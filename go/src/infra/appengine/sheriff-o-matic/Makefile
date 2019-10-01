@@ -27,11 +27,6 @@ test: build
 relnotes:
 	go run ../../tools/relnotes/relnotes.go -app sheriff-o-matic -extra-paths .,../../monitoring/analyzer,../../monitoring/client,../../monitoring/messages
 
-# This is only used for testing on the continuous build system.
-bower_cipd: deps
-	cipd pkg-build -pkg-def ./cipd/sheriff-o-matic.yaml -pkg-var platform:linux-amd64 -out ./cipd/bower_components.cipd
-	cipd pkg-register ./cipd/bower_components.cipd
-
 getversion_prod:
 	$(eval VERS := $(shell ./gae.py version -p ./frontend -A sheriff-o-matic | cut -c 1-35))
 	echo version is $(VERS)
