@@ -7,7 +7,7 @@ before clicking the CSV link.
 
 
 [for panels][# There will always be exactly one panel.][for panels.ordered_columns]"[panels.ordered_columns.name]"[if-index panels.ordered_columns last][else],[end][end][end]
-[for table_data][for table_data.cells][is table_data.cells.type "ID"]"[table_data.local_id]",[else]"[format "raw"][if-any table_data.cells.values][for table_data.cells.values][table_data.cells.values.item][if-index table_data.cells.values last][else], [end][end][end][end]"[if-index table_data.cells last][else],[end][end][end]
+[for table_data][for table_data.cells][is table_data.cells.type "ID"]"[table_data.local_id]",[else]"[format "raw"][if-any table_data.cells.values][for table_data.cells.values][is table_data.cells.type "issues"][table_data.cells.values.item.id][else][table_data.cells.values.item][end][if-index table_data.cells.values last][else], [end][end][end][end]"[if-index table_data.cells last][else],[end][end][end]
 [end]
 
 [if-any next_csv_link]
