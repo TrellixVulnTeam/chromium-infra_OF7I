@@ -10,12 +10,14 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/maruel/subcommands"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/isolatedclient"
 
 	"infra/cmd/cros_test_platform/internal/execution"
@@ -54,24 +56,29 @@ func (c *skylabExecuteRun) Run(a subcommands.Application, args []string, env sub
 }
 
 func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	request, err := c.readRequest(c.inputPath)
-	if err != nil {
-		return err
-	}
-
-	if err = c.validateRequest(request); err != nil {
-		return err
-	}
-
 	ctx := cli.GetContext(a, c, env)
 	ctx = setupLogging(ctx)
 
-	client, err := swarmingClient(ctx, request.Config.SkylabSwarming)
+	requests, err := c.readRequests()
 	if err != nil {
 		return err
 	}
+	if err := c.validateRequests(requests); err != nil {
+		return err
+	}
 
-	gf := c.getterFactory(request.Config.SkylabIsolate)
+	// TODO(pprabhu) Implement -multi_request for skylab backend.
+	if len(requests) > 1 {
+		return errors.Reason("multiple requests support unimplemented (got %d)", len(requests)).Err()
+	}
+
+	request := requests[0]
+	cfg := request.Config
+	client, err := swarmingClient(ctx, cfg.SkylabSwarming)
+	if err != nil {
+		return err
+	}
+	gf := c.getterFactory(cfg.SkylabIsolate)
 
 	var taskID string
 	// taskID will be used as the parent task ID for child jobs created by
@@ -79,15 +86,14 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 	// instance as the parent (which is not true for cros_test_platform-dev).
 	// TODO(crbug.com/994289): Move cros_test_platform-dev to the same instance
 	// as its child jobs, then delete this conditional.
-	if sameHost(env["SWARMING_SERVER"].Value, request.Config.SkylabSwarming.Server) {
+	if sameHost(env["SWARMING_SERVER"].Value, cfg.SkylabSwarming.Server) {
 		taskID = env["SWARMING_TASK_ID"].Value
 	}
 
-	runner, err := execution.NewSkylabRunner(ctx, request.Enumeration.AutotestInvocations, request.RequestParams, request.Config.SkylabWorker, taskID)
+	runner, err := execution.NewSkylabRunner(ctx, request.Enumeration.AutotestInvocations, request.RequestParams, cfg.SkylabWorker, taskID)
 	if err != nil {
 		return err
 	}
-
 	maxDuration, err := ptypes.Duration(request.RequestParams.Time.MaximumDuration)
 	if err != nil {
 		maxDuration = 12 * time.Hour
@@ -98,8 +104,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		// Catastrophic error. There is no reasonable response to write.
 		return err
 	}
-
-	return writeResponseWithError(c.outputPath, response, err)
+	return c.writeResponseWithError([]*steps.ExecuteResponse{response}, err)
 }
 
 func sameHost(urlA, urlB string) bool {
@@ -114,23 +119,38 @@ func sameHost(urlA, urlB string) bool {
 	return a.Host == b.Host
 }
 
-func (c *skylabExecuteRun) validateRequest(request *steps.ExecuteRequest) error {
-	if err := c.validateRequestCommon(request); err != nil {
-		return err
+func (c *skylabExecuteRun) validateRequests(requests []*steps.ExecuteRequest) error {
+	if len(requests) == 0 {
+		return errors.Reason("zero requests").Err()
 	}
+	for _, r := range requests {
+		if err := c.validateRequestCommon(r); err != nil {
+			return errors.Annotate(err, "validate request %s", r).Err()
+		}
+	}
+	if err := c.validateRequestConfig(requests[0].Config); err != nil {
+		return errors.Annotate(err, "validate request %s", requests[0]).Err()
+	}
+	cfg := requests[0].Config
+	for _, r := range requests[1:] {
+		o := r.Config
+		if !proto.Equal(cfg, o) {
+			return errors.Reason("mistmatched config: %s vs %s", cfg, o).Err()
+		}
+	}
+	return nil
+}
 
-	if request.Config.SkylabSwarming == nil {
+func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
+	if cfg.SkylabSwarming == nil {
 		return fmt.Errorf("nil request.config.skylab_swarming")
 	}
-
-	if request.Config.SkylabIsolate == nil {
+	if cfg.SkylabIsolate == nil {
 		return fmt.Errorf("nil request.config.skylab_isolate")
 	}
-
-	if request.Config.SkylabWorker == nil {
+	if cfg.SkylabWorker == nil {
 		return fmt.Errorf("nil request.config.skylab_worker")
 	}
-
 	return nil
 }
 

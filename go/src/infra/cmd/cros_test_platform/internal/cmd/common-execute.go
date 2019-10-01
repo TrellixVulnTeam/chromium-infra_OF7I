@@ -26,13 +26,15 @@ import (
 
 type commonExecuteRun struct {
 	subcommands.CommandRunBase
-	inputPath  string
-	outputPath string
+	inputPath    string
+	outputPath   string
+	multiRequest bool
 }
 
 func (c *commonExecuteRun) addFlags() {
 	c.Flags.StringVar(&c.inputPath, "input_json", "", "Path to JSON ExecuteRequest to read.")
 	c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to JSON ExecuteResponse to write.")
+	c.Flags.BoolVar(&c.multiRequest, "multi_request", false, "If true, handle multiple requests at once (transitional flag: crbug.com/1008135).")
 }
 
 func (c *commonExecuteRun) validateArgs() error {
@@ -47,14 +49,6 @@ func (c *commonExecuteRun) validateArgs() error {
 	return nil
 }
 
-func (c *commonExecuteRun) readRequest(inputPath string) (*steps.ExecuteRequest, error) {
-	var request steps.ExecuteRequest
-	if err := readRequest(inputPath, &request); err != nil {
-		return nil, err
-	}
-	return &request, nil
-}
-
 func (c *commonExecuteRun) validateRequestCommon(request *steps.ExecuteRequest) error {
 	if request == nil {
 		return fmt.Errorf("nil request")
@@ -65,6 +59,53 @@ func (c *commonExecuteRun) validateRequestCommon(request *steps.ExecuteRequest) 
 	}
 
 	return nil
+}
+
+func (c *commonExecuteRun) readRequests() ([]*steps.ExecuteRequest, error) {
+	if c.multiRequest {
+		rs, err := c.readMultiRequest()
+		if err != nil {
+			return nil, err
+		}
+		return rs.Requests, nil
+	}
+	r, err := c.readSingleRequest()
+	if err != nil {
+		return nil, err
+	}
+	return []*steps.ExecuteRequest{r}, nil
+}
+
+func (c *commonExecuteRun) readMultiRequest() (*steps.ExecuteRequests, error) {
+	var requests steps.ExecuteRequests
+	if err := readRequest(c.inputPath, &requests); err != nil {
+		return nil, err
+	}
+	return &requests, nil
+}
+
+func (c *commonExecuteRun) readSingleRequest() (*steps.ExecuteRequest, error) {
+	var request steps.ExecuteRequest
+	if err := readRequest(c.inputPath, &request); err != nil {
+		return nil, err
+	}
+	return &request, nil
+}
+
+func (c *commonExecuteRun) writeResponseWithError(resps []*steps.ExecuteResponse, err error) error {
+	if c.multiRequest {
+		return writeResponseWithError(
+			c.outputPath,
+			&steps.ExecuteResponses{
+				Responses: resps,
+			},
+			err,
+		)
+	}
+	if len(resps) > 1 {
+		panic(fmt.Sprintf("multiple responses without -multi_request: %s", resps))
+	}
+	return writeResponseWithError(c.outputPath, resps[0], err)
 }
 
 func (c *commonExecuteRun) handleRequest(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) (*steps.ExecuteResponse, error) {

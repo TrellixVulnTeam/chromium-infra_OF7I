@@ -15,6 +15,7 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 )
 
 // AutotestExecute subcommand: Run a set of enumerated tests against autotest backend.
@@ -48,10 +49,17 @@ func (c *autotestExecuteRun) Run(a subcommands.Application, args []string, env s
 }
 
 func (c *autotestExecuteRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	request, err := c.readRequest(c.inputPath)
+	requests, err := c.readRequests()
 	if err != nil {
 		return err
 	}
+	switch {
+	case len(requests) == 0:
+		return errors.Reason("zero requests").Err()
+	case len(requests) > 1:
+		return errors.Reason("multiple requests unsupported (got %d)", len(requests)).Err()
+	}
+	request := requests[0]
 
 	if err = c.validateRequest(request); err != nil {
 		return err
@@ -77,8 +85,7 @@ func (c *autotestExecuteRun) innerRun(a subcommands.Application, args []string, 
 		// Catastrophic error. There is no reasonable response to write.
 		return err
 	}
-
-	return writeResponseWithError(c.outputPath, response, err)
+	return c.writeResponseWithError([]*steps.ExecuteResponse{response}, err)
 }
 
 func (c *autotestExecuteRun) validateRequest(request *steps.ExecuteRequest) error {
