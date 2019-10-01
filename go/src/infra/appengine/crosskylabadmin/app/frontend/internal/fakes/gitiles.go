@@ -85,12 +85,58 @@ func (g *GitilesClient) DownloadFile(ctx context.Context, in *gitiles.DownloadFi
 type InventoryData struct {
 	Lab            []byte
 	Infrastructure []byte
+	// The mapping from the path of the file where the DUT's inventory data is stored (relative the git project root) to its content.
+	// E.g. chromeos-misc/jetstream-host.textpb => `duts { common {...} }`
+	//
+	// This will replace lab field when per-file inventory is enabled. See crbug.com/1008442 for details.
+	Duts map[string][]byte
 }
 
 const fullPerm = 0777
 
+func writeTarFile(tw *tar.Writer, path string, data []byte) error {
+	err := tw.WriteHeader(&tar.Header{
+		Name: path,
+		Mode: fullPerm,
+		Size: int64(len(data)),
+	})
+	if err != nil {
+		return err
+	}
+	if _, err := tw.Write(data); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetSplitInventory sets the serialized inventory data for the split inventory (each host has its own inventory file).
+// archive returned from gitiles.
+func (g *GitilesClient) SetSplitInventory(ic *config.Inventory, data InventoryData) error {
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+
+	for path, dut := range data.Duts {
+		if err := writeTarFile(tw, path, dut); err != nil {
+			return err
+		}
+	}
+	if err := writeTarFile(tw, ic.InfrastructureDataPath, data.Infrastructure); err != nil {
+		return err
+	}
+	if err := tw.Close(); err != nil {
+		return err
+	}
+	if err := gw.Close(); err != nil {
+		return err
+	}
+	g.Archived[projectRefKey(ic.Project, ic.Branch)] = buf.Bytes()
+	return nil
+}
+
 // SetInventory sets the serialized lab and infrastructure data as the inventory
 // archive returned from gitiles.
+// TODO(xixuan): remove this after per-file inventory is landed and tested.
 func (g *GitilesClient) SetInventory(ic *config.Inventory, data InventoryData) error {
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)

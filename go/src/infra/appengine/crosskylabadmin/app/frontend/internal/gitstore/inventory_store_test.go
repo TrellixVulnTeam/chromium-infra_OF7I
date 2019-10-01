@@ -25,6 +25,74 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 )
 
+func TestStoreValidityWithNewInventory(t *testing.T) {
+	Convey("with no DUTs", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("dev~infra-crosskylabadmin")
+		ctx = config.Use(ctx, &config.Config{
+			AccessGroup: "fake-access-group",
+			Inventory: &config.Inventory{
+				GitilesHost:            "some-gitiles-host",
+				GerritHost:             "some-gerrit-host",
+				Project:                "some-project",
+				Branch:                 "master",
+				LabDataPath:            "data/skylab/lab.textpb",
+				InfrastructureDataPath: "data/skylab/server_db.textpb",
+				Environment:            "ENVIRONMENT_STAGING",
+			},
+		})
+		gerritC := &fakes.GerritClient{}
+		gitilesC := fakes.NewGitilesClient()
+
+		err := gitilesC.SetInventory(config.Get(ctx).Inventory, fakes.InventoryData{})
+		So(err, ShouldBeNil)
+
+		Convey("store initially contains no data", func() {
+			store := NewInventoryStore(gerritC, gitilesC)
+			So(store.Lab, ShouldBeNil)
+
+			Convey("and initial Commit() fails", func() {
+				_, err := store.commitAll(ctx, "no reason")
+				So(err, ShouldNotBeNil)
+			})
+
+			Convey("on Refresh(), store obtains data", func() {
+				err := store.refreshAll(ctx)
+				So(err, ShouldBeNil)
+				So(store.Lab, ShouldNotBeNil)
+
+				Convey("Commit() without changes fails", func() {
+					_, err := store.commitAll(ctx, "no reason")
+					So(err, ShouldNotBeNil)
+					So(IsEmptyErr(err), ShouldBeTrue)
+				})
+
+				Convey("Commit() with changes succeeds", func() {
+					fi := "fake_id"
+					fh := "fake_hostname"
+					store.Lab = &inventory.Lab{
+						Duts: []*inventory.DeviceUnderTest{
+							{
+								Common: &inventory.CommonDeviceSpecs{
+									Id:       &fi,
+									Hostname: &fh,
+								},
+							},
+						},
+					}
+					_, err := store.commitAll(ctx, "no reason")
+					So(err, ShouldBeNil)
+					So(store.Lab, ShouldBeNil)
+
+					Convey("and invalidated", func() {
+						_, err := store.commitAll(ctx, "no reason")
+						So(err, ShouldNotBeNil)
+					})
+				})
+			})
+		})
+	})
+}
+
 func TestStoreValidity(t *testing.T) {
 	Convey("With 1 known DUT", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("dev~infra-crosskylabadmin")

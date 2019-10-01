@@ -38,6 +38,125 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func TestGetDutInfoWithConsistentDatastoreAndSplitInventory(t *testing.T) {
+	Convey("On happy path and 3 DUTs in the inventory", t, func() {
+		ctx := testingContext()
+		ctx = withSplitInventory(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		setSplitGitilesDuts(tf.C, tf.FakeGitiles, []testInventoryDut{
+			{id: "dut1_id", hostname: "jetstream-host", model: "link", pool: "DUT_POOL_SUITES"},
+			{id: "dut2_id", hostname: "jetstream-host", model: "peppy", pool: "DUT_POOL_SUITES"},
+			{id: "dut3_id", hostname: "chromeos15-rack1-row2-host3", model: "link", pool: "DUT_POOL_SUITES"},
+		})
+
+		Convey("initial GetDutInfo (by Id) returns NotFound", func() {
+			_, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Id: "dut1_id"})
+			So(status.Code(err), ShouldEqual, codes.NotFound)
+		})
+
+		Convey("initial GetDutInfo (by Hostname) returns NotFound", func() {
+			_, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Hostname: "jetstream-host"})
+			So(status.Code(err), ShouldEqual, codes.NotFound)
+		})
+
+		Convey("after a call to UpdateCachedInventory", func() {
+			_, err := tf.Inventory.UpdateCachedInventory(tf.C, &fleet.UpdateCachedInventoryRequest{})
+			So(err, ShouldBeNil)
+
+			Convey("Dut with same hostname will be overwritten", func() {
+				resp, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Id: "dut1_id"})
+				So(status.Code(err), ShouldEqual, codes.NotFound)
+
+				resp, err = tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Id: "dut2_id"})
+				So(err, ShouldBeNil)
+				dut := getDutInfo(t, resp)
+				So(dut.GetCommon().GetId(), ShouldEqual, "dut2_id")
+				So(dut.GetCommon().GetHostname(), ShouldEqual, "jetstream-host")
+			})
+
+			Convey("GetDutInfo (by ID) returns the DUT", func() {
+				resp, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Id: "dut3_id"})
+				So(err, ShouldBeNil)
+				dut := getDutInfo(t, resp)
+				So(dut.GetCommon().GetId(), ShouldEqual, "dut3_id")
+				So(dut.GetCommon().GetHostname(), ShouldEqual, "chromeos15-rack1-row2-host3")
+			})
+
+			Convey("GetDutInfo (by Hostname) returns the DUT", func() {
+				resp, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Hostname: "jetstream-host"})
+				So(err, ShouldBeNil)
+				dut := getDutInfo(t, resp)
+				So(dut.GetCommon().GetId(), ShouldEqual, "dut2_id")
+				So(dut.GetCommon().GetHostname(), ShouldEqual, "jetstream-host")
+			})
+		})
+	})
+}
+
+func TestGetDutInfoWithEventuallyConsistentDatastoreAndSplitInventory(t *testing.T) {
+	Convey("With eventually consistent datastore and a single DUT in the inventory", t, func() {
+		ctx := testingContext()
+		ctx = withSplitInventory(ctx)
+		ctx = withDutInfoCacheValidity(ctx, 100*time.Second)
+		datastore.GetTestable(ctx).Consistent(false)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		setSplitGitilesDuts(tf.C, tf.FakeGitiles, []testInventoryDut{
+			{id: "dut1_id", hostname: "jetstream-host", model: "link", pool: "DUT_POOL_SUITES"},
+		})
+
+		Convey("after a call to UpdateCachedInventory", func() {
+			_, err := tf.Inventory.UpdateCachedInventory(tf.C, &fleet.UpdateCachedInventoryRequest{})
+			So(err, ShouldBeNil)
+
+			Convey("GetDutInfo (by ID) returns the DUT", func() {
+				resp, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Id: "dut1_id"})
+				So(err, ShouldBeNil)
+				dut := getDutInfo(t, resp)
+				So(dut.GetCommon().GetId(), ShouldEqual, "dut1_id")
+				So(dut.GetCommon().GetHostname(), ShouldEqual, "jetstream-host")
+			})
+
+			Convey("GetDutInfo (by Hostname) returns NotFound", func() {
+				_, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Id: "jetstream-host"})
+				So(status.Code(err), ShouldEqual, codes.NotFound)
+			})
+
+			Convey("after index update, GetDutInfo (by Hostname) returns the DUT", func() {
+				datastore.GetTestable(ctx).CatchupIndexes()
+				resp, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Hostname: "jetstream-host"})
+				So(err, ShouldBeNil)
+				dut := getDutInfo(t, resp)
+				So(dut.GetCommon().GetId(), ShouldEqual, "dut1_id")
+				So(dut.GetCommon().GetHostname(), ShouldEqual, "jetstream-host")
+
+				Convey("after a Hostname update, GetDutInfo (by Hostname) returns NotFound", func() {
+					setSplitGitilesDuts(tf.C, tf.FakeGitiles, []testInventoryDut{
+						{id: "dut1_id", hostname: "jetstream-host-2", model: "link", pool: "DUT_POOL_SUITES"},
+					})
+					_, err := tf.Inventory.UpdateCachedInventory(tf.C, &fleet.UpdateCachedInventoryRequest{})
+					So(err, ShouldBeNil)
+
+					_, err = tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Id: "jetstream-host"})
+					So(status.Code(err), ShouldEqual, codes.NotFound)
+
+					Convey("after index update, GetDutInfo (by Hostname) returns the DUT for the new Hostname", func() {
+						datastore.GetTestable(ctx).CatchupIndexes()
+						resp, err := tf.Inventory.GetDutInfo(tf.C, &fleet.GetDutInfoRequest{Hostname: "jetstream-host-2"})
+						So(err, ShouldBeNil)
+						dut := getDutInfo(t, resp)
+						So(dut.GetCommon().GetId(), ShouldEqual, "dut1_id")
+						So(dut.GetCommon().GetHostname(), ShouldEqual, "jetstream-host-2")
+					})
+				})
+			})
+		})
+	})
+}
+
 func TestInvalidDutID(t *testing.T) {
 	Convey("DutID with empty hostname won't go to drone config datastore", t, func() {
 		ctx := testingContext()
@@ -132,6 +251,7 @@ func TestListRemovedDuts(t *testing.T) {
 	})
 }
 
+// TODO(xixuan): remove this after per-file inventory is landed and tested.
 func TestGetDutInfoWithConsistentDatastore(t *testing.T) {
 	Convey("On happy path and a single DUT in the inventory", t, func() {
 		ctx := testingContext()
@@ -181,6 +301,7 @@ func TestGetDutInfoWithConsistentDatastore(t *testing.T) {
 	})
 }
 
+// TODO(xixuan): remove this after per-file inventory is landed and tested.
 func TestGetDutInfoWithEventuallyConsistentDatastore(t *testing.T) {
 	Convey("With eventually consistent datastore and a single DUT in the inventory", t, func() {
 		ctx := testingContext()
@@ -245,6 +366,12 @@ func TestGetDutInfoWithEventuallyConsistentDatastore(t *testing.T) {
 func withDutInfoCacheValidity(ctx context.Context, v time.Duration) context.Context {
 	cfg := config.Get(ctx)
 	cfg.Inventory.DutInfoCacheValidity = google.NewDuration(v)
+	return config.Use(ctx, cfg)
+}
+
+func withSplitInventory(ctx context.Context) context.Context {
+	cfg := config.Get(ctx)
+	cfg.Inventory.Multifile = true
 	return config.Use(ctx, cfg)
 }
 

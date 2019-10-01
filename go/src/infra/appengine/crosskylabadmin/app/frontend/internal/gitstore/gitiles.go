@@ -64,6 +64,28 @@ func fetchLatestSHA1(ctx context.Context, gc gitiles.GitilesClient, project stri
 	return resp.Log[0].GetId(), nil
 }
 
+// fetchAllFromGitiles fetches host inventory info from per-file inventory plus files in additionalPaths.
+//
+// project is the git project to fetch from.
+// ref is the git-ref to fetch from.
+// additionalPaths is a map of required paths to fetch. Use map for easy check.
+//
+// The return is a map from path in the git project to the
+// contents of the file at that path for each requested path
+func fetchAllFromGitiles(ctx context.Context, gc gitiles.GitilesClient, project string, ref string, additionalPaths map[string]bool) (map[string]string, error) {
+	res := make(map[string]string)
+	contents, err := obtainGitilesBytes(ctx, gc, project, ref)
+	if err != nil {
+		return res, err
+	}
+
+	pathFilter := func(path string) bool {
+		return validateInvPathForDut(path) || additionalPaths[path]
+	}
+
+	return extractGitilesArchive(ctx, contents, pathFilter)
+}
+
 // fetchFilesFromGitiles fetches file contents from gitiles.
 //
 // project is the git project to fetch from.
@@ -72,12 +94,24 @@ func fetchLatestSHA1(ctx context.Context, gc gitiles.GitilesClient, project stri
 //
 // fetchFilesFromGitiles returns a map from path in the git project to the
 // contents of the file at that path for each requested path.
+//
+// TODO(xixuan): remove this after per-file inventory is landed and tested.
 func fetchFilesFromGitiles(ctx context.Context, gc gitiles.GitilesClient, project string, ref string, paths []string) (map[string]string, error) {
 	contents, err := obtainGitilesBytes(ctx, gc, project, ref)
 	if err != nil {
 		return make(map[string]string), err
 	}
-	return extractGitilesArchive(ctx, contents, paths)
+
+	pathFilter := func(path string) bool {
+		for _, p := range paths {
+			if path == p {
+				return true
+			}
+		}
+		return false
+	}
+
+	return extractGitilesArchive(ctx, contents, pathFilter)
 }
 
 func obtainGitilesBytes(ctx context.Context, gc gitiles.GitilesClient, project string, ref string) (contents []byte, err error) {
@@ -103,12 +137,8 @@ func obtainGitilesBytes(ctx context.Context, gc gitiles.GitilesClient, project s
 //
 // This function takes ownership of data. Caller should not use the byte array
 // concurrent to / after this call. See io.Reader interface for more details.
-func extractGitilesArchive(ctx context.Context, data []byte, paths []string) (map[string]string, error) {
+func extractGitilesArchive(ctx context.Context, data []byte, pathFilter func(string) bool) (map[string]string, error) {
 	res := make(map[string]string)
-	pmap := make(map[string]bool)
-	for _, p := range paths {
-		pmap[p] = true
-	}
 
 	abuf := bytes.NewBuffer(data)
 	gr, err := gzip.NewReader(abuf)
@@ -129,7 +159,7 @@ func extractGitilesArchive(ctx context.Context, data []byte, paths []string) (ma
 		default:
 			// good case.
 		}
-		if found := pmap[h.Name]; !found {
+		if !pathFilter(h.Name) {
 			continue
 		}
 

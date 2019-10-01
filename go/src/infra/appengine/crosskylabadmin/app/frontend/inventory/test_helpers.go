@@ -25,6 +25,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/clients/mock"
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
+	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/libs/skylab/inventory"
 
 	"github.com/golang/mock/gomock"
@@ -135,9 +136,20 @@ type testInventoryDut struct {
 
 // setGitilesDUTs sets up fake gitiles to return the inventory of
 // duts provided.
+// TODO(xixuan): remove this after per-file inventory is landed and tested.
 func setGitilesDUTs(c context.Context, g *fakes.GitilesClient, duts []testInventoryDut) error {
 	return g.SetInventory(config.Get(c).Inventory, fakes.InventoryData{
 		Lab: inventoryBytesFromDUTs(duts),
+	})
+}
+
+func setSplitGitilesDuts(c context.Context, g *fakes.GitilesClient, duts []testInventoryDut) error {
+	dmap := make(map[string][]byte, len(duts))
+	for _, dut := range duts {
+		dmap[gitstore.InvPathForDut(dut.hostname)] = []byte(fmt.Sprintf(dutFmt, dut.hostname, dut.id, dut.pool, dut.model))
+	}
+	return g.SetSplitInventory(config.Get(c).Inventory, fakes.InventoryData{
+		Duts: dmap,
 	})
 }
 

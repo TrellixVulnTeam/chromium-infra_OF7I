@@ -15,6 +15,7 @@
 package inventory
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -33,6 +34,271 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
+func TestDeleteDutsWithSplitInventory(t *testing.T) {
+	Convey("With 3 DUTs in the split inventory", t, func() {
+		ctx := testingContext()
+		ctx = withSplitInventory(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		setSplitGitilesDuts(tf.C, tf.FakeGitiles, []testInventoryDut{
+			{id: "dut1_id", hostname: "jetstream-host", model: "link", pool: "DUT_POOL_SUITES"},
+			{id: "dut2_id", hostname: "chromeos6-rack1-row2-host3", model: "link", pool: "DUT_POOL_SUITES"},
+			{id: "dut3_id", hostname: "chromeos15-rack1-row2-host3", model: "link", pool: "DUT_POOL_SUITES"},
+		})
+
+		Convey("DeleteDuts with no hostnames returns error", func() {
+			_, err := tf.Inventory.DeleteDuts(tf.C, &fleet.DeleteDutsRequest{})
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("DeleteDuts with unknown hostname deletes no duts", func() {
+			resp, err := tf.Inventory.DeleteDuts(tf.C, &fleet.DeleteDutsRequest{Hostnames: []string{"unknown_hostname"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetIds(), ShouldBeEmpty)
+		})
+
+		Convey("DeleteDuts with known hostnames deletes duts", func() {
+			resp, err := tf.Inventory.DeleteDuts(tf.C, &fleet.DeleteDutsRequest{Hostnames: []string{"jetstream-host", "chromeos6-rack1-row2-host3"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(stringset.NewFromSlice(resp.GetIds()...), ShouldResemble, stringset.NewFromSlice("dut1_id", "dut2_id"))
+
+			So(tf.FakeGerrit.Changes, ShouldHaveLength, 1)
+			change := tf.FakeGerrit.Changes[len(tf.FakeGerrit.Changes)-1]
+			So(change.Files, ShouldHaveLength, 2)
+			var paths []string
+			for p := range change.Files {
+				paths = append(paths, p)
+			}
+			So(stringset.NewFromSlice(paths...), ShouldResemble, stringset.NewFromSlice(
+				"data/skylab/chromeos-misc/jetstream-host.textpb",
+				"data/skylab/chromeos6/chromeos6-rack1-row2-host3.textpb",
+			))
+		})
+	})
+}
+
+func TestDeployDutWithSplitInventory(t *testing.T) {
+	Convey("With no DUTs and one drone in the inventory", t, func() {
+		ctx := testingContext()
+		ctx = withSplitInventory(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		err := tf.FakeGitiles.SetSplitInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+				},
+			}),
+		})
+		So(err, ShouldBeNil)
+
+		Convey("DeployDut with empty new_spec returns error", func() {
+			_, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{})
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("DeployDut with invalid new_specs returns error", func() {
+			_, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
+				NewSpecs: [][]byte{[]byte("clearly not a protobuf")},
+			})
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("DeployDut with valid new_specs triggers deploy", func() {
+			// Id is a required field, so must be set.
+			// But a new ID is assigned on deployment.
+			ignoredID := "This ID is ignored"
+			dutHostname := "fake-dut"
+			specs := &inventory.CommonDeviceSpecs{
+				Id:       &ignoredID,
+				Hostname: &dutHostname,
+			}
+
+			// TODO(pprabhu) Check arguments of this call after testing utilities
+			// from ../test_common.go are refactored into a package.
+			deployTaskID := "swarming-task"
+			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).Return(deployTaskID, nil)
+			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
+				NewSpecs: marshalOrPanicMany(specs),
+			})
+			So(err, ShouldBeNil)
+			deploymentID := resp.DeploymentId
+			So(deploymentID, ShouldNotEqual, "")
+
+			oneDutLab, err := getLastChangeForHost(tf.FakeGerrit, "data/skylab/chromeos-misc/fake-dut.textpb")
+			So(err, ShouldBeNil)
+			dut := oneDutLab.Duts[0]
+			common := dut.GetCommon()
+			So(common.GetId(), ShouldNotEqual, "")
+			So(common.GetId(), ShouldNotEqual, specs.GetId())
+			So(common.GetHostname(), ShouldEqual, specs.GetHostname())
+
+			infra, err := getInfrastructureFromLastChange(tf.FakeGerrit)
+			So(err, ShouldBeNil)
+			So(infra.Servers, ShouldHaveLength, 1)
+			server := infra.Servers[0]
+			So(server.GetHostname(), ShouldEqual, "drone-queen-ENVIRONMENT_STAGING")
+			So(server.DutUids, ShouldHaveLength, 1)
+			So(server.DutUids[0], ShouldEqual, common.GetId())
+
+			Convey("then GetDeploymentStatus with wrong ID returns error", func() {
+				_, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: "incorrct-id"})
+				So(err, ShouldNotBeNil)
+			})
+
+			Convey("then GetDeploymentStatus with correct ID returns IN_PROGRESS status", func() {
+				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
+					State: "RUNNING",
+				}, nil)
+				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
+				So(err, ShouldBeNil)
+				So(resp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS)
+				So(resp.ChangeUrl, ShouldNotEqual, "")
+				So(resp.TaskUrl, ShouldContainSubstring, deployTaskID)
+			})
+
+			Convey("then GetDeploymentStatus with correct ID returns COMPLETED status on task success", func() {
+				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
+					State: "COMPLETED",
+				}, nil)
+				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
+				So(err, ShouldBeNil)
+				So(resp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_SUCCEEDED)
+			})
+
+			Convey("then GetDeploymentStatus with correct ID returns FAILURE status on task failure", func() {
+				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
+					State:   "COMPLETED",
+					Failure: true,
+				}, nil)
+				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
+				So(err, ShouldBeNil)
+				So(resp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_FAILED)
+			})
+		})
+
+		Convey("DeployDut with multiple valid new_specs triggers deploy", func() {
+			ignoredID1 := "fake-id-1"
+			dutHostname1 := "fake-dut-1"
+			specs1 := &inventory.CommonDeviceSpecs{
+				Id:       &ignoredID1,
+				Hostname: &dutHostname1,
+			}
+			ignoredID2 := "fake-id-2"
+			dutHostname2 := "chromeos15-rack1-row2-host3"
+			specs2 := &inventory.CommonDeviceSpecs{
+				Id:       &ignoredID2,
+				Hostname: &dutHostname2,
+			}
+
+			var byteArr [][]byte
+			byteArr = marshalOrPanicMany(specs1, specs2)
+
+			deployTaskID := "swarming-task2"
+			// expect two calls to create task (one per new DUT)
+			for i := 1; i <= 2; i++ {
+				tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).Return(deployTaskID, nil)
+			}
+			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
+				NewSpecs: byteArr,
+			})
+			So(err, ShouldBeNil)
+			deploymentID := resp.DeploymentId
+			So(deploymentID, ShouldNotEqual, "")
+
+			oneDutLab, err := getLastChangeForHost(tf.FakeGerrit, "data/skylab/chromeos-misc/fake-dut-1.textpb")
+			So(err, ShouldBeNil)
+			dut := oneDutLab.Duts[0]
+			common := dut.GetCommon()
+			So(common.GetId(), ShouldNotEqual, "")
+			So(common.GetId(), ShouldNotEqual, specs1.GetId())
+			So(common.GetHostname(), ShouldEqual, specs1.GetHostname())
+
+			oneDutLab, err = getLastChangeForHost(tf.FakeGerrit, "data/skylab/chromeos15/chromeos15-rack1-row2-host3.textpb")
+			So(err, ShouldBeNil)
+			dut = oneDutLab.Duts[0]
+			common = dut.GetCommon()
+			So(common.GetId(), ShouldNotEqual, "")
+			So(common.GetId(), ShouldNotEqual, specs2.GetId())
+			So(common.GetHostname(), ShouldEqual, specs2.GetHostname())
+
+			infra, err := getInfrastructureFromLastChange(tf.FakeGerrit)
+			So(err, ShouldBeNil)
+			So(infra.Servers, ShouldHaveLength, 1)
+			server := infra.Servers[0]
+			So(server.GetHostname(), ShouldEqual, "drone-queen-ENVIRONMENT_STAGING")
+			So(server.DutUids, ShouldHaveLength, 2)
+		})
+
+		Convey("DeployDut assigns servo_port if requested via option", func() {
+			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+			tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), gomock.Any()).AnyTimes().Return(&swarming.SwarmingRpcsTaskResult{
+				State: "RUNNING",
+			}, nil)
+
+			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
+				NewSpecs: marshalOrPanicMany(&inventory.CommonDeviceSpecs{
+					Id:       stringPtr("This ID is ignored"),
+					Hostname: stringPtr("first-dut"),
+					Attributes: []*inventory.KeyValue{
+						{Key: stringPtr("servo_host"), Value: stringPtr("my-special-labstation")},
+					},
+				}),
+				Options: &fleet.DutDeploymentOptions{
+					AssignServoPortIfMissing: true,
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: resp.DeploymentId})
+			So(err, ShouldBeNil)
+
+			oneDutLab, err := getLastChangeForHost(tf.FakeGerrit, "data/skylab/chromeos-misc/first-dut.textpb")
+			So(err, ShouldBeNil)
+			common := oneDutLab.Duts[0].GetCommon()
+			So(common.GetHostname(), ShouldEqual, "first-dut")
+			firstPort, found := getAttributeByKey(common, servoPortAttributeKey)
+			So(found, ShouldEqual, true)
+			// Currently, these test hard-codes the expectation that the first assigned port is 9999.
+			// It is very difficult to setup expectations for subsequent
+			// DeployDut() calls, so we can not truly validate that the
+			// auto-generated ports are arbitrary, but different.
+			// See also TestDeployMultipleDuts.
+			So(firstPort, ShouldEqual, "9999")
+		})
+
+		Convey("DeployDUT should skip deployment if SkipDeployment is provided", func() {
+			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(0)
+			tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), gomock.Any()).AnyTimes().MaxTimes(0)
+			response, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
+				NewSpecs: marshalOrPanicMany(&inventory.CommonDeviceSpecs{
+					Id:       stringPtr("This ID is ignored"),
+					Hostname: stringPtr("first-dut"),
+					Attributes: []*inventory.KeyValue{
+						{Key: stringPtr("servo_host"), Value: stringPtr("my-special-labstation")},
+					},
+				}),
+				Actions: &fleet.DutDeploymentActions{
+					SkipDeployment: true,
+				},
+			})
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			So(response.DeploymentId, ShouldNotBeNil)
+			{
+				response, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: response.GetDeploymentId()})
+				So(err, ShouldBeNil)
+				So(response.ChangeUrl, ShouldNotEqual, "")
+				So(response.TaskUrl, ShouldEqual, "")
+			}
+		})
+	})
+}
+
+// TODO(xixuan): remove this after per-file inventory is landed and tested.
 func TestDeleteDuts(t *testing.T) {
 	Convey("With 3 DUTs in the inventory", t, func() {
 		tf, validate := newTestFixture(t)
@@ -88,6 +354,7 @@ func TestDeleteDuts(t *testing.T) {
 	})
 }
 
+// TODO(xixuan): remove this after per-file inventory is landed and tested.
 func TestDeployDut(t *testing.T) {
 	Convey("With no DUTs and one drone in the inventory", t, func() {
 		tf, validate := newTestFixture(t)
@@ -553,6 +820,22 @@ func TestGetDeploymentStatus(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("GetDeploymentStatus() = %#v; want %#v", got, want)
 	}
+}
+
+// getLastChangeForHost gets the latest change for a given path of one host in gerrit for per-file inventory.
+func getLastChangeForHost(fg *fakes.GerritClient, path string) (*inventory.Lab, error) {
+	if len(fg.Changes) == 0 {
+		return nil, errors.Reason("found no gerrit changes").Err()
+	}
+
+	change := fg.Changes[len(fg.Changes)-1]
+	content, ok := change.Files[path]
+	if !ok {
+		return nil, errors.Reason(fmt.Sprintf("cannot find path %s in %v", path, change.Files)).Err()
+	}
+	var oneDutLab inventory.Lab
+	err := inventory.LoadLabFromString(content, &oneDutLab)
+	return &oneDutLab, err
 }
 
 // getLabFromLastChange gets the latest inventory.Lab committed to

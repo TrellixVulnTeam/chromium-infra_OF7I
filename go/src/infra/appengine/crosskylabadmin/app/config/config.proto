@@ -172,6 +172,9 @@ message Inventory {
   // The device config file path.
   // e.g. deviceconfig/generated/device_configs.cfg
   string device_config_path = 14;
+
+  // If using multi files for inventory. See crbug.com/1008442 for details.
+  bool multifile = 15;
 }
 
 message PoolBalancer {
