@@ -59,14 +59,7 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 	return maxInt32IfZero(params.GetRetry().GetMax())
 }
 
-// LaunchAndWait launches a skylab execution and waits for it to complete,
-// polling for new results periodically, and retrying tests that need retry,
-// based on retry policy.
-//
-// If the supplied context is cancelled prior to completion, or some other error
-// is encountered, this method returns whatever partial execution response
-// was visible to it prior to that error.
-func (r *TaskSet) LaunchAndWait(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
+func (r *TaskSet) launchAndWait(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
 	defer func() { r.running = false }()
 
 	if err := r.launchAll(ctx, client); err != nil {
@@ -254,9 +247,7 @@ var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCyc
 	jsonrpc.TaskState_TIMED_OUT: test_platform.TaskState_LIFE_CYCLE_ABORTED,
 }
 
-// Response constructs a response based on the current state of the
-// TaskSet.
-func (r *TaskSet) Response(urler swarming.URLer) *steps.ExecuteResponse {
+func (r *TaskSet) response(urler swarming.URLer) *steps.ExecuteResponse {
 	resp := &steps.ExecuteResponse{
 		TaskResults: r.taskResults(urler),
 		State: &test_platform.TaskState{

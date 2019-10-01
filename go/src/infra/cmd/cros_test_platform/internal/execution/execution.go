@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
+	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/cros_test_platform/internal/execution/internal/autotest"
 	"infra/cmd/cros_test_platform/internal/execution/internal/skylab"
@@ -28,7 +29,11 @@ type Runner interface {
 // NewSkylabRunner returns a Runner that will execute the given tests in
 // the skylab environment.
 func NewSkylabRunner(ctx context.Context, tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (Runner, error) {
-	return skylab.NewTaskSet(ctx, tests, params, workerConfig, parentTaskID)
+	ts, err := skylab.NewTaskSet(ctx, tests, params, workerConfig, parentTaskID)
+	if err != nil {
+		return nil, errors.Annotate(err, "new skylab runner").Err()
+	}
+	return skylab.NewRunner(ts), nil
 }
 
 // NewAutotestRunner returns a Runner that will execute the given tests in
