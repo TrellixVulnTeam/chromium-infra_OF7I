@@ -31,8 +31,6 @@ type TaskSet struct {
 	retries          int32
 	// complete indicates that the TaskSet ran to completion of all tasks.
 	complete bool
-	// running indicates that the TaskSet is still running.
-	running bool
 }
 
 // NewTaskSet creates a new TaskSet.
@@ -48,7 +46,6 @@ func NewTaskSet(ctx context.Context, tests []*steps.EnumerationResponse_Autotest
 	return &TaskSet{
 		testRuns:         testRuns,
 		globalMaxRetries: inferGlobalMaxRetries(params),
-		running:          true,
 	}, nil
 }
 
@@ -60,7 +57,6 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 }
 
 func (r *TaskSet) launchAndWait(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
-	defer func() { r.running = false }()
 
 	if err := r.launchAll(ctx, client); err != nil {
 		return err
@@ -247,22 +243,22 @@ var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCyc
 	jsonrpc.TaskState_TIMED_OUT: test_platform.TaskState_LIFE_CYCLE_ABORTED,
 }
 
-func (r *TaskSet) response(urler swarming.URLer) *steps.ExecuteResponse {
+func (r *TaskSet) response(urler swarming.URLer, running bool) *steps.ExecuteResponse {
 	resp := &steps.ExecuteResponse{
 		TaskResults: r.taskResults(urler),
 		State: &test_platform.TaskState{
 			Verdict:   r.verdict(),
-			LifeCycle: r.lifecycle(),
+			LifeCycle: r.lifecycle(running),
 		},
 	}
 	return resp
 }
 
-func (r *TaskSet) lifecycle() test_platform.TaskState_LifeCycle {
+func (r *TaskSet) lifecycle(running bool) test_platform.TaskState_LifeCycle {
 	switch {
 	case r.complete:
 		return test_platform.TaskState_LIFE_CYCLE_COMPLETED
-	case r.running:
+	case running:
 		return test_platform.TaskState_LIFE_CYCLE_RUNNING
 	default:
 		// TODO(akeshet): The task set is neither running nor complete, so it

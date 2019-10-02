@@ -15,6 +15,8 @@ import (
 // Runner is a new Skylab task set runner.
 type Runner struct {
 	taskSet *TaskSet
+
+	running bool
 }
 
 // NewRunner returns a new Runner for executing the provided TaskSet.
@@ -32,10 +34,11 @@ func NewRunner(taskSet *TaskSet) *Runner {
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
 func (r *Runner) LaunchAndWait(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
+	defer func() { r.running = false }()
 	return r.taskSet.launchAndWait(ctx, client, gf)
 }
 
 // Response constructs a response based on the current state of the Runner.
 func (r *Runner) Response(urler swarming.URLer) *steps.ExecuteResponse {
-	return r.taskSet.response(urler)
+	return r.taskSet.response(urler, r.running)
 }
