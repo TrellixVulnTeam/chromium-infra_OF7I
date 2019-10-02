@@ -27,4 +27,4 @@ infra/tools/cloud_sql_proxy/linux-amd64  downloaded:2017_07_25
 infra/machine-db/crimson/linux-amd64 stable
 
 # Helper for building Docker images.
-infra/tools/cloudbuildhelper/linux-amd64 git_revision:372f87c6420d1d6d08f257af3b82d0cd7c29b513
+infra/tools/cloudbuildhelper/linux-amd64 git_revision:9ab9f1f0cadaf3d58c3415914e3f21d2a6a7cac4
