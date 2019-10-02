@@ -6,7 +6,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/maruel/subcommands"
@@ -31,12 +33,13 @@ type commandBase struct {
 	needAuth bool      // set in init, true if we have auth flags registered
 	posArgs  []*string // will be filled in by positional arguments
 
-	logConfig logging.Config // -log-* flags
-	authFlags authcli.Flags  // -auth-* flags
+	logConfig  logging.Config // -log-* flags
+	authFlags  authcli.Flags  // -auth-* flags
+	jsonOutput string         // -json-output flag
 }
 
 // init register base flags. Must be called.
-func (c *commandBase) init(exec execCb, needAuth bool, posArgs []*string) {
+func (c *commandBase) init(exec execCb, needAuth, needJSONOutput bool, posArgs []*string) {
 	c.exec = exec
 	c.needAuth = needAuth
 	c.posArgs = posArgs
@@ -46,6 +49,9 @@ func (c *commandBase) init(exec execCb, needAuth bool, posArgs []*string) {
 
 	if c.needAuth {
 		c.authFlags.Register(&c.Flags, authOptions()) // see main.go
+	}
+	if needJSONOutput {
+		c.Flags.StringVar(&c.jsonOutput, "json-output", "", "Where to write JSON file with the outcome (\"-\" for stdout).")
 	}
 }
 
@@ -102,6 +108,22 @@ func (c *commandBase) tokenSource(ctx context.Context) (oauth2.TokenSource, erro
 		logging.Infof(ctx, "Running as %s", email)
 	}
 	return authn.TokenSource()
+}
+
+// writeJSONOutput writes the result to -json-output file (if was given).
+func (c *commandBase) writeJSONOutput(r interface{}) error {
+	if c.jsonOutput == "" {
+		return nil
+	}
+	b, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		return errors.Annotate(err, "failed to marshal to JSON: %v", r).Err()
+	}
+	if c.jsonOutput == "-" {
+		fmt.Printf("%s\n", b)
+		return nil
+	}
+	return errors.Annotate(ioutil.WriteFile(c.jsonOutput, b, 0600), "failed to write %q", c.jsonOutput).Err()
 }
 
 // isCLIError is tagged into errors caused by bad CLI flags.

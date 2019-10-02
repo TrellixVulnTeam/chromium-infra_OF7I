@@ -46,7 +46,7 @@ type cmdPinsUpdateRun struct {
 }
 
 func (c *cmdPinsUpdateRun) init() {
-	c.commandBase.init(c.exec, true, []*string{
+	c.commandBase.init(c.exec, true, true, []*string{
 		&c.pins,
 	})
 }
@@ -64,10 +64,12 @@ func (c *cmdPinsUpdateRun) exec(ctx context.Context) error {
 	registry := &registry.Client{TokenSource: ts}
 
 	var m sync.Mutex
-	var unchanged []string
-	var updated []string
-	var skipped []string
-	var failed []string
+	var out struct {
+		Unchanged []string `json:"unchanged,omitempty"`
+		Updated   []string `json:"updated,omitempty"`
+		Skipped   []string `json:"skipped,omitempty"`
+		Failed    []string `json:"failed,omitempty"`
+	}
 
 	report := func(s *[]string, p *dockerfile.Pin) {
 		m.Lock()
@@ -78,33 +80,38 @@ func (c *cmdPinsUpdateRun) exec(ctx context.Context) error {
 	err = pins.Visit(func(p *dockerfile.Pin) error {
 		if p.Freeze != "" {
 			logging.Infof(ctx, "Skipping frozen %s: %s", p.ImageRef(), p.Freeze)
-			report(&skipped, p)
+			report(&out.Skipped, p)
 			return nil
 		}
 		switch resolved, err := registry.GetImage(ctx, p.ImageRef()); {
 		case err != nil:
 			logging.Errorf(ctx, "When resolving %s: %s", p.ImageRef(), err)
-			report(&failed, p)
+			report(&out.Failed, p)
 			return err
 		case resolved.Digest != p.Digest:
 			logging.Infof(ctx, "Updating %s: %s -> %s", p.ImageRef(), p.Digest, resolved.Digest)
 			p.Digest = resolved.Digest
-			report(&updated, p)
+			report(&out.Updated, p)
 		default:
-			report(&unchanged, p)
+			report(&out.Unchanged, p)
 		}
 		return nil
 	})
 
-	// TODO(vadimsh): Write to -json-output.
 	logging.Infof(ctx, "Summary:")
-	logging.Infof(ctx, "    Unchanged: %d", len(unchanged))
-	logging.Infof(ctx, "    Updated:   %d", len(updated))
-	logging.Infof(ctx, "    Skipped:   %d", len(skipped))
-	logging.Infof(ctx, "    Failed:    %d", len(failed))
+	logging.Infof(ctx, "    Unchanged: %d", len(out.Unchanged))
+	logging.Infof(ctx, "    Updated:   %d", len(out.Updated))
+	logging.Infof(ctx, "    Skipped:   %d", len(out.Skipped))
+	logging.Infof(ctx, "    Failed:    %d", len(out.Failed))
 
+	if jerr := c.writeJSONOutput(&out); jerr != nil {
+		return errors.Annotate(jerr, "failed to write JSON output").Err()
+	}
 	if err != nil {
 		return errors.Annotate(err, "failed to resolve pin(s)").Err()
 	}
-	return errors.Annotate(writePins(c.pins, pins), "writing pins file").Err()
+	if len(out.Updated) != 0 {
+		return errors.Annotate(writePins(c.pins, pins), "writing pins file").Err()
+	}
+	return nil
 }

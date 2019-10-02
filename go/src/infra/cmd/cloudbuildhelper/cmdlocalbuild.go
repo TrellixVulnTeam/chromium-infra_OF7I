@@ -48,7 +48,7 @@ type cmdLocalBuildRun struct {
 }
 
 func (c *cmdLocalBuildRun) init() {
-	c.commandBase.init(c.exec, false, []*string{
+	c.commandBase.init(c.exec, false, false, []*string{
 		&c.targetManifest,
 	})
 	c.Flags.Var(&c.labels, "label", "Labels to attach to the docker image, in k=v form.")

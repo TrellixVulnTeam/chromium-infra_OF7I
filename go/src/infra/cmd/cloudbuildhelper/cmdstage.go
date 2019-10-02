@@ -45,7 +45,7 @@ type cmdStageRun struct {
 }
 
 func (c *cmdStageRun) init() {
-	c.commandBase.init(c.exec, false, []*string{
+	c.commandBase.init(c.exec, false, false, []*string{
 		&c.targetManifest,
 	})
 	c.Flags.StringVar(&c.outputTarball, "output-tarball", "", "Where to write the tarball with the context dir.")

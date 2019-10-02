@@ -98,11 +98,10 @@ type cmdBuildRun struct {
 	force          bool
 	labels         stringmapflag.Value
 	tags           stringlistflag.Flag
-	jsonOutput     string
 }
 
 func (c *cmdBuildRun) init() {
-	c.commandBase.init(c.exec, true, []*string{
+	c.commandBase.init(c.exec, true, true, []*string{
 		&c.targetManifest,
 	})
 	c.Flags.StringVar(&c.infra, "infra", "dev", "What section to pick from 'infra' field in the YAML.")
@@ -111,7 +110,6 @@ func (c *cmdBuildRun) init() {
 	c.Flags.BoolVar(&c.force, "force", false, "Rebuild and reupload the image, ignoring existing artifacts.")
 	c.Flags.Var(&c.labels, "label", "Labels to attach to the docker image, in k=v form.")
 	c.Flags.Var(&c.tags, "tag", "Additional tag(s) to unconditionally push the image to (e.g. \"latest\").")
-	c.Flags.StringVar(&c.jsonOutput, "json-output", "", "Where to write JSON file with the outcome (\"-\" for stdout).")
 }
 
 func (c *cmdBuildRun) exec(ctx context.Context) error {
@@ -187,7 +185,28 @@ func (c *cmdBuildRun) exec(ctx context.Context) error {
 		Builder:      builder,
 		Registry:     registry,
 	})
-	return reportResult(ctx, res, err, c.jsonOutput)
+	return c.reportResult(ctx, res, err)
+}
+
+// reportResult is called to report the result of the build (successful or not).
+func (c *cmdBuildRun) reportResult(ctx context.Context, r buildResult, err error) error {
+	if err != nil {
+		r.Error = err.Error()
+	}
+
+	img := r.Image
+	if img == nil && err == nil {
+		logging.Infof(ctx, "Image builds successfully") // not using a registry at all
+	}
+	if img != nil {
+		img.Log(ctx, "The final image:")
+		r.ViewImageURL = img.ViewURL()
+	}
+
+	if jerr := c.writeJSONOutput(&r); jerr != nil {
+		return errors.Annotate(jerr, "failed to write JSON output").Err()
+	}
+	return err
 }
 
 // storageImpl is implemented by *storage.Storage.
@@ -333,43 +352,6 @@ func runBuild(ctx context.Context, p buildParams) (res buildResult, err error) {
 	}
 
 	return
-}
-
-// reportResult is called to report the result of the build (successful or not).
-func reportResult(ctx context.Context, r buildResult, err error, jsonOutput string) error {
-	if err != nil {
-		r.Error = err.Error()
-	}
-
-	img := r.Image
-	if img == nil && err == nil {
-		logging.Infof(ctx, "Image builds successfully") // not using a registry at all
-	}
-	if img != nil {
-		img.Log(ctx, "The final image:")
-		r.ViewImageURL = img.ViewURL()
-	}
-
-	if jsonOutput != "" {
-		if jerr := writeJSONOutput(&r, jsonOutput); jerr != nil {
-			return errors.Annotate(jerr, "failed to write JSON output").Err()
-		}
-	}
-
-	return err
-}
-
-// writeJSONOutput writes the result to given file or stdout.
-func writeJSONOutput(r *buildResult, out string) error {
-	b, err := json.MarshalIndent(r, "", "  ")
-	if err != nil {
-		return errors.Annotate(err, "failed to marshal to JSON: %v", r).Err()
-	}
-	if out == "-" {
-		fmt.Printf("%s\n", b)
-		return nil
-	}
-	return errors.Annotate(ioutil.WriteFile(out, b, 0600), "failed to write %q", out).Err()
 }
 
 // remoteBuild executes high level remote build logic.
