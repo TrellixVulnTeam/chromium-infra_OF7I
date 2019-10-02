@@ -8,7 +8,7 @@ from recipe_engine import recipe_test_api
 
 
 class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
-  def output(self, image, target='target', canonical_tag=None):
+  def build_success_output(self, image, target='target', canonical_tag=None):
     if not image:
       img = 'example.com/fake-registry/%s' % target
       digest = 'sha256:'+sha256(target).hexdigest()[:16]+'...'
@@ -27,8 +27,11 @@ class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
 
     return self.m.json.output(out)
 
-  def error_output(self, message, target='target'):
+  def build_error_output(self, message, target='target'):
     return self.m.json.output({
       'error': message,
       'view_build_url': 'https://example.com/build/%s' % target,
     })
+
+  def update_pins_output(self, updated):
+    return self.m.json.output({'updated': updated or []})

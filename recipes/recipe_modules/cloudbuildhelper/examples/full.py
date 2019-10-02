@@ -11,7 +11,10 @@ DEPS = [
 def RunSteps(api):
   api.cloudbuildhelper.report_version()
 
-  # With all args.
+  # Updating pins.
+  assert api.cloudbuildhelper.update_pins('some/pins.yaml')
+
+  # Building with all args.
   img = api.cloudbuildhelper.build(
       manifest='some/dir/target.yaml',
       canonical_tag='123_456',
@@ -60,6 +63,6 @@ def GenTests(api):
       api.test('failing') +
       api.step_data(
           'cloudbuildhelper build fail_maybe',
-          api.cloudbuildhelper.error_output('Boom'),
+          api.cloudbuildhelper.build_error_output('Boom'),
           retcode=1)
   )

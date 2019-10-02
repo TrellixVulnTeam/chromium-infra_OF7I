@@ -341,7 +341,7 @@ def GenTests(api):
       ) +
       api.step_data(
           'cloudbuildhelper build target',
-          api.cloudbuildhelper.error_output('Boom'),
+          api.cloudbuildhelper.build_error_output('Boom'),
           retcode=1)
   )
 

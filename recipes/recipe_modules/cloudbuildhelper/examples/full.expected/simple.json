@@ -36,6 +36,24 @@
   {
     "cmd": [
       "[START_DIR]/cbh/cloudbuildhelper",
+      "pins-update",
+      "some/pins.yaml",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cloudbuildhelper pins-update",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"updated\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"some_image:tag\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cbh/cloudbuildhelper",
       "build",
       "some/dir/target.yaml",
       "-canonical-tag",

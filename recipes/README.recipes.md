@@ -114,6 +114,19 @@ Reports the version of cloudbuildhelper tool via the step text.
 
 Returns:
   None.
+
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#183)(self, path):**
+
+Calls `cloudbuildhelper pins-update <path>`.
+
+Updates the file at `path` in place if some docker tags mentioned there have
+moved since the last pins update.
+
+Args:
+  * path (Path) - path to a `pins.yaml` file to update.
+
+Returns:
+  True if updated the file, False if pins there are up-to-date.
 ### *recipe_modules* / [cloudkms](/recipes/recipe_modules/cloudkms)
 
 [DEPS](/recipes/recipe_modules/cloudkms/__init__.py#5): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]

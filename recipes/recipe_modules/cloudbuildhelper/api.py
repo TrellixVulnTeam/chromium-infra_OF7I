@@ -129,7 +129,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       res = self.m.step(
           name='cloudbuildhelper build %s' % name,
           cmd=cmd,
-          step_test_data=lambda: self.test_api.output(
+          step_test_data=lambda: self.test_api.build_success_output(
               step_test_image, name, canonical_tag,
           ),
       )
@@ -179,3 +179,27 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       r.presentation.step_text += '\n'.join(lines)
     else:
       r.presentation.step_text += '\nImage builds successfully'
+
+  def update_pins(self, path):
+    """Calls `cloudbuildhelper pins-update <path>`.
+
+    Updates the file at `path` in place if some docker tags mentioned there have
+    moved since the last pins update.
+
+    Args:
+      * path (Path) - path to a `pins.yaml` file to update.
+
+    Returns:
+      True if updated the file, False if pins there are up-to-date.
+    """
+    res = self.m.step(
+        'cloudbuildhelper pins-update',
+        [
+            self.command, 'pins-update', path,
+            '-json-output', self.m.json.output(),
+        ],
+        step_test_data=lambda: self.test_api.update_pins_output(
+            updated=['some_image:tag'],
+        ),
+    )
+    return bool(res.json.output.get('updated'))
