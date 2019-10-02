@@ -224,6 +224,8 @@
   },
   {
     "cmd": [
+      "python",
+      "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "status",
       "--issue",
@@ -376,6 +378,8 @@
   },
   {
     "cmd": [
+      "python",
+      "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "upload",
       "--send-mail",
@@ -397,6 +401,8 @@
   },
   {
     "cmd": [
+      "python",
+      "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "issue",
       "--json",
