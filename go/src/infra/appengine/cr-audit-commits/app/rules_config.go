@@ -96,7 +96,7 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]RuleSet{
-			"autoroll-rules-chromium": AutoRollRulesForFileList(
+			"autoroll-rules-chromium": AutoRollRulesForFilesAndDirs(
 				"chromium-autoroll@skia-public.iam.gserviceaccount.com",
 				[]string{
 					fileAFDO,
@@ -106,7 +106,8 @@ var RuleMap = map[string]*RepoConfig{
 					fileFreeTypeOptionH,
 					fileFuchsiaSDKLinux,
 					fileFuchsiaSDKMac,
-					fileOrderfile,
+				}, []string{
+					dirCrosProfile,
 				}),
 			"autoroll-rules-chromium-internal": AutoRollRulesDEPS("chromium-internal-autoroll@skia-corp.google.com.iam.gserviceaccount.com"),
 			"autoroll-rules-wpt":               AutoRollRulesLayoutTests("wpt-autoroller@chops-service-accounts.iam.gserviceaccount.com"),

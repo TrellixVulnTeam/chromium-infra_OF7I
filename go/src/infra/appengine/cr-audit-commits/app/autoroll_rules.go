@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	dirCrosProfile = "chromeos/profiles"
 	dirLayoutTests = "third_party/blink/web_tests"
 	dirSkiaAPIDocs = "site/user/api"
 
@@ -22,7 +23,6 @@ const (
 	fileFuchsiaSDKMac   = "build/fuchsia/mac.sdk.sha1"
 	fileGoMod           = "go.mod"
 	fileGoSum           = "go.sum"
-	fileOrderfile       = "chromeos/profiles/orderfile.newest.txt"
 	fileSkiaManifest    = "manifest/skia"
 	fileSkiaTasks       = "infra/bots/tasks.json"
 
