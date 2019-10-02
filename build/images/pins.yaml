@@ -15,6 +15,9 @@
 # an explanation why it is frozen.
 
 pins:
+- image: docker.io/library/ubuntu
+  tag: xenial
+  digest: sha256:6239ca16d54d8edd38788aacde7c6426e5999ffbbd7e97ac3cf04d474341d079
 - image: gcr.io/distroless/static
   tag: latest
   digest: sha256:9b60270ec0991bc4f14bda475e8cae75594d8197d0ae58576ace84694aa75d7a
