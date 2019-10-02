@@ -1,10 +1,7 @@
 package handler
 
 import (
-	"crypto/sha1"
 	"fmt"
-	"net/http/httptest"
-	"sort"
 	"testing"
 	"time"
 
@@ -22,7 +19,6 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
-	"go.chromium.org/luci/server/router"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/logging/gologger"
@@ -285,135 +281,6 @@ func (f *fakeReasonRaw) Title([]*messages.BuildStep) string {
 
 func (f *fakeReasonRaw) Severity() messages.Severity {
 	return messages.NewFailure
-}
-
-func TestMergeAlertsByReason(t *testing.T) {
-	Convey("test MergeAlertsByReason", t, func() {
-		c := newTestContext()
-		w := httptest.NewRecorder()
-
-		ctx := &router.Context{
-			Context: c,
-			Writer:  w,
-			Request: makeGetRequest(),
-			Params:  makeParams("tree", "unknown.tree"),
-		}
-
-		tests := []struct {
-			name    string
-			in      []*messages.Alert
-			want    []model.Annotation
-			wantErr error
-		}{
-			{
-				name: "empty",
-				want: []model.Annotation{},
-			},
-			{
-				name: "no merges",
-				in: []*messages.Alert{
-					{
-						Type: messages.AlertBuildFailure,
-						Extension: messages.BuildFailure{
-							Reason: &messages.Reason{
-								Raw: &fakeReasonRaw{
-									signature: "reason_a",
-								},
-							},
-						},
-						Key: "a",
-					},
-					{
-						Type: messages.AlertBuildFailure,
-						Extension: &messages.BuildFailure{
-							Reason: &messages.Reason{
-								Raw: &fakeReasonRaw{
-									signature: "reason_b",
-								},
-							},
-						},
-						Key: "b",
-					},
-				},
-				want: []model.Annotation{},
-			},
-			{
-				name: "multiple builders fail on bad_test",
-				in: []*messages.Alert{
-					{
-						Type: messages.AlertBuildFailure,
-						Extension: &messages.BuildFailure{
-							Reason: &messages.Reason{
-								Raw: &fakeReasonRaw{
-									signature: "bad_test",
-								},
-							},
-						},
-						Key: "buildera.bad_test",
-					},
-					{
-						Type: messages.AlertBuildFailure,
-						Extension: &messages.BuildFailure{
-							Reason: &messages.Reason{
-								Raw: &fakeReasonRaw{
-									signature: "bad_test",
-								},
-							},
-						},
-						Key: "builderb.bad_test",
-					},
-					{
-						Type: messages.AlertBuildFailure,
-						Extension: &messages.BuildFailure{
-							Reason: &messages.Reason{
-								Raw: &fakeReasonRaw{
-									signature: "bad_test",
-								},
-							},
-						},
-						Key: "builderc.bad_test",
-					},
-				},
-				want: []model.Annotation{
-					{
-						Tree:      datastore.MakeKey(c, "Tree", "unknown.tree"),
-						KeyDigest: fmt.Sprintf("%x", sha1.Sum([]byte("buildera.bad_test"))),
-						Key:       "buildera.bad_test",
-						GroupID:   "fakeTitle",
-					},
-					{
-						Tree:      datastore.MakeKey(c, "Tree", "unknown.tree"),
-						KeyDigest: fmt.Sprintf("%x", sha1.Sum([]byte("builderb.bad_test"))),
-						Key:       "builderb.bad_test",
-						GroupID:   "fakeTitle",
-					},
-					{
-						Tree:      datastore.MakeKey(c, "Tree", "unknown.tree"),
-						KeyDigest: fmt.Sprintf("%x", sha1.Sum([]byte("builderc.bad_test"))),
-						Key:       "builderc.bad_test",
-						GroupID:   "fakeTitle",
-					},
-				},
-			},
-		}
-
-		for _, test := range tests {
-			test := test
-			Convey(test.name, func() {
-				groups, err := mergeAlertsByReason(ctx, test.in)
-				So(err, ShouldResemble, test.wantErr)
-				So(groups, ShouldNotBeNil)
-
-				allAnns := []model.Annotation{}
-				q := datastore.NewQuery("Annotation")
-				So(datastore.GetAll(c, q, &allAnns), ShouldBeNil)
-
-				sort.Sort(annList(allAnns))
-				sort.Sort(annList(test.want))
-				So(allAnns, ShouldResemble, test.want)
-			})
-		}
-	})
 }
 
 type annList []model.Annotation

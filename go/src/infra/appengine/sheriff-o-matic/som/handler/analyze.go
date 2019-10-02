@@ -1,12 +1,10 @@
 package handler
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"net/http"
 	"net/url"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -15,15 +13,12 @@ import (
 
 	"infra/appengine/sheriff-o-matic/som/analyzer"
 	"infra/appengine/sheriff-o-matic/som/client"
-	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/appengine/sheriff-o-matic/som/model/gen"
 	"infra/monitoring/messages"
 
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/sync/parallel"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/server/router"
@@ -236,107 +231,6 @@ func alertCategory(a *messages.Alert) string {
 // groupCounts maps alert category to a map of group IDs to counts of alerts
 // in that category and group.
 type groupCounts map[string]map[string]int
-
-// mergeAlertsByReason merges alerts for step failures occurring across multiple builders into
-// one alert with multiple builders indicated.
-// FIXME: Move the regression range logic into package regrange
-// This logic is for buildbot alerts, not buildbucket alerts.
-func mergeAlertsByReason(ctx *router.Context, alerts []*messages.Alert) (groupCounts, error) {
-	c, p := ctx.Context, ctx.Params
-
-	tree := p.ByName("tree")
-
-	byReason := map[string][]*messages.Alert{}
-	for _, alert := range alerts {
-		bf, ok := alert.Extension.(*messages.BuildFailure)
-		if !ok {
-			logging.Infof(c, "%s failed, but isn't a builder-failure: %s", alert.Key, alert.Type)
-			continue
-		}
-		r := bf.Reason
-		k := r.Kind() + "|" + r.Signature()
-		byReason[k] = append(byReason[k], alert)
-	}
-
-	sortedReasons := []string{}
-	for reason := range byReason {
-		sortedReasons = append(sortedReasons, reason)
-	}
-
-	sort.Strings(sortedReasons)
-
-	// Maps alert category to map of groupID to count of alerts in group.
-	groupIDs := groupCounts{}
-	var mux sync.Mutex
-
-	err := parallel.WorkPool(groupingPoolSize, func(workC chan<- func() error) {
-		for _, reason := range sortedReasons {
-			stepAlerts := byReason[reason]
-			if len(stepAlerts) == 1 {
-				continue
-			}
-
-			workC <- func() error {
-				sort.Sort(messages.Alerts(stepAlerts))
-				mergedBF := stepAlerts[0].Extension.(*messages.BuildFailure)
-
-				stepsAtFault := make([]*messages.BuildStep, len(stepAlerts))
-				for i := range stepAlerts {
-					bf, ok := stepAlerts[i].Extension.(*messages.BuildFailure)
-					if !ok {
-						return fmt.Errorf("alert extension %s was not a BuildFailure", stepAlerts[i].Extension)
-					}
-
-					stepsAtFault[i] = bf.StepAtFault
-				}
-
-				groupTitle := mergedBF.Reason.Title(stepsAtFault)
-				for _, alr := range stepAlerts {
-					ann := &model.Annotation{
-						Tree:      datastore.MakeKey(c, "Tree", tree),
-						KeyDigest: fmt.Sprintf("%x", sha1.Sum([]byte(alr.Key))),
-						Key:       alr.Key,
-					}
-					err := datastore.Get(c, ann)
-					if err != nil && err != datastore.ErrNoSuchEntity {
-						logging.Warningf(c, "got err while getting annotation from key %s: %s. Ignoring", alr.Key, err)
-					}
-
-					cat := alertCategory(alr)
-
-					// Count ungrouped alerts as their own groups.
-					gID := groupTitle
-					if ann != nil {
-						gID = ann.GroupID
-					}
-
-					mux.Lock()
-					if _, ok := groupIDs[cat]; !ok {
-						groupIDs[cat] = map[string]int{}
-					}
-					groupIDs[cat][gID]++
-					mux.Unlock()
-
-					// If we didn't find an annotation, then the default group ID will be present.
-					// We only want the case where the user explicitly sets the group to something.
-					// Ungrouping an alert sets the group ID to "".
-					if err != datastore.ErrNoSuchEntity && ann.GroupID != groupTitle {
-						logging.Warningf(c, "Found groupID %s, wanted to set %s. Assuming user set group manually.", ann.GroupID, groupTitle)
-						continue
-					}
-
-					ann.GroupID = groupTitle
-					if err := datastore.Put(c, ann); err != nil {
-						return fmt.Errorf("got err while put: %s", err)
-					}
-				}
-				return nil
-			}
-		}
-	})
-
-	return groupIDs, err
-}
 
 func storeAlertsSummary(c context.Context, a *analyzer.Analyzer, tree string, alertsSummary *messages.AlertsSummary) error {
 	sort.Sort(messages.Alerts(alertsSummary.Alerts))
