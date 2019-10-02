@@ -10,7 +10,6 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/clock"
@@ -134,44 +133,6 @@ func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.G
 		}
 	}
 	r.complete = complete
-	return nil
-}
-
-// fetchResults fetches the latest swarming and isolate state of the given attempt,
-// and updates the attempt accordingly.
-func (r *TaskSet) fetchResults(ctx context.Context, a *attempt, client swarming.Client, gf isolate.GetterFactory) error {
-	results, err := client.GetResults(ctx, []string{a.taskID})
-	if err != nil {
-		return errors.Annotate(err, "fetch results").Err()
-	}
-
-	result, err := unpackResult(results, a.taskID)
-	if err != nil {
-		return errors.Annotate(err, "fetch results").Err()
-	}
-
-	state, err := swarming.AsTaskState(result.State)
-	if err != nil {
-		return errors.Annotate(err, "fetch results").Err()
-	}
-	a.state = state
-
-	switch {
-	// Task ran to completion.
-	case swarming.CompletedTaskStates[state]:
-		r, err := getAutotestResult(ctx, result, gf)
-		if err != nil {
-			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", a.taskID, err.Error())
-			r = &skylab_test_runner.Result_Autotest{Incomplete: true}
-		}
-		a.autotestResult = r
-	// Task no longer running, but didn't run to completion.
-	case !swarming.UnfinishedTaskStates[state]:
-		a.autotestResult = &skylab_test_runner.Result_Autotest{Incomplete: true}
-	// Task is still running.
-	default:
-	}
-
 	return nil
 }
 
