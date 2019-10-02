@@ -84,10 +84,11 @@ func (r *TaskSet) launchAll(ctx context.Context, client swarming.Client) error {
 
 func (r *TaskSet) wait(ctx context.Context, swarming swarming.Client, gf isolate.GetterFactory) error {
 	for {
-		complete, err := r.tick(ctx, swarming, gf)
-		if complete || err != nil {
-			r.complete = complete
+		if err := r.tick(ctx, swarming, gf); err != nil {
 			return err
+		}
+		if r.complete {
+			return nil
 		}
 
 		select {
@@ -98,9 +99,8 @@ func (r *TaskSet) wait(ctx context.Context, swarming swarming.Client, gf isolate
 	}
 }
 
-func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) (complete bool, err error) {
-	complete = true
-
+func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
+	complete := true
 	for _, testRun := range r.testRuns {
 		if testRun.Completed() {
 			continue
@@ -108,7 +108,7 @@ func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.G
 
 		latestAttempt := testRun.GetLatestAttempt()
 		if err := latestAttempt.FetchResults(ctx, client, gf); err != nil {
-			return false, errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
+			return errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
 		}
 
 		if !testRun.Completed() {
@@ -120,21 +120,21 @@ func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.G
 
 		shouldRetry, err := r.shouldRetry(testRun)
 		if err != nil {
-			return false, errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
+			return errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
 		}
 		if shouldRetry {
 			complete = false
 			logging.Debugf(ctx, "Retrying %s", testRun.Name)
 			if err := testRun.LaunchAttempt(ctx, client); err != nil {
-				return false, errors.Annotate(err, "tick for task %s: retry test", latestAttempt.taskID).Err()
+				return errors.Annotate(err, "tick for task %s: retry test", latestAttempt.taskID).Err()
 			}
 			r.retries++
 		} else {
 			logging.Debugf(ctx, "Not retrying %s", testRun.Name)
 		}
 	}
-
-	return complete, nil
+	r.complete = complete
+	return nil
 }
 
 // fetchResults fetches the latest swarming and isolate state of the given attempt,
