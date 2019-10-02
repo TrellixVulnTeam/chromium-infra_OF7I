@@ -217,10 +217,12 @@ type AlertedBuilder struct {
 	Master    string    `json:"master"`
 	URL       string    `json:"url"`
 	StartTime EpochTime `json:"start_time"`
-	// FirstFailure is the build number of first failure.
+	// FirstFailure is the build ID of first failure.
 	FirstFailure int64 `json:"first_failure"`
-	// LatestFailure is the build number of latest failure.
-	LatestFailure int64 `json:"latest_failure"`
+	// LatestFailure is the build ID of latest failure.
+	LatestFailure            int64 `json:"latest_failure"`
+	FirstBuildNumberFailure  int64 `json:"first_build_number_failure"`
+	LatestBuildNumberFailure int64 `json:"latest_build_number_failure"`
 	// LatestPassing is the build number of latest passing build
 	LatestPassing     int64            `json:"latest_passing"`
 	LatestPassingRev  *RevisionSummary `json:"last_passing_rev"`

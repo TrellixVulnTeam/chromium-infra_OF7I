@@ -28,6 +28,8 @@ SELECT
   NumTests,
   BuildIdBegin,
   BuildIdEnd,
+  BuildNumberBegin,
+  BuildNumberEnd,
   CPRangeOutputBegin,
   CPRangeOutputEnd,
   CPRangeInputBegin,
@@ -139,6 +141,8 @@ type failureRow struct {
 	Project              string
 	BuildIDBegin         bigquery.NullInt64
 	BuildIDEnd           bigquery.NullInt64
+	BuildNumberBegin     bigquery.NullInt64
+	BuildNumberEnd       bigquery.NullInt64
 	CPRangeInputBegin    *GitCommit
 	CPRangeInputEnd      *GitCommit
 	CPRangeOutputBegin   *GitCommit
@@ -297,16 +301,18 @@ func processBQResults(ctx context.Context, it nexter) ([]*messages.BuildFailure,
 			}
 		}
 		ab := &messages.AlertedBuilder{
-			Project:          r.Project,
-			Bucket:           r.Bucket,
-			Name:             r.Builder,
-			Master:           r.MasterName.StringVal,
-			FirstFailure:     r.BuildIDBegin.Int64,
-			LatestFailure:    r.BuildIDEnd.Int64,
-			URL:              generateBuilderURL(r.Project, r.Bucket, r.Builder),
-			LatestPassingRev: latestPassingRev,
-			FirstFailingRev:  firstFailingRev,
-			NumFailingTests:  r.NumTests.Int64,
+			Project:                  r.Project,
+			Bucket:                   r.Bucket,
+			Name:                     r.Builder,
+			Master:                   r.MasterName.StringVal,
+			FirstFailure:             r.BuildIDBegin.Int64,
+			LatestFailure:            r.BuildIDEnd.Int64,
+			FirstBuildNumberFailure:  r.BuildNumberBegin.Int64,
+			LatestBuildNumberFailure: r.BuildNumberEnd.Int64,
+			URL:                      generateBuilderURL(r.Project, r.Bucket, r.Builder),
+			LatestPassingRev:         latestPassingRev,
+			FirstFailingRev:          firstFailingRev,
+			NumFailingTests:          r.NumTests.Int64,
 		}
 
 		forStep, ok := alertedBuildersByStep[r.StepName]

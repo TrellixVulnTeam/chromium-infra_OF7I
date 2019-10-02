@@ -65,7 +65,7 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
 
   _failureCount(builder) {
     // The build number range is inclusive.
-    return builder.latest_failure - builder.first_failure + 1;
+    return builder.latest_build_number_failure - builder.first_build_number_failure + 1;
   }
 
   _failureCountText(builder) {

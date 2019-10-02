@@ -38,25 +38,25 @@
 
     test('failureCountText', function() {
       assert.equal(element._failureCountText({
-        latest_failure:0, first_failure:0}), '');
+        latest_build_number_failure:0, first_build_number_failure:0}), '');
 
       assert.equal(element._failureCountText({
-        latest_failure:1, first_failure:0}), '[2 since first detection]');
+        latest_build_number_failure:1, first_build_number_failure:0}), '[2 since first detection]');
 
       assert.equal(element._failureCountText({
-        latest_failure:4, first_failure:0}), '[5 since first detection]');
+        latest_build_number_failure:4, first_build_number_failure:0}), '[5 since first detection]');
 
       assert.equal(element._failureCountText({
-        latest_failure:4, first_failure:0, count: 2}),
+        latest_build_number_failure:4, first_build_number_failure:0, count: 2}),
         '[2 out of the last 5 builds have failed]');
     });
 
     test('renders count of successive failures', function(done) {
       element.extension = {
         builders: [
-          {name: 'dummy builder 1', first_failure:0, latest_failure:3},
-          {name: 'dummy builder 2', first_failure:0, latest_failure:4, count:2},
-          {name: 'dummy builder 3', first_failure:0, latest_failure:4, count:4},
+          {name: 'dummy builder 1', first_build_number_failure:0, latest_build_number_failure:3},
+          {name: 'dummy builder 2', first_build_number_failure:0, latest_build_number_failure:4, count:2},
+          {name: 'dummy builder 3', first_build_number_failure:0, latest_build_number_failure:4, count:4},
         ],
         reason: {},
         regression_ranges: []
