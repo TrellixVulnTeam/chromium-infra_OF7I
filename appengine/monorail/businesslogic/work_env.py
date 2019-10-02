@@ -2211,26 +2211,6 @@ class WorkEnv(object):
   # FUTURE: UpdateHotlist()
   # FUTURE: DeleteHotlist()
 
-  def DismissCue(self, cue_id):
-    """Dismiss the given cue and don't show it again to the logged in user."""
-    if cue_id is None:
-      raise exceptions.InputException('No cue specified')
-
-    if not self.mc.auth.user_id:
-      raise exceptions.InputException('No current user specified')
-
-    if cue_id not in features_constants.KNOWN_CUES:
-      raise exceptions.InputException('%s is not a known cue ID.')
-
-    with self.mc.profiler.Phase('Handling user set cue request: %r' % cue_id):
-      new_dismissed_cues = self.mc.auth.user_pb.dismissed_cues
-      if cue_id in new_dismissed_cues:
-        return
-      new_dismissed_cues.append(cue_id)
-
-    self.UpdateUserSettings(
-        self.mc.auth.user_pb, dismissed_cues=new_dismissed_cues)
-
   def expungeUsersFromStars(self, user_ids):
     """Wipes any starred user or user's stars from all star services.
 

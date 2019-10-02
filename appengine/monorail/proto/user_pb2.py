@@ -60,9 +60,6 @@ class User(messages.Message):
   # The email address chosen by the user to reveal on the site.
   email = messages.StringField(27)
 
-  # The user has seen these cue cards and dismissed them.
-  dismissed_cues = messages.StringField(32, repeated=True)
-
   # Sticky state for show/hide widget on people details page.
   keep_people_perms_open = messages.BooleanField(33, default=False)
 

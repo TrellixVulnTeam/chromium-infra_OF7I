@@ -207,17 +207,6 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return result
 
   @monorail_servicer.PRPCMethod
-  def DismissCue(self, mc, request):
-    """Don't show the given cue to the logged in user anymore."""
-    cue_id = request.cue_id
-
-    with work_env.WorkEnv(mc, self.services) as we:
-      we.DismissCue(cue_id)
-
-    result = features_pb2.DismissCueResponse()
-    return result
-
-  @monorail_servicer.PRPCMethod
   def CreateHotlist(self, mc, request):
     """Create a new hotlist."""
     editor_ids = converters.IngestUserRefs(

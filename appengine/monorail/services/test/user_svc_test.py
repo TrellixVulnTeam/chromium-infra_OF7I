@@ -31,8 +31,6 @@ def SetUpGetUsers(user_service, cnxn):
           [(333, 'c@example.com', False, False, False, False, True,
             False, 'Spammer',
             'stay_same_issue', False, False, True, 0, 0, None)])
-  user_service.dismissedcues_tbl.Select(
-      cnxn, cols=user_svc.DISMISSEDCUES_COLS, user_id=[333]).AndReturn([])
   user_service.linkedaccount_tbl.Select(
       cnxn, cols=user_svc.LINKEDACCOUNT_COLS, parent_id=[333], child_id=[333],
       or_where_conds=True).AndReturn([])
@@ -41,7 +39,6 @@ def SetUpGetUsers(user_service, cnxn):
 def MakeUserService(cache_manager, my_mox):
   user_service = user_svc.UserService(cache_manager)
   user_service.user_tbl = my_mox.CreateMock(sql.SQLTableManager)
-  user_service.dismissedcues_tbl = my_mox.CreateMock(sql.SQLTableManager)
   user_service.hotlistvisithistory_tbl = my_mox.CreateMock(sql.SQLTableManager)
   user_service.linkedaccount_tbl = my_mox.CreateMock(sql.SQLTableManager)
   # Account linking invites are done with patch().
@@ -70,10 +67,9 @@ class UserTwoLevelCacheTest(unittest.TestCase):
         (222, 'b@example.com', False, False, False, False, True, False, '',
          'next_in_list', False, False, True, 0, 0, None),
         ]
-    dismissedcues_rows = []
     linkedaccount_rows = []
     user_dict = self.user_service.user_2lc._DeserializeUsersByID(
-        user_rows, dismissedcues_rows, linkedaccount_rows)
+        user_rows, linkedaccount_rows)
     self.assertEqual(2, len(user_dict))
     self.assertEqual('a@example.com', user_dict[111].email)
     self.assertFalse(user_dict[111].is_site_admin)
@@ -90,10 +86,9 @@ class UserTwoLevelCacheTest(unittest.TestCase):
         (111, 'a@example.com', False, False, False, False, True, False, '',
          'stay_same_issue', False, False, True, 0, 0, None),
         ]
-    dismissedcues_rows = []
     linkedaccount_rows = [(111, 222), (111, 333), (444, 111)]
     user_dict = self.user_service.user_2lc._DeserializeUsersByID(
-        user_rows, dismissedcues_rows, linkedaccount_rows)
+        user_rows, linkedaccount_rows)
     self.assertEqual(1, len(user_dict))
     user_pb = user_dict[111]
     self.assertEqual('a@example.com', user_pb.email)
@@ -274,11 +269,6 @@ class UserServiceTest(unittest.TestCase):
     }
     self.user_service.user_tbl.Update(
         self.cnxn, delta, user_id=111, commit=False)
-
-    self.user_service.dismissedcues_tbl.Delete(
-        self.cnxn, user_id=111, commit=False)
-    self.user_service.dismissedcues_tbl.InsertRows(
-        self.cnxn, user_svc.DISMISSEDCUES_COLS, [], commit=False)
 
   def testUpdateUser(self):
     self.SetUpUpdateUser()
@@ -525,7 +515,6 @@ class UserServiceTest(unittest.TestCase):
   def testExpungeUsers(self):
     self.user_service.linkedaccount_tbl.Delete = mock.Mock()
     self.user_service.linkedaccountinvite_tbl.Delete = mock.Mock()
-    self.user_service.dismissedcues_tbl.Delete = mock.Mock()
     self.user_service.userprefs_tbl.Delete = mock.Mock()
     self.user_service.user_tbl.Delete = mock.Mock()
 
@@ -539,7 +528,6 @@ class UserServiceTest(unittest.TestCase):
     self.user_service.linkedaccountinvite_tbl.Delete.has_calls(
         linked_account_calls)
     user_calls = [mock.call(self.cnxn, user_id=user_ids, commit=False)]
-    self.user_service.dismissedcues_tbl.Delete.has_calls(user_calls)
     self.user_service.userprefs_tbl.Delete.has_calls(user_calls)
     self.user_service.user_tbl.Delete.has_calls(user_calls)
 

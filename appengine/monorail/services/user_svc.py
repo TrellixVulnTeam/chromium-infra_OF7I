@@ -27,7 +27,6 @@ from services import caches
 
 USER_TABLE_NAME = 'User'
 USERPREFS_TABLE_NAME = 'UserPrefs'
-DISMISSEDCUES_TABLE_NAME = 'DismissedCues'
 HOTLISTVISITHISTORY_TABLE_NAME = 'HotlistVisitHistory'
 LINKEDACCOUNT_TABLE_NAME = 'LinkedAccount'
 LINKEDACCOUNTINVITE_TABLE_NAME = 'LinkedAccountInvite'
@@ -40,7 +39,6 @@ USER_COLS = [
     'preview_on_hover', 'obscure_email',
     'last_visit_timestamp', 'email_bounce_timestamp', 'vacation_message']
 USERPREFS_COLS = ['user_id', 'name', 'value']
-DISMISSEDCUES_COLS = ['user_id', 'cue']
 HOTLISTVISITHISTORY_COLS = ['hotlist_id', 'user_id', 'viewed']
 LINKEDACCOUNT_COLS = ['parent_id', 'child_id']
 LINKEDACCOUNTINVITE_COLS = ['parent_id', 'child_id']
@@ -55,13 +53,11 @@ class UserTwoLevelCache(caches.AbstractTwoLevelCache):
         max_size=settings.user_cache_max_size)
     self.user_service = user_service
 
-  def _DeserializeUsersByID(
-      self, user_rows, dismissedcue_rows, linkedaccount_rows):
+  def _DeserializeUsersByID(self, user_rows, linkedaccount_rows):
     """Convert database row tuples into User PBs.
 
     Args:
       user_rows: rows from the User DB table.
-      dismissedcue_rows: rows from the DismissedCues DB table.
       linkedaccount_rows: rows from the LinkedAccount DB table.
 
     Returns:
@@ -98,13 +94,6 @@ class UserTwoLevelCache(caches.AbstractTwoLevelCache):
         user.vacation_message = vacation_message
       result_dict[user_id] = user
 
-    # Build up a list of dismissed "cue card" help items for the users.
-    for user_id, cue in dismissedcue_rows:
-      if user_id not in result_dict:
-        logging.error('Found dismissed cues for missing user %r', user_id)
-        continue
-      result_dict[user_id].dismissed_cues.append(cue)
-
     # Put in any linked accounts.
     for parent_id, child_id in linkedaccount_rows:
       if parent_id in result_dict:
@@ -126,13 +115,10 @@ class UserTwoLevelCache(caches.AbstractTwoLevelCache):
     """
     user_rows = self.user_service.user_tbl.Select(
         cnxn, cols=USER_COLS, user_id=keys)
-    dismissedcues_rows = self.user_service.dismissedcues_tbl.Select(
-        cnxn, cols=DISMISSEDCUES_COLS, user_id=keys)
     linkedaccount_rows = self.user_service.linkedaccount_tbl.Select(
         cnxn, cols=LINKEDACCOUNT_COLS, parent_id=keys, child_id=keys,
         or_where_conds=True)
-    return self._DeserializeUsersByID(
-        user_rows, dismissedcues_rows, linkedaccount_rows)
+    return self._DeserializeUsersByID(user_rows, linkedaccount_rows)
 
 
 class UserPrefsTwoLevelCache(caches.AbstractTwoLevelCache):
@@ -193,7 +179,6 @@ class UserService(object):
     """
     self.user_tbl = sql.SQLTableManager(USER_TABLE_NAME)
     self.userprefs_tbl = sql.SQLTableManager(USERPREFS_TABLE_NAME)
-    self.dismissedcues_tbl = sql.SQLTableManager(DISMISSEDCUES_TABLE_NAME)
     self.hotlistvisithistory_tbl = sql.SQLTableManager(
         HOTLISTVISITHISTORY_TABLE_NAME)
     self.linkedaccount_tbl = sql.SQLTableManager(LINKEDACCOUNT_TABLE_NAME)
@@ -457,12 +442,6 @@ class UserService(object):
     # Start sending UPDATE statements, but don't COMMIT until the end.
     self.user_tbl.Update(cnxn, delta, user_id=user_id, commit=False)
 
-    # Rewrite all the DismissedCues rows.
-    cues_rows = [(user_id, cue) for cue in user.dismissed_cues]
-    self.dismissedcues_tbl.Delete(cnxn, user_id=user_id, commit=False)
-    self.dismissedcues_tbl.InsertRows(
-        cnxn, DISMISSEDCUES_COLS, cues_rows, commit=False)
-
     cnxn.Commit()
     self.user_2lc.InvalidateKeys(cnxn, [user_id])
 
@@ -599,7 +578,7 @@ class UserService(object):
       email_compact_subject=None, email_view_widget=None,
       notify_starred_ping=None, obscure_email=None, after_issue_update=None,
       is_site_admin=None, is_banned=None, banned_reason=None,
-      dismissed_cues=None, keep_people_perms_open=None, preview_on_hover=None,
+      keep_people_perms_open=None, preview_on_hover=None,
       vacation_message=None):
     """Update the preferences of the specified user.
 
@@ -629,8 +608,6 @@ class UserService(object):
       user.after_issue_update = user_pb2.IssueUpdateNav(after_issue_update)
     if preview_on_hover is not None:
       user.preview_on_hover = preview_on_hover
-    if dismissed_cues:  # Note, we never set it back to [].
-      user.dismissed_cues = dismissed_cues
     if keep_people_perms_open is not None:
       user.keep_people_perms_open = keep_people_perms_open
 
@@ -708,7 +685,6 @@ class UserService(object):
     self.linkedaccount_tbl.Delete(cnxn, child_id=user_ids, commit=False)
     self.linkedaccountinvite_tbl.Delete(cnxn, parent_id=user_ids, commit=False)
     self.linkedaccountinvite_tbl.Delete(cnxn, child_id=user_ids, commit=False)
-    self.dismissedcues_tbl.Delete(cnxn, user_id=user_ids, commit=False)
     self.userprefs_tbl.Delete(cnxn, user_id=user_ids, commit=False)
     self.user_tbl.Delete(cnxn, user_id=user_ids, commit=False)
 

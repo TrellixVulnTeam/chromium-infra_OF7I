@@ -18,7 +18,6 @@ service Features {
   rpc GetHotlistStarCount (GetHotlistStarCountRequest) returns (GetHotlistStarCountResponse) {}
   rpc StarHotlist (StarHotlistRequest) returns (StarHotlistResponse) {}
   rpc ListHotlistIssues (ListHotlistIssuesRequest) returns (ListHotlistIssuesResponse) {}
-  rpc DismissCue (DismissCueRequest) returns (DismissCueResponse) {}
   rpc CreateHotlist (CreateHotlistRequest) returns (CreateHotlistResponse) {}
   rpc CheckHotlistName (CheckHotlistNameRequest) returns (CheckHotlistNameResponse) {}
   rpc RemoveIssuesFromHotlists (RemoveIssuesFromHotlistsRequest) returns (RemoveIssuesFromHotlistsResponse) {}
@@ -109,17 +108,6 @@ message ListHotlistIssuesRequest {
 // Next available tag: 2
 message ListHotlistIssuesResponse {
   repeated HotlistItem items = 1;
-}
-
-
-// Next available tag: 3
-message DismissCueRequest {
-  string cue_id = 2;
-}
-
-
-// Next available tag: 1
-message DismissCueResponse {
 }
 
 

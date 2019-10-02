@@ -614,7 +614,7 @@ class UserService(object):
       email_compact_subject=None, email_view_widget=None,
       notify_starred_ping=None, obscure_email=None, after_issue_update=None,
       is_site_admin=None, is_banned=None, banned_reason=None,
-      dismissed_cues=None, keep_people_perms_open=None, preview_on_hover=None,
+      keep_people_perms_open=None, preview_on_hover=None,
       vacation_message=None):
     # notifications
     if notify is not None:
@@ -633,8 +633,6 @@ class UserService(object):
       user.after_issue_update = user_pb2.IssueUpdateNav(after_issue_update)
     if preview_on_hover is not None:
       user.preview_on_hover = preview_on_hover
-    if dismissed_cues:  # Note, we never set it back to [].
-      user.dismissed_cues = dismissed_cues
     if keep_people_perms_open is not None:
       user.keep_people_perms_open = keep_people_perms_open
 

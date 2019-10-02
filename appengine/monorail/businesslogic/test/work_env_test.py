@@ -2723,12 +2723,10 @@ class WorkEnvTest(unittest.TestCase):
       we.UpdateUserSettings(
           user,
           obscure_email=True,
-          dismissed_cues=['code_of_conduct'],
           keep_people_perms_open=True)
 
     self.assertTrue(user.obscure_email)
     self.assertTrue(user.keep_people_perms_open)
-    self.assertEqual(['code_of_conduct'], user.dismissed_cues)
 
   def testUpdateUserSettings_Anon(self):
     """A user must be logged in."""
@@ -3828,57 +3826,6 @@ class WorkEnvTest(unittest.TestCase):
 
   # FUTURE: UpdateHotlist()
   # FUTURE: DeleteHotlist()
-
-  def testDismissCue(self):
-    user = self.services.user.test_users[111]
-    self.assertEqual(0, len(user.dismissed_cues))
-
-    self.SignIn()
-    with self.work_env as we:
-      we.DismissCue('code_of_conduct')
-
-    self.assertEqual(['code_of_conduct'],
-                     user.dismissed_cues)
-
-  def testDismissCue_NoCueId(self):
-    user = self.services.user.test_users[111]
-
-    self.SignIn()
-    with self.assertRaises(exceptions.InputException):
-      with self.work_env as we:
-        we.DismissCue(None)
-
-    self.assertEqual([], user.dismissed_cues)
-
-  def testDismissCue_NotSignedIn(self):
-    user = self.services.user.test_users[111]
-
-    with self.assertRaises(exceptions.InputException):
-      with self.work_env as we:
-        we.DismissCue(None)
-
-    self.assertEqual([], user.dismissed_cues)
-
-  def testDismissCue_CueAlreadyDismissed(self):
-    user = self.services.user.test_users[111]
-    user.dismissed_cues = ['code_of_conduct']
-
-    self.SignIn()
-    with self.work_env as we:
-      we.DismissCue('code_of_conduct')
-
-    self.assertEqual(['code_of_conduct'],
-                     user.dismissed_cues)
-
-  def testDismissCue_UnrecognizedCueId(self):
-    user = self.services.user.test_users[111]
-
-    self.SignIn()
-    with self.assertRaises(exceptions.InputException):
-      with self.work_env as we:
-        we.DismissCue('foo')
-
-    self.assertEqual([], user.dismissed_cues)
 
   def setUpExpungeUsersFromStars(self):
     config = fake.MakeTestConfig(789, [], [])

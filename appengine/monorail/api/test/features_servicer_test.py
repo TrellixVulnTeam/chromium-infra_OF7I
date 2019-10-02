@@ -608,17 +608,6 @@ class FeaturesServicerTest(unittest.TestCase):
     self.assertEqual('sum', response.items[0].issue.summary)
     self.assertEqual('New', response.items[0].issue.status_ref.status)
 
-  def testDismissCue(self):
-    user = self.services.user.test_users[111]
-    self.assertEqual(0, len(user.dismissed_cues))
-
-    request = features_pb2.DismissCueRequest(cue_id='code_of_conduct')
-    mc = monorailcontext.MonorailContext(
-        self.services, cnxn=self.cnxn, requester='owner@example.com')
-    self.CallWrapped(self.features_svcr.DismissCue, mc, request)
-
-    self.assertEqual(['code_of_conduct'], user.dismissed_cues)
-
   def testCreateHotlist_Normal(self):
     request = features_pb2.CreateHotlistRequest(
         name='Fake-Hotlist',
