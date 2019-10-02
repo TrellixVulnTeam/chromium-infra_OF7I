@@ -14,7 +14,7 @@ message Inputs {
     MODE_UNDEFINED = 0;
 
     MODE_CI = 1;  // build images from checked in code at a revision
-    MODE_TS = 2;  // build images from checked in code on a schedule (TODO)
+    MODE_TS = 2;  // build images from checked in code on a schedule
     MODE_CL = 3;  // build images from code in a Gerrit CL
   }
 

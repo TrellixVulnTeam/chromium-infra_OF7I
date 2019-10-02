@@ -44,13 +44,13 @@ def RunSteps(api, properties):
   # Checkout either the committed code or a pending CL, depending on the mode.
   # This also calculates metadata (labels, tags) to apply to images built from
   # this code.
-  if properties.mode == PROPERTIES.MODE_CI:
-    co, meta = _checkout_ci(api, properties.project)
+  if properties.mode in (PROPERTIES.MODE_CI, PROPERTIES.MODE_TS):
+    co, meta = _checkout_committed(api, properties.mode, properties.project)
   elif properties.mode == PROPERTIES.MODE_CL:
-    co, meta = _checkout_cl(api, properties.project)
-  else:
+    co, meta = _checkout_pending(api, properties.project)
+  else:  # pragma: no cover
     raise recipe_api.InfraFailure(
-        '%s is not implemented yet' % PROPERTIES.Mode.Name(properties.mode))
+        'Unknown mode %s' % PROPERTIES.Mode.Name(properties.mode))
   co.gclient_runhooks()
 
   # Discover what *.yaml manifests (full paths to them) we need to build.
@@ -102,11 +102,12 @@ def _validate_props(p):  # pragma: no cover
     raise ValueError('PROJECT_LUCI_GO can be used only together with MODE_CL')
 
 
-def _checkout_ci(api, project):
+def _checkout_committed(api, mode, project):
   """Checks out some committed revision (based on Buildbucket properties).
 
   Args:
     api: recipes API.
+    mode: PROPERTIES.Mode enum (either MODE_CI or MODE_TS).
     project: PROPERTIES.Project enum.
 
   Returns:
@@ -132,14 +133,18 @@ def _checkout_ci(api, project):
   cp_ref, cp_num = api.commit_position.parse(cp)
   if cp_ref != 'refs/heads/master':  # pragma: no cover
     raise recipe_api.InfraFailure(
-        'Only refs/heads/master commits are supporte for now, got %r' % cp_ref)
+        'Only refs/heads/master commits are supported for now, got %r' % cp_ref)
+
+  canonical_tag = None
+  if mode == PROPERTIES.MODE_CI:
+    canonical_tag = 'ci-%s-%d-%s' % (_date(api), cp_num, rev[:7])
+  elif mode == PROPERTIES.MODE_TS:
+    canonical_tag = 'ts-%s-%d' % (_date(api), api.buildbucket.build.number)
+  else:
+    raise AssertionError('Impossible')  # pragma: no cover
 
   return co, Metadata(
-      canonical_tag='ci-%s-%d-%s' % (
-          _date(api),
-          cp_num,
-          rev[:7],
-      ),
+      canonical_tag=canonical_tag,
       labels={
           'org.opencontainers.image.source': repo_url,
           'org.opencontainers.image.revision': rev,
@@ -147,7 +152,7 @@ def _checkout_ci(api, project):
       tags=['latest'])
 
 
-def _checkout_cl(api, project):
+def _checkout_pending(api, project):
   """Checks out some pending CL (based on Buildbucket properties).
 
   Args:
@@ -316,7 +321,6 @@ def GenTests(api):
       )
   )
 
-  # TODO(vadimsh): Not implemented yet.
   yield (
       api.test('ts-infra') +
       api.properties(
