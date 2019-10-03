@@ -1,3 +1,46 @@
+# Release Notes sheriff-o-matic 2019-10-03
+
+- 18 commits, 6 bugs affected since 0a0bd30 ()
+- 4 Authors:
+  - jsca@google.com
+  - seanmccullough@chromium.org
+  - nqmtuan@google.com
+  - yuanzhi@google.com
+
+## Changes in this release
+
+- [Minor updates to SoM README.](https://chromium-review.googlesource.com/c/infra/infra/+/1833200) (jsca@google.com)
+- [[som] Remove unused buildbot-specific analyzer logic](https://chromium-review.googlesource.com/c/infra/infra/+/1834320) (seanmccullough@chromium.org)
+- [Fix build number in SOM](https://chromium-review.googlesource.com/c/infra/infra/+/1835311) (nqmtuan@google.com)
+- [[som] Remove cipd stuff for bower, since we don't use it.](https://chromium-review.googlesource.com/c/infra/infra/+/1827449) (seanmccullough@chromium.org)
+- [[som, infra/monitoring/messages] Make struct types use pointer fields](https://chromium-review.googlesource.com/c/infra/infra/+/1832891) (seanmccullough@chromium.org)
+- [Fix problem with URL escape for builder name with spaces](https://chromium-review.googlesource.com/c/infra/infra/+/1830845) (nqmtuan@google.com)
+- [[som] Remove unused code related to test-results server.](https://chromium-review.googlesource.com/c/infra/infra/+/1832889) (seanmccullough@chromium.org)
+- [[som] Custom WHERE clause for chromium](https://chromium-review.googlesource.com/c/infra/infra/+/1832344) (seanmccullough@chromium.org)
+- [[som] Add UI to change monorail ProjectId in Sheriff-o-matic frontend.](https://chromium-review.googlesource.com/c/infra/infra/+/1785098) (yuanzhi@google.com)
+- [[som] Add custom WHERE clause for fuchsia.](https://chromium-review.googlesource.com/c/infra/infra/+/1829819) (seanmccullough@chromium.org)
+- [[som] Update view definitions to use separate data sets.](https://chromium-review.googlesource.com/c/infra/infra/+/1809694) (seanmccullough@chromium.org)
+- [[som] README: remove references to GOOGLE_APPLICATION_CREDENTIALS](https://chromium-review.googlesource.com/c/infra/infra/+/1825995) (seanmccullough@chromium.org)
+- [[som] Remove unused buildbot-related code.](https://chromium-review.googlesource.com/c/infra/infra/+/1825978) (seanmccullough@chromium.org)
+- [[som] Remove code paths to old analyzer, starting at request handler.](https://chromium-review.googlesource.com/c/infra/infra/+/1825811) (seanmccullough@chromium.org)
+- [[som] Add some more android builders per request.](https://chromium-review.googlesource.com/c/infra/infra/+/1825692) (seanmccullough@chromium.org)
+- [[som] Update findit call sites to use build ID instead of build number.](https://chromium-review.googlesource.com/c/infra/infra/+/1817145) (seanmccullough@chromium.org)
+- [[som] switch ios tree to bigquery analyzer](https://chromium-review.googlesource.com/c/infra/infra/+/1816742) (seanmccullough@chromium.org)
+- [[som] Update RELNOTES.md](https://chromium-review.googlesource.com/c/infra/infra/+/1815347) (seanmccullough@chromium.org)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1010365](https://crbug.com/1010365)
+  -  [https://crbug.com/996013](https://crbug.com/996013)
+  
+- seanmccullough@chromium.org:
+  -  [https://crbug.com/1000388](https://crbug.com/1000388)
+  -  [https://crbug.com/1007430](https://crbug.com/1007430)
+  -  [https://crbug.com/1008440](https://crbug.com/1008440)
+  -  [https://crbug.com/998336](https://crbug.com/998336)
+  
+
 # Release Notes sheriff-o-matic 2019-09-19
 
 - 12 commits, 5 bugs affected since  (2019-08-23)
