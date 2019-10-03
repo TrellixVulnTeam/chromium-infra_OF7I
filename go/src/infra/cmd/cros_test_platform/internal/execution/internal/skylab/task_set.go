@@ -6,13 +6,11 @@ package skylab
 
 import (
 	"context"
-	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
-	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
@@ -63,16 +61,8 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 	return maxInt32IfZero(params.GetRetry().GetMax())
 }
 
-func (r *TaskSet) launchAndWait(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
-
-	if err := r.launchAll(ctx, client); err != nil {
-		return err
-	}
-
-	return r.wait(ctx, client, gf)
-}
-
-func (r *TaskSet) launchAll(ctx context.Context, client swarming.Client) error {
+// LaunchTasks launches initial tasks for all the testRuns in this task set.
+func (r *TaskSet) LaunchTasks(ctx context.Context, client swarming.Client) error {
 	for _, testRun := range r.testRuns {
 		runnable, err := testRun.ValidateDependencies(ctx, client)
 		if err != nil {
@@ -89,24 +79,9 @@ func (r *TaskSet) launchAll(ctx context.Context, client swarming.Client) error {
 	return nil
 }
 
-func (r *TaskSet) wait(ctx context.Context, swarming swarming.Client, gf isolate.GetterFactory) error {
-	for {
-		if err := r.tick(ctx, swarming, gf); err != nil {
-			return err
-		}
-		if r.Completed() {
-			return nil
-		}
-
-		select {
-		case <-ctx.Done():
-			return errors.Annotate(ctx.Err(), "wait for tests").Err()
-		case <-clock.After(ctx, 15*time.Second):
-		}
-	}
-}
-
-func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
+// CheckTasksAndRetry checks the status of currently running tasks and retries
+// failed tasks when allowed.
+func (r *TaskSet) CheckTasksAndRetry(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
 	for _, testRun := range r.testRuns {
 		if testRun.Completed() {
 			continue
