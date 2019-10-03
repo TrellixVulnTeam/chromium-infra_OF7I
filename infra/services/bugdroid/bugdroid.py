@@ -73,19 +73,21 @@ class BugdroidGitPollerHandler(poller_handlers.BasePollerHandler):
         self.logger.debug('Removing %s', label)
 
   def ProcessLogEntry(self, log_entry):
-    project_bugs = log_parser.get_issues(
+    affected_issues = log_parser.get_issues(
         log_entry, default_project=self.default_project)
     self.logger.info('Processing commit %s : bugs %s',
-                     log_entry.revision, str(project_bugs))
-    if project_bugs:
+                     log_entry.revision, str(affected_issues['bugs']))
+    if affected_issues['bugs']:
       comment = self._CreateMessage(log_entry)
       self.logger.debug(comment)
 
-      for project, bugs in project_bugs.iteritems():
+      for project, bugs in affected_issues['bugs'].iteritems():
         for bug in bugs:
           try:
             issue = self.monorail_client.get_issue(project, bug)
             issue.set_comment(comment[:24 * 1024])
+            if bug in affected_issues['fixed'].get(project, set()):
+              issue.mark_fixed()
             branch = scm_helper.GetBranch(log_entry)
             # Apply merge labels if this commit landed on a branch.
             if branch and not (log_entry.scm in ['git', 'gerrit'] and

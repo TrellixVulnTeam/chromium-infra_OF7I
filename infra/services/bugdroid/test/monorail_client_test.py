@@ -103,6 +103,20 @@ class MonorailClientTest(unittest.TestCase):
 
     self.assertFalse(self.insert.called)
 
+  def test_update_issue_fixed(self):
+    issue = monorail_client.Issue(123, [])
+    issue.mark_fixed()
+    self.client.update_issue('foo', issue)
+
+    self.insert.assert_called_once_with(
+        projectId='foo',
+        issueId=123,
+        sendEmail=True,
+        body={
+            'id': 123,
+            'updates': {'status': 'Fixed'},
+        })
+
   @mock.patch('logging.debug')
   def test_unicode_decode_error(self, mock_debug):
     http = self.insert.return_value

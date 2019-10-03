@@ -9,7 +9,8 @@ from collections import defaultdict
 
 
 BUG_LINE_REGEX = re.compile(
-    r'(?m)^(?P<flag>[>\s]*(?:BUGS?|ISSUE|Bugs?) *[ :=] *)(?P<data>.*)$')
+    r'(?m)^(?P<flag>[>\s]*'
+    r'(?P<keyword>(?:BUGS?|ISSUE|Bugs?) *[ :=] *|Fixed *: *))(?P<data>.*)$')
 
 PROJECT_NAME_REGEX = r'(?P<project>[a-z0-9][-a-z0-9]*[a-z0-9])'
 BUG_NUMBER_REGEX = r'(?P<bugnum>[0-9]+)'
@@ -72,7 +73,8 @@ def get_issues(log_entry, default_project): # pragma: no cover
       then assume it belongs in this project.
 
   Returns:
-    Dictionary of {'project': [list, of, bug, numbers]}.
+    Dictionary of {'bugs': {'project': set([bug, IDs, to, comment, on])},
+                   'fixed': {'project': set([bug, IDs, to, comment, and, fix])}}
 
   Supported Identifier Syntax:
   ----------------------------
@@ -89,17 +91,27 @@ def get_issues(log_entry, default_project): # pragma: no cover
   BUG=<Issue Tracker URL>
     A direct link to an issue tracker page matches that issue in that project.
 
+  Fixed: n
+  Fixed: project:n
+  Fixed: <Issue Tracker URL>
+
   Syntax Notes:
   - The keywords 'BUG' and 'ISSUE' are interchangeable in all formats.
   - 'n' can be a comma-delimited list of bug #'s.
   - Multiple bug lines may appear in the log message.
   - Project specification only works for configured projects, since we can't
     assume bugdroid has the ability to update bugs on arbitrary projects.
+  - The 'Fixed:' syntax runs the same steps as Bug:, but additionally changes
+    each bug's status to "Fixed" when the CL lands.
+  - FIXED= is not valid; BUG= is currently maintained for compatibility.
+    Only 'Fixed:' works.
   """
   if not log_entry.msg:
     return {}
 
-  bug_dict = defaultdict(set)
+  # |all_issues_dict| includes superset of all IDs from Bug: and Fixed: lines.
+  # |fixed_dict| included only those from Fixed: lines.
+  all_issues_dict, fixed_dict = defaultdict(set), defaultdict(set)
   default_project = normalize_project_name(default_project)
 
   bug_lines = [m.groupdict() for m in
@@ -125,9 +137,13 @@ def get_issues(log_entry, default_project): # pragma: no cover
         bugproject = normalize_project_name(bugproject)
         bugnum = m.groupdict().get('bugnum')
         # Only check for None, since empty project name is the default.
-        bug_dict[bugproject].add(bugnum)
+        all_issues_dict[bugproject].add(bugnum)
+        if line.get('keyword').startswith('Fixed'):
+          fixed_dict[bugproject].add(bugnum)
         line_project = bugproject
 
-  rtn = {proj: sorted([int(b.strip()) for b in bugs])
-         for proj, bugs in bug_dict.iteritems()}
-  return rtn
+  bugs = {proj: sorted([int(b.strip()) for b in bugs])
+          for proj, bugs in all_issues_dict.iteritems()}
+  fixed = {proj: sorted([int(f.strip()) for f in fixed])
+           for proj, fixed in fixed_dict.iteritems()}
+  return {'bugs': bugs, 'fixed': fixed}

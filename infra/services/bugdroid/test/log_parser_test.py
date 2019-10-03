@@ -16,6 +16,8 @@ class BugLineParserTest(unittest.TestCase):
         (123, 'BUG=123'),
         (124, 'Bug: 124'),
         ('chromium:125', 'Bugs: chromium:125'),
+        (126, 'Fixed: 126'),
+        ('chromium:127', 'Fixed : chromium:127'),
     ]:
       m = log_parser.BUG_LINE_REGEX.match(bug_line)
       self.assertIsNotNone(m, '"%s" line must be matched' % bug_line)
@@ -29,6 +31,8 @@ class BugLineParserTest(unittest.TestCase):
         'BUGr=123',
         'BUGS/124',
         'someBugs:',
+        'FIXED=126',  # FIXED= is not supported; only Fixed: is.
+        'someFixed:',
     ]:
       m = log_parser.BUG_LINE_REGEX.match(bug_line)
       self.assertIsNone(m, '"%s" line must not be matched (got %s)' %
@@ -36,12 +40,22 @@ class BugLineParserTest(unittest.TestCase):
 
   def test_get_issues(self):
     test_cases = [
-        ({'default': [123]}, 'Bug: 123'),
-        ({'default': [123]}, 'Bug: #123'),
-        ({'default': [123]}, 'Bug: crbug.com/123'),
-        ({'proj': [123]}, 'Bug: proj:123'),
-        ({'proj': [123]}, 'Bug: proj:#123'),
-        ({'proj': [123]}, 'Bug: crbug.com/proj/123'),
+        ({'bugs': {'default': [123]}, 'fixed': {}}, 'Bug: 123'),
+        ({'bugs': {'default': [123]}, 'fixed': {}}, 'Bug: #123'),
+        ({'bugs': {'default': [123]}, 'fixed': {}}, 'Bug: crbug.com/123'),
+        ({'bugs': {'proj': [123]}, 'fixed': {}}, 'Bug: proj:123'),
+        ({'bugs': {'proj': [123]}, 'fixed': {}}, 'Bug: proj:#123'),
+        ({'bugs': {'proj': [123]}, 'fixed': {}}, 'Bug: crbug.com/proj/123'),
+        ({'bugs': {'default': [11]}, 'fixed': {'default': [11]}}, 'Fixed: 11'),
+        ({'bugs': {'default': [12]}, 'fixed': {'default': [12]}}, 'Fixed: #12'),
+        ({'bugs': {'default': [126]}, 'fixed': {'default': [126]}},
+         'Fixed: crbug.com/126'),
+        ({'bugs': {'proj': [127]}, 'fixed': {'proj': [127]}},
+         'Fixed: proj:127'),
+        ({'bugs': {'proj': [128]}, 'fixed': {'proj': [128]}},
+         'Fixed: proj:#128'),
+        ({'bugs': {'proj': [129]}, 'fixed': {'proj': [129]}},
+         'Fixed: crbug.com/proj/129'),
     ]
     for expected, bug_line in test_cases:
       log_entry = LogEntry(msg=bug_line)
@@ -55,10 +69,17 @@ class BugLineParserTest(unittest.TestCase):
         'Bug: invalid_name:123',
         'Bug: proj:#123.5',
         'Bug: foocrbug.com/proj/123',
+        'Fixed: foo123',
+        'Fixed: 123.5',
+        'Fixed: foocrbug.com/123',
+        'Fixed: invalid_name:123',
+        'Fixed: proj:#123.5',
+        'Fixed: foocrbug.com/proj/123',
     ]
     for bug_line in test_cases:
       log_entry = LogEntry(msg=bug_line)
-      self.assertEqual({}, log_parser.get_issues(log_entry, 'default'))
+      self.assertEqual({'bugs': {}, 'fixed': {}},
+                       log_parser.get_issues(log_entry, 'default'))
 
   def test_should_send_email(self):
     for test_case, result in [

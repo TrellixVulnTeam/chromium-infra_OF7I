@@ -116,6 +116,37 @@ class BugdroidGitPollerHandlerTest(unittest.TestCase):
         bugdroid.BugdroidGitPollerHandler.bug_comments_metric.get(
             {'project': 'foo', 'status': 'success'}))
 
+  def test_process_log_entry_default_project_fixed(self):
+    handler = self._make_handler()
+
+    issue = monorail_client.Issue(1234, [])
+    self.monorail_client.get_issue.return_value = issue
+
+    self.assertFalse(issue.fixed)
+    handler.ProcessLogEntry(self._make_commit('Message\nFixed: 1234'))
+    self.assertTrue(issue.fixed)
+
+    self.logger.info.assert_called_once_with(
+        'Processing commit %s : bugs %s', 'abcdef', "{'foo': [1234]}")
+    self.monorail_client.get_issue.assert_called_once_with('foo', 1234)
+    self.monorail_client.update_issue.assert_called_once_with(
+        'foo', issue, True)
+    self.assertEqual(
+        'The following revision refers to this bug:\n'
+        '  https://example.googlesource.com/foo/+/abcdef\n\n'
+        'commit abcdef\n'
+        'Author: Author <author@example.com>\n'
+        'Date: Sun Oct 10 10:10:10 2010\n\n'
+        'Message\n'
+        'Fixed: 1234\n'
+        '[modify] https://example.googlesource.com/foo/+/abcdef/modified/file\n'
+        '[add] https://example.googlesource.com/foo/+/abcdef/added/file\n'
+        '[delete] https://example.googlesource.com/foo/+/123456/deleted/file\n',
+        issue.comment)
+    self.assertEqual(1,
+        bugdroid.BugdroidGitPollerHandler.bug_comments_metric.get(
+            {'project': 'foo', 'status': 'success'}))
+
   def test_process_log_entry_test_mode(self):
     handler = self._make_handler(test_mode=True)
 

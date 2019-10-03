@@ -116,6 +116,9 @@ class MonorailClient(object):
     if issue.comment:
       body['content'] = issue.comment
 
+    if issue.fixed:
+      body['updates']['status'] = 'Fixed'
+
     req = self.client.issues().comments().insert(projectId=project_name,
                                                  issueId=issue.id,
                                                  sendEmail=send_email,
@@ -155,6 +158,7 @@ class Issue(object):
     self.id = issue_id
     self.comment = ''
     self.labels = labels
+    self.fixed = False
 
     self.labels_added = set()
     self.dirty = False
@@ -185,3 +189,8 @@ class Issue(object):
 
   def has_label(self, value):
     return any(x.lower() == value.lower() for x in self.labels)
+
+  def mark_fixed(self):
+    if not self.fixed:
+      self.fixed = True
+      self.dirty = True
