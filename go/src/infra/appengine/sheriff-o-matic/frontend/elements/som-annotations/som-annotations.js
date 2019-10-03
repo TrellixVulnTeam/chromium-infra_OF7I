@@ -253,18 +253,31 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     return response;
   }
 
+  _builderFailureInfo(builder) {
+    let s = 'Builder: ' + builder.name;
+    s += '\n' + builder.url;
+    if (builder.first_failure_url) {
+      s += '\n' + 'First failing build:';
+      s += '\n' + builder.first_failure_url;
+    } else if (builder.latest_failure_url) {
+      s += '\n' + 'Latest failing build:';
+      s += '\n' + builder.latest_failure_url;
+    }
+    return s;
+  }
+
   _commentForBug(alerts) {
     return alerts.reduce((comment, alert) => {
       let result = alert.title + '\n\n';
       if (alert.extension) {
         if (alert.extension.builders &&
             alert.extension.builders.length > 0) {
-          result += 'Builders failed on: ';
-          for (let i in alert.extension.builders) {
-            result += '\n- ' + alert.extension.builders[i].name + ': \n  ' +
-                      alert.extension.builders[i].url;
+          const failuresInfo = [];
+          for (const builder of alert.extension.builders) {
+            failuresInfo.push(this._builderFailureInfo(builder));
           }
-          result += '\n\n';
+          result += 'List of failed builders:\n\n' +
+                    failuresInfo.join('\n--------------------\n') + '\n\n';
         }
         if (alert.extension.reasons &&
             alert.extension.reasons.length > 0) {

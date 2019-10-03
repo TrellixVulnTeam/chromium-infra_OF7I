@@ -242,9 +242,9 @@
 
       assert.equal(element._commentForBug(bugModel),
         "WebKit Win7 step failure\n\n" +
-        "Builders failed on: \n" +
-        "- WebKit Win7: \n" +
-        "  https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7\n\n" +
+        "List of failed builders:\n\n" +
+        "Builder: WebKit Win7\n" +
+        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7\n\n" +
         "Reasons: \n" +
         "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/builds/42524/steps/webkit_tests\n" +
         "Tests:\n" +
@@ -254,6 +254,82 @@
         "* paint/selection/invalidation-rect-includes-newline.html\n" +
         "* paint/selection/invalidation-rect-with-br-includes-newline.html\n" +
         "* transforms/3d/point-mapping/3d-point-mapping-preserve-3d.html\n\n"
+      );
+    });
+
+    test('filing a bug generates comment for new bug - first failure is available', function() {
+      let bugModel = [{
+        title: "WebKit Win7 step failure",
+        extension: {
+          builders: [
+            {
+              name: "WebKit Win7",
+              url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7",
+              first_failure_url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b12345",
+              latest_failure_url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b6789"
+            }
+          ],
+          reasons: [
+            {
+              step: "webkit_tests",
+              test_names: [
+                "paint/selection/invalidation-rect-includes-newline-for-rtl.html",
+              ],
+              url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/builds/42524/steps/webkit_tests"
+            }
+          ]
+        }
+      }];
+
+      assert.equal(element._commentForBug(bugModel),
+        "WebKit Win7 step failure\n\n" +
+        "List of failed builders:\n\n" +
+        "Builder: WebKit Win7\n" +
+        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7\n" +
+        "First failing build:\n" +
+        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b12345\n\n" +
+        "Reasons: \n" +
+        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/builds/42524/steps/webkit_tests\n" +
+        "Tests:\n" +
+        "* paint/selection/invalidation-rect-includes-newline-for-rtl.html\n\n"
+      );
+    });
+
+    test('filing a bug generates comment for new bug - first failure not available', function() {
+      let bugModel = [{
+        title: "WebKit Win7 step failure",
+        extension: {
+          builders: [
+            {
+              name: "WebKit Win7",
+              url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7",
+              first_failure_url: "",
+              latest_failure_url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b6789"
+            }
+          ],
+          reasons: [
+            {
+              step: "webkit_tests",
+              test_names: [
+                "paint/selection/invalidation-rect-includes-newline-for-rtl.html",
+              ],
+              url: "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/builds/42524/steps/webkit_tests"
+            }
+          ]
+        }
+      }];
+
+      assert.equal(element._commentForBug(bugModel),
+        "WebKit Win7 step failure\n\n" +
+        "List of failed builders:\n\n" +
+        "Builder: WebKit Win7\n" +
+        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7\n" +
+        "Latest failing build:\n" +
+        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/b6789\n\n" +
+        "Reasons: \n" +
+        "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7/builds/42524/steps/webkit_tests\n" +
+        "Tests:\n" +
+        "* paint/selection/invalidation-rect-includes-newline-for-rtl.html\n\n"
       );
     });
 

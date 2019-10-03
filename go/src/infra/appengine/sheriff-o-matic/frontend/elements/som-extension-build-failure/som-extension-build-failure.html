@@ -65,7 +65,7 @@
         </div>
         <div class="layout horizontal wrap">
           <template is="dom-repeat" items="[[extension.builders]]" as="builder">
-            <a class$="[[_classForBuilder(builder)]]" target="_blank" href$="[[_linkify(linkStyle, builder.url)]]" title$="Failing for the last [[_failureCount(builder)]] build(s): From build [[builder.first_build_number_failure]] to build [[builder.latest_build_number_failure]].">
+            <a class$="[[_classForBuilder(builder)]]" target="_blank" href$="[[_linkify(linkStyle, builder.url)]]" title$="Failing for the last [[_failureCount(builder)]] build(s): From build [[builder.first_failure_build_number]] to build [[builder.latest_failure_build_number]].">
                 [[builder.name]]
                 [[_failureCountText(builder)]]
             </a>

@@ -258,6 +258,13 @@ func generateBuilderURL(project string, bucket string, builderName string) strin
 	return fmt.Sprintf("https://ci.chromium.org/p/%s/builders/%s/%s", project, bucket, url.PathEscape(builderName))
 }
 
+func generateBuildURL(project string, bucket string, builderName string, buildID bigquery.NullInt64) string {
+	if buildID.Valid {
+		return fmt.Sprintf("%s/b%d", generateBuilderURL(project, bucket, builderName), buildID.Int64)
+	}
+	return "" // Go does not allow null value :(
+}
+
 func processBQResults(ctx context.Context, it nexter) ([]*messages.BuildFailure, error) {
 	alertedBuildersByStep := map[string][]*messages.AlertedBuilder{}
 	alertedBuildersByStepAndTests := map[string]map[int64][]*messages.AlertedBuilder{}
@@ -307,9 +314,11 @@ func processBQResults(ctx context.Context, it nexter) ([]*messages.BuildFailure,
 			Master:                   r.MasterName.StringVal,
 			FirstFailure:             r.BuildIDBegin.Int64,
 			LatestFailure:            r.BuildIDEnd.Int64,
-			FirstBuildNumberFailure:  r.BuildNumberBegin.Int64,
-			LatestBuildNumberFailure: r.BuildNumberEnd.Int64,
+			FirstFailureBuildNumber:  r.BuildNumberBegin.Int64,
+			LatestFailureBuildNumber: r.BuildNumberEnd.Int64,
 			URL:                      generateBuilderURL(r.Project, r.Bucket, r.Builder),
+			FirstFailureURL:          generateBuildURL(r.Project, r.Bucket, r.Builder, r.BuildIDBegin),
+			LatestFailureURL:         generateBuildURL(r.Project, r.Bucket, r.Builder, r.BuildIDEnd),
 			LatestPassingRev:         latestPassingRev,
 			FirstFailingRev:          firstFailingRev,
 			NumFailingTests:          r.NumTests.Int64,

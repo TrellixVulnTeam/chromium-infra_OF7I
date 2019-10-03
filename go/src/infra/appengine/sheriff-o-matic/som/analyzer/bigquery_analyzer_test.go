@@ -79,6 +79,25 @@ func TestGenerateBuilderURL(t *testing.T) {
 	})
 }
 
+func TestGenerateBuildURL(t *testing.T) {
+	Convey("Test build url with build ID", t, func() {
+		project := "chromium"
+		bucket := "ci"
+		builderName := "Win"
+		buildID := bigquery.NullInt64{Int64: 8127364737474, Valid: true}
+		url := generateBuildURL(project, bucket, builderName, buildID)
+		So(url, ShouldEqual, "https://ci.chromium.org/p/chromium/builders/ci/Win/b8127364737474")
+	})
+	Convey("Test build url with empty buildID", t, func() {
+		project := "chromium"
+		bucket := "ci"
+		builderName := "Win"
+		buildID := bigquery.NullInt64{}
+		url := generateBuildURL(project, bucket, builderName, buildID)
+		So(url, ShouldEqual, "")
+	})
+}
+
 func TestProcessBQResults(t *testing.T) {
 	ctx := context.Background()
 	ctx = gologger.StdConfig.Use(ctx)
