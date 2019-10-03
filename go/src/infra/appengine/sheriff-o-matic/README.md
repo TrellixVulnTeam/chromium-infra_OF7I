@@ -140,8 +140,8 @@ sheriff-o-matic-staging. To deploy to staging:
 
 - run `make deploy_staging`
 - Optional: Go to the Versions section of the
-[App Engine Console](https://appengine.google.com/) and update the default
-version of the app.
+[App Engine Console](https://appengine.google.com/) and update both the default
+and backend versions of the app.
 
 ### Authenticating for deployment
 
