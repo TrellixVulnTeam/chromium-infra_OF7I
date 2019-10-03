@@ -108,11 +108,11 @@ func (c *commonExecuteRun) writeResponseWithError(resps []*steps.ExecuteResponse
 	return writeResponseWithError(c.outputPath, resps[0], err)
 }
 
-func (c *commonExecuteRun) handleRequest(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) (*steps.ExecuteResponse, error) {
+func (c *commonExecuteRun) handleRequest(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("exceeded request's maximum duration"))
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, t, gf)
-	return runner.Response(t), err
+	return runner.Responses(t), err
 }
 
 func httpClient(ctx context.Context, authJSONPath string) (*http.Client, error) {
@@ -142,4 +142,13 @@ func swarmingClient(ctx context.Context, c *config.Config_Swarming) (*swarming.C
 	}
 
 	return client, nil
+}
+
+func containsSomeResponse(rs []*steps.ExecuteResponse) bool {
+	for _, r := range rs {
+		if r != nil {
+			return true
+		}
+	}
+	return false
 }

@@ -78,13 +78,16 @@ func (r *Runner) LaunchAndWait(ctx context.Context, client swarming.Client, _ is
 	return nil
 }
 
-// Response constructs a response based on the current state of the
+// Responses constructs a response based on the current state of the
 // Runner.
-func (r *Runner) Response(swarming swarming.URLer) *steps.ExecuteResponse {
+//
+// autotest.Runner only supports running a single Request, hence the returned
+// slice always has length 1.
+func (r *Runner) Responses(swarming swarming.URLer) []*steps.ExecuteResponse {
 	r.responseLock.RLock()
 	val := r.response
 	r.responseLock.RUnlock()
-	return val
+	return []*steps.ExecuteResponse{val}
 }
 
 func (r *Runner) setResponse(resp *steps.ExecuteResponse) {

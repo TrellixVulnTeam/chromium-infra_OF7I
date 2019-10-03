@@ -14,6 +14,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	"infra/cmd/cros_test_platform/internal/execution/internal/autotest"
+	"infra/cmd/cros_test_platform/internal/execution/swarming"
 
 	build_api "go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
@@ -343,14 +344,15 @@ func TestWaitAndCollect(t *testing.T) {
 			cancel()
 			wg.Wait()
 			So(err, ShouldNotBeNil)
-			So(run.Response(swarming), ShouldResemble, running)
+			resp := getSingleResponse(run, swarming)
+			So(resp, ShouldResemble, running)
 		})
 
 		Convey("when the task completes, but no good json is available, then an error is returned and the response is completed with unspecified verdict.", func() {
 			swarming.SetResult(&swarming_api.SwarmingRpcsTaskResult{State: "COMPLETED"})
 			wg.Wait()
 			So(err, ShouldNotBeNil)
-			resp := run.Response(swarming)
+			resp := getSingleResponse(run, swarming)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
 		})
@@ -360,7 +362,7 @@ func TestWaitAndCollect(t *testing.T) {
 			swarming.SetResult(&swarming_api.SwarmingRpcsTaskResult{State: "COMPLETED"})
 			wg.Wait()
 			So(err, ShouldBeNil)
-			resp := run.Response(swarming)
+			resp := getSingleResponse(run, swarming)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_PASSED)
 		})
@@ -371,4 +373,10 @@ func invocation(name string) *steps.EnumerationResponse_AutotestInvocation {
 	return &steps.EnumerationResponse_AutotestInvocation{
 		Test: &build_api.AutotestTest{Name: name},
 	}
+}
+
+func getSingleResponse(r *autotest.Runner, client swarming.Client) *steps.ExecuteResponse {
+	resps := r.Responses(client)
+	So(resps, ShouldHaveLength, 1)
+	return resps[0]
 }

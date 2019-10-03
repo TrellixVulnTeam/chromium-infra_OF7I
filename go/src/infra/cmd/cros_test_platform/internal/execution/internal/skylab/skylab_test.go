@@ -7,6 +7,7 @@ package skylab_test
 import (
 	"context"
 	"fmt"
+	"infra/cmd/cros_test_platform/internal/execution"
 	"regexp"
 	"strings"
 	"sync"
@@ -33,6 +34,7 @@ import (
 
 	"infra/cmd/cros_test_platform/internal/execution/internal/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
+	"infra/cmd/cros_test_platform/internal/execution/swarming"
 )
 
 // fakeSwarming implements skylab.Swarming
@@ -258,7 +260,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 			err = run.LaunchAndWait(ctx, swarming, gf)
 			So(err, ShouldBeNil)
 
-			resp := run.Response(swarming)
+			resp := getSingleResponse(run, swarming)
 			So(resp, ShouldNotBeNil)
 
 			Convey("then task result is complete with unspecified verdict.", func() {
@@ -299,7 +301,7 @@ func TestLaunchAndWaitTest(t *testing.T) {
 			err = run.LaunchAndWait(ctx, swarming, gf)
 			So(err, ShouldBeNil)
 
-			resp := run.Response(swarming)
+			resp := getSingleResponse(run, swarming)
 			So(resp, ShouldNotBeNil)
 
 			Convey("then results for all tests are reflected.", func() {
@@ -378,7 +380,7 @@ func TestTaskStates(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("then the task state is correct.", func() {
-					resp := run.Response(swarming)
+					resp := getSingleResponse(run, swarming)
 					So(resp.TaskResults, ShouldHaveLength, 1)
 					So(resp.TaskResults[0].State, ShouldResemble, c.expectTaskState)
 				})
@@ -434,7 +436,7 @@ func TestTaskURL(t *testing.T) {
 		err = run.LaunchAndWait(ctx, swarming, gf)
 		So(err, ShouldBeNil)
 
-		resp := run.Response(swarming)
+		resp := getSingleResponse(run, swarming)
 		So(resp.TaskResults, ShouldHaveLength, 1)
 		taskURL := resp.TaskResults[0].TaskUrl
 		So(taskURL, ShouldStartWith, swarming_service)
@@ -468,7 +470,7 @@ func TestIncompleteWait(t *testing.T) {
 
 		So(err.Error(), ShouldContainSubstring, context.Canceled.Error())
 
-		resp := run.Response(swarming)
+		resp := getSingleResponse(run, swarming)
 		So(resp, ShouldNotBeNil)
 		So(resp.TaskResults, ShouldHaveLength, 1)
 		So(resp.TaskResults[0].State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_RUNNING)
@@ -890,7 +892,7 @@ func TestRetries(t *testing.T) {
 
 				err = run.LaunchAndWait(ctx, swarming, gf)
 				So(err, ShouldBeNil)
-				response := run.Response(swarming)
+				resp := getSingleResponse(run, swarming)
 
 				Convey("each attempt request should have a unique logdog url in the.", func() {
 					s := map[string]bool{}
@@ -913,18 +915,18 @@ func TestRetries(t *testing.T) {
 				Convey("then the launched task count should be correct.", func() {
 					// Each test is tried at least once.
 					attemptCount := len(c.invocations) + c.expectedRetryCount
-					So(response.TaskResults, ShouldHaveLength, attemptCount)
+					So(resp.TaskResults, ShouldHaveLength, attemptCount)
 				})
 				Convey("then task (name, attempt) should be unique.", func() {
 					s := make(stringset.Set)
-					for _, res := range response.TaskResults {
+					for _, res := range resp.TaskResults {
 						s.Add(fmt.Sprintf("%s__%d", res.Name, res.Attempt))
 					}
-					So(s, ShouldHaveLength, len(response.TaskResults))
+					So(s, ShouldHaveLength, len(resp.TaskResults))
 				})
 
 				Convey("then the build verdict should be correct.", func() {
-					So(response.State.Verdict, ShouldEqual, c.expectedSummaryVerdict)
+					So(resp.State.Verdict, ShouldEqual, c.expectedSummaryVerdict)
 				})
 			})
 		}
@@ -1078,7 +1080,7 @@ func TestResponseVerdict(t *testing.T) {
 				_ = run.LaunchAndWait(ctx, swarming, gf)
 			}()
 
-			resp := run.Response(swarming)
+			resp := getSingleResponse(run, swarming)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_RUNNING)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
 		})
@@ -1087,7 +1089,7 @@ func TestResponseVerdict(t *testing.T) {
 			getter.SetAutotestResultGenerator(autotestResultAlwaysPass)
 
 			run.LaunchAndWait(ctx, swarming, gf)
-			resp := run.Response(swarming)
+			resp := getSingleResponse(run, swarming)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_PASSED)
 		})
@@ -1095,7 +1097,7 @@ func TestResponseVerdict(t *testing.T) {
 		Convey("when the test failed, response verdict is correct.", func() {
 			getter.SetAutotestResultGenerator(autotestResultAlwaysFail)
 			run.LaunchAndWait(ctx, swarming, gf)
-			resp := run.Response(swarming)
+			resp := getSingleResponse(run, swarming)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
@@ -1115,9 +1117,15 @@ func TestResponseVerdict(t *testing.T) {
 			wg.Wait()
 			So(err, ShouldNotBeNil)
 
-			resp := run.Response(swarming)
+			resp := getSingleResponse(run, swarming)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_ABORTED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
 	})
+}
+
+func getSingleResponse(r execution.Runner, client swarming.Client) *steps.ExecuteResponse {
+	resps := r.Responses(client)
+	So(resps, ShouldHaveLength, 1)
+	return resps[0]
 }

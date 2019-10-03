@@ -17,15 +17,15 @@ import (
 
 // Runner is a new Skylab task set runner.
 type Runner struct {
-	taskSet *TaskSet
+	taskSets []*TaskSet
 
 	running bool
 }
 
-// NewRunner returns a new Runner for executing the provided TaskSet.
-func NewRunner(taskSet *TaskSet) *Runner {
+// NewRunner returns a new Runner for executing the provided TaskSets.
+func NewRunner(taskSets ...*TaskSet) *Runner {
 	return &Runner{
-		taskSet: taskSet,
+		taskSets: taskSets,
 	}
 }
 
@@ -39,14 +39,14 @@ func NewRunner(taskSet *TaskSet) *Runner {
 func (r *Runner) LaunchAndWait(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
 	defer func() { r.running = false }()
 
-	if err := r.taskSet.LaunchTasks(ctx, client); err != nil {
+	if err := r.launchTasks(ctx, client); err != nil {
 		return err
 	}
 	for {
-		if err := r.taskSet.CheckTasksAndRetry(ctx, client, gf); err != nil {
+		if err := r.checkTasksAndRetry(ctx, client, gf); err != nil {
 			return err
 		}
-		if r.taskSet.Completed() {
+		if r.completed() {
 			return nil
 		}
 
@@ -58,7 +58,39 @@ func (r *Runner) LaunchAndWait(ctx context.Context, client swarming.Client, gf i
 	}
 }
 
-// Response constructs a response based on the current state of the Runner.
-func (r *Runner) Response(urler swarming.URLer) *steps.ExecuteResponse {
-	return r.taskSet.response(urler, r.running)
+func (r *Runner) launchTasks(ctx context.Context, client swarming.Client) error {
+	for _, ts := range r.taskSets {
+		if err := ts.LaunchTasks(ctx, client); err != nil {
+			return errors.Annotate(err, "launch tasks for request [%v]", ts).Err()
+		}
+	}
+	return nil
+}
+
+func (r *Runner) checkTasksAndRetry(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
+	for _, ts := range r.taskSets {
+		if err := ts.CheckTasksAndRetry(ctx, client, gf); err != nil {
+			return errors.Annotate(err, "check tasks and retry for request [%v]", ts).Err()
+		}
+	}
+	return nil
+}
+
+func (r *Runner) completed() bool {
+	for _, ts := range r.taskSets {
+		if !ts.Completed() {
+			return false
+		}
+	}
+	return true
+}
+
+// Responses constructs responses for each taskSet managed by the Runner.
+func (r *Runner) Responses(urler swarming.URLer) []*steps.ExecuteResponse {
+	running := r.running
+	resps := make([]*steps.ExecuteResponse, len(r.taskSets))
+	for i, ts := range r.taskSets {
+		resps[i] = ts.response(urler, running)
+	}
+	return resps
 }
