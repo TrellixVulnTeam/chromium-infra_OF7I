@@ -140,7 +140,7 @@ import:
   - profiler
 - package: google.golang.org/genproto
   version: master
-  repo: https://chromium.googlesource.com/external/github.com/google/go-genproto.git
+  repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
   - protobuf/...
