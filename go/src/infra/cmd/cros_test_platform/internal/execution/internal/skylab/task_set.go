@@ -28,8 +28,6 @@ type TaskSet struct {
 	testRuns         []*testRun
 	globalMaxRetries int32
 	retries          int32
-	// complete indicates that the TaskSet ran to completion of all tasks.
-	complete bool
 }
 
 // NewTaskSet creates a new TaskSet.
@@ -46,6 +44,16 @@ func NewTaskSet(ctx context.Context, tests []*steps.EnumerationResponse_Autotest
 		testRuns:         testRuns,
 		globalMaxRetries: inferGlobalMaxRetries(params),
 	}, nil
+}
+
+// Completed returns true if all test runs in this task set have completed.
+func (r *TaskSet) Completed() bool {
+	for _, t := range r.testRuns {
+		if !t.Completed() {
+			return false
+		}
+	}
+	return true
 }
 
 func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
@@ -86,7 +94,7 @@ func (r *TaskSet) wait(ctx context.Context, swarming swarming.Client, gf isolate
 		if err := r.tick(ctx, swarming, gf); err != nil {
 			return err
 		}
-		if r.complete {
+		if r.Completed() {
 			return nil
 		}
 
@@ -99,7 +107,6 @@ func (r *TaskSet) wait(ctx context.Context, swarming swarming.Client, gf isolate
 }
 
 func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
-	complete := true
 	for _, testRun := range r.testRuns {
 		if testRun.Completed() {
 			continue
@@ -111,7 +118,6 @@ func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.G
 		}
 
 		if !testRun.Completed() {
-			complete = false
 			continue
 		}
 
@@ -122,7 +128,6 @@ func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.G
 			return errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
 		}
 		if shouldRetry {
-			complete = false
 			logging.Debugf(ctx, "Retrying %s", testRun.Name)
 			if err := testRun.LaunchAttempt(ctx, client); err != nil {
 				return errors.Annotate(err, "tick for task %s: retry test", latestAttempt.taskID).Err()
@@ -132,7 +137,6 @@ func (r *TaskSet) tick(ctx context.Context, client swarming.Client, gf isolate.G
 			logging.Debugf(ctx, "Not retrying %s", testRun.Name)
 		}
 	}
-	r.complete = complete
 	return nil
 }
 
@@ -217,7 +221,7 @@ func (r *TaskSet) response(urler swarming.URLer, running bool) *steps.ExecuteRes
 
 func (r *TaskSet) lifecycle(running bool) test_platform.TaskState_LifeCycle {
 	switch {
-	case r.complete:
+	case r.Completed():
 		return test_platform.TaskState_LIFE_CYCLE_COMPLETED
 	case running:
 		return test_platform.TaskState_LIFE_CYCLE_RUNNING
@@ -231,7 +235,7 @@ func (r *TaskSet) lifecycle(running bool) test_platform.TaskState_LifeCycle {
 
 func (r *TaskSet) verdict() test_platform.TaskState_Verdict {
 	v := test_platform.TaskState_VERDICT_PASSED
-	if !r.complete {
+	if !r.Completed() {
 		v = test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
 	for _, t := range r.testRuns {
