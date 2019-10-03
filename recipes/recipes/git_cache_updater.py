@@ -15,15 +15,19 @@ from PB.recipes.infra import git_cache_updater as git_cache_updater_pb
 
 
 DEPS = [
-  'depot_tools/depot_tools',
   'recipe_engine/buildbucket',
   'recipe_engine/context',
   'recipe_engine/file',
+  'recipe_engine/raw_io',
+  'recipe_engine/futures',
   'recipe_engine/path',
   'recipe_engine/properties',
   'recipe_engine/runtime',
   'recipe_engine/step',
   'recipe_engine/url',
+
+  'depot_tools/depot_tools',
+  'depot_tools/git',
 ]
 
 PROPERTIES = git_cache_updater_pb.Inputs
@@ -68,6 +72,59 @@ def _get_repo_urls(api, inputs):
   raise _InvalidInput('repo_urls or git_host.host must be provided')
 
 
+def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
+  opts = [
+    url,
+    '--cache-dir', work_dir,
+    '--reset-fetch-config',
+    '--verbose',
+    '--ref', 'refs/branch-heads/*',
+    # By default, "refs/heads/*" and refs/tags/* are checked out by
+    # git_cache. However, for heavy branching repos,
+    # 'refs/branch-heads/*' is also very useful (crbug/942169).
+    # This is a noop for repos without refs/branch-heads.
+  ]
+
+  with api.step.nest('Update '+url):
+    api.step(
+        name='populate',
+        cmd=['git_cache.py', 'populate'] + opts,
+        cost=api.step.ResourceCost(disk=20))
+
+    repo_path = api.path.abs_to_path(api.step(
+        name='lookup repo_path',
+        cmd=['git_cache.py', 'exists', '--cache-dir', work_dir, url],
+        stdout=api.raw_io.output(),
+        step_test_data=lambda: api.raw_io.test_api.stream_output(
+            api.path.join(work_dir, url.strip('https://')),
+        ),
+    ).stdout)
+
+    with api.context(cwd=repo_path):
+      stats = api.git.count_objects(
+          can_fail_build=True,
+          # TODO(iannucci): ugh, the test mock for this is horrendous.
+          #   1) it should default to something automatically
+          #   2) test_api.count_objects_output should return a TestData, not
+          #      a string.
+          step_test_data=lambda: api.raw_io.test_api.stream_output(
+              api.git.test_api.count_objects_output(10)))
+
+    opts += ['--skip-populate', '--prune']
+    if gc_aggressive:
+      opts += ['--gc-aggressive']
+
+    # Scale the memory cost of this update by size-pack raised to 1.5. This is
+    # an arbitrary scaling factor, but it allows multiple small repos to run in
+    # parallel but allows large repos (e.g. chromium) to exclusively use all the
+    # memory on the system.
+    mem_cost = int((stats['size'] + stats['size-pack']) ** 1.5)
+    api.step(
+        name='update bootstrap',
+        cmd=['git_cache.py', 'update-bootstrap'] + opts,
+        cost=api.step.ResourceCost(memory=mem_cost, net=10))
+
+
 def RunSteps(api, inputs):
   try:
     repo_urls = _get_repo_urls(api, inputs)
@@ -91,30 +148,22 @@ def RunSteps(api, inputs):
   if inputs.override_bucket:
     env['OVERRIDE_BOOTSTRAP_BUCKET'] = inputs.override_bucket
 
-  opts = [
-    '--cache-dir', work_dir,
-    '--prune',
-    '--reset-fetch-config',
-    '--verbose',
-    '--ref', 'refs/branch-heads/*',
-    # By default, "refs/heads/*" and refs/tags/* are checked out by
-    # git_cache. However, for heavy branching repos,
-    # 'refs/branch-heads/*' is also very useful (crbug/942169).
-    # This is a noop for repos without refs/branch-heads.
-  ]
-  if inputs.gc_aggressive:
-    opts += ['--gc-aggressive']
-
+  work = []
   with api.context(env=env), api.depot_tools.on_path():
     for url in sorted(repo_urls):
-      api.step(
-          name='Updating %s' % url,
-          cmd=['git_cache.py', 'update-bootstrap', url] + opts,
-          # It's fine for this to fail, just move on to the next one.
-          ok_ret='any')
+      work.append(api.futures.spawn_immediate(
+          _do_update_bootstrap, api, url, work_dir, inputs.gc_aggressive,
+          __name=('update '+url)))
+
+  total = len(work)
+  success = 0
+  for result in api.futures.iwait(work):
+    if result.exception() is None:
+      success += 1
+
   return result_pb.RawResult(
-      status=bb_common_pb.SUCCESS,
-      summary_markdown='Updated cache for %d repos' % len(repo_urls),
+      status=bb_common_pb.FAILURE if success == total else bb_common_pb.SUCCESS,
+      summary_markdown='Updated cache for %d/%d repos' % (success, total),
   )
 
 

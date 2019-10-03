@@ -864,11 +864,11 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 &mdash; **def [RunSteps](/recipes/recipes/gerrit_hello_world.py#22)(api):**
 ### *recipes* / [git\_cache\_updater](/recipes/recipes/git_cache_updater.py)
 
-[DEPS](/recipes/recipes/git_cache_updater.py#17): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]
+[DEPS](/recipes/recipes/git_cache_updater.py#17): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]
 
 Updates the Git Cache zip files.
 
-&mdash; **def [RunSteps](/recipes/recipes/git_cache_updater.py#71)(api, inputs):**
+&mdash; **def [RunSteps](/recipes/recipes/git_cache_updater.py#128)(api, inputs):**
 ### *recipes* / [goma\_hello\_world](/recipes/recipes/goma_hello_world.py)
 
 [DEPS](/recipes/recipes/goma_hello_world.py#12): [build/goma][build/recipe_modules/goma], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
@@ -1281,6 +1281,7 @@ Runs a step which adds a link to the current CL if there is one.
 [recipe_engine/recipe_modules/commit_position]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8e2b5104ac52091e7d02228665b7eca4eade38ad/README.recipes.md#recipe_modules-commit_position
 [recipe_engine/recipe_modules/context]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8e2b5104ac52091e7d02228665b7eca4eade38ad/README.recipes.md#recipe_modules-context
 [recipe_engine/recipe_modules/file]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8e2b5104ac52091e7d02228665b7eca4eade38ad/README.recipes.md#recipe_modules-file
+[recipe_engine/recipe_modules/futures]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8e2b5104ac52091e7d02228665b7eca4eade38ad/README.recipes.md#recipe_modules-futures
 [recipe_engine/recipe_modules/json]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8e2b5104ac52091e7d02228665b7eca4eade38ad/README.recipes.md#recipe_modules-json
 [recipe_engine/recipe_modules/path]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8e2b5104ac52091e7d02228665b7eca4eade38ad/README.recipes.md#recipe_modules-path
 [recipe_engine/recipe_modules/platform]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8e2b5104ac52091e7d02228665b7eca4eade38ad/README.recipes.md#recipe_modules-platform
