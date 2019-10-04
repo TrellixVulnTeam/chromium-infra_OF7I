@@ -959,8 +959,18 @@ class BizobjTest(unittest.TestCase):
     template = tracker_bizobj.MakeIssueTemplate(
         'A report', 'Something went wrong', 'New', 111, 'Look out!',
         ['Priority-High'], [], [333, 444], [])
+    template.field_values = [
+        tracker_bizobj.MakeFieldValue(22, None, None, 222, None, None, False),
+        tracker_bizobj.MakeFieldValue(23, None, None, 333, None, None, False),
+        tracker_bizobj.MakeFieldValue(24, None, None, 222, None, None, False),
+        tracker_bizobj.MakeFieldValue(25, None, 'pop', None, None, None, False)]
+    template.approval_values = [
+        tracker_pb2.ApprovalValue(
+            approval_id=30, setter_id=666, approver_ids=[444, 555]),
+        tracker_pb2.ApprovalValue(approval_id=31),
+    ]
     self.assertEqual(
-        set([111, 333, 444]),
+        {111, 333, 444, 222, 555, 666},
         tracker_bizobj.UsersInvolvedInTemplate(template))
 
   def testUsersInvolvedInConfig_Empty(self):

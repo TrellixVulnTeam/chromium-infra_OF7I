@@ -780,6 +780,10 @@ def UsersInvolvedInTemplate(template):
     [fv.user_id for fv in template.field_values if fv.user_id])
   if template.owner_id:
     result.add(template.owner_id)
+  for av in template.approval_values:
+    result.update(set(av.approver_ids))
+    if av.setter_id:
+      result.add(av.setter_id)
   return result
 
 
