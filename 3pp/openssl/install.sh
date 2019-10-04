@@ -25,7 +25,9 @@ case $OSTYPE in
         TARGET="linux-mips32"
         ;;
       mips-*)
-        TARGET="linux-mips64"
+        # https://github.com/dockcross/dockcross does not support linux-mips64
+        # currently.
+        TARGET="linux-mips32"
         ;;
       *) # should apply to aarch64
         TARGET="linux-${CROSS_TRIPLE%%-*}"
