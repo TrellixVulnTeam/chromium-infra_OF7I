@@ -117,9 +117,18 @@ Note that you may need to authenticate for deployment as
 described below in order to have `make relnotes` work properly this way.
 
 Copy and paste the output into the top of `README.md` and make any manual edits
-if necessary. You can also use the optional flags `-since-date YYYY-MM-DD` or
+if necessary.
+
+You can also use the optional flags `-since-date YYYY-MM-DD` or
 `-since-hash=<git short hash>` if you need to manually specify the range
-of commits to include. Then:
+of commits to include, using the command
+```
+go run ../../tools/relnotes/relnotes.go -since-hash <commit_hash> -app sheriff-o-matic -extra-paths .,../../monitoring/analyzer,../../monitoring/client,../../monitoring/messages
+```
+
+Tips: You can find the commit hash of a version by looking at the version name in appengine (Go to pantheon page for your app, and click at Versions section). For example, if your version name is 12345-20d8b52, then the commit hash is 20d8b52.
+
+Then:
 
 - Send the RELNOTES.md update CL for review by OWNERS.
 - Land CL.
@@ -129,8 +138,9 @@ such a version will cause alerts to fire (plus, you shouldn't deploy uncommitted
 - Go to the Versions section of the
 [App Engine Console](https://appengine.google.com/) and update the default
 version of the app services. **Important**: *Rembember to update both the "default" and "analyzer"
-services*. Having the default and analyzer services running different versions
+services* by clicking the "Migrate traffic" button. Having the default and analyzer services running different versions
 may cause errors and/or monitoring alerts to fire.
+- Wait for a while, making sure that the graphs looks fine and there is no abnormality in https://viceroy.corp.google.com/chrome_infra/Appengine/sheriff_o_matic_prod?duration=1h
 - Send a PSA email to cit-sheriffing@ about the new release.
 
 ### Deploying to staging
@@ -142,6 +152,7 @@ sheriff-o-matic-staging. To deploy to staging:
 - Optional: Go to the Versions section of the
 [App Engine Console](https://appengine.google.com/) and update both the default
 and backend versions of the app.
+- Check https://viceroy.corp.google.com/chrome_infra/Appengine/sheriff_o_matic_staging?duration=1h, make sure everything is ok
 
 ### Authenticating for deployment
 
