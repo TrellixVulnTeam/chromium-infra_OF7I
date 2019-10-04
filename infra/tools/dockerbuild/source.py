@@ -318,7 +318,7 @@ def local_directory(name, version, path):
 Repository._DOWNLOAD_MAP['local_directory'] = _download_local
 
 
-def pypi_sdist(name, version, patches=None):
+def pypi_sdist(name, version, patches=()):
   """Defines a Source whose remote data is a PyPi source distribution."""
 
   return Source(
