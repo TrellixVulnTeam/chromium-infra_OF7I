@@ -16,7 +16,7 @@
   },
   {
     "cmd": [],
-    "name": "https://chromium.googlesource.com/v8/v8"
+    "name": "https://chromium.googlesource.com/empty"
   },
   {
     "cmd": [
@@ -28,7 +28,7 @@
       "--cache-dir",
       "[CACHE]/builder/w",
       "--verbose",
-      "https://chromium.googlesource.com/v8/v8"
+      "https://chromium.googlesource.com/empty"
     ],
     "cost": {
       "cpu": 500,
@@ -47,7 +47,7 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "https://chromium.googlesource.com/v8/v8.populate",
+    "name": "https://chromium.googlesource.com/empty.populate",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -59,7 +59,7 @@
       "--cache-dir",
       "[CACHE]/builder/w",
       "--verbose",
-      "https://chromium.googlesource.com/v8/v8"
+      "https://chromium.googlesource.com/empty"
     ],
     "env": {
       "CHROME_HEADLESS": "1",
@@ -72,7 +72,7 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "https://chromium.googlesource.com/v8/v8.lookup repo_path",
+    "name": "https://chromium.googlesource.com/empty.lookup repo_path",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -83,7 +83,7 @@
       "count-objects",
       "-v"
     ],
-    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/v8/v8",
+    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/empty",
     "env": {
       "CHROME_HEADLESS": "1",
       "GIT_HTTP_LOW_SPEED_LIMIT": "0",
@@ -96,50 +96,23 @@
       ]
     },
     "infra_step": true,
-    "name": "https://chromium.googlesource.com/v8/v8.git count-objects",
+    "name": "https://chromium.googlesource.com/empty.git count-objects",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@result@  count: 10@@@",
-      "@@@STEP_LOG_LINE@result@  garbage: 10@@@",
-      "@@@STEP_LOG_LINE@result@  packs: 10@@@",
-      "@@@STEP_LOG_LINE@result@  in_pack: 10@@@",
-      "@@@STEP_LOG_LINE@result@  size-pack: 10@@@",
-      "@@@STEP_LOG_LINE@result@  size-garbage: 10@@@",
-      "@@@STEP_LOG_LINE@result@  prune-packable: 10@@@",
-      "@@@STEP_LOG_LINE@result@  size: 10@@@",
+      "@@@STEP_LOG_LINE@result@  count: 0@@@",
+      "@@@STEP_LOG_LINE@result@  garbage: 0@@@",
+      "@@@STEP_LOG_LINE@result@  packs: 0@@@",
+      "@@@STEP_LOG_LINE@result@  in_pack: 0@@@",
+      "@@@STEP_LOG_LINE@result@  size-pack: 0@@@",
+      "@@@STEP_LOG_LINE@result@  size-garbage: 0@@@",
+      "@@@STEP_LOG_LINE@result@  prune-packable: 0@@@",
+      "@@@STEP_LOG_LINE@result@  size: 0@@@",
       "@@@STEP_LOG_END@result@@@"
     ]
   },
   {
-    "cmd": [
-      "git_cache.py",
-      "update-bootstrap",
-      "--skip-populate",
-      "--prune",
-      "--cache-dir",
-      "[CACHE]/builder/w",
-      "--verbose",
-      "https://chromium.googlesource.com/v8/v8",
-      "--gc-aggressive"
-    ],
-    "cost": {
-      "cpu": 500,
-      "disk": 0,
-      "memory": 89,
-      "net": 10
-    },
-    "env": {
-      "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
-      "GIT_HTTP_LOW_SPEED_TIME": "0",
-      "OVERRIDE_BOOTSTRAP_BUCKET": "experimental-gs-bucket"
-    },
-    "env_suffixes": {
-      "PATH": [
-        "RECIPE_REPO[depot_tools]"
-      ]
-    },
-    "name": "https://chromium.googlesource.com/v8/v8.update bootstrap",
+    "cmd": [],
+    "name": "https://chromium.googlesource.com/empty.repo is empty; skipping update",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

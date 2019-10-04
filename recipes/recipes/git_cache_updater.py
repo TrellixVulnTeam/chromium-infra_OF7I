@@ -79,7 +79,7 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
     url,
   ]
 
-  with api.step.nest('Update '+url):
+  with api.step.nest(url):
     api.step(
         name='populate',
         cmd=[
@@ -96,7 +96,7 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
 
     repo_path = api.path.abs_to_path(api.step(
         name='lookup repo_path',
-        cmd=['git_cache.py', 'exists', '--cache-dir', work_dir, url],
+        cmd=['git_cache.py', 'exists'] + opts,
         stdout=api.raw_io.output(),
         step_test_data=lambda: api.raw_io.test_api.stream_output(
             api.path.join(work_dir, url.strip('https://'))+'\n',
@@ -113,15 +113,21 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
           step_test_data=lambda: api.raw_io.test_api.stream_output(
               api.git.test_api.count_objects_output(10)))
 
-    gc_aggressive_opt = []
-    if gc_aggressive:
-      gc_aggressive_opt = ['--gc-aggressive']
-
     # Scale the memory cost of this update by size-pack raised to 1.5. This is
     # an arbitrary scaling factor, but it allows multiple small repos to run in
     # parallel but allows large repos (e.g. chromium) to exclusively use all the
     # memory on the system.
     mem_cost = int((stats['size'] + stats['size-pack']) ** 1.5)
+    if mem_cost == 0:
+      # some repos can be empty (e.g. they're an "ACL-only" repo), and
+      # update-bootstrap doesn't like that, so skip them.
+      api.step('repo is empty; skipping update', cmd=None)
+      return
+
+    gc_aggressive_opt = []
+    if gc_aggressive:
+      gc_aggressive_opt = ['--gc-aggressive']
+
     api.step(
         name='update bootstrap',
         cmd=[
@@ -196,6 +202,19 @@ def GenTests(api):
           repo_urls=['https://chromium.googlesource.com/v8/v8'],
           gc_aggressive=True,
       ))
+  )
+  yield (
+      api.test('one-repo-empty')
+      + api.runtime(is_experimental=True, is_luci=True)
+      + api.properties(git_cache_updater_pb.Inputs(
+          override_bucket='experimental-gs-bucket',
+          repo_urls=['https://chromium.googlesource.com/empty'],
+          gc_aggressive=True,
+      ))
+      + api.override_step_data(
+          'https://chromium.googlesource.com/empty.git count-objects',
+          api.raw_io.stream_output(api.git.count_objects_output(0)),
+      )
   )
   yield (
       api.test('host-with-exclusions')

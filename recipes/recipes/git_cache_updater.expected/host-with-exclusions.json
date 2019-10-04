@@ -35,7 +35,7 @@
   },
   {
     "cmd": [],
-    "name": "Update https://chromium.googlesource.com/apps"
+    "name": "https://chromium.googlesource.com/apps"
   },
   {
     "cmd": [
@@ -65,7 +65,7 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "Update https://chromium.googlesource.com/apps.populate",
+    "name": "https://chromium.googlesource.com/apps.populate",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -76,6 +76,7 @@
       "exists",
       "--cache-dir",
       "[CACHE]/builder/w",
+      "--verbose",
       "https://chromium.googlesource.com/apps"
     ],
     "env": {
@@ -88,7 +89,7 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "Update https://chromium.googlesource.com/apps.lookup repo_path",
+    "name": "https://chromium.googlesource.com/apps.lookup repo_path",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -111,7 +112,7 @@
       ]
     },
     "infra_step": true,
-    "name": "Update https://chromium.googlesource.com/apps.git count-objects",
+    "name": "https://chromium.googlesource.com/apps.git count-objects",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@result@  count: 10@@@",
@@ -152,14 +153,14 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "Update https://chromium.googlesource.com/apps.update bootstrap",
+    "name": "https://chromium.googlesource.com/apps.update bootstrap",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "Update https://chromium.googlesource.com/chromium/src"
+    "name": "https://chromium.googlesource.com/chromium/src"
   },
   {
     "cmd": [
@@ -189,7 +190,7 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "Update https://chromium.googlesource.com/chromium/src.populate",
+    "name": "https://chromium.googlesource.com/chromium/src.populate",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -200,6 +201,7 @@
       "exists",
       "--cache-dir",
       "[CACHE]/builder/w",
+      "--verbose",
       "https://chromium.googlesource.com/chromium/src"
     ],
     "env": {
@@ -212,7 +214,7 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "Update https://chromium.googlesource.com/chromium/src.lookup repo_path",
+    "name": "https://chromium.googlesource.com/chromium/src.lookup repo_path",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -235,7 +237,7 @@
       ]
     },
     "infra_step": true,
-    "name": "Update https://chromium.googlesource.com/chromium/src.git count-objects",
+    "name": "https://chromium.googlesource.com/chromium/src.git count-objects",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@result@  count: 10@@@",
@@ -276,7 +278,7 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "Update https://chromium.googlesource.com/chromium/src.update bootstrap",
+    "name": "https://chromium.googlesource.com/chromium/src.update bootstrap",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
