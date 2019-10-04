@@ -80,6 +80,31 @@
   {
     "cmd": [
       "git",
+      "show-ref",
+      "-q",
+      "master"
+    ],
+    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/v8/v8",
+    "env": {
+      "CHROME_HEADLESS": "1",
+      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
+      "GIT_HTTP_LOW_SPEED_TIME": "0",
+      "OVERRIDE_BOOTSTRAP_BUCKET": "experimental-gs-bucket"
+    },
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "https://chromium.googlesource.com/v8/v8.git show-ref",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
       "count-objects",
       "-v"
     ],

@@ -97,6 +97,30 @@
   {
     "cmd": [
       "git",
+      "show-ref",
+      "-q",
+      "master"
+    ],
+    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/a",
+    "env": {
+      "CHROME_HEADLESS": "1",
+      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
+      "GIT_HTTP_LOW_SPEED_TIME": "0"
+    },
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "https://chromium.googlesource.com/apps.git show-ref",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
       "count-objects",
       "-v"
     ],
@@ -215,6 +239,30 @@
       ]
     },
     "name": "https://chromium.googlesource.com/chromium/src.lookup repo_path",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "show-ref",
+      "-q",
+      "master"
+    ],
+    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/chromium/src",
+    "env": {
+      "CHROME_HEADLESS": "1",
+      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
+      "GIT_HTTP_LOW_SPEED_TIME": "0"
+    },
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "https://chromium.googlesource.com/chromium/src.git show-ref",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

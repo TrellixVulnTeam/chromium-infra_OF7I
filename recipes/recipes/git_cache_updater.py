@@ -104,6 +104,10 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
     ).stdout.strip())
 
     with api.context(cwd=repo_path):
+      if api.git('show-ref', '-q', 'master', ok_ret='any').retcode:
+        api.step('repo has no master ref; skipping update', cmd=None)
+        return
+
       stats = api.git.count_objects(
           can_fail_build=True,
           # TODO(iannucci): ugh, the test mock for this is horrendous.
@@ -194,6 +198,7 @@ def GenTests(api):
       + api.post_process(post_process.StatusFailure)
       + api.post_process(post_process.DropExpectation)
   )
+
   yield (
       api.test('one-repo-experiment-aggressive')
       + api.runtime(is_experimental=True, is_luci=True)
@@ -203,6 +208,7 @@ def GenTests(api):
           gc_aggressive=True,
       ))
   )
+
   yield (
       api.test('one-repo-empty')
       + api.runtime(is_experimental=True, is_luci=True)
@@ -216,6 +222,22 @@ def GenTests(api):
           api.raw_io.stream_output(api.git.count_objects_output(0)),
       )
   )
+
+  yield (
+      api.test('one-repo-no-master')
+      + api.runtime(is_experimental=True, is_luci=True)
+      + api.properties(git_cache_updater_pb.Inputs(
+          override_bucket='experimental-gs-bucket',
+          repo_urls=['https://chromium.googlesource.com/bogus'],
+          gc_aggressive=True,
+      ))
+      + api.override_step_data(
+          'https://chromium.googlesource.com/bogus.git show-ref',
+          retcode=1,
+      )
+  )
+
+
   yield (
       api.test('host-with-exclusions')
       + api.properties(git_cache_updater_pb.Inputs(
@@ -229,6 +251,7 @@ def GenTests(api):
           ),
       ))
   )
+
   yield (
       api.test('host-with-incorrect-regexp-exclude')
       + api.properties(git_cache_updater_pb.Inputs(
