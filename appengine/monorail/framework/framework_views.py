@@ -92,7 +92,7 @@ class UserView(object):
     self.banned = ''
 
     (self.username, self.domain,
-     self.obscured_username) = ParseAndObscureAddress(email)
+     self.obscured_username, obscured_email) = ParseAndObscureAddress(email)
     # No need to obfuscate or reveal client email.
     # Instead display a human-readable username.
     if self.user_id == framework_constants.DELETED_USER_ID:
@@ -104,7 +104,7 @@ class UserView(object):
     elif not self.obscure_email:
       self.display_name = email
     else:
-      self.display_name = '%s...@%s' % (self.obscured_username, self.domain)
+      self.display_name = obscured_email
 
     self.avail_message, self.avail_state = (
         framework_helpers.GetUserAvailability(user, is_group))
@@ -150,8 +150,10 @@ def ParseAndObscureAddress(email):
     email: string email address to process
 
   Returns:
-    A 3-tuple (username, domain, obscured_username).
-    The obscured_username is trucated the same way that Google Groups does it.
+    A 4-tuple (username, domain, obscured_username, obscured_email).
+    The obscured_username is truncated the same way that Google Groups does it:
+    it truncates at 8 characters or truncates OFF 3 characters, whichever
+    results in a shorter obscured_username.
   """
   if '@' in email:
     username, user_domain = email.split('@', 1)
@@ -161,8 +163,9 @@ def ParseAndObscureAddress(email):
   base_username = username.split('+')[0]
   cutoff_point = min(8, max(1, len(base_username) - 3))
   obscured_username = base_username[:cutoff_point]
+  obscured_email = '%s...@%s' %(obscured_username, user_domain)
 
-  return username, user_domain, obscured_username
+  return username, user_domain, obscured_username, obscured_email
 
 
 def _ShouldRevealEmail(auth, project, viewed_email):
@@ -241,9 +244,9 @@ def GetViewedUserDisplayName(mr):
   email_obscured = (not(mr.auth.user_pb.is_site_admin or viewing_self)
                     and mr.viewed_user_auth.user_view.obscure_email)
   if email_obscured:
-    _, domain, obscured_username = ParseAndObscureAddress(
-        mr.viewed_user_auth.email)
-    viewed_user_display_name = '%s...@%s' % (obscured_username, domain)
+    (_username, _domain, _obscured_username,
+     obscured_email) = ParseAndObscureAddress(mr.viewed_user_auth.email)
+    viewed_user_display_name = obscured_email
   else:
     viewed_user_display_name = mr.viewed_user_auth.email
 

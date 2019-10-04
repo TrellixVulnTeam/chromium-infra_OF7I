@@ -247,6 +247,18 @@ class RevealEmailsToMembersTest(unittest.TestCase):
     self.CheckRevealAllToMember(555, True)
 
 
+class ParseAndObscureAddressTest(unittest.TestCase):
+
+  def testParseAndObscureAddress(self):
+    email = 'sir.chicken@farm.test'
+    (username, user_domain, obscured_username,
+     obscured_email) = framework_views.ParseAndObscureAddress(email)
+
+    self.assertEqual(username, 'sir.chicken')
+    self.assertEqual(user_domain, 'farm.test')
+    self.assertEqual(obscured_username, 'sir.chic')
+    self.assertEqual(obscured_email, 'sir.chic...@farm.test')
+
 class RevealAllEmailsTest(unittest.TestCase):
 
   def testRevealAllEmail(self):
