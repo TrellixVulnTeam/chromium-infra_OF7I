@@ -23,12 +23,12 @@
       "git_cache.py",
       "populate",
       "--reset-fetch-config",
-      "https://chromium.googlesource.com/v8/v8",
+      "--ref",
+      "refs/branch-heads/*",
       "--cache-dir",
       "[CACHE]/builder/w",
       "--verbose",
-      "--ref",
-      "refs/branch-heads/*"
+      "https://chromium.googlesource.com/v8/v8"
     ],
     "cost": {
       "cpu": 500,
@@ -113,14 +113,12 @@
     "cmd": [
       "git_cache.py",
       "update-bootstrap",
-      "https://chromium.googlesource.com/v8/v8",
+      "--skip-populate",
+      "--prune",
       "--cache-dir",
       "[CACHE]/builder/w",
       "--verbose",
-      "--ref",
-      "refs/branch-heads/*",
-      "--skip-populate",
-      "--prune",
+      "https://chromium.googlesource.com/v8/v8",
       "--gc-aggressive"
     ],
     "cost": {

@@ -74,20 +74,24 @@ def _get_repo_urls(api, inputs):
 
 def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
   opts = [
-    url,
     '--cache-dir', work_dir,
     '--verbose',
-    '--ref', 'refs/branch-heads/*',
-    # By default, "refs/heads/*" and refs/tags/* are checked out by
-    # git_cache. However, for heavy branching repos,
-    # 'refs/branch-heads/*' is also very useful (crbug/942169).
-    # This is a noop for repos without refs/branch-heads.
+    url,
   ]
 
   with api.step.nest('Update '+url):
     api.step(
         name='populate',
-        cmd=['git_cache.py', 'populate', '--reset-fetch-config'] + opts,
+        cmd=[
+          'git_cache.py', 'populate',
+          '--reset-fetch-config',
+
+          # By default, "refs/heads/*" and refs/tags/* are checked out by
+          # git_cache. However, for heavy branching repos,
+          # 'refs/branch-heads/*' is also very useful (crbug/942169).
+          # This is a noop for repos without refs/branch-heads.
+          '--ref', 'refs/branch-heads/*',
+        ]+opts,
         cost=api.step.ResourceCost(disk=20))
 
     repo_path = api.path.abs_to_path(api.step(
@@ -109,9 +113,9 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
           step_test_data=lambda: api.raw_io.test_api.stream_output(
               api.git.test_api.count_objects_output(10)))
 
-    opts += ['--skip-populate', '--prune']
+    gc_aggressive_opt = []
     if gc_aggressive:
-      opts += ['--gc-aggressive']
+      gc_aggressive_opt = ['--gc-aggressive']
 
     # Scale the memory cost of this update by size-pack raised to 1.5. This is
     # an arbitrary scaling factor, but it allows multiple small repos to run in
@@ -120,7 +124,10 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
     mem_cost = int((stats['size'] + stats['size-pack']) ** 1.5)
     api.step(
         name='update bootstrap',
-        cmd=['git_cache.py', 'update-bootstrap'] + opts,
+        cmd=[
+          'git_cache.py', 'update-bootstrap',
+          '--skip-populate', '--prune',
+        ] + opts + gc_aggressive_opt,
         cost=api.step.ResourceCost(memory=mem_cost, net=10))
 
 
