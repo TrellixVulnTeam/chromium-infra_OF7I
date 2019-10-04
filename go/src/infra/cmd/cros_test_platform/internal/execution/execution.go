@@ -28,12 +28,16 @@ type Runner interface {
 
 // NewSkylabRunner returns a Runner that will execute the given tests in
 // the skylab environment.
-func NewSkylabRunner(ctx context.Context, tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (Runner, error) {
-	ts, err := skylab.NewTaskSet(ctx, tests, params, workerConfig, parentTaskID)
-	if err != nil {
-		return nil, errors.Annotate(err, "new skylab runner").Err()
+func NewSkylabRunner(ctx context.Context, workerConfig *config.Config_SkylabWorker, parentTaskID string, requests []*steps.ExecuteRequest) (Runner, error) {
+	ts := make([]*skylab.TaskSet, len(requests))
+	for i, r := range requests {
+		var err error
+		ts[i], err = skylab.NewTaskSet(ctx, r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
+		if err != nil {
+			return nil, errors.Annotate(err, "new skylab runner").Err()
+		}
 	}
-	return skylab.NewRunner(ts), nil
+	return skylab.NewRunner(ts...), nil
 }
 
 // NewAutotestRunner returns a Runner that will execute the given tests in

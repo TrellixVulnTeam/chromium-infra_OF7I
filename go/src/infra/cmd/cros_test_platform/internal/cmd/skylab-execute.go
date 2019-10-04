@@ -67,13 +67,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		return err
 	}
 
-	// TODO(pprabhu) Implement -multi_request for skylab backend.
-	if len(requests) > 1 {
-		return errors.Reason("multiple requests support unimplemented (got %d)", len(requests)).Err()
-	}
-
-	request := requests[0]
-	cfg := request.Config
+	cfg := requests[0].Config
 	client, err := swarmingClient(ctx, cfg.SkylabSwarming)
 	if err != nil {
 		return err
@@ -90,11 +84,11 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		taskID = env["SWARMING_TASK_ID"].Value
 	}
 
-	runner, err := execution.NewSkylabRunner(ctx, request.Enumeration.AutotestInvocations, request.RequestParams, cfg.SkylabWorker, taskID)
+	runner, err := execution.NewSkylabRunner(ctx, cfg.SkylabWorker, taskID, requests)
 	if err != nil {
 		return err
 	}
-	maxDuration, err := ptypes.Duration(request.RequestParams.Time.MaximumDuration)
+	maxDuration, err := ptypes.Duration(requests[0].RequestParams.Time.MaximumDuration)
 	if err != nil {
 		maxDuration = 12 * time.Hour
 	}
@@ -131,6 +125,7 @@ func (c *skylabExecuteRun) validateRequests(requests []*steps.ExecuteRequest) er
 	if err := c.validateRequestConfig(requests[0].Config); err != nil {
 		return errors.Annotate(err, "validate request %s", requests[0]).Err()
 	}
+
 	cfg := requests[0].Config
 	for _, r := range requests[1:] {
 		o := r.Config
@@ -138,6 +133,14 @@ func (c *skylabExecuteRun) validateRequests(requests []*steps.ExecuteRequest) er
 			return errors.Reason("mistmatched config: %s vs %s", cfg, o).Err()
 		}
 	}
+	timeout := requests[0].RequestParams.Time.MaximumDuration
+	for _, r := range requests[1:] {
+		o := r.RequestParams.Time.MaximumDuration
+		if !proto.Equal(timeout, o) {
+			return errors.Reason("per-request timeout support unimplemented: %s vs %s", timeout, o).Err()
+		}
+	}
+
 	return nil
 }
 
