@@ -96,9 +96,9 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
         cmd=['git_cache.py', 'exists', '--cache-dir', work_dir, url],
         stdout=api.raw_io.output(),
         step_test_data=lambda: api.raw_io.test_api.stream_output(
-            api.path.join(work_dir, url.strip('https://')),
+            api.path.join(work_dir, url.strip('https://'))+'\n',
         ),
-    ).stdout)
+    ).stdout.strip())
 
     with api.context(cwd=repo_path):
       stats = api.git.count_objects(
