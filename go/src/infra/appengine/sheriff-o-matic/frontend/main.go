@@ -272,14 +272,7 @@ func init() {
 	r.GET("/api/v1/alerts/:tree", protected, handler.GetAlertsHandler)
 	r.GET("/api/v1/unresolved/:tree", protected, handler.GetUnresolvedAlertsHandler)
 	r.GET("/api/v1/resolved/:tree", protected, handler.GetResolvedAlertsHandler)
-	r.GET("/api/v1/restarts/:tree", protected, handler.GetRestartingMastersHandler)
 	r.GET("/api/v1/xsrf_token", protected, getXSRFToken)
-
-	// Disallow cookies because this handler should not be accessible by regular
-	// users.
-	r.POST("/api/v1/alerts/:tree", base(false).Extend(requireGoogler), handler.PostAlertsHandler)
-	r.POST("/api/v1/alert/:tree/:key", base(false).Extend(requireGoogler), handler.PostAlertHandler)
-	r.POST("/api/v1/resolve/:tree", protected, handler.ResolveAlertHandler)
 
 	r.GET("/api/v1/annotations/:tree", protected, getAnnotationsHandler)
 	r.POST("/api/v1/annotations/:tree/:action", protected, postAnnotationsHandler)

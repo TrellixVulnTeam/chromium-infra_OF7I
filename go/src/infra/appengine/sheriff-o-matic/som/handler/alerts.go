@@ -8,19 +8,16 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
 	"golang.org/x/net/context"
 
-	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock"
-	"go.chromium.org/luci/server/auth/xsrf"
 	"go.chromium.org/luci/server/router"
 )
 
@@ -161,43 +158,6 @@ func GetResolvedAlertsHandler(ctx *router.Context) {
 	getAlerts(ctx, false, true)
 }
 
-// PostAlertsHandler handes alert writes sent by an alerts dispatcher instance.
-func PostAlertsHandler(ctx *router.Context) {
-	c, w, r, p := ctx.Context, ctx.Writer, ctx.Request, ctx.Params
-
-	tree := p.ByName("tree")
-
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if err = r.Body.Close(); err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	// Do a sanity check.
-	alertsSummary := &messages.AlertsSummary{}
-	err = json.Unmarshal(data, alertsSummary)
-	if err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if alertsSummary.Timestamp == 0 {
-		errStatus(c, w, http.StatusBadRequest,
-			"Couldn't decode into AlertsSummary or did not include a timestamp.")
-		return
-	}
-
-	err = putAlertsDatastore(c, tree, alertsSummary, true)
-	if err != nil {
-		errStatus(c, w, http.StatusInternalServerError, err.Error())
-	}
-}
-
 func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.AlertsSummary, autoResolve bool) error {
 	treeKey := datastore.MakeKey(c, "Tree", tree)
 	now := clock.Now(c).UTC()
@@ -290,224 +250,4 @@ func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.
 	}
 
 	return datastore.Put(c, revisionSummaryJSONs)
-}
-
-// PostAlertHandler writes a single Alert based on a given client-provided key.
-// This is currently used by CrOS, but not any other clients.
-func PostAlertHandler(ctx *router.Context) {
-	c, w, r, p := ctx.Context, ctx.Writer, ctx.Request, ctx.Params
-
-	tree := p.ByName("tree")
-	key := p.ByName("key")
-
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if err = r.Body.Close(); err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	// Do a sanity check.
-	alert := &messages.Alert{}
-	err = json.Unmarshal(data, alert)
-	if err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if key != alert.Key {
-		errStatus(c, w, http.StatusBadRequest, fmt.Sprintf("POST key '%s' does not match alert key '%s'", key, alert.Key))
-		return
-	}
-
-	alertJSON := &model.AlertJSON{
-		ID:       key,
-		Tree:     datastore.MakeKey(c, "Tree", tree),
-		Resolved: false,
-	}
-
-	err = datastore.RunInTransaction(c, func(c context.Context) error {
-		// Try and get the alert to maintain resolved status.
-		datastore.Get(c, alertJSON)
-		alertJSON.Date = clock.Now(c)
-		alertJSON.Contents = data
-		if alertJSON.Resolved && alertJSON.AutoResolved {
-			alertJSON.Resolved = false
-			alertJSON.AutoResolved = false
-		}
-		return datastore.Put(c, alertJSON)
-	}, nil)
-	if err != nil {
-		errStatus(c, w, http.StatusInternalServerError, err.Error())
-		return
-	}
-}
-
-// ResolveAlertHandler updates the Resolved status of an alert.
-func ResolveAlertHandler(ctx *router.Context) {
-	c, w, r, p := ctx.Context, ctx.Writer, ctx.Request, ctx.Params
-
-	tree := p.ByName("tree")
-	treeKey := datastore.MakeKey(c, "Tree", tree)
-	now := clock.Now(c).UTC()
-
-	req := &postRequest{}
-	err := json.NewDecoder(r.Body).Decode(req)
-	if err != nil {
-		errStatus(c, w, http.StatusBadRequest, fmt.Sprintf("while decoding request: %s", err))
-		return
-	}
-
-	if err = xsrf.Check(c, req.XSRFToken); err != nil {
-		errStatus(c, w, http.StatusForbidden, err.Error())
-		return
-	}
-
-	if err = r.Body.Close(); err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if req.Data == nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-	resolveRequest := &model.ResolveRequest{}
-	err = json.Unmarshal(*req.Data, resolveRequest)
-	if err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	alertJSONs := make([]model.AlertJSON, len(resolveRequest.Keys))
-	for i, key := range resolveRequest.Keys {
-		alertJSONs[i].ID = key
-		alertJSONs[i].Tree = treeKey
-	}
-
-	err = datastore.Get(c, alertJSONs)
-	if err != nil {
-		errStatus(c, w, http.StatusBadRequest, err.Error())
-		return
-	}
-	for i := range resolveRequest.Keys {
-		if len(alertJSONs[i].Contents) == 0 {
-			errStatus(c, w, http.StatusInternalServerError, fmt.Sprintf("Key %s not found", alertJSONs[i].ID))
-			return
-		}
-		alertJSONs[i].Resolved = resolveRequest.Resolved
-		alertJSONs[i].AutoResolved = false
-		alertJSONs[i].ResolvedDate = now
-	}
-	err = datastore.Put(c, alertJSONs)
-	if err != nil {
-		errStatus(c, w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	resolveResponse := &model.ResolveResponse{
-		Tree:     tree,
-		Keys:     resolveRequest.Keys,
-		Resolved: resolveRequest.Resolved,
-	}
-	resp, err := json.Marshal(resolveResponse)
-	if err != nil {
-		errStatus(c, w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(resp)
-}
-
-// GetRestartingMastersHandler returns any pending master restarts for a given tree.
-func GetRestartingMastersHandler(ctx *router.Context) {
-	c, w, p := ctx.Context, ctx.Writer, ctx.Params
-
-	tree := p.ByName("tree")
-
-	masters, err := getRestartingMasters(c, tree)
-	if err == ErrUnrecognizedTree {
-		errStatus(c, w, http.StatusNotFound, err.Error())
-		return
-	}
-
-	if err != nil {
-		errStatus(c, w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	data, err := json.Marshal(masters)
-	if err != nil {
-		errStatus(c, w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
-}
-
-type desiredMasterStates struct {
-	MasterStates map[string][]masterState `json:"master_states"`
-}
-
-type masterState struct {
-	DesiredState   string `json:"desired_state"`
-	TransitionTime string `json:"transition_time_utc"`
-}
-
-func getRestartingMasters(c context.Context, treeName string) (map[string]masterState, error) {
-	b, err := client.GetGitilesCached(c, masterStateURL)
-	if err != nil {
-		return nil, err
-	}
-
-	ms := &desiredMasterStates{}
-	if err = json.Unmarshal(b, ms); err != nil {
-		return nil, err
-	}
-
-	trees, err := getGatekeeperTrees(c)
-	if err != nil {
-		return nil, err
-	}
-
-	now := time.Now().UTC()
-
-	ret := map[string]masterState{}
-	var filter = func(masterName string, masterStates []masterState) error {
-		for _, state := range masterStates {
-			tt, err := time.Parse(time.RFC3339Nano, state.TransitionTime)
-			if err != nil {
-				return err
-			}
-
-			// TODO: make this warning window configurable. This logic will include a
-			// master if it is scheduled to restart at any time later than two
-			// hours ago. This handles both recent and future restarts.
-
-			if now.Sub(tt) < 2*time.Hour {
-				ret[masterName] = state
-			}
-		}
-		return nil
-	}
-
-	// For specific trees, filter to master specified in the config.
-	cfgs, ok := trees[treeName]
-	if !ok {
-		return nil, ErrUnrecognizedTree
-	}
-
-	for _, cfg := range cfgs {
-		for masterLoc := range cfg.Masters {
-			if err := filter(masterLoc.Name(), ms.MasterStates["master."+masterLoc.Name()]); err != nil {
-				return nil, err
-			}
-		}
-	}
-	return ret, nil
 }
