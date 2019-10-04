@@ -787,6 +787,14 @@ def UsersInvolvedInTemplate(template):
   return result
 
 
+def UsersInvolvedInTemplates(templates):
+  """Return a set of all user IDs referenced in the given templates."""
+  result = set()
+  for template in templates:
+    result.update(UsersInvolvedInTemplate(template))
+  return result
+
+
 def UsersInvolvedInComponents(component_defs):
   """Return a set of user IDs referenced in the given components."""
   result = set()

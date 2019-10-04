@@ -955,7 +955,7 @@ class BizobjTest(unittest.TestCase):
         ['Priority-High'], [], [], [])
     self.assertEqual(set(), tracker_bizobj.UsersInvolvedInTemplate(template))
 
-  def testUsersInvolvedInTempalte_Normal(self):
+  def testUsersInvolvedInTemplate_Normal(self):
     template = tracker_bizobj.MakeIssueTemplate(
         'A report', 'Something went wrong', 'New', 111, 'Look out!',
         ['Priority-High'], [], [333, 444], [])
@@ -972,6 +972,29 @@ class BizobjTest(unittest.TestCase):
     self.assertEqual(
         {111, 333, 444, 222, 555, 666},
         tracker_bizobj.UsersInvolvedInTemplate(template))
+
+  def testUsersInvolvedInTemplates_NoTemplates(self):
+    self.assertEqual(set(), tracker_bizobj.UsersInvolvedInTemplates([]))
+
+  def testUsersInvolvedInTemplates_Normal(self):
+    template1 = tracker_bizobj.MakeIssueTemplate(
+        'A report', 'Something went wrong', 'New', 111, 'Look out!',
+        ['Priority-High'], [], [333, 444], [])
+    template1.field_values = [
+        tracker_bizobj.MakeFieldValue(22, None, None, 222, None, None, False)]
+
+    template2 = tracker_bizobj.MakeIssueTemplate(
+        'dude', 'wheres my', 'New', 222, 'car', [], [], [999, 888], [])
+    template2.field_values = [
+        tracker_bizobj.MakeFieldValue(23, None, None, 333, None, None, False)]
+    template2.approval_values = [
+        tracker_pb2.ApprovalValue(
+            approval_id=30, setter_id=666, approver_ids=[444, 555]),
+        tracker_pb2.ApprovalValue(approval_id=31)]
+
+    self.assertEqual(
+        {111, 333, 444, 222, 555, 666, 888, 999},
+        tracker_bizobj.UsersInvolvedInTemplates([template1, template2]))
 
   def testUsersInvolvedInConfig_Empty(self):
     """There are no user IDs mentioned in a default config."""
