@@ -76,7 +76,6 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
   opts = [
     url,
     '--cache-dir', work_dir,
-    '--reset-fetch-config',
     '--verbose',
     '--ref', 'refs/branch-heads/*',
     # By default, "refs/heads/*" and refs/tags/* are checked out by
@@ -88,7 +87,7 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
   with api.step.nest('Update '+url):
     api.step(
         name='populate',
-        cmd=['git_cache.py', 'populate'] + opts,
+        cmd=['git_cache.py', 'populate', '--reset-fetch-config'] + opts,
         cost=api.step.ResourceCost(disk=20))
 
     repo_path = api.path.abs_to_path(api.step(
