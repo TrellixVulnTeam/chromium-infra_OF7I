@@ -4,7 +4,7 @@
 
 oncalls: {
   name: "Trooper"
-  url: "https://build.chromium.org/p/chromium/trooper.json"
+  url: "https://rota-ng.appspot.com/legacy/trooper.json"
 }
 
 links: {
