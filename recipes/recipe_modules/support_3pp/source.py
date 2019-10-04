@@ -189,7 +189,8 @@ def _do_checkout(api, workdir, spec, version):
       paths = api.file.glob_paths(
         'find archive to unpack', checkout_dir, '*.*')
       assert len(paths) == 1, (
-        'unpack_archive==true - expected single archive file')
+        'unpack_archive==true - expected single archive file, '
+        'but %s are extracted' % (paths,))
 
       archive = paths[0]
       archive_name = archive.pieces[-1]
