@@ -32,6 +32,8 @@ DEPS = [
 
 PROPERTIES = git_cache_updater_pb.Inputs
 
+OK, EMPTY, NO_MASTER = range(3)
+
 
 def _list_host_repos(api, host_url):
   host_url = host_url.rstrip('/')
@@ -106,12 +108,6 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
     ).stdout.strip())
 
     with api.context(cwd=repo_path):
-      if api.git('rev-parse', '-q', '--verify', 'master', ok_ret='any').retcode:
-        api.step('repo has no master ref; skipping update', cmd=None)
-        summary.step_text = "[no master ref]"
-        summary.status = api.step.FAILURE  # TODO(iannucci): warning
-        return
-
       stats = api.git.count_objects(
           can_fail_build=True,
           # TODO(iannucci): ugh, the test mock for this is horrendous.
@@ -121,18 +117,24 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
           step_test_data=lambda: api.raw_io.test_api.stream_output(
               api.git.test_api.count_objects_output(10)))
 
-    # Scale the memory cost of this update by size-pack raised to 1.5. This is
-    # an arbitrary scaling factor, but it allows multiple small repos to run in
-    # parallel but allows large repos (e.g. chromium) to exclusively use all the
-    # memory on the system.
-    mem_cost = int((stats['size'] + stats['size-pack']) ** 1.5)
-    if mem_cost == 0:
-      # some repos can be empty (e.g. they're an "ACL-only" repo), and
-      # update-bootstrap doesn't like that, so skip them.
-      api.step('repo is empty; skipping update', cmd=None)
-      summary.step_text = "[empty]"
-      summary.status = api.step.FAILURE  # TODO(iannucci): warning
-      return
+      # Scale the memory cost of this update by size-pack raised to 1.5. This is
+      # an arbitrary scaling factor, but it allows multiple small repos to run
+      # in parallel but allows large repos (e.g. chromium) to exclusively use
+      # all the memory on the system.
+      mem_cost = int((stats['size'] + stats['size-pack']) ** 1.5)
+      if mem_cost == 0:
+        # some repos can be empty (e.g. they're an "ACL-only" repo), and
+        # update-bootstrap doesn't like that, so skip them.
+        api.step('repo is empty; skipping update', cmd=None)
+        summary.step_text = "[empty]"
+        summary.status = api.step.FAILURE  # TODO(iannucci): warning
+        return EMPTY
+
+      if api.git('rev-parse', '-q', '--verify', 'master', ok_ret='any').retcode:
+        api.step('repo has no master ref; skipping update', cmd=None)
+        summary.step_text = "[no master ref]"
+        summary.status = api.step.FAILURE  # TODO(iannucci): warning
+        return NO_MASTER
 
     gc_aggressive_opt = []
     if gc_aggressive:
@@ -147,6 +149,7 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
         cost=api.step.ResourceCost(memory=mem_cost, net=10))
 
     summary.step_text = "[ok]"
+    return OK
 
 
 def RunSteps(api, inputs):
@@ -177,18 +180,44 @@ def RunSteps(api, inputs):
     for url in sorted(repo_urls):
       work.append(api.futures.spawn_immediate(
           _do_update_bootstrap, api, url, work_dir, inputs.gc_aggressive,
-          __name=('update '+url)))
+          __name=url))
 
   total = len(work)
-  success = 0
-  for result in api.futures.iwait(work):
-    if result.exception() is None:
-      success += 1
+  success = warning = 0
+  failed_repos = []
+  empties = masterless = 0
+  for future in api.futures.iwait(work):
+    try:
+      status = future.result()
+    except Exception:  # pylint: disable=broad-except
+      failed_repos.append(future.name)
+      continue
 
-  return result_pb.RawResult(
-      status=bb_common_pb.FAILURE if success == total else bb_common_pb.SUCCESS,
-      summary_markdown='Updated cache for %d/%d repos' % (success, total),
-  )
+    if status == OK:
+      success += 1
+    elif status == EMPTY:
+      empties += 1
+      warning += 1
+    elif status == NO_MASTER:
+      masterless += 1
+      warning += 1
+    else:
+      assert False, 'unknown status %r' % (status,)  # pragma: no cover
+
+  status = bb_common_pb.FAILURE if failed_repos else bb_common_pb.SUCCESS
+  summary = 'Updated cache for %d/%d repos.' % (success, total)
+  if warning:
+    summary += '\n\nEncountered warnings for %d repos:' % (warning,)
+    if empties:
+      summary += '\n  * empty (repo has no objects): %d' % (empties,)
+    if masterless:
+      summary += '\n  * no master ref: %d' % (masterless,)
+  if failed_repos:
+    summary += '\n\nEncountered failures for %d repos:' % (len(failed_repos),)
+    for repo_name in failed_repos:
+      summary += '\n  * ' + repo_name
+
+  return result_pb.RawResult(status=status, summary_markdown=summary)
 
 
 TEST_REPOS = """
@@ -228,6 +257,20 @@ def GenTests(api):
       + api.override_step_data(
           'https://chromium.googlesource.com/empty.git count-objects',
           api.raw_io.stream_output(api.git.count_objects_output(0)),
+      )
+  )
+
+  yield (
+      api.test('one-repo-fail')
+      + api.runtime(is_experimental=True, is_luci=True)
+      + api.properties(git_cache_updater_pb.Inputs(
+          override_bucket='experimental-gs-bucket',
+          repo_urls=['https://chromium.googlesource.com/fail'],
+          gc_aggressive=True,
+      ))
+      + api.override_step_data(
+          'https://chromium.googlesource.com/fail.populate',
+          retcode=1,
       )
   )
 

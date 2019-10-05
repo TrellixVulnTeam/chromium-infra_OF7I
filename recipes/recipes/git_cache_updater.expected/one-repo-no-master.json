@@ -85,6 +85,39 @@
   {
     "cmd": [
       "git",
+      "count-objects",
+      "-v"
+    ],
+    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/bogu",
+    "env": {
+      "CHROME_HEADLESS": "1",
+      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
+      "GIT_HTTP_LOW_SPEED_TIME": "0",
+      "OVERRIDE_BOOTSTRAP_BUCKET": "experimental-gs-bucket"
+    },
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "https://chromium.googlesource.com/bogus.git count-objects",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@result@  count: 10@@@",
+      "@@@STEP_LOG_LINE@result@  garbage: 10@@@",
+      "@@@STEP_LOG_LINE@result@  packs: 10@@@",
+      "@@@STEP_LOG_LINE@result@  in_pack: 10@@@",
+      "@@@STEP_LOG_LINE@result@  size-pack: 10@@@",
+      "@@@STEP_LOG_LINE@result@  size-garbage: 10@@@",
+      "@@@STEP_LOG_LINE@result@  prune-packable: 10@@@",
+      "@@@STEP_LOG_LINE@result@  size: 10@@@",
+      "@@@STEP_LOG_END@result@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
       "rev-parse",
       "-q",
       "--verify",
@@ -116,10 +149,6 @@
     ]
   },
   {
-    "failure": {
-      "failure": {},
-      "humanReason": "Updated cache for 1/1 repos"
-    },
     "name": "$result"
   }
 ]

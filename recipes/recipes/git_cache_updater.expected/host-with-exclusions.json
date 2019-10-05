@@ -101,31 +101,6 @@
   {
     "cmd": [
       "git",
-      "rev-parse",
-      "-q",
-      "--verify",
-      "master"
-    ],
-    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/a",
-    "env": {
-      "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
-      "GIT_HTTP_LOW_SPEED_TIME": "0"
-    },
-    "env_suffixes": {
-      "PATH": [
-        "RECIPE_REPO[depot_tools]"
-      ]
-    },
-    "infra_step": true,
-    "name": "https://chromium.googlesource.com/apps.git rev-parse",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
       "count-objects",
       "-v"
     ],
@@ -153,6 +128,31 @@
       "@@@STEP_LOG_LINE@result@  prune-packable: 10@@@",
       "@@@STEP_LOG_LINE@result@  size: 10@@@",
       "@@@STEP_LOG_END@result@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "rev-parse",
+      "-q",
+      "--verify",
+      "master"
+    ],
+    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/a",
+    "env": {
+      "CHROME_HEADLESS": "1",
+      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
+      "GIT_HTTP_LOW_SPEED_TIME": "0"
+    },
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "https://chromium.googlesource.com/apps.git rev-parse",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
@@ -255,31 +255,6 @@
   {
     "cmd": [
       "git",
-      "rev-parse",
-      "-q",
-      "--verify",
-      "master"
-    ],
-    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/chromium/src",
-    "env": {
-      "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
-      "GIT_HTTP_LOW_SPEED_TIME": "0"
-    },
-    "env_suffixes": {
-      "PATH": [
-        "RECIPE_REPO[depot_tools]"
-      ]
-    },
-    "infra_step": true,
-    "name": "https://chromium.googlesource.com/chromium/src.git rev-parse",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
       "count-objects",
       "-v"
     ],
@@ -307,6 +282,31 @@
       "@@@STEP_LOG_LINE@result@  prune-packable: 10@@@",
       "@@@STEP_LOG_LINE@result@  size: 10@@@",
       "@@@STEP_LOG_END@result@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "rev-parse",
+      "-q",
+      "--verify",
+      "master"
+    ],
+    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/chromium/src",
+    "env": {
+      "CHROME_HEADLESS": "1",
+      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
+      "GIT_HTTP_LOW_SPEED_TIME": "0"
+    },
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "https://chromium.googlesource.com/chromium/src.git rev-parse",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
@@ -342,10 +342,6 @@
     ]
   },
   {
-    "failure": {
-      "failure": {},
-      "humanReason": "Updated cache for 2/2 repos"
-    },
     "name": "$result"
   }
 ]
