@@ -35,7 +35,10 @@
   },
   {
     "cmd": [],
-    "name": "https://chromium.googlesource.com/apps"
+    "name": "https://chromium.googlesource.com/apps",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@[ok]@@@"
+    ]
   },
   {
     "cmd": [
@@ -44,6 +47,7 @@
       "--reset-fetch-config",
       "--ref",
       "refs/branch-heads/*",
+      "--break-locks",
       "--cache-dir",
       "[CACHE]/builder/w",
       "--verbose",
@@ -97,8 +101,9 @@
   {
     "cmd": [
       "git",
-      "show-ref",
+      "rev-parse",
       "-q",
+      "--verify",
       "master"
     ],
     "cwd": "[CACHE]/builder/w/chromium.googlesource.com/a",
@@ -113,7 +118,7 @@
       ]
     },
     "infra_step": true,
-    "name": "https://chromium.googlesource.com/apps.git show-ref",
+    "name": "https://chromium.googlesource.com/apps.git rev-parse",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -184,7 +189,10 @@
   },
   {
     "cmd": [],
-    "name": "https://chromium.googlesource.com/chromium/src"
+    "name": "https://chromium.googlesource.com/chromium/src",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@[ok]@@@"
+    ]
   },
   {
     "cmd": [
@@ -193,6 +201,7 @@
       "--reset-fetch-config",
       "--ref",
       "refs/branch-heads/*",
+      "--break-locks",
       "--cache-dir",
       "[CACHE]/builder/w",
       "--verbose",
@@ -246,8 +255,9 @@
   {
     "cmd": [
       "git",
-      "show-ref",
+      "rev-parse",
       "-q",
+      "--verify",
       "master"
     ],
     "cwd": "[CACHE]/builder/w/chromium.googlesource.com/chromium/src",
@@ -262,7 +272,7 @@
       ]
     },
     "infra_step": true,
-    "name": "https://chromium.googlesource.com/chromium/src.git show-ref",
+    "name": "https://chromium.googlesource.com/chromium/src.git rev-parse",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

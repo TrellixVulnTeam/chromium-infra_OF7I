@@ -79,7 +79,7 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
     url,
   ]
 
-  with api.step.nest(url):
+  with api.step.nest(url) as summary:
     api.step(
         name='populate',
         cmd=[
@@ -91,6 +91,8 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
           # 'refs/branch-heads/*' is also very useful (crbug/942169).
           # This is a noop for repos without refs/branch-heads.
           '--ref', 'refs/branch-heads/*',
+
+          '--break-locks',
         ]+opts,
         cost=api.step.ResourceCost(disk=20))
 
@@ -104,8 +106,10 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
     ).stdout.strip())
 
     with api.context(cwd=repo_path):
-      if api.git('show-ref', '-q', 'master', ok_ret='any').retcode:
+      if api.git('rev-parse', '-q', '--verify', 'master', ok_ret='any').retcode:
         api.step('repo has no master ref; skipping update', cmd=None)
+        summary.step_text = "[no master ref]"
+        summary.status = api.step.FAILURE  # TODO(iannucci): warning
         return
 
       stats = api.git.count_objects(
@@ -126,6 +130,8 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
       # some repos can be empty (e.g. they're an "ACL-only" repo), and
       # update-bootstrap doesn't like that, so skip them.
       api.step('repo is empty; skipping update', cmd=None)
+      summary.step_text = "[empty]"
+      summary.status = api.step.FAILURE  # TODO(iannucci): warning
       return
 
     gc_aggressive_opt = []
@@ -139,6 +145,8 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
           '--skip-populate', '--prune',
         ] + opts + gc_aggressive_opt,
         cost=api.step.ResourceCost(memory=mem_cost, net=10))
+
+    summary.step_text = "[ok]"
 
 
 def RunSteps(api, inputs):
@@ -232,7 +240,7 @@ def GenTests(api):
           gc_aggressive=True,
       ))
       + api.override_step_data(
-          'https://chromium.googlesource.com/bogus.git show-ref',
+          'https://chromium.googlesource.com/bogus.git rev-parse',
           retcode=1,
       )
   )

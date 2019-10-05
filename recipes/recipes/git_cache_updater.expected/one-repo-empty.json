@@ -16,7 +16,11 @@
   },
   {
     "cmd": [],
-    "name": "https://chromium.googlesource.com/empty"
+    "name": "https://chromium.googlesource.com/empty",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@[empty]@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
@@ -25,6 +29,7 @@
       "--reset-fetch-config",
       "--ref",
       "refs/branch-heads/*",
+      "--break-locks",
       "--cache-dir",
       "[CACHE]/builder/w",
       "--verbose",
@@ -80,8 +85,9 @@
   {
     "cmd": [
       "git",
-      "show-ref",
+      "rev-parse",
       "-q",
+      "--verify",
       "master"
     ],
     "cwd": "[CACHE]/builder/w/chromium.googlesource.com/empty",
@@ -97,7 +103,7 @@
       ]
     },
     "infra_step": true,
-    "name": "https://chromium.googlesource.com/empty.git show-ref",
+    "name": "https://chromium.googlesource.com/empty.git rev-parse",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
