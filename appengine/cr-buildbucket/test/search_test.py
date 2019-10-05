@@ -84,7 +84,7 @@ class SearchTest(testing.AppengineTestCase):
     # user.can_async is patched in setUp()
     user.can_async.side_effect = can_async
 
-  def put_many_builds(self, count=100, **build_proto_fields):
+  def put_many_builds(self, count, **build_proto_fields):
     return [self.put_build(**build_proto_fields) for _ in xrange(count)]
 
   def put_build(self, **build_proto_fields):
