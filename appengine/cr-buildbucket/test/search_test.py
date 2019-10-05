@@ -454,14 +454,14 @@ class SearchTest(testing.AppengineTestCase):
       self.search(created_by='blah')
 
   def test_filter_by_with_paging_using_datastore_query(self):
-    self.put_many_builds()
+    self.put_many_builds(count=10)
 
-    first_page, next_cursor = self.search(max_builds=10)
-    self.assertEqual(len(first_page), 10)
+    first_page, next_cursor = self.search(max_builds=3)
+    self.assertEqual(len(first_page), 3)
     self.assertTrue(next_cursor)
 
-    second_page, _ = self.search(max_builds=10, start_cursor=next_cursor)
-    self.assertEqual(len(second_page), 10)
+    second_page, _ = self.search(max_builds=3, start_cursor=next_cursor)
+    self.assertEqual(len(second_page), 3)
     # no cover due to a bug in coverage (http://stackoverflow.com/a/35325514)
     self.assertTrue(any(new not in first_page for new in second_page)
                    )  # pragma: no cover
@@ -647,15 +647,15 @@ class SearchTest(testing.AppengineTestCase):
     self.assertEqual(builds, [prod_build, exp_build])
 
   def test_filter_by_with_experimental_and_paging(self):
-    for _ in xrange(100):
+    for _ in xrange(5):
       self.put_build(input=dict(experimental=True))
     prod_build = self.put_build(input=dict(experimental=False))
-    for _ in xrange(100):
+    for _ in xrange(5):
       self.put_build(input=dict(experimental=True))
 
-    builds, _ = self.search()
+    builds, _ = self.search(max_builds=3)
     self.assertEqual(builds, [prod_build])
-    builds, _ = self.search(tags=[self.INDEXED_TAG])
+    builds, _ = self.search(max_builds=3, tags=[self.INDEXED_TAG])
     self.assertEqual(builds, [prod_build])
 
   def test_multiple_shard_of_tag_index(self):
