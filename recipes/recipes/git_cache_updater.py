@@ -207,13 +207,13 @@ def RunSteps(api, inputs):
   status = bb_common_pb.FAILURE if failed_repos else bb_common_pb.SUCCESS
   summary = 'Updated cache for %d/%d repos.' % (success, total)
   if warning:
-    summary += '\n\nEncountered warnings for %d repos:' % (warning,)
+    summary += '\n\nEncountered warnings for %d repos:\n' % (warning,)
     if empties:
       summary += '\n  * empty (repo has no objects): %d' % (empties,)
     if masterless:
       summary += '\n  * no master ref: %d' % (masterless,)
   if failed_repos:
-    summary += '\n\nEncountered failures for %d repos:' % (len(failed_repos),)
+    summary += '\n\nEncountered failures for %d repos:\n' % (len(failed_repos),)
     for repo_name in failed_repos:
       summary += '\n  * ' + repo_name
 

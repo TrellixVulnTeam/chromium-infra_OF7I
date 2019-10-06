@@ -60,7 +60,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Updated cache for 0/1 repos.\n\nEncountered failures for 1 repos:\n  * https://chromium.googlesource.com/fail"
+      "humanReason": "Updated cache for 0/1 repos.\n\nEncountered failures for 1 repos:\n\n  * https://chromium.googlesource.com/fail"
     },
     "name": "$result"
   }
