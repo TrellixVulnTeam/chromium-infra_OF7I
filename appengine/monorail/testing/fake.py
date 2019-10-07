@@ -2147,7 +2147,7 @@ class FeaturesService(object):
 
 
     # hotlists
-    self.test_hotlists = {}  # hotlist_name => hotlist_pb
+    self.test_hotlists = {}  # (hotlist_name, owner_id) => hotlist_pb
     self.hotlists_by_id = {}
     self.hotlists_id_by_user = {}  # user_id => [hotlist_id, hotlist_id, ...]
     self.hotlists_id_by_issue = {}  # issue_id => [hotlist_id, hotlist_id, ...]
@@ -2211,7 +2211,10 @@ class FeaturesService(object):
         except KeyError:
           self.hotlists_id_by_issue[issue_id] = [hotlist_pb.hotlist_id]
 
-    self.test_hotlists[name] = hotlist_pb
+    owner_id = None
+    if hotlist_pb.owner_ids:
+      owner_id = hotlist_pb.owner_ids[0]
+    self.test_hotlists[(name, owner_id)] = hotlist_pb
     self.hotlists_by_id[hotlist_pb.hotlist_id] = hotlist_pb
     return hotlist_pb
 
@@ -2242,10 +2245,10 @@ class FeaturesService(object):
     """Create and store a Hotlist with the given attributes."""
     if not framework_bizobj.IsValidHotlistName(hotlist_name):
       raise exceptions.InputException()
-    if hotlist_name in self.test_hotlists:
-      raise features_svc.HotlistAlreadyExists()
     if not owner_ids:  # Should never happen.
       raise features_svc.UnownedHotlistException()
+    if (hotlist_name, owner_ids[0]) in self.test_hotlists:
+      raise features_svc.HotlistAlreadyExists()
     hotlist_item_fields = [
         (issue_id, rank*100, owner_ids[0] or None, ts, '') for
         rank, issue_id in enumerate(issue_ids or [])]
@@ -2354,14 +2357,14 @@ class FeaturesService(object):
   def LookupHotlistIDs(self, cnxn, hotlist_names, owner_ids):
     id_dict = {}
     for name in hotlist_names:
-      hotlist = self.test_hotlists.get(name)
-      if hotlist:
-        if not hotlist.owner_ids:  # Should never happen.
-          logging.warn('Unowned Hotlist: id:%r, name:%r',
-            hotlist.hotlist_id, hotlist.name)
-          continue
-        if hotlist.owner_ids[0] in owner_ids:
-          id_dict[(name.lower(), hotlist.owner_ids[0])] = hotlist.hotlist_id
+      for owner_id in owner_ids:
+        hotlist = self.test_hotlists.get((name, owner_id))
+        if hotlist:
+          if not hotlist.owner_ids:  # Should never happen.
+            logging.warn('Unowned Hotlist: id:%r, name:%r',
+                         hotlist.hotlist_id, hotlist.name)
+            continue
+          id_dict[(name.lower(), owner_id)] = hotlist.hotlist_id
     return id_dict
 
   def GetHotlists(self, cnxn, hotlist_ids, use_cache=True):
@@ -2430,7 +2433,7 @@ class FeaturesService(object):
   def DeleteHotlist(self, cnxn, hotlist_id, commit=True):
     hotlist = self.hotlists_by_id.pop(hotlist_id, None)
     if hotlist is not None:
-      self.test_hotlists.pop(hotlist.name, None)
+      self.test_hotlists.pop((hotlist.name, hotlist.owner_ids[0]), None)
       user_ids = hotlist.owner_ids+hotlist.editor_ids+hotlist.follower_ids
       for user_id in user_ids:
         try:
