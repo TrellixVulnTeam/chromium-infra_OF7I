@@ -92,7 +92,7 @@ done
 
 set -x
 # pick a super-vanilla builder
-led get-builder -canary 'luci.infra.try:Infra Presubmit' | \
+led get-builder -canary 'luci.infra.try:infra-try-presubmit' | \
   # Remove the first task slice; we don't want its named cache entry for the
   # builder, and swarming prevents us from triggering a task with two identical
   # task slices (which, if we remove the named cache, the two slices will be the
@@ -102,7 +102,7 @@ led get-builder -canary 'luci.infra.try:Infra Presubmit' | \
   led edit -d builder= -d caches= -d os=$TARG_OS | \
   # Remove LUCI global properties
   led edit -p buildbucket= -p buildername= -p buildnumber= | \
-  # Remove 'Infra Presubmit' properties
+  # Remove 'infra-try-presubmit' properties
   led edit -p repo_name= -p runhooks | \
   # This is always experimental
   led edit -p '$recipe_engine/runtime={"is_luci": true, "is_experimental": true}' | \

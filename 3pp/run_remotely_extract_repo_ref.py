@@ -15,6 +15,9 @@ for i, arg in enumerate(cmdline):
     properties = json.loads(cmdline[i+1])
     break
 if mode == 'ref':
-  print properties['patch_ref']
+  build_input = properties['$recipe_engine/buildbucket']['build']['input']
+  ref = build_input['gerritChanges'][0]
+  print('refs/changes/%d/%s/%s' % (
+    int(ref['change'])%100, ref['change'], ref['patchset']))
 elif mode == 'repo':
-  print properties['patch_repository_url']
+  print(properties['repository'])
