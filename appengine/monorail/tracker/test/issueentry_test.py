@@ -150,6 +150,7 @@ class IssueEntryTest(unittest.TestCase):
     self.assertTrue(page_data['clear_summary_on_click'])
     self.assertTrue(page_data['must_edit_summary'])
     self.assertEqual(page_data['labels'], ['NotEnum-Not-Masked'])
+    self.assertEqual(page_data['offer_templates'], ezt.boolean(False))
 
   def testGatherPageData_Approvals(self):
     user = self.services.user.TestAddUser('user@invalid', 100)

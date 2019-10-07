@@ -84,7 +84,7 @@ class IssueView(template_helpers.PBProxy):
         users_by_id)
 
     labels, derived_labels = tracker_bizobj.ExplicitAndDerivedNonMaskedLabels(
-        issue, config)
+        issue.labels, issue.derived_labels, config)
     self.labels = [
         framework_views.LabelView(label, config)
         for label in labels]

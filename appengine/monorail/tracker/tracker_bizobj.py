@@ -230,16 +230,16 @@ def NonMaskedLabels(labels, field_names):
           if not LabelIsMaskedByField(lab, field_names)]
 
 
-def ExplicitAndDerivedNonMaskedLabels(issue, config):
+def ExplicitAndDerivedNonMaskedLabels(labels, derived_labels, config):
   """Return two lists of labels that are not masked by enum custom fields."""
   field_names = [fd.field_name.lower() for fd in config.field_defs
                  if fd.field_type is tracker_pb2.FieldTypes.ENUM_TYPE and
                  not fd.is_deleted]  # TODO(jrobbins): restricts
   labels = [
-      lab for lab in issue.labels
+      lab for lab in labels
       if not LabelIsMaskedByField(lab, field_names)]
   derived_labels = [
-    lab for lab in issue.derived_labels
+    lab for lab in derived_labels
     if not LabelIsMaskedByField(lab, field_names)]
   return labels, derived_labels
 

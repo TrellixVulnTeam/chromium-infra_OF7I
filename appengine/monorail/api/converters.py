@@ -338,7 +338,7 @@ def ConvertIssue(issue, users_by_id, related_refs, config):
   cc_refs = ConvertUserRefs(
       issue.cc_ids, issue.derived_cc_ids, users_by_id, False)
   labels, derived_labels = tracker_bizobj.ExplicitAndDerivedNonMaskedLabels(
-      issue, config)
+      issue.labels, issue.derived_labels, config)
   label_refs = ConvertLabels(labels, derived_labels)
   component_refs = ConvertComponents(
       issue.component_ids, issue.derived_component_ids, config)

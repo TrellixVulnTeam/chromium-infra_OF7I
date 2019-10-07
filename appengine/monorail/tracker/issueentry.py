@@ -140,13 +140,9 @@ class IssueEntry(servlet.Servlet):
     # TODO(jeffcarp): Unit test this.
     offer_templates = len(config_view.template_names) > 1
     restrict_to_known = config.restrict_to_known
-    enum_field_name_set = {fd.field_name.lower() for fd in config.field_defs
-                      if fd.field_type is tracker_pb2.FieldTypes.ENUM_TYPE
-                      and not fd.is_deleted}  # TODO(jrobbins): restrictions
     link_or_template_labels = mr.GetListParam('labels', template.labels)
-    labels = [lab for lab in link_or_template_labels
-              if not tracker_bizobj.LabelIsMaskedByField(
-                  lab, enum_field_name_set)]
+    labels, _derived_labels = tracker_bizobj.ExplicitAndDerivedNonMaskedLabels(
+        link_or_template_labels, [], config)
 
     # Corp-mode users automatically add R-V-G.
     with work_env.WorkEnv(mr, self.services) as we:
