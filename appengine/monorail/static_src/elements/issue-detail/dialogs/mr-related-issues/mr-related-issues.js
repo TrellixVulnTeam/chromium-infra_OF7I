@@ -186,7 +186,8 @@ export class MrRelatedIssues extends connectStore(LitElement) {
         summary = '(not available)';
       }
       const row = {
-        draggable: !isClosed,
+        // Disallow reranking FedRefs/DanglingIssueRelations.
+        draggable: !isClosed && !issue.extIdentifier,
         cells: [
           {
             type: 'issue',

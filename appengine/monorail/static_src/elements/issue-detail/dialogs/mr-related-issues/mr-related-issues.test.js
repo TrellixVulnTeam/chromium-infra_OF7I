@@ -50,6 +50,7 @@ describe('mr-related-issues', () => {
         summary: 'Issue 3'},
       {projectName: 'proj2', localId: 4,
         summary: 'Issue 4 on another project'},
+      {extIdentifier: 'b/123456', statusRef: {meansOpen: true}},
       {projectName: 'proj', localId: 5, statusRef: {meansOpen: false},
         summary: 'Issue 5'},
       {projectName: 'proj2', localId: 6, statusRef: {meansOpen: false},
@@ -113,6 +114,23 @@ describe('mr-related-issues', () => {
           {
             type: 'text',
             content: 'Issue 4 on another project',
+          },
+        ],
+      },
+      {
+        draggable: false,
+        cells: [
+          {
+            type: 'issue',
+            issue: {
+              extIdentifier: 'b/123456',
+              statusRef: {meansOpen: true},
+            },
+            isClosed: false,
+          },
+          {
+            type: 'text',
+            content: '(not available)',
           },
         ],
       },
