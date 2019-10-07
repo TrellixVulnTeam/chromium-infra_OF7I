@@ -56,16 +56,22 @@ class BugdroidGitPollerHandler(poller_handlers.BasePollerHandler):
     if not branch or not issue:
       return
 
-    label = '%s-%s' % (self.issues_labels.get('merge', 'merge-merged'), branch)
-    issue.add_label(label)
-    self.logger.debug('Adding %s', label)
+    mstone = branch_utils.get_mstone(branch, False)
+
+    # Apply "merge-merged-{branch}" and "merge-merged-{milestone}" labels
+    merged_prefix = self.issues_labels.get('merge', 'merge-merged')
+    merged_labels = ['%s-%s' % (merged_prefix, branch)]
+    if mstone:
+      merged_labels.append('%s-%s' % (merged_prefix, mstone))
+    for label in merged_labels:
+      issue.add_label(label)
+      self.logger.debug('Adding %s', label)
 
     label = self.issues_labels.get('approved', 'merge-approved')
     if issue.has_label(label):
       issue.remove_label(label)
       self.logger.debug('Removing %s', label)
 
-    mstone = branch_utils.get_mstone(branch, False)
     if mstone:
       label = 'merge-approved-%s' % mstone
       if issue.has_label(label):

@@ -259,6 +259,7 @@ class BugdroidGitPollerHandlerTest(unittest.TestCase):
 
     handler.ProcessLogEntry(self._make_commit('Message\nBug: 1234'))
     self.assertTrue(issue.has_label('-merge-approved-baz'))
+    self.assertTrue(issue.has_label('merge-merged-baz'))
 
   @mock.patch('infra.services.bugdroid.branch_utils.get_mstone')
   def test_process_log_entry_no_mstone(self, mock_get_mstone):
