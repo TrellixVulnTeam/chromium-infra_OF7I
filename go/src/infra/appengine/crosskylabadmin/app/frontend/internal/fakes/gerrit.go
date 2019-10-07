@@ -90,6 +90,17 @@ func (gc *GerritClient) ChangeEditFileContent(ctx context.Context, in *gerrit.Ch
 	return &empty.Empty{}, fmt.Errorf("No change edit for %+v", in)
 }
 
+// DeleteEditFileContent implements the gerrit.GerritClient interface.
+func (gc *GerritClient) DeleteEditFileContent(ctx context.Context, in *gerrit.DeleteEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	for _, c := range gc.Changes {
+		if in.Number == c.Number {
+			c.GerritChangeEdit.Files[in.FilePath] = ""
+			return &empty.Empty{}, nil
+		}
+	}
+	return &empty.Empty{}, fmt.Errorf("No change edit for %+v", in)
+}
+
 // ChangeEditPublish implements the gerrit.GerritClient interface.
 func (gc *GerritClient) ChangeEditPublish(ctx context.Context, in *gerrit.ChangeEditPublishRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	for _, c := range gc.Changes {
