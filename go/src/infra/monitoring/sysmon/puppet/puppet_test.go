@@ -93,6 +93,8 @@ func TestMetrics(t *testing.T) {
 			So(events.Get(c, "success"), ShouldEqual, 2)
 			So(events.Get(c, "total"), ShouldEqual, 0)
 
+			So(failure.Get(c), ShouldBeTrue)
+
 			So(resources.Get(c, "changed"), ShouldEqual, 1)
 			So(resources.Get(c, "failed"), ShouldEqual, 2)
 			So(resources.Get(c, "failed_to_restart"), ShouldEqual, 3)
@@ -115,6 +117,25 @@ func TestMetrics(t *testing.T) {
 
 			So(age.Get(c), ShouldEqual, 123.45)
 		})
+
+		Convey("metrics successful run", func() {
+			file.Write([]byte(`---
+  events:
+    failure: 0
+    success: 2
+    total: 2`))
+			file.Sync()
+			So(updateLastRunStats(c, file.Name()), ShouldBeNil)
+			So(failure.Get(c), ShouldBeFalse)
+		})
+
+		Convey("metrics with completely failed run", func() {
+			file.Write([]byte(`---`))
+			file.Sync()
+			So(updateLastRunStats(c, file.Name()), ShouldBeNil)
+			So(failure.Get(c), ShouldBeTrue)
+		})
+
 	})
 
 	Convey("Puppet is_canary metric", t, func() {

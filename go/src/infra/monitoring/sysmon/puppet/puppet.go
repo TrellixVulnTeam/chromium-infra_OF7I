@@ -43,6 +43,9 @@ var (
 		"Number of changes the puppet client made to the system in its last run, by success or failure",
 		nil,
 		field.String("result"))
+	failure = metric.NewBool("puppet/failure",
+		"Puppet client's last run, by success or failure",
+		nil)
 	age = metric.NewFloat("puppet/age",
 		"Time since last run",
 		nil)
@@ -100,11 +103,16 @@ func updateLastRunStats(c context.Context, path string) error {
 	for k, v := range data.Resources {
 		resources.Set(c, v, k)
 	}
+
 	for k, v := range data.Events {
 		if k != "total" {
 			events.Set(c, v, k)
 		}
 	}
+
+	count, exist := data.Events["failure"]
+	failure.Set(c, !exist || count > 0)
+
 	for k, v := range data.Time {
 		if k == "last_run" {
 			age.Set(c, float64(clock.Now(c).Sub(time.Unix(int64(v), 0)))/float64(time.Second))
