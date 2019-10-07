@@ -199,7 +199,7 @@ class PropertiesToJson(testing.AppengineTestCase):
     expected = json.dumps(
         {
             'a': 'b',
-            'buildnumber': 1,
+            'buildnumber': 1,  # See api_common.INTEGER_PROPERTIES.
             'another number': 1.0,
         },
         sort_keys=True,
