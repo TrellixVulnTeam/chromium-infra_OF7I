@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import email
 
 from framework import emailfmt
+from framework import framework_views
 from proto import user_pb2
 from services import service_manager
 from services import template_svc
@@ -46,6 +47,10 @@ ALERT_EMAIL_HEADER_LINES = HEADER_LINES + [
     (AlertEmailHeader.LABEL, ''),
 ]
 
+def ObscuredEmail(address):
+  (_username, _domain, _obs_username,
+   obs_email) = framework_views.ParseAndObscureAddress(address)
+  return obs_email
 
 def MakeMessage(header_list, body):
   """Convenience function to make an email.message.Message."""

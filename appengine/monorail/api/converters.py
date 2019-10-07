@@ -122,7 +122,8 @@ def ConvertUserRef(explicit_user_id, derived_user_id, users_by_id):
       is_derived=is_derived,
       display_name=users_by_id[user_id].display_name)
 
-
+# TODO(jojwang): document this (explain 'use_email' parameter),
+# and rewrite method, ConvertUserRefs should be able to call ConvertUserRef
 def ConvertUserRefs(explicit_user_ids, derived_user_ids, users_by_id,
                     use_email):
   """Use the given user ID lists to create a list of UserRef."""
@@ -203,7 +204,7 @@ def ConvertComponentRef(component_id, config, is_derived=False):
       is_derived=is_derived)
   return result
 
-
+# TODO(jojwang): rename to ConvertComponentRefs
 def ConvertComponents(explicit_component_ids, derived_component_ids, config):
   """Make a ComponentRef for each component_id."""
   result = [ConvertComponentRef(cid, config) for cid in explicit_component_ids]
@@ -999,12 +1000,38 @@ def ConvertConfig(
   return result
 
 
-def ConvertTemplates(templates):
-  """Convert protorpc TemplateDefs into protoc TemplateDefs."""
-  # TODO(jojwang): Convert remaining template fields when needed.
-  return [
-      project_objects_pb2.TemplateDef(template_name=template.name)
-      for template in templates]
+def ConvertProjectTemplateDefs(templates, users_by_id, config):
+  """Convert a project's protorpc TemplateDefs into protoc TemplateDefs."""
+  converted_templates = []
+  for template in templates:
+    owner_ref = ConvertUserRef(template.owner_id, None, users_by_id)
+    status_ref = ConvertStatusRef(template.status, None, config)
+    labels, _derived_labels = tracker_bizobj.ExplicitAndDerivedNonMaskedLabels(
+        template.labels, [], config)
+    label_refs = ConvertLabels(labels, [])
+    admin_refs = ConvertUserRefs(template.admin_ids, [], users_by_id, False)
+    field_values = ConvertFieldValues(
+        config, template.labels, [], template.field_values, users_by_id,
+        phases=template.phases)
+    component_refs = ConvertComponents(template.component_ids, [], config)
+    approval_values = ConvertApprovalValues(
+        template.approval_values, template.phases, users_by_id, config)
+    phases = [ConvertPhaseDef(phase) for phase in template.phases]
+
+    converted_templates.append(
+        project_objects_pb2.TemplateDef(
+            template_name=template.name, content=template.content,
+            summary=template.summary,
+            summary_must_be_edited=template.summary_must_be_edited,
+            owner_ref=owner_ref, status_ref=status_ref, label_refs=label_refs,
+            members_only=template.members_only,
+            owner_defaults_to_member=template.owner_defaults_to_member,
+            admin_refs=admin_refs, field_values=field_values,
+            component_refs=component_refs,
+            component_required=template.component_required,
+            approval_values=approval_values, phases=phases)
+    )
+  return converted_templates
 
 
 def ConvertHotlist(hotlist, users_by_id):

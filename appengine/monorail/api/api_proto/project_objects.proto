@@ -11,6 +11,7 @@ syntax = "proto3";
 package monorail;
 
 import "api/api_proto/common.proto";
+import "api/api_proto/issue_objects.proto";
 
 
 // Next available tag: 4
@@ -115,9 +116,21 @@ message PresentationConfig {
 }
 
 
-// Next available tag: 2
+// Next available tag: 16
 message TemplateDef {
   string template_name = 1;
-  // TODO(jojwang): Add approvals and phases.
-  // TODO(jojwang): Add other fields.
+  string content = 2;
+  string summary = 3;
+  bool summary_must_be_edited = 4;
+  UserRef owner_ref = 5;
+  StatusRef status_ref = 6;
+  repeated LabelRef label_refs = 7;
+  bool members_only = 8;
+  bool owner_defaults_to_member = 9;
+  repeated UserRef admin_refs = 10;
+  repeated FieldValue field_values = 11;
+  repeated ComponentRef component_refs = 12;
+  bool component_required = 13;
+  repeated Approval approval_values = 14;
+  repeated PhaseDef phases = 15;
 }

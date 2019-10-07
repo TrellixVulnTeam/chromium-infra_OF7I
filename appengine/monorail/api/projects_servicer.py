@@ -62,11 +62,16 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
     project = self._GetProject(mc, request)
 
     with work_env.WorkEnv(mc, self.services) as we:
+      config = we.GetProjectConfig(project.project_id)
       templates = we.ListProjectTemplates(project)
 
     with mc.profiler.Phase('converting to response objects'):
+      involved_user_ids = tracker_bizobj.UsersInvolvedInTemplates(templates)
+      users_by_id = framework_views.MakeAllUserViews(
+          mc.cnxn, self.services.user, involved_user_ids)
       response = projects_pb2.ListProjectTemplatesResponse(
-          templates=converters.ConvertTemplates(templates))
+          templates=converters.ConvertProjectTemplateDefs(
+              templates, users_by_id, config))
 
     return response
 
@@ -79,9 +84,9 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
       config = we.GetProjectConfig(project.project_id)
 
     with mc.profiler.Phase('making user views'):
-      users_involved = tracker_bizobj.UsersInvolvedInConfig(config)
+      involved_user_ids = tracker_bizobj.UsersInvolvedInConfig(config)
       users_by_id = framework_views.MakeAllUserViews(
-          mc.cnxn, self.services.user, users_involved)
+          mc.cnxn, self.services.user, involved_user_ids)
       framework_views.RevealAllEmailsToMembers(mc.auth, project, users_by_id)
 
       label_ids = tracker_bizobj.LabelIDsInvolvedInConfig(config)

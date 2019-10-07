@@ -787,7 +787,7 @@ class FeaturesService(object):
 
   def UpdateHotlistItemsFields(
       self, cnxn, hotlist_id, new_ranks=None, new_notes=None, commit=True):
-    """Updates rankings of hotlistissues.
+    """Updates rankings or notes of hotlistissues.
 
     Args:
       cnxn: connection to SQL database.

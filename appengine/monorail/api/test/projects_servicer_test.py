@@ -17,6 +17,7 @@ from components.prpc import server
 
 from api import projects_servicer
 from api.api_proto import common_pb2
+from api.api_proto import issue_objects_pb2
 from api.api_proto import project_objects_pb2
 from api.api_proto import projects_pb2
 from framework import authdata
@@ -26,8 +27,10 @@ from framework import monorailcontext
 from framework import permissions
 from proto import tracker_pb2
 from proto import project_pb2
+from tracker import tracker_bizobj
 from tracker import tracker_constants
 from testing import fake
+from testing import testing_helpers
 from services import service_manager
 
 
@@ -126,8 +129,32 @@ class ProjectsServicerTest(unittest.TestCase):
 
   @patch('businesslogic.work_env.WorkEnv.ListProjectTemplates')
   def testListProjectTemplates_Normal(self, mockListProjectTemplates):
-    mockListProjectTemplates.return_value = [tracker_pb2.TemplateDef(
-        name='chicken')]
+    fd_1 = tracker_pb2.FieldDef(
+        field_name='FirstField', field_id=1,
+        field_type=tracker_pb2.FieldTypes.STR_TYPE)
+    fd_2 = tracker_pb2.FieldDef(
+        field_name='LegalApproval', field_id=2,
+        field_type=tracker_pb2.FieldTypes.APPROVAL_TYPE)
+    component = tracker_pb2.ComponentDef(component_id=1, path='dude')
+    status_def = tracker_pb2.StatusDef(status='New', means_open=True)
+    config = tracker_pb2.ProjectIssueConfig(
+        project_id=789, field_defs=[fd_1, fd_2], component_defs=[component],
+        well_known_statuses=[status_def])
+    self.services.config.StoreConfig(self.cnxn, config)
+    admin1 = self.services.user.TestAddUser('admin@example.com', 222)
+    appr1 = self.services.user.TestAddUser('approver@example.com', 333)
+    setter = self.services.user.TestAddUser('setter@example.com', 444)
+    template = tracker_pb2.TemplateDef(
+        name='Chicken', content='description', summary='summary',
+        status='New', admin_ids=[admin1.user_id],
+        field_values=[tracker_bizobj.MakeFieldValue(
+            fd_1.field_id, None, 'Cow', None, None, None, False)],
+        component_ids=[component.component_id],
+        approval_values=[tracker_pb2.ApprovalValue(
+            approval_id=2, approver_ids=[appr1.user_id],
+            setter_id=setter.user_id)])
+    mockListProjectTemplates.return_value = [template]
+
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester='owner@example.com')
     request = projects_pb2.ListProjectTemplatesRequest(project_name='proj')
@@ -136,8 +163,47 @@ class ProjectsServicerTest(unittest.TestCase):
     self.assertEqual(
         response,
         projects_pb2.ListProjectTemplatesResponse(
-            templates=[
-                project_objects_pb2.TemplateDef(template_name='chicken')]))
+            templates=[project_objects_pb2.TemplateDef(
+                template_name='Chicken',
+                content='description',
+                summary='summary',
+                owner_ref=common_pb2.UserRef(display_name='----'),
+                status_ref=common_pb2.StatusRef(
+                    status='New',
+                    is_derived=False,
+                    means_open=True),
+                owner_defaults_to_member=True,
+                admin_refs=[
+                  common_pb2.UserRef(
+                      user_id=admin1.user_id,
+                      display_name=testing_helpers.ObscuredEmail(admin1.email),
+                      is_derived=False)],
+                field_values=[
+                  issue_objects_pb2.FieldValue(
+                    field_ref=common_pb2.FieldRef(
+                        field_id=fd_1.field_id,
+                        field_name=fd_1.field_name,
+                        type=common_pb2.STR_TYPE),
+                    value='Cow')],
+                component_refs=[
+                    common_pb2.ComponentRef(
+                        path=component.path, is_derived=False)],
+                approval_values=[
+                  issue_objects_pb2.Approval(
+                    field_ref=common_pb2.FieldRef(
+                        field_id=fd_2.field_id,
+                        field_name=fd_2.field_name,
+                        type=common_pb2.APPROVAL_TYPE),
+                    setter_ref=common_pb2.UserRef(
+                        user_id=setter.user_id,
+                        display_name=testing_helpers.ObscuredEmail(
+                            setter.email)),
+                    phase_ref=issue_objects_pb2.PhaseRef(),
+                    approver_refs=[common_pb2.UserRef(
+                        user_id=appr1.user_id,
+                        display_name=testing_helpers.ObscuredEmail(appr1.email),
+                        is_derived=False)])],
+          )]))
 
   def testListProjectTemplates_NoProjectName(self):
     mc = monorailcontext.MonorailContext(

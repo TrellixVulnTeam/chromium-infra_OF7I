@@ -1662,6 +1662,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         (1234, settings.max_artifact_search_results_per_page),
         converters.IngestPagination(pagination))
 
+  # TODO(jojwang): add testConvertStatusRef
+
   def testConvertStatusDef(self):
     """We can convert a status definition to protoc."""
     status_def = tracker_pb2.StatusDef(status='Started')
@@ -1916,19 +1918,136 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.project, self.config, self.users_by_id, labels_by_id)
     self.assertEqual(3, len(actual.field_defs))
 
-  def testConvertTemplates_Normal(self):
+  def testConvertProjectTemplateDefs_Normal(self):
     """We can convert protoc TemplateDefs."""
+    self.config.component_defs = [
+        tracker_pb2.ComponentDef(component_id=1, path="dude"),
+    ]
+    status_def_1 = tracker_pb2.StatusDef(status='New', means_open=True)
+    status_def_2 = tracker_pb2.StatusDef(status='Old', means_open=False)
+    self.config.well_known_statuses.extend([status_def_1, status_def_2])
+    owner = self.services.user.TestAddUser('owner@example.com', 111)
+    admin1 = self.services.user.TestAddUser('admin1@example.com', 222)
+    admin2 = self.services.user.TestAddUser('admin2@example.com', 333)
+    appr1 = self.services.user.TestAddUser('approver1@example.com', 444)
+    self.config.field_defs = [
+        self.fd_1,  # STR_TYPE
+        self.fd_3,  # APPROVAl_TYPE
+        self.fd_5,  # ENUM_TYPE
+        self.fd_6,  # INT_TYPE PHASE
+        self.fd_7,  # ENUM_TYPE APPROVAL
+    ]
+    field_values = [
+        tracker_bizobj.MakeFieldValue(
+            self.fd_1.field_id, None, 'honk', None, None, None, False),
+        tracker_bizobj.MakeFieldValue(
+            self.fd_6.field_id, 78, None, None, None, None, False, phase_id=3)]
+    phases = [tracker_pb2.Phase(phase_id=3, name='phaseName')]
+    approval_values = [tracker_pb2.ApprovalValue(
+        approval_id=3, approver_ids=[appr1.user_id], phase_id=3)]
+    labels = ['ApprovalEnum-choice1', 'label-2', 'chicken']
     templates = [
-        tracker_pb2.TemplateDef(name='Chicken'),
+        tracker_pb2.TemplateDef(
+            name='Chicken', content='description', summary='summary',
+            summary_must_be_edited=True, owner_id=111, status='New',
+            labels=labels, members_only=True,
+            owner_defaults_to_member=True,
+            admin_ids=[admin1.user_id, admin2.user_id],
+            field_values=field_values, component_ids=[1],
+            component_required=True, phases=phases,
+            approval_values=approval_values),
         tracker_pb2.TemplateDef(name='Kale')]
-    actual = converters.ConvertTemplates(templates)
-    expected = [project_objects_pb2.TemplateDef(template_name='Chicken'),
-                project_objects_pb2.TemplateDef(template_name='Kale')]
+    users_by_id = {
+        owner.user_id: testing_helpers.Blank(
+            display_name=owner.email, email=owner.email, banned=False),
+        admin1.user_id: testing_helpers.Blank(
+            display_name=admin1.email, email=admin1.email, banned=False),
+        admin2.user_id: testing_helpers.Blank(
+            display_name=admin2.email, email=admin2.email, banned=True),
+        appr1.user_id: testing_helpers.Blank(
+            display_name=appr1.email, email=appr1.email, banned=False),
+    }
+    actual = converters.ConvertProjectTemplateDefs(
+        templates, users_by_id, self.config)
+    expected = [
+        project_objects_pb2.TemplateDef(
+            template_name='Chicken',
+            content='description',
+            summary='summary',
+            summary_must_be_edited=True,
+            owner_ref=common_pb2.UserRef(
+                user_id=owner.user_id,
+                display_name=owner.email,
+                is_derived=False),
+            status_ref=common_pb2.StatusRef(
+                status='New',
+                is_derived=False,
+                means_open=True),
+            label_refs=[
+                common_pb2.LabelRef(label='label-2', is_derived=False),
+                common_pb2.LabelRef(label='chicken', is_derived=False)],
+            members_only=True,
+            owner_defaults_to_member=True,
+            admin_refs=[
+                common_pb2.UserRef(
+                    user_id=admin1.user_id,
+                    display_name=admin1.email,
+                    is_derived=False),
+                common_pb2.UserRef(
+                    user_id=admin2.user_id,
+                    display_name=admin2.email,
+                    is_derived=False)],
+            field_values=[
+                issue_objects_pb2.FieldValue(
+                    field_ref=common_pb2.FieldRef(
+                        field_id=self.fd_7.field_id,
+                        field_name=self.fd_7.field_name,
+                        type=common_pb2.ENUM_TYPE),
+                    value='choice1'),
+                issue_objects_pb2.FieldValue(
+                  field_ref=common_pb2.FieldRef(
+                      field_id=self.fd_1.field_id,
+                      field_name=self.fd_1.field_name,
+                      type=common_pb2.STR_TYPE),
+                  value='honk'),
+                issue_objects_pb2.FieldValue(
+                    field_ref=common_pb2.FieldRef(
+                        field_id=self.fd_6.field_id,
+                        field_name=self.fd_6.field_name,
+                        type=common_pb2.INT_TYPE),
+                    value='78',
+                    phase_ref=issue_objects_pb2.PhaseRef(
+                        phase_name='phaseName'))],
+            component_refs=[
+                common_pb2.ComponentRef(path='dude', is_derived=False)],
+            component_required=True,
+            phases=[issue_objects_pb2.PhaseDef(
+                phase_ref=issue_objects_pb2.PhaseRef(phase_name='phaseName'))],
+            approval_values=[
+              issue_objects_pb2.Approval(
+                  field_ref=common_pb2.FieldRef(
+                      field_id=self.fd_3.field_id,
+                      field_name=self.fd_3.field_name,
+                      type=common_pb2.APPROVAL_TYPE),
+                  phase_ref=issue_objects_pb2.PhaseRef(phase_name='phaseName'),
+                  setter_ref=common_pb2.UserRef(display_name='----'),
+                  approver_refs=[common_pb2.UserRef(
+                      user_id=appr1.user_id,
+                      display_name=appr1.email,
+                      is_derived=False)])],
+        ),
+        project_objects_pb2.TemplateDef(
+            template_name='Kale',
+            owner_ref=common_pb2.UserRef(display_name='----'),
+            status_ref=common_pb2.StatusRef(
+                status='----',
+                means_open=True),
+            owner_defaults_to_member=True)]
     self.assertEqual(actual, expected)
 
-  def testConvertTemplates_Empty(self):
+  def testConvertTemplateDefs_Empty(self):
     """We can convert an empty list of protoc TemplateDefs."""
-    actual = converters.ConvertTemplates([])
+    actual = converters.ConvertProjectTemplateDefs([], {}, self.config)
     self.assertEqual(actual, [])
 
   def testConvertHotlist(self):
