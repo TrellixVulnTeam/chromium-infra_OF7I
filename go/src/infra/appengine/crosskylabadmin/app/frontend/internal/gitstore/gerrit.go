@@ -61,12 +61,21 @@ func commitFileContents(ctx context.Context, client gerrit.GerritClient, project
 		} else {
 			logging.Debugf(ctx, "changing file %v contents to (truncated, total %v): %s", path, n, contents[:limit])
 		}
-		if _, err = client.ChangeEditFileContent(ctx, &gerrit.ChangeEditFileContentRequest{
-			Number:   changeInfo.Number,
-			Project:  changeInfo.Project,
-			FilePath: path,
-			Content:  []byte(contents),
-		}); err != nil {
+		if contents == "" {
+			_, err = client.DeleteEditFileContent(ctx, &gerrit.DeleteEditFileContentRequest{
+				Number:   changeInfo.Number,
+				Project:  changeInfo.Project,
+				FilePath: path,
+			})
+		} else {
+			_, err = client.ChangeEditFileContent(ctx, &gerrit.ChangeEditFileContentRequest{
+				Number:   changeInfo.Number,
+				Project:  changeInfo.Project,
+				FilePath: path,
+				Content:  []byte(contents),
+			})
+		}
+		if err != nil {
 			return -1, err
 		}
 	}
