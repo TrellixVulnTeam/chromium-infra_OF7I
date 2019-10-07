@@ -1,0 +1,13 @@
+diff --git a/ncurses/base/MKlib_gen.sh b/ncurses/base/MKlib_gen.sh
+index 4f7f19de..3a727fa0 100755
+--- a/ncurses/base/MKlib_gen.sh
++++ b/ncurses/base/MKlib_gen.sh
+@@ -425,6 +425,8 @@ BEGIN		{
+ 		print ""
+ 		print "#undef vw_printw"
+ 		print "#undef vwprintw"
++		print ""
++		print "#undef mouse_trafo"
+ 		}
+ /^DECLARATIONS/	{start = 1; next;}
+ 		{
