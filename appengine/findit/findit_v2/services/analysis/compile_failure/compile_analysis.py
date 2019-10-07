@@ -37,8 +37,10 @@ def AnalyzeCompileFailure(context, build, compile_steps):
   """
   luci_project = context.luci_project_name
   if luci_project == 'chromium':
-    logging.warning('Findit does not support chromium project in v2.')
-    return False
+    logging.warning('Findit does not fully support chromium project in v2, '
+                    'analyses are performed for a limited number of builders '
+                    'in parallel with v1 analyses. V2 analyses will take no '
+                    'action upon finding a culprit.')
 
   project_api = projects.GetProjectAPI(luci_project)
 

@@ -21,6 +21,7 @@ from findit_v2.services.analysis.compile_failure import compile_analysis
 from findit_v2.services.analysis.compile_failure.compile_analysis_api import (
     CompileAnalysisAPI)
 from findit_v2.services.chromeos_api import ChromeOSProjectAPI
+from findit_v2.services.chromium_api import ChromiumProjectAPI
 from findit_v2.services.context import Context
 from findit_v2.services.failure_type import StepTypeEnum
 from libs import analysis_status
@@ -57,10 +58,35 @@ class CompileAnalysisTest(wf_testcase.TestCase):
 
     self.compile_step_name = 'compile'
 
-  def testAnalyzeCompileFailureBailoutChromium(self):
-    context = Context(luci_project_name='chromium')
-    self.assertFalse(
-        compile_analysis.AnalyzeCompileFailure(context, None, None))
+  @mock.patch.object(CompileAnalysisAPI, 'RerunBasedAnalysis')
+  @mock.patch.object(CompileAnalysisAPI, 'SaveFailureAnalysis')
+  @mock.patch.object(
+      CompileAnalysisAPI, 'GetSuspectedCulprits', return_value=None)
+  @mock.patch.object(CompileAnalysisAPI, 'SaveFailures')
+  @mock.patch.object(CompileAnalysisAPI, 'UpdateFailuresWithFirstFailureInfo')
+  @mock.patch.object(ChromiumProjectAPI, 'GetCompileFailures', return_value={})
+  @mock.patch.object(CompileAnalysisAPI,
+                     'GetFirstFailuresInCurrentBuildWithoutGroup')
+  @mock.patch.object(CompileAnalysisAPI, 'GetFirstFailuresInCurrentBuild')
+  def testAnalyzeCompileFailureNotBailoutChromium(
+      self, mock_first_failure_in_build, mock_no_group, *_):
+    mock_first_failure_in_build.return_value = {
+        'failures': {
+            self.compile_step_name: {
+                'atomic_failures': ['target4', 'target1', 'target2']
+            }
+        }
+    }
+    mock_no_group.return_value = {
+        'failures': {
+            self.compile_step_name: {
+                'atomic_failures': ['target4', 'target1', 'target2']
+            }
+        }
+    }
+    self.context.luci_project_name = 'chromium'
+    self.assertTrue(
+        compile_analysis.AnalyzeCompileFailure(self.context, Build(), []))
 
   @mock.patch.object(
       CompileAnalysisAPI,
