@@ -610,7 +610,6 @@ class TaskDefTest(BaseTest):
         '-known-gerrit-host', 'chromium-review.googlesource.com'
     ], test_util.ununicode(actual['task_slices'][0]['properties']['command']))
 
-
   def test_experimental(self):
     build = self._test_build(input=dict(experimental=True))
     actual = self.compute_task_def(build)
@@ -620,6 +619,13 @@ class TaskDefTest(BaseTest):
         'key': 'BUILDBUCKET_EXPERIMENTAL',
         'value': 'TRUE',
     }, env)
+
+  def test_parent_run_id(self):
+    build = self._test_build(
+        infra=dict(swarming=dict(parent_run_id='deadbeef'))
+    )
+    actual = self.compute_task_def(build)
+    self.assertEqual(actual['parent_task_id'], 'deadbeef')
 
   def test_generate_build_url(self):
     build = self._test_build(id=1)

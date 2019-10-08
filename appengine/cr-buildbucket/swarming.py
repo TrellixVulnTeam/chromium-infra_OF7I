@@ -164,6 +164,10 @@ def compute_task_def(build, settings, fake_build):
   }
   if build.proto.number:  # pragma: no branch
     task['name'] += '-%d' % build.proto.number
+  if sw.parent_run_id:
+    # Semantically, it's a run id, but swarming API unfortunately called it
+    # parent_task_id.
+    task['parent_task_id'] = sw.parent_run_id
 
   if sw.task_service_account:  # pragma: no branch
     # Don't pass it if not defined, for backward compatibility.

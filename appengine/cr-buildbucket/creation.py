@@ -191,6 +191,9 @@ class BuildRequest(_BuildRequestBase):
         _apply_dimension_overrides(configured_task_dims, sbr.dimensions)
     )
 
+    if sbr.swarming.parent_run_id:
+      sw.parent_run_id = sbr.swarming.parent_run_id
+
     if sbr.priority:
       sw.priority = sbr.priority
     elif bp.input.experimental:
