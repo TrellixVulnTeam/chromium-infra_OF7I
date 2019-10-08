@@ -145,26 +145,53 @@ export class MrSearchBar extends LitElement {
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-      <form @submit=${this._searchSubmitted} @keypress=${this._submitSearchWithKeypress}>
+      <form
+        @submit=${this._searchSubmitted}
+        @keypress=${this._submitSearchWithKeypress}
+      >
         <div class="select-container">
           <i class="material-icons">arrow_drop_down</i>
           <select id="can" name="can" @change=${this._redirectOnSelect} aria-label="Search scope">
             <optgroup label="Search within">
-              <option value="1" ?selected=${this.defaultCan === '1'}>All issues</option>
-              <option value="2" ?selected=${this.defaultCan === '2'}>Open issues</option>
-              <option value="3" ?selected=${this.defaultCan === '3'}>Open and owned by me</option>
-              <option value="4" ?selected=${this.defaultCan === '4'}>Open and reported by me</option>
-              <option value="5" ?selected=${this.defaultCan === '5'}>Open and starred by me</option>
-              <option value="8" ?selected=${this.defaultCan === '8'}>Open with comment by me</option>
-              <option value="6" ?selected=${this.defaultCan === '6'}>New issues</option>
-              <option value="7" ?selected=${this.defaultCan === '7'}>Issues to verify</option>
+              <option
+                value="1"
+                ?selected=${this.currentCan === '1'}
+              >All issues</option>
+              <option
+                value="2"
+                ?selected=${this.currentCan === '2'}
+              >Open issues</option>
+              <option
+                value="3"
+                ?selected=${this.currentCan === '3'}
+              >Open and owned by me</option>
+              <option
+                value="4"
+                ?selected=${this.currentCan === '4'}
+              >Open and reported by me</option>
+              <option
+                value="5"
+                ?selected=${this.currentCan === '5'}
+              >Open and starred by me</option>
+              <option
+                value="8"
+                ?selected=${this.currentCan === '8'}
+              >Open with comment by me</option>
+              <option
+                value="6"
+                ?selected=${this.currentCan === '6'}
+              >New issues</option>
+              <option
+                value="7"
+                ?selected=${this.currentCan === '7'}
+              >Issues to verify</option>
             </optgroup>
             <optgroup label="Project queries" ?hidden=${!this.userDisplayName}>
               ${this.projectSavedQueries && this.projectSavedQueries.map((query) => html`
                 <option
                   class="project-query"
                   value=${query.queryId}
-                  ?selected=${this.defaultCan === query.queryId}
+                  ?selected=${this.currentCan === query.queryId}
                 >${query.name}</option>
               `)}
               <option data-href="/p/${this.projectName}/adminViews">Manage project queries...</option>
@@ -174,7 +201,7 @@ export class MrSearchBar extends LitElement {
                 <option
                   class="user-query"
                   value=${query.queryId}
-                  ?selected=${this.defaultCan === query.queryId}
+                  ?selected=${this.currentCan === query.queryId}
                 >${query.name}</option>
               `)}
               <option data-href="/u/${this.userDisplayName}/queries">Manage my saved queries...</option>
@@ -208,7 +235,7 @@ export class MrSearchBar extends LitElement {
     return {
       projectName: {type: String},
       userDisplayName: {type: String},
-      defaultCan: {type: String},
+      currentCan: {type: String},
       initialValue: {type: String},
       projectSavedQueries: {type: Array},
       userSavedQueries: {type: Array},
@@ -235,7 +262,7 @@ export class MrSearchBar extends LitElement {
       'num',
     ];
     this.initialValue = '';
-    this.defaultCan = '2';
+    this.currentCan = '2';
     this.projectSavedQueries = [];
     this.userSavedQueries = [];
 

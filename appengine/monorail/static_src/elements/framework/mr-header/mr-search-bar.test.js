@@ -105,9 +105,9 @@ describe('mr-search-bar', () => {
       sinon.assert.calledOnce(event.preventDefault);
     });
 
-    it('submit uses default values when no form changes', async () => {
+    it('submit uses initial values when no form changes', async () => {
       element.initialValue = 'test query';
-      element.defaultCan = '3';
+      element.currentCan = '3';
 
       await element.updateComplete;
 

@@ -94,6 +94,25 @@ describe('project selectors', () => {
     }), ['ID', 'Summary', 'ColumnName', 'Priority']);
   });
 
+  it('currentCan', () => {
+    // Uses default when no params.
+    assert.deepEqual(project.currentCan({}), '2');
+
+    // Params override default.
+    assert.deepEqual(project.currentCan({
+      sitewide: {
+        queryParams: {can: '3'},
+      },
+    }), '3');
+
+    // Undefined does not override default query.
+    assert.deepEqual(project.currentCan({
+      sitewide: {
+        queryParams: {can: undefined},
+      },
+    }), '2');
+  });
+
   it('defaultQuery', () => {
     assert.deepEqual(project.defaultQuery({}), '');
     assert.deepEqual(project.defaultQuery({project: {}}), '');

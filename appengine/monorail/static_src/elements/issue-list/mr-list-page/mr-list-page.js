@@ -21,7 +21,7 @@ import '../dialogs/mr-change-columns/mr-change-columns.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 
 export const DEFAULT_ISSUES_PER_PAGE = 100;
-const PARAMS_THAT_TRIGGER_REFRESH = ['q', 'can', 'sort', 'groupby', 'num',
+const PARAMS_THAT_TRIGGER_REFRESH = ['sort', 'groupby', 'num',
   'start'];
 
 export class MrListPage extends connectStore(LitElement) {
@@ -194,6 +194,7 @@ export class MrListPage extends connectStore(LitElement) {
         .projectName=${this.projectName}
         .queryParams=${this.queryParams}
         .currentQuery=${this.currentQuery}
+        .currentCan=${this.currentCan}
         .columns=${this.columns}
         .groups=${this.groups}
         ?selectionEnabled=${this.editingEnabled}
@@ -285,6 +286,10 @@ export class MrListPage extends connectStore(LitElement) {
        * The current search string the user is querying for.
        */
       currentQuery: {type: String},
+      /**
+       * The current canned query the user is searching for.
+       */
+      currentCan: {type: String},
       _isLoggedIn: {type: Boolean},
       _currentUser: {type: Object},
       _usersProjects: {type: Object},
@@ -330,8 +335,9 @@ export class MrListPage extends connectStore(LitElement) {
   }
 
   updated(changedProperties) {
-    if (changedProperties.has('projectName')
-        || changedProperties.has('currentQuery')) {
+    if (changedProperties.has('projectName') ||
+        changedProperties.has('currentQuery') ||
+        changedProperties.has('currentCan')) {
       this.refresh();
     } else if (changedProperties.has('queryParams')) {
       const oldParams = changedProperties.get('queryParams') || {};
@@ -353,7 +359,7 @@ export class MrListPage extends connectStore(LitElement) {
 
   refresh() {
     store.dispatch(issue.fetchIssueList(
-        {...this.queryParams, q: this.currentQuery},
+        {...this.queryParams, q: this.currentQuery, can: this.currentCan},
         this.projectName,
         {maxItems: this.maxItems, start: this.startIndex}));
   }
@@ -368,6 +374,7 @@ export class MrListPage extends connectStore(LitElement) {
     this.fetchingIssueList = issue.requests(state).fetchIssueList.requesting;
 
     this.currentQuery = project.currentQuery(state);
+    this.currentCan = project.currentCan(state);
     this.columns = project.currentColumns(state);
   }
 

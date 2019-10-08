@@ -6,7 +6,7 @@ import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 import * as sitewide from 'reducers/sitewide.js';
-import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS,
+import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS, SITEWIDE_DEFAULT_CAN,
   parseColSpec} from 'shared/issue-fields.js';
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
@@ -141,6 +141,15 @@ export const currentColumns = createSelector(
       }
       return defaultColumns;
     });
+
+/**
+ * Get the default canned query for the currently viewed project.
+ * Note: Projects cannot configure a per-project default canned query,
+ * so there is only a sitewide default.
+ */
+export const currentCan = createSelector(sitewide.queryParams,
+    (params) => params.can || SITEWIDE_DEFAULT_CAN);
+
 
 /**
  * Get the default query for the currently viewed project.

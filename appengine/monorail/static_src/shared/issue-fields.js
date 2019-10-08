@@ -39,6 +39,9 @@ const SPEC_DELIMITER_REGEX = /[\s\+]+/;
 export const SITEWIDE_DEFAULT_COLUMNS = ['ID', 'Type', 'Status',
   'Priority', 'Milestone', 'Owner', 'Summary'];
 
+// When no default can is configured, projects use "Open issues".
+export const SITEWIDE_DEFAULT_CAN = '2';
+
 export const PHASE_FIELD_COL_DELIMITER_REGEX = /\./;
 
 export const EMPTY_FIELD_VALUE = '----';

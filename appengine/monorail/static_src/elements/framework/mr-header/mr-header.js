@@ -133,8 +133,8 @@ export class MrHeader extends connectStore(LitElement) {
         .projectName=${this.projectName}
         .userDisplayName=${this.userDisplayName}
         .projectSavedQueries=${this.presentationConfig.savedQueries}
-        .defaultCan=${this._defaultCan}
-        .initialValue=${this._initialSearch}
+        .currentCan=${this._currentCan}
+        .initialValue=${this._currentQuery}
         .queryParams=${this.queryParams}
         ?hidden=${!this.projectName}
       ></mr-search-bar>
@@ -179,7 +179,8 @@ export class MrHeader extends connectStore(LitElement) {
       //   frontend with logic similar to ComputeIssueEntryURL().
       issueEntryUrl: {type: String},
       clientLogger: {type: Object},
-      _initialSearch: {type: String},
+      _currentQuery: {type: String},
+      _currentCan: {type: String},
     };
   }
 
@@ -205,7 +206,8 @@ export class MrHeader extends connectStore(LitElement) {
     // the GetPresentationConfig pRPC request.
     this.projectThumbnailUrl = presentationConfig.projectThumbnailUrl;
 
-    this._initialSearch = project.currentQuery(state);
+    this._currentQuery = project.currentQuery(state);
+    this._currentCan = project.currentCan(state);
 
     this.queryParams = sitewide.queryParams(state);
   }
@@ -271,11 +273,6 @@ export class MrHeader extends connectStore(LitElement) {
       items.push({text: 'Administer', url: `/p/${projectName}/admin`});
     }
     return items;
-  }
-
-  get _defaultCan() {
-    const can = this.queryParams && this.queryParams.can;
-    return can ? can : '2';
   }
 
   _projectChangedHandler(item) {

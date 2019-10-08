@@ -113,7 +113,7 @@ describe('mr-list-page', () => {
     assert.isTrue(considerClosed.hidden);
   });
 
-  it('refreshes when queryParams.q changes', async () => {
+  it('refreshes when queryParams.sort changes', async () => {
     element.queryParams = {};
     await element.updateComplete;
 
@@ -124,7 +124,7 @@ describe('mr-list-page', () => {
     await element.updateComplete;
     sinon.assert.notCalled(element.refresh);
 
-    element.queryParams = {q: 'owner:me'};
+    element.queryParams = {sort: '-Summary'};
 
     await element.updateComplete;
     sinon.assert.calledOnce(element.refresh);
