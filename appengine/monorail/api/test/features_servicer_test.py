@@ -52,10 +52,10 @@ class FeaturesServicerTest(unittest.TestCase):
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, owner_ids=[111], contrib_ids=[222, 333])
     self.config = tracker_bizobj.MakeDefaultProjectIssueConfig(789)
-    self.user = self.services.user.TestAddUser('owner@example.com', 111)
-    self.user = self.services.user.TestAddUser('editor@example.com', 222)
-    self.user = self.services.user.TestAddUser('foo@example.com', 333)
-    self.user = self.services.user.TestAddUser('bar@example.com', 444)
+    self.user1 = self.services.user.TestAddUser('owner@example.com', 111)
+    self.user2 = self.services.user.TestAddUser('editor@example.com', 222)
+    self.user3 = self.services.user.TestAddUser('foo@example.com', 333)
+    self.user4 = self.services.user.TestAddUser('bar@example.com', 444)
     self.features_svcr = features_servicer.FeaturesServicer(
         self.services, make_rate_limiter=False)
     self.prpc_context = context.ServicerContext()
@@ -812,6 +812,27 @@ class FeaturesServicerTest(unittest.TestCase):
         self.services, cnxn=self.cnxn, requester='owner@example.com')
     with self.assertRaises(permissions.PermissionException):
       self.CallWrapped(self.features_svcr.UpdateHotlistIssueNote, mc, request)
+
+  @mock.patch('businesslogic.work_env.WorkEnv.DeltaUpdateHotlistRoles')
+  def testUpdateHotlistRoles(self, fake_update):
+    """Test we can update hotlist people."""
+    hotlist = self.services.features.TestAddHotlist(
+        name='Hotlist-1', summary='summary', description='description',
+        owner_ids=[222], hotlist_id=1233)
+    request = features_pb2.UpdateHotlistRolesRequest(
+        hotlist_ref=common_pb2.HotlistRef(
+            name='Hotlist-1',
+            owner=common_pb2.UserRef(user_id=222)),
+        people_delta=features_objects_pb2.HotlistPeopleDelta(
+            new_owner_ref=common_pb2.UserRef(user_id=222),
+            add_follower_refs=[common_pb2.UserRef(user_id=444)])
+        )
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester='owner@example.com')
+    self.CallWrapped(self.features_svcr.UpdateHotlistRoles, mc, request)
+    fake_update.assert_called_once_with(
+        hotlist.hotlist_id, 222, [], [444], [])
 
   def testPredictComponent_Normal(self):
     """Test normal case when predicted component exists."""

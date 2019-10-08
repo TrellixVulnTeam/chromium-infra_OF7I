@@ -23,6 +23,7 @@ service Features {
   rpc RemoveIssuesFromHotlists (RemoveIssuesFromHotlistsRequest) returns (RemoveIssuesFromHotlistsResponse) {}
   rpc AddIssuesToHotlists (AddIssuesToHotlistsRequest) returns (AddIssuesToHotlistsResponse) {}
   rpc UpdateHotlistIssueNote (UpdateHotlistIssueNoteRequest) returns (UpdateHotlistIssueNoteResponse) {}
+  rpc UpdateHotlistRoles (UpdateHotlistRolesRequest) returns (UpdateHotlistRolesResponse) {}
   rpc PredictComponent (PredictComponentRequest) returns (PredictComponentResponse) {}
 }
 
@@ -174,6 +175,18 @@ message UpdateHotlistIssueNoteRequest {
 
 // Next available tag: 1
 message UpdateHotlistIssueNoteResponse {
+}
+
+
+// Next available tag: 3
+message UpdateHotlistRolesRequest {
+  HotlistRef hotlist_ref = 1;
+  HotlistPeopleDelta people_delta = 2;
+}
+
+
+// Next available tag: 1
+message UpdateHotlistRolesResponse {
 }
 
 

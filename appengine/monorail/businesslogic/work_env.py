@@ -1963,7 +1963,25 @@ class WorkEnv(object):
     self.services.features.TransferHotlistOwnership(
         self.mc.cnxn, hotlist, new_owner_id, remain_editor, commit=commit)
 
-  # TODO(jojwang) UpdateHotlistRoles
+  def DeltaUpdateHotlistRoles(
+      self, hotlist_id, new_owner_id=None, add_editor_ids=None,
+      add_follower_ids=None, remove_user_ids=None, use_cache=True,
+      commit=True):
+    """Update the members of a hotlist.
+
+    A user can only hold one role in a hotlist. If an existing hotlist
+    member is in any add_ list, they will be reassigned to the new role.
+    If a user appears in an add_ list and the remove_user_ids list,
+    the user will be added as a hotlist member.
+
+    Args:
+      hotlist_id: the id of the hotlist we want to update
+      new_owner_id: user_id of new owner for hotlist
+      add_editor_ids: list of editor_ids to add to hotlist editors
+      add_follower_ids: list of follower_ids to add to hotlistfollower
+      remove_user_ids: list of user_ids to remove from hotlist members
+    """
+    pass
 
   def ListHotlistsByUser(self, user_id):
     """Return the hotlists for the given user.

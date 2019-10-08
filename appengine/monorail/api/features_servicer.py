@@ -280,6 +280,28 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return result
 
   @monorail_servicer.PRPCMethod
+  def UpdateHotlistRoles(self, mc, request):
+    """Update the hotlist people."""
+    hotlist_id = converters.IngestHotlistRef(
+        mc.cnxn, self.services.user, self.services.features,
+        request.hotlist_ref)
+    new_owner_id = converters.IngestUserRef(
+        mc.cnxn, request.people_delta.new_owner_ref, self.services.user)
+    add_editor_ids = converters.IngestUserRefs(
+        mc.cnxn, request.people_delta.add_editor_refs, self.services.user)
+    add_follower_ids = converters.IngestUserRefs(
+        mc.cnxn, request.people_delta.add_follower_refs, self.services.user)
+    remove_user_ids = converters.IngestUserRefs(
+        mc.cnxn, request.people_delta.remove_user_refs, self.services.user)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.DeltaUpdateHotlistRoles(
+          hotlist_id, new_owner_id, add_editor_ids, add_follower_ids,
+          remove_user_ids)
+
+    return features_pb2.UpdateHotlistRolesResponse()
+
+  @monorail_servicer.PRPCMethod
   def PredictComponent(self, mc, request):
     """Predict the component of an issue based on the given text."""
     with work_env.WorkEnv(mc, self.services) as we:
