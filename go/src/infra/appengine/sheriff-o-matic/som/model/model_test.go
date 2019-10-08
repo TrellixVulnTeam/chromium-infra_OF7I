@@ -56,13 +56,36 @@ func TestAnnotation(t *testing.T) {
 				So(res, ShouldEqual, "123123")
 			})
 
-			Convey("bugs.chromium.org", func() {
+			Convey("bugs.chromium.org without id", func() {
 				_, err := validBug("bugs.chromium.org/aasasnans")
 				So(err, ShouldNotBeNil)
 			})
 
+			Convey("bugs.chromium.org with id", func() {
+				res, err := validBug("bugs.chromium.org/?id=123123")
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, "123123")
+			})
+
 			Convey("crbug.com", func() {
 				res, err := validBug("crbug.com/123123")
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, "123123")
+			})
+
+			Convey("non-integer ID", func() {
+				_, err := validBug("crbug.com/abc")
+				So(err, ShouldNotBeNil)
+			})
+
+			Convey("https", func() {
+				res, err := validBug("bugs.chromium.org/?id=123123")
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, "123123")
+			})
+
+			Convey("http", func() {
+				res, err := validBug("http://crbug.com/123123")
 				So(err, ShouldBeNil)
 				So(res, ShouldEqual, "123123")
 			})

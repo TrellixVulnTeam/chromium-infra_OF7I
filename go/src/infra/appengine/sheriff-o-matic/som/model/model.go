@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -130,8 +131,10 @@ type annotationRemove struct {
 // number.
 func validBug(bug string) (string, error) {
 	urlBug := bug
-	if !strings.HasPrefix(bug, "https://") {
-		urlBug = "https://" + urlBug
+
+	r, _ := regexp.Compile("^https?://")
+	if !r.MatchString(bug) {
+		urlBug = "https://" + bug
 	}
 
 	parsed, err := url.Parse(urlBug)

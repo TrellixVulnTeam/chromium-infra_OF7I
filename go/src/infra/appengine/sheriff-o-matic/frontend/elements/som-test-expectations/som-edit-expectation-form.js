@@ -66,21 +66,37 @@ class SomEditExpectationForm extends Polymer.LegacyElementMixin(Polymer.Element)
 
   _addBug(evt) {
     ga('send', 'event', this.nodeName.toLocaleLowerCase(), 'add-bug');
-    this._newBugError = '';
-    let bug = this.$.newBug.value;
-    let parser = document.createElement('a');
-    parser.href = bug;
-    if (!bug.startsWith('https://')) {
-      parser.href = 'https://' + bug;
-    }
-    if (isNaN(parseInt(bug)) && parser.hostname != 'bugs.chromium.org' &&
-      parser.hostname != 'crbug.com') {
+    const bug = this.$.newBug.value.trim();
+    if (!this._isValidBugStr(bug)) {
       this._newBugError = 'Invalid bug';
-      return
+      return;
     }
 
-    this.push('_editValue.Bugs', this.$.newBug.value);
+    this._newBugError = '';
+    if (this._editValue.Bugs) {
+      this.push('_editValue.Bugs', bug);
+    } else {
+      this.set('_editValue.Bugs', [bug]);
+    }
     this.$.newBug.value = '';
+  }
+
+  _isValidBugStr(bugStr) {
+    if (/^\d+$/.test(bugStr)) {
+      return true;
+    }
+
+    const bugUrl = (/^https?:\/\//.test(bugStr)) ? bugStr : `https://${bugStr}`;
+    let url;
+    try {
+      url = new URL(bugUrl);
+    } catch (_) {
+      return false;
+    }
+    const isValid =
+      url.hostname === 'bugs.chromium.org' && /^\d+$/.test(url.searchParams.get('id')) || // eslint-disable-line max-len
+      url.hostname === 'crbug.com' && /^\/\d+$/.test(url.pathname);
+    return isValid;
   }
 
   _expects(item, val) {
