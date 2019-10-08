@@ -96,7 +96,7 @@ Other available team trooper queues within Chrome Operations.
 Common Non-Trooper Requests:
 
 *   [Contact a Git Admin](https://bugs.chromium.org/p/chromium/issues/entry?template=Infra-Git)
-*   [File Chrome OS infra bug](https://bugs.chromium.org/p/chromium/issues/entry?template=Defect%20report%20from%20developer&components=Infra>Client>ChromeOS&labels=Restrict-View-Google&summary=%5BBrief%20description%20of%20problem%5D)
+*   [File Chrome OS infra bug](https://bugs.chromium.org/p/chromium/issues/entry?template=Defect%20report%20from%20developer&components=Infra>ChromeOS&labels=Restrict-View-Google&summary=%5BBrief%20description%20of%20problem%5D)
 *   [Check the Chrome OS on-call channel](http://go/crosoncall) (internal)
 
 [Machine restart requests]: https://bugs.chromium.org/p/chromium/issues/entry?template=Build%20Infrastructure&labels=Restrict-View-Google,Infra-Troopers,Pri-2&summary=%5BMachine%20Restart%5D%20for%20%5Bmachine%20hostame%5D&comment=Please%20provide%20the%20reason%20for%20restart.%0A%0ALeave%20at%20Pri-2%20for%20restart%20by%20end-of-day;%20Pri-1%20if%20you%20would%20like%20a%20restart%20sooner%20than%20that;%20or%20Pri-0%20if%20this%20is%20part%20of%20fixing%20an%20ongoing%20outage.
