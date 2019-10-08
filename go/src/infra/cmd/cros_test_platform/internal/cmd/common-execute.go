@@ -34,7 +34,7 @@ type commonExecuteRun struct {
 func (c *commonExecuteRun) addFlags() {
 	c.Flags.StringVar(&c.inputPath, "input_json", "", "Path to JSON ExecuteRequest to read.")
 	c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to JSON ExecuteResponse to write.")
-	c.Flags.BoolVar(&c.multiRequest, "multi_request", false, "If true, handle multiple requests at once (transitional flag: crbug.com/1008135).")
+	c.Flags.BoolVar(&c.multiRequest, "multi_request", true, "If true, handle multiple requests at once (transitional flag: crbug.com/1008135).")
 }
 
 func (c *commonExecuteRun) validateArgs() error {

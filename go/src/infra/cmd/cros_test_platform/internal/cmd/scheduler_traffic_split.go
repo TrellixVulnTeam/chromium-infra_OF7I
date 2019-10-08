@@ -40,7 +40,7 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.SchedulerTrafficSplitRequest")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.SchedulerTrafficSplitResponse should be written.")
-		c.Flags.BoolVar(&c.multiRequest, "multi_request", false, "If true, handle multiple requests at once (transitional flag: crbug.com/1008135).")
+		c.Flags.BoolVar(&c.multiRequest, "multi_request", true, "If true, handle multiple requests at once (transitional flag: crbug.com/1008135).")
 		return c
 	},
 }
