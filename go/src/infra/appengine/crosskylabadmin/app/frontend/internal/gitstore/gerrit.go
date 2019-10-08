@@ -62,6 +62,7 @@ func commitFileContents(ctx context.Context, client gerrit.GerritClient, project
 			logging.Debugf(ctx, "changing file %v contents to (truncated, total %v): %s", path, n, contents[:limit])
 		}
 		if contents == "" {
+			logging.Debugf(ctx, "delete call: %s, %s, %s", changeInfo.Number, changeInfo.Project, path)
 			_, err = client.DeleteEditFileContent(ctx, &gerrit.DeleteEditFileContentRequest{
 				Number:   changeInfo.Number,
 				Project:  changeInfo.Project,
