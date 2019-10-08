@@ -64,9 +64,9 @@ class WorkEnvTest(unittest.TestCase):
     self.admin_user = self.services.user.TestAddUser(
         'admin@example.com', 444)
     self.admin_user.is_site_admin = True
-    self.services.user.TestAddUser('user_111@example.com', 111)
-    self.services.user.TestAddUser('user_222@example.com', 222)
-    self.services.user.TestAddUser('user_333@example.com', 333)
+    self.user_1 = self.services.user.TestAddUser('user_111@example.com', 111)
+    self.user_2 = self.services.user.TestAddUser('user_222@example.com', 222)
+    self.user_3 = self.services.user.TestAddUser('user_333@example.com', 333)
     self.mr = testing_helpers.MakeMonorailRequest(project=self.project)
     self.mr.perms = permissions.READ_ONLY_PERMISSIONSET
 
@@ -3191,6 +3191,53 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(features_svc.NoSuchHotlistException):
       with self.work_env as we:
         _actual = we.GetHotlist(999)
+
+  def testTransferHotlistOwnership(self):
+    """We can transfer ownership of a hotlist."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'hotlist', summary='Summary', description='Description',
+        owner_ids=owner_ids, editor_ids=editor_ids, hotlist_id=123)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      we.TransferHotlistOwnership(
+          hotlist.hotlist_id, self.user_2.user_id, True)
+      transferred_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(transferred_hotlist.owner_ids, editor_ids)
+      self.assertEqual(transferred_hotlist.editor_ids, owner_ids)
+
+  def testTransferHotlistOwnership_NoPermission(self):
+    """We only let hotlist owners transfer hotlist ownership."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'SameName', summary='Summary', description='Description',
+        owner_ids=owner_ids, editor_ids=editor_ids, hotlist_id=123)
+
+    self.SignIn(user_id=self.user_2.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.TransferHotlistOwnership(
+            hotlist.hotlist_id, self.user_2.user_id, True)
+
+  def testTransferHotlistOwnership_RejectNewOwner(self):
+    """We reject attempts when new owner already owns a
+       hotlist with the same name."""
+    owner_ids = [self.user_1.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'SameName', summary='Summary', description='Description',
+        owner_ids=owner_ids, hotlist_id=123)
+    _other_hotlist = self.work_env.services.features.TestAddHotlist(
+        'SameName', summary='summary', description='description',
+        owner_ids=[self.user_2.user_id], hotlist_id=124)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.TransferHotlistOwnership(
+            hotlist.hotlist_id, self.user_2.user_id, True)
 
   def testListHotlistsByUser_Normal(self):
     self.work_env.services.features.CreateHotlist(

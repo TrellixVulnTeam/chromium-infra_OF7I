@@ -860,10 +860,6 @@ class FeaturesService(object):
   def TransferHotlistOwnership(
       self, cnxn, hotlist, new_owner_id, remain_editor, commit=True):
     """Transfers ownership of a hotlist to a new owner."""
-    if self.LookupHotlistIDs(cnxn, [hotlist.name], [new_owner_id]):
-      raise exceptions.InputException(
-          'Proposed new owner already owns a hotlist with this name.')
-
     new_editor_ids = hotlist.editor_ids
     if remain_editor:
       new_editor_ids.extend(hotlist.owner_ids)
@@ -1081,14 +1077,12 @@ class FeaturesService(object):
         candidate_new_owners = [user_id for user_id in hotlist.editor_ids
                                 if user_id not in user_ids]
         for candidate_id in candidate_new_owners:
-          try:
+          if not self.LookupHotlistIDs(cnxn, [hotlist.name], [candidate_id]):
             self.TransferHotlistOwnership(
                 cnxn, hotlist, candidate_id, False, commit=False)
             # Hotlist transferred successfully. No need to delete it.
             hotlists_to_delete.remove(hotlist_id)
             break
-          except exceptions.InputException:
-            pass
 
     # Delete users
     self.hotlist2user_tbl.Delete(cnxn, user_id=user_ids, commit=False)

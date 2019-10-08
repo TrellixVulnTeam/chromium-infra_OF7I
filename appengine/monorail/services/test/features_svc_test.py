@@ -660,17 +660,6 @@ Delete.assert_called_once_with(
     self.features_service.hotlist2user_tbl.InsertRows.assert_called_once_with(
         self.cnxn, features_svc.HOTLIST2USER_COLS, insert_rows, commit=False)
 
-  def testTransferHotlistOwnership_RejectNewOwner(self):
-    hotlist = fake.Hotlist(hotlist_name='sameName', hotlist_id=123,
-                           owner_ids=[111], editor_ids=[222])
-    self.features_service.hotlist2user_tbl.Select = mock.Mock(
-        return_value=[(123, 222), (567, 222)])
-    self.features_service.hotlist_tbl.Select = mock.Mock(
-        return_value=[(123, 'sameName'), (567, 'diffName')])
-    with self.assertRaises(exceptions.InputException):
-      self.features_service.TransferHotlistOwnership(
-          self.cnxn, hotlist, 222, True)
-
   def SetUpLookupHotlistIDs(self):
     self.features_service.hotlist_tbl.Select(
       self.cnxn, cols=['id', 'name'], is_deleted=False,

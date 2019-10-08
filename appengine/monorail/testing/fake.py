@@ -2145,7 +2145,6 @@ class FeaturesService(object):
     # filter rules, project_id => filterrule_pb
     self.test_rules = collections.defaultdict(list)
 
-
     # hotlists
     self.test_hotlists = {}  # (hotlist_name, owner_id) => hotlist_pb
     self.hotlists_by_id = {}
@@ -2337,6 +2336,21 @@ class FeaturesService(object):
         hotlist_item.rank = new_ranks[hotlist_item.issue_id]
       if hotlist_item.issue_id in new_notes:
         hotlist_item.note = new_notes[hotlist_item.issue_id]
+
+  def TransferHotlistOwnership(
+      self, cnxn, hotlist, new_owner_id, remain_editor, commit=True):
+    """Transfers ownership of a hotlist to a new owner."""
+    new_editor_ids = hotlist.editor_ids
+    if remain_editor:
+      new_editor_ids.extend(hotlist.owner_ids)
+    if new_owner_id in new_editor_ids:
+      new_editor_ids.remove(new_owner_id)
+    new_follower_ids = hotlist.follower_ids
+    if new_owner_id in new_follower_ids:
+      new_follower_ids.remove(new_owner_id)
+    self.UpdateHotlistRoles(
+        cnxn, hotlist.hotlist_id, [new_owner_id], new_editor_ids,
+        new_follower_ids, commit=commit)
 
   def LookupUserHotlists(self, cnxn, user_ids):
     """Return dict of {user_id: [hotlist_id, hotlist_id...]}."""

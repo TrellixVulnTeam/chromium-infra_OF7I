@@ -1877,9 +1877,6 @@ class WorkEnv(object):
 
   ### Hotlist methods
 
-  # FUTURE: TransferHotlistOwnership(), checks permissions before calling
-  # self.services.features.TransferHotlistOwnership()
-
   def CreateHotlist(
       self, name, summary, description, editor_ids, issue_ids, is_private):
     """Create a hotlist.
@@ -1930,6 +1927,43 @@ class WorkEnv(object):
           self.mc.cnxn, hotlist_id, use_cache=use_cache)
     self._AssertUserCanViewHotlist(hotlist)
     return hotlist
+
+  def TransferHotlistOwnership(self, hotlist_id, new_owner_id, remain_editor,
+                               use_cache=True, commit=True):
+    """Transfer ownership of hotlist from current owner to new_owner.
+
+    Args:
+      hotlist_id: int hotlist_id of the hotlist we want to transfer
+      new_owner_id: user_id of the new owner
+      remain_editor: True if the old owner should remain on the hotlist as
+        editor.
+      use_cache: set to false when doing read-modify-write.
+      commit: True, if changes should be committed.
+
+    Raises:
+      NoSuchHotlistException: There is not hotlist with the given ID.
+      PermissionException: The logged-in user is not allowed to change ownership
+        of the hotlist.
+      InputException: The proposed new owner already owns a hotlist with the
+        same name.
+    """
+    hotlist = self.services.features.GetHotlist(
+        self.mc.cnxn, hotlist_id, use_cache=use_cache)
+    edit_permitted = permissions.CanAdministerHotlist(
+        self.mc.auth.effective_ids, self.mc.perms, hotlist)
+    if not edit_permitted:
+      raise permissions.PermissionException(
+          'User is not allowed to update hotlist members.')
+
+    if self.services.features.LookupHotlistIDs(
+        self.mc.cnxn, [hotlist.name], [new_owner_id]):
+      raise exceptions.InputException(
+          'Proposed new owner already owns a hotlist with this name.')
+
+    self.services.features.TransferHotlistOwnership(
+        self.mc.cnxn, hotlist, new_owner_id, remain_editor, commit=commit)
+
+  # TODO(jojwang) UpdateHotlistRoles
 
   def ListHotlistsByUser(self, user_id):
     """Return the hotlists for the given user.
