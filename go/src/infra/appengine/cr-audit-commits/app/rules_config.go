@@ -156,6 +156,10 @@ var RuleMap = map[string]*RepoConfig{
 				},
 				notificationFunction: fileBugForTBRViolation,
 			},
+			"images-pins-roller": AutoRollRulesForFileList(
+				"images-pins-roller@chops-service-accounts.iam.gserviceaccount.com",
+				[]string{"build/images/pins.yaml"},
+			),
 		},
 	},
 	"chromium-infra-config": {
