@@ -67,7 +67,7 @@ func (c *runTestRun) innerRun(a subcommands.Application, args []string, env subc
 }
 
 func validateRunTestRequest(r phosphorus.RunTestRequest) error {
-	missingArgs := validateRequestConfig(r.Config)
+	missingArgs := getCommonMissingArgs(r.Config)
 
 	if len(r.DutHostnames) == 0 {
 		missingArgs = append(missingArgs, "DUT hostname(s)")

@@ -48,9 +48,9 @@ func readJSONPb(inFile string, payload proto.Message) error {
 	return nil
 }
 
-// validateRequestConfig returns the list of missing required config
+// getCommonMissingArgs returns the list of missing required config
 // arguments.
-func validateRequestConfig(c *phosphorus.Config) []string {
+func getCommonMissingArgs(c *phosphorus.Config) []string {
 	var missingArgs []string
 
 	if c.GetBot().GetAutotestDir() == "" {

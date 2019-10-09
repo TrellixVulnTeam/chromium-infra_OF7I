@@ -72,7 +72,7 @@ func (c *prejobRun) innerRun(a subcommands.Application, args []string, env subco
 }
 
 func validatePrejobRequest(r phosphorus.PrejobRequest) error {
-	missingArgs := validateRequestConfig(r.Config)
+	missingArgs := getCommonMissingArgs(r.Config)
 
 	if r.DutHostname == "" {
 		missingArgs = append(missingArgs, "DUT hostname")
