@@ -2048,6 +2048,20 @@ wheel: <
 
 * *universal*
 
+## **nose2**
+
+### 0.9.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/nose2-py2_py3"
+  version: "version:0.9.1"
+>
+```
+
+
+* *universal*
+
 ## **numpy**
 
 ### 1.11.3
