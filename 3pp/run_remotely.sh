@@ -65,7 +65,7 @@ for arg in "$@"; do
   if [[ $arg == platform* ]]; then
     case $arg in
       *linux*)
-        TARG_OS=Linux
+        TARG_OS=Ubuntu-14.04
         ;;
       *mac*)
         TARG_OS=Mac
@@ -92,7 +92,7 @@ done
 
 set -x
 # pick a super-vanilla builder
-led get-builder -canary 'luci.infra.try:infra-try-presubmit' | \
+led get-builder -canary 'luci.infra-internal.try:infra-internal-presubmit' | \
   # Remove the first task slice; we don't want its named cache entry for the
   # builder, and swarming prevents us from triggering a task with two identical
   # task slices (which, if we remove the named cache, the two slices will be the
