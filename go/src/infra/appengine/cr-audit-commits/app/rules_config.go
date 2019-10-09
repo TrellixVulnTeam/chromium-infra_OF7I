@@ -179,6 +179,14 @@ var RuleMap = map[string]*RepoConfig{
 				},
 				notificationFunction: fileBugForTBRViolation,
 			},
+			"image-autoroller": AutoRollRulesForFilesAndDirs(
+				"image-builder@chops-service-accounts.iam.gserviceaccount.com",
+				[]string{
+					"configs/gce-provider/vms.cfg",
+					"dev-configs/gce-provider-dev/vms.cfg",
+				},
+				[]string{"images"},
+			),
 		},
 	},
 	"chromium-src-release-branches": {
