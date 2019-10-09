@@ -413,6 +413,7 @@ SPECS.update({s.spec.tag: s for s in assert_sorted('UniversalSource',
   UniversalSource('pylint', '1.9.5', patches=(
       'disable-log-spam',
   )),
+  UniversalSource('pylint-quotes', '0.1.8'),
   UniversalSource('requests-unixsocket', '0.1.5'),
   UniversalSource('tlslite', '0.4.9'),
   UniversalSource('websocket_client', '0.40.0'),
