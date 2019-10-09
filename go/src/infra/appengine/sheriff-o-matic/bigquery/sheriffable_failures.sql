@@ -78,6 +78,7 @@ WITH
     s.builder,
     s.mastername,
     s.step_name,
+    s.critical,
     # Latest, meaning sort by commit position if it exists, then by build ID (ascending), otherwise by the build number.
     ARRAY_AGG(s
     ORDER BY
@@ -96,12 +97,14 @@ WITH
     bucket,
     builder,
     mastername,
-    step_name)
+    step_name,
+    critical)
 SELECT
   s.project AS Project,
   s.bucket AS Bucket,
   s.builder AS Builder,
   s.mastername AS MasterName,
+  t.critical AS Critical,
   s.step AS StepName,
   s.test_names_fp as TestNamesFingerprint,
   s.test_names_trunc as TestNamesTrunc,
