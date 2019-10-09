@@ -1,0 +1,19 @@
+// Copyright 2019 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.images_pins_roller;
+
+// Input properties recognized by 'infra/images_pins_roller' recipe.
+message Inputs {
+  // Repository with pins.yaml to checkout and update.
+  string repo_url = 1;
+  // Path to pins.yaml file within the repository to update.
+  string pins_yaml = 2;
+  // Emails of whom to put into TBR= line in the CL.
+  repeated string tbr = 3;
+  // True to actually commit via CQ, False to just to upload pending CL.
+  bool commit = 4;
+}

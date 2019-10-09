@@ -190,7 +190,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * path (Path) - path to a `pins.yaml` file to update.
 
     Returns:
-      True if updated the file, False if pins there are up-to-date.
+      List of strings with updated "<image>:<tag>" pairs, if any.
     """
     res = self.m.step(
         'cloudbuildhelper pins-update',
@@ -202,4 +202,4 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
             updated=['some_image:tag'],
         ),
     )
-    return bool(res.json.output.get('updated'))
+    return res.json.output.get('updated') or []
