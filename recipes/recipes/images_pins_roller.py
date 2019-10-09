@@ -45,7 +45,7 @@ def RunSteps(api, properties):
 
 def _send_cl(api, root, updated, tbrs, commit):
   desc = [
-      'Roll pinned docker image tags.',
+      '[images] Roll pinned docker image tags.',
       '',
       'Updated pins:',
   ] + ['  * %s' % p for p in updated]

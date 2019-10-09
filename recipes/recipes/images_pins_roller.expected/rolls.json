@@ -264,7 +264,7 @@
       "commit",
       "-a",
       "-m",
-      "Roll pinned docker image tags.\n\nUpdated pins:\n  * some_image:tag"
+      "[images] Roll pinned docker image tags.\n\nUpdated pins:\n  * some_image:tag"
     ],
     "cwd": "[CACHE]/builder/checkout",
     "infra_step": true,
@@ -282,7 +282,7 @@
       "--tbrs=b@example.com",
       "--use-commit-queue",
       "--message-file",
-      "Roll pinned docker image tags.\n\nUpdated pins:\n  * some_image:tag"
+      "[images] Roll pinned docker image tags.\n\nUpdated pins:\n  * some_image:tag"
     ],
     "cwd": "[CACHE]/builder/checkout",
     "name": "git cl upload"
