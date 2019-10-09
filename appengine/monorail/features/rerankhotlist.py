@@ -131,9 +131,6 @@ class RerankHotlistIssue(jsonfeed.JsonFeed):
         (item.issue_id, item.rank) for item in
         mr.hotlist.items if item.issue_id not in mr.moved_ids]
 
-    # Note: The original reranking methods were written for reranking lists
-    # sorted High to Low. Hotlist issues are reranked when they are sorted
-    # Low to High so the mr.split_above must be flipped.
     lower, higher = features_bizobj.SplitHotlistIssueRanks(
-        mr.target_id, not mr.split_above, untouched_items)
+        mr.target_id, mr.split_above, untouched_items)
     return rerank_helpers.GetInsertRankings(lower, higher, mr.moved_ids)

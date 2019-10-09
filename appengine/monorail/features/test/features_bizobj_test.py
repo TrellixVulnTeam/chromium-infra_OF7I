@@ -38,12 +38,12 @@ class FeaturesBizobjTest(unittest.TestCase):
                        for issue in self.hotlistitems]
     iid_rank_tuples.reverse()
     ret = features_bizobj.SplitHotlistIssueRanks(
-        100003, False, iid_rank_tuples)
+        100003, True, iid_rank_tuples)
     self.assertEqual(ret, (iid_rank_tuples[:2], iid_rank_tuples[2:]))
 
     iid_rank_tuples.reverse()
     ret = features_bizobj.SplitHotlistIssueRanks(
-        100003, True, iid_rank_tuples)
+        100003, False, iid_rank_tuples)
     self.assertEqual(ret, (iid_rank_tuples[:3], iid_rank_tuples[3:]))
 
     # target issue not found

@@ -63,6 +63,10 @@ def UserIsInHotlist(hotlist, effective_ids):
 def SplitHotlistIssueRanks(target_iid, split_above, iid_rank_pairs):
   """Splits hotlist issue relation rankings by some target issue's rank.
 
+  Hotlists issues are sorted Low to High. When split_above is true,
+  the split should occur before the target object and the objects
+  should be moved above the target, with lower ranks than the target.
+
   Args:
     target_iid: the global ID of the issue to split rankings about.
     split_above: False to split below the target issue, True to split above.
@@ -75,7 +79,7 @@ def SplitHotlistIssueRanks(target_iid, split_above, iid_rank_pairs):
     included in higher, otherwise it is included in lower.
   """
   iid_rank_pairs.reverse()
-  offset = int(split_above)
+  offset = int(not split_above)
   for i, (issue_id, _) in enumerate(iid_rank_pairs):
     if issue_id == target_iid:
       return iid_rank_pairs[:i + offset], iid_rank_pairs[i + offset:]
