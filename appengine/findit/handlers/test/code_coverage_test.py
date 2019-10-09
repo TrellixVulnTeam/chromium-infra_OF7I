@@ -462,7 +462,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   ],
                                        debug=True)
 
-  def testServeCLPatchCoverageData(self):
+  def testServeCLPatchsetLinesData(self):
     self.UpdateUnitTestConfigSettings('code_coverage_settings',
                                       {'serve_presubmit_coverage_data': True})
 
@@ -491,8 +491,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url)
 
     expected_response_body = json.dumps({
-        'project': 'chromium/src',
-        'host': 'chromium-review.googlesource.com',
         'data': {
             'files': [{
                 'path':
@@ -506,14 +504,12 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
                 }]
             }]
         },
-        'patchset': 4,
-        'change': 138000,
     })
     self.assertEqual(expected_response_body, response.body)
 
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
-  def testServeCLPatchCoverageDataNoEquivalentPatchsets(self,
-                                                        mock_get_equivalent_ps):
+  def testServeCLPatchLinesDataNoEquivalentPatchsets(self,
+                                                     mock_get_equivalent_ps):
     self.UpdateUnitTestConfigSettings('code_coverage_settings',
                                       {'serve_presubmit_coverage_data': True})
     host = 'chromium-review.googlesource.com'
@@ -527,7 +523,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     self.assertEqual(404, response.status_int)
 
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
-  def testServeCLPatchCoverageDataEquivalentPatchsetsHaveNoData(
+  def testServeCLPatchLinesDataEquivalentPatchsetsHaveNoData(
       self, mock_get_equivalent_ps):
     self.UpdateUnitTestConfigSettings('code_coverage_settings',
                                       {'serve_presubmit_coverage_data': True})
@@ -546,8 +542,8 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(code_coverage.code_coverage_util,
                      'RebasePresubmitCoverageDataBetweenPatchsets')
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
-  def testServeCLPatchCoverageDataEquivalentPatchsets(
-      self, mock_get_equivalent_ps, mock_rebase_data):
+  def testServeCLPatchLinesDataEquivalentPatchsets(self, mock_get_equivalent_ps,
+                                                   mock_rebase_data):
     self.UpdateUnitTestConfigSettings('code_coverage_settings',
                                       {'serve_presubmit_coverage_data': True})
     host = 'chromium-review.googlesource.com'
@@ -589,8 +585,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url)
 
     expected_response_body = json.dumps({
-        'project': 'chromium/src',
-        'host': 'chromium-review.googlesource.com',
         'data': {
             'files': [{
                 'path':
@@ -604,8 +598,119 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
                 }]
             }]
         },
-        'patchset': 4,
-        'change': 138000,
+    })
+    self.assertEqual(expected_response_body, response.body)
+
+  def testServeCLPatchPercentagesData(self):
+    self.UpdateUnitTestConfigSettings('code_coverage_settings',
+                                      {'serve_presubmit_coverage_data': True})
+
+    host = 'chromium-review.googlesource.com'
+    project = 'chromium/src'
+    change = 138000
+    patchset = 4
+    build_id = 123456789
+    data = [{
+        'path': '//dir/test.cc',
+        'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 2,
+        }],
+    }]
+    entity = PresubmitCoverageData.Create(
+        server_host=host,
+        change=change,
+        patchset=patchset,
+        build_id=build_id,
+        data=data)
+    entity.absolute_percentages = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=2, covered_lines=1)
+    ]
+    entity.incremental_percentages = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=1, covered_lines=1)
+    ]
+    entity.put()
+
+    request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
+                   '&patchset=%d&type=percentages&concise=1') % (
+                       host, project, change, patchset)
+    response = self.test_app.get(request_url)
+
+    expected_response_body = json.dumps({
+        'data': {
+            'files': [{
+                "path": "dir/test.cc",
+                "absolute_coverage": {
+                    "covered": 1,
+                    "total": 2,
+                },
+                "incremental_coverage": {
+                    "covered": 1,
+                    "total": 1,
+                },
+            }]
+        },
+    })
+    self.assertEqual(expected_response_body, response.body)
+
+  @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
+  def testServeCLPatchPercentagesDataEquivalentPatchsets(
+      self, mock_get_equivalent_ps):
+    self.UpdateUnitTestConfigSettings('code_coverage_settings',
+                                      {'serve_presubmit_coverage_data': True})
+    host = 'chromium-review.googlesource.com'
+    project = 'chromium/src'
+    change = 138000
+    patchset_src = 3
+    patchset_dest = 4
+    mock_get_equivalent_ps.return_value = [patchset_src]
+    build_id = 123456789
+    data = [{
+        'path': '//dir/test.cc',
+        'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 2,
+        }],
+    }]
+    entity = PresubmitCoverageData.Create(
+        server_host=host,
+        change=change,
+        patchset=patchset_src,
+        build_id=build_id,
+        data=data)
+    entity.absolute_percentages = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=2, covered_lines=1)
+    ]
+    entity.incremental_percentages = [
+        CoveragePercentage(
+            path='//dir/test.cc', total_lines=1, covered_lines=1)
+    ]
+    entity.put()
+
+    request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
+                   '&patchset=%d&type=percentages&concise=1') % (
+                       host, project, change, patchset_dest)
+    response = self.test_app.get(request_url)
+
+    expected_response_body = json.dumps({
+        'data': {
+            'files': [{
+                "path": "dir/test.cc",
+                "absolute_coverage": {
+                    "covered": 1,
+                    "total": 2,
+                },
+                "incremental_coverage": {
+                    "covered": 1,
+                    "total": 1,
+                },
+            }]
+        },
     })
     self.assertEqual(expected_response_body, response.body)
 
