@@ -8,7 +8,7 @@ histograms-check:
 	go build -o histograms_check
 
 test: histograms-check
-	./histograms_check -input=test -output=out
+	./histograms_check -input=testdata -output=out
 
 unit-test:
 	go test histograms_check_test.go histograms_check.go
