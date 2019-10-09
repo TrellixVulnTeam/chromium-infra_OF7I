@@ -73,6 +73,7 @@ type args struct {
 	xTestArgs           string
 	deployActions       string
 	isolatedOutdir      string
+	sideEffectsConfig   string
 }
 
 func parseArgs() *args {
@@ -98,6 +99,8 @@ func parseArgs() *args {
 		"Actions to execute for a deploytask")
 	flag.StringVar(&a.isolatedOutdir, "isolated-outdir", "",
 		"Directory to place isolated output into. Generate no isolated output if not set.")
+	flag.StringVar(&a.sideEffectsConfig, "side-effect-config", "",
+		"JSONpb string of side_effects.Config to be dropped into the results directory. No file is created if empty.")
 	flag.Parse()
 
 	return a
@@ -141,6 +144,12 @@ func mainInner(a *args) error {
 		}
 		defer fc.Close()
 		ta.LogDogFile = fifoPath
+	}
+
+	if a.sideEffectsConfig != "" {
+		if err := dropSideEffectsConfig(a.sideEffectsConfig, i.ResultsDir, annotWriter); err != nil {
+			return err
+		}
 	}
 
 	luciferErr := runLuciferTask(i, a, annotWriter, ta)

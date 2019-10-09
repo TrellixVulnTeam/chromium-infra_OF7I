@@ -9,7 +9,11 @@ package sideeffects
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/golang/protobuf/jsonpb"
+	"go.chromium.org/luci/common/errors"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/side_effects"
 )
@@ -76,4 +80,23 @@ func getMissingFiles(c *side_effects.Config) []string {
 	}
 
 	return r
+}
+
+const configFileName = "side_effects_config.json"
+
+// WriteConfigToDisk writes a JSON encoded side_effects.Config proto to
+// <dir>/side_effects_config.json.
+func WriteConfigToDisk(dir string, c *side_effects.Config) error {
+	f := filepath.Join(dir, configFileName)
+	w, err := os.Create(f)
+	if err != nil {
+		return errors.Annotate(err, "write side_effects_config.json to disk").Err()
+	}
+	defer w.Close()
+
+	marshaler := jsonpb.Marshaler{}
+	if err := marshaler.Marshal(w, c); err != nil {
+		return errors.Annotate(err, "write side_effects_config.json to disk").Err()
+	}
+	return nil
 }

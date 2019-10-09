@@ -6,8 +6,11 @@ package sideeffects
 
 import (
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/uuid"
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -130,5 +133,37 @@ func TestMissingFiles(t *testing.T) {
 				})
 			})
 		}
+	})
+}
+
+func TestWriteConfigToDisk(t *testing.T) {
+	Convey("Given side_effects.Config object", t, func() {
+		want := side_effects.Config{
+			Tko: &side_effects.TKOConfig{
+				ProxySocket:       "foo-socket",
+				MysqlUser:         "foo-user",
+				MysqlPasswordFile: "foo-password-file",
+			},
+			GoogleStorage: &side_effects.GoogleStorageConfig{
+				Bucket:          "foo-bucket",
+				CredentialsFile: "foo-creds",
+			},
+		}
+		Convey("when WriteConfigToDisk is called", func() {
+			dir, _ := ioutil.TempDir("", "")
+			err := WriteConfigToDisk(dir, &want)
+			So(err, ShouldBeNil)
+
+			Convey("then the side_effects_config.json file contains the original object", func() {
+				f, fileErr := os.Open(filepath.Join(dir, "side_effects_config.json"))
+				So(fileErr, ShouldBeNil)
+
+				var got side_effects.Config
+				um := jsonpb.Unmarshaler{}
+				unmarshalErr := um.Unmarshal(f, &got)
+				So(unmarshalErr, ShouldBeNil)
+				So(got, ShouldResemble, want)
+			})
+		})
 	})
 }
