@@ -43,7 +43,7 @@ var _ nodestore.Operator = &createUniqueAccounts{}
 
 func (n *createUniqueAccounts) Modify(ctx context.Context, s *types.QScheduler) error {
 	for i := 0; i < n.nAccounts; i++ {
-		s.Scheduler.AddAccount(ctx, scheduler.AccountID(uuid.New().String()), scheduler.NewAccountConfig(0, 0, nil, false), nil)
+		s.Scheduler.AddAccount(ctx, scheduler.AccountID(uuid.New().String()), scheduler.NewAccountConfig(0, 0, nil, false, ""), nil)
 	}
 	return nil
 }

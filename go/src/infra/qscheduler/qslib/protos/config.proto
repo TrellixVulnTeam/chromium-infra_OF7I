@@ -64,4 +64,7 @@ message AccountConfig {
   // If DisableFreeTasks is true, then jobs for this account will not start
   // running if they would be run at FreeBucket priority.
   bool disable_free_tasks = 4;
+
+  // Human readable description of account's intended purpose.
+  string description = 5;
 }

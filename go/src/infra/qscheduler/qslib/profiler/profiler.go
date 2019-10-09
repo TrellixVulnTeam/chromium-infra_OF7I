@@ -73,7 +73,7 @@ func newStateWithAccount(ctx context.Context, params StateParams, t time.Time) *
 		for j := range chargeRate {
 			chargeRate[j] = rand.Float32() * params.ChargeRateMax
 		}
-		accountConfig := scheduler.NewAccountConfig(params.Fanout, params.ChargeTime, chargeRate, false)
+		accountConfig := scheduler.NewAccountConfig(params.Fanout, params.ChargeTime, chargeRate, false, "")
 		accountConfig.DisableFreeTasks = params.DisableFreeTasks
 
 		state.AddAccount(ctx, accountName(i), accountConfig, nil)

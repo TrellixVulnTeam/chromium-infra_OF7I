@@ -15,6 +15,7 @@
 package scheduler
 
 import (
+	"infra/qscheduler/qslib/protos"
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
@@ -80,6 +81,26 @@ func TestAccountAdvanceWithOverflow(t *testing.T) {
 	actual := nextBalance(before, config, 1, []int{0, 1, 1, 1})
 
 	if diff := pretty.Compare(actual, expect); diff != "" {
+		t.Errorf("Unexpected diff (-got +want): %s", diff)
+	}
+}
+
+// TestNewAccountConfigFromProto tests that if a proto instance can be transferred
+// to AccountConfig.
+func TestNewAccountConfigFromProto(t *testing.T) {
+	t.Parallel()
+	proto := &protos.AccountConfig{
+		ChargeRate:       []float32{1.0, 2.0, 3.0},
+		MaxChargeSeconds: 10,
+		Description:      "foo",
+	}
+	want := &AccountConfig{
+		ChargeRate:       Balance{1, 2, 3},
+		MaxChargeSeconds: 10,
+		Description:      "foo",
+	}
+	got := NewAccountConfigFromProto(proto)
+	if diff := pretty.Compare(got, want); diff != "" {
 		t.Errorf("Unexpected diff (-got +want): %s", diff)
 	}
 }

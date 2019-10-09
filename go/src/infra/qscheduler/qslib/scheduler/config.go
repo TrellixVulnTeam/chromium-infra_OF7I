@@ -52,6 +52,7 @@ func (c *Config) ToProto() *protos.SchedulerConfig {
 			DisableFreeTasks: ac.DisableFreeTasks,
 			MaxChargeSeconds: ac.MaxChargeSeconds,
 			MaxFanout:        ac.MaxFanout,
+			Description:      ac.Description,
 		}
 	}
 	return p
@@ -74,7 +75,7 @@ func NewConfigFromProto(p *protos.SchedulerConfig) *Config {
 	c.DisablePreemption = p.DisablePreemption
 	for aid, ac := range p.AccountConfigs {
 		c.AccountConfigs[AccountID(aid)] = NewAccountConfig(
-			int(ac.MaxFanout), ac.MaxChargeSeconds, ac.ChargeRate, ac.DisableFreeTasks)
+			int(ac.MaxFanout), ac.MaxChargeSeconds, ac.ChargeRate, ac.DisableFreeTasks, ac.Description)
 	}
 	return c
 }

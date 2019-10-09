@@ -59,6 +59,8 @@ type AccountConfig struct {
 	// If DisableFreeTasks is true, then jobs for this account will not start
 	// running if they would be run at FreeBucket priority.
 	DisableFreeTasks bool
+	// Human readable description of account's intended purpose.
+	Description string
 }
 
 // BestPriorityFor determines the highest available priority for a quota
@@ -105,7 +107,7 @@ func nextBalance(balance Balance, c *AccountConfig, elapsedSecs float32, running
 }
 
 // NewAccountConfig creates a new Config instance.
-func NewAccountConfig(fanout int, chargeSeconds float32, chargeRate []float32, disableFreeTasks bool) *AccountConfig {
+func NewAccountConfig(fanout int, chargeSeconds float32, chargeRate []float32, disableFreeTasks bool, desc string) *AccountConfig {
 	b := Balance{}
 	copy(b[:], chargeRate)
 	return &AccountConfig{
@@ -113,6 +115,7 @@ func NewAccountConfig(fanout int, chargeSeconds float32, chargeRate []float32, d
 		MaxChargeSeconds: chargeSeconds,
 		MaxFanout:        int32(fanout),
 		DisableFreeTasks: disableFreeTasks,
+		Description:      desc,
 	}
 }
 
@@ -123,5 +126,6 @@ func NewAccountConfigFromProto(c *protos.AccountConfig) *AccountConfig {
 		c.MaxChargeSeconds,
 		c.ChargeRate,
 		c.DisableFreeTasks,
+		c.Description,
 	)
 }
