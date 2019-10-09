@@ -61,6 +61,9 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
 
   # Our builder system is missing X11 headers, so this module does not build.
   SETUP_LOCAL_SKIP+=(_tkinter)
+
+  # getaddrinfo cannot be used, xcode is not property setup?
+  EXTRA_CONFIGURE_ARGS="--disable-ipv6"
 else
   PYTHONEXE=python
 
