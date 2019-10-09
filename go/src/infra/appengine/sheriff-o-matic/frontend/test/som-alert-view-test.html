@@ -267,15 +267,31 @@
           'key': 'alert5',
           'title': 'Hello, World!',
         },
+        {
+          'key': 'alert6',
+          'title': 'might be here',
+          'body': 'or here',
+        },
       ];
-      let filteredAlerts = element._filterAlerts(alerts, pattern);
+      const annotations = {
+        'alert6': {
+          bugs: ['123', '234'],
+          bug_data: {
+            '123': {
+              summary: 'hello'
+            }
+          }
+        }
+      };
+      let filteredAlerts = element._filterAlerts(alerts, annotations, pattern);
 
       flush(function() {
-        assert.equal(filteredAlerts.length, 4);
+        assert.equal(filteredAlerts.length, 5);
         assert.equal(filteredAlerts[0].key, "alert1.hello");
         assert.equal(filteredAlerts[1].key, "alert2");
         assert.equal(filteredAlerts[2].key, "alert4");
         assert.equal(filteredAlerts[3].key, "alert5");
+        assert.equal(filteredAlerts[4].key, "alert6");
         done();
       });
     });
@@ -295,14 +311,30 @@
           'title': 'not here',
           'body': 'or here',
         },
+        {
+          'key': 'alert4',
+          'title': 'might be here',
+          'body': 'or here',
+        },
       ];
-      let filteredAlerts = element._filterAlerts(alerts, pattern);
+      const annotations = {
+        'alert4': {
+          bugs: ['123', '234'],
+          bug_data: {
+            '123': {
+              summary: 'hello'
+            }
+          }
+        }
+      };
+      let filteredAlerts = element._filterAlerts(alerts, annotations, pattern);
 
       flush(function() {
-        assert.equal(filteredAlerts.length, 3);
+        assert.equal(filteredAlerts.length, 4);
         assert.equal(filteredAlerts[0].key, "alert1.hello");
         assert.equal(filteredAlerts[1].key, "alert2");
         assert.equal(filteredAlerts[2].key, "alert3");
+        assert.equal(filteredAlerts[3].key, "alert4");
         done();
       });
     });
@@ -321,6 +353,18 @@
           'href': 'http://locat2',
         },
       ],
+    };
+
+    const basicAnnotation = {
+      'a basic key': {
+        bugs: ['123'],
+        bug_data: {
+          '123': {
+            id: '123',
+            summary: 'a summary',
+          },
+        },
+      },
     };
 
     let buildExtension = {
@@ -392,6 +436,36 @@
       });
     });
 
+    test('_searchBugs no match', function(done) {
+      let pattern = 'hello';
+      let match = element._searchBugs(element.computeBugs(element.computeAnnotation(basicAnnotation, basicAlert)), pattern);
+
+      flush(function() {
+        assert.isFalse(match);
+        done();
+      });
+    });
+
+    test('_searchBugs id', function(done) {
+      let pattern = /23/;
+      let match = element._searchBugs(element.computeBugs(element.computeAnnotation(basicAnnotation, basicAlert)), pattern);
+
+      flush(function() {
+        assert.isTrue(match);
+        done();
+      });
+    });
+
+    test('_searchBugs summary', function(done) {
+      let pattern = /summa/;
+      let match = element._searchBugs(element.computeBugs(element.computeAnnotation(basicAnnotation, basicAlert)), pattern);
+
+      flush(function() {
+        assert.isTrue(match);
+        done();
+      });
+    });
+
     test('_searchNotes', function(done) {
       let pattern = 'star';
       let notes = [
@@ -433,12 +507,33 @@
         {'key': 'big up'},
         {'key': 'small'},
         {'key': 'BIGGER'},
+        {'key': 'quite small'},
+        {'key': 'quite big'},
       ];
-      let filteredAlerts = element._filterByPattern(alerts, pattern);
+      const annotations = {
+        'quite small': {
+          bugs: ['123'],
+          bug_data: {
+            '123': {
+              summary: 'it might be big',
+            },
+          },
+        },
+        'quite big': {
+          bugs: ['123'],
+          bug_data: {
+            '123': {
+              summary: 'it\'s actually BIG',
+            },
+          },
+        },
+      }
+      let filteredAlerts = element._filterByPattern(alerts, annotations, pattern);
 
       flush(function() {
-        assert.equal(filteredAlerts.length, 1);
+        assert.equal(filteredAlerts.length, 2);
         assert.equal(filteredAlerts[0].key, "BIGGER");
+        assert.equal(filteredAlerts[1].key, "quite big");
         done();
       });
     });
@@ -449,13 +544,25 @@
         {'key': 'big up'},
         {'key': 'small'},
         {'key': 'BIGGER'},
+        {'key': 'not small'},
       ];
-      let filteredAlerts = element._filterByPattern(alerts, pattern);
+      const annotations = {
+        'not small': {
+          bugs: ['123'],
+          bug_data: {
+            '123': {
+              summary: 'it\'s actually big',
+            },
+          },
+        },
+      }
+      let filteredAlerts = element._filterByPattern(alerts, annotations, pattern);
 
       flush(function() {
-        assert.equal(filteredAlerts.length, 2);
+        assert.equal(filteredAlerts.length, 3);
         assert.equal(filteredAlerts[0].key, "big up");
         assert.equal(filteredAlerts[1].key, "BIGGER");
+        assert.equal(filteredAlerts[2].key, "not small");
         done();
       });
     });

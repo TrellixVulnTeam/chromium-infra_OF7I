@@ -1,7 +1,7 @@
 'use strict';
 
 class SomAlertItem extends Polymer.mixinBehaviors(
-    [LinkifyBehavior, AlertTypeBehavior, TimeBehavior],
+    [LinkifyBehavior, AlertTypeBehavior, TimeBehavior, BugManagerBehavior],
     Polymer.Element) {
 
   static get is() {
@@ -70,7 +70,7 @@ class SomAlertItem extends Polymer.mixinBehaviors(
       },
       _bugs: {
         type: Array,
-        computed: '_computeBugs(annotation)',
+        computed: 'computeBugs(annotation)',
       },
       _commentsClass: {
         type: String,
@@ -129,18 +129,6 @@ class SomAlertItem extends Polymer.mixinBehaviors(
 
   _alertChecked(isChecked) {
     this.fire('checked');
-  }
-
-  _computeBugs(annotation) {
-    // bugData is a map with the bug ids used as keys.
-    let bugs = annotation.bugs;
-    if (!bugs) return [];
-    return bugs.map((bug) => {
-      if (annotation.bugData && bug in annotation.bugData) {
-        return annotation.bugData[bug];
-      }
-      return {'id': bug};
-    });
   }
 
   _helpLinkForAlert(alert) {

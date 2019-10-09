@@ -1,0 +1,10 @@
+<script>
+  BugManagerBehavior = {
+    computeBugs: function(annotation) {
+      // bugData is a map with the bug ids used as keys.
+      let bugs = annotation.bugs;
+      if (!bugs) return [];
+      return bugs.map((bug) => annotation.bugData && annotation.bugData[bug] || {'id': bug});
+    }
+  }
+</script>

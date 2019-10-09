@@ -7,9 +7,15 @@ const refreshDelayMs = 60 * 1000;
 const recentUngroupedResolvedMs = 24 * 3600 * 1000;
 
 class SomAlertView extends Polymer.mixinBehaviors(
-    [AnnotationManagerBehavior, AlertTypeBehavior, PostBehavior, TimeBehavior],
-    Polymer.Element) {
-
+    [
+      AnnotationManagerBehavior,
+      AlertTypeBehavior,
+      PostBehavior,
+      TimeBehavior,
+      BugManagerBehavior,
+    ],
+    Polymer.Element,
+) {
   static get is() {
     return 'som-alert-view';
   }
@@ -32,7 +38,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
         value: function() {
           return [];
         },
-        computed: `_filterAlerts(_allAlerts, _filterPattern)`,
+        computed: `_filterAlerts(_allAlerts, annotations, _filterPattern)`,
       },
       // Map of stream to data, timestamp of latest updated data.
       _alertsData: {
@@ -662,9 +668,10 @@ class SomAlertView extends Polymer.mixinBehaviors(
     });
   }
 
-  _filterAlerts(allAlerts, pattern) {
-    let filteredAlerts = pattern ? this._filterByPattern(allAlerts, pattern) :
-                                   allAlerts;
+  _filterAlerts(allAlerts, annotations, pattern) {
+    const filteredAlerts = pattern
+      ? this._filterByPattern(allAlerts, annotations, pattern)
+      : allAlerts;
     return filteredAlerts;
   }
 
@@ -698,6 +705,11 @@ class SomAlertView extends Polymer.mixinBehaviors(
     }
 
     return false;
+  }
+
+  _searchBugs(bugs, re) {
+    return bugs.some((bug) => bug.id && bug.id.toString().match(re) ||
+      bug.summary && bug.summary.match(re));
   }
 
   _searchLinks(links, re) {
@@ -742,13 +754,13 @@ class SomAlertView extends Polymer.mixinBehaviors(
     return false;
   }
 
-  _filterByPattern(alerts, pattern) {
+  _filterByPattern(alerts, annotations, pattern) {
     // Treat pattern as case-insensitive, unless there is a capital letter
     // in the pattern.
     let re = RegExp(pattern, pattern.match(/[A-Z]/) ? "" : "i");
-    return alerts.filter((alert) => {
-      return this._searchAlert(alert, re)
-    });
+    return alerts.filter((alert) => this._searchAlert(alert, re) ||
+      this._searchBugs(this.computeBugs(this.computeAnnotation(annotations, alert)), re) // eslint-disable-line max-len
+    );
   }
 
   _mergeExtensions(extension) {
