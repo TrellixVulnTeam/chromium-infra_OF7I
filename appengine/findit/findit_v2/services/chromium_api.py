@@ -106,7 +106,7 @@ class ChromiumProjectAPI(ProjectAPI):
     ])
     build = buildbucket_client.GetV2Build(
         analyzed_build_id,
-        fields=FieldMask(paths=['infra.swarming.taskDimensions']))
+        fields=FieldMask(paths=['infra.swarming.task_dimensions']))
     assert build, "Could not get analyzed build %d" % analyzed_build_id
     dimension_dicts = []
     for dimension_proto in build.infra.swarming.task_dimensions:
