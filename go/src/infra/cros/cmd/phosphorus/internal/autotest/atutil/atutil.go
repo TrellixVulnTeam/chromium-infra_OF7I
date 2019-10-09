@@ -79,17 +79,8 @@ func RunAutoserv(ctx context.Context, m *MainJob, j AutoservJob, w io.Writer) (r
 //
 // This function returns the number of tests failed and an error if
 // any.
-func TKOParse(c autotest.Config, resultsDir string, level int, w io.Writer) (failed int, err error) {
-	a := &autotest.ParseArgs{
-		Level:          level,
-		RecordDuration: true,
-		Reparse:        true,
-		ResultsDir:     resultsDir,
-		SingleDir:      true,
-		SuiteReport:    true,
-		WritePidfile:   true,
-	}
-	cmd := autotest.ParseCommand(c, a)
+func TKOParse(c autotest.Config, resultsDir string, w io.Writer) (failed int, err error) {
+	cmd := autotest.ParseCommand(c, resultsDir)
 	cmd.Stdout = w
 	cmd.Stderr = w
 	if err := cmd.Run(); err != nil {

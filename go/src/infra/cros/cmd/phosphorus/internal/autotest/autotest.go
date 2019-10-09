@@ -15,7 +15,6 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -161,42 +160,25 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 
 const tkoRelpath = "tko/parse"
 
-// ParseArgs contains arguments for ParseCommand.
-type ParseArgs struct {
-	Level          int
-	RecordDuration bool
-	Reparse        bool
-	SingleDir      bool
-	SuiteReport    bool
-	WritePidfile   bool
-
-	ResultsDir string
-}
+// A.k.a. "SKYLAB_PROVISION" in older code.
+const skylabResultsDirNestingLevel = "3"
 
 // ParseCommand returns the Cmd struct to execute tko/parse with the
 // given arguments.
-func ParseCommand(c Config, cmd *ParseArgs) *exec.Cmd {
+func ParseCommand(c Config, resultsDir string) *exec.Cmd {
 	args := make([]string, 0, 10)
-	args = append(args, "-l", strconv.Itoa(cmd.Level))
-	if cmd.RecordDuration {
-		args = append(args, "--record-duration")
-	}
-	if cmd.Reparse {
-		args = append(args, "-r")
-	}
-	if cmd.SingleDir {
-		args = append(args, "-o")
-	}
-	if cmd.SuiteReport {
-		args = append(args, "--suite-report")
-	}
-	if cmd.WritePidfile {
-		args = append(args, "--write-pidfile")
-	}
-
-	if cmd.ResultsDir != "" {
-		args = append(args, cmd.ResultsDir)
-	}
+	// Levels of subdirectories to include in the job name.
+	args = append(args, "-l", skylabResultsDirNestingLevel)
+	// TODO(crbug.com/1012839): consider removing.
+	args = append(args, "--record-duration")
+	// Reparse results.
+	args = append(args, "-r")
+	// Parse a single results directory.
+	args = append(args, "-o")
+	// TODO(crbug.com/1012839): consider removing.
+	args = append(args, "--suite-report")
+	args = append(args, "--write-pidfile")
+	args = append(args, resultsDir)
 	return command(c, tkoRelpath, args...)
 }
 

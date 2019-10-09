@@ -78,7 +78,6 @@ func runTKOUploadStep(ctx context.Context, pc phosphorus.Config) error {
 			AutotestDir: pc.Bot.AutotestDir,
 		},
 		pc.Task.ResultsDir,
-		3, // "SKYLAB_PROVISION"
 		os.Stdout)
 
 	if err != nil {
