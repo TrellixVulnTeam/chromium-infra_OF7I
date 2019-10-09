@@ -346,7 +346,7 @@
       });
     });
 
-    test('save bug saves an annotation', function () {
+    test('save bug with invalid string', function () {
       let sendStub = sinon.stub(element, 'sendAnnotation');
       sendStub.onCall(0).returns({
           then: (f) => {
@@ -360,17 +360,170 @@
 
       element._saveBug();
 
+      sinon.assert.notCalled(sendStub);
+    });
+
+    test('save bug with invalid string in path', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'bugs.chromium.org/aasasnans';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.notCalled(sendStub);
+    });
+
+    test('save bug with valid fuchsia full url', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'https://bugs.fuchsia.dev/p/fuchsia/issues/detail?id=37668&redir=1';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
       sinon.assert.calledOnce(sendStub);
       sendStub.calledWith('foo', [{
         add: {
-          bugs: ['bar']
+          bugs: [{
+            id: '37668',
+            projectId: 'fuchsia',
+          }]
+        }
+      }]);
+    });
+
+    test('save bug with valid chromium short url', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'http://crbug.com/123123';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sendStub.calledWith('foo', [{
+        add: {
+          bugs: [{
+            id: '123123',
+            projectId: 'chromium',
+          }]
+        }
+      }]);
+    });
+
+    test('save bug with valid url with different project', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'http://crbug.com/monorail/123123';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sendStub.calledWith('foo', [{
+        add: {
+          bugs: [{
+            id: '123123',
+            projectId: 'monorail',
+          }]
+        }
+      }]);
+    });
+    test('save bug with shorthand', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'fuchsia:123123';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sendStub.calledWith('foo', [{
+        add: {
+          bugs: [{
+            id: '123123',
+            projectId: 'fuchsia',
+          }]
+        }
+      }]);
+    });
+
+    test('save bug with invalid shorthand', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'fuchsia:aaa';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.notCalled(sendStub);
+    });
+
+    test('save bug with number', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = '123';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sendStub.calledWith('foo', [{
+        add: {
+          bugs: [{
+            id: '123',
+            projectId: 'chromium',
+          }]
         }
       }]);
     });
 
     test('saving multiple bugs sends many annotations', function() {
       let sendStub = sinon.stub(element, 'sendAnnotation');
-      element.$.bug.value = 'bar';
+      element.$.bug.value = '123';
       element.$.autosnooze.checked = false;
       element._fileBugModel = [{key: 'foo'}, {key: 'bazzy'}];
 
@@ -388,7 +541,7 @@
       });
 
       element._removeBugModel = {
-        bug: 'bar',
+        bug: '123',
         alert: {key: 'foo'}
       };
 
@@ -410,7 +563,7 @@
           }
       });
 
-      element.$.bug.value = 'bar';
+      element.$.bug.value = 'fxb/123';
       element.$.autosnooze.checked = true;
       element._fileBugModel = [{key: 'foo'}];
 
@@ -419,7 +572,10 @@
       sinon.assert.calledOnce(sendStub);
       sendStub.calledWith('foo', [{
         add: {
-          bugs: ['bar'],
+          bugs: [{
+            id: '123',
+            projectId: 'fuchsia',
+          }],
           snoozeTime: element._defaultSnoozeTime * 60 * 1000
         }
       }]);

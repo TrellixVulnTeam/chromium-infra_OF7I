@@ -143,11 +143,13 @@
 
     test('fires remove event when remove bug clicked', function(done) {
       element.annotation = {
-        bugs: ['foo/bar']
+        bugs: [{ id: '1234', projectId: 'chromium' }],
+        bugData: []
       };
 
       element.addEventListener('remove-bug', (evt) => {
-        assert.equal(evt.detail.bug, 'foo/bar');
+        assert.equal(evt.detail.bug, '1234');
+        assert.equal(evt.detail.project, 'chromium');
         done();
       });
 
@@ -163,13 +165,14 @@
 
     test('has a bug list when annotation has bugs', function(done) {
       element.annotation = {
-        bugs: ['foo/bar']
+        bugs: [{ id: '1234', projectId: 'chromium' }],
+        bugData: []
       };
 
       flush(function () {
         assert.lengthOf(element.$.bugsList.querySelectorAll(".bug"), 1);
-        assert.equal('Bug foo/bar', element.$.bugsList.querySelector("a").textContent);
-        assert.include(element.$.bugsList.querySelector("a").href, 'foo/bar');
+        assert.equal('Bug 1234', element.$.bugsList.querySelector("a").textContent);
+        assert.equal(element.$.bugsList.querySelector("a").href, 'https://crbug.com/chromium/1234');
         done();
       });
     });

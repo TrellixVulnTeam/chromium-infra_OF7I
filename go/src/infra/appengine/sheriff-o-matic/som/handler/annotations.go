@@ -10,8 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
-	"strings"
 	"time"
 
 	"google.golang.org/appengine"
@@ -26,7 +24,6 @@ import (
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/common/clock"
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/xsrf"
@@ -50,14 +47,15 @@ type AnnotationResponse struct {
 	BugData map[string]monorail.Issue `json:"bug_data"`
 }
 
-func makeAnnotationResponse(a *model.Annotation, meta map[string]monorail.Issue) *AnnotationResponse {
+// Convert data from model.Annotation type to AnnotationResponse type by populating monorail data.
+func makeAnnotationResponse(annotations *model.Annotation, meta map[string]monorail.Issue) *AnnotationResponse {
 	bugs := make(map[string]monorail.Issue)
-	for _, b := range a.Bugs {
-		if bugData, ok := meta[b]; ok {
-			bugs[b] = bugData
+	for _, b := range annotations.Bugs {
+		if bugData, ok := meta[b.BugID]; ok {
+			bugs[b.BugID] = bugData
 		}
 	}
-	return &AnnotationResponse{*a, bugs}
+	return &AnnotationResponse{*annotations, bugs}
 }
 
 func filterAnnotations(annotations []*model.Annotation, activeKeys map[string]interface{}) []*model.Annotation {
@@ -88,18 +86,18 @@ func (ah *AnnotationHandler) GetAnnotationsHandler(ctx *router.Context, activeKe
 
 	annotations = filterAnnotations(annotations, activeKeys)
 
-	meta, err := ah.getAnnotationsMetaData(c)
+	meta, err := ah.getAnnotationsMetaData(ctx)
 
 	if err != nil {
 		logging.Errorf(c, "while fetching annotation metadata")
 	}
 
-	output := make([]*AnnotationResponse, len(annotations))
+	response := make([]*AnnotationResponse, len(annotations))
 	for i, a := range annotations {
-		output[i] = makeAnnotationResponse(a, meta)
+		response[i] = makeAnnotationResponse(a, meta)
 	}
 
-	data, err := json.Marshal(output)
+	data, err := json.Marshal(response)
 	if err != nil {
 		errStatus(c, w, http.StatusInternalServerError, err.Error())
 		return
@@ -109,13 +107,14 @@ func (ah *AnnotationHandler) GetAnnotationsHandler(ctx *router.Context, activeKe
 	w.Write(data)
 }
 
-func (ah *AnnotationHandler) getAnnotationsMetaData(c context.Context) (map[string]monorail.Issue, error) {
+func (ah *AnnotationHandler) getAnnotationsMetaData(ctx *router.Context) (map[string]monorail.Issue, error) {
+	c := ctx.Context
 	item, err := memcache.GetKey(c, annotationsCacheKey)
 	val := make(map[string]monorail.Issue)
 
 	if err == memcache.ErrCacheMiss {
 		logging.Warningf(c, "No annotation metadata in memcache, refreshing...")
-		val, err = ah.refreshAnnotations(c, nil)
+		val, err = ah.refreshAnnotations(ctx, nil)
 
 		if err != nil {
 			return nil, err
@@ -134,7 +133,7 @@ func (ah *AnnotationHandler) getAnnotationsMetaData(c context.Context) (map[stri
 func (ah *AnnotationHandler) RefreshAnnotationsHandler(ctx *router.Context) {
 	c, w := ctx.Context, ctx.Writer
 
-	bugMap, err := ah.refreshAnnotations(c, nil)
+	bugMap, err := ah.refreshAnnotations(ctx, nil)
 	if err != nil {
 		errStatus(c, w, http.StatusInternalServerError, err.Error())
 		return
@@ -150,43 +149,52 @@ func (ah *AnnotationHandler) RefreshAnnotationsHandler(ctx *router.Context) {
 	w.Write(data)
 }
 
+// Builds a map keyed by projectId (i.e "chromium", "fuchsia"), value contains
+// the monorail query string.
+func constructQueryFromBugList(bugs []*model.MonorailBug) map[string]string {
+	queries := map[string]string{}
+	for _, bug := range bugs {
+		if val, ok := queries[bug.ProjectID]; ok {
+			queries[bug.ProjectID] = fmt.Sprintf("%s,%s", val, bug.BugID)
+		} else {
+			queries[bug.ProjectID] = "id:"
+		}
+	}
+	return queries
+}
+
 // Update the cache for annotation bug data.
-func (ah *AnnotationHandler) refreshAnnotations(c context.Context, a *model.Annotation) (map[string]monorail.Issue, error) {
+func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.Annotation) (map[string]monorail.Issue, error) {
+	c := ctx.Context
+
 	q := datastore.NewQuery("Annotation")
 	results := []*model.Annotation{}
+	allBugs := []*model.MonorailBug{}
 	datastore.GetAll(c, q, &results)
 
 	// Monorail takes queries of the format id:1,2,3 (gets bugs with those ids).
-	mq := "id:"
-
 	if a != nil {
 		results = append(results, a)
 	}
 
-	allBugs := stringset.New(len(results))
-	for _, ann := range results {
-		for _, b := range ann.Bugs {
-			allBugs.Add(b)
+	for _, annotation := range results {
+		for _, b := range annotation.Bugs {
+			allBugs = append(allBugs, &b)
 		}
 	}
 
-	bugsSlice := allBugs.ToSlice()
-	// Sort so that tests are consistent.
-	sort.Strings(bugsSlice)
-	mq = fmt.Sprintf("%s%s", mq, strings.Join(bugsSlice, ","))
-
-	issues, err := ah.Bqh.getBugsFromMonorail(c, mq, monorail.IssuesListRequest_ALL)
-	if err != nil {
-		logging.Errorf(c, "error getting bugs from monorail: %v", err)
-		return nil, err
-	}
-
-	// Turn the bug data into a map with the bug id as a key for easier searching.
+	queries := constructQueryFromBugList(allBugs)
 	m := make(map[string]monorail.Issue)
-
-	for _, b := range issues.Items {
-		key := fmt.Sprintf("%d", b.Id)
-		m[key] = *b
+	for project, query := range queries {
+		issues, err := ah.Bqh.getBugsFromMonorail(c, query, project, monorail.IssuesListRequest_ALL)
+		if err != nil {
+			logging.Errorf(c, "error getting bugs from monorail: %v", err)
+			return nil, err
+		}
+		for _, b := range issues.Items {
+			key := fmt.Sprintf("%d", b.Id)
+			m[key] = *b
+		}
 	}
 
 	bytes, err := json.Marshal(m)
@@ -288,12 +296,12 @@ func (ah *AnnotationHandler) PostAnnotationsHandler(ctx *router.Context) {
 	// code to still run even if this fails.
 	if needRefresh {
 		logging.Infof(c, "Refreshing annotation metadata, due to a stateful modification.")
-		m, err = ah.refreshAnnotations(c, annotation)
+		m, err = ah.refreshAnnotations(ctx, annotation)
 		if err != nil {
 			logging.Errorf(c, "while refreshing annotation cache on post: %s", err)
 		}
 	} else {
-		m, err = ah.getAnnotationsMetaData(c)
+		m, err = ah.getAnnotationsMetaData(ctx)
 		if err != nil {
 			logging.Errorf(c, "while getting annotation metadata: %s", err)
 		}
@@ -404,7 +412,13 @@ func FileBugHandler(ctx *router.Context) {
 		},
 	}
 
-	mr := client.NewMonorail(c, "https://monorail-prod.appspot.com")
+	var mr monorail.MonorailClient
+
+	if info.AppID(c) == "sheriff-o-matic" {
+		mr = client.NewMonorail(c, "https://monorail-prod.appspot.com")
+	} else {
+		mr = client.NewMonorail(c, "https://monorail-staging.appspot.com")
+	}
 
 	res, err := mr.InsertIssue(c, fileBugReq)
 	if err != nil {

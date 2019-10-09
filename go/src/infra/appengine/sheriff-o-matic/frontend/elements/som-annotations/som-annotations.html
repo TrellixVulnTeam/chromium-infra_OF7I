@@ -116,8 +116,8 @@
 
     <paper-dialog id="bugDialog" with-backdrop>
       <iron-a11y-keys target="[[_fileBugInput]]" keys="enter" on-keys-pressed="_saveBug"></iron-a11y-keys>
-      <h2>Enter bug number</h2>
-      <paper-input autofocus id="bug" label="Bug # or URL" auto-validate minlength="3"></paper-input>
+      <h2>Enter Bug URL or Number</h2>
+      <paper-input autofocus id="bug" label="chromium:123, crbug.com/123, fxb/123" auto-validate minlength="3"></paper-input>
       <label class="checkbox autosnoozeCheckbox">
         <input type="checkbox" id="autosnooze" checked />
         <div class="autosnoozeText">

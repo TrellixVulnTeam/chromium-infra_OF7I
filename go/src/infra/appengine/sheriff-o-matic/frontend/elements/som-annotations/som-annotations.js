@@ -8,9 +8,13 @@ const DefaultSnoozeTimes = {
 
 const ONE_MIN_MS = 1000 * 60;
 
-class SomAnnotations extends Polymer.mixinBehaviors(
-    [AnnotationManagerBehavior, PostBehavior, AlertTypeBehavior], Polymer.Element) {
+// TODO(yuanzhi) Consider construct this list from a monorail query.
+const MONORAIL_PROJECTS = ['chromium',
+  'fuchsia', 'gn', 'monorail', 'v8', 'webrtc'];
 
+class SomAnnotations extends Polymer.mixinBehaviors(
+    [AnnotationManagerBehavior, PostBehavior, AlertTypeBehavior],
+    Polymer.Element) {
   static get is() {
     return 'som-annotations';
   }
@@ -48,7 +52,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
       _commentsModelAnnotation: {
         type: Object,
         computed:
-            '_computeCommentsModelAnnotation(annotations, _commentsModel)',
+          '_computeCommentsModelAnnotation(annotations, _commentsModel)',
       },
       _commentsHidden: {
         type: Boolean,
@@ -99,7 +103,6 @@ class SomAnnotations extends Polymer.mixinBehaviors(
   fetch() {
     this.annotationError.action = 'Fetching all annotations';
     this.fetchAnnotations().catch((error) => {
-      let old = this.annotationError;
       this.annotationError.message = error;
       this.notifyPath('annotationError.message');
     });
@@ -107,7 +110,8 @@ class SomAnnotations extends Polymer.mixinBehaviors(
 
   // Fetches new annotations from the server.
   fetchAnnotations() {
-    return window.fetch('/api/v1/annotations/' + this.tree.name, {credentials: 'include'})
+    return window.fetch('/api/v1/annotations/' +
+      this.tree.name, {credentials: 'include'})
         .then(jsonParsePromise)
         .then((req) => {
           this._annotationsResp = [];
@@ -128,11 +132,11 @@ class SomAnnotations extends Polymer.mixinBehaviors(
   }
 
   _computeAnnotations(annotationsJson) {
-    let annotations = {};
+    const annotations = {};
     annotationsJson = annotationsJson || [];
 
     annotationsJson.forEach((ann) => {
-      let key = decodeURIComponent(ann.key);
+      const key = decodeURIComponent(ann.key);
       annotations[key] = ann;
     });
     return annotations;
@@ -144,9 +148,9 @@ class SomAnnotations extends Polymer.mixinBehaviors(
 
   // Handle the result of the response of a post to the server.
   _postResponse(response) {
-    let annotations = this.annotations;
+    const annotations = this.annotations;
     annotations[decodeURIComponent(response.key)] = response;
-    let newArray = [];
+    const newArray = [];
     Object.keys(annotations).forEach((k) => {
       k = decodeURIComponent(k);
       newArray.push(annotations[k]);
@@ -156,14 +160,13 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     return response;
   }
 
-  ////////////////////// Handlers ///////////////////////////
+  // //////////////////// Handlers ///////////////////////////
 
   handleAnnotation(alert, detail) {
     this.annotationError.action = 'Fetching all annotations';
     this.sendAnnotation(alert.key, detail.type, detail.change)
-        .then((response) => {})
+        .then((response) => { })
         .catch((error) => {
-          let old = this.annotationError;
           this.annotationError.message = error;
           this.notifyPath('annotationError.message');
         });
@@ -181,7 +184,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
 
     this._bugErrorMessage = '';
 
-    let autosnoozeTime = parseInt(this.$.autosnoozeTime.value, 10);
+    const autosnoozeTime = parseInt(this.$.autosnoozeTime.value, 10);
     this.$.autosnoozeTime.value = autosnoozeTime || this._defaultSnoozeTime;
     this.$.bugDialog.open();
   }
@@ -232,17 +235,23 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     this.$.ungroupBulkDialog.open();
   }
 
-  ////////////////////// Bugs ///////////////////////////
+  // //////////////////// Bugs ///////////////////////////
 
   _linkNewBug() {
     // TODO(zhangtiff): Move annotation creation to the backend.
-    let data = {bugs: [this.$.fileBug.filedBugId]};
-    let promises = this._fileBugModel.map((alert) => {
+    const data = {
+      bugs: [{
+        id: this.$.fileBug.filedBugId,
+        projectId: this.$.fileBug.projectId,
+      }],
+    };
+
+    const promises = this._fileBugModel.map((alert) => {
       return this.sendAnnotation(alert.key, 'add', data);
-    })
+    });
     Promise.all(promises).then(
         (response) => {
-    this.$.fileBug.showBugFiledDialog();
+          this.$.fileBug.showBugFiledDialog();
 
           if (this._fileBugCallback) {
             this._fileBugCallback();
@@ -271,25 +280,25 @@ class SomAnnotations extends Polymer.mixinBehaviors(
       let result = alert.title + '\n\n';
       if (alert.extension) {
         if (alert.extension.builders &&
-            alert.extension.builders.length > 0) {
+          alert.extension.builders.length > 0) {
           const failuresInfo = [];
           for (const builder of alert.extension.builders) {
             failuresInfo.push(this._builderFailureInfo(builder));
           }
           result += 'List of failed builders:\n\n' +
-                    failuresInfo.join('\n--------------------\n') + '\n\n';
+            failuresInfo.join('\n--------------------\n') + '\n\n';
         }
         if (alert.extension.reasons &&
-            alert.extension.reasons.length > 0) {
+          alert.extension.reasons.length > 0) {
           result += 'Reasons: ';
-          for (let i in alert.extension.reasons) {
+          for (let i = 0; i < alert.extension.reasons.length; i++) {
             result += '\n' + alert.extension.reasons[i].url;
             if (alert.extension.reasons[i].test_names) {
               result += '\n' +
-                        'Tests:';
+                'Tests:';
               if (alert.extension.reasons[i].test_names) {
                 result += '\n* ' +
-                          alert.extension.reasons[i].test_names.join('\n* ');
+                  alert.extension.reasons[i].test_names.join('\n* ');
               }
             }
           }
@@ -306,8 +315,13 @@ class SomAnnotations extends Polymer.mixinBehaviors(
   }
 
   _removeBug() {
-    let model = this._removeBugModel;
-    let data = {bugs: [model.bug]};
+    const model = this._removeBugModel;
+    const data = {
+      bugs: [{
+        id: model.bug,
+        projectId: model.project,
+      }],
+    };
     this.sendAnnotation(model.alert.key, 'remove', data)
         .then(
             (response) => {
@@ -319,18 +333,130 @@ class SomAnnotations extends Polymer.mixinBehaviors(
             });
   }
 
+  // Parse URL to get bug id if its in the query segment.
+  // ex: crbug.com/issues/detail?id=123 will return 123
+  _getBugIDFromURLQuery(url) {
+    const _params = new URLSearchParams(url.search);
+    if (_params.has('id') && !isNaN(parseInt(_params.get('id')))) {
+      return _params.get('id');
+    }
+    return NaN;
+  }
+
+  // Parse URL to get bug id if its the last path segment
+  // ex: crbug.com/123 will return 123
+  _getBugIDFromURLPath(url) {
+    const pathName = url.pathname;
+    const bugId = pathName.substring(pathName.lastIndexOf('/') + 1);
+    return isNaN(parseInt(bugId)) ? NaN : bugId;
+  }
+
+  // Parse URL to read back bug id as a numerical string.
+  _getBugIDFromURL(url) {
+    const bugId = this._getBugIDFromURLPath(url);
+    return isNaN(bugId) ? this._getBugIDFromURLQuery(url) : bugId;
+  }
+
+  // Parse for input if its in the format
+  // project:bug (ex: chromium:1234)
+  _getBugIDFromString(input) {
+    const fields = input.split(':');
+    if (!input.startsWith('http') &&
+      fields.length == 2 &&
+      MONORAIL_PROJECTS.includes(fields[0])) {
+      return isNaN(parseInt(fields[1])) ? [] : fields;
+    }
+    return [];
+  }
+
+  // Parse the url object to read back the project name
+  // ex: crbug.com/p/monorail/123 will return monorail
+  // ex: crbug.com/123 will return chromium
+  _getProjectNameFromUrl(url) {
+    let projectName = '';
+    const paths = url.pathname.split('/');
+    if (paths.includes('p')) {
+      projectName = paths[paths.indexOf('p') + 1];
+    }
+    return projectName == undefined ? 'chromium' : projectName;
+  }
+
+  // Checks if url begins with http or https, if not, prepend "http://".
+  _cleanupUrl(url) {
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'http://' + url;
+    }
+    return url;
+  }
+
+  _getBugDataFromURL(url) {
+    let projectName = '';
+    let bugID = '';
+
+    // Check if input is in the format "chromium:1234"
+    const bugInfo = this._getBugIDFromString(url);
+    if (bugInfo.length == 2) {
+      projectName = bugInfo[0];
+      bugID = bugInfo[1];
+    } else if (!isNaN(parseInt(url))) {
+      // If input is numerical, default to chromium project.
+      projectName = 'chromium';
+      bugID = url;
+    } else {
+      // If input is url, parse both path and query fields for
+      // project and bug id.
+      const _url = new URL(this._cleanupUrl(url));
+      switch (_url.hostname) {
+        case 'fxb':
+        case 'bugs.fuchsia.dev':
+          projectName = 'fuchsia';
+          break;
+        case 'crbug.com':
+        case 'crbug':
+        case 'bugs.chromium.org':
+          // Parse url path for project
+          projectName = this._getProjectNameFromUrl(_url);
+          break;
+        default:
+          projectName = 'chromium';
+      }
+      bugID = this._getBugIDFromURL(_url);
+      if (isNaN(bugID)) {
+        throw Error('Input ' + url + ' is not a valid Bug ID or URL. ' +
+          'Allowed formats are: \n' +
+          ' <id> (ex:1234, defaults to chromium project) \n' +
+          ' <project>:<id> (ex: chromium:1234) \n' +
+          ' <hostName>/<id> (ex: bugs.chromium.org/1234) \n' +
+          ' <shortName>/<id> (ex: crbugs.com/1234) \n' +
+          ' <FullURL> (ex: https://bugs.fuchsia.dev/p/fuchsia/issues/detail?id=1234) \n');
+      }
+    }
+    return {
+      bugs: [{
+        id: bugID,
+        projectId: projectName,
+      }],
+    };
+  }
+
   _saveBug() {
-    let data = {bugs: [this.$.bug.value.trim()]};
+    let data;
+    try {
+      data = this._getBugDataFromURL(this.$.bug.value.trim());
+    } catch (e) {
+      this._bugErrorMessage = e;
+      return;
+    }
     if (this.$.autosnooze.checked) {
-      let autosnoozeTime = parseInt(this.$.autosnoozeTime.value, 10);
+      const autosnoozeTime = parseInt(this.$.autosnoozeTime.value, 10);
       if (isNaN(autosnoozeTime)) {
         this._bugErrorMessage = 'Please enter a valid snooze time.';
         return;
       }
-      let snoozeTime = autosnoozeTime || this._defaultSnoozeTime;
+      const snoozeTime = autosnoozeTime || this._defaultSnoozeTime;
       data.snoozeTime = Date.now() + ONE_MIN_MS * snoozeTime;
     }
-    let promises = this._fileBugModel.map((alert) => {
+    const promises = this._fileBugModel.map((alert) => {
       return this.sendAnnotation(alert.key, 'add', data);
     });
     Promise.all(promises).then(
@@ -348,13 +474,15 @@ class SomAnnotations extends Polymer.mixinBehaviors(
         });
   }
 
-  ////////////////////// Snooze ///////////////////////////
+  // //////////////////// Snooze ///////////////////////////
 
   _snooze() {
-    let promises = this._snoozeModel.map(
-        (alert) => {return this.sendAnnotation(alert.key, 'add', {
-          snoozeTime: Date.now() + ONE_MIN_MS * this.$.snoozeTime.value
-        })});
+    const promises = this._snoozeModel.map(
+        (alert) => {
+          return this.sendAnnotation(alert.key, 'add', {
+            snoozeTime: Date.now() + ONE_MIN_MS * this.$.snoozeTime.value,
+          });
+        });
     Promise.all(promises).then(
         (response) => {
           this.$.snoozeDialog.close();
@@ -368,21 +496,22 @@ class SomAnnotations extends Polymer.mixinBehaviors(
         });
   }
 
-  ////////////////////// Comments ///////////////////////////
+  // //////////////////// Comments ///////////////////////////
 
   _addComment() {
-    if (this._commentInFlight)
+    if (this._commentInFlight) {
       return;
+    }
 
-    let text = this.$.commentText.value;
+    const text = this.$.commentText.value;
     if (!(text && /[^\s]/.test(text))) {
       this._commentsErrorMessage = 'Comment text cannot be blank!';
       return;
     }
     this._commentInFlight = true;
     this.sendAnnotation(this._commentsModel.key, 'add', {
-          comments: [text],
-        })
+      comments: [text],
+    })
         .then(
             (response) => {
               this.$.commentText.value = '';
@@ -416,7 +545,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
   }
 
   _computeFileBugLabels(tree, alerts) {
-    let labels = ['Filed-Via-SoM'];
+    const labels = ['Filed-Via-SoM'];
     if (!tree) {
       return labels;
     }
@@ -431,7 +560,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     }
 
     if (alerts) {
-      let trooperBug = alerts.some((alert) => {
+      const trooperBug = alerts.some((alert) => {
         return this.isTrooperAlertType(alert.type);
       });
 
@@ -450,7 +579,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     if (!email) {
       return email;
     }
-    let cutoff = email.indexOf('@');
+    const cutoff = email.indexOf('@');
     if (cutoff < 0) {
       return email;
     }
@@ -461,26 +590,27 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     if (!timestamp) {
       return '';
     }
-    let time = moment.tz(new Date(timestamp), 'Atlantic/Reykjavik');
-    let result = time.tz('America/Los_Angeles').format('ddd, DD MMM Y hh:mm A z');
+    const time = moment.tz(new Date(timestamp), 'Atlantic/Reykjavik');
+    const result = time.tz('America/Los_Angeles').format(
+        'ddd, DD MMM Y hh:mm A z');
     return result + ` (${time.fromNow()})`;
   }
 
   _removeComment(evt) {
-    let request = this.sendAnnotation(this._commentsModel.key, 'remove', {
+    const request = this.sendAnnotation(this._commentsModel.key, 'remove', {
       comments: [evt.model.comment.index],
     });
     if (request) {
-      request.then((response) => {}, (error) => {
+      request.then((response) => { }, (error) => {
         this._commentsErrorMessage = error;
       });
     }
   }
 
-  ////////////////////// Groups ///////////////////////////
+  // //////////////////// Groups ///////////////////////////
   _group(evt) {
     // Group the current alert and all checked alerts.
-    let alerts = this._groupModel.targets.filter((t) => {
+    const alerts = this._groupModel.targets.filter((t) => {
       return t.checked;
     });
     alerts.push(this._groupModel.alert);
@@ -493,7 +623,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
 
     // Determine group ID.
     let groupAlert = null;
-    for (let i in alerts) {
+    for (const i in alerts) {
       if (alerts[i].grouped) {
         if (groupAlert) {
           this._groupErrorMessage = 'attempting to group multiple groups';
@@ -502,7 +632,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
         groupAlert = alerts[i];
       }
     }
-    let groupID = groupAlert ? groupAlert.key : this._generateUUID();
+    const groupID = groupAlert ? groupAlert.key : this._generateUUID();
 
     // Determine ungrouped alerts to group.
     alerts = alerts.filter((a) => {
@@ -512,24 +642,24 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     // Data cleanup: If the group is resolved, ensure that all subalerts
     // are resolved too.
     if (groupAlert && groupAlert.resolved) {
-      for (let i in groupAlert.alerts) {
-        let subAlert = groupAlert.alerts[i];
+      for (let i = 0; i < groupAlert.alerts.length; i++) {
+        const subAlert = groupAlert.alerts[i];
         if (!subAlert.resolved) {
           this._groupModel.resolveAlerts([subAlert], true);
         }
       }
     } else if (groupAlert && !groupAlert.resolved) {
-      for (let i in alerts) {
+      for (const i in alerts) {
         if (alerts[i].resolved) {
           this._groupErrorMessage =
-              'attempting to group resolved alert with unresolved group';
+            'attempting to group resolved alert with unresolved group';
           return;
         }
       }
     }
 
     // Create annotation for each ungrouped alert key.
-    for (let i in alerts) {
+    for (let i = 0; i < alerts.length; i++) {
       // Grouping with a resolved group will resolve all unresolved issues.
       if (groupAlert && groupAlert.resolved && !alerts[i].resolved) {
         this._groupModel.resolveAlerts([alerts[i]], true);
@@ -551,11 +681,11 @@ class SomAnnotations extends Polymer.mixinBehaviors(
 
   _ungroup() {
     // TODO(add proper error handling)
-    for (let i in this._ungroupModel.alerts) {
+    for (const i in this._ungroupModel.alerts) {
       if (!this._ungroupErrorMessage &&
-          this._ungroupModel.alerts[i].checked) {
+        this._ungroupModel.alerts[i].checked) {
         this.sendAnnotation(this._ungroupModel.alerts[i].key, 'remove',
-                            {group_id: true})
+            {group_id: true})
             .then(
                 (response) => {
                   this.$.ungroupDialog.close();
@@ -571,28 +701,26 @@ class SomAnnotations extends Polymer.mixinBehaviors(
 
   _ungroupBulk() {
     // TODO(add proper error handling)
-    let ungroupedAlerts = [];
-    let changes = [];
-    for (let i in this._ungroupBulkModel) {
-      let group = this._ungroupBulkModel[i];
-      if (!this._ungroupBulkErrorMessage &&
-          group.checked) {
-        for (let j in group.alerts) {
-          let alert = group.alerts[j];
+    const ungroupedAlerts = [];
+    const changes = [];
+    for (let i = 0; i < this._ungroupBulkModel.length; i++) {
+      const group = this._ungroupBulkModel[i];
+      if (!this._ungroupBulkErrorMessage && group.checked) {
+        for (let j = 0; j < group.alerts.length; j++) {
+          const alert = group.alerts[j];
           changes.push(this.sendAnnotation(alert.key, 'remove',
-                              {group_id: true}));
+              {group_id: true}));
           ungroupedAlerts.push(alert);
         }
-
       }
       // TODO(seanmccullough): Figure out why things remain checked.
       group.checked = false;
     }
 
-    Promise.all(changes).then(resps => {
+    Promise.all(changes).then((resps) => {
       this.$.ungroupBulkDialog.close();
       this.fire('bulk-ungrouped', ungroupedAlerts);
-    }, error => {
+    }, (error) => {
       this._ungroupBulkErrorMessage = error;
     });
   }
@@ -603,25 +731,26 @@ class SomAnnotations extends Polymer.mixinBehaviors(
 
   _haveStages(alert) {
     return alert.extension && alert.extension.stages &&
-           alert.extension.stages.length > 0;
+      alert.extension.stages.length > 0;
   }
 
   _generateUUID() {
     // This is actually an rfc4122 version 4 compliant uuid taken from:
     // http://stackoverflow.com/questions/105034
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-        /[xy]/g, function(c) {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+        /[xy]/g, function (c) {
           var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
           return v.toString(16);
         });
   }
 
-  ////////////////////// Misc UX ///////////////////////////
+  // //////////////////// Misc UX ///////////////////////////
 
   _checkAll(e) {
-    let target = e.target;
-    let checkboxSelector = target.getAttribute('data-checkbox-selector');
-    let checkboxes = Polymer.dom(this.root).querySelectorAll(checkboxSelector);
+    const target = e.target;
+    const checkboxSelector = target.getAttribute('data-checkbox-selector');
+    const checkboxes = Polymer.dom(this.root).querySelectorAll(
+        checkboxSelector);
     for (let i = 0; i < checkboxes.length; i++) {
       // Note: We are using .click() because otherwise the checkbox's change
       // event is not fired.

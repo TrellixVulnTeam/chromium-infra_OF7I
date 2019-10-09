@@ -125,8 +125,13 @@ message SOMAnnotationEvent {
   // Operation is the annoation operation.
   OperationType operation = 7;
 
-  // Bugs is the list of bug IDs or URLs attached to the alert.
-  repeated string bugs = 8;
+  message MonorailBug {
+    string bug_id = 1;
+    string project_id = 2;
+  }
+
+  // Bugs is the list of MonorailBugs attached to the alert.
+  repeated MonorailBug bugs = 8;
 
   // Comment is a user comment attached to an alert.
   message Comment {

@@ -1,8 +1,8 @@
 'use strict';
 
 class SomAlertItem extends Polymer.mixinBehaviors(
-    [LinkifyBehavior, AlertTypeBehavior, TimeBehavior, BugManagerBehavior],
-    Polymer.Element) {
+  [LinkifyBehavior, AlertTypeBehavior, TimeBehavior, BugManagerBehavior],
+  Polymer.Element) {
 
   static get is() {
     return 'som-alert-item';
@@ -128,7 +128,10 @@ class SomAlertItem extends Polymer.mixinBehaviors(
   }
 
   _alertChecked(isChecked) {
-    this.fire('checked');
+    this.dispatchEvent(new CustomEvent('checked', {
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   _helpLinkForAlert(alert) {
@@ -145,7 +148,10 @@ class SomAlertItem extends Polymer.mixinBehaviors(
   }
 
   _comment(evt) {
-    this.fire('comment');
+    this.dispatchEvent(new CustomEvent('comment', {
+      bubbles: true,
+      composed: true,
+    }));
     evt.preventDefault();
   }
 
@@ -194,11 +200,17 @@ class SomAlertItem extends Polymer.mixinBehaviors(
   }
 
   _linkBug(evt) {
-    this.fire('link-bug');
+    this.dispatchEvent(new CustomEvent('link-bug', {
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   _fileBug(evt) {
-    this.fire('file-bug');
+    this.dispatchEvent(new CustomEvent('file-bug', {
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   _formatTimestamp(timestamp) {
@@ -215,35 +227,56 @@ class SomAlertItem extends Polymer.mixinBehaviors(
 
   _removeBug(evt) {
     let bug = evt.model.bug;
-    this.fire('remove-bug', {
-      bug: String(bug.id),
-      summary: bug.summary,
-      url: 'https://crbug.com/' + bug.id,
-    });
+    this.dispatchEvent(new CustomEvent('remove-bug', {
+      detail: {
+        bug: String(bug.id),
+        summary: bug.summary,
+        project: String(bug.projectId),
+        url: 'https://crbug.com/' + bug.projectId + '/' + bug.id,
+      },
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   _snooze(evt) {
     if (this.annotation.snoozed) {
-      this.fire('annotation-change', {
-        type: 'remove',
-        change: {'snoozeTime': true},
-      });
+      this.dispatchEvent(new CustomEvent('annotation-change', {
+        detail: {
+          type: 'remove',
+          change: { 'snoozeTime': true },
+        },
+        bubbles: true,
+        composed: true,
+      }));
     } else {
-      this.fire('snooze');
+      this.dispatchEvent(new CustomEvent('snooze', {
+        bubbles: true,
+        composed: true,
+      }));
     }
     evt.preventDefault();
   }
 
   _ungroup(evt) {
-    this.fire('ungroup');
+    this.dispatchEvent(new CustomEvent('ungroup', {
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   _resolve(evt) {
-    this.fire('resolve');
+    this.dispatchEvent(new CustomEvent('resolve', {
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   _unresolve(evt) {
-    this.fire('unresolve');
+    this.dispatchEvent(new CustomEvent('unresolve', {
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   _updateGroupName(evt) {
@@ -254,10 +287,14 @@ class SomAlertItem extends Polymer.mixinBehaviors(
 
     if (value == oldTitle) return;
 
-    this.fire('annotation-change', {
-      type: 'add',
-      change: {'group_id': value},
-    });
+    this.dispatchEvent(new CustomEvent('annotation-change', {
+      detail: {
+        type: 'add',
+        change: { 'group_id': value },
+      },
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   _haveSubAlerts(alert) {

@@ -38,12 +38,17 @@ type BugQueueHandler struct {
 }
 
 // A bit of a hack to let us mock getBugsFromMonorail.
-func (bqh *BugQueueHandler) getBugsFromMonorail(c context.Context, q string,
+func (bqh *BugQueueHandler) getBugsFromMonorail(c context.Context, q string, projectID string,
 	can monorail.IssuesListRequest_CannedQuery) (*monorail.IssuesListResponse, error) {
+
+	// TODO(yuanzhi): find a way to map projectId for bugqueue.
+	if projectID == "" {
+		projectID = "chromium"
+	}
 	// TODO(martiniss): make this look up request info based on Tree datastore
 	// object
 	req := &monorail.IssuesListRequest{
-		ProjectId: "chromium",
+		ProjectId: projectID,
 		Q:         q,
 	}
 
@@ -112,7 +117,7 @@ func (bqh *BugQueueHandler) GetUncachedBugsHandler(ctx *router.Context) {
 	q := fmt.Sprintf("label:%[1]s -has:owner OR label:%[1]s owner:%s OR owner:%s label:%[1]s",
 		label, user.Email(), email)
 
-	bugs, err := bqh.getBugsFromMonorail(c, q, monorail.IssuesListRequest_OPEN)
+	bugs, err := bqh.getBugsFromMonorail(c, q, "" /* projectId*/, monorail.IssuesListRequest_OPEN)
 	if err != nil && bugs != nil {
 		bugQueueLength.Set(c, int64(bugs.TotalResults), label)
 	}
@@ -131,7 +136,7 @@ func (bqh *BugQueueHandler) GetUncachedBugsHandler(ctx *router.Context) {
 func (bqh *BugQueueHandler) refreshBugQueue(c context.Context, label string) (memcache.Item, error) {
 	q := fmt.Sprintf("label=%s", label)
 
-	res, err := bqh.getBugsFromMonorail(c, q, monorail.IssuesListRequest_OPEN)
+	res, err := bqh.getBugsFromMonorail(c, q, "" /* projectId*/, monorail.IssuesListRequest_OPEN)
 	if err != nil {
 		return nil, err
 	}

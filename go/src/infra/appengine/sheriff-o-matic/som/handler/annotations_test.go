@@ -90,7 +90,7 @@ func TestAnnotations(t *testing.T) {
 			ann := &model.Annotation{
 				KeyDigest:        fmt.Sprintf("%x", sha1.Sum([]byte("foobar"))),
 				Key:              "foobar",
-				Bugs:             []string{"111", "222"},
+				Bugs:             []model.MonorailBug{{BugID: "111", ProjectID: "fuchsia"}, {BugID: "222", ProjectID: "chromium"}},
 				SnoozeTime:       123123,
 				ModificationTime: datastore.RoundTime(clock.Now(c).Add(4 * time.Hour)),
 			}
@@ -210,7 +210,7 @@ func TestAnnotations(t *testing.T) {
 				})
 
 				Convey("bugs", func() {
-					change["bugs"] = []string{"123123"}
+					change["bugs"] = []model.MonorailBug{{BugID: "123123", ProjectID: "chromium"}}
 					change["key"] = "foobar"
 					ah.PostAnnotationsHandler(&router.Context{
 						Context: c,
@@ -222,23 +222,7 @@ func TestAnnotations(t *testing.T) {
 					So(w.Code, ShouldEqual, 200)
 
 					So(datastore.Get(c, ann), ShouldBeNil)
-					So(ann.Bugs, ShouldResemble, []string{"123123"})
-				})
-
-				Convey("bad change", func() {
-					change["bugs"] = []string{"ooops"}
-					change["key"] = "foobar"
-					w = httptest.NewRecorder()
-					ah.PostAnnotationsHandler(&router.Context{
-						Context: c,
-						Writer:  w,
-						Request: makePostRequest(makeChange(change, tok)),
-						Params:  makeParams("action", "add", "tree", "tree.unknown"),
-					})
-
-					So(w.Code, ShouldEqual, 400)
-
-					So(datastore.Get(c, ann), ShouldNotBeNil)
+					So(ann.Bugs, ShouldResemble, []model.MonorailBug{{BugID: "123123", ProjectID: "chromium"}})
 				})
 			})
 

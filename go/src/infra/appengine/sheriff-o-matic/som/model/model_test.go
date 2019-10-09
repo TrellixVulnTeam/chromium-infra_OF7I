@@ -49,55 +49,7 @@ func TestAnnotation(t *testing.T) {
 			So(datastore.Put(c, ann), ShouldBeNil)
 		})
 
-		Convey("validBug", func() {
-			Convey("number", func() {
-				res, err := validBug("123123")
-				So(err, ShouldBeNil)
-				So(res, ShouldEqual, "123123")
-			})
-
-			Convey("bugs.chromium.org without id", func() {
-				_, err := validBug("bugs.chromium.org/aasasnans")
-				So(err, ShouldNotBeNil)
-			})
-
-			Convey("bugs.chromium.org with id", func() {
-				res, err := validBug("bugs.chromium.org/?id=123123")
-				So(err, ShouldBeNil)
-				So(res, ShouldEqual, "123123")
-			})
-
-			Convey("crbug.com", func() {
-				res, err := validBug("crbug.com/123123")
-				So(err, ShouldBeNil)
-				So(res, ShouldEqual, "123123")
-			})
-
-			Convey("non-integer ID", func() {
-				_, err := validBug("crbug.com/abc")
-				So(err, ShouldNotBeNil)
-			})
-
-			Convey("https", func() {
-				res, err := validBug("bugs.chromium.org/?id=123123")
-				So(err, ShouldBeNil)
-				So(res, ShouldEqual, "123123")
-			})
-
-			Convey("http", func() {
-				res, err := validBug("http://crbug.com/123123")
-				So(err, ShouldBeNil)
-				So(res, ShouldEqual, "123123")
-			})
-
-			Convey("invalid", func() {
-				_, err := validBug("lolwat")
-				So(err, ShouldNotBeNil)
-			})
-
-		})
-
-		Convey("with mocked ValidBug", func() {
+		Convey("with mocked checkAndGetBug", func() {
 			Convey("add", func() {
 				Convey("time", func() {
 					changeS := `{"snoozeTime":123123}`
@@ -112,14 +64,14 @@ func TestAnnotation(t *testing.T) {
 				})
 
 				Convey("bugs", func() {
-					changeString := `{"bugs":["123123"]}`
+					changeString := `{"bugs":[{"id": "123123", "projectId": "chromium"}]}`
 					Convey("basic", func() {
 						needRefresh, err := ann.Add(c, strings.NewReader(changeString))
 
 						So(err, ShouldBeNil)
 						So(needRefresh, ShouldBeTrue)
 						So(ann.SnoozeTime, ShouldEqual, 0)
-						So(ann.Bugs, ShouldResemble, []string{"123123"})
+						So(ann.Bugs, ShouldResemble, []MonorailBug{{BugID: "123123", ProjectID: "chromium"}})
 						So(ann.ModificationTime, ShouldResemble, cl.Now())
 
 						Convey("duplicate bugs", func() {
@@ -129,7 +81,7 @@ func TestAnnotation(t *testing.T) {
 							So(needRefresh, ShouldBeFalse)
 
 							So(ann.SnoozeTime, ShouldEqual, 0)
-							So(ann.Bugs, ShouldResemble, []string{"123123"})
+							So(ann.Bugs, ShouldResemble, []MonorailBug{{BugID: "123123", ProjectID: "chromium"}})
 							So(ann.Comments, ShouldBeNil)
 							// We aren't changing the annotation, so the modification time shouldn't update.
 							So(ann.ModificationTime, ShouldResemble, cl.Now().Add(-time.Hour))
@@ -178,10 +130,11 @@ func TestAnnotation(t *testing.T) {
 
 			Convey("remove", func() {
 				t := cl.Now()
-				comments := []Comment{{"hello", "", t}, {"world", "", t}, {"hehe", "", t}}
+				fakeComments := []Comment{{"hello", "", t}, {"world", "", t}, {"hehe", "", t}}
+				fakeBugs := []MonorailBug{{BugID: "123123", ProjectID: "chromium"}, {BugID: "bug2", ProjectID: "fuchsia"}}
 				ann.SnoozeTime = 100
-				ann.Bugs = []string{"123123", "bug2"}
-				ann.Comments = comments
+				ann.Bugs = fakeBugs
+				ann.Comments = fakeComments
 
 				Convey("time", func() {
 					changeS := `{"snoozeTime":true}`
@@ -190,21 +143,21 @@ func TestAnnotation(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(needRefresh, ShouldBeFalse)
 					So(ann.SnoozeTime, ShouldEqual, 0)
-					So(ann.Bugs, ShouldResemble, []string{"123123", "bug2"})
-					So(ann.Comments, ShouldResemble, comments)
+					So(ann.Bugs, ShouldResemble, fakeBugs)
+					So(ann.Comments, ShouldResemble, fakeComments)
 					So(ann.ModificationTime, ShouldResemble, cl.Now())
 				})
 
 				Convey("bugs", func() {
-					changeString := `{"bugs":["123123"]}`
+					changeString := `{"bugs":[{"id": "123123", "projectId": "chromium"}]}`
 					Convey("basic", func() {
 						needRefresh, err := ann.Remove(c, strings.NewReader(changeString))
 
 						So(err, ShouldBeNil)
 						So(needRefresh, ShouldBeFalse)
 						So(ann.SnoozeTime, ShouldEqual, 100)
-						So(ann.Comments, ShouldResemble, comments)
-						So(ann.Bugs, ShouldResemble, []string{"bug2"})
+						So(ann.Comments, ShouldResemble, fakeComments)
+						So(ann.Bugs, ShouldResemble, []MonorailBug{{BugID: "bug2", ProjectID: "fuchsia"}})
 						So(ann.ModificationTime, ShouldResemble, cl.Now())
 					})
 
@@ -214,8 +167,8 @@ func TestAnnotation(t *testing.T) {
 						So(err, ShouldNotBeNil)
 						So(needRefresh, ShouldBeFalse)
 						So(ann.SnoozeTime, ShouldEqual, 100)
-						So(ann.Bugs, ShouldResemble, []string{"123123", "bug2"})
-						So(ann.Comments, ShouldResemble, comments)
+						So(ann.Bugs, ShouldResemble, fakeBugs)
+						So(ann.Comments, ShouldResemble, fakeComments)
 						So(ann.ModificationTime, ShouldResemble, cl.Now().Add(-time.Hour))
 					})
 				})
@@ -228,7 +181,7 @@ func TestAnnotation(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(needRefresh, ShouldBeFalse)
 						So(ann.SnoozeTime, ShouldEqual, 100)
-						So(ann.Bugs, ShouldResemble, []string{"123123", "bug2"})
+						So(ann.Bugs, ShouldResemble, fakeBugs)
 						So(ann.Comments, ShouldResemble, []Comment{{"hello", "", t}, {"hehe", "", t}})
 						So(ann.ModificationTime, ShouldResemble, cl.Now())
 					})
@@ -239,8 +192,8 @@ func TestAnnotation(t *testing.T) {
 						So(err, ShouldNotBeNil)
 						So(needRefresh, ShouldBeFalse)
 						So(ann.SnoozeTime, ShouldEqual, 100)
-						So(ann.Bugs, ShouldResemble, []string{"123123", "bug2"})
-						So(ann.Comments, ShouldResemble, comments)
+						So(ann.Bugs, ShouldResemble, fakeBugs)
+						So(ann.Comments, ShouldResemble, fakeComments)
 						So(ann.ModificationTime, ShouldResemble, cl.Now().Add(-time.Hour))
 					})
 
@@ -251,8 +204,8 @@ func TestAnnotation(t *testing.T) {
 						So(err, ShouldNotBeNil)
 						So(needRefresh, ShouldBeFalse)
 						So(ann.SnoozeTime, ShouldEqual, 100)
-						So(ann.Bugs, ShouldResemble, []string{"123123", "bug2"})
-						So(ann.Comments, ShouldResemble, comments)
+						So(ann.Bugs, ShouldResemble, fakeBugs)
+						So(ann.Comments, ShouldResemble, fakeComments)
 						So(ann.ModificationTime, ShouldResemble, cl.Now().Add(-time.Hour))
 					})
 				})

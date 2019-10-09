@@ -11,6 +11,10 @@ cron:
   url: /_cron/refresh/bugqueue/sheriff-chromium
   schedule: every 1 minutes
 
+- description: Update fuchsia bug queue
+  url: /_cron/refresh/bugqueue/sheriff-fuchsia
+  schedule: every 1 minutes
+
 - description: Update trooper queue
   url: /_cron/refresh/bugqueue/infra-troopers
   schedule: every 1 minutes

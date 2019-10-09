@@ -275,7 +275,10 @@
       ];
       const annotations = {
         'alert6': {
-          bugs: ['123', '234'],
+          bugs: [
+            {id:'123', projectId:'chromium'},
+            {id:'234', projectId:'fuchsia'},
+          ],
           bug_data: {
             '123': {
               summary: 'hello'
@@ -319,7 +322,10 @@
       ];
       const annotations = {
         'alert4': {
-          bugs: ['123', '234'],
+          bugs: [
+            { id: '123', projectId: 'chromium' },
+            { id: '234', projectId: 'fuchsia' },
+          ],
           bug_data: {
             '123': {
               summary: 'hello'
@@ -357,10 +363,11 @@
 
     const basicAnnotation = {
       'a basic key': {
-        bugs: ['123'],
+        bugs: [{id: '123', projectId: 'chromium'}],
         bug_data: {
           '123': {
             id: '123',
+            projectId: 'chromium',
             summary: 'a summary',
           },
         },
@@ -512,7 +519,7 @@
       ];
       const annotations = {
         'quite small': {
-          bugs: ['123'],
+          bugs: [{id:'123', projectId:'monorail'}],
           bug_data: {
             '123': {
               summary: 'it might be big',
@@ -520,7 +527,7 @@
           },
         },
         'quite big': {
-          bugs: ['123'],
+          bugs: [{ id: '123', projectId: 'fuchsia'}],
           bug_data: {
             '123': {
               summary: 'it\'s actually BIG',
@@ -548,7 +555,7 @@
       ];
       const annotations = {
         'not small': {
-          bugs: ['123'],
+          bugs: [{ id: '123', projectId: 'chromium'}],
           bug_data: {
             '123': {
               summary: 'it\'s actually big',

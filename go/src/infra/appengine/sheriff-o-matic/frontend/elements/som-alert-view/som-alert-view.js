@@ -10,12 +10,11 @@ class SomAlertView extends Polymer.mixinBehaviors(
     [
       AnnotationManagerBehavior,
       AlertTypeBehavior,
+      BugManagerBehavior,
       PostBehavior,
       TimeBehavior,
-      BugManagerBehavior,
     ],
-    Polymer.Element,
-) {
+    Polymer.Element) {
   static get is() {
     return 'som-alert-view';
   }

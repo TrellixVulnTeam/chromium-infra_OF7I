@@ -232,7 +232,7 @@
           <div id="bugsList" hidden$="[[!_bugs.length]]" class="alert-links">
             <template is="dom-repeat" items="[[_bugs]]" as="bug">
               <div class="bug no-toggle">
-                <a target="_blank" href="https://crbug.com/[[bug.id]]">Bug [[bug.id]]</a>
+                <a target="_blank" href="https://crbug.com/[[bug.projectId]]/[[bug.id]]">Bug [[bug.id]]</a>
                 [[bug.summary]]
                 <em class="bug-status" hidden$="[[!bug.status]]">([[bug.status]])</em>
                 <iron-icon icon="close" title="Remove" id="remove[[index]]" on-tap="_removeBug"></iron-icon>

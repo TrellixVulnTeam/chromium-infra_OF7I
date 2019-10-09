@@ -9,10 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"infra/appengine/sheriff-o-matic/som/model/gen"
@@ -26,7 +22,6 @@ import (
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/clock"
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
@@ -36,6 +31,9 @@ const (
 	bqDatasetID = "events"
 	bqTableID   = "annotations"
 )
+
+// Currently we only accept linking bugs for chromium and fuchisa.
+var validProjects = [2]string{"chromium", "fuchsia"}
 
 // Tree is a tree which sheriff-o-matic receives and groups alerts for.
 type Tree struct {
@@ -99,11 +97,17 @@ type Annotation struct {
 	Tree             *datastore.Key `gae:"$parent"`
 	KeyDigest        string         `gae:"$id"`
 	Key              string         `gae:",noindex" json:"key"`
-	Bugs             []string       `gae:",noindex" json:"bugs"`
+	Bugs             []MonorailBug  `gae:",noindex" json:"bugs"`
 	Comments         []Comment      `gae:",noindex" json:"comments"`
 	SnoozeTime       int            `json:"snoozeTime"`
 	GroupID          string         `gae:",noindex" json:"group_id"`
 	ModificationTime time.Time
+}
+
+// MonorailBug stores data to differentiate bugs by projects.
+type MonorailBug struct {
+	BugID     string `json:"id"`        // This should match monorail.Issue.id
+	ProjectID string `json:"projectId"` // This should match monorail.Issue.projectId
 }
 
 // Comment is the format for the data in the Comments property of an Annotation
@@ -114,52 +118,35 @@ type Comment struct {
 }
 
 type annotationAdd struct {
-	Time     int      `json:"snoozeTime"`
-	Bugs     []string `json:"bugs"`
-	Comments []string `json:"comments"`
-	GroupID  string   `json:"group_id"`
+	Time     int           `json:"snoozeTime"`
+	Bugs     []MonorailBug `json:"bugs"`
+	Comments []string      `json:"comments"`
+	GroupID  string        `json:"group_id"`
 }
 
 type annotationRemove struct {
-	Time     bool     `json:"snoozeTime"`
-	Bugs     []string `json:"bugs"`
-	Comments []int    `json:"comments"`
-	GroupID  bool     `json:"group_id"`
+	Time     bool          `json:"snoozeTime"`
+	Bugs     []MonorailBug `json:"bugs"`
+	Comments []int         `json:"comments"`
+	GroupID  bool          `json:"group_id"`
 }
 
-// Extracts the bug id from a URL or returns the input if the user entered a
-// number.
-func validBug(bug string) (string, error) {
-	urlBug := bug
-
-	r, _ := regexp.Compile("^https?://")
-	if !r.MatchString(bug) {
-		urlBug = "https://" + bug
-	}
-
-	parsed, err := url.Parse(urlBug)
-	if err == nil {
-		// Example: bugs.chromium.org?id=123
-		if strings.Contains(parsed.Host, "bugs.chromium.org") {
-			params, err := url.ParseQuery(parsed.RawQuery)
-			if err == nil {
-				if id, ok := params["id"]; ok {
-					bug = id[0]
-				}
-			}
-		}
-		// Example: crbug.com/123
-		if strings.Contains(parsed.Host, "crbug.com") {
-			bug = strings.Replace(parsed.Path, "/", "", -1)
+func appendToBugList(knownBugs []MonorailBug, newBug MonorailBug) []MonorailBug {
+	for _, knownBug := range knownBugs {
+		if knownBug.BugID == newBug.BugID && knownBug.ProjectID == newBug.ProjectID {
+			return knownBugs
 		}
 	}
+	return append(knownBugs, newBug)
+}
 
-	_, err = strconv.Atoi(bug)
-	if err == nil {
-		return bug, nil
+func removeFromBugList(knownBugs []MonorailBug, bugToRemove MonorailBug) []MonorailBug {
+	for i, knownBug := range knownBugs {
+		if knownBug.BugID == bugToRemove.BugID && knownBug.ProjectID == bugToRemove.ProjectID {
+			return append(knownBugs[:i], knownBugs[i+1:]...)
+		}
 	}
-
-	return "", fmt.Errorf("Invalid bug '%s'", bug)
+	return knownBugs
 }
 
 // Add adds some data to an annotation. Returns true if a refresh of annotation
@@ -173,14 +160,6 @@ func (a *Annotation) Add(c context.Context, r io.Reader) (bool, error) {
 		return needRefresh, err
 	}
 
-	for i, bug := range change.Bugs {
-		newBug, err := validBug(bug)
-		if err != nil {
-			return needRefresh, err
-		}
-		change.Bugs[i] = newBug
-	}
-
 	modified := false
 
 	if change.Time != 0 {
@@ -188,11 +167,13 @@ func (a *Annotation) Add(c context.Context, r io.Reader) (bool, error) {
 		modified = true
 	}
 
+	// Check if changed bugs are new, and append to annotation Bugs list.
 	if change.Bugs != nil {
-		oldBugs := stringset.NewFromSlice(a.Bugs...)
-		newBugs := stringset.NewFromSlice(append(a.Bugs, change.Bugs...)...)
-		if newBugs.Difference(oldBugs).Len() != 0 {
-			a.Bugs = newBugs.ToSlice()
+		oldBugsCount := len(a.Bugs)
+		for _, newBug := range change.Bugs {
+			a.Bugs = appendToBugList(a.Bugs, newBug)
+		}
+		if oldBugsCount != len(a.Bugs) {
 			needRefresh = true
 			modified = true
 		}
@@ -223,7 +204,12 @@ func (a *Annotation) Add(c context.Context, r io.Reader) (bool, error) {
 
 	evt := createAnnotationEvent(c, a, gen.SOMAnnotationEvent_ADD)
 	evt.User = user.Email()
-	evt.Bugs = change.Bugs
+	for _, changedBug := range change.Bugs {
+		evt.Bugs = append(evt.Bugs, &gen.SOMAnnotationEvent_MonorailBug{
+			BugId:     changedBug.BugID,
+			ProjectId: changedBug.ProjectID,
+		})
+	}
 	if ts, err := intToTimestamp(a.SnoozeTime); err != nil {
 		evt.SnoozeTime = ts
 	} else {
@@ -279,11 +265,9 @@ func (a *Annotation) Remove(c context.Context, r io.Reader) (bool, error) {
 	}
 
 	if change.Bugs != nil {
-		set := stringset.NewFromSlice(a.Bugs...)
 		for _, bug := range change.Bugs {
-			set.Del(bug)
+			a.Bugs = removeFromBugList(a.Bugs, bug)
 		}
-		a.Bugs = set.ToSlice()
 		modified = true
 	}
 
@@ -310,7 +294,12 @@ func (a *Annotation) Remove(c context.Context, r io.Reader) (bool, error) {
 	user := auth.CurrentIdentity(c)
 	evt := createAnnotationEvent(c, a, gen.SOMAnnotationEvent_DELETE)
 	evt.User = user.Email()
-	evt.Bugs = change.Bugs
+	for _, changedBug := range change.Bugs {
+		evt.Bugs = append(evt.Bugs, &gen.SOMAnnotationEvent_MonorailBug{
+			BugId:     changedBug.BugID,
+			ProjectId: changedBug.ProjectID,
+		})
+	}
 	if ts, err := intToTimestamp(a.SnoozeTime); err == nil {
 		evt.SnoozeTime = ts
 	} else {

@@ -4,7 +4,7 @@
       // bugData is a map with the bug ids used as keys.
       let bugs = annotation.bugs;
       if (!bugs) return [];
-      return bugs.map((bug) => annotation.bugData && annotation.bugData[bug] || {'id': bug});
+      return bugs.map((bug) => annotation.bugData[bug.id] && annotation.bugData[bug.id] || bug);
     }
   }
 </script>

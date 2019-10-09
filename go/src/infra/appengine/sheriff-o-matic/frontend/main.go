@@ -231,20 +231,20 @@ func getUncachedBugsHandler(ctx *router.Context) {
 	bqh.GetUncachedBugsHandler(ctx)
 }
 
-func newAnnotationHandler(c context.Context) *handler.AnnotationHandler {
-	bqh := newBugQueueHandler(c)
+func newAnnotationHandler(ctx *router.Context) *handler.AnnotationHandler {
+	bqh := newBugQueueHandler(ctx.Context)
 	return &handler.AnnotationHandler{
 		Bqh: bqh,
 	}
 }
 
 func refreshAnnotationsHandler(ctx *router.Context) {
-	ah := newAnnotationHandler(ctx.Context)
+	ah := newAnnotationHandler(ctx)
 	ah.RefreshAnnotationsHandler(ctx)
 }
 
 func getAnnotationsHandler(ctx *router.Context) {
-	ah := newAnnotationHandler(ctx.Context)
+	ah := newAnnotationHandler(ctx)
 	activeKeys := map[string]interface{}{}
 	activeAlerts := handler.GetAlerts(ctx, true, false)
 	for _, alrt := range activeAlerts.Alerts {
@@ -254,7 +254,7 @@ func getAnnotationsHandler(ctx *router.Context) {
 }
 
 func postAnnotationsHandler(ctx *router.Context) {
-	ah := newAnnotationHandler(ctx.Context)
+	ah := newAnnotationHandler(ctx)
 	ah.PostAnnotationsHandler(ctx)
 }
 
