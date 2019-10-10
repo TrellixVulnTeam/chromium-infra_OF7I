@@ -70,6 +70,7 @@ class WorkEnvTest(unittest.TestCase):
     self.user_3 = self.services.user.TestAddUser('user_333@example.com', 333)
     self.mr = testing_helpers.MakeMonorailRequest(project=self.project)
     self.mr.perms = permissions.READ_ONLY_PERMISSIONSET
+    self.PAST_TIME = 12345
 
     self.work_env = work_env.WorkEnv(
       self.mr, self.services, 'Testing phase')
@@ -3997,6 +3998,79 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(features_svc.NoSuchHotlistException):
       with self.work_env as we:
         we.AddIssuesToHotlists([1, 2, 3], [4, 5, 6], None)
+
+  def testRerankHotlistIssues_SplitAbove(self):
+    """We can rerank issues in a hotlist with split_above = true."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    follower_ids = []
+    hotlist_items = [
+        (78904, 31, self.user_2.user_id, self.PAST_TIME, 'note'),
+        (78903, 21, self.user_2.user_id, self.PAST_TIME, 'note'),
+        (78902, 11, self.user_2.user_id, self.PAST_TIME, 'note'),
+        (78901, 1, self.user_2.user_id, self.PAST_TIME, 'note')]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'HotlistName', summary='summary', owner_ids=owner_ids,
+        editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1235, hotlist_item_fields=hotlist_items)
+
+    moved_ids = [78901]
+    target_id = 78904
+    split_above = True
+    self.SignIn(self.user_2.user_id)
+    with self.work_env as we:
+      we.RerankHotlistIssues(
+          hotlist.hotlist_id, moved_ids, target_id, split_above)
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(
+          [item.issue_id for item in updated_hotlist.items],
+          [78902, 78903, 78901, 78904])
+
+  def testRerankHotlistIssues_SplitBelow(self):
+    """We can rerank issues in a hotlist with split_above = false."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    follower_ids = []
+    hotlist_items = [
+        (78904, 31, self.user_2.user_id, self.PAST_TIME, 'note'),
+        (78903, 21, self.user_2.user_id, self.PAST_TIME, 'note'),
+        (78902, 11, self.user_2.user_id, self.PAST_TIME, 'note'),
+        (78901, 1, self.user_2.user_id, self.PAST_TIME, 'note')]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'HotlistName', summary='summary', owner_ids=owner_ids,
+        editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1235, hotlist_item_fields=hotlist_items)
+
+    moved_ids = [78901]
+    target_id = 78904
+    split_above = False
+    self.SignIn(self.user_2.user_id)
+    with self.work_env as we:
+      we.RerankHotlistIssues(
+          hotlist.hotlist_id, moved_ids, target_id, split_above)
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(
+          [item.issue_id for item in updated_hotlist.items],
+          [78902, 78903, 78904, 78901])
+
+  def testRerankHotlistIssues_NoPerms(self):
+    """We don't let non editors/owners update issue ranks."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = []
+    follower_ids = [self.user_3.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'HotlistName', summary='summary', owner_ids=owner_ids,
+        editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1235)
+
+    moved_ids = [78901]
+    target_id = 78904
+    split_above = True
+    self.SignIn(self.user_3.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.RerankHotlistIssues(
+            hotlist.hotlist_id, moved_ids, target_id, split_above)
 
   def testUpdateHotlistIssueNote(self):
     issue = fake.MakeTestIssue(789, 1, 'sum1', 'New', 111, issue_id=78901)

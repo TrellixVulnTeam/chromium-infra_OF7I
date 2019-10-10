@@ -66,6 +66,7 @@ class FeaturesServicerTest(unittest.TestCase):
         789, 2, 'sum', 'New', 111, project_name='proj', issue_id=78902)
     self.services.issue.TestAddIssue(self.issue_1)
     self.services.issue.TestAddIssue(self.issue_2)
+    self.PAST_TIME = 123456
 
     # For testing PredictComponent
     self._ml_engine = component_helpers_test.FakeMLEngine(self)
@@ -765,6 +766,46 @@ class FeaturesServicerTest(unittest.TestCase):
 
     self.assertEqual('Foo', hotlist_1.items[0].note)
     self.assertEqual('Foo', hotlist_2.items[0].note)
+
+  def testRerankHotlistIssues(self):
+    """Rerank a hotlist."""
+    issue_3 = fake.MakeTestIssue(
+        789, 3, 'sum', 'New', 111, project_name='proj', issue_id=78903)
+    issue_4 = fake.MakeTestIssue(
+        789, 4, 'sum', 'New', 111, project_name='proj', issue_id=78904)
+    self.services.issue.TestAddIssue(issue_3)
+    self.services.issue.TestAddIssue(issue_4)
+
+    owner_ids = [self.user1.user_id]
+    follower_ids = [self.user2.user_id]
+    editor_ids = [self.user3.user_id]
+    hotlist_items = [
+        (78904, 31, self.user2.user_id, self.PAST_TIME, 'note'),
+        (78903, 21, self.user2.user_id, self.PAST_TIME, 'note'),
+        (78902, 11, self.user2.user_id, self.PAST_TIME, 'note'),
+        (78901, 1, self.user2.user_id, self.PAST_TIME, 'note')]
+    hotlist = self.services.features.TestAddHotlist(
+        'RerankHotlistName', summary='summary', owner_ids=owner_ids,
+        editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1236, hotlist_item_fields=hotlist_items)
+
+    request = features_pb2.RerankHotlistIssuesRequest(
+        hotlist_ref=common_pb2.HotlistRef(
+            name='RerankHotlistName',
+            owner=common_pb2.UserRef(user_id=self.user1.user_id)),
+        moved_refs=[common_pb2.IssueRef(
+            project_name='proj', local_id=2)],
+        target_ref=common_pb2.IssueRef(project_name='proj', local_id=4),
+        split_above=True)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user1.email)
+    mc.LookupLoggedInUserPerms(self.project)
+    self.CallWrapped(self.features_svcr.RerankHotlistIssues, mc, request)
+
+    self.assertEqual(
+        [item.issue_id for item in hotlist.items],
+        [78901, 78903, 78902, 78904])
 
   def testUpdateHotlistIssueNote(self):
     hotlist = self.services.features.CreateHotlist(

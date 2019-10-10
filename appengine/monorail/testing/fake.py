@@ -2337,6 +2337,8 @@ class FeaturesService(object):
       if hotlist_item.issue_id in new_notes:
         hotlist_item.note = new_notes[hotlist_item.issue_id]
 
+    hotlist.items.sort(key=lambda item: item.rank)
+
   def TransferHotlistOwnership(
       self, cnxn, hotlist, new_owner_id, remain_editor, commit=True):
     """Transfers ownership of a hotlist to a new owner."""

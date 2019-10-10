@@ -2289,6 +2289,37 @@ class WorkEnv(object):
           self.mc.cnxn, hotlist_ids, added_tuples, self.services.issue,
           self.services.chart)
 
+  def RerankHotlistIssues(self, hotlist_id, moved_ids, target_id, split_above):
+    """Rerank the moved issues for the hotlist.
+
+    Args:
+      hotlist_id: an int with the id of the hotlist.
+      moved_ids: The id of the issues to move.
+      target_id: the id of the issue to move the issues to.
+      split_above: True if moved issues should be moved before the target issue.
+    """
+    hotlist = self.GetHotlist(hotlist_id)
+    self._AssertUserCanEditHotlist(hotlist)
+    hotlist_issue_ids = [item.issue_id for item in hotlist.items]
+    if not set(moved_ids).issubset(set(hotlist_issue_ids)):
+      raise exceptions.InputException('The issue to move is not in the hotlist')
+    if target_id not in hotlist_issue_ids:
+      raise exceptions.InputException('The target issue is not in the hotlist.')
+
+    phase_name = 'Moving issues %r %s issue %d.' % (
+        moved_ids, 'above' if split_above else 'below', target_id)
+    with self.mc.profiler.Phase(phase_name):
+      lower, higher = features_bizobj.SplitHotlistIssueRanks(
+          target_id, split_above,
+          [(item.issue_id, item.rank) for item in hotlist.items if
+           item.issue_id not in moved_ids])
+      rank_changes = rerank_helpers.GetInsertRankings(lower, higher, moved_ids)
+      if rank_changes:
+        relations_to_change = {
+            issue_id: rank for issue_id, rank in rank_changes}
+        self.services.features.UpdateHotlistItemsFields(
+            self.mc.cnxn, hotlist_id, new_ranks=relations_to_change)
+
   def UpdateHotlistIssueNote(self, hotlist_id, issue_id, note):
     """Update the given issue of the given hotlist with the given note.
 

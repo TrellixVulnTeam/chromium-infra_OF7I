@@ -263,6 +263,27 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return result
 
   @monorail_servicer.PRPCMethod
+  def RerankHotlistIssues(self, mc, request):
+    """Rerank issues in the given hotlist."""
+    hotlist_id = converters.IngestHotlistRef(
+        mc.cnxn, self.services.user, self.services.features,
+        request.hotlist_ref)
+    moved_issue_ids = converters.IngestIssueRefs(
+        mc.cnxn, request.moved_refs, self.services)
+    [target_issue_id] = converters.IngestIssueRefs(
+        mc.cnxn, [request.target_ref], self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.RerankHotlistIssues(
+          hotlist_id, moved_issue_ids, target_issue_id, request.split_above)
+
+    # TODO(jojwang): return updated hotlist items.
+    with mc.profiler.Phase('converting to response objects'):
+      result = features_pb2.RerankHotlistIssuesResponse()
+
+    return result
+
+  @monorail_servicer.PRPCMethod
   def UpdateHotlistIssueNote(self, mc, request):
     """Update the note for the given issue in the given hotlist."""
     hotlist_id = converters.IngestHotlistRef(
