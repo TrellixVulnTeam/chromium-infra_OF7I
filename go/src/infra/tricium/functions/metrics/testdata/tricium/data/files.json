@@ -13,6 +13,8 @@
 		{ "path": "src/expiry/milestone/over_year_milestone_3.xml" },
 		{ "path": "src/expiry/milestone/past_milestone.xml" },
 		{ "path": "src/expiry/milestone/unformatted_milestone.xml" },
+		{ "path": "src/namespace/add_namespace.xml" },
+		{ "path": "src/namespace/same_namespace.xml" },
 		{ "path": "src/obsolete/good_obsolete_date.xml" },
 		{ "path": "src/obsolete/good_obsolete_milestone.xml" },
 		{ "path": "src/obsolete/obsolete_no_date.xml" },

@@ -6,6 +6,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"flag"
@@ -63,6 +64,10 @@ or a milestone in MXX format.`
 	removedHistogramError = `[ERROR]: Do not delete %s from histograms.xml. 
 Instead, mark unused histograms as obsolete and annotate them with the date or milestone in the <obsolete> tag entry:
 https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries`
+	addedNamespaceWarning = `[WARNING]: Are you sure you want to add the namespace %s to histograms.xml?
+For most new histograms, it's appropriate to re-use one of the existing 
+top-level histogram namespaces. For histogram names, the namespace 
+is defined as everything preceding the first dot '.' in the name.`
 )
 
 var (
@@ -241,11 +246,13 @@ func getOriginalFiles(filePaths []string, tempDir string, patchPath string) {
 	if fi.Size() > 0 {
 		cmds := []*exec.Cmd{exec.Command("git", "init")}
 		cmds = append(cmds, exec.Command("git", "apply", "-p1", "--reverse", patchPath))
-		for _, cmd := range cmds {
-			cmd.Dir = tempDir
-			log.Printf("Running cmd: %s", cmd.Args)
-			if err := cmd.Run(); err != nil {
-				log.Fatalf("Failed to run command %s\n%v\n", cmd.Args, err)
+		for _, c := range cmds {
+			var stderr bytes.Buffer
+			c.Dir = tempDir
+			c.Stderr = &stderr
+			log.Printf("Running cmd: %s", c.Args)
+			if err := c.Run(); err != nil {
+				log.Fatalf("Failed to run command %s\n%v\nStderr: %s", c.Args, err, stderr.String())
 			}
 		}
 	}
@@ -266,30 +273,21 @@ func analyzeFile(inputPath string, tempDir string, filesChanged *diffsPerFile) [
 	var allComments []*tricium.Data_Comment
 	f := openFileOrDie(inputPath)
 	defer closeFileOrDie(f)
-	// Analyze added lines in file (if any).
-	comments, addedHistograms := analyzeChangedLines(bufio.NewScanner(f), inputPath, filesChanged.addedLines[inputPath], ADDED)
+	// Analyze added lines in file (if any)
+	comments, addedHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), inputPath, filesChanged.addedLines[inputPath], ADDED)
 	allComments = append(allComments, comments...)
-	// Analyze removed lines in file (if any).
+	// Analyze removed lines in file (if any)
 	tempPath := filepath.Join(tempDir, inputPath)
 	oldFile := openFileOrDie(tempPath)
 	defer closeFileOrDie(oldFile)
-	_, removedHistograms := analyzeChangedLines(bufio.NewScanner(oldFile), tempPath, filesChanged.removedLines[inputPath], REMOVED)
-	// Identify any removed histograms.
-	allRemovedHistograms := removedHistograms.Difference(addedHistograms).ToSlice()
-	sort.Strings(allRemovedHistograms)
-	for _, histogram := range allRemovedHistograms {
-		comment := &tricium.Data_Comment{
-			Category: fmt.Sprintf("%s/%s", category, "Removed"),
-			Message:  fmt.Sprintf(removedHistogramError, histogram),
-			Path:     inputPath,
-		}
-		log.Printf("ADDING Comment for %s: %s", histogram, "[ERROR]: Removed Histogram")
-		allComments = append(allComments, comment)
-	}
+	_, removedHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), tempPath, filesChanged.removedLines[inputPath], REMOVED)
+	// Identify any removed histograms
+	allComments = append(allComments, findRemovedHistograms(inputPath, addedHistograms, removedHistograms)...)
+	allComments = append(allComments, findAddedNamespaces(inputPath, newNamespaces, oldNamespaces, namespaceLineNums)...)
 	return allComments
 }
 
-func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int, mode changeMode) ([]*tricium.Data_Comment, stringset.Set) {
+func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int, mode changeMode) ([]*tricium.Data_Comment, stringset.Set, stringset.Set, map[string]int) {
 	var comments []*tricium.Data_Comment
 	// metadata is a struct that holds line numbers of different tags in histogram.
 	var metadata *Metadata
@@ -297,9 +295,11 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 	var currHistogram []byte
 	// histogramStart is the starting line number for the current histogram.
 	var histogramStart int
-	// histogramChanged is true if any line in the histogram showed up as an added or removed line in the diff.
+	// If any line in the histogram showed up as an added or removed line in the diff
 	var histogramChanged bool
 	changedHistograms := make(stringset.Set)
+	namespaces := make(stringset.Set)
+	namespaceLineNums := make(map[string]int)
 	lineNum := 1
 	changedIndex := 0
 	for scanner.Scan() {
@@ -318,11 +318,14 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 			metadata = newMetadata(histogramStart)
 			currHistogram = scanner.Bytes()
 		} else if strings.HasPrefix(line, histogramEndTag) {
-			// Analyze entire histogram after histogram end tag is encountered.
+			// Analyze entire histogram after histogram end tag is encountered
+			histogram := bytesToHistogram(currHistogram, metadata)
+			namespace := strings.SplitN(histogram.Name, ".", 2)[0]
+			namespaces.Add(namespace)
+			namespaceLineNums[namespace] = metadata.HistogramLineNum
 			if histogramChanged {
-				histogram := bytesToHistogram(currHistogram, metadata)
 				changedHistograms.Add(histogram.Name)
-				// Only check new (added) histograms are correct.
+				// Only check new (added) histograms are correct
 				if mode == ADDED {
 					comments = append(comments, checkHistogram(path, currHistogram, metadata)...)
 				}
@@ -340,7 +343,7 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 		}
 		lineNum++
 	}
-	return comments, changedHistograms
+	return comments, changedHistograms, namespaces, namespaceLineNums
 }
 
 func checkHistogram(path string, histBytes []byte, metadata *Metadata) []*tricium.Data_Comment {
@@ -516,6 +519,39 @@ func createExpiryComment(message string, path string, metadata *Metadata) *trici
 		Path:      path,
 		StartLine: int32(metadata.HistogramLineNum),
 	}
+}
+
+func findRemovedHistograms(path string, addedHistograms stringset.Set, removedHistograms stringset.Set) []*tricium.Data_Comment {
+	var comments []*tricium.Data_Comment
+	allRemovedHistograms := removedHistograms.Difference(addedHistograms).ToSlice()
+	sort.Strings(allRemovedHistograms)
+	for _, histogram := range allRemovedHistograms {
+		comment := &tricium.Data_Comment{
+			Category: fmt.Sprintf("%s/%s", category, "Removed"),
+			Message:  fmt.Sprintf(removedHistogramError, histogram),
+			Path:     path,
+		}
+		log.Printf("ADDING Comment for %s: %s", histogram, "[ERROR]: Removed Histogram")
+		comments = append(comments, comment)
+	}
+	return comments
+}
+
+func findAddedNamespaces(path string, addedNamespaces stringset.Set, removedNamespaces stringset.Set, namespaceLineNums map[string]int) []*tricium.Data_Comment {
+	var comments []*tricium.Data_Comment
+	allAddedNamespaces := addedNamespaces.Difference(removedNamespaces).ToSlice()
+	sort.Strings(allAddedNamespaces)
+	for _, namespace := range allAddedNamespaces {
+		comment := &tricium.Data_Comment{
+			Category:  fmt.Sprintf("%s/%s", category, "Namespace"),
+			Message:   fmt.Sprintf(addedNamespaceWarning, namespace),
+			Path:      path,
+			StartLine: int32(namespaceLineNums[namespace]),
+		}
+		log.Printf("ADDING Comment for %s at line %d: %s", namespace, comment.StartLine, "[WARNING]: Added Namespace")
+		comments = append(comments, comment)
+	}
+	return comments
 }
 
 func openFileOrDie(path string) *os.File {
