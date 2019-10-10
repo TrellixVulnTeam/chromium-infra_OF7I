@@ -98,7 +98,7 @@ func (r *TaskSet) CheckTasksAndRetry(ctx context.Context, client swarming.Client
 
 		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestAttempt.taskID, testRun.Name, latestAttempt.Verdict())
 
-		shouldRetry, err := r.shouldRetry(testRun)
+		shouldRetry, err := r.shouldRetry(ctx, testRun)
 		if err != nil {
 			return errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
 		}
@@ -108,19 +108,22 @@ func (r *TaskSet) CheckTasksAndRetry(ctx context.Context, client swarming.Client
 				return errors.Annotate(err, "tick for task %s: retry test", latestAttempt.taskID).Err()
 			}
 			r.retries++
-		} else {
-			logging.Debugf(ctx, "Not retrying %s", testRun.Name)
 		}
 	}
 	return nil
 }
 
 // shouldRetry computes if the given testRun should be retried.
-func (r *TaskSet) shouldRetry(tr *testRun) (bool, error) {
+func (r *TaskSet) shouldRetry(ctx context.Context, tr *testRun) (bool, error) {
 	if !tr.AttemptedAtLeastOnce() {
 		return false, errors.Reason("should retry: can't retry a never-tried test").Err()
 	}
-	if r.globalRetriesRemaining() <= 0 || tr.AttemptsRemaining() <= 0 {
+	if tr.AttemptsRemaining() <= 0 {
+		logging.Debugf(ctx, "Not retrying %s. Hit the test retry limit.", tr.Name)
+		return false, nil
+	}
+	if r.globalRetriesRemaining() <= 0 {
+		logging.Debugf(ctx, "Not retrying %s. Hit the task set retry limit.", tr.Name)
 		return false, nil
 	}
 
@@ -133,6 +136,8 @@ func (r *TaskSet) shouldRetry(tr *testRun) (bool, error) {
 	case test_platform.TaskState_VERDICT_NO_VERDICT:
 		fallthrough
 	case test_platform.TaskState_VERDICT_PASSED:
+		fallthrough
+	case test_platform.TaskState_VERDICT_PASSED_ON_RETRY:
 		return false, nil
 	default:
 		return false, errors.Reason("should retry: unknown verdict %s", verdict.String()).Err()

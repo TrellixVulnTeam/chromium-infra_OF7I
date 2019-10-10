@@ -30,6 +30,8 @@ import (
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/isolated"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/logging/memlogger"
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
 
 	"infra/cmd/cros_test_platform/internal/execution/internal/skylab"
@@ -698,6 +700,16 @@ func invocationsWithServerTests(names ...string) []*steps.EnumerationResponse_Au
 	return ret
 }
 
+func loggerDebug(ml memlogger.MemLogger) string {
+	out := ""
+	for _, m := range ml.Messages() {
+		if m.Level == logging.Debug {
+			out = out + m.Msg
+		}
+	}
+	return out
+}
+
 func TestRetries(t *testing.T) {
 	Convey("Given a test with", t, func() {
 		ctx := context.Background()
@@ -722,16 +734,19 @@ func TestRetries(t *testing.T) {
 			testMaxRetry            int32
 
 			// Total number of expected tasks is this +1
-			expectedRetryCount     int
-			expectedSummaryVerdict test_platform.TaskState_Verdict
+			expectedRetryCount          int
+			expectedSummaryVerdict      test_platform.TaskState_Verdict
+			expectedLogShouldContain    string
+			expectedLogShouldNotContain string
 		}{
 			{
 				name:                    "1 test; no retry configuration in test or request params",
 				invocations:             invocationsWithServerTests("name1"),
 				autotestResultGenerator: autotestResultAlwaysFail,
 
-				expectedRetryCount:     0,
-				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
+				expectedRetryCount:       0,
+				expectedSummaryVerdict:   test_platform.TaskState_VERDICT_FAILED,
+				expectedLogShouldContain: "Hit the test retry limit",
 			},
 			{
 				name:        "1 passing test; retries allowed",
@@ -743,8 +758,9 @@ func TestRetries(t *testing.T) {
 				testMaxRetry:            1,
 				autotestResultGenerator: autotestResultAlwaysPass,
 
-				expectedRetryCount:     0,
-				expectedSummaryVerdict: test_platform.TaskState_VERDICT_PASSED,
+				expectedRetryCount:          0,
+				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_PASSED,
+				expectedLogShouldNotContain: "retry",
 			},
 			{
 				name:        "1 failing test; retries disabled globally",
@@ -756,8 +772,10 @@ func TestRetries(t *testing.T) {
 				testMaxRetry:            1,
 				autotestResultGenerator: autotestResultAlwaysFail,
 
-				expectedRetryCount:     0,
-				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
+				expectedRetryCount:          0,
+				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_FAILED,
+				expectedLogShouldContain:    "Hit the task set retry limit",
+				expectedLogShouldNotContain: "Hit the test retry limit",
 			},
 			{
 				name:        "1 failing test; retries allowed globally and for test",
@@ -821,8 +839,10 @@ func TestRetries(t *testing.T) {
 				testMaxRetry:            7,
 				autotestResultGenerator: autotestResultAlwaysFail,
 
-				expectedRetryCount:     5,
-				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
+				expectedRetryCount:          5,
+				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_FAILED,
+				expectedLogShouldContain:    "Hit the task set retry limit",
+				expectedLogShouldNotContain: "Hit the test retry limit",
 			},
 			{
 				name:        "1 failing test; retries allowed globally with test maximum smaller than global maximum",
@@ -835,8 +855,10 @@ func TestRetries(t *testing.T) {
 				testMaxRetry:            5,
 				autotestResultGenerator: autotestResultAlwaysFail,
 
-				expectedRetryCount:     5,
-				expectedSummaryVerdict: test_platform.TaskState_VERDICT_FAILED,
+				expectedRetryCount:          5,
+				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_FAILED,
+				expectedLogShouldContain:    "Hit the test retry limit",
+				expectedLogShouldNotContain: "Hit the task set retry limit",
 			},
 			{
 				name:        "2 failing tests; retries allowed globally with global maximum",
@@ -875,7 +897,9 @@ func TestRetries(t *testing.T) {
 				expectedRetryCount: 1,
 				// TODO(crbug.com/1005609) Indicate in *some way* that a test
 				// passed only on retry.
-				expectedSummaryVerdict: test_platform.TaskState_VERDICT_PASSED,
+				expectedSummaryVerdict:      test_platform.TaskState_VERDICT_PASSED,
+				expectedLogShouldContain:    "Retrying name1",
+				expectedLogShouldNotContain: "retry limit",
 			},
 		}
 		for _, c := range cases {
@@ -886,10 +910,11 @@ func TestRetries(t *testing.T) {
 					inv.Test.AllowRetries = c.testAllowRetry
 					inv.Test.MaxRetries = c.testMaxRetry
 				}
+				var ml memlogger.MemLogger
+				ctx = logging.SetFactory(ctx, func(context.Context) logging.Logger { return &ml })
 				ts, err := skylab.NewTaskSet(ctx, c.invocations, params, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunner(ts)
-
 				err = run.LaunchAndWait(ctx, swarming, gf)
 				So(err, ShouldBeNil)
 				resp := getSingleResponse(run, swarming)
@@ -927,6 +952,14 @@ func TestRetries(t *testing.T) {
 
 				Convey("then the build verdict should be correct.", func() {
 					So(resp.State.Verdict, ShouldEqual, c.expectedSummaryVerdict)
+				})
+				Convey("then the log output should match the retry.", func() {
+					if len(c.expectedLogShouldContain) > 0 {
+						So(loggerDebug(ml), ShouldContainSubstring, c.expectedLogShouldContain)
+					}
+					if len(c.expectedLogShouldNotContain) > 0 {
+						So(loggerDebug(ml), ShouldNotContainSubstring, c.expectedLogShouldNotContain)
+					}
 				})
 			})
 		}
