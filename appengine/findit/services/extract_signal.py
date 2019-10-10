@@ -55,5 +55,8 @@ def GetStdoutLog(master_name, builder_name, build_number, step_name,
 
 def SaveSignalInAnalysis(master_name, builder_name, build_number, signals):
   analysis = WfAnalysis.Get(master_name, builder_name, build_number)
-  analysis.signals = signals
-  analysis.put()
+  # It is possible that a v1 analysis does not exist, as v2 resuses this file
+  # for heuristic analysis.
+  if analysis:
+    analysis.signals = signals
+    analysis.put()
