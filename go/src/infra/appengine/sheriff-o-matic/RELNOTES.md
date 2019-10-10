@@ -1,3 +1,40 @@
+# Release Notes sheriff-o-matic 2019-10-10
+
+- 12 commits, 6 bugs affected since 20d8b52 (2019-10-03T00:15:05Z)
+- 4 Authors:
+  - nqmtuan@google.com
+  - yuanzhi@google.com
+  - weiweilin@google.com
+  - seanmccullough@chromium.org
+
+## Changes in this release
+
+- [Chromium.perf should use sheriff-o-matic.chrome.sheriffable_failures table](https://chromium-review.googlesource.com/c/infra/infra/+/1849918) (nqmtuan@google.com)
+- [SOM - do not show failures for ChromeOS with critical = NO](https://chromium-review.googlesource.com/c/infra/infra/+/1847013) (nqmtuan@google.com)
+- [Add Critical field to SOM view, as suggested in the bug](https://chromium-review.googlesource.com/c/infra/infra/+/1847012) (nqmtuan@google.com)
+- [[som] Allow linking to monorail bugs from different projects.](https://chromium-review.googlesource.com/c/infra/infra/+/1832898) (yuanzhi@google.com)
+- [support filtering bug id and summary](https://chromium-review.googlesource.com/c/infra/infra/+/1847011) (weiweilin@google.com)
+- [add support for "http://" URLs](https://chromium-review.googlesource.com/c/infra/infra/+/1839335) (weiweilin@google.com)
+- [[som] Remove more dead code](https://chromium-review.googlesource.com/c/infra/infra/+/1839291) (seanmccullough@chromium.org)
+- [Update readme to include deployment instruction](https://chromium-review.googlesource.com/c/infra/infra/+/1839331) (nqmtuan@google.com)
+- [Make URL from SOM bugs more useful](https://chromium-review.googlesource.com/c/infra/infra/+/1835313) (nqmtuan@google.com)
+- [[som] Minor README fix.](https://chromium-review.googlesource.com/c/infra/infra/+/1838162) (seanmccullough@chromium.org)
+- [add missing handler for file-bug](https://chromium-review.googlesource.com/c/infra/infra/+/1835916) (weiweilin@google.com)
+- [Update relnotes](https://chromium-review.googlesource.com/c/infra/infra/+/1835919) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1002965](https://crbug.com/1002965)
+  -  [https://crbug.com/1012958](https://crbug.com/1012958)
+  -  [https://crbug.com/981013](https://crbug.com/981013)
+  
+- weiweilin@google.com:
+  -  [https://crbug.com/859974](https://crbug.com/859974)
+  -  [https://crbug.com/898731](https://crbug.com/898731)
+  -  [https://crbug.com/989235](https://crbug.com/989235)
+
+
 # Release Notes sheriff-o-matic 2019-10-03
 
 - 18 commits, 6 bugs affected since 0a0bd30 ()
