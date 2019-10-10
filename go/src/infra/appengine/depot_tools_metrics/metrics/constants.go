@@ -165,6 +165,7 @@ var (
 		"file_path",
 		"filter",
 		"force",
+		"fixed",
 		"forced_codereview",
 		"full",
 		"gclientfile",
