@@ -23,10 +23,24 @@ ASSETS_DIFF_FAILURE_MESSAGE = '''
 def RunSteps(api):
   api.gclient.set_config('luci_py')
   api.bot_update.ensure_checkout()
+  api.gclient.runhooks()
   # TODO(tandrii): trigger tests without PRESUBMIT.py; https://crbug.com/917479
 
-  if api.platform.is_linux:
-    _step_swarming_ui_tests(api)
+  luci_dir = api.path['checkout'].join('luci')
+  with api.context(cwd=luci_dir):
+    venv = luci_dir.join('.vpython')
+
+    _step_run_swarming_tests(api, venv)
+
+    if api.platform.is_linux:
+      _step_swarming_ui_tests(api)
+
+def _step_run_swarming_tests(api, venv):
+  with api.step.nest('swarming'):
+    cwd = api.context.cwd.join('appengine', 'swarming')
+    with api.context(cwd=cwd):
+      api.python(
+          'run local smoke test', 'local_smoke_test.py', args=['-v'], venv=venv)
 
 
 def _step_swarming_ui_tests(api):
