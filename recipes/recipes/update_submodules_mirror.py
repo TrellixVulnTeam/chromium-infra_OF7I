@@ -158,6 +158,13 @@ def RunSteps(api, source_repo, target_repo, extra_submodules):
   # point at HEAD it wouldn't be.
   api.git('branch', '-f', 'master-original', 'HEAD~')
 
+  original_sha1 = api.git('rev-parse', 'refs/heads/master-original',
+                          name='rev-parse master-original',
+                          stdout=api.raw_io.output()).stdout
+
+  kythe_ref = 'refs/kythe/' + original_sha1.strip()
+  api.git('update-ref', kythe_ref, 'HEAD')
+
   api.git('push',
           # skip-validation is necessary as without it we cannot push >=10k
           # commits at once.
@@ -172,6 +179,8 @@ def RunSteps(api, source_repo, target_repo, extra_submodules):
   # You can't use --all and --tags at the same time for some reason.
   # --mirror pushes both, but it also pushes remotes, which we don't want.
   api.git('push', '--tags', target_repo, name='git push --tags')
+
+  api.git('push', target_repo, kythe_ref, name='git push ' + kythe_ref)
 
 def ShouldGenerateNewCommit(api, target_repo):
   """
@@ -283,7 +292,9 @@ def GenTests(api):
                     # No commits in the target repo.
                     api.json.output({'log': []})) +
       api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
+      api.step_data('rev-parse master-original',
+                    api.raw_io.stream_output('f' * 40, stream='stdout'))
   )
 
   yield (
@@ -333,7 +344,9 @@ def GenTests(api):
           'Check for new commits.Get latest commit hash in source repo',
           api.raw_io.stream_output('c' * 40)) +
       api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
+      api.step_data('rev-parse master-original',
+                    api.raw_io.stream_output('f' * 40, stream='stdout'))
   )
 
   yield (
@@ -352,7 +365,9 @@ def GenTests(api):
                         },
                     ]})) +
       api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
+      api.step_data('rev-parse master-original',
+                    api.raw_io.stream_output('f' * 40, stream='stdout'))
   )
 
   yield (
@@ -366,7 +381,9 @@ def GenTests(api):
       api.step_data('Check for new commits.Find latest commit to target repo',
                     retcode=1) +
       api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
+      api.step_data('rev-parse master-original',
+                    api.raw_io.stream_output('f' * 40, stream='stdout'))
   )
 
   yield (
@@ -391,8 +408,10 @@ def GenTests(api):
                     api.raw_io.stream_output(
                         '91c13923c1d136dc688527fa39583ef61a3277f7\t' +
                         'refs/heads/master',
-                        stream='stdout'))
-  )
+                        stream='stdout')) +
+      api.step_data('rev-parse master-original',
+                    api.raw_io.stream_output('f' * 40, stream='stdout'))
+ )
 
   yield (
       api.test('nested_deps') +
@@ -411,7 +430,9 @@ def GenTests(api):
                     ]})) +
       api.step_data('gclient evaluate DEPS',
                     api.raw_io.stream_output(fake_deps_with_nested_dep,
-                                             stream='stdout'))
+                                             stream='stdout')) +
+      api.step_data('rev-parse master-original',
+                    api.raw_io.stream_output('f' * 40, stream='stdout'))
   )
 
   yield (
@@ -431,7 +452,9 @@ def GenTests(api):
                     ]})) +
       api.step_data('gclient evaluate DEPS',
                     api.raw_io.stream_output(fake_deps_with_trailing_slash,
-                                             stream='stdout'))
+                                             stream='stdout')) +
+      api.step_data('rev-parse master-original',
+                    api.raw_io.stream_output('f' * 40, stream='stdout'))
   )
 
   yield (
@@ -456,5 +479,7 @@ def GenTests(api):
                     api.raw_io.stream_output(
                         'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\t' +
                         'refs/heads/master',
-                        stream='stdout'))
+                        stream='stdout')) +
+      api.step_data('rev-parse master-original',
+                    api.raw_io.stream_output('f' * 40, stream='stdout'))
   )
