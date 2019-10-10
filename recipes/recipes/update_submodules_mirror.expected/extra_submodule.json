@@ -202,27 +202,6 @@
   {
     "cmd": [
       "git",
-      "rev-parse",
-      "refs/heads/master-original"
-    ],
-    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
-    "infra_step": true,
-    "name": "rev-parse master-original"
-  },
-  {
-    "cmd": [
-      "git",
-      "update-ref",
-      "refs/kythe/ffffffffffffffffffffffffffffffffffffffff",
-      "HEAD"
-    ],
-    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
-    "infra_step": true,
-    "name": "git update-ref"
-  },
-  {
-    "cmd": [
-      "git",
       "push",
       "--push-option=skip-validation",
       "--force",
@@ -243,17 +222,6 @@
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
     "name": "git push --tags"
-  },
-  {
-    "cmd": [
-      "git",
-      "push",
-      "https://chromium.googlesource.com/codesearch/src_mirror",
-      "refs/kythe/ffffffffffffffffffffffffffffffffffffffff"
-    ],
-    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
-    "infra_step": true,
-    "name": "git push refs/kythe/ffffffffffffffffffffffffffffffffffffffff"
   },
   {
     "name": "$result"
