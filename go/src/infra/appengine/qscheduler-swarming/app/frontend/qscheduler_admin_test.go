@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
 
@@ -154,6 +155,29 @@ func TestCreateListDeleteAccount(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(resp.Accounts, ShouldContainKey, accountID)
 						So(resp.Accounts, ShouldHaveLength, 1)
+					})
+				})
+				Convey("when ModAccount is called to update the account", func() {
+					expect := "foo"
+					reqMod := qscheduler.ModAccountRequest{
+						AccountId:   accountID,
+						PoolId:      poolID,
+						Description: &wrappers.StringValue{Value: expect},
+					}
+					respMod, err := admin.ModAccount(ctx, &reqMod)
+					So(respMod, ShouldResemble, &qscheduler.ModAccountResponse{})
+					So(err, ShouldBeNil)
+
+					Convey("then when account is listed, it reflects the modifications.", func() {
+						reqList := qscheduler.ListAccountsRequest{
+							PoolId: poolID,
+						}
+						respList, err := view.ListAccounts(ctx, &reqList)
+						So(err, ShouldBeNil)
+						So(respList.Accounts, ShouldContainKey, accountID)
+						So(respList.Accounts, ShouldHaveLength, 1)
+						actual := respList.Accounts[accountID]
+						So(actual.Description, ShouldEqual, expect)
 					})
 				})
 				Convey("when ModAccount is called to delete the account", func() {

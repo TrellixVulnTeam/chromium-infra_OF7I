@@ -124,6 +124,9 @@ func (s *QSchedulerAdminServerImpl) ModAccount(ctx context.Context, r *qschedule
 			copy(bal[:], r.ChargeRate)
 			accountConfig.ChargeRate = bal
 		}
+		if r.Description != nil {
+			accountConfig.Description = r.Description.Value
+		}
 		if r.ResetBalance {
 			sp.Scheduler.ResetBalance(scheduler.AccountID(r.AccountId))
 		}

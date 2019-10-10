@@ -99,6 +99,8 @@ message ModAccountRequest {
 
   // If true, reset this account's balance to 0.
   bool reset_balance = 7;
+
+  google.protobuf.StringValue description = 8;
 }
 
 message ModAccountResponse {}
