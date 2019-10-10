@@ -142,9 +142,12 @@ func SortLabels(labels *SchedulableLabels) {
 		})
 	}
 	{
-		v := labels.Capabilities.VideoAcceleration
-		sort.Slice(v, func(i, j int) bool {
-			return v[i] < v[j]
-		})
+		c := labels.Capabilities
+		if c != nil {
+			v := c.VideoAcceleration
+			sort.Slice(v, func(i, j int) bool {
+				return v[i] < v[j]
+			})
+		}
 	}
 }
