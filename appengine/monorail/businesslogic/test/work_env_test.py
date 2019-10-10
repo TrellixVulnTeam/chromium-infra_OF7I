@@ -19,6 +19,7 @@ from google.appengine.ext import testbed
 import settings
 from businesslogic import work_env
 from features import filterrules_helpers
+from framework import authdata
 from framework import exceptions
 from framework import framework_constants
 from framework import framework_views
@@ -74,10 +75,8 @@ class WorkEnvTest(unittest.TestCase):
       self.mr, self.services, 'Testing phase')
 
   def SignIn(self, user_id=111):
-    self.mr.auth.user_pb = self.services.user.GetUser(self.cnxn, user_id)
-    self.mr.auth.user_view = framework_views.UserView(self.mr.auth.user_pb)
-    self.mr.auth.user_id = user_id
-    self.mr.auth.effective_ids = {user_id}
+    self.mr.auth = authdata.AuthData.FromUserID(
+        self.cnxn, user_id, self.services)
     self.mr.perms = permissions.GetPermissions(
         self.mr.auth.user_pb, self.mr.auth.effective_ids, self.project)
 
@@ -3238,6 +3237,188 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.TransferHotlistOwnership(
             hotlist.hotlist_id, self.user_2.user_id, True)
+
+  def testDeltaUpdateHotlistRoles(self):
+    """Hotlist roles and memberships can be updated."""
+    user_6 = self.services.user.TestAddUser('user_666@example.com', 666)
+    user_5 = self.services.user.TestAddUser('user_555@example.com', 555)
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    follower_ids = [user_6.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'UpdatePeople', summary='Summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1256)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      add_editor_ids = [self.user_3.user_id]
+      add_follower_ids = [self.user_2.user_id]  # move from editor to follower
+      remove_user_ids = [
+          user_6.user_id,
+          self.user_3.user_id]  # no effect, since this is in add_editor_ids
+      new_owner_id = user_5.user_id
+      we.DeltaUpdateHotlistRoles(
+          hotlist.hotlist_id, new_owner_id=new_owner_id,
+          add_editor_ids=add_editor_ids, add_follower_ids=add_follower_ids,
+          remove_user_ids=remove_user_ids)
+
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      updated_hotlist.owner_ids = [new_owner_id]
+      updated_hotlist.editor_ids = [self.user_3.user_id]
+      updated_hotlist.follower_ids = [self.user_2.user_id]
+
+  def testDeltaUpdateHotlistRoles_RejectUnownedHotlist(self):
+    """We reject any change that results in an unowned hotlist."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    follower_ids = []
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned', summary='Summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1257)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        new_owner_id = 0
+        add_editor_ids = []
+        add_follower_ids = [self.user_1.user_id]
+        remove_user_ids = []
+        we.DeltaUpdateHotlistRoles(
+            hotlist.hotlist_id, new_owner_id=new_owner_id,
+            add_editor_ids=add_editor_ids, add_follower_ids=add_follower_ids,
+            remove_user_ids=remove_user_ids)
+
+  def testDeltaUpdateHotlistRoles_RejectMultipleRoles(self):
+    """We reject attempts to give a user multiple roles."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    follower_ids = []
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned', summary='Summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1257)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        new_owner_id = self.user_2.user_id
+        add_editor_ids = []
+        add_follower_ids = [self.user_2.user_id]
+        remove_user_ids = []
+        we.DeltaUpdateHotlistRoles(
+            hotlist.hotlist_id, new_owner_id=new_owner_id,
+            add_editor_ids=add_editor_ids, add_follower_ids=add_follower_ids,
+            remove_user_ids=remove_user_ids)
+
+  def testDeltaUpdateHotlistRoles_NoPerms(self):
+    """A user who is not the hotlist owner cannot update members."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    follower_ids = []
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned', summary='Summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1257)
+
+    self.SignIn(user_id=self.user_2.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        new_owner_id = 0
+        add_editor_ids = []
+        add_follower_ids = [self.user_2.user_id]
+        remove_user_ids = []
+        we.DeltaUpdateHotlistRoles(
+            hotlist.hotlist_id, new_owner_id=new_owner_id,
+            add_editor_ids=add_editor_ids, add_follower_ids=add_follower_ids,
+            remove_user_ids=remove_user_ids)
+
+  def testDeltaUpdateHotlistRoles_AllowRemoveSelf(self):
+    """A non-owner member of a hotlist can remove themselves."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    follower_ids = [self.user_3.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned', summary='Summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1257)
+
+    self.SignIn(user_id=self.user_2.user_id)
+    with self.work_env as we:
+      new_owner_id = 0
+      add_editor_ids = []
+      add_follower_ids = []
+      remove_user_ids = [self.user_2.user_id]
+      we.DeltaUpdateHotlistRoles(
+          hotlist.hotlist_id, new_owner_id=new_owner_id,
+          add_editor_ids=add_editor_ids, add_follower_ids=add_follower_ids,
+          remove_user_ids=remove_user_ids)
+
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(updated_hotlist.owner_ids, owner_ids)
+      self.assertEqual(updated_hotlist.editor_ids, [])
+      self.assertEqual(updated_hotlist.follower_ids, [self.user_3.user_id])
+
+    # assert cannot remove someone else
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        new_owner_id = 0
+        add_editor_ids = []
+        add_follower_ids = []
+        remove_user_ids = [self.user_3.user_id]
+        we.DeltaUpdateHotlistRoles(
+            hotlist.hotlist_id, new_owner_id=new_owner_id,
+            add_editor_ids=add_editor_ids, add_follower_ids=add_follower_ids,
+            remove_user_ids=remove_user_ids)
+
+  def testDeltaUpdateHotlistRoles_AllowRemoveLinkedAccounts(self):
+    """A non-owner member of a hotlist can remove their linked accounts."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    follower_ids = [self.user_3.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned', summary='Summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, follower_ids=follower_ids,
+        hotlist_id=1257)
+    self.services.user.InviteLinkedParent(
+        self.cnxn, self.user_3.user_id, self.user_2.user_id)
+    self.services.user.AcceptLinkedChild(
+        self.cnxn, self.user_3.user_id, self.user_2.user_id)
+
+    # assert can remove parent linked accounts
+    self.SignIn(user_id=self.user_2.user_id)
+    with self.work_env as we:
+      new_owner_id = 0
+      add_editor_ids = []
+      add_follower_ids = []
+      remove_user_ids = [self.user_3.user_id]
+      we.DeltaUpdateHotlistRoles(
+          hotlist.hotlist_id, new_owner_id=new_owner_id,
+          add_editor_ids=add_editor_ids, add_follower_ids=add_follower_ids,
+          remove_user_ids=remove_user_ids)
+
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(updated_hotlist.owner_ids, owner_ids)
+      self.assertEqual(updated_hotlist.editor_ids, [self.user_2.user_id])
+      self.assertEqual(updated_hotlist.follower_ids, [])
+
+    # assert can remove child linked accounts
+    self.SignIn(user_id=self.user_3.user_id)
+    with self.work_env as we:
+      new_owner_id = 0
+      add_editor_ids = []
+      add_follower_ids = []
+      remove_user_ids = [self.user_2.user_id]
+      we.DeltaUpdateHotlistRoles(
+          hotlist.hotlist_id, new_owner_id=new_owner_id,
+          add_editor_ids=add_editor_ids, add_follower_ids=add_follower_ids,
+          remove_user_ids=remove_user_ids)
+
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(updated_hotlist.owner_ids, owner_ids)
+      self.assertEqual(updated_hotlist.editor_ids, [])
+      self.assertEqual(updated_hotlist.follower_ids, [])
 
   def testListHotlistsByUser_Normal(self):
     self.work_env.services.features.CreateHotlist(

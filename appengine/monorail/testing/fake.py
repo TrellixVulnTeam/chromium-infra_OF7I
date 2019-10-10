@@ -2433,16 +2433,32 @@ class FeaturesService(object):
     if not hotlist:
       raise features_svc.NoSuchHotlistException(
           'Hotlist "%s" not found!' % hotlist_id)
+
+    # Remove hotlist_ids to clear old roles
+    for user_id in (hotlist.owner_ids + hotlist.editor_ids +
+                    hotlist.follower_ids):
+      if hotlist_id in self.hotlists_id_by_user[user_id]:
+        self.hotlists_id_by_user[user_id].remove(hotlist_id)
+    old_owner_id = None
+    if hotlist.owner_ids:
+      old_owner_id = hotlist.owner_ids[0]
+    self.test_hotlists.pop((hotlist.name, old_owner_id), None)
+
     hotlist.owner_ids = owner_ids
     hotlist.editor_ids = editor_ids
     hotlist.follower_ids = follower_ids
 
+    # Add new hotlist roles
     for user_id in owner_ids+editor_ids+follower_ids:
       try:
         if hotlist_id not in self.hotlists_id_by_user[user_id]:
           self.hotlists_id_by_user[user_id].append(hotlist_id)
       except KeyError:
         self.hotlists_id_by_user[user_id] = [hotlist_id]
+    new_owner_id = None
+    if owner_ids:
+      new_owner_id = owner_ids[0]
+    self.test_hotlists[(hotlist.name, new_owner_id)] = hotlist
 
   def DeleteHotlist(self, cnxn, hotlist_id, commit=True):
     hotlist = self.hotlists_by_id.pop(hotlist_id, None)

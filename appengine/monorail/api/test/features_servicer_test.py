@@ -813,26 +813,57 @@ class FeaturesServicerTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       self.CallWrapped(self.features_svcr.UpdateHotlistIssueNote, mc, request)
 
-  @mock.patch('businesslogic.work_env.WorkEnv.DeltaUpdateHotlistRoles')
-  def testUpdateHotlistRoles(self, fake_update):
+  def testUpdateHotlistRoles(self):
     """Test we can update hotlist people."""
+    owner_ids = [self.user2.user_id]
+    editor_ids = [self.user4.user_id]
     hotlist = self.services.features.TestAddHotlist(
         name='Hotlist-1', summary='summary', description='description',
-        owner_ids=[222], hotlist_id=1233)
+        owner_ids=owner_ids, editor_ids=editor_ids, hotlist_id=1233)
     request = features_pb2.UpdateHotlistRolesRequest(
         hotlist_ref=common_pb2.HotlistRef(
             name='Hotlist-1',
-            owner=common_pb2.UserRef(user_id=222)),
+            owner=common_pb2.UserRef(user_id=self.user2.user_id)),
         people_delta=features_objects_pb2.HotlistPeopleDelta(
-            new_owner_ref=common_pb2.UserRef(user_id=222),
-            add_follower_refs=[common_pb2.UserRef(user_id=444)])
+            new_owner_ref=common_pb2.UserRef(user_id=self.user3.user_id),
+            add_follower_refs=[common_pb2.UserRef(user_id=self.user4.user_id)])
         )
 
     mc = monorailcontext.MonorailContext(
-        self.services, cnxn=self.cnxn, requester='owner@example.com')
+        self.services, cnxn=self.cnxn, requester=self.user2.email)
+    mc.LookupLoggedInUserPerms(None)
     self.CallWrapped(self.features_svcr.UpdateHotlistRoles, mc, request)
-    fake_update.assert_called_once_with(
-        hotlist.hotlist_id, 222, [], [444], [])
+
+    hotlist = self.services.features.GetHotlist(self.cnxn, hotlist.hotlist_id)
+    self.assertEqual(hotlist.owner_ids, [self.user3.user_id])
+    self.assertEqual(hotlist.editor_ids, [])
+    self.assertEqual(hotlist.follower_ids, [self.user4.user_id])
+
+  def testUpdateHotlistRoles_EmptyNewOwnerRef(self):
+    """Test that an empty UserRef in owner_user_ref is processed correctly"""
+    owner_ids = [self.user2.user_id]
+    editor_ids = [self.user4.user_id]
+    hotlist = self.services.features.TestAddHotlist(
+        name='Hotlist-1', summary='summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, hotlist_id=1234)
+    request = features_pb2.UpdateHotlistRolesRequest(
+        hotlist_ref=common_pb2.HotlistRef(
+            name='Hotlist-1',
+            owner=common_pb2.UserRef(user_id=self.user2.user_id)),
+        people_delta=features_objects_pb2.HotlistPeopleDelta(
+            add_follower_refs=[common_pb2.UserRef(user_id=self.user4.user_id)])
+        )
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user2.email)
+    mc.LookupLoggedInUserPerms(None)
+    self.CallWrapped(self.features_svcr.UpdateHotlistRoles, mc, request)
+
+    hotlist = self.services.features.GetHotlist(self.cnxn, hotlist.hotlist_id)
+    self.assertEqual(hotlist.owner_ids, owner_ids)
+    self.assertEqual(hotlist.editor_ids, [])
+    self.assertEqual(hotlist.follower_ids, [self.user4.user_id])
+
 
   def testPredictComponent_Normal(self):
     """Test normal case when predicted component exists."""

@@ -1980,8 +1980,65 @@ class WorkEnv(object):
       add_editor_ids: list of editor_ids to add to hotlist editors
       add_follower_ids: list of follower_ids to add to hotlistfollower
       remove_user_ids: list of user_ids to remove from hotlist members
+
+    Raises:
+      NoSuchHotlistException: There is not hotlist with the given ID.
+      PermissionException: The logged-in user is not allowed to make the hotlist
+        roles change.
+      InputException: The add_ lists or new_owner_id have overlapping user_ids,
+        or the changes would result in an unowned hotlist.
     """
-    pass
+    hotlist = self.services.features.GetHotlist(
+        self.mc.cnxn, hotlist_id, use_cache=use_cache)
+    edit_permitted = permissions.CanAdministerHotlist(
+        self.mc.auth.effective_ids, self.mc.perms, hotlist)
+    # check if user is only removing themselves from the hotlist.
+    # removing linked accounts is allowed but users cannot remove groups
+    # they are part of from hotlists.
+    user_or_linked_ids = (self.mc.auth.user_pb.linked_child_ids +
+                          [self.mc.auth.user_id])
+    if self.mc.auth.user_pb.linked_parent_id:
+      user_or_linked_ids.append(self.mc.auth.user_pb.linked_parent_id)
+    removing_self_only = (not new_owner_id and not add_editor_ids and
+                     not add_follower_ids and
+                     set(remove_user_ids).issubset(set(user_or_linked_ids)))
+    if not (removing_self_only or edit_permitted):
+      raise permissions.PermissionException(
+          'User is not allowed to make this hotlist members update.')
+    if (new_owner_id in (add_editor_ids + add_follower_ids) or
+        set(add_editor_ids) & set(add_follower_ids)):
+      raise exceptions.InputException(
+          'User cannot have multiple roles in hotlist.')
+
+    new_owner_ids = set(hotlist.owner_ids)
+    new_editor_ids = set(hotlist.editor_ids)
+    new_follower_ids = set(hotlist.follower_ids)
+    if remove_user_ids:
+      new_owner_ids -= set(remove_user_ids)
+      new_editor_ids -= set(remove_user_ids)
+      new_follower_ids -= set(remove_user_ids)
+    if add_follower_ids:
+      new_follower_ids.update(set(add_follower_ids))
+      # remove new followers from other roles
+      new_editor_ids -= new_follower_ids
+      new_owner_ids -= new_follower_ids
+    if add_editor_ids:
+      new_editor_ids.update(set(add_editor_ids))
+      # remove new editors from other roles
+      new_follower_ids -= new_editor_ids
+      new_owner_ids -= new_follower_ids
+    if new_owner_id:
+      new_owner_ids = {new_owner_id}
+      # remove new owner from other roles
+      new_editor_ids -= new_owner_ids
+      new_follower_ids -= new_owner_ids
+
+    if not new_owner_ids:
+      raise exceptions.InputException('Hotlist must have owner.')
+
+    self.services.features.UpdateHotlistRoles(
+        self.mc.cnxn, hotlist_id, list(new_owner_ids), list(new_editor_ids),
+        list(new_follower_ids), commit=commit)
 
   def ListHotlistsByUser(self, user_id):
     """Return the hotlists for the given user.
