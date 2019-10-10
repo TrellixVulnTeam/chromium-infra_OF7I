@@ -70,7 +70,7 @@ ci_builder(name = 'infra-continuous-mac-10.13-64', os = 'Mac-10.13')
 ci_builder(name = 'infra-continuous-mac-10.12-64', os = 'Mac-10.12')
 
 # CI Win.
-ci_builder(name = 'infra-continuous-win7-64', os = 'Windows')
+ci_builder(name = 'infra-continuous-win7-64', os = 'Windows-7')
 ci_builder(name = 'infra-continuous-win10-64', os = 'Windows-10')
 
 # CI for building docker images.
