@@ -436,6 +436,7 @@ SPECS.update({s.spec.tag: s for s in assert_sorted('Universal',
   Universal('appdirs', '1.4.3'),
   Universal('argparse', '1.4.0'),  # Includes fixes missing from stdlib 2.7.6
   Universal('asn1crypto', '0.22.0'),
+  Universal('asn1crypto', '1.0.1'),
   Universal('astroid', '1.4.9'),
   Universal('astroid', '1.5.3'),
   Universal('astroid', '1.6.6'),

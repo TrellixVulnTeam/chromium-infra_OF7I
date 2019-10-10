@@ -382,6 +382,18 @@ wheel: <
 
 * *universal*
 
+### 1.0.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/asn1crypto-py2_py3"
+  version: "version:1.0.1"
+>
+```
+
+
+* *universal*
+
 ## **astroid**
 
 ### 1.4.9
