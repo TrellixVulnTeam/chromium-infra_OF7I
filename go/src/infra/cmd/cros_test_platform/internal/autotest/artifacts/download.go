@@ -20,7 +20,7 @@ import (
 //
 // This function returns the local paths to the downloaded artifacts.
 func DownloadFromGoogleStorage(ctx context.Context, client gs.Client, remoteDir gs.Path, outDir string) (LocalPaths, error) {
-	logging.Debugf(ctx, "downloading autotest artifacts from %s", remoteDir)
+	logging.Debugf(ctx, "downloading autotest artifacts from %s into %s", remoteDir, outDir)
 	lp := LocalPaths{
 		ControlFilesArchive: filepath.Join(outDir, "control_files.tar"),
 		TestSuitesArchive:   filepath.Join(outDir, "test_suites.tar.bz2"),

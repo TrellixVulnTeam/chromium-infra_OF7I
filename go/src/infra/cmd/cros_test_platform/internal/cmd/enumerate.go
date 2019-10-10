@@ -75,10 +75,6 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	if len(requests) == 0 {
 		return errors.Reason("zero requests").Err()
 	}
-	gsPath, err := c.gsPath(requests)
-	if err != nil {
-		return err
-	}
 
 	workspace, err := ioutil.TempDir("", "enumerate")
 	if err != nil {
@@ -87,21 +83,46 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	defer func() {
 		os.RemoveAll(workspace)
 	}()
-	lp, err := c.downloadArtifacts(ctx, gsPath, workspace)
-	if err != nil {
-		return err
-	}
 
-	tm, writableErr := computeMetadata(lp, workspace)
-	if writableErr != nil && tm == nil {
-		// Catastrophic error. There is no reasonable response to write.
-		return writableErr
+	// TODO(crbug.com/1012863) Properly handle recoverable error in some
+	// requests. Currently a catastrophic error in any request immediately
+	// aborts all requests.
+	tms := make([]*api.TestMetadataResponse, len(requests))
+	merr := errors.NewMultiError()
+	for i, r := range requests {
+		m := r.GetMetadata().GetTestMetadataUrl()
+		if m == "" {
+			return errors.Reason("empty request.metadata.test_metadata_url in %s", r).Err()
+		}
+		gsPath := gs.Path(m)
+
+		w, err := ioutil.TempDir(workspace, "request")
+		if err != nil {
+			return err
+		}
+
+		lp, err := c.downloadArtifacts(ctx, gsPath, w)
+		if err != nil {
+			return err
+		}
+
+		tm, writableErr := computeMetadata(lp, w)
+		if writableErr != nil && tm == nil {
+			// Catastrophic error. There is no reasonable response to write.
+			return writableErr
+		}
+		tms[i] = tm
+		merr = append(merr, writableErr)
+	}
+	var writableErr error
+	if merr.First() != nil {
+		writableErr = merr
 	}
 
 	resps := make([]*steps.EnumerationResponse, len(requests))
-	merr := errors.NewMultiError()
-	for i, r := range requests {
-		if ts, err := c.enumerate(tm, r); err != nil {
+	merr = errors.NewMultiError()
+	for i := range requests {
+		if ts, err := c.enumerate(tms[i], requests[i]); err != nil {
 			merr = append(merr, err)
 		} else {
 			resps[i] = &steps.EnumerationResponse{AutotestInvocations: ts}
@@ -173,7 +194,15 @@ func (c *enumerateRun) readSingleRequest() (*steps.EnumerationRequest, error) {
 	return &request, nil
 }
 
-func (c *enumerateRun) gsPath(requests []*steps.EnumerationRequest) (gs.Path, error) {
+func (c *enumerateRun) gsPath(request *steps.EnumerationRequest) (gs.Path, error) {
+	m := request.GetMetadata().GetTestMetadataUrl()
+	if m == "" {
+		return "", errors.Reason("empty request.metadata.test_metadata_url in %s", request).Err()
+	}
+	return gs.Path(m), nil
+}
+
+func (c *enumerateRun) gsPathLegacy(requests []*steps.EnumerationRequest) (gs.Path, error) {
 	if len(requests) == 0 {
 		panic("zero requests")
 	}
