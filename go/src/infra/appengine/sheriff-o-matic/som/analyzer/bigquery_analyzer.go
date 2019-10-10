@@ -103,9 +103,12 @@ LIMIT
 	1000
 `
 
+// TODO (nqmtuan): Filter the critical for other projects
+// But firstly make sure it is working with chrome os first
 const crosFailuresQuery = selectFromWhere + `
 	project = "chromeos"
 	AND bucket IN ("postsubmit", "annealing")
+	AND (critical != "NO" OR critical is NULL)
 `
 
 const fuchsiaFailuresQuery = selectFromWhere + `
