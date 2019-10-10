@@ -519,3 +519,10 @@ indexes:
   - name: last_updated_time
   - name: normalized_test_name
     direction: desc
+
+- kind: CulpritAction
+  properties:
+  - name: action_type
+  - name: revert_committed
+  - name: create_timestamp
+    direction: desc
