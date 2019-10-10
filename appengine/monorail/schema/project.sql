@@ -104,15 +104,6 @@ CREATE TABLE Project (
 ) ENGINE=INNODB;
 
 
--- TODO(jrobbins): Delete this after the next deployment.
-CREATE TABLE DismissedCues (
-  user_id INT UNSIGNED NOT NULL,
-  cue VARCHAR(40),  -- names of the cue cards that the user has dismissed.
-
-  INDEX (user_id)
-) ENGINE=INNODB;
-
-
 CREATE TABLE User2Project (
   project_id SMALLINT UNSIGNED NOT NULL,
   user_id INT UNSIGNED NOT NULL,

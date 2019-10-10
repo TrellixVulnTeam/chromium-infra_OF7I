@@ -1697,3 +1697,9 @@ CREATE TABLE CommentImporter (
   FOREIGN KEY (comment_id) REFERENCES Comment(id),
   FOREIGN KEY (importer_id) REFERENCES User(user_id)
 ) ENGINE=INNODB;
+
+
+================================================================
+2019-10-09: Drop DismissedCues because that data has been in UserPrefs since April.
+
+DROP TABLE DismissedCues;
