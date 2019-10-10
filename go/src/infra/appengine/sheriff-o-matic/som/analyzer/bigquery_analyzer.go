@@ -240,6 +240,9 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 	case "fuchsia":
 		queryStr = fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", tree, tree)
 		break
+	case "chromium.perf":
+		queryStr = fmt.Sprintf(failuresQuery, appID, "chrome", tree, tree)
+		break
 	default:
 		queryStr = fmt.Sprintf(failuresQuery, appID, "chromium", tree, tree)
 	}
