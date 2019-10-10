@@ -162,6 +162,25 @@ var RuleMap = map[string]*RepoConfig{
 			),
 		},
 	},
+	"chromium-infra-luci-go": {
+		BaseRepoURL: "https://chromium.googlesource.com/infra/luci/luci-go",
+		GerritURL:   "https://chromium-review.googlesource.com",
+		BranchName:  "master",
+		// No special meaning, ToT as of the time this line was added.
+		StartingCommit:  "fd8c22ff66975b12558be71b8850dee9e02479bd",
+		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailProject: "chromium",
+		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
+		Rules: map[string]RuleSet{
+			"manual-changes": AccountRules{
+				Account: "*",
+				Rules: []Rule{
+					ChangeReviewed{},
+				},
+				notificationFunction: fileBugForTBRViolation,
+			},
+		},
+	},
 	"chromium-infra-config": {
 		BaseRepoURL: "https://chrome-internal.googlesource.com/infradata/config.git",
 		GerritURL:   "https://chrome-internal-review.googlesource.com",
@@ -187,6 +206,25 @@ var RuleMap = map[string]*RepoConfig{
 				},
 				[]string{"images"},
 			),
+		},
+	},
+	"chromium-infra-internal": {
+		BaseRepoURL: "https://chrome-internal.googlesource.com/infra/infra_internal.git",
+		GerritURL:   "https://chrome-internal-review.googlesource.com",
+		BranchName:  "master",
+		// No special meaning, ToT as of the time this line was added.
+		StartingCommit:  "b7ef8a811e812d564a6167be6f8866f496919912",
+		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailProject: "chromium",
+		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
+		Rules: map[string]RuleSet{
+			"manual-changes": AccountRules{
+				Account: "*",
+				Rules: []Rule{
+					ChangeReviewed{},
+				},
+				notificationFunction: fileBugForTBRViolation,
+			},
 		},
 	},
 	"chromium-src-release-branches": {
