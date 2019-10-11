@@ -147,6 +147,7 @@ func floatInsert(v []float32, l int, r row) row {
 
 func printAccountTables(w io.Writer, report *qscheduler.InspectPoolResponse) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	printAccountDescriptionTable(tw, report)
 	printAccountBalancesTable(tw, report)
 	printAccountRatesTable(tw, report)
 	printAccountPoliciesTable(tw, report)
@@ -203,6 +204,24 @@ func printAccountPoliciesTable(tw *tabwriter.Writer, report *qscheduler.InspectP
 			fmt.Sprintf("%.1f", config.GetMaxChargeSeconds()),
 			fmt.Sprintf("%d", config.GetMaxFanout()),
 			fmt.Sprintf("%t", config.GetDisableFreeTasks()),
+		}...)
+		t = append(t, r)
+	}
+	t.sort()
+	t.print(tw)
+	fmt.Fprintln(tw)
+	return
+}
+
+func printAccountDescriptionTable(tw *tabwriter.Writer, report *qscheduler.InspectPoolResponse) {
+	fmt.Fprintln(tw, "Account Description")
+	fmt.Fprintln(tw, "================================================================")
+	t := make(table, 0, len(report.GetAccountConfigs()))
+	for account, config := range report.GetAccountConfigs() {
+		r := make(row, 0, 2)
+		r = append(r, []string{
+			account,
+			fmt.Sprintf("%s", config.GetDescription()),
 		}...)
 		t = append(t, r)
 	}
