@@ -18,9 +18,11 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	iv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/inventory"
 )
@@ -91,7 +93,7 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 	if c.delete {
-		mod, err := c.deleteDUTs(ctx, ic, a.GetOut())
+		mod, err := c.deleteDUTs(ctx, a.GetOut())
 		if err != nil {
 			return err
 		}
@@ -185,15 +187,44 @@ func protoTimestamp(t time.Time) *inventory.Timestamp {
 	}
 }
 
-func (c *removeDutsRun) deleteDUTs(ctx context.Context, ic fleet.InventoryClient, stdout io.Writer) (modified bool, err error) {
-	resp, err := ic.DeleteDuts(ctx, &fleet.DeleteDutsRequest{Hostnames: c.Flags.Args()})
+func (c *removeDutsRun) deleteDUTs(ctx context.Context, stdout io.Writer) (modified bool, err error) {
+	hostnames := c.Flags.Args()
+	hc, err := newHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return false, err
 	}
-	if resp.ChangeUrl == "" {
-		return false, nil
+	ic, err := iv.CreateC(hc)
+	if err != nil {
+		return false, err
 	}
-	_ = printDeletions(stdout, resp)
+
+	var changeInfo *gerrit.ChangeInfo
+	defer func() {
+		if changeInfo != nil {
+			err := ic.AbandonChange(ctx, changeInfo)
+			if err != nil {
+				b := bufio.NewWriter(stdout)
+				fmt.Fprintf(b, "Failed to abandon change %v on error", changeInfo)
+			}
+		}
+	}()
+	changeInfo, err = ic.CreateChange(ctx, fmt.Sprintf("delete %d duts", len(hostnames)))
+	if err != nil {
+		return false, err
+	}
+	for _, host := range hostnames {
+		if err := ic.MakeDeleteHostChange(ctx, changeInfo, host); err != nil {
+			return false, err
+		}
+	}
+	if err := ic.SubmitChange(ctx, changeInfo); err != nil {
+		return false, err
+	}
+	cn := int(changeInfo.Number)
+	// Successful: do not abandon change beyond this point.
+	changeInfo = nil
+
+	_ = printDeletions(stdout, cn, hostnames)
 	return true, nil
 }
 
@@ -210,12 +241,16 @@ func printRemovals(w io.Writer, resp *fleet.RemoveDutsFromDronesResponse) error 
 }
 
 // printDeletions prints a list of deleted DUTs.
-func printDeletions(w io.Writer, resp *fleet.DeleteDutsResponse) error {
+func printDeletions(w io.Writer, cn int, hostnames []string) error {
 	b := bufio.NewWriter(w)
-	fmt.Fprintf(b, "DUT deletion: %s\n", resp.ChangeUrl)
-	fmt.Fprintln(b, "Deleted DUT IDs")
-	for _, id := range resp.Ids {
-		fmt.Fprintln(b, id)
+	url, err := iv.ChangeURL(cn)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(b, "DUT deletion: %s\n", url)
+	fmt.Fprintln(b, "Deleted DUT hostnames")
+	for _, h := range hostnames {
+		fmt.Fprintln(b, h)
 	}
 	return b.Flush()
 }
