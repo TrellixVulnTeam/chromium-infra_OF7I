@@ -140,9 +140,14 @@ export class MrApp extends connectStore(LitElement) {
        */
       versionBase: {type: String},
       /**
-       * A string identifier for the page that the user is viewing.
+       * A String identifier for the page that the user is viewing.
        */
       page: {type: String},
+      /**
+       * A String for the title of the page that the user will see in their browser
+       * tab. ie: equivalent to the <title> tag.
+       */
+      pageTitle: {type: String},
       /**
        * The page.js context for the viewed page is saved for reference
        * in future navigations.
@@ -161,6 +166,7 @@ export class MrApp extends connectStore(LitElement) {
   stateChanged(state) {
     this.dirtyForms = ui.dirtyForms(state);
     this.queryParams = sitewide.queryParams(state);
+    this.pageTitle = sitewide.pageTitle(state);
   }
 
   updated(changedProperties) {
@@ -170,6 +176,13 @@ export class MrApp extends connectStore(LitElement) {
 
     if (changedProperties.has('projectName')) {
       store.dispatch(project.fetch(this.projectName));
+    }
+
+    if (changedProperties.has('pageTitle')) {
+      // To ensure that changes to the page title are easy to reason about,
+      // we want to sync the current pageTitle in the Redux state to
+      // document.title in only one place in the code.
+      document.title = this.pageTitle;
     }
   }
 

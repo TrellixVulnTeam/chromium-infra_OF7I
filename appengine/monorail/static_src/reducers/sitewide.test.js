@@ -8,6 +8,7 @@ import {assert} from 'chai';
 import {store, stateUpdated} from 'reducers/base.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import * as sitewide from './sitewide.js';
+import {SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
 
 let prpcCall;
 
@@ -17,6 +18,132 @@ describe('sitewide selectors', () => {
     assert.deepEqual(sitewide.queryParams({sitewide: {}}), {});
     assert.deepEqual(sitewide.queryParams({sitewide: {queryParams:
       {q: 'owner:me'}}}), {q: 'owner:me'});
+  });
+
+  describe('pageTitle', () => {
+    it('defaults to Monorail when no data', () => {
+      assert.equal(sitewide.pageTitle({}), 'Monorail');
+      assert.equal(sitewide.pageTitle({sitewide: {}}), 'Monorail');
+    });
+
+    it('prepends local page title when one exists', () => {
+      assert.equal(sitewide.pageTitle(
+          {sitewide: {pageTitle: 'Issue Detail'}}), 'Issue Detail - Monorail');
+    });
+
+    it('shows data for view project', () => {
+      assert.equal(sitewide.pageTitle({
+        sitewide: {pageTitle: 'Page'},
+        project: {
+          config: {projectName: 'chromium'},
+          presentationConfig: {projectSummary: 'Open source browser'},
+        },
+      }), 'Page - chromium - Open source browser - Monorail');
+    });
+  });
+
+  describe('currentColumns', () => {
+    it('defaults to sitewide default columns when no configuration', () => {
+      assert.deepEqual(sitewide.currentColumns({}), SITEWIDE_DEFAULT_COLUMNS);
+      assert.deepEqual(sitewide.currentColumns({project: {}}),
+          SITEWIDE_DEFAULT_COLUMNS);
+      assert.deepEqual(sitewide.currentColumns({project: {
+        presentationConfig: {},
+      }}), SITEWIDE_DEFAULT_COLUMNS);
+    });
+
+    it('uses project default columns', () => {
+      assert.deepEqual(sitewide.currentColumns({project: {
+        presentationConfig: {defaultColSpec: 'ID+Summary+AllLabels'},
+      }}), ['ID', 'Summary', 'AllLabels']);
+    });
+
+    it('columns in URL query params override all defaults', () => {
+      assert.deepEqual(sitewide.currentColumns({
+        project: {
+          presentationConfig: {defaultColSpec: 'ID+Summary+AllLabels'},
+        },
+        sitewide: {
+          queryParams: {colspec: 'ID+Summary+ColumnName+Priority'},
+        },
+      }), ['ID', 'Summary', 'ColumnName', 'Priority']);
+    });
+  });
+
+  describe('currentCan', () => {
+    it('uses sitewide default can by default', () => {
+      assert.deepEqual(sitewide.currentCan({}), '2');
+    });
+
+    it('URL params override default can', () => {
+      assert.deepEqual(sitewide.currentCan({
+        sitewide: {
+          queryParams: {can: '3'},
+        },
+      }), '3');
+    });
+
+    it('undefined query param does not override default can', () => {
+      assert.deepEqual(sitewide.currentCan({
+        sitewide: {
+          queryParams: {can: undefined},
+        },
+      }), '2');
+    });
+  });
+
+  describe('currentQuery', () => {
+    it('defaults to empty', () => {
+      assert.deepEqual(sitewide.currentQuery({}), '');
+      assert.deepEqual(sitewide.currentQuery({project: {}}), '');
+    });
+
+    it('uses project default when no params', () => {
+      assert.deepEqual(sitewide.currentQuery({project: {
+        presentationConfig: {
+          defaultQuery: 'owner:me',
+        },
+      }}), 'owner:me');
+    });
+
+    it('URL query params override default query', () => {
+      assert.deepEqual(sitewide.currentQuery({
+        project: {
+          presentationConfig: {
+            defaultQuery: 'owner:me',
+          },
+        },
+        sitewide: {
+          queryParams: {q: 'component:Infra'},
+        },
+      }), 'component:Infra');
+    });
+
+    it('empty string in param overrides default project query', () => {
+      assert.deepEqual(sitewide.currentQuery({
+        project: {
+          presentationConfig: {
+            defaultQuery: 'owner:me',
+          },
+        },
+        sitewide: {
+          queryParams: {q: ''},
+        },
+      }), '');
+    });
+
+    it('undefined query param does not override default search', () => {
+      assert.deepEqual(sitewide.currentQuery({
+        project: {
+          presentationConfig: {
+            defaultQuery: 'owner:me',
+          },
+        },
+        sitewide: {
+          queryParams: {q: undefined},
+        },
+      }), 'owner:me');
+    });
   });
 });
 

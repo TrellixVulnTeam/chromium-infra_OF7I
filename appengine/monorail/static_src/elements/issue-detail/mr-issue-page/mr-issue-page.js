@@ -15,6 +15,8 @@ import {store, connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
 import * as user from 'reducers/user.js';
+import * as sitewide from 'reducers/sitewide.js';
+
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {ISSUE_DELETE_PERMISSION} from 'shared/permissions.js';
 
@@ -167,89 +169,106 @@ export class MrIssuePage extends connectStore(LitElement) {
   }
 
   render() {
-    const issueIsEmpty = !this.issue || !this.issue.localId;
-    const movedToRef = this.issue.movedToRef;
-    const commentShown = this.issue.approvalValues ? APPROVAL_COMMENT_COUNT
-      : DETAIL_COMMENT_COUNT;
-
     return html`
       <mr-click-throughs
          .userDisplayName=${this.userDisplayName}></mr-click-throughs>
-      ${this.fetchIssueError ? html`
+      ${this._renderIssue()}
+    `;
+  }
+
+  _renderIssue() {
+    const issueIsEmpty = !this.issue || !this.issue.localId;
+    const movedToRef = this.issue.movedToRef;
+    const commentShown = this.issue.approvalValues ? APPROVAL_COMMENT_COUNT :
+      DETAIL_COMMENT_COUNT;
+
+    if (this.fetchIssueError) {
+      return html`
         <div class="container-no-issue" id="fetch-error">
           ${this.fetchIssueError.description}
         </div>
-      `: html`
-        ${this.fetchingIssue && issueIsEmpty ? html`
-          <div class="container-no-issue" id="loading">
-            Loading...
-          </div>
-        ` : ''}
-        </template>
-        ${this.issue.isDeleted ? html`
-          <div class="container-no-issue" id="deleted">
-            <p>Issue ${this.issueRef.localId} has been deleted.</p>
-            ${this.issuePermissions.includes(ISSUE_DELETE_PERMISSION) ? html`
-              <chops-button
-                @click=${this._undeleteIssue}
-                class="undelete emphasized"
-              >
-                Undelete Issue
-              </chops-button>
-            `: ''}
-          </div>
-        `: ''}
-        ${movedToRef && movedToRef.localId ? html`
-          <div class="container-no-issue" id="moved">
-            <h2>Issue has moved.</h2>
-            <p>
-              This issue was moved to ${movedToRef.projectName}.
-              <a
-                class="new-location"
-                href="/p/${movedToRef.projectName}/issues/detail?id=${movedToRef.localId}"
-              >
-                Go to issue</a>.
-            </p>
-          </div>
-        `: ''}
+      `;
+    }
 
-        ${!issueIsEmpty ? html`
-          <div
-            class="container-outside"
-            @open-dialog=${this._onOpenDialog}
-            id="issue"
-          >
-            <aside class="metadata-container">
-              <mr-issue-metadata></mr-issue-metadata>
-            </aside>
-            <div class="container-issue">
-              <div class="issue-header-container">
-                <mr-issue-header
-                  .userDisplayName=${this.userDisplayName}
-                ></mr-issue-header>
-                <mr-restriction-indicator></mr-restriction-indicator>
-              </div>
-              <div class="container-issue-content">
-                <mr-issue-details
-                  class="main-item"
-                  .commentsShownCount=${commentShown}
-                ></mr-issue-details>
-                <mr-launch-overview class="main-item"></mr-launch-overview>
-              </div>
+    if (this.fetchingIssue && issueIsEmpty) {
+      return html`
+        <div class="container-no-issue" id="loading">
+          Loading...
+        </div>
+      `;
+    }
+
+    if (this.issue.isDeleted) {
+      return html`
+        <div class="container-no-issue" id="deleted">
+          <p>Issue ${this.issueRef.localId} has been deleted.</p>
+          ${this.issuePermissions.includes(ISSUE_DELETE_PERMISSION) ? html`
+            <chops-button
+              @click=${this._undeleteIssue}
+              class="undelete emphasized"
+            >
+              Undelete Issue
+            </chops-button>
+          `: ''}
+        </div>
+      `;
+    }
+
+    if (movedToRef && movedToRef.localId) {
+      return html`
+        <div class="container-no-issue" id="moved">
+          <h2>Issue has moved.</h2>
+          <p>
+            This issue was moved to ${movedToRef.projectName}.
+            <a
+              class="new-location"
+              href="/p/${movedToRef.projectName}/issues/detail?id=${movedToRef.localId}"
+            >
+              Go to issue</a>.
+          </p>
+        </div>
+      `;
+    }
+
+    if (!issueIsEmpty) {
+      return html`
+        <div
+          class="container-outside"
+          @open-dialog=${this._onOpenDialog}
+          id="issue"
+        >
+          <aside class="metadata-container">
+            <mr-issue-metadata></mr-issue-metadata>
+          </aside>
+          <div class="container-issue">
+            <div class="issue-header-container">
+              <mr-issue-header
+                .userDisplayName=${this.userDisplayName}
+              ></mr-issue-header>
+              <mr-restriction-indicator></mr-restriction-indicator>
+            </div>
+            <div class="container-issue-content">
+              <mr-issue-details
+                class="main-item"
+                .commentsShownCount=${commentShown}
+              ></mr-issue-details>
+              <mr-launch-overview class="main-item"></mr-launch-overview>
             </div>
           </div>
-          <mr-edit-description id="edit-description"></mr-edit-description>
-          <mr-move-copy-issue id="move-copy-issue"></mr-move-copy-issue>
-          <mr-convert-issue id="convert-issue"></mr-convert-issue>
-          <mr-related-issues id="reorder-related-issues"></mr-related-issues>
-          <mr-update-issue-hotlists
-            id="update-issue-hotlists"
-            .issueRefs=${[this.issueRef]}
-            .issueHotlists=${this.issueHotlists}
-          ></mr-update-issue-hotlists>
-        `: ''}
-      `}
-    `;
+        </div>
+        <mr-edit-description id="edit-description"></mr-edit-description>
+        <mr-move-copy-issue id="move-copy-issue"></mr-move-copy-issue>
+        <mr-convert-issue id="convert-issue"></mr-convert-issue>
+        <mr-related-issues id="reorder-related-issues"></mr-related-issues>
+        <mr-update-issue-hotlists
+          id="update-issue-hotlists"
+          .issueRefs=${[this.issueRef]}
+          .issueHotlists=${this.issueHotlists}
+        ></mr-update-issue-hotlists>
+      `;
+    }
+
+    return '';
   }
 
   static get properties() {
@@ -332,24 +351,27 @@ export class MrIssuePage extends connectStore(LitElement) {
     }
 
     if (changedProperties.has('issueRef') || changedProperties.has('issue')) {
-      this._setPageTitle(this.issueRef, this.issue);
+      const title = this._pageTitle(this.issueRef, this.issue);
+      store.dispatch(sitewide.setPageTitle(title));
     }
   }
 
-  _setPageTitle(issueRef, issue) {
-    if (!issueRef) return;
-    let title =
-      issueRef.localId ? `${issueRef.localId} - ` : 'Loading issue... - ';
-    if (issue && issue.isDeleted) {
-      title += 'Issue has been deleted - ';
-    } else if (issue && issue.summary) {
-      title += `${issue.summary} - `;
+  _pageTitle(issueRef, issue) {
+    const titlePieces = [];
+    if (issueRef.localId) {
+      titlePieces.push(issueRef.localId);
     }
-    if (issueRef.projectName) {
-      title += `${issueRef.projectName} - `;
+    if (!issue || !issue.localId) {
+      // Issue is not loaded.
+      titlePieces.push('Loading issue...');
+    } else {
+      if (issue.isDeleted) {
+        titlePieces.push('Deleted issue');
+      } else if (issue.summary) {
+        titlePieces.push(issue.summary);
+      }
     }
-    title += 'Monorail';
-    document.title = title;
+    return titlePieces.join(' - ');
   }
 
   _onOpenDialog(e) {

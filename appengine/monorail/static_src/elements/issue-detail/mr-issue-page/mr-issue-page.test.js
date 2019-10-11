@@ -44,7 +44,34 @@ describe('mr-issue-page', () => {
     assert.instanceOf(element, MrIssuePage);
   });
 
+  describe('_pageTitle', () => {
+    it('displays loading when no issue', () => {
+      assert.equal(element._pageTitle({}, {}), 'Loading issue...');
+    });
+
+    it('display issue ID when available', () => {
+      assert.equal(element._pageTitle({projectName: 'test', localId: 1}, {}),
+          '1 - Loading issue...');
+    });
+
+    it('display deleted issues', () => {
+      assert.equal(element._pageTitle({projectName: 'test', localId: 1},
+          {projectName: 'test', localId: 1, isDeleted: true}
+      ), '1 - Deleted issue');
+    });
+
+    it('displays loaded issue', () => {
+      assert.equal(element._pageTitle({projectName: 'test', localId: 2},
+          {projectName: 'test', localId: 2, summary: 'test'}), '2 - test');
+    });
+  });
+
   it('issue not loaded yet', async () => {
+    // Prevent unrelated Redux changes from affecting this test.
+    // TODO(zhangtiff): Find a more canonical way to test components
+    // in and out of Redux.
+    sinon.stub(store, 'dispatch');
+
     element.fetchingIssue = true;
 
     await element.updateComplete;
@@ -54,6 +81,8 @@ describe('mr-issue-page', () => {
     assert.isNull(fetchErrorElement);
     assert.isNull(deletedElement);
     assert.isNull(issueElement);
+
+    store.dispatch.restore();
   });
 
   it('no loading on future issue fetches', async () => {
@@ -125,6 +154,8 @@ describe('mr-issue-page', () => {
   });
 
   it('undeleting issue only shown if you have permissions', async () => {
+    sinon.stub(store, 'dispatch');
+
     element.issue = {isDeleted: true};
 
     await element.updateComplete;
@@ -140,6 +171,8 @@ describe('mr-issue-page', () => {
 
     button = element.shadowRoot.querySelector('.undelete');
     assert.isNotNull(button);
+
+    store.dispatch.restore();
   });
 
   it('undeleting issue updates page with issue', async () => {

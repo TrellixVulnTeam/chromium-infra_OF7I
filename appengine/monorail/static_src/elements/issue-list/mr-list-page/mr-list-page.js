@@ -8,7 +8,7 @@ import qs from 'qs';
 import {store, connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import * as user from 'reducers/user.js';
-import * as project from 'reducers/project.js';
+import * as sitewide from 'reducers/sitewide.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import {parseColSpec} from 'shared/issue-fields.js';
 import {urlWithNewParams, userIsMember} from 'shared/helpers.js';
@@ -326,6 +326,10 @@ export class MrListPage extends connectStore(LitElement) {
     super.connectedCallback();
 
     window.addEventListener('refreshList', this._boundRefresh);
+
+    // TODO(zhangtiff): Consider if we can make this page title more useful for
+    // the list view.
+    store.dispatch(sitewide.setPageTitle('Issues'));
   }
 
   disconnectedCallback() {
@@ -373,9 +377,9 @@ export class MrListPage extends connectStore(LitElement) {
     this.totalIssues = (issue.totalIssues(state) || 0);
     this.fetchingIssueList = issue.requests(state).fetchIssueList.requesting;
 
-    this.currentQuery = project.currentQuery(state);
-    this.currentCan = project.currentCan(state);
-    this.columns = project.currentColumns(state);
+    this.currentQuery = sitewide.currentQuery(state);
+    this.currentCan = sitewide.currentCan(state);
+    this.columns = sitewide.currentColumns(state);
   }
 
   get starringEnabled() {

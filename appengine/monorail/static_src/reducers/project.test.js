@@ -72,47 +72,6 @@ describe('project selectors', () => {
     }}), ['ID', 'Summary', 'AllLabels']);
   });
 
-  it('currentColumns', () => {
-    assert.deepEqual(project.currentColumns({}), SITEWIDE_DEFAULT_COLUMNS);
-    assert.deepEqual(project.currentColumns({project: {}}),
-        SITEWIDE_DEFAULT_COLUMNS);
-    assert.deepEqual(project.currentColumns({project: {
-      presentationConfig: {},
-    }}), SITEWIDE_DEFAULT_COLUMNS);
-    assert.deepEqual(project.currentColumns({project: {
-      presentationConfig: {defaultColSpec: 'ID+Summary+AllLabels'},
-    }}), ['ID', 'Summary', 'AllLabels']);
-
-    // Params override default.
-    assert.deepEqual(project.currentColumns({
-      project: {
-        presentationConfig: {defaultColSpec: 'ID+Summary+AllLabels'},
-      },
-      sitewide: {
-        queryParams: {colspec: 'ID+Summary+ColumnName+Priority'},
-      },
-    }), ['ID', 'Summary', 'ColumnName', 'Priority']);
-  });
-
-  it('currentCan', () => {
-    // Uses default when no params.
-    assert.deepEqual(project.currentCan({}), '2');
-
-    // Params override default.
-    assert.deepEqual(project.currentCan({
-      sitewide: {
-        queryParams: {can: '3'},
-      },
-    }), '3');
-
-    // Undefined does not override default query.
-    assert.deepEqual(project.currentCan({
-      sitewide: {
-        queryParams: {can: undefined},
-      },
-    }), '2');
-  });
-
   it('defaultQuery', () => {
     assert.deepEqual(project.defaultQuery({}), '');
     assert.deepEqual(project.defaultQuery({project: {}}), '');
@@ -121,54 +80,6 @@ describe('project selectors', () => {
         defaultQuery: 'owner:me',
       },
     }}), 'owner:me');
-  });
-
-  it('currentQuery', () => {
-    assert.deepEqual(project.currentQuery({}), '');
-    assert.deepEqual(project.currentQuery({project: {}}), '');
-
-    // Uses default when no params.
-    assert.deepEqual(project.currentQuery({project: {
-      presentationConfig: {
-        defaultQuery: 'owner:me',
-      },
-    }}), 'owner:me');
-
-    // Params override default.
-    assert.deepEqual(project.currentQuery({
-      project: {
-        presentationConfig: {
-          defaultQuery: 'owner:me',
-        },
-      },
-      sitewide: {
-        queryParams: {q: 'component:Infra'},
-      },
-    }), 'component:Infra');
-
-    // Empty string overrides default search.
-    assert.deepEqual(project.currentQuery({
-      project: {
-        presentationConfig: {
-          defaultQuery: 'owner:me',
-        },
-      },
-      sitewide: {
-        queryParams: {q: ''},
-      },
-    }), '');
-
-    // Undefined does not override default search.
-    assert.deepEqual(project.currentQuery({
-      project: {
-        presentationConfig: {
-          defaultQuery: 'owner:me',
-        },
-      },
-      sitewide: {
-        queryParams: {q: undefined},
-      },
-    }), 'owner:me');
   });
 
   it('fieldDefs', () => {

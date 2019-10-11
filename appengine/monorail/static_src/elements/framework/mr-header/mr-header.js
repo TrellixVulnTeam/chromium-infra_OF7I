@@ -206,8 +206,8 @@ export class MrHeader extends connectStore(LitElement) {
     // the GetPresentationConfig pRPC request.
     this.projectThumbnailUrl = presentationConfig.projectThumbnailUrl;
 
-    this._currentQuery = project.currentQuery(state);
-    this._currentCan = project.currentCan(state);
+    this._currentQuery = sitewide.currentQuery(state);
+    this._currentCan = sitewide.currentCan(state);
 
     this.queryParams = sitewide.queryParams(state);
   }

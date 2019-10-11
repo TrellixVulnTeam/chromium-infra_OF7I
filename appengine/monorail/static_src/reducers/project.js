@@ -5,8 +5,7 @@
 import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
-import * as sitewide from 'reducers/sitewide.js';
-import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS, SITEWIDE_DEFAULT_CAN,
+import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS,
   parseColSpec} from 'shared/issue-fields.js';
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
@@ -128,48 +127,12 @@ export const defaultColumns = createSelector(presentationConfig,
       return SITEWIDE_DEFAULT_COLUMNS;
     });
 
-/**
- * Compute the current columns that the user is viewing in the list
- * view, based on default columns and URL parameters.
- */
-export const currentColumns = createSelector(
-    defaultColumns,
-    sitewide.queryParams,
-    (defaultColumns, params = {}) => {
-      if (params.colspec) {
-        return parseColSpec(params.colspec);
-      }
-      return defaultColumns;
-    });
-
-/**
- * Get the default canned query for the currently viewed project.
- * Note: Projects cannot configure a per-project default canned query,
- * so there is only a sitewide default.
- */
-export const currentCan = createSelector(sitewide.queryParams,
-    (params) => params.can || SITEWIDE_DEFAULT_CAN);
-
 
 /**
  * Get the default query for the currently viewed project.
  */
 export const defaultQuery = createSelector(presentationConfig,
     (config) => config.defaultQuery || '');
-
-/**
- * Compute the current issue search query that the user has
- * entered for a project, based on queryParams and the default
- * project search.
- */
-export const currentQuery = createSelector(
-    defaultQuery,
-    sitewide.queryParams,
-    (defaultQuery, params = {}) => {
-      // Make sure entering an empty search still works.
-      if (params.q === '') return params.q;
-      return params.q || defaultQuery;
-    });
 
 // Look up components by path.
 export const componentsMap = createSelector(
