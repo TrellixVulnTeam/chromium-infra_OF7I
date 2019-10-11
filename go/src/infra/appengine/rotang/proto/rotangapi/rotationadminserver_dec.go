@@ -14,45 +14,45 @@ type DecoratedRotationAdmin struct {
 	// Prelude is called for each method before forwarding the call to Service.
 	// If Prelude returns an error, then the call is skipped and the error is
 	// processed via the Postlude (if one is defined), or it is returned directly.
-	Prelude func(c context.Context, methodName string, req proto.Message) (context.Context, error)
+	Prelude func(ctx context.Context, methodName string, req proto.Message) (context.Context, error)
 	// Postlude is called for each method after Service has processed the call, or
 	// after the Prelude has returned an error. This takes the the Service's
 	// response proto (which may be nil) and/or any error. The decorated
 	// service will return the response (possibly mutated) and error that Postlude
 	// returns.
-	Postlude func(c context.Context, methodName string, rsp proto.Message, err error) error
+	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedRotationAdmin) CreateExternal(c context.Context, req *CreateExternalRequest) (rsp *CreateExternalResponse, err error) {
+func (s *DecoratedRotationAdmin) CreateExternal(ctx context.Context, req *CreateExternalRequest) (rsp *CreateExternalResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "CreateExternal", req)
+		newCtx, err = s.Prelude(ctx, "CreateExternal", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.CreateExternal(c, req)
+		rsp, err = s.Service.CreateExternal(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "CreateExternal", rsp, err)
+		err = s.Postlude(ctx, "CreateExternal", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedRotationAdmin) DeleteExternal(c context.Context, req *DeleteExternalRequest) (rsp *DeleteExternalResponse, err error) {
+func (s *DecoratedRotationAdmin) DeleteExternal(ctx context.Context, req *DeleteExternalRequest) (rsp *DeleteExternalResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "DeleteExternal", req)
+		newCtx, err = s.Prelude(ctx, "DeleteExternal", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.DeleteExternal(c, req)
+		rsp, err = s.Service.DeleteExternal(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "DeleteExternal", rsp, err)
+		err = s.Postlude(ctx, "DeleteExternal", rsp, err)
 	}
 	return
 }

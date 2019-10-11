@@ -188,6 +188,10 @@ service MemberAdmin {
   // RotationMembers returns the members of a rotation together with when they were last OnCall and OOO information.
   // Owner permissions for the rotation is required.
   rpc RotationMembers(RotationMembersRequest) returns (RotationMembersResponse) {}
+	// MakeAllMembersOwners makes all rotation members part of the rotation Owners.
+	// In cases where the caller is an owner of a rotation but not a member the caller will be added
+	// to the owners along with all the members.
+	rpc MakeAllMembersOwners(MakeAllMembersOwnersRequest) returns (MakeAllMembersOwnersResponse) {}
 }
 
 message RotationMembersRequest {
@@ -209,4 +213,11 @@ message OOO {
   google.protobuf.Timestamp start = 1;
   google.protobuf.Timestamp end = 2;
   string comment = 3;
-	}
+}
+
+message MakeAllMembersOwnersRequest {
+	string name = 1;
+}
+
+message MakeAllMembersOwnersResponse {
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes"
+	"go.chromium.org/luci/server/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -11,6 +12,53 @@ import (
 
 	apb "infra/appengine/rotang/proto/rotangapi"
 )
+
+// MakeAllMembersOwners sets all rotation members as owners.
+func (h *State) MakeAllMembersOwners(ctx context.Context, req *apb.MakeAllMembersOwnersRequest) (*apb.MakeAllMembersOwnersResponse, error) {
+	if req.GetName() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "rotation name is required")
+	}
+
+	cfgs, err := h.configStore(ctx).RotaConfig(ctx, req.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cfgs) != 1 {
+		return nil, status.Errorf(codes.Internal, "RotaConfig did not return 1 configuration, got: %d", len(cfgs))
+	}
+
+	cfg := cfgs[0]
+
+	if !isOwner(ctx, cfg) {
+		return nil, status.Errorf(codes.PermissionDenied, "not an owner of rotation: %q", req.GetName())
+	}
+
+	if len(cfg.Members) < 1 {
+		return &apb.MakeAllMembersOwnersResponse{}, nil
+	}
+
+	usr := auth.CurrentUser(ctx)
+	if usr == nil || usr.Email == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "current user not set")
+	}
+
+	// Make sure the current user is still in the list.
+	syncedOwners := []string{usr.Email}
+	for _, shiftMember := range cfg.Members {
+		if shiftMember.Email == usr.Email {
+			continue
+		}
+		syncedOwners = append(syncedOwners, shiftMember.Email)
+	}
+	cfg.Config.Owners = syncedOwners
+
+	if err := h.configStore(ctx).UpdateRotaConfig(ctx, cfg); err != nil {
+		return nil, err
+	}
+
+	return &apb.MakeAllMembersOwnersResponse{}, nil
+}
 
 // RotationMembers return information for all members of a rotation.
 func (h *State) RotationMembers(ctx context.Context, req *apb.RotationMembersRequest) (*apb.RotationMembersResponse, error) {
