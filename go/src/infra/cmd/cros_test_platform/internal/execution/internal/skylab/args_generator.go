@@ -214,9 +214,9 @@ func (a *argsGenerator) updateWithInvocationKeyvals(kv map[string]string) {
 }
 
 func (a *argsGenerator) baseKeyvals() map[string]string {
-	keyvals := a.params.GetDecorations().GetAutotestKeyvals()
-	if keyvals == nil {
-		keyvals = make(map[string]string)
+	keyvals := make(map[string]string)
+	for k, v := range a.params.GetDecorations().GetAutotestKeyvals() {
+		keyvals[k] = v
 	}
 	if a.parentTaskID != "" {
 		// This keyval is inspected by some downstream results consumers such as

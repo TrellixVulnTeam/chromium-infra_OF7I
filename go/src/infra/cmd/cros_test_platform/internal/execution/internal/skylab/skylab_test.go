@@ -709,6 +709,60 @@ func loggerDebug(ml memlogger.MemLogger) string {
 	}
 	return out
 }
+func TestKeyvalsAcrossTestRuns(t *testing.T) {
+	Convey("Given a request with a suite keyval", t, func() {
+		ctx := context.Background()
+		swarming := newFakeSwarming("")
+		getter := newFakeGetter()
+		gf := fakeGetterFactory(getter)
+
+		p := basicParams()
+		p.Decorations = &test_platform.Request_Params_Decorations{
+			AutotestKeyvals: map[string]string{
+				"suite": "someSuite",
+			},
+		}
+
+		Convey("and two enumerations with different test names", func() {
+
+			invs := []*steps.EnumerationResponse_AutotestInvocation{
+				{
+					Test: &api.AutotestTest{
+						Name:                 "firstTest",
+						ExecutionEnvironment: api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
+					},
+				},
+				{
+					Test: &api.AutotestTest{
+						Name:                 "secondTest",
+						ExecutionEnvironment: api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
+					},
+				},
+			}
+
+			Convey("created commands include common suite keyval and different label keyvals", func() {
+				ts, err := skylab.NewTaskSet(ctx, invs, p, basicConfig(), "foo-parent-task-id")
+				So(err, ShouldBeNil)
+				run := skylab.NewRunner(ts)
+				err = run.LaunchAndWait(ctx, swarming, gf)
+				So(err, ShouldBeNil)
+
+				So(swarming.createCalls, ShouldHaveLength, 2)
+				cmd := make([]string, 2)
+				for i, cc := range swarming.createCalls {
+					So(cc.TaskSlices, ShouldNotBeEmpty)
+					cmd[i] = strings.Join(cc.TaskSlices[0].Properties.Command, " ")
+				}
+				kv0 := extractKeyvalsArgument(cmd[0])
+				So(kv0, ShouldContainSubstring, `"suite":"someSuite"`)
+				So(kv0, ShouldContainSubstring, `"label":"foo-build/someSuite/firstTest"`)
+				kv1 := extractKeyvalsArgument(cmd[1])
+				So(kv1, ShouldContainSubstring, `"suite":"someSuite"`)
+				So(kv1, ShouldContainSubstring, `"label":"foo-build/someSuite/secondTest"`)
+			})
+		})
+	})
+}
 
 func TestRetries(t *testing.T) {
 	Convey("Given a test with", t, func() {
