@@ -20,7 +20,7 @@ import (
 
 // ModAccount subcommand: add an account.
 var ModAccount = &subcommands.Command{
-	UsageLine: "mod-account [-rate RATE...] [-charge-time CHARGE_TIME] [-fanout FANOUT] POOL_ID ACCOUNT_ID",
+	UsageLine: "mod-account [-rate RATE...] [-charge-time CHARGE_TIME] [-fanout FANOUT] [-description ACCOUNT_DESCRIPTION] POOL_ID ACCOUNT_ID",
 	ShortDesc: "Modify a quota account",
 	LongDesc:  "Modify a quota account. Values that are unspecified will not be modified.",
 	CommandRun: func() subcommands.CommandRun {
@@ -35,6 +35,7 @@ var ModAccount = &subcommands.Command{
 		c.Flags.Var(nullableInt32Value(&c.fanout), "fanout", "Maximum number of concurrent tasks that account will pay for.")
 		c.Flags.Var(nullableBoolValue(&c.disableFreeTasks), "disable-free-tasks", "Disallow the account from running free tasks.")
 		c.Flags.BoolVar(&c.resetBalance, "reset-balance", false, "Reset the account's balance to 0.")
+		c.Flags.StringVar(&c.description, "description", "", "Attach a description for an account.")
 		return c
 	},
 }
@@ -49,6 +50,7 @@ type modAccountRun struct {
 	fanout           *int32
 	disableFreeTasks *bool
 	resetBalance     bool
+	description      string
 }
 
 // validate validates command line arguments.
@@ -105,6 +107,9 @@ func (c *modAccountRun) Run(a subcommands.Application, args []string, env subcom
 	}
 	if len(chargeRateFloats) > 0 {
 		req.ChargeRate = chargeRateFloats
+	}
+	if c.description != "" {
+		req.Description = &wrappers.StringValue{Value: c.description}
 	}
 
 	_, err = adminClient.ModAccount(ctx, req)
