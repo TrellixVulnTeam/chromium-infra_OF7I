@@ -36,7 +36,9 @@ getversion_staging:
 	echo version is $(VERS)
 
 deploy_prod: build getversion_prod
+	cp cron_prod.yaml cron.yaml
 	gcloud app deploy --no-promote --no-stop-previous-version frontend/app.yaml backend/app.yaml dispatch.yaml cron.yaml frontend/queue.yaml --project sheriff-o-matic --version $(VERS)
+	cp cron_default.yaml cron.yaml
 	rm frontend/elements/som-app/som-app.vulcanized.html
 
 bqtools:
@@ -51,7 +53,9 @@ update_bq_prod: bqtools
 	bqschemaupdater -proto-dir ./som/model/gen -table sheriff-o-matic.events.annotations -message gen.SOMAnnotationEvent
 
 deploy_staging: build getversion_staging
+	cp cron_staging.yaml cron.yaml
 	gcloud app deploy --no-promote --no-stop-previous-version frontend/app.yaml backend/app.yaml dispatch.yaml cron.yaml frontend/queue.yaml --project sheriff-o-matic-staging --version $(VERS)
+	cp cron_default.yaml cron.yaml
 	rm frontend/elements/som-app/som-app.vulcanized.html
 
 devserver:

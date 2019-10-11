@@ -1,0 +1,92 @@
+cron:
+- description: Send ts_mon metrics
+  url: /internal/cron/ts_mon/housekeeping
+  schedule: every 1 minutes
+
+- description: Update android bug queue
+  url: /_cron/refresh/bugqueue/sheriff-android
+  schedule: every 1 minutes
+
+- description: Update chromium bug queue
+  url: /_cron/refresh/bugqueue/sheriff-chromium
+  schedule: every 1 minutes
+
+- description: Update fuchsia bug queue
+  url: /_cron/refresh/bugqueue/sheriff-fuchsia
+  schedule: every 1 minutes
+
+- description: Update trooper queue
+  url: /_cron/refresh/bugqueue/infra-troopers
+  schedule: every 1 minutes
+
+- description: Update cached annotation metadata
+  url: /_cron/annotations/refresh/
+  schedule: every 15 minutes
+
+- description: Delete old annotations
+  url: /_cron/annotations/flush_old/
+  schedule: every 1 hours
+
+- description: Update Android alerts
+  url: /_cron/analyze/android
+  schedule: every 5 minutes
+  target: analyzer
+  retry_parameters:
+    min_backoff_seconds: 2.5
+    max_doublings: 5
+
+- description: Update Chromium alerts
+  url: /_cron/analyze/chromium
+  schedule: every 5 minutes
+  target: analyzer
+  retry_parameters:
+    min_backoff_seconds: 2.5
+    max_doublings: 5
+
+- description: Update ChromeOS Alerts
+  url: /_cron/analyze/chromeos
+  schedule: every 5 minutes
+  target: analyzer
+  retry_parameters:
+    min_backoff_seconds: 2.5
+    max_doublings: 5
+
+- description: Update iOS alerts
+  url: /_cron/analyze/ios
+  schedule: every 5 minutes
+  target: analyzer
+  retry_parameters:
+    min_backoff_seconds: 2.5
+    max_doublings: 5
+
+- description: Update Chromium Perf alerts
+  url: /_cron/analyze/chromium.perf
+  schedule: every 5 minutes
+  target: analyzer
+  retry_parameters:
+    min_backoff_seconds: 2.5
+    max_doublings: 5
+
+- description: Update Chromium GPU FYI alerts
+  url: /_cron/analyze/chromium.gpu.fyi
+  schedule: every 5 minutes
+  target: analyzer
+  retry_parameters:
+    min_backoff_seconds: 2.5
+    max_doublings: 5
+
+- description: Update Chromium Clang alerts
+  url: /_cron/analyze/chromium.clang
+  schedule: every 5 minutes
+  target: analyzer
+  retry_parameters:
+    min_backoff_seconds: 2.5
+    max_doublings: 5
+
+- description: Update Fuchsia alerts
+  url: /_cron/analyze/fuchsia
+  schedule: every 5 minutes
+  target: analyzer
+  retry_parameters:
+    min_backoff_seconds: 2.5
+    max_doublings: 5
