@@ -74,6 +74,10 @@ const FETCH_RELATED_ISSUES_START = 'FETCH_RELATED_ISSUES_START';
 const FETCH_RELATED_ISSUES_SUCCESS = 'FETCH_RELATED_ISSUES_SUCCESS';
 const FETCH_RELATED_ISSUES_FAILURE = 'FETCH_RELATED_ISSUES_FAILURE';
 
+const FETCH_FEDERATED_REFERENCES_START = 'FETCH_FEDERATED_REFERENCES_START';
+const FETCH_FEDERATED_REFERENCES_SUCCESS = 'FETCH_FEDERATED_REFERENCES_SUCCESS';
+const FETCH_FEDERATED_REFERENCES_FAILURE = 'FETCH_FEDERATED_REFERENCES_FAILURE';
+
 const CONVERT_START = 'CONVERT_START';
 const CONVERT_SUCCESS = 'CONVERT_SUCCESS';
 const CONVERT_FAILURE = 'CONVERT_FAILURE';
@@ -120,6 +124,7 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
     predictComponent: Object,
     fetchComments: Object,
     fetchCommentReferences: Object,
+    fetchFederatedReferences: Object,
     fetchRelatedIssues: Object,
     fetchStarredIssues: Object,
     fetchStarredIssues: Object,
@@ -185,8 +190,24 @@ const commentReferencesReducer = createReducer({}, {
   },
 });
 
-const relatedIssuesReducer = createReducer({}, {
+export const relatedIssuesReducer = createReducer({}, {
   [FETCH_RELATED_ISSUES_SUCCESS]: (_state, action) => action.relatedIssues,
+  [FETCH_FEDERATED_REFERENCES_SUCCESS]: (state, action) => {
+    if (!action.fedRefs || !action.fedRefs instanceof Map) {
+      return state;
+    }
+
+    const fedRefStates = {};
+    action.fedRefs.forEach((isOpen, shortlink) => {
+      fedRefStates[shortlink] = {
+        extIdentifier: shortlink,
+        statusRef: {meansOpen: isOpen},
+      };
+    });
+
+    // Return a new object, in Redux fashion.
+    return Object.assign(fedRefStates, state);
+  },
 });
 
 const referencedUsersReducer = createReducer({}, {
@@ -246,6 +267,10 @@ const requestsReducer = combineReducers({
       FETCH_COMMENT_REFERENCES_START,
       FETCH_COMMENT_REFERENCES_SUCCESS,
       FETCH_COMMENT_REFERENCES_FAILURE),
+  fetchFederatedReferences: createRequestReducer(
+      FETCH_FEDERATED_REFERENCES_START,
+      FETCH_FEDERATED_REFERENCES_SUCCESS,
+      FETCH_FEDERATED_REFERENCES_FAILURE),
   fetchRelatedIssues: createRequestReducer(
       FETCH_RELATED_ISSUES_START,
       FETCH_RELATED_ISSUES_SUCCESS,
@@ -617,7 +642,9 @@ export const fetchReferencedUsers = (issue) => async (dispatch) => {
   }
 };
 
-export const fetchFederatedReferenceStatuses = (issue) => async (dispatch) => {
+export const fetchFederatedReferences = (issue) => async (dispatch) => {
+  dispatch({type: FETCH_FEDERATED_REFERENCES_START});
+
   // Concat all potential fedrefs together, convert from shortlink to classes,
   // then fire off a request to fetch the status of each.
   const fedRefs = []
@@ -633,27 +660,35 @@ export const fetchFederatedReferenceStatuses = (issue) => async (dispatch) => {
     return new Map();
   }
 
-  // Load email separately since it might have changed.
-  await loadGapi();
-  const email = await fetchGapiEmail();
+  try {
+    // Load email separately since it might have changed.
+    await loadGapi();
+    const email = await fetchGapiEmail();
 
-  // If already logged in, dispatch login success event.
-  dispatch({
-    type: user.GAPI_LOGIN_SUCCESS,
-    email: email,
-  });
+    // If already logged in, dispatch login success event.
+    dispatch({
+      type: user.GAPI_LOGIN_SUCCESS,
+      email: email,
+    });
 
-  const fedRefPromises = fedRefs.map((fedRef) => fedRef.isOpen());
-  const results = await Promise.all(fedRefPromises);
+    const fedRefPromises = fedRefs.map((fedRef) => fedRef.isOpen());
+    const results = await Promise.all(fedRefPromises);
 
-  // Create a map of {extIdentifier -> isOpen}.
-  const shortlinkToStatus = new Map(results.map((result, i) => {
-    return [fedRefs[i].shortlink, result];
-  }));
+    // TODO(jeffcarp): Expand this to return issue summary as well,
+    // update reducer to assign appropriately.
 
-  // TODO(jeffcarp): Expand this to return issue summary as well,
-  // update reducer to assign appropriately.
-  return shortlinkToStatus;
+    // Create a map of {extIdentifier -> isOpen}.
+    const shortlinkToStatus = new Map(results.map((result, i) => {
+      return [fedRefs[i].shortlink, result];
+    }));
+
+    dispatch({
+      type: FETCH_FEDERATED_REFERENCES_SUCCESS,
+      fedRefs: shortlinkToStatus,
+    });
+  } catch (error) {
+    dispatch({type: FETCH_FEDERATED_REFERENCES_FAILURE, error});
+  }
 };
 
 // TODO(zhangtiff): Figure out if we can reduce request/response sizes by
@@ -674,11 +709,13 @@ export const fetchRelatedIssues = (issue) => async (dispatch) => {
     issueRefs: refsToFetch,
   };
   try {
-    // TODO(jeffcarp): Split into 2 action creators, resolve separately.
-    const [resp, fedRefStatuses] = await Promise.all([
-      prpcClient.call('monorail.Issues', 'ListReferencedIssues', message),
-      dispatch(fetchFederatedReferenceStatuses(issue)),
-    ]);
+
+    // Fire off call to fetch FedRefs. Since it might take longer it is
+    // handled by a separate reducer.
+    dispatch(fetchFederatedReferences(issue));
+
+    const resp = await prpcClient.call(
+        'monorail.Issues', 'ListReferencedIssues', message);
 
     const relatedIssues = {};
 
@@ -692,14 +729,6 @@ export const fetchRelatedIssues = (issue) => async (dispatch) => {
       issue.statusRef.meansOpen = false;
       relatedIssues[issueRefToString(issue)] = issue;
     });
-
-    fedRefStatuses.forEach((isOpen, shortlink) => {
-      relatedIssues[shortlink] = {
-        extIdentifier: shortlink,
-        statusRef: {meansOpen: isOpen},
-      };
-    });
-
     dispatch({
       type: FETCH_RELATED_ISSUES_SUCCESS,
       relatedIssues: relatedIssues,
