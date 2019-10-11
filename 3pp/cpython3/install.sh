@@ -51,6 +51,8 @@ SETUP_LOCAL_ATTACH=(
   "_curses_panel:: -DNCURSES_WIDECHAR=1"
 )
 
+WITH_LIBS="-lpthread"
+
 if [[ $_3PP_PLATFORM == mac* ]]; then
   PYTHONEXE=python.exe
 
@@ -62,8 +64,6 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
   # Our builder system is missing X11 headers, so this module does not build.
   SETUP_LOCAL_SKIP+=(_tkinter)
 
-  # getaddrinfo cannot be used, xcode is not property setup?
-  EXTRA_CONFIGURE_ARGS="--disable-ipv6"
 else
   PYTHONEXE=python
 
@@ -82,6 +82,9 @@ else
   # Makefile has an LDLAST to allow some ldflags to be the very last thing on
   # the link line.
   LDLAST="-lpthread"
+
+  # Linux requires -lrt.
+  WITH_LIBS="$WITH_LIBS -lrt"
 
   # The "crypt" module needs to link against glibc's "crypt" function.
   #
@@ -137,11 +140,16 @@ export LDLAST
 #
 # We're going to use our bootstrap python interpreter to generate our static
 # module list.
-./configure --prefix "$PREFIX" --host="$CROSS_TRIPLE" \
+if ! ./configure --prefix "$PREFIX" --host="$CROSS_TRIPLE" \
   --disable-shared --without-system-ffi --enable-ipv6 \
   --enable-py-version-override="$PY_VERSION" \
-  --with-openssl="$DEPS_PREFIX" --with-libs="-lrt -pthread" \
-  $EXTRA_CONFIGURE_ARGS
+  --with-openssl="$DEPS_PREFIX" --with-libs="$WITH_LIBS" \
+  $EXTRA_CONFIGURE_ARGS; then
+    # Show log when failed to run configure.
+    cat config.log
+    exit 1
+fi
+
 
 export LDFLAGS=
 export CPPFLAGS=
