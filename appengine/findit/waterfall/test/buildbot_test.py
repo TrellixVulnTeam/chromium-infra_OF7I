@@ -2,11 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import base64
 from datetime import datetime
-import json
 import mock
-import unittest
 
 from buildbucket_proto import common_pb2
 from buildbucket_proto.build_pb2 import Build
@@ -14,14 +11,15 @@ from buildbucket_proto.build_pb2 import BuilderID
 from buildbucket_proto.rpc_pb2 import SearchBuildsResponse
 from buildbucket_proto.step_pb2 import Step
 
-from common import rpc_util
 from common.waterfall import buildbucket_client
 from libs.http.retry_http_client import RetryHttpClient
+from model.wf_build import WfBuild
 from services import git
 from waterfall import buildbot
+from waterfall.test import wf_testcase
 
 
-class BuildBotTest(unittest.TestCase):
+class BuildBotTest(wf_testcase.WaterfallTestCase):
 
   def setUp(self):
     super(BuildBotTest, self).setUp()
@@ -61,7 +59,15 @@ class BuildBotTest(unittest.TestCase):
       result = buildbot.GetMasterNameFromUrl(url)
       self.assertEqual(expected_result, result)
 
-  def testParseBuildUrl(self):
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
+  def testParseBuildUrl(self, mock_build):
+    build = Build(
+        id=8000000000000001,
+        number=321,
+        builder=BuilderID(project='chromium', bucket='ci', builder='b'))
+    build.input.properties['mastername'] = 'm'
+    mock_build.return_value = build
+
     cases = {
         None:
             None,
@@ -80,6 +86,7 @@ class BuildBotTest(unittest.TestCase):
                                                                    234),
         'https://luci-milo.appspot.com/buildbot/m2/b2/123': ('m2', 'b2', 123),
         'https://ci.chromium.org/buildbot/m2/b2/123': ('m2', 'b2', 123),
+        'https://ci.chromium.org/b/8000000000000001': ('m', 'b', 321),
     }
 
     for url, expected_result in cases.iteritems():
@@ -331,3 +338,28 @@ class BuildBotTest(unittest.TestCase):
     self.assertEqual(
         ('chromium', 'try'),
         buildbot.GetLuciProjectAndBucketForMaster('tryserver.chromium/linux'))
+
+  def testCreateBuildbucketUrlFromWfBuild(self):
+    master_name = 'm'
+    builder_name = 'b'
+    build_number = 101
+
+    b = WfBuild.Create(master_name, builder_name, build_number)
+    b.build_id = '800000000001'
+    b.put()
+    self.assertEqual(
+        'https://ci.chromium.org/b/800000000001',
+        buildbot.CreateBuildbucketUrl(master_name, builder_name, build_number))
+
+  @mock.patch.object(buildbucket_client, 'GetV2BuildByBuilderAndBuildNumber')
+  def testCreateBuildbucketUrl(self, mock_get_build):
+    build_id = 800000000001
+    mock_build = Build(id=build_id)
+    mock_get_build.return_value = mock_build
+
+    master_name = 'm'
+    builder_name = 'b'
+    build_number = 101
+    self.assertEqual(
+        'https://ci.chromium.org/b/800000000001',
+        buildbot.CreateBuildbucketUrl(master_name, builder_name, build_number))

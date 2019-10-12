@@ -329,7 +329,7 @@ class GetIsolateShaPipelineTest(WaterfallTestCase):
     self.execute_queued_tasks()
 
   @mock.patch.object(step_util, 'GetValidBoundingBuildsForStep')
-  @mock.patch.object(buildbot, 'CreateBuildUrl')
+  @mock.patch.object(buildbot, 'CreateBuildbucketUrl')
   @mock.patch.object(build_util, 'GetBuildInfo')
   @mock.patch.object(
       IsolatedTarget,

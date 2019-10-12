@@ -13,11 +13,11 @@ from model.flake.flake import DEFAULT_COMPONENT
 from model.flake.flake import Flake
 from model.flake.flake_issue import FlakeIssue
 from monorail_api import CustomizedField
-from services import build_url
 from services import git
 from services import issue_constants
 from services import monitoring
 from services import swarming
+from waterfall import buildbot
 
 # TODO(crbug.com/902408): Once underlying data models for Flake, FlakeIssue,
 # MasterFlakeAnalysis, etc. are updated to associate with each other for bug
@@ -215,9 +215,9 @@ def _GenerateMessageText(analysis):
   # Culprit not identified.
   analysis_link = _GenerateAnalysisLink(analysis)
 
-  build_link = build_url.CreateBuildUrl(analysis.original_master_name,
-                                        analysis.original_builder_name,
-                                        analysis.original_build_number)
+  build_link = buildbot.CreateBuildbucketUrl(analysis.original_master_name,
+                                             analysis.original_builder_name,
+                                             analysis.original_build_number)
   test_output_log_link = _GenerateTestOutputLogLink(analysis)
   return _UNKNOWN_CULPRIT_TEMPLATE.format(
       test_name=analysis.original_test_name,

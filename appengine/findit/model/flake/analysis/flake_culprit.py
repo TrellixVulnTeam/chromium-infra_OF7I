@@ -46,7 +46,7 @@ class FlakeCulprit(BaseSuspectedCL):
     assert analysis
 
     sample_build = build_id.split('/')
-    sample_build_url = buildbot.CreateBuildUrl(*sample_build)
+    sample_build_url = buildbot.CreateBuildbucketUrl(*sample_build)
     return textwrap.dedent("""
         Findit (https://goo.gl/kROfz5) identified CL at revision %s as the
         culprit for flakes in the build cycles as shown on:

@@ -15,6 +15,7 @@ from google.protobuf.field_mask_pb2 import FieldMask
 from common.waterfall import buildbucket_client
 from gae_libs.caches import PickledMemCache
 from libs.cache_decorator import Cached
+from model.wf_build import WfBuild
 from services import git
 from waterfall.build_info import BuildInfo
 
@@ -74,6 +75,9 @@ _STEP_URL_PATTERN = re.compile(
 
 _COMMIT_POSITION_PATTERN = re.compile(r'refs/heads/master@{#(\d+)}$',
                                       re.IGNORECASE)
+
+_BUILDBUCKET_BUILD_URL_PATTERN = re.compile(
+    r'^https?://ci\.chromium\.org/b/(\d+)$')
 
 
 def GetRecentCompletedBuilds(master_name, builder_name, page_size=None):
@@ -155,15 +159,12 @@ def _ParseBuildLongUrl(url):
   return master_name, builder_name, int(build_number)
 
 
-def ParseBuildUrl(url):
-  """Parses the given build url.
+def _ParseBuildbotBuildUrl(url):
+  """Parses the given build url using buildbot url format.
 
   Return:
     (master_name, builder_name, build_number)
   """
-  if not url:
-    return None
-
   match = None
   for pattern in _BUILD_URL_PATTERNS:
     match = pattern.match(url)
@@ -175,6 +176,36 @@ def ParseBuildUrl(url):
   master_name, builder_name, build_number = match.groups()
   builder_name = urllib.unquote(builder_name)
   return master_name, builder_name, int(build_number)
+
+
+def ParseBuildUrl(url):
+  """Parses the given build url.
+
+  Return:
+    (master_name, builder_name, build_number)
+  """
+  if not url:
+    return None
+
+  match = _BUILDBUCKET_BUILD_URL_PATTERN.match(url)
+  if not match:
+    return _ParseBuildbotBuildUrl(url)
+
+  build_id = match.groups()[0]
+  build = buildbucket_client.GetV2Build(
+      build_id,
+      FieldMask(paths=['id', 'number', 'builder', 'input.properties']))
+  if not build:
+    return None
+
+  input_properties = json_format.MessageToDict(build.input.properties)
+  master_name = input_properties.get('mastername')
+  if not master_name:
+    logging.error('No master name for build %d', build_id)
+    return None
+
+  return build.input.properties[
+      'mastername'], build.builder.builder, build.number
 
 
 def ParseStepUrl(url):
@@ -200,6 +231,27 @@ def CreateBuildUrl(master_name, builder_name, build_number):
   builder_name = urllib.quote(builder_name)
   return 'https://ci.chromium.org/buildbot/%s/%s/%s' % (
       master_name, builder_name, build_number)
+
+
+def GetBuildId(master_name, builder_name, build_number):
+  """Gets build_id based on legacy buildbot info."""
+  luci_project, bucket = GetLuciProjectAndBucketForMaster(master_name)
+  build = buildbucket_client.GetV2BuildByBuilderAndBuildNumber(
+      luci_project, bucket, builder_name, build_number, FieldMask(paths=['id']))
+  if not build:
+    logging.error('Failed to get build info for %s/%s/%d', master_name,
+                  builder_name, build_number)
+    return None
+  return build.id
+
+
+def CreateBuildbucketUrl(master_name, builder_name, build_number):
+  """Creates the buildbucket build url for the given build."""
+  build = WfBuild.Get(master_name, builder_name, build_number)
+  build_id = build.build_id if build and build.build_id else None
+  if not build_id:
+    build_id = GetBuildId(master_name, builder_name, build_number)
+  return 'https://ci.chromium.org/b/{}'.format(build_id) if build_id else None
 
 
 def GetCommitPosition(commit_position_line):

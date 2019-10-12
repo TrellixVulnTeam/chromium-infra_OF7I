@@ -45,6 +45,10 @@ class CreateRevertCLPipelineTest(wf_testcase.WaterfallTestCase):
     self.mock(git, 'GetCodeReviewInfoForACommit',
               MockGetCodeReviewInfoForACommit)
 
+  @mock.patch.object(
+      buildbot,
+      'CreateBuildbucketUrl',
+      return_value='https://ci.chromium.org/b/800000000001')
   @mock.patch.object(gerrit, '_GetCodeReview', return_value=Gerrit('host'))
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime(2017, 2, 1, 16, 0, 0))
@@ -96,7 +100,7 @@ class CreateRevertCLPipelineTest(wf_testcase.WaterfallTestCase):
         https://analysis.chromium.org/waterfall/culprit?key=%s\n
         Sample Failed Build: %s\n
         Sample Failed Step: %s""") % (commit_position, culprit.key.urlsafe(),
-                                      buildbot.CreateBuildUrl('m', 'b', '123'),
+                                      'https://ci.chromium.org/b/800000000001',
                                       'step')
     mock_revert.assert_called_with(
         reason, self.review_change_id, '20001', bug_id=None)

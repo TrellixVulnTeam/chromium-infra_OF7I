@@ -200,8 +200,9 @@ class GetIsolateShaForCommitPositionPipeline(GeneratorPipeline):
             builder_name=builder_name,
             build_number=earliest_containing_build.build_number,
             step_name=step_name,
-            url=buildbot.CreateBuildUrl(master_name, builder_name,
-                                        earliest_containing_build.build_number))
+            url=buildbot.CreateBuildbucketUrl(
+                master_name, builder_name,
+                earliest_containing_build.build_number))
         yield GetIsolateShaForBuildPipeline(get_build_sha_parameters)
         return
 

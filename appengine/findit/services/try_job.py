@@ -256,7 +256,8 @@ def GetBuildProperties(pipeline_input, try_job_type):
       'target_mastername':
           master_name,
       'referenced_build_url':
-          buildbot.CreateBuildUrl(master_name, builder_name, build_number),
+          buildbot.CreateBuildbucketUrl(master_name, builder_name,
+                                        build_number),
       'suspected_revisions':
           pipeline_input.suspected_revisions or [],
   }

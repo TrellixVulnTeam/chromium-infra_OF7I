@@ -2,12 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import mock
 import textwrap
 
 from gae_libs.testcase import TestCase
 
 from model.flake.analysis.flake_culprit import FlakeCulprit
 from model.flake.analysis.master_flake_analysis import MasterFlakeAnalysis
+from waterfall import buildbot
 
 
 class FlakeculpritTest(TestCase):
@@ -29,7 +31,11 @@ class FlakeculpritTest(TestCase):
         'https://analysis.chromium.org/p/chromium/flake-portal/analysis/'
         'culprit?key=%s' % culprit.key.urlsafe(), culprit.GetCulpritLink())
 
-  def testGenerateRevertReason(self):
+  @mock.patch.object(
+      buildbot,
+      'CreateBuildbucketUrl',
+      return_value='https://ci.chromium.org/b/800000000001')
+  def testGenerateRevertReason(self, _):
     analysis = MasterFlakeAnalysis.Create('m', 'b', 2, 's', 't')
     analysis.original_step_name = 's'
     analysis.original_test_name = 't'
@@ -46,7 +52,7 @@ class FlakeculpritTest(TestCase):
         Sample Flaky Test: t""") % (
         123,
         culprit.key.urlsafe(),
-        'https://ci.chromium.org/buildbot/m/b/2',
+        'https://ci.chromium.org/b/800000000001',
     )
 
     self.assertEqual(expected_reason,

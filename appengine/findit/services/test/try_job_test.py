@@ -38,6 +38,7 @@ from services.parameters import CompileFailureInfo
 from services.parameters import CompileHeuristicResult
 from services.parameters import CompileTryJobResult
 from services.parameters import RunCompileTryJobParameters
+from waterfall import buildbot
 from waterfall import waterfall_config
 from waterfall.build_info import BuildInfo
 from waterfall.test import wf_testcase
@@ -406,10 +407,13 @@ class TryJobTest(wf_testcase.WaterfallTestCase):
         analysis, CompileTryJobResult.FromSerializable(result))
     self.assertEqual(status, result_status.NOT_FOUND_INCORRECT)
 
-  def testGetBuildPropertiesWithSuspectedRevision(self):
+  @mock.patch.object(buildbot, 'CreateBuildbucketUrl')
+  def testGetBuildPropertiesWithSuspectedRevision(self, mock_build_url):
     master_name = 'm'
     builder_name = 'b'
     build_number = 1
+    build_url = 'https://ci.chromium.org/b/800000000001'
+    mock_build_url.return_value = build_url
 
     pipeline_input = RunCompileTryJobParameters(
         build_key=BuildKey(
@@ -421,16 +425,11 @@ class TryJobTest(wf_testcase.WaterfallTestCase):
         suspected_revisions=['rev'])
 
     expected_properties = {
-        'recipe':
-            'findit/chromium/compile',
-        'good_revision':
-            '1',
-        'bad_revision':
-            '2',
-        'target_mastername':
-            master_name,
-        'referenced_build_url': ('https://ci.chromium.org/buildbot/%s/%s/%s') %
-                                (master_name, builder_name, build_number),
+        'recipe': 'findit/chromium/compile',
+        'good_revision': '1',
+        'bad_revision': '2',
+        'target_mastername': master_name,
+        'referenced_build_url': build_url,
         'suspected_revisions': ['rev']
     }
     properties = try_job_service.GetBuildProperties(pipeline_input,

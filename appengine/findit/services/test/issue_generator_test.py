@@ -12,6 +12,7 @@ from model.flake.flake import Flake
 from model.flake.flake_issue import FlakeIssue
 from services import git
 from services import issue_generator
+from waterfall import buildbot
 from waterfall.test.wf_testcase import WaterfallTestCase
 
 _EXPECTED_GROUP_DESC = textwrap.dedent("""
@@ -90,11 +91,12 @@ class IssueGeneratorTest(WaterfallTestCase):
     self.assertIn('r123', comment)
     self.assertIn(culprit.key.urlsafe(), comment)
 
+  @mock.patch.object(buildbot, 'CreateBuildbucketUrl')
   @mock.patch.object(
       MasterFlakeAnalysis,
       'GetRepresentativeSwarmingTaskId',
       return_value='task_id')
-  def testGenerateMessageTextNoCulprit(self, _):
+  def testGenerateMessageTextNoCulprit(self, *_):
     master_name = 'm'
     builder_name = 'b'
     build_number = 100

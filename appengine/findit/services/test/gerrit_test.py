@@ -58,6 +58,10 @@ class GerritTest(wf_testcase.WaterfallTestCase):
         },
     }
 
+  @mock.patch.object(
+      buildbot,
+      'CreateBuildbucketUrl',
+      return_value='https://ci.chromium.org/b/800000000001')
   @mock.patch.object(gerrit, '_GetCodeReview', return_value=_CODEREVIEW)
   @mock.patch.object(waterfall_config, 'GetActionSettings', return_value={})
   @mock.patch.object(
@@ -109,7 +113,7 @@ class GerritTest(wf_testcase.WaterfallTestCase):
         https://analysis.chromium.org/waterfall/culprit?key=%s\n
         Sample Failed Build: %s\n
         Sample Failed Step: %s""") % (commit_position, culprit.key.urlsafe(),
-                                      buildbot.CreateBuildUrl('m', 'b', '1'),
+                                      'https://ci.chromium.org/b/800000000001',
                                       sample_failed_step)
     mock_gerrit.assert_called_once_with(
         reason, self.review_change_id, '20001', bug_id=None)
@@ -144,6 +148,10 @@ class GerritTest(wf_testcase.WaterfallTestCase):
         gerrit._SURVEY_LINK)
     mock_add.assert_called_once_with('54321', ['a@b.com'], message)
 
+  @mock.patch.object(
+      buildbot,
+      'CreateBuildbucketUrl',
+      return_value='https://ci.chromium.org/b/800000000001')
   @mock.patch.object(gerrit, '_GetCodeReview', return_value=_CODEREVIEW)
   @mock.patch.object(waterfall_config, 'GetActionSettings', return_value={})
   @mock.patch.object(
@@ -201,7 +209,7 @@ class GerritTest(wf_testcase.WaterfallTestCase):
       Sample Failed Step: %s\n
       Sample Flaky Test: %s""") % (
         commit_position or revision, culprit.key.urlsafe(),
-        buildbot.CreateBuildUrl('m', 'b', '1'), sample_failed_step, test_name)
+        'https://ci.chromium.org/b/800000000001', sample_failed_step, test_name)
     mock_gerrit.assert_called_once_with(
         reason, self.review_change_id, '20001', bug_id=1)
 

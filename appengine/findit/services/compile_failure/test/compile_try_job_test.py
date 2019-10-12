@@ -33,8 +33,8 @@ from services.parameters import CompileTryJobResult
 from services.parameters import IdentifyCompileTryJobCulpritParameters
 from services.parameters import RunCompileTryJobParameters
 from services.test.git_test import MockedChangeLog
+from waterfall import buildbot
 from waterfall import suspected_cl_util
-from waterfall import waterfall_config
 from waterfall.test import wf_testcase
 
 
@@ -1215,10 +1215,14 @@ class CompileTryJobTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(expected_result,
                      compile_try_job._GetUpdatedAnalysisResult(analysis, True))
 
-  def testGetBuildPropertiesWithCompileTargets(self):
+  @mock.patch.object(buildbot, 'CreateBuildbucketUrl')
+  def testGetBuildPropertiesWithCompileTargets(self, mock_build_url):
     master_name = u'm'
     builder_name = u'b'
     build_number = 1
+
+    build_url = 'https://ci.chromium.org/b/800000000001'
+    mock_build_url.return_value = build_url
 
     pipeline_input = RunCompileTryJobParameters(
         build_key=BuildKey(
@@ -1231,19 +1235,13 @@ class CompileTryJobTest(wf_testcase.WaterfallTestCase):
         compile_targets=[])
 
     expected_properties = {
-        'recipe':
-            'findit/chromium/compile',
-        'good_revision':
-            '1',
-        'bad_revision':
-            '2',
-        'target_mastername':
-            master_name,
-        'target_buildername':
-            'b',
+        'recipe': 'findit/chromium/compile',
+        'good_revision': '1',
+        'bad_revision': '2',
+        'target_mastername': master_name,
+        'target_buildername': 'b',
         'suspected_revisions': [],
-        'referenced_build_url': ('https://ci.chromium.org/buildbot/%s/%s/%s') %
-                                (master_name, builder_name, build_number),
+        'referenced_build_url': build_url,
         'compile_targets': [],
     }
     properties = compile_try_job.GetBuildProperties(pipeline_input)

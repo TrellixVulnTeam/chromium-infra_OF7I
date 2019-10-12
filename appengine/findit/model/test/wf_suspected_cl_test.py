@@ -2,11 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import mock
 import textwrap
 import unittest
 
 from libs import analysis_status as status
 from model.wf_suspected_cl import WfSuspectedCL
+from waterfall import buildbot
 
 
 class WfSuspectedCLTest(unittest.TestCase):
@@ -40,7 +42,11 @@ class WfSuspectedCLTest(unittest.TestCase):
         'https://analysis.chromium.org/waterfall/culprit?key=%s' %
         culprit.key.urlsafe(), culprit.GetCulpritLink())
 
-  def testGenerateRevertReason(self):
+  @mock.patch.object(
+      buildbot,
+      'CreateBuildbucketUrl',
+      return_value='https://ci.chromium.org/b/800000000001')
+  def testGenerateRevertReason(self, _):
     culprit = WfSuspectedCL.Create('chromium', 'r1', 123)
 
     expected_reason = textwrap.dedent("""
@@ -49,7 +55,7 @@ class WfSuspectedCLTest(unittest.TestCase):
           https://analysis.chromium.org/waterfall/culprit?key=%s\n
           Sample Failed Build: %s\n
           Sample Failed Step: %s""") % (
-        123, culprit.key.urlsafe(), 'https://ci.chromium.org/buildbot/m/b/2',
+        123, culprit.key.urlsafe(), 'https://ci.chromium.org/b/800000000001',
         's')
 
     self.assertEqual(expected_reason,

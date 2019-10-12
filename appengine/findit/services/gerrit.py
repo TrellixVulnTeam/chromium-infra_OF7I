@@ -179,7 +179,6 @@ def RevertCulprit(urlsafe_key, build_id, build_failure_type, sample_step_name,
   culprit_change_id = codereview_info['review_change_id']
 
   codereview = _GetCodeReview(codereview_info)
-  print codereview
 
   if not codereview or not culprit_change_id:  # pragma: no cover
     logging.error('Failed to get change id for %s/%s', repo_name, revision)
