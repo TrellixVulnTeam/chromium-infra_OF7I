@@ -302,7 +302,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "upload",
@@ -323,7 +323,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "issue",

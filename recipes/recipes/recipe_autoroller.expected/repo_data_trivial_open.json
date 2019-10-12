@@ -224,7 +224,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "status",
@@ -243,7 +243,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "set-close",
@@ -394,7 +394,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "upload",
@@ -417,7 +417,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "issue",
