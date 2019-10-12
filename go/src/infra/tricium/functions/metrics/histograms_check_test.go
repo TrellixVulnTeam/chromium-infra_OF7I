@@ -359,6 +359,41 @@ func TestHistogramsCheck(t *testing.T) {
 		})
 	})
 
+	// UNITS tests
+	Convey("Analyze XML file no errors, units of microseconds, all users", t, func() {
+		results := analyzeTestFile(t, "units/microseconds_all_users.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			defaultExpiryInfo("testdata/src/units/microseconds_all_users.xml"),
+		})
+	})
+
+	Convey("Analyze XML file no errors, units of microseconds, high-resolution", t, func() {
+		results := analyzeTestFile(t, "units/microseconds_high_res.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			defaultExpiryInfo("testdata/src/units/microseconds_high_res.xml"),
+		})
+	})
+
+	Convey("Analyze XML file no errors, units of microseconds, low-resolution", t, func() {
+		results := analyzeTestFile(t, "units/microseconds_low_res.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			defaultExpiryInfo("testdata/src/units/microseconds_low_res.xml"),
+		})
+	})
+
+	Convey("Analyze XML file with error: units of microseconds, bad summary", t, func() {
+		results := analyzeTestFile(t, "units/microseconds_bad_summary.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:  fmt.Sprintf("%s/%s", category, "Units"),
+				Message:   unitsMicrosecondsWarning,
+				StartLine: 3,
+				Path:      "testdata/src/units/microseconds_bad_summary.xml",
+			},
+			defaultExpiryInfo("testdata/src/units/microseconds_bad_summary.xml"),
+		})
+	})
+
 	// REMOVED HISTOGRAM tests
 	Convey("Analyze XML file with error: histogram deleted", t, func() {
 		results := analyzeTestFile(t, "rm/remove_histogram.xml", "testdata/tricium_generated_diff.patch", tempDir)

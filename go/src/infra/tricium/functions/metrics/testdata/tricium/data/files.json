@@ -24,7 +24,11 @@
 		{ "path": "src/owners/good_individuals.xml" },
 		{ "path": "src/owners/no_owners.xml" },
 		{ "path": "src/owners/one_owner.xml" },
-		{ "path": "src/rm/remove_histogram.xml" }
+		{ "path": "src/rm/remove_histogram.xml" },
+		{ "path": "src/units/microseconds_all_users.xml" },
+		{ "path": "src/units/microseconds_bad_summary.xml" },
+		{ "path": "src/units/microseconds_high_res.xml" },
+		{ "path": "src/units/microseconds_low_res.xml" }
 	],
 	"patch": "tricium_generated_diff.patch"
 }

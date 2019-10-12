@@ -61,6 +61,10 @@ Please double-check that this milestone is correct, because the tool is currentl
 please document when the histogram was removed,
 either as a date including a 2-digit month and 4-digit year,
 or a milestone in MXX format.`
+	unitsMicrosecondsWarning = `[WARNING] Histograms with units="microseconds" should document 
+whether the metrics is reported for all users or only users with high-resolution clocks.
+Note that reports from clients with low-resolution clocks (i.e. on Windows, ref. 
+|TimeTicks::IsHighResolution()|) may cause the metric to have an abnormal distribution.`
 	removedHistogramError = `[ERROR]: Do not delete %s from histograms.xml. 
 Instead, mark unused histograms as obsolete and annotate them with the date or milestone in the <obsolete> tag entry:
 https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries`
@@ -83,6 +87,8 @@ var (
 	// Match double-digit or spelled-out months
 	obsoleteMonthPattern     = regexp.MustCompile(`([^0-9](0[1-9]|10|11|12)[^0-9])|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec`)
 	obsoleteMilestonePattern = regexp.MustCompile(`M([0-9]{2,3})`)
+	// Match valid summaries for histograms with units=microseconds
+	microsecondsSummary = regexp.MustCompile(`all\suser|(high|low)(\s|-)resolution`)
 
 	// Now is an alias for time.Now, can be overwritten by tests
 	now              = time.Now
@@ -355,6 +361,9 @@ func checkHistogram(path string, histBytes []byte, metadata *Metadata) []*triciu
 	if comment := checkNonTeamOwner(path, histogram, metadata); comment != nil {
 		comments = append(comments, comment)
 	}
+	if comment := checkUnits(path, histogram, metadata); comment != nil {
+		comments = append(comments, comment)
+	}
 	if comment := checkObsolete(path, histogram, metadata); comment != nil {
 		comments = append(comments, comment)
 	}
@@ -395,6 +404,20 @@ func createOwnerComment(message string, path string, metadata *Metadata) *triciu
 		Path:      path,
 		StartLine: int32(metadata.OwnerLineNum),
 	}
+}
+
+func checkUnits(path string, histogram Histogram, metadata *Metadata) *tricium.Data_Comment {
+	if strings.Contains(histogram.Units, "microseconds") && !microsecondsSummary.MatchString(histogram.Summary) {
+		comment := &tricium.Data_Comment{
+			Category:  fmt.Sprintf("%s/%s", category, "Units"),
+			Message:   unitsMicrosecondsWarning,
+			Path:      path,
+			StartLine: int32(metadata.HistogramLineNum),
+		}
+		log.Printf("ADDING Comment for %s at line %d: %s", histogram.Name, comment.StartLine, "[ERROR]: Units Microseconds Bad Summary")
+		return comment
+	}
+	return nil
 }
 
 func checkObsolete(path string, histogram Histogram, metadata *Metadata) *tricium.Data_Comment {

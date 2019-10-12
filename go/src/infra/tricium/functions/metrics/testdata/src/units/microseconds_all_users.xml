@@ -1,0 +1,9 @@
+<histogram-configuration>
+    <histograms>
+        <histogram name="Test.Histogram1" units="microseconds" expires_after="2019-12-30">
+            <owner>ltina@google.com</owner>
+            <owner>chrome-metrics-team@google.com</owner>
+            <summary> This metric will be collected for all users. </summary>
+        </histogram>
+    </histograms>
+</histogram-configuration>
