@@ -148,7 +148,7 @@ func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string
 	attachFindItResults(c, filteredBuilderAlerts, a.FindIt)
 
 	alerts := []*messages.Alert{}
-	for _, ba := range builderAlerts {
+	for _, ba := range filteredBuilderAlerts {
 		title := fmt.Sprintf("Step %q failing on %d builder(s)", ba.StepAtFault.Step.Name, len(ba.Builders))
 		startTime := messages.TimeToEpochTime(time.Now())
 		severity := messages.NewFailure
