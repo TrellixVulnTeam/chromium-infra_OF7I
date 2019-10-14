@@ -190,7 +190,7 @@
       "vpython",
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/go/env.py",
-      "python",
+      "vpython",
       "RECIPE_REPO[depot_tools]/presubmit_support.py",
       "--root",
       "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",

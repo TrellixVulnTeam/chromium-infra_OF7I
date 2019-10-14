@@ -169,7 +169,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         gerrit_change = self.m.buildbucket.build.input.gerrit_changes[0]
         # The presubmit must be run with proper Go environment.
         presubmit_cmd = [
-          'python',  # env.py will replace with this its sys.executable.
+          'vpython',
           self.m.presubmit.presubmit_support_path,
           '--root', path.join(patch_root),
           '--commit',
