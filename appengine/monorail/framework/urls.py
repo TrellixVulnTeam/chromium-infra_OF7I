@@ -144,9 +144,6 @@ HOTLIST_CREATE = '/hosting/createHotlist'
 CAPTCHA_QUESTION = '/hosting/captcha'
 EXCESSIVE_ACTIVITY = '/hosting/excessiveActivity'
 BANNED = '/hosting/noAccess'
-NONPROJECT_COLLISION = '/hosting/collision'
-# This is for collisions that happen within a project, based at /p/projectname
-ARTIFACT_COLLISION = '/collision'
 CLIENT_MON = '/_/clientmon'
 TS_MON_JS = '/_/jstsmon'
 

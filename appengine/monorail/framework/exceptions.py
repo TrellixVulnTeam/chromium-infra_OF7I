@@ -108,15 +108,6 @@ class NoSuchGroupException(Error):
   pass
 
 
-class MidAirCollisionException(Error):
-  """The item was updated by another user at the same time."""
-
-  def __init__(self, name, continue_issue_id):
-    super(MidAirCollisionException, self).__init__()
-    self.name = name  # human-readable name for the artifact being edited.
-    self.continue_issue_id = continue_issue_id  # ID of issue to start over.
-
-
 class InvalidExternalIssueReference(Error):
   """Improperly formatted external issue reference.
 

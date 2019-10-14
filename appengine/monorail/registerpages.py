@@ -32,7 +32,6 @@ from features import spammodel
 from features import spamtraining
 from features import componentexport
 
-from framework import artifactcollision
 from framework import banned
 from framework import clientmon
 from framework import csp_report
@@ -307,7 +306,6 @@ class ServletRegistry(object):
         urls.CSP_REPORT: csp_report.CSPReportPage,
 
         # These are only shown to users if specific conditions are met.
-        urls.NONPROJECT_COLLISION: artifactcollision.ArtifactCollision,
         urls.EXCESSIVE_ACTIVITY: excessiveactivity.ExcessiveActivity,
         urls.BANNED: banned.Banned,
         urls.PROJECT_MOVED: moved.ProjectMoved,
@@ -324,11 +322,6 @@ class ServletRegistry(object):
         urls.WARMUP: warmup.Warmup,
         urls.START: warmup.Start,
         urls.STOP: warmup.Stop
-        })
-
-    self._SetupProjectServlets({
-        # Collisions can happen on artifacts within a project or outside.
-        urls.ARTIFACT_COLLISION: artifactcollision.ArtifactCollision,
         })
 
   def _RegisterSitewideHandlers(self):

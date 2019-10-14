@@ -434,15 +434,6 @@ class Servlet(webapp2.RequestHandler):
       # TODO(jrobbins): can we do better than an error page? not much.
       self.response.status = httplib.BAD_REQUEST
 
-    except exceptions.MidAirCollisionException as e:
-      logging.info('Mid-air collision detected.')
-      collision_page_url = urls.ARTIFACT_COLLISION
-      url = framework_helpers.FormatAbsoluteURL(
-          self.mr, collision_page_url, copy_params=False,
-          name=e.name, continue_issue_id=e.continue_issue_id,
-          ts=int(time.time()))
-      self.redirect(url, abort=True)
-
   def _DoCommonRequestProcessing(self, request, mr):
     """Do common processing dependent on having the user and project pbs."""
     with mr.profiler.Phase('basic processing'):
