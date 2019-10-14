@@ -12,7 +12,7 @@ import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-crbug-link/mr-crbug-link.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-star-button/mr-star-button.js';
-import {issueRefToUrl, issueToIssueRef,
+import {issueRefToUrl, issueToIssueRef, issueStringToRef,
   issueRefToString, labelRefsToOneWordLabels} from 'shared/converters.js';
 import {isTextInput} from 'shared/dom-helpers.js';
 import {urlWithNewParams, pluralize, setHasAny,
@@ -125,6 +125,12 @@ export class MrIssueList extends connectStore(LitElement) {
       }
       tr[selected] {
         background: var(--chops-selected-bg);
+      }
+      .first-column {
+        border-left: 4px solid transparent;
+      }
+      tr[cursored] > td.first-column {
+        border-left: 4px solid var(--chops-blue-700);
       }
       mr-crbug-link {
         visibility: hidden;
@@ -319,21 +325,25 @@ export class MrIssueList extends connectStore(LitElement) {
     const draggable = this.rerankEnabled && this.rerankEnabled(issue);
     const rowSelected = this._selectedIssues.has(issueRefToString(issue));
     const id = issueRefToString(issue);
+    const cursorId = issueRefToString(this.cursor);
+    const hasCursor = cursorId === id;
 
     return html`
       <tr
         class="row-${i} list-row ${i === this.srcIndex ? 'dragged' : ''}"
         ?selected=${rowSelected}
+        ?cursored=${hasCursor}
         ?hidden=${isHidden}
         draggable=${draggable}
+        data-issue-ref=${id}
         data-index=${i}
         @dragstart=${this._dragstart}
         @dragend=${this._dragend}
         @dragover=${this._dragover}
         @drop=${this._dragdrop}
+        @focus=${this._setRowAsCursorOnFocus}
         @click=${this._clickIssueRow}
         @auxclick=${this._clickIssueRow}
-        @keydown=${this._runListHotkeys}
         tabindex="0"
       >
         <td class="first-column ignore-navigation">
@@ -433,7 +443,8 @@ export class MrIssueList extends connectStore(LitElement) {
        */
       starringEnabled: {type: Boolean},
       /**
-       * Attribute set to make host element into a table. Do not override.
+       * Attribute set to make host element into a table for accessibility.
+       * Do not override.
        */
       role: {
         type: String,
@@ -447,9 +458,24 @@ export class MrIssueList extends connectStore(LitElement) {
       currentQuery: {type: String},
       /**
        * Object containing URL parameters to be preserved when issue links are
-       * clicked.
+       * clicked. This Object is only used for the purpose of preserving query
+       * parameters across links, not for the purpose of evaluating the query
+       * parameters themselves to get values like columns, sort, or q. This
+       * separation is important because we don't want to tightly couple this
+       * list component with a specific URL system.
        */
       queryParams: {type: Object},
+      /**
+       * The initial cursor that a list view uses. This attribute allows users
+       * of the list component to specify and control the cursor. When the
+       * initialCursor attribute updates, the list focuses the element specified
+       * by the cursor.
+       */
+      initialCursor: {type: String},
+      /**
+       * IssueRef Object specifying which issue the user is currently focusing.
+       */
+      _localCursor: {type: Object},
       /**
        * Set of group keys that are currently hidden.
        */
@@ -488,7 +514,7 @@ export class MrIssueList extends connectStore(LitElement) {
     this.columns = ['ID', 'Summary'];
     this.groups = [];
 
-    this._boundRunNavigationHotKeys = this._runNavigationHotKeys.bind(this);
+    this._boundRunListHotKeys = this._runListHotKeys.bind(this);
 
     this._hiddenGroups = new Set();
 
@@ -522,13 +548,13 @@ export class MrIssueList extends connectStore(LitElement) {
 
   firstUpdated() {
     // Only attach an event listener once the DOM has rendered.
-    window.addEventListener('keydown', this._boundRunNavigationHotKeys);
+    window.addEventListener('keydown', this._boundRunListHotKeys);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
 
-    window.removeEventListener('keydown', this._boundRunNavigationHotKeys);
+    window.removeEventListener('keydown', this._boundRunListHotKeys);
   }
 
   update(changedProperties) {
@@ -553,6 +579,16 @@ export class MrIssueList extends connectStore(LitElement) {
     }
 
     super.update(changedProperties);
+  }
+
+  updated(changedProperties) {
+    if (changedProperties.has('initialCursor')) {
+      const ref = issueStringToRef(this.projectName, this.initialCursor);
+      const row = this._getRowFromIssueRef(ref);
+      if (row) {
+        row.focus();
+      }
+    }
   }
 
   /**
@@ -624,6 +660,23 @@ export class MrIssueList extends connectStore(LitElement) {
       }
     });
     return [...issuesByGroup.values()];
+  }
+
+  /**
+   * The currently selected issue, as a function of this._localCursor
+   * and this.queryParams.cursor. _localCursor overrides queryParams.
+   *
+   * @return {Object} IssueRef with {projectName, localId} for the currently
+   * selected issue.
+   */
+  get cursor() {
+    if (this._localCursor) {
+      return this._localCursor;
+    }
+    if (this.initialCursor) {
+      return issueStringToRef(this.projectName, this.initialCursor);
+    }
+    return {};
   }
 
   _groupNameForIssue(issue) {
@@ -769,36 +822,41 @@ export class MrIssueList extends connectStore(LitElement) {
     return window.location.pathname;
   }
 
-  // Navigate between issues in the list by focusing them. These keys
-  // need to be bound globally because the user can run these actions
-  // even when they are not currently focusing an issue.
-  _runNavigationHotKeys(e) {
+  // Run issue list hot keys. This event handler needs to be bound globally
+  //
+  _runListHotKeys(e) {
     if (!this.issues || !this.issues.length) return;
     const target = e.path ? e.path[0] : e.target;
     if (!target || isTextInput(target)) return;
     const key = e.key;
+
+    const activeRow = this._getCursorElement();
+
+    let i = -1;
+    if (activeRow) {
+      i = Number.parseInt(activeRow.dataset.index);
+
+      const issue = this.issues[i];
+
+      switch (key) {
+        case 's': // Star focused issue.
+          this.starIssue(issueToIssueRef(issue));
+          return;
+        case 'x': // Toggle selection of focused issue.
+          const key = issueRefToString(issue);
+          this._updateSelectedIssues([key], !this._selectedIssues.has(key));
+          return;
+        case 'o': // Open current issue.
+        case 'O': // Open current issue in new tab.
+          this._navigateToIssue(issue, e.shiftKey);
+          return;
+      }
+    }
+
+    // Move up and down the issue list.
+    // 'j' moves 'down'.
+    // 'k' moves 'up'.
     if (key === 'j' || key === 'k') {
-      let activeRow = this.shadowRoot.activeElement;
-
-      // If the focused element is a child of a table row, find the parent
-      // table row to navigate users to the prev/next issue relative to where
-      // they are focused.
-      while (activeRow && (activeRow.tagName.toUpperCase() !== 'TR'
-          || !activeRow.classList.contains('list-row'))) {
-        // This loop is guaranteed to run in the DOM within this component's
-        // template because of ShadowDOM. Neither HTMLElement.activeElement
-        // nor HTMLElement.parentElement penetrate shadow roots.
-        // This guarantees that we don't need to worry about <tr> tags or
-        // class="list-row" elements anywhere else on the page, including
-        // nested inside the element.
-        activeRow = activeRow.parentElement;
-      }
-
-      let i = -1;
-      if (activeRow) {
-        i = Number.parseInt(activeRow.dataset.index);
-      }
-
       if (key === 'j') { // Navigate down the list.
         i += 1;
         if (i >= this.issues.length) {
@@ -811,32 +869,33 @@ export class MrIssueList extends connectStore(LitElement) {
         }
       }
 
-      const row = this.shadowRoot.querySelector(`.row-${i}`);
-      row.focus();
+      const nextRow = this.shadowRoot.querySelector(`.row-${i}`);
+      this._setRowAsCursor(nextRow);
     }
   }
 
-  // Issue list hot key actions
-  _runListHotkeys(e) {
-    const target = e.target;
-    const i = Number.parseInt(target.dataset.index);
-    if (Number.isNaN(i)) return;
-
-    const issue = this.issues[i];
-
-    switch (e.key) {
-      case 's': // Star focused issue.
-        this.starIssue(issueToIssueRef(issue));
-        break;
-      case 'x': // Toggle selection of focused issue.
-        const key = issueRefToString(issue);
-        this._updateSelectedIssues([key], !this._selectedIssues.has(key));
-        break;
-      case 'o': // Open current issue.
-      case 'O': // Open current issue in new tab.
-        this._navigateToIssue(issue, e.shiftKey);
-        break;
+  _getCursorElement() {
+    const cursor = this.cursor;
+    if (cursor) {
+      // If there's a cursor set, use that instead of focus.
+      return this._getRowFromIssueRef(cursor);
     }
+    return;
+  }
+
+  _setRowAsCursorOnFocus(e) {
+    this._setRowAsCursor(e.target);
+  }
+
+  _setRowAsCursor(row) {
+    this._localCursor = issueStringToRef(this.projectName,
+        row.dataset.issueRef);
+    row.focus();
+  }
+
+  _getRowFromIssueRef(ref) {
+    return this.shadowRoot.querySelector(
+        `.list-row[data-issue-ref="${issueRefToString(ref)}"]`);
   }
 
   starIssue(issueRef) {

@@ -598,6 +598,61 @@ describe('mr-issue-list', () => {
     });
   });
 
+  describe('cursor', () => {
+    beforeEach(() => {
+      element.issues = [
+        {localId: 1, projectName: 'chromium'},
+        {localId: 2, projectName: 'chromium'},
+      ];
+    });
+
+    it('empty when no initialCursor', () => {
+      assert.deepEqual(element.cursor, {});
+
+      element.initialCursor = '';
+      assert.deepEqual(element.cursor, {});
+    });
+
+    it('parses initialCursor value', () => {
+      element.initialCursor = '1';
+      element.projectName = 'chromium';
+
+      assert.deepEqual(element.cursor, {projectName: 'chromium', localId: 1});
+
+      element.initialCursor = 'chromium:1';
+      assert.deepEqual(element.cursor, {projectName: 'chromium', localId: 1});
+    });
+
+    it('overrides initialCursor with _localCursor', () => {
+      element.initialCursor = 'chromium:1';
+      element._localCursor = {projectName: 'gerrit', localId: 2};
+
+      assert.deepEqual(element.cursor, {projectName: 'gerrit', localId: 2});
+    });
+
+    it('initialCursor renders cursor and focuses element', async () => {
+      element.initialCursor = 'chromium:1';
+
+      await element.updateComplete;
+
+      const row = element.shadowRoot.querySelector('.row-0');
+      assert.isTrue(row.hasAttribute('cursored'));
+      listRowIsFocused(element, 0);
+    });
+
+    it('cursor value updated when row is focused', async () => {
+      element.initialCursor = 'chromium:1';
+
+      await element.updateComplete;
+
+      // HTMLElement.focus() seems to cause a timing related flake here.
+      element.shadowRoot.querySelector('.row-1').dispatchEvent(
+          new Event('focus'));
+
+      assert.deepEqual(element.cursor, {projectName: 'chromium', localId: 2});
+    });
+  });
+
   describe('hot keys', () => {
     beforeEach(() => {
       element.issues = [
@@ -616,17 +671,17 @@ describe('mr-issue-list', () => {
     });
 
     it('global keydown listener removed on disconnect', async () => {
-      sinon.stub(element, '_boundRunNavigationHotKeys');
+      sinon.stub(element, '_boundRunListHotKeys');
 
       await element.updateComplete;
 
       window.dispatchEvent(new Event('keydown'));
-      sinon.assert.calledOnce(element._boundRunNavigationHotKeys);
+      sinon.assert.calledOnce(element._boundRunListHotKeys);
 
       document.body.removeChild(element);
 
       window.dispatchEvent(new Event('keydown'));
-      sinon.assert.calledOnce(element._boundRunNavigationHotKeys);
+      sinon.assert.calledOnce(element._boundRunListHotKeys);
 
       document.body.appendChild(element);
     });
@@ -640,9 +695,9 @@ describe('mr-issue-list', () => {
     });
 
     it('pressing j focuses next issue', async () => {
-      await element.updateComplete;
+      element.initialCursor = 'chromium:1';
 
-      element.shadowRoot.querySelector('.row-0').focus();
+      await element.updateComplete;
 
       window.dispatchEvent(new KeyboardEvent('keydown', {key: 'j'}));
 
@@ -673,9 +728,9 @@ describe('mr-issue-list', () => {
     });
 
     it('pressing k focuses previous issue', async () => {
-      await element.updateComplete;
+      element.initialCursor = 'chromium:3';
 
-      element.shadowRoot.querySelector('.row-2').focus();
+      await element.updateComplete;
 
       window.dispatchEvent(new KeyboardEvent('keydown', {key: 'k'}));
 
@@ -764,65 +819,69 @@ describe('mr-issue-list', () => {
       document.body.removeChild(root);
     });
 
-    it('pressing s stars focused issue', async () => {
-      element.starringEnabled = true;
-      sinon.stub(element, 'starIssue');
-      await element.updateComplete;
+    describe('starring issue', () => {
+      beforeEach(() => {
+        element.starringEnabled = true;
+        element.initialCursor = 'chromium:2';
+      });
 
-      const row = element.shadowRoot.querySelector('.row-1');
-      row.dispatchEvent(new KeyboardEvent('keydown', {key: 's'}));
+      it('pressing s stars focused issue', async () => {
+        sinon.stub(element, 'starIssue');
+        await element.updateComplete;
 
-      sinon.assert.calledWith(element.starIssue,
-          {localId: 2, projectName: 'chromium'});
-    });
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: 's'}));
 
-    it('starIssue does not star issue while stars are fetched', () => {
-      element.starringEnabled = true;
-      sinon.stub(element, '_starIssue');
-      element._fetchingStarredIssues = true;
+        sinon.assert.calledWith(element.starIssue,
+            {localId: 2, projectName: 'chromium'});
+      });
 
-      element.starIssue({localId: 2, projectName: 'chromium'});
+      it('starIssue does not star issue while stars are fetched', () => {
+        sinon.stub(element, '_starIssue');
+        element._fetchingStarredIssues = true;
 
-      sinon.assert.notCalled(element._starIssue);
-    });
+        element.starIssue({localId: 2, projectName: 'chromium'});
 
-    it('starIssue does not star when issue is being starred', () => {
-      element.starringEnabled = true;
-      sinon.stub(element, '_starIssue');
-      element._starringIssues = new Map([['chromium:2', {requesting: true}]]);
+        sinon.assert.notCalled(element._starIssue);
+      });
 
-      element.starIssue({localId: 2, projectName: 'chromium'});
+      it('starIssue does not star when issue is being starred', () => {
+        sinon.stub(element, '_starIssue');
+        element._starringIssues = new Map([['chromium:2', {requesting: true}]]);
 
-      sinon.assert.notCalled(element._starIssue);
-    });
+        element.starIssue({localId: 2, projectName: 'chromium'});
 
-    it('starIssue stars issue when issue is not being starred', () => {
-      element.starringEnabled = true;
-      sinon.stub(element, '_starIssue');
-      element._starringIssues = new Map([['chromium:2', {requesting: false}]]);
+        sinon.assert.notCalled(element._starIssue);
+      });
 
-      element.starIssue({localId: 2, projectName: 'chromium'});
+      it('starIssue stars issue when issue is not being starred', () => {
+        sinon.stub(element, '_starIssue');
+        element._starringIssues = new Map([
+          ['chromium:2', {requesting: false}],
+        ]);
 
-      sinon.assert.calledWith(element._starIssue,
-          {localId: 2, projectName: 'chromium'}, true);
-    });
+        element.starIssue({localId: 2, projectName: 'chromium'});
 
-    it('starIssue unstars issue when issue is already starred', () => {
-      element.starringEnabled = true;
-      sinon.stub(element, '_starIssue');
-      element._starredIssues = new Set(['chromium:2']);
+        sinon.assert.calledWith(element._starIssue,
+            {localId: 2, projectName: 'chromium'}, true);
+      });
 
-      element.starIssue({localId: 2, projectName: 'chromium'});
+      it('starIssue unstars issue when issue is already starred', () => {
+        sinon.stub(element, '_starIssue');
+        element._starredIssues = new Set(['chromium:2']);
 
-      sinon.assert.calledWith(element._starIssue,
-          {localId: 2, projectName: 'chromium'}, false);
+        element.starIssue({localId: 2, projectName: 'chromium'});
+
+        sinon.assert.calledWith(element._starIssue,
+            {localId: 2, projectName: 'chromium'}, false);
+      });
     });
 
     it('pressing x selects focused issue', async () => {
+      element.initialCursor = 'chromium:2';
+
       await element.updateComplete;
 
-      const row = element.shadowRoot.querySelector('.row-1');
-      row.dispatchEvent(new KeyboardEvent('keydown', {key: 'x'}));
+      window.dispatchEvent(new KeyboardEvent('keydown', {key: 'x'}));
 
       await element.updateComplete;
 
@@ -832,10 +891,11 @@ describe('mr-issue-list', () => {
     });
 
     it('pressing o navigates to focused issue', async () => {
+      element.initialCursor = 'chromium:2';
+
       await element.updateComplete;
 
-      const row = element.shadowRoot.querySelector('.row-1');
-      row.dispatchEvent(new KeyboardEvent('keydown', {key: 'o'}));
+      window.dispatchEvent(new KeyboardEvent('keydown', {key: 'o'}));
 
       await element.updateComplete;
 
@@ -845,10 +905,11 @@ describe('mr-issue-list', () => {
     });
 
     it('pressing shift+o opens focused issue in new tab', async () => {
+      element.initialCursor = 'chromium:2';
+
       await element.updateComplete;
 
-      const row = element.shadowRoot.querySelector('.row-1');
-      row.dispatchEvent(new KeyboardEvent('keydown',
+      window.dispatchEvent(new KeyboardEvent('keydown',
           {key: 'O', shiftKey: true}));
 
       await element.updateComplete;

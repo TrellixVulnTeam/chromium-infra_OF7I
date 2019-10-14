@@ -193,6 +193,7 @@ export class MrListPage extends connectStore(LitElement) {
         .issues=${this.issues}
         .projectName=${this.projectName}
         .queryParams=${this.queryParams}
+        .initialCursor=${this.queryParams.cursor}
         .currentQuery=${this.currentQuery}
         .currentCan=${this.currentCan}
         .columns=${this.columns}
