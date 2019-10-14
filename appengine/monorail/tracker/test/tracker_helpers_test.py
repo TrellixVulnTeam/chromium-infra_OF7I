@@ -518,6 +518,16 @@ class HelpersTest(unittest.TestCase):
     self.assertEqual([('otherproj', 2)], parsed_blockers.dangling_refs)
     settings.recognized_codesite_projects = real_codesite_projects
 
+  def testParseBlockers_FederatedReferences(self):
+    """Should parse and return FedRefs."""
+    post_data = {'id': '9', tracker_helpers.BLOCKING: '2, b/123, 3, b/789'}
+    parsed_blockers = tracker_helpers._ParseBlockers(
+        self.cnxn, post_data, self.services, self.errors, 'testproj',
+        tracker_helpers.BLOCKING)
+    self.assertEqual('2, b/123, 3, b/789', parsed_blockers.entered_str)
+    self.assertEqual([100002, 100003], parsed_blockers.iids)
+    self.assertEqual(['b/123', 'b/789'], parsed_blockers.federated_ref_strings)
+
   def testIsValidIssueOwner(self):
     project = project_pb2.Project()
     project.owner_ids.extend([1, 2])

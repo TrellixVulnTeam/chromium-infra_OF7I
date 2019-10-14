@@ -559,6 +559,36 @@ class IssueServiceTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertEqual(1, actual_local_id)
 
+  def testCreateIssue_FederatedReferences(self):
+    self.SetUpAllocateNextLocalID(789, None, None)
+    self.SetUpInsertIssue(dangling_relation_rows=[
+        (78901, None, None, 'b/1234', 'blockedon'),
+        (78901, None, None, 'b/5678', 'blockedon'),
+        (78901, None, None, 'b/9876', 'blocking'),
+        (78901, None, None, 'b/5432', 'blocking')])
+    self.SetUpInsertComment(7890101, is_description=True)
+    self.services.spam.ClassifyIssue(mox.IsA(tracker_pb2.Issue),
+        mox.IsA(tracker_pb2.IssueComment), self.reporter, False).AndReturn(
+        self.classifierResult(0.0))
+    self.services.spam.RecordClassifierIssueVerdict(self.cnxn,
+        mox.IsA(tracker_pb2.Issue), mox.IgnoreArg(), mox.IgnoreArg(),
+        mox.IgnoreArg())
+    self.SetUpUpdateIssuesModified(set())
+    self.SetUpEnqueueIssuesForIndexing([78901])
+
+    self.mox.ReplayAll()
+    self.services.issue.CreateIssue(
+        self.cnxn, self.services, 789, 'sum',
+        'New', 111, [], ['Type-Defect'], [], [], 111, 'content',
+        index_now=False, timestamp=self.now,
+        dangling_blocked_on=[
+          tracker_pb2.DanglingIssueRef(ext_issue_identifier=shortlink)
+          for shortlink in ['b/1234', 'b/5678']],
+        dangling_blocking=[
+          tracker_pb2.DanglingIssueRef(ext_issue_identifier=shortlink)
+          for shortlink in ['b/9876', 'b/5432']])
+    self.mox.VerifyAll()
+
   def testCreateIssue_Imported(self):
     settings.classifier_spam_thresh = 0.9
     self.SetUpAllocateNextLocalID(789, None, None)
@@ -686,7 +716,8 @@ class IssueServiceTest(unittest.TestCase):
     self.assertEqual(locations, [(781, 1), (782, 11)])
 
   def SetUpInsertIssue(
-      self, label_rows=None, av_rows=None, approver_rows=None):
+      self, label_rows=None, av_rows=None, approver_rows=None,
+      dangling_relation_rows=None):
     row = (789, 1, 1, 111, 111,
            self.now, 0, self.now, self.now, self.now, self.now,
            None, 0,
@@ -704,7 +735,8 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpUpdateIssuesComponents()
     self.SetUpUpdateIssuesCc()
     self.SetUpUpdateIssuesNotify()
-    self.SetUpUpdateIssuesRelation()
+    self.SetUpUpdateIssuesRelation(
+        dangling_relation_rows=dangling_relation_rows)
     self.SetUpUpdateIssuesApprovals(
         av_rows=av_rows, approver_rows=approver_rows)
     self.services.chart.StoreIssueSnapshots(self.cnxn, mox.IgnoreArg(),

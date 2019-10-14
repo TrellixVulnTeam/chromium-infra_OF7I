@@ -24,6 +24,7 @@ from six import string_types
 
 import settings
 
+from features import federated
 from framework import authdata
 from framework import exceptions
 from framework import filecontent
@@ -117,7 +118,8 @@ ParsedUsers = collections.namedtuple(
     'ParsedUsers', 'owner_username, owner_id, cc_usernames, '
     'cc_usernames_remove, cc_ids, cc_ids_remove')
 ParsedBlockers = collections.namedtuple(
-    'ParsedBlockers', 'entered_str, iids, dangling_refs')
+    'ParsedBlockers', 'entered_str, iids, dangling_refs, '
+    'federated_ref_strings')
 ParsedHotlistRef = collections.namedtuple(
     'ParsedHotlistRef', 'user_email, hotlist_name')
 ParsedHotlists = collections.namedtuple(
@@ -388,9 +390,15 @@ def _ParseBlockers(cnxn, post_data, services, errors, default_project_name,
   entered_str = post_data.get(field_name, '').strip()
   blocker_iids = []
   dangling_ref_tuples = []
+  federated_ref_strings = []
 
   issue_ref = None
   for ref_str in re.split('[,;\s]+', entered_str):
+    # Handle federated references.
+    if federated.IsShortlinkValid(ref_str):
+        federated_ref_strings.append(ref_str)
+        continue
+
     try:
       issue_ref = tracker_bizobj.ParseIssueRef(ref_str)
     except ValueError:
@@ -430,7 +438,8 @@ def _ParseBlockers(cnxn, post_data, services, errors, default_project_name,
 
   blocker_iids.sort()
   dangling_ref_tuples.sort()
-  return ParsedBlockers(entered_str, blocker_iids, dangling_ref_tuples)
+  return ParsedBlockers(entered_str, blocker_iids, dangling_ref_tuples,
+      federated_ref_strings)
 
 
 def PairDerivedValuesWithRuleExplanations(

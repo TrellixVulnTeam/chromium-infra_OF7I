@@ -352,7 +352,14 @@ class IssueEntry(servlet.Servlet):
               parsed.users.owner_id, parsed.users.cc_ids, labels, field_values,
               component_ids, marked_description,
               blocked_on=parsed.blocked_on.iids,
-              blocking=parsed.blocking.iids, attachments=parsed.attachments,
+              blocking=parsed.blocking.iids,
+              dangling_blocked_on=[
+                tracker_pb2.DanglingIssueRef(ext_issue_identifier=ref_string)
+                for ref_string in parsed.blocked_on.federated_ref_strings],
+              dangling_blocking=[
+                tracker_pb2.DanglingIssueRef(ext_issue_identifier=ref_string)
+                for ref_string in parsed.blocking.federated_ref_strings],
+              attachments=parsed.attachments,
               approval_values=approval_values, phases=phases)
 
           if has_star:

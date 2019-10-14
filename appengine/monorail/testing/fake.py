@@ -1620,7 +1620,8 @@ class IssueService(object):
       summary, status, owner_id, cc_ids, labels, field_values,
       component_ids, reporter_id, marked_description, blocked_on=None,
       blocking=None, attachments=None, timestamp=None, index_now=False,
-      phases=None, approval_values=None, importer_id=None):
+      phases=None, approval_values=None, importer_id=None,
+      dangling_blocked_on=None, dangling_blocking=None):
     issue = tracker_pb2.Issue()
     issue.project_id = project_id
     if services and services.project:
@@ -1647,6 +1648,11 @@ class IssueService(object):
 
     if blocking:
       issue.blocking_iids.extend(blocking)
+
+    if dangling_blocked_on is not None:
+      issue.dangling_blocked_on_refs = dangling_blocked_on
+    if dangling_blocking is not None:
+      issue.dangling_blocking_refs = dangling_blocking
 
     if phases:
       issue.phases = phases

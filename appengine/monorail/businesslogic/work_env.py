@@ -696,7 +696,8 @@ class WorkEnv(object):
       self, project_id, summary, status, owner_id, cc_ids, labels,
       field_values, component_ids, marked_description, blocked_on=None,
       blocking=None, attachments=None, phases=None, approval_values=None,
-      send_email=True, reporter_id=None, timestamp=None):
+      send_email=True, reporter_id=None, timestamp=None,
+      dangling_blocked_on=None, dangling_blocking=None):
     """Create and store a new issue with all the given information.
 
     Args:
@@ -719,6 +720,8 @@ class WorkEnv(object):
       reporter_id: optional user ID of a different user to attribute this
           issue report to.  The requester must have the ImportComment perm.
       timestamp: optional int timestamp of an imported issue.
+      dangling_blocked_on: a list of DanglingIssueRefs this issue is blocked on.
+      dangling_blocking: a list of DanglingIssueRefs that this issue blocks.
 
     Returns:
       A tuple (newly created Issue, Comment PB for the description).
@@ -740,7 +743,8 @@ class WorkEnv(object):
           marked_description, blocked_on=blocked_on, blocking=blocking,
           attachments=attachments, index_now=False, phases=phases,
           approval_values=approval_values, timestamp=timestamp,
-          importer_id=importer_id)
+          importer_id=importer_id, dangling_blocked_on=dangling_blocked_on,
+          dangling_blocking=dangling_blocking)
       logging.info('created issue %r in project %r', new_local_id, project_id)
 
     with self.mc.profiler.Phase('following up after issue creation'):

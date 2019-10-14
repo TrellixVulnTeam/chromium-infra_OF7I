@@ -689,6 +689,28 @@ class IssueEntryTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertTrue('/p/proj/issues/detail?id=' in url)
 
+  def testProcessFormData_AcceptsFederatedReferences(self):
+    """ProcessFormData accepts federated references."""
+    mr = testing_helpers.MakeMonorailRequest(
+        path='/p/proj/issues/entry', project=self.project)
+    mr.auth.user_view = framework_views.StuffUserView(100, 'user@invalid', True)
+    mr.auth.effective_ids = set([100])
+
+    post_data = fake.PostData(
+        summary=['fake summary'],
+        comment=['fake comment'],
+        status=['New'],
+        template_name='rutabaga',
+        blocking=['b/123, b/987'],
+        blockedon=['b/456, b/654'])
+
+    self.mox.ReplayAll()
+    self.servlet.ProcessFormData(mr, post_data)
+
+    self.mox.VerifyAll()
+    self.assertIsNone(mr.errors.blockedon)
+    self.assertIsNone(mr.errors.blocking)
+
   def testAttachDefaultApprovers(self):
     config = tracker_bizobj.MakeDefaultProjectIssueConfig(789)
     config.approval_defs = [

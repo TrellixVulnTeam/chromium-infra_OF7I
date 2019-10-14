@@ -621,7 +621,7 @@ class IssueService(object):
       owner_id, cc_ids, labels, field_values, component_ids, reporter_id,
       marked_description, blocked_on=None, blocking=None, attachments=None,
       timestamp=None, index_now=False, phases=None, approval_values=None,
-      importer_id=None):
+      importer_id=None, dangling_blocked_on=None, dangling_blocking=None):
     """Create and store a new issue with all the given information.
 
     Args:
@@ -646,6 +646,8 @@ class IssueService(object):
       phases: list of Phase PBs, if any.
       approval_values: list of ApprovalValue PBs, if any.
       importer_id: optional user ID of API client importing issues for users.
+      dangling_blocked_on: a list of DanglingIssueRefs this issue is blocked on.
+      dangling_blocking: a list of DanglingIssueRefs that this issue blocks.
 
     Returns:
       A tuple (the integer local ID of the new issue, Comment PB for the
@@ -677,6 +679,10 @@ class IssueService(object):
     if blocking is not None:
       iids_to_invalidate.update(blocking)
       issue.blocking_iids = blocking
+    if dangling_blocked_on is not None:
+      issue.dangling_blocked_on_refs = dangling_blocked_on
+    if dangling_blocking is not None:
+      issue.dangling_blocking_refs = dangling_blocking
     if attachments:
       issue.attachment_count = len(attachments)
     if phases:
