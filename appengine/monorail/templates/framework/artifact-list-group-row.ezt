@@ -22,7 +22,7 @@ Args:
         [end]
         [is any_group_value "Yes"]
           [for table_data.group.cells.values]
-            [table_data.group.cells.group_name]=[table_data.group.cells.values.item]
+            [table_data.group.cells.group_name]=[is table_data.group.cells.type "issues"][table_data.group.cells.values.item.id][else][table_data.group.cells.values.item][end]
           [end]
         [else]
           -has:[table_data.group.cells.group_name]
