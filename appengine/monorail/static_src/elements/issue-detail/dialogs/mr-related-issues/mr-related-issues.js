@@ -183,7 +183,8 @@ export class MrRelatedIssues extends connectStore(LitElement) {
       const isClosed = issue.statusRef ? !issue.statusRef.meansOpen : false;
       let summary = issue.summary;
       if (issue.extIdentifier) {
-        summary = '(not available)';
+        // Some federated references will have summaries.
+        summary = issue.summary || '(not available)';
       }
       const row = {
         // Disallow reranking FedRefs/DanglingIssueRelations.

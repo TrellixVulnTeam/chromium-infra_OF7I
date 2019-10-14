@@ -76,6 +76,14 @@ class FederatedIssue {
     throw new Error('Not implemented.');
   }
 
+  // toIssueRef converts the FedRef's information into an object having the
+  // IssueRef format everywhere on the front-end expects.
+  toIssueRef() {
+    return {
+      extIdentifier: this.shortlink,
+    };
+  }
+
   // trackerName should return the name of the bug tracker.
   get trackerName() {
     throw new Error('Not implemented.');
@@ -92,6 +100,7 @@ export class GoogleIssueTrackerIssue extends FederatedIssue {
   constructor(shortlink) {
     super(shortlink);
     this.issueID = Number(shortlink.substr(2));
+    this._federatedDetails = null;
   }
 
   shortlinkRe() {
@@ -106,22 +115,56 @@ export class GoogleIssueTrackerIssue extends FederatedIssue {
     return 'Buganizer';
   }
 
-  async isOpen() {
+  async getFederatedDetails() {
+    // Prevent fetching details more than once.
+    if (this._federatedDetails) {
+      return this._federatedDetails;
+    }
+
     await loadGapi();
     const email = await fetchGapiEmail();
     if (!email) {
       // Fail open.
       return true;
     }
-
     const res = await this._loadGoogleIssueTrackerIssue(this.issueID);
     if (!res || !res.result) {
+      // Fail open.
+      return null;
+    }
+
+    this._federatedDetails = res.result;
+    return this._federatedDetails;
+  }
+
+  // isOpen assumes getFederatedDetails has already been called, otherwise
+  // it will fail open (returning that the issue is open).
+  get isOpen() {
+    if (!this._federatedDetails) {
       // Fail open.
       return true;
     }
 
     // Open issues will not have a `resolvedTime`.
-    return !Boolean(res.result.resolvedTime);
+    return !Boolean(this._federatedDetails.resolvedTime);
+  }
+
+  // summary assumes getFederatedDetails has already been called.
+  get summary() {
+    if (this._federatedDetails &&
+        this._federatedDetails.issueState &&
+        this._federatedDetails.issueState.title) {
+      return this._federatedDetails.issueState.title;
+    }
+    return null;
+  }
+
+  toIssueRef() {
+    return {
+      extIdentifier: this.shortlink,
+      summary: this.summary,
+      statusRef: {meansOpen: this.isOpen},
+    };
   }
 
   get _APIURL() {

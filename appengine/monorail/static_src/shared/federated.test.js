@@ -65,7 +65,7 @@ describe('GoogleIssueTrackerIssue', () => {
     });
   });
 
-  describe('isOpen', () => {
+  describe('federated details', () => {
     let signinImpl;
     beforeEach(() => {
       window.CS_env = {gapi_client_id: 'rutabaga'};
@@ -86,10 +86,51 @@ describe('GoogleIssueTrackerIssue', () => {
       delete window.CS_env;
     });
 
-    it('Returns a Promise', () => {
-      const issue = new GoogleIssueTrackerIssue('b/1234');
-      const actual = issue.isOpen();
-      assert.instanceOf(actual, Promise);
+    describe('isOpen', () => {
+      it('Fails open', () => {
+        const issue = new GoogleIssueTrackerIssue('b/1234');
+        assert.isTrue(issue.isOpen);
+      });
+
+      it('Is based on details.resolvedTime', () => {
+        const issue = new GoogleIssueTrackerIssue('b/1234');
+        issue._federatedDetails = {resolvedTime: 12345};
+        assert.isFalse(issue.isOpen);
+
+        issue._federatedDetails = {};
+        assert.isTrue(issue.isOpen);
+      });
+    });
+
+    describe('summary', () => {
+      it('Returns null if not available', () => {
+        const issue = new GoogleIssueTrackerIssue('b/1234');
+        assert.isNull(issue.summary);
+      });
+
+      it('Returns the summary if available', () => {
+        const issue = new GoogleIssueTrackerIssue('b/1234');
+        issue._federatedDetails = {issueState: {title: 'Rutabaga title'}};
+        assert.equal(issue.summary, 'Rutabaga title');
+      });
+    });
+
+    describe('toIssueRef', () => {
+      it('Returns an issue ref object', () => {
+        const issue = new GoogleIssueTrackerIssue('b/1234');
+        issue._federatedDetails = {
+          resolvedTime: 12345,
+          issueState: {
+            title: 'A fedref issue title',
+          },
+        };
+
+        assert.deepEqual(issue.toIssueRef(), {
+          extIdentifier: 'b/1234',
+          summary: 'A fedref issue title',
+          statusRef: {meansOpen: false},
+        });
+      });
     });
   });
 });

@@ -193,16 +193,13 @@ const commentReferencesReducer = createReducer({}, {
 export const relatedIssuesReducer = createReducer({}, {
   [FETCH_RELATED_ISSUES_SUCCESS]: (_state, action) => action.relatedIssues,
   [FETCH_FEDERATED_REFERENCES_SUCCESS]: (state, action) => {
-    if (!action.fedRefs || !action.fedRefs instanceof Map) {
+    if (!action.fedRefIssueRefs) {
       return state;
     }
 
     const fedRefStates = {};
-    action.fedRefs.forEach((isOpen, shortlink) => {
-      fedRefStates[shortlink] = {
-        extIdentifier: shortlink,
-        statusRef: {meansOpen: isOpen},
-      };
+    action.fedRefIssueRefs.forEach((ref) => {
+      fedRefStates[ref.extIdentifier] = ref;
     });
 
     // Return a new object, in Redux fashion.
@@ -657,7 +654,7 @@ export const fetchFederatedReferences = (issue) => async (dispatch) => {
 
   // If no FedRefs, return empty Map.
   if (fedRefs.length === 0) {
-    return new Map();
+    return;
   }
 
   try {
@@ -671,20 +668,12 @@ export const fetchFederatedReferences = (issue) => async (dispatch) => {
       email: email,
     });
 
-    const fedRefPromises = fedRefs.map((fedRef) => fedRef.isOpen());
-    const results = await Promise.all(fedRefPromises);
-
-    // TODO(jeffcarp): Expand this to return issue summary as well,
-    // update reducer to assign appropriately.
-
-    // Create a map of {extIdentifier -> isOpen}.
-    const shortlinkToStatus = new Map(results.map((result, i) => {
-      return [fedRefs[i].shortlink, result];
-    }));
+    await Promise.all(fedRefs.map((fedRef) => fedRef.getFederatedDetails()));
+    const fedRefIssueRefs = fedRefs.map((fedRef) => fedRef.toIssueRef());
 
     dispatch({
       type: FETCH_FEDERATED_REFERENCES_SUCCESS,
-      fedRefs: shortlinkToStatus,
+      fedRefIssueRefs: fedRefIssueRefs,
     });
   } catch (error) {
     dispatch({type: FETCH_FEDERATED_REFERENCES_FAILURE, error});

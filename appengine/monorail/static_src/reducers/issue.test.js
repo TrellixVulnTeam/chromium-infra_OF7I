@@ -15,7 +15,6 @@ let prpcCall;
 let dispatch;
 
 describe('issue', () => {
-
   describe('reducers', () => {
     describe('relatedIssuesReducer', () => {
       it('handles FETCH_RELATED_ISSUES_SUCCESS', () => {
@@ -27,9 +26,17 @@ describe('issue', () => {
       });
 
       describe('FETCH_FEDERATED_REFERENCES_SUCCESS', () => {
-        it('returns early if action.fedRefs is invalid', () => {
+        it('returns early if data is missing', () => {
           const newState = issue.relatedIssuesReducer({'b/123': {}}, {
             type: 'FETCH_FEDERATED_REFERENCES_SUCCESS',
+          });
+          assert.deepEqual(newState, {'b/123': {}});
+        });
+
+        it('returns early if data is empty', () => {
+          const newState = issue.relatedIssuesReducer({'b/123': {}}, {
+            type: 'FETCH_FEDERATED_REFERENCES_SUCCESS',
+            fedRefIssueRefs: [],
           });
           assert.deepEqual(newState, {'b/123': {}});
         });
@@ -41,20 +48,30 @@ describe('issue', () => {
           };
           const newState = issue.relatedIssuesReducer(state, {
             type: 'FETCH_FEDERATED_REFERENCES_SUCCESS',
-            fedRefs: new Map([
-              ['b/987', true],
-              ['b/765', false],
-            ]),
+            fedRefIssueRefs: [
+              {
+                extIdentifier: 'b/987',
+                summary: 'What is up',
+                statusRef: {meansOpen: true},
+              },
+              {
+                extIdentifier: 'b/765',
+                summary: 'Rutabaga',
+                statusRef: {meansOpen: false},
+              },
+            ],
           });
           assert.deepEqual(newState, {
             'rutabaga:123': {},
             'rutabaga:345': {},
             'b/987': {
               extIdentifier: 'b/987',
+              summary: 'What is up',
               statusRef: {meansOpen: true},
             },
             'b/765': {
               extIdentifier: 'b/765',
+              summary: 'Rutabaga',
               statusRef: {meansOpen: false},
             },
           });
@@ -651,6 +668,9 @@ describe('issue', () => {
         const response = {
           result: {
             resolvedTime: 12345,
+            issueState: {
+              title: 'Rutabaga title',
+            },
           },
         };
         window.gapi = {
@@ -677,8 +697,7 @@ describe('issue', () => {
           sinon.assert.calledWith(dispatch, {
             type: 'FETCH_FEDERATED_REFERENCES_START',
           });
-          assert.instanceOf(result, Map);
-          assert.deepEqual(Array.from(result), []);
+          assert.isUndefined(result);
         });
 
         it('fetches from Buganizer API', async () => {
@@ -704,17 +723,26 @@ describe('issue', () => {
             type: 'GAPI_LOGIN_SUCCESS',
             email: 'rutabaga@google.com',
           });
-          // This assertion is implemented in a more brittle way in order to be
-          // able to assert on the contents of the Map dispatch is called with.
-          assert.equal(dispatch.getCall(2).args[0].type,
-              'FETCH_FEDERATED_REFERENCES_SUCCESS');
-          assert.deepEqual(
-              Array.from(dispatch.getCall(2).args[0].fedRefs.entries()),
-              [
-                ['b/123456', false],
-                ['b/654321', false],
-                ['b/987654', false],
-              ]);
+          sinon.assert.calledWith(dispatch, {
+            type: 'FETCH_FEDERATED_REFERENCES_SUCCESS',
+            fedRefIssueRefs: [
+              {
+                extIdentifier: 'b/123456',
+                statusRef: {meansOpen: false},
+                summary: 'Rutabaga title',
+              },
+              {
+                extIdentifier: 'b/654321',
+                statusRef: {meansOpen: false},
+                summary: 'Rutabaga title',
+              },
+              {
+                extIdentifier: 'b/987654',
+                statusRef: {meansOpen: false},
+                summary: 'Rutabaga title',
+              },
+            ],
+          });
         });
       });
 
