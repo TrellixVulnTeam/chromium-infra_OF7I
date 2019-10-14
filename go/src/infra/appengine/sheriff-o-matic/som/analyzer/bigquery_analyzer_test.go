@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/bigquery"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -95,6 +96,319 @@ func TestGenerateBuildURL(t *testing.T) {
 		buildID := bigquery.NullInt64{}
 		url := generateBuildURL(project, bucket, builderName, buildID)
 		So(url, ShouldEqual, "")
+	})
+}
+
+// Make SQL query uniform, for the purpose of testing
+func formatQuery(query string) string {
+	query = regexp.MustCompile(`\s+`).ReplaceAllString(query, " ")
+	query = regexp.MustCompile(`\s?\(\s?`).ReplaceAllString(query, "(")
+	query = regexp.MustCompile(`\s?\)\s?`).ReplaceAllString(query, ")")
+	return query
+}
+
+func TestGenerateSQLQuery(t *testing.T) {
+	Convey("Test generate SQL query for android", t, func() {
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime
+			FROM
+				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
+			WHERE
+			  MasterName IN (
+			    "internal.client.clank",
+			    "internal.client.clank_tot",
+			    "chromium.android")
+			  OR (
+			    MasterName = "chromium"
+			    AND builder="Android")
+			  OR (
+			    MasterName = "chromium.webkit"
+			    AND builder IN (
+			      "Android Builder",
+				    "Webkit Android (Nexus4)"))
+			  OR (
+			    MasterName = "official.chrome"
+				  AND builder IN (
+					  "android-arm-official-tests",
+					  "android-arm64-official-tests",
+					  "android-arm-beta-tests",
+					  "android-arm64-beta-tests",
+					  "android-arm-stable-tests",
+					  "android-arm64-stable-tests"))
+			  OR (
+			    MasterName = "official.chrome.continuous"
+				  AND builder IN (
+					  "android-arm-beta",
+					  "android-arm64-beta",
+					  "android-arm64-stable",
+					  "android-arm64-stable",
+					  "android-arm-stable"))
+			LIMIT
+				1000
+		`
+		actual := generateSQLQuery("android", "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	})
+	Convey("Test generate SQL query for chromium", t, func() {
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime
+			FROM
+				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
+			WHERE
+			MasterName IN(
+				"chrome",
+				"chromium",
+				"chromium.chromiumos",
+				"chromium.gpu",
+				"chromium.linux",
+				"chromium.mac",
+				"chromium.memory",
+				"chromium.win"
+				)
+			LIMIT
+				1000
+		`
+		actual := generateSQLQuery("chromium", "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	})
+	Convey("Test generate SQL query for chromium.gpu.fyi", t, func() {
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime
+			FROM
+				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
+			WHERE MasterName = "chromium.gpu.fyi"
+		`
+		actual := generateSQLQuery("chromium.gpu.fyi", "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	})
+	Convey("Test generate SQL query for chromeos", t, func() {
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime
+			FROM
+				` + "`sheriff-o-matic.chromeos.sheriffable_failures`" + `
+			WHERE project = "chromeos"
+				AND bucket IN ("postsubmit", "annealing")
+				AND (critical != "NO" OR critical is NULL)
+		`
+		actual := generateSQLQuery("chromeos", "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	})
+	Convey("Test generate SQL query for ios", t, func() {
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime
+			FROM
+				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
+			WHERE project = "chromium"
+				AND MasterName IN ("chromium.mac")
+				AND builder IN (
+					"ios-device",
+					"ios-device-xcode-clang",
+					"ios-simulator",
+					"ios-simulator-full-configs",
+					"ios-simulator-xcode-clang"
+				)
+		`
+		actual := generateSQLQuery("ios", "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	})
+	Convey("Test generate SQL query for fuchsia", t, func() {
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime
+			FROM
+				` + "`sheriff-o-matic.fuchsia.sheriffable_failures`" + `
+			WHERE
+				(Project = "fuchsia" OR MasterName = "fuchsia")
+				AND Bucket NOT IN ("try", "cq", "staging", "general")
+				AND Builder NOT LIKE "%bisect%"
+			LIMIT
+				1000
+		`
+		actual := generateSQLQuery("fuchsia", "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	})
+	Convey("Test generate SQL query for chromium.perf", t, func() {
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime
+			FROM
+				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
+			WHERE
+				(Project = "chromium.perf" OR MasterName = "chromium.perf")
+				AND Bucket NOT IN ("try", "cq", "staging", "general")
+				AND (Mastername IS NULL OR Mastername NOT LIKE "%.fyi")
+				AND Builder NOT LIKE "%bisect%"
+			LIMIT
+				1000
+		`
+		actual := generateSQLQuery("chromium.perf", "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	})
+	Convey("Test generate SQL query for other builders", t, func() {
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime
+			FROM
+				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
+			WHERE
+				(Project = "builder" OR MasterName = "builder")
+				AND Bucket NOT IN ("try", "cq", "staging", "general")
+				AND (Mastername IS NULL OR Mastername NOT LIKE "%.fyi")
+				AND Builder NOT LIKE "%bisect%"
+			LIMIT
+				1000
+		`
+		actual := generateSQLQuery("builder", "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 }
 

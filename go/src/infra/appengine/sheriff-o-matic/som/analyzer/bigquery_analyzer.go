@@ -202,6 +202,27 @@ func (b *bqFailure) Title(bses []*messages.BuildStep) string {
 	return fmt.Sprintf("%s on multiple builders", prefix)
 }
 
+func generateSQLQuery(tree string, appID string) string {
+	switch tree {
+	case "android":
+		return fmt.Sprintf(androidFailuresQuery, appID, "chromium")
+	case "chromium":
+		return fmt.Sprintf(chromiumFailuresQuery, appID, "chromium")
+	case "chromium.gpu.fyi":
+		return fmt.Sprintf(chromiumGPUFYIFailuresQuery, appID, "chromium")
+	case "chromeos":
+		return fmt.Sprintf(crosFailuresQuery, appID, "chromeos")
+	case "ios":
+		return fmt.Sprintf(iosFailuresQuery, appID, "chromium")
+	case "fuchsia":
+		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", tree, tree)
+	case "chromium.perf":
+		return fmt.Sprintf(failuresQuery, appID, "chrome", tree, tree)
+	default:
+		return fmt.Sprintf(failuresQuery, appID, "chromium", tree, tree)
+	}
+}
+
 // GetBigQueryAlerts generates alerts for currently failing build steps, using
 // BigQuery to do most of the heavy lifting.
 // Note that this returns alerts for all failing steps, so filtering should
@@ -220,32 +241,7 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 	if err != nil {
 		return nil, err
 	}
-	queryStr := ""
-	switch tree {
-	case "android":
-		queryStr = fmt.Sprintf(androidFailuresQuery, appID, "chromium")
-		break
-	case "chromium":
-		queryStr = fmt.Sprintf(chromiumFailuresQuery, appID, "chromium")
-		break
-	case "chromium.gpu.fyi":
-		queryStr = fmt.Sprintf(chromiumGPUFYIFailuresQuery, appID, "chromium")
-		break
-	case "chromeos":
-		queryStr = fmt.Sprintf(crosFailuresQuery, appID, "chromeos")
-		break
-	case "ios":
-		queryStr = fmt.Sprintf(iosFailuresQuery, appID, "chromium")
-		break
-	case "fuchsia":
-		queryStr = fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", tree, tree)
-		break
-	case "chromium.perf":
-		queryStr = fmt.Sprintf(failuresQuery, appID, "chrome", tree, tree)
-		break
-	default:
-		queryStr = fmt.Sprintf(failuresQuery, appID, "chromium", tree, tree)
-	}
+	queryStr := generateSQLQuery(tree, appID)
 
 	logging.Infof(ctx, "query: %s", queryStr)
 	q := client.Query(queryStr)
