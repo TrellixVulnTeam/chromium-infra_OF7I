@@ -2,16 +2,20 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from mock import patch
+import hashlib
+import mock
 import unittest
 
 from buildbucket_proto.build_pb2 import Build
 from buildbucket_proto.common_pb2 import Log
 from buildbucket_proto.step_pb2 import Step
 from common.waterfall import buildbucket_client
+from findit_v2.model.gitiles_commit import Culprit
 from findit_v2.services.chromium_api import ChromiumProjectAPI
 from findit_v2.services.failure_type import StepTypeEnum
 from infra_api_clients import logdog_util
+from infra_api_clients.codereview import gerrit
+from services import git
 from services.compile_failure import compile_failure_analysis
 from services.test_failure import test_failure_analysis
 
@@ -42,7 +46,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
     self.assertEqual(StepTypeEnum.INFRA,
                      ChromiumProjectAPI().ClassifyStepType(None, step))
 
-  @patch.object(test_failure_analysis, 'AnalyzeTestFailure')
+  @mock.patch.object(test_failure_analysis, 'AnalyzeTestFailure')
   def testTestHeuristicAnalysis(self, mock_analyze):
     self.maxDiff = None
     mock_analyze.return_value = ({
@@ -176,7 +180,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
             None,
             None))
 
-  @patch.object(compile_failure_analysis, 'AnalyzeCompileFailure')
+  @mock.patch.object(compile_failure_analysis, 'AnalyzeCompileFailure')
   def testCompileHeuristicAnalysis(self, mock_analyze):
     # Ensure that the output of this api is in the following format:
     # map from ('step', frozenset['target1']) -> {'revision', 'commit_position',
@@ -246,7 +250,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
       new_d.value = d['value']
     return build
 
-  @patch.object(logdog_util, 'GetLogFromViewUrl')
+  @mock.patch.object(logdog_util, 'GetLogFromViewUrl')
   def testGetCompileFailures(self, mock_get_log):
     build_id = 8765432109123
     build_number = 123
@@ -297,7 +301,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
     self.assertEqual(expected_response,
                      ChromiumProjectAPI().GetCompileFailures(build, [step]))
 
-  @patch.object(logdog_util, 'GetLogFromViewUrl')
+  @mock.patch.object(logdog_util, 'GetLogFromViewUrl')
   def testGetCompileFailuresEmptyNinjaInfo(self, mock_get_log):
     build_id = 8765432109123
     build_number = 123
@@ -318,7 +322,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
     self.assertEqual(expected_response,
                      ChromiumProjectAPI().GetCompileFailures(build, [step]))
 
-  @patch.object(logdog_util, 'GetLogFromViewUrl')
+  @mock.patch.object(logdog_util, 'GetLogFromViewUrl')
   def testGetCompileFailuresMultipleFailuresInNinjaInfo(self, mock_get_log):
     build_id = 8765432109123
     build_number = 123
@@ -385,7 +389,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
     self.assertEqual(expected_response,
                      ChromiumProjectAPI().GetCompileFailures(build, [step]))
 
-  @patch.object(logdog_util, 'GetLogFromViewUrl')
+  @mock.patch.object(logdog_util, 'GetLogFromViewUrl')
   def testGetCompileFailuresMultipleSteps(self, mock_get_log):
     build_id = 8765432109123
     build_number = 123
@@ -478,7 +482,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
         expected_response,
         ChromiumProjectAPI().GetCompileFailures(build, [step, step2]))
 
-  @patch.object(buildbucket_client, 'GetV2Build')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
   def testGetCompileRerunBuildInputProperties(self, mock_bb):
     mock_bb.return_value = self._CreateBuildbucketBuild(
         800000001234, 1234, 'chromium.linux', 'Linux Builder')
@@ -493,7 +497,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
     self.assertEqual(
         sorted(props['compile_targets']), ['bad_target1', 'bad_tests'])
 
-  @patch.object(buildbucket_client, 'GetV2Build')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
   def testGetTestRerunBuildInputProperties(self, mock_bb):
     mock_bb.return_value = self._CreateBuildbucketBuild(
         800000009999, 9999, 'chromium.linux', 'Linux Tests')
@@ -527,7 +531,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
         'complexitor_tests': ['TestTrueNatureOf42', 'ValidateFTLCommunication']
     })
 
-  @patch.object(buildbucket_client, 'GetV2Build')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
   def testGetRerunDimensions(self, mock_bb):
     mock_bb.return_value = self._CreateBuildbucketBuild(
         800000009999,
@@ -547,3 +551,86 @@ class ChromiumProjectAPITest(unittest.TestCase):
     )
     dimensions = ChromiumProjectAPI().GetRerunDimensions(800000009999)
     self.assertEqual(dimensions, [{'key': 'os', 'value': 'Mac'}])
+
+  @mock.patch.object(gerrit, 'Gerrit')
+  @mock.patch.object(git, 'GetCodeReviewInfoForACommit')
+  def testCreateRevert(self, mock_change_info, mock_gerrit):
+    culprit = Culprit.Create('x.googlesource.com', 'x', 'refs/heads/master',
+                             hashlib.sha1('1').hexdigest(), 1)
+    mock_change_info.return_value = {
+        'review_server_host': 'x-review.googlesource.com',
+        'review_change_id': 1234,
+    }
+    reason = 'Mock reason for a revert'
+    ChromiumProjectAPI().CreateRevert(culprit, reason)
+    self.assertEqual(
+        [mock.call('Mock reason for a revert', 1234, full_change_info=True)],
+        mock_gerrit().CreateRevert.call_args_list)
+
+  @mock.patch.object(gerrit, 'Gerrit')
+  @mock.patch.object(git, 'GetCodeReviewInfoForACommit')
+  def testSubmitRevert(self, mock_change_info, mock_gerrit):
+    culprit = Culprit.Create('x.googlesource.com', 'x', 'refs/heads/master',
+                             hashlib.sha1('2').hexdigest(), 2)
+    mock_change_info.return_value = {
+        'review_server_host': 'x-review.googlesource.com',
+        'review_change_id': 2345,
+    }
+    reason = 'Mock reason for a revert #2'
+    api = ChromiumProjectAPI()
+    mock_gerrit().CreateRevert.return_value = {'review_change_id': 1002345}
+    revert_info = api.CreateRevert(culprit, reason)
+    with mock.patch(
+        'findit_v2.services.chromium_api.current_sheriffs',
+        return_value=['a@b.com']):
+      api.CommitRevert(revert_info,
+                       'Auto-committing revert because it broke stuff')
+    self.assertEqual([mock.call(1002345)],
+                     mock_gerrit().SubmitRevert.call_args_list)
+
+  @mock.patch.object(gerrit, 'Gerrit')
+  @mock.patch.object(git, 'GetCodeReviewInfoForACommit')
+  def testRequestReview(self, mock_change_info, mock_gerrit):
+    culprit = Culprit.Create('x.googlesource.com', 'x', 'refs/heads/master',
+                             hashlib.sha1('3').hexdigest(), 3)
+    mock_change_info.return_value = {
+        'review_server_host': 'x-review.googlesource.com',
+        'review_change_id': 3456,
+    }
+    reason = 'Mock reason for a revert #3'
+    api = ChromiumProjectAPI()
+    mock_gerrit().CreateRevert.return_value = {'review_change_id': 1003456}
+    revert_info = api.CreateRevert(culprit, reason)
+    with mock.patch(
+        'findit_v2.services.chromium_api.current_sheriffs',
+        return_value=['a@b.com']):
+      api.RequestReview(revert_info,
+                        'Please land revert manually because it broke stuff')
+    self.assertEqual([
+        mock.call(
+            1003456, ['a@b.com'],
+            message='Please land revert manually because it broke stuff')
+    ],
+                     mock_gerrit().AddReviewers.call_args_list)
+
+  @mock.patch.object(gerrit, 'Gerrit')
+  @mock.patch.object(git, 'GetCodeReviewInfoForACommit')
+  def testNotifyCulprit(self, mock_change_info, mock_gerrit):
+    culprit = Culprit.Create('x.googlesource.com', 'x', 'refs/heads/master',
+                             hashlib.sha1('4').hexdigest(), 4)
+    mock_change_info.return_value = {
+        'review_server_host': 'x-review.googlesource.com',
+        'review_change_id': 4567,
+    }
+    api = ChromiumProjectAPI()
+    api.NotifyCulprit(
+        culprit,
+        'Findit identified this change as culprit for some breakages',
+        silent_notification=False)
+    self.assertEqual([
+        mock.call(
+            4567,
+            'Findit identified this change as culprit for some breakages',
+            should_email=True)
+    ],
+                     mock_gerrit().PostMessage.call_args_list)

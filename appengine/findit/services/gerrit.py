@@ -233,14 +233,16 @@ def RevertCulprit(urlsafe_key, build_id, build_failure_type, sample_step_name,
                     culprit.key.urlsafe() if culprit else '')
       return services_constants.ERROR, None, None
     bug_id = _GetBugIdForCulprit(culprit)
-    revert_change_id = codereview.CreateRevert(
+    revert_info = codereview.CreateRevert(
         revert_reason,
         culprit_change_id,
         culprit_cl_info.GetPatchsetIdByRevision(revision),
         bug_id=bug_id)
 
-    if not revert_change_id:  # pragma: no cover
+    if not revert_info:  # pragma: no cover
       return services_constants.ERROR, None, None
+
+    revert_change_id = revert_info['change_id']
 
   # Save revert CL info and notification info to culprit.
   revert_cl = None

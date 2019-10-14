@@ -554,8 +554,9 @@ class GerritTest(testing.AppengineTestCase):
 
     with mock.patch.object(
         self.gerrit, '_GenerateRevertCLDescription', return_value='Reason'):
-      self.assertEqual(reverting_change_id,
-                       self.gerrit.CreateRevert('Reason', change_id))
+      self.assertEqual(
+          reverting_change_id,
+          self.gerrit.CreateRevert('Reason', change_id)['change_id'])
 
   def testCreateRevertFailure(self):
     change_id = 'I123456'

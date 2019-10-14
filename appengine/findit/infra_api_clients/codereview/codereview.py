@@ -80,7 +80,8 @@ class CodeReview(object):  # pragma: no cover.
           Optional for Gerrit.
 
     Returns:
-      The change id (or issue id) of the revert CL, or None upon failures.
+      A dictionary containing at least the 'change_id' key, identifying the
+      revert CL created. None if revert creation failed.
     """
     raise NotImplementedError()
 

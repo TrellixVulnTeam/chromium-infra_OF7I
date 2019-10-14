@@ -13,6 +13,7 @@ from findit_v2.services.failure_type import StepTypeEnum
 from findit_v2.services.project_api import ProjectAPI
 
 from common.findit_http_client import FinditHttpClient
+from common.rotations import current_sheriffs
 from common.waterfall import buildbucket_client
 from infra_api_clients import logdog_util
 from services import git
@@ -321,3 +322,6 @@ class ChromiumProjectAPI(ProjectAPI):
         failure_key = (failure['step_name'], frozenset(tests))
         result[failure_key].append(suspects_by_cp[cp])
     return result
+
+  def GetAutoRevertReviewers(self):
+    return current_sheriffs('chrome')

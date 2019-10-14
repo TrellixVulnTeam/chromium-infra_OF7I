@@ -82,7 +82,7 @@ class GerritTest(wf_testcase.WaterfallTestCase):
         Commit('20001', 'rev1', [], datetime(2017, 2, 1, 0, 0, 0)))
     cl_info.owner_email = 'abc@chromium.org'
     mock_fn.return_value = cl_info
-    mock_gerrit.return_value = '54321'
+    mock_gerrit.return_value = {'change_id': '54321'}
 
     culprit = WfSuspectedCL.Create(repo_name, revision, commit_position)
     culprit.builds = {
@@ -171,7 +171,7 @@ class GerritTest(wf_testcase.WaterfallTestCase):
         Commit('20001', 'rev1', [], datetime(2017, 2, 1, 0, 0, 0)))
     cl_info.owner_email = 'abc@chromium.org'
     mock_fn.return_value = cl_info
-    mock_gerrit.return_value = '54321'
+    mock_gerrit.return_value = {'change_id': '54321'}
 
     master_name = 'm'
     builder_name = 'b'

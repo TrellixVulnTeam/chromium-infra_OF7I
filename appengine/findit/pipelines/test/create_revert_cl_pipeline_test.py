@@ -68,7 +68,7 @@ class CreateRevertCLPipelineTest(wf_testcase.WaterfallTestCase):
         Commit('20001', 'rev1', ['rev0'], datetime(2017, 2, 1, 0, 0, 0)))
     cl_info.owner_email = 'abc@chromium.org'
     mock_fn.return_value = cl_info
-    mock_revert.return_value = '54321'
+    mock_revert.return_value = {'change_id': '54321'}
 
     culprit = WfSuspectedCL.Create(repo_name, revision, commit_position)
     culprit.builds = {

@@ -157,15 +157,20 @@ class Gerrit(codereview.CodeReview):
                    patchset_id=None,
                    footer=None,
                    bug_id=None):
+    """Create a revert using Gerrit's Revert Change api.
+
+    Returns:
+      A dict containing the response of the Revert Change api, described by:
+      https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revert-change
+    """
     parts = ['changes', change_id, 'revert']
     revert_cl_description = self._GenerateRevertCLDescription(
         change_id, reason, bug_id=bug_id)
     body = {'message': revert_cl_description}
     reverting_change = self._Post(parts, body=body)
-    try:
-      return reverting_change['change_id']
-    except (TypeError, KeyError):
+    if not reverting_change or 'change_id' not in reverting_change:
       return None
+    return reverting_change
 
   def SubmitRevert(self, change_id):
     parts = ['changes', change_id, 'submit']

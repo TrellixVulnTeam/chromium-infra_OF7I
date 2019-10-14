@@ -294,6 +294,23 @@ def GetRepoUrlFromContext(context):
       host=context.gitiles_host, project=context.gitiles_project)
 
 
+def GetRepoUrlFromCommit(gitiles_commit):
+  """Constructs repo url from a gitiles_commit.
+
+  Args:
+    gitiles_commit (findit_v2.model.gitiles_commit.GitilesCommit): A commit.
+
+  Returns:
+    (str): repo url.
+  """
+  context = Context(
+      gitiles_host=gitiles_commit.gitiles_host,
+      gitiles_project=gitiles_commit.gitiles_project,
+      gitiles_ref=gitiles_commit.gitiles_ref,
+      gitiles_id=gitiles_commit.gitiles_id)
+  return GetRepoUrlFromContext(context)
+
+
 def GetRepoUrlFromV2Build(build):
   """Constructs repo url from a build's info.
 
