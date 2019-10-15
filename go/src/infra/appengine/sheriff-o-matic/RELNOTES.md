@@ -1,3 +1,23 @@
+# Release Notes sheriff-o-matic 2019-10-15
+
+- 3 commits, 3 bugs affected since 723e596 (2019-10-10T04:26:57Z)
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[SOM] Add test to bigquery_analyzer](https://chromium-review.googlesource.com/c/infra/infra/+/1855162) (nqmtuan@google.com)
+- [Fix filtering bug SOM](https://chromium-review.googlesource.com/c/infra/infra/+/1859298) (nqmtuan@google.com)
+- [Reduce the frequency of analyzer cron job on staging from 5 mins -> 1 day](https://chromium-review.googlesource.com/c/infra/infra/+/1855158) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1010958](https://crbug.com/1010958)
+  -  [https://crbug.com/1013041](https://crbug.com/1013041)
+  -  [https://crbug.com/1013505](https://crbug.com/1013505)
+
+
 # Release Notes sheriff-o-matic 2019-10-10
 
 - 12 commits, 6 bugs affected since 20d8b52 (2019-10-03T00:15:05Z)
