@@ -1570,8 +1570,10 @@ class WorkEnvTest(unittest.TestCase):
           config, issue, 'template_name', 'comment')
 
   @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testUpdateIssue_Normal(self, fake_pasicn):
+  def testUpdateIssue_Normal(self, fake_pasicn, fake_pasibn):
     """We can update an issue."""
     self.SignIn()
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 0)
@@ -1592,10 +1594,14 @@ class WorkEnvTest(unittest.TestCase):
     fake_pasicn.assert_called_with(
         issue.issue_id, 'testing-app.appspot.com', 111, send_email=True,
         old_owner_id=0, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [], 111, send_email=True)
 
   @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testUpdateIssue_EditDescription(self, fake_pasicn):
+  def testUpdateIssue_EditDescription(self, fake_pasicn, fake_pasibn):
     """We can edit an issue description."""
     self.SignIn()
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
@@ -1611,10 +1617,15 @@ class WorkEnvTest(unittest.TestCase):
     fake_pasicn.assert_called_with(
         issue.issue_id, 'testing-app.appspot.com', 111, send_email=True,
         old_owner_id=111, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [], 111, send_email=True)
 
   @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testUpdateIssue_NotAllowedToEditDescription(self, fake_pasicn):
+  def testUpdateIssue_NotAllowedToEditDescription(
+      self, fake_pasicn, fake_pasibn):
     """We cannot edit an issue description without EditIssue permission."""
     self.SignIn(222)
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
@@ -1626,10 +1637,13 @@ class WorkEnvTest(unittest.TestCase):
         we.UpdateIssue(issue, delta, 'New description', is_description=True)
 
     fake_pasicn.assert_not_called()
+    fake_pasibn.assert_not_called()
 
   @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testUpdateIssue_AddComment(self, fake_pasicn):
+  def testUpdateIssue_AddComment(self, fake_pasicn, fake_pasibn):
     """We can add a comment."""
     self.SignIn(222)
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
@@ -1645,11 +1659,39 @@ class WorkEnvTest(unittest.TestCase):
     fake_pasicn.assert_called_with(
         issue.issue_id, 'testing-app.appspot.com', 222, send_email=True,
         old_owner_id=111, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [], 222, send_email=True)
 
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testUpdateIssue_AddComment_NoEmail(self, fake_pasicn, fake_pasibn):
+    """We can add a comment without sending email."""
+    self.SignIn(222)
+    issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
+    self.services.issue.TestAddIssue(issue)
+    delta = tracker_pb2.IssueDelta()
+
+    with self.work_env as we:
+      we.UpdateIssue(issue, delta, 'New description', send_email=False)
+
+    comments = self.services.issue.GetCommentsForIssue('cnxn', issue.issue_id)
+    comment_pb = comments[-1]
+    self.assertFalse(comment_pb.is_description)
+    fake_pasicn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', 222, send_email=False,
+        old_owner_id=111, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [], 222, send_email=False)
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   @mock.patch('framework.permissions.GetExtraPerms')
-  def testUpdateIssue_EditOwner(self, fake_extra_perms, fake_pasicn):
+  def testUpdateIssue_EditOwner(
+      self, fake_extra_perms, fake_pasicn, fake_pasibn):
     """We can edit the owner with the EditIssueOwner permission."""
     self.SignIn(222)
     fake_extra_perms.return_value = [permissions.EDIT_ISSUE_OWNER]
@@ -1667,11 +1709,16 @@ class WorkEnvTest(unittest.TestCase):
     fake_pasicn.assert_called_with(
         issue.issue_id, 'testing-app.appspot.com', 222, send_email=True,
         old_owner_id=111, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [], 222, send_email=True)
 
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   @mock.patch('framework.permissions.GetExtraPerms')
-  def testUpdateIssue_EditSummary(self, fake_extra_perms, fake_pasicn):
+  def testUpdateIssue_EditSummary(
+      self, fake_extra_perms, fake_pasicn, fake_pasibn):
     """We can edit the owner with the EditIssueOwner permission."""
     self.SignIn(222)
     fake_extra_perms.return_value = [permissions.EDIT_ISSUE_SUMMARY]
@@ -1689,11 +1736,16 @@ class WorkEnvTest(unittest.TestCase):
     fake_pasicn.assert_called_with(
         issue.issue_id, 'testing-app.appspot.com', 222, send_email=True,
         old_owner_id=111, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [], 222, send_email=True)
 
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   @mock.patch('framework.permissions.GetExtraPerms')
-  def testUpdateIssue_EditStatus(self, fake_extra_perms, fake_pasicn):
+  def testUpdateIssue_EditStatus(
+      self, fake_extra_perms, fake_pasicn, fake_pasibn):
     """We can edit the owner with the EditIssueOwner permission."""
     self.SignIn(222)
     fake_extra_perms.return_value = [permissions.EDIT_ISSUE_STATUS]
@@ -1711,6 +1763,8 @@ class WorkEnvTest(unittest.TestCase):
     fake_pasicn.assert_called_with(
         issue.issue_id, 'testing-app.appspot.com', 222, send_email=True,
         old_owner_id=111, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [], 222, send_email=True)
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
@@ -1834,7 +1888,36 @@ class WorkEnvTest(unittest.TestCase):
     comments = self.services.issue.GetCommentsForIssue('cnxn', issue.issue_id)
     self.assertEqual(1, len(comments))
 
-  def testUpdateIssue_BlockOnItself(self):
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testUpdateIssue_BlockOn(self, fake_pasicn, fake_pasibn):
+    """We can block an issue on an existing issue."""
+    self.SignIn()
+    issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
+    upstream_issue = fake.MakeTestIssue(789, 2, 'umbrella', 'Available', 111)
+    self.services.issue.TestAddIssue(issue)
+
+    delta = tracker_pb2.IssueDelta(blocked_on_add=[upstream_issue.issue_id])
+    with self.work_env as we:
+      we.UpdateIssue(issue, delta, '')
+
+    comments = self.services.issue.GetCommentsForIssue('cnxn', issue.issue_id)
+    comment_pb = comments[-1]
+    self.assertEqual([upstream_issue.issue_id], issue.blocked_on_iids)
+    fake_pasicn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', 111, send_email=True,
+        old_owner_id=111, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [upstream_issue.issue_id],
+        111, send_email=True)
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testUpdateIssue_BlockOnItself(self, fake_pasicn, fake_pasibn):
     """We cannot block an issue on itself."""
     self.SignIn()
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
@@ -1858,10 +1941,14 @@ class WorkEnvTest(unittest.TestCase):
     # No comment was added.
     comments = self.services.issue.GetCommentsForIssue('cnxn', issue.issue_id)
     self.assertEqual(1, len(comments))
+    fake_pasicn.assert_not_called()
+    fake_pasibn.assert_not_called()
 
   @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testUpdateIssue_Attachments(self, fake_pasicn):
+  def testUpdateIssue_Attachments(self, fake_pasicn, fake_pasibn):
     """We can attach files as we make a change."""
     self.SignIn()
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 0)
@@ -1884,6 +1971,8 @@ class WorkEnvTest(unittest.TestCase):
     fake_pasicn.assert_called_with(
         issue.issue_id, 'testing-app.appspot.com', 111, send_email=True,
         old_owner_id=0, comment_id=comment_pb.id)
+    fake_pasibn.assert_called_with(
+        issue.issue_id, 'testing-app.appspot.com', [], 111, send_email=True)
 
     attachments = [
         ('README.md', 'readme content', 'text/plain'),
@@ -1923,8 +2012,10 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual('hello.txt', comment_pb.attachments[0].filename)
 
   @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testUpdateIssue_PermissionDenied(self, fake_pasicn):
+  def testUpdateIssue_PermissionDenied(self, fake_pasicn, fake_pasibn):
     """We reject attempts to update an issue when the user lacks permission."""
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 555)
     self.services.issue.TestAddIssue(issue)
@@ -1949,6 +2040,7 @@ class WorkEnvTest(unittest.TestCase):
         we.UpdateIssue(issue, delta, 'I lack CoreTeam')
 
     fake_pasicn.assert_not_called()
+    fake_pasibn.assert_not_called()
 
   @mock.patch(
       'settings.preferred_domains', {'testing-app.appspot.com': 'example.com'})

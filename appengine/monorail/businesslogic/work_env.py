@@ -1275,6 +1275,10 @@ class WorkEnv(object):
             issue.issue_id, hostport, reporter_id,
             send_email=send_email, old_owner_id=old_owner_id,
             comment_id=comment_pb.id)
+        delta_blocked_on_iids = delta.blocked_on_add + delta.blocked_on_remove
+        send_notifications.PrepareAndSendIssueBlockingNotification(
+            issue.issue_id, hostport, delta_blocked_on_iids,
+            reporter_id, send_email=send_email)
 
   def DeleteIssue(self, issue, delete):
     """Mark or unmark the given issue as deleted."""
