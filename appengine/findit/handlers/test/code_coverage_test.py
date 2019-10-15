@@ -196,6 +196,16 @@ class FetchSourceFileTest(WaterfallTestCase):
   ],
                                        debug=True)
 
+  def setUp(self):
+    super(FetchSourceFileTest, self).setUp()
+    self.UpdateUnitTestConfigSettings(
+        'code_coverage_settings',
+        {'allowed_gitiles_host': ['chromium.googlesource.com']})
+
+  def tearDown(self):
+    self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
+    super(FetchSourceFileTest, self).tearDown()
+
   def testPermissionInProcessCodeCoverageData(self):
     self.mock_current_user(user_email='test@google.com', is_admin=True)
     response = self.test_app.post(
@@ -462,10 +472,19 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   ],
                                        debug=True)
 
-  def testServeCLPatchsetLinesData(self):
-    self.UpdateUnitTestConfigSettings('code_coverage_settings',
-                                      {'serve_presubmit_coverage_data': True})
+  def setUp(self):
+    super(ServeCodeCoverageDataTest, self).setUp()
+    self.UpdateUnitTestConfigSettings(
+        'code_coverage_settings', {
+            'serve_presubmit_coverage_data': True,
+            'allowed_gitiles_host': ['chromium.googlesource.com']
+        })
 
+  def tearDown(self):
+    self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
+    super(ServeCodeCoverageDataTest, self).tearDown()
+
+  def testServeCLPatchsetLinesData(self):
     host = 'chromium-review.googlesource.com'
     project = 'chromium/src'
     change = 138000
@@ -510,8 +529,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataNoEquivalentPatchsets(self,
                                                      mock_get_equivalent_ps):
-    self.UpdateUnitTestConfigSettings('code_coverage_settings',
-                                      {'serve_presubmit_coverage_data': True})
     host = 'chromium-review.googlesource.com'
     project = 'chromium/src'
     change = 138000
@@ -525,8 +542,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataEquivalentPatchsetsHaveNoData(
       self, mock_get_equivalent_ps):
-    self.UpdateUnitTestConfigSettings('code_coverage_settings',
-                                      {'serve_presubmit_coverage_data': True})
     host = 'chromium-review.googlesource.com'
     project = 'chromium/src'
     change = 138000
@@ -544,8 +559,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataEquivalentPatchsets(self, mock_get_equivalent_ps,
                                                    mock_rebase_data):
-    self.UpdateUnitTestConfigSettings('code_coverage_settings',
-                                      {'serve_presubmit_coverage_data': True})
     host = 'chromium-review.googlesource.com'
     project = 'chromium/src'
     change = 138000
@@ -602,9 +615,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     self.assertEqual(expected_response_body, response.body)
 
   def testServeCLPatchPercentagesData(self):
-    self.UpdateUnitTestConfigSettings('code_coverage_settings',
-                                      {'serve_presubmit_coverage_data': True})
-
     host = 'chromium-review.googlesource.com'
     project = 'chromium/src'
     change = 138000
@@ -659,8 +669,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchPercentagesDataEquivalentPatchsets(
       self, mock_get_equivalent_ps):
-    self.UpdateUnitTestConfigSettings('code_coverage_settings',
-                                      {'serve_presubmit_coverage_data': True})
     host = 'chromium-review.googlesource.com'
     project = 'chromium/src'
     change = 138000

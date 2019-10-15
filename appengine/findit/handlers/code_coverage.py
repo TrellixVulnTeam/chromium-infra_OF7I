@@ -46,19 +46,6 @@ from waterfall import waterfall_config
 
 # List of Gerrit projects that the Code Coverage service supports.
 _PROJECTS_WHITELIST = ('chromium/src', 'libassistant/internal')
-_ALLOWED_GITILES_HOST = set([
-    'android.googlesource.com',
-    'aomedia.googlesource.com',
-    'boringssl.googlesource.com',
-    'chromium.googlesource.com',
-    'dawn.googlesource.com',
-    'pdfium.googlesource.com',
-    'quiche.googlesource.com',
-    'skia.googlesource.com',
-    'swiftshader.googlesource.com',
-    'webrtc.googlesource.com',
-    'libassistant-internal.googlesource.com',
-])
 
 # The regex to extract the build id from the url path.
 _BUILD_ID_REGEX = re.compile(r'.*/build/(\d+)$')
@@ -110,6 +97,12 @@ _POSTSUBMIT_PLATFORM_INFO_MAP = {
         'ui_name': 'libassistant code coverage',
     },
 }
+
+
+def _GetAllowedGitilesHost():
+  """Returns a set of allowed gitiles hosts."""
+  return set(waterfall_config.GetCodeCoverageSettings().get(
+      'allowed_gitiles_host', []))
 
 
 def _GetSameOrMostRecentReportForEachPlatform(host, project, ref, revision):
@@ -299,7 +292,7 @@ def _GetMatchedDependencyRepository(report, file_path):  # pragma: no cover.
       dependency = dep
       break
 
-  if not dependency or dependency.server_host not in _ALLOWED_GITILES_HOST:
+  if not dependency or dependency.server_host not in _GetAllowedGitilesHost():
     return None
 
   return dependency
@@ -1027,7 +1020,7 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('patchset=%d', patchset)
     logging.info('type=%s', data_type)
 
-    if host and host.replace('-review', '') not in _ALLOWED_GITILES_HOST:
+    if host and host.replace('-review', '') not in _GetAllowedGitilesHost():
       return BaseHandler.CreateError(
           error_message='Host "%s" is not whitelisted.' % host,
           return_code=400,
