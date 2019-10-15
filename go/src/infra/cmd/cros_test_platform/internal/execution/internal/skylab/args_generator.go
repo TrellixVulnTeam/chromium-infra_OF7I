@@ -30,6 +30,40 @@ type argsGenerator struct {
 	parentTaskID string
 }
 
+// CheckConsistency checks the internal consistency of the various inputs to the
+// argument generation logic.
+func (a *argsGenerator) CheckConsistency() error {
+	el := a.enumerationInventoryLabels()
+
+	rb := a.params.GetSoftwareAttributes().GetBuildTarget().GetName()
+	eb := el.GetBoard()
+	if nonEmptyAndDifferent(rb, eb) {
+		return errors.Reason("incompatible board dependency: request (%s) vs. enumeration (%s)", rb, eb).Err()
+	}
+
+	rm := a.params.GetHardwareAttributes().GetModel()
+	em := el.GetModel()
+	if nonEmptyAndDifferent(rm, em) {
+		return errors.Reason("incompatible model dependency: request (%s) vs. enumeration (%s)", rm, em).Err()
+	}
+	return nil
+}
+
+func nonEmptyAndDifferent(a, b string) bool {
+	return a != "" && b != "" && a != b
+}
+
+func (a *argsGenerator) enumerationInventoryLabels() *inventory.SchedulableLabels {
+	deps := a.invocation.Test.Dependencies
+	flatDims := make([]string, len(deps))
+	for i, dep := range deps {
+		flatDims[i] = dep.Label
+	}
+	return labels.Revert(flatDims)
+}
+
+// GenerateArgs generates request.Args, combining all the inputs to
+// argsGenerator.
 func (a *argsGenerator) GenerateArgs(ctx context.Context) (request.Args, error) {
 	isClient, err := a.isClientTest()
 	if err != nil {
@@ -89,14 +123,7 @@ func (a *argsGenerator) isClientTest() (bool, error) {
 }
 
 func (a *argsGenerator) inventoryLabels() (*inventory.SchedulableLabels, error) {
-	deps := a.invocation.Test.Dependencies
-	flatDims := make([]string, len(deps))
-	for i, dep := range deps {
-		flatDims[i] = dep.Label
-	}
-
-	inv := labels.Revert(flatDims)
-
+	inv := a.enumerationInventoryLabels()
 	if a.params.GetSoftwareAttributes().GetBuildTarget() != nil {
 		*inv.Board = a.params.SoftwareAttributes.BuildTarget.Name
 	}

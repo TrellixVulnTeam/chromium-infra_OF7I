@@ -1211,6 +1211,90 @@ func TestResponseVerdict(t *testing.T) {
 	})
 }
 
+func TestIncompatibleDependencies(t *testing.T) {
+
+	Convey("In testing context", t, func() {
+		cases := []struct {
+			Tag    string
+			Params *test_platform.Request_Params
+			Invs   []*steps.EnumerationResponse_AutotestInvocation
+		}{
+			{
+				Tag: "incompatible build target",
+				Params: &test_platform.Request_Params{
+					SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+						BuildTarget: &chromiumos.BuildTarget{Name: "requested"},
+					},
+					Time: &test_platform.Request_Params_Time{
+						MaximumDuration: &duration.Duration{Seconds: 3600},
+					},
+				},
+				Invs: []*steps.EnumerationResponse_AutotestInvocation{
+					testInvocationWithDependency("some_test", "board:enumerated"),
+				},
+			},
+			{
+				Tag: "incompatible model",
+				Params: &test_platform.Request_Params{
+					HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
+						Model: "requested",
+					},
+					Time: &test_platform.Request_Params_Time{
+						MaximumDuration: &duration.Duration{Seconds: 3600},
+					},
+				},
+				Invs: []*steps.EnumerationResponse_AutotestInvocation{
+					testInvocationWithDependency("some_test", "model:enumerated"),
+				},
+			},
+		}
+
+		ctx := context.Background()
+		swarming := newFakeSwarming("")
+		for _, c := range cases {
+			Convey(fmt.Sprintf("with %s between enumeration and request", c.Tag), func() {
+				ts, err := skylab.NewTaskSet(ctx, c.Invs, c.Params, basicConfig(), "foo-parent-task-id")
+				So(err, ShouldBeNil)
+				run := skylab.NewRunner(ts)
+				err = run.LaunchAndWait(ctx, swarming, fakeGetterFactory(newFakeGetter()))
+				So(err, ShouldBeNil)
+
+				resp := getSingleResponse(run, swarming)
+				So(resp, ShouldNotBeNil)
+
+				Convey("then task result is rejected with unspecified verdict.", func() {
+					So(resp.TaskResults, ShouldHaveLength, 1)
+					tr := resp.TaskResults[0]
+					So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_REJECTED)
+					So(tr.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
+
+				})
+				Convey("and overall result is complete with failed verdict.", func() {
+					So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
+					So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
+				})
+				Convey("and no skylab swarming tasks are created.", func() {
+					So(swarming.getCalls, ShouldHaveLength, 0)
+					So(swarming.createCalls, ShouldHaveLength, 0)
+				})
+			})
+		}
+	})
+}
+
+func testInvocationWithDependency(name string, deps ...string) *steps.EnumerationResponse_AutotestInvocation {
+	inv := steps.EnumerationResponse_AutotestInvocation{
+		Test: &build_api.AutotestTest{
+			Name:                 name,
+			ExecutionEnvironment: build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER,
+		},
+	}
+	for _, d := range deps {
+		inv.Test.Dependencies = append(inv.Test.Dependencies, &build_api.AutotestTaskDependency{Label: d})
+	}
+	return &inv
+}
+
 func getSingleResponse(r execution.Runner, client swarming.Client) *steps.ExecuteResponse {
 	resps := r.Responses(client)
 	So(resps, ShouldHaveLength, 1)

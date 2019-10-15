@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 )
 
 type testRun struct {
@@ -59,6 +60,11 @@ func (t *testRun) AttemptedAtLeastOnce() bool {
 // ValidateDependencies checks whether this test has dependencies satisfied by
 // at least one Skylab bot.
 func (t *testRun) ValidateDependencies(ctx context.Context, client swarming.Client) (bool, error) {
+	if err := t.argsGenerator.CheckConsistency(); err != nil {
+		logging.Infof(ctx, "Test rejected because argument consistency check failed: %s", err)
+		return false, nil
+	}
+
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
 		return false, errors.Annotate(err, "validate dependencies").Err()
