@@ -159,7 +159,8 @@ class BuildRequest(_BuildRequestBase):
     bp.status = common_pb2.SCHEDULED
     bp.created_by = created_by.to_bytes()
     bp.create_time.FromDatetime(now)
-    bp.critical = sbr.critical
+    if sbr.critical != common_pb2.UNSET:
+      bp.critical = sbr.critical
     bp.exe.cipd_version = sbr.exe.cipd_version or bp.exe.cipd_version
     # If the SBR expressed canary preference, override what the config said.
     if sbr.canary != common_pb2.UNSET:
@@ -575,6 +576,9 @@ def _apply_builder_config_async(builder_cfg, build_proto):
   build_proto.input.experimental = (
       builder_cfg.experimental == project_config_pb2.YES
   )
+
+  # Populate criticality
+  build_proto.critical = builder_cfg.critical
 
   # Populate exe.
   build_proto.exe.CopyFrom(builder_cfg.exe)

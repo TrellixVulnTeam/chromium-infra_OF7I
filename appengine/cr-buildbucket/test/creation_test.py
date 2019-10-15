@@ -172,6 +172,10 @@ class CreationTest(testing.AppengineTestCase):
     build = self.add(dict(critical=common_pb2.YES))
     self.assertEqual(build.proto.critical, common_pb2.YES)
 
+  def test_critical_default(self):
+    build = self.add()
+    self.assertEqual(build.proto.critical, common_pb2.UNSET)
+
   def test_canary_in_request(self):
     build = self.add(dict(canary=common_pb2.YES))
     self.assertTrue(build.proto.canary)
@@ -301,6 +305,27 @@ class CreationTest(testing.AppengineTestCase):
     build = self.add()
     self.assertEqual(build.proto.scheduling_timeout.seconds, 60)
     self.assertEqual(build.proto.execution_timeout.seconds, 120)
+
+  def test_builder_critical_yes(self):
+    with self.mutate_builder_cfg() as cfg:
+      cfg.critical = common_pb2.YES
+
+    build = self.add()
+    self.assertEqual(build.proto.critical, common_pb2.YES)
+
+  def test_builder_critical_no(self):
+    with self.mutate_builder_cfg() as cfg:
+      cfg.critical = common_pb2.NO
+
+    build = self.add()
+    self.assertEqual(build.proto.critical, common_pb2.NO)
+
+  def test_builder_critical_get_overriden(self):
+    with self.mutate_builder_cfg() as cfg:
+      cfg.critical = common_pb2.NO
+
+    build = self.add(dict(critical=common_pb2.YES))
+    self.assertEqual(build.proto.critical, common_pb2.YES)
 
   def test_dimensions(self):
     dims = [
