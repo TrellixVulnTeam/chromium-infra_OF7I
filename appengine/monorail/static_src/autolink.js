@@ -11,8 +11,8 @@ const CRBUG_LINK_RE = /(\b(https?:\/\/)?crbug\.com\/)((\b[-a-z0-9]+)(\/))?(\d+)\
 const CRBUG_LINK_RE_PROJECT_GROUP = 4;
 const CRBUG_LINK_RE_ID_GROUP = 6;
 const CRBUG_LINK_RE_COMMENT_GROUP = 7;
-const ISSUE_TRACKER_RE = /(\b(issues?|bugs?)[ \t]*(:|=|\b))([ \t]*((\b[-a-z0-9]+)[:\#])?(\#?)(\d+)\b(,?[ \t]*(and|or)?)?)+/gi;
-const PROJECT_LOCALID_RE = /((\b(issue|bug)[ \t]*(:|=)?[ \t]*)?((\b[-a-z0-9]+)[:\#])?(\#?)(\d+))/gi;
+const ISSUE_TRACKER_RE = /(\b(issues?|bugs?)[ \t]*(:|=|\b)|\bfixed[ \t]*:)([ \t]*((\b[-a-z0-9]+)[:\#])?(\#?)(\d+)\b(,?[ \t]*(and|or)?)?)+/gi;
+const PROJECT_LOCALID_RE = /((\b(issue|bug)[ \t]*(:|=)?[ \t]*|\bfixed[ \t]*:[ \t]*)?((\b[-a-z0-9]+)[:\#])?(\#?)(\d+))/gi;
 const PROJECT_COMMENT_BUG_RE = /(((\b(issue|bug)[ \t]*(:|=)?[ \t]*)(\#?)(\d+)[ \t*])?((\b((comment)[ \t]*(:|=)?[ \t]*(\#?))|(\B((\#))(c)))(\d+)))/gi;
 const PROJECT_LOCALID_RE_PROJECT_GROUP = 6;
 const PROJECT_LOCALID_RE_ID_GROUP = 8;

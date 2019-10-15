@@ -256,6 +256,43 @@ describe('autolink', () => {
           ],
       );
     });
+
+    it('Recognizes Fixed: syntax', () => {
+      const str = 'Fixed : 123, proj:456';
+      const match = refRegs[0].exec(str);
+      refRegs[0].lastIndex = 0;
+
+      const components = {
+        openRefs: [
+          {summary: 'summ', projectName: 'chromium', localId: 123},
+        ],
+        closedRefs: [
+          {summary: 'ary', projectName: 'proj', localId: 456},
+        ],
+      };
+
+      const actualTextRuns = replacer(match, components, 'chromium');
+      assert.deepEqual(
+          actualTextRuns,
+          [
+            {
+              tag: 'a',
+              href: '/p/chromium/issues/detail?id=123',
+              css: '',
+              title: 'summ',
+              content: 'Fixed : 123',
+            },
+            {content: ', '},
+            {
+              tag: 'a',
+              href: '/p/proj/issues/detail?id=456',
+              css: 'strike-through',
+              title: 'ary',
+              content: 'proj:456',
+            },
+          ]
+      );
+    });
   });
 
   describe('user email component functions', () => {
