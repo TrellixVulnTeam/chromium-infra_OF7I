@@ -203,6 +203,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 				"chromium.memory",
 				"chromium.win"
 				)
+			AND Bucket = "ci"
 			LIMIT
 				1000
 		`

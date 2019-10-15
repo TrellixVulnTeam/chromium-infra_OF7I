@@ -99,6 +99,7 @@ MasterName IN(
 	"chromium.memory",
 	"chromium.win"
 	)
+AND Bucket = "ci"
 LIMIT
 	1000
 `
