@@ -36,6 +36,20 @@
           element._haveNoBugs([{id:1, status: 'foo'}]));
     });
 
+    test('tree name', function () {
+      element.treeDisplayName = 'Fuchsia';
+      element.bugQueueLabel = 'sheriff-fuchsia';
+      assert.equal(element.$.main.querySelectorAll("a")[1].href,
+      'https://bugs.chromium.org/p/fuchsia/issues/entry?status=Available&labels=sheriff-fuchsia');
+    });
+
+    test('tree name default', function () {
+      element.treeDisplayName = 'Bar';
+      element.bugQueueLabel = 'foo';
+      assert.equal(element.$.main.querySelectorAll("a")[1].href,
+        'https://bugs.chromium.org/p/chromium/issues/entry?status=Available&labels=foo');
+    });
+
     test('renders empty', function(done) {
       assert.equal(true, element.$.main.hidden);
       element._bugQueueJson = {};
@@ -55,8 +69,8 @@
 
       element._bugQueueJson = {
         items: [
-          { summary: 'foo', status: 'bar', id: 123 },
-          { summary: 'baz', status: 'zippy', id: 456 },
+          { summary: 'foo', status: 'bar', id: 123, projectId: "chromium", labels:["Pri-1", "flaky"] },
+          { summary: 'baz', status: 'zippy', id: 456, projectId: "fuchsia", labels:["Pri-2", "sheriff"] },
         ],
       };
       element._bugsLoaded = true;
@@ -66,6 +80,10 @@
       flush( () => {
         assert.equal(false, element.$.main.hidden);
         assert.equal(2, element.$.main.querySelectorAll('.bug').length);
+        assert.equal(element.$.main.querySelectorAll('.bug')[0].querySelector('.bug-label').href,
+          'https://bugs.chromium.org/p/chromium/issues/list?q=label:flaky');
+        assert.equal(element.$.main.querySelectorAll('.bug')[1].querySelector('.bug-label').href,
+          'https://bugs.chromium.org/p/fuchsia/issues/list?q=label:sheriff');
         done();
       });
     });

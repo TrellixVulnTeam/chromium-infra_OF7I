@@ -3,12 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"infra/appengine/sheriff-o-matic/som/client"
+	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
@@ -52,7 +54,8 @@ func TestBugQueue(t *testing.T) {
 		monorail := client.NewMonorail(c, monorailServer.URL)
 
 		bqh := &BugQueueHandler{
-			Monorail: monorail,
+			Monorail:               monorail,
+			DefaultMonorailProject: "",
 		}
 
 		Convey("mock getBugsFromMonorail", func() {
@@ -89,7 +92,7 @@ func TestBugQueue(t *testing.T) {
 					return &http.Client{}, nil
 				}
 
-				_, err := bqh.refreshBugQueue(c, "label")
+				_, err := bqh.refreshBugQueue(c, "sheriff-chromium", "chromium")
 				So(err, ShouldBeNil)
 				getOAuthClient = oldOAClient
 			})
@@ -114,6 +117,43 @@ func TestBugQueue(t *testing.T) {
 
 				e = getAlternateEmail("test@google.com")
 				So(e, ShouldEqual, "test@chromium.org")
+			})
+		})
+
+		Convey("GetMonorailProjectNameFromLabel", func() {
+			Convey("label match", func() {
+				tree := &model.Tree{
+					Name:                       "oak",
+					DisplayName:                "Oak",
+					BugQueueLabel:              "sheriff-oak",
+					DefaultMonorailProjectName: "oak-project",
+				}
+				So(datastore.Put(c, tree), ShouldBeNil)
+				datastore.GetTestable(c).CatchupIndexes()
+				So(bqh.GetMonorailProjectNameFromLabel(c, "sheriff-oak"), ShouldEqual, "oak-project")
+			})
+
+			Convey("label not match", func() {
+				tree := &model.Tree{
+					Name:                       "oak2",
+					DisplayName:                "Oak2",
+					BugQueueLabel:              "sheriff-oak-2",
+					DefaultMonorailProjectName: "oak-project",
+				}
+				So(datastore.Put(c, tree), ShouldBeNil)
+				datastore.GetTestable(c).CatchupIndexes()
+				So(bqh.GetMonorailProjectNameFromLabel(c, "sheriff-oak"), ShouldEqual, "chromium")
+			})
+
+			Convey("no label", func() {
+				tree := &model.Tree{
+					Name:          "oak3",
+					DisplayName:   "Oak3",
+					BugQueueLabel: "sheriff-oak-3",
+				}
+				So(datastore.Put(c, tree), ShouldBeNil)
+				datastore.GetTestable(c).CatchupIndexes()
+				So(bqh.GetMonorailProjectNameFromLabel(c, "sheriff-oak"), ShouldEqual, "chromium")
 			})
 		})
 	})

@@ -335,10 +335,14 @@
 
     test('click file bugs with defaults', (done) => {
       flush(() => {
+        element.tree = {
+          name: 'Foo',
+          default_monorail_project_name: 'foo'
+        };
         element._fileBugModel = [{ title: 'bug summary' }];
         element._fileBugCallBack = null;
         element._fileBugClicked();
-        expect(element.$.fileBug.$.projectId.value).equal('chromium');
+        expect(element.$.fileBug.$.projectId.value).equal('foo');
         expect(element.$.fileBug.$.priority.value).equal('Pri-2');
         expect(element.$.fileBug.$.summary.value).equal('bug summary');
 

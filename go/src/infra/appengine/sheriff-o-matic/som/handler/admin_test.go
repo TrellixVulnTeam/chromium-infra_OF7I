@@ -29,13 +29,14 @@ func TestRenderSettingsPage(t *testing.T) {
 		})
 
 		tree := &model.Tree{
-			Name:           "oak",
-			DisplayName:    "Great Oaakk",
-			BugQueueLabel:  "test",
-			AlertStreams:   []string{"hello", "world"},
-			HelpLink:       "http://google.com/",
-			GerritProject:  "some/project/name",
-			GerritInstance: "some-gerrit-instance",
+			Name:                       "oak",
+			DisplayName:                "Great Oaakk",
+			BugQueueLabel:              "test",
+			AlertStreams:               []string{"hello", "world"},
+			HelpLink:                   "http://google.com/",
+			GerritProject:              "some/project/name",
+			GerritInstance:             "some-gerrit-instance",
+			DefaultMonorailProjectName: "oak-project",
 		}
 
 		So(datastore.Put(c, tree), ShouldBeNil)
@@ -44,19 +45,20 @@ func TestRenderSettingsPage(t *testing.T) {
 		Convey("Fields", func() {
 			fields, err := SettingsPage.Fields(s, c)
 			So(err, ShouldBeNil)
-			So(len(fields), ShouldEqual, 6)
+			So(len(fields), ShouldEqual, 7)
 		})
 
 		Convey("ReadSettings", func() {
 			settings, err := SettingsPage.ReadSettings(s, c)
 			So(err, ShouldBeNil)
-			So(len(settings), ShouldEqual, 6)
+			So(len(settings), ShouldEqual, 7)
 			So(settings["Trees"], ShouldEqual, "oak:Great Oaakk")
 			So(settings["BugQueueLabels"], ShouldEqual, "oak:test")
 			So(settings["AlertStreams-oak"], ShouldEqual, "hello,world")
 			So(settings["HelpLink-oak"], ShouldEqual, "http://google.com/")
 			So(settings["GerritProject-oak"], ShouldEqual, "some/project/name")
 			So(settings["GerritInstance-oak"], ShouldEqual, "some-gerrit-instance")
+			So(settings["DefaultMonorailProjectName-oak"], ShouldEqual, "oak-project")
 		})
 	})
 }

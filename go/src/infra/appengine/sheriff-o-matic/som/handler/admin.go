@@ -73,6 +73,12 @@ func (SettingsPage) Fields(c context.Context) ([]portal.Field, error) {
 			Type:  portal.FieldText,
 			Help:  "The Gerrit instance for this tree.",
 		})
+		fields = append(fields, portal.Field{
+			ID:    fmt.Sprintf("DefaultMonorailProjectName-%s", t.Name),
+			Title: fmt.Sprintf("%s Default Monorail Project Name", t.DisplayName),
+			Type:  portal.FieldText,
+			Help:  "Default monorail project name used for bugqueue.",
+		})
 	}
 
 	return fields, nil
@@ -96,6 +102,7 @@ func (SettingsPage) ReadSettings(c context.Context) (map[string]string, error) {
 		values[fmt.Sprintf("HelpLink-%s", t.Name)] = t.HelpLink
 		values[fmt.Sprintf("GerritProject-%s", t.Name)] = t.GerritProject
 		values[fmt.Sprintf("GerritInstance-%s", t.Name)] = t.GerritInstance
+		values[fmt.Sprintf("DefaultMonorailProjectName-%s", t.Name)] = t.DefaultMonorailProjectName
 	}
 
 	values["Trees"] = strings.Join(trees, ",")
@@ -211,6 +218,10 @@ func writeAllValues(c context.Context, values map[string]string) error {
 
 		if gerritInstance, ok := values[fmt.Sprintf("GerritInstance-%s", t.Name)]; ok {
 			t.GerritInstance = gerritInstance
+		}
+
+		if projectName, ok := values[fmt.Sprintf("DefaultMonorailProjectName-%s", t.Name)]; ok {
+			t.DefaultMonorailProjectName = projectName
 		}
 
 		// Try to do only write per tree each save.

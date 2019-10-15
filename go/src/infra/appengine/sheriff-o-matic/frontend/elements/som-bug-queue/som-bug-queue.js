@@ -1,9 +1,12 @@
 'use strict';
 
 const UNSET_PRIORITY = Number.MAX_SAFE_INTEGER;
+const TREENAME_TO_PROJECT_MAPPING = {
+  'fuchsia' /* tree name */: 'fuchsia' /* default bug project name*/,
+  'chromium': 'chromium',
+};
 
 class SomBugQueue extends Polymer.Element {
-
   static get is() {
     return 'som-bug-queue';
   }
@@ -67,6 +70,10 @@ class SomBugQueue extends Polymer.Element {
         type: Object,
         value: null,
       },
+      _defaultBugProject: {
+        type: String,
+        computed: '_computeDefaultProjectIdFromTree(treeDisplayName)',
+      },
     };
   }
 
@@ -88,9 +95,9 @@ class SomBugQueue extends Polymer.Element {
       });
     }
 
-    let requests = [this.$.bugQueueAjax.generateRequest()];
+    const requests = [this.$.bugQueueAjax.generateRequest()];
 
-    let promises = requests.map((r) => {
+    const promises = requests.map((r) => {
       return r.completes;
     });
 
@@ -113,8 +120,9 @@ class SomBugQueue extends Polymer.Element {
   }
 
   _computeBugs(bugQueueJson, uncachedBugsJson) {
-    let hasBugJson = bugQueueJson && bugQueueJson.items;
-    let hasUncachedJson = uncachedBugsJson && uncachedBugsJson.items;
+    const hasBugJson = bugQueueJson && bugQueueJson.items;
+
+    const hasUncachedJson = uncachedBugsJson && uncachedBugsJson.items;
     if (!hasBugJson && !hasUncachedJson) {
       return [];
     } else if (!hasUncachedJson) {
@@ -125,24 +133,25 @@ class SomBugQueue extends Polymer.Element {
 
   _computeBugsByPriority(bugs) {
     // update last updated time as relative time
-    for(var i = 0; i < bugs.length; i++) {
+    for (let i = 0; i < bugs.length; i++) {
       if (bugs[i].updated) {
-        bugs[i].updated = moment.tz(bugs[i].updated, 'Atlantic/Reykjavik').fromNow();
+        bugs[i].updated = moment.tz(bugs[i].updated,
+            'Atlantic/Reykjavik').fromNow();
       }
     }
-    let buckets = bugs.reduce((function(obj, b) {
-                                let p = this._computePriority(b);
-                                if (!(p in obj)) {
-                                  obj[p] = [b];
-                                } else {
-                                  obj[p].push(b);
-                                }
-                                return obj;
-                              }).bind(this),
-                              {});
+    const buckets = bugs.reduce((function(obj, b) {
+      const p = this._computePriority(b);
+      if (!(p in obj)) {
+        obj[p] = [b];
+      } else {
+        obj[p].push(b);
+      }
+      return obj;
+    }).bind(this),
+    {});
 
     // Flatten the buckets into an array for use in dom-repeat.
-    let result = Object.keys(buckets).sort().map(function(key) {
+    const result = Object.keys(buckets).sort().map(function(key) {
       return {'priority': key, 'bugs': buckets[key]};
     });
     return result;
@@ -151,17 +160,17 @@ class SomBugQueue extends Polymer.Element {
   _computeHideBugQueue(bugQueueLabel) {
     // No loading or empty message is shown unless a bug queue exists.
     return !bugQueueLabel || bugQueueLabel === '' ||
-           bugQueueLabel === 'Performance-Sheriff-BotHealth';
+      bugQueueLabel === 'Performance-Sheriff-BotHealth';
   }
 
   _computePriority(bug) {
     if (!bug || !bug.labels) {
       return this.UNSET_PRIORITY;
     }
-    for (let i in bug.labels) {
-      let match = bug.labels[i].match(/^Pri-(\d)$/);
+    for (let i = 0; i < bug.labels.length; i++) {
+      const match = bug.labels[i].match(/^Pri-(\d)$/);
       if (match) {
-        let result = parseInt(match[1]);
+        const result = parseInt(match[1]);
         return result !== NaN ? result : this.UNSET_PRIORITY;
       }
     }
@@ -180,7 +189,7 @@ class SomBugQueue extends Polymer.Element {
     bugQueueLabel = bugQueueLabel || '';
     return labels.filter((label) => {
       return label.toLowerCase() != bugQueueLabel.toLowerCase() &&
-             !label.match(/^Pri-(\d)$/);
+        !label.match(/^Pri-(\d)$/);
     });
   }
 
@@ -207,7 +216,7 @@ class SomBugQueue extends Polymer.Element {
     return pri != this.UNSET_PRIORITY;
   }
 
-  ////////////////////// Collapsing by priority ///////////////////////////
+  // //////////////////// Collapsing by priority ///////////////////////////
 
   _computeCollapseId(pri) {
     return `collapsePri${pri}`;
@@ -219,46 +228,51 @@ class SomBugQueue extends Polymer.Element {
 
   _collapseAll() {
     for (let i = 0; i < this._bugsByPriority.length; i++) {
-      let pri = this._bugsByPriority[i].priority;
-      let id = this._computeCollapseId(pri);
-      let collapse = this.shadowRoot.querySelector('#' + id);
+      const pri = this._bugsByPriority[i].priority;
+      const id = this._computeCollapseId(pri);
+      const collapse = this.shadowRoot.querySelector('#' + id);
 
       collapse.opened = false;
       this.shadowRoot.querySelector('#toggleIconPri' + pri).icon =
-          this._computeCollapseIcon(collapse.opened);
+        this._computeCollapseIcon(collapse.opened);
     }
   }
 
   _expandAll() {
     for (let i = 0; i < this._bugsByPriority.length; i++) {
-      let pri = this._bugsByPriority[i].priority;
-      let id = this._computeCollapseId(pri);
-      let collapse = this.shadowRoot.querySelector('#' + id);
+      const pri = this._bugsByPriority[i].priority;
+      const id = this._computeCollapseId(pri);
+      const collapse = this.shadowRoot.querySelector('#' + id);
 
       collapse.opened = true;
       this.shadowRoot.querySelector('#toggleIconPri' + pri).icon =
-          this._computeCollapseIcon(collapse.opened);
+        this._computeCollapseIcon(collapse.opened);
     }
 
     this._opened = true;
   }
 
   _togglePriorityCollapse(evt) {
-    let i = evt.model.get('index');
-    let pri = this._bugsByPriority[i].priority;
-    let id = this._computeCollapseId(pri);
-    let collapse = this.shadowRoot.querySelector('#' + id);
+    const i = evt.model.get('index');
+    const pri = this._bugsByPriority[i].priority;
+    const id = this._computeCollapseId(pri);
+    const collapse = this.shadowRoot.querySelector('#' + id);
     if (!collapse) {
       console.error(id + ' is not a valid Id.');
     } else {
       collapse.toggle();
 
       this.shadowRoot.querySelector('#toggleIconPri' + pri).icon =
-          this._computeCollapseIcon(collapse.opened);
+        this._computeCollapseIcon(collapse.opened);
     }
   }
 
-  ////////////////////// Collapsing the section ///////////////////////////
+  _computeDefaultProjectIdFromTree(treeName) {
+    const projectName = TREENAME_TO_PROJECT_MAPPING[treeName.toLowerCase()];
+    return projectName == undefined ? 'chromium' : projectName;
+  }
+
+  // //////////////////// Collapsing the section ///////////////////////////
 
   _computeToggleSectionIcon(opened) {
     return opened ? 'unfold-less' : 'unfold-more';

@@ -67,7 +67,7 @@
         <span>
           [[treeDisplayName]] Bug Queue
           (<a href="https://sites.google.com/a/chromium.org/dev/developers/tree-sheriffs/sheriffing-bug-queues" target="_blank">Help?</a>)
-          (<a href$="https://bugs.chromium.org/p/chromium/issues/entry?status=Available&labels=[[bugQueueLabel]]" target="_blank">Add Bug</a>)
+          (<a href$="https://bugs.chromium.org/p/[[_defaultBugProject]]/issues/entry?status=Available&labels=[[bugQueueLabel]]" target="_blank">Add Bug</a>)
         </span>
 
         <div class="header-buttons">
@@ -101,13 +101,13 @@
             <template is="dom-repeat" items="[[bucket.bugs]]" as="bug">
               <div class="bug">
                 <div class="summary-box">
-                  <a href="http://crbug.com/[[bug.id]]" target="_blank" title="[[bug.summary]]" class="summary">[[bug.summary]]</a>
+                  <a href="http://crbug.com/[[bug.projectId]]/[[bug.id]]" target="_blank" title="[[bug.summary]]" class="summary">[[bug.summary]]</a>
                   <template is="dom-repeat" items="[[_filterBugLabels(bug.labels, bugQueueLabel)]]" as="label">
-                    <a href="https://bugs.chromium.org/p/chromium/issues/list?q=label:[[label]]"
+                    <a href="https://bugs.chromium.org/p/[[bug.projectId]]/issues/list?q=label:[[label]]"
                       class="bug-label" target="_blank">[[label]]</a>
                   </template>
                 </div>
-                <a href="http://crbug.com/[[bug.id]]" target="_blank">Bug [[bug.id]]</a>
+                <a href="http://crbug.com/[[bug.projectId]]/[[bug.id]]" target="_blank">Bug [[bug.id]]</a>
                 ([[bug.status]]<template is="dom-if" if="[[bug.owner.name]]">,
                 [[bug.owner.name]]</template>)
                 <template is="dom-if" if="[[_validPriority(bucket.priority)]]">

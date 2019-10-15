@@ -206,7 +206,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     this.$.fileBug.summary = bugSummary;
     this.$.fileBug.description = this._commentForBug(this._fileBugModel);
     this.$.fileBug.labels = this._computeFileBugLabels(this.tree, alerts);
-
+    this.$.fileBug.projectId = this.tree.default_monorail_project_name;
     this.$.fileBug.open();
   }
 

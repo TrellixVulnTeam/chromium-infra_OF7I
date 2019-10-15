@@ -211,7 +211,8 @@ func newBugQueueHandler(c context.Context) *handler.BugQueueHandler {
 		monorailClient = client.NewMonorail(c, "https://monorail-staging.appspot.com")
 	}
 	bqh := &handler.BugQueueHandler{
-		Monorail: monorailClient,
+		Monorail:               monorailClient,
+		DefaultMonorailProject: "",
 	}
 	return bqh
 }
