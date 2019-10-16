@@ -96,6 +96,12 @@ _POSTSUBMIT_PLATFORM_INFO_MAP = {
         'coverage_tool': 'clang',
         'ui_name': 'libassistant code coverage',
     },
+    'win': {
+        'bucket': 'ci',
+        'builder': 'win10-code-coverage',
+        'coverage_tool': 'clang',
+        'ui_name': '(EXPERIMENTAL) Windows (C/C++)',
+    },
 }
 
 
