@@ -1,5 +1,5 @@
-/histgorams_check
+/histograms_check
 /out
 # The below files are used only for local testing purposes.
-test/src/histograms.xml
-test/src/enums/enums_all.xml
+/testdata/src/histograms.xml
+/testdata/src/enums/enums_all.xml

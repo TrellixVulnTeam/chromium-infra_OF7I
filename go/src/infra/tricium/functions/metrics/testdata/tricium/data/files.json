@@ -1,5 +1,6 @@
 {
 	"files": [
+		{ "path": "src/enums/enums.xml" },
 		{ "path": "src/expiry/good_date.xml" },
 		{ "path": "src/expiry/never_expiry_no_comment.xml" },
 		{ "path": "src/expiry/never_expiry_with_comment.xml" },

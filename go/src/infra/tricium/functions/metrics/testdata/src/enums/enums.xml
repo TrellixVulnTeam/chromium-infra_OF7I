@@ -1,0 +1,11 @@
+<histogram-configuration>
+    <enums>
+        <enum name="SingleElementEnum">
+            <int value="0" label="Test"/>
+        </enum>
+        <enum name="TwoElementsEnum">
+            <int value="0" label="Test1"/>
+            <int value="1" label="Test2"/>
+        </enum>
+    </enums>
+</histogram-configuration>

@@ -72,6 +72,11 @@ https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/R
 For most new histograms, it's appropriate to re-use one of the existing 
 top-level histogram namespaces. For histogram names, the namespace 
 is defined as everything preceding the first dot '.' in the name.`
+	singleElementEnumWarning = `[WARNING]: It looks like this is an enumerated histogram that contains only a single bucket. 
+UMA metrics are difficult to interpret in isolation, so please either 
+add one or more additional buckets that can serve as a baseline for comparison, 
+or document what other metric should be used as a baseline during analysis. 
+https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#enum-histograms.`
 )
 
 var (
@@ -115,6 +120,22 @@ type Metadata struct {
 	HistogramBytes        []byte
 }
 
+// enum contains all the data about a particular enum.
+type enum struct {
+	Name     string `xml:"name,attr"`
+	Elements []struct {
+		Value string `xml:"value,attr"`
+		Label string `xml:"label,attr"`
+	} `xml:"int"`
+}
+
+// enumFile contains all the data in an enums file.
+type enumFile struct {
+	Enums struct {
+		EnumList []enum `xml:"enum"`
+	} `xml:"enums"`
+}
+
 // Milestone contains the date of a particular milestone
 type Milestone struct {
 	Milestone int    `json:"mstone"`
@@ -156,11 +177,19 @@ func main() {
 
 	results := &tricium.Data_Results{}
 
-	// Only add .xml files to filePaths.
+	// Only add .xml files to filePaths
 	var filePaths []string
+	var singletonEnums stringset.Set
 	for _, file := range input.Files {
-		if !file.IsBinary && filepath.Ext(file.Path) == ".xml" {
-			filePaths = append(filePaths, filepath.Join(*inputDir, file.Path))
+		if !file.IsBinary {
+			fullPath := filepath.Join(*inputDir, file.Path)
+			if filepath.Base(file.Path) == "enums.xml" {
+				singletonEnums = getSingleElementEnums(fullPath)
+			} else if filepath.Ext(file.Path) == ".xml" {
+				// Eventually, we want to change this to only analyze "histograms.xml".
+				// Right now, it's kept more general for testing purposes.
+				filePaths = append(filePaths, fullPath)
+			}
 		}
 	}
 
@@ -191,7 +220,7 @@ func main() {
 	getOriginalFiles(filePaths, tempDir, filepath.Join(*inputDir, input.Patch))
 
 	for _, filePath := range filePaths {
-		results.Comments = append(results.Comments, analyzeFile(filePath, tempDir, filesChanged)...)
+		results.Comments = append(results.Comments, analyzeFile(filePath, tempDir, filesChanged, singletonEnums)...)
 	}
 
 	// Write Tricium RESULTS data.
@@ -274,26 +303,47 @@ func copyFile(sourceFile string, destFile string) {
 	}
 }
 
-func analyzeFile(inputPath string, tempDir string, filesChanged *diffsPerFile) []*tricium.Data_Comment {
+func getSingleElementEnums(inputPath string) stringset.Set {
+	singletonEnums := make(stringset.Set)
+	f := openFileOrDie(inputPath)
+	defer closeFileOrDie(f)
+	enumBytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		log.Fatalf("Failed to read enums into buffer")
+	}
+	var enumFile enumFile
+	if err := xml.Unmarshal(enumBytes, &enumFile); err != nil {
+		log.Fatalf("Failed to unmarshal enums")
+	}
+	for _, enum := range enumFile.Enums.EnumList {
+		if len(enum.Elements) == 1 {
+			singletonEnums.Add(enum.Name)
+		}
+	}
+	return singletonEnums
+}
+
+func analyzeFile(inputPath string, tempDir string, filesChanged *diffsPerFile, singletonEnums stringset.Set) []*tricium.Data_Comment {
 	log.Printf("ANALYZING File: %s", inputPath)
 	var allComments []*tricium.Data_Comment
 	f := openFileOrDie(inputPath)
 	defer closeFileOrDie(f)
 	// Analyze added lines in file (if any)
-	comments, addedHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), inputPath, filesChanged.addedLines[inputPath], ADDED)
+	comments, addedHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), inputPath, filesChanged.addedLines[inputPath], singletonEnums, ADDED)
 	allComments = append(allComments, comments...)
 	// Analyze removed lines in file (if any)
 	tempPath := filepath.Join(tempDir, inputPath)
 	oldFile := openFileOrDie(tempPath)
 	defer closeFileOrDie(oldFile)
-	_, removedHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), tempPath, filesChanged.removedLines[inputPath], REMOVED)
+	var emptySet stringset.Set
+	_, removedHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), tempPath, filesChanged.removedLines[inputPath], emptySet, REMOVED)
 	// Identify any removed histograms
 	allComments = append(allComments, findRemovedHistograms(inputPath, addedHistograms, removedHistograms)...)
 	allComments = append(allComments, findAddedNamespaces(inputPath, newNamespaces, oldNamespaces, namespaceLineNums)...)
 	return allComments
 }
 
-func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int, mode changeMode) ([]*tricium.Data_Comment, stringset.Set, stringset.Set, map[string]int) {
+func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int, singletonEnums stringset.Set, mode changeMode) ([]*tricium.Data_Comment, stringset.Set, stringset.Set, map[string]int) {
 	var comments []*tricium.Data_Comment
 	// metadata is a struct that holds line numbers of different tags in histogram.
 	var metadata *Metadata
@@ -333,7 +383,7 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 				changedHistograms.Add(histogram.Name)
 				// Only check new (added) histograms are correct
 				if mode == ADDED {
-					comments = append(comments, checkHistogram(path, currHistogram, metadata)...)
+					comments = append(comments, checkHistogram(path, currHistogram, metadata, singletonEnums)...)
 				}
 			}
 			currHistogram = nil
@@ -352,7 +402,7 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 	return comments, changedHistograms, namespaces, namespaceLineNums
 }
 
-func checkHistogram(path string, histBytes []byte, metadata *Metadata) []*tricium.Data_Comment {
+func checkHistogram(path string, histBytes []byte, metadata *Metadata, singletonEnums stringset.Set) []*tricium.Data_Comment {
 	var comments []*tricium.Data_Comment
 	histogram := bytesToHistogram(histBytes, metadata)
 	if comment := checkNumOwners(path, histogram, metadata); comment != nil {
@@ -365,6 +415,9 @@ func checkHistogram(path string, histBytes []byte, metadata *Metadata) []*triciu
 		comments = append(comments, comment)
 	}
 	if comment := checkObsolete(path, histogram, metadata); comment != nil {
+		comments = append(comments, comment)
+	}
+	if comment := checkEnums(path, histogram, metadata, singletonEnums); comment != nil {
 		comments = append(comments, comment)
 	}
 	comments = append(comments, checkExpiry(path, histogram, metadata)...)
@@ -542,6 +595,19 @@ func createExpiryComment(message string, path string, metadata *Metadata) *trici
 		Path:      path,
 		StartLine: int32(metadata.HistogramLineNum),
 	}
+}
+
+func checkEnums(path string, histogram Histogram, metadata *Metadata, singletonEnums stringset.Set) *tricium.Data_Comment {
+	if singletonEnums.Has(histogram.Enum) && !strings.Contains(histogram.Summary, "baseline") {
+		log.Printf("ADDING Comment for %s at line %d: %s", histogram.Name, metadata.HistogramLineNum, "Single Element Enum No Baseline")
+		return &tricium.Data_Comment{
+			Category:  category + "/Enums",
+			Message:   singleElementEnumWarning,
+			Path:      path,
+			StartLine: int32(metadata.HistogramLineNum),
+		}
+	}
+	return nil
 }
 
 func findRemovedHistograms(path string, addedHistograms stringset.Set, removedHistograms stringset.Set) []*tricium.Data_Comment {

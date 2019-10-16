@@ -15,6 +15,7 @@ import (
 
 const (
 	emptyPatch = "testdata/empty_diff.patch"
+	enumPath   = "testdata/src/enums/enums.xml"
 )
 
 func analyzeTestFile(t *testing.T, name string, patch string, tempDir string) []*tricium.Data_Comment {
@@ -54,7 +55,8 @@ func analyzeTestFile(t *testing.T, name string, patch string, tempDir string) []
 		filesChanged.addedLines[filePath] = makeRange(1, 100)
 		filesChanged.removedLines[filePath] = makeRange(1, 100)
 	}
-	return analyzeFile(filePath, tempDir, filesChanged)
+	singletonEnums := getSingleElementEnums(enumPath)
+	return analyzeFile(filePath, tempDir, filesChanged, singletonEnums)
 }
 
 func TestHistogramsCheck(t *testing.T) {
@@ -75,6 +77,34 @@ func TestHistogramsCheck(t *testing.T) {
 	}
 	patchFile.Close()
 	defer os.Remove(emptyPatch)
+
+	// ENUM tests
+	Convey("Analyze XML file with no errors: single element enum with baseline", t, func() {
+		results := analyzeTestFile(t, "enums/enum_tests/single_element_baseline.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			defaultExpiryInfo("testdata/src/enums/enum_tests/single_element_baseline.xml"),
+		})
+	})
+
+	Convey("Analyze XML file with no errors: multi element enum no baseline", t, func() {
+		results := analyzeTestFile(t, "enums/enum_tests/multi_element_no_baseline.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			defaultExpiryInfo("testdata/src/enums/enum_tests/multi_element_no_baseline.xml"),
+		})
+	})
+
+	Convey("Analyze XML file with error: single element enum with no baseline", t, func() {
+		results := analyzeTestFile(t, "enums/enum_tests/single_element_no_baseline.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:  category + "/Enums",
+				Message:   singleElementEnumWarning,
+				StartLine: 3,
+				Path:      "testdata/src/enums/enum_tests/single_element_no_baseline.xml",
+			},
+			defaultExpiryInfo("testdata/src/enums/enum_tests/single_element_no_baseline.xml"),
+		})
+	})
 
 	// EXPIRY tests
 	Convey("Analyze XML file with no errors: good expiry date", t, func() {
