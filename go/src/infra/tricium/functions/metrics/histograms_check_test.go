@@ -107,6 +107,7 @@ func TestHistogramsCheck(t *testing.T) {
 	})
 
 	// EXPIRY tests
+
 	Convey("Analyze XML file with no errors: good expiry date", t, func() {
 		results := analyzeTestFile(t, "expiry/good_date.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
@@ -118,7 +119,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/no_expiry.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   noExpiryError,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/no_expiry.xml",
@@ -130,7 +131,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/never_expiry_with_comment.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   neverExpiryInfo,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/never_expiry_with_comment.xml",
@@ -142,13 +143,13 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/never_expiry_no_comment.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   neverExpiryInfo,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/never_expiry_no_comment.xml",
 			},
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   neverExpiryError,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/never_expiry_no_comment.xml",
@@ -160,7 +161,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/over_year_expiry.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   farExpiryWarning,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/over_year_expiry.xml",
@@ -172,7 +173,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/past_expiry.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   pastExpiryWarning,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/past_expiry.xml",
@@ -184,7 +185,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/unformatted_expiry.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   badExpiryError,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/unformatted_expiry.xml",
@@ -193,11 +194,12 @@ func TestHistogramsCheck(t *testing.T) {
 	})
 
 	// EXPIRY MILESTONE tests
+
 	Convey("Analyze XML file with no errors: good milestone expiry", t, func() {
 		results := analyzeTestFile(t, "expiry/milestone/good_milestone.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   fmt.Sprintf("[INFO]: Expiry date is in 30 days"),
 				StartLine: 3,
 				Path:      "testdata/src/expiry/milestone/good_milestone.xml",
@@ -209,7 +211,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/milestone/milestone_fetch_failed.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   milestoneFailure,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/milestone/milestone_fetch_failed.xml",
@@ -221,7 +223,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/milestone/over_year_milestone.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   farExpiryWarning,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/milestone/over_year_milestone.xml",
@@ -233,7 +235,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/milestone/over_year_milestone_3.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   farExpiryWarning,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/milestone/over_year_milestone_3.xml",
@@ -245,7 +247,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/milestone/past_milestone.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   pastExpiryWarning,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/milestone/past_milestone.xml",
@@ -257,7 +259,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "expiry/milestone/unformatted_milestone.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   badExpiryError,
 				StartLine: 3,
 				Path:      "testdata/src/expiry/milestone/unformatted_milestone.xml",
@@ -266,6 +268,7 @@ func TestHistogramsCheck(t *testing.T) {
 	})
 
 	// OBSOLETE tests
+
 	Convey("Analyze XML file with no obsolete message and no errors", t, func() {
 		currPath := "obsolete/good_obsolete_date.xml"
 		fullPath := "testdata/src/" + currPath
@@ -284,7 +287,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "obsolete/good_obsolete_milestone.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+				Category:  category + "/Expiry",
 				Message:   fmt.Sprintf("[INFO]: Expiry date is in 30 days"),
 				StartLine: 3,
 				Path:      "testdata/src/obsolete/good_obsolete_milestone.xml",
@@ -296,7 +299,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "obsolete/obsolete_no_date.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Obsolete"),
+				Category:  category + "/Obsolete",
 				Message:   obsoleteDateError,
 				StartLine: 4,
 				Path:      "testdata/src/obsolete/obsolete_no_date.xml",
@@ -324,6 +327,7 @@ func TestHistogramsCheck(t *testing.T) {
 	})
 
 	// OWNER tests
+
 	Convey("Analyze XML file with no errors: both owners individuals", t, func() {
 		results := analyzeTestFile(t, "owners/good_individuals.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
@@ -335,7 +339,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "owners/one_owner.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Owners"),
+				Category:  category + "/Owners",
 				Message:   oneOwnerError,
 				StartLine: 4,
 				Path:      "testdata/src/owners/one_owner.xml",
@@ -348,7 +352,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "owners/no_owners.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Owners"),
+				Category:  category + "/Owners",
 				Message:   oneOwnerError,
 				StartLine: 3,
 				Path:      "testdata/src/owners/no_owners.xml",
@@ -361,7 +365,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "owners/first_team_owner.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Owners"),
+				Category:  category + "/Owners",
 				Message:   firstOwnerTeamError,
 				StartLine: 4,
 				Path:      "testdata/src/owners/first_team_owner.xml",
@@ -374,13 +378,13 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "owners/first_team_one_owner.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Owners"),
+				Category:  category + "/Owners",
 				Message:   oneOwnerError,
 				StartLine: 4,
 				Path:      "testdata/src/owners/first_team_one_owner.xml",
 			},
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Owners"),
+				Category:  category + "/Owners",
 				Message:   firstOwnerTeamError,
 				StartLine: 4,
 				Path:      "testdata/src/owners/first_team_one_owner.xml",
@@ -390,6 +394,7 @@ func TestHistogramsCheck(t *testing.T) {
 	})
 
 	// UNITS tests
+
 	Convey("Analyze XML file no errors, units of microseconds, all users", t, func() {
 		results := analyzeTestFile(t, "units/microseconds_all_users.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
@@ -415,7 +420,7 @@ func TestHistogramsCheck(t *testing.T) {
 		results := analyzeTestFile(t, "units/microseconds_bad_summary.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Units"),
+				Category:  category + "/Units",
 				Message:   unitsMicrosecondsWarning,
 				StartLine: 3,
 				Path:      "testdata/src/units/microseconds_bad_summary.xml",
@@ -425,11 +430,12 @@ func TestHistogramsCheck(t *testing.T) {
 	})
 
 	// REMOVED HISTOGRAM tests
+
 	Convey("Analyze XML file with error: histogram deleted", t, func() {
 		results := analyzeTestFile(t, "rm/remove_histogram.xml", "testdata/tricium_generated_diff.patch", tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
-				Category: fmt.Sprintf("%s/%s", category, "Removed"),
+				Category: category + "/Removed",
 				Message:  fmt.Sprintf(removedHistogramError, "Test.Histogram2"),
 				Path:     "testdata/src/rm/remove_histogram.xml",
 			},
@@ -437,6 +443,7 @@ func TestHistogramsCheck(t *testing.T) {
 	})
 
 	// ADDED NAMESPACE tests
+
 	Convey("Analyze XML file with no error: added histogram with same namespace", t, func() {
 		results := analyzeTestFile(t, "namespace/same_namespace.xml", "testdata/tricium_same_namespace.patch", tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
@@ -449,7 +456,7 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			defaultExpiryInfoLine("testdata/src/namespace/add_namespace.xml", 8),
 			{
-				Category:  fmt.Sprintf("%s/%s", category, "Namespace"),
+				Category:  category + "/Namespace",
 				Message:   fmt.Sprintf(addedNamespaceWarning, "Test2"),
 				Path:      "testdata/src/namespace/add_namespace.xml",
 				StartLine: 8,
@@ -464,7 +471,7 @@ func defaultExpiryInfo(path string) *tricium.Data_Comment {
 
 func defaultExpiryInfoLine(path string, startLine int) *tricium.Data_Comment {
 	return &tricium.Data_Comment{
-		Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+		Category:  category + "/Expiry",
 		Message:   fmt.Sprintf("[INFO]: Expiry date is in 104 days"),
 		StartLine: int32(startLine),
 		Path:      path,
@@ -473,7 +480,7 @@ func defaultExpiryInfoLine(path string, startLine int) *tricium.Data_Comment {
 
 func makeObsoleteDateError(path string, startLine int) *tricium.Data_Comment {
 	return &tricium.Data_Comment{
-		Category:  fmt.Sprintf("%s/%s", category, "Obsolete"),
+		Category:  category + "/Obsolete",
 		Message:   obsoleteDateError,
 		StartLine: int32(startLine),
 		Path:      path,

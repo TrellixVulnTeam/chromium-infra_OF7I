@@ -452,7 +452,7 @@ func checkNonTeamOwner(path string, histogram Histogram, metadata *Metadata) *tr
 
 func createOwnerComment(message string, path string, metadata *Metadata) *tricium.Data_Comment {
 	return &tricium.Data_Comment{
-		Category:  fmt.Sprintf("%s/%s", category, "Owners"),
+		Category:  category + "/Owners",
 		Message:   message,
 		Path:      path,
 		StartLine: int32(metadata.OwnerLineNum),
@@ -462,7 +462,7 @@ func createOwnerComment(message string, path string, metadata *Metadata) *triciu
 func checkUnits(path string, histogram Histogram, metadata *Metadata) *tricium.Data_Comment {
 	if strings.Contains(histogram.Units, "microseconds") && !microsecondsSummary.MatchString(histogram.Summary) {
 		comment := &tricium.Data_Comment{
-			Category:  fmt.Sprintf("%s/%s", category, "Units"),
+			Category:  category + "/Units",
 			Message:   unitsMicrosecondsWarning,
 			Path:      path,
 			StartLine: int32(metadata.HistogramLineNum),
@@ -479,7 +479,7 @@ func checkObsolete(path string, histogram Histogram, metadata *Metadata) *triciu
 		!(obsoleteYearPattern.MatchString(histogram.Obsolete) &&
 			obsoleteMonthPattern.MatchString(histogram.Obsolete)) {
 		comment := &tricium.Data_Comment{
-			Category:  fmt.Sprintf("%s/%s", category, "Obsolete"),
+			Category:  category + "/Obsolete",
 			Message:   obsoleteDateError,
 			Path:      path,
 			StartLine: int32(metadata.ObsoleteLineNum),
@@ -590,7 +590,7 @@ func getMilestoneDateImpl(milestone int) (time.Time, error) {
 
 func createExpiryComment(message string, path string, metadata *Metadata) *tricium.Data_Comment {
 	return &tricium.Data_Comment{
-		Category:  fmt.Sprintf("%s/%s", category, "Expiry"),
+		Category:  category + "/Expiry",
 		Message:   message,
 		Path:      path,
 		StartLine: int32(metadata.HistogramLineNum),
@@ -616,7 +616,7 @@ func findRemovedHistograms(path string, addedHistograms stringset.Set, removedHi
 	sort.Strings(allRemovedHistograms)
 	for _, histogram := range allRemovedHistograms {
 		comment := &tricium.Data_Comment{
-			Category: fmt.Sprintf("%s/%s", category, "Removed"),
+			Category: category + "/Removed",
 			Message:  fmt.Sprintf(removedHistogramError, histogram),
 			Path:     path,
 		}
@@ -632,7 +632,7 @@ func findAddedNamespaces(path string, addedNamespaces stringset.Set, removedName
 	sort.Strings(allAddedNamespaces)
 	for _, namespace := range allAddedNamespaces {
 		comment := &tricium.Data_Comment{
-			Category:  fmt.Sprintf("%s/%s", category, "Namespace"),
+			Category:  category + "/Namespace",
 			Message:   fmt.Sprintf(addedNamespaceWarning, namespace),
 			Path:      path,
 			StartLine: int32(namespaceLineNums[namespace]),
