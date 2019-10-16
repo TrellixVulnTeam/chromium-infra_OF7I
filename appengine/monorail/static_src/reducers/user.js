@@ -263,7 +263,7 @@ export const fetchPrefs = () => async (dispatch) => {
  * Action creator for setting a user's preferences.
  *
  * @param {Object} newPrefs
- * @param {boolean} saveChanges
+ * @param {Boolean} saveChanges
  *
  * @return {undefined}
  */

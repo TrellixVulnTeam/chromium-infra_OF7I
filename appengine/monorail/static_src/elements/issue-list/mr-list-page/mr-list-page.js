@@ -418,7 +418,7 @@ export class MrListPage extends connectStore(LitElement) {
    * Computes the current URL of the page with updated queryParams.
    *
    * @param {Object} newParams keys and values to override existing parameters.
-   * @return {string} the new URL.
+   * @return {String} the new URL.
    */
   _urlWithNewParams(newParams) {
     // TODO(zhangtiff): replace list_new with list when switching over.

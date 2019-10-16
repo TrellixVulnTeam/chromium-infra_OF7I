@@ -739,7 +739,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Update sort parameter in the URL based on user input.
    *
-   * @param {string} column name of the column to be sorted.
+   * @param {String} column name of the column to be sorted.
    * @param {Boolean} descending descending or ascending order.
    */
   updateSortSpec(column, descending = false) {
@@ -778,7 +778,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Removes the column at a particular index.
    *
-   * @param {int} i the issue column to be removed.
+   * @param {Number} i the issue column to be removed.
    */
   removeColumn(i) {
     const columns = [...this.columns];
@@ -789,7 +789,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Adds a new column to a particular index.
    *
-   * @param {string} name of the new column added.
+   * @param {String} name of the new column added.
    */
   addColumn(name) {
     this.reloadColspec([...this.columns, name]);
@@ -823,7 +823,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * Get the current URL of the page, without query params. Useful for
    * test stubbing.
    *
-   * @return {string} the URL of the list page, without params.
+   * @return {String} the URL of the list page, without params.
    */
   _baseUrl() {
     return window.location.pathname;

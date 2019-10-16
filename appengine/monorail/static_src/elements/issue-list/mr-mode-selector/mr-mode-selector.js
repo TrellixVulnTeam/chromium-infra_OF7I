@@ -15,6 +15,7 @@ export class MrModeSelector extends ChopsChoiceButtons {
       projectName: {type: String},
     };
   }
+
   /** @override */
   constructor() {
     super();

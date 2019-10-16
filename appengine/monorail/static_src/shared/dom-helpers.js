@@ -25,7 +25,7 @@ const INPUT_TYPES_WITHOUT_TEXT_INPUT = [
  * the user is typing.
  *
  * @param {HTMLElement} element is a dom node to run checks against.
- * @return {boolean} Whether the dom node is an element that accepts key input.
+ * @return {Boolean} Whether the dom node is an element that accepts key input.
  */
 export function isTextInput(element) {
   const tagName = element.tagName && element.tagName.toUpperCase();

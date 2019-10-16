@@ -167,7 +167,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
   /**
    * Removes the column at a particular index.
    *
-   * @param {int} i the issue column to be removed.
+   * @param {Number} i the issue column to be removed.
    */
   removeColumn(i) {
     if (this.onHideColumn) {
@@ -183,7 +183,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
   /**
    * Adds a new column to a particular index.
    *
-   * @param {string} name of the new column added.
+   * @param {String} name of the new column added.
    */
   addColumn(name) {
     if (this.onShowColumn) {
@@ -220,7 +220,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
    * Get the current URL of the page, without query params. Useful for
    * test stubbing.
    *
-   * @return {string} the URL of the list page, without params.
+   * @return {String} the URL of the list page, without params.
    */
   _baseUrl() {
     return window.location.pathname;
