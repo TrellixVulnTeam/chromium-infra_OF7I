@@ -48,6 +48,7 @@ const DEBOUNCED_PRESUBMIT_TIME_OUT = 400;
  *
  */
 export class MrEditMetadata extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -169,6 +170,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -560,6 +562,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     ` : '';
   }
 
+  /** @override */
   static get properties() {
     return {
       fieldDefs: {type: Array},
@@ -601,6 +604,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.summary = '';
@@ -695,6 +699,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     return ownerView;
   }
 
+  /** @override */
   stateChanged(state) {
     this.fieldValueMap = issue.fieldValueMap(state);
     this.issueType = issue.type(state);
@@ -710,6 +715,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.isStarred = starredIssues.has(issueRefToString(this.issueRef));
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
 

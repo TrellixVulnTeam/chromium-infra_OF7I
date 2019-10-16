@@ -13,6 +13,7 @@ import {ISSUE_EDIT_PERMISSION} from 'shared/permissions';
 import {prpcClient} from 'prpc-client-instance.js';
 
 export class MrRelatedIssues extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -81,6 +82,7 @@ export class MrRelatedIssues extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     const rerankEnabled = (this.issuePermissions
       || []).includes(ISSUE_EDIT_PERMISSION);
@@ -140,6 +142,7 @@ export class MrRelatedIssues extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       columns: {type: Array},
@@ -152,17 +155,20 @@ export class MrRelatedIssues extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.issueRef = issue.issueRef(state);
     this.issuePermissions = issue.permissions(state);
     this.sortedBlockedOn = issue.sortedBlockedOn(state);
   }
 
+  /** @override */
   constructor() {
     super();
     this.columns = ['Issue', 'Summary'];
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('sortedBlockedOn')) {
       this.reset();
@@ -170,6 +176,7 @@ export class MrRelatedIssues extends connectStore(LitElement) {
     super.update(changedProperties);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('issueRef')) {
       this.close();

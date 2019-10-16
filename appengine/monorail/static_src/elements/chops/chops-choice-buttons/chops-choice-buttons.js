@@ -6,6 +6,7 @@ import {LitElement, html, css} from 'lit-element';
 import 'elements/chops/chops-button/chops-button.js';
 
 export class ChopsChoiceButtons extends LitElement {
+  /** @override */
   render() {
     return html`
       ${(this.options).map((option) => html`
@@ -18,6 +19,7 @@ export class ChopsChoiceButtons extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       /**
@@ -29,11 +31,13 @@ export class ChopsChoiceButtons extends LitElement {
     };
   };
 
+  /** @override */
   constructor() {
     super();
     this.options = [];
   };
 
+  /** @override */
   static get styles() {
     return css`
       :host {

@@ -12,6 +12,7 @@ import {LitElement, html, css} from 'lit-element';
  *
  */
 export class ChopsToggle extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -61,6 +62,7 @@ export class ChopsToggle extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <input id="checkbox"
@@ -75,6 +77,7 @@ export class ChopsToggle extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       /**

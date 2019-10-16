@@ -9,6 +9,7 @@ import {connectStore} from 'reducers/base.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 export class MrSiteBanner extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host([hidden]) {
@@ -25,6 +26,7 @@ export class MrSiteBanner extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       ${this.bannerMessage}
@@ -36,6 +38,7 @@ export class MrSiteBanner extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       hidden: {
@@ -47,6 +50,7 @@ export class MrSiteBanner extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.bannerMessage = '';
@@ -54,11 +58,13 @@ export class MrSiteBanner extends connectStore(LitElement) {
     this.hidden = false;
   }
 
+  /** @override */
   stateChanged(state) {
     this.bannerMessage = sitewide.bannerMessage(state);
     this.bannerTime = sitewide.bannerTime(state);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('bannerMessage')) {
       this.hidden = !this.bannerMessage;

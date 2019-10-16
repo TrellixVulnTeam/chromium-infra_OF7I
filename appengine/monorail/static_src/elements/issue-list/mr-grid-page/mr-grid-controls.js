@@ -14,6 +14,7 @@ import './mr-grid-dropdown.js';
 import {getAvailableGridFields} from './extract-grid-data.js';
 
 export class MrGridControls extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -44,6 +45,7 @@ export class MrGridControls extends connectStore(LitElement) {
     `;
   };
 
+  /** @override */
   render() {
     const hideCounts = this.totalIssues === 0;
     return html`
@@ -89,6 +91,7 @@ export class MrGridControls extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   constructor() {
     super();
     this.gridOptions = getAvailableGridFields();
@@ -110,6 +113,7 @@ export class MrGridControls extends connectStore(LitElement) {
     this._labelPrefixFields = [];
   };
 
+  /** @override */
   static get properties() {
     return {
       gridOptions: {type: Array},
@@ -125,12 +129,14 @@ export class MrGridControls extends connectStore(LitElement) {
     };
   };
 
+  /** @override */
   stateChanged(state) {
     this.totalIssues = (issue.totalIssues(state) || 0);
     this._fieldDefs = project.fieldDefs(state) || [];
     this._labelPrefixFields = project.labelPrefixFields(state) || [];
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('_fieldDefs')
         || changedProperties.has('_labelPrefixFields')) {

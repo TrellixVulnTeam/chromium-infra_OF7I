@@ -16,6 +16,7 @@ import {userRefsToDisplayNames} from 'shared/converters.js';
  *
  */
 export class MrAutocomplete extends connectStore(ChopsAutocomplete) {
+  /** @override */
   static get properties() {
     return {
       ...ChopsAutocomplete.properties,
@@ -39,12 +40,14 @@ export class MrAutocomplete extends connectStore(ChopsAutocomplete) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.vocabularyName = '';
     this.vocabularies = {};
   }
 
+  /** @override */
   stateChanged(state) {
     const visibleMembers = project.visibleMembers(state);
     const userProjects = user.projects(state);
@@ -78,6 +81,7 @@ export class MrAutocomplete extends connectStore(ChopsAutocomplete) {
     return {strings: owners};
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('vocabularyName')
         || changedProperties.has('vocabularies')) {

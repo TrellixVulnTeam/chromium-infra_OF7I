@@ -11,6 +11,7 @@ import {LitElement, html, css} from 'lit-element';
  *
  */
 export class ChopsChart extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -19,12 +20,14 @@ export class ChopsChart extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <canvas></canvas>
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       type: {type: String},
@@ -34,6 +37,7 @@ export class ChopsChart extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.type = 'line';

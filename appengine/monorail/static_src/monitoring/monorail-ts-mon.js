@@ -19,6 +19,7 @@ export const PAGE_TYPES = Object.freeze({
 });
 
 export default class MonorailTSMon extends TSMonClient {
+  /** @override */
   constructor() {
     super(TS_MON_JS_PATH);
     this.clientId = MonorailTSMon.generateClientId();

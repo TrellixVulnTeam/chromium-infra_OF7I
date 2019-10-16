@@ -82,6 +82,7 @@ const SHORTCUT_DOC_GROUPS = [
  *
  */
 export class MrKeystrokes extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       h2 {
@@ -133,6 +134,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <chops-dialog ?opened=${this.opened}>
@@ -169,6 +171,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       shortcutDocGroups: {type: Array},
@@ -184,6 +187,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -192,6 +196,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
     this._starringIssues = new Map();
   }
 
+  /** @override */
   stateChanged(state) {
     this.issuePermissions = issue.permissions(state);
     // Create an issue ref to fetch whether it's starred
@@ -205,6 +210,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
     this._starringIssues = issue.starringIssues(state);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('projectName')
         || changedProperties.has('issueEntryUrl')) {
@@ -218,6 +224,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
     }
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
     this.unbindProjectKeys();

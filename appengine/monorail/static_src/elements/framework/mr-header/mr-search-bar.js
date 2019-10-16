@@ -18,6 +18,7 @@ import ClientLogger from 'monitoring/client-logger';
  *
  */
 export class MrSearchBar extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -142,6 +143,7 @@ export class MrSearchBar extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -231,6 +233,7 @@ export class MrSearchBar extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       projectName: {type: String},
@@ -248,6 +251,7 @@ export class MrSearchBar extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.queryParams = {};
@@ -271,6 +275,7 @@ export class MrSearchBar extends LitElement {
     this._page = page;
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
 
@@ -280,12 +285,14 @@ export class MrSearchBar extends LitElement {
     window.addEventListener('focus-search', this._boundFocus);
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
 
     window.removeEventListener('focus-search', this._boundFocus);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (this.userDisplayName && changedProperties.has('userDisplayName')) {
       const userSavedQueriesPromise = prpcClient.call('monorail.Users',

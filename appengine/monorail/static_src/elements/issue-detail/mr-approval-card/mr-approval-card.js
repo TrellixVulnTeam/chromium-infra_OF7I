@@ -30,6 +30,7 @@ import {commentListToDescriptionList} from 'shared/converters.js';
  *
  */
 export class MrApprovalCard extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -135,6 +136,8 @@ export class MrApprovalCard extends connectStore(LitElement) {
       `,
     ];
   }
+
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -210,6 +213,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       fieldName: {type: String},
@@ -234,6 +238,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.opened = false;
@@ -242,6 +247,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     this._allSurveys = [];
   }
 
+  /** @override */
   stateChanged(state) {
     const fieldDefsByApproval = project.fieldDefsByApprovalName(state);
     if (fieldDefsByApproval && this.fieldName
@@ -264,6 +270,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     this.updateError = issue.requests(state).updateApproval.error;
   }
 
+  /** @override */
   update(changedProperties) {
     if ((changedProperties.has('comments') || changedProperties.has('focusId'))
         && this.comments) {
@@ -286,6 +293,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     super.update(changedProperties);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('issue')) {
       this.reset();

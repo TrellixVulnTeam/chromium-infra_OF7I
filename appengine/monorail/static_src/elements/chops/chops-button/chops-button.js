@@ -14,6 +14,7 @@ const DEFAULT_INPUT_KEYS = [13, 32];
  * @demo /demo/chops-button_demo.html
  */
 export class ChopsButton extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -56,12 +57,14 @@ export class ChopsButton extends LitElement {
       }
     `;
   }
+  /** @override */
   render() {
     return html`
       <slot></slot>
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       /** Whether the button is available for input or not. */
@@ -111,6 +114,7 @@ export class ChopsButton extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -122,6 +126,7 @@ export class ChopsButton extends LitElement {
     this._boundFocusBlurHandler = this._focusBlurHandler.bind(this);
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
 
@@ -130,6 +135,7 @@ export class ChopsButton extends LitElement {
     this.addEventListener('blur', this._boundFocusBlurHandler, true);
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('keypress', this._boundKeypressHandler,

@@ -22,6 +22,7 @@ import {commentListToDescriptionList} from 'shared/converters.js';
  *
  */
 export class MrEditDescription extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -54,6 +55,7 @@ export class MrEditDescription extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -112,6 +114,7 @@ export class MrEditDescription extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       commentsByApproval: {type: Array},
@@ -127,6 +130,7 @@ export class MrEditDescription extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.commentsByApproval = issue.commentsByApprovalName(state);
     this.issueRef = issue.issueRef(state);

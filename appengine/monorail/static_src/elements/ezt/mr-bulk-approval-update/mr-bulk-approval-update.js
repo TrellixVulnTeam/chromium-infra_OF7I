@@ -15,6 +15,7 @@ export const NO_UPDATES_MESSAGE =
 export const NO_APPROVALS_MESSAGE = 'These issues don\'t have any approvals.';
 
 export class MrBulkApprovalUpdate extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -49,6 +50,7 @@ export class MrBulkApprovalUpdate extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <button
@@ -130,6 +132,7 @@ export class MrBulkApprovalUpdate extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       approvals: {type: Array},
@@ -141,6 +144,7 @@ export class MrBulkApprovalUpdate extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.approvals = [];

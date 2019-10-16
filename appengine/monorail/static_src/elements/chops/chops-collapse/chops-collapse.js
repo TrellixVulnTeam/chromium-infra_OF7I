@@ -9,6 +9,7 @@ import {LitElement, html, css} from 'lit-element';
  *
  */
 export class ChopsCollapse extends LitElement {
+  /** @override */
   static get properties() {
     return {
       opened: {
@@ -23,6 +24,7 @@ export class ChopsCollapse extends LitElement {
     };
   }
 
+  /** @override */
   static get styles() {
     return css`
       :host, :host([hidden]) {
@@ -34,12 +36,14 @@ export class ChopsCollapse extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <slot></slot>
     `;
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -47,6 +51,7 @@ export class ChopsCollapse extends LitElement {
     this.ariaHidden = true;
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('opened')) {
       this.ariaHidden = !this.opened;

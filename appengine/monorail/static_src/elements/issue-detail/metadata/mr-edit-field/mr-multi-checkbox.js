@@ -11,6 +11,7 @@ import {LitElement, html, css} from 'lit-element';
  *
  */
 export class MrMultiCheckbox extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       input[type="checkbox"] {
@@ -20,6 +21,7 @@ export class MrMultiCheckbox extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       ${this.options.map((option) => html`
@@ -37,6 +39,7 @@ export class MrMultiCheckbox extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       values: {type: Array},
@@ -46,6 +49,7 @@ export class MrMultiCheckbox extends LitElement {
   }
 
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('options')) {
       this._inputRefs = this.shadowRoot.querySelectorAll('input');

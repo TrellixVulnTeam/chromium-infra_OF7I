@@ -23,6 +23,7 @@ import './mr-metadata.js';
  *
  */
 export class MrIssueMetadata extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -96,6 +97,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     const hotlistsByRole = this._hotlistsByRole;
     return html`
@@ -209,6 +211,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     `);
   }
 
+  /** @override */
   static get properties() {
     return {
       issue: {type: Object},
@@ -226,6 +229,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.issue = issue.issue(state);
     this.issueRef = issue.issueRef(state);

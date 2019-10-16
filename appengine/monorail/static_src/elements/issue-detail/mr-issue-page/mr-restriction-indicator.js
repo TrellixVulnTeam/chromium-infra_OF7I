@@ -17,6 +17,7 @@ import {arrayToEnglish} from 'shared/helpers.js';
  *
  */
 export class MrRestrictionIndicator extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -59,6 +60,7 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -83,6 +85,7 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       restrictions: Object,
@@ -98,6 +101,7 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -106,11 +110,13 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
     this.prefs = {};
   }
 
+  /** @override */
   stateChanged(state) {
     this.restrictions = issue.restrictions(state);
     this.prefs = user.prefs(state);
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('prefs')
         || changedProperties.has('restrictions')) {

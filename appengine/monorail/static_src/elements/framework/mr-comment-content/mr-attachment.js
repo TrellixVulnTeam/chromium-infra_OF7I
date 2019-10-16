@@ -17,6 +17,7 @@ import {prpcClient} from 'prpc-client-instance.js';
  *
  */
 export class MrAttachment extends connectStore(LitElement) {
+  /** @override */
   static get properties() {
     return {
       attachment: {type: Object},
@@ -27,6 +28,7 @@ export class MrAttachment extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -81,6 +83,7 @@ export class MrAttachment extends connectStore(LitElement) {
       `];
   }
 
+  /** @override */
   render() {
     return html`
       <div class="comment-attachment">

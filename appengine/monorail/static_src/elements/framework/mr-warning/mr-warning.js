@@ -12,6 +12,7 @@ import {LitElement, html, css} from 'lit-element';
  *
  */
 export class MrWarning extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -37,6 +38,7 @@ export class MrWarning extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">

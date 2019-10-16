@@ -30,6 +30,7 @@ const SELECT_INPUT = 'SELECT_INPUT';
  *
  */
 export class MrEditField extends LitElement {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -54,6 +55,7 @@ export class MrEditField extends LitElement {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -138,6 +140,7 @@ export class MrEditField extends LitElement {
     }
   }
 
+  /** @override */
   static get properties() {
     return {
       // TODO(zhangtiff): Redesign this a bit so we don't need two separate
@@ -174,6 +177,7 @@ export class MrEditField extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.initialValues = [];
@@ -187,6 +191,7 @@ export class MrEditField extends LitElement {
     this.type = '';
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('initialValues')) {
       // Assume we always want to reset the user's input when initial
@@ -196,6 +201,7 @@ export class MrEditField extends LitElement {
     super.update(changedProperties);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('type') || changedProperties.has('multi')) {
       this._checkboxRef = this.shadowRoot.querySelector('mr-multi-checkbox');

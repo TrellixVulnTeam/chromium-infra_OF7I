@@ -14,6 +14,7 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 export class MrMoveCopyIssue extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -41,6 +42,7 @@ export class MrMoveCopyIssue extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -78,6 +80,7 @@ export class MrMoveCopyIssue extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       issueRef: {type: Object},
@@ -86,6 +89,7 @@ export class MrMoveCopyIssue extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.issueRef = issue.issueRef(state);
   }

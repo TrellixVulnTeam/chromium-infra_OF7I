@@ -11,6 +11,7 @@ import {LitElement, html, css} from 'lit-element';
  *
  */
 export class MrCrbugLink extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       a.material-icons {
@@ -25,6 +26,7 @@ export class MrCrbugLink extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -37,6 +39,7 @@ export class MrCrbugLink extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       // The issue being viewed. Falls back gracefully if this is only a ref.

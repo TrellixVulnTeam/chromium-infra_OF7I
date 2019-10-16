@@ -22,6 +22,7 @@ import ClientLogger from 'monitoring/client-logger.js';
  *
  */
 export class MrEditIssue extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -34,6 +35,7 @@ export class MrEditIssue extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     const issue = this.issue || {};
     let blockedOnRefs = issue.blockedOnIssueRefs || [];
@@ -77,6 +79,7 @@ export class MrEditIssue extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       /**
@@ -118,12 +121,14 @@ export class MrEditIssue extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
     this.clientLogger = new ClientLogger('issues');
   }
 
+  /** @override */
   stateChanged(state) {
     this.issue = issue.issue(state);
     this.issueRef = issue.issueRef(state);
@@ -135,6 +140,7 @@ export class MrEditIssue extends connectStore(LitElement) {
     this._fieldDefs = issue.fieldDefs(state);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (this.focusId && changedProperties.has('focusId')) {
       // TODO(zhangtiff): Generalize logic to focus elements based on ID

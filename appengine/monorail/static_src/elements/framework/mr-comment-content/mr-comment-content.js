@@ -16,6 +16,7 @@ import * as project from 'reducers/project.js';
  *
  */
 export class MrCommentContent extends connectStore(LitElement) {
+  /** @override */
   constructor() {
     super();
 
@@ -25,6 +26,7 @@ export class MrCommentContent extends connectStore(LitElement) {
     this.projectName = '';
   }
 
+  /** @override */
   static get properties() {
     return {
       content: {type: String},
@@ -38,6 +40,7 @@ export class MrCommentContent extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -59,6 +62,7 @@ export class MrCommentContent extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     const runs = autolink.markupAutolinks(
         this.content, this.commentReferences, this.projectName,
@@ -84,6 +88,7 @@ export class MrCommentContent extends connectStore(LitElement) {
     return html`${templates}`;
   }
 
+  /** @override */
   stateChanged(state) {
     this.commentReferences = issue.commentReferences(state);
     this.projectName = issue.issueRef(state).projectName;

@@ -13,6 +13,7 @@ import 'elements/chops/chops-timestamp/chops-timestamp.js';
  *
  */
 export class MrCommentTable extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       .ellipsis {
@@ -47,6 +48,7 @@ export class MrCommentTable extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     const comments = this._displayedComments(this.selectedDate, this.comments);
     // TODO(zhangtiff): render deltas for comment changes.
@@ -90,6 +92,7 @@ export class MrCommentTable extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       comments: {type: Array},
@@ -97,6 +100,7 @@ export class MrCommentTable extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.comments = [];

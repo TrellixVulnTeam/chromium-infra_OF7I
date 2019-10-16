@@ -11,6 +11,7 @@ import {LitElement, html} from 'lit-element';
  *
  */
 export class MrHotlistLink extends LitElement {
+  /** @override */
   render() {
     if (!this.hotlist) return html``;
     return html`
@@ -22,6 +23,7 @@ export class MrHotlistLink extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       hotlist: {type: Object},

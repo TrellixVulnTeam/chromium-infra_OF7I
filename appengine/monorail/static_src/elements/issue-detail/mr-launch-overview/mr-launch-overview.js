@@ -15,6 +15,7 @@ import './mr-phase.js';
  *
  */
 export class MrLaunchOverview extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -33,6 +34,7 @@ export class MrLaunchOverview extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -49,6 +51,7 @@ export class MrLaunchOverview extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       approvals: {type: Array},
@@ -60,6 +63,7 @@ export class MrLaunchOverview extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.approvals = [];
@@ -67,6 +71,7 @@ export class MrLaunchOverview extends connectStore(LitElement) {
     this.hidden = true;
   }
 
+  /** @override */
   stateChanged(state) {
     if (!issue.issue(state)) return;
 
@@ -74,6 +79,7 @@ export class MrLaunchOverview extends connectStore(LitElement) {
     this.phases = issue.issue(state).phases || [];
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('phases') || changedProperties.has('approvals')) {
       this.hidden = !this.phases.length && !this.approvals.length;

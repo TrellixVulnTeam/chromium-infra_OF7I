@@ -12,6 +12,7 @@ import {LitElement, html, css} from 'lit-element';
  *
  */
 export class ChopsCheckbox extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -66,6 +67,7 @@ export class ChopsCheckbox extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <!-- Note: Avoiding 2-way data binding to futureproof this code
@@ -77,6 +79,7 @@ export class ChopsCheckbox extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       label: {type: String},

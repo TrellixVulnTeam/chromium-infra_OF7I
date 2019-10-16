@@ -23,6 +23,7 @@ import {prpcClient} from 'prpc-client-instance.js';
  *
  */
 export class EztComments extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host([codeFont]) {
@@ -40,6 +41,7 @@ export class EztComments extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <mr-description
@@ -55,6 +57,7 @@ export class EztComments extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       issueId: {type: Number},
@@ -69,6 +72,7 @@ export class EztComments extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.prefs = {};
@@ -76,6 +80,7 @@ export class EztComments extends connectStore(LitElement) {
     this.descriptionList = [];
   }
 
+  /** @override */
   stateChanged(state) {
     this.prefs = user.prefs(state);
 
@@ -98,6 +103,7 @@ export class EztComments extends connectStore(LitElement) {
     }
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('prefs')) {
       this.codeFont = this.prefs['code_font'] === 'true';
@@ -105,6 +111,7 @@ export class EztComments extends connectStore(LitElement) {
     super.update(changedProperties);
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
     this._onLocationChanged();

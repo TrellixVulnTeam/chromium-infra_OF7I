@@ -25,6 +25,7 @@ import ClientLogger from 'monitoring/client-logger.js';
  *
  */
 export class MrHeader extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -98,6 +99,7 @@ export class MrHeader extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -162,6 +164,7 @@ export class MrHeader extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       loginUrl: {type: String},
@@ -184,6 +187,7 @@ export class MrHeader extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -194,6 +198,7 @@ export class MrHeader extends connectStore(LitElement) {
     this.clientLogger = new ClientLogger('mr-header');
   }
 
+  /** @override */
   stateChanged(state) {
     this.userProjects = user.projects(state);
 

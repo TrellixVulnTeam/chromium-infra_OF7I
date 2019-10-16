@@ -16,6 +16,7 @@ const DELIMITER_REGEX = /[,;\s]+/;
  *
  */
 export class ChopsChipInput extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -57,6 +58,7 @@ export class ChopsChipInput extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       ${this.immutableValues.map((value) => html`
@@ -111,6 +113,7 @@ export class ChopsChipInput extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       name: {type: String},
@@ -142,6 +145,7 @@ export class ChopsChipInput extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -159,12 +163,14 @@ export class ChopsChipInput extends LitElement {
     this._boundKeyDown = this._onKeyDown.bind(this);
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
 
     window.addEventListener('keydown', this._boundKeyDown);
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
 
@@ -175,6 +181,7 @@ export class ChopsChipInput extends LitElement {
     this._addValueInput = this.shadowRoot.querySelector('.add-value');
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('initialValues')) {
       this.reset();
@@ -183,6 +190,7 @@ export class ChopsChipInput extends LitElement {
     super.update(changedProperties);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('values')) {
       this.dispatchEvent(new Event('change'));

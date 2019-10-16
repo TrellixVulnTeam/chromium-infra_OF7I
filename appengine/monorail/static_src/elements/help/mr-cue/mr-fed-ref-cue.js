@@ -19,6 +19,7 @@ import {MrCue} from './mr-cue.js';
  *
  */
 export class MrFedRefCue extends MrCue {
+  /** @override */
   static get properties() {
     return {
       ...MrCue.properties,
@@ -26,6 +27,7 @@ export class MrFedRefCue extends MrCue {
     };
   }
 
+  /** @override */
   static get styles() {
     return [
       ...MrCue.styles,

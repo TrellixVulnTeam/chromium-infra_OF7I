@@ -22,6 +22,7 @@ let idCount = 1;
  * @customElement
  */
 export class ChopsAutocomplete extends LitElement {
+  /** @override */
   render() {
     const completions = this.completions;
     const currentValue = this._prefix.trim().toLowerCase();
@@ -153,6 +154,7 @@ export class ChopsAutocomplete extends LitElement {
     return html`${start}<b>${middle}</b>${end}`;
   }
 
+  /** @override */
   static get properties() {
     return {
       /**
@@ -210,6 +212,7 @@ export class ChopsAutocomplete extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -235,20 +238,22 @@ export class ChopsAutocomplete extends LitElement {
     return this;
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
 
     this._disconnectAutocomplete(this._forRef);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('for')) {
       const forRef = this.getRootNode().querySelector('#' + this.for);
 
       // TODO(zhangtiff): Make this element work with custom input components
       // in the future as well.
-      this._forRef = (forRef.tagName || '').toUpperCase() === 'INPUT'
-        ? forRef : undefined;
+      this._forRef = (forRef.tagName || '').toUpperCase() === 'INPUT' ?
+        forRef : undefined;
       this._connectAutocomplete(this._forRef);
     }
     if (this._forRef) {

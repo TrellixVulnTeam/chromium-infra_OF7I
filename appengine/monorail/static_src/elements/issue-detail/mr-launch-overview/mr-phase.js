@@ -44,6 +44,7 @@ const PHASES_WITH_MILESTONES = ['Beta', 'Stable', 'Stable-Exp', 'Stable-Full'];
  *
  */
 export class MrPhase extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -87,6 +88,7 @@ export class MrPhase extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     const isPhaseWithMilestone = PHASES_WITH_MILESTONES.includes(this.phaseName);
     return html`
@@ -164,6 +166,7 @@ export class MrPhase extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       issue: {type: Object},
@@ -178,6 +181,7 @@ export class MrPhase extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.fieldValueMap = issue.fieldValueMap(state);
     this.issue = issue.issue(state);
@@ -187,6 +191,7 @@ export class MrPhase extends connectStore(LitElement) {
     this.fieldDefs = project.fieldDefsForPhases(state);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('issue')) {
       this.reset();

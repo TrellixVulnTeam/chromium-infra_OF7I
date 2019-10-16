@@ -13,6 +13,7 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
  *
  */
 export class MrUpload extends LitElement {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -108,6 +109,7 @@ export class MrUpload extends LitElement {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -132,6 +134,7 @@ export class MrUpload extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       files: {type: Array},
@@ -151,6 +154,7 @@ export class MrUpload extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -164,6 +168,7 @@ export class MrUpload extends LitElement {
     this._boundOnDrop = this._onDrop.bind(this);
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('dragenter', this._boundOnDragInto);
@@ -178,6 +183,7 @@ export class MrUpload extends LitElement {
     window.addEventListener('drop', this._boundOnDragOutOfWindow);
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
 

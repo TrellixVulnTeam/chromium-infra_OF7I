@@ -10,6 +10,7 @@ import {LitElement, html, css} from 'lit-element';
  * @customElement
  */
 export class ChopsDialog extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -57,6 +58,7 @@ export class ChopsDialog extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <dialog class="dialog" role="dialog" @cancel=${this._cancelHandler}>
@@ -67,6 +69,7 @@ export class ChopsDialog extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       /**
@@ -108,6 +111,7 @@ export class ChopsDialog extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -117,6 +121,7 @@ export class ChopsDialog extends LitElement {
     this._boundKeydownHandler = this._keydownHandler.bind(this);
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
 
@@ -136,12 +141,14 @@ export class ChopsDialog extends LitElement {
     window.addEventListener('keydown', this._boundKeydownHandler, true);
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('keydown', this._boundKeydownHandler,
         true);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('opened')) {
       this._openedChanged(this.opened);

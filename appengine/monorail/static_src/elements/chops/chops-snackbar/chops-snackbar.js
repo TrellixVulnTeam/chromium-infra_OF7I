@@ -13,6 +13,7 @@ const DEFAULT_TIMEOUT = 10;
  *
  */
 export class ChopsSnackbar extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -43,6 +44,7 @@ export class ChopsSnackbar extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       timeout: {
@@ -55,17 +57,20 @@ export class ChopsSnackbar extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.timeout = DEFAULT_TIMEOUT;
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('hidden') && !this.hidden) {
       setTimeout(this.close.bind(this), this.timeout * 1000);
     }
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">

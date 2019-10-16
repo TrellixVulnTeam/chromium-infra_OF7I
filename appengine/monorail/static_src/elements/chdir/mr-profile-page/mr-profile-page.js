@@ -16,6 +16,7 @@ import '../mr-comment-table/mr-comment-table.js';
  *
  */
 export class MrProfilePage extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       .history-container {
@@ -71,6 +72,7 @@ export class MrProfilePage extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <mr-header
@@ -109,6 +111,7 @@ export class MrProfilePage extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       user: {type: String},
@@ -123,6 +126,7 @@ export class MrProfilePage extends LitElement {
     };
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('viewedUserId')) {
       this._fetchActivity();

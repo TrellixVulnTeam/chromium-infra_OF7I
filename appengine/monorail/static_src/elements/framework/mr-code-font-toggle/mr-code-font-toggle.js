@@ -16,6 +16,7 @@ import 'elements/chops/chops-toggle/chops-toggle.js';
  * font and the setting is saved in the user's preferences.
  */
 export class MrCodeFontToggle extends connectStore(LitElement) {
+  /** @override */
   render() {
     return html`
       <chops-toggle
@@ -27,6 +28,7 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       prefs: {type: Object},
@@ -36,12 +38,14 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.prefs = user.prefs(state);
     this._prefsInFlight = user.requests(state).fetchPrefs.requesting
       || user.requests(state).setPrefs.requesting;
   }
 
+  /** @override */
   constructor() {
     super();
     this.initialValue = false;

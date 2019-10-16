@@ -15,6 +15,7 @@ export const SCREENREADER_ATTRIBUTE_ERROR = `For screenreader support,
  *
  */
 export class MrDropdown extends LitElement {
+  /** @override */
   static get styles() {
     return [css`
       :host {
@@ -144,6 +145,7 @@ export class MrDropdown extends LitElement {
     `];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -205,6 +207,7 @@ export class MrDropdown extends LitElement {
     `;
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -219,6 +222,7 @@ export class MrDropdown extends LitElement {
     this._boundCloseOnOutsideClick = this._closeOnOutsideClick.bind(this);
   }
 
+  /** @override */
   static get properties() {
     return {
       title: {type: String},
@@ -242,16 +246,19 @@ export class MrDropdown extends LitElement {
     }
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
     window.addEventListener('click', this._boundCloseOnOutsideClick, true);
   }
 
+  /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('click', this._boundCloseOnOutsideClick, true);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('label') || changedProperties.has('text')) {
       if (!this.label && !this.text) {

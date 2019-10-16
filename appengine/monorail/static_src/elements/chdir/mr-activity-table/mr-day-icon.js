@@ -5,6 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 
 export class MrDayIcon extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -52,6 +53,7 @@ export class MrDayIcon extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <div class="hover-card">
@@ -61,6 +63,7 @@ export class MrDayIcon extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       activityLevel: {
@@ -76,6 +79,7 @@ export class MrDayIcon extends LitElement {
     };
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('commentCount')) {
       const level = Math.ceil(this.commentCount / 2);

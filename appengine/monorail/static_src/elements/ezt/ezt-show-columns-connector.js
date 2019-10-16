@@ -20,6 +20,7 @@ import {equalsIgnoreCase} from 'shared/helpers.js';
  *
  */
 export class EztShowColumnsConnector extends connectStore(LitElement) {
+  /** @override */
   render() {
     return html`
       <mr-show-columns-dropdown
@@ -32,6 +33,7 @@ export class EztShowColumnsConnector extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       initialColumns: {type: Array},
@@ -42,12 +44,14 @@ export class EztShowColumnsConnector extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.hiddenColumns = new Set();
     this.queryParams = {};
   }
 
+  /** @override */
   stateChanged(state) {
     this.queryParams = sitewide.queryParams(state);
   }

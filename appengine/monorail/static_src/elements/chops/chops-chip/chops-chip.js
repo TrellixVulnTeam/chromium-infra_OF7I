@@ -9,6 +9,7 @@ import {LitElement, html, css} from 'lit-element';
  *
  */
 export class ChopsChip extends LitElement {
+  /** @override */
   static get properties() {
     return {
       icon: {type: String},
@@ -20,6 +21,7 @@ export class ChopsChip extends LitElement {
     };
   }
 
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -70,6 +72,7 @@ export class ChopsChip extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -86,6 +89,7 @@ export class ChopsChip extends LitElement {
     `;
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('focusable')) {
       this.tabIndex = this.focusable ? '0' : undefined;

@@ -14,12 +14,14 @@ import {standardTime, standardTimeShort} from './chops-timestamp-helpers';
  * @customElement
  */
 export class ChopsTimestamp extends LitElement {
+  /** @override */
   render() {
     return html`
       ${this._displayedTime}
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       /** The data for the time which can be in any format readable by
@@ -47,6 +49,7 @@ export class ChopsTimestamp extends LitElement {
     return standardTime(date);
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('timestamp')) {
       this._date = this._parseTimestamp(this.timestamp);

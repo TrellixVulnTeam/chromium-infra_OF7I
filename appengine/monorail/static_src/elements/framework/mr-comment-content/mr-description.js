@@ -17,6 +17,7 @@ import {standardTimeShort} from
  *
  */
 export class MrDescription extends LitElement {
+  /** @override */
   constructor() {
     super();
 
@@ -24,6 +25,7 @@ export class MrDescription extends LitElement {
     this.selectedIndex = 0;
   }
 
+  /** @override */
   static get properties() {
     return {
       descriptionList: {type: Array},
@@ -31,6 +33,7 @@ export class MrDescription extends LitElement {
     };
   }
 
+  /** @override */
   updated(changedProperties) {
     super.updated(changedProperties);
 
@@ -40,6 +43,7 @@ export class MrDescription extends LitElement {
     }
   }
 
+  /** @override */
   static get styles() {
     return css`
       .select-container {
@@ -48,6 +52,7 @@ export class MrDescription extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     const selectedDescription =
       (this.descriptionList || [])[this.selectedIndex] || {};

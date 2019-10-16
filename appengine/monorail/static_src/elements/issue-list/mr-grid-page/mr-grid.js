@@ -12,6 +12,7 @@ import './mr-grid-tile.js';
 import qs from 'qs';
 
 export class MrGrid extends connectStore(LitElement) {
+  /** @override */
   render() {
     return html`
       <table>
@@ -110,6 +111,7 @@ export class MrGrid extends connectStore(LitElement) {
     return params;
   }
 
+  /** @override */
   static get properties() {
     return {
       xAttr: {type: String},
@@ -123,6 +125,7 @@ export class MrGrid extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   static get styles() {
     return css`
       table {
@@ -151,6 +154,7 @@ export class MrGrid extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   constructor() {
     super();
     this.cellMode = 'tiles';
@@ -161,11 +165,13 @@ export class MrGrid extends connectStore(LitElement) {
     this._labelPrefixSet = new Set();
   }
 
+  /** @override */
   stateChanged(state) {
     this._fieldDefMap = project.fieldDefMap(state);
     this._labelPrefixSet = project.labelPrefixSet(state);
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('xAttr') || changedProperties.has('yAttr') ||
         changedProperties.has('issues') ||
@@ -178,7 +184,7 @@ export class MrGrid extends connectStore(LitElement) {
       this.groupedIssues = gridData.sortedIssues;
     }
 
-    super.update();
+    super.update(changedProperties);
   }
 };
 customElements.define('mr-grid', MrGrid);

@@ -12,6 +12,7 @@ import './mr-grid-controls.js';
 import './mr-grid.js';
 
 export class MrGridPage extends connectStore(LitElement) {
+  /** @override */
   render() {
     const displayedProgress = this.progress || 0.02;
     const doneLoading = this.progress === 1;
@@ -45,6 +46,7 @@ export class MrGridPage extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       projectName: {type: String},
@@ -58,6 +60,7 @@ export class MrGridPage extends connectStore(LitElement) {
     };
   };
 
+  /** @override */
   constructor() {
     super();
     this.issues = [];
@@ -65,6 +68,7 @@ export class MrGridPage extends connectStore(LitElement) {
     this.queryParams = {};
   };
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('userDisplayName')) {
       store.dispatch(issue.fetchStarredIssues());
@@ -88,12 +92,14 @@ export class MrGridPage extends connectStore(LitElement) {
         this.projectName, {maxItems: 500}, 12));
   }
 
+  /** @override */
   stateChanged(state) {
     this.issues = (issue.issueList(state) || []);
     this.progress = (issue.issueListProgress(state) || 0);
     this.totalIssues = (issue.totalIssues(state) || 0);
   }
 
+  /** @override */
   static get styles() {
     return css `
       progress {

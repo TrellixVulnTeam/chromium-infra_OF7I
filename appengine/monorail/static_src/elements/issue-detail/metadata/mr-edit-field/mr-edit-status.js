@@ -14,6 +14,7 @@ import './mr-edit-field.js';
  *
  */
 export class MrEditStatus extends LitElement {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -43,6 +44,7 @@ export class MrEditStatus extends LitElement {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <select
@@ -87,6 +89,7 @@ export class MrEditStatus extends LitElement {
       </div>`;
   }
 
+  /** @override */
   static get properties() {
     return {
       initialStatus: {type: String},
@@ -97,6 +100,7 @@ export class MrEditStatus extends LitElement {
     };
   }
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('initialStatus')) {
       this.status = this.initialStatus;

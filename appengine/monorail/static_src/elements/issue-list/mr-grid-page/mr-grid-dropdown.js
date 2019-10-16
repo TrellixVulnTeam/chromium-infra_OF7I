@@ -6,6 +6,7 @@ import {LitElement, html, css} from 'lit-element';
 import {equalsIgnoreCase} from 'shared/helpers.js';
 
 export class MrGridDropdown extends LitElement {
+  /** @override */
   render() {
     return html`
       ${this.text}:
@@ -22,6 +23,7 @@ export class MrGridDropdown extends LitElement {
       `;
   }
 
+  /** @override */
   static get properties() {
     return {
       text: {type: String},
@@ -30,12 +32,14 @@ export class MrGridDropdown extends LitElement {
     };
   };
 
+  /** @override */
   constructor() {
     super();
     this.items = [];
     this.selection = 'None';
   };
 
+  /** @override */
   static get styles() {
     return css`
       :host {

@@ -13,6 +13,7 @@ const SECONDS_PER_DAY = 24 * 60 * 60;
 const MAX_COMMENT_AGE = 31 * 3;
 
 export class MrActivityTable extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -33,6 +34,7 @@ export class MrActivityTable extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       ${WEEKDAY_ABBREVIATIONS.map((weekday) => html`<span>${weekday}</span>`)}
@@ -48,6 +50,7 @@ export class MrActivityTable extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       comments: {type: Array},

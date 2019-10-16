@@ -8,6 +8,7 @@ import {connectStore} from 'reducers/base.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 export default class MrFlipper extends connectStore(LitElement) {
+  /** @override */
   static get properties() {
     return {
       currentIndex: {type: Number},
@@ -19,6 +20,7 @@ export default class MrFlipper extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.currentIndex = null;
@@ -30,10 +32,12 @@ export default class MrFlipper extends connectStore(LitElement) {
     this.queryParams = {};
   }
 
+  /** @override */
   stateChanged(state) {
     this.queryParams = sitewide.queryParams(state);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('queryParams')) {
       this.fetchFlipperData(qs.stringify(this.queryParams));
@@ -71,6 +75,7 @@ export default class MrFlipper extends connectStore(LitElement) {
     this.listUrl = data.list_url;
   }
 
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -114,6 +119,7 @@ export default class MrFlipper extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <div class="row">

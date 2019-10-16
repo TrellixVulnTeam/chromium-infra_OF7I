@@ -7,6 +7,7 @@ import {issueRefToUrl, issueToIssueRef} from 'shared/converters.js';
 import '../../framework/mr-star-button/mr-star-button.js';
 
 export class MrGridTile extends LitElement {
+  /** @override */
   render() {
     return html`
       <div class="tile-header">
@@ -26,6 +27,7 @@ export class MrGridTile extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       issue: {type: Object},
@@ -34,12 +36,14 @@ export class MrGridTile extends LitElement {
     };
   };
 
+  /** @override */
   constructor() {
     super();
     this.issue = {};
     this.queryParams = '';
   };
 
+  /** @override */
   update(changedProperties) {
     if (changedProperties.has('issue')) {
       this.issueRef = issueToIssueRef(this.issue);
@@ -47,6 +51,7 @@ export class MrGridTile extends LitElement {
     super.update(changedProperties);
   }
 
+  /** @override */
   static get styles() {
     return css`
       :host {

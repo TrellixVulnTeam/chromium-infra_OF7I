@@ -12,6 +12,7 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 export class MrUpdateIssueHotlists extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -80,6 +81,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -128,6 +130,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       viewedIssueRef: {type: Object},
@@ -139,12 +142,14 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.viewedIssueRef = issue.issueRef(state);
     this.user = user.user(state);
     this.userHotlists = user.user(state).hotlists;
   }
 
+  /** @override */
   constructor() {
     super();
 

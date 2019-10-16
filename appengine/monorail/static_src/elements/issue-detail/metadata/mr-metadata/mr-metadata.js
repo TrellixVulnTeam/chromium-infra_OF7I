@@ -21,6 +21,7 @@ import {HARDCODED_FIELD_GROUPS, valuesForField, fieldDefsWithGroup,
  *
  */
 export class MrMetadata extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -56,6 +57,7 @@ export class MrMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -223,6 +225,7 @@ export class MrMetadata extends connectStore(LitElement) {
     });
   }
 
+  /** @override */
   static get properties() {
     return {
       approvalStatus: {type: Array},
@@ -242,6 +245,7 @@ export class MrMetadata extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.isApproval = false;
@@ -249,11 +253,13 @@ export class MrMetadata extends connectStore(LitElement) {
     this.issueRef = {};
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
     this.setAttribute('role', 'table');
   }
 
+  /** @override */
   stateChanged(state) {
     this.fieldValueMap = issue.fieldValueMap(state);
     this.issueType = issue.type(state);

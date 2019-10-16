@@ -18,6 +18,7 @@ const NULL_DISPLAY_NAME_VALUES = [EMPTY_FIELD_VALUE, 'a_deleted_user'];
  *
  */
 export class MrUserLink extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -40,6 +41,7 @@ export class MrUserLink extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       referencedUsers: {
@@ -58,6 +60,7 @@ export class MrUserLink extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.userRef = {};
@@ -66,10 +69,12 @@ export class MrUserLink extends connectStore(LitElement) {
     this.showAvailabilityText = false;
   }
 
+  /** @override */
   stateChanged(state) {
     this.referencedUsers = issue.referencedUsers(state);
   }
 
+  /** @override */
   render() {
     const availability = this._getAvailability();
     const userLink = this._getUserLink();

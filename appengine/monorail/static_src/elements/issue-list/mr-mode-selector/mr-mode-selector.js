@@ -7,6 +7,7 @@ import {ChopsChoiceButtons} from
   'elements/chops/chops-choice-buttons/chops-choice-buttons.js';
 
 export class MrModeSelector extends ChopsChoiceButtons {
+  /** @override */
   static get properties() {
     return {
       ...ChopsChoiceButtons.properties,
@@ -14,6 +15,7 @@ export class MrModeSelector extends ChopsChoiceButtons {
       projectName: {type: String},
     };
   }
+  /** @override */
   constructor() {
     super();
     this.options = [
@@ -28,6 +30,7 @@ export class MrModeSelector extends ChopsChoiceButtons {
     this._page = page;
   };
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
 

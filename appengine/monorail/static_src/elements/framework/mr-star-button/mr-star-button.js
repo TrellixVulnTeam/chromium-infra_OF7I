@@ -15,6 +15,7 @@ import {issueRefToString} from 'shared/converters';
  *
  */
 export class MrStarButton extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -44,6 +45,7 @@ export class MrStarButton extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -67,6 +69,7 @@ export class MrStarButton extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       /**
@@ -95,6 +98,7 @@ export class MrStarButton extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this._isLoggedIn = user.isLoggedIn(state);
     this._starringIssues = issue.starringIssues(state);

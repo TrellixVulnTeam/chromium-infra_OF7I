@@ -17,6 +17,7 @@ import {parseColSpec} from 'shared/issue-fields.js';
  *
  */
 export class MrChangeColumns extends LitElement {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -38,6 +39,7 @@ export class MrChangeColumns extends LitElement {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <chops-dialog closeOnOutsideClick>
@@ -70,6 +72,7 @@ export class MrChangeColumns extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       /**
@@ -85,6 +88,7 @@ export class MrChangeColumns extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 

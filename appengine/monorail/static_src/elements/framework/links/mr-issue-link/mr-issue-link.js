@@ -15,6 +15,7 @@ import '../../../help/mr-cue/mr-fed-ref-cue.js';
  *
  */
 export class MrIssueLink extends LitElement {
+  /** @override */
   static get styles() {
     return css`
       a[is-closed] {
@@ -28,6 +29,7 @@ export class MrIssueLink extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     let fedRefInfo;
     if (this.issue && this.issue.extIdentifier) {
@@ -57,6 +59,7 @@ export class MrIssueLink extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       // The issue being viewed. Falls back gracefully if this is only a ref.
@@ -69,6 +72,7 @@ export class MrIssueLink extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 

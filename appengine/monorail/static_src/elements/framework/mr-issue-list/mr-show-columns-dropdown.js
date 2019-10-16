@@ -17,6 +17,7 @@ import {DEFAULT_ISSUE_FIELD_LIST, fieldTypes} from 'shared/issue-fields.js';
  *
  */
 export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
+  /** @override */
   static get styles() {
     return [
       ...MrDropdown.styles,
@@ -38,6 +39,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
       `,
     ];
   }
+  /** @override */
   static get properties() {
     return {
       ...MrDropdown.properties,
@@ -63,6 +65,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
 
@@ -79,17 +82,19 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
     this._page = page;
   }
 
+  /** @override */
   stateChanged(state) {
     this._fieldDefs = project.fieldDefs(state) || [];
     this._labelPrefixFields = project.labelPrefixFields(state) || [];
   }
 
-  update() {
+  /** @override */
+  update(changedProperties) {
     this.items = this.issueOptions(
         this.defaultIssueFields, this._fieldDefs, this._labelPrefixFields,
         this.columns, this.phaseNames);
 
-    super.update();
+    super.update(changedProperties);
   }
 
   issueOptions(defaultFields, fieldDefs, labelPrefixes, columns, phaseNames) {

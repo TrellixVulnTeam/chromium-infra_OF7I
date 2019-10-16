@@ -69,6 +69,7 @@ const BG_COLOR_CHOICES = ['#B2EBF2', '#EF9A9A', '#C8E6C9', '#B2DFDB',
   '#D7CCC8', '#DCEDC8', '#FFECB3', '#E1BEE7', '#F8BBD0', '#E6EE9C'];
 
 export default class MrChart extends LitElement {
+  /** @override */
   static get properties() {
     return {
       progress: {type: Number},
@@ -82,6 +83,7 @@ export default class MrChart extends LitElement {
     };
   }
 
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -183,6 +185,7 @@ export default class MrChart extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     const doneLoading = this.progress === 1;
     return html`
@@ -294,6 +297,7 @@ export default class MrChart extends LitElement {
     `;
   }
 
+  /** @override */
   constructor() {
     super();
     this.progress = 0.05;

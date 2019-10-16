@@ -13,6 +13,7 @@ import './mr-dropdown.js';
  *
  */
 export class MrAccountDropdown extends LitElement {
+  /** @override */
   static get styles() {
     return css`
         :host {
@@ -24,6 +25,7 @@ export class MrAccountDropdown extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       <mr-dropdown
@@ -34,6 +36,7 @@ export class MrAccountDropdown extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       userDisplayName: String,

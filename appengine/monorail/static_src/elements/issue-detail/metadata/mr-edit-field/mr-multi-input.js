@@ -17,6 +17,7 @@ import {SHARED_STYLES} from 'shared/shared-styles';
  *
  */
 export class MrMultiInput extends LitElement {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -51,6 +52,7 @@ export class MrMultiInput extends LitElement {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       ${this.immutableValues.map((value) => html`
@@ -76,6 +78,7 @@ export class MrMultiInput extends LitElement {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       name: {type: String},
@@ -94,6 +97,7 @@ export class MrMultiInput extends LitElement {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.immutableValues = [];
@@ -103,6 +107,7 @@ export class MrMultiInput extends LitElement {
     this.addEntryText = 'Add entry';
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('initialValues')) {
       this.reset();

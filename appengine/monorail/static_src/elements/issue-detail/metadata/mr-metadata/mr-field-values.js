@@ -16,6 +16,7 @@ import {displayNameToUserRef} from 'shared/converters.js';
  *
  */
 export class MrFieldValues extends LitElement {
+  /** @override */
   render() {
     if (!this.values || !this.values.length) {
       return html`${EMPTY_FIELD_VALUE}`;
@@ -37,6 +38,7 @@ export class MrFieldValues extends LitElement {
     }
   }
 
+  /** @override */
   static get properties() {
     return {
       name: {type: String},

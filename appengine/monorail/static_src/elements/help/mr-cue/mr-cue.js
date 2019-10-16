@@ -24,6 +24,7 @@ import {prpcClient} from 'prpc-client-instance.js';
  *
  */
 export class MrCue extends connectStore(LitElement) {
+  /** @override */
   constructor() {
     super();
     this.prefs = new Map();
@@ -34,6 +35,7 @@ export class MrCue extends connectStore(LitElement) {
         this.cuePrefName, this.message);
   }
 
+  /** @override */
   static get properties() {
     return {
       issue: {type: Object},
@@ -52,6 +54,7 @@ export class MrCue extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   static get styles() {
     return [SHARED_STYLES, css`
       :host {
@@ -92,6 +95,7 @@ export class MrCue extends connectStore(LitElement) {
     `];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -150,6 +154,7 @@ export class MrCue extends connectStore(LitElement) {
             'chromium/src/+/master/CODE_OF_CONDUCT.md');
   }
 
+  /** @override */
   updated(changedProperties) {
     const hiddenWatchProps = ['prefsLoaded', 'cuePrefName', 'signedIn',
       'prefs'];
@@ -191,6 +196,7 @@ export class MrCue extends connectStore(LitElement) {
     return !message;
   }
 
+  /** @override */
   stateChanged(state) {
     this.project = project.project(state);
     this.issue = issue.issue(state);

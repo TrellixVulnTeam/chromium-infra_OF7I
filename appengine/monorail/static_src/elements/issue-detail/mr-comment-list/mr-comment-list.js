@@ -23,6 +23,7 @@ const ADD_ISSUE_COMMENT_PERMISSION = 'addissuecomment';
  *
  */
 export class MrCommentList extends connectStore(LitElement) {
+  /** @override */
   constructor() {
     super();
 
@@ -38,6 +39,7 @@ export class MrCommentList extends connectStore(LitElement) {
     this._hideComments = true;
   }
 
+  /** @override */
   static get properties() {
     return {
       commentsShownCount: {type: Number},
@@ -53,12 +55,14 @@ export class MrCommentList extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.issuePermissions = issue.permissions(state);
     this.focusId = ui.focusId(state);
     this.usersProjects = user.projectsPerUser(state);
   }
 
+  /** @override */
   updated(changedProperties) {
     super.updated(changedProperties);
 
@@ -76,6 +80,7 @@ export class MrCommentList extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   static get styles() {
     return [SHARED_STYLES, css`
       button.toggle {
@@ -102,6 +107,7 @@ export class MrCommentList extends connectStore(LitElement) {
     `];
   }
 
+  /** @override */
   render() {
     const hiddenCount =
       _hiddenCount(this.comments.length, this.commentsShownCount);

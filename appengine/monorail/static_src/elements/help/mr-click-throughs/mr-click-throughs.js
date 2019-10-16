@@ -17,10 +17,12 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
  *
  */
 export class MrClickThroughs extends connectStore(LitElement) {
+  /** @override */
   constructor() {
     super();
   }
 
+  /** @override */
   static get properties() {
     return {
       userDisplayName: {type: String},
@@ -29,6 +31,7 @@ export class MrClickThroughs extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   static get styles() {
     return [SHARED_STYLES, css`
       :host {
@@ -51,6 +54,7 @@ export class MrClickThroughs extends connectStore(LitElement) {
     `];
   }
 
+  /** @override */
   render() {
     return html`
       <chops-dialog
@@ -119,6 +123,7 @@ export class MrClickThroughs extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   stateChanged(state) {
     this.prefs = user.prefs(state);
     this.prefsLoaded = user.user(state).prefsLoaded;

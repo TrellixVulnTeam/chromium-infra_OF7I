@@ -18,6 +18,7 @@ import * as sitewide from 'reducers/sitewide.js';
  *
  */
 export class EztAppBase extends connectStore(LitElement) {
+  /** @override */
   static get properties() {
     return {
       projectName: {type: String},
@@ -25,12 +26,14 @@ export class EztAppBase extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   connectedCallback() {
     super.connectedCallback();
 
     this.mapUrlToQueryParams();
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('userDisplayName') && this.userDisplayName) {
       this.fetchUserData(this.userDisplayName);

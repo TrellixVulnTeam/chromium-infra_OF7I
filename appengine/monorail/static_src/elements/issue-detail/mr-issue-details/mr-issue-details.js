@@ -19,6 +19,7 @@ import {commentListToDescriptionList} from 'shared/converters.js';
  *
  */
 export class MrIssueDetails extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -42,6 +43,7 @@ export class MrIssueDetails extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   render() {
     let comments = [];
     let descriptions = [];
@@ -65,6 +67,7 @@ export class MrIssueDetails extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       commentsByApproval: {type: Object},
@@ -72,15 +75,18 @@ export class MrIssueDetails extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.commentsByApproval = new Map();
   }
 
+  /** @override */
   stateChanged(state) {
     this.commentsByApproval = issue.commentsByApprovalName(state);
   }
 
+  /** @override */
   updated(changedProperties) {
     super.updated(changedProperties);
     this._measureCommentLoadTime(changedProperties);

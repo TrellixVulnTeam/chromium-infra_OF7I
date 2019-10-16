@@ -33,6 +33,7 @@ Are you sure you want to delete this issue?`;
  *
  */
 export class MrIssueHeader extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -130,6 +131,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     const reporterIsMember = userIsMember(
         this.issue.reporterRef, this.issue.projectName, this.usersProjects);
@@ -173,6 +175,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       userDisplayName: {type: String},
@@ -186,6 +189,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   constructor() {
     super();
     this.issuePermissions = [];
@@ -195,6 +199,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     this.isRestricted = false;
   }
 
+  /** @override */
   stateChanged(state) {
     this.issue = issue.issue(state);
     this.issuePermissions = issue.permissions(state);

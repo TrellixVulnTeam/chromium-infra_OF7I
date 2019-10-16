@@ -31,12 +31,14 @@ const ISSUE_REF_FIELD_NAMES = [
  *
  */
 export class MrComment extends LitElement {
+  /** @override */
   constructor() {
     super();
 
     this._isExpandedIfDeleted = false;
   }
 
+  /** @override */
   static get properties() {
     return {
       comment: {type: Object},
@@ -51,6 +53,7 @@ export class MrComment extends LitElement {
     };
   }
 
+  /** @override */
   updated(changedProperties) {
     super.updated(changedProperties);
 
@@ -64,6 +67,7 @@ export class MrComment extends LitElement {
     }
   }
 
+  /** @override */
   static get styles() {
     return css`
       :host {
@@ -124,6 +128,7 @@ export class MrComment extends LitElement {
     `;
   }
 
+  /** @override */
   render() {
     return html`
       ${this._renderHeading()}

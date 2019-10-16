@@ -22,6 +22,7 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
  *
  */
 export class MrConvertIssue extends connectStore(LitElement) {
+  /** @override */
   static get styles() {
     return [
       SHARED_STYLES,
@@ -50,6 +51,7 @@ export class MrConvertIssue extends connectStore(LitElement) {
     ];
   }
 
+  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -89,6 +91,7 @@ export class MrConvertIssue extends connectStore(LitElement) {
     `;
   }
 
+  /** @override */
   static get properties() {
     return {
       convertingIssue: {
@@ -115,6 +118,7 @@ export class MrConvertIssue extends connectStore(LitElement) {
     };
   }
 
+  /** @override */
   stateChanged(state) {
     this.convertingIssue = issue.requests(state).convert.requesting;
     this.convertIssueError = issue.requests(state).convert.error;
@@ -123,12 +127,14 @@ export class MrConvertIssue extends connectStore(LitElement) {
     this.projectTemplates = project.project(state).templates;
   }
 
+  /** @override */
   constructor() {
     super();
     this.selectedTemplate = '';
     this.sendEmail = true;
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('convertingIssue')) {
       if (!this.convertingIssue && !this.convertIssueError) {
