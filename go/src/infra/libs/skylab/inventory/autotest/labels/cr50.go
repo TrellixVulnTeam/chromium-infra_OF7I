@@ -7,6 +7,7 @@ package labels
 import (
 	"strings"
 
+	"fmt"
 	"infra/libs/skylab/inventory"
 )
 
@@ -22,6 +23,41 @@ func cr50Converter(ls *inventory.SchedulableLabels) []string {
 		lv := "cr50:" + strings.ToLower(v.String()[plen:])
 		labels = append(labels, lv)
 	}
+	if v := ls.GetCr50RoKeyid(); v != "" {
+		lv := fmt.Sprintf("cr50-ro-keyid:%s", v)
+		labels = append(labels, lv)
+	}
+	{
+		major := ls.GetCr50RoVersionMajor()
+		minor := ls.GetCr50RoVersionMinor()
+		rev := ls.GetCr50RoVersionRev()
+		if major != 0 || minor != 0 || rev != 0 {
+			lv := fmt.Sprintf("cr50-ro-version:%d.%d.%d", major, minor, rev)
+			labels = append(labels, lv)
+		}
+	}
+	if v := ls.GetCr50RwKeyid(); v != "" {
+		lv := fmt.Sprintf("cr50-rw-keyid:%s", v)
+		labels = append(labels, lv)
+	}
+	{
+		major := ls.GetCr50RwVersionMajor()
+		minor := ls.GetCr50RwVersionMinor()
+		rev := ls.GetCr50RwVersionRev()
+		if major != 0 || minor != 0 || rev != 0 {
+			lv := fmt.Sprintf("cr50-rw-version:%d.%d.%d", major, minor, rev)
+			labels = append(labels, lv)
+		}
+	}
+	{
+		major := ls.GetCr50VersionMajor()
+		minor := ls.GetCr50VersionMinor()
+		rev := ls.GetCr50VersionRev()
+		if major != 0 || minor != 0 || rev != 0 {
+			lv := fmt.Sprintf("cr50:%d.%d.%d", major, minor, rev)
+			labels = append(labels, lv)
+		}
+	}
 	return labels
 }
 
@@ -33,7 +69,37 @@ func cr50Reverter(ls *inventory.SchedulableLabels, labels []string) []string {
 			vn := "CR50_PHASE_" + strings.ToUpper(v)
 			type t = inventory.SchedulableLabels_CR50_Phase
 			vals := inventory.SchedulableLabels_CR50_Phase_value
-			*ls.Cr50Phase = t(vals[vn])
+			if _, ok := vals[vn]; ok {
+				*ls.Cr50Phase = t(vals[vn])
+			} else {
+				var major, minor, rev int32
+				if n, err := fmt.Sscanf(v, "%d.%d.%d", &major, &minor, &rev); n != 3 || err != nil {
+					continue
+				}
+				ls.Cr50VersionMajor = &major
+				ls.Cr50VersionMinor = &minor
+				ls.Cr50VersionRev = &rev
+			}
+		case "cr50-ro-keyid":
+			ls.Cr50RoKeyid = &v
+		case "cr50-ro-version":
+			var major, minor, rev int32
+			if n, err := fmt.Sscanf(v, "%d.%d.%d", &major, &minor, &rev); n != 3 || err != nil {
+				continue
+			}
+			ls.Cr50RoVersionMajor = &major
+			ls.Cr50RoVersionMinor = &minor
+			ls.Cr50RoVersionRev = &rev
+		case "cr50-rw-keyid":
+			ls.Cr50RwKeyid = &v
+		case "cr50-rw-version":
+			var major, minor, rev int32
+			if n, err := fmt.Sscanf(v, "%d.%d.%d", &major, &minor, &rev); n != 3 || err != nil {
+				continue
+			}
+			ls.Cr50RwVersionMajor = &major
+			ls.Cr50RwVersionMinor = &minor
+			ls.Cr50RwVersionRev = &rev
 		default:
 			continue
 		}
