@@ -98,9 +98,7 @@ import:
   - google
   - jwt
 - package: google.golang.org/api
-  # This is pinned due to crbug.com/1003496, as gensupport was moved to
-  # internal/gensupport after this commit and thus would be unreachable.
-  version: a5d32fec5493cdc53ee6392d77152517d5d8f2af
+  version: master
   repo: https://code.googlesource.com/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -470,24 +468,28 @@ import:
 - package: github.com/zeebo/bencode
   version: master
   repo: https://chromium.googlesource.com/external/github.com/zeebo/bencode.git
-- package: github.com/prometheus/client_golang
-  version: master
-  repo: https://chromium.googlesource.com/external/github.com/prometheus/client_golang.git
 - package: github.com/spf13/pflag
   version: master
   repo: https://chromium.googlesource.com/external/github.com/spf13/pflag.git
 - package: github.com/hashicorp/errwrap
   version: master
   repo: https://chromium.googlesource.com/external/github.com/hashicorp/errwrap.git
+
+# Freeze all prometheus packages since future versions are incompatible with
+# Glide-based vendoring and will require switching to go modules.
+- package: github.com/prometheus/client_golang
+  version: 9a37535b1ba53f6216e9c8557559a714e0dbb84a
+  repo: https://chromium.googlesource.com/external/github.com/prometheus/client_golang.git
 - package: github.com/prometheus/common
-  version: master
+  version: 287d3e634a1e550c9e463dd7e5a75a422c614505
   repo: https://chromium.googlesource.com/external/github.com/prometheus/common.git
 - package: github.com/prometheus/client_model
-  version: master
+  version: 14fe0d1b01d4d5fc031dd4bec1823bd3ebbe8016
   repo: https://chromium.googlesource.com/external/github.com/prometheus/client_model.git
 - package: github.com/prometheus/procfs
-  version: master
+  version: de25ac347ef9305868b04dc42425c973b863b18c
   repo: https://chromium.googlesource.com/external/github.com/prometheus/procfs.git
+
 - package: github.com/beorn7/perks
   version: master
   repo: https://chromium.googlesource.com/external/github.com/beorn7/perks.git

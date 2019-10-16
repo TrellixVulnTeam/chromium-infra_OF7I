@@ -1,8 +1,8 @@
-hash: f8434b6ed485b88c2736f72a2ee68cd88f60c2703035e9709fbb38b90b108911
-updated: 2019-10-11T13:49:17.915537042+09:00
+hash: 65bc95501c244f3b34b08b5d92741030ba1211429411a3963df7492252646e73
+updated: 2019-10-16T12:42:42.621797-07:00
 imports:
 - name: cloud.google.com/go
-  version: 76dbc05961376d34607e760858c1ea7c0024208b
+  version: b9197a057a6cb1129f29cd21ca11d1bb043666d1
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -23,7 +23,7 @@ imports:
   version: f61b66f89f4a311bef65f13e575bcf1a2ffadda6
   repo: https://chromium.googlesource.com/external/github.com/asaskevich/govalidator.git
 - name: github.com/aws/aws-sdk-go
-  version: 58b7199e0d9b062933b46b90fa62d40cdf90c699
+  version: 3576772d916b5db1cb5516b772bcdc362349a177
   repo: https://chromium.googlesource.com/external/github.com/aws/aws-sdk-go.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -40,7 +40,7 @@ imports:
   version: 2146c93394225c3732078705043ce9f26584d334
   repo: https://chromium.googlesource.com/external/github.com/cenkalti/backoff.git
 - name: github.com/chromedp/cdproto
-  version: c22f49c9ff0a06bc05aadb26dce44f2fbdf2269c
+  version: ffea6b31d538a7cce876e221fa44ef4f69c9d038
   repo: https://chromium.googlesource.com/external/github.com/chromedp/cdproto.git
   subpackages:
   - '...'
@@ -122,7 +122,7 @@ imports:
   - proto
   - protoc-gen-go
 - name: github.com/gomodule/redigo
-  version: d3876d43bbbeb98b4d67309b4d3eef49438ef74c
+  version: 4f569a4708584d192c9b2e49bb2d9936341f1e68
   repo: https://chromium.googlesource.com/external/github.com/gomodule/redigo.git
   subpackages:
   - redis
@@ -135,7 +135,7 @@ imports:
   subpackages:
   - query
 - name: github.com/google/pprof
-  version: 6ce02741cba3adff4f8d4de07dc7a2379334cae4
+  version: 35da2c455f8fc6e91643b555d9b584d5d15e9265
   repo: https://chromium.googlesource.com/external/github.com/google/pprof.git
   subpackages:
   - profile
@@ -388,7 +388,7 @@ imports:
   version: cf5003e89e5a68181295c9383cd3329ef85549ac
   repo: https://chromium.googlesource.com/external/github.com/zeebo/bencode.git
 - name: go.opencensus.io
-  version: fa651b05963cfb6060755dc887e7d156ba66e792
+  version: 3b5a343282fe4b4fccdb0f24cbd1d7169d20858a
   repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-go.git
   subpackages:
   - plugin/grpc
@@ -401,12 +401,12 @@ imports:
   version: 979af19b165c9bb0bb725848ab91275634848354
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: a3b43586c3417fbb58b9bee1329db41ddfba0a8d
+  version: 0dcb7edcc2a52903a77a57094c2b721b70c65c0e
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
 - name: golang.org/x/crypto
-  version: af544f31c8ac5794d2134b792e9eb714d9d8f9ce
+  version: 87dc89f01550277dc22b74ffcf4cd89fa2f40f4c
   repo: https://go.googlesource.com/crypto.git
   subpackages:
   - ssh/terminal
@@ -425,7 +425,7 @@ imports:
   subpackages:
   - cmd/gomobile
 - name: golang.org/x/net
-  version: d66e71096ffb9f08f36d9aefcae80ce319de6d68
+  version: da9a3fd4c5820e74b24a6cb7fb438dc9b0dd377c
   repo: https://go.googlesource.com/net.git
   subpackages:
   - context
@@ -454,7 +454,7 @@ imports:
   version: c4c64cad1fd0a1a8dab2523e04e61d35308e131e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: e5ffc44a6fee48797f1a6e50da4caa281d3282bb
+  version: ba31bb905655611fcaee0e9db7433118a68d4de2
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -467,7 +467,7 @@ imports:
   - cmd/oracle
   - cmd/stringer
 - name: google.golang.org/api
-  version: a5d32fec5493cdc53ee6392d77152517d5d8f2af
+  version: 00e9aafd2753ed5b3c6e84d4f37e33780e75fa5f
   repo: https://code.googlesource.com/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -482,7 +482,7 @@ imports:
   - support/bundler
   - taskqueue/v1beta2
 - name: google.golang.org/appengine
-  version: 971852bfffca25b069c31162ae8f247a3dba083b
+  version: 9e26d07459185b2b6983fdc9894d75055a499ecc
   repo: https://chromium.googlesource.com/external/github.com/golang/appengine.git
   subpackages:
   - cmd/aedeploy
@@ -502,7 +502,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: f07f2cffa0a190ea48a4a3adb042d12cb87353ab
+  version: 7c8e60372e19da88fb3fe8ac6a8de781eef7f547
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
