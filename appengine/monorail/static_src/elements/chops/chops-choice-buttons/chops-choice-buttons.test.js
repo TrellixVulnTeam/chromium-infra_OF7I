@@ -30,7 +30,7 @@ describe('chops-choice-buttons', () => {
     const changeStub = sinon.stub();
     element.addEventListener('change', changeStub);
 
-    const option = element.shadowRoot.querySelector('chops-button');
+    const option = element.shadowRoot.querySelector('button');
     option.click();
 
     sinon.assert.calledOnce(changeStub);
@@ -45,7 +45,7 @@ describe('chops-choice-buttons', () => {
     const changeStub = sinon.stub();
     element.addEventListener('change', changeStub);
 
-    const option = element.shadowRoot.querySelector('chops-button');
+    const option = element.shadowRoot.querySelector('button');
     option.click();
 
     sinon.assert.notCalled(changeStub);
@@ -60,7 +60,35 @@ describe('chops-choice-buttons', () => {
 
     await element.updateComplete;
 
-    const options = element.shadowRoot.querySelectorAll('chops-button');
+    const options = element.shadowRoot.querySelectorAll('button');
+
+    assert.isFalse(options[0].hasAttribute('selected'));
+    assert.isTrue(options[1].hasAttribute('selected'));
+  });
+
+  it('renders <a> tags when url set', async () => {
+    element.options = [
+      {value: 'test', text: 'test', url: 'http://google.com/'},
+    ];
+
+    await element.updateComplete;
+
+    const options = element.shadowRoot.querySelectorAll('a');
+
+    assert.equal(options[0].textContent.trim(), 'test');
+    assert.equal(options[0].href, 'http://google.com/');
+  });
+
+  it('selected value highlighted for <a> tags', async () => {
+    element.options = [
+      {value: 'test', text: 'test', url: 'http://google.com/'},
+      {value: 'selected', text: 'highlighted!', url: 'http://localhost/'},
+    ];
+    element.value = 'selected';
+
+    await element.updateComplete;
+
+    const options = element.shadowRoot.querySelectorAll('a');
 
     assert.isFalse(options[0].hasAttribute('selected'));
     assert.isTrue(options[1].hasAttribute('selected'));

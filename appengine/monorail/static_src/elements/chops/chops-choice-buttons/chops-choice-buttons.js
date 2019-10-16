@@ -9,13 +9,19 @@ export class ChopsChoiceButtons extends LitElement {
   /** @override */
   render() {
     return html`
-      ${(this.options).map((option) => html`
-        <chops-button
-          ?selected=${this.value === option.value}
-          @click=${this._setValue}
-          value=${option.value}
-        >${option.text}</chops-button>
-      `)}
+      ${(this.options).map((option) => option.url ?
+        html`
+          <a
+            ?selected=${this.value === option.value}
+            href=${option.url}
+          >${option.text}</a>
+        ` : html`
+          <button
+            ?selected=${this.value === option.value}
+            @click=${this._setValue}
+            value=${option.value}
+          >${option.text}</button>
+        `)}
     `;
   }
 
@@ -24,7 +30,7 @@ export class ChopsChoiceButtons extends LitElement {
     return {
       /**
        * Array of options where each option is an Object with keys:
-       * {value, text}
+       * {value, text, url}
        */
       options: {type: Array},
       value: {type: String},
@@ -45,16 +51,21 @@ export class ChopsChoiceButtons extends LitElement {
         grid-auto-flow: column;
         grid-template-columns: auto;
       }
-      chops-button {
+      button, a {
+        display: block;
+        cursor: pointer;
+        border: 0;
         color: var(--chops-gray-700);
         font-size: var(--chops-normal-font-size);
+        margin: 0.1em 4px;
         padding: 4px 10px;
+        line-height: 1.4;
         background: var(--chops-choice-bg);
         text-decoration: none;
         border-radius: 16px;
         outline: none;
       }
-      chops-button[selected] {
+      button[selected], a[selected] {
         background: var(--chops-blue-50);
         color: var(--chops-blue-900);
         border-radius: 16px;

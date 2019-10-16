@@ -24,27 +24,19 @@ describe('mr-mode-selector', () => {
     assert.instanceOf(element, MrModeSelector);
   });
 
-  it('changing mode causes page navigation', async () => {
+  it('renders links with projectName and queryParams', async () => {
     element.value = 'list';
     element.projectName = 'chromium';
+    element.queryParams = {q: 'hello-world'};
 
     await element.updateComplete;
 
-    element.setValue('grid');
+    const links = element.shadowRoot.querySelectorAll('a');
 
-    sinon.assert.calledOnce(element._page);
-    sinon.assert.calledWith(element._page, '/p/chromium/issues/list?mode=grid');
-  });
-
-  it('changing mode to list deletes mode param', async () => {
-    element.value = 'grid';
-    element.projectName = 'chromium';
-
-    await element.updateComplete;
-
-    element.setValue('list');
-
-    sinon.assert.calledOnce(element._page);
-    sinon.assert.calledWith(element._page, '/p/chromium/issues/list');
+    assert.include(links[0].href, '/p/chromium/issues/list?q=hello-world');
+    assert.include(links[1].href,
+        '/p/chromium/issues/list?q=hello-world&mode=grid');
+    assert.include(links[2].href,
+        '/p/chromium/issues/list?q=hello-world&mode=chart');
   });
 });

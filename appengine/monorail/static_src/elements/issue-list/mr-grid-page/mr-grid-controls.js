@@ -4,7 +4,6 @@
 
 import {LitElement, html, css} from 'lit-element';
 import page from 'page';
-import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
@@ -12,6 +11,7 @@ import 'elements/chops/chops-choice-buttons/chops-choice-buttons.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 import './mr-grid-dropdown.js';
 import {getAvailableGridFields} from './extract-grid-data.js';
+import {urlWithNewParams} from 'shared/helpers.js';
 
 export class MrGridControls extends connectStore(LitElement) {
   /** @override */
@@ -24,7 +24,7 @@ export class MrGridControls extends connectStore(LitElement) {
         box-sizing: border-box;
         padding: 0 20px;
       }
-      .rows, .cols {
+      mr-grid-dropdown {
         padding-right: 20px;
       }
       .left-controls {
@@ -51,14 +51,14 @@ export class MrGridControls extends connectStore(LitElement) {
     return html`
       <div class="left-controls">
         <mr-grid-dropdown
-          class="rows"
+          class="row-selector"
           .text=${'Rows'}
           .items=${this.gridOptions}
           .selection=${this.queryParams.y}
           @change=${this._rowChanged}>
         </mr-grid-dropdown>
         <mr-grid-dropdown
-          class="cols"
+          class="col-selector"
           .text=${'Cols'}
           .items=${this.gridOptions}
           .selection=${this.queryParams.x}
@@ -66,8 +66,7 @@ export class MrGridControls extends connectStore(LitElement) {
         </mr-grid-dropdown>
         <chops-choice-buttons
           class="cell-selector"
-          .options=${this.cells}
-          @change=${this._selectCell}
+          .options=${this.cellOptions}
           .value=${this.cellType}>
         </chops-choice-buttons>
       </div>
@@ -95,31 +94,19 @@ export class MrGridControls extends connectStore(LitElement) {
   constructor() {
     super();
     this.gridOptions = getAvailableGridFields();
-    this.cells = [
-      {text: 'Tile', value: 'tiles'},
-      {text: 'IDs', value: 'ids'},
-      {text: 'Counts', value: 'counts'},
-    ];
-    this.modeOptions = [
-      {text: 'List', value: 'list'},
-      {text: 'Grid', value: 'grid'},
-      {text: 'Chart', value: 'chart'},
-    ];
-    this.queryParams = {y: 'None', x: 'None'};
-    this.cellType = 'tiles';
+    this.queryParams = {};
 
     this.totalIssues = 0;
     this._fieldDefs = [];
     this._labelPrefixFields = [];
+
+    this._page = page;
   };
 
   /** @override */
   static get properties() {
     return {
       gridOptions: {type: Array},
-      cells: {type: Array},
-      cellType: {type: String},
-      modeOptions: {type: Array},
       projectName: {tupe: String},
       queryParams: {type: Object},
       issueCount: {type: Number},
@@ -143,39 +130,53 @@ export class MrGridControls extends connectStore(LitElement) {
       this.gridOptions = getAvailableGridFields(
           this._fieldDefs, this._labelPrefixFields);
     }
-    if (changedProperties.has('cells') && this.queryParams.cells) {
-      this.cellType = this.queryParams.cells;
-    }
     super.update(changedProperties);
   }
 
+  get cellType() {
+    const cells = this.queryParams.cells;
+    return cells || 'tiles';
+  }
+
+  get cellOptions() {
+    return [
+      {text: 'Tile', value: 'tiles',
+        url: this._updatedGridViewUrl({}, ['cells'])},
+      {text: 'IDs', value: 'ids',
+        url: this._updatedGridViewUrl({cells: 'ids'})},
+      {text: 'Counts', value: 'counts',
+        url: this._updatedGridViewUrl({cells: 'counts'})},
+    ];
+  }
+
   _rowChanged(e) {
-    this.queryParams.y = e.target.selection;
-    const params = Object.assign({}, this.queryParams);
-    if (this.queryParams.y === 'None') {
-      params.y = '';
+    const y = e.target.selection;
+    let deletedParams;
+    if (y === 'None') {
+      deletedParams = ['y'];
     }
-    this._changeUrlParams(params);
+    this._changeUrlParams({y}, deletedParams);
   }
 
   _colChanged(e) {
-    this.queryParams.x = e.target.selection;
-    const params = Object.assign({}, this.queryParams);
-    if (this.queryParams.x === 'None') {
-      params.x = '';
+    const x = e.target.selection;
+    let deletedParams;
+    if (x === 'None') {
+      deletedParams = ['x'];
     }
-    this._changeUrlParams(params);
+    this._changeUrlParams({x}, deletedParams);
   }
 
-  _changeUrlParams(params) {
-    const newParams = qs.stringify(params);
-    const newUrl = `${location.pathname}?${newParams}`;
-    page(newUrl);
+  _changeUrlParams(newParams, deletedParams) {
+    const newUrl = this._updatedGridViewUrl(newParams, deletedParams);
+    this._page(newUrl);
   }
 
-  _selectCell(e) {
-    this.queryParams.cells = e.target.value;
-    this._changeUrlParams(this.queryParams);
+  _updatedGridViewUrl(newParams, deletedParams) {
+    // TODO(zhangtiff): Replace /list_new with /list when switching the new grid
+    // view to default.
+    return urlWithNewParams(`/p/${this.projectName}/issues/list_new`,
+        this.queryParams, newParams, deletedParams);
   }
 };
 

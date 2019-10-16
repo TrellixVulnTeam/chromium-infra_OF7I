@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 import page from 'page';
-import qs from 'qs';
 import {ChopsChoiceButtons} from
   'elements/chops/chops-choice-buttons/chops-choice-buttons.js';
+import {urlWithNewParams} from 'shared/helpers.js';
 
 export class MrModeSelector extends ChopsChoiceButtons {
   /** @override */
@@ -18,11 +18,6 @@ export class MrModeSelector extends ChopsChoiceButtons {
   /** @override */
   constructor() {
     super();
-    this.options = [
-      {text: 'List', value: 'list'},
-      {text: 'Grid', value: 'grid'},
-      {text: 'Chart', value: 'chart'},
-    ];
 
     this.queryParams = {};
     this.projectName = '';
@@ -31,27 +26,22 @@ export class MrModeSelector extends ChopsChoiceButtons {
   };
 
   /** @override */
-  connectedCallback() {
-    super.connectedCallback();
-
-    this.addEventListener('change', (e) => this._selectMode(e));
+  update(changedProperties) {
+    if (changedProperties.has('queryParams') ||
+        changedProperties.has('projectName')) {
+      this.options = [
+        {text: 'List', value: 'list', url: this._newListViewPath()},
+        {text: 'Grid', value: 'grid', url: this._newListViewPath('grid')},
+        {text: 'Chart', value: 'chart', url: this._newListViewPath('chart')},
+      ];
+    }
+    super.update(changedProperties);
   }
 
-  _selectMode(e) {
-    const value = e.target.value.toLowerCase();
-
-    const newParams = {...this.queryParams};
-
-    if (value.toLowerCase() === 'list') {
-      delete newParams.mode;
-    } else {
-      newParams.mode = value;
-    }
-
-    const params = qs.stringify(newParams);
-    const newURL =
-        `/p/${this.projectName}/issues/list${params ? '?' : ''}${params}`;
-    this._page(newURL);
+  _newListViewPath(mode) {
+    const basePath = `/p/${this.projectName}/issues/list`;
+    const deletedParams = mode ? undefined : ['mode'];
+    return urlWithNewParams(basePath, this.queryParams, {mode}, deletedParams);
   }
 };
 
