@@ -44,9 +44,6 @@ from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
 from waterfall import waterfall_config
 
-# List of Gerrit projects that the Code Coverage service supports.
-_PROJECTS_WHITELIST = ('chromium/src', 'libassistant/internal')
-
 # The regex to extract the build id from the url path.
 _BUILD_ID_REGEX = re.compile(r'.*/build/(\d+)$')
 
@@ -97,10 +94,37 @@ _POSTSUBMIT_PLATFORM_INFO_MAP = {
 }
 
 
-def _GetAllowedGitilesHost():
-  """Returns a set of allowed gitiles hosts."""
+def _GetAllowedGitilesHosts():
+  """Returns a set of gitiles hosts that the service supports.
+
+  Example config:
+  {
+    'allowed_gitiles_hosts': ['chromium.googlesource.com'],
+  }
+  """
   return set(waterfall_config.GetCodeCoverageSettings().get(
-      'allowed_gitiles_host', []))
+      'allowed_gitiles_hosts', []))
+
+
+def _GetAllowedProjectsForPerCL(host):
+  """Returns a set of Gerrit projects that the service supports.
+
+  The main use case is to filter out per-cl coverage data requests whose
+  projects are not supported yet to avoid wasting time and resource quering the
+  datastore.
+
+  Please note that the hosts in the config are gitiles hosts instead of gerrit
+  hosts, such as: 'chromium.googlesource.com'.
+
+  Example config:
+  {
+    'allowed_projects_for_per_cl': {
+        'chromium.googlesource.com': ['chromium/src'],
+    },
+  }
+  """
+  return set(waterfall_config.GetCodeCoverageSettings().get(
+      'allowed_projects_for_per_cl', {}).get(host, []))
 
 
 def _GetBlacklistedDeps():
@@ -300,7 +324,7 @@ def _GetMatchedDependencyRepository(report, file_path):  # pragma: no cover.
       dependency = dep
       break
 
-  if not dependency or dependency.server_host not in _GetAllowedGitilesHost():
+  if not dependency or dependency.server_host not in _GetAllowedGitilesHosts():
     return None
 
   return dependency
@@ -1028,11 +1052,19 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('patchset=%d', patchset)
     logging.info('type=%s', data_type)
 
-    if host and host.replace('-review', '') not in _GetAllowedGitilesHost():
+    if host.replace('-review', '') not in _GetAllowedGitilesHosts():
       return BaseHandler.CreateError(
           error_message='Host "%s" is not whitelisted.' % host,
           return_code=400,
           allowed_origin='*')
+
+    if project not in _GetAllowedProjectsForPerCL(host.replace('-review', '')):
+      kwargs = {'is_project_supported': False}
+      return BaseHandler.CreateError(
+          error_message='Project "%s" is not supported.' % project,
+          return_code=400,
+          allowed_origin='*',
+          **kwargs)
 
     if data_type not in ('lines', 'percentages'):
       return BaseHandler.CreateError(
@@ -1041,14 +1073,6 @@ class ServeCodeCoverageData(BaseHandler):
               data_type),
           return_code=400,
           allowed_origin='*')
-
-    if project and project not in _PROJECTS_WHITELIST:
-      kwargs = {'is_project_supported': False}
-      return BaseHandler.CreateError(
-          error_message='Project "%s" is not supported.' % project,
-          return_code=400,
-          allowed_origin='*',
-          **kwargs)
 
     if not _IsServePresubmitCoverageDataEnabled():
       # TODO(crbug.com/908609): Switch to 'is_service_enabled'.
