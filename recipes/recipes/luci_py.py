@@ -40,16 +40,12 @@ def _step_run_swarming_tests(api):
     cwd = luci_dir.join('appengine', 'swarming')
     with api.context(cwd=cwd):
       cfg = api.context.cwd.join('unittest.cfg')
-      # TODO(jwata): remove '--log-level DEBUG' after fixing test failures
-      testpy_args = ['-v', '--conf', cfg, '-A',
-                     '!no_run', '--log-level', 'DEBUG']
+      testpy_args = ['-v', '--conf', cfg, '-A', '!no_run']
 
       with api.step.nest('python2'):
         venv = luci_dir.join('.vpython')
-        # TODO(jwata): some tests are failing
-        # remove ok_ret='any' after fixing them on the luci-py repo
         api.python('run tests',
-                   'test.py', args=testpy_args, venv=venv, ok_ret='any')
+                   'test.py', args=testpy_args, venv=venv)
         api.python('run tests sequentially',
                    'test_seq.py', args=['-v'], venv=venv)
 

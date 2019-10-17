@@ -146,9 +146,7 @@
       "--conf",
       "[START_DIR]/infra/luci/appengine/swarming/unittest.cfg",
       "-A",
-      "!no_run",
-      "--log-level",
-      "DEBUG"
+      "!no_run"
     ],
     "cwd": "[START_DIR]/infra/luci/appengine/swarming",
     "name": "swarming.python2.run tests",
@@ -190,8 +188,6 @@
       "[START_DIR]/infra/luci/appengine/swarming/unittest.cfg",
       "-A",
       "!no_run",
-      "--log-level",
-      "DEBUG",
       "--python3"
     ],
     "cwd": "[START_DIR]/infra/luci/appengine/swarming",
