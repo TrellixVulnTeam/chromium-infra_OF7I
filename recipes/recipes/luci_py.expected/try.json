@@ -129,18 +129,90 @@
     "name": "swarming"
   },
   {
+    "cmd": [],
+    "name": "swarming.python2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
     "cmd": [
       "vpython",
       "-vpython-spec",
       "[START_DIR]/infra/luci/.vpython",
       "-u",
-      "local_smoke_test.py",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/swarming/unittest.cfg",
+      "-A",
+      "!no_run",
+      "--log-level",
+      "DEBUG"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/swarming",
+    "name": "swarming.python2.run tests",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython",
+      "-u",
+      "test_seq.py",
       "-v"
     ],
     "cwd": "[START_DIR]/infra/luci/appengine/swarming",
-    "name": "swarming.run local smoke test",
+    "name": "swarming.python2.run tests sequentially",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "swarming.python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/swarming/unittest.cfg",
+      "-A",
+      "!no_run",
+      "--log-level",
+      "DEBUG",
+      "--python3"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/swarming",
+    "name": "swarming.python3.run tests",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test_seq.py",
+      "-v"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/swarming",
+    "name": "swarming.python3.run tests sequentially",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
