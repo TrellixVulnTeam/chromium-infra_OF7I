@@ -206,9 +206,9 @@ func (b *bqFailure) Title(bses []*messages.BuildStep) string {
 func generateSQLQuery(tree string, appID string) string {
 	switch tree {
 	case "android":
-		return fmt.Sprintf(androidFailuresQuery, appID, "chromium")
+		return fmt.Sprintf(androidFailuresQuery, appID, "chrome")
 	case "chromium":
-		return fmt.Sprintf(chromiumFailuresQuery, appID, "chromium")
+		return fmt.Sprintf(chromiumFailuresQuery, appID, "chrome")
 	case "chromium.gpu.fyi":
 		return fmt.Sprintf(chromiumGPUFYIFailuresQuery, appID, "chromium")
 	case "chromeos":

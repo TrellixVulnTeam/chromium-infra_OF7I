@@ -131,7 +131,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CulpritIdRangeEnd,
 			  StartTime
 			FROM
-				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
+				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
 			WHERE
 			  MasterName IN (
 			    "internal.client.clank",
@@ -191,7 +191,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CulpritIdRangeEnd,
 			  StartTime
 			FROM
-				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
+				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
 			WHERE
 			MasterName IN(
 				"chrome",
