@@ -49,9 +49,16 @@ This user guide is organized into the following chapters:
 
 ## How to ask for help and report problems with Monorail itself
 
+<!-- This is purposely written in a couple different places to make it
+     easier for users to find. -->
+
 If you wish to file a bug against Monorail itself, please do so in our
 [self-hosting tracker](https://bugs.chromium.org/p/monorail/issues/entry).
 We also discuss development of Monorail at `infra-dev@chromium.org`.
+
+You can report spam issues via the "..." menu near the issue summary.
+You can report spam comments via the "..." menu on that comment.  Any
+project owner can ban a spammer from the site.
 
 
 ## Brief note on Monorail history
