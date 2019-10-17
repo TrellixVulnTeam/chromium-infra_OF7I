@@ -24,6 +24,7 @@ import (
 
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/common/errctx"
+	"infra/libs/skylab/swarming"
 )
 
 const progName = "skylab"
@@ -93,6 +94,19 @@ func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 		return nil, errors.Annotate(err, "failed to create HTTP client").Err()
 	}
 	return c, nil
+}
+
+// newSwarmingClient returns a new client for the Swarming service.
+func newSwarmingClient(ctx context.Context, authFlags authcli.Flags, env site.Environment) (*swarming.Client, error) {
+	h, err := newHTTPClient(ctx, &authFlags)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to create http client").Err()
+	}
+	client, err := swarming.New(ctx, h, env.SwarmingService)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 // UserErrorReporter reports a detailed error message to the user.
