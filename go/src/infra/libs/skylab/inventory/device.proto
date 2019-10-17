@@ -282,7 +282,7 @@ message SchedulableLabels {
 
 // Keep sorted by field name.
 //
-// NEXT TAG: 18
+// NEXT TAG: 19
 message HardwareCapabilities {
   optional bool atrus = 17;
   optional bool bluetooth = 7;
@@ -310,6 +310,7 @@ message HardwareCapabilities {
   optional string telephony = 2;
   optional bool webcam = 9;
   optional bool touchpad = 10;
+  optional bool touchscreen = 18;
 
   // NEXT TAG: 9
   enum VideoAcceleration {

@@ -44,6 +44,9 @@ func boolCapabilitiesConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 	if c.GetTouchpad() {
 		dims["label-touchpad"] = []string{"True"}
 	}
+	if c.GetTouchscreen() {
+		dims["label-touchscreen"] = []string{"True"}
+	}
 	if c.GetWebcam() {
 		dims["label-webcam"] = []string{"True"}
 	}
@@ -59,6 +62,7 @@ func boolCapabilitiesReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 	d = assignLastBoolValueAndDropKey(d, c.InternalDisplay, "label-internal_display")
 	d = assignLastBoolValueAndDropKey(d, c.Lucidsleep, "label-lucidsleep")
 	d = assignLastBoolValueAndDropKey(d, c.Touchpad, "label-touchpad")
+	d = assignLastBoolValueAndDropKey(d, c.Touchscreen, "label-touchscreen")
 	d = assignLastBoolValueAndDropKey(d, c.Webcam, "label-webcam")
 	return d
 }

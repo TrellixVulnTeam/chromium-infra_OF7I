@@ -42,6 +42,7 @@ const fullDeviceConfig = `
 				"HARDWARE_FEATURE_INTERNAL_DISPLAY",
 				"HARDWARE_FEATURE_WEBCAM",
 				"HARDWARE_FEATURE_TOUCHPAD",
+				"HARDWARE_FEATURE_TOUCHSCREEN",
 				"HARDWARE_FEATURE_STYLUS"
 			],
 			"power": "POWER_SUPPLY_BATTERY",
@@ -71,6 +72,7 @@ labels: {
 		power: "battery"
 		storage: "mmc"
 		touchpad: true
+		touchscreen: true
 		video_acceleration: 1
 		video_acceleration: 2
 		video_acceleration: 3
@@ -94,6 +96,7 @@ labels: {
 		power: "AC_only"
 		storage: "nvme"
 		touchpad: true
+		touchscreen: true
 		video_acceleration: 2
 		webcam: false
 	}

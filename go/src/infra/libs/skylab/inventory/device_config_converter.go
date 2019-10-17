@@ -74,6 +74,8 @@ func ConvertDeviceConfig(dc *device.Config, spec *CommonDeviceSpecs) {
 			c.Touchpad = new(bool)
 			*c.Touchpad = true
 		case device.Config_HARDWARE_FEATURE_TOUCHSCREEN:
+			c.Touchscreen = new(bool)
+			*c.Touchscreen = true
 		default:
 		}
 	}
@@ -145,5 +147,6 @@ func CopyDCAmongLabels(to *SchedulableLabels, from *SchedulableLabels) {
 	toC.Hotwording = fromC.Hotwording
 	toC.Lucidsleep = fromC.Lucidsleep
 	toC.Touchpad = fromC.Touchpad
+	toC.Touchscreen = fromC.Touchscreen
 	to.GetPeripherals().Stylus = from.GetPeripherals().Stylus
 }

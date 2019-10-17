@@ -47,6 +47,9 @@ func boolCapabilitiesConverter(ls *inventory.SchedulableLabels) []string {
 	if c.GetTouchpad() {
 		labels = append(labels, "touchpad")
 	}
+	if c.GetTouchscreen() {
+		labels = append(labels, "touchscreen")
+	}
 	if c.GetWebcam() {
 		labels = append(labels, "webcam")
 	}
@@ -120,6 +123,8 @@ func boolCapabilitiesReverter(ls *inventory.SchedulableLabels, labels []string) 
 			*c.Lucidsleep = true
 		case "touchpad":
 			*c.Touchpad = true
+		case "touchscreen":
+			*c.Touchscreen = true
 		case "webcam":
 			*c.Webcam = true
 		default:

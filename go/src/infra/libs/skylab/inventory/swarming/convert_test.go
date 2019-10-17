@@ -67,6 +67,7 @@ capabilities {
   video_acceleration: 6
   video_acceleration: 8
   touchpad: true
+  touchscreen: true
   telephony: "telephonyval"
   storage: "storageval"
   power: "powerval"
@@ -128,6 +129,7 @@ var fullDimensions = Dimensions{
 	"label-recovery_test":    {"True"},
 	"label-reference_design": {"reef"},
 	"label-touchpad":         {"True"},
+	"label-touchscreen":      {"True"},
 	"label-servo":            {"True"},
 	"label-sku":              {"skuval"},
 	"label-brand":            {"HOMH"},

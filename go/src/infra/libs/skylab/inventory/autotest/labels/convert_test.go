@@ -68,6 +68,7 @@ capabilities {
   video_acceleration: 6
   video_acceleration: 8
   touchpad: true
+  touchscreen: true
   telephony: "telephonyval"
   storage: "storageval"
   power: "powerval"
@@ -148,6 +149,7 @@ var fullLabels = []string{
 	"test_usbaudio",
 	"test_usbprinting",
 	"touchpad",
+	"touchscreen",
 	"usb_detect",
 	"variant:somevariant",
 	"webcam",

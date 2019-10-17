@@ -26,6 +26,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 			Storage:         new(string),
 			Telephony:       new(string),
 			Touchpad:        new(bool),
+			Touchscreen:     new(bool),
 			Webcam:          new(bool),
 		},
 		Cr50Phase:     new(SchedulableLabels_CR50_Phase),
