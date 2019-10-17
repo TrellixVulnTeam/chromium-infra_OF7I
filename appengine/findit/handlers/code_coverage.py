@@ -53,14 +53,6 @@ _BUILD_ID_REGEX = re.compile(r'.*/build/(\d+)$')
 # Cloud storage bucket used to store the source files fetched from gitile.
 _SOURCE_FILE_GS_BUCKET = 'source-files-for-coverage'
 
-# Dependencies to skip adding to manifest. Maps root repo url to list of
-# dependency paths (relative to the root of the checkout).
-_BLACKLISTED_DEPS = {
-    'https://chromium.googlesource.com/chromium/src.git': [
-        'src/ios/third_party/webkit/src'
-    ],
-}
-
 # The regex to extract the luci project name from the url path.
 _LUCI_PROJECT_REGEX = re.compile(r'^/p/(.+)/coverage.*')
 
@@ -109,6 +101,16 @@ def _GetAllowedGitilesHost():
   """Returns a set of allowed gitiles hosts."""
   return set(waterfall_config.GetCodeCoverageSettings().get(
       'allowed_gitiles_host', []))
+
+
+def _GetBlacklistedDeps():
+  """Returns a map of blacklisted dependencies to skip adding to manifest.
+
+  Main use case is to skip dependency repos that have malformed structures, and
+  the mapping is from root repo url to list of dependency paths (relative to
+  the root of the checkout).
+  """
+  return waterfall_config.GetCodeCoverageSettings().get('blacklisted_deps', {})
 
 
 def _GetSameOrMostRecentReportForEachPlatform(host, project, ref, revision):
@@ -271,7 +273,7 @@ def _RetrieveManifest(repo_url, revision, os_platform):  # pragma: no cover.
   deps = dep_fetcher.GetDependency(revision, os_platform)
   for path, dep in deps.iteritems():
     # Remove clause when crbug.com/929315 gets fixed.
-    if path in _BLACKLISTED_DEPS.get(repo_url, []):
+    if path in _GetBlacklistedDeps().get(repo_url, []):
       continue
     AddDependencyToManifest(path, dep.repo_url, dep.revision)
 
