@@ -10,12 +10,11 @@ import (
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
+	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/site"
-
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"infra/libs/skylab/swarming"
 )
 
