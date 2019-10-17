@@ -11,7 +11,8 @@ import (
 	"sort"
 	"strings"
 
-	structpb "github.com/golang/protobuf/ptypes/struct"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -233,18 +234,18 @@ func (c *backfillRequestRun) confirmMultileBuildsOK(a subcommands.Application, b
 }
 
 func (c *backfillRequestRun) scheduleBackfillBuild(ctx context.Context, original *bb.Build) (int64, error) {
-	var req *structpb.Struct
+	var req *test_platform.Request
 	switch {
-	case original.RawBackfillRequest != nil:
-		req = original.RawBackfillRequest
-	case original.RawRequest != nil:
+	case original.BackfillRequest != nil:
+		req = original.BackfillRequest
+	case original.Request != nil:
 		logging.Infof(ctx, "Original build %d has no backfill_request. Using original request instead.", original.ID)
-		req = original.RawRequest
+		req = original.Request
 	default:
 		return -1, errors.Reason("schedule backfill: build %d has no request to clone", original.ID).Err()
 	}
 
-	ID, err := c.bbClient.ScheduleBuildRaw(ctx, req, backfillTags(original.Tags, original.ID))
+	ID, err := c.bbClient.ScheduleBuild(ctx, req, backfillTags(original.Tags, original.ID))
 	if err != nil {
 		return -1, errors.Annotate(err, "schedule backfill").Err()
 	}

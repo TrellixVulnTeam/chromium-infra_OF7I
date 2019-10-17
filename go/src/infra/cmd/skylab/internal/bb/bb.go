@@ -87,16 +87,11 @@ func (c *Client) ScheduleBuild(ctx context.Context, request *test_platform.Reque
 		return -1, err
 	}
 
-	return c.ScheduleBuildRaw(ctx, reqStruct, tags)
+	return c.scheduleBuildRaw(ctx, reqStruct, tags)
 }
 
-// ScheduleBuildRaw schedules a new cros_test_platform build.
-//
-// The request argument is a structpb Struct for a cros_test_platform.Request as
-// expected by the buildbucket API. ScheduledBuildRaw is useful in cases where
-// there is a need to avoid parsing a request Struct obtained from another
-// buildbucket build.
-func (c *Client) ScheduleBuildRaw(ctx context.Context, request *structpb.Struct, tags []string) (int64, error) {
+// scheduleBuildRaw schedules a new cros_test_platform build for the given request struct.
+func (c *Client) scheduleBuildRaw(ctx context.Context, request *structpb.Struct, tags []string) (int64, error) {
 	recipeStruct := &structpb.Struct{}
 	recipeStruct.Fields = map[string]*structpb.Value{
 		"request": {Kind: &structpb.Value_StructValue{StructValue: request}},
@@ -159,25 +154,13 @@ type Build struct {
 	// a response.
 	Response *steps.ExecuteResponse
 
-	// RawRequest is the unmarshalled Request from the build.
-	//
-	// RawRequest is not interpreted as a test_platform.Request to avoid
-	// compatibility issues arising from skylab tool's test_platform API
-	// version.
-	//
-	// RawRequest may be nil if the output properties of the build do not
-	// contain a request field.
-	RawRequest *structpb.Struct
+	// Request may be nil if the output properties of the build do not contain a
+	// request field.
+	Request *test_platform.Request
 
-	// RawBackfillRequest is the unmarshalled backfillRequest output property.
-	//
-	// RawBackfillRequest is not interpreted as a test_platform.Request to avoid
-	// compatibility issues arising from skylab tool's test_platform API
-	// version.
-	//
-	// RawBackfillRequest may be nil if the output properties of the build do
-	// not contain a backfill_request field.
-	RawBackfillRequest *structpb.Struct
+	// BackfillRequest may be nil if the output properties of the build do not
+	// contain a backfill_request field.
+	BackfillRequest *test_platform.Request
 }
 
 // GetBuild gets a buildbucket build by ID.
@@ -309,21 +292,19 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 		}
 
 		if reqValue, ok := op["request"]; ok {
-			switch r := reqValue.Kind.(type) {
-			case *structpb.Value_StructValue:
-				build.RawRequest = r.StructValue
-			default:
-				return nil, errors.Reason("output properties have malformed request %#v", reqValue).Err()
+			request, err := structPBToRequest(reqValue)
+			if err != nil {
+				return nil, errors.Annotate(err, "extractBuildData").Err()
 			}
+			build.Request = request
 		}
 
 		if reqValue, ok := op["backfill_request"]; ok {
-			switch r := reqValue.Kind.(type) {
-			case *structpb.Value_StructValue:
-				build.RawBackfillRequest = r.StructValue
-			default:
-				return nil, errors.Reason("output properties have malformed backfill_request %#v", reqValue).Err()
+			request, err := structPBToRequest(reqValue)
+			if err != nil {
+				return nil, errors.Annotate(err, "extractBuildData").Err()
 			}
+			build.BackfillRequest = request
 		}
 	}
 	return &build, nil
@@ -352,6 +333,19 @@ func structPBToExecuteResponse(from *structpb.Value) (*steps.ExecuteResponse, er
 		return nil, errors.Annotate(err, "structPBToExecuteResponse").Err()
 	}
 	return response, nil
+}
+
+func structPBToRequest(from *structpb.Value) (*test_platform.Request, error) {
+	m := jsonpb.Marshaler{}
+	json, err := m.MarshalToString(from)
+	if err != nil {
+		return nil, errors.Annotate(err, "structPBToExecuteRequest").Err()
+	}
+	request := &test_platform.Request{}
+	if err := jsonpb.UnmarshalString(json, request); err != nil {
+		return nil, errors.Annotate(err, "structPBToExecuteRequest").Err()
+	}
+	return request, nil
 }
 
 func isFinal(status buildbucket_pb.Status) bool {
