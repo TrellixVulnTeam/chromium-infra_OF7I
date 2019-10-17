@@ -330,7 +330,7 @@ message Peripherals {
   // Is this device connected to a chameleon (GVC head).
   optional bool chameleon = 5;
 
-  // NEXT TAG: 6
+  // NEXT TAG: 9
   enum ChameleonType {
     CHAMELEON_TYPE_INVALID = 0;
     CHAMELEON_TYPE_BT_HID = 1;
@@ -338,8 +338,11 @@ message Peripherals {
     CHAMELEON_TYPE_DP_HDMI = 3;
     CHAMELEON_TYPE_VGA = 4;
     CHAMELEON_TYPE_HDMI = 5;
+    CHAMELEON_TYPE_BT_BLE_HID = 6;
+    CHAMELEON_TYPE_BT_A2DP_SINK = 7;
+    CHAMELEON_TYPE_BT_PEER = 8;
   }
-  optional ChameleonType chameleon_type = 10;
+  repeated ChameleonType chameleon_type = 10;
 
   // Whether DUT WiFi antenna is connected conductively or OTA.
   optional bool conductive = 11;

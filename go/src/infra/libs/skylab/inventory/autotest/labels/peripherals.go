@@ -58,7 +58,7 @@ func boolPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 	var labels []string
 	p := ls.GetPeripherals()
-	if v := p.GetChameleonType(); v != inventory.Peripherals_CHAMELEON_TYPE_INVALID {
+	for _, v := range p.GetChameleonType() {
 		const plen = 15 // len("CHAMELEON_TYPE_")
 		lv := "chameleon:" + strings.ToLower(v.String()[plen:])
 		labels = append(labels, lv)
@@ -118,7 +118,7 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 			vn := "CHAMELEON_TYPE_" + strings.ToUpper(v)
 			type t = inventory.Peripherals_ChameleonType
 			vals := inventory.Peripherals_ChameleonType_value
-			*p.ChameleonType = t(vals[vn])
+			p.ChameleonType = append(p.ChameleonType, t(vals[vn]))
 		default:
 			continue
 		}

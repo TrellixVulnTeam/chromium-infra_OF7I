@@ -150,4 +150,13 @@ func SortLabels(labels *SchedulableLabels) {
 			})
 		}
 	}
+	{
+		p := labels.Peripherals
+		if p != nil {
+			v := p.ChameleonType
+			sort.Slice(v, func(i, j int) bool {
+				return v[i] < v[j]
+			})
+		}
+	}
 }

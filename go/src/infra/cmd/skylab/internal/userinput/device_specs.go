@@ -470,7 +470,10 @@ const example = `{
 				"audioBox": false,
 				"audioLoopbackDongle": true,
 				"chameleon": false,
-				"chameleonType": "CHAMELEON_TYPE_INVALID",
+				"chameleonType": [
+					"CHAMELEON_TYPE_BT_HID",
+					"CHAMELEON_TYPE_DP_HDMI"
+				],
 				"conductive": false,
 				"huddly": false,
 				"mimo": false,

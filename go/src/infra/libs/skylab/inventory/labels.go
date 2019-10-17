@@ -39,7 +39,6 @@ func NewSchedulableLabels() *SchedulableLabels {
 			AudioBox:            new(bool),
 			AudioLoopbackDongle: new(bool),
 			Chameleon:           new(bool),
-			ChameleonType:       new(Peripherals_ChameleonType),
 			Conductive:          new(bool),
 			Huddly:              new(bool),
 			Mimo:                new(bool),

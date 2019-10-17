@@ -40,6 +40,7 @@ peripherals: {
   huddly: true
   conductive: true
   chameleon_type: 3
+  chameleon_type: 5
   chameleon: true
   audio_loopback_dongle: true
   audio_box: true
@@ -94,6 +95,7 @@ var fullLabels = []string{
 	"carrier:tmobile",
 	"chameleon",
 	"chameleon:dp_hdmi",
+	"chameleon:hdmi",
 	"chaos_dut",
 	"chromesign",
 	"conductive:True",

@@ -66,18 +66,20 @@ func boolPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dime
 
 func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels) {
 	p := ls.GetPeripherals()
-	if v := p.GetChameleonType(); v != inventory.Peripherals_CHAMELEON_TYPE_INVALID {
-		dims["label-chameleon_type"] = []string{v.String()}
+	for _, v := range p.GetChameleonType() {
+		appendDim(dims, "label-chameleon_type", v.String())
 	}
 }
 
 func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
 	p := ls.Peripherals
-	if v, ok := getLastStringValue(d, "label-chameleon_type"); ok {
+
+	p.ChameleonType = make([]inventory.Peripherals_ChameleonType, len(d["label-chameleon_type"]))
+	for i, v := range d["label-chameleon_type"] {
 		if ct, ok := inventory.Peripherals_ChameleonType_value[v]; ok {
-			*p.ChameleonType = inventory.Peripherals_ChameleonType(ct)
+			p.ChameleonType[i] = inventory.Peripherals_ChameleonType(ct)
 		}
-		delete(d, "label-chameleon_type")
 	}
+	delete(d, "label-chameleon_type")
 	return d
 }
