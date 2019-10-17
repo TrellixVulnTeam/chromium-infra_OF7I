@@ -151,6 +151,7 @@ def update_submodules_mirror(
 builder(
     name = 'codesearch-gen-chromium-initiator',
     executable = build.recipe('chromium_codesearch_initiator'),
+    execution_timeout = 5 * time.hour,
     category = 'gen|init',
     schedule = '0 */4 * * *',
 )
