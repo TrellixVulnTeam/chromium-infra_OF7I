@@ -124,12 +124,10 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (
-    api.test('snapshot') +
-    api.platform('linux', 64) +
-    api.properties.git_scheduled() +
-    api.step_data(
+  yield api.test(
+      'snapshot',
+      api.platform('linux', 64),
+      api.buildbucket.ci_build(),
+      api.step_data(
         'chromium-swarm-dev.buildbucket.put',
-        stdout=api.json.output({}),
-    )
-  )
+        stdout=api.json.output({})))

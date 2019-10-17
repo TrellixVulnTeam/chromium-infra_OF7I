@@ -108,7 +108,7 @@
       "put",
       "-host",
       "cr-buildbucket-dev.appspot.com",
-      "{\"bucket\": \"luci.chromium.cron\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"Snapshots\\\", \\\"properties\\\": {\\\"machine_type\\\": \\\"mt\\\"}, \\\"swarming\\\": {\\\"override_builder_cfg\\\": {\\\"dimensions\\\": [\\\"id:snapshot-me\\\", \\\"pool:Chrome\\\"]}}}\", \"tags\": [\"builder:Snapshots\", \"machine_type:mt\", \"parent_buildername:TestBuilder\", \"parent_buildnumber:571\", \"user_agent:recipe\"]}"
+      "{\"bucket\": \"luci.chromium.cron\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"Snapshots\\\", \\\"properties\\\": {\\\"machine_type\\\": \\\"mt\\\"}, \\\"swarming\\\": {\\\"override_builder_cfg\\\": {\\\"dimensions\\\": [\\\"id:snapshot-me\\\", \\\"pool:Chrome\\\"]}}}\", \"tags\": [\"builder:Snapshots\", \"buildset:commit/gitiles/chromium.googlesource.com/project/+/2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"gitiles_ref:refs/heads/master\", \"machine_type:mt\", \"parent_buildername:builder\", \"user_agent:recipe\"]}"
     ],
     "infra_step": true,
     "name": "chromium-swarm-dev.buildbucket.put",
