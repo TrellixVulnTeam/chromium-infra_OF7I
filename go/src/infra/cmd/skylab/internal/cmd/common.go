@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -13,8 +12,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -22,14 +19,11 @@ import (
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
-	"go.chromium.org/luci/common/data/strpair"
 	"go.chromium.org/luci/common/errors"
 	lflag "go.chromium.org/luci/common/flag"
 
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/common/errctx"
-	"infra/libs/skylab/swarming"
 )
 
 const progName = "skylab"
@@ -101,19 +95,6 @@ func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 	return c, nil
 }
 
-// newSwarmingClient returns a new client for the Swarming service.
-func newSwarmingClient(ctx context.Context, authFlags authcli.Flags, env site.Environment) (*swarming.Client, error) {
-	h, err := newHTTPClient(ctx, &authFlags)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to create http client").Err()
-	}
-	client, err := swarming.New(ctx, h, env.SwarmingService)
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
-}
-
 // UserErrorReporter reports a detailed error message to the user.
 //
 // PrintError() uses a UserErrorReporter to print multi-line user error details
@@ -153,49 +134,10 @@ func (e *usageError) ReportUserError(w io.Writer) {
 	e.flags.Usage()
 }
 
-// toPairs converts a slice of strings in foo:bar form to a slice of swarming rpc string pairs.
-func toPairs(dimensions []string) ([]*swarming_api.SwarmingRpcsStringPair, error) {
-	pairs := make([]*swarming_api.SwarmingRpcsStringPair, len(dimensions))
-	for i, d := range dimensions {
-		k, v := strpair.Parse(d)
-		if v == "" {
-			return nil, fmt.Errorf("malformed dimension with key '%s' has no value", k)
-		}
-		pairs[i] = &swarming_api.SwarmingRpcsStringPair{Key: k, Value: v}
-	}
-	return pairs, nil
-}
-
-func prompt(s string) bool {
-	fmt.Fprintf(os.Stderr, s)
-	reader := bufio.NewReader(os.Stdin)
-	answer, _ := reader.ReadString('\n')
-	answer = strings.TrimSpace(answer)
-	return answer == "y" || answer == "Y"
-}
-
 func maybeWithTimeout(ctx context.Context, timeoutMins int) (context.Context, func(error)) {
 	if timeoutMins >= 0 {
 		return errctx.WithTimeout(ctx, time.Duration(timeoutMins)*time.Minute,
 			fmt.Errorf("timed out after %d minutes while waiting for task(s) to complete", timeoutMins))
 	}
 	return errctx.WithCancel(ctx)
-}
-
-// printTaskInfo displays a list of user-friendly list of tasks (with a given
-// upper limit), with a header of the form "Found X tasks to <showText>:"
-func printTaskInfo(results []*swarming_api.SwarmingRpcsTaskResult, showLimit int, showText string, siteEnv site.Environment) {
-	fmt.Fprintln(os.Stderr, strings.Repeat("-", 80))
-	fmt.Fprintf(os.Stderr, "Found %d tasks to %s:\n", len(results), showText)
-	for i, r := range results {
-		if i < showTaskLimit {
-			fmt.Fprintf(os.Stderr, "%s\n", swarming.TaskURL(siteEnv.SwarmingService, r.TaskId))
-		} else {
-			break
-		}
-	}
-	if len(results) > showTaskLimit {
-		fmt.Fprintf(os.Stderr, "... and %d more tasks\n", len(results)-showTaskLimit)
-	}
-	fmt.Fprintln(os.Stderr, strings.Repeat("-", 80))
 }

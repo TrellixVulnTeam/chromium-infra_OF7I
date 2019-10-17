@@ -5,9 +5,7 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -17,10 +15,6 @@ import (
 	"infra/cmd/skylab/internal/bb"
 	"infra/cmd/skylab/internal/cmd/recipe"
 	"infra/cmd/skylab/internal/site"
-	"infra/libs/skylab/inventory"
-	"infra/libs/skylab/request"
-	"infra/libs/skylab/swarming"
-	"infra/libs/skylab/worker"
 )
 
 // CreateTest subcommand: create a test task.
@@ -37,12 +31,8 @@ This command does not wait for the task to start running.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.createRunCommon.Register(&c.Flags)
-		// TODO(akeshet): Deprecate this argument once recipe migration is complete;
-		// the recipe ignores this argument, and determines it independently during
-		// test enumeration.
-		c.Flags.BoolVar(&c.client, "client-test", false, "Task is a client-side test.")
+		c.Flags.BoolVar(&c.client, "client-test", false, "(Deprecated).")
 		c.Flags.StringVar(&c.testArgs, "test-args", "", "Test arguments string (meaning depends on test).")
-
 		c.Flags.StringVar(&c.parentTaskID, "parent-task-run-id", "", "For internal use only. Task run ID of the parent (suite) task to this test. Note that this must be a run ID (i.e. not ending in 0).")
 
 		return c
@@ -85,10 +75,7 @@ func (c *createTestRun) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 
-	if c.buildBucket {
-		return c.innerRunBB(a, args, env)
-	}
-	return c.innerRunSwarming(a, args, env)
+	return c.innerRunBB(a, args, env)
 }
 
 func (c *createTestRun) innerRunBB(a subcommands.Application, args []string, env subcommands.Env) error {
@@ -132,100 +119,6 @@ func (c *createTestRun) validateForBB() error {
 	return nil
 }
 
-func (c *createTestRun) innerRunSwarming(a subcommands.Application, args []string, env subcommands.Env) error {
-	ctx := cli.GetContext(a, c, env)
-	e := c.envFlags.Env()
-
-	if c.Flags.NArg() > 1 {
-		return errors.Reason("multiple tests in a single command only supported in -bb mode").Err()
-	}
-
-	taskName := c.Flags.Arg(0)
-
-	keyvals, err := toKeyvalMap(c.keyvals)
-	if err != nil {
-		return err
-	}
-
-	cmd := worker.Command{
-		TaskName:   taskName,
-		ClientTest: c.client,
-		Keyvals:    keyvals,
-		TestArgs:   c.testArgs,
-	}
-	cmd.Config(e.Wrapped())
-
-	tags := append(c.buildTags(), "log_location:"+cmd.LogDogAnnotationURL, "luci_project:"+e.LUCIProject)
-	if c.qsAccount != "" {
-		tags = append(tags, "qs_account:"+c.qsAccount)
-	}
-
-	ra := request.Args{
-		Cmd:                     cmd,
-		SwarmingTags:            tags,
-		ProvisionableDimensions: c.getProvisionableDimensions(),
-		Dimensions:              c.createRunCommon.dimensions,
-		SchedulableLabels:       c.getLabels(),
-		Timeout:                 time.Duration(c.timeoutMins) * time.Minute,
-		Priority:                int64(c.priority),
-		ParentTaskID:            c.parentTaskID,
-	}
-	req, err := ra.SwarmingNewTaskRequest()
-
-	h, err := newHTTPClient(ctx, &c.authFlags)
-	if err != nil {
-		return errors.Annotate(err, "failed to create http client").Err()
-	}
-	client, err := swarming.New(ctx, h, e.SwarmingService)
-	if err != nil {
-		return err
-	}
-
-	ctx, cf := context.WithTimeout(ctx, 120*time.Second)
-	defer cf()
-	resp, err := client.CreateTask(ctx, req)
-	if err != nil {
-		if err == context.DeadlineExceeded {
-			return errors.Reason("timed out while attempting to create swarming task").Err()
-		}
-		return errors.Annotate(err, "create test").Err()
-	}
-
-	fmt.Fprintf(a.GetOut(), "Created Swarming task %s\n", swarming.TaskURL(e.SwarmingService, resp.TaskId))
-	return nil
-}
-
 func (c *createTestRun) buildTags() []string {
 	return append(c.createRunCommon.BuildTags(), "skylab-tool:create-test")
-}
-
-func (c *createTestRun) getLabels() inventory.SchedulableLabels {
-	labels := inventory.SchedulableLabels{}
-
-	if c.board != "" {
-		labels.Board = &c.board
-	}
-	if c.model != "" {
-		labels.Model = &c.model
-	}
-	if c.pool != "" {
-		pool, ok := inventory.SchedulableLabels_DUTPool_value[c.pool]
-		if ok {
-			labels.CriticalPools = []inventory.SchedulableLabels_DUTPool{inventory.SchedulableLabels_DUTPool(pool)}
-		} else {
-			labels.SelfServePools = []string{c.pool}
-		}
-	}
-	return labels
-}
-
-func (c *createTestRun) getProvisionableDimensions() []string {
-	var provisionableDimensions []string
-	if c.image != "" {
-		provisionableDimensions = append(provisionableDimensions, "provisionable-cros-version:"+c.image)
-	}
-	for _, p := range c.createRunCommon.provisionLabels {
-		provisionableDimensions = append(provisionableDimensions, "provisionable-"+p)
-	}
-	return provisionableDimensions
 }

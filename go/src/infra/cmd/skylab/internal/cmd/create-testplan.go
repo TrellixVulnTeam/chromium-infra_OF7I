@@ -56,9 +56,6 @@ func (c *createTestPlanRun) validateArgs() error {
 	if err := c.createRunCommon.ValidateArgs(c.Flags); err != nil {
 		return err
 	}
-	if !c.buildBucket {
-		return NewUsageError(c.Flags, "-bb=True required for create-testplan")
-	}
 
 	return nil
 }
