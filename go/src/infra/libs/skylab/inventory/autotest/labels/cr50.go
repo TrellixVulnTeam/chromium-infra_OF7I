@@ -7,6 +7,7 @@ package labels
 import (
 	"strings"
 
+	"fmt"
 	"infra/libs/skylab/inventory"
 )
 
@@ -22,6 +23,22 @@ func cr50Converter(ls *inventory.SchedulableLabels) []string {
 		lv := "cr50:" + strings.ToLower(v.String()[plen:])
 		labels = append(labels, lv)
 	}
+	if v := ls.GetCr50RoKeyid(); v != "" {
+		lv := fmt.Sprintf("cr50-ro-keyid:%s", v)
+		labels = append(labels, lv)
+	}
+	if v := ls.GetCr50RoVersion(); v != "" {
+		lv := fmt.Sprintf("cr50-ro-version:%s", v)
+		labels = append(labels, lv)
+	}
+	if v := ls.GetCr50RwKeyid(); v != "" {
+		lv := fmt.Sprintf("cr50-rw-keyid:%s", v)
+		labels = append(labels, lv)
+	}
+	if v := ls.GetCr50RwVersion(); v != "" {
+		lv := fmt.Sprintf("cr50-rw-version:%s", v)
+		labels = append(labels, lv)
+	}
 	return labels
 }
 
@@ -34,6 +51,14 @@ func cr50Reverter(ls *inventory.SchedulableLabels, labels []string) []string {
 			type t = inventory.SchedulableLabels_CR50_Phase
 			vals := inventory.SchedulableLabels_CR50_Phase_value
 			*ls.Cr50Phase = t(vals[vn])
+		case "cr50-ro-keyid":
+			ls.Cr50RoKeyid = &v
+		case "cr50-ro-version":
+			ls.Cr50RoVersion = &v
+		case "cr50-rw-keyid":
+			ls.Cr50RwKeyid = &v
+		case "cr50-rw-version":
+			ls.Cr50RwVersion = &v
 		default:
 			continue
 		}

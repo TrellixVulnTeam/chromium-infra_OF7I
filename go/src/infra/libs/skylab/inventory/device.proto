@@ -143,7 +143,7 @@ message Shard {
 //
 // Keep sorted by field name.
 //
-// NEXT TAG: 28
+// NEXT TAG: 32
 message SchedulableLabels {
   // Whether this device supports ARC execution environment.
   optional bool arc = 20;
@@ -166,6 +166,20 @@ message SchedulableLabels {
     CR50_PHASE_PVT = 2;
   }
   optional CR50_Phase cr50_phase = 22;
+
+  // Example: cr50-ro-keyid:prod
+  // Example: cr50-ro-keyid:0xaa66150f
+  optional string cr50_ro_keyid = 28;
+
+  // Example: cr50-ro-version:0.0.10
+  optional string cr50_ro_version = 29;
+
+  // Example: cr50-rw-keyid:prod
+  // Example: cr50-rw-keyid:0xde88588d
+  optional string cr50_rw_keyid = 30;
+
+  // Example:cr50-rw-version:0.3.20
+  optional string cr50_rw_version = 31;
 
   // critical_pools are pool labels that the builders are dependent on, and that
   // the cros-infra team is responsible for managing explicitly. All other pool
@@ -215,7 +229,7 @@ message SchedulableLabels {
 
   optional string sku = 25;
 
-  // NEXT TAG: 4
+  // NEXT TAG: 6
   enum OSType {
     OS_TYPE_INVALID = 0;
     OS_TYPE_ANDROID = 1;

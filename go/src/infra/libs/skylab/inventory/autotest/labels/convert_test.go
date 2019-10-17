@@ -59,6 +59,10 @@ cts_abi: 2
 critical_pools: 2
 critical_pools: 1
 cr50_phase: 2
+cr50_ro_keyid: "prod"
+cr50_ro_version: "1.2.3"
+cr50_rw_keyid: "0xde88588d"
+cr50_rw_version: "9.8.7"
 capabilities {
   webcam: true
   video_acceleration: 6
@@ -99,6 +103,10 @@ var fullLabels = []string{
 	"chaos_dut",
 	"chromesign",
 	"conductive:True",
+	"cr50-ro-keyid:prod",
+	"cr50-ro-version:1.2.3",
+	"cr50-rw-keyid:0xde88588d",
+	"cr50-rw-version:9.8.7",
 	"cr50:pvt",
 	"cts_abi_arm",
 	"cts_abi_x86",

@@ -51,7 +51,11 @@ sku: "skuval"
 hwid_sku: "eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB"
 brand: "HOMH"
 ec_type: 1
-cr50_phase: 0
+cr50_ro_keyid: "a"
+cr50_ro_version: "11.12.13"
+cr50_rw_keyid: "b"
+cr50_rw_version: "21.22.23"
+cr50_phase: 2
 cts_cpu: 1
 cts_cpu: 2
 cts_abi: 1
@@ -140,8 +144,13 @@ var fullDimensions = Dimensions{
 		"VIDEO_ACCELERATION_ENC_VP9",
 		"VIDEO_ACCELERATION_ENC_VP9_2",
 	},
-	"label-webcam":   {"True"},
-	"label-wificell": {"True"},
+	"label-webcam":          {"True"},
+	"label-wificell":        {"True"},
+	"label-cr50_phase":      {"CR50_PHASE_PVT"},
+	"label-cr50_ro_keyid":   {"a"},
+	"label-cr50_ro_version": {"11.12.13"},
+	"label-cr50_rw_keyid":   {"b"},
+	"label-cr50_rw_version": {"21.22.23"},
 }
 
 func TestConvertEmpty(t *testing.T) {
