@@ -306,15 +306,13 @@
       "[TMP_BASE]/goma_counterz",
       "--goma-crash-report-id-file",
       "[TMP_BASE]/crash_report_id",
+      "--build-id",
+      "8945511751514863184",
       "--builder-id-json",
-      "{\"bucket\": \"master.test_master\", \"builder\": \"test_builder\", \"project\": \"\"}",
+      "{\"bucket\": \"cron\", \"builder\": \"test_builder\", \"project\": \"project\"}",
       "--is-luci",
       "--buildbot-buildername",
-      "test_builder",
-      "--buildbot-mastername",
-      "test_master",
-      "--buildbot-slavename",
-      "test_bot"
+      "test_builder"
     ],
     "name": "postprocess_for_goma.upload_log",
     "~followup_annotations": [

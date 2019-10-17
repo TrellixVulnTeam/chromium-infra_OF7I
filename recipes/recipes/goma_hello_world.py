@@ -11,6 +11,7 @@ environment. Linux and OSX only.
 
 DEPS = [
   'build/goma',
+  'recipe_engine/buildbucket',
   'recipe_engine/context',
   'recipe_engine/file',
   'recipe_engine/path',
@@ -90,17 +91,13 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (
-      api.test('linux') +
-      api.platform.name('linux') +
-      api.properties.generic(
-          buildername='test_builder',
-          mastername='test_master'))
+  yield api.test(
+      'linux',
+      api.platform.name('linux'),
+      api.buildbucket.generic_build(builder='test_builder'))
 
-  yield (
-      api.test('linux_fail') +
-      api.platform.name('linux') +
-      api.properties.generic(
-          buildername='test_builder',
-          mastername='test_master') +
+  yield api.test(
+      'linux_fail',
+      api.platform.name('linux'),
+      api.buildbucket.generic_build(builder='test_builder'),
       api.step_data('link', retcode=1))

@@ -872,14 +872,14 @@ Updates the Git Cache zip files.
 &mdash; **def [RunSteps](/recipes/recipes/git_cache_updater.py#155)(api, inputs):**
 ### *recipes* / [goma\_hello\_world](/recipes/recipes/goma_hello_world.py)
 
-[DEPS](/recipes/recipes/goma_hello_world.py#12): [build/goma][build/recipe_modules/goma], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/goma_hello_world.py#12): [build/goma][build/recipe_modules/goma], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
 Compiles trivial C++ program using Goma.
 
 Intended to be used as a very simple litmus test of Goma health on LUCI staging
 environment. Linux and OSX only.
 
-&mdash; **def [RunSteps](/recipes/recipes/goma_hello_world.py#43)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/goma_hello_world.py#44)(api):**
 ### *recipes* / [gsubmodd](/recipes/recipes/gsubmodd.py)
 
 [DEPS](/recipes/recipes/gsubmodd.py#14): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python]
