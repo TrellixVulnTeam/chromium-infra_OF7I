@@ -272,6 +272,19 @@ func (a *argsGenerator) baseKeyvals() map[string]string {
 		// should be respected if it was specified.
 		keyvals["parent_job_id"] = a.parentTaskID
 	}
+	// These build related keyvals are used by gs_offlaoder's CTS results
+	// offload hook.
+	for _, sd := range a.params.GetSoftwareDependencies() {
+		if b := sd.GetChromeosBuild(); b != "" {
+			keyvals["build"] = b
+		}
+		if b := sd.GetRwFirmwareBuild(); b != "" {
+			keyvals["fwrw_build"] = b
+		}
+		if b := sd.GetRoFirmwareBuild(); b != "" {
+			keyvals["fwro_build"] = b
+		}
+	}
 	return keyvals
 }
 
