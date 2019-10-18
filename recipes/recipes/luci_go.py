@@ -33,7 +33,9 @@ def RunSteps(api, GOARCH):
     co.commit_change()
   co.gclient_runhooks()
 
-  env = {}
+  env = {
+    'INTEGRATION_TESTS': '1',
+  }
   if GOARCH is not None:
     env['GOARCH'] = GOARCH
 
