@@ -53,46 +53,6 @@ _SOURCE_FILE_GS_BUCKET = 'source-files-for-coverage'
 # The regex to extract the luci project name from the url path.
 _LUCI_PROJECT_REGEX = re.compile(r'^/p/(.+)/coverage.*')
 
-# A mapping from platform to related info such as builder name and ui name.
-_POSTSUBMIT_PLATFORM_INFO_MAP = {
-    'linux': {
-        'bucket': 'coverage',
-        'builder': 'linux-code-coverage',
-        'coverage_tool': 'clang',
-        'ui_name': 'Linux (C/C++)',
-    },
-    'chromeos-vm': {
-        'bucket': 'ci',
-        'builder': 'chromeos-vm-code-coverage',
-        'coverage_tool': 'clang',
-        'ui_name': 'ChromeOS VM (C/C++)',
-    },
-    'linux-chromeos': {
-        'bucket': 'ci',
-        'builder': 'linux-chromeos-code-coverage',
-        'coverage_tool': 'clang',
-        'ui_name': 'ChromeOS on Linux (C/C++)',
-    },
-    'android-java': {
-        'bucket': 'ci',
-        'builder': 'android-code-coverage',
-        'coverage_tool': 'jacoco',
-        'ui_name': 'Android (Java)'
-    },
-    'libassistant': {
-        'bucket': 'master.tryserver.cast-chromecast-internal.gce',
-        'builder': 'libassistant-absolute_coverage',
-        'coverage_tool': 'clang',
-        'ui_name': 'libassistant code coverage',
-    },
-    'win': {
-        'bucket': 'ci',
-        'builder': 'win10-code-coverage',
-        'coverage_tool': 'clang',
-        'ui_name': '(EXPERIMENTAL) Windows (C/C++)',
-    },
-}
-
 
 def _GetAllowedGitilesHosts():
   """Returns a set of gitiles hosts that the service supports.
@@ -137,6 +97,22 @@ def _GetBlacklistedDeps():
   return waterfall_config.GetCodeCoverageSettings().get('blacklisted_deps', {})
 
 
+def _GetPostsubmitPlatformInfoMap():
+  """Returns a map of postsubmit platform information.
+
+  The map maps from platform name to another map containing the information of
+  the platform, which has the following format, for example:
+  'linux': {
+    'bucket': 'ci',
+    'buider': 'linux-code-coverage',
+    'coverage_tool': 'clang',
+    'ui_name': 'Linux (C/C++)',
+  }
+  """
+  return waterfall_config.GetCodeCoverageSettings().get(
+      'postsubmit_platform_info_map', {})
+
+
 def _GetSameOrMostRecentReportForEachPlatform(host, project, ref, revision):
   """Find the matching report on other platforms, or the most recent.
 
@@ -146,17 +122,15 @@ def _GetSameOrMostRecentReportForEachPlatform(host, project, ref, revision):
   most recent visible one.
   """
   result = {}
-  platforms = _POSTSUBMIT_PLATFORM_INFO_MAP.keys()
-  for platform in platforms:
+  for platform, info in _GetPostsubmitPlatformInfoMap().iteritems():
     # Some 'platforms' are hidden from the selection to avoid confusion, as they
     # may be custom reports that do not make sense outside a certain team.
     # They should still be reachable via a url.
-    if (_POSTSUBMIT_PLATFORM_INFO_MAP[platform].get('hidden') and
-        not users.is_current_user_admin()):
+    if (info.get('hidden') and not users.is_current_user_admin()):
       continue
 
-    bucket = _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['bucket']
-    builder = _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['builder']
+    bucket = info['bucket']
+    builder = info['builder']
     same_report = PostsubmitReport.Get(
         server_host=host,
         project=project,
@@ -208,7 +182,7 @@ def _MakePlatformSelect(host, project, ref, revision, path, current_platform):
       value = '%s#%s' % (platform, revision)
     result['options'].append({
         'value': value,
-        'ui_name': _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['ui_name'],
+        'ui_name': _GetPostsubmitPlatformInfoMap()[platform]['ui_name'],
         'selected': platform == current_platform,
     })
   return result
@@ -1177,10 +1151,10 @@ class ServeCodeCoverageData(BaseHandler):
             'platform':
                 platform,
             'platform_ui_name':
-                _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['ui_name'],
+                _GetPostsubmitPlatformInfoMap()[platform]['ui_name'],
             'metrics':
                 code_coverage_util.GetMetricsBasedOnCoverageTool(
-                    _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['coverage_tool']),
+                    _GetPostsubmitPlatformInfoMap()[platform]['coverage_tool']),
             'data':
                 data,
             'data_type':
@@ -1240,11 +1214,12 @@ class ServeCodeCoverageData(BaseHandler):
       return BaseHandler.CreateError('Invalid request', 400)
 
     logging.info('Servicing coverage data for postsubmit')
-    if platform not in _POSTSUBMIT_PLATFORM_INFO_MAP:
+    platform_info_map = _GetPostsubmitPlatformInfoMap()
+    if platform not in platform_info_map:
       return BaseHandler.CreateError('Platform: %s is not supported' % platform,
                                      404)
-    bucket = _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['bucket']
-    builder = _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['builder']
+    bucket = platform_info_map[platform]['bucket']
+    builder = platform_info_map[platform]['builder']
 
     if list_reports:
       return self._ServeProjectViewCoverageData(
@@ -1403,12 +1378,12 @@ class ServeCodeCoverageData(BaseHandler):
             'platform':
                 platform,
             'platform_ui_name':
-                _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['ui_name'],
+                _GetPostsubmitPlatformInfoMap()[platform]['ui_name'],
             'path_root':
                 path_root,
             'metrics':
                 code_coverage_util.GetMetricsBasedOnCoverageTool(
-                    _POSTSUBMIT_PLATFORM_INFO_MAP[platform]['coverage_tool']),
+                    _GetPostsubmitPlatformInfoMap()[platform]['coverage_tool']),
             'data':
                 data,
             'data_type':

@@ -481,6 +481,14 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
             'allowed_projects_for_per_cl': {
                 'chromium.googlesource.com': ['chromium/src'],
             },
+            'postsubmit_platform_info_map': {
+                'linux': {
+                    'bucket': 'coverage',
+                    'builder': 'linux-code-coverage',
+                    'coverage_tool': 'clang',
+                    'ui_name': 'Linux (C/C++)',
+                },
+            },
         })
 
   def tearDown(self):
