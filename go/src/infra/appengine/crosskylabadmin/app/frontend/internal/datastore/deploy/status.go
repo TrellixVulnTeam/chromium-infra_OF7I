@@ -31,9 +31,8 @@ type Status struct {
 	ChangeURL string
 	Status    fleet.GetDeploymentStatusResponse_Status
 	// Reason for an unsuccessful deployment status.
-	Reason string
-	// ID of the skylab task for deployment.
-	TaskID string
+	Reason  string
+	TaskIDs []string
 }
 
 // GetStatus gets status for deployment attempt with given ID.

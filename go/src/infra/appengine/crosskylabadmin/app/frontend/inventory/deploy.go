@@ -145,7 +145,7 @@ func (is *ServerImpl) GetDeploymentStatus(ctx context.Context, req *fleet.GetDep
 		return nil, status.Errorf(codes.NotFound, "no deployment attempt with ID %s", req.DeploymentId)
 	}
 	if !ds.IsFinal {
-		if err = refreshDeployStatus(ctx, sc, ds); err != nil {
+		if err = refreshDeployStatus(ctx, sc, ds, req.DeploymentId); err != nil {
 			return nil, err
 		}
 		if err := deploy.UpdateStatus(ctx, req.DeploymentId, ds); err != nil {
@@ -158,8 +158,8 @@ func (is *ServerImpl) GetDeploymentStatus(ctx context.Context, req *fleet.GetDep
 		ChangeUrl: ds.ChangeURL,
 		Message:   ds.Reason,
 	}
-	if ds.TaskID != "" {
-		resp.TaskUrl = swarming.URLForTask(ctx, ds.TaskID)
+	if len(ds.TaskIDs) > 0 {
+		resp.TaskUrl = swarming.URLForTags(ctx, getDeployTags(req.DeploymentId))
 	}
 	return resp, nil
 }
@@ -238,19 +238,20 @@ func deployManyDUTs(ctx context.Context, s *gitstore.InventoryStore, sc clients.
 		return ds
 	}
 	if a.GetSkipDeployment() {
+		ds.IsFinal = true
+		ds.Status = fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_SUCCEEDED
 		return ds
 	}
 	for _, nd := range newDevices {
 		logging.Infof(ctx, "schedule deploy task for %s", nd.GetHostname())
-		taskID, err := scheduleDUTPreparationTask(ctx, sc, nd.GetId(), a)
-		// TODO(gregorynisbet): this only records the last task ID
-		ds.TaskID = taskID
+		taskID, err := scheduleDUTPreparationTask(ctx, sc, nd.GetId(), attemptID, a)
 		// We deliberately keep going after encountering an error. We try to
 		// schedule a preparation for every DUT once regardless of whether an earlier
 		// DUT fails.
 		if err != nil {
-			failDeployStatus(ctx, ds, fmt.Sprintf("failed to create deploy task: %s", err))
+			logging.Errorf(ctx, "failed to create deploy task: %s", err)
 		}
+		ds.TaskIDs = append(ds.TaskIDs, taskID)
 	}
 	return ds
 }
@@ -411,12 +412,15 @@ func addDUTToStore(s *gitstore.InventoryStore, nd *inventory.CommonDeviceSpecs) 
 }
 
 // scheduleDUTPreparationTask schedules a Skylab DUT preparation task.
-func scheduleDUTPreparationTask(ctx context.Context, sc clients.SwarmingClient, dutID string, a *fleet.DutDeploymentActions) (string, error) {
+func scheduleDUTPreparationTask(ctx context.Context, sc clients.SwarmingClient, dutID string, attemptID string, a *fleet.DutDeploymentActions) (string, error) {
 	if a.GetSkipDeployment() {
 		return "", errors.New("no DUT preparation task should be scheduled if deployment is skipped")
 	}
 	taskCfg := config.Get(ctx).GetEndpoint().GetDeployDut()
 	tags := swarming.AddCommonTags(ctx, fmt.Sprintf("deploy_task:%s", dutID))
+	for _, t := range getDeployTags(attemptID) {
+		tags = append(tags, t)
+	}
 	at := worker.DeployTaskWithActions(ctx, deployActionArgs(a))
 	tags = append(tags, at.Tags...)
 	return sc.CreateTask(ctx, at.Name, swarming.SetCommonTaskArgs(ctx, &clients.SwarmingCreateTaskArgs{
@@ -444,7 +448,8 @@ func redeployDUT(ctx context.Context, s *gitstore.InventoryStore, sc clients.Swa
 		}
 	}
 
-	ds.TaskID, err = scheduleDUTPreparationTask(ctx, sc, oldSpecs.GetId(), a)
+	taskID, err := scheduleDUTPreparationTask(ctx, sc, oldSpecs.GetId(), attemptID, a)
+	ds.TaskIDs = append(ds.TaskIDs, taskID)
 	if err != nil {
 		failDeployStatus(ctx, ds, fmt.Sprintf("failed to create deploy task: %s", err))
 		return ds
@@ -499,29 +504,42 @@ func updateDUTSpecs(ctx context.Context, s *gitstore.InventoryStore, od, nd *inv
 
 // refreshDeployStatus refreshes the status of given deployment attempt from
 // Swarming.
-func refreshDeployStatus(ctx context.Context, sc clients.SwarmingClient, ds *deploy.Status) error {
-	if ds.TaskID == "" {
-		failDeployStatus(ctx, ds, "missing deploy task ID in deploy request entry")
+func refreshDeployStatus(ctx context.Context, sc clients.SwarmingClient, ds *deploy.Status, attemptID string) error {
+	if len(ds.TaskIDs) < 1 {
+		failDeployStatus(ctx, ds, "missing deploy task IDs in deploy request entry")
 		return nil
 	}
 
-	tr, err := sc.GetTaskResult(ctx, ds.TaskID)
+	tags := getDeployTags(attemptID)
+	results, err := sc.ListRecentTasks(ctx, tags, "", len(ds.TaskIDs))
 	if err != nil {
 		return errors.Annotate(err, "refresh deploy status").Err()
 	}
 
-	switch tr.State {
-	case "COMPLETED":
-		if tr.Failure || tr.InternalFailure {
-			ds.Status = fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_FAILED
-		} else {
-			ds.Status = fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_SUCCEEDED
+	if len(results) != len(ds.TaskIDs) {
+		logging.Warningf(ctx, "%d tasks expected, only found %d tasks", len(ds.TaskIDs), len(results))
+	}
+
+	isFinal := true
+	status := fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_SUCCEEDED
+	for _, tr := range results {
+		switch tr.State {
+		case "COMPLETED":
+			if tr.Failure || tr.InternalFailure {
+				status = fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_FAILED
+			}
+		case "PENDING", "RUNNING":
+			isFinal = false
+		default:
+			status = fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_FAILED
+			logging.Warningf(ctx, "unhandled deploy task state: %s", tr.State)
 		}
-		ds.IsFinal = true
-	case "PENDING", "RUNNING":
+	}
+	ds.IsFinal = isFinal
+	if !isFinal {
 		ds.Status = fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS
-	default:
-		failDeployStatus(ctx, ds, fmt.Sprintf("unhandled deploy task state: %s", tr.State))
+	} else {
+		ds.Status = status
 	}
 	return nil
 }
@@ -618,4 +636,8 @@ func deployActionArgs(a *fleet.DutDeploymentActions) string {
 		s = append(s, "install-test-image")
 	}
 	return strings.Join(s, ",")
+}
+
+func getDeployTags(attempID string) []string {
+	return []string{fmt.Sprintf("deployAttemptID:%s", attempID)}
 }

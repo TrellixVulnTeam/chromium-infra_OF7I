@@ -151,19 +151,23 @@ func TestDeployDutWithSplitInventory(t *testing.T) {
 			})
 
 			Convey("then GetDeploymentStatus with correct ID returns IN_PROGRESS status", func() {
-				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
-					State: "RUNNING",
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "RUNNING",
+					},
 				}, nil)
 				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 				So(err, ShouldBeNil)
 				So(resp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS)
 				So(resp.ChangeUrl, ShouldNotEqual, "")
-				So(resp.TaskUrl, ShouldContainSubstring, deployTaskID)
+				So(resp.TaskUrl, ShouldContainSubstring, deploymentID)
 			})
 
 			Convey("then GetDeploymentStatus with correct ID returns COMPLETED status on task success", func() {
-				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
-					State: "COMPLETED",
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "COMPLETED",
+					},
 				}, nil)
 				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 				So(err, ShouldBeNil)
@@ -171,9 +175,11 @@ func TestDeployDutWithSplitInventory(t *testing.T) {
 			})
 
 			Convey("then GetDeploymentStatus with correct ID returns FAILURE status on task failure", func() {
-				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
-					State:   "COMPLETED",
-					Failure: true,
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State:   "COMPLETED",
+						Failure: true,
+					},
 				}, nil)
 				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 				So(err, ShouldBeNil)
@@ -210,6 +216,52 @@ func TestDeployDutWithSplitInventory(t *testing.T) {
 			deploymentID := resp.DeploymentId
 			So(deploymentID, ShouldNotEqual, "")
 
+			Convey("DeploymentStatus returns IN_PROGRESS", func() {
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "RUNNING",
+					},
+					{
+						State: "COMPLETED",
+					},
+				}, nil)
+				depResp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: resp.DeploymentId})
+				So(err, ShouldBeNil)
+				So(depResp.TaskUrl, ShouldContainSubstring, deploymentID)
+				So(depResp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS)
+			})
+
+			Convey("DeploymentStatus returns FAILURE", func() {
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "COMPLETED",
+					},
+					{
+						State:   "COMPLETED",
+						Failure: true,
+					},
+				}, nil)
+				depResp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: resp.DeploymentId})
+				So(err, ShouldBeNil)
+				So(depResp.TaskUrl, ShouldContainSubstring, deploymentID)
+				So(depResp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_FAILED)
+			})
+
+			Convey("DeploymentStatus returns SUCCESS", func() {
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "COMPLETED",
+					},
+					{
+						State: "COMPLETED",
+					},
+				}, nil)
+				depResp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: resp.DeploymentId})
+				So(err, ShouldBeNil)
+				So(depResp.TaskUrl, ShouldContainSubstring, deploymentID)
+				So(depResp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_SUCCEEDED)
+			})
+
 			oneDutLab, err := getLastChangeForHost(tf.FakeGerrit, "data/skylab/chromeos-misc/fake-dut-1.textpb")
 			So(err, ShouldBeNil)
 			dut := oneDutLab.Duts[0]
@@ -236,8 +288,10 @@ func TestDeployDutWithSplitInventory(t *testing.T) {
 
 		Convey("DeployDut assigns servo_port if requested via option", func() {
 			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-			tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), gomock.Any()).AnyTimes().Return(&swarming.SwarmingRpcsTaskResult{
-				State: "RUNNING",
+			tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return([]*swarming.SwarmingRpcsTaskResult{
+				{
+					State: "RUNNING",
+				},
 			}, nil)
 
 			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
@@ -272,7 +326,7 @@ func TestDeployDutWithSplitInventory(t *testing.T) {
 
 		Convey("DeployDUT should skip deployment if SkipDeployment is provided", func() {
 			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(0)
-			tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), gomock.Any()).AnyTimes().MaxTimes(0)
+			tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().MaxTimes(0)
 			response, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
 				NewSpecs: marshalOrPanicMany(&inventory.CommonDeviceSpecs{
 					Id:       stringPtr("This ID is ignored"),
@@ -425,19 +479,23 @@ func TestDeployDut(t *testing.T) {
 			})
 
 			Convey("then GetDeploymentStatus with correct ID returns IN_PROGRESS status", func() {
-				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
-					State: "RUNNING",
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "RUNNING",
+					},
 				}, nil)
 				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 				So(err, ShouldBeNil)
 				So(resp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS)
 				So(resp.ChangeUrl, ShouldNotEqual, "")
-				So(resp.TaskUrl, ShouldContainSubstring, deployTaskID)
+				So(resp.TaskUrl, ShouldContainSubstring, deploymentID)
 			})
 
 			Convey("then GetDeploymentStatus with correct ID returns COMPLETED status on task success", func() {
-				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
-					State: "COMPLETED",
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "COMPLETED",
+					},
 				}, nil)
 				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 				So(err, ShouldBeNil)
@@ -445,9 +503,11 @@ func TestDeployDut(t *testing.T) {
 			})
 
 			Convey("then GetDeploymentStatus with correct ID returns FAILURE status on task failure", func() {
-				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
-					State:   "COMPLETED",
-					Failure: true,
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State:   "COMPLETED",
+						Failure: true,
+					},
 				}, nil)
 				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 				So(err, ShouldBeNil)
@@ -487,8 +547,10 @@ func TestDeployDut(t *testing.T) {
 
 		Convey("DeployDut assigns servo_port if requested via option", func() {
 			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-			tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), gomock.Any()).AnyTimes().Return(&swarming.SwarmingRpcsTaskResult{
-				State: "RUNNING",
+			tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return([]*swarming.SwarmingRpcsTaskResult{
+				{
+					State: "RUNNING",
+				},
 			}, nil)
 
 			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
@@ -525,7 +587,7 @@ func TestDeployDut(t *testing.T) {
 
 		Convey("DeployDUT should skip deployment if SkipDeployment is provided", func() {
 			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(0)
-			tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), gomock.Any()).AnyTimes().MaxTimes(0)
+			tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().MaxTimes(0)
 			response, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
 				NewSpecs: marshalOrPanicMany(&inventory.CommonDeviceSpecs{
 					Id:       stringPtr("This ID is ignored"),
@@ -627,8 +689,10 @@ func TestDeployMultipleDuts(t *testing.T) {
 
 		Convey("DeployDut assigns non-conflicting servo_port if requested via option", func() {
 			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-			tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), gomock.Any()).AnyTimes().Return(&swarming.SwarmingRpcsTaskResult{
-				State: "RUNNING",
+			tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return([]*swarming.SwarmingRpcsTaskResult{
+				{
+					State: "RUNNING",
+				},
 			}, nil)
 
 			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
@@ -737,15 +801,17 @@ func TestRedeployDut(t *testing.T) {
 			So(tf.FakeGerrit.Changes, ShouldHaveLength, 0)
 
 			Convey("then GetDeploymentStatus with correct ID returns IN_PROGRESS status", func() {
-				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
-					State: "RUNNING",
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "RUNNING",
+					},
 				}, nil)
 				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 				So(err, ShouldBeNil)
 				So(resp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS)
 				// There were no DUT specs update, so there should be no inventory chanage.
 				So(resp.ChangeUrl, ShouldEqual, "")
-				So(resp.TaskUrl, ShouldContainSubstring, deployTaskID)
+				So(resp.TaskUrl, ShouldContainSubstring, deploymentID)
 			})
 		})
 
@@ -779,14 +845,16 @@ func TestRedeployDut(t *testing.T) {
 			So(common.GetHostname(), ShouldEqual, newSpecs.GetHostname())
 
 			Convey("then GetDeploymentStatus with correct ID returns IN_PROGRESS status", func() {
-				tf.MockSwarming.EXPECT().GetTaskResult(gomock.Any(), deployTaskID).Return(&swarming.SwarmingRpcsTaskResult{
-					State: "RUNNING",
+				tf.MockSwarming.EXPECT().ListRecentTasks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*swarming.SwarmingRpcsTaskResult{
+					{
+						State: "RUNNING",
+					},
 				}, nil)
 				resp, err := tf.Inventory.GetDeploymentStatus(tf.C, &fleet.GetDeploymentStatusRequest{DeploymentId: deploymentID})
 				So(err, ShouldBeNil)
 				So(resp.Status, ShouldEqual, fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS)
 				So(resp.ChangeUrl, ShouldNotEqual, "")
-				So(resp.TaskUrl, ShouldContainSubstring, deployTaskID)
+				So(resp.TaskUrl, ShouldContainSubstring, deploymentID)
 			})
 
 		})
