@@ -187,6 +187,30 @@ func TestGetForSuitesSetsSuiteKeyval(t *testing.T) {
 
 }
 
+func TestGetForSuitesSetsSuiteKeyvalsForTestSelectedTwice(t *testing.T) {
+	tests := enumeration.GetForSuites(
+		autotestMetadata(
+			[]string{"included"},
+			map[string][]string{
+				"selected":         {"included"},
+				"another_selected": {"included"},
+			},
+		),
+		suiteRequest("selected", "another_selected"),
+	)
+	if len(tests) != 2 {
+		t.Errorf("Want 2 test, got %d: %s", len(tests), tests)
+	}
+	got := stringset.New(len(tests))
+	for _, t := range tests {
+		got.Add(t.GetResultKeyvals()["suite"])
+	}
+	want := stringset.NewFromSlice("selected", "another_selected")
+	if diff := pretty.Compare(want, got); diff != "" {
+		t.Errorf("Result keyvals differ, -want +got: %s", diff)
+	}
+}
+
 func suiteRequest(ns ...string) []*test_platform.Request_Suite {
 	req := make([]*test_platform.Request_Suite, 0, len(ns))
 	for _, n := range ns {
