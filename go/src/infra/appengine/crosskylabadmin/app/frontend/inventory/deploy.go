@@ -639,5 +639,8 @@ func deployActionArgs(a *fleet.DutDeploymentActions) string {
 }
 
 func getDeployTags(attempID string) []string {
-	return []string{fmt.Sprintf("deployAttemptID:%s", attempID)}
+	return []string{
+		fmt.Sprintf("deployAttemptID:%s", attempID),
+		"task:Deploy",
+	}
 }
