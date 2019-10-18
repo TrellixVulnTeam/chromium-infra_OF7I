@@ -28,8 +28,13 @@ def RunSteps(api):
 
   luci_dir = api.path['checkout'].join('luci')
   with api.context(cwd=luci_dir):
+    # isolate
+    _step_run_isolate_tests(api)
+
+    # swarming
     _step_run_swarming_tests(api)
 
+    # swarming ui
     if api.platform.is_linux:
       _step_swarming_ui_tests(api)
 
@@ -51,9 +56,8 @@ def _step_run_swarming_tests(api):
 
       with api.step.nest('python3'):
         venv3 = luci_dir.join('.vpython3')
-        # add --python3 for enabling py3filter plugin
         api.python('run tests',
-                   'test.py', args=testpy_args+['--python3'], venv=venv3)
+                   'test.py', args=testpy_args, venv=venv3)
         api.python('run tests sequentially',
                    'test_seq.py', args=['-v'], venv=venv3)
 
@@ -68,6 +72,21 @@ def _step_swarming_ui_tests(api):
       api.step('install node modules', ['npm', 'ci'])
       _steps_check_diffs_on_ui_assets(api)
       api.step('run tests', ['make', 'test'])
+
+
+def _step_run_isolate_tests(api):
+  luci_dir = api.context.cwd
+  with api.step.nest('isolate'):
+    cwd = luci_dir.join('appengine', 'isolate')
+    with api.context(cwd=cwd):
+      cfg = api.context.cwd.join('unittest.cfg')
+      args = ['-v', '--conf', cfg, '-A', '!no_run']
+
+      venv = luci_dir.join('.vpython')
+      api.python('run tests python2', 'test.py', args=args, venv=venv)
+
+      venv3 = luci_dir.join('.vpython3')
+      api.python('run tests python3', 'test.py', args=args, venv=venv3)
 
 
 def _steps_check_diffs_on_ui_assets(api):
