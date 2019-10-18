@@ -17,15 +17,19 @@ tracking tools and selected Monorail because of several key features:
   and for process details to be gracefully phased in and phased out
   over time.  For example, labels and custom fields are treated very
   much like built-in fields.
+
 * Monorail is inclusive in that it allows average users to view details
   of how a project's development process is configured so that contributors
   can understand how their contributions fit in.  And, Monorail's UI
   emphasizes usability and accessibility.
+
 * Monorail has a long track record of hosting a mix of public-facing and
   private issues.  This has required per-issue access controls and user
   privacy features.
+
 * Monorail helps users focus on individual issues and also work with sets
   of issues through powerful issue list, grid, and graph views.
+
 * Monorail is built and maintained by the Chrome team, allowing for
   customization to our processes.  For example, Feature Launch Tracking.
 

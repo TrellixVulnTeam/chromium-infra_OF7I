@@ -1,6 +1,6 @@
 # Monorail Quick Start
 
-## Mission: track issues to help improve software products.
+## Mission: Track issues to help improve software products
 
 Monorail’s mission is to track issues to help improve software
 products.  Every piece of information stored in Monorail’s database is
@@ -133,6 +133,7 @@ If you need a URL that you can bookmark or paste into another document:
 
 * You can copy and share the URL of the issue as it is shown in the
   browser location bar.
+
 * For a cleaner link, open the browser context menu on the link icon
   located next to the issue summary, then choose "Copy Link Address".
 
@@ -152,7 +153,9 @@ There are several ways to get notifications:
 * Click the star icon at the top of the issue to express your interest
   in seeing the issue resolved and to be notified of future updates to
   the issue.  Or, click the star icon for that issue in the issue list.
+
 * The issue owner and any CC’d addresses are notified of changes.
+
 * You can subscribe to a saved query.  Start by clicking the “Saved
   queries” item in the account menu.
 
