@@ -223,6 +223,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
         }
       }
       store.dispatch(user.fetchHotlists({userId: this.user.userId}));
+      this.dispatchEvent(new Event('saveSuccess'));
       this.close();
     } catch (error) {
       this.error = error.description;

@@ -153,4 +153,35 @@ describe('mr-update-issue-hotlists', () => {
     sinon.assert.calledWith(prpcClient.call, 'monorail.Features',
         'ListHotlistsByIssue', {issue: {localId: 32, projectName: 'test'}});
   });
+
+  it('dispatches event upon successfully saving', async () => {
+    sinon.stub(element, 'changes').get(() => ({
+      added: [{name: 'Hotlist-2', owner: {userId: 67890}}],
+    }));
+    element.issueRefs = [{localId: 22, projectName: 'test'}];
+
+    const savedStub = sinon.stub();
+    element.addEventListener('saveSuccess', savedStub);
+
+    await element.save();
+
+    sinon.assert.calledOnce(savedStub);
+  });
+
+  it('dispatches no event upon error saving', async () => {
+    sinon.stub(element, 'changes').get(() => ({
+      added: [{name: 'Hotlist-2', owner: {userId: 67890}}],
+    }));
+    element.issueRefs = [{localId: 22, projectName: 'test'}];
+
+    const error = new Error('Mistakes were made');
+    prpcClient.call.returns(Promise.reject(error));
+
+    const savedStub = sinon.stub();
+    element.addEventListener('saveSuccess', savedStub);
+
+    await element.save();
+
+    sinon.assert.notCalled(savedStub);
+  });
 });
