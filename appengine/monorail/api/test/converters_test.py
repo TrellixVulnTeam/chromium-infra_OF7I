@@ -209,8 +209,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     """We can convert user IDs to a UserRef."""
     # No specified user
     actual = converters.ConvertUserRef(None, None, self.users_by_id)
-    expected = common_pb2.UserRef(
-        user_id=0, is_derived=False, display_name='----')
+    expected = None
     self.assertEqual(expected, actual)
 
     # Explicitly specified user
@@ -2030,7 +2029,6 @@ class ConverterFunctionsTest(unittest.TestCase):
                       field_name=self.fd_3.field_name,
                       type=common_pb2.APPROVAL_TYPE),
                   phase_ref=issue_objects_pb2.PhaseRef(phase_name='phaseName'),
-                  setter_ref=common_pb2.UserRef(display_name='----'),
                   approver_refs=[common_pb2.UserRef(
                       user_id=appr1.user_id,
                       display_name=appr1.email,
@@ -2038,7 +2036,6 @@ class ConverterFunctionsTest(unittest.TestCase):
         ),
         project_objects_pb2.TemplateDef(
             template_name='Kale',
-            owner_ref=common_pb2.UserRef(display_name='----'),
             status_ref=common_pb2.StatusRef(
                 status='----',
                 means_open=True),

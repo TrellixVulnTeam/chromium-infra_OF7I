@@ -167,7 +167,6 @@ class ProjectsServicerTest(unittest.TestCase):
                 template_name='Chicken',
                 content='description',
                 summary='summary',
-                owner_ref=common_pb2.UserRef(display_name='----'),
                 status_ref=common_pb2.StatusRef(
                     status='New',
                     is_derived=False,
@@ -507,8 +506,6 @@ class ProjectsServicerTest(unittest.TestCase):
     creator_ref = common_pb2.UserRef(
         user_id=111,
         display_name='owner@example.com')
-    no_user_ref = common_pb2.UserRef(
-        display_name=framework_constants.NO_USER_NAME)
 
     request = projects_pb2.ListComponentsRequest(
         project_name='proj', include_admin_info=True)
@@ -523,22 +520,19 @@ class ProjectsServicerTest(unittest.TestCase):
             docstring='Foo Component',
             deprecated=True,
             created=1234567,
-            creator_ref=creator_ref,
-             modifier_ref=no_user_ref),
+            creator_ref=creator_ref),
          project_objects_pb2.ComponentDef(
              path='Bar',
              docstring='Bar Component',
              deprecated=False,
              created=1234568,
-             creator_ref=creator_ref,
-             modifier_ref=no_user_ref),
+             creator_ref=creator_ref),
          project_objects_pb2.ComponentDef(
              path='Bar>Baz',
              docstring='Baz Component',
              deprecated=False,
              created=1234569,
-             creator_ref=creator_ref,
-             modifier_ref=no_user_ref),
+             creator_ref=creator_ref),
             ],
         list(response.component_defs))
 

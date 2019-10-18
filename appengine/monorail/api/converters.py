@@ -114,8 +114,7 @@ def ConvertUserRef(explicit_user_id, derived_user_id, users_by_id):
   user_id = explicit_user_id or derived_user_id
   is_derived = not explicit_user_id
   if not user_id:
-    return common_pb2.UserRef(
-        user_id=0, display_name=framework_constants.NO_USER_NAME)
+    return None;
 
   return common_pb2.UserRef(
       user_id=user_id,

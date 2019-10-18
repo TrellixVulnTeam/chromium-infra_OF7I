@@ -1182,7 +1182,6 @@ class IssuesServicerTest(unittest.TestCase):
                 field_id=3,
                 field_name='LegalApproval',
                 type=common_pb2.APPROVAL_TYPE),
-            setter_ref=common_pb2.UserRef(display_name='----'),
             phase_ref=issue_objects_pb2.PhaseRef()
         )
     )
@@ -1226,7 +1225,6 @@ class IssuesServicerTest(unittest.TestCase):
             field_id=3,
             field_name='LegalApproval',
             type=common_pb2.APPROVAL_TYPE),
-        setter_ref=common_pb2.UserRef(display_name='----'),
         phase_ref=issue_objects_pb2.PhaseRef()
     )
     expected = issues_pb2.UpdateApprovalResponse(approval=approval_value)
