@@ -54,6 +54,10 @@ func commitFileContents(ctx context.Context, client gerrit.GerritClient, project
 		return -1, err
 	}
 
+	// Limit 1 CL to only upload 200 files as for each file it may cost 1~2s.
+	// This will limit that we can only add/decom 200 DUTs together. But it's ok for now.
+	const maxFileNumsToUpload = 200
+	var uploaded int
 	for path, contents := range fileContents {
 		const limit = 5000
 		if n := len(contents); n <= limit {
@@ -78,6 +82,10 @@ func commitFileContents(ctx context.Context, client gerrit.GerritClient, project
 		}
 		if err != nil {
 			return -1, err
+		}
+		uploaded++
+		if uploaded >= maxFileNumsToUpload {
+			break
 		}
 	}
 	if _, err = client.ChangeEditPublish(ctx, &gerrit.ChangeEditPublishRequest{
