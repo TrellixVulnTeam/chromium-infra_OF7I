@@ -2815,6 +2815,20 @@ wheel: <
 * *universal*
 * custom patches: disable-log-spam
 
+## **pylint-quotes**
+
+### 0.1.8
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-quotes-py2_py3"
+  version: "version:0.1.8"
+>
+```
+
+
+* *universal*
+
 ## **pynacl**
 
 ### 1.2.1
