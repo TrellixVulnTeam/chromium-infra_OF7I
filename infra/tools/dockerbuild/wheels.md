@@ -951,6 +951,20 @@ wheel: <
 
 * *universal*
 
+## **expect_tests**
+
+### 0.3.27
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/expect_tests-py2"
+  version: "version:0.3.27"
+>
+```
+
+
+* *universal*
+
 ## **fabric**
 
 ### 1.14.0
