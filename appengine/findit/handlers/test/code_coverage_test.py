@@ -256,6 +256,20 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
   ],
                                        debug=True)
 
+  def setUp(self):
+    super(ProcessCodeCoverageDataTest, self).setUp()
+    self.UpdateUnitTestConfigSettings(
+        'code_coverage_settings', {
+            'whitelisted_builders': [
+                'chromium/try/linux-rel',
+                'chrome/coverage/linux-code-coverage',
+            ],
+        })
+
+  def tearDown(self):
+    self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
+    super(ProcessCodeCoverageDataTest, self).tearDown()
+
   @mock.patch.object(code_coverage_util, 'CalculateIncrementalPercentages')
   @mock.patch.object(code_coverage_util, 'CalculateAbsolutePercentages')
   @mock.patch.object(code_coverage, '_GetValidatedData')

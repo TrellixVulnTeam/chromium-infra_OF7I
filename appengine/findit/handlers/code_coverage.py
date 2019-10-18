@@ -113,6 +113,22 @@ def _GetPostsubmitPlatformInfoMap():
       'postsubmit_platform_info_map', {})
 
 
+def _GetWhitelistedBuilders():
+  """Returns a set of whitelisted builders that the service should process.
+
+  builders are specified in canonical string representations, and following is
+  an example config:
+  {
+    'whitelisted_builders': [
+      'chromium/try/linux-rel',
+      'chromium/try/linux-chromeos-rel',
+    ],
+  }
+  """
+  return set(waterfall_config.GetCodeCoverageSettings().get(
+      'whitelisted_builders', []))
+
+
 def _GetSameOrMostRecentReportForEachPlatform(host, project, ref, revision):
   """Find the matching report on other platforms, or the most recent.
 
@@ -716,8 +732,10 @@ class ProcessCodeCoverageData(BaseHandler):
           'Could not retrieve build #%d from buildbucket, retry' % build_id,
           404)
 
-    if not self._IsCoverageBuild(build.builder.project, build.builder.bucket,
-                                 build.builder.builder):
+    builder_id = '%s/%s/%s' % (build.builder.project, build.builder.bucket,
+                               build.builder.builder)
+    if builder_id not in _GetWhitelistedBuilders():
+      logging.info('%s is not whitelisted', builder_id)
       return
 
     # Convert the Struct to standard dict, to use .get, .iteritems etc.
@@ -773,34 +791,6 @@ class ProcessCodeCoverageData(BaseHandler):
         'gitiles_commit_project')
     build.input.gitiles_commit.ref = output_properties.get('gitiles_commit_ref')
     build.input.gitiles_commit.id = output_properties.get('gitiles_commit_id')
-
-  # TODO(crbug.com/982811): Move this to a config, which can be easily changed
-  # without commit/deployment cycles.
-  def _IsCoverageBuild(self, project, bucket, builder):
-    """Returns True if the given build is related to code coverage.
-
-    Args:
-      project (str): buildbucket project name.
-      bucket (str): buildbucket bucket name.
-      builder (str): buildbucket builder name.
-
-    Returns:
-      True if the given build is related to code coverage, otherwise False.
-    """
-    # The internal instance of the coverage service is deployed and used ONLY by
-    # the cast and libassistant team.
-    if IsInternalInstance():
-      return (project in ('cast-chromecast-internal',) and
-              bucket in ('master.tryserver.cast-chromecast-internal.gce',) and
-              builder in ('libassistant-absolute_coverage',
-                          'libassistant-incremental_coverage'))
-
-    return (project in ('chromium', 'chrome') and
-            bucket in ('coverage', 'ci', 'try') and
-            builder in ('linux-rel', 'chromeos-vm-code-coverage',
-                        'linux-chromeos-code-coverage', 'linux-code-coverage',
-                        'android-code-coverage',
-                        'android-marshmallow-arm64-coverage-rel'))
 
   def HandlePost(self):
     """Loads the data from GS bucket, and dumps them into ndb."""
