@@ -89,8 +89,9 @@ deps = {
      "8c6026ba09716a4e164f5420120bfe2ebb2d9d82",
 
   ## For ease of development. These are pulled in as wheels for run.py/test.py
-  "expect_tests":
-     "{chromium_git}/infra/testing/expect_tests.git",
+  "infra/packages/expect_tests":
+     "{chromium_git}/infra/testing/expect_tests.git@" +
+     "eecc3e75a97e34e52686adc1ef5b7e2d59d60395",
   "testing_support":
      "{chromium_git}/infra/testing/testing_support.git",
 

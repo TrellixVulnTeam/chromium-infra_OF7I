@@ -687,9 +687,10 @@ SPECS.update({s.spec.tag: s for s in assert_sorted('MySQLPython',
   ),
 )})
 
-from .wheel_infra import Infra
-SPECS.update({s.spec.tag: s for s in assert_sorted('Infra',
-  Infra(),
+from .wheel_infra import InfraPackage
+SPECS.update({s.spec.tag: s for s in assert_sorted('InfraPackage',
+  InfraPackage('expect_tests'),
+  InfraPackage('infra_libs'),
 )})
 
 SPEC_NAMES = sorted(SPECS.keys())

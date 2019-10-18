@@ -12,14 +12,14 @@ from .builder import Builder
 from .types import Spec, UniversalSpec
 
 
-class Infra(Builder):
-  def __init__(self):
+class InfraPackage(Builder):
+  def __init__(self, name):
     """Wheel builder for pure Python wheels built from the current local repo's
        packages folder.
     """
     self._resolved_version = None
-    super(Infra, self).__init__(Spec(
-        'infra_libs', None,
+    super(InfraPackage, self).__init__(Spec(
+        name, None,
         universal=UniversalSpec(pyversions=['py2']),
         default=True,
     ))
