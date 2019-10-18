@@ -13,6 +13,7 @@ import {fieldValueMapKey} from 'shared/metadata-helpers.js';
 
 // TODO(zhangtiff): Merge this file with metadata-helpers.js.
 
+
 export const fieldTypes = Object.freeze({
   APPROVAL_TYPE: 'APPROVAL_TYPE',
   DATE_TYPE: 'DATE_TYPE',

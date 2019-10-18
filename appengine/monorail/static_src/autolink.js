@@ -156,7 +156,8 @@ function LookupReferencedUsers(emails, componentName) {
 // Extract referenced artifacts info functions.
 function ExtractCrbugProjectAndIssueIds(match, _currentProjectName) {
   // When crbug links don't specify a project, the default project is Chromium.
-  const projectName = match[CRBUG_LINK_RE_PROJECT_GROUP] || CRBUG_DEFAULT_PROJECT;
+  const projectName = match[CRBUG_LINK_RE_PROJECT_GROUP] ||
+    CRBUG_DEFAULT_PROJECT;
   const localId = match[CRBUG_LINK_RE_ID_GROUP];
   return [{projectName: projectName, localId: localId}];
 }
