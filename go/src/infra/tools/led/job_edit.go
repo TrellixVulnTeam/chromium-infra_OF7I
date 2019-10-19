@@ -416,6 +416,14 @@ func (ejd *EditJobDefinition) PrefixPathEnv(values []string) {
 	})
 }
 
+// Tags controls swarming tags.
+func (ejd *EditJobDefinition) Tags(values []string) {
+	if len(values) == 0 {
+		return
+	}
+	ejd.jd.TopLevel.Tags = append(ejd.jd.TopLevel.Tags, values...)
+}
+
 func updateMap(dest, updates map[string]string) {
 	if len(updates) == 0 {
 		return

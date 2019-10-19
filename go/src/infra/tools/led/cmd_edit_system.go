@@ -35,6 +35,9 @@ func editSystemCmd() *subcommands.Command {
 			ret.Flags.Var(&ret.prefixPathEnv, "ppe",
 				"(repeatable) override a PATH prefix entry. Using a value like '!value' will remove a path entry.")
 
+			ret.Flags.Var(&ret.tags, "tag",
+				"(repeatable) append a new tag.")
+
 			ret.Flags.Int64Var(&ret.priority, "p", -1, "set the swarming task priority (0-255), lower is faster to scheduler.")
 
 			return ret
@@ -50,6 +53,7 @@ type cmdEditSystem struct {
 	environment   stringmapflag.Value
 	cipdPackages  stringmapflag.Value
 	prefixPathEnv stringlistflag.Flag
+	tags          stringlistflag.Flag
 	priority      int64
 }
 
@@ -62,6 +66,7 @@ func (c *cmdEditSystem) Run(a subcommands.Application, args []string, env subcom
 		ejd.CipdPkgs(c.cipdPackages)
 		ejd.PrefixPathEnv(c.prefixPathEnv)
 		ejd.Priority(c.priority)
+		ejd.Tags(c.tags)
 		return ejd.Finalize()
 	})
 	if err != nil {
