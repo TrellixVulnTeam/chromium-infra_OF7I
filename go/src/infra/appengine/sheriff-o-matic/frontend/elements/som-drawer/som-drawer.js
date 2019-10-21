@@ -45,10 +45,23 @@ const ROTATIONS = {
       url: 'https://rota-ng.appspot.com/legacy/sheriff_perfbot.json',
     },
   ],
+  'fuchsia': [
+    {
+      name: 'Fuchsia Build Cop',
+      url: 'https://oncall.corp.google.com/tq-buildcop/json',
+    },
+    {
+      name: 'Fuchsia Infra',
+      url: 'https://oncall.corp.google.com/fuchsia-infra/json',
+    },
+    {
+      name: 'Fuchsia E2E',
+      url: 'https://rotation.googleplex.com/json?id=5683269937922048',
+    },
+  ],
 };
 
 class SomDrawer extends Polymer.Element {
-
   static get is() {
     return 'som-drawer';
   }
@@ -100,7 +113,7 @@ class SomDrawer extends Polymer.Element {
 
   static get observers() {
     return [
-      '_navigateToDefaultTree(path, trees, _defaultTree)'
+      '_navigateToDefaultTree(path, trees, _defaultTree)',
     ];
   }
 
@@ -132,39 +145,56 @@ class SomDrawer extends Polymer.Element {
     const self = this;
     ROTATIONS[tree.name].forEach(function(rotation) {
       switch (rotation.url.split('/')[2]) {
-      case 'rota-ng.appspot.com':
-        fetch(rotation.url, {
-          method: 'GET',
-        }).then(function(response) {
-          return response.json();
-        }).then(function(response) {
-          self.push('_rotations', {
-            name: rotation.name,
-            people: response.emails,
+        case 'rota-ng.appspot.com':
+          fetch(rotation.url, {
+            method: 'GET',
+          }).then(function(response) {
+            return response.json();
+          }).then(function(response) {
+            self.push('_rotations', {
+              name: rotation.name,
+              people: response.emails,
+            });
           });
-        });
-        break;
-      case 'rotation.googleplex.com':
-        fetch(rotation.url, {
-          method: 'GET',
-          credentials: 'include',
-        }).then(function(response) {
-          return response.json();
-        }).then(function(response) {
-          self.push('_rotations', {
-            name: rotation.name,
-            people: [response.primary],
+          break;
+        case 'rotation.googleplex.com':
+          fetch(rotation.url, {
+            method: 'GET',
+            credentials: 'include',
+          }).then(function(response) {
+            return response.json();
+          }).then(function(response) {
+            self.push('_rotations', {
+              name: rotation.name,
+              people: [response.primary],
+            });
           });
-        });
-        break;
+          break;
+        case 'oncall.corp.google.com':
+          fetch(rotation.url, {
+            method: 'GET',
+            credentials: 'include',
+          }).then(function(response) {
+            return response.json();
+          }).then(function(response) {
+            response.forEach(function(entry) {
+              if (entry.position == '1') {
+                self.push('_rotations', {
+                  name: rotation.name,
+                  people: [entry.person],
+                });
+              }
+            });
+          });
+          break;
       }
     });
   }
 
   _computeStaticPageList(staticPages) {
-    let pageList = [];
-    for (let key in staticPages) {
-      let page = staticPages[key];
+    const pageList = [];
+    for (let key = 0; key < staticPages; key++) {
+      const page = staticPages[key];
       page.name = key;
       pageList.push(page);
     }
@@ -180,7 +210,7 @@ class SomDrawer extends Polymer.Element {
       return [];
     }
 
-    let troopers = trooperString.split(',');
+    const troopers = trooperString.split(',');
     troopers[0] = troopers[0] + ' (primary)';
     if (troopers.length == 1) {
       return troopers;
@@ -211,7 +241,7 @@ class SomDrawer extends Polymer.Element {
   }
 
   _onSelected(evt) {
-    let pathIdentifier = evt.srcElement.value;
+    const pathIdentifier = evt.srcElement.value;
     this.path = '/' + pathIdentifier;
 
     if (pathIdentifier && pathIdentifier in this.trees) {
@@ -220,7 +250,7 @@ class SomDrawer extends Polymer.Element {
   }
 
   toggleMenu(e) {
-    let path = Polymer.dom(e).path;
+    const path = Polymer.dom(e).path;
     let target = null;
     let collapseId = null;
 
@@ -229,10 +259,10 @@ class SomDrawer extends Polymer.Element {
       collapseId = target.getAttribute('data-toggle-target');
     }
 
-    let collapse = this.$[collapseId];
+    const collapse = this.$[collapseId];
     collapse.opened = !collapse.opened;
 
-    let icons = target.getElementsByClassName('toggle-icon');
+    const icons = target.getElementsByClassName('toggle-icon');
     for (let i = 0; i < icons.length; i++) {
       icons[i].icon = collapse.opened ? 'remove' : 'add';
     }
