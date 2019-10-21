@@ -27,45 +27,66 @@ def RunSteps(api):
 
   luci_dir = api.path['checkout'].join('luci')
   with api.context(cwd=luci_dir):
-    _step_run_tests(api, 'auth_service',
-                    luci_dir.join('appengine', 'auth_service'))
+    # auth server
+    if api.platform.is_linux:
+      _step_run_tests(api, 'auth_service',
+                      luci_dir.join('appengine', 'auth_service'))
 
-    _step_run_tests(api, 'config_service',
-                    luci_dir.join('appengine', 'config_service'))
+    # config server
+    if api.platform.is_linux:
+      _step_run_tests(api, 'config_service',
+                      luci_dir.join('appengine', 'config_service'))
 
+    # components
     _step_run_tests(api, 'components',
                     luci_dir.join('appengine', 'components'),
-                    run_test_seq=True)
+                    run_test_seq=True,
+                    run_python3=True)
 
-    _step_run_tests(api, 'isolate',
-                    luci_dir.join('appengine', 'isolate'))
+    # isolate server
+    if api.platform.is_linux:
+      _step_run_tests(api, 'isolate',
+                      luci_dir.join('appengine', 'isolate'))
 
+    # client
     _step_run_tests(api, 'client',
-                    luci_dir.join('client'), run_test_seq=True)
+                    luci_dir.join('client'),
+                    run_test_seq=True,
+                    run_python3=True)
 
-    _step_run_tests(api, 'swarming',
-                    luci_dir.join('appengine', 'swarming'),
-                    run_test_seq=True)
+    # swarming bot
+    _step_run_tests(api, 'swarming bot',
+                    luci_dir.join('appengine', 'swarming', 'swarming_bot'),
+                    run_test_seq=True,
+                    run_python3=True)
+
+    # swarming server
+    if api.platform.is_linux:
+      _step_run_tests(api, 'swarming',
+                      luci_dir.join('appengine', 'swarming'),
+                      run_test_seq=True)
 
     # swarming ui
     if api.platform.is_linux:
       _step_swarming_ui_tests(api)
 
 
-def _step_run_tests(api, name, cwd, run_test_seq=False, ok_ret=(0,)):
+def _step_run_tests(
+    api, name, cwd, run_test_seq=False, run_python3=False, ok_ret=(0,)):
   luci_dir = api.context.cwd
   with api.step.nest(name):
     with api.context(cwd=cwd):
       cfg = api.context.cwd.join('unittest.cfg')
       testpy_args = ['-v', '--conf', cfg, '-A', '!no_run']
 
-      # python3
-      venv3 = luci_dir.join('.vpython3')
-      api.python('run tests python3',
-                 'test.py', args=testpy_args, venv=venv3, ok_ret=ok_ret)
-      if run_test_seq:
-        api.python('run tests seq python3',
-                   'test_seq.py', args=['-v'], venv=venv3, ok_ret=ok_ret)
+      if run_python3:
+        # python3
+        venv3 = luci_dir.join('.vpython3')
+        api.python('run tests python3',
+                   'test.py', args=testpy_args, venv=venv3, ok_ret=ok_ret)
+        if run_test_seq:
+          api.python('run tests seq python3',
+                     'test_seq.py', args=['-v'], venv=venv3, ok_ret=ok_ret)
 
       # python2
       venv = luci_dir.join('.vpython')
