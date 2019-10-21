@@ -1814,6 +1814,7 @@ class WorkEnvTest(unittest.TestCase):
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   def testUpdateIssue_MergeInto(self, _fake_pasicn):
+    """We can merge issue 1 into issue 2, including CCs and starrers."""
     self.SignIn()
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
     issue2 = fake.MakeTestIssue(789, 2, 'summary2', 'Available', 111)
@@ -1824,6 +1825,10 @@ class WorkEnvTest(unittest.TestCase):
         status='Duplicate')
 
     issue.cc_ids = [111, 222, 333, 444]
+    self.services.issue_star.SetStarsBatch(
+        'cnxn', 'service', 'config', issue.issue_id, [111, 222, 333], True)
+    self.services.issue_star.SetStarsBatch(
+        'cnxn', 'service', 'config', issue2.issue_id, [555], True)
     with self.work_env as we:
       we.UpdateIssue(issue, delta, '')
 
@@ -1837,6 +1842,12 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual(
         'Issue 1 has been merged into this issue.',
         comments[-1].content)
+    source_starrers = self.services.issue_star.LookupItemStarrers(
+        'cnxn', issue.issue_id)
+    self.assertItemsEqual([111, 222, 333], source_starrers)
+    target_starrers = self.services.issue_star.LookupItemStarrers(
+        'cnxn', issue2.issue_id)
+    self.assertItemsEqual([111, 222, 333, 555], target_starrers)
 
   def testUpdateIssue_MergeIntoRestrictedIssue(self):
     """We cannot merge into an issue we cannot view and edit."""

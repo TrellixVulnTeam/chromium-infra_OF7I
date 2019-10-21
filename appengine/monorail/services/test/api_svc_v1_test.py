@@ -671,6 +671,10 @@ class MonorailApiTest(testing.EndpointsTestCase):
         12345, 2, 'Issue 2', 'New', 222, project_name='test-project')
     self.services.issue.TestAddIssue(issue1)
     self.services.issue.TestAddIssue(issue2)
+    self.services.issue_star.SetStarsBatch(
+        'cnxn', 'service', 'config', issue1.issue_id, [111, 222, 333], True)
+    self.services.issue_star.SetStarsBatch(
+        'cnxn', 'service', 'config', issue2.issue_id, [555], True)
 
     self.request['updates'] = {
         'summary': 'new summary',
@@ -687,6 +691,12 @@ class MonorailApiTest(testing.EndpointsTestCase):
     issue2_comments = self.services.issue.GetCommentsForIssue(
       'cnxn', issue2.issue_id)
     self.assertEqual(2, len(issue2_comments))  # description and merge
+    source_starrers = self.services.issue_star.LookupItemStarrers(
+        'cnxn', issue1.issue_id)
+    self.assertItemsEqual([111, 222, 333], source_starrers)
+    target_starrers = self.services.issue_star.LookupItemStarrers(
+        'cnxn', issue2.issue_id)
+    self.assertItemsEqual([111, 222, 333, 555], target_starrers)
 
   def testIssuesCommentsInsert_CustomFields(self):
     """Update custom field values."""

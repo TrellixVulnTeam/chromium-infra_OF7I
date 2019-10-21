@@ -1261,6 +1261,16 @@ class WorkEnv(object):
 
     with self.mc.profiler.Phase('Following up after issue update'):
       if delta.merged_into:
+        new_starrers = tracker_helpers.GetNewIssueStarrers(
+            self.mc.cnxn, self.services, issue.issue_id,
+            delta.merged_into)
+        merged_into_project = self.GetProject(merged_into_issue.project_id)
+        tracker_helpers.AddIssueStarrers(
+            self.mc.cnxn, self.services, self.mc,
+            delta.merged_into, merged_into_project, new_starrers)
+        # Load target issue again to get the updated star count.
+        merged_into_issue = self.GetIssue(
+            merged_into_issue.issue_id, use_cache=False)
         tracker_helpers.MergeCCsAndAddComment(
             self.services, self.mc, issue, merged_into_issue)
       self.services.project.UpdateRecentActivity(

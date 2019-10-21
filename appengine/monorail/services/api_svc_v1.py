@@ -585,6 +585,9 @@ class MonorailApi(remote.Service):
       tracker_helpers.AddIssueStarrers(
           mar.cnxn, self._services, mar,
           merge_into_issue.issue_id, merge_into_project, new_starrers)
+      # Load target issue again to get the updated star count.
+      merge_into_issue = self._services.issue.GetIssue(
+        mar.cnxn, merge_into_issue.issue_id, use_cache=False)
       merge_comment_pb = tracker_helpers.MergeCCsAndAddComment(
         self._services, mar, issue, merge_into_issue)
       hostport = framework_helpers.GetHostPort(

@@ -378,6 +378,9 @@ class IssueBulkEdit(servlet.Servlet):
           tracker_helpers.AddIssueStarrers(
               mr.cnxn, self.services, mr, merge_into_issue.issue_id,
               merge_into_project, new_starrers)
+          # Load target issue again to get the updated star count.
+          merge_into_issue = self.services.issue.GetIssue(
+              mr.cnxn, merge_into_issue.issue_id, use_cache=False)
           tracker_helpers.MergeCCsAndAddCommentMultipleIssues(
               self.services, mr, editable_issues, merge_into_issue)
 
