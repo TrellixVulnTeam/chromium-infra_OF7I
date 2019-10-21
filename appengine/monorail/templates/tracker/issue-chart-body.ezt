@@ -1,4 +1,7 @@
-<mr-chart projectName="[projectname]"></mr-chart>
+<mr-chart
+  projectName="[projectname]"
+  hotlistId="[if-any hotlist_id][hotlist_id][end]"
+></mr-chart>
 
 <div>
   <div class="help" style="padding: 1em;">

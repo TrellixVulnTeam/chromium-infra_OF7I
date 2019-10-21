@@ -15,6 +15,7 @@ import logging
 import settings
 import time
 
+from features import hotlist_helpers
 from framework import framework_helpers
 from framework import sql
 from search import search_helpers
@@ -60,7 +61,7 @@ class ChartService(object):
 
   def QueryIssueSnapshots(self, cnxn, services, unixtime, effective_ids,
                           project, perms, group_by=None, label_prefix=None,
-                          query=None, canned_query=None):
+                          query=None, canned_query=None, hotlist=None):
     """Queries historical issue counts grouped by label or component.
 
     Args:
@@ -79,17 +80,35 @@ class ChartService(object):
         the snapshot query.
       canned_query (str, optional): Parsed canned query applied to the query
         scope.
+      hotlist (Hotlist, optional): Hotlist to search under (in lieu of project).
 
     Returns:
       1. A dict of {'2nd dimension or "total"': number of occurences}.
       2. A list of any unsupported query conditions in query.
       3. A boolean that is true if any results were capped.
     """
-    project_config = services.config.GetProjectConfig(cnxn,
-        project.project_id)
+    if hotlist:
+      # TODO(jeffcarp): Get project_ids in a more efficient manner. We can
+      #   query for "SELECT DISTINCT(project_id)" for all issues in hotlist.
+      issues_list = services.issue.GetIssues(cnxn,
+          [hotlist_issue.issue_id for hotlist_issue in hotlist.items])
+      hotlist_issues_project_ids = hotlist_helpers.GetAllProjectsOfIssues(
+          [issue for issue in issues_list])
+      config_list = hotlist_helpers.GetAllConfigsOfProjects(
+          cnxn, hotlist_issues_project_ids, services)
+      project_config = tracker_bizobj.HarmonizeConfigs(config_list)
+    else:
+      project_config = services.config.GetProjectConfig(cnxn,
+          project.project_id)
+
+    if project:
+      project_ids = [project.project_id]
+    else:
+      project_ids = hotlist_issues_project_ids
+
     try:
       query_left_joins, query_where, unsupported_conds = self._QueryToWhere(
-          cnxn, services, project_config, query, canned_query, project)
+          cnxn, services, project_config, query, canned_query, project_ids)
     except ast2select.NoPossibleResults:
       return {}, ['Invalid query.'], False
 
@@ -119,7 +138,8 @@ class ChartService(object):
     where = [
       ('IssueSnapshot.period_start <= %s', [unixtime]),
       ('IssueSnapshot.period_end > %s', [unixtime]),
-      ('IssueSnapshot.project_id = %s', [project.project_id]),
+      ('IssueSnapshot.project_id IN (%s)' % sql.PlaceHolders(project_ids),
+        project_ids),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
     ]
@@ -192,6 +212,15 @@ class ChartService(object):
 
     if query_where:
       where.extend(query_where)
+
+    if hotlist:
+      left_joins.extend([
+        (('IssueSnapshot2Hotlist AS Is2h'
+          ' ON Is2h.issuesnapshot_id = IssueSnapshot.id'
+          ' AND Is2h.hotlist_id = %s'), [hotlist.hotlist_id]),
+      ])
+      where.append(
+        ('Is2h.hotlist_id = %s', [hotlist.hotlist_id]))
 
     promises = []
 
@@ -329,7 +358,7 @@ class ChartService(object):
     return time.time()
 
   def _QueryToWhere(self, cnxn, services, project_config, query, canned_query,
-                    project):
+                    project_ids):
     """Parses a query string into LEFT JOIN and WHERE conditions.
 
     Args:
@@ -338,7 +367,7 @@ class ChartService(object):
       project_config: The configuration for the given project.
       query (string): The query to parse.
       canned_query (string): The supplied canned query.
-      project: The current project.
+      project_ids: The current project ID(s).
 
     Returns:
       1. A list of LEFT JOIN clauses for the SQL query.
@@ -353,7 +382,7 @@ class ChartService(object):
 
     query_ast = query2ast.ParseUserQuery(query, scope,
         query2ast.BUILTIN_ISSUE_FIELDS, project_config)
-    query_ast = ast2ast.PreprocessAST(cnxn, query_ast, [project.project_id],
+    query_ast = ast2ast.PreprocessAST(cnxn, query_ast, project_ids,
         services, project_config)
     left_joins, where, unsupported = ast2select.BuildSQLQuery(query_ast,
         snapshot_mode=True)

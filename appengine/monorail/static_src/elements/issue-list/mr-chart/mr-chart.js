@@ -74,6 +74,7 @@ export default class MrChart extends LitElement {
     return {
       progress: {type: Number},
       projectName: {type: String},
+      hotlistId: {type: Number},
       indices: {type: Array},
       values: {type: Array},
       unsupportedFields: {type: Array},
@@ -324,8 +325,8 @@ export default class MrChart extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
 
-    if (!this.projectName || !this.projectName.length) {
-      throw new Error('Attribute `projectName` required.');
+    if (!this.projectName && !this.hotlistId) {
+      throw new Error('Attribute `projectName` or `hotlistId` required.');
     }
 
     // Load Chart.js before chops-chart to allow data points to render as soon as
@@ -430,6 +431,7 @@ export default class MrChart extends LitElement {
       projectName: this.projectName,
       query: query,
       cannedQuery: cannedQuery,
+      hotlistId: this.hotlistId,
     };
     if (this.groupBy.value !== '') {
       message['groupBy'] = this.groupBy.value;

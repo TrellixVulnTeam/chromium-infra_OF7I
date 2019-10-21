@@ -109,6 +109,8 @@ class HotlistIssues(servlet.Servlet):
                       'editor_permissions': ezt.boolean(editor_permissions),
                       'issue_tab_mode': 'issueList',
                       'grid_mode': ezt.boolean(mr.mode == 'grid'),
+                      'list_mode': ezt.boolean(mr.mode == 'list'),
+                      'chart_mode': ezt.boolean(mr.mode == 'chart'),
                       'page_perms': page_perms,
                       'colspec': mr.col_spec,
                       # monorail:6336, used in <ezt-show-columns-connector>

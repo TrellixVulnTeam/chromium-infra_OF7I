@@ -51,6 +51,7 @@ class ChartServiceTest(unittest.TestCase):
     self.config_service = fake.ConfigService()
     self.services.config = self.config_service
     self.services.chart = MakeChartService(self.mox, self.config_service)
+    self.services.issue = fake.IssueService()
     self.mox.StubOutWithMock(self.services.chart, '_QueryToWhere')
     self.mox.StubOutWithMock(search_helpers, 'GetPersonalAtRiskLabelIDs')
     self.mox.StubOutWithMock(settings, 'num_logical_shards')
@@ -69,7 +70,7 @@ class ChartServiceTest(unittest.TestCase):
     self.defaultWheres = [
       ('IssueSnapshot.period_start <= %s', [1514764800]),
       ('IssueSnapshot.period_end > %s', [1514764800]),
-      ('IssueSnapshot.project_id = %s', [789]),
+      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
       ('(Issue.reporter_id IN (%s,%s)'
@@ -288,6 +289,43 @@ class ChartServiceTest(unittest.TestCase):
         perms=perms, group_by='status')
     self.mox.VerifyAll()
 
+  def testQueryIssueSnapshots_Hotlist(self):
+    """Test a QueryIssueSnapshots when a hotlist is passed."""
+    hotlist = fake.Hotlist('hotlist_rutabaga', 19191)
+    project = fake.Project(project_id=789)
+    perms = permissions.PermissionSet(['BarPerm'])
+    search_helpers.GetPersonalAtRiskLabelIDs(self.cnxn, None,
+        self.config_service, [10, 20], project,
+        perms).AndReturn([91, 81])
+
+    cols = [
+      'IssueSnapshot.issue_id',
+    ]
+    left_joins = self.defaultLeftJoins + [
+        (('IssueSnapshot2Hotlist AS Is2h'
+          ' ON Is2h.issuesnapshot_id = IssueSnapshot.id'
+          ' AND Is2h.hotlist_id = %s'), [hotlist.hotlist_id]),
+    ]
+    where = self.defaultWheres + [
+      ('Is2h.hotlist_id = %s', [hotlist.hotlist_id]),
+    ]
+    group_by = []
+    stmt, stmt_args = self.services.chart._BuildSnapshotQuery(cols, where,
+        left_joins, group_by, shard_id=0)
+
+    self.services.chart._QueryToWhere(mox.IgnoreArg(), mox.IgnoreArg(),
+        mox.IgnoreArg(), mox.IgnoreArg(), mox.IgnoreArg(),
+        mox.IgnoreArg()).AndReturn(([], [], []))
+    self.cnxn.Execute(stmt, stmt_args, shard_id=0).AndReturn([])
+
+    self._verifySQL(cols, left_joins, where, group_by)
+
+    self.mox.ReplayAll()
+    self.services.chart.QueryIssueSnapshots(self.cnxn, self.services,
+        unixtime=1514764800, effective_ids=[10, 20], project=project,
+        perms=perms, hotlist=hotlist)
+    self.mox.VerifyAll()
+
   def testQueryIssueSnapshots_Owner(self):
     """Test a burndown query from a regular user grouping by owner."""
     project = fake.Project(project_id=789)
@@ -375,7 +413,7 @@ class ChartServiceTest(unittest.TestCase):
     where = [
       ('IssueSnapshot.period_start <= %s', [1514764800]),
       ('IssueSnapshot.period_end > %s', [1514764800]),
-      ('IssueSnapshot.project_id = %s', [789]),
+      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
       ('Forbidden_label.label_id IS NULL', []),
@@ -422,7 +460,7 @@ class ChartServiceTest(unittest.TestCase):
     where = [
       ('IssueSnapshot.period_start <= %s', [1514764800]),
       ('IssueSnapshot.period_end > %s', [1514764800]),
-      ('IssueSnapshot.project_id = %s', [789]),
+      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
       ('(Issue.reporter_id IN (%s,%s)'
@@ -591,7 +629,7 @@ class ChartServiceTest(unittest.TestCase):
     where = [
       ('IssueSnapshot.period_start <= %s', [1514764800]),
       ('IssueSnapshot.period_end > %s', [1514764800]),
-      ('IssueSnapshot.project_id = %s', [789]),
+      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
       ('(Issue.reporter_id IN (%s,%s)'

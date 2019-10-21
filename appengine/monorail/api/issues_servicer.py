@@ -532,8 +532,9 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     if not request.timestamp:
       raise exceptions.InputException('Param `timestamp` required.')
 
-    if not request.project_name:
-      raise exceptions.InputException('Param `project_name` required.')
+    if not request.project_name and not request.hotlist_id:
+      raise exceptions.InputException('Params `project_name` or `hotlist_id` '
+          'required.')
 
     if request.group_by == 'label' and not request.label_prefix:
       raise exceptions.InputException('Param `label_prefix` required.')
@@ -554,11 +555,20 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       query = None
 
     with work_env.WorkEnv(mc, self.services) as we:
-      project = we.GetProjectByName(request.project_name)
+      try:
+        project = we.GetProjectByName(request.project_name)
+      except exceptions.NoSuchProjectException:
+        project = None
+
+      if request.hotlist_id:
+        hotlist = we.GetHotlist(request.hotlist_id)
+      else:
+        hotlist = None
+
       results, unsupported_fields, limit_reached = we.SnapshotCountsQuery(
           project, request.timestamp, request.group_by,
-          label_prefix=request.label_prefix,
-          query=query, canned_query=canned_query)
+          label_prefix=request.label_prefix, query=query,
+          canned_query=canned_query, hotlist=hotlist)
     if request.group_by == 'owner':
       # Map user ids to emails.
       snapshot_counts = [

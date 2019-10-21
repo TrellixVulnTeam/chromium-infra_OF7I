@@ -1299,7 +1299,7 @@ class IssuesServicerTest(unittest.TestCase):
     with self.assertRaises(exceptions.InputException):
       self.CallWrapped(self.issues_svcr.IssueSnapshot, mc, request)
 
-    # Test project_name is required.
+    # Test project_name or hotlist_id is required.
     request = issues_pb2.IssueSnapshotRequest(timestamp=1531334109)
     with self.assertRaises(exceptions.InputException):
       self.CallWrapped(self.issues_svcr.IssueSnapshot, mc, request)
@@ -1327,7 +1327,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual(0, len(response.unsupported_field))
     self.assertTrue(response.search_limit_reached)
     mockSnapshotCountsQuery.assert_called_once_with(self.project, 1531334109,
-      '', query=None, canned_query=None, label_prefix='')
+      '', query=None, canned_query=None, label_prefix='', hotlist=None)
 
   @patch('businesslogic.work_env.WorkEnv.SnapshotCountsQuery')
   @patch('search.searchpipeline.ReplaceKeywordsWithUserIDs')
@@ -1352,7 +1352,8 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual(0, len(response.unsupported_field))
     self.assertFalse(response.search_limit_reached)
     mockSnapshotCountsQuery.assert_called_once_with(self.project, 1531334109,
-      '', query='owner:1234', canned_query='cc:2345', label_prefix='')
+      '', query='owner:1234', canned_query='cc:2345', label_prefix='',
+      hotlist=None)
 
   @patch('businesslogic.work_env.WorkEnv.SnapshotCountsQuery')
   def testSnapshotCounts_GroupByLabel(self, mockSnapshotCountsQuery):
@@ -1381,7 +1382,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertTrue(response.search_limit_reached)
     mockSnapshotCountsQuery.assert_called_once_with(self.project, 1531334109,
         'label', label_prefix='Type', query='rutabaga:rutabaga',
-        canned_query=None)
+        canned_query=None, hotlist=None)
 
   @patch('businesslogic.work_env.WorkEnv.SnapshotCountsQuery')
   def testSnapshotCounts_GroupByComponent(self, mockSnapshotCountsQuery):
@@ -1408,7 +1409,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertTrue(response.search_limit_reached)
     mockSnapshotCountsQuery.assert_called_once_with(self.project, 1531334109,
         'component', label_prefix='', query='rutabaga:rutabaga',
-        canned_query='is:open')
+        canned_query='is:open', hotlist=None)
 
   @patch('businesslogic.work_env.WorkEnv.SnapshotCountsQuery')
   def testSnapshotCounts_GroupByOpen(self, mockSnapshotCountsQuery):
@@ -1428,7 +1429,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual('Closed', response.snapshot_count[1].dimension)
     self.assertEqual(23, response.snapshot_count[1].count)
     mockSnapshotCountsQuery.assert_called_once_with(self.project, 1531334109,
-        'open', label_prefix='', query=None, canned_query=None)
+        'open', label_prefix='', query=None, canned_query=None, hotlist=None)
 
   @patch('businesslogic.work_env.WorkEnv.SnapshotCountsQuery')
   def testSnapshotCounts_GroupByStatus(self, mockSnapshotCountsQuery):
@@ -1448,7 +1449,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual('Accepted', response.snapshot_count[1].dimension)
     self.assertEqual(100, response.snapshot_count[1].count)
     mockSnapshotCountsQuery.assert_called_once_with(self.project, 1531334109,
-        'status', label_prefix='', query=None, canned_query=None)
+        'status', label_prefix='', query=None, canned_query=None, hotlist=None)
 
   @patch('businesslogic.work_env.WorkEnv.SnapshotCountsQuery')
   def testSnapshotCounts_GroupByOwner(self, mockSnapshotCountsQuery):
@@ -1465,7 +1466,29 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual('owner@example.com', response.snapshot_count[0].dimension)
     self.assertEqual(100, response.snapshot_count[0].count)
     mockSnapshotCountsQuery.assert_called_once_with(self.project, 1531334109,
-        'owner', label_prefix='', query=None, canned_query=None)
+        'owner', label_prefix='', query=None, canned_query=None, hotlist=None)
+
+  @patch('businesslogic.work_env.WorkEnv.GetHotlist')
+  @patch('businesslogic.work_env.WorkEnv.SnapshotCountsQuery')
+  def testSnapshotCounts_WithHotlist(self, mockSnapshotCountsQuery,
+                                     mockGetHotlist):
+    """Tests grouping by status with a hotlist."""
+    request = issues_pb2.IssueSnapshotRequest(
+        timestamp=1531334109, hotlist_id=19191)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester='owner@example.com')
+    mockSnapshotCountsQuery.return_value = ({'total': 123}, [], True)
+    fake_hotlist = fake.Hotlist('hotlist_rutabaga', 19191)
+    mockGetHotlist.return_value = fake_hotlist
+
+    response = self.CallWrapped(self.issues_svcr.IssueSnapshot, mc, request)
+
+    self.assertEqual(1, len(response.snapshot_count))
+    self.assertEqual('total', response.snapshot_count[0].dimension)
+    self.assertEqual(123, response.snapshot_count[0].count)
+    mockSnapshotCountsQuery.assert_called_once_with(None, 1531334109,
+        '', label_prefix='', query=None, canned_query=None,
+        hotlist=fake_hotlist)
 
   def AddField(self, name, field_type_str):
     kwargs = {

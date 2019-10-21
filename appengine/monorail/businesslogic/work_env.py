@@ -1489,7 +1489,7 @@ class WorkEnv(object):
           self.mc.cnxn, self.mc.auth.user_id)
 
   def SnapshotCountsQuery(self, project, timestamp, group_by, label_prefix=None,
-                          query=None, canned_query=None):
+                          query=None, canned_query=None, hotlist=None):
     """Query IssueSnapshots for daily counts.
 
     See chart_svc.QueryIssueSnapshots for more detail on arguments.
@@ -1502,6 +1502,7 @@ class WorkEnv(object):
         with the supplied prefix.
       query (str, optional): If supplied, will parse & apply query conditions.
       canned_query (str, optional): Parsed canned query.
+      hotlist (Hotlist, optional): Hotlist to search under (in lieu of project).
 
     Returns:
       1. A dict of {name: count} for each item in group_by.
@@ -1511,9 +1512,8 @@ class WorkEnv(object):
     with self.mc.profiler.Phase('querying snapshot counts'):
       return self.services.chart.QueryIssueSnapshots(
         self.mc.cnxn, self.services, timestamp, self.mc.auth.effective_ids,
-        project, self.mc.perms, group_by=group_by,
-        label_prefix=label_prefix,
-        query=query, canned_query=canned_query)
+        project, self.mc.perms, group_by=group_by, label_prefix=label_prefix,
+        query=query, canned_query=canned_query, hotlist=hotlist)
 
   ### User methods
 
