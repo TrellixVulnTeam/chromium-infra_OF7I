@@ -1,0 +1,10 @@
+package: chromiumos/infra/stable_version2/${platform}
+description: stable version command line tool
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cmd/stable_version2
+root: ../../go/bin
+data:
+  - file: stable_version2${exe_suffix}
+  - version_file: .versions/stable_version2{exe_suffix}.cipd_version
