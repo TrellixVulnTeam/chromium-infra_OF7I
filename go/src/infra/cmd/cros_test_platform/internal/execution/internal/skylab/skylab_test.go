@@ -1220,7 +1220,7 @@ func TestIncompatibleDependencies(t *testing.T) {
 			Invs   []*steps.EnumerationResponse_AutotestInvocation
 		}{
 			{
-				Tag: "incompatible build target between enumeration and request",
+				Tag: "incompatible build target",
 				Params: &test_platform.Request_Params{
 					SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
 						BuildTarget: &chromiumos.BuildTarget{Name: "requested"},
@@ -1234,7 +1234,7 @@ func TestIncompatibleDependencies(t *testing.T) {
 				},
 			},
 			{
-				Tag: "incompatible model between enumeration and request",
+				Tag: "incompatible model",
 				Params: &test_platform.Request_Params{
 					HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{
 						Model: "requested",
@@ -1247,19 +1247,12 @@ func TestIncompatibleDependencies(t *testing.T) {
 					testInvocationWithDependency("some_test", "model:enumerated"),
 				},
 			},
-			{
-				Tag:    "unsupported dependencies",
-				Params: basicParams(),
-				Invs: []*steps.EnumerationResponse_AutotestInvocation{
-					testInvocationWithDependency("some_test", "some_unsupported_dependency"),
-				},
-			},
 		}
 
 		ctx := context.Background()
 		swarming := newFakeSwarming("")
 		for _, c := range cases {
-			Convey(fmt.Sprintf("with %s", c.Tag), func() {
+			Convey(fmt.Sprintf("with %s between enumeration and request", c.Tag), func() {
 				ts, err := skylab.NewTaskSet(ctx, c.Invs, c.Params, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunner(ts)

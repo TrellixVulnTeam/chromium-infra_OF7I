@@ -12,7 +12,6 @@ import (
 	"infra/libs/skylab/inventory/autotest/labels"
 	"infra/libs/skylab/request"
 	"infra/libs/skylab/worker"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -20,7 +19,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 )
@@ -48,12 +46,6 @@ func (a *argsGenerator) CheckConsistency() error {
 	if nonEmptyAndDifferent(rm, em) {
 		return errors.Reason("incompatible model dependency: request (%s) vs. enumeration (%s)", rm, em).Err()
 	}
-
-	ud := a.getUnsupportedDependencies()
-	if len(ud) > 0 {
-		return errors.Reason("unsupported request dependencies: %s", strings.Join(ud, ", ")).Err()
-	}
-
 	return nil
 }
 
@@ -68,18 +60,6 @@ func (a *argsGenerator) enumerationInventoryLabels() *inventory.SchedulableLabel
 		flatDims[i] = dep.Label
 	}
 	return labels.Revert(flatDims)
-}
-
-func (a *argsGenerator) getUnsupportedDependencies() []string {
-	el := a.enumerationInventoryLabels()
-	unsupported := stringset.New(len(a.invocation.Test.Dependencies))
-	for _, dep := range a.invocation.Test.Dependencies {
-		unsupported.Add(dep.Label)
-	}
-	for _, label := range labels.Convert(el) {
-		unsupported.Del(label)
-	}
-	return unsupported.ToSlice()
 }
 
 // GenerateArgs generates request.Args, combining all the inputs to
