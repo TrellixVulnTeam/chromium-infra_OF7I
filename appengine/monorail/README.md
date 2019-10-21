@@ -88,6 +88,23 @@ Then, to run the frontend tests, run:
 make karma
 ```
 
+To run only one test or a subset of tests, you can add `.only` to the test
+function you want to isolate:
+
+```javascript
+// Run one test.
+it.only(() => {
+  ...
+});
+
+// Run a subset of tests.
+describe.only(() => {
+  ...
+});
+```
+
+Just remember to remove them before you upload your CL.
+
 ## Troubleshooting
 
 *   `TypeError: connect() got an unexpected keyword argument 'charset'`
