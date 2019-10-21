@@ -39,10 +39,10 @@ func GetForTests(metadata *api.AutotestTestMetadata, tests []*test_platform.Requ
 // GetForSuites returns the test metadata for specified suites.
 func GetForSuites(metadata *api.AutotestTestMetadata, suites []*test_platform.Request_Suite) []*steps.EnumerationResponse_AutotestInvocation {
 	invs := []*steps.EnumerationResponse_AutotestInvocation{}
-	for _, sName := range suiteNames(suites) {
-		tNames := testsInSuite(metadata.GetSuites(), sName)
+	for _, suite := range enumeratedSuitesWithNames(metadata.GetSuites(), suites) {
+		tNames := extractTestNames(suite)
 		tests := filterTests(metadata.GetTests(), tNames)
-		invs = append(invs, autotestInvocationsForSuite(sName, tests)...)
+		invs = append(invs, autotestInvocationsForSuite(suite, tests)...)
 	}
 	return invs
 }
@@ -80,17 +80,32 @@ func testsByName(tests []*api.AutotestTest) map[string]*api.AutotestTest {
 	return ret
 }
 
-func autotestInvocationsForSuite(sName string, tests []*api.AutotestTest) []*steps.EnumerationResponse_AutotestInvocation {
+func autotestInvocationsForSuite(suite *api.AutotestSuite, tests []*api.AutotestTest) []*steps.EnumerationResponse_AutotestInvocation {
 	ret := make([]*steps.EnumerationResponse_AutotestInvocation, 0, len(tests))
 	for _, t := range tests {
-		ret = append(ret, &steps.EnumerationResponse_AutotestInvocation{
+		inv := steps.EnumerationResponse_AutotestInvocation{
 			Test: t,
 			ResultKeyvals: map[string]string{
-				"suite": sName,
+				"suite": suite.Name,
 			},
-		})
+		}
+		inv.Test.Dependencies = appendNewDependencies(inv.Test.Dependencies, suite.GetChildDependencies())
+		ret = append(ret, &inv)
 	}
 	return ret
+}
+
+func appendNewDependencies(to, from []*api.AutotestTaskDependency) []*api.AutotestTaskDependency {
+	seen := stringset.New(len(to))
+	for _, d := range to {
+		seen.Add(d.Label)
+	}
+	for _, d := range from {
+		if !seen.Has(d.Label) {
+			to = append(to, d)
+		}
+	}
+	return to
 }
 
 func testNames(ts []*test_platform.Request_Test) (stringset.Set, error) {
@@ -106,23 +121,19 @@ func testNames(ts []*test_platform.Request_Test) (stringset.Set, error) {
 	return ns, nil
 }
 
-func suiteNames(ss []*test_platform.Request_Suite) []string {
-	ns := stringset.New(len(ss))
-	for _, s := range ss {
-		ns.Add(s.GetName())
+func enumeratedSuitesWithNames(enumeratedSuites []*api.AutotestSuite, requestedSuites []*test_platform.Request_Suite) []*api.AutotestSuite {
+	sNames := stringset.New(len(requestedSuites))
+	for _, s := range requestedSuites {
+		sNames.Add(s.GetName())
 	}
-	return ns.ToSlice()
-}
 
-func testsInSuite(ss []*api.AutotestSuite, sName string) stringset.Set {
-	tNames := stringset.New(0)
-	for _, s := range ss {
-		if s.GetName() == sName {
-			tNames = tNames.Union(extractTestNames(s))
+	var ret []*api.AutotestSuite
+	for _, s := range enumeratedSuites {
+		if sNames.Has(s.GetName()) {
+			ret = append(ret, s)
 		}
 	}
-	return tNames
-
+	return ret
 }
 
 func extractTestNames(s *api.AutotestSuite) stringset.Set {

@@ -5,6 +5,7 @@
 package enumeration_test
 
 import (
+	"sort"
 	"testing"
 
 	"infra/cmd/cros_test_platform/internal/enumeration"
@@ -237,6 +238,71 @@ func addSuiteMetadata(m *api.AutotestTestMetadata, sName string, tNames ...strin
 		suite.Tests = append(suite.Tests, &api.AutotestSuite_TestReference{Name: tName})
 	}
 	m.Suites = append(m.Suites, suite)
+}
+
+func TestGetForSuitesSetsSuiteDependency(t *testing.T) {
+	cases := []struct {
+		Tag                    string
+		SuiteChildDependencies []string
+		TestDependencies       []string
+		WantDependencies       []string
+	}{
+		{
+			Tag:                    "suite dependency",
+			SuiteChildDependencies: []string{"suitedep"},
+			TestDependencies:       []string{},
+			WantDependencies:       []string{"suitedep"},
+		},
+		{
+			Tag:                    "suite and test dependencies",
+			SuiteChildDependencies: []string{"suitedep"},
+			TestDependencies:       []string{"testdep"},
+			WantDependencies:       []string{"suitedep", "testdep"},
+		},
+		{
+			Tag:                    "same dependency in suite and test",
+			SuiteChildDependencies: []string{"commondep"},
+			TestDependencies:       []string{"commondep"},
+			WantDependencies:       []string{"commondep"},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.Tag, func(t *testing.T) {
+			mytest := &api.AutotestTest{Name: "mytest"}
+			for _, d := range c.TestDependencies {
+				mytest.Dependencies = append(mytest.Dependencies, &api.AutotestTaskDependency{Label: d})
+			}
+			mysuite := &api.AutotestSuite{
+				Name: "mysuite",
+				Tests: []*api.AutotestSuite_TestReference{
+					{Name: "mytest"},
+				},
+			}
+			for _, d := range c.SuiteChildDependencies {
+				mysuite.ChildDependencies = append(mysuite.ChildDependencies, &api.AutotestTaskDependency{Label: d})
+			}
+			m := &api.AutotestTestMetadata{
+				Tests:  []*api.AutotestTest{mytest},
+				Suites: []*api.AutotestSuite{mysuite},
+			}
+
+			tests := enumeration.GetForSuites(m, suiteRequest("mysuite"))
+			if diff := pretty.Compare(stringset.NewFromSlice("mytest"), extractTestNames(tests)); diff != "" {
+				t.Fatalf("enumerated tests differ, -want +got: %s", diff)
+			}
+
+			gotDeps := []string{}
+			for _, d := range tests[0].GetTest().GetDependencies() {
+				gotDeps = append(gotDeps, d.Label)
+			}
+			sort.Strings(c.WantDependencies)
+			sort.Strings(gotDeps)
+			if diff := pretty.Compare(c.WantDependencies, gotDeps); diff != "" {
+				t.Errorf("test dependencies differ, -want +got: %s", diff)
+			}
+		})
+	}
 }
 
 func TestGetForEnumeration(t *testing.T) {
