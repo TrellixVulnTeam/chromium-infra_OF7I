@@ -82,7 +82,26 @@
   },
   {
     "cmd": [],
-    "name": "isolate"
+    "name": "auth_service"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/auth_service/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/auth_service",
+    "name": "auth_service.run tests python3",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -93,15 +112,133 @@
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]/infra/luci/appengine/isolate/unittest.cfg",
+      "[START_DIR]/infra/luci/appengine/auth_service/unittest.cfg",
       "-A",
       "!no_run"
     ],
-    "cwd": "[START_DIR]/infra/luci/appengine/isolate",
-    "name": "isolate.run tests python2",
+    "cwd": "[START_DIR]/infra/luci/appengine/auth_service",
+    "name": "auth_service.run tests python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
+  },
+  {
+    "cmd": [],
+    "name": "config_service"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/config_service/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/config_service",
+    "name": "config_service.run tests python3",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/config_service/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/config_service",
+    "name": "config_service.run tests python2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "components"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/components/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/components",
+    "name": "components.run tests python3",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test_seq.py",
+      "-v"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/components",
+    "name": "components.run tests seq python3",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/components/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/components",
+    "name": "components.run tests python2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython",
+      "-u",
+      "test_seq.py",
+      "-v"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/components",
+    "name": "components.run tests seq python2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "isolate"
   },
   {
     "cmd": [
@@ -123,12 +260,130 @@
     ]
   },
   {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/isolate/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/isolate",
+    "name": "isolate.run tests python2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "client"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/client/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/client",
+    "name": "client.run tests python3",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test_seq.py",
+      "-v"
+    ],
+    "cwd": "[START_DIR]/infra/luci/client",
+    "name": "client.run tests seq python3",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/client/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/client",
+    "name": "client.run tests python2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython",
+      "-u",
+      "test_seq.py",
+      "-v"
+    ],
+    "cwd": "[START_DIR]/infra/luci/client",
+    "name": "client.run tests seq python2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "swarming"
   },
   {
-    "cmd": [],
-    "name": "swarming.python2",
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]/infra/luci/appengine/swarming/unittest.cfg",
+      "-A",
+      "!no_run"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/swarming",
+    "name": "swarming.run tests python3",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-vpython-spec",
+      "[START_DIR]/infra/luci/.vpython3",
+      "-u",
+      "test_seq.py",
+      "-v"
+    ],
+    "cwd": "[START_DIR]/infra/luci/appengine/swarming",
+    "name": "swarming.run tests seq python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -147,9 +402,9 @@
       "!no_run"
     ],
     "cwd": "[START_DIR]/infra/luci/appengine/swarming",
-    "name": "swarming.python2.run tests",
+    "name": "swarming.run tests python2",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
@@ -162,50 +417,9 @@
       "-v"
     ],
     "cwd": "[START_DIR]/infra/luci/appengine/swarming",
-    "name": "swarming.python2.run tests sequentially",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "swarming.python3",
+    "name": "swarming.run tests seq python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython3",
-      "-u",
-      "test.py",
-      "-v",
-      "--conf",
-      "[START_DIR]/infra/luci/appengine/swarming/unittest.cfg",
-      "-A",
-      "!no_run"
-    ],
-    "cwd": "[START_DIR]/infra/luci/appengine/swarming",
-    "name": "swarming.python3.run tests",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython3",
-      "-u",
-      "test_seq.py",
-      "-v"
-    ],
-    "cwd": "[START_DIR]/infra/luci/appengine/swarming",
-    "name": "swarming.python3.run tests sequentially",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {

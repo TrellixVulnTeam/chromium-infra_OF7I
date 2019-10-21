@@ -24,42 +24,61 @@ def RunSteps(api):
   api.gclient.set_config('luci_py')
   api.bot_update.ensure_checkout()
   api.gclient.runhooks()
-  # TODO(tandrii): trigger tests without PRESUBMIT.py; https://crbug.com/917479
 
   luci_dir = api.path['checkout'].join('luci')
   with api.context(cwd=luci_dir):
-    # isolate
-    _step_run_isolate_tests(api)
+    # TODO(jwata): remove debug options after fixing tests
+    _step_run_tests(api, 'auth_service',
+                    luci_dir.join('appengine', 'auth_service'),
+                    ok_ret='any')
 
-    # swarming
-    _step_run_swarming_tests(api)
+    _step_run_tests(api, 'config_service',
+                    luci_dir.join('appengine', 'config_service'))
+
+    # TODO(jwata): remove debug options after fixing tests
+    _step_run_tests(api, 'components',
+                    luci_dir.join('appengine', 'components'),
+                    run_test_seq=True, ok_ret='any')
+
+    _step_run_tests(api, 'isolate',
+                    luci_dir.join('appengine', 'isolate'))
+
+    # TODO(jwata): remove debug options after fixing tests
+    _step_run_tests(api, 'client',
+                    luci_dir.join('client'), run_test_seq=True,
+                    ok_ret='any')
+
+    _step_run_tests(api, 'swarming',
+                    luci_dir.join('appengine', 'swarming'),
+                    run_test_seq=True)
 
     # swarming ui
     if api.platform.is_linux:
       _step_swarming_ui_tests(api)
 
-def _step_run_swarming_tests(api):
-  luci_dir = api.context.cwd
 
-  with api.step.nest('swarming'):
-    cwd = luci_dir.join('appengine', 'swarming')
+def _step_run_tests(api, name, cwd, run_test_seq=False, ok_ret=(0,)):
+  luci_dir = api.context.cwd
+  with api.step.nest(name):
     with api.context(cwd=cwd):
       cfg = api.context.cwd.join('unittest.cfg')
       testpy_args = ['-v', '--conf', cfg, '-A', '!no_run']
 
-      with api.step.nest('python2'):
-        venv = luci_dir.join('.vpython')
-        api.python('run tests',
-                   'test.py', args=testpy_args, venv=venv)
-        api.python('run tests sequentially',
-                   'test_seq.py', args=['-v'], venv=venv)
+      # python3
+      venv3 = luci_dir.join('.vpython3')
+      api.python('run tests python3',
+                 'test.py', args=testpy_args, venv=venv3, ok_ret=ok_ret)
+      if run_test_seq:
+        api.python('run tests seq python3',
+                   'test_seq.py', args=['-v'], venv=venv3, ok_ret=ok_ret)
 
-      with api.step.nest('python3'):
-        venv3 = luci_dir.join('.vpython3')
-        api.python('run tests',
-                   'test.py', args=testpy_args, venv=venv3)
-        api.python('run tests sequentially',
-                   'test_seq.py', args=['-v'], venv=venv3)
+      # python2
+      venv = luci_dir.join('.vpython')
+      api.python('run tests python2',
+                 'test.py', args=testpy_args, venv=venv, ok_ret=ok_ret)
+      if run_test_seq:
+        api.python('run tests seq python2',
+                   'test_seq.py', args=['-v'], venv=venv, ok_ret=ok_ret)
 
 
 def _step_swarming_ui_tests(api):
@@ -72,21 +91,6 @@ def _step_swarming_ui_tests(api):
       api.step('install node modules', ['npm', 'ci'])
       _steps_check_diffs_on_ui_assets(api)
       api.step('run tests', ['make', 'test'])
-
-
-def _step_run_isolate_tests(api):
-  luci_dir = api.context.cwd
-  with api.step.nest('isolate'):
-    cwd = luci_dir.join('appengine', 'isolate')
-    with api.context(cwd=cwd):
-      cfg = api.context.cwd.join('unittest.cfg')
-      args = ['-v', '--conf', cfg, '-A', '!no_run']
-
-      venv = luci_dir.join('.vpython')
-      api.python('run tests python2', 'test.py', args=args, venv=venv)
-
-      venv3 = luci_dir.join('.vpython3')
-      api.python('run tests python3', 'test.py', args=args, venv=venv3)
 
 
 def _steps_check_diffs_on_ui_assets(api):
