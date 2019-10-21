@@ -27,26 +27,21 @@ def RunSteps(api):
 
   luci_dir = api.path['checkout'].join('luci')
   with api.context(cwd=luci_dir):
-    # TODO(jwata): remove debug options after fixing tests
     _step_run_tests(api, 'auth_service',
-                    luci_dir.join('appengine', 'auth_service'),
-                    ok_ret='any')
+                    luci_dir.join('appengine', 'auth_service'))
 
     _step_run_tests(api, 'config_service',
                     luci_dir.join('appengine', 'config_service'))
 
-    # TODO(jwata): remove debug options after fixing tests
     _step_run_tests(api, 'components',
                     luci_dir.join('appengine', 'components'),
-                    run_test_seq=True, ok_ret='any')
+                    run_test_seq=True)
 
     _step_run_tests(api, 'isolate',
                     luci_dir.join('appengine', 'isolate'))
 
-    # TODO(jwata): remove debug options after fixing tests
     _step_run_tests(api, 'client',
-                    luci_dir.join('client'), run_test_seq=True,
-                    ok_ret='any')
+                    luci_dir.join('client'), run_test_seq=True)
 
     _step_run_tests(api, 'swarming',
                     luci_dir.join('appengine', 'swarming'),
