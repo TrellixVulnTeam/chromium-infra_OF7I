@@ -21,23 +21,29 @@ PROPERTIES = {
     default=None,
     kind=str,
     help="set GOARCH environment variable for go build+test"),
+  'run_integration_tests': Property(
+    default=False,
+    kind=bool,
+    help='Whether to run integration tests',
+  ),
 }
 
 LUCI_GO_PATH_IN_INFRA = 'infra/go/src/go.chromium.org/luci'
 
 
-def RunSteps(api, GOARCH):
+def RunSteps(api, GOARCH, run_integration_tests):
   co = api.infra_checkout.checkout('luci_go', patch_root=LUCI_GO_PATH_IN_INFRA)
   is_presubmit = 'presubmit' in api.buildbucket.builder_name.lower()
   if is_presubmit:
     co.commit_change()
   co.gclient_runhooks()
 
-  env = {
-    'INTEGRATION_TESTS': '1',
-  }
+
+  env = {}
   if GOARCH is not None:
     env['GOARCH'] = GOARCH
+  if run_integration_tests:
+    env['INTEGRATION_TESTS'] = '1'
 
   with api.context(env=env), api.osx_sdk('mac'):
     co.ensure_go_env()
@@ -86,4 +92,13 @@ def GenTests(api):
         change_number=607472,
         patch_set=2,
     ) + api.properties(GOARCH='386')
+  )
+
+  yield (
+    api.test('integration_tests') +
+    api.runtime(is_luci=True, is_experimental=False) +
+    api.buildbucket.try_build(
+        'infra', 'try', 'integration_tests', change_number=607472, patch_set=2,
+    ) +
+    api.properties(run_integration_tests=True)
   )

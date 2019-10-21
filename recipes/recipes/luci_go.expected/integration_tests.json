@@ -16,6 +16,47 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_REPO[depot_tools]/gerrit_client.py",
+      "changes",
+      "--host",
+      "https://chromium-review.googlesource.com",
+      "--json_file",
+      "/path/to/tmp/json",
+      "--limit",
+      "1",
+      "-p",
+      "change=607472",
+      "-o",
+      "ALL_REVISIONS",
+      "-o",
+      "DOWNLOAD_COMMANDS"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
+    "infra_step": true,
+    "name": "gerrit fetch current CL info",
+    "timeout": 600,
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"branch\": \"master\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"revisions\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"184ebe53805e102605d11f6b143486d15c23a09c\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"_number\": \"2\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"ref\": \"refs/changes/72/607472/2\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
       "python",
       "-u",
       "RECIPE_MODULE[depot_tools::bot_update]/resources/bot_update.py",
@@ -31,10 +72,12 @@
       "[CLEANUP]/bot_update",
       "--output_json",
       "/path/to/tmp/json",
+      "--patch_ref",
+      "https://chromium.googlesource.com/infra@refs/heads/master:refs/changes/72/607472/2",
       "--revision",
       "infra@origin/master",
       "--revision",
-      "infra/go/src/go.chromium.org/luci@1111111111111111111111111111111111111111"
+      "infra/go/src/go.chromium.org/luci@origin/master"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env_suffixes": {
@@ -50,7 +93,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"fixed_revisions\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"infra\": \"origin/master\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"infra/go/src/go.chromium.org/luci\": \"1111111111111111111111111111111111111111\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra/go/src/go.chromium.org/luci\": \"origin/master\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"manifest\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"infra/go/src/go.chromium.org/luci\": {@@@",
@@ -106,6 +149,9 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "INTEGRATION_TESTS": "1"
+    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -136,6 +182,9 @@
       "go.chromium.org/luci/..."
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "INTEGRATION_TESTS": "1"
+    },
     "name": "go build"
   },
   {
@@ -148,6 +197,9 @@
       "go.chromium.org/luci/..."
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "INTEGRATION_TESTS": "1"
+    },
     "name": "go test"
   },
   {
@@ -161,6 +213,9 @@
       "go.chromium.org/luci/..."
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "INTEGRATION_TESTS": "1"
+    },
     "name": "go test -race"
   },
   {

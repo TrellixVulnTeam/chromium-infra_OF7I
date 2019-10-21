@@ -106,9 +106,6 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
-    "env": {
-      "INTEGRATION_TESTS": "1"
-    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -139,9 +136,6 @@
       "go.chromium.org/luci/..."
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
-    "env": {
-      "INTEGRATION_TESTS": "1"
-    },
     "name": "go build"
   },
   {
@@ -154,9 +148,6 @@
       "go.chromium.org/luci/..."
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
-    "env": {
-      "INTEGRATION_TESTS": "1"
-    },
     "name": "go test"
   },
   {

@@ -45,7 +45,7 @@ def try_builder(
       os,
       recipe=None,
       experiment_percentage=None,
-      properties=None
+      properties=None,
   ):
   infra.builder(
       name = name,
@@ -69,7 +69,9 @@ ci_builder(name = 'luci-go-continuous-win7-64', os = 'Windows')
 ci_builder(name = 'luci-go-continuous-win10-64', os = 'Windows-10')
 
 try_builder(name = 'luci-go-try-trusty-64', os = 'Ubuntu-14.04')
-try_builder(name = 'luci-go-try-xenial-64', os = 'Ubuntu-16.04')
+try_builder(name = 'luci-go-try-xenial-64', os = 'Ubuntu-16.04', properties = {
+    'run_integration_tests': True,
+})
 try_builder(name = 'luci-go-try-mac', os = 'Mac-10.13')
 try_builder(name = 'luci-go-try-win', os = 'Windows')
 
