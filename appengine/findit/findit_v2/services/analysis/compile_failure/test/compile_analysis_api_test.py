@@ -4,19 +4,25 @@
 
 from datetime import datetime
 import mock
+import textwrap
 
 from buildbucket_proto import common_pb2
 from buildbucket_proto.build_pb2 import Build
 from buildbucket_proto.build_pb2 import BuilderID
 
 from findit_v2.model.compile_failure import CompileFailureGroup
+from findit_v2.model.culprit_action import CulpritAction
+from findit_v2.model.gitiles_commit import Culprit
 from findit_v2.model.gitiles_commit import GitilesCommit
 from findit_v2.model.luci_build import LuciFailedBuild
+from findit_v2.services import build_util
+from findit_v2.services import projects
 from findit_v2.services.analysis.compile_failure.compile_analysis_api import (
     CompileAnalysisAPI)
 from findit_v2.services.chromium_api import ChromiumProjectAPI
 from findit_v2.services.context import Context
 from findit_v2.services.failure_type import StepTypeEnum
+from services import gerrit
 from services import git
 from waterfall.test import wf_testcase
 
@@ -178,3 +184,185 @@ class CompileAnalysisAPITest(wf_testcase.TestCase):
     self.assertEqual(
         group,
         CompileAnalysisAPI()._GetFailureGroupByContext(self.context))
+
+  @mock.patch.object(build_util, 'AllLaterBuildsHaveOverlappingFailure')
+  @mock.patch.object(CulpritAction, 'GetRecentActionsByType')
+  @mock.patch.object(gerrit, 'ExistCQedDependingChanges')
+  @mock.patch.object(git, 'ChangeCommittedWithinTime')
+  @mock.patch.object(ChromiumProjectAPI, 'ChangeInfoAndClientFromCommit')
+  @mock.patch.object(ChromiumProjectAPI, 'CreateRevert')
+  @mock.patch.object(CompileAnalysisAPI, '_CheckIfReverted')
+  @mock.patch.object(CompileAnalysisAPI, '_NoAction')
+  @mock.patch.object(CompileAnalysisAPI, '_RequestReview')
+  @mock.patch.object(CompileAnalysisAPI, '_CommitRevert')
+  @mock.patch.object(CompileAnalysisAPI, '_Notify')
+  def testOnCulpritFound(self, notify, commit, review, no_action, check_revert,
+                         create_revert, change_info_and_client, changed_in_time,
+                         cqed_changes, actions_by_type, ongoing_failure):
+
+    class MockGerritClient(object):
+      revert_of = False
+      auto_revert_off = False
+
+      def GetClDetails(self, *_args, **_kwargs):
+
+        class MockClDetails(object):
+          revert_of = MockGerritClient.revert_of
+          auto_revert_off = MockGerritClient.auto_revert_off
+          owner_email = 'dummy@account.org'
+
+        return MockClDetails()
+
+    change_info_and_client.return_value = ({
+        'review_change_id': 1
+    }, MockGerritClient())
+
+    # In the following list of pairs, the first element is the list of values
+    # for the mocks to return, and the second element is a dict indicating which
+    # actions are expected to be taken by OnCulpritFound.
+    scenarios = [
+        # Create a revert and submit, with the default values.
+        ([], {
+            'create_revert': True,
+            'commit': True
+        }),
+        # Auto-action disabled.
+        ([False], {
+            'no_action': True
+        }),
+        # Build recovered.
+        ([True, False], {
+            'no_action': True
+        }),
+        # The culprit is a revert.
+        ([True, True, True], {
+            'notify': True
+        }),
+        # The culprit is already reverted by findit.
+        ([True, True, False, True, True], {
+            'no_action': True
+        }),
+        # The culprit is already reverted by sheriff.
+        ([True, True, False, True, False], {
+            'notify': True
+        }),
+        # Reached the revert quota.
+        ([True, True, False, False, False, 100], {
+            'notify': True
+        }),
+        # Auto-revert disabled.
+        ([True, True, False, False, False, 0, False], {
+            'notify': True
+        }),
+        # Culprit tagged with NOAUTOREVERT=True
+        ([True, True, False, False, False, 0, True, True], {
+            'notify': True
+        }),
+        # CQed changes depend on the culprit.
+        ([True, True, False, False, False, 0, True, False, True], {
+            'notify': True
+        }),
+        # Culprit landed over 24 hours ago.
+        ([True, True, False, False, False, 0, True, False, False, False], {
+            'notify': True
+        }),
+        # Culprit author whitelisted.
+        ([
+            True, True, False, False, False, 0, True, False, False, True,
+            ['dummy@account.org']
+        ], {
+            'notify': True
+        }),
+        # Auto-commit disabled.
+        ([
+            True, True, False, False, False, 0, True, False, False, True, [],
+            False
+        ], {
+            'create_revert': True,
+            'review': True
+        }),
+        # Auto-commit quota reached.
+        ([
+            True, True, False, False, False, 0, True, False, False, True, [],
+            True, 100
+        ], {
+            'create_revert': True,
+            'review': True
+        }),
+    ]
+    for scenario_list, result in scenarios:
+      # Make the list of flags into a dict to allow getting default values.
+      scenario = dict(enumerate(scenario_list))
+
+      # Reset action mocks to correctly check for calls later.
+      for m in notify, create_revert, commit, review, no_action:
+        m.reset_mock()
+
+      # Set values of decision points according to list of flags.
+      projects.PROJECT_CFG['chromium'][
+          'auto_actions_enabled_for_project'] = scenario.get(0, True)
+      ongoing_failure.return_value = scenario.get(1, True)
+      MockGerritClient.revert_of = scenario.get(2, False)
+      check_revert.return_value = scenario.get(3, False), scenario.get(4, False)
+      actions_by_type.side_effect = [scenario.get(5, 0), scenario.get(12, 0)]
+      projects.PROJECT_CFG['chromium'][
+          'auto_revert_enabled_for_project'] = scenario.get(6, True)
+      MockGerritClient.auto_revert_off = scenario.get(7, False)
+      cqed_changes.return_value = scenario.get(8, False)
+      changed_in_time.return_value = scenario.get(9, True)
+      projects.PROJECT_CFG['chromium'][
+          'automated_account_whitelist'] = scenario.get(10, [])
+      projects.PROJECT_CFG['chromium'][
+          'auto_commit_enabled_for_project'] = scenario.get(11, True)
+
+      # Code under test.
+      self.analysis_api.OnCulpritFound(
+          self.context, self.build_id,
+          Culprit.GetOrCreate(self.context.gitiles_host,
+                              self.context.gitiles_project,
+                              self.context.gitiles_ref, 'badc0de', 666,
+                              [self.compile_failure.key.urlsafe()]))
+
+      # Verify expected actions were called.
+      self.assertEqual(result.get('no_action', False), bool(no_action.called))
+      self.assertEqual(result.get('notify', False), bool(notify.called))
+      self.assertEqual(
+          result.get('create_revert', False), bool(create_revert.called))
+      self.assertEqual(result.get('review', False), bool(review.called))
+      self.assertEqual(result.get('commit', False), bool(commit.called))
+
+  @mock.patch.object(ChromiumProjectAPI, 'RequestReview')
+  @mock.patch.object(ChromiumProjectAPI, 'CommitRevert')
+  @mock.patch.object(ChromiumProjectAPI, 'NotifyCulprit')
+  def testActions(self, *_):
+    # pylint:disable=line-too-long
+    culprit = Culprit.GetOrCreate(self.context.gitiles_host,
+                                  self.context.gitiles_project,
+                                  self.context.gitiles_ref, 'badc0de', 666,
+                                  [self.compile_failure.key.urlsafe()])
+    self.assertIsNone(self.analysis_api._NoAction(culprit, 'no_action message'))
+    self.assertEquals(
+        textwrap.dedent("""\
+      Findit (https://goo.gl/kROfz5) identified this CL at revision badc0de as
+      the culprit for failures in the continuous build including:
+
+      Sample Failed Build: https://ci.chromium.org/b/8000000000123
+      Sample Failed Step: compile
+
+      If it is a false positive, please report it at https://bugs.chromium.org/p/chromium/issues/entry?status=Available&comment=Detail+is+gitiles.host.com%2Fproject%2Fname%2Fref%2Fheads%2Fmaster%2Fbadc0de&labels=Test-Findit-Wrong&components=Tools%3ETest%3EFindIt&summary=Wrongly+blame+badc0de"""
+                       ),
+        self.analysis_api._ComposeRevertDescription(ChromiumProjectAPI(),
+                                                    culprit))
+    action = self.analysis_api._Notify(ChromiumProjectAPI(), culprit,
+                                       'notify message')
+    self.assertEqual(action.action_type, CulpritAction.CULPRIT_NOTIFIED)
+
+    action = self.analysis_api._CommitRevert(ChromiumProjectAPI(),
+                                             {'_number': 1}, culprit)
+    self.assertEqual(action.action_type, CulpritAction.REVERT)
+    self.assertEqual(action.revert_committed, True)
+
+    action = self.analysis_api._RequestReview(ChromiumProjectAPI(),
+                                              {'_number': 1}, culprit)
+    self.assertEqual(action.action_type, CulpritAction.REVERT)
+    self.assertEqual(action.revert_committed, False)

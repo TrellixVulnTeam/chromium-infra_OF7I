@@ -12,6 +12,7 @@ from google.protobuf.field_mask_pb2 import FieldMask
 
 from common.waterfall import buildbucket_client
 from findit_v2.model import luci_build
+from findit_v2.model.culprit_action import CulpritAction
 from findit_v2.model.gitiles_commit import GitilesCommit
 from findit_v2.model.gitiles_commit import Culprit
 from findit_v2.model.gitiles_commit import Suspect
@@ -22,6 +23,7 @@ from findit_v2.services import projects
 from findit_v2.services import constants
 from libs import analysis_status
 from libs import time_util
+from services import gerrit
 from services import git
 
 # Max number a rerun build on one commit can be tried.
@@ -314,6 +316,22 @@ class AnalysisAPI(object):
       }
     """
     raise NotImplementedError()
+
+  def OnCulpritFound(self, context, analyzed_build_id, culprit_commit):
+    """Subclasses may override this to take action when a culprit is identified.
+
+    Args:
+      context (findit_v2.services.context.Context): Scope of the analysis.
+      analyzed_build_id: Buildbucket id of the continuous build being analyzed.
+      culprit: The Culprit entity for the change identified as causing the
+          failures.
+
+    Returns:
+      The CulpritAction entity describing the action taken, None if no action
+      was performed.
+    """
+    # pylint:disable=unused-argument
+    return None
 
   def _GetFailureKeysToAnalyze(self, failure_entities, _project_api):
     """Gets failures that'll actually be analyzed in the analysis.
@@ -1308,6 +1326,7 @@ class AnalysisAPI(object):
     for failure in failure_entities:
       failure.culprit_commit_key = culprit_entity.key
     ndb.put_multi(failure_entities)
+    return culprit_entity
 
   def _GetSuspectToRerun(self, context, failures, last_passed_commit,
                          first_failed_commit, commit_position_to_git_hash_map):
@@ -1430,7 +1449,8 @@ class AnalysisAPI(object):
                                               first_failed_commit)
       if culprit_commit:
         # Analysis for these failures has run to the end.
-        self._SaveCulpritInFailures(failures, culprit_commit)
+        culprit_entity = self._SaveCulpritInFailures(failures, culprit_commit)
+        self.OnCulpritFound(context, analyzed_build_id, culprit_entity)
         analysis_errors.append(None)
         continue
 
@@ -1510,3 +1530,147 @@ class AnalysisAPI(object):
         [f.key for f in failures_to_analyze])
     analysis.Save()
     self.RerunBasedAnalysis(context, build.id)
+
+  @staticmethod
+  def _RequestReview(project_api, revert, culprit):
+    """Requests manual review of the created revert with appropriate message.
+
+    Args:
+      project_api (ProjectAPI): API for project specific logic.
+      revert: The created revert's information as returned by
+          project_api.CreatRevert().
+      culprit: The culprit entity.
+
+    Returns:
+      The CulpritAction entity describing the action taken, None if no action
+      was performed.
+    """
+    bug_link = gerrit.CreateFinditWrongBugLink(
+        gerrit.FINDIT_BUILD_FAILURE_COMPONENT, culprit.key.id(),
+        culprit.gitiles_id)
+    request_review_message = project_api.REQUEST_REVIEW.format(
+        bug_link=bug_link)
+    project_api.RequestReview(revert, request_review_message)
+    action = CulpritAction.Create(
+        culprit,
+        CulpritAction.REVERT,
+        revert_committed=False,
+        revert_change=revert['_number'])
+    action.put()
+    return action
+
+  @staticmethod
+  def _CommitRevert(project_api, revert, culprit):
+    """Commits a previously created revert, and saves action to datastore.
+
+    Args:
+      project_api (ProjectAPI): API for project specific logic.
+      revert: The created revert's information as returned by
+          project_api.CreatRevert().
+      culprit: The culprit entity.
+
+    Returns:
+      The CulpritAction entity describing the action taken, None if no action
+      was performed.
+    """
+    bug_link = gerrit.CreateFinditWrongBugLink(
+        gerrit.FINDIT_BUILD_FAILURE_COMPONENT, culprit.key.id(),
+        culprit.gitiles_id)
+    if project_api.CommitRevert(
+        revert, project_api.REQUEST_CONFIRMATION.format(bug_link=bug_link)):
+      action = CulpritAction.Create(
+          culprit,
+          CulpritAction.REVERT,
+          revert_committed=True,
+          revert_change=revert['_number'])
+      action.put()
+      return action
+    return None
+
+  @staticmethod
+  def _CheckIfReverted(cl_details, culprit, service_account):
+    """Checks if the CL given has been reverted, and by which account.
+
+    Args:
+      cl_details: Details about the CL as returned by
+          gerrit_client.GetClDetails()
+      culprit: The culprit entity.
+      service_account: The service account used for auto-actions.
+
+    Returns:
+      A pair of booleans (reverted, by_service_account) the first indicates
+      whether the CL has been reverted, and the second one whether the revert
+      was created by the given service account.
+
+    """
+    reverts = cl_details.GetRevertCLsByRevision(culprit.gitiles_id)
+    for r in reverts:
+      if r.reverting_user_email == service_account:
+        return True, True
+    if reverts:
+      return True, False
+    return False, False
+
+  def _Notify(self, project_api, culprit, log_message, silent=False):
+    """Posts notification to the culprit CL and save the change to datastore.
+
+    Args:
+      project_api (ProjectAPI): API for project specific logic.
+      culprit: The culprit entity.
+      log_message: A short string about why this action is being taken, to be
+          logged for debugging purposes.
+      silent: Boolean indicating whether to bypass sending email. Useful when
+          action has already been taken and we're only confirming the findings.
+
+    Returns:
+      The CulpritAction entity describing the action taken, None if no action
+      was performed.
+    """
+    logging.info('Notifying culprit %s, %s', culprit.key.id(), log_message)
+    message = self._ComposeRevertDescription(project_api, culprit, silent)
+    project_api.NotifyCulprit(culprit, message, silent_notification=silent)
+    action = CulpritAction.Create(culprit, CulpritAction.CULPRIT_NOTIFIED)
+    action.put()
+    return action
+
+  @staticmethod
+  def _ComposeRevertDescription(project_api, culprit, confirm_only=False):
+    """Composes the body of a message to be used in auto-actions.
+
+    This done by populating fields in a project-specific template.
+
+    Args:
+      project_api (ProjectAPI): API for project specific logic.
+      culprit: The culprit entity.
+      confirm_only: If this notification is not requesting the sheriffs to take
+          action, but simply providing confirmation.
+
+    Returns:
+      A string containing the populated notification.
+    """
+    bug_link = gerrit.CreateFinditWrongBugLink(
+        gerrit.FINDIT_BUILD_FAILURE_COMPONENT, culprit.key.id(),
+        culprit.gitiles_id)
+    sample_failure = ndb.Key(urlsafe=culprit.failure_urlsafe_keys[0]).get()
+    sample_build = (
+        'https://ci.chromium.org/b/%d' % sample_failure.first_failed_build_id)
+    sample_step = sample_failure.step_ui_name
+    return project_api.ACTION_REASON.format(
+        verb='confrmed' if confirm_only else 'identified',
+        revision=culprit.gitiles_id,
+        bug_link=bug_link,
+        build=sample_build,
+        step=sample_step)
+
+  @staticmethod
+  def _NoAction(culprit, log_message):
+    """Logs consistent message when no culprit action is to be taken.
+
+    Args:
+      culprit: The culprit entity.
+      log_message: A short string about why this action is being taken, to be
+          logged for debugging purposes.
+    """
+    logging.info('Not taking any action for culprit %s, %s', culprit.key.id(),
+                 log_message)
+    return None

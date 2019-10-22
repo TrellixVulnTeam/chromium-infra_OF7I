@@ -3,11 +3,43 @@
 # found in the LICENSE file.
 """Defines the APIs that each supported project must implement."""
 
+import textwrap
+
 from infra_api_clients.codereview import gerrit
 from services import git
 
 
 class ProjectAPI(object):  # pragma: no cover.
+
+  # Default auto action messaging templates, override these constants for
+  # custom/project-specific messages.
+  REQUEST_REVIEW = textwrap.dedent("""\
+      Sheriffs, CL owner or CL reviewers:
+      Please submit this revert if it is correct.
+
+      If it is a false positive, please abandon and report it
+      at {bug_link}
+
+      For more information about Findit auto-revert: https://goo.gl/adB34D.""")
+
+  REQUEST_CONFIRMATION = textwrap.dedent("""\
+      Sheriffs, CL owner or CL reviewers:
+      Please confirm if this revert is correct.
+
+      If it is a false positive, please reland the original CL and report this
+      at {bug_link}
+
+      For more information about Findit auto-revert: https://goo.gl/adB34D.""")
+
+  ACTION_REASON = textwrap.dedent("""\
+      Findit (https://goo.gl/kROfz5) {verb} this CL at revision {revision} as
+      the culprit for failures in the continuous build including:
+
+      Sample Failed Build: {build}
+      Sample Failed Step: {step}
+
+      If it is a false positive, please report it at {bug_link}""")
+
 
   def ClassifyStepType(self, build, step):
     """ Returns the failure type of the given build step.
@@ -328,7 +360,7 @@ class ProjectAPI(object):  # pragma: no cover.
         }
       }
     """
-    change_info, gerrit_client = self._ChangeInfoAndClientFromCommit(culprit)
+    change_info, gerrit_client = self.ChangeInfoAndClientFromCommit(culprit)
     revert_info = gerrit_client.CreateRevert(
         reason, change_info['review_change_id'], full_change_info=True)
     revert_info['client'] = gerrit_client
@@ -394,13 +426,13 @@ class ProjectAPI(object):  # pragma: no cover.
     Returns:
       sent: A boolean indicating whether the notification was sent successfully.
     """
-    change_info, gerrit_client = self._ChangeInfoAndClientFromCommit(culprit)
+    change_info, gerrit_client = self.ChangeInfoAndClientFromCommit(culprit)
     return gerrit_client.PostMessage(
         change_info['review_change_id'],
         message,
         should_email=not silent_notification)
 
-  def _ChangeInfoAndClientFromCommit(self, commit):
+  def ChangeInfoAndClientFromCommit(self, commit):
     """Gets a commit's code review information and a configured client."""
     repo_url = git.GetRepoUrlFromCommit(commit)
     change_info = git.GetCodeReviewInfoForACommit(commit.gitiles_id, repo_url,

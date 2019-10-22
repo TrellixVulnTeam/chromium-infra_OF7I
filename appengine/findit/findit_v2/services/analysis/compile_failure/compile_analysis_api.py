@@ -6,19 +6,27 @@
 Build with compile failures will be pre-processed to determine if a new compile
 analysis is needed or not.
 """
+import logging
 
 from google.appengine.ext import ndb
+from google.protobuf.field_mask_pb2 import FieldMask
 
+from services import gerrit
 from services import git
 from services import deps
+from waterfall import waterfall_config
 
+from common.waterfall import buildbucket_client
 from findit_v2.model import luci_build
 from findit_v2.model import compile_failure
 from findit_v2.model.compile_failure import CompileFailure
 from findit_v2.model.compile_failure import CompileFailureAnalysis
 from findit_v2.model.compile_failure import CompileFailureGroup
 from findit_v2.model.compile_failure import CompileRerunBuild
+from findit_v2.model.culprit_action import CulpritAction
+from findit_v2.services import build_util
 from findit_v2.services import constants
+from findit_v2.services import projects
 from findit_v2.services.analysis.analysis_api import AnalysisAPI
 from findit_v2.services.failure_type import StepTypeEnum
 
@@ -181,3 +189,109 @@ class CompileAnalysisAPI(AnalysisAPI):
             CompileFailureGroup.first_failed_commit.gitiles_id == context
             .gitiles_id).fetch()
     return groups[0] if groups else None
+
+  def OnCulpritFound(self, context, analyzed_build_id, culprit):
+    """Decides and executes the action for the found culprit change.
+
+    This possible actions include:
+
+     - No action.
+     - Notify the culprit CL.
+     - Create revert and request that it's reviewed.
+     - Create a revert and submit it.
+
+    Selecting the appropriate action will be based on the project's configured
+    options and daily limits as well as whether the action can be taken safely.
+
+    Refer to the code below for details.
+
+    Args:
+      context (findit_v2.services.context.Context): Scope of the analysis.
+      analyzed_build_id: Buildbucket id of the continuous build being analyzed.
+      culprit: The Culprit entity for the change identified as causing the
+          failures.
+
+    Returns:
+      The CulpritAction entity describing the action taken, None if no action
+      was performed.
+    """
+
+    project_api = projects.GetProjectAPI(context.luci_project_name)
+    project_config = projects.PROJECT_CFG.get(context.luci_project_name, {})
+    action_settings = waterfall_config.GetActionSettings()
+
+    if not project_config.get('auto_actions_enabled_for_project', False):
+      return self._NoAction(culprit, 'Auto-actions disabled for project')
+
+    if not build_util.AllLaterBuildsHaveOverlappingFailure(
+        context, analyzed_build_id, culprit):
+      return self._NoAction(culprit, 'Build has recovered')
+
+    change_info, gerrit_client = project_api.ChangeInfoAndClientFromCommit(
+        culprit)
+    cl_details = gerrit_client.GetClDetails(change_info['review_change_id'])
+    if bool(cl_details.revert_of):
+      return self._Notify(project_api, culprit, 'The culprit is a revert')
+
+    reverted, by_findit = self._CheckIfReverted(
+        cl_details, culprit,
+        project_config.get('auto_actions_service_account', ''))
+    if reverted and by_findit:
+      return self._NoAction(culprit,
+                            'We already created a revert for this culprit')
+
+    if reverted:
+      return self._Notify(
+          project_api,
+          culprit,
+          'A revert was manually created for this culprit',
+          silent=True)
+
+    if CulpritAction.GetRecentActionsByType(
+        CulpritAction.REVERT, revert_committed=False) >= action_settings.get(
+            'auto_create_revert_daily_threshold_compile', 10):
+      return self._Notify(project_api, culprit, 'Reached revert creation quota')
+
+    if not project_config.get('auto_revert_enabled_for_project', False):
+      return self._Notify(project_api, culprit,
+                          'Auto-revert disabled for this project')
+
+    if cl_details.auto_revert_off:
+      return self._Notify(project_api, culprit,
+                          'The culprit has been tagged with NOAUTOREVERT=True')
+
+    if gerrit.ExistCQedDependingChanges(change_info):
+      return self._Notify(project_api, culprit,
+                          'Changes already in the CQ depend on culprit')
+
+    if not git.ChangeCommittedWithinTime(
+        culprit.gitiles_id,
+        repo_url=git.GetRepoUrlFromContext(context),
+        hours=project_config.get('max_revertible_culprit_age_hours', 24)):
+      return self._Notify(project_api, culprit,
+                          'Culprit is too old to auto-revert')
+
+    if cl_details.owner_email in project_config.get(
+        'automated_account_whitelist', []):
+      return self._Notify(project_api, culprit,
+                          'Culprit was created by a whitelisted account')
+
+    revert = project_api.CreateRevert(
+        culprit, self._ComposeRevertDescription(project_api, culprit))
+    if project_config.get('auto_commit_enabled_for_project', False):
+      if CulpritAction.GetRecentActionsByType(
+          CulpritAction.REVERT, revert_committed=True) < action_settings.get(
+              'auto_commit_revert_daily_threshold_compile', 4):
+        logging.info('Submitting revert %s for %s', revert['id'],
+                     culprit.key.id())
+        action = self._CommitRevert(project_api, revert, culprit)
+        if action:
+          return action
+        logging.info(
+            'Could not land revert automatically, requesting manual review')
+      else:
+        logging.info('Reached auto-commit quota, requesting manual review')
+    else:
+      logging.info('Auto-committing disabled, requesting manual review')
+
+    return self._RequestReview(project_api, revert, culprit)

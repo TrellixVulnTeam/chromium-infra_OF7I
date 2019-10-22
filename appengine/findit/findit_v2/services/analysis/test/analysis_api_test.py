@@ -1579,10 +1579,11 @@ class AnalysisAPITest(wf_testcase.TestCase):
     self.assertEqual(1, len(rerun_builds))
     self.assertEqual(6000002, rerun_builds[0].gitiles_commit.commit_position)
 
+  @mock.patch.object(CompileAnalysisAPI, 'OnCulpritFound')
   @mock.patch.object(CompileAnalysisAPI, 'TriggerRerunBuild')
   @mock.patch.object(git, 'MapCommitPositionsToGitHashes')
-  def testRerunBasedAnalysisEndWithCulprit(self, mock_revisions,
-                                           mock_trigger_build):
+  def testRerunBasedAnalysisEndWithCulprit(
+      self, mock_revisions, mock_trigger_build, mock_culprit_found):
     rerun_build = self._CreateCompileRerunBuild(commit_index=1)
     rerun_build.status = 20
     failure_entity_a = CompileFailureInRerunBuild(
@@ -1605,6 +1606,7 @@ class AnalysisAPITest(wf_testcase.TestCase):
     self.assertIsNotNone(culprit_key)
     culprit = culprit_key.get()
     self.assertEqual(6000001, culprit.commit_position)
+    self.assertEqual(1, mock_culprit_found.call_count)
 
   @mock.patch.object(
       CompileAnalysisAPI,

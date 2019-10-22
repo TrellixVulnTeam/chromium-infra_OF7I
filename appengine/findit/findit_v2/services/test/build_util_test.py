@@ -66,8 +66,9 @@ class BuildUtilTest(WaterfallTestCase):
                      build_util.GetBuildAndContextForAnalysis('chromium', 123))
 
   @mock.patch.object(git, 'GetCommitPositionFromRevision', return_value=12345)
+  @mock.patch('common.waterfall.buildbucket_client.GetV2Build')
   @mock.patch.object(build_util, 'GetRecentCompletedBuilds')
-  def testAllLaterBuildsHaveOverlappingFailure(self, mock_builds, _):
+  def testAllLaterBuildsHaveOverlappingFailure(self, mock_builds, mock_get, _):
     context = Context(
         luci_project_name='chromium',
         gitiles_host='gitiles.host.com',
@@ -86,6 +87,7 @@ class BuildUtilTest(WaterfallTestCase):
     step1 = Step(name='s1', status=common_pb2.SUCCESS)
     step2 = Step(name='compile', status=common_pb2.FAILURE)
     original_build.steps.extend([step1, step2])
+    mock_get.return_value = original_build
 
     build_entity = luci_build.SaveFailedBuild(context, original_build,
                                               'COMPILE')
@@ -107,7 +109,7 @@ class BuildUtilTest(WaterfallTestCase):
 
     mock_builds.return_value = [later_build, original_build]
     self.assertTrue(
-        build_util.AllLaterBuildsHaveOverlappingFailure(context, original_build,
+        build_util.AllLaterBuildsHaveOverlappingFailure(context, build_id,
                                                         culprit))
 
     # Build succeeds later.

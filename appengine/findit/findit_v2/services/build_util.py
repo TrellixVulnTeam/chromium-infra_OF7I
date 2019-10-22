@@ -117,7 +117,7 @@ def GetBuildAndContextForAnalysis(project, build_id):
   return build, context
 
 
-def AllLaterBuildsHaveOverlappingFailure(context, build, culprit):
+def AllLaterBuildsHaveOverlappingFailure(context, build_id, culprit):
   """Gets later builds on the same builder with overlapping failed steps.
 
   Queries buildbucket for later builds on the same builder and checks if all of
@@ -125,7 +125,8 @@ def AllLaterBuildsHaveOverlappingFailure(context, build, culprit):
   based on failed step names.
 
   Args:
-    build (buildbucket build.proto): ALL info about the original build.
+    context (findit_v2.services.context.Context): Scope of the analysis.
+    build_id: Id of the build to check
     culprit (findit_v2.model.gitiles_commit.Culprit): The culprit that
         introduces the failures we are checking.
 
@@ -140,9 +141,10 @@ def AllLaterBuildsHaveOverlappingFailure(context, build, culprit):
   def _StepNamesOnly(step_type_tuples):
     return set(s.name for s, st in step_type_tuples)
 
+  build = buildbucket_client.GetV2Build(build_id, fields=FieldMask(paths=['*']))
   builder_id = build.builder
   latest_builds = GetRecentCompletedBuilds(
-      builder_id, at_or_after_build=build.id)
+      builder_id, at_or_after_build=build_id)
   failures = [ndb.Key(urlsafe=k).get() for k in culprit.failure_urlsafe_keys]
   original_failed_steps = set(f.step_ui_name for f in failures)
   for newer_build in latest_builds:

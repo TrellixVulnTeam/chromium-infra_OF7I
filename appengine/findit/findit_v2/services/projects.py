@@ -6,6 +6,8 @@
 import logging
 import re
 
+from common import constants
+
 from findit_v2.services.chromeos_api import ChromeOSProjectAPI
 from findit_v2.services.chromium_api import ChromiumProjectAPI
 from findit_v2.services.failure_type import BuilderTypeEnum
@@ -138,6 +140,15 @@ PROJECT_CFG = {
         'should_group_failures': False,
         # Heurisitic analysis.
         'should_get_compile_suspects': True,
+        # Auto-actions
+        'auto_actions_enabled_for_project': True,
+        'auto_revert_enabled_for_project': True,
+        'auto_commit_enabled_for_project': True,
+        # Do not automatically revert Culprits older than this. Commented out as
+        # this is the default value.
+        # 'max_revertible_culprit_age_hours': 24,
+        # Do not automatically revert commits by these accounts.
+        'automated_account_whitelist': constants.NO_AUTO_COMMIT_REVERT_ACCOUNTS,
     },
     'chromeos': {
         'project_api': ChromeOSProjectAPI(),
