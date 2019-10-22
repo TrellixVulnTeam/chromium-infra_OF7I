@@ -29,41 +29,10 @@ cron:
     # side effect. If it fails, it can catch the next cron train.
     job_retry_limit: 1
 
-- description: refresh bots
-  url: /internal/cron/refresh-bots
-  schedule: every 5 minutes
-  retry_parameters:
-    # The cron handlers are idempotent, and called frequently. A small number of
-    # retries is enough to paper over trasient Swarming service failures. Beyond
-    # that, we can always catch the next cron train.
-    job_retry_limit: 3
 - description: refresh inventory
   url: /internal/cron/refresh-inventory
   schedule: every 1 minutes
-- description: ensure background tasks
-  url: /internal/cron/ensure-background-tasks
-  schedule: every 5 minutes
-  retry_parameters:
-    # The cron handlers are idempotent, and called frequently. A small number of
-    # retries is enough to paper over trasient Swarming service failures. Beyond
-    # that, we can always catch the next cron train.
-    job_retry_limit: 3
-- description: trigger repair on idle bots
-  url: /internal/cron/trigger-repair-on-idle
-  schedule: every 5 minutes
-  retry_parameters:
-    # The cron handlers are idempotent, and called frequently. A small number of
-    # retries is enough to paper over trasient Swarming service failures. Beyond
-    # that, we can always catch the next cron train.
-    job_retry_limit: 3
-- description: trigger repair on repair failed bots
-  url: /internal/cron/trigger-repair-on-repair-failed
-  schedule: every 5 minutes
-  retry_parameters:
-    # The cron handlers are idempotent, and called frequently. A small number of
-    # retries is enough to paper over trasient Swarming service failures. Beyond
-    # that, we can always catch the next cron train.
-    job_retry_limit: 3
+
 - description: push inventory to drone queen
   url: /internal/cron/push-inventory-to-queen
   schedule: every 10 minutes
@@ -71,6 +40,7 @@ cron:
 - description: LUCI config datastore cache periodic refresh
   url: /admin/config/cache/manager
   schedule: every 10 minutes
+
 - description: tsmon house keeping
   url: /internal/cron/ts_mon/housekeeping
   schedule: every 1 minutes
