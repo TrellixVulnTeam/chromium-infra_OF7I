@@ -1050,8 +1050,10 @@ Delete.assert_called_once_with(
   def testGetProjectIDsFromHotlist(self):
     self.features_service.hotlist2issue_tbl.Select(self.cnxn,
         cols=['Issue.project_id'], hotlist_id=678, distinct=True,
-        left_joins=[('Issue ON issue_id = id', [])])
+        left_joins=[('Issue ON issue_id = id', [])]).AndReturn(
+            [(789,), (787,), (788,)])
 
     self.mox.ReplayAll()
-    self.features_service.GetProjectIDsFromHotlist(self.cnxn, 678)
+    project_ids = self.features_service.GetProjectIDsFromHotlist(self.cnxn, 678)
     self.mox.VerifyAll()
+    self.assertEqual([789, 787, 788], project_ids)

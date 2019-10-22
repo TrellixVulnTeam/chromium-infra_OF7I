@@ -930,9 +930,10 @@ class FeaturesService(object):
     return retrieved_dict
 
   def GetProjectIDsFromHotlist(self, cnxn, hotlist_id):
-    return self.hotlist2issue_tbl.Select(cnxn,
+    project_id_rows = self.hotlist2issue_tbl.Select(cnxn,
         cols=['Issue.project_id'], hotlist_id=hotlist_id, distinct=True,
         left_joins=[('Issue ON issue_id = id', [])])
+    return [row[0] for row in project_id_rows]
 
   ### Get hotlists
   def GetHotlists(self, cnxn, hotlist_ids, use_cache=True):
@@ -1036,7 +1037,6 @@ class FeaturesService(object):
           (hotlist.name, owner_id))
 
     for project_id in project_ids:
-      project_id = project_id[0]
       self.config_service.InvalidateMemcacheForEntireProject(project_id)
 
   def ExpungeHotlists(self, cnxn, hotlist_ids, star_svc, user_svc, chart_svc):
