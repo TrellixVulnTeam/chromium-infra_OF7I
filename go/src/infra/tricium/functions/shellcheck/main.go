@@ -36,7 +36,7 @@ func main() {
 
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument")
+		log.Panicf("Unexpected argument")
 	}
 
 	r := &runner.Runner{
@@ -52,15 +52,15 @@ func main() {
 		// No explicit shellcheck_bin; try to find one.
 		r.Path = findShellCheckBin()
 		if r.Path == "" {
-			log.Fatal("Couldn't find shellcheck bin!")
+			log.Panic("Couldn't find shellcheck bin!")
 		}
 		// Validate that the found binary is a supported version of shellcheck.
 		version, err := r.Version()
 		if err != nil {
-			log.Fatalf("Error checking shellcheck version: %v", err)
+			log.Panicf("Error checking shellcheck version: %v", err)
 		}
 		if !strings.HasPrefix(version, "0.") || version < "0.6" {
-			log.Fatalf("Found shellcheck with unsupported version %q", version)
+			log.Panicf("Found shellcheck with unsupported version %q", version)
 		}
 	}
 
@@ -71,13 +71,13 @@ func run(r *runner.Runner, inputDir, outputDir, pathFilters string) {
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err := tricium.ReadDataType(inputDir, input); err != nil {
-		log.Fatalf("Failed to read FILES data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 	log.Printf("Read FILES data.")
 
 	filtered, err := tricium.FilterFiles(input.Files, strings.Split(pathFilters, ",")...)
 	if err != nil {
-		log.Fatalf("Failed to filter files: %v", err)
+		log.Panicf("Failed to filter files: %v", err)
 	}
 
 	// Run shellcheck on input files.
@@ -90,7 +90,7 @@ func run(r *runner.Runner, inputDir, outputDir, pathFilters string) {
 	if len(paths) > 0 {
 		warns, err = r.Warnings(paths...)
 		if err != nil {
-			log.Fatalf("Error running shellcheck: %v", err)
+			log.Panicf("Error running shellcheck: %v", err)
 		}
 	} else {
 		log.Printf("No files to check.")
@@ -115,7 +115,7 @@ func run(r *runner.Runner, inputDir, outputDir, pathFilters string) {
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(outputDir, results)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
 }

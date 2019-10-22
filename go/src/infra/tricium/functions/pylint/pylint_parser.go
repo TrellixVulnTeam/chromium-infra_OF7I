@@ -42,7 +42,7 @@ func main() {
 		"The enable list overrides the disable list.")
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument.")
+		log.Panicf("Unexpected argument.")
 	}
 
 	// Retrieve the path name for the executable that started the current process.
@@ -56,14 +56,14 @@ func main() {
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err = tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read FILES data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 	log.Printf("Read FILES data.")
 
 	// Filter the files to include only .py files.
 	files, err := tricium.FilterFiles(input.Files, "*.py")
 	if err != nil {
-		log.Fatalf("Failed to filter files: %v", err)
+		log.Panicf("Failed to filter files: %v", err)
 	}
 
 	// Construct the command args and invoke Pylint on the given paths.
@@ -119,7 +119,7 @@ func main() {
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, output)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
 }
@@ -139,7 +139,7 @@ func scanPylintOutput(scanner *bufio.Scanner, results *tricium.Data_Results) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to read file: %v", err)
+		log.Panicf("Failed to read file: %v", err)
 	}
 }
 

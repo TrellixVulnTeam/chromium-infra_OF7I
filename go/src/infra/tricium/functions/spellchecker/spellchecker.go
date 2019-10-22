@@ -104,7 +104,7 @@ func main() {
 	outputDir := flag.String("output", "", "Path to root of Tricium output")
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument.")
+		log.Panicf("Unexpected argument.")
 	}
 	cp := loadCommentsJSONFile()
 	dict = loadDictionaryFile()
@@ -112,7 +112,7 @@ func main() {
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err := tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read FILES data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 	log.Printf("Read FILES data.")
 
@@ -143,7 +143,7 @@ func main() {
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, results)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
 }
@@ -428,7 +428,7 @@ func loadDictionaryFile() map[string][]string {
 		dictMap[strings.ToLower(parts[0])] = fixes
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to read file: %v, path: %s", err, dictPath)
+		log.Panicf("Failed to read file: %v, path: %s", err, dictPath)
 	}
 
 	return dictMap
@@ -444,10 +444,10 @@ func loadCommentsJSONFile() map[string]*commentFormat {
 
 	jsonBytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		log.Fatalf("Failed to read JSON file: %v", err)
+		log.Panicf("Failed to read JSON file: %v", err)
 	}
 	if err := json.Unmarshal(jsonBytes, &commentsMap); err != nil {
-		log.Fatalf("Failed to read JSON file: %v", err)
+		log.Panicf("Failed to read JSON file: %v", err)
 	}
 
 	return commentsMap
@@ -456,14 +456,14 @@ func loadCommentsJSONFile() map[string]*commentFormat {
 func openFileOrDie(path string) *os.File {
 	f, err := os.Open(path)
 	if err != nil {
-		log.Fatalf("Failed to open file: %v, path: %s", err, path)
+		log.Panicf("Failed to open file: %v, path: %s", err, path)
 	}
 	return f
 }
 
 func closeFileOrDie(f *os.File) {
 	if err := f.Close(); err != nil {
-		log.Fatalf("Failed to close file: %v", err)
+		log.Panicf("Failed to close file: %v", err)
 	}
 }
 

@@ -37,14 +37,14 @@ func main() {
 	rootFlag := flag.String("root", "", "Path to repo root, for header-guard paths")
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument.")
+		log.Panicf("Unexpected argument.")
 	}
 
 	// Retrieve the path name for the executable that started the current
 	// process, so that we can build an absolute path below.
 	ex, err := os.Executable()
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	exPath := filepath.Dir(ex)
 	log.Printf("Using executable path %q.", exPath)
@@ -52,7 +52,7 @@ func main() {
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err = tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read FILES data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 	log.Printf("Read FILES data.")
 
@@ -66,7 +66,7 @@ func main() {
 	cmd.Dir = *inputDir
 	log.Printf("Running cmd: %s", cmd.Args)
 	if err = cmd.Run(); err != nil {
-		log.Fatalf("Failed to run command %s", err)
+		log.Panicf("Failed to run command %s", err)
 	}
 
 	// Construct Command to run.
@@ -109,7 +109,7 @@ func main() {
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, output)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to %q.", path)
 }
@@ -146,7 +146,7 @@ func scanCpplintOutput(scanner *bufio.Scanner, results *tricium.Data_Results) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to read file: %v", err)
+		log.Panicf("Failed to read file: %v", err)
 	}
 }
 

@@ -52,7 +52,7 @@ func main() {
 	// would enable specifying warnings in project configs.
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument")
+		log.Panicf("Unexpected argument")
 	}
 
 	// Retrieve the path of the executable that started the current process.
@@ -66,14 +66,14 @@ func main() {
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err = tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read FILES data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 	log.Printf("Read FILES data.")
 
 	// Filter the files to include only .js files.
 	files, err := tricium.FilterFiles(input.Files, "*.js")
 	if err != nil {
-		log.Fatalf("Failed to filter files: %v", err)
+		log.Panicf("Failed to filter files: %v", err)
 	}
 
 	cmdName := filepath.Join(exPath, nodePath)
@@ -89,10 +89,10 @@ func main() {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatalf("StdoutPipe failed: %v", err)
+		log.Panicf("StdoutPipe failed: %v", err)
 	}
 	if err = cmd.Start(); err != nil {
-		log.Fatalf("Command Start failed: %v", err)
+		log.Panicf("Command Start failed: %v", err)
 	}
 
 	// Parse the output and convert to Tricium results.
@@ -104,7 +104,7 @@ func main() {
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, results)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
 }
@@ -117,12 +117,12 @@ func readESLintOutput(r io.Reader, basePath string) *tricium.Data_Results {
 	results := &tricium.Data_Results{}
 	bytes, err := ioutil.ReadAll(r)
 	if err != nil {
-		log.Fatalf("Failed to read command output: %v", err)
+		log.Panicf("Failed to read command output: %v", err)
 	}
 
 	var output []FileErrors
 	if err := json.Unmarshal(bytes, &output); err != nil {
-		log.Fatalf("Failed to parse JSON output: %v", err)
+		log.Panicf("Failed to parse JSON output: %v", err)
 	}
 
 	for _, fileOutput := range output {
@@ -130,7 +130,7 @@ func readESLintOutput(r io.Reader, basePath string) *tricium.Data_Results {
 		// but for Tricium comments we require relative paths.
 		path, err := filepath.Rel(basePath, fileOutput.FilePath)
 		if err != nil {
-			log.Fatalf("Failed to get relative path from %q to %q: %v", basePath, fileOutput.FilePath, err)
+			log.Panicf("Failed to get relative path from %q to %q: %v", basePath, fileOutput.FilePath, err)
 		}
 		for _, message := range fileOutput.Messages {
 			if comment := makeCommentForMessage(path, message); comment != nil {

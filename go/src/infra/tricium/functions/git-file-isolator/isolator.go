@@ -33,7 +33,7 @@ func main() {
 	// Read Tricium input GIT_FILE_DETAILS data.
 	input := &tricium.Data_GitFileDetails{}
 	if err := tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read GIT_FILE_DETAILS data: %v", err)
+		log.Panicf("Failed to read GIT_FILE_DETAILS data: %v", err)
 	}
 	log.Printf("Read GIT_FILE_DETAILS data.")
 
@@ -49,11 +49,11 @@ func main() {
 	// The temporary directory should be cleaned up before exiting.
 	tempDir, err := ioutil.TempDir("", "git-file-isolator")
 	if err != nil {
-		log.Fatalf("Failed to setup temporary directory: %v", err)
+		log.Panicf("Failed to setup temporary directory: %v", err)
 	}
 	defer func() {
 		if err = os.RemoveAll(tempDir); err != nil {
-			log.Fatalf("Failed to clean up temporary directory %q: %v", tempDir, err)
+			log.Panicf("Failed to clean up temporary directory %q: %v", tempDir, err)
 		}
 	}()
 	log.Printf("Created temporary directory %q.", tempDir)
@@ -70,7 +70,7 @@ func main() {
 		c.Stderr = &stderr
 		log.Printf("Running cmd: %s", c.Args)
 		if err = c.Run(); err != nil {
-			log.Fatalf("Failed to run command %s\n%v\nStderr: %s", c.Args, err, stderr.String())
+			log.Panicf("Failed to run command %s\n%v\nStderr: %s", c.Args, err, stderr.String())
 		}
 	}
 
@@ -80,7 +80,7 @@ func main() {
 	// filtering is based only on file path.
 	files := filterSkippedFiles(input.Files, tempDir)
 	if len(files) == 0 {
-		log.Fatalf("Empty files list after filtering.")
+		log.Panicf("Empty files list after filtering.")
 	}
 
 	// Check out the files into the temporary directory.
@@ -90,7 +90,7 @@ func main() {
 		c.Args = append(c.Args, file.Path)
 	}
 	if err = c.Run(); err != nil {
-		log.Fatalf("Failed to run command: %v, cmd: %s", err, c.Args)
+		log.Panicf("Failed to run command: %v, cmd: %s", err, c.Args)
 	}
 
 	getLastPatch(tempDir, files, input)
@@ -107,7 +107,7 @@ func main() {
 	// Write Tricium output FILES data.
 	p, err := tricium.WriteDataType(*outputDir, output)
 	if err != nil {
-		log.Fatalf("Failed to write FILES data: %v", err)
+		log.Panicf("Failed to write FILES data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", p)
 }
@@ -135,7 +135,7 @@ func runCmd(c *exec.Cmd, dir string) string {
 	log.Printf("Running cmd: %s", c.Args)
 	out, err := c.Output()
 	if err != nil {
-		log.Fatalf("Failed to run command %s\n%v\nStderr: %s", c.Args, err, stderr.String())
+		log.Panicf("Failed to run command %s\n%v\nStderr: %s", c.Args, err, stderr.String())
 	}
 	return string(out)
 }
@@ -169,7 +169,7 @@ func checkoutGitattributes(paths []string, dir string) {
 	log.Printf("Running cmd: %s", c.Args)
 	out, err := c.Output()
 	if err != nil {
-		log.Fatalf("Failed to run command: %v, cmd: %s", err, c.Args)
+		log.Panicf("Failed to run command: %v, cmd: %s", err, c.Args)
 	}
 	existent := splitNull(string(out))
 	if len(existent) == 0 {
@@ -185,7 +185,7 @@ func checkoutGitattributes(paths []string, dir string) {
 	log.Printf("Running cmd: %s", c.Args)
 	out, err = c.Output()
 	if err != nil {
-		log.Fatalf("Failed to run command: %v, cmd: %s", err, c.Args)
+		log.Panicf("Failed to run command: %v, cmd: %s", err, c.Args)
 	}
 }
 
@@ -238,7 +238,7 @@ func skippedByGitattributes(paths []string, dir string) stringset.Set {
 	log.Printf("Running cmd: %s", c.Args)
 	out, err := c.Output()
 	if err != nil {
-		log.Fatalf("Failed to run command: %v, cmd: %s", err, c.Args)
+		log.Panicf("Failed to run command: %v, cmd: %s", err, c.Args)
 	}
 
 	// The output of `git check-attr -z <attr> -- ...` is a flat null-separated
@@ -247,7 +247,7 @@ func skippedByGitattributes(paths []string, dir string) stringset.Set {
 	skipped := stringset.Set{}
 	fields := splitNull(string(out))
 	if len(fields)%3 != 0 {
-		log.Fatalf("Unexpected output from git check-attr: %s", out)
+		log.Panicf("Unexpected output from git check-attr: %s", out)
 	}
 	for i := 0; i+2 < len(fields); i += 3 {
 		p, v := fields[i], fields[i+2]
@@ -285,20 +285,20 @@ func copyFiles(inputDir, outputDir string, files []*tricium.Data_File) []*triciu
 
 		dest := path.Join(outputDir, file.Path)
 		if err := os.MkdirAll(path.Dir(dest), os.ModePerm); err != nil {
-			log.Fatalf("Failed to create dirs for file: %v", err)
+			log.Panicf("Failed to create dirs for file: %v", err)
 		}
 		cmd := exec.Command("cp", src, dest)
 
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
-			log.Fatalf("Failed to read stderr: %v", err)
+			log.Panicf("Failed to read stderr: %v", err)
 		}
 		if err := cmd.Start(); err != nil {
-			log.Fatalf("Failed to invoke command: %v", err)
+			log.Panicf("Failed to invoke command: %v", err)
 		}
 		slurp, _ := ioutil.ReadAll(stderr)
 		if err := cmd.Wait(); err != nil {
-			log.Fatalf("Command failed: %v, stderr: %s", err, slurp)
+			log.Panicf("Command failed: %v, stderr: %s", err, slurp)
 		}
 		// Copy the patch, but do not add the patch to the output file paths
 		if file.Path != patchName {

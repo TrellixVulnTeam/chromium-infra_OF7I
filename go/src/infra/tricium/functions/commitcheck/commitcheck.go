@@ -19,13 +19,13 @@ func main() {
 	outputDir := flag.String("output", "", "Path to root of Tricium output")
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument")
+		log.Panicf("Unexpected argument")
 	}
 
 	// Read Tricium input GIT_FILE_DETAILS data.
 	input := &tricium.Data_GitFileDetails{}
 	if err := tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read GIT_FILE_DETAILS data: %v", err)
+		log.Panicf("Failed to read GIT_FILE_DETAILS data: %v", err)
 	}
 
 	results := &tricium.Data_Results{}
@@ -36,7 +36,7 @@ func main() {
 	// Write Tricium RESULTS data.
 	_, err := tricium.WriteDataType(*outputDir, results)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 }
 

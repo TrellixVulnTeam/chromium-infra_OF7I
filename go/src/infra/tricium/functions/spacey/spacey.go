@@ -33,13 +33,13 @@ func main() {
 	outputDir := flag.String("output", "", "Path to root of Tricium output")
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument.")
+		log.Panicf("Unexpected argument.")
 	}
 
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err := tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read FILES data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 	log.Printf("Read FILES data.")
 
@@ -53,20 +53,20 @@ func main() {
 		p := file.Path
 		file, err := os.Open(filepath.Join(*inputDir, p))
 		if err != nil {
-			log.Fatalf("Failed to open file %q: %v", p, err)
+			log.Panicf("Failed to open file %q: %v", p, err)
 		}
 		comments := analyzeFile(bufio.NewScanner(file), p)
 		commentFreqs := organizeCommentsByCategory(comments)
 		output.Comments = mergeComments(commentFreqs, p)
 		if err := file.Close(); err != nil {
-			log.Fatalf("Failed to close file %q: %v", p, err)
+			log.Panicf("Failed to close file %q: %v", p, err)
 		}
 	}
 
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, output)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
 }

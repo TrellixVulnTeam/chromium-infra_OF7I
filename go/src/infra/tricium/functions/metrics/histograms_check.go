@@ -166,12 +166,12 @@ func main() {
 	outputDir := flag.String("output", "", "Path to root of Tricium output")
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument.")
+		log.Panicf("Unexpected argument.")
 	}
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err := tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read FILES data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 	log.Printf("Read FILES data.")
 
@@ -200,18 +200,18 @@ func main() {
 
 	filesChanged, err := getDiffsPerFile(filepath.Join(*inputDir, input.Patch))
 	if err != nil {
-		log.Fatalf("Failed to get diffs per file: %v", err)
+		log.Panicf("Failed to get diffs per file: %v", err)
 	}
 
 	// Set up the temporary directory where we'll put original files.
 	// The temporary directory should be cleaned up before exiting.
 	tempDir, err := ioutil.TempDir(*inputDir, "get-original-file")
 	if err != nil {
-		log.Fatalf("Failed to setup temporary directory: %v", err)
+		log.Panicf("Failed to setup temporary directory: %v", err)
 	}
 	defer func() {
 		if err = os.RemoveAll(tempDir); err != nil {
-			log.Fatalf("Failed to clean up temporary directory %q: %v", tempDir, err)
+			log.Panicf("Failed to clean up temporary directory %q: %v", tempDir, err)
 		}
 	}()
 	log.Printf("Created temporary directory %q.", tempDir)
@@ -226,7 +226,7 @@ func main() {
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, results)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
 }
@@ -269,14 +269,14 @@ func getOriginalFiles(filePaths []string, tempDir string, patchPath string) {
 		tempPath := filepath.Join(tempDir, filePath)
 		// Note: Must use filepath.Dir rather than path.Dir to be compatible with Windows.
 		if err := os.MkdirAll(filepath.Dir(tempPath), os.ModePerm); err != nil {
-			log.Fatalf("Failed to create dirs for file: %v", err)
+			log.Panicf("Failed to create dirs for file: %v", err)
 		}
 		copyFile(filePath, tempPath)
 	}
 	// Only apply patch if patch is not empty.
 	fi, err := os.Stat(patchPath)
 	if err != nil {
-		log.Fatalf("Failed to get file info for patch %s: %v", patchPath, err)
+		log.Panicf("Failed to get file info for patch %s: %v", patchPath, err)
 	}
 	if fi.Size() > 0 {
 		cmds := []*exec.Cmd{exec.Command("git", "init")}
@@ -287,7 +287,7 @@ func getOriginalFiles(filePaths []string, tempDir string, patchPath string) {
 			c.Stderr = &stderr
 			log.Printf("Running cmd: %s", c.Args)
 			if err := c.Run(); err != nil {
-				log.Fatalf("Failed to run command %s\n%v\nStderr: %s", c.Args, err, stderr.String())
+				log.Panicf("Failed to run command %s\n%v\nStderr: %s", c.Args, err, stderr.String())
 			}
 		}
 	}
@@ -296,10 +296,10 @@ func getOriginalFiles(filePaths []string, tempDir string, patchPath string) {
 func copyFile(sourceFile string, destFile string) {
 	input, err := ioutil.ReadFile(sourceFile)
 	if err != nil {
-		log.Fatalf("Failed to read file %s while copying file %s to %s: %v", sourceFile, sourceFile, destFile, err)
+		log.Panicf("Failed to read file %s while copying file %s to %s: %v", sourceFile, sourceFile, destFile, err)
 	}
 	if err = ioutil.WriteFile(destFile, input, 0644); err != nil {
-		log.Fatalf("Failed to write file %s while copying file %s to %s: %v", destFile, sourceFile, destFile, err)
+		log.Panicf("Failed to write file %s while copying file %s to %s: %v", destFile, sourceFile, destFile, err)
 	}
 }
 
@@ -309,11 +309,11 @@ func getSingleElementEnums(inputPath string) stringset.Set {
 	defer closeFileOrDie(f)
 	enumBytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		log.Fatalf("Failed to read enums into buffer")
+		log.Panicf("Failed to read enums into buffer")
 	}
 	var enumFile enumFile
 	if err := xml.Unmarshal(enumBytes, &enumFile); err != nil {
-		log.Fatalf("Failed to unmarshal enums")
+		log.Panicf("Failed to unmarshal enums")
 	}
 	for _, enum := range enumFile.Enums.EnumList {
 		if len(enum.Elements) == 1 {
@@ -427,7 +427,7 @@ func checkHistogram(path string, histBytes []byte, metadata *Metadata, singleton
 func bytesToHistogram(histBytes []byte, metadata *Metadata) Histogram {
 	var histogram Histogram
 	if err := xml.Unmarshal(histBytes, &histogram); err != nil {
-		log.Fatalf("WARNING: Failed to unmarshal histogram at line %d", metadata.HistogramLineNum)
+		log.Panicf("WARNING: Failed to unmarshal histogram at line %d", metadata.HistogramLineNum)
 	}
 	return histogram
 }
@@ -511,13 +511,13 @@ func checkExpiry(path string, histogram Histogram, metadata *Metadata) []*triciu
 		if dateMatch {
 			inputDate, err := time.Parse(dateFormat, expiry)
 			if err != nil {
-				log.Fatalf("Failed to parse expiry date: %v", err)
+				log.Panicf("Failed to parse expiry date: %v", err)
 			}
 			processExpiryDateDiff(inputDate, &commentMessage, &logMessage)
 		} else if milestoneMatch {
 			milestone, err := strconv.Atoi(expiry[1:])
 			if err != nil {
-				log.Fatalf("Failed to convert input milestone to integer: %v", err)
+				log.Panicf("Failed to convert input milestone to integer: %v", err)
 			}
 			milestoneDate, err := getMilestoneDate(milestone)
 			if err != nil {
@@ -532,7 +532,7 @@ func checkExpiry(path string, histogram Histogram, metadata *Metadata) []*triciu
 		}
 	}
 	if commentMessage == "" {
-		log.Fatalf("Primary expiry comment should not be empty")
+		log.Panicf("Primary expiry comment should not be empty")
 	}
 	expiryComments := []*tricium.Data_Comment{createExpiryComment(commentMessage, path, metadata)}
 	if extraComment != nil {
@@ -583,7 +583,7 @@ func getMilestoneDateImpl(milestone int) (time.Time, error) {
 	log.Printf("Fetched branch date %s for milestone %d", dateString, milestone)
 	milestoneDate, err = time.Parse(dateMilestoneFormat, dateString)
 	if err != nil {
-		log.Fatalf("Failed to parse milestone date: %v", err)
+		log.Panicf("Failed to parse milestone date: %v", err)
 	}
 	return milestoneDate, nil
 }
@@ -646,14 +646,14 @@ func findAddedNamespaces(path string, addedNamespaces stringset.Set, removedName
 func openFileOrDie(path string) *os.File {
 	f, err := os.Open(path)
 	if err != nil {
-		log.Fatalf("Failed to open file: %v, path: %s", err, path)
+		log.Panicf("Failed to open file: %v, path: %s", err, path)
 	}
 	return f
 }
 
 func closeFileOrDie(f *os.File) {
 	if err := f.Close(); err != nil {
-		log.Fatalf("Failed to close file: %v", err)
+		log.Panicf("Failed to close file: %v", err)
 	}
 }
 

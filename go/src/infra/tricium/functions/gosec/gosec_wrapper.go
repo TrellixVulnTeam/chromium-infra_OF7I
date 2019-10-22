@@ -82,7 +82,7 @@ func main() {
 func run() int {
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument.")
+		log.Panicf("Unexpected argument.")
 	}
 	log.Printf("Invoked with args: %v", flag.Args())
 
@@ -90,24 +90,24 @@ func run() int {
 	var err error
 	*inputDir, err = filepath.Abs(*inputDir)
 	if err != nil {
-		log.Fatalf("Unable to get absolute input dir.")
+		log.Panicf("Unable to get absolute input dir.")
 	}
 
 	// Prepare src/packages/... to simulate Gopath directory structure needed for Gosec.
 	envDir, _, packagesDir, err := prepareEnv(*inputDir)
 	if err != nil {
-		log.Fatalf("Unable to setup gosec environment: %v", err)
+		log.Panicf("Unable to setup gosec environment: %v", err)
 	}
 	defer func() {
 		if err = cleanupEnv(envDir); err != nil {
-			log.Fatalf("Unable to clean up gosec environment: %v", err)
+			log.Panicf("Unable to clean up gosec environment: %v", err)
 		}
 	}()
 
 	log.Printf("Running gosec in parallel with %d workers.", maxWorkers)
 	issues, err := runGosecParallel(maxWorkers, envDir, packagesDir)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 		return 1
 	}
 
@@ -146,7 +146,7 @@ func run() int {
 
 	path, err := tricium.WriteDataType(*outputDir, output)
 	if err != nil {
-		log.Fatalf("Failed to write analyzer results: %v", err)
+		log.Panicf("Failed to write analyzer results: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
 	return 0

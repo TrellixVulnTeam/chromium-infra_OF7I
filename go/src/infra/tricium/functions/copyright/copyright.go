@@ -51,13 +51,13 @@ func main() {
 	outputDir := flag.String("output", "", "Path to root of Tricium output")
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Fatalf("Unexpected argument.")
+		log.Panicf("Unexpected argument.")
 	}
 
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err := tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Fatalf("Failed to read FILES data: %v", err)
+		log.Panicf("Failed to read FILES data: %v", err)
 	}
 	log.Printf("Read FILES data.")
 
@@ -80,7 +80,7 @@ func main() {
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, output)
 	if err != nil {
-		log.Fatalf("Failed to write RESULTS data: %v", err)
+		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to %q.", path)
 }
@@ -97,11 +97,11 @@ func isWhitelisted(path string) bool {
 func checkCopyright(path string) *tricium.Data_Comment {
 	file, err := os.Open(path)
 	if err != nil {
-		log.Fatalf("Failed to open file: %v, path: %s", err, path)
+		log.Panicf("Failed to open file: %v, path: %s", err, path)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
-			log.Fatalf("Failed to close file: %v, path: %s", err, path)
+			log.Panicf("Failed to close file: %v, path: %s", err, path)
 		}
 	}()
 	header := getFileHeader(path, file)
@@ -138,7 +138,7 @@ func getFileHeader(path string, file *os.File) string {
 		}
 
 		if err := scanner.Err(); err != nil {
-			log.Fatalf("Failed to read file: %v, path: %s", err, path)
+			log.Panicf("Failed to read file: %v, path: %s", err, path)
 		}
 	}
 	return header.String()
