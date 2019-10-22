@@ -136,6 +136,10 @@ func FreeInvalidDUTs(ctx context.Context, now time.Time) error {
 	if err := datastore.GetAll(ctx, q, &d); err != nil {
 		return errors.Annotate(err, "free invalid DUTs: get all DUTs").Err()
 	}
+	validDrones, err := getValidDrones(ctx, now)
+	if err != nil {
+		return errors.Annotate(err, "free invalid DUTs").Err()
+	}
 	for _, d := range d {
 		f := func(ctx context.Context) error {
 			if err := datastore.Get(ctx, &d); err != nil {
@@ -144,11 +148,7 @@ func FreeInvalidDUTs(ctx context.Context, now time.Time) error {
 			if d.AssignedDrone == "" {
 				return nil
 			}
-			ok, err := isDroneValid(ctx, d.AssignedDrone, now)
-			if err != nil {
-				return err
-			}
-			if ok {
+			if validDrones[d.AssignedDrone] {
 				return nil
 			}
 			d.AssignedDrone = ""
@@ -157,26 +157,27 @@ func FreeInvalidDUTs(ctx context.Context, now time.Time) error {
 			}
 			return nil
 		}
-		o := datastore.TransactionOptions{XG: true}
-		if err := datastore.RunInTransaction(ctx, f, &o); err != nil {
+		if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 			return errors.Annotate(err, "free invalid DUTs").Err()
 		}
 	}
 	return nil
 }
 
-// isDroneValid returns whether the drone is valid (exists and not
-// expired).  This does not have to be run in a transaction, but
-// caveat emptor.
-func isDroneValid(ctx context.Context, d entities.DroneID, now time.Time) (bool, error) {
-	dr := entities.Drone{ID: d}
-	if err := datastore.Get(ctx, &dr); err != nil {
-		if datastore.IsErrNoSuchEntity(err) {
-			return false, nil
-		}
-		return false, errors.Annotate(err, "is drone %v valid", d).Err()
+// getValidDrones returns a map of all valid drones.
+func getValidDrones(ctx context.Context, now time.Time) (map[entities.DroneID]bool, error) {
+	q := datastore.NewQuery(entities.DroneKind)
+	var d []entities.Drone
+	if err := datastore.GetAll(ctx, q, &d); err != nil {
+		return nil, errors.Annotate(err, "get valid drones").Err()
 	}
-	return dr.Expiration.After(now), nil
+	m := make(map[entities.DroneID]bool)
+	for _, d := range d {
+		if d.Expiration.After(now) {
+			m[d.ID] = true
+		}
+	}
+	return m, nil
 }
 
 // PruneExpiredDrones deletes Drones that have expired.  This function

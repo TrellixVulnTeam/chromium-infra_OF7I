@@ -387,6 +387,11 @@ func TestFreeInvalidDUTs(t *testing.T) {
 			dut:  entities.DUT{ID: "jakuri", AssignedDrone: "shurelia"},
 			want: entities.DUT{ID: "jakuri"},
 		},
+		{
+			desc: "DUT assigned to valid drone",
+			dut:  entities.DUT{ID: "jakuri", AssignedDrone: "harvestasha"},
+			want: entities.DUT{ID: "jakuri", AssignedDrone: "harvestasha"},
+		},
 	}
 	for _, c := range cases {
 		c := c
@@ -417,7 +422,7 @@ func TestFreeInvalidDUTs(t *testing.T) {
 	}
 }
 
-func TestIsDroneValid(t *testing.T) {
+func TestGetValidDrones(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
@@ -429,36 +434,17 @@ func TestIsDroneValid(t *testing.T) {
 	if err := datastore.Put(ctx, d); err != nil {
 		t.Fatal(err)
 	}
-	t.Run("valid drone", func(t *testing.T) {
-		t.Parallel()
-		ok, err := isDroneValid(ctx, "harvestasha", now)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !ok {
-			t.Errorf("Got isDroneValid = %v; want true", ok)
-		}
-	})
-	t.Run("expired drone", func(t *testing.T) {
-		t.Parallel()
-		ok, err := isDroneValid(ctx, "shurelia", now)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if ok {
-			t.Errorf("Got isDroneValid = %v; want false", ok)
-		}
-	})
-	t.Run("unknown drone", func(t *testing.T) {
-		t.Parallel()
-		ok, err := isDroneValid(ctx, "jakuri", now)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if ok {
-			t.Errorf("Got isDroneValid = %v; want false", ok)
-		}
-	})
+
+	got, err := getValidDrones(ctx, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[entities.DroneID]bool{
+		"harvestasha": true,
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("map mismatch (-want +got):\n%s", diff)
+	}
 }
 
 func TestPruneExpiredDrones(t *testing.T) {
