@@ -105,6 +105,7 @@ func (a *argsGenerator) GenerateArgs(ctx context.Context) (request.Args, error) 
 		ParentTaskID:            a.parentTaskID,
 		Priority:                a.params.GetScheduling().GetPriority(),
 		ProvisionableDimensions: provisionableDimensions,
+		StatusTopic:             a.params.GetNotification().GetPubsubTopic(),
 		SwarmingTags:            a.swarmingTags(cmd),
 		Timeout:                 timeout,
 	}, nil

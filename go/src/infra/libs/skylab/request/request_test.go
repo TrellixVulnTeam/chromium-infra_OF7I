@@ -67,6 +67,22 @@ func TestProvisionableDimensions(t *testing.T) {
 	})
 }
 
+func TestStatusTopic(t *testing.T) {
+	Convey("Given request arguments that specify a Pubsub topic for status updates", t, func() {
+		args := request.Args{
+			StatusTopic: "a topic name",
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.SwarmingNewTaskRequest()
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have the Pubsub topic assigned.", func() {
+				So(req.PubsubTopic, ShouldEqual, "a topic name")
+			})
+		})
+	})
+}
+
 func TestSliceExpiration(t *testing.T) {
 	timeout := 11 * time.Minute
 	Convey("Given a request arguments with no provisionable dimensions", t, func() {

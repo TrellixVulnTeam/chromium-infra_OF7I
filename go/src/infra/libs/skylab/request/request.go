@@ -44,6 +44,8 @@ type Args struct {
 	Timeout           time.Duration
 	Priority          int64
 	ParentTaskID      string
+	//Pubsub Topic for status updates on the tests run for the request
+	StatusTopic string
 }
 
 // SwarmingNewTaskRequest returns the Swarming request to create the Skylab
@@ -64,6 +66,7 @@ func (a *Args) SwarmingNewTaskRequest() (*swarming.SwarmingRpcsNewTaskRequest, e
 		TaskSlices:   slices,
 		Priority:     a.Priority,
 		ParentTaskId: a.ParentTaskID,
+		PubsubTopic:  a.StatusTopic,
 	}
 	return req, nil
 }
