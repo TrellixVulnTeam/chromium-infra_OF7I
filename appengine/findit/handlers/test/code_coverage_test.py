@@ -496,11 +496,13 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
                 'chromium.googlesource.com': ['chromium/src'],
             },
             'postsubmit_platform_info_map': {
-                'linux': {
-                    'bucket': 'coverage',
-                    'builder': 'linux-code-coverage',
-                    'coverage_tool': 'clang',
-                    'ui_name': 'Linux (C/C++)',
+                'chromium': {
+                    'linux': {
+                        'bucket': 'coverage',
+                        'builder': 'linux-code-coverage',
+                        'coverage_tool': 'clang',
+                        'ui_name': 'Linux (C/C++)',
+                    },
                 },
             },
         })

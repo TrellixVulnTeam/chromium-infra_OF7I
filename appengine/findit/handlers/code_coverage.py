@@ -97,20 +97,26 @@ def _GetBlacklistedDeps():
   return waterfall_config.GetCodeCoverageSettings().get('blacklisted_deps', {})
 
 
-def _GetPostsubmitPlatformInfoMap():
+def _GetPostsubmitPlatformInfoMap(luci_project):
   """Returns a map of postsubmit platform information.
 
-  The map maps from platform name to another map containing the information of
-  the platform, which has the following format, for example:
-  'linux': {
-    'bucket': 'ci',
-    'buider': 'linux-code-coverage',
-    'coverage_tool': 'clang',
-    'ui_name': 'Linux (C/C++)',
+  The map contains per-luci_project platform information, and following is
+  an example config:
+  {
+    'postsubmit_platform_info_map': {
+      'chromium': {
+        'linux': {
+          'bucket': 'ci',
+          'buider': 'linux-code-coverage',
+          'coverage_tool': 'clang',
+          'ui_name': 'Linux (C/C++)',
+        }
+      }
+    }
   }
   """
   return waterfall_config.GetCodeCoverageSettings().get(
-      'postsubmit_platform_info_map', {})
+      'postsubmit_platform_info_map', {}).get(luci_project, {})
 
 
 def _GetWhitelistedBuilders():
@@ -129,7 +135,8 @@ def _GetWhitelistedBuilders():
       'whitelisted_builders', []))
 
 
-def _GetSameOrMostRecentReportForEachPlatform(host, project, ref, revision):
+def _GetSameOrMostRecentReportForEachPlatform(luci_project, host, project, ref,
+                                              revision):
   """Find the matching report on other platforms, or the most recent.
 
   The intent of this function is to help the UI list the platforms that are
@@ -138,7 +145,7 @@ def _GetSameOrMostRecentReportForEachPlatform(host, project, ref, revision):
   most recent visible one.
   """
   result = {}
-  for platform, info in _GetPostsubmitPlatformInfoMap().iteritems():
+  for platform, info in _GetPostsubmitPlatformInfoMap(luci_project).iteritems():
     # Some 'platforms' are hidden from the selection to avoid confusion, as they
     # may be custom reports that do not make sense outside a certain team.
     # They should still be reachable via a url.
@@ -171,7 +178,8 @@ def _GetSameOrMostRecentReportForEachPlatform(host, project, ref, revision):
   return result
 
 
-def _MakePlatformSelect(host, project, ref, revision, path, current_platform):
+def _MakePlatformSelect(luci_project, host, project, ref, revision, path,
+                        current_platform):
   """Populate values needed to render a form to let the user switch platforms.
 
   This will produce parameters needed for the form to post to the same page so
@@ -189,7 +197,7 @@ def _MakePlatformSelect(host, project, ref, revision, path, current_platform):
   if path:
     result['params']['path'] = path
   for platform, report in _GetSameOrMostRecentReportForEachPlatform(
-      host, project, ref, revision).iteritems():
+      luci_project, host, project, ref, revision).iteritems():
     value = platform
     if report.gitiles_commit.revision == revision:
       # If the same revision is available in the target platform, append it to
@@ -197,9 +205,12 @@ def _MakePlatformSelect(host, project, ref, revision, path, current_platform):
       # submission.
       value = '%s#%s' % (platform, revision)
     result['options'].append({
-        'value': value,
-        'ui_name': _GetPostsubmitPlatformInfoMap()[platform]['ui_name'],
-        'selected': platform == current_platform,
+        'value':
+            value,
+        'ui_name':
+            _GetPostsubmitPlatformInfoMap(luci_project)[platform]['ui_name'],
+        'selected':
+            platform == current_platform,
     })
   return result
 
@@ -1141,17 +1152,19 @@ class ServeCodeCoverageData(BaseHandler):
             'platform':
                 platform,
             'platform_ui_name':
-                _GetPostsubmitPlatformInfoMap()[platform]['ui_name'],
+                _GetPostsubmitPlatformInfoMap(luci_project)[platform]
+                ['ui_name'],
             'metrics':
                 code_coverage_util.GetMetricsBasedOnCoverageTool(
-                    _GetPostsubmitPlatformInfoMap()[platform]['coverage_tool']),
+                    _GetPostsubmitPlatformInfoMap(luci_project)[platform]
+                    ['coverage_tool']),
             'data':
                 data,
             'data_type':
                 'project',
             'platform_select':
-                _MakePlatformSelect(host, project, ref, revision, None,
-                                    platform),
+                _MakePlatformSelect(luci_project, host, project, ref, revision,
+                                    None, platform),
             'banner':
                 _GetBanner(project),
             'next_cursor':
@@ -1204,7 +1217,7 @@ class ServeCodeCoverageData(BaseHandler):
       return BaseHandler.CreateError('Invalid request', 400)
 
     logging.info('Servicing coverage data for postsubmit')
-    platform_info_map = _GetPostsubmitPlatformInfoMap()
+    platform_info_map = _GetPostsubmitPlatformInfoMap(luci_project)
     if platform not in platform_info_map:
       return BaseHandler.CreateError('Platform: %s is not supported' % platform,
                                      404)
@@ -1368,12 +1381,14 @@ class ServeCodeCoverageData(BaseHandler):
             'platform':
                 platform,
             'platform_ui_name':
-                _GetPostsubmitPlatformInfoMap()[platform]['ui_name'],
+                _GetPostsubmitPlatformInfoMap(luci_project)[platform]
+                ['ui_name'],
             'path_root':
                 path_root,
             'metrics':
                 code_coverage_util.GetMetricsBasedOnCoverageTool(
-                    _GetPostsubmitPlatformInfoMap()[platform]['coverage_tool']),
+                    _GetPostsubmitPlatformInfoMap(luci_project)[platform]
+                    ['coverage_tool']),
             'data':
                 data,
             'data_type':
@@ -1381,8 +1396,8 @@ class ServeCodeCoverageData(BaseHandler):
             'path_parts':
                 path_parts,
             'platform_select':
-                _MakePlatformSelect(host, project, ref, revision, path,
-                                    platform),
+                _MakePlatformSelect(luci_project, host, project, ref, revision,
+                                    path, platform),
             'banner':
                 _GetBanner(project),
             'warning':
