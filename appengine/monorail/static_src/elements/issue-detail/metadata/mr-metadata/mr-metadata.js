@@ -11,6 +11,7 @@ import 'elements/framework/links/mr-user-link/mr-user-link.js';
 
 import * as issue from 'reducers/issue.js';
 import './mr-field-values.js';
+import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {HARDCODED_FIELD_GROUPS, valuesForField, fieldDefsWithGroup,
   fieldDefsWithoutGroup} from 'shared/metadata-helpers.js';
 
@@ -87,30 +88,34 @@ export class MrMetadata extends connectStore(LitElement) {
       `: ''}
 
       ${this.setter ? html`
-        <th>Setter:</th>
-        <td>
-          <mr-user-link
-            .userRef=${this.setter}
-            showAvailabilityIcon
-          ></mr-user-link>
-        </td>
+        <tr>
+          <th>Setter:</th>
+          <td>
+            <mr-user-link
+              .userRef=${this.setter}
+              showAvailabilityIcon
+            ></mr-user-link>
+          </td>
+        </tr>
       `: ''}
 
-      ${this.owner ? html`
+      <tr>
         <th>Owner:</th>
         <td>
+        ${this.owner ? html`
           <mr-user-link
             .userRef=${this.owner}
             showAvailabilityIcon
             showAvailabilityText
           ></mr-user-link>
+          ` : EMPTY_FIELD_VALUE}
         </td>
-      `: ''}
+      </tr>
 
-      ${this.cc && this.cc.length ? html`
-        <tr>
-          <th>CC:</th>
-          <td>
+      <tr>
+        <th>CC:</th>
+        <td>
+          ${this.cc && this.cc.length ? html`
             ${this.cc.map((cc) => html`
               <mr-user-link
                 .userRef=${cc}
@@ -118,9 +123,10 @@ export class MrMetadata extends connectStore(LitElement) {
               ></mr-user-link>
               <br />
             `)}
-          </td>
-        </tr>
-      `: ''}
+          ` : EMPTY_FIELD_VALUE}
+        </td>
+      </tr>
+
      <tr>
        <td colspan="2">
          <mr-cue cuePrefName="availability_msgs"></mr-cue>
