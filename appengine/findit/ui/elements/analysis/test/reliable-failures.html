@@ -58,13 +58,13 @@
                   </td>
                   <td rowspan$="[[_getRowspan(failure)]]">
                     <template is="dom-if" if="[[_hasLastPass(failure.result.last_pass)]]">
-                      <a href="[[builderUrl]]/[[failure.result.last_pass]]" target="_blank">[[failure.result.last_pass]]</a>
+                      <a href="https://ci.chromium.org/b/[[failure.result.last_pass_build_id]]" target="_blank">[[failure.result.last_pass]]</a>
                     </template>
                     <template is="dom-if" if="[[!_hasLastPass(failure.result.last_pass)]]">
                       Unknown
                     </template>
                     &rarr;
-                    <a href="[[builderUrl]]/[[failure.result.first_failure]]" target="_blank">[[failure.result.first_failure]]</a>
+                    <a href="https://ci.chromium.org/b/[[failure.result.first_failure_build_id]]" target="_blank">[[failure.result.first_failure]]</a>
                   </td>
                   <td rowspan$="[[_getRowspan(failure)]]">
                     <template is="dom-if" if="[[failure.result.try_job.task_id)]]">
@@ -78,7 +78,7 @@
                     <a class="high-lighted" href="[[_getCLLink(failure.result.try_job.culprit)]]">[[_getCLRevisionForUI(failure.result.try_job.culprit)]]</a>
                     <br>
                     <br>
-                    (build#: <a href="[[builderUrl]]/[[failure.result.first_failure]]">[[failure.result.first_failure]]</a>)
+                    (build#: <a href="https://ci.chromium.org/b/[[failure.result.first_failure_build_id]]">[[failure.result.first_failure]]</a>)
                   </td>
                   <td>
                   </td>
@@ -98,13 +98,13 @@
                   </td>
                   <td rowspan$="[[_getRowspan(failure)]]">
                     <template is="dom-if" if="[[_hasLastPass(failure.result.last_pass)]]">
-                      <a href="[[builderUrl]]/[[failure.result.last_pass]]" target="_blank">[[failure.result.last_pass]]</a>
+                      <a href="https://ci.chromium.org/b/[[failure.result.last_pass_build_id]]" target="_blank">[[failure.result.last_pass]]</a>
                     </template>
                     <template is="dom-if" if="[[!_hasLastPass(failure.result.last_pass)]]">
                       Unknown
                     </template>
                     &rarr;
-                    <a href="[[builderUrl]]/[[failure.result.first_failure]]" target="_blank">[[failure.result.first_failure]]</a>
+                    <a href="https://ci.chromium.org/b/[[failure.result.first_failure_build_id]]" target="_blank">[[failure.result.first_failure]]</a>
                   </td>
                   <td rowspan$="[[_getRowspan(failure)]]">
                     <template is="dom-if" if="[[failure.result.try_job.task_id)]]">
@@ -139,7 +139,7 @@
                       <a class="high-lighted" href="[[_getCLLink(suspect)]]" target="_blank">[[_getCLRevisionForUI(suspect)]]</a>
                       <br>
                       <br>
-                      (build# <a href="[[builderUrl]]/[[suspect.build_number]]" target="_blank">[[suspect.build_number]]</a>)
+                      (build# <a href="https://ci.chromium.org/b/[[suspect.build_id]]" target="_blank">[[suspect.build_number]]</a>)
                     </td>
                     <td>
                       [[suspect.score]]

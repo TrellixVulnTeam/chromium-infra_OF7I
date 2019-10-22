@@ -34,7 +34,7 @@
     var findit = {};
     findit.analysisCompleted = '{{analysis_completed}}' == 'True';
     findit.analysisFailed = '{{analysis_failed}}' == 'True';
-    findit.builderUrl = 'https://luci-milo.appspot.com/buildbot/{{master_name}}/{{builder_name}}';
+    findit.builderUrl = 'https://ci.chromium.org/p/chromium/builders/ci/{{builder_name}}';
     findit.buildUrl = findit.builderUrl + '/{{build_number}}';
     findit.showDebugInfo = '{{show_debug_info}}' == 'True';
     findit.xsrfToken = '{{ xsrf_token }}';
@@ -106,7 +106,7 @@
     <b>{% block heading %}{% endblock heading %}</b>
     <div>
       Master: {{master_name}}<br>
-      Builder: <a href="https://luci-milo.appspot.com/buildbot/{{master_name}}/{{builder_name}}" target="_blank">{{builder_name}}</a><br>
+      Builder: <a href="https://ci.chromium.org/p/chromium/builders/ci/{{builder_name}}" target="_blank">{{builder_name}}</a><br>
       {% block failure_info %}{% endblock failure_info %}
     </div>
     <br>

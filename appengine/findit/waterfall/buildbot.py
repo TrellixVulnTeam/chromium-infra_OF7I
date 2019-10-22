@@ -233,8 +233,8 @@ def CreateBuildUrl(master_name, builder_name, build_number):
       master_name, builder_name, build_number)
 
 
-def GetBuildId(master_name, builder_name, build_number):
-  """Gets build_id based on legacy buildbot info."""
+def GetBuildIdThroughBuildbucket(master_name, builder_name, build_number):
+  """Gets build_id through buildbucket based on legacy buildbot info."""
   luci_project, bucket = GetLuciProjectAndBucketForMaster(master_name)
   build = buildbucket_client.GetV2BuildByBuilderAndBuildNumber(
       luci_project, bucket, builder_name, build_number, FieldMask(paths=['id']))
@@ -245,12 +245,20 @@ def GetBuildId(master_name, builder_name, build_number):
   return build.id
 
 
-def CreateBuildbucketUrl(master_name, builder_name, build_number):
-  """Creates the buildbucket build url for the given build."""
+def GetBuildId(master_name, builder_name, build_number):
+  """Gets build_id based on legacy buildbot info."""
+  if master_name is None or builder_name is None or build_number is None:
+    return None
   build = WfBuild.Get(master_name, builder_name, build_number)
   build_id = build.build_id if build and build.build_id else None
-  if not build_id:
-    build_id = GetBuildId(master_name, builder_name, build_number)
+  if build_id:
+    return build_id
+  return GetBuildIdThroughBuildbucket(master_name, builder_name, build_number)
+
+
+def CreateBuildbucketUrl(master_name, builder_name, build_number):
+  """Creates the buildbucket build url for the given build."""
+  build_id = GetBuildId(master_name, builder_name, build_number)
   return 'https://ci.chromium.org/b/{}'.format(build_id) if build_id else None
 
 

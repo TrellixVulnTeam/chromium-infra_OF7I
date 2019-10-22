@@ -171,6 +171,11 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
 
     self.mock(handlers_util, 'GetAllTryJobResults', MockedGetAllTryJobResults)
 
+    def MockedGetBuildId(_master_name, _builder_name, build_number):
+      return 80000000000 + build_number if build_number else None
+
+    self.mock(buildbot, 'GetBuildId', MockedGetBuildId)
+
     self.cl_confidences = SuspectedCLConfidence.Create()
     self.cl_confidences.compile_heuristic = [
         SAMPLE_HEURISTIC_1, SAMPLE_HEURISTIC_2
@@ -496,13 +501,17 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
     }
 
     result = build_failure._GetOrganizedAnalysisResultBySuspectedCL(
-        analysis_result)
+        'm', 'b', analysis_result)
 
     expected_result = {
         'a': [{
             'first_failure':
                 98,
             'last_pass':
+                None,
+            'first_failure_build_id':
+                80000000098,
+            'last_pass_build_id':
                 None,
             'supported':
                 True,
@@ -533,6 +542,10 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                 98,
             'last_pass':
                 96,
+            'first_failure_build_id':
+                80000000098,
+            'last_pass_build_id':
+                80000000096,
             'supported':
                 True,
             'suspected_cls': [{
@@ -567,7 +580,7 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         },
                     }],
                     'flaky':
-                        False
+                        False,
                 },
                 {
                     'test_name':
@@ -619,13 +632,13 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                     'last_pass': 96,
                     'suspected_cls': [],
                     'flaky': True
-                }
+                },
             ]
         }]
     }
 
     result = build_failure._GetOrganizedAnalysisResultBySuspectedCL(
-        analysis_result)
+        'm', 'b', analysis_result)
 
     expected_result = {
         'b': [{
@@ -635,6 +648,10 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                 98,
             'last_pass':
                 97,
+            'first_failure_build_id':
+                80000000098,
+            'last_pass_build_id':
+                80000000097,
             'suspected_cls': [{
                 'build_number': 98,
                 'repo_name': 'chromium',
@@ -657,6 +674,10 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                       98,
                   'last_pass':
                       97,
+                  'first_failure_build_id':
+                      80000000098,
+                  'last_pass_build_id':
+                      80000000097,
                   'suspected_cls': [{
                       'build_number': 98,
                       'repo_name': 'chromium',
@@ -675,6 +696,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
               {
                   'first_failure': 98,
                   'last_pass': 96,
+                  'first_failure_build_id': 80000000098,
+                  'last_pass_build_id': 80000000096,
                   'supported': True,
                   'suspected_cls': [],
                   'tests': ['Unittest3.Subtest3'],
@@ -688,52 +711,54 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
     builder_name = 'b'
     build_number = 119
     organized_results = {
-        'step1 on platform': [{
-            'supported':
-                True,
-            'first_failure':
-                119,
-            'last_pass':
-                118,
-            'suspected_cls': [{
-                'build_number': 119,
-                'repo_name': 'chromium',
-                'revision': 'r98_1',
-                'commit_position': None,
-                'url': None,
-                'score': 4,
-                'hints': {
-                    'modified f98.cc[123, 456] (and it was in log)': 4,
-                },
-            }],
-            'tests': ['test2', 'test3'],
-            'flaky':
-                False
-        },
-                              {
-                                  'supported': True,
-                                  'first_failure': 119,
-                                  'last_pass': 118,
-                                  'suspected_cls': [],
-                                  'tests': ['test6'],
-                                  'flaky': True
-                              },
-                              {
-                                  'first_failure': 119,
-                                  'last_pass': 118,
-                                  'supported': True,
-                                  'suspected_cls': [],
-                                  'tests': ['test4'],
-                                  'flaky': True
-                              },
-                              {
-                                  'first_failure': 120,
-                                  'last_pass': 119,
-                                  'supported': True,
-                                  'suspected_cls': [],
-                                  'tests': ['test1', 'test5'],
-                                  'flaky': False
-                              }]
+        'step1 on platform': [
+            {
+                'supported':
+                    True,
+                'first_failure':
+                    119,
+                'last_pass':
+                    118,
+                'suspected_cls': [{
+                    'build_number': 119,
+                    'repo_name': 'chromium',
+                    'revision': 'r98_1',
+                    'commit_position': None,
+                    'url': None,
+                    'score': 4,
+                    'hints': {
+                        'modified f98.cc[123, 456] (and it was in log)': 4,
+                    },
+                }],
+                'tests': ['test2', 'test3'],
+                'flaky':
+                    False
+            },
+            {
+                'supported': True,
+                'first_failure': 119,
+                'last_pass': 118,
+                'suspected_cls': [],
+                'tests': ['test6'],
+                'flaky': True
+            },
+            {
+                'first_failure': 119,
+                'last_pass': 118,
+                'supported': True,
+                'suspected_cls': [],
+                'tests': ['test4'],
+                'flaky': True
+            },
+            {
+                'first_failure': 120,
+                'last_pass': 119,
+                'supported': True,
+                'suspected_cls': [],
+                'tests': ['test1', 'test5'],
+                'flaky': False
+            },
+        ]
     }
 
     updated_result = build_failure._GetAnalysisResultWithTryJobInfo(
@@ -766,6 +791,7 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'heuristic_analysis': {
                             'suspected_cls': [{
                                 'build_number': 119,
+                                'build_id': 80000000119,
                                 'repo_name': 'chromium',
                                 'revision': 'r98_1',
                                 'commit_position': None,
@@ -781,7 +807,9 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'tests': ['test3'],
                         'first_failure': 119,
                         'last_pass': 118,
-                        'supported': True
+                        'first_failure_build_id': 80000000119,
+                        'last_pass_build_id': 80000000118,
+                        'supported': True,
                     },
                     {
                         'try_job': {
@@ -803,13 +831,14 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                             'culprit': {
                                 'revision': 'rev2',
                                 'commit_position': '2',
-                                'review_url': 'url_2'
+                                'review_url': 'url_2',
                             },
-                            'tests': ['test2']
+                            'tests': ['test2'],
                         },
                         'heuristic_analysis': {
                             'suspected_cls': [{
                                 'build_number': 119,
+                                'build_id': 80000000119,
                                 'repo_name': 'chromium',
                                 'revision': 'r98_1',
                                 'commit_position': None,
@@ -820,59 +849,67 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                                      '(and it was in log)'):
                                         4,
                                 },
-                            }]
+                            }],
                         },
                         'tests': ['test2'],
                         'first_failure': 119,
                         'last_pass': 118,
-                        'supported': True
-                    }
+                        'first_failure_build_id': 80000000119,
+                        'last_pass_build_id': 80000000118,
+                        'supported': True,
+                    },
                 ],
-                'flaky_failures': [{
-                    'try_job': {
-                        'ref_name':
-                            'step1',
-                        'try_job_key':
-                            'm/b/119',
-                        'task_id':
-                            'task1',
-                        'task_url':
-                            'url/task1',
-                        'status':
-                            analysis_status.COMPLETED,
-                        'try_job_url': (
-                            'http://build.chromium.org/p/tryserver.chromium'
-                            '.linux/builders/linux_variable/builds/121'),
-                        'try_job_build_number':
-                            121,
-                        'tests': ['test3', 'test6'],
-                        'culprit': {}
+                'flaky_failures': [
+                    {
+                        'try_job': {
+                            'ref_name':
+                                'step1',
+                            'try_job_key':
+                                'm/b/119',
+                            'task_id':
+                                'task1',
+                            'task_url':
+                                'url/task1',
+                            'status':
+                                analysis_status.COMPLETED,
+                            'try_job_url': (
+                                'http://build.chromium.org/p/tryserver.chromium'
+                                '.linux/builders/linux_variable/builds/121'),
+                            'try_job_build_number':
+                                121,
+                            'tests': ['test3', 'test6'],
+                            'culprit': {},
+                        },
+                        'heuristic_analysis': {
+                            'suspected_cls': [],
+                        },
+                        'tests': ['test6'],
+                        'first_failure': 119,
+                        'last_pass': 118,
+                        'first_failure_build_id': 80000000119,
+                        'last_pass_build_id': 80000000118,
+                        'supported': True,
                     },
-                    'heuristic_analysis': {
-                        'suspected_cls': []
+                    {
+                        'try_job': {
+                            'ref_name': 'step1',
+                            'try_job_key': 'm/b/119',
+                            'status': result_status.FLAKY,
+                            'task_id': 'task1',
+                            'task_url': 'url/task1',
+                            'tests': ['test4'],
+                        },
+                        'heuristic_analysis': {
+                            'suspected_cls': [],
+                        },
+                        'tests': ['test4'],
+                        'first_failure': 119,
+                        'last_pass': 118,
+                        'first_failure_build_id': 80000000119,
+                        'last_pass_build_id': 80000000118,
+                        'supported': True,
                     },
-                    'tests': ['test6'],
-                    'first_failure': 119,
-                    'last_pass': 118,
-                    'supported': True
-                },
-                                   {
-                                       'try_job': {
-                                           'ref_name': 'step1',
-                                           'try_job_key': 'm/b/119',
-                                           'status': result_status.FLAKY,
-                                           'task_id': 'task1',
-                                           'task_url': 'url/task1',
-                                           'tests': ['test4']
-                                       },
-                                       'heuristic_analysis': {
-                                           'suspected_cls': []
-                                       },
-                                       'tests': ['test4'],
-                                       'first_failure': 119,
-                                       'last_pass': 118,
-                                       'supported': True
-                                   }],
+                ],
                 'unclassified_failures': [
                     {
                         'try_job': {
@@ -887,15 +924,17 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                                 'task2',
                             'task_url':
                                 'url/task2',
-                            'tests': ['test1']
+                            'tests': ['test1'],
                         },
                         'heuristic_analysis': {
-                            'suspected_cls': []
+                            'suspected_cls': [],
                         },
                         'tests': ['test1'],
                         'first_failure': 120,
                         'last_pass': 119,
-                        'supported': True
+                        'first_failure_build_id': 80000000120,
+                        'last_pass_build_id': 80000000119,
+                        'supported': True,
                     },
                     {
                         'try_job': {
@@ -904,16 +943,18 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                             'status': result_status.UNKNOWN,
                             'task_id': 'task2',
                             'task_url': 'url/task2',
-                            'tests': ['test5']
+                            'tests': ['test5'],
                         },
                         'heuristic_analysis': {
-                            'suspected_cls': []
+                            'suspected_cls': [],
                         },
                         'tests': ['test5'],
                         'first_failure': 120,
                         'last_pass': 119,
-                        'supported': True
-                    }
+                        'first_failure_build_id': 80000000120,
+                        'last_pass_build_id': 80000000119,
+                        'supported': True,
+                    },
                 ]
             }
         }
@@ -978,6 +1019,7 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                     'heuristic_analysis': {
                         'suspected_cls': [{
                             'build_number': 120,
+                            'build_id': 80000000120,
                             'repo_name': 'chromium',
                             'revision': 'rev2',
                             'commit_position': None,
@@ -992,6 +1034,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                     'tests': [],
                     'first_failure': 120,
                     'last_pass': 119,
+                    'first_failure_build_id': 80000000120,
+                    'last_pass_build_id': 80000000119,
                     'supported': True
                 }]
             }
@@ -1062,6 +1106,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
     expected_data = {
         'first_failure': 122,
         'last_pass': 121,
+        'first_failure_build_id': 80000000122,
+        'last_pass_build_id': 80000000121,
         'suspected_cls_by_heuristic': [],
     }
 

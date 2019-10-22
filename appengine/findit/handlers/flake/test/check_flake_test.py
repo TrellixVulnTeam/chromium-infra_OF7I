@@ -252,6 +252,7 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
     self.assertEqual('Analysis of flake is not found.',
                      response.json_body.get('error_message'))
 
+  @mock.patch.object(buildbot, 'GetBuildId', return_value=800000000123)
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2017, 1, 1))
   @mock.patch.object(
@@ -306,9 +307,9 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
     analysis.status = analysis_status.COMPLETED
     analysis.suspected_flake_build_number = 100
     analysis.updated_time = datetime.datetime(2016, 1, 1)
-    analysis.request_time = datetime.datetime(2016, 10, 01, 12, 10, 00)
-    analysis.start_time = datetime.datetime(2016, 10, 01, 12, 10, 05)
-    analysis.end_time = datetime.datetime(2016, 10, 01, 13, 10, 00)
+    analysis.request_time = datetime.datetime(2016, 10, 1, 12, 10, 0)
+    analysis.start_time = datetime.datetime(2016, 10, 1, 12, 10, 5)
+    analysis.end_time = datetime.datetime(2016, 10, 1, 13, 10, 0)
     analysis.pipeline_status_path = 'pipelinestatus'
     analysis.suspect_urlsafe_keys.append(suspect.key.urlsafe())
     analysis.Save()
@@ -334,6 +335,8 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
             builder_name,
         'build_number':
             int(build_number),
+        'build_id':
+            800000000123,
         'step_name':
             step_name,
         'test_name':
@@ -475,6 +478,7 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
     self.assertTrue(
         response.headers.get('Location', '').endswith(expected_url_surfix))
 
+  @mock.patch.object(buildbot, 'GetBuildId', return_value=800000000123)
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2017, 1, 1))
   @mock.patch.object(
@@ -532,9 +536,9 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
     analysis.status = analysis_status.RUNNING
     analysis.suspected_flake_build_number = 100
     analysis.updated_time = datetime.datetime(2016, 1, 1)
-    analysis.request_time = datetime.datetime(2016, 10, 01, 12, 10, 00)
-    analysis.start_time = datetime.datetime(2016, 10, 01, 12, 10, 05)
-    analysis.end_time = datetime.datetime(2016, 10, 01, 13, 10, 00)
+    analysis.request_time = datetime.datetime(2016, 10, 1, 12, 10, 00)
+    analysis.start_time = datetime.datetime(2016, 10, 1, 12, 10, 5)
+    analysis.end_time = datetime.datetime(2016, 10, 1, 13, 10, 00)
     analysis.pipeline_status_path = 'pipelinestatus'
     analysis.Save()
 
@@ -557,6 +561,8 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
             builder_name,
         'build_number':
             build_number - 1,
+        'build_id':
+            800000000123,
         'step_name':
             step_name,
         'test_name':
@@ -683,6 +689,7 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
          'the test type is not supported or the test is not swarmed yet.'),
         response.json_body.get('error_message'))
 
+  @mock.patch.object(buildbot, 'GetBuildId', return_value=800000000123)
   @mock.patch.object(
       check_flake,
       '_GetSuspectedFlakeInfo',
@@ -976,15 +983,15 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
   def testGetDurationForAnalysisWhenStillRunning(self):
     analysis = MasterFlakeAnalysis.Create('m', 'b', 1, 's', 't')
     analysis.status = analysis_status.COMPLETED
-    analysis.start_time = datetime.datetime(2017, 06, 06, 00, 00, 00)
-    self.MockUTCNow(datetime.datetime(2017, 06, 06, 00, 43, 00))
+    analysis.start_time = datetime.datetime(2017, 6, 6, 00, 00, 00)
+    self.MockUTCNow(datetime.datetime(2017, 6, 6, 00, 43, 00))
     self.assertEqual('00:43:00', check_flake._GetDurationForAnalysis(analysis))
 
   def testGetDurationForAnalysisWhenCompleted(self):
     analysis = MasterFlakeAnalysis.Create('m', 'b', 1, 's', 't')
     analysis.status = analysis_status.COMPLETED
-    analysis.start_time = datetime.datetime(2017, 06, 06, 00, 00, 00)
-    analysis.end_time = datetime.datetime(2017, 06, 06, 00, 43, 00)
+    analysis.start_time = datetime.datetime(2017, 6, 6, 00, 00, 00)
+    analysis.end_time = datetime.datetime(2017, 6, 6, 00, 43, 00)
     self.assertEqual('00:43:00', check_flake._GetDurationForAnalysis(analysis))
 
   @mock.patch.object(

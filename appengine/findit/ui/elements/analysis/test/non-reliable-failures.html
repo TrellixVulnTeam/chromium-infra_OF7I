@@ -50,13 +50,13 @@
                 </td>
                 <td rowspan$="[[_getRowspan(failure)]]">
                   <template is="dom-if" if="[[_hasLastPass(failure.result.last_pass)]]">
-                    <a href="[[builderUrl]]/[[failure.result.last_pass]]" target="_blank">[[failure.result.last_pass]]</a>
+                    <a href="https://ci.chromium.org/b/[[failure.result.last_pass_build_id]]" target="_blank">[[failure.result.last_pass]]</a>
                   </template>
                   <template is="dom-if" if="[[!_hasLastPass(failure.result.last_pass)]]">
                     Unknown
                   </template>
                   &rarr;
-                  <a href="[[builderUrl]]/[[failure.result.first_failure]]" target="_blank">[[failure.result.first_failure]]</a>
+                  <a href="https://ci.chromium.org/b/[[failure.result.first_failure_build_id]]" target="_blank">[[failure.result.first_failure]]</a>
                 </td>
                 <td rowspan$="[[_getRowspan(failure)]]">
                   <template is="dom-if" if="[[failure.result.try_job.task_id)]]">
@@ -73,7 +73,7 @@
                       <a class="high-lighted" href="[[_getSuspectInfo(failure, 0, 'url')]]" target="_blank">[[_getSuspectInfo(failure, 0, 'commit_position')]]</a>
                       <br>
                       <br>
-                      (build# <a href="[[builderUrl]]/[[_getSuspectInfo(failure, 0, 'build_number')]]" target="_blank">[[_getSuspectInfo(failure, 0, 'build_number')]]</a>)
+                      (build# <a href="https://ci.chromium.org/b/[[_getSuspectInfo(failure, 0, 'build_id')]]" target="_blank">[[_getSuspectInfo(failure, 0, 'build_number')]]</a>)
                     </td>
                     <td>
                       [[_getSuspectInfo(failure, 0, 'score')]]
@@ -93,7 +93,7 @@
                       <a class="high-lighted" href="[[_getSuspectInfo(failure, i, 'url')]]" target="_blank">[[_getSuspectInfo(failure, i, 'commit_position')]]</a>
                       <br>
                       <br>
-                      (build# <a href="[[builderUrl]]/[[_getSuspectInfo(failure, i, 'build_number')]]" target="_blank">[[_getSuspectInfo(failure, i, 'build_number')]]</a>)
+                      (build# <a href="https://ci.chromium.org/b/[[_getSuspectInfo(failure, i, 'build_id')]]" target="_blank">[[_getSuspectInfo(failure, i, 'build_number')]]</a>)
                     </td>
                     <td>
                       [[_getSuspectInfo(failure, i, 'score')]]

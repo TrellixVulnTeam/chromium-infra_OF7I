@@ -15,16 +15,16 @@
 
 {% block failure_info %}
     {% if build_number != first_failure %}
-      Current Failure: <a href="https://luci-milo.appspot.com/buildbot/{{master_name}}/{{builder_name}}/{{build_number}}" target="_blank">{{build_number}}</a><br>
-      First Failure: <a href="https://luci-milo.appspot.com/buildbot/{{master_name}}/{{builder_name}}/{{first_failure}}" target="_blank">{{first_failure}}</a><br>
+      Current Failure: <a href="https://ci.chromium.org/b/{{build_id}}" target="_blank">{{build_number}}</a><br>
+      First Failure: <a href="https://ci.chromium.org/b/{{first_failure_build_id}}" target="_blank">{{first_failure}}</a><br>
     {% else %}
-      First Failure: <a href="https://luci-milo.appspot.com/buildbot/{{master_name}}/{{builder_name}}/{{build_number}}" target="_blank">{{build_number}}</a><br>
+      First Failure: <a href="https://ci.chromium.org/b/{{build_id}}" target="_blank">{{build_number}}</a><br>
     {% endif %}
     {% if infra_exception %}
       <div class="warning">This build failed due to an infra exception. Analysis skipped.</div>
     {% else %}
       {% if last_pass %}
-        Last Pass: <a href="https://luci-milo.appspot.com/buildbot/{{master_name}}/{{builder_name}}/{{last_pass}}" target="_blank">{{last_pass}}</a><br>
+        Last Pass: <a href="https://ci.chromium.org/b/{{last_pass_build_id}}" target="_blank">{{last_pass}}</a><br>
         {% if last_pass + 1 != first_failure %}
         <div class="warning">Be careful, compile was not run or purple in builds before first failure!</div>
         {% endif %}
@@ -83,7 +83,7 @@
           <tbody>
             {% for suspected_cl in suspected_cls_by_heuristic %}
             <tr>
-              <td><a href="https://luci-milo.appspot.com/buildbot/{{master_name}}/{{builder_name}}/{{suspected_cl.build_number}}" target="_blank">{{suspected_cl.build_number}}</a></td>
+              <td><a href="https://ci.chromium.org/b/{{suspected_cl.build_id}}" target="_blank">{{suspected_cl.build_number}}</a></td>
               <td>
                 {{suspected_cl.repo_name}} <a href="{{suspected_cl.url}}" target="_blank">{{suspected_cl.commit_position or suspected_cl.revision}}</a>
               </td>

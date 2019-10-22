@@ -11,6 +11,7 @@ from libs import analysis_status
 from libs import time_util
 from model import result_status
 from model.flake.analysis.master_flake_analysis import MasterFlakeAnalysis
+from waterfall import buildbot
 
 PAGE_SIZE = 100
 
@@ -112,13 +113,18 @@ class ListFlakes(BaseHandler):
           time_util.ConvertToTimestamp(analysis.request_time)
           if analysis.request_time else 'None')
 
+      master_name = analysis.original_master_name or analysis.master_name
+      builder_name = analysis.original_builder_name or analysis.builder_name
+      build_number = analysis.original_build_number or analysis.build_number
       data['master_flake_analyses'].append({
           'master_name':
-              analysis.original_master_name or analysis.master_name,
+              master_name,
           'builder_name':
-              analysis.original_builder_name or analysis.builder_name,
+              builder_name,
           'build_number':
-              analysis.original_build_number or analysis.build_number,
+              build_number,
+          'build_id':
+              buildbot.GetBuildId(master_name, builder_name, build_number),
           'step_name':
               analysis.original_step_name or analysis.step_name,
           'test_name':
@@ -138,6 +144,9 @@ class ListFlakes(BaseHandler):
                   analysis.result_status),
           'suspected_build':
               analysis.suspected_flake_build_number,
+          'suspected_build_id':
+              buildbot.GetBuildId(master_name, builder_name,
+                                  analysis.suspected_flake_build_number),
           'status':
               analysis_status.STATUS_TO_DESCRIPTION.get(status),
       })

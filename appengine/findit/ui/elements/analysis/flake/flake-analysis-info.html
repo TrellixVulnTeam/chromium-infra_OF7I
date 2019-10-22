@@ -88,7 +88,7 @@
               <table>
                 <tr>
                   <td class="description">Build</td>
-                  <td class="data selectable"><a href="https://ci.chromium.org/buildbot/[[masterName]]/[[builderName]]/[[buildNumber]]">[[masterName]]/[[builderName]]/[[buildNumber]]</a></td>
+                  <td class="data selectable"><a href="https://ci.chromium.org/b/[[buildId]]">[[masterName]]/[[builderName]]/[[buildNumber]]</a></td>
                 </tr>
                 <tr>
                   <td class="description">Step</td>
@@ -134,6 +134,7 @@
           masterName: String,
           builderName: String,
           buildNumber: Number,
+          buildId: Number,
           stepName: String,
           testName: String,
 

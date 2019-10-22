@@ -584,6 +584,9 @@ class CheckFlake(BaseHandler):
       analysis.end_time = time_util.GetUTCNow()
 
     analysis_complete = self._AnalysisCompleted(analysis)
+    master_name = analysis.original_master_name or analysis.master_name
+    builder_name = analysis.original_builder_name or analysis.builder_name
+    build_number = analysis.original_build_number or analysis.build_number
 
     data = {
         'key':
@@ -626,11 +629,13 @@ class CheckFlake(BaseHandler):
 
         # new ui stuff
         'master_name':
-            analysis.original_master_name or analysis.master_name,
+            master_name,
         'builder_name':
-            analysis.original_builder_name or analysis.builder_name,
+            builder_name,
         'build_number':
-            analysis.original_build_number or analysis.build_number,
+            build_number,
+        'build_id':
+            buildbot.GetBuildId(master_name, builder_name, build_number),
         'step_name':
             analysis.original_step_name or analysis.step_name,
         'test_name':

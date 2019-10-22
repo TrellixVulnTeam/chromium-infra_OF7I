@@ -261,7 +261,7 @@
             <div class="timestamp">{{ analysis.request_utc_timestamp or '' }}</div>
           </td>
           <td>
-            <a href="https://ci.chromium.org/buildbot/{{analysis.master_name}}/{{analysis.builder_name}}/{{analysis.build_number}}">{{ analysis.master_name }}/ {{ analysis.builder_name }}/ {{ analysis.build_number }}</a>
+            <a href="https://ci.chromium.org/b/{{analysis.build_id}}">{{ analysis.master_name }}/ {{ analysis.builder_name }}/ {{ analysis.build_number }}</a>
           </td>
           <td>
             <div>
@@ -278,7 +278,7 @@
           </td>
           <td>
             {% if analysis.suspected_build %}
-              Regression: build <a href="https://luci-milo.appspot.com/buildbot/{{ analysis.master_name }}/{{ analysis.builder_name }}/{{ analysis.suspected_build }}" target="_blank">{{ analysis.suspected_build }}</a>
+              Regression: build <a href="https://ci.chromium.org/b/{{ analysis.suspected_build_id }}" target="_blank">{{ analysis.suspected_build }}</a>
               <br>
             {% endif %}
             {% if analysis.culprit %}

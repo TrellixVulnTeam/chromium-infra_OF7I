@@ -85,7 +85,8 @@ def _GetTriageHistory(analysis):
   return triage_history
 
 
-def _GetOrganizedAnalysisResultBySuspectedCL(analysis_result):
+def _GetOrganizedAnalysisResultBySuspectedCL(master_name, builder_name,
+                                             analysis_result):
   """Group tests it they have the same suspected CLs."""
   organized_results = defaultdict(list)
 
@@ -102,12 +103,23 @@ def _GetOrganizedAnalysisResultBySuspectedCL(analysis_result):
     if not step_failure.get('tests'):
       # Non swarming, just group the whole step together.
       shared_result = {
-          'first_failure': step_failure['first_failure'],
-          'last_pass': step_failure.get('last_pass'),
-          'supported': supported,
+          'first_failure':
+              step_failure['first_failure'],
+          'last_pass':
+              step_failure.get('last_pass'),
+          'first_failure_build_id':
+              buildbot.GetBuildId(master_name, builder_name,
+                                  step_failure['first_failure']),
+          'last_pass_build_id':
+              buildbot.GetBuildId(master_name, builder_name,
+                                  step_failure['last_pass']),
+          'supported':
+              supported,
           'tests': [],
-          'suspected_cls': step_failure['suspected_cls'],
-          'flaky': is_flaky,
+          'suspected_cls':
+              step_failure['suspected_cls'],
+          'flaky':
+              is_flaky,
       }
       organized_suspected_cls.append(shared_result)
       continue
@@ -170,16 +182,35 @@ def _GetOrganizedAnalysisResultBySuspectedCL(analysis_result):
       # Reorganize heuristic results by culprits.
       test_result = step_failure['tests'][index]
       shared_result = {
-          'first_failure': test_result['first_failure'],
-          'last_pass': test_result.get('last_pass'),
-          'supported': supported,
-          'tests': group['tests'],
-          'suspected_cls': group['suspected_cls'],
-          'flaky': group['flaky'],
+          'first_failure':
+              test_result['first_failure'],
+          'last_pass':
+              test_result.get('last_pass'),
+          'first_failure_build_id':
+              buildbot.GetBuildId(master_name, builder_name,
+                                  test_result['first_failure']),
+          'last_pass_build_id':
+              buildbot.GetBuildId(master_name, builder_name,
+                                  test_result['last_pass']),
+          'supported':
+              supported,
+          'tests':
+              group['tests'],
+          'suspected_cls':
+              group['suspected_cls'],
+          'flaky':
+              group['flaky'],
       }
       organized_suspected_cls.append(shared_result)
 
   return organized_results
+
+
+def _AttachBuildIdToSuspectedCLs(master_name, builder_name, suspected_cls):
+  for cl in suspected_cls:
+    cl['build_id'] = buildbot.GetBuildId(master_name, builder_name,
+                                         cl.get('build_number'))
+  return suspected_cls
 
 
 def _GetAnalysisResultWithTryJobInfo(show_debug_info, organized_results,
@@ -278,14 +309,28 @@ def _GetAnalysisResultWithTryJobInfo(show_debug_info, organized_results,
       heuristic_result = step_heuristic_results[heuristic_index]
 
       final_result = {
-          'try_job': try_job_result,
+          'try_job':
+              try_job_result,
           'heuristic_analysis': {
-              'suspected_cls': heuristic_result['suspected_cls']
+              'suspected_cls':
+                  _AttachBuildIdToSuspectedCLs(
+                      master_name, builder_name,
+                      heuristic_result['suspected_cls']),
           },
-          'tests': tests if tests != [NON_SWARMING] else [],
-          'first_failure': heuristic_result['first_failure'],
-          'last_pass': heuristic_result['last_pass'],
-          'supported': heuristic_result['supported']
+          'tests':
+              tests if tests != [NON_SWARMING] else [],
+          'first_failure':
+              heuristic_result['first_failure'],
+          'last_pass':
+              heuristic_result['last_pass'],
+          'first_failure_build_id':
+              buildbot.GetBuildId(master_name, builder_name,
+                                  heuristic_result['first_failure']),
+          'last_pass_build_id':
+              buildbot.GetBuildId(master_name, builder_name,
+                                  heuristic_result['last_pass']),
+          'supported':
+              heuristic_result['supported']
       }
 
       if (('status' not in try_job_result or
@@ -337,7 +382,15 @@ def _PopulateHeuristicDataForCompileFailure(analysis, data):
     if compile_failure:  # pragma: no branch.
       data['first_failure'] = compile_failure['first_failure']
       data['last_pass'] = compile_failure['last_pass']
-      data['suspected_cls_by_heuristic'] = compile_failure['suspected_cls']
+      data['first_failure_build_id'] = buildbot.GetBuildId(
+          analysis.master_name, analysis.builder_name,
+          compile_failure['first_failure'])
+      data['last_pass_build_id'] = buildbot.GetBuildId(
+          analysis.master_name, analysis.builder_name,
+          compile_failure['last_pass'])
+      data['suspected_cls_by_heuristic'] = _AttachBuildIdToSuspectedCLs(
+          analysis.master_name, analysis.builder_name,
+          compile_failure['suspected_cls'])
 
 
 def _GetAllSuspectedCLsAndCheckStatus(master_name, builder_name, build_number,
@@ -379,6 +432,9 @@ class BuildFailure(BaseHandler):
             analysis.builder_name,
         'build_number':
             analysis.build_number,
+        'build_id':
+            buildbot.GetBuildId(analysis.master_name, analysis.builder_name,
+                                analysis.build_number),
         'pipeline_status_path':
             analysis.pipeline_status_path,
         'show_debug_info':
@@ -429,7 +485,7 @@ class BuildFailure(BaseHandler):
     data['status_message_map'] = result_status.STATUS_MESSAGE_MAP
 
     organized_results = _GetOrganizedAnalysisResultBySuspectedCL(
-        analysis.result)
+        analysis.master_name, analysis.builder_name, analysis.result)
     analysis_result = _GetAnalysisResultWithTryJobInfo(
         show_debug_info, organized_results, *build_info)
 

@@ -13,14 +13,15 @@ from libs import analysis_status
 from libs import time_util
 from model import result_status
 from model.flake.analysis.master_flake_analysis import MasterFlakeAnalysis
+from waterfall import buildbot
 from waterfall.test import wf_testcase
 
 
 class FilterFlakeTest(wf_testcase.WaterfallTestCase):
-  app_module = webapp2.WSGIApplication(
-      [
-          ('/waterfall/list-flakes', list_flakes.ListFlakes),
-      ], debug=True)
+  app_module = webapp2.WSGIApplication([
+      ('/waterfall/list-flakes', list_flakes.ListFlakes),
+  ],
+                                       debug=True)
 
   def _MockCursor(self):
     results, prev_cursor, cursor = dashboard_util.GetPagedResults(
@@ -66,8 +67,8 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
     self.step_name2 = 's2'
     self.test_name1 = 't1'
     self.test_name2 = 't2'
-    self.request_time1 = datetime.datetime(2016, 10, 01)
-    self.request_time2 = datetime.datetime(2016, 10, 02)
+    self.request_time1 = datetime.datetime(2016, 10, 1)
+    self.request_time2 = datetime.datetime(2016, 10, 2)
     self.result_status1 = result_status.FOUND_UNTRIAGED
     self.result_status2 = result_status.FOUND_CORRECT
 
@@ -83,6 +84,11 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
         self.master_name2, self.builder_name2, self.build_number2,
         self.step_name2, self.test_name1, self.request_time1)
     self.results, self.prev_cursor, self.cursor = self._MockCursor()
+
+    def MockedGetBuildId(_master_name, _builder_name, build_number):
+      return 80000000000 + build_number if build_number else None
+
+    self.mock(buildbot, 'GetBuildId', MockedGetBuildId)
 
   def testGetStartAndEndDatesNotInTriageMode(self):
     self.assertEqual((None, None),
@@ -210,6 +216,8 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
                 analysis_key,
             'master_name':
                 self.master_name1,
+            'build_id':
+                80000000001,
             'request_utc_timestamp':
                 1475280000,
             'result_status':
@@ -217,6 +225,8 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
             'step_name':
                 self.step_name1,
             'suspected_build':
+                None,
+            'suspected_build_id':
                 None,
             'test_name':
                 self.test_name1,
@@ -288,6 +298,8 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
                 analysis_key,
             'master_name':
                 self.master_name1,
+            'build_id':
+                80000000001,
             'result_status':
                 result_status.RESULT_STATUS_TO_DESCRIPTION[self.result_status1],
             'request_utc_timestamp':
@@ -295,6 +307,8 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
             'step_name':
                 self.step_name1,
             'suspected_build':
+                None,
+            'suspected_build_id':
                 None,
             'test_name':
                 self.test_name1,

@@ -16,10 +16,10 @@ from model.wf_suspected_cl import WfSuspectedCL
 
 
 class CulpritTest(testing.AppengineTestCase):
-  app_module = webapp2.WSGIApplication(
-      [
-          ('/culprit', culprit.Culprit),
-      ], debug=True)
+  app_module = webapp2.WSGIApplication([
+      ('/culprit', culprit.Culprit),
+  ],
+                                       debug=True)
 
   def testGetCulpritSuccess(self):
     suspected_cl = WfSuspectedCL.Create('chromium', 'r1', 123)
@@ -33,7 +33,7 @@ class CulpritTest(testing.AppengineTestCase):
         'approaches': [analysis_approach_type.HEURISTIC]
     }
     suspected_cl.cr_notification_status = status.COMPLETED
-    suspected_cl.cr_notification_time = datetime(2016, 06, 24, 10, 03, 00)
+    suspected_cl.cr_notification_time = datetime(2016, 6, 24, 10, 3, 0)
     suspected_cl.put()
 
     expected_result = {
