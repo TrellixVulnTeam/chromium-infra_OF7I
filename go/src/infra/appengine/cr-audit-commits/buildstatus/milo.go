@@ -13,10 +13,10 @@ import (
 )
 
 var miloPathRX = regexp.MustCompile(
-	`/buildbot/(?P<master>[^/]+)/(?P<builder>[^/]+)/(?P<buildNum>\d+)/?`)
+	`/b/(?P<buildID>\d+)`)
 
-// ParseBuildURL obtains master, builder and build number from the build url.
-func ParseBuildURL(rawURL string) (master string, builder string, buildNum int32, err error) {
+// ParseBuildURL obtains buildID from the build url.
+func ParseBuildURL(rawURL string) (buildID int64, err error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return
@@ -33,17 +33,16 @@ func ParseBuildURL(rawURL string) (master string, builder string, buildNum int32
 			parts[name] = m[i]
 		}
 	}
-	master, hasMaster := parts["master"]
-	builder, hasBuilder := parts["builder"]
-	buildNumS, hasBuildNum := parts["buildNum"]
-	if !(hasMaster && hasBuilder && hasBuildNum) {
+	buildIDS, hasBuildID := parts["buildID"]
+	if !(hasBuildID) {
 		err = errors.Reason("The path given does not match the expected format. %s", u.Path).Err()
 		return
 	}
-	buildNumI, err := strconv.Atoi(buildNumS)
+
+	buildIDI, err := strconv.ParseInt(buildIDS, 10, 64)
 	if err != nil {
 		return
 	}
-	buildNum = int32(buildNumI)
+	buildID = int64(buildIDI)
 	return
 }

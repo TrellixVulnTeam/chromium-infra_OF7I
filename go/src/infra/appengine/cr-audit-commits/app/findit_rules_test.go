@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"context"
+
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	"github.com/golang/mock/gomock"
@@ -42,7 +43,7 @@ func TestFinditRules(t *testing.T) {
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
 			CommitterAccount: "findit@sample.com",
 			AuthorAccount:    "findit@sample.com",
-			CommitMessage:    "Sample Failed Build: https://ci/buildbot/m/b/42",
+			CommitMessage:    "Sample Failed Build: https://ci/b/42",
 		}
 		cfg := &RepoConfig{
 			BaseRepoURL: "https://a.googlesource.com/a.git",
@@ -221,13 +222,31 @@ func TestFinditRules(t *testing.T) {
 
 		Convey("Culprit in build", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+				Id: 42,
+			}).Return(&buildbucketpb.Build{
+				Number: 23,
 				Builder: &buildbucketpb.BuilderID{
 					Project: "chromium",
 					Bucket:  "ci",
 					Builder: "b",
 				},
-				BuildNumber: 42,
+				Input: &buildbucketpb.Build_Input{
+					GitilesCommit: &buildbucketpb.GitilesCommit{
+						Project: "a",
+						Id:      "c001c0de",
+					},
+				},
+			}, nil)
+
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+				Id: 42,
 			}).Return(&buildbucketpb.Build{
+				Number: 23,
+				Builder: &buildbucketpb.BuilderID{
+					Project: "chromium",
+					Bucket:  "ci",
+					Builder: "b",
+				},
 				Input: &buildbucketpb.Build_Input{
 					GitilesCommit: &buildbucketpb.GitilesCommit{
 						Project: "a",
@@ -242,7 +261,7 @@ func TestFinditRules(t *testing.T) {
 					Bucket:  "ci",
 					Builder: "b",
 				},
-				BuildNumber: 41,
+				BuildNumber: 22,
 			}).Return(&buildbucketpb.Build{
 				Input: &buildbucketpb.Build_Input{
 					GitilesCommit: &buildbucketpb.GitilesCommit{
@@ -282,13 +301,31 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Culprit not in build", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+				Id: 42,
+			}).Return(&buildbucketpb.Build{
+				Number: 23,
 				Builder: &buildbucketpb.BuilderID{
 					Project: "chromium",
 					Bucket:  "ci",
 					Builder: "b",
 				},
-				BuildNumber: 42,
+				Input: &buildbucketpb.Build_Input{
+					GitilesCommit: &buildbucketpb.GitilesCommit{
+						Project: "a",
+						Id:      "c001c0de",
+					},
+				},
+			}, nil)
+
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+				Id: 42,
 			}).Return(&buildbucketpb.Build{
+				Number: 23,
+				Builder: &buildbucketpb.BuilderID{
+					Project: "chromium",
+					Bucket:  "ci",
+					Builder: "b",
+				},
 				Input: &buildbucketpb.Build_Input{
 					GitilesCommit: &buildbucketpb.GitilesCommit{
 						Project: "a",
@@ -303,7 +340,7 @@ func TestFinditRules(t *testing.T) {
 					Bucket:  "ci",
 					Builder: "b",
 				},
-				BuildNumber: 41,
+				BuildNumber: 22,
 			}).Return(&buildbucketpb.Build{
 				Input: &buildbucketpb.Build_Input{
 					GitilesCommit: &buildbucketpb.GitilesCommit{
@@ -345,13 +382,8 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Failed build is compile failure Pass", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
-				Builder: &buildbucketpb.BuilderID{
-					Project: "chromium",
-					Bucket:  "ci",
-					Builder: "b",
-				},
-				BuildNumber: 42,
-				Fields:      &field_mask.FieldMask{Paths: []string{"steps"}},
+				Id:     42,
+				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
 			}).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
@@ -365,13 +397,8 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Failed build is compile failure Pass - Nested", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
-				Builder: &buildbucketpb.BuilderID{
-					Project: "chromium",
-					Bucket:  "ci",
-					Builder: "b",
-				},
-				BuildNumber: 42,
-				Fields:      &field_mask.FieldMask{Paths: []string{"steps"}},
+				Id:     42,
+				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
 			}).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
@@ -385,13 +412,8 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Failed build is compile failure Fail", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
-				Builder: &buildbucketpb.BuilderID{
-					Project: "chromium",
-					Bucket:  "ci",
-					Builder: "b",
-				},
-				BuildNumber: 42,
-				Fields:      &field_mask.FieldMask{Paths: []string{"steps"}},
+				Id:     42,
+				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
 			}).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
@@ -407,13 +429,8 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Failed build is compile failure Fail - missing step", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
-				Builder: &buildbucketpb.BuilderID{
-					Project: "chromium",
-					Bucket:  "ci",
-					Builder: "b",
-				},
-				BuildNumber: 42,
-				Fields:      &field_mask.FieldMask{Paths: []string{"steps"}},
+				Id:     42,
+				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
 			}).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
@@ -429,13 +446,8 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Failed build is flaky failure Pass", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
-				Builder: &buildbucketpb.BuilderID{
-					Project: "chromium",
-					Bucket:  "ci",
-					Builder: "b",
-				},
-				BuildNumber: 42,
-				Fields:      &field_mask.FieldMask{Paths: []string{"steps"}},
+				Id:     42,
+				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
 			}).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
@@ -450,13 +462,8 @@ func TestFinditRules(t *testing.T) {
 		})
 		Convey("Failed build is flaky failure Fail", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
-				Builder: &buildbucketpb.BuilderID{
-					Project: "chromium",
-					Bucket:  "ci",
-					Builder: "b",
-				},
-				BuildNumber: 42,
-				Fields:      &field_mask.FieldMask{Paths: []string{"steps"}},
+				Id:     42,
+				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
 			}).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{

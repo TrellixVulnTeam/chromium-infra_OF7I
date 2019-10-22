@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"context"
+
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ds "go.chromium.org/gae/service/datastore"
@@ -219,37 +220,24 @@ func resultText(cfg *RepoConfig, rc *RelevantCommit, issueExists bool) string {
 }
 
 func getBuildByURL(ctx context.Context, buildURL string, cs *Clients, fm *field_mask.FieldMask) (*buildbucketpb.Build, error) {
-	master, builder, buildNumber, err := buildstatus.ParseBuildURL(buildURL)
+	buildID, err := buildstatus.ParseBuildURL(buildURL)
 	if err != nil {
 		return nil, err
 	}
-	return getBuild(ctx, master, builder, buildNumber, cs, fm)
+	return getBuild(ctx, buildID, cs, fm)
 }
 
 func getPreviousBuildByURL(ctx context.Context, buildURL string, cs *Clients, fm *field_mask.FieldMask) (*buildbucketpb.Build, error) {
-	master, builder, buildNumber, err := buildstatus.ParseBuildURL(buildURL)
+	buildID, err := buildstatus.ParseBuildURL(buildURL)
 	if err != nil {
 		return nil, err
 	}
-	return getBuild(ctx, master, builder, buildNumber-1, cs, fm)
+	return getPrevBuild(ctx, buildID, cs, fm)
 }
 
-func getBuild(ctx context.Context, master, builder string, buildNumber int32, cs *Clients, fm *field_mask.FieldMask) (*buildbucketpb.Build, error) {
-	// TODO(crbug/998334): Use buildbucket id instead, once Findit changes build URLs to /b/<build_id>.
-	// Make some assumptions about project and bucket.
-	project := "chromium"
-	bucket := "ci"
-	if strings.Contains(master, "try") {
-		bucket = "try"
-	}
-
+func getBuild(ctx context.Context, buildID int64, cs *Clients, fm *field_mask.FieldMask) (*buildbucketpb.Build, error) {
 	req := &buildbucketpb.GetBuildRequest{
-		Builder: &buildbucketpb.BuilderID{
-			Project: project,
-			Bucket:  bucket,
-			Builder: builder,
-		},
-		BuildNumber: buildNumber,
+		Id: buildID,
 	}
 	if fm != nil {
 		req.Fields = fm
@@ -260,6 +248,26 @@ func getBuild(ctx context.Context, master, builder string, buildNumber int32, cs
 		return nil, err
 	}
 	return build, nil
+}
+
+func getPrevBuild(ctx context.Context, buildID int64, cs *Clients, fm *field_mask.FieldMask) (*buildbucketpb.Build, error) {
+	build, err := getBuild(ctx, buildID, cs, fm)
+	if err != nil {
+		return nil, err
+	}
+	req := &buildbucketpb.GetBuildRequest{
+		Builder:     build.Builder,
+		BuildNumber: build.Number - 1,
+	}
+	if fm != nil {
+		req.Fields = fm
+	}
+	bb := cs.NewBuildbucketClient()
+	prevBuild, err := bb.GetBuild(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return prevBuild, nil
 }
 
 // Clients exposes clients for external services shared throughout one request.
