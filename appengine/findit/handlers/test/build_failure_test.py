@@ -172,7 +172,7 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
     self.mock(handlers_util, 'GetAllTryJobResults', MockedGetAllTryJobResults)
 
     def MockedGetBuildId(_master_name, _builder_name, build_number):
-      return 80000000000 + build_number if build_number else None
+      return str(80000000000 + build_number) if build_number else None
 
     self.mock(buildbot, 'GetBuildId', MockedGetBuildId)
 
@@ -510,7 +510,7 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
             'last_pass':
                 None,
             'first_failure_build_id':
-                80000000098,
+                '80000000098',
             'last_pass_build_id':
                 None,
             'supported':
@@ -543,9 +543,9 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
             'last_pass':
                 96,
             'first_failure_build_id':
-                80000000098,
+                '80000000098',
             'last_pass_build_id':
-                80000000096,
+                '80000000096',
             'supported':
                 True,
             'suspected_cls': [{
@@ -649,9 +649,9 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
             'last_pass':
                 97,
             'first_failure_build_id':
-                80000000098,
+                '80000000098',
             'last_pass_build_id':
-                80000000097,
+                '80000000097',
             'suspected_cls': [{
                 'build_number': 98,
                 'repo_name': 'chromium',
@@ -675,9 +675,9 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                   'last_pass':
                       97,
                   'first_failure_build_id':
-                      80000000098,
+                      '80000000098',
                   'last_pass_build_id':
-                      80000000097,
+                      '80000000097',
                   'suspected_cls': [{
                       'build_number': 98,
                       'repo_name': 'chromium',
@@ -696,8 +696,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
               {
                   'first_failure': 98,
                   'last_pass': 96,
-                  'first_failure_build_id': 80000000098,
-                  'last_pass_build_id': 80000000096,
+                  'first_failure_build_id': '80000000098',
+                  'last_pass_build_id': '80000000096',
                   'supported': True,
                   'suspected_cls': [],
                   'tests': ['Unittest3.Subtest3'],
@@ -791,7 +791,7 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'heuristic_analysis': {
                             'suspected_cls': [{
                                 'build_number': 119,
-                                'build_id': 80000000119,
+                                'build_id': '80000000119',
                                 'repo_name': 'chromium',
                                 'revision': 'r98_1',
                                 'commit_position': None,
@@ -807,8 +807,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'tests': ['test3'],
                         'first_failure': 119,
                         'last_pass': 118,
-                        'first_failure_build_id': 80000000119,
-                        'last_pass_build_id': 80000000118,
+                        'first_failure_build_id': '80000000119',
+                        'last_pass_build_id': '80000000118',
                         'supported': True,
                     },
                     {
@@ -838,7 +838,7 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'heuristic_analysis': {
                             'suspected_cls': [{
                                 'build_number': 119,
-                                'build_id': 80000000119,
+                                'build_id': '80000000119',
                                 'repo_name': 'chromium',
                                 'revision': 'r98_1',
                                 'commit_position': None,
@@ -854,8 +854,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'tests': ['test2'],
                         'first_failure': 119,
                         'last_pass': 118,
-                        'first_failure_build_id': 80000000119,
-                        'last_pass_build_id': 80000000118,
+                        'first_failure_build_id': '80000000119',
+                        'last_pass_build_id': '80000000118',
                         'supported': True,
                     },
                 ],
@@ -886,8 +886,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'tests': ['test6'],
                         'first_failure': 119,
                         'last_pass': 118,
-                        'first_failure_build_id': 80000000119,
-                        'last_pass_build_id': 80000000118,
+                        'first_failure_build_id': '80000000119',
+                        'last_pass_build_id': '80000000118',
                         'supported': True,
                     },
                     {
@@ -905,8 +905,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'tests': ['test4'],
                         'first_failure': 119,
                         'last_pass': 118,
-                        'first_failure_build_id': 80000000119,
-                        'last_pass_build_id': 80000000118,
+                        'first_failure_build_id': '80000000119',
+                        'last_pass_build_id': '80000000118',
                         'supported': True,
                     },
                 ],
@@ -932,8 +932,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'tests': ['test1'],
                         'first_failure': 120,
                         'last_pass': 119,
-                        'first_failure_build_id': 80000000120,
-                        'last_pass_build_id': 80000000119,
+                        'first_failure_build_id': '80000000120',
+                        'last_pass_build_id': '80000000119',
                         'supported': True,
                     },
                     {
@@ -951,8 +951,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                         'tests': ['test5'],
                         'first_failure': 120,
                         'last_pass': 119,
-                        'first_failure_build_id': 80000000120,
-                        'last_pass_build_id': 80000000119,
+                        'first_failure_build_id': '80000000120',
+                        'last_pass_build_id': '80000000119',
                         'supported': True,
                     },
                 ]
@@ -1019,7 +1019,7 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                     'heuristic_analysis': {
                         'suspected_cls': [{
                             'build_number': 120,
-                            'build_id': 80000000120,
+                            'build_id': '80000000120',
                             'repo_name': 'chromium',
                             'revision': 'rev2',
                             'commit_position': None,
@@ -1034,8 +1034,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
                     'tests': [],
                     'first_failure': 120,
                     'last_pass': 119,
-                    'first_failure_build_id': 80000000120,
-                    'last_pass_build_id': 80000000119,
+                    'first_failure_build_id': '80000000120',
+                    'last_pass_build_id': '80000000119',
                     'supported': True
                 }]
             }
@@ -1106,8 +1106,8 @@ class BuildFailureTest(wf_testcase.WaterfallTestCase):
     expected_data = {
         'first_failure': 122,
         'last_pass': 121,
-        'first_failure_build_id': 80000000122,
-        'last_pass_build_id': 80000000121,
+        'first_failure_build_id': '80000000122',
+        'last_pass_build_id': '80000000121',
         'suspected_cls_by_heuristic': [],
     }
 

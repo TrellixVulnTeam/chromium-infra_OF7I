@@ -252,7 +252,7 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
     self.assertEqual('Analysis of flake is not found.',
                      response.json_body.get('error_message'))
 
-  @mock.patch.object(buildbot, 'GetBuildId', return_value=800000000123)
+  @mock.patch.object(buildbot, 'GetBuildId', return_value='800000000123')
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2017, 1, 1))
   @mock.patch.object(
@@ -336,7 +336,7 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
         'build_number':
             int(build_number),
         'build_id':
-            800000000123,
+            '800000000123',
         'step_name':
             step_name,
         'test_name':
@@ -478,7 +478,7 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
     self.assertTrue(
         response.headers.get('Location', '').endswith(expected_url_surfix))
 
-  @mock.patch.object(buildbot, 'GetBuildId', return_value=800000000123)
+  @mock.patch.object(buildbot, 'GetBuildId', return_value='800000000123')
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2017, 1, 1))
   @mock.patch.object(
@@ -562,7 +562,7 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
         'build_number':
             build_number - 1,
         'build_id':
-            800000000123,
+            '800000000123',
         'step_name':
             step_name,
         'test_name':
@@ -689,7 +689,7 @@ class CheckFlakeTest(wf_testcase.WaterfallTestCase):
          'the test type is not supported or the test is not swarmed yet.'),
         response.json_body.get('error_message'))
 
-  @mock.patch.object(buildbot, 'GetBuildId', return_value=800000000123)
+  @mock.patch.object(buildbot, 'GetBuildId', return_value='800000000123')
   @mock.patch.object(
       check_flake,
       '_GetSuspectedFlakeInfo',

@@ -246,14 +246,20 @@ def GetBuildIdThroughBuildbucket(master_name, builder_name, build_number):
 
 
 def GetBuildId(master_name, builder_name, build_number):
-  """Gets build_id based on legacy buildbot info."""
+  """Gets build_id based on legacy buildbot info.
+
+  Returns:
+    build_id (str): Id of the build in string format.
+  """
   if master_name is None or builder_name is None or build_number is None:
     return None
   build = WfBuild.Get(master_name, builder_name, build_number)
   build_id = build.build_id if build and build.build_id else None
-  if build_id:
-    return build_id
-  return GetBuildIdThroughBuildbucket(master_name, builder_name, build_number)
+  if not build_id:
+    build_id = GetBuildIdThroughBuildbucket(master_name, builder_name,
+                                            build_number)
+
+  return str(build_id) if build_id else None
 
 
 def CreateBuildbucketUrl(master_name, builder_name, build_number):

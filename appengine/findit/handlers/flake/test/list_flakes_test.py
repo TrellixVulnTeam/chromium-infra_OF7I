@@ -86,7 +86,7 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
     self.results, self.prev_cursor, self.cursor = self._MockCursor()
 
     def MockedGetBuildId(_master_name, _builder_name, build_number):
-      return 80000000000 + build_number if build_number else None
+      return str(80000000000 + build_number) if build_number else None
 
     self.mock(buildbot, 'GetBuildId', MockedGetBuildId)
 
@@ -217,7 +217,7 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
             'master_name':
                 self.master_name1,
             'build_id':
-                80000000001,
+                '80000000001',
             'request_utc_timestamp':
                 1475280000,
             'result_status':
@@ -299,7 +299,7 @@ class FilterFlakeTest(wf_testcase.WaterfallTestCase):
             'master_name':
                 self.master_name1,
             'build_id':
-                80000000001,
+                '80000000001',
             'result_status':
                 result_status.RESULT_STATUS_TO_DESCRIPTION[self.result_status1],
             'request_utc_timestamp':
