@@ -43,7 +43,6 @@ To change the number of DUTs in a pool, use resize-pool.`,
 		c.envFlags.Register(&c.Flags)
 
 		c.Flags.BoolVar(&c.dryrun, "dryrun", false, "Dry run.  Inventory changes are not committed.")
-		c.Flags.BoolVar(&c.allModels, "all-models", false, "Consider all models in the pool.")
 		c.Flags.StringVar(&c.spare, "spare", "DUT_POOL_SUITES", "Spare pool to use.")
 		return c
 	},
@@ -54,9 +53,8 @@ type ensurePoolHealthyRun struct {
 	authFlags authcli.Flags
 	envFlags  envFlags
 
-	dryrun    bool
-	allModels bool
-	spare     string
+	dryrun bool
+	spare  string
 }
 
 func (c *ensurePoolHealthyRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -165,40 +163,8 @@ func (c *ensurePoolHealthyRun) getTargetPool(args []string) (string, error) {
 
 func (c *ensurePoolHealthyRun) getModels(ctx context.Context, hc *http.Client, args []string) ([]string, error) {
 	numModelPosArgs := len(args) - 1
-	if c.allModels {
-		if numModelPosArgs > 0 {
-			return []string{}, NewUsageError(c.Flags, "want no model postional arguments with -all-models, got %d", numModelPosArgs)
-		}
-		return c.getAllModels(ctx, hc)
-	}
-
 	if numModelPosArgs < 1 {
 		return []string{}, NewUsageError(c.Flags, "want at least 1 model positional argument, have %d", numModelPosArgs)
 	}
 	return args[1:], nil
-}
-
-func (c *ensurePoolHealthyRun) getAllModels(ctx context.Context, hc *http.Client) ([]string, error) {
-	// TODO(pprabhu) Consider implementing an RPC directly to ensure pool health
-	// for all models.
-	e := c.envFlags.Env()
-	tc := fleet.NewTrackerPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    e.AdminService,
-		Options: site.DefaultPRPCOptions,
-	})
-	res, err := tc.SummarizeBots(ctx, &fleet.SummarizeBotsRequest{})
-	if err != nil {
-		return []string{}, err
-	}
-	r := compileInventoryReport(res.GetBots())
-	return modelsFromInventory(r.models), nil
-}
-
-func modelsFromInventory(ics []*inventoryCount) []string {
-	ms := make([]string, 0, len(ics))
-	for _, ic := range ics {
-		ms = append(ms, ic.name)
-	}
-	return ms
 }

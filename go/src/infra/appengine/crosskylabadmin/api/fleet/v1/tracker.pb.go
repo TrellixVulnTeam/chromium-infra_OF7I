@@ -9,8 +9,6 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	duration "github.com/golang/protobuf/ptypes/duration"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -28,7 +26,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// DutState specifies the valid values for DUT state.
 type DutState int32
 
 const (
@@ -95,6 +92,37 @@ func (x Health) String() string {
 
 func (Health) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_474af594abe23e82, []int{1}
+}
+
+type TaskType int32
+
+const (
+	TaskType_Invalid TaskType = 0
+	TaskType_Reset   TaskType = 1
+	TaskType_Cleanup TaskType = 2
+	TaskType_Repair  TaskType = 3
+)
+
+var TaskType_name = map[int32]string{
+	0: "Invalid",
+	1: "Reset",
+	2: "Cleanup",
+	3: "Repair",
+}
+
+var TaskType_value = map[string]int32{
+	"Invalid": 0,
+	"Reset":   1,
+	"Cleanup": 2,
+	"Repair":  3,
+}
+
+func (x TaskType) String() string {
+	return proto.EnumName(TaskType_name, int32(x))
+}
+
+func (TaskType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_474af594abe23e82, []int{2}
 }
 
 type PushBotsForAdminTasksRequest struct {
@@ -283,363 +311,16 @@ func (m *ReportBotsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ReportBotsResponse proto.InternalMessageInfo
 
-// RefreshBotsRequest can be used to restrict the Swarming bots to refresh via
-// the Tracker.RefreshBots rpc.
-type RefreshBotsRequest struct {
-	// selectors whitelists the bots to refresh. This includes new bots
-	// discovered from Swarming matching the selectors.
-	// Bots selected via repeated selectors are unioned together.
-	//
-	// If no selectors are provided, all bots are selected.
-	Selectors            []*BotSelector `protobuf:"bytes,2,rep,name=selectors,proto3" json:"selectors,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
-}
-
-func (m *RefreshBotsRequest) Reset()         { *m = RefreshBotsRequest{} }
-func (m *RefreshBotsRequest) String() string { return proto.CompactTextString(m) }
-func (*RefreshBotsRequest) ProtoMessage()    {}
-func (*RefreshBotsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_474af594abe23e82, []int{6}
-}
-
-func (m *RefreshBotsRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RefreshBotsRequest.Unmarshal(m, b)
-}
-func (m *RefreshBotsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RefreshBotsRequest.Marshal(b, m, deterministic)
-}
-func (m *RefreshBotsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RefreshBotsRequest.Merge(m, src)
-}
-func (m *RefreshBotsRequest) XXX_Size() int {
-	return xxx_messageInfo_RefreshBotsRequest.Size(m)
-}
-func (m *RefreshBotsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RefreshBotsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RefreshBotsRequest proto.InternalMessageInfo
-
-func (m *RefreshBotsRequest) GetSelectors() []*BotSelector {
-	if m != nil {
-		return m.Selectors
-	}
-	return nil
-}
-
-// RefreshBotsResponse contains information about the Swarming bots actually
-// refreshed in response to a Tracker.RefreshBots rpc.
-type RefreshBotsResponse struct {
-	// dut_ids lists the dut_id of of the bots refreshed.
-	DutIds               []string `protobuf:"bytes,1,rep,name=dut_ids,json=dutIds,proto3" json:"dut_ids,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RefreshBotsResponse) Reset()         { *m = RefreshBotsResponse{} }
-func (m *RefreshBotsResponse) String() string { return proto.CompactTextString(m) }
-func (*RefreshBotsResponse) ProtoMessage()    {}
-func (*RefreshBotsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_474af594abe23e82, []int{7}
-}
-
-func (m *RefreshBotsResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RefreshBotsResponse.Unmarshal(m, b)
-}
-func (m *RefreshBotsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RefreshBotsResponse.Marshal(b, m, deterministic)
-}
-func (m *RefreshBotsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RefreshBotsResponse.Merge(m, src)
-}
-func (m *RefreshBotsResponse) XXX_Size() int {
-	return xxx_messageInfo_RefreshBotsResponse.Size(m)
-}
-func (m *RefreshBotsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RefreshBotsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RefreshBotsResponse proto.InternalMessageInfo
-
-func (m *RefreshBotsResponse) GetDutIds() []string {
-	if m != nil {
-		return m.DutIds
-	}
-	return nil
-}
-
-// SummarizeBotsRequest can be used to restrict the Swarming bots to summarize
-// via the Tracker.SummarizeBots rpc.
-type SummarizeBotsRequest struct {
-	// selectors whitelists the bots to refresh, from the already known bots to
-	// Tracker. Bots selected via repeated selectors are unioned together.
-	//
-	// If no selectors are provided, all bots are selected.
-	Selectors            []*BotSelector `protobuf:"bytes,1,rep,name=selectors,proto3" json:"selectors,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
-}
-
-func (m *SummarizeBotsRequest) Reset()         { *m = SummarizeBotsRequest{} }
-func (m *SummarizeBotsRequest) String() string { return proto.CompactTextString(m) }
-func (*SummarizeBotsRequest) ProtoMessage()    {}
-func (*SummarizeBotsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_474af594abe23e82, []int{8}
-}
-
-func (m *SummarizeBotsRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SummarizeBotsRequest.Unmarshal(m, b)
-}
-func (m *SummarizeBotsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SummarizeBotsRequest.Marshal(b, m, deterministic)
-}
-func (m *SummarizeBotsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SummarizeBotsRequest.Merge(m, src)
-}
-func (m *SummarizeBotsRequest) XXX_Size() int {
-	return xxx_messageInfo_SummarizeBotsRequest.Size(m)
-}
-func (m *SummarizeBotsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_SummarizeBotsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SummarizeBotsRequest proto.InternalMessageInfo
-
-func (m *SummarizeBotsRequest) GetSelectors() []*BotSelector {
-	if m != nil {
-		return m.Selectors
-	}
-	return nil
-}
-
-// SummarizeBotsResponse contains summary information about Swarming bots
-// returned by the Tracker.SummarizeBots rpc.
-type SummarizeBotsResponse struct {
-	Bots                 []*BotSummary `protobuf:"bytes,1,rep,name=bots,proto3" json:"bots,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
-}
-
-func (m *SummarizeBotsResponse) Reset()         { *m = SummarizeBotsResponse{} }
-func (m *SummarizeBotsResponse) String() string { return proto.CompactTextString(m) }
-func (*SummarizeBotsResponse) ProtoMessage()    {}
-func (*SummarizeBotsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_474af594abe23e82, []int{9}
-}
-
-func (m *SummarizeBotsResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SummarizeBotsResponse.Unmarshal(m, b)
-}
-func (m *SummarizeBotsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SummarizeBotsResponse.Marshal(b, m, deterministic)
-}
-func (m *SummarizeBotsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SummarizeBotsResponse.Merge(m, src)
-}
-func (m *SummarizeBotsResponse) XXX_Size() int {
-	return xxx_messageInfo_SummarizeBotsResponse.Size(m)
-}
-func (m *SummarizeBotsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_SummarizeBotsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SummarizeBotsResponse proto.InternalMessageInfo
-
-func (m *SummarizeBotsResponse) GetBots() []*BotSummary {
-	if m != nil {
-		return m.Bots
-	}
-	return nil
-}
-
-// BotSummary contains the summary information tracked by Tracker for a single
-// Skylab Swarming bot.
-type BotSummary struct {
-	// dut_id contains the dut_id dimension for the bot.
-	DutId string `protobuf:"bytes,1,opt,name=dut_id,json=dutId,proto3" json:"dut_id,omitempty"`
-	// dut_state contains the current Autotest state of the dut corresponding to
-	// this bot.
-	DutState DutState `protobuf:"varint,2,opt,name=dut_state,json=dutState,proto3,enum=crosskylabadmin.fleet.DutState" json:"dut_state,omitempty"`
-	// idle_duration contains the time since this bot last ran a task.
-	//
-	// A bot is considered idle for the time that it wasn't running any task.
-	// Killed tasks are counted as legitimate tasks (i.e., time spent running a
-	// task that is then killed does not count as idle time)
-	IdleDuration *duration.Duration `protobuf:"bytes,3,opt,name=idle_duration,json=idleDuration,proto3" json:"idle_duration,omitempty"`
-	// Subset of Swarming dimensions for the current bot.
-	Dimensions *BotDimensions `protobuf:"bytes,4,opt,name=dimensions,proto3" json:"dimensions,omitempty"`
-	// health is the history aware health of the bot.
-	//
-	// A healthy bot is safe to use for external workload. For unhealthy bots,
-	// this field summarizes the reason for the unhealthy state of the bot.
-	Health Health `protobuf:"varint,5,opt,name=health,proto3,enum=crosskylabadmin.fleet.Health" json:"health,omitempty"`
-	// diagnosis contains the tasks that explain how the DUT got into
-	// its present state.
-	Diagnosis            []*Task  `protobuf:"bytes,6,rep,name=diagnosis,proto3" json:"diagnosis,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *BotSummary) Reset()         { *m = BotSummary{} }
-func (m *BotSummary) String() string { return proto.CompactTextString(m) }
-func (*BotSummary) ProtoMessage()    {}
-func (*BotSummary) Descriptor() ([]byte, []int) {
-	return fileDescriptor_474af594abe23e82, []int{10}
-}
-
-func (m *BotSummary) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_BotSummary.Unmarshal(m, b)
-}
-func (m *BotSummary) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_BotSummary.Marshal(b, m, deterministic)
-}
-func (m *BotSummary) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BotSummary.Merge(m, src)
-}
-func (m *BotSummary) XXX_Size() int {
-	return xxx_messageInfo_BotSummary.Size(m)
-}
-func (m *BotSummary) XXX_DiscardUnknown() {
-	xxx_messageInfo_BotSummary.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_BotSummary proto.InternalMessageInfo
-
-func (m *BotSummary) GetDutId() string {
-	if m != nil {
-		return m.DutId
-	}
-	return ""
-}
-
-func (m *BotSummary) GetDutState() DutState {
-	if m != nil {
-		return m.DutState
-	}
-	return DutState_DutStateInvalid
-}
-
-func (m *BotSummary) GetIdleDuration() *duration.Duration {
-	if m != nil {
-		return m.IdleDuration
-	}
-	return nil
-}
-
-func (m *BotSummary) GetDimensions() *BotDimensions {
-	if m != nil {
-		return m.Dimensions
-	}
-	return nil
-}
-
-func (m *BotSummary) GetHealth() Health {
-	if m != nil {
-		return m.Health
-	}
-	return Health_HealthInvalid
-}
-
-func (m *BotSummary) GetDiagnosis() []*Task {
-	if m != nil {
-		return m.Diagnosis
-	}
-	return nil
-}
-
-// Task contains information about a Swarming task.
-type Task struct {
-	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                 string               `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	StateBefore          DutState             `protobuf:"varint,3,opt,name=state_before,json=stateBefore,proto3,enum=crosskylabadmin.fleet.DutState" json:"state_before,omitempty"`
-	StateAfter           DutState             `protobuf:"varint,4,opt,name=state_after,json=stateAfter,proto3,enum=crosskylabadmin.fleet.DutState" json:"state_after,omitempty"`
-	StartedTs            *timestamp.Timestamp `protobuf:"bytes,5,opt,name=started_ts,json=startedTs,proto3" json:"started_ts,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
-}
-
-func (m *Task) Reset()         { *m = Task{} }
-func (m *Task) String() string { return proto.CompactTextString(m) }
-func (*Task) ProtoMessage()    {}
-func (*Task) Descriptor() ([]byte, []int) {
-	return fileDescriptor_474af594abe23e82, []int{11}
-}
-
-func (m *Task) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Task.Unmarshal(m, b)
-}
-func (m *Task) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Task.Marshal(b, m, deterministic)
-}
-func (m *Task) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Task.Merge(m, src)
-}
-func (m *Task) XXX_Size() int {
-	return xxx_messageInfo_Task.Size(m)
-}
-func (m *Task) XXX_DiscardUnknown() {
-	xxx_messageInfo_Task.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Task proto.InternalMessageInfo
-
-func (m *Task) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *Task) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *Task) GetStateBefore() DutState {
-	if m != nil {
-		return m.StateBefore
-	}
-	return DutState_DutStateInvalid
-}
-
-func (m *Task) GetStateAfter() DutState {
-	if m != nil {
-		return m.StateAfter
-	}
-	return DutState_DutStateInvalid
-}
-
-func (m *Task) GetStartedTs() *timestamp.Timestamp {
-	if m != nil {
-		return m.StartedTs
-	}
-	return nil
-}
-
 func init() {
 	proto.RegisterEnum("crosskylabadmin.fleet.DutState", DutState_name, DutState_value)
 	proto.RegisterEnum("crosskylabadmin.fleet.Health", Health_name, Health_value)
+	proto.RegisterEnum("crosskylabadmin.fleet.TaskType", TaskType_name, TaskType_value)
 	proto.RegisterType((*PushBotsForAdminTasksRequest)(nil), "crosskylabadmin.fleet.PushBotsForAdminTasksRequest")
 	proto.RegisterType((*PushBotsForAdminTasksResponse)(nil), "crosskylabadmin.fleet.PushBotsForAdminTasksResponse")
 	proto.RegisterType((*PushRepairJobsForLabstationsRequest)(nil), "crosskylabadmin.fleet.PushRepairJobsForLabstationsRequest")
 	proto.RegisterType((*PushRepairJobsForLabstationsResponse)(nil), "crosskylabadmin.fleet.PushRepairJobsForLabstationsResponse")
 	proto.RegisterType((*ReportBotsRequest)(nil), "crosskylabadmin.fleet.ReportBotsRequest")
 	proto.RegisterType((*ReportBotsResponse)(nil), "crosskylabadmin.fleet.ReportBotsResponse")
-	proto.RegisterType((*RefreshBotsRequest)(nil), "crosskylabadmin.fleet.RefreshBotsRequest")
-	proto.RegisterType((*RefreshBotsResponse)(nil), "crosskylabadmin.fleet.RefreshBotsResponse")
-	proto.RegisterType((*SummarizeBotsRequest)(nil), "crosskylabadmin.fleet.SummarizeBotsRequest")
-	proto.RegisterType((*SummarizeBotsResponse)(nil), "crosskylabadmin.fleet.SummarizeBotsResponse")
-	proto.RegisterType((*BotSummary)(nil), "crosskylabadmin.fleet.BotSummary")
-	proto.RegisterType((*Task)(nil), "crosskylabadmin.fleet.Task")
 }
 
 func init() {
@@ -647,57 +328,33 @@ func init() {
 }
 
 var fileDescriptor_474af594abe23e82 = []byte{
-	// 787 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x95, 0xdd, 0x8e, 0x1b, 0x35,
-	0x14, 0xc7, 0x99, 0x7c, 0x76, 0x4e, 0x36, 0xdb, 0xd4, 0xdb, 0x88, 0x61, 0xa0, 0xdd, 0x30, 0x14,
-	0x94, 0x2e, 0x68, 0x46, 0xa4, 0x54, 0x68, 0x0b, 0x42, 0x6d, 0x88, 0x2a, 0x8a, 0x50, 0x85, 0x66,
-	0x03, 0x42, 0xdc, 0x44, 0x4e, 0xec, 0x24, 0x66, 0x67, 0xc6, 0xc3, 0xd8, 0x53, 0x69, 0xb9, 0xe4,
-	0x25, 0x78, 0x36, 0x2e, 0x78, 0x02, 0x5e, 0x02, 0xd9, 0xe3, 0xd9, 0x6c, 0xd3, 0x9d, 0x90, 0xee,
-	0x9d, 0x7d, 0xfc, 0xfb, 0x9f, 0x73, 0x7c, 0x6c, 0x1f, 0xc3, 0x13, 0x96, 0x2c, 0x33, 0x1c, 0xe0,
-	0x34, 0xa5, 0xc9, 0x8a, 0x25, 0x34, 0x58, 0x64, 0x5c, 0x88, 0xf3, 0x8b, 0x08, 0xcf, 0x31, 0x89,
-	0x59, 0x12, 0xe0, 0x94, 0x05, 0xcb, 0x88, 0x52, 0x19, 0xbc, 0xfa, 0x3c, 0x90, 0x19, 0x5e, 0x9c,
-	0xd3, 0xcc, 0x4f, 0x33, 0x2e, 0x39, 0xea, 0x6f, 0xb1, 0xbe, 0xe6, 0xdc, 0xfb, 0x2b, 0xce, 0x57,
-	0x11, 0x0d, 0x34, 0x34, 0xcf, 0x97, 0x01, 0xc9, 0x33, 0x2c, 0x19, 0x4f, 0x0a, 0x99, 0x7b, 0xbc,
-	0xbd, 0x2e, 0x59, 0x4c, 0x85, 0xc4, 0x71, 0x6a, 0x80, 0xd3, 0xb7, 0xca, 0x69, 0xc1, 0xe3, 0xb8,
-	0xf4, 0xed, 0xdd, 0x87, 0x0f, 0x7e, 0xcc, 0xc5, 0x7a, 0xcc, 0xa5, 0x78, 0xce, 0xb3, 0x67, 0x8a,
-	0x9e, 0x62, 0x71, 0x2e, 0x42, 0xfa, 0x7b, 0x4e, 0x85, 0xf4, 0x8e, 0xe1, 0x5e, 0xc5, 0xba, 0x48,
-	0x79, 0x22, 0xa8, 0xf7, 0x31, 0x7c, 0xa4, 0x80, 0x90, 0xa6, 0x98, 0x65, 0xdf, 0xf3, 0xb9, 0xc2,
-	0x7e, 0xc0, 0x73, 0x21, 0xf5, 0x0e, 0x2e, 0xfd, 0x7c, 0x02, 0x0f, 0x76, 0x63, 0xc6, 0xdd, 0x11,
-	0xdc, 0x09, 0x69, 0xca, 0x33, 0xa9, 0x22, 0x96, 0xe2, 0xbb, 0x80, 0xae, 0x1a, 0x0d, 0xfa, 0xb3,
-	0xb2, 0x2e, 0x33, 0x5a, 0x64, 0x67, 0x58, 0xf4, 0x14, 0x6c, 0x41, 0x23, 0xba, 0x90, 0x3c, 0x13,
-	0x4e, 0x6d, 0x50, 0x1f, 0x76, 0x46, 0x9e, 0x7f, 0x6d, 0xdd, 0xfd, 0x31, 0x97, 0x67, 0x06, 0x0d,
-	0x37, 0x22, 0xcf, 0x87, 0xa3, 0xd7, 0xfc, 0x16, 0xe1, 0xd0, 0xbb, 0xd0, 0x26, 0xb9, 0x9c, 0x31,
-	0x22, 0x1c, 0x6b, 0x50, 0x1f, 0xda, 0x61, 0x8b, 0xe4, 0xf2, 0x05, 0x11, 0xde, 0x2f, 0x70, 0xf7,
-	0x2c, 0x8f, 0x63, 0x9c, 0xb1, 0x3f, 0x68, 0x65, 0x26, 0xd6, 0x4d, 0x32, 0x79, 0x09, 0xfd, 0x2d,
-	0xcf, 0x26, 0x97, 0xc7, 0xd0, 0x98, 0x73, 0x59, 0x7a, 0xfd, 0x70, 0x87, 0x57, 0x2d, 0xbf, 0x08,
-	0x35, 0xee, 0xfd, 0x5d, 0x03, 0xd8, 0x18, 0x51, 0x1f, 0x5a, 0xc5, 0x8e, 0x1c, 0x6b, 0x60, 0x0d,
-	0xed, 0xb0, 0xa9, 0x37, 0x84, 0xbe, 0x06, 0x5b, 0x99, 0xd5, 0xd1, 0x50, 0xa7, 0x36, 0xb0, 0x86,
-	0x87, 0xa3, 0xe3, 0x8a, 0x08, 0x93, 0x5c, 0x9e, 0x29, 0x2c, 0xbc, 0x45, 0xcc, 0x08, 0x7d, 0x03,
-	0x5d, 0x46, 0x22, 0x3a, 0x2b, 0xef, 0xb0, 0x53, 0x1f, 0x58, 0xc3, 0xce, 0xe8, 0x3d, 0xbf, 0xb8,
-	0xc4, 0x7e, 0x79, 0x89, 0xfd, 0x89, 0x01, 0xc2, 0x03, 0xc5, 0x97, 0x33, 0x34, 0x01, 0x20, 0x2c,
-	0xa6, 0x89, 0x50, 0xd7, 0xc2, 0x69, 0x68, 0xf1, 0x83, 0xea, 0x0d, 0x4e, 0x2e, 0xd9, 0xf0, 0x8a,
-	0x0e, 0x3d, 0x86, 0xd6, 0x9a, 0xe2, 0x48, 0xae, 0x9d, 0xa6, 0xde, 0xc0, 0xbd, 0x0a, 0x0f, 0xdf,
-	0x69, 0x28, 0x34, 0x30, 0x3a, 0x05, 0x9b, 0x30, 0xbc, 0x4a, 0xb8, 0x60, 0xc2, 0x69, 0xe9, 0xe2,
-	0xbe, 0x5f, 0xa1, 0x54, 0xaf, 0x20, 0xdc, 0xd0, 0xde, 0xbf, 0x16, 0x34, 0x94, 0x0d, 0x1d, 0x42,
-	0xed, 0xb2, 0xa2, 0x35, 0x46, 0x10, 0x82, 0x46, 0x82, 0xe3, 0xa2, 0x92, 0x76, 0xa8, 0xc7, 0x68,
-	0x0c, 0x07, 0xba, 0xbc, 0xb3, 0x39, 0x5d, 0xf2, 0x8c, 0xea, 0x1a, 0xed, 0x51, 0xe5, 0x8e, 0x16,
-	0x8d, 0xb5, 0x06, 0x3d, 0x85, 0x62, 0x3a, 0xc3, 0x4b, 0x49, 0x33, 0x5d, 0xa9, 0x3d, 0x5c, 0x80,
-	0xd6, 0x3c, 0x53, 0x12, 0x74, 0x0a, 0x6a, 0x96, 0x49, 0x4a, 0x66, 0x52, 0xe8, 0x42, 0x75, 0x46,
-	0xee, 0x1b, 0xe7, 0x34, 0x2d, 0x9b, 0x4d, 0x68, 0x1b, 0x7a, 0x2a, 0x4e, 0x38, 0xdc, 0x2a, 0x5d,
-	0xa2, 0x23, 0xb8, 0x5d, 0x8e, 0x5f, 0x24, 0xaf, 0x70, 0xc4, 0x48, 0xef, 0x1d, 0x64, 0x43, 0x33,
-	0xa4, 0x98, 0x5c, 0xf4, 0x2c, 0xd4, 0x83, 0x83, 0x97, 0x94, 0x12, 0xf1, 0x6d, 0x44, 0x71, 0x92,
-	0xa7, 0xbd, 0x1a, 0xba, 0x0d, 0x1d, 0x6d, 0x29, 0xba, 0x41, 0xaf, 0x8e, 0x0e, 0x01, 0x8c, 0x41,
-	0x50, 0xd9, 0x6b, 0x28, 0x49, 0xb1, 0xf6, 0x1c, 0xb3, 0x88, 0x92, 0x5e, 0xf3, 0xe4, 0x4b, 0x68,
-	0x15, 0x67, 0x85, 0xee, 0x40, 0xb7, 0x18, 0x6d, 0x82, 0x75, 0xa0, 0x5d, 0x98, 0x54, 0xb8, 0x2e,
-	0xd8, 0x3f, 0x25, 0x6b, 0x33, 0xad, 0x8d, 0xfe, 0x69, 0x40, 0x7b, 0x5a, 0x74, 0x61, 0x44, 0xa0,
-	0x73, 0xe5, 0x65, 0xa3, 0x87, 0x15, 0xc5, 0x7a, 0xb3, 0xab, 0xb8, 0x27, 0xfb, 0xa0, 0xe6, 0x71,
-	0xfe, 0x06, 0xdd, 0xd7, 0x5e, 0x2d, 0xfa, 0xb4, 0x42, 0x7c, 0x5d, 0xd7, 0x70, 0x3f, 0xdb, 0x0f,
-	0x36, 0xb1, 0xfe, 0xb4, 0xa0, 0x7f, 0x6d, 0x7f, 0x46, 0x8f, 0x2a, 0xfc, 0xec, 0xea, 0xf6, 0xee,
-	0x17, 0x6f, 0x27, 0x32, 0x49, 0xfc, 0x65, 0x15, 0x9f, 0x48, 0x55, 0x73, 0x47, 0x4f, 0x76, 0xb8,
-	0xfd, 0x9f, 0x8f, 0xc3, 0xfd, 0xea, 0x46, 0x5a, 0x93, 0x19, 0x06, 0xd8, 0x7c, 0x1c, 0x68, 0x58,
-	0x79, 0x88, 0x5b, 0x1f, 0x8e, 0xfb, 0x70, 0x0f, 0xb2, 0x08, 0x31, 0x6e, 0xff, 0xda, 0xd4, 0x6b,
-	0xf3, 0x96, 0x7e, 0x31, 0x8f, 0xfe, 0x0b, 0x00, 0x00, 0xff, 0xff, 0xe6, 0x23, 0x0e, 0xcd, 0x21,
-	0x08, 0x00, 0x00,
+	// 403 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x53, 0x4d, 0x8f, 0x12, 0x41,
+	0x10, 0x75, 0x76, 0x05, 0x76, 0x6b, 0x5d, 0x77, 0x68, 0xe4, 0x42, 0xfc, 0x48, 0xf0, 0x23, 0xca,
+	0x61, 0x26, 0x8a, 0x89, 0x09, 0x9c, 0x44, 0x43, 0xd4, 0x18, 0x63, 0x46, 0xbc, 0x78, 0xab, 0x61,
+	0x0a, 0xe9, 0x30, 0x76, 0xb7, 0xdd, 0x3d, 0x24, 0x5c, 0xbd, 0xfa, 0x03, 0xfc, 0xbb, 0xa6, 0xa7,
+	0x07, 0x31, 0x08, 0xa8, 0x7b, 0xeb, 0x79, 0xf5, 0xaa, 0xde, 0x4b, 0xbd, 0x1a, 0x18, 0x70, 0x31,
+	0xd3, 0x18, 0xa3, 0x52, 0x24, 0x3e, 0x73, 0x41, 0xf1, 0x54, 0x4b, 0x63, 0x16, 0xab, 0x1c, 0x53,
+	0xcc, 0xbe, 0x70, 0x11, 0xa3, 0xe2, 0xf1, 0x2c, 0x27, 0xb2, 0xf1, 0xf2, 0x71, 0x6c, 0x35, 0x4e,
+	0x17, 0xa4, 0x23, 0xa5, 0xa5, 0x95, 0xac, 0xbd, 0xc5, 0x8d, 0x4a, 0x5e, 0xf7, 0x36, 0xdc, 0x7c,
+	0x5f, 0x98, 0xf9, 0x48, 0x5a, 0x33, 0x96, 0xfa, 0xb9, 0xab, 0x4c, 0xd0, 0x2c, 0x4c, 0x42, 0x5f,
+	0x0b, 0x32, 0xb6, 0x7b, 0x07, 0x6e, 0xed, 0xa9, 0x1b, 0x25, 0x85, 0xa1, 0xee, 0x7d, 0xb8, 0xeb,
+	0x08, 0x09, 0x29, 0xe4, 0xfa, 0x8d, 0x4c, 0x1d, 0xed, 0x2d, 0xa6, 0xc6, 0xa2, 0xe5, 0x52, 0xfc,
+	0x9a, 0xf3, 0x00, 0xee, 0x1d, 0xa6, 0x55, 0xe3, 0x5a, 0xd0, 0x4c, 0x48, 0x49, 0x6d, 0x9d, 0xe2,
+	0xba, 0xf9, 0x06, 0xb0, 0xdf, 0x41, 0x4f, 0xed, 0x49, 0x38, 0x79, 0x59, 0xd8, 0x0f, 0x16, 0x2d,
+	0xb1, 0x16, 0x5c, 0xac, 0xdf, 0xaf, 0xc5, 0x12, 0x73, 0x9e, 0x85, 0x57, 0xd8, 0x29, 0xd4, 0x12,
+	0xc2, 0x6c, 0x15, 0x06, 0x2c, 0x84, 0x6b, 0xef, 0x88, 0x32, 0xf3, 0x22, 0x27, 0x14, 0x85, 0x0a,
+	0x8f, 0xd8, 0x05, 0x9c, 0x95, 0x88, 0x77, 0x14, 0x1e, 0xb3, 0xeb, 0x00, 0x15, 0x60, 0xc8, 0x86,
+	0x57, 0x5d, 0x8b, 0xaf, 0x8d, 0x91, 0xe7, 0x94, 0x85, 0xb5, 0xde, 0x33, 0xa8, 0xbf, 0x22, 0xcc,
+	0xed, 0x9c, 0x35, 0xe1, 0xdc, 0xbf, 0x36, 0x62, 0x67, 0xd0, 0xf0, 0x90, 0x93, 0x3b, 0x87, 0xd3,
+	0x8f, 0x62, 0x5e, 0x7d, 0x1e, 0xf5, 0x86, 0x70, 0xe2, 0x96, 0x36, 0x59, 0x29, 0x72, 0xbc, 0x2d,
+	0x87, 0x4e, 0x2e, 0x70, 0xf8, 0xc6, 0x1c, 0x40, 0x7d, 0xed, 0xeb, 0xc9, 0xf7, 0x63, 0x68, 0x4c,
+	0x7c, 0x94, 0xec, 0x5b, 0x00, 0xed, 0x9d, 0x71, 0xb0, 0x7e, 0xb4, 0x33, 0xdf, 0xe8, 0x50, 0xb8,
+	0x9d, 0xa7, 0xff, 0xd7, 0xe4, 0xf7, 0xce, 0x7e, 0x04, 0xfe, 0x66, 0xf6, 0x65, 0xc9, 0x06, 0x07,
+	0xc6, 0xfe, 0xe5, 0x4e, 0x3a, 0xc3, 0x4b, 0xf5, 0x56, 0xce, 0x10, 0x60, 0x73, 0x27, 0xec, 0xe1,
+	0x9e, 0x51, 0x7f, 0xdc, 0x57, 0xe7, 0xd1, 0x3f, 0x30, 0xbd, 0xc4, 0xa8, 0xf1, 0xa9, 0x56, 0xd6,
+	0xd2, 0x7a, 0xf9, 0x5b, 0xf5, 0x7f, 0x06, 0x00, 0x00, 0xff, 0xff, 0x6c, 0x97, 0xce, 0xda, 0x94,
+	0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -712,19 +369,6 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type TrackerClient interface {
-	// RefreshBots instructs the Tracker service to update Swarming bot
-	// information from the Swarming server hosting ChromeOS Skylab bots.
-	//
-	// RefreshBots stops at the first error encountered and returns the error. A
-	// failed RefreshBots call may have refreshed some of the bots requested.
-	// It is safe to call RefreshBots to continue from a partially failed call.
-	RefreshBots(ctx context.Context, in *RefreshBotsRequest, opts ...grpc.CallOption) (*RefreshBotsResponse, error)
-	// SummarizeBots returns summary information about Swarming bots.
-	// This includes ChromeOS Skylab specific dimensions/state information as
-	// well as a summary of the recenty history of administrative tasks.
-	//
-	// SummarizeBots stops at the first error encountered and returns the error.
-	SummarizeBots(ctx context.Context, in *SummarizeBotsRequest, opts ...grpc.CallOption) (*SummarizeBotsResponse, error)
 	// Filter out and queue the CrOS bots that require admin tasks Repair and Reset.
 	PushBotsForAdminTasks(ctx context.Context, in *PushBotsForAdminTasksRequest, opts ...grpc.CallOption) (*PushBotsForAdminTasksResponse, error)
 	// Filter out and queue the labstation bots that require admin tasks Repair.
@@ -738,24 +382,6 @@ type trackerPRPCClient struct {
 
 func NewTrackerPRPCClient(client *prpc.Client) TrackerClient {
 	return &trackerPRPCClient{client}
-}
-
-func (c *trackerPRPCClient) RefreshBots(ctx context.Context, in *RefreshBotsRequest, opts ...grpc.CallOption) (*RefreshBotsResponse, error) {
-	out := new(RefreshBotsResponse)
-	err := c.client.Call(ctx, "crosskylabadmin.fleet.Tracker", "RefreshBots", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *trackerPRPCClient) SummarizeBots(ctx context.Context, in *SummarizeBotsRequest, opts ...grpc.CallOption) (*SummarizeBotsResponse, error) {
-	out := new(SummarizeBotsResponse)
-	err := c.client.Call(ctx, "crosskylabadmin.fleet.Tracker", "SummarizeBots", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *trackerPRPCClient) PushBotsForAdminTasks(ctx context.Context, in *PushBotsForAdminTasksRequest, opts ...grpc.CallOption) (*PushBotsForAdminTasksResponse, error) {
@@ -793,24 +419,6 @@ func NewTrackerClient(cc *grpc.ClientConn) TrackerClient {
 	return &trackerClient{cc}
 }
 
-func (c *trackerClient) RefreshBots(ctx context.Context, in *RefreshBotsRequest, opts ...grpc.CallOption) (*RefreshBotsResponse, error) {
-	out := new(RefreshBotsResponse)
-	err := c.cc.Invoke(ctx, "/crosskylabadmin.fleet.Tracker/RefreshBots", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *trackerClient) SummarizeBots(ctx context.Context, in *SummarizeBotsRequest, opts ...grpc.CallOption) (*SummarizeBotsResponse, error) {
-	out := new(SummarizeBotsResponse)
-	err := c.cc.Invoke(ctx, "/crosskylabadmin.fleet.Tracker/SummarizeBots", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *trackerClient) PushBotsForAdminTasks(ctx context.Context, in *PushBotsForAdminTasksRequest, opts ...grpc.CallOption) (*PushBotsForAdminTasksResponse, error) {
 	out := new(PushBotsForAdminTasksResponse)
 	err := c.cc.Invoke(ctx, "/crosskylabadmin.fleet.Tracker/PushBotsForAdminTasks", in, out, opts...)
@@ -840,19 +448,6 @@ func (c *trackerClient) ReportBots(ctx context.Context, in *ReportBotsRequest, o
 
 // TrackerServer is the server API for Tracker service.
 type TrackerServer interface {
-	// RefreshBots instructs the Tracker service to update Swarming bot
-	// information from the Swarming server hosting ChromeOS Skylab bots.
-	//
-	// RefreshBots stops at the first error encountered and returns the error. A
-	// failed RefreshBots call may have refreshed some of the bots requested.
-	// It is safe to call RefreshBots to continue from a partially failed call.
-	RefreshBots(context.Context, *RefreshBotsRequest) (*RefreshBotsResponse, error)
-	// SummarizeBots returns summary information about Swarming bots.
-	// This includes ChromeOS Skylab specific dimensions/state information as
-	// well as a summary of the recenty history of administrative tasks.
-	//
-	// SummarizeBots stops at the first error encountered and returns the error.
-	SummarizeBots(context.Context, *SummarizeBotsRequest) (*SummarizeBotsResponse, error)
 	// Filter out and queue the CrOS bots that require admin tasks Repair and Reset.
 	PushBotsForAdminTasks(context.Context, *PushBotsForAdminTasksRequest) (*PushBotsForAdminTasksResponse, error)
 	// Filter out and queue the labstation bots that require admin tasks Repair.
@@ -865,12 +460,6 @@ type TrackerServer interface {
 type UnimplementedTrackerServer struct {
 }
 
-func (*UnimplementedTrackerServer) RefreshBots(ctx context.Context, req *RefreshBotsRequest) (*RefreshBotsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RefreshBots not implemented")
-}
-func (*UnimplementedTrackerServer) SummarizeBots(ctx context.Context, req *SummarizeBotsRequest) (*SummarizeBotsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SummarizeBots not implemented")
-}
 func (*UnimplementedTrackerServer) PushBotsForAdminTasks(ctx context.Context, req *PushBotsForAdminTasksRequest) (*PushBotsForAdminTasksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushBotsForAdminTasks not implemented")
 }
@@ -883,42 +472,6 @@ func (*UnimplementedTrackerServer) ReportBots(ctx context.Context, req *ReportBo
 
 func RegisterTrackerServer(s prpc.Registrar, srv TrackerServer) {
 	s.RegisterService(&_Tracker_serviceDesc, srv)
-}
-
-func _Tracker_RefreshBots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RefreshBotsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TrackerServer).RefreshBots(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/crosskylabadmin.fleet.Tracker/RefreshBots",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TrackerServer).RefreshBots(ctx, req.(*RefreshBotsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Tracker_SummarizeBots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SummarizeBotsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TrackerServer).SummarizeBots(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/crosskylabadmin.fleet.Tracker/SummarizeBots",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TrackerServer).SummarizeBots(ctx, req.(*SummarizeBotsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Tracker_PushBotsForAdminTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -979,14 +532,6 @@ var _Tracker_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "crosskylabadmin.fleet.Tracker",
 	HandlerType: (*TrackerServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "RefreshBots",
-			Handler:    _Tracker_RefreshBots_Handler,
-		},
-		{
-			MethodName: "SummarizeBots",
-			Handler:    _Tracker_SummarizeBots_Handler,
-		},
 		{
 			MethodName: "PushBotsForAdminTasks",
 			Handler:    _Tracker_PushBotsForAdminTasks_Handler,

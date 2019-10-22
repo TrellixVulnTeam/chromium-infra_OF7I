@@ -583,11 +583,6 @@ func assertLabInventoryChange(c C, fg *fakes.GerritClient, duts []testInventoryD
 	So(want, ShouldEqual, got)
 }
 
-func expectDutsWithHealth(t *fleet.MockTrackerServer, dutHealths map[string]fleet.Health) {
-	ft := &trackerPartialFake{dutHealths}
-	t.EXPECT().SummarizeBots(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(ft.SummarizeBots)
-}
-
 func expectDutsHealthFromSwarming(tf testFixture, bots []*swarming.SwarmingRpcsBotInfo) {
 	tf.MockSwarming.EXPECT().ListAliveBotsInPool(
 		gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool), gomock.Any(),

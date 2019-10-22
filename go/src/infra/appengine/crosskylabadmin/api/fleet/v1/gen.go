@@ -15,11 +15,9 @@
 //go:generate cproto
 
 //go:generate mockgen -source tracker.pb.go -destination tracker.mock.pb.go -package fleet
-//go:generate mockgen -source tasker.pb.go -destination tasker.mock.pb.go -package fleet
 //go:generate mockgen -source inventory.pb.go -destination inventory.mock.pb.go -package fleet
 
 //go:generate svcdec -type TrackerServer
-//go:generate svcdec -type TaskerServer
 //go:generate svcdec -type InventoryServer
 
 // Package fleet contains service definitions for fleet management in

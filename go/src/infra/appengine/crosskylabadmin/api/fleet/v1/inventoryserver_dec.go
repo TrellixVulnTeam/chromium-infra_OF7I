@@ -14,283 +14,283 @@ type DecoratedInventory struct {
 	// Prelude is called for each method before forwarding the call to Service.
 	// If Prelude returns an error, then the call is skipped and the error is
 	// processed via the Postlude (if one is defined), or it is returned directly.
-	Prelude func(c context.Context, methodName string, req proto.Message) (context.Context, error)
+	Prelude func(ctx context.Context, methodName string, req proto.Message) (context.Context, error)
 	// Postlude is called for each method after Service has processed the call, or
 	// after the Prelude has returned an error. This takes the the Service's
 	// response proto (which may be nil) and/or any error. The decorated
 	// service will return the response (possibly mutated) and error that Postlude
 	// returns.
-	Postlude func(c context.Context, methodName string, rsp proto.Message, err error) error
+	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedInventory) DeployDut(c context.Context, req *DeployDutRequest) (rsp *DeployDutResponse, err error) {
+func (s *DecoratedInventory) DeployDut(ctx context.Context, req *DeployDutRequest) (rsp *DeployDutResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "DeployDut", req)
+		newCtx, err = s.Prelude(ctx, "DeployDut", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.DeployDut(c, req)
+		rsp, err = s.Service.DeployDut(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "DeployDut", rsp, err)
+		err = s.Postlude(ctx, "DeployDut", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) RedeployDut(c context.Context, req *RedeployDutRequest) (rsp *RedeployDutResponse, err error) {
+func (s *DecoratedInventory) RedeployDut(ctx context.Context, req *RedeployDutRequest) (rsp *RedeployDutResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "RedeployDut", req)
+		newCtx, err = s.Prelude(ctx, "RedeployDut", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.RedeployDut(c, req)
+		rsp, err = s.Service.RedeployDut(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "RedeployDut", rsp, err)
+		err = s.Postlude(ctx, "RedeployDut", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) GetDeploymentStatus(c context.Context, req *GetDeploymentStatusRequest) (rsp *GetDeploymentStatusResponse, err error) {
+func (s *DecoratedInventory) GetDeploymentStatus(ctx context.Context, req *GetDeploymentStatusRequest) (rsp *GetDeploymentStatusResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "GetDeploymentStatus", req)
+		newCtx, err = s.Prelude(ctx, "GetDeploymentStatus", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.GetDeploymentStatus(c, req)
+		rsp, err = s.Service.GetDeploymentStatus(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "GetDeploymentStatus", rsp, err)
+		err = s.Postlude(ctx, "GetDeploymentStatus", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) DeleteDuts(c context.Context, req *DeleteDutsRequest) (rsp *DeleteDutsResponse, err error) {
+func (s *DecoratedInventory) DeleteDuts(ctx context.Context, req *DeleteDutsRequest) (rsp *DeleteDutsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "DeleteDuts", req)
+		newCtx, err = s.Prelude(ctx, "DeleteDuts", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.DeleteDuts(c, req)
+		rsp, err = s.Service.DeleteDuts(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "DeleteDuts", rsp, err)
+		err = s.Postlude(ctx, "DeleteDuts", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) BalancePools(c context.Context, req *BalancePoolsRequest) (rsp *BalancePoolsResponse, err error) {
+func (s *DecoratedInventory) BalancePools(ctx context.Context, req *BalancePoolsRequest) (rsp *BalancePoolsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "BalancePools", req)
+		newCtx, err = s.Prelude(ctx, "BalancePools", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.BalancePools(c, req)
+		rsp, err = s.Service.BalancePools(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "BalancePools", rsp, err)
+		err = s.Postlude(ctx, "BalancePools", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) ResizePool(c context.Context, req *ResizePoolRequest) (rsp *ResizePoolResponse, err error) {
+func (s *DecoratedInventory) ResizePool(ctx context.Context, req *ResizePoolRequest) (rsp *ResizePoolResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "ResizePool", req)
+		newCtx, err = s.Prelude(ctx, "ResizePool", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.ResizePool(c, req)
+		rsp, err = s.Service.ResizePool(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "ResizePool", rsp, err)
+		err = s.Postlude(ctx, "ResizePool", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) RemoveDutsFromDrones(c context.Context, req *RemoveDutsFromDronesRequest) (rsp *RemoveDutsFromDronesResponse, err error) {
+func (s *DecoratedInventory) RemoveDutsFromDrones(ctx context.Context, req *RemoveDutsFromDronesRequest) (rsp *RemoveDutsFromDronesResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "RemoveDutsFromDrones", req)
+		newCtx, err = s.Prelude(ctx, "RemoveDutsFromDrones", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.RemoveDutsFromDrones(c, req)
+		rsp, err = s.Service.RemoveDutsFromDrones(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "RemoveDutsFromDrones", rsp, err)
+		err = s.Postlude(ctx, "RemoveDutsFromDrones", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) AssignDutsToDrones(c context.Context, req *AssignDutsToDronesRequest) (rsp *AssignDutsToDronesResponse, err error) {
+func (s *DecoratedInventory) AssignDutsToDrones(ctx context.Context, req *AssignDutsToDronesRequest) (rsp *AssignDutsToDronesResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "AssignDutsToDrones", req)
+		newCtx, err = s.Prelude(ctx, "AssignDutsToDrones", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.AssignDutsToDrones(c, req)
+		rsp, err = s.Service.AssignDutsToDrones(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "AssignDutsToDrones", rsp, err)
+		err = s.Postlude(ctx, "AssignDutsToDrones", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) ListServers(c context.Context, req *ListServersRequest) (rsp *ListServersResponse, err error) {
+func (s *DecoratedInventory) ListServers(ctx context.Context, req *ListServersRequest) (rsp *ListServersResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "ListServers", req)
+		newCtx, err = s.Prelude(ctx, "ListServers", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.ListServers(c, req)
+		rsp, err = s.Service.ListServers(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "ListServers", rsp, err)
+		err = s.Postlude(ctx, "ListServers", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) GetDutInfo(c context.Context, req *GetDutInfoRequest) (rsp *GetDutInfoResponse, err error) {
+func (s *DecoratedInventory) GetDutInfo(ctx context.Context, req *GetDutInfoRequest) (rsp *GetDutInfoResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "GetDutInfo", req)
+		newCtx, err = s.Prelude(ctx, "GetDutInfo", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.GetDutInfo(c, req)
+		rsp, err = s.Service.GetDutInfo(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "GetDutInfo", rsp, err)
+		err = s.Postlude(ctx, "GetDutInfo", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) GetDroneConfig(c context.Context, req *GetDroneConfigRequest) (rsp *GetDroneConfigResponse, err error) {
+func (s *DecoratedInventory) GetDroneConfig(ctx context.Context, req *GetDroneConfigRequest) (rsp *GetDroneConfigResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "GetDroneConfig", req)
+		newCtx, err = s.Prelude(ctx, "GetDroneConfig", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.GetDroneConfig(c, req)
+		rsp, err = s.Service.GetDroneConfig(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "GetDroneConfig", rsp, err)
+		err = s.Postlude(ctx, "GetDroneConfig", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) ListRemovedDuts(c context.Context, req *ListRemovedDutsRequest) (rsp *ListRemovedDutsResponse, err error) {
+func (s *DecoratedInventory) ListRemovedDuts(ctx context.Context, req *ListRemovedDutsRequest) (rsp *ListRemovedDutsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "ListRemovedDuts", req)
+		newCtx, err = s.Prelude(ctx, "ListRemovedDuts", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.ListRemovedDuts(c, req)
+		rsp, err = s.Service.ListRemovedDuts(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "ListRemovedDuts", rsp, err)
+		err = s.Postlude(ctx, "ListRemovedDuts", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) PushInventoryToQueen(c context.Context, req *PushInventoryToQueenRequest) (rsp *PushInventoryToQueenResponse, err error) {
+func (s *DecoratedInventory) PushInventoryToQueen(ctx context.Context, req *PushInventoryToQueenRequest) (rsp *PushInventoryToQueenResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "PushInventoryToQueen", req)
+		newCtx, err = s.Prelude(ctx, "PushInventoryToQueen", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.PushInventoryToQueen(c, req)
+		rsp, err = s.Service.PushInventoryToQueen(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "PushInventoryToQueen", rsp, err)
+		err = s.Postlude(ctx, "PushInventoryToQueen", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) UpdateDutLabels(c context.Context, req *UpdateDutLabelsRequest) (rsp *UpdateDutLabelsResponse, err error) {
+func (s *DecoratedInventory) UpdateDutLabels(ctx context.Context, req *UpdateDutLabelsRequest) (rsp *UpdateDutLabelsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "UpdateDutLabels", req)
+		newCtx, err = s.Prelude(ctx, "UpdateDutLabels", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.UpdateDutLabels(c, req)
+		rsp, err = s.Service.UpdateDutLabels(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "UpdateDutLabels", rsp, err)
+		err = s.Postlude(ctx, "UpdateDutLabels", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) UpdateCachedInventory(c context.Context, req *UpdateCachedInventoryRequest) (rsp *UpdateCachedInventoryResponse, err error) {
+func (s *DecoratedInventory) UpdateCachedInventory(ctx context.Context, req *UpdateCachedInventoryRequest) (rsp *UpdateCachedInventoryResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "UpdateCachedInventory", req)
+		newCtx, err = s.Prelude(ctx, "UpdateCachedInventory", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.UpdateCachedInventory(c, req)
+		rsp, err = s.Service.UpdateCachedInventory(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "UpdateCachedInventory", rsp, err)
+		err = s.Postlude(ctx, "UpdateCachedInventory", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) UpdateDeviceConfig(c context.Context, req *UpdateDeviceConfigRequest) (rsp *UpdateDeviceConfigResponse, err error) {
+func (s *DecoratedInventory) UpdateDeviceConfig(ctx context.Context, req *UpdateDeviceConfigRequest) (rsp *UpdateDeviceConfigResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "UpdateDeviceConfig", req)
+		newCtx, err = s.Prelude(ctx, "UpdateDeviceConfig", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.UpdateDeviceConfig(c, req)
+		rsp, err = s.Service.UpdateDeviceConfig(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "UpdateDeviceConfig", rsp, err)
+		err = s.Postlude(ctx, "UpdateDeviceConfig", rsp, err)
 	}
 	return
 }

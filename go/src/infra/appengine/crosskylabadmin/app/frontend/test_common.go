@@ -38,7 +38,6 @@ type testFixture struct {
 	C context.Context
 
 	Tracker fleet.TrackerServer
-	Tasker  fleet.TaskerServer
 
 	MockSwarming       *mock.MockSwarmingClient
 	MockBotTasksCursor *mock.MockBotTasksCursor
@@ -68,11 +67,6 @@ func newTestFixtureWithContext(c context.Context, t *testing.T) (testFixture, fu
 
 	tf.MockSwarming = mock.NewMockSwarmingClient(mc)
 	tf.Tracker = &TrackerServerImpl{
-		SwarmingFactory: func(context.Context, string) (clients.SwarmingClient, error) {
-			return tf.MockSwarming, nil
-		},
-	}
-	tf.Tasker = &TaskerServerImpl{
 		SwarmingFactory: func(context.Context, string) (clients.SwarmingClient, error) {
 			return tf.MockSwarming, nil
 		},

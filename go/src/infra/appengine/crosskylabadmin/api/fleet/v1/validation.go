@@ -22,28 +22,6 @@ import (
 )
 
 // Validate returns an error if r is invalid.
-func (r *TriggerRepairOnIdleRequest) Validate() error {
-	if r.IdleDuration == nil {
-		return errors.New("idleDuration is required")
-	}
-	if r.Priority == 0 {
-		return errors.New("must specify priority greater than 0")
-	}
-	return nil
-}
-
-// Validate returns an error if r is invalid.
-func (r *TriggerRepairOnRepairFailedRequest) Validate() error {
-	if r.TimeSinceLastRepair == nil {
-		return errors.New("lastRepairDuration is required")
-	}
-	if r.Priority == 0 {
-		return errors.New("must specify priority greater than 0")
-	}
-	return nil
-}
-
-// Validate returns an error if r is invalid.
 func (r *BalancePoolsRequest) Validate() error {
 	if r.DutSelector != nil {
 		if err := r.DutSelector.Validate(); err != nil {

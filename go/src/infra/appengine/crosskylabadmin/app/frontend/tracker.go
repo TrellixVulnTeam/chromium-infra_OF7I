@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/golang/protobuf/ptypes/duration"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/data/strpair"
 	"go.chromium.org/luci/common/errors"
@@ -30,11 +29,12 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/botsummary"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/diagnosis"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/metrics/utilization"
 	swarming_utils "infra/appengine/crosskylabadmin/app/frontend/internal/swarming"
 )
+
+// SwarmingFactory is a constructor for a SwarmingClient.
+type SwarmingFactory func(c context.Context, host string) (clients.SwarmingClient, error)
 
 // TrackerServerImpl implements the fleet.TrackerServer interface.
 type TrackerServerImpl struct {
@@ -133,62 +133,6 @@ func (tsi *TrackerServerImpl) ReportBots(ctx context.Context, req *fleet.ReportB
 	return &fleet.ReportBotsResponse{}, nil
 }
 
-// RefreshBots implements the fleet.Tracker.RefreshBots() method.
-func (tsi *TrackerServerImpl) RefreshBots(ctx context.Context, req *fleet.RefreshBotsRequest) (res *fleet.RefreshBotsResponse, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-
-	cfg := config.Get(ctx)
-	sc, err := tsi.newSwarmingClient(ctx, cfg.Swarming.Host)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to obtain Swarming client").Err()
-	}
-
-	logging.Infof(ctx, "Getting bots from Swarming")
-	bots, err := getBotsFromSwarming(ctx, sc, cfg.Swarming.BotPool, req.Selectors)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to get bots from Swarming").Err()
-	}
-
-	bsm := botInfoToSummary(ctx, bots)
-	logging.Infof(ctx, "Adding task info to bot summaries")
-	if err = addTaskInfoToSummaries(ctx, sc, bsm); err != nil {
-		return nil, errors.Annotate(err, "failed to set idle time for bots").Err()
-	}
-	logging.Infof(ctx, "Inserting bot summaries into datastore")
-	updated, err := botsummary.Insert(ctx, bsm)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to insert bots").Err()
-	}
-	return &fleet.RefreshBotsResponse{
-		DutIds: updated,
-	}, nil
-}
-
-// SummarizeBots implements the fleet.Tracker.SummarizeBots() method.
-func (tsi *TrackerServerImpl) SummarizeBots(ctx context.Context, req *fleet.SummarizeBotsRequest) (res *fleet.SummarizeBotsResponse, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-
-	bses, err := botsummary.Get(ctx, req.Selectors)
-	if err != nil {
-		return nil, err
-	}
-	bss := make([]*fleet.BotSummary, 0, len(bses))
-	for _, bse := range bses {
-		bs, err := bse.Decode()
-		if err != nil {
-			return nil, errors.Annotate(err, "failed to unmarshal bot summary for bot with dut_id %q", bse.DutID).Err()
-		}
-		bss = append(bss, bs)
-	}
-	return &fleet.SummarizeBotsResponse{
-		Bots: bss,
-	}, nil
-}
-
 // getBotsFromSwarming lists bots by calling the Swarming service.
 func getBotsFromSwarming(ctx context.Context, sc clients.SwarmingClient, pool string, sels []*fleet.BotSelector) ([]*swarming.SwarmingRpcsBotInfo, error) {
 	// No filters implies get all bots.
@@ -270,105 +214,6 @@ var healthyDutStates = map[fleet.DutState]bool{
 	fleet.DutState_NeedsCleanup: true,
 	fleet.DutState_NeedsRepair:  true,
 	fleet.DutState_NeedsReset:   true,
-}
-
-// botInfoToSummary initializes fleet.BotSummary for each bot.
-//
-// This function returns a map from the bot ID to fleet.BotSummary object for
-// it.
-func botInfoToSummary(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) map[string]*fleet.BotSummary {
-	bsm := make(map[string]*fleet.BotSummary, len(bots))
-	for _, bi := range bots {
-		bs, err := singleBotInfoToSummary(bi)
-		if err != nil {
-			logging.Errorf(ctx, "failed to make summary for bot %s: %s", bi.BotId, err)
-			continue
-		}
-		bsm[bi.BotId] = bs
-	}
-	return bsm
-}
-
-// singleBotInfoToSummary returns a BotSummary for the bot.
-func singleBotInfoToSummary(bi *swarming.SwarmingRpcsBotInfo) (*fleet.BotSummary, error) {
-	bs := &fleet.BotSummary{
-		Dimensions: &fleet.BotDimensions{},
-	}
-	dims := swarming_utils.DimensionsMap(bi.Dimensions)
-	var err error
-	bs.DutId, err = swarming_utils.ExtractSingleValuedDimension(dims, clients.DutIDDimensionKey)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to obtain DUT ID for bot %q", bi.BotId).Err()
-	}
-	bs.Dimensions.DutName, err = swarming_utils.ExtractSingleValuedDimension(dims, clients.DutNameDimensionKey)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to obtain DUT name for bot %q", bi.BotId).Err()
-	}
-
-	bs.DutState = clients.GetStateDimension(bi.Dimensions)
-	if bs.DutState == fleet.DutState_DutStateInvalid {
-		return nil, errors.Reason("failed to obtain DutState for bot %q", bi.BotId).Err()
-	}
-
-	if vs := dims[clients.DutModelDimensionKey]; len(vs) == 1 {
-		bs.Dimensions.Model = vs[0]
-	}
-	bs.Dimensions.Pools = dims[clients.DutPoolDimensionKey]
-	if healthy := healthyDutStates[bs.DutState]; healthy {
-		bs.Health = fleet.Health_Healthy
-	} else {
-		bs.Health = fleet.Health_Unhealthy
-	}
-	return bs, nil
-}
-
-// addTaskInfoToSummaries updates the bot summaries with information
-// derived from the bot's tasks.
-func addTaskInfoToSummaries(ctx context.Context, sc clients.SwarmingClient, bsm map[string]*fleet.BotSummary) error {
-	return parallel.WorkPool(clients.MaxConcurrentSwarmingCalls, func(workC chan<- func() error) {
-		for bid := range bsm {
-			// In-scope variable for goroutine closure.
-			bid := bid
-			bs := bsm[bid]
-			workC <- func() error {
-				return addTaskInfoToSummary(ctx, sc, bid, bs)
-			}
-		}
-	})
-}
-
-// addTaskInfoToSummary updates the bot summary with information derived
-// from the bot's tasks.
-func addTaskInfoToSummary(ctx context.Context, sc clients.SwarmingClient, botID string, bs *fleet.BotSummary) error {
-	d, err := getIdleDuration(ctx, sc, botID)
-	if err != nil {
-		return errors.Annotate(err, "failed to get idle duration of bot %s", botID).Err()
-	}
-	bs.IdleDuration = d
-	ts, err := diagnosis.Diagnose(ctx, sc, botID, bs.DutState)
-	if err != nil {
-		return errors.Annotate(err, "failed to get diagnosis for bot %s", botID).Err()
-	}
-	bs.Diagnosis = ts
-	return nil
-}
-
-// getIdleDuration queries swarming for the duration since last task on the
-// bot.
-func getIdleDuration(ctx context.Context, sc clients.SwarmingClient, botID string) (*duration.Duration, error) {
-	trs, err := sc.ListSortedRecentTasksForBot(ctx, botID, 1)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to list recent tasks for bot %s", botID).Err()
-	}
-	if len(trs) == 0 {
-		return nil, nil
-	}
-	tr := trs[0]
-	d, err := clients.TimeSinceBotTask(tr)
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to determine time since task %s", tr.TaskId).Err()
-	}
-	return d, nil
 }
 
 // identifyBots identifies bots that need reset and need repair.

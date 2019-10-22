@@ -250,21 +250,3 @@ func inventoryBytesFromServers(servers []testInventoryServer) []byte {
 	}
 	return []byte(proto.MarshalTextString(infra))
 }
-
-type trackerPartialFake struct {
-	DutHealths map[string]fleet.Health
-}
-
-// SummarizeBots implements the fleet.TrackerService interface.
-func (t *trackerPartialFake) SummarizeBots(c context.Context, req *fleet.SummarizeBotsRequest) (*fleet.SummarizeBotsResponse, error) {
-	summaries := make([]*fleet.BotSummary, 0, len(req.Selectors))
-	for _, s := range req.Selectors {
-		h, ok := t.DutHealths[s.DutId]
-		// Tracker silently skips any selectors that don't match existing DUTs.
-		if !ok {
-			continue
-		}
-		summaries = append(summaries, &fleet.BotSummary{DutId: s.DutId, Health: h})
-	}
-	return &fleet.SummarizeBotsResponse{Bots: summaries}, nil
-}

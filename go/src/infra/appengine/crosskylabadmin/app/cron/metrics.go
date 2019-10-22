@@ -44,30 +44,6 @@ var (
 		nil,
 		field.Bool("success"),
 	)
-	refreshBotsTick = metric.NewCounter(
-		"chromeos/crosskylabadmin/cron/refresh_bots",
-		"RefreshBots cron attempt",
-		nil,
-		field.Bool("success"),
-	)
-	ensureBackgroundTasksTick = metric.NewCounter(
-		"chromeos/crosskylabadmin/cron/ensure_background_tasks",
-		"EnsureBackgroundTasks cron attempt",
-		nil,
-		field.Bool("success"),
-	)
-	triggerRepairOnIdleTick = metric.NewCounter(
-		"chromeos/crosskylabadmin/cron/trigger_repair_on_idle",
-		"TriggerRepairOnIdle cron attempt",
-		nil,
-		field.Bool("success"),
-	)
-	triggerRepairOnRepairFailedTick = metric.NewCounter(
-		"chromeos/crosskylabadmin/cron/trigger_repair_on_repair_failed",
-		"TriggerRepairOnRepairFailed cron attempt",
-		nil,
-		field.Bool("success"),
-	)
 	pushInventoryToQueenTick = metric.NewCounter(
 		"chromeos/crosskylabadmin/cron/push_inventory_to_queen",
 		"PushInventoryToQueen cron attempt",

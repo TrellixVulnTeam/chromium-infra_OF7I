@@ -42,10 +42,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 		Service: &TrackerServerImpl{},
 		Prelude: checkAccess,
 	})
-	fleet.RegisterTaskerServer(&api, &fleet.DecoratedTasker{
-		Service: &TaskerServerImpl{},
-		Prelude: checkAccess,
-	})
 	fleet.RegisterInventoryServer(&api, &fleet.DecoratedInventory{
 		Service: &inventory.ServerImpl{TrackerFactory: trackerFactory},
 		Prelude: checkAccess,

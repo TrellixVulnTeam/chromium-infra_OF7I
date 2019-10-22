@@ -34,46 +34,6 @@ func (m *MockTrackerClient) EXPECT() *MockTrackerClientMockRecorder {
 	return m.recorder
 }
 
-// RefreshBots mocks base method
-func (m *MockTrackerClient) RefreshBots(ctx context.Context, in *RefreshBotsRequest, opts ...grpc.CallOption) (*RefreshBotsResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "RefreshBots", varargs...)
-	ret0, _ := ret[0].(*RefreshBotsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RefreshBots indicates an expected call of RefreshBots
-func (mr *MockTrackerClientMockRecorder) RefreshBots(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshBots", reflect.TypeOf((*MockTrackerClient)(nil).RefreshBots), varargs...)
-}
-
-// SummarizeBots mocks base method
-func (m *MockTrackerClient) SummarizeBots(ctx context.Context, in *SummarizeBotsRequest, opts ...grpc.CallOption) (*SummarizeBotsResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "SummarizeBots", varargs...)
-	ret0, _ := ret[0].(*SummarizeBotsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SummarizeBots indicates an expected call of SummarizeBots
-func (mr *MockTrackerClientMockRecorder) SummarizeBots(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SummarizeBots", reflect.TypeOf((*MockTrackerClient)(nil).SummarizeBots), varargs...)
-}
-
 // PushBotsForAdminTasks mocks base method
 func (m *MockTrackerClient) PushBotsForAdminTasks(ctx context.Context, in *PushBotsForAdminTasksRequest, opts ...grpc.CallOption) (*PushBotsForAdminTasksResponse, error) {
 	m.ctrl.T.Helper()
@@ -155,36 +115,6 @@ func NewMockTrackerServer(ctrl *gomock.Controller) *MockTrackerServer {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockTrackerServer) EXPECT() *MockTrackerServerMockRecorder {
 	return m.recorder
-}
-
-// RefreshBots mocks base method
-func (m *MockTrackerServer) RefreshBots(arg0 context.Context, arg1 *RefreshBotsRequest) (*RefreshBotsResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RefreshBots", arg0, arg1)
-	ret0, _ := ret[0].(*RefreshBotsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RefreshBots indicates an expected call of RefreshBots
-func (mr *MockTrackerServerMockRecorder) RefreshBots(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshBots", reflect.TypeOf((*MockTrackerServer)(nil).RefreshBots), arg0, arg1)
-}
-
-// SummarizeBots mocks base method
-func (m *MockTrackerServer) SummarizeBots(arg0 context.Context, arg1 *SummarizeBotsRequest) (*SummarizeBotsResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SummarizeBots", arg0, arg1)
-	ret0, _ := ret[0].(*SummarizeBotsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SummarizeBots indicates an expected call of SummarizeBots
-func (mr *MockTrackerServerMockRecorder) SummarizeBots(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SummarizeBots", reflect.TypeOf((*MockTrackerServer)(nil).SummarizeBots), arg0, arg1)
 }
 
 // PushBotsForAdminTasks mocks base method
