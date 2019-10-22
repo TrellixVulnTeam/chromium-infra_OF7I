@@ -114,7 +114,7 @@ func (c *removeDutsRun) validateArgs() error {
 	if c.removalReason.bug == "" && !c.delete {
 		errs = append(errs, "-bug is required when not deleting")
 	}
-	if !validBug(c.removalReason.bug) {
+	if c.removalReason.bug != "" && !validBug(c.removalReason.bug) {
 		errs = append(errs, "-bug must match crbug.com/NNNN or b/NNNN")
 	}
 	// Limit to roughly one line, like a commit message first line.
