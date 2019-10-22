@@ -505,6 +505,14 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
                     },
                 },
             },
+            'default_postsubmit_report_config': {
+                'chromium': {
+                    'host': 'chromium.googlesource.com',
+                    'project': 'chromium/src',
+                    'ref': 'refs/heads/master',
+                    'platform': 'linux',
+                },
+            },
         })
 
   def tearDown(self):
@@ -754,15 +762,23 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
 
     host = 'chromium.googlesource.com'
     project = 'chromium/src'
+    ref = 'refs/heads/master'
     platform = 'linux'
 
     report = _CreateSamplePostsubmitReport()
     report.put()
 
-    request_url = (
-        '/p/chromium/coverage?host=%s&project=%s&platform=%s&list_reports=true'
-    ) % (host, project, platform)
+    request_url = ('/p/chromium/coverage?host=%s&project=%s&ref=%s&platform=%s'
+                   '&list_reports=true') % (host, project, ref, platform)
     response = self.test_app.get(request_url)
+    self.assertEqual(200, response.status_int)
+
+  def testServeFullRepoProjectViewDefaultReportConfig(self):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+    report = _CreateSamplePostsubmitReport()
+    report.put()
+
+    response = self.test_app.get('/p/chromium/coverage?&list_reports=true')
     self.assertEqual(200, response.status_int)
 
   def testServeFullRepoDirectoryView(self):

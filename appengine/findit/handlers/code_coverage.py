@@ -119,6 +119,25 @@ def _GetPostsubmitPlatformInfoMap(luci_project):
       'postsubmit_platform_info_map', {}).get(luci_project, {})
 
 
+def _GetPostsubmitDefaultReportConfig(luci_project):
+  """Returns a tuple of (host, project, ref, platform) to serve default report.
+
+  Following is an example config:
+  {
+    'default_postsubmit_report_config': {
+      'chromium': {
+        'host': 'chromium.googlesource.com',
+        'project': 'chromium/src',
+        'ref': 'refs/heads/master',
+        'platform': 'linux',
+      }
+    }
+  }
+  """
+  return waterfall_config.GetCodeCoverageSettings().get(
+      'default_postsubmit_report_config', {}).get(luci_project, None)
+
+
 def _GetWhitelistedBuilders():
   """Returns a set of whitelisted builders that the service should process.
 
@@ -1185,14 +1204,21 @@ class ServeCodeCoverageData(BaseHandler):
                                      400)
     luci_project = match.group(1)
 
-    host = self.request.get('host', 'chromium.googlesource.com')
-    project = self.request.get('project', 'chromium/src')
-    ref = self.request.get('ref', 'refs/heads/master')
+    default_config = _GetPostsubmitDefaultReportConfig(luci_project)
+    if not default_config:
+      return BaseHandler.CreateError(
+          'Default report config is missing for project: "%s", please file a '
+          'bug with component: Infra>Test>CodeCoverage for fixing it' %
+          luci_project, 400)
+
+    host = self.request.get('host', default_config['host'])
+    project = self.request.get('project', default_config['project'])
+    ref = self.request.get('ref', default_config['ref'])
 
     revision = self.request.get('revision')
     path = self.request.get('path')
     data_type = self.request.get('data_type')
-    platform = self.request.get('platform', 'linux')
+    platform = self.request.get('platform', default_config['platform'])
     list_reports = self.request.get('list_reports', False)
     if isinstance(list_reports, str):
       list_reports = (list_reports.lower() == 'true')
