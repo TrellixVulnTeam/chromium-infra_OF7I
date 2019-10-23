@@ -124,6 +124,10 @@ func createLeaseTask(ctx context.Context, t *swarming.Client, e site.Environment
 		Tags: []string{
 			"pool:ChromeOSSkylab",
 			"skylab-tool:lease",
+			// This quota account specifier is only relevant for DUTs that are
+			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+			// harmless otherwise.
+			"qs_account:leases",
 			fmt.Sprintf("dut-name:%s", lt.host),
 		},
 		TaskSlices:     slices,
