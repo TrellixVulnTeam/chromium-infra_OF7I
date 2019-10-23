@@ -62,6 +62,9 @@ SEND_WIPEOUT_USER_LISTS_TASK = '/_task/sendWipeoutUserListsTask'
 DELETE_WIPEOUT_USERS_TASK = '/_task/deleteWipeoutUsersTask'
 DELETE_USERS_TASK = '/_task/deleteUsersTask'
 
+# URL for publishing issue changes to a pubsub topic.
+PUBLISH_PUBSUB_ISSUE_CHANGE_TASK = '/_task/publishPubsubIssueChange'
+
 # URL for manually triggered FLT launch issue conversion job.
 FLT_ISSUE_CONVERSION_TASK = '/_task/fltConversionTask'
 

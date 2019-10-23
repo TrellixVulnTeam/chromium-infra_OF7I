@@ -19,6 +19,7 @@ ISSUE_INPUT_REGEX = "[a-z0-9][-a-z0-9]*[a-z0-9]:\d+(([,]|\s)+[a-z0-9][-a-z0-9]*[
 
 QUEUE_NOTIFICATIONS = 'notifications'
 QUEUE_OUTBOUND_EMAIL = 'outboundemail'
+QUEUE_PUBSUB = 'pubsub-issueupdates'
 
 KNOWN_CUES = (
     'privacy_click_through',

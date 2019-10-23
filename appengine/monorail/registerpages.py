@@ -23,6 +23,7 @@ from features import hotlistissues
 from features import hotlistissuescsv
 from features import hotlistpeople
 from features import filterrules
+from features import pubsub
 from features import userhotlists
 from features import inboundemail
 from features import notify
@@ -215,6 +216,8 @@ class ServletRegistry(object):
         urls.SPAM_DATA_EXPORT_TASK: spammodel.TrainingDataExportTask,
         urls.DATE_ACTION_CRON: dateaction.DateActionCron,
         urls.SPAM_TRAINING_CRON: spamtraining.TrainSpamModelCron,
+        urls.PUBLISH_PUBSUB_ISSUE_CHANGE_TASK:
+            pubsub.PublishPubsubIssueChangeTask,
         urls.ISSUE_DATE_ACTION_TASK: dateaction.IssueDateActionTask,
         urls.COMPONENT_DATA_EXPORT_CRON:
           componentexport.ComponentTrainingDataExport,

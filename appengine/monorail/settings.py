@@ -453,3 +453,14 @@ if app_identity.get_application_id() == 'monorail-prod':
 else:
   gapi_client_id = (
     '52759169022-6918fl1hd1qoul985cs1ohgedeb8c9a0.apps.googleusercontent.com')
+
+# The pub/sub topic on which to publish issue update messages.
+if local_mode:
+  # In local dev, send issue updates to the monorail-dev project.
+  # There also exists a pubsub emulator we could potentially use in the future:
+  # https://cloud.google.com/pubsub/docs/emulator
+  pubsub_project = 'monorail-dev'
+else:
+  pubsub_project = app_identity.get_application_id()
+
+pubsub_topic_id = 'projects/%s/topics/issue-updates' % pubsub_project
