@@ -3084,6 +3084,19 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 225
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pywin32/${vpython_platform}"
+  version: "version:225"
+>
+```
+
+
+* *windows-x64*
+* *windows-x86*
+
 ## **requests**
 
 ### 2.13.0
