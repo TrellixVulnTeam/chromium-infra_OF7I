@@ -502,3 +502,54 @@ def _GetPatchsetRevision(patchset, change_details):
   raise RuntimeError(
       'Patchset %d is not found in the returned change details: %s' %
       (patchset, json.dumps(change_details)))
+
+
+def MergeFilesCoverageDataForPerCL(a, b):
+  """Merges coverage data files for per-cl coverage data.
+
+  The original data includes 'uncovered blocks', but this merge function drops
+  it because it's non-trivial to merge them, and it won't be useful at all
+  unless Gerrit decides to support displaying them, and it's still unclear
+  whether it will happen or not.
+
+  Args:
+    a (list): A list of File in coverage proto.
+    b (list): A list of File in coverage proto.
+
+  Returns:
+    A list of File in coverage proto.
+  """
+  merged = []
+  a_dict = {i['path']: i for i in a}
+  b_dict = {i['path']: i for i in b}
+  for path in set(a_dict.keys() + b_dict.keys()):
+    if path not in a_dict:
+      merged.append(b_dict[path])
+      continue
+
+    if path not in b_dict:
+      merged.append(a_dict[path])
+      continue
+
+    a_lines_dict = {
+        i['line']: i['count']
+        for i in DecompressLineRanges(a_dict[path]['lines'])
+    }
+    b_lines_dict = {
+        i['line']: i['count']
+        for i in DecompressLineRanges(b_dict[path]['lines'])
+    }
+    merged_lines_dict = {}
+    for k in set(a_lines_dict.keys() + b_lines_dict.keys()):
+      merged_lines_dict[k] = a_lines_dict.get(k, 0) + b_lines_dict.get(k, 0)
+
+    merged_lines = [{
+        'line': l,
+        'count': c
+    } for l, c in merged_lines_dict.iteritems()]
+    merged.append({
+        'path': path,
+        'lines': CompressLines(merged_lines),
+    })
+
+  return sorted(merged, key=lambda x: x['path'])

@@ -462,3 +462,123 @@ class CodeCoverageUtilTest(WaterfallTestCase):
 
     self.assertEqual(1, len(rebased_coverage_data))
     self.assertEqual('//base/test1.cc', rebased_coverage_data[0]['path'])
+
+  def testMergeFilesCoverageData(self):
+    a = [{
+        'path': '//test.cc',
+        'lines': [{
+            'first': 1,
+            'last': 3,
+            'count': 0,
+        }]
+    }]
+    b = [{
+        'path': '//test.cc',
+        'lines': [{
+            'first': 2,
+            'last': 4,
+            'count': 1,
+        }]
+    }]
+    expected = [{
+        'path':
+            '//test.cc',
+        'lines': [
+            {
+                'first': 1,
+                'last': 1,
+                'count': 0,
+            },
+            {
+                'first': 2,
+                'last': 4,
+                'count': 1,
+            },
+        ]
+    }]
+    self.assertListEqual(
+        expected, code_coverage_util.MergeFilesCoverageDataForPerCL(a, b))
+
+  def testMergeFilesCoverageDataNoOverlap(self):
+    a = [{
+        'path': '//test.cc',
+        'lines': [{
+            'first': 1,
+            'last': 3,
+            'count': 0,
+        }]
+    }]
+    b = [{
+        'path': '//test.cc',
+        'lines': [{
+            'first': 4,
+            'last': 6,
+            'count': 1,
+        }]
+    }]
+    expected = [{
+        'path':
+            '//test.cc',
+        'lines': [
+            {
+                'first': 1,
+                'last': 3,
+                'count': 0,
+            },
+            {
+                'first': 4,
+                'last': 6,
+                'count': 1,
+            },
+        ]
+    }]
+    self.assertListEqual(
+        expected, code_coverage_util.MergeFilesCoverageDataForPerCL(a, b))
+
+  def testMergeFilesCoverageDataMultipleFiles(self):
+    a = [{
+        'path': '//test1.cc',
+        'lines': [{
+            'first': 1,
+            'last': 3,
+            'count': 1,
+        }]
+    }]
+    b = [
+        {
+            'path': '//test1.cc',
+            'lines': [{
+                'first': 4,
+                'last': 6,
+                'count': 1,
+            }]
+        },
+        {
+            'path': '//test2.cc',
+            'lines': [{
+                'first': 1,
+                'last': 3,
+                'count': 1,
+            }]
+        },
+    ]
+    expected = [
+        {
+            'path': '//test1.cc',
+            'lines': [{
+                'first': 1,
+                'last': 6,
+                'count': 1,
+            },]
+        },
+        {
+            'path': '//test2.cc',
+            'lines': [{
+                'first': 1,
+                'last': 3,
+                'count': 1,
+            }]
+        },
+    ]
+    self.assertListEqual(
+        expected, code_coverage_util.MergeFilesCoverageDataForPerCL(a, b))
