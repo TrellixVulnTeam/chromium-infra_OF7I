@@ -119,7 +119,7 @@ history.History.prototype = {
     {
         // TODO(crbug/706192): remove webkit_tests once this step name no longer exists
         return this.crossDashboardState.testType == 'webkit_tests' ||
-            this.crossDashboardState.testType == 'webkit_layout_tests';
+            this.crossDashboardState.testType.startsWith('webkit_layout_tests');
     },
     isGPUTestResults: function()
     {

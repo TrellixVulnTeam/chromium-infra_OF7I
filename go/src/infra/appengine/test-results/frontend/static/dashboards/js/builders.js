@@ -123,18 +123,19 @@ builders.builderFromKey = function(builderKey)
 builders.Master = function(master_data)
 {
     this.name = master_data.name;
-    this.basePath = 'http://build.chromium.org/p/' + master_data.url_name;
+    this.basePath = 'https://ci.chromium.org/p/chromium';
     this.tests = master_data.tests;
 }
 
 builders.Master.prototype = {
     logPath: function(builder, buildNumber)
     {
-        return this.builderPath(builder) + '/builds/' + buildNumber;
+        return this.builderPath(builder) + '/' + buildNumber;
     },
     builderPath: function(builder)
     {
-        return this.basePath + '/builders/' + builder;
+        return this.basePath + '/builders/' +
+               (this.name.startsWith('tryserver') ? 'try' : 'ci') + builder;
     },
     builderJsonPath: function()
     {

@@ -563,7 +563,8 @@ function htmlForPopupForBuild(builderKey, index, opt_testName)
     var chromeRevision = g_resultsByBuilder[builder.key()].chromeRevision[index];
     if (chromeRevision && g_history.isLayoutTestResults()) {
         html += '<li><a href="' + TEST_RESULTS_BASE_PATH + builder.builderNameForPath() +
-            '/' + buildNumber + '/layout-test-results.zip">layout-test-results.zip</a></li>';
+            '/' + buildNumber + '/' + g_history.crossDashboardState.testType +
+            '/layout-test-results/results.html">layout-test-results (html)</a></li>';
     }
 
     if (!g_history.isLayoutTestResults() && opt_testName && isFailure(builder, opt_testName, index))
