@@ -325,6 +325,7 @@ _CONFIG_SPEC = {  # yapf: disable
         'max_flake_analysis_bug_updates_per_day': int,
         'minimum_confidence_to_update_endpoints': float,
         'minimum_confidence_to_revert_flake_culprit': float,
+        'v2_actions': bool,
     }),
     'builders_to_trybots': (dict, True, _ValidateTrybotMapping),
     'check_flake_settings': (dict, True, {

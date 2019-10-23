@@ -156,6 +156,8 @@ class MastersTest(wf_testcase.WaterfallTestCase):
             0.7,
         'minimum_confidence_to_revert_flake_culprit':
             1.0,
+        'v2_actions':
+            False,
     }, waterfall_config.GetActionSettings())
 
   def testGetCheckFlakeSettings(self):

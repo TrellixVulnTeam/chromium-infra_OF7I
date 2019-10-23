@@ -220,6 +220,10 @@ class CompileAnalysisAPI(AnalysisAPI):
     project_config = projects.PROJECT_CFG.get(context.luci_project_name, {})
     action_settings = waterfall_config.GetActionSettings()
 
+    if not action_settings.get('v2_actions', False):
+      logging.info('V2 auto-action flow globally disabled')
+      return None
+
     if not project_config.get('auto_actions_enabled_for_project', False):
       return self._NoAction(culprit, 'Auto-actions disabled for project')
 

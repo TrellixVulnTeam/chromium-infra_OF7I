@@ -125,6 +125,7 @@ class FinditConfig(VersionedConfig):
   #     'max_flake_analysis_bug_updates_per_day': 30,
   #     'minimum_confidence_to_update_endpoints': 0.7,
   #     'minimum_confidence_to_revert_flake_culprit': 1.0,
+  #     'v2_actions': False,
   # }
   action_settings = ndb.JsonProperty(indexed=False, default={})
 

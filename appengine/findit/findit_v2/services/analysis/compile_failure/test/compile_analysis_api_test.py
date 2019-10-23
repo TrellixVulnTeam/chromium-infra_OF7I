@@ -27,7 +27,7 @@ from services import git
 from waterfall.test import wf_testcase
 
 
-class CompileAnalysisAPITest(wf_testcase.TestCase):
+class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
 
   def _MockBuild(self,
                  build_id,
@@ -49,6 +49,8 @@ class CompileAnalysisAPITest(wf_testcase.TestCase):
 
   def setUp(self):
     super(CompileAnalysisAPITest, self).setUp()
+    self.UpdateUnitTestConfigSettings(
+        config_property='action_settings', override_data={'v2_actions': True})
     self.build_id = 8000000000123
     self.build_number = 123
     self.builder = BuilderID(
