@@ -18,6 +18,7 @@ const fullTextProto = `
 variant: "somevariant"
 test_coverage_hints {
   usb_detect: true
+  use_lid: true
   test_usbprinting: true
   test_usbaudio: true
   test_hdmiaudio: true
@@ -151,6 +152,7 @@ var fullLabels = []string{
 	"touchpad",
 	"touchscreen",
 	"usb_detect",
+	"use_lid",
 	"variant:somevariant",
 	"webcam",
 	"wificell",

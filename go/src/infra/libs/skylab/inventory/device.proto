@@ -380,7 +380,7 @@ message Peripherals {
 //
 // Keep sorted by field name.
 //
-// NEXT TAG: 12
+// NEXT TAG: 13
 message TestCoverageHints {
   optional bool chaos_dut = 7;
   optional bool chromesign = 11;
@@ -411,6 +411,7 @@ message TestCoverageHints {
   optional bool test_usbaudio = 4;
   optional bool test_usbprinting = 5;
   optional bool usb_detect = 6;
+  optional bool use_lid = 12;
 }
 
 // NEXT TAG: 3

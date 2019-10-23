@@ -45,6 +45,9 @@ func boolTestCoverageHintsConverter(dims Dimensions, ls *inventory.SchedulableLa
 	if h.GetUsbDetect() {
 		dims["label-usb_detect"] = []string{"True"}
 	}
+	if h.GetUseLid() {
+		dims["label-use_lid"] = []string{"True"}
+	}
 }
 
 func boolTestCoverageHintsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -59,6 +62,7 @@ func boolTestCoverageHintsReverter(ls *inventory.SchedulableLabels, d Dimensions
 	d = assignLastBoolValueAndDropKey(d, h.TestUsbaudio, "label-test_usbaudio")
 	d = assignLastBoolValueAndDropKey(d, h.TestUsbprinting, "label-test_usbprinting")
 	d = assignLastBoolValueAndDropKey(d, h.UsbDetect, "label-usb_detect")
+	d = assignLastBoolValueAndDropKey(d, h.UseLid, "label-use_lid")
 
 	return d
 }

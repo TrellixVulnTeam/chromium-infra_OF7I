@@ -17,6 +17,7 @@ const fullTextProto = `
 variant: "somevariant"
 test_coverage_hints {
   usb_detect: true
+  use_lid: true
   test_usbprinting: true
   test_usbaudio: true
   test_hdmiaudio: true
@@ -141,6 +142,7 @@ var fullDimensions = Dimensions{
 	"label-test_usbaudio":    {"True"},
 	"label-test_usbprinting": {"True"},
 	"label-usb_detect":       {"True"},
+	"label-use_lid":          {"True"},
 	"label-variant":          {"somevariant"},
 	"label-video_acceleration": {
 		"VIDEO_ACCELERATION_ENC_VP9",

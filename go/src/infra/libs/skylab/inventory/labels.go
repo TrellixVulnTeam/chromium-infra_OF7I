@@ -65,6 +65,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 			TestUsbaudio:    new(bool),
 			TestUsbprinting: new(bool),
 			UsbDetect:       new(bool),
+			UseLid:          new(bool),
 		},
 	}
 }

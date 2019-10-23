@@ -47,6 +47,9 @@ func boolTestCoverageHintsConverter(ls *inventory.SchedulableLabels) []string {
 	if h.GetUsbDetect() {
 		labels = append(labels, "usb_detect")
 	}
+	if h.GetUseLid() {
+		labels = append(labels, "use_lid")
+	}
 	return labels
 }
 
@@ -75,6 +78,8 @@ func boolTestCoverageHintsReverter(ls *inventory.SchedulableLabels, labels []str
 			*h.TestUsbprinting = true
 		case "usb_detect":
 			*h.UsbDetect = true
+		case "use_lid":
+			*h.UseLid = true
 		default:
 			continue
 		}
