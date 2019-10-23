@@ -498,14 +498,6 @@ def _IsReportSuspicious(report):
   return False
 
 
-def _IsPresubmitBuild(build):
-  if build.builder.bucket == 'try':
-    return True
-  return build.builder.bucket in (
-      'master.tryserver.cast-chromecast-internal.gce',
-  ) and build.builder.builder in ('libassistant-incremental_coverage',)
-
-
 class FetchSourceFile(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
@@ -788,14 +780,18 @@ class ProcessCodeCoverageData(BaseHandler):
     all_json_gs_path = '%s/all.json.gz' % full_gs_metadata_dir
     data = _GetValidatedData(all_json_gs_path)
 
-    # For presubmit coverage, save the whole data in json.
-    if _IsPresubmitBuild(build):
+    if 'coverage_is_presubmit' not in properties:
+      logging.error('Expecting "coverage_is_presubmit" in output properties')
+      return
+
+    if properties['coverage_is_presubmit']:
+      # For presubmit coverage, save the whole data in json.
       # Assume there is only 1 patch which is true in CQ.
       assert len(build.input.gerrit_changes) == 1, 'Expect only one patchset'
       patch = build.input.gerrit_changes[0]
       self._ProcessCLPatchData(patch, data['files'], build_id)
-    # For postsubmit coverage, we save the data by file and directory.
     else:
+      # For postsubmit coverage, we save the data by file and directory.
       if not self._IsGitilesCommitAvailable(build.input.gitiles_commit):
         self._SetGitilesCommitFromOutputProperty(build, properties)
 
