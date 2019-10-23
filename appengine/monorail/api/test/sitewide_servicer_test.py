@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import time
 import unittest
 
 import mock
@@ -40,12 +41,12 @@ class SitewideServicerTest(unittest.TestCase):
     return wrapped_handler.wrapped(self.sitewide_svcr, *args, **kwargs)
 
   @mock.patch('services.secrets_svc.GetXSRFKey')
-  @mock.patch('framework.xsrf.GetRoundedTime')
-  def testRefreshToken(self, mockGetRoundedTime, mockGetXSRFKey):
+  @mock.patch('time.time')
+  def testRefreshToken(self, mockTime, mockGetXSRFKey):
     """We can refresh an expired token."""
     mockGetXSRFKey.side_effect = lambda: 'fakeXSRFKey'
     # The token is at the brink of being too old
-    mockGetRoundedTime.side_effect = lambda: 1 + xsrf.REFRESH_TOKEN_TIMEOUT_SEC
+    mockTime.side_effect = lambda: 1 + xsrf.REFRESH_TOKEN_TIMEOUT_SEC
 
     token_path = 'token_path'
     token = xsrf.GenerateToken(111, token_path, 1)
@@ -63,11 +64,11 @@ class SitewideServicerTest(unittest.TestCase):
         response)
 
   @mock.patch('services.secrets_svc.GetXSRFKey')
-  @mock.patch('framework.xsrf.GetRoundedTime')
-  def testRefreshToken_InvalidToken(self, mockGetRoundedTime, mockGetXSRFKey):
+  @mock.patch('time.time')
+  def testRefreshToken_InvalidToken(self, mockTime, mockGetXSRFKey):
     """We reject attempts to refresh an invalid token."""
     mockGetXSRFKey.side_effect = ['fakeXSRFKey']
-    mockGetRoundedTime.side_effect = [123]
+    mockTime.side_effect = [123]
 
     token_path = 'token_path'
     token = 'invalidToken'
@@ -81,11 +82,11 @@ class SitewideServicerTest(unittest.TestCase):
       self.CallWrapped(self.sitewide_svcr.RefreshToken, mc, request)
 
   @mock.patch('services.secrets_svc.GetXSRFKey')
-  @mock.patch('framework.xsrf.GetRoundedTime')
-  def testRefreshToken_TokenTooOld(self, mockGetRoundedTime, mockGetXSRFKey):
+  @mock.patch('time.time')
+  def testRefreshToken_TokenTooOld(self, mockTime, mockGetXSRFKey):
     """We reject attempts to refresh a token that's too old."""
     mockGetXSRFKey.side_effect = lambda: 'fakeXSRFKey'
-    mockGetRoundedTime.side_effect = lambda: 2 + xsrf.REFRESH_TOKEN_TIMEOUT_SEC
+    mockTime.side_effect = lambda: 2 + xsrf.REFRESH_TOKEN_TIMEOUT_SEC
 
     token_path = 'token_path'
     token = xsrf.GenerateToken(111, token_path, 1)

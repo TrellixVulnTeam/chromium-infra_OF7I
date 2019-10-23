@@ -31,16 +31,17 @@ REFRESH_TOKEN_TIMEOUT_SEC = 10 * framework_constants.SECS_PER_DAY
 # token that the server might consider expired already.
 TOKEN_TIMEOUT_MARGIN_SEC = 5 * framework_constants.SECS_PER_MINUTE
 
+# When checking that the token is not from the future, allow a little
+# margin for the possibliity that the clock of the GAE instance that
+# generated the token could be a little ahead of the one checking.
+CLOCK_SKEW_SEC = 5
+
 # Form tokens and issue stars are limited to only work with the specific
 # servlet path for the servlet that processes them.  There are several
 # XHR handlers that mainly read data without making changes, so we just
 # use 'xhr' with all of them.
 XHR_SERVLET_PATH = 'xhr'
 
-# Return the same XSRF token within a 10 minute period to allow the same
-# token to be used in multiple requests by the same user. Quickly changing the
-# XSRF token defeats URL-based caching. More context in crbug.com/monorail/3814.
-TOKEN_GRANULARITY_SECONDS = 10 * framework_constants.SECS_PER_MINUTE
 
 DELIMITER = ':'
 
@@ -61,7 +62,7 @@ def GenerateToken(user_id, servlet_path, token_time=None):
   Raises:
     ValueError: if the XSRF secret was not configured.
   """
-  token_time = token_time or GetRoundedTime()
+  token_time = token_time or int(time.time())
   digester = hmac.new(secrets_svc.GetXSRFKey())
   digester.update(str(user_id))
   digester.update(DELIMITER)
@@ -94,7 +95,7 @@ def ValidateToken(
     token_time = int(decoded.split(DELIMITER)[-1])
   except (TypeError, ValueError):
     raise TokenIncorrect('could not decode token')
-  now = GetRoundedTime()
+  now = int(time.time())
 
   # The given token should match the generated one with the same time.
   expected_token = GenerateToken(user_id, servlet_path, token_time=token_time)
@@ -110,6 +111,10 @@ def ValidateToken(
         'presented token does not match expected token: %r != %r' % (
             token, expected_token))
 
+  # We reject tokens from the future.
+  if token_time > now + CLOCK_SKEW_SEC:
+    raise TokenIncorrect('token is from future')
+
   # We check expiration last so that we only raise the expriration error
   # if the token would have otherwise been valid.
   if now - token_time > timeout:
@@ -118,14 +123,9 @@ def ValidateToken(
 
 def TokenExpiresSec():
   """Return timestamp when current tokens will expire, minus a safety margin."""
-  now = GetRoundedTime()
+  now = int(time.time())
   return now + TOKEN_TIMEOUT_SEC - TOKEN_TIMEOUT_MARGIN_SEC
 
-
-def GetRoundedTime():
-  now = int(time.time())
-  rounded = now - (now % TOKEN_GRANULARITY_SECONDS)
-  return rounded
 
 class Error(Exception):
   """Base class for errors from this module."""

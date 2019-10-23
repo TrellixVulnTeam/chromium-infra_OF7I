@@ -48,27 +48,6 @@ class XsrfTest(unittest.TestCase):
         xsrf.GenerateToken(111, '/path/one'),
         xsrf.GenerateToken(111, '/path/two'))
 
-  @patch('time.time')
-  def testGenerateToken_CloseTimesGetSameTokens(self, mockTime):
-    test_time = 1526671379
-
-    mockTime.return_value = test_time
-    token1 = xsrf.GenerateToken(111, '/path')
-
-    mockTime.return_value = test_time + 1
-    token2 = xsrf.GenerateToken(111, '/path')
-    self.assertEqual(token1, token2)
-
-    mockTime.return_value = test_time \
-        + xsrf.TOKEN_GRANULARITY_SECONDS \
-        - xsrf.TOKEN_TIMEOUT_MARGIN_SEC
-    token3 = xsrf.GenerateToken(111, '/path')
-    self.assertEqual(token1, token3)
-
-    mockTime.return_value = test_time + xsrf.TOKEN_GRANULARITY_SECONDS
-    token4 = xsrf.GenerateToken(111, '/path')
-    self.assertNotEqual(token1, token4)
-
   def testValidToken(self):
     token = xsrf.GenerateToken(111, '/path')
     xsrf.ValidateToken(token, 111, '/path')  # no exception raised
@@ -116,10 +95,19 @@ class XsrfTest(unittest.TestCase):
       xsrf.ValidateToken, token, 11, '/path')
 
   @patch('time.time')
-  def testGetRoundedTime(self, mockTime):
-    mockTime.return_value = 1526344117
-    self.assertEqual(1526343600, xsrf.GetRoundedTime())
+  def testValidateToken_Future(self, mockTime):
+    """We reject tokens from the future."""
+    test_time = 1526671379
+    mockTime.return_value = test_time
+    token = xsrf.GenerateToken(111, '/path')
+    xsrf.ValidateToken(token, 111, '/path')
 
-    # When it divides evenly by 10 minutes (600 seconds).
-    mockTime.return_value = 1526344200
-    self.assertEqual(1526344200, xsrf.GetRoundedTime())
+    # The clock of the GAE instance doing the checking might be slightly slow.
+    mockTime.return_value = test_time - 1
+    xsrf.ValidateToken(token, 111, '/path')
+
+    # But, if the difference is too much, someone is trying to fake a token.
+    mockTime.return_value = test_time - xsrf.CLOCK_SKEW_SEC - 1
+    self.assertRaises(
+      xsrf.TokenIncorrect,
+      xsrf.ValidateToken, token, 111, '/path')

@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import time
 import unittest
 import mock
 import mox
@@ -393,9 +394,9 @@ class MonorailServicerTest(unittest.TestCase):
       self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
 
   @mock.patch('google.appengine.api.oauth.get_client_id')
-  @mock.patch('framework.xsrf.GetRoundedTime')
+  @mock.patch('time.time')
   def testAssertWhitelistedOrXSRF_CustomTimeout(
-      self, mockGetRoundedTime, mock_get_client_id):
+      self, mockTime, mock_get_client_id):
     """Our API is limited to our client by checking an XSRF token."""
     # Disable special whitelisting of the default client_id while testing.
     mock_get_client_id.return_value = None
@@ -410,7 +411,7 @@ class MonorailServicerTest(unittest.TestCase):
                   xsrf.GenerateToken(222, xsrf.XHR_SERVLET_PATH, 1)}
 
     # The token is too old and we fail to authenticate.
-    mockGetRoundedTime.side_effect = lambda: 2 + xsrf.TOKEN_TIMEOUT_SEC
+    mockTime.side_effect = lambda: 2 + xsrf.TOKEN_TIMEOUT_SEC
     with self.assertRaises(xsrf.TokenIncorrect):
       self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
 
