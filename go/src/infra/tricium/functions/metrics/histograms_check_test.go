@@ -55,8 +55,8 @@ func analyzeTestFile(t *testing.T, filePath string, patch string, tempDir string
 	// Previous files will be put into tempDir.
 	getPreviousFiles([]string{filePath}, inputPath, tempDir, patch)
 	if patch == emptyPatch {
-		// Assumes all test files are less than 100 lines in length
-		// Necessary to ensure all lines in the test file are analyzed
+		// Assumes all test files are less than 100 lines in length.
+		// This is necessary to ensure all lines in the test file are analyzed.
 		filesChanged.addedLines[filePath] = makeRange(1, 100)
 		filesChanged.removedLines[filePath] = makeRange(1, 100)
 	}
