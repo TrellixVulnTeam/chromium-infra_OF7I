@@ -16,6 +16,7 @@ INSTANCES = [
   'chromium-status-hr',
   'chromiumos-status-hr',
   'dart-status',
+  'devtools-status',
   'infra-status',
   'naclports-status-hrd',
   'nativeclient-status-hrd',
