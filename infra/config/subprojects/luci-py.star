@@ -43,7 +43,6 @@ build.presubmit(
     # The default 8-minute timeout is a problem for luci-py.
     # See https://crbug.com/917479 for context.
     timeout_s = 900,
-    vpython_spec_path = '.vpython',
 )
 
 try_builder(
