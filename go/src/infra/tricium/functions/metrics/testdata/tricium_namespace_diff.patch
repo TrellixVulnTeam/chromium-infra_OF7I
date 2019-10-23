@@ -1,7 +1,7 @@
-diff --git a/testdata/src/namespace/add_namespace.xml b/testdata/src/namespace/add_namespace.xml
+diff --git a/src/namespace/add_namespace.xml b/src/namespace/add_namespace.xml
 index c173b8af0..fdfce9d08 100644
---- a/testdata/src/namespace/add_namespace.xml
-+++ b/testdata/src/namespace/add_namespace.xml
+--- a/src/namespace/add_namespace.xml
++++ b/src/namespace/add_namespace.xml
 @@ -5,5 +5,10 @@
              <owner>chrome-metrics-team@google.com</owner>
              <summary> This is a summary </summary>
