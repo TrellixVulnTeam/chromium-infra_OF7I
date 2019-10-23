@@ -72,7 +72,7 @@ def RunSteps(api):
 
 
 def _step_run_tests(
-    api, name, cwd, run_test_seq=False, run_python3=False, ok_ret=(0,)):
+    api, name, cwd, run_test_seq=False, run_python3=False):
   luci_dir = api.context.cwd
   with api.step.nest(name):
     with api.context(cwd=cwd):
@@ -83,18 +83,18 @@ def _step_run_tests(
         # python3
         venv3 = luci_dir.join('.vpython3')
         api.python('run tests python3',
-                   'test.py', args=testpy_args, venv=venv3, ok_ret=ok_ret)
+                   'test.py', args=testpy_args, venv=venv3)
         if run_test_seq:
           api.python('run tests seq python3',
-                     'test_seq.py', args=['-v'], venv=venv3, ok_ret=ok_ret)
+                     'test_seq.py', args=['-v'], venv=venv3)
 
       # python2
       venv = luci_dir.join('.vpython')
       api.python('run tests python2',
-                 'test.py', args=testpy_args, venv=venv, ok_ret=ok_ret)
+                 'test.py', args=testpy_args, venv=venv)
       if run_test_seq:
         api.python('run tests seq python2',
-                   'test_seq.py', args=['-v'], venv=venv, ok_ret=ok_ret)
+                   'test_seq.py', args=['-v'], venv=venv)
 
 
 def _step_swarming_ui_tests(api):
