@@ -32,7 +32,6 @@ def presubmit(
       repo_name,  # e.g. 'infra' or 'luci_py', as expected by the recipe
       run_hooks=True,
       timeout_s=480,
-      vpython_spec_path=None,
 
       os=None,
       experiment_percentage=None
@@ -43,7 +42,6 @@ def presubmit(
       '$depot_tools/presubmit': {
           'runhooks': run_hooks,
           'timeout_s': timeout_s,
-          'vpython_spec_path': vpython_spec_path,
       }
   }
   luci.builder(
