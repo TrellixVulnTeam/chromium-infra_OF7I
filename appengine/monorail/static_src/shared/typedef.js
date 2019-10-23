@@ -11,7 +11,40 @@
 // API object from .proto files.
 
 /**
- * A JS Object in the format of a User Object returned by the pRPC API.
+ * A String containing the data necessary to identify an IssueRef. An IssueRef
+ * can reference either an issue in Monorail or an external issue in another
+ * tracker.
+ *
+ * Examples of valid IssueRefStrings:
+ * - monorail:1234
+ * - chromium:1
+ * - 1234
+ * - b/123456
+ *
+ * @typedef {String} IssueRefString
+ */
+
+/**
+ * An Object containing the metadata associated with tracking async requests
+ * through Redux.
+ *
+ * @typedef {Object} ReduxRequestState
+ * @property {Boolean} [requesting] Whether a request is in flight.
+ * @property {Error} [error] An Error Object returned by the request.
+ */
+
+/**
+ * A Hotlist Object returned by the pRPC API.
+ *
+ * @typedef {Object} Hotlist
+ * @property {UserRef} [ownerRef]
+ * @property {String} [name]
+ * @property {String} [summary]
+ * @property {String} [description]
+ */
+
+/**
+ * A User Object returned by the pRPC API.
  *
  * @typedef {Object} User
  * @property {String} [displayName]
@@ -23,7 +56,7 @@
  */
 
 /**
- * A JS Object in the format of a UserRef Object returned by the pRPC API.
+ * A UserRef Object returned by the pRPC API.
  *
  * @typedef {Object} UserRef
  * @property {String} [displayName]
@@ -31,7 +64,7 @@
  */
 
 /**
- * A JS Object in the format of a LabelRef Object returned by the pRPC API.
+ * A LabelRef Object returned by the pRPC API.
  *
  * @typedef {Object} LabelRef
  * @property {String} label
@@ -39,7 +72,7 @@
  */
 
 /**
- * A JS Object in the format of a StatusRef Object returned by the pRPC API.
+ * A StatusRef Object returned by the pRPC API.
  *
  * @typedef {Object} StatusRef
  * @property {String} status
@@ -48,7 +81,7 @@
  */
 
 /**
- * A JS Object in the format of a ComponentRef Object returned by the pRPC API.
+ * A ComponentRef Object returned by the pRPC API.
  *
  * @typedef {Object} ComponentRef
  * @property {String} path
@@ -56,7 +89,7 @@
  */
 
 /**
- * A JS Object in the format of an Issue Object returned by the pRPC API.
+ * An Issue Object returned by the pRPC API.
  *
  * @typedef {Object} Issue
  * @property {String} projectName
@@ -89,7 +122,7 @@
  */
 
 /**
- * A JS Object in the format of an IssueRef Object returned by the pRPC API.
+ * An IssueRef Object returned by the pRPC API.
  *
  * @typedef {Object} IssueRef
  * @property {String} [projectName]
@@ -98,7 +131,7 @@
  */
 
 /**
- * A JS Object in the format of a Comment Object returned by the pRPC API.
+ * A Comment Object returned by the pRPC API.
  *
  * Note: This Object is called "Comment" in the backend but is named
  * "IssueComment" here to avoid a collision with an internal JSDoc Intellisense
@@ -129,7 +162,7 @@
  */
 
 /**
- * A JS Object in the format of a FieldRef Object returned by the pRPC API.
+ * A FieldRef Object returned by the pRPC API.
  *
  * @typedef {Object} FieldRef
  * @property {Number} fieldId
@@ -139,7 +172,7 @@
  */
 
 /**
- * A JS Object in the format of a FieldValue Object returned by the pRPC API.
+ * A FieldValue Object returned by the pRPC API.
  *
  * @typedef {Object} FieldValue
  * @property {FieldRef} fieldRef

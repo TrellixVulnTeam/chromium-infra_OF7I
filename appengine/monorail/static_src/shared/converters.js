@@ -62,7 +62,7 @@ export function userToUserRef(user) {
  * Convert a UserRef style Object to a userId string.
  *
  * @param {UserRef} userRef Object expected to contain a userId key.
- * @return {String} the unique ID of the user.
+ * @return {Number} the unique ID of the user.
  */
 export function userRefToId(userRef) {
   return userRef && userRef.userId;
@@ -253,7 +253,7 @@ export function componentRefsToStrings(componentRefs) {
  *
  * @param {String} defaultProjectName The implied projectName if none is
  *   specified.
- * @param {String} idStr A String of the format projectName:1234, a
+ * @param {IssueRefString} idStr A String of the format projectName:1234, a
  *   standard issue ID input format used across Monorail.
  * @return {IssueRef}
  * @throws {UserInputError} If the IssueRef string is invalidly formatted.
@@ -282,7 +282,7 @@ export function issueStringToRef(defaultProjectName, idStr) {
  *
  * @param {String} projectName The current project the user is viewing.
  * @param {Number} localId The ID of the issue the user is viewing.
- * @param {String} idStr A String of the format projectName:1234, a
+ * @param {IssueRefString} idStr A String of the format projectName:1234, a
  *   standard issue ID input format used across Monorail.
  * @return {IssueRef}
  * @throws {UserInputError} If the IssueRef string is invalidly formatted
@@ -308,7 +308,7 @@ export function issueStringToBlockingRef(projectName, localId, idStr) {
  *   generated String excludes the projectName if it matches the
  *   project the user is currently viewing, to create simpler
  *   issue ID links.
- * @return {String} A String representing the pieces of an IssueRef.
+ * @return {IssueRefString} A String representing the pieces of an IssueRef.
  */
 export function issueRefToString(ref, projectName) {
   if (!ref) return '';
@@ -337,6 +337,21 @@ export function issueToIssueRef(issue) {
 
   return {localId: issue.localId,
     projectName: issue.projectName};
+}
+
+/**
+ * Converts a full Issue Object into an IssueRefString
+ *
+ * @param {Issue} issue A full Issue Object.
+ * @param {String} projectName The default project the String should assume.
+ * @return {IssueRefString} A String with all the data needed to
+ *   construct an IssueRef.
+ */
+export function issueToIssueRefString(issue, projectName) {
+  if (!issue) return '';
+
+  const ref = issueToIssueRef(issue);
+  return issueRefToString(ref, projectName);
 }
 
 /**
@@ -374,8 +389,8 @@ export function issueRefToUrl(ref, queryParams = {}) {
  *
  * @param {Array<IssueRef>} arr Array of IssueRefs to convert to Strings.
  * @param {String} projectName The default project name.
- * @return {Array<String>} Array of Strings where each entry is represents
- *   one IssueRef.
+ * @return {Array<IssueRefString>} Array of Strings where each entry is
+ *   represents one IssueRef.
  */
 export function issueRefsToStrings(arr, projectName) {
   if (!arr || !arr.length) return [];

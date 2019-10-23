@@ -275,7 +275,7 @@ function ReplaceCommentBugRef(match) {
   return [textRun];
 }
 
-function ReplaceLinkRef(match, _componets, _currentProjectName) {
+function ReplaceLinkRef(match, _components, _currentProjectName) {
   const textRuns = [];
   let content = match[0];
   let trailing = '';

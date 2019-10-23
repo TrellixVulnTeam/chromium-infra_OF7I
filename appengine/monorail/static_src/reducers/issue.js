@@ -2,13 +2,21 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+/**
+ * @fileoverview Issue actions, selectors, and reducers organized into
+ * a single Redux "Duck" that manages updating and retrieving issue state
+ * on the frontend.
+ *
+ * Reference: https://github.com/erikras/ducks-modular-redux
+ */
+
 import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
 import {autolink} from 'autolink.js';
 import {fieldTypes, extractTypeForIssue,
   fieldValuesToMap} from 'shared/issue-fields.js';
 import {removePrefix, objectToMap} from 'shared/helpers.js';
-import {issueRefToString} from 'shared/converters.js';
+import {issueRefToString, issueToIssueRefString} from 'shared/converters.js';
 import {fromShortlink} from 'shared/federated.js';
 import {createReducer, createRequestReducer,
   createKeyedRequestReducer} from './redux-helpers.js';
@@ -17,6 +25,7 @@ import * as user from './user.js';
 import {fieldValueMapKey} from 'shared/metadata-helpers.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import loadGapi, {fetchGapiEmail} from 'shared/gapi-loader.js';
+import 'shared/typedef.js';
 
 // Actions
 const SET_ISSUE_REF = 'SET_ISSUE_REF';
@@ -92,45 +101,43 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
 
 /* State Shape
 {
-  issueRef: {
-    localId: Number,
-    projectName: String,
-  },
+  issuesByRefString: Object.<IssueRefString, Issue>,
 
-  currentIssue: Object,
+  issueRef: IssueRef,
+  currentIssue: Issue,
 
-  hotlists: Array,
+  hotlists: Array<Hotlist>,
   issueList: {
-    issues: Array,
+    issueRefs: Array<IssueRefString>,
     progress: Number,
     totalResults: Number,
   }
-  comments: Array,
+  comments: Array<IssueComment>,
   commentReferences: Object,
   relatedIssues: Object,
-  referencedUsers: Array,
-  starredIssues: Object,
-  permissions: Array,
+  referencedUsers: Array<User>,
+  starredIssues: Object.<IssueRefString, Boolean>,
+  permissions: Array<String>,
   presubmitResponse: Object,
   predictedComponent: String,
 
   requests: {
-    fetch: Object,
-    fetchHotlists: Object,
-    fetchIssueList: Object,
-    fetchPermissions: Object,
-    star: Object,
-    presubmit: Object,
-    predictComponent: Object,
-    fetchComments: Object,
-    fetchCommentReferences: Object,
-    fetchFederatedReferences: Object,
-    fetchRelatedIssues: Object,
-    fetchStarredIssues: Object,
-    fetchStarredIssues: Object,
-    convert: Object,
-    update: Object,
-    updateApproval: Object,
+    fetch: ReduxRequestState,
+    fetchHotlists: ReduxRequestState,
+    fetchIssueList: ReduxRequestState,
+    fetchPermissions: ReduxRequestState,
+    starringIssues: Object.<String, ReduxRequestState>,
+    presubmit: ReduxRequestState,
+    predictComponent: ReduxRequestState,
+    fetchComments: ReduxRequestState,
+    fetchCommentReferences: ReduxRequestState,
+    fetchFederatedReferences: ReduxRequestState,
+    fetchRelatedIssues: ReduxRequestState,
+    fetchStarredIssues: ReduxRequestState,
+    fetchStarredIssues: ReduxRequestState,
+    convert: ReduxRequestState,
+    update: ReduxRequestState,
+    updateApproval: ReduxRequestState,
   },
 }
 */
@@ -150,6 +157,27 @@ const updateApprovalValues = (issue, approval) => {
 };
 
 // Reducers
+
+// A Reducer that normalizes Issue Objects in Redux actions.
+// TODO(crbug.com/monorail/5953): Finish converting all other issue
+//   actions to use this format.
+export const issuesByRefStringReducer = createReducer({}, {
+  [FETCH_ISSUE_LIST_UPDATE]: (state, action) => {
+    const newState = {...state};
+
+    action.issues.forEach((issue) => {
+      const issueRefString = issueToIssueRefString(issue);
+
+      newState[issueRefString] = {
+        ...newState[issueRefString],
+        ...issue,
+      };
+    });
+
+    return newState;
+  },
+});
+
 const localIdReducer = createReducer(0, {
   [SET_ISSUE_REF]: (state, action) => action.localId || state,
 });
@@ -174,15 +202,19 @@ const hotlistsReducer = createReducer([], {
   [FETCH_HOTLISTS_SUCCESS]: (_, action) => action.hotlists,
 });
 
-const issueListReducer = createReducer([], {
-  [FETCH_ISSUE_LIST_SUCCESS]: (_state, action) => action.issueList,
-  [FETCH_ISSUE_LIST_UPDATE]: (_state, action) => action.issueList,
+export const issueListReducer = createReducer([], {
+  [FETCH_ISSUE_LIST_UPDATE]: (_state, {issues, progress, totalResults}) => ({
+    issueRefs: issues.map(issueToIssueRefString), progress, totalResults,
+  }),
 });
 
 const commentsReducer = createReducer([], {
   [FETCH_COMMENTS_SUCCESS]: (_state, action) => action.comments,
 });
 
+// TODO(crbug.com/monorail/5953): Come up with some way to refactor
+// autolink.js's reference code to allow avoiding duplicate lookups
+// with data already in Redux state.
 const commentReferencesReducer = createReducer({}, {
   [FETCH_COMMENTS_START]: (_state, _action) => ({}),
   [FETCH_COMMENT_REFERENCES_SUCCESS]: (_state, action) => {
@@ -287,8 +319,8 @@ const requestsReducer = combineReducers({
       CONVERT_START, CONVERT_SUCCESS, CONVERT_FAILURE),
   update: createRequestReducer(
       UPDATE_START, UPDATE_SUCCESS, UPDATE_FAILURE),
-  // Assumption: It's okay to prevent the user from sending multiple
-  // approval update requests at once, even for different approvals.
+  // TODO(zhangtiff): Update this to use createKeyedRequestReducer() instead, so
+  // users can update multiple approvals at once.
   updateApproval: createRequestReducer(
       UPDATE_APPROVAL_START, UPDATE_APPROVAL_SUCCESS, UPDATE_APPROVAL_FAILURE),
 });
@@ -298,6 +330,8 @@ export const reducer = combineReducers({
     localId: localIdReducer,
     projectName: projectNameReducer,
   }),
+
+  issuesByRefString: issuesByRefStringReducer,
 
   currentIssue: currentIssueReducer,
 
@@ -335,7 +369,13 @@ export const commentReferences = createSelector(_commentReferences,
     (commentReferences) => objectToMap(commentReferences));
 
 export const hotlists = (state) => state.issue.hotlists;
-export const issueList = (state) => state.issue.issueList.issues;
+export const issueList = (state) => {
+  const listData = state.issue.issueList;
+  const issuesByRefString = state.issue.issuesByRefString;
+  return (listData.issueRefs || []).map((issueRef) => {
+    return issuesByRefString[issueRef];
+  });
+};
 export const totalIssues = (state) => state.issue.issueList.totalResults;
 export const issueListProgress = (state) => state.issue.issueList.progress;
 export const issueListPhaseNames = createSelector(issueList, (issueList) => {
@@ -351,7 +391,6 @@ export const issueListPhaseNames = createSelector(issueList, (issueList) => {
   }
   return Array.from(phaseNamesSet);
 });
-
 
 export const issueLoaded = (state) => state.issue.issueLoaded;
 export const permissions = (state) => state.issue.permissions;
@@ -392,7 +431,8 @@ export const commentsByApprovalName = createSelector(
     (comments) => {
       const map = new Map();
       comments.forEach((comment) => {
-        const key = (comment.approvalRef && comment.approvalRef.fieldName) || '';
+        const key = (comment.approvalRef && comment.approvalRef.fieldName) ||
+          '';
         if (map.has(key)) {
           map.get(key).push(comment);
         } else {
@@ -565,16 +605,16 @@ export const fieldDefs = createSelector(
           return true;
         }
         // Skip approval type and phase fields here.
-        if (f.fieldRef.approvalName
-          || f.fieldRef.type === fieldTypes.APPROVAL_TYPE
-          || f.isPhaseField) {
+        if (f.fieldRef.approvalName ||
+            f.fieldRef.type === fieldTypes.APPROVAL_TYPE ||
+            f.isPhaseField) {
           return false;
         }
 
         // If this fieldDef belongs to only one type, filter out the field if
         // that type isn't the specified type.
-        if (f.applicableType && type.toLowerCase()
-          !== f.applicableType.toLowerCase()) {
+        if (f.applicableType && type.toLowerCase() !==
+            f.applicableType.toLowerCase()) {
           return false;
         }
 
@@ -698,7 +738,6 @@ export const fetchRelatedIssues = (issue) => async (dispatch) => {
     issueRefs: refsToFetch,
   };
   try {
-
     // Fire off call to fetch FedRefs. Since it might take longer it is
     // handled by a separate reducer.
     dispatch(fetchFederatedReferences(issue));
@@ -777,9 +816,27 @@ export const fetchHotlists = (issue) => async (dispatch) => {
   };
 };
 
+/**
+ * Async action creator to fetch issues in the issue list and grid pages. This
+ * action creator supports batching multiple async requests to support the grid
+ * view's ability to load up to 6,000 issues in one page load.
+ *
+ * @param {Object} params Options for which issues to fetch.
+ * @param {String} [params.q] The query string for the search.
+ * @param {String} [params.can] The ID of the canned query for the search.
+ * @param {String} [params.groupby] The spec of which fields to group by.
+ * @param {String} [params.sort] The spec of which fields to sort by.
+ * @param {String} projectName The project to fetch issues from.
+ * @param {Object} pagination Object with info on how many issues to fetch and
+ *   how many issues to offset.
+ * @param {Number} maxCalls The maxinum number of API calls to make. Combined
+ *   with pagination.maxItems, this defines the maximum number of issues this
+ *   method can fetch.
+ * @return {Function}
+ */
 export const fetchIssueList =
   (params, projectName, pagination = {}, maxCalls = 1) => async (dispatch) => {
-    let issueList = {};
+    let updateData = {};
     const promises = [];
     const issuesByRequest = [];
     let issueLimit;
@@ -806,9 +863,9 @@ export const fetchIssueList =
             sortSpec: params.sort,
           });
 
-      issueList = (resp || {});
-      issuesByRequest[0] = issueList.issues;
-      issueLimit = issueList.totalResults;
+      updateData = (resp || {});
+      issuesByRequest[0] = updateData.issues;
+      issueLimit = updateData.totalResults;
 
       // determine correct issues to load and number of calls to be made.
       if (issueLimit > (itemsPerCall * maxCalls)) {
@@ -820,13 +877,12 @@ export const fetchIssueList =
       }
 
       if (totalIssues) {
-        issueList.progress =
-          issueList.issues.length / totalIssues;
+        updateData.progress = updateData.issues.length / totalIssues;
       } else {
-        issueList.progress = 1;
+        updateData.progress = 1;
       }
 
-      dispatch({type: FETCH_ISSUE_LIST_UPDATE, issueList});
+      dispatch({type: FETCH_ISSUE_LIST_UPDATE, ...updateData});
 
       // remaining api calls are made.
       for (let i = 1; i <= totalCalls; i++) {
@@ -842,19 +898,20 @@ export const fetchIssueList =
               });
           issuesByRequest[i] = (resp.issues || []);
           // sort the issues in the correct order.
-          issueList.issues = [];
+          updateData.issues = [];
           issuesByRequest.forEach((issue) => {
-            issueList.issues = issueList.issues.concat(issue);
+            updateData.issues = updateData.issues.concat(issue);
           });
-          issueList.progress =
-            issueList.issues.length / totalIssues;
-          dispatch({type: FETCH_ISSUE_LIST_UPDATE, issueList});
+          updateData.progress = updateData.issues.length / totalIssues;
+          dispatch({type: FETCH_ISSUE_LIST_UPDATE, ...updateData});
         })();
       }
 
       await Promise.all(promises);
 
-      dispatch({type: FETCH_ISSUE_LIST_SUCCESS, issueList});
+      // TODO(zhangtiff): Try to delete FETCH_ISSUE_LIST_SUCCESS in favor of
+      // just FETCH_ISSUE_LIST_UPDATE.
+      dispatch({type: FETCH_ISSUE_LIST_SUCCESS});
     } catch (error) {
       dispatch({type: FETCH_ISSUE_LIST_FAILURE, error});
     };

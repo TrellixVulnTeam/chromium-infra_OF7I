@@ -16,6 +16,81 @@ let dispatch;
 
 describe('issue', () => {
   describe('reducers', () => {
+    describe('issueByRefReducer', () => {
+      it('no-op on unmatching action', () => {
+        const action = {
+          type: 'FETCH_ISSUE_LIST_FAKE_ACTION',
+          issues: [
+            {localId: 1, projectName: 'chromium', summary: 'hello-world'},
+          ],
+        };
+        assert.deepEqual(issue.issuesByRefStringReducer({}, action), {});
+
+        assert.deepEqual(issue.issuesByRefStringReducer({
+          ['chromium:1']: {localId: 1, projectName: 'chromium'},
+        }, action), {
+          ['chromium:1']: {localId: 1, projectName: 'chromium'},
+        });
+      });
+
+      it('handles FETCH_ISSUE_LIST_UPDATE', () => {
+        const newState = issue.issuesByRefStringReducer({}, {
+          type: 'FETCH_ISSUE_LIST_UPDATE',
+          issues: [
+            {localId: 1, projectName: 'chromium', summary: 'hello-world'},
+            {localId: 2, projectName: 'monorail', summary: 'Test'},
+          ],
+          totalResults: 2,
+          progress: 1,
+        });
+        assert.deepEqual(newState, {
+          'chromium:1': {localId: 1, projectName: 'chromium',
+            summary: 'hello-world'},
+          'monorail:2': {localId: 2, projectName: 'monorail',
+            summary: 'Test'},
+        });
+      });
+    });
+
+    describe('issueListReducer', () => {
+      it('no-op on unmatching action', () => {
+        const action = {
+          type: 'FETCH_ISSUE_LIST_FAKE_ACTION',
+          issues: [
+            {localId: 1, projectName: 'chromium', summary: 'hello-world'},
+          ],
+        };
+        assert.deepEqual(issue.issueListReducer({}, action), {});
+
+        assert.deepEqual(issue.issueListReducer({
+          issueRefs: ['chromium:1'],
+          totalResults: 1,
+          progress: 1,
+        }, action), {
+          issueRefs: ['chromium:1'],
+          totalResults: 1,
+          progress: 1,
+        });
+      });
+
+      it('handles FETCH_ISSUE_LIST_UPDATE', () => {
+        const newState = issue.issueListReducer({}, {
+          type: 'FETCH_ISSUE_LIST_UPDATE',
+          issues: [
+            {localId: 1, projectName: 'chromium', summary: 'hello-world'},
+            {localId: 2, projectName: 'monorail', summary: 'Test'},
+          ],
+          totalResults: 2,
+          progress: 1,
+        });
+        assert.deepEqual(newState, {
+          issueRefs: ['chromium:1', 'monorail:2'],
+          totalResults: 2,
+          progress: 1,
+        });
+      });
+    });
+
     describe('relatedIssuesReducer', () => {
       it('handles FETCH_RELATED_ISSUES_SUCCESS', () => {
         const newState = issue.relatedIssuesReducer({}, {
@@ -83,6 +158,28 @@ describe('issue', () => {
   it('issue', () => {
     assert.deepEqual(issue.issue(wrapIssue()), {});
     assert.deepEqual(issue.issue(wrapIssue({localId: 100})), {localId: 100});
+  });
+
+  it('issueList', () => {
+    const stateWithEmptyIssueList = {issue: {
+      issueList: [],
+    }};
+    assert.deepEqual(issue.issueList(stateWithEmptyIssueList), []);
+
+    const stateWithIssueList = {issue: {
+      issuesByRefString: {
+        'chromium:1': {localId: 1, projectName: 'chromium', summary: 'test'},
+        'monorail:2': {localId: 2, projectName: 'monorail',
+          summary: 'hello world'},
+      },
+      issueList: {
+        issueRefs: ['chromium:1', 'monorail:2'],
+      }}};
+    assert.deepEqual(issue.issueList(stateWithIssueList),
+        [
+          {localId: 1, projectName: 'chromium', summary: 'test'},
+          {localId: 2, projectName: 'monorail', summary: 'hello world'},
+        ]);
   });
 
   it('fieldValues', () => {
@@ -159,21 +256,22 @@ describe('issue', () => {
     }};
     assert.deepEqual(issue.issueListPhaseNames(stateWithEmptyIssueList), []);
     const stateWithIssueList = {issue: {
+      issuesByRefString: {
+        '1': {localId: 1, phases: [{phaseRef: {phaseName: 'chicken-phase'}}]},
+        '2': {localId: 2, phases: [
+          {phaseRef: {phaseName: 'chicken-Phase'}},
+          {phaseRef: {phaseName: 'cow-phase'}}],
+        },
+        '3': {localId: 3, phases: [
+          {phaseRef: {phaseName: 'cow-Phase'}},
+          {phaseRef: {phaseName: 'DOG-phase'}}],
+        },
+        '4': {localId: 4, phases: [
+          {phaseRef: {phaseName: 'dog-phase'}},
+        ]},
+      },
       issueList: {
-        issues: [
-          {localId: 1, phases: [{phaseRef: {phaseName: 'chicken-phase'}}]},
-          {localId: 2, phases: [
-            {phaseRef: {phaseName: 'chicken-Phase'}},
-            {phaseRef: {phaseName: 'cow-phase'}}],
-          },
-          {localId: 3, phases: [
-            {phaseRef: {phaseName: 'cow-Phase'}},
-            {phaseRef: {phaseName: 'DOG-phase'}}],
-          },
-          {localId: 4, phases: [
-            {phaseRef: {phaseName: 'dog-phase'}},
-          ]},
-        ],
+        issueRefs: ['1', '2', '3', '4'],
       }}};
     assert.deepEqual(issue.issueListPhaseNames(stateWithIssueList),
         ['chicken-phase', 'cow-phase', 'dog-phase']);
@@ -585,15 +683,14 @@ describe('issue', () => {
 
       sinon.assert.calledTwice(prpcCall);
       sinon.assert.calledWith(dispatch, {
-        type: 'FETCH_ISSUE_LIST_SUCCESS',
-        issueList: {
-          issues:
-            [{localId: 1}, {localId: 2}, {localId: 3},
-              {localId: 1}, {localId: 2}, {localId: 3}],
-          progress: 1,
-          totalResults: 6,
-        },
+        type: 'FETCH_ISSUE_LIST_UPDATE',
+        issues:
+          [{localId: 1}, {localId: 2}, {localId: 3},
+            {localId: 1}, {localId: 2}, {localId: 3}],
+        progress: 1,
+        totalResults: 6,
       });
+      sinon.assert.calledWith(dispatch, {type: 'FETCH_ISSUE_LIST_SUCCESS'});
     });
 
     it('fetchIssueList orders issues correctly', async () => {
@@ -608,13 +705,12 @@ describe('issue', () => {
       await action(dispatch);
 
       sinon.assert.calledWith(dispatch, {
-        type: 'FETCH_ISSUE_LIST_SUCCESS',
-        issueList: {
-          issues: [{localId: 1}, {localId: 2}, {localId: 3}],
-          progress: 1,
-          totalResults: 6,
-        },
+        type: 'FETCH_ISSUE_LIST_UPDATE',
+        issues: [{localId: 1}, {localId: 2}, {localId: 3}],
+        progress: 1,
+        totalResults: 6,
       });
+      sinon.assert.calledWith(dispatch, {type: 'FETCH_ISSUE_LIST_SUCCESS'});
     });
 
     it('returns progress of 1 when no totalIssues', async () => {
@@ -625,13 +721,12 @@ describe('issue', () => {
       await action(dispatch);
 
       sinon.assert.calledWith(dispatch, {
-        type: 'FETCH_ISSUE_LIST_SUCCESS',
-        issueList: {
-          issues: [],
-          progress: 1,
-          totalResults: 0,
-        },
+        type: 'FETCH_ISSUE_LIST_UPDATE',
+        issues: [],
+        progress: 1,
+        totalResults: 0,
       });
+      sinon.assert.calledWith(dispatch, {type: 'FETCH_ISSUE_LIST_SUCCESS'});
     });
 
     it('returns progress of 1 when totalIssues undefined', async () => {
@@ -642,12 +737,11 @@ describe('issue', () => {
       await action(dispatch);
 
       sinon.assert.calledWith(dispatch, {
-        type: 'FETCH_ISSUE_LIST_SUCCESS',
-        issueList: {
-          issues: [],
-          progress: 1,
-        },
+        type: 'FETCH_ISSUE_LIST_UPDATE',
+        issues: [],
+        progress: 1,
       });
+      sinon.assert.calledWith(dispatch, {type: 'FETCH_ISSUE_LIST_SUCCESS'});
     });
 
     describe('federated references', () => {
