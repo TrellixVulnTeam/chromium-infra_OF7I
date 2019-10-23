@@ -1,3 +1,28 @@
+# Release Notes sheriff-o-matic 2019-10-23
+
+- 5 commits, 2 bugs affected since 12cc75d ()
+- 3 Authors:
+  - yuanzhi@google.com
+  - bpastene@chromium.org
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[som][fuchsia]Add fuchsia buildcop to sheriff-o-matic](https://chromium-review.googlesource.com/c/infra/infra/+/1867910) (yuanzhi@google.com)
+- [[som] Use the 'chrome' project when querying for chromium and android alerts.](https://chromium-review.googlesource.com/c/infra/infra/+/1866071) (bpastene@chromium.org)
+- [Filter SoM chromium page to only show alerts from the ci bucket](https://chromium-review.googlesource.com/c/infra/infra/+/1860181) (nqmtuan@google.com)
+- [Relnotes for release on 15 Oct](https://chromium-review.googlesource.com/c/infra/infra/+/1860177) (nqmtuan@google.com)
+- [[som] Differentiate projectId for bugqueue.](https://chromium-review.googlesource.com/c/infra/infra/+/1853046) (yuanzhi@google.com)
+
+
+## Bugs updated, by author
+- bpastene@chromium.org:
+  -  [https://crbug.com/938113](https://crbug.com/938113)
+  
+- nqmtuan@google.com:
+  -  [https://crbug.com/1013473](https://crbug.com/1013473)
+
+
 # Release Notes sheriff-o-matic 2019-10-15
 
 - 3 commits, 3 bugs affected since 723e596 (2019-10-10T04:26:57Z)
