@@ -47,6 +47,7 @@ This command does not wait for the build to start running.`,
 		c.envFlags.Register(&c.Flags)
 		c.Flags.Int64Var(&c.buildID, "id", -1, "Search for original build with this ID. Mutually exclusive with -tag.")
 		c.Flags.Var(flag.StringSlice(&c.buildTags), "tag", "Search for original build matching given tag. May be used multiple times to provide more tags to match. Mutually exclusive with -id")
+		c.Flags.BoolVar(&c.highestPriority, "highest-priority", false, "Create backfill tasks at highest priority. This will displace legitimate prod tasks. Use with care.")
 		return c
 	},
 }
@@ -56,8 +57,9 @@ type backfillRequestRun struct {
 	authFlags authcli.Flags
 	envFlags  envFlags
 
-	buildID   int64
-	buildTags []string
+	buildID         int64
+	buildTags       []string
+	highestPriority bool
 
 	bbClient *bb.Client
 }
@@ -245,11 +247,24 @@ func (c *backfillRequestRun) scheduleBackfillBuild(ctx context.Context, original
 		return -1, errors.Reason("schedule backfill: build %d has no request to clone", original.ID).Err()
 	}
 
+	if c.highestPriority {
+		bumpPriority(req)
+	}
+
 	ID, err := c.bbClient.ScheduleBuild(ctx, req, backfillTags(original.Tags, original.ID))
 	if err != nil {
 		return -1, errors.Annotate(err, "schedule backfill").Err()
 	}
 	return ID, nil
+}
+
+const highestTestTaskPriority = 50
+
+func bumpPriority(req *test_platform.Request) {
+	sc := req.GetParams().GetScheduling()
+	if sc != nil {
+		sc.Priority = highestTestTaskPriority
+	}
 }
 
 func backfillTags(tags []string, originalID int64) []string {
