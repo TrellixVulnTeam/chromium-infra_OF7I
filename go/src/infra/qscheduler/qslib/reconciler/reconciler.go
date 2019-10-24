@@ -216,8 +216,11 @@ func (state *State) NotifyTaskRunning(ctx context.Context, s *scheduler.Schedule
 	s.NotifyTaskRunning(ctx, rid, wid, update.Time, events)
 	if q, ok := state.proto.WorkerQueues[string(wid)]; ok {
 		if !update.Time.Before(tutils.Timestamp(q.EnqueueTime)) {
+			if q.TaskToAssign != string(rid) {
+				logging.Warningf(ctx, "Reconciler: unexpected request %s on worker %s.", rid, wid)
+			}
+			logging.Debugf(ctx, "Reconciler: received forward RUNNING notification for worker %s; clobbering WorkerQueue.", wid)
 			delete(state.proto.WorkerQueues, string(wid))
-			logging.Debugf(ctx, "Reconciler: unexpected request %s on worker %s, clobbering WorkerQueue.", rid, wid)
 		} else {
 			logging.Debugf(ctx, "Reconciler: ignoring non-forward RUNNING notification with request %s on worker %s.", rid, wid)
 			// TODO(akeshet): Consider whether we should delete from workerqueue
