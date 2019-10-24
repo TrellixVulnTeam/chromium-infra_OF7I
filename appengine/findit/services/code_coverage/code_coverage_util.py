@@ -545,8 +545,8 @@ def MergeFilesCoverageDataForPerCL(a, b):
 
     merged_lines = [{
         'line': l,
-        'count': c
-    } for l, c in merged_lines_dict.iteritems()]
+        'count': c,
+    } for l, c in sorted(merged_lines_dict.iteritems())]
     merged.append({
         'path': path,
         'lines': CompressLines(merged_lines),
