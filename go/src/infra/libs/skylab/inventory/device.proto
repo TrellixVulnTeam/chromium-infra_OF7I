@@ -380,9 +380,10 @@ message Peripherals {
 //
 // Keep sorted by field name.
 //
-// NEXT TAG: 13
+// NEXT TAG: 14
 message TestCoverageHints {
   optional bool chaos_dut = 7;
+  optional bool chaos_nightly = 13;
   optional bool chromesign = 11;
 
   // Related to sparse CTS testing. See b/70309087

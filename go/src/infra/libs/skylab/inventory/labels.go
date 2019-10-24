@@ -56,6 +56,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 		ReferenceDesign: new(string),
 		TestCoverageHints: &TestCoverageHints{
 			ChaosDut:        new(bool),
+			ChaosNightly:    new(bool),
 			Chromesign:      new(bool),
 			HangoutApp:      new(bool),
 			MeetApp:         new(bool),

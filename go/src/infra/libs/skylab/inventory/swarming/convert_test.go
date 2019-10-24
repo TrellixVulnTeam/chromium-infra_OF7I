@@ -26,6 +26,7 @@ test_coverage_hints {
   meet_app: true
   hangout_app: true
   chromesign: true
+  chaos_nightly: true
   chaos_dut: true
 }
 self_serve_pools: "poolval"
@@ -103,6 +104,7 @@ var fullDimensions = Dimensions{
 		"CHAMELEON_TYPE_HDMI",
 	},
 	"label-chaos_dut":        {"True"},
+	"label-chaos_nightly":    {"True"},
 	"label-chromesign":       {"True"},
 	"label-conductive":       {"True"},
 	"label-cts_abi":          {"CTS_ABI_ARM", "CTS_ABI_X86"},

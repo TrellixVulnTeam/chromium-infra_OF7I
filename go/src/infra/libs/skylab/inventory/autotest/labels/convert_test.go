@@ -27,6 +27,7 @@ test_coverage_hints {
   meet_app: true
   hangout_app: true
   chromesign: true
+  chaos_nightly: true
   chaos_dut: true
 }
 self_serve_pools: "poolval"
@@ -103,6 +104,7 @@ var fullLabels = []string{
 	"chameleon:dp_hdmi",
 	"chameleon:hdmi",
 	"chaos_dut",
+	"chaos_nightly",
 	"chromesign",
 	"conductive:True",
 	"cr50-ro-keyid:prod",

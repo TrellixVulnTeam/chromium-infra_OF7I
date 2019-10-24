@@ -20,6 +20,9 @@ func boolTestCoverageHintsConverter(ls *inventory.SchedulableLabels) []string {
 	if h.GetChaosDut() {
 		labels = append(labels, "chaos_dut")
 	}
+	if h.GetChaosNightly() {
+		labels = append(labels, "chaos_nightly")
+	}
 	if h.GetChromesign() {
 		labels = append(labels, "chromesign")
 	}
@@ -60,6 +63,8 @@ func boolTestCoverageHintsReverter(ls *inventory.SchedulableLabels, labels []str
 		switch v {
 		case "chaos_dut":
 			*h.ChaosDut = true
+		case "chaos_nightly":
+			*h.ChaosNightly = true
 		case "chromesign":
 			*h.Chromesign = true
 		case "hangout_app":

@@ -18,6 +18,9 @@ func boolTestCoverageHintsConverter(dims Dimensions, ls *inventory.SchedulableLa
 	if h.GetChaosDut() {
 		dims["label-chaos_dut"] = []string{"True"}
 	}
+	if h.GetChaosNightly() {
+		dims["label-chaos_nightly"] = []string{"True"}
+	}
 	if h.GetChromesign() {
 		dims["label-chromesign"] = []string{"True"}
 	}
@@ -53,6 +56,7 @@ func boolTestCoverageHintsConverter(dims Dimensions, ls *inventory.SchedulableLa
 func boolTestCoverageHintsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
 	h := ls.TestCoverageHints
 	d = assignLastBoolValueAndDropKey(d, h.ChaosDut, "label-chaos_dut")
+	d = assignLastBoolValueAndDropKey(d, h.ChaosNightly, "label-chaos_nightly")
 	d = assignLastBoolValueAndDropKey(d, h.Chromesign, "label-chromesign")
 	d = assignLastBoolValueAndDropKey(d, h.HangoutApp, "label-hangout_app")
 	d = assignLastBoolValueAndDropKey(d, h.MeetApp, "label-meet_app")
