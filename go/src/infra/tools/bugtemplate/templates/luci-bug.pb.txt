@@ -1,0 +1,18 @@
+summary: "Please, edit the summary :)"
+
+description: <<END
+Please describe the problem / feature request for LUCI/Foundation team
+tool/service.
+
+If you need urgent attention by the trooper (on-call), please use
+go/luci-trooper-bug instead.
+
+If urgent attention is not required, please file a normal go/luci-bug instead.
+
+To file another bug like this: go/luci-bug
+
+END
+
+components: "Infra>Platform"
+pri: P3
+labels: "Restrict-View-Google"
