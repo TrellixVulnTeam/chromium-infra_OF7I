@@ -1039,19 +1039,30 @@ class FeaturesService(object):
     for project_id in project_ids:
       self.config_service.InvalidateMemcacheForEntireProject(project_id)
 
-  def ExpungeHotlists(self, cnxn, hotlist_ids, star_svc, user_svc, chart_svc):
+  def ExpungeHotlists(
+      self, cnxn, hotlist_ids, star_svc, user_svc, chart_svc, commit=True):
     """Wipes the given hotlists from the DB tables.
 
-    This method will not commit the operation. This method will not make
-    changes to in-memory data.
+    This method will only do cache invalidation if commit is set to True.
+
+    Args:
+      cnxn: connection to SQL database.
+      hotlist_ids: the ID of the hotlists to Expunge.
+      star_svc: an instance of a HotlistStarService.
+      user_svc: an instance of a UserService.
+      chart_svc: an instance of a ChartService.
+      commit: set to False to skip the DB commit and do it in the caller.
     """
     for hotlist_id in hotlist_ids:
-      star_svc.ExpungeStars(cnxn, hotlist_id, commit=False)
-    chart_svc.ExpungeHotlistsFromIssueSnapshots(cnxn, hotlist_ids)
-    user_svc.ExpungeHotlistsFromHistory(cnxn, hotlist_ids, commit=False)
-    self.hotlist2user_tbl.Delete(cnxn, hotlist_id=hotlist_ids, commit=False)
-    self.hotlist2issue_tbl.Delete(cnxn, hotlist_id=hotlist_ids, commit=False)
-    self.hotlist_tbl.Delete(cnxn, id=hotlist_ids, commit=False)
+      star_svc.ExpungeStars(cnxn, hotlist_id, commit=commit)
+    chart_svc.ExpungeHotlistsFromIssueSnapshots(
+        cnxn, hotlist_ids, commit=commit)
+    user_svc.ExpungeHotlistsFromHistory(cnxn, hotlist_ids, commit=commit)
+    self.hotlist2user_tbl.Delete(cnxn, hotlist_id=hotlist_ids, commit=commit)
+    self.hotlist2issue_tbl.Delete(cnxn, hotlist_id=hotlist_ids, commit=commit)
+    self.hotlist_tbl.Delete(cnxn, id=hotlist_ids, commit=commit)
+
+    # TODO(jojwang): cache invalidation
 
   def ExpungeUsersInHotlists(
       self, cnxn, user_ids, star_svc, user_svc, chart_svc):
@@ -1093,7 +1104,7 @@ class FeaturesService(object):
     # Delete hotlists
     if hotlists_to_delete:
       self.ExpungeHotlists(
-          cnxn, hotlists_to_delete, star_svc, user_svc, chart_svc)
+          cnxn, hotlists_to_delete, star_svc, user_svc, chart_svc, commit=False)
 
 
 class HotlistAlreadyExists(Exception):

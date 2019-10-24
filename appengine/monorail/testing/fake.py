@@ -2484,7 +2484,8 @@ class FeaturesService(object):
         except (ValueError, KeyError):
           pass
 
-  def ExpungeHotlists(self, cnxn, hotlist_ids, star_svc, user_svc, chart_svc):
+  def ExpungeHotlists(
+      self, cnxn, hotlist_ids, star_svc, user_svc, chart_svc, commit=True):
     self.expunged_hotlist_ids.extend(hotlist_ids)
 
   def ExpungeUsersInHotlists(

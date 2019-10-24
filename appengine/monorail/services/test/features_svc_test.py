@@ -954,28 +954,29 @@ Delete.assert_called_once_with(
     self.features_service.hotlist_tbl.Delete = mock.Mock()
 
     hotlist_ids = [678, 679]
+    commit = True  # commit in ExpungeHotlists should be True by default.
     self.features_service.ExpungeHotlists(
         self.cnxn, hotlist_ids, star_service, user_service, chart_service)
 
     star_calls = [
         mock.call(
-            self.cnxn, commit=False, limit=None, hotlist_id=hotlist_ids[0]),
+            self.cnxn, commit=commit, limit=None, hotlist_id=hotlist_ids[0]),
         mock.call(
-            self.cnxn, commit=False, limit=None, hotlist_id=hotlist_ids[1])]
+            self.cnxn, commit=commit, limit=None, hotlist_id=hotlist_ids[1])]
     hotliststar_tbl.Delete.assert_has_calls(star_calls)
 
     self.cnxn.Execute.assert_called_once_with(
         'DELETE FROM IssueSnapshot2Hotlist WHERE hotlist_id IN (%s,%s)',
-        [678, 679], commit=False)
+        [678, 679], commit=commit)
     user_service.hotlistvisithistory_tbl.Delete.assert_called_once_with(
-        self.cnxn, commit=False, hotlist_id=hotlist_ids)
+        self.cnxn, commit=commit, hotlist_id=hotlist_ids)
 
     self.features_service.hotlist2user_tbl.Delete.assert_called_once_with(
-        self.cnxn, hotlist_id=hotlist_ids, commit=False)
+        self.cnxn, hotlist_id=hotlist_ids, commit=commit)
     self.features_service.hotlist2issue_tbl.Delete.assert_called_once_with(
-        self.cnxn, hotlist_id=hotlist_ids, commit=False)
+        self.cnxn, hotlist_id=hotlist_ids, commit=commit)
     self.features_service.hotlist_tbl.Delete.assert_called_once_with(
-        self.cnxn, id=hotlist_ids, commit=False)
+        self.cnxn, id=hotlist_ids, commit=commit)
 
   def testExpungeUsersInHotlists(self):
     hotliststar_tbl = mock.Mock()
