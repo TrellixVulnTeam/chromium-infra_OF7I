@@ -60,9 +60,21 @@ func makeAnnotationResponse(annotations *model.Annotation, meta map[string]monor
 
 func filterAnnotations(annotations []*model.Annotation, activeKeys map[string]interface{}) []*model.Annotation {
 	ret := []*model.Annotation{}
+	groups := map[string]interface{}{}
 
+	// Process annotations not belonging to a group
 	for _, a := range annotations {
 		if _, ok := activeKeys[a.Key]; ok {
+			ret = append(ret, a)
+			if a.GroupID != "" {
+				groups[a.GroupID] = nil
+			}
+		}
+	}
+
+	// Process annotations belonging to a group
+	for _, a := range annotations {
+		if _, ok := groups[a.Key]; ok {
 			ret = append(ret, a)
 		}
 	}

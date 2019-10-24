@@ -29,6 +29,45 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func TestFilterAnnotations(t *testing.T) {
+	Convey("Test filter annotation", t, func() {
+		activeKeys := map[string]interface{}{
+			"alert_1": nil,
+			"alert_2": nil,
+			"alert_3": nil,
+		}
+
+		annotations := []*model.Annotation{
+			{
+				Key:     "alert_1",
+				GroupID: "group_1",
+			},
+			{
+				Key:     "alert_2",
+				GroupID: "group_2",
+			},
+			{
+				Key:     "group_2",
+				GroupID: "",
+			},
+			{
+				Key:     "group_3",
+				GroupID: "",
+			},
+			{
+				Key:     "group_1",
+				GroupID: "",
+			},
+		}
+		result := filterAnnotations(annotations, activeKeys)
+		So(len(result), ShouldEqual, 4)
+		So(result[0].Key, ShouldEqual, "alert_1")
+		So(result[1].Key, ShouldEqual, "alert_2")
+		So(result[2].Key, ShouldEqual, "group_2")
+		So(result[3].Key, ShouldEqual, "group_1")
+	})
+}
+
 func TestAnnotations(t *testing.T) {
 	newContext := func() (context.Context, testclock.TestClock) {
 		c := gaetesting.TestingContext()
