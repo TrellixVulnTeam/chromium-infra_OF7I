@@ -108,5 +108,11 @@ func mainImpl(c context.Context, argv []string, env environ.Env) int {
 func main() {
 	c := context.Background()
 	c = gologger.StdConfig.Use(logging.SetLevel(c, logging.Warning))
-	os.Exit(mainImpl(c, os.Args, environ.System()))
+	ret := mainImpl(c, os.Args, environ.System())
+	// os.Exit seems not to flush logging targets on Windows. The logger stores
+	// the logging target as io.Writer which has no mechanism to flush. Knowing
+	// gologger.StdConfig is configured to use os.Stderr, flush it directly.
+	// https://crbug.com/1017136.
+	os.Stderr.Sync()
+	os.Exit(ret)
 }
