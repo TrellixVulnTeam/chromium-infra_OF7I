@@ -34,6 +34,7 @@ const (
 
 	oneOwnerError            = `[WARNING] It's a best practice to list multiple owners, so that there's no single point of failure for communication: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	firstOwnerTeamError      = `[WARNING] Please list an individual as the primary owner for this metric: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
+	oneOwnerTeamError        = `[WARNING] Please list an individual as the primary owner for this metric. Please also ensure to list multiple owners, so there's no single point of failure for communication: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	noExpiryError            = `[ERROR] Please specify an expiry condition for this histogram: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	badExpiryError           = `[ERROR] Could not parse histogram expiry. Please format as YYYY-MM-DD or MXX: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	pastExpiryWarning        = `[WARNING] This expiry date is in the past. Did you mean to set an expiry date in the future?`
@@ -196,10 +197,7 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 
 func checkHistogram(path string, hist *histogram, meta *metadata, singletonEnums stringset.Set) []*tricium.Data_Comment {
 	var comments []*tricium.Data_Comment
-	if comment := checkNumOwners(path, hist, meta); comment != nil {
-		comments = append(comments, comment)
-	}
-	if comment := checkNonTeamOwner(path, hist, meta); comment != nil {
+	if comment := checkOwners(path, hist, meta); comment != nil {
 		comments = append(comments, comment)
 	}
 	if comment := checkUnits(path, hist, meta); comment != nil {
@@ -223,22 +221,23 @@ func bytesToHistogram(histBytes []byte, meta *metadata) *histogram {
 	return hist
 }
 
-func checkNumOwners(path string, hist *histogram, meta *metadata) *tricium.Data_Comment {
+func checkOwners(path string, hist *histogram, meta *metadata) *tricium.Data_Comment {
+	var comment *tricium.Data_Comment
+	// Check that there is more than 1 owner
 	if len(hist.Owners) <= 1 {
-		comment := createOwnerComment(oneOwnerError, path, meta)
+		comment = createOwnerComment(oneOwnerError, path, meta)
 		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, comment.StartLine, "[ERROR]: One Owner")
-		return comment
 	}
-	return nil
-}
-
-func checkNonTeamOwner(path string, hist *histogram, meta *metadata) *tricium.Data_Comment {
-	if len(hist.Owners) > 0 && strings.Contains(hist.Owners[0], "-") {
-		comment := createOwnerComment(firstOwnerTeamError, path, meta)
+	// Check first owner is a not a team or OWNERS file.
+	if len(hist.Owners) > 0 && (strings.Contains(hist.Owners[0], "-") || strings.Contains(hist.Owners[0], "OWNERS")) {
+		if comment != nil {
+			comment.Message = oneOwnerTeamError
+		} else {
+			comment = createOwnerComment(firstOwnerTeamError, path, meta)
+		}
 		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, comment.StartLine, "[ERROR]: First Owner Team")
-		return comment
 	}
-	return nil
+	return comment
 }
 
 func createOwnerComment(message, path string, meta *metadata) *tricium.Data_Comment {

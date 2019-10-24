@@ -380,22 +380,42 @@ func TestHistogramsCheck(t *testing.T) {
 		})
 	})
 
-	Convey("Analyze XML file with multiple owner errors", t, func() {
-		results := analyzeTestFile(t, "src/owners/first_team_one_owner.xml", emptyPatch, tempDir)
+	Convey("Analyze XML file with error: first owner is OWNERS file", t, func() {
+		results := analyzeTestFile(t, "src/owners/first_owner_file.xml", emptyPatch, tempDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
-			{
-				Category:  category + "/Owners",
-				Message:   oneOwnerError,
-				StartLine: 4,
-				Path:      filepath.Join(ownerTestPath, "first_team_one_owner.xml"),
-			},
 			{
 				Category:  category + "/Owners",
 				Message:   firstOwnerTeamError,
 				StartLine: 4,
+				Path:      filepath.Join(ownerTestPath, "first_owner_file.xml"),
+			},
+			defaultExpiryInfo(filepath.Join(ownerTestPath, "first_owner_file.xml")),
+		})
+	})
+
+	Convey("Analyze XML file with error: first owner is team, only one owner", t, func() {
+		results := analyzeTestFile(t, "src/owners/first_team_one_owner.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:  category + "/Owners",
+				Message:   oneOwnerTeamError,
+				StartLine: 4,
 				Path:      filepath.Join(ownerTestPath, "first_team_one_owner.xml"),
 			},
 			defaultExpiryInfo(filepath.Join(ownerTestPath, "first_team_one_owner.xml")),
+		})
+	})
+
+	Convey("Analyze XML file with error: first owner is OWNERS file, only one owner", t, func() {
+		results := analyzeTestFile(t, "src/owners/first_file_one_owner.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:  category + "/Owners",
+				Message:   oneOwnerTeamError,
+				StartLine: 4,
+				Path:      filepath.Join(ownerTestPath, "first_file_one_owner.xml"),
+			},
+			defaultExpiryInfo(filepath.Join(ownerTestPath, "first_file_one_owner.xml")),
 		})
 	})
 
