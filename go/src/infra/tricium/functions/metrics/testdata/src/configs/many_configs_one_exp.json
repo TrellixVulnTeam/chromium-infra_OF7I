@@ -1,0 +1,30 @@
+{
+    "TestConfig1": [
+        {
+            "platforms": [
+                "android"
+            ],
+            "experiments": [
+                {
+                    "name": "Experiment1",
+                    "enable_features": [
+                        "TestConfig1"
+                    ]
+                }
+            ]
+        },
+        {
+            "platforms": [
+                "ios"
+            ],
+            "experiments": [
+                {
+                    "name": "Experiment1",
+                    "enable_features": [
+                        "TestConfig1"
+                    ]
+                }
+            ]
+        }
+    ]
+}

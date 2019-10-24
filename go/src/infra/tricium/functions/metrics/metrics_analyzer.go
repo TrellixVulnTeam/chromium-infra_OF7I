@@ -95,7 +95,14 @@ func main() {
 
 	results := &tricium.Data_Results{}
 	for _, filePath := range filePaths {
-		results.Comments = append(results.Comments, analyzeFile(filePath, *inputDir, *prevDir, filesChanged, singletonEnums)...)
+		inputPath := filepath.Join(*inputDir, filePath)
+		f := openFileOrDie(inputPath)
+		defer closeFileOrDie(f)
+		if filepath.Ext(filePath) == ".xml" {
+			results.Comments = append(results.Comments, analyzeHistogramFile(f, filePath, *inputDir, *prevDir, filesChanged, singletonEnums)...)
+		} else if filepath.Ext(filePath) == ".json" {
+			results.Comments = append(results.Comments, analyzeFieldTrialTestingConfig(f, filePath)...)
+		}
 	}
 
 	// Write Tricium RESULTS data.

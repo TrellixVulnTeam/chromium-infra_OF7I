@@ -1,5 +1,7 @@
 /metrics_analyzer
 /out
 # The below files are used only for local testing purposes.
-/testdata/src/histograms.xml
+/testdata/src/configs/fieldtrial_testing_config.json
 /testdata/src/enums/enums_all.xml
+/testdata/src/histograms.xml
+

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -109,12 +110,10 @@ const (
 	REMOVED
 )
 
-func analyzeFile(filePath, inputDir, prevDir string, filesChanged *diffsPerFile, singletonEnums stringset.Set) []*tricium.Data_Comment {
+func analyzeHistogramFile(f io.Reader, filePath, inputDir, prevDir string, filesChanged *diffsPerFile, singletonEnums stringset.Set) []*tricium.Data_Comment {
 	log.Printf("ANALYZING File: %s", filePath)
 	var allComments []*tricium.Data_Comment
 	inputPath := filepath.Join(inputDir, filePath)
-	f := openFileOrDie(inputPath)
-	defer closeFileOrDie(f)
 	// Analyze added lines in file (if any).
 	comments, addedHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), inputPath, filesChanged.addedLines[filePath], singletonEnums, ADDED)
 	allComments = append(allComments, comments...)
