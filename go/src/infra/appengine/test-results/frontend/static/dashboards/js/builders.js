@@ -135,7 +135,7 @@ builders.Master.prototype = {
     builderPath: function(builder)
     {
         return this.basePath + '/builders/' +
-               (this.name.startsWith('tryserver') ? 'try' : 'ci') + builder;
+               (this.name.startsWith('tryserver') ? 'try' : 'ci') + '/' + builder;
     },
     builderJsonPath: function()
     {
