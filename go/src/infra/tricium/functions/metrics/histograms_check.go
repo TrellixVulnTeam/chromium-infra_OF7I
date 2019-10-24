@@ -32,46 +32,20 @@ const (
 	obsoleteStartTag    = "<obsolete"
 	ownerStartTag       = "<owner"
 
-	oneOwnerError = `[WARNING] It's a best practice to list multiple owners,
-so that there's no single point of failure for communication:
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
-	firstOwnerTeamError = `[WARNING] Please list an individual as the primary owner for this metric:
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
-	noExpiryError = `[ERROR] Please specify an expiry condition for this histogram:
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
-	badExpiryError = `[ERROR] Could not parse histogram expiry. Please format as YYYY-MM-DD or MXX:
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
-	pastExpiryWarning = `[WARNING] This expiry date is in the past. Did you mean to set an expiry date in the future?`
-	farExpiryWarning  = `[WARNING] It's a best practice to choose an expiry that is at most one year out:
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
-	neverExpiryInfo = `[INFO] The expiry should only be set to \"never\" in rare cases.
-Please double-check that this use of \"never\" is appropriate:
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
-	neverExpiryError = `[ERROR] Histograms that never expire must have an XML comment describing why,
-such as <!-- expires-never: \"heartbeat\" metric (internal: go/uma-heartbeats) -->:
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
-	milestoneFailure = `[WARNING] Tricium failed to fetch milestone branch date.
-Please double-check that this milestone is correct, because the tool is currently not able to check for you.`
-	obsoleteDateError = `[WARNING] When marking a histogram as <obsolete>,
-please document when the histogram was removed,
-either as a date including a 2-digit month and 4-digit year,
-or a milestone in MXX format.`
-	unitsMicrosecondsWarning = `[WARNING] Histograms with units="microseconds" should document 
-whether the metrics is reported for all users or only users with high-resolution clocks.
-Note that reports from clients with low-resolution clocks (i.e. on Windows, ref. 
-|TimeTicks::IsHighResolution()|) may cause the metric to have an abnormal distribution.`
-	removedHistogramError = `[ERROR]: Do not delete %s from histograms.xml. 
-Instead, mark unused histograms as obsolete and annotate them with the date or milestone in the <obsolete> tag entry:
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries`
-	addedNamespaceWarning = `[WARNING]: Are you sure you want to add the namespace %s to histograms.xml?
-For most new histograms, it's appropriate to re-use one of the existing 
-top-level histogram namespaces. For histogram names, the namespace 
-is defined as everything preceding the first dot '.' in the name.`
-	singleElementEnumWarning = `[WARNING]: It looks like this is an enumerated histogram that contains only a single bucket. 
-UMA metrics are difficult to interpret in isolation, so please either 
-add one or more additional buckets that can serve as a baseline for comparison, 
-or document what other metric should be used as a baseline during analysis. 
-https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#enum-histograms.`
+	oneOwnerError            = `[WARNING] It's a best practice to list multiple owners, so that there's no single point of failure for communication: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
+	firstOwnerTeamError      = `[WARNING] Please list an individual as the primary owner for this metric: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
+	noExpiryError            = `[ERROR] Please specify an expiry condition for this histogram: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
+	badExpiryError           = `[ERROR] Could not parse histogram expiry. Please format as YYYY-MM-DD or MXX: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
+	pastExpiryWarning        = `[WARNING] This expiry date is in the past. Did you mean to set an expiry date in the future?`
+	farExpiryWarning         = `[WARNING] It's a best practice to choose an expiry that is at most one year out: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
+	neverExpiryInfo          = `[INFO] The expiry should only be set to "never" in rare cases. Please double-check that this use of "never" is appropriate: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
+	neverExpiryError         = `[ERROR] The expiry should only be set to "never" in rare cases. If you believe this use of "never" is appropriate, you must include an XML comment describing why, such as <!-- expires-never: "heartbeat" metric (internal: go/uma-heartbeats) -->: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
+	milestoneFailure         = `[WARNING] Tricium failed to fetch milestone branch date. Please double-check that this milestone is correct, because the tool is currently not able to check for you.`
+	obsoleteDateError        = `[WARNING] When marking a histogram as <obsolete>, please document when the histogram was removed, either as a date including a 2-digit month and 4-digit year, or a milestone in MXX format.`
+	unitsMicrosecondsWarning = `[WARNING] Histograms with units="microseconds" should document whether the metrics is reported for all users or only users with high-resolution clocks. Note that reports from clients with low-resolution clocks (i.e. on Windows, ref. TimeTicks::IsHighResolution()) may cause the metric to have an abnormal distribution.`
+	removedHistogramError    = `[ERROR] Do not delete histograms from histograms.xml. Instead, mark unused histograms as obsolete and annotate them with the date or milestone in the <obsolete> tag entry: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries.`
+	addedNamespaceWarning    = `[WARNING] Are you sure you want to add the namespace %s to histograms.xml? For most new histograms, it's appropriate to re-use one of the existing top-level histogram namespaces. For histogram names, the namespace is defined as everything preceding the first dot '.' in the name.`
+	singleElementEnumWarning = `[WARNING] It looks like this is an enumerated histogram that contains only a single bucket. UMA metrics are difficult to interpret in isolation, so please either add one or more additional buckets that can serve as a baseline for comparison, or document what other metric should be used as a baseline during analysis. https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#enum-histograms.`
 )
 
 var (
@@ -149,7 +123,7 @@ func analyzeFile(filePath, inputDir, prevDir string, filesChanged *diffsPerFile,
 	defer closeFileOrDie(oldFile)
 	var emptySet stringset.Set
 	_, removedHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), tempPath, filesChanged.removedLines[filePath], emptySet, REMOVED)
-	// Identify any removed histograms.
+	// Identify if any histograms were removed
 	allComments = append(allComments, findRemovedHistograms(inputPath, addedHistograms, removedHistograms)...)
 	allComments = append(allComments, findAddedNamespaces(inputPath, newNamespaces, oldNamespaces, namespaceLineNums)...)
 	return allComments
@@ -191,7 +165,9 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 			hist := bytesToHistogram(currHistogram, meta)
 			namespace := strings.SplitN(hist.Name, ".", 2)[0]
 			namespaces.Add(namespace)
-			namespaceLineNums[namespace] = meta.HistogramLineNum
+			if namespaceLineNums[namespace] == 0 {
+				namespaceLineNums[namespace] = meta.HistogramLineNum
+			}
 			if histogramChanged {
 				changedHistograms.Add(hist.Name)
 				// Only check new (added) hists are correct.
@@ -308,17 +284,16 @@ func checkObsolete(path string, hist *histogram, meta *metadata) *tricium.Data_C
 func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_Comment {
 	var commentMessage string
 	var logMessage string
-	var extraComment *tricium.Data_Comment
 	if expiry := hist.Expiry; expiry == "" {
 		commentMessage = noExpiryError
 		logMessage = "[ERROR]: No Expiry"
 	} else if expiry == "never" {
-		commentMessage = neverExpiryInfo
-		logMessage = "[INFO]: Never Expiry"
-		// Add second Tricium comment if an expiry of never has no comment.
 		if !meta.HasNeverExpiryComment {
-			extraComment = createExpiryComment(neverExpiryError, path, meta)
-			logMessage += " & [ERROR]: No Comment"
+			commentMessage = neverExpiryError
+			logMessage = "[ERROR]: Never Expiry, No Comment"
+		} else {
+			commentMessage = neverExpiryInfo
+			logMessage = "[INFO]: Never Expiry"
 		}
 	} else {
 		dateMatch := expiryDatePattern.MatchString(expiry)
@@ -350,9 +325,6 @@ func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_C
 		log.Panicf("Primary expiry comment should not be empty")
 	}
 	expiryComments := []*tricium.Data_Comment{createExpiryComment(commentMessage, path, meta)}
-	if extraComment != nil {
-		expiryComments = append(expiryComments, extraComment)
-	}
 	log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, meta.HistogramLineNum, logMessage)
 	return expiryComments
 }
@@ -428,15 +400,14 @@ func checkEnums(path string, hist *histogram, meta *metadata, singletonEnums str
 func findRemovedHistograms(path string, addedHistograms stringset.Set, removedHistograms stringset.Set) []*tricium.Data_Comment {
 	var comments []*tricium.Data_Comment
 	allRemovedHistograms := removedHistograms.Difference(addedHistograms).ToSlice()
-	sort.Strings(allRemovedHistograms)
-	for _, hist := range allRemovedHistograms {
+	if len(allRemovedHistograms) > 0 {
 		comment := &tricium.Data_Comment{
 			Category: category + "/Removed",
-			Message:  fmt.Sprintf(removedHistogramError, hist),
+			Message:  removedHistogramError,
 			Path:     path,
 		}
-		log.Printf("ADDING Comment for %s: %s", hist, "[ERROR]: Removed Histogram")
 		comments = append(comments, comment)
+		log.Printf("ADDING Comment: [ERROR]: Removed Histogram")
 	}
 	return comments
 }

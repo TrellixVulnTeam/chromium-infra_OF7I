@@ -155,12 +155,6 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:  category + "/Expiry",
-				Message:   neverExpiryInfo,
-				StartLine: 3,
-				Path:      filepath.Join(expiryTestPath, "never_expiry_no_comment.xml"),
-			},
-			{
-				Category:  category + "/Expiry",
 				Message:   neverExpiryError,
 				StartLine: 3,
 				Path:      filepath.Join(expiryTestPath, "never_expiry_no_comment.xml"),
@@ -450,7 +444,7 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category: category + "/Removed",
-				Message:  fmt.Sprintf(removedHistogramError, "Test.Histogram2"),
+				Message:  removedHistogramError,
 				Path:     filepath.Join(removeTestPath, "remove_histogram.xml"),
 			},
 		})
