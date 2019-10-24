@@ -1,0 +1,17 @@
+summary: "LUCI/Foundation bug ..."
+
+description: <<END
+Please describe the problem with LUCI/foundation tool/service that needs attention
+from a trooper (on-call). Once filed, it'll be auto-assigned to the trooper.
+
+If urgent attention is not required, please file a normal go/luci-bug instead.
+
+To file another bug like this: go/luci-trooper-bug
+
+END
+
+components: "Infra>Platform"
+type: Bug
+pri: P1
+labels: "Restrict-View-Google"
+labels: "Foundation=Troopers"
