@@ -354,17 +354,6 @@ class TaskDefTest(BaseTest):
 
     expected = {
         'a': 'b',
-        'buildbucket': {
-            'hostname': 'cr-buildbucket.appspot.com',
-            'build': {
-                'project': 'chromium',
-                'bucket': 'luci.chromium.try',
-                'created_by': 'anonymous:anonymous',
-                'created_ts': 1448841600000000,
-                'id': '1',
-                'tags': ['t:1'],
-            },
-        },
         'buildername': 'linux-rel',
         'buildnumber': 1,
         'recipe': 'recipe',

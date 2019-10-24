@@ -105,33 +105,6 @@ def _buildbucket_property(build):
   }
 
 
-def _buildbucket_property_legacy(build):
-  """Returns value for 'buildbucket' build property.
-
-  The format of the returned value corresponds the one used in
-  buildbot-buildbucket integration [1], with two exceptions:
-  - it is not encoded in JSON
-  - the list of tags are initial tags only.
-    Does not include auto-generated tags.
-
-  [1]:
-  https://chromium.googlesource.com/chromium/tools/build/+/82373bb503dca5f91cd0988d49df38394fdf8b0b/scripts/master/buildbucket/integration.py#329
-  """
-  # TODO(crbug.com/859231): remove this function.
-  created_ts = api_common.proto_to_timestamp(build.proto.create_time)
-  return {
-      'hostname': app_identity.get_default_version_hostname(),
-      'build': {
-          'project': build.project,
-          'bucket': api_common.format_luci_bucket(build.bucket_id),
-          'created_by': build.created_by.to_bytes(),
-          'created_ts': created_ts,
-          'id': str(build.proto.id),
-          'tags': build.tags,
-      },
-  }
-
-
 def compute_task_def(build, settings, fake_build):
   """Returns a swarming task definition for the |build|.
 
@@ -409,8 +382,6 @@ def _compute_legacy_properties(build):
       # TODO(crbug.com/877161): remove legacy "buildername" property.
       'buildername': build.proto.builder.builder,
       '$recipe_engine/buildbucket': _buildbucket_property(build),
-      # TODO(crbug.com/877161): remove legacy "buildbucket" property.
-      'buildbucket': _buildbucket_property_legacy(build),
   })
 
   ret.get_or_create_struct('$recipe_engine/runtime').update({
