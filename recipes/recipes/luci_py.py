@@ -38,10 +38,11 @@ def RunSteps(api):
                       luci_dir.join('appengine', 'config_service'))
 
     # components
-    _step_run_tests(api, 'components',
-                    luci_dir.join('appengine', 'components'),
-                    run_test_seq=True,
-                    run_python3=True)
+    if api.platform.is_linux:
+      _step_run_tests(api, 'components',
+                      luci_dir.join('appengine', 'components'),
+                      run_test_seq=True,
+                      run_python3=True)
 
     # isolate server
     if api.platform.is_linux:
@@ -52,13 +53,13 @@ def RunSteps(api):
     _step_run_tests(api, 'client',
                     luci_dir.join('client'),
                     run_test_seq=True,
-                    run_python3=True)
+                    run_python3=api.platform.is_linux)
 
     # swarming bot
     _step_run_tests(api, 'swarming bot',
                     luci_dir.join('appengine', 'swarming', 'swarming_bot'),
                     run_test_seq=True,
-                    run_python3=True)
+                    run_python3=api.platform.is_linux)
 
     # swarming server
     if api.platform.is_linux:
