@@ -18,7 +18,7 @@ WEBPACK_PATH := ./node_modules/webpack-cli/bin/cli.js
 TARDIR ?= "/workspace"
 
 FRONTEND_MODULES?= default
-BACKEND_MODULES?= besearch latency-insensitive
+BACKEND_MODULES?= besearch latency-insensitive api
 
 BRANCH_NAME := $(shell git rev-parse --abbrev-ref HEAD)
 
@@ -118,31 +118,37 @@ config_prod:
 	m4 -DPROD < app.yaml.m4 > app.yaml
 	m4 -DPROD < module-besearch.yaml.m4 > module-besearch.yaml
 	m4 -DPROD < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
+	m4 -DPROD < module-api.yaml.m4 > module-api.yaml
 
 config_prod_cloud:
 	m4 -DPROD < app-cloud.yaml.m4 > app.prod.yaml
 	m4 -DPROD < module-besearch-cloud.yaml.m4 > besearch.prod.yaml
 	m4 -DPROD < module-latency-insensitive-cloud.yaml.m4 > latency-insensitive.prod.yaml
+	m4 -DPROD < module-api-cloud.yaml.m4 > api.prod.yaml
 
 config_non_prod:
 	m4 < app-cloud.yaml.m4 > app.yaml
 	m4 < module-besearch-cloud.yaml.m4 > besearch.yaml
 	m4 < module-latency-insensitive-cloud.yaml.m4 > latency-insensitive.yaml
+	m4 < module-api-cloud.yaml.m4 > api.yaml
 
 config_staging:
 	m4 -DSTAGING < app.yaml.m4 > app.yaml
 	m4 -DSTAGING < module-besearch.yaml.m4 > module-besearch.yaml
 	m4 -DSTAGING < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
+	m4 -DSTAGING < module-api.yaml.m4 > module-api.yaml
 
 config_dev:
 	m4 -DDEV < app.yaml.m4 > app.yaml
 	m4 -DDEV < module-besearch.yaml.m4 > module-besearch.yaml
 	m4 -DDEV < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
+	m4 -DDEV < module-api.yaml.m4 > module-api.yaml
 
 config_local:
 	m4 app.yaml.m4 > app.yaml
 	m4 module-besearch.yaml.m4 > module-besearch.yaml
 	m4 module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
+	m4 module-api.yaml.m4 > module-api.yaml
 
 deploy_dev: clean_deps deps build_js config_dev
 	$(eval BRANCH_NAME := $(shell git rev-parse --abbrev-ref HEAD))
@@ -157,7 +163,7 @@ deploy_cloud_dev: clean_deps deps build_js config
 	rm -rf $(GCB_DIR)
 
 
-deploy: 
+deploy:
 ifeq ($(SPIN),)
 	$(error "please install spin go/chops-install-spin")
 endif

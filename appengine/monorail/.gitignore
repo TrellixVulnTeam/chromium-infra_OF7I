@@ -27,5 +27,6 @@ besearch.yaml
 module-latency-insensitive.yaml
 latency-insensitive.prod.yaml
 latency-insensitive.yaml
+module-api.yaml
 templates/webpack-out
 full_results.json
