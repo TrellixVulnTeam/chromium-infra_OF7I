@@ -202,3 +202,7 @@
 /**
  * @typedef {Object} Attachment
  */
+
+/**
+ * @typedef {Object} FieldDef
+ */

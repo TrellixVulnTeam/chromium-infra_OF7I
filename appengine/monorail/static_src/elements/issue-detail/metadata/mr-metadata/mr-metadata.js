@@ -14,11 +14,12 @@ import './mr-field-values.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {HARDCODED_FIELD_GROUPS, valuesForField, fieldDefsWithGroup,
   fieldDefsWithoutGroup} from 'shared/metadata-helpers.js';
+import 'shared/typedef.js';
 
 /**
  * `<mr-metadata>`
  *
- * Generalized metadata for either approvals or issues.
+ * Generalized metadata components, used for either approvals or issues.
  *
  */
 export class MrMetadata extends connectStore(LitElement) {
@@ -63,132 +64,146 @@ export class MrMetadata extends connectStore(LitElement) {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet">
-      ${this.approvalStatus ? html`
-        <tr>
-          <th>Status:</th>
-          <td>
-            ${this.approvalStatus}
+      ${this._renderBuiltInFields()}
+      ${this._renderCustomFieldGroups()}
+    `;
+  }
+
+  /**
+   * Helper for handling the rendering of built in fields.
+   * @return {Object} lit-html template.
+   */
+  _renderBuiltInFields() {
+    return this.builtInFieldSpec.map((fieldName) => {
+      const fieldKey = fieldName.toLowerCase();
+
+      // Adding classes to table rows based on field names makes testing
+      // easier.
+      const className = `row-${fieldKey.replace('.', '-')}`;
+
+      // TODO(zhangtiff): Make cues use shared constants for cue names.
+      if (fieldKey === 'cue.availability_msgs') {
+        return html`
+          <tr class=${className}>
+            <td colspan="2">
+              <mr-cue cuePrefName="availability_msgs"></mr-cue>
+            </td>
+          </tr>
+        `;
+      }
+
+      const isApprovalStatus = fieldKey === 'approvalstatus';
+      const isMergedInto = fieldKey === 'mergedinto';
+
+      const fieldValueTemplate = this._renderBuiltInFieldValue(fieldName);
+
+      if (!fieldValueTemplate) return '';
+
+      // Allow overflow to enable the FedRef popup to expand.
+      // TODO(jeffcarp): Look into a more elegant solution.
+      return html`
+        <tr class=${className}>
+          <th>${isApprovalStatus ? 'Status' : fieldName}:</th>
+          <td class=${isMergedInto ? 'allow-overflow' : ''}>
+            ${fieldValueTemplate}
           </td>
         </tr>
-      `: ''}
+      `;
+    });
+  }
 
-      ${this.approvers && this.approvers.length ? html`
-        <tr>
-          <th>Approvers:</th>
-          <td>
-            ${this.approvers.map((approver) => html`
-              <mr-user-link
-                .userRef=${approver}
-                showAvailabilityIcon
-              ></mr-user-link>
-              <br />
-            `)}
-          </td>
-        </tr>
-      `: ''}
-
-      ${this.setter ? html`
-        <tr>
-          <th>Setter:</th>
-          <td>
+  /**
+   * A helper to display a single built-in field.
+   *
+   * @param {String} fieldName The name of the built in field to render.
+   * @return {Object|undefined} lit-html template for displaying the value of
+   *   the built in field. If undefined, the rendering code assumes that the
+   *   field should be hidden if empty.
+   */
+  _renderBuiltInFieldValue(fieldName) {
+    // TODO(zhangtiff): Merge with code in shared/issue-fields.js for further
+    // de-duplication.
+    switch (fieldName.toLowerCase()) {
+      case 'approvalstatus':
+        return this.approvalStatus || EMPTY_FIELD_VALUE;
+      case 'approvers':
+        return this.approvers && this.approvers.length ?
+          this.approvers.map((approver) => html`
             <mr-user-link
-              .userRef=${this.setter}
+              .userRef=${approver}
               showAvailabilityIcon
             ></mr-user-link>
-          </td>
-        </tr>
-      `: ''}
-
-      <tr>
-        <th>Owner:</th>
-        <td>
-        ${this.owner ? html`
+            <br />
+          `) : EMPTY_FIELD_VALUE;
+      case 'setter':
+        return this.setter ? html`
+          <mr-user-link
+            .userRef=${this.setter}
+            showAvailabilityIcon
+          ></mr-user-link>
+          ` : undefined; // Hide the field when empty.
+      case 'owner':
+        return this.owner ? html`
           <mr-user-link
             .userRef=${this.owner}
             showAvailabilityIcon
             showAvailabilityText
           ></mr-user-link>
-          ` : EMPTY_FIELD_VALUE}
-        </td>
-      </tr>
-
-      <tr>
-        <th>CC:</th>
-        <td>
-          ${this.cc && this.cc.length ? html`
-            ${this.cc.map((cc) => html`
-              <mr-user-link
-                .userRef=${cc}
-                showAvailabilityIcon
-              ></mr-user-link>
-              <br />
-            `)}
-          ` : EMPTY_FIELD_VALUE}
-        </td>
-      </tr>
-
-     <tr>
-       <td colspan="2">
-         <mr-cue cuePrefName="availability_msgs"></mr-cue>
-       </td>
-     </tr>
-
-      ${this.issueStatus ? html`
-        <tr>
-          <th>Status:</th>
-          <td>
-            ${this.issueStatus.status}
-            <em>
-              ${this.issueStatus.meansOpen ? '(Open)' : '(Closed)'}
-            </em>
-          </td>
-        </tr>
-        ${this.issueStatus.status === 'Duplicate' ? html`
-          <tr>
-            <th>MergedInto:</th>
-            <!-- Allow overflow to enable the FedRef popup to expand. -->
-            <!-- TODO(jeffcarp): Look into a more elegant solution. -->
-            <td class="allow-overflow">
-              <mr-issue-link
-                .projectName=${this.issueRef.projectName}
-                .issue=${this.mergedInto}
-              ></mr-issue-link>
-            </td>
-          </tr>
-        `: ''}
-      `: ''}
-
-      ${this.components && this.components.length ? html`
-        <tr>
-          <th>Components:</th>
-          <td>
-            ${this.components.map((comp) => html`
-              <a href="/p/${this.issueRef.projectName}/issues/list?q=component:${comp.path}"
-                title="${comp.path}${comp.docstring ? ' = ' + comp.docstring : ''}"
-              >
-                ${comp.path}</a><br />
-            `)}
-          </td>
-        </tr>
-      `:''}
-
-      ${this.modifiedTimestamp ? html`
-        <tr>
-          <th>Modified:</th>
-          <td>
+          ` : EMPTY_FIELD_VALUE;
+      case 'cc':
+        return this.cc && this.cc.length ?
+          this.cc.map((cc) => html`
+            <mr-user-link
+              .userRef=${cc}
+              showAvailabilityIcon
+            ></mr-user-link>
+            <br />
+          `) : EMPTY_FIELD_VALUE;
+      case 'status':
+        return this.issueStatus ? html`
+          ${this.issueStatus.status} <em>${
+            this.issueStatus.meansOpen ? '(Open)' : '(Closed)'}
+          </em>` : EMPTY_FIELD_VALUE;
+      case 'mergedinto':
+        // TODO(zhangtiff): This should use the project config to determine if a
+        // field allows merging rather than used a hard-coded value.
+        return this.issueStatus && this.issueStatus.status === 'Duplicate' ?
+          html`
+            <mr-issue-link
+              .projectName=${this.issueRef.projectName}
+              .issue=${this.mergedInto}
+            ></mr-issue-link>
+          `: undefined; // Hide the field when empty.
+      case 'components':
+        return (this.components && this.components.length) ?
+          this.components.map((comp) => html`
+            <a
+              href="/p/${this.issueRef.projectName
+                }/issues/list?q=component:${comp.path}"
+              title="${comp.path}${comp.docstring ?
+                ' = ' + comp.docstring : ''}"
+            >
+              ${comp.path}</a><br />
+          `) : EMPTY_FIELD_VALUE;
+      case 'modified':
+        return this.modifiedTimestamp ? html`
             <chops-timestamp
               .timestamp=${this.modifiedTimestamp}
               short
             ></chops-timestamp>
-          </td>
-        </tr>
-      `:''}
+          ` : EMPTY_FIELD_VALUE;
+    }
 
-      ${this._renderCustomFields()}
-    `;
+    // Non-existent field.
+    return;
   }
 
-  _renderCustomFields() {
+  /**
+   * Helper for handling the rendering of custom fields defined in a project
+   * config.
+   * @return {Object} lit-html template.
+   */
+  _renderCustomFieldGroups() {
     const grouped = fieldDefsWithGroup(this.fieldDefs,
         this.fieldGroups, this.issueType);
     const ungrouped = fieldDefsWithoutGroup(this.fieldDefs,
@@ -200,17 +215,24 @@ export class MrMetadata extends connectStore(LitElement) {
             ${group.groupName}
           </th>
         </tr>
-        ${this._renderCustomFieldList(group.fieldDefs)}
+        ${this._renderCustomFields(group.fieldDefs)}
         <tr>
           <th class="group-separator" colspan="2"></th>
         </tr>
       `)}
 
-      ${this._renderCustomFieldList(ungrouped)}
+      ${this._renderCustomFields(ungrouped)}
     `;
   }
 
-  _renderCustomFieldList(fieldDefs) {
+  /**
+   * Helper for handling the rendering of built in fields.
+   *
+   * @param {Array<FieldDef>} fieldDefs Arrays of configurations Objects
+   *   for fields to render.
+   * @return {Object} lit-html template.
+   */
+  _renderCustomFields(fieldDefs) {
     if (!fieldDefs || !fieldDefs.length) return '';
     return fieldDefs.map((field) => {
       const fieldValues = valuesForField(
@@ -234,6 +256,10 @@ export class MrMetadata extends connectStore(LitElement) {
   /** @override */
   static get properties() {
     return {
+      /**
+       * An Array of Strings to specify which built in fields to display.
+       */
+      builtInFieldSpec: {type: Array},
       approvalStatus: {type: Array},
       approvers: {type: Array},
       setter: {type: Object},
@@ -244,6 +270,7 @@ export class MrMetadata extends connectStore(LitElement) {
       issueStatus: {type: String},
       issueType: {type: String},
       mergedInto: {type: Object},
+      modifiedTimestamp: {type: Number},
       owner: {type: Object},
       isApproval: {type: Boolean},
       issueRef: {type: Object},
@@ -257,11 +284,32 @@ export class MrMetadata extends connectStore(LitElement) {
     this.isApproval = false;
     this.fieldGroups = HARDCODED_FIELD_GROUPS;
     this.issueRef = {};
+
+    // Default built in fields used by issue metadata.
+    this.builtInFieldSpec = [
+      'Owner', 'CC', 'cue.availability_msgs', 'Status', 'MergedInto',
+      'Components', 'Modified',
+    ];
+    this.fieldValueMap = new Map();
+
+    this.approvalStatus = undefined;
+    this.approvers = undefined;
+    this.setter = undefined;
+    this.cc = undefined;
+    this.components = undefined;
+    this.fieldDefs = undefined;
+    this.issueStatus = undefined;
+    this.issueType = undefined;
+    this.mergedInto = undefined;
+    this.owner = undefined;
+    this.modifiedTimestamp = undefined;
   }
 
   /** @override */
   connectedCallback() {
     super.connectedCallback();
+
+    // This is set for accessibility. Do not override.
     this.setAttribute('role', 'table');
   }
 

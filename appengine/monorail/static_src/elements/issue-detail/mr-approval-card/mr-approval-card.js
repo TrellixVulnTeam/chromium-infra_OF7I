@@ -24,6 +24,13 @@ import {commentListToDescriptionList} from 'shared/converters.js';
 
 
 /**
+ * @type {Array<String>} The list of built in metadata fields to show on
+ *   issue approvals.
+ */
+const APPROVAL_METADATA_FIELDS = ['ApprovalStatus', 'Approvers', 'Setter',
+  'cue.availability_msgs'];
+
+/**
  * `<mr-approval-card>`
  *
  * This element shows a card for a single approval.
@@ -173,6 +180,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
           .approvers=${this.approvers}
           .setter=${this.setter}
           .fieldDefs=${this.fieldDefs}
+          .builtInFieldSpec=${APPROVAL_METADATA_FIELDS}
           isApproval
         ></mr-metadata>
         <h4
@@ -250,13 +258,13 @@ export class MrApprovalCard extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     const fieldDefsByApproval = project.fieldDefsByApprovalName(state);
-    if (fieldDefsByApproval && this.fieldName
-        && fieldDefsByApproval.has(this.fieldName)) {
+    if (fieldDefsByApproval && this.fieldName &&
+        fieldDefsByApproval.has(this.fieldName)) {
       this.fieldDefs = fieldDefsByApproval.get(this.fieldName);
     }
     const commentsByApproval = issue.commentsByApprovalName(state);
-    if (commentsByApproval && this.fieldName
-        && commentsByApproval.has(this.fieldName)) {
+    if (commentsByApproval && this.fieldName &&
+        commentsByApproval.has(this.fieldName)) {
       const comments = commentsByApproval.get(this.fieldName);
       this.comments = comments.slice(1);
       this._allSurveys = commentListToDescriptionList(comments);
@@ -272,8 +280,8 @@ export class MrApprovalCard extends connectStore(LitElement) {
 
   /** @override */
   update(changedProperties) {
-    if ((changedProperties.has('comments') || changedProperties.has('focusId'))
-        && this.comments) {
+    if ((changedProperties.has('comments') ||
+        changedProperties.has('focusId')) && this.comments) {
       const focused = this.comments.find(
           (comment) => `c${comment.sequenceNum}` === this.focusId);
       if (focused) {
