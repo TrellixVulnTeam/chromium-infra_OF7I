@@ -80,14 +80,31 @@ class PublishPubsubIssueChangeTaskTest(unittest.TestCase):
     }
     self.assertEqual(result, expected_body)
 
-  def testPublishPubsubIssueChangeTask_Normal(self):
-    """Test normal happy-path case."""
+  def testPublishPubsubIssueChangeTask_IssueNotFound(self):
+    """Test case when issue is not found."""
     task = pubsub.PublishPubsubIssueChangeTask(
         request=None, response=None, services=self.services)
-    params = {'issue_id': 12345001}
     mr = testing_helpers.MakeMonorailRequest(
         user_info={'user_id': 1},
-        params=params,
+        params={'issue_id': 314159},
+        method='POST',
+        services=self.services)
+    result = task.HandleRequest(mr)
+    expected_body = {
+      'error': 'Could not find issue with ID 314159',
+    }
+    self.assertEqual(result, expected_body)
+
+  def testPublishPubsubIssueChangeTask_Normal(self):
+    """Test normal happy-path case."""
+    issue = fake.MakeTestIssue(789, 543, 'sum', 'New', 111, issue_id=78901,
+        project_name='rutabaga')
+    self.services.issue.TestAddIssue(issue)
+    task = pubsub.PublishPubsubIssueChangeTask(
+        request=None, response=None, services=self.services)
+    mr = testing_helpers.MakeMonorailRequest(
+        user_info={'user_id': 1},
+        params={'issue_id': 78901},
         method='POST',
         services=self.services)
     result = task.HandleRequest(mr)
@@ -97,11 +114,10 @@ class PublishPubsubIssueChangeTaskTest(unittest.TestCase):
       body={
         'messages': [{
           'attributes': {
-            'issue_id': '12345001',
+            'local_id': '543',
+            'project_name': 'rutabaga',
           },
         }],
       }
     )
-    self.pubsub_client_mock.projects().topics().publish() \
-        .execute.assert_called_once()
     self.assertEqual(result, {})

@@ -22,6 +22,7 @@ from apiclient.errors import Error as ApiClientError
 from oauth2client.client import GoogleCredentials
 from oauth2client.client import Error as Oauth2ClientError
 
+from framework import exceptions
 from framework import jsonfeed
 
 
@@ -48,13 +49,20 @@ class PublishPubsubIssueChangeTask(jsonfeed.InternalTask):
       return {
         'error': 'Cannot proceed without a valid issue ID.',
       }
+    try:
+      issue = self.services.issue.GetIssue(mr.cnxn, issue_id, use_cache=False)
+    except exceptions.NoSuchIssueException:
+      return {
+        'error': 'Could not find issue with ID %s' % issue_id,
+      }
 
     pubsub_client.projects().topics().publish(
         topic=settings.pubsub_topic_id,
         body={
           'messages': [{
             'attributes': {
-              'issue_id': str(issue_id),
+              'local_id': str(issue.local_id),
+              'project_name': str(issue.project_name),
             },
           }],
         },
