@@ -10,7 +10,7 @@
       cc, component, hotlist, label, owner, reporter, status
     </span>
     <br /><br />
-    <a href="https://bugs.chromium.org/p/monorail/issues/entry?owner=jeffcarp@chromium.org&labels=Feature-Charts">
+    <a href="https://bugs.chromium.org/p/monorail/issues/entry?labels=Feature-Charts">
       Please file feedback here.
     </a>
   </div>
