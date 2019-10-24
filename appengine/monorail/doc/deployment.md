@@ -4,14 +4,15 @@
 
 Spinnaker is a platform that helps teams configure and manage application
 deployment pipelines. We have a
-[ChromeOps Spinnaker](http://go/chrome-infra-spinnaker)
-instance that holds pipelines for several ChromeOps services, including
-Monorail.
+[ChromeOps Spinnaker](http://go/chrome-infra-spinnaker) instance that holds
+pipelines for several ChromeOps services, including Monorail.
 
 IMPORTANT: In the event of an unexpected failure in a Spinnaker pipeline, it is
 extremely important that the release engineer properly cleans up versions in the
 Appengine console (e.g. delete bad versions and manual rollback to previous
 version).
+
+### Spinnaker Traffic Splitting
 
 Spinnaker's traffic splitting, rollback, and cleanup systems rely heavily on the
 assumption that the currently deployed version always has the highest version
@@ -36,55 +37,91 @@ deployment process in Spinnaker.
 
 #### Deploy Monorail
 
-This is the starting point of the Monorail deployment process. This is the only
-Pipeline that needs to be manually triggered by the Release Engineer.
-![](md_images/start-deploy-monorail.png) With the default parameters, an empty
-"BUILD_ID" and "ENV" set to "staging", "Deploy Monorail" triggers a Cloud Build
-of Monorail from HEAD. And when this pipeline finishes, the "Deploy Staging"
-pipeline automatically begins.
+This is the starting point of the Monorail deployment process and should be
+manually triggered by the Release Engineer.
+![start monorail deployment](md_images/start-deploy-monorail.png) With the
+default parameters, an empty "BUILD_ID" and "ENV" set to "dev", `Deploy
+Monorail` triggers a Cloud Build of Monorail from HEAD. And when this pipeline
+finishes, the `Deploy Dev (in use)` pipeline automatically begins.
 
-"Deploy Monorail" accepts a "BUILD_ID" parameter, which should be the id of a
-previous Cloud Build found
-[here](https://pantheon.corp.google.com/cloud-build/builds?organizationId=433637338589&src=ac&project=chrome-infra-spinnaker).
-If "ENV" is set to "prod", the "Deploy Prod" pipeline is automatically triggered
-with a successful finish of "Deploy Monorail"
+##### Parameter Options
+
+*   The "BUILD_ID" parameter can take the id of a previous Cloud Build found
+    [here](https://pantheon.corp.google.com/cloud-build/builds?organizationId=433637338589&src=ac&project=chrome-infra-spinnaker).
+    We can use this to rebuild older Monorail versions.
+*   The "ENV" parameter can be set to "dev", "staging", or "prod" to
+    automatically trigger `Deploy Dev (in use)`, `Deploy Staging`, or `Deploy
+    Production` (respectively) with a successful finish of `Deploy Monorail`.
+
+#### Deploy Dev (in use)
+
+This pipeline handles deploying a new monorail-dev version and migrating traffic
+to the newest version.
+
+After a new version is created, but before traffic is migrated, there is a
+"Continue?" stage that waits on manual judgement. The release engineer is
+expected to do any testing in the newest version before confirming that the
+pipeline should continue with traffic migration. If there are any issues, the
+release engineer should select "Rollback", which triggers the `Rollback`
+pipeline. If "Continue" is selected, spinnaker will immediately migrate 100%
+traffic to to the newest version.
+![manual judgement stage](md_images/manual-judgement-stage.png)
+![continue options](md_images/continue-options.png)
+
+The successful finish of this pipeline triggers two pipelines: `Cleanup` and
+`Deploy Staging`.
+
+#### Deploy Development
+
+Note that this pipeline is similar to the above `Deploy Dev (in use)` pipeline.
+This is for Prod Tech's experimental purposes. Please ignore this pipeline. This
+cannot be triggered by `Deploy Monorail`.
 
 #### Deploy Staging
 
 This pipeline handles deploying a new monorail-staging version and migrating
 traffic to the newest version.
 
-After a new version is created, but before traffic is migrated, there is a
-"Continue?" stage that waits on manual judgement. The release engineer is
-expected to any required manual testing in the newest version before confirming
-that the pipeline should continue with traffic migration. If any issues are
-spotted during this, the release engineer should select "Rollback", which
-triggers the "Rollback" pipeline. ![](md_images/manual-judgement-stage.png)
-![](md_images/continue-options.png) If "Continue" is selected, spinnaker will
-proceed with three stages of traffic splitting with a waiting period between
-each traffic split.
+Like `Deploy Dev (in use)` after a new version is created, there is a
+"Continue?" stage that waits on manual judgement. The release engineer should
+test the new version before letting the pipeline proceed to traffic migration.
+If any issues are spotted, the release engineer should select "Rollback", to
+trigger the `Rollback` pipeline.
 
-The successful finish of this pipeline triggers two pipelines: "Cleanup" and
-"Deploy Production".
+Unlike `Deploy Dev (in use)`, after "Continue" is selected, spinnaker will
+proceed with three separate stages of traffic splitting with a waiting period
+between each traffic split.
+
+The successful finish of this pipeline triggers two pipelines: `Cleanup` and
+`Deploy Production`.
 
 #### Deploy Production
 
 This pipeline handles deploying a new monorail-prod version and migrating
 traffic to the newest version.
 
-Like the "Deploy Staging" pipeline, this pipeline has a "Continue?" stage that
-waits on manual judgement. If any issues are spotted during this, the release
-engineer should select "Rollback", which triggers the "Rollback" pipeline.
-
-If "Continue" is selected, spinnaker will proceed with three stages of traffic
-splitting with a waiting period between each traffic split.
-
-The successful finish of this pipeline triggers the "Cleanup" pipeline.
+This pipeline has the same set of stages as `Deploy Staging`. the successful
+finish of this pipeline triggers the `Cleanup` pipeline.
 
 #### Rollback
 
 This pipeline handles migrating traffic back from the newest version to the
-previous version and deleting the newest version.
+previous version and deleting the newest version. This pipeline is normally
+triggered by the `Rollback` stage of the `Deploy Dev|Staging|Production`
+pipelines and it only handles rolling back one of the applications, not all
+three.
+
+##### Parameter Options
+
+*   "Stack" is a required parameter for this pipeline and can be one of "dev",
+    "staging", or "prod". This determines which of monorail's three applications
+    (monorail-dev, monorail-staging, monorail-prod) it should rollback. When
+    `Rollback` is triggered by one of the above Deploy pipelines, the
+    appropriate "Stack" value is passed. When the release engineer needs to
+    manually trigger the `Rollback` pipeline they should make sure they are
+    choosing the correct "Stack" to rollback.
+    ![start rollback](md_images/start-rollback.png)
+    ![rollback options](md_images/rollback-options.png)
 
 #### Cleanup
 
@@ -102,8 +139,8 @@ Monorail's pipelines in Spinnaker have been configured to send notifications to
 monorail-eng+spinnaker@google.com when:
 
 1.  Any Monorail pipeline fails
-1.  "Deploy Staging" requires manual judgement at the "Continue?" stage.
-1.  "Deploy Production" requires manual judgement at the "Continue?" stage.
+1.  `Deploy Staging` requires manual judgement at the "Continue?" stage.
+1.  `Deploy Production` requires manual judgement at the "Continue?" stage.
 
 ### Cron Jobs and Task
 
@@ -126,23 +163,30 @@ If any step below fails. Stop the deploy and ping
         1.  [Error Reporting](http://console.cloud.google.com/errors?time=P1D&order=COUNT_DESC&resolution=OPEN&resolution=ACKNOWLEDGED&project=monorail-prod)
     1.  If there are any significant operational problems with Monorail or ChOps
         in general, halt deploy.
-1.  Update Staging Schema
-    1.  Check for changes since last deploy: `tail -30
+1.  Update Dev and Staging Schema
+    1.  Check for changes since last deploy: tail -30
         schema/alter-table-log.txt`
-    1.  Copy and paste the new changes into the
-        [master DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-staging)
-        in staging. Please be careful when pasting into SQL prompt.
     1.  Also copy and paste updates to the
         [master DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-dev)
-        in the `monorail-dev` project.
+        in the `monorail-dev` project. Please be careful when pasting into SQL
+        prompt.
+    1.  Copy and paste the new changes into the
+        [master DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-staging)
+        in staging.
 1.  Start the deployment Pipeline in Spinnaker
     1.  Navigate to the Monorail Delivery page at
         [go/spinnaker-deploy-monorail](https://spinnaker-1.endpoints.chrome-infra-spinnaker.cloud.goog/#/applications/monorail/executions)
         in Spinnaker.
-    1.  Identify the "Deploy Monorail" Pipeline and click "Start Manual
-        Execution". "BUILD_ID" should be empty. "ENV" should be set to
-        "staging".
-1.  Test on Staging (Pipeline: "Deploy Staging", Stage: "Continue?")
+    1.  Identify the `Deploy Monorail` Pipeline and click "Start Manual
+        Execution". "BUILD_ID" should be empty. "ENV" should be set to "dev".
+1.  Confirm monorail-dev was successfully deployed (Pipeline: `Deploy Dev (in
+    use)`, Stage: "Continue?")
+    1.  If there are any new tasks or cron jobs, run `gcloud app deploy
+        queue.yaml cron.yaml --project monorail-dev`
+    1.  Visit popular/essential pages and confirm they are all accessible.
+    1.  If everything looks good, choose "Continue" for this stage.
+    1.  If there is an issue, choose "Rollback" for this stage.
+1.  Test on Staging (Pipeline: `Deploy Staging`, Stage: "Continue?")
     1.  If there are any new tasks or cron jobs, run `gcloud app deploy
         queue.yaml cron.yaml --project monorail-staging`
     1.  For each commit since last deploy, verify affected functionality still
@@ -157,7 +201,7 @@ If any step below fails. Stop the deploy and ping
     1.  Repeat the same schema changes on the prod database.
     1.  If there are any new tasks or cron jobs, run `gcloud app deploy
         queue.yaml cron.yaml --project monorail-prod`
-1.  Test on Prod (Pipeline: "Deploy Production", Stage: "Continue?")
+1.  Test on Prod (Pipeline: `Deploy Production`, Stage: "Continue?")
     1.  For each commit since last deploy, verify affected functionality still
         works. Test using a non-admin account, unless you're verifying
         admin-specific functionality.
@@ -185,6 +229,19 @@ If any step below fails. Stop the deploy and ping
     [Monorail Deployment Stats](http://go/monorail-deployment-stats) spreadsheet
     to help track deploys/followups/rollbacks. It is important to do this even
     if the deploy failed for some reason.
+
+### Rolling back and other unexpected situations.
+
+If issues are discovered after the "Continue?" stage and traffic migration has
+already started: Cancel the execution and manually start the `Rollback`
+pipeline. ![cancel executions](md_images/cancel-execution.png)
+
+If issues are discovered during the monorail-staging or monorail-prod deployment
+DO NOT forget to also run the `Rollback` pipeline for monorail-dev or
+monorail-dev and monorail-staging, respectively.
+
+If you are ever unsure on how to rollback or clean up unexpected Spinnaker
+errors please ping the [Monorail chat](http://chat/room/AAAACV9ZZ8k) for help.
 
 ## Creating and deploying a new Monorail instance
 
