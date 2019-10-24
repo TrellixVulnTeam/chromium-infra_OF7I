@@ -1,4 +1,4 @@
-/histograms_check
+/metrics_analyzer
 /out
 # The below files are used only for local testing purposes.
 /testdata/src/histograms.xml
