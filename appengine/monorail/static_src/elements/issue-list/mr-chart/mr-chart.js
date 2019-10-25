@@ -467,6 +467,11 @@ export default class MrChart extends LitElement {
 
   // Get prefixes from the set of labels.
   async _getLabelPrefixes() {
+    // If no project (i.e. viewing a hotlist), return empty list.
+    if (!this.projectName) {
+      return [];
+    }
+
     const projectRequestMessage = {
       project_name: this.projectName};
     const labelsResponse = await prpcClient.call(

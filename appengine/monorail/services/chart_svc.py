@@ -138,11 +138,13 @@ class ChartService(object):
     where = [
       ('IssueSnapshot.period_start <= %s', [unixtime]),
       ('IssueSnapshot.period_end > %s', [unixtime]),
-      ('IssueSnapshot.project_id IN (%s)' % sql.PlaceHolders(project_ids),
-        project_ids),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
     ]
+    if project_ids:
+      where.append(
+        ('IssueSnapshot.project_id IN (%s)' % sql.PlaceHolders(project_ids),
+          project_ids))
 
     forbidden_label_clause = 'Forbidden_label.label_id IS NULL'
     if effective_ids:

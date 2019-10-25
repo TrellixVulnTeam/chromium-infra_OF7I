@@ -70,9 +70,9 @@ class ChartServiceTest(unittest.TestCase):
     self.defaultWheres = [
       ('IssueSnapshot.period_start <= %s', [1514764800]),
       ('IssueSnapshot.period_end > %s', [1514764800]),
-      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
+      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('(Issue.reporter_id IN (%s,%s)'
        ' OR Issue.owner_id IN (%s,%s)'
        ' OR I2cc.cc_id IS NOT NULL'
@@ -413,9 +413,9 @@ class ChartServiceTest(unittest.TestCase):
     where = [
       ('IssueSnapshot.period_start <= %s', [1514764800]),
       ('IssueSnapshot.period_end > %s', [1514764800]),
-      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
+      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Forbidden_label.label_id IS NULL', []),
       ('LOWER(Lab.label) LIKE %s', ['foo-%']),
     ]
@@ -460,9 +460,9 @@ class ChartServiceTest(unittest.TestCase):
     where = [
       ('IssueSnapshot.period_start <= %s', [1514764800]),
       ('IssueSnapshot.period_end > %s', [1514764800]),
-      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
+      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('(Issue.reporter_id IN (%s,%s)'
        ' OR Issue.owner_id IN (%s,%s)'
        ' OR I2cc.cc_id IS NOT NULL)',
@@ -629,9 +629,9 @@ class ChartServiceTest(unittest.TestCase):
     where = [
       ('IssueSnapshot.period_start <= %s', [1514764800]),
       ('IssueSnapshot.period_end > %s', [1514764800]),
-      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('Issue.is_spam = %s', [False]),
       ('Issue.deleted = %s', [False]),
+      ('IssueSnapshot.project_id IN (%s)', [789]),
       ('(Issue.reporter_id IN (%s,%s)'
        ' OR Issue.owner_id IN (%s,%s)'
        ' OR I2cc.cc_id IS NOT NULL)',
