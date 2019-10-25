@@ -48,6 +48,7 @@ const (
 	removedHistogramError    = `[ERROR] Do not delete histograms from histograms.xml. Instead, mark unused histograms as obsolete and annotate them with the date or milestone in the <obsolete> tag entry: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries.`
 	addedNamespaceWarning    = `[WARNING] Are you sure you want to add the namespace %s to histograms.xml? For most new histograms, it's appropriate to re-use one of the existing top-level histogram namespaces. For histogram names, the namespace is defined as everything preceding the first dot '.' in the name.`
 	singleElementEnumWarning = `[WARNING] It looks like this is an enumerated histogram that contains only a single bucket. UMA metrics are difficult to interpret in isolation, so please either add one or more additional buckets that can serve as a baseline for comparison, or document what other metric should be used as a baseline during analysis. https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#enum-histograms.`
+	changeMilestoneExpiry    = ` For expiry dates this far into the future, it is recommended that you use a date rather than a milestone, as the date will be easier to reason about.`
 )
 
 var (
@@ -108,6 +109,15 @@ const (
 	ADDED changeMode = iota
 	// REMOVED means a line was removed from a file.
 	REMOVED
+)
+
+type expiryDateType int
+
+const (
+	// REGULAR means the expiry date is formatted as YYYY-MM-DD
+	REGULAR expiryDateType = iota
+	// MILESTONE means the expiry date is in milestone format (M*)
+	MILESTONE
 )
 
 func analyzeHistogramFile(f io.Reader, filePath, inputDir, prevDir string, filesChanged *diffsPerFile, singletonEnums stringset.Set) []*tricium.Data_Comment {
@@ -301,7 +311,7 @@ func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_C
 			if err != nil {
 				log.Panicf("Failed to parse expiry date: %v", err)
 			}
-			processExpiryDateDiff(inputDate, &commentMessage, &logMessage)
+			processExpiryDateDiff(inputDate, REGULAR, &commentMessage, &logMessage)
 		} else if milestoneMatch {
 			milestone, err := strconv.Atoi(expiry[1:])
 			if err != nil {
@@ -312,7 +322,7 @@ func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_C
 				commentMessage = milestoneFailure
 				logMessage = fmt.Sprintf("[WARNING] Milestone Fetch Failure: %v", err)
 			} else {
-				processExpiryDateDiff(milestoneDate, &commentMessage, &logMessage)
+				processExpiryDateDiff(milestoneDate, MILESTONE, &commentMessage, &logMessage)
 			}
 		} else {
 			commentMessage = badExpiryError
@@ -327,7 +337,7 @@ func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_C
 	return expiryComments
 }
 
-func processExpiryDateDiff(inputDate time.Time, commentMessage, logMessage *string) {
+func processExpiryDateDiff(inputDate time.Time, dateType expiryDateType, commentMessage *string, logMessage *string) {
 	dateDiff := int(inputDate.Sub(now()).Hours()/24) + 1
 	if dateDiff <= 0 {
 		*commentMessage = pastExpiryWarning
@@ -336,8 +346,11 @@ func processExpiryDateDiff(inputDate time.Time, commentMessage, logMessage *stri
 		*commentMessage = farExpiryWarning
 		*logMessage = "[WARNING]: Expiry past one year"
 	} else {
-		*commentMessage = fmt.Sprintf("[INFO]: Expiry date is in %d days", dateDiff)
+		*commentMessage = fmt.Sprintf("[INFO]: Expiry date is in %d days.", dateDiff)
 		*logMessage = *commentMessage
+	}
+	if dateDiff > 180 && dateType == MILESTONE {
+		*commentMessage += changeMilestoneExpiry
 	}
 }
 

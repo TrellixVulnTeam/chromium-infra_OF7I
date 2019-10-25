@@ -39,6 +39,8 @@ func analyzeHistogramTestFile(t *testing.T, filePath string, patch string, tempD
 			date, _ = time.Parse(dateMilestoneFormat, "2019-07-25T00:00:00")
 		case 79:
 			date, _ = time.Parse(dateMilestoneFormat, "2019-10-17T00:00:00")
+		case 83:
+			date, _ = time.Parse(dateMilestoneFormat, "2020-04-23T00:00:00")
 		case 87:
 			date, _ = time.Parse(dateMilestoneFormat, "2020-10-22T00:00:00")
 		case 101:
@@ -209,9 +211,21 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:  category + "/Expiry",
-				Message:   fmt.Sprintf("[INFO]: Expiry date is in 30 days"),
+				Message:   "[INFO]: Expiry date is in 30 days.",
 				StartLine: 3,
 				Path:      filepath.Join(milestoneTestPath, "good_milestone.xml"),
+			},
+		})
+	})
+
+	Convey("Analyze XML file with no errors: good milestone expiry, but greater than 6 months out", t, func() {
+		results := analyzeHistogramTestFile(t, "src/expiry/milestone/over_6months_milestone.xml", emptyPatch, tempDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:  category + "/Expiry",
+				Message:   "[INFO]: Expiry date is in 219 days." + changeMilestoneExpiry,
+				StartLine: 3,
+				Path:      filepath.Join(milestoneTestPath, "over_6months_milestone.xml"),
 			},
 		})
 	})
@@ -233,7 +247,7 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:  category + "/Expiry",
-				Message:   farExpiryWarning,
+				Message:   farExpiryWarning + changeMilestoneExpiry,
 				StartLine: 3,
 				Path:      filepath.Join(milestoneTestPath, "over_year_milestone.xml"),
 			},
@@ -245,7 +259,7 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:  category + "/Expiry",
-				Message:   farExpiryWarning,
+				Message:   farExpiryWarning + changeMilestoneExpiry,
 				StartLine: 3,
 				Path:      filepath.Join(milestoneTestPath, "over_year_milestone_3.xml"),
 			},
@@ -297,7 +311,7 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:  category + "/Expiry",
-				Message:   fmt.Sprintf("[INFO]: Expiry date is in 30 days"),
+				Message:   "[INFO]: Expiry date is in 30 days.",
 				StartLine: 3,
 				Path:      filepath.Join(obsoleteTestPath, "good_obsolete_milestone.xml"),
 			},
@@ -504,7 +518,7 @@ func defaultExpiryInfo(path string) *tricium.Data_Comment {
 func defaultExpiryInfoLine(path string, startLine int) *tricium.Data_Comment {
 	return &tricium.Data_Comment{
 		Category:  category + "/Expiry",
-		Message:   fmt.Sprintf("[INFO]: Expiry date is in 104 days"),
+		Message:   "[INFO]: Expiry date is in 104 days.",
 		StartLine: int32(startLine),
 		Path:      path,
 	}
