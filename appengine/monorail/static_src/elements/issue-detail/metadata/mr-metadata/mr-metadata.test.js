@@ -284,7 +284,7 @@ describe('mr-metadata', () => {
       await element.updateComplete;
 
       const tr = element.shadowRoot.querySelector(
-          'tr.row-cue-availability_msgs');
+          'tr.cue-availability_msgs');
       const cueElement = tr.querySelector('mr-cue');
 
       assert.isDefined(cueElement);
@@ -318,7 +318,7 @@ describe('mr-metadata', () => {
     it('cue.availability_msgs does not render when not configured', async () => {
       await element.updateComplete;
 
-      const tr = element.shadowRoot.querySelector('tr.row-cue.availability_msgs');
+      const tr = element.shadowRoot.querySelector('tr.cue-availability_msgs');
 
       assert.isNull(tr);
     });

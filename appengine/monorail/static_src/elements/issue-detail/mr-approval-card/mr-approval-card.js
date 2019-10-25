@@ -21,6 +21,7 @@ import {APPROVER_RESTRICTED_STATUSES, STATUS_ENUM_TO_TEXT, TEXT_TO_STATUS_ENUM,
   STATUS_CLASS_MAP, CLASS_ICON_MAP, APPROVAL_STATUSES,
 } from 'shared/approval-consts.js';
 import {commentListToDescriptionList} from 'shared/converters.js';
+import {cueNames, cueNameToSpec} from 'elements/help/mr-cue/cue-helpers.js';
 
 
 /**
@@ -28,7 +29,7 @@ import {commentListToDescriptionList} from 'shared/converters.js';
  *   issue approvals.
  */
 const APPROVAL_METADATA_FIELDS = ['ApprovalStatus', 'Approvers', 'Setter',
-  'cue.availability_msgs'];
+  cueNameToSpec(cueNames.AVAILABILITY_MSGS)];
 
 /**
  * `<mr-approval-card>`

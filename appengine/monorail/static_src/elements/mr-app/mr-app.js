@@ -17,6 +17,8 @@ import * as sitewide from 'reducers/sitewide.js';
 import {arrayToEnglish} from 'shared/helpers.js';
 import 'elements/framework/mr-header/mr-header.js';
 import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
+import 'elements/help/mr-cue/mr-cue.js';
+import {cueNames} from 'elements/help/mr-cue/cue-helpers.js';
 
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 
@@ -62,12 +64,15 @@ export class MrApp extends connectStore(LitElement) {
       ></mr-header>
       <mr-site-banner></mr-site-banner>
       <mr-cue
-        cuePrefName="switch_to_parent_account"
+        cuePrefName=${cueNames.SWITCH_TO_PARENT_ACCOUNT}
         .loginUrl=${this.loginUrl}
         centered
         nondismissible
       ></mr-cue>
-      <mr-cue cuePrefName="search_for_numbers" centered></mr-cue>
+      <mr-cue
+        cuePrefName=${cueNames.SEARCH_FOR_NUMBERS}
+        centered
+      ></mr-cue>
       <main>${this._renderPage()}</main>
     `;
   }

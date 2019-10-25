@@ -11,7 +11,8 @@ import * as project from 'reducers/project.js';
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import {prpcClient} from 'prpc-client-instance.js';
+import {cueNames} from './cue-helpers.js';
+
 
 /**
  * `<mr-cue>`
@@ -31,6 +32,8 @@ export class MrCue extends connectStore(LitElement) {
     this.issue = null;
     this.referencedUsers = new Map();
     this.nondismissible = false;
+    this.cuePrefName = '';
+    this.loginUrl = '';
     this.hidden = this._shouldBeHidden(this.signedIn, this.prefsLoaded,
         this.cuePrefName, this.message);
   }
@@ -109,15 +112,19 @@ export class MrCue extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult} lit-html template for the cue message a user
+   * should see.
+   */
   get message() {
-    if (this.cuePrefName === 'code_of_conduct') {
+    if (this.cuePrefName === cueNames.CODE_OF_CONDUCT) {
       return html`
         Please keep discussions respectful and constructive.
         See our
         <a href="${this.codeOfConductUrl}"
            target="_blank">code of conduct</a>.
         `;
-    } else if (this.cuePrefName === 'availability_msgs') {
+    } else if (this.cuePrefName === cueNames.AVAILABILITY_MSGS) {
       if (this._availablityMsgsRelevant(this.issue)) {
         return html`
           <b>Note:</b>
@@ -125,7 +132,7 @@ export class MrCue extends connectStore(LitElement) {
           Tooltips show the reason.
           `;
       }
-    } else if (this.cuePrefName === 'switch_to_parent_account') {
+    } else if (this.cuePrefName === cueNames.SWITCH_TO_PARENT_ACCOUNT) {
       if (this._switchToParentAccountRelevant()) {
         return html`
           You are signed in to a linked account.
@@ -133,7 +140,7 @@ export class MrCue extends connectStore(LitElement) {
              Switch to ${this.user.linkedParentRef.displayName}</a>.
           `;
       }
-    } else if (this.cuePrefName === 'search_for_numbers') {
+    } else if (this.cuePrefName === cueNames.SEARCH_FOR_NUMBERS) {
       if (this._searchForNumbersRelevant(this.jumpLocalId)) {
         return html`
           <b>Tip:</b>
@@ -141,8 +148,14 @@ export class MrCue extends connectStore(LitElement) {
           `;
       }
     }
+    return;
   }
 
+  /**
+  * Conditionally returns a hardcoded code of conduct URL for
+  * different projects.
+  * @return {String} the URL for the code of conduct.
+   */
   get codeOfConductUrl() {
     const projectName = (this.project && this.project.config &&
                          this.project.config.projectName);
@@ -166,12 +179,23 @@ export class MrCue extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Checks if there are any unavailable users and only displays this cue if so.
+   * @param {Issue} issue
+   * @return {Boolean} Whether the User Availability cue should be
+   *   displayed or not.
+   */
   _availablityMsgsRelevant(issue) {
     if (!issue) return false;
     return (this._anyUnvailable([issue.ownerRef]) ||
             this._anyUnvailable(issue.ccRefs));
   }
 
+  /**
+   * Checks if a given list of users contains any unavailable users.
+   * @param {Array<UserRef>} userRefList
+   * @return {Boolean} Whether there are unavailable users.
+   */
   _anyUnvailable(userRefList) {
     if (!userRefList) return false;
     for (const userRef of userRefList) {
@@ -182,14 +206,35 @@ export class MrCue extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Finds if the user has a linked parent account that's separate from the
+   * one they are logged into and conditionally hides the cue if so.
+   * @return {Boolean} Whether to show the cue to switch to a parent account.
+   */
   _switchToParentAccountRelevant() {
     return this.user && this.user.linkedParentRef;
   }
 
+  /**
+   * Determines whether the user should see a cue telling them how to avoid the
+   * "jump to issue" feature.
+   * @param {Number} jumpLocalId the ID of the issue the user jumped to.
+   * @return {Boolean} Whether the user jumped to a number or not.
+   */
   _searchForNumbersRelevant(jumpLocalId) {
-    return jumpLocalId;
+    return !!jumpLocalId;
   }
 
+  /**
+   * Checks the user's preferences to hide a particular cue if they have
+   * dismissed it.
+   * @param {Boolean} signedIn Whether the user is signed in.
+   * @param {Boolean} prefsLoaded Whether the user's prefs have been fetched
+   *   from the API.
+   * @param {String} cuePrefName The name of the cue being checked.
+   * @param {String} message
+   * @return {Boolean} Whether the cue should be hidden.
+   */
   _shouldBeHidden(signedIn, prefsLoaded, cuePrefName, message) {
     if (signedIn && !prefsLoaded) return true;
     if (this.alreadyDismissed(cuePrefName)) return true;
@@ -214,10 +259,22 @@ export class MrCue extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Check whether a cue has already been dismissed in a user's
+   * preferences.
+   * @param {String} pref The name of the user preference to check.
+   * @return {Boolean} Whether the cue was dismissed or not.
+   */
   alreadyDismissed(pref) {
     return this.prefs && this.prefs.get(pref) === 'true';
   }
 
+  /**
+   * Sends a request to the API to save that a user has dismissed a cue.
+   * The results of this request update Redux's state, which leads to
+   * the cue disappearing for the user after the request finishes.
+   * @return {void}
+   */
   dismiss() {
     const newPrefs = [{name: this.cuePrefName, value: 'true'}];
     store.dispatch(user.setPrefs(newPrefs, this.signedIn));

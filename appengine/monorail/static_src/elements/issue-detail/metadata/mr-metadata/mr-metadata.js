@@ -15,6 +15,9 @@ import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {HARDCODED_FIELD_GROUPS, valuesForField, fieldDefsWithGroup,
   fieldDefsWithoutGroup} from 'shared/metadata-helpers.js';
 import 'shared/typedef.js';
+import {AVAILABLE_CUES, cueNames, specToCueName,
+  cueNameToSpec} from 'elements/help/mr-cue/cue-helpers.js';
+
 
 /**
  * `<mr-metadata>`
@@ -71,22 +74,26 @@ export class MrMetadata extends connectStore(LitElement) {
 
   /**
    * Helper for handling the rendering of built in fields.
-   * @return {Object} lit-html template.
+   * @return {Array<TemplateResult>}
    */
   _renderBuiltInFields() {
     return this.builtInFieldSpec.map((fieldName) => {
       const fieldKey = fieldName.toLowerCase();
 
-      // Adding classes to table rows based on field names makes testing
-      // easier.
-      const className = `row-${fieldKey.replace('.', '-')}`;
+      // Adding classes to table rows based on field names makes selecting
+      // rows with specific values easier, for example in tests.
+      let className = `row-${fieldKey}`;
 
-      // TODO(zhangtiff): Make cues use shared constants for cue names.
-      if (fieldKey === 'cue.availability_msgs') {
+      const cueName = specToCueName(fieldKey);
+      if (cueName) {
+        className = `cue-${cueName}`;
+
+        if (!AVAILABLE_CUES.has(cueName)) return '';
+
         return html`
           <tr class=${className}>
             <td colspan="2">
-              <mr-cue cuePrefName="availability_msgs"></mr-cue>
+              <mr-cue cuePrefName=${cueName}></mr-cue>
             </td>
           </tr>
         `;
@@ -116,9 +123,9 @@ export class MrMetadata extends connectStore(LitElement) {
    * A helper to display a single built-in field.
    *
    * @param {String} fieldName The name of the built in field to render.
-   * @return {Object|undefined} lit-html template for displaying the value of
-   *   the built in field. If undefined, the rendering code assumes that the
-   *   field should be hidden if empty.
+   * @return {TemplateResult|undefined} lit-html template for displaying the
+   *   value of the built in field. If undefined, the rendering code assumes
+   *   that the field should be hidden if empty.
    */
   _renderBuiltInFieldValue(fieldName) {
     // TODO(zhangtiff): Merge with code in shared/issue-fields.js for further
@@ -201,7 +208,7 @@ export class MrMetadata extends connectStore(LitElement) {
   /**
    * Helper for handling the rendering of custom fields defined in a project
    * config.
-   * @return {Object} lit-html template.
+   * @return {TemplateResult} lit-html template.
    */
   _renderCustomFieldGroups() {
     const grouped = fieldDefsWithGroup(this.fieldDefs,
@@ -230,10 +237,11 @@ export class MrMetadata extends connectStore(LitElement) {
    *
    * @param {Array<FieldDef>} fieldDefs Arrays of configurations Objects
    *   for fields to render.
-   * @return {Object} lit-html template.
+   * @return {Array<TemplateResult>} Array of lit-html templates to render, each
+   *   representing a single table row for a custom field.
    */
   _renderCustomFields(fieldDefs) {
-    if (!fieldDefs || !fieldDefs.length) return '';
+    if (!fieldDefs || !fieldDefs.length) return [];
     return fieldDefs.map((field) => {
       const fieldValues = valuesForField(
           this.fieldValueMap, field.fieldRef.fieldName) || [];
@@ -287,8 +295,8 @@ export class MrMetadata extends connectStore(LitElement) {
 
     // Default built in fields used by issue metadata.
     this.builtInFieldSpec = [
-      'Owner', 'CC', 'cue.availability_msgs', 'Status', 'MergedInto',
-      'Components', 'Modified',
+      'Owner', 'CC', cueNameToSpec(cueNames.AVAILABILITY_MSGS),
+      'Status', 'MergedInto', 'Components', 'Modified',
     ];
     this.fieldValueMap = new Map();
 

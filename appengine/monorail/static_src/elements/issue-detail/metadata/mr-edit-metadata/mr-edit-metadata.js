@@ -14,6 +14,7 @@ import 'elements/chops/chops-chip/chops-chip.js';
 import 'elements/framework/mr-error/mr-error.js';
 import 'elements/framework/mr-warning/mr-warning.js';
 import 'elements/help/mr-cue/mr-cue.js';
+import {cueNames} from 'elements/help/mr-cue/cue-helpers.js';
 import {store, connectStore} from 'reducers/base.js';
 import {UserInputError} from 'shared/errors.js';
 import {fieldTypes} from 'shared/issue-fields.js';
@@ -176,7 +177,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet">
       <form id="editForm" @submit=${this.save}>
-        <mr-cue cuePrefName="code_of_conduct"></mr-cue>
+        <mr-cue cuePrefName=${cueNames.CODE_OF_CONDUCT}></mr-cue>
         ${this._renderStarLine()}
         <textarea
           id="commentText"
