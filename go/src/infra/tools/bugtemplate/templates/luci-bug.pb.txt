@@ -7,8 +7,6 @@ tool/service.
 If you need urgent attention by the trooper (on-call), please use
 go/luci-trooper-bug instead.
 
-If urgent attention is not required, please file a normal go/luci-bug instead.
-
 To file another bug like this: go/luci-bug
 
 END
