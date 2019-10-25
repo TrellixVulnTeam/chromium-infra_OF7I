@@ -23,6 +23,7 @@ import '../mr-mode-selector/mr-mode-selector.js';
 export const DEFAULT_ISSUES_PER_PAGE = 100;
 const PARAMS_THAT_TRIGGER_REFRESH = ['sort', 'groupby', 'num',
   'start'];
+const SNACKBAR_LOADING = 'Loading issues...';
 
 export class MrListPage extends connectStore(LitElement) {
   /** @override */
@@ -127,7 +128,9 @@ export class MrListPage extends connectStore(LitElement) {
     // eslint-disable-next-line
     const feedbackUrl = `https://bugs.chromium.org/p/monorail/issues/entry?labels=UI-Refresh-Feedback&cc=zhangtiff@chromium.org&summary=Feedback+on+the+new+Monorail+UI&components=UI`;
     return html`
-      ${this._renderSnackbar()}
+      <chops-snackbar ?hidden=${!this._snackbarText}>
+        ${this._snackbarText}
+      </chops-snackbar>
       <div class="testing-notice">
         Thanks for trying out the new list view! If you encounter any issues,
         please <a href=${feedbackUrl}>file feedback</a>.
@@ -136,21 +139,13 @@ export class MrListPage extends connectStore(LitElement) {
       ${this._renderListBody()}
       <mr-update-issue-hotlists
         .issueRefs=${selectedRefs}
+        @saveSuccess=${this._onHotlistSaveSuccess}
       ></mr-update-issue-hotlists>
       <mr-change-columns
         .columns=${this.columns}
         .queryParams=${this.queryParams}
       ></mr-change-columns>
     `;
-  }
-
-  _renderSnackbar() {
-    if (this.fetchingIssueList && this.totalIssues) {
-      return html`
-        <chops-snackbar>Updating issues...</chops-snackbar>
-      `;
-    }
-    return '';
   }
 
   _renderListBody() {
@@ -287,6 +282,11 @@ export class MrListPage extends connectStore(LitElement) {
       columns: {type: Array},
       userDisplayName: {type: String},
       /**
+       * The most recent snackbar message shown.
+       * Note: we rely on it hiding itself after a timeout.
+       */
+      _snackbarText: {type: String},
+      /**
        * The current search string the user is querying for.
        */
       currentQuery: {type: String},
@@ -385,6 +385,13 @@ export class MrListPage extends connectStore(LitElement) {
     this.issues = (issue.issueList(state) || []);
     this.totalIssues = (issue.totalIssues(state) || 0);
     this.fetchingIssueList = issue.requests(state).fetchIssueList.requesting;
+    // Show a message if waiting for issues to load (after initial load).
+    if (this.fetchingIssueList && this.totalIssues > 0) {
+      this._snackbarText = SNACKBAR_LOADING;
+    }
+    if (!this.fetchingIssueList && this._snackbarText == SNACKBAR_LOADING) {
+      this._snackbarText = undefined;
+    }
 
     this.currentQuery = sitewide.currentQuery(state);
     this.currentCan = sitewide.currentCan(state);
@@ -451,6 +458,11 @@ export class MrListPage extends connectStore(LitElement) {
       q: this.queryParams && this.queryParams.q,
     };
     this.page(`/p/${this.projectName}/issues/bulkedit?${qs.stringify(params)}`);
+  }
+
+  /** Shows user confirmation that their hotlist changes were saved. */
+  _onHotlistSaveSuccess() {
+    this._snackbarText = 'Hotlists updated';
   }
 
   async _flagIssues(flagAsSpam = true) {
