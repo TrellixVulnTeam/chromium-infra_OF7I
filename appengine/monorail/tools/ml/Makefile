@@ -18,9 +18,6 @@ help:
 	@sed -n '/^[a-zA-Z0-9_.]*:/s/:.*//p' <Makefile
 
 train_local_spam:
-ifndef TRAIN_FILE
-	$(error TRAIN_FILE not set)
-endif
 	gcloud ml-engine local train \
 		--package-path trainer/ \
 		--module-name trainer.task \

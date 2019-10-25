@@ -27,46 +27,26 @@ ML Engine uses the high-level [`learn_runner`](https://www.tensorflow.org/api_do
 
 ### Run locally
 
-To test the trainer without waiting for it to download all its training data, you can download and supply some manually with the `--train-file` argument.
+To run any training jobs locally, you'll need Python 2 and TensorFlow 1.2:
 
 ```sh
-TRAIN_DATA_DIR={fill this in}
-gsutil cp gs://monorail-staging-mlengine/data/spam_training_data/2017-09-14 $TRAIN_DATA_DIR
+pip install -r requirements.txt
 ```
 
-To kick off the local job, run:
+Run a local training job with dummy data:
 
 ```sh
-OUTPUT_DIR=/tmp/monospam-local-training
-rm -rf $OUTPUT_DIR
-gcloud ml-engine local train \
-    --package-path trainer/ \
-    --module-name trainer.task \
-    --job-dir $OUTPUT_DIR \
-    -- \
-    --train-steps 1000 \
-    --verbosity DEBUG \
-    --train-file $TRAIN_DATA_DIR/2017-09-14 \
-    --trainer-type spam
+make TRAIN_FILE=./sample_spam_training_data.csv train_local_spam
 ```
 
-To have the trainer download all training data, you'll need to supply the
-`--gcs-bucket` and `--gcs-prefix` arguments.
+To have the local trainer download and train on the real training data, you'll
+need to be logged into `gcloud` and have access to the `monorail-prod` project.
 
 ```sh
-OUTPUT_DIR=/tmp/monospam-local-training
-rm -rf $OUTPUT_DIR
-gcloud ml-engine local train \
-    --package-path trainer/ \
-    --module-name trainer.task \
-    --job-dir $OUTPUT_DIR \
-    -- \
-    --train-steps 1000 \
-    --verbosity DEBUG \
-    --gcs-bucket monorail-prod.appspot.com \
-    --gcs-prefix spam_training_data \
-    --trainer-type spam
+make train_from_prod_data_spam
 ```
+
+<!-- TODO: the below has not been reviewed recently. -->
 
 ### Submit a local prediction
 

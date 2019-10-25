@@ -101,8 +101,16 @@ def GenerateFeaturesRaw(content, num_features, top_words=None):
 def transform_spam_csv_to_features(csv_training_data):
   X = []
   y = []
+
+  # Handle if the list is double-wrapped.
+  if csv_training_data and len(csv_training_data[0]) > 4:
+    csv_training_data = csv_training_data[0]
+
   for row in csv_training_data:
-    verdict, subject, content = row
+    if len(row) == 4:
+      verdict, subject, content, _email = row
+    else:
+      verdict, subject, content = row
     X.append(GenerateFeaturesRaw([str(subject), str(content)],
                                  SPAM_FEATURE_HASHES))
     y.append(1 if verdict == 'spam' else 0)
