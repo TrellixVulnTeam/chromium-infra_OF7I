@@ -49,12 +49,14 @@ def RunSteps(api):
       _step_run_tests(api, 'isolate',
                       luci_dir.join('appengine', 'isolate'))
 
+    # TODO(crbug.com/1017545): enable python3 on windows and mac
     # client
     _step_run_tests(api, 'client',
                     luci_dir.join('client'),
                     run_test_seq=True,
                     run_python3=api.platform.is_linux)
 
+    # TODO(crbug.com/1017545): enable python3 on windows and mac
     # swarming bot
     _step_run_tests(api, 'swarming bot',
                     luci_dir.join('appengine', 'swarming', 'swarming_bot'),
