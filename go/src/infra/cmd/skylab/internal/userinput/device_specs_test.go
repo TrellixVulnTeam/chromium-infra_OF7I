@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/google/go-cmp/cmp"
 	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/common/errors"
 )
@@ -220,6 +221,30 @@ func TestMcsvFieldsNoDuplicates(t *testing.T) {
 			break
 		}
 		seen[string] = true
+	}
+}
+
+func getAttrMap(dut *inventory.DeviceUnderTest) map[string]string {
+	attrs := dut.Common.Attributes
+	out := make(map[string]string)
+	for _, attr := range attrs {
+		out[*attr.Key] = *attr.Value
+	}
+	return out
+}
+
+func TestDeviceUnderTestOfMcsvRecordEmptyServoSerial(t *testing.T) {
+	input := &mcsvRecord{servoSerial: "", servoHost: "4"}
+	dut := deviceUnderTestOfMcsvRecord(input)
+	foundAttrs := getAttrMap(dut)
+	expected := map[string]string{
+		"servo_host":         "4",
+		"servo_port":         "",
+		"powerunit_hostname": "",
+		"powerunit_outlet":   "",
+	}
+	if diff := cmp.Diff(expected, foundAttrs); diff != "" {
+		t.Errorf("attribute map differs: %s", diff)
 	}
 }
 

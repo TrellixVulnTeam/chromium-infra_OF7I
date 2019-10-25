@@ -260,6 +260,12 @@ func dutAddAttribute(dut *inventory.DeviceUnderTest, key string, value string) {
 	dut.Common.Attributes = append(dut.Common.Attributes, kv)
 }
 
+func dutAddAttributeIfNonzero(dut *inventory.DeviceUnderTest, key string, value string) {
+	if value != "" {
+		dutAddAttribute(dut, key, value)
+	}
+}
+
 func deviceUnderTestOfMcsvRecord(rec *mcsvRecord) *inventory.DeviceUnderTest {
 	out := &inventory.DeviceUnderTest{
 		Common: &inventory.CommonDeviceSpecs{
@@ -270,8 +276,10 @@ func deviceUnderTestOfMcsvRecord(rec *mcsvRecord) *inventory.DeviceUnderTest {
 	out.Common.Labels.Board = &rec.board
 	out.Common.Labels.Model = &rec.model
 	dutAddAttribute(out, `servo_host`, rec.servoHost)
+	dutAddAttribute(out, `servo_host`, rec.servoHost)
 	dutAddAttribute(out, `servo_port`, rec.servoPort)
-	dutAddAttribute(out, `servo_serial`, rec.servoSerial)
+	// servo v3's don't have servo_serial attributes.
+	dutAddAttributeIfNonzero(out, `servo_serial`, rec.servoSerial)
 	dutAddAttribute(out, `powerunit_hostname`, rec.powerunitHostname)
 	dutAddAttribute(out, `powerunit_outlet`, rec.powerunitOutlet)
 	return out
@@ -375,9 +383,8 @@ func validateMcsvRecord(rec *mcsvRecord) error {
 	if rec.servoPort == "" {
 		return errors.New("servo_port cannot be empty")
 	}
-	if rec.servoSerial == "" {
-		return errors.New("servo_serial cannot be empty")
-	}
+	// rec.servoSerial CAN be empty if the servo is a
+	// servo-v3 servo
 	if rec.powerunitHostname == "" {
 		return errors.New("powerunit_hostname cannot be empty")
 	}
