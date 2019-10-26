@@ -3232,7 +3232,8 @@ class WorkEnvTest(unittest.TestCase):
 
   def testCreateHotlist_Normal(self):
     """We can create a hotlist."""
-    issue_1 = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
+    issue_1 = fake.MakeTestIssue(
+        789, 1, 'sum', 'New', 111, issue_id=78901)
     self.services.issue.TestAddIssue(issue_1)
 
     self.SignIn()
@@ -3247,6 +3248,20 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual([222], hotlist.editor_ids)
     self.assertEqual([78901], [item.issue_id for item in hotlist.items])
     self.assertEqual(False, hotlist.is_private)
+
+  def testCreateHotlist_NotViewable(self):
+    """We cannot add issues we cannot see to a hotlist."""
+    hotlist_owner_id = 333
+    issue1 = fake.MakeTestIssue(
+        789, 1, 'sum1', 'New', 111, issue_id=78901,
+        labels=['Restrict-View-Chicken'])
+    self.services.issue.TestAddIssue(issue1)
+
+    self.SignIn(user_id=hotlist_owner_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.CreateHotlist(
+            'Cow-Hotlist', 'Moo', 'MooMoo', [], [issue1.issue_id], False)
 
   def testCreateHotlist_AnonCantCreateHotlist(self):
     """We must be signed in to create a hotlist."""

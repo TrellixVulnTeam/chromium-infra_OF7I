@@ -1917,6 +1917,11 @@ class WorkEnv(object):
     if not self.mc.auth.user_id:
       raise exceptions.InputException('Anon cannot create hotlists.')
 
+    # Prevent users from adding issues they can't view to hotlists.
+    issues_dict = self.services.issue.GetIssuesDict(self.mc.cnxn, issue_ids)
+    for issue in issues_dict.values():
+      self._AssertUserCanViewIssue(issue)
+
     with self.mc.profiler.Phase('creating hotlist %s' % name):
       hotlist = self.services.features.CreateHotlist(
           self.mc.cnxn, name, summary, description, [self.mc.auth.user_id],
@@ -2293,9 +2298,9 @@ class WorkEnv(object):
     # Even though we check permissions when viewing the issues in a hotlist,
     # we also check permissions when adding issues to a hotlist to prevent
     # some clever ways that attackers could find some issue details.
-    issues = self.services.issue.GetIssuesDict(self.mc.cnxn, issue_ids)
-    for issue_id in issues:
-      self._AssertUserCanViewIssue(issues[issue_id])
+    issues_dict = self.services.issue.GetIssuesDict(self.mc.cnxn, issue_ids)
+    for issue in issues_dict.values():
+      self._AssertUserCanViewIssue(issue)
 
     added_tuples = [
         (issue_id, self.mc.auth.user_id, int(time.time()), note)
