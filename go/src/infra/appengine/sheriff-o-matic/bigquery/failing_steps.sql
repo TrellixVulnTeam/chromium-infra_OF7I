@@ -59,6 +59,7 @@ SELECT
   JSON_EXTRACT_SCALAR(latest.input.properties,
     "$.mastername") AS mastername,
   s.name step,
+  ANY_VALUE(b.latest.status) status,
   ANY_VALUE(b.latest.output.gitiles_commit) output_commit,
   ANY_VALUE(b.latest.input.gitiles_commit) input_commit,
   FARM_FINGERPRINT(STRING_AGG(tr.path, "\n"
@@ -79,8 +80,12 @@ ON
   SAFE_CAST(tr.build_id AS int64) = b.latest.id
   AND tr.step_name = s.name
 WHERE
-  b.latest.status = 'FAILURE'
-  AND s.status = 'FAILURE'
+  (b.latest.status = 'FAILURE' AND s.status = 'FAILURE')
+  OR
+  (
+    b.latest.status = 'INFRA_FAILURE'
+    AND (s.status = 'INFRA_FAILURE' OR s.status = 'CANCELED')
+  )
 GROUP BY
   1,
   2,

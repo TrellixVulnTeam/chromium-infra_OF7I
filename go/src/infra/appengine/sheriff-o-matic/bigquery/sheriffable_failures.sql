@@ -90,8 +90,10 @@ WITH
   FROM
     `APP_ID.PROJECT_NAME.step_status_transitions` s
   WHERE
-    s.step_status = 'FAILURE'
-    AND s.previous_status = 'SUCCESS'
+      (s.step_status = 'FAILURE'
+        OR (s.step_status = 'CANCELED' AND s.status = 'INFRA_FAILURE')
+        OR s.step_status = 'INFRA_FAILURE'
+      ) AND s.previous_step_status = 'SUCCESS'
   GROUP BY
     project,
     bucket,
@@ -119,7 +121,8 @@ SELECT
   t.latest.input_commit AS CPRangeInputEnd,
   t.latest.previous_id as CulpritIdRangeBegin,
   t.latest.id as CulpritIdRangeEnd,
-  t.latest.end_time AS StartTime
+  t.latest.end_time AS StartTime,
+  s.status AS BuildStatus
 FROM
   `APP_ID.PROJECT_NAME.failing_steps` s
   # Deal with steps who have *never* been green by using a left outer join.
