@@ -18,4 +18,4 @@
 // Package mock contains mocks for client interfaces from the parent package.
 package mock
 
-//go:generate mockgen -source ../swarming.go -destination swarming.go -package mock SwarmingClient
+//go:generate go run runner/runner.go
