@@ -235,6 +235,7 @@ type AlertedBuilder struct {
 	Bucket            string           `json:"bucket"`
 	FailingTestsTrunc string           `json:"failing_tests_trunc"`
 	NumFailingTests   int64            `json:"num_failing_tests"`
+	BuildStatus       string           `json:"build_status"`
 }
 
 // RegressionRange identifies the bounds of the location of a regression.

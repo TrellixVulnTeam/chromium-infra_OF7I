@@ -36,7 +36,8 @@ SELECT
   CPRangeInputEnd,
   CulpritIdRangeBegin,
   CulpritIdRangeEnd,
-  StartTime
+  StartTime,
+  BuildStatus
 FROM
 	` + "`%s.%s.sheriffable_failures`" + `
 WHERE
@@ -154,6 +155,7 @@ type failureRow struct {
 	CulpritIDRangeBegin  bigquery.NullInt64
 	CulpritIDRangeEnd    bigquery.NullInt64
 	StartTime            bigquery.NullTimestamp
+	BuildStatus          string
 }
 
 // GitCommit represents a struct column for BQ query results.
@@ -325,6 +327,7 @@ func processBQResults(ctx context.Context, it nexter) ([]*messages.BuildFailure,
 			LatestPassingRev:         latestPassingRev,
 			FirstFailingRev:          firstFailingRev,
 			NumFailingTests:          r.NumTests.Int64,
+			BuildStatus:              r.BuildStatus,
 		}
 
 		forStep, ok := alertedBuildersByStep[r.StepName]

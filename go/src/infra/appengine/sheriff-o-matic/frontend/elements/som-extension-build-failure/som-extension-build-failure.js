@@ -91,7 +91,8 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
     if (this._failureCount(builder) > 1) {
       classes.push('multiple-failures');
     }
-    if (this.type == 'infra-failure') {
+    if (this.type == 'infra-failure'
+        || builder.build_status === "INFRA_FAILURE") {
       classes.push('infra-failure');
     }
     return classes.join(' ');

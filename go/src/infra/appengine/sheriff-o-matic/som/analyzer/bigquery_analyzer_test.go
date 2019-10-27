@@ -129,7 +129,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CPRangeInputEnd,
 			  CulpritIdRangeBegin,
 			  CulpritIdRangeEnd,
-			  StartTime
+			  StartTime,
+			  BuildStatus
 			FROM
 				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
 			WHERE
@@ -189,7 +190,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CPRangeInputEnd,
 			  CulpritIdRangeBegin,
 			  CulpritIdRangeEnd,
-			  StartTime
+			  StartTime,
+			  BuildStatus
 			FROM
 				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
 			WHERE
@@ -231,7 +233,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CPRangeInputEnd,
 			  CulpritIdRangeBegin,
 			  CulpritIdRangeEnd,
-			  StartTime
+			  StartTime,
+			  BuildStatus
 			FROM
 				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
 			WHERE MasterName = "chromium.gpu.fyi"
@@ -260,7 +263,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CPRangeInputEnd,
 			  CulpritIdRangeBegin,
 			  CulpritIdRangeEnd,
-			  StartTime
+			  StartTime,
+			  BuildStatus
 			FROM
 				` + "`sheriff-o-matic.chromeos.sheriffable_failures`" + `
 			WHERE project = "chromeos"
@@ -291,7 +295,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CPRangeInputEnd,
 			  CulpritIdRangeBegin,
 			  CulpritIdRangeEnd,
-			  StartTime
+			  StartTime,
+			  BuildStatus
 			FROM
 				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
 			WHERE project = "chromium"
@@ -328,7 +333,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CPRangeInputEnd,
 			  CulpritIdRangeBegin,
 			  CulpritIdRangeEnd,
-			  StartTime
+			  StartTime,
+			  BuildStatus
 			FROM
 				` + "`sheriff-o-matic.fuchsia.sheriffable_failures`" + `
 			WHERE
@@ -362,7 +368,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CPRangeInputEnd,
 			  CulpritIdRangeBegin,
 			  CulpritIdRangeEnd,
-			  StartTime
+			  StartTime,
+			  BuildStatus
 			FROM
 				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
 			WHERE
@@ -397,7 +404,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  CPRangeInputEnd,
 			  CulpritIdRangeBegin,
 			  CulpritIdRangeEnd,
-			  StartTime
+			  StartTime,
+			  BuildStatus
 			FROM
 				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
 			WHERE
