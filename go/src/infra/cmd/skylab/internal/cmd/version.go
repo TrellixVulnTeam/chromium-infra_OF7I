@@ -13,8 +13,8 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cmd/skylab/internal/cipd"
 	"infra/cmd/skylab/internal/site"
+	"infra/libs/cros/cipd"
 )
 
 // Version subcommand: Version skylab tool.
@@ -69,7 +69,7 @@ func findSkylabPackage() (*cipd.Package, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "find skylab package").Err()
 	}
-	pkgs, err := cipd.InstalledPackages(root)
+	pkgs, err := cipd.InstalledPackages("skylab")(root)
 	if err != nil {
 		return nil, errors.Annotate(err, "find skylab package").Err()
 	}

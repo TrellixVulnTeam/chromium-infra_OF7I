@@ -16,9 +16,9 @@ func TestUnmarshalPackages(t *testing.T) {
   "result": {
     "": [
       {
-        "package": "chromiumos/infra/skylab/linux-amd64",
+        "package": "chromiumos/infra/some_application/linux-amd64",
         "pin": {
-          "package": "chromiumos/infra/skylab/linux-amd64",
+          "package": "chromiumos/infra/some_application/linux-amd64",
           "instance_id": "Z5AzvrgQMH45eCuQymTro7yVwwJOny0Tf5vFRks4A-4C"
         },
         "tracking": "latest"
@@ -32,9 +32,9 @@ func TestUnmarshalPackages(t *testing.T) {
 	}
 	want := []Package{
 		{
-			Package: "chromiumos/infra/skylab/linux-amd64",
+			Package: "chromiumos/infra/some_application/linux-amd64",
 			Pin: Pin{
-				Package:    "chromiumos/infra/skylab/linux-amd64",
+				Package:    "chromiumos/infra/some_application/linux-amd64",
 				InstanceID: "Z5AzvrgQMH45eCuQymTro7yVwwJOny0Tf5vFRks4A-4C",
 			},
 			Tracking: "latest",
