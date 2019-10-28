@@ -175,6 +175,18 @@ func constructQueryFromBugList(bugs []*model.MonorailBug) map[string]string {
 	return queries
 }
 
+func filterDuplicateBugs(bugs []*model.MonorailBug) []*model.MonorailBug {
+	bugIds := map[string]interface{}{}
+	filteredBugs := []*model.MonorailBug{}
+	for _, bug := range bugs {
+		if _, exist := bugIds[bug.BugID]; !exist {
+			bugIds[bug.BugID] = nil
+			filteredBugs = append(filteredBugs, bug)
+		}
+	}
+	return filteredBugs
+}
+
 // Update the cache for annotation bug data.
 func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.Annotation) (map[string]monorail.Issue, error) {
 	c := ctx.Context
@@ -194,6 +206,8 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 			allBugs = append(allBugs, &b)
 		}
 	}
+
+	allBugs = filterDuplicateBugs(allBugs)
 
 	queries := constructQueryFromBugList(allBugs)
 	m := make(map[string]monorail.Issue)

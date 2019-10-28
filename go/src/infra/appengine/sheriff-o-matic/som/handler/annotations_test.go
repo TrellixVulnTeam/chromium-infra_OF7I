@@ -68,6 +68,35 @@ func TestFilterAnnotations(t *testing.T) {
 	})
 }
 
+func TestFilterDuplicateBugs(t *testing.T) {
+	Convey("Test filter annotation", t, func() {
+		bugs := []*model.MonorailBug{
+			{
+				BugID:     "bug_1",
+				ProjectID: "project_1",
+			},
+			{
+				BugID:     "bug_2",
+				ProjectID: "project_2",
+			},
+			{
+				BugID:     "bug_1",
+				ProjectID: "project_1",
+			},
+			{
+				BugID:     "bug_3",
+				ProjectID: "project_3",
+			},
+		}
+
+		result := filterDuplicateBugs(bugs)
+		So(len(result), ShouldEqual, 3)
+		So(result[0].BugID, ShouldEqual, "bug_1")
+		So(result[1].BugID, ShouldEqual, "bug_2")
+		So(result[2].BugID, ShouldEqual, "bug_3")
+	})
+}
+
 func TestAnnotations(t *testing.T) {
 	newContext := func() (context.Context, testclock.TestClock) {
 		c := gaetesting.TestingContext()
