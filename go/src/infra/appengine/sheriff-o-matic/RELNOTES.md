@@ -1,3 +1,23 @@
+# Release Notes sheriff-o-matic 2019-10-28
+
+- 4 commits, 2 bugs affected since 6acffba ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[SOM] Show infra failures in SoM UI](https://chromium-review.googlesource.com/c/infra/infra/+/1875912) (nqmtuan@google.com)
+- [Make SOM also show infra errors](https://chromium-review.googlesource.com/c/infra/infra/+/1874928) (nqmtuan@google.com)
+- [Fix annotations for group](https://chromium-review.googlesource.com/c/infra/infra/+/1875920) (nqmtuan@google.com)
+- [Release note for 23 Oct](https://chromium-review.googlesource.com/c/infra/infra/+/1874927) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1014187](https://crbug.com/1014187)
+  -  [https://crbug.com/1016361](https://crbug.com/1016361)
+
+
 # Release Notes sheriff-o-matic 2019-10-23
 
 - 5 commits, 2 bugs affected since 12cc75d ()
