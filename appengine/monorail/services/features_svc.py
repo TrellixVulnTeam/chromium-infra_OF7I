@@ -140,6 +140,108 @@ class HotlistTwoLevelCache(caches.AbstractTwoLevelCache):
     return retrieved_dict
 
 
+class HotlistIDTwoLevelCache(caches.AbstractTwoLevelCache):
+  """Class to manage both RAM and memcache for hotlist_ids.
+
+     Keys for this cache are tuples (hotlist_name.lower(), owner_id).
+     This cache should be used to fetch hotlist_ids owned by users or
+     to check if a user owns a hotlist with a certain name, so the
+     hotlist_names in keys will always be in lowercase.
+  """
+
+  def __init__(self, cachemanager, features_service):
+    super(HotlistIDTwoLevelCache, self).__init__(
+        cachemanager, 'hotlist_id', 'hotlist_id:', int,
+        max_size=settings.issue_cache_max_size)
+    self.features_service = features_service
+
+  def _MakeCache(self, cache_manager, kind, max_size=None):
+    """Override normal RamCache creation with ValueCentricRamCache."""
+    return caches.ValueCentricRamCache(cache_manager, kind, max_size=max_size)
+
+  def _KeyToStr(self, key):
+    """This cache uses pairs of (str, int) as keys. Convert them to strings."""
+    return '%s,%d' % key
+
+  def _StrToKey(self, key_str):
+    """This cache uses pairs of (str, int) as keys.
+       Convert them from strings.
+    """
+    hotlist_name_str, owner_id_str = key_str.split(',')
+    return (hotlist_name_str, int(owner_id_str))
+
+  def _DeserializeHotlistIDs(
+      self, hotlist_rows, owner_rows, wanted_names_for_owners):
+    """Convert database rows into a dictionary of hotlist_ids keyed by (
+       hotlist_name, owner_id).
+
+    Args:
+      hotlist_rows: a list of hotlist rows [id, name] from HOTLIST for
+        with names we are interested in.
+      owner_rows: a list of role rows [hotlist_id, uwer_id] from HOTLIST2USER
+        for owners that we are interested in that own hotlists with names that
+        we are interested in.
+      wanted_names_for_owners: a dict of
+        {owner_id: [hotlist_name.lower(), ...], ...}
+        so we know which (hotlist_name, owner_id) keys to return.
+
+    Returns:
+      A dict mapping (hotlist_name.lower(), owner_id) keys to hotlist_id values.
+    """
+    hotlist_ids_dict = {}
+    if not hotlist_rows or not owner_rows:
+      return hotlist_ids_dict
+
+    hotlist_to_owner_id = {}
+
+    # Note: owner_rows contains hotlist owners that we are interested in, but
+    # may not own hotlists with names we are interested in.
+    for (hotlist_id, user_id) in owner_rows:
+      found_owner_id = hotlist_to_owner_id.get(hotlist_id)
+      if found_owner_id:
+        logging.warn(
+            'hotlist %d has more than one owner: %d, %d',
+            hotlist_id, user_id, found_owner_id)
+      hotlist_to_owner_id[hotlist_id] = user_id
+
+    # Note: hotlist_rows hotlists found in the owner_rows that have names
+    # we're interested in.
+    # We use wanted_names_for_owners to filter out hotlists in hotlist_rows
+    # that have a (hotlist_name, owner_id) pair we are not interested in.
+    for (hotlist_id, hotlist_name) in hotlist_rows:
+      owner_id = hotlist_to_owner_id.get(hotlist_id)
+      if owner_id:
+        if hotlist_name.lower() in wanted_names_for_owners.get(owner_id, []):
+          hotlist_ids_dict[(hotlist_name.lower(), owner_id)] = hotlist_id
+
+    return hotlist_ids_dict
+
+  def FetchItems(self, cnxn, keys):
+    """On RAM and memcache miss, hit the database."""
+    hotlist_names, _owner_ids = zip(*keys)
+    # Keys may contain [(name1, user1), (name1, user2)] so we cast this to
+    # a set to make sure 'name1' is not repeated.
+    hotlist_names_set = set(hotlist_names)
+    # Pass this dict to _DeserializeHotlistIDs so it knows what hotlist names
+    # we're interested in for each owner.
+    wanted_names_for_owner = collections.defaultdict(list)
+    for hotlist_name, owner_id in keys:
+      wanted_names_for_owner[owner_id].append(hotlist_name.lower())
+
+    role_rows = self.features_service.hotlist2user_tbl.Select(
+        cnxn, cols=['hotlist_id', 'user_id'],
+        user_id=wanted_names_for_owner.keys(), role_name='owner')
+
+    hotlist_ids = [row[0] for row in role_rows]
+    hotlist_rows = self.features_service.hotlist_tbl.Select(
+        cnxn, cols=['id', 'name'], id=hotlist_ids, is_deleted=False,
+        where=[('LOWER(name) IN (%s)' % sql.PlaceHolders(hotlist_names_set),
+                [name.lower() for name in hotlist_names_set])])
+
+    return self._DeserializeHotlistIDs(
+        hotlist_rows, role_rows, wanted_names_for_owner)
+
+
 class FeaturesService(object):
   """The persistence layer for servlets in the features directory."""
 
@@ -171,7 +273,7 @@ class FeaturesService(object):
         cache_manager, 'user', max_size=1000)
 
     self.hotlist_2lc = HotlistTwoLevelCache(cache_manager, self)
-    self.hotlist_names_owner_to_ids = caches.RamCache(cache_manager, 'hotlist')
+    self.hotlist_id_2lc = HotlistIDTwoLevelCache(cache_manager, self)
     self.hotlist_user_to_ids = caches.RamCache(cache_manager, 'hotlist')
 
     self.config_service = config_service
@@ -668,9 +770,10 @@ class FeaturesService(object):
     if not hotlist.owner_ids:  # Should never happen.
       logging.warn('Modifying unowned Hotlist: id:%r, name:%r',
         hotlist_id, hotlist.name)
-    for owner_id in hotlist.owner_ids:
-      self.hotlist_names_owner_to_ids.InvalidateKeys(cnxn,
-          (hotlist.name, owner_id))
+    elif hotlist.name:
+      self.hotlist_id_2lc.InvalidateKeys(
+          cnxn, [(hotlist.name.lower(), owner_id) for
+                 owner_id in hotlist.owner_ids])
 
     # Update the hotlist PB in RAM
     if name is not None:
@@ -878,27 +981,9 @@ class FeaturesService(object):
     """Return a dict of (name, owner_id) mapped to hotlist_id for all hotlists
     with one of the given names and any of the given owners. Hotlists that
     match multiple owners will be in the dict multiple times."""
-    id_dict, missed_keys = self.hotlist_names_owner_to_ids.GetAll(
-        [(name.lower(), owner_id)
-         for name in hotlist_names for owner_id in owner_ids])
-    if missed_keys:
-      missed_names, missed_owners = map(list, list(zip(*missed_keys)))
-      hotlist_rows = self.hotlist_tbl.Select(
-          cnxn, cols=['id', 'name'], is_deleted=False, name=missed_names)
-      if hotlist_rows:
-        id_to_name = dict(hotlist_rows)
-        hotlist_ids = [row[0] for row in hotlist_rows]
-        role_rows = self.hotlist2user_tbl.Select(
-            cnxn, cols=['hotlist_id', 'user_id'], hotlist_id=hotlist_ids,
-            user_id=missed_owners, role_name='owner')
-        retrieved_dict = {
-            (id_to_name[hotlist_id], owner_id) : hotlist_id
-            for (hotlist_id, owner_id) in role_rows}
-        to_cache = {
-            (name.lower(), owner_id) : hotlist_id
-            for ((name, owner_id), hotlist_id) in retrieved_dict.items()}
-        self.hotlist_names_owner_to_ids.CacheAll(to_cache)
-        id_dict.update(to_cache)
+    id_dict, _missed_keys = self.hotlist_id_2lc.GetAll(
+        cnxn, [(name.lower(), owner_id)
+               for name in hotlist_names for owner_id in owner_ids])
     return id_dict
 
   def LookupUserHotlists(self, cnxn, user_ids):
@@ -1032,9 +1117,10 @@ class FeaturesService(object):
     if not hotlist.owner_ids:  # Should never happen.
       logging.warn('Soft-deleting unowned Hotlist: id:%r, name:%r',
         hotlist_id, hotlist.name)
-    for owner_id in hotlist.owner_ids:
-      self.hotlist_names_owner_to_ids.InvalidateKeys(cnxn,
-          (hotlist.name, owner_id))
+    elif hotlist.name:
+      self.hotlist_id_2lc.InvalidateKeys(
+          cnxn, [(hotlist.name.lower(), owner_id) for
+                 owner_id in hotlist.owner_ids])
 
     for project_id in project_ids:
       self.config_service.InvalidateMemcacheForEntireProject(project_id)

@@ -85,6 +85,67 @@ class HotlistTwoLevelCacheTest(unittest.TestCase):
     self.assertItemsEqual([111], hotlist_dict[234].owner_ids)
 
 
+class HotlistIDTwoLevelCache(unittest.TestCase):
+
+  def setUp(self):
+    self.testbed = testbed.Testbed()
+    self.testbed.activate()
+    self.testbed.init_memcache_stub()
+
+    self.mox = mox.Mox()
+    self.cnxn = self.mox.CreateMock(sql.MonorailConnection)
+    self.cache_manager = fake.CacheManager()
+    self.features_service = MakeFeaturesService(self.cache_manager, self.mox)
+    self.hotlist_id_2lc = self.features_service.hotlist_id_2lc
+
+  def tearDown(self):
+    memcache.flush_all()
+    self.testbed.deactivate()
+    self.mox.UnsetStubs()
+    self.mox.ResetAll()
+
+  def testGetAll(self):
+    cached_keys = [('name1', 111), ('name2', 222)]
+    self.hotlist_id_2lc.CacheItem(cached_keys[0], 121)
+    self.hotlist_id_2lc.CacheItem(cached_keys[1], 122)
+
+    # Set up DB query mocks.
+    # Test that a ('name1', 222) or ('name3', 333) hotlist
+    # does not get returned by GetAll even though these hotlists
+    # exist and are returned by the DB queries.
+    from_db_keys = [
+        ('name1', 333), ('name3', 222), ('name3', 555)]
+    self.features_service.hotlist2user_tbl.Select = mock.Mock(return_value=[
+        (123, 333),  # name1 hotlist
+        (124, 222),  # name3 hotlist
+        (125, 222),  # name1 hotlist, should be ignored
+        (126, 333),  # name3 hotlist, should be ignored
+        (127, 555),  # wrongname hotlist, should be ignored
+    ])
+    self.features_service.hotlist_tbl.Select = mock.Mock(
+        return_value=[(123, 'Name1'), (124, 'Name3'),
+                      (125, 'Name1'), (126, 'Name3')])
+
+    hit, misses = self.hotlist_id_2lc.GetAll(
+        self.cnxn, cached_keys + from_db_keys)
+
+    # Assertions
+    self.features_service.hotlist2user_tbl.Select.assert_called_once_with(
+        self.cnxn, cols=['hotlist_id', 'user_id'], user_id=[555, 333, 222],
+        role_name='owner')
+    hotlist_ids = [123, 124, 125, 126, 127]
+    self.features_service.hotlist_tbl.Select.assert_called_once_with(
+        self.cnxn, cols=['id', 'name'], id=hotlist_ids, is_deleted=False,
+        where=[('LOWER(name) IN (%s,%s)', ['name3', 'name1'])])
+
+    self.assertEqual(hit,{
+        ('name1', 111): 121,
+        ('name2', 222): 122,
+        ('name1', 333): 123,
+        ('name3', 222): 124})
+    self.assertEqual(from_db_keys[-1:], misses)
+
+
 class FeaturesServiceTest(unittest.TestCase):
 
   def MakeMockTable(self):
@@ -577,9 +638,14 @@ Delete.assert_called_once_with(
 
   def SetUpCreateHotlist(self):
     # Check for the existing hotlist: there should be none.
+    # Two hotlists named 'hot1' exist but neither are owned by the user.
+    self.features_service.hotlist2user_tbl.Select(
+        self.cnxn, cols=['hotlist_id', 'user_id'],
+        user_id=[567], role_name='owner').AndReturn([])
+
     self.features_service.hotlist_tbl.Select(
-        self.cnxn, cols=['id', 'name'], is_deleted=False,
-        name=['hot1']).AndReturn([])
+        self.cnxn, cols=['id', 'name'], id=[], is_deleted=False,
+        where =[(('LOWER(name) IN (%s)'), ['hot1'])]).AndReturn([])
 
     # Inserting the hotlist returns the id.
     self.features_service.hotlist_tbl.InsertRow(
@@ -617,13 +683,7 @@ Delete.assert_called_once_with(
           'A Hotlist that is not owned', [], [])
 
   def testCreateHotlist_HotlistAlreadyExists(self):
-    self.features_service.hotlist_tbl.Select(
-        self.cnxn, cols=['id', 'name'], is_deleted=False,
-        name=['fake-hotlist']).AndReturn([(123, 'Fake-Hotlist')])
-    self.features_service.hotlist2user_tbl.Select(
-        self.cnxn, cols=['hotlist_id', 'user_id'], hotlist_id=[123],
-        user_id=[567], role_name='owner').AndReturn([(123, 567)])
-    self.mox.ReplayAll()
+    self.features_service.hotlist_id_2lc.CacheItem(('fake-hotlist', 567), 123)
     with self.assertRaises(features_svc.HotlistAlreadyExists):
       self.features_service.CreateHotlist(
           self.cnxn, 'Fake-Hotlist', 'Misnamed Hotlist',
@@ -660,21 +720,26 @@ Delete.assert_called_once_with(
     self.features_service.hotlist2user_tbl.InsertRows.assert_called_once_with(
         self.cnxn, features_svc.HOTLIST2USER_COLS, insert_rows, commit=False)
 
-  def SetUpLookupHotlistIDs(self):
-    self.features_service.hotlist_tbl.Select(
-      self.cnxn, cols=['id', 'name'], is_deleted=False,
-          name=['hot1']).AndReturn([(123, 'hot1')])
-    self.features_service.hotlist2user_tbl.Select(
-        self.cnxn, cols=['hotlist_id', 'user_id'], hotlist_id=[123],
-        user_id=[567], role_name='owner').AndReturn([(123, 567)])
-
   def testLookupHotlistIDs(self):
-    self.SetUpLookupHotlistIDs()
-    self.mox.ReplayAll()
+    # Set up DB query mocks.
+    self.features_service.hotlist2user_tbl.Select = mock.Mock(return_value=[
+        (123, 222), (125, 333)])
+    self.features_service.hotlist_tbl.Select = mock.Mock(
+        return_value=[(123, 'q3-TODO'), (125, 'q4-TODO')])
+
+    self.features_service.hotlist_id_2lc.CacheItem(
+        ('q4-todo', 333), 124)
+
     ret = self.features_service.LookupHotlistIDs(
-        self.cnxn, ['hot1'], [567])
-    self.assertEqual(ret, {('hot1', 567) : 123})
-    self.mox.VerifyAll()
+        self.cnxn, ['q3-todo', 'Q4-TODO'], [222, 333, 444])
+    self.assertEqual(ret, {('q3-todo', 222) : 123, ('q4-todo', 333): 124})
+    self.features_service.hotlist2user_tbl.Select.assert_called_once_with(
+        self.cnxn, cols=['hotlist_id', 'user_id'], user_id=[444, 333, 222],
+        role_name='owner')
+    self.features_service.hotlist_tbl.Select.assert_called_once_with(
+        self.cnxn, cols=['id', 'name'], id=[123, 125], is_deleted=False,
+        where=[
+            (('LOWER(name) IN (%s,%s)'), ['q3-todo', 'q4-todo'])])
 
   def SetUpLookupUserHotlists(self):
     self.features_service.hotlist2user_tbl.Select(

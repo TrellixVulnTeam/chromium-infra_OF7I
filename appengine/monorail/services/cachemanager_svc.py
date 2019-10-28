@@ -49,9 +49,13 @@ from framework import sql
 
 INVALIDATE_TABLE_NAME = 'Invalidate'
 INVALIDATE_COLS = ['timestep', 'kind', 'cache_key']
+# Note: *_id invalidations should happen only when there's a change
+# in one of the values used to look up the internal ID number.
+# E.g. hotlist_id_2lc should only be invalidated when the hotlist
+# name or owner changes.
 INVALIDATE_KIND_VALUES = [
     'user', 'usergroup', 'project', 'issue', 'issue_id', 'hotlist',
-    'comment', 'template']
+    'hotlist_id', 'comment', 'template']
 INVALIDATE_ALL_KEYS = 0
 MAX_INVALIDATE_ROWS_TO_CONSIDER = 1000
 
