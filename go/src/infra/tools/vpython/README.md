@@ -132,10 +132,6 @@ Circumstantially, other ways of creating `vpython` CIPD wheel packages include:
   using the `vpython` and `vpython.bat` shims to bootstrap `vpython` from
   `cipd_manifest.txt`.
 
-- For BuildBot bots, it is deployed via
-  [cipd_bootstrap_v2.py](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/cipd_bootstrap_v2.py),
-  which also integrates it into `PATH` on bots.
-
 - For LUCI builds, it is deployed and integrated into `PATH` via the build's
   SwarmBucket template.
 

@@ -82,8 +82,4 @@ Python bundles are installed on and used in various parts of the system:
     * On Mac and Linux, this is installed at: `/opt/infra-system/bin/python`
 * A Python bundle is used per-build to run the Recipe Engine and its associated
   software, including building and testing code.
-    * On BuildBot, this is implemented using
-      [cipd_bootstrap_v2](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/cipd_bootstrap_v2.py).
     * On LUCI, this is installed in the `luci-config` Swarming Task Template.
-* For legacy reasons, Windows systems still have a Python bundle installed
-  in their build root `depot_tools` directory.

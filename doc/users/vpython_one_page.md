@@ -32,12 +32,12 @@ deleting all changes to PYTHONPATH. In this case, the launcher and subscript are
 “in the same bubble”.
 
 ### How can I use VPython?
-`vpython` (and `vpython.bat` on windows) are already in $PATH via [buildbot],
-[LUCI], and [depot_tools]. After adding any “vpython spec”s that your script
-needs to the repo containing your script, use `vpython` exactly the way that you
-would have used `python` to invoke the script. So instead of `python script.py
-arg arg`, call `vpython script.py arg arg`. Recipes can also use vpython by
-setting `venv=True` when using the `python` recipe_module.
+`vpython` (and `vpython.bat` on windows) are already in $PATH via [LUCI], and
+[depot_tools]. After adding any “vpython spec”s that your script needs to the
+repo containing your script, use `vpython` exactly the way that you would have
+used `python` to invoke the script. So instead of `python script.py arg arg`,
+call `vpython script.py arg arg`. Recipes can also use vpython by setting
+`venv=True` when using the `python` recipe_module.
 
 ### What if I need a new VPython wheel?
 First check to see if the wheel is already available in [wheels.md]. If not,
@@ -48,7 +48,6 @@ file a bug [here](https://bugs.chromium.org/p/chromium/issues/entry?summary=Need
 [Python VirtualEnvs]: https://virtualenv.pypa.io/en/stable/
 [PyPI]: https://pypi.python.org/
 [vpython spec]: https://chromium.googlesource.com/chromium/src.git/+/master/.vpython
-[buildbot]: https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/cipd_bootstrap_v2.py#43
 [LUCI]: https://chrome-internal.googlesource.com/infradata/config/+/master/configs/cr-buildbucket/swarming_task_template.json#70
 [depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools/+/master/cipd_manifest.txt#11
 [wheels.md]: https://chromium.googlesource.com/infra/infra/+/master/infra/tools/dockerbuild/wheels.md

@@ -39,8 +39,6 @@ Chromium development or bot environment.
     [Windows](https://chromium.googlesource.com/chromium/tools/depot_tools/+/master/vpython.bat),
     [Linux and Mac](https://chromium.googlesource.com/chromium/tools/depot_tools/+/master/vpython)).
 * In bot environments via `PATH`:
-    * On BuildBot, it is installed into `PATH` using
-      [cipd_bootstrap_v2](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/cipd_bootstrap_v2.py).
     * On LUCI, this is installed into `PATH` in the `luci-config` Swarming Task
       Template.
 
