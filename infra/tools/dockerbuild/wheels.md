@@ -2275,6 +2275,20 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **parameterized**
+
+### 0.7.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/parameterized-py2_py3"
+  version: "version:0.7.0"
+>
+```
+
+
+* *universal*
+
 ## **paramiko**
 
 ### 2.4.1
