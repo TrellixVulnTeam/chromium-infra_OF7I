@@ -107,7 +107,6 @@ class CodeCoverageTest(WaterfallTestCase):
     server_host = 'chromium-review.googlesource.com'
     change = 138000
     patchset = 4
-    build_id = 123456789
     data = [
         {
             'path': '//base1/test1.cc',
@@ -128,11 +127,7 @@ class CodeCoverageTest(WaterfallTestCase):
     ]
 
     coverage_data = PresubmitCoverageData.Create(
-        server_host=server_host,
-        change=change,
-        patchset=patchset,
-        build_id=build_id,
-        data=data)
+        server_host=server_host, change=change, patchset=patchset, data=data)
     coverage_data.put()
 
     # Test key.

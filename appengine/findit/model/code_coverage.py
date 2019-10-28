@@ -178,9 +178,6 @@ class PresubmitCoverageData(ndb.Model):
   # The CL patchset.
   cl_patchset = ndb.StructuredProperty(CLPatchset, indexed=True, required=True)
 
-  # The build id that uniquely identifies the build.
-  build_id = ndb.IntegerProperty(indexed=False, required=True)
-
   # A list of file level coverage data for all the source files modified by the
   # this CL.
   data = ndb.JsonProperty(indexed=False, compressed=True, required=True)
@@ -193,23 +190,32 @@ class PresubmitCoverageData(ndb.Model):
   incremental_percentages = ndb.LocalStructuredProperty(
       CoveragePercentage, indexed=False, repeated=True)
 
+  # If assigned, represents the patchset number from which this coverage data is
+  # generated, and it specifically refers to the scenario where coverage data
+  # are shared between equivalent patchsets, such as trivial-rebase.
+  based_on = ndb.IntegerProperty(indexed=True)
+
   @classmethod
   def _CreateKey(cls, server_host, change, patchset):
     return ndb.Key(cls, '%s$%s$%s' % (server_host, change, patchset))
 
   @classmethod
-  def Create(cls, server_host, change, patchset, build_id, data, project=None):
+  def Create(cls, server_host, change, patchset, data, project=None):
     key = cls._CreateKey(server_host, change, patchset)
     cl_patchset = CLPatchset(
         server_host=server_host,
         project=project,
         change=change,
         patchset=patchset)
-    return cls(key=key, cl_patchset=cl_patchset, build_id=build_id, data=data)
+    return cls(key=key, cl_patchset=cl_patchset, data=data)
 
   @classmethod
   def Get(cls, server_host, change, patchset):
-    return cls._CreateKey(server_host, change, patchset).get()
+    return cls.GetAsync(server_host, change, patchset).get_result()
+
+  @classmethod
+  def GetAsync(cls, server_host, change, patchset):
+    return cls._CreateKey(server_host, change, patchset).get_async()
 
 
 class FileCoverageData(ndb.Model):

@@ -457,6 +457,12 @@ indexes:
   - name: builder
   - name: commit_timestamp
 
+- kind: PresubmitCoverageData
+  properties:
+  - name: cl_patchset.server_host
+  - name: cl_patchset.change
+  - name: based_on
+
 # For Flake report
 - kind: ComponentFlakinessReport
   properties:

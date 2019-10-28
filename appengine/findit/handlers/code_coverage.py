@@ -715,7 +715,7 @@ class ProcessCodeCoverageData(BaseHandler):
         queue_name='code-coverage-fetch-source-file',
         params=params)
 
-  def _ProcessCLPatchData(self, patch, coverage_data, build_id):
+  def _ProcessCLPatchData(self, patch, coverage_data):
     """Processes and updates coverage data for per-cl build.
 
     Part of the responsibility of this method is to calculate per-file coverage
@@ -730,19 +730,63 @@ class ProcessCodeCoverageData(BaseHandler):
       coverage_data (list): A list of File in coverage proto.
       build_id (int): Id of the build to process coverage data for.
     """
-    entity = PresubmitCoverageData.Create(
-        server_host=patch.host,
-        change=patch.change,
-        patchset=patch.patchset,
-        build_id=build_id,
-        data=coverage_data)
-    entity.absolute_percentages = (
-        code_coverage_util.CalculateAbsolutePercentages(coverage_data))
-    entity.incremental_percentages = (
-        code_coverage_util.CalculateIncrementalPercentages(
-            patch.host, patch.project, patch.change, patch.patchset,
-            coverage_data))
-    entity.put()
+
+    @ndb.tasklet
+    @ndb.transactional
+    def _UpdateCoverageDataAsync():
+      entity = yield PresubmitCoverageData.GetAsync(
+          server_host=patch.host, change=patch.change, patchset=patch.patchset)
+      if entity:
+        entity.data = code_coverage_util.MergeFilesCoverageDataForPerCL(
+            entity.data, coverage_data)
+      else:
+        entity = PresubmitCoverageData.Create(
+            server_host=patch.host,
+            change=patch.change,
+            patchset=patch.patchset,
+            data=coverage_data)
+      entity.absolute_percentages = (
+          code_coverage_util.CalculateAbsolutePercentages(entity.data))
+      entity.incremental_percentages = (
+          code_coverage_util.CalculateIncrementalPercentages(
+              patch.host, patch.project, patch.change, patch.patchset,
+              entity.data))
+      yield entity.put_async()
+
+    update_future = _UpdateCoverageDataAsync()
+
+    # Following code invalidates the dependent patchsets whenever the coverage
+    # data of the current patchset changes, and it is based on the assumption
+    # that the coverage data of the dependent patchsets is always a subset of
+    # the current patchset.
+    #
+    # There is one scenario where the above mentioned assumption doesn't hold:
+    # 1. User triggers builder1 on ps1, so ps1 has builder1's coverage data.
+    # 2. Ps2 is a trivial-rebase of ps1, and once its coverage data is
+    #    requested, it reuses ps1's, which is to say that ps2 now has builder1's
+    #    coverage data.
+    # 3. User triggers builder2 on ps2, so ps2 contains coverage data from both
+    #    builder1 and builder2.
+    # 4. User triggers builder3 on ps1, so now ps1 has builder1 and builder3's
+    #    coverage data, and it also invalidates ps2, but it's NOT entirely
+    #    correct because ps2 has something (builder2) that ps1 doesn't have.
+    #
+    # In practice, the described scenario is rather extreme corner case because:
+    # 1. Most users triggers cq dry run instead of specific builders.
+    # 2. When users upload a new trivial-rebase patchset, most likely they'll
+    #    never go back to previous patchset to trigger builds.
+    #
+    # Therefore, it makes sense to do nothing about it for now.
+    delete_futures = ndb.delete_multi_async(
+        PresubmitCoverageData.query(
+            PresubmitCoverageData.cl_patchset.server_host == patch.host,
+            PresubmitCoverageData.cl_patchset.change == patch.change,
+            PresubmitCoverageData.based_on == patch.patchset).fetch(
+                keys_only=True))
+
+    update_future.get_result()
+    for f in delete_futures:
+      f.get_result()
 
   def _processCodeCoverageData(self, build_id):
     build = GetV2Build(
@@ -789,7 +833,7 @@ class ProcessCodeCoverageData(BaseHandler):
       # Assume there is only 1 patch which is true in CQ.
       assert len(build.input.gerrit_changes) == 1, 'Expect only one patchset'
       patch = build.input.gerrit_changes[0]
-      self._ProcessCLPatchData(patch, data['files'], build_id)
+      self._ProcessCLPatchData(patch, data['files'])
     else:
       # For postsubmit coverage, we save the data by file and directory.
       if not self._IsGitilesCommitAvailable(build.input.gitiles_commit):
@@ -1091,16 +1135,14 @@ class ServeCodeCoverageData(BaseHandler):
       return BaseHandler.CreateError(
           'Requested coverage data is not found.', 404, allowed_origin='*')
 
-    latest_patchset = None
     latest_entity = None
     for ps in sorted(equivalent_patchsets, reverse=True):
       latest_entity = PresubmitCoverageData.Get(
           server_host=host, change=change, patchset=ps)
-      if latest_entity:
-        latest_patchset = ps
+      if latest_entity and latest_entity.based_on is None:
         break
 
-    if latest_patchset is None:
+    if latest_entity is None:
       return BaseHandler.CreateError(
           'Requested coverage data is not found.', 404, allowed_origin='*')
 
@@ -1113,17 +1155,17 @@ class ServeCodeCoverageData(BaseHandler):
             host=host,
             project=project,
             change=change,
-            patchset_src=latest_patchset,
+            patchset_src=latest_entity.cl_patchset.patchset,
             patchset_dest=patchset,
             coverage_data_src=latest_entity.data))
     entity = PresubmitCoverageData.Create(
         server_host=host,
         change=change,
         patchset=patchset,
-        build_id=latest_entity.build_id,
         data=rebased_coverage_data)
     entity.absolute_percentages = latest_entity.absolute_percentages
     entity.incremental_percentages = latest_entity.incremental_percentages
+    entity.based_on = latest_entity.cl_patchset.patchset
     entity.put()
     return _ServeLines(entity.data)
 

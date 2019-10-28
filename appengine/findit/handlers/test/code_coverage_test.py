@@ -348,12 +348,108 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
         server_host='chromium-review.googlesource.com',
         change=138000,
         patchset=4,
-        build_id=123456789,
         data=coverage_data['files'])
     expected_entity.absolute_percentages = abs_percentages
     expected_entity.incremental_percentages = inc_percentages
     fetched_entities = PresubmitCoverageData.query().fetch()
 
+    self.assertEqual(1, len(fetched_entities))
+    self.assertEqual(expected_entity, fetched_entities[0])
+
+  @mock.patch.object(code_coverage_util, 'CalculateIncrementalPercentages')
+  @mock.patch.object(code_coverage_util, 'CalculateAbsolutePercentages')
+  @mock.patch.object(code_coverage, '_GetValidatedData')
+  @mock.patch.object(code_coverage, 'GetV2Build')
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  def testProcessCLPatchDataMergingData(
+      self, _, mocked_get_build, mocked_get_validated_data,
+      mocked_abs_percentages, mocked_inc_percentages):
+    # Mock buildbucket v2 API.
+    build = mock.Mock()
+    build.builder.project = 'chromium'
+    build.builder.bucket = 'try'
+    build.builder.builder = 'linux-rel'
+    build.output.properties.items.return_value = [
+        ('coverage_is_presubmit', True),
+        ('coverage_gs_bucket', 'code-coverage-data'),
+        ('coverage_metadata_gs_path',
+         ('presubmit/chromium-review.googlesource.com/138000/4/try/'
+          'linux-rel/123456789/metadata'))
+    ]
+    build.input.gerrit_changes = [
+        mock.Mock(
+            host='chromium-review.googlesource.com',
+            project='chromium/src',
+            change=138000,
+            patchset=4)
+    ]
+    mocked_get_build.return_value = build
+
+    # Mock get validated data from cloud storage.
+    coverage_data = {
+        'dirs':
+            None,
+        'files': [{
+            'path': '//dir/test.cc',
+            'lines': [{
+                'count': 100,
+                'first': 1,
+                'last': 1,
+            }],
+        }],
+        'summaries':
+            None,
+        'components':
+            None,
+    }
+    mocked_get_validated_data.return_value = coverage_data
+
+    mocked_abs_percentages.return_value = []
+    mocked_inc_percentages.return_value = []
+
+    existing_entity = PresubmitCoverageData.Create(
+        server_host='chromium-review.googlesource.com',
+        change=138000,
+        patchset=4,
+        data=[{
+            'path': '//dir/test.cc',
+            'lines': [{
+                'count': 100,
+                'first': 2,
+                'last': 2,
+            }],
+        }])
+    existing_entity.put()
+    rebased_entity = PresubmitCoverageData.Create(
+        server_host='chromium-review.googlesource.com',
+        change=138000,
+        patchset=5,
+        data=[])
+    rebased_entity.based_on = 4
+    rebased_entity.put()
+
+    self.assertEqual(2, len(PresubmitCoverageData.query().fetch()))
+    request_url = '/coverage/task/process-data/build/123456789'
+    response = self.test_app.post(request_url)
+    self.assertEqual(200, response.status_int)
+
+    expected_entity = PresubmitCoverageData.Create(
+        server_host='chromium-review.googlesource.com',
+        change=138000,
+        patchset=4,
+        data=[{
+            'path': '//dir/test.cc',
+            'lines': [{
+                'count': 100,
+                'first': 1,
+                'last': 2,
+            }],
+        }])
+    expected_entity.absolute_percentages = []
+    expected_entity.incremental_percentages = []
+    fetched_entities = PresubmitCoverageData.query().fetch()
+
+    mocked_abs_percentages.assert_called_with(expected_entity.data)
     self.assertEqual(1, len(fetched_entities))
     self.assertEqual(expected_entity, fetched_entities[0])
 
@@ -526,7 +622,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     project = 'chromium/src'
     change = 138000
     patchset = 4
-    build_id = 123456789
     data = [{
         'path': '//dir/test.cc',
         'lines': [{
@@ -536,11 +631,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         }],
     }]
     PresubmitCoverageData.Create(
-        server_host=host,
-        change=change,
-        patchset=patchset,
-        build_id=build_id,
-        data=data).put()
+        server_host=host, change=change, patchset=patchset, data=data).put()
 
     request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
                    '&patchset=%d&concise=1') % (host, project, change, patchset)
@@ -600,8 +691,9 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     project = 'chromium/src'
     change = 138000
     patchset_src = 3
-    patchset_dest = 4
-    build_id = 123456789
+    # 4 is based on 3, used to test that 5 would choose 3 instead of 4.
+    patchset_mid = 4
+    patchset_dest = 5
     data = [{
         'path': '//dir/test.cc',
         'lines': [{
@@ -611,11 +703,12 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         }],
     }]
     PresubmitCoverageData.Create(
-        server_host=host,
-        change=change,
-        patchset=patchset_src,
-        build_id=build_id,
+        server_host=host, change=change, patchset=patchset_src,
         data=data).put()
+    mid_data = PresubmitCoverageData.Create(
+        server_host=host, change=change, patchset=patchset_mid, data=data)
+    mid_data.based_on = patchset_src
+    mid_data.put()
 
     rebased_coverage_data = [{
         'path': '//dir/test.cc',
@@ -626,7 +719,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         }],
     }]
 
-    mock_get_equivalent_ps.return_value = [3]
+    mock_get_equivalent_ps.return_value = [patchset_src, patchset_mid]
     mock_rebase_data.return_value = rebased_coverage_data
 
     request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
@@ -650,13 +743,15 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         },
     })
     self.assertEqual(expected_response_body, response.body)
+    self.assertEqual(
+        patchset_src,
+        PresubmitCoverageData.Get(host, change, patchset_dest).based_on)
 
   def testServeCLPatchPercentagesData(self):
     host = 'chromium-review.googlesource.com'
     project = 'chromium/src'
     change = 138000
     patchset = 4
-    build_id = 123456789
     data = [{
         'path': '//dir/test.cc',
         'lines': [{
@@ -666,11 +761,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         }],
     }]
     entity = PresubmitCoverageData.Create(
-        server_host=host,
-        change=change,
-        patchset=patchset,
-        build_id=build_id,
-        data=data)
+        server_host=host, change=change, patchset=patchset, data=data)
     entity.absolute_percentages = [
         CoveragePercentage(
             path='//dir/test.cc', total_lines=2, covered_lines=1)
@@ -712,7 +803,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     patchset_src = 3
     patchset_dest = 4
     mock_get_equivalent_ps.return_value = [patchset_src]
-    build_id = 123456789
     data = [{
         'path': '//dir/test.cc',
         'lines': [{
@@ -722,11 +812,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         }],
     }]
     entity = PresubmitCoverageData.Create(
-        server_host=host,
-        change=change,
-        patchset=patchset_src,
-        build_id=build_id,
-        data=data)
+        server_host=host, change=change, patchset=patchset_src, data=data)
     entity.absolute_percentages = [
         CoveragePercentage(
             path='//dir/test.cc', total_lines=2, covered_lines=1)
