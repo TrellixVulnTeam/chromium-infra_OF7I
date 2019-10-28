@@ -463,8 +463,7 @@ const example = `{
 			},
 			"cr50Phase": "CR50_PHASE_INVALID",
 			"criticalPools": [
-				"DUT_POOL_SUITES",
-				"DUT_POOL_SUITES"
+				"DUT_POOL_QUOTA"
 			],
 			"ctsAbi": [
 				"CTS_ABI_ARM"

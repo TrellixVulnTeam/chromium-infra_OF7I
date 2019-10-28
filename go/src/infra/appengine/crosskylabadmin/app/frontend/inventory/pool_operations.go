@@ -15,7 +15,6 @@
 package inventory
 
 import (
-	"fmt"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
@@ -182,7 +181,7 @@ func (is *ServerImpl) commitBalancePoolChanges(ctx context.Context, store *gitst
 		// TODO(pprabhu) add a unittest enforcing this.
 		return "", nil
 	}
-	if err := applyChanges(store.Lab, changes); err != nil {
+	if err := applyChanges(ctx, store.Lab, changes); err != nil {
 		return "", errors.Annotate(err, "apply balance pool changes").Err()
 	}
 	return store.Commit(ctx, "balance pool")
@@ -248,34 +247,76 @@ func collectChanges(mrs map[string]*fleet.EnsurePoolHealthyResponse) []*fleet.Po
 	return ret
 }
 
-func applyChanges(lab *inventory.Lab, changes []*fleet.PoolChange) error {
+func applyChanges(ctx context.Context, lab *inventory.Lab, changes []*fleet.PoolChange) error {
+	logging.Infof(ctx, "%v", changes)
 	oldPool := make(map[string]inventory.SchedulableLabels_DUTPool)
+	oldSelfServePool := make(map[string]string)
 	newPool := make(map[string]inventory.SchedulableLabels_DUTPool)
+	newSelfServePool := make(map[string]string)
 	for _, c := range changes {
-		oldPool[c.DutId] = inventory.SchedulableLabels_DUTPool(inventory.SchedulableLabels_DUTPool_value[c.OldPool])
-		np, ok := inventory.SchedulableLabels_DUTPool_value[c.NewPool]
-		if !ok {
-			// TODO: Add support for moving devices to non-critical pools.
-			return fmt.Errorf("invalid destination pool %s, not a known critical pool", c.NewPool)
+		// Check if oldpool is a critical pool or a normal string self-serve pool.
+		// Same check for newpool below.
+		op, ok := inventory.SchedulableLabels_DUTPool_value[c.OldPool]
+		if ok {
+			oldPool[c.DutId] = inventory.SchedulableLabels_DUTPool(op)
+		} else {
+			logging.Debugf(ctx, "old pool: %s, not a known critical pool", c.OldPool)
+			oldSelfServePool[c.DutId] = c.OldPool
 		}
-		newPool[c.DutId] = inventory.SchedulableLabels_DUTPool(np)
+		np, ok := inventory.SchedulableLabels_DUTPool_value[c.NewPool]
+		if ok {
+			newPool[c.DutId] = inventory.SchedulableLabels_DUTPool(np)
+		} else {
+			logging.Debugf(ctx, "new pool: %s, not a known critical pool", c.NewPool)
+			newSelfServePool[c.DutId] = c.NewPool
+		}
 	}
 
 	for _, d := range lab.Duts {
 		id := d.GetCommon().GetId()
-		if np, ok := newPool[id]; ok {
-			ls := d.GetCommon().GetLabels().GetCriticalPools()
-			if ls == nil {
-				return fmt.Errorf("critical pools missing for dut %s", id)
+		np, hasNewCPool := newPool[id]
+		nsp, hasNewSSPool := newSelfServePool[id]
+		if hasNewCPool || hasNewSSPool {
+			// New pool is assigned. Remove old pool.
+			lcp := d.GetCommon().GetLabels().GetCriticalPools()
+			lsp := d.GetCommon().GetLabels().GetSelfServePools()
+			if op, ok := oldPool[id]; ok {
+				lcp = removeOld(lcp, op)
 			}
-			ls = removeOld(ls, oldPool[id])
-			ls = append(ls, np)
-			d.GetCommon().GetLabels().CriticalPools = ls
+			if osp, ok := oldSelfServePool[id]; ok {
+				lsp = removeOldSelfServePool(lsp, osp)
+			}
+			if hasNewCPool {
+				lcp = append(lcp, np)
+				d.GetCommon().GetLabels().CriticalPools = lcp
+				d.GetCommon().GetLabels().SelfServePools = lsp
+			} else {
+				lsp = append(lsp, nsp)
+				d.GetCommon().GetLabels().SelfServePools = lsp
+				d.GetCommon().GetLabels().CriticalPools = lcp
+			}
 		}
 	}
 	return nil
 }
 
+// Remove an old self serve pool from given pool list.
+// Return the new list of self serve pool after removal.
+// The first parameter is invalidated.
+func removeOldSelfServePool(ls []string, old string) []string {
+	for i, l := range ls {
+		if l == old {
+			copy(ls[i:], ls[i+1:])
+			ls[len(ls)-1] = ""
+			return ls[:len(ls)-1]
+		}
+	}
+	return ls
+}
+
+// Remove an old critical pool from given pool list.
+// Return the new list of critical pool after removal.
+// The first parameter is invalidated.
 func removeOld(ls []inventory.SchedulableLabels_DUTPool, old inventory.SchedulableLabels_DUTPool) []inventory.SchedulableLabels_DUTPool {
 	for i, l := range ls {
 		if l == old {

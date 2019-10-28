@@ -169,7 +169,7 @@ const (
 		"labels": {
 			"board": "[PLACEHOLDER] board of the DUT (roughly identifies the portage overlay the OS images come from)",
 			"criticalPools": [
-				"DUT_POOL_SUITES"
+				"DUT_POOL_QUOTA"
 			],
 			"model": "[PLACEHOLDER] model of the DUT (roughly identifies the DUT hardware variant)"
 		}

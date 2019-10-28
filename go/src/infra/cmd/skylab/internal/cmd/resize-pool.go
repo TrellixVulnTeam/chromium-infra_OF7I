@@ -35,7 +35,7 @@ taken from or returned to the SPARE pool.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 
-		c.Flags.StringVar(&c.spare, "spare", "DUT_POOL_SUITES", "Spare pool to use.")
+		c.Flags.StringVar(&c.spare, "spare", "DUT_POOL_QUOTA", "Spare pool to use.")
 		return c
 	},
 }

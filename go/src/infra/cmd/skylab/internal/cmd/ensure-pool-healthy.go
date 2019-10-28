@@ -26,7 +26,7 @@ import (
 
 // EnsurePoolHealthy subcommand: Balance DUT pools
 var EnsurePoolHealthy = &subcommands.Command{
-	UsageLine: "ensure-pool-healthy [-dryrun] [-all-models] [-spare SPARE] TARGET [MODEL ...]",
+	UsageLine: "ensure-pool-healthy [-dryrun] [-spare SPARE] TARGET [MODEL ...]",
 	ShortDesc: "ensure DUT pool is healthy",
 	LongDesc: `
 Ensure that the TARGET pool is healthy for the given MODELs.  If
@@ -43,7 +43,7 @@ To change the number of DUTs in a pool, use resize-pool.`,
 		c.envFlags.Register(&c.Flags)
 
 		c.Flags.BoolVar(&c.dryrun, "dryrun", false, "Dry run.  Inventory changes are not committed.")
-		c.Flags.StringVar(&c.spare, "spare", "DUT_POOL_SUITES", "Spare pool to use.")
+		c.Flags.StringVar(&c.spare, "spare", "DUT_POOL_QUOTA", "Spare pool to use.")
 		return c
 	},
 }

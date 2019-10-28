@@ -23,8 +23,8 @@ import (
 func mapPoolsToDUTs(duts []*inventory.DeviceUnderTest) (map[string][]string, error) {
 	dp := make(map[string][]string)
 	for _, d := range duts {
-		for _, ep := range d.GetCommon().GetLabels().GetCriticalPools() {
-			p := ep.String()
+		pools := mergePools(d.GetCommon().GetLabels())
+		for _, p := range pools {
 			id := d.GetCommon().GetId()
 			if id == "" {
 				return dp, fmt.Errorf("inventory contains DUT without ID (hostname: %s)", d.GetCommon().GetHostname())
@@ -37,6 +37,15 @@ func mapPoolsToDUTs(duts []*inventory.DeviceUnderTest) (map[string][]string, err
 		}
 	}
 	return dp, nil
+}
+
+func mergePools(l *inventory.SchedulableLabels) []string {
+	res := make([]string, len(l.GetCriticalPools()))
+	for i, ep := range l.GetCriticalPools() {
+		res[i] = ep.String()
+	}
+	res = append(res, l.GetSelfServePools()...)
+	return res
 }
 
 func changeDUTPools(duts []string, oldPool, newPool string) []*fleet.PoolChange {
