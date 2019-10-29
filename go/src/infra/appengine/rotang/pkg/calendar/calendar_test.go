@@ -120,6 +120,38 @@ func TestCreateEvent(t *testing.T) {
 	}
 }
 
+func createCalendarEvents(summary []string) *gcal.Events {
+	return &gcal.Events{
+		Items: []*gcal.Event{
+			{
+				Start: &gcal.EventDateTime{
+					DateTime: midnight.Add(-fullDay).Format(time.RFC3339),
+				},
+				End: &gcal.EventDateTime{
+					DateTime: midnight.Format(time.RFC3339),
+				},
+				Summary: summary[0],
+			}, {
+				Start: &gcal.EventDateTime{
+					DateTime: midnight.Format(time.RFC3339),
+				},
+				End: &gcal.EventDateTime{
+					DateTime: midnight.Add(fullDay).Format(time.RFC3339),
+				},
+				Summary: summary[1],
+			}, {
+				Start: &gcal.EventDateTime{
+					DateTime: midnight.Add(fullDay).Format(time.RFC3339),
+				},
+				End: &gcal.EventDateTime{
+					DateTime: midnight.Add(2 * fullDay).Format(time.RFC3339),
+				},
+				Summary: summary[2],
+			},
+		},
+	}
+}
+
 func TestFindTrooperEvent(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -128,103 +160,120 @@ func TestFindTrooperEvent(t *testing.T) {
 		match  string
 		at     time.Time
 		want   []string
-	}{{
-		name: "Success",
-		events: &gcal.Events{
-			Items: []*gcal.Event{
-				{
-					Start: &gcal.EventDateTime{
-						DateTime: midnight.Add(-fullDay).Format(time.RFC3339),
-					},
-					End: &gcal.EventDateTime{
-						DateTime: midnight.Format(time.RFC3339),
-					},
-					Summary: "CCI-Trooper: not1, not2, not3",
-				}, {
-					Start: &gcal.EventDateTime{
-						DateTime: midnight.Format(time.RFC3339),
-					},
-					End: &gcal.EventDateTime{
-						DateTime: midnight.Add(fullDay).Format(time.RFC3339),
-					},
-					Summary: "CCI-Trooper: this1, this2, this3",
-				}, {
-					Start: &gcal.EventDateTime{
-						DateTime: midnight.Add(fullDay).Format(time.RFC3339),
-					},
-					End: &gcal.EventDateTime{
-						DateTime: midnight.Add(2 * fullDay).Format(time.RFC3339),
-					},
-					Summary: "CCI-Trooper: nope1, nope2, nope3",
-				},
-			},
+	}{
+		{
+			name: "Success",
+			events: createCalendarEvents([]string{
+				"CCI-Trooper: not1, not2, not3",
+				"CCI-Trooper: this1, this2, this3",
+				"CCI-Trooper: nope1, nope2, nope3",
+			}),
+			match: "CCI-Trooper: ",
+			at:    midnight,
+			want:  []string{"this1", "this2", "this3"},
+		}, {
+			name: "No match",
+			fail: true,
+			events: createCalendarEvents([]string{
+				"CCI-Trooper: not1, not2, not3",
+				"Nope-Trooper: this1, this2, this3",
+				"CCI-Trooper: nope1, nope2, nope3",
+			}),
+			match: "CCI-Trooper: ",
+			at:    midnight,
+			want:  []string{"this1", "this2", "this3"},
+		}, {
+			name: "No shift found",
+			fail: true,
+			events: createCalendarEvents([]string{
+				"CCI-Trooper: not1, not2, not3",
+				"",
+				"CCI-Trooper: nope1, nope2, nope3",
+			}),
+			match: "CCI-Trooper: ",
+			at:    midnight,
+			want:  []string{"this1", "this2", "this3"},
 		},
-		match: "CCI-Trooper: ",
-		at:    midnight,
-		want:  []string{"this1", "this2", "this3"},
-	}, {
-		name: "No match",
-		fail: true,
-		events: &gcal.Events{
-			Items: []*gcal.Event{
-				{
-					Start: &gcal.EventDateTime{
-						DateTime: midnight.Add(-fullDay).Format(time.RFC3339),
-					},
-					End: &gcal.EventDateTime{
-						DateTime: midnight.Format(time.RFC3339),
-					},
-					Summary: "CCI-Trooper: not1, not2, not3",
-				}, {
-					Start: &gcal.EventDateTime{
-						DateTime: midnight.Format(time.RFC3339),
-					},
-					End: &gcal.EventDateTime{
-						DateTime: midnight.Add(fullDay).Format(time.RFC3339),
-					},
-					Summary: "Nope-Trooper: this1, this2, this3",
-				}, {
-					Start: &gcal.EventDateTime{
-						DateTime: midnight.Add(fullDay).Format(time.RFC3339),
-					},
-					End: &gcal.EventDateTime{
-						DateTime: midnight.Add(2 * fullDay).Format(time.RFC3339),
-					},
-					Summary: "CCI-Trooper: nope1, nope2, nope3",
-				},
-			},
+	}
+
+	for _, tst := range tests {
+		res, err := findTrooperEvent(tst.events, tst.match, tst.at)
+		if got, want := (err != nil), tst.fail; got != want {
+			t.Errorf("%s: findTrooperEvent(_, %q, %v) = %t want: %t, err: %v", tst.name, tst.match, tst.at, got, want, err)
+			continue
+		}
+		if err != nil {
+			continue
+		}
+		if diff := pretty.Compare(tst.want, res); diff != "" {
+			t.Errorf("%s: findTrooperEvent(_, %q, %v) differ -want +got, %s", tst.name, tst.match, tst.at, diff)
+		}
+	}
+}
+
+func TestFindOncallRotationEvent(t *testing.T) {
+	tests := []struct {
+		name   string
+		fail   bool
+		events *gcal.Events
+		match  string
+		at     time.Time
+		want   []string
+	}{
+		{
+			name: "Success with primary only",
+			events: createCalendarEvents([]string{
+				"not1 is primary for Rotation rotation-1",
+				"this1 is primary for Rotation rotation-1",
+				"nope1 is primary for Rotation rotation-1",
+			}),
+			match: "rotation-1",
+			at:    midnight,
+			want:  []string{"this1"},
+		}, {
+			name: "Success with primary and secondary",
+			events: createCalendarEvents([]string{
+				"not1 is primary for Rotation rotation-1 secondary: not2",
+				"this1 is primary for Rotation rotation-1 secondary: this2",
+				"nope1 is primary for Rotation rotation-1 secondary: nope2",
+			}),
+			match: "rotation-1",
+			at:    midnight,
+			want:  []string{"this1", "this2"},
+		}, {
+			name: "No match",
+			fail: true,
+			events: createCalendarEvents([]string{
+				"this1 is primary for Rotation rotation-2",
+				"this1 is primary for Rotation rotation-2",
+				"this1 is primary for Rotation rotation-2",
+			}),
+			match: "rotation-1",
+			at:    midnight,
+			want:  []string{"this1"},
+		}, {
+			name: "No shift found",
+			fail: true,
+			events: createCalendarEvents([]string{
+				"this1 is primary for Rotation rotation-1 secondary: this2",
+				"",
+				"this1 is primary for Rotation rotation-1 secondary: this2",
+			}),
+			match: "rotation-1",
+			at:    midnight,
+			want:  []string{"this1", "this2"},
+		}, {
+			name: "invalid oncall",
+			fail: true,
+			events: createCalendarEvents([]string{
+				"no@t1 is primary for Rotation rotation-1 secondary: not2",
+				"thi!s1 is primary for Rotation rotation-1 secondary: this2",
+				"nop#e1 is primary for Rotation rotation-1 secondary: nope2",
+			}),
+			match: "unmatched",
+			at:    midnight,
+			want:  []string{"this1", "this2"},
 		},
-		match: "CCI-Trooper: ",
-		at:    midnight,
-		want:  []string{"this1", "this2", "this3"},
-	}, {
-		name: "No shift found",
-		fail: true,
-		events: &gcal.Events{
-			Items: []*gcal.Event{
-				{
-					Start: &gcal.EventDateTime{
-						DateTime: midnight.Add(-fullDay).Format(time.RFC3339),
-					},
-					End: &gcal.EventDateTime{
-						DateTime: midnight.Format(time.RFC3339),
-					},
-					Summary: "CCI-Trooper: not1, not2, not3",
-				}, {
-					Start: &gcal.EventDateTime{
-						DateTime: midnight.Add(fullDay).Format(time.RFC3339),
-					},
-					End: &gcal.EventDateTime{
-						DateTime: midnight.Add(2 * fullDay).Format(time.RFC3339),
-					},
-					Summary: "CCI-Trooper: nope1, nope2, nope3",
-				},
-			},
-		},
-		match: "CCI-Trooper: ",
-		at:    midnight,
-		want:  []string{"this1", "this2", "this3"},
-	},
 	}
 
 	for _, tst := range tests {

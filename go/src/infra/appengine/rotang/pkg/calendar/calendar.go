@@ -2,9 +2,11 @@ package calendar
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"infra/appengine/rotang"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -25,7 +27,11 @@ type Calendar struct {
 	credentials func(*router.Context) (*http.Client, error)
 }
 
-var _ rotang.Calenderer = &Calendar{}
+var (
+	_      rotang.Calenderer = &Calendar{}
+	pregex                   = regexp.MustCompile(`^([.[:alnum:]-_]+) is primary for Rotation`)
+	sregex                   = regexp.MustCompile(`secondary: ([.[:alnum:]-_]+)$`)
+)
 
 // New creates a new Calendar.
 func New(credFunc func(*router.Context) (*http.Client, error)) *Calendar {
@@ -231,15 +237,39 @@ func findTrooperEvent(es *gcal.Events, match string, t time.Time) ([]string, err
 }
 
 func oncallerFromSummary(in, match string) ([]string, error) {
+	var ocs []string
+
+	// There are two different summary formats supported.
+
+	// (1) "${primiary} is primiary for Rotation ${rotation_name} secondary: ${secondary}",
+	// where
+	// - ${rotation_name} must match with the value of `match`
+	// - " secondary: ${secondary}" is optional, and
+	if pri := pregex.FindStringSubmatch(in); pri != nil {
+		// validate rotation name
+		s := fmt.Sprintf("%s is primary for Rotation %s", pri[1], match)
+		if !strings.HasPrefix(in, s) {
+			return nil, status.Errorf(codes.InvalidArgument, "unmatched rotation: %q", in)
+		}
+		ocs = append(ocs, pri[1])
+		if sec := sregex.FindStringSubmatch(in); sec != nil {
+			ocs = append(ocs, sec[1])
+		}
+		return ocs, nil
+	}
+
+	// (2) "${prefix} ${primary}, ${secondary-1}, ${sec-2}, ... ${sec-N}",
+	// where
+	// - ${prefix} is the value of `match`, and
+	// - all of ${primiary}, and ${secondary-N} are optional.
 	if !strings.HasPrefix(in, match) {
 		return nil, status.Errorf(codes.InvalidArgument, "event has invalid format")
 	}
-
-	oc := strings.Split(strings.TrimPrefix(in, match), ",")
-	for i := range oc {
-		oc[i] = strings.Join(strings.Fields(oc[i]), "")
+	tokens := strings.Split(strings.TrimPrefix(in, match), ",")
+	for _, t := range tokens {
+		ocs = append(ocs, strings.Join(strings.Fields(t), ""))
 	}
-	return oc, nil
+	return ocs, nil
 }
 
 // nameShiftSeparator is used to separate the ShiftName from the rota name in Calendar Events.
