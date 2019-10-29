@@ -30,7 +30,7 @@ import (
 )
 
 func requestOK(ctx *router.Context) bool {
-	c, w, r := ctx.Context, ctx.Writer, ctx.Request
+	c, w, _ := ctx.Context, ctx.Writer, ctx.Request
 	if info.IsDevAppServer(c) {
 		return true
 	}
@@ -46,11 +46,6 @@ func requestOK(ctx *router.Context) bool {
 		logging.WithError(err).Errorf(
 			c, "Uploading IP %s is not whitelisted", auth.GetState(c).PeerIP())
 		http.Error(w, "IP is not whitelisted", http.StatusUnauthorized)
-		return false
-	}
-	if r.TLS == nil {
-		logging.Errorf(c, "uploadHandler: only allow HTTPS")
-		http.Error(w, "Only HTTPS requests are allowed", http.StatusUnauthorized)
 		return false
 	}
 	return true
