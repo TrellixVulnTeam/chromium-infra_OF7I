@@ -38,6 +38,8 @@ CREATE TABLE User (
   UNIQUE KEY (email)
 ) ENGINE=INNODB;
 
+-- Row to represent all deleted users i Monorail.
+INSERT IGNORE INTO User (user_id, email) VALUES (1, '');
 
 -- The UserPrefs table has open-ended key/value pairs that affect how
 -- we present information to that user when we generate a web page for

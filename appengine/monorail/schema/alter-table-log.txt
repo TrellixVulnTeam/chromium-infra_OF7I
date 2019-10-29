@@ -1703,3 +1703,8 @@ CREATE TABLE CommentImporter (
 2019-10-09: Drop DismissedCues because that data has been in UserPrefs since April.
 
 DROP TABLE DismissedCues;
+
+================================================================
+2019-10-24: Insert row representing deleted user.
+
+INSERT IGNORE INTO User (user_id, email) VALUES (1, '');

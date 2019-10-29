@@ -1014,11 +1014,27 @@ Delete.assert_called_once_with(
     chart_service = chart_svc.ChartService(self.config_service)
     self.cnxn.Execute = mock.Mock()
 
+    hotlist1 = fake.Hotlist(hotlist_name='unique', hotlist_id=678,
+                            owner_ids=[111], editor_ids=[222, 333])
+    hotlist2 = fake.Hotlist(hotlist_name='unique2', hotlist_id=679,
+                            owner_ids=[111])
+    hotlists_by_id = {hotlist1.hotlist_id: hotlist1,
+                      hotlist2.hotlist_id: hotlist2}
+    self.features_service.GetHotlists = mock.Mock(return_value=hotlists_by_id)
     self.features_service.hotlist2user_tbl.Delete = mock.Mock()
     self.features_service.hotlist2issue_tbl.Delete = mock.Mock()
     self.features_service.hotlist_tbl.Delete = mock.Mock()
+     # cache invalidation mocks
+    self.features_service.hotlist_2lc.InvalidateKeys = mock.Mock()
+    self.features_service.hotlist_id_2lc.InvalidateKeys = mock.Mock()
+    self.features_service.hotlist_user_to_ids.InvalidateKeys = mock.Mock()
+    self.config_service.InvalidateMemcacheForEntireProject = mock.Mock()
 
-    hotlist_ids = [678, 679]
+    hotlists_project_id = 787
+    self.features_service.GetProjectIDsFromHotlist = mock.Mock(
+        return_value=[hotlists_project_id])
+
+    hotlist_ids = hotlists_by_id.keys()
     commit = True  # commit in ExpungeHotlists should be True by default.
     self.features_service.ExpungeHotlists(
         self.cnxn, hotlist_ids, star_service, user_service, chart_service)
@@ -1042,6 +1058,19 @@ Delete.assert_called_once_with(
         self.cnxn, hotlist_id=hotlist_ids, commit=commit)
     self.features_service.hotlist_tbl.Delete.assert_called_once_with(
         self.cnxn, id=hotlist_ids, commit=commit)
+    # cache invalidation checks
+    self.features_service.hotlist_2lc.InvalidateKeys.assert_called_once_with(
+        self.cnxn, hotlist_ids)
+    invalidate_owner_calls = [
+        mock.call(self.cnxn, [(hotlist1.name, hotlist1.owner_ids[0])]),
+        mock.call(self.cnxn, [(hotlist2.name, hotlist2.owner_ids[0])])]
+    self.features_service.hotlist_id_2lc.InvalidateKeys.assert_has_calls(
+      invalidate_owner_calls)
+    self.features_service.hotlist_user_to_ids.InvalidateKeys.\
+assert_called_once_with(
+        self.cnxn, [333, 222, 111])
+    self.config_service.InvalidateMemcacheForEntireProject.\
+assert_called_once_with(hotlists_project_id)
 
   def testExpungeUsersInHotlists(self):
     hotliststar_tbl = mock.Mock()
@@ -1058,6 +1087,10 @@ Delete.assert_called_once_with(
     hotlist2 = fake.Hotlist(hotlist_name='name', hotlist_id=223,
                             owner_ids=[222], editor_ids=[111, 333])
     delete_hotlists = [hotlist2.hotlist_id]
+    delete_hotlist_project_id = 788
+    self.features_service.GetProjectIDsFromHotlist = mock.Mock(
+        return_value=[delete_hotlist_project_id])
+    self.config_service.InvalidateMemcacheForEntireProject = mock.Mock()
     hotlists_by_user_id = {
         111: [hotlist1.hotlist_id, hotlist2.hotlist_id],
         222: [hotlist1.hotlist_id, hotlist2.hotlist_id],
@@ -1085,6 +1118,10 @@ Delete.assert_called_once_with(
     user_service.hotlistvisithistory_tbl.Delete = mock.Mock()
 
     # Called to expunge hotlists
+    hotlists_by_id = {hotlist1.hotlist_id: hotlist1,
+                      hotlist2.hotlist_id: hotlist2}
+    self.features_service.GetHotlists = mock.Mock(
+        return_value=hotlists_by_id)
     self.features_service.hotlist2issue_tbl.Delete = mock.Mock()
     self.features_service.hotlist_tbl.Delete = mock.Mock()
     hotliststar_tbl.Delete = mock.Mock()

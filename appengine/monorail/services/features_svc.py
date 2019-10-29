@@ -1139,6 +1139,9 @@ class FeaturesService(object):
       chart_svc: an instance of a ChartService.
       commit: set to False to skip the DB commit and do it in the caller.
     """
+
+    hotlists_by_id = self.GetHotlists(cnxn, hotlist_ids)
+
     for hotlist_id in hotlist_ids:
       star_svc.ExpungeStars(cnxn, hotlist_id, commit=commit)
     chart_svc.ExpungeHotlistsFromIssueSnapshots(
@@ -1148,7 +1151,21 @@ class FeaturesService(object):
     self.hotlist2issue_tbl.Delete(cnxn, hotlist_id=hotlist_ids, commit=commit)
     self.hotlist_tbl.Delete(cnxn, id=hotlist_ids, commit=commit)
 
-    # TODO(jojwang): cache invalidation
+    # Invalidate cache for deleted hotlists.
+    self.hotlist_2lc.InvalidateKeys(cnxn, hotlist_ids)
+    users_to_invalidate = set()
+    for hotlist in hotlists_by_id.values():
+      users_to_invalidate.update(
+          hotlist.owner_ids + hotlist.editor_ids + hotlist.follower_ids)
+      self.hotlist_id_2lc.InvalidateKeys(
+          cnxn, [(hotlist.name, owner_id) for owner_id in hotlist.owner_ids])
+    self.hotlist_user_to_ids.InvalidateKeys(cnxn, list(users_to_invalidate))
+    hotlist_project_ids = set()
+    for hotlist_id in hotlist_ids:
+      hotlist_project_ids.update(self.GetProjectIDsFromHotlist(
+          cnxn, hotlist_id))
+    for project_id in hotlist_project_ids:
+      self.config_service.InvalidateMemcacheForEntireProject(project_id)
 
   def ExpungeUsersInHotlists(
       self, cnxn, user_ids, star_svc, user_svc, chart_svc):
