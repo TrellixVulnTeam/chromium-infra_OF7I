@@ -340,7 +340,64 @@
     ],
     "cwd": "[CACHE]/builder/depot_tools/depot_tools",
     "infra_step": true,
-    "name": "post-train diff at upstream CL"
+    "name": "post-train diff at upstream CL",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "add",
+      "--all"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "save post-train diff"
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "git clean (2)"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "refs/heads/master"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "sync recipe_engine to master"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/depot_tools/depot_tools/some/path/recipes.py",
+      "-O",
+      "recipe_engine=[CACHE]/builder/recipe_engine/recipe_engine",
+      "test",
+      "train",
+      "--no-docs"
+    ],
+    "name": "train recipes at upstream master"
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--exit-code"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "post-train diff at upstream master"
   },
   {
     "cmd": [

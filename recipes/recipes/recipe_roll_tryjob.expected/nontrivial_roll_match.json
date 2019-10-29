@@ -49,7 +49,11 @@
     ],
     "name": "parse description",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{}@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"Recipe-Nontrivial-Roll\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"depot_tools\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
   },
@@ -340,7 +344,67 @@
     ],
     "cwd": "[CACHE]/builder/depot_tools/depot_tools",
     "infra_step": true,
-    "name": "post-train diff at upstream CL"
+    "name": "post-train diff at upstream CL",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "add",
+      "--all"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "save post-train diff"
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "git clean (2)"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "refs/heads/master"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "sync recipe_engine to master"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/depot_tools/depot_tools/some/path/recipes.py",
+      "-O",
+      "recipe_engine=[CACHE]/builder/recipe_engine/recipe_engine",
+      "test",
+      "train",
+      "--no-docs"
+    ],
+    "name": "train recipes at upstream master"
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--exit-code"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "post-train diff at upstream master",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
@@ -350,7 +414,7 @@
     ],
     "name": "Roll OK",
     "~followup_annotations": [
-      "@@@STEP_TEXT@CL is trivial and message contains no footers for this repo.@@@"
+      "@@@STEP_TEXT@CL message contains correct footer ('Recipe-Nontrivial-Roll') for this repo.@@@"
     ]
   },
   {

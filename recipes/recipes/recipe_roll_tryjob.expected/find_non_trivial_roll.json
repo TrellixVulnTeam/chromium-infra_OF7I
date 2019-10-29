@@ -54,6 +54,10 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "initialize checkouts"
+  },
+  {
     "cmd": [
       "vpython",
       "-u",
@@ -66,7 +70,10 @@
       "[CACHE]/builder/recipe_engine"
     ],
     "infra_step": true,
-    "name": "recipe_engine checkout"
+    "name": "initialize checkouts.recipe_engine checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -92,9 +99,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "gerrit fetch current CL info",
+    "name": "initialize checkouts.gerrit fetch current CL info",
     "timeout": 600,
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@[@@@",
       "@@@STEP_LOG_LINE@json.output@  {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"branch\": \"master\", @@@",
@@ -138,8 +146,9 @@
       ]
     },
     "infra_step": true,
-    "name": "bot_update",
+    "name": "initialize checkouts.bot_update",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@Some step text@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
@@ -180,12 +189,15 @@
   {
     "cmd": [
       "git",
-      "clean",
-      "-xf"
+      "rev-parse",
+      "HEAD"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "git clean"
+    "name": "initialize checkouts.read CL revision",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -200,7 +212,10 @@
       "[CACHE]/builder/depot_tools"
     ],
     "infra_step": true,
-    "name": "depot_tools checkout"
+    "name": "initialize checkouts.depot_tools checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -229,8 +244,9 @@
       ]
     },
     "infra_step": true,
-    "name": "bot_update (without patch)",
+    "name": "initialize checkouts.bot_update (without patch)",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@Some step text@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
@@ -274,9 +290,20 @@
       "clean",
       "-xf"
     ],
-    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "git clean (2)"
+    "name": "git clean"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "deadbeef"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "sync recipe_engine to CL"
   },
   {
     "cmd": [
@@ -303,7 +330,7 @@
       "train",
       "--no-docs"
     ],
-    "name": "train recipes"
+    "name": "train recipes at upstream CL"
   },
   {
     "cmd": [
@@ -313,7 +340,64 @@
     ],
     "cwd": "[CACHE]/builder/depot_tools/depot_tools",
     "infra_step": true,
-    "name": "post-train diff",
+    "name": "post-train diff at upstream CL",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "add",
+      "--all"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "save post-train diff"
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "git clean (2)"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "refs/heads/master"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "sync recipe_engine to master"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/depot_tools/depot_tools/some/path/recipes.py",
+      "-O",
+      "recipe_engine=[CACHE]/builder/recipe_engine/recipe_engine",
+      "test",
+      "train",
+      "--no-docs"
+    ],
+    "name": "train recipes at upstream master"
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--exit-code"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "post-train diff at upstream master",
     "~followup_annotations": [
       "@@@STEP_FAILURE@@@"
     ]
