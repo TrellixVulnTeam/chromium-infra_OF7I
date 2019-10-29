@@ -13,6 +13,7 @@ from buildbucket_proto.build_pb2 import Build
 from testing_utils.testing import AppengineTestCase
 
 from common.findit_http_client import FinditHttpClient
+from common.waterfall import buildbucket_client
 from handlers import completed_build_pubsub_ingestor
 from model.isolated_target import IsolatedTarget
 
@@ -30,8 +31,9 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
   @mock.patch.object(FinditHttpClient, 'Post')
-  def testSucessfulPushCIBuild(self, mock_post, *_):
+  def testSucessfulPushCIBuild(self, mock_post, mock_get_build, *_):
     mock_build = Build()
     mock_build.id = 8945610992972640896
     mock_build.status = 12
@@ -50,6 +52,7 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     mock_headers = {'X-Prpc-Grpc-Code': '0'}
     binary_data = mock_build.SerializeToString()
     mock_post.return_value = (200, binary_data, mock_headers)
+    mock_get_build.return_value = mock_build
 
     request_body = json.dumps({
         'message': {
@@ -165,8 +168,9 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
   @mock.patch.object(FinditHttpClient, 'Post')
-  def testNonIsolateBuild(self, mock_post, *_):
+  def testNonIsolateBuild(self, mock_post, mock_get_build, *_):
     # This build does not isolate any targets.
     mock_build = Build()
     mock_build.id = 8945610992972640896
@@ -183,6 +187,7 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     mock_headers = {'X-Prpc-Grpc-Code': '0'}
     binary_data = mock_build.SerializeToString()
     mock_post.return_value = (200, binary_data, mock_headers)
+    mock_get_build.return_value = mock_build
 
     request_body = json.dumps({
         'message': {
@@ -212,8 +217,9 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
   @mock.patch.object(FinditHttpClient, 'Post')
-  def testNoMasternameBuild(self, mock_post, *_):
+  def testNoMasternameBuild(self, mock_post, mock_get_build, *_):
     mock_build = Build()
     mock_build.id = 8945610992972640896
     mock_build.status = 12
@@ -231,6 +237,7 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     mock_headers = {'X-Prpc-Grpc-Code': '0'}
     binary_data = mock_build.SerializeToString()
     mock_post.return_value = (200, binary_data, mock_headers)
+    mock_get_build.return_value = mock_build
 
     request_body = json.dumps({
         'message': {
@@ -260,8 +267,9 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
   @mock.patch.object(FinditHttpClient, 'Post')
-  def testSucessfulPushTryJob(self, mock_post, *_):
+  def testSucessfulPushTryJob(self, mock_post, mock_get_build, *_):
     mock_build = Build()
     mock_build.id = 8945610992972640896
     mock_build.status = 12
@@ -289,6 +297,7 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     mock_headers = {'X-Prpc-Grpc-Code': '0'}
     binary_data = mock_build.SerializeToString()
     mock_post.return_value = (200, binary_data, mock_headers)
+    mock_get_build.return_value = mock_build
 
     request_body = json.dumps({
         'message': {

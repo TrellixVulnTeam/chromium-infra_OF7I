@@ -66,6 +66,13 @@ class CompletedBuildPubsubIngestor(BaseHandler):
       return
 
     if status == 'COMPLETED':
+      # Checks if the build is accessable.
+      bb_build = GetV2Build(build_id)
+      if not bb_build:
+        logging.error('Failed to download build for %s/%r.', builder_name,
+                      build_id)
+        return
+
       _HandlePossibleCodeCoverageBuild(int(build_id))
       if project in _FINDIT_V2_INTERCEPT_PROJECTS:
         _HandlePossibleFailuresInBuild(project, bucket, builder_name,
@@ -221,7 +228,7 @@ def _IngestProto(build_id):
 def _TriggerV1AnalysisForChromiumBuildIfNeeded(bucket, builder_name, build_id,
                                                build_result):
   """Temporary solution of triggering v1 analysis until v2 is ready."""
-  if 'ci' not in bucket:
+  if not bucket.endswith('ci'):
     return
 
   if build_result != 'FAILURE':
@@ -235,8 +242,8 @@ def _TriggerV1AnalysisForChromiumBuildIfNeeded(bucket, builder_name, build_id,
   # Sanity check.
   assert build, 'Failed to download build for {}.'.format(build_id)
   assert build_id == build.id, (
-      'Build id {} is different from the requested id {}.'.format(
-          build.id, build_id))
+    'Build id {} is different from the requested id {}.'.format(
+      build.id, build_id))
   assert build.number, 'No build_number for chromium build {}'.format(build_id)
 
   # Converts the Struct to standard dict, to use .get, .iteritems etc.
