@@ -130,8 +130,11 @@ message SOMAnnotationEvent {
     string project_id = 2;
   }
 
-  // Bugs is the list of MonorailBugs attached to the alert.
-  repeated MonorailBug bugs = 8;
+  // Deprecated, use bug_list instead
+  repeated string bugs = 8 [deprecated=true];
+
+  // bug_list is the list of MonorailBugs attached to the alert.
+  repeated MonorailBug bug_list = 13;
 
   // Comment is a user comment attached to an alert.
   message Comment {

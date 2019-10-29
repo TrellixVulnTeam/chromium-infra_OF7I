@@ -203,7 +203,7 @@ func (a *Annotation) Add(c context.Context, r io.Reader) (bool, error) {
 	evt := createAnnotationEvent(c, a, gen.SOMAnnotationEvent_ADD)
 	evt.User = user.Email()
 	for _, changedBug := range change.Bugs {
-		evt.Bugs = append(evt.Bugs, &gen.SOMAnnotationEvent_MonorailBug{
+		evt.BugList = append(evt.BugList, &gen.SOMAnnotationEvent_MonorailBug{
 			BugId:     changedBug.BugID,
 			ProjectId: changedBug.ProjectID,
 		})
@@ -293,7 +293,7 @@ func (a *Annotation) Remove(c context.Context, r io.Reader) (bool, error) {
 	evt := createAnnotationEvent(c, a, gen.SOMAnnotationEvent_DELETE)
 	evt.User = user.Email()
 	for _, changedBug := range change.Bugs {
-		evt.Bugs = append(evt.Bugs, &gen.SOMAnnotationEvent_MonorailBug{
+		evt.BugList = append(evt.BugList, &gen.SOMAnnotationEvent_MonorailBug{
 			BugId:     changedBug.BugID,
 			ProjectId: changedBug.ProjectID,
 		})
