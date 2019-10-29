@@ -56,12 +56,19 @@ def RunSteps(api):
                     run_test_seq=True,
                     run_python3=api.platform.is_linux)
 
+    # TODO(crbug.com/1019105): remove this timeout.
+    if api.platform.is_mac:
+      timeout = 60
+    else:
+      timeout = None
+
     # TODO(crbug.com/1017545): enable python3 on windows and mac
     # swarming bot
     _step_run_tests(api, 'swarming bot',
                     luci_dir.join('appengine', 'swarming', 'swarming_bot'),
                     run_test_seq=True,
-                    run_python3=api.platform.is_linux)
+                    run_python3=api.platform.is_linux,
+                    timeout=timeout)
 
     # swarming server
     if api.platform.is_linux:
@@ -75,7 +82,7 @@ def RunSteps(api):
 
 
 def _step_run_tests(
-    api, name, cwd, run_test_seq=False, run_python3=False):
+    api, name, cwd, run_test_seq=False, run_python3=False, timeout=None):
   luci_dir = api.context.cwd
   with api.step.nest(name):
     with api.context(cwd=cwd):
@@ -86,18 +93,22 @@ def _step_run_tests(
         # python3
         venv3 = luci_dir.join('.vpython3')
         api.python('run tests python3',
-                   'test.py', args=testpy_args, venv=venv3)
+                   'test.py', args=testpy_args, venv=venv3,
+                   timeout=timeout)
         if run_test_seq:
           api.python('run tests seq python3',
-                     'test_seq.py', args=['-v'], venv=venv3)
+                     'test_seq.py', args=['-v'], venv=venv3,
+                     timeout=timeout)
 
       # python2
       venv = luci_dir.join('.vpython')
       api.python('run tests python2',
-                 'test.py', args=testpy_args, venv=venv)
+                 'test.py', args=testpy_args, venv=venv,
+                 timeout=timeout)
       if run_test_seq:
         api.python('run tests seq python2',
-                   'test_seq.py', args=['-v'], venv=venv)
+                   'test_seq.py', args=['-v'], venv=venv,
+                   timeout=timeout)
 
 
 def _step_swarming_ui_tests(api):
@@ -133,6 +144,15 @@ def GenTests(api):
 
   yield (
       api.test('try') +
+      api.buildbucket.try_build(
+          'infra', 'try', 'Luci-py Presubmit',
+          git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
+      )
+  )
+
+  yield (
+      api.test('try-mac') +
+      api.platform.name('mac') +
       api.buildbucket.try_build(
           'infra', 'try', 'Luci-py Presubmit',
           git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
