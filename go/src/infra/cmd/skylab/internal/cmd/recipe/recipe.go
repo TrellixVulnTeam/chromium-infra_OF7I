@@ -68,6 +68,7 @@ type Args struct {
 	Tags                       []string
 	ProvisionLabels            []string
 	LegacySuite                string
+	PubsubTopic                string
 }
 
 // TestPlatformRequest constructs a cros_test_platform.Request from Args.
@@ -135,6 +136,12 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 	if a.LegacySuite != "" {
 		params.Legacy = &test_platform.Request_Params_Legacy{
 			AutotestSuite: a.LegacySuite,
+		}
+	}
+
+	if a.PubsubTopic != "" {
+		params.Notification = &test_platform.Request_Params_Notification{
+			PubsubTopic: a.PubsubTopic,
 		}
 	}
 

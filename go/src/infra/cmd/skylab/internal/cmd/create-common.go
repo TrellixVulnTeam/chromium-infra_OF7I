@@ -33,6 +33,7 @@ type createRunCommon struct {
 	keyvals         []string
 	qsAccount       string
 	buildBucket     bool
+	statusTopic     string
 }
 
 func (c *createRunCommon) Register(fl *flag.FlagSet) {
@@ -60,6 +61,7 @@ specified multiple times.`)
 	fl.StringVar(&c.qsAccount, "qs-account", "", "Quota Scheduler account to use for this task.  Optional.")
 	fl.Var(flagx.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
 	fl.BoolVar(&c.buildBucket, "bb", true, "Deprecated, do not use.")
+	fl.StringVar(&c.statusTopic, "status-topic", "", "Pubsub `topic` on which to send test-status update notifications.")
 }
 
 func (c *createRunCommon) ValidateArgs(fl flag.FlagSet) error {
@@ -98,6 +100,7 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		Timeout:                    time.Duration(c.timeoutMins) * time.Minute,
 		MaxRetries:                 c.maxRetries,
 		Keyvals:                    keyvalMap,
+		PubsubTopic:                c.statusTopic,
 		Priority:                   int64(c.priority),
 		Tags:                       tags,
 	}, nil
