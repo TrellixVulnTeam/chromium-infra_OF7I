@@ -29,17 +29,16 @@ import (
 // Enumerate is the `enumerate` subcommand implementation.
 var Enumerate = &subcommands.Command{
 	UsageLine: "enumerate -input_json /path/to/input.json -output_json /path/to/output.json",
-	ShortDesc: "Enumerate tasks to execute for a request.",
-	LongDesc: `Enumerate tasks to execute for a request.
+	ShortDesc: "Enumerate tasks to execute for given requests.",
+	LongDesc: `Enumerate tasks to execute for given requests.
 
 Step input and output is JSON encoded protobuf defined at
 https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platform/steps/enumeration.proto`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &enumerateRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
-		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.EnumerationRequest")
-		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.EnumerationResponse should be written.")
-		c.Flags.BoolVar(&c.multiRequest, "multi_request", true, "If true, handle multiple requests at once (transitional flag: crbug.com/1008135).")
+		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.EnumerationRequests")
+		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.EnumerationResponses should be written.")
 		return c
 	},
 }
@@ -48,9 +47,8 @@ type enumerateRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 
-	inputPath    string
-	outputPath   string
-	multiRequest bool
+	inputPath  string
+	outputPath string
 }
 
 func (c *enumerateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -148,61 +146,24 @@ func (c *enumerateRun) processCLIArgs(args []string) error {
 }
 
 func (c *enumerateRun) readRequests() ([]*steps.EnumerationRequest, error) {
-	if c.multiRequest {
-		rs, err := c.readMultiRequest()
-		if err != nil {
-			return nil, err
-		}
-		return rs.Requests, nil
-	}
-	r, err := c.readSingleRequest()
-	if err != nil {
+	var rs steps.EnumerationRequests
+	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	return []*steps.EnumerationRequest{r}, nil
+	return rs.Requests, nil
 }
 
 func (c *enumerateRun) writeResponseWithError(resps []*steps.EnumerationResponse, err error) error {
-	if c.multiRequest {
-		return writeResponseWithError(
-			c.outputPath,
-			&steps.EnumerationResponses{
-				Responses: resps,
-			},
-			err,
-		)
-	}
-	if len(resps) > 1 {
-		panic(fmt.Sprintf("multiple responses without -multi_request: %s", resps))
-	}
-	return writeResponseWithError(c.outputPath, resps[0], err)
+	return writeResponseWithError(
+		c.outputPath,
+		&steps.EnumerationResponses{
+			Responses: resps,
+		},
+		err,
+	)
 }
 
-func (c *enumerateRun) readMultiRequest() (*steps.EnumerationRequests, error) {
-	var requests steps.EnumerationRequests
-	if err := readRequest(c.inputPath, &requests); err != nil {
-		return nil, err
-	}
-	return &requests, nil
-}
-
-func (c *enumerateRun) readSingleRequest() (*steps.EnumerationRequest, error) {
-	var request steps.EnumerationRequest
-	if err := readRequest(c.inputPath, &request); err != nil {
-		return nil, err
-	}
-	return &request, nil
-}
-
-func (c *enumerateRun) gsPath(request *steps.EnumerationRequest) (gs.Path, error) {
-	m := request.GetMetadata().GetTestMetadataUrl()
-	if m == "" {
-		return "", errors.Reason("empty request.metadata.test_metadata_url in %s", request).Err()
-	}
-	return gs.Path(m), nil
-}
-
-func (c *enumerateRun) gsPathLegacy(requests []*steps.EnumerationRequest) (gs.Path, error) {
+func (c *enumerateRun) gsPath(requests []*steps.EnumerationRequest) (gs.Path, error) {
 	if len(requests) == 0 {
 		panic("zero requests")
 	}

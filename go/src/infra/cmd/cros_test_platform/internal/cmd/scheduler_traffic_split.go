@@ -38,9 +38,8 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 	CommandRun: func() subcommands.CommandRun {
 		c := &schedulerTrafficSplitRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
-		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.SchedulerTrafficSplitRequest")
-		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.SchedulerTrafficSplitResponse should be written.")
-		c.Flags.BoolVar(&c.multiRequest, "multi_request", true, "If true, handle multiple requests at once (transitional flag: crbug.com/1008135).")
+		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.SchedulerTrafficSplitRequests")
+		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.SchedulerTrafficSplitResponses should be written.")
 		return c
 	},
 }
@@ -49,9 +48,8 @@ type schedulerTrafficSplitRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 
-	multiRequest bool
-	inputPath    string
-	outputPath   string
+	inputPath  string
+	outputPath string
 }
 
 func (c *schedulerTrafficSplitRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -119,34 +117,11 @@ func (c *schedulerTrafficSplitRun) processCLIArgs(args []string) error {
 }
 
 func (c *schedulerTrafficSplitRun) readRequests() ([]*steps.SchedulerTrafficSplitRequest, error) {
-	if c.multiRequest {
-		rs, err := c.readMultiRequest()
-		if err != nil {
-			return nil, err
-		}
-		return rs.Requests, nil
-	}
-	r, err := c.readSingleRequest()
-	if err != nil {
+	var rs steps.SchedulerTrafficSplitRequests
+	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	return []*steps.SchedulerTrafficSplitRequest{r}, nil
-}
-
-func (c *schedulerTrafficSplitRun) readMultiRequest() (*steps.SchedulerTrafficSplitRequests, error) {
-	var requests steps.SchedulerTrafficSplitRequests
-	if err := readRequest(c.inputPath, &requests); err != nil {
-		return nil, err
-	}
-	return &requests, nil
-}
-
-func (c *schedulerTrafficSplitRun) readSingleRequest() (*steps.SchedulerTrafficSplitRequest, error) {
-	var request steps.SchedulerTrafficSplitRequest
-	if err := readRequest(c.inputPath, &request); err != nil {
-		return nil, err
-	}
-	return &request, nil
+	return rs.Requests, nil
 }
 
 func ensureIdenticalConfigs(rs []*steps.SchedulerTrafficSplitRequest) error {
@@ -173,16 +148,9 @@ func autotestResponseCount(rs []*steps.SchedulerTrafficSplitResponse) int {
 }
 
 func (c *schedulerTrafficSplitRun) writeResponses(resps []*steps.SchedulerTrafficSplitResponse) error {
-	if c.multiRequest {
-		return writeResponse(c.outputPath, &steps.SchedulerTrafficSplitResponses{
-			Responses: resps,
-		})
-	}
-
-	if len(resps) > 1 {
-		panic(fmt.Sprintf("multiple responses without -multi_request: %s", resps))
-	}
-	return writeResponse(c.outputPath, resps[0])
+	return writeResponse(c.outputPath, &steps.SchedulerTrafficSplitResponses{
+		Responses: resps,
+	})
 }
 
 func (c *schedulerTrafficSplitRun) getTrafficSplitConfig(ctx context.Context, config *config.Config_SchedulerMigration) (*scheduler.TrafficSplit, error) {
