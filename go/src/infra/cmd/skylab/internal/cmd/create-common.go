@@ -5,8 +5,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"time"
 
 	"go.chromium.org/luci/common/data/strpair"
@@ -132,4 +134,17 @@ func toKeyvalMap(keyvals []string) (map[string]string, error) {
 		m[k] = v
 	}
 	return m, nil
+}
+
+func printScheduledTaskJSON(w io.Writer, name string, ID string, URL string) error {
+	t := struct {
+		Name string `json:"task_name"`
+		ID   string `json:"task_id"`
+		URL  string `json:"task_url"`
+	}{
+		Name: name,
+		ID:   ID,
+		URL:  URL,
+	}
+	return json.NewEncoder(w).Encode(t)
 }

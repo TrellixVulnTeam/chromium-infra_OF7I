@@ -6,9 +6,7 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
@@ -116,17 +114,4 @@ func (c *createSuiteRun) testPlatformRequest(suite string) (*test_platform.Reque
 
 func (c *createSuiteRun) buildTags(suiteName string) []string {
 	return append(c.createRunCommon.BuildTags(), "skylab-tool:create-suite", fmt.Sprintf("suite:%s", suiteName))
-}
-
-func printScheduledTaskJSON(w io.Writer, name string, ID string, URL string) error {
-	t := struct {
-		Name string `json:"task_name"`
-		ID   string `json:"task_id"`
-		URL  string `json:"task_url"`
-	}{
-		Name: name,
-		ID:   ID,
-		URL:  URL,
-	}
-	return json.NewEncoder(w).Encode(t)
 }
