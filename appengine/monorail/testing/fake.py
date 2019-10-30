@@ -2483,10 +2483,14 @@ class FeaturesService(object):
           self.hotlists_id_by_issue[item.issue_id].remove(hotlist_id)
         except (ValueError, KeyError):
           pass
+      for owner_id in hotlist.owner_ids:
+        self.test_hotlists.pop((hotlist.name, owner_id), None)
 
   def ExpungeHotlists(
       self, cnxn, hotlist_ids, star_svc, user_svc, chart_svc, commit=True):
     self.expunged_hotlist_ids.extend(hotlist_ids)
+    for hotlist_id in hotlist_ids:
+      self.DeleteHotlist(cnxn, hotlist_id)
 
   def ExpungeUsersInHotlists(
       self, cnxn, user_ids, star_svc, user_svc, chart_svc):

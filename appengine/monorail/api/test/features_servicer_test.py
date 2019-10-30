@@ -905,6 +905,25 @@ class FeaturesServicerTest(unittest.TestCase):
     self.assertEqual(hotlist.editor_ids, [])
     self.assertEqual(hotlist.follower_ids, [self.user4.user_id])
 
+  def testDeleteHotlist(self):
+    """Test we can delete a hotlist via the API."""
+    owner_ids = [self.user2.user_id]
+    editor_ids = []
+    hotlist = self.services.features.TestAddHotlist(
+        name='Hotlist-1', summary='summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, hotlist_id=1235)
+    request = features_pb2.DeleteHotlistRequest(
+        hotlist_ref=common_pb2.HotlistRef(
+            name='Hotlist-1',
+            owner=common_pb2.UserRef(user_id=self.user2.user_id)))
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user2.email)
+    mc.LookupLoggedInUserPerms(None)
+    self.CallWrapped(self.features_svcr.DeleteHotlist, mc, request)
+
+    self.assertTrue(
+        hotlist.hotlist_id in self.services.features.expunged_hotlist_ids)
 
   def testPredictComponent_Normal(self):
     """Test normal case when predicted component exists."""

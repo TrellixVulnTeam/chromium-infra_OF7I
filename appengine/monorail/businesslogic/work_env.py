@@ -2063,6 +2063,30 @@ class WorkEnv(object):
         self.mc.cnxn, hotlist_id, list(new_owner_ids), list(new_editor_ids),
         list(new_follower_ids), commit=commit)
 
+  def DeleteHotlist(self, hotlist_id):
+    """Delete the given hotlist from the DB.
+
+    Args:
+      hotlist_id (int): The id of the hotlist to delete.
+
+    Raises:
+      NoSuchHotlistException: There is not hotlist with the given ID.
+      PermissionException: The logged-in user is not allowed to
+        delete the hotlist.
+    """
+    hotlist = self.services.features.GetHotlist(
+        self.mc.cnxn, hotlist_id, use_cache=False)
+    edit_permitted = permissions.CanAdministerHotlist(
+        self.mc.auth.effective_ids, self.mc.perms, hotlist)
+    if not edit_permitted:
+      raise permissions.PermissionException(
+          'User is not allowed to delete hotlist')
+
+    self.services.features.ExpungeHotlists(
+        self.mc.cnxn, [hotlist.hotlist_id], self.services.hotlist_star,
+        self.services.user,  self.services.chart)
+
+
   def ListHotlistsByUser(self, user_id):
     """Return the hotlists for the given user.
 

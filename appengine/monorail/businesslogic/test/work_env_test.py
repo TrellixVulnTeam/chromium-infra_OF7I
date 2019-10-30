@@ -3539,6 +3539,27 @@ class WorkEnvTest(unittest.TestCase):
       self.assertEqual(updated_hotlist.editor_ids, [])
       self.assertEqual(updated_hotlist.follower_ids, [])
 
+  def testDeleteHotlist(self):
+    hotlist = self.work_env.services.features.CreateHotlist(
+        self.cnxn, 'hotlistName', 'summary', 'desc', [444], [])
+
+    self.SignIn(user_id=444)
+    with self.work_env as we:
+      we.DeleteHotlist(hotlist.hotlist_id)
+
+    # Just test that services.features.ExpungeHotlists was called
+    self.assertTrue(
+        hotlist.hotlist_id in self.services.features.expunged_hotlist_ids)
+
+  def testDeleteHotlist_NoPerms(self):
+    hotlist = self.work_env.services.features.CreateHotlist(
+        self.cnxn, 'hotlistName', 'summary', 'desc', [444], [])
+
+    self.SignIn(user_id=333)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.DeleteHotlist(hotlist.hotlist_id)
+
   def testListHotlistsByUser_Normal(self):
     self.work_env.services.features.CreateHotlist(
         self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',

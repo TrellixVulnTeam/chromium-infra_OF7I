@@ -323,6 +323,18 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return features_pb2.UpdateHotlistRolesResponse()
 
   @monorail_servicer.PRPCMethod
+  def DeleteHotlist(self, mc, request):
+    """Delete the given hotlist"""
+    hotlist_id = converters.IngestHotlistRef(
+        mc.cnxn, self.services.user, self.services.features,
+        request.hotlist_ref)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.DeleteHotlist(hotlist_id)
+
+    return features_pb2.DeleteHotlistResponse()
+
+  @monorail_servicer.PRPCMethod
   def PredictComponent(self, mc, request):
     """Predict the component of an issue based on the given text."""
     with work_env.WorkEnv(mc, self.services) as we:
