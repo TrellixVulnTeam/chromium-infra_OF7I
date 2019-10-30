@@ -180,12 +180,6 @@ func uploadHandler(ctx *router.Context) {
 		return
 	}
 
-	if r.TLS == nil {
-		logging.Errorf(c, "uploadHandler: only allow HTTPS")
-		http.Error(w, "Only HTTPS requests are allowed", http.StatusUnauthorized)
-		return
-	}
-
 	fileheaders := r.MultipartForm.File["file"]
 	if !info.IsDevAppServer(c) {
 		c = appengine.WithContext(c, r)
