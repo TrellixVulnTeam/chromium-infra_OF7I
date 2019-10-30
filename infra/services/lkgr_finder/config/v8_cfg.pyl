@@ -78,7 +78,7 @@
         'V8 Arm - builder - perf',
         'V8 Android Arm - builder - perf',
         'V8 Arm64 - builder - perf',
-        'V8 Android64 Arm - builder - perf',
+        'V8 Android Arm64 - builder - perf',
       ],
     },
   },
