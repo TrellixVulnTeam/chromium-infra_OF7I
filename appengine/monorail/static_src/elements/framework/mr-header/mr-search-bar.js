@@ -340,7 +340,7 @@ export class MrSearchBar extends LitElement {
       }
     });
 
-    params.q = form.q.value;
+    params.q = form.q.value.trim();
     params.can = form.can.value;
 
     this._navigateToList(params, newTab);

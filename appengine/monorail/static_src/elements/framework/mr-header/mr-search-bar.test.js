@@ -91,7 +91,7 @@ describe('mr-search-bar', () => {
       window.open.restore();
     });
 
-    it('submit prevents default', async () => {
+    it('prevents default', async () => {
       await element.updateComplete;
 
       const form = element.shadowRoot.querySelector('form');
@@ -105,7 +105,7 @@ describe('mr-search-bar', () => {
       sinon.assert.calledOnce(event.preventDefault);
     });
 
-    it('submit uses initial values when no form changes', async () => {
+    it('uses initial values when no form changes', async () => {
       element.initialValue = 'test query';
       element.currentCan = '3';
 
@@ -120,7 +120,7 @@ describe('mr-search-bar', () => {
           '/p/chromium/issues/list?q=test%20query&can=3');
     });
 
-    it('submit adds form values to url', async () => {
+    it('adds form values to url', async () => {
       await element.updateComplete;
 
       const form = element.shadowRoot.querySelector('form');
@@ -135,7 +135,22 @@ describe('mr-search-bar', () => {
           '/p/chromium/issues/list?q=test&can=1');
     });
 
-    it('submit only keeps kept query params', async () => {
+    it('trims query', async () => {
+      await element.updateComplete;
+
+      const form = element.shadowRoot.querySelector('form');
+
+      form.q.value = '  123  ';
+      form.can.value = '1';
+
+      form.dispatchEvent(new Event('submit'));
+
+      sinon.assert.calledOnce(element._page);
+      sinon.assert.calledWith(element._page,
+          '/p/chromium/issues/list?q=123&can=1');
+    });
+
+    it('only keeps kept query params', async () => {
       element.queryParams = {fakeParam: 'test', x: 'Status'};
       element.keptParams = ['x'];
 
@@ -150,7 +165,7 @@ describe('mr-search-bar', () => {
           '/p/chromium/issues/list?x=Status&q=&can=2');
     });
 
-    it('shift+enter opens search in new tab', async () => {
+    it('on shift+enter opens search in new tab', async () => {
       await element.updateComplete;
 
       const form = element.shadowRoot.querySelector('form');
