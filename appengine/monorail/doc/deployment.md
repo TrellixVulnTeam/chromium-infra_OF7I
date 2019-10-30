@@ -149,6 +149,11 @@ The pipelines currently do not update cron jobs or task queues. See
 
 ## Deploying a new version to an existing instance using Spinnaker
 
+Manual testing steps are added during Workflow's weekly meetings. Confirm that
+any changes that may have been merged between the meeting and deployment have
+been added to the meeting notes with testing steps. If there are missing
+changes, ping the CL owner to add testing instructions.
+
 ### Deployment steps
 
 If any step below fails. Stop the deploy and ping
@@ -195,6 +200,9 @@ If any step below fails. Stop the deploy and ping
             admin-specific functionality.
         1.  If you rolled back a previous attempt, make sure you test any
             changes that might have landed in the mean time.
+        1.  Test that email works by updating any issue with an owner and/or cc
+            list and confirming that the email shows up in
+            g/monorail-staging-emails with all the correct recipients.
     1.  If everything looks good, choose "Continue" for this stage.
     1.  If there is an issue, choose "Rollback" for this stage.
 1.  Update Prod Schema
@@ -207,8 +215,7 @@ If any step below fails. Stop the deploy and ping
         admin-specific functionality.
     1.  Add a comment to an issue.
     1.  Enter a new issue and CC your personal account.
-    1.  Verify that you got an email (at the "all" email address specified in
-        settings.py).
+    1.  Verify that you got an email
     1.  Try doing a query that is not cached, then repeat it to test the cached
         case.
     1.  If everything looks good, choose "Continue" for this stage.
@@ -225,6 +232,12 @@ If any step below fails. Stop the deploy and ping
     1.  Include the version numbers of the new staging and prod deployments.
         (They may be different).
     1.  Copy changes since last deploy: `git log --oneline .`
+    1.  If there were schema changes, copy and paste the commands at the bottom
+        of the email
+    1.  Use the subject line "Deployed Monorail to staging and prod with build
+        id: <build id>"
+    1.  Send the email to "monorail-eng@google.com" and
+        "chrome-infra+monorail@google.com"
 1.  Add a new row to the
     [Monorail Deployment Stats](http://go/monorail-deployment-stats) spreadsheet
     to help track deploys/followups/rollbacks. It is important to do this even
