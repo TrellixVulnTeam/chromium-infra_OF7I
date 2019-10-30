@@ -583,6 +583,81 @@ class ConverterFunctionsTest(unittest.TestCase):
               rank=2)])
     self.assertEqual(expected, actual)
 
+  def testConvertIssue_NegativeAttachmentCount(self):
+    """We can convert a protorpc Issue to a protoc Issue."""
+    related_refs_dict = {
+        78901: ('proj', 1),
+        78902: ('proj', 2),
+        }
+    now = 12345678
+    self.config.component_defs = [
+      tracker_pb2.ComponentDef(component_id=1, path='UI'),
+      tracker_pb2.ComponentDef(component_id=2, path='DB'),
+      ]
+    issue = fake.MakeTestIssue(
+      789, 3, 'sum', 'New', 111, labels=['Hot'],
+      derived_labels=['Scalability'], star_count=12, reporter_id=222,
+      opened_timestamp=now, component_ids=[1], project_name='proj',
+      cc_ids=[111], derived_cc_ids=[222], attachment_count=-10)
+    issue.phases = [
+        tracker_pb2.Phase(phase_id=1, name='Dev', rank=1),
+        tracker_pb2.Phase(phase_id=2, name='Beta', rank=2),
+        ]
+    issue.dangling_blocked_on_refs = [
+        tracker_pb2.DanglingIssueRef(project='dangling_proj', issue_id=1234)]
+    issue.dangling_blocking_refs = [
+        tracker_pb2.DanglingIssueRef(project='dangling_proj', issue_id=5678)]
+
+    actual = converters.ConvertIssue(
+        issue, self.users_by_id, related_refs_dict, self.config)
+
+    expected = issue_objects_pb2.Issue(
+        project_name='proj',
+        local_id=3,
+        summary='sum',
+        status_ref=common_pb2.StatusRef(
+            status='New',
+            is_derived=False,
+            means_open=True),
+        owner_ref=common_pb2.UserRef(
+            user_id=111,
+            display_name='one@example.com',
+            is_derived=False),
+        cc_refs=[
+            common_pb2.UserRef(
+                user_id=111,
+                display_name='one@example.com',
+                is_derived=False),
+            common_pb2.UserRef(
+                user_id=222,
+                display_name='two@example.com',
+                is_derived=True)],
+        label_refs=[
+            common_pb2.LabelRef(label='Hot', is_derived=False),
+            common_pb2.LabelRef(label='Scalability', is_derived=True)],
+        component_refs=[common_pb2.ComponentRef(path='UI', is_derived=False)],
+        is_deleted=False,
+        reporter_ref=common_pb2.UserRef(
+            user_id=222, display_name='two@example.com', is_derived=False),
+        opened_timestamp=now,
+        component_modified_timestamp=now,
+        status_modified_timestamp=now,
+        owner_modified_timestamp=now,
+        star_count=12,
+        is_spam=False,
+        dangling_blocked_on_refs=[
+            common_pb2.IssueRef(project_name='dangling_proj', local_id=1234)],
+        dangling_blocking_refs=[
+            common_pb2.IssueRef(project_name='dangling_proj', local_id=5678)],
+        phases=[
+            issue_objects_pb2.PhaseDef(
+              phase_ref=issue_objects_pb2.PhaseRef(phase_name='Dev'),
+              rank=1),
+            issue_objects_pb2.PhaseDef(
+              phase_ref=issue_objects_pb2.PhaseRef(phase_name='Beta'),
+              rank=2)])
+    self.assertEqual(expected, actual)
+
   def testConvertIssue_ExternalMergedInto(self):
     """ConvertIssue works on issues with external mergedinto values."""
     issue = fake.MakeTestIssue(789, 3, 'sum', 'New', 111, project_name='proj',

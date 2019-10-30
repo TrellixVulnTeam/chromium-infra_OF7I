@@ -385,10 +385,14 @@ def ConvertIssue(issue, users_by_id, related_refs, config):
       status_modified_timestamp=issue.status_modified_timestamp,
       owner_modified_timestamp=issue.owner_modified_timestamp,
       star_count=issue.star_count, is_spam=issue.is_spam,
-      # TODO(crbug.com/monorail/5665): Re-enable once the issues with
-      # attachment_count have been fixed.
-      # attachment_count=issue.attachment_count,
       approval_values=approval_values, phases=phases)
+
+  # TODO(crbug.com/monorail/5857): Set attachment_count unconditionally
+  # after the underlying source of negative attachment counts has been
+  # resolved and database has been repaired.
+  if issue.attachment_count >= 0:
+    result.attachment_count = issue.attachment_count
+
   return result
 
 

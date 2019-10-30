@@ -238,6 +238,62 @@ class IssuesServicerTest(unittest.TestCase):
 
   # TODO(zhangtiff): Add tests for ListIssues + canned queries.
 
+  @patch('search.frontendsearchpipeline.FrontendSearchPipeline')
+  def testListIssues_IncludesAttachmentCount(self, mock_pipeline):
+    """Ensure ListIssues includes correct attachment counts."""
+
+    # Add an attachment to one of the issues so we can check attachment counts.
+    issue_3 = fake.MakeTestIssue(
+        789, 3, 'sum', 'New', 111, project_name='proj', issue_id=2003,
+        attachment_count=1)
+    issue_4 = fake.MakeTestIssue(
+        789, 4, 'sum', 'New', 111, project_name='proj', issue_id=2004,
+        attachment_count=-10)
+    self.services.issue.TestAddIssue(issue_3)
+    self.services.issue.TestAddIssue(issue_4)
+
+    # Request the list of issues.
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester='approver3@example.com',
+        auth=self.auth)
+    mc.LookupLoggedInUserPerms(self.project)
+
+    users_by_id = framework_views.MakeAllUserViews(
+        mc.cnxn, self.services.user, [111])
+    config = self.services.config.GetProjectConfig(self.cnxn, 789)
+    instance = Mock(
+        spec=True, visible_results=[
+            self.issue_1, self.issue_2, issue_3, issue_4],
+        users_by_id=users_by_id, harmonized_config=config,
+        pagination=Mock(total_count=4))
+    mock_pipeline.return_value = instance
+    instance.SearchForIIDs = Mock()
+    instance.MergeAndSortIssues = Mock()
+    instance.Paginate = Mock()
+
+    request = issues_pb2.ListIssuesRequest(query='', project_names=['proj'])
+    response = self.CallWrapped(self.issues_svcr.ListIssues, mc, request)
+
+    # Ensure attachment counts match what we expect.
+    actual_issue_1 = response.issues[0]
+    self.assertEqual(actual_issue_1.attachment_count, 0)
+    self.assertEqual(actual_issue_1.local_id, 1)
+
+    actual_issue_2 = response.issues[1]
+    self.assertEqual(actual_issue_2.attachment_count, 0)
+    self.assertEqual(actual_issue_2.local_id, 2)
+
+    actual_issue_3 = response.issues[2]
+    self.assertEqual(actual_issue_3.attachment_count, 1)
+    self.assertEqual(actual_issue_3.local_id, 3)
+
+    actual_issue_4 = response.issues[3]
+    # NOTE(pawalls): It is not possible to test for presence in Proto3. Instead
+    # we test for default value here though it is semantically different
+    # and not quite the behavior we care about.
+    self.assertEqual(actual_issue_4.attachment_count, 0)
+    self.assertEqual(actual_issue_4.local_id, 4)
+
   def testListReferencedIssues(self):
     """We can get the referenced issues that exist."""
     self.services.project.TestAddProject(
