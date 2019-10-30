@@ -9,6 +9,42 @@ import (
 	"testing"
 )
 
+func TestCompareCrOSVersions(t *testing.T) {
+	Convey("Test v1 > v2", t, func() {
+		v1 := "R2-2.3.4"
+		v2 := "R1-2.3.4"
+		cv, err := CompareCrOSVersions(v1, v2)
+		So(err, ShouldBeNil)
+		So(cv, ShouldEqual, 1)
+
+		v1 = "R1-2.5.4"
+		v2 = "R1-2.3.4"
+		cv, err = CompareCrOSVersions(v1, v2)
+		So(err, ShouldBeNil)
+		So(cv, ShouldEqual, 1)
+	})
+	Convey("Test v1 < v2", t, func() {
+		v1 := "R2-1.3.4"
+		v2 := "R2-2.3.4"
+		cv, err := CompareCrOSVersions(v1, v2)
+		So(err, ShouldBeNil)
+		So(cv, ShouldEqual, -1)
+
+		v1 = "R1-2.3.4"
+		v2 = "R1-2.3.5"
+		cv, err = CompareCrOSVersions(v1, v2)
+		So(err, ShouldBeNil)
+		So(cv, ShouldEqual, -1)
+	})
+	Convey("Test v1 == v2", t, func() {
+		v1 := "R1-2.3.4"
+		v2 := "R1-2.3.4"
+		cv, err := CompareCrOSVersions(v1, v2)
+		So(err, ShouldBeNil)
+		So(cv, ShouldEqual, 0)
+	})
+}
+
 func TestValidateCrOSVersion(t *testing.T) {
 	good := func(s string) {
 		if err := ValidateCrOSVersion(s); err != nil {

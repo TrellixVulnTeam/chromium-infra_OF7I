@@ -5,10 +5,12 @@
 package site
 
 import (
-	"go.chromium.org/luci/auth"
-	"go.chromium.org/luci/common/api/gitiles"
 	"os"
 	"path/filepath"
+
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/common/api/gitiles"
+	"go.chromium.org/luci/common/gcloud/gs"
 )
 
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra
@@ -22,7 +24,7 @@ var DefaultAuthOptions = auth.Options{
 	ClientID:     "446450136466-2hr92jrq8e6i4tnsa56b52vacp7t3936.apps.googleusercontent.com",
 	ClientSecret: "uBfbay2KCy9t4QveJ-dOqHtp",
 	SecretsDir:   SecretsDir(),
-	Scopes:       []string{auth.OAuthScopeEmail, gitiles.OAuthScope},
+	Scopes:       append(gs.ReadOnlyScopes, auth.OAuthScopeEmail, gitiles.OAuthScope),
 }
 
 // SecretsDir determines the location for auth-related secrets and consults

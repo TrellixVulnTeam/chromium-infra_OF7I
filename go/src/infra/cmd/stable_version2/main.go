@@ -6,13 +6,16 @@ package main
 
 import (
 	"context"
+	"os"
+
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/logging/gologger"
+
+	"infra/cmd/stable_version2/internal/cmd"
 	"infra/cmd/stable_version2/internal/site"
-	"os"
 )
 
 func getApplication() *cli.Application {
@@ -28,6 +31,8 @@ func getApplication() *cli.Application {
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
+			subcommands.Section("Internal use (not for direct human use)"),
+			cmd.UpdateWithOmaha,
 		},
 	}
 }

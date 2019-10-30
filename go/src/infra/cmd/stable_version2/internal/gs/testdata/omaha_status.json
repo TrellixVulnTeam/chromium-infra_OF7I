@@ -1,0 +1,158 @@
+{
+  "omaha_data": [
+    {
+      "board": {
+        "public_codename": "normal",
+        "is_active": true
+      },
+      "channel": "beta",
+      "chrome_os_version": "9414.0.0",
+      "chrome_version": "59.0.3055.0",
+      "keyset": "test",
+      "is_mp_keyset": false,
+      "payloads": [
+        {
+          "name": "test",
+          "fraction": 1.0,
+          "max_fraction": false
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "milestone": 59
+    },
+    {
+      "board": {
+        "public_codename": "board-with-dash",
+        "is_active": true
+      },
+      "channel": "beta",
+      "chrome_os_version": "9414.0.0",
+      "chrome_version": "59.0.3055.0",
+      "keyset": "test",
+      "is_mp_keyset": false,
+      "payloads": [
+        {
+          "name": "test",
+          "fraction": 1.0,
+          "max_fraction": false
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "milestone": 59
+    },
+    {
+      "board": {
+        "public_codename": "canaryboard",
+        "is_active": true
+      },
+      "channel": "canary",
+      "chrome_os_version": "9414.0.0",
+      "chrome_version": "59.0.3055.0",
+      "keyset": "test",
+      "is_mp_keyset": false,
+      "payloads": [
+        {
+          "name": "test",
+          "fraction": 1.0,
+          "max_fraction": false
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "milestone": 59
+    },
+    {
+      "board": {
+        "public_codename": "board_with_new_version",
+        "is_active": true
+      },
+      "channel": "beta",
+      "chrome_os_version": "9414.0.0",
+      "chrome_version": "59.0.3055.0",
+      "keyset": "test",
+      "is_mp_keyset": false,
+      "payloads": [
+        {
+          "name": "test",
+          "fraction": 1.0,
+          "max_fraction": false
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "milestone": 59
+    },
+    {
+      "board": {
+        "public_codename": "board_with_new_version",
+        "is_active": true
+      },
+      "channel": "beta",
+      "chrome_os_version": "9514.0.0",
+      "chrome_version": "59.0.3055.0",
+      "keyset": "test",
+      "is_mp_keyset": false,
+      "payloads": [
+        {
+          "name": "test",
+          "fraction": 1.0,
+          "max_fraction": false
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "milestone": 59
+    },
+    {
+      "board": {
+        "public_codename": "board_with_new_milestone",
+        "is_active": true
+      },
+      "channel": "beta",
+      "chrome_os_version": "9444414.0.0",
+      "chrome_version": "59.0.3055.0",
+      "keyset": "test",
+      "is_mp_keyset": false,
+      "payloads": [
+        {
+          "name": "test",
+          "fraction": 1.0,
+          "max_fraction": false
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "milestone": 59
+    },
+    {
+      "board": {
+        "public_codename": "board_with_new_milestone",
+        "is_active": true
+      },
+      "channel": "beta",
+      "chrome_os_version": "9414.0.0",
+      "chrome_version": "59.0.3055.0",
+      "keyset": "test",
+      "is_mp_keyset": false,
+      "payloads": [
+        {
+          "name": "test",
+          "fraction": 1.0,
+          "max_fraction": false
+        },
+        {
+          "name": "test"
+        }
+      ],
+      "milestone": 60
+    }
+  ]
+}

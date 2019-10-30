@@ -1,0 +1,39 @@
+// Copyright 2019 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chrome.chromeos_infra.cros.stableversion;
+
+option go_package = "stableversion";
+
+// NEXT TAG: 2
+message OmahaDatas {
+  repeated OmahaData omaha_data = 1;
+}
+
+// NEXT TAG: 9
+message OmahaData {
+  Board board = 1;
+  string channel = 2;
+  string chrome_os_version = 3;
+  string chrome_version = 4;
+  string keyset = 5;
+  bool is_mp_keyset = 6;
+  repeated Payload payloads = 7;
+  int32 milestone = 8;
+}
+
+// NEXT TAG: 3
+message Board {
+  string public_codename = 1;
+  bool is_active = 2;
+}
+
+// NEXT TAG: 4
+message Payload {
+  string name = 1;
+  float fraction = 2;
+  bool max_fraction = 3;
+}

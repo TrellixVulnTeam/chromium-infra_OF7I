@@ -13,6 +13,34 @@ import (
 // release, tip, branch, branchbranch
 var crosVersionPattern *regexp.Regexp = regexp.MustCompile(`\AR(?P<release>[0-9]+)-(?P<tip>[0-9]+)\.(?P<branch>[0-9]+)\.(?P<branchbranch>[0-9]+)\z`)
 
+// CompareCrOSVersions compares two cros versions' number.
+//
+// Return:
+//  1 if v1 > v2
+//  0 if v1 == v2
+//  -1 if v1 < v2
+func CompareCrOSVersions(v1, v2 string) (int, error) {
+	r1, t1, b1, bb1, err := ParseCrOSVersion(v1)
+	if err != nil {
+		return 0, err
+	}
+	r2, t2, b2, bb2, err := ParseCrOSVersion(v2)
+	if err != nil {
+		return 0, err
+	}
+	v1Info := []int32{r1, t1, b1, bb1}
+	v2Info := []int32{r2, t2, b2, bb2}
+	for i, v := range v1Info {
+		if v > v2Info[i] {
+			return 1, nil
+		}
+		if v < v2Info[i] {
+			return -1, nil
+		}
+	}
+	return 0, nil
+}
+
 // ParseCrOSVersion takes a version string and extracts version info
 func ParseCrOSVersion(v string) (int32, int32, int32, int32, error) {
 	if v == "" {
