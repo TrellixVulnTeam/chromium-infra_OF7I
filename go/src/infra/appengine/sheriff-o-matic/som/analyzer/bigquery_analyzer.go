@@ -1,19 +1,22 @@
 package analyzer
 
 import (
-	"cloud.google.com/go/bigquery"
 	"fmt"
-	"go.chromium.org/gae/service/info"
-	"go.chromium.org/luci/common/data/stringset"
-	"go.chromium.org/luci/common/logging"
-	"golang.org/x/net/context"
-	"google.golang.org/api/iterator"
 	"infra/appengine/sheriff-o-matic/som/analyzer/step"
+	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
+
+	"cloud.google.com/go/bigquery"
+	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/gae/service/info"
+	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/logging"
+	"golang.org/x/net/context"
+	"google.golang.org/api/iterator"
 )
 
 const selectFromWhere = `
@@ -205,7 +208,12 @@ func (b *bqFailure) Title(bses []*messages.BuildStep) string {
 	return fmt.Sprintf("%s on multiple builders", prefix)
 }
 
-func generateSQLQuery(tree string, appID string) string {
+// Generates the BigQuery SQL for the specified tree against the app environment specified
+// in appID (ex: "sheriff-o-matic-staging" vs. "sheriff-o-matic").
+func generateSQLQuery(ctx context.Context, tree string, appID string) string {
+
+	bbProjectFilter := getBuildBucketProjectFilterFromTree(ctx, tree)
+
 	switch tree {
 	case "android":
 		return fmt.Sprintf(androidFailuresQuery, appID, "chrome")
@@ -218,7 +226,7 @@ func generateSQLQuery(tree string, appID string) string {
 	case "ios":
 		return fmt.Sprintf(iosFailuresQuery, appID, "chromium")
 	case "fuchsia":
-		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", tree, tree)
+		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter, tree)
 	case "chromium.perf":
 		return fmt.Sprintf(failuresQuery, appID, "chrome", tree, tree)
 	default:
@@ -244,7 +252,8 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 	if err != nil {
 		return nil, err
 	}
-	queryStr := generateSQLQuery(tree, appID)
+
+	queryStr := generateSQLQuery(ctx, tree, appID)
 
 	logging.Infof(ctx, "query: %s", queryStr)
 	q := client.Query(queryStr)
@@ -253,6 +262,21 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 		return nil, err
 	}
 	return processBQResults(ctx, it)
+}
+
+// Queries BuildBucketProjectFilter from datastore on specified tree.
+// Return the treeName if BuildBucketProjectFilter is not set.
+func getBuildBucketProjectFilterFromTree(c context.Context, treeName string) string {
+	q := datastore.NewQuery("Tree")
+	trees := []*model.Tree{}
+	if err := datastore.GetAll(c, q, &trees); err == nil {
+		for _, tree := range trees {
+			if tree.Name == treeName && tree.BuildBucketProjectFilter != "" {
+				return strings.TrimSpace(tree.BuildBucketProjectFilter)
+			}
+		}
+	}
+	return treeName
 }
 
 type nexter interface {

@@ -100,7 +100,7 @@ func TestMain(t *testing.T) {
 					trees, err := GetTrees(c)
 
 					So(err, ShouldBeNil)
-					So(string(trees), ShouldEqual, `[{"name":"oak","display_name":"Oak"}]`)
+					So(string(trees), ShouldEqual, `[{"name":"oak","display_name":"Oak","bb_project_filter":""}]`)
 				})
 			})
 

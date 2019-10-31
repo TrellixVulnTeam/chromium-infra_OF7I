@@ -79,6 +79,12 @@ func (SettingsPage) Fields(c context.Context) ([]portal.Field, error) {
 			Type:  portal.FieldText,
 			Help:  "Default monorail project name used for bugqueue.",
 		})
+		fields = append(fields, portal.Field{
+			ID:    fmt.Sprintf("BuildBucketProjectFilter-%s", t.Name),
+			Title: fmt.Sprintf("%s BuildBucket Project Filter", t.DisplayName),
+			Type:  portal.FieldText,
+			Help:  "Buildbucket project name to use for this tree. If blank, the name of the tree will be used.",
+		})
 	}
 
 	return fields, nil
@@ -103,6 +109,7 @@ func (SettingsPage) ReadSettings(c context.Context) (map[string]string, error) {
 		values[fmt.Sprintf("GerritProject-%s", t.Name)] = t.GerritProject
 		values[fmt.Sprintf("GerritInstance-%s", t.Name)] = t.GerritInstance
 		values[fmt.Sprintf("DefaultMonorailProjectName-%s", t.Name)] = t.DefaultMonorailProjectName
+		values[fmt.Sprintf("BuildBucketProjectFilter-%s", t.Name)] = t.BuildBucketProjectFilter
 	}
 
 	values["Trees"] = strings.Join(trees, ",")
@@ -224,6 +231,9 @@ func writeAllValues(c context.Context, values map[string]string) error {
 			t.DefaultMonorailProjectName = projectName
 		}
 
+		if filter, ok := values[fmt.Sprintf("BuildBucketProjectFilter-%s", t.Name)]; ok {
+			t.BuildBucketProjectFilter = filter
+		}
 		// Try to do only write per tree each save.
 		if err := datastore.Put(c, t); err != nil {
 			return err

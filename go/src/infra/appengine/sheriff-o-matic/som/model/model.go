@@ -42,6 +42,7 @@ type Tree struct {
 	GerritProject              string   `json:"gerrit_project,omitempty"`
 	GerritInstance             string   `json:"gerrit_instance,omitempty"`
 	DefaultMonorailProjectName string   `json:"default_monorail_project_name,omitempty"`
+	BuildBucketProjectFilter   string   `json:"bb_project_filter"`
 }
 
 // BuildBucketTree holds "tree" information about buildbucket builders.

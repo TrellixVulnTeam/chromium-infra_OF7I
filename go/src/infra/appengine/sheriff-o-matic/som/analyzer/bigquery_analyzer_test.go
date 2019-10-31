@@ -1,19 +1,23 @@
 package analyzer
 
 import (
-	"cloud.google.com/go/bigquery"
-	"golang.org/x/net/context"
-	"google.golang.org/api/iterator"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
 
+	"cloud.google.com/go/bigquery"
+	"golang.org/x/net/context"
+	"google.golang.org/api/iterator"
+
 	"infra/appengine/sheriff-o-matic/som/analyzer/step"
+	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/logging/gologger"
 )
 
@@ -108,6 +112,8 @@ func formatQuery(query string) string {
 }
 
 func TestGenerateSQLQuery(t *testing.T) {
+	c := gaetesting.TestingContext()
+
 	Convey("Test generate SQL query for android", t, func() {
 		expected := `
 			SELECT
@@ -166,10 +172,16 @@ func TestGenerateSQLQuery(t *testing.T) {
 			LIMIT
 				1000
 		`
-		actual := generateSQLQuery("android", "sheriff-o-matic")
+		actual := generateSQLQuery(c, "android", "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 	Convey("Test generate SQL query for chromium", t, func() {
+		treeName := "chromium"
+		tree := &model.Tree{
+			Name: treeName,
+		}
+		So(datastore.Put(c, tree), ShouldBeNil)
+		datastore.GetTestable(c).CatchupIndexes()
 		expected := `
 			SELECT
 			  Project,
@@ -209,7 +221,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 			LIMIT
 				1000
 		`
-		actual := generateSQLQuery("chromium", "sheriff-o-matic")
+		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 	Convey("Test generate SQL query for chromium.gpu.fyi", t, func() {
@@ -239,10 +251,16 @@ func TestGenerateSQLQuery(t *testing.T) {
 				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
 			WHERE MasterName = "chromium.gpu.fyi"
 		`
-		actual := generateSQLQuery("chromium.gpu.fyi", "sheriff-o-matic")
+		actual := generateSQLQuery(c, "chromium.gpu.fyi", "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 	Convey("Test generate SQL query for chromeos", t, func() {
+		treeName := "chromeos"
+		tree := &model.Tree{
+			Name: treeName,
+		}
+		So(datastore.Put(c, tree), ShouldBeNil)
+		datastore.GetTestable(c).CatchupIndexes()
 		expected := `
 			SELECT
 			  Project,
@@ -271,7 +289,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 				AND bucket IN ("postsubmit", "annealing")
 				AND (critical != "NO" OR critical is NULL)
 		`
-		actual := generateSQLQuery("chromeos", "sheriff-o-matic")
+		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 	Convey("Test generate SQL query for ios", t, func() {
@@ -309,10 +327,17 @@ func TestGenerateSQLQuery(t *testing.T) {
 					"ios-simulator-xcode-clang"
 				)
 		`
-		actual := generateSQLQuery("ios", "sheriff-o-matic")
+		actual := generateSQLQuery(c, "ios", "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 	Convey("Test generate SQL query for fuchsia", t, func() {
+		treeName := "fuchsia"
+		tree := &model.Tree{
+			Name:                     treeName,
+			BuildBucketProjectFilter: "fuchsia-test",
+		}
+		So(datastore.Put(c, tree), ShouldBeNil)
+		datastore.GetTestable(c).CatchupIndexes()
 		expected := `
 			SELECT
 			  Project,
@@ -338,16 +363,22 @@ func TestGenerateSQLQuery(t *testing.T) {
 			FROM
 				` + "`sheriff-o-matic.fuchsia.sheriffable_failures`" + `
 			WHERE
-				(Project = "fuchsia" OR MasterName = "fuchsia")
+				(Project = "fuchsia-test" OR MasterName = "fuchsia")
 				AND Bucket NOT IN ("try", "cq", "staging", "general")
 				AND Builder NOT LIKE "%bisect%"
 			LIMIT
 				1000
 		`
-		actual := generateSQLQuery("fuchsia", "sheriff-o-matic")
+		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 	Convey("Test generate SQL query for chromium.perf", t, func() {
+		treeName := "chromium.perf"
+		tree := &model.Tree{
+			Name: treeName,
+		}
+		So(datastore.Put(c, tree), ShouldBeNil)
+		datastore.GetTestable(c).CatchupIndexes()
 		expected := `
 			SELECT
 			  Project,
@@ -380,10 +411,10 @@ func TestGenerateSQLQuery(t *testing.T) {
 			LIMIT
 				1000
 		`
-		actual := generateSQLQuery("chromium.perf", "sheriff-o-matic")
+		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
-	Convey("Test generate SQL query for other builders", t, func() {
+	Convey("Test generate SQL query for default builders", t, func() {
 		expected := `
 			SELECT
 			  Project,
@@ -416,7 +447,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 			LIMIT
 				1000
 		`
-		actual := generateSQLQuery("builder", "sheriff-o-matic")
+		actual := generateSQLQuery(c, "builder", "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 }
