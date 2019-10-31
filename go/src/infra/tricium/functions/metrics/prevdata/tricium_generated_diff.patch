@@ -1,7 +1,7 @@
-diff --git a/src/rm/remove_histogram.xml b/src/rm/remove_histogram.xml
+diff --git a/rm/remove_histogram.xml b/rm/remove_histogram.xml
 index bf1c4279d..c173b8af0 100644
---- a/src/rm/remove_histogram.xml
-+++ b/src/rm/remove_histogram.xml
+--- a/rm/remove_histogram.xml
++++ b/rm/remove_histogram.xml
 @@ -5,10 +5,5 @@
              <owner>chrome-metrics-team@google.com</owner>
              <summary> This is a summary </summary>

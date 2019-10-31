@@ -8,10 +8,10 @@ metrics-analyzer:
 	go build -o metrics_analyzer
 
 test: metrics-analyzer
-	./metrics_analyzer -input=testdata -output=out -previous=prevdata -patch=prevdata/tricium_generated_diff.patch -enums=src/enums/enums.xml -- src/rm/remove_histogram.xml
+	./metrics_analyzer -input=testdata/src -output=out -previous=prevdata/src -patch=prevdata/tricium_generated_diff.patch -enums=enums/enums.xml -- rm/remove_histogram.xml
 
 unit-test:
 	go test histograms_check_test.go field_trial_check_test.go metrics_analyzer.go histograms_check.go field_trial_check.go
-	
+
 clean:
 	rm -rf out metrics_analyzer

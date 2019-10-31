@@ -120,22 +120,21 @@ const (
 	MILESTONE
 )
 
-func analyzeHistogramFile(f io.Reader, filePath, inputDir, prevDir string, filesChanged *diffsPerFile, singletonEnums stringset.Set) []*tricium.Data_Comment {
+func analyzeHistogramFile(f io.Reader, filePath, prevDir string, filesChanged *diffsPerFile, singletonEnums stringset.Set) []*tricium.Data_Comment {
 	log.Printf("ANALYZING File: %s", filePath)
 	var allComments []*tricium.Data_Comment
-	inputPath := filepath.Join(inputDir, filePath)
 	// Analyze added lines in file (if any).
-	comments, addedHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), inputPath, filesChanged.addedLines[filePath], singletonEnums, ADDED)
+	comments, addedHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), filePath, filesChanged.addedLines[filePath], singletonEnums, ADDED)
 	allComments = append(allComments, comments...)
 	// Analyze removed lines in file (if any)
 	oldPath := filepath.Join(prevDir, filePath)
 	oldFile := openFileOrDie(oldPath)
 	defer closeFileOrDie(oldFile)
 	var emptySet stringset.Set
-	_, removedHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), oldPath, filesChanged.removedLines[filePath], emptySet, REMOVED)
-	// Identify any removed histograms
-	allComments = append(allComments, findRemovedHistograms(inputPath, addedHistograms, removedHistograms)...)
-	allComments = append(allComments, findAddedNamespaces(inputPath, newNamespaces, oldNamespaces, namespaceLineNums)...)
+	_, removedHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), filePath, filesChanged.removedLines[filePath], emptySet, REMOVED)
+	// Identify if any histograms were removed
+	allComments = append(allComments, findRemovedHistograms(filePath, addedHistograms, removedHistograms)...)
+	allComments = append(allComments, findAddedNamespaces(filePath, newNamespaces, oldNamespaces, namespaceLineNums)...)
 	return allComments
 }
 

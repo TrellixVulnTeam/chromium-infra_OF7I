@@ -42,8 +42,10 @@ func main() {
 	inputDir := flag.String("input", "", "Path to directory with current versions of changed files")
 	outputDir := flag.String("output", "", "Path to root of Tricium output")
 	prevDir := flag.String("previous", "", "Path to directory with previous versions of changed files")
+	// patchPath is an absolute path to the patch.
 	patchPath := flag.String("patch", "", "Path to patch of changed files")
-	enumsPath := flag.String("enums", "src/tools/metrics/histograms/enums.xml", "Path to enums file")
+	// enumsPath is a relative path to the enums file.
+	enumsPath := flag.String("enums", "tools/metrics/histograms/enums.xml", "Path to enums file")
 	flag.Parse()
 	if *inputDir == "" || *outputDir == "" || *prevDir == "" || *patchPath == "" {
 		log.Fatalf("Please specify non-empty values for the following flags: -input, -output, -previous, -patch")
@@ -61,7 +63,7 @@ func main() {
 		f := openFileOrDie(inputPath)
 		defer closeFileOrDie(f)
 		if filepath.Ext(filePath) == ".xml" {
-			results.Comments = append(results.Comments, analyzeHistogramFile(f, filePath, *inputDir, *prevDir, filesChanged, singletonEnums)...)
+			results.Comments = append(results.Comments, analyzeHistogramFile(f, filePath, *prevDir, filesChanged, singletonEnums)...)
 		} else if filepath.Ext(filePath) == ".json" {
 			results.Comments = append(results.Comments, analyzeFieldTrialTestingConfig(f, filePath)...)
 		}

@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -13,10 +14,10 @@ import (
 	tricium "infra/tricium/api/v1"
 )
 
-func analyzeJSONTestFile(t *testing.T, name string) []*tricium.Data_Comment {
+func analyzeJSONTestFile(t *testing.T, filePath string) []*tricium.Data_Comment {
 	// Mock current time for testing
-	filePath := "testdata/src/" + name
-	f := openFileOrDie(filePath)
+	inputPath := filepath.Join(inputDir, filePath)
+	f := openFileOrDie(inputPath)
 	defer closeFileOrDie(f)
 	return analyzeFieldTrialTestingConfig(f, filePath)
 }
@@ -39,7 +40,7 @@ func TestConfigCheck(t *testing.T) {
 				Category:  category + "/Experiments",
 				Message:   fmt.Sprintf(manyExperimentsWarning, "TestConfig1"),
 				StartLine: 7,
-				Path:      "testdata/src/configs/many_experiments.json",
+				Path:      "configs/many_experiments.json",
 			},
 		})
 	})
@@ -51,13 +52,13 @@ func TestConfigCheck(t *testing.T) {
 				Category:  category + "/Experiments",
 				Message:   fmt.Sprintf(manyExperimentsWarning, "TestConfig1"),
 				StartLine: 7,
-				Path:      "testdata/src/configs/many_configs_many_exp.json",
+				Path:      "configs/many_configs_many_exp.json",
 			},
 			{
 				Category:  category + "/Experiments",
 				Message:   fmt.Sprintf(manyExperimentsWarning, "TestConfig1"),
 				StartLine: 26,
-				Path:      "testdata/src/configs/many_configs_many_exp.json",
+				Path:      "configs/many_configs_many_exp.json",
 			},
 		})
 	})
