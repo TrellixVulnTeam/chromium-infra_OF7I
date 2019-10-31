@@ -97,6 +97,44 @@ func TestFilterDuplicateBugs(t *testing.T) {
 	})
 }
 
+func TestConstructQueryFromBugList(t *testing.T) {
+	Convey("Test construct query from bug list", t, func() {
+		bugs := []*model.MonorailBug{
+			{
+				BugID:     "bug_1",
+				ProjectID: "project_1",
+			},
+			{
+				BugID:     "bug_2",
+				ProjectID: "project_2",
+			},
+			{
+				BugID:     "bug_3",
+				ProjectID: "project_1",
+			},
+			{
+				BugID:     "bug_4",
+				ProjectID: "project_3",
+			},
+			{
+				BugID:     "bug_5",
+				ProjectID: "project_1",
+			},
+		}
+
+		result := constructQueryFromBugList(bugs)
+		So(
+			result,
+			ShouldResemble,
+			map[string]string{
+				"project_1": "id:bug_1,bug_3,bug_5",
+				"project_2": "id:bug_2",
+				"project_3": "id:bug_4",
+			},
+		)
+	})
+}
+
 func TestAnnotations(t *testing.T) {
 	newContext := func() (context.Context, testclock.TestClock) {
 		c := gaetesting.TestingContext()

@@ -169,7 +169,7 @@ func constructQueryFromBugList(bugs []*model.MonorailBug) map[string]string {
 		if val, ok := queries[bug.ProjectID]; ok {
 			queries[bug.ProjectID] = fmt.Sprintf("%s,%s", val, bug.BugID)
 		} else {
-			queries[bug.ProjectID] = "id:"
+			queries[bug.ProjectID] = fmt.Sprintf("id:%s", bug.BugID)
 		}
 	}
 	return queries
