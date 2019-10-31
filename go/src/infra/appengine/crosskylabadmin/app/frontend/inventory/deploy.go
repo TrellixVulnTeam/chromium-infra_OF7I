@@ -629,11 +629,13 @@ func deployActionArgs(a *fleet.DutDeploymentActions) string {
 	if a.GetStageImageToUsb() {
 		s = append(s, "stage-usb")
 	}
-	if a.GetInstallFirmware() {
-		s = append(s, "install-firmware")
-	}
 	if a.GetInstallTestImage() {
 		s = append(s, "install-test-image")
+		s = append(s, "update-label")
+	}
+	if a.GetInstallFirmware() {
+		s = append(s, "install-firmware")
+		s = append(s, "verify-recovery-mode")
 	}
 	return strings.Join(s, ",")
 }
