@@ -1,3 +1,23 @@
+# Release Notes sheriff-o-matic 2019-10-31
+
+- 4 commits, 1 bugs affected since 89d4635 ()
+- 2 Authors:
+  - jsca@google.com
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[som] Fix non-functional ungroup button on examine page.](https://chromium-review.googlesource.com/c/infra/infra/+/1888017) (jsca@google.com)
+- [Use bug_list instead of bugs when logging event](https://chromium-review.googlesource.com/c/infra/infra/+/1885354) (nqmtuan@google.com)
+- [Filter duplicate bugs when querying monorail](https://chromium-review.googlesource.com/c/infra/infra/+/1883150) (nqmtuan@google.com)
+- [[SOM] Release not for Oct 28](https://chromium-review.googlesource.com/c/infra/infra/+/1883147) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1018635](https://crbug.com/1018635)
+
+
 # Release Notes sheriff-o-matic 2019-10-28
 
 - 4 commits, 2 bugs affected since 6acffba ()
