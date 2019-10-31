@@ -9,6 +9,7 @@ import os
 import pwd
 import requests
 import socket
+import sys
 import time
 
 
@@ -46,6 +47,7 @@ _DOCKER_VOLUMES = {
 
 _SWARMING_URL_ENV_VAR = 'SWARM_URL'
 _HOST_HOSTNAME_ENV_VAR = 'DOCKER_HOST_HOSTNAME'
+_KVM_DEVICE = '/dev/kvm'
 
 
 class FrozenEngineError(Exception):
@@ -256,11 +258,17 @@ class DockerClient(object):
     env = self._get_env(swarming_url)
     if additional_env:
       env.update(additional_env)
+    if sys.platform.startswith('linux') and os.path.exists(_KVM_DEVICE):
+      # Allow the container access to the KVM device so it can run qemu-kvm.
+      devices = ['{0}:{0}'.format(_KVM_DEVICE)]
+    else:
+      devices = None
     new_container = self._client.containers.create(
         image=image_name,
         hostname=container_desc.hostname,
         volumes=self._get_volumes(container_workdir),
         environment=env,
+        devices=devices,
         name=container_desc.name,
         detach=True,  # Don't block until it exits.
         labels=labels,

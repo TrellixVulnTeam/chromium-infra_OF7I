@@ -7,6 +7,7 @@ import collections
 import docker
 import mock
 import requests
+import sys
 import unittest
 
 from infra.services.swarm_docker import containers
@@ -68,7 +69,7 @@ class FakeContainerBackend(object):
   containers.Container wraps each one. Mocked here to verify the wrapper class
   behaves correctly.
   """
-  def __init__(self, name):
+  def __init__(self, name, devices='not set'):
     self.name = name
     self.was_deleted = False
     self.was_started = False
@@ -77,6 +78,7 @@ class FakeContainerBackend(object):
     self.exec_outputs = []
     self.exec_inputs = []
     self.attrs = {}
+    self.devices = devices
 
   def remove(self, **_kwargs):
     self.was_deleted = True
@@ -106,7 +108,7 @@ class FakeContainerList(object):
     self._list = containers_list
 
   def create(self, **kwargs):
-    return FakeContainerBackend(kwargs['name'])
+    return FakeContainerBackend(kwargs['name'], kwargs['devices'])
 
   def list(self, filters=None, **_kwargs):  # pylint: disable=unused-argument
     if filters is None:
@@ -349,6 +351,64 @@ class TestDockerClient(unittest.TestCase):
         additional_env)
     self.assertEquals(container.name, '1')
     mock_chown.assert_called_with(mock_mkdir.call_args[0][0], 1, 2)
+
+  @mock.patch('os.chown')
+  @mock.patch('os.mkdir')
+  @mock.patch('os.path.exists')
+  @mock.patch('pwd.getpwnam')
+  @mock.patch('sys.platform', 'darwin')
+  @mock.patch('docker.from_env')
+  def test_create_container_darwin(self, mock_from_env, mock_getpwnam,
+                                   mock_exists, mock_mkdir, mock_chown):
+    mock_getpwnam.return_value = collections.namedtuple(
+        'pwnam', 'pw_uid, pw_gid')(1,2)
+    mock_exists.side_effect = lambda d: d == containers._KVM_DEVICE
+    mock_from_env.return_value = self.fake_client
+
+    container = containers.DockerClient().create_container(
+        containers.ContainerDescriptor('1'), 'image', 'swarm-url.com', {})
+    self.assertEquals(container.name, '1')
+    mock_chown.assert_called_with(mock_mkdir.call_args[0][0], 1, 2)
+    self.assertEquals(container.devices, None)
+
+  @mock.patch('os.chown')
+  @mock.patch('os.mkdir')
+  @mock.patch('os.path.exists')
+  @mock.patch('pwd.getpwnam')
+  @mock.patch('sys.platform', 'linux2')
+  @mock.patch('docker.from_env')
+  def test_create_container_linux_no_kvm(self, mock_from_env, mock_getpwnam,
+                                         mock_exists, mock_mkdir, mock_chown):
+    mock_getpwnam.return_value = collections.namedtuple(
+        'pwnam', 'pw_uid, pw_gid')(1,2)
+    mock_exists.return_value = False
+    mock_from_env.return_value = self.fake_client
+
+    container = containers.DockerClient().create_container(
+        containers.ContainerDescriptor('1'), 'image', 'swarm-url.com', {})
+    self.assertEquals(container.name, '1')
+    mock_chown.assert_called_with(mock_mkdir.call_args[0][0], 1, 2)
+    self.assertEquals(container.devices, None)
+
+  @mock.patch('os.chown')
+  @mock.patch('os.mkdir')
+  @mock.patch('os.path.exists')
+  @mock.patch('pwd.getpwnam')
+  @mock.patch('sys.platform', 'linux2')
+  @mock.patch('docker.from_env')
+  def test_create_container_linux_kvm(self, mock_from_env, mock_getpwnam,
+                                      mock_exists, mock_mkdir, mock_chown):
+    mock_getpwnam.return_value = collections.namedtuple(
+        'pwnam', 'pw_uid, pw_gid')(1,2)
+    mock_exists.side_effect = lambda d: d == containers._KVM_DEVICE
+    mock_from_env.return_value = self.fake_client
+
+    container = containers.DockerClient().create_container(
+        containers.ContainerDescriptor('1'), 'image', 'swarm-url.com', {})
+    self.assertEquals(container.name, '1')
+    mock_chown.assert_called_with(mock_mkdir.call_args[0][0], 1, 2)
+    self.assertEquals(container.devices,
+                      ['{0}:{0}'.format(containers._KVM_DEVICE)])
 
   def test_num_containers_is_set(self):
     client = containers.DockerClient()
