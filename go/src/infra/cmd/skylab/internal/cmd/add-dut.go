@@ -53,7 +53,10 @@ The protobuf definition of inventory.DeviceUnderTest is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/libs/skylab/inventory/device.proto`)
 		c.Flags.BoolVar(&c.tail, "tail", false, "Wait for the deployment task to complete.")
 
-		c.Flags.BoolVar(&c.skipInstallOS, "skip-install-os", false, "Do not install a stable OS image on the DUT.")
+		c.Flags.BoolVar(&c.skipInstallOS, "skip-install-os", false, `Do not install a stable OS image on the DUT.
+This installation is designed for initial deployment, so the DUT need to be
+in dev mode and with dev_boot_usb enabled. Please also make sure that
+dev_mode_short_delay gbb flag is not set.`)
 		c.Flags.BoolVar(&c.skipInstallFirmware, "skip-install-firmware", false, "Do not install a stable firmware on the DUT.")
 		c.Flags.BoolVar(&c.skipImageDownload, "skip-image-download", false, `Some DUT preparation steps require downloading OS image onto an external drive
 connected to the DUT. This flag disables the download, instead using whatever
