@@ -58,10 +58,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "initialize checkouts"
-  },
-  {
     "cmd": [
       "vpython",
       "-u",
@@ -74,10 +70,7 @@
       "[CACHE]/builder/recipe_engine"
     ],
     "infra_step": true,
-    "name": "initialize checkouts.recipe_engine checkout",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
+    "name": "recipe_engine checkout"
   },
   {
     "cmd": [
@@ -103,10 +96,9 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "initialize checkouts.gerrit fetch current CL info",
+    "name": "gerrit fetch current CL info",
     "timeout": 600,
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@[@@@",
       "@@@STEP_LOG_LINE@json.output@  {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"branch\": \"master\", @@@",
@@ -150,9 +142,8 @@
       ]
     },
     "infra_step": true,
-    "name": "initialize checkouts.bot_update",
+    "name": "bot_update",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@Some step text@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
@@ -193,15 +184,12 @@
   {
     "cmd": [
       "git",
-      "rev-parse",
-      "HEAD"
+      "clean",
+      "-xf"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "initialize checkouts.read CL revision",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
+    "name": "git clean"
   },
   {
     "cmd": [
@@ -216,10 +204,7 @@
       "[CACHE]/builder/depot_tools"
     ],
     "infra_step": true,
-    "name": "initialize checkouts.depot_tools checkout",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
+    "name": "depot_tools checkout"
   },
   {
     "cmd": [
@@ -248,9 +233,8 @@
       ]
     },
     "infra_step": true,
-    "name": "initialize checkouts.bot_update (without patch)",
+    "name": "bot_update (without patch)",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@Some step text@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
@@ -294,20 +278,9 @@
       "clean",
       "-xf"
     ],
-    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
     "infra_step": true,
-    "name": "git clean"
-  },
-  {
-    "cmd": [
-      "git",
-      "checkout",
-      "-f",
-      "deadbeef"
-    ],
-    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
-    "infra_step": true,
-    "name": "sync recipe_engine to CL"
+    "name": "git clean (2)"
   },
   {
     "cmd": [
@@ -334,7 +307,7 @@
       "train",
       "--no-docs"
     ],
-    "name": "train recipes at upstream CL"
+    "name": "train recipes"
   },
   {
     "cmd": [
@@ -344,7 +317,7 @@
     ],
     "cwd": "[CACHE]/builder/depot_tools/depot_tools",
     "infra_step": true,
-    "name": "post-train diff at upstream CL"
+    "name": "post-train diff"
   },
   {
     "cmd": [

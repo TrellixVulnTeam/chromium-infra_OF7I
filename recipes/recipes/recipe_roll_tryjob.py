@@ -13,7 +13,6 @@ DEPS = [
   'recipe_engine/path',
   'recipe_engine/properties',
   'recipe_engine/python',
-  'recipe_engine/raw_io',
   'recipe_engine/runtime',
   'recipe_engine/step',
 
@@ -91,149 +90,24 @@ EXTRA_MSG = {
 }
 
 
-class RecipeTrainingFailure(Exception):
-  pass
+def _checkout_project(
+    api, workdir, project, url, patch, revision=None, name=None):
+  api.file.ensure_directory('%s checkout' % project, workdir)
 
+  gclient_config = api.gclient.make_config()
+  gclient_config.got_revision_reverse_mapping['got_revision'] = project
+  soln = gclient_config.solutions.add()
+  soln.name = project
+  soln.url = url
+  soln.revision = revision
 
-class RecipesRepo(object):
-  """An abstraction of a recipes project to encapsulate common interactions."""
-
-  def __init__(self, api, workdir_base, name, url, manifest_name):
-    """
-    Args:
-      api (RecipeApi): The recipe api for this build.
-      workdir_base (Path): The global directory for all recipe repo checkouts.
-      name (str): See `name` property.
-      url (str): The remote URL for this repo.
-      manifest_name (str): The name of the manifest to upload to Logdog (must
-        be unique per-build).
-    """
-    self._api = api
-    self._workdir = workdir_base.join(name)
-    self._name = name
-    self._url = url
-    self._manifest_name = manifest_name
-
-    self._root = None
-    self._cl_revision = None
-    self._recipes_py = None
-
-  @property
-  def name(self):
-    """The name of this recipes project, e.g. 'recipe_engine'."""
-    return self._name
-
-  @property
-  def root(self):
-    """The absolute path to the root of the checkout for this repo.
-
-    Will be None until `init_checkout()` is called.
-    """
-    return self._root
-
-  @property
-  def recipes_py(self):
-    """The path to the recipes.py file for this repo, relative to the root."""
-    if self._recipes_py is None:
-      recipes_cfg = self._api.file.read_json(
-          'parse recipes.cfg',
-          self._root.join('infra', 'config', 'recipes.cfg'),
-          test_data={
-            'recipes_path': 'some/path',
-          })
-      self._recipes_py = self._api.path.join(
-          recipes_cfg.get('recipes_path', ''), 'recipes.py')
-    return self._recipes_py
-
-  def checkout_cl(self):
-    """Sync the repo the CL that triggered this build.
-
-    Assumes this repo is the repo for the CL.
-    """
-    assert self._cl_revision
-    return self._checkout(self._cl_revision, 'sync %s to CL' % self.name)
-
-  def checkout_master(self):
-    """Sync the repo to master."""
-    return self._checkout('refs/heads/master', 'sync %s to master' % self.name)
-
-  def _checkout(self, checkout_ref, step_name):
-    with self._api.context(cwd=self.root):
+  with api.context(cwd=workdir):
+    ret = api.bot_update.ensure_checkout(
+        gclient_config=gclient_config, patch=patch, manifest_name=name)
+    with api.context(cwd=workdir.join(project)):
       # Clean out those stale pyc's!
-      self._api.git('clean', '-xf')
-      return self._api.git('checkout', '-f', checkout_ref, name=step_name)
-
-  def init_checkout(self):
-    """Checks out the repo into a subdirectory of _workdir.
-
-    Sets `root` to the root of the checkout, and `_cl_revision` to the
-    """
-    assert not self._root, 'checkout already initialized'
-
-    is_triggering_repo = self._url == self._api.tryserver.gerrit_change_repo_url
-
-    self._api.file.ensure_directory(
-        '%s checkout' % self._name, self._workdir)
-
-    gclient_config = self._api.gclient.make_config()
-    gclient_config.got_revision_reverse_mapping['got_revision'] = self._name
-    soln = gclient_config.solutions.add()
-    soln.name = self._name
-    soln.url = self._url
-
-    with self._api.context(cwd=self._workdir):
-      ret = self._api.bot_update.ensure_checkout(
-          gclient_config=gclient_config,
-          # Only try to checkout the CL if this repo is the one that triggered
-          # the current build.
-          patch=is_triggering_repo,
-          manifest_name=self._manifest_name)
-      self._root = self._workdir.join(ret.json.output['root'])
-
-      if is_triggering_repo:
-        with self._api.context(cwd=self._root):
-          rev_parse_step = self._api.git(
-              'rev-parse', 'HEAD',
-              name='read CL revision',
-              stdout=self._api.raw_io.output(),
-              step_test_data=lambda:
-                  self._api.raw_io.test_api.stream_output('deadbeef'))
-          self._cl_revision = rev_parse_step.stdout.strip()
-
-  def is_dirty(self, name):
-    """Check whether the repo has any unstaged changes.
-
-    Specifically, this can be used after calling `train()` to determine
-    whether the training caused a change in the expectation files.
-    """
-    with self._api.context(cwd=self._root):
-      # This has the benefit of showing the expectation diff to the user.
-      diff_step = self._api.git('diff', '--exit-code', name=name, ok_ret='any')
-      dirty = diff_step.retcode != 0
-      if dirty:
-        diff_step.presentation.status = 'FAILURE'
-      return dirty
-
-  def train(self, upstream_repo, step_name):
-    """Re-trains the expectation files for this repo.
-
-    Args:
-      upstream_repo (RecipeRepo): A locally checked-out recipes repo that's
-        among the dependencies of `self`. The training will be run using the
-        local version of the dependency rather than the version pinned in
-        recipes.cfg.
-      step_name (str): The name to use for the training step.
-
-    Raises:
-      `RecipeTrainingFailure` if the training produces an uncaught exception.
-    """
-    try:
-      return self._api.python(
-          step_name, self._root.join(self.recipes_py),
-          ['-O', '%s=%s' % (upstream_repo.name, upstream_repo.root),
-          'test', 'train', '--no-docs'])
-    except self._api.step.StepFailure:
-      raise RecipeTrainingFailure('failed to train recipes')
+      api.git('clean', '-xf')
+    return workdir.join(ret.json.output['root'])
 
 
 def _find_footer(api, repo_id):
@@ -263,54 +137,14 @@ def _find_footer(api, repo_id):
   return found_set.pop() if found_set else None, False
 
 
-def _get_expected_footer(api, upstream_repo, downstream_repo):
-  # Run a 'train' on the downstream repo, first using the upstream repo at the
-  # CL revision and then at HEAD. We compare these two runs to avoid taking
-  # unrolled CLs into account in the resulting diff.
-  #
-  # If the CL train fails, we require a Manual-Change footer
-  # If there's a diff between the two trains, we require a Nontrivial-Roll
-  # footer
-  # If there's no diff between the two trains, we require no footers
-
-  with api.step.nest('initialize checkouts'):
-    upstream_repo.init_checkout()
-    downstream_repo.init_checkout()
-
-  upstream_repo.checkout_cl()
-
-  try:
-    downstream_repo.train(upstream_repo, 'train recipes at upstream CL')
-  except RecipeTrainingFailure:
-    return MANUAL_CHANGE_FOOTER
-
-  # If there is no diff introduced by training against this CL along with all
-  # the other unrolled changes, then there is a trivial CL that the roller will
-  # use rather than trying to roll in any nontrivial ancestor commits. So this
-  # change can be considered trivial.
-  trivial = not downstream_repo.is_dirty('post-train diff at upstream CL')
-  if trivial:
-    return None
-
-  with api.context(cwd=downstream_repo.root):
-    api.git('add', '--all', name='save post-train diff')
-
-  upstream_repo.checkout_master()
-
-  try:
-    downstream_repo.train(upstream_repo, 'train recipes at upstream master')
-  except RecipeTrainingFailure:
-    # If this CL fixes an older unrolled CL that requires a manual change
-    # downstream for it to be rolled, then we can let this CL in without
-    # requiring a manual change footer.
-    return NONTRIVIAL_ROLL_FOOTER
-
-  # If the training passes when run against upstream at HEAD, we can use the
-  # diff between training against upstream HEAD and training against the
-  # upstream CL to more accurately determine if this CL introduces diffs,
-  # while disregarding diffs introduced by older unrolled changes.
-  trivial = not downstream_repo.is_dirty('post-train diff at upstream master')
-  return NONTRIVIAL_ROLL_FOOTER if not trivial else None
+def _find_recipes_py(api, repo_path):
+  recipes_cfg = api.file.read_json(
+      'parse recipes.cfg',
+      repo_path.join('infra', 'config', 'recipes.cfg'),
+      test_data={
+        'recipes_path': 'some/path',
+      })
+  return api.path.join(recipes_cfg.get('recipes_path', ''), 'recipes.py')
 
 
 def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
@@ -322,19 +156,43 @@ def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
   # patch and deprecated both upstream_id and upstream_url parameters.
   workdir_base = api.path['cache'].join('builder')
 
-  upstream_repo = RecipesRepo(
-    api, workdir_base, upstream_id, upstream_url, manifest_name='upstream')
-  downstream_repo = RecipesRepo(
-    api, workdir_base, downstream_id, downstream_url,
-    manifest_name='downstream')
-
   # First, check to see if the user has bypassed this tryjob's analysis
   # entirely.
   actual_footer, bypass = _find_footer(api, downstream_id)
   if bypass:
     return
 
-  expected_footer = _get_expected_footer(api, upstream_repo, downstream_repo)
+  # If not, we run a 'train' on the downstream repo, using the upstream
+  # checkout.
+  #
+  # If the train fails, we require a Manual-Change footer
+  # If the train creates a diff, we require a Nontrivial-Roll footer
+  # If the train is clean, we require no footers
+  upstream_checkout = _checkout_project(
+      api, workdir_base.join(upstream_id), upstream_id, upstream_url,
+      patch=True, name="upstream")
+  downstream_checkout = _checkout_project(
+      api, workdir_base.join(downstream_id), downstream_id, downstream_url,
+      patch=False, name="downstream")
+
+  expected_footer = None
+  recipes_relpath = _find_recipes_py(api, downstream_checkout)
+  try:
+    api.python('train recipes',
+        downstream_checkout.join(recipes_relpath),
+        ['-O', '%s=%s' % (upstream_id, upstream_checkout), 'test', 'train',
+         '--no-docs'])
+
+    with api.context(cwd=downstream_checkout):
+      # This has the benefit of showing the expectation diff to the user.
+      dirty_check = api.git(
+          'diff', '--exit-code', name='post-train diff', ok_ret='any')
+
+    if dirty_check.retcode != 0:
+      dirty_check.presentation.status = 'FAILURE'
+      expected_footer = NONTRIVIAL_ROLL_FOOTER
+  except api.step.StepFailure:
+    expected_footer = MANUAL_CHANGE_FOOTER
 
   # Either expected_footer and actual_footer are both None or both matching
   # footers.
@@ -369,7 +227,7 @@ def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
           footer=expected_footer,
           up_id=upstream_id,
           down_id=downstream_id,
-          down_recipes=downstream_repo.recipes_py,
+          down_recipes=recipes_relpath,
       ))
 
 
@@ -434,7 +292,7 @@ def GenTests(api):
 
   yield (
     test('find_manual_roll_missing')
-    + api.step_data('train recipes at upstream CL', retcode=1)
+    + api.step_data('train recipes', retcode=1)
     + api.post_check(lambda check, steps: check(
         MANUAL_CHANGE_FOOTER in steps['MISSING FOOTER IN CL MESSAGE'].step_text
     ))
@@ -442,7 +300,7 @@ def GenTests(api):
 
   yield (
     test('find_manual_roll_wrong', NONTRIVIAL_ROLL_FOOTER)
-    + api.step_data('train recipes at upstream CL', retcode=1)
+    + api.step_data('train recipes', retcode=1)
     + api.post_check(lambda check, steps: check(
         MANUAL_CHANGE_FOOTER in steps['WRONG FOOTER IN CL MESSAGE'].step_text
     ))
@@ -450,37 +308,13 @@ def GenTests(api):
 
   yield (
     test('find_non_trivial_roll')
-    + api.step_data('post-train diff at upstream CL', retcode=1)
-    + api.step_data('post-train diff at upstream master', retcode=1)
+    + api.step_data('post-train diff', retcode=1)
     + api.post_check(lambda check, steps: check(
       NONTRIVIAL_ROLL_FOOTER in steps['MISSING FOOTER IN CL MESSAGE'].step_text
     ))
   )
 
   yield (
-    test('trivial_roll_unrolled_changes')
-    + api.step_data('post-train diff at upstream CL', retcode=1)
-  )
-
-  yield (
-    test('nontrivial_roll_unrolled_changes')
-    + api.step_data('post-train diff at upstream CL', retcode=1)
-    + api.step_data('post-train diff at upstream master', retcode=1)
-    + api.post_check(lambda check, steps: check(
-      NONTRIVIAL_ROLL_FOOTER in steps['MISSING FOOTER IN CL MESSAGE'].step_text
-    ))
-  )
-
-  yield (
-    test('nontrivial_roll_match', NONTRIVIAL_ROLL_FOOTER)
-    + api.step_data('post-train diff at upstream CL', retcode=1)
-    + api.step_data('post-train diff at upstream master', retcode=1)
-  )
-
-  # The upstream HEAD commit cannot be rolled downstream without a manual
-  # change, but this nontrivial CL fixes that.
-  yield (
-    test('nontrivial_fix_for_broken_head', NONTRIVIAL_ROLL_FOOTER)
-    + api.step_data('post-train diff at upstream CL', retcode=1)
-    + api.step_data('train recipes at upstream master', retcode=1)
+    test('non_trivial_roll_match', NONTRIVIAL_ROLL_FOOTER)
+    + api.step_data('post-train diff', retcode=1)
   )
