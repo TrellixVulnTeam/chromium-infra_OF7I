@@ -87,7 +87,12 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "read instance config"
+    "name": "read instance config",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@properties@[core]@@@",
+      "@@@STEP_LOG_LINE@properties@disable_usage_reporting = True@@@",
+      "@@@STEP_LOG_END@properties@@@"
+    ]
   },
   {
     "cmd": [

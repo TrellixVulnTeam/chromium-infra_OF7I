@@ -42,7 +42,9 @@
     "infra_step": true,
     "name": "load package specs.read 'something'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@create {}@@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {

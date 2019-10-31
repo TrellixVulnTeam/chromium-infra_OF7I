@@ -139,7 +139,12 @@
     "infra_step": true,
     "name": "load packages from desired repos.load package specs.read 'pkg_a'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create { unsupported: true }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"prefix/deps\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -156,7 +161,12 @@
     "infra_step": true,
     "name": "load packages from desired repos.load package specs.read 'pkg_b'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create { unsupported: true }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"prefix/deps\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {

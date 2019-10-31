@@ -45,7 +45,9 @@
     "infra_step": true,
     "name": "load package specs.read 'bad'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@narwhal@@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {

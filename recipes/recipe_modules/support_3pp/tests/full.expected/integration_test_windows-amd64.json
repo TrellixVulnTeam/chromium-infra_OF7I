@@ -51,7 +51,18 @@
     "infra_step": true,
     "name": "load package specs.read 'already_uploaded'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source { cipd {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        pkg: \"source/already_uploaded\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        default_version: \"1.5.0-rc1\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        original_download_url: \"https://some.internet.example.com\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"tools\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -68,7 +79,19 @@
     "infra_step": true,
     "name": "load package specs.read 'bottom_dep'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source { cipd {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        pkg: \"source/bottom_dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        default_version: \"1.0\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        original_download_url: \"https://some.internet.example.com\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {}@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"deps\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -85,7 +108,18 @@
     "infra_step": true,
     "name": "load package specs.read 'deep_dep'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source { cipd {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        pkg: \"source/deep_dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        default_version: \"1.0.0\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        original_download_url: \"https://some.internet.example.com\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"deps\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -102,7 +136,22 @@
     "infra_step": true,
     "name": "load package specs.read 'dep'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source { cipd {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        pkg: \"source/dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        default_version: \"1.0.0\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        original_download_url: \"https://some.internet.example.com\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        tool: \"tool\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        dep: \"deep_dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"deps\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -119,7 +168,15 @@
     "infra_step": true,
     "name": "load package specs.read 'fetch_and_package'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create { source { script { name: \"fetch.py\" } } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      pkg_prefix: \"tools\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      universal: true@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -136,7 +193,18 @@
     "infra_step": true,
     "name": "load package specs.read 'pkg'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source { script { name: \"fetch.py\" } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        tool: \"tool\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        dep:  \"dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"tools\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -153,7 +221,23 @@
     "infra_step": true,
     "name": "load package specs.read 'posix_tool'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"linux-.*|mac-.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        cipd {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@          pkg: \"source/posix_tool\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@          default_version: \"1.2.0\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@          original_download_url: \"https://some.internet.example.com\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        unpack_archive: true@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {}  # default build options@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"tools\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -170,7 +254,82 @@
     "infra_step": true,
     "name": "load package specs.read 'tool'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        git {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@          repo: \"https://go.repo/tool\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@          tag_pattern: \"v%s\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@          version_join: \".\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        subdir: \"src/go.repo/tool\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        patch_dir: \"patches\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        patch_version: \"chops.1\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        # We use an older version of the tool to bootstrap new versions.@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        tool: \"tool@0.9.0\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        dep: \"bottom_dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        install: \"install.sh\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        install: \"intel\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      package {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        version_file: \".versions/tool.cipd_version\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"mac-.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        install: \"install-mac.sh\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      package {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        install_mode: symlink@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      verify {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        test: \"test.py\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        test: \"mac\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"windows-.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      verify {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        test: \"test.py\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        test: \"windows\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"linux-.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      verify {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        test: \"test.py\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        test: \"linux\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"linux-arm.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        install: \"install.sh\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        install: \"arm\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"linux-amd64\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        # on linux-amd64 we self-bootstrap the tool@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        tool: \"\"  # clears tool@0.9.0@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        install: \"install_bootstrap.sh\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"build_tools\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -187,7 +346,11 @@
     "infra_step": true,
     "name": "load package specs.read 'unsupported'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create { unsupported: true }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -204,7 +367,24 @@
     "infra_step": true,
     "name": "load package specs.read 'windows_experiment'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"linux-.*|mac-.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source { script { name: \"fetch.py\" } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {}@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"windows-.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      experimental: true@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      source { script { name: \"fetch.py\" } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build { install: \"win_install.py\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"tools\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -744,7 +924,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/deps/bottom_dep/windows-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/deps/bottom_dep/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/bottom_dep/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -1023,7 +1204,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/deps/deep_dep/windows-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/deps/deep_dep/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/deep_dep/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -1308,7 +1490,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/tools/fetch_and_package\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/tools/fetch_and_package@https://chrome-infra-packages.appspot.com/p/3pp/tools/fetch_and_package/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -1800,7 +1983,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"experimental/3pp/tools/windows_experiment/windows-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@experimental/3pp/tools/windows_experiment/windows-amd64@https://chrome-infra-packages.appspot.com/p/experimental/3pp/tools/windows_experiment/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -2835,7 +3019,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/build_tools/tool/windows-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/build_tools/tool/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/build_tools/tool/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -3423,7 +3608,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/deps/dep/windows-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/deps/dep/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/deps/dep/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -4020,7 +4206,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/tools/pkg/windows-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/tools/pkg/windows-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg/windows-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {

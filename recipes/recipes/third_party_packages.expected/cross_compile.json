@@ -1180,7 +1180,8 @@
     "infra_step": true,
     "name": "python.provision SSL.read ssl.py",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_END@ssl.py@@@"
     ]
   },
   {
@@ -1198,7 +1199,8 @@
     "infra_step": true,
     "name": "python.provision SSL.read ssl.py addendum",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_END@python_ssl_suffix.py@@@"
     ]
   },
   {
@@ -2300,7 +2302,10 @@
     "infra_step": true,
     "name": "gcloud.read instance config",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@properties@[core]@@@",
+      "@@@STEP_LOG_LINE@properties@disable_usage_reporting = True@@@",
+      "@@@STEP_LOG_END@properties@@@"
     ]
   },
   {

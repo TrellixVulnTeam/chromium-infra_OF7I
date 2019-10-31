@@ -294,7 +294,11 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "parse recipes.cfg"
+    "name": "parse recipes.cfg",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@recipes.cfg@{\"recipes_path\": \"some/path\"}@@@",
+      "@@@STEP_LOG_END@recipes.cfg@@@"
+    ]
   },
   {
     "cmd": [

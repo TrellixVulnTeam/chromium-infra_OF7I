@@ -44,7 +44,21 @@
     "infra_step": true,
     "name": "load package specs.read 'dep'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    platform_re: \"linux-amd64|mac-.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    source {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      git {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        repo: \"https://go.repo/dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        tag_pattern: \"v%s\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    build {}@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  upload { pkg_prefix: \"pkg\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -61,7 +75,22 @@
     "infra_step": true,
     "name": "load package specs.read 'tool'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  create {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    platform_re: \"linux-amd64|mac-.*\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    source {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      git {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        repo: \"https://go.repo/tool\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      tool: \"dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  upload { pkg_prefix: \"pkg\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -78,7 +107,11 @@
     "infra_step": true,
     "name": "load package specs.read 'unsupported'",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  create { verify { test: \"verify.py\" } }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@  @@@",
+      "@@@STEP_LOG_END@3pp.pb@@@"
     ]
   },
   {
@@ -1199,7 +1232,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/pkg/tool/linux-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/pkg/tool/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/pkg/tool/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -1781,7 +1815,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/pkg/tool/linux-amd64\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/pkg/tool/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/pkg/tool/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {

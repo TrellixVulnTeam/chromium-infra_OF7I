@@ -46,6 +46,7 @@
     "name": "load package specs.read 'bad'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@3pp.pb@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },
