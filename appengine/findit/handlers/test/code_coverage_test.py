@@ -654,6 +654,15 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     })
     self.assertEqual(expected_response_body, response.body)
 
+  def testServeCLPatchsetLinesDataInvalidPatchset(self):
+    host = 'chromium-review.googlesource.com'
+    project = 'chromium/src'
+    change = 138000
+    request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
+                   '&patchset=NaN&concise=1') % (host, project, change)
+    with self.assertRaisesRegexp(Exception, r'.*400.*'):
+      self.test_app.get(request_url)
+
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataNoEquivalentPatchsets(self,
                                                      mock_get_equivalent_ps):

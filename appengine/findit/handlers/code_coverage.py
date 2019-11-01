@@ -1076,8 +1076,18 @@ class ServeCodeCoverageData(BaseHandler):
 
     host = self.request.get('host')
     project = self.request.get('project')
-    change = int(self.request.get('change'))
-    patchset = int(self.request.get('patchset'))
+    try:
+      change = int(self.request.get('change'))
+      patchset = int(self.request.get('patchset'))
+    except ValueError, ve:
+      return BaseHandler.CreateError(
+          error_message=(
+              'Invalid value for change(%r) or patchset(%r): need int, %s' %
+              (self.request.get('change'), self.request.get('patchset'),
+               ve.message)),
+          return_code=400,
+          allowed_origin='*')
+
     data_type = self.request.get('type', 'lines')
 
     logging.info('Serving coverage data for CL:')
