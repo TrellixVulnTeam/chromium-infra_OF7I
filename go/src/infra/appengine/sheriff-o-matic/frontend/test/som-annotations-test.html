@@ -399,14 +399,17 @@
       element._saveBug();
 
       sinon.assert.calledOnce(sendStub);
-      sendStub.calledWith('foo', [{
-        add: {
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
           bugs: [{
             id: '37668',
             projectId: 'fuchsia',
           }]
         }
-      }]);
+      );
     });
 
     test('save bug with valid chromium short url', function () {
@@ -423,15 +426,19 @@
 
       element._saveBug();
 
+
       sinon.assert.calledOnce(sendStub);
-      sendStub.calledWith('foo', [{
-        add: {
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
           bugs: [{
             id: '123123',
             projectId: 'chromium',
           }]
         }
-      }]);
+      );
     });
 
     test('save bug with valid url with different project', function () {
@@ -449,15 +456,19 @@
       element._saveBug();
 
       sinon.assert.calledOnce(sendStub);
-      sendStub.calledWith('foo', [{
-        add: {
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
           bugs: [{
             id: '123123',
             projectId: 'monorail',
           }]
         }
-      }]);
+      );
     });
+
     test('save bug with shorthand', function () {
       let sendStub = sinon.stub(element, 'sendAnnotation');
       sendStub.onCall(0).returns({
@@ -473,14 +484,17 @@
       element._saveBug();
 
       sinon.assert.calledOnce(sendStub);
-      sendStub.calledWith('foo', [{
-        add: {
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
           bugs: [{
             id: '123123',
             projectId: 'fuchsia',
           }]
         }
-      }]);
+      );
     });
 
     test('save bug with invalid shorthand', function () {
@@ -515,14 +529,17 @@
       element._saveBug();
 
       sinon.assert.calledOnce(sendStub);
-      sendStub.calledWith('foo', [{
-        add: {
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
           bugs: [{
             id: '123',
             projectId: 'chromium',
           }]
         }
-      }]);
+      );
     });
 
     test('saving multiple bugs sends many annotations', function() {
@@ -546,17 +563,24 @@
 
       element._removeBugModel = {
         bug: '123',
+        project: 'chromium',
         alert: {key: 'foo'}
       };
 
       element._removeBug();
 
       sinon.assert.calledOnce(sendStub);
-      sendStub.calledWith('foo', [{
-        remove: {
-          bugs: ['bar']
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'remove',
+        {
+          bugs: [{
+            id: '123',
+            projectId: 'chromium',
+          }]
         }
-      }]);
+      );
     });
 
     test('autosnooze bug', function() {
@@ -574,15 +598,19 @@
       element._saveBug();
 
       sinon.assert.calledOnce(sendStub);
-      sendStub.calledWith('foo', [{
-        add: {
+
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
           bugs: [{
             id: '123',
             projectId: 'fuchsia',
           }],
           snoozeTime: element._defaultSnoozeTime * 60 * 1000
         }
-      }]);
+      );
     });
   });
 
@@ -636,11 +664,12 @@
 
       flush(function () {
         sinon.assert.calledOnce(sendStub);
-        sendStub.calledWith('commentkey', [{
-          remove: {
-            comments: [1]
-          }
-        }]);
+        sinon.assert.calledWith(
+          sendStub,
+          'commentkey',
+          'remove',
+          {comments: [1]}
+        );
         done();
       });
     });
@@ -660,11 +689,12 @@
 
       flush(function () {
         sinon.assert.calledOnce(sendStub);
-        sendStub.calledWith('commentkey', [{
-          add: {
-            comments: ['fake comment']
-          }
-        }]);
+        sinon.assert.calledWith(
+          sendStub,
+          'commentkey',
+          'add',
+          {comments: ['fake comment']}
+        );
         done();
       });
     });

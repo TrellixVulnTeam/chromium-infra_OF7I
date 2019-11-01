@@ -372,13 +372,13 @@ class SomAnnotations extends Polymer.mixinBehaviors(
   // Parse the url object to read back the project name
   // ex: crbug.com/p/monorail/123 will return monorail
   // ex: crbug.com/123 will return chromium
+  // ex: crbug.com/monorail/123 will return monorail
   _getProjectNameFromUrl(url) {
-    let projectName = '';
     const paths = url.pathname.split('/');
-    if (paths.includes('p')) {
-      projectName = paths[paths.indexOf('p') + 1];
+    if (paths.length > 2) {
+      return paths[paths.length - 2];
     }
-    return projectName == undefined ? 'chromium' : projectName;
+    return "chromium";
   }
 
   // Checks if url begins with http or https, if not, prepend "http://".
