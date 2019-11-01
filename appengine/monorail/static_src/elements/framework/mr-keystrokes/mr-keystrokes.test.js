@@ -7,11 +7,15 @@ import {MrKeystrokes} from './mr-keystrokes.js';
 import page from 'page';
 import Mousetrap from 'mousetrap';
 
+import {issueRefToString} from 'shared/converters.js';
+
+/** @type {MrKeystrokes} */
 let element;
 
 describe('mr-keystrokes', () => {
   beforeEach(() => {
-    element = document.createElement('mr-keystrokes');
+    element = /** @type {MrKeystrokes} */ (
+      document.createElement('mr-keystrokes'));
     document.body.appendChild(element);
 
     element.projectName = 'proj';
@@ -32,17 +36,26 @@ describe('mr-keystrokes', () => {
 
   it('? and esc open and close dialog', async () => {
     await element.updateComplete;
-    assert.isFalse(element.opened);
+    assert.isFalse(element._opened);
 
     Mousetrap.trigger('?');
 
     await element.updateComplete;
-    assert.isTrue(element.opened);
+    assert.isTrue(element._opened);
 
     Mousetrap.trigger('esc');
 
     await element.updateComplete;
-    assert.isFalse(element.opened);
+    assert.isFalse(element._opened);
+  });
+
+  it('tracks if the issue is currently starring', async () => {
+    await element.updateComplete;
+    assert.isFalse(element._isStarring);
+
+    const issueRefStr = issueRefToString(element._issueRef);
+    element._starringIssues.set(issueRefStr, {requesting: true});
+    assert.isTrue(element._isStarring);
   });
 
   // TODO(zhangtiff): Figure out how to best test page navigation.

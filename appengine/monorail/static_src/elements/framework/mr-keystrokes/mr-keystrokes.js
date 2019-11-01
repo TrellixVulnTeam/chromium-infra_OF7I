@@ -79,7 +79,7 @@ const SHORTCUT_DOC_GROUPS = [
  * `<mr-keystrokes>`
  *
  * Adds keybindings for Monorail, including a dialog for showing keystrokes.
- *
+ * @extends {LitElement}
  */
 export class MrKeystrokes extends connectStore(LitElement) {
   /** @override */
@@ -137,15 +137,15 @@ export class MrKeystrokes extends connectStore(LitElement) {
   /** @override */
   render() {
     return html`
-      <chops-dialog ?opened=${this.opened}>
+      <chops-dialog ?opened=${this._opened}>
         <h2>
           Issue tracker keyboard shortcuts
-          <button class="close-button" @click=${this.closeDialog}>
+          <button class="close-button" @click=${this._closeDialog}>
             Close
           </button>
         </h2>
         <div class="keyboard-help">
-          ${this.shortcutDocGroups.map((group) => html`
+          ${this._shortcutDocGroups.map((group) => html`
             <div class="keyboard-help-section">
               <span></span><span class="help-title">${group.title}</span>
               ${group.keyDocs.map((keyDoc) => html`
@@ -174,15 +174,15 @@ export class MrKeystrokes extends connectStore(LitElement) {
   /** @override */
   static get properties() {
     return {
-      shortcutDocGroups: {type: Array},
-      opened: {type: Boolean},
       issueEntryUrl: {type: String},
-      projectName: {type: String},
       issueId: {type: Number},
-      issuePermissions: {type: Array},
+      projectName: {type: String},
       queryParams: {type: Object},
-      _isStarred: {type: Boolean},
       _fetchingIsStarred: {type: Boolean},
+      _isStarred: {type: Boolean},
+      _issuePermissions: {type: Array},
+      _opened: {type: Boolean},
+      _shortcutDocGroups: {type: Array},
       _starringIssues: {type: Object},
     };
   }
@@ -191,21 +191,21 @@ export class MrKeystrokes extends connectStore(LitElement) {
   constructor() {
     super();
 
-    this.shortcutDocGroups = SHORTCUT_DOC_GROUPS;
-    this.opened = false;
+    this._shortcutDocGroups = SHORTCUT_DOC_GROUPS;
+    this._opened = false;
     this._starringIssues = new Map();
+    this.projectName = undefined;
+    this.issueId = undefined;
+    this.queryParams = undefined;
+    this.issueEntryUrl = undefined;
   }
 
   /** @override */
   stateChanged(state) {
-    this.issuePermissions = issue.permissions(state);
-    // Create an issue ref to fetch whether it's starred
-    const issueRef = {
-      projectName: this.projectName,
-      localId: this.issueId,
-    };
+    this._issuePermissions = issue.permissions(state);
+
     const starredIssues = issue.starredIssues(state);
-    this._isStarred = starredIssues.has(issueRefToString(issueRef));
+    this._isStarred = starredIssues.has(issueRefToString(this._issueRef));
     this._fetchingIsStarred = issue.requests(state).fetchIsStarred.requesting;
     this._starringIssues = issue.starringIssues(state);
   }
@@ -214,45 +214,62 @@ export class MrKeystrokes extends connectStore(LitElement) {
   updated(changedProperties) {
     if (changedProperties.has('projectName')
         || changedProperties.has('issueEntryUrl')) {
-      this.bindProjectKeys(this.projectName, this.issueEntryUrl);
+      this._bindProjectKeys(this.projectName, this.issueEntryUrl);
     }
     if (changedProperties.has('projectName') || changedProperties.has('issueId')
         || changedProperties.has('issuePermissions')
         || changedProperties.has('queryParams')) {
-      this.bindIssueDetailKeys(this.projectName, this.issueId,
-          this.issuePermissions, this.queryParams);
+      this._bindIssueDetailKeys(this.projectName, this.issueId,
+          this._issuePermissions, this.queryParams);
     }
   }
 
   /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.unbindProjectKeys();
-    this.unbindIssueDetailKeys();
+    this._unbindProjectKeys();
+    this._unbindIssueDetailKeys();
   }
 
+  /** @private */
   get _isStarring() {
-    const requestKey = issueRefToString(this.issueRef);
+    const requestKey = issueRefToString(this._issueRef);
     if (this._starringIssues.has(requestKey)) {
-      return this._starringIssuesget(requestKey).requesting;
+      return this._starringIssues.get(requestKey).requesting;
     }
     return false;
   }
 
-  toggleDialog() {
-    this.opened = !this.opened;
+  /** @private */
+  get _issueRef() {
+    return {
+      projectName: this.projectName,
+      localId: this.issueId,
+    };
   }
 
-  openDialog() {
-    this.opened = true;
+  /** @private */
+  _toggleDialog() {
+    this._opened = !this._opened;
   }
 
-  closeDialog() {
-    this.opened = false;
+  /** @private */
+  _openDialog() {
+    this._opened = true;
   }
 
-  bindProjectKeys(projectName, issueEntryUrl) {
-    this.unbindProjectKeys();
+  /** @private */
+  _closeDialog() {
+    this._opened = false;
+  }
+
+  /**
+   * @param {String} projectName
+   * @param {String} issueEntryUrl
+   * @private
+   */
+  _bindProjectKeys(projectName, issueEntryUrl) {
+    this._unbindProjectKeys();
 
     if (!projectName) return;
 
@@ -267,26 +284,34 @@ export class MrKeystrokes extends connectStore(LitElement) {
 
     Mousetrap.bind('?', () => {
       // Toggle key help.
-      this.toggleDialog();
+      this._toggleDialog();
     });
 
     Mousetrap.bind('esc', () => {
       // Close key help dialog if open.
-      this.closeDialog();
+      this._closeDialog();
     });
 
     Mousetrap.bind('c', () => page(issueEntryUrl));
   }
 
-  unbindProjectKeys() {
+  /** @private */
+  _unbindProjectKeys() {
     Mousetrap.unbind('/');
     Mousetrap.unbind('?');
     Mousetrap.unbind('esc');
     Mousetrap.unbind('c');
   }
 
-  bindIssueDetailKeys(projectName, issueId, issuePermissions, queryParams) {
-    this.unbindIssueDetailKeys();
+  /**
+   * @param {String} projectName
+   * @param {String} issueId
+   * @param {Array<String>} issuePermissions
+   * @param {Object} queryParams
+   * @private
+   */
+  _bindIssueDetailKeys(projectName, issueId, issuePermissions, queryParams) {
+    this._unbindIssueDetailKeys();
 
     if (!projectName || !issueId) return;
 
@@ -337,18 +362,15 @@ export class MrKeystrokes extends connectStore(LitElement) {
         // Star an issue.
         if (!this._fetchingIsStarred && !this._isStarring) {
           const newIsStarred = !this._isStarred;
-          const issueRef = {
-            projectName: this.projectName,
-            localId: this.issueId,
-          };
 
-          store.dispatch(issue.star(issueRef, newIsStarred));
+          store.dispatch(issue.star(this._issueRef, newIsStarred));
         }
       });
     }
   }
 
-  unbindIssueDetailKeys() {
+  /** @private */
+  _unbindIssueDetailKeys() {
     Mousetrap.unbind('k');
     Mousetrap.unbind('j');
     Mousetrap.unbind('u');
