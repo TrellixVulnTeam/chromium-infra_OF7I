@@ -33,6 +33,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/freeduts"
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
+	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/libs/skylab/inventory"
 )
@@ -121,6 +122,15 @@ func (is *ServerImpl) ListRemovedDuts(ctx context.Context, req *fleet.ListRemove
 		})
 	}
 	return resp, nil
+}
+
+// GetStableVersion implements the method from fleet.InventoryServer interface
+func (is *ServerImpl) GetStableVersion(ctx context.Context, req *fleet.GetStableVersionRequest) (resp *fleet.GetStableVersionResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	return getStableVersionImpl(ctx, req.BuildTarget, req.Model)
 }
 
 // UpdateCachedInventory implements the method from fleet.InventoryServer interface.
@@ -262,4 +272,27 @@ func freeDUTInfo(d *inventory.DeviceUnderTest) freeduts.DUT {
 		ExpireTime: t,
 		Model:      c.GetLabels().GetModel(),
 	}
+}
+
+// getStableVersionImpl returns all the stable versions associated with a given buildTarget and model
+func getStableVersionImpl(ctx context.Context, buildTarget string, model string) (*fleet.GetStableVersionResponse, error) {
+	var err error
+	merr := errors.NewMultiError()
+	out := &fleet.GetStableVersionResponse{}
+	out.CrosVersion, err = dssv.GetCrosStableVersion(ctx, buildTarget)
+	if err != nil {
+		merr = append(merr, err)
+	}
+	out.FaftVersion, err = dssv.GetFaftStableVersion(ctx, buildTarget, model)
+	if err != nil {
+		merr = append(merr, err)
+	}
+	out.FirmwareVersion, err = dssv.GetFirmwareStableVersion(ctx, buildTarget, model)
+	if err != nil {
+		merr = append(merr, err)
+	}
+	if len(merr) != 0 {
+		return nil, merr
+	}
+	return out, nil
 }

@@ -294,3 +294,20 @@ func (s *DecoratedInventory) UpdateDeviceConfig(ctx context.Context, req *Update
 	}
 	return
 }
+
+func (s *DecoratedInventory) GetStableVersion(ctx context.Context, req *GetStableVersionRequest) (rsp *GetStableVersionResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetStableVersion", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetStableVersion(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetStableVersion", rsp, err)
+	}
+	return
+}

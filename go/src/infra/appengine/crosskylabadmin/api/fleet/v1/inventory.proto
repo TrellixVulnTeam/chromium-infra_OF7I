@@ -126,6 +126,11 @@ service Inventory {
   // It also caches device config to local datastore, which is used for filtering
   // out device config in future DUT label updating.
   rpc UpdateDeviceConfig(UpdateDeviceConfigRequest) returns (UpdateDeviceConfigResponse);
+
+  // GetStableVersion reads the stable version for a particular DUT from datastore
+  //
+  // There is intentionally no RPC for writing the stable version.
+  rpc GetStableVersion(GetStableVersionRequest) returns (GetStableVersionResponse);
 }
 
 message PushInventoryToQueenRequest {}
@@ -666,3 +671,15 @@ message UpdateDutLabelsResponse {
 message UpdateCachedInventoryRequest {}
 message UpdateCachedInventoryResponse {}
 
+// next tag: 3
+message GetStableVersionRequest {
+    string buildTarget = 1;
+    string model = 2;
+}
+
+// next tag: 4
+message GetStableVersionResponse {
+    string crosVersion = 1;
+    string firmwareVersion = 2;
+    string faftVersion = 3;
+}

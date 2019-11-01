@@ -22,6 +22,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/freeduts"
+	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
 	"infra/libs/skylab/inventory"
 
@@ -248,6 +249,48 @@ func TestListRemovedDuts(t *testing.T) {
 		if diff := pretty.Compare(want, resp); diff != "" {
 			t.Errorf("Unexpected response -want +got, %s", diff)
 		}
+	})
+}
+
+func TestGetStableVersion(t *testing.T) {
+	Convey("Test GetStableVersion RPC -- stable versions exist", t, func() {
+		ctx := testingContext()
+		datastore.GetTestable(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		err := dssv.PutCrosStableVersion(ctx, "xxx-build-target", "xxx-cros-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutFaftStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-faft-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutFirmwareStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-firmware-version")
+		So(err, ShouldBeNil)
+		resp, err := tf.Inventory.GetStableVersion(
+			ctx,
+			&fleet.GetStableVersionRequest{
+				BuildTarget: "xxx-build-target",
+				Model:       "xxx-model",
+			},
+		)
+		So(err, ShouldBeNil)
+		So(resp.CrosVersion, ShouldEqual, "xxx-cros-version")
+		So(resp.FaftVersion, ShouldEqual, "xxx-faft-version")
+		So(resp.FirmwareVersion, ShouldEqual, "xxx-firmware-version")
+	})
+
+	Convey("Test GetStableVersion RPC -- no stable versions exist", t, func() {
+		ctx := testingContext()
+		datastore.GetTestable(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		resp, err := tf.Inventory.GetStableVersion(
+			ctx,
+			&fleet.GetStableVersionRequest{
+				BuildTarget: "xxx-build-target",
+				Model:       "xxx-model",
+			},
+		)
+		So(err, ShouldNotBeNil)
+		So(resp, ShouldBeNil)
 	})
 }
 

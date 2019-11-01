@@ -354,6 +354,26 @@ func (mr *MockInventoryClientMockRecorder) UpdateDeviceConfig(ctx, in interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDeviceConfig", reflect.TypeOf((*MockInventoryClient)(nil).UpdateDeviceConfig), varargs...)
 }
 
+// GetStableVersion mocks base method
+func (m *MockInventoryClient) GetStableVersion(ctx context.Context, in *GetStableVersionRequest, opts ...grpc.CallOption) (*GetStableVersionResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetStableVersion", varargs...)
+	ret0, _ := ret[0].(*GetStableVersionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStableVersion indicates an expected call of GetStableVersion
+func (mr *MockInventoryClientMockRecorder) GetStableVersion(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStableVersion", reflect.TypeOf((*MockInventoryClient)(nil).GetStableVersion), varargs...)
+}
+
 // MockInventoryServer is a mock of InventoryServer interface
 type MockInventoryServer struct {
 	ctrl     *gomock.Controller
@@ -615,4 +635,19 @@ func (m *MockInventoryServer) UpdateDeviceConfig(arg0 context.Context, arg1 *Upd
 func (mr *MockInventoryServerMockRecorder) UpdateDeviceConfig(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDeviceConfig", reflect.TypeOf((*MockInventoryServer)(nil).UpdateDeviceConfig), arg0, arg1)
+}
+
+// GetStableVersion mocks base method
+func (m *MockInventoryServer) GetStableVersion(arg0 context.Context, arg1 *GetStableVersionRequest) (*GetStableVersionResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStableVersion", arg0, arg1)
+	ret0, _ := ret[0].(*GetStableVersionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStableVersion indicates an expected call of GetStableVersion
+func (mr *MockInventoryServerMockRecorder) GetStableVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStableVersion", reflect.TypeOf((*MockInventoryServer)(nil).GetStableVersion), arg0, arg1)
 }
