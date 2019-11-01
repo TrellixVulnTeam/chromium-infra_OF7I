@@ -1,5 +1,7 @@
 # Monorail Quick Start
 
+[TOC]
+
 ## Mission: Track issues to help improve software products
 
 Monorail’s mission is to track issues to help improve software
