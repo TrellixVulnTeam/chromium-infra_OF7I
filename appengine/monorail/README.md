@@ -9,7 +9,8 @@ We also discuss development of Monorail at `infra-dev@chromium.org`.
 
 # Getting started with Monorail development
 
-Here's how to run Monorail locally for development on any unix system (not under google3):
+Here's how to run Monorail locally for development on Debian stretch/buster.
+These instructions may work with other Debian derivatives:
 
 1.  You need to [get the Chrome Infra depot_tools commands](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up) to check out the source code and all its related dependencies and to be able to send changes for review.
 1.  Check out the Monorail source code
@@ -25,9 +26,12 @@ Here's how to run Monorail locally for development on any unix system (not under
     1. Otherwise, download from the [offical page](http://dev.mysql.com/downloads/mysql/5.6.html#downloads).
         1.  **Do not download v5.7 (as of April 2016)**
 1.  Get the database backend running and use the command-line to create a database named "monorail":
-    1.  `sudo /usr/bin/mysqld_safe `
-    1.  `mysql --user=root --password=<pw>`
-    1.  `CREATE DATABASE monorail;`
+    1.  Allow passwordless authentication from non-root users:
+        1.  `sudo mysql -uroot mysql -e "UPDATE user SET host='%', plugin='' WHERE user='root'; FLUSH PRIVILEGES;"`
+    1.  Disable `STRICT_TRANS_TABLES`
+        1.  `echo -e "[mysqld]\nsql_mode = ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" | sudo tee /etc/mysql/conf.d/99-sql-mode.cnf`
+    1.  `sudo /etc/init.d/mysql restart`
+    1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
 1.  Install Python MySQLdb. Either:
     1.  `sudo apt-get install python-mysqldb`
     1.  Or, download from http://sourceforge.net/projects/mysql-python/
@@ -37,23 +41,27 @@ Here's how to run Monorail locally for development on any unix system (not under
             1.  setenv VERSIONER_PYTHON_PREFER_64_BIT no
             1.  setenv VERSIONER_PYTHON_PREFER_32_BIT yes
         1.  In Mac OSX 10.11.1, if you see errors about failing to import MySQLdb or that _mysql.so references an untrusted relative path, then run:
-  sudo install_name_tool -change libmysqlclient.18.dylib \
+  `sudo install_name_tool -change libmysqlclient.18.dylib \
   /usr/local/mysql/lib/libmysqlclient.18.dylib \
-  /Library/Python/2.7/site-packages/_mysql.so
+  /Library/Python/2.7/site-packages/_mysql.so`
 1.  Set up one master SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
     1.  `mysql --user=root monorail < schema/framework.sql`
     1.  `mysql --user=root monorail < schema/project.sql`
     1.  `mysql --user=root monorail < schema/tracker.sql`
 1.  Configure the site defaults in settings.py.  You can leave it as-is for now.
 1.  Set up the front-end development environment:
-    1.  Make sure you've run `gclient runhooks`, which will install the correct versions of `node` and `npm`.
-    1.  Run `npm install`
+    1.  ``eval `../../go/env.py` `` -- you'll need to run this in any shell you
+        wish to use for developing Monorail. It will add some key directories to
+        your `$PATH`.
+    1.  `npm install`
+1.  Install build requirements:
+    1.  `sudo apt-get install build-essential automake`
 1.  Run the app:
-    1.  Run `make serve`
+    1.  `make serve`
 1.  Browse the app at localhost:8080 your browser.
 1.  Optional: Create/modify your Monorail User row in the database and make that user a site admin. You will need to be a site admin to gain access to create projects through the UI.
-    1.  `UPDATE User SET is_site_admin = TRUE WHERE email = 'YOUR@EMAIL';`
-    1.  `Restart your local dev appserver.`
+    1.  `mysql --user=root monorail -e "UPDATE User SET is_site_admin = TRUE WHERE email = 'test@example.com';"`
+    1.  If the admin change isn't immediately apparent, you may need to restart your local dev appserver.
 
 Instructions for deploying Monorail to an existing instance or setting up a new instance are [here](doc/deployment.md).
 
