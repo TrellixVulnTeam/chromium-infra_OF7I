@@ -186,14 +186,17 @@ If any step below fails. Stop the deploy and ping
         Execution". "BUILD_ID" should be empty. "ENV" should be set to "dev".
 1.  Confirm monorail-dev was successfully deployed (Pipeline: `Deploy Dev (in
     use)`, Stage: "Continue?")
-    1.  If there are any new tasks or cron jobs, run `gcloud app deploy
-        queue.yaml cron.yaml --project monorail-dev`
+    1.  If there are
+        [any new tasks or cron jobs](https://chromium-review.googlesource.com/q/status:merged+%28file:cron.yaml+OR+file:queue.yaml%29+file:monorail),
+        run `gcloud app deploy queue.yaml cron.yaml --project monorail-dev`
+        1. Note: you should ideally be synced to the same CL as the release.
+    1.  Find the new version using the [appengine version console](https://pantheon.corp.google.com/appengine/versions?organizationId=433637338589&project=monorail-dev).
     1.  Visit popular/essential pages and confirm they are all accessible.
     1.  If everything looks good, choose "Continue" for this stage.
     1.  If there is an issue, choose "Rollback" for this stage.
 1.  Test on Staging (Pipeline: `Deploy Staging`, Stage: "Continue?")
-    1.  If there are any new tasks or cron jobs, run `gcloud app deploy
-        queue.yaml cron.yaml --project monorail-staging`
+    1.  If there are any new tasks or cron jobs, run
+        `gcloud app deploy queue.yaml cron.yaml --project monorail-staging`
     1.  For each commit since last deploy, verify affected functionality still
         works.
         1.  Test using a non-admin account, unless you're verifying
@@ -227,11 +230,13 @@ If any step below fails. Stop the deploy and ping
     1.  [Chromiumdash](https://chromiumdash.appspot.com/release-manager?platform=Android),
         should work after deployment.
 1.  Announce the Deployment.
-    1.  Include the build id of the Cloud Build that was used for this
-        deployment.
+    1.  Include the
+        [build id](https://screenshot.googleplex.com/KvzoxHEs6Qy.png)
+        of the Cloud Build used for this deployment.
     1.  Include the version numbers of the new staging and prod deployments.
         (They may be different).
-    1.  Copy changes since last deploy: `git log --oneline .`
+    1.  Copy changes since last deploy: `git log --oneline .` (use `--before`
+        and `--after` as needed).
     1.  If there were schema changes, copy and paste the commands at the bottom
         of the email
     1.  Use the subject line "Deployed Monorail to staging and prod with build
