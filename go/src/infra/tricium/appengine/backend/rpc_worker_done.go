@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"strconv"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -493,7 +492,7 @@ func collectComments(c context.Context, isolator common.IsolateAPI, isolateServe
 			return comments, errors.Annotate(err, "failed to unmarshal results data").Err()
 		}
 	} else {
-		if err := json.Unmarshal([]byte(buildbucketOutput), &results); err != nil {
+		if err := jsonpb.UnmarshalString(buildbucketOutput, &results); err != nil {
 			return comments, errors.Annotate(err, "failed to unmarshal results data").Err()
 		}
 	}

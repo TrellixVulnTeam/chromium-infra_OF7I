@@ -68,15 +68,18 @@ type CollectParameters struct {
 
 // CollectResult contains the return value of a Collect call to a TaskServerAPI.
 //
-// State is the current status of the task (can be PENDING, SUCCESS, or FAILURE)
 // One and only one of IsolatedOutputHash and BuildbucketOutput should be populated.
-// IsolatedOutputHash is the data value of a completed Swarming task.
-// BuildbucketOutput is the data value of a completed Buildbucket build.
 type CollectResult struct {
-	State              ResultState
+	// State is the current status of the task (can be PENDING, SUCCESS, or FAILURE)
+	State ResultState
+	// IsolatedOutputHash is the data value of a completed Swarming task; if this
+	// is given, then IsolatedNamespace is also required.
 	IsolatedOutputHash string
 	IsolatedNamespace  string
-	BuildbucketOutput  string
+	// BuildbucketOutput is the data value of a completed Buildbucket build,
+	// which is the JSON serialization of the Results protobuf message; it
+	// should be deserialized with jsonpb since fields use camelCase names.
+	BuildbucketOutput string
 }
 
 // TaskServerAPI specifies the Swarming service API.
