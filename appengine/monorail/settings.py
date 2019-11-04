@@ -323,6 +323,8 @@ else:
     analytics_id = 'UA-55762617-14'
     branded_domains = branded_domains_prod
     domain_to_default_project = domain_to_default_project_prod
+    # Use replicas created in response to replication failures 2019-11-04
+    db_replica_names = ['%s-next' % name for name in db_replica_names]
 
 if local_mode:
   site_name = 'Monorail Local'
