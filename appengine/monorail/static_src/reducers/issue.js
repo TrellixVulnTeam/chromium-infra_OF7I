@@ -863,7 +863,15 @@ export const fetchIssueList =
             sortSpec: params.sort,
           });
 
-      updateData = (resp || {});
+      // prpcClient is not actually a protobuf client and therefore not
+      // hydrating default values. See crbug.com/monorail/6641
+      // Until that is fixed, we have to explicitly define it.
+      const defaultFetchListResponse = {totalResults: 0, issues: []};
+
+      updateData =
+        Object.entries(resp).length === 0 ?
+          defaultFetchListResponse :
+          resp;
       issuesByRequest[0] = updateData.issues;
       issueLimit = updateData.totalResults;
 

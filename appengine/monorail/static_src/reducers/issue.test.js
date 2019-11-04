@@ -744,6 +744,23 @@ describe('issue', () => {
       sinon.assert.calledWith(dispatch, {type: 'FETCH_ISSUE_LIST_SUCCESS'});
     });
 
+    // TODO(kweng@) remove once crbug.com/monorail/6641 is fixed
+    it('has sane default for empty response', async () => {
+      prpcCall.onFirstCall().returns({});
+
+      const dispatch = sinon.stub();
+      const action = issue.fetchIssueList({}, 'chromium', {maxItems: 1}, 1);
+      await action(dispatch);
+
+      sinon.assert.calledWith(dispatch, {
+        type: 'FETCH_ISSUE_LIST_UPDATE',
+        issues: [],
+        progress: 1,
+        totalResults: 0,
+      });
+      sinon.assert.calledWith(dispatch, {type: 'FETCH_ISSUE_LIST_SUCCESS'});
+    });
+
     describe('federated references', () => {
       beforeEach(() => {
         // Preload signinImpl with a fake for testing.
