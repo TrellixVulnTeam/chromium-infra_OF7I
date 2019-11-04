@@ -117,8 +117,8 @@ const crosFailuresQuery = selectFromWhere + `
 `
 
 const fuchsiaFailuresQuery = selectFromWhere + `
-	(Project = %q OR MasterName = %q)
-	AND Bucket NOT IN ("try", "cq", "staging", "general")
+	Project = %q
+	AND Bucket = "global.try"
 	AND Builder NOT LIKE "%%bisect%%"
 LIMIT
 	1000
@@ -226,7 +226,7 @@ func generateSQLQuery(ctx context.Context, tree string, appID string) string {
 	case "ios":
 		return fmt.Sprintf(iosFailuresQuery, appID, "chromium")
 	case "fuchsia":
-		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter, tree)
+		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter)
 	case "chromium.perf":
 		return fmt.Sprintf(failuresQuery, appID, "chrome", tree, tree)
 	default:
