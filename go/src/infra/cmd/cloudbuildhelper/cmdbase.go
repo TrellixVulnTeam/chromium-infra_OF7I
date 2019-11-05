@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/maruel/subcommands"
 	"golang.org/x/oauth2"
@@ -35,10 +37,11 @@ type commandBase struct {
 	needAuth bool      // set in init, true if we have auth flags registered
 	posArgs  []*string // will be filled in by positional arguments
 
-	minVersion string         // -cloudbuildhelper-min-version
-	logConfig  logging.Config // -log-* flags
-	authFlags  authcli.Flags  // -auth-* flags
-	jsonOutput string         // -json-output flag
+	minVersion     string         // -cloudbuildhelper-min-version
+	logConfig      logging.Config // -log-* flags
+	authFlags      authcli.Flags  // -auth-* flags
+	jsonOutput     string         // -json-output flag
+	renderToStdout string         // -render-to-stdout flag
 }
 
 // init register base flags. Must be called.
@@ -59,6 +62,7 @@ func (c *commandBase) init(exec execCb, needAuth, needJSONOutput bool, posArgs [
 	}
 	if needJSONOutput {
 		c.Flags.StringVar(&c.jsonOutput, "json-output", "", "Where to write JSON file with the outcome (\"-\" for stdout).")
+		c.Flags.StringVar(&c.renderToStdout, "render-to-stdout", "", "Text template with fields to print to stdout. It takes -json-output JSON as an input.")
 	}
 }
 
@@ -84,6 +88,16 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 
 	for i, arg := range args {
 		*c.posArgs[i] = arg
+	}
+
+	// For now just make sure we can compile it.
+	if c.renderToStdout != "" {
+		if _, err := template.New("").Parse(c.renderToStdout); err != nil {
+			return handleErr(ctx, errBadFlag("-render-to-stdout", err.Error()))
+		}
+		if c.jsonOutput == "-" {
+			return handleErr(ctx, errors.Reason("-render-to-stdout and -json-output='-' can't be used together").Tag(isCLIError).Err())
+		}
 	}
 
 	if c.minVersion != "" {
@@ -125,19 +139,45 @@ func (c *commandBase) tokenSource(ctx context.Context) (oauth2.TokenSource, erro
 }
 
 // writeJSONOutput writes the result to -json-output file (if was given).
+//
+// Handles -render-to-stdout as well.
 func (c *commandBase) writeJSONOutput(r interface{}) error {
-	if c.jsonOutput == "" {
-		return nil
-	}
+	// Need to round-trip though JSON to "activate" all `json:...` annotations.
 	b, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
 		return errors.Annotate(err, "failed to marshal to JSON: %v", r).Err()
 	}
-	if c.jsonOutput == "-" {
+	var asMap interface{}
+	if err := json.Unmarshal(b, &asMap); err != nil {
+		return errors.Annotate(err, "generated bad JSON output").Err()
+	}
+
+	if c.renderToStdout != "" {
+		// We already verified it can be compiled in Run.
+		tmpl := template.Must(template.New("").Parse(c.renderToStdout))
+
+		// Render it.
+		buf := bytes.Buffer{}
+		if err = tmpl.Execute(&buf, asMap); err != nil {
+			return errors.Annotate(err, "failed to render %q", c.renderToStdout).Err()
+		}
+		buf.WriteRune('\n')
+
+		// Emit it.
+		if _, err := os.Stdout.Write(buf.Bytes()); err != nil {
+			return errors.Annotate(err, "failed to write to stdout").Err()
+		}
+	}
+
+	switch c.jsonOutput {
+	case "":
+		return nil
+	case "-":
 		fmt.Printf("%s\n", b)
 		return nil
+	default:
+		return errors.Annotate(ioutil.WriteFile(c.jsonOutput, b, 0600), "failed to write %q", c.jsonOutput).Err()
 	}
-	return errors.Annotate(ioutil.WriteFile(c.jsonOutput, b, 0600), "failed to write %q", c.jsonOutput).Err()
 }
 
 // checkVersion returns an error if the version of cloudbuildhelper is older
