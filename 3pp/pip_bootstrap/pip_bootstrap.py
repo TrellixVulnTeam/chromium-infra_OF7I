@@ -32,8 +32,6 @@ def main():
   # pylint: disable=no-name-in-module
   # pylint: disable=no-member
   import pip
-  print("imported %r" % pip)
-  import pip._internal
 
   if sys.platform == 'win32':
     # HACK - We change sys.executable here so that pip generates e.g. pip.exe
@@ -52,7 +50,7 @@ def main():
     # python.exe on %PATH%, instead of python.bat.
     sys.executable = 'python.exe'
 
-  sys.exit(pip._internal.main([
+  sys.exit(pip._main([
     # obliterate whatever is there
     'install', '--upgrade', '--force-reinstall', '--ignore-installed',
     # don't talk to the internet
