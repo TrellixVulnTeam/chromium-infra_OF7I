@@ -334,7 +334,7 @@ message CipdSource {
 //
 // This will be invoked as `script latest` and is expected to
 // print to stdout the latest symver available (e.g. `1.2.3`). The
-// $3PP_VERSION environment variable is not present.
+// $_3PP_VERSION environment variable is not present.
 //
 // If this version needs to be fetched, the script will be invoked as
 // `script checkout </abs/path/to/checkout>`. The checkout directory will

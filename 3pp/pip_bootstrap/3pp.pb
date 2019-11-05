@@ -1,5 +1,8 @@
 create {
-  source { script { name: "fetch.py" } }
+  source {
+    script { name: "fetch.py" }
+    patch_version: "chromium1"
+  }
   build {
     no_docker_env: true
   }
