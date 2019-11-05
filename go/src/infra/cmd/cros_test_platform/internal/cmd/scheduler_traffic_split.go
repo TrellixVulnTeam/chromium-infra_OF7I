@@ -219,10 +219,14 @@ func logPotentiallyRelevantRules(ctx context.Context, request *test_platform.Req
 }
 
 func formatFirstFewRules(rules []*scheduler.Rule) string {
-	const rulesToPrint = 5
-	s := fmt.Sprintf("%v", rules[:rulesToPrint])
-	if len(s) > rulesToPrint {
-		s = fmt.Sprintf("%s... [%d more]", s, len(s)-rulesToPrint)
+	const numRulesToPrint = 5
+	rulesToPrint := rules
+	if len(rulesToPrint) > numRulesToPrint {
+		rulesToPrint = rulesToPrint[:numRulesToPrint]
+	}
+	s := fmt.Sprintf("%v", rulesToPrint)
+	if len(s) > numRulesToPrint {
+		s = fmt.Sprintf("%s... [%d more]", s, len(s)-numRulesToPrint)
 	}
 	return s
 }
