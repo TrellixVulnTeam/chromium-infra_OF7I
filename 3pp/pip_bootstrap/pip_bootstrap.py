@@ -31,7 +31,7 @@ def main():
   # pip, setuptools and wheel.
   # pylint: disable=no-name-in-module
   # pylint: disable=no-member
-  import pip
+  import pip.__main__
 
   if sys.platform == 'win32':
     # HACK - We change sys.executable here so that pip generates e.g. pip.exe
@@ -50,7 +50,7 @@ def main():
     # python.exe on %PATH%, instead of python.bat.
     sys.executable = 'python.exe'
 
-  sys.exit(pip._main([
+  sys.exit(pip.__main__._main([
     # obliterate whatever is there
     'install', '--upgrade', '--force-reinstall', '--ignore-installed',
     # don't talk to the internet
