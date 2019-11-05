@@ -62,7 +62,7 @@ func (c *cmdLocalBuildRun) exec(ctx context.Context) error {
 
 	labels := docker.Labels{
 		Created:   clock.Now(ctx).UTC(),
-		BuildTool: userAgent,
+		BuildTool: UserAgent,
 		BuildMode: "local",
 		Extra:     c.labels,
 	}

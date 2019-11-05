@@ -22,12 +22,17 @@ import (
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
-const userAgent = "cloudbuildhelper v1.0.3"
+const (
+	// Version is the version of cloudbuildhelper tool.
+	Version = "1.0.4"
+	// UserAgent is used in HTTP headers of requests from cloudbuildhelper.
+	UserAgent = "cloudbuildhelper v" + Version
+)
 
 func getApplication() *cli.Application {
 	return &cli.Application{
 		Name:  "cloudbuildhelper",
-		Title: "Helper for building docker images (" + userAgent + ")",
+		Title: "Helper for building docker images (" + UserAgent + ")",
 
 		Context: func(ctx context.Context) context.Context {
 			return gologger.StdConfig.Use(ctx)
@@ -35,7 +40,7 @@ func getApplication() *cli.Application {
 
 		Commands: []*subcommands.Command{
 			subcommands.CmdHelp,
-			versioncli.CmdVersion(userAgent),
+			versioncli.CmdVersion(UserAgent),
 
 			subcommands.Section(""),
 			cmdBuild,

@@ -591,7 +591,7 @@ func doCloudBuild(ctx context.Context, in *storage.Object, inDigest string, p bu
 		Image:  image,
 		Labels: docker.Labels{
 			Created:      clock.Now(ctx).UTC(),
-			BuildTool:    userAgent,
+			BuildTool:    UserAgent,
 			BuildMode:    "cloudbuild",
 			Inputs:       inDigest,
 			BuildID:      p.BuildID,

@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"golang.org/x/oauth2"
@@ -33,6 +35,7 @@ type commandBase struct {
 	needAuth bool      // set in init, true if we have auth flags registered
 	posArgs  []*string // will be filled in by positional arguments
 
+	minVersion string         // -cloudbuildhelper-min-version
 	logConfig  logging.Config // -log-* flags
 	authFlags  authcli.Flags  // -auth-* flags
 	jsonOutput string         // -json-output flag
@@ -43,6 +46,10 @@ func (c *commandBase) init(exec execCb, needAuth, needJSONOutput bool, posArgs [
 	c.exec = exec
 	c.needAuth = needAuth
 	c.posArgs = posArgs
+
+	c.Flags.StringVar(
+		&c.minVersion, "cloudbuildhelper-min-version", "",
+		"Min expected version of cloudbuildhelper tool")
 
 	c.logConfig.Level = logging.Info // default logging level
 	c.logConfig.AddFlags(&c.Flags)
@@ -78,6 +85,13 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 	for i, arg := range args {
 		*c.posArgs[i] = arg
 	}
+
+	if c.minVersion != "" {
+		if err := checkVersion(c.minVersion); err != nil {
+			return handleErr(ctx, err)
+		}
+	}
+	logging.Infof(ctx, "Starting %s", UserAgent)
 
 	ctx, cancel := context.WithCancel(ctx)
 	signals.HandleInterrupt(cancel)
@@ -124,6 +138,41 @@ func (c *commandBase) writeJSONOutput(r interface{}) error {
 		return nil
 	}
 	return errors.Annotate(ioutil.WriteFile(c.jsonOutput, b, 0600), "failed to write %q", c.jsonOutput).Err()
+}
+
+// checkVersion returns an error if the version of cloudbuildhelper is older
+// than minVer.
+func checkVersion(minVer string) error {
+	min, err := parseVersion(minVer)
+	if err != nil {
+		return errBadFlag("-cloudbuildhelper-min-version", err.Error())
+	}
+	cur, err := parseVersion(Version)
+	if err != nil {
+		panic("impossible")
+	}
+	for i := range min {
+		if cur[i] < min[i] {
+			return errors.Reason("the caller wants cloudbuildhelper >=v%s but the running executable is v%s", minVer, Version).Tag(isCLIError).Err()
+		}
+	}
+	return nil
+}
+
+// parseVersion parses "a.b.c" into [a, b, c] slice.
+func parseVersion(v string) (out [3]int64, err error) {
+	chunks := strings.Split(v, ".")
+	if len(chunks) > 3 {
+		err = fmt.Errorf("version string is allowed to have at most 3 components, got %d", len(chunks))
+	} else {
+		for i, s := range chunks {
+			if out[i], err = strconv.ParseInt(s, 10, 32); err != nil {
+				err = fmt.Errorf("bad version string %q", v)
+				break
+			}
+		}
+	}
+	return
 }
 
 // isCLIError is tagged into errors caused by bad CLI flags.
