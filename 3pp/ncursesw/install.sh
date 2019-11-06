@@ -35,11 +35,15 @@ tic_prefix=$(realpath ../tic_prefix)
     . /install-util.sh
     toggle_host
 
-    # TODO(iannucci): fix toggle_host to correctly set $CC to gcc-4.9. This is
-    # because the docker images currently set an alternative for `cc` and `gcc`
-    # in /usr/bin to be the xcompile gcc. None of the other tools in /usr/bin
-    # are switched though...
-    export CC=gcc-4.9
+    # TODO(iannucci): fix toggle_host to correctly export the 'host' compiler.
+    # This is because the docker images currently set an alternative for `cc`
+    # and `gcc` in /usr/bin to be the xcompile gcc. None of the other tools in
+    # /usr/bin are switched though...
+    if command -v gcc-6 > /dev/null; then
+      export CC=gcc-6
+    elif command -v gcc-4.9 > /dev/null; then
+      export CC=gcc-4.9
+    fi
   fi
 
   src=$(realpath .)
