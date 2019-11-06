@@ -469,6 +469,8 @@ def CommonChecks(input_api, output_api):  # pragma: no cover
       path, black_list=THIRD_PARTY_DIRS)
   output.extend(input_api.canned_checks.CheckGenderNeutral(
       input_api, output_api, source_file_filter=third_party_filter))
+  output.extend(
+      input_api.canned_checks.CheckPatchFormatted(input_api, output_api))
 
   return output
 

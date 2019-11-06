@@ -45,11 +45,19 @@ If you've added a new module, integrate your tests with test.py:
 1. Create a .coveragerc file in the root directory of the module you want to
    test. Take a look at another .coveragerc to see what to include in that.
 1. Create a "test" directory in the root directory of the module you want to
-   test. More your *_test.py files to this directory.
+   test. Move your `*_test.py` files to this directory.
 
 Double-check that your tests are getting picked up when you want them to be:
 `./test.py test <path-to-package>`.
 
 Tests still not getting picked up by test.py? Double-check to make sure you have
-__init__.py files in each directory of your module so Python recognizes it as a
+`__init__.py` files in each directory of your module so Python recognizes it as a
 package.
+
+## Style
+
+The preferred style is PEP8 with two-space indent; that is, the [Chromium
+Python
+style](https://chromium.googlesource.com/chromium/src/+/master/styleguide/python/python.md),
+except functions use `lowercase_with_underscores`. Use yapf (`git cl format`)
+to autoformat new code.
