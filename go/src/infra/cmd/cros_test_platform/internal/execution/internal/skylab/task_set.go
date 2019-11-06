@@ -190,7 +190,8 @@ var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCyc
 
 func (r *TaskSet) response(urler swarming.URLer, running bool) *steps.ExecuteResponse {
 	resp := &steps.ExecuteResponse{
-		TaskResults: r.taskResults(urler),
+		TaskResults:         r.taskResults(urler),
+		ConsolidatedResults: r.results(urler),
 		State: &test_platform.TaskState{
 			Verdict:   r.verdict(),
 			LifeCycle: r.lifecycle(running),
@@ -238,10 +239,21 @@ func successfulVerdict(v test_platform.TaskState_Verdict) bool {
 	}
 }
 
-func (r *TaskSet) taskResults(urler swarming.URLer) []*steps.ExecuteResponse_TaskResult {
-	var results []*steps.ExecuteResponse_TaskResult
-	for _, test := range r.testRuns {
-		results = append(results, test.TaskResult(urler)...)
+func (r *TaskSet) results(urler swarming.URLer) []*steps.ExecuteResponse_ConsolidatedResult {
+	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(r.testRuns))
+	for i, test := range r.testRuns {
+		rs[i] = &steps.ExecuteResponse_ConsolidatedResult{
+			Attempts: test.TaskResult(urler),
+		}
 	}
-	return results
+	return rs
+}
+
+func (r *TaskSet) taskResults(urler swarming.URLer) []*steps.ExecuteResponse_TaskResult {
+	results := r.results(urler)
+	var trs []*steps.ExecuteResponse_TaskResult
+	for _, result := range results {
+		trs = append(trs, result.Attempts...)
+	}
+	return trs
 }

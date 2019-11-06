@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"infra/cmd/cros_test_platform/internal/execution"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -765,6 +766,67 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestEnumerationResponseWithRetries(t *testing.T) {
+	Convey("Given a request with retry enabled", t, func() {
+		ctx := context.Background()
+		ctx = setFakeTimeWithImmediateTimeout(ctx)
+		swarming := newFakeSwarming("")
+		params := basicParams()
+		params.Retry = &test_platform.Request_Params_Retry{
+			Allow: true,
+		}
+		getter := newFakeGetter()
+		gf := fakeGetterFactory(getter)
+		Convey("and two tests that always fail and retry limit", func() {
+			getter.SetAutotestResultGenerator(autotestResultAlwaysFail)
+			invs := invocationsWithServerTests("name1", "name2")
+			for _, inv := range invs {
+				inv.Test.AllowRetries = true
+				inv.Test.MaxRetries = 2
+			}
+			Convey("for skylab execution", func() {
+				ts, err := skylab.NewTaskSet(ctx, invs, params, basicConfig(), "foo-parent-task-id")
+				So(err, ShouldBeNil)
+				run := skylab.NewRunner(ts)
+				err = run.LaunchAndWait(ctx, swarming, gf)
+				So(err, ShouldBeNil)
+				resp := getSingleResponse(run, swarming)
+				Convey("response should contain two enumerated results", func() {
+					So(resp.ConsolidatedResults, ShouldHaveLength, 2)
+				})
+
+				for i, er := range resp.ConsolidatedResults {
+					Convey(fmt.Sprintf("%dst enumerated result should contain 3 attempts of a single test", i), func() {
+						as := er.GetAttempts()
+						n := as[0].Name
+						for _, a := range as {
+							So(a.Name, ShouldEqual, n)
+						}
+					})
+				}
+				Convey("both tests' results should be enumerated", func() {
+					names := make([]string, 2)
+					for i := range resp.ConsolidatedResults {
+						names[i] = resp.ConsolidatedResults[i].Attempts[0].Name
+					}
+					sort.Strings(names)
+					So(names, ShouldResemble, []string{"name1", "name2"})
+				})
+			})
+		})
+	})
+}
+
+func setFakeTimeWithImmediateTimeout(ctx context.Context) context.Context {
+	ctx, ts := testclock.UseTime(ctx, time.Now())
+	// Setup testclock to immediately advance whenever timer is set; this
+	// avoids slowdown due to timer inside of LaunchAndWait.
+	ts.SetTimerCallback(func(d time.Duration, t clock.Timer) {
+		ts.Add(2 * d)
+	})
+	return ctx
 }
 
 func TestRetries(t *testing.T) {
