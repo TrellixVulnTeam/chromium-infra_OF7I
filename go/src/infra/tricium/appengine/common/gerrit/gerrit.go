@@ -145,13 +145,11 @@ func (gerritServer) QueryChanges(c context.Context, host, project string, lastTi
 func (g gerritServer) PostRobotComments(c context.Context, host, change, revision string, runID int64, storedComments []*track.Comment) error {
 	robos := map[string][]*robotCommentInput{} // Map of path to comments for that path.
 	for _, storedComment := range storedComments {
-		logging.Debugf(c, "Stored comment is %s", string(storedComment.Comment))
 		var comment tricium.Data_Comment
 		if err := jsonpb.UnmarshalString(string(storedComment.Comment), &comment); err != nil {
 			logging.WithError(err).Warningf(c, "Failed to unmarshal comment.")
 			break
 		}
-		logging.Debugf(c, "Unmarshaled comment has start line %d", comment.StartLine)
 		path := pathForGerrit(comment.Path)
 		if _, ok := robos[path]; !ok {
 			robos[path] = []*robotCommentInput{}
@@ -340,7 +338,6 @@ func (gerritServer) setReview(c context.Context, host, change, revision string, 
 	}
 	url := fmt.Sprintf("https://%s/a/changes/%s/revisions/%s/review", host, change, PatchSetNumber(revision))
 	logging.Debugf(c, "Posting comments using URL %q.", url)
-	logging.Debugf(c, "Bytes posted are %s", string(data))
 	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
 	if err != nil {
 		return errors.Annotate(err, "failed to create POST request").Err()
