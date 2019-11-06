@@ -79,9 +79,9 @@ else
   EXTRA_CONFIGURE_ARGS="$EXTRA_CONFIGURE_ARGS --build=x86_64-linux-gnu"
 
   # OpenSSL 1.1.1 depends on pthread, so it needs to come LAST. Python's
-  # Makefile has an LDLAST to allow some ldflags to be the very last thing on
-  # the link line.
-  LDLAST="-lpthread"
+  # Makefile has BASEMODLIBS which is used last when linking the final
+  # executable.
+  BASEMODLIBS="-lpthread"
 
   # Linux requires -lrt.
   WITH_LIBS="$WITH_LIBS -lrt"
@@ -134,7 +134,6 @@ autoconf
 
 export LDFLAGS
 export CPPFLAGS
-export LDLAST
 # Configure our production Python build with our static configuration
 # environment and generate our basic platform.
 #
@@ -153,7 +152,6 @@ fi
 
 export LDFLAGS=
 export CPPFLAGS=
-export LDLAST=
 
 # Tweak Makefile to change LIBFFI_INCLUDEDIR=<TAB>path
 sed -i \
@@ -203,6 +201,7 @@ $INTERP -s -S "$SCRIPT_DIR/python_mod_gen.py" \
   "${SETUP_LOCAL_FLAGS[@]}"
 
 # Build production Python.
+export BASEMODLIBS
 make install
 
 # Augment the Python installation.
