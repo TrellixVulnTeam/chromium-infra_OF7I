@@ -179,7 +179,7 @@ describe('mr-chart', () => {
       await element.updateComplete;
 
       const startDateInput = element.shadowRoot.querySelector('#start-date');
-      startDateInput.value = '2019-11-06';
+      startDateInput.value = '2199-11-06';
 
       const event = new Event('change');
       startDateInput.dispatchEvent(event);
