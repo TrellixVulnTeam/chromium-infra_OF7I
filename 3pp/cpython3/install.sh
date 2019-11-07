@@ -200,9 +200,11 @@ $INTERP -s -S "$SCRIPT_DIR/python_mod_gen.py" \
   --output ./Modules/Setup.local \
   "${SETUP_LOCAL_FLAGS[@]}"
 
-# Build production Python.
-export BASEMODLIBS
-make install
+# Build production Python. BASEMODLIBS override allows -lpthread to be
+# at the end of the linker command for old gcc's (like 4.9, still used on e.g.
+# arm64 as of Nov 2019). This can likely go away when the dockcross base images
+# update to gcc-6 or later.
+make install BASEMODLIBS=$BASEMODLIBS
 
 # Augment the Python installation.
 

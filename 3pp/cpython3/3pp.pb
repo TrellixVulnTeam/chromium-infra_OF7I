@@ -1,5 +1,6 @@
 create {
   verify { test: "python_test.py" }
+  patch_version: "chromium.2"
 }
 
 create {
@@ -10,7 +11,6 @@ create {
       tag_pattern: "v%s",
     }
     patch_dir: "patches"
-    patch_version: "chromium.1"
   }
   build {
     # no binutils on mac since it includes some tools like 'ar' that we don't
