@@ -12,8 +12,9 @@ import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-crbug-link/mr-crbug-link.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-star-button/mr-star-button.js';
-import {issueRefToUrl, issueToIssueRef, issueStringToRef,
-  issueRefToString, labelRefsToOneWordLabels} from 'shared/converters.js';
+import {issueRefToUrl, issueRefToString, issueStringToRef,
+  issueToIssueRef, issueToIssueRefString,
+  labelRefsToOneWordLabels} from 'shared/converters.js';
 import {isTextInput} from 'shared/dom-helpers.js';
 import {urlWithNewParams, pluralize, setHasAny,
   objectValuesForKeys} from 'shared/helpers.js';
@@ -31,6 +32,12 @@ const COLUMN_DISPLAY_NAMES = {
  */
 const UNGROUPABLE_COLUMNS = new Set(['id', 'summary']);
 
+/**
+ * `<mr-issue-list>`
+ *
+ * A list of issues intended to be used in multiple contexts.
+ * @extends {LitElement}
+ */
 export class MrIssueList extends connectStore(LitElement) {
   /** @override */
   static get styles() {
@@ -202,6 +209,12 @@ export class MrIssueList extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @param {string} column
+   * @param {number} i The index of the column in the table.
+   * @return {TemplateResult} html for header for the i-th column.
+   * @private
+   */
   _renderHeader(column, i) {
     // zIndex is used to render the z-index property in descending order
     const zIndex = this.highestZIndex - i;
@@ -219,6 +232,12 @@ export class MrIssueList extends connectStore(LitElement) {
       </th>`;
   }
 
+  /**
+   * @param {string} column
+   * @param {number} i The index of the column in the table.
+   * @return {Array<Object>} Available actions for the column.
+   * @private
+   */
   _headerActions(column, i) {
     const columnKey = column.toLowerCase();
 
@@ -261,6 +280,9 @@ export class MrIssueList extends connectStore(LitElement) {
     return actions;
   }
 
+  /**
+   * @return {TemplateResult}
+   */
   _renderIssues() {
     // Keep track of all the groups that we've seen so far to create
     // group headers as needed.
@@ -284,8 +306,15 @@ export class MrIssueList extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @param {string} groupName
+   * @param {Array<Issue>} issues
+   * @param {number} iOffset
+   * @return {TemplateResult}
+   * @private
+   */
   _renderGroup(groupName, issues, iOffset) {
-    if (!this.groups.length) return '';
+    if (!this.groups.length) return html``;
 
     const count = issues.length;
     const groupKey = groupName.toLowerCase();
@@ -312,6 +341,10 @@ export class MrIssueList extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @param {string} groupKey Lowercase group key.
+   * @private
+   */
   _toggleGroup(groupKey) {
     if (this._hiddenGroups.has(groupKey)) {
       this._hiddenGroups.delete(groupKey);
@@ -323,6 +356,12 @@ export class MrIssueList extends connectStore(LitElement) {
     this.requestUpdate('_hiddenGroups');
   }
 
+  /**
+   * @param {Issue} issue
+   * @param {number} i Index within the list of issues
+   * @param {boolean} [isHidden]
+   * @return {TemplateResult}
+   */
   _renderRow(issue, i, isHidden = false) {
     const draggable = this.rerankEnabled && this.rerankEnabled(issue);
     const rowSelected = this._selectedIssues.has(issueRefToString(issue));
@@ -389,6 +428,12 @@ export class MrIssueList extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @param {string} column
+   * @param {Issue} issue
+   * @return {TemplateResult} Html for the given column for the given issue.
+   * @private
+   */
   _renderCell(column, issue) {
     // Fields that need to render more than strings happen first.
     switch (column.toLowerCase()) {
@@ -506,11 +551,21 @@ export class MrIssueList extends connectStore(LitElement) {
   /** @override */
   constructor() {
     super();
+    /** @type {Array<Issue>} */
     this.issues = [];
     // TODO(jojwang): monorail:6336#c8, when ezt listissues page is fully
     // deprecated, remove phaseNames from mr-issue-list.
     this._phaseNames = [];
+    /** @type {IssueRef} */
+    this._localCursor;
+    /** @type {IssueRefString} */
+    this.initialCursor;
+    /** @type {Set<IssueRefString>} */
     this._selectedIssues = new Set();
+    /** @type {string} */
+    this.projectName;
+    /** @type {Object} */
+    this.queryParams = {};
     this.selectionEnabled = false;
     this.starringEnabled = false;
     this.role = 'table';
@@ -551,6 +606,7 @@ export class MrIssueList extends connectStore(LitElement) {
     this._phaseNames = (issue.issueListPhaseNames(state) || []);
   }
 
+  /** @override */
   firstUpdated() {
     // Only attach an event listener once the DOM has rendered.
     window.addEventListener('keydown', this._boundRunListHotKeys);
@@ -588,6 +644,7 @@ export class MrIssueList extends connectStore(LitElement) {
     super.update(changedProperties);
   }
 
+  /** @override */
   updated(changedProperties) {
     if (changedProperties.has('initialCursor')) {
       const ref = issueStringToRef(this.projectName, this.initialCursor);
@@ -604,7 +661,7 @@ export class MrIssueList extends connectStore(LitElement) {
    *
    * @param {Array} issues
    * @param {Array} columns
-   * @param {String} projectName
+   * @param {string} projectName
    * @param {Map} fieldDefMap
    * @param {Set} labelPrefixSet
    * @return {Map} Map where each entry has a String key for the
@@ -670,11 +727,9 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
-   * The currently selected issue, as a function of this._localCursor
-   * and this.queryParams.cursor. _localCursor overrides queryParams.
+   * The currently selected issue, with _localCursor overriding initialCursor.
    *
-   * @return {Object} IssueRef with {projectName, localId} for the currently
-   * selected issue.
+   * @return {IssueRef} The currently selected issue.
    */
   get cursor() {
     if (this._localCursor) {
@@ -686,6 +741,10 @@ export class MrIssueList extends connectStore(LitElement) {
     return {};
   }
 
+  /**
+   * @param {Issue} issue
+   * @return {string}
+   */
   _groupNameForIssue(issue) {
     const groups = this.groups;
     const keyPieces = [];
@@ -706,18 +765,18 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
-   * Return an Array of selected issues in the order they appear in the list.
+   * @return {Array<Issue>} Selected issues in the order they appear.
    */
   get selectedIssues() {
     return this.issues.filter((issue) =>
-      this._selectedIssues.has(issueRefToString(issue)));
+      this._selectedIssues.has(issueToIssueRefString(issue)));
   }
 
   /**
    * Update the search query to filter values matching a specific one.
    *
-   * @param {String} column name of the column being filtered.
-   * @param {String} value value of the field to filter by.
+   * @param {string} column name of the column being filtered.
+   * @param {string} value value of the field to filter by.
    */
   showOnly(column, value) {
     column = column.toLowerCase();
@@ -739,8 +798,8 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Update sort parameter in the URL based on user input.
    *
-   * @param {String} column name of the column to be sorted.
-   * @param {Boolean} descending descending or ascending order.
+   * @param {string} column name of the column to be sorted.
+   * @param {boolean} descending descending or ascending order.
    */
   updateSortSpec(column, descending = false) {
     column = column.toLowerCase();
@@ -759,7 +818,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Updates the groupby URL parameter to include a new column to group.
    *
-   * @param {Number} i index of the column to be grouped.
+   * @param {number} i index of the column to be grouped.
    */
   addGroupBy(i) {
     const groups = [...this.groups];
@@ -778,7 +837,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Removes the column at a particular index.
    *
-   * @param {Number} i the issue column to be removed.
+   * @param {number} i the issue column to be removed.
    */
   removeColumn(i) {
     const columns = [...this.columns];
@@ -789,7 +848,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Adds a new column to a particular index.
    *
-   * @param {String} name of the new column added.
+   * @param {string} name of the new column added.
    */
   addColumn(name) {
     this.reloadColspec([...this.columns, name]);
@@ -829,8 +888,10 @@ export class MrIssueList extends connectStore(LitElement) {
     return window.location.pathname;
   }
 
-  // Run issue list hot keys. This event handler needs to be bound globally
-  //
+  /**
+   * Run issue list hot keys. This event handler needs to be bound globally
+   * @param {KeyboardEvent} e
+   */
   _runListHotKeys(e) {
     if (!this.issues || !this.issues.length) return;
     const target = e.path ? e.path[0] : e.target;
@@ -847,11 +908,12 @@ export class MrIssueList extends connectStore(LitElement) {
 
       switch (key) {
         case 's': // Star focused issue.
-          this.starIssue(issueToIssueRef(issue));
+          this._starIssue(issueToIssueRef(issue));
           return;
         case 'x': // Toggle selection of focused issue.
-          const key = issueRefToString(issue);
-          this._updateSelectedIssues([key], !this._selectedIssues.has(key));
+          const issueRefString = issueToIssueRefString(issue);
+          this._updateSelectedIssues([issueRefString],
+              !this._selectedIssues.has(issueRefString));
           return;
         case 'o': // Open current issue.
         case 'O': // Open current issue in new tab.
@@ -881,6 +943,9 @@ export class MrIssueList extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * @return {HTMLTableRowElement}
+   */
   _getCursorElement() {
     const cursor = this.cursor;
     if (cursor) {
@@ -890,22 +955,36 @@ export class MrIssueList extends connectStore(LitElement) {
     return;
   }
 
+  /**
+   * @param {FocusEvent} e
+   */
   _setRowAsCursorOnFocus(e) {
-    this._setRowAsCursor(e.target);
+    this._setRowAsCursor(/** @type {HTMLTableRowElement} */ (e.target));
   }
 
+  /**
+   *
+   * @param {HTMLTableRowElement} row
+   */
   _setRowAsCursor(row) {
     this._localCursor = issueStringToRef(this.projectName,
         row.dataset.issueRef);
     row.focus();
   }
 
+  /**
+   * @param {IssueRef} ref The issueRef to query for.
+   * @return {HTMLTableRowElement}
+   */
   _getRowFromIssueRef(ref) {
     return this.shadowRoot.querySelector(
         `.list-row[data-issue-ref="${issueRefToString(ref)}"]`);
   }
 
-  starIssue(issueRef) {
+  /**
+   * @param {IssueRef} issueRef Issue to star
+   */
+  _starIssue(issueRef) {
     if (!this.starringEnabled) return;
     const issueKey = issueRefToString(issueRef);
 
@@ -915,22 +994,24 @@ export class MrIssueList extends connectStore(LitElement) {
     const starEnabled = !this._fetchingStarredIssues && !isStarring;
     if (starEnabled) {
       const newIsStarred = !this._starredIssues.has(issueKey);
-      this._starIssue(issueRef, newIsStarred);
+      this._starIssueInternal(issueRef, newIsStarred);
     }
   }
 
   /**
    * Wrap store.dispatch and issue.star, for testing.
    *
-   * @param {Object} issueRef the issue being starred.
-   * @param {Boolean} newIsStarred whether to star or unstar the issue.
+   * @param {IssueRef} issueRef the issue being starred.
+   * @param {boolean} newIsStarred whether to star or unstar the issue.
    */
-  _starIssue(issueRef, newIsStarred) {
+  _starIssueInternal(issueRef, newIsStarred) {
     store.dispatch(issue.star(issueRef, newIsStarred));
   }
-
+  /**
+   * @param {Event} e
+   */
   _selectAll(e) {
-    const checkbox = e.target;
+    const checkbox = /** @type {HTMLInputElement} */ (e.target);
 
     if (checkbox.checked) {
       this._selectedIssues = new Set(this.issues.map(issueRefToString));
@@ -942,10 +1023,13 @@ export class MrIssueList extends connectStore(LitElement) {
 
   // TODO(zhangtiff): Implement Shift+Click to select a range of checkboxes
   // for the 'x' hot key.
+  /**
+   * @param {MouseEvent} e
+   */
   _selectIssueRange(e) {
     if (!this.selectionEnabled) return;
 
-    const checkbox = e.target;
+    const checkbox = /** @type {HTMLInputElement} */ (e.target);
 
     const index = Number.parseInt(checkbox.dataset.index);
     if (Number.isNaN(index)) {
@@ -961,22 +1045,29 @@ export class MrIssueList extends connectStore(LitElement) {
       const end = Math.max(lastIndex, index) + 1;
 
       const updatedIssueKeys = this.issues.slice(start, end).map(
-          issueRefToString);
+          issueToIssueRefString);
       this._updateSelectedIssues(updatedIssueKeys, newCheckedState);
     }
 
     this._lastSelectedCheckbox = index;
   }
 
+  /**
+   * @param {Event} e
+   */
   _selectIssue(e) {
     if (!this.selectionEnabled) return;
 
-    const checkbox = e.target;
+    const checkbox = /** @type {HTMLInputElement} */ (e.target);
     const issueKey = checkbox.value;
 
     this._updateSelectedIssues([issueKey], checkbox.checked);
   }
 
+  /**
+   * @param {Array<IssueRefString>} issueKeys Stringified issue refs.
+   * @param {boolean} selected
+   */
   _updateSelectedIssues(issueKeys, selected) {
     let hasChanges = false;
 
@@ -1001,6 +1092,9 @@ export class MrIssueList extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * @param {MouseEvent} e
+   */
   _clickIssueRow(e) {
     const path = e.path || e.composedPath();
     const containsIgnoredElement = path.find(
@@ -1008,7 +1102,7 @@ export class MrIssueList extends connectStore(LitElement) {
         && node.classList.contains('ignore-navigation')));
     if (containsIgnoredElement) return;
 
-    const row = e.currentTarget;
+    const row = /** @type {HTMLTableRowElement} */ (e.currentTarget);
 
     const i = Number.parseInt(row.dataset.index);
 
@@ -1018,8 +1112,13 @@ export class MrIssueList extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * @param {Issue} issue
+   * @param {boolean} newTab
+   */
   _navigateToIssue(issue, newTab) {
-    const link = issueRefToUrl(issue, this.queryParams);
+    const link = issueRefToUrl(issueToIssueRef(issue),
+        this.queryParams);
 
     if (newTab) {
       // Whether the link opens in a new tab or window is based on the

@@ -826,52 +826,52 @@ describe('mr-issue-list', () => {
       });
 
       it('pressing s stars focused issue', async () => {
-        sinon.stub(element, 'starIssue');
+        sinon.stub(element, '_starIssue');
         await element.updateComplete;
 
         window.dispatchEvent(new KeyboardEvent('keydown', {key: 's'}));
 
-        sinon.assert.calledWith(element.starIssue,
+        sinon.assert.calledWith(element._starIssue,
             {localId: 2, projectName: 'chromium'});
       });
 
       it('starIssue does not star issue while stars are fetched', () => {
-        sinon.stub(element, '_starIssue');
+        sinon.stub(element, '_starIssueInternal');
         element._fetchingStarredIssues = true;
 
-        element.starIssue({localId: 2, projectName: 'chromium'});
+        element._starIssue({localId: 2, projectName: 'chromium'});
 
-        sinon.assert.notCalled(element._starIssue);
+        sinon.assert.notCalled(element._starIssueInternal);
       });
 
       it('starIssue does not star when issue is being starred', () => {
-        sinon.stub(element, '_starIssue');
+        sinon.stub(element, '_starIssueInternal');
         element._starringIssues = new Map([['chromium:2', {requesting: true}]]);
 
-        element.starIssue({localId: 2, projectName: 'chromium'});
+        element._starIssue({localId: 2, projectName: 'chromium'});
 
-        sinon.assert.notCalled(element._starIssue);
+        sinon.assert.notCalled(element._starIssueInternal);
       });
 
       it('starIssue stars issue when issue is not being starred', () => {
-        sinon.stub(element, '_starIssue');
+        sinon.stub(element, '_starIssueInternal');
         element._starringIssues = new Map([
           ['chromium:2', {requesting: false}],
         ]);
 
-        element.starIssue({localId: 2, projectName: 'chromium'});
+        element._starIssue({localId: 2, projectName: 'chromium'});
 
-        sinon.assert.calledWith(element._starIssue,
+        sinon.assert.calledWith(element._starIssueInternal,
             {localId: 2, projectName: 'chromium'}, true);
       });
 
       it('starIssue unstars issue when issue is already starred', () => {
-        sinon.stub(element, '_starIssue');
+        sinon.stub(element, '_starIssueInternal');
         element._starredIssues = new Set(['chromium:2']);
 
-        element.starIssue({localId: 2, projectName: 'chromium'});
+        element._starIssue({localId: 2, projectName: 'chromium'});
 
-        sinon.assert.calledWith(element._starIssue,
+        sinon.assert.calledWith(element._starIssueInternal,
             {localId: 2, projectName: 'chromium'}, false);
       });
     });
