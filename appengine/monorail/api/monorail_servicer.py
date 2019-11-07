@@ -21,6 +21,7 @@ from components.prpc import server
 from infra_libs.ts_mon.common import http_metrics
 
 import settings
+from framework import authdata
 from framework import exceptions
 from framework import framework_bizobj
 from framework import framework_constants
@@ -50,9 +51,9 @@ def ConvertPRPCStatusToHTTPStatus(context):
 
 def PRPCMethod(func):
   @functools.wraps(func)
-  def wrapper(self, request, prpc_context, cnxn=None, auth=None):
+  def wrapper(self, request, prpc_context, cnxn=None):
     return self.Run(
-        func, request, prpc_context, cnxn=cnxn, auth=auth)
+        func, request, prpc_context, cnxn=cnxn)
 
   wrapper.wrapped = func
   return wrapper
@@ -75,7 +76,7 @@ class MonorailServicer(object):
 
   def Run(
       self, handler, request, prpc_context,
-      cnxn=None, auth=None, perms=None, start_time=None, end_time=None):
+      cnxn=None, perms=None, start_time=None, end_time=None):
     """Run a Do* method in an API context.
 
     Args:
@@ -83,7 +84,6 @@ class MonorailServicer(object):
       request: API Request proto object.
       prpc_context: pRPC context object with status code.
       cnxn: Optional connection to SQL database.
-      auth: AuthData passed in during testing.
       perms: PermissionSet passed in during testing.
       start_time: Int timestamp passed in during testing.
       end_time: Int timestamp passed in during testing.
@@ -104,21 +104,22 @@ class MonorailServicer(object):
 
     response = None
     client_id = None  # TODO(jrobbins): consider using client ID.
-    requester = None
+    requester_auth = None
     metadata = dict(prpc_context.invocation_metadata())
-    mc = None
+    mc = monorailcontext.MonorailContext(self.services, cnxn=cnxn, perms=perms)
     try:
-      requester = auth.email if auth else self.GetRequester(metadata)
-      logging.info('request proto is:\n%r\n', request)
-      logging.info('requester is %r', requester)
+      self.AssertBaseChecks(request, metadata)
+      requester_auth = self.GetAndAssertRequesterAuth(
+          cnxn, metadata, self.services)
+      logging.info('request proto is:\n%r\n', requester_auth.email)
+      logging.info('requester is %r', requester_auth.email)
 
       if self.rate_limiter:
-        self.rate_limiter.CheckStart(client_id, requester, start_time)
-      mc = monorailcontext.MonorailContext(
-          self.services, cnxn=cnxn, requester=requester, auth=auth, perms=perms)
+        self.rate_limiter.CheckStart(
+            client_id, requester_auth.email, start_time)
+      mc.auth = requester_auth
       if not perms:
         mc.LookupLoggedInUserPerms(self.GetRequestProject(mc.cnxn, request))
-      self.AssertBaseChecks(mc, request, metadata)
       response = handler(self, mc, request)
 
     except Exception as e:
@@ -127,45 +128,101 @@ class MonorailServicer(object):
     finally:
       if mc:
         mc.CleanUp()
-      if self.rate_limiter and requester:
+      if self.rate_limiter and requester_auth and requester_auth.email:
         end_time = end_time or time.time()
-        self.rate_limiter.CheckEnd(client_id, requester, end_time, start_time)
+        self.rate_limiter.CheckEnd(
+            client_id, requester_auth.email, end_time, start_time)
       self.RecordMonitoringStats(start_time, request, response, prpc_context)
 
     return response
 
-  def GetRequester(self, metadata):
-    """Return the email address of the signed in user or None."""
+  def GetAndAssertRequesterAuth(self, cnxn, metadata, services):
+    """Gets the requester identity and checks if the user has permission
+       to make the request.
+       Any users successfully authenticated with oauth must be whitelisted.
+       Users identified using cookie-based auth must have valid XSRF tokens.
+       Test accounts ending with @example.com are only allowed in the
+       local_mode.
+
+    Args:
+      cnxn: connection to the SQL database.
+      metadata: metadata sent by the client.
+      services: connections to backend services.
+
+    Returns:
+      A new AuthData object representing a signed in or anonymous user.
+
+    Raises:
+      exceptions.NoSuchUserException: If the requester does not exist
+      permissions.BannedUserException: If the user has been banned from the site
+      permissions.PermissionException: If the user is not authorized with the
+        Monorail scope, is not whitelisted, and has an invalid token.
+    """
+    requester_auth = None
     # When running on localhost, allow request to specify test account.
     if TEST_ACCOUNT_HEADER in metadata:
       if not settings.local_mode:
         raise exceptions.InputException(
             'x-test-account only accepted in local_mode')
+      # For local development, we accept any request.
+      # TODO(jrobbins): make this more realistic by requiring a fake XSRF token.
       test_account = metadata[TEST_ACCOUNT_HEADER]
       if not test_account.endswith('@example.com'):
         raise exceptions.InputException(
             'test_account must end with @example.com')
       logging.info('Using test_account: %r' % test_account)
-      return test_account
+      requester_auth = authdata.AuthData.FromEmail(cnxn, test_account, services)
 
-    # Cookie-based auth
-    user = users.get_current_user()
-    if user:
-      logging.info('Using cookie user: %r', user.email())
-      return user.email()
+    # TODO(jojwang): Oauth using Monorail's scope
+    # Oauth for whitelisted users
+    if not requester_auth:
+      try:
+        user = oauth.get_current_user(framework_constants.OAUTH_SCOPE)
+        if user:
+          auth_client_ids, auth_emails = (
+              client_config_svc.GetClientConfigSvc().GetClientIDEmails())
+          logging.info('Oauth requester %s', user.email())
+          # Check if email or client_id is whitelisted
+          if (user.email() in auth_emails) or (
+              user.client_id() in auth_client_ids):
+            logging.info('Client %r is whitelisted', user.email())
+            requester_auth = authdata.AuthData.FromEmail(
+                cnxn, user.email(), services)
+      except oauth.Error as ex:
+        logging.info('Got oauth error: %r', ex)
 
-    # Oauth
-    try:
-      user = oauth.get_current_user(framework_constants.OAUTH_SCOPE)
+    # Cookie-based auth for signed in and anonymous users.
+    if not requester_auth:
+      # Check for signed in user
+      user = users.get_current_user()
       if user:
-        logging.info('Oauth requester %s', user.email())
-        return user.email()
-    except oauth.Error as ex:
-      logging.info('Got oauth error: %r', ex)
+        logging.info('Using cookie user: %r', user.email())
+        requester_auth = authdata.AuthData.FromEmail(
+            cnxn, user.email(), services)
+      else:
+        # Create AuthData for anonymous user.
+        requester_auth = authdata.AuthData.FromEmail(cnxn, None, services)
 
-    return None
+      # Cookie-based auth signed-in and anon users need to have the XSRF
+      # token validate.
+      try:
+        token = metadata.get(XSRF_TOKEN_HEADER)
+        xsrf.ValidateToken(
+            token, requester_auth.user_id, xsrf.XHR_SERVLET_PATH,
+            timeout=self.xsrf_timeout)
+      except xsrf.TokenIncorrect:
+        raise permissions.PermissionException(
+            'Requester %s does not have permission to make this request.'
+            % requester_auth.email)
 
-  def AssertBaseChecks(self, mc, request, metadata):
+    if permissions.IsBanned(requester_auth.user_pb, requester_auth.user_view):
+      raise permissions.BannedUserException(
+          'The user %s has been banned from using this site' %
+          requester_auth.email)
+
+    return requester_auth
+
+  def AssertBaseChecks(self, request, metadata):
     """Reject requests that we refuse to serve."""
     # TODO(jrobbins): Add read_only check as an exception raised in sql.py.
     if (settings.read_only and
@@ -173,51 +230,11 @@ class MonorailServicer(object):
       raise permissions.PermissionException(
           'This request is not allowed in read-only mode')
 
-    if permissions.IsBanned(mc.auth.user_pb, mc.auth.user_view):
-      raise permissions.BannedUserException(
-          'The user %s has been banned from using this site' %
-          mc.auth.email)
-
     if REASON_HEADER in metadata:
       logging.info('Request reason: %r', metadata[REASON_HEADER])
     if REQUEST_ID_HEADER in metadata:
       # TODO(jrobbins): Ignore requests with duplicate request_ids.
       logging.info('request_id: %r', metadata[REQUEST_ID_HEADER])
-    self.AssertWhitelistedOrXSRF(mc, metadata)
-
-  def AssertWhitelistedOrXSRF(self, mc, metadata):
-    """Raise an exception if we don't want to process this request."""
-    # For local development, we accept any request.
-    # TODO(jrobbins): make this more realistic by requiring a fake XSRF token.
-    if settings.local_mode:
-      return
-
-    # Check if the user is whitelisted.
-    auth_client_ids, auth_emails = (
-        client_config_svc.GetClientConfigSvc().GetClientIDEmails())
-    if mc.auth.user_pb.email in auth_emails:
-      logging.info('User %r is whitelisted to use any client',
-                   mc.auth.user_pb.email)
-      return
-
-    # Check if the client is whitelisted.
-    client_id = None
-    try:
-      client_id = oauth.get_client_id(framework_constants.OAUTH_SCOPE)
-      logging.info('Oauth client ID %s', client_id)
-    except oauth.Error as ex:
-      logging.info('oauth.Error: %s' % ex)
-
-    if client_id in auth_client_ids:
-      logging.info('Client %r is whitelisted for any user', client_id)
-      return
-
-    # Otherwise, require an XSRF token generated by our app UI.
-    logging.info('Neither email nor client ID is whitelisted, checking XSRF')
-    token = metadata.get(XSRF_TOKEN_HEADER)
-    xsrf.ValidateToken(
-        token, mc.auth.user_id, xsrf.XHR_SERVLET_PATH,
-        timeout=self.xsrf_timeout)
 
   def GetRequestProject(self, cnxn, request):
     """Return the Project business object that the user is viewing or None."""

@@ -113,13 +113,19 @@ class MonorailServicerTest(unittest.TestCase):
         cache_manager=fake.CacheManager())
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, owner_ids=[111])
-    self.user = self.services.user.TestAddUser('nonmember@example.com', 222)
+    # whitelisted_bot's email is whitelisted in testing/api_clients.cfg.
+    self.whitelisted_bot = self.services.user.TestAddUser(
+        '123456789@developer.gserviceaccount.com', 999)
+    self.non_member = self.services.user.TestAddUser(
+        'nonmember@example.com', 222)
+    self.test_user = self.services.user.TestAddUser('test@example.com', 420)
     self.svcr = TestableServicer(self.services)
-    self.token = xsrf.GenerateToken(222, xsrf.XHR_SERVLET_PATH)
+    self.nonmember_token = xsrf.GenerateToken(222, xsrf.XHR_SERVLET_PATH)
     self.request = UpdateSomethingRequest(exc_class=None)
     self.prpc_context = context.ServicerContext()
     self.prpc_context.set_code(codes.StatusCode.OK)
-    self.auth = authdata.AuthData(user_id=222, email='nonmember@example.com')
+    self.prpc_context._invocation_metadata = [
+        (monorail_servicer.XSRF_TOKEN_HEADER, self.nonmember_token)]
 
     self.oauth_patcher = mock.patch(
         'google.appengine.api.oauth.get_current_user')
@@ -140,12 +146,13 @@ class MonorailServicerTest(unittest.TestCase):
 
   def testRun_SiteWide_Normal(self):
     """Calling the handler through the decorator."""
+    self.testbed.setup_env(user_email=self.non_member.email, overwrite=True)
     self.SetUpRecordMonitoringStats()
     # pylint: disable=unexpected-keyword-arg
     response = self.svcr.CalcSomething(
-        self.request, self.prpc_context, cnxn=self.cnxn, auth=self.auth)
+        self.request, self.prpc_context, cnxn=self.cnxn)
     self.assertIsNone(self.svcr.seen_mc.cnxn)  # Because of CleanUp().
-    self.assertEqual(self.auth, self.svcr.seen_mc.auth)
+    self.assertEqual(self.svcr.seen_mc.auth.email, self.non_member.email)
     self.assertIn(permissions.CREATE_HOTLIST.lower(),
                   self.svcr.seen_mc.perms.perm_names)
     self.assertNotIn(permissions.ADMINISTER_SITE.lower(),
@@ -154,81 +161,133 @@ class MonorailServicerTest(unittest.TestCase):
     self.assertEqual('fake response proto', response)
     self.assertEqual(codes.StatusCode.OK, self.prpc_context._code)
 
-  def testRun_BaseChecksFail(self):
+  def testRun_RequesterBanned(self):
     """If we reject the request, give PERMISSION_DENIED."""
-    self.auth.user_pb.banned = 'Spammer'
+    self.non_member.banned = 'Spammer'
+    self.testbed.setup_env(user_email=self.non_member.email, overwrite=True)
     self.SetUpRecordMonitoringStats()
     # pylint: disable=unexpected-keyword-arg
     self.svcr.CalcSomething(
-        self.request, self.prpc_context, cnxn=self.cnxn, auth=self.auth)
+        self.request, self.prpc_context, cnxn=self.cnxn)
     self.assertFalse(self.svcr.was_called)
     self.assertEqual(
         codes.StatusCode.PERMISSION_DENIED, self.prpc_context._code)
 
+  def testRun_AnonymousRequester(self):
+    """Test we properly process anonymous users with valid tokens."""
+    self.prpc_context._invocation_metadata = [
+        (monorail_servicer.XSRF_TOKEN_HEADER,
+         xsrf.GenerateToken(0, xsrf.XHR_SERVLET_PATH))]
+    self.SetUpRecordMonitoringStats()
+    # pylint: disable=unexpected-keyword-arg
+    response = self.svcr.CalcSomething(
+        self.request, self.prpc_context, cnxn=self.cnxn)
+    self.assertIsNone(self.svcr.seen_mc.cnxn)  # Because of CleanUp().
+    self.assertIsNone(self.svcr.seen_mc.auth.email)
+    self.assertNotIn(permissions.CREATE_HOTLIST.lower(),
+                  self.svcr.seen_mc.perms.perm_names)
+    self.assertNotIn(permissions.ADMINISTER_SITE.lower(),
+                     self.svcr.seen_mc.perms.perm_names)
+    self.assertEqual(self.request, self.svcr.seen_request)
+    self.assertEqual('fake response proto', response)
+    self.assertEqual(codes.StatusCode.OK, self.prpc_context._code)
+
   def testRun_DistributedInvalidation(self):
     """The Run method must call DoDistributedInvalidation()."""
+    self.testbed.setup_env(user_email=self.non_member.email, overwrite=True)
     self.SetUpRecordMonitoringStats()
     # pylint: disable=unexpected-keyword-arg
     self.svcr.CalcSomething(
-        self.request, self.prpc_context, cnxn=self.cnxn, auth=self.auth)
+        self.request, self.prpc_context, cnxn=self.cnxn)
     self.assertIsNotNone(self.services.cache_manager.last_call)
 
   def testRun_HandlerErrorResponse(self):
     """An expected exception in the method causes an error status."""
+    self.testbed.setup_env(user_email=self.non_member.email, overwrite=True)
     self.SetUpRecordMonitoringStats()
     # pylint: disable=attribute-defined-outside-init
     self.request.exc_class = exceptions.NoSuchUserException
     # pylint: disable=unexpected-keyword-arg
     response = self.svcr.CalcSomething(
-        self.request, self.prpc_context, cnxn=self.cnxn, auth=self.auth)
+        self.request, self.prpc_context, cnxn=self.cnxn)
     self.assertTrue(self.svcr.was_called)
     self.assertIsNone(self.svcr.seen_mc.cnxn)  # Because of CleanUp().
-    self.assertEqual(self.auth, self.svcr.seen_mc.auth)
+    self.assertEqual(self.svcr.seen_mc.auth.email, self.non_member.email)
     self.assertEqual(self.request, self.svcr.seen_request)
     self.assertIsNone(response)
     self.assertEqual(codes.StatusCode.NOT_FOUND, self.prpc_context._code)
 
   def testRun_HandlerProgrammingError(self):
     """An unexception in the handler method is re-raised."""
+    self.testbed.setup_env(user_email=self.non_member.email, overwrite=True)
     self.SetUpRecordMonitoringStats()
     # pylint: disable=attribute-defined-outside-init
     self.request.exc_class = NotImplementedError
     self.assertRaises(
         NotImplementedError,
         self.svcr.CalcSomething,
-        self.request, self.prpc_context, cnxn=self.cnxn, auth=self.auth)
+        self.request, self.prpc_context, cnxn=self.cnxn)
     self.assertTrue(self.svcr.was_called)
     self.assertIsNone(self.svcr.seen_mc.cnxn)  # Because of CleanUp().
 
-  def testGetRequester_Cookie(self):
-    """We get the email address of the signed in user using cookie auth."""
-    metadata = {}
+  def testGetAndAssertRequesterAuth_Cookie_Anon(self):
+    """We get and allow requests from anon user using cookie auth."""
+    metadata = {
+        monorail_servicer.XSRF_TOKEN_HEADER: xsrf.GenerateToken(
+            0, xsrf.XHR_SERVLET_PATH)}
     # Signed out.
-    self.assertIsNone(self.svcr.GetRequester(metadata))
+    self.assertIsNone(self.svcr.GetAndAssertRequesterAuth(
+        self.cnxn, metadata, self.services).email)
 
+  def testGetAndAssertRequesterAuth_Cookie_SignedIn(self):
+    """We get and allow requests from signed in users using cookie auth."""
+    metadata = dict(self.prpc_context.invocation_metadata())
     # Signed in with cookie auth.
-    self.testbed.setup_env(user_email='user@example.com', overwrite=True)
-    self.assertEqual('user@example.com',
-                     self.svcr.GetRequester(metadata))
+    self.testbed.setup_env(user_email=self.non_member.email, overwrite=True)
+    user_auth = self.svcr.GetAndAssertRequesterAuth(
+        self.cnxn, metadata, self.services)
+    self.assertEqual(self.non_member.email, user_auth.email)
 
-  def testGetRequester_Oauth(self):
+  def testGetAndAssertRequester_Anon_BadToken(self):
     """We get the email address of the signed in user using oauth."""
     metadata = {}
-    # Signed out.
-    self.assertIsNone(self.svcr.GetRequester(metadata))
+    # Anonymous user has invalid token.
+    with self.assertRaises(permissions.PermissionException):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
+  def testGetAndAssertRequesterAuth_Oauth_Whitelisted(self):
+    metadata = {}
     # Signed in with oauth.
     self.mock_oauth_gcu.return_value = testing_helpers.Blank(
-        email=lambda: 'robot@example.com')
-    self.assertEqual('robot@example.com',
-                     self.svcr.GetRequester(metadata))
+        email=lambda: self.whitelisted_bot.email, client_id=lambda: 32794)
+
+    bot_auth = self.svcr.GetAndAssertRequesterAuth(
+        self.cnxn, metadata, self.services)
+    self.assertEqual(bot_auth.email, self.whitelisted_bot.email)
+
+  def testGetAndAssertRequesterAuth_Oauth_NotWhitelisted(self):
+    metadata = {}
+    # Signed in with oauth.
+    self.mock_oauth_gcu.return_value = testing_helpers.Blank(
+        email=lambda: 'who-is-this@test.com', client_id=lambda: 32794)
+
+    with self.assertRaises(permissions.PermissionException):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+  def testGetAndAssertRequesterAuth_Banned(self):
+    self.non_member.banned = 'Spammer'
+    metadata = dict(self.prpc_context.invocation_metadata())
+    # Signed in with cookie auth.
+    self.testbed.setup_env(user_email=self.non_member.email, overwrite=True)
+    with self.assertRaises(permissions.BannedUserException):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
   def testGetRequester_TestAccountOnAppspot(self):
-    """Specifying test_account is ignore on deployed server."""
+    """Specifying test_account is ignored on deployed server."""
     # pylint: disable=attribute-defined-outside-init
     metadata = {'x-test-account': 'test@example.com'}
     with self.assertRaises(exceptions.InputException):
-      self.svcr.GetRequester(metadata)
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
   def testGetRequester_TestAccountOnDev(self):
     """For integration testing, we can set test_account on dev_server."""
@@ -238,13 +297,14 @@ class MonorailServicerTest(unittest.TestCase):
 
       # pylint: disable=attribute-defined-outside-init
       metadata = {'x-test-account': 'test@example.com'}
-      self.assertEqual(
-          'test@example.com', self.svcr.GetRequester(metadata))
+      test_auth = self.svcr.GetAndAssertRequesterAuth(
+          self.cnxn, metadata, self.services)
+      self.assertEqual('test@example.com', test_auth.email)
 
       # pylint: disable=attribute-defined-outside-init
       metadata = {'x-test-account': 'test@anythingelse.com'}
       with self.assertRaises(exceptions.InputException):
-        self.svcr.GetRequester(metadata)
+        self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
     finally:
       settings.local_mode = orig_local_mode
 
@@ -256,7 +316,7 @@ class MonorailServicerTest(unittest.TestCase):
       metadata = {}
       self.assertRaises(
         permissions.PermissionException,
-        self.svcr.AssertBaseChecks, None, self.request, metadata)
+        self.svcr.AssertBaseChecks, self.request, metadata)
     finally:
       settings.read_only = orig_read_only
 
@@ -265,159 +325,17 @@ class MonorailServicerTest(unittest.TestCase):
     orig_read_only = settings.read_only
     try:
       settings.read_only = True
-      mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-      metadata = {monorail_servicer.XSRF_TOKEN_HEADER: self.token}
+      metadata = {monorail_servicer.XSRF_TOKEN_HEADER: self.nonmember_token}
 
       # Our default request is an update.
       with self.assertRaises(permissions.PermissionException):
-        self.svcr.AssertBaseChecks(mc, self.request, metadata)
+        self.svcr.AssertBaseChecks(self.request, metadata)
 
       # A method name starting with "List" or "Get" will run OK.
       self.request = ListSomethingRequest(exc_class=None)
-      self.svcr.AssertBaseChecks(mc, self.request, metadata)
+      self.svcr.AssertBaseChecks(self.request, metadata)
     finally:
       settings.read_only = orig_read_only
-
-  def testAssertBaseChecks_Banned(self):
-    """We currently only whitelist non-banned users."""
-    self.auth.user_pb.banned = 'Spammer'
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-    metadata = {}
-    self.assertRaises(
-        permissions.BannedUserException,
-        self.svcr.AssertBaseChecks, mc, self.request, metadata)
-
-  def testAssertBaseChecks_Anon(self):
-    """We allow anonymous access, with a XSRF token generated by our app."""
-    self.auth.user_id = 0
-    metadata = {monorail_servicer.XSRF_TOKEN_HEADER:
-                    xsrf.GenerateToken(0, xsrf.XHR_SERVLET_PATH)}
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-    self.svcr.AssertBaseChecks(mc, self.request, metadata)
-
-  def testAssertBaseChecks_ProjectNonmember(self):
-    """We allow non-members."""
-    # pylint: disable=attribute-defined-outside-init
-    self.request.project_name = 'proj'
-    metadata = {}
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-    self.svcr.AssertBaseChecks(mc, self.request, metadata)
-
-  def testAssertBaseChecks_ProjectMember(self):
-    """We allow signed-in project members."""
-    # pylint: disable=attribute-defined-outside-init
-    self.request.project_name = 'proj'
-    self.project.committer_ids.append(222)
-    metadata = {}
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-    self.svcr.AssertBaseChecks(mc, self.request, metadata)
-
-  @mock.patch('google.appengine.api.oauth.get_client_id')
-  def testAssertWhitelistedOrXSRF_Email(self, mock_get_client_id):
-    """A requester (oauth or cookie) can be whitelisted by email."""
-    # Disable special whitelisting of the default client_id while testing.
-    mock_get_client_id.return_value = None
-    # Take away the XSRF token.
-    metadata = {monorail_servicer.XSRF_TOKEN_HEADER: ''}
-
-    # pylint: disable=attribute-defined-outside-init
-    self.request.project_name = 'proj'
-    self.project.committer_ids.append(222)
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-
-    # nonmember@example.com is not whitelisted.
-    with self.assertRaises(xsrf.TokenIncorrect):
-      self.auth.user_pb.email = 'nonmember@example.com'
-      self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-    # This email is whitelisted in testing/api_clients.cfg.
-    self.auth.user_pb.email = '123456789@developer.gserviceaccount.com'
-    self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-  @mock.patch('google.appengine.api.oauth.get_client_id')
-  def testAssertWhitelistedOrXSRF_Client(self, mock_get_client_id):
-    """An oauth requester can be whitelisted by client ID."""
-    # Take away the XSRF token.
-    metadata = {monorail_servicer.XSRF_TOKEN_HEADER: ''}
-
-    # pylint: disable=attribute-defined-outside-init
-    self.request.project_name = 'proj'
-    self.project.committer_ids.append(222)
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-
-    # No client_id provided.
-    with self.assertRaises(xsrf.TokenIncorrect):
-      mock_get_client_id.return_value = None
-      self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-    # client_id is not whitelisted.
-    with self.assertRaises(xsrf.TokenIncorrect):
-      mock_get_client_id.return_value = '0000000'
-      self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-    # This client_id is whitelisted in testing/api_clients.cfg.
-    mock_get_client_id.return_value = '123456789.apps.googleusercontent.com'
-    self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-  @mock.patch('google.appengine.api.oauth.get_client_id')
-  def testAssertWhitelistedOrXSRF_XSRFToken_Header(self, mock_get_client_id):
-    """Our API is limited to our client by checking an XSRF token."""
-    # Disable special whitelisting of the default client_id while testing.
-    mock_get_client_id.return_value = None
-
-    # pylint: disable=attribute-defined-outside-init
-    self.request.project_name = 'proj'
-    self.project.committer_ids.append(222)
-    metadata = {'x-xsrf-token': self.token}
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-
-    # The token set in setUp() works with self.auth.
-    self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-    # Passing no token is OK in local_mode
-    try:
-      orig_local_mode = settings.local_mode
-      settings.local_mode = True
-      metadata = {'x-xsrf-token': ''}
-      self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-    finally:
-      settings.local_mode = orig_local_mode
-
-    # We detect a missing token.
-    metadata = {'x-xsrf-token': ''}
-    with self.assertRaises(xsrf.TokenIncorrect):
-      self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-    # We detect a malformed, inappropriate, or expired token.
-    metadata = {'x-xsrf-token': 'bad token'}
-    with self.assertRaises(xsrf.TokenIncorrect):
-      self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-  @mock.patch('google.appengine.api.oauth.get_client_id')
-  @mock.patch('time.time')
-  def testAssertWhitelistedOrXSRF_CustomTimeout(
-      self, mockTime, mock_get_client_id):
-    """Our API is limited to our client by checking an XSRF token."""
-    # Disable special whitelisting of the default client_id while testing.
-    mock_get_client_id.return_value = None
-
-    # pylint: disable=attribute-defined-outside-init
-    self.request.project_name = 'proj'
-    self.project.committer_ids.append(222)
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
-
-    # Set the token to an token created at time 1
-    metadata = {monorail_servicer.XSRF_TOKEN_HEADER:
-                  xsrf.GenerateToken(222, xsrf.XHR_SERVLET_PATH, 1)}
-
-    # The token is too old and we fail to authenticate.
-    mockTime.side_effect = lambda: 2 + xsrf.TOKEN_TIMEOUT_SEC
-    with self.assertRaises(xsrf.TokenIncorrect):
-      self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
-
-    # We can specify a custom xsrf timeout.
-    self.svcr.xsrf_timeout = 1 + xsrf.TOKEN_TIMEOUT_SEC
-    self.svcr.AssertWhitelistedOrXSRF(mc, metadata)
 
   def testGetRequestProject(self):
     """We get a project specified by request field project_name."""
@@ -436,7 +354,7 @@ class MonorailServicerTest(unittest.TestCase):
     self.assertIsNone(self.svcr.GetRequestProject(self.cnxn, self.request))
 
   def CheckExceptionStatus(self, e, expected_code):
-    mc = monorailcontext.MonorailContext(self.services, auth=self.auth)
+    mc = monorailcontext.MonorailContext(self.services)
     self.prpc_context.set_code(codes.StatusCode.OK)
     processed = self.svcr.ProcessException(e, self.prpc_context, mc)
     if expected_code:
