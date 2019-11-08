@@ -1,5 +1,6 @@
 create {
   verify { test: "python_test.py" }
+  source { patch_version: "chromium.15" }
 }
 
 create {
@@ -13,7 +14,6 @@ create {
     }
     unpack_archive: true
     patch_dir: "patches"
-    patch_version: "chromium.14"
   }
   build {
     tool: "autoconf"

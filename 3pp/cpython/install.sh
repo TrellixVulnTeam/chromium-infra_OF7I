@@ -200,7 +200,7 @@ if [[ $_3PP_PLATFORM == $_3PP_TOOL_PLATFORM ]]; then  # not cross compiling
   INTERP=./$PYTHONEXE
 fi
 
-python -s -S "$SCRIPT_DIR/python_mod_gen.py" \
+$INTERP -s -S "$SCRIPT_DIR/python_mod_gen.py" \
   --pybuilddir $(cat pybuilddir.txt) \
   --output ./Modules/Setup.local \
   "${SETUP_LOCAL_FLAGS[@]}"
