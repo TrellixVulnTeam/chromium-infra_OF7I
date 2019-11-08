@@ -197,6 +197,15 @@ done
 
 INTERP=python2
 if [[ $_3PP_PLATFORM == $_3PP_TOOL_PLATFORM ]]; then  # not cross compiling
+  # we need to make all the rest of the stuff like _struct and _functools in
+  # order to use this interpreter. If we're cross compiling then we're using
+  # the interpreter from path, which is already complete.
+  #
+  # Because of... something... setup.py tries to load in all modules which it
+  # builds. This gets seriously horked when loading readline and running the 3pp
+  # recipe when attached to a terminal. We don't actually ever want any
+  # processes in make to touch stdin, so we redirect it to /dev/null.
+  make < /dev/null
   INTERP=./$PYTHONEXE
 fi
 
