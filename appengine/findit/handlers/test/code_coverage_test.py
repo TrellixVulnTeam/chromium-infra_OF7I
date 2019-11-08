@@ -694,6 +694,49 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(code_coverage.code_coverage_util,
                      'RebasePresubmitCoverageDataBetweenPatchsets')
   @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
+  def testServeCLPatchLinesDataEquivalentPatchsetsMissingData(
+      self, mock_get_equivalent_ps, mock_rebase_data):
+    host = 'chromium-review.googlesource.com'
+    project = 'chromium/src'
+    change = 138000
+    patchset_src = 3
+    # 4 is based on 3, used to test that 5 would choose 3 instead of 4.
+    patchset_mid = 4
+    patchset_dest = 5
+    data = [{
+        'path': '//dir/test.cc',
+        'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 2,
+        }],
+    }]
+    PresubmitCoverageData.Create(
+        server_host=host, change=change, patchset=patchset_src,
+        data=data).put()
+    mid_data = PresubmitCoverageData.Create(
+        server_host=host, change=change, patchset=patchset_mid, data=data)
+    mid_data.based_on = patchset_src
+    mid_data.put()
+
+    mock_get_equivalent_ps.return_value = [patchset_src, patchset_mid]
+    mock_rebase_data.side_effect = (
+        code_coverage_util.MissingChangeDataException(''))
+
+    request_url = ('/coverage/api/coverage-data?host=%s&project=%s&change=%d'
+                   '&patchset=%d&concise=1') % (host, project, change,
+                                                patchset_dest)
+    response = self.test_app.get(request_url, expect_errors=True)
+    self.assertEqual(404, response.status_int)
+
+    mock_rebase_data.side_effect = RuntimeError('Some unknown http code')
+    response = self.test_app.get(request_url, expect_errors=True)
+    self.assertEqual(500, response.status_int)
+
+
+  @mock.patch.object(code_coverage.code_coverage_util,
+                     'RebasePresubmitCoverageDataBetweenPatchsets')
+  @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataEquivalentPatchsets(self, mock_get_equivalent_ps,
                                                    mock_rebase_data):
     host = 'chromium-review.googlesource.com'

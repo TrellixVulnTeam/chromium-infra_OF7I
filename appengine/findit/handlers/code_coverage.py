@@ -1160,14 +1160,21 @@ class ServeCodeCoverageData(BaseHandler):
       return _ServePercentages(latest_entity.absolute_percentages,
                                latest_entity.incremental_percentages)
 
-    rebased_coverage_data = (
-        code_coverage_util.RebasePresubmitCoverageDataBetweenPatchsets(
-            host=host,
-            project=project,
-            change=change,
-            patchset_src=latest_entity.cl_patchset.patchset,
-            patchset_dest=patchset,
-            coverage_data_src=latest_entity.data))
+    try:
+      rebased_coverage_data = (
+          code_coverage_util.RebasePresubmitCoverageDataBetweenPatchsets(
+              host=host,
+              project=project,
+              change=change,
+              patchset_src=latest_entity.cl_patchset.patchset,
+              patchset_dest=patchset,
+              coverage_data_src=latest_entity.data))
+    except code_coverage_util.MissingChangeDataException as mcde:
+      return BaseHandler.CreateError(
+          'Requested coverage data is not found. %s' % mcde.message,
+          404,
+          allowed_origin='*')
+
     entity = PresubmitCoverageData.Create(
         server_host=host,
         change=change,

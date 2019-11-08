@@ -61,6 +61,10 @@ _NON_CONFLICT_CHANGE_KIND = [
 ]
 
 
+class MissingChangeDataException(Exception):
+  pass
+
+
 def GetMetricsBasedOnCoverageTool(coverage_tool):
   """Gets a list of metrics for the given coverage tool.
 
@@ -156,15 +160,24 @@ def _FetchChangeDetails(host, project, change):
       'https://%s/changes/%s?o=ALL_REVISIONS&o=SKIP_MERGEABLE')
   url = template_to_get_change % (host, _GetChangeId(project, change))
   status_code, response, _ = FinditHttpClient().Get(url)
-  if status_code != 200:
-    raise RuntimeError(
-        'Failed to get change details with status code: %d' % status_code)
+  _CheckChangeDetailsResponseCode(status_code, response)
 
   # Remove XSSI magic prefix
   if response.startswith(')]}\''):
     response = response[4:]
 
   return json.loads(response)
+
+
+def _CheckChangeDetailsResponseCode(status_code, response):
+  if status_code == 200:
+    return
+  error_message = (
+      'Failed to get change details with status code: %d, response: %s' %
+      (status_code, response))
+  if status_code == 404:
+    raise MissingChangeDataException(error_message)
+  raise RuntimeError(error_message)
 
 
 def _GetChangeId(project, change):
@@ -366,10 +379,7 @@ def _FetchPatchsetFiles(host, project, change, patchset_revision):
   url = template_to_get_change % (host, _GetChangeId(project, change),
                                   patchset_revision)
   status_code, response, _ = FinditHttpClient().Get(url)
-  if status_code != 200:
-    raise RuntimeError(
-        'Failed to get change details with status code: %d, response: %s' %
-        status_code, response)
+  _CheckChangeDetailsResponseCode(status_code, response)
 
   # Remove XSSI magic prefix
   if response.startswith(')]}\''):
@@ -476,9 +486,7 @@ def _FetchDiffForPatchset(host, project, change, patchset_revision):
   url_template = 'https://%s/changes/%s/revisions/%s/patch'
   url = url_template % (host, _GetChangeId(project, change), patchset_revision)
   status_code, response, _ = FinditHttpClient().Get(url)
-  if status_code != 200:
-    raise RuntimeError(
-        'Failed to get change details with status code: %d' % status_code)
+  _CheckChangeDetailsResponseCode(status_code, response)
 
   return base64.b64decode(response)
 
@@ -499,7 +507,7 @@ def _GetPatchsetRevision(patchset, change_details):
     if patchset == value['_number']:
       return revision
 
-  raise RuntimeError(
+  raise MissingChangeDataException(
       'Patchset %d is not found in the returned change details: %s' %
       (patchset, json.dumps(change_details)))
 
