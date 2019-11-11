@@ -1667,6 +1667,20 @@ wheel: <
 
 * *universal*
 
+## **ink-extensions**
+
+### 1.0.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/ink-extensions-py2_py3"
+  version: "version:1.0.2"
+>
+```
+
+
+* *universal*
+
 ## **inotify_simple**
 
 ### 1.1.7
