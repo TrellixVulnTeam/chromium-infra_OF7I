@@ -64,12 +64,12 @@ describe('mr-grid', () => {
     element.cellMode = 'Tiles';
 
     element.issues = [testIssue];
-    element.xAttr = 'Stars';
-    element.yAttr = 'Blocked';
+    element.xField = 'Stars';
+    element.yField = 'Blocked';
 
     await element.updateComplete;
 
-    assert.deepEqual(element.groupedIssues, new Map([
+    assert.deepEqual(element._groupedIssues, new Map([
       ['2 + Yes', [testIssue]],
     ]));
 
@@ -102,14 +102,14 @@ describe('mr-grid', () => {
     assert.include(href, '/list?x=&y=&mode=');
   });
 
-  it('computes counts link when grouped by row', async () => {
+  it('computes list link when grouped by row in counts mode', async () => {
     await element.updateComplete;
 
     element.cellMode = 'Counts';
     element.queryParams = {x: 'Type', y: '', q: 'Type:Defect'};
-    element.xHeadings = ['All', 'Defect'];
-    element.yHeadings = ['All'];
-    element.groupedIssues = new Map([
+    element._xHeadings = ['All', 'Defect'];
+    element._yHeadings = ['All'];
+    element._groupedIssues = new Map([
       ['All + All', [{'localId': 1, 'projectName': 'monorail'}]],
       ['Defect + All', [
         {localId: 2, projectName: 'monorail',
@@ -125,14 +125,14 @@ describe('mr-grid', () => {
     assert.include(href, '/list?x=Type&y=&q=Type%3ADefect&mode=');
   });
 
-  it('computes counts link when grouped by col', async () => {
+  it('computes list link when grouped by col in counts mode', async () => {
     await element.updateComplete;
 
     element.cellMode = 'Counts';
     element.queryParams = {x: '', y: 'Type', q: 'Type:Defect'};
-    element.xHeadings = ['All'];
-    element.yHeadings = ['All', 'Defect'];
-    element.groupedIssues = new Map([
+    element._xHeadings = ['All'];
+    element._yHeadings = ['All', 'Defect'];
+    element._groupedIssues = new Map([
       ['All + All', [{'localId': 1, 'projectName': 'monorail'}]],
       ['All + Defect', [
         {localId: 2, projectName: 'monorail',
@@ -148,15 +148,15 @@ describe('mr-grid', () => {
     assert.include(href, '/list?x=&y=Type&q=Type%3ADefect&mode=');
   });
 
-  it('computes counts link when grouped by row and col', async () => {
+  it('computes list link when grouped by row, col in counts mode', async () => {
     await element.updateComplete;
 
     element.cellMode = 'Counts';
     element.queryParams = {x: 'Stars', y: 'Type',
       q: 'Type:Defect Stars=2'};
-    element.xHeadings = ['All', '2'];
-    element.yHeadings = ['All', 'Defect'];
-    element.groupedIssues = new Map([
+    element._xHeadings = ['All', '2'];
+    element._yHeadings = ['All', 'Defect'];
+    element._groupedIssues = new Map([
       ['All + All', [{'localId': 1, 'projectName': 'monorail'}]],
       ['2 + Defect', [
         {localId: 2, projectName: 'monorail',

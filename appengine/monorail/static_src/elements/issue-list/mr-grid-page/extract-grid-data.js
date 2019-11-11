@@ -27,174 +27,177 @@ export const DEFAULT_GRID_FIELD_NAMES = [
   'Owner',
 ];
 
-const SORTABLE_FIELD_TYPES = new Set([
+const GROUPABLE_FIELD_TYPES = new Set([
   fieldTypes.DATE_TYPE,
   fieldTypes.ENUM_TYPE,
   fieldTypes.USER_TYPE,
   fieldTypes.INT_TYPE,
 ]);
 
-// Get an underlying case senstitive version of the grid field set to be
-// used for cases where case needs to be preserved.
-const _getGridFieldSet = (fieldDefs = [], labelFields = []) => {
-  const set = new Set([...DEFAULT_GRID_FIELD_NAMES, ...labelFields]);
-  fieldDefs.forEach((fd) => {
-    if (SORTABLE_FIELD_TYPES.has(fd.fieldRef.type)) {
-      set.add(fd.fieldRef.fieldName);
+/**
+ * Returns the fields available given these fieldDefs and labelFields.
+ *
+ * A special value of 'None' will always be prepended to the otherwise sorted
+ * list returned.
+ *
+ * @param {Iterable<FieldDef>} fieldDefs
+ * @param {Iterable<string>} labelFields
+ * @return {Array<string>}
+ */
+export function getAvailableGridFields(fieldDefs = [], labelFields = []) {
+  // TODO(jessan): Consider whether the deduplication is needed.
+  const gridFieldSet = new Set([...DEFAULT_GRID_FIELD_NAMES, ...labelFields]);
+  for (const fd of fieldDefs) {
+    if (GROUPABLE_FIELD_TYPES.has(fd.fieldRef.type)) {
+      gridFieldSet.add(fd.fieldRef.fieldName);
     }
-  });
-  return set;
-};
+  };
 
-// Publicly available version of the grid field set uses lowercase keys.
-export const getGridFieldSet = (fieldDefs = [], labelFields = []) => {
-  const caseSensitiveSet = _getGridFieldSet(fieldDefs, labelFields);
-  const newSet = new Set();
-  caseSensitiveSet.forEach((field) => {
-    newSet.add(field.toLowerCase());
-  });
-  return newSet;
-};
-
-export const getAvailableGridFields = (fieldDefs = [], labelFields = []) => {
-  const list = [..._getGridFieldSet(fieldDefs, labelFields)];
-  list.sort();
-
-  list.unshift('None');
-  return list;
+  const gridFieldList = [...gridFieldSet];
+  gridFieldList.sort();
+  gridFieldList.unshift('None');
+  return gridFieldList;
 };
 
 // Sort headings functions
 // TODO(zhangtiff): Find some way to restructure this code to allow
 // sorting functions to sort with raw types instead of stringified values.
-function countSort(headings) {
-  headings.sort(function(headerA, headerB) {
-    return parseInt(headerA) - parseInt(headerB);
-  });
-  return headings;
+
+/**
+ * Used as an optional 'compareFunction' for Array.sort().
+ * @param {string} strA
+ * @param {string} strB
+ * @return {number}
+ */
+function intStrComparator(strA, strB) {
+  return parseInt(strA) - parseInt(strB);
 }
 
-function issueRefStringSort(headings) {
-  headings.sort(function(headerA, headerB) {
-    const issueRefA = headerA.split(':');
-    const issueRefB = headerB.split(':');
-    if (issueRefA[0] != issueRefB[0]) {
-      return headerA.localeCompare(headerB);
-    } else {
-      return parseInt(issueRefA[1]) - parseInt(issueRefB[1]);
-    }
-  });
-  return headings;
+/**
+ * Used as an optional 'compareFunction' for Array.sort()
+ * @param {string} issueRefStrA
+ * @param {string} issueRefStrB
+ * @return {number}
+ */
+function issueRefComparator(issueRefStrA, issueRefStrB) {
+  const issueRefA = issueRefStrA.split(':');
+  const issueRefB = issueRefStrB.split(':');
+  if (issueRefA[0] != issueRefB[0]) {
+    return issueRefStrA.localeCompare(issueRefStrB);
+  } else {
+    return parseInt(issueRefA[1]) - parseInt(issueRefB[1]);
+  }
 }
 
 // TODO(juliacordero): handle sorting ad hoc values
-function sortHeadings(headingsSet, attribute) {
-  // Track whether EMPTY_FIELD_VALUE is present, and ensure that
-  // it is sorted to the first position even for custom fields
-  const noHeaderValueIsFound = headingsSet.delete(EMPTY_FIELD_VALUE);
-  let headingsList = [...headingsSet];
+/**
+ * @param {Set<string>} headingSet The headers found for the field.
+ * @param {string} fieldName The field on which we're sorting.
+ * @return {Array}
+ */
+function sortHeadings(headingSet, fieldName) {
   let sorter;
-
-  if (headingsSet.has(attribute)) {
-    type = getTypeForFieldName(attribute);
+  if (headingSet.has(fieldName)) { // TODO(jessan): What is this checking?
+    const type = getTypeForFieldName(fieldName);
     if (type === fieldTypes.ISSUE_TYPE) {
-      sorter = issueRefStringSort;
+      sorter = issueRefComparator;
     } else if (type === fieldTypes.INT_TYPE) {
-      sorter = countSort;
+      sorter = intStrComparator;
     }
   }
 
-  if (sorter) {
-    headingsList = sorter(headingsList);
-  } else {
-    headingsList.sort();
-  }
+  // Track whether EMPTY_FIELD_VALUE is present, and ensure that
+  // it is sorted to the last position even for custom fields.
+  // TODO(jessan): although convenient, it is bad practice to mutate parameters.
+  const hasEmptyFieldValue = headingSet.delete(EMPTY_FIELD_VALUE);
+  const headingsList = [...headingSet];
 
-  if (noHeaderValueIsFound) {
+  headingsList.sort(sorter);
+
+  if (hasEmptyFieldValue) {
     headingsList.push(EMPTY_FIELD_VALUE);
   }
   return headingsList;
 }
 
-function addValuesToHeadings(headingsSet, valuesAdded) {
-  if (!valuesAdded.length) {
-    // Make sure issues are sorted into the "empty" category if
-    // they have no matching values.
-    valuesAdded.push(EMPTY_FIELD_VALUE);
-    headingsSet.add(EMPTY_FIELD_VALUE);
-  }
-  for (const value of valuesAdded) {
-    headingsSet.add(value);
-  }
-}
-
+/**
+ * @param {string} x Header value.
+ * @param {string} y Header value.
+ * @return {string} The key for the groupedIssue map.
+ * TODO(jessan): Make a GridData class, which avoids exposing this logic.
+ */
 export function makeGridCellKey(x, y) {
   // Note: Some possible x and y values contain ':', '-', and other
   // non-word characters making delimiter options limited.
   return x + ' + ' + y;
 }
 
-// Outer function that runs each custom extractor function
-export function extractGridData(issues, xField = '', yField = '',
+/**
+ * @param {Issue} issue The issue for which we're preparing grid headings.
+ * @param {string} fieldName The field on which we're grouping.
+ * @param {string} projectName
+ * @param {Map} fieldDefMap
+ * @param {Set} labelPrefixSet
+ * @return {Array<string>} The headings the issue should be grouped into.
+ */
+function prepareHeadings(
+    issue, fieldName, projectName, fieldDefMap, labelPrefixSet) {
+  const values = stringValuesForIssueField(
+      issue, fieldName, projectName, fieldDefMap, labelPrefixSet);
+
+  return values.length == 0 ?
+     [EMPTY_FIELD_VALUE] :
+     values;
+}
+
+/**
+ * Groups issues by their values for the given fields.
+ *
+ * @param {Array<Issue>} issues The issues we are grouping.
+ * @param {string} xFieldName name of the field for grouping columns.
+ * @param {string} yFieldName name of the field for grouping rows.
+ * @param {string} projectName
+ * @param {Map} fieldDefMap
+ * @param {Set} labelPrefixSet
+ * @return {Object} Grid data
+ *   - groupedIssues: A map of issues grouped by thir xField and yField values.
+ *   - xHeadings: sorted headings for columns.
+ *   - yHeadings: sorted headings for rows.
+ */
+export function extractGridData(issues, xFieldName = '', yFieldName = '',
     projectName = '', fieldDefMap = new Map(), labelPrefixSet = new Set()) {
-  const gridData = {
-    xHeadings: [],
-    yHeadings: [],
-    sortedIssues: new Map(),
-  };
-
-  const gridFields = getGridFieldSet([...fieldDefMap.values()], labelPrefixSet);
-
   const xHeadingsSet = new Set();
   const yHeadingsSet = new Set();
-
-  const hasX = gridFields.has(xField.toLowerCase());
-  const hasY = gridFields.has(yField.toLowerCase());
-
-  let xKeysAdded = [];
-  let yKeysAdded = [];
-
-  if (!hasX) {
-    xHeadingsSet.add(DEFAULT_HEADER_VALUE);
-    xKeysAdded.push(DEFAULT_HEADER_VALUE);
-  }
-
-  if (!hasY) {
-    yHeadingsSet.add(DEFAULT_HEADER_VALUE);
-    yKeysAdded.push(DEFAULT_HEADER_VALUE);
-  }
-
+  const groupedIssues = new Map();
   for (const issue of issues) {
-    if (hasX) {
-      xKeysAdded = stringValuesForIssueField(issue, xField,
-          projectName, fieldDefMap, labelPrefixSet);
-      addValuesToHeadings(xHeadingsSet, xKeysAdded);
-    }
+    const xHeadings = !xFieldName ?
+        [DEFAULT_HEADER_VALUE] :
+        prepareHeadings(
+            issue, xFieldName, projectName, fieldDefMap, labelPrefixSet);
+    const yHeadings = !yFieldName ?
+        [DEFAULT_HEADER_VALUE] :
+        prepareHeadings(
+            issue, yFieldName, projectName, fieldDefMap, labelPrefixSet);
 
-    if (hasY) {
-      yKeysAdded = stringValuesForIssueField(issue, yField,
-          projectName, fieldDefMap, labelPrefixSet);
-      addValuesToHeadings(yHeadingsSet, yKeysAdded);
-    }
-
-    // Find every combo of 'xKey yKey' that the issue belongs to
-    // and sort it into that cell
-    for (const xKey of xKeysAdded) {
-      for (const yKey of yKeysAdded) {
-        const cellKey = makeGridCellKey(xKey, yKey);
-        if (gridData.sortedIssues.has(cellKey)) {
-          const cellValue = gridData.sortedIssues.get(cellKey);
-          cellValue.push(issue);
-          gridData.sortedIssues.set(cellKey, cellValue);
+    // Find every combo of 'xValue yValue' that the issue belongs to
+    // and add it into that cell. Also record each header used.
+    for (const xHeading of xHeadings) {
+      xHeadingsSet.add(xHeading);
+      for (const yHeading of yHeadings) {
+        yHeadingsSet.add(yHeading);
+        const cellKey = makeGridCellKey(xHeading, yHeading);
+        if (groupedIssues.has(cellKey)) {
+          groupedIssues.get(cellKey).push(issue);
         } else {
-          gridData.sortedIssues.set(cellKey, [issue]);
+          groupedIssues.set(cellKey, [issue]);
         }
       }
     }
   }
 
-  gridData.xHeadings = sortHeadings(xHeadingsSet, xField);
-  gridData.yHeadings = sortHeadings(yHeadingsSet, yField);
-
-  return gridData;
+  return {
+    groupedIssues,
+    xHeadings: sortHeadings(xHeadingsSet, xFieldName),
+    yHeadings: sortHeadings(yHeadingsSet, yFieldName),
+  };
 }

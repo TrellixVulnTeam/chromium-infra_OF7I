@@ -23,7 +23,7 @@ describe('extract headings from x and y attributes', () => {
 
     assert.deepEqual(data.xHeadings, ['All']);
     assert.deepEqual(data.yHeadings, ['All']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   it('extract headings from Attachments attribute', () => {
@@ -41,7 +41,7 @@ describe('extract headings from x and y attributes', () => {
 
     assert.deepEqual(data.xHeadings, ['0', '1']);
     assert.deepEqual(data.yHeadings, ['All']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   it('extract headings from Blocked attribute', () => {
@@ -58,7 +58,7 @@ describe('extract headings from x and y attributes', () => {
 
     assert.deepEqual(data.xHeadings, ['No', 'Yes']);
     assert.deepEqual(data.yHeadings, ['All']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   it('extract headings from BlockedOn attribute', () => {
@@ -89,7 +89,7 @@ describe('extract headings from x and y attributes', () => {
     assert.deepEqual(data.xHeadings, ['test-projectA:1',
       'test-projectA:3', 'test-projectB:3', '----']);
     assert.deepEqual(data.yHeadings, ['All']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   it('extract headings from Blocking attribute', () => {
@@ -120,10 +120,11 @@ describe('extract headings from x and y attributes', () => {
     assert.deepEqual(data.xHeadings, ['test-projectA:1',
       'test-projectA:3', 'test-projectB:3', '----']);
     assert.deepEqual(data.yHeadings, ['All']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   it('extract headings from Component attribute', () => {
+    debugger;
     const issues = [
       {'otherIssueProperty': 'issueProperty'},
       {'componentRefs': [{'path': 'UI'}]},
@@ -140,7 +141,7 @@ describe('extract headings from x and y attributes', () => {
 
     assert.deepEqual(data.xHeadings, ['API', 'UI', '----']);
     assert.deepEqual(data.yHeadings, ['All']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   it('extract headings from Reporter attribute', () => {
@@ -158,7 +159,7 @@ describe('extract headings from x and y attributes', () => {
 
     assert.deepEqual(data.xHeadings, ['All']);
     assert.deepEqual(data.yHeadings, ['testA@google.com', 'testB@google.com']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   it('extract headings from Stars attribute', () => {
@@ -173,7 +174,7 @@ describe('extract headings from x and y attributes', () => {
 
     assert.deepEqual(data.xHeadings, ['All']);
     assert.deepEqual(data.yHeadings, ['1', '6']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   // TODO(juliacordero): sort these like the current grid view (?)
@@ -193,7 +194,7 @@ describe('extract headings from x and y attributes', () => {
 
     assert.deepEqual(data.xHeadings, ['All']);
     assert.deepEqual(data.yHeadings, ['Accepted', 'New']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
   it('extract headings from the Type attribute', () => {
@@ -217,6 +218,6 @@ describe('extract headings from x and y attributes', () => {
 
     assert.deepEqual(data.xHeadings, ['All']);
     assert.deepEqual(data.yHeadings, ['Defect', 'Enhancement', '----']);
-    assert.deepEqual(data.sortedIssues, expectedIssues);
+    assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 });

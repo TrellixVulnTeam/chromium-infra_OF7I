@@ -11,6 +11,16 @@ import {issueRefToUrl} from 'shared/converters.js';
 import './mr-grid-tile.js';
 import qs from 'qs';
 
+/**
+ * <mr-grid>
+ *
+ * A grid of issues grouped optionally horizontally and vertically.
+ *
+ * Throughout the file 'x' corresponds to column headers and 'y' corresponds to
+ * row headers.
+ *
+ * @extends {LitElement}
+ */
 export class MrGrid extends connectStore(LitElement) {
   /** @override */
   render() {
@@ -18,33 +28,36 @@ export class MrGrid extends connectStore(LitElement) {
       <table>
         <tr>
           <th>&nbsp</th>
-          ${this.xHeadings.map((heading) => html`
+          ${this._xHeadings.map((heading) => html`
               <th>${heading}</th>`)}
         </tr>
-        ${this.yHeadings.map((yHeading) => html`
+        ${this._yHeadings.map((yHeading) => html`
           <tr>
             <th>${yHeading}</th>
-            ${this.xHeadings.map((xHeading) => html`
-              ${this.groupedIssues.has(makeGridCellKey(xHeading, yHeading)) ? html`
-                <td>
-                  ${this.renderCellMode(this.cellMode, xHeading, yHeading)}
-                </td>
-              `: html`
-                <td></td>
-              `}
-            `)}
+            ${this._xHeadings.map((xHeading) => html`
+                ${this._renderCell(xHeading, yHeading)}`)}
           </tr>
         `)}
       </table>
     `;
   }
+  /**
+   *
+   * @param {string} xHeading
+   * @param {string} yHeading
+   * @return {TemplateResult}
+   */
+  _renderCell(xHeading, yHeading) {
+    const cell = this._groupedIssues.get(makeGridCellKey(xHeading, yHeading));
+    if (!cell) {
+      return html`<td></td>`;
+    }
 
-  renderCellMode(cellMode, xHeading, yHeading) {
-    cellMode = cellMode.toLowerCase();
-    const cellHeading = makeGridCellKey(xHeading, yHeading);
+    const cellMode = this.cellMode.toLowerCase();
+    let content;
     if (cellMode === 'ids') {
-      return html`
-        ${this.groupedIssues.get(cellHeading).map((issue) => html`
+      content = html`
+        ${cell.map((issue) => html`
           <mr-issue-link
             .projectName=${this.projectName}
             .issue=${issue}
@@ -54,68 +67,83 @@ export class MrGrid extends connectStore(LitElement) {
         `)}
       `;
     } else if (cellMode === 'counts') {
-      const itemCount =
-        this.groupedIssues.get(cellHeading).length;
+      const itemCount = cell.length;
       if (itemCount === 1) {
-        const issue = this.groupedIssues.get(cellHeading)[0];
-        return html`
+        const issue = cell[0];
+        content = html`
           <a href=${issueRefToUrl(issue, this.queryParams)} class="counts">
             1 item
           </a>
         `;
       } else {
-        return html`
-          <a href=${this.formatCountsURL(xHeading, yHeading)} class="counts">
+        content = html`
+          <a href=${this._formatListUrl(xHeading, yHeading)} class="counts">
             ${itemCount} items
           </a>
         `;
       }
+    } else {
+      // Default to tiles.
+      content = html`
+        ${cell.map((issue) => html`
+          <mr-grid-tile
+            .issue=${issue}
+            .queryParams=${this.queryParams}
+          ></mr-grid-tile>
+          `)}
+        `;
     }
-
-    // Default to tiles.
-    return html`
-      ${this.groupedIssues.get(cellHeading).map((issue) => html`
-        <mr-grid-tile
-          .issue=${issue}
-          .queryParams=${this.queryParams}
-        ></mr-grid-tile>`)}
-    `;
+    return html`<td>${content}</td>`;
   }
 
-  formatCountsURL(xHeading, yHeading) {
+  /**
+   * Creates a URL to the list view for the group of issues corresponding to
+   * the given headings.
+   *
+   * @param {string} xHeading
+   * @param {string} yHeading
+   * @return {string}
+   */
+  _formatListUrl(xHeading, yHeading) {
     let url = 'list?';
     const params = Object.assign({}, this.queryParams);
     params.mode = '';
 
-    params.q = this.addHeadingsToSearch(params.q, xHeading, this.xAttr);
-    params.q = this.addHeadingsToSearch(params.q, yHeading, this.yAttr);
+    params.q = this._addHeadingToQuery(params.q, xHeading, this.xField);
+    params.q = this._addHeadingToQuery(params.q, yHeading, this.yField);
 
     url += qs.stringify(params);
 
     return url;
   }
 
-  addHeadingsToSearch(params, heading, attr) {
-    if (attr && attr !== 'None') {
+  /**
+   * @param {string} query
+   * @param {string} heading The value of field for the current group.
+   * @param {string} field Field on which we're grouping the issue.
+   * @return {string} The query with an additional clause if needed.
+   */
+  _addHeadingToQuery(query, heading, field) {
+    if (field && field !== 'None') {
       if (heading === EMPTY_FIELD_VALUE) {
-        params += ' -has:' + attr;
+        query += ' -has:' + field;
       // The following two cases are to handle grouping issues by Blocked
       } else if (heading === 'No') {
-        params += ' -is:' + attr;
+        query += ' -is:' + field;
       } else if (heading === 'Yes') {
-        params += ' is:' + attr;
+        query += ' is:' + field;
       } else {
-        params += ' ' + attr + '=' + heading;
+        query += ' ' + field + '=' + heading;
       }
     }
-    return params;
+    return query;
   }
 
   /** @override */
   static get properties() {
     return {
-      xAttr: {type: String},
-      yAttr: {type: String},
+      xField: {type: String},
+      yField: {type: String},
       issues: {type: Array},
       cellMode: {type: String},
       queryParams: {type: Object},
@@ -157,11 +185,38 @@ export class MrGrid extends connectStore(LitElement) {
   /** @override */
   constructor() {
     super();
+    /** @type {string} */
     this.cellMode = 'tiles';
-    this.xHeadings = [];
-    this.yHeadings = [];
-    this.groupedIssues = new Map();
+    /** @type {Array<Issue>} */
+    this.issues = [];
+    /** @type {string} */
+    this.projectName;
+    this.queryParams = {};
+
+    /** @type {string} The issue field on which to group columns. */
+    this.xField;
+
+    /** @type {string} The issue field on which to group rows. */
+    this.yField;
+
+    /**
+     * Grid cell key mapped to issues associated with that cell.
+     * @type {Map<string, Array<Issue>>}
+     */
+    this._groupedIssues = new Map();
+
+    /** @type {Array<string>} */
+    this._xHeadings = [];
+
+    /** @type {Array<string>} */
+    this._yHeadings = [];
+
+    /**
+     * Lowercase field name -> FieldDef for the project
+     * @type {Map<string, FieldDef>}
+     */
     this._fieldDefMap = new Map();
+
     this._labelPrefixSet = new Set();
   }
 
@@ -173,15 +228,15 @@ export class MrGrid extends connectStore(LitElement) {
 
   /** @override */
   update(changedProperties) {
-    if (changedProperties.has('xAttr') || changedProperties.has('yAttr') ||
+    if (changedProperties.has('xField') || changedProperties.has('yField') ||
         changedProperties.has('issues') ||
         changedProperties.has('_fieldDefMap') ||
         changedProperties.has('_labelPrefixSet')) {
-      const gridData = extractGridData(this.issues, this.xAttr, this.yAttr,
+      const gridData = extractGridData(this.issues, this.xField, this.yField,
           this.projectName, this._fieldDefMap, this._labelPrefixSet);
-      this.xHeadings = gridData.xHeadings;
-      this.yHeadings = gridData.yHeadings;
-      this.groupedIssues = gridData.sortedIssues;
+      this._xHeadings = gridData.xHeadings;
+      this._yHeadings = gridData.yHeadings;
+      this._groupedIssues = gridData.groupedIssues;
     }
 
     super.update(changedProperties);

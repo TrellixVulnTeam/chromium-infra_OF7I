@@ -11,6 +11,12 @@ import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import './mr-grid-controls.js';
 import './mr-grid.js';
 
+/**
+ * <mr-grid-page>
+ *
+ * Grid page view containing mr-grid and mr-grid-controls.
+ * @extends {LitElement}
+ */
 export class MrGridPage extends connectStore(LitElement) {
   /** @override */
   render() {
@@ -36,8 +42,8 @@ export class MrGridPage extends connectStore(LitElement) {
         <br>
         <mr-grid
           .issues=${this.issues}
-          .xAttr=${this.queryParams.x}
-          .yAttr=${this.queryParams.y}
+          .xField=${this.queryParams.x}
+          .yField=${this.queryParams.y}
           .cellMode=${this.queryParams.cells ? this.queryParams.cells : 'tiles'}
           .queryParams=${this.queryParams}
           .projectName=${this.projectName}
@@ -65,6 +71,8 @@ export class MrGridPage extends connectStore(LitElement) {
     super();
     this.issues = [];
     this.progress = 0;
+    /** @type {string} */
+    this.projectName;
     this.queryParams = {};
   };
 
@@ -87,6 +95,7 @@ export class MrGridPage extends connectStore(LitElement) {
     }
   }
 
+  /** @private */
   _fetchMatchingIssues() {
     store.dispatch(issue.fetchIssueList(this.queryParams,
         this.projectName, {maxItems: 500}, 12));
