@@ -61,6 +61,9 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/report-bots", mwCron, logAndSetHTTPErr(reportBotsCronHandler))
 
 	r.GET("/internal/cron/push-inventory-to-queen", mwCron, logAndSetHTTPErr(pushInventoryToQueenCronHandler))
+
+	// dump information from stable version file to datastore
+	r.GET("/internal/cron/dump-stable-version-to-datastore", mwCron, logAndSetHTTPErr(dumpStableVersionToDatastoreHandler))
 }
 
 func updateDeviceConfigCronHandler(c *router.Context) (err error) {
@@ -199,4 +202,14 @@ func createInventoryServer(c *router.Context) *inventory.ServerImpl {
 			return tracker
 		},
 	}
+}
+
+func dumpStableVersionToDatastoreHandler(c *router.Context) error {
+	cfg := config.Get(c.Context)
+	if cfg.RpcControl != nil && cfg.RpcControl.GetDisableDumpStableVersionToDatastore() {
+		return nil
+	}
+	inv := createInventoryServer(c)
+	_, err := inv.DumpStableVersionToDatastore(c.Context, &fleet.DumpStableVersionToDatastoreRequest{})
+	return err
 }

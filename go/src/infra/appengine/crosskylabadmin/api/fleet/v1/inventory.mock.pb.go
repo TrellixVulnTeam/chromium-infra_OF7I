@@ -374,6 +374,26 @@ func (mr *MockInventoryClientMockRecorder) GetStableVersion(ctx, in interface{},
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStableVersion", reflect.TypeOf((*MockInventoryClient)(nil).GetStableVersion), varargs...)
 }
 
+// DumpStableVersionToDatastore mocks base method
+func (m *MockInventoryClient) DumpStableVersionToDatastore(ctx context.Context, in *DumpStableVersionToDatastoreRequest, opts ...grpc.CallOption) (*DumpStableVersionToDatastoreResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DumpStableVersionToDatastore", varargs...)
+	ret0, _ := ret[0].(*DumpStableVersionToDatastoreResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DumpStableVersionToDatastore indicates an expected call of DumpStableVersionToDatastore
+func (mr *MockInventoryClientMockRecorder) DumpStableVersionToDatastore(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DumpStableVersionToDatastore", reflect.TypeOf((*MockInventoryClient)(nil).DumpStableVersionToDatastore), varargs...)
+}
+
 // MockInventoryServer is a mock of InventoryServer interface
 type MockInventoryServer struct {
 	ctrl     *gomock.Controller
@@ -650,4 +670,19 @@ func (m *MockInventoryServer) GetStableVersion(arg0 context.Context, arg1 *GetSt
 func (mr *MockInventoryServerMockRecorder) GetStableVersion(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStableVersion", reflect.TypeOf((*MockInventoryServer)(nil).GetStableVersion), arg0, arg1)
+}
+
+// DumpStableVersionToDatastore mocks base method
+func (m *MockInventoryServer) DumpStableVersionToDatastore(arg0 context.Context, arg1 *DumpStableVersionToDatastoreRequest) (*DumpStableVersionToDatastoreResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DumpStableVersionToDatastore", arg0, arg1)
+	ret0, _ := ret[0].(*DumpStableVersionToDatastoreResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DumpStableVersionToDatastore indicates an expected call of DumpStableVersionToDatastore
+func (mr *MockInventoryServerMockRecorder) DumpStableVersionToDatastore(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DumpStableVersionToDatastore", reflect.TypeOf((*MockInventoryServer)(nil).DumpStableVersionToDatastore), arg0, arg1)
 }

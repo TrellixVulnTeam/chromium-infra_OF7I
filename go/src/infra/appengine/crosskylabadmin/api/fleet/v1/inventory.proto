@@ -129,8 +129,12 @@ service Inventory {
 
   // GetStableVersion reads the stable version for a particular DUT from datastore
   //
-  // There is intentionally no RPC for writing the stable version.
+  // There is intentionally no RPC for overwtiting the stable version with arbitrary content.
   rpc GetStableVersion(GetStableVersionRequest) returns (GetStableVersionResponse);
+
+  // DumpStableVersionToDatastore reads the stable version from the LUCI config file
+  // and writes it to datastore.
+  rpc DumpStableVersionToDatastore(DumpStableVersionToDatastoreRequest) returns (DumpStableVersionToDatastoreResponse);
 }
 
 message PushInventoryToQueenRequest {}
@@ -683,3 +687,6 @@ message GetStableVersionResponse {
     string firmwareVersion = 2;
     string faftVersion = 3;
 }
+
+message DumpStableVersionToDatastoreRequest {}
+message DumpStableVersionToDatastoreResponse {}

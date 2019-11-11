@@ -301,6 +301,12 @@ func UpdateDCAndCheckIfSkipLabelUpdate(ctx context.Context, req updateDutLabelsR
 	return false
 }
 
+// DumpStableVersionToDatastore takes stable version info from the git repo where it lives
+// and dumps it to datastore
+func (is *ServerImpl) DumpStableVersionToDatastore(ctx context.Context, in *fleet.DumpStableVersionToDatastoreRequest) (*fleet.DumpStableVersionToDatastoreResponse, error) {
+	return nil, fmt.Errorf("not yet implemented")
+}
+
 // initUpdateLimiterOnce initializes the updateLimiter.  This should
 // be called before using updateLimiter always.
 func (is *ServerImpl) initUpdateLimiterOnce(ctx context.Context) {

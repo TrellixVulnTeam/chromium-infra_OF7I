@@ -311,3 +311,20 @@ func (s *DecoratedInventory) GetStableVersion(ctx context.Context, req *GetStabl
 	}
 	return
 }
+
+func (s *DecoratedInventory) DumpStableVersionToDatastore(ctx context.Context, req *DumpStableVersionToDatastoreRequest) (rsp *DumpStableVersionToDatastoreResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DumpStableVersionToDatastore", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DumpStableVersionToDatastore(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DumpStableVersionToDatastore", rsp, err)
+	}
+	return
+}
