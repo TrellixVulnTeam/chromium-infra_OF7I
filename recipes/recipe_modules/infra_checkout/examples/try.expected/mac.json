@@ -151,16 +151,7 @@
     "infra_step": true,
     "name": "get change list",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@change list is too long@1@@@",
-      "@@@STEP_LOG_LINE@change list is too long@0@@@",
-      "@@@STEP_LOG_LINE@change list is too long@0@@@",
-      "@@@STEP_LOG_LINE@change list is too long@0@@@",
-      "@@@STEP_LOG_LINE@change list is too long@ @@@",
-      "@@@STEP_LOG_LINE@change list is too long@f@@@",
-      "@@@STEP_LOG_LINE@change list is too long@i@@@",
-      "@@@STEP_LOG_LINE@change list is too long@l@@@",
-      "@@@STEP_LOG_LINE@change list is too long@e@@@",
-      "@@@STEP_LOG_LINE@change list is too long@s@@@",
+      "@@@STEP_LOG_LINE@change list is too long@1000 files@@@",
       "@@@STEP_LOG_END@change list is too long@@@"
     ]
   },
