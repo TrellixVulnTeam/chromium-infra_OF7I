@@ -259,7 +259,12 @@ export class MrApp extends connectStore(LitElement) {
       lowerCaseParams[key.toLowerCase()] = params[key];
     });
     ctx.query = lowerCaseParams;
-    store.dispatch(sitewide.setQueryParams(ctx.query));
+
+    // Do not update queryParam if attempting to jump-to-issue
+    // As updating query forces a list refresh
+    if (!params.hasOwnProperty('id')) {
+      store.dispatch(sitewide.setQueryParams(ctx.query));
+    }
 
     this._currentContext = ctx;
 

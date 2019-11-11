@@ -4,7 +4,7 @@
 
 import {assert} from 'chai';
 import {MrIssueHeader} from './mr-issue-header.js';
-import {store} from 'reducers/base.js';
+import {store, resetState} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import {ISSUE_EDIT_PERMISSION, ISSUE_DELETE_PERMISSION,
   ISSUE_FLAGSPAM_PERMISSION} from 'shared/permissions.js';
@@ -13,6 +13,7 @@ let element;
 
 describe('mr-issue-header', () => {
   beforeEach(() => {
+    store.dispatch(resetState());
     element = document.createElement('mr-issue-header');
     document.body.appendChild(element);
   });

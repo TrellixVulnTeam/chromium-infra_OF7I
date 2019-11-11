@@ -6,6 +6,8 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 
 import {MrSearchBar} from './mr-search-bar.js';
+import {prpcClient} from 'prpc-client-instance.js';
+import {issueRefToUrl} from 'shared/converters.js';
 import {clientLoggerFake} from 'shared/test-fakes.js';
 
 
@@ -78,6 +80,7 @@ describe('mr-search-bar', () => {
   });
 
   describe('search form submit', () => {
+    let prpcClientStub;
     beforeEach(() => {
       element.clientLogger = clientLoggerFake();
 
@@ -85,10 +88,12 @@ describe('mr-search-bar', () => {
       sinon.stub(window, 'open');
 
       element.projectName = 'chromium';
+      prpcClientStub = sinon.stub(prpcClient, 'call');
     });
 
     afterEach(() => {
       window.open.restore();
+      prpcClient.call.restore();
     });
 
     it('prevents default', async () => {
@@ -140,14 +145,32 @@ describe('mr-search-bar', () => {
 
       const form = element.shadowRoot.querySelector('form');
 
-      form.q.value = '  123  ';
+      form.q.value = '  abc  ';
       form.can.value = '1';
 
       form.dispatchEvent(new Event('submit'));
 
       sinon.assert.calledOnce(element._page);
       sinon.assert.calledWith(element._page,
-          '/p/chromium/issues/list?q=123&can=1');
+          '/p/chromium/issues/list?q=abc&can=1');
+    });
+
+    it('jumps to issue for digit-only query', async () => {
+      prpcClientStub.returns(Promise.resolve({issue: 'hello world'}));
+
+      await element.updateComplete;
+
+      const form = element.shadowRoot.querySelector('form');
+
+      form.q.value = '123';
+      form.can.value = '1';
+
+      form.dispatchEvent(new Event('submit'));
+
+      await element._navigateToNext;
+
+      const expected = issueRefToUrl('hello world', {q: '123', can: '1'});
+      sinon.assert.calledWith(element._page, expected);
     });
 
     it('only keeps kept query params', async () => {

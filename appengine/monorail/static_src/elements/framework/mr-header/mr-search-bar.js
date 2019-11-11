@@ -9,7 +9,11 @@ import qs from 'qs';
 import '../mr-dropdown/mr-dropdown.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import ClientLogger from 'monitoring/client-logger';
+import {issueRefToUrl} from 'shared/converters.js';
 
+// Search field input regex testing for all digits
+// indicating that the user wants to jump to the specified issue.
+const JUMP_RE = /^\d+$/;
 
 /**
  * `<mr-search-bar>`
@@ -343,9 +347,45 @@ export class MrSearchBar extends LitElement {
     params.q = form.q.value.trim();
     params.can = form.can.value;
 
-    this._navigateToList(params, newTab);
+    this._navigateToNext(params, newTab);
   }
 
+  /**
+   * Attempt to jump-to-issue, otherwise continue to list view
+   * @param {Object} params URL navigation parameters
+   * @param {Boolean} newTab
+   */
+  async _navigateToNext(params, newTab = false) {
+    let resp;
+    if (JUMP_RE.test(params.q)) {
+      const message = {
+        issueRef: {
+          projectName: this.projectName,
+          localId: params.q,
+        },
+      };
+
+      try {
+        resp = await prpcClient.call(
+            'monorail.Issues', 'GetIssue', message,
+        );
+      } catch (error) {
+        // Fall through to navigateToList
+      }
+    }
+    if (resp && resp.issue) {
+      const link = issueRefToUrl(resp.issue, params);
+      this._page(link);
+    } else {
+      this._navigateToList(params, newTab);
+    }
+  }
+
+  /**
+   * Navigate to list view, currently splits on old and new view
+   * @param {Object} params URL navigation parameters
+   * @param {Boolean} newTab
+   */
   _navigateToList(params, newTab = false) {
     // TODO(zhangtiff): Remove this check once list_new is removed
     // when the new list page switches to default.

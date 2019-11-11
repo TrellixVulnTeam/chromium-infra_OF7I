@@ -5,7 +5,7 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 import {MrIssuePage} from './mr-issue-page.js';
-import {store} from 'reducers/base.js';
+import {store, resetState} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
@@ -26,6 +26,7 @@ function populateElementReferences() {
 
 describe('mr-issue-page', () => {
   beforeEach(() => {
+    store.dispatch(resetState());
     element = document.createElement('mr-issue-page');
     document.body.appendChild(element);
     sinon.stub(prpcClient, 'call');
@@ -255,8 +256,8 @@ describe('mr-issue-page', () => {
     element.issue = {localId: 222};
     element.fetchIssueError = 'error';
 
-    populateElementReferences();
     await element.updateComplete;
+    populateElementReferences();
 
     assert.isNull(loadingElement);
     assert.isNotNull(fetchErrorElement);

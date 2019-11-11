@@ -9,13 +9,14 @@ import {ISSUE_EDIT_PERMISSION, ISSUE_EDIT_SUMMARY_PERMISSION,
   ISSUE_EDIT_STATUS_PERMISSION, ISSUE_EDIT_OWNER_PERMISSION,
   ISSUE_EDIT_CC_PERMISSION,
 } from 'shared/permissions.js';
-import {store} from 'reducers/base.js';
+import {store, resetState} from 'reducers/base.js';
 
 let element;
 let clock;
 
 describe('mr-edit-metadata', () => {
   beforeEach(() => {
+    store.dispatch(resetState());
     element = document.createElement('mr-edit-metadata');
     document.body.appendChild(element);
 

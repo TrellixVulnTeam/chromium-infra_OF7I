@@ -5,7 +5,7 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 import {MrApp} from './mr-app.js';
-
+import {store, resetState} from 'reducers/base.js';
 
 let element;
 
@@ -15,6 +15,7 @@ window.CS_env = {
 
 describe('mr-app', () => {
   beforeEach(() => {
+    store.dispatch(resetState());
     element = document.createElement('mr-app');
     document.body.appendChild(element);
     element.formsToCheck = [];
@@ -52,6 +53,14 @@ describe('mr-app', () => {
 
     assert.deepEqual(element.queryParams, {q: 'owner:me', colspec: 'Summary',
       x: 'owner'});
+  });
+
+  it('_universalRouteHandler ignores setQueryParams for jump-to-issue', () => {
+    const ctx = {querystring: 'id=123'};
+    const next = sinon.stub();
+    element._universalRouteHandler(ctx, next);
+
+    assert.deepEqual(element.queryParams, {});
   });
 
   it('_loadIssuePage loads issue page', async () => {

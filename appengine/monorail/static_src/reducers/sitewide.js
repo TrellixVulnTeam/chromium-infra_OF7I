@@ -2,29 +2,29 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {combineReducers} from 'redux';
-import {createSelector} from 'reselect';
-import {createReducer, createRequestReducer} from './redux-helpers.js';
 import * as project from 'reducers/project.js';
-import {SITEWIDE_DEFAULT_CAN, parseColSpec} from 'shared/issue-fields.js';
+import {combineReducers} from 'redux';
+import {createReducer, createRequestReducer} from './redux-helpers.js';
+import {createSelector} from 'reselect';
 import {prpcClient} from 'prpc-client-instance.js';
+import {SITEWIDE_DEFAULT_CAN, parseColSpec} from 'shared/issue-fields.js';
 
 // Actions
-const SET_QUERY_PARAMS = 'SET_QUERY_PARAMS';
 const SET_PAGE_TITLE = 'SET_PAGE_TITLE';
+const SET_QUERY_PARAMS = 'SET_QUERY_PARAMS';
 
 // Async actions
+const GET_SERVER_STATUS_FAILURE = 'GET_SERVER_STATUS_FAILURE';
 const GET_SERVER_STATUS_START = 'GET_SERVER_STATUS_START';
 const GET_SERVER_STATUS_SUCCESS = 'GET_SERVER_STATUS_SUCCESS';
-const GET_SERVER_STATUS_FAILURE = 'GET_SERVER_STATUS_FAILURE';
 
 /* State Shape
 {
   bannerMessage: String,
   bannerTime: Number,
-  readOnly: Boolean,
-  queryParams: Object,
   pageTitle: String,
+  queryParams: Object,
+  readOnly: Boolean,
   requests: {
     serverStatus: Object,
   },
@@ -42,20 +42,20 @@ const bannerTimeReducer = createReducer(0, {
     (_state, action) => action.serverStatus.bannerTime || 0,
 });
 
-const readOnlyReducer = createReducer(false, {
-  [GET_SERVER_STATUS_SUCCESS]:
-    (_state, action) => action.serverStatus.readOnly || false,
+/**
+ * Handle state for the current document title.
+ */
+const pageTitleReducer = createReducer('', {
+  [SET_PAGE_TITLE]: (_state, action) => action.title || '',
 });
 
 const queryParamsReducer = createReducer({}, {
   [SET_QUERY_PARAMS]: (_state, action) => action.queryParams || {},
 });
 
-/**
- * Handle state for the current document title.
- */
-const pageTitleReducer = createReducer('', {
-  [SET_PAGE_TITLE]: (_state, action) => action.title || '',
+const readOnlyReducer = createReducer(false, {
+  [GET_SERVER_STATUS_SUCCESS]:
+    (_state, action) => action.serverStatus.readOnly || false,
 });
 
 const requestsReducer = combineReducers({
@@ -81,8 +81,6 @@ export const bannerMessage = createSelector(sitewide,
     (sitewide) => sitewide.bannerMessage);
 export const bannerTime = createSelector(sitewide,
     (sitewide) => sitewide.bannerTime);
-export const readOnly = createSelector(sitewide,
-    (sitewide) => sitewide.readOnly);
 export const queryParams = createSelector(sitewide,
     (sitewide) => sitewide.queryParams || {});
 export const pageTitle = createSelector(sitewide,
@@ -111,6 +109,8 @@ export const pageTitle = createSelector(sitewide,
       titlePieces.push('Monorail');
       return titlePieces.join(' - ');
     });
+export const readOnly = createSelector(sitewide,
+    (sitewide) => sitewide.readOnly);
 
 /**
  * Compute the current columns that the user is viewing in the list

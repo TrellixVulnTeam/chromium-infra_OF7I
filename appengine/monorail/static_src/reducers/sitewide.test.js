@@ -5,7 +5,7 @@
 import sinon from 'sinon';
 import {assert} from 'chai';
 
-import {store, stateUpdated} from 'reducers/base.js';
+import {store, stateUpdated, resetState} from 'reducers/base.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import * as sitewide from './sitewide.js';
 import {SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
@@ -13,6 +13,9 @@ import {SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
 let prpcCall;
 
 describe('sitewide selectors', () => {
+  beforeEach(() => {
+    store.dispatch(resetState());
+  });
   it('queryParams', () => {
     assert.deepEqual(sitewide.queryParams({}), {});
     assert.deepEqual(sitewide.queryParams({sitewide: {}}), {});

@@ -4,7 +4,7 @@
 
 import {assert} from 'chai';
 import sinon from 'sinon';
-import {store} from './base.js';
+import {store, resetState} from './base.js';
 import * as issue from './issue.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 import {issueToIssueRef} from 'shared/converters.js';
@@ -15,6 +15,9 @@ let prpcCall;
 let dispatch;
 
 describe('issue', () => {
+  beforeEach(() => {
+    store.dispatch(resetState());
+  });
   describe('reducers', () => {
     describe('issueByRefReducer', () => {
       it('no-op on unmatching action', () => {

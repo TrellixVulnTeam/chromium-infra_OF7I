@@ -5,11 +5,13 @@ import sinon from 'sinon';
 import {assert} from 'chai';
 import {prpcClient} from 'prpc-client-instance.js';
 import {MrListPage, DEFAULT_ISSUES_PER_PAGE} from './mr-list-page.js';
+import {store, resetState} from 'reducers/base.js';
 
 let element;
 
 describe('mr-list-page', () => {
   beforeEach(() => {
+    store.dispatch(resetState());
     element = document.createElement('mr-list-page');
     document.body.appendChild(element);
     sinon.stub(prpcClient, 'call');
@@ -116,20 +118,22 @@ describe('mr-list-page', () => {
   });
 
   it('refreshes when queryParams.sort changes', async () => {
-    element.queryParams = {};
-    await element.updateComplete;
-
     sinon.stub(element, 'refresh');
+
+    await element.updateComplete;
+    sinon.assert.callCount(element.refresh, 1);
 
     element.queryParams = {colspec: 'Summary+ID'};
 
     await element.updateComplete;
-    sinon.assert.notCalled(element.refresh);
+    sinon.assert.callCount(element.refresh, 1);
 
     element.queryParams = {sort: '-Summary'};
 
     await element.updateComplete;
-    sinon.assert.calledOnce(element.refresh);
+    sinon.assert.callCount(element.refresh, 2);
+
+    element.refresh.restore();
   });
 
   it('startIndex parses queryParams for value', () => {
