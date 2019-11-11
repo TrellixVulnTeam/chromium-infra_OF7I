@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
@@ -25,11 +24,6 @@ const gitilesHost = "chrome-internal.googlesource.com"
 const project = "chromeos/infra/config"
 const branch = "master"
 const stableVersionConfigPath = "lab_platform/stable_version_data/stable_versions.cfg"
-
-var (
-	unmarshaller = jsonpb.Unmarshaler{AllowUnknownFields: true}
-	marshaller   = jsonpb.Marshaler{}
-)
 
 func printError(w io.Writer, err error) {
 	fmt.Fprintf(w, "%s: %s\n", programName, err)

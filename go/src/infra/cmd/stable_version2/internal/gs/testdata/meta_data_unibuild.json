@@ -1,0 +1,33 @@
+{
+  "board-metadata": {
+    "reef": {
+      "android-container-branch": "test",
+      "arc-use-set": true,
+      "ec-firmware-version": "test_v1",
+      "kernel-version": "kernel_v1",
+      "main-firmware-version": "firmware_v1",
+      "models": {
+        "model1": {
+          "ec-firmware-version": "v1",
+          "firmware-key-id": "v1",
+          "main-readonly-firmware-version": "v1",
+          "main-readwrite-firmware-version": "v1"
+        },
+        "model2": {
+          "ec-firmware-version": "v2",
+          "firmware-key-id": "v2",
+          "main-readonly-firmware-version": "v2",
+          "main-readwrite-firmware-version": "v2"
+        }
+      }
+    }
+  },
+  "boards": [
+    "reef"
+  ],
+  "bot-config": "reef-release",
+  "unibuild": true,
+  "version": {
+    "android": "1"
+  }
+}

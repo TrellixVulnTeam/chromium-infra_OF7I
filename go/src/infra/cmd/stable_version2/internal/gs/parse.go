@@ -20,10 +20,10 @@ import (
 )
 
 // ParseOmahaStatus the omaha stable version strings.
-func (gsc *Client) ParseOmahaStatus(ctx context.Context, data []byte) ([]*sv.StableCrosVersion, error) {
+func ParseOmahaStatus(ctx context.Context, data []byte) ([]*sv.StableCrosVersion, error) {
 	res := make([]*sv.StableCrosVersion, 0)
 	var omahaDatas svdata.OmahaDatas
-	if err := gsc.unmarshaller.Unmarshal(bytes.NewReader(data), &omahaDatas); err != nil {
+	if err := utils.Unmarshaller.Unmarshal(bytes.NewReader(data), &omahaDatas); err != nil {
 		return nil, err
 	}
 	m := make(map[string]string)
@@ -38,6 +38,35 @@ func (gsc *Client) ParseOmahaStatus(ctx context.Context, data []byte) ([]*sv.Sta
 
 	for k, v := range m {
 		res = append(res, utils.MakeCrOSSV(k, v))
+	}
+	return res, nil
+}
+
+// ParseMetadata parses the build metadata.
+func ParseMetadata(data []byte) ([]*sv.StableFirmwareVersion, error) {
+	var bm svdata.BuildMetadata
+	if err := utils.Unmarshaller.Unmarshal(bytes.NewReader(data), &bm); err != nil {
+		return nil, err
+	}
+	var res []*sv.StableFirmwareVersion
+	if bm.GetUnibuild() {
+		for buildTarget, bm := range bm.GetBoardMetadata() {
+			for model, mm := range bm.GetModels() {
+				key := utils.MakeStableVersionKey(buildTarget, model)
+				res = append(res, &sv.StableFirmwareVersion{
+					Key:     key,
+					Version: getFirmwareVersion(mm),
+				})
+			}
+		}
+	} else {
+		for buildTarget, bm := range bm.GetBoardMetadata() {
+			key := utils.MakeStableVersionKey(buildTarget, buildTarget)
+			res = append(res, &sv.StableFirmwareVersion{
+				Key:     key,
+				Version: bm.GetMainFirmwareVersion(),
+			})
+		}
 	}
 	return res, nil
 }
@@ -73,4 +102,11 @@ func parseEntry(od *svdata.OmahaData) (string, string) {
 
 func correctBuildTarget(b string) string {
 	return strings.Replace(b, "-", "_", -1)
+}
+
+func getFirmwareVersion(mm *svdata.ModelMetadata) string {
+	if mm.GetReadwriteFirmwareVersion() != "" {
+		return mm.GetReadwriteFirmwareVersion()
+	}
+	return mm.GetReadonlyFirmwareVersion()
 }

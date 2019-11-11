@@ -1,0 +1,17 @@
+{
+  "board-metadata": {
+    "arkham": {
+      "arc-use-set": false,
+      "ec-firmware-version": null,
+      "kernel-version": "kernel_v1",
+      "main-firmware-version": "v1"
+    }
+  },
+  "boards": [
+    "arkham"
+  ],
+  "unibuild": false,
+  "version": {
+    "android": null
+  }
+}

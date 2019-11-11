@@ -6,7 +6,6 @@ package gs
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -19,12 +18,10 @@ import (
 func TestParseOmahaStatus(t *testing.T) {
 	Convey("Parse omaha status file", t, func() {
 		ctx := context.Background()
-		bt, err := ioutil.ReadFile(testDataPath(("omaha_status.json")))
+		bt, err := ioutil.ReadFile(testDataPath("omaha_status.json"))
 		So(err, ShouldBeNil)
 
-		var gsc Client
-		res, err := gsc.ParseOmahaStatus(ctx, bt)
-		fmt.Println(res)
+		res, err := ParseOmahaStatus(ctx, bt)
 		So(err, ShouldBeNil)
 
 		Convey("Parse normal board", func() {
@@ -53,6 +50,40 @@ func TestParseOmahaStatus(t *testing.T) {
 		Convey("Parse non-beta channel board, no return", func() {
 			v := utils.GetCrOSSVByBuildtarget(res, "canaryboard")
 			So(v, ShouldEqual, "")
+		})
+	})
+}
+
+func TestParseMetaData(t *testing.T) {
+	Convey("Parse meta data file", t, func() {
+
+		Convey("Parse non-unibuild", func() {
+			bt, err := ioutil.ReadFile((testDataPath("meta_data.json")))
+			So(err, ShouldBeNil)
+
+			res, err := ParseMetadata(bt)
+			So(err, ShouldBeNil)
+			So(res, ShouldHaveLength, 1)
+			So(res[0].GetKey().GetBuildTarget().GetName(), ShouldEqual, "arkham")
+			So(res[0].GetKey().GetModelId().GetValue(), ShouldEqual, "arkham")
+			So(res[0].GetVersion(), ShouldEqual, "v1")
+		})
+
+		Convey("Parse unibuild", func() {
+			bt, err := ioutil.ReadFile((testDataPath("meta_data_unibuild.json")))
+			So(err, ShouldBeNil)
+
+			res, err := ParseMetadata(bt)
+			So(err, ShouldBeNil)
+			So(res, ShouldHaveLength, 2)
+			So(res[0].GetKey().GetBuildTarget().GetName(), ShouldEqual, "reef")
+			So(res[1].GetKey().GetBuildTarget().GetName(), ShouldEqual, "reef")
+			models := map[string]string{
+				res[0].GetKey().GetModelId().GetValue(): res[0].GetVersion(),
+				res[1].GetKey().GetModelId().GetValue(): res[1].GetVersion(),
+			}
+			So(models["model1"], ShouldEqual, "v1")
+			So(models["model2"], ShouldEqual, "v2")
 		})
 	})
 }

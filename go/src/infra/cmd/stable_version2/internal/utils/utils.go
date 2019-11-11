@@ -5,23 +5,30 @@
 package utils
 
 import (
+	"github.com/golang/protobuf/jsonpb"
+
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
+)
+
+// Unmarshaller is used to unmarshall all stable_version related data.
+var (
+	Unmarshaller = jsonpb.Unmarshaler{AllowUnknownFields: true}
 )
 
 // MakeCrOSSV makes a stable cros version object following format:
 // https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/master/src/lab_platform/stable_cros_version.proto
 func MakeCrOSSV(b, v string) *sv.StableCrosVersion {
 	return &sv.StableCrosVersion{
-		Key:     makeStableVersionKey(b, ""),
+		Key:     MakeStableVersionKey(b, ""),
 		Version: v,
 	}
 }
 
-// makeStableVersionKey makes a key whose format follows:
+// MakeStableVersionKey makes a key whose format follows:
 // https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/master/src/lab_platform/stable_version.proto
-func makeStableVersionKey(buildTarget, model string) *sv.StableVersionKey {
+func MakeStableVersionKey(buildTarget, model string) *sv.StableVersionKey {
 	return &sv.StableVersionKey{
 		ModelId: &device.ModelId{
 			Value: model,

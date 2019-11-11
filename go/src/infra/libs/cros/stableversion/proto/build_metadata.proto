@@ -1,0 +1,27 @@
+// Copyright 2019 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chrome.chromeos_infra.cros.stableversion;
+
+option go_package = "stableversion";
+
+// NEXT TAG: 3
+message BuildMetadata {
+  bool unibuild = 1;
+  map<string, BoardMetadata> board_metadata = 2 [json_name = "board-metadata"];
+}
+
+// NEXT TAG: 3
+message BoardMetadata {
+  string main_firmware_version = 1 [json_name = "main-firmware-version"];
+  map<string, ModelMetadata> models = 2;
+}
+
+// NEXT TAG: 3
+message ModelMetadata {
+  string readonly_firmware_version = 1 [json_name = "main-readonly-firmware-version"];
+  string readwrite_firmware_version = 2 [json_name = "main-readwrite-firmware-version"];
+}
