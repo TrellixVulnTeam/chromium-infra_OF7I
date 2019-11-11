@@ -20,6 +20,11 @@ import (
 const programName = "stable_version2"
 const omahaStatusFile = "omaha_status.json"
 const omahaGsPath = "gs://chromeos-build-release-console/omaha_status.json"
+const gerritHost = "chrome-internal-review.googlesource.com"
+const gitilesHost = "chrome-internal.googlesource.com"
+const project = "chromeos/infra/config"
+const branch = "master"
+const stableVersionConfigPath = "lab_platform/stable_version_data/stable_versions.cfg"
 
 var (
 	unmarshaller = jsonpb.Unmarshaler{AllowUnknownFields: true}
@@ -41,4 +46,17 @@ func newAuthenticatedTransport(ctx context.Context, f *authcli.Flags) (http.Roun
 	}
 	a := auth.NewAuthenticator(ctx, auth.SilentLogin, o)
 	return a.Transport()
+}
+
+func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) {
+	o, err := f.Options()
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to get auth options").Err()
+	}
+	a := auth.NewAuthenticator(ctx, auth.OptionalLogin, o)
+	c, err := a.Client()
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to create HTTP client").Err()
+	}
+	return c, nil
 }

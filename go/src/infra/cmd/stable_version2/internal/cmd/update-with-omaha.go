@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -19,6 +20,8 @@ import (
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	gslib "infra/cmd/stable_version2/internal/gs"
 	"infra/cmd/stable_version2/internal/site"
+	svlib "infra/libs/cros/stableversion"
+	gitlib "infra/libs/cros/stableversion/git"
 )
 
 // UpdateWithOmaha subcommand: read stable version in omaha json file in GS.
@@ -82,16 +85,37 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 		return err
 	}
 
+	// Fetch up-to-date stable version based on omaha file
 	newCrosSV, err := getGSCrosSV(ctx, outDir, gsc)
 	if err != nil {
 		return err
 	}
 
+	// Fetch existing stable version
+	hc, err := newHTTPClient(ctx, f)
+	if err != nil {
+		return err
+	}
+	gc, err := gitlib.NewClient(ctx, hc, gerritHost, gitilesHost, project, branch)
+	if err != nil {
+		return err
+	}
+
+	oldSV, err := getGitSV(ctx, gc)
+	logInvalidCrosSV(ctx, oldSV.GetCros())
+	if err != nil {
+		return err
+	}
+	updatedCros := compareCrosSV(ctx, newCrosSV, oldSV.GetCros())
+
 	// TODO(xixuan): Add more following logics.
 	if c.outputPath == "" {
-		for _, u := range newCrosSV {
+		for _, u := range updatedCros {
 			logging.Debugf(ctx, "%v", u)
 		}
+		logging.Infof(ctx, "Number of new SV: %d", len(newCrosSV))
+		logging.Infof(ctx, "Number of old SV: %d", len(oldSV.GetCros()))
+		logging.Infof(ctx, "Number of updated SV: %d", len(updatedCros))
 	}
 	return nil
 }
@@ -111,4 +135,51 @@ func getGSCrosSV(ctx context.Context, outDir string, gsc gslib.Client) ([]*sv.St
 		return nil, errors.Annotate(err, "parse omaha").Err()
 	}
 	return cros, nil
+}
+
+func getGitSV(ctx context.Context, gc *gitlib.Client) (*sv.StableVersions, error) {
+	res, err := gc.GetFile(ctx, stableVersionConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	var allSV sv.StableVersions
+	if err := unmarshaller.Unmarshal(strings.NewReader(res), &allSV); err != nil {
+		return nil, err
+	}
+	return &allSV, nil
+}
+
+func logInvalidCrosSV(ctx context.Context, crosSV []*sv.StableCrosVersion) {
+	for _, csv := range crosSV {
+		if err := svlib.ValidateCrOSVersion(csv.GetVersion()); err != nil {
+			logging.Debugf(ctx, "invalid cros version: %s, %s", csv.GetKey().GetBuildTarget().GetName(), csv.GetVersion())
+		}
+	}
+}
+
+func compareCrosSV(ctx context.Context, newCrosSV []*sv.StableCrosVersion, oldCrosSV []*sv.StableCrosVersion) []*sv.StableCrosVersion {
+	oldMap := make(map[string]string, len(oldCrosSV))
+	for _, csv := range oldCrosSV {
+		if err := svlib.ValidateCrOSVersion(csv.GetVersion()); err != nil {
+			continue
+		}
+		oldMap[csv.GetKey().GetBuildTarget().GetName()] = csv.GetVersion()
+	}
+	var updated []*sv.StableCrosVersion
+	for _, nsv := range newCrosSV {
+		k := nsv.GetKey().GetBuildTarget().GetName()
+		v, ok := oldMap[k]
+		if ok {
+			nv := nsv.GetVersion()
+			cp, err := svlib.CompareCrOSVersions(v, nv)
+			if err == nil && cp == -1 {
+				updated = append(updated, nsv)
+			} else {
+				logging.Debugf(ctx, "new version %s is not newer than existing version %s for board %s", nv, v, k)
+			}
+		} else {
+			updated = append(updated, nsv)
+		}
+	}
+	return updated
 }
