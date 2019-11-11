@@ -68,7 +68,7 @@ type UpdateFunc func(dutID string, old *inventory.SchedulableLabels, new *invent
 // This function returns a Store that should be closed to update the inventory
 // with any changes to the info, using a supplied UpdateFunc.  If UpdateFunc is
 // nil, the inventory is not updated.
-func LoadCached(ctx context.Context, b *swmbot.Info, noCache bool, f UpdateFunc) (*Store, error) {
+func LoadCached(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
 	return load(ctx, b, f, getCached)
 }
 
@@ -80,7 +80,7 @@ func LoadCached(ctx context.Context, b *swmbot.Info, noCache bool, f UpdateFunc)
 // This function returns a Store that should be closed to update the inventory
 // with any changes to the info, using a supplied UpdateFunc.  If UpdateFunc is
 // nil, the inventory is not updated.
-func LoadFresh(ctx context.Context, b *swmbot.Info, noCache bool, f UpdateFunc) (*Store, error) {
+func LoadFresh(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
 	return load(ctx, b, f, getUncached)
 }
 

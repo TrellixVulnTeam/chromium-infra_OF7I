@@ -122,9 +122,9 @@ func (i *Info) loadDUTInfo(ctx context.Context, b *swmbot.Info) *inventory.Devic
 	}
 	var s *dutinfo.Store
 	if i.fetchFreshDUTInfo {
-		s, i.err = dutinfo.LoadFresh(ctx, b, i.fetchFreshDUTInfo, i.labelUpdater.update)
+		s, i.err = dutinfo.LoadFresh(ctx, b, i.labelUpdater.update)
 	} else {
-		s, i.err = dutinfo.LoadCached(ctx, b, i.fetchFreshDUTInfo, i.labelUpdater.update)
+		s, i.err = dutinfo.LoadCached(ctx, b, i.labelUpdater.update)
 	}
 	if i.err != nil {
 		return nil
