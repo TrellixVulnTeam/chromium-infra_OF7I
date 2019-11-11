@@ -30,7 +30,7 @@ func ParseOmahaStatus(ctx context.Context, data []byte) ([]*sv.StableCrosVersion
 	for _, od := range omahaDatas.GetOmahaData() {
 		b, v, err := parseOne(od, m)
 		if err != nil {
-			logging.Debugf(ctx, "fail to parse: %s", err)
+			logging.Debugf(ctx, "fail to parse %s: %s", od.GetBoard(), err)
 			continue
 		}
 		m[b] = v

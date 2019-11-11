@@ -114,7 +114,10 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 		return err
 	}
 
-	// TODO(xixuan): Add more following logics.
+	changeURL, err := commitNew(ctx, gc, updatedCros, updatedFirmwareSV, oldSV)
+	if err != nil {
+		return err
+	}
 	if c.outputPath == "" {
 		for _, u := range updatedCros {
 			logging.Debugf(ctx, "cros stable version: %v", u)
@@ -127,6 +130,7 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 		logging.Infof(ctx, "Number of updated cros SV: %d", len(updatedCros))
 		logging.Infof(ctx, "Number of updated firmware SV: %d", len(updatedFirmwareSV))
 	}
+	logging.Debugf(ctx, "Update stable version CL: %s", changeURL)
 	return nil
 }
 
@@ -225,6 +229,30 @@ func getGSFirmwareSV(ctx context.Context, gsc gslib.Client, outDir string, updat
 		}
 	}
 	return res, nil
+}
+
+func commitNew(ctx context.Context, gc *gitlib.Client, updatedCros []*sv.StableCrosVersion, updatedFirmwareSV []*sv.StableFirmwareVersion, old *sv.StableVersions) (string, error) {
+	newCros := svlib.AddUpdatedCros(old.Cros, updatedCros)
+	newFirmware := svlib.AddUpdatedFirmware(old.Firmware, updatedFirmwareSV)
+	old.Cros = newCros
+	old.Firmware = newFirmware
+	newContent, err := svlib.WriteSVToString(old)
+	if err != nil {
+		return "", errors.Annotate(err, "convert change").Err()
+	}
+
+	u := map[string]string{
+		stableVersionConfigPath: newContent,
+	}
+	changeInfo, err := gc.UpdateFiles(ctx, "Update stable version (automatically)", u)
+	if err != nil {
+		return "", errors.Annotate(err, "update change").Err()
+	}
+	gerritURL, err := gc.SubmitChange(ctx, changeInfo)
+	if err != nil {
+		return "", errors.Annotate(err, "submit change").Err()
+	}
+	return gerritURL, nil
 }
 
 func localMetaFilePath(crosSV *sv.StableCrosVersion) string {

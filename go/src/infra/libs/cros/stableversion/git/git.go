@@ -8,11 +8,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	gerritapi "go.chromium.org/luci/common/api/gerrit"
 	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/gerrit"
+	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
@@ -21,6 +23,7 @@ import (
 type Client struct {
 	gerritC    gerrit.GerritClient
 	gitilesC   gitiles.GitilesClient
+	gerritHost string
 	project    string
 	branch     string
 	latestSHA1 string
@@ -45,6 +48,7 @@ func (c *Client) Init(ctx context.Context, hc *http.Client, gerritHost string, g
 	var err error
 	c.project = project
 	c.branch = branch
+	c.gerritHost = gerritHost
 	c.gerritC, err = gerritapi.NewRESTClient(hc, gerritHost, true)
 	if err != nil {
 		return err
@@ -84,6 +88,76 @@ func (c *Client) GetFile(ctx context.Context, path string) (string, error) {
 	return res.Contents, nil
 }
 
+// UpdateFiles associates new contents with a path in a gerrit repo.
+//
+// subject: the subject of the CL
+// contents: the mapping between file path and its new contents
+func (c *Client) UpdateFiles(ctx context.Context, subject string, contents map[string]string) (*gerritpb.ChangeInfo, error) {
+	if c.latestSHA1 == "" {
+		return nil, fmt.Errorf("Client::PutFile: stableversion git client not initialized")
+	}
+	changeInfo, err := c.gerritC.CreateChange(ctx, &gerritpb.CreateChangeRequest{
+		Project:    c.project,
+		Ref:        c.branch,
+		Subject:    subject,
+		BaseCommit: c.latestSHA1,
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "create change").Err()
+	}
+	for path, content := range contents {
+		_, err = c.gerritC.ChangeEditFileContent(ctx, &gerritpb.ChangeEditFileContentRequest{
+			Number:   changeInfo.Number,
+			Project:  changeInfo.Project,
+			FilePath: path,
+			Content:  []byte(content),
+		})
+		if err != nil {
+			return nil, errors.Annotate(err, "change edit file content").Err()
+		}
+	}
+	return changeInfo, nil
+}
+
+// SubmitChange takes a change and submits it, returns a gerrit url upon success
+func (c *Client) SubmitChange(ctx context.Context, changeInfo *gerritpb.ChangeInfo) (string, error) {
+	if _, err := c.gerritC.ChangeEditPublish(ctx, &gerritpb.ChangeEditPublishRequest{
+		Number:  changeInfo.Number,
+		Project: changeInfo.Project,
+	}); err != nil {
+		return "", err
+	}
+	ci, err := c.gerritC.GetChange(ctx, &gerritpb.GetChangeRequest{
+		Number:  changeInfo.Number,
+		Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if _, err = c.gerritC.SetReview(ctx, &gerritpb.SetReviewRequest{
+		Number:     changeInfo.Number,
+		Project:    changeInfo.Project,
+		RevisionId: ci.CurrentRevision,
+		Labels: map[string]int32{
+			"Code-Review": 2,
+			"Verified":    1,
+		},
+	}); err != nil {
+		return "", err
+	}
+
+	newCI, err := c.gerritC.SubmitChange(ctx, &gerritpb.SubmitChangeRequest{
+		Number:  changeInfo.Number,
+		Project: changeInfo.Project,
+	})
+	if err != nil {
+		return "", errors.Annotate(err, "submit file").Err()
+	}
+
+	return changeURL(c.gerritHost, c.project, int(newCI.Number))
+}
+
 func (c *Client) fetchLatestSHA1(ctx context.Context) (string, error) {
 	resp, err := c.gitilesC.Log(ctx, &gitilespb.LogRequest{
 		Project:    c.project,
@@ -119,4 +193,12 @@ func validateNewClientParams(gerritHost string, gitilesHost string, project stri
 	}
 
 	return nil
+}
+
+func changeURL(host string, project string, changeNumber int) (string, error) {
+	p, err := url.PathUnescape(project)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("https://%s/c/%s/+/%d", host, p, changeNumber), nil
 }
