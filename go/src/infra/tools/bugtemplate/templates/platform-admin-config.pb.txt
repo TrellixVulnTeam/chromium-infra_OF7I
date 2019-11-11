@@ -4,7 +4,7 @@ description: <<END
 
 This is http://go/bug-luci-admin.
 
-Please fill out the relevant section and delete the others and also adjust
+Please fill out the relevant section and **delete the others** and also adjust
 the summary to match your request.
 
 
@@ -19,14 +19,10 @@ Prefix:
 Owning group:
 What will be there:
 
+NOTE: editing ACLs of existing CIPD prefix is responsibility of the prefix
+OWNER, which you can find via `cipd acl-list <prefix>` command, e.g.:
+  $ cipd acl-list infra/tools/cpython
 
-=== Create Chromium-affiliated Google Storage bucket ===
-Name: chromium-* or chrome-*
-Public: public | googlers only | only bots + owners
-People or Google groups that need upload access:
-Service accounts or builders that need read access:
-
-Note: the bucket will live in "chromium-archive" Cloud Project
 
 END
 
