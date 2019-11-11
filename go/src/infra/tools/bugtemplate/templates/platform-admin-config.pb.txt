@@ -24,6 +24,14 @@ OWNER, which you can find via `cipd acl-list <prefix>` command, e.g.:
   $ cipd acl-list infra/tools/cpython
 
 
+=== Edit permissions to view LUCI BigQuery data ===
+
+Data type: <Swarming host> | Buildbucket | CQ
+Table/View:
+Readers to add/remove:
+**NOTE to whoever handles a bug: add "BigQuery Data Viewer" role only.
+
+
 END
 
 components: "Infra>Platform>Admin"
