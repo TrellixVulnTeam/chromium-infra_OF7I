@@ -219,21 +219,22 @@ func createIssueDelta(c context.Context, mc monorail.IssuesClient, task *model.T
 		return nil, errors.New("invalid response from GetIssue")
 	}
 
-	delta := &monorail.IssueDelta{
-		// Arquebus never unassigns issues from the current owner.
-		Status:    &wrappers.StringValue{Value: "Assigned"},
-		CcRefsAdd: findCcsToAdd(task, issue.CcRefs, ccs),
-	}
+	delta := &monorail.IssueDelta{}
 	needUpdate := false
+	// iff the issue has the intended owner, set the status to "Assigned".
+	// Otherwise, keep the existing status.
 	if assignee != nil && !proto.Equal(issue.OwnerRef, assignee) {
 		needUpdate = true
 		delta.OwnerRef = assignee
+		delta.Status = &wrappers.StringValue{Value: "Assigned"}
 		writeTaskLogWithLink(
 			c, task, issue, "Found a new owner: %s", assignee.DisplayName,
 		)
 	}
-	if len(delta.CcRefsAdd) > 0 {
+	ccsToAdd := findCcsToAdd(task, issue.CcRefs, ccs)
+	if len(ccsToAdd) > 0 {
 		needUpdate = true
+		delta.CcRefsAdd = ccsToAdd
 		writeTaskLogWithLink(
 			c, task, issue, "Found new CC(s): %s", delta.CcRefsAdd,
 		)

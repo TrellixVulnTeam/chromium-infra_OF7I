@@ -172,5 +172,48 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 				So(nUpdated, ShouldEqual, 0)
 			})
 		})
+
+		Convey("the status and assignee remain the same, if there is no intended assignee", func() {
+			// Mock an issue with an assignee and status.
+			si := &monorail.Issue{
+				ProjectName: "test", LocalId: 123,
+				StatusRef: &monorail.StatusRef{
+					Status:    "Assigned",
+					MeansOpen: true,
+				},
+				OwnerRef: monorailUser("foo@example.org"),
+			}
+			mockGetAndListIssues(c, si)
+
+			Convey("because it's outside of the oncall hours", func() {
+				// Mock a rotation with empty shifts.
+				mockOncall(c, "Rotation 1", &rotangapi.ShiftEntry{})
+				// nUpdated should be 0
+				nUpdated, err := searchAndUpdateIssues(c, assigner, task)
+				So(err, ShouldBeNil)
+				So(nUpdated, ShouldEqual, 0)
+			})
+
+			Convey("because the config doesn't have assignee", func() {
+				// This rotation only cc-es the oncaller into the issue.
+				assigner.CCsRaw = createRawUserSources(
+					oncallUserSource("Rotation 1", config.Oncall_PRIMARY),
+				)
+				assigner.AssigneesRaw = createRawUserSources()
+
+				// nUpdated should be 1 for the new cc-ed oncall.
+				nUpdated, err := searchAndUpdateIssues(c, assigner, task)
+				So(err, ShouldBeNil)
+				So(nUpdated, ShouldEqual, 1)
+
+				// The IssueDelta{} should only contain a change for CC, but
+				// not for the owner and status.
+				req := getIssueUpdateRequest(c, si.ProjectName, si.LocalId)
+				So(req, ShouldNotBeNil)
+				So(req.Delta.OwnerRef, ShouldBeNil)
+				So(req.Delta.Status, ShouldBeNil)
+				So(req.Delta.CcRefsAdd, ShouldNotBeNil)
+			})
+		})
 	})
 }
