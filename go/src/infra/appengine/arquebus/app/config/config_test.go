@@ -116,7 +116,31 @@ func TestConfigValidator(t *testing.T) {
 		Convey("for missing assignees", func() {
 			cfg := createConfig("my-assigner")
 			cfg.Assigners[0].Assignees = []*UserSource{}
-			So(validate(cfg), ShouldErrLike, "missing assignees")
+			Convey("with ccs", func() {
+				// If ccs[] is given, assignees[] can be omitted.
+				So(cfg.Assigners[0].Ccs, ShouldNotBeNil)
+				So(validate(cfg), ShouldBeNil)
+			})
+
+			Convey("Without ccs", func() {
+				cfg.Assigners[0].Ccs = []*UserSource{}
+				So(validate(cfg), ShouldErrLike, "at least one of assignees or ccs must be given.")
+			})
+		})
+
+		Convey("for missing ccs", func() {
+			cfg := createConfig("my-assigner")
+			cfg.Assigners[0].Ccs = []*UserSource{}
+			Convey("with assignees", func() {
+				// If assignees[] is given, ccs[] can be omitted.
+				So(cfg.Assigners[0].Ccs, ShouldNotBeNil)
+				So(validate(cfg), ShouldBeNil)
+			})
+
+			Convey("Without assignees", func() {
+				cfg.Assigners[0].Assignees = []*UserSource{}
+				So(validate(cfg), ShouldErrLike, "at least one of assignees or ccs must be given.")
+			})
 		})
 
 		Convey("for missing issue_query", func() {

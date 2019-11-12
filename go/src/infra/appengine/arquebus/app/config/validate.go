@@ -132,18 +132,19 @@ func validateAssigner(c *validation.Context, assigner *Assigner) {
 		c.Exit()
 	}
 
-	if len(assigner.Assignees) == 0 {
-		c.Errorf("missing assignees")
-	}
-	for i, source := range assigner.Assignees {
-		c.Enter("assignee %d", i+1)
-		validateUserSource(c, source)
-		c.Exit()
-	}
-	for i, source := range assigner.Ccs {
-		c.Enter("cc %d", i+1)
-		validateUserSource(c, source)
-		c.Exit()
+	if len(assigner.Assignees) == 0 && len(assigner.Ccs) == 0 {
+		c.Errorf("at least one of assignees or ccs must be given.")
+	} else {
+		for i, source := range assigner.Assignees {
+			c.Enter("assignee %d", i+1)
+			validateUserSource(c, source)
+			c.Exit()
+		}
+		for i, source := range assigner.Ccs {
+			c.Enter("cc %d", i+1)
+			validateUserSource(c, source)
+			c.Exit()
+		}
 	}
 }
 
