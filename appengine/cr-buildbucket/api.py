@@ -22,6 +22,7 @@ from proto import rpc_pb2  # pylint: disable=unused-import
 from proto import rpc_prpc_pb2
 from proto import step_pb2  # pylint: disable=unused-import
 
+import bbutil
 import buildtags
 import config
 import creation
@@ -228,39 +229,26 @@ def prepare_schedule_build_request_async(req):
 
   build = yield service.get_async(req.template_build_id)
 
+  # First initialize the new request based on the build.
   new_req = rpc_pb2.ScheduleBuildRequest(
-      request_id=req.request_id,
-      template_build_id=req.template_build_id,
-      builder=req.builder if req.HasField('builder') else build.proto.builder,
-      canary=req.canary if req.canary is not common_pb2.UNSET else build.canary,
-      experimental=(
-          req.experimental if req.experimental is not common_pb2.UNSET else
-          [common_pb2.NO, common_pb2.YES][build.experimental]
-      ),
-      properties=(
-          req.properties
-          if req.HasField('properties') else build.proto.input.properties
-      ),
-      gitiles_commit=(
-          req.gitiles_commit if req.HasField('gitiles_commit') else
-          build.proto.input.gitiles_commit
-      ),
-      gerrit_changes=req.gerrit_changes or build.proto.input.gerrit_changes,
-      tags=req.tags,
-      dimensions=req.dimensions,
-      priority=req.priority,
-      notify=req.notify,
-      fields=req.fields,
-      critical=(
-          req.critical
-          if req.critical is not common_pb2.UNSET else build.proto.critical
-      ),
-      exe=req.exe if req.HasField('exe') else build.proto.exe,
-      swarming=req.swarming,
+      builder=build.proto.builder,
+      canary=build.canary,
+      experimental=bbutil.BOOLISH_TO_TRINARY[build.proto.input.experimental],
+      properties=build.proto.input.properties,
+      gitiles_commit=build.proto.input.gitiles_commit,
+      gerrit_changes=build.proto.input.gerrit_changes,
+      critical=build.proto.critical,
+      exe=build.proto.exe,
   )
-
   if not req.tags:
     build.tags_to_protos(new_req.tags)
+
+  # Then apply the overrides specified in req.
+  # Clear composite fields if they are specified in req.
+  for f, _ in req.ListFields():
+    new_req.ClearField(f.name)
+  new_req.MergeFrom(req)
+
   raise ndb.Return(new_req)
 
 
