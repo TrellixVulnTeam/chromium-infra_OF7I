@@ -217,6 +217,53 @@ def build_predicate_to_search_query(predicate):
   return q
 
 
+@ndb.tasklet
+def prepare_schedule_build_request_async(req):
+  """Populates empty fields in the req with properties from the template build.
+
+  When req doesn't have template_build_id property, return req as is.
+  """
+  if not req.template_build_id:
+    raise ndb.Return(req)
+
+  build = yield service.get_async(req.template_build_id)
+
+  new_req = rpc_pb2.ScheduleBuildRequest(
+      request_id=req.request_id,
+      template_build_id=req.template_build_id,
+      builder=req.builder if req.HasField('builder') else build.proto.builder,
+      canary=req.canary if req.canary is not common_pb2.UNSET else build.canary,
+      experimental=(
+          req.experimental if req.experimental is not common_pb2.UNSET else
+          [common_pb2.NO, common_pb2.YES][build.experimental]
+      ),
+      properties=(
+          req.properties
+          if req.HasField('properties') else build.proto.input.properties
+      ),
+      gitiles_commit=(
+          req.gitiles_commit if req.HasField('gitiles_commit') else
+          build.proto.input.gitiles_commit
+      ),
+      gerrit_changes=req.gerrit_changes or build.proto.input.gerrit_changes,
+      tags=req.tags,
+      dimensions=req.dimensions,
+      priority=req.priority,
+      notify=req.notify,
+      fields=req.fields,
+      critical=(
+          req.critical
+          if req.critical is not common_pb2.UNSET else build.proto.critical
+      ),
+      exe=req.exe if req.HasField('exe') else build.proto.exe,
+      swarming=req.swarming,
+  )
+
+  if not req.tags:
+    build.tags_to_protos(new_req.tags)
+  raise ndb.Return(new_req)
+
+
 @rpc_impl_async('GetBuild')
 @ndb.tasklet
 def get_build_async(req, res, _ctx, mask):
@@ -421,6 +468,7 @@ def update_build_async(req, _res, ctx, _mask):
 def schedule_build_async(req, res, _ctx, mask):
   """Schedules one build."""
   validation.validate_schedule_build_request(req)
+  req = yield prepare_schedule_build_request_async(req)
 
   bucket_id = config.format_bucket_id(req.builder.project, req.builder.bucket)
   if not (yield user.can_add_build_async(bucket_id)):
@@ -448,7 +496,7 @@ def schedule_build_multi(batch):
       Response objects will be mutated.
   """
   # Validate requests.
-  valid_items = []
+  valid_entries = []
   for rr in batch:
     try:
       validation.validate_schedule_build_request(rr.request)
@@ -470,11 +518,18 @@ def schedule_build_multi(batch):
         rr.response.error.message = 'invalid fields: %s' % ex.message
         continue
 
-    valid_items.append(_ScheduleItem(rr.request, rr.response, mask))
+    valid_entries.append(
+        (prepare_schedule_build_request_async(rr.request), rr.response, mask)
+    )
 
   # Check permissions.
   def get_bucket_id(req):
     return config.format_bucket_id(req.builder.project, req.builder.bucket)
+
+  valid_items = [
+      _ScheduleItem(req_fut.get_result(), res, mask)
+      for req_fut, res, mask in valid_entries
+  ]
 
   bucket_ids = {get_bucket_id(x.request) for x in valid_items}
   can_add = dict(utils.async_apply(bucket_ids, user.can_add_build_async))

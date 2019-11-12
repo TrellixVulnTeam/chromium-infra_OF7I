@@ -6,7 +6,7 @@ import os
 import datetime
 
 from google.appengine.ext import ndb
-from google.protobuf import text_format
+from google.protobuf import text_format, field_mask_pb2
 
 from components import auth
 from components import prpc
@@ -18,6 +18,7 @@ import mock
 from proto import build_pb2
 from proto import common_pb2
 from proto import rpc_pb2
+from proto import notification_pb2
 from test import test_util
 import api
 import bbutil
@@ -493,6 +494,219 @@ class ScheduleBuildTests(BaseTestCase):
         creation.BuildRequest(schedule_build_request=req)
     )
 
+  @mock.patch('creation.add_async', autospec=True)
+  @mock.patch('service.get_async', autospec=True)
+  def test_schedule_with_template_build_id(self, get_async, add_async):
+    get_async.return_value = future(
+        test_util.build(
+            id=44,
+            builder=dict(project='chromium', bucket='try', builder='linux'),
+            canary=common_pb2.YES,
+            input=build_pb2.Build.Input(
+                experimental=common_pb2.NO,
+                properties=test_util.create_struct({
+                    'property_key': 'property_value_from_build',
+                    'another_property_key': 'another_property_value',
+                }),
+                gitiles_commit=common_pb2.GitilesCommit(
+                    host='host', project='proj', ref="refs/from_host"
+                ),
+                gerrit_changes=[
+                    common_pb2.GerritChange(
+                        project='proj', host='host', change=1, patchset=1
+                    ),
+                    common_pb2.GerritChange(
+                        project='proj', host='host', change=1, patchset=1
+                    ),
+                ],
+            ),
+            tags=[
+                common_pb2.StringPair(
+                    key='tag_key', value='tag_value_from_build'
+                ),
+                common_pb2.StringPair(
+                    key='another_tag_key', value='another_tag_value'
+                ),
+            ],
+            critical=common_pb2.YES,
+            exe=common_pb2.Executable(cipd_package='package_from_host'),
+            infra=build_pb2.BuildInfra(
+                swarming=build_pb2.BuildInfra
+                .Swarming(parent_run_id='id_from_build')
+            ),
+        ),
+    )
+    add_async.return_value = future(
+        test_util.build(
+            id=54,
+            builder=dict(project='chromium', bucket='try', builder='linux'),
+            canary=common_pb2.NO,
+            input=build_pb2.Build.Input(
+                experimental=common_pb2.YES,
+                properties=test_util.create_struct({
+                    'property_key': 'property_value_from_req',
+                }),
+                gitiles_commit=common_pb2.GitilesCommit(
+                    host='host', project='proj', ref="refs/from_req"
+                ),
+                gerrit_changes=[
+                    common_pb2.GerritChange(
+                        project='proj', host='host', change=2, patchset=2
+                    ),
+                ],
+            ),
+            tags=[
+                common_pb2.StringPair(
+                    key='tag_key', value='tag_value_from_req'
+                ),
+            ],
+            critical=common_pb2.NO,
+            exe=common_pb2.Executable(cipd_package=''),
+            infra=build_pb2.BuildInfra(
+                swarming=build_pb2.BuildInfra
+                .Swarming(parent_run_id='id_from_req')
+            ),
+        ),
+    )
+    req = rpc_pb2.ScheduleBuildRequest(
+        template_build_id=44,
+        builder=dict(project='chromium', bucket='try', builder='linux'),
+        canary=common_pb2.NO,
+        experimental=common_pb2.YES,
+        properties=test_util.create_struct({
+            'property_key': 'property_value_from_req',
+        }),
+        gitiles_commit=common_pb2.GitilesCommit(
+            host='host', project='proj', ref="refs/from_req"
+        ),
+        gerrit_changes=[
+            common_pb2.GerritChange(
+                project='proj', host='host', change=2, patchset=2
+            ),
+        ],
+        tags=[
+            common_pb2.StringPair(key='tag_key', value='tag_value_from_req'),
+        ],
+        critical=common_pb2.NO,
+        exe=common_pb2.Executable(cipd_package=''),
+        swarming=rpc_pb2.ScheduleBuildRequest.Swarming(
+            parent_run_id='id_from_req'
+        ),
+        notify=notification_pb2.NotificationConfig(pubsub_topic='topic'),
+        fields=field_mask_pb2.FieldMask(),
+    )
+    res = self.call(self.api.ScheduleBuild, req)
+    self.assertEqual(res.id, 54)
+
+    add_async.assert_called_once_with(mock.ANY)
+    actual_req = add_async.mock_calls[0][1][0].schedule_build_request
+    self.assertEqual(actual_req, req)
+
+  @mock.patch('creation.add_async', autospec=True)
+  @mock.patch('service.get_async', autospec=True)
+  def test_schedule_with_only_template_build_id(self, get_async, add_async):
+    build_tags = [
+        common_pb2.StringPair(key='tag_key', value='tag_value'),
+        common_pb2.StringPair(key='another_tag_key', value='another_tag_value'),
+    ]
+    template_build = test_util.build(
+        id=44,
+        builder=dict(project='chromium', bucket='try', builder='linux'),
+        canary=common_pb2.YES,
+        input=build_pb2.Build.Input(
+            experimental=common_pb2.NO,
+            properties=test_util.create_struct({
+                'property_key': 'property_value',
+                'another_property_key': 'another_property_value',
+            }),
+            gitiles_commit=common_pb2.GitilesCommit(
+                host='host', project='proj', ref="refs/ref"
+            ),
+            gerrit_changes=[
+                common_pb2.GerritChange(
+                    project='proj', host='host', change=1, patchset=1
+                ),
+                common_pb2.GerritChange(
+                    project='proj', host='host', change=1, patchset=1
+                ),
+            ],
+        ),
+        tags=build_tags,
+        critical=common_pb2.YES,
+        exe=common_pb2.Executable(cipd_package='package'),
+        infra=build_pb2.BuildInfra(
+            swarming=build_pb2.BuildInfra.Swarming(parent_run_id='id')
+        ),
+    )
+    get_async.return_value = future(template_build)
+    add_async.return_value = future(
+        test_util.build(
+            id=54,
+            builder=dict(project='chromium', bucket='try', builder='linux'),
+            canary=common_pb2.NO,
+            input=build_pb2.Build.Input(
+                experimental=common_pb2.YES,
+                properties=test_util.create_struct({
+                    'property_key': 'property_value',
+                }),
+                gitiles_commit=common_pb2.GitilesCommit(
+                    host='host', project='proj', ref="refs/ref"
+                ),
+                gerrit_changes=[
+                    common_pb2.GerritChange(
+                        project='proj', host='host', change=2, patchset=2
+                    ),
+                ],
+            ),
+            tags=build_tags,
+            critical=common_pb2.NO,
+            exe=common_pb2.Executable(cipd_package=''),
+            infra=build_pb2.BuildInfra(
+                swarming=build_pb2.BuildInfra.Swarming(parent_run_id='id')
+            ),
+        ),
+    )
+    req = rpc_pb2.ScheduleBuildRequest(template_build_id=44)
+    res = self.call(self.api.ScheduleBuild, req)
+    self.assertEqual(res.id, 54)
+
+    add_async.assert_called_once_with(mock.ANY)
+    actual_req = add_async.mock_calls[0][1][0].schedule_build_request
+    self.assertEqual(actual_req.builder, template_build.proto.builder)
+    self.assertEqual(actual_req.canary, template_build.proto.canary)
+    self.assertEqual(
+        actual_req.experimental, template_build.proto.input.experimental
+    )
+    self.assertEqual(
+        actual_req.properties, template_build.proto.input.properties
+    )
+    self.assertEqual(
+        actual_req.gitiles_commit, template_build.proto.input.gitiles_commit
+    )
+    self.assertEqual(
+        actual_req.gerrit_changes, template_build.proto.input.gerrit_changes
+    )
+    self.assertTrue(all(tag in actual_req.tags for tag in build_tags))
+    self.assertEqual(actual_req.critical, template_build.proto.critical)
+    self.assertEqual(actual_req.exe, template_build.proto.exe)
+    self.assertEqual(actual_req.swarming.parent_run_id, '')
+
+  @mock.patch('service.get_async', autospec=True)
+  def test_schedule_with_unauthorized_template_build_id(self, get_async):
+    user.can_async.return_value = future(False)
+    get_async.return_value = future(
+        test_util.build(
+            id=44,
+            builder=dict(project='chromium', bucket='try', builder='linux'),
+        ),
+    )
+    req = rpc_pb2.ScheduleBuildRequest(template_build_id=44)
+    self.call(
+        self.api.ScheduleBuild,
+        req,
+        expected_code=prpc.StatusCode.PERMISSION_DENIED,
+    )
+
   def test_forbidden(self):
     user.can_async.return_value = future(False)
     req = rpc_pb2.ScheduleBuildRequest(
@@ -594,10 +808,19 @@ class BatchTests(BaseTestCase):
     )
 
   @mock.patch('creation.add_many_async', autospec=True)
-  def test_schedule_build_requests(self, add_many_async):
+  @mock.patch('service.get_async', autospec=True)
+  def test_schedule_build_requests(self, get_async, add_many_async):
+    linux_builder = dict(project='chromium', bucket='try', builder='linux')
+    win_builder = dict(project='chromium', bucket='try', builder='windows')
+
+    get_async.return_value = future(
+        test_util.build(id=23, builder=linux_builder),
+    )
+
     add_many_async.return_value = future([
         (test_util.build(id=42), None),
         (test_util.build(id=43), None),
+        (test_util.build(id=44), None),
         (None, errors.InvalidInputError('bad')),
         (None, Exception('unexpected')),
         (None, auth.AuthorizationError('bad')),
@@ -607,8 +830,6 @@ class BatchTests(BaseTestCase):
         lambda bucket_id, _: future('forbidden' not in bucket_id)
     )
 
-    linux_builder = dict(project='chromium', bucket='try', builder='linux')
-    win_builder = dict(project='chromium', bucket='try', builder='windows')
     req = rpc_pb2.BatchRequest(
         requests=[
             dict(schedule_build=dict(builder=linux_builder)),
@@ -617,6 +838,7 @@ class BatchTests(BaseTestCase):
                     builder=linux_builder, fields=dict(paths=['tags'])
                 )
             ),
+            dict(schedule_build=dict(template_build_id=23)),
             dict(
                 schedule_build=dict(
                     builder=linux_builder, fields=dict(paths=['wrong-field'])
@@ -645,6 +867,7 @@ class BatchTests(BaseTestCase):
         codes, [
             prpc.StatusCode.OK.value,
             prpc.StatusCode.OK.value,
+            prpc.StatusCode.OK.value,
             prpc.StatusCode.INVALID_ARGUMENT.value,
             prpc.StatusCode.INVALID_ARGUMENT.value,
             prpc.StatusCode.INTERNAL.value,
@@ -656,6 +879,7 @@ class BatchTests(BaseTestCase):
     self.assertEqual(res.responses[0].schedule_build.id, 42)
     self.assertFalse(len(res.responses[0].schedule_build.tags))
     self.assertTrue(len(res.responses[1].schedule_build.tags))
+    self.assertEqual(res.responses[2].schedule_build.id, 44)
 
 
 class BuildPredicateToSearchQueryTests(BaseTestCase):

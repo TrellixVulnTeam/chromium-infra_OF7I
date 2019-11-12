@@ -7,6 +7,7 @@ import json
 
 from google.protobuf import json_format
 from google.protobuf import text_format
+from google.protobuf import struct_pb2
 
 from google.appengine.ext import ndb
 from google.protobuf import timestamp_pb2
@@ -187,3 +188,9 @@ def dt2ts(dt):  # pragma: no cover
   ts = timestamp_pb2.Timestamp()
   ts.FromDatetime(dt)
   return ts
+
+
+def create_struct(props):  # pragma: no cover
+  s = struct_pb2.Struct()
+  s.update(props)
+  return s
