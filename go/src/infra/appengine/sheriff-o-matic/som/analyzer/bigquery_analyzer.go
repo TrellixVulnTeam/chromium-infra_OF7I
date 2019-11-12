@@ -112,7 +112,7 @@ LIMIT
 // But firstly make sure it is working with chrome os first
 const crosFailuresQuery = selectFromWhere + `
 	project = "chromeos"
-	AND bucket IN ("postsubmit", "annealing")
+	AND bucket IN ("postsubmit")
 	AND (critical != "NO" OR critical is NULL)
 `
 

@@ -286,7 +286,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 			FROM
 				` + "`sheriff-o-matic.chromeos.sheriffable_failures`" + `
 			WHERE project = "chromeos"
-				AND bucket IN ("postsubmit", "annealing")
+				AND bucket IN ("postsubmit")
 				AND (critical != "NO" OR critical is NULL)
 		`
 		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
