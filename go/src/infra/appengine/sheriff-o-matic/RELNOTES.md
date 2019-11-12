@@ -1,3 +1,22 @@
+# Release Notes sheriff-o-matic 2019-11-12
+
+- 3 commits, 1 bugs affected since 1289c34 ()
+- 2 Authors:
+  - yuanzhi@google.com
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[som][fuchsia] Update fuchsia bigquery sql string.](https://chromium-review.googlesource.com/c/infra/infra/+/1893447) (yuanzhi@google.com)
+- [Fix empty string project ID when filing bugs](https://chromium-review.googlesource.com/c/infra/infra/+/1894771) (nqmtuan@google.com)
+- [[som][fuchsia] Support custom filter for bigquery_analyzer.](https://chromium-review.googlesource.com/c/infra/infra/+/1881623) (yuanzhi@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1018635](https://crbug.com/1018635)
+
+
 # Release Notes sheriff-o-matic 2019-10-31
 
 - 4 commits, 1 bugs affected since 89d4635 ()
