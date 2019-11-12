@@ -34,8 +34,8 @@ class BQRead(beam.io.iobase.Read):
 class BQWrite(beam.io.Write):
   """Write transform created from a BigQuerySink with convenient defaults.
 
-     beam.io.BigQuerySink will automatically add unique insert ids to rows,
-     which BigQuery uses to prevent duplicate inserts.
+  beam.io.BigQuerySink will automatically add unique insert IDs to rows,
+  which BigQuery uses to prevent duplicate inserts.
   """
   def __init__(self, project, table, dataset='aggregated',
                write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE):

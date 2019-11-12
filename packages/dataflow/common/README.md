@@ -1,6 +1,6 @@
 The `common` module provides reusable classes for writing Dataflow workflows.
 
-## chops_beam
+## chops\_beam
 
 For easily constructing readable pipelines with standard defaults.
 
@@ -24,7 +24,7 @@ for row in input_rows:
   event = objects.CQEvent.from_bigquery_row(row)
 ```
 
-## combine_fns
+## combine\_fns
 
 Generally useful [Combine
 Functions](https://beam.apache.org/documentation/programming-guide/#transforms-combine).
