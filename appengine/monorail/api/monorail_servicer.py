@@ -177,14 +177,14 @@ class MonorailServicer(object):
     # Oauth for whitelisted users
     if not requester_auth:
       try:
+        client_id = oauth.get_client_id(framework_constants.OAUTH_SCOPE)
         user = oauth.get_current_user(framework_constants.OAUTH_SCOPE)
         if user:
           auth_client_ids, auth_emails = (
               client_config_svc.GetClientConfigSvc().GetClientIDEmails())
           logging.info('Oauth requester %s', user.email())
           # Check if email or client_id is whitelisted
-          if (user.email() in auth_emails) or (
-              user.client_id() in auth_client_ids):
+          if (user.email() in auth_emails) or (client_id in auth_client_ids):
             logging.info('Client %r is whitelisted', user.email())
             requester_auth = authdata.AuthData.FromEmail(
                 cnxn, user.email(), services)
