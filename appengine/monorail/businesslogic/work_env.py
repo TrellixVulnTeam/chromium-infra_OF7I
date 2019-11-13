@@ -61,6 +61,7 @@ from features import features_bizobj
 from features import hotlist_helpers
 from framework import exceptions
 from framework import framework_bizobj
+from framework import framework_constants
 from framework import framework_helpers
 from framework import framework_views
 from framework import permissions
@@ -1781,10 +1782,17 @@ class WorkEnv(object):
         raise permissions.PermissionException(
             'User is not allowed to delete users.')
 
+    limit = 10000
     user_ids_by_email = self.services.user.LookupExistingUserIDs(
         self.mc.cnxn, emails)
     user_ids = list(user_ids_by_email.values())
-    limit = 10000
+    if framework_constants.DELETED_USER_ID in user_ids:
+      raise exceptions.InputException(
+          'Reserved deleted_user_id found in deletion request and'
+          'should not be deleted')
+    if not user_ids:
+      logging.info('Emails %r not found in DB. No users deleted', emails)
+      return
 
     # The operations made in the methods below can be limited.
     # We can adjust 'limit' as necessary to avoid timing out.
