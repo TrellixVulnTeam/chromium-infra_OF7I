@@ -80,6 +80,7 @@ capabilities {
   graphics: "graphicsval"
   gpu_family: "gpufamilyval"
   flashrom: true
+  fingerprint: true
   detachablebase: true
   carrier: 2
   bluetooth: true
@@ -111,6 +112,7 @@ var fullDimensions = Dimensions{
 	"label-cts_cpu":          {"CTS_CPU_ARM", "CTS_CPU_X86"},
 	"label-detachablebase":   {"True"},
 	"label-ec_type":          {"EC_TYPE_CHROME_OS"},
+	"label-fingerprint":      {"True"},
 	"label-flashrom":         {"True"},
 	"label-gpu_family":       {"gpufamilyval"},
 	"label-graphics":         {"graphicsval"},

@@ -282,7 +282,7 @@ message SchedulableLabels {
 
 // Keep sorted by field name.
 //
-// NEXT TAG: 19
+// NEXT TAG: 20
 message HardwareCapabilities {
   optional bool atrus = 17;
   optional bool bluetooth = 7;
@@ -298,6 +298,8 @@ message HardwareCapabilities {
   optional Carrier carrier = 16;
 
   optional bool detachablebase = 12;
+  // Indicating if the device has fingerprint sensor.
+  optional bool fingerprint = 19;
   optional bool flashrom = 14;
   optional string gpu_family = 3;
   optional string graphics = 4;

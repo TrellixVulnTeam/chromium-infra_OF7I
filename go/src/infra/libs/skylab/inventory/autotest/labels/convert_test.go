@@ -71,6 +71,7 @@ capabilities {
   video_acceleration: 8
   touchpad: true
   touchscreen: true
+  fingerprint: true
   telephony: "telephonyval"
   storage: "storageval"
   power: "powerval"
@@ -119,6 +120,7 @@ var fullLabels = []string{
 	"detachablebase",
 	"device-sku:skuval",
 	"ec:cros",
+	"fingerprint",
 	"flashrom",
 	"gpu_family:gpufamilyval",
 	"graphics:graphicsval",

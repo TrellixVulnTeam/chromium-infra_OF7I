@@ -15,6 +15,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 			Bluetooth:       new(bool),
 			Detachablebase:  new(bool),
 			Carrier:         new(HardwareCapabilities_Carrier),
+			Fingerprint:     new(bool),
 			Flashrom:        new(bool),
 			GpuFamily:       new(string),
 			Graphics:        new(string),

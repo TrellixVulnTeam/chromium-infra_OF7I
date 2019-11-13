@@ -32,6 +32,9 @@ func boolCapabilitiesConverter(ls *inventory.SchedulableLabels) []string {
 	if c.GetDetachablebase() {
 		labels = append(labels, "detachablebase")
 	}
+	if c.GetFingerprint() {
+		labels = append(labels, "fingerprint")
+	}
 	if c.GetFlashrom() {
 		labels = append(labels, "flashrom")
 	}
@@ -113,6 +116,8 @@ func boolCapabilitiesReverter(ls *inventory.SchedulableLabels, labels []string) 
 			*c.Bluetooth = true
 		case "detachablebase":
 			*c.Detachablebase = true
+		case "fingerprint":
+			*c.Fingerprint = true
 		case "flashrom":
 			*c.Flashrom = true
 		case "hotwording":

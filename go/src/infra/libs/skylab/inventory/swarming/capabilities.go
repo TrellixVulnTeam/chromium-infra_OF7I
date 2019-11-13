@@ -29,6 +29,9 @@ func boolCapabilitiesConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 	if c.GetDetachablebase() {
 		dims["label-detachablebase"] = []string{"True"}
 	}
+	if c.GetFingerprint() {
+		dims["label-fingerprint"] = []string{"True"}
+	}
 	if c.GetFlashrom() {
 		dims["label-flashrom"] = []string{"True"}
 	}
@@ -57,6 +60,7 @@ func boolCapabilitiesReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 	d = assignLastBoolValueAndDropKey(d, c.Atrus, "label-atrus")
 	d = assignLastBoolValueAndDropKey(d, c.Bluetooth, "label-bluetooth")
 	d = assignLastBoolValueAndDropKey(d, c.Detachablebase, "label-detachablebase")
+	d = assignLastBoolValueAndDropKey(d, c.Fingerprint, "label-fingerprint")
 	d = assignLastBoolValueAndDropKey(d, c.Flashrom, "label-flashrom")
 	d = assignLastBoolValueAndDropKey(d, c.Hotwording, "label-hotwording")
 	d = assignLastBoolValueAndDropKey(d, c.InternalDisplay, "label-internal_display")
