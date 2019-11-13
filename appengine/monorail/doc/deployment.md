@@ -168,8 +168,13 @@ If any step below fails. Stop the deploy and ping
         1.  [Error Reporting](http://console.cloud.google.com/errors?time=P1D&order=COUNT_DESC&resolution=OPEN&resolution=ACKNOWLEDGED&project=monorail-prod)
     1.  If there are any significant operational problems with Monorail or ChOps
         in general, halt deploy.
+1.  Understand what changes you are about to deploy
+    1.  Go to last deployment's build log via [Spinnaker](http://go/spinnaker-deploy-monorail). ![navgiation to build log](md_images/nav-to-build-log.png)
+    1.  Find the git sha of last deployment's build ![build log's git sha](md_images/build-log.png) In this example it's `bbaab65c91`
+    1. Make sure you're on latest master and in `infra/appengine/monorail/` and run `git log --oneline <git_sha>..HEAD`. In the example above, that command would be `git log --oneline bbaab65c91..HEAD`
+    1. Make sure list of commits matches the manually recorded list in the weekly meeting notes.
 1.  Update Dev and Staging Schema
-    1.  Check for changes since last deploy: tail -30
+    1.  Check for changes since last deploy: `tail -30
         schema/alter-table-log.txt`
     1.  Also copy and paste updates to the
         [master DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-dev)
@@ -235,7 +240,7 @@ If any step below fails. Stop the deploy and ping
         of the Cloud Build used for this deployment.
     1.  Include the version numbers of the new staging and prod deployments.
         (They may be different).
-    1.  Copy changes since last deploy: `git log --oneline .` (use `--before`
+    1.  Include list of changes that went out (obtained from section 2 above), or via `git log --oneline .` (use `--before`
         and `--after` as needed).
     1.  If there were schema changes, copy and paste the commands at the bottom
         of the email
