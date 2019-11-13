@@ -41,7 +41,7 @@ func TestUpdateAndGet(t *testing.T) {
 				So(item, ShouldEqual, "")
 			})
 			Convey("Cros write should succeed", func() {
-				err := PutCrosStableVersion(ctx, buildTarget, crosVersion)
+				err := PutSingleCrosStableVersion(ctx, buildTarget, crosVersion)
 				So(err, ShouldBeNil)
 			})
 			Convey("Cros present after write", func() {
@@ -57,7 +57,7 @@ func TestUpdateAndGet(t *testing.T) {
 				So(item, ShouldEqual, "")
 			})
 			Convey("Faft write should succeed", func() {
-				err := PutFaftStableVersion(ctx, buildTarget, model, faftVersion)
+				err := PutSingleFaftStableVersion(ctx, buildTarget, model, faftVersion)
 				So(err, ShouldBeNil)
 			})
 			Convey("Faft present after write", func() {
@@ -73,7 +73,7 @@ func TestUpdateAndGet(t *testing.T) {
 				So(item, ShouldEqual, "")
 			})
 			Convey("Firmware write should succeed", func() {
-				err := PutFirmwareStableVersion(ctx, buildTarget, model, firmwareVersion)
+				err := PutSingleFirmwareStableVersion(ctx, buildTarget, model, firmwareVersion)
 				So(err, ShouldBeNil)
 			})
 			Convey("Firmware present after write", func() {
@@ -81,6 +81,48 @@ func TestUpdateAndGet(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(item, ShouldEqual, firmwareVersion)
 			})
+		})
+	})
+}
+
+func TestJoinBuildTargetModel(t *testing.T) {
+	Convey("test joining buildTarget and model", t, func() {
+		Convey("non-empty strings good", func() {
+			s, err := JoinBuildTargetModel("a", "m")
+			So(s, ShouldEqual, "a;m")
+			So(err, ShouldBeNil)
+		})
+		Convey("empty string bad", func() {
+			s, err := JoinBuildTargetModel("", "m")
+			So(s, ShouldEqual, "")
+			So(err, ShouldNotBeNil)
+		})
+	})
+}
+
+func TestRemoveEmptyKeyOrValue(t *testing.T) {
+	Convey("remove non-conforming keys and values", t, func() {
+		ctx := context.Background()
+		ctx = memory.Use(ctx)
+		Convey("remove empty key good", func() {
+			m := map[string]string{"": "a"}
+			removeEmptyKeyOrValue(ctx, m)
+			So(len(m), ShouldEqual, 0)
+		})
+		Convey("remove empty value good", func() {
+			m := map[string]string{"a": ""}
+			removeEmptyKeyOrValue(ctx, m)
+			So(len(m), ShouldEqual, 0)
+		})
+		Convey("remove empty key and value good", func() {
+			m := map[string]string{"": ""}
+			removeEmptyKeyOrValue(ctx, m)
+			So(len(m), ShouldEqual, 0)
+		})
+		Convey("remove conforming key and value bad", func() {
+			m := map[string]string{"k": "v"}
+			removeEmptyKeyOrValue(ctx, m)
+			So(len(m), ShouldEqual, 1)
 		})
 	})
 }

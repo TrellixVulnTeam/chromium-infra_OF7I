@@ -22,6 +22,7 @@ import (
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 )
 
 const (
@@ -50,6 +51,31 @@ type firmwareStableVersionEntity struct {
 
 const separator = ";"
 
+// JoinBuildTargetModel -- join a buildTarget string and a model string to produce a combined key
+func JoinBuildTargetModel(buildTarget string, model string) (string, error) {
+	if err := ValidateJoinBuildTargetModel(buildTarget, model); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s%s%s", buildTarget, separator, model), nil
+}
+
+// ValidateJoinBuildTargetModel -- checks that a buildTarget and model are valid
+func ValidateJoinBuildTargetModel(buildTarget string, model string) error {
+	if buildTarget == "" {
+		return fmt.Errorf("ValidateJoinBuildTargetModel: buildTarget cannot be \"\"")
+	}
+	if model == "" {
+		return fmt.Errorf("ValidateJoinBuildTargetModel: model cannot be \"\"")
+	}
+	if strings.Contains(buildTarget, separator) {
+		return fmt.Errorf("ValidateJoinBuildTargetModel: buildTarget cannot contain separator")
+	}
+	if strings.Contains(model, separator) {
+		return fmt.Errorf("ValidateJoinBuildTargetModel: model cannot contain separator")
+	}
+	return nil
+}
+
 // GetCrosStableVersion gets a stable version for ChromeOS from datastore
 func GetCrosStableVersion(ctx context.Context, buildTarget string) (string, error) {
 	if buildTarget == "" {
@@ -62,24 +88,27 @@ func GetCrosStableVersion(ctx context.Context, buildTarget string) (string, erro
 	return entity.Cros, nil
 }
 
-// PutCrosStableVersion writes a stable version for ChromeOS to datastore
-func PutCrosStableVersion(ctx context.Context, buildTarget string, cros string) error {
-	if buildTarget == "" {
-		return fmt.Errorf("PutCrosStableVersion: buildTarget cannot be nil")
+// PutSingleCrosStableVersion is a convenience wrapper around PutManyCrosStableVersion
+func PutSingleCrosStableVersion(ctx context.Context, buildTarget string, cros string) error {
+	return PutManyCrosStableVersion(ctx, map[string]string{buildTarget: cros})
+}
+
+// PutManyCrosStableVersion writes many stable versions for ChromeOS to datastore
+func PutManyCrosStableVersion(ctx context.Context, crosOfBuildTarget map[string]string) error {
+	removeEmptyKeyOrValue(ctx, crosOfBuildTarget)
+	var entities []*crosStableVersionEntity
+	for buildTarget, cros := range crosOfBuildTarget {
+		entities = append(entities, &crosStableVersionEntity{ID: buildTarget, Cros: cros})
 	}
-	if cros == "" {
-		return fmt.Errorf("PutCrosStableVersion: cros cannot be nil")
-	}
-	entity := &crosStableVersionEntity{ID: buildTarget, Cros: cros}
-	if err := datastore.Put(ctx, entity); err != nil {
-		return errors.Annotate(err, "PutCrosStableVersion").Err()
+	if err := datastore.Put(ctx, entities); err != nil {
+		return errors.Annotate(err, "PutManyCrosStableVersion").Err()
 	}
 	return nil
 }
 
 // GetFirmwareStableVersion takes a buildtarget and a model and produces a firmware stable version from datastore
 func GetFirmwareStableVersion(ctx context.Context, buildTarget string, model string) (string, error) {
-	key, err := combineBuildTargetModel(buildTarget, model)
+	key, err := JoinBuildTargetModel(buildTarget, model)
 	if err != nil {
 		return "", errors.Annotate(err, "GetFirmwareStableVersion").Err()
 	}
@@ -90,25 +119,31 @@ func GetFirmwareStableVersion(ctx context.Context, buildTarget string, model str
 	return entity.Firmware, nil
 }
 
-// PutFirmwareStableVersion takes a buildtarget, a model, and a firmware stableversion and persists it to datastore
-func PutFirmwareStableVersion(ctx context.Context, buildTarget string, model string, firmware string) error {
-	key, err := combineBuildTargetModel(buildTarget, model)
+// PutSingleFirmwareStableVersion is a convenience wrapper around PutManyFirmwareStableVersion
+func PutSingleFirmwareStableVersion(ctx context.Context, buildTarget string, model string, firmware string) error {
+	key, err := JoinBuildTargetModel(buildTarget, model)
 	if err != nil {
 		return err
 	}
-	if firmware == "" {
-		return fmt.Errorf("PutFirmwareStableVersion: firmware cannot be nil")
+	return PutManyFirmwareStableVersion(ctx, map[string]string{key: firmware})
+}
+
+// PutManyFirmwareStableVersion takes a map from build_target+model keys to firmware versions and persists it to datastore
+func PutManyFirmwareStableVersion(ctx context.Context, firmwareOfJoinedKey map[string]string) error {
+	removeEmptyKeyOrValue(ctx, firmwareOfJoinedKey)
+	var entities []*firmwareStableVersionEntity
+	for key, firmware := range firmwareOfJoinedKey {
+		entities = append(entities, &firmwareStableVersionEntity{ID: key, Firmware: firmware})
 	}
-	entity := &firmwareStableVersionEntity{ID: key, Firmware: firmware}
-	if err := datastore.Put(ctx, entity); err != nil {
-		return errors.Annotate(err, "PutFirmwareStableVersion").Err()
+	if err := datastore.Put(ctx, entities); err != nil {
+		return errors.Annotate(err, "PutManyFirmwareStableVersion").Err()
 	}
 	return nil
 }
 
 // GetFaftStableVersion takes a model and a buildtarget and produces a faft stable version from datastore
 func GetFaftStableVersion(ctx context.Context, buildTarget string, model string) (string, error) {
-	key, err := combineBuildTargetModel(buildTarget, model)
+	key, err := JoinBuildTargetModel(buildTarget, model)
 	if err != nil {
 		return "", errors.Annotate(err, "GetFaftStableVersion").Err()
 	}
@@ -119,34 +154,40 @@ func GetFaftStableVersion(ctx context.Context, buildTarget string, model string)
 	return entity.Faft, nil
 }
 
-// PutFaftStableVersion takes a model, buildtarget, and faft stableversion and persists it to datastore
-func PutFaftStableVersion(ctx context.Context, buildTarget string, model string, faft string) error {
-	key, err := combineBuildTargetModel(buildTarget, model)
+// PutSingleFaftStableVersion is a convenience wrapper around PutManyFaftStableVersion
+func PutSingleFaftStableVersion(ctx context.Context, buildTarget string, model string, faft string) error {
+	key, err := JoinBuildTargetModel(buildTarget, model)
 	if err != nil {
 		return err
 	}
-	if faft == "" {
-		return fmt.Errorf("PutFaftStableVersion: faft cannot be nil")
+	return PutManyFaftStableVersion(ctx, map[string]string{key: faft})
+}
+
+// PutManyFaftStableVersion takes a model, buildtarget, and faft stableversion and persists it to datastore
+func PutManyFaftStableVersion(ctx context.Context, faftOfJoinedKey map[string]string) error {
+	removeEmptyKeyOrValue(ctx, faftOfJoinedKey)
+	var entities []*faftStableVersionEntity
+	for key, faft := range faftOfJoinedKey {
+		entities = append(entities, &faftStableVersionEntity{ID: key, Faft: faft})
 	}
-	entity := &faftStableVersionEntity{ID: key, Faft: faft}
-	if err := datastore.Put(ctx, entity); err != nil {
-		return errors.Annotate(err, "PutFaftStableVersion").Err()
+	if err := datastore.Put(ctx, entities); err != nil {
+		return errors.Annotate(err, "PutManyFaftStableVersion").Err()
 	}
 	return nil
 }
 
-func combineBuildTargetModel(buildTarget string, model string) (string, error) {
-	if model == "" {
-		return "", fmt.Errorf("combineBuildTargetModel: model cannot be empty")
+// removeEmptyKeyOrValue destructively drops empty keys or values from versionMap
+func removeEmptyKeyOrValue(ctx context.Context, versionMap map[string]string) {
+	removedTally := 0
+	for k, v := range versionMap {
+		if k == "" || v == "" {
+			logging.Infof(ctx, "removed non-conforming key-value pair (%s) -> (%s)", k, v)
+			delete(versionMap, k)
+			removedTally++
+			continue
+		}
 	}
-	if buildTarget == "" {
-		return "", fmt.Errorf("combineBuildTargetModel: buildTarget cannot be empty")
+	if removedTally > 0 {
+		logging.Infof(ctx, "removed (%d) pairs for containing \"\" as key or value", removedTally)
 	}
-	if strings.Contains(model, separator) {
-		return "", fmt.Errorf("combineBuildTargetModel: model cannot contain `%s`", separator)
-	}
-	if strings.Contains(buildTarget, separator) {
-		return "", fmt.Errorf("combineBuildTargetModel: buildTarget cannot contain `%s`", separator)
-	}
-	return fmt.Sprintf("%s%s%s", buildTarget, separator, model), nil
 }

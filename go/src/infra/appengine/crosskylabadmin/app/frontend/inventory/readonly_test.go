@@ -258,11 +258,11 @@ func TestGetStableVersion(t *testing.T) {
 		datastore.GetTestable(ctx)
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
-		err := dssv.PutCrosStableVersion(ctx, "xxx-build-target", "xxx-cros-version")
+		err := dssv.PutSingleCrosStableVersion(ctx, "xxx-build-target", "xxx-cros-version")
 		So(err, ShouldBeNil)
-		err = dssv.PutFaftStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-faft-version")
+		err = dssv.PutSingleFaftStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-faft-version")
 		So(err, ShouldBeNil)
-		err = dssv.PutFirmwareStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-firmware-version")
+		err = dssv.PutSingleFirmwareStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-firmware-version")
 		So(err, ShouldBeNil)
 		resp, err := tf.Inventory.GetStableVersion(
 			ctx,
