@@ -83,7 +83,7 @@ def ci_builder(
       executable = infra.recipe(recipe),
       os = os,
       cpu = 'x86-64',
-      pool = 'Chrome',  # no point in creating a dedicated pool on -dev
+      pool = 'chromium.tests',  # no point in creating a dedicated pool on -dev
       service_account = 'adhoc-testing@luci-token-server-dev.iam.gserviceaccount.com',
       triggered_by = [infra.poller()],
   )
@@ -103,7 +103,7 @@ def adhoc_builder(
       schedule=None,
       triggered_by=None,
   ):
-  dims = {'os': os, 'cpu': 'x86-64', 'pool': 'Chrome'}
+  dims = {'os': os, 'cpu': 'x86-64', 'pool': 'chromium.tests'}
   if extra_dims:
     dims.update(**extra_dims)
   luci.builder(
