@@ -36,6 +36,9 @@ message Config {
 
   // RPCcontrol controls rpc traffic.
   RPCControl rpc_control = 7;
+
+  // StableVersionConfig determines the location of stable version related information
+  StableVersionConfig stable_version_config = 8;
 }
 
 // Swarming contains information about the Swarming instance that hosts the bots
@@ -213,4 +216,22 @@ message DeployDut {
   // This should be the same as, or higher priority (i.e., numerically lower)
   // than other admin tasks.
   int64 task_priority = 3;
+}
+
+message StableVersionConfig {
+  // The Gerrit Server for the stable version data file's repo
+  // example: "chrome-internal-review.googlesource.com"
+  string gerrit_host = 1;
+  // The Gitiles Server for the stable version data file's repo
+  // example: "chrome-internal.googlesource.com"
+  string gitiles_host = 2;
+  // The project name for the stable version data file's repo
+  // example: "chromeos/infra/config"
+  string project = 3;
+  // The branch that the stable version data file is on
+  // example: "master"
+  string branch = 4;
+  // The path, relative to the repo root, of the stable version data file
+  // example: "lab_platform/stable_version_data/stable_versions.cfg"
+  string stable_version_data_path = 5;
 }
