@@ -811,14 +811,19 @@ func (m *DeployDut) GetTaskPriority() int64 {
 
 type StableVersionConfig struct {
 	// The Gerrit Server for the stable version data file's repo
+	// example: "chrome-internal-review.googlesource.com"
 	GerritHost string `protobuf:"bytes,1,opt,name=gerrit_host,json=gerritHost,proto3" json:"gerrit_host,omitempty"`
 	// The Gitiles Server for the stable version data file's repo
+	// example: "chrome-internal.googlesource.com"
 	GitilesHost string `protobuf:"bytes,2,opt,name=gitiles_host,json=gitilesHost,proto3" json:"gitiles_host,omitempty"`
 	// The project name for the stable version data file's repo
+	// example: "chromeos/infra/config"
 	Project string `protobuf:"bytes,3,opt,name=project,proto3" json:"project,omitempty"`
 	// The branch that the stable version data file is on
+	// example: "master"
 	Branch string `protobuf:"bytes,4,opt,name=branch,proto3" json:"branch,omitempty"`
 	// The path, relative to the repo root, of the stable version data file
+	// example: "lab_platform/stable_version_data/stable_versions.cfg"
 	StableVersionDataPath string   `protobuf:"bytes,5,opt,name=stable_version_data_path,json=stableVersionDataPath,proto3" json:"stable_version_data_path,omitempty"`
 	XXX_NoUnkeyedLiteral  struct{} `json:"-"`
 	XXX_unrecognized      []byte   `json:"-"`
