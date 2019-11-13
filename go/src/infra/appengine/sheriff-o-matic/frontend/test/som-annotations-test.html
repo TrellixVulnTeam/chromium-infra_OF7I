@@ -469,6 +469,34 @@
       );
     });
 
+    test('save bug with bugs.chromium.org', function () {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.onCall(0).returns({
+        then: (f) => {
+          f({ key: 'foo' });
+        }
+      });
+
+      element.$.bug.value = 'bugs.chromium.org/p/monorail/issues/detail?id=1024028';
+      element.$.autosnooze.checked = false;
+      element._fileBugModel = [{ key: 'foo' }];
+
+      element._saveBug();
+
+      sinon.assert.calledOnce(sendStub);
+      sinon.assert.calledWith(
+        sendStub,
+        'foo',
+        'add',
+        {
+          bugs: [{
+            id: '1024028',
+            projectId: 'monorail',
+          }]
+        }
+      );
+    });
+
     test('save bug with shorthand', function () {
       let sendStub = sinon.stub(element, 'sendAnnotation');
       sendStub.onCall(0).returns({

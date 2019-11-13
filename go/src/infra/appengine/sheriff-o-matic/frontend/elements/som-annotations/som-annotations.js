@@ -373,9 +373,14 @@ class SomAnnotations extends Polymer.mixinBehaviors(
   // ex: crbug.com/p/monorail/123 will return monorail
   // ex: crbug.com/123 will return chromium
   // ex: crbug.com/monorail/123 will return monorail
+  // ex: bugs.chromium.org/p/monorail/issues/detail?id=1024028
+  // will return monorail
   _getProjectNameFromUrl(url) {
     const paths = url.pathname.split('/');
     if (paths.length > 2) {
+      if (url.hostname == 'bugs.chromium.org') {
+        return paths[2];
+      }
       return paths[paths.length - 2];
     }
     return "chromium";
