@@ -261,7 +261,7 @@ func TestBuild(t *testing.T) {
 				return digest                            // got its digest correctly
 			}
 
-			res, err := runBuild(ctx, buildParams{
+			params := buildParams{
 				Manifest: &manifest.Manifest{
 					Name:          testTargetName,
 					Deterministic: &_true,
@@ -274,7 +274,8 @@ func TestBuild(t *testing.T) {
 				Store:        store,
 				Builder:      builder,
 				Registry:     registry,
-			})
+			}
+			res, err := runBuild(ctx, params)
 			So(err, ShouldBeNil)
 
 			// Uploaded the file.
@@ -297,6 +298,20 @@ func TestBuild(t *testing.T) {
 			img, err := registry.GetImage(ctx, fmt.Sprintf("%s:%s", testImageName, expectedTag))
 			So(err, ShouldBeNil)
 			So(img.Digest, ShouldEqual, testDigest)
+
+			// Repeating the build reuses the existing image since inputs hash didn't
+			// change (and thus its canonical tag also didn't change and we already
+			// have an image with this canonical tag).
+			res, err = runBuild(ctx, params)
+			So(err, ShouldBeNil)
+			So(res, ShouldResemble, buildResult{
+				Image: &imageRef{
+					Image:        testImageName,
+					Digest:       testDigest,
+					CanonicalTag: expectedTag,
+				},
+				ViewBuildURL: "", // Cloud Build wasn't used
+			})
 		})
 
 		Convey("No registry is set => nothing is uploaded", func() {

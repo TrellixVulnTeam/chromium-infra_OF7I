@@ -92,9 +92,8 @@ The `build` command works in multiple steps:
   3. Calculates SHA256 of the tarball and uses it to construct a Google Storage
      path. If the tarball at that path already exists in Google Storage and
      the target is marked as deterministic in the manifest YAML, examines
-     tarball's metadata to find a reference to an image already built from it.
-     If there's such image, uses it (and its canonical tag, whatever it was
-     when the image was built) as the result.
+     tarball's metadata to find the canonical tag of some previous image built
+     from this tarball. If it exists, returns this canonical tag as the result.
   4. If the target is not marked as deterministic, or there's no existing images
      that can be reused, triggers "docker build" via Cloud Build and feeds it
      the uploaded tarball as the context. The result of this process is a new

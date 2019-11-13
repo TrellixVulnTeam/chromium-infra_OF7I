@@ -64,9 +64,8 @@ The "build" command works in multiple steps:
   3. Calculates SHA256 of the tarball and uses it to construct a Google Storage
      path. If the tarball at that path already exists in Google Storage and
      the target is marked as deterministic in the manifest YAML, examines
-     tarball's metadata to find a reference to an image already built from it.
-     If there's such image, uses it (and its canonical tag, whatever it was
-     when the image was built) as the result.
+     tarball's metadata to find the canonical tag of some previous image built
+     from this tarball. If it exists, returns this canonical tag as the result.
   4. If the target is not marked as deterministic, or there's no existing images
      that can be reused, triggers "docker build" via Cloud Build and feeds it
      the uploaded tarball as the context. The result of this process is a new
@@ -308,50 +307,64 @@ func (r *imageRef) ViewURL() string {
 // On errors may return partially populated buildResult.
 func runBuild(ctx context.Context, p buildParams) (res buildResult, err error) {
 	// Skip the build completely if there's already an image with the requested
-	// canonical tag.
+	// canonical tag. This check is delayed until later if ":inputs-hash" is used
+	// as a canonical tag, since we don't know it yet (need to build the tarball
+	// in p.Stage first).
 	if p.Image != "" && p.CanonicalTag != "" && p.CanonicalTag != inputsHashCanonicalTag {
-		fullName := fmt.Sprintf("%s:%s", p.Image, p.CanonicalTag)
-		switch img, err := getImage(ctx, p.Registry, fullName); {
-		case err != nil:
-			return res, err // already annotated
-		case img != nil:
-			if !p.Force {
-				logging.Infof(ctx, "The canonical tag already exists, skipping the build")
-				res.Image = &imageRef{
-					Image:        p.Image,
-					Digest:       img.Digest,
-					CanonicalTag: p.CanonicalTag,
-				}
-				// Advance -tag(s) only, do NOT touch -canonical-tag. It is touched only
-				// when we build a new image. Otherwise highly deterministic images will
-				// have a TON of tags (one per every commit, even totally unrelated), we
-				// don't want that.
-				if err := tagImage(ctx, p.Registry, res.Image, p.Tags); err != nil {
-					return res, errors.Annotate(err, "tagging the image with -tag(s)").Err()
-				}
-				return res, nil
-			}
-			logging.Warningf(ctx, "Using -force, will overwrite existing canonical tag %s => %s", p.CanonicalTag, img.Digest)
-		case img == nil:
-			logging.Infof(ctx, "No such image, will have to build it")
+		if res.Image, err = maybeReuseExistingImage(ctx, p); err != nil {
+			return
 		}
 	}
 
-	err = p.Stage(ctx, p.Manifest, func(out *fileset.Set) error {
-		var err error
-		res, err = remoteBuild(ctx, p, out)
-		return err
-	})
+	// Build the image if haven't found an existing one.
+	if res.Image == nil {
+		err = p.Stage(ctx, p.Manifest, func(out *fileset.Set) error {
+			var err error
+			res, err = remoteBuild(ctx, p, out)
+			return err
+		})
+		if err != nil {
+			return
+		}
+	}
 
-	// res.Image may be nil if we are building the image but not uploading it
-	// anywhere (if "registry" is not set in the manifest).
-	if err == nil && res.Image != nil {
+	// Attach all requested tags (even if we reused an existing image).
+	//
+	// Note that res.Image may be nil if we are building the image but not
+	// uploading it anywhere (if "registry" is not set in the manifest).
+	if res.Image != nil {
 		if err := tagImage(ctx, p.Registry, res.Image, p.Tags); err != nil {
 			return res, errors.Annotate(err, "tagging the image with -tag(s)").Err()
 		}
 	}
 
 	return
+}
+
+// maybeReuseExistingImage searches for an image with the canonical tag.
+//
+// Returns:
+//   (img, nil) if there's an image we can reuse.
+//   (nil, nil) if we need to build a new image.
+//   (nil, err) if failed to check.
+func maybeReuseExistingImage(ctx context.Context, p buildParams) (*imageRef, error) {
+	fullName := fmt.Sprintf("%s:%s", p.Image, p.CanonicalTag)
+	switch img, err := getImage(ctx, p.Registry, fullName); {
+	case err != nil:
+		return nil, err // already annotated
+	case img != nil && p.Force:
+		logging.Warningf(ctx, "Using -force, will overwrite existing canonical tag %s => %s", p.CanonicalTag, img.Digest)
+	case img != nil:
+		logging.Infof(ctx, "The canonical tag already exists, skipping the build")
+		return &imageRef{
+			Image:        p.Image,
+			Digest:       img.Digest,
+			CanonicalTag: p.CanonicalTag,
+		}, nil
+	default:
+		logging.Infof(ctx, "No such image, will have to build it")
+	}
+	return nil, nil
 }
 
 // remoteBuild executes high level remote build logic.
@@ -367,19 +380,6 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 		err = errors.Annotate(err, "failed to write the tarball with context dir").Err()
 		return
 	}
-	size, err := f.Seek(0, 1)
-	if err != nil {
-		err = errors.Annotate(err, "failed to query the size of the temp file").Err()
-		return
-	}
-	logging.Infof(ctx, "Tarball digest: %s", digest)
-	logging.Infof(ctx, "Tarball length: %s", humanize.Bytes(uint64(size)))
-
-	// Now that we know the inputs, we can resolve "-canonical-tag :inputs-hash".
-	if p.CanonicalTag == inputsHashCanonicalTag {
-		p.CanonicalTag = "cbh-inputs-" + digest[:24]
-		logging.Infof(ctx, "Canonical tag:  %s", p.CanonicalTag)
-	}
 
 	// Cleanup no matter what. Note that we don't care about IO flush errors in
 	// f.Close() as long as uploadToStorage sent everything successfully (as
@@ -388,6 +388,26 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 		f.Close()
 		os.Remove(f.Name())
 	}()
+
+	size, err := f.Seek(0, 1)
+	if err != nil {
+		err = errors.Annotate(err, "failed to query the size of the temp file").Err()
+		return
+	}
+
+	logging.Infof(ctx, "Tarball digest: %s", digest)
+	logging.Infof(ctx, "Tarball length: %s", humanize.Bytes(uint64(size)))
+
+	// Now that we know the inputs, we can resolve "-canonical-tag :inputs-hash"
+	// and do maybeReuseExistingImage check we skipped in `runBuild`.
+	if p.CanonicalTag == inputsHashCanonicalTag {
+		p.CanonicalTag = "cbh-inputs-" + digest[:24]
+		logging.Infof(ctx, "Canonical tag:  %s", p.CanonicalTag)
+		res.Image, err = maybeReuseExistingImage(ctx, p)
+		if err != nil || res.Image != nil {
+			return
+		}
+	}
 
 	// Upload the tarball (or grab metadata of existing object).
 	obj, err := uploadToStorage(ctx, p.Store,
