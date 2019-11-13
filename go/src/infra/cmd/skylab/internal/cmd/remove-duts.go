@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -24,6 +25,7 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	iv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmd/skylab/internal/userinput"
 	"infra/libs/skylab/inventory"
 )
 
@@ -88,6 +90,13 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		Host:    e.AdminService,
 		Options: site.DefaultPRPCOptions,
 	})
+
+	hostnames := c.Flags.Args()
+	prompt := userinput.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Ready to remove hosts: %v", hostnames)) {
+		return nil
+	}
+
 	modified, err := c.removeDUTs(ctx, ic, a.GetOut())
 	if err != nil {
 		return err
