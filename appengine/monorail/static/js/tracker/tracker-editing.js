@@ -1793,12 +1793,14 @@ function HTL_toggleIssuesShown(toggleIssuesButton) {
   let url = `${hotlist_name}?can=${can}`;
   const hidden_cols = $('colcontrol').classList.value;
   if (window.location.href.includes('&colspec') || hidden_cols) {
-    const col_spec = TKR_getColspecElement().value;
+    const colSpecElement =
+        TKR_getColspecElement(); // eslint-disable-line new-cap
     let sort = '';
     if ($('sort')) {
       sort = $('sort').value.split(' ').join('+');
+      url += `&sort=${sort}`;
     }
-    url += `&sort=${sort}&colspec=${TKR_getColspecElement().value}`;
+    url += colSpecElement ? `&colspec=${colSpecElement.value}` : '';
   }
   TKR_go(url);
 }
