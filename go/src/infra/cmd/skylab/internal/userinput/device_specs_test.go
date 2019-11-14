@@ -238,13 +238,37 @@ func TestDeviceUnderTestOfMcsvRecordEmptyServoSerial(t *testing.T) {
 	dut := deviceUnderTestOfMcsvRecord(input)
 	foundAttrs := getAttrMap(dut)
 	expected := map[string]string{
-		"servo_host":         "4",
-		"servo_port":         "",
-		"powerunit_hostname": "",
-		"powerunit_outlet":   "",
+		"servo_host": "4",
 	}
 	if diff := cmp.Diff(expected, foundAttrs); diff != "" {
 		t.Errorf("attribute map differs: %s", diff)
+	}
+}
+
+var testValidCSVTable = []struct {
+	out  bool
+	name string
+	in   string
+}{
+	{true, "missing nothing", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet"},
+	{false, "missing servo_port", "xxx-host,xxx-board,xxx-model,xxx-servo_host,,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet"},
+	{false, "missing servo_host", "xxx-host,xxx-board,xxx-model,,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet"},
+	{true, "missing servo_host and servo_port", "xxx-host,xxx-board,xxx-model,,,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet"},
+	{true, "missing servo_serial", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,,xxx-powerunit_hostname,xxx-powerunit_outlet"},
+	{false, "missing powerunit_hostname", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,xxx-powerunit_outlet"},
+	{false, "missing powerunit_outlet", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,"},
+	{true, "missing powerunit_hostname and powerunit_outlet", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,"},
+}
+
+func TestValidCSV(t *testing.T) {
+	for i, item := range testValidCSVTable {
+		t.Run(item.name, func(t *testing.T) {
+			_, err := parseMCSV(item.in)
+			res := (err == nil)
+			if res != item.out {
+				t.Errorf("misclassified csv row #%d expected: %t got: %t", i, item.out, res)
+			}
+		})
 	}
 }
 

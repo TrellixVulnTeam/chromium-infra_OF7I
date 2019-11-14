@@ -275,13 +275,14 @@ func deviceUnderTestOfMcsvRecord(rec *mcsvRecord) *inventory.DeviceUnderTest {
 	out.Common.Hostname = &rec.host
 	out.Common.Labels.Board = &rec.board
 	out.Common.Labels.Model = &rec.model
-	dutAddAttribute(out, `servo_host`, rec.servoHost)
-	dutAddAttribute(out, `servo_host`, rec.servoHost)
-	dutAddAttribute(out, `servo_port`, rec.servoPort)
+	// servo_host and servo_port is optional
+	dutAddAttributeIfNonzero(out, `servo_host`, rec.servoHost)
+	dutAddAttributeIfNonzero(out, `servo_port`, rec.servoPort)
 	// servo v3's don't have servo_serial attributes.
 	dutAddAttributeIfNonzero(out, `servo_serial`, rec.servoSerial)
-	dutAddAttribute(out, `powerunit_hostname`, rec.powerunitHostname)
-	dutAddAttribute(out, `powerunit_outlet`, rec.powerunitOutlet)
+	// powerunit information is optional.
+	dutAddAttributeIfNonzero(out, `powerunit_hostname`, rec.powerunitHostname)
+	dutAddAttributeIfNonzero(out, `powerunit_outlet`, rec.powerunitOutlet)
 	return out
 }
 
@@ -377,19 +378,20 @@ func validateMcsvRecord(rec *mcsvRecord) error {
 	if rec.model == "" {
 		return errors.New("model cannot be empty")
 	}
-	if rec.servoHost == "" {
-		return errors.New("servo_host cannot be empty")
-	}
-	if rec.servoPort == "" {
-		return errors.New("servo_port cannot be empty")
+	// servo information can be missing
+	hasServoHost := (rec.servoHost != "")
+	hasServoPort := (rec.servoPort != "")
+	if hasServoHost != hasServoPort {
+		return errors.New("servo_host and servo_port must both be empty or both be non-empty")
 	}
 	// rec.servoSerial CAN be empty if the servo is a
 	// servo-v3 servo
-	if rec.powerunitHostname == "" {
-		return errors.New("powerunit_hostname cannot be empty")
-	}
-	if rec.powerunitOutlet == "" {
-		return errors.New("powerunit_outlet cannot be empty")
+
+	// powerunit information can be missing
+	hasPowerunitHostname := (rec.powerunitHostname != "")
+	hasPowerunitOutlet := (rec.powerunitOutlet != "")
+	if hasPowerunitHostname != hasPowerunitOutlet {
+		return errors.New("powerunit_hostname and powerunit_outlet must both be empty or both be non-empty")
 	}
 	return nil
 }
