@@ -22,9 +22,9 @@ Then open http://localhost:8080 for the home page.
 # How to run unit tests for Findit?
 
 From command line, run:
-  `make test` to run all tests;
-  `make test TEST_GLOB=<path to a sub dir>` to run tests in a sub directory;
-  'make test TEST_GLOB=<path to a sub dir>:*<test name>*' to run a given test.
+ * `make test` to run all tests;
+ * `make test TEST_GLOB=<path to a sub dir>` to run tests in a sub directory;
+ * `make test TEST_GLOB=<path to a sub dir>:*<test name>*` to run a given test.
 
 
 If a code path branch is not tested and no line number is shown in the command
@@ -43,25 +43,25 @@ From command line, run:
 
 ## Staging
 Deploy to the staging instance (and make it default):
-  `make clean && make deploy-staging`
+  `make deploy-findit-staging`
 
 ## Production
 Deploy to analysis.chromium.org (production):
-  `make clean && make deploy-prod`
+  `make deploy-findit-prod`
 
-To make the new version the default:
-  `make migrate`
+Please use [pantheon] to make the new version the default.
 
 # Code Structure
-* [services/](services/) contains service-layer code for the core analysis logic
+* Findit v1
+  * [services/](services/) contains service-layer code for the core analysis logic
   for compile failures, reliable test failures, and flaky tests.
-* [pipelines/](pipelines/) contains code for the pipeline flows that connect the
+  * [pipelines/](pipelines/) contains code for the pipeline flows that connect the
   different analysis units from the service layer.
-We are refactoring [waterfall/](waterfall/) into services/ and pipelines/ to
-separate analysis logic from pipeline flow.
+* Findit v2
+  * [findit_v2/](findit_v2/) contains code of Findit v2. To add support to a Luci
+  project, please make changes in this directory.
 
 # BQ Event Tables
-Contact wylieb@ with any questions about this.
 
 To get bqchemaupdater installed run
 ```shell
@@ -84,3 +84,5 @@ From findit/ this command may be out of date. Refer to bqschemaupdater --help.
 WARNING: Consult with chrome-findit@ before running any commands that may
 affect production data. Once you're confident that the command does what you
 want, remove the -dry-run argument.
+
+[pantheon]: https://pantheon.corp.google.com/appengine/versions?project=findit-for-me&src=ac&versionId=alpha&moduleId=default&pli=1&serviceId=default&versionssize=50
