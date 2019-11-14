@@ -49,7 +49,7 @@ Deploy to the staging instance (and make it default):
 Deploy to analysis.chromium.org (production):
   `make deploy-findit-prod`
 
-Please use [pantheon] to make the new version the default.
+Please use [pantheon] to make the new version default.
 
 # Code Structure
 * Findit v1

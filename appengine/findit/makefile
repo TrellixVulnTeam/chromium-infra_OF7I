@@ -10,8 +10,9 @@ STAGING_APPID := "findit-for-me-staging"
 # ...$ gclient sync
 PROTOC := "../../cipd/protoc"
 PROTO_PATH ?= "model/proto/"
-FINDIT_MODULES := default frontend waterfall-backend flake-detection-backend disabled-test-detection-backend auto-action-backend findit-backend
+FINDIT_MODULES := default frontend waterfall-backend auto-action-backend findit-backend
 CODE_COVERAGE_MODULES := code-coverage-frontend code-coverage-backend
+FLAKE_PORTAL_MODULES := flake-detection-backend disabled-test-detection-backend
 LOCAL_VERSION := `$(INFRAPYTHON) $(GAE_PY) version`
 LOCAL_HASH := `git rev-parse --short HEAD`
 # If there are multiple active versions just use the latest one.
@@ -40,12 +41,22 @@ help:
 	      "please migrate traffic for modules: $(CODE_COVERAGE_MODULES)"
 	@echo "https://pantheon.corp.google.com/appengine/versions?project=findit-for-me"
 	@echo
+	@echo "Flake Portal:"
+	@echo "To deploy a new version of Flake Portal, check out the appropriate" \
+	      "revision and run \`gclient sync\` then run" \
+	      "\`make deploy-flake-prod\` for production or \`make deploy-flake-staging\`"\
+	      "for staging."
+	@echo "To set the newly version as default or revert to a previous one, " \
+	      "please migrate traffic for modules: $(FLAKE_PORTAL_MODULES)"
+	@echo "https://pantheon.corp.google.com/appengine/versions?project=findit-for-me"
+	@echo
 	@echo "Run tests"
 	@echo "To run ALL tests: \`make test\`"
 	@echo "To run tests in a sub directory: \`make test TEST_GLOB=services\`"
 	@echo "To run a given test: \`make test TEST_GLOB=:*testUnrecognizedMasterUrl*\`"
 	@echo
-	@echo "To format code use \`make format\`"
+	@echo "To format code run \`make format\`"
+	@echo
 	@echo "To run all modules locally use \`make run\`"
 
 
@@ -59,12 +70,6 @@ findit-predeploy:
 	@echo
 	@echo "Deployable Changes. (git pull and client sync if not current)"
 	@git log $(REMOTE_FINDIT_HASH)..HEAD --pretty=oneline .
-
-deploy-all-prod: deploy-findit-prod deploy-coverage-prod
-	@echo "Both Findit and Code Coverage were deployed to production."
-
-deploy-all-staging: deploy-findit-staging deploy-coverage-staging
-	@echo "Both Findit and Code Coverage were deployed to staging."
 
 deploy-findit-prod: test
 	@$(INFRAPYTHON) $(GAE_PY) upload -A $(APPID) $(FINDIT_MODULES);
@@ -115,12 +120,19 @@ deploy-coverage-staging: test
 	@echo "New version is https://$(LOCAL_VERSION)-dot-code-coverage-frontend-"\
 	"dot-$(STAGING_APPID).appspot.com/p/chromium/coverage"
 
+deploy-flake-prod: test
+	@$(INFRAPYTHON) $(GAE_PY) upload -A $(APPID) $(FLAKE_PORTAL_MODULES);
+
+deploy-flake-staging: test
+	@$(INFRAPYTHON) $(GAE_PY) upload -A $(STAGING_APPID) $(FLAKE_PORTAL_MODULES);
+
 migrate:
 	@echo "Please use the Google Cloud Console to migrate traffic to new versions"
 	      "https://pantheon.corp.google.com/appengine/versions?project=findit-for-me"
 	@echo
 	@echo "Findit modules: $(FINDIT_MODULES)"
 	@echo "Code Coverage modules: $(CODE_COVERAGE_MODULES)"
+	@echo "Flake Portal modules: $(FLAKE_PORTAL_MODULES)"
 
 
 ##### Development ###
