@@ -46,7 +46,6 @@ func getApplication() *cli.Application {
 			cmd.SkylabExecute,
 
 			cmd.ComputeBackfill,
-			cmd.Summarize,
 		},
 		EnvVars: map[string]subcommands.EnvVarDefinition{
 			"SWARMING_TASK_ID": {
