@@ -17,17 +17,19 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
 
   # Reference to a docker image uploaded to a registry.
   Image = namedtuple('Image', [
-      'image',   # <registry>/<name>
-      'digest',  # sha256:...
-      'tag',     # its canonical tag, if any
+      'image',          # <registry>/<name>
+      'digest',         # sha256:...
+      'tag',            # its canonical tag, if any
+      'view_image_url', # link to GCR page, for humans, optional
+      'view_build_url', # link to GCB page, for humans, optional
   ])
 
   # Used in place of Image to indicate that the image builds successfully, but
   # it wasn't uploaded anywhere.
   #
   # This happens if the target manifest doesn't specify a registry to upload
-  # the image too. This is rare.
-  NotUploadImage = Image(None, None, None)
+  # the image to. This is rare.
+  NotUploadedImage = Image(None, None, None, None, None)
 
   def __init__(self, **kwargs):
     super(CloudBuildHelperApi, self).__init__(**kwargs)
@@ -93,7 +95,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * step_test_image (Image) - image to produce in training mode.
 
     Returns:
-      Image instance or NotUploadImage if the YAML doesn't specify a registry.
+      Image instance or NotUploadedImage if the YAML doesn't specify a registry.
 
     Raises:
       StepFailure on failures.
@@ -139,11 +141,13 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
             'Call succeeded, but didn\'t produce -json-output')
       img = res.json.output.get('image')
       if not img:
-        return self.NotUploadImage
+        return self.NotUploadedImage
       return self.Image(
           image=img['image'],
           digest=img['digest'],
           tag=img.get('tag'),
+          view_image_url=img.get('view_image_url'),
+          view_build_url=img.get('view_build_url'),
       )
     finally:
       self._make_step_pretty(self.m.step.active_result, tags)

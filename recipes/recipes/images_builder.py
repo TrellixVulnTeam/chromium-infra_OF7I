@@ -10,6 +10,7 @@ from PB.recipes.infra import images_builder as images_builder_pb
 DEPS = [
     'recipe_engine/buildbucket',
     'recipe_engine/commit_position',
+    'recipe_engine/context',
     'recipe_engine/file',
     'recipe_engine/json',
     'recipe_engine/path',
@@ -18,6 +19,8 @@ DEPS = [
     'recipe_engine/time',
 
     'depot_tools/gerrit',
+    'depot_tools/git',
+    'depot_tools/git_cl',
 
     'cloudbuildhelper',
     'infra_checkout',
@@ -67,11 +70,12 @@ def RunSteps(api, properties):
     api.cloudbuildhelper.report_version()
 
     # Build, tag and upload corresponding images.
+    built = []
     fails = []
     for m in manifests:
       # TODO(vadimsh): Run this in parallel when it's possible.
       try:
-        api.cloudbuildhelper.build(
+        img = api.cloudbuildhelper.build(
             manifest=m,
             canonical_tag=meta.canonical_tag,
             build_id=api.buildbucket.build_url(),
@@ -79,8 +83,15 @@ def RunSteps(api, properties):
             labels=meta.labels,
             tags=meta.tags,
         )
+        if img != api.cloudbuildhelper.NotUploadedImage:
+          built.append(img)
       except api.step.StepFailure:
         fails.append(api.path.basename(m))
+
+  # Try to roll even if something failed. One broken image should not block the
+  # rest of them.
+  if built and properties.HasField('roll_into'):
+    _roll_built_images(api, properties.roll_into, built, meta)
 
   if fails:
     raise recipe_api.StepFailure('Failed to build: %s' % ', '.join(fails))
@@ -100,6 +111,8 @@ def _validate_props(p):  # pragma: no cover
   # of infra.git checkout.
   if p.project == PROPERTIES.PROJECT_LUCI_GO and p.mode != PROPERTIES.MODE_CL:
     raise ValueError('PROJECT_LUCI_GO can be used only together with MODE_CL')
+  if p.HasField('roll_into') and p.mode == PROPERTIES.MODE_CL:
+    raise ValueError('"roll_into" can\'t be used in MODE_CL')
 
 
 def _checkout_committed(api, mode, project):
@@ -241,6 +254,107 @@ def _discover_manifests(api, root, dirs):
   return paths
 
 
+def _roll_built_images(api, spec, images, meta):
+  """Uploads a CL with info about built images into a repo with pinned images.
+
+  See comments in images_builder.proto for more details.
+
+  Args:
+    api: recipes API.
+    spec: instance of images_builder.Inputs.RollInto proto with the config.
+    images: a list of CloudBuildHelperApi.Image with info about built images.
+    meta: Metadata struct, as returned by _checkout_committed.
+  """
+  # RFC3389 timstamp in UTC zone.
+  date = api.time.utcnow().isoformat('T') + 'Z'
+
+  # Prepare tag JSON specs for all images.
+  # See //starlark/lib/proto/proto.star in infradata/k8s repo.
+  tags = []
+  for img in images:
+    tags.append({
+        'image': img.image,
+        'tag': {
+            'tag': img.tag,
+            'digest': img.digest,
+            'metadata': {
+                'date': date,
+                'source': {
+                    'repo': meta.labels['org.opencontainers.image.source'],
+                    'revision':
+                        meta.labels['org.opencontainers.image.revision'],
+                },
+                'links': {
+                    'buildbucket': api.buildbucket.build_url(),
+                    'cloudbuild': img.view_build_url,
+                    'gcr': img.view_image_url,
+                },
+            },
+        },
+    })
+
+  # A repo to roll into.
+  root = api.path['cache'].join('builder', 'roll')
+  api.git.checkout(spec.repo_url, dir_path=root, submodules=False)
+
+  with api.context(cwd=root):
+    api.git('branch', '-D', 'roll-images', ok_ret=(0, 1))
+    api.git('checkout', '-t', 'origin/master', '-b', 'roll-images')
+
+    # Add all new tags (if any).
+    res = api.step(
+        name='roll_images.py',
+        cmd=[root.join('scripts', 'roll_images.py')],
+        stdin=api.json.input({'tags': tags}),
+        stdout=api.json.output(),
+        step_test_data=lambda: api.json.test_api.output_stream({'tags': tags}))
+    rolled = res.stdout['tags']
+
+    # Delete old unused tags (if any).
+    api.step(
+        name='prune_images.py',
+        cmd=[root.join('scripts', 'prune_images.py'), '--verbose'])
+
+    # Check we actually updated something.
+    diff_check = api.git('diff', '--exit-code', ok_ret='any')
+    if diff_check.retcode == 0:  # pragma: no cover
+      return
+
+    # Generate commit message.
+    desc = [
+        '[images] Rolling in new images.',
+        '',
+        'Produced by %s' % api.buildbucket.build_url(),
+    ]
+    if rolled:
+      desc.extend([
+          '',
+          'Added pins:',
+      ])
+      desc.extend('  * %s:%s' % (t['image'], t['tag']['tag']) for t in rolled)
+    desc = '\n'.join(desc)
+
+    # Upload a CL.
+    api.git('commit', '-a', '-m', desc)
+    api.git_cl.upload(desc, name='git cl upload', upload_args=[
+        '--force', # skip asking for description, we already set it
+    ] + [
+        '--tbrs=%s' % tbr for tbr in spec.tbr
+    ] + (['--use-commit-queue'] if spec.commit else []))
+
+    # Put a link to the uploaded CL.
+    issue_step = api.git_cl(
+        'issue', ['--json', api.json.output()],
+        name='git cl issue',
+        step_test_data=lambda: api.json.test_api.output({
+            'issue': 123456789,
+            'issue_url': 'https://chromium-review.googlesource.com/c/123456789',
+        }),
+    )
+    out = issue_step.json.output
+    issue_step.presentation.links['Issue %s' % out['issue']] = out['issue_url']
+
+
 def GenTests(api):
   def try_props(project, cl, patch_set):
     return (
@@ -329,6 +443,22 @@ def GenTests(api):
           infra='prod',
           manifests=['infra/build/images/daily'],
       )
+  )
+
+  yield (
+      api.test('ci-infra-with-roll') +
+      api.properties(
+          mode=PROPERTIES.MODE_CI,
+          project=PROPERTIES.PROJECT_INFRA,
+          infra='prod',
+          manifests=['infra/build/images/deterministic'],
+          roll_into={
+              'repo_url': 'https://images.repo.example.com',
+              'tbr': ['someone@example.com'],
+              'commit': True,
+          },
+      ) +
+      api.step_data('git diff', retcode=1)
   )
 
   yield (

@@ -43,9 +43,29 @@ message Inputs {
   string infra = 3;
 
   // A path(s) within the gclient solution to a directory with *.yaml files to
-  // discover and build, e.g. 'infra/build/images/deterministic. Will be listed
+  // discover and build, e.g. 'infra/build/images/deterministic'. Will be listed
   // recursively.
   //
   // Required.
   repeated string manifests = 4;
+
+  // If present, enables auto-rolling of built images into a git repository with
+  // pinned images.
+  //
+  // Each image in this repository is represented by a directory (matching its
+  // full name) under 'images' directory. Each tag is represented by a file
+  // <tag>.json inside the image directory. The schema is defined by Tag
+  // message below.
+  //
+  // If at least one image file was added, runs `scripts/prune_images.py` from
+  // this repo to delete older unused images.
+  message RollInto {
+    // Repository to roll built images into (usually infradata/k8s).
+    string repo_url = 1;
+    // Emails of whom to put into TBR= line in the CL.
+    repeated string tbr = 2;
+    // True to actually commit via CQ, False just to upload a pending CL.
+    bool commit = 3;
+  }
+  RollInto roll_into = 5;
 }

@@ -27,14 +27,18 @@ def RunSteps(api):
   expected = api.cloudbuildhelper.Image(
       image='example.com/fake-registry/target',
       digest='sha256:34a04005bcaf206e...',
-      tag='123_456')
+      tag='123_456',
+      view_image_url=None,
+      view_build_url=None)
   assert img == expected, img
 
   # With minimal args and custom emulated output.
   custom = api.cloudbuildhelper.Image(
       image='xxx',
       digest='yyy',
-      tag=None)
+      tag=None,
+      view_image_url=None,
+      view_build_url=None)
   img = api.cloudbuildhelper.build('another.yaml', step_test_image=custom)
   assert img == custom, img
 
@@ -49,8 +53,8 @@ def RunSteps(api):
 
   # Image that wasn't uploaded anywhere.
   img = api.cloudbuildhelper.build(
-      'third.yaml', step_test_image=api.cloudbuildhelper.NotUploadImage)
-  assert img == api.cloudbuildhelper.NotUploadImage, img
+      'third.yaml', step_test_image=api.cloudbuildhelper.NotUploadedImage)
+  assert img == api.cloudbuildhelper.NotUploadedImage, img
 
   # Possibly failing build.
   api.cloudbuildhelper.build('fail_maybe.yaml')
