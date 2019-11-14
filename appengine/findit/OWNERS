@@ -1,3 +1,19 @@
+# For Findit and Flake Analyzer related changes.
+sclaxton@chromium.org
+jsca@chromium.org
+orodley@chromium.org
+olaka@chromium.org
+nqmtuan@google.com
+weiweilin@google.com
+
+# CTI members.
+# TODO (crbug.com/1024958): Remove CTI members after Flake Portal and Code Coverage code is removed.
+nodir@chromium.org
+
+# For Flake Portal related changes.
 chanli@chromium.org
+
+# For Code Coverage related changes.
 liaoyuke@chromium.org
 robertocn@chromium.org
+sajjadm@chromium.org
