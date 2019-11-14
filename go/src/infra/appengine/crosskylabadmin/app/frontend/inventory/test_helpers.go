@@ -19,15 +19,6 @@ import (
 	"fmt"
 	"testing"
 
-	"go.chromium.org/chromiumos/infra/proto/go/device"
-	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/appengine/crosskylabadmin/app/clients"
-	"infra/appengine/crosskylabadmin/app/clients/mock"
-	"infra/appengine/crosskylabadmin/app/config"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
-	"infra/libs/skylab/inventory"
-
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -38,6 +29,16 @@ import (
 	"go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
+
+	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/appengine/crosskylabadmin/app/clients"
+	"infra/appengine/crosskylabadmin/app/clients/mock"
+	"infra/appengine/crosskylabadmin/app/config"
+	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
+	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/libs/skylab/inventory"
+
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 )
 
 type testFixture struct {
