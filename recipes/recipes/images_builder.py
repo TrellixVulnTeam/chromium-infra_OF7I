@@ -335,7 +335,7 @@ def _roll_built_images(api, spec, images, meta):
           'Added pins:',
       ])
       desc.extend('  * %s:%s' % (t['image'], t['tag']['tag']) for t in rolled)
-    desc = '\n'.join(desc)
+    desc = str('\n'.join(desc))
 
     # Upload a CL.
     api.git('commit', '-m', desc)
