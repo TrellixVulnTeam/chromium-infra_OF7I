@@ -65,6 +65,8 @@ func (b *Borrower) Close() error {
 
 var provisionableLabelKeys = map[string]struct{}{
 	"cros-version": {},
+	"fwro-version": {},
+	"fwrw-version": {},
 }
 
 var provisionableAttributeKeys = map[string]struct{}{
