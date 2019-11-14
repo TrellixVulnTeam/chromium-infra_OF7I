@@ -139,15 +139,15 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
         res.presentation.status = self.m.step.FAILURE
         raise recipe_api.InfraFailure(
             'Call succeeded, but didn\'t produce -json-output')
-      img = res.json.output.get('image')
-      if not img:
+      out = res.json.output
+      if not out.get('image'):
         return self.NotUploadedImage
       return self.Image(
-          image=img['image'],
-          digest=img['digest'],
-          tag=img.get('tag'),
-          view_image_url=img.get('view_image_url'),
-          view_build_url=img.get('view_build_url'),
+          image=out['image']['image'],
+          digest=out['image']['digest'],
+          tag=out['image'].get('tag'),
+          view_image_url=out.get('view_image_url'),
+          view_build_url=out.get('view_build_url'),
       )
     finally:
       self._make_step_pretty(self.m.step.active_result, tags)

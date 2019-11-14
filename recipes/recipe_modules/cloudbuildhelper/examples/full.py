@@ -28,8 +28,8 @@ def RunSteps(api):
       image='example.com/fake-registry/target',
       digest='sha256:34a04005bcaf206e...',
       tag='123_456',
-      view_image_url=None,
-      view_build_url=None)
+      view_image_url='https://example.com/image/target',
+      view_build_url='https://example.com/build/target')
   assert img == expected, img
 
   # With minimal args and custom emulated output.
@@ -37,8 +37,8 @@ def RunSteps(api):
       image='xxx',
       digest='yyy',
       tag=None,
-      view_image_url=None,
-      view_build_url=None)
+      view_image_url='https://example.com/image/another',
+      view_build_url='https://example.com/build/another')
   img = api.cloudbuildhelper.build('another.yaml', step_test_image=custom)
   assert img == custom, img
 
