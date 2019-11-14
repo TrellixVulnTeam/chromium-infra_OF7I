@@ -341,7 +341,18 @@
   {
     "cmd": [
       "git",
+      "add",
+      "."
+    ],
+    "cwd": "[CACHE]/builder/roll",
+    "infra_step": true,
+    "name": "git add"
+  },
+  {
+    "cmd": [
+      "git",
       "diff",
+      "--cached",
       "--exit-code"
     ],
     "cwd": "[CACHE]/builder/roll",
@@ -352,7 +363,6 @@
     "cmd": [
       "git",
       "commit",
-      "-a",
       "-m",
       "[images] Rolling in new images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nAdded pins:\n  * example.com/fake-registry/target:ci-2012.05.14-197293-5e03a58"
     ],

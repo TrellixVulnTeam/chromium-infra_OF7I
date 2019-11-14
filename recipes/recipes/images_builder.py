@@ -315,8 +315,11 @@ def _roll_built_images(api, spec, images, meta):
         name='prune_images.py',
         cmd=[root.join('scripts', 'prune_images.py'), '--verbose'])
 
+    # Stage all added and deleted files to be able to `git diff` them.
+    api.git('add', '.')
+
     # Check we actually updated something.
-    diff_check = api.git('diff', '--exit-code', ok_ret='any')
+    diff_check = api.git('diff', '--cached', '--exit-code', ok_ret='any')
     if diff_check.retcode == 0:  # pragma: no cover
       return
 
@@ -335,7 +338,7 @@ def _roll_built_images(api, spec, images, meta):
     desc = '\n'.join(desc)
 
     # Upload a CL.
-    api.git('commit', '-a', '-m', desc)
+    api.git('commit', '-m', desc)
     api.git_cl.upload(desc, name='git cl upload', upload_args=[
         '--force', # skip asking for description, we already set it
     ] + [
