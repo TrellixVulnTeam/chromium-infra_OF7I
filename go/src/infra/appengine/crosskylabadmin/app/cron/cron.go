@@ -205,11 +205,22 @@ func createInventoryServer(c *router.Context) *inventory.ServerImpl {
 }
 
 func dumpStableVersionToDatastoreHandler(c *router.Context) error {
+	logging.Infof(c.Context, "begin dumpStableVersionToDatastoreHandler")
 	cfg := config.Get(c.Context)
 	if cfg.RpcControl != nil && cfg.RpcControl.GetDisableDumpStableVersionToDatastore() {
+		if cfg.RpcControl == nil {
+			logging.Infof(c.Context, "end dumpStableVersionToDatastoreHandler immediately because RpcControl is nil")
+		} else {
+			logging.Infof(c.Context, "end dumpStableVersionToDatastoreHandler immediately because task is disabled")
+		}
 		return nil
 	}
 	inv := createInventoryServer(c)
 	_, err := inv.DumpStableVersionToDatastore(c.Context, &fleet.DumpStableVersionToDatastoreRequest{})
+	if err != nil {
+		logging.Infof(c.Context, "end dumpStableVersionToDatastoreHandler with err (%s)", err)
+	} else {
+		logging.Infof(c.Context, "end dumpStableVersionToDatastoreHandler successfully", err)
+	}
 	return err
 }

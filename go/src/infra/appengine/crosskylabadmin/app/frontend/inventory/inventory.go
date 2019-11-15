@@ -338,6 +338,7 @@ func UpdateDCAndCheckIfSkipLabelUpdate(ctx context.Context, req updateDutLabelsR
 func (is *ServerImpl) DumpStableVersionToDatastore(ctx context.Context, in *fleet.DumpStableVersionToDatastoreRequest) (*fleet.DumpStableVersionToDatastoreResponse, error) {
 	client, err := is.newStableVersionGitClient(ctx)
 	if err != nil {
+		logging.Errorf(ctx, "get git client: %s", err)
 		return nil, errors.Annotate(err, "get git client").Err()
 	}
 	return dumpStableVersionToDatastoreImpl(ctx, client.GetFile)
@@ -347,10 +348,12 @@ func (is *ServerImpl) DumpStableVersionToDatastore(ctx context.Context, in *flee
 func dumpStableVersionToDatastoreImpl(ctx context.Context, getFile func(context.Context, string) (string, error)) (*fleet.DumpStableVersionToDatastoreResponse, error) {
 	contents, err := getFile(ctx, config.Get(ctx).StableVersionConfig.StableVersionDataPath)
 	if err != nil {
+		logging.Errorf(ctx, "fetch file: %s", err)
 		return nil, errors.Annotate(err, "fetch file").Err()
 	}
 	stableVersions, err := parseStableVersions(contents)
 	if err != nil {
+		logging.Errorf(ctx, "parse json: %s", err)
 		return nil, errors.Annotate(err, "parse json").Err()
 	}
 	m := getStableVersionRecords(ctx, stableVersions)
@@ -365,8 +368,10 @@ func dumpStableVersionToDatastoreImpl(ctx context.Context, getFile func(context.
 		merr = append(merr, errors.Annotate(err, "put firmware stable version").Err())
 	}
 	if len(merr) != 0 {
+		logging.Errorf(ctx, "error writing stable versions: %s", merr)
 		return nil, merr
 	}
+	logging.Infof(ctx, "successfully wrote stable versions")
 	return &fleet.DumpStableVersionToDatastoreResponse{}, nil
 }
 
