@@ -7,7 +7,9 @@
 package sideeffects
 
 import (
+	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +18,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/side_effects"
+	"infra/libs/skylab/cloudkms"
 )
 
 // ValidateConfig checks the presence of all required fields in
@@ -49,16 +52,12 @@ func getMissingArgs(c *side_effects.Config) []string {
 		r = append(r, "MySQL user")
 	}
 
-	if c.Tko.GetMysqlPasswordFile() == "" {
-		r = append(r, "MySQL password file")
+	if c.Tko.GetEncryptedMysqlPassword() == "" {
+		r = append(r, "Encrypted MySQL password")
 	}
 
 	if c.GoogleStorage.GetBucket() == "" {
 		r = append(r, "Google Storage bucket")
-	}
-
-	if c.GoogleStorage.GetCredentialsFile() == "" {
-		r = append(r, "Google Storage credentials file")
 	}
 
 	return r
@@ -69,14 +68,6 @@ func getMissingFiles(c *side_effects.Config) []string {
 
 	if _, err := os.Stat(c.Tko.ProxySocket); err != nil {
 		r = append(r, err.Error()+" (proxy socket)")
-	}
-
-	if _, err := os.Stat(c.Tko.MysqlPasswordFile); err != nil {
-		r = append(r, err.Error()+" (MySQL password file)")
-	}
-
-	if _, err := os.Stat(c.GoogleStorage.CredentialsFile); err != nil {
-		r = append(r, err.Error()+" (Google Storage credentials file)")
 	}
 
 	return r
@@ -97,6 +88,41 @@ func WriteConfigToDisk(dir string, c *side_effects.Config) error {
 	marshaler := jsonpb.Marshaler{}
 	if err := marshaler.Marshal(w, c); err != nil {
 		return errors.Annotate(err, "write side_effects_config.json to disk").Err()
+	}
+	return nil
+}
+
+// PopulateTKOPasswordFile decrypts the encrypted MySQL password, writes it
+// to a temp file and updates the corresponding config field.
+func PopulateTKOPasswordFile(ctx context.Context, ckc cloudkms.Client, c *side_effects.Config) error {
+	pwd, err := ckc.Decrypt(ctx, c.GetTko().GetEncryptedMysqlPassword())
+	if err != nil {
+		return errors.Annotate(err, "populate TKO password file").Err()
+	}
+
+	f, err := ioutil.TempFile("", "tko_password")
+	if err != nil {
+		return errors.Annotate(err, "populate TKO password file").Err()
+	}
+	defer f.Close()
+	_, err = f.Write(pwd)
+	if err != nil {
+		return errors.Annotate(err, "populate TKO password file").Err()
+	}
+
+	c.GetTko().MysqlPasswordFile = f.Name()
+
+	return nil
+}
+
+// CleanupTempFiles deletes all temp files used in side_effects.Config.
+func CleanupTempFiles(c *side_effects.Config) error {
+	f := c.GetTko().GetMysqlPasswordFile()
+	if _, err := os.Stat(f); os.IsNotExist(err) {
+		return nil
+	}
+	if err := os.Remove(f); err != nil {
+		return errors.Annotate(err, "cleanup temp side effects files").Err()
 	}
 	return nil
 }
