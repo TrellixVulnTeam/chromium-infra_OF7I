@@ -78,7 +78,53 @@ func TestReadIncorrectSerializerVersion(t *testing.T) {
 	t.Parallel()
 	blob := []byte(`{"serializer_version": 0}`)
 	got, err := Unmarshal(blob)
-	if err == nil {
-		t.Errorf("Did not return error parsing corrupted HostInfo. Parsed `%s`to %#v", blob, got)
+	if err != nil {
+		t.Errorf("Unmarshal should have ignored the serializer version but didn't. Parsed `%s`to %#v", blob, got)
+	}
+}
+
+var TestUnMarshalTests = []struct {
+	in   string
+	out  *HostInfo
+	name string
+}{
+	{
+		`{}`,
+		&HostInfo{},
+		`{}`,
+	},
+	{
+		`{"serializer_version": 0}`,
+		&HostInfo{},
+		`serializer_version=0`,
+	},
+	{
+		`{"serializer_version": 1}`,
+		&HostInfo{},
+		`serializer_version=1`,
+	},
+	{
+		`{ "labels": [ "7" ] }`,
+		&HostInfo{Labels: []string{"7"}},
+		`nonempty labels`,
+	},
+	{
+		`{ "attributes": { "a" : "b" } }`,
+		&HostInfo{Attributes: map[string]string{"a": "b"}},
+		`nonempty attributes`,
+	},
+}
+
+func TestUnMarshal(t *testing.T) {
+	for _, tt := range TestUnMarshalTests {
+		t.Run(tt.name, func(t *testing.T) {
+			unmarshalled, err := Unmarshal([]byte(tt.in))
+			if err != nil {
+				t.Errorf("failed to unmarshal: %s", err)
+			}
+			if !reflect.DeepEqual(unmarshalled, tt.out) {
+				t.Errorf("wanted: (%s) got: (%s)", tt.out, unmarshalled)
+			}
+		})
 	}
 }
