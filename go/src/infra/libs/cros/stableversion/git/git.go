@@ -29,6 +29,11 @@ type Client struct {
 	latestSHA1 string
 }
 
+// ClientInterface is the public API of a stableversion git client
+type ClientInterface interface {
+	GetFile(ctx context.Context, path string) (string, error)
+}
+
 // NewClient produces a new client using only simple types available in a command line context
 func NewClient(ctx context.Context, hc *http.Client, gerritHost, gitilesHost, project, branch string) (*Client, error) {
 	if err := validateNewClientParams(gerritHost, gitilesHost, project, branch); err != nil {
@@ -37,7 +42,7 @@ func NewClient(ctx context.Context, hc *http.Client, gerritHost, gitilesHost, pr
 
 	c := &Client{}
 	if err := c.Init(ctx, hc, gerritHost, gitilesHost, project, branch); err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "initialize client").Err()
 	}
 
 	return c, nil
@@ -51,17 +56,17 @@ func (c *Client) Init(ctx context.Context, hc *http.Client, gerritHost string, g
 	c.gerritHost = gerritHost
 	c.gerritC, err = gerritapi.NewRESTClient(hc, gerritHost, true)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "initialize gerrit").Err()
 	}
 
 	c.gitilesC, err = gitilesapi.NewRESTClient(hc, gitilesHost, true)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "initialize gitiles").Err()
 	}
 
 	c.latestSHA1, err = c.fetchLatestSHA1(ctx)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "get latest sha1 for repo").Err()
 	}
 
 	return nil

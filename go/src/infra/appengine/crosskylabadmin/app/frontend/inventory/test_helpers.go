@@ -36,6 +36,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/libs/cros/stableversion/git"
 	"infra/libs/skylab/inventory"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
@@ -45,12 +46,31 @@ type testFixture struct {
 	T *testing.T
 	C context.Context
 
-	Inventory fleet.InventoryServer
+	Inventory *ServerImpl
 
 	FakeGerrit   *fakes.GerritClient
 	FakeGitiles  *fakes.GitilesClient
 	MockSwarming *mock.MockSwarmingClient
 	MockTracker  *fleet.MockTrackerServer
+}
+
+type fakeGitClient struct {
+	getFile func(ctx context.Context, path string) (string, error)
+}
+
+func (f *fakeGitClient) GetFile(ctx context.Context, path string) (string, error) {
+	return f.getFile(ctx, path)
+}
+
+func (tf *testFixture) setStableVersionFactory(stableVersionFileContent string) {
+	is := tf.Inventory
+	is.StableVersionGitClientFactory = func(c context.Context) (git.ClientInterface, error) {
+		gc := &fakeGitClient{}
+		gc.getFile = func(ctx context.Context, path string) (string, error) {
+			return stableVersionFileContent, nil
+		}
+		return gc, nil
+	}
 }
 
 // newTextFixture creates a new testFixture to be used in unittests.
@@ -118,6 +138,13 @@ func testingContext() context.Context {
 			BotPool:           "ChromeOSSkylab",
 			FleetAdminTaskTag: "fake-tag",
 			LuciProjectTag:    "fake-project",
+		},
+		StableVersionConfig: &config.StableVersionConfig{
+			GerritHost:            "xxx-fake-gerrit-review.googlesource.com",
+			GitilesHost:           "xxx-gitiles.googlesource.com",
+			Project:               "xxx-project",
+			Branch:                "xxx-branch",
+			StableVersionDataPath: "xxx-stable_version_data_path",
 		},
 	})
 	datastore.GetTestable(c).Consistent(true)
