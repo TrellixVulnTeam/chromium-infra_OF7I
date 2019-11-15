@@ -142,6 +142,7 @@ func update(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer dockerClient.Close()
 
 	if _, err = dockerClient.Ping(ctx); err != nil {
 		// Don't log an error if the ping failed. Most bots don't have
