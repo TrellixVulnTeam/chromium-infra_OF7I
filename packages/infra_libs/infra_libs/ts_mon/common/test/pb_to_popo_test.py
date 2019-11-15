@@ -24,13 +24,21 @@ class PbToPopoTest(unittest.TestCase):
 
     popo = pb_to_popo.convert(data_set)
     expected = {
-      'metric_name': 'foo',
-      'data': [
-        {'bool_value': True},
-        {'bool_value': False},
-        {'int64_value': 200L},
-        {'double_value': 123.456},
-      ],
+        'metric_name':
+            'foo',
+        'data': [
+            {
+                'bool_value': True
+            },
+            {
+                'bool_value': False
+            },
+            {
+                'int64_value': 200
+            },
+            {
+                'double_value': 123.456
+            },
+        ],
     }
     self.assertDictEqual(expected, popo)
-

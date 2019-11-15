@@ -11,6 +11,7 @@ import time
 
 from google.protobuf import message
 from infra_libs.ts_mon.common import errors
+import six
 
 
 def default_modify_fn(name):
@@ -128,7 +129,7 @@ class _TargetFieldsValues(object):
   def gen_key(self, target_fields):
     if not isinstance(target_fields, message.Message):
       # It's a dict. Canonicalise its items.
-      return tuple(sorted(target_fields.iteritems()))
+      return tuple(sorted(six.iteritems(target_fields)))
 
     # It's a protobuf. Serialise its values.
     # The zeroth element is the target type.
@@ -166,7 +167,7 @@ class _TargetFieldsValues(object):
       yield target, fields_values
 
   def iter_targets_with_start_times(self, default_target):
-    for target_fields, fields_values in self._values.iteritems():
+    for target_fields, fields_values in six.iteritems(self._values):
       if target_fields:
         if inspect.isclass(target_fields[0]):
           # It's a target type plus serialised values.
@@ -206,8 +207,8 @@ class InProcessMetricStore(MetricStore):
 
   def iter_field_values(self, name):
     return itertools.chain.from_iterable(
-        x.iteritems() for _, x
-        in self._entry(name).iter_targets(self._state.target))
+        six.iteritems(x)
+        for _, x in self._entry(name).iter_targets(self._state.target))
 
   def get_all(self):
     # Make a copy of the metric values in case another thread (or this
@@ -216,7 +217,7 @@ class InProcessMetricStore(MetricStore):
       values = copy.deepcopy(self._values)
     end_time = self._time_fn()
 
-    for name, metric_values in values.iteritems():
+    for name, metric_values in six.iteritems(values):
       if name not in self._state.metrics:
         continue
       targets = metric_values.iter_targets_with_start_times(

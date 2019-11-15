@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 """Classes representing the monitoring interface for tasks or devices."""
+import six
 
 
 class Target(object):
@@ -28,7 +29,7 @@ class Target(object):
 
   def update(self, target_fields):
     """Update target fields from a dict."""
-    for name, value in target_fields.iteritems():
+    for name, value in six.iteritems(target_fields):
       if name not in self._fields:
         raise AttributeError('Bad target field: %s' % name)
       # Make sure the attribute actually exists in the object.

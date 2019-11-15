@@ -44,6 +44,7 @@ from google.protobuf import message
 from infra_libs.ts_mon.common import errors
 from infra_libs.ts_mon.common import metric_store
 from infra_libs.ts_mon.protos import metrics_pb2
+import six
 
 # The maximum number of MetricsData messages to include in each HTTP request.
 # MetricsCollections larger than this will be split into multiple requests.
@@ -157,9 +158,9 @@ def _populate_root_labels(root_labels, target):
   for field, value in zip(target[0].DESCRIPTOR.fields, target[1:]):
     if isinstance(value, bool):
       root_labels.add(key=field.name, bool_value=value)
-    elif isinstance(value, (int, long)):
+    elif isinstance(value, six.integer_types):
       root_labels.add(key=field.name, int64_value=value)
-    elif isinstance(value, basestring):
+    elif isinstance(value, six.string_types):
       root_labels.add(key=field.name, string_value=value)
     else:
       raise NotImplementedError()
@@ -178,7 +179,7 @@ def _generate_proto():
   count = 0
   for (target, metric, start_times, end_time, fields_values
        ) in state.store.get_all():
-    for fields, value in fields_values.iteritems():
+    for fields, value in six.iteritems(fields_values):
       # In default, the start time of all data points for a single stream
       # should be set with the first time of a value change in the stream,
       # until metric.reset() invoked.
@@ -319,7 +320,7 @@ def register_global_metrics_callback(name, callback):
 
 
 def invoke_global_callbacks():
-  for name, callback in state.global_metrics_callbacks.iteritems():
+  for name, callback in six.iteritems(state.global_metrics_callbacks):
     logging.debug('Invoking callback %s', name)
     try:
       callback()

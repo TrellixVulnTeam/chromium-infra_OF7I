@@ -13,6 +13,8 @@ from infra_libs.ts_mon.common import distribution
 from infra_libs.ts_mon.common import errors
 from infra_libs.ts_mon.common import interface
 from infra_libs.ts_mon.protos import metrics_pb2
+import six
+from six.moves import range  # pylint: disable=redefined-builtin
 
 
 MICROSECONDS_PER_SECOND = 1000000
@@ -48,13 +50,13 @@ class Field(object):
 
 
 class StringField(Field):
-  allowed_python_types = basestring
+  allowed_python_types = six.string_types
   type_enum = metrics_pb2.MetricsDataSet.MetricFieldDescriptor.STRING
   field_name = 'string_value'
 
 
 class IntegerField(Field):
-  allowed_python_types = (int, long)
+  allowed_python_types = six.integer_types
   type_enum = metrics_pb2.MetricsDataSet.MetricFieldDescriptor.INT64
   field_name = 'int64_value'
 
@@ -119,7 +121,7 @@ class Metric(object):
 
     self._name = name.lstrip('/')
 
-    if not isinstance(description, basestring):
+    if not isinstance(description, six.string_types):
       raise errors.MetricDefinitionError('Metric description must be a string')
     if not description:
       raise errors.MetricDefinitionError('Metric must have a description')
@@ -258,8 +260,8 @@ class Metric(object):
           fields, type(fields)))
 
     if sorted(fields) != self._sorted_field_names:
-      raise errors.WrongFieldsError(
-          self.name, fields.keys(), self._sorted_field_names)
+      raise errors.WrongFieldsError(self.name, list(fields.keys()),
+                                    self._sorted_field_names)
 
     for spec in self._field_spec:
       spec.validate_value(self.name, fields[spec.name])
@@ -369,7 +371,7 @@ class StringMetric(Metric):
     data_set.value_type = metrics_pb2.STRING
 
   def set(self, value, fields=None, target_fields=None):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
       raise errors.MonitoringInvalidValueTypeError(self._name, value)
     self._set(fields, target_fields, value)
 
@@ -421,12 +423,12 @@ class CounterMetric(NumericMetric):
     data_set.value_type = metrics_pb2.INT64
 
   def set(self, value, fields=None, target_fields=None):
-    if not isinstance(value, (int, long)):
+    if not isinstance(value, six.integer_types):
       raise errors.MonitoringInvalidValueTypeError(self._name, value)
     self._set(fields, target_fields, value, enforce_ge=True)
 
   def increment_by(self, step, fields=None, target_fields=None):
-    if not isinstance(step, (int, long)):
+    if not isinstance(step, six.integer_types):
       raise errors.MonitoringInvalidValueTypeError(self._name, step)
     self._incr(fields, target_fields, step)
 
@@ -444,7 +446,7 @@ class GaugeMetric(NumericMetric):
     data_set.value_type = metrics_pb2.INT64
 
   def set(self, value, fields=None, target_fields=None):
-    if not isinstance(value, (int, long)):
+    if not isinstance(value, six.integer_types):
       raise errors.MonitoringInvalidValueTypeError(self._name, value)
     self._set(fields, target_fields, value)
 
@@ -531,8 +533,7 @@ class _DistributionMetricBase(Metric):
     # Copy the distribution bucket values.  Include the overflow buckets on
     # either end.
     pb.bucket_count.extend(
-        value.buckets.get(i, 0) for i in
-        xrange(0, value.bucketer.total_buckets))
+        value.buckets.get(i, 0) for i in range(0, value.bucketer.total_buckets))
 
     pb.count = value.count
     pb.mean = float(value.sum) / max(value.count, 1)

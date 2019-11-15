@@ -77,7 +77,7 @@ class MetricTest(TestBase):
     self.assertEqual(m, m)
 
   def test_init_too_many_fields(self):
-    fields = [metrics.StringField('field%d' % i) for i in xrange(13)]
+    fields = [metrics.StringField('field%d' % i) for i in range(13)]
     with self.assertRaises(errors.MonitoringTooManyFieldsError) as e:
       metrics.Metric('test', 'test', fields)
     self.assertEqual(e.exception.metric, 'test')
@@ -219,7 +219,7 @@ class FieldValidationTest(TestBase):
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
       f.validate_value('', 123)
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
-      f.validate_value('', long(123))
+      f.validate_value('', int(123))
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
       f.validate_value('', True)
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
@@ -234,7 +234,7 @@ class FieldValidationTest(TestBase):
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
       f.validate_value('', u'string')
     f.validate_value('', 123)
-    f.validate_value('', long(123))
+    f.validate_value('', int(123))
     f.validate_value('', True)  # Python allows this *shrug*
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
       f.validate_value('', None)
@@ -250,7 +250,7 @@ class FieldValidationTest(TestBase):
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
       f.validate_value('', 123)
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
-      f.validate_value('', long(123))
+      f.validate_value('', int(123))
     f.validate_value('', True)
     with self.assertRaises(errors.MonitoringInvalidFieldTypeError):
       f.validate_value('', None)
@@ -400,8 +400,8 @@ class GaugeMetricTest(TestBase):
     m = metrics.GaugeMetric('test', 'test', None)
     m.set(10)
     self.assertEqual(m.get(), 10)
-    m.set(sys.maxint + 1)
-    self.assertEqual(m.get(), sys.maxint + 1)
+    m.set(sys.maxsize + 1)
+    self.assertEqual(m.get(), sys.maxsize + 1)
 
   def test_non_int_raises(self):
     m = metrics.GaugeMetric('test', 'test', None)

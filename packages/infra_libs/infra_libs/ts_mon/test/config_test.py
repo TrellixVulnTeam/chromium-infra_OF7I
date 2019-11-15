@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
 import argparse
 import json
 import os
@@ -43,7 +44,7 @@ class GlobalsTest(auto_stub.TestCase):
   @mock.patch('infra_libs.ts_mon.common.monitors.CredentialFactory.'
               'from_string')
   def test_https_monitor_args(self, _load_creds, fake_fqdn, fake_get):
-    print [_load_creds, fake_fqdn, fake_get]
+    print([_load_creds, fake_fqdn, fake_get])
     fake_fqdn.return_value = 'slave1-a1.reg.tld'
     fake_get.return_value.side_effect = requests.exceptions.ConnectionError
     p = argparse.ArgumentParser()
