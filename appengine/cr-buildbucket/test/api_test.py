@@ -692,6 +692,14 @@ class ScheduleBuildTests(BaseTestCase):
     self.assertEqual(actual_req.swarming.parent_run_id, '')
 
   @mock.patch('service.get_async', autospec=True)
+  def test_schedule_with_template_build_id_not_found(self, get_async):
+    get_async.return_value = future(None)
+    req = rpc_pb2.ScheduleBuildRequest(template_build_id=44,)
+    self.call(
+        self.api.ScheduleBuild, req, expected_code=prpc.StatusCode.NOT_FOUND
+    )
+
+  @mock.patch('service.get_async', autospec=True)
   def test_schedule_with_unauthorized_template_build_id(self, get_async):
     user.can_async.return_value = future(False)
     get_async.return_value = future(

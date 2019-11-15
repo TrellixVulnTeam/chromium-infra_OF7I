@@ -228,6 +228,8 @@ def prepare_schedule_build_request_async(req):
     raise ndb.Return(req)
 
   build = yield service.get_async(req.template_build_id)
+  if not build:
+    raise not_found('build %d is not found', req.template_build_id)
 
   # First initialize the new request based on the build.
   new_req = rpc_pb2.ScheduleBuildRequest(
