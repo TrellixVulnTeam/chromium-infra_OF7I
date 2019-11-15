@@ -19,7 +19,7 @@ FLAKY_TEST_CUSTOMIZED_FIELD = 'Flaky-Test'
 
 FINDIT_ANALYZED_LABEL_TEXT = 'Test-Findit-Analyzed'
 
-FLAKE_DETECTION_LABEL_TEXT = 'Test-Findit-Detected'
+FLAKE_DETECTION_LABEL_TEXT = 'Test-Flake-Detected'
 
 # Query used to search for flaky test in customized field.
 FLAKY_TEST_CUSTOMIZED_FIELD_QUERY_TEMPLATE = (

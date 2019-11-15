@@ -18,7 +18,7 @@ from waterfall.test.wf_testcase import WaterfallTestCase
 _EXPECTED_GROUP_DESC = textwrap.dedent("""
 Tests in step is flaky.
 
-Findit has detected 5 flake occurrences of tests below within
+5 flake occurrences of tests below have been detected within
 the past 24 hours:
 
 suite.test0
@@ -37,10 +37,10 @@ https://analysis.chromium.org/p/chromium/flake-portal/flakes?bug_id={}.
 If the result above is wrong, please file a bug using this link:
 {}
 
-Automatically posted by the findit-for-me app (https://goo.gl/Ne6KtC).""")
+Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""")
 
 _EXPECTED_GROUP_COMMENT = textwrap.dedent("""
-Findit has detected 5+ new flake occurrences of tests in this bug
+5+ new flake occurrences of tests in this bug have been detected
 within the past 24 hours.
 
 List of all flake occurrences can be found at:
@@ -51,7 +51,7 @@ https://analysis.chromium.org/p/chromium/flake-portal/flakes?bug_id={}.
 If the result above is wrong, please file a bug using this link:
 {}
 
-Automatically posted by the findit-for-me app (https://goo.gl/Ne6KtC).""")
+Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""")
 
 
 class IssueGeneratorTest(WaterfallTestCase):
@@ -166,9 +166,9 @@ class IssueGeneratorTest(WaterfallTestCase):
     issue_generator_new.SetFlakeIssue(flake_issue)
     wrong_result_link = (
         'https://bugs.chromium.org/p/chromium/issues/entry?'
-        'status=Unconfirmed&labels=Pri-1,Test-Findit-Wrong&'
+        'status=Unconfirmed&labels=Pri-1,Test-Flake-Detection-Wrong&'
         'components=Infra%3ETest%3EFlakiness&'
-        'summary=%5BFindit%5D%20Flake%20Detection%20-%20Wrong%20result%3A%20'
+        'summary=Flake%20Detection%20-%20Wrong%20result%3A%20'
         'Tests in step&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org/p/chromium/flake-portal/flakes?bug_id={}'
     ).format(flake_issue.issue_id)
@@ -182,9 +182,9 @@ class IssueGeneratorTest(WaterfallTestCase):
     bug_id = issue_generator_old._flake_issue.issue_id
     wrong_result_link = (
         'https://bugs.chromium.org/p/chromium/issues/entry?'
-        'status=Unconfirmed&labels=Pri-1,Test-Findit-Wrong&'
+        'status=Unconfirmed&labels=Pri-1,Test-Flake-Detection-Wrong&'
         'components=Infra%3ETest%3EFlakiness&'
-        'summary=%5BFindit%5D%20Flake%20Detection%20-%20Wrong%20result%3A%20'
+        'summary=Flake%20Detection%20-%20Wrong%20result%3A%20'
         '12345&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org/p/chromium/flake-portal/flakes?bug_id={}'
     ).format(bug_id)

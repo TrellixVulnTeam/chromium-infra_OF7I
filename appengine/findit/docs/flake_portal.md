@@ -24,7 +24,7 @@ Table of contents:
 
 ## Flakes
 The [Flakes] page ranks on-going flakes from CQ and CI in last 7 days by their
- negative impacts. Open bugs (either filed by Findit or by
+ negative impacts. Open bugs (either filed by Flake Portal or by
  developers/sheriffs/other automatic tools) are linked to each flake.
 
 ### Term Definitions
@@ -83,7 +83,7 @@ Score = Sum(CQ flake type weight * impacted CLs) + Sum(CI flake type weight * oc
 | parent_component | [parent_component==Blink>Accessibility] matches tests whose component is Blink>Accessibility or a sub-component of Blink>Accessibility.|
 | source | [source==base/hash_unittest.cc] matches tests defined in the source file base/hash_unittest.cc. |
 | step | [step==content_browsertests (with patch)]|
-| suite | In Findit, suite is the smallest group of tests that are defined in the same file or directory, with some special cases.|
+| suite | In Flake Portal, suite is the smallest group of tests that are defined in the same file or directory, with some special cases.|
 ||[suite==GCMConnectionHandlerImplTest] matches gtest GCMConnectionHandlerImplTest.*|
 ||[suite==FullscreenVideoTest] matches Java tests *.FullscreenVideoTest#test.*|
 ||[suite==third_party/blink/web_tests/fast/events] matches Blink layout tests fast/events/*|
@@ -177,9 +177,12 @@ Component view shows
 
 ## Contacts
 ### Reporting problems
-For any breakage report and feature requests, please [file a bug].
+For any breakage report and feature requests, please
+ * [file a bug for Flake Analyzer].
+ * [file a bug for other Flakiness Tooling].
 ### Mailing list
-For questions and general discussions, please use [findit group].
+* For questions and general discussions on Flake Analyzer, please use [findit group].
+* For questions and general discussions on other Flakiness Tooling, please use [CTI group].
 ## FAQ
 ### What's the difference between Flake Portal and the
 [Legacy Flakniness Dashboard](https://test-results.appspot.com/dashboards/flakiness_dashboard.html)?
@@ -200,14 +203,16 @@ For questions and general discussions, please use [findit group].
 [Component Report]: images/component_report.png
 [CQ]: https://chrome-internal.googlesource.com/infra/infra_internal/+/master/infra_internal/services/cq/README.md
 [cq_raw]: https://bigquery.cloud.google.com/table/chrome-infra-events:raw_events.cq
+[CTI group]: https://groups.google.com/a/google.com/forum/#!forum/chops-cti
 [directory==base/]: https://analysis.chromium.org/p/chromium/flake-portal/flakes?flake_filter=directory::base/
 [Example of gtests with different parameters]: images/gtests_with_different_parameters.png
 [Example of webkit layout tests with different queries]: images/webkit_layout_tests_with_different_queries.png
 [external/wpt/IndexedDB/interleaved-cursors-large.html]: https://analysis.chromium.org/p/chromium/flake-portal/flakes?flake_filter=test::external/wpt/IndexedDB/interleaved-cursors-large.html
-[file a bug]: https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ETest%3EFlakiness
+[file a bug for Flake Analyzer]: https://bugs.chromium.org/p/chromium/issues/entry?components=Tools%3ETest%3EFindIt%3EFlakiness
+[file a bug for other Flakiness Tooling]: https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ETest%3EFlakiness
 [Filter Flakes Example]: images/filter_flakes.png
 [Findit]: https://analysis.chromium.org
-[findit group]: https://groups.google.com/a/chromium.org/forum/?pli=1#!forum/findit
+[findit group]: https://groups.google.com/a/google.com/forum/#!forum/chops-cti
 [Flake portal]: https://analysis.chromium.org/p/chromium/flake-portal
 [Flake Score Example]: images/flake_score.png
 [Flakes]: https://analysis.chromium.org/p/chromium/flake-portal/flakes
@@ -217,9 +222,9 @@ For questions and general discussions, please use [findit group].
 [OWNERS]: https://cs.chromium.org/chromium/src/third_party/blink/renderer/modules/accessibility/OWNERS?q=COMPONENT
 [parent_component==Blink>Accessibility]: https://analysis.chromium.org/p/chromium/flake-portal/flakes?flake_filter=parent_component::Blink>Accessibility
 [post-analysis bug]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=test-findit-analyzed&colspec=ID+Pri+M+Stars+ReleaseBlock+Component+Status+Owner+Summary+OS+Modified&x=m&y=releaseblock&cells=ids
-[pre-analysis bugs]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=test-findit-detected&colspec=ID+Pri+M+Stars+ReleaseBlock+Component+Status+Owner+Summary+OS+Modified&x=m&y=releaseblock&cells=ids
+[pre-analysis bugs]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=test-flake-detected&colspec=ID+Pri+M+Stars+ReleaseBlock+Component+Status+Owner+Summary+OS+Modified&x=m&y=releaseblock&cells=ids
 [Project Report]: images/project_report.png
-[Report]: https://findit-for-me.appspot.com/p/chromium/flake-portal/report
+[Report]: https://analysis.chromium.org/p/chromium/flake-portal/report
 [Search Flake Example]: images/search_flake.png
 [source==base/hash_unittest.cc]: https://analysis.chromium.org/p/chromium/flake-portal/flakes?flake_filter=source::base/hash_unittest.cc
 [SQL queries]: https://cs.chromium.org/chromium/infra/appengine/findit/services/flake_detection/

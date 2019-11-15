@@ -50,7 +50,7 @@ _WRONG_CULPRIT_LINK_TEMPLATE = (
     'https://bugs.chromium.org/p/chromium/issues/entry?'
     'status=Unconfirmed&'
     'labels=Pri-1,Test-Findit-Wrong&'
-    'components=Infra%3ETest%3EFlakiness&'
+    'components=Tools%3ETest%3EFindIt%3EFlakiness&'
     'summary=%5BFindit%5D%20Flake%20Analyzer%20-%20Wrong%20culprit%20'
     'r{commit_position}&comment=Link%20to%20Culprit%3A%20{culprit_link}')
 
@@ -72,7 +72,7 @@ Automatically posted by the findit-for-me app (https://goo.gl/6D5FZh).""")
 _FLAKE_DETECTION_BUG_DESCRIPTION = textwrap.dedent("""
 {test_name} is flaky.
 
-Findit has detected {num_occurrences} flake occurrences of this test within the
+{num_occurrences} flake occurrences of this test have been detected within the
 past 24 hours. List of all flake occurrences can be found at:
 {flake_url}.
 
@@ -85,7 +85,7 @@ within 30 minutes then find an appropriate owner.
 _FLAKE_DETECTION_BUG_COMMENT = textwrap.dedent("""
 {test_name} is flaky.
 
-Findit has detected {num_occurrences} new flake occurrences of this test. List
+{num_occurrences} new flake occurrences of this test have been detected. List
 of all flake occurrences can be found at:
 {flake_url}.
 
@@ -95,9 +95,9 @@ of all flake occurrences can be found at:
 
 _FLAKE_DETECTION_WRONG_RESULTS_BUG_LINK = (
     'https://bugs.chromium.org/p/chromium/issues/entry?'
-    'status=Unconfirmed&labels=Pri-1,Test-Findit-Wrong&'
+    'status=Unconfirmed&labels=Pri-1,Test-Flake-Detection-Wrong&'
     'components=Infra%3ETest%3EFlakiness&'
-    'summary=%5BFindit%5D%20Flake%20Detection%20-%20Wrong%20result%3A%20'
+    'summary=Flake%20Detection%20-%20Wrong%20result%3A%20'
     '{summary}&comment=Link%20to%20flake%20details%3A%20{flake_link}')
 
 _FLAKE_DETECTION_PREVIOUS_TRACKING_BUG = (
@@ -107,14 +107,14 @@ _FLAKE_DETECTION_FOOTER_TEMPLATE = textwrap.dedent(
     """If the result above is wrong, please file a bug using this link:
 {wrong_results_bug_link}
 
-Automatically posted by the findit-for-me app (https://goo.gl/Ne6KtC).""")
+Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""")
 
 ############### Below are bug templates for flake groups. ###############
 # Bug template for a group of detected flakes.
 _FLAKE_DETECTION_GROUP_BUG_DESCRIPTION = textwrap.dedent("""
 Tests in {canonical_step_name} is flaky.
 
-Findit has detected {num_occurrences} flake occurrences of tests below within
+{num_occurrences} flake occurrences of tests below have been detected within
 the past 24 hours:
 
 {flake_list}
@@ -136,7 +136,7 @@ _BACK_ONTO_SHERIFF_QUEUE_MESSAGE = (
     ' Sheriff Bug Queue if it hasn\'t already.')
 
 _FLAKE_DETECTION_GROUP_BUG_COMMENT = textwrap.dedent("""
-Findit has detected {num_occurrences} new flake occurrences of tests in this bug
+{num_occurrences} new flake occurrences of tests in this bug have been detected
 within the past 24 hours.
 
 List of all flake occurrences can be found at:
@@ -150,7 +150,7 @@ _DUPLICATE_FLAKE_BUG_COMMENT = textwrap.dedent("""
 This flake has been identified as being introduced in r{commit_position}.
 See {culprit_url} for details.
 
-In the case that Findit's finding is wrong, please unmerge the bug.
+In the case that the finding is wrong, please unmerge the bug.
 """)
 
 
