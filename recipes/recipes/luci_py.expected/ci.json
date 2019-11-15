@@ -17,7 +17,9 @@
       "--revision",
       "infra@origin/master",
       "--revision",
-      "infra/luci@origin/master"
+      "infra/luci@origin/master",
+      "--refs",
+      "refs/heads/master"
     ],
     "env_suffixes": {
       "PATH": [

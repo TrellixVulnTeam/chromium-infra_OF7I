@@ -30,7 +30,9 @@
       "--output_json",
       "/path/to/tmp/json",
       "--revision",
-      "s@HEAD"
+      "s@HEAD",
+      "--refs",
+      "refs/heads/master"
     ],
     "cwd": "[CACHE]/builder/https___chromium_chromium_tools_build",
     "env_suffixes": {
