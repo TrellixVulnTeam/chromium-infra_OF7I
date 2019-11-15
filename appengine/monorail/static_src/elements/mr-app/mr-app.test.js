@@ -55,14 +55,6 @@ describe('mr-app', () => {
       x: 'owner'});
   });
 
-  it('_universalRouteHandler ignores setQueryParams for jump-to-issue', () => {
-    const ctx = {querystring: 'id=123'};
-    const next = sinon.stub();
-    element._universalRouteHandler(ctx, next);
-
-    assert.deepEqual(element.queryParams, {});
-  });
-
   it('_loadIssuePage loads issue page', async () => {
     await element._loadIssuePage({
       query: {id: '234'},
