@@ -124,7 +124,6 @@ describe('extract headings from x and y attributes', () => {
   });
 
   it('extract headings from Component attribute', () => {
-    debugger;
     const issues = [
       {'otherIssueProperty': 'issueProperty'},
       {'componentRefs': [{'path': 'UI'}]},
