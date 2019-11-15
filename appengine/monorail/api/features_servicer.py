@@ -160,6 +160,30 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return result
 
   @monorail_servicer.PRPCMethod
+  def GetHotlist(self, mc, request):
+    """Get the Hotlist metadata for the specified hotlist."""
+    if (not request.hotlist_ref or
+        not request.hotlist_ref.name or not request.hotlist_ref.owner):
+      raise exceptions.InputException(
+          'Param `hotlist_name` and `owner_ref` required')
+    hotlist_id = converters.IngestHotlistRef(
+        mc.cnxn, self.services.user, self.services.features,
+        request.hotlist_ref)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      mc.LookupLoggedInUserPerms(None)
+      hotlist = we.GetHotlist(hotlist_id)
+
+    with mc.profiler.Phase('making user views'):
+      users_involved = features_bizobj.UsersInvolvedInHotlists([hotlist])
+      users_by_id = framework_views.MakeAllUserViews(
+          mc.cnxn, self.services.user, users_involved)
+      framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
+
+    converted_hotlist = converters.ConvertHotlist(hotlist, users_by_id)
+    return features_pb2.GetHotlistResponse(hotlist=converted_hotlist)
+
+  @monorail_servicer.PRPCMethod
   def ListHotlistIssues(self, mc, request):
     """Get the issues on the specified hotlist."""
     # TODO(ehmaldonado): This probably doesn't work, since we need to check

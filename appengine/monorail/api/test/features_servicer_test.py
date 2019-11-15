@@ -26,6 +26,7 @@ from framework import exceptions
 from framework import monorailcontext
 from framework import permissions
 from testing import fake
+from testing import testing_helpers
 from tracker import tracker_bizobj
 from services import features_svc
 from services import service_manager
@@ -574,6 +575,41 @@ class FeaturesServicerTest(unittest.TestCase):
     self.assertEqual(
         0, self.CallStar(requester='user_222@example.com', starred=False))
     self.assertEqual(0, self.CallGetStarCount())
+
+  def testGetHotlist(self):
+    hotlist = self.services.features.CreateHotlist(
+        self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
+        owner_ids=[self.user3.user_id], editor_ids=[self.user4.user_id])
+
+    owner_ref = common_pb2.UserRef(user_id=self.user3.user_id)
+    hotlist_ref = common_pb2.HotlistRef(
+        name=hotlist.name, owner=owner_ref)
+    request = features_pb2.GetHotlistRequest(hotlist_ref=hotlist_ref)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user4.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(
+        self.features_svcr.GetHotlist, mc, request)
+
+    self.assertEqual(
+        response.hotlist,
+        features_objects_pb2.Hotlist(
+          owner_ref=common_pb2.UserRef(
+              user_id=self.user3.user_id,
+              display_name=testing_helpers.ObscuredEmail(self.user3.email)),
+          name=hotlist.name,
+          summary=hotlist.summary,
+          description=hotlist.description))
+
+  def testGetHotlist_BadInput(self):
+    hotlist_ref = common_pb2.HotlistRef()
+    request = features_pb2.GetHotlistRequest(hotlist_ref=hotlist_ref)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester='foo@example.com')
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.features_svcr.GetHotlist, mc, request)
 
   def testListHotlistIssues(self):
     hotlist_id = self.services.features.CreateHotlist(

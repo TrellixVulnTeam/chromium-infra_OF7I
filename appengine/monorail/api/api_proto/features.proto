@@ -17,6 +17,7 @@ service Features {
   rpc ListStarredHotlists (ListStarredHotlistsRequest) returns (ListStarredHotlistsResponse) {}
   rpc GetHotlistStarCount (GetHotlistStarCountRequest) returns (GetHotlistStarCountResponse) {}
   rpc StarHotlist (StarHotlistRequest) returns (StarHotlistResponse) {}
+  rpc GetHotlist (GetHotlistRequest) returns (GetHotlistResponse) {}
   rpc ListHotlistIssues (ListHotlistIssuesRequest) returns (ListHotlistIssuesResponse) {}
   rpc CreateHotlist (CreateHotlistRequest) returns (CreateHotlistResponse) {}
   rpc CheckHotlistName (CheckHotlistNameRequest) returns (CheckHotlistNameResponse) {}
@@ -100,6 +101,15 @@ message StarHotlistResponse {
   uint32 star_count = 1;
 }
 
+// Next available tag: 2
+message GetHotlistRequest {
+  HotlistRef hotlist_ref = 1;
+}
+
+// Next available tag: 2
+message GetHotlistResponse {
+  Hotlist hotlist = 1;
+}
 
 // Next available tag: 4
 message ListHotlistIssuesRequest {
