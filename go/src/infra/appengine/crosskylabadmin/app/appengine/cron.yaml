@@ -40,3 +40,9 @@ cron:
 - description: tsmon house keeping
   url: /internal/cron/ts_mon/housekeeping
   schedule: every 1 minutes
+
+- description: dump stable version to datastore
+  url: /internal/cron/dump-stable-version-to-datastore
+  schedule: every 60 minutes
+  retry_parameters:
+    job_retry_limit: 3
