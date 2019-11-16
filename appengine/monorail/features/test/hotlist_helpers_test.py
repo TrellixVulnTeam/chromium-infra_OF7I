@@ -183,14 +183,13 @@ class HelpersUnitTest(unittest.TestCase):
 
   def testFilterIssues(self):
     test_allowed_issues = hotlist_helpers.FilterIssues(
-        self.mr, self.issues, self.services)
+        self.mr.cnxn, self.mr.auth, 2, self.issues, self.services)
     self.assertEqual(len(test_allowed_issues), 1)
     self.assertEqual(test_allowed_issues[0].local_id, 3)
 
   def testFilterIssues_ShowClosed(self):
-    self.mr.can = 1
     test_allowed_issues = hotlist_helpers.FilterIssues(
-        self.mr, self.issues, self.services)
+        self.mr.cnxn, self.mr.auth, 1, self.issues, self.services)
     self.assertEqual(len(test_allowed_issues), 2)
     self.assertEqual(test_allowed_issues[0].local_id, 3)
     self.assertEqual(test_allowed_issues[1].local_id, 4)

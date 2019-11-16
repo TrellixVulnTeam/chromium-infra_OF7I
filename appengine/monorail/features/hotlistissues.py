@@ -268,7 +268,7 @@ class HotlistIssues(servlet.Servlet):
         [hotlist_issue.issue_id for hotlist_issue
          in mr.hotlist.items])
     allowed_issues = hotlist_helpers.FilterIssues(
-        mr, issues_list, self.services)
+        mr.cnxn, mr.auth, mr.can, issues_list, self.services)
     issue_and_hotlist_users = tracker_bizobj.UsersInvolvedInIssues(
         allowed_issues or []).union(features_bizobj.UsersInvolvedInHotlists(
             [mr.hotlist]))

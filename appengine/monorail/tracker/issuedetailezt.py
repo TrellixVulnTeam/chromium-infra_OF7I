@@ -217,7 +217,8 @@ class FlipperIndex(jsonfeed.JsonFeed):
           raise permissions.PermissionException()
 
         (prev_iid, cur_index, next_iid, total_count
-            ) = we.GetIssuePositionInHotlist(issue, hotlist)
+            ) = we.GetIssuePositionInHotlist(
+                issue, hotlist, mr.can, mr.sort_spec, mr.group_by_spec)
       else:
         (prev_iid, cur_index, next_iid, total_count
             ) = we.FindIssuePositionInSearch(issue)

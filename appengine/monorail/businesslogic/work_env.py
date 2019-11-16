@@ -1349,13 +1349,17 @@ class WorkEnv(object):
     """
     return self.LookupIssuesFlaggers([issue])[issue.issue_id]
 
-  # TODO(jrobbins): This method also requires self.mc to be a MonorailRequest.
-  def GetIssuePositionInHotlist(self, current_issue, hotlist):
+  def GetIssuePositionInHotlist(
+      self, current_issue, hotlist, can, sort_spec, group_by_spec):
+    # type: (Issue, Hotlist, int, str, str) -> (int, int, int, int)
     """Get index info of an issue within a hotlist.
 
     Args:
       current_issue: the currently viewed issue.
       hotlist: the hotlist this flipper is flipping through.
+      can: int "canned query" number to scope the visible issues.
+      sort_spec: string that lists the sort order.
+      group_by_spec: string that lists the grouping order.
     """
     issues_list = self.services.issue.GetIssues(self.mc.cnxn,
         [item.issue_id for item in hotlist.items])
@@ -1364,11 +1368,11 @@ class WorkEnv(object):
     config_list = hotlist_helpers.GetAllConfigsOfProjects(
         self.mc.cnxn, project_ids, self.services)
     harmonized_config = tracker_bizobj.HarmonizeConfigs(config_list)
-    mr = self.mc  # TODO(jrobbins): change GetSortedHotlistIssues.
     (sorted_issues, _hotlist_issues_context,
      _users) = hotlist_helpers.GetSortedHotlistIssues(
-         mr, hotlist.items, issues_list, harmonized_config,
-         self.services)
+         self.mc.cnxn, hotlist.items, issues_list, self.mc.auth,
+         can, sort_spec, group_by_spec, harmonized_config, self.services,
+         self.mc.profiler)
     (prev_iid, cur_index,
      next_iid) = features_bizobj.DetermineHotlistIssuePosition(
          current_issue, [issue.issue_id for issue in sorted_issues])

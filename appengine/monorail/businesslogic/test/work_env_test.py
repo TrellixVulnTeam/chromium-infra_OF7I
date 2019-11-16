@@ -2196,6 +2196,33 @@ class WorkEnvTest(unittest.TestCase):
       self.assertEqual([222], issue_reporters)
       self.assertEqual({comment_2.id: [111]}, comment_reporters)
 
+  def testGetIssuePositionInHotlist(self):
+    issue1 = fake.MakeTestIssue(
+        789, 1, 'sum1', 'New', self.user_1.user_id, issue_id=78901)
+    self.services.issue.TestAddIssue(issue1)
+    issue2 = fake.MakeTestIssue(
+        789, 2, 'sum1', 'New', self.user_2.user_id, issue_id=78902)
+    self.services.issue.TestAddIssue(issue2)
+    issue3 = fake.MakeTestIssue(
+        789, 3, 'sum1', 'New', self.user_3.user_id, issue_id=78903)
+    self.services.issue.TestAddIssue(issue3)
+
+    hotlist = self.work_env.services.features.CreateHotlist(
+        self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
+        owner_ids=[self.user_1.user_id], editor_ids=[])
+    self.AddIssueToHotlist(hotlist.hotlist_id, issue_id=issue2.issue_id)
+    self.AddIssueToHotlist(hotlist.hotlist_id, issue_id=issue1.issue_id)
+    self.AddIssueToHotlist(hotlist.hotlist_id, issue_id=issue3.issue_id)
+
+    with self.work_env as we:
+      prev_iid, cur_index, next_iid, total_count = we.GetIssuePositionInHotlist(
+          issue1, hotlist, 1, 'rank', '')
+
+    self.assertEqual(prev_iid, issue2.issue_id)
+    self.assertEqual(cur_index, 1)
+    self.assertEqual(next_iid, issue3.issue_id)
+    self.assertEqual(total_count, 3)
+
   def testRerankBlockedOnIssues_SplitBelow(self):
     parent_issue = fake.MakeTestIssue(
         789, 1, 'sum', 'New', 111, project_name='proj', issue_id=1001)

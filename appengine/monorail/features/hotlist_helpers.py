@@ -31,66 +31,96 @@ HotlistRef = collections.namedtuple('HotlistRef', 'user_id, hotlist_name')
 
 
 def GetSortedHotlistIssues(
-    mr, hotlist_issues, issues_list, harmonized_config, services):
-  with mr.profiler.Phase('Checking issue permissions and getting ranks'):
+    cnxn, hotlist_items, issues, auth, can, sort_spec, group_by_spec,
+    harmonized_config, services, profiler):
+  # type: (MonorailConnection, List[HotlistItem], List[Issue], AuthData,
+  #        ProjectIssueConfig, Services, Profiler) -> (List[Issue], Dict, Dict)
+  """Sorts the given HotlistItems and Issues and filters out Issues that
+     the user cannot view.
 
-    allowed_issues = FilterIssues(mr, issues_list, services)
+  Args:
+    cnxn: MonorailConnection for connection to the SQL database.
+    hotlist_items: list of HotlistItems in the Hotlist we want to sort.
+    issues: list of Issues in the Hotlist we want to sort.
+    auth: AuthData object that identifies the logged in user.
+    can: int "canned query" number to scope the visible issues.
+    sort_spec: string that lists the sort order.
+    group_by_spec: string that lists the grouping order.
+    harmonized_config: ProjectIssueConfig created from all configs of projects
+      with issues in the issues list.
+    services: Services object for connections to backend services.
+    profiler: Profiler object to display and record processes.
+
+  Returns:
+    A tuple of (sorted_issues, hotlist_items_context, issues_users_by_id) where:
+
+    sorted_issues: list of Issues that are sorted and issues the user cannot
+      view are filtered out.
+    hotlist_items_context: a dict of dicts providing HotlistItem values that
+      are associated with each Hotlist Issue. E.g:
+      {issue.issue_id: {'issue_rank': hotlist item rank,
+                        'adder_id': hotlist item adder's user_id,
+                        'date_added': timestamp when this issue was added to the
+                          hotlist,
+                        'note': note for this issue in the hotlist,},
+       issue.issue_id: {...}}
+     issues_users_by_id: dict of {user_id: UserView, ...} for all users involved
+       in the hotlist items and issues.
+  """
+  with profiler.Phase('Checking issue permissions and getting ranks'):
+
+    allowed_issues = FilterIssues(cnxn, auth, can, issues, services)
     allowed_iids = [issue.issue_id for issue in allowed_issues]
     # The values for issues in a hotlist are specific to the hotlist
     # (rank, adder, added) without invalidating the keys, an issue will retain
     # the rank value it has in one hotlist when navigating to another hotlist.
     sorting.InvalidateArtValuesKeys(
-        mr.cnxn, [issue.issue_id for issue in allowed_issues])
+        cnxn, [issue.issue_id for issue in allowed_issues])
     sorted_ranks = sorted(
-        [hotlist_issue.rank for hotlist_issue in hotlist_issues if
-         hotlist_issue.issue_id in allowed_iids])
+        [hotlist_item.rank for hotlist_item in hotlist_items if
+         hotlist_item.issue_id in allowed_iids])
     friendly_ranks = {
         rank: friendly for friendly, rank in enumerate(sorted_ranks, 1)}
     issue_adders = framework_views.MakeAllUserViews(
-        mr.cnxn, services.user, [hotlist_issue.adder_id for
-                                 hotlist_issue in hotlist_issues])
-    hotlist_issues_context = {
-        hotlist_issue.issue_id: {'issue_rank':
-                                 friendly_ranks[hotlist_issue.rank],
-                                 'adder_id': hotlist_issue.adder_id,
+        cnxn, services.user, [hotlist_item.adder_id for
+                                 hotlist_item in hotlist_items])
+    hotlist_items_context = {
+        hotlist_item.issue_id: {'issue_rank':
+                                 friendly_ranks[hotlist_item.rank],
+                                 'adder_id': hotlist_item.adder_id,
                                  'date_added': timestr.FormatAbsoluteDate(
-                                     hotlist_issue.date_added),
-                                 'note': hotlist_issue.note}
-        for hotlist_issue in hotlist_issues if
-        hotlist_issue.issue_id in allowed_iids}
+                                     hotlist_item.date_added),
+                                 'note': hotlist_item.note}
+        for hotlist_item in hotlist_items if
+        hotlist_item.issue_id in allowed_iids}
 
-  with mr.profiler.Phase('Making user views'):
+  with profiler.Phase('Making user views'):
     issues_users_by_id = framework_views.MakeAllUserViews(
-        mr.cnxn, services.user,
+        cnxn, services.user,
         tracker_bizobj.UsersInvolvedInIssues(allowed_issues or []))
     issues_users_by_id.update(issue_adders)
 
-  with mr.profiler.Phase('Sorting issues'):
+  with profiler.Phase('Sorting issues'):
     sortable_fields = tracker_helpers.SORTABLE_FIELDS.copy()
     sortable_fields.update(
-        {'rank': lambda issue: hotlist_issues_context[
+        {'rank': lambda issue: hotlist_items_context[
             issue.issue_id]['issue_rank'],
-         'adder': lambda issue: hotlist_issues_context[
+         'adder': lambda issue: hotlist_items_context[
              issue.issue_id]['adder_id'],
-         'added': lambda issue: hotlist_issues_context[
+         'added': lambda issue: hotlist_items_context[
              issue.issue_id]['date_added'],
-         'note': lambda issue: hotlist_issues_context[
+         'note': lambda issue: hotlist_items_context[
              issue.issue_id]['note']})
     sortable_postproc = tracker_helpers.SORTABLE_FIELDS_POSTPROCESSORS.copy()
     sortable_postproc.update(
         {'adder': lambda user_view: user_view.email,
         })
-    # With no sort_spec specified, a hotlist should default to be sorted by
-    # 'rank'. mr.sort_spec needs to be modified because hotlistissues.py:89
-    # checks for 'rank' in mr.sort_spec to determine if drag and drop reranking
-    # should be enabled.
-    if not mr.sort_spec:
-      mr.sort_spec = 'rank'
+
     sorted_issues = sorting.SortArtifacts(
         allowed_issues, harmonized_config, sortable_fields,
-        sortable_postproc, mr.group_by_spec, mr.sort_spec,
+        sortable_postproc, group_by_spec, sort_spec,
         users_by_id=issues_users_by_id, tie_breakers=['rank', 'id'])
-    return sorted_issues, hotlist_issues_context, issues_users_by_id
+    return sorted_issues, hotlist_items_context, issues_users_by_id
 
 
 def CreateHotlistTableData(mr, hotlist_issues, services):
@@ -113,9 +143,16 @@ def CreateHotlistTableData(mr, hotlist_issues, services):
         mr.cnxn, hotlist_issues_project_ids, services)
     harmonized_config = tracker_bizobj.HarmonizeConfigs(config_list)
 
+  # With no sort_spec specified, a hotlist should default to be sorted by
+  # 'rank'. sort_spec needs to be modified because hotlistissues.py
+  # checks for 'rank' in sort_spec to set 'allow_rerank' which determines if
+  # drag and drop reranking should be enabled.
+  if not mr.sort_spec:
+    mr.sort_spec = 'rank'
   (sorted_issues, hotlist_issues_context,
    issues_users_by_id) = GetSortedHotlistIssues(
-       mr, hotlist_issues, issues_list, harmonized_config, services)
+       mr.cnxn, hotlist_issues, issues_list, mr.auth, mr.can, mr.sort_spec,
+       mr.group_by_spec, harmonized_config, services, mr.profiler)
 
   with mr.profiler.Phase("getting related issues"):
     related_iids = set()
@@ -201,26 +238,36 @@ def _MakeTableData(issues, starred_iid_set, lower_columns,
   return table_data
 
 
-def FilterIssues(mr, issues, services):
-  """Return a list of issues that the user is allowed to view."""
+def FilterIssues(cnxn, auth, can, issues, services):
+  # (MonorailConnection, AuthData, int, List[Issue], Services) -> List[Issue]
+  """Return a list of issues that the user is allowed to view.
+
+  Args:
+    cnxn: MonorailConnection for connection to the SQL database.
+    auth: AuthData object that identifies the logged in user.
+    can: in "canned_query" number to scope the visible issues.
+    issues: list of Issues to be filtered.
+    services: Services object for connections to backend services.
+
+  Returns:
+    A list of Issues that the user has permissions to view.
+  """
   allowed_issues = []
   project_ids = GetAllProjectsOfIssues(issues)
-  issue_projects = services.project.GetProjects(mr.cnxn, project_ids)
-  configs_by_project_id = services.config.GetProjectConfigs(
-      mr.cnxn, project_ids)
+  issue_projects = services.project.GetProjects(cnxn, project_ids)
+  configs_by_project_id = services.config.GetProjectConfigs(cnxn, project_ids)
   perms_by_project_id = {
-      pid: permissions.GetPermissions(
-          mr.auth.user_pb, mr.auth.effective_ids, p)
+      pid: permissions.GetPermissions(auth.user_pb, auth.effective_ids, p)
       for pid, p in issue_projects.items()}
   for issue in issues:
-    if (mr.can == 1) or not issue.closed_timestamp:
+    if (can == 1) or not issue.closed_timestamp:
       issue_project = issue_projects[issue.project_id]
       config = configs_by_project_id[issue.project_id]
       perms = perms_by_project_id[issue.project_id]
       granted_perms = tracker_bizobj.GetGrantedPerms(
-          issue, mr.auth.effective_ids, config)
+          issue, auth.effective_ids, config)
       permit_view = permissions.CanViewIssue(
-          mr.auth.effective_ids, perms,
+          auth.effective_ids, perms,
           issue_project, issue, granted_perms=granted_perms)
       if permit_view:
         allowed_issues.append(issue)
