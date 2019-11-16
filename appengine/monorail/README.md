@@ -21,20 +21,25 @@ These instructions may work with other Debian derivatives:
     1.  It should be fetched for you by step 1 above (during runhooks)
     1.  Otherwise, you can download it from https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python
 1.  Install MySQL v5.6.
-    1. If you're on a Debian derivative, use your package manager:
+    1. On a Debian derivative, use your package manager:
         1.  `sudo apt-get install default-mysql-server default-mysql-client`
-    1. Otherwise, download from the [offical page](http://dev.mysql.com/downloads/mysql/5.6.html#downloads).
+    1. On OS X, use Homebrew:
+        1.  `brew install mysql@5.6`
+    1. Otherwise, download from the [official page](http://dev.mysql.com/downloads/mysql/5.6.html#downloads).
         1.  **Do not download v5.7 (as of April 2016)**
-1.  Get the database backend running and use the command-line to create a database named "monorail":
+1.  Get the database backend configured and running:
     1.  Allow passwordless authentication from non-root users:
         1.  `sudo mysql -uroot mysql -e "UPDATE user SET host='%', plugin='' WHERE user='root'; FLUSH PRIVILEGES;"`
     1.  Disable `STRICT_TRANS_TABLES`
         1.  `echo -e "[mysqld]\nsql_mode = ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" | sudo tee /etc/mysql/conf.d/99-sql-mode.cnf`
     1.  `sudo /etc/init.d/mysql restart`
-    1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
-1.  Install Python MySQLdb. Either:
-    1.  `sudo apt-get install python-mysqldb`
-    1.  Or, download from http://sourceforge.net/projects/mysql-python/
+1.  Install Python MySQLdb.
+    1.  On Debian, use apt-get:
+        1. `sudo apt-get install python-mysqldb`
+    1.  On OS X, use pip:
+        1. `export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
+        1. `pip install MYSQL-python`
+    1.  Otherwise, download from http://sourceforge.net/projects/mysql-python/
         1.  Follow instructions to install.
         1.  If needed, add these lines to your ~/.profile file and restart on MacOS 10.8:
             1.  setenv DYLD_LIBRARY_PATH /usr/local/mysql/lib/
@@ -45,6 +50,7 @@ These instructions may work with other Debian derivatives:
   /usr/local/mysql/lib/libmysqlclient.18.dylib \
   /Library/Python/2.7/site-packages/_mysql.so`
 1.  Set up one master SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
+    1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
     1.  `mysql --user=root monorail < schema/framework.sql`
     1.  `mysql --user=root monorail < schema/project.sql`
     1.  `mysql --user=root monorail < schema/tracker.sql`
