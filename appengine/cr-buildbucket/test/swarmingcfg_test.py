@@ -71,6 +71,38 @@ class ProjectCfgTest(testing.AppengineTestCase):
             }
           }
           builders {
+            name: "custom exe"
+            swarming_tags: "a:b'"
+            dimensions: "os:Linux"
+            dimensions: "cpu:"
+            service_account: "robot@example.com"
+            caches {
+              name: "git_chromium"
+              path: "git_cache"
+            }
+            exe {
+              cipd_package: "infra/executable/foo"
+              cipd_version: "refs/heads/master"
+            }
+            properties: "{\\"a\\":\\"b\\",\\"x\\":true}"
+          }
+          builders {
+            name: "another custom exe"
+            swarming_tags: "a:b'"
+            dimensions: "os:Linux"
+            dimensions: "cpu:"
+            service_account: "robot@example.com"
+            caches {
+              name: "git_chromium"
+              path: "git_cache"
+            }
+            exe {
+              cipd_package: "infra/executable/bar"
+              cipd_version: "refs/heads/master"
+            }
+            properties: "{}"
+          }
+          builders {
             name: "release cipd"
             recipe {
               cipd_package: "some/package"
@@ -152,8 +184,79 @@ class ProjectCfgTest(testing.AppengineTestCase):
         [
             'builder #1: name: unspecified',
             'builder #1: swarming_host: unspecified',
-            'builder #1: recipe: name: unspecified',
-            'builder #1: recipe: cipd_package: unspecified',
+            'builder #1: exactly one of exe or recipe must be specified',
+        ],
+    )
+
+    self.cfg_test(
+        '''
+          builder_defaults {
+            swarming_host: "example.com"
+          }
+          builders {
+            name: "neither"
+          }
+          builders {
+            name: "both"
+            exe {
+              cipd_package: "infra/executable"
+            }
+            recipe {
+              name: "foo"
+              cipd_package: "infra/recipe_bundle"
+            }
+          }
+          builders {
+            name: "bad exe"
+            exe {
+              cipd_version: "refs/heads/master"
+            }
+          }
+          builders {
+            name: "non json properties"
+            exe {
+              cipd_package: "infra/executable"
+            }
+            properties: "{1:2}"
+          }
+          builders {
+            name: "non dict properties"
+            exe {
+              cipd_package: "infra/executable"
+            }
+            properties: "[]"
+          }
+          builders {
+            name: "bad recipe"
+            recipe {
+              cipd_version: "refs/heads/master"
+            }
+          }
+          builders {
+            name: "recipe and properties"
+            recipe {
+              name: "foo"
+              cipd_package: "infra/recipe_bundle"
+            }
+            properties: "{}"
+          }
+        ''',
+        '',
+        [
+            'builder neither: exactly one of exe or recipe must be specified',
+            'builder both: exactly one of exe or recipe must be specified',
+            'builder bad exe: exe: cipd_package: unspecified',
+            (
+                'builder non json properties: Expecting property name enclosed '
+                'in double quotes: line 1 column 2 (char 1)'
+            ),
+            'builder non dict properties: properties is not a dict',
+            'builder bad recipe: recipe: name: unspecified',
+            'builder bad recipe: recipe: cipd_package: unspecified',
+            (
+                'builder recipe and properties: recipe and properties cannot '
+                'be set together'
+            ),
         ],
     )
 

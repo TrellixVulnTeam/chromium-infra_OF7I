@@ -162,6 +162,16 @@ def _validate_relative_path(path, ctx):
     ctx.error('cannot start with "/"')
 
 
+def _validate_exe_cfg(exe, ctx, final=True):
+  """Validates an Executable message.
+
+  If final is False, does not validate for completeness.
+  """
+  if final:
+    if not exe.cipd_package:
+      ctx.error('cipd_package: unspecified')
+
+
 def _validate_recipe_cfg(recipe, ctx, final=True):
   """Validates a Recipe message.
 
@@ -217,6 +227,16 @@ def validate_recipe_properties(properties, properties_j, ctx):
     validate(properties, False)
   with ctx.prefix('properties_j '):
     validate(properties_j, True)
+
+
+def _validate_properties(properties, ctx):
+  try:
+    properties_d = json.loads(properties)
+  except ValueError as ex:
+    ctx.error('%s', ex)
+    return
+  if not isinstance(properties_d, dict):
+    ctx.error('properties is not a dict')
 
 
 def validate_builder_cfg(builder, mixin_names, final, ctx):
@@ -275,11 +295,24 @@ def validate_builder_cfg(builder, mixin_names, final, ctx):
         len(fallback_secs)
     )
 
-  with ctx.prefix('recipe: '):
-    _validate_recipe_cfg(builder.recipe, ctx, final=final)
+  has_exe = builder.HasField('exe')
+  has_recipe = builder.HasField('recipe')
+  if final and ((not has_exe and not has_recipe) or (has_exe and has_recipe)):
+    ctx.error('exactly one of exe or recipe must be specified')
+  if has_exe:
+    with ctx.prefix('exe: '):
+      _validate_exe_cfg(builder.exe, ctx, final=final)
+  elif has_recipe:
+    if builder.properties:
+      ctx.error('recipe and properties cannot be set together')
+    with ctx.prefix('recipe: '):
+      _validate_recipe_cfg(builder.recipe, ctx, final=final)
 
   if builder.priority and (builder.priority < 20 or builder.priority > 255):
     ctx.error('priority: must be in [20, 255] range; got %d', builder.priority)
+
+  if builder.properties:
+    _validate_properties(builder.properties, ctx)
 
   if builder.service_account:
     with ctx.prefix('service_account: '):
