@@ -307,8 +307,15 @@ def _roll_built_images(api, spec, images, meta):
         cmd=[root.join('scripts', 'roll_images.py')],
         stdin=api.json.input({'tags': tags}),
         stdout=api.json.output(),
-        step_test_data=lambda: api.json.test_api.output_stream({'tags': tags}))
+        step_test_data=lambda: api.json.test_api.output_stream({
+            'tags': tags,
+            'deployments': [
+                {'cc': ['n1@example.com', 'n2@example.com']},
+                {'cc': ['n3@example.com', 'n1@example.com']},
+            ],
+        }))
     rolled = res.stdout['tags']
+    deployments = res.stdout.get('deployments') or []
 
     # Delete old unused tags (if any).
     api.step(
@@ -337,13 +344,20 @@ def _roll_built_images(api, spec, images, meta):
       desc.extend('  * %s:%s' % (t['image'], t['tag']['tag']) for t in rolled)
     desc = str('\n'.join(desc))
 
+    # List of people to CC based on what staging deployments were updated.
+    extra_cc = set()
+    for dep in deployments:
+      extra_cc.update(dep.get('cc') or [])
+
     # Upload a CL.
     api.git('commit', '-m', desc)
     api.git_cl.upload(desc, name='git cl upload', upload_args=[
         '--force', # skip asking for description, we already set it
     ] + [
         '--tbrs=%s' % tbr for tbr in spec.tbr
-    ] + (['--use-commit-queue'] if spec.commit else []))
+    ] + [
+        '--cc=%s' % cc for cc in sorted(extra_cc)
+    ] +(['--use-commit-queue'] if spec.commit else []))
 
     # Put a link to the uploaded CL.
     issue_step = api.git_cl(
