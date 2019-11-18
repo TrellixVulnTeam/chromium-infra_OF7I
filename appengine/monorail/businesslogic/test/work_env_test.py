@@ -24,6 +24,7 @@ from framework import exceptions
 from framework import framework_constants
 from framework import framework_views
 from framework import permissions
+from framework import sorting
 from features import send_notifications
 from proto import project_pb2
 from proto import tracker_pb2
@@ -49,6 +50,7 @@ class WorkEnvTest(unittest.TestCase):
     self.cnxn = 'fake connection'
     self.services = service_manager.Services(
         config=fake.ConfigService(),
+        cache_manager=fake.CacheManager(),
         issue=fake.IssueService(),
         user=fake.UserService(),
         project=fake.ProjectService(),
@@ -71,6 +73,7 @@ class WorkEnvTest(unittest.TestCase):
     self.mr = testing_helpers.MakeMonorailRequest(project=self.project)
     self.mr.perms = permissions.READ_ONLY_PERMISSIONSET
     self.PAST_TIME = 12345
+    sorting.InitializeArtValues(self.services)
 
     self.work_env = work_env.WorkEnv(
       self.mr, self.services, 'Testing phase')
