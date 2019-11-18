@@ -14,6 +14,7 @@ import {fieldValueMapKey} from 'shared/metadata-helpers.js';
 // TODO(zhangtiff): Merge this file with metadata-helpers.js.
 
 
+/** @enum {string} */
 export const fieldTypes = Object.freeze({
   APPROVAL_TYPE: 'APPROVAL_TYPE',
   DATE_TYPE: 'DATE_TYPE',
@@ -154,11 +155,19 @@ export function approvalApproversToMap(approvalValues) {
 // Helper function used for fields with only one value that can be unset.
 const wrapValueIfExists = (value) => value ? [value] : [];
 
-// Object containing extraction functions for default fields present in
-// Monorail. Each function returns an Array of strings.
+
+/**
+ * @typedef DefaultIssueField
+ * @property {string} fieldName
+ * @property {fieldTypes} type
+ * @property {function(*): Array<string>} extractor
+*/
 // TODO(zhangtiff): Merge this functionality with extract-grid-data.js
 // TODO(zhangtiff): Combine this functionality with mr-metadata and
 // mr-edit-metadata to allow more expressive representation of built in fields.
+/**
+ * @const {Array<DefaultIssueField>}
+ */
 const defaultIssueFields = Object.freeze([
   {
     fieldName: 'ID',
@@ -263,6 +272,10 @@ const defaultIssueFields = Object.freeze([
   },
 ]);
 
+/**
+ * Lowercase field name -> field object.
+ * @type {Map<string, DefaultIssueField>}
+ */
 const defaultIssueFieldMap = new Map();
 
 defaultIssueFields.forEach((field) => {
@@ -355,13 +368,18 @@ export const stringValuesForIssueField = (issue, columnName, projectName,
 };
 
 // TODO(zhangtiff): Integrate this logic with Redux selectors.
+/**
+ * @param {string} fieldName
+ * @param {Map} fieldDefMap
+ * @return {fieldTypes}
+ */
 export const getTypeForFieldName = (fieldName, fieldDefMap = new Map()) => {
   const key = fieldName.toLowerCase();
 
   // If the field is a built in field. Default fields have precedence
   // over custom fields.
   if (defaultIssueFieldMap.has(key)) {
-    return defaultIssueFieldMap.get(key);
+    return defaultIssueFieldMap.get(key).type;
   }
 
   // If the field is a custom field. Custom fields have precedence
