@@ -220,7 +220,7 @@ func dumpStableVersionToDatastoreHandler(c *router.Context) error {
 	if err != nil {
 		logging.Infof(c.Context, "end dumpStableVersionToDatastoreHandler with err (%s)", err)
 	} else {
-		logging.Infof(c.Context, "end dumpStableVersionToDatastoreHandler successfully", err)
+		logging.Infof(c.Context, "end dumpStableVersionToDatastoreHandler successfully")
 	}
 	return err
 }
