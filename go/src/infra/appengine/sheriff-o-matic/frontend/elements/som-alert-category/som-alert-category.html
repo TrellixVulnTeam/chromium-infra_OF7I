@@ -27,14 +27,17 @@
       .alert-item {
         box-sizing: border-box;
       }
+      .category-title-text {
+        border: none;
+        padding: 0.25em 0px 0.25em;
+        display: inline;
+      }
     </style>
     <h2 class="category-title">
       <span>
         <input type="checkbox" id="checkAll" on-tap="checkAll" class="category-checkbox"
           title="Select all alerts in this category." />
-        <span class="category-title-text" title$="[[tooltip]]">
-          [[categoryTitle]]
-        </span>
+        <h2 class="category-title-text" title$="[[tooltip]]">[[categoryTitle]]</h2>
         <span class="category-title-count" hidden$="[[!!isResolvedSection]]">
           ([[alerts.length]] total)
         </span>

@@ -186,6 +186,12 @@
      #subAlertMenu {
        width: 500px;
      }
+     #alertTitle {
+       display: inline;
+       margin-block-start: 0.25em;
+       margin-block-end: 0.25em;
+       font-size: 1em;
+     }
      @media (max-width: 800px) {
        .alert-expanded {
          flex-direction: column;
@@ -223,7 +229,7 @@
             </template>
             <template is="dom-if" if="[[!_hasUngroup]]">
               <span id="snoozeTitle" hidden$="[[!annotation.snoozed]]">Snoozed ([[_snoozeTimeLeft]]): </span>
-              <span id="alertTitle">[[alert.title]]</span>
+              <h3 id="alertTitle">[[alert.title]]</h3>
             </template>
             <div id="handleLink" hidden$="[[!_helpLinkForAlert(alert)]]">
               (<a href$="[[_helpLinkForAlert(alert)]]" target="_blank">Help?</a>)
