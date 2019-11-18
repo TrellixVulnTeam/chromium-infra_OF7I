@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import cgi
 import functools
 import logging
 import sys
@@ -290,7 +291,8 @@ class MonorailServicer(object):
       prpc_context.set_details('That component name is invalid.')
     elif exc_type == exceptions.InputException:
       prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
-      prpc_context.set_details('Invalid arguments: %s' % e.message)
+      prpc_context.set_details(
+         'Invalid arguments: %s' % cgi.escape(e.message, quote=True))
     elif exc_type == ratelimiter.ApiRateLimitExceeded:
       prpc_context.set_code(codes.StatusCode.PERMISSION_DENIED)
       prpc_context.set_details('The requester has exceeded API quotas limit.')

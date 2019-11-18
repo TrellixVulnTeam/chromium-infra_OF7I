@@ -372,7 +372,7 @@ class MonorailServicerTest(unittest.TestCase):
     self.request.project_name = 'not-a-proj'
     self.assertIsNone(self.svcr.GetRequestProject(self.cnxn, self.request))
 
-  def CheckExceptionStatus(self, e, expected_code):
+  def CheckExceptionStatus(self, e, expected_code, details=None):
     mc = monorailcontext.MonorailContext(self.services)
     self.prpc_context.set_code(codes.StatusCode.OK)
     processed = self.svcr.ProcessException(e, self.prpc_context, mc)
@@ -382,6 +382,8 @@ class MonorailServicerTest(unittest.TestCase):
     else:
       self.assertFalse(processed)
       self.assertEqual(codes.StatusCode.OK, self.prpc_context._code)
+    if details is not None:
+      self.assertEqual(details, self.prpc_context._details)
 
   def testProcessException(self):
     """Expected exceptions are converted to pRPC codes, expected not."""
@@ -403,11 +405,23 @@ class MonorailServicerTest(unittest.TestCase):
         exceptions.InvalidComponentNameException(),
         codes.StatusCode.INVALID_ARGUMENT)
     self.CheckExceptionStatus(
+        exceptions.InputException('echoed values'),
+        codes.StatusCode.INVALID_ARGUMENT,
+        details='Invalid arguments: echoed values')
+    self.CheckExceptionStatus(
         ratelimiter.ApiRateLimitExceeded('client_id', 'email'),
         codes.StatusCode.PERMISSION_DENIED)
     self.CheckExceptionStatus(
         features_svc.HotlistAlreadyExists(), codes.StatusCode.INVALID_ARGUMENT)
     self.CheckExceptionStatus(NotImplementedError(), None)
+
+  def testProcessException_ErrorMessageEscaped(self):
+    """If we ever echo user input in error messages, it is escaped.."""
+    self.CheckExceptionStatus(
+        exceptions.InputException('echoed <script>"code"</script>'),
+        codes.StatusCode.INVALID_ARGUMENT,
+        details=('Invalid arguments: echoed '
+                 '&lt;script&gt;&quot;code&quot;&lt;/script&gt;'))
 
   def testRecordMonitoringStats_RequestClassDoesNotEndInRequest(self):
     """We cope with request proto class names that do not end in 'Request'."""
