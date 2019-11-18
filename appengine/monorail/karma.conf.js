@@ -122,9 +122,6 @@ module.exports = function(config) {
           },
         ],
       },
-      plugins: [
-        new ExitOnErrorWebpackPlugin(),
-      ],
     },
 
 
@@ -191,24 +188,3 @@ module.exports = function(config) {
     concurrency: Infinity,
   });
 };
-
-/**
- * Works around issue with karma-webpack.
- * https://github.com/webpack-contrib/karma-webpack/issues/66
- */
-class ExitOnErrorWebpackPlugin {
-  /**
-   * @param {*} compiler webpack.Compiler (using *, typedef not available)
-   */
-  apply(compiler) {
-    // https://webpack.js.org/api/compiler-hooks/
-    compiler.hooks.done.tap('ExitOnErrorWebpackPlugin', (stats) => {
-      if (stats && stats.hasErrors()) {
-        stats.toJson().errors.forEach((err) => {
-          console.error(err);
-        });
-        process.exit(1);
-      }
-    });
-  }
-}
