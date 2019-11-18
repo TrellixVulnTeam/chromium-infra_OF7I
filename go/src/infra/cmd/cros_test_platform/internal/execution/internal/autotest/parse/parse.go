@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/errors"
 )
@@ -162,7 +163,10 @@ func parseReport(rep *report) (*steps.ExecuteResponse, error) {
 			Name:    testName,
 			LogUrl:  result.LinkToLogs,
 			TaskUrl: taskURL(rep.AutotestInstance, result.JobID),
-			State:   state,
+			LogData: &common.TaskLogData{
+				GsUrl: "unsupported from autotest backend",
+			},
+			State: state,
 		}
 		resp.TaskResults = append(resp.TaskResults, taskResult)
 	}

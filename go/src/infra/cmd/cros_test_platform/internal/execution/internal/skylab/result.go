@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
@@ -64,10 +65,14 @@ func getAutotestResult(ctx context.Context, sResult *swarming_api.SwarmingRpcsTa
 }
 
 func toTaskResult(testName string, attempt *attempt, attemptNum int, urler swarming.URLer) *steps.ExecuteResponse_TaskResult {
-	// TODO(akeshet): Determine this URL in a more principled way. See crbug.com/987487
+	// TODO(akeshet): Determine these URLs in a more principled way. See crbug.com/987487
 	// for context.
 	logURL := fmt.Sprintf(
 		"https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-%s/",
+		attempt.taskID,
+	)
+	gsURL := fmt.Sprintf(
+		"gs://chromeos-autotest-results/swarming-%s/",
 		attempt.taskID,
 	)
 
@@ -79,6 +84,9 @@ func toTaskResult(testName string, attempt *attempt, attemptNum int, urler swarm
 		},
 		TaskUrl: urler.GetTaskURL(attempt.taskID),
 		LogUrl:  logURL,
+		LogData: &common.TaskLogData{
+			GsUrl: gsURL,
+		},
 		Attempt: int32(attemptNum),
 	}
 }

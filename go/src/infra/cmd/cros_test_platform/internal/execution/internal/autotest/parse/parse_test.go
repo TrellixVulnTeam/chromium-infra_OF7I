@@ -11,6 +11,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 
 	"infra/cmd/cros_test_platform/internal/execution/internal/autotest/parse"
@@ -84,6 +85,9 @@ func TestFullSample(t *testing.T) {
 				State:   passed,
 				Name:    "tast.video.SeekSwitchVP8",
 				LogUrl:  "http://cautotest/tko/retrieve_logs.cgi?job=/results/319091084-chromeos-test/",
+				LogData: &common.TaskLogData{
+					GsUrl: "unsupported from autotest backend",
+				},
 			})
 		})
 

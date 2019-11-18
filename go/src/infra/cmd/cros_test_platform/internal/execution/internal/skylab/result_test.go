@@ -121,11 +121,13 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 		for _, c := range cases {
 			Convey(c.description, func() {
 				Convey("then task results are correctly converted to verdict.", func() {
-					attempt := &attempt{autotestResult: c.result, state: jsonrpc.TaskState_COMPLETED}
+					attempt := &attempt{autotestResult: c.result, state: jsonrpc.TaskState_COMPLETED, taskID: "foo-task-ID"}
 					result := toTaskResult("", attempt, 5, urler)
 					So(result.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 					So(result.State.Verdict, ShouldEqual, c.expectVerdict)
 					So(result.Attempt, ShouldEqual, 5)
+					So(result.LogData.GsUrl, ShouldEqual, "gs://chromeos-autotest-results/swarming-foo-task-ID/")
+					So(result.LogUrl, ShouldEqual, "https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-foo-task-ID/")
 				})
 			})
 		}
