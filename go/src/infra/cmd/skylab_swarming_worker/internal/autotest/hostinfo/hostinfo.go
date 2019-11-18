@@ -14,8 +14,9 @@ import (
 // pass host information to Autotest and receive host information
 // changes from Autotest.
 type HostInfo struct {
-	Labels     []string          `json:"labels"`
-	Attributes map[string]string `json:"attributes"`
+	Labels         []string          `json:"labels"`
+	Attributes     map[string]string `json:"attributes"`
+	StableVersions map[string]string `json:"stable_versions"`
 }
 
 // versionedHostInfo is only used for backwards-compatibility when
@@ -42,9 +43,23 @@ func Unmarshal(blob []byte) (*HostInfo, error) {
 
 // Marshal serializes the HostInfo struct into a slice of bytes.
 func Marshal(hi *HostInfo) ([]byte, error) {
+	ensureDefaultFieldValues(hi)
 	vhi := versionedHostInfo{
 		HostInfo:          hi,
 		SerializerVersion: currentSerializerVersion,
 	}
 	return json.Marshal(vhi)
+}
+
+// ensureDefaultFieldValues -- ensure that maps and slices in HostInfo are non-nil
+func ensureDefaultFieldValues(hi *HostInfo) {
+	if hi.Labels == nil {
+		hi.Labels = []string{}
+	}
+	if hi.Attributes == nil {
+		hi.Attributes = make(map[string]string)
+	}
+	if hi.StableVersions == nil {
+		hi.StableVersions = make(map[string]string)
+	}
 }
