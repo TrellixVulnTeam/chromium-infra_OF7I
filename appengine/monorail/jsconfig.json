@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": "static_src",
+    "checkJs": true,
+    "moduleResolution": "node",
+    "target": "es2015"
+  },
+  "include": ["static_src/**/*"]
+}
