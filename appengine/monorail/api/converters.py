@@ -121,11 +121,24 @@ def ConvertUserRef(explicit_user_id, derived_user_id, users_by_id):
       is_derived=is_derived,
       display_name=users_by_id[user_id].display_name)
 
-# TODO(jojwang): document this (explain 'use_email' parameter),
-# and rewrite method, ConvertUserRefs should be able to call ConvertUserRef
+# TODO(jojwang): Rewrite method, ConvertUserRefs should be able to
+# call ConvertUserRef
 def ConvertUserRefs(explicit_user_ids, derived_user_ids, users_by_id,
                     use_email):
-  """Use the given user ID lists to create a list of UserRef."""
+  # (List(int), List(int), Dict(int: UserView), bool) -> List(UserRef)
+  """Use the given user ID lists to create a list of UserRef.
+
+  Args:
+    explicit_user_ids: list of user_ids for users that are not derived.
+    derived_user_ids: list of user_ids for users derived from FilterRules.
+    users_by_id: dict of {user_id: UserView, ...} for all users in
+      explicit_user_ids and derived_user_ids.
+    use_email: boolean true if the UserView.email should be used as
+      the display_name instead of UserView.display_name, which may be obscured.
+
+  Returns:
+    A single list of UserRefs.
+  """
   result = []
   for user_id in explicit_user_ids:
     result.append(common_pb2.UserRef(
@@ -1041,8 +1054,13 @@ def ConvertHotlist(hotlist, users_by_id):
   """Convert a protorpc Hotlist into a protoc Hotlist."""
   owner_ref = ConvertUserRef(
       hotlist.owner_ids[0], None, users_by_id)
+  editor_refs = ConvertUserRefs(hotlist.editor_ids, [], users_by_id, False)
+  follower_refs = ConvertUserRefs(
+      hotlist.follower_ids, [], users_by_id, False)
   result = features_objects_pb2.Hotlist(
       owner_ref=owner_ref,
+      editor_refs=editor_refs,
+      follower_refs=follower_refs,
       name=hotlist.name,
       summary=hotlist.summary,
       description=hotlist.description)

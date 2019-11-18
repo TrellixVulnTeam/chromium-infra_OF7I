@@ -46,7 +46,7 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       hotlists = we.ListHotlistsByUser(user_id)
 
     with mc.profiler.Phase('making user views'):
-      users_involved = features_bizobj.UsersOwnersOfHotlists(hotlists)
+      users_involved = features_bizobj.UsersInvolvedInHotlists(hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
       framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
@@ -72,7 +72,7 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       hotlists = we.ListHotlistsByIssue(issue_id)
 
     with mc.profiler.Phase('making user views'):
-      users_involved = features_bizobj.UsersOwnersOfHotlists(hotlists)
+      users_involved = features_bizobj.UsersInvolvedInHotlists(hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
       framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
@@ -94,7 +94,7 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       hotlists = we.ListRecentlyVisitedHotlists()
 
     with mc.profiler.Phase('making user views'):
-      users_involved = features_bizobj.UsersOwnersOfHotlists(hotlists)
+      users_involved = features_bizobj.UsersInvolvedInHotlists(hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
       framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
@@ -116,7 +116,7 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       hotlists = we.ListStarredHotlists()
 
     with mc.profiler.Phase('maknig user views'):
-      users_involved = features_bizobj.UsersOwnersOfHotlists(hotlists)
+      users_involved = features_bizobj.UsersInvolvedInHotlists(hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
       framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)

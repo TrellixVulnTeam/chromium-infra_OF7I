@@ -2126,11 +2126,15 @@ class ConverterFunctionsTest(unittest.TestCase):
     """We can convert a hotlist to protoc."""
     hotlist = testing_helpers.Blank(
         owner_ids=[111],
+        editor_ids=[222],
+        follower_ids=[333],
         name='Fake-Hotlist',
         summary='A fake hotlist.',
         description='Detailed description of the fake hotlist.')
     actual = converters.ConvertHotlist(hotlist, self.users_by_id)
     self.assertEqual(111, actual.owner_ref.user_id)
+    self.assertEqual(222, actual.editor_refs[0].user_id)
+    self.assertEqual(333, actual.follower_refs[0].user_id)
     self.assertEqual('one@example.com', actual.owner_ref.display_name)
     self.assertEqual('Fake-Hotlist', actual.name)
     self.assertEqual('A fake hotlist.', actual.summary)

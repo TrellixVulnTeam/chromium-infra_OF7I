@@ -411,36 +411,43 @@ class FeaturesServicerTest(unittest.TestCase):
     hotlists = [
         self.services.features.CreateHotlist(
             self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
-            owner_ids=[222], editor_ids=[111]),
+            owner_ids=[self.user2.user_id], editor_ids=[self.user1.user_id]),
         self.services.features.CreateHotlist(
             self.cnxn, 'Fake-Hotlist-2', 'Summary', 'Description',
-            owner_ids=[111], editor_ids=[222]),
+            owner_ids=[self.user1.user_id], editor_ids=[self.user2.user_id]),
         self.services.features.CreateHotlist(
             self.cnxn, 'Private-Hotlist', 'Summary', 'Description',
-            owner_ids=[333], editor_ids=[222], is_private=True)]
+            owner_ids=[self.user3.user_id], editor_ids=[self.user2.user_id],
+            is_private=True)]
 
     for hotlist in hotlists:
       self.services.user.AddVisitedHotlist(
-          self.cnxn, 111, hotlist.hotlist_id)
+          self.cnxn, self.user1.user_id, hotlist.hotlist_id)
 
     request = features_pb2.ListRecentlyVisitedHotlistsRequest()
     mc = monorailcontext.MonorailContext(
-        self.services, cnxn=self.cnxn, requester='owner@example.com')
+        self.services, cnxn=self.cnxn, requester=self.user1.email)
     response = self.CallWrapped(
         self.features_svcr.ListRecentlyVisitedHotlists, mc, request)
 
     expected_hotlists = [
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
-                user_id=222,
-                display_name='edi...@example.com'),
+                user_id=self.user2.user_id,
+                display_name=testing_helpers.ObscuredEmail(self.user2.email)),
+            editor_refs=[common_pb2.UserRef(
+                user_id=self.user1.user_id,
+                display_name=self.user1.email)],
             name='Fake-Hotlist',
             summary='Summary',
             description='Description'),
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
-                user_id=111,
-                display_name='owner@example.com'),
+                user_id=self.user1.user_id,
+                display_name=self.user1.email),
+            editor_refs=[common_pb2.UserRef(
+                user_id=self.user2.user_id,
+                display_name=testing_helpers.ObscuredEmail(self.user2.email))],
             name='Fake-Hotlist-2',
             summary='Summary',
             description='Description')]
@@ -460,17 +467,19 @@ class FeaturesServicerTest(unittest.TestCase):
     hotlists = [
         self.services.features.CreateHotlist(
             self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
-            owner_ids=[222], editor_ids=[111]),
+            owner_ids=[self.user2.user_id], editor_ids=[self.user1.user_id]),
         self.services.features.CreateHotlist(
             self.cnxn, 'Fake-Hotlist-2', 'Summary', 'Description',
-            owner_ids=[111], editor_ids=[222]),
+            owner_ids=[self.user1.user_id],
+            editor_ids=[self.user2.user_id, self.user3.user_id]),
         self.services.features.CreateHotlist(
             self.cnxn, 'Private-Hotlist', 'Summary', 'Description',
-            owner_ids=[333], editor_ids=[222], is_private=True)]
+            owner_ids=[self.user3.user_id], editor_ids=[self.user2.user_id],
+            is_private=True)]
 
     for hotlist in hotlists:
       self.services.hotlist_star.SetStar(
-          self.cnxn, hotlist.hotlist_id, 111, True)
+          self.cnxn, hotlist.hotlist_id, self.user1.user_id, True)
 
     request = features_pb2.ListStarredHotlistsRequest()
     mc = monorailcontext.MonorailContext(
@@ -481,15 +490,27 @@ class FeaturesServicerTest(unittest.TestCase):
     expected_hotlists = [
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
-                user_id=222,
-                display_name='edi...@example.com'),
+                user_id=self.user2.user_id,
+                display_name=testing_helpers.ObscuredEmail(self.user2.email)),
+            editor_refs=[common_pb2.UserRef(
+                user_id=self.user1.user_id,
+                display_name=self.user1.email)],
             name='Fake-Hotlist',
             summary='Summary',
             description='Description'),
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
-                user_id=111,
-                display_name='owner@example.com'),
+                user_id=self.user1.user_id,
+                display_name=self.user1.email),
+            editor_refs=[
+                common_pb2.UserRef(
+                    user_id=self.user2.user_id,
+                    display_name=testing_helpers.ObscuredEmail(
+                        self.user2.email)),
+                common_pb2.UserRef(
+                    user_id=self.user3.user_id,
+                    display_name=testing_helpers.ObscuredEmail(
+                        self.user3.email))],
             name='Fake-Hotlist-2',
             summary='Summary',
             description='Description')]
@@ -598,6 +619,9 @@ class FeaturesServicerTest(unittest.TestCase):
           owner_ref=common_pb2.UserRef(
               user_id=self.user3.user_id,
               display_name=testing_helpers.ObscuredEmail(self.user3.email)),
+          editor_refs=[common_pb2.UserRef(
+              user_id=self.user4.user_id,
+              display_name=self.user4.email)],
           name=hotlist.name,
           summary=hotlist.summary,
           description=hotlist.description))
