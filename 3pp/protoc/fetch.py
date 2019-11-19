@@ -41,6 +41,7 @@ LATEST = 'https://api.github.com/repos/protocolbuffers/protobuf/releases/latest'
 # platform.
 PROTOC_PLATFORMS = {
     'linux-amd64': 'linux-x86_64',
+    'linux-arm64': 'linux-aarch_64',
     'mac-amd64': 'osx-x86_64',
     'windows-386': 'win32',
     'windows-amd64': 'win64',
