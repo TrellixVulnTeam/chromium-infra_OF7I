@@ -55,6 +55,12 @@ class CrosDockerClient(containers.DockerClient):
   def __init__(self):
     super(CrosDockerClient, self).__init__()
 
+    # The 'cros flash' tool creates loopback devices to mount the CrOS images.
+    # Due to a bug, Docker is unable to create new loop devices in /dev/ within
+    # a container. So mount the host's /dev/ within each container as a
+    # workaround. See https://github.com/moby/moby/issues/27886 for more info.
+    self.volumes['/dev/'] = '/dev/'
+
   def create_container(self, container_desc, image_name, swarming_url, labels,
                        additional_env=None):
     assert isinstance(container_desc, CrosContainerDescriptor)

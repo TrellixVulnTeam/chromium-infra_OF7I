@@ -118,6 +118,7 @@ class DockerClient(object):
     self._client = docker.from_env()
     self.logged_in = False
     self._num_configured_containers = None
+    self.volumes = _DOCKER_VOLUMES.copy()
 
   def ping(self, retries=5):
     """Checks if the engine is responsive.
@@ -226,11 +227,6 @@ class DockerClient(object):
       # It's already stopped, so removal is the only option to fix this.
       c.remove(force=True)
 
-  def _get_volumes(self, container_workdir):
-    volumes = _DOCKER_VOLUMES.copy()
-    volumes[container_workdir] = '/b/'
-    return volumes
-
   def _get_env(self, swarming_url):
     env = {
         _SWARMING_URL_ENV_VAR: swarming_url + '/bot_code',
@@ -246,6 +242,8 @@ class DockerClient(object):
   def create_container(self, container_desc, image_name, swarming_url, labels,
                        additional_env=None, **kwargs):
     container_workdir = '/b/%s' % container_desc.name
+    container_volumes = self.volumes.copy()
+    container_volumes[container_workdir] = '/b/'
     pw = pwd.getpwnam('chrome-bot')
     uid, gid = pw.pw_uid, pw.pw_gid
     if not os.path.exists(container_workdir):
@@ -266,14 +264,13 @@ class DockerClient(object):
     new_container = self._client.containers.create(
         image=image_name,
         hostname=container_desc.hostname,
-        volumes=self._get_volumes(container_workdir),
+        volumes=container_volumes,
         environment=env,
         devices=devices,
         name=container_desc.name,
         detach=True,  # Don't block until it exits.
         labels=labels,
-        **kwargs
-    )
+        **kwargs)
     new_container.start()
     container_desc.log_started()
     return new_container
