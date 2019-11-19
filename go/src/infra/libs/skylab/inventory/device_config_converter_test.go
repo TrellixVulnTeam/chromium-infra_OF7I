@@ -33,7 +33,6 @@ const fullDeviceConfig = `
 					"value": ""
 				}
 			},
-			"carrier": "",
 			"formFactor": "FORM_FACTOR_UNSPECIFIED",
 			"gpuFamily": "",
 			"graphics": "GRAPHICS_UNSPECIFIED",
@@ -65,7 +64,6 @@ hostname: "host1"
 labels: {
 	capabilities: {
 		bluetooth: true
-		carrier: 0
 		gpu_family: ""
 		graphics: ""
 		internal_display: true

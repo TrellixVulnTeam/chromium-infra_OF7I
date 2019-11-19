@@ -21,19 +21,6 @@ func ConvertDeviceConfig(dc *device.Config, spec *CommonDeviceSpecs) {
 		spec.GetLabels().Peripherals = &Peripherals{}
 		p = spec.GetLabels().GetPeripherals()
 	}
-	c.Carrier = new(HardwareCapabilities_Carrier)
-	switch dc.GetCarrier() {
-	case "att":
-		*c.Carrier = HardwareCapabilities_CARRIER_ATT
-	case "tmobile":
-		*c.Carrier = HardwareCapabilities_CARRIER_TMOBILE
-	case "verizon":
-		*c.Carrier = HardwareCapabilities_CARRIER_VERIZON
-	case "sprint":
-		*c.Carrier = HardwareCapabilities_CARRIER_SPRINT
-	default:
-		*c.Carrier = HardwareCapabilities_CARRIER_INVALID
-	}
 
 	c.GpuFamily = new(string)
 	*c.GpuFamily = dc.GetGpuFamily()
@@ -134,7 +121,6 @@ func ConvertDeviceConfig(dc *device.Config, spec *CommonDeviceSpecs) {
 func CopyDCAmongLabels(to *SchedulableLabels, from *SchedulableLabels) {
 	toC := to.GetCapabilities()
 	fromC := from.GetCapabilities()
-	toC.Carrier = fromC.Carrier
 	toC.GpuFamily = fromC.GpuFamily
 	toC.Graphics = fromC.Graphics
 	toC.Power = fromC.Power
