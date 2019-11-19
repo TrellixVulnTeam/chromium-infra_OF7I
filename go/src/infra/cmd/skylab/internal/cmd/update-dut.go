@@ -112,6 +112,11 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 
+	prompt := userinput.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Ready to update host: %s", hostname)) {
+		return nil
+	}
+
 	deploymentID, err := c.triggerRedeploy(ctx, ic, oldSpecs, newSpecs)
 	if err != nil {
 		return err
