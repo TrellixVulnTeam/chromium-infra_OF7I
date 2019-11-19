@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/sync/parallel"
 
 	"infra/cmd/skylab/internal/bb"
 	"infra/cmd/skylab/internal/site"
@@ -33,6 +34,7 @@ var WaitTasks = &subcommands.Command{
 
 		c.Flags.IntVar(&c.timeoutMins, "timeout-mins", -1, "The maxinum number of minutes to wait for the task to finish. Default: no timeout.")
 		c.Flags.BoolVar(&c.buildBucket, "bb", true, "(Default: True) Use buildbucket recipe backend. If so, TASK_ID is interpreted as a buildbucket task id.")
+		c.Flags.BoolVar(&c.isolateLink, "isolate", false, "(Default: False) Print links to the isolate output of the tasks after other output")
 		return c
 	},
 }
@@ -43,6 +45,7 @@ type waitTasksRun struct {
 	envFlags    envFlags
 	timeoutMins int
 	buildBucket bool
+	isolateLink bool
 }
 
 func (c *waitTasksRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -85,8 +88,11 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 	resultMap, consumeErr := consumeToMap(ctx, len(uniqueIDs), results)
 
 	output := &skylab_tool.WaitTasksResult{Incomplete: consumeErr != nil}
-	for _, ID := range args {
-		r, ok := resultMap[ID]
+
+	resArr := make([]*skylab_tool.WaitTaskResult, len(uniqueIDs))
+
+	checkResultAndAddIsolatePath := func(index int, resultID string) error {
+		r, ok := resultMap[resultID]
 		if !ok {
 			// Results for the given ID never appeared; instead use a "missing"
 			// placeholder.
@@ -94,21 +100,39 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 			// results.
 			r = &skylab_tool.WaitTaskResult{
 				Result: &skylab_tool.WaitTaskResult_Task{
-					TaskRequestId: ID,
+					TaskRequestId: resultID,
 				},
 			}
+		} else {
+			path, err := outputIsolatePath(ctx, r)
+			if err != nil {
+				return err
+			}
+			r.LogDataUrl = &skylab_tool.WaitTaskResult_LogDataURL{
+				IsolateUrl: path,
+			}
 		}
-		output.Results = append(output.Results, r)
+		resArr[index] = r
+		return nil
 	}
+	parErr := parallel.WorkPool(len(uniqueIDs), func(ch chan<- func() error) {
+		var idx int
+		for id := range uniqueIDs {
+			ch <- func() error { return checkResultAndAddIsolatePath(idx, id) }
+			idx++
+		}
+	})
+	multiErr := errors.NewMultiError(append([]error{consumeErr}, []error{parErr}...)...)
 
 	outputJSON, err := jsonPBMarshaller.MarshalToString(output)
 	if err != nil {
-		return err
+		multiErr = errors.MultiError(append([]error(multiErr), err))
+		return multiErr
 	}
 
 	fmt.Fprintf(a.GetOut(), string(outputJSON))
 
-	return consumeErr
+	return multiErr
 }
 
 // consumeToMap consumes per-task results from results channel, into an ID-to-results

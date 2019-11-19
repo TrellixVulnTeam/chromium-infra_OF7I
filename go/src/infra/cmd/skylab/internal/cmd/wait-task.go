@@ -212,6 +212,23 @@ func waitSwarmingTask(ctx context.Context, taskID string, t *swarming.Client) er
 	}
 }
 
+func outputIsolatePath(ctx context.Context, result *skylab_tool.WaitTaskResult) (string, error) {
+	ser, err := swarming_api.NewService(ctx)
+	if err != nil {
+		return "", err
+	}
+	ts := swarming_api.NewTaskService(ser)
+	id := result.Result.TaskRunId
+	call := ts.Result(id)
+	call = call.Fields("outputsRef/isolatedserver", "outputsRef/namespace", "outputsRef/isolated")
+	res, err := call.Do()
+	if err != nil {
+		return "", err
+	}
+	fr := res.OutputsRef
+	return fmt.Sprintf("%s/browse?namespace=%s&digest=%s", fr.Isolatedserver, fr.Namespace, fr.Isolated), nil
+}
+
 func sleepOrCancel(ctx context.Context, duration time.Duration) error {
 	sleepTimer := time.NewTimer(duration)
 	select {
