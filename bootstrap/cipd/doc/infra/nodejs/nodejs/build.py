@@ -37,22 +37,25 @@ NodePackage = collections.namedtuple('NodePackage', ('filename', 'sha256'))
 # Node parameter dictionary.
 NODE_PARAMS = NodeParams(
     # The Node.js version.
-    version='10.15.3',
-)
+    version='12.13.0',)
 
 # URL template for a Node.js package.
 NODE_URL_TEMPLATE = 'https://nodejs.org/dist/v%(version)s/%(filename)s'
 
 # A map of platform to (URL, SHA256) for each supported package.
 PLATFORMS = collections.OrderedDict({
-  'linux-amd64': NodePackage(
-      filename = 'node-v%(version)s-linux-x64.tar.xz',
-      sha256='faddbe418064baf2226c2fcbd038c3ef4ae6f936eb952a1138c7ff8cfe862438',
-  ),
-  'mac-amd64': NodePackage(
-      filename = 'node-v%(version)s-darwin-x64.tar.gz',
-      sha256='7a5eaa1f69614375a695ccb62017248e5dcc15b0b8edffa7db5b52997cf992ba',
-  ),
+    'linux-amd64':
+        NodePackage(
+            filename='node-v%(version)s-linux-x64.tar.xz',
+            sha256=
+            '7a57ef2cb3036d7eacd50ae7ba07245a28336a93652641c065f747adb2a356d9',
+        ),
+    'mac-amd64':
+        NodePackage(
+            filename='node-v%(version)s-darwin-x64.tar.gz',
+            sha256=
+            '49a7374670a111b033ce16611b20fd1aafd3296bbc662b184fe8fb26a29c22cc',
+        ),
 })
 
 
