@@ -149,3 +149,8 @@ func (gc *GerritClient) AbandonChange(ctx context.Context, in *gerrit.AbandonCha
 func (gc *GerritClient) GetMergeable(ctx context.Context, req *gerrit.GetMergeableRequest, opts ...grpc.CallOption) (*gerrit.MergeableInfo, error) {
 	return nil, fmt.Errorf("Fake GetMergeable not yet implemented")
 }
+
+// ListFiles implements the gerrit.GerritClient interface.
+func (gc *GerritClient) ListFiles(ctx context.Context, req *gerrit.ListFilesRequest, opts ...grpc.CallOption) (*gerrit.ListFilesResponse, error) {
+	return nil, fmt.Errorf("Fake ListFiles not yet implemented")
+}
