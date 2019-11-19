@@ -78,7 +78,7 @@ func (c *commonExecuteRun) writeResponsesWithError(resps []*steps.ExecuteRespons
 }
 
 func (c *commonExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {
-	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("exceeded request's maximum duration"))
+	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("cros_test_platform request timeout (after %s)", maximumDuration))
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, t, gf)
 	return runner.Responses(t), err
