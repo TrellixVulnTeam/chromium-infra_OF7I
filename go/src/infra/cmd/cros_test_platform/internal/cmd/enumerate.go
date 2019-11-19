@@ -39,6 +39,7 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.EnumerationRequests")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.EnumerationResponses should be written.")
+		c.Flags.BoolVar(&c.tagged, "tagged", false, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
 }
@@ -49,6 +50,11 @@ type enumerateRun struct {
 
 	inputPath  string
 	outputPath string
+
+	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
+	// - recipe has transitioned to using tagged requests
+	tagged      bool
+	orderedTags []string
 }
 
 func (c *enumerateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -150,17 +156,43 @@ func (c *enumerateRun) readRequests() ([]*steps.EnumerationRequest, error) {
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	return rs.Requests, nil
+	if !c.tagged {
+		return rs.Requests, nil
+	}
+	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
+	c.orderedTags = ts
+	return reqs, nil
+}
+
+func (c *enumerateRun) unzipTaggedRequests(trs map[string]*steps.EnumerationRequest) ([]string, []*steps.EnumerationRequest) {
+	var ts []string
+	var rs []*steps.EnumerationRequest
+	for t, r := range trs {
+		ts = append(ts, t)
+		rs = append(rs, r)
+	}
+	return ts, rs
 }
 
 func (c *enumerateRun) writeResponsesWithError(resps []*steps.EnumerationResponse, err error) error {
-	return writeResponseWithError(
-		c.outputPath,
-		&steps.EnumerationResponses{
-			Responses: resps,
-		},
-		err,
-	)
+	r := &steps.EnumerationResponses{
+		Responses: resps,
+	}
+	if c.tagged {
+		r.TaggedResponses = c.zipTaggedResponses(c.orderedTags, resps)
+	}
+	return writeResponseWithError(c.outputPath, r, err)
+}
+
+func (c *enumerateRun) zipTaggedResponses(ts []string, rs []*steps.EnumerationResponse) map[string]*steps.EnumerationResponse {
+	if len(ts) != len(rs) {
+		panic(fmt.Sprintf("got %d responses for %d tags (%s)", len(rs), len(ts), ts))
+	}
+	m := make(map[string]*steps.EnumerationResponse)
+	for i := range ts {
+		m[ts[i]] = rs[i]
+	}
+	return m
 }
 
 func (c *enumerateRun) gsPath(requests []*steps.EnumerationRequest) (gs.Path, error) {

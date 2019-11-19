@@ -28,11 +28,18 @@ type commonExecuteRun struct {
 	subcommands.CommandRunBase
 	inputPath  string
 	outputPath string
+
+	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
+	// - recipe has transitioned to using tagged requests
+	// - autotest-execute has been deleted (this just reduces the work required).
+	tagged      bool
+	orderedTags []string
 }
 
 func (c *commonExecuteRun) addFlags() {
 	c.Flags.StringVar(&c.inputPath, "input_json", "", "Path to JSON ExecuteRequests to read.")
 	c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to JSON ExecuteResponses to write.")
+	c.Flags.BoolVar(&c.tagged, "tagged", false, "Transitional flag to enable tagged requests and responses.")
 }
 
 func (c *commonExecuteRun) validateArgs() error {
@@ -64,17 +71,43 @@ func (c *commonExecuteRun) readRequests() ([]*steps.ExecuteRequest, error) {
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	return rs.Requests, nil
+	if !c.tagged {
+		return rs.Requests, nil
+	}
+	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
+	c.orderedTags = ts
+	return reqs, nil
+}
+
+func (c *commonExecuteRun) unzipTaggedRequests(trs map[string]*steps.ExecuteRequest) ([]string, []*steps.ExecuteRequest) {
+	var ts []string
+	var rs []*steps.ExecuteRequest
+	for t, r := range trs {
+		ts = append(ts, t)
+		rs = append(rs, r)
+	}
+	return ts, rs
 }
 
 func (c *commonExecuteRun) writeResponsesWithError(resps []*steps.ExecuteResponse, err error) error {
-	return writeResponseWithError(
-		c.outputPath,
-		&steps.ExecuteResponses{
-			Responses: resps,
-		},
-		err,
-	)
+	r := &steps.ExecuteResponses{
+		Responses: resps,
+	}
+	if c.tagged {
+		r.TaggedResponses = c.zipTaggedResponses(c.orderedTags, resps)
+	}
+	return writeResponseWithError(c.outputPath, r, err)
+}
+
+func (c *commonExecuteRun) zipTaggedResponses(ts []string, rs []*steps.ExecuteResponse) map[string]*steps.ExecuteResponse {
+	if len(ts) != len(rs) {
+		panic(fmt.Sprintf("got %d responses for %d tags (%s)", len(rs), len(ts), ts))
+	}
+	m := make(map[string]*steps.ExecuteResponse)
+	for i := range ts {
+		m[ts[i]] = rs[i]
+	}
+	return m
 }
 
 func (c *commonExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {

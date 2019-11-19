@@ -40,6 +40,7 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.SchedulerTrafficSplitRequests")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.SchedulerTrafficSplitResponses should be written.")
+		c.Flags.BoolVar(&c.tagged, "tagged", false, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
 }
@@ -50,6 +51,12 @@ type schedulerTrafficSplitRun struct {
 
 	inputPath  string
 	outputPath string
+
+	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
+	// - recipe has transitioned to using tagged requests
+	// - autotest-execute has been deleted (this just reduces the work required).
+	tagged      bool
+	orderedTags []string
 }
 
 func (c *schedulerTrafficSplitRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -121,7 +128,22 @@ func (c *schedulerTrafficSplitRun) readRequests() ([]*steps.SchedulerTrafficSpli
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	return rs.Requests, nil
+	if !c.tagged {
+		return rs.Requests, nil
+	}
+	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
+	c.orderedTags = ts
+	return reqs, nil
+}
+
+func (c *schedulerTrafficSplitRun) unzipTaggedRequests(trs map[string]*steps.SchedulerTrafficSplitRequest) ([]string, []*steps.SchedulerTrafficSplitRequest) {
+	var ts []string
+	var rs []*steps.SchedulerTrafficSplitRequest
+	for t, r := range trs {
+		ts = append(ts, t)
+		rs = append(rs, r)
+	}
+	return ts, rs
 }
 
 func ensureIdenticalConfigs(rs []*steps.SchedulerTrafficSplitRequest) error {
@@ -148,9 +170,24 @@ func autotestResponseCount(rs []*steps.SchedulerTrafficSplitResponse) int {
 }
 
 func (c *schedulerTrafficSplitRun) writeResponses(resps []*steps.SchedulerTrafficSplitResponse) error {
-	return writeResponse(c.outputPath, &steps.SchedulerTrafficSplitResponses{
+	r := &steps.SchedulerTrafficSplitResponses{
 		Responses: resps,
-	})
+	}
+	if c.tagged {
+		r.TaggedResponses = c.zipTaggedResponses(c.orderedTags, resps)
+	}
+	return writeResponse(c.outputPath, r)
+}
+
+func (c *schedulerTrafficSplitRun) zipTaggedResponses(ts []string, rs []*steps.SchedulerTrafficSplitResponse) map[string]*steps.SchedulerTrafficSplitResponse {
+	if len(ts) != len(rs) {
+		panic(fmt.Sprintf("got %d responses for %d tags (%s)", len(rs), len(ts), ts))
+	}
+	m := make(map[string]*steps.SchedulerTrafficSplitResponse)
+	for i := range ts {
+		m[ts[i]] = rs[i]
+	}
+	return m
 }
 
 func (c *schedulerTrafficSplitRun) getTrafficSplitConfig(ctx context.Context, config *config.Config_SchedulerMigration) (*scheduler.TrafficSplit, error) {
