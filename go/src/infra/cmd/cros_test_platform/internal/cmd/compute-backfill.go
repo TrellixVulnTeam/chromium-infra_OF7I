@@ -56,13 +56,13 @@ func (c *computeBackfillRun) innerRun(a subcommands.Application, args []string, 
 	if err != nil {
 		return err
 	}
-	resps := make([]*steps.ComputeBackfillResponse, len(requests))
-	for i := range requests {
-		r, err := c.computeFor(requests[i])
+	resps := make(map[string]*steps.ComputeBackfillResponse)
+	for t, req := range requests {
+		resp, err := c.computeFor(req)
 		if err != nil {
 			return err
 		}
-		resps[i] = r
+		resps[t] = resp
 	}
 	return c.writeResponses(resps)
 }
@@ -80,17 +80,17 @@ func (c *computeBackfillRun) processCLIArgs(args []string) error {
 	return nil
 }
 
-func (c *computeBackfillRun) readRequests() ([]*steps.ComputeBackfillRequest, error) {
+func (c *computeBackfillRun) readRequests() (map[string]*steps.ComputeBackfillRequest, error) {
 	var rs steps.ComputeBackfillRequests
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	return rs.Requests, nil
+	return rs.TaggedRequests, nil
 }
 
-func (c *computeBackfillRun) writeResponses(resps []*steps.ComputeBackfillResponse) error {
+func (c *computeBackfillRun) writeResponses(resps map[string]*steps.ComputeBackfillResponse) error {
 	return writeResponse(c.outputPath, &steps.ComputeBackfillResponses{
-		Responses: resps,
+		TaggedResponses: resps,
 	})
 }
 
