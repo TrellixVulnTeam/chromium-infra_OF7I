@@ -129,7 +129,7 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	if merr.First() != nil {
 		return merr
 	}
-	return c.writeResponseWithError(resps, writableErr)
+	return c.writeResponsesWithError(resps, writableErr)
 }
 
 func (c *enumerateRun) processCLIArgs(args []string) error {
@@ -153,7 +153,7 @@ func (c *enumerateRun) readRequests() ([]*steps.EnumerationRequest, error) {
 	return rs.Requests, nil
 }
 
-func (c *enumerateRun) writeResponseWithError(resps []*steps.EnumerationResponse, err error) error {
+func (c *enumerateRun) writeResponsesWithError(resps []*steps.EnumerationResponse, err error) error {
 	return writeResponseWithError(
 		c.outputPath,
 		&steps.EnumerationResponses{

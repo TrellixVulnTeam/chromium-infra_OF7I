@@ -67,7 +67,7 @@ func (c *commonExecuteRun) readRequests() ([]*steps.ExecuteRequest, error) {
 	return rs.Requests, nil
 }
 
-func (c *commonExecuteRun) writeResponseWithError(resps []*steps.ExecuteResponse, err error) error {
+func (c *commonExecuteRun) writeResponsesWithError(resps []*steps.ExecuteResponse, err error) error {
 	return writeResponseWithError(
 		c.outputPath,
 		&steps.ExecuteResponses{
@@ -77,7 +77,7 @@ func (c *commonExecuteRun) writeResponseWithError(resps []*steps.ExecuteResponse
 	)
 }
 
-func (c *commonExecuteRun) handleRequest(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {
+func (c *commonExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("exceeded request's maximum duration"))
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, t, gf)

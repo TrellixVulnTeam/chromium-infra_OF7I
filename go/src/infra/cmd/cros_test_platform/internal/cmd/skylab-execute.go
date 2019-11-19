@@ -93,12 +93,12 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		maxDuration = 12 * time.Hour
 	}
 
-	resps, err := c.handleRequest(ctx, maxDuration, runner, client, gf)
+	resps, err := c.handleRequests(ctx, maxDuration, runner, client, gf)
 	if err != nil && !containsSomeResponse(resps) {
 		// Catastrophic error. There is no reasonable response to write.
 		return err
 	}
-	return c.writeResponseWithError(resps, err)
+	return c.writeResponsesWithError(resps, err)
 }
 
 func sameHost(urlA, urlB string) bool {
