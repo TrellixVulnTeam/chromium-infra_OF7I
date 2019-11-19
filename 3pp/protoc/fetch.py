@@ -49,7 +49,7 @@ PROTOC_PLATFORMS = {
 
 
 def do_latest():
-  return "3.10.0"
+  print "3.10.0"
   # TODO(iannucci): revert after we have 3.10.0 built for all platforms
   #r = requests.get(LATEST)
   #r.raise_for_status()
