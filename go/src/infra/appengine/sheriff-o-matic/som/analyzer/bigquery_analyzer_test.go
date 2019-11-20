@@ -152,23 +152,18 @@ func TestGenerateSQLQuery(t *testing.T) {
 			    AND builder IN (
 			      "Android Builder",
 				    "Webkit Android (Nexus4)"))
-			  OR (
-			    MasterName = "official.chrome"
-				  AND builder IN (
-					  "android-arm-official-tests",
-					  "android-arm64-official-tests",
-					  "android-arm-beta-tests",
-					  "android-arm64-beta-tests",
-					  "android-arm-stable-tests",
-					  "android-arm64-stable-tests"))
-			  OR (
-			    MasterName = "official.chrome.continuous"
-				  AND builder IN (
-					  "android-arm-beta",
-					  "android-arm64-beta",
-					  "android-arm64-stable",
-					  "android-arm64-stable",
-					  "android-arm-stable"))
+			  OR builder IN (
+				"android-arm-official-tests",
+				"android-arm64-official-tests",
+				"android-arm-beta-tests",
+				"android-arm64-beta-tests",
+				"android-arm-stable-tests",
+				"android-arm64-stable-tests",
+				"android-arm-beta",
+				"android-arm64-beta",
+				"android-arm64-stable",
+				"android-arm64-stable",
+				"android-arm-stable")
 			LIMIT
 				1000
 		`
