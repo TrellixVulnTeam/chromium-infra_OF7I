@@ -3443,6 +3443,200 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         _actual = we.GetHotlist(999)
 
+  def testListHotlistItems(self):
+    """We can get hotlist's sorted HotlistItems."""
+    owner_ids = [self.user_1.user_id]
+    issue1 = fake.MakeTestIssue(
+        789, 1, 'sum', 'New', self.user_1.user_id, issue_id=78901)
+    self.services.issue.TestAddIssue(issue1)
+    project2 = self.services.project.TestAddProject(
+        'proj', project_id=788, committer_ids=[self.user_1.user_id])
+    issue2 = fake.MakeTestIssue(
+        788, 2, 'sum', 'New', self.user_1.user_id, issue_id=78802)
+    self.services.issue.TestAddIssue(issue2)
+    issue3 = fake.MakeTestIssue(
+        789, 3, 'sum', 'New', self.user_3.user_id, issue_id=78803)
+    self.services.issue.TestAddIssue(issue3)
+    base_date = 1205079300
+    hotlist_item_tuples = [
+        (issue1.issue_id, 1, self.user_1.user_id, base_date + 2, 'dude wheres'),
+        (issue2.issue_id, 31, self.user_1.user_id, base_date + 1, 'my car'),
+        (issue3.issue_id, 21, self.user_1.user_id, base_date, '')]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'hotlist', summary='Summary', description='Description',
+        owner_ids=owner_ids, hotlist_id=123,
+        hotlist_item_fields=hotlist_item_tuples)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      max_items = 2
+      start = 1
+      can = 1
+      sort_spec = 'rank'
+      group_by_spec = ''
+      (visible_hotlist_items, harmonized_config
+      ) = we.ListHotlistItems(
+          hotlist.hotlist_id, max_items, start, can, sort_spec, group_by_spec)
+
+    expected_items = [
+      features_pb2.Hotlist.HotlistItem(
+          issue_id=issue1.issue_id, rank=1, adder_id=self.user_1.user_id,
+          date_added=base_date + 2, note='dude wheres'),
+      features_pb2.Hotlist.HotlistItem(
+          issue_id=issue3.issue_id, rank=21, adder_id=self.user_1.user_id,
+          date_added=base_date, note='')]
+    self.assertEqual(visible_hotlist_items, expected_items)
+
+    configs = [self.services.config.GetProjectConfig(self.cnxn, 789),
+               self.services.config.GetProjectConfig(
+                   self.cnxn, project2.project_id)]
+    expected_config = tracker_bizobj.HarmonizeConfigs(configs)
+    self.assertEqual(harmonized_config, expected_config)
+
+  def testListHotlistItems_InvalidNum(self):
+    """We can get hotlist's sorted HotlistItems."""
+    owner_ids = [self.user_1.user_id]
+    issue1 = fake.MakeTestIssue(
+        789, 1, 'sum', 'New', self.user_1.user_id, issue_id=78901)
+    self.services.issue.TestAddIssue(issue1)
+    project2 = self.services.project.TestAddProject(
+        'proj', project_id=788, committer_ids=[self.user_1.user_id])
+    issue2 = fake.MakeTestIssue(
+        788, 2, 'sum', 'New', self.user_1.user_id, issue_id=78802)
+    self.services.issue.TestAddIssue(issue2)
+    issue3 = fake.MakeTestIssue(
+        789, 3, 'sum', 'New', self.user_3.user_id, issue_id=78803)
+    self.services.issue.TestAddIssue(issue3)
+    base_date = 1205079300
+    hotlist_item_tuples = [
+        (issue1.issue_id, 1, self.user_1.user_id, base_date + 2, 'dude wheres'),
+        (issue2.issue_id, 31, self.user_1.user_id, base_date + 1, 'my car'),
+        (issue3.issue_id, 21, self.user_1.user_id, base_date, '')]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'hotlist', summary='Summary', description='Description',
+        owner_ids=owner_ids, hotlist_id=123,
+        hotlist_item_fields=hotlist_item_tuples)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      max_items = -2
+      start = -1
+      can = 1
+      sort_spec = 'rank'
+      group_by_spec = ''
+      (visible_hotlist_items, harmonized_config
+      ) = we.ListHotlistItems(
+          hotlist.hotlist_id, max_items, start, can, sort_spec, group_by_spec)
+
+    expected_items = [
+      features_pb2.Hotlist.HotlistItem(
+          issue_id=issue1.issue_id, rank=1, adder_id=self.user_1.user_id,
+          date_added=base_date + 2, note='dude wheres'),
+      features_pb2.Hotlist.HotlistItem(
+          issue_id=issue3.issue_id, rank=21, adder_id=self.user_1.user_id,
+          date_added=base_date, note=''),
+      features_pb2.Hotlist.HotlistItem(
+          issue_id=issue2.issue_id, rank=31, adder_id=self.user_1.user_id,
+          date_added=base_date + 1, note='my car')]
+    self.assertEqual(visible_hotlist_items, expected_items)
+
+    configs = [self.services.config.GetProjectConfig(self.cnxn, 789),
+               self.services.config.GetProjectConfig(
+                   self.cnxn, project2.project_id)]
+    expected_config = tracker_bizobj.HarmonizeConfigs(configs)
+    self.assertEqual(harmonized_config, expected_config)
+
+  def testListHotlistItems_OpenOnly(self):
+    """We can get hotlist's sorted HotlistItems."""
+    base_date = 1205079300
+    owner_ids = [self.user_1.user_id]
+    issue1 = fake.MakeTestIssue(
+        789, 1, 'sum', 'New', self.user_1.user_id, issue_id=78901)
+    self.services.issue.TestAddIssue(issue1)
+    issue2 = fake.MakeTestIssue(
+        789, 2, 'sum', 'Fixed', self.user_1.user_id, issue_id=78902,
+        closed_timestamp=base_date + 10)
+    self.services.issue.TestAddIssue(issue2)
+    hotlist_item_tuples = [
+        (issue1.issue_id, 1, self.user_1.user_id, base_date + 2, 'dude wheres'),
+        (issue2.issue_id, 31, self.user_1.user_id, base_date + 1, 'my car')]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'hotlist', summary='Summary', description='Description',
+        owner_ids=owner_ids, hotlist_id=123,
+        hotlist_item_fields=hotlist_item_tuples)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      max_items = 2
+      start = 1
+      can = 2
+      sort_spec = 'rank'
+      group_by_spec = ''
+      (visible_hotlist_items, harmonized_config) = we.ListHotlistItems(
+          hotlist.hotlist_id, max_items, start, can, sort_spec, group_by_spec)
+
+    expected_items = [
+      features_pb2.Hotlist.HotlistItem(
+          issue_id=issue1.issue_id, rank=1, adder_id=self.user_1.user_id,
+          date_added=base_date + 2, note='dude wheres')]
+    self.assertEqual(visible_hotlist_items, expected_items)
+
+    self.assertEqual(
+        harmonized_config, tracker_bizobj.HarmonizeConfigs([
+            self.services.config.GetProjectConfig(self.cnxn, 789)]))
+
+  def testListHotlistItems_HideRestricted(self):
+    """We can get hotlist's sorted HotlistItems."""
+    base_date = 1205079300
+    owner_ids = [self.user_1.user_id]
+    issue1 = fake.MakeTestIssue(
+        789, 1, 'sum', 'New', self.user_1.user_id, issue_id=78901)
+    self.services.issue.TestAddIssue(issue1)
+    project2 = self.services.project.TestAddProject(
+        'proj', project_id=788, committer_ids=[self.user_1.user_id])
+    issue2 = fake.MakeTestIssue(
+        788, 2, 'sum', 'New', self.user_1.user_id, issue_id=78802,
+        closed_timestamp=base_date + 15)
+    self.services.issue.TestAddIssue(issue2)
+    issue3 = fake.MakeTestIssue(
+        789, 3, 'sum', 'New', self.user_3.user_id, issue_id=78803,
+        closed_timestamp=base_date + 10,
+        labels=['Restrict-View-Sheep'])  # user_1 does not have 'Sheep' perms
+    self.services.issue.TestAddIssue(issue3)
+    hotlist_item_tuples = [
+        (issue1.issue_id, 1, self.user_1.user_id, base_date + 2, 'dude wheres'),
+        (issue3.issue_id, 21, self.user_2.user_id, base_date, ''),
+        (issue2.issue_id, 31, self.user_1.user_id, base_date + 1, 'my car')]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'hotlist', summary='Summary', description='Description',
+        owner_ids=owner_ids, hotlist_id=123,
+        hotlist_item_fields=hotlist_item_tuples)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      max_items = 3
+      start = 1
+      can = 1
+      sort_spec = 'rank'
+      group_by_spec = ''
+      (visible_hotlist_items, harmonized_config) = we.ListHotlistItems(
+          hotlist.hotlist_id, max_items, start, can, sort_spec, group_by_spec)
+
+    expected_items = [
+      features_pb2.Hotlist.HotlistItem(
+          issue_id=issue1.issue_id, rank=1, adder_id=self.user_1.user_id,
+          date_added=base_date + 2, note='dude wheres'),
+      features_pb2.Hotlist.HotlistItem(
+          issue_id=issue2.issue_id, rank=31, adder_id=self.user_1.user_id,
+          date_added=base_date + 1, note='my car')]
+    self.assertEqual(visible_hotlist_items, expected_items)
+
+    configs = [self.services.config.GetProjectConfig(self.cnxn, 789),
+               self.services.config.GetProjectConfig(
+                   self.cnxn, project2.project_id)]
+    expected_config = tracker_bizobj.HarmonizeConfigs(configs)
+    self.assertEqual(harmonized_config, expected_config)
+
   def testTransferHotlistOwnership(self):
     """We can transfer ownership of a hotlist."""
     owner_ids = [self.user_1.user_id]

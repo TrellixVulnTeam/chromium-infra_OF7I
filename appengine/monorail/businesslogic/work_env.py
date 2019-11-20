@@ -1363,8 +1363,7 @@ class WorkEnv(object):
     """
     issues_list = self.services.issue.GetIssues(self.mc.cnxn,
         [item.issue_id for item in hotlist.items])
-    project_ids = hotlist_helpers.GetAllProjectsOfIssues(
-        [issue for issue in issues_list])
+    project_ids = hotlist_helpers.GetAllProjectsOfIssues(issues_list)
     config_list = hotlist_helpers.GetAllConfigsOfProjects(
         self.mc.cnxn, project_ids, self.services)
     harmonized_config = tracker_bizobj.HarmonizeConfigs(config_list)
@@ -2018,6 +2017,63 @@ class WorkEnv(object):
           self.mc.cnxn, hotlist_id, use_cache=use_cache)
     self._AssertUserCanViewHotlist(hotlist)
     return hotlist
+
+  def ListHotlistItems(self, hotlist_id, max_items, start, can, sort_spec,
+                       group_by_spec, use_cache=True):
+    # (int, int, int, int, str, str, bool) -> (
+    #     List(HotlistItem), ProjectIssueConfig, Dict{user_id: UserView, ...})
+    """Return a list of HotlistItems for the given hotlist that
+       are visible by the user.
+
+    Args:
+      hotlist_id: int hotlist_id of the hotlist.
+      max_items: int the maximum number of HotlistItems we want to return.
+      start: int start position in the total sorted items.
+      can: int "canned_query" number to scope the visible issues.
+      sort_spec: string that lists the sort order.
+      group_by_spec: string that lists the grouping order.
+      use_cache: set to false when doing read-modify-write.
+
+    Returns:
+      A tuple of (visible_hotlist_items, harmonized_config, users_by_id) where:
+
+      visible_hotlist_items: a list of sorted HotlistItems with
+        issues filtered out based on start, max_items, can, and the users's
+        permisisons.
+      harmonized_config: ProjectIssueConfig for all projects involved in
+        with the hotlist.
+      users_by_id: dict of {user_id: UserView, ...} for all users involved in
+        the HotlistItems.
+
+    Raises:
+      NoSuchHotlistException: There is no hotlist with that ID.
+    """
+    hotlist = self.GetHotlist(hotlist_id, use_cache=use_cache)
+    hotlist_issues = self.services.issue.GetIssues(
+        self.mc.cnxn, [item.issue_id for item in hotlist.items])
+    project_ids = hotlist_helpers.GetAllProjectsOfIssues(hotlist_issues)
+    config_list = hotlist_helpers.GetAllConfigsOfProjects(
+        self.mc.cnxn, project_ids, self.services)
+    harmonized_config = tracker_bizobj.HarmonizeConfigs(config_list)
+
+    (sorted_issues, _hotlist_items_context,
+     _users_by_id) = hotlist_helpers.GetSortedHotlistIssues(
+        self.mc.cnxn, hotlist.items, hotlist_issues, self.mc.auth, can,
+        sort_spec, group_by_spec, harmonized_config, self.services,
+        self.mc.profiler)
+
+    if not start or start < 1:
+      range_start = 0
+    else:
+      range_start = start - 1
+    if not max_items or max_items < 1:
+      max_items = features_constants.DEFAULT_RESULTS_PER_PAGE
+    range_end = range_start + max_items
+    visible_issues = sorted_issues[range_start: range_end]
+    hotlist_items_dict = {item.issue_id: item for item in hotlist.items}
+    visible_hotlist_items = [hotlist_items_dict.get(issue.issue_id) for
+                            issue in visible_issues]
+    return (visible_hotlist_items, harmonized_config)
 
   def TransferHotlistOwnership(self, hotlist_id, new_owner_id, remain_editor,
                                use_cache=True, commit=True):
