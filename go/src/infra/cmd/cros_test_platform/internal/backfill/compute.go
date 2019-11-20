@@ -13,13 +13,15 @@ import (
 )
 
 // Compute computes the backfill response for a single request and execution.
+//
+// Compute returns nil response if no backfill is required.
 func Compute(r *steps.ComputeBackfillRequest) (*steps.ComputeBackfillResponse, error) {
 	tp, err := computePlan(r.GetEnumeration(), r.GetExecution())
 	if err != nil {
 		return nil, err
 	}
 	if tp == nil {
-		return &steps.ComputeBackfillResponse{}, nil
+		return nil, nil
 	}
 	return &steps.ComputeBackfillResponse{
 		Request: requestWithTestPlan(r.GetRequest(), tp),

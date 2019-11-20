@@ -62,7 +62,9 @@ func (c *computeBackfillRun) innerRun(a subcommands.Application, args []string, 
 		if err != nil {
 			return err
 		}
-		resps[t] = resp
+		if resp != nil {
+			resps[t] = resp
+		}
 	}
 	return c.writeResponses(resps)
 }
