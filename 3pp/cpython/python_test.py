@@ -29,9 +29,6 @@ class TestPython(unittest.TestCase):
 
   @classmethod
   def setUpClass(cls):
-    cls._expected_version = os.environ['_3PP_VERSION']
-    if '_3PP_PATCH_VERSION' in os.environ:
-      cls._expected_version += '+' + os.environ['_3PP_PATCH_VERSION']
     cls._is_windows = os.name == 'nt'
     cls._exe_suffix = '.exe' if cls._is_windows else ''
 
@@ -80,7 +77,15 @@ class TestPython(unittest.TestCase):
         [self.python, '--version'],
         stderr=subprocess.STDOUT)
     self.assertTrue(output.startswith('Python '))
-    self.assertEqual(output.lstrip('Python ').strip(), self._expected_version)
+
+    expected_version = os.environ['_3PP_VERSION']
+    # On windows we don't append the patch version because we actually bundle
+    # the official python release, so don't have an opportunity to change the
+    # version string.
+    if '_3PP_PATCH_VERSION' in os.environ and not self._is_windows:
+      expected_version += '+' + os.environ['_3PP_PATCH_VERSION']
+
+    self.assertEqual(output.lstrip('Python ').strip(), expected_version)
 
   def test_package_import(self):
     for pkg in (
