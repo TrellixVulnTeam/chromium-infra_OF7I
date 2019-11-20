@@ -26,6 +26,7 @@ from framework import framework_views
 from framework import permissions
 from framework import sorting
 from features import send_notifications
+from proto import features_pb2
 from proto import project_pb2
 from proto import tracker_pb2
 from proto import user_pb2
@@ -3341,6 +3342,83 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(features_svc.HotlistAlreadyExists):
       with self.work_env as we:
         we.CreateHotlist('name', 'foo', 'bar', [], [], True)
+
+  def testUpdateHotlistSettings_AdminCanMakeChange(self):
+    """Admins can update hotlist settings."""
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'myhotlist', summary='old sum', owner_ids=[self.user_1.user_id],
+        description='old desc', hotlist_id=456, is_private=True)
+    self.work_env.services.features.TestAddHotlist(
+        'samename', summary='summary', owner_ids=[self.admin_user.user_id],
+        description='desc', hotlist_id=345, is_private=False)
+
+    self.SignIn(user_id=self.admin_user.user_id)
+    with self.work_env as we:
+      we.UpdateHotlistSettings(
+          hotlist.hotlist_id, name='samename', description='new desc')
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+
+    expected_hotlist = features_pb2.Hotlist(
+        name='samename', summary='old sum', owner_ids=[self.user_1.user_id],
+        description='new desc', hotlist_id=456, is_private=True)
+    self.assertEqual(updated_hotlist, expected_hotlist)
+
+  def testUpdateHotlistSettings_NameConflict(self):
+    """Users cannot change hotlist names to match existing hotlist."""
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'myhotlist', summary='old sum', owner_ids=[self.user_1.user_id],
+        description='old desc', hotlist_id=456, is_private=True)
+    self.work_env.services.features.TestAddHotlist(
+        'samename', summary='summary', owner_ids=[self.user_1.user_id],
+        description='desc', hotlist_id=345, is_private=False)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(features_svc.HotlistAlreadyExists):
+      with self.work_env as we:
+        we.UpdateHotlistSettings(
+            hotlist.hotlist_id, name='samename', description='new desc')
+
+  def testUpdateHotlistSettings_UserCannotUpdate(self):
+    """Non admins/owners cannot update hotlist settings."""
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'myhotlist', summary='old sum', owner_ids=[self.user_1.user_id],
+        editor_ids=[self.user_2.user_id], description='old desc',
+        hotlist_id=456, is_private=True)
+
+    self.SignIn(user_id=self.user_2.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.UpdateHotlistSettings(
+            hotlist.hotlist_id, name='samename', description='new desc')
+
+  def testUpdateHotlistSettings_NoChanges(self):
+    """No DB calls are made if there are no real changes."""
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'myhotlist', summary='old sum', owner_ids=[self.user_1.user_id],
+        description='old desc', hotlist_id=456, is_private=True)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      we.services.features.UpdateHotlist = mock.Mock()
+      we.UpdateHotlistSettings(hotlist.hotlist_id, name='myhotlist')
+      we.services.features.UpdateHotlist.assert_not_called()
+
+  def testUpdateHotlistSettings(self):
+    """Owners can update hotlist settings."""
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'myhotlist', summary='old sum', owner_ids=[self.user_1.user_id],
+        description='old desc', hotlist_id=456, is_private=True)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      we.UpdateHotlistSettings(
+          hotlist.hotlist_id, name='MYHOTLIST', is_private=False)
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+
+    expected_hotlist = features_pb2.Hotlist(
+        name='MYHOTLIST', summary='old sum', owner_ids=[self.user_1.user_id],
+        description='old desc', hotlist_id=456, is_private=False)
+    self.assertEqual(updated_hotlist, expected_hotlist)
 
   def testGetHotlist_Normal(self):
     """We can get an existing hotlist by hotlist_id."""
