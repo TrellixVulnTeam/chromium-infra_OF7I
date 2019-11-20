@@ -11,13 +11,18 @@ tree is closed.
 
 import jinja2
 import os
-import utils
+import urllib
+
+
+def urlquote(value, safe=''):
+  return urllib.quote(value, safe=safe)
+
 
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(
         os.path.join(os.path.dirname(__file__), 'templates')),
     autoescape=True)
-jinja_environment.filters['urlquote'] = utils.urlquote
+jinja_environment.filters['urlquote'] = urlquote
 
 # From buildbot's results.py.
 SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, RETRY = range(6)
