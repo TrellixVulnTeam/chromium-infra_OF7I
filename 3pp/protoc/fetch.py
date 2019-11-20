@@ -54,11 +54,9 @@ PROTOC_PLATFORMS = {
 
 
 def do_latest():
-  print "3.10.0"
-  # TODO(iannucci): revert after we have 3.10.0 built for all platforms
-  #r = requests.get(LATEST)
-  #r.raise_for_status()
-  #print json.loads(r.text)['tag_name'][1:] # e.g. v3.8.0 -> 3.8.0
+  r = requests.get(LATEST)
+  r.raise_for_status()
+  print json.loads(r.text)['tag_name'][1:] # e.g. v3.8.0 -> 3.8.0
 
 
 def fetch(url, outfile):
