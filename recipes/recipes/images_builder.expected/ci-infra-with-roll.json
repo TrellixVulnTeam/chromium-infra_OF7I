@@ -210,6 +210,13 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "upload roll CL",
+    "~followup_annotations": [
+      "@@@STEP_LINK@Issue 123456789@https://chromium-review.googlesource.com/c/123456789@@@"
+    ]
+  },
+  {
     "cmd": [
       "python",
       "-u",
@@ -219,7 +226,10 @@
       "--url",
       "https://images.repo.example.com"
     ],
-    "name": "git setup"
+    "name": "upload roll CL.git setup",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -234,7 +244,10 @@
       "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
     },
     "infra_step": true,
-    "name": "git fetch"
+    "name": "upload roll CL.git fetch",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -245,7 +258,10 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
-    "name": "git checkout"
+    "name": "upload roll CL.git checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -255,8 +271,9 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
-    "name": "read revision",
+    "name": "upload roll CL.read revision",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@<br/>checked out 'deadbeef'<br/>@@@"
     ]
   },
@@ -270,7 +287,10 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
-    "name": "git clean"
+    "name": "upload roll CL.git clean",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -281,7 +301,10 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
-    "name": "git branch"
+    "name": "upload roll CL.git branch",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -294,16 +317,20 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
-    "name": "git checkout (2)"
+    "name": "upload roll CL.git checkout (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
       "[CACHE]/builder/roll/scripts/roll_images.py"
     ],
     "cwd": "[CACHE]/builder/roll",
-    "name": "roll_images.py",
+    "name": "upload roll CL.roll_images.py",
     "stdin": "{\"tags\": [{\"image\": \"example.com/fake-registry/target\", \"tag\": {\"digest\": \"sha256:34a04005bcaf206e...\", \"metadata\": {\"date\": \"2012-05-14T12:53:23Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\", \"cloudbuild\": \"https://example.com/build/target\", \"gcr\": \"https://example.com/image/target\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}}, \"tag\": \"ci-2012.05.14-197293-5e03a58\"}}]}",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"deployments\": [@@@",
       "@@@STEP_LOG_LINE@json.output@    {@@@",
@@ -350,7 +377,10 @@
       "--verbose"
     ],
     "cwd": "[CACHE]/builder/roll",
-    "name": "prune_images.py"
+    "name": "upload roll CL.prune_images.py",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -360,7 +390,10 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
-    "name": "git add"
+    "name": "upload roll CL.git add",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -371,7 +404,10 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
-    "name": "git diff"
+    "name": "upload roll CL.git diff",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -382,7 +418,10 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
-    "name": "git commit"
+    "name": "upload roll CL.git commit",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -400,7 +439,10 @@
       "[images] Rolling in new images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nAdded pins:\n  * example.com/fake-registry/target:ci-2012.05.14-197293-5e03a58"
     ],
     "cwd": "[CACHE]/builder/roll",
-    "name": "git cl upload"
+    "name": "upload roll CL.git cl upload",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -412,8 +454,9 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/builder/roll",
-    "name": "git cl issue",
+    "name": "upload roll CL.git cl issue",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"issue\": 123456789, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"issue_url\": \"https://chromium-review.googlesource.com/c/123456789\"@@@",

@@ -12,6 +12,7 @@ DEPS = [
     'recipe_engine/commit_position',
     'recipe_engine/context',
     'recipe_engine/file',
+    'recipe_engine/futures',
     'recipe_engine/json',
     'recipe_engine/path',
     'recipe_engine/properties',
@@ -69,29 +70,37 @@ def RunSteps(api, properties):
     # Report the exact version we picked up from the infra checkout.
     api.cloudbuildhelper.report_version()
 
-    # Build, tag and upload corresponding images.
-    built = []
-    fails = []
+    # Build, tag and upload corresponding images (in parallel).
+    futures = {}
     for m in manifests:
-      # TODO(vadimsh): Run this in parallel when it's possible.
-      try:
-        img = api.cloudbuildhelper.build(
-            manifest=m,
-            canonical_tag=meta.canonical_tag,
-            build_id=api.buildbucket.build_url(),
-            infra=properties.infra,
-            labels=meta.labels,
-            tags=meta.tags,
-        )
-        if img != api.cloudbuildhelper.NotUploadedImage:
-          built.append(img)
-      except api.step.StepFailure:
-        fails.append(api.path.basename(m))
+      fut = api.futures.spawn(
+          api.cloudbuildhelper.build,
+          manifest=m,
+          canonical_tag=meta.canonical_tag,
+          build_id=api.buildbucket.build_url(),
+          infra=properties.infra,
+          labels=meta.labels,
+          tags=meta.tags)
+      futures[fut] = m
+
+  # Wait until all builds complete.
+  built = []
+  fails = []
+  for fut in api.futures.iwait(futures.keys()):
+    try:
+      img = fut.result()
+      if img != api.cloudbuildhelper.NotUploadedImage:
+        built.append(img)
+    except api.step.StepFailure:
+      fails.append(api.path.basename(futures[fut]))
 
   # Try to roll even if something failed. One broken image should not block the
   # rest of them.
   if built and properties.HasField('roll_into'):
-    _roll_built_images(api, properties.roll_into, built, meta)
+    with api.step.nest('upload roll CL') as roll:
+      num, url = _roll_built_images(api, properties.roll_into, built, meta)
+      if num is not None:
+        roll.presentation.links['Issue %s' % num] = url
 
   if fails:
     raise recipe_api.StepFailure('Failed to build: %s' % ', '.join(fails))
@@ -205,9 +214,6 @@ def _checkout_pending(api, project):
   rev_info = api.gerrit.get_revision_info(repo_url, cl.change, cl.patchset)
   author = rev_info['commit']['author']['email']
 
-  # TODO(vadimsh): Examine footers in rev_info['commit']['message'] to detect
-  # what images to build and what trial deployments to kick off.
-
   return co, Metadata(
       # ':inputs-hash' essentially tells cloudbuildhelper to skip the build if
       # there's already an image built from the exact same inputs.
@@ -264,6 +270,10 @@ def _roll_built_images(api, spec, images, meta):
     spec: instance of images_builder.Inputs.RollInto proto with the config.
     images: a list of CloudBuildHelperApi.Image with info about built images.
     meta: Metadata struct, as returned by _checkout_committed.
+
+  Returns:
+    (None, None) if didn't create a CL (because nothing has changed).
+    (Issue number, Issue URL) if created a CL.
   """
   # RFC3389 timstamp in UTC zone.
   date = api.time.utcnow().isoformat('T') + 'Z'
@@ -328,7 +338,7 @@ def _roll_built_images(api, spec, images, meta):
     # Check we actually updated something.
     diff_check = api.git('diff', '--cached', '--exit-code', ok_ret='any')
     if diff_check.retcode == 0:  # pragma: no cover
-      return
+      return None, None
 
     # Generate commit message.
     desc = [
@@ -370,6 +380,13 @@ def _roll_built_images(api, spec, images, meta):
     )
     out = issue_step.json.output
     issue_step.presentation.links['Issue %s' % out['issue']] = out['issue_url']
+
+    # TODO(vadimsh): Babysit the CL until it lands or until timeout happens.
+    # Without this if images_builder runs again while the previous roll is still
+    # in-flight, it will produce a duplicate roll (which will eventually fail
+    # due to merge conflicts).
+
+    return out['issue'], out['issue_url']
 
 
 def GenTests(api):
@@ -475,7 +492,7 @@ def GenTests(api):
               'commit': True,
           },
       ) +
-      api.step_data('git diff', retcode=1)
+      api.step_data('upload roll CL.git diff', retcode=1)
   )
 
   yield (
