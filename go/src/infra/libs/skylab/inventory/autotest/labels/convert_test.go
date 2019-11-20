@@ -44,6 +44,7 @@ peripherals: {
   chameleon_type: 3
   chameleon_type: 5
   chameleon: true
+  camerabox: true
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
@@ -100,6 +101,7 @@ var fullLabels = []string{
 	"bluetooth",
 	"board:boardval",
 	"brand-code:HOMH",
+	"camerabox",
 	"carrier:tmobile",
 	"chameleon",
 	"chameleon:dp_hdmi",

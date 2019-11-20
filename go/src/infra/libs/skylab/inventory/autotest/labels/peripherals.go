@@ -30,6 +30,9 @@ func boolPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 	if p.GetAudioLoopbackDongle() {
 		labels = append(labels, "audio_loopback_dongle")
 	}
+	if p.GetCamerabox() {
+		labels = append(labels, "camerabox")
+	}
 	if p.GetChameleon() {
 		labels = append(labels, "chameleon")
 	}
@@ -77,6 +80,8 @@ func boolPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) [
 			*p.AudioBox = true
 		case "audio_loopback_dongle":
 			*p.AudioLoopbackDongle = true
+		case "camerabox":
+			*p.Camerabox = true
 		case "chameleon":
 			if v != "" {
 				continue
