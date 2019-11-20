@@ -137,7 +137,10 @@ import:
   - spanner
   - profiler
 - package: google.golang.org/genproto
-  version: master
+  # Pin until https://github.com/googleapis/go-genproto/issues/269 is resolved.
+  # If it's not resolved, ping vadimsh@, there are workarounds we can do on our
+  # side.
+  version: 6bbd007550de91f00332b51032ea2cd88b87e799
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...

@@ -1,5 +1,5 @@
-hash: e0455f34e2d9e07d7a48fedab53ed7c693e6115c8b808da67027f78204407d2e
-updated: 2019-11-20T08:13:28.561065675-05:00
+hash: 435be39838bfdb39b33d1633a40eb33241bfe15661f1659d920fde681a8ba9ee
+updated: 2019-11-20T12:02:11.515654-08:00
 imports:
 - name: cloud.google.com/go
   version: 25d2e811d4ff5c05f6fe5ae5858f6a56c0961a78
@@ -23,7 +23,7 @@ imports:
   version: f61b66f89f4a311bef65f13e575bcf1a2ffadda6
   repo: https://chromium.googlesource.com/external/github.com/asaskevich/govalidator.git
 - name: github.com/aws/aws-sdk-go
-  version: 7814a7f61bf93cb54d00a5f97918c5501f07d351
+  version: 3dfcfc34e12ccbb66d72fb6ab6b87f61315d882d
   repo: https://chromium.googlesource.com/external/github.com/aws/aws-sdk-go.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -109,7 +109,7 @@ imports:
   subpackages:
   - golint
 - name: github.com/golang/mock
-  version: 0b73a1dbc3e1197079e9b9db31ab2879a5c9a095
+  version: 3fae80861dc1910bcd85db91ad2bef93971a4ed8
   repo: https://chromium.googlesource.com/external/github.com/golang/mock.git
   subpackages:
   - gomock
@@ -166,7 +166,7 @@ imports:
   version: 8a6fb523712970c966eefc6b39ed2c5e74880354
   repo: https://chromium.googlesource.com/external/github.com/hashicorp/errwrap.git
 - name: github.com/hashicorp/go-multierror
-  version: bdca7bb83f603b80ef756bb953fe1dafa9cd00a2
+  version: 72917a1559e17f38638ade54020ab372ba848d67
   repo: https://chromium.googlesource.com/external/github.com/hashicorp/go-multierror.git
 - name: github.com/hashicorp/golang-lru
   version: 7f827b33c0f158ec5dfbba01bb0b14a4541fd81d
@@ -401,7 +401,7 @@ imports:
   version: aaf7be0038921cd52ad0b7430265094afe746042
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: 5a36865fda1dcdaa9127e1ee72e82d870b064612
+  version: d4e4f4e85214de7778f0ef58aa6d3fe95cb118b2
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -442,7 +442,7 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 6bfc516c8699a01fce75e51d680e03b80d068f24
+  version: bd437916bb0eb726b873ee8e9b2dcf212d32e2fd
   repo: https://go.googlesource.com/sys.git
   subpackages:
   - unix
@@ -454,7 +454,7 @@ imports:
   version: 555d28b269f0569763d25dbe1a237ae74c6bcc82
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: ad01d5993d978890e598d35ff90e41811bc2958b
+  version: 688c506a55c1b3cd77849ad2e9879c7e87e0b715
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -496,13 +496,13 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: 83cc0476cb11ea0da33dacd4c6354ab192de6fe6
+  version: 6bbd007550de91f00332b51032ea2cd88b87e799
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: d720ab346fd09f63ecd5b34fcf3696d3d345f938
+  version: 7c1d326729dc9b0a07135f8902ddcc050ff8ab64
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
