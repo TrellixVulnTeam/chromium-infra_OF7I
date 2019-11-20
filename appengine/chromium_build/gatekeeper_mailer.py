@@ -30,22 +30,21 @@ Results = ["success", "warnings", "failure", "skipped", "exception", "retry"]
 
 
 class MailTemplate(object):
-  """Encapsulates a buildbot status email."""
+  """Encapsulates a Gatekeeper status email."""
 
   default_status_header = ('Automatically closing tree for "%(steps)s" on '
                           '"%(builder_name)s"')
-  default_subject = ('buildbot %(result)s in %(project_name)s on '
-                     '%(builder_name)s, revision %(revision)s')
+  default_subject = ('CI %(result)s in %(project_name)s on %(builder_name)s')
 
-  def __init__(self, waterfall_url, build_url, project_name, fromaddr,
-               reply_to=None, subject=None, status_header=None):
-
-
-    self.reply_to = reply_to
+  def __init__(self,
+               build_url,
+               project_name,
+               fromaddr,
+               subject=None,
+               status_header=None):
     self.fromaddr = fromaddr
     self.subject = subject or self.default_subject
     self.status_header = status_header or self.default_status_header
-    self.waterfall_url = waterfall_url
     self.build_url = build_url
     self.project_name = project_name
 
@@ -55,10 +54,8 @@ class MailTemplate(object):
     revisions_list = build_status['revisions']
     blame_list = ','.join(build_status['blamelist'])
     revisions_string = ''
-    latest_revision = 0
     if revisions_list:
       revisions_string = ', '.join([str(rev) for rev in revisions_list])
-      latest_revision = max([rev for rev in revisions_list])
     if build_status['result'] == FAILURE:
       result = 'failure'
     else:
@@ -71,7 +68,6 @@ class MailTemplate(object):
         'builder_name': builder_name,
         'revisions': revisions_string,
         'steps': us_steps,
-        'waterfall_url': self.waterfall_url,
     }
 
     status_text = self.status_header % context
@@ -93,7 +89,6 @@ class MailTemplate(object):
         'project_name': self.project_name,
         'builder_name': builder_name,
         'reason': build_status['reason'],
-        'revision': str(latest_revision),
         'buildnumber': str(build_status['number']),
         'steps': us_steps,
     }

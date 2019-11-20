@@ -22,8 +22,7 @@ class MailTestCase(cb.CbTestCase):
 
   def test_html_format(self):
     import gatekeeper_mailer
-    template = gatekeeper_mailer.MailTemplate(self.build_data['waterfall_url'],
-                                              self.build_data['build_url'],
+    template = gatekeeper_mailer.MailTemplate(self.build_data['build_url'],
                                               self.build_data['project_name'],
                                               'test@chromium.org')
 
@@ -39,11 +38,11 @@ class MailTestCase(cb.CbTestCase):
   def test_html_format_status(self):
     import gatekeeper_mailer
     status_header = ('Perf alert for "%(steps)s" on "%(builder_name)s"')
-    template = gatekeeper_mailer.MailTemplate(self.build_data['waterfall_url'],
-                                              self.build_data['build_url'],
-                                              self.build_data['project_name'],
-                                              'test@chromium.org',
-                                              status_header=status_header)
+    template = gatekeeper_mailer.MailTemplate(
+        self.build_data['build_url'],
+        self.build_data['project_name'],
+        'test@chromium.org',
+        status_header=status_header)
 
     _, html_content, _ = template.genMessageContent(self.build_data)
 
@@ -54,4 +53,3 @@ class MailTestCase(cb.CbTestCase):
     expected = str(BeautifulSoup(expected_html)).split()
 
     self.assertEqual(saw, expected)
-
