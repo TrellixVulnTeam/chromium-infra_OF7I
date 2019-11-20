@@ -36,6 +36,11 @@ import requests
 # prebuilt binary.
 LATEST = 'https://api.github.com/repos/protocolbuffers/protobuf/releases/latest'
 
+# https://developer.github.com/v3/repos/releases/#get-a-release-by-tag-name
+# Returns a JSON loadable text response like LATEST, but for a specific tag.
+TAGGED_RELEASE = (
+  'https://api.github.com/repos/protocolbuffers/protobuf/releases/tags/v%s')
+
 
 # A mapping of supported CIPD platforms to the name of the corresponding protoc
 # platform.
@@ -70,13 +75,12 @@ def do_checkout(version, platform, checkout_path):
     raise ValueError('unsupported platform %s' % platform)
   name = 'protoc-%s-%s.zip' % (version, PROTOC_PLATFORMS[platform])
 
-  r = requests.get(LATEST)
+  r = requests.get(TAGGED_RELEASE % version)
   r.raise_for_status()
   rsp = json.loads(r.text)
-  latest = rsp['tag_name'][1:]
-  if version != latest:
-    # Race between calling latest and checkout.
-    raise ValueError('expected %s, latest is %s' % (version, latest))
+  actual_tag = rsp['tag_name'][1:]
+  if version != actual_tag:
+    raise ValueError('expected %s, actual is %s' % (version, actual_tag))
 
   for a in rsp['assets']:
     if a['name'] == name:
