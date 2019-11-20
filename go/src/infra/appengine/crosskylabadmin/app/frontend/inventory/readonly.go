@@ -276,6 +276,7 @@ func freeDUTInfo(d *inventory.DeviceUnderTest) freeduts.DUT {
 
 // getStableVersionImpl returns all the stable versions associated with a given buildTarget and model
 func getStableVersionImpl(ctx context.Context, buildTarget string, model string) (*fleet.GetStableVersionResponse, error) {
+	logging.Infof(ctx, "getting stable version for buildTarget: %s and model: %s", buildTarget, model)
 	var err error
 	merr := errors.NewMultiError()
 	out := &fleet.GetStableVersionResponse{}
@@ -285,7 +286,7 @@ func getStableVersionImpl(ctx context.Context, buildTarget string, model string)
 	}
 	out.FaftVersion, err = dssv.GetFaftStableVersion(ctx, buildTarget, model)
 	if err != nil {
-		merr = append(merr, err)
+		logging.Infof(ctx, "faft stable version does not exist: %v", err)
 	}
 	out.FirmwareVersion, err = dssv.GetFirmwareStableVersion(ctx, buildTarget, model)
 	if err != nil {
