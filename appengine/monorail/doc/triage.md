@@ -8,7 +8,7 @@ issues reported by our users and take appropriate actions.
 
 When you have the monorail triage shift, you are responsible for the
 weekly deploy on either Monday early afternoon or Tuesday morning.
-How-to is in the [deployment.md](/deployment.md).
+How-to is in the [deployment.md](deployment.md).
 
 When you have a monorail triage shift, look at each issue in the
 [untriaged queue](https://bugs.chromium.org/p/monorail/issues/list?can=2&q=-has%3Aqueue+-has%3Aowner)
