@@ -111,6 +111,8 @@ service Inventory {
   // internally.  It is used by repair tasks to update DUT labels.
   rpc UpdateDutLabels(UpdateDutLabelsRequest) returns (UpdateDutLabelsResponse);
 
+  rpc BatchUpdateDuts(BatchUpdateDutsRequest) returns (BatchUpdateDutsResponse);
+
   // UpdateCachedInventory updates the cached inventory data.
   //
   // Cached inventory data is used to serve read-only inventory RPCs.
@@ -669,6 +671,16 @@ message UpdateDutLabelsResponse {
   // url is a URL associated with the label update.
   //
   // It is usually a Gerrit or Gitiles URL.
+  string url = 1;
+}
+
+message atchUpdateDutsRequest {
+  repeated string hostnames = 1;
+  string pool = 2;
+}
+
+message BatchUpdateDutsResponse {
+  // A Gerrit URL with the label update.
   string url = 1;
 }
 

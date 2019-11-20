@@ -262,6 +262,74 @@ func (is *ServerImpl) UpdateDutLabels(ctx context.Context, req *fleet.UpdateDutL
 	return resp, err
 }
 
+func validateBatchUpdateDutsRequest(req *fleet.BatchUpdateDutsRequest) error {
+	if len(req.GetHostnames()) == 0 {
+		return errors.New("must specify at least one hostname")
+	}
+
+	if req.GetPool() == "" {
+		return errors.New("must specify a non-empty pool")
+	}
+
+	return nil
+}
+
+// BatchUpdateDuts implements the method from fleet.InventoryServer interface.
+func (is *ServerImpl) BatchUpdateDuts(ctx context.Context, req *fleet.BatchUpdateDutsRequest) (resp *fleet.BatchUpdateDutsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := validateBatchUpdateDutsRequest(req); err != nil {
+		return nil, errors.Annotate(err, "invalid BatchUpdateDutsRequest").Err()
+	}
+
+	hostnames := make(map[string]bool, len(req.GetHostnames()))
+	for _, h := range req.GetHostnames() {
+		hostnames[h] = true
+	}
+	pool := req.GetPool()
+
+	store, err := is.newStore(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "BatchUpdateDuts").Err()
+	}
+	if err := store.Refresh(ctx); err != nil {
+		return nil, errors.Annotate(err, "BatchUpdateDuts").Err()
+	}
+
+	for _, d := range store.Lab.GetDuts() {
+		if hostnames[d.GetCommon().GetHostname()] {
+			logging.Debugf(ctx, "assign pool to host: %s", d.GetCommon().GetHostname())
+			assignPool(d, pool)
+		}
+	}
+	url, err := store.Commit(ctx, "Batch update DUT labels")
+	if gitstore.IsEmptyErr(err) {
+		logging.Infof(ctx, "no updates, so nothing to commit")
+		return &fleet.BatchUpdateDutsResponse{}, nil
+	}
+	if err != nil {
+		logging.Infof(ctx, "commit failure: %v", err)
+		return nil, errors.Annotate(err, "BatchUpdateDuts").Err()
+	}
+
+	return &fleet.BatchUpdateDutsResponse{
+		Url: url,
+	}, nil
+}
+
+// Assign pool to a given device.
+func assignPool(d *inventory.DeviceUnderTest, pool string) {
+	cp, ok := inventory.SchedulableLabels_DUTPool_value[pool]
+	if ok {
+		d.GetCommon().GetLabels().CriticalPools = []inventory.SchedulableLabels_DUTPool{inventory.SchedulableLabels_DUTPool(cp)}
+		d.GetCommon().GetLabels().SelfServePools = nil
+	} else {
+		d.GetCommon().GetLabels().CriticalPools = nil
+		d.GetCommon().GetLabels().SelfServePools = []string{pool}
+	}
+}
+
 // PushInventoryToQueen implements the method from fleet.InventoryServer interface.
 func (is *ServerImpl) PushInventoryToQueen(ctx context.Context, req *fleet.PushInventoryToQueenRequest) (resp *fleet.PushInventoryToQueenResponse, err error) {
 	defer func() {

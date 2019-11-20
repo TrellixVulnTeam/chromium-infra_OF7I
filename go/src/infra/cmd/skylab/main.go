@@ -46,6 +46,7 @@ func getApplication() *cli.Application {
 			cmd.AssignDuts,
 			cmd.RemoveDuts,
 			cmd.UpdateDut,
+			cmd.BatchUpdateDuts,
 			subcommands.Section("Pool Operations"),
 			cmd.EnsurePoolHealthy,
 			cmd.ResizePool,

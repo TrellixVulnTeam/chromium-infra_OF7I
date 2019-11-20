@@ -314,6 +314,26 @@ func (mr *MockInventoryClientMockRecorder) UpdateDutLabels(ctx, in interface{}, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDutLabels", reflect.TypeOf((*MockInventoryClient)(nil).UpdateDutLabels), varargs...)
 }
 
+// BatchUpdateDuts mocks base method
+func (m *MockInventoryClient) BatchUpdateDuts(ctx context.Context, in *BatchUpdateDutsRequest, opts ...grpc.CallOption) (*BatchUpdateDutsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "BatchUpdateDuts", varargs...)
+	ret0, _ := ret[0].(*BatchUpdateDutsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BatchUpdateDuts indicates an expected call of BatchUpdateDuts
+func (mr *MockInventoryClientMockRecorder) BatchUpdateDuts(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BatchUpdateDuts", reflect.TypeOf((*MockInventoryClient)(nil).BatchUpdateDuts), varargs...)
+}
+
 // UpdateCachedInventory mocks base method
 func (m *MockInventoryClient) UpdateCachedInventory(ctx context.Context, in *UpdateCachedInventoryRequest, opts ...grpc.CallOption) (*UpdateCachedInventoryResponse, error) {
 	m.ctrl.T.Helper()
@@ -625,6 +645,21 @@ func (m *MockInventoryServer) UpdateDutLabels(arg0 context.Context, arg1 *Update
 func (mr *MockInventoryServerMockRecorder) UpdateDutLabels(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDutLabels", reflect.TypeOf((*MockInventoryServer)(nil).UpdateDutLabels), arg0, arg1)
+}
+
+// BatchUpdateDuts mocks base method
+func (m *MockInventoryServer) BatchUpdateDuts(arg0 context.Context, arg1 *BatchUpdateDutsRequest) (*BatchUpdateDutsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BatchUpdateDuts", arg0, arg1)
+	ret0, _ := ret[0].(*BatchUpdateDutsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BatchUpdateDuts indicates an expected call of BatchUpdateDuts
+func (mr *MockInventoryServerMockRecorder) BatchUpdateDuts(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BatchUpdateDuts", reflect.TypeOf((*MockInventoryServer)(nil).BatchUpdateDuts), arg0, arg1)
 }
 
 // UpdateCachedInventory mocks base method

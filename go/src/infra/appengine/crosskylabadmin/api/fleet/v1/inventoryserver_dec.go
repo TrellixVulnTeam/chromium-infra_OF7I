@@ -261,6 +261,23 @@ func (s *DecoratedInventory) UpdateDutLabels(ctx context.Context, req *UpdateDut
 	return
 }
 
+func (s *DecoratedInventory) BatchUpdateDuts(ctx context.Context, req *BatchUpdateDutsRequest) (rsp *BatchUpdateDutsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchUpdateDuts", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchUpdateDuts(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchUpdateDuts", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedInventory) UpdateCachedInventory(ctx context.Context, req *UpdateCachedInventoryRequest) (rsp *UpdateCachedInventoryResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
