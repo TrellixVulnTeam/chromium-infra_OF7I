@@ -106,6 +106,17 @@ FLAG_SPAM = 'FlagSpam'
 VERDICT_SPAM = 'VerdictSpam'
 MODERATE_SPAM = 'ModerateSpam'
 
+# Permissions for user hotlists.
+ADMINISTER_HOTLIST = 'AdministerHotlist'
+EDIT_HOTLIST = 'EditHotlist'
+VIEW_HOTLIST = 'ViewHotlist'
+HOTLIST_OWNER_PERMISSIONS = [
+    ADMINISTER_HOTLIST, EDIT_HOTLIST, VIEW_HOTLIST]
+HOTLIST_EDITOR_PERMISSIONS = [
+    EDIT_HOTLIST, VIEW_HOTLIST]
+# Permissions for all users for public hotlists.
+STANDARD_HOTLIST_PERMISSIONS = [VIEW_HOTLIST]
+
 RESTRICTED_APPROVAL_STATUSES = [
     tracker_pb2.ApprovalStatus.NA,
     tracker_pb2.ApprovalStatus.APPROVED,

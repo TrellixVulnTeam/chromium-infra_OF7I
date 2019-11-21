@@ -632,7 +632,7 @@ class FeaturesServicerTest(unittest.TestCase):
 
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester='foo@example.com')
-    with self.assertRaises(exceptions.InputException):
+    with self.assertRaises(features_svc.NoSuchHotlistException):
       self.CallWrapped(self.features_svcr.GetHotlist, mc, request)
 
   def testListHotlistIssues(self):
@@ -984,6 +984,35 @@ class FeaturesServicerTest(unittest.TestCase):
 
     self.assertTrue(
         hotlist.hotlist_id in self.services.features.expunged_hotlist_ids)
+
+  def testListHotlistPermissions_InvalidHotlistRef(self):
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user2.email)
+    request = features_pb2.ListHotlistPermissionsRequest()
+    with self.assertRaises(features_svc.NoSuchHotlistException):
+      self.CallWrapped(self.features_svcr.ListHotlistPermissions, mc, request)
+
+  def testListHotlistPermissions(self):
+    owner_ids = [self.user1.user_id]
+    editor_ids = [self.user3.user_id]
+    hotlist = self.services.features.TestAddHotlist(
+        name='Hotlist-1', summary='summary', description='description',
+        owner_ids=owner_ids, editor_ids=editor_ids, hotlist_id=1235)
+
+    request = features_pb2.ListHotlistPermissionsRequest(
+        hotlist_ref=common_pb2.HotlistRef(
+            name=hotlist.name, owner=common_pb2.UserRef(
+                user_id=self.user1.user_id)))
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user3.email)
+    mc.LookupLoggedInUserPerms(None)
+
+    user_perms = self.CallWrapped(
+        self.features_svcr.ListHotlistPermissions, mc, request)
+    self.assertEqual(
+        user_perms,
+        features_pb2.ListHotlistPermissionsResponse(
+            permissions=permissions.HOTLIST_EDITOR_PERMISSIONS))
 
   def testPredictComponent_Normal(self):
     """Test normal case when predicted component exists."""

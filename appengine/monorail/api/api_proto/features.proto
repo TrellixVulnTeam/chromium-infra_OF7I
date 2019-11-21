@@ -27,6 +27,7 @@ service Features {
   rpc UpdateHotlistIssueNote (UpdateHotlistIssueNoteRequest) returns (UpdateHotlistIssueNoteResponse) {}
   rpc UpdateHotlistRoles (UpdateHotlistRolesRequest) returns (UpdateHotlistRolesResponse) {}
   rpc DeleteHotlist (DeleteHotlistRequest) returns (DeleteHotlistResponse) {}
+  rpc ListHotlistPermissions (ListHotlistPermissionsRequest) returns (ListHotlistPermissionsResponse) {}
   rpc PredictComponent (PredictComponentRequest) returns (PredictComponentResponse) {}
 }
 
@@ -221,6 +222,19 @@ message DeleteHotlistRequest {
 
 // Next available tag: 1
 message DeleteHotlistResponse {
+}
+
+
+// Fetches the permissions of the logged in or anon user.
+// Next available tag: 2
+message ListHotlistPermissionsRequest {
+  HotlistRef hotlist_ref = 1;
+}
+
+
+// Next available tag: 2
+message ListHotlistPermissionsResponse {
+  repeated string permissions = 1;
 }
 
 

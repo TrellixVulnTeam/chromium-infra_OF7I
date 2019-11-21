@@ -2520,6 +2520,26 @@ class WorkEnv(object):
       self.services.features.UpdateHotlistItemsFields(
           self.mc.cnxn, hotlist_id, new_notes=new_notes)
 
+  def ListHotlistPermissions(self, hotlist_id):
+    # type: (int) -> List(str)
+    """Return the list of permissions the current user has for the given
+       hotlist.
+
+    This method only allows for fetching the permisisons of the current anon
+    or logged-in user. Users will only be able to look up their own permissions.
+    """
+    hotlist = self.services.features.GetHotlist(self.mc.cnxn, hotlist_id)
+    if permissions.CanAdministerHotlist(
+        self.mc.auth.effective_ids, self.mc.perms, hotlist):
+      return permissions.HOTLIST_OWNER_PERMISSIONS
+    if permissions.CanEditHotlist(
+        self.mc.auth.effective_ids, self.mc.perms, hotlist):
+      return permissions.HOTLIST_EDITOR_PERMISSIONS
+    if permissions.CanViewHotlist(
+        self.mc.auth.effective_ids, self.mc.perms, hotlist):
+      return permissions.STANDARD_HOTLIST_PERMISSIONS
+    return []
+
   # FUTURE: DeleteHotlist()
 
   def expungeUsersFromStars(self, user_ids):

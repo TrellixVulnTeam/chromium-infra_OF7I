@@ -162,10 +162,6 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
   @monorail_servicer.PRPCMethod
   def GetHotlist(self, mc, request):
     """Get the Hotlist metadata for the specified hotlist."""
-    if (not request.hotlist_ref or
-        not request.hotlist_ref.name or not request.hotlist_ref.owner):
-      raise exceptions.InputException(
-          'Param `hotlist_name` and `owner_ref` required')
     hotlist_id = converters.IngestHotlistRef(
         mc.cnxn, self.services.user, self.services.features,
         request.hotlist_ref)
@@ -357,6 +353,18 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       we.DeleteHotlist(hotlist_id)
 
     return features_pb2.DeleteHotlistResponse()
+
+  @monorail_servicer.PRPCMethod
+  def ListHotlistPermissions(self, mc, request):
+    """Lists the hotlist permissions of the given or current user."""
+    hotlist_id = converters.IngestHotlistRef(
+        mc.cnxn, self.services.user, self.services.features,
+        request.hotlist_ref)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      permissions = we.ListHotlistPermissions(hotlist_id)
+
+    return features_pb2.ListHotlistPermissionsResponse(permissions=permissions)
 
   @monorail_servicer.PRPCMethod
   def PredictComponent(self, mc, request):
