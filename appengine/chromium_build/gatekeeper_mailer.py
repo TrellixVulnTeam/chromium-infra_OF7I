@@ -54,8 +54,10 @@ class MailTemplate(object):
     revisions_list = build_status['revisions']
     blame_list = ','.join(build_status['blamelist'])
     revisions_string = ''
+    latest_revision = 0
     if revisions_list:
       revisions_string = ', '.join([str(rev) for rev in revisions_list])
+      latest_revision = max([rev for rev in revisions_list])
     if build_status['result'] == FAILURE:
       result = 'failure'
     else:
@@ -89,6 +91,7 @@ class MailTemplate(object):
         'project_name': self.project_name,
         'builder_name': builder_name,
         'reason': build_status['reason'],
+        'revision': str(latest_revision),
         'buildnumber': str(build_status['number']),
         'steps': us_steps,
     }
