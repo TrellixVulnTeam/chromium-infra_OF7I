@@ -92,6 +92,12 @@ func (t *Task) StainlessURL() string {
 		resultsSubdir(t.RunID))
 }
 
+// GsURL returns the URL for the Google Storage location of the logs offloaded
+// from this task.
+func (t *Task) GsURL(gsBucket string) string {
+	return fmt.Sprintf("gs://%s/%s/", gsBucket, resultsSubdir(t.RunID))
+}
+
 func resultsSubdir(runID string) string {
 	return filepath.Join(fmt.Sprintf("swarming-%s0", runID[:len(runID)-1]), runID[len(runID)-1:])
 }

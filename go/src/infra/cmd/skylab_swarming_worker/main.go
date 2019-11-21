@@ -32,13 +32,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
+	protoCommon "go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
 	lflag "go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/common/logging/gologger"
 
@@ -146,10 +146,17 @@ func mainInner(a *args) error {
 		ta.LogDogFile = fifoPath
 	}
 
+	gsBucket := "chromeos-autotest-results"
+
 	if a.sideEffectsConfig != "" {
-		if err := dropSideEffectsConfig(a.sideEffectsConfig, i.ResultsDir, annotWriter); err != nil {
+		sec, err := parseSideEffectsConfig(a.sideEffectsConfig, annotWriter)
+		if err != nil {
 			return err
 		}
+		if err = dropSideEffectsConfig(sec, i.ResultsDir, annotWriter); err != nil {
+			return err
+		}
+		gsBucket = sec.GetGoogleStorage().GetBucket()
 	}
 
 	luciferErr := runLuciferTask(i, a, annotWriter, ta)
@@ -165,12 +172,16 @@ func mainInner(a *args) error {
 		pa := i.ParserArgs()
 		pa.Failed = luciferErr != nil
 
-		blob, err := parser.GetResults(pa, annotWriter)
+		r, err := parser.GetResults(pa, annotWriter)
 		if err != nil {
 			return errors.Wrap(err, "results parsing")
 		}
 
-		err = writeResultsFile(a.isolatedOutdir, blob, annotWriter)
+		r.LogData = &protoCommon.TaskLogData{
+			GsUrl: i.Task.GsURL(gsBucket),
+		}
+
+		err = writeResultsFile(a.isolatedOutdir, r, annotWriter)
 
 		if err != nil {
 			return errors.Wrap(err, "writing results to isolated output file")
@@ -352,26 +363,4 @@ func runDeployTask(i *harness.Info, actions string, logdogOutput io.Writer, ta l
 		return errors.Wrap(err, "run deploy task")
 	}
 	return nil
-}
-
-// TODO(zamorzaev): move this into the isolate client.
-const resultsFileName = "results.json"
-
-// writeResultsFile writes the results blob to "results.json" inside the given dir.
-func writeResultsFile(outdir string, b []byte, logdogOutput io.Writer) error {
-	annotations.SeedStep(logdogOutput, "Write results.json")
-	annotations.StepCursor(logdogOutput, "Write results.json")
-	annotations.StepStarted(logdogOutput)
-	defer annotations.StepClosed(logdogOutput)
-
-	f := filepath.Join(outdir, resultsFileName)
-	fmt.Fprintf(logdogOutput, "Writing results to %s", f)
-
-	err := ioutil.WriteFile(f, b, 0644)
-
-	if err != nil {
-		annotations.StepException(logdogOutput)
-		fmt.Fprint(logdogOutput, err.Error())
-	}
-	return err
 }

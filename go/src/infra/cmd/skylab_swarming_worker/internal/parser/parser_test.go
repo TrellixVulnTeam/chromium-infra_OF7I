@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 )
 
 func TestParseCmdArgs(t *testing.T) {
@@ -64,23 +66,26 @@ func TestMissingResultsDir(t *testing.T) {
 func TestPassingRun(t *testing.T) {
 	Convey("When the run succeeded, test cases are annotated and no autoserv failure is reported.",
 		t, func() {
-			input := []byte(`
-{
-	"autotestResult": {
-		"testCases": [
-		{
-			"name": "passing_test_case",
-			"verdict": "VERDICT_PASS"
-		}]
-	},
-	"prejob": {
-		"step": [
-		{
-			"name": "provision",
-			"verdict": "VERDICT_PASS"
-		}]
-	}
-}`)
+			input := &skylab_test_runner.Result{
+				Harness: &skylab_test_runner.Result_AutotestResult{
+					AutotestResult: &skylab_test_runner.Result_Autotest{
+						TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+							{
+								Name:    "passing_test_case",
+								Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS,
+							},
+						},
+					},
+				},
+				Prejob: &skylab_test_runner.Result_Prejob{
+					Step: []*skylab_test_runner.Result_Prejob_Step{
+						{
+							Name:    "provision",
+							Verdict: skylab_test_runner.Result_Prejob_Step_VERDICT_PASS,
+						},
+					},
+				},
+			}
 
 			var output bytes.Buffer
 
@@ -98,31 +103,34 @@ func TestPassingRun(t *testing.T) {
 func TestFailingTestCase(t *testing.T) {
 	Convey("When test cases failed, they are annotated and no autoserv failure is reported.",
 		t, func() {
-			input := []byte(`
-{
-	"autotestResult": {
-		"testCases": [
-		{
-			"name": "passing_test_case",
-			"verdict": "VERDICT_PASS"
-		},
-		{
-			"name": "failing_test_case",
-			"verdict": "VERDICT_FAIL",
-			"humanReadableSummary": "Failure because reasons."
-		},
-		{
-			"name": "mystery_test_case"
-		}]
-	},
-	"prejob": {
-		"step": [
-		{
-			"name": "provision",
-			"verdict": "VERDICT_PASS"
-		}]
-	}
-}`)
+			input := &skylab_test_runner.Result{
+				Harness: &skylab_test_runner.Result_AutotestResult{
+					AutotestResult: &skylab_test_runner.Result_Autotest{
+						TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+							{
+								Name:    "passing_test_case",
+								Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS,
+							},
+							{
+								Name:                 "failing_test_case",
+								Verdict:              skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL,
+								HumanReadableSummary: "Failure because reasons.",
+							},
+							{
+								Name: "mystery_test_case",
+							},
+						},
+					},
+				},
+				Prejob: &skylab_test_runner.Result_Prejob{
+					Step: []*skylab_test_runner.Result_Prejob_Step{
+						{
+							Name:    "provision",
+							Verdict: skylab_test_runner.Result_Prejob_Step_VERDICT_PASS,
+						},
+					},
+				},
+			}
 
 			var output bytes.Buffer
 
@@ -142,20 +150,22 @@ func TestFailingTestCase(t *testing.T) {
 func TestFailingPrejob(t *testing.T) {
 	Convey("When prejob failed, it is annotated and no autoserv failure is reported.",
 		t, func() {
-			input := []byte(`
-{
-	"autotestResult": {
-		"incomplete": true
-	},
-	"prejob": {
-		"step": [
-		{
-			"name": "provision",
-			"verdict": "VERDICT_FAIL",
-			"humanReadableSummary": "The DUT exploded."
-		}]
-	}
-}`)
+			input := &skylab_test_runner.Result{
+				Harness: &skylab_test_runner.Result_AutotestResult{
+					AutotestResult: &skylab_test_runner.Result_Autotest{
+						Incomplete: true,
+					},
+				},
+				Prejob: &skylab_test_runner.Result_Prejob{
+					Step: []*skylab_test_runner.Result_Prejob_Step{
+						{
+							Name:                 "provision",
+							Verdict:              skylab_test_runner.Result_Prejob_Step_VERDICT_FAIL,
+							HumanReadableSummary: "The DUT exploded.",
+						},
+					},
+				},
+			}
 
 			var output bytes.Buffer
 
@@ -172,24 +182,27 @@ func TestFailingPrejob(t *testing.T) {
 func TestAutoservFailure(t *testing.T) {
 	Convey("When a run fails with no individual tests failing, autoserv failure is reported.",
 		t, func() {
-			input := []byte(`
-{
-	"autotestResult": {
-		"testCases": [
-		{
-			"name": "passing_test_case",
-			"verdict": "VERDICT_PASS"
-		}],
-		"incomplete": true
-	},
-	"prejob": {
-		"step": [
-		{
-			"name": "provision",
-			"verdict": "VERDICT_PASS"
-		}]
-	}
-}`)
+			input := &skylab_test_runner.Result{
+				Harness: &skylab_test_runner.Result_AutotestResult{
+					AutotestResult: &skylab_test_runner.Result_Autotest{
+						TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+							{
+								Name:    "passing_test_case",
+								Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS,
+							},
+						},
+						Incomplete: true,
+					},
+				},
+				Prejob: &skylab_test_runner.Result_Prejob{
+					Step: []*skylab_test_runner.Result_Prejob_Step{
+						{
+							Name:    "provision",
+							Verdict: skylab_test_runner.Result_Prejob_Step_VERDICT_PASS,
+						},
+					},
+				},
+			}
 
 			var output bytes.Buffer
 

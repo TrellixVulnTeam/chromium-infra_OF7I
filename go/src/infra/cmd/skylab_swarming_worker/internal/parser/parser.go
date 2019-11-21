@@ -27,11 +27,12 @@ type Args struct {
 	ParserPath   string
 	ResultsDir   string
 	StainlessURL string
+	GsURL        string
 	Failed       bool
 }
 
-// GetResults calls autotest_status_parser and returns its stdout.
-func GetResults(a Args, w io.Writer) ([]byte, error) {
+// GetResults calls autotest_status_parser and parses its stdout.
+func GetResults(a Args, w io.Writer) (*skylab_test_runner.Result, error) {
 	annotations.SeedStep(w, logdogStepName)
 	annotations.StepCursor(w, logdogStepName)
 	annotations.StepStarted(w)
@@ -57,15 +58,21 @@ func GetResults(a Args, w io.Writer) ([]byte, error) {
 		annotations.StepFailure(w)
 	}
 
-	fmt.Fprintf(w, "Test results summary:\n%s", output)
+	var r skylab_test_runner.Result
 
-	if err := annotateTestCases(output, a.Failed, w); err != nil {
+	if err := jsonpb.Unmarshal(bytes.NewReader(output), &r); err != nil {
+		return nil, errors.Annotate(err, "parse autotest status").Err()
+	}
+
+	fmt.Fprintf(w, "Test results summary:\n%v", r)
+
+	if err := annotateTestCases(&r, a.Failed, w); err != nil {
 		fmt.Fprintf(w,
 			"Failed to create logdog annotations for test cases due to error %s",
 			err.Error())
 	}
 
-	return output, nil
+	return &r, nil
 }
 
 // parseCommand creates an exec.Cmd for running the results parser.
@@ -81,14 +88,7 @@ func parseCommand(a Args) (*exec.Cmd, error) {
 }
 
 // annotateTestCases prints LogDog annotations for test cases in the output blob.
-func annotateTestCases(b []byte, runFailed bool, w io.Writer) error {
-	var r skylab_test_runner.Result
-	if err := jsonpb.Unmarshal(bytes.NewReader(b), &r); err != nil {
-		fmt.Printf("error: %s", err.Error())
-		return err
-	}
-	fmt.Printf("%v", r)
-
+func annotateTestCases(r *skylab_test_runner.Result, runFailed bool, w io.Writer) error {
 	failureEncountered := false
 
 	for _, s := range r.Prejob.GetStep() {
