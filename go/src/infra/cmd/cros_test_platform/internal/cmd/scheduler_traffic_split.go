@@ -40,6 +40,7 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.SchedulerTrafficSplitRequests")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.SchedulerTrafficSplitResponses should be written.")
+		c.Flags.BoolVar(&c.directAllToSkylab, "rip-cautotest", false, "Cautotest is now at peace. Use a simple forwarding rule to send all traffic to Skylab.")
 		c.Flags.BoolVar(&c.tagged, "tagged", false, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
@@ -51,6 +52,10 @@ type schedulerTrafficSplitRun struct {
 
 	inputPath  string
 	outputPath string
+
+	// A fast-path flag that replaces the traffic splitter logic with a mostly
+	// trivial redirection to Skylab.
+	directAllToSkylab bool
 
 	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
 	// - recipe has transitioned to using tagged requests
@@ -81,6 +86,14 @@ func (c *schedulerTrafficSplitRun) innerRun(a subcommands.Application, args []st
 	if len(requests) == 0 {
 		return errors.Reason("zero requests").Err()
 	}
+
+	if c.directAllToSkylab {
+		return c.sendAllToSkylab(requests)
+	}
+	return c.respondUsingConfig(ctx, requests)
+}
+
+func (c *schedulerTrafficSplitRun) respondUsingConfig(ctx context.Context, requests []*steps.SchedulerTrafficSplitRequest) error {
 	if err := ensureIdenticalConfigs(requests); err != nil {
 		return err
 	}
@@ -108,6 +121,42 @@ func (c *schedulerTrafficSplitRun) innerRun(a subcommands.Application, args []st
 		return errors.Reason("multiple requests with autotest backend: %s", resps).Err()
 	}
 	return c.writeResponses(resps)
+}
+
+func (c *schedulerTrafficSplitRun) sendAllToSkylab(requests []*steps.SchedulerTrafficSplitRequest) error {
+	resps := make([]*steps.SchedulerTrafficSplitResponse, len(requests))
+	for i, r := range requests {
+		resps[i] = c.sendToSkylab(r.Request)
+	}
+	return c.writeResponses(resps)
+}
+
+func (c *schedulerTrafficSplitRun) sendToSkylab(req *test_platform.Request) *steps.SchedulerTrafficSplitResponse {
+	var dst test_platform.Request
+	proto.Merge(&dst, req)
+	setQuotaAccountForLegacyPools(&dst)
+	return &steps.SchedulerTrafficSplitResponse{
+		SkylabRequest: &dst,
+	}
+}
+
+// TODO(crbug.com/1026367) Once CTP stops receiving requests targeted at these
+// legacy pools, drop the traffic splitter step entirely.
+// The main source of these legacy requests are release builders on old
+// branches.
+var quotaAccountsForLegacyPools = map[test_platform.Request_Params_Scheduling_ManagedPool]string{
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_BVT:        "legacypool-bvt",
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_CONTINUOUS: "pfq",
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_CQ:         "cq",
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_SUITES:     "legacypool-suites",
+}
+
+func setQuotaAccountForLegacyPools(req *test_platform.Request) {
+	if qa, ok := quotaAccountsForLegacyPools[req.GetParams().GetScheduling().GetManagedPool()]; ok {
+		req.Params.Scheduling.Pool = &test_platform.Request_Params_Scheduling_QuotaAccount{
+			QuotaAccount: qa,
+		}
+	}
 }
 
 func (c *schedulerTrafficSplitRun) processCLIArgs(args []string) error {
