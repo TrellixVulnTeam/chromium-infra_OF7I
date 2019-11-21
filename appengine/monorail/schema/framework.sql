@@ -26,7 +26,7 @@ CREATE TABLE Invalidate (
   -- that project.  But, they do not nest.  E.g., invalidating a project does
   -- not invalidate all issues in the project.
   kind enum('user', 'usergroup', 'project', 'issue', 'issue_id',
-            'hotlist', 'comment', 'template') NOT NULL,
+            'hotlist', 'comment', 'template', 'hotlist_id') NOT NULL,
 
   -- Which cache entry should be invalidated?  Special value 0 indicates
   -- that all entries should be invalidated.
@@ -34,4 +34,3 @@ CREATE TABLE Invalidate (
 
   INDEX (timestep)
 ) ENGINE=INNODB;
-

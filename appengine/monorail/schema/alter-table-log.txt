@@ -1708,3 +1708,11 @@ DROP TABLE DismissedCues;
 2019-10-24: Insert row representing deleted user.
 
 INSERT IGNORE INTO User (user_id, email) VALUES (1, '');
+
+==================================================================
+2019-11-21: Add hotlist_id to Invalidate table.
+
+ALTER TABLE Invalidate CHANGE kind
+  kind ENUM('user', 'usergroup', 'project', 'issue', 'issue_id', 'hotlist', 'comment', 'template', 'hotlist_id');
+
+
