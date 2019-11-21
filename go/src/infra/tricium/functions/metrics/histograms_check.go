@@ -328,11 +328,11 @@ func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_C
 			logMessage = "[ERROR]: Expiry condition badly formatted"
 		}
 	}
-	if commentMessage == "" {
-		log.Panicf("Primary expiry comment should not be empty")
+	var expiryComments []*tricium.Data_Comment
+	if commentMessage != "" {
+		expiryComments = []*tricium.Data_Comment{createExpiryComment(commentMessage, path, meta)}
+		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, meta.HistogramLineNum, logMessage)
 	}
-	expiryComments := []*tricium.Data_Comment{createExpiryComment(commentMessage, path, meta)}
-	log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, meta.HistogramLineNum, logMessage)
 	return expiryComments
 }
 
@@ -344,9 +344,6 @@ func processExpiryDateDiff(inputDate time.Time, dateType expiryDateType, comment
 	} else if dateDiff >= 365 {
 		*commentMessage = farExpiryWarning
 		*logMessage = "[WARNING]: Expiry past one year"
-	} else {
-		*commentMessage = fmt.Sprintf("[INFO]: Expiry date is in %d days.", dateDiff)
-		*logMessage = *commentMessage
 	}
 	if dateDiff > 180 && dateType == MILESTONE {
 		*commentMessage += changeMilestoneExpiry
