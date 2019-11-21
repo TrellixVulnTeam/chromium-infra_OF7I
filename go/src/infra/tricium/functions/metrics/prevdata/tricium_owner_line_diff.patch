@@ -1,0 +1,12 @@
+diff --git a/rm/remove_owner_line.xml b/rm/remove_owner_line.xml
+index feec141398..c173b8af03 100644
+--- a/rm/remove_owner_line.xml
++++ b/rm/remove_owner_line.xml
+@@ -2,7 +2,6 @@
+     <histograms>
+         <histogram name="Test.Histogram1" units="units" expires_after="2019-12-30">
+             <owner>ltina@google.com</owner>
+-            <owner>ltina2@google.com</owner>
+             <owner>chrome-metrics-team@google.com</owner>
+             <summary> This is a summary </summary>
+         </histogram>

@@ -1,0 +1,12 @@
+diff --git a/rm/change_attribute.xml b/rm/change_attribute.xml
+index ed94a3fd21..b3aecc6c08 100644
+--- a/rm/change_attribute.xml
++++ b/rm/change_attribute.xml
+@@ -1,6 +1,6 @@
+ <histogram-configuration>
+     <histograms>
+-        <histogram name="Test.Histogram1" units="microseconds" expires_after="2019-12-30">
++        <histogram name="Test.Histogram1" units="ms" expires_after="2019-12-30">
+             <owner>ltina@google.com</owner>
+             <owner>chrome-metrics-team@google.com</owner>
+             <summary> This is a summary </summary>

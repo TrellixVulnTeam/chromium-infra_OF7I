@@ -124,20 +124,25 @@ func analyzeHistogramFile(f io.Reader, filePath, prevDir string, filesChanged *d
 	log.Printf("ANALYZING File: %s", filePath)
 	var allComments []*tricium.Data_Comment
 	// Analyze added lines in file (if any).
-	comments, addedHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), filePath, filesChanged.addedLines[filePath], singletonEnums, ADDED)
+	comments, newHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), filePath, filesChanged.addedLines[filePath], singletonEnums, ADDED)
 	allComments = append(allComments, comments...)
-	// Analyze removed lines in file (if any)
+	// Analyze removed lines in file (if any).
 	oldPath := filepath.Join(prevDir, filePath)
 	oldFile := openFileOrDie(oldPath)
 	defer closeFileOrDie(oldFile)
 	var emptySet stringset.Set
-	_, removedHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), filePath, filesChanged.removedLines[filePath], emptySet, REMOVED)
-	// Identify if any histograms were removed
-	allComments = append(allComments, findRemovedHistograms(filePath, addedHistograms, removedHistograms)...)
+	_, oldHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), filePath, filesChanged.removedLines[filePath], emptySet, REMOVED)
+	// Identify if any histograms were removed.
+	allComments = append(allComments, findRemovedHistograms(filePath, newHistograms, oldHistograms)...)
 	allComments = append(allComments, findAddedNamespaces(filePath, newNamespaces, oldNamespaces, namespaceLineNums)...)
 	return allComments
 }
 
+// analyzeChangedLines analyzes a version of the file and returns:
+// 1. A list of comments generated from analyzing changed histograms.
+// 2. A set containing all the names of histograms in the file.
+// 3. A set containing all the names of namespaces in the file.
+// 4. A map from namespace to line number.
 func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int, singletonEnums stringset.Set, mode changeMode) ([]*tricium.Data_Comment, stringset.Set, stringset.Set, map[string]int) {
 	var comments []*tricium.Data_Comment
 	// meta is a struct that holds line numbers of different tags in histogram.
@@ -148,7 +153,7 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 	var histogramStart int
 	// If any line in the histogram showed up as an added or removed line in the diff.
 	var histogramChanged bool
-	changedHistograms := make(stringset.Set)
+	allHistograms := make(stringset.Set)
 	namespaces := make(stringset.Set)
 	namespaceLineNums := make(map[string]int)
 	lineNum := 1
@@ -174,12 +179,12 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 			hist := bytesToHistogram(currHistogram, meta)
 			namespace := strings.SplitN(hist.Name, ".", 2)[0]
 			namespaces.Add(namespace)
+			allHistograms.Add(hist.Name)
 			if namespaceLineNums[namespace] == 0 {
 				namespaceLineNums[namespace] = meta.HistogramLineNum
 			}
 			if histogramChanged {
-				changedHistograms.Add(hist.Name)
-				// Only check new (added) hists are correct.
+				// Only check new (added) histograms are correct.
 				if mode == ADDED {
 					comments = append(comments, checkHistogram(path, hist, meta, singletonEnums)...)
 				}
@@ -200,7 +205,7 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 		}
 		lineNum++
 	}
-	return comments, changedHistograms, namespaces, namespaceLineNums
+	return comments, allHistograms, namespaces, namespaceLineNums
 }
 
 func checkHistogram(path string, hist *histogram, meta *metadata, singletonEnums stringset.Set) []*tricium.Data_Comment {

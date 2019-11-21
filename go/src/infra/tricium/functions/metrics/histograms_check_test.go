@@ -415,6 +415,16 @@ func TestHistogramsCheck(t *testing.T) {
 		})
 	})
 
+	Convey("Analyze XML file with no error: only owner line deleted", t, func() {
+		results := analyzeHistogramTestFile(t, "rm/remove_owner_line.xml", "prevdata/tricium_owner_line_diff.patch", "prevdata/src")
+		So(results, ShouldBeNil)
+	})
+
+	Convey("Analyze XML file with no error: only attribute changed", t, func() {
+		results := analyzeHistogramTestFile(t, "rm/change_attribute.xml", "prevdata/tricium_attribute_diff.patch", "prevdata/src")
+		So(results, ShouldBeNil)
+	})
+
 	// ADDED NAMESPACE tests
 
 	Convey("Analyze XML file with no error: added histogram with same namespace", t, func() {
