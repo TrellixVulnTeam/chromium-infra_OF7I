@@ -28,6 +28,7 @@ def _attach_cacert_bundle():
     ]
   if sys.platform.startswith('linux'):
     cabases += [
+        '/etc/pki/tls',
         '/etc/ssl',
         '/usr/lib/ssl',
     ]

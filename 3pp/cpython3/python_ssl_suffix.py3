@@ -124,7 +124,7 @@ def _linux_find_load_verify_locations_kwargs():
   # pylint: disable=undefined-variable
 
   kwargs = {}
-  for cabase in ['/etc/ssl', '/usr/lib/ssl']:
+  for cabase in ['/etc/pki/tls', '/etc/ssl', '/usr/lib/ssl']:
     cafile = os.path.join(cabase, 'cert.pem')
     if os.path.isfile(cafile):
       kwargs['cafile'] = cafile

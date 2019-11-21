@@ -1,4 +1,4 @@
-# CPython 2.7
+# CPython 3.8
 
 Differences to typical python installations:
   * Fully statically compiled; no dynamic libraries or dynamic linkage to system
@@ -7,5 +7,6 @@ Differences to typical python installations:
   * Includes OpenSSL, sqlite, bzip, gzip, ncurses/readline
   * On linux, ssl is patched to pick up cert bundles from the system-installed
     cert bundle locations. These are:
+    * `/etc/tls/pki`
     * `/etc/ssl`
     * `/usr/lib/ssl`
