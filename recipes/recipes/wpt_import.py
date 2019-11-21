@@ -101,6 +101,7 @@ def git_cl_issue_link(api):
   issue_step.presentation.links[link_text] = issue_result['issue_url']
 
 
+# Run `./recipes.py test train` to update wpt-import.json file.
 def GenTests(api):
   yield (
       api.test('wpt-import-with-issue') +

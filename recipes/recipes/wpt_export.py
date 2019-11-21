@@ -49,6 +49,7 @@ def RunSteps(api):
   api.python('Export Chromium commits and in-flight CLs to WPT', script, args)
 
 
+# Run `./recipes.py test train` to update wpt-export.json file.
 def GenTests(api):
   yield (
       api.test('wpt-export') +
