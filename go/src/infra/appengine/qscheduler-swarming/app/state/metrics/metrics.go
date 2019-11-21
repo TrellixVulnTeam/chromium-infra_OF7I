@@ -122,6 +122,24 @@ var (
 		field.Int("priority"),
 	)
 
+	gaugeBotLabels = metric.NewInt(
+		"qscheduler/state/bot_labels",
+		"The number of running or idle bots with a given (non-provisionable) label.",
+		nil,
+		field.String("scheduler_id"),
+		field.String("label"),
+		field.Bool("running"),
+	)
+
+	gaugeTaskLabels = metric.NewInt(
+		"qscheduler/state/task_labels",
+		"The number of running or waiting tasks with a given (non-provisionable) label.",
+		nil,
+		field.String("scheduler_id"),
+		field.String("label"),
+		field.Bool("running"),
+	)
+
 	gaugeProtoSize = metric.NewInt(
 		"qscheduler/store/proto_size",
 		"Size of a loaded store proto.",
@@ -151,6 +169,8 @@ var (
 		field.String("scheduler_id"),
 		field.Bool("success"),
 	)
+
+	utilizationCounter = newUtilizationCounter()
 )
 
 // Buffer implements scheduler.EventSink.
@@ -279,10 +299,22 @@ func RecordStateGaugeMetrics(ctx context.Context, s *scheduler.Scheduler, schedu
 		gaugeBotState.Set(ctx, val, schedulerID, "running", priority)
 	}
 
+	// Note: If an account is erased, its account balance metric will not be
+	// zeroed out until quotascheduler service is restarted. This is a known
+	// limitation of gauge metrics, but minor because accounts are seldom deleted.
 	for aid, balance := range s.GetBalances() {
 		for priority, value := range balance {
 			gaugeAccountBalance.Set(ctx, int64(value), schedulerID, string(aid), priority)
 		}
+	}
+
+	d := digest(s)
+	labelUtilizations := utilizationCounter.Compute(schedulerID, d)
+	for label, util := range labelUtilizations {
+		gaugeBotLabels.Set(ctx, int64(util.IdleBots), schedulerID, label, false)
+		gaugeBotLabels.Set(ctx, int64(util.RunningBots), schedulerID, label, true)
+		gaugeTaskLabels.Set(ctx, int64(util.WaitingRequests), schedulerID, label, false)
+		gaugeTaskLabels.Set(ctx, int64(util.RunningRequests), schedulerID, label, true)
 	}
 }
 
