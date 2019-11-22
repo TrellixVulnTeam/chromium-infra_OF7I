@@ -46,6 +46,7 @@ Notes:
     host system is linux).
   * You may need to tell your docker service that it's OK to mount directories
     under $WORKDIR.
+  * Changes need to be committed to be picked up by the 3pp recipe.
   * If your host runs a Case-Insensitive filesystem (OS X, Windows), and you
     target a linux platform, you should create a Case-Sensitive disk image and
     mount it to use as your workdir. Otherwise assumptions in some packages
