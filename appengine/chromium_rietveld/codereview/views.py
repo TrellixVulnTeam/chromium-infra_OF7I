@@ -70,7 +70,6 @@ from codereview import patching
 from codereview.exceptions import FetchError
 from codereview.responses import HttpTextResponse, HttpHtmlResponse, respond
 import codereview.decorators as deco
-import gae_ts_mon
 
 
 # Add our own custom template tags library.

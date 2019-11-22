@@ -50,8 +50,6 @@ import django.db
 import django.dispatch.dispatcher
 import django.forms
 
-import gae_ts_mon
-
 
 def log_exception(*_args, **_kwds):
   """Django signal handler to log an exception."""
@@ -68,7 +66,6 @@ django.core.signals.got_request_exception.disconnect(
 
 # Create a Django application for WSGI.
 application = django.core.handlers.wsgi.WSGIHandler()
-gae_ts_mon.initialize(None)
 
 
 def real_main():
