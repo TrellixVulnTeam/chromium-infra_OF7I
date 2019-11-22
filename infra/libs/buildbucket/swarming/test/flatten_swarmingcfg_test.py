@@ -6,7 +6,7 @@ import unittest
 
 from google.protobuf import text_format
 
-from infra.libs.buildbucket.proto.config import project_config_pb2
+from infra.libs.buildbucket.proto import project_config_pb2
 from infra.libs.buildbucket.swarming import flatten_swarmingcfg
 
 
