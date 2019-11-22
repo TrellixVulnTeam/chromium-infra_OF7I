@@ -33,8 +33,13 @@ var WaitTasks = &subcommands.Command{
 		c.envFlags.Register(&c.Flags)
 
 		c.Flags.IntVar(&c.timeoutMins, "timeout-mins", -1, "The maxinum number of minutes to wait for the task to finish. Default: no timeout.")
-		c.Flags.BoolVar(&c.buildBucket, "bb", true, "(Default: True) Use buildbucket recipe backend. If so, TASK_ID is interpreted as a buildbucket task id.")
 		c.Flags.BoolVar(&c.isolateLink, "isolate", false, "(Default: False) Print links to the isolate output of the tasks after other output")
+
+		// TODO: Delete this flag entirely.
+		// There should be no users of this flag now, but remove in own CL for
+		// easy revert.
+		var unused bool
+		c.Flags.BoolVar(&unused, "bb", true, "Deprecated. Has no effect.")
 		return c
 	},
 }
@@ -63,14 +68,7 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 	ctx, cancel := maybeWithTimeout(ctx, c.timeoutMins)
 	defer cancel(context.Canceled)
 
-	var results <-chan waitItem
-	var err error
-	switch c.buildBucket {
-	case true:
-		results, err = waitMultiBuildbucket(ctx, uniqueIDs, c.authFlags, c.envFlags.Env())
-	case false:
-		results, err = waitMultiSwarming(ctx, uniqueIDs, c.authFlags, c.envFlags.Env())
-	}
+	results, err := waitMultiBuildbucket(ctx, uniqueIDs, c.authFlags, c.envFlags.Env())
 	if err != nil {
 		return err
 	}
@@ -174,48 +172,6 @@ type waitItem struct {
 	result *skylab_tool.WaitTaskResult
 	ID     string
 	err    error
-}
-
-func waitMultiSwarming(ctx context.Context, IDs stringset.Set, authFlags authcli.Flags, env site.Environment) (<-chan waitItem, error) {
-	client, err := newSwarmingClient(ctx, authFlags, env)
-	if err != nil {
-		return nil, err
-	}
-
-	results := make(chan waitItem)
-	go func() {
-		defer close(results)
-
-		// Wait for each task in separate goroutine.
-		wg := sync.WaitGroup{}
-		wg.Add(IDs.Len())
-		for _, ID := range IDs.ToSlice() {
-			go func(ID string) {
-				defer wg.Done()
-
-				err := waitSwarmingTask(ctx, ID, client)
-				if err != nil {
-					select {
-					case results <- waitItem{err: err}:
-					case <-ctx.Done():
-					}
-					return
-				}
-
-				result, err := extractSwarmingResult(ctx, ID, client)
-				item := waitItem{result: result, err: err, ID: ID}
-				select {
-				case results <- item:
-				case <-ctx.Done():
-				}
-				return
-			}(ID)
-		}
-		// Wait for all child routines terminate.
-		wg.Wait()
-	}()
-
-	return results, nil
 }
 
 func waitMultiBuildbucket(ctx context.Context, IDs stringset.Set, authFlags authcli.Flags, env site.Environment) (<-chan waitItem, error) {
