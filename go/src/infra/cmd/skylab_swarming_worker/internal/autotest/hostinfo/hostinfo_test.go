@@ -8,50 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
-
-var hostInfoToJSONToHostInfoTests = []struct {
-	in   *HostInfo
-	name string
-}{
-	{
-		&HostInfo{},
-		`empty hostinfo`,
-	},
-	{
-		&HostInfo{
-			Labels: []string{
-				"cros-version:lumpy-release/R66-0.0.0.0",
-			},
-			Attributes: map[string]string{
-				"job_repo_url": "http://127.0.0.1",
-			},
-		},
-		`hostInfoNoStableVersion`,
-	},
-}
-
-// Test the HostInfo -> JSON -> HostInfo conversion path
-func TestHostInfoToJSONToHostInfo(t *testing.T) {
-	t.Parallel()
-	for i, tt := range hostInfoToJSONToHostInfoTests {
-		t.Run(tt.name, func(t *testing.T) {
-			marshalled, err := Marshal(tt.in)
-			if err != nil {
-				t.Fatalf("failed to marshal: %s", err)
-			}
-			unmarshalled, err := Unmarshal(marshalled)
-			if err != nil {
-				t.Errorf("failed to unmarshal: %s", err)
-			}
-			if !reflect.DeepEqual(unmarshalled, tt.in) {
-				t.Errorf("subtest #%d wanted: (%s) got: (%s)", i, tt.in, unmarshalled)
-			}
-		})
-	}
-}
 
 func TestMarshalRoundTrip(t *testing.T) {
 	t.Parallel()
@@ -63,11 +20,6 @@ func TestMarshalRoundTrip(t *testing.T) {
 			},
 			Attributes: map[string]string{
 				"job_repo_url": "http://127.0.0.1",
-			},
-			StableVersions: map[string]string{
-				"cros":     "xxx-cros",
-				"faft":     "xxx-faft",
-				"firmware": "xxx-firmware",
 			},
 		},
 	}
@@ -83,7 +35,6 @@ func TestMarshalRoundTrip(t *testing.T) {
 		}
 		if !reflect.DeepEqual(got, hi) {
 			t.Errorf("Write/Read roundtrip of %#v does not match, got %#v", hi, got)
-			t.Errorf("Diff %s", cmp.Diff(got, hi))
 		}
 	}
 }
@@ -99,11 +50,6 @@ func TestWriteFormat(t *testing.T) {
 		Attributes: map[string]string{
 			"job_repo_url": "http://127.0.0.1",
 		},
-		StableVersions: map[string]string{
-			"cros":     "xxx-cros",
-			"faft":     "xxx-faft",
-			"firmware": "xxx-firmware",
-		},
 	}
 	got, err := Marshal(&hi)
 	if err != nil {
@@ -117,11 +63,6 @@ func TestWriteFormat(t *testing.T) {
 		],
 		"attributes": {
 			"job_repo_url": "http://127.0.0.1"
-		},
-		"stable_versions": {
-			"cros": "xxx-cros",
-			"faft": "xxx-faft",
-			"firmware": "xxx-firmware"
 		},
 		"serializer_version": 1
 	}`
@@ -172,56 +113,6 @@ var TestUnMarshalTests = []struct {
 		&HostInfo{Attributes: map[string]string{"a": "b"}},
 		`nonempty attributes`,
 	},
-	{
-		`{
-			"labels": [
-				"cros-version:lumpy-release/R66-0.0.0.0",
-				"another-label"
-			],
-			"attributes": {
-				"job_repo_url": "http://127.0.0.1"
-			},
-			"stable_versions": {
-			},
-			"serializer_version": 1
-		}`,
-		&HostInfo{
-			Labels: []string{
-				"cros-version:lumpy-release/R66-0.0.0.0",
-				"another-label",
-			},
-			Attributes: map[string]string{
-				"job_repo_url": "http://127.0.0.1",
-			},
-			StableVersions: map[string]string{},
-		},
-		"nontrivial with serializer version 1",
-	},
-	{
-		`{
-			"labels": [
-				"cros-version:lumpy-release/R66-0.0.0.0",
-				"another-label"
-			],
-			"attributes": {
-				"job_repo_url": "http://127.0.0.1"
-			},
-			"stable_versions": {
-			},
-			"serializer_version": 2
-		}`,
-		&HostInfo{
-			Labels: []string{
-				"cros-version:lumpy-release/R66-0.0.0.0",
-				"another-label",
-			},
-			Attributes: map[string]string{
-				"job_repo_url": "http://127.0.0.1",
-			},
-			StableVersions: map[string]string{},
-		},
-		"nontrivial with serializer version 2",
-	},
 }
 
 func TestUnMarshal(t *testing.T) {
@@ -231,8 +122,8 @@ func TestUnMarshal(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to unmarshal: %s", err)
 			}
-			if diff := cmp.Diff(unmarshalled, tt.out); diff != "" {
-				t.Errorf("wanted: (%s) got: (%s)\n(%s)", tt.out, unmarshalled, diff)
+			if !reflect.DeepEqual(unmarshalled, tt.out) {
+				t.Errorf("wanted: (%s) got: (%s)", tt.out, unmarshalled)
 			}
 		})
 	}

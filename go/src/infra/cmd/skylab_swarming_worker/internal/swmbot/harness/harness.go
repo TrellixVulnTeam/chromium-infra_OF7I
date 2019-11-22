@@ -82,10 +82,9 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 		o(i)
 	}
 	i.BotInfo = i.loadBotInfo(b)
-	d, sv := i.loadDUTInfo(ctx, b)
+	d := i.loadDUTInfo(ctx, b)
 	i.DUTName = d.GetCommon().GetHostname()
-
-	hi := i.makeHostInfo(d, sv)
+	hi := i.makeHostInfo(d)
 	i.addBotInfoToHostInfo(hi, i.BotInfo)
 	i.ResultsDir = i.makeResultsDir(b)
 	i.exposeHostInfo(hi, i.ResultsDir, i.DUTName)
@@ -117,9 +116,9 @@ func (i *Info) loadBotInfo(b *swmbot.Info) *swmbot.LocalState {
 	return &bi.LocalState
 }
 
-func (i *Info) loadDUTInfo(ctx context.Context, b *swmbot.Info) (*inventory.DeviceUnderTest, map[string]string) {
+func (i *Info) loadDUTInfo(ctx context.Context, b *swmbot.Info) *inventory.DeviceUnderTest {
 	if i.err != nil {
-		return nil, nil
+		return nil
 	}
 	var s *dutinfo.Store
 	if i.fetchFreshDUTInfo {
@@ -128,17 +127,17 @@ func (i *Info) loadDUTInfo(ctx context.Context, b *swmbot.Info) (*inventory.Devi
 		s, i.err = dutinfo.LoadCached(ctx, b, i.labelUpdater.update)
 	}
 	if i.err != nil {
-		return nil, nil
+		return nil
 	}
 	i.closers = append(i.closers, s)
-	return s.DUT, s.StableVersions
+	return s.DUT
 }
 
-func (i *Info) makeHostInfo(d *inventory.DeviceUnderTest, stableVersion map[string]string) *hostinfo.HostInfo {
+func (i *Info) makeHostInfo(d *inventory.DeviceUnderTest) *hostinfo.HostInfo {
 	if i.err != nil {
 		return nil
 	}
-	hip := h_hostinfo.FromDUT(d, stableVersion)
+	hip := h_hostinfo.FromDUT(d)
 	i.closers = append(i.closers, hip)
 	return hip.HostInfo
 }

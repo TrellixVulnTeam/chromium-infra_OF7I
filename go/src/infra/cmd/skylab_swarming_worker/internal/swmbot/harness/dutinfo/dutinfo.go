@@ -8,7 +8,6 @@ package dutinfo
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -24,10 +23,9 @@ import (
 
 // Store holds a DUT's inventory info and adds a Close method.
 type Store struct {
-	DUT            *inventory.DeviceUnderTest
-	StableVersions map[string]string
-	oldLabels      *inventory.SchedulableLabels
-	updateFunc     UpdateFunc
+	DUT        *inventory.DeviceUnderTest
+	oldLabels  *inventory.SchedulableLabels
+	updateFunc UpdateFunc
 }
 
 // Close updates the DUT's inventory info.  This method does nothing on
@@ -88,30 +86,6 @@ func LoadFresh(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error
 
 type getDutInfoFunc func(context.Context, fleet.InventoryClient, *fleet.GetDutInfoRequest) (*fleet.GetDutInfoResponse, error)
 
-// getStableVersion fetches the current stable version from an inventory client
-func getStableVersion(ctx context.Context, client fleet.InventoryClient, buildTarget string, model string) (map[string]string, error) {
-	if buildTarget == "" {
-		return nil, fmt.Errorf("getStableVersion: buildTarget cannot be \"\"")
-	}
-	if model == "" {
-		return nil, fmt.Errorf("getStableVersion: model cannot be \"\"")
-	}
-	req := &fleet.GetStableVersionRequest{
-		BuildTarget: buildTarget,
-		Model:       model,
-	}
-	res, err := client.GetStableVersion(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	s := map[string]string{
-		"cros":     res.GetCrosVersion(),
-		"faft":     res.GetFaftVersion(),
-		"firmware": res.GetFirmwareVersion(),
-	}
-	return s, nil
-}
-
 func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc) (*Store, error) {
 	ctx, err := swmbot.WithSystemAccount(ctx)
 	if err != nil {
@@ -129,23 +103,11 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc)
 	if err := proto.Unmarshal(resp.Spec, &d); err != nil {
 		return nil, errors.Annotate(err, "load DUT host info").Err()
 	}
-	sv, err := produceStableVersion(ctx, &d, c)
-	if err != nil {
-		return nil, errors.Annotate(err, "getting stable version").Err()
-	}
-	store := &Store{
-		DUT:            &d,
-		oldLabels:      proto.Clone(d.GetCommon().GetLabels()).(*inventory.SchedulableLabels),
-		updateFunc:     uf,
-		StableVersions: sv,
-	}
-	return store, nil
-}
-
-func produceStableVersion(ctx context.Context, d *inventory.DeviceUnderTest, c fleet.InventoryClient) (map[string]string, error) {
-	buildTarget := d.GetCommon().GetLabels().GetBoard()
-	model := d.GetCommon().GetLabels().GetModel()
-	return getStableVersion(ctx, c, buildTarget, model)
+	return &Store{
+		DUT:        &d,
+		oldLabels:  proto.Clone(d.GetCommon().GetLabels()).(*inventory.SchedulableLabels),
+		updateFunc: uf,
+	}, nil
 }
 
 // getCached obtains DUT info from the inventory service ignoring cache
