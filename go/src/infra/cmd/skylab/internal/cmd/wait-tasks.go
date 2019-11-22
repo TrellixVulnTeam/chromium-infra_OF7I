@@ -84,10 +84,9 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 	// Consume results. If an error occurs, save it for later logging, but
 	// still use the partial results.
 	resultMap, consumeErr := consumeToMap(ctx, len(uniqueIDs), results)
-	resArr := make([]*skylab_tool.WaitTaskResult, len(uniqueIDs))
-
-	checkResultAndAddIsolatePath := func(index int, resultID string) error {
-		r, ok := resultMap[resultID]
+	var resArr []*skylab_tool.WaitTaskResult
+	for id := range uniqueIDs {
+		r, ok := resultMap[id]
 		if !ok {
 			// Results for the given ID never appeared; instead use a "missing"
 			// placeholder.
@@ -95,10 +94,18 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 			// results.
 			r = &skylab_tool.WaitTaskResult{
 				Result: &skylab_tool.WaitTaskResult_Task{
-					TaskRequestId: resultID,
+					TaskRequestId: id,
 				},
 			}
-		} else {
+		}
+		resArr = append(resArr, r)
+	}
+
+	addIsolatePath := func(r *skylab_tool.WaitTaskResult) error {
+		// This is a transitional hack. All results except the "missing
+		// placeholder" have a name. Remove this hack when we remove the
+		// "missing placeholder" hack.
+		if r.GetResult().GetName() != "" {
 			path, err := outputIsolatePath(ctx, r)
 			if err != nil {
 				return err
@@ -107,14 +114,13 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 				IsolateUrl: path,
 			}
 		}
-		resArr[index] = r
 		return nil
 	}
+
 	parErr := parallel.WorkPool(len(uniqueIDs), func(ch chan<- func() error) {
-		var idx int
-		for id := range uniqueIDs {
-			ch <- func() error { return checkResultAndAddIsolatePath(idx, id) }
-			idx++
+		for _, r := range resArr {
+			ch <- func() error { return addIsolatePath(r) }
+
 		}
 	})
 
