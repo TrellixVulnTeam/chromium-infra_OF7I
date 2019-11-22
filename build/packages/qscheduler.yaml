@@ -3,7 +3,7 @@ description: QScheduler command line tool.
 platforms:
   - linux-amd64
 go_packages:
-  - infra/cmd/qscheduler
+  - infra/qscheduler/cmd/qscheduler
 root: ../../go/bin
 data:
   - file: qscheduler${exe_suffix}
