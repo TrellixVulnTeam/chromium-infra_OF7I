@@ -41,7 +41,7 @@ Tips:
 Notes:
   * You will need to give yourself CIPD writer access to the experimental prefix
     that this script derives from your email (e.g.
-    `cipd acl-edit -writer email:user@example.com experimental/user_at_example.com`)
+    `cipd acl-edit -writer user:user@example.com experimental/user_at_example.com`)
   * You need docker in $PATH if you're targetting any linux system (even if your
     host system is linux).
   * You may need to tell your docker service that it's OK to mount directories
