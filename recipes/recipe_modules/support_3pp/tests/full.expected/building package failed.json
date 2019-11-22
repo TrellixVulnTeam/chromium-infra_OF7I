@@ -82,6 +82,8 @@
       "@@@STEP_LOG_LINE@3pp.pb@    source {@@@",
       "@@@STEP_LOG_LINE@3pp.pb@      git {@@@",
       "@@@STEP_LOG_LINE@3pp.pb@        repo: \"https://go.repo/tool\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        version_restriction { op: LT val: \"1.5rc\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        version_restriction { op: GE val: \"1.4\" }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@    build {@@@",
@@ -1259,7 +1261,7 @@
     "name": "building tool (2).git ls-remote",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@resolved version: v1.5.0-rc1@@@"
+      "@@@STEP_TEXT@resolved version: v1.4.1@@@"
     ]
   },
   {
@@ -1268,7 +1270,7 @@
       "describe",
       "3pp/pkg/tool/linux-amd64",
       "-version",
-      "version:v1.5.0-rc1",
+      "version:v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1282,7 +1284,7 @@
     "name": "building tool (2).cipd describe 3pp/pkg/tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@tag 'version:v1.5.0-rc1' not found@@@",
+      "@@@STEP_TEXT@tag 'version:v1.4.1' not found@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -1300,7 +1302,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1"
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1308,7 +1310,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).mkdir -p [workdir]",
@@ -1336,7 +1338,7 @@
       "pkg-deploy",
       "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
       "-root",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/tools_prefix",
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/tools_prefix",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1346,7 +1348,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "name": "building tool (2).fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
     "~followup_annotations": [
@@ -1370,7 +1372,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout"
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1378,7 +1380,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).fetch sources.mkdir -p [workdir]/checkout/",
@@ -1392,7 +1394,7 @@
       "-u",
       "RECIPE_MODULE[depot_tools::git]/resources/git_setup.py",
       "--path",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout",
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout",
       "--url",
       "https://go.repo/tool"
     ],
@@ -1402,7 +1404,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "name": "building tool (2).fetch sources.git setup",
     "~followup_annotations": [
@@ -1414,10 +1416,10 @@
       "git",
       "fetch",
       "origin",
-      "refs/tags/v1.5.0-rc1",
+      "refs/tags/v1.4.1",
       "--progress"
     ],
-    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout",
+    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "linux",
@@ -1425,7 +1427,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).fetch sources.git fetch",
@@ -1440,14 +1442,14 @@
       "-f",
       "FETCH_HEAD"
     ],
-    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout",
+    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).fetch sources.git checkout",
@@ -1461,14 +1463,14 @@
       "rev-parse",
       "HEAD"
     ],
-    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout",
+    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).fetch sources.read revision",
@@ -1485,14 +1487,14 @@
       "-d",
       "-x"
     ],
-    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout",
+    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).fetch sources.git clean",
@@ -1506,14 +1508,14 @@
       "submodule",
       "sync"
     ],
-    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout",
+    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).fetch sources.submodule sync",
@@ -1529,14 +1531,14 @@
       "--init",
       "--recursive"
     ],
-    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout",
+    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).fetch sources.submodule update",
@@ -1553,7 +1555,7 @@
       "/path/to/tmp/json",
       "copytree",
       "[CACHE]/builder/package_repo",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout/.3pp"
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout/.3pp"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1561,7 +1563,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).fetch sources.copy package definition",
@@ -1586,7 +1588,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/out"
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/out"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1594,7 +1596,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).run installation.make output dir",
@@ -1615,13 +1617,13 @@
       "--platform",
       "manylinux-x64",
       "--workdir",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1",
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1",
       "--env-prefix",
       "PATH",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/tools_prefix",
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/tools_prefix",
       "--env-prefix",
       "PATH",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/tools_prefix/bin",
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/tools_prefix/bin",
       "--env",
       "_3PP_TOOL_PLATFORM",
       "linux-amd64",
@@ -1630,7 +1632,7 @@
       "amd64",
       "--env",
       "_3PP_VERSION",
-      "v1.5.0-rc1",
+      "v1.4.1",
       "--env",
       "GOOS",
       "linux",
@@ -1642,11 +1644,11 @@
       "tool",
       "--",
       "bash",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout/.3pp/tool/install.sh",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/out",
-      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/deps_prefix"
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout/.3pp/tool/install.sh",
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/out",
+      "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/deps_prefix"
     ],
-    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/checkout",
+    "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "linux",
@@ -1654,15 +1656,15 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "env_prefixes": {
       "PATH": [
-        "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/tools_prefix",
-        "[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/tools_prefix/bin"
+        "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/tools_prefix",
+        "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/tools_prefix/bin"
       ]
     },
-    "name": "building tool (2).run installation.install.sh [START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/out [START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/deps_prefix",
+    "name": "building tool (2).run installation.install.sh [START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/out [START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
@@ -1672,7 +1674,7 @@
       "cipd",
       "pkg-build",
       "-pkg-def",
-      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/pkg/tool/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/v1.5.0-rc1/out\"}",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/pkg/tool/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/out\"}",
       "-out",
       "[CLEANUP]/tmp_tmp_3",
       "-hash-algo",
@@ -1686,7 +1688,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "name": "building tool (2).build 3pp/pkg/tool/linux-amd64",
     "~followup_annotations": [
@@ -1718,7 +1720,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).ensure cipd pkg cache exists",
@@ -1743,7 +1745,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "infra_step": true,
     "name": "building tool (2).mv built cipd pkg to cache",
@@ -1764,7 +1766,7 @@
       "describe",
       "3pp/pkg/tool/linux-amd64",
       "-version",
-      "version:v1.5.0-rc1",
+      "version:v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1774,7 +1776,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "name": "building tool (2).do upload.cipd describe 3pp/pkg/tool/linux-amd64",
     "~followup_annotations": [
@@ -1794,7 +1796,7 @@
       "-ref",
       "latest",
       "-tag",
-      "version:v1.5.0-rc1",
+      "version:v1.4.1",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1804,7 +1806,7 @@
       "_3PP_PACKAGE_NAME": "tool",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "v1.5.0-rc1"
+      "_3PP_VERSION": "v1.4.1"
     },
     "name": "building tool (2).do upload.register 3pp/pkg/tool/linux-amd64",
     "~followup_annotations": [

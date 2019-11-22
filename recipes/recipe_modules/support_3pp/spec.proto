@@ -282,6 +282,37 @@ message Spec {
   Upload upload = 2;
 }
 
+enum Operator {
+  UNKNOWN = 0;
+
+  LT = 1;  // less-than
+  LE = 2;  // less-than-or-equal-to
+  GT = 3;  // greater-than
+  GE = 4;  // greater-than-or-equal-to
+  EQ = 5;  // equal-to
+  NE = 6;  // not-equal-to
+}
+
+// SemverRestriction expresses a restriction on a semver.
+//
+// When SemverRestriction is used to restrict some `$version`, it works like
+// `$version $op $val`. So, if this was `{op: LT val: "1.0"}`, then:
+//   * 1.1   would be excluded
+//   * 0.9   would be included
+//   * 0.9.9 would be included
+//
+// NOTE: Release candidates sort LOWER than their symver prefix. For example,
+// "1.0rc1" < "1.0". This makes sense if you think about it a bit, but it
+// implies that if you want to exclude "1.x", you need a rule
+// `{op: LT val: "1.0rc0"}`.
+message SemverRestriction {
+  // The comparison operator to use with this restriction.
+  Operator op = 1;
+
+  // The value to compare the version to.
+  string val = 2;
+}
+
 // Pulls package sources from a git repo.
 message GitSource {
   // (required) The URL to the repo, e.g.
@@ -302,6 +333,14 @@ message GitSource {
   // For example, if this was `v%s`, then this would look for the version 1.2.3
   // as `refs/tags/v1.2.3`
   string tag_pattern = 2;
+
+  // (optional) A list of SemverRestriction's to restrict the semvars from
+  // matched tags. You can use this to restrict which tags to consider when
+  // calculated the 'latest' version available.
+  //
+  // Note that if you over-constrain this, 3pp will simply see no available tags
+  // at all.
+  repeated SemverRestriction version_restriction = 4;
 
   // (optional) version_join is a string used to join the portions of a version
   // number together for repos which don't use "." as the joiner.

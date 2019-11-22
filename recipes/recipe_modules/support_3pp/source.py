@@ -4,11 +4,77 @@
 
 """Implements the source version checking and acquisition logic."""
 
-
-from pkg_resources import parse_version
+import functools
+import operator
 import re
 
+from pkg_resources import parse_version
+
 from .run_script import run_script
+
+from PB.recipe_modules.infra.support_3pp.spec import LT, LE, GT, GE, EQ, NE
+
+
+def _to_versions(raw_ls_remote_lines, version_join, tag_re):
+  """Converts raw ls-remote output lines to a sorted (descending)
+  list of (Version, v_str) objects.
+  """
+  ret = []
+  for line in raw_ls_remote_lines:
+    _hash, ref = line.split('\t')
+    if ref.startswith('refs/tags/'):
+      tag = ref[len('refs/tags/'):]
+      m = tag_re.match(tag)
+      if not m:
+        continue
+
+      v_str = m.group(1)
+      if version_join:
+        v_str = '.'.join(v_str.split(version_join))
+
+      ret.append((parse_version(v_str), v_str))
+  return sorted(ret, reverse=True)
+
+
+# Maps the operator OP(a, b) to the reverse function. For example:
+#
+#    A < B   maps to   B >= A
+#
+# This will allow us to use functools.partial to pre-fill the value of B.
+FILTER_TO_REVERSE_OP = {
+  LT: operator.ge,
+  LE: operator.gt,
+  GT: operator.le,
+  GE: operator.lt,
+
+  # EQ and NE are commutative comparisons, so they map directly to their
+  # equivalent function in `operator`.
+  EQ: operator.eq,
+  NE: operator.ne,
+}
+
+def _filters_to_func(filters):
+  restrictions = [
+    functools.partial(FILTER_TO_REVERSE_OP[f.op], parse_version(f.val))
+    for f in filters
+  ]
+  def _apply_filter(candidate_version):
+    for restriction in restrictions:
+      if not restriction(candidate_version):
+        return False
+    return True
+  return _apply_filter
+
+
+def _filter_versions(version_strs, filters):
+  if not filters:
+    return version_strs
+  filt_fn = _filters_to_func(filters)
+  return [
+    (vers, vers_s)
+    for vers, vers_s in version_strs
+    if filt_fn(vers)
+  ]
 
 
 def resolve_latest(api, spec):
@@ -35,7 +101,6 @@ def resolve_latest(api, spec):
     tag_re = re.escape(
       source_method_pb.tag_pattern if source_method_pb.tag_pattern else '%s')
     tag_re = '^%s$' % (tag_re.replace('\\%s', '(.*)'),)
-    rx = re.compile(tag_re)
 
     step = api.git('ls-remote', '-t', source_method_pb.repo,
                    stdout=api.raw_io.output(),
@@ -49,22 +114,20 @@ def resolve_latest(api, spec):
                        'hash\trefs/tags/v1.5.0-rc1',
                      ])))
 
+    versions = _to_versions(
+        step.stdout.splitlines(),
+        source_method_pb.version_join,
+        re.compile(tag_re))
+
+    versions = _filter_versions(
+        versions, source_method_pb.version_restriction)
+
     highest_cmp = parse_version('0')
     highest_str = ''
-    for line in step.stdout.splitlines():
-      _hash, ref = line.split('\t')
-      if ref.startswith('refs/tags/'):
-        tag = ref[len('refs/tags/'):]
-        m = rx.match(tag)
-        if m:
-          v_str = m.group(1)
-          if source_method_pb.version_join:
-            v_str = '.'.join(v_str.split(source_method_pb.version_join))
-
-          v = parse_version(v_str)
-          if v > highest_cmp:
-            highest_cmp = v
-            highest_str = v_str
+    for vers, v_str in versions:
+      if vers > highest_cmp:
+        highest_cmp = vers
+        highest_str = v_str
 
     assert highest_str
     version = highest_str

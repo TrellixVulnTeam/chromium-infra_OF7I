@@ -332,6 +332,8 @@ def GenTests(api):
     source {
       git {
         repo: "https://go.repo/tool"
+        version_restriction { op: LT val: "1.5rc" }
+        version_restriction { op: GE val: "1.4" }
       }
     }
     build {
