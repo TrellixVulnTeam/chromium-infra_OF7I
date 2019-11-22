@@ -216,8 +216,7 @@
       "-u",
       "[START_DIR]/src/third_party/blink/tools/wpt_export.py",
       "--credentials-json",
-      "[CLEANUP]/wpt-import-export.json",
-      "--surface-failures-to-gerrit"
+      "[CLEANUP]/wpt-import-export.json"
     ],
     "name": "Export Chromium commits and in-flight CLs to WPT"
   },
