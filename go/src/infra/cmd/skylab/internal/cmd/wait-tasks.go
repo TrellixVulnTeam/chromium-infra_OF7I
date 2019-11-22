@@ -84,9 +84,6 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 	// Consume results. If an error occurs, save it for later logging, but
 	// still use the partial results.
 	resultMap, consumeErr := consumeToMap(ctx, len(uniqueIDs), results)
-
-	output := &skylab_tool.WaitTasksResult{Incomplete: consumeErr != nil}
-
 	resArr := make([]*skylab_tool.WaitTaskResult, len(uniqueIDs))
 
 	checkResultAndAddIsolatePath := func(index int, resultID string) error {
@@ -120,9 +117,12 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 			idx++
 		}
 	})
-	multiErr := errors.NewMultiError(append([]error{consumeErr}, []error{parErr}...)...)
 
-	outputJSON, err := jsonPBMarshaller.MarshalToString(output)
+	multiErr := errors.NewMultiError(append([]error{consumeErr}, []error{parErr}...)...)
+	outputJSON, err := jsonPBMarshaller.MarshalToString(&skylab_tool.WaitTasksResult{
+		Incomplete: consumeErr != nil,
+		Results:    resArr,
+	})
 	if err != nil {
 		multiErr = errors.MultiError(append([]error(multiErr), err))
 		return multiErr
