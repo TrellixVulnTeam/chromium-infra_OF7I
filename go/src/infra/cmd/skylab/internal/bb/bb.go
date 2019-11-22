@@ -154,13 +154,25 @@ type Build struct {
 	// a response.
 	Response *steps.ExecuteResponse
 
+	// Responses may be nil if the output properties of the build do not contain
+	// a responses field.
+	Responses map[string]*steps.ExecuteResponse
+
 	// Request may be nil if the output properties of the build do not contain a
 	// request field.
 	Request *test_platform.Request
 
+	// Requests may be nil if the output properties of the build do not contain
+	// a requests field.
+	Requests map[string]*test_platform.Request
+
 	// BackfillRequest may be nil if the output properties of the build do not
 	// contain a backfill_request field.
 	BackfillRequest *test_platform.Request
+
+	// BackfillRequests may be nil if the output properties of the build do not
+	// contain a backfill_requests field.
+	BackfillRequests map[string]*test_platform.Request
 }
 
 // GetBuild gets a buildbucket build by ID.
@@ -291,6 +303,14 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 			build.Response = response
 		}
 
+		if raw, ok := op["responses"]; ok {
+			r, err := structPBToResponses(raw)
+			if err != nil {
+				return nil, errors.Annotate(err, "extractBuildData").Err()
+			}
+			build.Responses = r
+		}
+
 		if reqValue, ok := op["request"]; ok {
 			request, err := structPBToRequest(reqValue)
 			if err != nil {
@@ -299,12 +319,28 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 			build.Request = request
 		}
 
+		if raw, ok := op["requests"]; ok {
+			r, err := structPBToRequests(raw)
+			if err != nil {
+				return nil, errors.Annotate(err, "extractBuildData").Err()
+			}
+			build.Requests = r
+		}
+
 		if reqValue, ok := op["backfill_request"]; ok {
 			request, err := structPBToRequest(reqValue)
 			if err != nil {
 				return nil, errors.Annotate(err, "extractBuildData").Err()
 			}
 			build.BackfillRequest = request
+		}
+
+		if raw, ok := op["backfill_requests"]; ok {
+			r, err := structPBToRequests(raw)
+			if err != nil {
+				return nil, errors.Annotate(err, "extractBuildData").Err()
+			}
+			build.BackfillRequests = r
 		}
 	}
 	return &build, nil
@@ -322,6 +358,34 @@ func extractBuildDataAll(from []*buildbucket_pb.Build) ([]*Build, error) {
 	return builds, nil
 }
 
+func structPBToResponses(from *structpb.Value) (map[string]*steps.ExecuteResponse, error) {
+	responses := make(map[string]*steps.ExecuteResponse)
+	m, err := structPBStructToMap(from)
+	if err != nil {
+		return nil, errors.Annotate(err, "struct PB to responses").Err()
+	}
+	for k, v := range m {
+		r, err := structPBToExecuteResponse(v)
+		if err != nil {
+			return nil, errors.Annotate(err, "struct PB to responses").Err()
+		}
+		responses[k] = r
+	}
+	return responses, nil
+}
+
+func structPBStructToMap(from *structpb.Value) (map[string]*structpb.Value, error) {
+	switch m := from.Kind.(type) {
+	case *structpb.Value_StructValue:
+		if m.StructValue == nil {
+			return nil, errors.Reason("struct has no fields").Err()
+		}
+		return m.StructValue.Fields, nil
+	default:
+		return nil, errors.Reason("not a Struct type").Err()
+	}
+}
+
 func structPBToExecuteResponse(from *structpb.Value) (*steps.ExecuteResponse, error) {
 	m := jsonpb.Marshaler{}
 	json, err := m.MarshalToString(from)
@@ -333,6 +397,22 @@ func structPBToExecuteResponse(from *structpb.Value) (*steps.ExecuteResponse, er
 		return nil, errors.Annotate(err, "structPBToExecuteResponse").Err()
 	}
 	return response, nil
+}
+
+func structPBToRequests(from *structpb.Value) (map[string]*test_platform.Request, error) {
+	requests := make(map[string]*test_platform.Request)
+	m, err := structPBStructToMap(from)
+	if err != nil {
+		return nil, errors.Annotate(err, "struct PB to requests").Err()
+	}
+	for k, v := range m {
+		r, err := structPBToRequest(v)
+		if err != nil {
+			return nil, errors.Annotate(err, "struct PB to requests").Err()
+		}
+		requests[k] = r
+	}
+	return requests, nil
 }
 
 func structPBToRequest(from *structpb.Value) (*test_platform.Request, error) {
