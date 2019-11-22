@@ -6,6 +6,7 @@ package userinput
 
 import (
 	"infra/libs/skylab/inventory"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -235,7 +236,10 @@ func getAttrMap(dut *inventory.DeviceUnderTest) map[string]string {
 
 func TestDeviceUnderTestOfMcsvRecordEmptyServoSerial(t *testing.T) {
 	input := &mcsvRecord{servoSerial: "", servoHost: "4"}
-	dut := deviceUnderTestOfMcsvRecord(input)
+	dut, err := deviceUnderTestOfMcsvRecord(input)
+	if err != nil {
+		panic(err)
+	}
 	foundAttrs := getAttrMap(dut)
 	expected := map[string]string{
 		"servo_host": "4",
@@ -250,14 +254,18 @@ var testValidCSVTable = []struct {
 	name string
 	in   string
 }{
-	{true, "missing nothing", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet"},
-	{false, "missing servo_port", "xxx-host,xxx-board,xxx-model,xxx-servo_host,,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet"},
-	{false, "missing servo_host", "xxx-host,xxx-board,xxx-model,,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet"},
-	{true, "missing servo_host and servo_port", "xxx-host,xxx-board,xxx-model,,,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet"},
-	{true, "missing servo_serial", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,,xxx-powerunit_hostname,xxx-powerunit_outlet"},
-	{false, "missing powerunit_hostname", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,xxx-powerunit_outlet"},
-	{false, "missing powerunit_outlet", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,"},
-	{true, "missing powerunit_hostname and powerunit_outlet", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,"},
+	{true, "missing nothing", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet,DUT_POOL_QUOTA"},
+	{false, "missing servo_port", "xxx-host,xxx-board,xxx-model,xxx-servo_host,,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet,DUT_POOL_QUOTA"},
+	{false, "missing servo_host", "xxx-host,xxx-board,xxx-model,,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet,DUT_POOL_QUOTA"},
+	{true, "missing servo_host and servo_port", "xxx-host,xxx-board,xxx-model,,,xxx-servo_serial,xxx-powerunit_hostname,xxx-powerunit_outlet,DUT_POOL_QUOTA"},
+	{true, "missing servo_serial", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,,xxx-powerunit_hostname,xxx-powerunit_outlet,DUT_POOL_QUOTA"},
+	{false, "missing powerunit_hostname", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,xxx-powerunit_outlet,DUT_POOL_QUOTA"},
+	{false, "missing powerunit_outlet", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,xxx-powerunit_hostname,,DUT_POOL_QUOTA"},
+	{true, "missing powerunit_hostname and powerunit_outlet", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,DUT_POOL_QUOTA"},
+	{true, "defaulted critical pool", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,"},
+	{true, "invalid critical pool is self-serve pool", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,aaaaaaaaaa"},
+	{false, "invalid multiple critical pool is self-serve pool", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,DUT_POOL_QUOTA DUT_POOL_CQ"},
+	{false, "pool with bad characters is bad", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,pool@@@@@"},
 }
 
 func TestValidCSV(t *testing.T) {
@@ -266,7 +274,76 @@ func TestValidCSV(t *testing.T) {
 			_, err := parseMCSV(item.in)
 			res := (err == nil)
 			if res != item.out {
-				t.Errorf("misclassified csv row #%d expected: %t got: %t", i, item.out, res)
+				t.Errorf("misclassified csv row #%d expected: %t got: %t err: %v", i, item.out, res, err)
+			}
+		})
+	}
+}
+
+var TestSplitPoolListTable = []struct {
+	name string
+	ok   bool
+	in   []string
+	out1 []string
+	out2 []string
+}{
+	{
+		"empty pool list",
+		true,
+		[]string{},
+		[]string{"DUT_POOL_QUOTA"},
+		[]string{},
+	},
+	{
+		"single self-serve pool",
+		true,
+		[]string{"a"},
+		[]string{},
+		[]string{"a"},
+	},
+	{
+		"multiple self-serve pools",
+		true,
+		[]string{"a", "b"},
+		[]string{},
+		[]string{"a", "b"},
+	},
+	{
+		"non-default critical pool",
+		true,
+		[]string{"DUT_POOL_CQ"},
+		[]string{"DUT_POOL_CQ"},
+		[]string{},
+	},
+	{
+		"empty pool bad",
+		false,
+		[]string{""},
+		nil,
+		nil,
+	},
+	{
+		"multiple critical pools bad",
+		false,
+		[]string{"DUT_POOL_CQ", "DUT_POOL_QUOTA"},
+		nil,
+		nil,
+	},
+}
+
+func TestSplitPoolList(t *testing.T) {
+	for i, item := range TestSplitPoolListTable {
+		t.Run(item.name, func(t *testing.T) {
+			criticalPools, selfServePools, err := splitPoolList(item.in...)
+			res := (err == nil)
+			if res != item.ok {
+				t.Errorf("misclassified TestSplitPoolList #%d expected: %t got: %t", i, item.ok, res)
+			}
+			if !reflect.DeepEqual(criticalPools, item.out1) {
+				t.Errorf("bad critical pool TestSplitPoolList #%d expected: %v got: %v", i, item.out1, criticalPools)
+			}
+			if !reflect.DeepEqual(selfServePools, item.out2) {
+				t.Errorf("bad self-serve pools TestSplitPoolList #%d expected: %v got: %v", i, item.out2, selfServePools)
 			}
 		})
 	}

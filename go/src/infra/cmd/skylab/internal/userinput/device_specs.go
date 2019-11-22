@@ -17,6 +17,12 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
+// looksLikeValidPool heuristically checks a string to see if it looks like a valid pool
+// currently this means "is it a valid C identifier"
+var looksLikeValidPool = regexp.MustCompile(`\A[A-Za-z_][A-za-z0-9_]*\z`).MatchString
+
+const defaultCriticalPool = "DUT_POOL_QUOTA"
+
 // GetDeviceSpecs interactively obtains inventory.DeviceUnderTest from the
 // user.
 //
@@ -207,12 +213,18 @@ func parseMCSV(text string) ([]*inventory.DeviceUnderTest, error) {
 		if err != nil {
 			return nil, errors.Annotate(err, fmt.Sprintf(`nonconforming entry for csv file on line %d`, linum)).Err()
 		}
-		out = append(out, deviceUnderTestOfMcsvRecord(mcsvRecord))
+		dut, err := deviceUnderTestOfMcsvRecord(mcsvRecord)
+		if err != nil {
+			return nil, errors.Annotate(err, fmt.Sprintf(`internal error on line %d`, linum)).Err()
+		}
+		out = append(out, dut)
 	}
 
 	return out, nil
 }
 
+// looksLikeHeader heuristically determines whether a CSV line looks like
+// a CSV header for the MCSV format.
 func looksLikeHeader(rec []string) bool {
 	if len(rec) == 0 {
 		return false
@@ -220,10 +232,13 @@ func looksLikeHeader(rec []string) bool {
 	return rec[0] == "host"
 }
 
+// parseMcsvRecord takes a row of a csv file and inflates it into a mcsvRecord
+// it rejects unknown fields and rows that have the wrong length.
+// parseMcsvRecord also splits the pool field because it is whitespace-delimited.
 func parseMcsvRecord(header []string, rec []string) (*mcsvRecord, error) {
 	out := &mcsvRecord{}
 	if len(header) != len(rec) {
-		return nil, errors.New(fmt.Sprintf("length mismatch: expected (%d) actual (%d)", len(header), len(rec)))
+		return nil, fmt.Errorf("length mismatch: expected (%d) actual (%d)", len(header), len(rec))
 	}
 	for i := range header {
 		name := header[i]
@@ -245,8 +260,10 @@ func parseMcsvRecord(header []string, rec []string) (*mcsvRecord, error) {
 			out.powerunitHostname = value
 		case "powerunit_outlet", "powerunitOutlet":
 			out.powerunitOutlet = value
+		case "pools":
+			out.pools = strings.Fields(value)
 		default:
-			return nil, errors.New(fmt.Sprintf(`unknown field: %s`, name))
+			return nil, fmt.Errorf(`unknown field: %s`, name)
 		}
 	}
 	return out, nil
@@ -266,7 +283,7 @@ func dutAddAttributeIfNonzero(dut *inventory.DeviceUnderTest, key string, value 
 	}
 }
 
-func deviceUnderTestOfMcsvRecord(rec *mcsvRecord) *inventory.DeviceUnderTest {
+func deviceUnderTestOfMcsvRecord(rec *mcsvRecord) (*inventory.DeviceUnderTest, error) {
 	out := &inventory.DeviceUnderTest{
 		Common: &inventory.CommonDeviceSpecs{
 			Labels: &inventory.SchedulableLabels{},
@@ -275,6 +292,21 @@ func deviceUnderTestOfMcsvRecord(rec *mcsvRecord) *inventory.DeviceUnderTest {
 	out.Common.Hostname = &rec.host
 	out.Common.Labels.Board = &rec.board
 	out.Common.Labels.Model = &rec.model
+
+	criticalPools, selfServePools, err := splitPoolList(rec.pools...)
+	if err != nil {
+		return nil, err
+	}
+	if len(criticalPools) > 0 {
+		criticalPoolNum, ok := inventory.SchedulableLabels_DUTPool_value[criticalPools[0]]
+		if !ok {
+			panic("internal error")
+		}
+		cp := inventory.SchedulableLabels_DUTPool(criticalPoolNum)
+		out.Common.Labels.CriticalPools = []inventory.SchedulableLabels_DUTPool{cp}
+	}
+	out.Common.Labels.SelfServePools = selfServePools
+
 	// servo_host and servo_port is optional
 	dutAddAttributeIfNonzero(out, `servo_host`, rec.servoHost)
 	dutAddAttributeIfNonzero(out, `servo_port`, rec.servoPort)
@@ -283,7 +315,7 @@ func deviceUnderTestOfMcsvRecord(rec *mcsvRecord) *inventory.DeviceUnderTest {
 	// powerunit information is optional.
 	dutAddAttributeIfNonzero(out, `powerunit_hostname`, rec.powerunitHostname)
 	dutAddAttributeIfNonzero(out, `powerunit_outlet`, rec.powerunitOutlet)
-	return out
+	return out, nil
 }
 
 func validateSameStringArray(expected []string, actual []string) error {
@@ -353,9 +385,10 @@ var mcsvFields = []string{
 	"servo_serial",
 	"powerunit_hostname",
 	"powerunit_outlet",
+	"pools",
 }
 
-const mcsvFieldsPrompt = `host,board,model,servo_host,servo_port,servo_serial,powerunit_hostname,powerunit_outlet`
+const mcsvFieldsPrompt = `host,board,model,servo_host,servo_port,servo_serial,powerunit_hostname,powerunit_outlet,pools`
 
 type mcsvRecord struct {
 	host              string
@@ -366,6 +399,7 @@ type mcsvRecord struct {
 	servoSerial       string
 	powerunitHostname string
 	powerunitOutlet   string
+	pools             []string
 }
 
 func validateMcsvRecord(rec *mcsvRecord) error {
@@ -508,3 +542,49 @@ const example = `{
 		"serialNumber": "5CD45009QJ"
 	}
 }`
+
+// splitPoolList takes a list of strings naming pools and returns
+// -- the critical pool, will be set to []string{defaultCriticalPool} if
+//    no explicit critical pool is provided and there are no self-serve pools.
+// -- the self-serve pools. Every pool that is not a critical pool is a self-serve pool.
+func splitPoolList(pools ...string) (criticalPools []string, selfServePools []string, err error) {
+	criticalPools = []string{}
+	selfServePools = []string{}
+	selfServePoolsSeen := make(map[string]bool)
+	for _, pool := range pools {
+		if pool == "" {
+			return nil, nil, fmt.Errorf("splitPoolList: empty pool is invalid")
+		}
+		if !looksLikeValidPool(pool) {
+			return nil, nil, fmt.Errorf("splitPoolList: pool (%s) does not conform to [a-zA-Z_][a-zA-Z0-9_]*", pool)
+		}
+		_, isCriticalPool := inventory.SchedulableLabels_DUTPool_value[pool]
+
+		if isCriticalPool {
+			criticalPools = append(criticalPools, pool)
+			continue
+		}
+
+		if seen := selfServePoolsSeen[pool]; !seen {
+			selfServePools = append(selfServePools, pool)
+			selfServePoolsSeen[pool] = true
+		}
+	}
+
+	if len(selfServePools) > 0 {
+		if len(criticalPools) > 0 {
+			return nil, nil, fmt.Errorf("cannot simultaneously have selfServePools and criticalPools")
+		}
+		return criticalPools, selfServePools, nil
+	}
+	if len(criticalPools) > 1 {
+		return nil, nil, fmt.Errorf("splitPoolList: multiple critical pools %v", criticalPools)
+	}
+	if len(criticalPools) == 1 {
+		return criticalPools, []string{}, nil
+	}
+	if len(criticalPools) == 0 {
+		return []string{defaultCriticalPool}, []string{}, nil
+	}
+	panic("impossible")
+}
