@@ -34,9 +34,11 @@ func (p *Proxy) Close() error {
 // FromDUT returns a DUT's hostinfo derived from its inventory info.
 // The Close method must be called to update the inventory info with
 // any changes.
-func FromDUT(d *inventory.DeviceUnderTest) *Proxy {
+func FromDUT(d *inventory.DeviceUnderTest, stableVersions map[string]string) *Proxy {
+	hi := hostinfo.ConvertDut(d)
+	hi.StableVersions = stableVersions
 	return &Proxy{
-		HostInfo: hostinfo.ConvertDut(d),
+		HostInfo: hi,
 		dut:      d,
 	}
 }
