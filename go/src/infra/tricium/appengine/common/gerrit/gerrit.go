@@ -172,12 +172,12 @@ func (g gerritServer) PostRobotComments(c context.Context, host, change, revisio
 // Note: This method only returns lines based on the patch, and does not know
 // about which files are renamed or copied.
 func (g gerritServer) GetChangedLines(c context.Context, host, change, revision string) (ChangedLinesInfo, error) {
-	return FetchChangedLines(c, host, change, revision)
+	return fetchChangedLines(c, host, change, revision)
 }
 
-// FetchChangedLines fetches information about which lines were changed which
+// fetchChangedLines fetches information about which lines were changed which
 // includes added and modified lines, and all lines in a moved or copied file.
-func FetchChangedLines(c context.Context, host, change, revision string) (ChangedLinesInfo, error) {
+func fetchChangedLines(c context.Context, host, change, revision string) (ChangedLinesInfo, error) {
 	url := fmt.Sprintf(
 		"https://%s/a/changes/%s/revisions/%s/patch",
 		host, change, PatchSetNumber(revision))

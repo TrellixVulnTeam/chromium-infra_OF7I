@@ -17,6 +17,7 @@ import (
 	"infra/qscheduler/qslib/tutils"
 	admin "infra/tricium/api/admin/v1"
 	tricium "infra/tricium/api/v1"
+	"infra/tricium/appengine/common/gerrit"
 	"infra/tricium/appengine/common/track"
 	"infra/tricium/appengine/common/triciumtest"
 )
@@ -408,6 +409,67 @@ func TestValidateWorkerDoneRequestRequest(t *testing.T) {
 			BuildbucketOutput:  "foobar",
 			IsolatedOutputHash: "12ab34cd",
 		}), ShouldNotBeNil)
+	})
+}
+
+func TestCreateCommentSelection(t *testing.T) {
+	changedLines := gerrit.ChangedLinesInfo{
+		"dir/file.txt": {2, 5, 6},
+	}
+	mock := &gerrit.MockRestAPI{ChangedLines: changedLines}
+	ctx := triciumtest.Context()
+	req := track.AnalyzeRequest{
+		GerritProject: "my-project",
+		GerritChange:  "my-project~master~I8473b95934b5732ac55d26311a706c9c2bde9940",
+	}
+	Convey("createCommentSelection keeps unchanged lines if comment's ShowOnUnchangedLines is true", t, func() {
+		commentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			Message:              "Not in Change",
+			Path:                 "dir/file.txt",
+			StartLine:            3,
+			EndLine:              4,
+			ShowOnUnchangedLines: true,
+		})
+		comments := []*track.Comment{
+			{
+				Comment: []byte(commentJSON),
+			},
+		}
+		selections := []*track.CommentSelection{
+			{
+				ID:       1,
+				Parent:   nil,
+				Included: true,
+			},
+		}
+		result, err := createCommentSelections(ctx, mock, &req, comments)
+		So(result, ShouldResemble, selections)
+		So(err, ShouldBeNil)
+	})
+
+	Convey("createCommentSelection discards unchanged lines if comment's ShowOnUnchangedLines is false", t, func() {
+		commentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			Message:              "Not in Change",
+			Path:                 "dir/file.txt",
+			StartLine:            3,
+			EndLine:              4,
+			ShowOnUnchangedLines: false,
+		})
+		comments := []*track.Comment{
+			{
+				Comment: []byte(commentJSON),
+			},
+		}
+		selections := []*track.CommentSelection{
+			{
+				ID:       1,
+				Parent:   nil,
+				Included: false,
+			},
+		}
+		result, err := createCommentSelections(ctx, mock, &req, comments)
+		So(result, ShouldResemble, selections)
+		So(err, ShouldBeNil)
 	})
 }
 

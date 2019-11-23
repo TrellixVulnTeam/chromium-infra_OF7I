@@ -208,7 +208,7 @@ func workerDone(c context.Context, req *admin.WorkerDoneRequest, isolator common
 	if err := ds.Get(c, request); err != nil {
 		return errors.Reason("failed to get AnalyzeRequest entity (run ID: %d): %v", req.RunId, err).Err()
 	}
-	selections, err := createCommentSelections(c, request, comments)
+	selections, err := createCommentSelections(c, gerrit.GerritServer, request, comments)
 	// Even on error, createCommentSelections is expected to always return a
 	// slice of CommentSelection that may be used below.
 	if len(selections) != len(comments) {
@@ -427,7 +427,7 @@ func createAnalysisResults(wres *track.WorkerRunResult, areq *track.AnalyzeReque
 // The given comments may not have been put in datastore and thus may not yet
 // have valid IDs, so the Parent key is not set in any of the returned
 // CommentSelection entities.
-func createCommentSelections(c context.Context, request *track.AnalyzeRequest, comments []*track.Comment) ([]*track.CommentSelection, error) {
+func createCommentSelections(c context.Context, gerritAPI gerrit.API, request *track.AnalyzeRequest, comments []*track.Comment) ([]*track.CommentSelection, error) {
 	selections := make([]*track.CommentSelection, len(comments))
 	for i := range comments {
 		// Default to Included: true; this value may be overridden below.
@@ -439,7 +439,7 @@ func createCommentSelections(c context.Context, request *track.AnalyzeRequest, c
 	}
 
 	// Get the changed lines for this revision.
-	changedLines, err := gerrit.FetchChangedLines(c, request.GerritHost, request.GerritChange, request.GitRef)
+	changedLines, err := gerritAPI.GetChangedLines(c, request.GerritHost, request.GerritChange, request.GitRef)
 	if err != nil {
 		// Upon error, mark all of the comments as not selected.
 		for _, s := range selections {
@@ -467,7 +467,7 @@ func createCommentSelections(c context.Context, request *track.AnalyzeRequest, c
 		if err = jsonpb.UnmarshalString(string(comment.Comment), &tcomment); err != nil {
 			return nil, err
 		}
-		selections[i].Included = isChanged && !isSuppressed
+		selections[i].Included = (tcomment.ShowOnUnchangedLines || isChanged) && !isSuppressed
 	}
 
 	return selections, nil
