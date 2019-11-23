@@ -1,0 +1,27 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package cros.tls.experimental;
+
+option go_package = "api";
+
+service Tls {
+  // Runs a shell command with the default shell.
+  // Does not spawn a tty.
+  rpc DutShell(DutShellRequest) returns (stream DutShellResponse);
+}
+
+message DutShellRequest {
+  string command = 1;
+
+}
+// For the last response in the stream, exited will be true and status
+// will be set.
+message DutShellResponse {
+  int32 status = 1;
+  bool exited = 2;
+  bytes output = 3;
+}
