@@ -92,9 +92,12 @@ HOTLISTS = '/hotlists'
 
 # URLS of User hotlist pages
 HOTLIST_ISSUES = ''
+HOTLIST_ISSUES_NEW = '/issues_new'
 HOTLIST_ISSUES_CSV = '/csv'
 HOTLIST_PEOPLE = '/people'
+HOTLIST_PEOPLE_NEW = '/people_new'
 HOTLIST_DETAIL = '/details'
+HOTLIST_DETAIL_NEW = '/details_new'
 HOTLIST_RERANK_JSON = '/rerank'
 
 # URLs of issue tracker project pages

@@ -103,6 +103,12 @@ export class MrApp extends connectStore(LitElement) {
           .userDisplayName=${this.userDisplayName}
         ></mr-list-page>
       `;
+    } else if (this.page === 'hotlist-details') {
+      return html`<mr-hotlist-details-page></mr-hotlist-details-page>`;
+    } else if (this.page === 'hotlist-issues') {
+      return html`<mr-hotlist-issues-page></mr-hotlist-issues-page>`;
+    } else if (this.page === 'hotlist-people') {
+      return html`<mr-hotlist-people-page></mr-hotlist-people-page>`;
     }
   }
 
@@ -213,6 +219,11 @@ export class MrApp extends connectStore(LitElement) {
     page('*', this._universalRouteHandler.bind(this));
     page('/p/:project/issues/list_new', this._loadListPage.bind(this));
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this));
+    page('/u/:user/*', this._setContext);
+    page('/u/:user/hotlists/:hotlist/*', this._setContext);
+    page('/u/:user/hotlists/:hotlist/details_new', this._loadHotlistDetailsPage.bind(this));
+    page('/u/:user/hotlists/:hotlist/issues_new', this._loadHotlistIssuesPage.bind(this));
+    page('/u/:user/hotlists/:hotlist/people_new', this._loadHotlistPeoplePage.bind(this));
     page();
   }
 
@@ -299,6 +310,26 @@ export class MrApp extends connectStore(LitElement) {
         this.page = 'list';
         break;
     }
+  }
+
+  async _setContext(ctx, next) {
+    store.dispatch(ui.setContext(ctx.params));
+    next();
+  }
+
+  async _loadHotlistDetailsPage(ctx, next) {
+    await import(/* webpackChunkName: "mr-hotlist-details-page" */ `../hotlist/mr-hotlist-details-page/mr-hotlist-details-page.js`);
+    this.page = 'hotlist-details';
+  }
+
+  async _loadHotlistIssuesPage(ctx, next) {
+    await import(/* webpackChunkName: "mr-hotlist-issues-page" */ `../hotlist/mr-hotlist-issues-page/mr-hotlist-issues-page.js`);
+    this.page = 'hotlist-issues';
+  }
+
+  async _loadHotlistPeoplePage(ctx, next) {
+    await import(/* webpackChunkName: "mr-hotlist-people-page" */ `../hotlist/mr-hotlist-people-page/mr-hotlist-people-page.js`);
+    this.page = 'hotlist-people';
   }
 
   _confirmDiscardMessage() {
