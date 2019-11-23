@@ -57,6 +57,7 @@ class ProjectCfgTest(unittest.TestCase):
               dimensions: "cores:8"
               dimensions: "pool:default"
               dimensions: "cpu:x86-86"
+              properties: "{\\\"a\\\":\\\"b\\\"}"
               recipe {
                 name: "recipe"
                 cipd_package: "infra/recipe_bundle"
@@ -78,6 +79,7 @@ class ProjectCfgTest(unittest.TestCase):
               dimensions: "pool:Chrome"
               dimensions: "cpu:"
               priority: 108
+              properties: "{\\\"c\\\":\\\"d\\\"}"
               recipe {
                 properties: "predefined-property:x"
                 properties_j: "predefined-property-bool:true"
@@ -99,6 +101,7 @@ class ProjectCfgTest(unittest.TestCase):
         dimensions: "os:Linux"
         dimensions: "pool:Chrome"
         priority: 108
+        properties: "{\\\"a\\\":\\\"b\\\",\\\"c\\\":\\\"d\\\"}"
         recipe {
           name: "recipe"
           cipd_package: "infra/recipe_bundle"
@@ -306,6 +309,7 @@ class ProjectCfgTest(unittest.TestCase):
               builders {
                 name: "ng-1000"
                 mixins: "mixme"
+                properties: "{\\\"a\\\":\\\"b\\\"}"
               }
             }
           }
@@ -314,6 +318,7 @@ class ProjectCfgTest(unittest.TestCase):
           name: "ng-1000"
           dimensions: "pool:mixed"
           auto_builder_dimension: YES
+          properties: "{\\\"a\\\":\\\"b\\\"}"
       ''',
     )
 

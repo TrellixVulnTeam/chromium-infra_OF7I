@@ -83,6 +83,9 @@ def merge_builder(b1, b2):
 
   dims = parse_dimensions(b1.dimensions)
   dims.update(parse_dimensions(b2.dimensions))
+  properties = None
+  if b1.properties or b2.properties:
+    properties = _merge_properties(b1.properties, b2.properties)
   recipe = None
   if b1.HasField('recipe') or b2.HasField('recipe'):  # pragma: no branch
     recipe = copy.deepcopy(b1.recipe)
@@ -98,6 +101,9 @@ def merge_builder(b1, b2):
 
   if recipe:  # pragma: no branch
     b1.recipe.CopyFrom(recipe)
+
+  if properties:
+    b1.properties = properties
 
 
 def flatten_builder(builder, defaults, mixins):
@@ -150,3 +156,13 @@ def _merge_recipe(r1, r2):
       for k, v in sorted(props.iteritems())
       if v is not None
   ]
+
+
+def _merge_properties(p1, p2):
+  """Returns the merge of properties p2 into p1.
+
+  Expects properties to be valid.
+  """
+  props = json.loads(p1) if p1 else {}
+  props.update(json.loads(p2) if p2 else {})
+  return json.dumps(props, sort_keys=True, separators=(',', ":"))
