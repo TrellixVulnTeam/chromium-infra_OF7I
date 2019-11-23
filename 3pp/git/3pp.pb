@@ -1,5 +1,6 @@
 create {
   verify { test: "git_test.py" }
+  source { patch_version: "chromium.1" }
 }
 
 create {
@@ -18,6 +19,7 @@ create {
     dep: "zlib"
     dep: "curl"
     dep: "pcre2"
+    dep: "libexpat"
   }
 }
 

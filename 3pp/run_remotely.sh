@@ -38,16 +38,12 @@ Tips:
     need to be a CIPD admin to delete them, but you can file a bug and ping
     iannucci@ or vadimsh@ to do this.
 
-BUGS:
-  * Currently (as of 2018-11-05) won't work when targetting linux because docker
-    isn't configured on these bots :(.
-
 Notes:
   * You will need to give the
     `infra-try-builder@chops-service-accounts.iam.gserviceaccount.com`
     service account CIPD writer access to the experimental prefix that this
     script derives from your email (e.g.
-    `cipd acl-edit -writer email:... experimental/user_at_example.com`)
+    `cipd acl-edit -writer user:... experimental/user_at_example.com`)
 EOF
 
       exit 0
@@ -78,6 +74,9 @@ for arg in "$@"; do
 done
 
 CL_URL=$(git cl issue --json >(python ./run_remotely_slurp_cl.py) > /dev/null)
+if [[ -z "$CL_URL" ]]; then
+  exit 1
+fi
 
 echo Using upload prefix: experimental/$CIPD_EMAIL
 echo Using os:$TARG_OS

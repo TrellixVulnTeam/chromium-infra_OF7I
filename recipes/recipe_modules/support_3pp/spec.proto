@@ -349,7 +349,7 @@ message GitSource {
   // look like `refs/tags/1.2.3`.
   //
   // For example, if this is "-", then the recipe would transform the symantic
-  // version `1.2.3` into `1-2-3` before expanding it into tag_expand to find
+  // version `1.2.3` into `1-2-3` before expanding it into tag_pattern to find
   // the matching git tag.
   string version_join = 3;
 }

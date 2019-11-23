@@ -12,12 +12,17 @@ DEPS="$2"
 
 CPPFLAGS="-I${DEPS}/include"
 LDFLAGS="-L$DEPS/lib"
+EXPATDIR="${DEPS}"
 CFLAGS=""
 
 # Write the "version" file. This is used by the "GIT-VERSION-GEN" script to pull
 # the Git version. We name ours after the Git tag that we pulled and our
 # Chromium-specific suffix, e.g.: v2.12.2.chromium4
-echo v$_3PP_VERSION.$_3PP_PATCH_VERSION > version
+echo -n "v$_3PP_VERSION" > version
+if [[ -n "$_3PP_PATCH_VERSION" ]]; then
+  echo -n ".$_3PP_PATCH_VERSION" >> version
+fi
+echo >> version
 
 # Override the autoconfig / system Makefile entries with custom ones.
 cat > config.mak <<EOF
@@ -92,9 +97,10 @@ fi
 
 export CPPFLAGS
 export CFLAGS
+export EXPATDIR
 export LDFLAGS
 export LIBS
 
 make configure
 ./configure --host="$CROSS_TRIPLE" --prefix="$PREFIX" --with-libpcre2
-make install -j$(nproc)
+make install "-j$(nproc)"
