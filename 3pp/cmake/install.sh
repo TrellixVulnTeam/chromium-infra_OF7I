@@ -19,7 +19,7 @@ cmake \
 # enable cross-compilation.
 
 # Build all the stuffs.
-ninja -j $(nproc) all
+ninja -j "$(nproc)" all
 
 # Use the system cmake to actually do the install. Otherwise it will use the
 # cmake binary we just built and fail when we're cross compiling.

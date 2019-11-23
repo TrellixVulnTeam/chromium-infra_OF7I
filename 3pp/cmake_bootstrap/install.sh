@@ -9,8 +9,14 @@ set -o pipefail
 
 PREFIX="$1"
 
+if [[ $_3PP_PLATFORM == mac* ]]; then
+  EXTRA_CONFIGURE_ARGS="-DCMAKE_OSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET"
+fi
+
 ./bootstrap -- \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX="$PREFIX" \
-  -DCMAKE_USE_OPENSSL=OFF
-make -j $(nproc) install
+  -DCMAKE_USE_OPENSSL=OFF \
+  "$EXTRA_CONFIGURE_ARGS"
+
+make -j "$(nproc)" install
