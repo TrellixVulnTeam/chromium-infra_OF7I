@@ -16,7 +16,6 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/sync/parallel"
 
 	"infra/cmd/skylab/internal/bb"
 	"infra/cmd/skylab/internal/site"
@@ -101,41 +100,16 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 		resArr = append(resArr, r)
 	}
 
-	addIsolatePath := func(r *skylab_tool.WaitTaskResult) error {
-		// This is a transitional hack. All results except the "missing
-		// placeholder" have a name. Remove this hack when we remove the
-		// "missing placeholder" hack.
-		if r.GetResult().GetName() != "" {
-			path, err := outputIsolatePath(ctx, r)
-			if err != nil {
-				return err
-			}
-			r.LogDataUrl = &skylab_tool.WaitTaskResult_LogDataURL{
-				IsolateUrl: path,
-			}
-		}
-		return nil
-	}
-
-	parErr := parallel.WorkPool(len(uniqueIDs), func(ch chan<- func() error) {
-		for _, r := range resArr {
-			ch <- func() error { return addIsolatePath(r) }
-
-		}
-	})
-
-	multiErr := errors.NewMultiError(append([]error{consumeErr}, []error{parErr}...)...)
+	multiErr := errors.NewMultiError(consumeErr)
 	outputJSON, err := jsonPBMarshaller.MarshalToString(&skylab_tool.WaitTasksResult{
 		Incomplete: consumeErr != nil,
 		Results:    resArr,
 	})
 	if err != nil {
-		multiErr = errors.MultiError(append([]error(multiErr), err))
+		multiErr = append(multiErr, err)
 		return multiErr
 	}
-
 	fmt.Fprintf(a.GetOut(), string(outputJSON))
-
 	return multiErr
 }
 
@@ -201,17 +175,26 @@ func waitMultiBuildbucket(ctx context.Context, IDs stringset.Set, authFlags auth
 
 		for ID, parsedID := range parsedIDs {
 			go func(ID string, parsedID int64) {
+				var merr errors.MultiError
 				build, err := client.WaitForBuild(ctx, parsedID)
+				if err != nil {
+					merr = append(merr, err)
+				}
 				var result *skylab_tool.WaitTaskResult
 				if build != nil {
 					result = responseToTaskResult(client, build)
+					if err := addIsolatePath(ctx, result); err != nil {
+						merr = append(merr, err)
+					}
 				}
-				item := waitItem{result: result, err: err, ID: ID}
 				select {
-				case results <- item:
+				case results <- waitItem{
+					result: result,
+					err:    merr,
+					ID:     ID,
+				}:
 				case <-ctx.Done():
 				}
-
 				wg.Done()
 			}(ID, parsedID)
 		}
@@ -220,6 +203,17 @@ func waitMultiBuildbucket(ctx context.Context, IDs stringset.Set, authFlags auth
 	}()
 
 	return results, nil
+}
+
+func addIsolatePath(ctx context.Context, r *skylab_tool.WaitTaskResult) error {
+	path, err := outputIsolatePath(ctx, r)
+	if err != nil {
+		return err
+	}
+	r.LogDataUrl = &skylab_tool.WaitTaskResult_LogDataURL{
+		IsolateUrl: path,
+	}
+	return nil
 }
 
 func parseBBTaskIDs(args []string) (map[string]int64, error) {
