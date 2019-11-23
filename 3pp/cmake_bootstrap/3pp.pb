@@ -17,7 +17,7 @@ create {
       #
       # The fix for US is to switch from manylinux1 to manylinux2010 (or
       # newer).
-      version_restriction: { op: LessThan val: "3.14rc0"}
+      version_restriction: { op: LT val: "3.14rc0"}
     }
   }
 
