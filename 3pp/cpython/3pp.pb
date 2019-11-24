@@ -1,6 +1,6 @@
 create {
   verify { test: "python_test.py" }
-  source { patch_version: "chromium.16" }
+  source { patch_version: "chromium.17" }
 }
 
 create {
@@ -18,6 +18,7 @@ create {
   build {
     tool: "autoconf"
     tool: "sed"            # Used by python's makefiles
+    tool: "ed"
     tool: "pip_bootstrap"
   }
 }

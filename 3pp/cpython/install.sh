@@ -38,9 +38,47 @@ SETUP_LOCAL_ATTACH=(
 # If True, we will augment "ssl.py" to install default system CA certs.
 PROBE_DEFAULT_SSL_CA_CERTS=0
 
-if [[ $_3PP_PLATFORM == mac* ]]; then
-  PYTHONEXE=python.exe
+# First see if we have to build a runnable python; we'll need it later.
+INTERP=python2
+if [[ $_3PP_PLATFORM == "$_3PP_TOOL_PLATFORM" ]]; then  # not cross compiling
+  # we need to make all the rest of the stuff like _struct and _functools in
+  # order to use this interpreter. If we're cross compiling then we're using
+  # the interpreter from path, which is already complete.
 
+  autoconf
+
+  ./configure --prefix="$(pwd)/host_interp" \
+    --disable-shared --without-system-ffi --enable-ipv6
+
+  # We need a couple of modules explicitly, so edit Modules/Setup
+
+  # Insert "*static*" after the first line, make zlib a builtin module.
+  ed Modules/Setup <<EOF
+H
+1a
+*static*
+
+.
+/^#zlib/s/^#zlib/zlib/g
+/^#binascii/s/^#binascii/binascii/g
+wq
+EOF
+
+  # Now regenerate the Makefile/config.c to pick up changes to Modules/Setup.
+  rm Modules/config.c
+  make Modules/config.c
+
+  # Because of... something... setup.py tries to load in all modules which it
+  # builds. This gets seriously horked when loading readline and running the 3pp
+  # processes in make to touch stdin, so we redirect it to /dev/null.
+  # recipe when attached to a terminal. We don't actually ever want any
+  make install < /dev/null
+
+  INTERP=$(pwd)/host_interp/bin/python
+fi
+
+# Now, really configure and build.
+if [[ $_3PP_PLATFORM == mac* ]]; then
   # Mac Python installations use 2-byte Unicode.
   UNICODE_TYPE=ucs2
   # Flags gathered from stock Python installation.
@@ -87,8 +125,6 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
     "_ssl::-lssl.0.9.8 -lcrypto.0.9.8"
   )
 else
-  PYTHONEXE=python
-
   # Linux Python (Ubuntu) installations use 4-byte Unicode.
   UNICODE_TYPE=ucs4
   EXTRA_CONFIGURE_ARGS="--with-fpectl --with-dbmliborder=bdb:gdbm"
@@ -194,20 +230,6 @@ done
 for x in "${SETUP_LOCAL_ATTACH[@]}"; do
   SETUP_LOCAL_FLAGS+=(--attach "$x")
 done
-
-INTERP=python2
-if [[ $_3PP_PLATFORM == $_3PP_TOOL_PLATFORM ]]; then  # not cross compiling
-  # we need to make all the rest of the stuff like _struct and _functools in
-  # order to use this interpreter. If we're cross compiling then we're using
-  # the interpreter from path, which is already complete.
-  #
-  # Because of... something... setup.py tries to load in all modules which it
-  # builds. This gets seriously horked when loading readline and running the 3pp
-  # recipe when attached to a terminal. We don't actually ever want any
-  # processes in make to touch stdin, so we redirect it to /dev/null.
-  make < /dev/null
-  INTERP=./$PYTHONEXE
-fi
 
 $INTERP -s -S "$SCRIPT_DIR/python_mod_gen.py" \
   --pybuilddir $(cat pybuilddir.txt) \

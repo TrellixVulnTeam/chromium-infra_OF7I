@@ -18,9 +18,11 @@ By default this will:
   * [OS X only] Run `sudo -v` to refresh your sudo token; this is needed to
     run `xcode-select`.
   * Delete the $WORKDIR/3pp subdirectory.
-  * Run the 3pp recipe in experimental mode using `//infra.git/.3pp_wd` as the
-    default $WORKDIR, using locally *committed* 3pp code as input. Non-committed
-    changes are silently ignored.
+  * Run the 3pp recipe in experimental mode using `//infra.git/../.3pp_wd` as
+    the default $WORKDIR, using locally *committed* 3pp code as input.
+    Non-committed changes are silently ignored. Note that .3pp_wd is OUTSIDE
+    of //infra.git; this is intentional because otherwise `git apply` fails to
+    patch.
 
 Options:
   * Set $WORKDIR to change what directory this uses for the recipe workdir.
@@ -65,7 +67,7 @@ esac
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 REPO=$(dirname $SCRIPT_DIR)
-WORKDIR=${WORKDIR:-$REPO/.3pp_wd}
+WORKDIR=$(realpath "${WORKDIR:-$REPO/../.3pp_wd}")
 
 LOGIN_EMAIL=$(luci-auth info | awk '/Logged in/{gsub("\.$", "", $4); print $4}')
 CIPD_EMAIL=$(sed 's/@/_at_/' <<<"$LOGIN_EMAIL")
