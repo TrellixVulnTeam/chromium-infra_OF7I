@@ -10,9 +10,9 @@ import sys
 import requests
 
 
-# This is hardcoded to 2.7.15. It seems unlikely that we'll need to release
+# This is hardcoded to 2.7.17. It seems unlikely that we'll need to release
 # another python2 version. If we do, it's easy enough to update.
-VERSION = '2.7.15'
+VERSION = '2.7.17'
 
 
 def get_installer_suffix(platform):
