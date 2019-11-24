@@ -257,5 +257,6 @@ $INTERP `which pip_bootstrap.py` "$PREFIX"
 # Cleanup!
 rm -rf $PREFIX/lib/*.a
 rm -rf $PREFIX/lib/python*/test
+rm -rf $PREFIX/lib/python*/*/*test*
 rm -rf $PREFIX/lib/python*/config
 rm $PREFIX/lib/python*/lib-dynload/*.{so,dylib} || true

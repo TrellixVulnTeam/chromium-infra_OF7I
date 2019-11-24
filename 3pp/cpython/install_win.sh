@@ -23,6 +23,7 @@ rm -vrf SourceDir/DLLs/tk*.*
 rm -vrf SourceDir/include
 rm -vrf SourceDir/libs
 rm -vrf SourceDir/Lib/test
+rm -vrf SourceDir/Lib/*/*test*
 rm -vrf SourceDir/Lib/tkinter
 rm -vrf SourceDir/Tools/Scripts
 
