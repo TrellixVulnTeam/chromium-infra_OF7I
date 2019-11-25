@@ -265,7 +265,7 @@ export const fetchPrefs = () => async (dispatch) => {
  * @param {Object} newPrefs
  * @param {Boolean} saveChanges
  *
- * @return {undefined}
+ * @return {Function}
  */
 export const setPrefs = (newPrefs, saveChanges = true) => async (dispatch) => {
   if (!saveChanges) {
