@@ -32,7 +32,6 @@ var WaitTasks = &subcommands.Command{
 		c.envFlags.Register(&c.Flags)
 
 		c.Flags.IntVar(&c.timeoutMins, "timeout-mins", -1, "The maxinum number of minutes to wait for the task to finish. Default: no timeout.")
-		c.Flags.BoolVar(&c.isolateLink, "isolate", false, "(Default: False) Print links to the isolate output of the tasks after other output")
 
 		// TODO: Delete this flag entirely.
 		// There should be no users of this flag now, but remove in own CL for
@@ -49,7 +48,6 @@ type waitTasksRun struct {
 	envFlags    envFlags
 	timeoutMins int
 	buildBucket bool
-	isolateLink bool
 }
 
 func (c *waitTasksRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
