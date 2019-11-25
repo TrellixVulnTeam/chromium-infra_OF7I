@@ -137,7 +137,13 @@ service Inventory {
   // DumpStableVersionToDatastore reads the stable version from the LUCI config file
   // and writes it to datastore.
   rpc DumpStableVersionToDatastore(DumpStableVersionToDatastoreRequest) returns (DumpStableVersionToDatastoreResponse);
+
+  // Report inventory metrics.
+  rpc ReportInventory(ReportInventoryRequest) returns (ReportInventoryResponse);
 }
+
+message ReportInventoryRequest {}
+message ReportInventoryResponse {}
 
 message PushInventoryToQueenRequest {}
 message PushInventoryToQueenResponse {}
@@ -674,7 +680,7 @@ message UpdateDutLabelsResponse {
   string url = 1;
 }
 
-message atchUpdateDutsRequest {
+message BatchUpdateDutsRequest {
   repeated string hostnames = 1;
   string pool = 2;
 }

@@ -30,11 +30,13 @@ import (
 	"google.golang.org/grpc/status"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/freeduts"
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/appengine/crosskylabadmin/app/frontend/internal/metrics/utilization"
 	"infra/libs/skylab/inventory"
 )
 
@@ -131,6 +133,32 @@ func (is *ServerImpl) GetStableVersion(ctx context.Context, req *fleet.GetStable
 	}()
 
 	return getStableVersionImpl(ctx, req.BuildTarget, req.Model)
+}
+
+// ReportInventory reports metrics of duts in inventory.
+func (is *ServerImpl) ReportInventory(ctx context.Context, req *fleet.ReportInventoryRequest) (resp *fleet.ReportInventoryResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	store, err := is.newStore(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := store.Refresh(ctx); err != nil {
+		return nil, err
+	}
+
+	cfg := config.Get(ctx).Inventory
+	var duts []*inventory.DeviceUnderTest
+	for _, d := range store.Lab.GetDuts() {
+		e := d.GetCommon().GetEnvironment()
+		if inventory.Environment_name[int32(e)] == cfg.GetEnvironment() {
+			duts = append(duts, d)
+		}
+	}
+	utilization.ReportInventoryMetrics(ctx, duts)
+	return &fleet.ReportInventoryResponse{}, nil
 }
 
 // UpdateCachedInventory implements the method from fleet.InventoryServer interface.

@@ -345,3 +345,20 @@ func (s *DecoratedInventory) DumpStableVersionToDatastore(ctx context.Context, r
 	}
 	return
 }
+
+func (s *DecoratedInventory) ReportInventory(ctx context.Context, req *ReportInventoryRequest) (rsp *ReportInventoryResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ReportInventory", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ReportInventory(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ReportInventory", rsp, err)
+	}
+	return
+}

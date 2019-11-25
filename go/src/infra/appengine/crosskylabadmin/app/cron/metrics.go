@@ -50,4 +50,10 @@ var (
 		nil,
 		field.Bool("success"),
 	)
+	reportInventoryCronHandlerTick = metric.NewCounter(
+		"chromeos/crosskylabadmin/cron/report_inventory",
+		"ReportInventory cron attempt",
+		nil,
+		field.Bool("success"),
+	)
 )

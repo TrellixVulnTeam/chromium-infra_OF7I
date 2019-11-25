@@ -132,6 +132,16 @@ func reportBotsCronHandler(c *router.Context) (err error) {
 	return nil
 }
 
+func reportInventoryCronHandler(c *router.Context) (err error) {
+	defer func() {
+		reportInventoryCronHandlerTick.Add(c.Context, 1, err == nil)
+	}()
+
+	inv := createInventoryServer(c)
+	_, err = inv.ReportInventory(c.Context, &fleet.ReportInventoryRequest{})
+	return err
+}
+
 func pushInventoryToQueenCronHandler(c *router.Context) (err error) {
 	defer func() {
 		pushInventoryToQueenTick.Add(c.Context, 1, err == nil)

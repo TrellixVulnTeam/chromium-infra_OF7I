@@ -414,6 +414,26 @@ func (mr *MockInventoryClientMockRecorder) DumpStableVersionToDatastore(ctx, in 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DumpStableVersionToDatastore", reflect.TypeOf((*MockInventoryClient)(nil).DumpStableVersionToDatastore), varargs...)
 }
 
+// ReportInventory mocks base method
+func (m *MockInventoryClient) ReportInventory(ctx context.Context, in *ReportInventoryRequest, opts ...grpc.CallOption) (*ReportInventoryResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ReportInventory", varargs...)
+	ret0, _ := ret[0].(*ReportInventoryResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReportInventory indicates an expected call of ReportInventory
+func (mr *MockInventoryClientMockRecorder) ReportInventory(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportInventory", reflect.TypeOf((*MockInventoryClient)(nil).ReportInventory), varargs...)
+}
+
 // MockInventoryServer is a mock of InventoryServer interface
 type MockInventoryServer struct {
 	ctrl     *gomock.Controller
@@ -720,4 +740,19 @@ func (m *MockInventoryServer) DumpStableVersionToDatastore(arg0 context.Context,
 func (mr *MockInventoryServerMockRecorder) DumpStableVersionToDatastore(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DumpStableVersionToDatastore", reflect.TypeOf((*MockInventoryServer)(nil).DumpStableVersionToDatastore), arg0, arg1)
+}
+
+// ReportInventory mocks base method
+func (m *MockInventoryServer) ReportInventory(arg0 context.Context, arg1 *ReportInventoryRequest) (*ReportInventoryResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReportInventory", arg0, arg1)
+	ret0, _ := ret[0].(*ReportInventoryResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReportInventory indicates an expected call of ReportInventory
+func (mr *MockInventoryServerMockRecorder) ReportInventory(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportInventory", reflect.TypeOf((*MockInventoryServer)(nil).ReportInventory), arg0, arg1)
 }

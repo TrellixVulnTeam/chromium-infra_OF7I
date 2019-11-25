@@ -36,6 +36,55 @@ var dutmonMetric = metric.NewInt(
 	field.Bool("is_locked"),
 )
 
+var inventoryMetric = metric.NewInt(
+	"chromeos/skylab/inventory/dut_count",
+	"The number of DUTs in a given bucket",
+	nil,
+	field.String("board"),
+	field.String("model"),
+	field.String("pool"),
+	field.String("environment"),
+)
+
+// ReportInventoryMetrics reports the inventory metrics to monarch.
+func ReportInventoryMetrics(ctx context.Context, duts []*inventory.DeviceUnderTest) {
+	c := make(inventoryCounter)
+	for _, d := range duts {
+		b := getBucketForDUT(d)
+		c[b]++
+	}
+	c.Report(ctx)
+}
+
+func (c inventoryCounter) Report(ctx context.Context) {
+	for b, count := range c {
+		inventoryMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment)
+	}
+}
+
+type inventoryCounter map[bucket]int
+
+func getBucketForDUT(d *inventory.DeviceUnderTest) bucket {
+	b := bucket{
+		board:       "[None]",
+		model:       "[None]",
+		pool:        "[None]",
+		environment: "[None]",
+	}
+	l := d.GetCommon().GetLabels()
+	b.board = l.GetBoard()
+	b.model = l.GetModel()
+	var pools []string
+	cp := l.GetCriticalPools()
+	for _, p := range cp {
+		pools = append(pools, inventory.SchedulableLabels_DUTPool_name[int32(p)])
+	}
+	pools = append(pools, l.GetSelfServePools()...)
+	b.pool = getReportPool(pools)
+	b.environment = d.GetCommon().GetEnvironment().String()
+	return b
+}
+
 // ReportMetrics reports DUT utilization metrics akin to dutmon in Autotest
 //
 // The reported fields closely match those reported by dutmon, but the metrics
@@ -56,9 +105,10 @@ func ReportMetrics(ctx context.Context, bis []*swarming.SwarmingRpcsBotInfo) {
 // dimensions are removed, the related metric is not automatically reset. The
 // metric will get reset eventually.
 type bucket struct {
-	board string
-	model string
-	pool  string
+	board       string
+	model       string
+	pool        string
+	environment string
 }
 
 // status is a dynamic DUT dimension.
@@ -106,12 +156,7 @@ func getBucketForBotInfo(bi *swarming.SwarmingRpcsBotInfo) bucket {
 		case "label-model":
 			b.model = summarizeValues(d.Value)
 		case "label-pool":
-			p := summarizeValues(d.Value)
-			if isManagedPool(p) {
-				b.pool = fmt.Sprintf("managed:%s", p)
-			} else {
-				b.pool = p
-			}
+			b.pool = getReportPool(d.Value)
 		default:
 			// Ignore other dimensions.
 		}
@@ -196,4 +241,12 @@ func summarizeValues(vs []string) string {
 func isManagedPool(p string) bool {
 	_, ok := inventory.SchedulableLabels_DUTPool_value[p]
 	return ok
+}
+
+func getReportPool(pools []string) string {
+	p := summarizeValues(pools)
+	if isManagedPool(p) {
+		return fmt.Sprintf("managed:%s", p)
+	}
+	return p
 }
