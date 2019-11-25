@@ -103,7 +103,8 @@ func (r *cmdShellRun) Run(a subcommands.Application, args []string, env subcomma
 		if err != nil {
 			return logFatalf(a, "stream recv error: %v", err)
 		}
-		_, _ = a.GetOut().Write(resp.GetOutput())
+		_, _ = a.GetOut().Write(resp.GetStdout())
+		_, _ = a.GetErr().Write(resp.GetStderr())
 		status = resp.GetStatus()
 		exited = resp.GetExited()
 	}

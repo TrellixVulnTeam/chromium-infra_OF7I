@@ -23,5 +23,6 @@ message DutShellRequest {
 message DutShellResponse {
   int32 status = 1;
   bool exited = 2;
-  bytes output = 3;
+  bytes stdout = 3;
+  bytes stderr = 4;
 }
