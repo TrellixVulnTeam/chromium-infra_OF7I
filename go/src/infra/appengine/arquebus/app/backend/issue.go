@@ -21,11 +21,13 @@ import (
 	"net/url"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/wrappers"
 
 	"go.chromium.org/gae/service/info"
+	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/sync/parallel"
 
@@ -43,6 +45,10 @@ const (
 	// IssueUpdateMaxConcurrency is the maximum number of
 	// monorail.UpdateIssue()s that can be invoked in parallel.
 	IssueUpdateMaxConcurrency = 4
+	// The length of an issue update throttle window, which is created after
+	// an issue update performed to prevent the issue from being updated again
+	// during the period.
+	issueUpdateThrottleDuration = 1 * time.Hour
 )
 
 // searchAndUpdateIssues searches and update issues for the Assigner.
@@ -99,10 +105,9 @@ func searchIssues(c context.Context, mc monorail.IssuesClient, assigner *model.A
 		CannedQuery:  uint32(monorail.SearchScope_OPEN),
 		ProjectNames: assigner.IssueQuery.ProjectNames,
 
-		// This assumes that the search query includes a filter to exclude
-		// the previously updated issues.
-		// TODO(crbug/965385) - provide a solution to write search queries
-		// easier and safer.
+		// TODO(crbug/965385) - paginate through the search results, until
+		// the total number of issues to be updated reaches the maximum number
+		// of issues to be updated in one Task.
 		Pagination: &monorail.Pagination{
 			Start:    0,
 			MaxItems: 20,
@@ -122,6 +127,35 @@ func searchIssues(c context.Context, mc monorail.IssuesClient, assigner *model.A
 // temporarily. Therefore, updateIssues tries to update as many issues as
 // possible.
 func updateIssues(c context.Context, mc monorail.IssuesClient, assigner *model.Assigner, task *model.Task, issues []*monorail.Issue, assignee *monorail.UserRef, ccs []*monorail.UserRef) (nUpdated, nFailed int32) {
+	mh := config.Get(c).MonorailHostname
+
+	isThrottled := func(issue *monorail.Issue) bool {
+		key := fmt.Sprintf("%s/%s/%d", mh, issue.ProjectName, issue.LocalId)
+		item, err := memcache.GetKey(c, key)
+
+		if err == nil {
+			writeTaskLogWithLink(c, task, issue, "issue update throttled - %s", item.Expiration())
+			return true
+		}
+		// TODO(1027998): Replace memcached with DS.
+		if err == memcache.ErrCacheMiss {
+			item.SetExpiration(issueUpdateThrottleDuration)
+			writeTaskLogWithLink(
+				c, task, issue, "Throttling issue updates with expiration %s",
+				item.Expiration(),
+			)
+			if err = memcache.Set(c, item); err != nil {
+				writeTaskLogWithLink(c, task, issue, "failed to throttle issue updates: %s", err.Error())
+			}
+			return false
+		}
+		// memcache.GetKey() failed.
+		writeTaskLogWithLink(
+			c, task, issue, "failed to look up a throttle duration: %s", err.Error(),
+		)
+		return false
+	}
+
 	update := func(issue *monorail.Issue) {
 		delta, err := createIssueDelta(c, mc, task, issue, assignee, ccs)
 		switch {
@@ -166,7 +200,9 @@ func updateIssues(c context.Context, mc monorail.IssuesClient, assigner *model.A
 			// In-Scope variable for goroutine closure.
 			issue := issue
 			tasks <- func() error {
-				update(issue)
+				if !isThrottled(issue) {
+					update(issue)
+				}
 				return nil
 			}
 		}

@@ -8,6 +8,10 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
+
+	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/clock/testclock"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -41,7 +45,7 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 		}
 		mockGetAndListIssues(c, sampleIssues...)
 
-		Convey("tickets with opt-out label are filtered in search", func() {
+		Convey("issues with opt-out label are filtered in search", func() {
 			countOptOptLabel := func(query string) int {
 				assigner.IssueQuery.Q = query
 				_, err := searchAndUpdateIssues(c, assigner, task)
@@ -171,6 +175,34 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(nUpdated, ShouldEqual, 0)
 			})
+		})
+
+		Convey("an issue update is throttled", func() {
+			clk := testclock.New(time.Unix(testclock.TestTimeUTC.Unix(), 0).UTC())
+			c = clock.Set(c, clk)
+
+			// Perform issue updates with new owners, first.
+			nUpdated, err := searchAndUpdateIssues(c, assigner, task)
+			So(err, ShouldBeNil)
+			So(nUpdated, ShouldEqual, len(sampleIssues))
+
+			// Advance the time by half of the throttle duration, and re-perform
+			// issue updates. Note that samplesIssues still have no owners, and
+			// therefore, reinvoking searchAndUpdateIssue() would have resulted
+			// in the same number of issue updates generated. However, due to
+			// the throttling duration, searchAndUpdateIssues() shouldn't
+			// generate any issue updates.
+			clk.Add(issueUpdateThrottleDuration / 2)
+			nUpdated, err = searchAndUpdateIssues(c, assigner, task)
+			So(err, ShouldBeNil)
+			So(nUpdated, ShouldEqual, 0)
+
+			// Advnace the time again. Now, it's out of the throttling window,
+			// and issue updates should be generated.
+			clk.Add(issueUpdateThrottleDuration)
+			nUpdated, err = searchAndUpdateIssues(c, assigner, task)
+			So(err, ShouldBeNil)
+			So(nUpdated, ShouldEqual, len(sampleIssues))
 		})
 
 		Convey("the status and assignee remain the same, if there is no intended assignee", func() {

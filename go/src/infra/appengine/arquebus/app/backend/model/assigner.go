@@ -30,8 +30,8 @@ import (
 )
 
 const (
-	// The interval of schedule-assigners cron job.
-	scheduleAssignerCronInterval = time.Second * 60
+	// The interval of schedule-assigners cron job
+	scheduleAssignerCronInterval = 60 * time.Second
 )
 
 // Assigner is a job object that periodically runs to perform issue update
@@ -87,7 +87,7 @@ type Assigner struct {
 
 // updateIfChanged updates the Assigner entity, based on the valid config.
 //
-// This Returns whether the content has been updated.
+// It returns true if an update has been performed. False, otherwise.
 func (a *Assigner) updateIfChanged(c context.Context, cfg *config.Assigner, rev string) bool {
 	// skip updating if the revision is the same.
 	if a.ConfigRevision == rev {
