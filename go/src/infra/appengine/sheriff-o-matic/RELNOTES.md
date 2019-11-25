@@ -1,3 +1,24 @@
+# Release Notes sheriff-o-matic 2019-11-25
+
+- 2 commits, 2 bugs affected since c72865a ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - benmason@chromium.org
+
+## Changes in this release
+
+- [Remove MasterName for the official builds.](https://chromium-review.googlesource.com/c/infra/infra/+/1925815) (benmason@chromium.org)
+- [Add headings for SoM alerts for screenreader](https://chromium-review.googlesource.com/c/infra/infra/+/1918506) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- benmason@chromium.org:
+  -  [https://crbug.com/1007430](https://crbug.com/1007430)
+  
+- nqmtuan@google.com:
+  -  [https://crbug.com/816686](https://crbug.com/816686)
+  
+
 # Release Notes sheriff-o-matic 2019-11-12
 
 - 3 commits, 1 bugs affected since 1289c34 ()
