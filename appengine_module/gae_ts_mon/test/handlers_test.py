@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import absolute_import
 import datetime
 import json
 import unittest
@@ -11,7 +12,7 @@ import mock
 import webapp2
 
 from google.appengine.api.runtime import runtime
-from test_support import test_case
+from .test_support import test_case
 
 from infra_libs.ts_mon import config
 from infra_libs.ts_mon import handlers
@@ -24,17 +25,16 @@ from infra_libs.ts_mon.common import targets
 class HelperFunctionsTest(unittest.TestCase):
   def test_find_gaps(self):
     self.assertEqual(
-      list(zip(xrange(5), handlers.find_gaps([1, 3, 5]))),
-      list(enumerate([0, 2, 4, 6, 7])))
+        list(zip(range(5), handlers.find_gaps([1, 3, 5]))),
+        list(enumerate([0, 2, 4, 6, 7])))
     self.assertEqual(
-      list(zip(xrange(5), handlers.find_gaps([0, 1, 2, 3, 5]))),
-      list(enumerate([4, 6, 7, 8, 9])))
+        list(zip(range(5), handlers.find_gaps([0, 1, 2, 3, 5]))),
+        list(enumerate([4, 6, 7, 8, 9])))
     self.assertEqual(
-      list(zip(xrange(3), handlers.find_gaps([]))),
-      list(enumerate([0, 1, 2])))
+        list(zip(range(3), handlers.find_gaps([]))), list(enumerate([0, 1, 2])))
     self.assertEqual(
-      list(zip(xrange(3), handlers.find_gaps([2]))),
-      list(enumerate([0, 1, 3])))
+        list(zip(range(3), handlers.find_gaps([2]))), list(
+            enumerate([0, 1, 3])))
 
 
 class HandlersTest(test_case.TestCase):

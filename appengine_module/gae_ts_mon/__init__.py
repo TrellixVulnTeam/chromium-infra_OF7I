@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 # pylint: disable=wrong-import-position
 
+from __future__ import absolute_import
 import google  # provided by GAE
 import imp
 import os
@@ -38,11 +39,11 @@ import infra_libs.ts_mon.httplib2_utils
 sys.modules['infra_libs'].httplib2_utils = infra_libs.ts_mon.httplib2_utils
 sys.modules['infra_libs.httplib2_utils'] = infra_libs.ts_mon.httplib2_utils
 
-from config import DjangoMiddleware
-from config import initialize
-from config import instrument_endpoint
-from config import instrument_wsgi_application
-from config import reset_for_unittest
+from .config import DjangoMiddleware
+from .config import initialize
+from .config import instrument_endpoint
+from .config import instrument_wsgi_application
+from .config import reset_for_unittest
 from infra_libs.ts_mon.handlers import app
 from infra_libs.ts_mon.handlers import TSMonJSHandler
 

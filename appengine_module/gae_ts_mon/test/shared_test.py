@@ -2,11 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import absolute_import
 import unittest
 
 import gae_ts_mon
 
-from test_support import test_case
+from .test_support import test_case
 
 from infra_libs.ts_mon import shared
 

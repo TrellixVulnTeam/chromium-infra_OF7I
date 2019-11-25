@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import copy
 import datetime
 import functools
@@ -14,7 +16,7 @@ import gae_ts_mon
 import mock
 import webapp2
 
-from test_support import test_case
+from .test_support import test_case
 
 from infra_libs.ts_mon import config
 from infra_libs.ts_mon import shared
@@ -545,7 +547,7 @@ class DjangoMiddlewareTest(test_case.TestCase):
   def test_decorated_view_func(self):
     self.view_func = decorated_view_func
     self.run_middleware()
-    print self.request.ts_mon_state
+    print(self.request.ts_mon_state)
 
     fields = {'name': 'gae_ts_mon.test.config_test.decorated_view_func',
               'status': 200, 'is_robot': False}

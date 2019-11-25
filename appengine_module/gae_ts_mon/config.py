@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import threading
+import six
 
 # Not all apps enable endpoints. If the import fails, the app will not
 # use @instrument_endpoint() decorator, so it is safe to ignore it.
@@ -99,7 +100,7 @@ def _flush_metrics(time_now):
 
   interface.flush()
 
-  for metric in interface.state.global_metrics.itervalues():
+  for metric in six.itervalues(interface.state.global_metrics):
     metric.reset()
 
   entity_deferred.get_result()
@@ -295,65 +296,68 @@ def instrument_endpoint(time_fn=time.time):
   return decorator
 
 
-class DjangoMiddleware(object):
-  STATE_ATTR = 'ts_mon_state'
 
-  def __init__(self, time_fn=time.time):
-    self._time_fn = time_fn
 
-  def _callable_name(self, fn):
-    if hasattr(fn, 'im_class') and hasattr(fn, 'im_func'):  # Bound method.
-      return '.'.join([
-          fn.im_class.__module__,
-          fn.im_class.__name__,
-          fn.im_func.func_name])
-    if hasattr(fn, '__name__'):  # Function.
-      return fn.__module__ + '.' + fn.__name__
-    return '<unknown>'  # pragma: no cover
+if sys.version_info.major == 2:  #pragma: no cover
 
-  def process_view(self, request, view_func, view_args, view_kwargs):
-    time_now = self._time_fn()
-    state = {
-        'flush_thread': None,
-        'name': self._callable_name(view_func),
-        'start_time': time_now,
-    }
+  class DjangoMiddleware(object):
+    STATE_ATTR = 'ts_mon_state'
 
-    if need_to_flush_metrics(time_now):
-      thread = threading.Thread(target=_flush_metrics, args=(time_now,))
-      thread.start()
-      state['flush_thread'] = thread
+    def __init__(self, time_fn=time.time):
+      self._time_fn = time_fn
 
-    setattr(request, self.STATE_ATTR, state)
-    return None
+    def _callable_name(self, fn):
+      if hasattr(fn, 'im_class') and hasattr(fn, 'im_func'):  # Bound method.
+        return '.'.join([
+            fn.im_class.__module__, fn.im_class.__name__, fn.im_func.func_name
+        ])
+      if hasattr(fn, '__name__'):  # Function.
+        return fn.__module__ + '.' + fn.__name__
+      return '<unknown>'  # pragma: no cover
 
-  def process_response(self, request, response):
-    try:
-      state = getattr(request, self.STATE_ATTR)
-    except AttributeError:
+    def process_view(self, request, view_func, *_):
+      time_now = self._time_fn()
+      state = {
+          'flush_thread': None,
+          'name': self._callable_name(view_func),
+          'start_time': time_now,
+      }
+
+      if need_to_flush_metrics(time_now):
+        thread = threading.Thread(target=_flush_metrics, args=(time_now,))
+        thread.start()
+        state['flush_thread'] = thread
+
+      setattr(request, self.STATE_ATTR, state)
+      return None
+
+    def process_response(self, request, response):
+      try:
+        state = getattr(request, self.STATE_ATTR)
+      except AttributeError:
+        return response
+
+      if state['flush_thread'] is not None:
+        state['flush_thread'].join()
+
+      duration_secs = self._time_fn() - state['start_time']
+
+      request_size = 0
+      if hasattr(request, 'body'):
+        request_size = len(request.body)
+
+      response_size = 0
+      if hasattr(response, 'content'):
+        response_size = len(response.content)
+
+      http_metrics.update_http_server_metrics(
+          state['name'],
+          response.status_code,
+          duration_secs * 1000,
+          request_size=request_size,
+          response_size=response_size,
+          user_agent=request.META.get('HTTP_USER_AGENT', None))
       return response
-
-    if state['flush_thread'] is not None:
-      state['flush_thread'].join()
-
-    duration_secs = self._time_fn() - state['start_time']
-
-    request_size = 0
-    if hasattr(request, 'body'):
-      request_size = len(request.body)
-
-    response_size = 0
-    if hasattr(response, 'content'):
-      response_size = len(response.content)
-
-    http_metrics.update_http_server_metrics(
-        state['name'],
-        response.status_code,
-        duration_secs * 1000,
-        request_size=request_size,
-        response_size=response_size,
-        user_agent=request.META.get('HTTP_USER_AGENT', None))
-    return response
 
 
 def reset_for_unittest(disable=False):

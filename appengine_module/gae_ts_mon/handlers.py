@@ -189,7 +189,7 @@ class TSMonJSHandler(webapp2.RequestHandler):
           logging.warning(
               'gae_ts_mon error: Supplied fields do not match metric "%s".',
               name)
-          logging.warning('Supplied fields keys: %s', fields.keys())
+          logging.warning('Supplied fields keys: %s', list(fields.keys()))
           logging.warning('Metric fields keys: %s', metric_field_keys)
           return
 
