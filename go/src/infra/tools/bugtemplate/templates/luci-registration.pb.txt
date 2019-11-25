@@ -60,9 +60,6 @@ Also, it contains instructions how to change this bug template.
 END
 
 components: "Infra>Platform>Admin"
-cc: "nodir@chromium.org"
-cc: "estaab@chromium.org"
-cc: "efoo@chromium.org"
 type: Task
 pri: P2
 labels: "Restrict-View-Google"
