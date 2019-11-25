@@ -40,8 +40,8 @@ const GROUPABLE_FIELD_TYPES = new Set([
  * A special value of 'None' will always be prepended to the otherwise sorted
  * list returned.
  *
- * @param {Iterable<FieldDef>} fieldDefs
- * @param {Iterable<string>} labelFields
+ * @param {Iterable<FieldDef>} [fieldDefs]
+ * @param {Iterable<string>} [labelFields]
  * @return {Array<string>}
  */
 export function getAvailableGridFields(fieldDefs = [], labelFields = []) {
@@ -89,22 +89,45 @@ function issueRefComparator(issueRefStrA, issueRefStrB) {
   }
 }
 
-// TODO(juliacordero): handle sorting ad hoc values
 /**
- * @param {Set<string>} headingSet The headers found for the field.
- * @param {string} fieldName The field on which we're sorting.
- * @return {Array}
+ * Returns a comparator for strings representing statuses using the ordering
+ * provided in statusDefs.
+ * Any status not found in statusDefs will be sorted to the end.
+ * @param {!Array<StatusDef>} statusDefs
+ * @return {function(string, string): number}
  */
-function sortHeadings(headingSet, fieldName) {
-  let sorter;
-  if (headingSet.has(fieldName)) { // TODO(jessan): What is this checking?
-    const type = getTypeForFieldName(fieldName);
-    if (type === fieldTypes.ISSUE_TYPE) {
-      sorter = issueRefComparator;
-    } else if (type === fieldTypes.INT_TYPE) {
-      sorter = intStrComparator;
+function getStatusDefComparator(statusDefs) {
+  return (statusStrA, statusStrB) => {
+    // Traverse statusDefs to determine which status is first.
+    for (const statusDef of statusDefs) {
+      if (statusDef.status == statusStrA) {
+        return -1;
+      } else if (statusDef.status == statusStrB) {
+        return 1;
+      }
     }
+    return 0;
+  };
+}
+
+/**
+ * @param {!Set<string>} headingSet The headers found for the field.
+ * @param {string} fieldName The field on which we're sorting.
+ * @param {!Map} fieldDefMap
+ * @param {!Array<StatusDef>} statusDefs
+ * @return {!Array<string>}
+ */
+function sortHeadings(headingSet, fieldName, fieldDefMap, statusDefs) {
+  let sorter;
+  const type = getTypeForFieldName(fieldName, fieldDefMap);
+  if (type === fieldTypes.ISSUE_TYPE) {
+    sorter = issueRefComparator;
+  } else if (type === fieldTypes.INT_TYPE) {
+    sorter = intStrComparator;
+  } else if (type === fieldTypes.STATUS_TYPE) {
+    sorter = getStatusDefComparator(statusDefs);
   }
+
 
   // Track whether EMPTY_FIELD_VALUE is present, and ensure that
   // it is sorted to the last position even for custom fields.
@@ -136,9 +159,9 @@ export function makeGridCellKey(x, y) {
  * @param {Issue} issue The issue for which we're preparing grid headings.
  * @param {string} fieldName The field on which we're grouping.
  * @param {string} projectName
- * @param {Map} fieldDefMap
- * @param {Set} labelPrefixSet
- * @return {Array<string>} The headings the issue should be grouped into.
+ * @param {!Map} fieldDefMap
+ * @param {!Set} labelPrefixSet
+ * @return {!Array<string>} The headings the issue should be grouped into.
  */
 function prepareHeadings(
     issue, fieldName, projectName, fieldDefMap, labelPrefixSet) {
@@ -154,18 +177,20 @@ function prepareHeadings(
  * Groups issues by their values for the given fields.
  *
  * @param {Array<Issue>} issues The issues we are grouping.
- * @param {string} xFieldName name of the field for grouping columns.
- * @param {string} yFieldName name of the field for grouping rows.
- * @param {string} projectName
- * @param {Map} fieldDefMap
- * @param {Set} labelPrefixSet
- * @return {Object} Grid data
+ * @param {string} [xFieldName] name of the field for grouping columns.
+ * @param {string} [yFieldName] name of the field for grouping rows.
+ * @param {string} [projectName]
+ * @param {Map} [fieldDefMap]
+ * @param {Set} [labelPrefixSet]
+ * @param {Array<StatusDef>} [statusDefs]
+ * @return {!Object} Grid data
  *   - groupedIssues: A map of issues grouped by thir xField and yField values.
  *   - xHeadings: sorted headings for columns.
  *   - yHeadings: sorted headings for rows.
  */
-export function extractGridData(issues, xFieldName = '', yFieldName = '',
-    projectName = '', fieldDefMap = new Map(), labelPrefixSet = new Set()) {
+export function extractGridData(
+    issues, xFieldName = '', yFieldName = '', projectName = '',
+    fieldDefMap = new Map(), labelPrefixSet = new Set(), statusDefs = []) {
   const xHeadingsSet = new Set();
   const yHeadingsSet = new Set();
   const groupedIssues = new Map();
@@ -197,7 +222,7 @@ export function extractGridData(issues, xFieldName = '', yFieldName = '',
 
   return {
     groupedIssues,
-    xHeadings: sortHeadings(xHeadingsSet, xFieldName),
-    yHeadings: sortHeadings(yHeadingsSet, yFieldName),
+    xHeadings: sortHeadings(xHeadingsSet, xFieldName, fieldDefMap, statusDefs),
+    yHeadings: sortHeadings(yHeadingsSet, yFieldName, fieldDefMap, statusDefs),
   };
 }

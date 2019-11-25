@@ -2,14 +2,26 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import './mr-grid-tile.js';
+
+import {css, html, LitElement} from 'lit-element';
+import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
 import * as project from 'reducers/project.js';
-import {extractGridData, makeGridCellKey} from './extract-grid-data.js';
-import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {issueRefToUrl} from 'shared/converters.js';
-import './mr-grid-tile.js';
-import qs from 'qs';
+import {setHasAny} from 'shared/helpers.js';
+import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
+
+import {extractGridData, makeGridCellKey} from './extract-grid-data.js';
+
+const PROPERTIES_TRIGGERING_GROUPING = Object.freeze([
+  'xField',
+  'yField',
+  'issues',
+  '_fieldDefMap',
+  '_labelPrefixSet',
+  '_statusDefs',
+]);
 
 /**
  * <mr-grid>
@@ -150,6 +162,7 @@ export class MrGrid extends connectStore(LitElement) {
       projectName: {type: String},
       _fieldDefMap: {type: Object},
       _labelPrefixSet: {type: Object},
+      _statusDefs: {type: Array},
     };
   }
 
@@ -218,22 +231,27 @@ export class MrGrid extends connectStore(LitElement) {
     this._fieldDefMap = new Map();
 
     this._labelPrefixSet = new Set();
+
+    /**
+     * Note: no default assigned here: it can be undefined in stateChanged.
+     * @type {Array<StatusDef>}
+     */
+    this._statusDefs;
   }
 
   /** @override */
   stateChanged(state) {
     this._fieldDefMap = project.fieldDefMap(state);
     this._labelPrefixSet = project.labelPrefixSet(state);
+    this._statusDefs = project.config(state).statusDefs;
   }
 
   /** @override */
   update(changedProperties) {
-    if (changedProperties.has('xField') || changedProperties.has('yField') ||
-        changedProperties.has('issues') ||
-        changedProperties.has('_fieldDefMap') ||
-        changedProperties.has('_labelPrefixSet')) {
-      const gridData = extractGridData(this.issues, this.xField, this.yField,
-          this.projectName, this._fieldDefMap, this._labelPrefixSet);
+    if (setHasAny(changedProperties, PROPERTIES_TRIGGERING_GROUPING)) {
+      const gridData = extractGridData(
+          this.issues, this.xField, this.yField, this.projectName,
+          this._fieldDefMap, this._labelPrefixSet, this._statusDefs);
       this._xHeadings = gridData.xHeadings;
       this._yHeadings = gridData.yHeadings;
       this._groupedIssues = gridData.groupedIssues;

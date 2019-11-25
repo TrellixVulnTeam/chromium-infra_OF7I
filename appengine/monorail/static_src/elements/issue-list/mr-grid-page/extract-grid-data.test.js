@@ -176,23 +176,35 @@ describe('extract headings from x and y attributes', () => {
     assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 
-  // TODO(juliacordero): sort these like the current grid view (?)
-  it('extract headings from Status attribute', () => {
+  it('extract headings from Status in order of statusDefs provided', () => {
     const issues = [
       {'statusRef': {'status': 'New'}},
+      {'statusRef': {'status': '1Unknown'}},
       {'statusRef': {'status': 'Accepted'}},
       {'statusRef': {'status': 'New'}},
+      {'statusRef': {'status': 'UltraNew'}},
     ];
-    const data = extractGridData(issues, '', 'Status');
+    const statusDefs = [
+      {status: 'UltraNew'}, {status: 'New'}, {status: 'Unused'},
+      {status: 'Accepted'},
+    ];
+
+    const data = extractGridData(
+        issues, '', 'Status', '', new Map(), new Set(), statusDefs);
 
     const expectedIssues = new Map();
-    expectedIssues.set('All + Accepted',
-        [{'statusRef': {'status': 'Accepted'}}]);
-    expectedIssues.set('All + New', [{'statusRef': {'status': 'New'}},
-      {'statusRef': {'status': 'New'}}]);
-
+    expectedIssues.set(
+        'All + Accepted', [{'statusRef': {'status': 'Accepted'}}]);
+    expectedIssues.set(
+        'All + New',
+        [{'statusRef': {'status': 'New'}}, {'statusRef': {'status': 'New'}}]);
+    expectedIssues.set(
+        'All + UltraNew', [{'statusRef': {'status': 'UltraNew'}}]);
+    expectedIssues.set(
+        'All + 1Unknown', [{'statusRef': {'status': '1Unknown'}}]);
     assert.deepEqual(data.xHeadings, ['All']);
-    assert.deepEqual(data.yHeadings, ['Accepted', 'New']);
+    assert.deepEqual(
+        data.yHeadings, ['UltraNew', 'New', 'Accepted', '1Unknown']);
     assert.deepEqual(data.groupedIssues, expectedIssues);
   });
 

@@ -22,11 +22,16 @@ export function arrayDifference(listA, listB, equals) {
  * Check to see if a Set contains any of a list of values.
  *
  * @param {Set} set the Set to check for values in.
- * @param {Array} values checks if any of these values are included.
+ * @param {Iterable} values checks if any of these values are included.
  * @return {Boolean} whether the Set has any of the values or not.
  */
 export function setHasAny(set, values) {
-  return !!values.find((v) => set.has(v));
+  for (const value of values) {
+    if (set.has(value)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Check if a string has a prefix, ignoring case.

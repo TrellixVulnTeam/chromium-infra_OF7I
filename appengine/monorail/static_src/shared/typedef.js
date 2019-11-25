@@ -162,7 +162,7 @@
  */
 
 /**
- * A FieldRef Object returned by the pRPC API.
+ * A FieldRef Object returned by the pRPC API common.proto.
  *
  * @typedef {Object} FieldRef
  * @property {Number} fieldId
@@ -172,7 +172,7 @@
  */
 
 /**
- * A FieldValue Object returned by the pRPC API.
+ * A FieldValue Object returned by the pRPC API common.proto.
  *
  * @typedef {Object} FieldValue
  * @property {FieldRef} fieldRef
@@ -181,6 +181,15 @@
  * @property {PhaseRef} [phaseRef]
  */
 
+/**
+ * A StatusDef Object returned as part of the pRPC API project_objects.proto.
+ *
+ * @typedef {Object} StatusDef
+ * @property {boolean} deprecated
+ * @property {string} docstring
+ * @property {boolean} meansOpen
+ * @property {string} status
+ */
 
 // TODO(zhangtiff): Define properties for the typedefs below.
 /**

@@ -53,7 +53,7 @@ describe('mr-grid', () => {
     assert.deepEqual(tile.issue, {localId: 1, projectName: 'monorail'});
   });
 
-  it('sorts issues before rendering', async () => {
+  it('groups issues before rendering', async () => {
     const testIssue = {
       localId: 1,
       projectName: 'monorail',
