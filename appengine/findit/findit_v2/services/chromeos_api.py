@@ -20,6 +20,9 @@ _BISECT_BUCKET = 'bisect'
 
 class ChromeOSProjectAPI(ProjectAPI):
 
+  def __init__(self):
+    super(ChromeOSProjectAPI, self).__init__('chromeos')
+
   def _GetFailureOutput(self, build, output_name):
     # Converts the Struct to standard dict, to use .get, .iteritems etc.
     build_failure_output = json_format.MessageToDict(

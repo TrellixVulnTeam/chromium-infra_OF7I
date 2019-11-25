@@ -7,10 +7,12 @@ import webapp2
 import gae_ts_mon
 
 from gae_libs import appengine_util
+from findit_v2.handlers import async_action
 from findit_v2.handlers import build_completion_processor
 
 # "findit-backend" module.
 findit_backend_handler_mappings = [
+    ('/findit/internal/v2/task/async-action', async_action.AsyncAction),
     ('/findit/internal/v2/task/build-completed',
      build_completion_processor.BuildCompletionProcessor),
 ]

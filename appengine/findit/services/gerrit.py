@@ -51,15 +51,21 @@ def _GetCodeReview(code_review_data):
   return Gerrit(code_review_data['review_server_host'])
 
 
-def CreateFinditWrongBugLink(component, culprit_link, revision):
+def CreateFinditWrongBugLink(component, culprit_link, revision, ds_key=None):
   """Create a link to file a bug for a false positive culprit."""
-  false_positive_bug_query = urllib.urlencode({
+  query = {
       'status': 'Available',
       'labels': 'Test-Findit-Wrong',
       'components': component,
       'summary': 'Wrongly blame %s' % revision,
-      'comment': 'Detail is %s' % culprit_link
-  })
+  }
+  comments = []
+  if culprit_link:
+    comments.append('Link to the culprit: %s' % culprit_link)
+  if ds_key:
+    comments.append('Datastore key for the culprit entity: %s' % ds_key)
+  query['comment'] = '\n'.join(comments)
+  false_positive_bug_query = urllib.urlencode(query)
 
   return 'https://bugs.chromium.org/p/chromium/issues/entry?%s' % (
       false_positive_bug_query)

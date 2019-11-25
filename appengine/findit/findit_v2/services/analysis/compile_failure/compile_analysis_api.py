@@ -231,8 +231,8 @@ class CompileAnalysisAPI(AnalysisAPI):
         context, analyzed_build_id, culprit):
       return self._NoAction(culprit, 'Build has recovered')
 
-    change_info, gerrit_client = project_api.ChangeInfoAndClientFromCommit(
-        culprit)
+    change_info, gerrit_client = (
+        project_api.gerrit_actions.ChangeInfoAndClientFromCommit(culprit))
     cl_details = gerrit_client.GetClDetails(change_info['review_change_id'])
     if bool(cl_details.revert_of):
       return self._Notify(project_api, culprit, 'The culprit is a revert')
@@ -280,15 +280,12 @@ class CompileAnalysisAPI(AnalysisAPI):
       return self._Notify(project_api, culprit,
                           'Culprit was created by a whitelisted account')
 
-    revert = project_api.CreateRevert(
-        culprit, self._ComposeRevertDescription(project_api, culprit))
+    revert_description = self._ComposeRevertDescription(project_api, culprit)
     if project_config.get('auto_commit_enabled_for_project', False):
       if CulpritAction.GetRecentActionsByType(
           CulpritAction.REVERT, revert_committed=True) < action_settings.get(
               'auto_commit_revert_daily_threshold_compile', 4):
-        logging.info('Submitting revert %s for %s', revert['id'],
-                     culprit.key.id())
-        action = self._CommitRevert(project_api, revert, culprit)
+        action = self._CommitRevert(project_api, revert_description, culprit)
         if action:
           return action
         logging.info(
@@ -298,4 +295,4 @@ class CompileAnalysisAPI(AnalysisAPI):
     else:
       logging.info('Auto-committing disabled, requesting manual review')
 
-    return self._RequestReview(project_api, revert, culprit)
+    return self._RequestReview(project_api, revert_description, culprit)

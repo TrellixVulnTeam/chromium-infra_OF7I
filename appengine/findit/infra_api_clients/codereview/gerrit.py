@@ -137,18 +137,30 @@ class Gerrit(codereview.CodeReview):
   def GetCodeReviewUrl(self, change_id):
     return 'https://%s/q/%s' % (self._server_hostname, change_id)
 
-  def _SetReview(self, change_id, message, should_email=True, reviewers=None):
+  def _SetReview(self,
+                 change_id,
+                 message,
+                 should_email=True,
+                 reviewers=None,
+                 omit_duplicates=True):
     parts = ['changes', change_id, 'revisions', 'current', 'review']
     body = {'message': message}
     if reviewers:
       body['reviewers'] = reviewers
     if not should_email:
       body['notify'] = 'NONE'
+    if omit_duplicates:
+      body['omit_duplicate_comments'] = True
     result = self._Post(parts, body=body)
     return result
 
-  def PostMessage(self, change_id, message, should_email=True):
-    result = self._SetReview(change_id, message, should_email)
+  def PostMessage(self,
+                  change_id,
+                  message,
+                  should_email=True,
+                  omit_duplicates=True):
+    result = self._SetReview(
+        change_id, message, should_email, omit_duplicates=omit_duplicates)
     return result is not None  # A successful post will return an empty dict.
 
   def CreateRevert(self,

@@ -90,10 +90,23 @@ class GerritTest(testing.AppengineTestCase):
     self.http_client._SetPostMessageResponse(self.server_hostname, change_id,
                                              response_str)
     # This message should not change when being urlencoded or jsonized
-    message = 'FinditWasHere'
+    message = 'FinditWasHere1'
     self.assertTrue(self.gerrit.PostMessage(change_id, message))
     _url, data, _headers = self.http_client.requests[0]
     self.assertIn(message, data)
+
+  def testPostMessageNoDuplicates(self):
+    change_id = 'I40bc1e744806f2c4aadf0ce6609aaa61b4019fa7'
+    response_str = '{}'
+    self.http_client._SetPostMessageResponse(self.server_hostname, change_id,
+                                             response_str)
+    # This message should not change when being urlencoded or jsonized
+    message = 'FinditWasHere2'
+    self.assertTrue(
+        self.gerrit.PostMessage(change_id, message, omit_duplicates=True))
+    _url, data, _headers = self.http_client.requests[0]
+    self.assertIn(message, data)
+    self.assertTrue(json.loads(data)['omit_duplicate_comments'])
 
   def testPostMessageNoEmail(self):
     change_id = 'I40bc1e744806f2c4aadf0ce6609aaa61b4019fa7'
@@ -101,7 +114,7 @@ class GerritTest(testing.AppengineTestCase):
     self.http_client._SetPostMessageResponse(self.server_hostname, change_id,
                                              response_str)
     # This message should not change when being urlencoded or jsonized
-    message = 'FinditWasHere'
+    message = 'FinditWasHere3'
     self.assertTrue(self.gerrit.PostMessage(change_id, message, False))
     _url, data, _headers = self.http_client.requests[0]
     self.assertIn(message, data)

@@ -51,6 +51,7 @@ def _UpdateToEarlierBuild(failure_info, build2):
     failure_info['last_passed_build'] = build2
 
 
+
 class AnalysisAPI(object):
 
   @property
@@ -1532,60 +1533,82 @@ class AnalysisAPI(object):
     self.RerunBasedAnalysis(context, build.id)
 
   @staticmethod
-  def _RequestReview(project_api, revert, culprit):
+  @ndb.transactional
+  def _CheckPreviousRevertAction(culprit):
+    assert ndb.in_transaction()
+    previous_action = CulpritAction.CreateKey(culprit).get()
+    if previous_action:
+      if previous_action.action_type == CulpritAction.REVERT:
+        logging.info(
+            'There is already a REVERT action on this culprit, bailing out')
+        return previous_action
+      # We are about to overwrite previous_action with a new action. Logging the
+      # the details.
+      logging.warning('Overwriting culprit notification on %s at %s' % (
+          previous_action.key.parent().id(),  # Culprit id string.
+          previous_action.create_timestamp,  # Datetime, rendered as isoformat.
+      ))
+    return None
+
+  @classmethod
+  @ndb.transactional
+  def _RequestReview(cls, project_api, revert_description, culprit):
     """Requests manual review of the created revert with appropriate message.
 
     Args:
       project_api (ProjectAPI): API for project specific logic.
-      revert: The created revert's information as returned by
-          project_api.CreatRevert().
+      revert_description(str): Description for the revert.
       culprit: The culprit entity.
 
     Returns:
       The CulpritAction entity describing the action taken, None if no action
       was performed.
     """
+    previous_revert_action = cls._CheckPreviousRevertAction(culprit)
+    if previous_revert_action:
+      return previous_revert_action
     bug_link = gerrit.CreateFinditWrongBugLink(
-        gerrit.FINDIT_BUILD_FAILURE_COMPONENT, culprit.key.id(),
-        culprit.gitiles_id)
+        gerrit.FINDIT_BUILD_FAILURE_COMPONENT,
+        None,
+        culprit.gitiles_id,
+        ds_key=culprit.key.id())
     request_review_message = project_api.REQUEST_REVIEW.format(
         bug_link=bug_link)
-    project_api.RequestReview(revert, request_review_message)
-    action = CulpritAction.Create(
-        culprit,
-        CulpritAction.REVERT,
-        revert_committed=False,
-        revert_change=revert['_number'])
+    project_api.AsyncRequestReview(culprit, revert_description,
+                                   request_review_message)
+    action = CulpritAction.Create(culprit, CulpritAction.REVERT)
     action.put()
     return action
 
-  @staticmethod
-  def _CommitRevert(project_api, revert, culprit):
+  @classmethod
+  @ndb.transactional
+  def _CommitRevert(cls, project_api, revert_description, culprit):
     """Commits a previously created revert, and saves action to datastore.
 
     Args:
       project_api (ProjectAPI): API for project specific logic.
-      revert: The created revert's information as returned by
-          project_api.CreatRevert().
+      revert_description (str): Description for the revert.
       culprit: The culprit entity.
 
     Returns:
       The CulpritAction entity describing the action taken, None if no action
       was performed.
     """
+    previous_revert_action = cls._CheckPreviousRevertAction(culprit)
+    if previous_revert_action:
+      return previous_revert_action
     bug_link = gerrit.CreateFinditWrongBugLink(
-        gerrit.FINDIT_BUILD_FAILURE_COMPONENT, culprit.key.id(),
-        culprit.gitiles_id)
-    if project_api.CommitRevert(
-        revert, project_api.REQUEST_CONFIRMATION.format(bug_link=bug_link)):
-      action = CulpritAction.Create(
-          culprit,
-          CulpritAction.REVERT,
-          revert_committed=True,
-          revert_change=revert['_number'])
-      action.put()
-      return action
-    return None
+        gerrit.FINDIT_BUILD_FAILURE_COMPONENT,
+        None,
+        culprit.gitiles_id,
+        ds_key=culprit.key.id())
+    request_confirmation_message = project_api.REQUEST_CONFIRMATION.format(
+        bug_link=bug_link)
+    project_api.AsyncCommitRevert(culprit, revert_description,
+                                  request_confirmation_message)
+    action = CulpritAction.Create(culprit, CulpritAction.REVERT)
+    action.put()
+    return action
 
   @staticmethod
   def _CheckIfReverted(cl_details, culprit, service_account):
@@ -1611,6 +1634,8 @@ class AnalysisAPI(object):
       return True, False
     return False, False
 
+
+  @ndb.transactional(xg=True)
   def _Notify(self, project_api, culprit, log_message, silent=False):
     """Posts notification to the culprit CL and save the change to datastore.
 
@@ -1626,9 +1651,12 @@ class AnalysisAPI(object):
       The CulpritAction entity describing the action taken, None if no action
       was performed.
     """
+    previous_action = CulpritAction.CreateKey(culprit).get()
+    if previous_action:
+      return previous_action
     logging.info('Notifying culprit %s, %s', culprit.key.id(), log_message)
     message = self._ComposeRevertDescription(project_api, culprit, silent)
-    project_api.NotifyCulprit(culprit, message, silent_notification=silent)
+    project_api.AsyncNotifyCulprit(culprit, message, silent_notification=silent)
     action = CulpritAction.Create(culprit, CulpritAction.CULPRIT_NOTIFIED)
     action.put()
     return action
@@ -1649,8 +1677,10 @@ class AnalysisAPI(object):
       A string containing the populated notification.
     """
     bug_link = gerrit.CreateFinditWrongBugLink(
-        gerrit.FINDIT_BUILD_FAILURE_COMPONENT, culprit.key.id(),
-        culprit.gitiles_id)
+        gerrit.FINDIT_BUILD_FAILURE_COMPONENT,
+        None,
+        culprit.gitiles_id,
+        ds_key=culprit.key.id())
     sample_failure = ndb.Key(urlsafe=culprit.failure_urlsafe_keys[0]).get()
     sample_build = (
         'https://ci.chromium.org/b/%d' % sample_failure.first_failed_build_id)

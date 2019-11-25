@@ -53,7 +53,11 @@ class CodeReview(object):  # pragma: no cover.
       review_url = review_url[:-1]
     return review_url.split('/')[-1]
 
-  def PostMessage(self, change_id, message, should_email=True):
+  def PostMessage(self,
+                  change_id,
+                  message,
+                  should_email=True,
+                  omit_duplicates=True):
     """Posts the given message to the CL codereview of the given change id.
 
     Args:

@@ -28,6 +28,9 @@ from waterfall import build_util
 
 class ChromiumProjectAPI(ProjectAPI):
 
+  def __init__(self):
+    super(ChromiumProjectAPI, self).__init__('chromium')
+
   def ExtractSignalsForCompileFailure(self, failure_info):
     return extract_compile_signal.ExtractSignalsForCompileFailure(
         failure_info, FinditHttpClient())

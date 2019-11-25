@@ -22,6 +22,7 @@ from findit_v2.services.analysis.compile_failure.compile_analysis_api import (
 from findit_v2.services.chromium_api import ChromiumProjectAPI
 from findit_v2.services.context import Context
 from findit_v2.services.failure_type import StepTypeEnum
+from findit_v2.services.gerrit_actions import GerritActions
 from services import gerrit
 from services import git
 from waterfall.test import wf_testcase
@@ -191,16 +192,15 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(CulpritAction, 'GetRecentActionsByType')
   @mock.patch.object(gerrit, 'ExistCQedDependingChanges')
   @mock.patch.object(git, 'ChangeCommittedWithinTime')
-  @mock.patch.object(ChromiumProjectAPI, 'ChangeInfoAndClientFromCommit')
-  @mock.patch.object(ChromiumProjectAPI, 'CreateRevert')
+  @mock.patch.object(GerritActions, 'ChangeInfoAndClientFromCommit')
   @mock.patch.object(CompileAnalysisAPI, '_CheckIfReverted')
   @mock.patch.object(CompileAnalysisAPI, '_NoAction')
   @mock.patch.object(CompileAnalysisAPI, '_RequestReview')
   @mock.patch.object(CompileAnalysisAPI, '_CommitRevert')
   @mock.patch.object(CompileAnalysisAPI, '_Notify')
   def testOnCulpritFound(self, notify, commit, review, no_action, check_revert,
-                         create_revert, change_info_and_client, changed_in_time,
-                         cqed_changes, actions_by_type, ongoing_failure):
+                         change_info_and_client, changed_in_time, cqed_changes,
+                         actions_by_type, ongoing_failure):
 
     class MockGerritClient(object):
       revert_of = False
@@ -225,7 +225,6 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
     scenarios = [
         # Create a revert and submit, with the default values.
         ([], {
-            'create_revert': True,
             'commit': True
         }),
         # Auto-action disabled.
@@ -280,7 +279,6 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
             True, True, False, False, False, 0, True, False, False, True, [],
             False
         ], {
-            'create_revert': True,
             'review': True
         }),
         # Auto-commit quota reached.
@@ -288,7 +286,6 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
             True, True, False, False, False, 0, True, False, False, True, [],
             True, 100
         ], {
-            'create_revert': True,
             'review': True
         }),
     ]
@@ -297,7 +294,7 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
       scenario = dict(enumerate(scenario_list))
 
       # Reset action mocks to correctly check for calls later.
-      for m in notify, create_revert, commit, review, no_action:
+      for m in notify, commit, review, no_action:
         m.reset_mock()
 
       # Set values of decision points according to list of flags.
@@ -328,20 +325,26 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
       # Verify expected actions were called.
       self.assertEqual(result.get('no_action', False), bool(no_action.called))
       self.assertEqual(result.get('notify', False), bool(notify.called))
-      self.assertEqual(
-          result.get('create_revert', False), bool(create_revert.called))
       self.assertEqual(result.get('review', False), bool(review.called))
       self.assertEqual(result.get('commit', False), bool(commit.called))
 
-  @mock.patch.object(ChromiumProjectAPI, 'RequestReview')
-  @mock.patch.object(ChromiumProjectAPI, 'CommitRevert')
-  @mock.patch.object(ChromiumProjectAPI, 'NotifyCulprit')
+  @mock.patch.object(GerritActions, 'RequestReview')
+  @mock.patch.object(GerritActions, 'CommitRevert')
+  @mock.patch.object(GerritActions, 'NotifyCulprit')
   def testActions(self, *_):
     # pylint:disable=line-too-long
     culprit = Culprit.GetOrCreate(self.context.gitiles_host,
                                   self.context.gitiles_project,
                                   self.context.gitiles_ref, 'badc0de', 666,
                                   [self.compile_failure.key.urlsafe()])
+    culprit2 = Culprit.GetOrCreate(self.context.gitiles_host,
+                                   self.context.gitiles_project,
+                                   self.context.gitiles_ref, 'badc0de2', 667,
+                                   [self.compile_failure.key.urlsafe()])
+    culprit3 = Culprit.GetOrCreate(self.context.gitiles_host,
+                                   self.context.gitiles_project,
+                                   self.context.gitiles_ref, 'badc0de3', 668,
+                                   [self.compile_failure.key.urlsafe()])
     self.assertIsNone(self.analysis_api._NoAction(culprit, 'no_action message'))
     self.assertEquals(
         textwrap.dedent("""\
@@ -351,7 +354,7 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
       Sample Failed Build: https://ci.chromium.org/b/8000000000123
       Sample Failed Step: compile
 
-      If it is a false positive, please report it at https://bugs.chromium.org/p/chromium/issues/entry?status=Available&comment=Detail+is+gitiles.host.com%2Fproject%2Fname%2Fref%2Fheads%2Fmaster%2Fbadc0de&labels=Test-Findit-Wrong&components=Tools%3ETest%3EFindIt&summary=Wrongly+blame+badc0de"""
+      If it is a false positive, please report it at https://bugs.chromium.org/p/chromium/issues/entry?status=Available&comment=Datastore+key+for+the+culprit+entity%3A+gitiles.host.com%2Fproject%2Fname%2Fref%2Fheads%2Fmaster%2Fbadc0de&labels=Test-Findit-Wrong&components=Tools%3ETest%3EFindIt&summary=Wrongly+blame+badc0de"""
                        ),
         self.analysis_api._ComposeRevertDescription(ChromiumProjectAPI(),
                                                     culprit))
@@ -359,12 +362,28 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
                                        'notify message')
     self.assertEqual(action.action_type, CulpritAction.CULPRIT_NOTIFIED)
 
+    # If action of the same type was already taken, this method should return
+    # the previous action.
+    new_action = self.analysis_api._Notify(ChromiumProjectAPI(), culprit,
+                                           'Second notification')
+    self.assertEqual(action, new_action)
+
+    # However, an action of a higher confidence (i.e. a revert) can and _should_
+    # be taken even if an action of a lower confidence (i.e. notification) was
+    # already taken.
     action = self.analysis_api._CommitRevert(ChromiumProjectAPI(),
                                              {'_number': 1}, culprit)
     self.assertEqual(action.action_type, CulpritAction.REVERT)
-    self.assertEqual(action.revert_committed, True)
 
+    # Test with a different culprit.
+    action = self.analysis_api._CommitRevert(ChromiumProjectAPI(),
+                                             {'_number': 2}, culprit2)
+    self.assertEqual(action.action_type, CulpritAction.REVERT)
+    # This field is not set to True until the async action runs.
+    self.assertEqual(action.revert_committed, False)
+
+    # Same here
     action = self.analysis_api._RequestReview(ChromiumProjectAPI(),
-                                              {'_number': 1}, culprit)
+                                              {'_number': 3}, culprit3)
     self.assertEqual(action.action_type, CulpritAction.REVERT)
     self.assertEqual(action.revert_committed, False)

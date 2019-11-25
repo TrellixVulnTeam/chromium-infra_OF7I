@@ -4,7 +4,6 @@
 
 import hashlib
 import mock
-import unittest
 
 from buildbucket_proto.build_pb2 import Build
 from buildbucket_proto.common_pb2 import Log
@@ -18,9 +17,10 @@ from infra_api_clients.codereview import gerrit
 from services import git
 from services.compile_failure import compile_failure_analysis
 from services.test_failure import test_failure_analysis
+from waterfall.test.wf_testcase import WaterfallTestCase
 
 
-class ChromiumProjectAPITest(unittest.TestCase):
+class ChromiumProjectAPITest(WaterfallTestCase):
 
   def testCompileStep(self):
     step = Step()
@@ -557,12 +557,13 @@ class ChromiumProjectAPITest(unittest.TestCase):
   def testCreateRevert(self, mock_change_info, mock_gerrit):
     culprit = Culprit.Create('x.googlesource.com', 'x', 'refs/heads/master',
                              hashlib.sha1('1').hexdigest(), 1)
+    culprit.put()
     mock_change_info.return_value = {
         'review_server_host': 'x-review.googlesource.com',
         'review_change_id': 1234,
     }
     reason = 'Mock reason for a revert'
-    ChromiumProjectAPI().CreateRevert(culprit, reason)
+    ChromiumProjectAPI().gerrit_actions.CreateRevert(culprit, reason)
     self.assertEqual(
         [mock.call('Mock reason for a revert', 1234, full_change_info=True)],
         mock_gerrit().CreateRevert.call_args_list)
@@ -572,6 +573,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
   def testSubmitRevert(self, mock_change_info, mock_gerrit):
     culprit = Culprit.Create('x.googlesource.com', 'x', 'refs/heads/master',
                              hashlib.sha1('2').hexdigest(), 2)
+    culprit.put()
     mock_change_info.return_value = {
         'review_server_host': 'x-review.googlesource.com',
         'review_change_id': 2345,
@@ -579,12 +581,12 @@ class ChromiumProjectAPITest(unittest.TestCase):
     reason = 'Mock reason for a revert #2'
     api = ChromiumProjectAPI()
     mock_gerrit().CreateRevert.return_value = {'review_change_id': 1002345}
-    revert_info = api.CreateRevert(culprit, reason)
+    revert_info = api.gerrit_actions.CreateRevert(culprit, reason)
     with mock.patch(
         'findit_v2.services.chromium_api.current_sheriffs',
         return_value=['a@b.com']):
-      api.CommitRevert(revert_info,
-                       'Auto-committing revert because it broke stuff')
+      api.gerrit_actions.CommitRevert(
+          revert_info, 'Auto-committing revert because it broke stuff')
     self.assertEqual([mock.call(1002345)],
                      mock_gerrit().SubmitRevert.call_args_list)
 
@@ -593,6 +595,7 @@ class ChromiumProjectAPITest(unittest.TestCase):
   def testRequestReview(self, mock_change_info, mock_gerrit):
     culprit = Culprit.Create('x.googlesource.com', 'x', 'refs/heads/master',
                              hashlib.sha1('3').hexdigest(), 3)
+    culprit.put()
     mock_change_info.return_value = {
         'review_server_host': 'x-review.googlesource.com',
         'review_change_id': 3456,
@@ -600,12 +603,12 @@ class ChromiumProjectAPITest(unittest.TestCase):
     reason = 'Mock reason for a revert #3'
     api = ChromiumProjectAPI()
     mock_gerrit().CreateRevert.return_value = {'review_change_id': 1003456}
-    revert_info = api.CreateRevert(culprit, reason)
+    revert_info = api.gerrit_actions.CreateRevert(culprit, reason)
     with mock.patch(
         'findit_v2.services.chromium_api.current_sheriffs',
         return_value=['a@b.com']):
-      api.RequestReview(revert_info,
-                        'Please land revert manually because it broke stuff')
+      api.gerrit_actions.RequestReview(
+          revert_info, 'Please land revert manually because it broke stuff')
     self.assertEqual([
         mock.call(
             1003456, ['a@b.com'],
@@ -618,12 +621,13 @@ class ChromiumProjectAPITest(unittest.TestCase):
   def testNotifyCulprit(self, mock_change_info, mock_gerrit):
     culprit = Culprit.Create('x.googlesource.com', 'x', 'refs/heads/master',
                              hashlib.sha1('4').hexdigest(), 4)
+    culprit.put()
     mock_change_info.return_value = {
         'review_server_host': 'x-review.googlesource.com',
         'review_change_id': 4567,
     }
     api = ChromiumProjectAPI()
-    api.NotifyCulprit(
+    api.gerrit_actions.NotifyCulprit(
         culprit,
         'Findit identified this change as culprit for some breakages',
         silent_notification=False)
