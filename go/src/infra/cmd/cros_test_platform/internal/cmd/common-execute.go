@@ -39,7 +39,7 @@ type commonExecuteRun struct {
 func (c *commonExecuteRun) addFlags() {
 	c.Flags.StringVar(&c.inputPath, "input_json", "", "Path to JSON ExecuteRequests to read.")
 	c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to JSON ExecuteResponses to write.")
-	c.Flags.BoolVar(&c.tagged, "tagged", false, "Transitional flag to enable tagged requests and responses.")
+	c.Flags.BoolVar(&c.tagged, "tagged", true, "Transitional flag to enable tagged requests and responses.")
 }
 
 func (c *commonExecuteRun) validateArgs() error {

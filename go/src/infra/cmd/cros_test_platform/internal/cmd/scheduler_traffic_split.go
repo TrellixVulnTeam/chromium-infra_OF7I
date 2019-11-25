@@ -41,7 +41,7 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.SchedulerTrafficSplitRequests")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.SchedulerTrafficSplitResponses should be written.")
 		c.Flags.BoolVar(&c.directAllToSkylab, "rip-cautotest", false, "Cautotest is now at peace. Use a simple forwarding rule to send all traffic to Skylab.")
-		c.Flags.BoolVar(&c.tagged, "tagged", false, "Transitional flag to enable tagged requests and responses.")
+		c.Flags.BoolVar(&c.tagged, "tagged", true, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
 }
