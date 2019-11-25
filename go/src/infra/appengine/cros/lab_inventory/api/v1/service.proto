@@ -1,0 +1,69 @@
+// Copyright 2019 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package inventory;
+
+option go_package = "api";
+
+// TODO(guocb) Import and use the latest ChromeOSDevice proto definition.
+
+service Inventory {
+  // AddCrosDevices adds new Chrome OS devices to the inventory.
+  rpc AddCrosDevices(AddCrosDevicesRequest) returns (AddCrosDevicesResponse);
+
+  // GetCrosDevices retrieves requested Chrome OS devices from the inventory.
+  rpc GetCrosDevices(GetCrosDevicesRequest) returns (GetCrosDevicesResponse);
+
+  // UpdateDutsStatus updates selected Duts' status labels related to testing.
+  rpc UpdateDutsStatus(UpdateDutsStatusRequest) returns (UpdateDutsStatusResponse);
+
+  // UpdateCrosDevicesSetup updates the selected Chrome OS devices setup data
+  // in the inventory.
+  rpc UpdateCrosDevicesSetup(UpdateCrosDevicesSetupRequest) returns (UpdateCrosDevicesSetupResponse);
+
+  // DeleteCrosDevices delete the selelcted Duts from testing scheduler.
+  rpc DeleteCrosDevices(DeleteCrosDevicesRequest) returns (DeleteCrosDevicesResponse);
+}
+
+message AddCrosDevicesRequest {
+
+}
+
+message AddCrosDevicesResponse {
+
+}
+
+message GetCrosDevicesRequest {
+  repeated string hostname = 1;
+}
+
+message GetCrosDevicesResponse {
+
+}
+
+message UpdateDutsStatusRequest {
+
+}
+
+message UpdateDutsStatusResponse {
+
+}
+
+message UpdateCrosDevicesSetupRequest {
+
+}
+
+message UpdateCrosDevicesSetupResponse {
+
+}
+
+message DeleteCrosDevicesRequest {
+
+}
+
+message DeleteCrosDevicesResponse {
+
+}
