@@ -247,6 +247,6 @@ var (
 	retriesPattern             = regexp.MustCompile(`^\s*JOB_RETRIES\s*=\s*(\d+)\s*`)
 	dependenciesPattern        = regexp.MustCompile(`^\s*DEPENDENCIES\s*=\s*(['"][\s\w\.,:-]+['"])\s*`)
 	attributesPattern          = regexp.MustCompile(`^\s*ATTRIBUTES\s*=\s*[\(]?\s*(['"][\s\w\.,:-]+['"])\s*[\)]?\s*`)
-	multilineAttributesPattern = regexp.MustCompile(`^\s*ATTRIBUTES\s*=\s*\(((?:\n*\s*(?:['"][\s\w\.,:-]+['"])\s*\n*)*)\)\s*`)
+	multilineAttributesPattern = regexp.MustCompile(`\s*ATTRIBUTES\s*=\s*\(((?:\n*\s*(?:['"][\s\w\.,:-]+['"])\s*\n*)*)\)\s*`)
 	suiteDependenciesPattern   = regexp.MustCompile(`^\s*args_dict\s*\[\s*['"]suite_dependencies['"]\s*\]\s*=\s*(['"][\s\w\.,:-]+['"])\s*`)
 )

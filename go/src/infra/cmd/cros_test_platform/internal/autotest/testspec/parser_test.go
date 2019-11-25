@@ -210,6 +210,24 @@ func TestParseTestControlSuites(t *testing.T) {
 			)`,
 			stringset.NewFromSlice("network_nightly", "cq"),
 		},
+		{
+			"suite on multiple lines with leading text",
+			`some other text
+			ATTRIBUTES = ('suite:network_nightly,'
+                           "suite:cq")`,
+			stringset.NewFromSlice("network_nightly", "cq"),
+		},
+		{
+			"suite on multiple lines with empty lines",
+			`ATTRIBUTES = (
+
+				'suite:network_nightly,'
+
+						   'suite:cq'
+
+			)`,
+			stringset.NewFromSlice("network_nightly", "cq"),
+		},
 	}
 
 	for _, c := range cases {
