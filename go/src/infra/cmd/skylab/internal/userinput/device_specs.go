@@ -229,7 +229,7 @@ func looksLikeHeader(rec []string) bool {
 	if len(rec) == 0 {
 		return false
 	}
-	return rec[0] == "host"
+	return strings.EqualFold(rec[0], "host")
 }
 
 // parseMcsvRecord takes a row of a csv file and inflates it into a mcsvRecord
