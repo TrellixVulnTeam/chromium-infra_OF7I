@@ -70,32 +70,45 @@ func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 	return c, nil
 }
 
+// ScheduleLegacyBuild schedules a new cros_test_platform build.
+//
+// ScheduleLegacyBuild returns the buildbucket build ID for the scheduled build
+// on success.
+// ScheduleLegacyBuild does not wait for the scheduled build to start.
+// ScheduleLegacyBuild uses the old "request" input property.
+func (c *Client) ScheduleLegacyBuild(ctx context.Context, request *test_platform.Request, tags []string) (int64, error) {
+	rs, err := requestToStructPB(request)
+	if err != nil {
+		return -1, err
+	}
+	props := &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"request": rs,
+		},
+	}
+	return c.scheduleBuildRaw(ctx, props, tags)
+}
+
 // ScheduleBuild schedules a new cros_test_platform build.
 //
 // ScheduleBuild returns the buildbucket build ID for the scheduled build on
 // success.
 // ScheduleBuild does not wait for the scheduled build to start.
-func (c *Client) ScheduleBuild(ctx context.Context, request *test_platform.Request, tags []string) (int64, error) {
-	// Do a JSON roundtrip to turn req (a proto) into a structpb.
-	m := jsonpb.Marshaler{}
-	jsonStr, err := m.MarshalToString(request)
+func (c *Client) ScheduleBuild(ctx context.Context, requests map[string]*test_platform.Request, tags []string) (int64, error) {
+	rs, err := requestsToStructPB(requests)
 	if err != nil {
 		return -1, err
 	}
-	reqStruct := &structpb.Struct{}
-	if err := jsonpb.UnmarshalString(jsonStr, reqStruct); err != nil {
-		return -1, err
+	props := &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"requests": rs,
+		},
 	}
-
-	return c.scheduleBuildRaw(ctx, reqStruct, tags)
+	return c.scheduleBuildRaw(ctx, props, tags)
 }
 
-// scheduleBuildRaw schedules a new cros_test_platform build for the given request struct.
-func (c *Client) scheduleBuildRaw(ctx context.Context, request *structpb.Struct, tags []string) (int64, error) {
-	recipeStruct := &structpb.Struct{}
-	recipeStruct.Fields = map[string]*structpb.Value{
-		"request": {Kind: &structpb.Value_StructValue{StructValue: request}},
-	}
+// scheduleBuildRaw schedules a new cros_test_platform build for the given properties struct.
+func (c *Client) scheduleBuildRaw(ctx context.Context, props *structpb.Struct, tags []string) (int64, error) {
 	tagPairs, err := splitTagPairs(tags)
 	if err != nil {
 		return -1, err
@@ -107,7 +120,7 @@ func (c *Client) scheduleBuildRaw(ctx context.Context, request *structpb.Struct,
 			Bucket:  c.env.BuildbucketBucket,
 			Builder: c.env.BuildbucketBuilder,
 		},
-		Properties: recipeStruct,
+		Properties: props,
 		Tags:       tagPairs,
 	}
 
@@ -165,10 +178,6 @@ type Build struct {
 	// Requests may be nil if the output properties of the build do not contain
 	// a requests field.
 	Requests map[string]*test_platform.Request
-
-	// BackfillRequest may be nil if the output properties of the build do not
-	// contain a backfill_request field.
-	BackfillRequest *test_platform.Request
 
 	// BackfillRequests may be nil if the output properties of the build do not
 	// contain a backfill_requests field.
@@ -327,15 +336,7 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 			build.Requests = r
 		}
 
-		if reqValue, ok := op["backfill_request"]; ok {
-			request, err := structPBToRequest(reqValue)
-			if err != nil {
-				return nil, errors.Annotate(err, "extractBuildData").Err()
-			}
-			build.BackfillRequest = request
-		}
-
-		if raw, ok := op["backfill_requests"]; ok {
+		if raw, ok := op["backfills"]; ok {
 			r, err := structPBToRequests(raw)
 			if err != nil {
 				return nil, errors.Annotate(err, "extractBuildData").Err()
@@ -426,6 +427,39 @@ func structPBToRequest(from *structpb.Value) (*test_platform.Request, error) {
 		return nil, errors.Annotate(err, "structPBToExecuteRequest").Err()
 	}
 	return request, nil
+}
+
+func requestToStructPB(from *test_platform.Request) (*structpb.Value, error) {
+	m := jsonpb.Marshaler{}
+	jsonStr, err := m.MarshalToString(from)
+	if err != nil {
+		return nil, err
+	}
+	reqStruct := &structpb.Struct{}
+	if err := jsonpb.UnmarshalString(jsonStr, reqStruct); err != nil {
+		return nil, err
+	}
+	return &structpb.Value{
+		Kind: &structpb.Value_StructValue{StructValue: reqStruct},
+	}, nil
+}
+
+func requestsToStructPB(from map[string]*test_platform.Request) (*structpb.Value, error) {
+	fs := make(map[string]*structpb.Value)
+	for k, r := range from {
+		v, err := requestToStructPB(r)
+		if err != nil {
+			return nil, errors.Annotate(err, "requests to struct pb (%s)", k).Err()
+		}
+		fs[k] = v
+	}
+	return &structpb.Value{
+		Kind: &structpb.Value_StructValue{
+			StructValue: &structpb.Struct{
+				Fields: fs,
+			},
+		},
+	}, nil
 }
 
 func isFinal(status buildbucket_pb.Status) bool {

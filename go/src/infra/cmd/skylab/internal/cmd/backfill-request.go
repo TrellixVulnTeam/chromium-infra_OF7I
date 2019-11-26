@@ -236,22 +236,25 @@ func (c *backfillRequestRun) confirmMultileBuildsOK(a subcommands.Application, b
 }
 
 func (c *backfillRequestRun) scheduleBackfillBuild(ctx context.Context, original *bb.Build) (int64, error) {
-	var req *test_platform.Request
+	var reqs map[string]*test_platform.Request
 	switch {
-	case original.BackfillRequest != nil:
-		req = original.BackfillRequest
+	case original.BackfillRequests != nil:
+		reqs = original.BackfillRequests
+	case original.Requests != nil:
+		logging.Infof(ctx, "Original build %d has no backfill requests. Using original requests instead.", original.ID)
+		reqs = original.Requests
 	case original.Request != nil:
-		logging.Infof(ctx, "Original build %d has no backfill_request. Using original request instead.", original.ID)
-		req = original.Request
+		logging.Infof(ctx, "Original build %d has no backfill requests. Using original request instead.", original.ID)
+		reqs = map[string]*test_platform.Request{"default": original.Request}
 	default:
 		return -1, errors.Reason("schedule backfill: build %d has no request to clone", original.ID).Err()
 	}
 
 	if c.highestPriority {
-		bumpPriority(req)
+		bumpPriority(reqs)
 	}
 
-	ID, err := c.bbClient.ScheduleBuild(ctx, req, backfillTags(original.Tags, original.ID))
+	ID, err := c.bbClient.ScheduleBuild(ctx, reqs, backfillTags(original.Tags, original.ID))
 	if err != nil {
 		return -1, errors.Annotate(err, "schedule backfill").Err()
 	}
@@ -260,10 +263,12 @@ func (c *backfillRequestRun) scheduleBackfillBuild(ctx context.Context, original
 
 const highestTestTaskPriority = 50
 
-func bumpPriority(req *test_platform.Request) {
-	sc := req.GetParams().GetScheduling()
-	if sc != nil {
-		sc.Priority = highestTestTaskPriority
+func bumpPriority(reqs map[string]*test_platform.Request) {
+	for _, req := range reqs {
+		sc := req.GetParams().GetScheduling()
+		if sc != nil {
+			sc.Priority = highestTestTaskPriority
+		}
 	}
 }
 

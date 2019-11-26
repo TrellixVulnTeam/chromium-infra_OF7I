@@ -100,7 +100,7 @@ func (c *createTestRun) innerRunBB(a subcommands.Application, args []string, env
 	if err != nil {
 		return err
 	}
-	buildID, err := client.ScheduleBuild(ctx, req, c.buildTags())
+	buildID, err := client.ScheduleLegacyBuild(ctx, req, c.buildTags())
 	if err != nil {
 		return err
 	}

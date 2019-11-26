@@ -91,7 +91,7 @@ func (c *createSuiteRun) innerRunBB(ctx context.Context, a subcommands.Applicati
 	if err != nil {
 		return err
 	}
-	buildID, err := client.ScheduleBuild(ctx, req, c.buildTags(suiteName))
+	buildID, err := client.ScheduleLegacyBuild(ctx, req, c.buildTags(suiteName))
 	if err != nil {
 		return err
 	}

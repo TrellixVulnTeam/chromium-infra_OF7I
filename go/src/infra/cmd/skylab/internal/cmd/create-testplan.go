@@ -97,7 +97,7 @@ func (c *createTestPlanRun) innerRun(a subcommands.Application, args []string, e
 	if err != nil {
 		return err
 	}
-	buildID, err := client.ScheduleBuild(ctx, req, c.buildTags())
+	buildID, err := client.ScheduleLegacyBuild(ctx, req, c.buildTags())
 	if err != nil {
 		return err
 	}
