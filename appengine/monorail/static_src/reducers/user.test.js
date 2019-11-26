@@ -320,8 +320,31 @@ describe('user', () => {
         newPrefs: [{name: 'pref_name', value: 'true'}],
       });
     });
+
+    it('setPrefs fails', async () => {
+      const action = user.setPrefs([{name: 'pref_name', value: 'true'}]);
+
+      const error = new Error('mistakes were made');
+      prpcClient.call.returns(Promise.reject(error));
+
+      await action(dispatch);
+
+      sinon.assert.calledWith(dispatch, {type: user.SET_PREFS_START});
+
+      sinon.assert.calledWith(
+          prpcClient.call,
+          'monorail.Users',
+          'SetUserPrefs',
+          {prefs: [{name: 'pref_name', value: 'true'}]});
+
+      sinon.assert.calledWith(dispatch, {
+        type: user.SET_PREFS_FAILURE,
+        error,
+      });
+    });
   });
 });
+
 
 const wrapCurrentUser = (currentUser = {}) => ({user: {currentUser}});
 const wrapUser = (user) => ({user});

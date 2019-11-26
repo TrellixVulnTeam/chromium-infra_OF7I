@@ -285,7 +285,7 @@ export const setPrefs = (newPrefs, saveChanges = true) => async (dispatch) => {
     // getting out of sync.
     dispatch(fetchPrefs());
   } catch (error) {
-    dispatch({type: SET_PREFS_ERROR, error});
+    dispatch({type: SET_PREFS_FAILURE, error});
   }
 };
 
