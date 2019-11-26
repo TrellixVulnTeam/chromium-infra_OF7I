@@ -59,6 +59,7 @@ class SomAnnotations extends Polymer.mixinBehaviors(
         computed: '_computeCommentsHidden(_commentsModelAnnotation)',
       },
       _commentTextInput: Object,
+      _commentIndexToRemove: Number,
       _defaultSnoozeTime: {
         type: Number,
         computed: '_computeDefaultSnoozeTime(tree.name)',
@@ -601,9 +602,15 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     return result + ` (${time.fromNow()})`;
   }
 
+  _confirmRemoveComment(evt) {
+    this._commentIndexToRemove = evt.model.comment.index;
+    this.$.removeCommentConfirmationDialog.open();
+  }
+
   _removeComment(evt) {
+    this.$.removeCommentConfirmationDialog.close();
     const request = this.sendAnnotation(this._commentsModel.key, 'remove', {
-      comments: [evt.model.comment.index],
+      comments: [this._commentIndexToRemove],
     });
     if (request) {
       request.then((response) => { }, (error) => {

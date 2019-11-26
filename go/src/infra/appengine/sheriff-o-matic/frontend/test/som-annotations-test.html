@@ -687,8 +687,8 @@
     test('removing comment sends an annotations', function(done) {
       let sendStub = sinon.stub(element, 'sendAnnotation');
       element._commentsModel = {key: 'commentkey'};
-
-      element._removeComment({model: {index: 1, comment: {index: 1}}});
+      element._commentIndexToRemove = 1;
+      element._removeComment({});
 
       flush(function () {
         sinon.assert.calledOnce(sendStub);
