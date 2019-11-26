@@ -33,9 +33,9 @@ const (
 	obsoleteStartTag    = "<obsolete"
 	ownerStartTag       = "<owner"
 
-	oneOwnerError            = `[WARNING] It's a best practice to list multiple owners, so that there's no single point of failure for communication: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
+	oneOwnerError            = `[WARNING] It's preferred to list at least two owners, where the second is often a team mailing list or a src/path/to/OWNERS reference: https://chromium.googlesource.com/chromium/src.git/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	firstOwnerTeamError      = `[WARNING] Please list an individual as the primary owner for this metric: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
-	oneOwnerTeamError        = `[WARNING] Please list an individual as the primary owner for this metric. Please also ensure to list multiple owners, so there's no single point of failure for communication: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
+	oneOwnerTeamError        = `[WARNING] Please list an individual as the primary owner for this metric. Note that it's preferred to list at least two owners, where the second is often a team mailing list or a src/path/to/OWNERS reference: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	noExpiryError            = `[ERROR] Please specify an expiry condition for this histogram: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	badExpiryError           = `[ERROR] Could not parse histogram expiry. Please format as YYYY-MM-DD or MXX: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	pastExpiryWarning        = `[WARNING] This expiry date is in the past. Did you mean to set an expiry date in the future?`
