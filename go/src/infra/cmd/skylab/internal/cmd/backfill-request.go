@@ -98,22 +98,27 @@ func (c *backfillRequestRun) innerRun(a subcommands.Application, args []string, 
 
 	var merr errors.MultiError
 	for _, b := range originalBuilds {
-		latest, err := c.getLatestBackfillBuildFor(ctx, b)
+		target := b
+
+		backfills, err := c.getSortedBackfillBuildsFor(ctx, b)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to find existing backfill requests for %s: %s", b, err)
 			merr = append(merr, err)
 			continue
 		}
-		if latest == nil {
-			latest = b
+
+		if len(backfills) > 0 {
+			if el := backfills[0]; isInFlight(el) {
+				logging.Infof(ctx, "Build %s already in flight to backfill %s", c.bbClient.BuildURL(el.ID), c.bbClient.BuildURL(b.ID))
+				continue
+			}
+			if t := c.getFirstWithValidBackfillRequest(backfills); t != nil {
+				target = t
+				logging.Debugf(ctx, "Backfilling a previous backfill attempt %s for %s", c.bbClient.BuildURL(target.ID), c.bbClient.BuildURL(b.ID))
+			}
 		}
 
-		if isInFlight(latest) {
-			logging.Infof(ctx, "Build %s already in flight to backfill %s", c.bbClient.BuildURL(latest.ID), c.bbClient.BuildURL(b.ID))
-			continue
-		}
-
-		id, err := c.scheduleBackfillBuild(ctx, latest)
+		id, err := c.scheduleBackfillBuild(ctx, target)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to create backfill request for %s: %s", b, err)
 			merr = append(merr, err)
@@ -212,12 +217,15 @@ func isOriginalBuild(b *bb.Build) bool {
 	return !isBackfillBuild(b)
 }
 
-// getLatestBackfillBuildFor returns nil (and no error) if no backfill build is
-// found.
-func (c *backfillRequestRun) getLatestBackfillBuildFor(ctx context.Context, b *bb.Build) (*bb.Build, error) {
+// getSortedBackfillBuildsFor returns a list of backfill builds for the given
+// build, sorted reverse-chronologically by creation time (latest first).
+//
+// getSortedBackfillBuildsFor returns nil (and no error) if no backfill builds
+// are found.
+func (c *backfillRequestRun) getSortedBackfillBuildsFor(ctx context.Context, b *bb.Build) ([]*bb.Build, error) {
 	builds, err := c.bbClient.SearchBuildsByTags(ctx, bbBuildSearchLimit, backfillTags(b.Tags, b.ID)...)
 	if err != nil {
-		return nil, errors.Annotate(err, "get latest backfill build for %d", b.ID).Err()
+		return nil, errors.Annotate(err, "get sorted backfill builds for %d", b.ID).Err()
 	}
 	if len(builds) == 0 {
 		return nil, nil
@@ -227,7 +235,20 @@ func (c *backfillRequestRun) getLatestBackfillBuildFor(ctx context.Context, b *b
 	sort.Slice(builds, func(i, j int) bool {
 		return builds[i].ID < builds[j].ID
 	})
-	return builds[0], nil
+	return builds, nil
+}
+
+// getFirstWithValidBackfillRequest returns the first build in the slice with
+// a valid backfill request.
+//
+// getFirstWithValidBackfillRequest returns nil if no such build is found.
+func (c *backfillRequestRun) getFirstWithValidBackfillRequest(bs []*bb.Build) *bb.Build {
+	for _, b := range bs {
+		if b.BackfillRequests != nil {
+			return b
+		}
+	}
+	return nil
 }
 
 func (c *backfillRequestRun) confirmMultileBuildsOK(a subcommands.Application, builds []*bb.Build) bool {
@@ -241,10 +262,10 @@ func (c *backfillRequestRun) scheduleBackfillBuild(ctx context.Context, original
 	case original.BackfillRequests != nil:
 		reqs = original.BackfillRequests
 	case original.Requests != nil:
-		logging.Infof(ctx, "Original build %d has no backfill requests. Using original requests instead.", original.ID)
+		logging.Debugf(ctx, "Original build %d has no backfill requests. Using original requests instead.", original.ID)
 		reqs = original.Requests
 	case original.Request != nil:
-		logging.Infof(ctx, "Original build %d has no backfill requests. Using original request instead.", original.ID)
+		logging.Debugf(ctx, "Original build %d has no backfill requests. Using original request instead.", original.ID)
 		reqs = map[string]*test_platform.Request{"default": original.Request}
 	default:
 		return -1, errors.Reason("schedule backfill: build %d has no request to clone", original.ID).Err()
