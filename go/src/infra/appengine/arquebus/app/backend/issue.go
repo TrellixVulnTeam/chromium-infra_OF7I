@@ -15,6 +15,7 @@
 package backend
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -117,7 +118,21 @@ func searchIssues(c context.Context, mc monorail.IssuesClient, assigner *model.A
 		return nil, err
 	}
 
-	task.WriteLog(c, "Found %d issues", len(res.Issues))
+	if len(res.Issues) > 0 {
+		var buf bytes.Buffer
+		for i, issue := range res.Issues {
+			if issue == nil {
+				continue
+			}
+			buf.WriteString(fmt.Sprintf("%s/%d", issue.ProjectName, issue.LocalId))
+			if i < len(res.Issues)-1 {
+				buf.WriteString(" ")
+			}
+		}
+		task.WriteLog(c, "Found %d issues: %s", len(res.Issues), buf.String())
+	} else {
+		task.WriteLog(c, "Found 0 issues")
+	}
 	return res.Issues, nil
 }
 
@@ -255,6 +270,10 @@ func createIssueDelta(c context.Context, mc monorail.IssuesClient, task *model.T
 		return nil, errors.New("invalid response from GetIssue")
 	}
 
+	// log the current status of the issue so that it becomes easy to find
+	// how Arquebus made the issue update decision.
+	logIssueStatus(c, task, issue)
+
 	delta := &monorail.IssueDelta{}
 	needUpdate := false
 	// iff the issue has the intended owner, set the status to "Assigned".
@@ -321,4 +340,38 @@ func genCommentContent(c context.Context, assigner *model.Assigner, task *model.
 		messages = append(messages, assigner.Comment)
 	}
 	return strings.Join(messages, "\n")
+}
+
+// logIssueStatus adds a log entry with the status of an issue.
+func logIssueStatus(c context.Context, task *model.Task, issue *monorail.Issue) {
+	status := ""
+	if issue.StatusRef != nil {
+		status = issue.StatusRef.Status
+	}
+	owner := ""
+	if issue.OwnerRef != nil {
+		owner = issue.OwnerRef.DisplayName
+	}
+
+	var buf bytes.Buffer
+	for i, user := range issue.CcRefs {
+		if user == nil {
+			continue
+		}
+		if i < len(issue.CcRefs)-1 {
+			buf.WriteString(" ")
+		}
+		buf.WriteString(user.DisplayName)
+	}
+
+	msg := strings.Join([]string{
+		"The current issue status",
+		"- Status: %s",
+		"- Owner: %s",
+		"- CCs: %s",
+		"- ModifiedTime: %d",
+	}, "\n")
+	writeTaskLogWithLink(
+		c, task, issue, msg, status, owner, buf.String(), issue.ModifiedTimestamp,
+	)
 }
