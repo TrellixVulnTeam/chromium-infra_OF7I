@@ -124,7 +124,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
         value: {
           // The order the sections appear in the array is the order they
           // appear on the page.
-          'default': ['notifications', 'bugQueue', 'alertsList'],
+          'default': ['notifications', 'alertsList', 'bugQueue'],
         },
       },
       trees: {
