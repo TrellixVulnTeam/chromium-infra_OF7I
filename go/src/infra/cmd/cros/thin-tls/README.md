@@ -20,9 +20,9 @@ The config file is in JSON format.
 
 Keys:
 
-- `dutHostname`: The hostname of the DUT for SSH.
-
-Your user SSH configuration should be able to SSH to the DUT with just `ssh HOSTNAME`.
+- `dutHostname`: The hostname of the DUT for SSH.  Your user SSH
+  configuration should be able to SSH to the DUT with just `ssh
+  HOSTNAME`.
 
 ## Usage
 
@@ -32,6 +32,10 @@ the command help for optional flags.  If your config file is not
 explicitly.
 
 You can then interact with the TLS API service, by default on port 50051.
+
+Because this is intended only for testing, parts of the implementation
+depend on existing setup in your environment.  Read the Implementation
+notes section below about what you need set up outside of thin-tls.
 
 The `client` program provides an experimental CLI wrapper around some
 of the RPCs.  This should only be used for experimenting interactively
