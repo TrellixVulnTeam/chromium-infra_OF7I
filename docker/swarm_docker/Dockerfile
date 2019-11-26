@@ -2,9 +2,13 @@ FROM ubuntu:xenial
 
 ENV DEBIAN_FRONTEND noninteractive
 
+ARG ARCH_PACKAGES
+ENV ARCH_PACKAGES ${ARCH_PACKAGES:-}
+
 RUN /usr/bin/apt-get update
 RUN /usr/bin/apt-get -y dist-upgrade
-RUN /usr/bin/apt-get -y install curl lsof openssh-client python sudo
+RUN /usr/bin/apt-get -y install curl lsof openssh-client python sudo \
+       $ARCH_PACKAGES
 
 # Cleanup to shrink image sizes.
 RUN /usr/bin/find /var/lib/apt/lists /tmp /var/tmp /usr/share/info \
