@@ -251,13 +251,13 @@ class SomAnnotations extends Polymer.mixinBehaviors(
     });
     Promise.all(promises).then(
         (response) => {
-          this.$.fileBug.showBugFiledDialog();
+          this.$.fileBug.onBugLinkedSuccessfully();
 
           if (this._fileBugCallback) {
             this._fileBugCallback();
           }
         }, (error) => {
-          this.$.fileBug.fileBugErrorMessage = error;
+          this.$.fileBug.onBugLinkedFailed(error);
         });
     return response;
   }

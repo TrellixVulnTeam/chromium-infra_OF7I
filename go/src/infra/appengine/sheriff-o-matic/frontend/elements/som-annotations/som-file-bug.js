@@ -85,6 +85,7 @@ class SomFileBug extends Polymer.mixinBehaviors([AnnotationManagerBehavior, Post
         value: '',
       },
       filedBugId: String,
+      _isFilingBug: Boolean,
       /** Autocomplete-d cc suggestions. */
       ccSuggestions: Array,
     }
@@ -134,6 +135,7 @@ class SomFileBug extends Polymer.mixinBehaviors([AnnotationManagerBehavior, Post
         Cc: selectedUsers,
         Labels: labels,
       }
+      this._isFilingBug = true;
       return this.fileBugRequest(bugData);
     }
   }
@@ -143,6 +145,7 @@ class SomFileBug extends Polymer.mixinBehaviors([AnnotationManagerBehavior, Post
         .postJSON('/api/v1/filebug/', bugData)
         .then(jsonParsePromise)
         .catch((error) => {
+          this._isFilingBug = false;
           this._fileBugErrorMessage = 'Error trying to create new issue: '
             + error;
         })
@@ -158,6 +161,16 @@ class SomFileBug extends Polymer.mixinBehaviors([AnnotationManagerBehavior, Post
     }
 
     this.fire('success');
+  }
+
+  onBugLinkedSuccessfully() {
+    this._isFilingBug = false;
+    this.showBugFiledDialog();
+  }
+
+  onBugLinkedFailed(error) {
+    this._isFilingBug = false;
+    this._fileBugErrorMessage = error;
   }
 
   showBugFiledDialog() {
