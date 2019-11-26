@@ -59,6 +59,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	// Report Bot metrics.
 	r.GET("/internal/cron/report-bots", mwCron, logAndSetHTTPErr(reportBotsCronHandler))
+	// Report inventory metrics
+	r.GET("/internal/cron/report-inventory", mwCron, logAndSetHTTPErr(reportInventoryCronHandler))
 
 	r.GET("/internal/cron/push-inventory-to-queen", mwCron, logAndSetHTTPErr(pushInventoryToQueenCronHandler))
 

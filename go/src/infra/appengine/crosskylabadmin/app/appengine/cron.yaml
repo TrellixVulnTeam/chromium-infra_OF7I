@@ -25,6 +25,11 @@ cron:
   # No retry, if it fails it can catch the next cron train.
   schedule: every 5 minutes
 
+- description: report metrics of Duts in inventory.
+  url: /internal/cron/report-inventory
+  # No retry, if it fails it can catch the next cron train.
+  schedule: every 5 minutes
+
 - description: refresh inventory
   url: /internal/cron/refresh-inventory
   schedule: every 1 minutes
