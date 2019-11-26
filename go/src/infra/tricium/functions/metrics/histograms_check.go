@@ -296,7 +296,7 @@ func checkObsolete(path string, hist *histogram, meta *metadata) *tricium.Data_C
 func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_Comment {
 	var commentMessage string
 	var logMessage string
-	if expiry := hist.Expiry; expiry == "" {
+	if expiry := hist.Expiry; expiry == "" && hist.Obsolete == "" {
 		commentMessage = noExpiryError
 		logMessage = "[ERROR]: No Expiry"
 	} else if expiry == "never" {
@@ -307,7 +307,7 @@ func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_C
 			commentMessage = neverExpiryInfo
 			logMessage = "[INFO]: Never Expiry"
 		}
-	} else {
+	} else if expiry != "" {
 		dateMatch := expiryDatePattern.MatchString(expiry)
 		milestoneMatch := expiryMilestonePattern.MatchString(expiry)
 		if dateMatch {

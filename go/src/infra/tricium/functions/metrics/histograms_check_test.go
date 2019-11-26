@@ -119,6 +119,11 @@ func TestHistogramsCheck(t *testing.T) {
 		})
 	})
 
+	Convey("Analyze XML file with no expiry, obsolete", t, func() {
+		results := analyzeHistogramTestFile(t, "expiry/no_expiry_obsolete.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
 	Convey("Analyze XML file with expiry of never", t, func() {
 		results := analyzeHistogramTestFile(t, "expiry/never_expiry_with_comment.xml", patchPath, inputDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
