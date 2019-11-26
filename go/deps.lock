@@ -1,8 +1,8 @@
-hash: 435be39838bfdb39b33d1633a40eb33241bfe15661f1659d920fde681a8ba9ee
-updated: 2019-11-20T12:02:11.515654-08:00
+hash: da36da2c9562dacd9d237710c5f31bc82b1d7b86731776c149a1d1702aff2f79
+updated: 2019-11-25T11:26:26.761838598-05:00
 imports:
 - name: cloud.google.com/go
-  version: 25d2e811d4ff5c05f6fe5ae5858f6a56c0961a78
+  version: 83a0b8742b4d7302c26d3b71bfdcbd9224f6b951
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -23,7 +23,7 @@ imports:
   version: f61b66f89f4a311bef65f13e575bcf1a2ffadda6
   repo: https://chromium.googlesource.com/external/github.com/asaskevich/govalidator.git
 - name: github.com/aws/aws-sdk-go
-  version: 3dfcfc34e12ccbb66d72fb6ab6b87f61315d882d
+  version: 4884dc6ba07ec4507452bc3a7e4f676da51e7f2f
   repo: https://chromium.googlesource.com/external/github.com/aws/aws-sdk-go.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -45,7 +45,7 @@ imports:
   subpackages:
   - '...'
 - name: github.com/chromedp/chromedp
-  version: 9fdaf2a039c8e5d7c46dc631d50c85b79f3c4422
+  version: bbc198126faffcdca2ed78ecddccda3f14c668d0
   repo: https://chromium.googlesource.com/external/github.com/chromedp/chromedp.git
 - name: github.com/chzyer/readline
   version: 2972be24d48e78746da79ba8e24e8b488c9880de
@@ -93,7 +93,7 @@ imports:
   version: 14974a1cf6477f616180232977d8ab4791ea8820
   repo: https://chromium.googlesource.com/external/github.com/go-ole/go-ole.git
 - name: github.com/go-sql-driver/mysql
-  version: 296987f946840022593fa9179ee8cfb58307caf5
+  version: 15462c1d60d42ecca11d6ef9fec0b0afd5833459
   repo: https://chromium.googlesource.com/external/github.com/go-sql-driver/mysql.git
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
@@ -157,7 +157,7 @@ imports:
   version: 88b0669f7d75f171bd612b874e52b95c190218df
   repo: https://chromium.googlesource.com/external/github.com/gorhill/cronexpr.git
 - name: github.com/gorilla/mux
-  version: f395758b854c4efa789b8c1e9b73479704c548cb
+  version: 49c01487a141b49f8ffe06277f3dca3ee80a55fa
   repo: https://chromium.googlesource.com/external/github.com/gorilla/mux.git
 - name: github.com/gorilla/websocket
   version: c3e18be99d19e6b3e8f1559eea2c161a665c4b6b
@@ -210,7 +210,7 @@ imports:
   version: 80517062f582ea3340cd4baf70e86d539ae7d84d
   repo: https://chromium.googlesource.com/external/github.com/kisielk/gotool.git
 - name: github.com/klauspost/compress
-  version: 16a4d3d7137cdefd94d420f22b5c20260674b95c
+  version: c099ac9f21ddbdc8fda7992ce71fae347bf1df88
   repo: https://chromium.googlesource.com/external/github.com/klauspost/compress.git
   subpackages:
   - zlib
@@ -393,7 +393,7 @@ imports:
   subpackages:
   - plugin/grpc
 - name: go.skia.org/infra
-  version: acc6f6319a91f8e5ee8f1c4610b66e70d2c6227f
+  version: 8e5a6438dcac3f1c50196baf8220adf79ccd809e
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
@@ -401,12 +401,12 @@ imports:
   version: aaf7be0038921cd52ad0b7430265094afe746042
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: d4e4f4e85214de7778f0ef58aa6d3fe95cb118b2
+  version: 9dbecd3d17f8cb6331155209636f8c0bba3d0af8
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
 - name: golang.org/x/crypto
-  version: 4f8c1d86b1ba699e7a66cd649947ed270a74e0bb
+  version: ac88ee75c92c889b97e05591e9a39b6480c538b3
   repo: https://go.googlesource.com/crypto.git
   subpackages:
   - ssh/terminal
@@ -425,13 +425,13 @@ imports:
   subpackages:
   - cmd/gomobile
 - name: golang.org/x/net
-  version: fc4aabc6c91483155dade6fbb627cc953a723260
+  version: ffdde105785063a81acd95bdf89ea53f6e0aac2d
   repo: https://go.googlesource.com/net.git
   subpackages:
   - context
   - context/ctxhttp
 - name: golang.org/x/oauth2
-  version: 0f29369cfe4552d0e4bcddc57cc75f4d7e672a33
+  version: 5d9234df094ce600ff541158d1491aa10d078a47
   repo: https://go.googlesource.com/oauth2.git
   subpackages:
   - google
@@ -448,13 +448,13 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 4b67af870c6ffd08258ef1202f371aebccaf7b68
+  version: cbf43d21aaebfdfeb81d91a5f444d13a3046e686
   repo: https://go.googlesource.com/text.git
 - name: golang.org/x/time
   version: 555d28b269f0569763d25dbe1a237ae74c6bcc82
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: 688c506a55c1b3cd77849ad2e9879c7e87e0b715
+  version: a911d9008d1f732040244007778232b02ebb2b84
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -467,7 +467,7 @@ imports:
   - cmd/oracle
   - cmd/stringer
 - name: google.golang.org/api
-  version: 006ab4afe25e899e4ec545ce1cbfdaed675d15d8
+  version: afa57733c26ab144f2aaaaccd2e0d43f3f41aed7
   repo: https://code.googlesource.com/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -502,7 +502,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 7c1d326729dc9b0a07135f8902ddcc050ff8ab64
+  version: e5e980f2766388fc243cc4cf20c59b9c13affa8c
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
