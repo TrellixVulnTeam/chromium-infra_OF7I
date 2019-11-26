@@ -21,7 +21,7 @@ import (
 
 // RunTest subcommand: Run a test against one or multiple DUTs.
 var RunTest = &subcommands.Command{
-	UsageLine: "run-test",
+	UsageLine: "run-test -input_json /path/to/input.json",
 	ShortDesc: "Run a test against one or multiple DUTs.",
 	LongDesc: `Run a test against one or multiple DUTs.
 

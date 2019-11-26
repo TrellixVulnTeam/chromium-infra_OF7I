@@ -21,14 +21,14 @@ import (
 
 // UploadToTKO subcommand: Parse test results and upload them to TKO.
 var UploadToTKO = &subcommands.Command{
-	UsageLine: "upload-to-tko",
+	UsageLine: "upload-to-tko -input_json /path/to/input.json",
 	ShortDesc: "Parse test results and upload them to TKO.",
 	LongDesc: `Parse test results and upload them to TKO.
 
 A wrapper around 'tko/parse'.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &uploadToTKORun{}
-		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.Config")
+		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.UploadToTkoRequest")
 		return c
 	},
 }
@@ -46,22 +46,22 @@ func (c *uploadToTKORun) Run(a subcommands.Application, args []string, env subco
 }
 
 func (c *uploadToTKORun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	var pc phosphorus.Config
-	if err := readJSONPb(c.inputPath, &pc); err != nil {
+	var r phosphorus.UploadToTkoRequest
+	if err := readJSONPb(c.inputPath, &r); err != nil {
 		return err
 	}
 
-	if err := validateRequestConfig(pc); err != nil {
+	if err := validateUploadToTkoRequest(r); err != nil {
 		return err
 	}
 
 	ctx := cli.GetContext(a, c, env)
 
-	return runTKOUploadStep(ctx, pc)
+	return runTKOUploadStep(ctx, r)
 }
 
-func validateRequestConfig(pc phosphorus.Config) error {
-	missingArgs := getCommonMissingArgs(&pc)
+func validateUploadToTkoRequest(r phosphorus.UploadToTkoRequest) error {
+	missingArgs := getCommonMissingArgs(r.Config)
 
 	if len(missingArgs) > 0 {
 		return fmt.Errorf("no %s provided", strings.Join(missingArgs, ", "))
@@ -72,12 +72,12 @@ func validateRequestConfig(pc phosphorus.Config) error {
 
 // runTKOUploadStep extracts test results out of the status.log files
 // and uploads them to TKO. It is a wrapper around tko/parse.
-func runTKOUploadStep(ctx context.Context, pc phosphorus.Config) error {
+func runTKOUploadStep(ctx context.Context, r phosphorus.UploadToTkoRequest) error {
 	_, err := atutil.TKOParse(
 		autotest.Config{
-			AutotestDir: pc.Bot.AutotestDir,
+			AutotestDir: r.Config.Bot.AutotestDir,
 		},
-		pc.Task.ResultsDir,
+		r.Config.Task.ResultsDir,
 		os.Stdout)
 
 	if err != nil {
