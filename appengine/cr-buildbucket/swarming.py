@@ -108,7 +108,6 @@ def _buildbucket_property(build):
 def compute_task_def(build, settings, fake_build):
   """Returns a swarming task definition for the |build|.
 
-
   Args:
     build (model.Build): the build to generate the task definition for.
       build.proto.infra and build.proto.input.properties must be initialized.

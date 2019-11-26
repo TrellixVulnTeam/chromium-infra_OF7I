@@ -152,6 +152,8 @@ def validate_settings_cfg(cfg, ctx):  # pragma: no cover
   if not cfg.logdog.hostname:
     ctx.error('logdog: hostname is required')
 
+  # TODO(crbug.com/1027762): make resultdb hostname required
+
 
 class Project(ndb.Model):
   """Parent entity for Bucket.

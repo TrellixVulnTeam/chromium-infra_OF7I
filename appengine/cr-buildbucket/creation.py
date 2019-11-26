@@ -545,6 +545,7 @@ def _apply_global_settings(settings, build_proto):
   """Applies global settings to build_proto."""
   assert isinstance(settings, service_config_pb2.SettingsCfg)
   build_proto.infra.logdog.hostname = settings.logdog.hostname
+  build_proto.infra.resultdb.hostname = settings.resultdb.hostname
   for c in settings.swarming.global_caches:
     _add_configured_cache(build_proto, c)
 
