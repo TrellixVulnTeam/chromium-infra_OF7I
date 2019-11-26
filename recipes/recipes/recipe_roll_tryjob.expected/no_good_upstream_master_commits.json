@@ -49,13 +49,13 @@
     ],
     "name": "parse description",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"Recipe-Nontrivial-Roll\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"depot_tools\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  ]@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_LINE@json.output@{}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
+  },
+  {
+    "cmd": [],
+    "name": "initialize checkouts"
   },
   {
     "cmd": [
@@ -70,7 +70,10 @@
       "[CACHE]/builder/recipe_engine"
     ],
     "infra_step": true,
-    "name": "recipe_engine checkout"
+    "name": "initialize checkouts.recipe_engine checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -96,9 +99,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "gerrit fetch current CL info",
+    "name": "initialize checkouts.gerrit fetch current CL info",
     "timeout": 600,
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@[@@@",
       "@@@STEP_LOG_LINE@json.output@  {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"branch\": \"master\", @@@",
@@ -142,8 +146,9 @@
       ]
     },
     "infra_step": true,
-    "name": "bot_update",
+    "name": "initialize checkouts.bot_update",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@Some step text@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
@@ -184,12 +189,15 @@
   {
     "cmd": [
       "git",
-      "clean",
-      "-xf"
+      "rev-parse",
+      "FETCH_HEAD"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "git clean"
+    "name": "initialize checkouts.read CL revision",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -204,7 +212,10 @@
       "[CACHE]/builder/depot_tools"
     ],
     "infra_step": true,
-    "name": "depot_tools checkout"
+    "name": "initialize checkouts.depot_tools checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -233,8 +244,9 @@
       ]
     },
     "infra_step": true,
-    "name": "bot_update (without patch)",
+    "name": "initialize checkouts.bot_update (without patch)",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@Some step text@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
@@ -278,9 +290,27 @@
       "clean",
       "-xf"
     ],
-    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "git clean (2)"
+    "name": "git clean"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "refs/remotes/origin/master"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "sync recipe_engine to master"
+  },
+  {
+    "cmd": [],
+    "name": "find last non-crashing upstream revision",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
   },
   {
     "cmd": [
@@ -294,8 +324,9 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "parse recipes.cfg",
+    "name": "find last non-crashing upstream revision.parse recipes.cfg",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@recipes.cfg@{\"recipes_path\": \"some/path\"}@@@",
       "@@@STEP_LOG_END@recipes.cfg@@@"
     ]
@@ -311,33 +342,58 @@
       "train",
       "--no-docs"
     ],
-    "name": "train recipes"
-  },
-  {
-    "cmd": [
-      "git",
-      "diff",
-      "--exit-code"
-    ],
-    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
-    "infra_step": true,
-    "name": "post-train diff",
+    "name": "find last non-crashing upstream revision.train recipes at upstream master",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(0)"
+      "git",
+      "checkout",
+      "--",
+      "."
     ],
-    "name": "Roll OK",
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.clear diffs from upstream master",
     "~followup_annotations": [
-      "@@@STEP_TEXT@CL message contains correct footer ('Recipe-Nontrivial-Roll') for this repo.@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.git clean",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "HEAD~"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.checkout upstream at master~1",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "failure": {
+      "humanReason": "no non-crashing revision in upstream git history"
+    },
     "name": "$result"
   }
 ]

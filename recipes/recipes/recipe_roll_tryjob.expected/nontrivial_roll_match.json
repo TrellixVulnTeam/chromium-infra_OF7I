@@ -50,7 +50,7 @@
     "name": "parse description",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"Recipe-Manual-Change\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"Recipe-Nontrivial-Roll\": [@@@",
       "@@@STEP_LOG_LINE@json.output@    \"depot_tools\"@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -407,25 +407,23 @@
     ],
     "cwd": "[CACHE]/builder/depot_tools/depot_tools",
     "infra_step": true,
-    "name": "post-train diff at upstream CL"
+    "name": "post-train diff at upstream CL",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
       "python",
       "-u",
-      "import sys; sys.exit(1)"
+      "import sys; sys.exit(0)"
     ],
-    "name": "UNEXPECTED FOOTER IN CL MESSAGE",
+    "name": "Roll OK",
     "~followup_annotations": [
-      "@@@STEP_TEXT@Change is trivial, but found 'Recipe-Manual-Change' footer@@@",
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_TEXT@CL message contains correct footer ('Recipe-Nontrivial-Roll') for this repo.@@@"
     ]
   },
   {
-    "failure": {
-      "failure": {},
-      "humanReason": "Step('UNEXPECTED FOOTER IN CL MESSAGE') (retcode: 1)"
-    },
     "name": "$result"
   }
 ]

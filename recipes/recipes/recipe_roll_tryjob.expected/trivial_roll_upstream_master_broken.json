@@ -49,11 +49,7 @@
     ],
     "name": "parse description",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"Recipe-Manual-Change\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"depot_tools\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  ]@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_LINE@json.output@{}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
   },
@@ -311,7 +307,10 @@
   },
   {
     "cmd": [],
-    "name": "find last non-crashing upstream revision"
+    "name": "find last non-crashing upstream revision",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
@@ -345,12 +344,70 @@
     ],
     "name": "find last non-crashing upstream revision.train recipes at upstream master",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "--",
+      "."
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.clear diffs from upstream master",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.git clean",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "HEAD~"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.checkout upstream at master~1",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/depot_tools/depot_tools/some/path/recipes.py",
+      "-O",
+      "recipe_engine=[CACHE]/builder/recipe_engine/recipe_engine",
+      "test",
+      "train",
+      "--no-docs"
+    ],
+    "name": "find last non-crashing upstream revision.train recipes at upstream master~1",
+    "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "find last non-crashing upstream revision.using upstream master as base",
+    "name": "find last non-crashing upstream revision.using upstream master~1 as base",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -413,19 +470,14 @@
     "cmd": [
       "python",
       "-u",
-      "import sys; sys.exit(1)"
+      "import sys; sys.exit(0)"
     ],
-    "name": "UNEXPECTED FOOTER IN CL MESSAGE",
+    "name": "Roll OK",
     "~followup_annotations": [
-      "@@@STEP_TEXT@Change is trivial, but found 'Recipe-Manual-Change' footer@@@",
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_TEXT@CL is trivial and message contains no footers for this repo.@@@"
     ]
   },
   {
-    "failure": {
-      "failure": {},
-      "humanReason": "Step('UNEXPECTED FOOTER IN CL MESSAGE') (retcode: 1)"
-    },
     "name": "$result"
   }
 ]
