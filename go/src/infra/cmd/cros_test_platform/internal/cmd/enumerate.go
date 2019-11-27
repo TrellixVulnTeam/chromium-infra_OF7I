@@ -17,6 +17,7 @@ import (
 	"infra/cmd/cros_test_platform/internal/enumeration"
 	"infra/cmd/cros_test_platform/internal/site"
 
+	"github.com/kr/pretty"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/chromite/api"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
@@ -24,6 +25,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
+	"go.chromium.org/luci/common/logging"
 )
 
 // Enumerate is the `enumerate` subcommand implementation.
@@ -39,6 +41,7 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.EnumerationRequests")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.EnumerationResponses should be written.")
+		c.Flags.BoolVar(&c.debug, "debug", false, "Print debugging information to stderr.")
 		c.Flags.BoolVar(&c.tagged, "tagged", true, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
@@ -50,6 +53,7 @@ type enumerateRun struct {
 
 	inputPath  string
 	outputPath string
+	debug      bool
 
 	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
 	// - recipe has transitioned to using tagged requests
@@ -132,10 +136,44 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 			resps[i] = &steps.EnumerationResponse{AutotestInvocations: ts}
 		}
 	}
+
+	if c.debug {
+		c.debugDump(ctx, requests, tms, resps, merr)
+	}
 	if merr.First() != nil {
 		return merr
 	}
 	return c.writeResponsesWithError(resps, writableErr)
+}
+
+func (c *enumerateRun) debugDump(ctx context.Context, reqs []*steps.EnumerationRequest, tms []*api.TestMetadataResponse, resps []*steps.EnumerationResponse, merr errors.MultiError) {
+	logging.Infof(ctx, "## Begin debug dump")
+	if len(reqs) != len(tms) {
+		panic(fmt.Sprintf("%d metadata for %d requests", len(tms), len(reqs)))
+	}
+	if len(reqs) != len(resps) {
+		panic(fmt.Sprintf("%d responses for %d requests", len(resps), len(reqs)))
+	}
+
+	logging.Infof(ctx, "Errors encountered...")
+	if merr.First() != nil {
+		for _, e := range merr {
+			if e != nil {
+				logging.Infof(ctx, "%s", e)
+			}
+		}
+	}
+	logging.Infof(ctx, "###")
+	logging.Infof(ctx, "")
+
+	for i := range reqs {
+		logging.Infof(ctx, "Request: %s", pretty.Sprint(reqs[i]))
+		logging.Infof(ctx, "Response: %s", pretty.Sprint(resps[i]))
+		logging.Infof(ctx, "Test Metadata: %s", pretty.Sprint(tms[i]))
+		logging.Infof(ctx, "")
+	}
+
+	logging.Infof(ctx, "## End debug dump")
 }
 
 func (c *enumerateRun) processCLIArgs(args []string) error {
