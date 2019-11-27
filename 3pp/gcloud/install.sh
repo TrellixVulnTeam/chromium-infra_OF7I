@@ -10,6 +10,12 @@ shopt -s dotglob
 
 PREFIX="$1"
 
+# cheap hack to tell if `python` is a vpython virtualenv.
+if ! python -c 'import sys; sys.real_prefix' ; then
+  VIRTUAL_ENV=1
+  export VIRTUAL_ENV
+fi
+
 # Install additional components. This will also install their dependencies.
 #
 # We assume here that "overall" gcloud SDK version is bumped whenever some of
