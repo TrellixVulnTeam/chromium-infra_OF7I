@@ -9,6 +9,9 @@ create {
     git {
       repo: "https://chromium.googlesource.com/external/github.com/python/cpython"
       tag_pattern: "v%s",
+
+      # Pin to 3.8.x for now.
+      version_restriction: { op: LT val: "3.9a0"}
     }
     patch_dir: "patches"
   }

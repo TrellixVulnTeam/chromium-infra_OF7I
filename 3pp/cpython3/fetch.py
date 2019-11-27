@@ -22,6 +22,10 @@ def get_webinstaller_suffix(platform):
   raise ValueError('fetch.py is only supported for windows-386, windows-amd64')
 
 
+# Only look at versions in 3.8.x for now.
+_VERSION_LIMIT = parse_version("3.9.0a0")
+
+
 def do_latest(platform):
   """This is pretty janky, but the apache generic Index page hasn't changed
   since forever. It contains links (a tags with href's) to the different
@@ -34,8 +38,9 @@ def do_latest(platform):
   href_re = re.compile(r'href="(\d+\.\d+\.\d+)/"')
   for m in href_re.finditer(r.text):
     v = parse_version(m.group(1))
-    if not highest or v > highest:
-      highest = v
+    if v < _VERSION_LIMIT:
+      if not highest or v > highest:
+        highest = v
   r = requests.get('https://www.python.org/ftp/python/%s/' % highest)
   r.raise_for_status()
   # Find the highest release e.g. 3.8.0a4.
@@ -43,8 +48,9 @@ def do_latest(platform):
   href_re = re.compile(r'href="python-(\d+\.\d+\.\d+((a|b|rc)\d+)?)%s"' % suf)
   for m in href_re.finditer(r.text):
     v = parse_version(m.group(1))
-    if not highest or v > highest:
-      highest = v
+    if v < _VERSION_LIMIT:
+      if not highest or v > highest:
+        highest = v
   print highest
 
 
