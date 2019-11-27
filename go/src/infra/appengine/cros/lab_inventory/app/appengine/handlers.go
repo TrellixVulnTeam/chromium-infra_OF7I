@@ -11,6 +11,8 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/appengine"
+
+	"infra/appengine/cros/lab_inventory/app/frontend"
 )
 
 func main() {
@@ -19,8 +21,10 @@ func main() {
 	// very random. Seed it with real randomness.
 	mathrand.SeedRandomly()
 	r := router.New()
+	mwBase := standard.Base()
 	// Install auth, config and tsmon handlers.
 	standard.InstallHandlers(r)
+	frontend.InstallHandlers(r, mwBase)
 	http.DefaultServeMux.Handle("/", r)
 	appengine.Main()
 }
