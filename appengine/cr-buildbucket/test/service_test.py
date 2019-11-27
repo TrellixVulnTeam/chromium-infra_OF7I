@@ -180,10 +180,17 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
       service.cancel_async(1).get_result()
 
   def test_cancel_completed_build(self):
-    build = self.classic_build(id=1, status=common_pb2.SUCCESS)
-    build.put()
-    with self.assertRaises(errors.BuildIsCompletedError):
-      service.cancel_async(1).get_result()
+
+    def test_build_with_status(build_id, status):
+      self.classic_build(id=build_id, status=status).put()
+      result_build = service.cancel_async(build_id).get_result()
+      self.assertEqual(result_build.proto.id, build_id)
+      # The status should not change when cancelling completed build
+      self.assertEqual(result_build.proto.status, status)
+
+    test_build_with_status(build_id=1, status=common_pb2.SUCCESS)
+    test_build_with_status(build_id=2, status=common_pb2.FAILURE)
+    test_build_with_status(build_id=3, status=common_pb2.CANCELED)
 
   def test_cancel_result_details(self):
     self.classic_build(id=1).put()

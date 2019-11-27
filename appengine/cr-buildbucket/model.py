@@ -210,12 +210,6 @@ class Build(ndb.Model):
 
   is_luci = ndb.BooleanProperty()
 
-  @property
-  def is_ended(self):  # pragma: no cover
-    return self.proto.status not in (
-        common_pb2.STATUS_UNSPECIFIED, common_pb2.SCHEDULED, common_pb2.STARTED
-    )
-
   # == Legacy properties =======================================================
 
   status_legacy = msgprop.EnumProperty(

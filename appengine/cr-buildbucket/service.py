@@ -491,6 +491,9 @@ def cancel_async(build_id, summary_markdown='', result_details=None):
   The current user has to have a permission to cancel a build in the
   bucket.
 
+  Cancelling an already ended build will be a no-op and the latest
+  BuildBundle for the provided build id will be returned
+
   Args:
     build_id: id of the build to cancel.
     summary_markdown (basestring): human-readable explanation.
@@ -509,11 +512,8 @@ def cancel_async(build_id, summary_markdown='', result_details=None):
     build = bundle.build
     if check_access and not (yield user.can_cancel_build_async(build)):
       raise user.current_identity_cannot('cancel build %s', build.key.id())
-    if build.proto.status == common_pb2.CANCELED:
-      raise ndb.Return(bundle, False)
-    if build.is_ended:
-      raise errors.BuildIsCompletedError('Cannot cancel a completed build')
-    raise ndb.Return(bundle, True)
+    # If the build is ended, do not update the build
+    raise ndb.Return(bundle, not build.is_ended)
 
   @ndb.transactional_tasklet
   def txn_async():
