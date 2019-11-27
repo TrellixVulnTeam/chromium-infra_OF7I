@@ -9,6 +9,7 @@
    }
    build {
     tool: "autoconf"
+    tool: "automake"
    }
  }
 
