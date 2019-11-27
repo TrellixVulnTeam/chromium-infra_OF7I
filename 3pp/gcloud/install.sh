@@ -10,8 +10,9 @@ shopt -s dotglob
 
 PREFIX="$1"
 
-# cheap hack to tell if `python` is a vpython virtualenv.
-if ! python -c 'import sys; sys.real_prefix' ; then
+# cheap hack to tell if `python` is a vpython virtualenv. If this works, then
+# python is vpython in disguise.
+if python -c 'import sys; sys.real_prefix' ; then
   VIRTUAL_ENV=1
   export VIRTUAL_ENV
 fi
