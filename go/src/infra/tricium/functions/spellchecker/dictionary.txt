@@ -220,6 +220,7 @@ accessibiliity->accessibility
 accessibiliy->accessibility, accessible,
 accessibilty->accessibility
 accessiblilty->accessibility
+accessiblity->accessibility
 accessintg->accessing
 accessisble->accessible
 accessort->accessor
