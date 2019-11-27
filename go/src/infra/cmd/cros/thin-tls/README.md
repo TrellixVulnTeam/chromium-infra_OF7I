@@ -23,6 +23,9 @@ Keys:
 - `dutHostname`: The hostname of the DUT for SSH.  Your user SSH
   configuration should be able to SSH to the DUT with just `ssh
   HOSTNAME`.
+- `rpmMachine`, `powerOutlet`, `powerunitHostname`, `hydraHostname`:
+  These are all used for RPM.  See `rpm_client` for the meaning of
+  these.
 
 ## Usage
 
@@ -33,7 +36,7 @@ explicitly.
 
 You can then interact with the TLS API service, by default on port 50051.
 
-Because this is intended only for testing, parts of the implementation
+Note: Because this is intended only for testing, parts of the implementation
 depend on existing setup in your environment.  Read the Implementation
 notes section below about what you need set up outside of thin-tls.
 
@@ -49,3 +52,8 @@ command help for usage.
 The `DutShell` API is implemented by creating an `ssh` subprocess.  It
 relies on your user SSH configuration for any necessary credentials or
 options.
+
+### RPM
+
+The RPM service is implemented by creating an `rpm_client` subprocess.
+THis should be installed as part of go/lab-tools.

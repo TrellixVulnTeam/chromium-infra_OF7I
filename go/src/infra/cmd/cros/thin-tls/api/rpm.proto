@@ -1,0 +1,33 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package cros.tls.experimental;
+
+option go_package = "api";
+
+service Rpm {
+  rpc SetRpm(SetRpmRequest) returns (SetRpmResponse);
+}
+
+message SetRpmRequest {
+  enum State {
+    STATE_UNKNOWN = 0;
+    STATE_ON = 1;
+    STATE_OFF = 2;
+    STATE_CYCLE = 3;
+  }
+  State state = 1;
+}
+message SetRpmResponse {
+  enum Status {
+    STATUS_UNKNOWN = 0;
+    STATUS_OK = 1;
+    STATUS_TIMEOUT = 2;
+    STATUS_BAD_REQUEST = 3;
+  }
+  Status status = 1;
+  string explanation = 2;
+}

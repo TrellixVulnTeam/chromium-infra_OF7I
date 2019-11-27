@@ -54,6 +54,12 @@ func main() {
 
 type config struct {
 	DutHostname string `json:"dutHostname"`
+
+	// Config for RPM, see rpm_client.
+	RPMMachine        string `json:"rpmMachine"`
+	PowerOutlet       string `json:"powerOutlet"`
+	PowerUnitHostname string `json:"powerunitHostname"`
+	HydraHostname     string `json:"hydraHostname"`
 }
 
 func loadConfig(path string) (*config, error) {
@@ -75,6 +81,7 @@ func loadConfig(path string) (*config, error) {
 
 type server struct {
 	api.UnimplementedTlsServer
+	api.UnimplementedRpmServer
 	config *config
 }
 
