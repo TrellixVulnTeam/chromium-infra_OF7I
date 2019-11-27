@@ -103,6 +103,13 @@ export class MrApp extends connectStore(LitElement) {
           .userDisplayName=${this.userDisplayName}
         ></mr-list-page>
       `;
+    } else if (this.page === 'chart') {
+      return html`
+        <mr-chart-page
+          .projectName=${this.projectName}
+          .queryParams=${this.queryParams}
+        ></mr-chart-page>
+      `;
     } else if (this.page === 'hotlist-details') {
       return html`<mr-hotlist-details-page></mr-hotlist-details-page>`;
     } else if (this.page === 'hotlist-issues') {
@@ -303,8 +310,10 @@ export class MrApp extends connectStore(LitElement) {
         await import(/* webpackChunkName: "mr-grid-page" */ '../issue-list/mr-grid-page/mr-grid-page.js');
         this.page = 'grid';
         break;
-      // TODO(zhangtiff): Add case for loading chart SPA page.
-      // case 'chart':
+      case 'chart':
+        await import(/* webpackChunkName: "mr-chart-page" */ '../issue-list/mr-chart-page/mr-chart-page.js');
+        this.page = 'chart';
+        break;
       default:
         await import(/* webpackChunkName: "mr-list-page" */ '../issue-list/mr-list-page/mr-list-page.js');
         this.page = 'list';

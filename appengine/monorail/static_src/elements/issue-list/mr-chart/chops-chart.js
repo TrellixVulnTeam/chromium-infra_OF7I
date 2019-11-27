@@ -45,18 +45,37 @@ export class ChopsChart extends LitElement {
     this.options = {};
   }
 
-  async updated(changedProperties) {
+  /**
+   * Dynamically chartJs to reduce single EZT bundle size
+   * Move to top-of-file import once EZT is deprecated
+   */
+  async connectedCallback() {
+    super.connectedCallback();
+    /* eslint-disable max-len */
     await import(/* webpackChunkName: "chartjs" */ 'chart.js/dist/Chart.bundle.min.js');
+  }
+
+  /**
+   * Refetch and rerender chart after property changes
+   * @override
+   * @param {Map} changedProperties
+   */
+  updated(changedProperties) {
     if (!this._chart) {
       const {type, data, options} = this;
       const ctx = this.shadowRoot.querySelector('canvas').getContext('2d');
       this._chart = new window.Chart(ctx, {type, data, options});
-    } else if (changedProperties.has('type') || changedProperties.has('data')
-        || changedProperties.has('options')) {
+    } else if (
+      changedProperties.has('type') ||
+      changedProperties.has('data') ||
+      changedProperties.has('options')) {
       this._updateChart();
     }
   }
 
+  /**
+   * Sets chartJs options and calls update
+   */
   _updateChart() {
     this._chart.type = this.type;
     this._chart.data = this.data;

@@ -5,7 +5,6 @@ import MrChart from 'elements/issue-list/mr-chart/mr-chart.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 let element;
-let chartLoadedPromise;
 let dataLoadedPromise;
 
 const beforeEachElement = () => {
@@ -16,9 +15,6 @@ const beforeEachElement = () => {
   }
   const el = document.createElement('mr-chart');
   el.setAttribute('projectName', 'rutabaga');
-  chartLoadedPromise = new Promise((resolve) => {
-    el.addEventListener('chartLoaded', resolve);
-  });
   dataLoadedPromise = new Promise((resolve) => {
     el.addEventListener('allDataLoaded', resolve);
   });
@@ -69,13 +65,6 @@ describe('mr-chart', () => {
 
   describe('data loading', () => {
     beforeEach(() => {
-      // Stub search params.
-      sinon.stub(MrChart, 'getSearchParams');
-      const searchParams = new URLSearchParams();
-      searchParams.set('q', 'owner:rutabaga@chromium.org');
-      searchParams.set('can', '8');
-      MrChart.getSearchParams.returns(searchParams);
-
       // Stub MrChart.makeTimestamps to return 6, not 30 data points.
       const originalMakeTimestamps = MrChart.makeTimestamps;
       sinon.stub(MrChart, 'makeTimestamps').callsFake((endDate) => {
@@ -90,7 +79,6 @@ describe('mr-chart', () => {
     });
 
     afterEach(() => {
-      MrChart.getSearchParams.restore();
       MrChart.makeTimestamps.restore();
       MrChart.getEndDate.restore();
     });
@@ -135,11 +123,6 @@ describe('mr-chart', () => {
         return [1234567, 2345678, 3456789];
       });
 
-      element = beforeEachElement();
-      await new Promise((resolve) => {
-        element.addEventListener('allDataLoaded', resolve);
-      });
-
       await element._fetchData(new Date());
       assert.deepEqual(element.values[0], {});
     });
@@ -150,9 +133,6 @@ describe('mr-chart', () => {
           () => ({issues: data}));
 
       element = beforeEachElement();
-      await new Promise((resolve) => {
-        element.addEventListener('allDataLoaded', resolve);
-      });
 
       await element._fetchData(new Date());
       for (let i = 0; i < 3; i++) {
@@ -163,29 +143,12 @@ describe('mr-chart', () => {
   });
 
   describe('start date change detection', () => {
-    beforeEach(async () => {
-      await chartLoadedPromise;
-
-      sinon.spy(window.history, 'pushState');
-      sinon.spy(element, '_fetchData');
-    });
-
-    afterEach(() => {
-      element._fetchData.restore();
-      window.history.pushState.restore();
-    });
-
     it('illegal query: start-date is greater than end-date', async () => {
       await element.updateComplete;
 
-      const startDateInput = element.shadowRoot.querySelector('#start-date');
-      startDateInput.value = '2199-11-06';
+      element.startDate = new Date('2199-11-06');
+      element._fetchData();
 
-      const event = new Event('change');
-      startDateInput.dispatchEvent(event);
-
-      element._onDateChanged();
-      sinon.assert.calledOnce(element._fetchData);
       assert.equal(element.dateRange, 90);
       assert.equal(element.frequency, 7);
       assert.equal(element.dateRangeNotLegal, true);
@@ -195,94 +158,65 @@ describe('mr-chart', () => {
         async () => {
           await element.updateComplete;
 
-          const startDateInput = element.shadowRoot.querySelector('#start-date');
-          startDateInput.value = '2016-10-03';
+          element.startDate = new Date('2016-10-03');
+          element._fetchData();
 
-          const event = new Event('change');
-          startDateInput.dispatchEvent(event);
-
-          element._onDateChanged();
-          sinon.assert.calledOnce(element._fetchData);
           assert.equal(element.dateRange, 90 * 7);
           assert.equal(element.frequency, 7);
           assert.equal(element.maxQuerySizeReached, true);
         });
   });
 
-  describe('end date change detection', () => {
-    beforeEach(async () => {
-      await chartLoadedPromise;
+  describe('date change behavior', () => {
+    it('pushes to history API via pageJS', async () => {
+      sinon.stub(element, '_page');
+      sinon.spy(element, '_setDateRange');
+      sinon.spy(element, '_onDateChanged');
+      sinon.spy(element, '_changeUrlParams');
 
-      sinon.spy(window.history, 'pushState');
-      sinon.spy(element, '_fetchData');
-    });
-
-    afterEach(() => {
-      element._fetchData.restore();
-      window.history.pushState.restore();
-    });
-
-    it('changes URL param when end_date input changes', async () => {
       await element.updateComplete;
 
-      const endDateInput = element.shadowRoot.querySelector('#end-date');
-      endDateInput.value = '2017-10-02';
+      const thirtyButton = element.shadowRoot
+          .querySelector('#two-toggle').children[2];
+      thirtyButton.click();
 
-      const event = new Event('change');
-      endDateInput.dispatchEvent(event);
+      sinon.assert.calledOnce(element._setDateRange);
+      sinon.assert.calledOnce(element._onDateChanged);
+      sinon.assert.calledOnce(element._changeUrlParams);
+      sinon.assert.calledOnce(element._page);
 
-      element._onDateChanged();
-      sinon.assert.calledOnce(element._fetchData);
-      sinon.assert.calledOnce(history.pushState);
-      sinon.assert.calledWith(history.pushState, {}, '',
-          sinon.match('end-date=2017-10-02'));
+      element._page.restore();
+      element._setDateRange.restore();
+      element._onDateChanged.restore();
+      element._changeUrlParams.restore();
     });
   });
 
   describe('progress bar', () => {
-    beforeEach(async () => {
-      await chartLoadedPromise;
-    });
-
     it('visible based on loading progress', async () => {
+      // Check for visible progress bar and hidden input after initial render
       await element.updateComplete;
       const progressBar = element.shadowRoot.querySelector('progress');
-      const startDateInput = element.shadowRoot.querySelector('#start-date');
       const endDateInput = element.shadowRoot.querySelector('#end-date');
-
       assert.isFalse(progressBar.hasAttribute('hidden'));
-      assert.equal(progressBar.value, 0.05);
       assert.isTrue(endDateInput.disabled);
 
-      startDateInput.value = '2017-10-03';
-      endDateInput.value = '2018-10-03';
-
-      const event = new Event('change');
-      startDateInput.dispatchEvent(event);
-      endDateInput.dispatchEvent(event);
-
-      await element._fetchData();
+      // Check for hidden progress bar and enabled input after fetch and render
+      await dataLoadedPromise;
       await element.updateComplete;
-
       assert.isTrue(progressBar.hasAttribute('hidden'));
-      assert.equal(progressBar.value, 1);
       assert.isFalse(endDateInput.disabled);
 
-      element.endDate = new Date(Date.UTC(2018, 5, 3, 23, 59, 59));
-      const fetchDataPromise = element._fetchData();
+      // Trigger another data fetch and render, but prior to fetch complete
+      // Check progress bar is visible again
+      element.queryParams['start-date'] = '2012-01-01';
+      await element.requestUpdate('queryParams');
       await element.updateComplete;
-
-      // Values are reset on second call.
       assert.isFalse(progressBar.hasAttribute('hidden'));
-      assert.equal(progressBar.value, 0.05);
-      assert.isTrue(endDateInput.disabled);
 
-      await fetchDataPromise;
+      await dataLoadedPromise;
       await element.updateComplete;
-
       assert.isTrue(progressBar.hasAttribute('hidden'));
-      assert.equal(progressBar.value, 1);
-      assert.isFalse(endDateInput.disabled);
     });
   });
 
@@ -351,61 +285,29 @@ describe('mr-chart', () => {
       });
     });
 
-    describe('getSearchParams', () => {
-      it('returns URLSearchParams', () => {
-        const urlParams = new URLSearchParams(location.search.substring(1));
-        urlParams.set('eat', 'rutabagas');
-        const newUrl = `${location.protocol}//${location.host}${location.pathname}?${urlParams.toString()}`;
-        window.history.pushState({}, '', newUrl);
-
-        const actualParams = MrChart.getSearchParams();
-        assert.equal(actualParams.get('eat'), 'rutabagas');
-      });
-    });
-
     describe('getEndDate', () => {
       let clock;
 
       beforeEach(() => {
-        sinon.stub(MrChart, 'getSearchParams');
         clock = sinon.useFakeTimers(10000);
       });
 
       afterEach(() => {
         clock.restore();
-        MrChart.getSearchParams.restore();
       });
 
-      it('returns end date if in URL params', () => {
-        const searchParams = new URLSearchParams();
-        searchParams.set('end-date', '2018-11-03');
-        MrChart.getSearchParams.returns(searchParams);
+      it('returns parsed input date', () => {
+        const input = '2018-11-03';
 
         const expectedDate = new Date(Date.UTC(2018, 10, 3, 23, 59, 59));
         // Time sanity check.
         assert.equal(Math.round(expectedDate.getTime() / 1e3), 1541289599);
 
-        const actual = MrChart.getEndDate();
+        const actual = MrChart.getEndDate(input);
         assert.equal(actual.getTime(), expectedDate.getTime());
       });
 
-      it('returns EOD of current date if not in URL params', () => {
-        MrChart.getSearchParams.returns(new URLSearchParams());
-
-        const expectedDate = new Date();
-        expectedDate.setHours(23);
-        expectedDate.setMinutes(59);
-        expectedDate.setSeconds(59);
-
-        assert.equal(MrChart.getEndDate().getTime(),
-            expectedDate.getTime());
-      });
-
-      it('returns EOD of URL param is empty', () => {
-        const searchParams = new URLSearchParams();
-        searchParams.set('end-date', '');
-        MrChart.getSearchParams.returns(searchParams);
-
+      it('returns EOD of current date by default', () => {
         const expectedDate = new Date();
         expectedDate.setHours(23);
         expectedDate.setMinutes(59);
@@ -420,40 +322,34 @@ describe('mr-chart', () => {
       let clock;
 
       beforeEach(() => {
-        sinon.stub(MrChart, 'getSearchParams');
         clock = sinon.useFakeTimers(10000);
       });
 
       afterEach(() => {
         clock.restore();
-        MrChart.getSearchParams.restore();
       });
 
-      it('returns start date if in URL params', () => {
-        const searchParams = new URLSearchParams();
-        searchParams.set('start-date', '2018-07-03');
-        MrChart.getSearchParams.returns(searchParams);
+      it('returns parsed input date', () => {
+        const input = '2018-07-03';
 
         const expectedDate = new Date(Date.UTC(2018, 6, 3, 23, 59, 59));
         // Time sanity check.
         assert.equal(Math.round(expectedDate.getTime() / 1e3), 1530662399);
 
-        const actual = MrChart.getStartDate(expectedDate, 90);
+        const actual = MrChart.getStartDate(input);
         assert.equal(actual.getTime(), expectedDate.getTime());
       });
 
-      it('returns EOD of current date if not in URL params', () => {
-        MrChart.getSearchParams.returns(new URLSearchParams());
-
+      it('returns EOD of current date by default', () => {
         const today = new Date();
         today.setHours(23);
         today.setMinutes(59);
         today.setSeconds(59);
 
         const secondsInDay = 24 * 60 * 60;
-        const expectedDate = new Date(today.getTime()
-          - 1000 * 90 * secondsInDay);
-        assert.equal(MrChart.getStartDate(today, 90).getTime(),
+        const expectedDate = new Date(today.getTime() -
+            1000 * 90 * secondsInDay);
+        assert.equal(MrChart.getStartDate(undefined, today, 90).getTime(),
             expectedDate.getTime());
       });
     });
@@ -474,7 +370,8 @@ describe('mr-chart', () => {
     describe('getPredictedData', () => {
       it('get predicted data shown in daily', () => {
         const values = [0, 1, 2, 3, 4, 5, 6];
-        const result = MrChart.getPredictedData(values, values.length, 3, 1);
+        const result = MrChart.getPredictedData(
+            values, values.length, 3, 1, new Date('10-02-2017'));
         assert.deepEqual(result[0], ['10/4/2017', '10/5/2017', '10/6/2017']);
         assert.deepEqual(result[1], [7, 8, 9]);
         assert.deepEqual(result[2], [0, 1, 2, 3, 4, 5, 6]);
@@ -482,7 +379,8 @@ describe('mr-chart', () => {
 
       it('get predicted data shown in weekly', () => {
         const values = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84];
-        const result = MrChart.getPredictedData(values, 91, 13, 7);
+        const result = MrChart.getPredictedData(
+            values, 91, 13, 7, new Date('10-02-2017'));
         assert.deepEqual(result[1], values.map((x) => x+91));
         assert.deepEqual(result[2], values);
       });
@@ -498,7 +396,8 @@ describe('mr-chart', () => {
 
       it('get error data with nonperfect regression', () => {
         const values = [0, 1, 3, 4, 6, 6, 7];
-        const result = MrChart.getPredictedData(values, values.length, 3, 1);
+        const result = MrChart.getPredictedData(
+            values, values.length, 3, 1, new Date('10-02-2017'));
         const error = MrChart.getErrorData(result[2], values, result[1]);
         assert.isTrue(error[0][0] > result[1][0]);
         assert.isTrue(error[1][0] < result[1][0]);
@@ -546,42 +445,30 @@ describe('mr-chart', () => {
           });
     });
 
-    describe('getGroupByURL', () => {
-      beforeEach(() => {
-        sinon.stub(MrChart, 'getSearchParams');
-      });
-
-      afterEach(() => {
-        MrChart.getSearchParams.restore();
-      });
-
+    describe('getGroupByFromQuery', () => {
       it('get group by label object from URL', () => {
-        const searchParams = new URLSearchParams();
-        searchParams.set('groupby', 'label');
-        searchParams.set('labelPrefix', 'Type');
-        MrChart.getSearchParams.returns(searchParams);
+        const input = {'groupby': 'label', 'labelprefix': 'Type'};
 
-        const expectedGroupBy = {value: 'label',
-          labelPrefix: 'Type', display: 'Type'};
-        assert.deepEqual(MrChart.getGroupByURL(), expectedGroupBy);
+        const expectedGroupBy = {
+          value: 'label',
+          labelPrefix: 'Type',
+          display: 'Type',
+        };
+        assert.deepEqual(MrChart.getGroupByFromQuery(input), expectedGroupBy);
       });
 
       it('get group by is open object from URL', () => {
-        const searchParams = new URLSearchParams();
-        searchParams.set('groupby', 'open');
-        MrChart.getSearchParams.returns(searchParams);
+        const input = {'groupby': 'open'};
 
         const expectedGroupBy = {value: 'open', display: 'Is open'};
-        assert.deepEqual(MrChart.getGroupByURL(), expectedGroupBy);
+        assert.deepEqual(MrChart.getGroupByFromQuery(input), expectedGroupBy);
       });
 
       it('get group by none object from URL', () => {
-        const searchParams = new URLSearchParams();
-        searchParams.set('groupby', '');
-        MrChart.getSearchParams.returns(searchParams);
+        const input = {'groupby': ''};
 
         const expectedGroupBy = {value: '', display: 'None'};
-        assert.deepEqual(MrChart.getGroupByURL(), expectedGroupBy);
+        assert.deepEqual(MrChart.getGroupByFromQuery(input), expectedGroupBy);
       });
     });
   });

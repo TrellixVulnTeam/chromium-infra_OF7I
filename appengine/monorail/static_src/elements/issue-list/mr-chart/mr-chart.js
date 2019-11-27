@@ -3,9 +3,13 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
+import qs from 'qs';
+import page from 'page';
+
 import {prpcClient} from 'prpc-client-instance.js';
 import {linearRegression} from 'shared/math.js';
 import './chops-chart.js';
+import {urlWithNewParams} from 'shared/helpers.js';
 
 const DEFAULT_NUM_DAYS = 90;
 const SECONDS_IN_DAY = 24 * 60 * 60;
@@ -42,10 +46,7 @@ const CHART_OPTIONS = {
     xAxes: [{
       display: true,
       type: 'time',
-      time:{
-        parser: 'MM/DD/YYYY',
-        tooltipFormat: 'll'
-      },
+      time: {parser: 'MM/DD/YYYY', tooltipFormat: 'll'},
       scaleLabel: {
         display: true,
         labelString: 'Day',
@@ -68,22 +69,45 @@ const COLOR_CHOICES = ['#00838F', '#B71C1C', '#2E7D32', '#00659C',
 const BG_COLOR_CHOICES = ['#B2EBF2', '#EF9A9A', '#C8E6C9', '#B2DFDB',
   '#D7CCC8', '#DCEDC8', '#FFECB3', '#E1BEE7', '#F8BBD0', '#E6EE9C'];
 
-export default class MrChart extends LitElement {
-  /** @override */
-  static get properties() {
-    return {
-      progress: {type: Number},
-      projectName: {type: String},
-      hotlistId: {type: Number},
-      indices: {type: Array},
-      values: {type: Array},
-      unsupportedFields: {type: Array},
-      dateRangeNotLegal: {type: Boolean},
-      dateRange: {type: Number},
-      frequency: {type: Number},
-    };
+/**
+ * Set of serialized state this element should update for.
+ * mr-app lowercases all query parameters before putting into store.
+ * @type {Set<string>}
+ */
+const subscribedQuery = new Set([
+  'start-date',
+  'end-date',
+  'groupby',
+  'labelprefix',
+  'q',
+  'can',
+]);
+
+/**
+ * Computes whether subscribed query parameters have changed
+ * ie: don't care if mode, col, or y changes
+ * @param {Object<string, string>} newVal
+ * @param {Object<string, string>} oldVal
+ * @return {boolean}
+ */
+export function queryParamsHaveChanged(newVal, oldVal) {
+  if (oldVal === undefined && newVal === undefined) {
+    return false;
+  } else if (oldVal === undefined || newVal === undefined) {
+    return true;
   }
 
+  return Array.from(subscribedQuery)
+      .some((propName) => newVal[propName] !== oldVal[propName]);
+}
+
+/**
+ * `<mr-chart>`
+ *
+ * Component rendering the chart view
+ *
+ */
+export default class MrChart extends LitElement {
   /** @override */
   static get styles() {
     return css`
@@ -184,6 +208,14 @@ export default class MrChart extends LitElement {
         background-color: #00838F;
       }
     `;
+  }
+
+  /** @override */
+  updated(changedProperties) {
+    if (changedProperties.has('queryParams')) {
+      this._setPropsFromQueryParams();
+      this._fetchData();
+    }
   }
 
   /** @override */
@@ -299,21 +331,78 @@ export default class MrChart extends LitElement {
   }
 
   /** @override */
+  static get properties() {
+    return {
+      progress: {type: Number},
+      projectName: {type: String},
+      hotlistId: {type: Number},
+      indices: {type: Array},
+      values: {type: Array},
+      unsupportedFields: {type: Array},
+      dateRangeNotLegal: {type: Boolean},
+      dateRange: {type: Number},
+      frequency: {type: Number},
+      queryParams: {
+        type: Object,
+        hasChanged: queryParamsHaveChanged,
+      },
+    };
+  }
+
+  /** @override */
   constructor() {
     super();
     this.progress = 0.05;
     this.values = [];
     this.indices = [];
     this.unsupportedFields = [];
-    this.endDate = MrChart.getEndDate();
-    this.startDate = MrChart.getStartDate(this.endDate, DEFAULT_NUM_DAYS);
     this.predRange = predRangeType.HIDE;
-    this.groupBy = MrChart.getGroupByURL();
+    this._page = page;
   }
 
-  // Set dropdown options menu in HTML.
+  /** @override */
+  connectedCallback() {
+    super.connectedCallback();
+
+    if (!this.projectName && !this.hotlistId) {
+      throw new Error('Attribute `projectName` or `hotlistId` required.');
+    }
+    this._setPropsFromQueryParams();
+    this._constructDropdownMenu();
+  }
+
+  /**
+   * Initialize queryParams and set properties from the queryParams.
+   * Since this page exists in both the SPA and ezt they initialize mr-chart
+   * differently, ie in ezt, this.queryParams will be undefined during
+   * connectedCallback. Until ezt is deleted, initialize props here.
+   */
+  _setPropsFromQueryParams() {
+    if (!this.queryParams) {
+      const params = qs.parse(document.location.search.substring(1));
+      // ezt pages used querystring as source of truth
+      // and 'labelPrefix'in query param, but SPA uses
+      // redux store's sitewide.queryParams as source of truth
+      // and lowercases all keys in sitewide.queryParams
+      if (params.hasOwnProperty('labelPrefix')) {
+        const labelPrefixValue = params['labelPrefix'];
+        params['labelprefix'] = labelPrefixValue;
+        delete params['labelPrefix'];
+      }
+      this.queryParams = params;
+    }
+    this.endDate = MrChart.getEndDate(this.queryParams['end-date']);
+    this.startDate = MrChart.getStartDate(
+        this.queryParams['start-date'],
+        this.endDate, DEFAULT_NUM_DAYS);
+    this.groupBy = MrChart.getGroupByFromQuery(this.queryParams);
+  }
+
+  /**
+   * Set dropdown options menu in HTML.
+   */
   async _constructDropdownMenu() {
-    let response = await this._getLabelPrefixes();
+    const response = await this._getLabelPrefixes();
     let dropdownOptions = ['None', 'Component', 'Is open', 'Status', 'Owner'];
     dropdownOptions = dropdownOptions.concat(response);
     const dropdownHTML = dropdownOptions.map((str) => html`
@@ -322,38 +411,37 @@ export default class MrChart extends LitElement {
     this.dropdownHTML = html`${dropdownHTML}`;
   }
 
-  async connectedCallback() {
-    super.connectedCallback();
-
-    if (!this.projectName && !this.hotlistId) {
-      throw new Error('Attribute `projectName` or `hotlistId` required.');
-    }
-
-    // Load Chart.js before chops-chart to allow data points to render as soon as
-    // they are loaded.
-    await import(/* webpackChunkName: "chartjs" */ 'chart.js/dist/Chart.bundle.min.js');
-
-    this.dispatchEvent(new Event('chartLoaded'));
-    this._constructDropdownMenu();
-    this._fetchData();
+  /**
+   * Call global page.js to change frontend route based on new parameters
+   * @param {Object<string, string>} newParams
+   */
+  _changeUrlParams(newParams) {
+    const isSpa = window.location.pathname.endsWith('list_new');
+    const list = isSpa ? 'list_new' : 'list';
+    const newUrl = urlWithNewParams(`/p/${this.projectName}/issues/${list}`,
+        this.queryParams, newParams);
+    this._page(newUrl);
   }
 
-  // Fetch corresponding data when start date or end date changes.
+  /**
+   * Set start date and end date and trigger url action
+   */
   _onDateChanged() {
-    this._fetchData();
-    const urlParams = MrChart.getSearchParams();
-
-    // TODO(zhangtiff): Integrate with frontend routing once charts is part of the SPA.
-    urlParams.set('start-date', this.startDate.toISOString().substr(0, 10));
-    urlParams.set('end-date', this.endDate.toISOString().substr(0, 10));
-    const newUrl = `${location.protocol}//${location.host}${location.pathname}?${urlParams.toString()}`;
-    window.history.pushState({}, '', newUrl);
+    const newParams = {
+      'start-date': this.startDate.toISOString().substr(0, 10),
+      'end-date': this.endDate.toISOString().substr(0, 10),
+    };
+    this._changeUrlParams(newParams);
   }
 
+  /**
+   * Fetch data required to render chart
+   */
   async _fetchData() {
-    this.dateRange = Math.ceil((this.endDate - this.startDate) / (1000 * SECONDS_IN_DAY));
+    this.dateRange = Math.ceil(
+        (this.endDate - this.startDate) / (1000 * SECONDS_IN_DAY));
 
-    // Coordinate different parameters and flags, protection against illegal queries.
+    // Coordinate different params and flags, protect against illegal queries
     // Case for start date greater than end date.
     if (this.dateRange <= 0) {
       this.frequency = 7;
@@ -379,15 +467,15 @@ export default class MrChart extends LitElement {
       }
     }
     // Set canned query flag.
-    this.cannedQueryOpen = (MrChart.getSearchParams().get('can') === '2'
-      && this.groupBy.value === 'open');
+    this.cannedQueryOpen = (this.queryParams.can === '2' &&
+      this.groupBy.value === 'open');
 
     // Reset chart variables except indices.
     this.progress = 0.05;
 
     let numTimestampsLoaded = 0;
     const timestampsChronological = MrChart.makeTimestamps(this.endDate,
-      this.frequency, this.dateRange);
+        this.frequency, this.dateRange);
     const tsToIndexMap = new Map(timestampsChronological.map((ts, idx) => (
       [ts, idx]
     )));
@@ -408,6 +496,7 @@ export default class MrChart extends LitElement {
 
     const chartData = await Promise.all(fetchPromises);
 
+    // This is purely for testing purposes
     this.dispatchEvent(new Event('allDataLoaded'));
 
     // Check if the query includes any field values that are not supported.
@@ -422,11 +511,15 @@ export default class MrChart extends LitElement {
     this.searchLimitReached = chartData.some((d) => d.searchLimitReached);
   }
 
+  /**
+   * fetch data at timestamp
+   * @param {number} timestamp
+   * @return {Object}
+   */
   async _fetchDataAtTimestamp(timestamp) {
-    const params = MrChart.getSearchParams();
-    const query = params.get('q');
-    const cannedQuery = params.get('can');
-    let message = {
+    const query = this.queryParams.q || '';
+    const cannedQuery = this.queryParams.can || '';
+    const message = {
       timestamp: timestamp,
       projectName: this.projectName,
       query: query,
@@ -440,7 +533,7 @@ export default class MrChart extends LitElement {
       }
     }
     const response = await prpcClient.call('monorail.Issues',
-      'IssueSnapshot', message);
+        'IssueSnapshot', message);
 
     let issues;
     if (response.snapshotCount) {
@@ -465,7 +558,9 @@ export default class MrChart extends LitElement {
     };
   }
 
-  // Get prefixes from the set of labels.
+  /**
+   * Get prefixes from the set of labels.
+   */
   async _getLabelPrefixes() {
     // If no project (i.e. viewing a hotlist), return empty list.
     if (!this.projectName) {
@@ -475,10 +570,10 @@ export default class MrChart extends LitElement {
     const projectRequestMessage = {
       project_name: this.projectName};
     const labelsResponse = await prpcClient.call(
-      'monorail.Projects', 'GetLabelOptions', projectRequestMessage);
+        'monorail.Projects', 'GetLabelOptions', projectRequestMessage);
     const labelPrefixes = new Set();
     for (let i = 0; i < labelsResponse.labelOptions.length; i++) {
-      let label = labelsResponse.labelOptions[i].label;
+      const label = labelsResponse.labelOptions[i].label;
       if (label.includes('-')) {
         labelPrefixes.add(label.split('-')[0]);
       }
@@ -486,14 +581,18 @@ export default class MrChart extends LitElement {
     return Array.from(labelPrefixes);
   }
 
+  /**
+   * construct chart data
+   * @param {Array} indices
+   * @param {Array} values
+   * @return {Object} chart data and options
+   */
   _chartData(indices, values) {
-    // Generate a map of each data line with type {dimension:string, value:array}.
-    let mapValues = new Map();
+    // Generate a map of each data line {dimension:string, value:array}
+    const mapValues = new Map();
     for (let i = 0; i < values.length; i++) {
       if (values[i] !== undefined) {
-        values[i].forEach((value, key, map) => {
-          mapValues.set(key, []);}
-        );
+        values[i].forEach((value, key, map) => mapValues.set(key, []));
       }
     }
     // Count the number of 0 or undefined data points.
@@ -534,7 +633,8 @@ export default class MrChart extends LitElement {
       arrayValues.push({
         label: key,
         data: value,
-        backgroundColor: COLOR_CHOICES[arrayValues.length % COLOR_CHOICES.length],
+        backgroundColor: COLOR_CHOICES[arrayValues.length %
+          COLOR_CHOICES.length],
         borderColor: COLOR_CHOICES[arrayValues.length % COLOR_CHOICES.length],
         showLine: true,
         fill: false,
@@ -550,7 +650,10 @@ export default class MrChart extends LitElement {
     }
 
     let predictedValues = [];
-    let originalData, predictedData, maxData, minData;
+    let originalData;
+    let predictedData;
+    let maxData;
+    let minData;
     let currColor;
     let currBGColor;
     // Check if displayed values > MAX_DISPLAY_LINES, hide legend.
@@ -562,7 +665,7 @@ export default class MrChart extends LitElement {
     for (let i = 0; i < arrayValues.length; i++) {
       [originalData, predictedData, maxData, minData] =
         MrChart.getAllData(indices, arrayValues[i]['data'], this.dateRange,
-          this.predRange, this.frequency);
+            this.predRange, this.frequency, this.endDate);
       currColor = COLOR_CHOICES[i % COLOR_CHOICES.length];
       currBGColor = BG_COLOR_CHOICES[i % COLOR_CHOICES.length];
       predictedValues = predictedValues.concat([{
@@ -572,7 +675,7 @@ export default class MrChart extends LitElement {
         data: originalData,
         showLine: true,
         fill: false,
-      },{
+      }, {
         label: arrayValues[i]['label'].concat(' prediction'),
         backgroundColor: currColor,
         borderColor: currColor,
@@ -581,7 +684,7 @@ export default class MrChart extends LitElement {
         pointRadius: 0,
         showLine: true,
         fill: false,
-      },{
+      }, {
         label: arrayValues[i]['label'].concat(' lower error'),
         backgroundColor: currBGColor,
         borderColor: currBGColor,
@@ -591,7 +694,7 @@ export default class MrChart extends LitElement {
         showLine: true,
         hidden: true,
         fill: false,
-      },{
+      }, {
         label: arrayValues[i]['label'].concat(' upper error'),
         backgroundColor: currBGColor,
         borderColor: currBGColor,
@@ -609,11 +712,14 @@ export default class MrChart extends LitElement {
     };
   }
 
-  // Change group by based on dropdown menu selection.
+  /**
+   * Change group by based on dropdown menu selection.
+   * @param {Event} e
+   */
   _setGroupBy(e) {
-    switch(e.target.text) {
+    switch (e.target.text) {
       case 'None':
-        this.groupBy = {value: ''};
+        this.groupBy = {value: undefined};
         break;
       case 'Is open':
         this.groupBy = {value: 'open'};
@@ -629,29 +735,33 @@ export default class MrChart extends LitElement {
     this.groupBy['display'] = e.target.text;
     this.shadowRoot.querySelector('#dropdown').text = e.target.text;
     this.shadowRoot.querySelector('#dropdown').close();
-    this._fetchData();
-    // Set groupby URL params.
-    const urlParams = MrChart.getSearchParams();
-    urlParams.set('groupby', this.groupBy.value);
-    if (this.groupBy.value === 'label') {
-      urlParams.set('labelPrefix', this.groupBy.labelPrefix);
-    } else {
-      urlParams.set('labelPrefix', '');
-    }
-    const newUrl = `${location.protocol}//${location.host}${location.pathname}?${urlParams.toString()}`;
-    window.history.pushState({}, '', newUrl);
+
+    const newParams = {
+      'groupby': this.groupBy.value,
+      'labelprefix': this.groupBy.labelPrefix,
+    };
+
+    this._changeUrlParams(newParams);
   }
 
-  // Change date range and frequency based on button clicked.
+  /**
+   * Change date range and frequency based on button clicked.
+   * @param {number} dateRange Number of days in date range
+   */
   _setDateRange(dateRange) {
     if (this.dateRange !== dateRange) {
-      this.startDate = new Date(this.endDate.getTime() - 1000 * SECONDS_IN_DAY * dateRange);
+      this.startDate = new Date(
+          this.endDate.getTime() - 1000 * SECONDS_IN_DAY * dateRange);
       this._onDateChanged();
       window.getTSMonClient().recordDateRangeChange(dateRange);
     }
   }
 
-  // Move first, last, and median to the beginning of the array, recursively.
+  /**
+   * Move first, last, and median to the beginning of the array, recursively.
+   * @param  {Array} timestamps
+   * @return {Array}
+   */
   static sortInBisectOrder(timestamps) {
     const arr = [];
     if (timestamps.length === 0) {
@@ -663,11 +773,17 @@ export default class MrChart extends LitElement {
       const endTs = timestamps.pop();
       const medianTs = timestamps.splice(timestamps.length / 2, 1)[0];
       return [beginTs, endTs, medianTs].concat(
-        MrChart.sortInBisectOrder(timestamps));
+          MrChart.sortInBisectOrder(timestamps));
     }
   }
 
-  // Populate array of timestamps we want to fetch.
+  /**
+   * Populate array of timestamps we want to fetch.
+   * @param {Date} endDate
+   * @param {number} frequency
+   * @param {number} numDays
+   * @return {Array}
+   */
   static makeTimestamps(endDate, frequency, numDays=DEFAULT_NUM_DAYS) {
     if (!endDate) {
       throw new Error('endDate required');
@@ -680,7 +796,11 @@ export default class MrChart extends LitElement {
     return timestampsChronological;
   }
 
-  // Convert a string '2018-11-03' to a Date object.
+  /**
+   * Convert a string '2018-11-03' to a Date object.
+   * @param  {string} dateString
+   * @return {Date}
+   */
   static dateStringToDate(dateString) {
     if (!dateString) {
       return null;
@@ -693,18 +813,14 @@ export default class MrChart extends LitElement {
     return new Date(Date.UTC(year, month, day, 23, 59, 59));
   }
 
-  // Return a URLSearchParams object. Separate method for stubbing.
-  static getSearchParams() {
-    // TODO(zhangtiff): Make this use page.js's queryParams object instead
-    // of parsing URL params multuple times, once charts is integrated with the SPA.
-    return new URLSearchParams(document.location.search.substring(1));
-  }
-
-  // Returns a Date taken from URL param, defaults to current date.
-  static getEndDate() {
-    const urlParams = MrChart.getSearchParams();
-    if (urlParams.has('end-date')) {
-      const date = MrChart.dateStringToDate(urlParams.get('end-date'));
+  /**
+   * Returns a Date parsed from string input, defaults to current date.
+   * @param {string} input
+   * @return {Date}
+   */
+  static getEndDate(input) {
+    if (input) {
+      const date = MrChart.dateStringToDate(input);
       if (date) {
         return date;
       }
@@ -716,19 +832,29 @@ export default class MrChart extends LitElement {
     return today;
   }
 
-  // Returns a Date taken from URL param, defaults to DEFAULT_NUM_DAYS days ago.
-  static getStartDate(endDate, diff) {
-    const urlParams = MrChart.getSearchParams();
-    if (urlParams.has('start-date')) {
-      const date = MrChart.dateStringToDate(urlParams.get('start-date'));
+  /**
+   * Return a Date parsed from string input
+   * defaults to diff days befores endDate
+   * @param {string} input
+   * @param {Date} endDate
+   * @param {Number} diff
+   * @return {Date}
+   */
+  static getStartDate(input, endDate, diff) {
+    if (input) {
+      const date = MrChart.dateStringToDate(input);
       if (date) {
         return date;
       }
     }
-    const startDate = new Date(endDate.getTime() - 1000 * SECONDS_IN_DAY * diff);
-    return startDate;
+    return new Date(endDate.getTime() - 1000 * SECONDS_IN_DAY * diff);
   }
 
+  /**
+   * Make indices
+   * @param {Array} timestamps
+   * @return {Array}
+   */
   static makeIndices(timestamps) {
     const dateFormat = {year: 'numeric', month: 'numeric', day: 'numeric'};
     return timestamps.map((ts) => (
@@ -736,10 +862,20 @@ export default class MrChart extends LitElement {
     ));
   }
 
-  // Generate predicted future data based on previous data.
-  static getPredictedData(values, dateRange, interval, frequency) {
+  /**
+   * Generate predicted future data based on previous data.
+   * @param {Array} values
+   * @param {number} dateRange
+   * @param {number} interval
+   * @param {number} frequency
+   * @param {Date} inputEndDate
+   * @return {Array}
+   */
+  static getPredictedData(
+      values, dateRange, interval, frequency, inputEndDate) {
     // TODO(weihanl): changes to support frequencies other than 1 and 7.
-    let n, endDateRange;
+    let n;
+    let endDateRange;
     if (frequency === 1) {
       // Display in daily.
       n = values.length;
@@ -750,8 +886,10 @@ export default class MrChart extends LitElement {
       endDateRange = interval * 7 - 1;
     }
     const [slope, intercept] = linearRegression(values, n);
-    const endDate = new Date(MrChart.getEndDate().getTime() + 1000 * SECONDS_IN_DAY * (1 + endDateRange));
-    const timestampsChronological = MrChart.makeTimestamps(endDate, frequency, endDateRange);
+    const endDate = new Date(inputEndDate.getTime() +
+        1000 * SECONDS_IN_DAY * (1 + endDateRange));
+    const timestampsChronological = MrChart.makeTimestamps(
+        endDate, frequency, endDateRange);
     const predictedIndices = MrChart.makeIndices(timestampsChronological);
 
     // Obtain future data and past data on the generated line.
@@ -766,25 +904,44 @@ export default class MrChart extends LitElement {
     return [predictedIndices, predictedValues, generatedValues];
   }
 
-  // Generate error range lines using +/- standard error on intercept to original line.
+  /**
+   * Generate error range lines using +/- standard error
+   * on intercept to original line.
+   * @param {Array} generatedValues
+   * @param {Array} values
+   * @param {Array} predictedValues
+   * @return {Array}
+   */
   static getErrorData(generatedValues, values, predictedValues) {
     const diffs = [];
     for (let i = 0; i < generatedValues.length; i++) {
-      diffs.push(values[values.length - generatedValues.length + i] - generatedValues[i]);
+      diffs.push(values[values.length - generatedValues.length + i] -
+          generatedValues[i]);
     }
     const sqDiffs = diffs.map((v) => v * v);
     const stdDev = sqDiffs.reduce((sum, v) => sum + v) / values.length;
-    const maxValues = predictedValues.map((x) => Math.round(100 * (x + stdDev)) / 100);
-    const minValues = predictedValues.map((x) => Math.round(100 * (x - stdDev)) / 100);
+    const maxValues = predictedValues.map(
+        (x) => Math.round(100 * (x + stdDev)) / 100);
+    const minValues = predictedValues.map(
+        (x) => Math.round(100 * (x - stdDev)) / 100);
     return [maxValues, minValues];
   }
 
-  // Format all data using scattered dot representation for a single chart line.
-  static getAllData(indices, values, dateRange, predRange, frequency) {
+  /**
+   * Format all data using scattered dot representation for a single chart line.
+   * @param {Array} indices
+   * @param {Array} values
+   * @param {humber} dateRange
+   * @param {number} predRange
+   * @param {number} frequency
+   * @param {Date} endDate
+   * @return {Array}
+   */
+  static getAllData(indices, values, dateRange, predRange, frequency, endDate) {
     // Set the number of data points that needs to be generated based on
     // future time range and frequency.
     let interval;
-    switch(predRange) {
+    switch (predRange) {
       case predRangeType.NEXT_MONTH:
         interval = frequency === 1 ? 30 : 4;
         break;
@@ -797,7 +954,7 @@ export default class MrChart extends LitElement {
     }
 
     const [predictedIndices, predictedValues, generatedValues] =
-      MrChart.getPredictedData(values, dateRange, interval, frequency);
+      MrChart.getPredictedData(values, dateRange, interval, frequency, endDate);
     const [maxValues, minValues] =
       MrChart.getErrorData(generatedValues, values, predictedValues);
     const n = generatedValues.length;
@@ -805,46 +962,64 @@ export default class MrChart extends LitElement {
     // Format data into an array of {x:"MM/DD/YYYY", y:1.00} to draw chart.
     const originalData = [];
     const predictedData = [];
-    const maxData = [{x: indices[values.length - 1], y: generatedValues[n - 1]}];
-    const minData = [{x: indices[values.length - 1], y: generatedValues[n - 1]}];
+    const maxData = [{
+      x: indices[values.length - 1],
+      y: generatedValues[n - 1],
+    }];
+    const minData = [{
+      x: indices[values.length - 1],
+      y: generatedValues[n - 1],
+    }];
     for (let i = 0; i < values.length; i++) {
-      originalData.push({x:indices[i], y:values[i]});
+      originalData.push({x: indices[i], y: values[i]});
     }
     for (let i = 0; i < n; i++) {
-      predictedData.push({x:indices[values.length - n + i],
-        y:Math.max(Math.round(100 * generatedValues[i]) / 100, 0)});
+      predictedData.push({x: indices[values.length - n + i],
+        y: Math.max(Math.round(100 * generatedValues[i]) / 100, 0)});
     }
     for (let i = 0; i < predictedValues.length; i++) {
-      predictedData.push({x: predictedIndices[i], y: Math.max(predictedValues[i], 0)});
+      predictedData.push({
+        x: predictedIndices[i],
+        y: Math.max(predictedValues[i], 0),
+      });
       maxData.push({x: predictedIndices[i], y: Math.max(maxValues[i], 0)});
       minData.push({x: predictedIndices[i], y: Math.max(minValues[i], 0)});
     }
-    return [originalData, predictedData, maxData, minData]
+    return [originalData, predictedData, maxData, minData];
   }
 
-  // Sort lines by data in reversed chronological order
-  // and return top n lines with most issues.
-  static getSortedLines(arrayValues, n) {
-    if (n >= arrayValues.length) {
+  /**
+   * Sort lines by data in reversed chronological order and
+   * return top n lines with most issues.
+   * @param {Array} arrayValues
+   * @param {number} index
+   * @return {Array}
+   */
+  static getSortedLines(arrayValues, index) {
+    if (index >= arrayValues.length) {
       return arrayValues;
     }
-    const len = arrayValues[0].data.length;
-    // Convert data by reversing and starting from last digit and sort according to
-    // the resulting value. e.g. [4,2,0] => 24, [0,4,3] => 340
+    // Convert data by reversing and starting from last digit and sort
+    // according to the resulting value. e.g. [4,2,0] => 24, [0,4,3] => 340
     const sortedValues = arrayValues.slice().sort((arrX, arrY) => {
-      const intX = parseInt(arrX.data.map((i) => i.toString()).reverse().join(''));
-      const intY = parseInt(arrY.data.map((i) => i.toString()).reverse().join(''));
+      const intX = parseInt(
+          arrX.data.map((i) => i.toString()).reverse().join(''));
+      const intY = parseInt(
+          arrY.data.map((i) => i.toString()).reverse().join(''));
       return intY - intX;
     });
-    return sortedValues.slice(0, n);
+    return sortedValues.slice(0, index);
   }
 
-  // Set groupby object from URL.
-  static getGroupByURL() {
-    const urlParams = MrChart.getSearchParams();
-    if (urlParams.has('groupby')) {
-      const groupBy = {value: urlParams.get('groupby')};
-      switch(urlParams.get('groupby')) {
+  /**
+   * Parses queryParams for groupBy property
+   * @param {Object<string, string>} queryParams
+   * @return {Object<string, string>}
+   */
+  static getGroupByFromQuery(queryParams) {
+    if (queryParams.hasOwnProperty('groupby')) {
+      const groupBy = {value: queryParams['groupby']};
+      switch (queryParams['groupby']) {
         case '':
           groupBy['display'] = 'None';
           break;
@@ -861,8 +1036,8 @@ export default class MrChart extends LitElement {
           groupBy['display'] = 'Status';
           break;
         default:
-          groupBy['display'] = urlParams.get('labelPrefix');
-          groupBy['labelPrefix'] = urlParams.get('labelPrefix');
+          groupBy['display'] = queryParams['labelprefix'];
+          groupBy['labelPrefix'] = queryParams['labelprefix'];
       }
       return groupBy;
     } else {

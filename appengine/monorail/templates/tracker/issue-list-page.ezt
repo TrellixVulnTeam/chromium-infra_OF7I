@@ -53,6 +53,10 @@
       [include "issue-list-menus.ezt"]
     [end]
   [end]
+
+  [if-any chart_mode]
+    [include "issue-chart-controls-bottom.ezt"]
+  [end]
 </div>
 
 <div id="helparea"></div>
