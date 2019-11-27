@@ -5,6 +5,8 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 APP_PATH := $(PROJECT_PATH)/app/appengine
+DEV_CFG_PATH := $(PROJECT_PATH)/devcfg/services/dev/
+
 GCP_PROJECT = cros-lab-inventory
 GCP_PROJECT_DEV = cros-lab-inventory-dev
 
@@ -27,8 +29,8 @@ gen:
 
 .PHONY: config
 config:
-	@printf ">>> Creating dev config at %s.  You may want to edit this for your needs.\n" $@
-	cp $(PROJECT_PATH)/app/appengine/devcfg/services/dev/config-template.cfg $@
+	@printf ">>> Creating dev config at %s/%s.cfg. You may want to edit this for your needs.\n" $(DEV_CFG_PATH) $@
+	cp $(DEV_CFG_PATH)/config-template.cfg $(DEV_CFG_PATH)/$@.cfg
 
 .PHONY: dev
 dev:

@@ -1,0 +1,24 @@
+// Copyright 2019 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package lab_inventory.config;
+
+option go_package = "config";
+
+// Note: docstrings use generated go style variable names.
+// Config is the configuration data served by luci-config for this app.
+message Config {
+  // AccessGroup is the luci-auth group controlling access to admin app APIs.
+  string access_group = 1;
+
+  // AdminService contains information about the skylab admin instances.
+  AdminService admin_service = 2;
+}
+
+message AdminService {
+  // The skylab admin GAE server hosting the admin services.
+  string host = 1;
+}
