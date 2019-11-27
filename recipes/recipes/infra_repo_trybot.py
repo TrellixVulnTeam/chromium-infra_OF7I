@@ -60,12 +60,6 @@ def RunSteps(api):
             co.path.join('infra', 'recipes', 'recipes.py'),
             ['lint'])
 
-    if api.platform.is_linux and (is_deps_roll or
-        any(f.startswith('appengine/chromium_rietveld') for f in files)):
-      with api.context(cwd=co.path.join('infra')):
-        api.step('rietveld tests',
-                 ['make', '-C', 'appengine/chromium_rietveld', 'test'])
-
   # Some third_party go packages on OSX rely on cgo and thus a configured
   # clang toolchain.
   with api.osx_sdk('mac'):
@@ -149,11 +143,6 @@ def GenTests(api):
   yield (
     test('infra_internal_with_cq', internal=True) +
     diff('infra_internal/services/cq/cq.py')
-  )
-
-  yield (
-    test('rietveld_tests') +
-    diff('appengine/chromium_rietveld/codereview/views.py')
   )
 
   yield (
