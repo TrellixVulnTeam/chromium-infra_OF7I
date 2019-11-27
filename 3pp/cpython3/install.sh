@@ -50,9 +50,10 @@ SETUP_LOCAL_ATTACH=(
   "_curses_panel:: -DNCURSES_WIDECHAR=1"
 )
 
-if [[ $_3PP_PLATFORM == *64 ]]; then
+if [[ $_3PP_PLATFORM == linux-*64 ]]; then
   SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib64/libffi.a")
 else
+  # mac-amd64 builds into lib. WHY.
   SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib/libffi.a")
 fi
 
