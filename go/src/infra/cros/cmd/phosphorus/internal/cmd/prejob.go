@@ -25,8 +25,9 @@ var Prejob = &subcommands.Command{
 	ShortDesc: "Run a prejob against a DUT.",
 	LongDesc: `Run a prejob against a DUT.
 
-Provision the DUT via 'autoserv --provision' if provisionable labels are set.
-Otherwise, reset the DUT via 'autosev --reset'`,
+Provision the DUT via 'autoserv --provision' if desired provisionable labels
+do not match the existing ones. Otherwise, reset the DUT via
+'autosev --reset'`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &prejobRun{}
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.PrejobRequest")
@@ -64,11 +65,11 @@ func (c *prejobRun) innerRun(a subcommands.Application, args []string, env subco
 
 	ctx := cli.GetContext(a, c, env)
 
-	if len(r.ProvisionableLabels) > 0 {
-		return runProvision(ctx, r)
+	if contains(r.ExistingProvisionableLabels, r.DesiredProvisionableLabels) {
+		return runReset(ctx, r)
 	}
 
-	return runReset(ctx, r)
+	return runProvision(ctx, r)
 }
 
 func validatePrejobRequest(r phosphorus.PrejobRequest) error {
@@ -85,13 +86,23 @@ func validatePrejobRequest(r phosphorus.PrejobRequest) error {
 	return nil
 }
 
+// contains tests whether map y is contained within map x.
+func contains(x, y map[string]string) bool {
+	for k, v := range y {
+		if x[k] != v {
+			return false
+		}
+	}
+	return true
+}
+
 // runProvisions provisions a single host. It is a wrapper around
 // `autoserv --provision`. It cannot modify its point arguments.
 func runProvision(ctx context.Context, r phosphorus.PrejobRequest) error {
 	j := getMainJob(r.Config)
 
 	var labels []string
-	for k, v := range r.ProvisionableLabels {
+	for k, v := range r.DesiredProvisionableLabels {
 		labels = append(labels, k+":"+v)
 	}
 
