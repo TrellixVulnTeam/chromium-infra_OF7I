@@ -25,13 +25,10 @@ def main():
   if options.verbose:
     logging.getLogger().setLevel(logging.DEBUG)
 
-  # TODO(crbug.com/980340): This package currently is NOT built automatically.
-  # It was built as experimental/infra/3pp/tools/gcloud/... and then manually
-  # repackaged as infra/3pp/tools/gcloud/....
   cipd_ensure_list(os.path.join(os.path.abspath(options.dest), 'gcloud'), [
     (
       'infra/3pp/tools/gcloud/${os=mac,linux}-${arch=amd64}',
-      'version:252.0.0.chromium0',
+      'version:272.0.0.chromium0',
     ),
   ])
   return 0
