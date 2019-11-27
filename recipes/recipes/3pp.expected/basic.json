@@ -10,6 +10,9 @@
       "[CACHE]/builder",
       "*"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "read cached checkouts",
     "~followup_annotations": [
@@ -32,6 +35,9 @@
       "--url",
       "https://example.repo"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "name": "load packages from desired repos.git setup",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -47,6 +53,7 @@
     ],
     "cwd": "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
     },
     "infra_step": true,
@@ -63,6 +70,9 @@
       "FETCH_HEAD"
     ],
     "cwd": "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load packages from desired repos.git checkout",
     "~followup_annotations": [
@@ -76,6 +86,9 @@
       "HEAD"
     ],
     "cwd": "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load packages from desired repos.read revision",
     "~followup_annotations": [
@@ -92,6 +105,9 @@
       "-x"
     ],
     "cwd": "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load packages from desired repos.git clean",
     "~followup_annotations": [
@@ -109,6 +125,9 @@
       "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a/support_3pp",
       "*/3pp.pb"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load packages from desired repos.find package specs",
     "~followup_annotations": [
@@ -137,6 +156,9 @@
       "rmtree",
       "[CACHE]/builder/badc0ffe"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "remove unused repos.rm badc0ffe",
     "~followup_annotations": [
@@ -153,6 +175,9 @@
       "rmtree",
       "[CACHE]/builder/deadbeef"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "remove unused repos.rm deadbeef",
     "~followup_annotations": [

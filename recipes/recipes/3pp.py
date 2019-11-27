@@ -11,6 +11,7 @@ from recipe_engine.config import ConfigList, ConfigGroup, Single, List
 
 
 DEPS = [
+  'recipe_engine/cipd',
   'recipe_engine/file',
   'recipe_engine/path',
   'recipe_engine/properties',
@@ -68,54 +69,64 @@ PROPERTIES = {
 
 def RunSteps(api, package_locations, to_build, platform, force_build,
              package_prefix):
-  package_repos = api.path['cache'].join('builder')
-  current_repos = set()
-  try:
-    current_repos = set(p.pieces[-1] for p in api.file.glob_paths(
-      'read cached checkouts', package_repos, '*',
-      test_data=[
-        'deadbeef',
-        'badc0ffe',
-      ]
-    ))
-  except api.file.Error as err:  # pragma: no cover
-    if err.errno_name != 'ENOENT':
-      raise
+  # NOTE: We essentially ignore the on-machine CIPD cache here. We do this in
+  # order to make sure this builder always operates with the current set of tags
+  # on the server... Practically speaking, when messing with these builders it's
+  # easier to delete packages (especially packages which haven't been rolled out
+  # to any other machines).
+  #
+  # Without dumping the cache, the persisted tag cache can lead to weird
+  # behaviors where things like 'describe' permanently tries to load data about
+  # a deleted instance, leading to continual re-uploads of packages.
+  with api.cipd.cache_dir(api.path.mkdtemp()):
+    package_repos = api.path['cache'].join('builder')
+    current_repos = set()
+    try:
+      current_repos = set(p.pieces[-1] for p in api.file.glob_paths(
+        'read cached checkouts', package_repos, '*',
+        test_data=[
+          'deadbeef',
+          'badc0ffe',
+        ]
+      ))
+    except api.file.Error as err:  # pragma: no cover
+      if err.errno_name != 'ENOENT':
+        raise
 
-  api.support_3pp.set_package_prefix(package_prefix)
+    api.support_3pp.set_package_prefix(package_prefix)
 
-  actual_repos = set()
-  with api.step.nest('load packages from desired repos'):
-    for pl in package_locations:
-      repo = pl['repo']
-      ref = pl.get('ref', 'refs/heads/master')
-      subdir = pl.get('subdir', '')
+    actual_repos = set()
+    with api.step.nest('load packages from desired repos'):
+      for pl in package_locations:
+        repo = pl['repo']
+        ref = pl.get('ref', 'refs/heads/master')
+        subdir = pl.get('subdir', '')
 
-      hash_name = hashlib.sha1("%s:%s" % (repo, ref)).hexdigest()
-      actual_repos.add(hash_name)
+        hash_name = hashlib.sha1("%s:%s" % (repo, ref)).hexdigest()
+        actual_repos.add(hash_name)
 
-      checkout_path = package_repos.join(hash_name)
-      api.git.checkout(
-        repo, ref, checkout_path, submodules=False)
+        checkout_path = package_repos.join(hash_name)
+        api.git.checkout(
+          repo, ref, checkout_path, submodules=False)
 
-      if subdir:
-        checkout_path = checkout_path.join(*subdir.split('/'))
-      api.support_3pp.load_packages_from_path(checkout_path)
+        if subdir:
+          checkout_path = checkout_path.join(*subdir.split('/'))
+        api.support_3pp.load_packages_from_path(checkout_path)
 
-  with api.step.nest('remove unused repos'):
-    leftovers = current_repos - actual_repos
-    for hash_name in leftovers:
-      api.file.rmtree('rm %s' % (hash_name,),
-                      package_repos.join(hash_name))
+    with api.step.nest('remove unused repos'):
+      leftovers = current_repos - actual_repos
+      for hash_name in leftovers:
+        api.file.rmtree('rm %s' % (hash_name,),
+                        package_repos.join(hash_name))
 
-  _, unsupported = api.support_3pp.ensure_uploaded(
-    to_build, platform, force_build)
+    _, unsupported = api.support_3pp.ensure_uploaded(
+      to_build, platform, force_build)
 
-  if unsupported:
-    api.python.succeeding_step(
-      '%d packges unsupported for %r' % (len(unsupported), platform),
-      '<br/>' + '<br/>'.join(sorted(unsupported))
-    )
+    if unsupported:
+      api.python.succeeding_step(
+        '%d packges unsupported for %r' % (len(unsupported), platform),
+        '<br/>' + '<br/>'.join(sorted(unsupported))
+      )
 
 
 def GenTests(api):
