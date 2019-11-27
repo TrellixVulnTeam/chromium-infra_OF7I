@@ -19,7 +19,7 @@ api_version: 1
 threadsafe: false   # Force no concurrency
 instance_class: B8  # The beefiest instance class: 2 GB, 4.8 GHz CPU
 basic_scaling:
-  max_instances: 10
+  max_instances: 20
 
 # Allow only Builds service.
 handlers:
