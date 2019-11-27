@@ -61,7 +61,7 @@ func (t *testRun) AttemptedAtLeastOnce() bool {
 // at least one Skylab bot.
 func (t *testRun) ValidateDependencies(ctx context.Context, client swarming.Client) (bool, error) {
 	if err := t.argsGenerator.CheckConsistency(); err != nil {
-		logging.Infof(ctx, "Test rejected because argument consistency check failed: %s", err)
+		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
 		return false, nil
 	}
 
@@ -76,6 +76,9 @@ func (t *testRun) ValidateDependencies(ctx context.Context, client swarming.Clie
 	exists, err := client.BotExists(ctx, dims)
 	if err != nil {
 		return false, errors.Annotate(err, "validate dependencies").Err()
+	}
+	if !exists {
+		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions %s.", t.Name, dims)
 	}
 	return exists, nil
 }
