@@ -38,14 +38,14 @@ tracking tools and selected Monorail because of several key features:
 
 This user guide is organized into the following chapters:
 
-* [Quick start](/quick-start.md)
-* [Concepts](/concepts.md)
-* [Working with individual issues](/working-with-issues.md)
-* [Issue lists, grids, and charts](/list-views.md)
-* [Power user features](/power-users.md)
-* [Email notifications and replies](/email.md)
+* [Quick start](quick-start.md)
+* [Concepts](concepts.md)
+* [Working with individual issues](working-with-issues.md)
+* [Issue lists, grids, and charts](list-views.md)
+* [Power user features](power-users.md)
+* [Email notifications and replies](email.md)
 <!-- Feature launch tracking and approvals -->
-<!-- Other project pages for users -->
+* [Other project pages for users](project-pages.md)
 <!-- User profiles and hotlists -->
 <!-- Project owner guide -->
 <!-- Site admin guide -->
