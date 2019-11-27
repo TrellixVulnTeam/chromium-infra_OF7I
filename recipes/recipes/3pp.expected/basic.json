@@ -1,6 +1,15 @@
 [
   {
     "cmd": [
+      "docker",
+      "rmi",
+      "-f",
+      "gcr.io/chromium-container-registry/infra-dockerbuild/linux-arm64:v1.4.5"
+    ],
+    "name": "rm old image"
+  },
+  {
+    "cmd": [
       "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",

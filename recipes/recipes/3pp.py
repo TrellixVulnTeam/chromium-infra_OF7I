@@ -69,6 +69,10 @@ PROPERTIES = {
 
 def RunSteps(api, package_locations, to_build, platform, force_build,
              package_prefix):
+  # TODO(iannucci): remove this; docker image seems to be incorrect on m0
+  # builder
+  api.step('rm old image', ['docker', 'rmi', '-f', 'gcr.io/chromium-container-registry/infra-dockerbuild/linux-arm64:v1.4.5'])
+
   # NOTE: We essentially ignore the on-machine CIPD cache here. We do this in
   # order to make sure this builder always operates with the current set of tags
   # on the server... Practically speaking, when messing with these builders it's
