@@ -3,7 +3,7 @@
     "cmd": [
       "vpython",
       "-u",
-      "RECIPE_REPO[depot_tools]/gerrit_client.py",
+      "RECIPE_REPO[depot_tools]\\gerrit_client.py",
       "changes",
       "--host",
       "https://chromium-review.googlesource.com",
@@ -19,7 +19,7 @@
       "DOWNLOAD_COMMANDS"
     ],
     "env": {
-      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+      "PATH": "<PATH>;RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
     "name": "gerrit fetch current CL info",
@@ -43,17 +43,17 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_MODULE[depot_tools::bot_update]/resources/bot_update.py",
+      "RECIPE_MODULE[depot_tools::bot_update]\\resources\\bot_update.py",
       "--spec-path",
-      "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
+      "cache_dir = '[CACHE]\\\\git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
       "--patch_root",
-      "infra/luci",
+      "infra\\luci",
       "--revision_mapping_file",
       "{\"got_revision\": \"infra/luci\"}",
       "--git-cache-dir",
-      "[CACHE]/git",
+      "[CACHE]\\git",
       "--cleanup-dir",
-      "[CLEANUP]/bot_update",
+      "[CLEANUP]\\bot_update",
       "--output_json",
       "/path/to/tmp/json",
       "--patch_ref",
@@ -85,7 +85,7 @@
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"patch_failure\": false, @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"patch_root\": \"infra/luci\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"patch_root\": \"infra\\\\luci\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"properties\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"2fed50a953d2415fd4185c8fb72bf4c9808a597e\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/master@{#81833}\"@@@",
@@ -113,10 +113,10 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_REPO[depot_tools]/gclient.py",
+      "RECIPE_REPO[depot_tools]\\gclient.py",
       "runhooks"
     ],
-    "cwd": "[START_DIR]/infra",
+    "cwd": "[START_DIR]\\infra",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -132,16 +132,16 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython3",
+      "[START_DIR]\\infra\\luci\\.vpython3",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]/infra/luci/client/unittest.cfg",
+      "[START_DIR]\\infra\\luci\\client\\unittest.cfg",
       "-A",
       "!no_run"
     ],
-    "cwd": "[START_DIR]/infra/luci/client",
+    "cwd": "[START_DIR]\\infra\\luci\\client",
     "name": "client.run tests python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -151,12 +151,12 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython3",
+      "[START_DIR]\\infra\\luci\\.vpython3",
       "-u",
       "test_seq.py",
       "-v"
     ],
-    "cwd": "[START_DIR]/infra/luci/client",
+    "cwd": "[START_DIR]\\infra\\luci\\client",
     "name": "client.run tests seq python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -166,16 +166,16 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython",
+      "[START_DIR]\\infra\\luci\\.vpython",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]/infra/luci/client/unittest.cfg",
+      "[START_DIR]\\infra\\luci\\client\\unittest.cfg",
       "-A",
       "!no_run"
     ],
-    "cwd": "[START_DIR]/infra/luci/client",
+    "cwd": "[START_DIR]\\infra\\luci\\client",
     "name": "client.run tests python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -185,12 +185,12 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython",
+      "[START_DIR]\\infra\\luci\\.vpython",
       "-u",
       "test_seq.py",
       "-v"
     ],
-    "cwd": "[START_DIR]/infra/luci/client",
+    "cwd": "[START_DIR]\\infra\\luci\\client",
     "name": "client.run tests seq python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -204,18 +204,17 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython",
+      "[START_DIR]\\infra\\luci\\.vpython",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]/infra/luci/appengine/swarming/swarming_bot/unittest.cfg",
+      "[START_DIR]\\infra\\luci\\appengine\\swarming\\swarming_bot\\unittest.cfg",
       "-A",
       "!no_run"
     ],
-    "cwd": "[START_DIR]/infra/luci/appengine/swarming/swarming_bot",
+    "cwd": "[START_DIR]\\infra\\luci\\appengine\\swarming\\swarming_bot",
     "name": "swarming bot.run tests python2",
-    "timeout": 60,
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -224,14 +223,13 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython",
+      "[START_DIR]\\infra\\luci\\.vpython",
       "-u",
       "test_seq.py",
       "-v"
     ],
-    "cwd": "[START_DIR]/infra/luci/appengine/swarming/swarming_bot",
+    "cwd": "[START_DIR]\\infra\\luci\\appengine\\swarming\\swarming_bot",
     "name": "swarming bot.run tests seq python2",
-    "timeout": 60,
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
