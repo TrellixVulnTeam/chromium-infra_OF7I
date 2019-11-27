@@ -1,3 +1,26 @@
+# Release Notes sheriff-o-matic 2019-11-27
+
+- 5 commits, 4 bugs affected since f6ebaec (2019-11-24T23:08:39Z)
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [Allow sheriff to have option to merge bugs when grouping alerts (and also set the group name)](https://chromium-review.googlesource.com/c/infra/infra/+/1928356) (nqmtuan@google.com)
+- [Move bug section under alert section](https://chromium-review.googlesource.com/c/infra/infra/+/1935689) (nqmtuan@google.com)
+- [Allow deleting comments](https://chromium-review.googlesource.com/c/infra/infra/+/1935687) (nqmtuan@google.com)
+- [Filing bug should disable the file button to prevent double-filing](https://chromium-review.googlesource.com/c/infra/infra/+/1932502) (nqmtuan@google.com)
+- [Release note 25 Nov](https://chromium-review.googlesource.com/c/infra/infra/+/1932497) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/842182](https://crbug.com/842182)
+  -  [https://crbug.com/894980](https://crbug.com/894980)
+  -  [https://crbug.com/933351](https://crbug.com/933351)
+  -  [https://crbug.com/963186](https://crbug.com/963186)
+
+
 # Release Notes sheriff-o-matic 2019-11-25
 
 - 2 commits, 2 bugs affected since c72865a ()
