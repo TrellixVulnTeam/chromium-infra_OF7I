@@ -177,6 +177,11 @@ message Spec {
       //   using the normal linux-x64 by default, and optionally being able to
       //   explicitly choose the manylinux-x64 for packages that need it.
       bool no_docker_env = 4;
+
+      // If set, 3pp will not try to set up a compiler toolchain for this
+      // package. You can use this if your package is repackaging a prebuilt
+      // upstream package.
+      bool no_toolchain = 5;
     }
 
     // See CIPD documentation for specifics about these options.

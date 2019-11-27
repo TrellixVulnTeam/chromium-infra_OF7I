@@ -6,7 +6,9 @@ create {
     unpack_archive: true
     no_archive_prune: true
   }
-  build {}
+  build {
+    no_toolchain: true
+  }
 }
 
 upload { pkg_prefix: "tools" }

@@ -56,12 +56,15 @@ def run_script(api, *args, **kwargs):
     * compile_platform (str) - Indicates what platform we want this step to
       compile for. If omitted, executes under the host platform without any
       compiler available. Omit to use the host environment.
+    * no_toolchain (bool) - If compiling natively (without docker), do not
+      attempt to make a toolchain available.
     * workdir (Workdir) - The working directory object we're running the script
       under. Required if `compile_platform` is specified.
     * stdout - Passed through to the underlying step.
     * step_test_data - Passed through to the underlying step.
   """
   compile_platform = kwargs.pop('compile_platform', '')
+  no_toolchain = kwargs.pop('no_toolchain', False)
   workdir = kwargs.pop('workdir', None)
   stdout = kwargs.pop('stdout', None)
   step_test_data = kwargs.pop('step_test_data', None)
@@ -103,10 +106,11 @@ def run_script(api, *args, **kwargs):
   def no_sdk():
     yield
   sdk = no_sdk()
-  if compile_platform.startswith('mac-'):
-    sdk = api.osx_sdk('mac')
-  elif compile_platform.startswith('windows-'):
-    sdk = api.windows_sdk()
+  if not no_toolchain:
+    if compile_platform.startswith('mac-'):
+      sdk = api.osx_sdk('mac')
+    if compile_platform.startswith('windows-'):
+      sdk = api.windows_sdk()
 
   with sdk:
     if interpreter == 'bash':
