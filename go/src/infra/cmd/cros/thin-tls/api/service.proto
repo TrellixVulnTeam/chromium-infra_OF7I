@@ -12,6 +12,9 @@ service Tls {
   // Runs a shell command with the default shell.
   // Does not spawn a tty.
   rpc DutShell(DutShellRequest) returns (stream DutShellResponse);
+
+  // List available optional service
+  rpc AvailableServices(AvailableServicesRequest) returns (AvailableServicesResponse);
 }
 
 message DutShellRequest {
@@ -25,4 +28,15 @@ message DutShellResponse {
   bool exited = 2;
   bytes stdout = 3;
   bytes stderr = 4;
+}
+
+message AvailableServicesRequest {}
+message AvailableServicesResponse {
+  enum Service {
+    SERVICE_UNKNOWN = 0;
+    SERVICE_SERVO = 1;
+    SERVICE_RPM = 2;
+    SERVICE_CHAMELEON = 3;
+  }
+  repeated Service service = 1;
 }

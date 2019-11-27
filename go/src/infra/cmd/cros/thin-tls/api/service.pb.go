@@ -24,6 +24,37 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type AvailableServicesResponse_Service int32
+
+const (
+	AvailableServicesResponse_SERVICE_UNKNOWN   AvailableServicesResponse_Service = 0
+	AvailableServicesResponse_SERVICE_SERVO     AvailableServicesResponse_Service = 1
+	AvailableServicesResponse_SERVICE_RPM       AvailableServicesResponse_Service = 2
+	AvailableServicesResponse_SERVICE_CHAMELEON AvailableServicesResponse_Service = 3
+)
+
+var AvailableServicesResponse_Service_name = map[int32]string{
+	0: "SERVICE_UNKNOWN",
+	1: "SERVICE_SERVO",
+	2: "SERVICE_RPM",
+	3: "SERVICE_CHAMELEON",
+}
+
+var AvailableServicesResponse_Service_value = map[string]int32{
+	"SERVICE_UNKNOWN":   0,
+	"SERVICE_SERVO":     1,
+	"SERVICE_RPM":       2,
+	"SERVICE_CHAMELEON": 3,
+}
+
+func (x AvailableServicesResponse_Service) String() string {
+	return proto.EnumName(AvailableServicesResponse_Service_name, int32(x))
+}
+
+func (AvailableServicesResponse_Service) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a0b84a42fa06f626, []int{3, 0}
+}
+
 type DutShellRequest struct {
 	Command              string   `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -128,29 +159,110 @@ func (m *DutShellResponse) GetStderr() []byte {
 	return nil
 }
 
+type AvailableServicesRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AvailableServicesRequest) Reset()         { *m = AvailableServicesRequest{} }
+func (m *AvailableServicesRequest) String() string { return proto.CompactTextString(m) }
+func (*AvailableServicesRequest) ProtoMessage()    {}
+func (*AvailableServicesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0b84a42fa06f626, []int{2}
+}
+
+func (m *AvailableServicesRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AvailableServicesRequest.Unmarshal(m, b)
+}
+func (m *AvailableServicesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AvailableServicesRequest.Marshal(b, m, deterministic)
+}
+func (m *AvailableServicesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AvailableServicesRequest.Merge(m, src)
+}
+func (m *AvailableServicesRequest) XXX_Size() int {
+	return xxx_messageInfo_AvailableServicesRequest.Size(m)
+}
+func (m *AvailableServicesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_AvailableServicesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AvailableServicesRequest proto.InternalMessageInfo
+
+type AvailableServicesResponse struct {
+	Service              []AvailableServicesResponse_Service `protobuf:"varint,1,rep,packed,name=service,proto3,enum=cros.tls.experimental.AvailableServicesResponse_Service" json:"service,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                            `json:"-"`
+	XXX_unrecognized     []byte                              `json:"-"`
+	XXX_sizecache        int32                               `json:"-"`
+}
+
+func (m *AvailableServicesResponse) Reset()         { *m = AvailableServicesResponse{} }
+func (m *AvailableServicesResponse) String() string { return proto.CompactTextString(m) }
+func (*AvailableServicesResponse) ProtoMessage()    {}
+func (*AvailableServicesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0b84a42fa06f626, []int{3}
+}
+
+func (m *AvailableServicesResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AvailableServicesResponse.Unmarshal(m, b)
+}
+func (m *AvailableServicesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AvailableServicesResponse.Marshal(b, m, deterministic)
+}
+func (m *AvailableServicesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AvailableServicesResponse.Merge(m, src)
+}
+func (m *AvailableServicesResponse) XXX_Size() int {
+	return xxx_messageInfo_AvailableServicesResponse.Size(m)
+}
+func (m *AvailableServicesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_AvailableServicesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AvailableServicesResponse proto.InternalMessageInfo
+
+func (m *AvailableServicesResponse) GetService() []AvailableServicesResponse_Service {
+	if m != nil {
+		return m.Service
+	}
+	return nil
+}
+
 func init() {
+	proto.RegisterEnum("cros.tls.experimental.AvailableServicesResponse_Service", AvailableServicesResponse_Service_name, AvailableServicesResponse_Service_value)
 	proto.RegisterType((*DutShellRequest)(nil), "cros.tls.experimental.DutShellRequest")
 	proto.RegisterType((*DutShellResponse)(nil), "cros.tls.experimental.DutShellResponse")
+	proto.RegisterType((*AvailableServicesRequest)(nil), "cros.tls.experimental.AvailableServicesRequest")
+	proto.RegisterType((*AvailableServicesResponse)(nil), "cros.tls.experimental.AvailableServicesResponse")
 }
 
 func init() { proto.RegisterFile("service.proto", fileDescriptor_a0b84a42fa06f626) }
 
 var fileDescriptor_a0b84a42fa06f626 = []byte{
-	// 210 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x90, 0xc1, 0x4a, 0xc4, 0x30,
-	0x10, 0x86, 0x89, 0x75, 0xd7, 0x35, 0x28, 0x4a, 0x40, 0x09, 0x9e, 0xca, 0x1e, 0xb4, 0x20, 0x04,
-	0xd1, 0x37, 0x10, 0x9f, 0x20, 0x7a, 0x12, 0x3c, 0xc4, 0x66, 0xc0, 0x40, 0xda, 0xc4, 0x99, 0x89,
-	0xec, 0xe3, 0x8b, 0x6d, 0xaa, 0x20, 0x82, 0xc7, 0xef, 0xe7, 0x83, 0xe1, 0x1b, 0x79, 0x4c, 0x80,
-	0x1f, 0xa1, 0x07, 0x93, 0x31, 0x71, 0x52, 0x67, 0x3d, 0x26, 0x32, 0x1c, 0xc9, 0xc0, 0x2e, 0x03,
-	0x86, 0x01, 0x46, 0x76, 0x71, 0x7b, 0x2d, 0x4f, 0x1e, 0x0a, 0x3f, 0xbe, 0x41, 0x8c, 0x16, 0xde,
-	0x0b, 0x10, 0x2b, 0x2d, 0x0f, 0xfa, 0x34, 0x0c, 0x6e, 0xf4, 0x5a, 0xb4, 0xa2, 0x3b, 0xb4, 0x0b,
-	0x6e, 0x51, 0x9e, 0xfe, 0xc8, 0x94, 0xd3, 0x48, 0xa0, 0xce, 0xe5, 0x9a, 0xd8, 0x71, 0xa1, 0x49,
-	0x5e, 0xd9, 0x4a, 0x5f, 0x3b, 0xec, 0x02, 0x83, 0xd7, 0x7b, 0xad, 0xe8, 0x36, 0xb6, 0xd2, 0xec,
-	0xfb, 0x54, 0x58, 0x37, 0xad, 0xe8, 0x8e, 0x6c, 0xa5, 0xba, 0x03, 0xa2, 0xde, 0xff, 0xde, 0x01,
-	0xf1, 0xd6, 0xcb, 0xe6, 0x29, 0x92, 0x7a, 0x91, 0x9b, 0xe5, 0xb4, 0xba, 0x34, 0x7f, 0xb6, 0x98,
-	0x5f, 0x21, 0x17, 0x57, 0xff, 0x7a, 0x73, 0xc3, 0x8d, 0xb8, 0x5f, 0x3d, 0x37, 0x2e, 0x87, 0xd7,
-	0xf5, 0xf4, 0xab, 0xbb, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x3c, 0xc8, 0xa2, 0xcd, 0x3c, 0x01,
-	0x00, 0x00,
+	// 343 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0xdd, 0x4a, 0xeb, 0x40,
+	0x14, 0x85, 0xcf, 0x34, 0xa7, 0x3f, 0x67, 0x1f, 0x6b, 0xd3, 0x91, 0x4a, 0xec, 0x55, 0xc8, 0x85,
+	0x06, 0x84, 0x58, 0xea, 0x8d, 0xb7, 0xb5, 0x06, 0x14, 0x6d, 0x2a, 0x53, 0x7f, 0x50, 0x10, 0x49,
+	0xdb, 0x0d, 0x06, 0xa6, 0x4d, 0x9c, 0x99, 0x94, 0x3e, 0xa3, 0xcf, 0xe0, 0xc3, 0x48, 0x9b, 0x89,
+	0x82, 0xb6, 0xa8, 0x57, 0x61, 0x7d, 0x59, 0xec, 0xd9, 0x6b, 0xcd, 0x40, 0x55, 0xa2, 0x98, 0x45,
+	0x23, 0xf4, 0x12, 0x11, 0xab, 0x98, 0x36, 0x46, 0x22, 0x96, 0x9e, 0xe2, 0xd2, 0xc3, 0x79, 0x82,
+	0x22, 0x9a, 0xe0, 0x54, 0x85, 0xdc, 0xd9, 0x87, 0xda, 0x49, 0xaa, 0x06, 0x4f, 0xc8, 0x39, 0xc3,
+	0xe7, 0x14, 0xa5, 0xa2, 0x16, 0x94, 0x47, 0xf1, 0x64, 0x12, 0x4e, 0xc7, 0x16, 0xb1, 0x89, 0xfb,
+	0x8f, 0xe5, 0xd2, 0x11, 0x60, 0x7e, 0x98, 0x65, 0x12, 0x4f, 0x25, 0xd2, 0x6d, 0x28, 0x49, 0x15,
+	0xaa, 0x54, 0x2e, 0xcd, 0x45, 0xa6, 0xd5, 0x82, 0xe3, 0x3c, 0x52, 0x38, 0xb6, 0x0a, 0x36, 0x71,
+	0x2b, 0x4c, 0xab, 0xcc, 0x3f, 0x8e, 0x53, 0x65, 0x19, 0x36, 0x71, 0x37, 0x98, 0x56, 0x9a, 0xa3,
+	0x10, 0xd6, 0xdf, 0x77, 0x8e, 0x42, 0x38, 0x4d, 0xb0, 0x3a, 0xb3, 0x30, 0xe2, 0xe1, 0x90, 0xe3,
+	0x20, 0x4b, 0x24, 0xf5, 0xa6, 0xce, 0x0b, 0x81, 0x9d, 0x15, 0x3f, 0xf5, 0x66, 0x0c, 0xca, 0xba,
+	0x02, 0x8b, 0xd8, 0x86, 0xbb, 0xd9, 0x3e, 0xf2, 0x56, 0x76, 0xe0, 0xad, 0x1d, 0xe1, 0x69, 0xc0,
+	0xf2, 0x41, 0xce, 0x1d, 0x94, 0x35, 0xa3, 0x5b, 0x50, 0x1b, 0xf8, 0xec, 0xe6, 0xac, 0xeb, 0x3f,
+	0x5e, 0x07, 0xe7, 0x41, 0xff, 0x36, 0x30, 0xff, 0xd0, 0x3a, 0x54, 0x73, 0xb8, 0xf8, 0xf6, 0x4d,
+	0x42, 0x6b, 0xf0, 0x3f, 0x47, 0xec, 0xb2, 0x67, 0x16, 0x68, 0x03, 0xea, 0x39, 0xe8, 0x9e, 0x76,
+	0x7a, 0xfe, 0x85, 0xdf, 0x0f, 0x4c, 0xa3, 0xfd, 0x4a, 0xc0, 0xb8, 0xe2, 0x92, 0x3e, 0x40, 0x25,
+	0x2f, 0x99, 0xee, 0xae, 0xd9, 0xf8, 0xd3, 0x95, 0x35, 0xf7, 0xbe, 0xf5, 0x65, 0x81, 0x5a, 0x84,
+	0xce, 0xa0, 0xfe, 0x25, 0x2f, 0x3d, 0xf8, 0x79, 0x33, 0xd9, 0x81, 0xad, 0xdf, 0x56, 0x79, 0x5c,
+	0xbc, 0x37, 0xc2, 0x24, 0x1a, 0x96, 0x96, 0xaf, 0xf1, 0xf0, 0x2d, 0x00, 0x00, 0xff, 0xff, 0xe7,
+	0xb2, 0x52, 0x07, 0x9e, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -168,6 +280,8 @@ type TlsClient interface {
 	// Runs a shell command with the default shell.
 	// Does not spawn a tty.
 	DutShell(ctx context.Context, in *DutShellRequest, opts ...grpc.CallOption) (Tls_DutShellClient, error)
+	// List available optional service
+	AvailableServices(ctx context.Context, in *AvailableServicesRequest, opts ...grpc.CallOption) (*AvailableServicesResponse, error)
 }
 
 type tlsClient struct {
@@ -210,11 +324,22 @@ func (x *tlsDutShellClient) Recv() (*DutShellResponse, error) {
 	return m, nil
 }
 
+func (c *tlsClient) AvailableServices(ctx context.Context, in *AvailableServicesRequest, opts ...grpc.CallOption) (*AvailableServicesResponse, error) {
+	out := new(AvailableServicesResponse)
+	err := c.cc.Invoke(ctx, "/cros.tls.experimental.Tls/AvailableServices", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TlsServer is the server API for Tls service.
 type TlsServer interface {
 	// Runs a shell command with the default shell.
 	// Does not spawn a tty.
 	DutShell(*DutShellRequest, Tls_DutShellServer) error
+	// List available optional service
+	AvailableServices(context.Context, *AvailableServicesRequest) (*AvailableServicesResponse, error)
 }
 
 // UnimplementedTlsServer can be embedded to have forward compatible implementations.
@@ -223,6 +348,9 @@ type UnimplementedTlsServer struct {
 
 func (*UnimplementedTlsServer) DutShell(req *DutShellRequest, srv Tls_DutShellServer) error {
 	return status.Errorf(codes.Unimplemented, "method DutShell not implemented")
+}
+func (*UnimplementedTlsServer) AvailableServices(ctx context.Context, req *AvailableServicesRequest) (*AvailableServicesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AvailableServices not implemented")
 }
 
 func RegisterTlsServer(s *grpc.Server, srv TlsServer) {
@@ -250,10 +378,33 @@ func (x *tlsDutShellServer) Send(m *DutShellResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Tls_AvailableServices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AvailableServicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TlsServer).AvailableServices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cros.tls.experimental.Tls/AvailableServices",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TlsServer).AvailableServices(ctx, req.(*AvailableServicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Tls_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "cros.tls.experimental.Tls",
 	HandlerType: (*TlsServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AvailableServices",
+			Handler:    _Tls_AvailableServices_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "DutShell",
