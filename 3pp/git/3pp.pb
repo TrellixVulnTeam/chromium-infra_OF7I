@@ -27,6 +27,10 @@ create {
   platform_re: "windows-.*"
   source { script { name: "fetch_win.py" }}
   build { install: "install_win.sh" }
+  package {
+    alter_version_re: "(.*)\.windows\.\d*(.*)"
+    alter_version_replace: "\\1\\2"
+  }
 }
 
 upload { pkg_prefix: "tools" }

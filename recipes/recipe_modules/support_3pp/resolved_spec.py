@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import re
+
 
 def parse_name_version(name_version):
   """Parses a package 'name', or 'name@version'.
@@ -199,8 +201,18 @@ class ResolvedSpec(object):
     if not self._spec_pb.upload.universal:
       pkg_name = '/'.join([pkg_name, self.platform])
     patch_ver = self.create_pb.source.patch_version
+
+    extra_tags = {}
+    if self.create_pb.package.alter_version_re:
+      extra_tags['real_version'] = version
+      version = re.sub(
+          self.create_pb.package.alter_version_re,
+          self.create_pb.package.alter_version_replace,
+          version)
+
     symver = '%s%s' % (version, '.'+patch_ver if patch_ver else '')
-    return self._cipd_spec_pool.get(pkg_name, symver)
+
+    return self._cipd_spec_pool.get(pkg_name, symver, extra_tags)
 
   @property
   def _sort_tuple(self):

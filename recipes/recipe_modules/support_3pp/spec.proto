@@ -194,6 +194,23 @@ message Spec {
       //
       // If omitted, no version file will be added to the package.
       string version_file = 2;
+
+      // (optional) The alter_version fields are used to change the version
+      // number we tag in CIPD as `version`. This is useful for when the
+      // upstream source versions vary across platforms (for example).
+      //
+      // This is applied like:
+      //
+      //   re.sub(
+      //     alter_version_re,
+      //     alter_version_replace,
+      //     full_symver_without_patch_version)
+      //
+      // If these are specified, the uploaded package will also be tagged with
+      // an additional tag `real_version`. This will be the original value of
+      // `version` before transformation.
+      string alter_version_re = 3;
+      string alter_version_replace = 4;
     }
 
     message Verify {

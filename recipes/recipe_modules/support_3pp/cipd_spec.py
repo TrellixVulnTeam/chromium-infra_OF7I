@@ -15,12 +15,12 @@ class CIPDSpecPool(object):
     self._version_cache = {}
     self._api = api
 
-  def get(self, pkg, symver):
+  def get(self, pkg, symver, extra_tags=None):
     """Returns a CIPDSpec from this pool for the given (pkg, symver)."""
     key = (pkg, symver)
     if key not in self._spec_cache:
       self._spec_cache[key] = CIPDSpec(
-        self._api, self._version_cache, pkg, symver)
+        self._api, self._version_cache, pkg, symver, extra_tags or {})
     return self._spec_cache[key]
 
 
@@ -34,10 +34,11 @@ class CIPDSpec(object):
     * Uploading the locally cached package to the server
     * Deploying the locally cached package to disk
   """
-  def __init__(self, api, version_cache, pkg, symver):
+  def __init__(self, api, version_cache, pkg, symver, extra_tags):
     self._api = api
     self._pkg = str(pkg)
     self._symver = str(symver)
+    self._extra_tags = {str(k): str(v) for k, v in extra_tags.iteritems()}
     # (pkg, symver) -> instance_id
     self._version_cache = version_cache
     assert self._pkg != 'None'
@@ -200,6 +201,7 @@ class CIPDSpec(object):
     tags = {'version': self._symver}
     if self._api.buildbucket.build.id:
       tags['build_id'] = str(self._api.buildbucket.build.id)
+    tags.update(self._extra_tags)
     refs = ['latest'] if latest else []
 
     try:

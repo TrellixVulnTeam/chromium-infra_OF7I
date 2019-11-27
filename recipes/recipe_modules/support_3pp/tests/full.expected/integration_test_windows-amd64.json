@@ -379,7 +379,13 @@
       "@@@STEP_LOG_LINE@3pp.pb@      platform_re: \"windows-.*\"@@@",
       "@@@STEP_LOG_LINE@3pp.pb@      experimental: true@@@",
       "@@@STEP_LOG_LINE@3pp.pb@      source { script { name: \"fetch.py\" } }@@@",
-      "@@@STEP_LOG_LINE@3pp.pb@      build { install: \"win_install.py\" }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      build {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        install: \"win_install.py\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      package {@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        alter_version_re: \"(.*)\\.windows\\.\\d*(.*)\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        alter_version_replace: \"\\\\1\\\\2\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@@@@",
       "@@@STEP_LOG_LINE@3pp.pb@    upload { pkg_prefix: \"tools\" }@@@",
@@ -1515,7 +1521,7 @@
     "name": "building windows_experiment.fetch.py latest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@resolved version: 2.0.0@@@"
+      "@@@STEP_TEXT@resolved version: 2.0.0.windows.1@@@"
     ]
   },
   {
@@ -1556,7 +1562,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0"
+      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1564,7 +1570,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "infra_step": true,
     "name": "building windows_experiment.mkdir -p [workdir]",
@@ -1589,7 +1595,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout"
+      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1597,7 +1603,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "infra_step": true,
     "name": "building windows_experiment.fetch sources.mkdir -p [workdir]/checkout/",
@@ -1611,7 +1617,7 @@
       "-u",
       "[CACHE]\\builder\\package_repo\\windows_experiment\\fetch.py",
       "checkout",
-      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout"
+      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1619,9 +1625,9 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
-    "name": "building windows_experiment.fetch sources.fetch.py checkout [START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout",
+    "name": "building windows_experiment.fetch sources.fetch.py checkout [START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
@@ -1635,7 +1641,7 @@
       "/path/to/tmp/json",
       "copytree",
       "[CACHE]\\builder\\package_repo",
-      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout\\.3pp"
+      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout\\.3pp"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1643,7 +1649,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "infra_step": true,
     "name": "building windows_experiment.fetch sources.copy package definition",
@@ -1668,7 +1674,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\out"
+      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\out"
     ],
     "env": {
       "GOARCH": "amd64",
@@ -1676,7 +1682,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "infra_step": true,
     "name": "building windows_experiment.run installation.make output dir",
@@ -1695,19 +1701,19 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "cwd": "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout",
+    "cwd": "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "windows",
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "env_prefixes": {
       "PATH": [
-        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\tools_prefix",
-        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\tools_prefix\\bin"
+        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\tools_prefix",
+        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\tools_prefix\\bin"
       ]
     },
     "infra_step": true,
@@ -1735,19 +1741,19 @@
       "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout",
+    "cwd": "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "windows",
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "env_prefixes": {
       "PATH": [
-        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\tools_prefix",
-        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\tools_prefix\\bin"
+        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\tools_prefix",
+        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\tools_prefix\\bin"
       ]
     },
     "name": "building windows_experiment.run installation.read SetEnv.x64.json",
@@ -1779,11 +1785,11 @@
     "cmd": [
       "vpython",
       "-u",
-      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout\\.3pp\\windows_experiment\\win_install.py",
-      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\out",
-      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\deps_prefix"
+      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout\\.3pp\\windows_experiment\\win_install.py",
+      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\out",
+      "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\deps_prefix"
     ],
-    "cwd": "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout",
+    "cwd": "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "windows",
@@ -1791,16 +1797,16 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "env_prefixes": {
       "PATH": [
         "[CACHE]\\windows_sdk\\win_sdk\\bin\\x64",
-        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\tools_prefix",
-        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\tools_prefix\\bin"
+        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\tools_prefix",
+        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\tools_prefix\\bin"
       ]
     },
-    "name": "building windows_experiment.run installation.win_install.py [START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\out [START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\deps_prefix",
+    "name": "building windows_experiment.run installation.win_install.py [START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\out [START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
@@ -1813,19 +1819,19 @@
       "/im",
       "mspdbsrv.exe"
     ],
-    "cwd": "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\checkout",
+    "cwd": "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout",
     "env": {
       "GOARCH": "amd64",
       "GOOS": "windows",
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "env_prefixes": {
       "PATH": [
-        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\tools_prefix",
-        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0\\tools_prefix\\bin"
+        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\tools_prefix",
+        "[START_DIR]\\3pp\\wd\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\tools_prefix\\bin"
       ]
     },
     "name": "building windows_experiment.run installation.taskkill mspdbsrv",
@@ -1838,7 +1844,7 @@
       "cipd.bat",
       "pkg-build",
       "-pkg-def",
-      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"experimental/3pp/tools/windows_experiment/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\windows_experiment\\\\windows-amd64\\\\2.0.0\\\\out\"}",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"experimental/3pp/tools/windows_experiment/windows-amd64\", \"root\": \"[START_DIR]\\\\3pp\\\\wd\\\\windows_experiment\\\\windows-amd64\\\\2.0.0.windows.1\\\\out\"}",
       "-out",
       "[CLEANUP]\\tmp_tmp_4",
       "-hash-algo",
@@ -1852,7 +1858,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "name": "building windows_experiment.build experimental/3pp/tools/windows_experiment/windows-amd64",
     "~followup_annotations": [
@@ -1884,7 +1890,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "infra_step": true,
     "name": "building windows_experiment.ensure cipd pkg cache exists",
@@ -1909,7 +1915,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "infra_step": true,
     "name": "building windows_experiment.mv built cipd pkg to cache",
@@ -1940,7 +1946,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "name": "building windows_experiment.do upload.cipd describe experimental/3pp/tools/windows_experiment/windows-amd64",
     "~followup_annotations": [
@@ -1962,6 +1968,8 @@
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
+      "real_version:2.0.0.windows.1",
+      "-tag",
       "version:2.0.0",
       "-json-output",
       "/path/to/tmp/json"
@@ -1972,7 +1980,7 @@
       "_3PP_PACKAGE_NAME": "windows_experiment",
       "_3PP_PLATFORM": "windows-amd64",
       "_3PP_TOOL_PLATFORM": "windows-amd64",
-      "_3PP_VERSION": "2.0.0"
+      "_3PP_VERSION": "2.0.0.windows.1"
     },
     "name": "building windows_experiment.do upload.register experimental/3pp/tools/windows_experiment/windows-amd64",
     "~followup_annotations": [

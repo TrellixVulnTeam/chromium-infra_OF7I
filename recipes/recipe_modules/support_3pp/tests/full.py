@@ -185,7 +185,7 @@ def GenTests(api):
     create { unsupported: true }
     ''',
 
-    windows_experiment='''
+    windows_experiment=r'''
     create {
       platform_re: "linux-.*|mac-.*"
       source { script { name: "fetch.py" } }
@@ -196,7 +196,13 @@ def GenTests(api):
       platform_re: "windows-.*"
       experimental: true
       source { script { name: "fetch.py" } }
-      build { install: "win_install.py" }
+      build {
+        install: "win_install.py"
+      }
+      package {
+        alter_version_re: "(.*)\.windows\.\d*(.*)"
+        alter_version_replace: "\\1\\2"
+      }
     }
 
     upload { pkg_prefix: "tools" }
@@ -276,6 +282,10 @@ def GenTests(api):
         'building posix_tool', 'fetch sources', 'unpack_archive',
         'find archive to unpack',
       ), api.file.glob_paths(['archive.tgz']))
+    else:
+      test += api.step_data(mk_name(
+          'building windows_experiment', 'fetch.py latest',
+      ), stdout=api.raw_io.output('2.0.0.windows.1'))
 
     for pkg, spec in pkgs:
       test += api.step_data("load package specs.read '%s'" % pkg,
