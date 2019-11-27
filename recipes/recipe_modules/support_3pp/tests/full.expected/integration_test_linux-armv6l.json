@@ -4,6 +4,9 @@
       "echo",
       "3pp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "name": "echo package_prefix"
   },
   {
@@ -17,6 +20,9 @@
       "[CACHE]/builder/package_repo",
       "*/3pp.pb"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "find package specs",
     "~followup_annotations": [
@@ -48,6 +54,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/already_uploaded/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'already_uploaded'",
     "~followup_annotations": [
@@ -76,6 +85,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/bottom_dep/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'bottom_dep'",
     "~followup_annotations": [
@@ -105,6 +117,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/deep_dep/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'deep_dep'",
     "~followup_annotations": [
@@ -133,6 +148,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/dep/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'dep'",
     "~followup_annotations": [
@@ -165,6 +183,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/fetch_and_package/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'fetch_and_package'",
     "~followup_annotations": [
@@ -190,6 +211,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/pkg/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'pkg'",
     "~followup_annotations": [
@@ -218,6 +242,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/posix_tool/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'posix_tool'",
     "~followup_annotations": [
@@ -251,6 +278,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/tool/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'tool'",
     "~followup_annotations": [
@@ -343,6 +373,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/unsupported/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'unsupported'",
     "~followup_annotations": [
@@ -364,6 +397,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/windows_experiment/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'windows_experiment'",
     "~followup_annotations": [
@@ -408,6 +444,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "already_uploaded",
@@ -461,6 +498,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -491,6 +529,7 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-amd64/1.0"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -524,6 +563,7 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-amd64/1.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -549,6 +589,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -584,6 +625,7 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-amd64/1.0/checkout/.3pp"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -617,6 +659,7 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-amd64/1.0/out"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -654,14 +697,14 @@
       "_3PP_TOOL_PLATFORM",
       "linux-amd64",
       "--env",
-      "GOARCH",
-      "amd64",
+      "GOOS",
+      "linux",
       "--env",
       "_3PP_VERSION",
       "1.0",
       "--env",
-      "GOOS",
-      "linux",
+      "GOARCH",
+      "amd64",
       "--env",
       "_3PP_PLATFORM",
       "linux-amd64",
@@ -676,6 +719,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/bottom_dep/linux-amd64/1.0/checkout",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -702,13 +746,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/bottom_dep/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/bottom_dep/linux-amd64/1.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_1",
+      "[CLEANUP]/tmp_tmp_2",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -741,6 +786,7 @@
       "[CACHE]/3pp_cipd/3pp/deps/bottom_dep/linux-amd64"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -762,10 +808,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_1",
+      "[CLEANUP]/tmp_tmp_2",
       "[CACHE]/3pp_cipd/3pp/deps/bottom_dep/linux-amd64/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -797,6 +844,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -829,6 +877,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -864,6 +913,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -894,6 +944,7 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-armv6l/1.0"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -927,6 +978,7 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-armv6l/1.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -952,6 +1004,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -987,6 +1040,7 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-armv6l/1.0/checkout/.3pp"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -1020,6 +1074,7 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-armv6l/1.0/out"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -1057,14 +1112,14 @@
       "_3PP_TOOL_PLATFORM",
       "linux-amd64",
       "--env",
-      "GOARCH",
-      "arm",
+      "GOOS",
+      "linux",
       "--env",
       "_3PP_VERSION",
       "1.0",
       "--env",
-      "GOOS",
-      "linux",
+      "GOARCH",
+      "arm",
       "--env",
       "_3PP_PLATFORM",
       "linux-armv6l",
@@ -1079,6 +1134,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/bottom_dep/linux-armv6l/1.0/checkout",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -1105,13 +1161,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/bottom_dep/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/bottom_dep/linux-armv6l/1.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_2",
+      "[CLEANUP]/tmp_tmp_3",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -1144,6 +1201,7 @@
       "[CACHE]/3pp_cipd/3pp/deps/bottom_dep/linux-armv6l"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -1165,10 +1223,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_2",
+      "[CLEANUP]/tmp_tmp_3",
       "[CACHE]/3pp_cipd/3pp/deps/bottom_dep/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -1200,6 +1259,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -1232,6 +1292,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "bottom_dep",
@@ -1267,6 +1328,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1297,6 +1359,7 @@
       "[START_DIR]/3pp/wd/deep_dep/linux-armv6l/1.0.0"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1330,6 +1393,7 @@
       "[START_DIR]/3pp/wd/deep_dep/linux-armv6l/1.0.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1355,6 +1419,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1385,13 +1450,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/deep_dep/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/deep_dep/linux-armv6l/1.0.0/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_3",
+      "[CLEANUP]/tmp_tmp_4",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1424,6 +1490,7 @@
       "[CACHE]/3pp_cipd/3pp/deps/deep_dep/linux-armv6l"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1445,10 +1512,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_3",
+      "[CLEANUP]/tmp_tmp_4",
       "[CACHE]/3pp_cipd/3pp/deps/deep_dep/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1480,6 +1548,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1512,6 +1581,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "deep_dep",
@@ -1544,6 +1614,7 @@
       "latest"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1567,6 +1638,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1597,6 +1669,7 @@
       "[START_DIR]/3pp/wd/fetch_and_package/linux-amd64/2.0.0"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1630,6 +1703,7 @@
       "[START_DIR]/3pp/wd/fetch_and_package/linux-amd64/2.0.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1652,6 +1726,7 @@
       "[START_DIR]/3pp/wd/fetch_and_package/linux-amd64/2.0.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1671,13 +1746,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/fetch_and_package\", \"root\": \"[START_DIR]/3pp/wd/fetch_and_package/linux-amd64/2.0.0/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_4",
+      "[CLEANUP]/tmp_tmp_5",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1710,6 +1786,7 @@
       "[CACHE]/3pp_cipd/3pp/tools/fetch_and_package"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1731,10 +1808,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_4",
+      "[CLEANUP]/tmp_tmp_5",
       "[CACHE]/3pp_cipd/3pp/tools/fetch_and_package/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1766,6 +1844,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1798,6 +1877,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "fetch_and_package",
@@ -1833,6 +1913,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -1863,6 +1944,7 @@
       "[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -1896,6 +1978,7 @@
       "[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -1921,6 +2004,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -1963,6 +2047,7 @@
       "*.*"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -1988,9 +2073,10 @@
       "/path/to/tmp/json",
       "copy",
       "[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/checkout/archive.tgz",
-      "[CLEANUP]/tmp_tmp_5/archive.tgz"
+      "[CLEANUP]/tmp_tmp_6/archive.tgz"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2015,6 +2101,7 @@
       "[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2034,11 +2121,12 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]/resources/extract.py",
       "--json-input",
-      "{\"archive_file\": \"[CLEANUP]/tmp_tmp_5/archive.tgz\", \"include_files\": [], \"output\": \"[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/checkout\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[CLEANUP]/tmp_tmp_6/archive.tgz\", \"include_files\": [], \"output\": \"[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/checkout\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2070,6 +2158,7 @@
       "[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2095,6 +2184,7 @@
       "[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/checkout/.3pp"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2128,6 +2218,7 @@
       "[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/out"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2165,14 +2256,14 @@
       "_3PP_TOOL_PLATFORM",
       "linux-amd64",
       "--env",
-      "GOARCH",
-      "arm",
+      "GOOS",
+      "linux",
       "--env",
       "_3PP_VERSION",
       "1.2.0",
       "--env",
-      "GOOS",
-      "linux",
+      "GOARCH",
+      "arm",
       "--env",
       "_3PP_PLATFORM",
       "linux-armv6l",
@@ -2187,6 +2278,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/checkout",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -2213,13 +2305,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/posix_tool/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/posix_tool/linux-armv6l/1.2.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_6",
+      "[CLEANUP]/tmp_tmp_7",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2252,6 +2345,7 @@
       "[CACHE]/3pp_cipd/3pp/tools/posix_tool/linux-armv6l"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2273,10 +2367,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_6",
+      "[CLEANUP]/tmp_tmp_7",
       "[CACHE]/3pp_cipd/3pp/tools/posix_tool/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2308,6 +2403,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2340,6 +2436,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "posix_tool",
@@ -2372,6 +2469,7 @@
       "latest"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2395,6 +2493,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2425,6 +2524,7 @@
       "[START_DIR]/3pp/wd/windows_experiment/linux-armv6l/2.0.0"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2458,6 +2558,7 @@
       "[START_DIR]/3pp/wd/windows_experiment/linux-armv6l/2.0.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2480,6 +2581,7 @@
       "[START_DIR]/3pp/wd/windows_experiment/linux-armv6l/2.0.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2504,6 +2606,7 @@
       "[START_DIR]/3pp/wd/windows_experiment/linux-armv6l/2.0.0/checkout/.3pp"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2537,6 +2640,7 @@
       "[START_DIR]/3pp/wd/windows_experiment/linux-armv6l/2.0.0/out"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2574,14 +2678,14 @@
       "_3PP_TOOL_PLATFORM",
       "linux-amd64",
       "--env",
-      "GOARCH",
-      "arm",
+      "GOOS",
+      "linux",
       "--env",
       "_3PP_VERSION",
       "2.0.0",
       "--env",
-      "GOOS",
-      "linux",
+      "GOARCH",
+      "arm",
       "--env",
       "_3PP_PLATFORM",
       "linux-armv6l",
@@ -2596,6 +2700,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/windows_experiment/linux-armv6l/2.0.0/checkout",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -2622,13 +2727,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/windows_experiment/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/windows_experiment/linux-armv6l/2.0.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_7",
+      "[CLEANUP]/tmp_tmp_8",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2661,6 +2767,7 @@
       "[CACHE]/3pp_cipd/3pp/tools/windows_experiment/linux-armv6l"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2682,10 +2789,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_7",
+      "[CLEANUP]/tmp_tmp_8",
       "[CACHE]/3pp_cipd/3pp/tools/windows_experiment/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2717,6 +2825,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2749,6 +2858,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "windows_experiment",
@@ -2782,6 +2892,7 @@
     ],
     "cwd": "None",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -2807,6 +2918,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -2838,6 +2950,7 @@
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -2877,6 +2990,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -2910,6 +3024,7 @@
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -2935,6 +3050,7 @@
       "https://go.repo/tool"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -2958,6 +3074,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "PATH": "RECIPE_REPO[depot_tools]:<PATH>",
@@ -2982,6 +3099,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3004,6 +3122,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3029,6 +3148,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3051,6 +3171,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3075,6 +3196,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3101,6 +3223,7 @@
       "*"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3124,6 +3247,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3150,6 +3274,7 @@
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/.3pp"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3184,6 +3309,7 @@
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/out"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3247,6 +3373,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -3274,13 +3401,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/tool/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_8",
+      "[CLEANUP]/tmp_tmp_9",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3314,6 +3442,7 @@
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3336,10 +3465,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_8",
+      "[CLEANUP]/tmp_tmp_9",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3374,6 +3504,7 @@
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/verify"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3400,6 +3531,7 @@
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/verify/cipd.pkg"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3427,6 +3559,7 @@
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/bin_tools"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3453,6 +3586,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3527,6 +3661,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/verify",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -3564,6 +3699,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3597,6 +3733,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "amd64",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3633,6 +3770,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3664,6 +3802,7 @@
       "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3700,11 +3839,12 @@
       "-version",
       "version:0.9.0.chops.1",
       "-out",
-      "[CLEANUP]/tmp_tmp_9",
+      "[CLEANUP]/tmp_tmp_10",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3739,6 +3879,7 @@
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3761,10 +3902,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_9",
+      "[CLEANUP]/tmp_tmp_10",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/resolved-instance_id-of-version:0.9.0.ch"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3790,6 +3932,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3828,6 +3971,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3861,6 +4005,7 @@
       "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3886,6 +4031,7 @@
       "https://go.repo/tool"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3909,6 +4055,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "PATH": "RECIPE_REPO[depot_tools]:<PATH>",
@@ -3933,6 +4080,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3955,6 +4103,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -3980,6 +4129,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4002,6 +4152,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4026,6 +4177,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4052,6 +4204,7 @@
       "*"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4075,6 +4228,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4101,6 +4255,7 @@
       "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout/.3pp"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4135,6 +4290,7 @@
       "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/out"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4199,6 +4355,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/checkout",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -4226,13 +4383,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}, {\"version_file\": \".versions/tool.cipd_version\"}], \"install_mode\": \"copy\", \"package\": \"3pp/build_tools/tool/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_10",
+      "[CLEANUP]/tmp_tmp_11",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4266,6 +4424,7 @@
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-armv6l"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4288,10 +4447,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_10",
+      "[CLEANUP]/tmp_tmp_11",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4326,6 +4486,7 @@
       "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/verify"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4352,6 +4513,7 @@
       "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/verify/cipd.pkg"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4379,6 +4541,7 @@
       "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/bin_tools"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4405,6 +4568,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4479,6 +4643,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-armv6l/1.5.0-rc1/verify",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -4516,6 +4681,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4547,6 +4713,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4581,6 +4748,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout/src/go.repo/tool",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "tool",
@@ -4610,6 +4778,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4640,6 +4809,7 @@
       "[START_DIR]/3pp/wd/dep/linux-armv6l/1.0.0"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4678,6 +4848,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4715,6 +4886,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4747,6 +4919,7 @@
       "[START_DIR]/3pp/wd/dep/linux-armv6l/1.0.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4772,6 +4945,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4807,6 +4981,7 @@
       "[START_DIR]/3pp/wd/dep/linux-armv6l/1.0.0/checkout/.3pp"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4840,6 +5015,7 @@
       "[START_DIR]/3pp/wd/dep/linux-armv6l/1.0.0/out"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4877,14 +5053,14 @@
       "_3PP_TOOL_PLATFORM",
       "linux-amd64",
       "--env",
-      "GOARCH",
-      "arm",
+      "GOOS",
+      "linux",
       "--env",
       "_3PP_VERSION",
       "1.0.0",
       "--env",
-      "GOOS",
-      "linux",
+      "GOARCH",
+      "arm",
       "--env",
       "_3PP_PLATFORM",
       "linux-armv6l",
@@ -4899,6 +5075,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/dep/linux-armv6l/1.0.0/checkout",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -4925,13 +5102,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/deps/dep/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/dep/linux-armv6l/1.0.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_11",
+      "[CLEANUP]/tmp_tmp_12",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4964,6 +5142,7 @@
       "[CACHE]/3pp_cipd/3pp/deps/dep/linux-armv6l"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -4985,10 +5164,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_11",
+      "[CLEANUP]/tmp_tmp_12",
       "[CACHE]/3pp_cipd/3pp/deps/dep/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -5020,6 +5200,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -5052,6 +5233,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "dep",
@@ -5084,6 +5266,7 @@
       "latest"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5107,6 +5290,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5137,6 +5321,7 @@
       "[START_DIR]/3pp/wd/pkg/linux-armv6l/2.0.0"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5175,6 +5360,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5212,6 +5398,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5242,6 +5429,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5274,6 +5462,7 @@
       "[START_DIR]/3pp/wd/pkg/linux-armv6l/2.0.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5296,6 +5485,7 @@
       "[START_DIR]/3pp/wd/pkg/linux-armv6l/2.0.0/checkout"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5320,6 +5510,7 @@
       "[START_DIR]/3pp/wd/pkg/linux-armv6l/2.0.0/checkout/.3pp"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5353,6 +5544,7 @@
       "[START_DIR]/3pp/wd/pkg/linux-armv6l/2.0.0/out"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5390,14 +5582,14 @@
       "_3PP_TOOL_PLATFORM",
       "linux-amd64",
       "--env",
-      "GOARCH",
-      "arm",
+      "GOOS",
+      "linux",
       "--env",
       "_3PP_VERSION",
       "2.0.0",
       "--env",
-      "GOOS",
-      "linux",
+      "GOARCH",
+      "arm",
       "--env",
       "_3PP_PLATFORM",
       "linux-armv6l",
@@ -5412,6 +5604,7 @@
     ],
     "cwd": "[START_DIR]/3pp/wd/pkg/linux-armv6l/2.0.0/checkout",
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "PYTHONPATH": "RECIPE_REPO[infra]",
@@ -5438,13 +5631,14 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/tools/pkg/linux-armv6l\", \"root\": \"[START_DIR]/3pp/wd/pkg/linux-armv6l/2.0.0/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_12",
+      "[CLEANUP]/tmp_tmp_13",
       "-hash-algo",
       "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5477,6 +5671,7 @@
       "[CACHE]/3pp_cipd/3pp/tools/pkg/linux-armv6l"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5498,10 +5693,11 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_12",
+      "[CLEANUP]/tmp_tmp_13",
       "[CACHE]/3pp_cipd/3pp/tools/pkg/linux-armv6l/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5533,6 +5729,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",
@@ -5565,6 +5762,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "GOARCH": "arm",
       "GOOS": "linux",
       "_3PP_PACKAGE_NAME": "pkg",

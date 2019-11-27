@@ -4,6 +4,9 @@
       "echo",
       "3pp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "name": "echo package_prefix"
   },
   {
@@ -17,6 +20,9 @@
       "[CACHE]/builder/package_repo",
       "*/3pp.pb"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "find package specs",
     "~followup_annotations": [
@@ -42,6 +48,9 @@
       "[CACHE]/builder/package_repo/[CACHE]/builder/package_repo/bad/3pp.pb",
       "/path/to/tmp/"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "infra_step": true,
     "name": "load package specs.read 'bad'",
     "~followup_annotations": [

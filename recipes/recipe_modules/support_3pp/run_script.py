@@ -10,17 +10,23 @@ from contextlib import contextmanager
 from .workdir import Workdir
 
 def _extract_contextual_dockerbuild_env_args(api):
+  # We don't want to pass the CIPD_CACHE_DIR through to dockerbuild, since it
+  # refers to a path on the host machine.
+  banlist = set(('CIPD_CACHE_DIR',))
   return [
     ('--env-prefix', k, str(v))
     for k, vs in api.context.env_prefixes.iteritems()
     for v in vs
+    if k not in banlist
   ] + [
     ('--env-suffix', k, str(v))
     for k, vs in api.context.env_suffixes.iteritems()
     for v in vs
+    if k not in banlist
   ] + [
     ('--env', k, str(v))
     for k, v in api.context.env.iteritems()
+    if k not in banlist
   ]
 
 # Dockerbuild uses different names than the CIPD platform names. This maps from

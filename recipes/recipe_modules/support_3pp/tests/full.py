@@ -25,35 +25,38 @@ PROPERTIES = {
 }
 
 def RunSteps(api, GOOS, GOARCH, load_dupe):
-  builder = api.path['cache'].join('builder')
-  api.support_3pp.set_package_prefix('3pp')
+  # set a cache directory to be similar to what the actual 3pp recipe does.
+  # TODO(iannucci): just move the 3pp recipe into the recipe_module here...
+  with api.cipd.cache_dir(api.path.mkdtemp()):
+    builder = api.path['cache'].join('builder')
+    api.support_3pp.set_package_prefix('3pp')
 
-  api.step('echo package_prefix', [
-    'echo', api.support_3pp.package_prefix()])
+    api.step('echo package_prefix', [
+      'echo', api.support_3pp.package_prefix()])
 
-  # do a checkout in `builder`
-  pkgs = api.support_3pp.load_packages_from_path(
-    builder.join('package_repo'))
+    # do a checkout in `builder`
+    pkgs = api.support_3pp.load_packages_from_path(
+      builder.join('package_repo'))
 
-  # For the test, also explicitly build 'tool@1.5.0-rc1', which should de-dup
-  # with the default tool@latest.
-  pkgs.add('tool@1.5.0-rc1')
+    # For the test, also explicitly build 'tool@1.5.0-rc1', which should de-dup
+    # with the default tool@latest.
+    pkgs.add('tool@1.5.0-rc1')
 
-  # doing it twice should raise a DuplicatePackage exception
-  if load_dupe:
-    api.support_3pp.load_packages_from_path(
-      builder.join('dup_repo'))
+    # doing it twice should raise a DuplicatePackage exception
+    if load_dupe:
+      api.support_3pp.load_packages_from_path(
+        builder.join('dup_repo'))
 
-  _, unsupported = api.support_3pp.ensure_uploaded(
-    pkgs, '%s-%s' % (GOOS, GOARCH))
+    _, unsupported = api.support_3pp.ensure_uploaded(
+      pkgs, '%s-%s' % (GOOS, GOARCH))
 
-  excluded = {'unsupported'}
-  if api.platform.is_win:
-    excluded.add('posix_tool')
-  assert unsupported == excluded, 'unexpected: %r' % (unsupported-excluded,)
+    excluded = {'unsupported'}
+    if api.platform.is_win:
+      excluded.add('posix_tool')
+    assert unsupported == excluded, 'unexpected: %r' % (unsupported-excluded,)
 
-  # doing it again should hit caches
-  api.support_3pp.ensure_uploaded(pkgs, '%s-%s' % (GOOS, GOARCH))
+    # doing it again should hit caches
+    api.support_3pp.ensure_uploaded(pkgs, '%s-%s' % (GOOS, GOARCH))
 
 
 def GenTests(api):
