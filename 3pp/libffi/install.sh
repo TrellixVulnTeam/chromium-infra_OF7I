@@ -9,18 +9,8 @@ set -o pipefail
 
 PREFIX=$1
 
-if [[ $_3PP_PLATFORM == mac* ]]; then
-  python generate-darwin-source-and-headers.py --only-osx
-fi
-
 ./configure --enable-static --disable-shared \
   --disable-docs \
   --host "$CROSS_TRIPLE" \
   --prefix "$PREFIX"
 make install -j "$(nproc)"
-
-# Some programs (like python) expect to be able to `#include <ffi.h>`, so
-# create those symlinks.
-mkdir "$PREFIX"/include
-(cd "$PREFIX"/include && ln -s ../lib/libffi*/include/*.h ./)
-(cd "$PREFIX"/lib && ln -s ../lib64/* ./)
