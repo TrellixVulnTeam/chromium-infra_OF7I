@@ -1,0 +1,39 @@
+From dd17b9e8fe685be9059e216beff5a7c8f28d5ea3 Mon Sep 17 00:00:00 2001
+From: Robert Iannucci <iannucci@chromium.org>
+Date: Wed, 27 Nov 2019 13:49:18 -0800
+Subject: [PATCH] Do not generate darwin source for 32bit desktop.
+
+This causes the generator script to fail on modern versions
+of XCode.
+---
+ generate-darwin-source-and-headers.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 generate-darwin-source-and-headers.py
+
+diff --git a/generate-darwin-source-and-headers.py b/generate-darwin-source-and-headers.py
+old mode 100644
+new mode 100755
+index 964e861..e282fae
+--- a/generate-darwin-source-and-headers.py
++++ b/generate-darwin-source-and-headers.py
+@@ -179,7 +179,7 @@ def generate_source_and_headers(generate_osx=True, generate_ios=True):
+         copy_src_platform_files(device_platform)
+         copy_src_platform_files(device64_platform)
+     if generate_osx:
+-        copy_src_platform_files(desktop32_platform)
++        #copy_src_platform_files(desktop32_platform)
+         copy_src_platform_files(desktop64_platform)
+ 
+     platform_headers = collections.defaultdict(set)
+@@ -190,7 +190,7 @@ def generate_source_and_headers(generate_osx=True, generate_ios=True):
+         build_target(device_platform, platform_headers)
+         build_target(device64_platform, platform_headers)
+     if generate_osx:
+-        build_target(desktop32_platform, platform_headers)
++        #build_target(desktop32_platform, platform_headers)
+         build_target(desktop64_platform, platform_headers)
+ 
+     mkdir_p('darwin_common/include')
+-- 
+2.20.1
+
