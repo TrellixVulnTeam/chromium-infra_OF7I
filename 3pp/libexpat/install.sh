@@ -8,9 +8,10 @@ set -x
 set -o pipefail
 
 PREFIX="$1"
+DEPS_PREFIX=$2
 
 cd ./expat
 
-./buildconf.sh
-./configure --prefix="$PREFIX" --enable-shared=no
+PATH=$DEPS_PREFIX/bin:$PATH ./buildconf.sh
+./configure --prefix="$PREFIX" --enable-shared=no --host "$CROSS_TRIPLE"
 make install
