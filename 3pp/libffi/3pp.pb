@@ -3,7 +3,7 @@ create {
   source {
     cipd {
       pkg: "infra/third_party/source/libffi"
-      default_version: "3.2.1"
+      default_version: "3.3"
       original_download_url: "https://github.com/libffi/libffi/releases"
     }
     unpack_archive: true
