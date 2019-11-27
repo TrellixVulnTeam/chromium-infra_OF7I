@@ -50,13 +50,6 @@ SETUP_LOCAL_ATTACH=(
   "_curses_panel:: -DNCURSES_WIDECHAR=1"
 )
 
-if [[ $_3PP_PLATFORM == linux-*64 ]]; then
-  SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib64/libffi.a")
-else
-  # mac-amd64 builds into lib. WHY.
-  SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib/libffi.a")
-fi
-
 WITH_LIBS="-lpthread"
 
 if [[ $_3PP_PLATFORM == mac* ]]; then
@@ -159,10 +152,16 @@ fi
 export LDFLAGS=
 export CPPFLAGS=
 
-# Tweak Makefile to change LIBFFI_INCLUDEDIR=<TAB>path
-sed -i \
-  $'s+^LIBFFI_INCLUDEDIR=\t.*+LIBFFI_INCLUDEDIR=\t'"$DEPS_PREFIX/include+" \
-  Makefile
+if [[ $_3PP_PLATFORM == linux-* ]]; then
+  if [[ $_3PP_PLATFORM == linux-*64 ]]; then
+    SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib64/libffi.a")
+  fi
+  # Tweak Makefile to change LIBFFI_INCLUDEDIR=<TAB>path
+  sed -i \
+    $'s+^LIBFFI_INCLUDEDIR=\t.*+LIBFFI_INCLUDEDIR=\t'"$DEPS_PREFIX/include+" \
+    Makefile
+fi
+# mac build includes libffi
 
 # Generate our "pybuilddir.txt" file. This also generates
 # "_sysconfigdata.py" from our current Python, which we need to
