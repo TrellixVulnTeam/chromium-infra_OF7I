@@ -12,6 +12,7 @@
 
 <link rel="import" href="../../elements/som-alert-type-behavior.html">
 <link rel="import" href="../../elements/som-annotation-manager-behavior.html">
+<link rel="import" href="../../elements/som-bug-manager-behavior.html">
 <link rel="import" href="../../elements/som-post-behavior.html">
 
 <link rel="import" href="../../elements/som-marked-element/som-marked-element.html">
@@ -26,6 +27,10 @@
     <style include="som-input-styles som-utility-styles">
       #bugDialog, #removeBugDialog, #snoozeDialog {
         width: 300px;
+      }
+      #groupDialog {
+        width: 300px;
+        padding: 10px;
       }
       #commentsDialog, #ungroupDialog {
         width: 80%;
@@ -230,6 +235,18 @@
       </div>
     </paper-dialog>
 
+    <paper-dialog id="groupDialog" with-backdrop>
+      <iron-a11y-keys keys="enter" on-keys-pressed="_group"></iron-a11y-keys>
+      <h2>Group alerts</h2>
+      <paper-input id="groupName" label="Group Name" value=[[_groupName]]></paper-input>
+      <input type="checkbox" id="mergeBugs" checked />
+      Copy bugs to this group
+      <div class="error">[[_groupErrorMessage]]</div>
+      <div class="buttons">
+        <button dialog-dismiss>Cancel</paper-button>
+        <button on-tap="_group" class="emphasized" disabled$="[[_isGrouping]]">OK</paper-button>
+      </div>
+    </paper-dialog>
 
     <paper-dialog id="ungroupDialog" with-backdrop>
       <iron-a11y-keys keys="enter" on-keys-pressed="_ungroup"></iron-a11y-keys>

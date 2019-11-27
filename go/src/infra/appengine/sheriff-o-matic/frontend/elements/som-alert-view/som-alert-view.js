@@ -970,10 +970,9 @@ class SomAlertView extends Polymer.mixinBehaviors(
   }
 
   _handleGroupBulk(evt) {
-    this.$.annotations.group(this._checkedAlerts);
-    // Uncheck all alerts after a group... Otherwise, the checking behavior
-    // is weird.
-    this._uncheckAll();
+    this.$.annotations.handleGroupAlerts(
+        this._checkedAlerts,
+        this._uncheckAll.bind(this));
   }
 
   // This opens the bulk ungroup dialog.

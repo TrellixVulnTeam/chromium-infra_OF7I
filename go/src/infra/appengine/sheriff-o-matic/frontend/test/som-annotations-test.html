@@ -726,6 +726,152 @@
         done();
       });
     });
+
+    test('grouping alerts and do not merge bugs', function(done) {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.returns();
+      let generateUUIDStub = sinon.stub(element, '_generateUUID');
+      generateUUIDStub.onCall(0).returns('groupID');
+
+      element.$.groupName.value = 'My group';
+      element.$.mergeBugs.checked = false;
+
+      element._annotationsResp =  [
+        {
+          key: 'alert1',
+          bugs: [
+            {
+              id: "123",
+              projectId: "chromium",
+            },
+            {
+              id: "456",
+              projectId: "monorail",
+            }
+          ],
+          bug_data: {},
+        },
+        {
+          key: 'alert2',
+          bugs: [
+            {
+              id: "123",
+              projectId: "chromium",
+            },
+            {
+              id: "789",
+              projectId: "fuchsia",
+            }
+          ],
+          bug_data: {},
+        },
+      ];
+
+      element._groupModel = [
+        {key: 'alert1'},
+        {key: 'alert2'},
+      ];
+
+      element._group();
+
+      flush(function () {
+        sinon.assert.calledThrice(sendStub);
+        sinon.assert.calledWith(
+          sendStub.firstCall,
+          'alert1',
+          'add',
+          {group_id: 'groupID'}
+        );
+        sinon.assert.calledWith(
+          sendStub.secondCall,
+          'alert2',
+          'add',
+          {group_id: 'groupID'}
+        );
+        sinon.assert.calledWith(
+          sendStub.thirdCall,
+          'groupID',
+          'add',
+          {group_id: 'My group'}
+        );
+        done();
+      });
+    });
+
+    test('grouping alerts and should merge bugs', function(done) {
+      let sendStub = sinon.stub(element, 'sendAnnotation');
+      sendStub.returns();
+      let generateUUIDStub = sinon.stub(element, '_generateUUID');
+      generateUUIDStub.onCall(0).returns('groupID');
+
+      element.$.groupName.value = 'My group';
+      element.$.mergeBugs.checked = true;
+
+      element._annotationsResp =  [
+        {
+          key: 'alert1',
+          bugs: [
+            {
+              id: 123,
+              projectId: "chromium",
+            },
+            {
+              id: 456,
+              projectId: "monorail",
+            }
+          ],
+          bug_data: {},
+        },
+        {
+          key: 'alert2',
+          bugs: [
+            {
+              id: 789,
+              projectId: "fuchsia",
+            }
+          ],
+          bug_data: {},
+        },
+      ];
+
+      element._groupModel = [
+        {key: 'alert1'},
+        {key: 'alert2'},
+      ];
+
+      element._group();
+
+      flush(function () {
+        sinon.assert.calledThrice(sendStub);
+        sinon.assert.calledWith(
+          sendStub.firstCall,
+          'alert1',
+          'add',
+          {group_id: 'groupID'}
+        );
+        sinon.assert.calledWith(
+          sendStub.secondCall,
+          'alert2',
+          'add',
+          {group_id: 'groupID'}
+        );
+        sinon.assert.calledWith(
+          sendStub.thirdCall,
+          'groupID',
+          'add',
+          {
+            group_id: 'My group',
+            bugs: [
+              {id: "123", projectId: "chromium"},
+              {id: "456", projectId: "monorail"},
+              {id: "789", projectId: "fuchsia"},
+            ]
+          }
+        );
+        done();
+      });
+    });
+
   });
 })();
 </script>
