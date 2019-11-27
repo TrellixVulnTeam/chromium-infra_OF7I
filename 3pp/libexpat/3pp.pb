@@ -10,6 +10,7 @@
    build {
     tool: "autoconf"
     tool: "automake"
+    tool: "libtool"
    }
  }
 
