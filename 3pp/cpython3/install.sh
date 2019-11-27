@@ -36,7 +36,6 @@ SETUP_LOCAL_ATTACH=(
   "$DEPS_PREFIX/lib/liblzma.a"
   "$DEPS_PREFIX/lib/libssl.a"
   "$DEPS_PREFIX/lib/libcrypto.a"
-  "$DEPS_PREFIX/lib/libffi.a"
   "$DEPS_PREFIX/lib/libuuid.a"
 
   # We always use the OSS ncurses headers; on OS X the system headers are weird
@@ -50,6 +49,12 @@ SETUP_LOCAL_ATTACH=(
   "_curses:: -DNCURSES_WIDECHAR=1"
   "_curses_panel:: -DNCURSES_WIDECHAR=1"
 )
+
+if [[ $_3PP_PLATFORM == *64 ]]; then
+  SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib64/libffi.a")
+else
+  SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib/libffi.a")
+fi
 
 WITH_LIBS="-lpthread"
 
