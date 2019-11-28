@@ -14,12 +14,11 @@ if [[ $OSTYPE == darwin* ]]; then
   EXTRA_CONFIG_ARGS=--with-darwinssl
 else
   export LIBS='-ldl -lpthread'
-  EXTRA_CONFIG_ARGS="--with-ssl=$DEPS"
+  EXTRA_CONFIG_ARGS="--with-ssl=$DEPS --with-ca-fallback"
 fi
 
 ./configure --enable-static --disable-shared \
   --disable-ldap \
-  --with-ca-fallback \
   --without-librtmp \
   --with-zlib="$DEPS" \
   --with-libidn2="$DEPS" \
