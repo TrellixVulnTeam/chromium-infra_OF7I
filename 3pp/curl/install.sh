@@ -11,10 +11,15 @@ PREFIX="$1"
 DEPS="$2"
 
 if [[ $OSTYPE == darwin* ]]; then
-  EXTRA_CONFIG_ARGS=--with-darwinssl
+  EXTRA_CONFIG_ARGS+=(--with-darwinssl)
 else
   export LIBS='-ldl -lpthread'
-  EXTRA_CONFIG_ARGS="--with-ssl=$DEPS --with-ca-fallback"
+  # We hardcode the ubuntu/debian ca-cert path... this is sucky, but... eh...
+  EXTRA_CONFIG_ARGS+=(
+    "--with-ssl=$DEPS"
+    "--with-ca-fallback"
+    "--with-ca-path=/etc/ssl/certs/ca-certificates.crt"
+  )
 fi
 
 ./configure --enable-static --disable-shared \
@@ -24,5 +29,6 @@ fi
   --with-libidn2="$DEPS" \
   --prefix="$PREFIX" \
   --host="$CROSS_TRIPLE" \
-  $EXTRA_CONFIG_ARGS
-make install -j $(nproc)
+  "${EXTRA_CONFIG_ARGS[@]}"
+
+make install -j "$(nproc)"
