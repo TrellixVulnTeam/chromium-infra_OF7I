@@ -105,7 +105,7 @@ class TestGit(unittest.TestCase):
     # we configure it to the CentOS file if it exists.
     centos_cafile = '/etc/pki/tls/certs/ca-bundle.crt'
     if os.path.exists(centos_cafile):
-      g('config', 'http.sslCAinfo', centos_cafile)
+      g('config', 'http.sslCAPath', centos_cafile)
 
     with open(os.path.join(path, 'README'), 'w') as fd:
       fd.write('TEST DATA')
