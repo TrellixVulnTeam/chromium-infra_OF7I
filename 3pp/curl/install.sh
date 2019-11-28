@@ -19,6 +19,7 @@ fi
 
 ./configure --enable-static --disable-shared \
   --disable-ldap \
+  --with-ca-fallback \
   --without-librtmp \
   --with-zlib="$DEPS" \
   --with-libidn2="$DEPS" \

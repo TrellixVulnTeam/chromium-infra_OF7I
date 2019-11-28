@@ -7,6 +7,7 @@ create {
       default_version: "7.59.0"
       original_download_url: "https://curl.haxx.se/download.html"
     }
+    patch_version: "chromium.1"
     unpack_archive: true
   }
 
