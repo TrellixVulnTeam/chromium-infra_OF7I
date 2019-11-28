@@ -64,7 +64,11 @@ def try_builder(
 
 ci_builder(name = 'luci-go-continuous-xenial-64', os = 'Ubuntu-16.04')
 ci_builder(name = 'luci-go-continuous-trusty-64', os = 'Ubuntu-14.04')
+ci_builder(name = 'luci-go-continuous-mac-10.11-64', os = 'Mac-10.11')
+ci_builder(name = 'luci-go-continuous-mac-10.12-64', os = 'Mac-10.12')
 ci_builder(name = 'luci-go-continuous-mac-10.13-64', os = 'Mac-10.13')
+ci_builder(name = 'luci-go-continuous-mac-10.14-64', os = 'Mac-10.14')
+ci_builder(name = 'luci-go-continuous-mac-10.15-64', os = 'Mac-10.15')
 ci_builder(name = 'luci-go-continuous-win7-64', os = 'Windows')
 ci_builder(name = 'luci-go-continuous-win10-64', os = 'Windows-10')
 
@@ -72,6 +76,7 @@ try_builder(name = 'luci-go-try-trusty-64', os = 'Ubuntu-14.04')
 try_builder(name = 'luci-go-try-xenial-64', os = 'Ubuntu-16.04', properties = {
     'run_integration_tests': True,
 })
+# TODO(tandrii): bump to 10.15 once available.
 try_builder(name = 'luci-go-try-mac', os = 'Mac-10.13')
 try_builder(name = 'luci-go-try-win', os = 'Windows')
 
