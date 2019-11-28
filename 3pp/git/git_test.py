@@ -97,6 +97,16 @@ class TestGit(unittest.TestCase):
     g('config', 'user.name', 'test')
     g('config', 'user.email', 'test@example.com')
 
+    # In 3pp land, some platforms (like linux-amd64) are CentOS based (because
+    # we currently use the 'manylinux1' system as a basis in order to produce
+    # universal python wheels. This actually stems from a misunderstanding, but
+    # for now that's how it works). In this environment during the test, the
+    # pre-configured certfile path (for debian/ubuntu systems) isn't present, so
+    # we configure it to the CentOS file if it exists.
+    centos_cafile = '/etc/pki/tls/certs/ca-bundle.crt'
+    if os.path.exists(centos_cafile):
+      g('config', 'http.sslCAinfo', centos_cafile)
+
     with open(os.path.join(path, 'README'), 'w') as fd:
       fd.write('TEST DATA')
     g('add', '.')
