@@ -59,11 +59,9 @@ try_builder(
 try_builder(
     name = 'luci-py-try-win7-64',
     os = 'Windows-7',
-    experiment_percentage=100,
 )
 
 try_builder(
     name = 'luci-py-try-win10-64',
     os = 'Windows-10',
-    experiment_percentage=100,
 )
