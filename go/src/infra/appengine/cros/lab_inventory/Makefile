@@ -19,7 +19,8 @@ vet:
 
 .PHONY: test
 test:
-	go test ./...
+	go test -coverprofile=coverage.out ./... || true
+	go tool cover -html=coverage.out -o coverage.html
 
 .PHONY: gen
 gen:

@@ -9,16 +9,27 @@ package lab_inventory.config;
 option go_package = "config";
 
 // Note: docstrings use generated go style variable names.
+
+message LuciAuthGroup {
+  string value = 1;
+}
+
 // Config is the configuration data served by luci-config for this app.
 message Config {
-  // AccessGroup is the luci-auth group controlling access to admin app APIs.
-  string access_group = 1;
+  reserved 1;
 
   // AdminService contains information about the skylab admin instances.
   AdminService admin_service = 2;
+
+  // The access groups of the inventory.
+  LuciAuthGroup readers = 3;
+  LuciAuthGroup status_writers = 4;
+  LuciAuthGroup setup_writers = 5;
+  LuciAuthGroup privileged_writers = 6;
 }
 
 message AdminService {
   // The skylab admin GAE server hosting the admin services.
   string host = 1;
 }
+
