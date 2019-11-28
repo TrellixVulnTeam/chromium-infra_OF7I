@@ -36,8 +36,23 @@ class TestGit(unittest.TestCase):
     ])
     cls.bin_dir = os.path.join(cls.pkg_dir, 'bin')
 
+    # In 3pp land, some platforms (like linux-amd64) are CentOS based (because
+    # we currently use the 'manylinux1' system as a basis in order to produce
+    # universal python wheels. This actually stems from a misunderstanding, but
+    # for now that's how it works). In this environment during the test, the
+    # pre-configured certfile path (for debian/ubuntu systems) isn't present, so
+    # we configure it to the CentOS file if it exists.
+    centos_cafile = '/etc/pki/tls/certs/ca-bundle.crt'
+    cls._old_GIT_SSL_CAINFO = os.getenv('GIT_SSL_CAINFO')
+    if os.path.exists(centos_cafile):
+      os.putenv('GIT_SSL_CAINFO', centos_cafile)
+
   @classmethod
   def tearDownClass(cls):
+    if cls._old_GIT_SSL_CAINFO is not None:
+      os.putenv('GIT_SSL_CAINFO', cls._old_GIT_SSL_CAINFO)
+    else:
+      os.unsetenv('GIT_SSL_CAINFO')
     # If we fail to delete, that's fine since we're within the workdir, which
     # gets purged with each build.
     shutil.rmtree(cls.tdir, ignore_errors=True)
@@ -96,16 +111,6 @@ class TestGit(unittest.TestCase):
     g('init')
     g('config', 'user.name', 'test')
     g('config', 'user.email', 'test@example.com')
-
-    # In 3pp land, some platforms (like linux-amd64) are CentOS based (because
-    # we currently use the 'manylinux1' system as a basis in order to produce
-    # universal python wheels. This actually stems from a misunderstanding, but
-    # for now that's how it works). In this environment during the test, the
-    # pre-configured certfile path (for debian/ubuntu systems) isn't present, so
-    # we configure it to the CentOS file if it exists.
-    centos_cafile = '/etc/pki/tls/certs/ca-bundle.crt'
-    if os.path.exists(centos_cafile):
-      g('config', 'http.sslCAPath', centos_cafile)
 
     with open(os.path.join(path, 'README'), 'w') as fd:
       fd.write('TEST DATA')
