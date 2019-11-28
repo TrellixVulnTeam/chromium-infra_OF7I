@@ -18,7 +18,8 @@ else
   EXTRA_CONFIG_ARGS+=(
     "--with-ssl=$DEPS"
     "--with-ca-fallback"
-    "--with-ca-path=/etc/ssl/certs/ca-certificates.crt"
+    "--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt"
+    "--with-ca-path=/usr/share/ca-certificates"
   )
 fi
 
