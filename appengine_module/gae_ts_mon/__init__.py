@@ -39,7 +39,6 @@ import infra_libs.ts_mon.httplib2_utils
 sys.modules['infra_libs'].httplib2_utils = infra_libs.ts_mon.httplib2_utils
 sys.modules['infra_libs.httplib2_utils'] = infra_libs.ts_mon.httplib2_utils
 
-from .config import DjangoMiddleware
 from .config import initialize
 from .config import instrument_endpoint
 from .config import instrument_wsgi_application
