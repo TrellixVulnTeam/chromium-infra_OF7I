@@ -2,15 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import copy
 import datetime
 import functools
 import logging
 import os
 import sys
 import time
-import threading
-import six
 
 # Not all apps enable endpoints. If the import fails, the app will not
 # use @instrument_endpoint() decorator, so it is safe to ignore it.
@@ -26,90 +23,19 @@ from google.appengine.api.app_identity import app_identity
 from google.appengine.api import runtime
 from google.appengine.ext import ndb
 
+from infra_libs.ts_mon import exporter
 from infra_libs.ts_mon import handlers
 from infra_libs.ts_mon import shared
 from infra_libs.ts_mon.common import http_metrics
 from infra_libs.ts_mon.common import interface
-from infra_libs.ts_mon.common import metric_store
 from infra_libs.ts_mon.common import monitors
 from infra_libs.ts_mon.common import standard_metrics
 from infra_libs.ts_mon.common import targets
 
 
-def _reset_cumulative_metrics():
-  """Clear the state when an instance loses its task_num assignment."""
-  logging.warning('Instance %s got purged from Datastore, but is still alive. '
-                  'Clearing cumulative metrics.', shared.instance_key_id())
-  for _, metric, _, _, _ in interface.state.store.get_all():
-    if metric.is_cumulative():
-      metric.reset()
-
-
-_flush_metrics_lock = threading.Lock()
-
-
-def need_to_flush_metrics(time_now):
-  """Check if metrics need flushing, and update the timestamp of last flush.
-
-  Even though the caller of this function may not successfully flush the
-  metrics, we still update the last_flushed timestamp to prevent too much work
-  being done in user requests.
-
-  Also, this check-and-update has to happen atomically, to ensure only one
-  thread can flush metrics at a time.
-  """
-  if not interface.state.flush_enabled_fn():
-    return False
-  datetime_now = datetime.datetime.utcfromtimestamp(time_now)
-  minute_ago = datetime_now - datetime.timedelta(seconds=60)
-  with _flush_metrics_lock:
-    if interface.state.last_flushed > minute_ago:
-      return False
-    interface.state.last_flushed = datetime_now
-  return True
-
-
-def flush_metrics_if_needed(time_now):
-  if not need_to_flush_metrics(time_now):
-    return False
-  return _flush_metrics(time_now)
-
-
-def _flush_metrics(time_now):
-  """Return True if metrics were actually sent."""
-  if interface.state.target is None:
-    # ts_mon is not configured.
-    return False
-
-  datetime_now = datetime.datetime.utcfromtimestamp(time_now)
-  entity = shared.get_instance_entity()
-  if entity.task_num < 0:
-    if interface.state.target.task_num >= 0:
-      _reset_cumulative_metrics()
-    interface.state.target.task_num = -1
-    interface.state.last_flushed = entity.last_updated
-    updated_sec_ago = (datetime_now - entity.last_updated).total_seconds()
-    if updated_sec_ago > shared.INSTANCE_EXPECTED_TO_HAVE_TASK_NUM_SEC:
-      logging.warning('Instance %s is %d seconds old with no task_num.',
-                      shared.instance_key_id(), updated_sec_ago)
-    return False
-  interface.state.target.task_num = entity.task_num
-
-  entity.last_updated = datetime_now
-  entity_deferred = entity.put_async()
-
-  interface.flush()
-
-  for metric in six.itervalues(interface.state.global_metrics):
-    metric.reset()
-
-  entity_deferred.get_result()
-  return True
-
-
 def _shutdown_hook(time_fn=time.time):
   shared.shutdown_counter.increment()
-  if flush_metrics_if_needed(time_fn()):
+  if exporter.flush_metrics_if_needed(time_fn()):
     logging.info('Shutdown hook: deleting %s, metrics were flushed.',
                  shared.instance_key_id())
   else:
@@ -210,13 +136,11 @@ def initialize(app=None, is_enabled_fn=None, cron_module='default',
 def _instrumented_dispatcher(dispatcher, request, response, time_fn=time.time):
   start_time = time_fn()
   response_status = 0
-  flush_thread = None
   time_now = time_fn()
-  if need_to_flush_metrics(time_now):
-    flush_thread = threading.Thread(target=_flush_metrics, args=(time_now,))
-    flush_thread.start()
+
   try:
-    ret = dispatcher(request, response)
+    with exporter.parallel_flush(time_now):
+      ret = dispatcher(request, response)
   except webapp2.HTTPException as ex:
     response_status = ex.code
     raise
@@ -228,8 +152,6 @@ def _instrumented_dispatcher(dispatcher, request, response, time_fn=time.time):
       response = ret
     response_status = response.status_int
   finally:
-    if flush_thread:
-      flush_thread.join()
     elapsed_ms = int((time_fn() - start_time) * 1000)
 
     # Use the route template regex, not the request path, to prevent an
@@ -271,15 +193,13 @@ def instrument_endpoint(time_fn=time.time):
       endpoint_name = '/_ah/spi/%s.%s' % (service_name, method_name)
       start_time = time_fn()
       response_status = 0
-      flush_thread = None
       time_now = time_fn()
-      if need_to_flush_metrics(time_now):
-        flush_thread = threading.Thread(target=_flush_metrics, args=(time_now,))
-        flush_thread.start()
+
       try:
-        ret = fn(service, *args, **kwargs)
-        response_status = 200
-        return ret
+        with exporter.parallel_flush(time_now):
+          ret = fn(service, *args, **kwargs)
+          response_status = 200
+          return ret
       except endpoints.ServiceException as e:
         response_status = e.http_status
         raise
@@ -287,8 +207,6 @@ def instrument_endpoint(time_fn=time.time):
         response_status = 500
         raise
       finally:
-        if flush_thread:
-          flush_thread.join()
         elapsed_ms = int((time_fn() - start_time) * 1000)
         http_metrics.update_http_server_metrics(
             endpoint_name, response_status, elapsed_ms)
