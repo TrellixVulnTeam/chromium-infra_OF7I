@@ -59,3 +59,18 @@ builder(
     triggering_policy = scheduler.greedy_batching(max_batch_size=1),
     cores=32,
 )
+
+luci.notifier(
+    name = 'release-tarballs',
+    on_failure = True,
+    on_status_change = True,
+    notify_emails = [
+        'raphael.kubo.da.costa@intel.com',
+        'thestig@chromium.org',
+        'thomasanderson@chromium.org',
+    ],
+    notified_by = [
+        'Build From Tarball',
+        'publish_tarball',
+    ]
+)

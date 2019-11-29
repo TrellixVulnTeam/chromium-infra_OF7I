@@ -37,6 +37,7 @@ lucicfg.config(
         'cr-buildbucket.cfg',
         'luci-logdog.cfg',
         'luci-milo.cfg',
+        'luci-notify.cfg',
         'luci-scheduler.cfg',
         'project.cfg',
     ],
@@ -50,6 +51,7 @@ luci.project(
     buildbucket = 'cr-buildbucket.appspot.com',
     logdog = 'luci-logdog.appspot.com',
     milo = 'luci-milo.appspot.com',
+    notify = 'luci-notify.appspot.com',
     scheduler = 'luci-scheduler.appspot.com',
     swarming = 'chromium-swarm.appspot.com',
 
