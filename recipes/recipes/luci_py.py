@@ -62,7 +62,7 @@ def RunSteps(api):
 
     # TODO(crbug.com/1019105): remove this timeout.
     if api.platform.is_mac:
-      timeout = 60
+      timeout = 120
     else:
       timeout = None
 
