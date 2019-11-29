@@ -27,25 +27,19 @@ def RunSteps(api):
 
   luci_dir = api.path['checkout'].join('luci')
   with api.context(cwd=luci_dir):
-    # auth server
+
     if api.platform.is_linux:
       _step_run_tests(api, 'auth_service',
                       luci_dir.join('appengine', 'auth_service'))
 
-    # config server
-    if api.platform.is_linux:
       _step_run_tests(api, 'config_service',
                       luci_dir.join('appengine', 'config_service'))
 
-    # components
-    if api.platform.is_linux:
       _step_run_tests(api, 'components',
                       luci_dir.join('appengine', 'components'),
                       run_test_seq=True,
                       run_python3=True)
 
-    # isolate server
-    if api.platform.is_linux:
       _step_run_tests(api, 'isolate',
                       luci_dir.join('appengine', 'isolate'))
 
