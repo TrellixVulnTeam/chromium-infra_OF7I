@@ -127,7 +127,8 @@ import:
   - user
   - cmd/aedeploy
 - package: cloud.google.com/go
-  version: master
+  # TODO(vadimsh): Unpin once google.golang.org/genproto is unpinned.
+  version: 0fd5feb1e2a15ca337bd028006006f20368ff83e
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -320,8 +321,9 @@ import:
 - package: go.opencensus.io
   version: master
   repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-go.git
-  subpackages:
-  - plugin/grpc
+- package: github.com/census-instrumentation/opencensus-proto
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-proto.git
 - package: golang.org/x/lint
   version: master
   repo: https://go.googlesource.com/lint.git
@@ -387,10 +389,8 @@ import:
   version: ^0.2.0
   repo: https://chromium.googlesource.com/external/github.com/google/go-cmp.git
 - package: contrib.go.opencensus.io/exporter/stackdriver
-  version: ^0.6.0
+  version: master
   repo: https://chromium.googlesource.com/external/github.com/census-ecosystem/opencensus-go-exporter-stackdriver.git
-  subpackages:
-  - propagation
 - package: github.com/GoogleCloudPlatform/google-cloud-go-testing
   version: master
   repo: https://chromium.googlesource.com/external/github.com/GoogleCloudPlatform/google-cloud-go-testing.git
