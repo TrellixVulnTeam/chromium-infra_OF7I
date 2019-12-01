@@ -59,4 +59,7 @@ github.com/xtgo/set
 github.com/yosuke-furukawa/json5/encoding/json5
 
 # Other stuff
+contrib.go.opencensus.io/exporter
+go.opencensus.io/exporter
+go.opencensus.io/trace
 howett.net/plist
