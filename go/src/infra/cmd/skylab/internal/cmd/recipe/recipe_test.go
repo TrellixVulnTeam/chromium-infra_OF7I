@@ -58,7 +58,8 @@ func TestRequest(t *testing.T) {
 				},
 			},
 			Metadata: &test_platform.Request_Params_Metadata{
-				TestMetadataUrl: "gs://chromeos-image-archive/foo-image",
+				TestMetadataUrl:        "gs://chromeos-image-archive/foo-image",
+				DebugSymbolsArchiveUrl: "gs://chromeos-image-archive/foo-image",
 			},
 			Time: &test_platform.Request_Params_Time{
 				MaximumDuration: &duration.Duration{

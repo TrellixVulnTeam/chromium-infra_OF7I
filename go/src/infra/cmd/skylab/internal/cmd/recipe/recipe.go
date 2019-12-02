@@ -125,7 +125,8 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 		Path:   a.Image,
 	}
 	params.Metadata = &test_platform.Request_Params_Metadata{
-		TestMetadataUrl: u.String(),
+		TestMetadataUrl:        u.String(),
+		DebugSymbolsArchiveUrl: u.String(),
 	}
 
 	duration := ptypes.DurationProto(a.Timeout)
