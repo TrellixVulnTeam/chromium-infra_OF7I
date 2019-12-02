@@ -49,6 +49,16 @@ def ParseAuthenticatedRepo(repo_url):
   return None
 
 
+def GetRepoUrlFromFetchInfo(fetch_info):
+  if 'http' in fetch_info:
+    return fetch_info['http']['url']
+  if 'sso' in fetch_info:
+    return 'https://{url.netloc}.googlesource.com{url.path}'.format(
+        url=urlparse.urlparse(fetch_info['sso']['url']))
+  logging.warning('Could not get URL from fetch info: %s', fetch_info)
+  return None
+
+
 class GitCommitPath(object):
   """Wrapper class for basic git commit file data."""
 
@@ -200,13 +210,16 @@ class GitLogEntry(object):
   def add_path(self, action, filename, copy_from_path):
     self.paths.append(GitCommitPath(action, filename, copy_from_path))
 
-  # -- svn_helper.svn_log_entry compatibility --
+  def HasUrl(self, shorten=False):
+    return shorten or self.repo_url is not None
 
   def GetCommitUrl(self, parent=False, shorten=False):
     """Generate a link to the gitiles UI for this commit."""
-    url = None
+    if not self.HasUrl(shorten):
+      return None
+
     if shorten:
-      url = 'https://crrev.com'
+      url = 'https://crrev.com/'
     elif self.repo_url:
       url = self.repo_url
       # Strip any forced authentication from the URL, otherwise it can force an
@@ -214,19 +227,17 @@ class GitLogEntry(object):
       parsed_urls = ParseAuthenticatedRepo(url)
       if parsed_urls:
         url = parsed_urls[1].geturl()
-      url += '/+'
-    if url:
-      if parent:
-        return '%s/%s' % (url, self.parents[0])
-      else:
-        return '%s/%s' % (url, self.commit)
+      url += '/+/'
+
+    url += self.parents[0] if parent else self.commit
+    return url
 
   def GetPathUrl(self, filepath, parent=False, shorten=False):
     """Generate a link to the gitiles UI for the given file from this commit, or
     the parent commit."""
-    link = self.GetCommitUrl(parent, shorten)
-    if link:
-      return '%s/%s' % (link, filepath)
+    if not self.HasUrl(shorten):
+      return filepath
+    return self.GetCommitUrl(parent, shorten) + '/' + filepath
 
 
 def ParseLogEntries(json_dict, repo, branch, paths_dict=None, diffs_dict=None):
@@ -565,8 +576,7 @@ class GerritHelper(RestApiHelper):
                            author['date'], committer['date'],
                            commit_dict['message'],
                            branch=change['branch'],
-                           repo_url=revision['fetch']['http']['url']
-                          )
+                           repo_url=GetRepoUrlFromFetchInfo(revision['fetch']))
     # https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#file-info
     status_map = {None: 'modify',
                   'D': 'delete',

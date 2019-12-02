@@ -15,6 +15,17 @@ class GobHelperTest(unittest.TestCase):
     self.assertEqual('/a/chromium/src.git', auth_res.path)
     self.assertEqual('/chromium/src.git', unauth_res.path)
 
+  def test_GetRepoUrlFromFetchInfo(self):
+    self.assertEqual(
+        'url',
+        gob_helper.GetRepoUrlFromFetchInfo({'http': {'url': 'url'}}))
+    self.assertEqual(
+        'https://foo.googlesource.com/bar',
+        gob_helper.GetRepoUrlFromFetchInfo({'sso': {'url': 'sso://foo/bar'}}))
+    self.assertIsNone(
+        gob_helper.GetRepoUrlFromFetchInfo({'foo': {'url': 'url'}}))
+
+
 
 class GitLogEntryTest(unittest.TestCase):
   def _make_entry(self, message):
@@ -35,6 +46,17 @@ class GitLogEntryTest(unittest.TestCase):
         entry.GetCommitUrl(),
         'https://example.googlesource.com/foo/+/abcdef')
 
+  def test_GetCommitUrl_no_repo_url_no_shorten(self):
+    entry = self._make_entry('Message')
+    entry.repo_url = None
+    self.assertIsNone(entry.GetCommitUrl())
+
+  def test_GetCommitUrl_no_repo_url_shorten(self):
+    entry = self._make_entry('Message')
+    entry.repo_url = None
+    self.assertEqual(
+        entry.GetCommitUrl(shorten=True), 'https://crrev.com/abcdef')
+
   def test_GetCommitUrl_parent(self):
     entry = self._make_entry('Message')
     self.assertEqual(
@@ -51,6 +73,18 @@ class GitLogEntryTest(unittest.TestCase):
     self.assertEqual(
         entry.GetPathUrl('path'),
         'https://example.googlesource.com/foo/+/abcdef/path')
+
+  def test_GetPathUrl_no_repo_url(self):
+    entry = self._make_entry('Message')
+    entry.repo_url = None
+    self.assertEqual(entry.GetPathUrl('path'), 'path')
+
+  def test_GetPathUrl_no_repo_url_shorten(self):
+    entry = self._make_entry('Message')
+    entry.repo_url = None
+    self.assertEqual(
+        entry.GetPathUrl('path', shorten=True),
+        'https://crrev.com/abcdef/path')
 
   def test_GetPathUrl_parent(self):
     entry = self._make_entry('Message')

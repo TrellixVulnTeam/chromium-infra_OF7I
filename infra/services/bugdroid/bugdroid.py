@@ -117,7 +117,8 @@ class BugdroidGitPollerHandler(poller_handlers.BasePollerHandler):
   def _CreateMessage(self, log_entry):
     msg = ''
     msg += 'The following revision refers to this bug:\n'
-    msg += '  %s\n\n' % log_entry.GetCommitUrl()
+    if log_entry.HasUrl():
+      msg += '  %s\n\n' % log_entry.GetCommitUrl()
     msg += self._BuildLogSpecial(log_entry)
     return msg
 
@@ -126,19 +127,23 @@ class BugdroidGitPollerHandler(poller_handlers.BasePollerHandler):
     rtn = 'commit %s\n' % log_entry.commit
     rtn += 'Author: %s <%s>\n' % (log_entry.author_name, log_entry.author_email)
     rtn += 'Date: %s\n' % log_entry.committer_date
-    if self.public_bugs:
-      rtn += '\n%s\n' % log_entry.msg
-      for path in log_entry.paths:
-        if path.action == 'delete':
-          # Use parent and copy_from_path for deletions, otherwise we get links
-          # to https://.../<commit>//dev/null
-          rtn += '[%s] %s\n' % (
-              path.action, log_entry.GetPathUrl(
-                  path.copy_from_path, parent=True, shorten=self.shorten_links))
-        else:
-          rtn += '[%s] %s\n' % (
-              path.action, log_entry.GetPathUrl(
-                  path.filename, shorten=self.shorten_links))
+
+    # Skip commit message and paths for non-public bugs.
+    if not self.public_bugs:
+      return rtn
+    rtn += '\n%s\n' % log_entry.msg
+
+    for path in log_entry.paths:
+      if path.action == 'delete':
+        # Use parent and copy_from_path for deletions, otherwise we get links
+        # to https://.../<commit>//dev/null
+        rtn += '[%s] %s\n' % (
+            path.action, log_entry.GetPathUrl(
+                path.copy_from_path, parent=True, shorten=self.shorten_links))
+      else:
+        rtn += '[%s] %s\n' % (
+            path.action, log_entry.GetPathUrl(
+                path.filename, shorten=self.shorten_links))
     return rtn
 
 
