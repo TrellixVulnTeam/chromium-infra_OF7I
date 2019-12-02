@@ -78,7 +78,7 @@ func (t *testRun) ValidateDependencies(ctx context.Context, client swarming.Clie
 		return false, errors.Annotate(err, "validate dependencies").Err()
 	}
 	if !exists {
-		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions %s.", t.Name, dims)
+		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions %+v.", t.Name, dims)
 	}
 	return exists, nil
 }
