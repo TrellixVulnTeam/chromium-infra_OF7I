@@ -6,8 +6,8 @@
 # Helper utility to update analyzers.
 
 # Usage.
-if [ "$#" -eq 0 ] || [ "$1" == "--help" ] ; then
-  echo "Usage: $ update.py directories..."
+if [[ "$#" -eq 0 || ( "$#" -eq 1 && "$1" == "--test" ) || "$1" == "--help" ]] ; then
+  echo "Usage: $ update.py [--test] directories..."
   echo "This only works on directories with both Makefile and cipd.yaml,"
   echo "where `make` builds the analyzer and `make clean` cleans up."
   exit 1
@@ -16,6 +16,12 @@ fi
 set -x # Echo all commands as they are run.
 set -u # Check for unset variables.
 set -e # Exit on failure of a command.
+
+ref="live"
+if [ "$1" == "--test" ]; then
+  ref="test"
+  shift; # Remove the first argument from $@
+fi
 
 function update {
   dir="$1"
@@ -28,7 +34,7 @@ function update {
   make
   out=$(cipd create -pkg-def=cipd.yaml)
   version=$(echo "$out" | grep Instance | sed 's/Instance: .*://')
-  cipd set-ref "infra/tricium/function/$dir" -ref live -version "$version"
+  cipd set-ref "infra/tricium/function/$dir" -ref "$ref" -version "$version"
   make clean
   popd
 }
