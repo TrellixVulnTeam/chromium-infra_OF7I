@@ -51,29 +51,45 @@ var (
 	// ignoredWords are words that shouldn't be flagged, even if they appear in
 	// the dictionary.
 	ignoredWords = []string{
+		"alph",        // person name
 		"als",         // abbr. for ambient light sensor
 		"backed",      // as in "backed by"
-		"cant",        // contraction, may appear in variable names, also a word
+		"ba",          // very short word, shouldn't be flagged
+		"cancelation", // alternative of cancellation
+		"cant",        // contraction, may appear in variable names
 		"cas",         // abbr. for Content Addressed Storage
-		"copyable",    // Valid usage, and used in C++, e.g. is_trivially_copyable
+		"chang",       // person name
+		"copyable",    // used in C++, e.g. is_trivially_copyable
 		"crasher",     // something that causes a crash
 		"crate",       // Rust keyword
 		"cros",        // CrOS, ChromeOS
+		"doesnt",      // contraction, may appear in variable names
+		"donn",        // person name
 		"dont",        // contraction, may appear in variable names
+		"dur",         // abbr. for duration
 		"ect",         // abbr. for effective connection time
+		"errorprone",  // proper name, a Java static analyzer
 		"files'",      // possessive of files
 		"gae",         // abbr. for Google App Engine
 		"hist",        // abbr. for histogram
 		"ith",         // ordinal form of variable i, like nth
 		"lightening",  // present participle of "to lighten"
+		"lod",         // abbr. of level of detail
+		"maks",        // person anme
 		"mut",         // Rust keyword
+		"optin",       // alternative of opt-in
 		"process'",    // possessive of process
+		"reenable",    // alternative of re-enable
+		"referers",    // HTTP referer header uses one 'r'
 		"seeked",      // JS event
 		"subprocess'", // possessive of subprocess
-		"tast",        // Name of a ChromeOS test
-		"wont",        // contraction, may appear in variable names, also a word
-		"wontfix",     // Monorail bug status
-		"maks",        // given name
+		"tast",        // name of a ChromeOS test
+		"te",          // TE is a HTTP request header
+		"tho",         // informal variant of though
+		"vertexes",    // alternative of vertices
+		"wasnt",       // contraction, may appear in variable names
+		"wont",        // contraction, may appear in variable names
+		"wontfix",     // monorail bug status
 	}
 	textFileExts = []string{".txt", ".md"}
 
