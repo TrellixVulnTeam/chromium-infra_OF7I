@@ -2,7 +2,6 @@
 # Copyright 2014 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-
 """Can be used to point environment variable to hermetic Go toolset.
 
 Usage (on linux and mac):
@@ -85,6 +84,12 @@ def main():
     # won't be happening on bots, since they don't use eval `./env.py`.
     if 'VIRTUAL_ENV' in old:
       emit_env_var('VIRTUAL_ENV', old['VIRTUAL_ENV'])
+    if sys.platform != 'win32' and sys.stdout.isatty():
+      print
+      print '# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+      print '# WRAP THIS COMMAND IN "eval" TO HAVE AN EFFECT!'
+      print '#    eval `./env.py`'
+      print '# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
   else:
     exe = args[0]
     if exe == 'python':
