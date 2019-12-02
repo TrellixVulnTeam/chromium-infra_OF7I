@@ -9,7 +9,7 @@ The steps for getting the code are:
 
  1. [Install depot_tools](https://www.chromium.org/developers/how-tos/install-depot-tools)
  1. Run `fetch infra`
- 1. Run `infra/go/env.py`
+ 1. Run `eval \`infra/go/env.py\``
 
 
 ### Quick Setup
