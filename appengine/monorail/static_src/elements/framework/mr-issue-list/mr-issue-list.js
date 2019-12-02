@@ -385,6 +385,7 @@ export class MrIssueList extends connectStore(LitElement) {
         @focus=${this._setRowAsCursorOnFocus}
         @click=${this._clickIssueRow}
         @auxclick=${this._clickIssueRow}
+        @keydown=${this._keydownIssueRow}
         tabindex="0"
       >
         <td class="first-column ignore-navigation">
@@ -1093,22 +1094,46 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
+   * Handles 'Enter' being pressed when a row is focused.
+   * Note we install the 'Enter' listener on the row rather than the window so
+   * 'Enter' behaves as expected when the focus is on other elements.
+   *
+   * @param {KeyboardEvent} e
+   */
+  _keydownIssueRow(e) {
+    if (e.key === 'Enter') {
+      this._maybeOpenIssueRow(e);
+    }
+  }
+
+  /**
    * @param {MouseEvent} e
    */
   _clickIssueRow(e) {
-    const path = e.path || e.composedPath();
+    this._maybeOpenIssueRow(e, e.button === 1);
+  }
+
+  /**
+   * Checks that the given event should not be ignored, then navigates to the
+   * issue associated with the row.
+   *
+   * @param {MouseEvent|KeyboardEvent} rowEvent A click or 'enter' on a row.
+   * @param {boolean} [openNewTab] Forces opening in a new tab
+   */
+  _maybeOpenIssueRow(rowEvent, openNewTab = false) {
+    const path = rowEvent.path || rowEvent.composedPath();
     const containsIgnoredElement = path.find(
         (node) => (node.tagName || '').toUpperCase() === 'A' || (node.classList
         && node.classList.contains('ignore-navigation')));
     if (containsIgnoredElement) return;
 
-    const row = /** @type {HTMLTableRowElement} */ (e.currentTarget);
+    const row = /** @type {HTMLTableRowElement} */ (rowEvent.currentTarget);
 
     const i = Number.parseInt(row.dataset.index);
 
     if (i >= 0 && i < this.issues.length) {
-      this._navigateToIssue(this.issues[i], e.metaKey ||
-          e.ctrlKey || e.button === 1);
+      this._navigateToIssue(this.issues[i], openNewTab || rowEvent.metaKey ||
+          rowEvent.ctrlKey);
     }
   }
 

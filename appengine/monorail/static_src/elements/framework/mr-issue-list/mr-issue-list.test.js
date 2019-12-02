@@ -918,6 +918,48 @@ describe('mr-issue-list', () => {
       sinon.assert.calledWith(element._navigateToIssue,
           {localId: 2, projectName: 'chromium'}, true);
     });
+
+    it('enter keydown on row navigates to issue', async () => {
+      await element.updateComplete;
+
+      const row = element.shadowRoot.querySelector('.row-1');
+
+      row.dispatchEvent(
+          new KeyboardEvent('keydown', {key: 'Enter', bubbles: true}));
+
+      await element.updateComplete;
+
+      sinon.assert.calledOnce(element._navigateToIssue);
+      sinon.assert.calledWith(
+          element._navigateToIssue, {localId: 2, projectName: 'chromium'},
+          false);
+    });
+
+    it('ctrl+enter keydown on row navigates to issue in new tab', async () => {
+      await element.updateComplete;
+
+      const row = element.shadowRoot.querySelector('.row-1');
+
+      // Note: metaKey would also work, but this is covered by click tests.
+      row.dispatchEvent(new KeyboardEvent(
+          'keydown', {key: 'Enter', ctrlKey: true, bubbles: true}));
+
+      await element.updateComplete;
+
+      sinon.assert.calledOnce(element._navigateToIssue);
+      sinon.assert.calledWith(element._navigateToIssue,
+          {localId: 2, projectName: 'chromium'}, true);
+    });
+
+    it('enter keypress outside row is ignored', async () => {
+      await element.updateComplete;
+
+      window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter'}));
+
+      await element.updateComplete;
+
+      sinon.assert.notCalled(element._navigateToIssue);
+    });
   });
 });
 
