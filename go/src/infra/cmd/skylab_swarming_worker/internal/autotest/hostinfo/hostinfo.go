@@ -8,6 +8,7 @@ package hostinfo
 
 import (
 	"encoding/json"
+	"log"
 )
 
 // HostInfo stores the host information.  Hostinfo files are used to
@@ -43,23 +44,30 @@ func Unmarshal(blob []byte) (*HostInfo, error) {
 
 // Marshal serializes the HostInfo struct into a slice of bytes.
 func Marshal(hi *HostInfo) ([]byte, error) {
+	log.Printf("hostinfo::Marshal: before default values applied (%v)", hi)
 	ensureDefaultFieldValues(hi)
+	log.Printf("hostinfo::Marshal: after default values applied (%v)", hi)
 	vhi := versionedHostInfo{
 		HostInfo:          hi,
 		SerializerVersion: currentSerializerVersion,
 	}
-	return json.Marshal(vhi)
+	out, err := json.Marshal(vhi)
+	log.Printf("hostinfo::Marshal: marshalled hostinfo (%s) err (%s)", string(out), err)
+	return out, err
 }
 
 // ensureDefaultFieldValues -- ensure that maps and slices in HostInfo are non-nil
 func ensureDefaultFieldValues(hi *HostInfo) {
 	if hi.Labels == nil {
+		log.Printf("ensureDefaultFieldValues: empty Labels")
 		hi.Labels = []string{}
 	}
 	if hi.Attributes == nil {
+		log.Printf("ensureDefaultFieldValues: empty Attributes")
 		hi.Attributes = make(map[string]string)
 	}
 	if hi.StableVersions == nil {
+		log.Printf("ensureDefaultFieldValues: empty StableVersions")
 		hi.StableVersions = make(map[string]string)
 	}
 }

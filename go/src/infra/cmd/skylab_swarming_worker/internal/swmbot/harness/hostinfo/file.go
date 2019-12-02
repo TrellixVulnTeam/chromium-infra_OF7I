@@ -7,6 +7,7 @@ package hostinfo
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -26,6 +27,7 @@ const hostInfoSubDir = "host_info_store"
 
 // Expose exposes the HostInfo as a file for Autotest to use.
 func Expose(hi *hostinfo.HostInfo, resultsDir string, dutName string) (*File, error) {
+	log.Printf("hostinfo::Expose: hi (%v) resultsDir (%s) dutName (%s)", hi, resultsDir, dutName)
 	blob, err := hostinfo.Marshal(hi)
 	if err != nil {
 		return nil, errors.Annotate(err, "expose hostinfo").Err()
