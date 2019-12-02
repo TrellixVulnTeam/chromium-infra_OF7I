@@ -132,48 +132,12 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]\\infra\\luci\\.vpython3",
-      "-u",
-      "test.py",
-      "-v",
-      "--conf",
-      "[START_DIR]\\infra\\luci\\client\\unittest.cfg",
-      "-A",
-      "!no_run"
-    ],
-    "cwd": "[START_DIR]\\infra\\luci\\client",
-    "name": "client.run tests python3",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
-      "[START_DIR]\\infra\\luci\\.vpython3",
-      "-u",
-      "test_seq.py",
-      "-v"
-    ],
-    "cwd": "[START_DIR]\\infra\\luci\\client",
-    "name": "client.run tests seq python3",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
       "[START_DIR]\\infra\\luci\\.vpython",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]\\infra\\luci\\client\\unittest.cfg",
-      "-A",
-      "!no_run"
+      "[START_DIR]\\infra\\luci\\client\\unittest.cfg"
     ],
     "cwd": "[START_DIR]\\infra\\luci\\client",
     "name": "client.run tests python2",
@@ -185,13 +149,15 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]\\infra\\luci\\.vpython",
+      "[START_DIR]\\infra\\luci\\.vpython3",
       "-u",
-      "test_seq.py",
-      "-v"
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]\\infra\\luci\\client\\unittest.cfg"
     ],
     "cwd": "[START_DIR]\\infra\\luci\\client",
-    "name": "client.run tests seq python2",
+    "name": "client.run tests python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -209,9 +175,7 @@
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]\\infra\\luci\\appengine\\swarming\\swarming_bot\\unittest.cfg",
-      "-A",
-      "!no_run"
+      "[START_DIR]\\infra\\luci\\appengine\\swarming\\swarming_bot\\unittest.cfg"
     ],
     "cwd": "[START_DIR]\\infra\\luci\\appengine\\swarming\\swarming_bot",
     "name": "swarming bot.run tests python2",
@@ -223,13 +187,15 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]\\infra\\luci\\.vpython",
+      "[START_DIR]\\infra\\luci\\.vpython3",
       "-u",
-      "test_seq.py",
-      "-v"
+      "test.py",
+      "-v",
+      "--conf",
+      "[START_DIR]\\infra\\luci\\appengine\\swarming\\swarming_bot\\unittest.cfg"
     ],
     "cwd": "[START_DIR]\\infra\\luci\\appengine\\swarming\\swarming_bot",
-    "name": "swarming bot.run tests seq python2",
+    "name": "swarming bot.run tests python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
