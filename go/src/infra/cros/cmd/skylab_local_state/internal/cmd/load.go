@@ -125,12 +125,15 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 
 	hostInfo := getFullHostInfo(dut, dutState)
 
-	if err := writeHostInfo(request.ResultsDir, request.DutName, hostInfo); err != nil {
+	resultsDir := dutstate.ResultsDir(request.Config.AutotestDir, request.RunId)
+
+	if err := writeHostInfo(resultsDir, request.DutName, hostInfo); err != nil {
 		return err
 	}
 
 	response := skylab_local_state.LoadResponse{
 		ProvisionableLabels: dutState.ProvisionableLabels,
+		ResultsDir:          resultsDir,
 	}
 
 	return writeJSONPb(c.outputPath, &response)
@@ -151,12 +154,12 @@ func validateLoadRequest(request *skylab_local_state.LoadRequest) error {
 		missingArgs = append(missingArgs, "autotest dir")
 	}
 
-	if request.ResultsDir == "" {
-		missingArgs = append(missingArgs, "results dir")
-	}
-
 	if request.DutName == "" {
 		missingArgs = append(missingArgs, "DUT hostname")
+	}
+
+	if request.RunId == "" {
+		missingArgs = append(missingArgs, "Swarming run ID")
 	}
 
 	if len(missingArgs) > 0 {
