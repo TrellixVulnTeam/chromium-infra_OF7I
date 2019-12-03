@@ -26,7 +26,7 @@ import (
 )
 
 var dutmonMetric = metric.NewInt(
-	"chromeos/skylab/dut_mon/dut_count",
+	"chromeos/skylab/dut_mon/swarming_dut_count",
 	"The number of DUTs in a given bucket and status",
 	nil,
 	field.String("board"),
@@ -117,9 +117,7 @@ type bucket struct {
 // the corresponding metric is immediately reset.
 type status string
 
-// List of valid statuses from
-// https://chromium.googlesource.com/chromiumos/third_party/autotest/+/e75ac7a5609a1e7463fd7dba9b1890bb0fc94944/client/common_lib/host_states.py#13
-var allStatuses = []status{"[Multiple]", "[None]", "Cleaning", "Ready", "RepairFailed", "Repairing", "Resetting", "Running", "Verifying"}
+var allStatuses = []status{"[None]", "Ready", "RepairFailed", "NeedsRepair", "NeedsReset", "Running"}
 
 // counter collects number of DUTs per bucket and status.
 type counter map[bucket]map[status]int
@@ -182,44 +180,26 @@ func getStatusForBotInfo(bi *swarming.SwarmingRpcsBotInfo) status {
 	if !isBotHealthy(bi) {
 		return "[None]"
 	}
-	botBusy := bi.TaskId != ""
 
 	switch dutState {
 	case "ready":
-		if botBusy {
-			return "Running"
-		}
 		return "Ready"
-
 	case "running":
 		return "Running"
-	case "needs_cleanup":
-		// We count time spent waiting for a cleanup task to be assigned as time
-		// spent Cleaning.
-		return "Cleaning"
 	case "needs_reset":
 		// We count time spent waiting for a reset task to be assigned as time
 		// spent Resetting.
-		return "Resetting"
+		return "NeedsReset"
 	case "needs_repair":
 		// We count time spent waiting for a repair task to be assigned as time
 		// spent Repairing.
-		return "Repairing"
-	case "needs_verify":
-		// We count time spent waiting for a verify task to be assigned as time
-		// spent Verifying.
-		return "Verifying"
-
+		return "NeedsRepair"
 	case "repair_failed":
-		if botBusy {
-			// TODO(pprabhu) Repeated attempts to repair a RepairFailed DUT are
-			// better counted towards RepairFailed.
-			return "Repairing"
-		}
 		return "RepairFailed"
 
 	default:
 		return "[None]"
+		// We should never see this state
 	}
 }
 

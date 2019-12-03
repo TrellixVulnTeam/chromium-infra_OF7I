@@ -35,8 +35,11 @@ func TestReportMetrics(t *testing.T) {
 			})
 			So(dutmonMetric.Get(ctx, "[None]", "[None]", "[None]", "[None]", false), ShouldEqual, 1)
 
-			So(dutmonMetric.Get(ctx, "[None]", "[None]", "[None]", "Repairing", false), ShouldEqual, 0)
+			So(dutmonMetric.Get(ctx, "[None]", "[None]", "[None]", "NeedsRepair", false), ShouldEqual, 0)
 			So(dutmonMetric.Get(ctx, "[None]", "[None]", "[None]", "Running", false), ShouldEqual, 0)
+			So(dutmonMetric.Get(ctx, "[None]", "[None]", "[None]", "RepairFailed", false), ShouldEqual, 0)
+			So(dutmonMetric.Get(ctx, "[None]", "[None]", "[None]", "Ready", false), ShouldEqual, 0)
+			So(dutmonMetric.Get(ctx, "[None]", "[None]", "[None]", "NeedsReset", false), ShouldEqual, 0)
 		})
 
 		Convey("ReportMetric for multiple bots with same fields should count up", func() {
@@ -85,6 +88,17 @@ func TestReportMetrics(t *testing.T) {
 			So(dutmonMetric.Get(ctx, "reef", "electro", "some_random_pool", "Ready", false), ShouldEqual, 3)
 			ReportMetrics(ctx, []*swarming.SwarmingRpcsBotInfo{bi})
 			So(dutmonMetric.Get(ctx, "reef", "electro", "some_random_pool", "Ready", false), ShouldEqual, 1)
+		})
+
+		Convey("ReportMetric should report repair_failed bots as RepairFailed", func() {
+			bi := &swarming.SwarmingRpcsBotInfo{State: "IDLE", Dimensions: []*swarming.SwarmingRpcsStringListPair{
+				{Key: "dut_state", Value: []string{"repair_failed"}},
+				{Key: "label-board", Value: []string{"reef"}},
+				{Key: "label-model", Value: []string{"electro"}},
+				{Key: "label-pool", Value: []string{"some_random_pool"}},
+			}}
+			ReportMetrics(ctx, []*swarming.SwarmingRpcsBotInfo{bi})
+			So(dutmonMetric.Get(ctx, "reef", "electro", "some_random_pool", "RepairFailed", false), ShouldEqual, 1)
 		})
 
 	})
