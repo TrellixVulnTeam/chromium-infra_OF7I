@@ -46,7 +46,7 @@ This user guide is organized into the following chapters:
 * [Email notifications and replies](email.md)
 <!-- Feature launch tracking and approvals -->
 * [Other project pages for users](project-pages.md)
-<!-- User profiles and hotlists -->
+* [User profiles and hotlists](profiles-and-hotlists.md)
 * [Project owner's guide](project-owners.md)
 <!-- Site admin guide -->
 
