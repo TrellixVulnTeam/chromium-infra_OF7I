@@ -1,6 +1,6 @@
 create {
   verify { test: "python_test.py" }
-  source { patch_version: "chromium.19" }
+  source { patch_version: "chromium.20" }
 }
 
 create {
@@ -31,9 +31,7 @@ create {
     dep: "ncurses"
     dep: "zlib"
     dep: "sqlite"
-
-    # Mac can link with the system openssl to get Keychain support.
-    dep: "openssl_headers"
+    dep: "openssl"
   }
 }
 

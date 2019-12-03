@@ -17,7 +17,6 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # $PATCH_VERSION.
 PY_VERSION="$_3PP_VERSION+${_3PP_PATCH_VERSION}"
 
-CFLAGS="-I$DEPS_PREFIX/include"
 CPPFLAGS="-I$DEPS_PREFIX/include"
 LDFLAGS="-L$DEPS_PREFIX/lib"
 
@@ -33,10 +32,9 @@ SETUP_LOCAL_ATTACH=(
   "$DEPS_PREFIX/lib/libncurses.a"
   "$DEPS_PREFIX/lib/libsqlite3.a"
   "$DEPS_PREFIX/lib/libz.a"
+  "$DEPS_PREFIX/lib/libssl.a"
+  "$DEPS_PREFIX/lib/libcrypto.a"
 )
-
-# If True, we will augment "ssl.py" to install default system CA certs.
-PROBE_DEFAULT_SSL_CA_CERTS=0
 
 # First see if we have to build a runnable python; we'll need it later.
 INTERP=python2
@@ -77,6 +75,11 @@ EOF
   INTERP=$(pwd)/host_interp/bin/python
 fi
 
+# OpenSSL 1.1.1 depends on pthread, so it needs to come LAST. Python's
+# Makefile has an LDLAST to allow some ldflags to be the very last thing on
+# the link line.
+LDLAST="-lpthread"
+
 # Now, really configure and build.
 if [[ $_3PP_PLATFORM == mac* ]]; then
   # Mac Python installations use 2-byte Unicode.
@@ -89,41 +92,10 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
   # that, do a second sweep for ".a".
   LDFLAGS="$LDFLAGS -Wl,-search_paths_first"
 
-  # On Mac, we want to link as much statically as possible. However, Mac OSX
-  # comes with an OpenSSL library that has Mac keychain support built in. In
-  # order to have Python's SSL use the system keychain, we must link against the
-  # native system OpenSSL libraries!
-  #
-  # (Note on Linux, the certificate authority is stored as a file, which we can
-  # just point Python to; consequently, we compile OpenSSL statically).
-  #
-  # In order to link against the system OpenSSL dynamic library, we need headers
-  # representing that library version. OSX doesn't come with those, so we build
-  # and install an equivalent OpenSSL version and include *just its headers* in
-  # our SSL module build.
-  export ac_cv_func_getentropy=n
-  export ac_cv_func_clock_gettime=n
-
   # Our builder system is missing X11 headers, so this module does not build.
   SETUP_LOCAL_SKIP+=(_tkinter)
-
-  # On Mac, we want to link against the system OpenSSL libraries.
-  #
-  # Mac uses "-syslibroot", which takes ownership of library paths that
-  # begin with paths matching those in the system library root, which
-  # includes "/usr/lib". In order to circumvent this, we will create a
-  # symlink to "/usr" called ".../systemusr", then reference it as
-  # ".../systemusr/lib".
-  rm -f $DEPS_PREFIX/lib/libcrypto.a
-  rm -f $DEPS_PREFIX/lib/libssl.a
-  ln -s /usr systemusr
-  LDFLAGS="$LDFLAGS -L`pwd`/systemusr/lib"
-
-  # TODO: check expectations
-  SETUP_LOCAL_ATTACH+=(
-    "_hashlib::-lssl.0.9.8 -lcrypto.0.9.8"
-    "_ssl::-lssl.0.9.8 -lcrypto.0.9.8"
-  )
+  # QuickTime.framework is no longer present on macOS 10.15
+  SETUP_LOCAL_SKIP+=(_Qt)
 else
   # Linux Python (Ubuntu) installations use 4-byte Unicode.
   UNICODE_TYPE=ucs4
@@ -137,25 +109,6 @@ else
   # TODO(iannucci) This assumes we're building for linux under docker (which is
   # currently true).
   EXTRA_CONFIGURE_ARGS="$EXTRA_CONFIGURE_ARGS --build=x86_64-linux-gnu"
-
-  # OpenSSL 1.1.1 depends on pthread, so it needs to come LAST. Python's
-  # Makefile has an LDLAST to allow some ldflags to be the very last thing on
-  # the link line.
-  LDLAST="-lpthread"
-
-  # The "crypt" module needs to link against glibc's "crypt" function.
-  #
-  # TODO: Maybe consider implementing a static version using OpenSSL and
-  # linking that in instead?
-  SETUP_LOCAL_ATTACH+=('crypt::-lcrypt')
-
-  # On Linux, we will statically compile OpenSSL into the binary, since we
-  # want to be generally system/library agnostic.
-  SETUP_LOCAL_ATTACH+=(
-    "$DEPS_PREFIX/lib/libssl.a"
-    "$DEPS_PREFIX/lib/libcrypto.a"
-    "$DEPS_PREFIX/lib/libnsl.a"
-  )
 
   # On Linux, we need to manually configure the embedded 'libffi' package
   # so the '_ctypes' module can link against it.
@@ -174,6 +127,13 @@ else
   # This set of symbols was determined by trial, see:
   # - crbug.com/763792
   LDFLAGS="$LDFLAGS -Wl,--version-script=$SCRIPT_DIR/gnu_version_script.txt"
+
+  # The "crypt" module needs to link against glibc's "crypt" function.
+  #
+  # TODO: Maybe consider implementing a static version using OpenSSL and
+  # linking that in instead?
+  SETUP_LOCAL_ATTACH+=('crypt::-lcrypt')
+  SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib/libnsl.a")
 
   # Assert blindly that the target distro will have /dev/ptmx and not /dev/ptc.
   # This is likely to be true, since all linuxes that we know of have this
@@ -241,14 +201,12 @@ make install
 
 # Augment the Python installation.
 
-if [[ $PROBE_DEFAULT_SSL_CA_CERTS == 1 ]]; then
-  # Read / augment / write the "ssl.py" module to implement custom SSL
-  # certificate loading logic.
-  #
-  # We do this here instead of "usercustomize.py" because the latter
-  # isn't propagated when a VirtualEnv is cut.
-  cat < "$SCRIPT_DIR/python_ssl_suffix.py" >> "$PREFIX/lib/python2.7/ssl.py"
-fi
+# Read / augment / write the "ssl.py" module to implement custom SSL
+# certificate loading logic.
+#
+# We do this here instead of "usercustomize.py" because the latter
+# isn't propagated when a VirtualEnv is cut.
+cat < "$SCRIPT_DIR/../cpython_common/ssl_suffix.py" >> "$PREFIX/lib/python2.7/ssl.py"
 
 # TODO: maybe strip python executable?
 

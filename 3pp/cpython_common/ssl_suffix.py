@@ -14,6 +14,9 @@
 #
 # The contents of this file are appended to "//lib/python3.7/ssl.py".
 
+import sys as _ssl_suffix_sys
+import os as _ssl_suffix_os
+
 def _darwin_synthesize_cert_pem():
   import io
   import ctypes
@@ -52,13 +55,16 @@ def _darwin_synthesize_cert_pem():
     assert SEC.SecKeychainCopySearchList(byref(lst)) == 0
     to_release.append(lst)
 
-    search_list = CF.CFArrayCreateMutableCopy(None, CF.CFArrayGetCount(lst)+1, lst)
+    search_list = CF.CFArrayCreateMutableCopy(
+        None, CF.CFArrayGetCount(lst)+1, lst)
     to_release.append(search_list)
 
     # Attempt to add the SystemRootCertificates keychain to the search path
     # as well.
     root_cert_kc = c_void_p(0)
-    root_certs = '/System/Library/Keychains/SystemRootCertificates.keychain'.encode('utf-8')
+    root_certs = (
+      '/System/Library/Keychains/SystemRootCertificates.keychain'
+    ).encode('utf-8')
     if SEC.SecKeychainOpen(root_certs, byref(root_cert_kc)) == 0:
       CF.CFArrayAppendValue(search_list, root_cert_kc)
       to_release.append(root_cert_kc)
@@ -92,11 +98,11 @@ def _darwin_synthesize_cert_pem():
     items = c_void_p(0)
     result = SEC.SecItemCopyMatching(query, byref(items))
     if result == errSecItemNotFound:
-      print('found zero certs in System Keychain', file=sys.stderr)
+      _ssl_suffix_sys.stderr.write('found zero certs in System Keychain\n')
       return
     elif result != 0:
-      print('failed to find certs in System Keychain: OSStatus(%r)' % result,
-            file=sys.stderr)
+      _ssl_suffix_sys.stderr.write(
+        'failed to find certs in System Keychain: OSStatus(%r)' % result)
       return
     to_release.append(items)
 
@@ -112,6 +118,8 @@ def _darwin_synthesize_cert_pem():
       buf = bytearray(siz)
       char_array = c_char * len(buf)
       memmove(char_array.from_buffer(buf), CF.CFDataGetBytePtr(data), siz)
+      # DER_cert_to_PEM_cert is a symbol inside of ssl.py
+      # pylint: disable=undefined-variable
       cert_pem.write(DER_cert_to_PEM_cert(buf))
 
     return cert_pem.getvalue()
@@ -121,27 +129,47 @@ def _darwin_synthesize_cert_pem():
 
 
 def _linux_find_load_verify_locations_kwargs():
-  # pylint: disable=undefined-variable
-
   kwargs = {}
-  for cabase in ['/etc/pki/tls', '/etc/ssl', '/usr/lib/ssl']:
-    cafile = os.path.join(cabase, 'cert.pem')
-    if os.path.isfile(cafile):
-      kwargs['cafile'] = cafile
 
-    capath = os.path.join(cabase, 'certs')
-    if os.path.isdir(capath):
-      kwargs['capath'] = capath
-
-    if kwargs:
+  # Borrowed from
+  # https://github.com/golang/go/blob/master/src/crypto/x509/root_linux.go#L9
+  ca_files = [
+    # Debian/Ubuntu/Gentoo etc.
+    '/etc/ssl/certs/ca-certificates.crt',
+    '/etc/pki/tls/certs/ca-bundle.crt',                  # Fedora/RHEL 6
+    '/etc/ssl/ca-bundle.pem',                            # OpenSUSE
+    '/etc/pki/tls/cacert.pem',                           # OpenELEC
+    '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem', # CentOS/RHEL 7
+    '/etc/ssl/cert.pem',                                 # Alpine Linux
+  ]
+  for fname in ca_files:
+    if _ssl_suffix_os.path.isfile(fname):
+      kwargs['cafile'] = fname
       break
+
+  # Borrowed from
+  # https://github.com/golang/go/blob/master/src/crypto/x509/root_unix.go#L16
+  ca_paths = [
+    # SLES10/SLES11, https://golang.org/issue/12139
+    '/etc/ssl/certs',
+    '/system/etc/security/cacerts', # Android
+    '/usr/local/share/certs',       # FreeBSD
+    '/etc/pki/tls/certs',           # Fedora/RHEL
+    '/etc/openssl/certs',           # NetBSD
+    '/var/ssl/certs',               # AIX
+  ]
+  for dname in ca_paths:
+    if _ssl_suffix_os.path.isdir(dname):
+      kwargs['capath'] = dname
+      break
+
   return kwargs
 
 
 def _override_set_default_verify_paths():
   kwargs = {}
 
-  if sys.platform == 'darwin':
+  if _ssl_suffix_sys.platform == 'darwin':
     # On OS X, we can use the Security.framework to obtain all the certs
     # installed to the system keychains. We calculate them once and cache them.
     #
@@ -149,8 +177,9 @@ def _override_set_default_verify_paths():
     # the python process... but that seems like a fair tradeoff to make.
     kwargs = {'cadata': _darwin_synthesize_cert_pem()}
 
-  elif sys.platform == 'linux':
-    # On linux we have an easier job; we search well-known locations for cert.pem.
+  elif _ssl_suffix_sys.platform == 'linux':
+    # On linux we have an easier job; we search well-known locations for
+    # cert.pem.
     #
     # As soon as we find one with certs in it, we stop and change
     # set_default_verify_paths to load from that location.
@@ -160,6 +189,8 @@ def _override_set_default_verify_paths():
 
   # Now we override set_default_verify_paths.
   if kwargs:
+    # DER_cert_to_PEM_cert is a symbol inside of ssl.py
+    # pylint: disable=undefined-variable
     SSLContext.set_default_verify_paths = (
         lambda self: self.load_verify_locations(**kwargs))
 
@@ -167,3 +198,5 @@ _override_set_default_verify_paths()
 del _darwin_synthesize_cert_pem
 del _linux_find_load_verify_locations_kwargs
 del _override_set_default_verify_paths
+del _ssl_suffix_sys
+del _ssl_suffix_os

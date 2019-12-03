@@ -213,7 +213,7 @@ make install BASEMODLIBS=$BASEMODLIBS
 #
 # We do this here instead of "usercustomize.py" because the latter
 # isn't propagated when a VirtualEnv is cut.
-cat "$SCRIPT_DIR/python_ssl_suffix.py3" >> $PREFIX/lib/python*/ssl.py
+cat "$SCRIPT_DIR/../cpython_common/ssl_suffix.py" >> $PREFIX/lib/python*/ssl.py
 
 # TODO: maybe strip python executable?
 
