@@ -180,6 +180,14 @@ def monorail_api_method(
     return wrapper
   return new_decorator
 
+def _is_requester_in_allowed_domains(requester):
+  if requester.email().endswith(settings.api_allowed_email_domains):
+    if framework_constants.MONORAIL_SCOPE in oauth.get_authorized_scopes(
+        framework_constants.MONORAIL_SCOPE):
+      return True
+    else:
+      logging.info("User is not authenticated with monorail scope")
+  return False
 
 def api_base_checks(request, requester, services, cnxn,
                     auth_client_ids, auth_emails):
@@ -230,6 +238,12 @@ def api_base_checks(request, requester, services, cnxn,
     elif requester.email() in auth_emails:
       # A whitelisted user account can make requests via any client app.
       logging.info('Client email %r is whitelisted', requester.email())
+      valid_user = True
+    elif _is_requester_in_allowed_domains(requester):
+      # A user with an allowed-domain email and authenticated with the
+      # monorail scope is allowed to make requests via any client app.
+      logging.info(
+          'User email %r is within the allowed domains', requester.email())
       valid_user = True
     else:
       auth_err = ('Neither client ID %r nor email %r is whitelisted' %

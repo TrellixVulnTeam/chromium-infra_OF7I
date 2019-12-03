@@ -25,6 +25,7 @@ from protorpc import message_types
 from features import send_notifications
 from framework import authdata
 from framework import exceptions
+from framework import framework_constants
 from framework import permissions
 from framework import profiler
 from framework import template_helpers
@@ -1723,6 +1724,7 @@ class AllBaseChecksTest(unittest.TestCase):
   def setUp(self):
     self.services = MakeFakeServiceManager()
     self.services.user.TestAddUser('test@example.com', 111)
+    self.user_2 = self.services.user.TestAddUser('test@google.com', 222)
     self.services.project.TestAddProject(
         'test-project', owner_ids=[111], project_id=123,
         access=project_pb2.ProjectAccess.MEMBERS_ONLY)
@@ -1730,6 +1732,7 @@ class AllBaseChecksTest(unittest.TestCase):
     oauth.get_client_id = Mock(return_value=self.auth_client_ids[0])
     oauth.get_current_user = Mock(
         return_value=RequesterMock(email='test@example.com'))
+    oauth.get_authorized_scopes = Mock()
 
   def testUnauthorizedRequester(self):
     with self.assertRaises(endpoints.UnauthorizedException):
@@ -1740,6 +1743,41 @@ class AllBaseChecksTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchUserException):
       api_svc_v1.api_base_checks(
           None, requester, self.services, None, self.auth_client_ids, [])
+
+  def testAllowedDomain_MonorailScope(self):
+    oauth.get_authorized_scopes.return_value = [
+        framework_constants.MONORAIL_SCOPE]
+    oauth.get_current_user.return_value = RequesterMock(
+        email=self.user_2.email)
+    whitelisted_client_ids = []
+    whitelisted_emails = []
+    client_id, email = api_svc_v1.api_base_checks(
+        None, None, self.services, None,
+        whitelisted_client_ids, whitelisted_emails)
+    self.assertEqual(client_id, self.auth_client_ids[0])
+    self.assertEqual(email, self.user_2.email)
+
+  def testAllowedDomain_NoMonorailScope(self):
+    oauth.get_authorized_scopes.return_value = []
+    oauth.get_current_user.return_value = RequesterMock(
+        email=self.user_2.email)
+    whitelisted_client_ids = []
+    whitelisted_emails = []
+    with self.assertRaises(endpoints.UnauthorizedException):
+      api_svc_v1.api_base_checks(None, None, self.services, None,
+                                 whitelisted_client_ids, whitelisted_emails)
+
+  def testAllowedDomain_BadEmail(self):
+    oauth.get_authorized_scopes.return_value = [
+        framework_constants.MONORAIL_SCOPE]
+    oauth.get_current_user.return_value = RequesterMock(
+        email='chicken@chicken.test')
+    whitelisted_client_ids = []
+    whitelisted_emails = []
+    self.services.user.TestAddUser('chicken@chicken.test', 333)
+    with self.assertRaises(endpoints.UnauthorizedException):
+      api_svc_v1.api_base_checks(None, None, self.services, None,
+                                 whitelisted_client_ids, whitelisted_emails)
 
   def testNoOauthUser(self):
     oauth.get_current_user.side_effect = oauth.Error()
