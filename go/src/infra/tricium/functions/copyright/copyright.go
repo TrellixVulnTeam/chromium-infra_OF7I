@@ -15,7 +15,7 @@ import (
 	"regexp"
 	"strings"
 
-	"infra/tricium/api/v1"
+	tricium "infra/tricium/api/v1"
 )
 
 const (
@@ -73,6 +73,7 @@ func main() {
 			continue
 		}
 		if c := checkCopyright(filepath.Join(*inputDir, file.Path)); c != nil {
+			log.Printf("%s: %s", file.Path, c.Category)
 			output.Comments = append(output.Comments, c)
 		}
 	}
