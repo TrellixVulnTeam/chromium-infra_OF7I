@@ -72,7 +72,8 @@ class GetAdjacentIssueTest(unittest.TestCase):
       we.FindIssuePositionInSearch = mock.Mock(
           return_value=[78901, 1, 78903, 3])
 
-      actual_issue = issuedetailezt.GetAdjacentIssue(we, cur_issue)
+      actual_issue = issuedetailezt.GetAdjacentIssue(
+         self.mr, we, cur_issue)
       self.assertEqual(prev_issue, actual_issue)
       we.FindIssuePositionInSearch.assert_called_once_with(cur_issue)
 
@@ -89,7 +90,7 @@ class GetAdjacentIssueTest(unittest.TestCase):
           return_value=[78901, 1, 78903, 3])
 
       actual_issue = issuedetailezt.GetAdjacentIssue(
-          we, cur_issue, next_issue=True)
+          self.mr, we, cur_issue, next_issue=True)
       self.assertEqual(next_issue, actual_issue)
       we.FindIssuePositionInSearch.assert_called_once_with(cur_issue)
 
@@ -104,8 +105,29 @@ class GetAdjacentIssueTest(unittest.TestCase):
           return_value=[78901, 1, 78903, 3])
 
       with self.assertRaises(exceptions.NoSuchIssueException):
-        issuedetailezt.GetAdjacentIssue(we, cur_issue, next_issue=True)
+        issuedetailezt.GetAdjacentIssue(
+            self.mr, we, cur_issue, next_issue=True)
       we.FindIssuePositionInSearch.assert_called_once_with(cur_issue)
+
+  def testGetAdjacentIssue_Hotlist(self):
+    cur_issue = fake.MakeTestIssue(789, 2, 'sum', 'New', 111, issue_id=78902)
+    next_issue = fake.MakeTestIssue(789, 3, 'sum', 'New', 111, issue_id=78903)
+    prev_issue = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
+    self.services.issue.TestAddIssue(cur_issue)
+    self.services.issue.TestAddIssue(next_issue)
+    self.services.issue.TestAddIssue(prev_issue)
+    hotlist = fake.Hotlist('name', 678, owner_ids=[111])
+
+    with self.work_env as we:
+      we.GetIssuePositionInHotlist = mock.Mock(
+          return_value=[78901, 1, 78903, 3])
+
+      actual_issue = issuedetailezt.GetAdjacentIssue(
+          self.mr, we, cur_issue, hotlist=hotlist, next_issue=True)
+      self.assertEqual(next_issue, actual_issue)
+      we.GetIssuePositionInHotlist.assert_called_once_with(
+          cur_issue, hotlist, self.mr.can, self.mr.sort_spec,
+          self.mr.group_by_spec)
 
 
 class FlipperRedirectTest(unittest.TestCase):

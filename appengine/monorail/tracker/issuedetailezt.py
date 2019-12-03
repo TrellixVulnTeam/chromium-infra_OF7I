@@ -141,8 +141,9 @@ class FlipperRedirectBase(servlet.Servlet):
           pass
 
       try:
-        adj_issue = GetAdjacentIssue(we, current_issue,
-            hotlist=hotlist, next_issue=self.next_handler)
+        adj_issue = GetAdjacentIssue(
+            self.mr, we, current_issue, hotlist=hotlist,
+            next_issue=self.next_handler)
         path = '/p/%s%s' % (adj_issue.project_name, urls.ISSUE_DETAIL)
         url = framework_helpers.FormatURL(
             [(name, self.mr.GetParam(name)) for
@@ -285,10 +286,12 @@ def _ShouldShowFlipper(mr, services):
   return True
 
 
-def GetAdjacentIssue(we, issue, hotlist=None, next_issue=False):
+def GetAdjacentIssue(
+    mr, we, issue, hotlist=None, next_issue=False):
   """Compute next or previous issue given params of current issue.
 
   Args:
+    mr: MonorailRequest, including can and sorting/grouping order.
     we: A WorkEnv instance.
     issue: The current issue (from which to compute prev/next).
     hotlist (optional): The current hotlist.
@@ -302,7 +305,8 @@ def GetAdjacentIssue(we, issue, hotlist=None, next_issue=False):
   """
   if hotlist:
     (prev_iid, _cur_index, next_iid, _total_count
-        ) = we.GetIssuePositionInHotlist(issue, hotlist)
+        ) = we.GetIssuePositionInHotlist(
+            issue, hotlist, mr.can, mr.sort_spec, mr.group_by_spec)
   else:
     (prev_iid, _cur_index, next_iid, _total_count
         ) = we.FindIssuePositionInSearch(issue)
