@@ -49,7 +49,9 @@ CROS_SSH_PASSWORD = 'test0000'
 SWARMING_BOT_SSH_ID = '/b/id_rsa'
 
 # Branch to sync the local ChromeOS checkout to.
-CROS_BRANCH = 'release-R79-12607.B'
+# TODO(crbug.com/1025097): Pin this back on a release branch when one is cut
+# that's stable.
+CROS_BRANCH = 'master'
 
 
 def RunSteps(api):
