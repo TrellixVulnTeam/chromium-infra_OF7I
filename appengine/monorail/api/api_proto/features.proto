@@ -18,7 +18,7 @@ service Features {
   rpc GetHotlistStarCount (GetHotlistStarCountRequest) returns (GetHotlistStarCountResponse) {}
   rpc StarHotlist (StarHotlistRequest) returns (StarHotlistResponse) {}
   rpc GetHotlist (GetHotlistRequest) returns (GetHotlistResponse) {}
-  rpc ListHotlistIssues (ListHotlistIssuesRequest) returns (ListHotlistIssuesResponse) {}
+  rpc ListHotlistItems (ListHotlistItemsRequest) returns (ListHotlistItemsResponse) {}
   rpc CreateHotlist (CreateHotlistRequest) returns (CreateHotlistResponse) {}
   rpc CheckHotlistName (CheckHotlistNameRequest) returns (CheckHotlistNameResponse) {}
   rpc RemoveIssuesFromHotlists (RemoveIssuesFromHotlistsRequest) returns (RemoveIssuesFromHotlistsResponse) {}
@@ -112,15 +112,18 @@ message GetHotlistResponse {
   Hotlist hotlist = 1;
 }
 
-// Next available tag: 4
-message ListHotlistIssuesRequest {
+// Next available tag: 7
+message ListHotlistItemsRequest {
   HotlistRef hotlist_ref = 2;
   Pagination pagination = 3;
+  uint32 can = 4;
+  string sort_spec = 5;
+  string group_by_spec = 6;
 }
 
 
 // Next available tag: 2
-message ListHotlistIssuesResponse {
+message ListHotlistItemsResponse {
   repeated HotlistItem items = 1;
 }
 

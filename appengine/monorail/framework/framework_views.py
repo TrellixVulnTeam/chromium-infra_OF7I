@@ -173,7 +173,7 @@ def _ShouldRevealEmail(auth, project, viewed_email):
 
   Args:
    auth: The AuthData of the user viewing the email addresses.
-   project: The project to which the viewed users belong.
+   project: The Project PB to which the viewed users belong.
    viewed_email: The email of the viewed user.
 
   Returns:
@@ -206,7 +206,7 @@ def RevealAllEmailsToMembers(auth, project, users_by_id):
 
   Args:
     auth: AuthInfo object for the signed in user.
-    project: the current project.
+    project: Project PB for the current project.
     users_by_id: dictionary of UserView's that will be displayed.
 
   Returns:

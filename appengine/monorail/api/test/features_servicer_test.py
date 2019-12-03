@@ -21,6 +21,7 @@ from api import converters
 from api.api_proto import common_pb2
 from api.api_proto import features_pb2
 from api.api_proto import features_objects_pb2
+from api.api_proto import issue_objects_pb2
 from framework import authdata
 from framework import exceptions
 from framework import monorailcontext
@@ -64,9 +65,28 @@ class FeaturesServicerTest(unittest.TestCase):
     self.issue_1 = fake.MakeTestIssue(
         789, 1, 'sum', 'New', 111, project_name='proj', issue_id=78901)
     self.issue_2 = fake.MakeTestIssue(
-        789, 2, 'sum', 'New', 111, project_name='proj', issue_id=78902)
+        789, 2, 'sum', 'Fixed', 111, project_name='proj', issue_id=78902,
+        closed_timestamp=112223344)
+    self.issue_3 = fake.MakeTestIssue(
+        789, 3, 'sum', 'New', 111, project_name='proj', issue_id=78903)
+
     self.services.issue.TestAddIssue(self.issue_1)
     self.services.issue.TestAddIssue(self.issue_2)
+    self.services.issue.TestAddIssue(self.issue_3)
+
+    self.project_2 = self.services.project.TestAddProject(
+        'proj2', project_id=788, owner_ids=[111], contrib_ids=[222, 333])
+    self.config_2 = tracker_bizobj.MakeDefaultProjectIssueConfig(788)
+    self.issue_21 = fake.MakeTestIssue(
+        788, 1, 'sum', 'New', 111, project_name='proj2', issue_id=78801)
+    self.issue_22 = fake.MakeTestIssue(
+        788, 2, 'sum', 'New', 111, project_name='proj2', issue_id=78802)
+    self.issue_23 = fake.MakeTestIssue(
+        788, 3, 'sum', 'New', 111, project_name='proj2', issue_id=78803)
+    self.services.issue.TestAddIssue(self.issue_21)
+    self.services.issue.TestAddIssue(self.issue_22)
+    self.services.issue.TestAddIssue(self.issue_23)
+
     self.PAST_TIME = 123456
 
     # For testing PredictComponent
@@ -635,39 +655,79 @@ class FeaturesServicerTest(unittest.TestCase):
     with self.assertRaises(features_svc.NoSuchHotlistException):
       self.CallWrapped(self.features_svcr.GetHotlist, mc, request)
 
-  def testListHotlistIssues(self):
+  def testListHotlistItems(self):
     hotlist_id = self.services.features.CreateHotlist(
         self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
         owner_ids=[111], editor_ids=[]).hotlist_id
     self.services.features.UpdateHotlistItems(
         self.cnxn, hotlist_id, [],
-        [(self.issue_1.issue_id, 222, 12345, 'Note'),
-         (self.issue_2.issue_id, 111, 12346, 'Note')])
-    self.issue_2.labels = ['Restrict-View-CoreTeam']
+        [(self.issue_3.issue_id, 222, 12234, 'Note'),  # cutoff by `start`
+         (self.issue_1.issue_id, 222, 12345, 'Note'),
+         (self.issue_2.issue_id, 222, 12349, 'Note'),  # closed issue
+         (self.issue_21.issue_id, 111, 12346, 'Note'),  # Restrict-View issue
+         (self.issue_22.issue_id, 111, 12347, 'Note'),
+         (self.issue_23.issue_id, 222, 12344, 'Note')])  # cutoff by `max_items`
+    self.issue_21.labels = ['Restrict-View-CoreTeam']
 
     owner_ref = common_pb2.UserRef(user_id=111)
     hotlist_ref = common_pb2.HotlistRef(name='Fake-Hotlist', owner=owner_ref)
-    request = features_pb2.ListHotlistIssuesRequest(hotlist_ref=hotlist_ref)
+    request = features_pb2.ListHotlistItemsRequest(
+        hotlist_ref=hotlist_ref, can=2, pagination=common_pb2.Pagination(
+            max_items=2, start=2))
 
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester='foo@example.com')
     mc.LookupLoggedInUserPerms(self.project)
     response = self.CallWrapped(
-        self.features_svcr.ListHotlistIssues, mc, request)
+        self.features_svcr.ListHotlistItems, mc, request)
 
-    self.assertEqual(1, len(response.items))
-    self.assertEqual(10, response.items[0].rank)
-    self.assertEqual(12345, response.items[0].added_timestamp)
-    self.assertEqual('Note', response.items[0].note)
-    self.assertEqual(
-        common_pb2.UserRef(
-            user_id=222,
-            display_name='edi...@example.com'),
-        response.items[0].adder_ref)
-    self.assertEqual(1, response.items[0].issue.local_id)
-    self.assertEqual('proj', response.items[0].issue.project_name)
-    self.assertEqual('sum', response.items[0].issue.summary)
-    self.assertEqual('New', response.items[0].issue.status_ref.status)
+    # TODO(jojwang): monorail:6754 testing.fake.py's UpdateHotlistItems
+    # does not calculate ranks correctly. Requires small follow-up CL.
+    expected = features_pb2.ListHotlistItemsResponse(
+        items=[
+            features_objects_pb2.HotlistItem(
+                issue=issue_objects_pb2.Issue(
+                    local_id=self.issue_1.local_id,
+                    project_name=self.project.project_name,
+                    summary=self.issue_1.summary,
+                    status_ref=common_pb2.StatusRef(
+                        status='New', means_open=True),
+                    reporter_ref=common_pb2.UserRef(
+                        user_id=self.user1.user_id,
+                        display_name=testing_helpers.ObscuredEmail(
+                            self.user1.email)),
+                    owner_ref=common_pb2.UserRef(
+                        user_id=self.user1.user_id,
+                        display_name=testing_helpers.ObscuredEmail(
+                            self.user1.email))),
+                rank=11,
+                adder_ref=common_pb2.UserRef(
+                    user_id=self.user2.user_id,
+                    display_name=testing_helpers.ObscuredEmail(
+                        self.user2.email)),
+                added_timestamp=12345, note='Note'),
+            features_objects_pb2.HotlistItem(
+                issue=issue_objects_pb2.Issue(
+                    local_id=self.issue_22.local_id,
+                    project_name=self.project_2.project_name,
+                    summary=self.issue_22.summary,
+                    status_ref=common_pb2.StatusRef(
+                        status='New', means_open=True),
+                    reporter_ref=common_pb2.UserRef(
+                        user_id=self.user1.user_id,
+                        display_name=testing_helpers.ObscuredEmail(
+                            self.user1.email)),
+                    owner_ref=common_pb2.UserRef(
+                        user_id=self.user1.user_id,
+                        display_name=testing_helpers.ObscuredEmail(
+                            self.user1.email))),
+                rank=14,
+                adder_ref=common_pb2.UserRef(
+                    user_id=self.user1.user_id,
+                    display_name=testing_helpers.ObscuredEmail(
+                        self.user1.email)),
+                added_timestamp=12347, note='Note')])
+    self.assertEqual(expected, response)
 
   def testCreateHotlist_Normal(self):
     request = features_pb2.CreateHotlistRequest(

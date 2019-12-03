@@ -1068,10 +1068,10 @@ def ConvertHotlist(hotlist, users_by_id):
 
 
 def ConvertHotlistItem(hotlist_item, issues_by_id, users_by_id, related_refs,
-                       configs):
+                       harmonized_config):
   issue_pb = issues_by_id[hotlist_item.issue_id]
   issue = ConvertIssue(
-      issue_pb, users_by_id, related_refs, configs[issue_pb.project_name])
+      issue_pb, users_by_id, related_refs, harmonized_config)
   adder_ref = ConvertUserRef(hotlist_item.adder_id, None, users_by_id)
   result = features_objects_pb2.HotlistItem(
       issue=issue,

@@ -2035,15 +2035,13 @@ class WorkEnv(object):
       use_cache: set to false when doing read-modify-write.
 
     Returns:
-      A tuple of (visible_hotlist_items, harmonized_config, users_by_id) where:
+      A tuple of (visible_hotlist_items, harmonized_config) where:
 
       visible_hotlist_items: a list of sorted HotlistItems with
         issues filtered out based on start, max_items, can, and the users's
         permisisons.
       harmonized_config: ProjectIssueConfig for all projects involved in
         with the hotlist.
-      users_by_id: dict of {user_id: UserView, ...} for all users involved in
-        the HotlistItems.
 
     Raises:
       NoSuchHotlistException: There is no hotlist with that ID.

@@ -180,51 +180,41 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return features_pb2.GetHotlistResponse(hotlist=converted_hotlist)
 
   @monorail_servicer.PRPCMethod
-  def ListHotlistIssues(self, mc, request):
+  def ListHotlistItems(self, mc, request):
     """Get the issues on the specified hotlist."""
-    # TODO(ehmaldonado): This probably doesn't work, since we need to check
-    # the permissions for each issue in their own project, and we're not doing
-    # that.
     hotlist_id = converters.IngestHotlistRef(
         mc.cnxn, self.services.user, self.services.features,
         request.hotlist_ref)
 
-    with work_env.WorkEnv(mc, self.services) as we:
-      hotlist_items = we.GetHotlist(hotlist_id).items
-      issue_ids = [item.issue_id for item in hotlist_items]
-      issues = we.GetIssuesDict(issue_ids)
-
-      projects = we.GetProjectsByName([
-          issue.project_name for issue in issues.values()])
-      configs = we.GetProjectConfigs([
-          project.project_id for project in projects.values()])
-      configs = {
-          project.project_name: configs[project.project_id]
-          for project in projects.values()}
-      related_refs = we.GetRelatedIssueRefs(iter(issues.values()))
-
-    with mc.profiler.Phase('making user views'):
-      users_involved = set(item.adder_id for item in hotlist_items)
-      users_involved.update(
-          tracker_bizobj.UsersInvolvedInIssues(iter(issues.values())))
-      users_by_id = framework_views.MakeAllUserViews(
-          mc.cnxn, self.services.user, users_involved)
-      framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
-
-    hotlist_items = [
-        hotlist_item for hotlist_item in hotlist_items
-        if hotlist_item.issue_id in issues]
-
     start, max_items = converters.IngestPagination(request.pagination)
-    pagination = paginate.ArtifactPagination(
-        hotlist_items, max_items, start, None, None)
+    with work_env.WorkEnv(mc, self.services) as we:
+      visible_hotlist_items, harmonized_config = we.ListHotlistItems(
+          hotlist_id, max_items, start, request.can, request.sort_spec,
+          request.group_by_spec)
 
-    result = features_pb2.ListHotlistIssuesResponse(
-        items=[
-            converters.ConvertHotlistItem(
-                hotlist_item, issues,  users_by_id, related_refs, configs)
-            for hotlist_item in pagination.visible_results])
-    return result
+      issue_ids = [item.issue_id for item in visible_hotlist_items]
+      issues_by_id = we.GetIssuesDict(issue_ids)
+      related_refs_by_id = we.GetRelatedIssueRefs(issues_by_id.values())
+      all_project_names = [project_name for (project_name, _local_id)
+                           in related_refs_by_id.values()]
+      projects_by_name = we.GetProjectsByName(all_project_names)
+
+      with mc.profiler.Phase('making user views'):
+        users_involved = set(item.adder_id for item in visible_hotlist_items)
+        users_involved.update(
+            tracker_bizobj.UsersInvolvedInIssues(issues_by_id.values()))
+        users_by_id = framework_views.MakeAllUserViews(
+            mc.cnxn, self.services.user, users_involved)
+        # Reveal emails for all projects current user is a member of.
+        for project in projects_by_name.values():
+          framework_views.RevealAllEmailsToMembers(
+              mc.auth, project, users_by_id)
+
+      result = features_pb2.ListHotlistItemsResponse(
+          items=[converters.ConvertHotlistItem(
+              item, issues_by_id, users_by_id, related_refs_by_id,
+              harmonized_config) for item in visible_hotlist_items])
+      return result
 
   @monorail_servicer.PRPCMethod
   def CreateHotlist(self, mc, request):

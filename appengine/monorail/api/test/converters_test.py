@@ -2143,6 +2143,13 @@ class ConverterFunctionsTest(unittest.TestCase):
 
   def testConvertHotlistItem(self):
     """We can convert a HotlistItem to protoc."""
+    project_2 = self.services.project.TestAddProject(
+        'proj2', project_id=788)
+    config_2 = tracker_bizobj.MakeDefaultProjectIssueConfig(
+        project_2.project_id)
+    config_2.field_defs = [self.fd_2]
+    self.config.field_defs = [self.fd_1]
+
     hotlist = self.services.features.CreateHotlist(
         self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
         owner_ids=[111], editor_ids=[])
@@ -2151,13 +2158,14 @@ class ConverterFunctionsTest(unittest.TestCase):
         [(self.issue_1.issue_id, 222, 12345, 'Note')])
     issues_by_id = {self.issue_1.issue_id: self.issue_1}
     related_refs = {}
-    configs = {'proj': self.config}
+    harmonized_config = tracker_bizobj.HarmonizeConfigs([self.config, config_2])
 
     actual = converters.ConvertHotlistItem(
-        hotlist.items[0], issues_by_id, self.users_by_id, related_refs, configs)
+        hotlist.items[0], issues_by_id, self.users_by_id, related_refs,
+        harmonized_config)
 
     expected_issue = converters.ConvertIssue(
-        self.issue_1, self.users_by_id, related_refs, self.config)
+        self.issue_1, self.users_by_id, related_refs, harmonized_config)
     self.assertEqual(
         features_objects_pb2.HotlistItem(
             issue=expected_issue,
