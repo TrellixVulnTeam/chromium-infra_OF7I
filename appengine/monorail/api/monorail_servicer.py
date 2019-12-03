@@ -137,10 +137,46 @@ class MonorailServicer(object):
 
     return response
 
+  def _GetAllowedEmailDomainAuth(self, cnxn, services):
+    """Checks if the requester's email is found in api_allowed_email_domains
+       and is authorized by the custom monorail scope.
+
+    Args:
+      cnxn: connection to the SQL database.
+      services: connections to backend services.
+
+    Returns:
+      A new AuthData object if the method determines the requester is allowed
+      to access the API, otherwise, None.
+    """
+    try:
+      # Note: get_current_user(scopes) returns the User with the User's email.
+      # So, in addition to requesting any scope listed in 'scopes', it also
+      # always requests the email scope.
+      monorail_scope_user = oauth.get_current_user(
+          framework_constants.MONORAIL_SCOPE)
+      logging.info('monorail scope user %r', monorail_scope_user)
+      # TODO(b/144508063): remove this workaround.
+      authorized_scopes = oauth.get_authorized_scopes(
+          framework_constants.MONORAIL_SCOPE)
+      if framework_constants.MONORAIL_SCOPE not in authorized_scopes:
+        raise oauth.Error('Work around for b/144508063')
+      logging.info(authorized_scopes)
+      if (monorail_scope_user and monorail_scope_user.email().endswith(
+          settings.api_allowed_email_domains)):
+        logging.info('User %r authenticated with Oauth and monorail',
+                     monorail_scope_user.email())
+        return authdata.AuthData.FromEmail(
+            cnxn, monorail_scope_user.email(), services)
+    except oauth.Error as ex:
+      logging.info('oauth.Error for monorail scope: %s' % ex)
+    return None
+
   def GetAndAssertRequesterAuth(self, cnxn, metadata, services):
     """Gets the requester identity and checks if the user has permission
        to make the request.
-       Any users successfully authenticated with oauth must be whitelisted.
+       Any users successfully authenticated with oauth must be whitelisted or
+       have accounts with the domains in api_allowed_email_domains.
        Users identified using cookie-based auth must have valid XSRF tokens.
        Test accounts ending with @example.com are only allowed in the
        local_mode.
@@ -159,6 +195,8 @@ class MonorailServicer(object):
       permissions.PermissionException: If the user is not authorized with the
         Monorail scope, is not whitelisted, and has an invalid token.
     """
+    # TODO(monorail:6538): Move different authentication methods into separate
+    # functions.
     requester_auth = None
     # When running on localhost, allow request to specify test account.
     if TEST_ACCOUNT_HEADER in metadata:
@@ -174,7 +212,10 @@ class MonorailServicer(object):
       logging.info('Using test_account: %r' % test_account)
       requester_auth = authdata.AuthData.FromEmail(cnxn, test_account, services)
 
-    # TODO(jojwang): Oauth using Monorail's scope
+    # Oauth for users with email domains in api_allowed_email_domains.
+    if not requester_auth:
+      requester_auth = self._GetAllowedEmailDomainAuth(cnxn, services)
+
     # Oauth for whitelisted users
     if not requester_auth:
       try:

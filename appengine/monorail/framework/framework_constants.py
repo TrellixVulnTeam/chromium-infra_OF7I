@@ -177,5 +177,6 @@ PRETTIFY_FILENAME_CLASS_MAP = {
 }
 
 OAUTH_SCOPE = 'https://www.googleapis.com/auth/userinfo.email'
+MONORAIL_SCOPE = 'https://www.googleapis.com/auth/monorail'
 
 FILENAME_RE = re.compile('^[-_.a-zA-Z0-9 #+()]+$')

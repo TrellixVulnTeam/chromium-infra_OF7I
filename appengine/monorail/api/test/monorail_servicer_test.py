@@ -23,6 +23,7 @@ import settings
 from api import monorail_servicer
 from framework import authdata
 from framework import exceptions
+from framework import framework_constants
 from framework import monorailcontext
 from framework import permissions
 from framework import ratelimiter
@@ -122,6 +123,8 @@ class MonorailServicerTest(unittest.TestCase):
         'whitelisted-with-client-id@developer.gserviceaccount.com', 888)
     self.non_member = self.services.user.TestAddUser(
         'nonmember@example.com', 222)
+    self.allowed_domain_user = self.services.user.TestAddUser(
+        'chickenchicken@google.com', 333)
     self.test_user = self.services.user.TestAddUser('test@example.com', 420)
     self.svcr = TestableServicer(self.services)
     self.nonmember_token = xsrf.GenerateToken(222, xsrf.XHR_SERVLET_PATH)
@@ -140,6 +143,12 @@ class MonorailServicerTest(unittest.TestCase):
         'google.appengine.api.oauth.get_client_id')
     self.mock_oauth_gcid = self.oauth_client_id_patcher.start()
     self.mock_oauth_gcid.return_value = "1234common.clientid"
+
+    # TODO(b/144508063): remove this workaround.
+    self.oauth_authorized_scopes_patcher = mock.patch(
+        'google.appengine.api.oauth.get_authorized_scopes')
+    self.mock_oauth_gas = self.oauth_authorized_scopes_patcher.start()
+    self.mock_oauth_gas.return_value = [framework_constants.MONORAIL_SCOPE]
 
   def tearDown(self):
     self.mox.UnsetStubs()
@@ -263,6 +272,42 @@ class MonorailServicerTest(unittest.TestCase):
     # Anonymous user has invalid token.
     with self.assertRaises(permissions.PermissionException):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+  def testGetAndAssertRequester_Oauth_AllowedDomain_NoMonorailScope(self):
+    """We reject users with allowed domains but no monorail scope."""
+    metadata = {}
+    self.mock_oauth_gcu.return_value = None
+
+    with self.assertRaises(permissions.PermissionException):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+  def testGetAndAssertRequester_Oauth_BadDomain_MonorailScope(self):
+    """We reject users with bad domains using the monorail scope."""
+    metadata = {}
+    def side_effect(scope=None):
+      if scope == framework_constants.MONORAIL_SCOPE:
+        return testing_helpers.Blank(
+            email=lambda: 'testchicken@chicken.com', client_id=lambda: 7899)
+      return None
+    self.mock_oauth_gcu.side_effect = side_effect
+
+    with self.assertRaises(permissions.PermissionException):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+  def testGetAndAssertRequester_Oauth_AllowedDomain_MonorailScope(self):
+    """We get and allow users with allowed domains using the monorail scope."""
+    metadata = {}
+    def side_effect(scope=None):
+      if scope == framework_constants.MONORAIL_SCOPE:
+        return testing_helpers.Blank(
+            email=lambda: self.allowed_domain_user.email,
+            client_id=lambda: 7899)
+      return None
+    self.mock_oauth_gcu.side_effect = side_effect
+
+    user_auth = self.svcr.GetAndAssertRequesterAuth(
+        self.cnxn, metadata, self.services)
+    self.assertEqual(user_auth.email, self.allowed_domain_user.email)
 
   def testGetAndAssertRequesterAuth_Oauth_Whitelisted(self):
     metadata = {}

@@ -466,3 +466,7 @@ else:
   pubsub_project = app_identity.get_application_id()
 
 pubsub_topic_id = 'projects/%s/topics/issue-updates' % pubsub_project
+
+# All users in the following domains will have API access.
+# Important: the @ symbol must be included.
+api_allowed_email_domains = ('@google.com')
