@@ -17,8 +17,11 @@
 package inventory
 
 import (
+	"fmt"
+	"regexp"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
@@ -39,6 +42,12 @@ import (
 	"infra/appengine/crosskylabadmin/app/frontend/internal/metrics/utilization"
 	"infra/libs/skylab/inventory"
 )
+
+var labstationPattern = regexp.MustCompile(`\A.*labstation\z`)
+
+var servoV3Pattern = regexp.MustCompile(`\A.*-servo\z`)
+
+const beagleboneServo = "beaglebone_servo"
 
 // ListServers implements the method from fleet.InventoryServer interface.
 func (is *ServerImpl) ListServers(ctx context.Context, req *fleet.ListServersRequest) (resp *fleet.ListServersResponse, err error) {
@@ -132,7 +141,7 @@ func (is *ServerImpl) GetStableVersion(ctx context.Context, req *fleet.GetStable
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	return getStableVersionImpl(ctx, req.BuildTarget, req.Model)
+	return getStableVersionImpl(ctx, req.BuildTarget, req.Model, req.Hostname)
 }
 
 // ReportInventory reports metrics of duts in inventory.
@@ -303,11 +312,25 @@ func freeDUTInfo(d *inventory.DeviceUnderTest) freeduts.DUT {
 }
 
 // getStableVersionImpl returns all the stable versions associated with a given buildTarget and model
-func getStableVersionImpl(ctx context.Context, buildTarget string, model string) (*fleet.GetStableVersionResponse, error) {
+// NOTE: hostname is explicitly allowed to be "". If hostname is "", then no hostname was provided in the GetStableVersion RPC call
+func getStableVersionImpl(ctx context.Context, buildTarget string, model string, hostname string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for buildTarget: %s and model: %s", buildTarget, model)
+
+	if hostname == "" {
+		logging.Infof(ctx, "hostname not provided, using buildTarget (%s) and model (%s)", buildTarget, model)
+		return getStableVersionImplNoHostname(ctx, buildTarget, model)
+	}
+	logging.Infof(ctx, "hostname (%s) provided, ignoring user-provided buildTarget (%s) and model (%s)", hostname, buildTarget, model)
+	return getStableVersionImplWithHostname(ctx, hostname)
+}
+
+// getStableVersionImplNoHostname returns stableversion information given a buildTarget and model
+func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, model string) (*fleet.GetStableVersionResponse, error) {
+	logging.Infof(ctx, "getting stable version for buildTarget: (%s) and model: (%s)", buildTarget, model)
 	var err error
 	merr := errors.NewMultiError()
 	out := &fleet.GetStableVersionResponse{}
+
 	out.CrosVersion, err = dssv.GetCrosStableVersion(ctx, buildTarget)
 	if err != nil {
 		merr = append(merr, err)
@@ -324,4 +347,98 @@ func getStableVersionImpl(ctx context.Context, buildTarget string, model string)
 		return nil, merr
 	}
 	return out, nil
+}
+
+// getStableVersionImplWithHostname return stable version information given just a hostname
+func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fleet.GetStableVersionResponse, error) {
+	logging.Infof(ctx, "getting stable version for given hostname (%s)", hostname)
+	var err error
+
+	dut, err := getDUT(ctx, hostname)
+	if err != nil {
+		logging.Infof(ctx, "failed to get DUT: %v", err)
+		return nil, errors.Annotate(err, "failed to get DUT").Err()
+	}
+
+	buildTarget := dut.GetCommon().GetLabels().GetBoard()
+	model := dut.GetCommon().GetLabels().GetModel()
+
+	out, err := getStableVersionImplNoHostname(ctx, buildTarget, model)
+	if err != nil {
+		return nil, errors.Annotate(err, "get stable version for DUT itself").Err()
+	}
+
+	servoHostHostname, err := getServoHostHostname(dut)
+	if err != nil {
+		return nil, errors.Annotate(err, "getting hostname of servohost").Err()
+	}
+	servoStableVersion, err := getCrosVersionFromServoHost(ctx, servoHostHostname)
+	if err != nil {
+		return nil, errors.Annotate(err, "getting cros version from servo host").Err()
+	}
+	out.ServoCrosVersion = servoStableVersion
+
+	return out, nil
+}
+
+// getServoHostHostname gets the servo host hostname associated with a dut
+// for instance, a labstation is a servo host.
+func getServoHostHostname(dut *inventory.DeviceUnderTest) (string, error) {
+	attrs := dut.GetCommon().GetAttributes()
+	if len(attrs) == 0 {
+		return "", fmt.Errorf("attributes for dut with hostname (%s) is unexpectedly empty", dut.GetCommon().GetHostname())
+	}
+	for _, item := range attrs {
+		key := item.GetKey()
+		value := item.GetValue()
+		if key == "servo_host" {
+			if value == "" {
+				return "", fmt.Errorf("\"servo_host\" attribute unexpectedly has value \"\" for hostname (%s)", dut.GetCommon().GetHostname())
+			}
+			return value, nil
+		}
+	}
+	return "", fmt.Errorf("no \"servo_host\" attribute for hostname (%s)", dut.GetCommon().GetHostname())
+}
+
+// getDUT returns the DUT associated with a particular hostname from datastore
+func getDUT(ctx context.Context, hostname string) (*inventory.DeviceUnderTest, error) {
+	resp, err := dsinventory.GetSerializedDUTByHostname(ctx, hostname)
+	if err != nil {
+		msg := fmt.Sprintf("getting serialized DUT by hostname for (%s)", hostname)
+		return nil, errors.Annotate(err, msg).Err()
+	}
+	dut := &inventory.DeviceUnderTest{}
+	if err := proto.Unmarshal(resp.Data, dut); err != nil {
+		msg := fmt.Sprintf("unserializing DUT for hostname (%s)", hostname)
+		return nil, errors.Annotate(err, msg).Err()
+	}
+	return dut, nil
+}
+
+// getCrosVersionFromServoHost returns the cros version associated with a particular servo host
+// hostname : hostname of the servo host (e.g. labstation)
+func getCrosVersionFromServoHost(ctx context.Context, hostname string) (string, error) {
+	if labstationPattern.MatchString(hostname) {
+		logging.Infof(ctx, "getCrosVersionFromServoHost: identified labstation servohost hostname (%s)", hostname)
+		dut, err := getDUT(ctx, hostname)
+		if err != nil {
+			return "", errors.Annotate(err, "get labstation dut info").Err()
+		}
+		buildTarget := dut.GetCommon().GetLabels().GetBoard()
+		if buildTarget == "" {
+			return "", fmt.Errorf("no buildTarget for hostname (%s)", hostname)
+		}
+		out, err := dssv.GetCrosStableVersion(ctx, buildTarget)
+		if err != nil {
+			return "", errors.Annotate(err, "getting labstation stable version").Err()
+		}
+		return out, nil
+	}
+	if servoV3Pattern.MatchString(hostname) {
+		logging.Infof(ctx, "getCrosVersionFromServoHost: identified beaglebone servohost hostname (%s)", hostname)
+		return beagleboneServo, nil
+	}
+	logging.Infof(ctx, "getCrosVersionFromServoHost: unrecognized hostname (%s)", hostname)
+	return "", fmt.Errorf("unrecognized hostname (%s) is not a labstation or beaglebone servo", hostname)
 }

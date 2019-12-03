@@ -693,17 +693,22 @@ message BatchUpdateDutsResponse {
 message UpdateCachedInventoryRequest {}
 message UpdateCachedInventoryResponse {}
 
-// next tag: 3
+// next tag: 4
 message GetStableVersionRequest {
+    // TODO(gregorynisbet): remove support for looking up
+    // stable version information by buildTarget + model
     string buildTarget = 1;
     string model = 2;
+    // NOTE: {hostname} and {buildTarget, model} are alternatives
+    string hostname = 3;
 }
 
-// next tag: 4
+// next tag: 5
 message GetStableVersionResponse {
     string crosVersion = 1;
     string firmwareVersion = 2;
     string faftVersion = 3;
+    string servoCrosVersion = 4;
 }
 
 message DumpStableVersionToDatastoreRequest {}

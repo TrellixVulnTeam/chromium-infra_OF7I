@@ -22,6 +22,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/freeduts"
+	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
 	"infra/libs/skylab/inventory"
@@ -277,6 +278,118 @@ func TestGetStableVersion(t *testing.T) {
 		So(resp.FirmwareVersion, ShouldEqual, "xxx-firmware-version")
 	})
 
+	Convey("Test GetStableVersion RPC -- look up by hostname beaglebone", t, func() {
+		ctx := testingContext()
+		datastore.GetTestable(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		// use a fake beaglebone servo
+		duts := []*inventory.DeviceUnderTest{
+			{
+				Common: &inventory.CommonDeviceSpecs{
+					Attributes: []*inventory.KeyValue{
+						{
+							Key:   strptr("servo_host"),
+							Value: strptr("xxx-beaglebone-servo"),
+						},
+					},
+					Id:       strptr("xxx-id"),
+					Hostname: strptr("xxx-hostname"),
+					Labels: &inventory.SchedulableLabels{
+						Model: strptr("xxx-model"),
+						Board: strptr("xxx-build-target"),
+					},
+				},
+			},
+		}
+
+		err := dsinventory.UpdateDUTs(ctx, duts)
+		So(err, ShouldBeNil)
+
+		err = dssv.PutSingleCrosStableVersion(ctx, "xxx-build-target", "xxx-cros-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutSingleFaftStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-faft-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutSingleFirmwareStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-firmware-version")
+		So(err, ShouldBeNil)
+
+		resp, err := tf.Inventory.GetStableVersion(
+			ctx,
+			&fleet.GetStableVersionRequest{
+				Hostname: "xxx-hostname",
+			},
+		)
+
+		So(err, ShouldBeNil)
+		So(resp.CrosVersion, ShouldEqual, "xxx-cros-version")
+		So(resp.FaftVersion, ShouldEqual, "xxx-faft-version")
+		So(resp.FirmwareVersion, ShouldEqual, "xxx-firmware-version")
+		So(resp.ServoCrosVersion, ShouldEqual, beagleboneServo)
+	})
+
+	Convey("Test GetStableVersion RPC -- look up by hostname labstation", t, func() {
+		ctx := testingContext()
+		datastore.GetTestable(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		// use a fake labstation
+		duts := []*inventory.DeviceUnderTest{
+			{
+				Common: &inventory.CommonDeviceSpecs{
+					Attributes: []*inventory.KeyValue{
+						{
+							Key:   strptr("servo_host"),
+							Value: strptr("xxx-labstation"),
+						},
+					},
+					Id:       strptr("xxx-id"),
+					Hostname: strptr("xxx-hostname"),
+					Labels: &inventory.SchedulableLabels{
+						Model: strptr("xxx-model"),
+						Board: strptr("xxx-build-target"),
+					},
+				},
+			},
+			{
+				Common: &inventory.CommonDeviceSpecs{
+					Id:       strptr("xxx-labstation-id"),
+					Hostname: strptr("xxx-labstation"),
+					Labels: &inventory.SchedulableLabels{
+						Model: strptr("xxx-labstation-model"),
+						Board: strptr("xxx-labstation-board"),
+					},
+				},
+			},
+		}
+
+		err := dsinventory.UpdateDUTs(ctx, duts)
+		So(err, ShouldBeNil)
+
+		err = dssv.PutSingleCrosStableVersion(ctx, "xxx-build-target", "xxx-cros-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutSingleCrosStableVersion(ctx, "xxx-labstation-board", "xxx-labstation-cros-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutSingleFaftStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-faft-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutSingleFirmwareStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-firmware-version")
+		So(err, ShouldBeNil)
+
+		resp, err := tf.Inventory.GetStableVersion(
+			ctx,
+			&fleet.GetStableVersionRequest{
+				Hostname: "xxx-hostname",
+			},
+		)
+
+		So(err, ShouldBeNil)
+		So(resp.CrosVersion, ShouldEqual, "xxx-cros-version")
+		So(resp.FaftVersion, ShouldEqual, "xxx-faft-version")
+		So(resp.FirmwareVersion, ShouldEqual, "xxx-firmware-version")
+		So(resp.ServoCrosVersion, ShouldEqual, "xxx-labstation-cros-version")
+	})
+
 	Convey("Test GetStableVersion RPC -- no stable versions exist", t, func() {
 		ctx := testingContext()
 		datastore.GetTestable(ctx)
@@ -342,4 +455,8 @@ var testRetriesTemplate = retry.ExponentialBackoff{
 func testRetryIteratorFactory() retry.Iterator {
 	it := testRetriesTemplate
 	return &it
+}
+
+func strptr(x string) *string {
+	return &x
 }
