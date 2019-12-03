@@ -47,7 +47,7 @@ This user guide is organized into the following chapters:
 <!-- Feature launch tracking and approvals -->
 * [Other project pages for users](project-pages.md)
 <!-- User profiles and hotlists -->
-<!-- Project owner guide -->
+* [Project owner's guide](project-owners.md)
 <!-- Site admin guide -->
 
 
