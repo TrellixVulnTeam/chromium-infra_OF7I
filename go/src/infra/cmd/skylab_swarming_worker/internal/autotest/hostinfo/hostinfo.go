@@ -44,9 +44,9 @@ func Unmarshal(blob []byte) (*HostInfo, error) {
 
 // Marshal serializes the HostInfo struct into a slice of bytes.
 func Marshal(hi *HostInfo) ([]byte, error) {
-	log.Printf("hostinfo::Marshal: before default values applied (%v)", hi)
+	log.Printf("hostinfo::Marshal: before default values applied (%#v)", hi)
 	ensureDefaultFieldValues(hi)
-	log.Printf("hostinfo::Marshal: after default values applied (%v)", hi)
+	log.Printf("hostinfo::Marshal: after default values applied (%#v)", hi)
 	vhi := versionedHostInfo{
 		HostInfo:          hi,
 		SerializerVersion: currentSerializerVersion,
