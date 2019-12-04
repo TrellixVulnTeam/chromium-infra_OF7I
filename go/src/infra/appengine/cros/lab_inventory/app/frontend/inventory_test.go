@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
 )
@@ -85,6 +86,68 @@ func TestACL(t *testing.T) {
 			})
 			_, err := tf.DecoratedInventory.GetCrosDevices(ctx, req)
 			So(err, ShouldBeNil)
+		})
+	})
+}
+
+func TestAddCrosDevices(t *testing.T) {
+	t.Parallel()
+	dut1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{
+				Hostname: "dut1",
+			},
+		},
+	}
+	labstation1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{},
+		Device: &lab.ChromeOSDevice_Labstation{
+			Labstation: &lab.Labstation{
+				Hostname: "labstation1",
+			},
+		},
+	}
+	Convey("Add Chrome OS devices", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Add new devices", func() {
+			req := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+			}
+			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.PassedDevices, ShouldHaveLength, 2)
+		})
+		Convey("Fail the input validation check", func() {
+			req := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{&dut1, &dut1},
+			}
+			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+		})
+		Convey("Add existing devices", func() {
+			req1 := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{&dut1},
+			}
+			req2 := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+			}
+			resp, err := tf.Inventory.AddCrosDevices(tf.C, req1)
+			So(err, ShouldBeNil)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
+			So(resp.FailedDevices, ShouldHaveLength, 0)
+			So(resp.PassedDevices[0].Hostname, ShouldEqual, "dut1")
+
+			resp, err = tf.Inventory.AddCrosDevices(tf.C, req2)
+			So(err, ShouldNotBeNil)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
+
+			So(resp.FailedDevices[0].Hostname, ShouldEqual, "dut1")
+			So(resp.PassedDevices[0].Hostname, ShouldEqual, "labstation1")
 		})
 	})
 }

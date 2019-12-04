@@ -79,27 +79,28 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 		// instead of a reference.
 		for i := range addingResults {
 			devToAdd := &addingResults[i]
+			hostname := utils.GetHostname(devToAdd.Device)
+			id := devToAdd.Device.GetId().GetValue()
+			devToAdd.Entity = DeviceEntity{
+				ID:       DeviceEntityID(id),
+				Hostname: hostname,
+				Parent:   fakeAcestorKey(ctx),
+			}
 			if err := sanityCheckForAdding(ctx, devToAdd.Device, q); err != nil {
 				devToAdd.logError(err)
 				continue
 			}
-			hostname := utils.GetHostname(devToAdd.Device)
-			id := devToAdd.Device.GetId().GetValue()
 
 			labConfig, err := proto.Marshal(devToAdd.Device)
 			if err != nil {
 				devToAdd.logError(errors.Annotate(err, fmt.Sprintf("fail to marshal device <%s:%s>", hostname, id), err).Err())
 				continue
 			}
-			devToAdd.Entity = DeviceEntity{
-				ID:        DeviceEntityID(id),
-				Hostname:  hostname,
-				Updated:   updatedTime,
-				LabConfig: labConfig,
-				Parent:    fakeAcestorKey(ctx),
-			}
+			devToAdd.Entity.Updated = updatedTime
+			devToAdd.Entity.LabConfig = labConfig
 
 			entities = append(entities, &(devToAdd.Entity))
+			fmt.Println("add dev", devToAdd.Entity)
 			entityResults = append(entityResults, devToAdd)
 		}
 		if err := datastore.Put(ctx, entities); err != nil {
