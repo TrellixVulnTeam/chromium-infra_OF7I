@@ -16,17 +16,12 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+
+	"infra/libs/cros/lab_inventory/utils"
 )
 
 // UUIDPrefix is the prefix we used to identify the system generated ID.
 const UUIDPrefix = "UUID"
-
-func getHostname(d *lab.ChromeOSDevice) string {
-	if d.GetDut() != nil {
-		return d.GetDut().GetHostname()
-	}
-	return d.GetLabstation().GetHostname()
-}
 
 // A query in transaction requires to have Ancestor filter, see
 // https://cloud.google.com/appengine/docs/standard/python/datastore/query-restrictions#queries_inside_transactions_must_include_ancestor_filters
@@ -45,7 +40,7 @@ func addMissingID(devices []*lab.ChromeOSDevice) {
 
 func sanityCheckForAdding(ctx context.Context, d *lab.ChromeOSDevice, q *datastore.Query) error {
 	id := d.GetId().GetValue()
-	hostname := getHostname(d)
+	hostname := utils.GetHostname(d)
 	var devs []*DeviceEntity
 	if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
 		return errors.Annotate(err, "failed to get host by hostname %s", hostname).Err()
@@ -88,7 +83,7 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 				devToAdd.logError(err)
 				continue
 			}
-			hostname := getHostname(devToAdd.Device)
+			hostname := utils.GetHostname(devToAdd.Device)
 			id := devToAdd.Device.GetId().GetValue()
 
 			labConfig, err := proto.Marshal(devToAdd.Device)

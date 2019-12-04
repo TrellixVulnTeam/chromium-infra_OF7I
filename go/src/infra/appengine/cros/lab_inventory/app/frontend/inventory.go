@@ -20,6 +20,9 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
+	if err = req.Validate(); err != nil {
+		return nil, err
+	}
 	return &api.AddCrosDevicesResponse{}, nil
 }
 
