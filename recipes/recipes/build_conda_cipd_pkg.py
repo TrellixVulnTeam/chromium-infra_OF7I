@@ -41,7 +41,7 @@ EXTRA_CONDA_PACKAGES = [
 
 
 def RunSteps(api):
-  cipd_pkg_name = 'infra/conda_python/scientific/' + api.cipd.platform_suffix()
+  cipd_pkg_name = 'infra/conda_python/scientific/${platform}'
   cipd_pkg_file = api.path['start_dir'].join('conda_python.cipd')
 
   # Prepare staging directory to install conda into.

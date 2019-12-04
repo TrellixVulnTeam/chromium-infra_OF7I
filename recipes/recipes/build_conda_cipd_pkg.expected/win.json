@@ -119,7 +119,7 @@
       "-in",
       "[START_DIR]\\conda_staging_dir",
       "-name",
-      "infra/conda_python/scientific/windows-amd64",
+      "infra/conda_python/scientific/${platform}",
       "-out",
       "[START_DIR]\\conda_python.cipd",
       "-json-output",
@@ -127,12 +127,12 @@
       "-install-mode",
       "copy"
     ],
-    "name": "build windows-amd64",
+    "name": "build ${platform}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/conda_python/scientific/windows-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/conda_python/scientific/${platform}\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -154,12 +154,12 @@
       "-tag",
       "conda:Miniconda2-3-18-3"
     ],
-    "name": "register infra/conda_python/scientific/windows-amd64",
+    "name": "register infra/conda_python/scientific/${platform}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/conda_python/scientific/windows-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/conda_python/scientific/${platform}\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
