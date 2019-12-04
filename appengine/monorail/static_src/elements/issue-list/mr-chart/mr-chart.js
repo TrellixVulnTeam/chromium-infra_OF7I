@@ -295,26 +295,14 @@ export default class MrChart extends LitElement {
         </div>
         <div class="align">
           <div id="prediction">
-            <label for="two-toggle">Choose prediction range:</label>
-            <div id="two-toggle">
-              <chops-button @click="${() => {this.predRange = predRangeType.NEXT_MONTH; this._fetchData()}}"
-                class="${this.predRange === predRangeType.NEXT_MONTH ? 'choice checked': 'choice'}">
-                Future Month
-              </chops-button>
-              <chops-button @click="${() => {this.predRange = predRangeType.NEXT_QUARTER; this._fetchData()}}"
-                class="${this.predRange === predRangeType.NEXT_QUARTER ? 'choice checked': 'choice'}">
-                Future Quarter
-              </chops-button>
-              <chops-button @click="${() => {this.predRange = predRangeType.NEXT_50; this._fetchData()}}"
-                class="${this.predRange === predRangeType.NEXT_50 ? 'choice checked': 'choice'}">
-                Future 50%
-              </chops-button>
-              <chops-button @click="${() => {this.predRange = predRangeType.HIDE; this._fetchData()}}"
-                class="${this.predRange === predRangeType.HIDE ? 'choice checked': 'choice'}">
-                Hide
-              </chops-button>
-            </div>
+          <label for="two-toggle">Choose prediction range:</label>
+          <div id="two-toggle">
+            ${this._renderPredictChoice('Future Month', predRangeType.NEXT_MONTH)}
+            ${this._renderPredictChoice('Future Quarter', predRangeType.NEXT_QUARTER)}
+            ${this._renderPredictChoice('Future 50%', predRangeType.NEXT_50)}
+            ${this._renderPredictChoice('Hide', predRangeType.HIDE)}
           </div>
+        </div>
           <div id="groupBy">
             <label for="dropdown">Choose group by:</label>
             <mr-dropdown
@@ -327,6 +315,27 @@ export default class MrChart extends LitElement {
           </div>
         </div>
       </div>
+    `;
+  }
+
+  /**
+   * Renders a single prediction button.
+   * @param {string} choiceName The text displayed on the button.
+   * @param {number} rangeType An enum-like number specifying which range
+   *   to use.
+   * @return {TemplateResult}
+   */
+  _renderPredictChoice(choiceName, rangeType) {
+    const changePrediction = (_e) => {
+      this.predRange = rangeType;
+      this._fetchData();
+    };
+    return html`
+      <chops-button
+        @click=${changePrediction}
+        class="${this.predRange === rangeType ? 'checked': ''} choice">
+        ${choiceName}
+      </chops-button>
     `;
   }
 
