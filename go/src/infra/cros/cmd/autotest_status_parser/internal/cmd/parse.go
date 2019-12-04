@@ -25,6 +25,10 @@ const (
 
 	verdictStringPrefix = "END "
 	undefinedName       = "----"
+
+	dutStateReady       = "ready"
+	dutStateNeedsRepair = "needs_repair"
+	dutStateNeedsReset  = "needs_reset"
 )
 
 var prejobPrefixes = []string{"provision", "prejob"}
@@ -75,6 +79,9 @@ func (c *parseRun) innerRun(a subcommands.Application, args []string, env subcom
 			AutotestResult: &autotestResult,
 		},
 		Prejob: &prejobResult,
+		StateUpdate: &skylab_test_runner.Result_StateUpdate{
+			DutState: getDutState(prejobResult, autotestResult),
+		},
 	}
 
 	return printProtoJSON(a.GetOut(), &result)
@@ -362,6 +369,24 @@ func parseVerdict(verdict string) skylab_test_runner.Result_Autotest_TestCase_Ve
 	}
 	// TODO(crbug.com/846770): deal with TEST_NA separately.
 	return skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL
+}
+
+// getDutState returns the state of the DUT after the prejob and test run.
+func getDutState(prejob skylab_test_runner.Result_Prejob, tests skylab_test_runner.Result_Autotest) string {
+	for _, s := range prejob.Step {
+		if s.GetVerdict() != skylab_test_runner.Result_Prejob_Step_VERDICT_PASS {
+			return dutStateNeedsRepair
+		}
+	}
+	if tests.Incomplete {
+		return dutStateNeedsReset
+	}
+	for _, tc := range tests.TestCases {
+		if tc.GetVerdict() != skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS {
+			return dutStateNeedsReset
+		}
+	}
+	return dutStateReady
 }
 
 // printProtoJSON prints the parsed test cases as a JSON-pb to stdout.
