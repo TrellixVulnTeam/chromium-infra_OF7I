@@ -38,17 +38,25 @@ func TestHostInfoToJSONToHostInfo(t *testing.T) {
 	t.Parallel()
 	for i, tt := range hostInfoToJSONToHostInfoTests {
 		t.Run(tt.name, func(t *testing.T) {
-			marshalled, err := Marshal(tt.in)
-			if err != nil {
-				t.Fatalf("failed to marshal: %s", err)
+			f := func(marshaller func(*HostInfo) ([]byte, error)) {
+				marshalled, err := marshaller(tt.in)
+				if err != nil {
+					t.Fatalf("failed to marshal: %s", err)
+				}
+				unmarshalled, err := Unmarshal(marshalled)
+				if err != nil {
+					t.Errorf("failed to unmarshal: %s", err)
+				}
+				if !reflect.DeepEqual(unmarshalled, tt.in) {
+					t.Errorf("subtest #%d wanted: (%s) got: (%s)", i, tt.in, unmarshalled)
+				}
 			}
-			unmarshalled, err := Unmarshal(marshalled)
-			if err != nil {
-				t.Errorf("failed to unmarshal: %s", err)
-			}
-			if !reflect.DeepEqual(unmarshalled, tt.in) {
-				t.Errorf("subtest #%d wanted: (%s) got: (%s)", i, tt.in, unmarshalled)
-			}
+			t.Run("marshal", func(t *testing.T) {
+				f(Marshal)
+			})
+			t.Run("marshall-indent", func(t *testing.T) {
+				f(MarshalIndent)
+			})
 		})
 	}
 }
@@ -72,19 +80,29 @@ func TestMarshalRoundTrip(t *testing.T) {
 		},
 	}
 	for _, hi := range his {
-		d, err := Marshal(hi)
-		if err != nil {
-			t.Errorf("Error writing HostInfo %#v: %s", hi, err)
-			continue
+		f := func(marshaller func(*HostInfo) ([]byte, error)) {
+
+			d, err := Marshal(hi)
+			if err != nil {
+				t.Errorf("Error writing HostInfo %#v: %s", hi, err)
+				return
+			}
+			got, err := Unmarshal(d)
+			if err != nil {
+				t.Errorf("Error reading HostInfo: %#v: %s", hi, err)
+			}
+			if !reflect.DeepEqual(got, hi) {
+				t.Errorf("Write/Read roundtrip of %#v does not match, got %#v", hi, got)
+				t.Errorf("Diff %s", cmp.Diff(got, hi))
+			}
+
 		}
-		got, err := Unmarshal(d)
-		if err != nil {
-			t.Errorf("Error reading HostInfo: %#v: %s", hi, err)
-		}
-		if !reflect.DeepEqual(got, hi) {
-			t.Errorf("Write/Read roundtrip of %#v does not match, got %#v", hi, got)
-			t.Errorf("Diff %s", cmp.Diff(got, hi))
-		}
+		t.Run("marshal", func(t *testing.T) {
+			f(Marshal)
+		})
+		t.Run("marshall-indent", func(t *testing.T) {
+			f(MarshalIndent)
+		})
 	}
 }
 

@@ -40,6 +40,21 @@ func Expose(hi *hostinfo.HostInfo, resultsDir string, dutName string) (*File, er
 	if err := ioutil.WriteFile(storeFile, blob, 0644); err != nil {
 		return nil, errors.Annotate(err, "expose hostinfo").Err()
 	}
+	// Write the secondary host info store file.
+	// TODO(gregorynisbet): Remove secondary host info file or remove original host info file.
+	// Failure to create a secondary host info store file
+	// is not a serious enough error to make the whole Expose action
+	// unsuccessful.
+	content, err := hostinfo.MarshalIndent(hi)
+	if err != nil {
+		log.Printf("Expose: failed to marshalIndent hostinfo file (%#v)", err)
+		content = []byte{}
+	}
+	hostInfoStore2 := filepath.Join(storeDir, fmt.Sprintf("%s.host_info_store2", dutName))
+	// NOTE(gregorynisbet): we always want to create this file, even if it has length zero due to a previous error
+	if err := ioutil.WriteFile(hostInfoStore2, content, 0o644); err != nil {
+		log.Printf("Expose: failed to write file contents to path (%s)", hostInfoStore2)
+	}
 	return &File{
 		hostInfo: hi,
 		path:     storeFile,
@@ -65,6 +80,8 @@ func (f *File) Close() error {
 		return errors.Annotate(err, "close exposed hostinfo").Err()
 	}
 	f.path = ""
+	log.Printf("File::Close: hostinfo before fixup (%#v)", f.hostInfo)
 	*f.hostInfo = *hi
+	log.Printf("File::Close: hostinfo after fixup (%#v)", f.hostInfo)
 	return nil
 }

@@ -120,7 +120,7 @@ func mainInner(a *args) error {
 	}
 	defer annotWriter.Close()
 	i, err := harness.Open(ctx, b, harnessOptions(a)...)
-	log.Printf("mainInner: harness info object (%v)", i)
+	log.Printf("mainInner: harness info object (%#v)", i)
 	if err != nil {
 		return err
 	}
