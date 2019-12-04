@@ -31,10 +31,12 @@ handled by the Systems team, please follow their
 
 For fastest response, please use the provided templates:
 
-*   [Machine restart requests]
-*   [Mobile device restart requests]
+*   **[General requests]**: for most cases.
+*   [Machine restart requests]: if a machine appears to be offline and you
+    know that it's managed by the Labs team.
+*   [Mobile device restart requests]: if a mobile device appears to be offline
+    and you know that it's managed by the Labs team.
 *   [ChromeOS Waterfall Pin Bumps / Restarts (Internal)](http://goto.google.com/cros-restart)
-*   [General requests]
 
 Also make sure to include the machine name (e.g. build11-m1)
 as well as the waterfall name (Builder: Win).
