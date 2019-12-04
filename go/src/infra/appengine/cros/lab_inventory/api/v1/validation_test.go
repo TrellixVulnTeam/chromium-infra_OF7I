@@ -89,3 +89,56 @@ func TestAddDevicesValidation(t *testing.T) {
 		})
 	})
 }
+func TestDeleteDevicesValidation(t *testing.T) {
+	t.Parallel()
+
+	hostname := DeviceID{
+		Id: &DeviceID_Hostname{
+			Hostname: "the_hostname",
+		},
+	}
+	id := DeviceID{
+		Id: &DeviceID_ChromeosDeviceId{
+			ChromeosDeviceId: "UUID:123",
+		},
+	}
+	Convey("Delete devices from storage backend", t, func() {
+		Convey("Empty request", func() {
+			req := &DeleteCrosDevicesRequest{}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "no devices to remove")
+		})
+		Convey("Zero device", func() {
+			req := DeleteCrosDevicesRequest{
+				Ids: []*DeviceID{},
+			}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "no devices to remove")
+		})
+		Convey("Duplicated hostname", func() {
+			req := DeleteCrosDevicesRequest{
+				Ids: []*DeviceID{&hostname, &hostname},
+			}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Duplicated hostname found: the_hostname")
+		})
+		Convey("Duplicated device id", func() {
+			req := DeleteCrosDevicesRequest{
+				Ids: []*DeviceID{&id, &id},
+			}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Duplicated id found: UUID:123")
+		})
+		Convey("Happy path", func() {
+			req := DeleteCrosDevicesRequest{
+				Ids: []*DeviceID{&hostname, &id},
+			}
+			err := req.Validate()
+			So(err, ShouldBeNil)
+		})
+	})
+}

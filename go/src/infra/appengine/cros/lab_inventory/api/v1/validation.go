@@ -61,3 +61,29 @@ func (r *AddCrosDevicesRequest) Validate() error {
 	}
 	return nil
 }
+
+// Validate validates input requests and return error if it's not.
+func (r *DeleteCrosDevicesRequest) Validate() error {
+	if r.Ids == nil || len(r.Ids) == 0 {
+		return status.Errorf(codes.InvalidArgument, "no devices to remove")
+	}
+	hostnameChecker, duplicatedHostname := checkDuplicatedString()
+	defer close(hostnameChecker)
+	idChecker, duplicatedID := checkDuplicatedString()
+	defer close(idChecker)
+
+	for _, id := range r.Ids {
+		if _, ok := id.GetId().(*DeviceID_Hostname); ok {
+			hostname := id.GetHostname()
+			if hostnameChecker <- hostname; <-duplicatedHostname {
+				return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Duplicated hostname found: %s", hostname))
+			}
+		} else {
+			devID := id.GetChromeosDeviceId()
+			if idChecker <- devID; <-duplicatedID {
+				return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Duplicated id found: %s", devID))
+			}
+		}
+	}
+	return nil
+}
