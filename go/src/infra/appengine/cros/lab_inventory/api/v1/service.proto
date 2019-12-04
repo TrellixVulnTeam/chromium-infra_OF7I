@@ -24,7 +24,7 @@ service Inventory {
   // in the inventory.
   rpc UpdateCrosDevicesSetup(UpdateCrosDevicesSetupRequest) returns (UpdateCrosDevicesSetupResponse);
 
-  // DeleteCrosDevices delete the selelcted Duts from testing scheduler.
+  // DeleteCrosDevices delete the selelcted devices from the inventory.
   rpc DeleteCrosDevices(DeleteCrosDevicesRequest) returns (DeleteCrosDevicesResponse);
 }
 
@@ -32,6 +32,13 @@ message DeviceOpResult{
   string id = 1;
   string hostname = 2;
   string error_msg = 3;
+}
+
+message DeviceID {
+  oneof id {
+    string hostname = 1;
+    string chromeos_device_id = 2;
+  }
 }
 
 message AddCrosDevicesRequest {
@@ -68,9 +75,12 @@ message UpdateCrosDevicesSetupResponse {
 }
 
 message DeleteCrosDevicesRequest {
-
+  repeated DeviceID ids = 1;
 }
 
 message DeleteCrosDevicesResponse {
+  repeated DeviceOpResult removed_devices = 1;
 
+  // Devices cannot be removed for any reason.
+  repeated DeviceOpResult failed_devices = 2;
 }
