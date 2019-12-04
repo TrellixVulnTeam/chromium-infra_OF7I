@@ -48,7 +48,7 @@ This user guide is organized into the following chapters:
 * [Other project pages for users](project-pages.md)
 * [User profiles and hotlists](profiles-and-hotlists.md)
 * [Project owner's guide](project-owners.md)
-<!-- Site admin guide -->
+* [Site admin's guide](site-admins.md)
 
 
 ## How to ask for help and report problems with Monorail itself
