@@ -36,11 +36,20 @@ func TestBalancePoolsDryrun(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_cq_unhealthy", "link_cq_unhealthy", "link", "DUT_POOL_CQ"},
 			{"link_suites_healthy", "link_suites_healthy", "link", "DUT_POOL_SUITES"},
 			{"coral_cq_unhealthy", "coral_cq_unhealthy", "coral", "DUT_POOL_CQ"},
 			{"coral_suites_healthy", "coral_suites_healthy", "coral", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_cq_unhealthy", "link_suites_healthy", "coral_cq_unhealthy", "coral_suites_healthy"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
 
@@ -92,12 +101,23 @@ func TestBalancePoolsDryrun(t *testing.T) {
 		})
 		So(r.Failures, ShouldHaveLength, 0)
 	})
+
 	Convey("BalancePools (dryrun) succeeds with no changes for empty inventory", t, func() {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{})
+		duts := []testInventoryDut{}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{},
+				},
+			}),
+		})
 		So(err, ShouldBeNil)
+
 		expectDutsHealthFromSwarming(tf, []*swarming.SwarmingRpcsBotInfo{})
 
 		resp, err := tf.Inventory.BalancePools(tf.C, &fleet.BalancePoolsRequest{
@@ -113,9 +133,18 @@ func TestBalancePoolsDryrun(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_cq_healthy", "link_cq_healthy", "link", "DUT_POOL_CQ"},
 			{"link_suites_healthy", "link_suites_healthy", "link", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_cq_healthy", "link_suites_healthy"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
 
@@ -139,13 +168,23 @@ func TestBalancePoolsDryrun(t *testing.T) {
 		So(r.Changes, ShouldHaveLength, 0)
 		So(r.Failures, ShouldHaveLength, 0)
 	})
+
 	Convey("BalancePools (dryrun) swaps one DUT with one DUT needed and one available", t, func() {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_cq_unhealthy", "link_cq_unhealthy", "link", "DUT_POOL_CQ"},
 			{"link_suites_healthy", "link_suites_healthy", "link", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_cq_unhealthy", "link_suites_healthy"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
 
@@ -190,12 +229,22 @@ func TestBalancePoolsDryrun(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_cq_unhealthy_1", "link_cq_unhealthy_1", "link", "DUT_POOL_CQ"},
 			{"link_cq_unhealthy_2", "link_cq_unhealthy_2", "link", "DUT_POOL_CQ"},
 			{"link_suites_healthy", "link_suites_healthy", "link", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_cq_unhealthy_1", "link_cq_unhealthy_2", "link_suites_healthy"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
+
 		expectDutsHealthFromSwarming(tf, []*swarming.SwarmingRpcsBotInfo{
 			test.BotForDUT("link_cq_unhealthy_1", "repair_failed", "label-model:link"),
 			test.BotForDUT("link_cq_unhealthy_2", "repair_failed", "label-model:link"),
@@ -243,11 +292,21 @@ func TestBalancePoolsDryrun(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_cq_unknown", "link_cq_unknown", "link", "DUT_POOL_CQ"},
 			{"link_suites_healthy", "link_suites_healthy", "link", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_cq_unknown", "link_suites_healthy"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
+
 		expectDutsHealthFromSwarming(tf, []*swarming.SwarmingRpcsBotInfo{
 			test.BotForDUT("link_cq_unknown", "unknown", "label-model:link"),
 			test.BotForDUT("link_suites_healthy", "ready", "label-model:link"),
@@ -287,9 +346,18 @@ func TestBalancePoolsDryrun(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_cq_unhealthy_1", "link_cq_unhealthy_1", "link", "DUT_POOL_CQ"},
 			{"link_cq_unhealthy_2", "link_cq_unhealthy_2", "link", "DUT_POOL_CQ"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_cq_unhealthy_1", "link_cq_unhealthy_2"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
 
@@ -320,11 +388,20 @@ func TestBalancePoolsCommit(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_cq_unhealthy", "link_cq_unhealthy", "link", "DUT_POOL_CQ"},
 			{"link_suites_healthy", "link_suites_healthy", "link", "DUT_POOL_SUITES"},
 			{"coral_cq_unhealthy", "coral_cq_unhealthy", "coral", "DUT_POOL_CQ"},
 			{"coral_suites_healthy", "coral_suites_healthy", "coral", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_cq_unhealthy", "link_suites_healthy", "coral_cq_unhealthy", "coral_suites_healthy"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
 
@@ -356,7 +433,16 @@ func TestResizePool(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{})
+		duts := []testInventoryDut{}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{},
+				},
+			}),
+		})
 		So(err, ShouldBeNil)
 
 		Convey("ResizePool to 0 DUTs in target pool makes no changes", func() {
@@ -390,11 +476,20 @@ func TestResizePool(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_suites_0", "link_suites_0", "link", "DUT_POOL_SUITES"},
 			{"link_suites_1", "link_suites_1", "link", "DUT_POOL_SUITES"},
 			{"link_suites_2", "link_suites_2", "link", "DUT_POOL_SUITES"},
 			{"link_suites_3", "link_suites_3", "link", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_suites_0", "link_suites_1", "link_suites_2", "link_suites_3"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
 
@@ -445,11 +540,20 @@ func TestResizePool(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_suites_0", "link_suites_0", "link", "DUT_POOL_CQ"},
 			{"link_suites_1", "link_suites_1", "link", "DUT_POOL_CQ"},
 			{"link_suites_2", "link_suites_2", "link", "DUT_POOL_CQ"},
 			{"link_suites_3", "link_suites_3", "link", "DUT_POOL_CQ"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_suites_0", "link_suites_1", "link_suites_2", "link_suites_3"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
 
@@ -483,6 +587,56 @@ func TestResizePool(t *testing.T) {
 			So(poolChangeCount(mc, "DUT_POOL_CQ", "DUT_POOL_SUITES"), ShouldEqual, 1)
 		})
 	})
+
+	Convey("With 4 DUTs in spare pool but 1 is in different env", t, func(c C) {
+		tf, validate := newTestFixture(t)
+		defer validate()
+
+		duts := []testInventoryDut{
+			{"link_suites_0", "link_suites_0", "link", "DUT_POOL_SUITES"},
+			{"link_suites_1", "link_suites_1", "link", "DUT_POOL_SUITES"},
+			{"link_suites_2", "link_suites_2", "link", "DUT_POOL_SUITES"},
+			{"link_suites_3", "link_suites_3", "link", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_suites_0", "link_suites_1", "link_suites_2"},
+				},
+			}),
+		})
+		So(err, ShouldBeNil)
+
+		Convey("ResizePool to 4 DUTs in target pool raise error", func() {
+			_, err := tf.Inventory.ResizePool(tf.C, &fleet.ResizePoolRequest{
+				DutSelector: &fleet.DutSelector{
+					Model: "link",
+				},
+				SparePool:      "DUT_POOL_SUITES",
+				TargetPool:     "DUT_POOL_CQ",
+				TargetPoolSize: 4,
+			})
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("ResizePool to 3 DUTs in target pool works", func() {
+			resp, err := tf.Inventory.ResizePool(tf.C, &fleet.ResizePoolRequest{
+				DutSelector: &fleet.DutSelector{
+					Model: "link",
+				},
+				SparePool:      "DUT_POOL_SUITES",
+				TargetPool:     "DUT_POOL_CQ",
+				TargetPoolSize: 3,
+			})
+			So(err, ShouldBeNil)
+			So(resp.Url, ShouldNotEqual, "")
+			So(resp.Changes, ShouldHaveLength, 3)
+			mc := poolChangeMap(resp.Changes)
+			So(poolChangeCount(mc, "DUT_POOL_SUITES", "DUT_POOL_CQ"), ShouldEqual, 3)
+		})
+	})
 }
 
 func TestResizePoolCommit(t *testing.T) {
@@ -490,8 +644,17 @@ func TestResizePoolCommit(t *testing.T) {
 		tf, validate := newTestFixture(t)
 		defer validate()
 
-		err := setGitilesDUTs(tf.C, tf.FakeGitiles, []testInventoryDut{
+		duts := []testInventoryDut{
 			{"link_suites_0", "link_suites_0", "link", "DUT_POOL_SUITES"},
+		}
+		err := tf.FakeGitiles.SetInventory(config.Get(tf.C).Inventory, fakes.InventoryData{
+			Lab: inventoryBytesFromDUTs(duts),
+			Infrastructure: inventoryBytesFromServers([]testInventoryServer{
+				{
+					hostname: "drone-queen-ENVIRONMENT_STAGING",
+					dutIDs:   []string{"link_suites_0"},
+				},
+			}),
 		})
 		So(err, ShouldBeNil)
 

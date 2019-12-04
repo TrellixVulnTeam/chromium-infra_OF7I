@@ -68,7 +68,6 @@ func (is *ServerImpl) balancePoolsNoRetry(ctx context.Context, req *fleet.Balanc
 		return nil, err
 	}
 
-	inventoryConfig := config.Get(ctx).Inventory
 	store, err := is.newStore(ctx)
 	if err != nil {
 		return nil, err
@@ -77,15 +76,15 @@ func (is *ServerImpl) balancePoolsNoRetry(ctx context.Context, req *fleet.Balanc
 		return nil, err
 	}
 
-	duts := selectDutsFromInventory(store.Lab, req.DutSelector, inventoryConfig.Environment)
+	duts := selectDutsFromInventory(ctx, store, req.DutSelector)
 	if len(duts) == 0 {
 		// Technically correct: No DUTs were selected so both target and spare are
 		// empty and healthy and no changes were required.
-		logging.Infof(ctx, "no duts were found based on %s", req.DutSelector.String())
+		logging.Infof(ctx, "no duts were found based on (%s)", req.DutSelector.String())
 		return &fleet.BalancePoolsResponse{}, nil
 	}
 
-	mds := mapModelsToDUTs(duts, inventoryConfig.Environment)
+	mds := mapModelsToDUTs(duts)
 	resp := &fleet.BalancePoolsResponse{
 		ModelResult: make(map[string]*fleet.EnsurePoolHealthyResponse),
 	}
@@ -151,7 +150,6 @@ func (is *ServerImpl) ResizePool(ctx context.Context, req *fleet.ResizePoolReque
 }
 
 func (is *ServerImpl) resizePoolNoRetry(ctx context.Context, req *fleet.ResizePoolRequest) (*fleet.ResizePoolResponse, error) {
-	inventoryConfig := config.Get(ctx).Inventory
 	store, err := is.newStore(ctx)
 	if err != nil {
 		return nil, err
@@ -160,7 +158,7 @@ func (is *ServerImpl) resizePoolNoRetry(ctx context.Context, req *fleet.ResizePo
 		return nil, err
 	}
 
-	duts := selectDutsFromInventory(store.Lab, req.DutSelector, inventoryConfig.Environment)
+	duts := selectDutsFromInventory(ctx, store, req.DutSelector)
 	changes, err := dutpool.Resize(duts, req.TargetPool, int(req.TargetPoolSize), req.SparePool)
 	if err != nil {
 		return nil, err
@@ -187,17 +185,18 @@ func (is *ServerImpl) commitBalancePoolChanges(ctx context.Context, store *gitst
 	return store.Commit(ctx, "balance pool")
 }
 
-func selectDutsFromInventory(lab *inventory.Lab, sel *fleet.DutSelector, env string) []*inventory.DeviceUnderTest {
-	duts := []*inventory.DeviceUnderTest{}
-	for _, d := range lab.Duts {
-		if sel != nil && d.GetCommon().GetEnvironment().String() == env && dutMatchesSelector(d, sel) {
-			duts = append(duts, d)
-		}
-		if sel == nil {
-			duts = append(duts, d)
+func selectDutsFromInventory(ctx context.Context, store *gitstore.InventoryStore, sel *fleet.DutSelector) []*inventory.DeviceUnderTest {
+	duts, err := GetDutsByEnvironment(ctx, store)
+	if err != nil {
+		return nil
+	}
+	var filteredDuts []*inventory.DeviceUnderTest
+	for _, d := range duts {
+		if sel == nil || dutMatchesSelector(d, sel) {
+			filteredDuts = append(filteredDuts, d)
 		}
 	}
-	return duts
+	return filteredDuts
 }
 
 func dutMatchesSelector(d *inventory.DeviceUnderTest, sel *fleet.DutSelector) bool {
@@ -328,12 +327,9 @@ func removeOld(ls []inventory.SchedulableLabels_DUTPool, old inventory.Schedulab
 	return ls
 }
 
-func mapModelsToDUTs(duts []*inventory.DeviceUnderTest, env string) map[string][]*inventory.DeviceUnderTest {
+func mapModelsToDUTs(duts []*inventory.DeviceUnderTest) map[string][]*inventory.DeviceUnderTest {
 	dms := make(map[string][]*inventory.DeviceUnderTest)
 	for _, d := range duts {
-		if d.GetCommon().GetEnvironment().String() != env {
-			continue
-		}
 		m := d.GetCommon().GetLabels().GetModel()
 		dms[m] = append(dms[m], d)
 	}

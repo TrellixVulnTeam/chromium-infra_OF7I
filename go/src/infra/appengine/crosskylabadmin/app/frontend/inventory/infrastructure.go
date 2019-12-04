@@ -33,6 +33,27 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// GetDutsByEnvironment returns Duts belong to a given environment.
+func GetDutsByEnvironment(ctx context.Context, s *gitstore.InventoryStore) ([]*inventory.DeviceUnderTest, error) {
+	c := newGlobalInvCache(ctx, s)
+	cfg := config.Get(ctx).Inventory
+	d := queenDroneName(cfg.Environment)
+	logging.Debugf(ctx, "Using pseudo-drone %s", d)
+	server, ok := c.hostnameToDrone[d]
+	if !ok {
+		return nil, fmt.Errorf("drone (%s) does not exist", d)
+	}
+	dutUids := server.GetDutUids()
+	logging.Debugf(ctx, "server (%s) contains %d duts", server.GetHostname(), len(dutUids))
+	duts := make([]*inventory.DeviceUnderTest, 0, len(dutUids))
+	for _, duid := range dutUids {
+		if d, ok := c.idToDUT[duid]; ok {
+			duts = append(duts, d)
+		}
+	}
+	return duts, nil
+}
+
 // AssignDutsToDrones implements the method from fleet.InventoryServer interface.
 func (is *ServerImpl) AssignDutsToDrones(ctx context.Context, req *fleet.AssignDutsToDronesRequest) (resp *fleet.AssignDutsToDronesResponse, err error) {
 	defer func() {
