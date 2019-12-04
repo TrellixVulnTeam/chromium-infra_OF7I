@@ -118,3 +118,65 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 	}
 	return &addingResults, nil
 }
+
+// DeleteDevicesByIds deletes entities by specified Ids.
+// The datastore implementation doesn't raise error when deleting non-existing
+// entities: https://github.com/googleapis/google-cloud-go/issues/501
+func DeleteDevicesByIds(ctx context.Context, ids []string) *DeviceOpResults {
+	removingResults := make(DeviceOpResults, len(ids))
+	entities := make([]DeviceEntity, len(ids))
+	for i, id := range ids {
+		entities[i].ID = DeviceEntityID(id)
+		entities[i].Parent = fakeAcestorKey(ctx)
+		removingResults[i].Entity.ID = DeviceEntityID(id)
+	}
+	if err := datastore.Delete(ctx, entities); err != nil {
+		for i, e := range err.(errors.MultiError) {
+			if e == nil {
+				continue
+			}
+			removingResults[i].logError(e)
+		}
+	}
+	return &removingResults
+}
+
+// DeleteDevicesByHostnames deletes entities by specified hostnames.
+func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOpResults {
+	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
+	removingResults := make(DeviceOpResults, len(hostnames))
+	entities := make([]*DeviceEntity, 0, len(hostnames))
+	entityResults := make([]*DeviceOpResult, 0, len(hostnames))
+
+	// Filter out invalid input hostnames.
+	for i, hostname := range hostnames {
+		removingResults[i].Entity.Hostname = hostname
+		var devs []*DeviceEntity
+		if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
+			removingResults[i].logError(errors.Annotate(err, "failed to get host by hostname %s", hostname).Err())
+			continue
+		}
+		if len(devs) == 0 {
+			// Don't raise any error when there's no entities match
+			// the hostname. This is consistent with the behavior of
+			// removing by ID.
+			continue
+		}
+		if len(devs) > 1 {
+			removingResults[i].logError(errors.Reason("multiple entities found with hostname %s: %v", hostname, devs).Err())
+			continue
+		}
+		removingResults[i].Entity = *devs[0]
+		entities = append(entities, devs[0])
+		entityResults = append(entityResults, &removingResults[i])
+	}
+	if err := datastore.Delete(ctx, entities); err != nil {
+		for i, e := range err.(errors.MultiError) {
+			if e == nil {
+				continue
+			}
+			entityResults[i].logError(e)
+		}
+	}
+	return &removingResults
+}
