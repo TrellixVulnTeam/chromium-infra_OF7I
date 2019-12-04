@@ -159,7 +159,7 @@ func analyzeHistogramFile(f io.Reader, filePath, prevDir string, filesChanged *d
 	// Identify if any histograms were removed.
 	allComments = append(allComments, findRemovedHistograms(filePath, newHistograms, oldHistograms)...)
 	allComments = append(allComments, findAddedNamespaces(filePath, newNamespaces, oldNamespaces, namespaceLineNums)...)
-	return allComments
+	return showAllComments(allComments)
 }
 
 // analyzeChangedLines analyzes a version of the file and returns:
@@ -506,4 +506,11 @@ func newMetadata(defaultLineNum int) *metadata {
 		tagMap:            tagMap,
 		attributeMap:      attributeMap,
 	}
+}
+
+func showAllComments(comments []*tricium.Data_Comment) []*tricium.Data_Comment {
+	for _, comment := range comments {
+		comment.ShowOnUnchangedLines = true
+	}
+	return comments
 }
