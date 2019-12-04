@@ -8,7 +8,7 @@ package inventory;
 
 option go_package = "api";
 
-// TODO(guocb) Import and use the latest ChromeOSDevice proto definition.
+import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
 
 service Inventory {
   // AddCrosDevices adds new Chrome OS devices to the inventory.
@@ -28,12 +28,19 @@ service Inventory {
   rpc DeleteCrosDevices(DeleteCrosDevicesRequest) returns (DeleteCrosDevicesResponse);
 }
 
-message AddCrosDevicesRequest {
+message DeviceOpResult{
+  string id = 1;
+  string hostname = 2;
+  string error_msg = 3;
+}
 
+message AddCrosDevicesRequest {
+  repeated lab.ChromeOSDevice devices = 1;
 }
 
 message AddCrosDevicesResponse {
-
+  repeated DeviceOpResult passed_devices = 1;
+  repeated DeviceOpResult failed_devices = 2;
 }
 
 message GetCrosDevicesRequest {
