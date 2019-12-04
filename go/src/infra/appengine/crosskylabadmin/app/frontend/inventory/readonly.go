@@ -33,7 +33,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/freeduts"
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
@@ -158,13 +157,9 @@ func (is *ServerImpl) ReportInventory(ctx context.Context, req *fleet.ReportInve
 		return nil, err
 	}
 
-	cfg := config.Get(ctx).Inventory
-	var duts []*inventory.DeviceUnderTest
-	for _, d := range store.Lab.GetDuts() {
-		e := d.GetCommon().GetEnvironment()
-		if inventory.Environment_name[int32(e)] == cfg.GetEnvironment() {
-			duts = append(duts, d)
-		}
+	duts, err := GetDutsByEnvironment(ctx, store)
+	if err != nil {
+		return nil, err
 	}
 	utilization.ReportInventoryMetrics(ctx, duts)
 	return &fleet.ReportInventoryResponse{}, nil

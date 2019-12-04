@@ -21,6 +21,7 @@ import (
 	"infra/libs/skylab/inventory"
 
 	"go.chromium.org/luci/common/api/swarming/swarming/v1"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 )
@@ -48,6 +49,7 @@ var inventoryMetric = metric.NewInt(
 
 // ReportInventoryMetrics reports the inventory metrics to monarch.
 func ReportInventoryMetrics(ctx context.Context, duts []*inventory.DeviceUnderTest) {
+	logging.Infof(ctx, "report inventory metrics for %d duts", len(duts))
 	c := make(inventoryCounter)
 	for _, d := range duts {
 		b := getBucketForDUT(d)
@@ -58,6 +60,7 @@ func ReportInventoryMetrics(ctx context.Context, duts []*inventory.DeviceUnderTe
 
 func (c inventoryCounter) Report(ctx context.Context) {
 	for b, count := range c {
+		logging.Infof(ctx, "bucket: %s, number: %d", b.String(), count)
 		inventoryMetric.Set(ctx, int64(count), b.board, b.model, b.pool, b.environment)
 	}
 }
@@ -109,6 +112,10 @@ type bucket struct {
 	model       string
 	pool        string
 	environment string
+}
+
+func (b bucket) String() string {
+	return fmt.Sprintf("board: %s, model: %s, pool: %s, env: %s", b.board, b.model, b.pool, b.environment)
 }
 
 // status is a dynamic DUT dimension.
