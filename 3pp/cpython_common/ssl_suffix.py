@@ -169,7 +169,7 @@ def _linux_find_load_verify_locations_kwargs():
 def _override_set_default_verify_paths():
   kwargs = {}
 
-  if _ssl_suffix_sys.platform == 'darwin':
+  if _ssl_suffix_sys.platform.startswith('darwin'):
     # On OS X, we can use the Security.framework to obtain all the certs
     # installed to the system keychains. We calculate them once and cache them.
     #
@@ -177,7 +177,7 @@ def _override_set_default_verify_paths():
     # the python process... but that seems like a fair tradeoff to make.
     kwargs = {'cadata': _darwin_synthesize_cert_pem()}
 
-  elif _ssl_suffix_sys.platform == 'linux':
+  elif _ssl_suffix_sys.platform.startswith('linux'):
     # On linux we have an easier job; we search well-known locations for
     # cert.pem.
     #
@@ -193,6 +193,10 @@ def _override_set_default_verify_paths():
     # pylint: disable=undefined-variable
     SSLContext.set_default_verify_paths = (
         lambda self: self.load_verify_locations(**kwargs))
+  else:
+    _ssl_suffix_sys.stderr.write(
+        "WARNING: no system SSL certs found. SSL verification may fail.\n"
+    )
 
 _override_set_default_verify_paths()
 del _darwin_synthesize_cert_pem
