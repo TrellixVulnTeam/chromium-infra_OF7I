@@ -54,8 +54,6 @@ def RunSteps(api):
       conda.install(pkg)
     try:
       conda.convert_to_cipd_package(cipd_pkg_name, cipd_pkg_file)
-      api.cipd.set_service_account_credentials(
-          api.cipd.default_bot_service_account_credentials)
       build = api.buildbucket.build
       tags = {
         'buildbot_build': '%s/%s/%s' % (

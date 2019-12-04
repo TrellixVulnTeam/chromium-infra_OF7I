@@ -29,10 +29,6 @@ PROPERTIES = {
 def RunSteps(api, cross_platform):
   api.third_party_packages.init_cross_platform(cross_platform)
   api.third_party_packages.dry_run = api.runtime.is_experimental
-  if not api.runtime.is_experimental and not api.runtime.is_luci:
-    # TODO(Tandrii): delete with buildbot.
-    api.cipd.set_service_account_credentials(
-        api.cipd.default_bot_service_account_credentials)
 
   with api.osx_sdk('mac'):
     with api.step.defer_results():
@@ -134,11 +130,6 @@ def GenTests(api):
       api.test('basic') +
       GenTestData() +
       api.runtime(is_luci=True, is_experimental=False))
-
-  yield (
-      api.test('basic-buildbot') +
-      GenTestData() +
-      api.runtime(is_luci=False, is_experimental=False))
 
   yield (
       api.test('dry_run') +

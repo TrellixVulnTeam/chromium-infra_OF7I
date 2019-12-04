@@ -70,8 +70,6 @@
       "[START_DIR]/recipes-py/infra/cipd/recipes-py.yaml",
       "-json-output",
       "/path/to/tmp/json",
-      "-service-account-json",
-      "/creds/service_accounts/service-account-cipd-builder.json",
       "-ref",
       "latest",
       "-tag",

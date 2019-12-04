@@ -58,9 +58,6 @@ def RunSteps(api):
   api.file.rmtree('cleaning staging dir', staging_dir)
 
   try:
-    api.cipd.set_service_account_credentials(
-        api.cipd.default_bot_service_account_credentials)
-
     version = _gsutil_version(api)
     name = 'gsutil_%s.zip' % version
     url = '%s/%s' % (GSUTIL_BUCKET, name)

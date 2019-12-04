@@ -15,9 +15,6 @@ DEPS = [
 
 
 def RunSteps(api):
-  api.cipd.set_service_account_credentials(
-      api.cipd.default_bot_service_account_credentials)
-
   api.gclient.set_config('recipes_py_bare')
   bot_update_step = api.bot_update.ensure_checkout()
 
