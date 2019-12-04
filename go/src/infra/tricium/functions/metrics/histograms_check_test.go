@@ -95,6 +95,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Enums",
 				Message:   singleElementEnumWarning,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 42,
+				EndChar:   66,
 				Path:      "enums/enum_tests/single_element_no_baseline.xml",
 			},
 		})
@@ -107,6 +110,11 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldBeNil)
 	})
 
+	Convey("Analyze XML file with no errors: good expiry date, expiry on new line", t, func() {
+		results := analyzeHistogramTestFile(t, "expiry/expiry_new_line.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
 	Convey("Analyze XML file with no expiry", t, func() {
 		results := analyzeHistogramTestFile(t, "expiry/no_expiry.xml", patchPath, inputDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
@@ -114,6 +122,7 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   noExpiryError,
 				StartLine: 3,
+				EndLine:   3,
 				Path:      "expiry/no_expiry.xml",
 			},
 		})
@@ -131,6 +140,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   neverExpiryInfo,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   77,
 				Path:      "expiry/never_expiry_with_comment.xml",
 			},
 		})
@@ -143,7 +155,25 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   neverExpiryError,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   77,
 				Path:      "expiry/never_expiry_no_comment.xml",
+			},
+		})
+	})
+
+	Convey("Analyze XML file with expiry of never and no comment, expiry on new line", t, func() {
+		results := analyzeHistogramTestFile(t, "expiry/never_expiry_new_line.xml", patchPath, inputDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:  category + "/Expiry",
+				Message:   neverExpiryError,
+				StartLine: 4,
+				EndLine:   4,
+				StartChar: 16,
+				EndChar:   37,
+				Path:      "expiry/never_expiry_new_line.xml",
 			},
 		})
 	})
@@ -155,6 +185,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   farExpiryWarning,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   82,
 				Path:      "expiry/over_year_expiry.xml",
 			},
 		})
@@ -167,6 +200,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   pastExpiryWarning,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   82,
 				Path:      "expiry/past_expiry.xml",
 			},
 		})
@@ -179,6 +215,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   badExpiryError,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   82,
 				Path:      "expiry/unformatted_expiry.xml",
 			},
 		})
@@ -198,6 +237,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   changeMilestoneExpiry,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   75,
 				Path:      "expiry/milestone/over_6months_milestone.xml",
 			},
 		})
@@ -210,6 +252,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   milestoneFailure,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   75,
 				Path:      "expiry/milestone/milestone_fetch_failed.xml",
 			},
 		})
@@ -222,6 +267,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   farExpiryWarning + changeMilestoneExpiry,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   75,
 				Path:      "expiry/milestone/over_year_milestone.xml",
 			},
 		})
@@ -234,6 +282,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   farExpiryWarning + changeMilestoneExpiry,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   76,
 				Path:      "expiry/milestone/over_year_milestone_3.xml",
 			},
 		})
@@ -246,6 +297,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   pastExpiryWarning,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   75,
 				Path:      "expiry/milestone/past_milestone.xml",
 			},
 		})
@@ -258,6 +312,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Expiry",
 				Message:   badExpiryError,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 56,
+				EndChar:   76,
 				Path:      "expiry/milestone/unformatted_milestone.xml",
 			},
 		})
@@ -282,6 +339,7 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Obsolete",
 				Message:   obsoleteDateError,
 				StartLine: 4,
+				EndLine:   6,
 				Path:      "obsolete/obsolete_no_date.xml",
 			},
 		})
@@ -291,11 +349,11 @@ func TestHistogramsCheck(t *testing.T) {
 		fullPath := "obsolete/obsolete_unformatted_date.xml"
 		results := analyzeHistogramTestFile(t, "obsolete/obsolete_unformatted_date.xml", patchPath, inputDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
-			makeObsoleteDateError(fullPath, 4),
-			makeObsoleteDateError(fullPath, 14),
-			makeObsoleteDateError(fullPath, 24),
-			makeObsoleteDateError(fullPath, 34),
-			makeObsoleteDateError(fullPath, 44),
+			makeObsoleteDateError(fullPath, 4, 6),
+			makeObsoleteDateError(fullPath, 14, 16),
+			makeObsoleteDateError(fullPath, 24, 26),
+			makeObsoleteDateError(fullPath, 34, 36),
+			makeObsoleteDateError(fullPath, 44, 46),
 		})
 	})
 
@@ -313,6 +371,7 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Owners",
 				Message:   oneOwnerError,
 				StartLine: 4,
+				EndLine:   4,
 				Path:      "owners/one_owner.xml",
 			},
 		})
@@ -325,6 +384,7 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Owners",
 				Message:   oneOwnerError,
 				StartLine: 3,
+				EndLine:   3,
 				Path:      "owners/no_owners.xml",
 			},
 		})
@@ -337,6 +397,7 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Owners",
 				Message:   firstOwnerTeamError,
 				StartLine: 4,
+				EndLine:   5,
 				Path:      "owners/first_team_owner.xml",
 			},
 		})
@@ -349,6 +410,7 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Owners",
 				Message:   firstOwnerTeamError,
 				StartLine: 4,
+				EndLine:   5,
 				Path:      "owners/first_owner_file.xml",
 			},
 		})
@@ -361,6 +423,7 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Owners",
 				Message:   oneOwnerTeamError,
 				StartLine: 4,
+				EndLine:   4,
 				Path:      "owners/first_team_one_owner.xml",
 			},
 		})
@@ -373,6 +436,7 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Owners",
 				Message:   oneOwnerTeamError,
 				StartLine: 4,
+				EndLine:   4,
 				Path:      "owners/first_file_one_owner.xml",
 			},
 		})
@@ -402,6 +466,9 @@ func TestHistogramsCheck(t *testing.T) {
 				Category:  category + "/Units",
 				Message:   unitsMicrosecondsWarning,
 				StartLine: 3,
+				EndLine:   3,
+				StartChar: 42,
+				EndChar:   62,
 				Path:      "units/microseconds_bad_summary.xml",
 			},
 		})
@@ -445,16 +512,18 @@ func TestHistogramsCheck(t *testing.T) {
 				Message:   fmt.Sprintf(addedNamespaceWarning, "Test2"),
 				Path:      "namespace/add_namespace.xml",
 				StartLine: 8,
+				EndLine:   8,
 			},
 		})
 	})
 }
 
-func makeObsoleteDateError(path string, startLine int) *tricium.Data_Comment {
+func makeObsoleteDateError(path string, startLine int, endLine int) *tricium.Data_Comment {
 	return &tricium.Data_Comment{
 		Category:  category + "/Obsolete",
 		Message:   obsoleteDateError,
 		StartLine: int32(startLine),
+		EndLine:   int32(endLine),
 		Path:      path,
 	}
 }

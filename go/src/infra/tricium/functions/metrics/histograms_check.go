@@ -31,7 +31,9 @@ const (
 	dateMilestoneFormat = "2006-01-02T15:04:05"
 	histogramEndTag     = "</histogram>"
 	obsoleteStartTag    = "<obsolete"
+	obsoleteEndTag      = "</obsolete>"
 	ownerStartTag       = "<owner"
+	ownerEndTag         = "</owner"
 
 	oneOwnerError            = `[WARNING] It's preferred to list at least two owners, where the second is often a team mailing list or a src/path/to/OWNERS reference: https://chromium.googlesource.com/chromium/src.git/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	firstOwnerTeamError      = `[WARNING] Please list an individual as the primary owner for this metric: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
@@ -66,10 +68,16 @@ var (
 	obsoleteMilestonePattern = regexp.MustCompile(`M([0-9]{2,3})`)
 	// Match valid summaries for histograms with units=microseconds.
 	microsecondsSummary = regexp.MustCompile(`all\suser|(high|low)(\s|-)resolution`)
+	expiryAttribute     = regexp.MustCompile(`expires_after="[^"]+"`)
+	enumAttribute       = regexp.MustCompile(`enum="[^"]+"`)
+	unitsAttribute      = regexp.MustCompile(`units="[^"]+"`)
 
 	// Now is an alias for time.Now, can be overwritten by tests.
 	now              = time.Now
 	getMilestoneDate = getMilestoneDateImpl
+
+	tags       = []string{ownerEndTag, obsoleteStartTag, obsoleteEndTag}
+	attributes = []*regexp.Regexp{expiryAttribute, enumAttribute, unitsAttribute}
 )
 
 // histogram contains all info about a UMA histogram.
@@ -85,9 +93,17 @@ type histogram struct {
 
 // metadata contains metadata about histogram tags and required comments.
 type metadata struct {
-	HistogramLineNum      int
-	OwnerLineNum          int
-	ObsoleteLineNum       int
+	HistogramLineNum int
+	// Handle the line numbers for owner tags separately from other tags and
+	// attributes because the <owner> tag can be repeated while the other
+	// patterns cannot.
+	OwnerStartLineNum int
+	// Map from an XML tag to its line number
+	tagMap map[string]int
+	// Map from an XML attribute to a struct containing its line number,
+	// start column number, and end column number
+	attributeMap map[*regexp.Regexp]*lineColumnNum
+
 	HasNeverExpiryComment bool
 	HistogramBytes        []byte
 }
@@ -100,6 +116,14 @@ type milestone struct {
 
 type milestones struct {
 	Milestones []milestone `json:"mstones"`
+}
+
+// lineColumnNum is used for attributes that are not split across lines
+// so there is not a separate start and end line.
+type lineColumnNum struct {
+	LineNum    int
+	StartIndex int
+	EndIndex   int
 }
 
 type changeMode int
@@ -171,8 +195,8 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 		if histogramStartPattern.MatchString(line) {
 			// Initialize currHistogram and metadata when a new histogram is encountered.
 			histogramStart = lineNum
-			meta = newMetadata(histogramStart)
 			currHistogram = newBytes
+			meta = newMetadata(lineNum)
 			histogramChanged = false
 		} else if strings.HasPrefix(line, histogramEndTag) {
 			// Analyze entire histogram after histogram end tag is encountered.
@@ -181,7 +205,7 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 			namespaces.Add(namespace)
 			allHistograms.Add(hist.Name)
 			if namespaceLineNums[namespace] == 0 {
-				namespaceLineNums[namespace] = meta.HistogramLineNum
+				namespaceLineNums[namespace] = histogramStart
 			}
 			if histogramChanged {
 				// Only check new (added) histograms are correct.
@@ -190,18 +214,25 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 				}
 			}
 			currHistogram = nil
-		} else if strings.HasPrefix(line, ownerStartTag) {
-			if meta.OwnerLineNum == histogramStart {
-				meta.OwnerLineNum = lineNum
-			}
-		} else if strings.HasPrefix(line, obsoleteStartTag) {
-			meta.ObsoleteLineNum = lineNum
+		} else if strings.HasPrefix(line, ownerStartTag) && meta.OwnerStartLineNum == histogramStart {
+			meta.OwnerStartLineNum = lineNum
 		} else if neverExpiryCommentPattern.MatchString(line) {
 			meta.HasNeverExpiryComment = true
 		}
 		if changedIndex < len(linesChanged) && lineNum == linesChanged[changedIndex] {
 			histogramChanged = true
 			changedIndex++
+		}
+		for _, tag := range tags {
+			if strings.Contains(line, tag) {
+				meta.tagMap[tag] = lineNum
+			}
+		}
+		for _, attribute := range attributes {
+			indices := attribute.FindIndex([]byte(scanner.Text()))
+			if indices != nil {
+				meta.attributeMap[attribute] = &lineColumnNum{lineNum, indices[0], indices[1]}
+			}
 		}
 		lineNum++
 	}
@@ -258,17 +289,22 @@ func createOwnerComment(message, path string, meta *metadata) *tricium.Data_Comm
 		Category:  category + "/Owners",
 		Message:   message,
 		Path:      path,
-		StartLine: int32(meta.OwnerLineNum),
+		StartLine: int32(meta.OwnerStartLineNum),
+		EndLine:   int32(meta.tagMap[ownerEndTag]),
 	}
 }
 
 func checkUnits(path string, hist *histogram, meta *metadata) *tricium.Data_Comment {
 	if strings.Contains(hist.Units, "microseconds") && !microsecondsSummary.MatchString(hist.Summary) {
+		unitsLine := meta.attributeMap[unitsAttribute]
 		comment := &tricium.Data_Comment{
 			Category:  category + "/Units",
 			Message:   unitsMicrosecondsWarning,
 			Path:      path,
-			StartLine: int32(meta.HistogramLineNum),
+			StartLine: int32(unitsLine.LineNum),
+			EndLine:   int32(unitsLine.LineNum),
+			StartChar: int32(unitsLine.StartIndex),
+			EndChar:   int32(unitsLine.EndIndex),
 		}
 		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, comment.StartLine, "[ERROR]: Units Microseconds Bad Summary")
 		return comment
@@ -285,7 +321,8 @@ func checkObsolete(path string, hist *histogram, meta *metadata) *tricium.Data_C
 			Category:  category + "/Obsolete",
 			Message:   obsoleteDateError,
 			Path:      path,
-			StartLine: int32(meta.ObsoleteLineNum),
+			StartLine: int32(meta.tagMap[obsoleteStartTag]),
+			EndLine:   int32(meta.tagMap[obsoleteEndTag]),
 		}
 		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, comment.StartLine, "[ERROR]: Obsolete no date")
 		return comment
@@ -335,7 +372,7 @@ func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_C
 	}
 	var expiryComments []*tricium.Data_Comment
 	if commentMessage != "" {
-		expiryComments = []*tricium.Data_Comment{createExpiryComment(commentMessage, path, meta)}
+		expiryComments = []*tricium.Data_Comment{createExpiryComment(commentMessage, hist.Expiry, path, meta)}
 		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, meta.HistogramLineNum, logMessage)
 	}
 	return expiryComments
@@ -389,23 +426,32 @@ func getMilestoneDateImpl(milestone int) (time.Time, error) {
 	return milestoneDate, nil
 }
 
-func createExpiryComment(message, path string, meta *metadata) *tricium.Data_Comment {
+func createExpiryComment(message, expiry, path string, meta *metadata) *tricium.Data_Comment {
+	expiryLine := meta.attributeMap[expiryAttribute]
+	log.Printf("ADDING Comment at line %d: %s", expiryLine.LineNum, message)
 	return &tricium.Data_Comment{
 		Category:  category + "/Expiry",
 		Message:   message,
 		Path:      path,
-		StartLine: int32(meta.HistogramLineNum),
+		StartLine: int32(expiryLine.LineNum),
+		EndLine:   int32(expiryLine.LineNum),
+		StartChar: int32(expiryLine.StartIndex),
+		EndChar:   int32(expiryLine.EndIndex),
 	}
 }
 
 func checkEnums(path string, hist *histogram, meta *metadata, singletonEnums stringset.Set) *tricium.Data_Comment {
 	if singletonEnums.Has(hist.Enum) && !strings.Contains(hist.Summary, "baseline") {
-		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, meta.HistogramLineNum, "Single Element Enum No Baseline")
+		enumLine := meta.attributeMap[enumAttribute]
+		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, enumLine.LineNum, "Single Element Enum No Baseline")
 		return &tricium.Data_Comment{
 			Category:  category + "/Enums",
 			Message:   singleElementEnumWarning,
 			Path:      path,
-			StartLine: int32(meta.HistogramLineNum),
+			StartLine: int32(enumLine.LineNum),
+			EndLine:   int32(enumLine.LineNum),
+			StartChar: int32(enumLine.StartIndex),
+			EndChar:   int32(enumLine.EndIndex),
 		}
 	}
 	return nil
@@ -436,6 +482,7 @@ func findAddedNamespaces(path string, addedNamespaces stringset.Set, removedName
 			Message:   fmt.Sprintf(addedNamespaceWarning, namespace),
 			Path:      path,
 			StartLine: int32(namespaceLineNums[namespace]),
+			EndLine:   int32(namespaceLineNums[namespace]),
 		}
 		log.Printf("ADDING Comment for %s at line %d: %s", namespace, comment.StartLine, "[WARNING]: Added Namespace")
 		comments = append(comments, comment)
@@ -445,8 +492,18 @@ func findAddedNamespaces(path string, addedNamespaces stringset.Set, removedName
 
 // newMetadata is a constructor for creating a Metadata struct with defaultLineNum.
 func newMetadata(defaultLineNum int) *metadata {
+	tagMap := make(map[string]int)
+	attributeMap := make(map[*regexp.Regexp]*lineColumnNum)
+	for _, tag := range tags {
+		tagMap[tag] = defaultLineNum
+	}
+	for _, attribute := range attributes {
+		attributeMap[attribute] = &lineColumnNum{defaultLineNum, 0, 0}
+	}
 	return &metadata{
-		HistogramLineNum: defaultLineNum,
-		OwnerLineNum:     defaultLineNum,
+		HistogramLineNum:  defaultLineNum,
+		OwnerStartLineNum: defaultLineNum,
+		tagMap:            tagMap,
+		attributeMap:      attributeMap,
 	}
 }
