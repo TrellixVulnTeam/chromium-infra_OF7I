@@ -110,9 +110,10 @@ func getStableVersion(ctx context.Context, client fleet.InventoryClient, buildTa
 		return nil, err
 	}
 	s := map[string]string{
-		"cros":     res.GetCrosVersion(),
-		"faft":     res.GetFaftVersion(),
-		"firmware": res.GetFirmwareVersion(),
+		"cros":       res.GetCrosVersion(),
+		"faft":       res.GetFaftVersion(),
+		"firmware":   res.GetFirmwareVersion(),
+		"servo-cros": res.GetServoCrosVersion(),
 	}
 	log.Printf("getStableVersion: stable version map (%v)", s)
 	return s, nil
