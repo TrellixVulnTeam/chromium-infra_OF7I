@@ -2816,8 +2816,11 @@ var xxx_messageInfo_UpdateCachedInventoryResponse proto.InternalMessageInfo
 
 // next tag: 4
 type GetStableVersionRequest struct {
-	BuildTarget          string   `protobuf:"bytes,1,opt,name=buildTarget,proto3" json:"buildTarget,omitempty"`
-	Model                string   `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
+	// TODO(gregorynisbet): remove support for looking up
+	// stable version information by buildTarget + model
+	BuildTarget string `protobuf:"bytes,1,opt,name=buildTarget,proto3" json:"buildTarget,omitempty"`
+	Model       string `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
+	// NOTE: {hostname} and {buildTarget, model} are alternatives
 	Hostname             string   `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
