@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$api/api_proto/features_objects.proto\x12\x08monorail\x1a\x1a\x61pi/api_proto/common.proto\x1a!api/api_proto/issue_objects.proto\"\xb5\x01\n\x07Hotlist\x12$\n\towner_ref\x18\x01 \x01(\x0b\x32\x11.monorail.UserRef\x12&\n\x0b\x65\x64itor_refs\x18\x05 \x03(\x0b\x32\x11.monorail.UserRef\x12(\n\rfollower_refs\x18\x06 \x03(\x0b\x32\x11.monorail.UserRef\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0f\n\x07summary\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\"\x88\x01\n\x0bHotlistItem\x12\x1e\n\x05issue\x18\x01 \x01(\x0b\x32\x0f.monorail.Issue\x12\x0c\n\x04rank\x18\x02 \x01(\r\x12$\n\tadder_ref\x18\x03 \x01(\x0b\x32\x11.monorail.UserRef\x12\x17\n\x0f\x61\x64\x64\x65\x64_timestamp\x18\x04 \x01(\r\x12\x0c\n\x04note\x18\x05 \x01(\t\"\xc5\x01\n\x12HotlistPeopleDelta\x12(\n\rnew_owner_ref\x18\x01 \x01(\x0b\x32\x11.monorail.UserRef\x12*\n\x0f\x61\x64\x64_editor_refs\x18\x02 \x03(\x0b\x32\x11.monorail.UserRef\x12,\n\x11\x61\x64\x64_follower_refs\x18\x03 \x03(\x0b\x32\x11.monorail.UserRef\x12+\n\x10remove_user_refs\x18\x04 \x03(\x0b\x32\x11.monorail.UserRefb\x06proto3')
+  serialized_pb=_b('\n$api/api_proto/features_objects.proto\x12\x08monorail\x1a\x1a\x61pi/api_proto/common.proto\x1a!api/api_proto/issue_objects.proto\"\xcf\x01\n\x07Hotlist\x12$\n\towner_ref\x18\x01 \x01(\x0b\x32\x11.monorail.UserRef\x12&\n\x0b\x65\x64itor_refs\x18\x05 \x03(\x0b\x32\x11.monorail.UserRef\x12(\n\rfollower_refs\x18\x06 \x03(\x0b\x32\x11.monorail.UserRef\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0f\n\x07summary\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\x12\x18\n\x10\x64\x65\x66\x61ult_col_spec\x18\x07 \x01(\t\"\x88\x01\n\x0bHotlistItem\x12\x1e\n\x05issue\x18\x01 \x01(\x0b\x32\x0f.monorail.Issue\x12\x0c\n\x04rank\x18\x02 \x01(\r\x12$\n\tadder_ref\x18\x03 \x01(\x0b\x32\x11.monorail.UserRef\x12\x17\n\x0f\x61\x64\x64\x65\x64_timestamp\x18\x04 \x01(\r\x12\x0c\n\x04note\x18\x05 \x01(\t\"\xc5\x01\n\x12HotlistPeopleDelta\x12(\n\rnew_owner_ref\x18\x01 \x01(\x0b\x32\x11.monorail.UserRef\x12*\n\x0f\x61\x64\x64_editor_refs\x18\x02 \x03(\x0b\x32\x11.monorail.UserRef\x12,\n\x11\x61\x64\x64_follower_refs\x18\x03 \x03(\x0b\x32\x11.monorail.UserRef\x12+\n\x10remove_user_refs\x18\x04 \x03(\x0b\x32\x11.monorail.UserRefb\x06proto3')
   ,
   dependencies=[api_dot_api__proto_dot_common__pb2.DESCRIPTOR,api_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,])
 
@@ -77,6 +77,13 @@ _HOTLIST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='default_col_spec', full_name='monorail.Hotlist.default_col_spec', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -90,7 +97,7 @@ _HOTLIST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=114,
-  serialized_end=295,
+  serialized_end=321,
 )
 
 
@@ -148,8 +155,8 @@ _HOTLISTITEM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=298,
-  serialized_end=434,
+  serialized_start=324,
+  serialized_end=460,
 )
 
 
@@ -200,8 +207,8 @@ _HOTLISTPEOPLEDELTA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=437,
-  serialized_end=634,
+  serialized_start=463,
+  serialized_end=660,
 )
 
 _HOTLIST.fields_by_name['owner_ref'].message_type = api_dot_api__proto_dot_common__pb2._USERREF

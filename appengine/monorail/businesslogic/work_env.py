@@ -1991,6 +1991,8 @@ class WorkEnv(object):
       logging.info('No updates given')
       return
 
+    # TODO(jojwang): monorail:6564, should check description and summary are
+    # not empty strings before calling UpdateHotlist.
     self.services.features.UpdateHotlist(
         self.mc.cnxn, hotlist_id, name=name, summary=summary,
         description=description, is_private=is_private,

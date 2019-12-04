@@ -333,6 +333,38 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return features_pb2.UpdateHotlistRolesResponse()
 
   @monorail_servicer.PRPCMethod
+  def UpdateHotlistSettings(self, mc, request):
+    """Update the hotlist settings."""
+    hotlist_id = converters.IngestHotlistRef(
+        mc.cnxn, self.services.user, self.services.features,
+        request.hotlist_ref)
+    (name, summary, description, is_private, default_col_spec) = (
+        None, None, None, None, None)
+    if request.HasField('name'):
+      name = request.name.value
+
+    if request.HasField('summary'):
+      summary = request.summary.value
+
+    if request.HasField('description'):
+      description = request.description.value
+
+    if request.HasField('is_private'):
+      is_private = request.is_private.value
+
+    if request.HasField('default_col_spec'):
+      default_col_spec = request.default_col_spec.value
+
+    if (name, summary, description, is_private, default_col_spec) != (
+        None, None, None, None, None):
+      with work_env.WorkEnv(mc, self.services) as we:
+        we.UpdateHotlistSettings(
+            hotlist_id, name=name, summary=summary, description=description,
+            is_private=is_private, default_col_spec=default_col_spec)
+
+    return features_pb2.UpdateHotlistSettingsResponse()
+
+  @monorail_servicer.PRPCMethod
   def DeleteHotlist(self, mc, request):
     """Delete the given hotlist"""
     hotlist_id = converters.IngestHotlistRef(

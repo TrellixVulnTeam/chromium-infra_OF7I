@@ -7,8 +7,10 @@ syntax = "proto3";
 
 package monorail;
 
+import "google/protobuf/wrappers.proto";
 import "api/api_proto/common.proto";
 import "api/api_proto/features_objects.proto";
+
 
 service Features {
   rpc ListHotlistsByUser (ListHotlistsByUserRequest) returns (ListHotlistsByUserResponse) {}
@@ -26,6 +28,7 @@ service Features {
   rpc RerankHotlistIssues (RerankHotlistIssuesRequest) returns (RerankHotlistIssuesResponse) {}
   rpc UpdateHotlistIssueNote (UpdateHotlistIssueNoteRequest) returns (UpdateHotlistIssueNoteResponse) {}
   rpc UpdateHotlistRoles (UpdateHotlistRolesRequest) returns (UpdateHotlistRolesResponse) {}
+  rpc UpdateHotlistSettings (UpdateHotlistSettingsRequest) returns (UpdateHotlistSettingsResponse) {}
   rpc DeleteHotlist (DeleteHotlistRequest) returns (DeleteHotlistResponse) {}
   rpc ListHotlistPermissions (ListHotlistPermissionsRequest) returns (ListHotlistPermissionsResponse) {}
   rpc PredictComponent (PredictComponentRequest) returns (PredictComponentResponse) {}
@@ -214,6 +217,22 @@ message UpdateHotlistRolesRequest {
 
 // Next available tag: 1
 message UpdateHotlistRolesResponse {
+}
+
+
+// Next available tag: 7
+message UpdateHotlistSettingsRequest {
+  HotlistRef hotlist_ref = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue summary = 3;
+  google.protobuf.StringValue description = 4;
+  google.protobuf.BoolValue is_private = 5;
+  google.protobuf.StringValue default_col_spec = 6;
+}
+
+
+// Next available tag: 1
+message UpdateHotlistSettingsResponse {
 }
 
 
