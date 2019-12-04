@@ -449,7 +449,10 @@ func createCommentSelections(c context.Context, gerritAPI gerrit.API, request *t
 	}
 	gerrit.FilterRequestChangedLines(request, &changedLines)
 	for path, lines := range changedLines {
-		logging.Debugf(c, "Num changed lines for %s is %d.", path, len(lines))
+		logging.Fields{
+			"path":              path,
+			"num_changed_lines": len(lines),
+		}.Debugf(c, "Changed lines")
 	}
 
 	// We want to suppress comments that are "similar" to those that have
@@ -459,15 +462,23 @@ func createCommentSelections(c context.Context, gerritAPI gerrit.API, request *t
 	// string. This could potentially be changed to match by comment text or
 	// some combination of comment properties.
 	categories := suppressedCategories(c, request.GerritHost, request.GerritChange)
-
+	logging.Fields{
+		"num_comments": len(comments),
+	}.Debugf(c, "Filtering comments")
 	for i, comment := range comments {
-		isChanged := gerrit.CommentIsInChangedLines(c, comment, changedLines)
-		isSuppressed := categories.Has(comment.Category)
-		tcomment := tricium.Data_Comment{}
-		if err = jsonpb.UnmarshalString(string(comment.Comment), &tcomment); err != nil {
+		data := tricium.Data_Comment{}
+		if err = comment.UnpackComment(c, &data); err != nil {
 			return nil, err
 		}
-		selections[i].Included = (tcomment.ShowOnUnchangedLines || isChanged) && !isSuppressed
+		isChanged := gerrit.CommentIsInChangedLines(c, &data, changedLines)
+		isSuppressed := categories.Has(comment.Category)
+		selections[i].Included = (data.ShowOnUnchangedLines || isChanged) && !isSuppressed
+		logging.Fields{
+			"path":       data.Path,
+			"start_line": data.StartLine,
+			"category":   data.Category,
+			"included":   selections[i].Included,
+		}.Debugf(c, "- %d", i)
 	}
 
 	return selections, nil

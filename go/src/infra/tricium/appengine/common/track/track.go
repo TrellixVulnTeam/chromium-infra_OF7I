@@ -49,9 +49,12 @@
 package track
 
 import (
+	"bytes"
+	"context"
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
 	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 
@@ -281,6 +284,17 @@ type Comment struct {
 	// This is a int64 bit map using the tricium.Platform_Name number
 	// values for platforms.
 	Platforms int64
+}
+
+// UnpackComment returns the proto encoded Comment.
+func (c *Comment) UnpackComment(ctx context.Context, out *tricium.Data_Comment) error {
+	if c.Comment == nil {
+		return errors.New("missing comment.Comment")
+	}
+	if err := jsonpb.Unmarshal(bytes.NewReader(c.Comment), out); err != nil {
+		return errors.Annotate(err, "failed to unpack proto tricium.Data_Comment").Err()
+	}
+	return nil
 }
 
 // CommentSelection tracks selection of comments.

@@ -417,18 +417,7 @@ func FilterRequestChangedLines(request *track.AnalyzeRequest, changedLines *Chan
 //
 // Non-file-level comments that don't overlap with the changed lines
 // should be filtered out.
-func CommentIsInChangedLines(c context.Context, trackComment *track.Comment, changedLines ChangedLinesInfo) bool {
-	var data tricium.Data_Comment
-	if trackComment.Comment == nil {
-		logging.Errorf(c, "Got a comment with a nil Comment field: %+v", trackComment)
-		return false
-	}
-
-	if err := jsonpb.UnmarshalString(string(trackComment.Comment), &data); err != nil {
-		logging.WithError(err).Errorf(c, "Failed to unmarshal comment.")
-		return false
-	}
-
+func CommentIsInChangedLines(c context.Context, data *tricium.Data_Comment, changedLines ChangedLinesInfo) bool {
 	if len(data.Path) == 0 {
 		return true // This is a comment on the commit message, which is always kept.
 	}

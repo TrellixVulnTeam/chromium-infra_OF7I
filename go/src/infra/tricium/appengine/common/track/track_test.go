@@ -5,10 +5,34 @@
 package track
 
 import (
+	"context"
+	tricium "infra/tricium/api/v1"
 	"testing"
 
+	"github.com/golang/protobuf/jsonpb"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+func TestComment_UnpackComment(t *testing.T) {
+	Convey("Test", t, func() {
+		ctx := context.Background()
+		out := tricium.Data_Comment{}
+		Convey("success", func() {
+			c := Comment{}
+			data := tricium.Data_Comment{}
+			s, err := (&jsonpb.Marshaler{}).MarshalToString(&data)
+			So(err, ShouldBeNil)
+			c.Comment = []byte(s)
+			So(c.UnpackComment(ctx, &out), ShouldBeNil)
+		})
+		Convey("failures", func() {
+			c := Comment{}
+			So(c.UnpackComment(ctx, &out), ShouldNotBeNil)
+			c.Comment = []byte{0}
+			So(c.UnpackComment(ctx, &out), ShouldNotBeNil)
+		})
+	})
+}
 
 func TestExtractFunctionPlatform(t *testing.T) {
 	Convey("Test Environment", t, func() {

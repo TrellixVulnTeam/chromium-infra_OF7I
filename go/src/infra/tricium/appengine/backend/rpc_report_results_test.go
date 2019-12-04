@@ -61,18 +61,20 @@ func TestReportResultsRequest(t *testing.T) {
 		changedLines := gc.ChangedLinesInfo{
 			"dir/file.txt": {2, 5, 6},
 		}
-		deletedFileCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+		dataCommentDeleted := tricium.Data_Comment{
 			Category: "L",
 			Message:  "Line too long",
 			Path:     "dir/deleted_file.txt",
-		})
-		inChangeCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+		}
+		deletedFileCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&dataCommentDeleted)
+		dataComment := tricium.Data_Comment{
 			Category:  "L",
 			Message:   "Line too short",
 			Path:      "dir/file.txt",
 			StartLine: 2,
 			EndLine:   3,
-		})
+		}
+		inChangeCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&dataComment)
 		So(err, ShouldBeNil)
 		comments := []*track.Comment{
 			{Parent: workerKey, Comment: []byte(deletedFileCommentJSON)},
@@ -153,13 +155,14 @@ func TestReportResultsRequest(t *testing.T) {
 		})
 
 		// This comment is not on a changed line.
-		outsideChangeCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+		dataOutside := tricium.Data_Comment{
 			Category:  "L",
 			Message:   "Line too short",
 			Path:      "dir/file.txt",
 			StartLine: 3,
 			EndLine:   3,
-		})
+		}
+		outsideChangeCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&dataOutside)
 		// Put the new comment with line numbers in.
 		outsideChangeComment := &track.Comment{Parent: workerKey, Comment: []byte(outsideChangeCommentJSON)}
 		comments = append(comments, outsideChangeComment)
@@ -167,7 +170,7 @@ func TestReportResultsRequest(t *testing.T) {
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, outsideChangeComment),
-			Included: gc.CommentIsInChangedLines(ctx, outsideChangeComment, changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataOutside, changedLines),
 		}), ShouldBeNil)
 		So(len(comments), ShouldEqual, maxComments+2)
 
@@ -188,7 +191,7 @@ func TestReportResultsRequest(t *testing.T) {
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, comment),
-			Included: gc.CommentIsInChangedLines(ctx, comment, changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataCommentDeleted, changedLines),
 		}), ShouldBeNil)
 		So(len(comments), ShouldEqual, maxComments+3)
 
@@ -249,27 +252,30 @@ func TestReportResultsRequestWithRenamedOrCopiedFiles(t *testing.T) {
 			"dir/copied_file.txt":  {1, 2, 3, 4, 5, 6, 7},
 		}
 		gc.FilterRequestChangedLines(request, &changedLines)
-		inChangeCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+		dataCommentChanged := tricium.Data_Comment{
 			Category:  "L",
 			Message:   "Line too short",
 			Path:      "dir/file.txt",
 			StartLine: 2,
 			EndLine:   3,
-		})
-		inRenamedFileCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+		}
+		inChangeCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&dataCommentChanged)
+		dataCommentRenamed := tricium.Data_Comment{
 			Category:  "L",
 			Message:   "Line doesn't look right",
 			Path:      "dir/renamed_file.txt",
 			StartLine: 2,
 			EndLine:   3,
-		})
-		inCopiedFileCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+		}
+		inRenamedFileCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&dataCommentRenamed)
+		dataCommentCopied := tricium.Data_Comment{
 			Category:  "L",
 			Message:   "Line doesn't look right",
 			Path:      "dir/copied_file.txt",
 			StartLine: 2,
 			EndLine:   3,
-		})
+		}
+		inCopiedFileCommentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&dataCommentCopied)
 		So(err, ShouldBeNil)
 		comments := []*track.Comment{
 			{Parent: workerKey, Comment: []byte(inChangeCommentJSON)},
@@ -280,17 +286,17 @@ func TestReportResultsRequestWithRenamedOrCopiedFiles(t *testing.T) {
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, comments[0]),
-			Included: gc.CommentIsInChangedLines(ctx, comments[0], changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataCommentChanged, changedLines),
 		}), ShouldBeNil)
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, comments[1]),
-			Included: gc.CommentIsInChangedLines(ctx, comments[1], changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataCommentRenamed, changedLines),
 		}), ShouldBeNil)
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, comments[2]),
-			Included: gc.CommentIsInChangedLines(ctx, comments[2], changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataCommentCopied, changedLines),
 		}), ShouldBeNil)
 
 		Convey("Does not report comments in renamed or copied files", func() {

@@ -8,12 +8,10 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/golang/protobuf/jsonpb"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"encoding/json"
 	tricium "infra/tricium/api/v1"
-	"infra/tricium/appengine/common/track"
 	"infra/tricium/appengine/common/triciumtest"
 )
 
@@ -242,90 +240,76 @@ func TestCommentIsInChangedLines(t *testing.T) {
 		ctx := triciumtest.Context()
 
 		Convey("Single line comment in changed lines", func() {
-			json, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			data := tricium.Data_Comment{
 				Path:      "dir/file.txt",
 				StartLine: 5,
 				EndLine:   5,
 				StartChar: 0,
 				EndChar:   10,
-			})
-			So(err, ShouldBeNil)
+			}
 			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			comment := &track.Comment{Comment: []byte(json)}
-			So(CommentIsInChangedLines(ctx, comment, lines), ShouldBeTrue)
+			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeTrue)
 		})
 
 		Convey("Single line comment outside of changed lines", func() {
-			json, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			data := tricium.Data_Comment{
 				Path:      "dir/file.txt",
 				StartLine: 4,
 				EndLine:   4,
 				StartChar: 0,
 				EndChar:   10,
-			})
-			So(err, ShouldBeNil)
+			}
 			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			comment := &track.Comment{Comment: []byte(json)}
-			So(CommentIsInChangedLines(ctx, comment, lines), ShouldBeFalse)
+			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeFalse)
 		})
 
 		Convey("Single line comment outside of changed files", func() {
-			json, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			data := tricium.Data_Comment{
 				Path:      "DELETED.txt",
 				StartLine: 5,
 				EndLine:   5,
 				StartChar: 5,
 				EndChar:   10,
-			})
-			So(err, ShouldBeNil)
+			}
 			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			comment := &track.Comment{Comment: []byte(json)}
-			So(CommentIsInChangedLines(ctx, comment, lines), ShouldBeFalse)
+			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeFalse)
 		})
 
 		Convey("Comment with line range that overlaps changed line", func() {
-			json, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			data := tricium.Data_Comment{
 				Path:      "dir/file.txt",
 				StartLine: 3,
 				EndLine:   8,
-			})
-			So(err, ShouldBeNil)
+			}
 			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			comment := &track.Comment{Comment: []byte(json)}
-			So(CommentIsInChangedLines(ctx, comment, lines), ShouldBeTrue)
+			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeTrue)
 		})
 
 		Convey("Comment with end char == 0, implying end line is not included", func() {
-			json, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			data := tricium.Data_Comment{
 				Path:      "dir/file.txt",
 				StartLine: 6,
 				EndLine:   10,
-			})
-			So(err, ShouldBeNil)
+			}
 			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			comment := &track.Comment{Comment: []byte(json)}
-			So(CommentIsInChangedLines(ctx, comment, lines), ShouldBeFalse)
+			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeFalse)
 		})
 
 		Convey("File-level comments are included", func() {
-			json, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			data := tricium.Data_Comment{
 				Path: "dir/file.txt",
-			})
-			So(err, ShouldBeNil)
+			}
 			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			comment := &track.Comment{Comment: []byte(json)}
-			So(CommentIsInChangedLines(ctx, comment, lines), ShouldBeTrue)
+			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeTrue)
 		})
 
 		Convey("Line comments on changed lines are included", func() {
-			json, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
+			data := tricium.Data_Comment{
 				Path:      "dir/file.txt",
 				StartLine: 2,
-			})
-			So(err, ShouldBeNil)
+			}
 			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			comment := &track.Comment{Comment: []byte(json)}
-			So(CommentIsInChangedLines(ctx, comment, lines), ShouldBeTrue)
+			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeTrue)
 		})
 	})
 }
