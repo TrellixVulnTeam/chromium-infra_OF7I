@@ -57,7 +57,7 @@ describe('mr-issue-page', () => {
 
     it('display deleted issues', () => {
       assert.equal(element._pageTitle({projectName: 'test', localId: 1},
-          {projectName: 'test', localId: 1, isDeleted: true}
+          {projectName: 'test', localId: 1, isDeleted: true},
       ), '1 - Deleted issue');
     });
 

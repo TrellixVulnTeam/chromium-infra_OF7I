@@ -651,26 +651,26 @@ export class MrEditMetadata extends connectStore(LitElement) {
 
   get _canEditSummary() {
     const issuePermissions = this.issuePermissions || [];
-    return this._canEditIssue
-      || issuePermissions.includes(ISSUE_EDIT_SUMMARY_PERMISSION);
+    return this._canEditIssue ||
+      issuePermissions.includes(ISSUE_EDIT_SUMMARY_PERMISSION);
   }
 
   get _canEditStatus() {
     const issuePermissions = this.issuePermissions || [];
-    return this._canEditIssue
-      || issuePermissions.includes(ISSUE_EDIT_STATUS_PERMISSION);
+    return this._canEditIssue ||
+      issuePermissions.includes(ISSUE_EDIT_STATUS_PERMISSION);
   }
 
   get _canEditOwner() {
     const issuePermissions = this.issuePermissions || [];
-    return this._canEditIssue
-      || issuePermissions.includes(ISSUE_EDIT_OWNER_PERMISSION);
+    return this._canEditIssue ||
+      issuePermissions.includes(ISSUE_EDIT_OWNER_PERMISSION);
   }
 
   get _canEditCC() {
     const issuePermissions = this.issuePermissions || [];
-    return this._canEditIssue
-      || issuePermissions.includes(ISSUE_EDIT_CC_PERMISSION);
+    return this._canEditIssue ||
+      issuePermissions.includes(ISSUE_EDIT_CC_PERMISSION);
   }
 
   get _ccNames() {

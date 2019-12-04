@@ -118,8 +118,8 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
 
   /** @override */
   update(changedProperties) {
-    if (changedProperties.has('prefs')
-        || changedProperties.has('restrictions')) {
+    if (changedProperties.has('prefs') ||
+        changedProperties.has('restrictions')) {
       this.hidden = !this._combinedText;
 
       this.showWarning = !!this._warningText;

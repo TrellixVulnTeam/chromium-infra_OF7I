@@ -47,8 +47,8 @@ export const fieldValueMapKey = (fieldName, phaseName) => {
 export const groupsForType = (fieldGroups, issueType) => {
   return fieldGroups.filter((group) => {
     if (!group.applicableType) return true;
-    return issueType && group.applicableType.toLowerCase()
-      === issueType.toLowerCase();
+    return issueType && group.applicableType.toLowerCase() ===
+      issueType.toLowerCase();
   });
 };
 

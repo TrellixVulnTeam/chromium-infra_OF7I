@@ -376,7 +376,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     const userGroups = this.user.groups || [];
     return !!this.approvers.find((a) => {
       return a.displayName === this.user.displayName || userGroups.find(
-          (group) => group.displayName === a.displayName
+          (group) => group.displayName === a.displayName,
       );
     });
   }
@@ -392,8 +392,8 @@ export class MrApprovalCard extends connectStore(LitElement) {
         return true;
       }
 
-      if (!this._hasApproverPrivileges
-          && APPROVER_RESTRICTED_STATUSES.has(s.status)) {
+      if (!this._hasApproverPrivileges &&
+          APPROVER_RESTRICTED_STATUSES.has(s.status)) {
         // If you are not an approver and and this status is restricted,
         // you can't change to this status.
         return false;

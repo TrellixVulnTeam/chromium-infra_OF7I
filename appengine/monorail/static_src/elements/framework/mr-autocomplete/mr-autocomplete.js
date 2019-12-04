@@ -83,8 +83,8 @@ export class MrAutocomplete extends connectStore(ChopsAutocomplete) {
 
   /** @override */
   update(changedProperties) {
-    if (changedProperties.has('vocabularyName')
-        || changedProperties.has('vocabularies')) {
+    if (changedProperties.has('vocabularyName') ||
+        changedProperties.has('vocabularies')) {
       if (this.vocabularyName in this.vocabularies) {
         const props = this.vocabularies[this.vocabularyName];
 

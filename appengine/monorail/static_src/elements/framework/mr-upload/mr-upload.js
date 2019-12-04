@@ -297,8 +297,8 @@ export class MrUpload extends LitElement {
     // NOTE: This function could return a false positive if two files have the
     // exact same name, lastModified time, size, and type but different
     // content. This is extremely unlikely, however.
-    return a.name === b.name && a.lastModified === b.lastModified
-      && a.size === b.size && a.type === b.type;
+    return a.name === b.name && a.lastModified === b.lastModified &&
+      a.size === b.size && a.type === b.type;
   }
 
   _removeFile(e) {

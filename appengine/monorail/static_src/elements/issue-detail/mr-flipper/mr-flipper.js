@@ -51,7 +51,7 @@ export default class MrFlipper extends connectStore(LitElement) {
       method: 'GET',
     };
     fetch(`detail/flipper?${query}`, options).then(
-        (response) => response.text()
+        (response) => response.text(),
     ).then(
         (responseBody) => {
           let responseData;
@@ -63,7 +63,7 @@ export default class MrFlipper extends connectStore(LitElement) {
             return;
           }
           this._populateResponseData(responseData);
-        }
+        },
     );
   }
 

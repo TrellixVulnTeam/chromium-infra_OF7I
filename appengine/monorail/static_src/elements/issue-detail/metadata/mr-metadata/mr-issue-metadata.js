@@ -307,8 +307,8 @@ function _labelTitle(labelDefMap, label) {
   if (labelDefMap && labelDefMap.has(key)) {
     docstring = labelDefMap.get(key).docstring;
   }
-  return (label.isDerived ? 'Derived: ' : '') + label.label
-    + (docstring ? ` = ${docstring}` : '');
+  return (label.isDerived ? 'Derived: ' : '') + label.label +
+    (docstring ? ` = ${docstring}` : '');
 }
 
 customElements.define('mr-issue-metadata', MrIssueMetadata);

@@ -12,5 +12,5 @@ import AutoRefreshPrpcClient from 'prpc.js';
 // TODO(crbug.com/monorail/5049): Remove usage of window.CS_env here.
 export const prpcClient = new AutoRefreshPrpcClient(
   window.CS_env ? window.CS_env.token : '',
-  window.CS_env ? window.CS_env.tokenExpiresSec : 0
+  window.CS_env ? window.CS_env.tokenExpiresSec : 0,
 );

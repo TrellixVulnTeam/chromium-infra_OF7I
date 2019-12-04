@@ -84,8 +84,8 @@ export class MrRelatedIssues extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    const rerankEnabled = (this.issuePermissions
-      || []).includes(ISSUE_EDIT_PERMISSION);
+    const rerankEnabled = (this.issuePermissions ||
+      []).includes(ISSUE_EDIT_PERMISSION);
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <chops-dialog closeOnOutsideClick>

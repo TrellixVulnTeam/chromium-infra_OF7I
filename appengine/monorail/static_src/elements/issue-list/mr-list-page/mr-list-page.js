@@ -404,8 +404,8 @@ export class MrListPage extends connectStore(LitElement) {
 
   get editingEnabled() {
     return this._isLoggedIn && (userIsMember(this._currentUser,
-        this.projectName, this._usersProjects)
-        || this._currentUser.isSiteAdmin);
+        this.projectName, this._usersProjects) ||
+        this._currentUser.isSiteAdmin);
   }
 
   get groups() {

@@ -125,8 +125,8 @@ export class MrGridControls extends connectStore(LitElement) {
 
   /** @override */
   update(changedProperties) {
-    if (changedProperties.has('_fieldDefs')
-        || changedProperties.has('_labelPrefixFields')) {
+    if (changedProperties.has('_fieldDefs') ||
+        changedProperties.has('_labelPrefixFields')) {
       this.gridOptions = getAvailableGridFields(
           this._fieldDefs, this._labelPrefixFields);
     }

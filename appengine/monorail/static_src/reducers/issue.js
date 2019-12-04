@@ -313,7 +313,7 @@ const requestsReducer = combineReducers({
       FETCH_IS_STARRED_FAILURE),
   fetchStarredIssues: createRequestReducer(
       FETCH_ISSUES_STARRED_START, FETCH_ISSUES_STARRED_SUCCESS,
-      FETCH_ISSUES_STARRED_FAILURE
+      FETCH_ISSUES_STARRED_FAILURE,
   ),
   convert: createRequestReducer(
       CONVERT_START, CONVERT_SUCCESS, CONVERT_FAILURE),
@@ -422,7 +422,7 @@ export const starredIssues = createSelector(
         if (starred) stars.add(ref);
       }
       return stars;
-    }
+    },
 );
 
 // TODO(zhangtiff): Split up either comments or approvals into their own "duck".
@@ -440,23 +440,23 @@ export const commentsByApprovalName = createSelector(
         }
       });
       return map;
-    }
+    },
 );
 
 export const fieldValues = createSelector(
     issue,
-    (issue) => issue && issue.fieldValues
+    (issue) => issue && issue.fieldValues,
 );
 
 export const labelRefs = createSelector(
     issue,
-    (issue) => issue && issue.labelRefs
+    (issue) => issue && issue.labelRefs,
 );
 
 export const type = createSelector(
     fieldValues,
     labelRefs,
-    (fieldValues, labelRefs) => extractTypeForIssue(fieldValues, labelRefs)
+    (fieldValues, labelRefs) => extractTypeForIssue(fieldValues, labelRefs),
 );
 
 export const restrictions = createSelector(
@@ -495,7 +495,7 @@ export const restrictions = createSelector(
       });
 
       return restrictions;
-    }
+    },
 );
 
 export const isOpen = createSelector(
@@ -541,12 +541,12 @@ const mapRefsWithRelated = (blocking) => {
 
 export const blockingIssues = createSelector(
     issue, relatedIssues,
-    mapRefsWithRelated(true)
+    mapRefsWithRelated(true),
 );
 
 export const blockedOnIssues = createSelector(
     issue, relatedIssues,
-    mapRefsWithRelated(false)
+    mapRefsWithRelated(false),
 );
 
 export const mergedInto = createSelector(
@@ -558,7 +558,7 @@ export const mergedInto = createSelector(
         return relatedIssues.get(key);
       }
       return issue.mergedIntoIssueRef;
-    }
+    },
 );
 
 export const sortedBlockedOn = createSelector(
@@ -567,14 +567,14 @@ export const sortedBlockedOn = createSelector(
       const aIsOpen = a.statusRef && a.statusRef.meansOpen ? 1 : 0;
       const bIsOpen = b.statusRef && b.statusRef.meansOpen ? 1 : 0;
       return bIsOpen - aIsOpen;
-    })
+    }),
 );
 
 // values (from issue.fieldValues) is an array with one entry per value.
 // We want to turn this into a map of fieldNames -> values.
 export const fieldValueMap = createSelector(
     fieldValues,
-    (fieldValues) => fieldValuesToMap(fieldValues)
+    (fieldValues) => fieldValuesToMap(fieldValues),
 );
 
 // Get the list of full componentDefs for the viewed issue.
@@ -585,7 +585,7 @@ export const components = createSelector(
       if (!issue || !issue.componentRefs) return [];
       return issue.componentRefs.map(
           (comp) => components.get(comp.path) || comp);
-    }
+    },
 );
 
 // Get custom fields that apply to a specific issue.
@@ -620,7 +620,7 @@ export const fieldDefs = createSelector(
 
         return true;
       });
-    }
+    },
 );
 
 // Action Creators
@@ -778,7 +778,7 @@ export const fetch = (message) => async (dispatch) => {
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'GetIssue', message
+        'monorail.Issues', 'GetIssue', message,
     );
     const movedToRef = resp.movedToRef;
     const issue = {...resp.issue};
@@ -930,7 +930,7 @@ export const fetchPermissions = (message) => async (dispatch) => {
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'ListIssuePermissions', message
+        'monorail.Issues', 'ListIssuePermissions', message,
     );
 
     dispatch({type: FETCH_PERMISSIONS_SUCCESS, permissions: resp.permissions});
@@ -962,7 +962,7 @@ export const fetchIsStarred = (message) => async (dispatch) => {
   dispatch({type: FETCH_IS_STARRED_START});
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'IsIssueStarred', message
+        'monorail.Issues', 'IsIssueStarred', message,
     );
 
     dispatch({
@@ -980,7 +980,7 @@ export const fetchStarredIssues = () => async (dispatch) => {
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'ListStarredIssues', {}
+        'monorail.Issues', 'ListStarredIssues', {},
     );
     const issueIds = (resp.starredIssueRefs || []).map(
         (ref) => issueRefToString(ref));
@@ -998,7 +998,7 @@ export const star = (issueRef, starred) => async (dispatch) => {
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'StarIssue', message
+        'monorail.Issues', 'StarIssue', message,
     );
     const ref = issueRefToString(issueRef);
 

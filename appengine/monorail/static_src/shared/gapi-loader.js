@@ -45,11 +45,11 @@ export function fetchGapiEmail() {
     signinImpl.getUserProfileAsync().then((profile) => {
       resolve(
           (
-            profile
-            && profile.getEmail instanceof Function
-            && profile.getEmail().endsWith(RESTRICT_TO_DOMAIN)
-            && profile.getEmail()
-          ) || null
+            profile &&
+            profile.getEmail instanceof Function &&
+            profile.getEmail().endsWith(RESTRICT_TO_DOMAIN) &&
+            profile.getEmail()
+          ) || null,
       );
     });
   });

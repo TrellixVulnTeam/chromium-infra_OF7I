@@ -212,13 +212,13 @@ export class MrKeystrokes extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
-    if (changedProperties.has('projectName')
-        || changedProperties.has('issueEntryUrl')) {
+    if (changedProperties.has('projectName') ||
+        changedProperties.has('issueEntryUrl')) {
       this._bindProjectKeys(this.projectName, this.issueEntryUrl);
     }
-    if (changedProperties.has('projectName') || changedProperties.has('issueId')
-        || changedProperties.has('issuePermissions')
-        || changedProperties.has('queryParams')) {
+    if (changedProperties.has('projectName') || changedProperties.has('issueId') ||
+        changedProperties.has('issuePermissions') ||
+        changedProperties.has('queryParams')) {
       this._bindIssueDetailKeys(this.projectName, this.issueId,
           this._issuePermissions, this.queryParams);
     }

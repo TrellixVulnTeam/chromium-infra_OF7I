@@ -293,7 +293,7 @@ export class MrApp extends connectStore(LitElement) {
     performance.mark('start load issue detail page');
 
     store.dispatch(issue.setIssueRef(
-      Number.parseInt(ctx.query.id), ctx.params.project));
+        Number.parseInt(ctx.query.id), ctx.params.project));
 
     this.projectName = ctx.params.project;
 
@@ -304,8 +304,8 @@ export class MrApp extends connectStore(LitElement) {
   async _loadListPage(ctx, next) {
     this.projectName = ctx.params.project;
 
-    switch (this.queryParams && this.queryParams.mode
-        && this.queryParams.mode.toLowerCase()) {
+    switch (this.queryParams && this.queryParams.mode &&
+        this.queryParams.mode.toLowerCase()) {
       case 'grid':
         await import(/* webpackChunkName: "mr-grid-page" */ '../issue-list/mr-grid-page/mr-grid-page.js');
         this.page = 'grid';

@@ -179,28 +179,28 @@ describe('issueRefToString', () => {
   it('ref with no project name', () => {
     assert.equal(
         'other:1234',
-        issueRefToString({projectName: 'other', localId: 1234})
+        issueRefToString({projectName: 'other', localId: 1234}),
     );
   });
 
   it('ref with different project name', () => {
     assert.equal(
         'other:1234',
-        issueRefToString({projectName: 'other', localId: 1234}, 'proj')
+        issueRefToString({projectName: 'other', localId: 1234}, 'proj'),
     );
   });
 
   it('ref with same project name', () => {
     assert.equal(
         '1234',
-        issueRefToString({projectName: 'proj', localId: 1234}, 'proj')
+        issueRefToString({projectName: 'proj', localId: 1234}, 'proj'),
     );
   });
 
   it('external ref', () => {
     assert.equal(
         'b/123456',
-        issueRefToString({extIdentifier: 'b/123456'}, 'proj')
+        issueRefToString({extIdentifier: 'b/123456'}, 'proj'),
     );
   });
 });

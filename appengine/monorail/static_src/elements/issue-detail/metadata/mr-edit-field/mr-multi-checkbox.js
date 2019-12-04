@@ -80,7 +80,7 @@ export class MrMultiCheckbox extends LitElement {
     this._inputRefs.forEach(
         (checkbox) => {
           checkbox.checked = values.includes(checkbox.value);
-        }
+        },
     );
   }
 

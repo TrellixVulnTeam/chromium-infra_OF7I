@@ -394,9 +394,9 @@ export class MrSearchBar extends LitElement {
     const pathname = `/p/${this.projectName}/issues/${isNewPage ?
       'list_new' : 'list'}`;
 
-    const hasChanges = !window.location.pathname.startsWith(pathname)
-      || this.queryParams.q !== params.q
-      || this.queryParams.can !== params.can;
+    const hasChanges = !window.location.pathname.startsWith(pathname) ||
+      this.queryParams.q !== params.q ||
+      this.queryParams.can !== params.can;
 
     const url =`${pathname}?${qs.stringify(params)}`;
 

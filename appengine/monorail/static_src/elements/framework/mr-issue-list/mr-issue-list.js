@@ -219,8 +219,8 @@ export class MrIssueList extends connectStore(LitElement) {
     // zIndex is used to render the z-index property in descending order
     const zIndex = this.highestZIndex - i;
     const colKey = column.toLowerCase();
-    const name = colKey in COLUMN_DISPLAY_NAMES ? COLUMN_DISPLAY_NAMES[colKey]
-      : column;
+    const name = colKey in COLUMN_DISPLAY_NAMES ? COLUMN_DISPLAY_NAMES[colKey] :
+      column;
     return html`
       <th style="z-index: ${zIndex};" class="header-${colKey}">
         <mr-dropdown
@@ -990,8 +990,8 @@ export class MrIssueList extends connectStore(LitElement) {
     const issueKey = issueRefToString(issueRef);
 
     // TODO(zhangtiff): Find way to share star disabling logic more.
-    const isStarring = this._starringIssues.has(issueKey)
-      && this._starringIssues.get(issueKey).requesting;
+    const isStarring = this._starringIssues.has(issueKey) &&
+      this._starringIssues.get(issueKey).requesting;
     const starEnabled = !this._fetchingStarredIssues && !isStarring;
     if (starEnabled) {
       const newIsStarred = !this._starredIssues.has(issueKey);
@@ -1123,8 +1123,8 @@ export class MrIssueList extends connectStore(LitElement) {
   _maybeOpenIssueRow(rowEvent, openNewTab = false) {
     const path = rowEvent.path || rowEvent.composedPath();
     const containsIgnoredElement = path.find(
-        (node) => (node.tagName || '').toUpperCase() === 'A' || (node.classList
-        && node.classList.contains('ignore-navigation')));
+        (node) => (node.tagName || '').toUpperCase() === 'A' || (node.classList &&
+        node.classList.contains('ignore-navigation')));
     if (containsIgnoredElement) return;
 
     const row = /** @type {HTMLTableRowElement} */ (rowEvent.currentTarget);

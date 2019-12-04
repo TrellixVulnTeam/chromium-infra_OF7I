@@ -49,7 +49,7 @@ describe('autolink', () => {
             href: '/p/monorail/issues/detail?id=1234',
             title: 'Issue summary',
             content: str,
-          }]
+          }],
       );
     });
 
@@ -71,7 +71,7 @@ describe('autolink', () => {
             href: '/p/monorail/issues/detail?id=1234#c1',
             title: 'Issue summary',
             content: str,
-          }]
+          }],
       );
     });
 
@@ -94,7 +94,7 @@ describe('autolink', () => {
             css: '',
             title: 'Issue 1234',
             content: str,
-          }]
+          }],
       );
     });
 
@@ -129,7 +129,7 @@ describe('autolink', () => {
             css: '',
             title: 'Issue 1234',
             content: str,
-          }]
+          }],
       );
     });
 
@@ -160,7 +160,7 @@ describe('autolink', () => {
             href: '/p/monorail/issues/detail?id=1234',
             title: '',
             content: str,
-          }]
+          }],
       );
     });
   });
@@ -216,7 +216,7 @@ describe('autolink', () => {
               title: 'ry',
               content: 'PROJ:#456',
             },
-          ]
+          ],
       );
     });
 
@@ -290,7 +290,7 @@ describe('autolink', () => {
               title: 'ary',
               content: 'proj:456',
             },
-          ]
+          ],
       );
     });
   });
@@ -313,7 +313,7 @@ describe('autolink', () => {
       const actualTextRun = replacer(match, components);
       assert.deepEqual(
           actualTextRun,
-          [{tag: 'a', href: '/u/User1@gmail.com', content: 'User1@gmail.com'}]
+          [{tag: 'a', href: '/u/User1@gmail.com', content: 'User1@gmail.com'}],
       );
     });
 
@@ -325,7 +325,7 @@ describe('autolink', () => {
             tag: 'a',
             href: 'mailto:User1@gmail.com',
             content: 'User1@gmail.com',
-          }]
+          }],
       );
     });
   });
@@ -358,7 +358,7 @@ describe('autolink', () => {
             href: 'https://website.net/other="here"',
             content: 'https://website.net/other="here"',
           },
-          {content: ').'}]
+          {content: ').'}],
       );
     });
 
@@ -372,7 +372,7 @@ describe('autolink', () => {
           [{tag: 'a',
             href: 'https://website.net/who/me/yes/you',
             content: 'https://website.net/who/me/yes/you',
-          }]
+          }],
       );
     });
 
@@ -386,7 +386,7 @@ describe('autolink', () => {
           [{tag: 'a',
             href: 'https://website.net/who/foo@example.com',
             content: 'https://website.net/who/foo@example.com',
-          }]
+          }],
       );
     });
   });
@@ -411,7 +411,7 @@ describe('autolink', () => {
       }
       assert.deepEqual(
           actualMatches,
-          ['go/shortlinks', ' https://who/shortlinks', ' go/hey/?wct=(go)']
+          ['go/shortlinks', ' https://who/shortlinks', ' go/hey/?wct=(go)'],
       );
     });
 
@@ -449,7 +449,7 @@ describe('autolink', () => {
               href: 'https://website.net/other="here"',
               content: 'website.net/other="here"',
             },
-            {content: ').'}]
+            {content: ').'}],
       );
     });
 
@@ -464,7 +464,7 @@ describe('autolink', () => {
               href: 'http://who/me',
               content: 'http://who/me',
             },
-            {content: ').'}]
+            {content: ').'}],
       );
     });
 
@@ -479,7 +479,7 @@ describe('autolink', () => {
               href: 'http://who/me',
               content: 'who/me',
             },
-            {content: ').'}]
+            {content: ').'}],
       );
     });
 
@@ -493,7 +493,7 @@ describe('autolink', () => {
             {tag: 'a',
               href: 'http://who/me',
               content: 'who/me',
-            }]
+            }],
       );
     });
 
@@ -509,7 +509,7 @@ describe('autolink', () => {
                 href: `http://${prefix}/abcd`,
                 content: `${prefix}/abcd`,
               },
-              {content: ').'}]
+              {content: ').'}],
         );
       });
     });
@@ -525,7 +525,7 @@ describe('autolink', () => {
               {tag: 'a',
                 href: `http://${prefix}/1234`,
                 content: `${prefix}/1234`,
-              }]
+              }],
         );
       });
     });
@@ -673,7 +673,7 @@ describe('autolink', () => {
             {
               content: ') get link',
             },
-          ]
+          ],
       );
     });
 
@@ -750,7 +750,7 @@ describe('autolink', () => {
             {
               content: 'get linked',
             },
-          ]
+          ],
       );
     });
 
@@ -827,7 +827,7 @@ describe('autolink', () => {
               tag: 'a',
               href: '#c57',
             },
-          ]
+          ],
       );
     });
 
@@ -841,7 +841,7 @@ describe('autolink', () => {
             {
               content: 'comment number 4, comment-4, comment= # 5, comment#c56',
             },
-          ]
+          ],
       );
     });
 
@@ -873,7 +873,7 @@ describe('autolink', () => {
               tag: 'a',
               href: '?id=3#c4',
             },
-          ]
+          ],
       );
     });
 
@@ -887,7 +887,7 @@ describe('autolink', () => {
             {
               content: 'theissue 2comment 3, issue2comment 9',
             },
-          ]
+          ],
       );
     });
   });

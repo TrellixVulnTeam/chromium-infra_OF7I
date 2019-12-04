@@ -65,7 +65,7 @@ export function extractTypeForIssue(fieldValues, labelRefs) {
   if (fieldValues) {
     // If there is a custom field for "Type", use that for type.
     const typeFieldValue = fieldValues.find(
-        (f) => (f.fieldRef && f.fieldRef.fieldName.toLowerCase() === 'type')
+        (f) => (f.fieldRef && f.fieldRef.fieldName.toLowerCase() === 'type'),
     );
     if (typeFieldValue) {
       return typeFieldValue.value;

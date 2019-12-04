@@ -189,7 +189,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
           'monorail.Features', 'AddIssuesToHotlists', {
             hotlistRefs: changes.added,
             issueRefs,
-          }
+          },
       ));
     }
     if (changes.removed && changes.removed.length) {
@@ -197,7 +197,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
           'monorail.Features', 'RemoveIssuesFromHotlists', {
             hotlistRefs: changes.removed,
             issueRefs,
-          }
+          },
       ));
     }
     if (changes.created) {
@@ -206,7 +206,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
             name: changes.created.name,
             summary: changes.created.summary,
             issueRefs,
-          }
+          },
       ));
     }
 
@@ -216,8 +216,8 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
       // Refresh the viewed issue's hotlists only if there is a viewed issue.
       if (viewedRef) {
         const viewedIssueWasUpdated = issueRefs.find((ref) =>
-          ref.projectName === viewedRef.projectName
-          && ref.localId === viewedRef.localId);
+          ref.projectName === viewedRef.projectName &&
+          ref.localId === viewedRef.localId);
         if (viewedIssueWasUpdated) {
           store.dispatch(issue.fetchHotlists(viewedRef));
         }
@@ -232,8 +232,8 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   _issueInHotlist(hotlist, issueHotlists) {
     return issueHotlists.some((issueHotlist) => {
-      return (hotlist.ownerRef.userId === issueHotlist.ownerRef.userId
-        && hotlist.name === issueHotlist.name);
+      return (hotlist.ownerRef.userId === issueHotlist.ownerRef.userId &&
+        hotlist.name === issueHotlist.name);
     });
   }
 

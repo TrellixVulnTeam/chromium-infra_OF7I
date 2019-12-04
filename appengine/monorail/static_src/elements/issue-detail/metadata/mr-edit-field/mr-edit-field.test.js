@@ -185,7 +185,7 @@ describe('mr-edit-field', () => {
     element._checkboxRef._inputRefs.forEach(
         (checkbox) => {
           checkbox.checked = true;
-        }
+        },
     );
     element._checkboxRef._changeHandler();
     await element.updateComplete;

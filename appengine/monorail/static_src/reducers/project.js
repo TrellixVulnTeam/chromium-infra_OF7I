@@ -144,11 +144,11 @@ export const componentsMap = createSelector(
         acc.set(v.path, v);
       }
       return acc;
-    }
+    },
 );
 
 export const fieldDefs = createSelector(
-    config, (config) => ((config && config.fieldDefs) || [])
+    config, (config) => ((config && config.fieldDefs) || []),
 );
 
 export const fieldDefMap = createSelector(
@@ -158,11 +158,11 @@ export const fieldDefMap = createSelector(
         map.set(fd.fieldRef.fieldName.toLowerCase(), fd);
       });
       return map;
-    }
+    },
 );
 
 export const labelDefs = createSelector(
-    config, (config) => ((config && config.labelDefs) || [])
+    config, (config) => ((config && config.labelDefs) || []),
 );
 
 // labelDefs stored in an easily findable format with label names as keys.
@@ -173,7 +173,7 @@ export const labelDefMap = createSelector(
         map.set(ld.label.toLowerCase(), ld);
       });
       return map;
-    }
+    },
 );
 
 // Find the options that exist for a given label prefix.
@@ -191,7 +191,7 @@ export const labelPrefixOptions = createSelector(
       });
 
       return prefixMap;
-    }
+    },
 );
 
 // Some labels are implicitly used as custom fields in the grid and list view.
@@ -211,7 +211,7 @@ export const labelPrefixFields = createSelector(
       });
 
       return prefixes;
-    }
+    },
 );
 
 // Wrap label prefixes in a Set for fast lookup.
@@ -225,7 +225,7 @@ export const enumFieldDefs = createSelector(
     (fieldDefs) => {
       return fieldDefs.filter(
           (fd) => fd.fieldRef.type === fieldTypes.ENUM_TYPE);
-    }
+    },
 );
 
 export const optionsPerEnumField = createSelector(
@@ -249,7 +249,7 @@ export const optionsPerEnumField = createSelector(
         }
       });
       return map;
-    }
+    },
 );
 
 export const fieldDefsForPhases = createSelector(
@@ -257,7 +257,7 @@ export const fieldDefsForPhases = createSelector(
     (fieldDefs) => {
       if (!fieldDefs) return [];
       return fieldDefs.filter((f) => f.isPhaseField);
-    }
+    },
 );
 
 export const fieldDefsByApprovalName = createSelector(
@@ -275,7 +275,7 @@ export const fieldDefsByApprovalName = createSelector(
         }
       }
       return acc;
-    }
+    },
 );
 
 export const fetchingConfig = (state) => {
@@ -356,7 +356,7 @@ export const fetchFields = (projectName) => async (dispatch) => {
         'monorail.Projects', 'ListFields', {
           projectName: projectName,
           includeUserChoices: true,
-        }
+        },
     );
     const fieldDefs = (resp.fieldDefs || []);
     dispatch({type: FETCH_FIELDS_LIST_SUCCESS, fieldDefs});

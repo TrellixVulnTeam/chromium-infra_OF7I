@@ -138,8 +138,8 @@ export default class ClientLogger {
       return;
     }
 
-    if (!startEvent.hasOwnProperty('elapsed')
-        || !startEvent.elapsed.hasOwnProperty(eventLabel)) {
+    if (!startEvent.hasOwnProperty('elapsed') ||
+        !startEvent.elapsed.hasOwnProperty(eventLabel)) {
       console.warn(`logResume called for event that was never paused:` +
         `${eventName}.${eventLabel}`);
       return;

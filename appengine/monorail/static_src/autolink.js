@@ -57,7 +57,7 @@ Components.set(
       extractRefs: null,
       refRegs: [PROJECT_COMMENT_BUG_RE],
       replacer: ReplaceCommentBugRef,
-    }
+    },
 );
 Components.set(
     '01-tracker-crbug',
@@ -67,7 +67,7 @@ Components.set(
       refRegs: [CRBUG_LINK_RE],
       replacer: ReplaceCrbugIssueRef,
 
-    }
+    },
 );
 Components.set(
     '02-full-urls',
@@ -78,7 +78,7 @@ Components.set(
       },
       refRegs: [IS_LINK_RE],
       replacer: ReplaceLinkRef,
-    }
+    },
 );
 Components.set(
     '03-user-emails',
@@ -89,7 +89,7 @@ Components.set(
       },
       refRegs: [IMPLIED_EMAIL_RE],
       replacer: ReplaceUserRef,
-    }
+    },
 );
 Components.set(
     '04-tracker-regular',
@@ -98,7 +98,7 @@ Components.set(
       extractRefs: ExtractTrackerProjectAndIssueIds,
       refRegs: [ISSUE_TRACKER_RE],
       replacer: ReplaceTrackerIssueRef,
-    }
+    },
 );
 Components.set(
     '05-linkify-shorthand',
@@ -113,7 +113,7 @@ Components.set(
         IMPLIED_LINK_RE,
       ],
       replacer: ReplaceLinkRef,
-    }
+    },
 );
 Components.set(
     '06-versioncontrol',
@@ -124,7 +124,7 @@ Components.set(
       },
       refRegs: [GIT_HASH_RE, SVN_REF_RE],
       replacer: ReplaceRevisionRef,
-    }
+    },
 );
 
 // Lookup referenced artifacts functions.

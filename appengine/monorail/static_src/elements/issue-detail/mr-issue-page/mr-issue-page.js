@@ -338,16 +338,16 @@ export class MrIssuePage extends connectStore(LitElement) {
   /** @override */
   updated(changedProperties) {
     if (changedProperties.has('issueRef')) {
-      if (this.issueRef.localId && this.issueRef.projectName
-          && !this.fetchingIssue) {
+      if (this.issueRef.localId && this.issueRef.projectName &&
+          !this.fetchingIssue) {
         // Reload the issue data when the id changes.
         store.dispatch(issue.fetchIssuePageData({issueRef: this.issueRef}));
       }
 
       const oldRef = changedProperties.get('issueRef');
       const oldProjectName = oldRef && oldRef.projectName;
-      if (this.issueRef.projectName && oldProjectName
-          !== this.issueRef.projectName) {
+      if (this.issueRef.projectName && oldProjectName !==
+          this.issueRef.projectName) {
         store.dispatch(project.fetch(this.issueRef.projectName));
 
         // TODO(ehmaldonado): Remove once the old autocomplete code is

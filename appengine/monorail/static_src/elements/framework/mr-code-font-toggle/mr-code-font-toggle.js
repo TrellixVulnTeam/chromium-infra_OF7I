@@ -41,8 +41,8 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.prefs = user.prefs(state);
-    this._prefsInFlight = user.requests(state).fetchPrefs.requesting
-      || user.requests(state).setPrefs.requesting;
+    this._prefsInFlight = user.requests(state).fetchPrefs.requesting ||
+      user.requests(state).setPrefs.requesting;
   }
 
   /** @override */

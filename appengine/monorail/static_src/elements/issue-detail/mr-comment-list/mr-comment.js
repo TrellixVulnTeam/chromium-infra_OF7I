@@ -285,8 +285,8 @@ function _shouldOfferCommentOptions(comment) {
 }
 
 function _canExpandDeletedComment(comment) {
-  return ((comment.isSpam && comment.canFlag)
-          || (comment.isDeleted && comment.canDelete));
+  return ((comment.isSpam && comment.canFlag) ||
+          (comment.isDeleted && comment.canDelete));
 }
 
 async function _deleteComment(comment) {
@@ -316,8 +316,8 @@ async function _flagComment(comment) {
 }
 
 function _issuesForAmendment(delta, projectName) {
-  if (!_amendmentHasIssueRefs(delta.fieldName)
-      || !delta.newOrDeltaValue) {
+  if (!_amendmentHasIssueRefs(delta.fieldName) ||
+      !delta.newOrDeltaValue) {
     return [];
   }
   // TODO(ehmaldonado): Request the issue to check for permissions and display

@@ -63,7 +63,7 @@ describe('mr-edit-metadata', () => {
           type: 'REPORT_DIRTY_FORM',
           name: 'test',
           isDirty: false,
-        }
+        },
     );
 
     document.body.appendChild(element);

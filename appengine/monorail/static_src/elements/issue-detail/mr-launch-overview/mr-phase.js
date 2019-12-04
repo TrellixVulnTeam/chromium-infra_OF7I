@@ -98,8 +98,8 @@ export class MrPhase extends connectStore(LitElement) {
           Approvals<span ?hidden=${!this.phaseName || !this.phaseName.length}>:
             ${this.phaseName}
           </span>
-          ${isPhaseWithMilestone ? html`${this.fieldDefs
-            && this.fieldDefs.map((field) => html`
+          ${isPhaseWithMilestone ? html`${this.fieldDefs &&
+            this.fieldDefs.map((field) => html`
               <div class="chip">
                 ${field.fieldRef.fieldName}:
                 <mr-field-values
@@ -215,7 +215,7 @@ export class MrPhase extends connectStore(LitElement) {
 
       if (milestone && milestone !== oldMilestone) {
         window.fetch(
-            `https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=${milestone}`
+            `https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=${milestone}`,
         ).then((resp) => resp.json()).then((resp) => {
           this._milestoneData = resp;
         });

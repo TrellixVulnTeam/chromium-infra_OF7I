@@ -305,7 +305,7 @@ describe('issue', () => {
       relatedIssues: {},
     }};
     assert.deepEqual(issue.blockingIssues(stateNoReferences),
-        [{localId: 1, projectName: 'proj'}]
+        [{localId: 1, projectName: 'proj'}],
     );
 
     const stateNoIssues = {issue: {
@@ -372,7 +372,7 @@ describe('issue', () => {
       relatedIssues: {},
     }};
     assert.deepEqual(issue.blockedOnIssues(stateNoReferences),
-        [{localId: 1, projectName: 'proj'}]
+        [{localId: 1, projectName: 'proj'}],
     );
 
     const stateNoIssues = {issue: {
@@ -487,7 +487,7 @@ describe('issue', () => {
           {localId: 5, projectName: 'proj', statusRef: {meansOpen: false}},
           {localId: 4, projectName: 'proj', statusRef: {meansOpen: false}},
           {localId: 3, projectName: 'proj', statusRef: {meansOpen: false}},
-        ]
+        ],
     );
   });
 
@@ -905,7 +905,7 @@ describe('issue', () => {
                   localId: 1,
                 },
               },
-            }
+            },
         );
         assert.deepEqual(newState, {'proj:1': false});
       });
@@ -915,7 +915,7 @@ describe('issue', () => {
             const state = {};
             const starredIssues = ['proj:1', 'proj:2'];
             const newState = issue.starredIssuesReducer(state,
-                {type: issue.FETCH_ISSUES_STARRED_SUCCESS, starredIssues}
+                {type: issue.FETCH_ISSUES_STARRED_SUCCESS, starredIssues},
             );
             assert.deepEqual(newState, {'proj:1': true, 'proj:2': true});
           });
@@ -974,7 +974,7 @@ describe('issue', () => {
 
         sinon.assert.calledWith(
             prpcClient.call, 'monorail.Issues',
-            'IsIssueStarred', message
+            'IsIssueStarred', message,
         );
 
         sinon.assert.calledWith(dispatch, {
@@ -997,7 +997,7 @@ describe('issue', () => {
 
         sinon.assert.calledWith(
             prpcClient.call, 'monorail.Issues',
-            'ListStarredIssues', {}
+            'ListStarredIssues', {},
         );
 
         sinon.assert.calledWith(dispatch, {
@@ -1023,7 +1023,7 @@ describe('issue', () => {
         sinon.assert.calledWith(
             prpcClient.call,
             'monorail.Issues', 'StarIssue',
-            {issueRef, starred: false}
+            {issueRef, starred: false},
         );
 
         sinon.assert.calledWith(dispatch, {

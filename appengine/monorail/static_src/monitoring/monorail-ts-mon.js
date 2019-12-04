@@ -75,7 +75,7 @@ export default class MonorailTSMon extends TSMonClient {
           ['host_name', TSMonClient.stringField('host_name')],
           ['document_visible', TSMonClient.boolField('document_visible')],
           ['date_range', TSMonClient.intField('date_range')],
-        ]))
+        ])),
     );
 
     this.issueCommentsLoadMetric = this.cumulativeDistribution(
@@ -87,7 +87,7 @@ export default class MonorailTSMon extends TSMonClient {
           ['template_name', TSMonClient.stringField('template_name')],
           ['document_visible', TSMonClient.boolField('document_visible')],
           ['full_app_load', TSMonClient.boolField('full_app_load')],
-        ]))
+        ])),
     );
 
     this.pageLoadMetric = this.cumulativeDistribution(
@@ -98,7 +98,7 @@ export default class MonorailTSMon extends TSMonClient {
           ['host_name', TSMonClient.stringField('host_name')],
           ['template_name', TSMonClient.stringField('template_name')],
           ['document_visible', TSMonClient.boolField('document_visible')],
-        ]))
+        ])),
     );
   }
 
@@ -122,9 +122,9 @@ export default class MonorailTSMon extends TSMonClient {
       ['document_visible', MonorailTSMon.isPageVisible()],
     ]);
     for (const metric of this._userTimingMetrics) {
-      if (category === metric.category
-          && eventName === metric.eventName
-          && eventLabel === metric.eventLabel) {
+      if (category === metric.category &&
+          eventName === metric.eventName &&
+          eventLabel === metric.eventLabel) {
         metric.metric.add(elapsed, metricFields);
       }
     }

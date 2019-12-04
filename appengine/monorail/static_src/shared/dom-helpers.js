@@ -36,6 +36,6 @@ export function isTextInput(element) {
     }
     return true;
   }
-  return tagName === 'SELECT' || tagName === 'TEXTAREA'
-    || element.isContentEditable;
+  return tagName === 'SELECT' || tagName === 'TEXTAREA' ||
+    element.isContentEditable;
 }
