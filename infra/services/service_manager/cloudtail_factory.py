@@ -72,7 +72,8 @@ class CloudtailFactory(object):
 
 def _choose_log_dir():
   # On Chrome puppet managed machines, one of the log directories should exist.
-  candidates = infra_libs.logs.logs.DEFAULT_LOG_DIRECTORIES
+  # NOTE: DEFAULT_LOG_DIRECTORIES is a string, not a list.
+  candidates = infra_libs.logs.logs.DEFAULT_LOG_DIRECTORIES.split(os.pathsep)
   for d in candidates:
     try:
       with tempfile.TemporaryFile(dir=d):

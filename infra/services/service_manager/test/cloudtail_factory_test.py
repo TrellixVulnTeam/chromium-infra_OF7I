@@ -18,7 +18,7 @@ class CloudtailFactoryTest(unittest.TestCase):
   def setUp(self):
     self.tmpdir = tempfile.mkdtemp()
     mock.patch(
-        'infra_libs.logs.logs.DEFAULT_LOG_DIRECTORIES', [self.tmpdir]).start()
+        'infra_libs.logs.logs.DEFAULT_LOG_DIRECTORIES', self.tmpdir).start()
     self.mock_popen = mock.patch('subprocess.Popen', autospec=True).start()
 
   def tearDown(self):
@@ -95,14 +95,19 @@ class CloudtailFactoryTest(unittest.TestCase):
     os.mkdir(writable, 0777)
     candidates.append(writable)
 
-    with mock.patch('infra_libs.logs.logs.DEFAULT_LOG_DIRECTORIES', candidates):
+    with mock.patch('infra_libs.logs.logs.DEFAULT_LOG_DIRECTORIES',
+                    os.pathsep.join(candidates)):
       self.assertEqual(cloudtail_factory._choose_log_dir(), writable)
 
   def test_choose_log_dir_failsafe_to_temp(self):
-    candidates = [os.path.join(self.tmpdir, 'not-exists')]
-    with mock.patch('infra_libs.logs.logs.DEFAULT_LOG_DIRECTORIES', candidates):
+    not_exists = os.path.join(self.tmpdir, 'not-exists')
+    with mock.patch('infra_libs.logs.logs.DEFAULT_LOG_DIRECTORIES', not_exists):
       with mock.patch('tempfile.gettempdir', autospec=True, return_value='/t'):
         self.assertEqual(cloudtail_factory._choose_log_dir(), '/t')
+
+  def test_choose_log_dir_default_smoke(self):
+    mock.patch.stopall()  # Use original value for DEFAULT_LOG_DIRECTORIES.
+    cloudtail_factory._choose_log_dir()
 
 
 class DummyCloudtailFactoryTest(unittest.TestCase):
