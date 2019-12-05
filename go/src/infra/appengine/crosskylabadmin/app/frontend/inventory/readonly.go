@@ -432,7 +432,11 @@ func getCrosVersionFromServoHost(ctx context.Context, hostname string) (string, 
 	}
 	if servoV3Pattern.MatchString(hostname) {
 		logging.Infof(ctx, "getCrosVersionFromServoHost: identified beaglebone servohost hostname (%s)", hostname)
-		return beagleboneServo, nil
+		out, err := dssv.GetCrosStableVersion(ctx, beagleboneServo)
+		if err != nil {
+			return "", errors.Annotate(err, "getting beaglebone servo stable version").Err()
+		}
+		return out, nil
 	}
 	logging.Infof(ctx, "getCrosVersionFromServoHost: unrecognized hostname (%s)", hostname)
 	return "", fmt.Errorf("unrecognized hostname (%s) is not a labstation or beaglebone servo", hostname)

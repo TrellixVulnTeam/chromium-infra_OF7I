@@ -309,6 +309,8 @@ func TestGetStableVersion(t *testing.T) {
 
 		err = dssv.PutSingleCrosStableVersion(ctx, "xxx-build-target", "xxx-cros-version")
 		So(err, ShouldBeNil)
+		err = dssv.PutSingleCrosStableVersion(ctx, beagleboneServo, "xxx-beaglebone-cros-version")
+		So(err, ShouldBeNil)
 		err = dssv.PutSingleFaftStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-faft-version")
 		So(err, ShouldBeNil)
 		err = dssv.PutSingleFirmwareStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-firmware-version")
@@ -325,7 +327,7 @@ func TestGetStableVersion(t *testing.T) {
 		So(resp.CrosVersion, ShouldEqual, "xxx-cros-version")
 		So(resp.FaftVersion, ShouldEqual, "xxx-faft-version")
 		So(resp.FirmwareVersion, ShouldEqual, "xxx-firmware-version")
-		So(resp.ServoCrosVersion, ShouldEqual, beagleboneServo)
+		So(resp.ServoCrosVersion, ShouldEqual, "xxx-beaglebone-cros-version")
 	})
 
 	Convey("Test GetStableVersion RPC -- look up by hostname labstation", t, func() {
