@@ -2,7 +2,6 @@
 
 Monorail API v1 aims to provide nearly identical interface to Google Code issue tracker's API for existing clients' smooth transition. You can get a high-level overview from the documents below.
 
-* [One-page getting started](https://docs.google.com/document/d/1SLK0AYokyaIGG_riOgQJ9UUMXhC58kqmj8l4vZT42vM)
 * [Code example in python](example.py)
 
 
