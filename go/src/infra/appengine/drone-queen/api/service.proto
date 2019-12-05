@@ -41,6 +41,8 @@ message ReportDroneRequest {
   string drone_uuid = 1;
   // load_indicators are used for load balancing.
   LoadIndicators load_indicators = 2;
+  // drone_description is a human friendly description of the current drone.
+  string drone_description = 3;
   message LoadIndicators {
     // dut_capacity is a simple load indicator that indicates how many
     // total DUTs the drone can support.
@@ -94,6 +96,7 @@ message ListDronesResponse {
   message Drone {
     string id = 1;
     google.protobuf.Timestamp expiration_time = 2;
+    string drone_description = 3;
   }
   repeated Drone drones = 1;
 }

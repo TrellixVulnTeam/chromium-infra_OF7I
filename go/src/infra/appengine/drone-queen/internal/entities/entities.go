@@ -62,9 +62,10 @@ func (d DUT) Equal(v DUT) bool {
 
 // Drone is a datastore entity that tracks a drone.
 type Drone struct {
-	_kind      string  `gae:"$kind,Drone"`
-	ID         DroneID `gae:"$id"`
-	Expiration time.Time
+	_kind       string  `gae:"$kind,Drone"`
+	ID          DroneID `gae:"$id"`
+	Expiration  time.Time
+	Description string
 }
 
 // Equal implements equality.

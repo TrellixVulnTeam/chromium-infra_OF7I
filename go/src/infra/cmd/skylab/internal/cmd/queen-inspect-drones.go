@@ -75,14 +75,14 @@ func (c *queenInspectDronesRun) innerRun(a subcommands.Application, args []strin
 	defer bw.Flush()
 	tw := tabwriter.NewWriter(bw, 0, 2, 2, ' ', 0)
 	defer tw.Flush()
-	fmt.Fprintf(tw, "Drone\tExpiration\t\n")
+	fmt.Fprintf(tw, "Drone\tExpiration\tDescription\t\n")
 	for _, d := range res.GetDrones() {
 		t, err := ptypes.Timestamp(d.GetExpirationTime())
 		if err != nil {
 			fmt.Fprintf(a.GetErr(), "Error parsing expiration time: %s", err)
 		}
-		fmt.Fprintf(tw, "%v\t%v\t\n",
-			d.GetId(), t)
+		fmt.Fprintf(tw, "%v\t%v\t%v\t\n",
+			d.GetId(), t, d.GetDroneDescription())
 	}
 	return nil
 }

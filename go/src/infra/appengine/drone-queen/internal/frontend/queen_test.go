@@ -272,7 +272,8 @@ func TestDroneQueenImpl_ReportDrone(t *testing.T) {
 		datastore.GetTestable(ctx).Consistent(true)
 		d := DroneQueenImpl{}
 		res, err := d.ReportDrone(ctx, &api.ReportDroneRequest{
-			DroneUuid: "unicorn",
+			DroneUuid:        "unicorn",
+			DroneDescription: "unicorn",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -290,14 +291,16 @@ func TestDroneQueenImpl_ReportDrone(t *testing.T) {
 			nowFunc: staticTime(now),
 		}
 		dr := entities.Drone{
-			ID:         "nelo",
-			Expiration: now.Add(-10 * time.Second),
+			ID:          "nelo",
+			Expiration:  now.Add(-10 * time.Second),
+			Description: "nelo",
 		}
 		if err := datastore.Put(ctx, &dr); err != nil {
 			t.Fatal(err)
 		}
 		res, err := d.ReportDrone(ctx, &api.ReportDroneRequest{
-			DroneUuid: "nelo",
+			DroneUuid:        "nelo",
+			DroneDescription: "nelo",
 		})
 		if err != nil {
 			t.Fatal(err)

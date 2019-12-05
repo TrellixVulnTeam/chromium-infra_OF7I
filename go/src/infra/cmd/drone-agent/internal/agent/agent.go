@@ -239,11 +239,17 @@ func applyUpdateToState(res *api.ReportDroneResponse, s stateInterface) error {
 // reportRequest returns the api.ReportDroneRequest to use when
 // reporting to the drone queen.
 func (a *Agent) reportRequest(ctx context.Context, uuid string) *api.ReportDroneRequest {
+	hostname, err := os.Hostname()
+	if err != nil {
+		a.log("Error getting drone hostname: %s", err)
+	}
+
 	req := api.ReportDroneRequest{
 		DroneUuid: uuid,
 		LoadIndicators: &api.ReportDroneRequest_LoadIndicators{
 			DutCapacity: intToUint32(a.DUTCapacity),
 		},
+		DroneDescription: hostname,
 	}
 	if shouldRefuseNewDUTs(ctx) {
 		req.LoadIndicators.DutCapacity = 0

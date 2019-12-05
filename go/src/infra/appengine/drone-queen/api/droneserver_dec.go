@@ -14,45 +14,45 @@ type DecoratedDrone struct {
 	// Prelude is called for each method before forwarding the call to Service.
 	// If Prelude returns an error, then the call is skipped and the error is
 	// processed via the Postlude (if one is defined), or it is returned directly.
-	Prelude func(c context.Context, methodName string, req proto.Message) (context.Context, error)
+	Prelude func(ctx context.Context, methodName string, req proto.Message) (context.Context, error)
 	// Postlude is called for each method after Service has processed the call, or
 	// after the Prelude has returned an error. This takes the the Service's
 	// response proto (which may be nil) and/or any error. The decorated
 	// service will return the response (possibly mutated) and error that Postlude
 	// returns.
-	Postlude func(c context.Context, methodName string, rsp proto.Message, err error) error
+	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedDrone) ReportDrone(c context.Context, req *ReportDroneRequest) (rsp *ReportDroneResponse, err error) {
+func (s *DecoratedDrone) ReportDrone(ctx context.Context, req *ReportDroneRequest) (rsp *ReportDroneResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "ReportDrone", req)
+		newCtx, err = s.Prelude(ctx, "ReportDrone", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.ReportDrone(c, req)
+		rsp, err = s.Service.ReportDrone(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "ReportDrone", rsp, err)
+		err = s.Postlude(ctx, "ReportDrone", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedDrone) ReleaseDuts(c context.Context, req *ReleaseDutsRequest) (rsp *ReleaseDutsResponse, err error) {
+func (s *DecoratedDrone) ReleaseDuts(ctx context.Context, req *ReleaseDutsRequest) (rsp *ReleaseDutsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "ReleaseDuts", req)
+		newCtx, err = s.Prelude(ctx, "ReleaseDuts", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.ReleaseDuts(c, req)
+		rsp, err = s.Service.ReleaseDuts(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "ReleaseDuts", rsp, err)
+		err = s.Postlude(ctx, "ReleaseDuts", rsp, err)
 	}
 	return
 }
