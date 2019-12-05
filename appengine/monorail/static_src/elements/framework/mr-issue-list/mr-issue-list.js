@@ -18,7 +18,7 @@ import {issueRefToUrl, issueRefToString, issueStringToRef,
 import {isTextInput} from 'shared/dom-helpers.js';
 import {urlWithNewParams, pluralize, setHasAny,
   objectValuesForKeys} from 'shared/helpers.js';
-import {stringValuesForIssueField, parseColSpec,
+import {parseColSpec,
   EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import './mr-show-columns-dropdown.js';
 
@@ -458,8 +458,7 @@ export class MrIssueList extends connectStore(LitElement) {
           `)}
         `;
     }
-    const values = stringValuesForIssueField(issue, column, this.projectName,
-        this._fieldDefMap, this._labelPrefixSet);
+    const values = this._extractFieldValuesFromIssue(issue, column);
     return values.join(', ');
   }
 
@@ -534,14 +533,11 @@ export class MrIssueList extends connectStore(LitElement) {
        */
       _selectedIssues: {type: Object},
       /**
-       * Map of fieldDefs in currently viewed project, used for computing
-       * displayed values.
+       * A function that takes in an issue and a field name and returns the
+       * value for that field in the issue. This function accepts custom fields,
+       * built in fields, and ad hoc fields computed from label prefixes.
        */
-      _fieldDefMap: {type: Object},
-      /**
-       * Set of label prefixes.
-       */
-      _labelPrefixSet: {type: Object},
+      _extractFieldValuesFromIssue: {type: Object},
       /**
        * List of unique phase names for all phases in issues.
        */
@@ -567,19 +563,33 @@ export class MrIssueList extends connectStore(LitElement) {
     this.projectName;
     /** @type {Object} */
     this.queryParams = {};
+    /** @type {String} */
+    this.currentQuery = '';
+    /** @type {boolean} */
     this.selectionEnabled = false;
+    /** @type {boolean} */
     this.starringEnabled = false;
+    /** @type {Array} */
+    this.columns = ['ID', 'Summary'];
+    /** @type {Array} */
+    this.groups = [];
+    /**
+     * @type {string}
+     * Role attribute set for accessibility. Do not override.
+     */
     this.role = 'table';
 
-    this.columns = ['ID', 'Summary'];
-    this.groups = [];
-
+    /** @type {function} */
     this._boundRunListHotKeys = this._runListHotKeys.bind(this);
 
-    this._hiddenGroups = new Set();
+    /**
+     * @param {Issue} _issue
+     * @param {string} _fieldName
+     * @return {Array<string>}
+     */
+    this._extractFieldValuesFromIssue = (_issue, _fieldName) => [];
 
-    this._fieldDefMap = new Map();
-    this._labelPrefixSet = new Set();
+    this._hiddenGroups = new Set();
 
     this._starredIssues = new Set();
     this._fetchingStarredIssues = false;
@@ -596,15 +606,13 @@ export class MrIssueList extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this._fieldDefMap = project.fieldDefMap(state);
-    this._labelPrefixSet = project.labelPrefixSet(state);
-
     this._starredIssues = issue.starredIssues(state);
     this._fetchingStarredIssues =
         issue.requests(state).fetchStarredIssues.requesting;
     this._starringIssues = issue.starringIssues(state);
 
     this._phaseNames = (issue.issueListPhaseNames(state) || []);
+    this._extractFieldValuesFromIssue = project.extractFieldValuesFromIssue(state);
   }
 
   /** @override */
@@ -635,8 +643,7 @@ export class MrIssueList extends connectStore(LitElement) {
       this._lastSelectedCheckbox = -1;
     }
 
-    const valuesByColumnArgs = ['issues', 'columns', 'projectName',
-      '_fieldDefMap', '_labelPrefixSet'];
+    const valuesByColumnArgs = ['issues', 'columns', '_extractFieldValuesFromIssue'];
     if (setHasAny(changedProperties, valuesByColumnArgs)) {
       this._uniqueValuesByColumn = this._computeUniqueValuesByColumn(
           ...objectValuesForKeys(this, valuesByColumnArgs));
@@ -659,18 +666,14 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Iterates through all issues in a list to sort unique values
    * across columns, for use in the "Show only" feature.
-   *
    * @param {Array} issues
    * @param {Array} columns
-   * @param {string} projectName
-   * @param {Map} fieldDefMap
-   * @param {Set} labelPrefixSet
+   * @param {function(Issue, string): Array<string>} fieldExtractor
    * @return {Map} Map where each entry has a String key for the
    *   lowercase column name and a Set value, continuing all values for
    *   that column.
    */
-  _computeUniqueValuesByColumn(issues, columns, projectName, fieldDefMap,
-      labelPrefixSet) {
+  _computeUniqueValuesByColumn(issues, columns, fieldExtractor) {
     const valueMap = new Map(
         columns.map((col) => [col.toLowerCase(), new Set()]));
 
@@ -679,8 +682,7 @@ export class MrIssueList extends connectStore(LitElement) {
         const key = col.toLowerCase();
         const valueSet = valueMap.get(key);
 
-        const values = stringValuesForIssueField(issue, col,
-            projectName, fieldDefMap, labelPrefixSet);
+        const values = fieldExtractor(issue, col);
         // Note: This allows multiple casings of the same values to be added
         // to the Set.
         values.forEach((v) => valueSet.add(v));
@@ -706,7 +708,8 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
-   * Sort issues into groups if groups are defined.
+   * Sort issues into groups if groups are defined. The grouping feature is used
+   * when the "groupby" URL parameter is set in the list view.
    */
   get groupedIssues() {
     if (!this.groups || !this.groups.length) return;
@@ -743,6 +746,10 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
+   * Computes the name of the group that an issue belongs to. Issues are grouped
+   * by fields that the user specifies and group names are generated using a
+   * combination of an issue's field values for all specified groups.
+   *
    * @param {Issue} issue
    * @return {string}
    */
@@ -751,8 +758,7 @@ export class MrIssueList extends connectStore(LitElement) {
     const keyPieces = [];
 
     groups.forEach((group) => {
-      const values = stringValuesForIssueField(issue, group, this.projectName,
-          this._fieldDefMap, this._labelPrefixSet);
+      const values = this._extractFieldValuesFromIssue(issue, group);
       if (!values.length) {
         keyPieces.push(`-has:${group}`);
       } else {
@@ -1123,8 +1129,8 @@ export class MrIssueList extends connectStore(LitElement) {
   _maybeOpenIssueRow(rowEvent, openNewTab = false) {
     const path = rowEvent.path || rowEvent.composedPath();
     const containsIgnoredElement = path.find(
-        (node) => (node.tagName || '').toUpperCase() === 'A' || (node.classList &&
-        node.classList.contains('ignore-navigation')));
+        (node) => (node.tagName || '').toUpperCase() === 'A' ||
+        (node.classList && node.classList.contains('ignore-navigation')));
     if (containsIgnoredElement) return;
 
     const row = /** @type {HTMLTableRowElement} */ (rowEvent.currentTarget);

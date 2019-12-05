@@ -283,6 +283,7 @@ describe('stringValuesForIssueField', () => {
           issue, 'dodo-approval-approver',
           projectName, fieldDefMap), ['kiwi@bird.test', 'mini-dino@bird.test']);
     });
+
     it('handles approval value columns', () => {
       const projectName = 'bird';
       const fieldDefMap = new Map([

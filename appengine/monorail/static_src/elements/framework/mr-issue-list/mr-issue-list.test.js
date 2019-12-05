@@ -307,7 +307,7 @@ describe('mr-issue-list', () => {
         '/p/chromium/issues/list?sort=-owner%20-summary');
   });
 
-  it('_uniqueValuesByColumn re-computed when values update', async () => {
+  it('_uniqueValuesByColumn re-computed when columns update', async () => {
     element.issues = [
       {id: 1, projectName: 'chromium'},
       {id: 2, projectName: 'chromium'},

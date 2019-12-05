@@ -6,7 +6,7 @@ import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS,
-  parseColSpec} from 'shared/issue-fields.js';
+  parseColSpec, stringValuesForIssueField} from 'shared/issue-fields.js';
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
   labelNameToLabelPrefix} from 'shared/converters.js';
@@ -111,6 +111,8 @@ export const reducer = combineReducers({
 export const project = (state) => state.project || {};
 export const config = createSelector(project,
     (project) => project.config || {});
+export const projectName = createSelector(config,
+    (config) => config.projectName);
 export const visibleMembers = createSelector(project,
     (project) => project.visibleMembers || {});
 export const presentationConfig = createSelector(project,
@@ -225,6 +227,25 @@ export const enumFieldDefs = createSelector(
     (fieldDefs) => {
       return fieldDefs.filter(
           (fd) => fd.fieldRef.type === fieldTypes.ENUM_TYPE);
+    },
+);
+
+/**
+ * A selector that builds a function that's used to compute the value of
+ * a given field name on a given issue. This function abstracts the difference
+ * between custom fields, built-in fields, and implicit fields created
+ * from labels and considers these values in the context of the current
+ * project configuration.
+ * @param {Object} state Current Redux state.
+ * @return {function(Issue, string): Array<string>} A function that processes a
+ *   given issue and field name to find the string value for that field, in
+ *   the issue.
+ */
+export const extractFieldValuesFromIssue = createSelector(projectName,
+    labelPrefixSet, fieldDefMap,
+    (projectName, labelPrefixSet, fieldDefMap) => {
+      return (issue, fieldName) => stringValuesForIssueField(issue, fieldName,
+          projectName, fieldDefMap, labelPrefixSet);
     },
 );
 
