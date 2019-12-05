@@ -151,3 +151,71 @@ func TestAddCrosDevices(t *testing.T) {
 		})
 	})
 }
+func TestDeleteCrosDevices(t *testing.T) {
+	t.Parallel()
+	dut1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{
+				Hostname: "dut1",
+			},
+		},
+	}
+	labstation1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{
+			Value: "ASSET_ID_123",
+		},
+		Device: &lab.ChromeOSDevice_Labstation{
+			Labstation: &lab.Labstation{
+				Hostname: "labstation1",
+			},
+		},
+	}
+	devID1 := api.DeviceID{
+		Id: &api.DeviceID_ChromeosDeviceId{
+			ChromeosDeviceId: "ASSET_ID_123",
+		},
+	}
+	devID2 := api.DeviceID{
+		Id: &api.DeviceID_Hostname{
+			Hostname: "dut1",
+		},
+	}
+	Convey("Delete Chrome OS devices", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Happy path", func() {
+			req := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+			}
+			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.PassedDevices, ShouldHaveLength, 2)
+
+			reqDelete := &api.DeleteCrosDevicesRequest{
+				Ids: []*api.DeviceID{&devID1, &devID2},
+			}
+			rsp, err := tf.Inventory.DeleteCrosDevices(tf.C, reqDelete)
+			So(err, ShouldBeNil)
+			So(rsp.RemovedDevices, ShouldHaveLength, 2)
+
+			removedDeviceNames := make([]string, 2)
+			for i, r := range rsp.RemovedDevices {
+				removedDeviceNames[i] = r.Hostname
+			}
+			So("dut1", ShouldBeIn, removedDeviceNames)
+			// "labstation1" won't be in the removed device names
+			// since it was removed by its id.
+			So("", ShouldBeIn, removedDeviceNames)
+
+			So(rsp.FailedDevices, ShouldHaveLength, 0)
+		})
+		Convey("Bad request", func() {
+			req := &api.DeleteCrosDevicesRequest{Ids: []*api.DeviceID{&devID1, &devID1}}
+			rsp, err := tf.Inventory.DeleteCrosDevices(tf.C, req)
+			So(rsp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+		})
+	})
+}

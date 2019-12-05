@@ -85,10 +85,50 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 	return &api.UpdateCrosDevicesSetupResponse{}, nil
 }
 
-// DeleteCrosDevices delete the selelcted DUTs from testing scheduler.
+// DeleteCrosDevices delete the selelcted devices from the inventory.
 func (is *InventoryServerImpl) DeleteCrosDevices(ctx context.Context, req *api.DeleteCrosDevicesRequest) (resp *api.DeleteCrosDevicesResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return &api.DeleteCrosDevicesResponse{}, nil
+
+	if err = req.Validate(); err != nil {
+		return nil, err
+	}
+	maxLen := len(req.Ids)
+	hostnames := make([]string, 0, maxLen)
+	ids := make([]string, 0, maxLen)
+	for _, id := range req.Ids {
+		if _, ok := id.GetId().(*api.DeviceID_Hostname); ok {
+			hostnames = append(hostnames, id.GetHostname())
+		} else {
+			ids = append(ids, id.GetChromeosDeviceId())
+		}
+	}
+	deletingResults := datastore.DeleteDevicesByIds(ctx, ids)
+	deletingResultsByHostname := datastore.DeleteDevicesByHostnames(ctx, hostnames)
+	*deletingResults = append(*deletingResults, *deletingResultsByHostname...)
+
+	removedDevices := make([]*api.DeviceOpResult, 0, maxLen)
+	failedDevices := make([]*api.DeviceOpResult, 0, maxLen)
+	for _, res := range deletingResults.Passed() {
+		r := new(api.DeviceOpResult)
+		r.Id = string(res.Entity.ID)
+		r.Hostname = res.Entity.Hostname
+		removedDevices = append(removedDevices, r)
+	}
+	for _, res := range deletingResults.Failed() {
+		r := new(api.DeviceOpResult)
+		r.Hostname = res.Entity.Hostname
+		r.ErrorMsg = res.Err.Error()
+		r.Id = string(res.Entity.ID)
+		failedDevices = append(failedDevices, r)
+	}
+	resp = &api.DeleteCrosDevicesResponse{
+		RemovedDevices: removedDevices,
+		FailedDevices:  failedDevices,
+	}
+	if len(failedDevices) > 0 {
+		err = errors.Reason("failed to remove some (or all) devices").Tag(grpcutil.UnknownTag).Err()
+	}
+	return resp, err
 }
