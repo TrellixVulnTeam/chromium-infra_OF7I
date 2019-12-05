@@ -3524,6 +3524,7 @@ calibrtion->calibration
 caligraphy->calligraphy
 calilng->calling
 caling->calling, scaling, culling,
+callabck->callback
 callack->callback
 callbacl->callback
 callbacsk->callback
@@ -4205,6 +4206,7 @@ cleaer->clear, clearer,
 cleaered->cleared
 cleaing->cleaning
 cleancacne->cleancache
+cleand->cleaned
 cleaness->cleanness
 cleanning->cleaning
 cleanpu->cleanup
@@ -6696,6 +6698,7 @@ dedidated->dedicated
 dedly->deadly
 deductable->deductible
 deductables->deductibles
+dedup->dedupe
 deduplacate->deduplicate
 deduplacated->deduplicated
 deduplacates->deduplicates
@@ -6870,6 +6873,7 @@ delagates->delegates
 delaloc->delalloc
 delalyed->delayed
 delapidated->dilapidated
+delaraction->declaration
 delarations->declarations
 delare->declare
 delared->declared
@@ -10078,6 +10082,7 @@ financialy->financially
 finanize->finalize
 finanlize->finalize
 fincally->finally
+finctionality->functionality
 finde->find
 findn->find
 findout->find out
@@ -20093,6 +20098,7 @@ sesssions->sessions
 setgit->setgid
 seting->setting
 setings->settings
+setion->section
 setis->set is, settees,
 setitng->setting
 setitngs->settings
