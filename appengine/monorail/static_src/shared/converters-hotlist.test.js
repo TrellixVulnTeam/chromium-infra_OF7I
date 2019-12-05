@@ -3,23 +3,9 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import {hotlistExample, hotlistRefExample,
+  hotlistRefStringExample} from 'shared/test/hotlist-constants.js';
 import * as hotlist from './converters-hotlist.js';
-
-export const hotlistExample = {
-  ownerRef: {
-    userId: 12345678,
-    displayName: 'example@example.com',
-  },
-  name: 'Hotlist-Name',
-};
-export const hotlistRefExample = {
-  owner: {
-    userId: 12345678,
-    displayName: 'example@example.com',
-  },
-  name: 'Hotlist-Name',
-};
-export const hotlistRefStringExample = '12345678:Hotlist-Name';
 
 it('hotlistToRef', () => {
   assert.deepEqual(hotlist.hotlistToRef(hotlistExample), hotlistRefExample);

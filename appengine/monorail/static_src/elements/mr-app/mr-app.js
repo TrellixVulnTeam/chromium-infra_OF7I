@@ -15,6 +15,7 @@ import * as issue from 'reducers/issue.js';
 import * as user from 'reducers/user.js';
 import * as ui from 'reducers/ui.js';
 import * as sitewide from 'reducers/sitewide.js';
+import {userIdOrDisplayNameToUserRef} from 'shared/converters.js';
 import {arrayToEnglish} from 'shared/helpers.js';
 import 'elements/framework/mr-header/mr-header.js';
 import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
@@ -322,28 +323,51 @@ export class MrApp extends connectStore(LitElement) {
   }
 
   /**
-   * Sets the currently viewed HotlistRef in the Redux store from the URL.
-   *
+   * Gets the currently viewed HotlistRef from the URL, selects
+   * it in the Redux store, and fetches the Hotlist data.
    * @param {PageJS.Context} ctx A page.js Context containing routing state.
    * @param {function} next Passes execution on to the next registered callback.
    */
   _selectHotlist(ctx, next) {
-    store.dispatch(hotlist.selectHotlist(ctx.params.user, ctx.params.hotlist));
+    const hotlistRef = {
+      owner: userIdOrDisplayNameToUserRef(ctx.params.user),
+      name: ctx.params.hotlist,
+    };
+    store.dispatch(hotlist.select(hotlistRef));
+    store.dispatch(hotlist.fetch(hotlistRef));
     next();
   }
 
+  /**
+   * Loads mr-hotlist-details-page.js and makes it the currently viewed page.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
   async _loadHotlistDetailsPage(ctx, next) {
-    await import(/* webpackChunkName: "mr-hotlist-details-page" */ `../hotlist/mr-hotlist-details-page/mr-hotlist-details-page.js`);
+    await import(/* webpackChunkName: "mr-hotlist-details-page" */
+        `../hotlist/mr-hotlist-details-page/mr-hotlist-details-page.js`);
     this.page = 'hotlist-details';
   }
 
+  /**
+   * Loads mr-hotlist-issues-page.js and makes it the currently viewed page.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
   async _loadHotlistIssuesPage(ctx, next) {
-    await import(/* webpackChunkName: "mr-hotlist-issues-page" */ `../hotlist/mr-hotlist-issues-page/mr-hotlist-issues-page.js`);
+    await import(/* webpackChunkName: "mr-hotlist-issues-page" */
+        `../hotlist/mr-hotlist-issues-page/mr-hotlist-issues-page.js`);
     this.page = 'hotlist-issues';
   }
 
+  /**
+   * Loads mr-hotlist-people-page.js and makes it the currently viewed page.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
   async _loadHotlistPeoplePage(ctx, next) {
-    await import(/* webpackChunkName: "mr-hotlist-people-page" */ `../hotlist/mr-hotlist-people-page/mr-hotlist-people-page.js`);
+    await import(/* webpackChunkName: "mr-hotlist-people-page" */
+        `../hotlist/mr-hotlist-people-page/mr-hotlist-people-page.js`);
     this.page = 'hotlist-people';
   }
 

@@ -17,15 +17,14 @@
 
 import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
-import {userIdOrDisplayNameToUserRef} from 'shared/converters.js';
-import {hotlistToRefString, hotlistRefToString}
+import {hotlistToRef, hotlistToRefString, hotlistRefToString}
   from 'shared/converters-hotlist.js';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 
 // Actions
-export const SELECT_HOTLIST = 'hotlist/SELECT_HOTLIST';
+export const SELECT = 'hotlist/SELECT';
 
 export const FETCH_START = 'hotlist/FETCH_START';
 export const FETCH_SUCCESS = 'hotlist/FETCH_SUCCESS';
@@ -66,7 +65,21 @@ export const hotlistsReducer = createReducer({}, {
  * @return {?Hotlist}
  */
 export const hotlistRefReducer = createReducer(null, {
-  [SELECT_HOTLIST]: (_state, action) => action.hotlistRef,
+  [SELECT]: (_state, action) => action.hotlistRef,
+  [FETCH_SUCCESS]: (state, action) => {
+    // The original HotlistRef may be missing the displayName or userId.
+    // If we just fetched the referenced Hotlist, update the missing info.
+    if (!state) {
+      return state;
+    }
+
+    const newRef = hotlistToRef(action.hotlist);
+    const sameName = state.name === newRef.name;
+    const sameOwner = state.owner.userId === newRef.owner.userId ||
+      state.owner.displayName === newRef.owner.displayName;
+    const oldRefMissingField = !state.owner.userId || !state.owner.displayName;
+    return sameName && sameOwner && oldRefMissingField ? newRef : state;
+  },
 });
 
 const requestsReducer = combineReducers({
@@ -102,7 +115,7 @@ export const hotlistRef = (state) => state.hotlist.hotlistRef;
  * @param {any} state The Redux store.
  * @return {?Hotlist}
  */
-export const hotlist = createSelector([hotlists, hotlistRef],
+export const viewedHotlist = createSelector([hotlists, hotlistRef],
     (hotlists, hotlistRef) => {
       if (!hotlistRef) {
         return null;
@@ -113,18 +126,11 @@ export const hotlist = createSelector([hotlists, hotlistRef],
 // Action Creators
 /**
  * Action creator to set the currently viewed Hotlist.
- * @param {string} userDisplayName The user who owns the Hotlist.
- * @param {string} hotlistName The name of the Hotlist.
+ * @param {HotlistRef} hotlistRef A reference to the Hotlist to select.
  * @return {function(function): void}
  */
-export const selectHotlist = (userDisplayName, hotlistName) => {
-  return (dispatch) => {
-    const hotlistRef = {
-      owner: userIdOrDisplayNameToUserRef(userDisplayName),
-      name: hotlistName,
-    };
-    dispatch({type: SELECT_HOTLIST, hotlistRef});
-  };
+export const select = (hotlistRef) => {
+  return (dispatch) => dispatch({type: SELECT, hotlistRef});
 };
 
 /**
