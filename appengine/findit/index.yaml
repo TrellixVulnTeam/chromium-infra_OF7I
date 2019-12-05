@@ -214,6 +214,17 @@ indexes:
   - name: flake_type
   - name: gerrit_cl_id
 
+# For querying the flake occurrences of a specific test on a builder.
+- kind: FlakeOccurrence
+  properties:
+  - name: build_configuration.luci_bucket
+  - name: build_configuration.luci_builder
+  - name: build_configuration.luci_project
+  - name: flake_type
+  - name: step_ui_name
+  - name: test_name
+  - name: time_happened
+
 # For cron to update Flake counts.
 - kind: Flake
   properties:
