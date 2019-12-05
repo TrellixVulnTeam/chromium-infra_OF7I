@@ -89,19 +89,14 @@ func LoadFresh(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error
 type getDutInfoFunc func(context.Context, fleet.InventoryClient, *fleet.GetDutInfoRequest) (*fleet.GetDutInfoResponse, error)
 
 // getStableVersion fetches the current stable version from an inventory client
-func getStableVersion(ctx context.Context, client fleet.InventoryClient, buildTarget string, model string) (map[string]string, error) {
-	log.Printf("getStableVersion: buildTarget (%s) model (%s)", buildTarget, model)
-	if buildTarget == "" {
-		log.Printf("getStableVersion: failed validation for buildTarget")
-		return nil, fmt.Errorf("getStableVersion: buildTarget cannot be \"\"")
-	}
-	if model == "" {
-		log.Printf("getStableVersion: failed validation for model")
-		return nil, fmt.Errorf("getStableVersion: model cannot be \"\"")
+func getStableVersion(ctx context.Context, client fleet.InventoryClient, hostname string) (map[string]string, error) {
+	log.Printf("getStableVersion: hostname (%s)", hostname)
+	if hostname == "" {
+		log.Printf("getStableVersion: failed validation for hostname")
+		return nil, fmt.Errorf("getStableVersion: hostname cannot be \"\"")
 	}
 	req := &fleet.GetStableVersionRequest{
-		BuildTarget: buildTarget,
-		Model:       model,
+		Hostname: hostname,
 	}
 	log.Printf("getStableVersion: client request (%v)", req)
 	res, err := client.GetStableVersion(ctx, req)
@@ -138,9 +133,8 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc)
 	}
 	// TODO(gregorynisbet): should failure to get the stableversion information
 	// cause the entire request to error out?
-	buildTarget := d.GetCommon().GetLabels().GetBoard()
-	model := d.GetCommon().GetLabels().GetModel()
-	sv, err := getStableVersion(ctx, c, buildTarget, model)
+	hostname := d.GetCommon().GetHostname()
+	sv, err := getStableVersion(ctx, c, hostname)
 	if err != nil {
 		sv = map[string]string{}
 		log.Printf("load: getting stable version: sv (%v) err (%v)", sv, err)
