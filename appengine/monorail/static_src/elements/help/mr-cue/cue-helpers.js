@@ -22,8 +22,8 @@ export const CUE_DISPLAY_PREFIX = 'cue.';
  * Converts a cue name to the format expected by components like <mr-metadata>
  * for the purpose of ordering fields.
  *
- * @param {String} cueName The name of the cue.
- * @return {String} A "cue.cue_name" formatted String used in ordering cues
+ * @param {string} cueName The name of the cue.
+ * @return {string} A "cue.cue_name" formatted String used in ordering cues
  *   alongside field types (ie: Owner) in various field specs.
  */
 export const cueNameToSpec = (cueName) => {
@@ -34,10 +34,10 @@ export const cueNameToSpec = (cueName) => {
  * Converts an issue field specifier to the name of the cue it references if
  * it references a cue. ie: "cue.cue_name" would reference "cue_name".
  *
- * @param {String} spec A "cue.cue_name" format String specifying that a
+ * @param {string} spec A "cue.cue_name" format String specifying that a
  *   specific cue should be mixed alongside issue fields in a component like
  *   <mr-metadata>.
- * @return {String} Name of the cue customized in the spec or an empty
+ * @return {string} Name of the cue customized in the spec or an empty
  *   String if the spec does not reference a cue.
  */
 export const specToCueName = (spec) => {

@@ -264,8 +264,8 @@ export class MrKeystrokes extends connectStore(LitElement) {
   }
 
   /**
-   * @param {String} projectName
-   * @param {String} issueEntryUrl
+   * @param {string} projectName
+   * @param {string} issueEntryUrl
    * @private
    */
   _bindProjectKeys(projectName, issueEntryUrl) {
@@ -304,8 +304,8 @@ export class MrKeystrokes extends connectStore(LitElement) {
   }
 
   /**
-   * @param {String} projectName
-   * @param {String} issueId
+   * @param {string} projectName
+   * @param {string} issueId
    * @param {Array<String>} issuePermissions
    * @param {Object} queryParams
    * @private

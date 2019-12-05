@@ -23,7 +23,7 @@ export function arrayDifference(listA, listB, equals) {
  *
  * @param {Set} set the Set to check for values in.
  * @param {Iterable} values checks if any of these values are included.
- * @return {Boolean} whether the Set has any of the values or not.
+ * @return {boolean} whether the Set has any of the values or not.
  */
 export function setHasAny(set, values) {
   for (const value of values) {
@@ -95,11 +95,11 @@ export function immutableSplice(arr, index, count, ...addedItems) {
  * Computes a new URL for a page based on an exiting path and set of query
  * params.
  *
- * @param {String} baseUrl the base URL without query params.
+ * @param {string} baseUrl the base URL without query params.
  * @param {Object} oldParams original query params before changes.
  * @param {Object} newParams query parameters to override existing ones.
  * @param {Array} deletedParams list of keys to be cleared.
- * @return {String} the new URL with the updated params.
+ * @return {string} the new URL with the updated params.
  */
 export function urlWithNewParams(baseUrl = '',
     oldParams = {}, newParams = {}, deletedParams = []) {
@@ -118,11 +118,11 @@ export function urlWithNewParams(baseUrl = '',
  * project membership info.
  *
  * @param {Object} userRef reference to a given user. Expects an id.
- * @param {String} projectName name of the project being searched for.
+ * @param {string} projectName name of the project being searched for.
  * @param {Map} usersProjects all known user project memberships where
  *  keys are userId and values are Objects with expected values
  *  for {ownerOf, memberOf, contributorTo}.
- * @return {Boolean} whether the user is a member of the project or not.
+ * @return {boolean} whether the user is a member of the project or not.
  */
 // TODO(crbug.com/monorail/5968): Find a better place for this function to live.
 export function userIsMember(userRef, projectName, usersProjects = new Map()) {

@@ -43,8 +43,8 @@ export default class AutoRefreshPrpcClient {
   /**
    * Sends a pRPC request. Adds this.token to the request message after making
    * sure it is fresh.
-   * @param {String} service Full service name, including package name.
-   * @param {String} method Service method name.
+   * @param {string} service Full service name, including package name.
+   * @param {string} method Service method name.
    * @param {Object} message The protobuf message to send.
    * @return {Object} The pRPC API response.
    */
@@ -57,8 +57,8 @@ export default class AutoRefreshPrpcClient {
 
   /**
    * Check if the token is expired.
-   * @param {Number} tokenExpiresSec: the expiration time of the token.
-   * @return {Boolean} Whether the token is expired.
+   * @param {number} tokenExpiresSec: the expiration time of the token.
+   * @return {boolean} Whether the token is expired.
    */
   static isTokenExpired(tokenExpiresSec) {
     const tokenExpiresDate = new Date(tokenExpiresSec * 1000);

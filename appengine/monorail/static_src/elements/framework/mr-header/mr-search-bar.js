@@ -353,7 +353,7 @@ export class MrSearchBar extends LitElement {
   /**
    * Attempt to jump-to-issue, otherwise continue to list view
    * @param {Object} params URL navigation parameters
-   * @param {Boolean} newTab
+   * @param {boolean} newTab
    */
   async _navigateToNext(params, newTab = false) {
     let resp;
@@ -384,7 +384,7 @@ export class MrSearchBar extends LitElement {
   /**
    * Navigate to list view, currently splits on old and new view
    * @param {Object} params URL navigation parameters
-   * @param {Boolean} newTab
+   * @param {boolean} newTab
    */
   _navigateToList(params, newTab = false) {
     // TODO(zhangtiff): Remove this check once list_new is removed

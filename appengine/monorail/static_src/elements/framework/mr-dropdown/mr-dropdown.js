@@ -282,7 +282,7 @@ export class MrDropdown extends LitElement {
   /**
    * Click a specific item in mr-dropdown, using JavaScript. Useful for testing.
    *
-   * @param {Number} i index of the item to click.
+   * @param {number} i index of the item to click.
    */
   clickItem(i) {
     const items = this.shadowRoot.querySelectorAll('.menu-item');

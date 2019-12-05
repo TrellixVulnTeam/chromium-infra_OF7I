@@ -30,7 +30,7 @@ const RFC_2821_EMAIL_REGEX = /^[-a-zA-Z0-9!#$%&'*+\/=?^_`{|}~]+(?:[.][-a-zA-Z0-9
 /**
  * Converts a displayName into a canonical UserRef Object format.
  *
- * @param {String} displayName The user's email address, used as a display name.
+ * @param {string} displayName The user's email address, used as a display name.
  * @return {UserRef} UserRef formatted object that contains a
  *   user's displayName.
  */
@@ -44,7 +44,7 @@ export function displayNameToUserRef(displayName) {
 /**
  * Converts a displayName into a canonical UserRef Object format.
  *
- * @param {String} user The user's email address, used as a display name,
+ * @param {string} user The user's email address, used as a display name,
  *   or their numeric user ID.
  * @return {UserRef} UserRef formatted object that contains a
  *   user's displayName or userId.
@@ -80,7 +80,7 @@ export function userToUserRef(user) {
  * Convert a UserRef style Object to a userId string.
  *
  * @param {UserRef} userRef Object expected to contain a userId key.
- * @return {Number} the unique ID of the user.
+ * @return {number} the unique ID of the user.
  */
 export function userRefToId(userRef) {
   return userRef && userRef.userId;
@@ -90,7 +90,7 @@ export function userRefToId(userRef) {
  * Extracts the displayName property from a UserRef Object.
  *
  * @param {UserRef} userRef UserRef Object uniquely identifying a user.
- * @return {String} The user's display name (email address).
+ * @return {string} The user's display name (email address).
  */
 export function userRefToDisplayName(userRef) {
   return userRef && userRef.displayName;
@@ -134,7 +134,7 @@ export function filteredUserDisplayNames(userRefs) {
 /**
  * Takes in the name of a label and turns it into a LabelRef Object.
  *
- * @param {String} label The name of a label.
+ * @param {string} label The name of a label.
  * @return {LabelRef}
  */
 export function labelStringToRef(label) {
@@ -145,7 +145,7 @@ export function labelStringToRef(label) {
  * Takes in the name of a label and turns it into a LabelRef Object.
  *
  * @param {LabelRef} labelRef
- * @return {String} The name of the label.
+ * @return {string} The name of the label.
  */
 export function labelRefToString(labelRef) {
   if (!labelRef) return;
@@ -179,8 +179,8 @@ export function labelRefsToOneWordLabels(labelRefs) {
 /**
  * Checks whether a particular label is one word.
  *
- * @param {String} label the name of the label being checked.
- * @return {Boolean} Whether the label is one word or not.
+ * @param {string} label the name of the label being checked.
+ * @return {boolean} Whether the label is one word or not.
  */
 export function isOneWordLabel(label = '') {
   const words = label.split('-');
@@ -192,8 +192,8 @@ export function isOneWordLabel(label = '') {
  * enum type field values. Monorail defines the enum options for
  * a custom field as labels.
  *
- * @param {String} fieldName Name of a custom field.
- * @return {String} The label prefixes for enum choices
+ * @param {string} fieldName Name of a custom field.
+ * @return {string} The label prefixes for enum choices
  *   associated with the field.
  */
 export function fieldNameToLabelPrefix(fieldName) {
@@ -205,8 +205,8 @@ export function fieldNameToLabelPrefix(fieldName) {
  * by '-'. Labels that share the same prefix are implciitly treated like
  * enum fields in certain parts of Monorail's UI.
  *
- * @param {String} label The name of the label.
- * @return {String} The label's prefix.
+ * @param {string} label The name of the label.
+ * @return {string} The label's prefix.
  */
 export function labelNameToLabelPrefix(label) {
   if (!label) return;
@@ -217,7 +217,7 @@ export function labelNameToLabelPrefix(label) {
  * Extracts just the name of the status from a StatusRef Object.
  *
  * @param {StatusRef} statusRef
- * @return {String} The name of the status.
+ * @return {string} The name of the status.
  */
 export function statusRefToString(statusRef) {
   return statusRef.status;
@@ -237,7 +237,7 @@ export function statusRefsToStrings(statusRefs) {
  * Takes the name of a component and converts it into a ComponentRef
  * Object.
  *
- * @param {String} path Name of the component.
+ * @param {string} path Name of the component.
  * @return {ComponentRef}
  */
 export function componentStringToRef(path) {
@@ -248,7 +248,7 @@ export function componentStringToRef(path) {
  * Extracts just the name of a component from a ComponentRef.
  *
  * @param {ComponentRef} componentRef
- * @return {String} The name of the component.
+ * @return {string} The name of the component.
  */
 export function componentRefToString(componentRef) {
   return componentRef && componentRef.path;
@@ -269,7 +269,7 @@ export function componentRefsToStrings(componentRefs) {
  * Takes a String with a project name and issue ID in Monorail's canonical
  * IssueRef format and converts it into an IssueRef Object.
  *
- * @param {String} defaultProjectName The implied projectName if none is
+ * @param {string} defaultProjectName The implied projectName if none is
  *   specified.
  * @param {IssueRefString} idStr A String of the format projectName:1234, a
  *   standard issue ID input format used across Monorail.
@@ -298,8 +298,8 @@ export function issueStringToRef(defaultProjectName, idStr) {
  * Takes a String with a project name and issue ID in Monorail's canonical
  * IssueRef format and converts it into an IssueRef Object.
  *
- * @param {String} projectName The current project the user is viewing.
- * @param {Number} localId The ID of the issue the user is viewing.
+ * @param {string} projectName The current project the user is viewing.
+ * @param {number} localId The ID of the issue the user is viewing.
  * @param {IssueRefString} idStr A String of the format projectName:1234, a
  *   standard issue ID input format used across Monorail.
  * @return {IssueRef}
@@ -322,7 +322,7 @@ export function issueStringToBlockingRef(projectName, localId, idStr) {
  * Converts an IssueRef into a canonical String format. ie: "project:1234"
  *
  * @param {IssueRef} ref
- * @param {String} projectName The current project context. The
+ * @param {string} projectName The current project context. The
  *   generated String excludes the projectName if it matches the
  *   project the user is currently viewing, to create simpler
  *   issue ID links.
@@ -361,7 +361,7 @@ export function issueToIssueRef(issue) {
  * Converts a full Issue Object into an IssueRefString
  *
  * @param {Issue} issue A full Issue Object.
- * @param {String} projectName The default project the String should assume.
+ * @param {string} projectName The default project the String should assume.
  * @return {IssueRefString} A String with all the data needed to
  *   construct an IssueRef.
  */
@@ -377,7 +377,7 @@ export function issueToIssueRefString(issue, projectName) {
  *
  * @param {IssueRef} ref The issue that the generated URL will point to.
  * @param {Object} queryParams The URL params for the URL.
- * @return {String} The URL for the issue's page as a relative path.
+ * @return {string} The URL for the issue's page as a relative path.
  */
 export function issueRefToUrl(ref, queryParams = {}) {
   if (!ref) return '';
@@ -406,7 +406,7 @@ export function issueRefToUrl(ref, queryParams = {}) {
  * String form expeced by Monorail.
  *
  * @param {Array<IssueRef>} arr Array of IssueRefs to convert to Strings.
- * @param {String} projectName The default project name.
+ * @param {string} projectName The default project name.
  * @return {Array<IssueRefString>} Array of Strings where each entry is
  *   represents one IssueRef.
  */
@@ -438,7 +438,7 @@ export function commentListToDescriptionList(comments) {
  *
  * @param {FieldRef} fieldRef A reference to the custom field that this
  *   value is tied to.
- * @param {String} value The value associated with the FieldRef.
+ * @param {string} value The value associated with the FieldRef.
  * @return {FieldValue}
  */
 export function valueToFieldValue(fieldRef, value) {

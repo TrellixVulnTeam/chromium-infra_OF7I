@@ -563,7 +563,7 @@ export class MrIssueList extends connectStore(LitElement) {
     this.projectName;
     /** @type {Object} */
     this.queryParams = {};
-    /** @type {String} */
+    /** @type {string} */
     this.currentQuery = '';
     /** @type {boolean} */
     this.selectionEnabled = false;
@@ -597,7 +597,7 @@ export class MrIssueList extends connectStore(LitElement) {
 
     this._uniqueValuesByColumn = new Map();
 
-    /** @type {Number} */
+    /** @type {number} */
     this._lastSelectedCheckbox = -1;
 
     // Expose page.js for stubbing.
@@ -889,7 +889,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * Get the current URL of the page, without query params. Useful for
    * test stubbing.
    *
-   * @return {String} the URL of the list page, without params.
+   * @return {string} the URL of the list page, without params.
    */
   _baseUrl() {
     return window.location.pathname;

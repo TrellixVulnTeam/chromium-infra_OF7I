@@ -54,7 +54,7 @@ export const APPROVER_COL_SUFFIX_REGEX = /\-approver$/i;
  * Parses colspec or groupbyspec values from user input such as form fields
  * or the URL.
  *
- * @param {String} spec a delimited string with spec values to parse.
+ * @param {string} spec a delimited string with spec values to parse.
  * @return {Array} list of spec values represented by the string.
  */
 export function parseColSpec(spec = '') {

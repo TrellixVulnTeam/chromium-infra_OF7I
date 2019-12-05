@@ -822,14 +822,14 @@ export const fetchHotlists = (issue) => async (dispatch) => {
  * view's ability to load up to 6,000 issues in one page load.
  *
  * @param {Object} params Options for which issues to fetch.
- * @param {String} [params.q] The query string for the search.
- * @param {String} [params.can] The ID of the canned query for the search.
- * @param {String} [params.groupby] The spec of which fields to group by.
- * @param {String} [params.sort] The spec of which fields to sort by.
- * @param {String} projectName The project to fetch issues from.
+ * @param {string} [params.q] The query string for the search.
+ * @param {string} [params.can] The ID of the canned query for the search.
+ * @param {string} [params.groupby] The spec of which fields to group by.
+ * @param {string} [params.sort] The spec of which fields to sort by.
+ * @param {string} projectName The project to fetch issues from.
  * @param {Object} pagination Object with info on how many issues to fetch and
  *   how many issues to offset.
- * @param {Number} maxCalls The maxinum number of API calls to make. Combined
+ * @param {number} maxCalls The maximum number of API calls to make. Combined
  *   with pagination.maxItems, this defines the maximum number of issues this
  *   method can fetch.
  * @return {Function}

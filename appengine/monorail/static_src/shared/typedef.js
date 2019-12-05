@@ -21,7 +21,7 @@
  * - 1234
  * - b/123456
  *
- * @typedef {String} IssueRefString
+ * @typedef {string} IssueRefString
  */
 
 /**
@@ -29,7 +29,7 @@
  * through Redux.
  *
  * @typedef {Object} ReduxRequestState
- * @property {Boolean} [requesting] Whether a request is in flight.
+ * @property {boolean} [requesting] Whether a request is in flight.
  * @property {Error} [error] An Error Object returned by the request.
  */
 
@@ -38,16 +38,16 @@
  *
  * @typedef {Object} Hotlist
  * @property {UserRef} [ownerRef]
- * @property {String} [name]
- * @property {String} [summary]
- * @property {String} [description]
+ * @property {string} [name]
+ * @property {string} [summary]
+ * @property {string} [description]
  */
 
 /**
  * A HotlistRef Object returned by the pRPC API.
  *
  * @typedef {Object} HotlistRef
- * @property {String} [name]
+ * @property {string} [name]
  * @property {UserRef} [owner]
  */
 
@@ -55,10 +55,10 @@
  * A User Object returned by the pRPC API.
  *
  * @typedef {Object} User
- * @property {String} [displayName]
- * @property {Number} [userId]
- * @property {Boolean} [isSiteAdmin]
- * @property {String} [availability]
+ * @property {string} [displayName]
+ * @property {number} [userId]
+ * @property {boolean} [isSiteAdmin]
+ * @property {string} [availability]
  * @property {UserRef} [linkedParentRef]
  * @property {Array<UserRef>} [linkedChildRefs]
  */
@@ -67,42 +67,42 @@
  * A UserRef Object returned by the pRPC API.
  *
  * @typedef {Object} UserRef
- * @property {String} [displayName]
- * @property {Number} [userId]
+ * @property {string} [displayName]
+ * @property {number} [userId]
  */
 
 /**
  * A LabelRef Object returned by the pRPC API.
  *
  * @typedef {Object} LabelRef
- * @property {String} label
- * @property {Boolean} [isDerived]
+ * @property {string} label
+ * @property {boolean} [isDerived]
  */
 
 /**
  * A StatusRef Object returned by the pRPC API.
  *
  * @typedef {Object} StatusRef
- * @property {String} status
- * @property {Boolean} [meansOpen]
- * @property {Boolean} [isDerived]
+ * @property {string} status
+ * @property {boolean} [meansOpen]
+ * @property {boolean} [isDerived]
  */
 
 /**
  * A ComponentRef Object returned by the pRPC API.
  *
  * @typedef {Object} ComponentRef
- * @property {String} path
- * @property {Boolean} [isDerived]
+ * @property {string} path
+ * @property {boolean} [isDerived]
  */
 
 /**
  * An Issue Object returned by the pRPC API.
  *
  * @typedef {Object} Issue
- * @property {String} projectName
- * @property {Number} localId
- * @property {String} [summary]
+ * @property {string} projectName
+ * @property {number} localId
+ * @property {string} [summary]
  * @property {StatusRef} [statusRef]
  * @property {UserRef} [ownerRef]
  * @property {Array<UserRef>} [ccRefs]
@@ -114,17 +114,17 @@
  * @property {Array<IssueRef>} [danglingBlockingRefs]
  * @property {IssueRef} [mergedIntoIssueRef]
  * @property {FieldValue} [fieldValues]
- * @property {Boolean} [isDeleted]
+ * @property {boolean} [isDeleted]
  * @property {UserRef} [reporterRef]
- * @property {Number} [openedTimestamp]
- * @property {Number} [closedTimestamp]
- * @property {Number} [modifiedTimestamp]
- * @property {Number} [componentModifiedTimestamp]
- * @property {Number} [statusModifiedTimestamp]
- * @property {Number} [ownerModifiedTimestamp]
- * @property {Number} [starCount]
- * @property {Boolean} [isSpam]
- * @property {Number} [attachmentCount]
+ * @property {number} [openedTimestamp]
+ * @property {number} [closedTimestamp]
+ * @property {number} [modifiedTimestamp]
+ * @property {number} [componentModifiedTimestamp]
+ * @property {number} [statusModifiedTimestamp]
+ * @property {number} [ownerModifiedTimestamp]
+ * @property {number} [starCount]
+ * @property {boolean} [isSpam]
+ * @property {number} [attachmentCount]
  * @property {Array<Approval>} [approvalValues]
  * @property {Array<PhaseDef>} [phases]
  */
@@ -133,9 +133,9 @@
  * An IssueRef Object returned by the pRPC API.
  *
  * @typedef {Object} IssueRef
- * @property {String} [projectName]
- * @property {Number} [localId]
- * @property {String} [extIdentifier]
+ * @property {string} [projectName]
+ * @property {number} [localId]
+ * @property {string} [extIdentifier]
  */
 
 /**
@@ -146,37 +146,37 @@
  * type.
  *
  * @typedef {Object} IssueComment
- * @property {String} projectName
- * @property {Number} localId
- * @property {Number} [sequenceNum]
- * @property {Boolean} [isDeleted]
+ * @property {string} projectName
+ * @property {number} localId
+ * @property {number} [sequenceNum]
+ * @property {boolean} [isDeleted]
  * @property {UserRef} [commenter]
- * @property {Number} [timestamp]
- * @property {String} [content]
- * @property {String} [inboundMessage]
+ * @property {number} [timestamp]
+ * @property {string} [content]
+ * @property {string} [inboundMessage]
  * @property {Array<Amendment>} [amendments]
  * @property {Array<Attachment>} [attachments]
  * @property {FieldRef} [approvalRef]
- * @property {Number} [descriptionNum]
- * @property {Boolean} [isSpam]
- * @property {Boolean} [canDelete]
- * @property {Boolean} [canFlag]
+ * @property {number} [descriptionNum]
+ * @property {boolean} [isSpam]
+ * @property {boolean} [canDelete]
+ * @property {boolean} [canFlag]
  */
 
 /**
  * An Enum representing the type that a custom field uses.
  *
- * @typedef {String} FieldType
+ * @typedef {string} FieldType
  */
 
 /**
  * A FieldRef Object returned by the pRPC API common.proto.
  *
  * @typedef {Object} FieldRef
- * @property {Number} fieldId
- * @property {String} fieldName
+ * @property {number} fieldId
+ * @property {string} fieldName
  * @property {FieldType} type
- * @property {String} approvalName
+ * @property {string} approvalName
  */
 
 /**
@@ -184,8 +184,8 @@
  *
  * @typedef {Object} FieldValue
  * @property {FieldRef} fieldRef
- * @property {String} value
- * @property {Boolean} [isDerived]
+ * @property {string} value
+ * @property {boolean} [isDerived]
  * @property {PhaseRef} [phaseRef]
  */
 

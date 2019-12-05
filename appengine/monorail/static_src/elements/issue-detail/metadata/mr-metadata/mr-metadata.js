@@ -122,7 +122,7 @@ export class MrMetadata extends connectStore(LitElement) {
   /**
    * A helper to display a single built-in field.
    *
-   * @param {String} fieldName The name of the built in field to render.
+   * @param {string} fieldName The name of the built in field to render.
    * @return {TemplateResult|undefined} lit-html template for displaying the
    *   value of the built in field. If undefined, the rendering code assumes
    *   that the field should be hidden if empty.

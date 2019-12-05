@@ -154,7 +154,7 @@ export class MrCue extends connectStore(LitElement) {
   /**
   * Conditionally returns a hardcoded code of conduct URL for
   * different projects.
-  * @return {String} the URL for the code of conduct.
+  * @return {string} the URL for the code of conduct.
    */
   get codeOfConductUrl() {
     const projectName = (this.project && this.project.config &&
@@ -182,7 +182,7 @@ export class MrCue extends connectStore(LitElement) {
   /**
    * Checks if there are any unavailable users and only displays this cue if so.
    * @param {Issue} issue
-   * @return {Boolean} Whether the User Availability cue should be
+   * @return {boolean} Whether the User Availability cue should be
    *   displayed or not.
    */
   _availablityMsgsRelevant(issue) {
@@ -194,7 +194,7 @@ export class MrCue extends connectStore(LitElement) {
   /**
    * Checks if a given list of users contains any unavailable users.
    * @param {Array<UserRef>} userRefList
-   * @return {Boolean} Whether there are unavailable users.
+   * @return {boolean} Whether there are unavailable users.
    */
   _anyUnvailable(userRefList) {
     if (!userRefList) return false;
@@ -209,7 +209,7 @@ export class MrCue extends connectStore(LitElement) {
   /**
    * Finds if the user has a linked parent account that's separate from the
    * one they are logged into and conditionally hides the cue if so.
-   * @return {Boolean} Whether to show the cue to switch to a parent account.
+   * @return {boolean} Whether to show the cue to switch to a parent account.
    */
   _switchToParentAccountRelevant() {
     return this.user && this.user.linkedParentRef;
@@ -218,8 +218,8 @@ export class MrCue extends connectStore(LitElement) {
   /**
    * Determines whether the user should see a cue telling them how to avoid the
    * "jump to issue" feature.
-   * @param {Number} jumpLocalId the ID of the issue the user jumped to.
-   * @return {Boolean} Whether the user jumped to a number or not.
+   * @param {number} jumpLocalId the ID of the issue the user jumped to.
+   * @return {boolean} Whether the user jumped to a number or not.
    */
   _searchForNumbersRelevant(jumpLocalId) {
     return !!jumpLocalId;
@@ -228,12 +228,12 @@ export class MrCue extends connectStore(LitElement) {
   /**
    * Checks the user's preferences to hide a particular cue if they have
    * dismissed it.
-   * @param {Boolean} signedIn Whether the user is signed in.
-   * @param {Boolean} prefsLoaded Whether the user's prefs have been fetched
+   * @param {boolean} signedIn Whether the user is signed in.
+   * @param {boolean} prefsLoaded Whether the user's prefs have been fetched
    *   from the API.
-   * @param {String} cuePrefName The name of the cue being checked.
-   * @param {String} message
-   * @return {Boolean} Whether the cue should be hidden.
+   * @param {string} cuePrefName The name of the cue being checked.
+   * @param {string} message
+   * @return {boolean} Whether the cue should be hidden.
    */
   _shouldBeHidden(signedIn, prefsLoaded, cuePrefName, message) {
     if (signedIn && !prefsLoaded) return true;
@@ -262,8 +262,8 @@ export class MrCue extends connectStore(LitElement) {
   /**
    * Check whether a cue has already been dismissed in a user's
    * preferences.
-   * @param {String} pref The name of the user preference to check.
-   * @return {Boolean} Whether the cue was dismissed or not.
+   * @param {string} pref The name of the user preference to check.
+   * @return {boolean} Whether the cue was dismissed or not.
    */
   alreadyDismissed(pref) {
     return this.prefs && this.prefs.get(pref) === 'true';

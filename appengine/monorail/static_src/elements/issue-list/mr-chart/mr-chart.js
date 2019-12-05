@@ -846,7 +846,7 @@ export default class MrChart extends LitElement {
    * defaults to diff days befores endDate
    * @param {string} input
    * @param {Date} endDate
-   * @param {Number} diff
+   * @param {number} diff
    * @return {Date}
    */
   static getStartDate(input, endDate, diff) {
