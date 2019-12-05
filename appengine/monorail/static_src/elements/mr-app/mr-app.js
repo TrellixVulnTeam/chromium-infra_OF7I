@@ -10,6 +10,7 @@ import {getServerStatusCron} from 'shared/cron.js';
 import 'elements/framework/mr-site-banner/mr-site-banner.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as project from 'reducers/project.js';
+import * as hotlist from 'reducers/hotlist.js';
 import * as issue from 'reducers/issue.js';
 import * as user from 'reducers/user.js';
 import * as ui from 'reducers/ui.js';
@@ -226,6 +227,7 @@ export class MrApp extends connectStore(LitElement) {
     page('*', this._universalRouteHandler.bind(this));
     page('/p/:project/issues/list_new', this._loadListPage.bind(this));
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this));
+    page('/u/:user/hotlists/:hotlist/*', this._selectHotlist);
     page('/u/:user/hotlists/:hotlist/details_new', this._loadHotlistDetailsPage.bind(this));
     page('/u/:user/hotlists/:hotlist/issues_new', this._loadHotlistIssuesPage.bind(this));
     page('/u/:user/hotlists/:hotlist/people_new', this._loadHotlistPeoplePage.bind(this));
@@ -317,6 +319,17 @@ export class MrApp extends connectStore(LitElement) {
         this.page = 'list';
         break;
     }
+  }
+
+  /**
+   * Sets the currently viewed HotlistRef in the Redux store from the URL.
+   *
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
+  _selectHotlist(ctx, next) {
+    store.dispatch(hotlist.selectHotlist(ctx.params.user, ctx.params.hotlist));
+    next();
   }
 
   async _loadHotlistDetailsPage(ctx, next) {

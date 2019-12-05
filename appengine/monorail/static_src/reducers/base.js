@@ -5,6 +5,7 @@
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 import thunk from 'redux-thunk';
+import * as hotlist from './hotlist.js';
 import * as issue from './issue.js';
 import * as project from './project.js';
 import * as sitewide from './sitewide.js';
@@ -16,6 +17,7 @@ const RESET_STATE = 'RESET_STATE';
 
 /* State Shape
 {
+  hotlist: Object,
   issue: Object,
   project: Object,
   sitewide: Object,
@@ -27,6 +29,7 @@ const RESET_STATE = 'RESET_STATE';
 
 // Reducers
 const reducer = combineReducers({
+  hotlist: hotlist.reducer,
   issue: issue.reducer,
   project: project.reducer,
   user: user.reducer,

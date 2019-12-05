@@ -36,10 +36,28 @@ const RFC_2821_EMAIL_REGEX = /^[-a-zA-Z0-9!#$%&'*+\/=?^_`{|}~]+(?:[.][-a-zA-Z0-9
  */
 export function displayNameToUserRef(displayName) {
   if (displayName && !RFC_2821_EMAIL_REGEX.test(displayName)) {
-    throw new UserInputError(
-        `Invalid email address: ${displayName}`);
+    throw new UserInputError(`Invalid email address: ${displayName}`);
   }
   return {displayName};
+}
+
+/**
+ * Converts a displayName into a canonical UserRef Object format.
+ *
+ * @param {String} user The user's email address, used as a display name,
+ *   or their numeric user ID.
+ * @return {UserRef} UserRef formatted object that contains a
+ *   user's displayName or userId.
+ */
+export function userIdOrDisplayNameToUserRef(user) {
+  if (RFC_2821_EMAIL_REGEX.test(user)) {
+    return {displayName: user};
+  }
+  const userId = Number.parseInt(user);
+  if (Number.isNaN(userId)) {
+    throw new UserInputError(`Invalid email address or user ID: ${user}`);
+  }
+  return {userId};
 }
 
 /**

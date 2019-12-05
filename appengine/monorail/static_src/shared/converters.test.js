@@ -3,10 +3,11 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {displayNameToUserRef, labelStringToRef, labelRefToString,
-  labelRefsToStrings, labelRefsToOneWordLabels, isOneWordLabel,
-  statusRefToString, statusRefsToStrings, componentStringToRef,
-  componentRefToString, componentRefsToStrings,
+import {UserInputError} from 'shared/errors.js';
+import {displayNameToUserRef, userIdOrDisplayNameToUserRef, labelStringToRef,
+  labelRefToString, labelRefsToStrings, labelRefsToOneWordLabels,
+  isOneWordLabel, statusRefToString, statusRefsToStrings,
+  componentStringToRef, componentRefToString, componentRefsToStrings,
   issueStringToRef, issueStringToBlockingRef, issueRefToString,
   issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefix,
   commentListToDescriptionList, valueToFieldValue, issueToIssueRef,
@@ -20,7 +21,26 @@ describe('displayNameToUserRef', () => {
   });
 
   it('throws on invalid email', () => {
+    assert.throws(() => displayNameToUserRef('foo'), UserInputError);
+  });
+});
+
+describe('userIdOrDisplayNameToUserRef', () => {
+  it('converts userId', () => {
     assert.throws(() => displayNameToUserRef('foo'));
+    assert.deepEqual(
+        userIdOrDisplayNameToUserRef('12345678'),
+        {userId: 12345678});
+  });
+
+  it('converts displayName', () => {
+    assert.deepEqual(
+        userIdOrDisplayNameToUserRef('foo@bar.com'),
+        {displayName: 'foo@bar.com'});
+  });
+
+  it('throws if not an email or numeric id', () => {
+    assert.throws(() => userIdOrDisplayNameToUserRef('foo'), UserInputError);
   });
 });
 

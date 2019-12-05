@@ -44,6 +44,14 @@
  */
 
 /**
+ * A HotlistRef Object returned by the pRPC API.
+ *
+ * @typedef {Object} HotlistRef
+ * @property {String} [name]
+ * @property {UserRef} [owner]
+ */
+
+/**
  * A User Object returned by the pRPC API.
  *
  * @typedef {Object} User
