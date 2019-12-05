@@ -38,7 +38,7 @@ const (
 	failedBuildPrefix   = "Sample Failed Build:"
 	failedStepPrefix    = "Sample Failed Step:"
 	flakyTestPrefix     = "Sample Flaky Test:"
-	bugIDRegex          = "^(?i) *bug[:= ]*(chromium[:= ]*)?(.*) *"
+	bugIDRegex          = "^(?i) *(?:bug|fixed|closed)[:= ]*(chromium[:= ]*)?(.*) *"
 	prodBuildbucketHost = "cr-buildbucket.appspot.com"
 )
 

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -55,6 +56,17 @@ func TestUtils(t *testing.T) {
 			"c:\n\\\\\\c",
 		} {
 			So(tc, ShouldEqual, unescapeToken(escapeToken(tc)))
+		}
+	})
+	Convey("Ensure bug ID prefix works as intended", t, func() {
+		for _, prefix := range []string{
+			"Bug",
+			"Fixed",
+			"Closed",
+		} {
+			commitMsg := fmt.Sprintf("Test\n\n%s: chromium:123456", prefix)
+			bugID, _ := bugIDFromCommitMessage(commitMsg)
+			So(bugID, ShouldEqual, "123456")
 		}
 	})
 }
