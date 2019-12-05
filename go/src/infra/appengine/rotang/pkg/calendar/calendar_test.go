@@ -807,6 +807,7 @@ func TestShiftsToEvents(t *testing.T) {
 				End: &gcal.EventDateTime{
 					DateTime: midnight.Add(2 * 24 * time.Hour).Format(time.RFC3339),
 				},
+				Transparency: "transparent",
 			},
 		},
 	}, {
@@ -853,6 +854,7 @@ func TestShiftsToEvents(t *testing.T) {
 				End: &gcal.EventDateTime{
 					Date: midnight.Add(2 * 24 * time.Hour).Format(dayFormat),
 				},
+				Transparency: "transparent",
 			},
 		},
 	},

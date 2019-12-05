@@ -364,6 +364,8 @@ func shiftsToEvents(cfg *rotang.Configuration, shifts []rotang.ShiftEntry) ([]*g
 			Description: desc,
 			Start:       start,
 			End:         end,
+			// Show calendar events as "Available" rather than "Busy".
+			Transparency: "transparent",
 		})
 	}
 	return res, nil
