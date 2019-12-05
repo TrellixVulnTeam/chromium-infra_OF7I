@@ -23,3 +23,12 @@ $ cipd create -pkg-def=cipd.yaml
 <outputs the VERSION>
 $ cipd set-ref infra/tricium/function/spellchecker -ref live -version VERSION
 ```
+
+## Adding Terms to Dictionary
+
+The `dictionary.txt` file comes from the [`codespell`] repo. If you would like
+to add new terms to the dictionary you should submit a PR to the [`codespell`]
+repo since the Tricium Spellchecker `dictionary.txt` is periodically synced with
+that.
+
+[`codespell`]: https://github.com/codespell-project/codespell
