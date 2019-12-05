@@ -88,7 +88,7 @@ class FlakeAnalysisActionsTest(WaterfallTestCase):
     mocked_update_monorail.assert_called_once_with(analysis.key.urlsafe())
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2019, 1, 3))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2019, 1, 3))
   def testMergeOrSplitFlakeIssueByCulpritFlakeIssueClosedLongAgo(self, _):
     project = 'chromium'
     duplicate_bug_id = 12344
@@ -167,7 +167,7 @@ class FlakeAnalysisActionsTest(WaterfallTestCase):
     self.assertEqual(flake_issue.merge_destination_key, culprit_flake_issue.key)
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2019, 1, 2))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2019, 1, 2))
   @mock.patch.object(monorail_util, 'WasCreatedByFindit', return_value=True)
   @mock.patch.object(monorail_util, 'MergeDuplicateIssues')
   @mock.patch.object(monorail_util, 'GetMonorailIssueForIssueId')

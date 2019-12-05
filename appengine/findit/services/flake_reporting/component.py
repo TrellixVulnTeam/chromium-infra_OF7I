@@ -35,7 +35,7 @@ def Report(save_test_report=False):
       may fire when also save TestFlakinessReport entries.
   """
   report_date = time_util.GetMidnight(
-      time_util.GetDateDaysBeforeNow(days=DAYS_IN_A_WEEK))
+      time_util.GetDatetimeBeforeNow(days=DAYS_IN_A_WEEK))
   if TotalFlakinessReport.Get(report_date, DEFAULT_LUCI_PROJECT):
     raise ReportExistsException('Report already exist for {}'.format(
         time_util.FormatDatetime(report_date, day_only=True)))

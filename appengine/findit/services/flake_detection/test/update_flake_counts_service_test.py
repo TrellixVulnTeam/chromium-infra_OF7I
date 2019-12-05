@@ -18,7 +18,7 @@ from waterfall.test.wf_testcase import WaterfallTestCase
 class UpdateFlakeCountsTest(WaterfallTestCase):
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2018, 8, 23))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2018, 8, 23))
   def testFlakeUpdates(self, _):
     luci_project = 'chromium'
     step_ui_name = 'step'
@@ -145,7 +145,7 @@ class UpdateFlakeCountsTest(WaterfallTestCase):
     self.assertEqual(120, flake1.flake_score_last_week)
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2018, 8, 23))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2018, 8, 23))
   def testNoOccurrences(self, _):
     luci_project = 'chromium'
     normalized_step_name = 'normalized_step_name'
@@ -169,7 +169,7 @@ class UpdateFlakeCountsTest(WaterfallTestCase):
     self.assertEqual(0, flake2.flake_score_last_week)
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2018, 8, 23))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2018, 8, 23))
   def testFlakesWithCQHiddenFlakes(self, _):
     luci_project = 'chromium'
     normalized_step_name = 'normalized_step_name'
@@ -238,7 +238,7 @@ class UpdateFlakeCountsTest(WaterfallTestCase):
     self.assertEqual(129, flake3.flake_score_last_week)
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2018, 8, 23))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2018, 8, 23))
   def testCIFlakes(self, _):
     luci_project = 'chromium'
     normalized_step_name = 'normalized_step_name'

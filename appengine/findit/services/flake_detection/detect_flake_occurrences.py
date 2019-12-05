@@ -258,7 +258,7 @@ def _UpdateTestLocationAndTags(flake, occurrences, component_mapping,
   # the last 7 days.
   if (flake.last_test_location_based_tag_update_time and
       (flake.last_test_location_based_tag_update_time >
-       time_util.GetDateDaysBeforeNow(7))):
+       time_util.GetDatetimeBeforeNow(days=7))):
     logging.debug('Flake test location tags were updated recently : %r', flake)
     return False
 

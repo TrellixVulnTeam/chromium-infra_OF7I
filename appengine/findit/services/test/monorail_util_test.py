@@ -471,7 +471,7 @@ class MonorailUtilTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(
       time_util,
-      'GetDateDaysBeforeNow',
+      'GetDatetimeBeforeNow',
       return_value=datetime.datetime(2019, 1, 29))
   @mock.patch('services.monorail_util.IssueTrackerAPI')
   def testGetIssuesClosedWithinAWeek(self, mock_api, _):

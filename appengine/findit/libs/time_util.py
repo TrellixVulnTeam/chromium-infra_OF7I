@@ -169,13 +169,17 @@ def GetStartEndDates(start, end, default_start=None, default_end=None):
   return (DatetimeFromString(start), DatetimeFromString(end))
 
 
-def GetDateDaysBeforeNow(days):
-  """Get the date days before now.
+def GetDatetimeBeforeNow(**kwargs):
+  """Get the datetime before now.
 
   Args:
-    days(int): Number of days before now. It should be a positive integer.
+    kwargs: A dictionary of keyword arguments whose keys must be supported by
+            the timedelta function, for example, days and hours.
+
+  Returns:
+    A datetime that was |kwargs| before utc now.
   """
-  return GetUTCNow() - timedelta(days=days)
+  return GetUTCNow() - timedelta(**kwargs)
 
 
 class TimeZoneInfo(object):

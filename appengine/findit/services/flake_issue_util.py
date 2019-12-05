@@ -1035,7 +1035,7 @@ def IsFlakeIssueActionable(flake_issue):
       flake_issue.status in issue_constants.CLOSED_STATUSES_NO_DUPLICATE and
       flake_issue.last_updated_time_in_monorail and
       flake_issue.last_updated_time_in_monorail <
-      time_util.GetDateDaysBeforeNow(days=7))
+      time_util.GetDatetimeBeforeNow(days=7))
 
   if is_bug_stale:
     logging.info(

@@ -220,7 +220,7 @@ def _FetchFlakeOccurrences(flake, flake_type, max_occurrence_count):
   Returns:
     (list): A list of occurrences.
   """
-  start_date = time_util.GetDateDaysBeforeNow(days=constants.DAYS_IN_A_WEEK)
+  start_date = time_util.GetDatetimeBeforeNow(days=constants.DAYS_IN_A_WEEK)
   occurrences_query = FlakeOccurrence.query(ancestor=flake.key).filter(
       ndb.AND(FlakeOccurrence.flake_type == flake_type,
               FlakeOccurrence.time_happened >

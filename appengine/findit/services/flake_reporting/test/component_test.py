@@ -186,7 +186,7 @@ class ReportTest(wf_testcase.WaterfallTestCase):
       _CreateFlake(flake_data, with_component)
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2018, 8, 27))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2018, 8, 27))
   def testBasicReport(self, _):
     report_date = datetime(2018, 8, 27)
     component_report.Report(save_test_report=True)
@@ -276,7 +276,7 @@ class ReportTest(wf_testcase.WaterfallTestCase):
                        cl_count.count)
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2018, 8, 27))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2018, 8, 27))
   def testBasicReportNoTestReports(self, _):
     report_date = datetime(2018, 8, 27)
     component_report.Report()

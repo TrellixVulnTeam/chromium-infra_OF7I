@@ -203,6 +203,6 @@ def UpdateFlakeCounts():
   Currently we only have weekly counts to update. Later we may also maintain
   daily or monthly counts.
   """
-  start_date = time_util.GetDateDaysBeforeNow(days=constants.DAYS_IN_A_WEEK)
+  start_date = time_util.GetDatetimeBeforeNow(days=constants.DAYS_IN_A_WEEK)
   _UpdateCountsForOldFlake(start_date)
   _UpdateCountsForNewFlake(start_date)

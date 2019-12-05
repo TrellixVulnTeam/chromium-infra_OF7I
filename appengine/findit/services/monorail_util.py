@@ -42,7 +42,7 @@ def GetOpenIssues(query, monorail_project):
 def IsIssueClosedWithinAWeek(issue):
   """Checks if a monorail issue is closed (excepted Merged) within a week."""
   return (issue.status in issue_constants.CLOSED_STATUSES_NO_DUPLICATE and
-          issue.closed > time_util.GetDateDaysBeforeNow(DAYS_IN_A_WEEK))
+          issue.closed > time_util.GetDatetimeBeforeNow(days=DAYS_IN_A_WEEK))
 
 
 def GetIssuesClosedWithinAWeek(query, monorail_project):

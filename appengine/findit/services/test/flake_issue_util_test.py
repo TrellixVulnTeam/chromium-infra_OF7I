@@ -906,7 +906,7 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
 
   @mock.patch.object(
       time_util,
-      'GetDateDaysBeforeNow',
+      'GetDatetimeBeforeNow',
       return_value=datetime.datetime(2019, 1, 28))
   @mock.patch.object(flake_issue_util, 'GetAndUpdateMergedIssue')
   def testGetFlakeGroupsForActionsOnBugs(self, mock_get_merged_issue, _):
@@ -1455,7 +1455,7 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
 
   @mock.patch.object(
       time_util,
-      'GetDateDaysBeforeNow',
+      'GetDatetimeBeforeNow',
       return_value=datetime.datetime(2019, 1, 1))
   def testIsFlakeIssueActionable(self, _):
     flake_issue = FlakeIssue.Create('chromium', 12367)

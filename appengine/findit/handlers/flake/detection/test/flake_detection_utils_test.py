@@ -23,7 +23,7 @@ class FlakeDetectionUtilsTest(WaterfallTestCase):
 
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2018, 1, 3))
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2017, 12, 27))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2017, 12, 27))
   def testGetFlakeInformation(self, *_):
     flake_issue = FlakeIssue.Create(monorail_project='chromium', issue_id=900)
     flake_issue.last_updated_time_by_flake_detection = datetime(2018, 1, 1)
@@ -358,7 +358,7 @@ class FlakeDetectionUtilsTest(WaterfallTestCase):
 
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2019, 1, 3))
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2018, 12, 27))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2018, 12, 27))
   def testGetFlakeInformationOldFlakes(self, *_):
     flake_issue = FlakeIssue.Create(monorail_project='chromium', issue_id=900)
     flake_issue.last_updated_time_by_flake_detection = datetime(2018, 1, 1)
@@ -692,7 +692,7 @@ class FlakeDetectionUtilsTest(WaterfallTestCase):
 
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2018, 1, 3))
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2017, 12, 27))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2017, 12, 27))
   def testGetFlakeInformationClosedIssue(self, *_):
     flake_issue = FlakeIssue.Create(monorail_project='chromium', issue_id=900)
     flake_issue.last_updated_time_by_flake_detection = datetime(2018, 1, 1)
@@ -815,7 +815,7 @@ class FlakeDetectionUtilsTest(WaterfallTestCase):
 
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2018, 1, 3))
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2017, 12, 27))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2017, 12, 27))
   def testGetFlakeInformationNoIssue(self, *_):
 
     luci_project = 'chromium'

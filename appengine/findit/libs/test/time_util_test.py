@@ -154,9 +154,14 @@ class TimeUtilTest(unittest.TestCase):
 
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime(2017, 4, 27, 8, 0, 0))
-  def testGetDateDaysFromNowBefore(self, _):
+  def testGetDatetimeBeforeNow(self, _):
     self.assertEqual(
-        datetime(2017, 4, 26, 8, 0, 0), time_util.GetDateDaysBeforeNow(days=1))
+        datetime(2017, 4, 26, 8, 0, 0), time_util.GetDatetimeBeforeNow(days=1))
+    self.assertEqual(
+        datetime(2017, 4, 27, 7, 0, 0), time_util.GetDatetimeBeforeNow(hours=1))
+    self.assertEqual(
+        datetime(2017, 4, 26, 7, 0, 0),
+        time_util.GetDatetimeBeforeNow(days=1, hours=1))
 
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime(2018, 4, 27, 8, 0, 0))

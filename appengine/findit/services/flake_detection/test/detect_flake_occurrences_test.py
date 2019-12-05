@@ -288,7 +288,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
     patcher.start()
 
   @mock.patch.object(
-      time_util, 'GetDateDaysBeforeNow', return_value=datetime(2019, 1, 1))
+      time_util, 'GetDatetimeBeforeNow', return_value=datetime(2019, 1, 1))
   def testUpdateTestLocationAndTagsRecentlyUpdated(self, _):
     flake = Flake(
         normalized_test_name='suite.test',
