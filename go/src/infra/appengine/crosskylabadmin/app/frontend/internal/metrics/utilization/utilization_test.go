@@ -22,6 +22,8 @@ import (
 
 	"go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/tsmon"
+
+	"infra/libs/skylab/inventory"
 )
 
 func TestReportMetrics(t *testing.T) {
@@ -103,3 +105,39 @@ func TestReportMetrics(t *testing.T) {
 
 	})
 }
+
+func TestReportServerMetrics(t *testing.T) {
+	Convey("with fake tsmon context", t, func() {
+		ctx := context.Background()
+		ctx, _ = tsmon.WithDummyInMemory(ctx)
+
+		Convey("Happy path", func() {
+			ReportServerMetrics(ctx, []*inventory.Server{
+				{
+					Hostname:    strPtr("devserver1"),
+					Environment: inventory.Environment_ENVIRONMENT_PROD.Enum(),
+					Roles:       []inventory.Server_Role{inventory.Server_ROLE_DEVSERVER, inventory.Server_ROLE_SKYLAB_DRONE},
+					Status:      inventory.Server_STATUS_PRIMARY.Enum(),
+				},
+				{
+					Hostname:    strPtr("devserver2"),
+					Environment: inventory.Environment_ENVIRONMENT_PROD.Enum(),
+					Roles:       []inventory.Server_Role{inventory.Server_ROLE_DEVSERVER},
+					Status:      inventory.Server_STATUS_PRIMARY.Enum(),
+				},
+				{
+					Hostname:    strPtr("skylab_drone1"),
+					Environment: inventory.Environment_ENVIRONMENT_PROD.Enum(),
+					Roles:       []inventory.Server_Role{inventory.Server_ROLE_SKYLAB_DRONE},
+					Status:      inventory.Server_STATUS_PRIMARY.Enum(),
+				},
+			})
+
+			So(serverMetric.Get(ctx, "devserver1", "ENVIRONMENT_PROD", "[Multiple]", "STATUS_PRIMARY"), ShouldEqual, 1)
+			So(serverMetric.Get(ctx, "devserver2", "ENVIRONMENT_PROD", "ROLE_DEVSERVER", "STATUS_PRIMARY"), ShouldEqual, 1)
+			So(serverMetric.Get(ctx, "skylab_drone1", "ENVIRONMENT_PROD", "ROLE_SKYLAB_DRONE", "STATUS_PRIMARY"), ShouldEqual, 1)
+		})
+	})
+}
+
+func strPtr(s string) *string { return &s }

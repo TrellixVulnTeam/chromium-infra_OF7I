@@ -47,12 +47,32 @@ var inventoryMetric = metric.NewInt(
 	field.String("environment"),
 )
 
+var serverMetric = metric.NewInt(
+	"chromeos/skylab/inventory/server_count",
+	"The number of servers in a given bucket",
+	nil,
+	field.String("hostname"),
+	field.String("environment"),
+	field.String("role"),
+	field.String("status"),
+)
+
 // ReportInventoryMetrics reports the inventory metrics to monarch.
 func ReportInventoryMetrics(ctx context.Context, duts []*inventory.DeviceUnderTest) {
 	logging.Infof(ctx, "report inventory metrics for %d duts", len(duts))
 	c := make(inventoryCounter)
 	for _, d := range duts {
 		b := getBucketForDUT(d)
+		c[b]++
+	}
+	c.Report(ctx)
+}
+
+// ReportServerMetrics reports the servers metrics to monarch.
+func ReportServerMetrics(ctx context.Context, servers []*inventory.Server) {
+	c := make(serverCounter)
+	for _, d := range servers {
+		b := getBucketForServer(d)
 		c[b]++
 	}
 	c.Report(ctx)
@@ -65,7 +85,14 @@ func (c inventoryCounter) Report(ctx context.Context) {
 	}
 }
 
+func (c serverCounter) Report(ctx context.Context) {
+	for b, count := range c {
+		serverMetric.Set(ctx, int64(count), b.hostname, b.environment, b.role, b.status)
+	}
+}
+
 type inventoryCounter map[bucket]int
+type serverCounter map[serverBucket]int
 
 func getBucketForDUT(d *inventory.DeviceUnderTest) bucket {
 	b := bucket{
@@ -85,6 +112,24 @@ func getBucketForDUT(d *inventory.DeviceUnderTest) bucket {
 	pools = append(pools, l.GetSelfServePools()...)
 	b.pool = getReportPool(pools)
 	b.environment = d.GetCommon().GetEnvironment().String()
+	return b
+}
+
+func getBucketForServer(s *inventory.Server) serverBucket {
+	b := serverBucket{
+		hostname:    "[None]",
+		environment: "[None]",
+		role:        "[None]",
+		status:      "[None]",
+	}
+	b.hostname = s.GetHostname()
+	b.environment = s.GetEnvironment().String()
+	var roles []string
+	for _, r := range s.GetRoles() {
+		roles = append(roles, r.String())
+	}
+	b.role = summarizeValues(roles)
+	b.status = s.GetStatus().String()
 	return b
 }
 
@@ -116,6 +161,17 @@ type bucket struct {
 
 func (b bucket) String() string {
 	return fmt.Sprintf("board: %s, model: %s, pool: %s, env: %s", b.board, b.model, b.pool, b.environment)
+}
+
+// serverBucket contains static server dimensions.
+//
+// role & status follows definition:
+// https://chromium.git.corp.google.com/infra/infra//+/caab71d0f852c760b0a0c5238d8edf699527f922/go/src/infra/libs/skylab/inventory/server.proto#12
+type serverBucket struct {
+	hostname    string
+	environment string
+	role        string
+	status      string
 }
 
 // status is a dynamic DUT dimension.
