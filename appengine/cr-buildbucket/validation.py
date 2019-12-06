@@ -321,8 +321,7 @@ def validate_update_build_request(req, build_steps=None):
 
   # Check build values, if present in the mask.
   with _enter('build'):
-    with _enter('id'):
-      _check_truth(req.build.id)
+    _check_truth(req.build, 'id')
 
     if 'build.status' in update_paths:
       if req.build.status not in UPDATE_BUILD_STATUSES:
@@ -561,6 +560,7 @@ def _validate_paged_request(req):
 
 def _check_truth(msg, *field_names):
   """Validates that the field values are truish."""
+  assert field_names, 'at least 1 field is required'
   for f in field_names:
     if not getattr(msg, f):
       _enter_err(f, 'required')
