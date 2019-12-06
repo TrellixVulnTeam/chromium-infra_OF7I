@@ -320,6 +320,8 @@ func getStableVersionImpl(ctx context.Context, buildTarget string, model string,
 }
 
 // getStableVersionImplNoHostname returns stableversion information given a buildTarget and model
+// TODO(gregorynisbet): Consider under what circumstances an error leaving this function
+// should be considered transient or non-transient.
 func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, model string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for buildTarget: (%s) and model: (%s)", buildTarget, model)
 	var err error
@@ -332,27 +334,34 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 	}
 	out.FaftVersion, err = dssv.GetFaftStableVersion(ctx, buildTarget, model)
 	if err != nil {
-		logging.Infof(ctx, "faft stable version does not exist: %v", err)
+		logging.Infof(ctx, "faft stable version does not exist: (%#v)", err)
 	}
 	out.FirmwareVersion, err = dssv.GetFirmwareStableVersion(ctx, buildTarget, model)
 	if err != nil {
 		merr = append(merr, err)
 	}
 	if len(merr) != 0 {
-		return nil, merr
+		// TODO(gregorynisbet): Consider a different error handling strategy.
+		// Wrap the error so it's non-transient.
+		logging.Infof(ctx, "getStableVersionImplNoHostname: errors (%#v)", merr)
+		return nil, fmt.Errorf("getStableVersionImplNoHostname: errors (%s)", merr)
 	}
 	return out, nil
 }
 
 // getStableVersionImplWithHostname return stable version information given just a hostname
+// TODO(gregorynisbet): Consider under what circumstances an error leaving this function
+// should be considered transient or non-transient.
 func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for given hostname (%s)", hostname)
 	var err error
 
 	dut, err := getDUT(ctx, hostname)
 	if err != nil {
-		logging.Infof(ctx, "failed to get DUT: %v", err)
-		return nil, errors.Annotate(err, "failed to get DUT").Err()
+		logging.Infof(ctx, "failed to get DUT: (%#v)", err)
+		// TODO(gregorynisbet): Consider a different error handling strategy.
+		// Wrap the error so it's non-transient.
+		return nil, fmt.Errorf("failed to get DUT (%s)", err)
 	}
 
 	buildTarget := dut.GetCommon().GetLabels().GetBoard()
@@ -360,16 +369,25 @@ func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fl
 
 	out, err := getStableVersionImplNoHostname(ctx, buildTarget, model)
 	if err != nil {
-		return nil, errors.Annotate(err, "get stable version for DUT itself").Err()
+		// TODO(gregorynisbet): Consider a different error handling strategy.
+		// Wrap the error so it's non-transient.
+		logging.Infof(ctx, "failed to get stable version info: (%#v)", err)
+		return nil, fmt.Errorf("failed to get stable version info (%s)", err)
 	}
 
 	servoHostHostname, err := getServoHostHostname(dut)
 	if err != nil {
-		return nil, errors.Annotate(err, "getting hostname of servohost").Err()
+		// TODO(gregorynisbet): Consider a different error handling strategy.
+		// Wrap the error so it's non-transient.
+		logging.Infof(ctx, "getting hostname of servohost (%#v)", err)
+		return nil, fmt.Errorf("getting hostname of servohost (%s)", err)
 	}
 	servoStableVersion, err := getCrosVersionFromServoHost(ctx, servoHostHostname)
 	if err != nil {
-		return nil, errors.Annotate(err, "getting cros version from servo host").Err()
+		// TODO(gregorynisbet): Consider a different error handling strategy.
+		// Wrap the error so it's non-transient.
+		logging.Infof(ctx, "getting cros version from servo host (%#v)", err)
+		return nil, fmt.Errorf("getting cros version from servo host (%s)", err)
 	}
 	out.ServoCrosVersion = servoStableVersion
 
