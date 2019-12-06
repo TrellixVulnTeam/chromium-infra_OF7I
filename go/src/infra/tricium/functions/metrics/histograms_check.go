@@ -383,9 +383,11 @@ func processExpiryDateDiff(inputDate time.Time, dateType expiryDateType, comment
 	if dateDiff <= 0 {
 		*commentMessage = pastExpiryWarning
 		*logMessage = "[WARNING]: Expiry in past"
-	} else if dateDiff >= 380 {
-		// Use a threshold of 380 to give users a 2-week grace period for
-		// expiry dates past 1 year.
+	} else if dateDiff >= 400 {
+		// Use a threshold of 400 days to give users a 1-month grace period for
+		// expiry dates past 1 year. It's common for a developer to e.g. bump an
+		// expiry date from December 1, 2019 to December 1, 2020, and to do so about
+		// a month before the histogram would actually expire.
 		*commentMessage = farExpiryWarning
 		*logMessage = "[WARNING]: Expiry past one year"
 	}
