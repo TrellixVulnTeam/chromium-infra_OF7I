@@ -2175,7 +2175,8 @@ class FeaturesService(object):
 
   def TestAddHotlist(self, name, summary='', owner_ids=None, editor_ids=None,
                      follower_ids=None, description=None, hotlist_id=None,
-                     is_private=False, hotlist_item_fields=None):
+                     is_private=False, hotlist_item_fields=None,
+                     default_col_spec=None):
     """Add a hotlist to the fake FeaturesService object.
 
     Args:
@@ -2190,6 +2191,7 @@ class FeaturesService(object):
       is_private: A boolean indicating whether the hotlist is private/public
       hotlist_item_fields: a list of tuples ->
         [(issue_id, rank, adder_id, date_added, note),...]
+      default_col_spec: string of default columns for the hotlist.
 
     Returns:
       A populated hotlist PB.
@@ -2199,6 +2201,7 @@ class FeaturesService(object):
     hotlist_pb.name = name
     hotlist_pb.summary = summary
     hotlist_pb.is_private = is_private
+    hotlist_pb.default_col_spec = default_col_spec
     if description is not None:
       hotlist_pb.description = description
 
@@ -2261,7 +2264,8 @@ class FeaturesService(object):
     return self.TestAddHotlist(hotlist_name, summary=summary,
                                owner_ids=owner_ids, editor_ids=editor_ids,
                                description=description, is_private=is_private,
-                               hotlist_item_fields=hotlist_item_fields)
+                               hotlist_item_fields=hotlist_item_fields,
+                               default_col_spec=default_col_spec)
 
   def UpdateHotlist(self, cnxn, hotlist_id, name=None, summary=None,
                     description=None, is_private=None, default_col_spec=None):

@@ -11,8 +11,7 @@ import "api/api_proto/common.proto";
 import "api/api_proto/issue_objects.proto";
 
 
-// TODO(jojwang): add editors and followers
-// Next available tag: 8
+// Next available tag: 9
 message Hotlist {
   UserRef owner_ref = 1;
   repeated UserRef editor_refs = 5;
@@ -21,6 +20,7 @@ message Hotlist {
   string summary = 3;
   string description = 4;
   string default_col_spec = 7;
+  bool is_private = 8;
 }
 
 

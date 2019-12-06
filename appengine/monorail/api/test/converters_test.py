@@ -87,8 +87,9 @@ class ConverterFunctionsTest(unittest.TestCase):
         field_type=tracker_pb2.FieldTypes.ENUM_TYPE,
         applicable_type='', approval_id=self.fd_3.field_id)
 
-    self.services.user.TestAddUser('owner@example.com', 111)
-    self.services.user.TestAddUser('editor@example.com', 222)
+    self.user_1 = self.services.user.TestAddUser('one@example.com', 111)
+    self.user_2 = self.services.user.TestAddUser('two@example.com', 222)
+    self.user_3 = self.services.user.TestAddUser('banned@example.com', 333)
     self.issue_1 = fake.MakeTestIssue(
         789, 1, 'sum', 'New', 111, project_name='proj')
     self.issue_2 = fake.MakeTestIssue(
@@ -2124,22 +2125,32 @@ class ConverterFunctionsTest(unittest.TestCase):
 
   def testConvertHotlist(self):
     """We can convert a hotlist to protoc."""
-    hotlist = testing_helpers.Blank(
-        owner_ids=[111],
-        editor_ids=[222],
-        follower_ids=[333],
-        name='Fake-Hotlist',
-        summary='A fake hotlist.',
-        description='Detailed description of the fake hotlist.')
+    hotlist = fake.Hotlist(
+        'Fake-hotlist', 123, is_private=True,
+        owner_ids=[self.user_1.user_id], editor_ids=[self.user_2.user_id],
+        follower_ids=[self.user_3.user_id])
+    hotlist.summary = 'A fake hotlist.'
+    hotlist.description = 'Detailed description of the fake hotlist.'
+    hotlist.default_col_spec = 'cows tho'
     actual = converters.ConvertHotlist(hotlist, self.users_by_id)
-    self.assertEqual(111, actual.owner_ref.user_id)
-    self.assertEqual(222, actual.editor_refs[0].user_id)
-    self.assertEqual(333, actual.follower_refs[0].user_id)
-    self.assertEqual('one@example.com', actual.owner_ref.display_name)
-    self.assertEqual('Fake-Hotlist', actual.name)
-    self.assertEqual('A fake hotlist.', actual.summary)
-    self.assertEqual(
-        'Detailed description of the fake hotlist.', actual.description)
+    self.assertEqual(actual,
+                     features_objects_pb2.Hotlist(
+                         name=hotlist.name,
+                         summary=hotlist.summary,
+                         description=hotlist.description,
+                         default_col_spec=hotlist.default_col_spec,
+                         is_private=hotlist.is_private,
+                         owner_ref=common_pb2.UserRef(
+                             display_name=self.user_1.email,
+                             user_id=self.user_1.user_id),
+                         editor_refs=[common_pb2.UserRef(
+                             display_name=self.user_2.email,
+                             user_id=self.user_2.user_id)],
+                         follower_refs=[common_pb2.UserRef(
+                             display_name=testing_helpers.ObscuredEmail(
+                                 self.user_3.email),
+                             user_id=self.user_3.user_id)]))
+
 
   def testConvertHotlistItem(self):
     """We can convert a HotlistItem to protoc."""

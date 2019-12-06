@@ -1063,7 +1063,10 @@ def ConvertHotlist(hotlist, users_by_id):
       follower_refs=follower_refs,
       name=hotlist.name,
       summary=hotlist.summary,
-      description=hotlist.description)
+      description=hotlist.description,
+      default_col_spec=hotlist.default_col_spec,
+      is_private=hotlist.is_private,
+  )
   return result
 
 

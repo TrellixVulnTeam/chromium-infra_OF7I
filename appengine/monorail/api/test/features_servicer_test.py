@@ -433,10 +433,12 @@ class FeaturesServicerTest(unittest.TestCase):
     hotlists = [
         self.services.features.CreateHotlist(
             self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
-            owner_ids=[self.user2.user_id], editor_ids=[self.user1.user_id]),
+            owner_ids=[self.user2.user_id], editor_ids=[self.user1.user_id],
+            default_col_spec='chicken'),
         self.services.features.CreateHotlist(
             self.cnxn, 'Fake-Hotlist-2', 'Summary', 'Description',
-            owner_ids=[self.user1.user_id], editor_ids=[self.user2.user_id]),
+            owner_ids=[self.user1.user_id], editor_ids=[self.user2.user_id],
+            default_col_spec='honk'),
         self.services.features.CreateHotlist(
             self.cnxn, 'Private-Hotlist', 'Summary', 'Description',
             owner_ids=[self.user3.user_id], editor_ids=[self.user2.user_id],
@@ -462,7 +464,9 @@ class FeaturesServicerTest(unittest.TestCase):
                 display_name=self.user1.email)],
             name='Fake-Hotlist',
             summary='Summary',
-            description='Description'),
+            description='Description',
+            is_private=False,
+            default_col_spec='chicken'),
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
                 user_id=self.user1.user_id,
@@ -472,7 +476,9 @@ class FeaturesServicerTest(unittest.TestCase):
                 display_name=testing_helpers.ObscuredEmail(self.user2.email))],
             name='Fake-Hotlist-2',
             summary='Summary',
-            description='Description')]
+            description='Description',
+            is_private=False,
+            default_col_spec='honk')]
 
     # We don't have permission to see the last issue, because it is marked as
     # private and we're not owners or editors.
@@ -489,15 +495,17 @@ class FeaturesServicerTest(unittest.TestCase):
     hotlists = [
         self.services.features.CreateHotlist(
             self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
-            owner_ids=[self.user2.user_id], editor_ids=[self.user1.user_id]),
+            owner_ids=[self.user2.user_id], editor_ids=[self.user1.user_id],
+            default_col_spec='cow chicken'),
         self.services.features.CreateHotlist(
             self.cnxn, 'Fake-Hotlist-2', 'Summary', 'Description',
             owner_ids=[self.user1.user_id],
-            editor_ids=[self.user2.user_id, self.user3.user_id]),
+            editor_ids=[self.user2.user_id, self.user3.user_id],
+            default_col_spec=''),
         self.services.features.CreateHotlist(
             self.cnxn, 'Private-Hotlist', 'Summary', 'Description',
             owner_ids=[self.user3.user_id], editor_ids=[self.user2.user_id],
-            is_private=True)]
+            is_private=True, default_col_spec='chicken')]
 
     for hotlist in hotlists:
       self.services.hotlist_star.SetStar(
@@ -519,7 +527,9 @@ class FeaturesServicerTest(unittest.TestCase):
                 display_name=self.user1.email)],
             name='Fake-Hotlist',
             summary='Summary',
-            description='Description'),
+            description='Description',
+            is_private=False,
+            default_col_spec='cow chicken'),
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
                 user_id=self.user1.user_id,
@@ -535,7 +545,8 @@ class FeaturesServicerTest(unittest.TestCase):
                         self.user3.email))],
             name='Fake-Hotlist-2',
             summary='Summary',
-            description='Description')]
+            description='Description',
+            is_private=False)]
 
     # We don't have permission to see the last issue, because it is marked as
     # private and we're not owners or editors.
@@ -622,7 +633,8 @@ class FeaturesServicerTest(unittest.TestCase):
   def testGetHotlist(self):
     hotlist = self.services.features.CreateHotlist(
         self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
-        owner_ids=[self.user3.user_id], editor_ids=[self.user4.user_id])
+        owner_ids=[self.user3.user_id], editor_ids=[self.user4.user_id],
+        is_private=True, default_col_spec='corgi butts')
 
     owner_ref = common_pb2.UserRef(user_id=self.user3.user_id)
     hotlist_ref = common_pb2.HotlistRef(
@@ -646,7 +658,9 @@ class FeaturesServicerTest(unittest.TestCase):
               display_name=self.user4.email)],
           name=hotlist.name,
           summary=hotlist.summary,
-          description=hotlist.description))
+          description=hotlist.description,
+          default_col_spec='corgi butts',
+          is_private=True))
 
   def testGetHotlist_BadInput(self):
     hotlist_ref = common_pb2.HotlistRef()
