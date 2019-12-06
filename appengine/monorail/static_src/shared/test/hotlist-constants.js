@@ -8,6 +8,10 @@ export const hotlistExample = {
     displayName: 'example@example.com',
   },
   name: 'Hotlist-Name',
+  summary: 'Summary',
+  description: 'Description',
+  defaultColSpec: 'Rank ID Summary',
+  isPrivate: false,
 };
 
 export const hotlistRefExample = {

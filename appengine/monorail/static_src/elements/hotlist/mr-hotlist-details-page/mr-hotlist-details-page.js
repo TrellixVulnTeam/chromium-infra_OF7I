@@ -47,7 +47,7 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
         <h1>Hotlist Defaults</h1>
         <dl>
           <dt>Default columns shown in list view</dt>
-          <dd></dd>
+          <dd>${this.hotlist.defaultColSpec}</dd>
         </dl>
       </section>
 
@@ -55,9 +55,13 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
         <h1>Hotlist Access</h1>
         <dl>
           <dt>Who can view this hotlist</dt>
-          <dd></dd>
+          <dd>
+            ${this.hotlist.isPrivate ?
+              'Members only' : 'Anyone on the Internet'}
+          </dd>
         </dl>
-        <p>Individual issues in the list can only be seen by users who can
+        <p>
+          Individual issues in the list can only be seen by users who can
           normally see them. The privacy status of an issue is considered
           when it is being displayed (or not displayed) in a hotlist.
       </section>

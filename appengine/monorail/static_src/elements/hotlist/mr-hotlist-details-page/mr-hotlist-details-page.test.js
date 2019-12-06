@@ -24,10 +24,18 @@ describe('mr-hotlist-details-page', () => {
 
   it('shows loading message with null hotlist', async () => {
     await element.updateComplete;
+    assert.include(element.shadowRoot.innerHTML, 'Loading');
   });
 
   it('renders hotlist', async () => {
     element.hotlist = hotlistExample;
     await element.updateComplete;
+  });
+
+  it('renders private hotlist', async () => {
+    element.hotlist = hotlistExample;
+    element.hotlist.isPrivate = true;
+    await element.updateComplete;
+    assert.include(element.shadowRoot.innerHTML, 'Members only');
   });
 });

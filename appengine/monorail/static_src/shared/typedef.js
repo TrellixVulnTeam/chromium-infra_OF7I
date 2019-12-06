@@ -41,6 +41,8 @@
  * @property {string} [name]
  * @property {string} [summary]
  * @property {string} [description]
+ * @property {string} [defaultColSpec]
+ * @property {boolean} [isPrivate]
  */
 
 /**
