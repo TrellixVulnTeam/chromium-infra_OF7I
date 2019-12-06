@@ -346,13 +346,13 @@ class FlakeReportUtilTest(WaterfallTestCase):
 
     expected_wrong_result_link = (
         'https://bugs.chromium.org/p/chromium/issues/entry?status=Unconfirmed&'
-        'labels=Pri-1,Test-Flake-Detection-Wrong&'
+        'labels=Pri-1,Test-Flake-Detection-Wrong,Type-Bug&'
         'components=Infra%3ETest%3EFlakiness&'
         'summary=Flake%20Detection%20-%20Wrong%20'
         'result%3A%20test&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org'
-        '/p/chromium/flake-portal/flakes/occurrences?key={}').format(
-            flake.key.urlsafe())
+        '/p/chromium/flake-portal/flakes/occurrences?key={}%0A%0AWhat is wrong?'
+        '%0A%0A').format(flake.key.urlsafe())
 
     expected_description = textwrap.dedent("""
 test_label is flaky.
@@ -485,13 +485,13 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
 
     expected_wrong_result_link = (
         'https://bugs.chromium.org/p/chromium/issues/entry?status=Unconfirmed&'
-        'labels=Pri-1,Test-Flake-Detection-Wrong'
+        'labels=Pri-1,Test-Flake-Detection-Wrong,Type-Bug'
         '&components=Infra%3ETest%3EFlakiness'
         '&summary=Flake%20Detection%20-%20Wrong%20'
         'result%3A%20test&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org'
-        '/p/chromium/flake-portal/flakes/occurrences?key={}').format(
-            flake.key.urlsafe())
+        '/p/chromium/flake-portal/flakes/occurrences?key={}%0A%0AWhat is wrong?'
+        '%0A%0A').format(flake.key.urlsafe())
 
     sheriff_queue_message = (
         'Since these tests are still flaky, this issue has been moved back onto'

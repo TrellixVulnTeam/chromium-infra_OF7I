@@ -95,10 +95,11 @@ of all flake occurrences can be found at:
 
 _FLAKE_DETECTION_WRONG_RESULTS_BUG_LINK = (
     'https://bugs.chromium.org/p/chromium/issues/entry?'
-    'status=Unconfirmed&labels=Pri-1,Test-Flake-Detection-Wrong&'
+    'status=Unconfirmed&labels=Pri-1,Test-Flake-Detection-Wrong,Type-Bug&'
     'components=Infra%3ETest%3EFlakiness&'
     'summary=Flake%20Detection%20-%20Wrong%20result%3A%20'
-    '{summary}&comment=Link%20to%20flake%20details%3A%20{flake_link}')
+    '{summary}&comment=Link%20to%20flake%20details%3A%20{flake_link}'
+    '%0A%0AWhat is wrong?%0A%0A')
 
 _FLAKE_DETECTION_PREVIOUS_TRACKING_BUG = (
     '\nThis flaky test was previously tracked in bug {}.\n')
