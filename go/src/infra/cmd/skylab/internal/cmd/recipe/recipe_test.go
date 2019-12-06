@@ -22,7 +22,7 @@ func TestRequest(t *testing.T) {
 		Image:                      "foo-image",
 		Model:                      "foo-model",
 		Pool:                       "foo-pool",
-		TestPlan:                   NewTestPlanForAutotestTests("foo-args", "foo-test-1", "foo-test-2"),
+		TestPlan:                   NewTestPlanForAutotestTests("foo-arg1=val1 foo-arg2=val2", "foo-test-1", "foo-test-2"),
 		Timeout:                    30 * time.Minute,
 		Keyvals:                    map[string]string{"k1": "v1"},
 		FreeformSwarmingDimensions: []string{"freeform-key:freeform-value"},
@@ -80,8 +80,8 @@ func TestRequest(t *testing.T) {
 		},
 		TestPlan: &test_platform.Request_TestPlan{
 			Test: []*test_platform.Request_Test{
-				{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "foo-test-1", TestArgs: "foo-args"}}},
-				{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "foo-test-2", TestArgs: "foo-args"}}},
+				{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "foo-test-1", TestArgs: "foo-arg1=val1 foo-arg2=val2"}}},
+				{Harness: &test_platform.Request_Test_Autotest_{Autotest: &test_platform.Request_Test_Autotest{Name: "foo-test-2", TestArgs: "foo-arg1=val1 foo-arg2=val2"}}},
 			},
 		},
 	}
