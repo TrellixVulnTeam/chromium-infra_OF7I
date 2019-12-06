@@ -18,7 +18,7 @@ package inventory
 
 import (
 	"fmt"
-	"regexp"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -41,10 +41,6 @@ import (
 	"infra/appengine/crosskylabadmin/app/frontend/internal/metrics/utilization"
 	"infra/libs/skylab/inventory"
 )
-
-var labstationPattern = regexp.MustCompile(`\A.*labstation\z`)
-
-var servoV3Pattern = regexp.MustCompile(`\A.*-servo\z`)
 
 const beagleboneServo = "beaglebone_servo"
 
@@ -432,7 +428,7 @@ func getDUT(ctx context.Context, hostname string) (*inventory.DeviceUnderTest, e
 // getCrosVersionFromServoHost returns the cros version associated with a particular servo host
 // hostname : hostname of the servo host (e.g. labstation)
 func getCrosVersionFromServoHost(ctx context.Context, hostname string) (string, error) {
-	if labstationPattern.MatchString(hostname) {
+	if strings.Contains(hostname, "labstation") {
 		logging.Infof(ctx, "getCrosVersionFromServoHost: identified labstation servohost hostname (%s)", hostname)
 		dut, err := getDUT(ctx, hostname)
 		if err != nil {
@@ -448,7 +444,7 @@ func getCrosVersionFromServoHost(ctx context.Context, hostname string) (string, 
 		}
 		return out, nil
 	}
-	if servoV3Pattern.MatchString(hostname) {
+	if strings.Contains(hostname, "servo") {
 		logging.Infof(ctx, "getCrosVersionFromServoHost: identified beaglebone servohost hostname (%s)", hostname)
 		out, err := dssv.GetCrosStableVersion(ctx, beagleboneServo)
 		if err != nil {
