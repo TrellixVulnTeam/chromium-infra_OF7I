@@ -95,6 +95,6 @@ describe('findDeepEventTarget', () => {
       done();
     });
 
-    target.dispatchEvent(new Event('shadow-root'));
+    target.dispatchEvent(new Event('shadow-root', {bubbles: true}));
   });
 });

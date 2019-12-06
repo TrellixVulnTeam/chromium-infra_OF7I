@@ -271,7 +271,7 @@ describe('userIsMember', () => {
   });
 });
 
-describe.only('createObjectComparisonFunc', () => {
+describe('createObjectComparisonFunc', () => {
   it('returns a function', () => {
     const result = createObjectComparisonFunc(new Set());
     assert.instanceOf(result, Function);
