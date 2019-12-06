@@ -6,11 +6,23 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {store, connectStore} from 'reducers/base.js';
+import {createObjectComparisonFunc} from 'shared/helpers.js';
 import * as issue from 'reducers/issue.js';
+import * as sitewide from 'reducers/sitewide.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import './mr-grid-controls.js';
 import './mr-grid.js';
 
+/**
+ * Set of query parameters properties that should trigger refetch
+ * @type {Set<string>}
+ */
+export const refetchTriggeringProps = new Set(['q', 'can']);
+
+/**
+ * Checks two objects are not equal based on a set of property keys.
+ */
+const compareProps = createObjectComparisonFunc(refetchTriggeringProps);
 /**
  * <mr-grid-page>
  *
@@ -27,7 +39,7 @@ export class MrGridPage extends connectStore(LitElement) {
       <div id="grid-area">
         <mr-grid-controls
           .projectName=${this.projectName}
-          .queryParams=${this.queryParams}
+          .queryParams=${this._queryParams}
           .issueCount=${this.issues.length}>
         </mr-grid-controls>
         ${noMatches ? html`
@@ -42,10 +54,10 @@ export class MrGridPage extends connectStore(LitElement) {
         <br>
         <mr-grid
           .issues=${this.issues}
-          .xField=${this.queryParams.x}
-          .yField=${this.queryParams.y}
-          .cellMode=${this.queryParams.cells ? this.queryParams.cells : 'tiles'}
-          .queryParams=${this.queryParams}
+          .xField=${this._queryParams.x}
+          .yField=${this._queryParams.y}
+          .cellMode=${this._queryParams.cells ? this._queryParams.cells : 'tiles'}
+          .queryParams=${this._queryParams}
           .projectName=${this.projectName}
         ></mr-grid>
       </div>
@@ -57,7 +69,7 @@ export class MrGridPage extends connectStore(LitElement) {
     return {
       projectName: {type: String},
       issueEntryUrl: {type: String},
-      queryParams: {type: Object},
+      _queryParams: {type: Object},
       userDisplayName: {type: String},
       issues: {type: Array},
       fields: {type: Array},
@@ -73,7 +85,7 @@ export class MrGridPage extends connectStore(LitElement) {
     this.progress = 0;
     /** @type {string} */
     this.projectName;
-    this.queryParams = {};
+    this._queryParams = {};
   };
 
   /** @override */
@@ -83,21 +95,32 @@ export class MrGridPage extends connectStore(LitElement) {
     }
     // TODO(zosha): Abort sets of calls to ListIssues when
     // queryParams.q is changed.
-    if (changedProperties.has('projectName')) {
+    if (this._shouldFetchMatchingIssues(changedProperties)) {
       this._fetchMatchingIssues();
-    } else if (changedProperties.has('queryParams')) {
-      const oldParams = changedProperties.get('queryParams');
-      const oldQ = oldParams ? oldParams.q : '';
-      const newQ = this.queryParams.q;
-      if (oldQ !== newQ) {
-        this._fetchMatchingIssues();
-      }
     }
+  }
+
+  /**
+   * Computes whether to fetch matching issues based on changedProperties
+   * @param {Map} changedProperties
+   * @return {Boolean}
+   */
+  _shouldFetchMatchingIssues(changedProperties) {
+    if (changedProperties.has('projectName')) {
+      return true;
+    }
+    if (changedProperties.has('_queryParams')) {
+      return compareProps(
+          this._queryParams,
+          changedProperties.get('_queryParams'));
+    }
+
+    return false;
   }
 
   /** @private */
   _fetchMatchingIssues() {
-    store.dispatch(issue.fetchIssueList(this.queryParams,
+    store.dispatch(issue.fetchIssueList(this._queryParams,
         this.projectName, {maxItems: 500}, 12));
   }
 
@@ -106,6 +129,7 @@ export class MrGridPage extends connectStore(LitElement) {
     this.issues = (issue.issueList(state) || []);
     this.progress = (issue.issueListProgress(state) || 0);
     this.totalIssues = (issue.totalIssues(state) || 0);
+    this._queryParams = sitewide.queryParams(state);
   }
 
   /** @override */

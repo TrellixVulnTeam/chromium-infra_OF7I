@@ -1,7 +1,9 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import MrChart from 'elements/issue-list/mr-chart/mr-chart.js';
+import MrChart, {
+  subscribedQuery,
+} from 'elements/issue-list/mr-chart/mr-chart.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 let element;
@@ -470,6 +472,23 @@ describe('mr-chart', () => {
         const expectedGroupBy = {value: '', display: 'None'};
         assert.deepEqual(MrChart.getGroupByFromQuery(input), expectedGroupBy);
       });
+    });
+  });
+
+  describe('subscribedQuery', () => {
+    it('includes start and end date', () => {
+      assert.isTrue(subscribedQuery.has('start-date'));
+      assert.isTrue(subscribedQuery.has('start-date'));
+    });
+
+    it('includes groupby and labelprefix', () => {
+      assert.isTrue(subscribedQuery.has('groupby'));
+      assert.isTrue(subscribedQuery.has('labelprefix'));
+    });
+
+    it('includes q and can', () => {
+      assert.isTrue(subscribedQuery.has('q'));
+      assert.isTrue(subscribedQuery.has('can'));
     });
   });
 });

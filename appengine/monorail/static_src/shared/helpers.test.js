@@ -5,7 +5,7 @@
 import {assert} from 'chai';
 import {arrayDifference, setHasAny, hasPrefix, objectToMap, objectValuesForKeys,
   equalsIgnoreCase, immutableSplice, userIsMember,
-  urlWithNewParams} from './helpers.js';
+  urlWithNewParams, createObjectComparisonFunc} from './helpers.js';
 
 
 describe('arrayDifference', () => {
@@ -268,5 +268,76 @@ describe('userIsMember', () => {
     assert.isFalse(userIsMember({userId: '123'}, 'chromium', new Map([
       ['543', {ownerOf: ['chromium']}],
     ])));
+  });
+});
+
+describe.only('createObjectComparisonFunc', () => {
+  it('returns a function', () => {
+    const result = createObjectComparisonFunc(new Set());
+    assert.instanceOf(result, Function);
+  });
+
+  describe('returned function', () => {
+    it('returns false if both inputs are undefined', () => {
+      const comparableProps = new Set(['a', 'b', 'c']);
+      const func = createObjectComparisonFunc(comparableProps);
+      const result = func(undefined, undefined);
+
+      assert.isFalse(result);
+    });
+
+    it('returns true if only one inputs is undefined', () => {
+      const comparableProps = new Set(['a', 'b', 'c']);
+      const func = createObjectComparisonFunc(comparableProps);
+      const result = func({}, undefined);
+
+      assert.isTrue(result);
+    });
+
+    it('returns false if both inputs are null', () => {
+      const comparableProps = new Set(['a', 'b', 'c']);
+      const func = createObjectComparisonFunc(comparableProps);
+      const result = func(null, null);
+
+      assert.isFalse(result);
+    });
+
+    it('returns true if only one inputs is null', () => {
+      const comparableProps = new Set(['a', 'b', 'c']);
+      const func = createObjectComparisonFunc(comparableProps);
+      const result = func({}, null);
+
+      assert.isTrue(result);
+    });
+
+    it('returns true if any comparable property is different', () => {
+      const comparableProps = new Set(['a', 'b', 'c']);
+      const func = createObjectComparisonFunc(comparableProps);
+      const a = {a: 1, b: 2, c: 3};
+      const b = {a: 1, b: 2, c: '3'};
+      const result = func(a, b);
+
+      assert.isTrue(result);
+    });
+
+    it('returns false if all comparable properties are the same', () => {
+      const comparableProps = new Set(['a', 'b', 'c']);
+      const func = createObjectComparisonFunc(comparableProps);
+      const a = {a: 1, b: 2, c: 3};
+      const b = {a: 1, b: 2, c: 3};
+      const result = func(a, b);
+
+      assert.isFalse(result);
+    });
+
+    it('ignores non-comparable properties', () => {
+      const comparableProps = new Set(['a', 'b', 'c']);
+      const func = createObjectComparisonFunc(comparableProps);
+      const a = {a: 1, b: 2, c: 3, d: 4};
+      const b = {a: 1, b: 2, c: 3, d: 'not four', e: 'exists'};
+      const result = func(a, b);
+
+      assert.isFalse(result);
+    });
   });
 });

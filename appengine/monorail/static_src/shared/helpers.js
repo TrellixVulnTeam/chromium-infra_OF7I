@@ -124,8 +124,8 @@ export function urlWithNewParams(baseUrl = '',
  *  for {ownerOf, memberOf, contributorTo}.
  * @return {boolean} whether the user is a member of the project or not.
  */
-// TODO(crbug.com/monorail/5968): Find a better place for this function to live.
 export function userIsMember(userRef, projectName, usersProjects = new Map()) {
+  // TODO(crbug.com/monorail/5968): Find a better place to place this function
   if (!userRef || !userRef.userId || !projectName) return false;
   const userProjects = usersProjects.get(userRef.userId);
   if (!userProjects) return false;
@@ -133,4 +133,34 @@ export function userIsMember(userRef, projectName, usersProjects = new Map()) {
   return ownerOf.includes(projectName) ||
     memberOf.includes(projectName) ||
     contributorTo.includes(projectName);
+}
+
+/**
+ * Creates a function that checks two objects are not equal
+ * based on a set of property keys
+ *
+ * @param {Set<string>} props
+ * @return {function(): boolean}
+ */
+export function createObjectComparisonFunc(props) {
+  /**
+   * Computes whether set of properties have changed
+   * @param {Object<string, string>} newVal
+   * @param {Object<string, string>} oldVal
+   * @return {boolean}
+   */
+  return function(newVal, oldVal) {
+    if (oldVal === undefined && newVal === undefined) {
+      return false;
+    } else if (oldVal === undefined || newVal === undefined) {
+      return true;
+    } else if (oldVal === null && newVal === null) {
+      return false;
+    } else if (oldVal === null || newVal === null) {
+      return true;
+    }
+
+    return Array.from(props)
+        .some((propName) => newVal[propName] !== oldVal[propName]);
+  };
 }

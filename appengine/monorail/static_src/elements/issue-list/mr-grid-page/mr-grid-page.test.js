@@ -4,7 +4,7 @@
 
 import {assert} from 'chai';
 import sinon from 'sinon';
-import {MrGridPage} from './mr-grid-page.js';
+import {MrGridPage, refetchTriggeringProps} from './mr-grid-page.js';
 
 let element;
 
@@ -44,13 +44,45 @@ describe('mr-grid-page', () => {
   it('calls to fetchIssueList made when q changes', async () => {
     await element.updateComplete;
     const issueListCall = sinon.stub(element, '_fetchMatchingIssues');
-    element.queryParams = {x: 'Blocked'};
+    element._queryParams = {x: 'Blocked'};
     await element.updateComplete;
     sinon.assert.notCalled(issueListCall);
 
-    element.queryParams = {q: 'cc:me'};
+    element._queryParams = {q: 'cc:me'};
     await element.updateComplete;
     sinon.assert.calledOnce(issueListCall);
+  });
+
+  describe('refetchTriggeringProps', () => {
+    it('includes q and can', () => {
+      assert.isTrue(refetchTriggeringProps.has('q'));
+      assert.isTrue(refetchTriggeringProps.has('can'));
+    });
+  });
+
+  describe('_shouldFetchMatchingIssues', () => {
+    it('default returns false', () => {
+      const result = element._shouldFetchMatchingIssues(new Map());
+      assert.isFalse(result);
+    });
+
+    it('returns true for projectName', () => {
+      const changedProps = new Map();
+      changedProps.set('projectName', 'anything');
+      const result = element._shouldFetchMatchingIssues(changedProps);
+      assert.isTrue(result);
+    });
+
+    it('depends on _queryParam\'s q and can when _queryParams changes', () => {
+      const changedProps = new Map();
+      changedProps.set('_queryParams', {can: '1'});
+      let result = element._shouldFetchMatchingIssues(changedProps);
+      assert.isTrue(result);
+
+      changedProps.set('_queryParams', {q: 'anything'});
+      result = element._shouldFetchMatchingIssues(changedProps);
+      assert.isTrue(result);
+    });
   });
 });
 

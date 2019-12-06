@@ -9,7 +9,7 @@ import page from 'page';
 import {prpcClient} from 'prpc-client-instance.js';
 import {linearRegression} from 'shared/math.js';
 import './chops-chart.js';
-import {urlWithNewParams} from 'shared/helpers.js';
+import {urlWithNewParams, createObjectComparisonFunc} from 'shared/helpers.js';
 
 const DEFAULT_NUM_DAYS = 90;
 const SECONDS_IN_DAY = 24 * 60 * 60;
@@ -74,7 +74,7 @@ const BG_COLOR_CHOICES = ['#B2EBF2', '#EF9A9A', '#C8E6C9', '#B2DFDB',
  * mr-app lowercases all query parameters before putting into store.
  * @type {Set<string>}
  */
-const subscribedQuery = new Set([
+export const subscribedQuery = new Set([
   'start-date',
   'end-date',
   'groupby',
@@ -83,23 +83,7 @@ const subscribedQuery = new Set([
   'can',
 ]);
 
-/**
- * Computes whether subscribed query parameters have changed
- * ie: don't care if mode, col, or y changes
- * @param {Object<string, string>} newVal
- * @param {Object<string, string>} oldVal
- * @return {boolean}
- */
-export function queryParamsHaveChanged(newVal, oldVal) {
-  if (oldVal === undefined && newVal === undefined) {
-    return false;
-  } else if (oldVal === undefined || newVal === undefined) {
-    return true;
-  }
-
-  return Array.from(subscribedQuery)
-      .some((propName) => newVal[propName] !== oldVal[propName]);
-}
+const queryParamsHaveChanged = createObjectComparisonFunc(subscribedQuery);
 
 /**
  * `<mr-chart>`
