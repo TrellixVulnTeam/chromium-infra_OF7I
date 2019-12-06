@@ -29,9 +29,10 @@ def has_custom_build(name):
 
 
 def pip(*args, **kwargs):
-  bin_dir = 'Scripts' if sys.platform.startswith('win') else 'bin'
+  bin_dir = '' if sys.platform.startswith('win') else 'bin'
   subprocess.check_call(
-      (os.path.join(sys.prefix, bin_dir, 'pip'),) + args, **kwargs)
+      (os.path.join(sys.prefix, bin_dir, 'python'), '-m', 'pip') + args,
+      **kwargs)
 
 
 def wheel(arg, source_sha, build, build_options):
@@ -109,8 +110,7 @@ def process_gs(name, sha_ext, build, build_options):
   with tempname(ext) as tmp:
     link = 'file://' + tmp
     subprocess.check_call([
-        sys.executable, GSUTIL, '--force-version', '4.7', 'cp',
-        SOURCE_URL.format(sha_ext), tmp])
+        'vpython', GSUTIL, 'cp', SOURCE_URL.format(sha_ext), tmp])
     with open(tmp, 'rb') as f:
       assert hashlib.sha1(f.read()).hexdigest() == sha
     if not has_custom_build(name):

@@ -212,11 +212,10 @@
     ],
     'implicit': True,  # Required by apache_beam
   },
-  'httplib2': {
-    'version': '0.9',
-    'build': '0',
-    'repo': 'external/github.com/jcgregorio/httplib2',
-    'rev': '7d1b88a3cf34774242bf4c0578c09c0092bb05d8',
+  "httplib2": {
+    "build": "0",
+    "gs": "dbdffdcbe920eca7b57ec62671c8be0e68b08ac3.tar.gz",
+    "version": "0.14.0"
   },
   'idna': {
     'version': '2.1',
