@@ -13,6 +13,7 @@ import (
 	"google.golang.org/appengine"
 
 	"infra/appengine/cros/lab_inventory/app/config"
+	"infra/appengine/cros/lab_inventory/app/cron"
 	"infra/appengine/cros/lab_inventory/app/frontend"
 )
 
@@ -26,6 +27,7 @@ func main() {
 	// Install auth, config and tsmon handlers.
 	standard.InstallHandlers(r)
 	frontend.InstallHandlers(r, mwBase)
+	cron.InstallHandlers(r, mwBase)
 
 	config.SetupValidation()
 

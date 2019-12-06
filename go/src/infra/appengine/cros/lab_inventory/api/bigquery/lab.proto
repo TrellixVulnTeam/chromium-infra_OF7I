@@ -1,0 +1,17 @@
+// Copyright 2019 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package apibq;
+
+import "google/protobuf/timestamp.proto";
+import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
+
+message LabInventory {
+    string id = 1;
+    string hostname = 2;
+    lab.ChromeOSDevice device = 3;
+    google.protobuf.Timestamp updated_time = 4;
+}
