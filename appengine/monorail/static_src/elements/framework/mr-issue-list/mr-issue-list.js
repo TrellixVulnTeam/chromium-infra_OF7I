@@ -15,7 +15,7 @@ import 'elements/framework/mr-star-button/mr-star-button.js';
 import {issueRefToUrl, issueRefToString, issueStringToRef,
   issueToIssueRef, issueToIssueRefString,
   labelRefsToOneWordLabels} from 'shared/converters.js';
-import {isTextInput} from 'shared/dom-helpers.js';
+import {isTextInput, findDeepEventTarget} from 'shared/dom-helpers.js';
 import {urlWithNewParams, pluralize, setHasAny,
   objectValuesForKeys} from 'shared/helpers.js';
 import {parseColSpec,
@@ -643,7 +643,8 @@ export class MrIssueList extends connectStore(LitElement) {
       this._lastSelectedCheckbox = -1;
     }
 
-    const valuesByColumnArgs = ['issues', 'columns', '_extractFieldValuesFromIssue'];
+    const valuesByColumnArgs = ['issues', 'columns',
+      '_extractFieldValuesFromIssue'];
     if (setHasAny(changedProperties, valuesByColumnArgs)) {
       this._uniqueValuesByColumn = this._computeUniqueValuesByColumn(
           ...objectValuesForKeys(this, valuesByColumnArgs));
@@ -897,12 +898,15 @@ export class MrIssueList extends connectStore(LitElement) {
 
   /**
    * Run issue list hot keys. This event handler needs to be bound globally
+   * because a list cursor can be defined even when no element in the list is
+   * focused.
    * @param {KeyboardEvent} e
    */
   _runListHotKeys(e) {
     if (!this.issues || !this.issues.length) return;
-    const target = e.path ? e.path[0] : e.target;
+    const target = findDeepEventTarget(e);
     if (!target || isTextInput(target)) return;
+
     const key = e.key;
 
     const activeRow = this._getCursorElement();
@@ -1127,7 +1131,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * @param {boolean} [openNewTab] Forces opening in a new tab
    */
   _maybeOpenIssueRow(rowEvent, openNewTab = false) {
-    const path = rowEvent.path || rowEvent.composedPath();
+    const path = rowEvent.composedPath();
     const containsIgnoredElement = path.find(
         (node) => (node.tagName || '').toUpperCase() === 'A' ||
         (node.classList && node.classList.contains('ignore-navigation')));

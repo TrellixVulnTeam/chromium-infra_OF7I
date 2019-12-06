@@ -39,3 +39,23 @@ export function isTextInput(element) {
   return tagName === 'SELECT' || tagName === 'TEXTAREA' ||
     element.isContentEditable;
 }
+
+/**
+ * Helper to find the EventTarget that an Event originated from, even if that
+ * EventTarget is buried until multiple layers of ShadowDOM.
+ *
+ * @param {Event} event
+ * @return {EventTarget} The DOM node that the event came from. For example,
+ *   if the input was a keypress, this might be the input element the user was
+ *   typing into.
+ */
+export function findDeepEventTarget(event) {
+  /**
+   * Event.target finds the element the event came from, but only
+   * finds events that come from the highest ShadowDOM level. For
+   * example, an Event listener attached to "window" will have all
+   * Events originating from the SPA set to a target of <mr-app>.
+   */
+  const path = event.composedPath();
+  return path ? path[0] : event.target;
+}

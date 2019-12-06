@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {isTextInput} from './dom-helpers.js';
+import {isTextInput, findDeepEventTarget} from './dom-helpers.js';
 
 describe('isTextInput', () => {
   it('returns true for select', () => {
@@ -66,5 +66,35 @@ describe('isTextInput', () => {
     assert.isFalse(isTextInput(document.createElement('href')));
     assert.isFalse(isTextInput(document.createElement('random-elment')));
     assert.isFalse(isTextInput(document.createElement('p')));
+  });
+});
+
+describe('findDeepEventTarget', () => {
+  it('returns empty for event without target', () => {
+    const event = new Event('whatsup');
+    assert.isUndefined(findDeepEventTarget(event));
+  });
+
+  it('returns target for event with target', (done) => {
+    const element = document.createElement('div');
+    element.addEventListener('hello', (e) => {
+      assert.deepEqual(findDeepEventTarget(e), element);
+      done();
+    });
+    element.dispatchEvent(new Event('hello'));
+  });
+
+  it('returns target for event coming from shadowRoot', (done) => {
+    const target = document.createElement('button');
+    const parent = document.createElement('div');
+    parent.appendChild(target);
+    parent.attachShadow({mode: 'open'});
+
+    parent.addEventListener('shadow-root', (e) => {
+      assert.deepEqual(findDeepEventTarget(e), target);
+      done();
+    });
+
+    target.dispatchEvent(new Event('shadow-root'));
   });
 });
