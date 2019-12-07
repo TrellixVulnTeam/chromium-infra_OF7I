@@ -306,12 +306,12 @@ UPDATE_BUILD_STATUSES = {
 }
 
 
-def validate_update_build_request(req, build_steps=None):
+def validate_update_build_request(req, make_build_steps_func=None):
   """Validates rpc_pb2.UpdateBuildRequest.
 
-  build_steps is prepared model.BuildSteps corresponding to req.build.steps.
-  If None, then validate_update_build_request will serialize potentially large
-  req.build.steps.
+  If make_build_steps_func is given, it will be called at the end to validate
+  the size of the its serialized representation. This allows the callee to save
+  the BuildStep locally and thus avoid re-doing the work later.
   """
   update_paths = set(req.update_mask.paths)
   with _enter('update_mask', 'paths'):
@@ -344,7 +344,10 @@ def validate_update_build_request(req, build_steps=None):
 
     if 'build.steps' in update_paths:  # pragma: no branch
       with _enter('steps'):
-        build_steps = build_steps or model.BuildSteps.make(req.build)
+        build_steps = (
+            make_build_steps_func()
+            if make_build_steps_func else model.BuildSteps.make(req.build)
+        )
         limit = model.BuildSteps.MAX_STEPS_LEN
         if len(build_steps.step_container_bytes) > limit:
           _err('too big to accept')

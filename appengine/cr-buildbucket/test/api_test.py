@@ -364,6 +364,19 @@ class UpdateBuildTests(BaseTestCase):
     steps.read_steps(step_container)
     self.assertEqual(step_container.steps[0].status, common_pb2.CANCELED)
 
+  def test_empty_build_id(self):
+    req, ctx = self._mk_update_req(
+        build_pb2.Build(id=0, status=common_pb2.STARTED),
+        paths=['build.status'],
+    )
+    self.call(
+        self.api.UpdateBuild,
+        req,
+        ctx=ctx,
+        expected_code=prpc.StatusCode.INVALID_ARGUMENT,
+        expected_details='build.id: required'
+    )
+
   def test_empty_summary(self):
     build = test_util.build(
         id=123, status=common_pb2.STARTED, summary_markdown='ok'

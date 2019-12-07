@@ -334,9 +334,17 @@ def update_build_async(req, _res, ctx, _mask):
   now = utils.utcnow()
   logging.debug('updating build %d', req.build.id)
 
-  # Validate the request.
-  build_steps = model.BuildSteps.make(req.build)
-  validation.validate_update_build_request(req, build_steps)
+  # Validate the request. This requires serializing BuildSteps to check their
+  # size, so keep serialized BuildSteps to avoid re-doing the work later.
+  # Note that creating BuildSteps needs validated req.build first.
+  build_steps_holder = []
+
+  def _make_build_steps():
+    build_steps_holder.append(model.BuildSteps.make(req.build))
+    return build_steps_holder[0]
+
+  validation.validate_update_build_request(req, _make_build_steps)
+  build_steps = build_steps_holder[0] if build_steps_holder else None
 
   update_paths = set(req.update_mask.paths)
 
