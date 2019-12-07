@@ -19,7 +19,8 @@ def ci_builder(
       cpu=None,
       recipe=None,
       console_category=None,
-      properties=None
+      properties=None,
+      experimental=False,
   ):
   infra.builder(
       name = name,
@@ -29,7 +30,7 @@ def ci_builder(
       cpu = cpu,
       triggered_by = [infra.poller()],
       properties = properties,
-      gatekeeper_group = 'chromium.infra',
+      gatekeeper_group = '' if experimental else 'chromium.infra',
   )
   luci.console_view_entry(
       builder = name,
@@ -63,6 +64,8 @@ def try_builder(
 ci_builder(name = 'infra-continuous-zesty-64', os = 'Ubuntu-17.04')
 ci_builder(name = 'infra-continuous-yakkety-64', os = 'Ubuntu-16.10')
 ci_builder(name = 'infra-continuous-xenial-64', os = 'Ubuntu-16.04')
+ci_builder(name = 'infra-continuous-xenial-arm64', os = 'Ubuntu-16.04',
+           cpu = 'arm64', experimental = True)
 ci_builder(name = 'infra-continuous-trusty-64', os = 'Ubuntu-14.04')
 
 # CI OSX.
