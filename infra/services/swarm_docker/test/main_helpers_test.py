@@ -17,8 +17,12 @@ MAIN_HELPERS = 'infra.services.swarm_docker.main_helpers.'
 class TestMainHelpers(unittest.TestCase):
   def setUp(self):
     self.args = argparse.Namespace(
-        reboot_schedule=None, canary=False, image_name='swarm_docker:latest',
-        registry_project='mock-registry', max_container_uptime=240,
+        reboot_schedule=None,
+        canary=False,
+        docker_version='',
+        image_name='swarm_docker:latest',
+        registry_project='mock-registry',
+        max_container_uptime=240,
         reboot_grace_period=240)
 
   def testGetUptime(self):

@@ -73,20 +73,25 @@ def get_host_uptime():
   return uptime / 60
 
 
-def update_docker(canary, version='18.06.3~ce~3-0~ubuntu'):  # pragma: no cover
+def update_docker(canary, docker_version):  # pragma: no cover
   """Update the docker package prior to reboot.
 
   This will automatically keep the docker package up to date and running prior
   to reboot will ensure that no containers are running, so no disruptions. This
   will also remove older docker packages (docker-engine) automatically.
 
-  If the bot is a docker_canary, then the latest version of docker-ce will be
-  installed, otherwise the pinned version= version will be installed.
-
   Args:
       canary: (bool) If this is a canary host or not.
-      version: (str) The version of docker-ce to ensure is installed.
+      docker_version: (str) Docker package version to ensure is installed.
   """
+  package_with_version = 'docker-ce'
+  if canary:
+    # This will cause apt to install the latest version.
+    logging.info('Ensuring the latest version of docker-ce is installed.')
+  else:
+    package_with_version = 'docker-ce=%s' % docker_version
+    logging.info('Ensuring %s is installed.', package_with_version)
+
   # Not doing a lot of dpkg/apt-cache checking here as the runtime to just try
   # an install is only 1.1 seconds.
   try:
@@ -94,11 +99,6 @@ def update_docker(canary, version='18.06.3~ce~3-0~ubuntu'):  # pragma: no cover
   except subprocess.CalledProcessError:
     # We don't care enough to abort reboot here, only if install fails.
     logging.exception('Unable to apt-get update.')
-
-  if canary:
-    package_with_version = 'docker-ce'
-  else:
-    package_with_version = 'docker-ce=%s' % version
 
   try:
     subprocess.check_call(['/usr/bin/apt-get', 'install', '-y',
@@ -109,10 +109,11 @@ def update_docker(canary, version='18.06.3~ce~3-0~ubuntu'):  # pragma: no cover
   return True
 
 
-def reboot_host(canary=False, skip_update=False):  # pragma: no cover
-  if not skip_update and not update_docker(canary):
-    logging.warning('Not rebooting, something went wrong.')
-    return
+def reboot_host(canary=False, docker_version=''):  # pragma: no cover
+  if docker_version:
+    if not update_docker(canary, docker_version):
+      logging.warning('Not rebooting, something went wrong.')
+      return
 
   # This script runs as root.
   try:
@@ -170,7 +171,7 @@ def reboot_gracefully(args, running_containers):
           'Drain exceeds grace period of %d min. Rebooting host now '
           'despite %d running containers.', args.reboot_grace_period,
           len(running_containers))
-      reboot_host(args.canary)
+      reboot_host(args.canary, args.docker_version)
     else:
       logging.debug(
           'Still %d containers running. Shutting them down first.',
@@ -179,7 +180,7 @@ def reboot_gracefully(args, running_containers):
         c.kill_swarming_bot()
   else:
     logging.debug('No running containers. Rebooting host now.')
-    reboot_host(args.canary)
+    reboot_host(args.canary, args.docker_version)
   return True
 
 
@@ -234,7 +235,7 @@ def launch_containers(
       c.kill_swarming_bot()
     if rebooting_host and not running_containers:
       os.remove(BOT_REBOOT_FILE)
-      reboot_host(args.canary)
+      reboot_host(args.canary, args.docker_version)
   else:
     for cd in draining_container_descriptors:
       c = docker_client.get_container(cd)
@@ -308,6 +309,11 @@ def add_launch_arguments(parser):  # pragma: no cover
       '-c', '--canary', action='store_true', default=False,
       help='Run this as a canary bot.')
   parser.add_argument(
+      '--docker-version',
+      required=True,
+      help='REQUIRED: The docker-ce version to be ensured is installed (ex: '
+      '18.06.3~ce~3-0~ubuntu). These values are supplied by puppet.')
+  parser.add_argument(
       '--max-container-uptime', type=int, default=60 * 4,
       help='Max uptime of a container, in minutes.')
   parser.add_argument(
@@ -373,7 +379,7 @@ def main_wrapper():  # pragma: no cover
   except containers.FrozenEngineError:
     logging.exception('Docker engine frozen, triggering host reboot.')
     # Skipping updates since something is very wrong with docker here.
-    reboot_host(skip_update=True)
+    reboot_host()
   except Exception as e:
     logging.exception('Exception:')
     raise e
