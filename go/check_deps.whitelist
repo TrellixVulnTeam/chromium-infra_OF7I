@@ -43,7 +43,7 @@ github.com/gomodule/redigo/redis
 github.com/google/go-cmp/cmp
 github.com/gorhill/cronexpr
 github.com/julienschmidt/httprouter
-github.com/klauspost/compress/snappy
+github.com/klauspost/compress/zstd
 github.com/kr/pretty
 github.com/kylelemons/godebug/pretty
 github.com/mattes/migrate
