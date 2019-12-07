@@ -42,6 +42,7 @@ def ci_builder(
 def try_builder(
       name,
       os,
+      cpu=None,
       recipe=None,
       experiment_percentage=None,
       properties=None
@@ -51,6 +52,7 @@ def try_builder(
       bucket = 'try',
       executable = infra.recipe(recipe or 'infra_repo_trybot'),
       os = os,
+      cpu = cpu,
       properties = properties,
   )
   luci.cq_tryjob_verifier(
@@ -95,6 +97,8 @@ ci_builder(
 
 # All trybots.
 try_builder(name = 'infra-try-xenial-64', os = 'Ubuntu-16.04')
+try_builder(name = 'infra-try-xenial-arm64', os = 'Ubuntu-16.04', cpu = 'arm64',
+            experiment_percentage=100)
 try_builder(name = 'infra-try-trusty-64', os = 'Ubuntu-14.04')
 try_builder(name = 'infra-try-mac', os = 'Mac-10.13')
 try_builder(name = 'infra-try-win', os = 'Windows')
