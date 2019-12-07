@@ -17,14 +17,13 @@ import (
 
 // Info contains information about the current Swarming bot.
 type Info struct {
-	AdminService           string
-	AutotestPath           string
-	DUTID                  string
-	LuciferBinDir          string
-	ParserPath             string
-	SwarmingService        string
-	IsolateOutputDirectory string
-	Task                   Task
+	AdminService    string
+	AutotestPath    string
+	DUTID           string
+	LuciferBinDir   string
+	ParserPath      string
+	SwarmingService string
+	Task            Task
 }
 
 // GetInfo returns the Info for the current Swarming bot, built from
@@ -42,17 +41,14 @@ type Info struct {
 // Per-task variables:
 //
 //   SWARMING_TASK_ID: task id of the swarming task being serviced.
-//   ISOLATED_OUTDIR: path to tempdir which will have its contents offloaded to
-//    Isolate. Small tree built within it for separating client and platform results.
 func GetInfo() *Info {
 	return &Info{
-		AdminService:           os.Getenv("ADMIN_SERVICE"),
-		AutotestPath:           os.Getenv("AUTOTEST_DIR"),
-		DUTID:                  os.Getenv("SKYLAB_DUT_ID"),
-		LuciferBinDir:          os.Getenv("LUCIFER_TOOLS_DIR"),
-		ParserPath:             os.Getenv("PARSER_PATH"),
-		SwarmingService:        os.Getenv("SWARMING_SERVICE"),
-		IsolateOutputDirectory: os.Getenv("ISOLATED_OUTDIR"),
+		AdminService:    os.Getenv("ADMIN_SERVICE"),
+		AutotestPath:    os.Getenv("AUTOTEST_DIR"),
+		DUTID:           os.Getenv("SKYLAB_DUT_ID"),
+		LuciferBinDir:   os.Getenv("LUCIFER_TOOLS_DIR"),
+		ParserPath:      os.Getenv("PARSER_PATH"),
+		SwarmingService: os.Getenv("SWARMING_SERVICE"),
 		Task: Task{
 			RunID: os.Getenv("SWARMING_TASK_ID"),
 		},
@@ -70,11 +66,6 @@ func (b *Info) LuciferConfig() lucifer.Config {
 		AutotestPath: b.AutotestPath,
 		BinDir:       b.LuciferBinDir,
 	}
-}
-
-// LogDataDir returns the path to the log-data output directory used by the bot task.
-func (b *Info) LogDataDir() string {
-	return filepath.Join(b.IsolateOutputDirectory, "client")
 }
 
 // ResultsDir returns the path to the results directory used by the bot task.
