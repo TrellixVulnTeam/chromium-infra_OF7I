@@ -158,6 +158,7 @@ func (is *ServerImpl) ReportInventory(ctx context.Context, req *fleet.ReportInve
 		return nil, err
 	}
 	utilization.ReportInventoryMetrics(ctx, duts)
+	utilization.ReportServerMetrics(ctx, store.Infrastructure.GetServers())
 	return &fleet.ReportInventoryResponse{}, nil
 }
 

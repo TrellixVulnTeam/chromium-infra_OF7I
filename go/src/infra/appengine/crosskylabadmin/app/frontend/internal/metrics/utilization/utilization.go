@@ -70,6 +70,7 @@ func ReportInventoryMetrics(ctx context.Context, duts []*inventory.DeviceUnderTe
 
 // ReportServerMetrics reports the servers metrics to monarch.
 func ReportServerMetrics(ctx context.Context, servers []*inventory.Server) {
+	logging.Infof(ctx, "report inventory metrics for %d servers", len(servers))
 	c := make(serverCounter)
 	for _, d := range servers {
 		b := getBucketForServer(d)
@@ -87,6 +88,7 @@ func (c inventoryCounter) Report(ctx context.Context) {
 
 func (c serverCounter) Report(ctx context.Context) {
 	for b, count := range c {
+		logging.Infof(ctx, "bucket: %s, number: %d", b.String(), count)
 		serverMetric.Set(ctx, int64(count), b.hostname, b.environment, b.role, b.status)
 	}
 }
@@ -172,6 +174,10 @@ type serverBucket struct {
 	environment string
 	role        string
 	status      string
+}
+
+func (b serverBucket) String() string {
+	return fmt.Sprintf("hostname: %s, env: %s, role: %s, status: %s", b.hostname, b.environment, b.role, b.status)
 }
 
 // status is a dynamic DUT dimension.
