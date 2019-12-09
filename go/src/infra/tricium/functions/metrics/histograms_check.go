@@ -50,7 +50,7 @@ const (
 	removedHistogramError    = `[ERROR] Do not delete histograms from histograms.xml. Instead, mark unused histograms as obsolete and annotate them with the date or milestone in the <obsolete> tag entry: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries.`
 	addedNamespaceWarning    = `[WARNING] Are you sure you want to add the namespace %s to histograms.xml? For most new histograms, it's appropriate to re-use one of the existing top-level histogram namespaces. For histogram names, the namespace is defined as everything preceding the first dot '.' in the name.`
 	singleElementEnumWarning = `[WARNING] It looks like this is an enumerated histogram that contains only a single bucket. UMA metrics are difficult to interpret in isolation, so please either add one or more additional buckets that can serve as a baseline for comparison, or document what other metric should be used as a baseline during analysis. https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#enum-histograms.`
-	changeMilestoneExpiry    = ` For expiry dates this far into the future, it is recommended that you use a date rather than a milestone, as the date will be easier to reason about.`
+	changeMilestoneExpiry    = `[WARNING] For expiry dates this far into the future, it is recommended that you use a date rather than a milestone, as the date will be easier to reason about.`
 )
 
 var (
