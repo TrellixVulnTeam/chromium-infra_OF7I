@@ -306,9 +306,9 @@ export function issueStringToRef(defaultProjectName, idStr) {
  * @throws {UserInputError} If the IssueRef string is invalidly formatted
  *   or if the issue is equivalent to the linked issue.
  */
-// TODO(zhangtiff): Consider simplifying this helper function to only validate
-// that an issue does not block itself rather than also doing string parsing.
 export function issueStringToBlockingRef(projectName, localId, idStr) {
+  // TODO(zhangtiff): Consider simplifying this helper function to only validate
+  // that an issue does not block itself rather than also doing string parsing.
   const result = issueStringToRef(projectName, idStr);
   if (result.projectName === projectName && result.localId === localId) {
     throw new UserInputError(
@@ -380,6 +380,8 @@ export function issueToIssueRefString(issue, projectName) {
  * @return {string} The URL for the issue's page as a relative path.
  */
 export function issueRefToUrl(ref, queryParams = {}) {
+  const queryParamsCopy = {...queryParams};
+
   if (!ref) return '';
 
   if (ref.extIdentifier) {
@@ -392,10 +394,10 @@ export function issueRefToUrl(ref, queryParams = {}) {
   }
 
   let paramString = '';
-  if (Object.keys(queryParams).length) {
-    delete queryParams.id;
+  if (Object.keys(queryParamsCopy).length) {
+    delete queryParamsCopy.id;
 
-    paramString = `&${qs.stringify(queryParams)}`;
+    paramString = `&${qs.stringify(queryParamsCopy)}`;
   }
 
   return `/p/${ref.projectName}/issues/detail?id=${ref.localId}${paramString}`;

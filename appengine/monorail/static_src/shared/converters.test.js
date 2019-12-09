@@ -261,6 +261,14 @@ describe('issueRefToUrl', () => {
       extIdentifier: 'b/5678',
     }), 'https://issuetracker.google.com/issues/5678');
   });
+
+  it.only('does not mutate input queryParams', () => {
+    const queryParams = {q: 'owner:me', id: 44};
+    const EXPECTED = JSON.stringify(queryParams);
+    const ref = {projectName: 'test', localId: 11};
+    issueRefToUrl(ref, queryParams);
+    assert.equal(EXPECTED, JSON.stringify(queryParams));
+  });
 });
 
 describe('commentListToDescriptionList', () => {
