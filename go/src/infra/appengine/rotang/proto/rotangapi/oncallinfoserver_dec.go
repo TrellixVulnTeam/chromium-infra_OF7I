@@ -73,3 +73,20 @@ func (s *DecoratedOncallInfo) Shifts(ctx context.Context, req *ShiftsRequest) (r
 	}
 	return
 }
+
+func (s *DecoratedOncallInfo) MigrationInfo(ctx context.Context, req *MigrationInfoRequest) (rsp *MigrationInfoResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "MigrationInfo", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.MigrationInfo(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "MigrationInfo", rsp, err)
+	}
+	return
+}

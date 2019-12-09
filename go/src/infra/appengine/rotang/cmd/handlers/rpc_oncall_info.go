@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"infra/appengine/rotang"
+	"infra/appengine/rotang/pkg/algo"
 
 	apb "infra/appengine/rotang/proto/rotangapi"
 )
@@ -84,6 +85,94 @@ func (h *State) ListRotations(ctx context.Context, _ *apb.ListRotationsRequest) 
 	return &apb.ListRotationsResponse{
 		Rotations: res,
 	}, nil
+}
+
+// MigrationInfo returns information used for migrating a rotation to G3 oncall.
+func (h *State) MigrationInfo(ctx context.Context, req *apb.MigrationInfoRequest) (*apb.MigrationInfoResponse, error) {
+	if req.GetName() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "rotation name is required")
+	}
+	cfgs, err := h.configStore(ctx).RotaConfig(ctx, req.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cfgs) != 1 {
+		return nil, status.Errorf(codes.Internal, "RotaConfig did not return 1 configuration, got: %d", len(cfgs))
+	}
+
+	cfg := cfgs[0]
+
+	if !isOwner(ctx, cfg) {
+		return nil, status.Errorf(codes.PermissionDenied, "not an owner of rotation: %q", req.GetName())
+	}
+
+	var tzConsider bool
+	if !cfg.Config.External {
+		gen, err := h.generators.Fetch(cfg.Config.Shifts.Generator)
+		if err != nil {
+			return nil, err
+		}
+		tzConsider = gen.TZConsider()
+	}
+
+	shifts, err := h.Shifts(ctx, &apb.ShiftsRequest{
+		Name:  req.GetName(),
+		Start: req.GetStart(),
+		End:   req.GetEnd(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := h.buildTZGroup(ctx, cfg, tzConsider)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apb.MigrationInfoResponse{
+		Name:       req.GetName(),
+		Calendar:   cfg.Config.Calendar,
+		Owners:     cfg.Config.Owners,
+		Members:    members,
+		Shifts:     shifts.GetShifts(),
+		TzConsider: tzConsider,
+	}, nil
+}
+
+// buildTZGroup groups members according to time-zone for time-zone aware generators.
+// For rotations not using time-zone aware rotations all members are put in a group named "default".
+func (h *State) buildTZGroup(ctx context.Context, cfg *rotang.Configuration, tz bool) ([]*apb.TZGroup, error) {
+	memberMap := make(map[string][]*rotang.Member)
+	memberStore := h.memberStore(ctx)
+	for _, m := range cfg.Members {
+		o, err := memberStore.Member(ctx, m.Email)
+		if err != nil {
+			return nil, err
+		}
+		if tz {
+			memberMap[algo.TimezoneGroup(o.TZ)] = append(memberMap[algo.TimezoneGroup(o.TZ)], o)
+			continue
+		}
+		memberMap["default"] = append(memberMap["default"], o)
+	}
+
+	var res []*apb.TZGroup
+	for k, v := range memberMap {
+		var ocs []*apb.OnCaller
+		for _, m := range v {
+			ocs = append(ocs, &apb.OnCaller{
+				Email: m.Email,
+				Name:  m.Name,
+				Tz:    m.TZ.String(),
+			})
+		}
+		res = append(res, &apb.TZGroup{
+			BusinessGroup: k,
+			Members:       ocs,
+		})
+	}
+	return res, nil
 }
 
 // Shifts returns a list of shift for the specified rotation and period.

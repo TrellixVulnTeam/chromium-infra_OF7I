@@ -20,6 +20,9 @@ service OncallInfo {
   // Shifts returns ShiftEntries for a specific time range.
   // Leaving times empty returns all shifts.
   rpc Shifts(ShiftsRequest) returns (ShiftsResponse) {}
+  // MigrationInfo returns ShiftEntries and members together with
+  // relevant rotation configuration.
+  rpc MigrationInfo(MigrationInfoRequest) returns(MigrationInfoResponse) {}
 }
 
 
@@ -82,6 +85,52 @@ message ShiftsRequest {
 // ShiftsResponse contains the shifts requested by ShiftsRequest.
 message ShiftsResponse {
   repeated ShiftEntry shifts = 1;
+}
+
+// MigrationsInfoRequest identifies the rotation information to fetch
+// along with a timerange for shifts of interest.
+message MigrationInfoRequest {
+  // name is a required field containing the rotation name of interest.
+  // Requester needs to be an owner of the requested rotation.
+  string name = 1;
+  // start contains the beginning of the time range of interest.
+  // Leaving this field empty will fetch shifts from the beginning
+  // of time.
+  google.protobuf.Timestamp start = 2;
+  // end contains the end of the time range of interest.
+  // Leaving this field empty will fetch shifts to the end of time.
+  google.protobuf.Timestamp end = 3;
+
+}
+
+// MigrationInfoResponse contain information needed for migrating a
+// RotaNG rotation to another scheduler.
+message MigrationInfoResponse {
+  string name = 1;
+  // The calendar currently configured for this rotation.
+  string calendar = 2;
+
+  // owners contain the email addresses of the rotation owners.
+  repeated string owners = 3;
+
+  // tz_consider indicates that this rotation is using a genarator
+  // that is TZ aware.
+  bool tz_consider = 4;
+
+  // members lists all members of the rotation.
+  repeated TZGroup members = 5;
+
+  // shifts lists shifts in the requested range.
+  repeated ShiftEntry shifts = 6;
+}
+
+// TZGroup represents a group of members in a particular business group.
+message TZGroup {
+  // business_group identifies the business group the members belong to.
+  // If the rotation don't use a timezone aware generator there will
+  // be a single group named "default".
+  string business_group = 1;
+  repeated OnCaller members = 2;
 }
 
 // Shift defines a shift configuration.
@@ -188,10 +237,10 @@ service MemberAdmin {
   // RotationMembers returns the members of a rotation together with when they were last OnCall and OOO information.
   // Owner permissions for the rotation is required.
   rpc RotationMembers(RotationMembersRequest) returns (RotationMembersResponse) {}
-	// MakeAllMembersOwners makes all rotation members part of the rotation Owners.
-	// In cases where the caller is an owner of a rotation but not a member the caller will be added
-	// to the owners along with all the members.
-	rpc MakeAllMembersOwners(MakeAllMembersOwnersRequest) returns (MakeAllMembersOwnersResponse) {}
+  // MakeAllMembersOwners makes all rotation members part of the rotation Owners.
+  // In cases where the caller is an owner of a rotation but not a member the caller will be added
+  // to the owners along with all the members.
+  rpc MakeAllMembersOwners(MakeAllMembersOwnersRequest) returns (MakeAllMembersOwnersResponse) {}
 }
 
 message RotationMembersRequest {
@@ -216,7 +265,7 @@ message OOO {
 }
 
 message MakeAllMembersOwnersRequest {
-	string name = 1;
+  string name = 1;
 }
 
 message MakeAllMembersOwnersResponse {
