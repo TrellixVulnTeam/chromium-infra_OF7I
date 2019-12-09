@@ -73,7 +73,7 @@ def get_host_uptime():
   return uptime / 60
 
 
-def update_docker(canary, docker_version):  # pragma: no cover
+def update_docker(canary, docker_version):
   """Update the docker package prior to reboot.
 
   This will automatically keep the docker package up to date and running prior
@@ -104,12 +104,13 @@ def update_docker(canary, docker_version):  # pragma: no cover
     subprocess.check_call(['/usr/bin/apt-get', 'install', '-y',
                            package_with_version])
   except subprocess.CalledProcessError:
-    logging.exception('Unable to install/upgrade docker-ce to %s.', version)
+    logging.exception('Unable to install/upgrade docker-ce to %s.',
+                      package_with_version)
     return False
   return True
 
 
-def reboot_host(canary=False, docker_version=''):  # pragma: no cover
+def reboot_host(canary=False, docker_version=''):
   if docker_version:
     if not update_docker(canary, docker_version):
       logging.warning('Not rebooting, something went wrong.')

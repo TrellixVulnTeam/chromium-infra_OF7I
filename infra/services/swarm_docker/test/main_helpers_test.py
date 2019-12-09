@@ -6,6 +6,7 @@ import argparse
 import mock
 import random
 import string
+import subprocess
 import unittest
 
 from infra.services.swarm_docker import main_helpers
@@ -80,3 +81,67 @@ class TestMainHelpers(unittest.TestCase):
       fuzzed_amount = main_helpers.fuzz_max_uptime(1200) - 1200
       self.assertGreaterEqual(fuzzed_amount, 0)
       self.assertLess(fuzzed_amount, 240)
+
+
+class TestUpdateDocker(unittest.TestCase):
+
+  @mock.patch.object(subprocess, 'check_call')
+  def test_update(self, mock_subprocess):
+    mock_subprocess.side_effect = [None, None]
+    self.assertTrue(main_helpers.update_docker(False, 'some-version-123'))
+    self.assertIn('docker-ce=some-version-123', mock_subprocess.call_args[0][0])
+
+  @mock.patch.object(subprocess, 'check_call')
+  def test_update_canary(self, mock_subprocess):
+    mock_subprocess.side_effect = [None, None]
+    self.assertTrue(main_helpers.update_docker(True, 'some-version-123'))
+    self.assertIn('docker-ce', mock_subprocess.call_args[0][0])
+    self.assertNotIn('docker-ce=some-version-123',
+                     mock_subprocess.call_args[0][0])
+
+  @mock.patch.object(subprocess, 'check_call')
+  def test_update_ignored_failure(self, mock_subprocess):
+    mock_subprocess.side_effect = [
+        subprocess.CalledProcessError(1, [], 'omg error'), None
+    ]
+    self.assertTrue(main_helpers.update_docker(False, 'some-version-123'))
+    self.assertIn('docker-ce=some-version-123', mock_subprocess.call_args[0][0])
+
+  @mock.patch.object(subprocess, 'check_call')
+  def test_update_failure(self, mock_subprocess):
+    mock_subprocess.side_effect = [
+        None, subprocess.CalledProcessError(1, [], 'omg error')
+    ]
+    self.assertFalse(main_helpers.update_docker(False, 'some-version-123'))
+
+
+class TestRebootHost(unittest.TestCase):
+
+  @mock.patch.object(subprocess, 'check_call')
+  @mock.patch.object(main_helpers, 'update_docker')
+  def test_reboot(self, mock_update, mock_subprocess):
+    main_helpers.reboot_host()
+    mock_update.assert_not_called()
+    mock_subprocess.assert_called()
+
+  @mock.patch.object(subprocess, 'check_call')
+  @mock.patch.object(main_helpers, 'update_docker')
+  def test_reboot_with_update(self, mock_update, mock_subprocess):
+    main_helpers.reboot_host(docker_version='some-version-123')
+    mock_update.assert_called()
+    mock_subprocess.assert_called()
+
+  @mock.patch.object(subprocess, 'check_call')
+  @mock.patch.object(main_helpers, 'update_docker')
+  def test_reboot_with_update_failure(self, mock_update, mock_subprocess):
+    mock_update.return_value = False
+    main_helpers.reboot_host(docker_version='some-version-123')
+    mock_update.assert_called()
+    mock_subprocess.assert_not_called()
+
+  @mock.patch.object(subprocess, 'check_call')
+  def test_reboot_failre(self, mock_subprocess):
+    mock_subprocess.side_effect = subprocess.CalledProcessError(
+        1, [], 'omg error')
+    main_helpers.reboot_host()
+    mock_subprocess.assert_called()
