@@ -1,0 +1,16 @@
+// Copyright 2019 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package apibq;
+
+import "google/protobuf/timestamp.proto";
+
+// Next Tag: 4
+message HWIDInventory {
+    string hwid = 1;
+    string sku = 2;
+    google.protobuf.Timestamp updated_time = 3;
+}
