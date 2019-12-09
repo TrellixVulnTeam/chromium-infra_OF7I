@@ -1,0 +1,23 @@
+package: infra/tools/rdb/${platform}
+description: ResultDB CLI
+platforms:
+  - linux-386
+  - linux-amd64
+  - linux-arm64
+  - linux-armv6l
+  - linux-mipsle
+  - linux-mips64
+  - linux-mips64le
+  - linux-ppc64
+  - linux-ppc64le
+  - linux-s390x
+  - mac-amd64
+  - windows-386
+  - windows-amd64
+go_packages:
+  - go.chromium.org/luci/resultdb/cmd/rdb
+install_mode: copy
+root: ../../go/bin
+data:
+  - file: rdb${exe_suffix}
+  - version_file: .versions/rdb${exe_suffix}.cipd_version
