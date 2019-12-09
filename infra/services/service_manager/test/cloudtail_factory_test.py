@@ -29,6 +29,10 @@ class CloudtailFactoryTest(unittest.TestCase):
       # Don't raise, as this may prevent from seeing actual test failure.
       logging.exception('failed to rmtree(%r)', self.tmpdir)
 
+  def _get_expected_local_log_file(self, counter=1):
+    return os.path.join(self.tmpdir, 'sm.%d.cloudtail.%d.log' % (
+        os.getpid(), counter))
+
   def test_start(self):
     fh = mock.Mock()
 
@@ -37,7 +41,8 @@ class CloudtailFactoryTest(unittest.TestCase):
 
     self.assertEqual(1, self.mock_popen.call_count)
     self.assertEqual(
-        ['/foo', 'pipe', '--log-id', 'log', '--local-log-level', 'info'],
+        ['/foo', 'pipe', '--log-id', 'log', '--local-log-level', 'info',
+         '--local-log-file', self._get_expected_local_log_file()],
         self.mock_popen.call_args[0][0])
 
     kwargs = self.mock_popen.call_args[1]
@@ -52,15 +57,10 @@ class CloudtailFactoryTest(unittest.TestCase):
     self.assertEqual(2, self.mock_popen.call_count)
     self.assertEqual(2, f._counter)
 
-    kwargs1 = self.mock_popen.call_args_list[0][1]
-    kwargs2 = self.mock_popen.call_args_list[1][1]
-    logging.debug('%s\n\n%s\n\n%s', self.mock_popen.call_args_list,
-        self.mock_popen.call_args_list[0], kwargs1)
-    base = os.path.join(self.tmpdir, 'sm.%d.cloudtail.' % os.getpid())
-    self.assertEqual(kwargs1['stdout'].name, base + '1.stdout')
-    self.assertEqual(kwargs1['stderr'].name, base + '1.stderr')
-    self.assertEqual(kwargs2['stdout'].name, base + '2.stdout')
-    self.assertEqual(kwargs2['stderr'].name, base + '2.stderr')
+    args1 = self.mock_popen.call_args_list[0][0][0]
+    args2 = self.mock_popen.call_args_list[1][0][0]
+    self.assertEqual(args1[-1], self._get_expected_local_log_file(counter=1))
+    self.assertEqual(args2[-1], self._get_expected_local_log_file(counter=2))
 
   def test_start_with_credentials(self):
     f = cloudtail_factory.CloudtailFactory('/foo', '/bar')
@@ -69,6 +69,7 @@ class CloudtailFactoryTest(unittest.TestCase):
     self.assertEqual(1, self.mock_popen.call_count)
     self.assertEqual(
         ['/foo', 'pipe', '--log-id', 'log', '--local-log-level', 'info',
+         '--local-log-file', self._get_expected_local_log_file(),
          '--ts-mon-credentials', '/bar'],
         self.mock_popen.call_args[0][0])
 
