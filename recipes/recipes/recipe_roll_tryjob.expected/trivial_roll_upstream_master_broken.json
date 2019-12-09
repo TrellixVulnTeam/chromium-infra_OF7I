@@ -445,6 +445,17 @@
   },
   {
     "cmd": [
+      "git",
+      "rebase",
+      "--autostash",
+      "refs/remotes/origin/master"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "rebase CL onto master"
+  },
+  {
+    "cmd": [
       "python",
       "-u",
       "[CACHE]/builder/depot_tools/depot_tools/some/path/recipes.py",

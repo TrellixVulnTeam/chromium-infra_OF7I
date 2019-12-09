@@ -91,6 +91,8 @@ EXTRA_MSG = {
   MANUAL_CHANGE_FOOTER: MANUAL_CHANGE_MSG,
 }
 
+MASTER_REF = 'refs/remotes/origin/master'
+
 
 class RecipeTrainingFailure(Exception):
   pass
@@ -152,12 +154,14 @@ class RecipesRepo(object):
     Assumes this repo is the repo for the CL.
     """
     assert self._cl_revision
-    return self.checkout(self._cl_revision, 'sync %s to CL' % self.name)
+    self.checkout(self._cl_revision, 'sync %s to CL' % self.name)
+    with self._api.context(cwd=self.root):
+      self._api.git(
+          'rebase', '--autostash', MASTER_REF, name='rebase CL onto master')
 
   def checkout_master(self):
     """Sync the repo to master."""
-    return self.checkout(
-        'refs/remotes/origin/master', 'sync %s to master' % self.name)
+    self.checkout(MASTER_REF, 'sync %s to master' % self.name)
 
   def checkout(self, checkout_ref, step_name):
     """Check out the specified ref."""
