@@ -227,10 +227,16 @@ export class MrApp extends connectStore(LitElement) {
     page('*', this._universalRouteHandler.bind(this));
     page('/p/:project/issues/list_new', this._loadListPage.bind(this));
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this));
-    page('/u/:user/hotlists/:hotlist/*', this._selectHotlist);
-    page('/u/:user/hotlists/:hotlist/details_new', this._loadHotlistDetailsPage.bind(this));
-    page('/u/:user/hotlists/:hotlist/issues_new', this._loadHotlistIssuesPage.bind(this));
-    page('/u/:user/hotlists/:hotlist/people_new', this._loadHotlistPeoplePage.bind(this));
+    page(
+        '/users/:user/hotlists/:hotlist',
+        this._selectHotlist, this._loadHotlistIssuesPage.bind(this));
+    page('/users/:user/hotlists/:hotlist/*', this._selectHotlist);
+    page(
+        '/users/:user/hotlists/:hotlist/details',
+        this._loadHotlistDetailsPage.bind(this));
+    page(
+        '/users/:user/hotlists/:hotlist/people',
+        this._loadHotlistPeoplePage.bind(this));
     page();
   }
 

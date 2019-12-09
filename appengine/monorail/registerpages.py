@@ -169,6 +169,7 @@ class ServletRegistry(object):
     self._RegisterSitewideHandlers()
     self._RegisterProjectHandlers()
     self._RegisterIssueHandlers()
+    self._RegisterWebComponentsHanders()
     self._RegisterRedirects()
     self._RegisterInboundMail()
     api_service.RegisterApiHandlers(self, services)
@@ -358,12 +359,9 @@ class ServletRegistry(object):
 
     self._SetupUserHotlistServlets({
         urls.HOTLIST_ISSUES: hotlistissues.HotlistIssues,
-        urls.HOTLIST_ISSUES_NEW: webcomponentspage.WebComponentsPage,
         urls.HOTLIST_ISSUES_CSV: hotlistissuescsv.HotlistIssuesCsv,
         urls.HOTLIST_PEOPLE: hotlistpeople.HotlistPeopleList,
-        urls.HOTLIST_PEOPLE_NEW: webcomponentspage.WebComponentsPage,
         urls.HOTLIST_DETAIL: hotlistdetails.HotlistDetails,
-        urls.HOTLIST_DETAIL_NEW: webcomponentspage.WebComponentsPage,
         urls.HOTLIST_RERANK_JSON: rerankhotlist.RerankHotlistIssue,
     })
 
@@ -375,6 +373,13 @@ class ServletRegistry(object):
         urls.GROUP_DETAIL: groupdetail.GroupDetail,
         urls.GROUP_ADMIN: groupadmin.GroupAdmin,
         })
+
+  def _RegisterWebComponentsHanders(self):
+    """Register page handlers that are handled by WebComponentsPage."""
+    self._AddRoute('/projects<unused:.*>', webcomponentspage.WebComponentsPage,
+                   'GET')
+    self._AddRoute('/users<unused:.*>', webcomponentspage.WebComponentsPage,
+                   'GET')
 
   def _RegisterRedirects(self):
     """Register redirects among pages inside monorail."""
