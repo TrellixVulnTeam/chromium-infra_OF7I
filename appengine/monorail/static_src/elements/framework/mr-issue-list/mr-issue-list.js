@@ -612,7 +612,8 @@ export class MrIssueList extends connectStore(LitElement) {
     this._starringIssues = issue.starringIssues(state);
 
     this._phaseNames = (issue.issueListPhaseNames(state) || []);
-    this._extractFieldValuesFromIssue = project.extractFieldValuesFromIssue(state);
+    this._extractFieldValuesFromIssue = project.extractFieldValuesFromIssue(
+        state);
   }
 
   /** @override */

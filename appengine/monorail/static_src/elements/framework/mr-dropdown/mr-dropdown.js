@@ -9,6 +9,18 @@ export const SCREENREADER_ATTRIBUTE_ERROR = `For screenreader support,
   mr-dropdown must always have either a label or a text property defined.`;
 
 /**
+ * An Object for specifying what to display in a single entry in the
+ * dropdown list.
+ *
+ * @typedef {Object} MenuItem
+ * @property {string} [text] The text to display in the menu.
+ * @property {string} [icon] A Material Design icon shown left of the text.
+ * @property {Array<MenuItem>} [items] A specification for a nested submenu.
+ * @property {function} [handler] An optional click handler for an item.
+ * @property {string} [url] A link for the menu item to navigate to.
+ */
+
+/**
  * `<mr-dropdown>`
  *
  * Dropdown menu for Monorail.
@@ -157,7 +169,7 @@ export class MrDropdown extends LitElement {
         aria-expanded=${this.opened}
       >
         ${this.text}
-        <i class="material-icons" aria-hidden>${this.icon}</i>
+        <i class="material-icons" aria-hidden="true">${this.icon}</i>
       </button>
       <div class="menu ${this.menuAlignment}">
         ${this.items.map((item, index) => this._renderItem(item, index))}
@@ -166,6 +178,12 @@ export class MrDropdown extends LitElement {
     `;
   }
 
+  /**
+   * Render a single dropdown menu item.
+   * @param {MenuItem} item
+   * @param {number} index The item's position in the list of items.
+   * @return {TemplateResult}
+   */
   _renderItem(item, index) {
     if (item.separator) {
       // The menu item is a no-op divider between sections.
@@ -186,9 +204,10 @@ export class MrDropdown extends LitElement {
           icon="arrow_right"
           data-idx=${index}
           class="menu-item"
-        ></button>
+        ></mr-dropdown>
       `;
     }
+
     return html`
       <a
         href=${ifDefined(item.url)}
@@ -236,6 +255,11 @@ export class MrDropdown extends LitElement {
     };
   }
 
+  /**
+   * Either runs the click handler attached to the clicked item or closes the
+   * menu if the click was not on an item.
+   * @param {MouseEvent} e
+   */
   _onClick(e) {
     if (e instanceof MouseEvent || e.code === 'Enter') {
       const idx = e.target.dataset.idx;
@@ -267,14 +291,23 @@ export class MrDropdown extends LitElement {
     }
   }
 
+  /**
+   * Closes and opens the dropdown menu.
+   */
   toggle() {
     this.opened = !this.opened;
   }
 
+  /**
+   * Opens the dropdown menu.
+   */
   open() {
     this.opened = true;
   }
 
+  /**
+   * Closes the dropdown menu.
+   */
   close() {
     this.opened = false;
   }
@@ -289,6 +322,10 @@ export class MrDropdown extends LitElement {
     items[i].click();
   }
 
+  /**
+   * @param {MouseEvent} evt
+   * @private
+   */
   _closeOnOutsideClick(evt) {
     if (!this.opened) return;
 

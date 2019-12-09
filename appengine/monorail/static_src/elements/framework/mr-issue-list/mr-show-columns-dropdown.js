@@ -30,11 +30,11 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
           --mr-dropdown-anchor-font-weight: bold;
           --mr-dropdown-menu-min-width: 150px;
           --mr-dropdown-menu-font-size: var(--chops-main-font-size);
+          --mr-dropdown-menu-icon-size: var(--chops-main-font-size);
           /* Because we're using a sticky header, we need to make sure the
-          * dropdown cannot be taller than the screen. */
+           * dropdown cannot be taller than the screen. */
           --mr-dropdown-menu-max-height: 80vh;
           --mr-dropdown-menu-overflow: auto;
-          --mr-dropdown-menu-icon-size: var(--chops-main-font-size);
         }
       `,
     ];
@@ -60,8 +60,8 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
       _labelPrefixFields: {type: Array},
       // TODO(zhangtiff): Delete this legacy integration after removing
       // the list view.
-      onHideColumn: {type: Function},
-      onShowColumn: {type: Function},
+      onHideColumn: {type: Object},
+      onShowColumn: {type: Object},
     };
   }
 
@@ -90,16 +90,31 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
 
   /** @override */
   update(changedProperties) {
-    this.items = this.issueOptions(
+    this.items = this.columnOptions(
         this.defaultIssueFields, this._fieldDefs, this._labelPrefixFields,
         this.columns, this.phaseNames);
 
     super.update(changedProperties);
   }
 
-  issueOptions(defaultFields, fieldDefs, labelPrefixes, columns, phaseNames) {
+  /**
+   * Computes the column options available in the list view based on project
+   * config data.
+   * @param {Array<string>} defaultFields List of built in columns.
+   * @param {Array<FieldDef>} fieldDefs List of custom fields configured in the
+   *   viewed project.
+   * @param {Array<string>} labelPrefixes List of available label prefixes for
+   *   the current project config..
+   * @param {Array<string>} selectedColumns List of columns the user is
+   *   currently viewing.
+   * @param {Array<string>} phaseNames All phase namws present in the currently
+   *   viewed issue list.
+   * @return {Array<MenuItem>}
+   */
+  columnOptions(defaultFields, fieldDefs, labelPrefixes, selectedColumns,
+      phaseNames) {
     const selectedOptions = new Set(
-        columns.map((col) => col.toLowerCase()));
+        selectedColumns.map((col) => col.toLowerCase()));
 
     const availableFields = new Set();
 
@@ -145,7 +160,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
     sortedFields.sort();
 
     return [
-      ...columns.map((field, i) => ({
+      ...selectedColumns.map((field, i) => ({
         icon: 'check',
         text: field,
         handler: () => this.removeColumn(i),
@@ -158,6 +173,16 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
     ];
   }
 
+  /**
+   * Helper that mutates a Set of column names in place, adding a given
+   * field only if it doesn't already show up in the list of selected
+   * fields.
+   * @param {Set<string>} availableFields Set of column names to mutate.
+   * @param {string} field Name of the field being added to the options.
+   * @param {Set<string>} selectedOptions Set of fieldNames that the user
+   *   is viewing.
+   * @private
+   */
   _addUnselectedField(availableFields, field, selectedOptions) {
     if (!selectedOptions.has(field.toLowerCase())) {
       availableFields.add(field);

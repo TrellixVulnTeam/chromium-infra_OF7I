@@ -262,7 +262,7 @@ describe('issueRefToUrl', () => {
     }), 'https://issuetracker.google.com/issues/5678');
   });
 
-  it.only('does not mutate input queryParams', () => {
+  it('does not mutate input queryParams', () => {
     const queryParams = {q: 'owner:me', id: 44};
     const EXPECTED = JSON.stringify(queryParams);
     const ref = {projectName: 'test', localId: 11};
