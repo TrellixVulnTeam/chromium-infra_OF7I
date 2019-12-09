@@ -671,6 +671,48 @@ class FeaturesServicerTest(unittest.TestCase):
     with self.assertRaises(features_svc.NoSuchHotlistException):
       self.CallWrapped(self.features_svcr.GetHotlist, mc, request)
 
+  def testGetHotlistID(self):
+    hotlist = self.services.features.CreateHotlist(
+        self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
+        owner_ids=[self.user3.user_id], editor_ids=[self.user4.user_id])
+
+    owner_ref = common_pb2.UserRef(user_id=self.user3.user_id)
+    hotlist_ref = common_pb2.HotlistRef(name=hotlist.name, owner=owner_ref)
+    request = features_pb2.GetHotlistIDRequest(hotlist_ref=hotlist_ref)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user4.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(self.features_svcr.GetHotlistID, mc, request)
+    self.assertEqual(hotlist.hotlist_id, response.hotlist_id)
+
+  def testGetHotlistID_NoPermission(self):
+    hotlist = self.services.features.CreateHotlist(
+        self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
+        owner_ids=[self.user3.user_id], editor_ids=[self.user4.user_id],
+        is_private=True)
+
+    owner_ref = common_pb2.UserRef(user_id=self.user3.user_id)
+    hotlist_ref = common_pb2.HotlistRef(name=hotlist.name, owner=owner_ref)
+    request = features_pb2.GetHotlistIDRequest(hotlist_ref=hotlist_ref)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user2.email)
+    mc.LookupLoggedInUserPerms(None)
+    with self.assertRaises(permissions.PermissionException):
+      self.CallWrapped(self.features_svcr.GetHotlistID, mc, request)
+
+  def testGetHotlistID_NoSuchHotlist(self):
+    owner_ref = common_pb2.UserRef(user_id=self.user3.user_id)
+    hotlist_ref = common_pb2.HotlistRef(name='Honklist', owner=owner_ref)
+    request = features_pb2.GetHotlistIDRequest(hotlist_ref=hotlist_ref)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user2.email)
+    mc.LookupLoggedInUserPerms(None)
+    with self.assertRaises(features_svc.NoSuchHotlistException):
+      self.CallWrapped(self.features_svcr.GetHotlistID, mc, request)
+
   def testListHotlistItems(self):
     hotlist_id = self.services.features.CreateHotlist(
         self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',

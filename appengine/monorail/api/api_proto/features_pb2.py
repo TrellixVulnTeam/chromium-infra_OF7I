@@ -22,7 +22,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1c\x61pi/api_proto/features.proto\x12\x08monorail\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1a\x61pi/api_proto/common.proto\x1a$api/api_proto/features_objects.proto\"<\n\x19ListHotlistsByUserRequest\x12\x1f\n\x04user\x18\x02 \x01(\x0b\x32\x11.monorail.UserRef\"A\n\x1aListHotlistsByUserResponse\x12#\n\x08hotlists\x18\x01 \x03(\x0b\x32\x11.monorail.Hotlist\"?\n\x1aListHotlistsByIssueRequest\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.IssueRef\"B\n\x1bListHotlistsByIssueResponse\x12#\n\x08hotlists\x18\x01 \x03(\x0b\x32\x11.monorail.Hotlist\"$\n\"ListRecentlyVisitedHotlistsRequest\"J\n#ListRecentlyVisitedHotlistsResponse\x12#\n\x08hotlists\x18\x01 \x03(\x0b\x32\x11.monorail.Hotlist\"\x1c\n\x1aListStarredHotlistsRequest\"B\n\x1bListStarredHotlistsResponse\x12#\n\x08hotlists\x18\x01 \x03(\x0b\x32\x11.monorail.Hotlist\"G\n\x1aGetHotlistStarCountRequest\x12)\n\x0bhotlist_ref\x18\x02 \x01(\x0b\x32\x14.monorail.HotlistRef\"1\n\x1bGetHotlistStarCountResponse\x12\x12\n\nstar_count\x18\x01 \x01(\r\"P\n\x12StarHotlistRequest\x12)\n\x0bhotlist_ref\x18\x02 \x01(\x0b\x32\x14.monorail.HotlistRef\x12\x0f\n\x07starred\x18\x03 \x01(\x08\")\n\x13StarHotlistResponse\x12\x12\n\nstar_count\x18\x01 \x01(\r\">\n\x11GetHotlistRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\"8\n\x12GetHotlistResponse\x12\"\n\x07hotlist\x18\x01 \x01(\x0b\x32\x11.monorail.Hotlist\"\xa5\x01\n\x17ListHotlistItemsRequest\x12)\n\x0bhotlist_ref\x18\x02 \x01(\x0b\x32\x14.monorail.HotlistRef\x12(\n\npagination\x18\x03 \x01(\x0b\x32\x14.monorail.Pagination\x12\x0b\n\x03\x63\x61n\x18\x04 \x01(\r\x12\x11\n\tsort_spec\x18\x05 \x01(\t\x12\x15\n\rgroup_by_spec\x18\x06 \x01(\t\"@\n\x18ListHotlistItemsResponse\x12$\n\x05items\x18\x01 \x03(\x0b\x32\x15.monorail.HotlistItem\"\xae\x01\n\x14\x43reateHotlistRequest\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0f\n\x07summary\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\x12&\n\x0b\x65\x64itor_refs\x18\x05 \x03(\x0b\x32\x11.monorail.UserRef\x12&\n\nissue_refs\x18\x06 \x03(\x0b\x32\x12.monorail.IssueRef\x12\x12\n\nis_private\x18\x07 \x01(\x08\"\x17\n\x15\x43reateHotlistResponse\"\'\n\x17\x43heckHotlistNameRequest\x12\x0c\n\x04name\x18\x02 \x01(\t\")\n\x18\x43heckHotlistNameResponse\x12\r\n\x05\x65rror\x18\x01 \x01(\t\"u\n\x1fRemoveIssuesFromHotlistsRequest\x12*\n\x0chotlist_refs\x18\x02 \x03(\x0b\x32\x14.monorail.HotlistRef\x12&\n\nissue_refs\x18\x03 \x03(\x0b\x32\x12.monorail.IssueRef\"\"\n RemoveIssuesFromHotlistsResponse\"~\n\x1a\x41\x64\x64IssuesToHotlistsRequest\x12*\n\x0chotlist_refs\x18\x02 \x03(\x0b\x32\x14.monorail.HotlistRef\x12&\n\nissue_refs\x18\x03 \x03(\x0b\x32\x12.monorail.IssueRef\x12\x0c\n\x04note\x18\x04 \x01(\t\"\x1d\n\x1b\x41\x64\x64IssuesToHotlistsResponse\"\xac\x01\n\x1aRerankHotlistIssuesRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\x12&\n\nmoved_refs\x18\x02 \x03(\x0b\x32\x12.monorail.IssueRef\x12&\n\ntarget_ref\x18\x03 \x01(\x0b\x32\x12.monorail.IssueRef\x12\x13\n\x0bsplit_above\x18\x04 \x01(\x08\"\x1d\n\x1bRerankHotlistIssuesResponse\"\x7f\n\x1dUpdateHotlistIssueNoteRequest\x12)\n\x0bhotlist_ref\x18\x02 \x01(\x0b\x32\x14.monorail.HotlistRef\x12%\n\tissue_ref\x18\x03 \x01(\x0b\x32\x12.monorail.IssueRef\x12\x0c\n\x04note\x18\x04 \x01(\t\" \n\x1eUpdateHotlistIssueNoteResponse\"z\n\x19UpdateHotlistRolesRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\x12\x32\n\x0cpeople_delta\x18\x02 \x01(\x0b\x32\x1c.monorail.HotlistPeopleDelta\"\x1c\n\x1aUpdateHotlistRolesResponse\"\xbf\x02\n\x1cUpdateHotlistSettingsRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\x12*\n\x04name\x18\x02 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12-\n\x07summary\x18\x03 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x31\n\x0b\x64\x65scription\x18\x04 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12.\n\nis_private\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.BoolValue\x12\x36\n\x10\x64\x65\x66\x61ult_col_spec\x18\x06 \x01(\x0b\x32\x1c.google.protobuf.StringValue\"\x1f\n\x1dUpdateHotlistSettingsResponse\"A\n\x14\x44\x65leteHotlistRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\"\x17\n\x15\x44\x65leteHotlistResponse\"J\n\x1dListHotlistPermissionsRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\"5\n\x1eListHotlistPermissionsResponse\x12\x13\n\x0bpermissions\x18\x01 \x03(\t\"=\n\x17PredictComponentRequest\x12\x0c\n\x04text\x18\x02 \x01(\t\x12\x14\n\x0cproject_name\x18\x03 \x01(\t\"I\n\x18PredictComponentResponse\x12-\n\rcomponent_ref\x18\x01 \x01(\x0b\x32\x16.monorail.ComponentRef2\xe3\x0e\n\x08\x46\x65\x61tures\x12\x61\n\x12ListHotlistsByUser\x12#.monorail.ListHotlistsByUserRequest\x1a$.monorail.ListHotlistsByUserResponse\"\x00\x12\x64\n\x13ListHotlistsByIssue\x12$.monorail.ListHotlistsByIssueRequest\x1a%.monorail.ListHotlistsByIssueResponse\"\x00\x12|\n\x1bListRecentlyVisitedHotlists\x12,.monorail.ListRecentlyVisitedHotlistsRequest\x1a-.monorail.ListRecentlyVisitedHotlistsResponse\"\x00\x12\x64\n\x13ListStarredHotlists\x12$.monorail.ListStarredHotlistsRequest\x1a%.monorail.ListStarredHotlistsResponse\"\x00\x12\x64\n\x13GetHotlistStarCount\x12$.monorail.GetHotlistStarCountRequest\x1a%.monorail.GetHotlistStarCountResponse\"\x00\x12L\n\x0bStarHotlist\x12\x1c.monorail.StarHotlistRequest\x1a\x1d.monorail.StarHotlistResponse\"\x00\x12I\n\nGetHotlist\x12\x1b.monorail.GetHotlistRequest\x1a\x1c.monorail.GetHotlistResponse\"\x00\x12[\n\x10ListHotlistItems\x12!.monorail.ListHotlistItemsRequest\x1a\".monorail.ListHotlistItemsResponse\"\x00\x12R\n\rCreateHotlist\x12\x1e.monorail.CreateHotlistRequest\x1a\x1f.monorail.CreateHotlistResponse\"\x00\x12[\n\x10\x43heckHotlistName\x12!.monorail.CheckHotlistNameRequest\x1a\".monorail.CheckHotlistNameResponse\"\x00\x12s\n\x18RemoveIssuesFromHotlists\x12).monorail.RemoveIssuesFromHotlistsRequest\x1a*.monorail.RemoveIssuesFromHotlistsResponse\"\x00\x12\x64\n\x13\x41\x64\x64IssuesToHotlists\x12$.monorail.AddIssuesToHotlistsRequest\x1a%.monorail.AddIssuesToHotlistsResponse\"\x00\x12\x64\n\x13RerankHotlistIssues\x12$.monorail.RerankHotlistIssuesRequest\x1a%.monorail.RerankHotlistIssuesResponse\"\x00\x12m\n\x16UpdateHotlistIssueNote\x12\'.monorail.UpdateHotlistIssueNoteRequest\x1a(.monorail.UpdateHotlistIssueNoteResponse\"\x00\x12\x61\n\x12UpdateHotlistRoles\x12#.monorail.UpdateHotlistRolesRequest\x1a$.monorail.UpdateHotlistRolesResponse\"\x00\x12j\n\x15UpdateHotlistSettings\x12&.monorail.UpdateHotlistSettingsRequest\x1a\'.monorail.UpdateHotlistSettingsResponse\"\x00\x12R\n\rDeleteHotlist\x12\x1e.monorail.DeleteHotlistRequest\x1a\x1f.monorail.DeleteHotlistResponse\"\x00\x12m\n\x16ListHotlistPermissions\x12\'.monorail.ListHotlistPermissionsRequest\x1a(.monorail.ListHotlistPermissionsResponse\"\x00\x12[\n\x10PredictComponent\x12!.monorail.PredictComponentRequest\x1a\".monorail.PredictComponentResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x1c\x61pi/api_proto/features.proto\x12\x08monorail\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1a\x61pi/api_proto/common.proto\x1a$api/api_proto/features_objects.proto\"<\n\x19ListHotlistsByUserRequest\x12\x1f\n\x04user\x18\x02 \x01(\x0b\x32\x11.monorail.UserRef\"A\n\x1aListHotlistsByUserResponse\x12#\n\x08hotlists\x18\x01 \x03(\x0b\x32\x11.monorail.Hotlist\"?\n\x1aListHotlistsByIssueRequest\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.IssueRef\"B\n\x1bListHotlistsByIssueResponse\x12#\n\x08hotlists\x18\x01 \x03(\x0b\x32\x11.monorail.Hotlist\"$\n\"ListRecentlyVisitedHotlistsRequest\"J\n#ListRecentlyVisitedHotlistsResponse\x12#\n\x08hotlists\x18\x01 \x03(\x0b\x32\x11.monorail.Hotlist\"\x1c\n\x1aListStarredHotlistsRequest\"B\n\x1bListStarredHotlistsResponse\x12#\n\x08hotlists\x18\x01 \x03(\x0b\x32\x11.monorail.Hotlist\"G\n\x1aGetHotlistStarCountRequest\x12)\n\x0bhotlist_ref\x18\x02 \x01(\x0b\x32\x14.monorail.HotlistRef\"1\n\x1bGetHotlistStarCountResponse\x12\x12\n\nstar_count\x18\x01 \x01(\r\"P\n\x12StarHotlistRequest\x12)\n\x0bhotlist_ref\x18\x02 \x01(\x0b\x32\x14.monorail.HotlistRef\x12\x0f\n\x07starred\x18\x03 \x01(\x08\")\n\x13StarHotlistResponse\x12\x12\n\nstar_count\x18\x01 \x01(\r\">\n\x11GetHotlistRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\"8\n\x12GetHotlistResponse\x12\"\n\x07hotlist\x18\x01 \x01(\x0b\x32\x11.monorail.Hotlist\"@\n\x13GetHotlistIDRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\"*\n\x14GetHotlistIDResponse\x12\x12\n\nhotlist_id\x18\x01 \x01(\x04\"\xa5\x01\n\x17ListHotlistItemsRequest\x12)\n\x0bhotlist_ref\x18\x02 \x01(\x0b\x32\x14.monorail.HotlistRef\x12(\n\npagination\x18\x03 \x01(\x0b\x32\x14.monorail.Pagination\x12\x0b\n\x03\x63\x61n\x18\x04 \x01(\r\x12\x11\n\tsort_spec\x18\x05 \x01(\t\x12\x15\n\rgroup_by_spec\x18\x06 \x01(\t\"@\n\x18ListHotlistItemsResponse\x12$\n\x05items\x18\x01 \x03(\x0b\x32\x15.monorail.HotlistItem\"\xae\x01\n\x14\x43reateHotlistRequest\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0f\n\x07summary\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\x12&\n\x0b\x65\x64itor_refs\x18\x05 \x03(\x0b\x32\x11.monorail.UserRef\x12&\n\nissue_refs\x18\x06 \x03(\x0b\x32\x12.monorail.IssueRef\x12\x12\n\nis_private\x18\x07 \x01(\x08\"\x17\n\x15\x43reateHotlistResponse\"\'\n\x17\x43heckHotlistNameRequest\x12\x0c\n\x04name\x18\x02 \x01(\t\")\n\x18\x43heckHotlistNameResponse\x12\r\n\x05\x65rror\x18\x01 \x01(\t\"u\n\x1fRemoveIssuesFromHotlistsRequest\x12*\n\x0chotlist_refs\x18\x02 \x03(\x0b\x32\x14.monorail.HotlistRef\x12&\n\nissue_refs\x18\x03 \x03(\x0b\x32\x12.monorail.IssueRef\"\"\n RemoveIssuesFromHotlistsResponse\"~\n\x1a\x41\x64\x64IssuesToHotlistsRequest\x12*\n\x0chotlist_refs\x18\x02 \x03(\x0b\x32\x14.monorail.HotlistRef\x12&\n\nissue_refs\x18\x03 \x03(\x0b\x32\x12.monorail.IssueRef\x12\x0c\n\x04note\x18\x04 \x01(\t\"\x1d\n\x1b\x41\x64\x64IssuesToHotlistsResponse\"\xac\x01\n\x1aRerankHotlistIssuesRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\x12&\n\nmoved_refs\x18\x02 \x03(\x0b\x32\x12.monorail.IssueRef\x12&\n\ntarget_ref\x18\x03 \x01(\x0b\x32\x12.monorail.IssueRef\x12\x13\n\x0bsplit_above\x18\x04 \x01(\x08\"\x1d\n\x1bRerankHotlistIssuesResponse\"\x7f\n\x1dUpdateHotlistIssueNoteRequest\x12)\n\x0bhotlist_ref\x18\x02 \x01(\x0b\x32\x14.monorail.HotlistRef\x12%\n\tissue_ref\x18\x03 \x01(\x0b\x32\x12.monorail.IssueRef\x12\x0c\n\x04note\x18\x04 \x01(\t\" \n\x1eUpdateHotlistIssueNoteResponse\"z\n\x19UpdateHotlistRolesRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\x12\x32\n\x0cpeople_delta\x18\x02 \x01(\x0b\x32\x1c.monorail.HotlistPeopleDelta\"\x1c\n\x1aUpdateHotlistRolesResponse\"\xbf\x02\n\x1cUpdateHotlistSettingsRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\x12*\n\x04name\x18\x02 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12-\n\x07summary\x18\x03 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x31\n\x0b\x64\x65scription\x18\x04 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12.\n\nis_private\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.BoolValue\x12\x36\n\x10\x64\x65\x66\x61ult_col_spec\x18\x06 \x01(\x0b\x32\x1c.google.protobuf.StringValue\"\x1f\n\x1dUpdateHotlistSettingsResponse\"A\n\x14\x44\x65leteHotlistRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\"\x17\n\x15\x44\x65leteHotlistResponse\"J\n\x1dListHotlistPermissionsRequest\x12)\n\x0bhotlist_ref\x18\x01 \x01(\x0b\x32\x14.monorail.HotlistRef\"5\n\x1eListHotlistPermissionsResponse\x12\x13\n\x0bpermissions\x18\x01 \x03(\t\"=\n\x17PredictComponentRequest\x12\x0c\n\x04text\x18\x02 \x01(\t\x12\x14\n\x0cproject_name\x18\x03 \x01(\t\"I\n\x18PredictComponentResponse\x12-\n\rcomponent_ref\x18\x01 \x01(\x0b\x32\x16.monorail.ComponentRef2\xb4\x0f\n\x08\x46\x65\x61tures\x12\x61\n\x12ListHotlistsByUser\x12#.monorail.ListHotlistsByUserRequest\x1a$.monorail.ListHotlistsByUserResponse\"\x00\x12\x64\n\x13ListHotlistsByIssue\x12$.monorail.ListHotlistsByIssueRequest\x1a%.monorail.ListHotlistsByIssueResponse\"\x00\x12|\n\x1bListRecentlyVisitedHotlists\x12,.monorail.ListRecentlyVisitedHotlistsRequest\x1a-.monorail.ListRecentlyVisitedHotlistsResponse\"\x00\x12\x64\n\x13ListStarredHotlists\x12$.monorail.ListStarredHotlistsRequest\x1a%.monorail.ListStarredHotlistsResponse\"\x00\x12\x64\n\x13GetHotlistStarCount\x12$.monorail.GetHotlistStarCountRequest\x1a%.monorail.GetHotlistStarCountResponse\"\x00\x12L\n\x0bStarHotlist\x12\x1c.monorail.StarHotlistRequest\x1a\x1d.monorail.StarHotlistResponse\"\x00\x12I\n\nGetHotlist\x12\x1b.monorail.GetHotlistRequest\x1a\x1c.monorail.GetHotlistResponse\"\x00\x12O\n\x0cGetHotlistID\x12\x1d.monorail.GetHotlistIDRequest\x1a\x1e.monorail.GetHotlistIDResponse\"\x00\x12[\n\x10ListHotlistItems\x12!.monorail.ListHotlistItemsRequest\x1a\".monorail.ListHotlistItemsResponse\"\x00\x12R\n\rCreateHotlist\x12\x1e.monorail.CreateHotlistRequest\x1a\x1f.monorail.CreateHotlistResponse\"\x00\x12[\n\x10\x43heckHotlistName\x12!.monorail.CheckHotlistNameRequest\x1a\".monorail.CheckHotlistNameResponse\"\x00\x12s\n\x18RemoveIssuesFromHotlists\x12).monorail.RemoveIssuesFromHotlistsRequest\x1a*.monorail.RemoveIssuesFromHotlistsResponse\"\x00\x12\x64\n\x13\x41\x64\x64IssuesToHotlists\x12$.monorail.AddIssuesToHotlistsRequest\x1a%.monorail.AddIssuesToHotlistsResponse\"\x00\x12\x64\n\x13RerankHotlistIssues\x12$.monorail.RerankHotlistIssuesRequest\x1a%.monorail.RerankHotlistIssuesResponse\"\x00\x12m\n\x16UpdateHotlistIssueNote\x12\'.monorail.UpdateHotlistIssueNoteRequest\x1a(.monorail.UpdateHotlistIssueNoteResponse\"\x00\x12\x61\n\x12UpdateHotlistRoles\x12#.monorail.UpdateHotlistRolesRequest\x1a$.monorail.UpdateHotlistRolesResponse\"\x00\x12j\n\x15UpdateHotlistSettings\x12&.monorail.UpdateHotlistSettingsRequest\x1a\'.monorail.UpdateHotlistSettingsResponse\"\x00\x12R\n\rDeleteHotlist\x12\x1e.monorail.DeleteHotlistRequest\x1a\x1f.monorail.DeleteHotlistResponse\"\x00\x12m\n\x16ListHotlistPermissions\x12\'.monorail.ListHotlistPermissionsRequest\x1a(.monorail.ListHotlistPermissionsResponse\"\x00\x12[\n\x10PredictComponent\x12!.monorail.PredictComponentRequest\x1a\".monorail.PredictComponentResponse\"\x00\x62\x06proto3')
   ,
   dependencies=[google_dot_protobuf_dot_wrappers__pb2.DESCRIPTOR,api_dot_api__proto_dot_common__pb2.DESCRIPTOR,api_dot_api__proto_dot_features__objects__pb2.DESCRIPTOR,])
 
@@ -456,6 +456,68 @@ _GETHOTLISTRESPONSE = _descriptor.Descriptor(
 )
 
 
+_GETHOTLISTIDREQUEST = _descriptor.Descriptor(
+  name='GetHotlistIDRequest',
+  full_name='monorail.GetHotlistIDRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='hotlist_ref', full_name='monorail.GetHotlistIDRequest.hotlist_ref', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=985,
+  serialized_end=1049,
+)
+
+
+_GETHOTLISTIDRESPONSE = _descriptor.Descriptor(
+  name='GetHotlistIDResponse',
+  full_name='monorail.GetHotlistIDResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='hotlist_id', full_name='monorail.GetHotlistIDResponse.hotlist_id', index=0,
+      number=1, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1051,
+  serialized_end=1093,
+)
+
+
 _LISTHOTLISTITEMSREQUEST = _descriptor.Descriptor(
   name='ListHotlistItemsRequest',
   full_name='monorail.ListHotlistItemsRequest',
@@ -510,8 +572,8 @@ _LISTHOTLISTITEMSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=986,
-  serialized_end=1151,
+  serialized_start=1096,
+  serialized_end=1261,
 )
 
 
@@ -541,8 +603,8 @@ _LISTHOTLISTITEMSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1153,
-  serialized_end=1217,
+  serialized_start=1263,
+  serialized_end=1327,
 )
 
 
@@ -607,8 +669,8 @@ _CREATEHOTLISTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1220,
-  serialized_end=1394,
+  serialized_start=1330,
+  serialized_end=1504,
 )
 
 
@@ -631,8 +693,8 @@ _CREATEHOTLISTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1396,
-  serialized_end=1419,
+  serialized_start=1506,
+  serialized_end=1529,
 )
 
 
@@ -662,8 +724,8 @@ _CHECKHOTLISTNAMEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1421,
-  serialized_end=1460,
+  serialized_start=1531,
+  serialized_end=1570,
 )
 
 
@@ -693,8 +755,8 @@ _CHECKHOTLISTNAMERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1462,
-  serialized_end=1503,
+  serialized_start=1572,
+  serialized_end=1613,
 )
 
 
@@ -731,8 +793,8 @@ _REMOVEISSUESFROMHOTLISTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1505,
-  serialized_end=1622,
+  serialized_start=1615,
+  serialized_end=1732,
 )
 
 
@@ -755,8 +817,8 @@ _REMOVEISSUESFROMHOTLISTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1624,
-  serialized_end=1658,
+  serialized_start=1734,
+  serialized_end=1768,
 )
 
 
@@ -800,8 +862,8 @@ _ADDISSUESTOHOTLISTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1660,
-  serialized_end=1786,
+  serialized_start=1770,
+  serialized_end=1896,
 )
 
 
@@ -824,8 +886,8 @@ _ADDISSUESTOHOTLISTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1788,
-  serialized_end=1817,
+  serialized_start=1898,
+  serialized_end=1927,
 )
 
 
@@ -876,8 +938,8 @@ _RERANKHOTLISTISSUESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1820,
-  serialized_end=1992,
+  serialized_start=1930,
+  serialized_end=2102,
 )
 
 
@@ -900,8 +962,8 @@ _RERANKHOTLISTISSUESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1994,
-  serialized_end=2023,
+  serialized_start=2104,
+  serialized_end=2133,
 )
 
 
@@ -945,8 +1007,8 @@ _UPDATEHOTLISTISSUENOTEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2025,
-  serialized_end=2152,
+  serialized_start=2135,
+  serialized_end=2262,
 )
 
 
@@ -969,8 +1031,8 @@ _UPDATEHOTLISTISSUENOTERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2154,
-  serialized_end=2186,
+  serialized_start=2264,
+  serialized_end=2296,
 )
 
 
@@ -1007,8 +1069,8 @@ _UPDATEHOTLISTROLESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2188,
-  serialized_end=2310,
+  serialized_start=2298,
+  serialized_end=2420,
 )
 
 
@@ -1031,8 +1093,8 @@ _UPDATEHOTLISTROLESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2312,
-  serialized_end=2340,
+  serialized_start=2422,
+  serialized_end=2450,
 )
 
 
@@ -1097,8 +1159,8 @@ _UPDATEHOTLISTSETTINGSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2343,
-  serialized_end=2662,
+  serialized_start=2453,
+  serialized_end=2772,
 )
 
 
@@ -1121,8 +1183,8 @@ _UPDATEHOTLISTSETTINGSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2664,
-  serialized_end=2695,
+  serialized_start=2774,
+  serialized_end=2805,
 )
 
 
@@ -1152,8 +1214,8 @@ _DELETEHOTLISTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2697,
-  serialized_end=2762,
+  serialized_start=2807,
+  serialized_end=2872,
 )
 
 
@@ -1176,8 +1238,8 @@ _DELETEHOTLISTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2764,
-  serialized_end=2787,
+  serialized_start=2874,
+  serialized_end=2897,
 )
 
 
@@ -1207,8 +1269,8 @@ _LISTHOTLISTPERMISSIONSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2789,
-  serialized_end=2863,
+  serialized_start=2899,
+  serialized_end=2973,
 )
 
 
@@ -1238,8 +1300,8 @@ _LISTHOTLISTPERMISSIONSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2865,
-  serialized_end=2918,
+  serialized_start=2975,
+  serialized_end=3028,
 )
 
 
@@ -1276,8 +1338,8 @@ _PREDICTCOMPONENTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2920,
-  serialized_end=2981,
+  serialized_start=3030,
+  serialized_end=3091,
 )
 
 
@@ -1307,8 +1369,8 @@ _PREDICTCOMPONENTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2983,
-  serialized_end=3056,
+  serialized_start=3093,
+  serialized_end=3166,
 )
 
 _LISTHOTLISTSBYUSERREQUEST.fields_by_name['user'].message_type = api_dot_api__proto_dot_common__pb2._USERREF
@@ -1321,6 +1383,7 @@ _GETHOTLISTSTARCOUNTREQUEST.fields_by_name['hotlist_ref'].message_type = api_dot
 _STARHOTLISTREQUEST.fields_by_name['hotlist_ref'].message_type = api_dot_api__proto_dot_common__pb2._HOTLISTREF
 _GETHOTLISTREQUEST.fields_by_name['hotlist_ref'].message_type = api_dot_api__proto_dot_common__pb2._HOTLISTREF
 _GETHOTLISTRESPONSE.fields_by_name['hotlist'].message_type = api_dot_api__proto_dot_features__objects__pb2._HOTLIST
+_GETHOTLISTIDREQUEST.fields_by_name['hotlist_ref'].message_type = api_dot_api__proto_dot_common__pb2._HOTLISTREF
 _LISTHOTLISTITEMSREQUEST.fields_by_name['hotlist_ref'].message_type = api_dot_api__proto_dot_common__pb2._HOTLISTREF
 _LISTHOTLISTITEMSREQUEST.fields_by_name['pagination'].message_type = api_dot_api__proto_dot_common__pb2._PAGINATION
 _LISTHOTLISTITEMSRESPONSE.fields_by_name['items'].message_type = api_dot_api__proto_dot_features__objects__pb2._HOTLISTITEM
@@ -1360,6 +1423,8 @@ DESCRIPTOR.message_types_by_name['StarHotlistRequest'] = _STARHOTLISTREQUEST
 DESCRIPTOR.message_types_by_name['StarHotlistResponse'] = _STARHOTLISTRESPONSE
 DESCRIPTOR.message_types_by_name['GetHotlistRequest'] = _GETHOTLISTREQUEST
 DESCRIPTOR.message_types_by_name['GetHotlistResponse'] = _GETHOTLISTRESPONSE
+DESCRIPTOR.message_types_by_name['GetHotlistIDRequest'] = _GETHOTLISTIDREQUEST
+DESCRIPTOR.message_types_by_name['GetHotlistIDResponse'] = _GETHOTLISTIDRESPONSE
 DESCRIPTOR.message_types_by_name['ListHotlistItemsRequest'] = _LISTHOTLISTITEMSREQUEST
 DESCRIPTOR.message_types_by_name['ListHotlistItemsResponse'] = _LISTHOTLISTITEMSRESPONSE
 DESCRIPTOR.message_types_by_name['CreateHotlistRequest'] = _CREATEHOTLISTREQUEST
@@ -1483,6 +1548,20 @@ GetHotlistResponse = _reflection.GeneratedProtocolMessageType('GetHotlistRespons
   # @@protoc_insertion_point(class_scope:monorail.GetHotlistResponse)
   ))
 _sym_db.RegisterMessage(GetHotlistResponse)
+
+GetHotlistIDRequest = _reflection.GeneratedProtocolMessageType('GetHotlistIDRequest', (_message.Message,), dict(
+  DESCRIPTOR = _GETHOTLISTIDREQUEST,
+  __module__ = 'api.api_proto.features_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.GetHotlistIDRequest)
+  ))
+_sym_db.RegisterMessage(GetHotlistIDRequest)
+
+GetHotlistIDResponse = _reflection.GeneratedProtocolMessageType('GetHotlistIDResponse', (_message.Message,), dict(
+  DESCRIPTOR = _GETHOTLISTIDRESPONSE,
+  __module__ = 'api.api_proto.features_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.GetHotlistIDResponse)
+  ))
+_sym_db.RegisterMessage(GetHotlistIDResponse)
 
 ListHotlistItemsRequest = _reflection.GeneratedProtocolMessageType('ListHotlistItemsRequest', (_message.Message,), dict(
   DESCRIPTOR = _LISTHOTLISTITEMSREQUEST,
@@ -1660,8 +1739,8 @@ _FEATURES = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=3059,
-  serialized_end=4950,
+  serialized_start=3169,
+  serialized_end=5141,
   methods=[
   _descriptor.MethodDescriptor(
     name='ListHotlistsByUser',
@@ -1727,9 +1806,18 @@ _FEATURES = _descriptor.ServiceDescriptor(
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='GetHotlistID',
+    full_name='monorail.Features.GetHotlistID',
+    index=7,
+    containing_service=None,
+    input_type=_GETHOTLISTIDREQUEST,
+    output_type=_GETHOTLISTIDRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='ListHotlistItems',
     full_name='monorail.Features.ListHotlistItems',
-    index=7,
+    index=8,
     containing_service=None,
     input_type=_LISTHOTLISTITEMSREQUEST,
     output_type=_LISTHOTLISTITEMSRESPONSE,
@@ -1738,7 +1826,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='CreateHotlist',
     full_name='monorail.Features.CreateHotlist',
-    index=8,
+    index=9,
     containing_service=None,
     input_type=_CREATEHOTLISTREQUEST,
     output_type=_CREATEHOTLISTRESPONSE,
@@ -1747,7 +1835,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='CheckHotlistName',
     full_name='monorail.Features.CheckHotlistName',
-    index=9,
+    index=10,
     containing_service=None,
     input_type=_CHECKHOTLISTNAMEREQUEST,
     output_type=_CHECKHOTLISTNAMERESPONSE,
@@ -1756,7 +1844,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='RemoveIssuesFromHotlists',
     full_name='monorail.Features.RemoveIssuesFromHotlists',
-    index=10,
+    index=11,
     containing_service=None,
     input_type=_REMOVEISSUESFROMHOTLISTSREQUEST,
     output_type=_REMOVEISSUESFROMHOTLISTSRESPONSE,
@@ -1765,7 +1853,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='AddIssuesToHotlists',
     full_name='monorail.Features.AddIssuesToHotlists',
-    index=11,
+    index=12,
     containing_service=None,
     input_type=_ADDISSUESTOHOTLISTSREQUEST,
     output_type=_ADDISSUESTOHOTLISTSRESPONSE,
@@ -1774,7 +1862,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='RerankHotlistIssues',
     full_name='monorail.Features.RerankHotlistIssues',
-    index=12,
+    index=13,
     containing_service=None,
     input_type=_RERANKHOTLISTISSUESREQUEST,
     output_type=_RERANKHOTLISTISSUESRESPONSE,
@@ -1783,7 +1871,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='UpdateHotlistIssueNote',
     full_name='monorail.Features.UpdateHotlistIssueNote',
-    index=13,
+    index=14,
     containing_service=None,
     input_type=_UPDATEHOTLISTISSUENOTEREQUEST,
     output_type=_UPDATEHOTLISTISSUENOTERESPONSE,
@@ -1792,7 +1880,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='UpdateHotlistRoles',
     full_name='monorail.Features.UpdateHotlistRoles',
-    index=14,
+    index=15,
     containing_service=None,
     input_type=_UPDATEHOTLISTROLESREQUEST,
     output_type=_UPDATEHOTLISTROLESRESPONSE,
@@ -1801,7 +1889,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='UpdateHotlistSettings',
     full_name='monorail.Features.UpdateHotlistSettings',
-    index=15,
+    index=16,
     containing_service=None,
     input_type=_UPDATEHOTLISTSETTINGSREQUEST,
     output_type=_UPDATEHOTLISTSETTINGSRESPONSE,
@@ -1810,7 +1898,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='DeleteHotlist',
     full_name='monorail.Features.DeleteHotlist',
-    index=16,
+    index=17,
     containing_service=None,
     input_type=_DELETEHOTLISTREQUEST,
     output_type=_DELETEHOTLISTRESPONSE,
@@ -1819,7 +1907,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='ListHotlistPermissions',
     full_name='monorail.Features.ListHotlistPermissions',
-    index=17,
+    index=18,
     containing_service=None,
     input_type=_LISTHOTLISTPERMISSIONSREQUEST,
     output_type=_LISTHOTLISTPERMISSIONSRESPONSE,
@@ -1828,7 +1916,7 @@ _FEATURES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='PredictComponent',
     full_name='monorail.Features.PredictComponent',
-    index=18,
+    index=19,
     containing_service=None,
     input_type=_PREDICTCOMPONENTREQUEST,
     output_type=_PREDICTCOMPONENTRESPONSE,
