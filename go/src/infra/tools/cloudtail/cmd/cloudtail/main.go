@@ -46,6 +46,7 @@ type commonOptions struct {
 	authFlags     authcli.Flags
 	tsmonFlags    tsmon.Flags
 	localLogLevel logging.Level
+	localLogFile  string
 	flushTimeout  time.Duration
 	bufferingTime time.Duration
 	debug         bool
@@ -61,6 +62,14 @@ type state struct {
 	id     cloudtail.ClientID
 	client cloudtail.Client
 	buffer cloudtail.PushBuffer
+
+	cleanups []func()
+}
+
+func (s *state) cleanup() {
+	for _, f := range s.cleanups {
+		f()
+	}
 }
 
 // registerFlags adds all CLI flags to the flag set.
@@ -71,6 +80,8 @@ func (opts *commonOptions) registerFlags(f *flag.FlagSet, defaultAuthOpts auth.O
 	opts.authFlags.Register(f, defaultAuthOpts)
 	f.Var(&opts.localLogLevel, "local-log-level",
 		"The logging level of local logger (for cloudtail own logs): debug, info, warning, error")
+	f.StringVar(&opts.localLogFile, "local-log-file", "",
+		"If set, local logger (for cloudtail own logs) will log into given file. Else, logs to stderr")
 	f.DurationVar(&opts.flushTimeout, "flush-timeout", 5*time.Second,
 		"How long to wait for all pending data to be flushed when exiting")
 	f.DurationVar(&opts.bufferingTime, "buffering-time", cloudtail.DefaultFlushTimeout,
@@ -97,13 +108,25 @@ func (opts *commonOptions) registerFlags(f *flag.FlagSet, defaultAuthOpts auth.O
 
 // processFlags validates flags, creates and configures logger, client, etc.
 func (opts *commonOptions) processFlags(ctx context.Context) (context.Context, state, error) {
+	state := state{}
 	// Logger.
-	ctx = logging.SetLevel(ctx, opts.localLogLevel)
+	// gologger.StdConfig to stderr is already configured in getApplication.
+	if opts.localLogFile != "" {
+		f, err := os.OpenFile(opts.localLogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return ctx, state, fmt.Errorf("Local log file %q not writable: %s", opts.localLogFile, err)
+		}
+		ctx = (&gologger.LoggerConfig{
+			Out: f,
+		}).Use(ctx)
+		state.cleanups = append(state.cleanups, func() { _ = f.Close() })
+	}
+	logging.SetLevel(ctx, opts.localLogLevel)
 
 	// Auth options.
 	authOpts, err := opts.authFlags.Options()
 	if err != nil {
-		return ctx, state{}, err
+		return ctx, state, err
 	}
 	if opts.projectID == "" {
 		if authOpts.ServiceAccountJSONPath != "" {
@@ -113,7 +136,7 @@ func (opts *commonOptions) processFlags(ctx context.Context) (context.Context, s
 			}
 		}
 		if opts.projectID == "" {
-			return ctx, state{}, fmt.Errorf("-project-id is required")
+			return ctx, state, fmt.Errorf("-project-id is required")
 		}
 	}
 
@@ -123,36 +146,37 @@ func (opts *commonOptions) processFlags(ctx context.Context) (context.Context, s
 			"%s-%s-%s", opts.logID, opts.resourceType, opts.resourceID)
 	}
 	if err = tsmon.InitializeFromFlags(ctx, &opts.tsmonFlags); err != nil {
-		return ctx, state{}, err
+		return ctx, state, err
 	}
+	state.cleanups = append(state.cleanups, func() { tsmon.Shutdown(ctx) })
 
 	// Client.
 	httpClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
 	if err != nil {
-		return ctx, state{}, err
+		return ctx, state, err
 	}
-	id := cloudtail.ClientID{
+	state.id = cloudtail.ClientID{
 		ResourceType: opts.resourceType,
 		ResourceID:   opts.resourceID,
 		LogID:        opts.logID,
 	}
-	client, err := cloudtail.NewClient(cloudtail.ClientOptions{
-		ClientID:  id,
+	state.client, err = cloudtail.NewClient(cloudtail.ClientOptions{
+		ClientID:  state.id,
 		Client:    httpClient,
 		ProjectID: opts.projectID,
 		Debug:     opts.debug,
 	})
 	if err != nil {
-		return ctx, state{}, err
+		return ctx, state, err
 	}
 
 	// Buffer.
-	buffer := cloudtail.NewPushBuffer(cloudtail.PushBufferOptions{
-		Client:       client,
+	state.buffer = cloudtail.NewPushBuffer(cloudtail.PushBufferOptions{
+		Client:       state.client,
 		FlushTimeout: opts.bufferingTime,
 	})
 
-	return ctx, state{id, client, buffer}, nil
+	return ctx, state, nil
 }
 
 // defaultServiceAccountJSON returns path to a default service account
@@ -426,11 +450,11 @@ func (c *tailRun) Run(a subcommands.Application, args []string, env subcommands.
 	}
 
 	ctx, state, err := c.commonOptions.processFlags(cli.GetContext(a, c, env))
+	defer state.cleanup()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	defer tsmon.Shutdown(ctx)
 
 	var teeOutput io.Writer
 	if c.teeToStdout {
