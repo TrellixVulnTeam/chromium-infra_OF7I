@@ -1,0 +1,29 @@
+From c7257303b46a75f6ba89319f471a0003fce8dffc Mon Sep 17 00:00:00 2001
+From: Robert Iannucci <iannucci@chromium.org>
+Date: Mon, 9 Dec 2019 13:30:06 -0800
+Subject: [PATCH] Add define to disallow getentropy
+
+---
+ crypto/rand/rand_unix.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/crypto/rand/rand_unix.c b/crypto/rand/rand_unix.c
+index 69efcde..14b7722 100644
+--- a/crypto/rand/rand_unix.c
++++ b/crypto/rand/rand_unix.c
+@@ -318,10 +318,12 @@ static ssize_t syscall_random(void *buf, size_t buflen)
+      * - FreeBSD since 12.0 (1200061)
+      */
+ #  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
++#    if !defined(NO_GETENTROPY)
+     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
+ 
+     if (getentropy != NULL)
+         return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
++#    endif
+ #  else
+     union {
+         void *p;
+-- 
+2.20.1
+

@@ -9,30 +9,29 @@ set -o pipefail
 
 PREFIX="$1"
 
-CFLAGS=""
-CPPFLAGS=""
-
-case $OSTYPE in
-  darwin*)
+case $_3PP_PLATFORM in
+  mac-amd64)
     TARGET=darwin64-x86_64-cc
     ;;
-  linux*)
-    case $CROSS_TRIPLE in
-      arm-*) # explicitly pick armv4, the highest 32bit arm target available
-        TARGET="linux-armv4"
-        ;;
-      mipsel-*)
-        TARGET="linux-mips32"
-        ;;
-      mips-*)
-        # https://github.com/dockcross/dockcross does not support linux-mips64
-        # currently.
-        TARGET="linux-mips32"
-        ;;
-      *) # should apply to aarch64
-        TARGET="linux-${CROSS_TRIPLE%%-*}"
-        ;;
-    esac
+  linux-*)
+    TARGET="linux-${CROSS_TRIPLE%%-*}"
+    # TODO(iannucci): Remove this (and the patch to enable this) once the fleet
+    # is using GLIBC 2.25 or higher. Currently the bulk of the fleet runs on
+    # Ubuntu 16.04, which as of this comment, uses GLIBC 2.23.
+    #
+    # OpenSSL links against getentropy as a weak symbol... but unfortunately
+    # when we compile executables such as `git` and `python` against this static
+    # OpenSSL lib, the 'weakness' of this symbol is destroyed, and the linker
+    # immediately resolves it. On linux-amd64 this is not a problem, because we
+    # use the 'manylinux1' based docker containers, which have very old libc.
+    #
+    # However there's no manylinux equivalent for arm, and the Dockcross
+    # containers currently use a linux version which has a modern enough version
+    # of glibc to resolve getentropy, causing problems at runtime for
+    # linux-arm64 bots.
+    #
+    # When getentropy is not available, OpenSSL falls back to getrandom.
+    ARGS="-DNO_GETENTROPY=1"
     ;;
   *)
     echo IDKWTF
@@ -42,5 +41,5 @@ esac
 
 perl Configure -lpthread --prefix="$PREFIX" no-shared $ARGS "$TARGET"
 
-make -j $(nproc)
+make -j "$(nproc)"
 make install_sw

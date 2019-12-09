@@ -3,9 +3,10 @@ create {
   source {
     cipd {
       pkg: "infra/third_party/source/openssl"
-      default_version: "1.1.1"
+      default_version: "1.1.1d"
       original_download_url: "https://www.openssl.org/source/"
     }
+    patch_dir: "patches"
     unpack_archive: true
   }
   build {}
