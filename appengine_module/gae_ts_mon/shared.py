@@ -20,6 +20,8 @@ INSTANCE_NAMESPACE = 'ts_mon_instance_namespace'
 INSTANCE_EXPIRE_SEC = 30 * 60
 INSTANCE_EXPECTED_TO_HAVE_TASK_NUM_SEC = 5 * 60
 INTERNAL_CALLBACK_NAME = '__gae_ts_mon_callback'
+# The cron request path for the tasknum assignment handler.
+CRON_REQUEST_PATH_TASKNUM_ASSIGNER = '/internal/cron/ts_mon/send'
 
 
 appengine_default_version = metrics.StringMetric(

@@ -249,3 +249,28 @@ class TSMonJSHandler(webapp2.RequestHandler):
       return False
 
     return True
+
+
+def report_memory(handler):
+  """Wraps an app so handlers log when memory usage increased by at least 0.5MB
+  after the handler completed.
+  """
+  if os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
+    # This is to detect "dev_appserver" environment and skip report_memory().
+    # report_memory() fails with the following exception in dev_appserver.
+    # :AssertionError: No api proxy found for service "system"
+    return handler  # pragma: no cover
+
+  min_delta = 0.5
+
+  def dispatch_and_report(*args, **kwargs):
+    before = apiruntime.runtime.memory_usage().current()
+    try:
+      return handler(*args, **kwargs)
+    finally:
+      after = apiruntime.runtime.memory_usage().current()
+      if after >= before + min_delta:  # pragma: no cover
+        logging.debug('Memory usage: %.1f -> %.1f MB; delta: %.1f MB', before,
+                      after, after - before)
+
+  return dispatch_and_report
