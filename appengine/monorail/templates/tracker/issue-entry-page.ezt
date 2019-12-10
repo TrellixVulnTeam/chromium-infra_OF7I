@@ -27,6 +27,12 @@
         <span id="mr-code-font-toggle-slot"></span>
        </td>
       </tr>
+     [else]
+      <tr>
+       <td colspan="3">
+        <span id="mr-code-font-toggle-slot"></span>
+       </td>
+      </tr>
      [end]
 
       <tr><th><label for="summary">Summary:</label></th>
