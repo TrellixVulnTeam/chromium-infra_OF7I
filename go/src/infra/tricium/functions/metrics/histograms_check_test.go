@@ -49,6 +49,9 @@ func analyzeHistogramTestFile(t *testing.T, filePath, patch, prevDir string) []*
 		}
 		return date, err
 	}
+	getCurrentMilestone = func() (int, error) {
+		return 80, nil
+	}
 	filesChanged, err := getDiffsPerFile([]string{filePath}, patch)
 	if err != nil {
 		t.Errorf("Failed to get diffs per file for %s: %v", filePath, err)
@@ -132,7 +135,16 @@ func TestHistogramsCheck(t *testing.T) {
 
 	Convey("Analyze XML file with no expiry, obsolete", t, func() {
 		results := analyzeHistogramTestFile(t, "expiry/no_expiry_obsolete.xml", patchPath, inputDir)
-		So(results, ShouldBeNil)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:             category + "/Expiry",
+				Message:              obsoleteNoExpiryError + ", M80.",
+				StartLine:            3,
+				EndLine:              3,
+				Path:                 "expiry/no_expiry_obsolete.xml",
+				ShowOnUnchangedLines: true,
+			},
+		})
 	})
 
 	Convey("Analyze XML file with expiry of never", t, func() {
@@ -336,13 +348,18 @@ func TestHistogramsCheck(t *testing.T) {
 
 	// OBSOLETE tests
 
-	Convey("Analyze XML file with no obsolete message and no errors", t, func() {
+	Convey("Analyze XML file with no errors and good obslete date", t, func() {
 		results := analyzeHistogramTestFile(t, "obsolete/good_obsolete_date.xml", patchPath, inputDir)
 		So(results, ShouldBeNil)
 	})
 
 	Convey("Analyze XML file with no errors and good obsolete milestone", t, func() {
 		results := analyzeHistogramTestFile(t, "obsolete/good_obsolete_milestone.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
+	Convey("Analyze XML file with obsolete message and suppressed warnings", t, func() {
+		results := analyzeHistogramTestFile(t, "obsolete/obsolete_suppress_comments.xml", patchPath, inputDir)
 		So(results, ShouldBeNil)
 	})
 

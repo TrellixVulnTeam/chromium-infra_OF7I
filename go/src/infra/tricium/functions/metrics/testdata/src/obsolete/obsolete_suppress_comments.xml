@@ -1,0 +1,11 @@
+<histogram-configuration>
+    <histograms>
+        <histogram name="Test.Histogram1" enum="TwoElementsEnum" expires_after="2015-12-30">
+            <obsolete>
+                Deprecated as of 12/2015. Now using Test.Histogram2.
+            </obsolete>
+            <owner>chrome-metrics-team@google.com</owner>
+            <summary> This is a summary </summary>
+        </histogram>
+    </histograms>
+</histogram-configuration>

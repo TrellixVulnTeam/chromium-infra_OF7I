@@ -39,6 +39,7 @@ const (
 	firstOwnerTeamError      = `[WARNING] Please list an individual as the primary owner for this metric: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	oneOwnerTeamError        = `[WARNING] Please list an individual as the primary owner for this metric. Note that it's preferred to list at least two owners, where the second is often a team mailing list or a src/path/to/OWNERS reference: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	noExpiryError            = `[ERROR] Please specify an expiry condition for this histogram: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
+	obsoleteNoExpiryError    = `[WARNING] Please set the expires_after date to be the current milestone`
 	badExpiryError           = `[ERROR] Could not parse histogram expiry. Please format as YYYY-MM-DD or MXX: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	pastExpiryWarning        = `[WARNING] This expiry date is in the past. Did you mean to set an expiry date in the future?`
 	farExpiryWarning         = `[WARNING] It's a best practice to choose an expiry that is at most one year out: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
@@ -73,8 +74,9 @@ var (
 	unitsAttribute      = regexp.MustCompile(`units="[^"]+"`)
 
 	// Now is an alias for time.Now, can be overwritten by tests.
-	now              = time.Now
-	getMilestoneDate = getMilestoneDateImpl
+	now                 = time.Now
+	getMilestoneDate    = getMilestoneDateImpl
+	getCurrentMilestone = getCurrentMilestoneImpl
 
 	tags       = []string{ownerEndTag, obsoleteStartTag, obsoleteEndTag}
 	attributes = []*regexp.Regexp{expiryAttribute, enumAttribute, unitsAttribute}
@@ -241,19 +243,22 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 
 func checkHistogram(path string, hist *histogram, meta *metadata, singletonEnums stringset.Set) []*tricium.Data_Comment {
 	var comments []*tricium.Data_Comment
-	if comment := checkOwners(path, hist, meta); comment != nil {
-		comments = append(comments, comment)
-	}
-	if comment := checkUnits(path, hist, meta); comment != nil {
-		comments = append(comments, comment)
-	}
+	comments = append(comments, checkExpiry(path, hist, meta)...)
 	if comment := checkObsolete(path, hist, meta); comment != nil {
 		comments = append(comments, comment)
 	}
-	if comment := checkEnums(path, hist, meta, singletonEnums); comment != nil {
-		comments = append(comments, comment)
+	// Only do the following checks if the histogram is not obsolete.
+	if hist.Obsolete == "" {
+		if comment := checkOwners(path, hist, meta); comment != nil {
+			comments = append(comments, comment)
+		}
+		if comment := checkUnits(path, hist, meta); comment != nil {
+			comments = append(comments, comment)
+		}
+		if comment := checkEnums(path, hist, meta, singletonEnums); comment != nil {
+			comments = append(comments, comment)
+		}
 	}
-	comments = append(comments, checkExpiry(path, hist, meta)...)
 	return comments
 }
 
@@ -267,6 +272,7 @@ func bytesToHistogram(histBytes []byte, meta *metadata) *histogram {
 
 func checkOwners(path string, hist *histogram, meta *metadata) *tricium.Data_Comment {
 	var comment *tricium.Data_Comment
+
 	// Check that there is more than 1 owner
 	if len(hist.Owners) <= 1 {
 		comment = createOwnerComment(oneOwnerError, path, meta)
@@ -333,7 +339,18 @@ func checkObsolete(path string, hist *histogram, meta *metadata) *tricium.Data_C
 func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_Comment {
 	var commentMessage string
 	var logMessage string
-	if expiry := hist.Expiry; expiry == "" && hist.Obsolete == "" {
+	if expiry := hist.Expiry; hist.Obsolete != "" {
+		if expiry == "" {
+			milestone, err := getCurrentMilestone()
+			if err != nil {
+				log.Print("Failed to get current milestone")
+				commentMessage = obsoleteNoExpiryError + "."
+			} else {
+				commentMessage = fmt.Sprintf(obsoleteNoExpiryError+", M%d.", milestone)
+			}
+			logMessage = "[WARNING]: No Expiry, Obsolete"
+		}
+	} else if expiry == "" {
 		commentMessage = noExpiryError
 		logMessage = "[ERROR]: No Expiry"
 	} else if expiry == "never" {
@@ -399,23 +416,7 @@ func processExpiryDateDiff(inputDate time.Time, dateType expiryDateType, comment
 func getMilestoneDateImpl(milestone int) (time.Time, error) {
 	var milestoneDate time.Time
 	url := fmt.Sprintf("https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=%d", milestone)
-	milestoneClient := http.Client{
-		Timeout: time.Second * 2,
-	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return milestoneDate, err
-	}
-	res, err := milestoneClient.Do(req)
-	if err != nil {
-		return milestoneDate, err
-	}
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return milestoneDate, err
-	}
-	newMilestones := milestones{}
-	err = json.Unmarshal(body, &newMilestones)
+	newMilestones, err := milestoneRequest(url)
 	if err != nil {
 		return milestoneDate, err
 	}
@@ -426,6 +427,37 @@ func getMilestoneDateImpl(milestone int) (time.Time, error) {
 		log.Panicf("Failed to parse milestone date: %v", err)
 	}
 	return milestoneDate, nil
+}
+
+func getCurrentMilestoneImpl() (int, error) {
+	var milestone int
+	url := "https://chromiumdash.appspot.com/fetch_milestone_schedule"
+	newMilestones, err := milestoneRequest(url)
+	if err != nil {
+		return milestone, err
+	}
+	return newMilestones.Milestones[0].Milestone, nil
+}
+
+func milestoneRequest(url string) (milestones, error) {
+	newMilestones := milestones{}
+	milestoneClient := http.Client{
+		Timeout: time.Second * 2,
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return newMilestones, err
+	}
+	res, err := milestoneClient.Do(req)
+	if err != nil {
+		return newMilestones, err
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return newMilestones, err
+	}
+	err = json.Unmarshal(body, &newMilestones)
+	return newMilestones, err
 }
 
 func createExpiryComment(message, expiry, path string, meta *metadata) *tricium.Data_Comment {
