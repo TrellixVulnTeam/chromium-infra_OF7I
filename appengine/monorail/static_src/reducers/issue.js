@@ -369,13 +369,18 @@ export const commentReferences = createSelector(_commentReferences,
     (commentReferences) => objectToMap(commentReferences));
 
 export const hotlists = (state) => state.issue.hotlists;
-export const issueList = (state) => {
-  const listData = state.issue.issueList;
-  const issuesByRefString = state.issue.issuesByRefString;
-  return (listData.issueRefs || []).map((issueRef) => {
-    return issuesByRefString[issueRef];
-  });
-};
+
+const issuesByRefString = (state) => state.issue.issuesByRefString;
+const stateIssueList = (state) => state.issue.issueList;
+export const issueList = createSelector(
+    issuesByRefString,
+    stateIssueList,
+    (issuesByRefString, stateIssueList) => {
+      return (stateIssueList.issueRefs || []).map((issueRef) => {
+        return issuesByRefString[issueRef];
+      });
+    },
+);
 export const totalIssues = (state) => state.issue.issueList.totalResults;
 export const issueListProgress = (state) => state.issue.issueList.progress;
 export const issueListPhaseNames = createSelector(issueList, (issueList) => {

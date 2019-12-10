@@ -4,6 +4,7 @@
 
 import {assert} from 'chai';
 import sinon from 'sinon';
+import {createSelector} from 'reselect';
 import {store, resetState} from './base.js';
 import * as issue from './issue.js';
 import {fieldTypes} from 'shared/issue-fields.js';
@@ -163,26 +164,50 @@ describe('issue', () => {
     assert.deepEqual(issue.issue(wrapIssue({localId: 100})), {localId: 100});
   });
 
-  it('issueList', () => {
-    const stateWithEmptyIssueList = {issue: {
-      issueList: [],
-    }};
-    assert.deepEqual(issue.issueList(stateWithEmptyIssueList), []);
+  describe('issueList', () => {
+    it('issueList', () => {
+      const stateWithEmptyIssueList = {issue: {
+        issueList: [],
+      }};
+      assert.deepEqual(issue.issueList(stateWithEmptyIssueList), []);
 
-    const stateWithIssueList = {issue: {
-      issuesByRefString: {
-        'chromium:1': {localId: 1, projectName: 'chromium', summary: 'test'},
-        'monorail:2': {localId: 2, projectName: 'monorail',
-          summary: 'hello world'},
-      },
-      issueList: {
-        issueRefs: ['chromium:1', 'monorail:2'],
-      }}};
-    assert.deepEqual(issue.issueList(stateWithIssueList),
-        [
-          {localId: 1, projectName: 'chromium', summary: 'test'},
-          {localId: 2, projectName: 'monorail', summary: 'hello world'},
-        ]);
+      const stateWithIssueList = {issue: {
+        issuesByRefString: {
+          'chromium:1': {localId: 1, projectName: 'chromium', summary: 'test'},
+          'monorail:2': {localId: 2, projectName: 'monorail',
+            summary: 'hello world'},
+        },
+        issueList: {
+          issueRefs: ['chromium:1', 'monorail:2'],
+        }}};
+      assert.deepEqual(issue.issueList(stateWithIssueList),
+          [
+            {localId: 1, projectName: 'chromium', summary: 'test'},
+            {localId: 2, projectName: 'monorail', summary: 'hello world'},
+          ]);
+    });
+
+    it('is a selector', () => {
+      issue.issueList.constructor === createSelector;
+    });
+
+    it('memoizes results: returns same reference', () => {
+      const stateWithIssueList = {issue: {
+        issuesByRefString: {
+          'chromium:1': {localId: 1, projectName: 'chromium', summary: 'test'},
+          'monorail:2': {localId: 2, projectName: 'monorail',
+            summary: 'hello world'},
+        },
+        issueList: {
+          issueRefs: ['chromium:1', 'monorail:2'],
+        }}};
+      const reference1 = issue.issueList(stateWithIssueList);
+      const reference2 = issue.issueList(stateWithIssueList);
+
+      assert.equal(typeof reference1, 'object');
+      assert.equal(typeof reference2, 'object');
+      assert.equal(reference1, reference2);
+    });
   });
 
   it('fieldValues', () => {
@@ -1038,6 +1063,11 @@ describe('issue', () => {
   });
 });
 
+/**
+ * Return a container object wrapping input
+ * @param {Object} currentIssue
+ * @return {Object}
+ */
 function wrapIssue(currentIssue) {
   return {issue: {currentIssue: {...currentIssue}}};
 }

@@ -25,6 +25,11 @@ const PARAMS_THAT_TRIGGER_REFRESH = ['sort', 'groupby', 'num',
   'start'];
 const SNACKBAR_LOADING = 'Loading issues...';
 
+/**
+ * `<mr-list-page>`
+ *
+ * Container page for the list view
+ */
 export class MrListPage extends connectStore(LitElement) {
   /** @override */
   static get styles() {

@@ -52,7 +52,6 @@ describe('mr-list-page', () => {
     const loading = element.shadowRoot.querySelector('.container-loading');
     const noIssues = element.shadowRoot.querySelector('.container-no-issues');
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
-    const snackbar = element.shadowRoot.querySelector('chops-snackbar');
 
     assert.isNull(loading);
     assert.isNull(noIssues);
