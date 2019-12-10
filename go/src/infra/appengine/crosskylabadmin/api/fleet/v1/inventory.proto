@@ -270,6 +270,9 @@ message DutDeploymentActions {
 
   // Skip deployment task.
   bool skip_deployment = 4;
+
+  // Setup labstation for deployment.
+  bool setup_labstation = 5;
 }
 
 message DutDeploymentOptions {

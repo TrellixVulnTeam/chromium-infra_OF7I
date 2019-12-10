@@ -141,7 +141,21 @@ func (r *DeployDutRequest) Validate() error {
 			return status.Errorf(codes.InvalidArgument, "skip-deployment and install-firmware are incompatible")
 		}
 		if a.GetStageImageToUsb() {
-			return status.Errorf(codes.InvalidArgument, "skip-deployment and get-stage-image-to-usb are incompatible")
+			return status.Errorf(codes.InvalidArgument, "skip-deployment and stage-image-to-usb are incompatible")
+		}
+		if a.GetSetupLabstation() {
+			return status.Errorf(codes.InvalidArgument, "skip-deployment and setup-labstation are incompatible")
+		}
+	}
+	if a.GetSetupLabstation() {
+		if a.GetInstallTestImage() {
+			return status.Errorf(codes.InvalidArgument, "setup-labstation and install-test-image are incompatible")
+		}
+		if a.GetInstallFirmware() {
+			return status.Errorf(codes.InvalidArgument, "setup-labstation and install-firmware are incompatible")
+		}
+		if a.GetStageImageToUsb() {
+			return status.Errorf(codes.InvalidArgument, "setup-labstation and stage-image-to-usb are incompatible")
 		}
 	}
 	return nil

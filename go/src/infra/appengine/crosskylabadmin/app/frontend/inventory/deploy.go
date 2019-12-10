@@ -625,7 +625,7 @@ func getAttributeByKey(d *inventory.CommonDeviceSpecs, key string) (string, bool
 }
 
 func deployActionArgs(a *fleet.DutDeploymentActions) string {
-	s := make([]string, 0, 3)
+	s := make([]string, 0, 5)
 	if a.GetStageImageToUsb() {
 		s = append(s, "stage-usb")
 	}
@@ -636,6 +636,10 @@ func deployActionArgs(a *fleet.DutDeploymentActions) string {
 	if a.GetInstallFirmware() {
 		s = append(s, "install-firmware")
 		s = append(s, "verify-recovery-mode")
+	}
+	if a.GetSetupLabstation() {
+		s = append(s, "setup-labstation")
+		s = append(s, "update-label")
 	}
 	return strings.Join(s, ",")
 }
