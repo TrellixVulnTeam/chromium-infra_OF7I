@@ -42,6 +42,7 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/refs/heads/master/src
 		c := &updateWithOmahaRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded lab_platform.StableVersions should be written.")
+		c.Flags.BoolVar(&c.dryRun, "dryrun", false, "indicate if it's a dryrun for stable version update")
 
 		return c
 	},
@@ -52,6 +53,7 @@ type updateWithOmahaRun struct {
 	authFlags authcli.Flags
 
 	outputPath string
+	dryRun     bool
 }
 
 // Run implements the subcommands.CommandRun interface.
@@ -112,6 +114,18 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 	updatedFirmwareSV, err := getGSFirmwareSV(ctx, gsc, outDir, updatedCros)
 	if err != nil {
 		return err
+	}
+
+	logging.Infof(ctx, "cros version to be updated: %#v", updatedCros)
+	logging.Infof(ctx, "firmware version to be updated: %#v", updatedFirmwareSV)
+	if len(updatedCros) == 0 && len(updatedFirmwareSV) == 0 {
+		logging.Infof(ctx, "stable_version: nothing to commit")
+		return nil
+	}
+
+	if c.dryRun {
+		logging.Infof(ctx, "dryrun: skip committing")
+		return nil
 	}
 
 	changeURL, err := commitNew(ctx, gc, updatedCros, updatedFirmwareSV, oldSV)
