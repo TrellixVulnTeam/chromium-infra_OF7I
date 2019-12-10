@@ -101,6 +101,19 @@ func (s *deviceSpecsGetter) Get(initial *inventory.DeviceUnderTest, helpText str
 	}
 }
 
+// DropCommentLines drops lines from text that are comment lines, commented
+// using commentLines().
+func DropCommentLines(text string) string {
+	lines := strings.Split(text, "\n")
+	filtered := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if !isCommented(line) {
+			filtered = append(filtered, line)
+		}
+	}
+	return strings.Join(filtered, "\n")
+}
+
 func (s *deviceSpecsGetter) parseAndValidate(t string) (*inventory.DeviceUnderTest, error) {
 	d, err := parseUserInput(t)
 	if err != nil {
@@ -130,7 +143,7 @@ func fullText(userText string, helptext string) (string, error) {
 
 // parseUserInput parses the text obtained from the user.
 func parseUserInput(text string) (*inventory.DeviceUnderTest, error) {
-	text = dropCommentLines(text)
+	text = DropCommentLines(text)
 	dut, err := deserialize(text)
 	if err != nil {
 		return nil, errors.Annotate(err, "parse user input").Err()
@@ -356,19 +369,6 @@ func commentLines(text string) string {
 		}
 	}
 	return strings.Join(lines, "\n")
-}
-
-// dropCommentLines drops lines from text that are comment lines, commented
-// using commentLines().
-func dropCommentLines(text string) string {
-	lines := strings.Split(text, "\n")
-	filtered := make([]string, 0, len(lines))
-	for _, line := range lines {
-		if !isCommented(line) {
-			filtered = append(filtered, line)
-		}
-	}
-	return strings.Join(filtered, "\n")
 }
 
 func isCommented(line string) bool {

@@ -179,12 +179,13 @@ func (c *updateDutRun) getNewSpecs(a subcommands.Application, oldSpecs *inventor
 
 // parseSpecsFile parses device specs from the user provided file.
 func parseSpecsFile(specsFile string) (*inventory.DeviceUnderTest, error) {
-	text, err := ioutil.ReadFile(specsFile)
+	rawText, err := ioutil.ReadFile(specsFile)
 	if err != nil {
 		return nil, errors.Annotate(err, "parse specs file").Err()
 	}
+	text := userinput.DropCommentLines(string(rawText))
 	var specs inventory.DeviceUnderTest
-	err = jsonpb.Unmarshal(strings.NewReader(string(text)), &specs)
+	err = jsonpb.Unmarshal(strings.NewReader(text), &specs)
 	return &specs, err
 }
 

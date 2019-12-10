@@ -146,7 +146,7 @@ second line will survive.
 	// fourth line has comment after tabs, will be dropped.
 //fifth line has no space before comment, will be dropped.`
 	want := "second line will survive."
-	got := dropCommentLines(text)
+	got := DropCommentLines(text)
 	if want != got {
 		t.Errorf("Incorrect output from dropCommentLines(), -want, +got:\n%s",
 			pretty.Compare(strings.Split(want, "\n"), strings.Split(got, "\n")))
