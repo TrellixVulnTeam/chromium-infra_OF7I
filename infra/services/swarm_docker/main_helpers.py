@@ -311,9 +311,10 @@ def add_launch_arguments(parser):  # pragma: no cover
       help='Run this as a canary bot.')
   parser.add_argument(
       '--docker-version',
-      required=True,
-      help='REQUIRED: The docker-ce version to be ensured is installed (ex: '
-      '18.06.3~ce~3-0~ubuntu). These values are supplied by puppet.')
+      default='',
+      help='The docker-ce version to be ensured is installed (ex: '
+      '18.06.3~ce~3-0~ubuntu). These values are supplied by puppet. If not '
+      'specified, no update will be triggered.')
   parser.add_argument(
       '--max-container-uptime', type=int, default=60 * 4,
       help='Max uptime of a container, in minutes.')
