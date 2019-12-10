@@ -188,8 +188,27 @@ TODO: Write more detail here.
 1.  Sign in as a project owner and visit any page in your project.
 1.  Open the gear menu and select `Development process`.
 1.  Click the `Rules` tab at the top of the page.
+1.  Fill in some rule predicates and consequences.
+1.  Submit the form.
 
-TODO: Write more detail here.
+Filter rules are if-then rules that automatically add information to
+issues when the issues are created, when the issues are updated, and
+when the rules change.  Rules add derived values to issues, which are
+stored separately from the explicitly set values on the issue itself.
+When a value is explicitly set, that value overrides the derived
+value, however the derived value itself cannot be edited except by
+changing the rule.
+
+The purpose of filter rules is to allow the explicit values on an
+issue to focus on capturing the details of the problem situation,
+while pragmatic concerns such as access controls and prioritization
+can have meaningful defaults set automatically.
+
+For example, there could be a rule that says `if [type=Defect
+component=Authentication] then add label Restrict-View-SecurityTeam`.
+That would mean that any defect in the system’s authentication
+component should be restricted to only be viewable by the security
+team (and the reporter, owner, and any CC’d users).
 
 ## How to configure issue templates
 
@@ -197,7 +216,32 @@ TODO: Write more detail here.
 1.  Open the gear menu and select `Development process`.
 1.  Click the `Templates` tab at the top of the page.
 
-TODO: Write more detail here.
+Issue templates are used to create new issues with some of the details
+filled in.  Each template has a name and the initial values for the
+issue summary, description, and other fields.  Most templates will be
+available to all users who can report issues in the project, but it is
+also possible to restrict a template to only project members.
+
+On that page you can set the default templates that are used for new
+issue reports by project members or non-members.  And, there is a list
+of existing templates and a button to create a new template.
+
+Each template must have a unique name.  Templates cannot be renamed
+after creation, but you can create a new template with the desired
+name then delete the original template.
+
+Template summary lines that begin with text inside brackets, such as
+`[Deployment] Name of system that needs to be deployed` will cause the
+issue entry page to keep the bracketed text when the user initially
+types the summary line.  Also, any labels that end with a question
+mark, like `Key-?`, will cause the issue entry page to require the
+user to edit that label before submitting the form.
+
+Each template can have a comma-separated list of template
+administrators who are allowed to edit that template.  This allows
+project owners to delegate authority to maintain certain templates to
+the teams that work on issues that use that template.  However, the
+overall set of templates is controlled by the project owners.
 
 ## How to configure components
 
@@ -205,15 +249,51 @@ TODO: Write more detail here.
 1.  Open the gear menu and select `Development process`.
 1.  Click the `Components` tab at the top of the page.
 
-TODO: Write more detail here.
+Components form a high-level outline of the software being developed
+in the project so that an issue can be related to the part of that
+software that needs to change.  For example, if a software system has
+architectural tiers for database access, business logic, and user
+interface, that would suggest using three components in Monorail.  If
+a piece of software is developed by a different team or using
+different processes, then using a separate monorail project may be
+more appropriate.
+
+The components list page shows a list of all currently active
+components in the project.  It can be filtered to show a smaller set
+of components, for example just the components that the signed-in user
+is involved in.  Showing all components includes both active
+components and components that have been marked as deprecated.
+
+Each component is identified by a path string that consists of a list
+of names separated by greater-than signs, e.g., `Database>Metrics`.
+When searching for issues by component, subcomponents are normally
+included in the results.
+
+The main purpose of components is to indicate the part of the software
+that needs to change to resolve an issue.  That could be determined as
+part of the investigative work needed to fully document the issue.
+Monorail components help with some of the pragmatic aspects of issue
+tracking by automatically adding labels or CCing people who might help
+resolve the issue.
+
+Each component can have a comma-separated list of component
+administrators who are allowed to edit that component.  This allows
+project owners to delegate authority to maintain certain components to
+the teams that work on issues that use that component.  However, the
+overall set of components and their organization is controlled by the
+project owners.
 
 ## How to configure default views
 
 1.  Sign in as a project owner and visit any page in your project.
 1.  Open the gear menu and select `Development process`.
 1.  Click the `Views` tab at the top of the page.
-
-TODO: Write more detail here.
+1.  Fill in a default query for project members to help them stay
+    focused on the issues that are most important for the team as a
+    whole, or set it to `owner:me` to focus each team member on
+    resolving the issues assigned to them.
+1.  Fill in default list columns and grid options.
+1.  Submit the form.
 
 ## How to administer project settings
 
@@ -221,9 +301,8 @@ TODO: Write more detail here.
 1.  Open the gear menu and select `Administer`.
 
 This page allows project owners to edit the project summary line,
-description, access level and some other settings.
-
-TODO: Write more detail here.
+description, access level and some other settings.  The description
+can be written in Markdown.
 
 ## How to view the project storage quota
 
