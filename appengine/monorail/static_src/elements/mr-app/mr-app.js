@@ -17,6 +17,7 @@ import * as ui from 'reducers/ui.js';
 import * as sitewide from 'reducers/sitewide.js';
 import {userIdOrDisplayNameToUserRef} from 'shared/converters.js';
 import {arrayToEnglish} from 'shared/helpers.js';
+import {trackPageChange} from 'shared/ga-helpers.js';
 import 'elements/framework/mr-header/mr-header.js';
 import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
 import 'elements/help/mr-cue/mr-cue.js';
@@ -208,6 +209,9 @@ export class MrApp extends connectStore(LitElement) {
       // we want to sync the current pageTitle in the Redux state to
       // document.title in only one place in the code.
       document.title = this.pageTitle;
+    }
+    if (changedProperties.has('page')) {
+      trackPageChange(this.page, this.userDisplayName);
     }
   }
 
