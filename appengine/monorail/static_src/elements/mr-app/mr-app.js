@@ -80,6 +80,10 @@ export class MrApp extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * Helper for determiing which page component to render.
+   * @return {TemplateResult}
+   */
   _renderPage() {
     if (this.page === 'detail') {
       return html`
@@ -167,15 +171,10 @@ export class MrApp extends connectStore(LitElement) {
        */
       page: {type: String},
       /**
-       * A String for the title of the page that the user will see in their browser
-       * tab. ie: equivalent to the <title> tag.
+       * A String for the title of the page that the user will see in their
+       * browser tab. ie: equivalent to the <title> tag.
        */
       pageTitle: {type: String},
-      /**
-       * The page.js context for the viewed page is saved for reference
-       * in future navigations.
-       */
-      _currentContext: {type: Object},
     };
   }
 
@@ -184,7 +183,13 @@ export class MrApp extends connectStore(LitElement) {
     super();
     this.queryParams = {};
     this.dirtyForms = [];
-    this._currentContext = {};
+
+    /**
+     * @type {PageJS.Context}
+     * The context of the page. This should not be a LitElement property
+     * because we don't want to re-render when updating this.
+     */
+    this._currentContext = undefined;
   }
 
   /** @override */
@@ -228,32 +233,42 @@ export class MrApp extends connectStore(LitElement) {
     // Start a cron task to periodically request the status from the server.
     getServerStatusCron.start();
 
-    page('*', this._universalRouteHandler.bind(this));
+    // NOTE: In most cases, we want more general route handlers like
+    // _initializeViewedProject() and _selectHotlist() to come AFTER more
+    // specific route handlers. This is because the more specific route
+    // handlers usually load the bundle for a given page, and we want the
+    // actions caused by these handlers to happen after a bundle has loaded,
+    // not before.
+    // This may change if we change the granularity of our bundling.
+    page('*', this._preRouteHandler.bind(this));
     page('/p/:project/issues/list_new', this._loadListPage.bind(this));
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this));
+    page('/p/:project/*', this._initializeViewedProject.bind(this));
     page(
         '/users/:user/hotlists/:hotlist',
         this._selectHotlist, this._loadHotlistIssuesPage.bind(this));
-    page('/users/:user/hotlists/:hotlist/*', this._selectHotlist);
     page(
         '/users/:user/hotlists/:hotlist/details',
         this._loadHotlistDetailsPage.bind(this));
     page(
         '/users/:user/hotlists/:hotlist/people',
         this._loadHotlistPeoplePage.bind(this));
+    page('/users/:user/hotlists/:hotlist/*', this._selectHotlist);
+    page('*', this._postRouteHandler.bind(this));
     page();
   }
 
-  // Functionality that runs on every single route change.
-  _universalRouteHandler(ctx, next) {
-    // Scroll to the requested element if a hash is present.
-    if (ctx.hash) {
-      store.dispatch(ui.setFocusId(ctx.hash));
-    }
-
+  /**
+   * Handler that runs on every single route change, before the new page has
+   * loaded. This function should not use store.dispatch() or assign properties
+   * on this because running these actions causes extra re-renders to happen.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
+  _preRouteHandler(ctx, next) {
     // We're not really navigating anywhere, so don't do anything.
     if (this._currentContext && this._currentContext.path &&
-        ctx.path === this._currentContext.path) {
+      ctx.path === this._currentContext.path) {
       Object.assign(ctx, this._currentContext);
       // Set ctx.handled to false, so we don't push the state to browser's
       // history.
@@ -264,10 +279,7 @@ export class MrApp extends connectStore(LitElement) {
     // Check if there were forms with unsaved data before loading the next
     // page.
     const discardMessage = this._confirmDiscardMessage();
-    if (!discardMessage || confirm(discardMessage)) {
-      // Clear the forms to be checked, since we're navigating away.
-      store.dispatch(ui.clearDirtyForms());
-    } else {
+    if (discardMessage && !confirm(discardMessage)) {
       Object.assign(ctx, this._currentContext);
       // Set ctx.handled to false, so we don't push the state to browser's
       // history.
@@ -277,58 +289,105 @@ export class MrApp extends connectStore(LitElement) {
       return;
     }
 
-    // Run query string parsing on all routes.
+    // Run query string parsing on all routes. Query params must be parsed
+    // before routes are loaded because some routes use them to conditionally
+    // load bundles.
     // Based on: https://visionmedia.github.io/page.js/#plugins
     const params = qs.parse(ctx.querystring);
 
-    // Make sure queryPrams are not case sensitive.
+    // Make sure queryParams are not case sensitive.
     const lowerCaseParams = {};
     Object.keys(params).forEach((key) => {
       lowerCaseParams[key.toLowerCase()] = params[key];
     });
-    ctx.query = lowerCaseParams;
-
-    store.dispatch(sitewide.setQueryParams(ctx.query));
-
-    this._currentContext = ctx;
-
-    // Increment the count of navigations in the Redux store.
-    store.dispatch(ui.incrementNavigationCount());
+    ctx.queryParams = lowerCaseParams;
 
     next();
   }
 
+  /**
+   * Handler that runs on every single route change, after the new page has
+   * loaded.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
+  _postRouteHandler(ctx, next) {
+    // Scroll to the requested element if a hash is present.
+    if (ctx.hash) {
+      store.dispatch(ui.setFocusId(ctx.hash));
+    }
+
+    // Sync queryParams to Redux after the route has loaded, rather than before,
+    // to avoid having extra queryParams update on the previously loaded
+    // component.
+    store.dispatch(sitewide.setQueryParams(ctx.queryParams));
+
+    // Increment the count of navigations in the Redux store.
+    store.dispatch(ui.incrementNavigationCount());
+
+    // Clear dirty forms when entering a new page.
+    store.dispatch(ui.clearDirtyForms());
+
+    // Save the context of this page to be compared to later.
+    this._currentContext = ctx;
+
+    next();
+  }
+
+  /**
+   * Handler that runs after a project page has loaded.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
+  _initializeViewedProject(ctx, next) {
+    this.projectName = ctx.params.project;
+    next();
+  }
+
+  /**
+   * Loads and triggers render for the issue detail page.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
   async _loadIssuePage(ctx, next) {
     performance.clearMarks('start load issue detail page');
     performance.mark('start load issue detail page');
 
+    await import(/* webpackChunkName: "mr-issue-page" */
+        '../issue-detail/mr-issue-page/mr-issue-page.js');
+
     store.dispatch(issue.setIssueRef(
-        Number.parseInt(ctx.query.id), ctx.params.project));
-
-    this.projectName = ctx.params.project;
-
-    await import(/* webpackChunkName: "mr-issue-page" */ '../issue-detail/mr-issue-page/mr-issue-page.js');
+        Number.parseInt(ctx.queryParams.id), ctx.params.project));
     this.page = 'detail';
+    next();
   }
 
+  /**
+   * Loads and triggers render for the issue list page, including the list,
+   * grid, and chart modes.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
   async _loadListPage(ctx, next) {
-    this.projectName = ctx.params.project;
-
-    switch (this.queryParams && this.queryParams.mode &&
-        this.queryParams.mode.toLowerCase()) {
+    switch (ctx.queryParams && ctx.queryParams.mode &&
+        ctx.queryParams.mode.toLowerCase()) {
       case 'grid':
-        await import(/* webpackChunkName: "mr-grid-page" */ '../issue-list/mr-grid-page/mr-grid-page.js');
+        await import(/* webpackChunkName: "mr-grid-page" */
+            '../issue-list/mr-grid-page/mr-grid-page.js');
         this.page = 'grid';
         break;
       case 'chart':
-        await import(/* webpackChunkName: "mr-chart-page" */ '../issue-list/mr-chart-page/mr-chart-page.js');
+        await import(/* webpackChunkName: "mr-chart-page" */
+            '../issue-list/mr-chart-page/mr-chart-page.js');
         this.page = 'chart';
         break;
       default:
-        await import(/* webpackChunkName: "mr-list-page" */ '../issue-list/mr-list-page/mr-list-page.js');
+        await import(/* webpackChunkName: "mr-list-page" */
+            '../issue-list/mr-list-page/mr-list-page.js');
         this.page = 'list';
         break;
     }
+    next();
   }
 
   /**
@@ -356,6 +415,7 @@ export class MrApp extends connectStore(LitElement) {
     await import(/* webpackChunkName: "mr-hotlist-details-page" */
         `../hotlist/mr-hotlist-details-page/mr-hotlist-details-page.js`);
     this.page = 'hotlist-details';
+    next();
   }
 
   /**
@@ -367,6 +427,7 @@ export class MrApp extends connectStore(LitElement) {
     await import(/* webpackChunkName: "mr-hotlist-issues-page" */
         `../hotlist/mr-hotlist-issues-page/mr-hotlist-issues-page.js`);
     this.page = 'hotlist-issues';
+    next();
   }
 
   /**
@@ -378,8 +439,15 @@ export class MrApp extends connectStore(LitElement) {
     await import(/* webpackChunkName: "mr-hotlist-people-page" */
         `../hotlist/mr-hotlist-people-page/mr-hotlist-people-page.js`);
     this.page = 'hotlist-people';
+    next();
   }
 
+  /**
+   * Constructs a message to warn users about dirty forms when they navigate
+   * away from a page, to prevent them from loasing data.
+   * @return {string} Message shown to users to warn about in flight form
+   *   changes.
+   */
   _confirmDiscardMessage() {
     if (!this.dirtyForms.length) return null;
     const dirtyFormsMessage =

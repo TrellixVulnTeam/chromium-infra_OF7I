@@ -8,6 +8,7 @@ import {MrApp} from './mr-app.js';
 import {store, resetState} from 'reducers/base.js';
 
 let element;
+let next;
 
 window.CS_env = {
   token: 'foo-token',
@@ -20,6 +21,8 @@ describe('mr-app', () => {
     element = document.createElement('mr-app');
     document.body.appendChild(element);
     element.formsToCheck = [];
+
+    next = sinon.stub();
   });
 
   afterEach(() => {
@@ -31,37 +34,66 @@ describe('mr-app', () => {
     assert.instanceOf(element, MrApp);
   });
 
-  it('_universalRouteHandler calls next()', () => {
+  it('_preRouteHandler calls next()', () => {
     const ctx = {};
-    const next = sinon.stub();
 
-    element._universalRouteHandler(ctx, next);
+    element._preRouteHandler(ctx, next);
 
     sinon.assert.calledOnce(next);
   });
 
-  it('_universalRouteHandler parses queryParams', () => {
-    const ctx = {querystring: 'q=owner:me&colspec=Summary'};
-    const next = sinon.stub();
-    element._universalRouteHandler(ctx, next);
+  it('_preRouteHandler does not call next() on same page nav', () => {
+    element._currentContext = {path: '123'};
+    const ctx = {path: '123'};
 
-    assert.deepEqual(element.queryParams, {q: 'owner:me', colspec: 'Summary'});
+    element._preRouteHandler(ctx, next);
+
+    assert.isFalse(ctx.handled);
+    sinon.assert.notCalled(next);
   });
 
-  it('_universalRouteHandler ignores case for queryParams keys', () => {
-    const ctx = {querystring: 'Q=owner:me&ColSpeC=Summary&x=owner'};
-    const next = sinon.stub();
-    element._universalRouteHandler(ctx, next);
+  it('_preRouteHandler parses queryParams', () => {
+    const ctx = {querystring: 'q=owner:me&colspec=Summary'};
+    element._preRouteHandler(ctx, next);
 
-    assert.deepEqual(element.queryParams, {q: 'owner:me', colspec: 'Summary',
+    assert.deepEqual(ctx.queryParams, {q: 'owner:me', colspec: 'Summary'});
+  });
+
+  it('_preRouteHandler ignores case for queryParams keys', () => {
+    const ctx = {querystring: 'Q=owner:me&ColSpeC=Summary&x=owner'};
+    element._preRouteHandler(ctx, next);
+
+    assert.deepEqual(ctx.queryParams, {q: 'owner:me', colspec: 'Summary',
       x: 'owner'});
+  });
+
+  it('_preRouteHandler ignores case for queryParams keys', () => {
+    const ctx = {querystring: 'Q=owner:me&ColSpeC=Summary&x=owner'};
+    element._preRouteHandler(ctx, next);
+
+    assert.deepEqual(ctx.queryParams, {q: 'owner:me', colspec: 'Summary',
+      x: 'owner'});
+  });
+
+  it('_postRouteHandler saves ctx.queryParams to Redux', () => {
+    const ctx = {queryParams: {q: '1234'}};
+    element._postRouteHandler(ctx, next);
+
+    assert.deepEqual(element.queryParams, {q: '1234'});
+  });
+
+  it('_postRouteHandler saves ctx to this._currentContext', () => {
+    const ctx = {path: '1234'};
+    element._postRouteHandler(ctx, next);
+
+    assert.deepEqual(element._currentContext, {path: '1234'});
   });
 
   it('_loadIssuePage loads issue page', async () => {
     await element._loadIssuePage({
-      query: {id: '234'},
+      queryParams: {id: '234'},
       params: {project: 'chromium'},
-    });
+    }, next);
     await element.updateComplete;
 
     // Check that only one page element is rendering at a time.
@@ -77,7 +109,7 @@ describe('mr-app', () => {
   it('_loadListPage loads list page', async () => {
     await element._loadListPage({
       params: {project: 'chromium'},
-    });
+    }, next);
     await element.updateComplete;
 
     // Check that only one page element is rendering at a time.
@@ -86,14 +118,13 @@ describe('mr-app', () => {
 
     const listPage = element.shadowRoot.querySelector('mr-list-page');
     assert.isDefined(listPage, 'list page is defined');
-    assert.equal(listPage.projectName, 'chromium');
   });
 
   it('_loadListPage loads grid page', async () => {
     element.queryParams = {mode: 'grid'};
     await element._loadListPage({
       params: {project: 'chromium'},
-    });
+    }, next);
     await element.updateComplete;
 
     // Check that only one page element is rendering at a time.
@@ -102,6 +133,5 @@ describe('mr-app', () => {
 
     const gridPage = element.shadowRoot.querySelector('mr-grid-page');
     assert.isDefined(gridPage, 'grid page is defined');
-    assert.equal(gridPage.projectName, 'chromium');
   });
 });
