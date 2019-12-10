@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 DEPS = [
-    'depot_tools/cipd',
     'recipe_engine/buildbucket',
     'recipe_engine/context',
     'recipe_engine/json',

@@ -6,7 +6,6 @@
 
 DEPS = [
   'build/zip',
-  'depot_tools/cipd',
   'depot_tools/git',
   'depot_tools/gsutil',
   'recipe_engine/buildbucket',

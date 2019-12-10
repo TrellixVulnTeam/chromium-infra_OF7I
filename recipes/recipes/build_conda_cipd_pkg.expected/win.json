@@ -122,10 +122,12 @@
       "infra/conda_python/scientific/${platform}",
       "-out",
       "[START_DIR]\\conda_python.cipd",
-      "-json-output",
-      "/path/to/tmp/json",
+      "-hash-algo",
+      "sha256",
       "-install-mode",
-      "copy"
+      "copy",
+      "-json-output",
+      "/path/to/tmp/json"
     ],
     "name": "build ${platform}",
     "~followup_annotations": [
@@ -143,14 +145,14 @@
       "cipd.bat",
       "pkg-register",
       "[START_DIR]\\conda_python.cipd",
-      "-json-output",
-      "/path/to/tmp/json",
       "-ref",
       "latest",
       "-tag",
       "buildbot_build:chromium.testing.master/TestBuilder/571",
       "-tag",
-      "conda:Miniconda2-3-18-3"
+      "conda:Miniconda2-3-18-3",
+      "-json-output",
+      "/path/to/tmp/json"
     ],
     "name": "register infra/conda_python/scientific/${platform}",
     "~followup_annotations": [
@@ -160,7 +162,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/conda_python/scientific/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/conda_python/scientific/resolved-platform@https://chrome-infra-packages.appspot.com/p/infra/conda_python/scientific/resolved-platform/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {

@@ -63,6 +63,8 @@
       "infra/tools/gsutil",
       "-out",
       "[START_DIR]/gsutil",
+      "-hash-algo",
+      "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -82,12 +84,12 @@
       "cipd",
       "pkg-register",
       "[START_DIR]/gsutil",
-      "-json-output",
-      "/path/to/tmp/json",
       "-ref",
       "latest",
       "-tag",
-      "gsutil_version:4.1"
+      "gsutil_version:4.1",
+      "-json-output",
+      "/path/to/tmp/json"
     ],
     "name": "register infra/tools/gsutil",
     "~followup_annotations": [
@@ -97,7 +99,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/tools/gsutil\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/tools/gsutil@https://chrome-infra-packages.appspot.com/p/infra/tools/gsutil/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {

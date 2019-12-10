@@ -8,9 +8,9 @@ from recipe_engine.recipe_api import Property
 
 
 DEPS = [
-  'depot_tools/cipd',
   'depot_tools/gitiles',
   'depot_tools/osx_sdk',
+  'recipe_engine/cipd',
   'recipe_engine/platform',
   'recipe_engine/properties',
   'recipe_engine/runtime',

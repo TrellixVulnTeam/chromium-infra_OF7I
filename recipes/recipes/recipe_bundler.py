@@ -6,11 +6,10 @@ from recipe_engine.recipe_api import Property
 from recipe_engine.config import List
 
 DEPS = [
+  'recipe_engine/cipd',
   'recipe_engine/path',
   'recipe_engine/properties',
-  'recipe_engine/step',
-
-  'depot_tools/cipd',
+  'recipe_engine/step'
 ]
 
 PROPERTIES = {
@@ -49,9 +48,9 @@ def RunSteps(api, recipe_bundler_pkg, recipe_bundler_vers, repo_specs,
              repo_specs_optional, package_name_prefix,
              package_name_internal_prefix):
   bundler_path = api.path['cache'].join('builder', 'bundler')
-  api.cipd.ensure(bundler_path, {
-    recipe_bundler_pkg: recipe_bundler_vers,
-  })
+  ensure_file = api.cipd.EnsureFile().add_package(
+      recipe_bundler_pkg, recipe_bundler_vers)
+  api.cipd.ensure(bundler_path, ensure_file)
 
   cmd = [
     bundler_path.join('recipe_bundler'),

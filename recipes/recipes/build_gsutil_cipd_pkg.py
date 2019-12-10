@@ -4,8 +4,8 @@
 
 DEPS = [
   'build/zip',
-  'depot_tools/cipd',
   'depot_tools/gsutil',
+  'recipe_engine/cipd',
   'recipe_engine/file',
   'recipe_engine/path',
   'recipe_engine/platform',

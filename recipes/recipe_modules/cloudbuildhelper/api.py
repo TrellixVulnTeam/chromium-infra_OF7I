@@ -45,9 +45,9 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
     """
     if self._cbh_bin is None:
       cbh_dir = self.m.path['start_dir'].join('cbh')
-      self.m.cipd.ensure(cbh_dir, {
-          'infra/tools/cloudbuildhelper/${platform}': 'latest',
-      })
+      ensure_file = self.m.cipd.EnsureFile().add_package(
+          'infra/tools/cloudbuildhelper/${platform}', 'latest')
+      self.m.cipd.ensure(cbh_dir, ensure_file)
       self._cbh_bin = cbh_dir.join('cloudbuildhelper')
     return self._cbh_bin
 
