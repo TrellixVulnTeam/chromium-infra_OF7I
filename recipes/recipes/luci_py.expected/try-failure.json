@@ -331,22 +331,6 @@
   },
   {
     "cmd": [
-      "npm",
-      "ci"
-    ],
-    "cwd": "[START_DIR]/infra/luci/appengine/swarming/ui2",
-    "env_prefixes": {
-      "PATH": [
-        "[START_DIR]/infra/luci/appengine/swarming/ui2/nodejs/bin"
-      ]
-    },
-    "name": "swarming-ui.install node modules",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
       "make",
       "release"
     ],

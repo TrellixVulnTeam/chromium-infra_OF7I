@@ -103,7 +103,6 @@ def _step_swarming_ui_tests(api):
     paths_to_add = [api.path.pathsep.join([str(node_path)])]
     env_prefixes = {'PATH': paths_to_add}
     with api.context(env_prefixes=env_prefixes, cwd=ui_dir):
-      api.step('install node modules', ['npm', 'ci'])
       _steps_check_diffs_on_ui_assets(api)
       api.step('run tests', ['make', 'test'])
 
