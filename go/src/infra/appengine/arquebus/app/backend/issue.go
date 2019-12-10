@@ -24,7 +24,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/wrappers"
 
 	"go.chromium.org/gae/service/info"
@@ -278,13 +277,15 @@ func createIssueDelta(c context.Context, mc monorail.IssuesClient, task *model.T
 	needUpdate := false
 	// iff the issue has the intended owner, set the status to "Assigned".
 	// Otherwise, keep the existing status.
-	if assignee != nil && !proto.Equal(issue.OwnerRef, assignee) {
-		needUpdate = true
-		delta.OwnerRef = assignee
-		delta.Status = &wrappers.StringValue{Value: "Assigned"}
-		writeTaskLogWithLink(
-			c, task, issue, "Found a new owner: %s", assignee.DisplayName,
-		)
+	if assignee != nil {
+		if issue.OwnerRef == nil || issue.OwnerRef.DisplayName != assignee.DisplayName {
+			needUpdate = true
+			delta.OwnerRef = assignee
+			delta.Status = &wrappers.StringValue{Value: "Assigned"}
+			writeTaskLogWithLink(
+				c, task, issue, "Found a new owner: %s", assignee.DisplayName,
+			)
+		}
 	}
 	ccsToAdd := findCcsToAdd(task, issue.CcRefs, ccs)
 	if len(ccsToAdd) > 0 {
@@ -306,14 +307,14 @@ func findCcsToAdd(task *model.Task, existingCCs, proposedCCs []*monorail.UserRef
 	if len(proposedCCs) == 0 {
 		return []*monorail.UserRef{}
 	}
-	ccmap := make(map[uint64]*monorail.UserRef, len(existingCCs))
+	ccmap := make(map[string]*monorail.UserRef, len(existingCCs))
 	for _, cc := range existingCCs {
-		ccmap[cc.UserId] = cc
+		ccmap[cc.DisplayName] = cc
 	}
 
 	var ccsToAdd []*monorail.UserRef
 	for _, cc := range proposedCCs {
-		if _, exist := ccmap[cc.UserId]; !exist {
+		if _, exist := ccmap[cc.DisplayName]; !exist {
 			ccsToAdd = append(ccsToAdd, cc)
 		}
 	}

@@ -105,24 +105,46 @@ func TestSearchAndUpdateIssues(t *testing.T) {
 			})
 
 			Convey("if no delta was found", func() {
-				assigner.AssigneesRaw = createRawUserSources(
-					emailUserSource("foo@example.org"),
-				)
-				assigner.CCsRaw = createRawUserSources(
-					emailUserSource("bar@example.net"),
-				)
-				mockGetAndListIssues(
-					c, &monorail.Issue{
-						ProjectName: "test", LocalId: 123,
-						OwnerRef: monorailUser("foo@example.org"),
-						CcRefs: []*monorail.UserRef{
-							monorailUser("bar@example.net"),
-						},
-					},
-				)
-				nUpdated, err := searchAndUpdateIssues(c, assigner, task)
-				So(err, ShouldBeNil)
-				So(nUpdated, ShouldEqual, 0)
+				issue := &monorail.Issue{
+					ProjectName: "test", LocalId: 123,
+					OwnerRef: nil,
+					CcRefs:   []*monorail.UserRef{},
+				}
+
+				Convey("when the owners are the same", func() {
+					assigner.AssigneesRaw = createRawUserSources(emailUserSource("foo@example.org"))
+					assigner.CCsRaw = createRawUserSources()
+					issue.OwnerRef = monorailUser("foo@example.org")
+
+					// This is to ensure that searchAndUpdateIssues() determines
+					// if the issue already has the intended owner by
+					// UserRefs.DisplayName.
+					//
+					// Arquebus creates a monorail.UserRef{} with the intended
+					// owner, specified in the config. However, it doesn't
+					// invoke GetUser() to retrieve the UserID of the email
+					// address, and, therefore, the UserId of the UserRef from
+					// config is always 0, and searchAndUpdateIssues() should
+					// perform the check, based on the email address, not UserID.
+					issue.OwnerRef.UserId = 123
+					mockGetAndListIssues(c, issue)
+
+					nUpdated, err := searchAndUpdateIssues(c, assigner, task)
+					So(err, ShouldBeNil)
+					So(nUpdated, ShouldEqual, 0)
+				})
+
+				Convey("when the user is already in the cc list.", func() {
+					assigner.AssigneesRaw = createRawUserSources()
+					assigner.CCsRaw = createRawUserSources(emailUserSource("bar@example.net"))
+					issue.CcRefs = append(issue.CcRefs, monorailUser("bar@example.net"))
+					issue.CcRefs[0].UserId = 123
+					mockGetAndListIssues(c, issue)
+
+					nUpdated, err := searchAndUpdateIssues(c, assigner, task)
+					So(err, ShouldBeNil)
+					So(nUpdated, ShouldEqual, 0)
+				})
 			})
 
 			Convey("if dry-run is set", func() {
