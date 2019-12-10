@@ -20,7 +20,7 @@ different project from that menu.
 ## The project people page
 
 When you are in a project, there is a gear menu located just to the
-right of the issue search box.  Selecting “People” from that menu
+right of the issue search box.  Selecting `People` from that menu
 takes you to the project people list.
 
 The project people list page lists all the members of the current
@@ -36,8 +36,8 @@ Project owners use this page to add and remove project members.
 ## The development process pages
 
 When you are in a project, there is a gear menu located just to the
-right of the issue search box.  Selecting “Development” from that menu
-takes you to the project introduction page.
+right of the issue search box.  Selecting `Development process` from
+that menu takes you to the project introduction page.
 
 The project introduction page has a short textual description of the
 goal of the project.  And, most projects have a link to the source
@@ -67,7 +67,7 @@ The development process tabs are:
 ## The project history page
 
 When you are in a project, there is a gear menu located just to the
-right of the issue search box.  Selecting “History” from that menu
+right of the issue search box.  Selecting `History` from that menu
 takes you to the project history page.
 
 The project history page shows a list of recent changes to issues in a

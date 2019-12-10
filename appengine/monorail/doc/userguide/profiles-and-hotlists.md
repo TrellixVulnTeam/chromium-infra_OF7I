@@ -102,7 +102,7 @@ is currently allowed to view.
 ## The user hotlists page
 
 The user hotlists page lists hotlists that a user owns or can edit. This page
-can be reached by clicking “Hotlists” in the account menu for your own hotlists,
+can be reached by clicking `Hotlists` in the account menu for your own hotlists,
 or via the `Hotlists` tab at the top of any users profile page.
 
 Clicking on a row in the hotlists table navigates to the list of issues in that

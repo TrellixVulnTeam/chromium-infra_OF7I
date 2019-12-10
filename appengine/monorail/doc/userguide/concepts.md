@@ -115,7 +115,7 @@ Comments:
     emoji.
 
 *   Whitespace in comments is stored in our database but extra whitespace is
-    usually not visible in the UI unless the user has clicked the “Code” button
+    usually not visible in the UI unless the user has clicked the `Code` button
     to use a fixed-width code-friendly font.
 
 *   All comments on an issue have the same access controls as the issue.
@@ -166,7 +166,7 @@ Attachments:
         and tags found in other tools.
     *   Key-Value labels have one or more dashes and are treated almost like
         enumerated-type fields.
-    *   Restriction labels start with “Restrict-” and have the effect of
+    *   Restriction labels start with "Restrict-" and have the effect of
         limiting access to the issue. These are described more below.
 
 *   A list of well-known labels can be configured by project owners. Each

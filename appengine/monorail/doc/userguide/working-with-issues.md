@@ -140,10 +140,10 @@ benefit of the project.
 1. Sign in to Monorail.  If this is your first time, you will see a
    privacy notice dialog box.
 
-1. Click on the “New issue” button at the top of the page.
+1. Click on the `New issue` button at the top of the page.
 
 1. In the /p/chromium project, non-members will be directed to the
-   “new issue wizard”.
+   "new issue wizard".
 
 1. Choose an issue template based on the kind of issue that you want to create.
 
@@ -171,7 +171,7 @@ If you need a URL that you can bookmark or paste into another document:
   the issue summary.
 
 If you are writing text in an issue comment, you can make a textual
-reference to another issue by typing word “issue” or “issues”.  For
+reference to another issue by typing word "issue" or "issues".  For
 example:
 
 * issue 1234
@@ -185,13 +185,13 @@ example:
 * Attached images and videos show a thumbnail or preview image.  You
   can click on that to see the full-sized image or play the video.
 
-* Click the “View” link to view the attachment in a new browser tab.
+* Click the `View` link to view the attachment in a new browser tab.
   Not all types of attachments can be viewed this way.
 
 * For many types of text files, viewing the attachment opens a new
   page that shows the file with syntax highlighting.
 
-* Click the “Download” link to download the attachment to your
+* Click the `Download` link to download the attachment to your
   computer.  Usually the file name is the same as the one used when
   the file was uploaded, however in some cases we use a filename that
   we know is safe.
@@ -199,7 +199,7 @@ example:
 
 ## How to link to a specific line of attached text file
 
-1. Open the attachment by clicking the “View” link.
+1. Open the attachment by clicking the `View` link.
 
 1. In the text file attachment viewer page, the line numbers are
    hyperlinks.  Click one to add an anchor to your current browser
@@ -229,8 +229,8 @@ example:
 Users may delete comments that they posted.  Also, project owners and
 site administrators may delete any comment.
 
-1. Open the “...” menu that is near the comment.
-1. Select “Delete comment” to mark the comment as deleted.
+1. Open the `...` menu that is near the comment.
+1. Select `Delete comment` to mark the comment as deleted.
 
 
 ## How to report spam
@@ -240,8 +240,8 @@ used as inputs to our spam detection model.  When a project member
 reports spam, the issue or comment is immediately classified as spam.
 
 1. Sign in to Monorail.
-1. Open the “...” menu near the issue summary or comment.
-1. Select “Flag comment” item or the “Flag issue as spam” item.
+1. Open the `...` menu near the issue summary or comment.
+1. Select `Flag comment` item or the `Flag issue as spam` item.
 
 
 ## How to edit an issue
@@ -255,8 +255,8 @@ reports spam, the issue or comment is immediately classified as spam.
    of the page.
 
 1. Please consider posting a comment that briefly explains the reason
-   for the edit.  For example, “Lowering the priority of this defect
-   because there is a clear work-around.”
+   for the edit.  For example, "Lowering the priority of this defect
+   because there is a clear work-around."
 
 It is also possible for project members to bulk edit multiple issues
 at one time, and to update an issue by replying to some issue update
@@ -267,14 +267,15 @@ notifications.
 
 1. Sign in as project committer and view the issue.
 
-1. Set the issue status to “Duplicate”.
+1. Set the issue status to `Duplicate`.
 
-1. A “Merged into:” input field will appear, type the other issue ID
+1. A `Merged into:` input field will appear, type the other issue ID
    into that field.
   * If the other issue is in a different project, use `projectname:issue_id`.
-  * For Googlers, if the issue is in our internal issue tracking tool, use `b/issue_id`.
+  * For Googlers, if the issue is in our internal issue tracking tool,
+    use `b/issue_id`.
 
-1. Press “Save changes”.
+1. Press `Save changes`.
 
 
 ## How to be notified of changes to an issue
@@ -287,7 +288,7 @@ unstar it if they are no longer interested.
 
 Another way to get notifications is to create a saved query.  Sign in
 and click your email address in the far upper right of the page to
-access your account menu, then choose “Saved queries”.  You can name
+access your account menu, then choose `Saved queries`.  You can name
 and define an issue query for issues that you are interested in.  When
 any issue that matches that query is updated, you will get an email
 notification.
@@ -306,17 +307,17 @@ addresses that do not represent users, for example, mailing lists.
 
 ## How to associate a CL with an issue
 
-When writing your CL description, add a “BUG=” line or a “Fixes:” line
+When writing your CL description, add a `BUG=` line or a `Fixes:` line
 to the end of the commit log message.  These lines can reference a
-/p/chromium issue by issue ID number, or an issue in any project by
-using the “project_name:issue_id” syntax.
+`/p/chromium` issue by issue ID number, or an issue in any project by
+using the "project_name:issue_id" syntax.
 
 After you upload a CL for review, you can copy the URL of the code
 review and then paste it into an issue comment.
 
 When the CL passes review and is committed, the bugdroid utility will
-automatically post a comment to the issue referenced in the “BUG=” or
-“Fixes” line.
+automatically post a comment to the issue referenced in the `BUG=` or
+`Fixes` line.
 
 
 ## How to move or copy an issue between projects
@@ -329,21 +330,21 @@ Only non-restricted issues can be moved: if an issue is restricted,
 consider creating a new issue in the target project that blocks the
 original issue.
 
-1. Open the ”...” menu near the issue summary and choose “Move issue”
+1. Open the `...` menu near the issue summary and choose `Move issue`
    or “Copy issue”.
 
 1. Select the name of the target project in the dialog box that opens.
 
-1. Press the “Move issue” or “Copy issue” button.
+1. Press the `Move issue` or `Copy issue` button.
 
 
 ## How to delete an issue
 
-In most cases, you should close the issue with status “Invalid” or
-“WontFix” rather than deleting it.  Spam issues should be marked as
+In most cases, you should close the issue with status `Invalid` or
+`WontFix` rather than deleting it.  Spam issues should be marked as
 spam so that they help build our spam model.  Only project owners and
 site administrators can mark issues as deleted.
 
 1. Sign in as a project owner and view the issue.
-1. Open the “...” menu near the issue summary and choose “Delete issue”
+1. Open the `...` menu near the issue summary and choose `Delete issue`.
 1. Confirm that you really want to mark the issue as deleted.

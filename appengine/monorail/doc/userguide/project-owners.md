@@ -148,7 +148,7 @@ definition can be changed later, but the name cannot.  Also, a deleted
 field name cannot be reused.
 
 Enum-type custom fields are stored as labels in Monorail's database.
-If you start to create an enum-type custom field with name “Key”, you
+If you start to create an enum-type custom field with name "Key", you
 will immediately see enum values offered for each existing Key-Value
 label that has the same Key part.  The syntax for defining new enum
 options is `EnumValue[= docstring]`.
@@ -167,7 +167,7 @@ support all those different variations could make issue editing forms
 long and complex.  Monorail helps manage that situation by allowing
 fields to be defined as important enough to always be offered as a
 visible field when the field is applicable to the issue, or only
-important enough to be kept behind a “Show all fields” link.
+important enough to be kept behind a `Show all fields` link.
 
 Project owners may edit any field.  Each field may also specify a list
 of field administrators who are also allowed to edit that field.  This

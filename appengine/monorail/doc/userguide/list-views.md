@@ -58,7 +58,7 @@ cursor in the existing query term. One common way to adjust search terms is to
 add more values to an existing term by using commas, e.g., `Pri:0,1`.
 
 A quick way to narrow down a displayed list of issues is to filter on one of the
-shown columns. Click on the column heading, open the “Show only” submenu, and
+shown columns. Click on the column heading, open the `Show only` submenu, and
 select a value that you would like to see. A search term that matches only that
 value will be added to the query and the list will be updated.
 
@@ -67,7 +67,7 @@ value will be added to the query and the list will be updated.
 1.  Do a query to get the right set of issues, and show the column that you want
     to sort on.
 1.  Click the column heading to open the column menu.
-1.  Choose “Sort up” or “Sort down”.
+1.  Choose `Sort up` or `Sort down`.
 
 Labels defined by the project owners will sort according to the order in which
 they are listed on the label admin page, e.g., Priority-High, Priority-Medium,
@@ -89,12 +89,31 @@ is used when the user does not specify a sort order and when there are ties.
 
 ## How to change columns on an issue list
 
-1.  Click on the “...” menu located after the last column heading in the issue
+1.  Click on the `...` menu located after the last column heading in the issue
     list.
 1.  Select one of the column names to toggle it.
 
 Alternatively, you can hide an existing column by clicking on the column heading
-and choosing “Hide column”.
+and choosing `Hide column`.
+
+## How to put an issue list into a spreadsheet
+
+You can copy and paste from an HTML table to a Google Spreadsheet:
+
+1.  Do a search and configure the issue list to show the desired columns.
+1.  Drag over the desired issues to select all cells.
+1.  Copy with control-c or by using the browse `Edit` menu.
+1.  Visit the Google Spreadsheet that you wish to put the information into.
+1.  Paste with control-v or by using the browse `Edit` menu.
+
+For longer sets of results, project members can export CSV files:
+
+1.  Sign in as a project member.
+1.  Do a search and configure the issue list to show the desired columns.
+1.  Click the `CSV` link at the bottom of the issue list.  A file will download.
+1.  Visit Google Drive.
+1.  Choose the menu item to upload a file.
+1.  Upload the CSV file that was download.
 
 ## How to group rows
 
@@ -104,7 +123,7 @@ could be grouped by priority. To group rows:
 1.  Do the issue search and, if needed, add a column for the field that you want
     to use for grouping.
 1.  Click on the column header.
-1.  Choose “Group rows”.
+1.  Choose `Group rows`.
 
 Each section header shows the count of issues in that section, and sections
 expanded or collapsed as you work through the list.
@@ -114,10 +133,10 @@ expanded or collapsed as you work through the list.
 1.  Search for issues that are relevant to your task.
 1.  Click the checkboxes for the issues that you want to edit, or use the
     controls above the issue table to select all issues on the current page.
-1.  Select “Bulk edit” from the controls above the issue list.
+1.  Select `Bulk edit` from the controls above the issue list.
 1.  On the bulk edit page, describe the reason for your change, and enter values
     to add, remove, or set on each issue.
-1.  Press “Submit”
+1.  Submit the form.
 
 ## How to view an issue grid
 
@@ -125,7 +144,7 @@ Monorail’s issue grid is similar to a scatter chart in that it can give a
 high-level view of the distribution of issues across rows and columns that you
 select.
 
-1.  On the issue list page, click “Grid” in the upper-left above the issue list
+1.  On the issue list page, click `Grid` in the upper-left above the issue list
     table.
 1.  The issue grid shows the same issues that were shown in the issue list, but
     in a grid format.
@@ -154,7 +173,7 @@ a query ahead of time. To see a chart:
 1.  Do a query for the issues that you are interested in. Charts currently
     support only query terms for cc, component, hotlist, label, owner, reporter,
     and status.
-1.  Click “Chart” in the upper-left above the issue table.
+1.  Click `Chart` in the upper-left above the issue table.
 1.  Hover your mouse over data points to see exact dates and counts.
 1.  Use the controls below the chart to adjust date range, grouping, and
     predictions.
@@ -169,7 +188,7 @@ burndown chart. Here’s how:
 1.  Do a query for the issues that you are interested in. Charts currently
     support only query terms for cc, component, hotlist, label, owner, reporter,
     and status.
-1.  Click “Chart” in the upper-left above the issue table.
+1.  Click `Chart` in the upper-left above the issue table.
 1.  Click one of the prediction options in the controls below the chart. A
     dotted line will be added to the chart showing the current trend and a
     future prediction.

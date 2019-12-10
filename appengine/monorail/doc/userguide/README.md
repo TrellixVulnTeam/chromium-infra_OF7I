@@ -34,7 +34,7 @@ tracking tools and selected Monorail because of several key features:
   customization to our processes.  For example, Feature Launch Tracking.
 
 
-## Links to chapter pages
+## User guide table of contents
 
 This user guide is organized into the following chapters:
 
@@ -65,7 +65,7 @@ You can report spam comments via the "..." menu on that comment.  Any
 project owner can ban a spammer from the site.
 
 
-## Brief note on Monorail history
+## A history of Monorail
 
 The design of Monorail was insipred by our experience with Bugzilla and
 other issue trackers that tended toward hard-coding a development

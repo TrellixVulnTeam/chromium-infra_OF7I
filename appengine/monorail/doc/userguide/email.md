@@ -77,7 +77,7 @@ members of that mailing list and add it to the mailing list archive.
 If you receive an email notification from Monorail, it is because of
 one of the reasons listed in the section above.  Monorail personalizes
 each message by adding a footer that lists the reason or reasons why
-that message was sent to you.  In Gmail, you may need to click a “...”
+that message was sent to you.  In Gmail, you may need to click a "..."
 icon near the bottom of the message to see this footer.
 
 
@@ -111,8 +111,8 @@ You can access the settings page via the account menu.
 ## How can I filter these emails?
 
 The best way to filter emails is to look at the reasons listed in the
-footer.  For example, if the email message contains the string “You
-are the owner of the issue”, then you might want to mark the message
+footer.  For example, if the email message contains the string "You
+are the owner of the issue", then you might want to mark the message
 as important.
 
 
@@ -129,14 +129,14 @@ unstar it if they are no longer interested.
 
 1. Sign in and click your email address in the far upper right of the
    page to access your account menu.
-1. Choose “Saved queries”.
+1. Choose `Saved queries`.
 1. Choose a name that describes what you are interested in.
 1. List the names of the projects where you want the subscription to
    apply.
 1. Type an issue query for issues in those projects that you are
    interested in.
 
-If you choose the “Notify immediately” option, then when any issue
+If you choose the `Notify immediately` option, then when any issue
 that matches that query is updated, you will get an email
 notification.  If you choose either to be notified or not notified,
 you can use any of your subscriptions in the issue query scope menu.
@@ -160,9 +160,9 @@ always sent to the issue owner and CC’d users.
 
 Project owners may enable processing of replies in their project, but
 it is disabled by default.  If it is enabled in your project, you will
-see that the footer of each email notification invites you to “Reply
-to this email to add a comment” or “Reply to this email to add a
-comment or make updates”.  These lines will only appear on messages
+see that the footer of each email notification invites you to "Reply
+to this email to add a comment" or "Reply to this email to add a
+comment or make updates".  These lines will only appear on messages
 that are sent directly to you, not on messages sent to an also-notify
 or notify-all mailing list address.
 
@@ -175,13 +175,13 @@ your reply will become the content of a new comment on the issue.  If
 your reply cannot be processed, you will get an email notification
 with an error message explaining what went wrong.
 
-If the notification sent to you invited you to “make updates”, then
+If the notification sent to you invited you to "make updates", then
 you can include some lines at the top of your email message to update
 the state of the issue.  Any text after the first line that does not
 parse as a command will be treated as the comment content.  Quoted
 lines and signature lines are automatically stripped off.  To help
 make sure nothing important is lost, project members may use the
-comment “...” menu to view the original email message with nothing
+comment `...` menu to view the original email message with nothing
 stripped off.
 
 For example:
@@ -199,7 +199,7 @@ Cheers
 
 That reply will update the issue owner, status, and the issue
 priority.  And, it will use the rest of the text as the comment body,
-except for “Cheers” which will be stripped.
+except for "Cheers" which will be stripped.
 
 
 

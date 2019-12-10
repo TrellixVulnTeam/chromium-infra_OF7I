@@ -24,10 +24,10 @@ launches.
   process changes to be gracefully phased in or phased out over the
   long term.
 
-* Security: Even open source projects need security so that developers
-  can work to resolve security flaws before disclosing them.
-  Per-issue access controls allow developers to work closely with
-  users and partners on a mix of public and restricted issues.
+* Security: Even open source projects need access controls so that
+  developers can work to resolve security flaws before disclosing
+  them.  Per-issue access controls allow developers to work closely
+  with users and partners on a mix of public and restricted issues.
 
 * Inclusiveness: Computing is an empowering and equalizing force in
   society.  Monorail’s inclusive functionality and user interface can
@@ -37,8 +37,8 @@ launches.
 
 ## High-level organization
 
-A Monorail server is divided into projects, such as /p/chromium and
-/p/monorail, that each have a list of project members, and that
+A Monorail server is divided into projects, such as `/p/chromium` and
+`/p/monorail`, that each have a list of project members, and that
 contain a set of issues.  Each project also has a page that lists the
 history of issue changes, and a set of pages that describe the software
 development process configured for that project.
@@ -58,9 +58,9 @@ Please search for relevant existing issues before entering a new issue.
 
 1. Sign in to Monorail.  If this is your first time, you will see a
    privacy notice dialog box.
-1. Click on the “New issue” button at the top of the page.
-1. In the /p/chromium project, non-members will be redirected to a
-   new issue wizard.
+1. Click on the `New issue` button at the top of the page.
+   Note: In the `/p/chromium` project, non-members will be redirected
+   to a new issue wizard.
 1. Choose an issue template based on the kind of issue that you want
    to create.
 1. Fill in the issue summary and details.
@@ -76,7 +76,7 @@ unintended details.  Never include passwords.
 When you report an issue, you star the issue by default.  Starring
 causes you to get email notifications of comments on that issue.
 
-It is also possible to enter issues by clicking on a “deep link” to
+It is also possible to enter issues by clicking on a "deep link" to
 our issue entry page.  Such links are sometimes used in documentation
 pages that tell users when to file an issue.
 
@@ -121,8 +121,8 @@ for that comment.  Attachments can also be marked as deleted.
 1. The editing fields are located with the comment form at the bottom
    of the page.
 1. Please consider posting a comment that briefly explains the reason
-   for the edit.  For example, “Lowering the priority of this defect
-   because there is a clear work-around.”
+   for the edit.  For example, "Lowering the priority of this defect
+   because there is a clear work-around."
 
 It is also possible for project members to bulk edit multiple issues
 at one time, and to update an issue by replying to some issue update
@@ -140,7 +140,7 @@ If you need a URL that you can bookmark or paste into another document:
   located next to the issue summary, then choose "Copy Link Address".
 
 If you are writing text in an issue comment, you can make a textual
-reference to another issue by typing the word “issue” or “issues”.  For
+reference to another issue by typing the word "issue" or "issues".  For
 example:
 
 * issue 1234
@@ -158,13 +158,13 @@ There are several ways to get notifications:
 
 * The issue owner and any CC’d addresses are notified of changes.
 
-* You can subscribe to a saved query.  Start by clicking the “Saved
-  queries” item in the account menu.
+* You can subscribe to a saved query.  Start by clicking the "Saved
+  queries" item in the account menu.
 
 
 ## How to associate a CL with an issue
 
-1. When you create a code change list, include a “BUG:” or “Fixed:”
+1. When you create a code change list, include a "BUG:" or "Fixed:"
    line at the bottom of the change description.
 1. When you upload the CL for review, consider posting a comment to
    the issue with the URL of the pending CL.
