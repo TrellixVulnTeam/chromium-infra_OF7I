@@ -153,7 +153,9 @@ def RunSteps(api):
   # package containing a reference to the Python that was used to create it. In
   # order to control for this, we ensure that the Python is a system Python,
   # which resides at a fixed path.
-  with api.infra_system.system_env():
+  #
+  # Our arm64 bots do not have the "system env" python available.
+  with api.infra_system.system_env(enabled=api.platform.arch != 'arm'):
     co.gclient_runhooks()
 
     # Whatever is checked out by bot_update. It is usually equal to
@@ -239,10 +241,11 @@ def run_python_tests(api, project_name):
 
 def GenTests(api):
 
-  def test(name, builder, repo, project, bucket, plat, is_experimental=False):
+  def test(name, builder, repo, project, bucket, plat, is_experimental=False,
+           arch='intel'):
     return (
         api.test(name) +
-        api.platform(plat, 64) +
+        api.platform(plat, 64, arch) +
         api.runtime(is_luci=True, is_experimental=is_experimental) +
         api.buildbucket.ci_build(project, bucket, builder,
                                  git_repo=repo,
@@ -251,6 +254,8 @@ def GenTests(api):
 
   yield test('public-ci-linux', 'infra-continuous-trusty-64',
              PUBLIC_REPO, 'infra', 'ci', 'linux')
+  yield test('public-ci-linux-arm64', 'infra-continuous-trusty-64',
+             PUBLIC_REPO, 'infra', 'ci', 'linux', arch='arm')
   yield test('public-ci-win', 'infra-continuous-win10-64',
              PUBLIC_REPO, 'infra', 'ci', 'win')
 

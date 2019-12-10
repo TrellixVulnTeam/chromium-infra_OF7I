@@ -147,6 +147,11 @@
       "runhooks"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -163,6 +168,11 @@
       "HEAD~"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "get change list",
     "~followup_annotations": [
@@ -178,6 +188,11 @@
       "test"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "name": "python tests"
   },
   {
@@ -191,6 +206,11 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "ensure_installed",
     "~followup_annotations": [
@@ -218,6 +238,11 @@
       "-output-dir",
       "[CACHE]/osx_sdk/XCode.app"
     ],
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "install xcode"
   },
@@ -228,6 +253,11 @@
       "--switch",
       "[CACHE]/osx_sdk/XCode.app"
     ],
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "select XCode"
   },
@@ -239,6 +269,11 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -268,6 +303,11 @@
       "[CACHE]/infra_gclient_with_go/infra/go/test.py"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "name": "go tests"
   },
   {
@@ -280,6 +320,11 @@
       "xcode-select",
       "--reset"
     ],
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "reset XCode"
   },

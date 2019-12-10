@@ -21,8 +21,15 @@ class InfraSystemApi(recipe_api.RecipeApi):
         else '/opt/infra-system/bin'))
 
   @contextlib.contextmanager
-  def system_env(self):
-    """Yields a context modified to operate on system paths."""
+  def system_env(self, enabled=True):
+    """Yields a context modified to operate on system paths.
+
+    If `enabled` is False, this is a noop.
+    """
+    if not enabled:
+      yield
+      return
+
     sys_bin_path = self.sys_bin_path
     self.m.path.mock_add_paths(sys_bin_path)
     assert self.m.path.exists(sys_bin_path), (

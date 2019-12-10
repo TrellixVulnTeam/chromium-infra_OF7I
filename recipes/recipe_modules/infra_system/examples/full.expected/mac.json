@@ -11,6 +11,12 @@
     "name": "dump env"
   },
   {
+    "cmd": [
+      "echo"
+    ],
+    "name": "dump env (sane)"
+  },
+  {
     "name": "$result"
   }
 ]

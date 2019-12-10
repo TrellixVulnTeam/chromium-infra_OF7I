@@ -147,6 +147,11 @@
       "runhooks"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -163,6 +168,11 @@
       "HEAD~"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "get change list",
     "~followup_annotations": [
@@ -178,6 +188,11 @@
       "test"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "name": "python tests"
   },
   {
@@ -188,6 +203,11 @@
       "test",
       "run"
     ],
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "name": "recipe test"
   },
   {
@@ -197,6 +217,11 @@
       "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",
       "lint"
     ],
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "name": "recipe lint"
   },
   {
@@ -207,6 +232,11 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -236,6 +266,11 @@
       "[CACHE]/infra_gclient_with_go/infra/go/test.py"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "name": "go tests"
   },
   {

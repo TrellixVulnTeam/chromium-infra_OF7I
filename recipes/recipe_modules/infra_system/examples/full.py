@@ -14,6 +14,9 @@ def RunSteps(api):
   with api.infra_system.system_env():
     api.step('dump env', ['echo'])
 
+  with api.infra_system.system_env(enabled=False):
+    api.step('dump env (sane)', ['echo'])
+
 
 def GenTests(api):
   for plat in ('linux', 'mac', 'win'):

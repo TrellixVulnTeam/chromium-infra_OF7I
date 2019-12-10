@@ -258,9 +258,11 @@ API for interacting with a provisioned infrastructure system.
 
 &emsp; **@property**<br>&mdash; **def [sys\_bin\_path](/recipes/recipe_modules/infra_system/api.py#17)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [system\_env](/recipes/recipe_modules/infra_system/api.py#23)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [system\_env](/recipes/recipe_modules/infra_system/api.py#23)(self, enabled=True):**
 
 Yields a context modified to operate on system paths.
+
+If `enabled` is False, this is a noop.
 ### *recipe_modules* / [omahaproxy](/recipes/recipe_modules/omahaproxy)
 
 [DEPS](/recipes/recipe_modules/omahaproxy/__init__.py#1): [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/url][recipe_engine/recipe_modules/url]
@@ -940,9 +942,9 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 
 &mdash; **def [RunSteps](/recipes/recipes/infra_continuous.py#126)(api):**
 
-&mdash; **def [build\_main](/recipes/recipes/infra_continuous.py#166)(api, checkout, buildername, project_name, repo_url, rev):**
+&mdash; **def [build\_main](/recipes/recipes/infra_continuous.py#168)(api, checkout, buildername, project_name, repo_url, rev):**
 
-&mdash; **def [run\_python\_tests](/recipes/recipes/infra_continuous.py#226)(api, project_name):**
+&mdash; **def [run\_python\_tests](/recipes/recipes/infra_continuous.py#228)(api, project_name):**
 ### *recipes* / [infra\_frontend\_tester](/recipes/recipes/infra_frontend_tester.py)
 
 [DEPS](/recipes/recipes/infra_frontend_tester.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]

@@ -16,54 +16,11 @@
   },
   {
     "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_REPO[depot_tools]/gerrit_client.py",
-      "changes",
-      "--host",
-      "https://chromium.googlesorce.com",
-      "--json_file",
-      "/path/to/tmp/json",
-      "--limit",
-      "1",
-      "-p",
-      "change=123456",
-      "-o",
-      "ALL_REVISIONS",
-      "-o",
-      "DOWNLOAD_COMMANDS"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
-    "env": {
-      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
-    },
-    "infra_step": true,
-    "name": "gerrit fetch current CL info",
-    "timeout": 600,
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@[@@@",
-      "@@@STEP_LOG_LINE@json.output@  {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"branch\": \"master\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"revisions\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"184ebe53805e102605d11f6b143486d15c23a09c\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"_number\": \"7\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"ref\": \"refs/changes/56/123456/7\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    }@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@]@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
       "python",
       "-u",
       "RECIPE_MODULE[depot_tools::bot_update]/resources/bot_update.py",
       "--spec-path",
       "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
-      "--patch_root",
-      "infra",
       "--revision_mapping_file",
       "{\"got_revision\": \"infra\"}",
       "--git-cache-dir",
@@ -72,10 +29,10 @@
       "[CLEANUP]/bot_update",
       "--output_json",
       "/path/to/tmp/json",
-      "--patch_ref",
-      "https://chromium.googlesorce.com/infra/infra@refs/heads/master:refs/changes/56/123456/7",
       "--revision",
-      "infra@HEAD"
+      "infra@2d72510e447ab60a9728aeea2362d8be2cbd7789",
+      "--refs",
+      "refs/heads/master"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env_suffixes": {
@@ -90,7 +47,7 @@
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"fixed_revisions\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"infra\": \"HEAD\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra\": \"2d72510e447ab60a9728aeea2362d8be2cbd7789\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"manifest\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"infra\": {@@@",
@@ -125,33 +82,12 @@
   },
   {
     "cmd": [
-      "git",
-      "-c",
-      "user.email=commit-bot@chromium.org",
-      "-c",
-      "user.name=The Commit Bot",
-      "commit",
-      "-a",
-      "-m",
-      "Committed patch"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
-    "infra_step": true,
-    "name": "commit git patch"
-  },
-  {
-    "cmd": [
       "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "runhooks"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -161,68 +97,13 @@
   },
   {
     "cmd": [
-      "git",
-      "diff",
-      "--name-only",
-      "HEAD",
-      "HEAD~"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
-    "infra_step": true,
-    "name": "get change list",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@change list@appengine/foo/static/stuff.js@@@",
-      "@@@STEP_LOG_END@change list@@@"
-    ]
-  },
-  {
-    "cmd": [
       "python",
       "-u",
       "test.py",
       "test"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra",
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
-    "name": "python tests"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",
-      "test",
-      "run"
-    ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
-    "name": "recipe test"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",
-      "lint"
-    ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
-    "name": "recipe lint"
+    "name": "infra python tests"
   },
   {
     "cmd": [
@@ -232,11 +113,6 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -265,17 +141,39 @@
       "python",
       "[CACHE]/infra_gclient_with_go/infra/go/test.py"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
-    "name": "go tests"
+    "name": "infra go tests"
   },
   {
-    "cmd": [],
-    "name": "skipping slow cipd packaging tests"
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/infra_gclient_with_go/infra/build/build.py",
+      "--builder",
+      "infra-continuous-trusty-64"
+    ],
+    "name": "cipd - build packages"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/infra_gclient_with_go/infra/build/test_packages.py"
+    ],
+    "name": "cipd - test packages integrity"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/infra_gclient_with_go/infra/build/build.py",
+      "--builder",
+      "infra-continuous-trusty-64"
+    ],
+    "env": {
+      "GOARCH": "386",
+      "GOOS": "linux"
+    },
+    "name": "[GOOS:linux GOARCH:386]cipd - build packages"
   },
   {
     "name": "$result"
