@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import datetime
 import json
 import logging
 import mock
@@ -24,9 +25,12 @@ import endpoint_api
 from findit_v2.model.messages import findit_result
 from gae_libs import appengine_util
 from libs import analysis_status
+from libs import time_util
 from model import analysis_approach_type
 from model.base_build_model import BaseBuildModel
 from model.base_suspected_cl import RevertCL
+from model.flake.detection.flake_occurrence import FlakeOccurrence
+from model.flake.flake_type import FlakeType
 from model.test_inventory import LuciTest
 from model.wf_analysis import WfAnalysis
 from model.wf_suspected_cl import WfSuspectedCL
@@ -37,6 +41,24 @@ from waterfall import waterfall_config
 
 # pylint:disable=unused-argument, unused-variable
 # https://crbug.com/947753
+
+
+# Create a sample flake occurrence, override the properties as necessary.
+def _CreateFlakeOccurrence(**kwargs):
+  return FlakeOccurrence.Create(
+      flake_type=kwargs.get('flake_type', FlakeType.RETRY_WITH_PATCH),
+      build_id=kwargs.get('build_id', 1000000),
+      step_ui_name=kwargs.get('step_ui_name', 'browser_tests (with patch)'),
+      test_name=kwargs.get('test_name', 'foo.bar'),
+      luci_project=kwargs.get('luci_project', 'chromium'),
+      luci_bucket=kwargs.get('luci_bucket', 'try'),
+      luci_builder=kwargs.get('luci_builder', 'linux-rel'),
+      legacy_master_name='b',
+      legacy_build_number=1,
+      time_happened=kwargs.get('time_happened', datetime.datetime(2019, 12,
+                                                                  12)),
+      gerrit_cl_id=kwargs.get('gerrit_cl_id', 1234),
+      parent_flake_key=None)
 
 
 class FinditApiTest(testing.EndpointsTestCase):
@@ -1809,3 +1831,278 @@ class FinditApiTest(testing.EndpointsTestCase):
 
     self.assertEqual(cases['expected_test_count'],
                      response.json_body.get('test_count'))
+
+  def testGetCQFlakesInvalidRequestsMissingBuilder(self):
+    request = {
+        'project': 'chromium',
+        'bucket': 'try',
+        'tests': [],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request, status=400)
+
+  def testGetCQFlakesInvalidRequestsMissingTest(self):
+    request = {
+        'project': 'chromium',
+        'bucket': 'try',
+        'tests': [{
+            'step_ui_name': 'browser_tests (with patch)',
+        }],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request, status=400)
+
+  def testGetCQFlakesNoFlakes(self):
+    request = {
+        'project': 'chromium',
+        'bucket': 'try',
+        'builder': 'linux-rel',
+        'tests': [],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertEqual({}, response.json_body)
+
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
+  def testGetCQFlakes(self, _):
+    _CreateFlakeOccurrence(
+        build_id=987,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=1),
+        gerrit_cl_id=1234).put()
+    _CreateFlakeOccurrence(
+        build_id=986,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=14),
+        gerrit_cl_id=1235).put()
+    _CreateFlakeOccurrence(
+        build_id=985,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=15),
+        gerrit_cl_id=1236).put()
+
+    request = {
+        'project':
+            'chromium',
+        'bucket':
+            'try',
+        'builder':
+            'linux-rel',
+        'tests': [{
+            'step_ui_name': 'browser_tests (with patch)',
+            'test_name': 'foo.bar',
+        },],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertEqual({
+        'flakes': [{
+            'test': {
+                'step_ui_name': 'browser_tests (with patch)',
+                'test_name': 'foo.bar',
+            },
+            'affected_gerrit_changes': ['1234', '1235', '1236'],
+        }]
+    }, response.json_body)
+
+  # This test tests that enough occurrences are required in order for a test to
+  # be determined as flaky.
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
+  def testGetCQFlakesNotEnoughOccurrences(self, _):
+    _CreateFlakeOccurrence(
+        build_id=987,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=1),
+        gerrit_cl_id=1234).put()
+    _CreateFlakeOccurrence(
+        build_id=986,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=14),
+        gerrit_cl_id=1235).put()
+
+    request = {
+        'project':
+            'chromium',
+        'bucket':
+            'try',
+        'builder':
+            'linux-rel',
+        'tests': [{
+            'step_ui_name': 'browser_tests (with patch)',
+            'test_name': 'foo.bar',
+        },],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertEqual({}, response.json_body)
+
+  # This test tests that enough uniquely affected CLs are required in order for
+  # a test to be determined as flaky.
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
+  def testGetCQFlakesNotEnoughGerritChanges(self, _):
+    # Two of the occurrences share the same gerrit change.
+    _CreateFlakeOccurrence(
+        build_id=987,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=1),
+        gerrit_cl_id=1234).put()
+    _CreateFlakeOccurrence(
+        build_id=986,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=14),
+        gerrit_cl_id=1235).put()
+    _CreateFlakeOccurrence(
+        build_id=985,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=15),
+        gerrit_cl_id=1235).put()
+
+    request = {
+        'project':
+            'chromium',
+        'bucket':
+            'try',
+        'builder':
+            'linux-rel',
+        'tests': [{
+            'step_ui_name': 'browser_tests (with patch)',
+            'test_name': 'foo.bar',
+        },],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertEqual({}, response.json_body)
+
+  # This test tests that at least one recent flake occurrence is required in
+  # order for a test to be determined as flaky.
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
+  def testGetCQFlakesNoRecentActivity(self, _):
+    # Two of the occurrences share the same gerrit change.
+    _CreateFlakeOccurrence(
+        build_id=987,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=13),
+        gerrit_cl_id=1234).put()
+    _CreateFlakeOccurrence(
+        build_id=986,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=14),
+        gerrit_cl_id=1235).put()
+    _CreateFlakeOccurrence(
+        build_id=985,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=15),
+        gerrit_cl_id=1236).put()
+
+    request = {
+        'project':
+            'chromium',
+        'bucket':
+            'try',
+        'builder':
+            'linux-rel',
+        'tests': [{
+            'step_ui_name': 'browser_tests (with patch)',
+            'test_name': 'foo.bar',
+        },],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertEqual({}, response.json_body)
+
+  # This test tests that the same step/test names on different builders will be
+  # treated as two different tests.
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
+  def testGetCQFlakesMultipleBuilders(self, _):
+    _CreateFlakeOccurrence(
+        build_id=987,
+        luci_builder='linux-rel',
+        time_happened=time_util.GetDatetimeBeforeNow(hours=1),
+        gerrit_cl_id=1234).put()
+    _CreateFlakeOccurrence(
+        build_id=986,
+        luci_builder='linux-rel',
+        time_happened=time_util.GetDatetimeBeforeNow(hours=14),
+        gerrit_cl_id=1235).put()
+    _CreateFlakeOccurrence(
+        build_id=985,
+        luci_builder='linux-chromeos-rel',
+        time_happened=time_util.GetDatetimeBeforeNow(hours=15),
+        gerrit_cl_id=1235).put()
+
+    request = {
+        'project':
+            'chromium',
+        'bucket':
+            'try',
+        'builder':
+            'linux-rel',
+        'tests': [{
+            'step_ui_name': 'browser_tests (with patch)',
+            'test_name': 'foo.bar',
+        },],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertEqual({}, response.json_body)
+
+    request = {
+        'project':
+            'chromium',
+        'bucket':
+            'try',
+        'builder':
+            'linux-chromeos-rel',
+        'tests': [{
+            'step_ui_name': 'browser_tests (with patch)',
+            'test_name': 'foo.bar',
+        },],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertEqual({}, response.json_body)
+
+  # This test tests that the same test names of different step names will be
+  # treated as two different tests.
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
+  def testGetCQFlakesMultipleSteps(self, _):
+    _CreateFlakeOccurrence(
+        build_id=987,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=1),
+        gerrit_cl_id=1234,
+        step_ui_name='browser_tests (with patch)').put()
+    _CreateFlakeOccurrence(
+        build_id=986,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=14),
+        gerrit_cl_id=1235,
+        step_ui_name='browser_tests (with patch)').put()
+    _CreateFlakeOccurrence(
+        build_id=985,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=15),
+        gerrit_cl_id=1236,
+        step_ui_name='non_viz_browser_tests (with patch)').put()
+
+    request = {
+        'project':
+            'chromium',
+        'bucket':
+            'try',
+        'builder':
+            'linux-rel',
+        'tests': [
+            {
+                'step_ui_name': 'browser_tests (with patch)',
+                'test_name': 'foo.bar',
+            },
+            {
+                'step_ui_name': 'non_viz_browser_tests (with patch)',
+                'test_name': 'foo.bar',
+            },
+        ],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertEqual({}, response.json_body)

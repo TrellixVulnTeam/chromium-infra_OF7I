@@ -15,6 +15,7 @@ import logging
 
 import endpoints
 from google.appengine.api import taskqueue
+from google.appengine.ext import ndb
 from google.protobuf import json_format
 from google.protobuf.field_mask_pb2 import FieldMask
 from protorpc import messages
@@ -37,6 +38,8 @@ from libs.cache_decorator import Cached
 from model import analysis_approach_type
 from model.base_build_model import BaseBuildModel
 from model.flake.analysis.flake_analysis_request import FlakeAnalysisRequest
+from model.flake.detection.flake_occurrence import FlakeOccurrence
+from model.flake.flake_type import FlakeType
 from model.suspected_cl_confidence import SuspectedCLConfidence
 from model.test_inventory import LuciTest
 from model.wf_analysis import WfAnalysis
@@ -180,6 +183,64 @@ class _DisabledTestsRequest(messages.Message):
   exclude_tags = messages.StringField(2, repeated=True)
   request_type = messages.EnumField(
       _DisabledTestRequestType, 3, default=_DisabledTestRequestType.NAME_ONLY)
+
+
+class _StepAndTestName(messages.Message):
+  step_ui_name = messages.StringField(1, required=True)
+  test_name = messages.StringField(2, required=True)
+
+
+class _CQFlakesRequest(messages.Message):
+  project = messages.StringField(1, required=True)
+  bucket = messages.StringField(2, required=True)
+  builder = messages.StringField(3, required=True)
+  tests = messages.MessageField(_StepAndTestName, 4, repeated=True)
+
+
+class _CQFlake(messages.Message):
+  test = messages.MessageField(_StepAndTestName, 1, required=True)
+  affected_gerrit_changes = messages.IntegerField(2, repeated=True)
+
+
+class _CQFlakeResponse(messages.Message):
+  flakes = messages.MessageField(_CQFlake, 1, repeated=True)
+
+
+@ndb.tasklet
+def _IsTestFlakyOnCQAsync(project, bucket, builder, step_ui_name, test_name):
+  """Decides whether a test is flaky on CQ.
+
+  As of 2019-12-06, the algorithm used to determine whether a test is flaky on
+  CQ is as following:
+  1. >= 3 different CLs have a failed step due to this test within the past 24h.
+  2. >= 1 CL have a failed step due to this test within the past 12h.
+
+  These rules are designed to be conservative and are subject to change based on
+  user feedback.
+
+  Returns:
+    A future object that wraps a tuple of two elements: the first one is a
+    boolean value indicating whether the test is flaky, and the second one is a
+    list of uniquely affected CLs that explains why the test is flaky.
+  """
+  query = FlakeOccurrence.query(
+      FlakeOccurrence.flake_type == FlakeType.RETRY_WITH_PATCH,
+      FlakeOccurrence.build_configuration.luci_project == project,
+      FlakeOccurrence.build_configuration.luci_bucket == bucket,
+      FlakeOccurrence.build_configuration.luci_builder == builder,
+      FlakeOccurrence.step_ui_name == step_ui_name,
+      FlakeOccurrence.test_name == test_name,
+      FlakeOccurrence.time_happened >= time_util.GetDatetimeBeforeNow(hours=24))
+  occurrences = yield query.fetch_async()
+
+  unique_cls = {o.gerrit_cl_id for o in occurrences}
+  active_start = time_util.GetDatetimeBeforeNow(hours=12)
+  is_active = any(o.time_happened > active_start for o in occurrences)
+
+  if len(unique_cls) >= 3 and is_active:
+    raise ndb.Return((True, list(unique_cls)))
+
+  raise ndb.Return((False, None))
 
 
 @Cached(
@@ -962,3 +1023,39 @@ class FindItApi(remote.Service):
                                          request.exclude_tags)
     return _DisabledTestsResponse(
         test_data=self._CreateDisabledTestData(tests, request.request_type))
+
+  @gae_ts_mon.instrument_endpoint()
+  @endpoints.method(
+      _CQFlakesRequest,
+      _CQFlakeResponse,
+      path='get_cq_flakes',
+      name='get_cq_flakes')
+  def GetCQFlakes(self, request):
+    """Gets flaky tests that are affecting CQ.
+
+    Args:
+      request (_CQFlakesRequest): A list of tests (with related info) to check
+                                  whether they're flaky.
+
+    Returns:
+      A _CQFlakeResponse that contains a list of tests determined as flaky along
+      with a list of sample Gerrit changes supporting why they're flaky.
+    """
+    logging.info('Request: %s', request)
+    futures = [
+        _IsTestFlakyOnCQAsync(request.project, request.bucket, request.builder,
+                              t.step_ui_name, t.test_name)
+        for t in request.tests
+    ]
+    flakes = []
+    for t, f in zip(request.tests, futures):
+      is_flaky, affected_cls = f.get_result()
+      if not is_flaky:
+        continue
+
+      # A list of CLs are used for communication and debugging, so 5 is enough.
+      flakes.append(_CQFlake(test=t, affected_gerrit_changes=affected_cls[:5]))
+
+    response = _CQFlakeResponse(flakes=flakes)
+    logging.info('Response: %s', response)
+    return response
