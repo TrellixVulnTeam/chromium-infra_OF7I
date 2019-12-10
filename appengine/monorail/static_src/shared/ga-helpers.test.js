@@ -4,7 +4,7 @@
 
 import {trackPageChange} from './ga-helpers.js';
 
-describe.only('trackPageChange', () => {
+describe('trackPageChange', () => {
   beforeEach(() => {
     global.ga = sinon.spy();
   });

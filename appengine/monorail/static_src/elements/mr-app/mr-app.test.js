@@ -15,6 +15,7 @@ window.CS_env = {
 
 describe('mr-app', () => {
   beforeEach(() => {
+    global.ga = sinon.spy();
     store.dispatch(resetState());
     element = document.createElement('mr-app');
     document.body.appendChild(element);
@@ -22,6 +23,7 @@ describe('mr-app', () => {
   });
 
   afterEach(() => {
+    global.ga.resetHistory();
     document.body.removeChild(element);
   });
 
