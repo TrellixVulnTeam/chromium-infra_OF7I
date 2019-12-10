@@ -2,13 +2,19 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import os
+import mock
 import webapp2
 
 from .test_support import test_case
 
+from google.appengine.api.runtime import runtime
+
 from infra_libs.ts_mon import config
 from infra_libs.ts_mon import instrument_webapp2
 from infra_libs.ts_mon.common import http_metrics
+from infra_libs.ts_mon.common import interface
+from infra_libs.ts_mon.common import targets
 
 
 class InstrumentWebapp2Test(test_case.TestCase):
@@ -201,3 +207,40 @@ class InstrumentWebapp2Test(test_case.TestCase):
     self.assertEqual(
         len('foo'),
         http_metrics.server_request_bytes.get(fields).sum)
+
+
+class TaskNumAssignerHandlerTest(test_case.TestCase):
+
+  def setUp(self):
+    super(TaskNumAssignerHandlerTest, self).setUp()
+    config.reset_for_unittest()
+    target = targets.TaskTarget('test_service', 'test_job', 'test_region',
+                                'test_host')
+    self.mock_state = interface.State(target=target)
+
+    # Workaround the fact that 'system' module is not mocked.
+    class _memory_usage(object):
+
+      def current(self):
+        return 10.0
+
+    env = os.environ.copy()
+    env['SERVER_SOFTWARE'] = 'PRODUCTION'
+    self.mock(runtime, 'memory_usage', _memory_usage)
+    self.mock(os, 'environ', env)
+
+    self.app = webapp2.WSGIApplication()
+    instrument_webapp2.instrument(self.app)
+
+  def tearDown(self):
+    mock.patch.stopall()
+    super(TaskNumAssignerHandlerTest, self).tearDown()
+
+  def test_success(self):
+    response = self.app.get_response(
+        '/internal/cron/ts_mon/send', headers=[('X-Appengine-Cron', 'true')])
+    self.assertEqual(response.status_int, 200)
+
+  def test_unauthorized(self):
+    response = self.app.get_response('/internal/cron/ts_mon/send')
+    self.assertEqual(response.status_int, 403)
