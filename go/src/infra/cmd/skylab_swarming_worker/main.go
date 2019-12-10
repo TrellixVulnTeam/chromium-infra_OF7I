@@ -169,7 +169,13 @@ func mainInner(a *args) error {
 			"Error: %s", luciferErr)
 	}
 
-	if a.isolatedOutdir != "" {
+	if isAdminTask(a) || isDeployTask(a) {
+		// Show Stainless links here for admin tasks.
+		// For test tasks they are bundled with results.json.
+		annotations.BuildStep(annotWriter, "Epilog")
+		annotations.StepLink(annotWriter, "Task results (Stainless)", i.Info.Task.StainlessURL())
+		annotations.StepClosed(annotWriter)
+	} else {
 		pa := i.ParserArgs()
 		pa.Failed = luciferErr != nil
 
@@ -187,12 +193,6 @@ func mainInner(a *args) error {
 		if err != nil {
 			return errors.Wrap(err, "writing results to isolated output file")
 		}
-	} else {
-		// Show Stainless links here for admin tasks.
-		// For test tasks they are bundled with results.json.
-		annotations.BuildStep(annotWriter, "Epilog")
-		annotations.StepLink(annotWriter, "Task results (Stainless)", i.Info.Task.StainlessURL())
-		annotations.StepClosed(annotWriter)
 	}
 	if err := i.Close(); err != nil {
 		return err
@@ -223,7 +223,7 @@ func runLuciferTask(i *harness.Info, a *args, logdogOutput io.Writer, ta lucifer
 		if err := runAdminTask(i, n, logdogOutput, ta); err != nil {
 			return errors.Wrap(err, "run admin task")
 		}
-	} else if isDeployTask(a.taskName) {
+	} else if isDeployTask(a) {
 		if err := runDeployTask(i, a.deployActions, logdogOutput, ta); err != nil {
 			return errors.Wrap(err, "run deploy task")
 		}
@@ -245,9 +245,15 @@ func getAdminTask(name string) (task string, ok bool) {
 	return "", false
 }
 
+// isAdminTask determines whether the args specify an admin task
+func isAdminTask(a *args) bool {
+	_, isAdmin := getAdminTask(a.taskName)
+	return isAdmin
+}
+
 // isDeployTask determines if the given task name corresponds to a deploy task.
-func isDeployTask(name string) bool {
-	return name == "deploy"
+func isDeployTask(a *args) bool {
+	return a.taskName == "deploy"
 }
 
 // runTest runs a test.
