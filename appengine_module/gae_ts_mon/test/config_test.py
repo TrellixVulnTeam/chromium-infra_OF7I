@@ -2,16 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from __future__ import print_function
-
 import copy
-import datetime
-import functools
 import os
-import time
-import unittest
 
-import endpoints
 import gae_ts_mon
 import mock
 import webapp2
@@ -19,14 +12,11 @@ import webapp2
 from .test_support import test_case
 
 from infra_libs.ts_mon import config
-from infra_libs.ts_mon import exporter
 from infra_libs.ts_mon import shared
 from infra_libs.ts_mon.common import http_metrics
 from infra_libs.ts_mon.common import interface
 from infra_libs.ts_mon.common import monitors
 from infra_libs.ts_mon.common import targets
-from protorpc import message_types
-from protorpc import remote
 
 
 class InitializeTest(test_case.TestCase):
@@ -59,61 +49,26 @@ class InitializeTest(test_case.TestCase):
 
   def test_sets_monitor(self):
     os.environ['SERVER_SOFTWARE'] = 'Production'  # != 'Development'
-
     config.initialize(is_local_unittest=False)
-
     self.assertEquals(1, monitors.HttpsMonitor.call_count)
 
   def test_sets_monitor_dev(self):
     config.initialize(is_local_unittest=False)
-
     self.assertFalse(monitors.HttpsMonitor.called)
     self.assertIsInstance(self.mock_state.global_monitor, monitors.DebugMonitor)
 
-  def test_instruments_app(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        self.response.write('success!')
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.initialize(app, is_local_unittest=False)
-
-    app.get_response('/')
-
-    self.assertEqual(1, http_metrics.server_response_status.get({
-        'name': '^/$', 'status': 200, 'is_robot': False}))
-
-  def test_instrument_app_with_enabled_fn(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        self.response.write('success!')
-
+  def test_initialize_with_enabled_fn(self):
     is_enabled_fn = mock.Mock()
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.initialize(app, is_enabled_fn=is_enabled_fn, is_local_unittest=False)
-    app.get_response('/')
+    config.initialize(
+        None, is_enabled_fn=is_enabled_fn, is_local_unittest=False)
     self.assertIs(is_enabled_fn, interface.state.flush_enabled_fn)
 
-  def test_instruments_app_only_once(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        self.response.write('success!')
+  @mock.patch('gae_ts_mon.config.instrument_wsgi_application')
+  def test_initialize_with_local_unittest(self, mock_inst):
+    config.initialize(object(), is_local_unittest=True)
+    mock_inst.assert_called()
 
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.initialize(app, is_local_unittest=False)
-    config.initialize(app, is_local_unittest=False)
-    config.initialize(app, is_local_unittest=False)
-
-    app.get_response('/')
-
-    fields = {'name': '^/$', 'status': 200, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-
-  @mock.patch(
-      'gae_ts_mon.exporter.flush_metrics_if_needed',
-      autospec=True,
-      return_value=True)
+  @mock.patch('gae_ts_mon.exporter.flush_metrics_if_needed', return_value=True)
   def test_shutdown_hook_flushed(self, _mock_flush):
     time_now = 10000
     id = shared.get_instance_entity().key.id()
@@ -123,10 +78,7 @@ class InitializeTest(test_case.TestCase):
     with shared.instance_namespace_context():
       self.assertIsNone(shared.Instance.get_by_id(id))
 
-  @mock.patch(
-      'gae_ts_mon.exporter.flush_metrics_if_needed',
-      autospec=True,
-      return_value=False)
+  @mock.patch('gae_ts_mon.exporter.flush_metrics_if_needed', return_value=False)
   def test_shutdown_hook_not_flushed(self, _mock_flush):
     time_now = 10000
     id = shared.get_instance_entity().key.id()
@@ -141,261 +93,17 @@ class InitializeTest(test_case.TestCase):
     config._internal_callback()
 
 
-class InstrumentTest(test_case.TestCase):
-  def setUp(self):
-    super(InstrumentTest, self).setUp()
-
-    interface.reset_for_unittest()
-
-    self.next_time = 42.0
-    self.time_increment = 3.0
-
-  def fake_time(self):
-    ret = self.next_time
-    self.next_time += self.time_increment
-    return ret
-
-  def test_success(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        self.response.write('success!')
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app, time_fn=self.fake_time)
-
-    app.get_response('/')
-
-    fields = {'name': '^/$', 'status': 200, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-    self.assertLessEqual(3000, http_metrics.server_durations.get(fields).sum)
-    self.assertEqual(
-        len('success!'), http_metrics.server_response_bytes.get(fields).sum)
-
-  def test_abort(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        self.abort(417)
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/')
-
-    fields = {'name': '^/$', 'status': 417, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-
-  def test_set_status(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        self.response.set_status(418)
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/')
-
-    fields = {'name': '^/$', 'status': 418, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-
-  def test_exception(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        raise ValueError
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/')
-
-    fields = {'name': '^/$', 'status': 500, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-
-  def test_http_exception(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        raise webapp2.exc.HTTPExpectationFailed()
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/')
-
-    fields = {'name': '^/$', 'status': 417, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-
-  def test_return_response(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        ret = webapp2.Response()
-        ret.set_status(418)
-        return ret
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/')
-
-    fields = {'name': '^/$', 'status': 418, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-
-  def test_robot(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        ret = webapp2.Response()
-        ret.set_status(200)
-        return ret
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/', user_agent='GoogleBot')
-
-    fields = {'name': '^/$', 'status': 200, 'is_robot': True}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-
-  def test_missing_response_content_length(self):
-    class Handler(webapp2.RequestHandler):
-      def get(self):
-        del self.response.headers['content-length']
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/')
-
-    fields = {'name': '^/$', 'status': 200, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-    self.assertIsNone(http_metrics.server_response_bytes.get(fields))
-
-  def test_not_found(self):
-    app = webapp2.WSGIApplication([])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/notfound')
-
-    fields = {'name': '', 'status': 404, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-
-  def test_post(self):
-    class Handler(webapp2.RequestHandler):
-      def post(self):
-        pass
-
-    app = webapp2.WSGIApplication([('/', Handler)])
-    config.instrument_wsgi_application(app)
-
-    app.get_response('/', POST='foo')
-
-    fields = {'name': '^/$', 'status': 200, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-    self.assertEqual(
-        len('foo'), http_metrics.server_request_bytes.get(fields).sum)
-
-
-class FakeTime(object):
-  def __init__(self):
-    self.timestamp_now = 1000.0
-
-  def __call__(self):
-    self.timestamp_now += 0.2
-    return self.timestamp_now
-
-
-@endpoints.api(name='testapi', version='v1')
-class TestEndpoint(remote.Service):
-
-  @gae_ts_mon.instrument_endpoint(time_fn=FakeTime())
-  @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
-                    name='method_good')
-  def do_good(self, request):
-    return request
-
-  @gae_ts_mon.instrument_endpoint(time_fn=FakeTime())
-  @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
-                    name='method_bad')
-  def do_bad(self, request):
-    raise Exception
-
-  @gae_ts_mon.instrument_endpoint(time_fn=FakeTime())
-  @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
-                    name='method_400')
-  def do_400(self, request):
-    raise endpoints.BadRequestException('Bad request')
-
-
-class InstrumentEndpointTest(test_case.EndpointsTestCase):
-  api_service_cls = TestEndpoint
+class InstrumentWSGIApplicationTest(test_case.TestCase):
 
   def setUp(self):
-    super(InstrumentEndpointTest, self).setUp()
+    super(InstrumentWSGIApplicationTest, self).setUp()
 
-    config.reset_for_unittest()
-    target = targets.TaskTarget('test_service', 'test_job',
-                                'test_region', 'test_host')
-    self.mock_state = interface.State(target=target)
-    self.mock_state.metrics = copy.copy(interface.state.metrics)
-    self.endpoint_name = '/_ah/spi/TestEndpoint.%s'
-    mock.patch('infra_libs.ts_mon.common.interface.state',
-        new=self.mock_state).start()
+  @mock.patch('gae_ts_mon.instrument_webapp2.instrument')
+  def testWithWebapp2(self, mock_inst):
+    app = webapp2.WSGIApplication()
+    config.instrument_wsgi_application(app, time_fn=None)
+    mock_inst.assert_called_once_with(app, None)
 
-    mock.patch('infra_libs.ts_mon.common.monitors.HttpsMonitor',
-               autospec=True).start()
-
-  def tearDown(self):
-    config.reset_for_unittest()
-    mock.patch.stopall()
-    super(InstrumentEndpointTest, self).tearDown()
-
-  def test_good(self):
-    self.call_api('do_good')
-    fields = {'name': self.endpoint_name % 'method_good',
-              'status': 200, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-    self.assertLessEqual(200, http_metrics.server_durations.get(fields).sum)
-
-  def test_bad(self):
-    self.call_api('do_bad', status=500)
-    fields = {'name': self.endpoint_name % 'method_bad',
-              'status': 500, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-    self.assertLessEqual(200, http_metrics.server_durations.get(fields).sum)
-
-  def test_400(self):
-    self.call_api('do_400', status=400)
-    fields = {'name': self.endpoint_name % 'method_400',
-              'status': 400, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-    self.assertLessEqual(200, http_metrics.server_durations.get(fields).sum)
-
-  @mock.patch(
-      'gae_ts_mon.exporter.need_to_flush_metrics',
-      autospec=True,
-      return_value=False)
-  def test_no_flush(self, _fake):
-    # For branch coverage.
-    self.call_api('do_good')
-    fields = {'name': self.endpoint_name % 'method_good',
-              'status': 200, 'is_robot': False}
-    self.assertEqual(1, http_metrics.server_response_status.get(fields))
-    self.assertLessEqual(200, http_metrics.server_durations.get(fields).sum)
-
-
-def view_func():
-  pass  # pragma: no cover
-
-
-class ViewClass(object):
-  def view_method(self):
-    pass  # pragma: no cover
-
-
-def decorator(func):
-  @functools.wraps(func)
-  def wrapped():
-    pass  # pragma: no cover
-  return wrapped
-
-
-@decorator
-def decorated_view_func():
-  pass  # pragma: no cover
+  def testWithUnsupportedWSGIApp(self):
+    with self.assertRaises(NotImplementedError):
+      config.instrument_wsgi_application(object())

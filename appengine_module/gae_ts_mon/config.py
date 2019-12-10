@@ -3,18 +3,10 @@
 # found in the LICENSE file.
 
 import datetime
-import functools
 import logging
 import os
 import sys
 import time
-
-# Not all apps enable endpoints. If the import fails, the app will not
-# use @instrument_endpoint() decorator, so it is safe to ignore it.
-try:
-  import endpoints
-except ImportError: # pragma: no cover
-  pass
 
 import webapp2
 
@@ -25,8 +17,8 @@ from google.appengine.ext import ndb
 
 from infra_libs.ts_mon import exporter
 from infra_libs.ts_mon import handlers
+from infra_libs.ts_mon import instrument_webapp2
 from infra_libs.ts_mon import shared
-from infra_libs.ts_mon.common import http_metrics
 from infra_libs.ts_mon.common import interface
 from infra_libs.ts_mon.common import monitors
 from infra_libs.ts_mon.common import standard_metrics
@@ -132,86 +124,12 @@ def initialize(app=None, is_enabled_fn=None, cron_module='default',
   logging.info('Initialized ts_mon with service_name=%s, job_name=%s, '
                'hostname=%s', service_name, job_name, hostname)
 
-
-def _instrumented_dispatcher(dispatcher, request, response, time_fn=time.time):
-  start_time = time_fn()
-  response_status = 0
-  time_now = time_fn()
-
-  try:
-    with exporter.parallel_flush(time_now):
-      ret = dispatcher(request, response)
-  except webapp2.HTTPException as ex:
-    response_status = ex.code
-    raise
-  except Exception:
-    response_status = 500
-    raise
-  else:
-    if isinstance(ret, webapp2.Response):
-      response = ret
-    response_status = response.status_int
-  finally:
-    elapsed_ms = int((time_fn() - start_time) * 1000)
-
-    # Use the route template regex, not the request path, to prevent an
-    # explosion in possible field values.
-    name = request.route.template if request.route is not None else ''
-
-    http_metrics.update_http_server_metrics(
-        name, response_status, elapsed_ms,
-        request_size=request.content_length,
-        response_size=response.content_length,
-        user_agent=request.user_agent)
-
-  return ret
-
-
 def instrument_wsgi_application(app, time_fn=time.time):
-  # Don't instrument the same router twice.
-  if hasattr(app.router, '__instrumented_by_ts_mon'):
-    return
+  """Instrument a given WSGI app."""
+  if isinstance(app, webapp2.WSGIApplication):
+    return instrument_webapp2.instrument(app, time_fn)
 
-  old_dispatcher = app.router.dispatch
-
-  def dispatch(router, request, response):
-    return _instrumented_dispatcher(old_dispatcher, request, response,
-                                    time_fn=time_fn)
-
-  app.router.set_dispatcher(dispatch)
-  app.router.__instrumented_by_ts_mon = True
-
-
-def instrument_endpoint(time_fn=time.time):
-  """Decorator to instrument Cloud Endpoint methods."""
-  def decorator(fn):
-    method_name = fn.__name__
-    assert method_name
-    @functools.wraps(fn)
-    def decorated(service, *args, **kwargs):
-      service_name = service.__class__.__name__
-      endpoint_name = '/_ah/spi/%s.%s' % (service_name, method_name)
-      start_time = time_fn()
-      response_status = 0
-      time_now = time_fn()
-
-      try:
-        with exporter.parallel_flush(time_now):
-          ret = fn(service, *args, **kwargs)
-          response_status = 200
-          return ret
-      except endpoints.ServiceException as e:
-        response_status = e.http_status
-        raise
-      except Exception:
-        response_status = 500
-        raise
-      finally:
-        elapsed_ms = int((time_fn() - start_time) * 1000)
-        http_metrics.update_http_server_metrics(
-            endpoint_name, response_status, elapsed_ms)
-    return decorated
-  return decorator
+  raise NotImplementedError("Unsupported middleware")
 
 
 def reset_for_unittest(disable=False):
