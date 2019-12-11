@@ -32,8 +32,10 @@ func fakeAcestorKey(ctx context.Context) *datastore.Key {
 func addMissingID(devices []*lab.ChromeOSDevice) {
 	// Use uuid as the device ID if asset id is not present.
 	for _, d := range devices {
-		if d.GetId().GetValue() == "" {
-			d.Id.Value = fmt.Sprintf("%s:%s", UUIDPrefix, uuid.New().String())
+		if d.GetId() == nil || d.GetId().GetValue() == "" {
+			d.Id = &lab.ChromeOSDeviceID{
+				Value: fmt.Sprintf("%s:%s", UUIDPrefix, uuid.New().String()),
+			}
 		}
 	}
 }
