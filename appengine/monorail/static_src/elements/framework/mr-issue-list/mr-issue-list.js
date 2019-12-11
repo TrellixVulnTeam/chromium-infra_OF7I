@@ -26,6 +26,11 @@ const COLUMN_DISPLAY_NAMES = {
   'summary': 'Summary + Labels',
 };
 
+/** @type {Number} Button property value of DOM click event */
+const PRIMARY_BUTTON = 0;
+/** @type {Number} Button property value of DOM auxclick event */
+const MIDDLE_BUTTON = 1;
+
 /**
  * Really high cardinality attributes like ID and Summary are unlikely to be
  * useful if grouped, so it's better to just hide the option.
@@ -1118,10 +1123,14 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
-   * @param {MouseEvent} e
+   * Handle click and auxclick on issue row
+   * @param {MouseEvent} event
    */
-  _clickIssueRow(e) {
-    this._maybeOpenIssueRow(e, e.button === 1);
+  _clickIssueRow(event) {
+    if (event.button === PRIMARY_BUTTON || event.button === MIDDLE_BUTTON) {
+      this._maybeOpenIssueRow(
+          event, /* openNewTab= */ event.button === MIDDLE_BUTTON);
+    }
   }
 
   /**

@@ -121,7 +121,7 @@ describe('mr-issue-list', () => {
     sinon.assert.notCalled(window.open);
   });
 
-  it('ctrl+click on row on opens issue in new tab', async () => {
+  it('ctrl+click on row opens issue in new tab', async () => {
     element.issues = [{
       summary: 'click me',
       localId: 24,
@@ -139,7 +139,7 @@ describe('mr-issue-list', () => {
         '/p/chromium/issues/detail?id=24', '_blank', 'noopener');
   });
 
-  it('meta+click on row on opens issue in new tab', async () => {
+  it('meta+click on row opens issue in new tab', async () => {
     element.issues = [{
       summary: 'click me',
       localId: 24,
@@ -157,7 +157,7 @@ describe('mr-issue-list', () => {
         '/p/chromium/issues/detail?id=24', '_blank', 'noopener');
   });
 
-  it('mouse wheel click on row on opens issue in new tab', async () => {
+  it('mouse wheel click on row opens issue in new tab', async () => {
     element.issues = [{
       summary: 'click me',
       localId: 24,
@@ -173,6 +173,23 @@ describe('mr-issue-list', () => {
 
     sinon.assert.calledWith(window.open,
         '/p/chromium/issues/detail?id=24', '_blank', 'noopener');
+  });
+
+  it('right click on row does not navigate', async () => {
+    element.issues = [{
+      summary: 'click me',
+      localId: 24,
+      projectName: 'chromium',
+    }];
+    element.columns = ['Summary'];
+
+    await element.updateComplete;
+
+    const rowChild = element.shadowRoot.querySelector('.col-summary');
+    rowChild.dispatchEvent(new MouseEvent('auxclick',
+        {button: 2, bubbles: true}));
+
+    sinon.assert.notCalled(window.open);
   });
 
   it('AllLabels column renders', async () => {
