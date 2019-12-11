@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
+	"go.chromium.org/luci/lucictx"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/libs/skylab/dutstate"
@@ -174,6 +175,14 @@ func newInventoryClient(ctx context.Context, adminService string, authFlags *aut
 	authOpts, err := authFlags.Options()
 	if err != nil {
 		return nil, errors.Annotate(err, "create new inventory client").Err()
+	}
+
+	authCtx, err := lucictx.SwitchLocalAccount(ctx, "system")
+	if err == nil {
+		// If there's a system account use it (the case of running on Swarming).
+		// Otherwise default to user credentials (the local development case).
+		ctx = authCtx
+		authOpts.Method = auth.LUCIContextMethod
 	}
 
 	a := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts)

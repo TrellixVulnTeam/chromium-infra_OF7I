@@ -44,5 +44,9 @@ func getApplication(authOpts auth.Options) *cli.Application {
 
 func main() {
 	authOpts := chromeinfra.DefaultAuthOptions()
+	authOpts.Scopes = append(authOpts.Scopes,
+		"https://www.googleapis.com/auth/cloud-platform",
+		auth.OAuthScopeEmail)
+	authOpts.Method = auth.UserCredentialsMethod
 	os.Exit(subcommands.Run(getApplication(authOpts), nil))
 }
