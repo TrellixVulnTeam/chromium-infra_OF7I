@@ -9,6 +9,7 @@
  *
  * The Hotlist data is stored in a normalized format.
  * `hotlists` stores all Hotlist data indexed by HotlistRefString.
+ * `hotlistItems` stores all Hotlist items indexed by HotlistRefString.
  * `hotlistRef` is a reference to the currently viewed Hotlist.
  * `hotlist` is a selector that gets the currently viewed Hotlist data.
  *
@@ -30,9 +31,14 @@ export const FETCH_START = 'hotlist/FETCH_START';
 export const FETCH_SUCCESS = 'hotlist/FETCH_SUCCESS';
 export const FETCH_FAILURE = 'hotlist/FETCH_FAILURE';
 
+export const FETCH_ITEMS_START = 'hotlist/FETCH_ITEMS_START';
+export const FETCH_ITEMS_SUCCESS = 'hotlist/FETCH_ITEMS_SUCCESS';
+export const FETCH_ITEMS_FAILURE = 'hotlist/FETCH_ITEMS_FAILURE';
+
 /* State Shape
 {
   hotlists: Object.<HotlistRefString, Hotlist>,
+  hotlistItems: Object.<HotlistRefString, Array<HotlistItem>>,
 
   hotlistRef: HotlistRef,
 
@@ -46,7 +52,7 @@ export const FETCH_FAILURE = 'hotlist/FETCH_FAILURE';
 
 /**
  * All Hotlist data indexed by HotlistRefString.
- * @param {Object<string, Hotlist>} state The existing mapping of Hotlist data.
+ * @param {Object<string, Hotlist>} state The mapping of existing Hotlist data.
  * @param {import('redux').AnyAction} action A Redux action.
  * @return {Object.<string, Hotlist>}
  */
@@ -54,6 +60,20 @@ export const hotlistsReducer = createReducer({}, {
   [FETCH_SUCCESS]: (state, action) => {
     const newState = {...state};
     newState[hotlistToRefString(action.hotlist)] = action.hotlist;
+    return newState;
+  },
+});
+
+/**
+ * All Hotlist items indexed by HotlistRefString.
+ * @param {Object<string, Array<HotlistItem>>} state
+ * @param {import('redux').AnyAction} action A Redux action.
+ * @return {Object.<string, Array<HotlistItem>>}
+ */
+export const hotlistItemsReducer = createReducer({}, {
+  [FETCH_ITEMS_SUCCESS]: (state, action) => {
+    const newState = {...state};
+    newState[hotlistRefToString(action.hotlistRef)] = action.items;
     return newState;
   },
 });
@@ -89,6 +109,7 @@ const requestsReducer = combineReducers({
 
 export const reducer = combineReducers({
   hotlists: hotlistsReducer,
+  hotlistItems: hotlistItemsReducer,
   hotlistRef: hotlistRefReducer,
 
   requests: requestsReducer,
@@ -102,6 +123,14 @@ export const reducer = combineReducers({
  * @return {Object.<string, Hotlist>}
  */
 export const hotlists = (state) => state.hotlist.hotlists;
+
+/**
+ * Returns all the Hotlist items in the store as a mapping of
+ * HotlistRef string to its respective array of HotlistItems.
+ * @param {any} state The Redux store.
+ * @return {Object.<string, Array<HotlistItem>>}
+ */
+export const hotlistItems = (state) => state.hotlist.hotlistItems;
 
 /**
  * Returns the currently viewed HotlistRef, or null if there is none.
@@ -121,6 +150,20 @@ export const viewedHotlist = createSelector([hotlists, hotlistRef],
         return null;
       }
       return hotlists[hotlistRefToString(hotlistRef)] || null;
+    });
+
+/**
+ * Returns an Array containing the items in the currently viewed Hotlist,
+ * or empty Array if there is no current HotlistRef or no data.
+ * @param {any} state The Redux store.
+ * @return {Array<HotlistItem>}
+ */
+export const viewedHotlistItems = createSelector([hotlistItems, hotlistRef],
+    (hotlistItems, hotlistRef) => {
+      if (!hotlistRef) {
+        return [];
+      }
+      return hotlistItems[hotlistRefToString(hotlistRef)] || [];
     });
 
 // Action Creators
@@ -148,5 +191,23 @@ export const fetch = (hotlistRef) => async (dispatch) => {
     dispatch({type: FETCH_SUCCESS, hotlist: resp.hotlist});
   } catch (error) {
     dispatch({type: FETCH_FAILURE, error});
+  };
+};
+
+/**
+ * Action creator to fetch the items in a Hotlist.
+ * @param {HotlistRef} hotlistRef A reference to the Hotlist to fetch.
+ * @return {function(function): Promise<void>}
+ */
+export const fetchItems = (hotlistRef) => async (dispatch) => {
+  dispatch({type: FETCH_ITEMS_START});
+
+  try {
+    const resp = await prpcClient.call(
+        'monorail.Features', 'ListHotlistItems', {hotlistRef});
+
+    dispatch({type: FETCH_ITEMS_SUCCESS, hotlistRef, items: resp.items});
+  } catch (error) {
+    dispatch({type: FETCH_ITEMS_FAILURE, error});
   };
 };

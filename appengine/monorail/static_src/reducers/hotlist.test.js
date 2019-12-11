@@ -5,8 +5,8 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 import * as hotlist from './hotlist.js';
-import {hotlistExample, hotlistRefExample, hotlistsExample}
-  from 'shared/test/hotlist-constants.js';
+import {hotlistRefExample, hotlistExample, hotlistItemExample, hotlistsExample,
+  hotlistItemsExample} from 'shared/test/hotlist-constants.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 let dispatch;
@@ -17,6 +17,7 @@ describe('hotlist', () => {
       const actual = hotlist.reducer(undefined, {type: null});
       const expected = {
         hotlists: {},
+        hotlistItems: {},
         hotlistRef: null,
         requests: {
           fetch: {
@@ -32,6 +33,16 @@ describe('hotlist', () => {
       const action = {type: hotlist.FETCH_SUCCESS, hotlist: hotlistExample};
       const actual = hotlist.hotlistsReducer({}, action);
       assert.deepEqual(actual, hotlistsExample);
+    });
+
+    it('hotlistItems updates on FETCH_ITEMS_SUCCESS', () => {
+      const action = {
+        type: hotlist.FETCH_ITEMS_SUCCESS,
+        hotlistRef: hotlistRefExample,
+        items: [hotlistItemExample],
+      };
+      const actual = hotlist.hotlistItemsReducer({}, action);
+      assert.deepEqual(actual, hotlistItemsExample);
     });
 
     describe('hotlistRef', () => {
@@ -79,12 +90,17 @@ describe('hotlist', () => {
       assert.deepEqual(hotlist.hotlists(state), hotlistsExample);
     });
 
+    it('hotlistItems', () => {
+      const state = {hotlist: {hotlistItems: hotlistItemsExample}};
+      assert.deepEqual(hotlist.hotlistItems(state), hotlistItemsExample);
+    });
+
     it('hotlistRef', () => {
       const state = {hotlist: {hotlistRef: hotlistRefExample}};
       assert.deepEqual(hotlist.hotlistRef(state), hotlistRefExample);
     });
 
-    describe('hotlist', () => {
+    describe('viewedHotlist', () => {
       it('normal case', () => {
         const state = {hotlist: {
           hotlists: hotlistsExample,
@@ -101,6 +117,33 @@ describe('hotlist', () => {
       it('hotlist not found', () => {
         const state = {hotlist: {hotlists: {}, hotlistRef: hotlistRefExample}};
         assert.deepEqual(hotlist.viewedHotlist(state), null);
+      });
+    });
+
+    describe('viewedHotlistItems', () => {
+      it('normal case', () => {
+        const state = {hotlist: {
+          hotlistItems: hotlistItemsExample,
+          hotlistRef: hotlistRefExample,
+        }};
+        const actual = hotlist.viewedHotlistItems(state);
+        assert.deepEqual(actual, [hotlistItemExample]);
+      });
+
+      it('no hotlistRef', () => {
+        const state = {hotlist: {
+          hotlistItems: hotlistItemsExample,
+          hotlistRef: null,
+        }};
+        assert.deepEqual(hotlist.viewedHotlistItems(state), []);
+      });
+
+      it('hotlist not found', () => {
+        const state = {hotlist: {
+          hotlistItems: {},
+          hotlistRef: hotlistRefExample,
+        }};
+        assert.deepEqual(hotlist.viewedHotlistItems(state), []);
       });
     });
   });
@@ -125,27 +168,58 @@ describe('hotlist', () => {
       it('success', async () => {
         prpcClient.call.returns(Promise.resolve({hotlist: hotlistExample}));
 
-        const action = hotlist.fetch(hotlistRefExample);
-        await(action(dispatch));
+        await hotlist.fetch(hotlistRefExample)(dispatch);
 
         sinon.assert.calledWith(dispatch, {type: hotlist.FETCH_START});
 
-        const returnValue = {hotlistRef: hotlistRefExample};
+        const args = {hotlistRef: hotlistRefExample};
         sinon.assert.calledWith(
-            prpcClient.call, 'monorail.Features', 'GetHotlist', returnValue);
+            prpcClient.call, 'monorail.Features', 'GetHotlist', args);
 
-        const args = {type: hotlist.FETCH_SUCCESS, hotlist: hotlistExample};
-        sinon.assert.calledWith(dispatch, args);
+        const action = {type: hotlist.FETCH_SUCCESS, hotlist: hotlistExample};
+        sinon.assert.calledWith(dispatch, action);
       });
 
       it('failure', async () => {
         prpcClient.call.throws();
 
-        const action = hotlist.fetch(hotlistRefExample);
-        await(action(dispatch));
+        await hotlist.fetch(hotlistRefExample)(dispatch);
 
-        const args = {type: hotlist.FETCH_FAILURE, error: sinon.match.any};
-        sinon.assert.calledWith(dispatch, args);
+        const action = {type: hotlist.FETCH_FAILURE, error: sinon.match.any};
+        sinon.assert.calledWith(dispatch, action);
+      });
+    });
+
+    describe('fetchItems', () => {
+      it('success', async () => {
+        prpcClient.call.returns(Promise.resolve({items: [hotlistItemExample]}));
+
+        await hotlist.fetchItems(hotlistRefExample)(dispatch);
+
+        sinon.assert.calledWith(dispatch, {type: hotlist.FETCH_ITEMS_START});
+
+        const args = {hotlistRef: hotlistRefExample};
+        sinon.assert.calledWith(
+            prpcClient.call, 'monorail.Features', 'ListHotlistItems', args);
+
+        const action = {
+          type: hotlist.FETCH_ITEMS_SUCCESS,
+          hotlistRef: hotlistRefExample,
+          items: [hotlistItemExample],
+        };
+        sinon.assert.calledWith(dispatch, action);
+      });
+
+      it('failure', async () => {
+        prpcClient.call.throws();
+
+        await hotlist.fetchItems(hotlistRefExample)(dispatch);
+
+        const action = {
+          type: hotlist.FETCH_ITEMS_FAILURE,
+          error: sinon.match.any,
+        };
+        sinon.assert.calledWith(dispatch, action);
       });
     });
   });

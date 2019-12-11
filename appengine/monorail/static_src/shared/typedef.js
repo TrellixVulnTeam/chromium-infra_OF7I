@@ -54,6 +54,17 @@
  */
 
 /**
+ * A HotlistItem Object returned by the pRPC API.
+ *
+ * @typedef {Object} HotlistItem
+ * @property {Issue} [issue]
+ * @property {number} [rank]
+ * @property {UserRef} [adderRef]
+ * @property {number} [addedTimestamp]
+ * @property {string} [note]
+ */
+
+/**
  * A User Object returned by the pRPC API.
  *
  * @typedef {Object} User

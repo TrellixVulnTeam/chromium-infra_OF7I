@@ -403,6 +403,7 @@ export class MrApp extends connectStore(LitElement) {
     };
     store.dispatch(hotlist.select(hotlistRef));
     store.dispatch(hotlist.fetch(hotlistRef));
+    store.dispatch(hotlist.fetchItems(hotlistRef));
     next();
   }
 
