@@ -183,7 +183,7 @@ def install_toolset(toolset_root, version):
     stdin=subprocess.PIPE)
   cmd.communicate(
     '@Subdir go\n'
-    'infra/go/${platform} version:%s\n' % version
+    'infra/3pp/tools/go/${platform} version:%s\n' % version
   )
   if cmd.returncode:
     raise Failure('CIPD call failed, exit code %d' % cmd.returncode)
