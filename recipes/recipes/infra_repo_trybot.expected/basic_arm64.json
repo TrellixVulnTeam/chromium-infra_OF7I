@@ -175,16 +175,6 @@
     "cmd": [
       "python",
       "-u",
-      "test.py",
-      "test"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
-    "name": "python tests"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
       "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",
       "test",
       "run"

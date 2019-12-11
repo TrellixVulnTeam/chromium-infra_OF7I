@@ -8,7 +8,7 @@ import contextlib
 import glob
 import logging
 import os
-import re
+import platform
 import shutil
 import subprocess
 import sys
@@ -276,6 +276,17 @@ def main(args):
     bitness = 'i686'
   else:
     bitness = 'x86_64'
+
+  machine = platform.machine()
+  arch = 'arm' if ('arm' in machine or 'aarch' in machine) else 'intel'
+  if arch == 'arm':
+    print '---------------------------'
+    print 'WARNING! WARNING! WARNING! '
+    print '---------------------------'
+    print 'The infra python environment is not available on ARM.'
+    print 'If you need to develop infra tools for ARM, use Go instead.'
+    return
+
   plat = '%s_%s' % (osname, bitness)
 
   deps, kicked = filter_deps(merge_deps(opts.deps_file), plat)

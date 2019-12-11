@@ -44,14 +44,15 @@ def RunSteps(api):
 
     with api.step.defer_results():
       with api.context(cwd=co.path.join(patch_root)):
-        api.python('python tests', 'test.py', ['test'])
-        # To preserve high CQ coverage vs very low coverage in infra_internal,
-        # test CQ separately. But only if CQ code is modified.
-        # Note that this will run CQ tests once again.
-        if internal and any(f.startswith('infra_internal/services/cq')
-                            for f in files):
-          api.python('python cq tests', 'test.py',
-                     ['test', 'infra_internal/services/cq'])
+        if api.platform.arch != 'arm':
+          api.python('python tests', 'test.py', ['test'])
+          # To preserve high CQ coverage vs very low coverage in infra_internal,
+          # test CQ separately. But only if CQ code is modified.
+          # Note that this will run CQ tests once again.
+          if internal and any(f.startswith('infra_internal/services/cq')
+                              for f in files):
+            api.python('python cq tests', 'test.py',
+                       ['test', 'infra_internal/services/cq'])
 
       if not internal:
         # TODO(phajdan.jr): should we make recipe tests run on other platforms?

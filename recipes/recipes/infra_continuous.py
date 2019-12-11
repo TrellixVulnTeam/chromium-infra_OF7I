@@ -172,7 +172,7 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
   # irrelevant to the produced packages. Relevant portion of tests will be run
   # from api.infra_cipd.test() below, when testing packages that pack python
   # code.
-  if not is_packager:
+  if api.platform.arch != 'arm' and not is_packager:
     run_python_tests(api, project_name)
 
   # Some third_party go packages on OSX rely on cgo and thus a configured

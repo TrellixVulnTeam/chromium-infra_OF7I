@@ -97,16 +97,6 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "test.py",
-      "test"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
-    "name": "infra python tests"
-  },
-  {
-    "cmd": [
       "vpython",
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/go/bootstrap.py",
