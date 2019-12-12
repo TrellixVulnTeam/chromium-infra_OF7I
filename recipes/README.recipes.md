@@ -118,7 +118,7 @@ Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
 ### *recipe_modules* / [cloudkms](/recipes/recipe_modules/cloudkms)
 
-[DEPS](/recipes/recipe_modules/cloudkms/__init__.py#5): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudkms/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 #### **class [CloudKMSApi](/recipes/recipe_modules/cloudkms/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -131,7 +131,7 @@ Returns the path to LUCI cloudkms binary.
 When the property is accessed the first time, cloudkms will be installed
 using cipd.
 
-&mdash; **def [decrypt](/recipes/recipe_modules/cloudkms/api.py#29)(self, kms_crypto_key, input_file, output_file):**
+&mdash; **def [decrypt](/recipes/recipe_modules/cloudkms/api.py#30)(self, kms_crypto_key, input_file, output_file):**
 
 Decrypt a ciphertext file with a CloudKMS key.
 

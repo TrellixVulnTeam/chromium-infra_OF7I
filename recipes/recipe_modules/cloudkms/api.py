@@ -21,8 +21,9 @@ class CloudKMSApi(recipe_api.RecipeApi):
     """
     if self._cloudkms_bin is None:
       cloudkms_dir = self.m.path['start_dir'].join('cloudkms')
-      self.m.cipd.ensure(
-          cloudkms_dir, {'infra/tools/luci/cloudkms/${platform}': 'latest'})
+      ensure_file = self.m.cipd.EnsureFile().add_package(
+          'infra/tools/luci/cloudkms/${platform}', 'latest')
+      self.m.cipd.ensure(cloudkms_dir, ensure_file)
       self._cloudkms_bin = cloudkms_dir.join('cloudkms')
     return self._cloudkms_bin
 
