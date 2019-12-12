@@ -422,7 +422,7 @@ import:
   version: master
   repo: https://chromium.googlesource.com/external/github.com/go-warnings/warnings.git
 - package: go.skia.org/infra
-  version: c2e0dd22623db7a94e470cb41de6f44a8cbcb899
+  version: ff3cf199c0092520b400071886b5ce691d23cd28
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
@@ -465,9 +465,6 @@ import:
 - package: github.com/hashicorp/go-multierror
   version: master
   repo: https://chromium.googlesource.com/external/github.com/hashicorp/go-multierror.git
-- package: github.com/stretchr/testify
-  version: master
-  repo: https://chromium.googlesource.com/external/github.com/stretchr/testify.git
 - package: github.com/zeebo/bencode
   version: master
   repo: https://chromium.googlesource.com/external/github.com/zeebo/bencode.git
