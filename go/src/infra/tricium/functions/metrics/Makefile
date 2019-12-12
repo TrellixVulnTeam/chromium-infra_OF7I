@@ -2,7 +2,11 @@
 # Copyright 2019 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-.PHONY: test clean
+.PHONY: build-for-deploy test unit-test clean
+
+# Make sure that the deployed binary is runnable on Linux, even if deploying from a different platform.
+build-for-deploy:
+	GOOS=linux GOARCH=amd64 go build -o metrics_analyzer
 
 metrics-analyzer:
 	go build -o metrics_analyzer
