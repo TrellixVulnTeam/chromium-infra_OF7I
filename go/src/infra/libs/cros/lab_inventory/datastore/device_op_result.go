@@ -14,7 +14,7 @@ import (
 // functions.
 type DeviceOpResult struct {
 	Device    *lab.ChromeOSDevice
-	Entity    DeviceEntity
+	Entity    *DeviceEntity
 	Err       error
 	Timestamp time.Time
 }

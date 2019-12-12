@@ -83,11 +83,13 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 			devToAdd := &addingResults[i]
 			hostname := utils.GetHostname(devToAdd.Device)
 			id := devToAdd.Device.GetId().GetValue()
-			devToAdd.Entity = DeviceEntity{
+
+			devToAdd.Entity = &DeviceEntity{
 				ID:       DeviceEntityID(id),
 				Hostname: hostname,
 				Parent:   fakeAcestorKey(ctx),
 			}
+
 			if err := sanityCheckForAdding(ctx, devToAdd.Device, q); err != nil {
 				devToAdd.logError(err)
 				continue
@@ -101,7 +103,7 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 			devToAdd.Entity.Updated = updatedTime
 			devToAdd.Entity.LabConfig = labConfig
 
-			entities = append(entities, &(devToAdd.Entity))
+			entities = append(entities, devToAdd.Entity)
 			fmt.Println("add dev", devToAdd.Entity)
 			entityResults = append(entityResults, devToAdd)
 		}
@@ -128,9 +130,9 @@ func DeleteDevicesByIds(ctx context.Context, ids []string) *DeviceOpResults {
 	removingResults := make(DeviceOpResults, len(ids))
 	entities := make([]DeviceEntity, len(ids))
 	for i, id := range ids {
+		removingResults[i].Entity = &entities[i]
 		entities[i].ID = DeviceEntityID(id)
 		entities[i].Parent = fakeAcestorKey(ctx)
-		removingResults[i].Entity.ID = DeviceEntityID(id)
 	}
 	if err := datastore.Delete(ctx, entities); err != nil {
 		for i, e := range err.(errors.MultiError) {
@@ -152,7 +154,6 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOp
 
 	// Filter out invalid input hostnames.
 	for i, hostname := range hostnames {
-		removingResults[i].Entity.Hostname = hostname
 		var devs []*DeviceEntity
 		if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
 			removingResults[i].logError(errors.Annotate(err, "failed to get host by hostname %s", hostname).Err())
@@ -168,7 +169,7 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOp
 			removingResults[i].logError(errors.Reason("multiple entities found with hostname %s: %v", hostname, devs).Err())
 			continue
 		}
-		removingResults[i].Entity = *devs[0]
+		removingResults[i].Entity = devs[0]
 		entities = append(entities, devs[0])
 		entityResults = append(entityResults, &removingResults[i])
 	}
