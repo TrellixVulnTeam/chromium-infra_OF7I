@@ -12,17 +12,16 @@ ROOT = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 GAEPY = os.path.join(ROOT, 'gae.py')
 
 INSTANCES = [
-  'c-status',
-  'chromium-status-hr',
-  'chromiumos-status-hr',
-  'dart-status',
-  'devtools-status',
-  'infra-status',
-  'naclports-status-hrd',
-  'nativeclient-status-hrd',
-  'v8-roll',
-  'v8-status',
-  'webrtc-status',
+    'chromium-status-hr',
+    'chromiumos-status-hr',
+    'dart-status',
+    'devtools-status',
+    'infra-status',
+    'pdfium-status',
+    'touch-status',
+    'v8-roll',
+    'v8-status',
+    'webrtc-status',
 ]
 
 

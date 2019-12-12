@@ -1,10 +1,8 @@
 Chromium Status
 
 Base framework for:
-  http://blink-status.appspot.com
   http://chromium-status.appspot.com
   http://chromiumos-status.appspot.com
-  http://nativeclient-status.appspot.com
   ... among others ...
 
 You should download & install Google Appengine into the parent dir:
