@@ -13,7 +13,6 @@
   * [recipe_autoroller](#recipe_modules-recipe_autoroller)
   * [support_3pp](#recipe_modules-support_3pp) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
   * [sync_submodules](#recipe_modules-sync_submodules)
-  * [third_party_packages](#recipe_modules-third_party_packages)
   * [windows_sdk](#recipe_modules-windows_sdk)
 
 **[Recipes](#Recipes)**
@@ -57,17 +56,6 @@
   * [snapshots/snapshot](#recipes-snapshots_snapshot)
   * [support_3pp:tests/full](#recipes-support_3pp_tests_full)
   * [sync_submodules](#recipes-sync_submodules)
-  * [third_party_packages](#recipes-third_party_packages) &mdash; This recipe builds and packages third party software, such as Git.
-  * [third_party_packages:examples/cmake](#recipes-third_party_packages_examples_cmake) &mdash; Recipe for 'cmake' building.
-  * [third_party_packages:examples/dep](#recipes-third_party_packages_examples_dep) &mdash; Recipe for Go dependency management tool building.
-  * [third_party_packages:examples/firebase](#recipes-third_party_packages_examples_firebase) &mdash; Recipe for firebase-tools building.
-  * [third_party_packages:examples/gcloud](#recipes-third_party_packages_examples_gcloud) &mdash; Recipe for Google Cloud SDK building.
-  * [third_party_packages:examples/git](#recipes-third_party_packages_examples_git) &mdash; Recipe for 'git' building.
-  * [third_party_packages:examples/go](#recipes-third_party_packages_examples_go) &mdash; Recipe for Go toolchain building.
-  * [third_party_packages:examples/gsutil](#recipes-third_party_packages_examples_gsutil) &mdash; Recipe for gsutil building.
-  * [third_party_packages:examples/ninja](#recipes-third_party_packages_examples_ninja) &mdash; Recipe for 'ninja' building.
-  * [third_party_packages:examples/python](#recipes-third_party_packages_examples_python) &mdash; Recipe for 'python' building.
-  * [third_party_packages:examples/swig](#recipes-third_party_packages_examples_swig) &mdash; Recipe for 'swig' building.
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full)
   * [wpt_export](#recipes-wpt_export) &mdash; Exports commits in Chromium to the web-platform-tests repo.
@@ -666,53 +654,6 @@ Args:
   deps_path_prefix: path prefix used to filter out DEPS. DEPS with the
       prefix are included.
   disable_path_prefix: disable filtering out DEPS by path prefix.
-### *recipe_modules* / [third\_party\_packages](/recipes/recipe_modules/third_party_packages)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/__init__.py#5): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_sdk](#recipe_modules-windows_sdk), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-#### **class [ThirdPartyPackagesApi](/recipes/recipe_modules/third_party_packages/api.py#23)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
-
-&mdash; **def [build\_package](/recipes/recipe_modules/third_party_packages/api.py#188)(self, name, workdir, root, install_mode):**
-
-&emsp; **@property**<br>&mdash; **def [cmake](/recipes/recipe_modules/third_party_packages/api.py#97)(self):**
-
-&emsp; **@property**<br>&mdash; **def [cross\_platform](/recipes/recipe_modules/third_party_packages/api.py#38)(self):**
-
-&emsp; **@property**<br>&mdash; **def [dep](/recipes/recipe_modules/third_party_packages/api.py#113)(self):**
-
-&mdash; **def [does\_package\_exist](/recipes/recipe_modules/third_party_packages/api.py#184)(self, name, version):**
-
-&emsp; **@dry_run.setter**<br>&mdash; **def [dry\_run](/recipes/recipe_modules/third_party_packages/api.py#34)(self, v):**
-
-&mdash; **def [ensure\_package](/recipes/recipe_modules/third_party_packages/api.py#123)(self, workdir, repo_url, package_name_prefix, install_fn, tag, version, cipd_install_mode, test_fn=None):**
-
-Ensures that the specified CIPD package exists.
-
-&emsp; **@property**<br>&mdash; **def [firebase](/recipes/recipe_modules/third_party_packages/api.py#109)(self):**
-
-&emsp; **@property**<br>&mdash; **def [gcloud](/recipes/recipe_modules/third_party_packages/api.py#85)(self):**
-
-&mdash; **def [get\_latest\_release\_tag](/recipes/recipe_modules/third_party_packages/api.py#161)(self, repo_url, prefix='v'):**
-
-&mdash; **def [get\_package\_name](/recipes/recipe_modules/third_party_packages/api.py#120)(self, package_name_prefix):**
-
-&emsp; **@property**<br>&mdash; **def [git](/recipes/recipe_modules/third_party_packages/api.py#81)(self):**
-
-&emsp; **@property**<br>&mdash; **def [go](/recipes/recipe_modules/third_party_packages/api.py#105)(self):**
-
-&emsp; **@property**<br>&mdash; **def [gsutil](/recipes/recipe_modules/third_party_packages/api.py#89)(self):**
-
-&mdash; **def [init\_cross\_platform](/recipes/recipe_modules/third_party_packages/api.py#44)(self, cross_platform):**
-
-&emsp; **@property**<br>&mdash; **def [ninja](/recipes/recipe_modules/third_party_packages/api.py#93)(self):**
-
-&emsp; **@property**<br>&mdash; **def [python](/recipes/recipe_modules/third_party_packages/api.py#77)(self):**
-
-&mdash; **def [register\_package](/recipes/recipe_modules/third_party_packages/api.py#193)(self, package_file, name, version):**
-
-&mdash; **def [support\_prefix](/recipes/recipe_modules/third_party_packages/api.py#117)(self, base):**
-
-&emsp; **@property**<br>&mdash; **def [swig](/recipes/recipe_modules/third_party_packages/api.py#101)(self):**
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1100,113 +1041,6 @@ Normalizes a string for use in a resource label.
 [DEPS](/recipes/recipes/sync_submodules.py#7): [sync\_submodules](#recipe_modules-sync_submodules), [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
 
 &mdash; **def [RunSteps](/recipes/recipes/sync_submodules.py#20)(api, disable_path_prefix):**
-### *recipes* / [third\_party\_packages](/recipes/recipes/third_party_packages.py)
-
-[DEPS](/recipes/recipes/third_party_packages.py#10): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
-
-This recipe builds and packages third party software, such as Git.
-
-&mdash; **def [RunSteps](/recipes/recipes/third_party_packages.py#29)(api, cross_platform):**
-### *recipes* / [third\_party\_packages:examples/cmake](/recipes/recipe_modules/third_party_packages/examples/cmake.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/cmake.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for 'cmake' building.
-
-During testing, it may be useful to focus on building CMake. This can be done by
-running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/cmake.py#44)(api, dry_run):**
-### *recipes* / [third\_party\_packages:examples/dep](/recipes/recipe_modules/third_party_packages/examples/dep.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/dep.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for Go dependency management tool building.
-
-During testing, it may be useful to focus on building dep. This can be done
-by running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/dep.py#47)(api, dry_run):**
-### *recipes* / [third\_party\_packages:examples/firebase](/recipes/recipe_modules/third_party_packages/examples/firebase.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/firebase.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for firebase-tools building.
-
-During testing, it may be useful to focus on building the firebase-tools. This
-can be done by running this recipe directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/firebase.py#30)(api, dry_run):**
-### *recipes* / [third\_party\_packages:examples/gcloud](/recipes/recipe_modules/third_party_packages/examples/gcloud.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/gcloud.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for Google Cloud SDK building.
-
-During testing, it may be useful to focus on building the SDK. This can be done
-by running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/gcloud.py#39)(api, platform_name, platform_bits, dry_run):**
-### *recipes* / [third\_party\_packages:examples/git](/recipes/recipe_modules/third_party_packages/examples/git.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/git.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for 'git' building.
-
-During testing, it may be useful to focus on building Git. This can be done by
-running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/git.py#67)(api, dry_run):**
-### *recipes* / [third\_party\_packages:examples/go](/recipes/recipe_modules/third_party_packages/examples/go.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/go.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for Go toolchain building.
-
-During testing, it may be useful to focus on building Go. This can be done
-by running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/go.py#39)(api, platform_name, platform_bits, dry_run):**
-### *recipes* / [third\_party\_packages:examples/gsutil](/recipes/recipe_modules/third_party_packages/examples/gsutil.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/gsutil.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for gsutil building.
-
-During testing, it may be useful to focus on building the gsutil. This can be
-done by running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/gsutil.py#28)(api, dry_run):**
-### *recipes* / [third\_party\_packages:examples/ninja](/recipes/recipe_modules/third_party_packages/examples/ninja.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/ninja.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for 'ninja' building.
-
-During testing, it may be useful to focus on building Ninja. This can be done by
-running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/ninja.py#45)(api, dry_run):**
-### *recipes* / [third\_party\_packages:examples/python](/recipes/recipe_modules/third_party_packages/examples/python.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/python.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
-
-Recipe for 'python' building.
-
-During testing, it may be useful to focus on building Python. This can be done
-by running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/python.py#28)(api, dry_run, cross_platform):**
-### *recipes* / [third\_party\_packages:examples/swig](/recipes/recipe_modules/third_party_packages/examples/swig.py)
-
-[DEPS](/recipes/recipe_modules/third_party_packages/examples/swig.py#14): [depot\_tools/cipd][depot_tools/recipe_modules/cipd], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [third\_party\_packages](#recipe_modules-third_party_packages), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/url][recipe_engine/recipe_modules/url]
-
-Recipe for 'swig' building.
-
-During testing, it may be useful to focus on building Swig. This can be done by
-running this recipe module directly.
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/third_party_packages/examples/swig.py#43)(api, dry_run):**
 ### *recipes* / [update\_submodules\_mirror](/recipes/recipes/update_submodules_mirror.py)
 
 [DEPS](/recipes/recipes/update_submodules_mirror.py#10): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
