@@ -89,8 +89,6 @@ ifdef(`STAGING', `
 libraries:
 - name: endpoints
   version: 1.0
-- name: flask
-  version: 0.12
 - name: MySQLdb
   version: "latest"
 - name: pycrypto
