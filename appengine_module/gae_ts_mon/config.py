@@ -8,7 +8,6 @@ import os
 import sys
 import time
 
-import flask
 import webapp2
 
 from google.appengine.api import modules
@@ -18,7 +17,6 @@ from google.appengine.ext import ndb
 
 from infra_libs.ts_mon import exporter
 from infra_libs.ts_mon import handlers
-from infra_libs.ts_mon import instrument_flask
 from infra_libs.ts_mon import instrument_webapp2
 from infra_libs.ts_mon import shared
 from infra_libs.ts_mon.common import interface
@@ -98,10 +96,7 @@ def initialize(
   interface.state.flush_mode = 'manual'
   interface.state.last_flushed = datetime.datetime.utcnow()
 
-  # pylint: disable=line-too-long
   # Don't send metrics when running on the dev appserver.
-  # : https://cloud.google.com/appengine/docs/standard/python/tools/using-local-server#detecting_application_runtime_environment
-  # pylint: enable=line-too-long
   if (is_local_unittest or
       os.environ.get('SERVER_SOFTWARE', '').startswith('Development')):
     logging.info('Using debug monitor')
@@ -133,9 +128,6 @@ def instrument_wsgi_application(app, time_fn=time.time):
   """Instrument a given WSGI app."""
   if isinstance(app, webapp2.WSGIApplication):
     return instrument_webapp2.instrument(app, time_fn)
-
-  if isinstance(app, flask.Flask):
-    return instrument_flask.instrument(app, time_fn)
 
   raise NotImplementedError("Unsupported middleware")
 
