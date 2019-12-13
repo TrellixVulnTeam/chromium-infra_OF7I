@@ -10,6 +10,10 @@ LIBS_PATH := $(PROJECT_PATH)/../../../libs/cros/lab_inventory
 GCP_PROJECT = cros-lab-inventory
 GCP_PROJECT_DEV = cros-lab-inventory-dev
 
+ifeq (${DEBUG}, 1)
+	TESTOPTIONS =-v --parallel=1
+endif
+
 .PHONY: default
 default: vet test
 
@@ -19,7 +23,7 @@ vet:
 
 .PHONY: test
 test:
-	go test -coverprofile=coverage.out ./... ${LIBS_PATH}/... || true
+	go test ${TESTOPTIONS} -coverprofile=coverage.out ./... ${LIBS_PATH}/... || true
 	go tool cover -html=coverage.out -o coverage.html
 
 .PHONY: gen
