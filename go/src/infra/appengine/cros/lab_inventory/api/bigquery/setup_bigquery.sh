@@ -91,3 +91,16 @@ if ! (bqschemaupdater -force \
   echo "and run this script again."
   exit 1
 fi
+
+if ! (bqschemaupdater -force \
+    -message apibq.ManufacturingInventory  \
+    -table "${APPID}".inventory.manufacturing); then
+  echo ""
+  echo ""
+  echo "Oh no! You may need to restart from scratch. You can do so with:"
+  echo ""
+  echo "  bq rm ${APPID}:inventory.manufacturing"
+  echo ""
+  echo "and run this script again."
+  exit 1
+fi
