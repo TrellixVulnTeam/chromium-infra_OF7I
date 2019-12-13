@@ -426,10 +426,20 @@ func getDUT(ctx context.Context, hostname string) (*inventory.DeviceUnderTest, e
 	return dut, nil
 }
 
+// This is a heuristic to check if something is a labstation and might be wrong.
+func looksLikeLabstation(hostname string) bool {
+	return strings.Contains(hostname, "labstation")
+}
+
+// This is a heuristic to check if something is a servo and might be wrong.
+func looksLikeServo(hostname string) bool {
+	return strings.Contains(hostname, "servo")
+}
+
 // getCrosVersionFromServoHost returns the cros version associated with a particular servo host
 // hostname : hostname of the servo host (e.g. labstation)
 func getCrosVersionFromServoHost(ctx context.Context, hostname string) (string, error) {
-	if strings.Contains(hostname, "labstation") {
+	if looksLikeLabstation(hostname) {
 		logging.Infof(ctx, "getCrosVersionFromServoHost: identified labstation servohost hostname (%s)", hostname)
 		dut, err := getDUT(ctx, hostname)
 		if err != nil {
@@ -445,7 +455,7 @@ func getCrosVersionFromServoHost(ctx context.Context, hostname string) (string, 
 		}
 		return out, nil
 	}
-	if strings.Contains(hostname, "servo") {
+	if looksLikeServo(hostname) {
 		logging.Infof(ctx, "getCrosVersionFromServoHost: identified beaglebone servohost hostname (%s)", hostname)
 		out, err := dssv.GetCrosStableVersion(ctx, beagleboneServo)
 		if err != nil {

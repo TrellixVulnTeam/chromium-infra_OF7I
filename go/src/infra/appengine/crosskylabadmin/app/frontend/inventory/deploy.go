@@ -338,6 +338,9 @@ const (
 // The assigned servo port value is unique among all the duts with the same
 // servo host attribute.
 func assignNewServoPort(duts []*inventory.DeviceUnderTest, d *inventory.CommonDeviceSpecs) error {
+	if looksLikeLabstation(d.GetHostname()) {
+		return nil
+	}
 	servoHost, found := getAttributeByKey(d, servoHostAttributeKey)
 	if !found {
 		return errors.Reason("no servo_host attribute in specs").Err()
