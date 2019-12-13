@@ -28,6 +28,7 @@ from framework import authdata
 from framework import exceptions
 from framework import monorailcontext
 from framework import permissions
+from framework import sorting
 from testing import fake
 from testing import testing_helpers
 from tracker import tracker_bizobj
@@ -46,6 +47,7 @@ class FeaturesServicerTest(unittest.TestCase):
     self.mox = mox.Mox()
     self.cnxn = fake.MonorailConnection()
     self.services = service_manager.Services(
+        cache_manager=fake.CacheManager(),
         config=fake.ConfigService(),
         issue=fake.IssueService(),
         user=fake.UserService(),
@@ -53,6 +55,8 @@ class FeaturesServicerTest(unittest.TestCase):
         project=fake.ProjectService(),
         features=fake.FeaturesService(),
         hotlist_star=fake.HotlistStarService())
+    sorting.InitializeArtValues(self.services)
+
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, owner_ids=[111], contrib_ids=[222, 333])
     self.config = tracker_bizobj.MakeDefaultProjectIssueConfig(789)
