@@ -155,3 +155,51 @@ func TestRemoveDevices(t *testing.T) {
 		})
 	})
 }
+func TestGetDevices(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	Convey("Get devices from an empty datastore", t, func() {
+		Convey("Get all", func() {
+			devs, err := GetAllDevices(ctx)
+			So(devs, ShouldBeEmpty)
+			So(err, ShouldBeNil)
+		})
+		Convey("Get by Ids", func() {
+			result := GetDevicesByIds(ctx, []string{"1234", "5678"})
+			So(result.Passed(), ShouldBeEmpty)
+			So(result.Failed(), ShouldHaveLength, 2)
+		})
+		Convey("Get by hostnames", func() {
+			result := GetDevicesByHostnames(ctx, []string{"dut1", "labstation2"})
+			So(result.Passed(), ShouldBeEmpty)
+			So(result.Failed(), ShouldHaveLength, 2)
+		})
+	})
+	Convey("Get devices from a non-empty datastore", t, func() {
+		devsToAdd := []*lab.ChromeOSDevice{
+			mockDut("dut1", "", "labstation1"),
+			mockLabstation("labstation1", "ASSET_ID_123"),
+		}
+		_, err := AddDevices(ctx, devsToAdd)
+		if err != nil {
+			t.Fatal(err)
+		}
+		Convey("Get all", func() {
+			devs, err := GetAllDevices(ctx)
+			So(devs, ShouldHaveLength, 2)
+			So(err, ShouldBeNil)
+		})
+		Convey("Get by Ids", func() {
+			result := GetDevicesByIds(ctx, []string{"ASSET_ID_123", "5678"})
+			So(result.Passed(), ShouldHaveLength, 1)
+			So(result.Passed()[0].Entity.Hostname, ShouldEqual, "labstation1")
+			So(result.Failed(), ShouldHaveLength, 1)
+		})
+		Convey("Get by hostnames", func() {
+			result := GetDevicesByHostnames(ctx, []string{"dut1", "labstationX"})
+			So(result.Passed(), ShouldHaveLength, 1)
+			So(result.Passed()[0].Entity.Hostname, ShouldEqual, "dut1")
+			So(result.Failed(), ShouldHaveLength, 1)
+		})
+	})
+}

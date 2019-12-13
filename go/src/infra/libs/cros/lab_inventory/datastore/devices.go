@@ -183,3 +183,60 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOp
 	}
 	return &removingResults
 }
+
+// TODO (guocb) Get HWID data and device config data.
+
+// GetDevicesByIds returns entities by specified ids.
+func GetDevicesByIds(ctx context.Context, ids []string) *DeviceOpResults {
+	retrievingResults := make(DeviceOpResults, len(ids))
+	entities := make([]DeviceEntity, len(ids))
+	for i, id := range ids {
+		retrievingResults[i].Entity = &entities[i]
+		entities[i].ID = DeviceEntityID(id)
+		entities[i].Parent = fakeAcestorKey(ctx)
+	}
+	if err := datastore.Get(ctx, entities); err != nil {
+		for i, e := range err.(errors.MultiError) {
+			if e == nil {
+				continue
+			}
+			retrievingResults[i].logError(e)
+		}
+	}
+	return &retrievingResults
+}
+
+// GetDevicesByHostnames returns entities by specified hostnames.
+func GetDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOpResults {
+	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
+	retrievingResults := make(DeviceOpResults, len(hostnames))
+
+	// Filter out invalid input hostnames.
+	for i, hostname := range hostnames {
+		var devs []*DeviceEntity
+		if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
+			retrievingResults[i].logError(errors.Annotate(err, "failed to get host by hostname %s", hostname).Err())
+			continue
+		}
+		if len(devs) == 0 {
+			retrievingResults[i].logError(errors.Reason("No such host: %s", hostname).Err())
+			continue
+		}
+		if len(devs) > 1 {
+			retrievingResults[i].logError(errors.Reason("multiple hosts found with hostname %s: %v", hostname, devs).Err())
+			continue
+		}
+		retrievingResults[i].Entity = devs[0]
+	}
+	return &retrievingResults
+}
+
+// GetAllDevices returns all device entities.
+func GetAllDevices(ctx context.Context) ([]*DeviceEntity, error) {
+	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
+	var devs []*DeviceEntity
+	if err := datastore.GetAll(ctx, q, &devs); err != nil {
+		return nil, errors.Annotate(err, "failed to get all hosts").Err()
+	}
+	return devs, nil
+}
