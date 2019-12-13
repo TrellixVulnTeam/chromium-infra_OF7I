@@ -7,9 +7,7 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/maruel/subcommands"
@@ -27,16 +25,36 @@ import (
 var BatchUpdateDuts = &subcommands.Command{
 	UsageLine: "batch-update-duts -pool POOL -f FILE [FLAGS...] HOSTNAMES...",
 	ShortDesc: "update a fixed set of common labels for a batch of existing DUTs",
-	LongDesc: `Update some common labels of existing DUTs' in inventory.
+	LongDesc: fmt.Sprintf(`Update some common labels of existing DUTs' in inventory.
 
-	Currently common labels only include pool.
-	`,
+Currently common labels only include pool and rpm info. RPM info are only supported by passing an input file via -f.
+
+The format of the input file is guided by:
+* each row is separated by "\n"
+* each column is separated by ","
+* the first column is the hostname
+* the following columns must has format of "label-name=label-value".
+
+The supported label names are [%s]
+
+Some example usages of this tool:
+
+* skylab batch-update-duts -pool DUT_POOL_QUOTA host1 host2 host3
+
+* skylab batch-update-duts -f input_file
+
+the content of the input file could be:
+hostname1,pool=fake_pool1
+hostname2,powerunit_hostname=fake_host,powerunit_outlet=fake_outlet
+...
+	`, userinput.SupportedLabels),
 	CommandRun: func() subcommands.CommandRun {
 		c := &batchUpdateDutsRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.pool, "pool", "DUT_POOL_QUOTA", "The pool to update for the given hostnames")
-		c.Flags.StringVar(&c.inputFile, "input_file", "", "A file which contains a list of hostnames at each line")
+		c.Flags.StringVar(&c.inputFile, "input_file", "", "A file which contains a list of hostnames, and required info to update at each line. It's mutually exclusive with all other parameters")
+
 		return c
 	},
 }
@@ -59,18 +77,30 @@ func (c *batchUpdateDutsRun) Run(a subcommands.Application, args []string, env s
 }
 
 func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if c.pool == "" {
+	hostnames := c.Flags.Args()
+	if len(hostnames) > 0 && c.inputFile != "" {
+		return NewUsageError(c.Flags, "inputFile or HOSTNAMES are mutually exclusive, can only specify one of them")
+	}
+	if len(hostnames) == 0 && c.inputFile == "" {
+		return NewUsageError(c.Flags, "must specify at least one hostname or pass in a file via -f")
+	}
+	if len(hostnames) > 0 && c.pool == "" {
 		return NewUsageError(c.Flags, "must specify non-empty pool to update")
 	}
-	hostnames, err := appendHostnames(c.Flags.Args(), c.inputFile)
-	if err != nil {
-		return errors.Annotate(err, "fail to collect hostnames").Err()
+
+	var req *fleet.BatchUpdateDutsRequest
+	var err error
+	if len(hostnames) > 0 {
+		req = getRequestForHostnames(hostnames, c.pool)
+	} else if c.inputFile != "" {
+		req, err = userinput.GetRequestFromFiles(c.inputFile)
+		if err != nil {
+			return err
+		}
 	}
-	if len(hostnames) == 0 {
-		return NewUsageError(c.Flags, "must specify at least one hostname to update")
-	}
+
 	prompt := userinput.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Ready to update hosts: %v", hostnames)) {
+	if !prompt(fmt.Sprintf("Ready to update %d hosts", len(req.GetDutProperties()))) {
 		return nil
 	}
 
@@ -85,10 +115,7 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 		Host:    e.AdminService,
 		Options: site.DefaultPRPCOptions,
 	})
-	ds, err := ic.BatchUpdateDuts(ctx, &fleet.BatchUpdateDutsRequest{
-		Hostnames: hostnames,
-		Pool:      c.pool,
-	})
+	ds, err := ic.BatchUpdateDuts(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "fail to update Duts").Err()
 	}
@@ -98,16 +125,17 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	return nil
 }
 
-func appendHostnames(existingHosts []string, fp string) ([]string, error) {
-	if fp == "" {
-		return existingHosts, nil
+func getRequestForHostnames(hostnames []string, pool string) *fleet.BatchUpdateDutsRequest {
+	var duts []*fleet.DutProperty
+	for _, h := range hostnames {
+		duts = append(duts, &fleet.DutProperty{
+			Hostname: h,
+			Pool:     pool,
+		})
 	}
-	raw, err := ioutil.ReadFile(fp)
-	if err != nil {
-		return nil, err
+	return &fleet.BatchUpdateDutsRequest{
+		DutProperties: duts,
 	}
-	parsed := strings.Split(string(raw), "\n")
-	return append(existingHosts, parsed...), nil
 }
 
 func printUpdates(w io.Writer, ds *fleet.BatchUpdateDutsResponse) (err error) {

@@ -684,8 +684,20 @@ message UpdateDutLabelsResponse {
 }
 
 message BatchUpdateDutsRequest {
-  repeated string hostnames = 1;
+  repeated string hostnames = 1 [deprecated=true];
+  string pool = 2 [deprecated=true];
+  repeated DutProperty dut_properties = 3;
+}
+
+message DutProperty {
+  string hostname = 1;
   string pool = 2;
+
+  message Rpm {
+    string powerunit_hostname = 1;
+    string powerunit_outlet = 2;
+  }
+  Rpm rpm = 3;
 }
 
 message BatchUpdateDutsResponse {

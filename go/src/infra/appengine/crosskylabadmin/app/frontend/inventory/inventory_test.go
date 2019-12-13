@@ -22,10 +22,12 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"golang.org/x/net/context"
 
+	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/config"
 	dataSV "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/libs/skylab/inventory"
 )
 
 const (
@@ -261,6 +263,102 @@ func TestUpdateDeviceConfig(t *testing.T) {
 		url, err := updateDeviceConfig(tf.C, deviceConfigs, store)
 		So(err, ShouldBeNil)
 		So(url, ShouldNotContainSubstring, config.Get(ctx).Inventory.GerritHost)
+	})
+}
+
+func TestBatchUpdateDuts(t *testing.T) {
+	Convey("Update DUTs with invalid request", t, func() {
+		ctx := testingContext()
+		ctx = withSplitInventory(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		_, err := tf.Inventory.BatchUpdateDuts(ctx, &fleet.BatchUpdateDutsRequest{
+			Hostnames: []string{"fake_host"},
+			Pool:      "fake_pool",
+			DutProperties: []*fleet.DutProperty{
+				{
+					Hostname: "jetstream-host",
+					Pool:     "DUT_POOL_SUITES",
+				},
+			},
+		})
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "deprecated")
+	})
+
+	Convey("Update DUTs with pool", t, func() {
+		ctx := testingContext()
+		ctx = withSplitInventory(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		setSplitGitilesDuts(tf.C, tf.FakeGitiles, []testInventoryDut{
+			{id: "dut1_id", hostname: "jetstream-host", model: "link", pool: "DUT_POOL_CQ"},
+		})
+
+		Convey("Update DUTs to critical pool", func() {
+			dp := &fleet.DutProperty{
+				Hostname: "jetstream-host",
+				Pool:     "DUT_POOL_SUITES",
+			}
+			resp, err := tf.Inventory.BatchUpdateDuts(ctx, &fleet.BatchUpdateDutsRequest{
+				DutProperties: []*fleet.DutProperty{dp},
+			})
+			So(err, ShouldBeNil)
+			So(resp.GetUrl(), ShouldNotBeNil)
+			oneDutLab, err := getLastChangeForHost(tf.FakeGerrit, "data/skylab/chromeos-misc/jetstream-host.textpb")
+			So(err, ShouldBeNil)
+			dut := oneDutLab.Duts[0]
+			common := dut.GetCommon()
+			So(common.GetHostname(), ShouldEqual, "jetstream-host")
+			So(common.GetLabels().GetCriticalPools(), ShouldResemble, []inventory.SchedulableLabels_DUTPool{inventory.SchedulableLabels_DUT_POOL_SUITES})
+		})
+
+		Convey("Update DUTs to non-critical pool", func() {
+			dp := &fleet.DutProperty{
+				Hostname: "jetstream-host",
+				Pool:     "performance",
+			}
+			resp, err := tf.Inventory.BatchUpdateDuts(ctx, &fleet.BatchUpdateDutsRequest{
+				DutProperties: []*fleet.DutProperty{dp},
+			})
+			So(err, ShouldBeNil)
+			So(resp.GetUrl(), ShouldNotBeNil)
+			oneDutLab, err := getLastChangeForHost(tf.FakeGerrit, "data/skylab/chromeos-misc/jetstream-host.textpb")
+			So(err, ShouldBeNil)
+			dut := oneDutLab.Duts[0]
+			common := dut.GetCommon()
+			So(common.GetHostname(), ShouldEqual, "jetstream-host")
+			So(common.GetLabels().GetCriticalPools(), ShouldBeNil)
+			So(common.GetLabels().GetSelfServePools(), ShouldResemble, []string{"performance"})
+		})
+
+		Convey("Update DUTs with a RPM info", func() {
+			dp := &fleet.DutProperty{
+				Hostname: "jetstream-host",
+				Rpm: &fleet.DutProperty_Rpm{
+					PowerunitHostname: "powerunit_host_1",
+					PowerunitOutlet:   "powerunit_outlet_A",
+				},
+			}
+			resp, err := tf.Inventory.BatchUpdateDuts(ctx, &fleet.BatchUpdateDutsRequest{
+				DutProperties: []*fleet.DutProperty{dp},
+			})
+			So(err, ShouldBeNil)
+			So(resp.GetUrl(), ShouldNotBeNil)
+			oneDutLab, err := getLastChangeForHost(tf.FakeGerrit, "data/skylab/chromeos-misc/jetstream-host.textpb")
+			So(err, ShouldBeNil)
+			dut := oneDutLab.Duts[0]
+			common := dut.GetCommon()
+			So(common.GetHostname(), ShouldEqual, "jetstream-host")
+			ph, exist := getAttributeByKey(common, "powerunit_hostname")
+			So(exist, ShouldBeTrue)
+			So(ph, ShouldEqual, "powerunit_host_1")
+			po, exist := getAttributeByKey(common, "powerunit_outlet")
+			So(exist, ShouldBeTrue)
+			So(po, ShouldEqual, "powerunit_outlet_A")
+		})
 	})
 }
 

@@ -263,14 +263,17 @@ func (is *ServerImpl) UpdateDutLabels(ctx context.Context, req *fleet.UpdateDutL
 }
 
 func validateBatchUpdateDutsRequest(req *fleet.BatchUpdateDutsRequest) error {
-	if len(req.GetHostnames()) == 0 {
-		return errors.New("must specify at least one hostname")
+	if len(req.GetDutProperties()) == 0 {
+		return errors.New("must specify at least dut property for one host")
 	}
 
-	if req.GetPool() == "" {
-		return errors.New("must specify a non-empty pool")
+	if len(req.GetHostnames()) > 0 {
+		return errors.New("'hostnames' field in BatchUpdateRequest is deprecated, please update skylab tool")
 	}
 
+	if req.GetPool() != "" {
+		return errors.New("'pool' field in BatchUpdateRequest is deprecated, please update skylab tool")
+	}
 	return nil
 }
 
@@ -283,11 +286,11 @@ func (is *ServerImpl) BatchUpdateDuts(ctx context.Context, req *fleet.BatchUpdat
 		return nil, errors.Annotate(err, "invalid BatchUpdateDutsRequest").Err()
 	}
 
-	hostnames := make(map[string]bool, len(req.GetHostnames()))
-	for _, h := range req.GetHostnames() {
-		hostnames[h] = true
+	duts := req.GetDutProperties()
+	hostnameToProperty := make(map[string]*fleet.DutProperty, len(duts))
+	for _, d := range duts {
+		hostnameToProperty[d.GetHostname()] = d
 	}
-	pool := req.GetPool()
 
 	store, err := is.newStore(ctx)
 	if err != nil {
@@ -298,11 +301,27 @@ func (is *ServerImpl) BatchUpdateDuts(ctx context.Context, req *fleet.BatchUpdat
 	}
 
 	for _, d := range store.Lab.GetDuts() {
-		if hostnames[d.GetCommon().GetHostname()] {
-			logging.Debugf(ctx, "assign pool to host: %s", d.GetCommon().GetHostname())
-			assignPool(d, pool)
+		hostname := d.GetCommon().GetHostname()
+		if hostname == "" {
+			logging.Infof(ctx, "empty hostname for dut %#v", d)
+			continue
+		}
+		if dp, ok := hostnameToProperty[hostname]; ok {
+			pool := dp.GetPool()
+			if pool == "" {
+				logging.Infof(ctx, "skip pool update for host %s as no pool is passed in", hostname)
+			} else {
+				assignPool(d, pool)
+			}
+			rpm := dp.GetRpm()
+			if rpm == nil {
+				logging.Infof(ctx, "skip rpm update for host %s as no rpm is passed in", hostname)
+			} else {
+				assignRpm(d, rpm)
+			}
 		}
 	}
+
 	url, err := store.Commit(ctx, "Batch update DUT labels")
 	if gitstore.IsEmptyErr(err) {
 		logging.Infof(ctx, "no updates, so nothing to commit")
@@ -318,7 +337,7 @@ func (is *ServerImpl) BatchUpdateDuts(ctx context.Context, req *fleet.BatchUpdat
 	}, nil
 }
 
-// Assign pool to a given device.
+// Assign pool to a single device.
 func assignPool(d *inventory.DeviceUnderTest, pool string) {
 	cp, ok := inventory.SchedulableLabels_DUTPool_value[pool]
 	if ok {
@@ -328,6 +347,28 @@ func assignPool(d *inventory.DeviceUnderTest, pool string) {
 		d.GetCommon().GetLabels().CriticalPools = nil
 		d.GetCommon().GetLabels().SelfServePools = []string{pool}
 	}
+}
+
+// Assign rpm info to a single device.
+func assignRpm(d *inventory.DeviceUnderTest, rpm *fleet.DutProperty_Rpm) {
+	attrs := d.GetCommon().GetAttributes()
+	attrs = setOrAppend(attrs, "powerunit_hostname", rpm.GetPowerunitHostname())
+	attrs = setOrAppend(attrs, "powerunit_outlet", rpm.GetPowerunitOutlet())
+	d.GetCommon().Attributes = attrs
+}
+
+func setOrAppend(attrs []*inventory.KeyValue, key string, value string) []*inventory.KeyValue {
+	for _, att := range attrs {
+		if att.GetKey() == key {
+			att.Value = &value
+			return attrs
+		}
+	}
+	attrs = append(attrs, &inventory.KeyValue{
+		Key:   &key,
+		Value: &value,
+	})
+	return attrs
 }
 
 // PushInventoryToQueen implements the method from fleet.InventoryServer interface.
