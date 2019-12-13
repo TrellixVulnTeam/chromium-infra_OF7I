@@ -762,7 +762,7 @@ class FeaturesServicerTest(unittest.TestCase):
                         user_id=self.user1.user_id,
                         display_name=testing_helpers.ObscuredEmail(
                             self.user1.email))),
-                rank=11,
+                rank=1,
                 adder_ref=common_pb2.UserRef(
                     user_id=self.user2.user_id,
                     display_name=testing_helpers.ObscuredEmail(
@@ -783,7 +783,7 @@ class FeaturesServicerTest(unittest.TestCase):
                         user_id=self.user1.user_id,
                         display_name=testing_helpers.ObscuredEmail(
                             self.user1.email))),
-                rank=14,
+                rank=2,
                 adder_ref=common_pb2.UserRef(
                     user_id=self.user1.user_id,
                     display_name=testing_helpers.ObscuredEmail(

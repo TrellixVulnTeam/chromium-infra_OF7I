@@ -227,9 +227,9 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
               mc.auth, project, users_by_id)
 
       result = features_pb2.ListHotlistItemsResponse(
-          items=[converters.ConvertHotlistItem(
-              item, issues_by_id, users_by_id, related_refs_by_id,
-              harmonized_config) for item in visible_hotlist_items])
+          items=converters.ConvertHotlistItems(
+              visible_hotlist_items, issues_by_id, users_by_id,
+              related_refs_by_id, harmonized_config))
       return result
 
   @monorail_servicer.PRPCMethod

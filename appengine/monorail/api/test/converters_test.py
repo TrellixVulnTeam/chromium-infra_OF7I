@@ -2171,21 +2171,21 @@ class ConverterFunctionsTest(unittest.TestCase):
     related_refs = {}
     harmonized_config = tracker_bizobj.HarmonizeConfigs([self.config, config_2])
 
-    actual = converters.ConvertHotlistItem(
-        hotlist.items[0], issues_by_id, self.users_by_id, related_refs,
+    actual = converters.ConvertHotlistItems(
+        hotlist.items, issues_by_id, self.users_by_id, related_refs,
         harmonized_config)
 
     expected_issue = converters.ConvertIssue(
         self.issue_1, self.users_by_id, related_refs, harmonized_config)
     self.assertEqual(
-        features_objects_pb2.HotlistItem(
+        [features_objects_pb2.HotlistItem(
             issue=expected_issue,
-            rank=10,
+            rank=1,
             adder_ref=common_pb2.UserRef(
                 user_id=222,
                 display_name='two@example.com'),
             added_timestamp=12345,
-            note='Note'),
+            note='Note')],
         actual)
 
   def testConvertValueAndWhy(self):

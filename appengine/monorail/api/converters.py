@@ -1070,19 +1070,26 @@ def ConvertHotlist(hotlist, users_by_id):
   return result
 
 
-def ConvertHotlistItem(hotlist_item, issues_by_id, users_by_id, related_refs,
-                       harmonized_config):
-  issue_pb = issues_by_id[hotlist_item.issue_id]
-  issue = ConvertIssue(
-      issue_pb, users_by_id, related_refs, harmonized_config)
-  adder_ref = ConvertUserRef(hotlist_item.adder_id, None, users_by_id)
-  result = features_objects_pb2.HotlistItem(
-      issue=issue,
-      rank=hotlist_item.rank,
-      adder_ref=adder_ref,
-      added_timestamp=hotlist_item.date_added,
-      note=hotlist_item.note)
-  return result
+def ConvertHotlistItems(hotlist_items, issues_by_id, users_by_id, related_refs,
+                        harmonized_config):
+  # Note: hotlist_items are not always sorted by 'rank'
+  sorted_ranks = sorted(item.rank for item in hotlist_items)
+  friendly_ranks_dict = {
+      rank: friendly_rank for friendly_rank, rank in
+      enumerate(sorted_ranks, 1)}
+  converted_items = []
+  for item in hotlist_items:
+    issue_pb = issues_by_id[item.issue_id]
+    issue = ConvertIssue(
+        issue_pb, users_by_id, related_refs, harmonized_config)
+    adder_ref = ConvertUserRef(item.adder_id, None, users_by_id)
+    converted_items.append(features_objects_pb2.HotlistItem(
+        issue=issue,
+        rank=friendly_ranks_dict[item.rank],
+        adder_ref=adder_ref,
+        added_timestamp=item.date_added,
+        note=item.note))
+  return converted_items
 
 
 def ConvertValueAndWhy(value_and_why):
