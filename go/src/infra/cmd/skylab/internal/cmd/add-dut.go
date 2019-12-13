@@ -62,6 +62,8 @@ dev_mode_short_delay gbb flag is not set.`)
 connected to the DUT. This flag disables the download, instead using whatever
 image is already downloaded onto the external drive.`)
 		c.Flags.BoolVar(&c.mcsv, "m", false, `interpret the specs file as a CSV of DUT descriptions.`)
+
+		c.Flags.BoolVar(&c.skipServoPortAssignment, "skip-servo-port-assign", false, "Do not assign servo port.")
 		return c
 	},
 }
@@ -74,9 +76,10 @@ type addDutRun struct {
 	tail         bool
 	mcsv         bool
 
-	skipInstallOS       bool
-	skipInstallFirmware bool
-	skipImageDownload   bool
+	skipInstallOS           bool
+	skipInstallFirmware     bool
+	skipImageDownload       bool
+	skipServoPortAssignment bool
 }
 
 // Run implements the subcommands.CommandRun interface.
@@ -226,7 +229,7 @@ func (c *addDutRun) triggerDeploy(ctx context.Context, ic fleet.InventoryClient,
 			InstallTestImage: !c.skipInstallOS,
 		},
 		Options: &fleet.DutDeploymentOptions{
-			AssignServoPortIfMissing: true,
+			AssignServoPortIfMissing: !c.skipServoPortAssignment,
 		},
 	})
 	if err != nil {
