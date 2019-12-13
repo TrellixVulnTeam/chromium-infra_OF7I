@@ -1304,13 +1304,13 @@ class ServeCodeCoverageData(BaseHandler):
                                      404)
     bucket = platform_info_map[platform]['bucket']
     builder = platform_info_map[platform]['builder']
+    warning = platform_info_map[platform].get('warning')
 
     if list_reports:
       return self._ServeProjectViewCoverageData(
           luci_project, host, project, ref, revision, platform, bucket, builder)
 
     template = None
-    warning = None
     if not data_type:
       data_type = 'dirs'
     if not revision:
