@@ -219,7 +219,7 @@ export class MrSearchBar extends LitElement {
           type="text"
           name="q"
           placeholder="Search ${this.projectName} issues..."
-          value=${this.initialValue || ''}
+          .value=${this.initialQuery || ''}
           autocomplete="off"
           aria-label="Search box"
           @focus=${this._searchEditStarted}
@@ -243,7 +243,7 @@ export class MrSearchBar extends LitElement {
       projectName: {type: String},
       userDisplayName: {type: String},
       currentCan: {type: String},
-      initialValue: {type: String},
+      initialQuery: {type: String},
       projectSavedQueries: {type: Array},
       userSavedQueries: {type: Array},
       queryParams: {type: Object},
@@ -269,7 +269,7 @@ export class MrSearchBar extends LitElement {
       'cells',
       'num',
     ];
-    this.initialValue = '';
+    this.initialQuery = '';
     this.currentCan = '2';
     this.projectSavedQueries = [];
     this.userSavedQueries = [];

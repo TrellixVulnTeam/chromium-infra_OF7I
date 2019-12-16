@@ -136,7 +136,7 @@ export class MrHeader extends connectStore(LitElement) {
         .userDisplayName=${this.userDisplayName}
         .projectSavedQueries=${this.presentationConfig.savedQueries}
         .currentCan=${this._currentCan}
-        .initialValue=${this._currentQuery}
+        .initialQuery=${this._currentQuery}
         .queryParams=${this.queryParams}
         ?hidden=${!this.projectName}
       ></mr-search-bar>

@@ -73,6 +73,42 @@ describe('mr-search-bar', () => {
     assert.equal(queryOptions[1].textContent, 'hello world');
   });
 
+  it('search input resets form value when initialQuery changes', async () => {
+    element.initialQuery = 'first query';
+    await element.updateComplete;
+
+    const queryInput = element.shadowRoot.querySelector('#searchq');
+
+    assert.equal(queryInput.value, 'first query');
+
+    // Simulate a user typing something into the search form.
+    queryInput.value = 'blah';
+
+    element.initialQuery = 'second query';
+    await element.updateComplete;
+
+    // 'blah' disappears because the new initialQuery causes the form to
+    // reset.
+    assert.equal(queryInput.value, 'second query');
+  });
+
+  it('unrelated property changes do not reset query form', async () => {
+    element.initialQuery = 'first query';
+    await element.updateComplete;
+
+    const queryInput = element.shadowRoot.querySelector('#searchq');
+
+    assert.equal(queryInput.value, 'first query');
+
+    // Simulate a user typing something into the search form.
+    queryInput.value = 'blah';
+
+    element.initialCan = '5';
+    await element.updateComplete;
+
+    assert.equal(queryInput.value, 'blah');
+  });
+
   it('spell check is off for search bar', async () => {
     await element.updateComplete;
     const searchElement = element.shadowRoot.querySelector('#searchq');
@@ -111,7 +147,7 @@ describe('mr-search-bar', () => {
     });
 
     it('uses initial values when no form changes', async () => {
-      element.initialValue = 'test query';
+      element.initialQuery = 'test query';
       element.currentCan = '3';
 
       await element.updateComplete;
