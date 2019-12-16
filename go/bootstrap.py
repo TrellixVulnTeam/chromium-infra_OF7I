@@ -127,59 +127,10 @@ LAYOUT = Layout(
 
 
 # Describes a modification of os.environ, see get_go_environ_diff(...).
-_EnvironDiff = collections.namedtuple('_EnvironDiff', [
+EnvironDiff = collections.namedtuple('EnvironDiff', [
     'env',          # {k:v} with vars to set or delete (if v == None)
     'env_prefixes', # {k: [path]} with entries to prepend
 ])
-
-
-class EnvironDiff(_EnvironDiff):
-  def apply(self, env=None):
-    """Returns a copy of `env`, with this EnvironDiff applied.
-
-    Args:
-      env (dict[str, str]) - The environment to mutate. If None, will use
-        os.environ.
-
-    Returns a dict[str, str] which is the full new environment.
-    """
-    env = (os.environ if env is None else env).copy()
-    for k, v in self.env.items():
-      if v is not None:
-        env[k] = v
-      else:
-        env.pop(k, None)
-
-    path = env['PATH'].split(os.pathsep)
-    paths_to_add = self.env_prefixes['PATH']
-
-    # Remove preexisting bin/ paths (including .vendor/bin) pointing to infra
-    # or infra_internal Go workspaces. It's important when switching from
-    # infra_internal to infra environments: infra_internal bin paths should
-    # be removed.
-    def should_keep(p):
-      if p in paths_to_add:
-        return False  # we'll move this entry to the front below
-      # TODO(vadimsh): This code knows about gclient checkout layout.
-      for d in ['infra', 'infra_internal']:
-        if p.startswith(os.path.join(GCLIENT_ROOT, d, 'go')):
-          return False
-      return True
-    path = filter(should_keep, path)
-
-    # Prepend paths_to_add to PATH.
-    env['PATH'] = os.pathsep.join(paths_to_add + path)
-
-    # Add a tag to the prompt
-    infra_prompt_tag = env.get('INFRA_PROMPT_TAG')
-    if infra_prompt_tag is None:
-      infra_prompt_tag = '[cr go] '
-    if infra_prompt_tag:
-      prompt = env.get('PS1')
-      if prompt and infra_prompt_tag not in prompt:
-        env['PS1'] = infra_prompt_tag + prompt
-
-    return env
 
 
 class Failure(Exception):
@@ -279,9 +230,9 @@ def call_bare_go(toolset_root, workspace, args):
     Failure if the call failed. All details are logged in this case.
   """
   cmd = [get_go_exe(toolset_root)] + args
-  env = get_go_environ_diff(_EMPTY_LAYOUT._replace(
+  env = get_go_environ(_EMPTY_LAYOUT._replace(
       toolset_root=toolset_root,
-      workspace=workspace)).apply()
+      workspace=workspace))
   proc = subprocess.Popen(
       cmd,
       env=env,
@@ -408,7 +359,7 @@ def install_deps_tools(layout, force):
 
   # (Re)install all of our Go packages.
   LOGGER.info('Installing Go tools: %s', layout.go_install_tools)
-  env = get_go_environ_diff(layout).apply()
+  env = get_go_environ(layout)
   subprocess.check_call([get_go_exe(layout.toolset_root), 'install'] +
                         list(layout.go_install_tools),
                         stdout=sys.stderr, stderr=sys.stderr, env=env)
@@ -447,36 +398,6 @@ def update_vendor_packages(workspace, toolset_root, force=False):
     return os.path.isfile(update_out_path)
 
 
-def _can_use_cgo(toolset_root, env):
-  # NOTE(iannucci): This seems like it should be call_bare_go or
-  # check_hello_world, but both of those call get_go_environ_diff, which needs
-  # this function to initialize the CGO_ENABLED environment variable for
-  # get_go_environ_diff.
-  #
-  # Its probably possible to untangle this with some refactoring, but I'm not
-  # sure it's worth it.
-  with tempfile.NamedTemporaryFile(suffix=".go") as tfile:
-    tfile.write(r'''
-        package main
-
-        // #include <stdio.h>
-        // void sayHi() {
-        //   printf("hello world\n");
-        // }
-        import "C"
-
-        func main() {
-          C.sayHi()
-        }
-    ''')
-    tfile.flush()
-    sub = subprocess.Popen(
-        [get_go_exe(toolset_root), 'run', tfile.name],
-        env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, _stderr = sub.communicate()
-    return sub.wait() == 0 and stdout == "hello world\n"
-
-
 def get_go_environ_diff(layout):
   """Returns what modifications must be applied to the environ to enable Go.
 
@@ -507,7 +428,7 @@ def get_go_environ_diff(layout):
   paths_to_add.extend(os.path.join(p, '.vendor', 'bin') for p in vendor_paths)
   paths_to_add.append(os.path.join(layout.workspace, 'bin'))
 
-  ret = EnvironDiff(
+  return EnvironDiff(
       env={
           'GOROOT': os.path.join(layout.toolset_root, 'go'),
           'GOBIN': os.path.join(layout.workspace, 'bin'),
@@ -524,10 +445,56 @@ def get_go_environ_diff(layout):
       env_prefixes={'PATH': paths_to_add},
   )
 
-  if not _can_use_cgo(layout.toolset_root, ret.apply()):
-    ret.env['CGO_ENABLED'] = '0'
 
-  return ret
+def get_go_environ(layout):
+  """Returns a copy of os.environ with mutated GO* environment variables.
+
+  This function primarily targets environ on workstations. It assumes
+  the developer may be constantly switching between infra and infra_internal
+  go environments and it has some protection against related edge cases.
+
+  Args:
+    layout: The Layout to derive the environment from.
+  """
+  diff = get_go_environ_diff(layout)
+
+  env = os.environ.copy()
+  for k, v in diff.env.items():
+    if v is not None:
+      env[k] = v
+    else:
+      env.pop(k, None)
+
+  path = env['PATH'].split(os.pathsep)
+  paths_to_add = diff.env_prefixes['PATH']
+
+  # Remove preexisting bin/ paths (including .vendor/bin) pointing to infra
+  # or infra_internal Go workspaces. It's important when switching from
+  # infra_internal to infra environments: infra_internal bin paths should
+  # be removed.
+  def should_keep(p):
+    if p in paths_to_add:
+      return False  # we'll move this entry to the front below
+    # TODO(vadimsh): This code knows about gclient checkout layout.
+    for d in ['infra', 'infra_internal']:
+      if p.startswith(os.path.join(GCLIENT_ROOT, d, 'go')):
+        return False
+    return True
+  path = filter(should_keep, path)
+
+  # Prepend paths_to_add to PATH.
+  env['PATH'] = os.pathsep.join(paths_to_add + path)
+
+  # Add a tag to the prompt
+  infra_prompt_tag = env.get('INFRA_PROMPT_TAG')
+  if infra_prompt_tag is None:
+    infra_prompt_tag = '[cr go] '
+  if infra_prompt_tag:
+    prompt = env.get('PS1')
+    if prompt and infra_prompt_tag not in prompt:
+      env['PS1'] = infra_prompt_tag + prompt
+
+  return env
 
 
 def get_go_exe(toolset_root):
@@ -614,7 +581,7 @@ def prepare_go_environ():
   Installs or updates the toolset and vendored dependencies if necessary.
   """
   bootstrap(LAYOUT, logging.INFO)
-  return get_go_environ_diff(LAYOUT).apply()
+  return get_go_environ(LAYOUT)
 
 
 def find_executable(name, workspaces):
