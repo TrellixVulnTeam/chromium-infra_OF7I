@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 import {assert} from 'chai';
 import sinon from 'sinon';
-import {MrIssueList} from './mr-issue-list.js';
+import {MrIssueList, constructHref} from './mr-issue-list.js';
 
 let element;
 
@@ -978,5 +978,116 @@ describe('mr-issue-list', () => {
       sinon.assert.notCalled(element._navigateToIssue);
     });
   });
-});
 
+  describe('CSV download', () => {
+    let _downloadCsvSpy;
+
+    beforeEach(() => {
+      _downloadCsvSpy = sinon.spy(element, '_downloadCsv');
+    });
+
+    afterEach(() => {
+      _downloadCsvSpy.resetHistory();
+      element._downloadCsv.restore();
+    });
+
+    it('renders a #download-link', async () => {
+      await element.updateComplete;
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
+      assert.isNotNull(downloadLink);
+
+      // TODO(kweng): uncomment once link is shown
+      // assert.equal('inline', window.getComputedStyle(downloadLink).display);
+    });
+
+    it('renders a #hidden-data-link', async () => {
+      await element.updateComplete;
+      assert.isNotNull(element._dataLink);
+      const expected = element.shadowRoot.querySelector('#hidden-data-link');
+      assert.equal(expected, element._dataLink);
+    });
+
+    it('hides #hidden-data-link', async () => {
+      await element.updateComplete;
+      const _dataLink = element.shadowRoot.querySelector('#hidden-data-link');
+      assert.equal('none', window.getComputedStyle(_dataLink).display);
+    });
+
+    it('calls _downloadCsv on click', async () => {
+      await element.updateComplete;
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
+
+      downloadLink.click();
+
+      sinon.assert.calledOnce(_downloadCsvSpy);
+    });
+
+    it('triggers _dataLink click after #downloadLink click', async () => {
+      await element.updateComplete;
+      const dataLinkStub = sinon.stub(element._dataLink, 'click');
+
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
+
+      downloadLink.click();
+
+      await element.requestUpdate('_csvDataHref');
+      sinon.assert.calledOnce(dataLinkStub);
+
+      element._dataLink.click.restore();
+    });
+
+    it('triggers _csvDataHref update and _dataLink click', async () => {
+      await element.updateComplete;
+      assert.equal('', element._csvDataHref);
+      const downloadStub = sinon.stub(element._dataLink, 'click');
+
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
+
+      downloadLink.click();
+      assert.notEqual('', element._csvDataHref);
+      await element.requestUpdate('_csvDataHref');
+      sinon.assert.calledOnce(downloadStub);
+
+      element._dataLink.click.restore();
+    });
+
+    it('resets _csvDataHref', async () => {
+      await element.updateComplete;
+      assert.equal('', element._csvDataHref);
+
+      sinon.stub(element._dataLink, 'click');
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
+      downloadLink.click();
+      assert.notEqual('', element._csvDataHref);
+
+      await element.requestUpdate('_csvDataHref');
+      assert.equal('', element._csvDataHref);
+      element._dataLink.click.restore();
+    });
+
+    describe('constructHref', () => {
+      it('has default of empty string', () => {
+        const result = constructHref();
+        assert.equal(result, 'data:attachment/csv;charset=utf-8,');
+      });
+
+      it('starts with data:', () => {
+        const result = constructHref('');
+        assert.isTrue(result.startsWith('data:'));
+      });
+
+      it('uses charset=utf-8', () => {
+        const result = constructHref('');
+        assert.isTrue(result.search('charset=utf-8') > -1);
+      });
+
+      it('encodes URI component', () => {
+        const encodeFuncStub = sinon.stub(window, 'encodeURIComponent');
+        constructHref('');
+        sinon.assert.calledOnce(encodeFuncStub);
+
+        window.encodeURIComponent.restore();
+      });
+    });
+  });
+});

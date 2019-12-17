@@ -38,6 +38,31 @@ const MIDDLE_BUTTON = 1;
 const UNGROUPABLE_COLUMNS = new Set(['id', 'summary']);
 
 /**
+ * Converts input data array into csv formatted string
+ * using already implemented data extractor
+ * @param {Array<Issue>} data
+ * @param {Array<string>} columns
+ * @param {function(Issue, string): Array<string>} dataExtractor
+ * @return {string}
+ */
+export const convertListToCsv = (data, columns, dataExtractor) => {
+  // Returning sample data for now. To be replaced in follow up CL.
+  return 'Feature,development\nin,progress.\nPlease,ignore.';
+};
+
+/** @type {String} CSV download link's data href prefix */
+const CSV_DATA_HREF_PREFIX = 'data:attachment/csv;charset=utf-8,';
+
+/**
+ * Constructs download link url from csv string data.
+ * @param {string} data CSV data
+ * @return {string}
+ */
+export const constructHref = (data = '') => {
+  return `${CSV_DATA_HREF_PREFIX}${encodeURIComponent(data)}`;
+};
+
+/**
  * `<mr-issue-list>`
  *
  * A list of issues intended to be used in multiple contexts.
@@ -168,6 +193,18 @@ export class MrIssueList extends connectStore(LitElement) {
         text-decoration: underline;
       }
 
+      .csv-download-container {
+        border-bottom: none;
+        text-align: end;
+        cursor: default;
+        /* Hiding until the function is ready */
+        display: none;
+      }
+
+      #hidden-data-link {
+        display: none;
+      }
+
       @media (min-width: 1024px) {
         .first-row th {
           position: sticky;
@@ -211,6 +248,11 @@ export class MrIssueList extends connectStore(LitElement) {
         </tr>
         ${this._renderIssues()}
       </tbody>
+      <tfoot><tr><td colspan=999 class="csv-download-container">
+        <a id="download-link" @click=${this._downloadCsv} href>CSV</a>
+        <a id="hidden-data-link" download="monorail-issues.csv"
+          href=${this._csvDataHref}></a>
+      </td></tr></tfoot>
     `;
   }
 
@@ -547,6 +589,10 @@ export class MrIssueList extends connectStore(LitElement) {
        * List of unique phase names for all phases in issues.
        */
       _phaseNames: {type: Array},
+      /**
+       * CSV data in data HREF format, used to download csv
+       */
+      _csvDataHref: {type: String},
     };
   };
 
@@ -607,6 +653,8 @@ export class MrIssueList extends connectStore(LitElement) {
 
     // Expose page.js for stubbing.
     this._page = page;
+    /** @type {string} page data in csv format as data href */
+    this._csvDataHref = '';
   };
 
   /** @override */
@@ -625,6 +673,7 @@ export class MrIssueList extends connectStore(LitElement) {
   firstUpdated() {
     // Only attach an event listener once the DOM has rendered.
     window.addEventListener('keydown', this._boundRunListHotKeys);
+    this._dataLink = this.shadowRoot.querySelector('#hidden-data-link');
   }
 
   /** @override */
@@ -1172,6 +1221,34 @@ export class MrIssueList extends connectStore(LitElement) {
     } else {
       this._page(link);
     }
+  }
+
+  /**
+   * Download content as csv. Conversion to CSV only on button click
+   * instead of on data change because CSV download is not often used.
+   * @param {MouseEvent} event
+   */
+  async _downloadCsv(event) {
+    event.preventDefault();
+
+    // convert the data, this.issues, into csv formatted string.
+    const csvDataString = convertListToCsv(
+        this.issues,
+        this.columns,
+        this._extractFieldValuesFromIssue);
+
+    // construct data href
+    const href = constructHref(csvDataString);
+
+    // modify a tag's href
+    this._csvDataHref = href;
+    await this.requestUpdate('_csvDataHref');
+
+    // click to trigger download
+    this._dataLink.click();
+
+    // reset dataHref
+    this._csvDataHref = '';
   }
 };
 
