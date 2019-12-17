@@ -53,6 +53,12 @@ SETUP_LOCAL_ATTACH=(
 
 WITH_LIBS="-lpthread"
 
+# TODO(iannucci): Remove this once the fleet is using GLIBC 2.25 and
+# macOS 10.12 or higher.
+#
+# See comment in 3pp/openssl/install.sh for more detail.
+export ac_cv_func_getentropy=0
+
 if [[ $_3PP_PLATFORM == mac* ]]; then
   PYTHONEXE=python.exe
 

@@ -80,6 +80,12 @@ fi
 # the link line.
 LDLAST="-lpthread"
 
+# TODO(iannucci): Remove this once the fleet is using GLIBC 2.25 and
+# macOS 10.12 or higher.
+#
+# See comment in 3pp/openssl/install.sh for more detail.
+export ac_cv_func_getentropy=0
+
 # Now, really configure and build.
 if [[ $_3PP_PLATFORM == mac* ]]; then
   # Mac Python installations use 2-byte Unicode.
