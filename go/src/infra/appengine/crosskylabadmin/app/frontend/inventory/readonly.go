@@ -312,6 +312,7 @@ func getStableVersionImpl(ctx context.Context, buildTarget string, model string,
 		logging.Infof(ctx, "hostname not provided, using buildTarget (%s) and model (%s)", buildTarget, model)
 		return getStableVersionImplNoHostname(ctx, buildTarget, model)
 	}
+
 	logging.Infof(ctx, "hostname (%s) provided, ignoring user-provided buildTarget (%s) and model (%s)", hostname, buildTarget, model)
 	return getStableVersionImplWithHostname(ctx, hostname)
 }
@@ -319,6 +320,8 @@ func getStableVersionImpl(ctx context.Context, buildTarget string, model string,
 // getStableVersionImplNoHostname returns stableversion information given a buildTarget and model
 // TODO(gregorynisbet): Consider under what circumstances an error leaving this function
 // should be considered transient or non-transient.
+// If the dut in question is a beaglebone servo, then failing to get the firmware version
+// is non-fatal.
 func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, model string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for buildTarget: (%s) and model: (%s)", buildTarget, model)
 	var err error
@@ -333,8 +336,13 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 	if err != nil {
 		logging.Infof(ctx, "faft stable version does not exist: (%#v)", err)
 	}
+	// successful early exit if we have a beaglebone servo
+	if buildTarget == beagleboneServo || model == beagleboneServo {
+		return out, nil
+	}
 	out.FirmwareVersion, err = dssv.GetFirmwareStableVersion(ctx, buildTarget, model)
 	if err != nil {
+		logging.Errorf(ctx, "getStableVersionImplNoHostname: failed to get firmware version (%s) (%s)", buildTarget, model)
 		merr = append(merr, err)
 	}
 	if len(merr) != 0 {
@@ -352,6 +360,16 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for given hostname (%s)", hostname)
 	var err error
+
+	// If the DUT in question is a labstation or a servo (i.e. is a servo host), then it does not have
+	// its own servo host.
+	if looksLikeServo(hostname) {
+		logging.Infof(ctx, "beaglebone servo provided")
+		return getStableVersionImplNoHostname(ctx, beagleboneServo, "")
+	}
+	if looksLikeLabstation(hostname) {
+		logging.Infof(ctx, "concluded that hostname (%s) is a servo host", hostname)
+	}
 
 	dut, err := getDUT(ctx, hostname)
 	if err != nil {
@@ -372,6 +390,9 @@ func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fl
 		return nil, fmt.Errorf("failed to get stable version info (%s)", err)
 	}
 
+	if looksLikeLabstation(hostname) {
+		return out, nil
+	}
 	servoHostHostname, err := getServoHostHostname(dut)
 	if err != nil {
 		// TODO(gregorynisbet): Consider a different error handling strategy.
@@ -438,7 +459,13 @@ func looksLikeServo(hostname string) bool {
 
 // getCrosVersionFromServoHost returns the cros version associated with a particular servo host
 // hostname : hostname of the servo host (e.g. labstation)
+// NOTE: If hostname is "", this indicates the absence of a relevant servo host.
+// This can happen if the DUT in question is already a labstation, for instance.
 func getCrosVersionFromServoHost(ctx context.Context, hostname string) (string, error) {
+	if hostname == "" {
+		logging.Infof(ctx, "getCrosVersionFromServoHost: skipping empty hostname \"\"")
+		return "", nil
+	}
 	if looksLikeLabstation(hostname) {
 		logging.Infof(ctx, "getCrosVersionFromServoHost: identified labstation servohost hostname (%s)", hostname)
 		dut, err := getDUT(ctx, hostname)
