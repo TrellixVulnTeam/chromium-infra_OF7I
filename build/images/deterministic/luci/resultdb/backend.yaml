@@ -1,0 +1,9 @@
+name: luci/resultdb/backend
+extends: ../../../base.yaml
+
+contextdir: ../../../../../go/src/go.chromium.org/luci/resultdb/cmd/backend/docker
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/resultdb/cmd/backend
+    dest: bin/backend
