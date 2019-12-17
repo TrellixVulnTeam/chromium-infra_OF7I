@@ -107,26 +107,33 @@ class FlakeIssue(ndb.Model):
 
     return url_template % (suffix, monorail_project, issue_id)
 
-  def GetMergeDestination(self, key_only=False):
-    """Gets the FlakeIssue entity of this issue's final merged destination.
+  def GetMostUpdatedIssue(self, key_only=False):
+    """Gets the most updated issue by traversing the merge chain.
+
+    If no merge happened, it's this issue itself, otherwise, traverse the chain
+    to locate the final issue.
 
     Args:
-      key_only (bool): True if just need the key to the destination issue, False
-        if need the entity.
+      key_only (bool): True if only needs the key to the issue, otherwise, the
+        issue itself.
+
+    Returns:
+      A FlakeIssue that represents the most updated issue, or its key if
+      |key_only| is specified.
     """
+    return self.GetMostUpdatedIssueAsync(key_only).get_result()
+
+  @ndb.tasklet
+  def GetMostUpdatedIssueAsync(self, key_only=False):
+    """The async version of GetMostUpdatedIssue."""
     if key_only:
-      return self.merge_destination_key
+      raise ndb.Return(self.merge_destination_key or self.key)
 
-    return self.merge_destination_key.get(
-    ) if self.merge_destination_key else None
+    if not self.merge_destination_key:
+      raise ndb.Return(self)
 
-  def GetMostUpdatedIssue(self, key_only=False):
-    destination_issue = self.GetMergeDestination(key_only)
-
-    if destination_issue:
-      return destination_issue
-
-    return self.key if key_only else self
+    destination_issue = yield self.merge_destination_key.get_async()
+    raise ndb.Return(destination_issue if destination_issue else self)
 
   def Update(self, **kwargs):
     """Updates arbitrary fields as specified in kwargs."""

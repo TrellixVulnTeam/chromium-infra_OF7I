@@ -200,6 +200,7 @@ class _CQFlakesRequest(messages.Message):
 class _CQFlake(messages.Message):
   test = messages.MessageField(_StepAndTestName, 1, required=True)
   affected_gerrit_changes = messages.IntegerField(2, repeated=True)
+  monorail_issue = messages.IntegerField(3, required=True)
 
 
 class _CQFlakeResponse(messages.Message):
@@ -207,29 +208,34 @@ class _CQFlakeResponse(messages.Message):
 
 
 @ndb.tasklet
-def _IsTestFlakyOnCQAsync(project, bucket, builder, step_ui_name, test_name):
+def _GetCQFlakeAsync(project, bucket, builder, test):
   """Decides whether a test is flaky on CQ.
 
   As of 2019-12-06, the algorithm used to determine whether a test is flaky on
   CQ is as following:
   1. >= 3 different CLs have a failed step due to this test within the past 24h.
   2. >= 1 CL have a failed step due to this test within the past 12h.
+  3. A bug has been filed for this flaky test.
 
   These rules are designed to be conservative and are subject to change based on
   user feedback.
 
+  Args:
+    project (str): Luci project name.
+    bucket (str): Luci bucket name.
+    builder (str): Luci builder name.
+    test (_StepAndTestName): The test to check if it's flaky.
+
   Returns:
-    A future object that wraps a tuple of two elements: the first one is a
-    boolean value indicating whether the test is flaky, and the second one is a
-    list of uniquely affected CLs that explains why the test is flaky.
+    A _CQFlake if the test is flaky, otherwise, None.
   """
   query = FlakeOccurrence.query(
       FlakeOccurrence.flake_type == FlakeType.RETRY_WITH_PATCH,
       FlakeOccurrence.build_configuration.luci_project == project,
       FlakeOccurrence.build_configuration.luci_bucket == bucket,
       FlakeOccurrence.build_configuration.luci_builder == builder,
-      FlakeOccurrence.step_ui_name == step_ui_name,
-      FlakeOccurrence.test_name == test_name,
+      FlakeOccurrence.step_ui_name == test.step_ui_name,
+      FlakeOccurrence.test_name == test.test_name,
       FlakeOccurrence.time_happened >= time_util.GetDatetimeBeforeNow(hours=24))
   occurrences = yield query.fetch_async()
 
@@ -237,10 +243,24 @@ def _IsTestFlakyOnCQAsync(project, bucket, builder, step_ui_name, test_name):
   active_start = time_util.GetDatetimeBeforeNow(hours=12)
   is_active = any(o.time_happened > active_start for o in occurrences)
 
-  if len(unique_cls) >= 3 and is_active:
-    raise ndb.Return((True, list(unique_cls)))
+  if len(unique_cls) < 3 or not is_active:
+    raise ndb.Return(None)
 
-  raise ndb.Return((False, None))
+  parent_flake = yield occurrences[0].key.parent().get_async()
+  if not parent_flake or not parent_flake.flake_issue_key:
+    raise ndb.Return(None)
+
+  issue = yield parent_flake.flake_issue_key.get_async()
+  destination_issue_key = yield issue.GetMostUpdatedIssueAsync(key_only=True)
+  if not destination_issue_key:
+    raise ndb.Return(None)
+
+  raise ndb.Return(
+      _CQFlake(
+          test=test,
+          # A list of CLs used for communication and debugging, so 5 is enough.
+          affected_gerrit_changes=list(unique_cls)[:5],
+          monorail_issue=int(destination_issue_key.id().split('@')[1])))
 
 
 @Cached(
@@ -1043,19 +1063,10 @@ class FindItApi(remote.Service):
     """
     logging.info('Request: %s', request)
     futures = [
-        _IsTestFlakyOnCQAsync(request.project, request.bucket, request.builder,
-                              t.step_ui_name, t.test_name)
+        _GetCQFlakeAsync(request.project, request.bucket, request.builder, t)
         for t in request.tests
     ]
-    flakes = []
-    for t, f in zip(request.tests, futures):
-      is_flaky, affected_cls = f.get_result()
-      if not is_flaky:
-        continue
-
-      # A list of CLs are used for communication and debugging, so 5 is enough.
-      flakes.append(_CQFlake(test=t, affected_gerrit_changes=affected_cls[:5]))
-
+    flakes = [f.get_result() for f in futures if f.get_result()]
     response = _CQFlakeResponse(flakes=flakes)
     logging.info('Response: %s', response)
     return response

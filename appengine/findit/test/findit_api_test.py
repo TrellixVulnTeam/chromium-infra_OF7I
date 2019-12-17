@@ -30,6 +30,8 @@ from model import analysis_approach_type
 from model.base_build_model import BaseBuildModel
 from model.base_suspected_cl import RevertCL
 from model.flake.detection.flake_occurrence import FlakeOccurrence
+from model.flake.flake import Flake
+from model.flake.flake_issue import FlakeIssue
 from model.flake.flake_type import FlakeType
 from model.test_inventory import LuciTest
 from model.wf_analysis import WfAnalysis
@@ -41,6 +43,22 @@ from waterfall import waterfall_config
 
 # pylint:disable=unused-argument, unused-variable
 # https://crbug.com/947753
+
+
+# Create a sample flake, and the default properties correspond to that of the
+# sample flake occurrence, override the properties as necessary.
+def _CreateFlake(**kwargs):
+  return Flake.Create(
+      luci_project=kwargs.get('luci_project', 'chromium'),
+      normalized_step_name=kwargs.get('normalized_step_name', 'browser_tests'),
+      normalized_test_name=kwargs.get('test_name', 'foo.bar'),
+      test_label_name=kwargs.get('test_label_name', 'foo.bar'))
+
+
+def _CreateFlakeIssue(**kwargs):
+  return FlakeIssue.Create(
+      monorail_project=kwargs.get('monorail_project', 'chromium'),
+      issue_id=kwargs.get('issue_id', 99999))
 
 
 # Create a sample flake occurrence, override the properties as necessary.
@@ -58,7 +76,7 @@ def _CreateFlakeOccurrence(**kwargs):
       time_happened=kwargs.get('time_happened', datetime.datetime(2019, 12,
                                                                   12)),
       gerrit_cl_id=kwargs.get('gerrit_cl_id', 1234),
-      parent_flake_key=None)
+      parent_flake_key=kwargs.get('parent_flake_key', None))
 
 
 class FinditApiTest(testing.EndpointsTestCase):
@@ -1862,23 +1880,35 @@ class FinditApiTest(testing.EndpointsTestCase):
 
     response = self.call_api('GetCQFlakes', body=request)
     self.assertEqual(200, response.status_int)
-    self.assertEqual({}, response.json_body)
+    self.assertDictEqual({}, response.json_body)
 
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
   def testGetCQFlakes(self, _):
+    destination_flake_issue = _CreateFlakeIssue(issue_id=99995)
+    destination_flake_issue.put()
+    flake_issue = _CreateFlakeIssue()
+    flake_issue.merge_destination_key = destination_flake_issue.key
+    flake_issue.put()
+    flake = _CreateFlake()
+    flake.flake_issue_key = flake_issue.key
+    flake.put()
+
     _CreateFlakeOccurrence(
         build_id=987,
         time_happened=time_util.GetDatetimeBeforeNow(hours=1),
-        gerrit_cl_id=1234).put()
+        gerrit_cl_id=1234,
+        parent_flake_key=flake.key).put()
     _CreateFlakeOccurrence(
         build_id=986,
         time_happened=time_util.GetDatetimeBeforeNow(hours=14),
-        gerrit_cl_id=1235).put()
+        gerrit_cl_id=1235,
+        parent_flake_key=flake.key).put()
     _CreateFlakeOccurrence(
         build_id=985,
         time_happened=time_util.GetDatetimeBeforeNow(hours=15),
-        gerrit_cl_id=1236).put()
+        gerrit_cl_id=1236,
+        parent_flake_key=flake.key).put()
 
     request = {
         'project':
@@ -1894,22 +1924,30 @@ class FinditApiTest(testing.EndpointsTestCase):
     }
 
     response = self.call_api('GetCQFlakes', body=request)
+
     self.assertEqual(200, response.status_int)
-    self.assertEqual({
+    self.assertDictEqual({
         'flakes': [{
             'test': {
                 'step_ui_name': 'browser_tests (with patch)',
                 'test_name': 'foo.bar',
             },
             'affected_gerrit_changes': ['1234', '1235', '1236'],
+            'monorail_issue': '99995',
         }]
     }, response.json_body)
 
   # This test tests that enough occurrences are required in order for a test to
-  # be determined as flaky.
+  # be used to skip retrying known flakes.
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
   def testGetCQFlakesNotEnoughOccurrences(self, _):
+    flake_issue = _CreateFlakeIssue()
+    flake = _CreateFlake()
+    flake.flake_issue_key = flake_issue.key
+    flake_issue.put()
+    flake.put()
+
     _CreateFlakeOccurrence(
         build_id=987,
         time_happened=time_util.GetDatetimeBeforeNow(hours=1),
@@ -1937,10 +1975,16 @@ class FinditApiTest(testing.EndpointsTestCase):
     self.assertEqual({}, response.json_body)
 
   # This test tests that enough uniquely affected CLs are required in order for
-  # a test to be determined as flaky.
+  # a test to be used to skip retrying known flakes.
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
   def testGetCQFlakesNotEnoughGerritChanges(self, _):
+    flake_issue = _CreateFlakeIssue()
+    flake = _CreateFlake()
+    flake.flake_issue_key = flake_issue.key
+    flake_issue.put()
+    flake.put()
+
     # Two of the occurrences share the same gerrit change.
     _CreateFlakeOccurrence(
         build_id=987,
@@ -1970,14 +2014,19 @@ class FinditApiTest(testing.EndpointsTestCase):
 
     response = self.call_api('GetCQFlakes', body=request)
     self.assertEqual(200, response.status_int)
-    self.assertEqual({}, response.json_body)
+    self.assertDictEqual({}, response.json_body)
 
   # This test tests that at least one recent flake occurrence is required in
   # order for a test to be determined as flaky.
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
   def testGetCQFlakesNoRecentActivity(self, _):
-    # Two of the occurrences share the same gerrit change.
+    flake_issue = _CreateFlakeIssue()
+    flake = _CreateFlake()
+    flake.flake_issue_key = flake_issue.key
+    flake_issue.put()
+    flake.put()
+
     _CreateFlakeOccurrence(
         build_id=987,
         time_happened=time_util.GetDatetimeBeforeNow(hours=13),
@@ -2006,13 +2055,60 @@ class FinditApiTest(testing.EndpointsTestCase):
 
     response = self.call_api('GetCQFlakes', body=request)
     self.assertEqual(200, response.status_int)
-    self.assertEqual({}, response.json_body)
+    self.assertDictEqual({}, response.json_body)
+
+  # This test tests that a bug must be filed in order for a test to be used to
+  # skip retrying known flakes.
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
+  def testGetCQFlakesNoBugFiled(self, _):
+    flake = _CreateFlake()
+    flake.put()
+
+    _CreateFlakeOccurrence(
+        build_id=987,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=1),
+        gerrit_cl_id=1234,
+        parent_flake_key=flake.key).put()
+    _CreateFlakeOccurrence(
+        build_id=986,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=14),
+        gerrit_cl_id=1235,
+        parent_flake_key=flake.key).put()
+    _CreateFlakeOccurrence(
+        build_id=985,
+        time_happened=time_util.GetDatetimeBeforeNow(hours=15),
+        gerrit_cl_id=1236,
+        parent_flake_key=flake.key).put()
+
+    request = {
+        'project':
+            'chromium',
+        'bucket':
+            'try',
+        'builder':
+            'linux-rel',
+        'tests': [{
+            'step_ui_name': 'browser_tests (with patch)',
+            'test_name': 'foo.bar',
+        },],
+    }
+
+    response = self.call_api('GetCQFlakes', body=request)
+    self.assertEqual(200, response.status_int)
+    self.assertDictEqual({}, response.json_body)
 
   # This test tests that the same step/test names on different builders will be
   # treated as two different tests.
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
   def testGetCQFlakesMultipleBuilders(self, _):
+    flake_issue = _CreateFlakeIssue()
+    flake = _CreateFlake()
+    flake.flake_issue_key = flake_issue.key
+    flake_issue.put()
+    flake.put()
+
     _CreateFlakeOccurrence(
         build_id=987,
         luci_builder='linux-rel',
@@ -2044,7 +2140,7 @@ class FinditApiTest(testing.EndpointsTestCase):
 
     response = self.call_api('GetCQFlakes', body=request)
     self.assertEqual(200, response.status_int)
-    self.assertEqual({}, response.json_body)
+    self.assertDictEqual({}, response.json_body)
 
     request = {
         'project':
@@ -2061,13 +2157,19 @@ class FinditApiTest(testing.EndpointsTestCase):
 
     response = self.call_api('GetCQFlakes', body=request)
     self.assertEqual(200, response.status_int)
-    self.assertEqual({}, response.json_body)
+    self.assertDictEqual({}, response.json_body)
 
   # This test tests that the same test names of different step names will be
   # treated as two different tests.
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2019, 12, 10))
   def testGetCQFlakesMultipleSteps(self, _):
+    flake_issue = _CreateFlakeIssue()
+    flake = _CreateFlake()
+    flake.flake_issue_key = flake_issue.key
+    flake_issue.put()
+    flake.put()
+
     _CreateFlakeOccurrence(
         build_id=987,
         time_happened=time_util.GetDatetimeBeforeNow(hours=1),
@@ -2105,4 +2207,4 @@ class FinditApiTest(testing.EndpointsTestCase):
 
     response = self.call_api('GetCQFlakes', body=request)
     self.assertEqual(200, response.status_int)
-    self.assertEqual({}, response.json_body)
+    self.assertDictEqual({}, response.json_body)
