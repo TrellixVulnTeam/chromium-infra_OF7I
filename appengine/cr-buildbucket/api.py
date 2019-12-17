@@ -231,19 +231,33 @@ def prepare_schedule_build_request_async(req):
   if not build:
     raise not_found('build %d is not found', req.template_build_id)
 
+  bp = build_pb2.Build()
+  yield model.builds_to_protos_async(
+      [(build, bp)],
+      load_tags=True,
+      load_input_properties=True,
+      load_output_properties=False,
+      load_steps=False,
+      load_infra=False,
+  )
+
   # First initialize the new request based on the build.
   new_req = rpc_pb2.ScheduleBuildRequest(
-      builder=build.proto.builder,
-      canary=build.canary,
-      experimental=bbutil.BOOLISH_TO_TRINARY[build.proto.input.experimental],
-      properties=build.proto.input.properties,
-      gitiles_commit=build.proto.input.gitiles_commit,
-      gerrit_changes=build.proto.input.gerrit_changes,
-      critical=build.proto.critical,
-      exe=build.proto.exe,
+      builder=bp.builder,
+      canary=bp.canary,
+      experimental=bp.input.experimental,
+      properties=bp.input.properties,
+      gitiles_commit=bp.input.gitiles_commit,
+      gerrit_changes=bp.input.gerrit_changes,
+      tags=bp.tags,
+      dimensions=bp.infra.buildbucket.requested_dimensions,
+      priority=bp.infra.swarming.priority,
+      # Don't copy notify and fields because they are not build configuration.
+      critical=bp.critical,
+      exe=bp.exe,
+      # Don't copy swarming or we are likely to create a dead-born build
+      # due to completed parent.
   )
-  if not req.tags:
-    build.tags_to_protos(new_req.tags)
 
   # Then apply the overrides specified in req.
   # Clear composite fields if they are specified in req.
