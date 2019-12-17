@@ -15,6 +15,7 @@
 package inventory
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -251,6 +252,28 @@ func TestListRemovedDuts(t *testing.T) {
 			t.Errorf("Unexpected response -want +got, %s", diff)
 		}
 	})
+}
+
+var testLooksLikeFakeServoTests = []struct {
+	in   string
+	good bool
+}{
+	{``, false},
+	{`dummy_host`, false},
+	{`FAKE_SERVO_HOST`, false},
+	{`chromeos6-row3-rack11-labstation`, true},
+}
+
+func TestLooksLikeFakeServo(t *testing.T) {
+	for _, tt := range testLooksLikeFakeServoTests {
+		name := fmt.Sprintf("(%s)", tt.in)
+		t.Run(name, func(t *testing.T) {
+			good := !looksLikeFakeServo(tt.in)
+			if good != tt.good {
+				t.Errorf("wanted: (%t) got: (%t)", tt.good, good)
+			}
+		})
+	}
 }
 
 func TestGetStableVersion(t *testing.T) {
@@ -505,6 +528,58 @@ func TestGetStableVersion(t *testing.T) {
 		So(resp.CrosVersion, ShouldEqual, "xxx-beaglebone-cros-version")
 		So(resp.FaftVersion, ShouldEqual, "")
 		So(resp.FirmwareVersion, ShouldEqual, "")
+		So(resp.ServoCrosVersion, ShouldEqual, "")
+	})
+
+	Convey("Test GetStableVersion RPC -- hostname with dummy_host", t, func() {
+		ctx := testingContext()
+		datastore.GetTestable(ctx)
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		// use a fake labstation
+		duts := []*inventory.DeviceUnderTest{
+			{
+				Common: &inventory.CommonDeviceSpecs{
+					Attributes: []*inventory.KeyValue{
+						{
+							Key:   strptr("servo_host"),
+							Value: strptr("dummy_host"),
+						},
+					},
+					Id:       strptr("xxx-id"),
+					Hostname: strptr("xxx-hostname"),
+					Labels: &inventory.SchedulableLabels{
+						Model: strptr("xxx-model"),
+						Board: strptr("xxx-build-target"),
+					},
+				},
+			},
+		}
+
+		err := dsinventory.UpdateDUTs(ctx, duts)
+		So(err, ShouldBeNil)
+
+		err = dssv.PutSingleCrosStableVersion(ctx, "xxx-build-target", "xxx-cros-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutSingleCrosStableVersion(ctx, "xxx-labstation-board", "xxx-labstation-cros-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutSingleFaftStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-faft-version")
+		So(err, ShouldBeNil)
+		err = dssv.PutSingleFirmwareStableVersion(ctx, "xxx-build-target", "xxx-model", "xxx-firmware-version")
+		So(err, ShouldBeNil)
+
+		resp, err := tf.Inventory.GetStableVersion(
+			ctx,
+			&fleet.GetStableVersionRequest{
+				Hostname: "xxx-hostname",
+			},
+		)
+
+		So(err, ShouldBeNil)
+		So(resp.CrosVersion, ShouldEqual, "xxx-cros-version")
+		So(resp.FaftVersion, ShouldEqual, "xxx-faft-version")
+		So(resp.FirmwareVersion, ShouldEqual, "xxx-firmware-version")
 		So(resp.ServoCrosVersion, ShouldEqual, "")
 	})
 

@@ -400,6 +400,10 @@ func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fl
 		logging.Infof(ctx, "getting hostname of servohost (%#v)", err)
 		return nil, fmt.Errorf("getting hostname of servohost (%s)", err)
 	}
+	if looksLikeFakeServo(servoHostHostname) {
+		logging.Infof(ctx, "concluded servo hostname is fake (%s)", servoHostHostname)
+		return out, nil
+	}
 	servoStableVersion, err := getCrosVersionFromServoHost(ctx, servoHostHostname)
 	if err != nil {
 		// TODO(gregorynisbet): Consider a different error handling strategy.
@@ -455,6 +459,13 @@ func looksLikeLabstation(hostname string) bool {
 // This is a heuristic to check if something is a servo and might be wrong.
 func looksLikeServo(hostname string) bool {
 	return strings.Contains(hostname, "servo")
+}
+
+// looksLikeFakeServo is a heuristic to check if a given hostname is an obviously
+// fake entry such as an empty string or dummy_host or FAKE_SERVO_HOST or similar
+func looksLikeFakeServo(hostname string) bool {
+	h := strings.ToLower(hostname)
+	return h == "" || strings.Contains(h, "dummy") || strings.Contains(h, "fake")
 }
 
 // getCrosVersionFromServoHost returns the cros version associated with a particular servo host
