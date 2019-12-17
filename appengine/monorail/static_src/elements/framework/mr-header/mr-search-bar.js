@@ -152,68 +152,10 @@ export class MrSearchBar extends LitElement {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <form
-        @submit=${this._searchSubmitted}
+        @submit=${this._submitSearch}
         @keypress=${this._submitSearchWithKeypress}
       >
-        <div class="select-container">
-          <i class="material-icons">arrow_drop_down</i>
-          <select id="can" name="can" @change=${this._redirectOnSelect} aria-label="Search scope">
-            <optgroup label="Search within">
-              <option
-                value="1"
-                ?selected=${this.currentCan === '1'}
-              >All issues</option>
-              <option
-                value="2"
-                ?selected=${this.currentCan === '2'}
-              >Open issues</option>
-              <option
-                value="3"
-                ?selected=${this.currentCan === '3'}
-              >Open and owned by me</option>
-              <option
-                value="4"
-                ?selected=${this.currentCan === '4'}
-              >Open and reported by me</option>
-              <option
-                value="5"
-                ?selected=${this.currentCan === '5'}
-              >Open and starred by me</option>
-              <option
-                value="8"
-                ?selected=${this.currentCan === '8'}
-              >Open with comment by me</option>
-              <option
-                value="6"
-                ?selected=${this.currentCan === '6'}
-              >New issues</option>
-              <option
-                value="7"
-                ?selected=${this.currentCan === '7'}
-              >Issues to verify</option>
-            </optgroup>
-            <optgroup label="Project queries" ?hidden=${!this.userDisplayName}>
-              ${this.projectSavedQueries && this.projectSavedQueries.map((query) => html`
-                <option
-                  class="project-query"
-                  value=${query.queryId}
-                  ?selected=${this.currentCan === query.queryId}
-                >${query.name}</option>
-              `)}
-              <option data-href="/p/${this.projectName}/adminViews">Manage project queries...</option>
-            </optgroup>
-            <optgroup label="My saved queries" ?hidden=${!this.userDisplayName}>
-              ${this.userSavedQueries && this.userSavedQueries.map((query) => html`
-                <option
-                  class="user-query"
-                  value=${query.queryId}
-                  ?selected=${this.currentCan === query.queryId}
-                >${query.name}</option>
-              `)}
-              <option data-href="/u/${this.userDisplayName}/queries">Manage my saved queries...</option>
-            </optgroup>
-          </select>
-        </div>
+        ${this._renderSearchScopeSelector()}
         <input
           id="searchq"
           type="text"
@@ -237,21 +179,100 @@ export class MrSearchBar extends LitElement {
     `;
   }
 
+  /**
+   * Render helper for the select menu that lets user select which search
+   * context/saved query they want to use.
+   * @return {TemplateResult}
+   */
+  _renderSearchScopeSelector() {
+    return html`
+      <div class="select-container">
+        <i class="material-icons">arrow_drop_down</i>
+        <select
+          id="can"
+          name="can"
+          @change=${this._redirectOnSelect}
+          aria-label="Search scope"
+        >
+          <optgroup label="Search within">
+            <option
+              value="1"
+              ?selected=${this.initialCan === '1'}
+            >All issues</option>
+            <option
+              value="2"
+              ?selected=${this.initialCan === '2'}
+            >Open issues</option>
+            <option
+              value="3"
+              ?selected=${this.initialCan === '3'}
+            >Open and owned by me</option>
+            <option
+              value="4"
+              ?selected=${this.initialCan === '4'}
+            >Open and reported by me</option>
+            <option
+              value="5"
+              ?selected=${this.initialCan === '5'}
+            >Open and starred by me</option>
+            <option
+              value="8"
+              ?selected=${this.initialCan === '8'}
+            >Open with comment by me</option>
+            <option
+              value="6"
+              ?selected=${this.initialCan === '6'}
+            >New issues</option>
+            <option
+              value="7"
+              ?selected=${this.initialCan === '7'}
+            >Issues to verify</option>
+          </optgroup>
+          <optgroup label="Project queries" ?hidden=${!this.userDisplayName}>
+            ${this._renderSavedQueryOptions(this.projectSavedQueries, 'project-query')}
+            <option data-href="/p/${this.projectName}/adminViews">
+              Manage project queries...
+            </option>
+          </optgroup>
+          <optgroup label="My saved queries" ?hidden=${!this.userDisplayName}>
+            ${this._renderSavedQueryOptions(this.userSavedQueries, 'user-query')}
+            <option data-href="/u/${this.userDisplayName}/queries">
+              Manage my saved queries...
+            </option>
+          </optgroup>
+        </select>
+      </div>
+    `;
+  }
+
+  /**
+   * Render helper for adding saved queries to the search scope select.
+   * @param {Array<SavedQuery>} queries Queries to render.
+   * @param {string} className CSS class to be applied to each option.
+   * @return {Array<TemplateResult>}
+   */
+  _renderSavedQueryOptions(queries, className) {
+    if (!queries) return;
+    return queries.map((query) => html`
+      <option
+        class=${className}
+        value=${query.queryId}
+        ?selected=${this.initialCan === query.queryId}
+      >${query.name}</option>
+    `);
+  }
+
   /** @override */
   static get properties() {
     return {
       projectName: {type: String},
       userDisplayName: {type: String},
-      currentCan: {type: String},
+      initialCan: {type: String},
       initialQuery: {type: String},
       projectSavedQueries: {type: Array},
       userSavedQueries: {type: Array},
       queryParams: {type: Object},
       keptQueryParams: {type: Array},
-      _boundFocus: {
-        type: Object,
-        hasChanged: () => false,
-      },
     };
   }
 
@@ -270,7 +291,7 @@ export class MrSearchBar extends LitElement {
       'num',
     ];
     this.initialQuery = '';
-    this.currentCan = '2';
+    this.initialCan = '2';
     this.projectSavedQueries = [];
     this.userSavedQueries = [];
 
@@ -307,31 +328,53 @@ export class MrSearchBar extends LitElement {
     }
   }
 
+  /**
+   * Sends an event to ClientLogger describing that the user started typing
+   * a search query.
+   */
   _searchEditStarted() {
     this.clientLogger.logStart('query-edit', 'user-time');
     this.clientLogger.logStart('issue-search', 'user-time');
   }
 
+  /**
+   * Sends an event to ClientLogger saying that the user finished typing a
+   * search.
+   */
   _searchEditFinished() {
     this.clientLogger.logEnd('query-edit');
   }
 
+  /**
+   * On Shift+Enter, this handler opens the search in a new tab.
+   * @param {KeyboardEvent} e
+   */
   _submitSearchWithKeypress(e) {
     if (e.key === 'Enter' && (e.shiftKey)) {
       const form = e.currentTarget;
-      this._submitSearch(form, true);
+      this._runSearch(form, true);
     }
     // In all other cases, we want to let the submit handler do the work.
+    // ie: pressing 'Enter' on a form should natively open it in a new tab.
   }
 
-  _searchSubmitted(e) {
+  /**
+   * Update the URL on form submit.
+   * @param {Event} e
+   */
+  _submitSearch(e) {
     e.preventDefault();
 
     const form = e.target;
-    this._submitSearch(form);
+    this._runSearch(form);
   }
 
-  _submitSearch(form, newTab) {
+  /**
+   * Updates the URL with the new search set in the query string.
+   * @param {HTMLFormElement} form the native form element to submit.
+   * @param {boolean} [newTab] whether to open the search in a new tab.
+   */
+  _runSearch(form, newTab) {
     this.clientLogger.logEnd('query-edit');
     this.clientLogger.logPause('issue-search', 'user-time');
     this.clientLogger.logStart('issue-search', 'computer-time');
@@ -408,6 +451,8 @@ export class MrSearchBar extends LitElement {
       if (isNewPage) {
         // TODO(zhangtiff): Replace this event with Redux once all of Monorail
         // uses Redux.
+        // This is needed because navigating to the exact same page does not
+        // cause any changes to happen.
         this.dispatchEvent(new Event('refreshList',
             {'composed': true, 'bubbles': true}));
       } else {
@@ -416,11 +461,19 @@ export class MrSearchBar extends LitElement {
     }
   }
 
+  /**
+   * Wrap the native focus() function for the search form to allow parent
+   * elements to focus the search.
+   */
   focus() {
     const search = this.shadowRoot.querySelector('#searchq');
     search.focus();
   }
 
+  /**
+   * Populates the search dropdown.
+   * @return {Array<MenuItem>}
+   */
   get _searchMenuItems() {
     const projectName = this.projectName;
     return [
@@ -435,12 +488,18 @@ export class MrSearchBar extends LitElement {
     ];
   }
 
+  /**
+   * The search dropdown includes links like "Manage my saved queries..."
+   * that automatically navigate a user to a new page when they select those
+   * options.
+   * @param {Event} evt
+   */
   _redirectOnSelect(evt) {
     const target = evt.target;
     const option = target.options[target.selectedIndex];
 
     if (option.dataset.href) {
-      window.location.href = option.dataset.href;
+      this._page(option.dataset.href);
     }
   }
 }

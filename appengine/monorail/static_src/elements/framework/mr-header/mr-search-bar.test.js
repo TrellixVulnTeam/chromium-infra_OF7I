@@ -148,7 +148,7 @@ describe('mr-search-bar', () => {
 
     it('uses initial values when no form changes', async () => {
       element.initialQuery = 'test query';
-      element.currentCan = '3';
+      element.initialCan = '3';
 
       await element.updateComplete;
 

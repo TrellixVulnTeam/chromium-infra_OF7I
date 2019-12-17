@@ -135,7 +135,7 @@ export class MrHeader extends connectStore(LitElement) {
         .projectName=${this.projectName}
         .userDisplayName=${this.userDisplayName}
         .projectSavedQueries=${this.presentationConfig.savedQueries}
-        .currentCan=${this._currentCan}
+        .initialCan=${this._currentCan}
         .initialQuery=${this._currentQuery}
         .queryParams=${this.queryParams}
         ?hidden=${!this.projectName}
@@ -217,6 +217,10 @@ export class MrHeader extends connectStore(LitElement) {
     this.queryParams = sitewide.queryParams(state);
   }
 
+  /**
+   * @return {boolean} whether the currently logged in user has admin
+   *   privileges for the currently viewed project.
+   */
   get canAdministerProject() {
     if (!this.userDisplayName) return false; // Not logged in.
     if (this.isSiteAdmin) return true;
@@ -224,6 +228,10 @@ export class MrHeader extends connectStore(LitElement) {
     return this.userProjects.ownerOf.includes(this.projectName);
   }
 
+  /**
+   * @return {Array<MenuItem>} the dropdown items for the project selector,
+   *   showing which projects a user can switch to.
+   */
   get _projectDropdownItems() {
     const {userProjects, loginUrl} = this;
     if (!this.userDisplayName) {
@@ -260,11 +268,15 @@ export class MrHeader extends connectStore(LitElement) {
 
     items.push({text: 'All projects', url: '/hosting/'});
     items.forEach((item) => {
-      item.handler = () => this._projectChangedHandler(item);
+      item.handler = () => this._projectChangedHandler(item.url);
     });
     return items;
   }
 
+  /**
+   * @return {Array<MenuItem>} dropdown menu items to show in the project
+   *   settings menu.
+   */
   get _projectSettingsItems() {
     const {projectName, canAdministerProject} = this;
     const items = [
@@ -280,9 +292,14 @@ export class MrHeader extends connectStore(LitElement) {
     return items;
   }
 
-  _projectChangedHandler(item) {
+  /**
+   * Records Google Analytics events for when users change projects using
+   * the selector.
+   * @param {string} url which project URL the user is navigating to.
+   */
+  _projectChangedHandler(url) {
     // Just log it to GA and continue.
-    this.clientLogger.logEvent('project-change', item.url);
+    this.clientLogger.logEvent('project-change', url);
   }
 }
 
