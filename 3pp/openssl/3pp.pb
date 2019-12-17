@@ -6,6 +6,7 @@ create {
       default_version: "1.1.1d"
       original_download_url: "https://www.openssl.org/source/"
     }
+    patch_version: "chromium.1"
     patch_dir: "patches"
     unpack_archive: true
   }
