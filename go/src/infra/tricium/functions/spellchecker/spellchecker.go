@@ -51,9 +51,12 @@ var (
 	// ignoredWords are words that shouldn't be flagged, even if they appear in
 	// the dictionary.
 	ignoredWords = []string{
+		"aka",         // abbr. for also known as
 		"alph",        // person name
 		"als",         // abbr. for ambient light sensor
+		"ang",         // person name
 		"backed",      // as in "backed by"
+		"bae",         // person name
 		"ba",          // very short word, shouldn't be flagged
 		"cancelation", // alternative of cancellation
 		"cant",        // contraction, may appear in variable names
@@ -75,10 +78,11 @@ var (
 		"ith",         // ordinal form of variable i, like nth
 		"lightening",  // present participle of "to lighten"
 		"lod",         // abbr. of level of detail
-		"maks",        // person anme
+		"maks",        // person name
 		"mut",         // Rust keyword
 		"optin",       // alternative of opt-in
 		"process'",    // possessive of process
+		"que",         // person name
 		"reenable",    // alternative of re-enable
 		"referers",    // HTTP referer header uses one 'r'
 		"seeked",      // JS event
@@ -87,6 +91,7 @@ var (
 		"te",          // TE is a HTTP request header
 		"tho",         // informal variant of though
 		"vertexes",    // alternative of vertices
+		"wan",         // person name
 		"wasnt",       // contraction, may appear in variable names
 		"wont",        // contraction, may appear in variable names
 		"wontfix",     // monorail bug status
