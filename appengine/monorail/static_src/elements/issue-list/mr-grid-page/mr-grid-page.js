@@ -8,6 +8,7 @@ import {LitElement, html, css} from 'lit-element';
 import {store, connectStore} from 'reducers/base.js';
 import {createObjectComparisonFunc} from 'shared/helpers.js';
 import * as issue from 'reducers/issue.js';
+import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import './mr-grid-controls.js';
@@ -126,6 +127,7 @@ export class MrGridPage extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
+    this.projectName = project.viewedProjectName(state);
     this.issues = (issue.issueList(state) || []);
     this.progress = (issue.issueListProgress(state) || 0);
     this.totalIssues = (issue.totalIssues(state) || 0);

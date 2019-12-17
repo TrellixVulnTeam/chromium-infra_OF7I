@@ -9,6 +9,12 @@ import * as project from './project.js';
 import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
 
 describe('project reducers', () => {
+  it('nameReducer', () => {
+    const action = {type: project.SELECT, projectName: 'project-name'};
+    const actual = project.nameReducer(null, action);
+    assert.deepEqual(actual, 'project-name');
+  });
+
   it('visibleMembersReducer', () => {
     assert.deepEqual(project.visibleMembersReducer({}, {
       type: project.FETCH_VISIBLE_MEMBERS_SUCCESS,
@@ -34,6 +40,11 @@ describe('project reducers', () => {
 });
 
 describe('project selectors', () => {
+  it('viewedProjectName', () => {
+    const state = {project: {name: 'project-name'}};
+    assert.deepEqual(project.viewedProjectName(state), 'project-name');
+  });
+
   it('visibleMembers', () => {
     assert.deepEqual(project.visibleMembers({}), {});
     assert.deepEqual(project.visibleMembers({project: {}}), {});
@@ -573,6 +584,12 @@ describe('project action creators', () => {
 
   afterEach(() => {
     prpcClient.call.restore();
+  });
+
+  it('select', () => {
+    project.select('project-name')(dispatch);
+    const action = {type: project.SELECT, projectName: 'project-name'};
+    sinon.assert.calledWith(dispatch, action);
   });
 
   it('fetchPresentationConfig', async () => {

@@ -7,6 +7,7 @@ import page from 'page';
 import qs from 'qs';
 import {store, connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
+import * as project from 'reducers/project.js';
 import * as user from 'reducers/user.js';
 import * as sitewide from 'reducers/sitewide.js';
 import {prpcClient} from 'prpc-client-instance.js';
@@ -383,6 +384,7 @@ export class MrListPage extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
+    this.projectName = project.viewedProjectName(state);
     this._isLoggedIn = user.isLoggedIn(state);
     this._currentUser = user.user(state);
     this._usersProjects = user.projectsPerUser(state);

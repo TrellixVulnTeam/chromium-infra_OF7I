@@ -200,6 +200,8 @@ export class MrHeader extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
+    this.projectName = project.viewedProjectName(state);
+
     this.userProjects = user.projects(state);
 
     const currentUser = user.user(state);

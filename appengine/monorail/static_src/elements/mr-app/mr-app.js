@@ -53,13 +53,11 @@ export class MrApp extends connectStore(LitElement) {
   render() {
     return html`
       <mr-keystrokes
-        .projectName=${this.projectName}
         .issueId=${this.queryParams.id}
         .queryParams=${this.queryParams}
         .issueEntryUrl=${this.issueEntryUrl}
       ></mr-keystrokes>
       <mr-header
-        .projectName=${this.projectName}
         .userDisplayName=${this.userDisplayName}
         .issueEntryUrl=${this.issueEntryUrl}
         .loginUrl=${this.loginUrl}
@@ -88,7 +86,6 @@ export class MrApp extends connectStore(LitElement) {
     if (this.page === 'detail') {
       return html`
         <mr-issue-page
-          .projectName=${this.projectName}
           .userDisplayName=${this.userDisplayName}
           .queryParams=${this.queryParams}
           .loginUrl=${this.loginUrl}
@@ -97,14 +94,12 @@ export class MrApp extends connectStore(LitElement) {
     } else if (this.page === 'grid') {
       return html`
         <mr-grid-page
-          .projectName=${this.projectName}
           .userDisplayName=${this.userDisplayName}
         ></mr-grid-page>
       `;
     } else if (this.page === 'list') {
       return html`
         <mr-list-page
-          .projectName=${this.projectName}
           .queryParams=${this.queryParams}
           .userDisplayName=${this.userDisplayName}
         ></mr-list-page>
@@ -112,7 +107,6 @@ export class MrApp extends connectStore(LitElement) {
     } else if (this.page === 'chart') {
       return html`
         <mr-chart-page
-          .projectName=${this.projectName}
           .queryParams=${this.queryParams}
         ></mr-chart-page>
       `;
@@ -144,11 +138,6 @@ export class MrApp extends connectStore(LitElement) {
        * Backend-generated URL for the page the user is directed to for logout.
        */
       logoutUrl: {type: String},
-      /**
-       * If the user is within a project page, this will be a string with
-       * the name of the project the user is currently viewing.
-       */
-      projectName: {type: String},
       /**
        * The display name of the currently logged in user.
        */
@@ -205,10 +194,6 @@ export class MrApp extends connectStore(LitElement) {
       store.dispatch(user.fetch(this.userDisplayName));
     }
 
-    if (changedProperties.has('projectName')) {
-      store.dispatch(project.fetch(this.projectName));
-    }
-
     if (changedProperties.has('pageTitle')) {
       // To ensure that changes to the page title are easy to reason about,
       // we want to sync the current pageTitle in the Redux state to
@@ -243,7 +228,7 @@ export class MrApp extends connectStore(LitElement) {
     page('*', this._preRouteHandler.bind(this));
     page('/p/:project/issues/list_new', this._loadListPage.bind(this));
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this));
-    page('/p/:project/*', this._initializeViewedProject.bind(this));
+    page('/p/:project/*', this._selectProject.bind(this));
     page(
         '/users/:user/hotlists/:hotlist',
         this._selectHotlist, this._loadHotlistIssuesPage.bind(this));
@@ -339,8 +324,9 @@ export class MrApp extends connectStore(LitElement) {
    * @param {PageJS.Context} ctx A page.js Context containing routing state.
    * @param {function} next Passes execution on to the next registered callback.
    */
-  _initializeViewedProject(ctx, next) {
-    this.projectName = ctx.params.project;
+  _selectProject(ctx, next) {
+    store.dispatch(project.select(ctx.params.project));
+    store.dispatch(project.fetch(ctx.params.project));
     next();
   }
 

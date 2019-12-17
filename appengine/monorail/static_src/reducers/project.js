@@ -13,6 +13,8 @@ import {fieldNameToLabelPrefix,
 import {prpcClient} from 'prpc-client-instance.js';
 
 // Actions
+export const SELECT = 'project/SELECT';
+
 const FETCH_CONFIG_START = 'project/FETCH_CONFIG_START';
 const FETCH_CONFIG_SUCCESS = 'project/FETCH_CONFIG_SUCCESS';
 const FETCH_CONFIG_FAILURE = 'project/FETCH_CONFIG_FAILURE';
@@ -42,6 +44,7 @@ const FETCH_FIELDS_LIST_FAILURE = 'project/FECTH_FIELDS_LIST_FAILURE';
 
 /* State Shape
 {
+  name: string,
   config: Object,
   presentationConfig: Object,
   templates: Array,
@@ -54,6 +57,10 @@ const FETCH_FIELDS_LIST_FAILURE = 'project/FECTH_FIELDS_LIST_FAILURE';
 */
 
 // Reducers
+export const nameReducer = createReducer(null, {
+  [SELECT]: (_state, action) => action.projectName,
+});
+
 const configReducer = createReducer({}, {
   [FETCH_CONFIG_SUCCESS]: (_state, action) => {
     return action.config;
@@ -100,6 +107,7 @@ const requestsReducer = combineReducers({
 });
 
 export const reducer = combineReducers({
+  name: nameReducer,
   config: configReducer,
   presentationConfig: presentationConfigReducer,
   visibleMembers: visibleMembersReducer,
@@ -109,6 +117,8 @@ export const reducer = combineReducers({
 
 // Selectors
 export const project = (state) => state.project || {};
+export const viewedProjectName = createSelector(project,
+    (project) => project.name || null);
 export const config = createSelector(project,
     (project) => project.config || {});
 export const projectName = createSelector(config,
@@ -304,6 +314,15 @@ export const fetchingConfig = (state) => {
 };
 
 // Action Creators
+/**
+ * Action creator to set the currently viewed Project.
+ * @param {string} projectName The name of the Project to select.
+ * @return {function(function): void}
+ */
+export const select = (projectName) => {
+  return (dispatch) => dispatch({type: SELECT, projectName});
+};
+
 export const fetch = (projectName) => async (dispatch) => {
   dispatch(fetchConfig(projectName));
   // TODO(zhangtiff): Split up GetConfig into multiple calls to

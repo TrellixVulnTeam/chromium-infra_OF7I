@@ -9,6 +9,7 @@ import Mousetrap from 'mousetrap';
 
 import {store, connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
+import * as project from 'reducers/project.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {issueRefToString} from 'shared/converters.js';
 
@@ -202,6 +203,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
+    this.projectName = project.viewedProjectName(state);
     this._issuePermissions = issue.permissions(state);
 
     const starredIssues = issue.starredIssues(state);

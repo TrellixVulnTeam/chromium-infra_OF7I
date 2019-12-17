@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
+import {connectStore} from 'reducers/base.js';
+import * as project from 'reducers/project.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 import '../mr-chart/mr-chart.js';
 
@@ -12,7 +14,7 @@ import '../mr-chart/mr-chart.js';
  * Chart page view containing mr-mode-selector and mr-chart.
  * @extends {LitElement}
  */
-export class MrChartPage extends LitElement {
+export class MrChartPage extends connectStore(LitElement) {
   /** @override */
   static get styles() {
     return css`
@@ -84,6 +86,11 @@ export class MrChartPage extends LitElement {
       projectName: {type: String},
       queryParams: {type: Object},
     };
-  };
+  }
+
+  /** @override */
+  stateChanged(state) {
+    this.projectName = project.viewedProjectName(state);
+  }
 };
 customElements.define('mr-chart-page', MrChartPage);
