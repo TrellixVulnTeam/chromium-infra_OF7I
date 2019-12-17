@@ -1,3 +1,22 @@
+# Release Notes sheriff-o-matic 2019-12-18
+
+- 3 commits, 1 bugs affected since 5eb0791 ()
+- 2 Authors:
+  - jsca@google.com
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [Have the Android SoM tree point to chromium-status.](https://chromium-review.googlesource.com/c/infra/infra/+/1970671) (jsca@google.com)
+- [Add Tuan as owner of SoM directory](https://chromium-review.googlesource.com/c/infra/infra/+/1928357) (nqmtuan@google.com)
+- [Release note 27 Nov](https://chromium-review.googlesource.com/c/infra/infra/+/1936510) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1034787](https://crbug.com/1034787)
+
+
 # Release Notes sheriff-o-matic 2019-11-27
 
 - 5 commits, 4 bugs affected since f6ebaec (2019-11-24T23:08:39Z)
