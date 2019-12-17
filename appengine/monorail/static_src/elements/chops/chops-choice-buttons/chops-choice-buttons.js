@@ -5,23 +5,48 @@
 import {LitElement, html, css} from 'lit-element';
 import 'elements/chops/chops-button/chops-button.js';
 
+/**
+ * @typedef {Object} ChoiceOption
+ * @property {string} [value] a unique string identifier for this option.
+ * @property {string} [text] the text displayed to the user for this option.
+ * @property {string} [url] the url this option navigates to.
+ */
+
+/**
+ * Shared component for rendering a set of choice chips.
+ * @extends {LitElement}
+ */
 export class ChopsChoiceButtons extends LitElement {
   /** @override */
   render() {
     return html`
-      ${(this.options).map((option) => option.url ?
-        html`
-          <a
-            ?selected=${this.value === option.value}
-            href=${option.url}
-          >${option.text}</a>
-        ` : html`
-          <button
-            ?selected=${this.value === option.value}
-            @click=${this._setValue}
-            value=${option.value}
-          >${option.text}</button>
-        `)}
+      ${(this.options).map((option) => this._renderOption(option))}
+    `;
+  }
+
+  /**
+   * Rendering helper for rendering a single option.
+   * @param {ChoiceOption} option
+   * @return {TemplateResult}
+   */
+  _renderOption(option) {
+    const isSelected = this.value === option.value;
+    if (option.url) {
+      return html`
+        <a
+          ?selected=${isSelected}
+          aria-current=${isSelected ? 'true' : 'false'}
+          href=${option.url}
+        >${option.text}</a>
+      `;
+    }
+    return html`
+      <button
+        ?selected=${isSelected}
+        aria-current=${isSelected ? 'true' : 'false'}
+        @click=${this._setValue}
+        value=${option.value}
+      >${option.text}</button>
     `;
   }
 
@@ -33,6 +58,9 @@ export class ChopsChoiceButtons extends LitElement {
        * {value, text, url}
        */
       options: {type: Array},
+      /**
+       * Which button is currently selected.
+       */
       value: {type: String},
     };
   };
@@ -40,7 +68,12 @@ export class ChopsChoiceButtons extends LitElement {
   /** @override */
   constructor() {
     super();
+
+    /**
+     * @type {Array<ChoiceOption>}
+     */
     this.options = [];
+    this.value = '';
   };
 
   /** @override */
@@ -63,7 +96,6 @@ export class ChopsChoiceButtons extends LitElement {
         background: var(--chops-choice-bg);
         text-decoration: none;
         border-radius: 16px;
-        outline: none;
       }
       button[selected], a[selected] {
         background: var(--chops-blue-50);
@@ -73,6 +105,10 @@ export class ChopsChoiceButtons extends LitElement {
     `;
   };
 
+  /**
+   * Public method for allowing parents to change the value of this component.
+   * @param {string} newValue
+   */
   setValue(newValue) {
     if (newValue !== this.value) {
       this.value = newValue;
@@ -80,6 +116,11 @@ export class ChopsChoiceButtons extends LitElement {
     }
   }
 
+  /**
+   * Private setter for updating the value of the component based on an internal
+   * click event.
+   * @param {MouseEvent} e
+   */
   _setValue(e) {
     this.setValue(e.target.getAttribute('value'));
   }

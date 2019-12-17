@@ -123,7 +123,7 @@ export class MrPhase extends connectStore(LitElement) {
         </div>
         ${isPhaseWithMilestone ? html`
           <chops-button @click=${this.edit} class="de-emphasized phase-edit">
-            <i class="material-icons">create</i>
+            <i class="material-icons" role="presentation">create</i>
             Edit
           </chops-button>
         `: ''}

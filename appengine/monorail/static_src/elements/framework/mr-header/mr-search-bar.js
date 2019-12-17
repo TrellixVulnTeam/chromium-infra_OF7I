@@ -187,7 +187,7 @@ export class MrSearchBar extends LitElement {
   _renderSearchScopeSelector() {
     return html`
       <div class="select-container">
-        <i class="material-icons">arrow_drop_down</i>
+        <i class="material-icons" role="presentation">arrow_drop_down</i>
         <select
           id="can"
           name="can"

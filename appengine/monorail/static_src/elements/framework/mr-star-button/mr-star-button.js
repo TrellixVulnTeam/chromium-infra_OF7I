@@ -47,26 +47,40 @@ export class MrStarButton extends connectStore(LitElement) {
 
   /** @override */
   render() {
+    const isStarred = this._starredIssues.has(issueRefToString(this.issueRef));
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <button class="star-button"
         @click=${this.toggleStar}
         ?disabled=${!this._canStar}
+        title=${this._renderStarToolTip(isStarred, this._isLoggedIn)}
+        aria-checked=${isStarred ? 'true' : 'false'}
       >
-        ${this._starredIssues.has(issueRefToString(this.issueRef)) ? html`
-          <i class="material-icons starred" title="You've starred this issue">
+        ${isStarred ? html`
+          <i class="material-icons starred" role="presentation">
             star
           </i>
         `: html`
-          <i
-            class="material-icons"
-            title="${this._isLoggedIn ? 'Click' : 'Log in'} to star this issue"
-          >
+          <i class="material-icons" role="presentation">
             star_border
           </i>
         `}
       </button>
     `;
+  }
+
+  /**
+   *
+   * @param {boolean} isStarred Whether the issue is starred.
+   * @param {boolean} isLoggedIn Whether the current user is logged in.
+   * @return {string} the title to display on the star button.
+   */
+  _renderStarToolTip(isStarred, isLoggedIn) {
+    if (isStarred) {
+      return `Unstar this issue`;
+    }
+
+    return `${isLoggedIn ? 'Click' : 'Log in'} to star this issue`;
   }
 
   /** @override */

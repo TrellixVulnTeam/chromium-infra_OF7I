@@ -147,7 +147,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
               class="linkify"
               @click=${this.openViewBlockedOn}
             >
-              <i class="material-icons">list</i>
+              <i class="material-icons" role="presentation">list</i>
               View details
             </button>
           </div>
@@ -179,7 +179,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
               class="linkify"
               @click=${this.openUpdateHotlists}
             >
-              <i class="material-icons">create</i> Update your hotlists
+              <i class="material-icons" role="presentation">create</i> Update your hotlists
             </button>
           </div>
         </div>

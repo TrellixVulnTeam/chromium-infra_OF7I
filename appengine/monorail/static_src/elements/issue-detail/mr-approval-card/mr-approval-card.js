@@ -160,7 +160,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
         </i>
         <h3>${this.fieldName}</h3>
         <span class="status">
-          <i class="material-icons status-icon">
+          <i class="material-icons status-icon" role="presentation">
             ${CLASS_ICON_MAP[this._statusClass]}
           </i>
           ${this._status}

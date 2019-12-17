@@ -14,6 +14,14 @@ export class MrCrbugLink extends LitElement {
   /** @override */
   static get styles() {
     return css`
+      :host {
+         /**
+         * CSS variables provided to allow conditionally hiding <mr-crbug-link>
+         * in a way that's screenreader friendly.
+         */
+        --mr-crbug-link-opacity: 1;
+        --mr-crbug-link-opacity-focused: 1;
+      }
       a.material-icons {
         font-size: var(--chops-icon-font-size);
         display: inline-block;
@@ -22,6 +30,12 @@ export class MrCrbugLink extends LitElement {
         box-sizing: border-box;
         text-decoration: none;
         vertical-align: middle;
+      }
+      a {
+        opacity: var(--mr-crbug-link-opacity);
+      }
+      a:focus {
+        opacity: var(--mr-crbug-link-opacity-focused);
       }
     `;
   }
@@ -42,11 +56,17 @@ export class MrCrbugLink extends LitElement {
   /** @override */
   static get properties() {
     return {
-      // The issue being viewed. Falls back gracefully if this is only a ref.
+      /**
+       * The issue being viewed. Falls back gracefully if this is only a ref.
+       */
       issue: {type: Object},
     };
   }
 
+  /**
+   * Computes the URL to render in the shortlink.
+   * @return {string}
+   */
   get _issueUrl() {
     const issue = this.issue;
     if (!issue) return '';

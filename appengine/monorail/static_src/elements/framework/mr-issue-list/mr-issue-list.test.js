@@ -492,6 +492,30 @@ describe('mr-issue-list', () => {
       assert.include(issues[0].textContent, 'issue 1');
     });
 
+    it('select all / none conditionally shows tooltip', async () => {
+      element.issues = [
+        {summary: 'issue 1', localId: 1, projectName: 'proj'},
+        {summary: 'issue 2', localId: 2, projectName: 'proj'},
+      ];
+
+      await element.updateComplete;
+      assert.deepEqual(element.selectedIssues, []);
+
+      const selectAll = element.shadowRoot.querySelector('.select-all');
+
+      // No issues selected, offer "Select All".
+      assert.equal(selectAll.title, 'Select All');
+      assert.equal(selectAll.getAttribute('aria-label'), 'Select All');
+
+      selectAll.click();
+
+      await element.updateComplete;
+
+      // Some issues selected, offer "Select None".
+      assert.equal(selectAll.title, 'Select None');
+      assert.equal(selectAll.getAttribute('aria-label'), 'Select None');
+    });
+
     it('clicking select all selects all issues', async () => {
       element.issues = [
         {summary: 'issue 1', localId: 1, projectName: 'proj'},

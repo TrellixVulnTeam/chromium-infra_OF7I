@@ -51,7 +51,7 @@ describe('chops-choice-buttons', () => {
     sinon.assert.notCalled(changeStub);
   });
 
-  it('selected value highlighted', async () => {
+  it('selected value highlighted and has aria-current="true"', async () => {
     element.options = [
       {value: 'test', text: 'test'},
       {value: 'selected', text: 'highlighted!'},
@@ -64,6 +64,9 @@ describe('chops-choice-buttons', () => {
 
     assert.isFalse(options[0].hasAttribute('selected'));
     assert.isTrue(options[1].hasAttribute('selected'));
+
+    assert.equal(options[0].getAttribute('aria-current'), 'false');
+    assert.equal(options[1].getAttribute('aria-current'), 'true');
   });
 
   it('renders <a> tags when url set', async () => {

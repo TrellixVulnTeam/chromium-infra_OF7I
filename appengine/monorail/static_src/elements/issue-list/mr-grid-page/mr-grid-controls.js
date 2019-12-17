@@ -13,6 +13,10 @@ import './mr-grid-dropdown.js';
 import {getAvailableGridFields} from './extract-grid-data.js';
 import {urlWithNewParams} from 'shared/helpers.js';
 
+/**
+ * Component for displaying the controls shown on the Monorail issue grid page.
+ * @extends {LitElement}
+ */
 export class MrGridControls extends connectStore(LitElement) {
   /** @override */
   static get styles() {

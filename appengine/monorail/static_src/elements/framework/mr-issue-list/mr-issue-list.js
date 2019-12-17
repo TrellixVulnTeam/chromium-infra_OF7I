@@ -171,10 +171,14 @@ export class MrIssueList extends connectStore(LitElement) {
         border-left: 4px solid var(--chops-blue-700);
       }
       mr-crbug-link {
-        visibility: hidden;
+        /* We need the shortlink to be hidden but still accessible.
+         * The opacity attribute visually hides a link while still
+         * keeping it in the DOM.opacity. */
+        --mr-crbug-link-opacity: 0;
+        --mr-crbug-link-opacity-focused: 1;
       }
       td:hover > mr-crbug-link {
-        visibility: visible;
+        --mr-crbug-link-opacity: 1;
       }
       .col-summary, .header-summary {
         /* Setting a table cell to 100% width makes it take up
@@ -217,6 +221,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /** @override */
   render() {
     const selectAllChecked = this._selectedIssues.size > 0;
+    const checkboxLabel = `Select ${selectAllChecked ? 'None' : 'All'}`;
 
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -229,7 +234,8 @@ export class MrIssueList extends connectStore(LitElement) {
                   class="select-all"
                   .checked=${selectAllChecked}
                   type="checkbox"
-                  aria-label="Select ${selectAllChecked ? 'All' : 'None'}"
+                  aria-label=${checkboxLabel}
+                  title=${checkboxLabel}
                   @change=${this._selectAll}
                 />
               ` : ''}

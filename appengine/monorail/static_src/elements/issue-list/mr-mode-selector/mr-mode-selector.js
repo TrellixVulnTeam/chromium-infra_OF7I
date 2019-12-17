@@ -6,6 +6,11 @@ import {ChopsChoiceButtons} from
   'elements/chops/chops-choice-buttons/chops-choice-buttons.js';
 import {urlWithNewParams} from 'shared/helpers.js';
 
+/**
+ * Component for showing the chips to switch between List, Grid, and Chart modes
+ * on the Monorail issue list page.
+ * @extends {ChopsChoiceButtons}
+ */
 export class MrModeSelector extends ChopsChoiceButtons {
   /** @override */
   static get properties() {
