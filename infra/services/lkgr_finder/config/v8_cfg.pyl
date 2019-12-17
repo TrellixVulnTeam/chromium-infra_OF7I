@@ -65,6 +65,7 @@
         # client.v8.fyi
         'Linux V8 FYI Release (NVIDIA)',
         'V8 Blink Linux',
+        'V8 Blink Linux Debug',
         'V8 Blink Linux Future',
         'V8 Linux GN',
 
