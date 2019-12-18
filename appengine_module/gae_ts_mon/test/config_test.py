@@ -33,6 +33,7 @@ class InitializeTest(test_case.TestCase):
 
     mock.patch('infra_libs.ts_mon.common.monitors.HttpsMonitor',
                autospec=True).start()
+    self.app = webapp2.WSGIApplication()
 
   def tearDown(self):
     config.reset_for_unittest()
@@ -40,7 +41,7 @@ class InitializeTest(test_case.TestCase):
     super(InitializeTest, self).tearDown()
 
   def test_sets_target(self):
-    config.initialize(is_local_unittest=False)
+    config.initialize(self.app, is_local_unittest=False)
 
     self.assertEqual('sample-app', self.mock_state.target.service_name)
     self.assertEqual('default', self.mock_state.target.job_name)
@@ -49,18 +50,22 @@ class InitializeTest(test_case.TestCase):
 
   def test_sets_monitor(self):
     os.environ['SERVER_SOFTWARE'] = 'Production'  # != 'Development'
-    config.initialize(is_local_unittest=False)
+    config.initialize(self.app, is_local_unittest=False)
     self.assertEquals(1, monitors.HttpsMonitor.call_count)
 
+  def test_initialize_disallow_None_app(self):
+    with self.assertRaises(Exception):
+      config.initialize(app=None, is_local_unittest=False)
+
   def test_sets_monitor_dev(self):
-    config.initialize(is_local_unittest=False)
+    config.initialize(self.app, is_local_unittest=False)
     self.assertFalse(monitors.HttpsMonitor.called)
     self.assertIsInstance(self.mock_state.global_monitor, monitors.DebugMonitor)
 
   def test_initialize_with_enabled_fn(self):
     is_enabled_fn = mock.Mock()
     config.initialize(
-        None, is_enabled_fn=is_enabled_fn, is_local_unittest=False)
+        self.app, is_enabled_fn=is_enabled_fn, is_local_unittest=False)
     self.assertIs(is_enabled_fn, interface.state.flush_enabled_fn)
 
   @mock.patch('gae_ts_mon.config.instrument_wsgi_application')
