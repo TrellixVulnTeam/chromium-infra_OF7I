@@ -35,6 +35,6 @@ import './typedef-user.js';
  * through Redux.
  *
  * @typedef {Object} ReduxRequestState
- * @property {boolean} [requesting] Whether a request is in flight.
- * @property {Error} [error] An Error Object returned by the request.
+ * @property {boolean=} requesting Whether a request is in flight.
+ * @property {Error=} error An Error Object returned by the request.
  */

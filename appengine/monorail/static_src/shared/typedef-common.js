@@ -12,7 +12,7 @@
  *
  * @typedef {Object} ComponentRef
  * @property {string} path
- * @property {boolean} [isDerived]
+ * @property {boolean=} isDerived
  */
 
 /**
@@ -36,7 +36,7 @@
  *
  * @typedef {Object} LabelRef
  * @property {string} label
- * @property {boolean} [isDerived]
+ * @property {boolean=} isDerived
  */
 
 /**
@@ -44,33 +44,33 @@
  *
  * @typedef {Object} StatusRef
  * @property {string} status
- * @property {boolean} [meansOpen]
- * @property {boolean} [isDerived]
+ * @property {boolean=} meansOpen
+ * @property {boolean=} isDerived
  */
 
 /**
  * An IssueRef Object returned by the pRPC API common.proto.
  *
  * @typedef {Object} IssueRef
- * @property {string} [projectName]
- * @property {number} [localId]
- * @property {string} [extIdentifier]
+ * @property {string=} projectName
+ * @property {number=} localId
+ * @property {string=} extIdentifier
  */
 
 /**
  * A UserRef Object returned by the pRPC API common.proto.
  *
  * @typedef {Object} UserRef
- * @property {string} [displayName]
- * @property {number} [userId]
+ * @property {string=} displayName
+ * @property {number=} userId
  */
 
 /**
  * A HotlistRef Object returned by the pRPC API common.proto.
  *
  * @typedef {Object} HotlistRef
- * @property {string} [name]
- * @property {UserRef} [owner]
+ * @property {string=} name
+ * @property {UserRef=} owner
  */
 
 /**

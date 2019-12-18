@@ -40,8 +40,8 @@ const GROUPABLE_FIELD_TYPES = new Set([
  * A special value of 'None' will always be prepended to the otherwise sorted
  * list returned.
  *
- * @param {Iterable<FieldDef>} [fieldDefs]
- * @param {Iterable<string>} [labelFields]
+ * @param {Iterable<FieldDef>=} fieldDefs
+ * @param {Iterable<string>=} labelFields
  * @return {Array<string>}
  */
 export function getAvailableGridFields(fieldDefs = [], labelFields = []) {
@@ -177,12 +177,12 @@ function prepareHeadings(
  * Groups issues by their values for the given fields.
  *
  * @param {Array<Issue>} issues The issues we are grouping.
- * @param {string} [xFieldName] name of the field for grouping columns.
- * @param {string} [yFieldName] name of the field for grouping rows.
- * @param {string} [projectName]
- * @param {Map} [fieldDefMap]
- * @param {Set} [labelPrefixSet]
- * @param {Array<StatusDef>} [statusDefs]
+ * @param {string=} xFieldName name of the field for grouping columns.
+ * @param {string=} yFieldName name of the field for grouping rows.
+ * @param {string=} projectName
+ * @param {Map=} fieldDefMap
+ * @param {Set=} labelPrefixSet
+ * @param {Array<StatusDef>=} statusDefs
  * @return {!Object} Grid data
  *   - groupedIssues: A map of issues grouped by thir xField and yField values.
  *   - xHeadings: sorted headings for columns.

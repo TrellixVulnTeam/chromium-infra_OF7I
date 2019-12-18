@@ -372,7 +372,7 @@ export class MrSearchBar extends LitElement {
   /**
    * Updates the URL with the new search set in the query string.
    * @param {HTMLFormElement} form the native form element to submit.
-   * @param {boolean} [newTab] whether to open the search in a new tab.
+   * @param {boolean=} newTab whether to open the search in a new tab.
    */
   _runSearch(form, newTab) {
     this.clientLogger.logEnd('query-edit');

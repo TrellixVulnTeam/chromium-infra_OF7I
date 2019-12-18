@@ -7,9 +7,9 @@ import 'elements/chops/chops-button/chops-button.js';
 
 /**
  * @typedef {Object} ChoiceOption
- * @property {string} [value] a unique string identifier for this option.
- * @property {string} [text] the text displayed to the user for this option.
- * @property {string} [url] the url this option navigates to.
+ * @property {string=} value a unique string identifier for this option.
+ * @property {string=} text the text displayed to the user for this option.
+ * @property {string=} url the url this option navigates to.
  */
 
 /**

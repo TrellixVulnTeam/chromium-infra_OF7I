@@ -13,10 +13,10 @@ import './typedef-common.js';
  * A User Object returned by the pRPC API user_objects.proto.
  *
  * @typedef {Object} User
- * @property {string} [displayName]
- * @property {number} [userId]
- * @property {boolean} [isSiteAdmin]
- * @property {string} [availability]
- * @property {UserRef} [linkedParentRef]
- * @property {Array<UserRef>} [linkedChildRefs]
+ * @property {string=} displayName
+ * @property {number=} userId
+ * @property {boolean=} isSiteAdmin
+ * @property {string=} availability
+ * @property {UserRef=} linkedParentRef
+ * @property {Array<UserRef>=} linkedChildRefs
  */

@@ -13,11 +13,11 @@ export const SCREENREADER_ATTRIBUTE_ERROR = `For screenreader support,
  * dropdown list.
  *
  * @typedef {Object} MenuItem
- * @property {string} [text] The text to display in the menu.
- * @property {string} [icon] A Material Design icon shown left of the text.
- * @property {Array<MenuItem>} [items] A specification for a nested submenu.
- * @property {function} [handler] An optional click handler for an item.
- * @property {string} [url] A link for the menu item to navigate to.
+ * @property {string=} text The text to display in the menu.
+ * @property {string=} icon A Material Design icon shown left of the text.
+ * @property {Array<MenuItem>=} items A specification for a nested submenu.
+ * @property {function=} handler An optional click handler for an item.
+ * @property {string=} url A link for the menu item to navigate to.
  */
 
 /**

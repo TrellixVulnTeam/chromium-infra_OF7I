@@ -406,7 +406,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * @param {Issue} issue
    * @param {number} i Index within the list of issues
-   * @param {boolean} [isHidden]
+   * @param {boolean=} isHidden
    * @return {TemplateResult}
    */
   _renderRow(issue, i, isHidden = false) {
@@ -1187,7 +1187,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * issue associated with the row.
    *
    * @param {MouseEvent|KeyboardEvent} rowEvent A click or 'enter' on a row.
-   * @param {boolean} [openNewTab] Forces opening in a new tab
+   * @param {boolean=} openNewTab Forces opening in a new tab
    */
   _maybeOpenIssueRow(rowEvent, openNewTab = false) {
     const path = rowEvent.composedPath();

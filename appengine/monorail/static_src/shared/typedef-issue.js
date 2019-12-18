@@ -60,19 +60,19 @@ import './typedef-common.js';
  * @typedef {Object} IssueComment
  * @property {string} projectName
  * @property {number} localId
- * @property {number} [sequenceNum]
- * @property {boolean} [isDeleted]
- * @property {UserRef} [commenter]
- * @property {number} [timestamp]
- * @property {string} [content]
- * @property {string} [inboundMessage]
- * @property {Array<Amendment>} [amendments]
- * @property {Array<Attachment>} [attachments]
- * @property {FieldRef} [approvalRef]
- * @property {number} [descriptionNum]
- * @property {boolean} [isSpam]
- * @property {boolean} [canDelete]
- * @property {boolean} [canFlag]
+ * @property {number=} sequenceNum
+ * @property {boolean=} isDeleted
+ * @property {UserRef=} commenter
+ * @property {number=} timestamp
+ * @property {string=} content
+ * @property {string=} inboundMessage
+ * @property {Array<Amendment>=} amendments
+ * @property {Array<Attachment>=} attachments
+ * @property {FieldRef=} approvalRef
+ * @property {number=} descriptionNum
+ * @property {boolean=} isSpam
+ * @property {boolean=} canDelete
+ * @property {boolean=} canFlag
  */
 
 /**
@@ -81,8 +81,8 @@ import './typedef-common.js';
  * @typedef {Object} FieldValue
  * @property {FieldRef} fieldRef
  * @property {string} value
- * @property {boolean} [isDerived]
- * @property {PhaseRef} [phaseRef]
+ * @property {boolean=} isDerived
+ * @property {PhaseRef=} phaseRef
  */
 
 /**
@@ -91,31 +91,31 @@ import './typedef-common.js';
  * @typedef {Object} Issue
  * @property {string} projectName
  * @property {number} localId
- * @property {string} [summary]
- * @property {StatusRef} [statusRef]
- * @property {UserRef} [ownerRef]
- * @property {Array<UserRef>} [ccRefs]
- * @property {Array<LabelRef>} [labelRefs]
- * @property {Array<ComponentRef>} [componentRefs]
- * @property {Array<IssueRef>} [blockedOnIssueRefs]
- * @property {Array<IssueRef>} [blockingIssueRefs]
- * @property {Array<IssueRef>} [danglingBlockedOnRefs]
- * @property {Array<IssueRef>} [danglingBlockingRefs]
- * @property {IssueRef} [mergedIntoIssueRef]
- * @property {FieldValue} [fieldValues]
- * @property {boolean} [isDeleted]
- * @property {UserRef} [reporterRef]
- * @property {number} [openedTimestamp]
- * @property {number} [closedTimestamp]
- * @property {number} [modifiedTimestamp]
- * @property {number} [componentModifiedTimestamp]
- * @property {number} [statusModifiedTimestamp]
- * @property {number} [ownerModifiedTimestamp]
- * @property {number} [starCount]
- * @property {boolean} [isSpam]
- * @property {number} [attachmentCount]
- * @property {Array<Approval>} [approvalValues]
- * @property {Array<PhaseDef>} [phases]
+ * @property {string=} summary
+ * @property {StatusRef=} statusRef
+ * @property {UserRef=} ownerRef
+ * @property {Array<UserRef>=} ccRefs
+ * @property {Array<LabelRef>=} labelRefs
+ * @property {Array<ComponentRef>=} componentRefs
+ * @property {Array<IssueRef>=} blockedOnIssueRefs
+ * @property {Array<IssueRef>=} blockingIssueRefs
+ * @property {Array<IssueRef>=} danglingBlockedOnRefs
+ * @property {Array<IssueRef>=} danglingBlockingRefs
+ * @property {IssueRef=} mergedIntoIssueRef
+ * @property {FieldValue=} fieldValues
+ * @property {boolean=} isDeleted
+ * @property {UserRef=} reporterRef
+ * @property {number=} openedTimestamp
+ * @property {number=} closedTimestamp
+ * @property {number=} modifiedTimestamp
+ * @property {number=} componentModifiedTimestamp
+ * @property {number=} statusModifiedTimestamp
+ * @property {number=} ownerModifiedTimestamp
+ * @property {number=} starCount
+ * @property {boolean=} isSpam
+ * @property {number=} attachmentCount
+ * @property {Array<Approval>=} approvalValues
+ * @property {Array<PhaseDef>=} phases
  */
 
 /**
