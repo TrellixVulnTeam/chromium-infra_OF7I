@@ -11,8 +11,8 @@ const SET = 'set';
  * Track page-to-page navigation via google analytics. Global window.ga
  * is set in server rendered HTML.
  *
- * @param {String} page
- * @param {String} userDisplayName
+ * @param {string} page
+ * @param {string} userDisplayName
  */
 export const trackPageChange = (page = '', userDisplayName = '') => {
   ga(SET, TITLE, `Issue ${page}`);

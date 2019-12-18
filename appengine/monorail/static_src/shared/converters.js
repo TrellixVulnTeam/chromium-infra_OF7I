@@ -100,7 +100,7 @@ export function userRefToDisplayName(userRef) {
  * Converts an Array of UserRefs to an Array of display name Strings.
  *
  * @param {Array<UserRef>} userRefs Array of UserRefs.
- * @return {Array<String>} Array of display names.
+ * @return {Array<string>} Array of display names.
  */
 export function userRefsToDisplayNames(userRefs) {
   if (!userRefs) return [];
@@ -124,7 +124,7 @@ export function userRefsWithIds(userRefs) {
  * only those refs with IDs specified.
  *
  * @param {Array<UserRef>} userRefs Array of UserRefs.
- * @return {Array<String>} Array of user displayNames.
+ * @return {Array<string>} Array of user displayNames.
  */
 export function filteredUserDisplayNames(userRefs) {
   if (!userRefs) return [];
@@ -156,7 +156,7 @@ export function labelRefToString(labelRef) {
  * Converts an Array of LabelRef Objects to label name Strings.
  *
  * @param {Array<LabelRef>} labelRefs Array of LabelRef Objects.
- * @return {Array<String>} Array of label names.
+ * @return {Array<string>} Array of label names.
  */
 export function labelRefsToStrings(labelRefs) {
   if (!labelRefs) return [];
@@ -227,7 +227,7 @@ export function statusRefToString(statusRef) {
  * Extracts the name of multiple statuses from multiple StatusRef Objects.
  *
  * @param {Array<StatusRef>} statusRefs
- * @return {Array<String>} The names of the statuses inputted.
+ * @return {Array<string>} The names of the statuses inputted.
  */
 export function statusRefsToStrings(statusRefs) {
   return statusRefs.map(statusRefToString);
@@ -258,7 +258,7 @@ export function componentRefToString(componentRef) {
  * Extracts the names of multiple components from multiple refs.
  *
  * @param {Array<ComponentRef>} componentRefs
- * @return {Array<String>} Array of component names.
+ * @return {Array<string>} Array of component names.
  */
 export function componentRefsToStrings(componentRefs) {
   if (!componentRefs) return [];

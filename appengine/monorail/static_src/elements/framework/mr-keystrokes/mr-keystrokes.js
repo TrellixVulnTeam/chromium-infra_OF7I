@@ -308,7 +308,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
   /**
    * @param {string} projectName
    * @param {string} issueId
-   * @param {Array<String>} issuePermissions
+   * @param {Array<string>} issuePermissions
    * @param {Object} queryParams
    * @private
    */

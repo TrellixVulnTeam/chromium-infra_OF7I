@@ -317,7 +317,7 @@ export class ChopsAutocomplete extends LitElement {
   /**
    * Changes the input's value according to the rules of the replacer function.
    *
-   * @param {String} value - the value to swap in.
+   * @param {string} value - the value to swap in.
    * @return {undefined}
    */
   completeValue(value) {

@@ -25,7 +25,7 @@ import {cueNames, cueNameToSpec} from 'elements/help/mr-cue/cue-helpers.js';
 
 
 /**
- * @type {Array<String>} The list of built in metadata fields to show on
+ * @type {Array<string>} The list of built in metadata fields to show on
  *   issue approvals.
  */
 const APPROVAL_METADATA_FIELDS = ['ApprovalStatus', 'Approvers', 'Setter',

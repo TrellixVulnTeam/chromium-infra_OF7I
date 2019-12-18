@@ -13,28 +13,41 @@ import 'elements/framework/links/mr-crbug-link/mr-crbug-link.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-star-button/mr-star-button.js';
 import {constructHref, prepareDataForDownload} from './list-to-csv-helpers.js';
-import {issueRefToUrl, issueRefToString, issueStringToRef,
-  issueToIssueRef, issueToIssueRefString,
-  labelRefsToOneWordLabels} from 'shared/converters.js';
+import {
+  issueRefToUrl,
+  issueRefToString,
+  issueStringToRef,
+  issueToIssueRef,
+  issueToIssueRefString,
+  labelRefsToOneWordLabels,
+} from 'shared/converters.js';
 import {isTextInput, findDeepEventTarget} from 'shared/dom-helpers.js';
-import {urlWithNewParams, pluralize, setHasAny,
-  objectValuesForKeys} from 'shared/helpers.js';
-import {parseColSpec,
-  EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
+import {
+  urlWithNewParams,
+  pluralize,
+  setHasAny,
+  objectValuesForKeys,
+} from 'shared/helpers.js';
+import {parseColSpec, EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import './mr-show-columns-dropdown.js';
 
-const COLUMN_DISPLAY_NAMES = {
+/**
+ * Column to display name mapping dictionary
+ * @type {Object<string, string>}
+ */
+const COLUMN_DISPLAY_NAMES = Object.freeze({
   'summary': 'Summary + Labels',
-};
+});
 
-/** @type {Number} Button property value of DOM click event */
+/** @const {number} Button property value of DOM click event */
 const PRIMARY_BUTTON = 0;
-/** @type {Number} Button property value of DOM auxclick event */
+/** @const {number} Button property value of DOM auxclick event */
 const MIDDLE_BUTTON = 1;
 
 /**
  * Really high cardinality attributes like ID and Summary are unlikely to be
  * useful if grouped, so it's better to just hide the option.
+ * @const {Set<string>}
  */
 const UNGROUPABLE_COLUMNS = new Set(['id', 'summary']);
 
