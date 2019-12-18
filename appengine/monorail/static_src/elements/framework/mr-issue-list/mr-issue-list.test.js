@@ -3,7 +3,8 @@
 // found in the LICENSE file.
 import {assert} from 'chai';
 import sinon from 'sinon';
-import {MrIssueList, constructHref} from './mr-issue-list.js';
+import {MrIssueList} from './mr-issue-list.js';
+import {extractFieldValuesFromIssue} from 'reducers/project.js';
 
 let element;
 
@@ -1003,25 +1004,97 @@ describe('mr-issue-list', () => {
     });
   });
 
+  describe('_convertIssueToPlaintextArray', () => {
+    it('returns an array with as many entries as this.columns.length', () => {
+      element.columns = ['summary'];
+      const result = element._convertIssueToPlaintextArray({
+        summary: 'test issue',
+      });
+      assert.equal(element.columns.length, result.length);
+    });
+
+    it('for column id uses issueRefToString', async () => {
+      const projectName = 'some_project_name';
+      const otherProjectName = 'some_other_project';
+      const localId = '123';
+      element.columns = ['ID'];
+      element.projectName = projectName;
+
+      element._extractFieldValuesFromIssue = extractFieldValuesFromIssue(
+          {project: {config: {projectName}}});
+
+      let result;
+      result = element._convertIssueToPlaintextArray({
+        localId,
+        projectName,
+      });
+      assert.equal(localId, result[0]);
+
+      result = element._convertIssueToPlaintextArray({
+        localId,
+        projectName: otherProjectName,
+      });
+      assert.equal(`${otherProjectName}:${localId}`, result[0]);
+    });
+
+    it('uses _extractFieldValuesFromIssue', () => {
+      element.columns = ['summary', 'notsummary', 'anotherColumn'];
+      element._extractFieldValuesFromIssue = sinon.fake.returns(['a', 'b']);
+
+      element._convertIssueToPlaintextArray({summary: 'test issue'});
+      sinon.assert.callCount(element._extractFieldValuesFromIssue,
+          element.columns.length);
+    });
+
+    it('joins the result of _extractFieldValuesFromIssue with ", "', () => {
+      element.columns = ['notSummary'];
+      element._extractFieldValuesFromIssue = sinon.fake.returns(['a', 'b']);
+
+      const result = element._convertIssueToPlaintextArray({
+        summary: 'test issue',
+      });
+      assert.deepEqual(result, ['a, b']);
+    });
+  });
+
+  describe('_convertIssuesToPlaintextArrays', () => {
+    it('maps this.issues with this._convertIssueToPlaintextArray', () => {
+      element._convertIssueToPlaintextArray = sinon.fake.returns(['foobar']);
+
+      element.columns = ['summary'];
+      element.issues = [
+        {summary: 'test issue'},
+        {summary: 'I have a summary'},
+      ];
+      const result = element._convertIssuesToPlaintextArrays();
+
+      assert.deepEqual([['foobar'], ['foobar']], result);
+      sinon.assert.callCount(element._convertIssueToPlaintextArray,
+          element.issues.length);
+    });
+  });
+
   describe('CSV download', () => {
     let _downloadCsvSpy;
+    let convertStub;
 
     beforeEach(() => {
       _downloadCsvSpy = sinon.spy(element, '_downloadCsv');
+      convertStub = sinon
+          .stub(element, '_convertIssuesToPlaintextArrays')
+          .returns([['']]);
     });
 
     afterEach(() => {
-      _downloadCsvSpy.resetHistory();
-      element._downloadCsv.restore();
+      _downloadCsvSpy.restore();
+      convertStub.restore();
     });
 
     it('renders a #download-link', async () => {
       await element.updateComplete;
       const downloadLink = element.shadowRoot.querySelector('#download-link');
       assert.isNotNull(downloadLink);
-
-      // TODO(kweng): uncomment once link is shown
-      // assert.equal('inline', window.getComputedStyle(downloadLink).display);
+      assert.equal('inline', window.getComputedStyle(downloadLink).display);
     });
 
     it('renders a #hidden-data-link', async () => {
@@ -1039,11 +1112,26 @@ describe('mr-issue-list', () => {
 
     it('calls _downloadCsv on click', async () => {
       await element.updateComplete;
-      const downloadLink = element.shadowRoot.querySelector('#download-link');
+      sinon.stub(element._dataLink, 'click');
 
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
       downloadLink.click();
+      await element.requestUpdate('_csvDataHref');
 
       sinon.assert.calledOnce(_downloadCsvSpy);
+      element._dataLink.click.restore();
+    });
+
+    it('converts issues into arrays of plaintext data', async () => {
+      await element.updateComplete;
+      sinon.stub(element._dataLink, 'click');
+
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
+      downloadLink.click();
+      await element.requestUpdate('_csvDataHref');
+
+      sinon.assert.calledOnce(convertStub);
+      element._dataLink.click.restore();
     });
 
     it('triggers _dataLink click after #downloadLink click', async () => {
@@ -1087,31 +1175,6 @@ describe('mr-issue-list', () => {
       await element.requestUpdate('_csvDataHref');
       assert.equal('', element._csvDataHref);
       element._dataLink.click.restore();
-    });
-
-    describe('constructHref', () => {
-      it('has default of empty string', () => {
-        const result = constructHref();
-        assert.equal(result, 'data:attachment/csv;charset=utf-8,');
-      });
-
-      it('starts with data:', () => {
-        const result = constructHref('');
-        assert.isTrue(result.startsWith('data:'));
-      });
-
-      it('uses charset=utf-8', () => {
-        const result = constructHref('');
-        assert.isTrue(result.search('charset=utf-8') > -1);
-      });
-
-      it('encodes URI component', () => {
-        const encodeFuncStub = sinon.stub(window, 'encodeURIComponent');
-        constructHref('');
-        sinon.assert.calledOnce(encodeFuncStub);
-
-        window.encodeURIComponent.restore();
-      });
     });
   });
 });

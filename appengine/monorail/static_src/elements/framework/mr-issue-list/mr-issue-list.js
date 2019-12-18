@@ -12,6 +12,7 @@ import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-crbug-link/mr-crbug-link.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-star-button/mr-star-button.js';
+import {constructHref, prepareDataForDownload} from './list-to-csv-helpers.js';
 import {issueRefToUrl, issueRefToString, issueStringToRef,
   issueToIssueRef, issueToIssueRefString,
   labelRefsToOneWordLabels} from 'shared/converters.js';
@@ -37,30 +38,12 @@ const MIDDLE_BUTTON = 1;
  */
 const UNGROUPABLE_COLUMNS = new Set(['id', 'summary']);
 
-/**
- * Converts input data array into csv formatted string
- * using already implemented data extractor
- * @param {Array<Issue>} data
- * @param {Array<string>} columns
- * @param {function(Issue, string): Array<string>} dataExtractor
- * @return {string}
- */
-export const convertListToCsv = (data, columns, dataExtractor) => {
-  // Returning sample data for now. To be replaced in follow up CL.
-  return 'Feature,development\nin,progress.\nPlease,ignore.';
-};
+/** @const {string} Csv instructions on how to modify columns. */
+const CSV_DATA_PREFIX = 'This file contains the same information as ' +
+'the issue list web page but in CSV format.\nYou can adjust the columns ' +
+'of the CSV file by adjusting the columns shown on the web page\n' +
+'before clicking the CSV link.\n';
 
-/** @type {String} CSV download link's data href prefix */
-const CSV_DATA_HREF_PREFIX = 'data:attachment/csv;charset=utf-8,';
-
-/**
- * Constructs download link url from csv string data.
- * @param {string} data CSV data
- * @return {string}
- */
-export const constructHref = (data = '') => {
-  return `${CSV_DATA_HREF_PREFIX}${encodeURIComponent(data)}`;
-};
 
 /**
  * `<mr-issue-list>`
@@ -201,8 +184,6 @@ export class MrIssueList extends connectStore(LitElement) {
         border-bottom: none;
         text-align: end;
         cursor: default;
-        /* Hiding until the function is ready */
-        display: none;
       }
 
       #hidden-data-link {
@@ -1230,6 +1211,27 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
+   * Convert an issue's data into an array of strings, where the columns
+   * match this.columns. Extracting data like _renderCell.
+   * @param {Issue} issue
+   * @return {Array<string>}
+   */
+  _convertIssueToPlaintextArray(issue) {
+    return this.columns.map((column) => {
+      return this._extractFieldValuesFromIssue(issue, column).join(', ');
+    });
+  }
+
+  /**
+   * Convert each Issue into array of strings, where the columns
+   * match this.columns.
+   * @return {Array<Array<string>>}
+   */
+  _convertIssuesToPlaintextArrays() {
+    return this.issues.map(this._convertIssueToPlaintextArray.bind(this));
+  }
+
+  /**
    * Download content as csv. Conversion to CSV only on button click
    * instead of on data change because CSV download is not often used.
    * @param {MouseEvent} event
@@ -1237,11 +1239,13 @@ export class MrIssueList extends connectStore(LitElement) {
   async _downloadCsv(event) {
     event.preventDefault();
 
-    // convert the data, this.issues, into csv formatted string.
-    const csvDataString = convertListToCsv(
-        this.issues,
+    // convert issues to array of arrays of strings
+    const issueData = this._convertIssuesToPlaintextArrays();
+
+    // convert the data into csv formatted string.
+    const csvDataString = prepareDataForDownload(issueData,
         this.columns,
-        this._extractFieldValuesFromIssue);
+        CSV_DATA_PREFIX);
 
     // construct data href
     const href = constructHref(csvDataString);
