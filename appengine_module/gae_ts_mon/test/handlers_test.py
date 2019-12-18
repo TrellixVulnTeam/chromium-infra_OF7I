@@ -6,7 +6,6 @@ from __future__ import absolute_import
 import datetime
 import json
 import unittest
-import os
 
 import gae_ts_mon
 import mock
@@ -423,32 +422,3 @@ class TSMonJSHandlerTest(test_case.TestCase):
 
     self.ts_mon_handler.post()
     self.assertEqual(self.response.status_int, 201)
-
-
-class ReportMemoryTest(test_case.TestCase):
-
-  def test_report_skipped_if_development(self):
-    env = os.environ.copy()
-    env['SERVER_SOFTWARE'] = 'Development'
-    with mock.patch.object(os, 'environ', env):
-
-      @handlers.report_memory
-      def handler(request):
-        return request
-
-      with mock.patch.object(runtime, 'memory_usage') as m:
-        handler('input params')
-        m.assert_not_called()
-
-  def test_report_with_production(self):
-    env = os.environ.copy()
-    env['SERVER_SOFTWARE'] = 'Production'
-    with mock.patch.object(os, 'environ', env):
-      # a test handler should be added in the scope of the mock for os.environ.
-      @handlers.report_memory
-      def handler(request):
-        return request
-
-      with mock.patch.object(runtime, 'memory_usage') as m:
-        handler('input params')
-        m.assert_called()

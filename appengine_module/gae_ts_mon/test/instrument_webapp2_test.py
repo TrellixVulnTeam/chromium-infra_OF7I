@@ -217,6 +217,18 @@ class TaskNumAssignerHandlerTest(test_case.TestCase):
     target = targets.TaskTarget('test_service', 'test_job', 'test_region',
                                 'test_host')
     self.mock_state = interface.State(target=target)
+
+    # Workaround the fact that 'system' module is not mocked.
+    class _memory_usage(object):
+
+      def current(self):
+        return 10.0
+
+    env = os.environ.copy()
+    env['SERVER_SOFTWARE'] = 'PRODUCTION'
+    self.mock(runtime, 'memory_usage', _memory_usage)
+    self.mock(os, 'environ', env)
+
     self.app = webapp2.WSGIApplication()
     instrument_webapp2.instrument(self.app)
 
@@ -225,14 +237,10 @@ class TaskNumAssignerHandlerTest(test_case.TestCase):
     super(TaskNumAssignerHandlerTest, self).tearDown()
 
   def test_success(self):
-    with mock.patch.object(runtime, 'memory_usage') as m:
-      response = self.app.get_response(
-          '/internal/cron/ts_mon/send', headers=[('X-Appengine-Cron', 'true')])
-      self.assertEqual(response.status_int, 200)
-      m.assert_called()
+    response = self.app.get_response(
+        '/internal/cron/ts_mon/send', headers=[('X-Appengine-Cron', 'true')])
+    self.assertEqual(response.status_int, 200)
 
   def test_unauthorized(self):
-    with mock.patch.object(runtime, 'memory_usage') as m:
-      response = self.app.get_response('/internal/cron/ts_mon/send')
-      self.assertEqual(response.status_int, 403)
-      m.assert_called()
+    response = self.app.get_response('/internal/cron/ts_mon/send')
+    self.assertEqual(response.status_int, 403)

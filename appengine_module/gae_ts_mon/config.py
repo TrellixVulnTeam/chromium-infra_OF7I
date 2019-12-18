@@ -8,24 +8,7 @@ import os
 import sys
 import time
 
-# Not all apps enable flask. If the import fails, the app wouldn't be able to
-# pass an instance of Flask() to gae_ts_mon.initialize(). If flask is not
-# importable by gae_ts_mon, but by a business application, then
-# gae_ts_mon.initialize() will raise Exception("Unsupported wsgi application").
-try:
-  import flask
-except ImportError:  # pragma: no cover
-  flask = None
-else:
-  from infra_libs.ts_mon import instrument_flask  # pylint: disable=ungrouped-imports
-
-# webapp2 won't be available in Chrome Infra Python3 SDK.
-try:
-  import webapp2
-except ImportError:  # pragma: no cover
-  webapp2 = None
-else:
-  from infra_libs.ts_mon import instrument_webapp2  # pylint: disable=ungrouped-imports
+import webapp2
 
 from google.appengine.api import modules
 from google.appengine.api.app_identity import app_identity
@@ -34,6 +17,7 @@ from google.appengine.ext import ndb
 
 from infra_libs.ts_mon import exporter
 from infra_libs.ts_mon import handlers
+from infra_libs.ts_mon import instrument_webapp2
 from infra_libs.ts_mon import shared
 from infra_libs.ts_mon.common import interface
 from infra_libs.ts_mon.common import monitors
@@ -112,10 +96,7 @@ def initialize(
   interface.state.flush_mode = 'manual'
   interface.state.last_flushed = datetime.datetime.utcnow()
 
-  # pylint: disable=line-too-long
   # Don't send metrics when running on the dev appserver.
-  # : https://cloud.google.com/appengine/docs/standard/python/tools/using-local-server#detecting_application_runtime_environment
-  # pylint: enable=line-too-long
   if (is_local_unittest or
       os.environ.get('SERVER_SOFTWARE', '').startswith('Development')):
     logging.info('Using debug monitor')
@@ -143,16 +124,12 @@ def initialize(
   logging.info('Initialized ts_mon with service_name=%s, job_name=%s, '
                'hostname=%s', service_name, job_name, hostname)
 
-
 def instrument_wsgi_application(app, time_fn=time.time):
   """Instrument a given WSGI app."""
-  if webapp2 is not None and isinstance(app, webapp2.WSGIApplication):
+  if isinstance(app, webapp2.WSGIApplication):
     return instrument_webapp2.instrument(app, time_fn)
 
-  if flask is not None and isinstance(app, flask.Flask):
-    return instrument_flask.instrument(app, time_fn)
-
-  raise NotImplementedError("Unsupported wsgi application")
+  raise NotImplementedError("Unsupported middleware")
 
 
 def reset_for_unittest(disable=False):

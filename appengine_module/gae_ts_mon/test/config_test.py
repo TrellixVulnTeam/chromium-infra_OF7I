@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 import copy
-import flask
 import os
 
 import gae_ts_mon
@@ -14,8 +13,6 @@ from .test_support import test_case
 
 from infra_libs.ts_mon import config
 from infra_libs.ts_mon import shared
-from infra_libs.ts_mon import instrument_flask
-from infra_libs.ts_mon import instrument_webapp2
 from infra_libs.ts_mon.common import http_metrics
 from infra_libs.ts_mon.common import interface
 from infra_libs.ts_mon.common import monitors
@@ -106,15 +103,11 @@ class InstrumentWSGIApplicationTest(test_case.TestCase):
   def setUp(self):
     super(InstrumentWSGIApplicationTest, self).setUp()
 
-  def testWithWebapp2(self):
+  @mock.patch('gae_ts_mon.instrument_webapp2.instrument')
+  def testWithWebapp2(self, mock_inst):
     app = webapp2.WSGIApplication()
     config.instrument_wsgi_application(app, time_fn=None)
-    self.assertTrue(instrument_webapp2._is_instrumented(app))
-
-  def testWithFlask(self):
-    app = flask.Flask('test_app')
-    config.instrument_wsgi_application(app, time_fn=None)
-    self.assertTrue(instrument_flask._is_instrumented(app))
+    mock_inst.assert_called_once_with(app, None)
 
   def testWithUnsupportedWSGIApp(self):
     with self.assertRaises(NotImplementedError):
