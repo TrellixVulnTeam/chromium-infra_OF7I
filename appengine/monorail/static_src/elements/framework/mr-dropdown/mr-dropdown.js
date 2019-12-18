@@ -163,6 +163,7 @@ export class MrDropdown extends LitElement {
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <button class="anchor"
         @click=${this.toggle}
+        @keydown=${this._exitMenuOnEsc}
         ?disabled=${this.disabled}
         title=${this.title || this.label}
         aria-label=${this.label}
@@ -211,8 +212,8 @@ export class MrDropdown extends LitElement {
     return html`
       <a
         href=${ifDefined(item.url)}
-        @click=${this._onClick}
-        @keydown=${this._onClick}
+        @click=${this._runItemHandler}
+        @keydown=${this._onItemKeydown}
         data-idx=${index}
         tabindex="0"
         class="menu-item"
@@ -256,17 +257,43 @@ export class MrDropdown extends LitElement {
   }
 
   /**
-   * Either runs the click handler attached to the clicked item or closes the
-   * menu if the click was not on an item.
-   * @param {MouseEvent} e
+   * Either runs the click handler attached to the clicked item and closes the
+   * menu.
+   * @param {MouseEvent|KeyboardEvent} e
    */
-  _onClick(e) {
+  _runItemHandler(e) {
     if (e instanceof MouseEvent || e.code === 'Enter') {
       const idx = e.target.dataset.idx;
       if (idx !== undefined && this.items[idx].handler) {
         this.items[idx].handler();
       }
       this.close();
+    }
+  }
+
+  /**
+   * Runs multiple event handlers when a user types a key while
+   * focusing a menu item.
+   * @param {KeyboardEvent} e
+   */
+  _onItemKeydown(e) {
+    this._runItemHandler(e);
+    this._exitMenuOnEsc(e);
+  }
+
+  /**
+   * If the user types Esc while focusing any dropdown item, then
+   * exit the dropdown.
+   * @param {KeyboardEvent} e
+   */
+  _exitMenuOnEsc(e) {
+    if (e.key === 'Escape') {
+      this.close();
+
+      // Return focus to the anchor of the dropdown on closing, so that
+      // users don't lose their overall focus position within the page.
+      const anchor = this.shadowRoot.querySelector('.anchor');
+      anchor.focus();
     }
   }
 

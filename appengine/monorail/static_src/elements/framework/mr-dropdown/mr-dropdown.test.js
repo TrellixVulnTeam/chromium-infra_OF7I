@@ -70,6 +70,43 @@ describe('mr-dropdown', () => {
     assert.isFalse(element.opened);
   });
 
+  it('escape while focusing the anchor closes menu', async () => {
+    element.open();
+    await element.updateComplete;
+
+    assert.isTrue(element.opened);
+
+    const anchor = element.shadowRoot.querySelector('.anchor');
+    anchor.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}));
+
+    assert.isFalse(element.opened);
+  });
+
+  it('other key while focusing the anchor does not close menu', async () => {
+    element.open();
+    await element.updateComplete;
+
+    assert.isTrue(element.opened);
+
+    const anchor = element.shadowRoot.querySelector('.anchor');
+    anchor.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter'}));
+
+    assert.isTrue(element.opened);
+  });
+
+  it('escape while focusing an item closes the menu', async () => {
+    element.items = [{text: 'An item'}];
+    element.open();
+    await element.updateComplete;
+
+    assert.isTrue(element.opened);
+
+    const item = element.shadowRoot.querySelector('.menu-item');
+    item.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}));
+
+    assert.isFalse(element.opened);
+  });
+
   it('icon hidden when undefined', async () => {
     element.items = [
       {text: 'test'},
