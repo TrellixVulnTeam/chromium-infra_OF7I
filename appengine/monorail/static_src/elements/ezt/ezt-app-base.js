@@ -49,6 +49,7 @@ export class EztAppBase extends connectStore(LitElement) {
   }
 
   fetchProjectData(projectName) {
+    store.dispatch(project.select(projectName));
     store.dispatch(project.fetch(projectName));
   }
 
