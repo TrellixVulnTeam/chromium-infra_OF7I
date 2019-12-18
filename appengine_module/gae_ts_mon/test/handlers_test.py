@@ -47,6 +47,11 @@ class HandlersTest(test_case.TestCase):
     self.mock_state = interface.State(target=target)
     mock.patch('infra_libs.ts_mon.common.interface.state',
         new=self.mock_state).start()
+    # Workaround the fact that 'system' module is not mocked.
+    class _memory_usage(object):
+      def current(self):
+        return 10.0
+    self.mock(runtime, 'memory_usage', _memory_usage)
 
   def tearDown(self):
     mock.patch.stopall()
@@ -79,6 +84,26 @@ class HandlersTest(test_case.TestCase):
     self.assertIsNotNone(current)
     self.assertEqual(2, current.task_num)
     self.assertEqual(1, new.task_num)
+
+  def test_unauthorized(self):
+    request = webapp2.Request.blank('/internal/cron/ts_mon/send')
+    response = request.get_response(handlers.app)
+
+    self.assertEqual(response.status_int, 403)
+
+  def test_initialized(self):
+    def callback(): # pragma: no cover
+      pass
+    callback_mock = mock.Mock(callback, set_auto=True)
+    interface.register_global_metrics_callback('cb', callback_mock)
+
+    request = webapp2.Request.blank('/internal/cron/ts_mon/send')
+    request.headers['X-Appengine-Cron'] = 'true'
+    self.mock_state.global_monitor = mock.Mock()
+    response = request.get_response(handlers.app)
+
+    self.assertEqual(response.status_int, 200)
+    callback_mock.assert_called_once_with()
 
 
 class TSMonJSHandlerTest(test_case.TestCase):

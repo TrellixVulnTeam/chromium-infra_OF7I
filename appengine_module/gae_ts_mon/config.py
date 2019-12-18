@@ -48,11 +48,8 @@ def _internal_callback():
         modules.get_default_version(module_name), target_fields=target_fields)
 
 
-def initialize(
-    app,
-    is_enabled_fn=None,
-    cron_module='default',  # pylint: disable=unused-argument
-    is_local_unittest=None):
+def initialize(app=None, is_enabled_fn=None, cron_module='default',
+               is_local_unittest=None):
   """Instruments webapp2 `app` with gae_ts_mon metrics.
 
   Instruments all the endpoints in `app` with basic metrics.
@@ -62,7 +59,9 @@ def initialize(
     is_enabled_fn (function or None): a function returning bool if ts_mon should
       send the actual metrics. None (default) is equivalent to lambda: True.
       This allows apps to turn monitoring on or off dynamically, per app.
-    cron_module (str): DEPRECATED. This param is noop.
+    cron_module (str): the name of the module handling the
+      /internal/cron/ts_mon/send endpoint. This allows moving the cron job
+      to any module the user wants.
     is_local_unittest (bool or None): whether we are running in a unittest.
   """
   if is_local_unittest is None:  # pragma: no cover
@@ -75,9 +74,10 @@ def initialize(
   if is_enabled_fn is not None:
     interface.state.flush_enabled_fn = is_enabled_fn
 
-  if app is None:
-    raise Exception('app cannot be None')
-  instrument_wsgi_application(app)
+  if app is not None:
+    instrument_wsgi_application(app)
+    if is_local_unittest or modules.get_current_module_name() == cron_module:
+      instrument_wsgi_application(handlers.app)
 
   # Use the application ID as the service name and the module name as the job
   # name.

@@ -72,6 +72,17 @@ def _assign_task_num(time_fn=datetime.datetime.utcnow):
   logging.debug('Committed all changes')
 
 
+class SendHandler(webapp2.RequestHandler):
+  def get(self):
+    if self.request.headers.get('X-Appengine-Cron') != 'true':
+      self.abort(403)
+
+    with shared.instance_namespace_context():
+      _assign_task_num()
+
+    interface.invoke_global_callbacks()
+
+
 class TSMonJSHandler(webapp2.RequestHandler):
   """Proxy handler for ts_mon metrics collected in JavaScript.
 
@@ -249,3 +260,37 @@ class TSMonJSHandler(webapp2.RequestHandler):
       return False
 
     return True
+
+
+def report_memory(application):
+  """Wraps an app so handlers log when memory usage increased by at least 0.5MB
+  after the handler completed.
+  """
+  if os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
+    # Otherwise this fails with:
+    # AssertionError: No api proxy found for service "system"
+    return # pragma: no cover
+  min_delta = 0.5
+  old_dispatcher = application.router.dispatch
+  def dispatch_and_report(*args, **kwargs):
+    before = apiruntime.runtime.memory_usage().current()
+    try:
+      return old_dispatcher(*args, **kwargs)
+    finally:
+      after = apiruntime.runtime.memory_usage().current()
+      if after >= before + min_delta: # pragma: no cover
+        logging.debug(
+            'Memory usage: %.1f -> %.1f MB; delta: %.1f MB',
+            before, after, after - before)
+  application.router.dispatch = dispatch_and_report
+
+
+def create_app():
+  ts_mon_app = webapp2.WSGIApplication([
+      (r'/internal/cron/ts_mon/send', SendHandler),
+  ])
+  report_memory(ts_mon_app)
+  return ts_mon_app
+
+
+app = create_app()

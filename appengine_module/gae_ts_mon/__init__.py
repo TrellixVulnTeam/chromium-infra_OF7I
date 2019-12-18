@@ -43,6 +43,7 @@ from .config import initialize
 from .instrument_endpoint import instrument as instrument_endpoint
 from .config import instrument_wsgi_application
 from .config import reset_for_unittest
+from infra_libs.ts_mon.handlers import app
 from infra_libs.ts_mon.handlers import TSMonJSHandler
 
 # The remaining lines are copied from infra_libs/ts_mon/__init__.py.
