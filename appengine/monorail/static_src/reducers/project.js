@@ -11,6 +11,7 @@ import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
   labelNameToLabelPrefix} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';
+import 'shared/typedef.js';
 
 // Actions
 export const SELECT = 'project/SELECT';
@@ -45,13 +46,13 @@ const FETCH_FIELDS_LIST_FAILURE = 'project/FECTH_FIELDS_LIST_FAILURE';
 /* State Shape
 {
   name: string,
-  config: Object,
-  presentationConfig: Object,
-  templates: Array,
+  config: Config,
+  presentationConfig: PresentationConfig,
+  templates: Array<TemplateDef>,
   requests: {
-    fetchConfig: Object,
-    fetchTemplates: Object,
-    fetchFields: Object,
+    fetchConfig: ReduxRequestState,
+    fetchTemplates: ReduxRequestState,
+    fetchFields: ReduxRequestState,
   },
 }
 */
