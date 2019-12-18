@@ -37,10 +37,14 @@ def CanAutoCreateRevert():
   Findit can auto create a revert if both of below are True:
     1. Auto create revert for compile is turned on;
     2. The number of reverts in past 24 hours is less than the daily limit.
+    3. V2 Auto-actions is disabled.
   """
   action_settings = waterfall_config.GetActionSettings()
   # Auto revert has been turned off.
   if not bool(action_settings.get('auto_create_revert')):
+    return False
+
+  if action_settings.get('v2_actions'):
     return False
 
   auto_create_revert_daily_threshold_compile = action_settings.get(

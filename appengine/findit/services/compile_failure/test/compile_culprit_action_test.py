@@ -38,6 +38,11 @@ class CompileCulpritActionTest(wf_testcase.WaterfallTestCase):
     self.assertTrue(compile_culprit_action.CanAutoCreateRevert())
 
   @mock.patch.object(
+      waterfall_config, 'GetActionSettings', return_value={'v2_actions': True})
+  def testCannotAutoCreateRevertIfV2IsEnabled(self, _):
+    self.assertFalse(compile_culprit_action.CanAutoCreateRevert())
+
+  @mock.patch.object(
       waterfall_config,
       'GetActionSettings',
       return_value={'auto_commit_revert_compile': False})
