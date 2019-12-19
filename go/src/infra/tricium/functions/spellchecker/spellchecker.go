@@ -54,30 +54,40 @@ var (
 		"aka",         // abbr. for also known as
 		"alph",        // person name
 		"als",         // abbr. for ambient light sensor
+		"amin",        // person name
 		"ang",         // person name
+		"anny",        // person name
 		"backed",      // as in "backed by"
 		"bae",         // person name
+		"ba",          // person name
 		"ba",          // very short word, shouldn't be flagged
 		"cancelation", // alternative of cancellation
 		"cant",        // contraction, may appear in variable names
 		"cas",         // abbr. for Content Addressed Storage
 		"chang",       // person name
+		"claus",       // person name
 		"copyable",    // used in C++, e.g. is_trivially_copyable
 		"crasher",     // something that causes a crash
 		"crate",       // Rust keyword
 		"cros",        // CrOS, ChromeOS
+		"didi",        // person name
 		"doesnt",      // contraction, may appear in variable names
+		"doman",       // person name
 		"donn",        // person name
 		"dont",        // contraction, may appear in variable names
 		"dur",         // abbr. for duration
+		"easly",       // person name
 		"ect",         // abbr. for effective connection time
 		"errorprone",  // proper name, a Java static analyzer
 		"files'",      // possessive of files
 		"gae",         // abbr. for Google App Engine
+		"harth",       // person name
+		"hart",        // person name
 		"hist",        // abbr. for histogram
 		"ith",         // ordinal form of variable i, like nth
 		"lightening",  // present participle of "to lighten"
 		"lod",         // abbr. of level of detail
+		"longe",       // person name
 		"maks",        // person name
 		"mut",         // Rust keyword
 		"optin",       // alternative of opt-in
@@ -85,16 +95,24 @@ var (
 		"que",         // person name
 		"reenable",    // alternative of re-enable
 		"referers",    // HTTP referer header uses one 'r'
+		"sargent",     // person name
 		"seeked",      // JS event
 		"subprocess'", // possessive of subprocess
 		"tast",        // name of a ChromeOS test
 		"te",          // TE is a HTTP request header
 		"tho",         // informal variant of though
+		"tim",         // person name
 		"vertexes",    // alternative of vertices
 		"wan",         // person name
 		"wasnt",       // contraction, may appear in variable names
+		"weill",       // person name
+		"wen",         // person name
+		"wight",       // person name
+		"winn",        // person name
 		"wont",        // contraction, may appear in variable names
 		"wontfix",     // monorail bug status
+		"yau",         // person name
+		"youn",        // person name
 	}
 	textFileExts = []string{".txt", ".md"}
 
