@@ -22,19 +22,22 @@ flashing the DUT. The basic steps of this recipe are:
 - Enter the chroot and flash the device.
 """
 
+from PB.recipes.infra import cros_flash as cros_flash_pb
 from recipe_engine import post_process
 
 DEPS = [
-  'build/chromite',
-  'build/repo',
-  'depot_tools/gsutil',
-  'recipe_engine/context',
-  'recipe_engine/path',
-  'recipe_engine/platform',
-  'recipe_engine/properties',
-  'recipe_engine/python',
-  'recipe_engine/raw_io',
-  'recipe_engine/step',
+    'build/chromite',
+    'build/chromium',
+    'build/chromium_checkout',
+    'build/repo',
+    'depot_tools/gclient',
+    'recipe_engine/context',
+    'recipe_engine/path',
+    'recipe_engine/platform',
+    'recipe_engine/properties',
+    'recipe_engine/python',
+    'recipe_engine/raw_io',
+    'recipe_engine/step',
 ]
 
 # This is a special hostname that resolves to a different DUT depending on
@@ -53,15 +56,10 @@ SWARMING_BOT_SSH_ID = '/b/id_rsa'
 # that's stable.
 CROS_BRANCH = 'master'
 
+PROPERTIES = cros_flash_pb.Inputs
 
-def RunSteps(api):
-  gs_image_bucket = api.properties.get('gs_image_bucket')
-  gs_image_path = api.properties.get('gs_image_path')
-  if not gs_image_bucket or not gs_image_path:
-    api.python.failing_step('unknown GS image URL',
-        'Must pass the Google Storage URL for the image to flash via the '
-        '"gs_image_bucket" and "gs_image_path" recipe properties.')
 
+def RunSteps(api, properties):
   # After flashing, the host's ssh identity is no longer authorized with the
   # DUT, so we'll need to add it back. The host's identity is an ssh key file
   # located at SWARMING_BOT_SSH_ID that the swarming bot generates at start-up.
@@ -75,78 +73,29 @@ def RunSteps(api):
         'key pair to use for authentication with the DUT.' % (
             SWARMING_BOT_SSH_ID))
 
-  # Download (and optionally extract) the CrOS image in a temp dir.
-  tmp_dir = api.path.mkdtemp('cros_flash')
-  if gs_image_path.endswith('.tar.xz'):
-    dest = tmp_dir.join('chromiumos_image.tar.xz')
-    api.gsutil.download(
-        gs_image_bucket, gs_image_path, dest, name='download image')
-    with api.context(cwd=tmp_dir):
-      extract_result = api.step(
-          'extract image', ['/bin/tar', '-xvf', dest],
-          stdout=api.raw_io.output('out'))
-    # Pull the name of the exracted file from tar's stdout.
-    img_path = tmp_dir.join(extract_result.stdout.strip())
-  elif gs_image_path.endswith('.bin'):
-    img_path = tmp_dir.join('chromiumos_image.bin')
-    api.gsutil.download(
-        gs_image_bucket, gs_image_path, img_path, name='download image')
-  else:
-    api.python.failing_step('unknown image format',
-        'Image file must end in either ".bin" or ".tar.xz".')
+  # We really just need chromite, but it's easy to get a plain chromium
+  # checkout via bot_update, and avoids us having to write our own `git clone`
+  # and/or `git pull` logic.
+  api.gclient.set_config('chromium')
+  api.chromium.set_config('chromium')
+  api.chromium_checkout.ensure_checkout({})
 
-  # Move into the named cache, and fetch a full ChromiumOS checkout.
-  cros_checkout_path = api.path['cache'].join('builder')
-  with api.context(cwd=cros_checkout_path):
-    try:
-      api.chromite.checkout(repo_sync_args=['-c', '-j4'], branch=CROS_BRANCH)
-    except api.step.StepFailure as f:
-      # repo has a tendency to flake when syncing. If it fails, continue on
-      # with the build. Anything problematic in the checkout should be caught
-      # by the subsequent build-chroot step.
-      f.result.presentation.status = api.step.WARNING
-
-    # Pass in --nouse-image below so the chroot is simply encased in a dir.
-    # It'll otherwise try creating and mounting an image file (which can be a
-    # 500GB sparse file).
-    api.chromite.cros_sdk(
-        'build chroot', ['exit'],
-        chroot_cmd=cros_checkout_path.join('chromite', 'bin', 'cros_sdk'),
-        args=['--nouse-image', '--create', '--debug'])
-    # The prev step is a no-op if the chroot already exists. But if we roll
-    # CROS_BRANCH, the chroot will likely need updating on the next build.
-    # Otherwise, this should similarly be a no-op if CROS_BRANCH doesn't
-    # change.
-    # And it really likes to fail transiently... 🤷 So give it a few
-    # attempts to succeed.
-    for _ in xrange(3):
-      update_result = api.chromite.cros_sdk(
-          'update chroot', ['./update_chroot'],
-          chroot_cmd=cros_checkout_path.join('chromite', 'bin', 'cros_sdk'),
-          args=['--nouse-image', '--debug'], ok_ret='all')
-      if not update_result.retcode:
-        break
-    if update_result.retcode:
-      raise api.step.StepFailure("Exhausted all 'update chroot' attempts.")
-
-    # chromite's own virtual env setup conflicts with vpython, so temporarily
-    # subvert vpython for the duration of the flash.
+  # chromite's own virtual env setup conflicts with vpython, so temporarily
+  # subvert vpython for the duration of the flash.
+  src_dir = api.path['cache'].join('builder', 'src')
+  with api.context(cwd=src_dir):
     with api.chromite.with_system_python():
-      chromite_bin_path = cros_checkout_path.join('chromite', 'bin')
-      # `cros flash` repeatedly enters and exits the chroot, and so needs
-      # chromite's bin/ on PATH to call cros_sdk.
-      with api.context(env_prefixes={'PATH': [chromite_bin_path]}):
-        arg_list = [
+      chromite_bin_path = src_dir.join('third_party', 'chromite', 'bin')
+      arg_list = [
           'flash',
           CROS_DUT_HOSTNAME,
-          img_path,
+          properties.xbuddy_path,
           '--disable-rootfs-verification',  # Needed to add ssh ID below.
           '--clobber-stateful',  # Fully wipe the device.
-          '--clear-cache',  # Don't keep old image files lying around.
           '--force',  # Force yes to all Y/N prompts.
           '--debug',  # More verbose logging.
-        ]
-        api.python('flash DUT', chromite_bin_path.join('cros'), arg_list)
+      ]
+      api.python('flash DUT', chromite_bin_path.join('cros'), arg_list)
 
   # Reauthorize the host's ssh identity with the DUT via ssh-copy-id, using
   # sshpass to pass in the root password.
@@ -160,70 +109,10 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (
-    api.test('basic_test') +
-    api.platform('linux', 64) +
-    api.properties(
-        gs_image_bucket='cros-image-bucket',
-        gs_image_path='some/image/path.bin',
-    ) +
-    api.post_process(post_process.StatusSuccess) +
-    api.post_process(post_process.DropExpectation)
-  )
-
-  yield (
-    api.test('basic_test_with_extract') +
-    api.platform('linux', 64) +
-    api.properties(
-        gs_image_bucket='cros-image-bucket',
-        gs_image_path='some/image/path.tar.xz',
-    ) +
-    api.post_process(post_process.StatusSuccess) +
-    api.post_process(post_process.DropExpectation) +
-    api.step_data('extract image', stdout=api.raw_io.output('some/path'))
-  )
-
-  yield (
-    api.test('sync_failure') +
-    api.platform('linux', 64) +
-    api.properties(
-        gs_image_bucket='cros-image-bucket',
-        gs_image_path='some/image/path.bin',
-    ) +
-    api.override_step_data('repo sync', retcode=1) +
-    api.post_process(post_process.StatusSuccess) +
-    api.post_process(post_process.DropExpectation)
-  )
-
-  yield (
-    api.test('chroot_update_failure') +
-    api.platform('linux', 64) +
-    api.properties(
-        gs_image_bucket='cros-image-bucket',
-        gs_image_path='some/image/path.bin',
-    ) +
-    api.override_step_data('update chroot', retcode=1) +
-    api.override_step_data('update chroot (2)', retcode=1) +
-    api.override_step_data('update chroot (3)', retcode=1) +
-    api.post_process(post_process.StatusFailure) +
-    api.post_process(post_process.DropExpectation)
-  )
-
-  yield (
-    api.test('unknown_image_format') +
-    api.platform('linux', 64) +
-    api.properties(
-        gs_image_bucket='cros-image-bucket',
-        gs_image_path='some/image/path.exe',
-    ) +
-    api.post_process(post_process.StatusFailure) +
-    api.post_process(post_process.DropExpectation)
-  )
-
-  yield (
-    api.test('missing_props') +
-    api.platform('linux', 64) +
-    api.properties() +
-    api.post_process(post_process.StatusFailure) +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'basic_test',
+      api.platform('linux', 64),
+      api.properties(xbuddy_path='xbuddy://some/image/path',),
+      api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation)
   )

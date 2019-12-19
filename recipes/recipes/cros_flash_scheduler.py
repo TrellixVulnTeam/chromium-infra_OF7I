@@ -163,16 +163,15 @@ def get_closest_available_version(api, board, image_type, lkgm_base):
   https://codesearch.chromium.org/chromium/src/third_party/chromite/cli/cros/cros_chrome_sdk.py?rcl=63924982b3fdaf3c313e0052fe0c07dae5e4628a&l=350
 
   Once it finds a valid LATEST-$lkgm file, it returns its contents appended
-  to the board's directory in the GS image bucket, which contains the images
-  built for that board at that version.
-  (eg: gs://chromeos-image-archive/kevin-full/R72-11244.0.0-rc2/)
+  to the xbuddy path for that board. (eg: xbuddy://remote/eve/R81-12750.0.0)
 
   Returns tuple of:
     The 5-digit manifest for the latest image.
-    GS path for the latest image.
+    Xbuddy path for the latest image.
   """
   board += '-' + image_type
   gs_path_prefix = 'gs://%s/%s/' % (CHROMEOS_IMAGE_BUCKET, board)
+  xbuddy_prefix = 'xbuddy://remote/%s/' % board
   with api.step.nest('find latest image at %s' % lkgm_base):
     # Occasionally an image won't be available for the board at the current
     # LKGM. So start decrementing the version until we find one that's
@@ -188,35 +187,33 @@ def get_closest_available_version(api, board, image_type, lkgm_base):
             full_version_file_path, name='cat LATEST-%d' % candidate_version,
             use_retry_wrapper=should_retry, stdout=api.raw_io.output(),
             infra_step=False)
-        return str(candidate_version), gs_path_prefix + result.stdout.strip()
+        return str(candidate_version), xbuddy_prefix + result.stdout.strip()
       except api.step.StepFailure:
         pass  # Gracefully skip 404s.
   return None, None
 
 
-def trigger_flash(api, bot, gs_image_path, flashing_builder,
+def trigger_flash(api, bot, xbuddy_path, flashing_builder,
                   flashing_builder_bucket):
   build_req = {
-    'bucket': flashing_builder_bucket,
-    'parameters': {
-      'builder_name': flashing_builder,
-      'properties': {
-        'gs_image_bucket': CHROMEOS_IMAGE_BUCKET,
-        # gs_image_path expects everything to the right of the bucket name
-        'gs_image_path': gs_image_path.split(CHROMEOS_IMAGE_BUCKET+'/')[1],
+      'bucket': flashing_builder_bucket,
+      'parameters': {
+          'builder_name': flashing_builder,
+          'properties': {
+              'xbuddy_path': xbuddy_path
+          },
+          'swarming': {
+              'override_builder_cfg': {
+                  'dimensions': [
+                      'id:%s' % bot.id,
+                      # Append the device's current OS to the request. This
+                      # ensures that if its OS changes unexpectedly, we don't
+                      # overwrite it.
+                      'device_os:%s' % bot.os,
+                  ],
+              },
+          },
       },
-      'swarming': {
-        'override_builder_cfg': {
-          'dimensions': [
-            'id:%s' % bot.id,
-            # Append the device's current OS to the request. This
-            # ensures that if its OS changes unexpectedly, we don't
-            # overwrite it.
-            'device_os:%s' % bot.os,
-          ],
-        },
-      },
-    },
   }
   result = api.buildbucket.put([build_req], name=bot.id)
   build_id = result.stdout['results'][0]['build']['id']
@@ -253,13 +250,10 @@ def RunSteps(api, swarming_server, swarming_pool, device_type, bb_host,
   lkgm_base = lkgm.split('.')[0]
 
   # Fetch the full path in GS for the board at the current lkgm.
-  latest_version_base, latest_version_gs_path = get_closest_available_version(
+  latest_version_base, latest_version_xbuddy = get_closest_available_version(
       api, device_type, image_type, lkgm_base)
-  if not latest_version_gs_path:
+  if not latest_version_xbuddy:
     api.python.failing_step('no available image at %s' % lkgm, '')
-  gs_image_path = latest_version_gs_path + '/chromiumos_test_image.tar.xz'
-  # Do a quick GS ls to ensure the image path exists.
-  api.gsutil.list(gs_image_path, name='ls ' + gs_image_path)
 
   # Collect the number of bots in the pool that need to be flashed.
   all_bots, step_result = get_bots_in_pool(
@@ -328,7 +322,7 @@ def RunSteps(api, swarming_server, swarming_pool, device_type, bb_host,
   with api.step.nest('flash bots'):
     for bot in bots_to_flash:
       flashing_requests.add(
-          trigger_flash(api, bot, gs_image_path, flashing_builder,
+          trigger_flash(api, bot, latest_version_xbuddy, flashing_builder,
                         flashing_builder_bucket))
 
   # Wait for all the flashing jobs. Nest it under a single step since there

@@ -723,7 +723,7 @@ To build a new package for all platforms:
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudkms/examples/usage.py#11)(api):**
 ### *recipes* / [cros\_flash](/recipes/recipes/cros_flash.py)
 
-[DEPS](/recipes/recipes/cros_flash.py#27): [build/chromite][build/recipe_modules/chromite], [build/repo][build/recipe_modules/repo], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/cros_flash.py#28): [build/chromite][build/recipe_modules/chromite], [build/chromium][build/recipe_modules/chromium], [build/chromium\_checkout][build/recipe_modules/chromium_checkout], [build/repo][build/recipe_modules/repo], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 This recipe is used to flash a CrOS DUT on a Chromium bot.
 
@@ -742,7 +742,7 @@ flashing the DUT. The basic steps of this recipe are:
 - Build the chroot.
 - Enter the chroot and flash the device.
 
-&mdash; **def [RunSteps](/recipes/recipes/cros_flash.py#57)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/cros_flash.py#62)(api, properties):**
 ### *recipes* / [cros\_flash\_scheduler](/recipes/recipes/cros_flash_scheduler.py)
 
 [DEPS](/recipes/recipes/cros_flash_scheduler.py#31): [build/swarming\_client][build/recipe_modules/swarming_client], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -760,7 +760,7 @@ This recipe is intended to run several times during MTV's off-peak hours. Its
 builder should be backed by a single thin Ubuntu VM, while the tasks it launches
 run the cros_flash recipe and run on DUT swarming bots.
 
-&mdash; **def [RunSteps](/recipes/recipes/cros_flash_scheduler.py#228)(api, swarming_server, swarming_pool, device_type, bb_host, random_seed, flashing_builder, flashing_builder_bucket, image_type, jobs_per_host):**
+&mdash; **def [RunSteps](/recipes/recipes/cros_flash_scheduler.py#225)(api, swarming_server, swarming_pool, device_type, bb_host, random_seed, flashing_builder, flashing_builder_bucket, image_type, jobs_per_host):**
 
 &mdash; **def [get\_bots\_in\_pool](/recipes/recipes/cros_flash_scheduler.py#99)(api, swarming_server, pool, device_type):**
 
@@ -778,15 +778,13 @@ is taken from:
 https://codesearch.chromium.org/chromium/src/third_party/chromite/cli/cros/cros_chrome_sdk.py?rcl=63924982b3fdaf3c313e0052fe0c07dae5e4628a&l=350
 
 Once it finds a valid LATEST-$lkgm file, it returns its contents appended
-to the board's directory in the GS image bucket, which contains the images
-built for that board at that version.
-(eg: gs://chromeos-image-archive/kevin-full/R72-11244.0.0-rc2/)
+to the xbuddy path for that board. (eg: xbuddy://remote/eve/R81-12750.0.0)
 
 Returns tuple of:
   The 5-digit manifest for the latest image.
-  GS path for the latest image.
+  Xbuddy path for the latest image.
 
-&mdash; **def [trigger\_flash](/recipes/recipes/cros_flash_scheduler.py#197)(api, bot, gs_image_path, flashing_builder, flashing_builder_bucket):**
+&mdash; **def [trigger\_flash](/recipes/recipes/cros_flash_scheduler.py#196)(api, bot, xbuddy_path, flashing_builder, flashing_builder_bucket):**
 ### *recipes* / [depot\_tools\_builder](/recipes/recipes/depot_tools_builder.py)
 
 [DEPS](/recipes/recipes/depot_tools_builder.py#7): [build/zip][build/recipe_modules/zip], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]

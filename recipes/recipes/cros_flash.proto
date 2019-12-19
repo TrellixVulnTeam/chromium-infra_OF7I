@@ -1,0 +1,13 @@
+// Copyright 2019 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.cros_flash;
+
+// Input properties recognized by 'infra/cros_flash' recipe.
+message Inputs {
+  // Xbuddy path of the image to flash the device with.
+  string xbuddy_path = 1;
+}
