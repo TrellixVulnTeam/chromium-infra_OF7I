@@ -3,8 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {hotlistExample, hotlistItemExample, hotlistItemDifferentProjectExample}
-  from 'shared/test/hotlist-constants.js';
+import * as example from 'shared/test/constants-hotlist.js';
 import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
 
 let element;
@@ -24,10 +23,8 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('renders hotlist items with one project', async () => {
-    element.hotlist = hotlistExample;
-    element.hotlistItems = [
-      hotlistItemExample,
-    ];
+    element.hotlist = example.HOTLIST;
+    element.hotlistItems = [example.HOTLIST_ITEM];
     await element.updateComplete;
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
@@ -35,10 +32,10 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('renders hotlist items with multiple projects', async () => {
-    element.hotlist = hotlistExample;
+    element.hotlist = example.HOTLIST;
     element.hotlistItems = [
-      hotlistItemExample,
-      hotlistItemDifferentProjectExample,
+      example.HOTLIST_ITEM,
+      example.HOTLIST_ITEM_OTHER_PROJECT,
     ];
     await element.updateComplete;
 

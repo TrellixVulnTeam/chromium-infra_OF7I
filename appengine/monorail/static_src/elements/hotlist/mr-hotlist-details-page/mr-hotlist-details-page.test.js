@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {hotlistExample} from 'shared/test/hotlist-constants.js';
+import * as example from 'shared/test/constants-hotlist.js';
 import {MrHotlistDetailsPage} from './mr-hotlist-details-page.js';
 
 let element;
@@ -28,12 +28,12 @@ describe('mr-hotlist-details-page', () => {
   });
 
   it('renders hotlist', async () => {
-    element.hotlist = hotlistExample;
+    element.hotlist = example.HOTLIST;
     await element.updateComplete;
   });
 
   it('renders private hotlist', async () => {
-    element.hotlist = hotlistExample;
+    element.hotlist = {...example.HOTLIST};
     element.hotlist.isPrivate = true;
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'Members only');

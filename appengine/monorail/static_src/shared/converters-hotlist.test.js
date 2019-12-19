@@ -3,20 +3,19 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {hotlistExample, hotlistRefExample,
-  hotlistRefStringExample} from 'shared/test/hotlist-constants.js';
+import * as example from 'shared/test/constants-hotlist.js';
 import * as hotlist from './converters-hotlist.js';
 
 it('hotlistToRef', () => {
-  assert.deepEqual(hotlist.hotlistToRef(hotlistExample), hotlistRefExample);
+  assert.deepEqual(hotlist.hotlistToRef(example.HOTLIST), example.HOTLIST_REF);
 });
 
 it('hotlistRefToString', () => {
-  const actual = hotlist.hotlistRefToString(hotlistRefExample);
-  assert.deepEqual(actual, hotlistRefStringExample);
+  const actual = hotlist.hotlistRefToString(example.HOTLIST_REF);
+  assert.deepEqual(actual, example.HOTLIST_REF_STRING);
 });
 
 it('hotlistToRefString', () => {
-  const actual = hotlist.hotlistToRefString(hotlistExample);
-  assert.deepEqual(actual, hotlistRefStringExample);
+  const actual = hotlist.hotlistToRefString(example.HOTLIST);
+  assert.deepEqual(actual, example.HOTLIST_REF_STRING);
 });
