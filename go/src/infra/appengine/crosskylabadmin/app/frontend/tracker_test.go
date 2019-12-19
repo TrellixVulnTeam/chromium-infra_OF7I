@@ -156,11 +156,13 @@ func TestPushLabstationsForRepair(t *testing.T) {
 		defer validate()
 		tqt := taskqueue.GetTestable(tf.C)
 		tqt.CreateQueue(repairLabstationQ)
-		bot1 := test.BotForDUT("dut_1", "needs_repair", "label-os_type:OS_TYPE_LABSTATION")
-		bot2 := test.BotForDUT("dut_2", "ready", "label-os_type:OS_TYPE_LABSTATION")
+		bot1 := test.BotForDUT("dut_1", "needs_repair", "label-os_type:OS_TYPE_LABSTATION;label-pool:labstation_main")
+		bot2 := test.BotForDUT("dut_2", "ready", "label-os_type:OS_TYPE_LABSTATION;label-pool:labstation_main")
+		bot3 := test.BotForDUT("dut_2", "ready", "label-os_type:OS_TYPE_LABSTATION;label-pool:DUT_POOL_QUOTA")
 		bots := []*swarming.SwarmingRpcsBotInfo{
 			bot1,
 			bot2,
+			bot3,
 		}
 		getDutName := func(bot *swarming.SwarmingRpcsBotInfo) string {
 			h, err := swarming_utils.ExtractSingleValuedDimension(swarming_utils.DimensionsMap(bot.Dimensions), clients.DutNameDimensionKey)
