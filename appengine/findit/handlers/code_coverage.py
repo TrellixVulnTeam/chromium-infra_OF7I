@@ -231,6 +231,7 @@ def _MakePlatformSelect(luci_project, host, project, ref, revision, path,
         'selected':
             platform == current_platform,
     })
+  result['options'].sort(key=lambda x: x['ui_name'])
   return result
 
 
