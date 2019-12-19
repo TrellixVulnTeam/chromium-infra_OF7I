@@ -17,7 +17,7 @@
 pins:
 - image: docker.io/library/ubuntu
   tag: xenial
-  digest: sha256:d2cfe1e7389fbb85a1cc6f4e1e14ca8a5d1c4c8b992c324bb1682ae152e6366b
+  digest: sha256:181800dada370557133a502977d0e3f7abda0c25b9bbb035f199f5eb6082a114
 - image: gcr.io/distroless/static
   tag: latest
   digest: sha256:c6d5981545ce1406d33e61434c61e9452dad93ecd8397c41e89036ef977a88f4
