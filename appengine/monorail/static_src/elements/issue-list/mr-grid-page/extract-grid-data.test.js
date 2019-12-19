@@ -4,6 +4,12 @@
 
 import {assert} from 'chai';
 import {extractGridData} from './extract-grid-data.js';
+import {extractFieldValuesFromIssue,
+  extractTypeForFieldName} from 'reducers/project.js';
+
+const fieldExtractor = extractFieldValuesFromIssue({});
+const typeExtractor = extractTypeForFieldName({});
+
 
 describe('extract headings from x and y attributes', () => {
   it('no attributes set', () => {
@@ -12,7 +18,7 @@ describe('extract headings from x and y attributes', () => {
       {'localId': 2, 'projectName': 'test'},
     ];
 
-    const data = extractGridData(issues);
+    const data = extractGridData(issues, '', '', fieldExtractor);
 
     const expectedIssues = new Map([
       ['All + All', [
@@ -32,7 +38,7 @@ describe('extract headings from x and y attributes', () => {
       {'attachmentCount': 1},
     ];
 
-    const data = extractGridData(issues, 'Attachments', '');
+    const data = extractGridData(issues, 'Attachments', '', fieldExtractor);
 
     const expectedIssues = new Map([
       ['0 + All', [{'attachmentCount': 0}]],
@@ -49,7 +55,7 @@ describe('extract headings from x and y attributes', () => {
       {'blockedOnIssueRefs': [{'localId': 21}]},
       {'otherIssueProperty': 'issueProperty'},
     ];
-    const data = extractGridData(issues, 'Blocked', '');
+    const data = extractGridData(issues, 'Blocked', '', fieldExtractor);
 
     const expectedIssues = new Map();
     expectedIssues.set('Yes + All',
@@ -73,7 +79,7 @@ describe('extract headings from x and y attributes', () => {
       {'blockedOnIssueRefs': [
         {'localId': 1, 'projectName': 'test-projectA'}]},
     ];
-    const data = extractGridData(issues, 'BlockedOn', '');
+    const data = extractGridData(issues, 'BlockedOn', '', fieldExtractor);
 
     const expectedIssues = new Map();
     expectedIssues.set('test-projectB:3 + All', [{'blockedOnIssueRefs':
@@ -104,7 +110,7 @@ describe('extract headings from x and y attributes', () => {
       {'blockingIssueRefs': [
         {'localId': 3, 'projectName': 'test-projectB'}]},
     ];
-    const data = extractGridData(issues, 'Blocking', '');
+    const data = extractGridData(issues, 'Blocking', '', fieldExtractor);
 
     const expectedIssues = new Map();
     expectedIssues.set('test-projectA:1 + All', [{'blockedOnIssueRefs':
@@ -130,7 +136,7 @@ describe('extract headings from x and y attributes', () => {
       {'componentRefs': [{'path': 'API'}]},
       {'componentRefs': [{'path': 'UI'}]},
     ];
-    const data = extractGridData(issues, 'Component', '');
+    const data = extractGridData(issues, 'Component', '', fieldExtractor);
 
     const expectedIssues = new Map();
     expectedIssues.set('UI + All', [{'componentRefs': [{'path': 'UI'}]},
@@ -148,7 +154,7 @@ describe('extract headings from x and y attributes', () => {
       {'reporterRef': {'displayName': 'testA@google.com'}},
       {'reporterRef': {'displayName': 'testB@google.com'}},
     ];
-    const data = extractGridData(issues, '', 'Reporter');
+    const data = extractGridData(issues, '', 'Reporter', fieldExtractor);
 
     const expectedIssues = new Map();
     expectedIssues.set('All + testA@google.com',
@@ -165,7 +171,7 @@ describe('extract headings from x and y attributes', () => {
     const issues = [
       {'starCount': 1}, {'starCount': 6}, {'starCount': 1},
     ];
-    const data = extractGridData(issues, '', 'Stars');
+    const data = extractGridData(issues, '', 'Stars', fieldExtractor);
 
     const expectedIssues = new Map();
     expectedIssues.set('All + 1', [{'starCount': 1}, {'starCount': 1}]);
@@ -190,7 +196,7 @@ describe('extract headings from x and y attributes', () => {
     ];
 
     const data = extractGridData(
-        issues, '', 'Status', '', new Map(), new Set(), statusDefs);
+        issues, '', 'Status', fieldExtractor, typeExtractor, statusDefs);
 
     const expectedIssues = new Map();
     expectedIssues.set(
@@ -215,7 +221,7 @@ describe('extract headings from x and y attributes', () => {
       {'labelRefs': [{'label': 'Type-Defect'}]},
       {'labelRefs': [{'label': 'Type-Enhancement'}]},
     ];
-    const data = extractGridData(issues, '', 'Type');
+    const data = extractGridData(issues, '', 'Type', fieldExtractor);
 
     const expectedIssues = new Map();
     expectedIssues.set('All + Defect', [

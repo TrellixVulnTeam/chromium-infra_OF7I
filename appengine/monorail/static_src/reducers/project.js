@@ -5,7 +5,7 @@
 import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
-import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS,
+import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS, defaultIssueFieldMap,
   parseColSpec, stringValuesForIssueField} from 'shared/issue-fields.js';
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
@@ -257,6 +257,35 @@ export const extractFieldValuesFromIssue = createSelector(projectName,
     (projectName, labelPrefixSet, fieldDefMap) => {
       return (issue, fieldName) => stringValuesForIssueField(issue, fieldName,
           projectName, fieldDefMap, labelPrefixSet);
+    },
+);
+
+/**
+ * A selector that builds a function that's used to compute the type of a given
+ * field name.
+ * @param {Object} state Current Redux state.
+ * @return {function(string): string}
+ */
+export const extractTypeForFieldName = createSelector(fieldDefMap,
+    (fieldDefMap) => {
+      return (fieldName) => {
+        const key = fieldName.toLowerCase();
+
+        // If the field is a built in field. Default fields have precedence
+        // over custom fields.
+        if (defaultIssueFieldMap.hasOwnProperty(key)) {
+          return defaultIssueFieldMap[key].type;
+        }
+
+        // If the field is a custom field. Custom fields have precedence
+        // over label prefixes.
+        if (fieldDefMap.has(key)) {
+          return fieldDefMap.get(key).fieldRef.type;
+        }
+
+        // Default to STR_TYPE, including for label fields.
+        return fieldTypes.STR_TYPE;
+      };
     },
 );
 

@@ -18,8 +18,8 @@ const PROPERTIES_TRIGGERING_GROUPING = Object.freeze([
   'xField',
   'yField',
   'issues',
-  '_fieldDefMap',
-  '_labelPrefixSet',
+  '_extractFieldValuesFromIssue',
+  '_extractTypeForFieldName',
   '_statusDefs',
 ]);
 
@@ -160,8 +160,8 @@ export class MrGrid extends connectStore(LitElement) {
       cellMode: {type: String},
       queryParams: {type: Object},
       projectName: {type: String},
-      _fieldDefMap: {type: Object},
-      _labelPrefixSet: {type: Object},
+      _extractFieldValuesFromIssue: {type: Object},
+      _extractTypeForFieldName: {type: Object},
       _statusDefs: {type: Array},
     };
   }
@@ -225,12 +225,17 @@ export class MrGrid extends connectStore(LitElement) {
     this._yHeadings = [];
 
     /**
-     * Lowercase field name -> FieldDef for the project
-     * @type {Map<string, FieldDef>}
+     * Method for extracting values from an issue for a given
+     * project config.
+     * @type {function(Issue, string): Array<string>}
      */
-    this._fieldDefMap = new Map();
+    this._extractFieldValuesFromIssue = undefined;
 
-    this._labelPrefixSet = new Set();
+    /**
+     * Method for finding the types of fields based on their names.
+     * @type {function(string): string}
+     */
+    this._extractTypeForFieldName = undefined;
 
     /**
      * Note: no default assigned here: it can be undefined in stateChanged.
@@ -241,20 +246,24 @@ export class MrGrid extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this._fieldDefMap = project.fieldDefMap(state);
-    this._labelPrefixSet = project.labelPrefixSet(state);
+    this._extractFieldValuesFromIssue =
+      project.extractFieldValuesFromIssue(state);
+    this._extractTypeForFieldName = project.extractTypeForFieldName(state);
     this._statusDefs = project.config(state).statusDefs;
   }
 
   /** @override */
   update(changedProperties) {
     if (setHasAny(changedProperties, PROPERTIES_TRIGGERING_GROUPING)) {
-      const gridData = extractGridData(
-          this.issues, this.xField, this.yField, this.projectName,
-          this._fieldDefMap, this._labelPrefixSet, this._statusDefs);
-      this._xHeadings = gridData.xHeadings;
-      this._yHeadings = gridData.yHeadings;
-      this._groupedIssues = gridData.groupedIssues;
+      if (this._extractFieldValuesFromIssue) {
+        const gridData = extractGridData(
+            this.issues, this.xField, this.yField,
+            this._extractFieldValuesFromIssue, this._extractTypeForFieldName,
+            this._statusDefs);
+        this._xHeadings = gridData.xHeadings;
+        this._yHeadings = gridData.yHeadings;
+        this._groupedIssues = gridData.groupedIssues;
+      }
     }
 
     super.update(changedProperties);

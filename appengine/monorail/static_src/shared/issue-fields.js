@@ -61,6 +61,14 @@ export function parseColSpec(spec = '') {
   return spec.split(SPEC_DELIMITER_REGEX).filter(Boolean);
 }
 
+/**
+ * Finds the type for an issue based on the issue's custom fields
+ * and labels. If there is a custom field named "Type", that field
+ * is used, otherwise labels are used.
+ * @param {!Array<FieldValue>} fieldValues
+ * @param {!Array<LabelRef>} labelRefs
+ * @return {string}
+ */
 export function extractTypeForIssue(fieldValues, labelRefs) {
   if (fieldValues) {
     // If there is a custom field for "Type", use that for type.
@@ -273,26 +281,27 @@ const defaultIssueFields = Object.freeze([
 ]);
 
 /**
- * Lowercase field name -> field object.
- * @type {Map<string, DefaultIssueField>}
+ * Lowercase field name -> field object. This uses an Object instead of a Map
+ * so that it can be frozen.
+ * @type {Object.<string, DefaultIssueField>}
  */
-const defaultIssueFieldMap = new Map();
-
-defaultIssueFields.forEach((field) => {
-  defaultIssueFieldMap.set(field.fieldName.toLowerCase(), field);
-});
+export const defaultIssueFieldMap = Object.freeze(
+    defaultIssueFields.reduce((acc, field) => {
+      acc[field.fieldName.toLowerCase()] = field;
+      return acc;
+    }, {}),
+);
 
 export const DEFAULT_ISSUE_FIELD_LIST = defaultIssueFields.map(
     (field) => field.fieldName);
 
-// TODO(zhangtiff): Integrate this logic with Redux selectors.
-export const stringValuesForIssueField = (issue, columnName, projectName,
-    fieldDefMap = new Map(), labelPrefixFields = new Set()) => {
-  const columnKey = columnName.toLowerCase();
+export const stringValuesForIssueField = (issue, fieldName, projectName,
+    fieldDefMap = new Map(), labelPrefixSet = new Set()) => {
+  const fieldKey = fieldName.toLowerCase();
 
   // Look at whether the field is a built in field first.
-  if (defaultIssueFieldMap.has(columnKey)) {
-    const bakedFieldDef = defaultIssueFieldMap.get(columnKey);
+  if (defaultIssueFieldMap.hasOwnProperty(fieldKey)) {
+    const bakedFieldDef = defaultIssueFieldMap[fieldKey];
     const values = bakedFieldDef.extractor(issue);
     switch (bakedFieldDef.type) {
       case fieldTypes.ISSUE_TYPE:
@@ -314,9 +323,9 @@ export const stringValuesForIssueField = (issue, columnName, projectName,
   }
 
   // Handle custom approval field approver columns.
-  const found = columnKey.match(APPROVER_COL_SUFFIX_REGEX);
+  const found = fieldKey.match(APPROVER_COL_SUFFIX_REGEX);
   if (found) {
-    const approvalName = columnKey.slice(0, -found[0].length);
+    const approvalName = fieldKey.slice(0, -found[0].length);
     const approvalFieldKey = fieldValueMapKey(approvalName);
     if (fieldDefMap.has(approvalFieldKey)) {
       const approvalApproversMap = approvalApproversToMap(issue.approvalValues);
@@ -327,20 +336,20 @@ export const stringValuesForIssueField = (issue, columnName, projectName,
   }
 
   // Handle custom approval field columns.
-  if (fieldDefMap.has(columnKey) && fieldDefMap.get(columnKey).fieldRef &&
-      fieldDefMap.get(columnKey).fieldRef.type == fieldTypes.APPROVAL_TYPE) {
+  if (fieldDefMap.has(fieldKey) && fieldDefMap.get(fieldKey).fieldRef &&
+      fieldDefMap.get(fieldKey).fieldRef.type == fieldTypes.APPROVAL_TYPE) {
     const approvalValuesMap = approvalValuesToMap(issue.approvalValues);
-    if (approvalValuesMap.has(columnKey)) {
-      return approvalValuesMap.get(columnKey);
+    if (approvalValuesMap.has(fieldKey)) {
+      return approvalValuesMap.get(fieldKey);
     }
   }
 
   // Handle custom fields.
-  let fieldValueKey = columnKey;
-  let fieldNameKey = columnKey;
-  if (columnKey.match(PHASE_FIELD_COL_DELIMITER_REGEX)) {
+  let fieldValueKey = fieldKey;
+  let fieldNameKey = fieldKey;
+  if (fieldKey.match(PHASE_FIELD_COL_DELIMITER_REGEX)) {
     let phaseName;
-    [phaseName, fieldNameKey] = columnKey.split(
+    [phaseName, fieldNameKey] = fieldKey.split(
         PHASE_FIELD_COL_DELIMITER_REGEX);
     // key for fieldValues Map contain the phaseName, if any.
     fieldValueKey = fieldValueMapKey(fieldNameKey, phaseName);
@@ -353,43 +362,18 @@ export const stringValuesForIssueField = (issue, columnName, projectName,
   }
 
   // Label options are last in precedence.
-  if (labelPrefixFields.has(columnKey)) {
+  if (labelPrefixSet.has(fieldKey)) {
     const matchingLabels = (issue.labelRefs || []).filter((labelRef) => {
       const labelPrefixKey = labelNameToLabelPrefix(
           labelRef.label).toLowerCase();
-      return columnKey === labelPrefixKey;
+      return fieldKey === labelPrefixKey;
     });
-    const labelPrefix = columnKey + '-';
+    const labelPrefix = fieldKey + '-';
     return matchingLabels.map(
         (labelRef) => removePrefix(labelRef.label, labelPrefix));
   }
 
   return [];
-};
-
-// TODO(zhangtiff): Integrate this logic with Redux selectors.
-/**
- * @param {string} fieldName
- * @param {Map} fieldDefMap
- * @return {fieldTypes}
- */
-export const getTypeForFieldName = (fieldName, fieldDefMap = new Map()) => {
-  const key = fieldName.toLowerCase();
-
-  // If the field is a built in field. Default fields have precedence
-  // over custom fields.
-  if (defaultIssueFieldMap.has(key)) {
-    return defaultIssueFieldMap.get(key).type;
-  }
-
-  // If the field is a custom field. Custom fields have precedence
-  // over label prefixes.
-  if (fieldDefMap.has(key)) {
-    return fieldDefMap.get(key).fieldRef.type;
-  }
-
-  // Default to STR_TYPE, including for label fields.
-  return fieldTypes.STR_TYPE;
 };
 
 // TODO(zhangtiff): Implement hotlist specific fields: Rank, Added, Adder.

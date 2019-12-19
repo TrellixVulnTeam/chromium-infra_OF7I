@@ -189,11 +189,155 @@ describe('project selectors', () => {
     ]));
   });
 
+  describe('extractTypeForFieldName', () => {
+    let typeExtractor;
+
+    describe('built-in fields', () => {
+      beforeEach(() => {
+        typeExtractor = project.extractTypeForFieldName({});
+      });
+
+      it('not case sensitive', () => {
+        assert.deepEqual(typeExtractor('id'), fieldTypes.ISSUE_TYPE);
+        assert.deepEqual(typeExtractor('iD'), fieldTypes.ISSUE_TYPE);
+        assert.deepEqual(typeExtractor('Id'), fieldTypes.ISSUE_TYPE);
+      });
+
+      it('gets type for ID', () => {
+        assert.deepEqual(typeExtractor('ID'), fieldTypes.ISSUE_TYPE);
+      });
+
+      it('gets type for Project', () => {
+        assert.deepEqual(typeExtractor('Project'), fieldTypes.PROJECT_TYPE);
+      });
+
+      it('gets type for Attachments', () => {
+        assert.deepEqual(typeExtractor('Attachments'), fieldTypes.INT_TYPE);
+      });
+
+      it('gets type for AllLabels', () => {
+        assert.deepEqual(typeExtractor('AllLabels'), fieldTypes.LABEL_TYPE);
+      });
+
+      it('gets type for AllLabels', () => {
+        assert.deepEqual(typeExtractor('AllLabels'), fieldTypes.LABEL_TYPE);
+      });
+
+      it('gets type for Blocked', () => {
+        assert.deepEqual(typeExtractor('Blocked'), fieldTypes.STR_TYPE);
+      });
+
+      it('gets type for BlockedOn', () => {
+        assert.deepEqual(typeExtractor('BlockedOn'), fieldTypes.ISSUE_TYPE);
+      });
+
+      it('gets type for Blocking', () => {
+        assert.deepEqual(typeExtractor('Blocking'), fieldTypes.ISSUE_TYPE);
+      });
+
+      it('gets type for CC', () => {
+        assert.deepEqual(typeExtractor('CC'), fieldTypes.USER_TYPE);
+      });
+
+      it('gets type for Closed', () => {
+        assert.deepEqual(typeExtractor('Closed'), fieldTypes.TIME_TYPE);
+      });
+
+      it('gets type for Component', () => {
+        assert.deepEqual(typeExtractor('Component'), fieldTypes.COMPONENT_TYPE);
+      });
+
+      it('gets type for ComponentModified', () => {
+        assert.deepEqual(typeExtractor('ComponentModified'),
+            fieldTypes.TIME_TYPE);
+      });
+
+      it('gets type for MergedInto', () => {
+        assert.deepEqual(typeExtractor('MergedInto'), fieldTypes.ISSUE_TYPE);
+      });
+
+      it('gets type for Modified', () => {
+        assert.deepEqual(typeExtractor('Modified'), fieldTypes.TIME_TYPE);
+      });
+
+      it('gets type for Reporter', () => {
+        assert.deepEqual(typeExtractor('Reporter'), fieldTypes.USER_TYPE);
+      });
+
+      it('gets type for Stars', () => {
+        assert.deepEqual(typeExtractor('Stars'), fieldTypes.INT_TYPE);
+      });
+
+      it('gets type for Status', () => {
+        assert.deepEqual(typeExtractor('Status'), fieldTypes.STATUS_TYPE);
+      });
+
+      it('gets type for StatusModified', () => {
+        assert.deepEqual(typeExtractor('StatusModified'), fieldTypes.TIME_TYPE);
+      });
+
+      it('gets type for Summary', () => {
+        assert.deepEqual(typeExtractor('Summary'), fieldTypes.STR_TYPE);
+      });
+
+      it('gets type for Type', () => {
+        assert.deepEqual(typeExtractor('Type'), fieldTypes.ENUM_TYPE);
+      });
+
+      it('gets type for Owner', () => {
+        assert.deepEqual(typeExtractor('Owner'), fieldTypes.USER_TYPE);
+      });
+
+      it('gets type for OwnerLastVisit', () => {
+        assert.deepEqual(typeExtractor('OwnerLastVisit'), fieldTypes.TIME_TYPE);
+      });
+
+      it('gets type for OwnerModified', () => {
+        assert.deepEqual(typeExtractor('OwnerModified'), fieldTypes.TIME_TYPE);
+      });
+
+      it('gets type for Opened', () => {
+        assert.deepEqual(typeExtractor('Opened'), fieldTypes.TIME_TYPE);
+      });
+    });
+
+    it('gets types for custom fields', () => {
+      typeExtractor = project.extractTypeForFieldName({
+        project: {config: {fieldDefs: [
+          {fieldRef: {fieldName: 'CustomIntField', type: 'INT_TYPE'}},
+          {fieldRef: {fieldName: 'CustomStrField', type: 'STR_TYPE'}},
+          {fieldRef: {fieldName: 'CustomUserField', type: 'USER_TYPE'}},
+          {fieldRef: {fieldName: 'CustomEnumField', type: 'ENUM_TYPE'}},
+          {fieldRef: {fieldName: 'CustomApprovalField',
+            type: 'APPROVAL_TYPE'}},
+        ]}},
+      });
+
+      assert.deepEqual(typeExtractor('CustomIntField'), fieldTypes.INT_TYPE);
+      assert.deepEqual(typeExtractor('CustomStrField'), fieldTypes.STR_TYPE);
+      assert.deepEqual(typeExtractor('CustomUserField'), fieldTypes.USER_TYPE);
+      assert.deepEqual(typeExtractor('CustomEnumField'), fieldTypes.ENUM_TYPE);
+      assert.deepEqual(typeExtractor('CustomApprovalField'),
+          fieldTypes.APPROVAL_TYPE);
+    });
+
+    it('defaults to string type for other fields', () => {
+      typeExtractor = project.extractTypeForFieldName({
+        project: {config: {fieldDefs: [
+          {fieldRef: {fieldName: 'CustomIntField', type: 'INT_TYPE'}},
+          {fieldRef: {fieldName: 'CustomUserField', type: 'USER_TYPE'}},
+        ]}},
+      });
+
+      assert.deepEqual(typeExtractor('FakeUserField'), fieldTypes.STR_TYPE);
+      assert.deepEqual(typeExtractor('NotOwner'), fieldTypes.STR_TYPE);
+    });
+  });
+
   describe('extractFieldValuesFromIssue', () => {
     let clock;
     let issue;
     let fieldExtractor;
-
 
     describe('built-in fields', () => {
       beforeEach(() => {

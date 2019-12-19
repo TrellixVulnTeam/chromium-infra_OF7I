@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {EMPTY_FIELD_VALUE,
-  stringValuesForIssueField} from 'shared/issue-fields.js';
-import {getTypeForFieldName, fieldTypes} from 'shared/issue-fields';
+import {EMPTY_FIELD_VALUE, fieldTypes} from 'shared/issue-fields.js';
+import 'shared/typedef.js';
 
 
 const DEFAULT_HEADER_VALUE = 'All';
@@ -93,10 +92,10 @@ function issueRefComparator(issueRefStrA, issueRefStrB) {
  * Returns a comparator for strings representing statuses using the ordering
  * provided in statusDefs.
  * Any status not found in statusDefs will be sorted to the end.
- * @param {!Array<StatusDef>} statusDefs
+ * @param {!Array<StatusDef>=} statusDefs
  * @return {function(string, string): number}
  */
-function getStatusDefComparator(statusDefs) {
+function getStatusDefComparator(statusDefs = []) {
   return (statusStrA, statusStrB) => {
     // Traverse statusDefs to determine which status is first.
     for (const statusDef of statusDefs) {
@@ -113,21 +112,23 @@ function getStatusDefComparator(statusDefs) {
 /**
  * @param {!Set<string>} headingSet The headers found for the field.
  * @param {string} fieldName The field on which we're sorting.
- * @param {!Map} fieldDefMap
- * @param {!Array<StatusDef>} statusDefs
+ * @param {function(string): string=} extractTypeForFieldName
+ * @param {!Array<StatusDef>=} statusDefs
  * @return {!Array<string>}
  */
-function sortHeadings(headingSet, fieldName, fieldDefMap, statusDefs) {
+function sortHeadings(headingSet, fieldName, extractTypeForFieldName,
+    statusDefs = []) {
   let sorter;
-  const type = getTypeForFieldName(fieldName, fieldDefMap);
-  if (type === fieldTypes.ISSUE_TYPE) {
-    sorter = issueRefComparator;
-  } else if (type === fieldTypes.INT_TYPE) {
-    sorter = intStrComparator;
-  } else if (type === fieldTypes.STATUS_TYPE) {
-    sorter = getStatusDefComparator(statusDefs);
+  if (extractTypeForFieldName) {
+    const type = extractTypeForFieldName(fieldName);
+    if (type === fieldTypes.ISSUE_TYPE) {
+      sorter = issueRefComparator;
+    } else if (type === fieldTypes.INT_TYPE) {
+      sorter = intStrComparator;
+    } else if (type === fieldTypes.STATUS_TYPE) {
+      sorter = getStatusDefComparator(statusDefs);
+    }
   }
-
 
   // Track whether EMPTY_FIELD_VALUE is present, and ensure that
   // it is sorted to the last position even for custom fields.
@@ -158,15 +159,12 @@ export function makeGridCellKey(x, y) {
 /**
  * @param {Issue} issue The issue for which we're preparing grid headings.
  * @param {string} fieldName The field on which we're grouping.
- * @param {string} projectName
- * @param {!Map} fieldDefMap
- * @param {!Set} labelPrefixSet
+ * @param {function(Issue, string): Array<string>} extractFieldValuesFromIssue
  * @return {!Array<string>} The headings the issue should be grouped into.
  */
 function prepareHeadings(
-    issue, fieldName, projectName, fieldDefMap, labelPrefixSet) {
-  const values = stringValuesForIssueField(
-      issue, fieldName, projectName, fieldDefMap, labelPrefixSet);
+    issue, fieldName, extractFieldValuesFromIssue) {
+  const values = extractFieldValuesFromIssue(issue, fieldName);
 
   return values.length == 0 ?
      [EMPTY_FIELD_VALUE] :
@@ -179,9 +177,8 @@ function prepareHeadings(
  * @param {Array<Issue>} issues The issues we are grouping.
  * @param {string=} xFieldName name of the field for grouping columns.
  * @param {string=} yFieldName name of the field for grouping rows.
- * @param {string=} projectName
- * @param {Map=} fieldDefMap
- * @param {Set=} labelPrefixSet
+ * @param {function(Issue, string): Array<string>} extractFieldValuesFromIssue
+ * @param {function(string): string=} extractTypeForFieldName
  * @param {Array<StatusDef>=} statusDefs
  * @return {!Object} Grid data
  *   - groupedIssues: A map of issues grouped by thir xField and yField values.
@@ -189,8 +186,8 @@ function prepareHeadings(
  *   - yHeadings: sorted headings for rows.
  */
 export function extractGridData(
-    issues, xFieldName = '', yFieldName = '', projectName = '',
-    fieldDefMap = new Map(), labelPrefixSet = new Set(), statusDefs = []) {
+    issues, xFieldName = '', yFieldName = '', extractFieldValuesFromIssue,
+    extractTypeForFieldName, statusDefs = []) {
   const xHeadingsSet = new Set();
   const yHeadingsSet = new Set();
   const groupedIssues = new Map();
@@ -198,11 +195,11 @@ export function extractGridData(
     const xHeadings = !xFieldName ?
         [DEFAULT_HEADER_VALUE] :
         prepareHeadings(
-            issue, xFieldName, projectName, fieldDefMap, labelPrefixSet);
+            issue, xFieldName, extractFieldValuesFromIssue);
     const yHeadings = !yFieldName ?
         [DEFAULT_HEADER_VALUE] :
         prepareHeadings(
-            issue, yFieldName, projectName, fieldDefMap, labelPrefixSet);
+            issue, yFieldName, extractFieldValuesFromIssue);
 
     // Find every combo of 'xValue yValue' that the issue belongs to
     // and add it into that cell. Also record each header used.
@@ -222,7 +219,9 @@ export function extractGridData(
 
   return {
     groupedIssues,
-    xHeadings: sortHeadings(xHeadingsSet, xFieldName, fieldDefMap, statusDefs),
-    yHeadings: sortHeadings(yHeadingsSet, yFieldName, fieldDefMap, statusDefs),
+    xHeadings: sortHeadings(xHeadingsSet, xFieldName, extractTypeForFieldName,
+        statusDefs),
+    yHeadings: sortHeadings(yHeadingsSet, yFieldName, extractTypeForFieldName,
+        statusDefs),
   };
 }
