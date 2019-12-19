@@ -1466,7 +1466,7 @@ class WorkEnvTest(unittest.TestCase):
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   def testConvertIssueApprovalsTemplate(self, fake_pasicn):
     """We can convert an issue's approvals to match template's approvals."""
-    issue = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
+    issue = fake.MakeTestIssue(789, 1, 'sum', 'New', 111)
     issue.approval_values = [
         tracker_pb2.ApprovalValue(
             approval_id=3,
@@ -1566,10 +1566,19 @@ class WorkEnvTest(unittest.TestCase):
         comment_id=mock.ANY)
 
   def testConvertIssueApprovalsTemplate_NoSuchTemplate(self):
-    issue = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
+    self.SignIn()
+    issue = fake.MakeTestIssue(789, 1, 'sum', 'New', 111)
     self.services.template.GetTemplateByName.return_value = None
     config = self.services.config.GetProjectConfig(self.cnxn, 789)
     with self.assertRaises(exceptions.NoSuchTemplateException):
+      self.work_env.ConvertIssueApprovalsTemplate(
+          config, issue, 'template_name', 'comment')
+
+  def testConvertIssueApprovalsTemplate_MissingEditPermissions(self):
+    self.SignIn(self.user_2.user_id)
+    issue = fake.MakeTestIssue(789, 1, 'sum', 'New', self.user_1.user_id)
+    config = self.services.config.GetProjectConfig(self.cnxn, 789)
+    with self.assertRaises(permissions.PermissionException):
       self.work_env.ConvertIssueApprovalsTemplate(
           config, issue, 'template_name', 'comment')
 

@@ -1010,7 +1010,7 @@ class WorkEnv(object):
         applicable_fds.append(fd)
       elif fd.field_type != tracker_pb2.FieldTypes.APPROVAL_TYPE and (
           not fd.applicable_type or fd.applicable_type.lower() in types_lower):
-          applicable_fds.append(fd)
+        applicable_fds.append(fd)
     return applicable_fds
 
   def GetIssueByLocalID(
@@ -1148,6 +1148,7 @@ class WorkEnv(object):
       self, config, issue, template_name, comment_content, send_email=True):
     """Convert an issue's existing approvals structure to match the one of
        the given template."""
+    self._AssertPermInIssue(issue, permissions.EDIT_ISSUE)
 
     template = self.services.template.GetTemplateByName(
         self.mc.cnxn, template_name, issue.project_id)
