@@ -413,11 +413,12 @@ func FilterRequestChangedLines(request *track.AnalyzeRequest, changedLines *Chan
 	}
 }
 
-// CommentIsInChangedLines checks whether a comment is in the change.
+// CommentIsInChangedLines returns true whether a comment is in or close enough
+// to the change.
 //
-// Non-file-level comments that don't overlap with the changed lines
-// should be filtered out.
-func CommentIsInChangedLines(c context.Context, data *tricium.Data_Comment, changedLines ChangedLinesInfo) bool {
+// Comments on the change description and comments within numNearbyLines of
+// changed lines are included.
+func CommentIsInChangedLines(c context.Context, data *tricium.Data_Comment, changedLines ChangedLinesInfo, numNearbyLines int) bool {
 	if len(data.Path) == 0 {
 		return true // This is a comment on the commit message, which is always kept.
 	}
@@ -426,7 +427,8 @@ func CommentIsInChangedLines(c context.Context, data *tricium.Data_Comment, chan
 		return true // File-level comment, should be kept.
 	}
 
-	// If the file has changed lines tracked, pass over comments that aren't in the diff.
+	// If the file has changed lines tracked, pass over comments that aren't in
+	// the diff.
 	if lines, ok := changedLines[data.Path]; ok {
 		start, end := int(data.StartLine), int(data.EndLine)
 		if end > start && data.EndChar == 0 {
@@ -435,7 +437,7 @@ func CommentIsInChangedLines(c context.Context, data *tricium.Data_Comment, chan
 		if end == 0 {
 			end = start // Line comment.
 		}
-		if isInChangedLines(start, end, lines) {
+		if isInChangedLines(start, end, lines, numNearbyLines) {
 			return true
 		}
 		logging.Debugf(c, "Filtering out comment on lines [%d, %d].", start, end)
@@ -447,11 +449,12 @@ func CommentIsInChangedLines(c context.Context, data *tricium.Data_Comment, chan
 
 // isInChangedLines checks for overlap between a comment and the change.
 //
-// Specifically, this returns true if the range defined by [start, end],
-// includes any of the lines in changedLines.
-func isInChangedLines(start, end int, changedLines []int) bool {
+// Specifically, this returns true if the range defined by
+// [start-numNearbyLines, end+numNearbyLines], includes any of the lines in
+// changedLines.
+func isInChangedLines(start, end int, changedLines []int, numNearbyLines int) bool {
 	for _, line := range changedLines {
-		if line >= start && line <= end {
+		if line >= start-numNearbyLines && line <= end+numNearbyLines {
 			return true
 		}
 	}

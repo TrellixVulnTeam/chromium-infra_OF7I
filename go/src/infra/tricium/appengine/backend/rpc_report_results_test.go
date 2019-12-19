@@ -170,7 +170,7 @@ func TestReportResultsRequest(t *testing.T) {
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, outsideChangeComment),
-			Included: gc.CommentIsInChangedLines(ctx, &dataOutside, changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataOutside, changedLines, 0),
 		}), ShouldBeNil)
 		So(len(comments), ShouldEqual, maxComments+2)
 
@@ -191,7 +191,7 @@ func TestReportResultsRequest(t *testing.T) {
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, comment),
-			Included: gc.CommentIsInChangedLines(ctx, &dataCommentDeleted, changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataCommentDeleted, changedLines, 0),
 		}), ShouldBeNil)
 		So(len(comments), ShouldEqual, maxComments+3)
 
@@ -286,17 +286,17 @@ func TestReportResultsRequestWithRenamedOrCopiedFiles(t *testing.T) {
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, comments[0]),
-			Included: gc.CommentIsInChangedLines(ctx, &dataCommentChanged, changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataCommentChanged, changedLines, 0),
 		}), ShouldBeNil)
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, comments[1]),
-			Included: gc.CommentIsInChangedLines(ctx, &dataCommentRenamed, changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataCommentRenamed, changedLines, 0),
 		}), ShouldBeNil)
 		So(ds.Put(ctx, &track.CommentSelection{
 			ID:       1,
 			Parent:   ds.KeyForObj(ctx, comments[2]),
-			Included: gc.CommentIsInChangedLines(ctx, &dataCommentCopied, changedLines),
+			Included: gc.CommentIsInChangedLines(ctx, &dataCommentCopied, changedLines, 0),
 		}), ShouldBeNil)
 
 		Convey("Does not report comments in renamed or copied files", func() {

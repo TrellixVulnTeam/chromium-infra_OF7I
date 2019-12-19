@@ -239,6 +239,14 @@ func TestCommentIsInChangedLines(t *testing.T) {
 
 		ctx := triciumtest.Context()
 
+		Convey("Anything in CL description is included", func() {
+			data := tricium.Data_Comment{
+				Path: "",
+			}
+			lines := ChangedLinesInfo{"": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 0), ShouldBeTrue)
+		})
+
 		Convey("Single line comment in changed lines", func() {
 			data := tricium.Data_Comment{
 				Path:      "dir/file.txt",
@@ -247,8 +255,8 @@ func TestCommentIsInChangedLines(t *testing.T) {
 				StartChar: 0,
 				EndChar:   10,
 			}
-			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeTrue)
+			lines := ChangedLinesInfo{"dir/file.txt": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 0), ShouldBeTrue)
 		})
 
 		Convey("Single line comment outside of changed lines", func() {
@@ -259,8 +267,8 @@ func TestCommentIsInChangedLines(t *testing.T) {
 				StartChar: 0,
 				EndChar:   10,
 			}
-			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeFalse)
+			lines := ChangedLinesInfo{"dir/file.txt": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 0), ShouldBeFalse)
 		})
 
 		Convey("Single line comment outside of changed files", func() {
@@ -271,8 +279,8 @@ func TestCommentIsInChangedLines(t *testing.T) {
 				StartChar: 5,
 				EndChar:   10,
 			}
-			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeFalse)
+			lines := ChangedLinesInfo{"dir/file.txt": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 0), ShouldBeFalse)
 		})
 
 		Convey("Comment with line range that overlaps changed line", func() {
@@ -281,8 +289,8 @@ func TestCommentIsInChangedLines(t *testing.T) {
 				StartLine: 3,
 				EndLine:   8,
 			}
-			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeTrue)
+			lines := ChangedLinesInfo{"dir/file.txt": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 0), ShouldBeTrue)
 		})
 
 		Convey("Comment with end char == 0, implying end line is not included", func() {
@@ -291,16 +299,16 @@ func TestCommentIsInChangedLines(t *testing.T) {
 				StartLine: 6,
 				EndLine:   10,
 			}
-			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeFalse)
+			lines := ChangedLinesInfo{"dir/file.txt": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 0), ShouldBeFalse)
 		})
 
 		Convey("File-level comments are included", func() {
 			data := tricium.Data_Comment{
 				Path: "dir/file.txt",
 			}
-			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeTrue)
+			lines := ChangedLinesInfo{"dir/file.txt": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 0), ShouldBeTrue)
 		})
 
 		Convey("Line comments on changed lines are included", func() {
@@ -308,28 +316,66 @@ func TestCommentIsInChangedLines(t *testing.T) {
 				Path:      "dir/file.txt",
 				StartLine: 2,
 			}
-			lines := map[string][]int{"dir/file.txt": {2, 5, 10}}
-			So(CommentIsInChangedLines(ctx, &data, lines), ShouldBeTrue)
+			lines := ChangedLinesInfo{"dir/file.txt": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 0), ShouldBeTrue)
+		})
+
+		// Fuzzy matching.
+
+		Convey("Line comments not close before changed lines are excluded", func() {
+			data := tricium.Data_Comment{
+				Path:      "dir/file.txt",
+				StartLine: 1,
+			}
+			lines := ChangedLinesInfo{"dir/file.txt": {3, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 1), ShouldBeFalse)
+		})
+
+		Convey("Line comments not close after changed lines are excluded", func() {
+			data := tricium.Data_Comment{
+				Path:      "dir/file.txt",
+				StartLine: 7,
+			}
+			lines := ChangedLinesInfo{"dir/file.txt": {3, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 1), ShouldBeFalse)
+		})
+
+		Convey("Line comments close before changed lines are included", func() {
+			data := tricium.Data_Comment{
+				Path:      "dir/file.txt",
+				StartLine: 2,
+			}
+			lines := ChangedLinesInfo{"dir/file.txt": {3, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 1), ShouldBeTrue)
+		})
+
+		Convey("Line comments close after changed lines are included", func() {
+			data := tricium.Data_Comment{
+				Path:      "dir/file.txt",
+				StartLine: 6,
+			}
+			lines := ChangedLinesInfo{"dir/file.txt": {2, 5, 10}}
+			So(CommentIsInChangedLines(ctx, &data, lines, 1), ShouldBeTrue)
 		})
 	})
 }
 
 func TestIsInChangedLines(t *testing.T) {
 	Convey("Overlapping cases", t, func() {
-		So(isInChangedLines(1, 3, []int{2, 3, 4}), ShouldBeTrue)
-		So(isInChangedLines(4, 5, []int{2, 3, 4}), ShouldBeTrue)
+		So(isInChangedLines(1, 3, []int{2, 3, 4}, 0), ShouldBeTrue)
+		So(isInChangedLines(4, 5, []int{2, 3, 4}, 0), ShouldBeTrue)
 		// The end line is inclusive.
-		So(isInChangedLines(1, 2, []int{2, 3, 4}), ShouldBeTrue)
-		So(isInChangedLines(3, 3, []int{2, 3, 4}), ShouldBeTrue)
+		So(isInChangedLines(1, 2, []int{2, 3, 4}, 0), ShouldBeTrue)
+		So(isInChangedLines(3, 3, []int{2, 3, 4}, 0), ShouldBeTrue)
 	})
 
 	Convey("Non-overlapping cases", t, func() {
-		So(isInChangedLines(5, 6, []int{2, 3, 4}), ShouldBeFalse)
-		So(isInChangedLines(1, 1, []int{2, 3, 4}), ShouldBeFalse)
+		So(isInChangedLines(5, 6, []int{2, 3, 4}, 0), ShouldBeFalse)
+		So(isInChangedLines(1, 1, []int{2, 3, 4}, 0), ShouldBeFalse)
 	})
 
 	Convey("Invalid range cases", t, func() {
-		So(isInChangedLines(2, 0, []int{2, 3, 4}), ShouldBeFalse)
+		So(isInChangedLines(2, 0, []int{2, 3, 4}, 0), ShouldBeFalse)
 	})
 }
 

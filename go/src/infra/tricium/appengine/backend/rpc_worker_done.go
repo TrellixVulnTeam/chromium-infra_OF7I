@@ -470,7 +470,7 @@ func createCommentSelections(c context.Context, gerritAPI gerrit.API, request *t
 		if err = comment.UnpackComment(c, &data); err != nil {
 			return nil, err
 		}
-		isChanged := gerrit.CommentIsInChangedLines(c, &data, changedLines)
+		isChanged := gerrit.CommentIsInChangedLines(c, &data, changedLines, 0)
 		isSuppressed := categories.Has(comment.Category)
 		selections[i].Included = (data.ShowOnUnchangedLines || isChanged) && !isSuppressed
 		logging.Fields{
