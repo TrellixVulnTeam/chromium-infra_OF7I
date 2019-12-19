@@ -87,7 +87,6 @@ export class MrApp extends connectStore(LitElement) {
       return html`
         <mr-issue-page
           .userDisplayName=${this.userDisplayName}
-          .queryParams=${this.queryParams}
           .loginUrl=${this.loginUrl}
         ></mr-issue-page>
       `;
@@ -100,16 +99,11 @@ export class MrApp extends connectStore(LitElement) {
     } else if (this.page === 'list') {
       return html`
         <mr-list-page
-          .queryParams=${this.queryParams}
           .userDisplayName=${this.userDisplayName}
         ></mr-list-page>
       `;
     } else if (this.page === 'chart') {
-      return html`
-        <mr-chart-page
-          .queryParams=${this.queryParams}
-        ></mr-chart-page>
-      `;
+      return html`<mr-chart-page></mr-chart-page>`;
     } else if (this.page === 'hotlist-details') {
       return html`<mr-hotlist-details-page></mr-hotlist-details-page>`;
     } else if (this.page === 'hotlist-issues') {

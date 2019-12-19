@@ -269,7 +269,7 @@ describe('mr-issue-list', () => {
 
   it('reloadColspec navigates to page with new colspec', () => {
     element.columns = ['ID', 'Summary'];
-    element.queryParams = {};
+    element._queryParams = {};
 
     element.reloadColspec(['Summary', 'AllLabels']);
 
@@ -279,7 +279,7 @@ describe('mr-issue-list', () => {
 
   it('updateSortSpec navigates to page with new sort option', async () => {
     element.columns = ['ID', 'Summary'];
-    element.queryParams = {};
+    element._queryParams = {};
 
     await element.updateComplete;
 
@@ -291,7 +291,7 @@ describe('mr-issue-list', () => {
 
   it('updateSortSpec navigates to first page when on later page', async () => {
     element.columns = ['ID', 'Summary'];
-    element.queryParams = {start: '100', q: 'owner:me'};
+    element._queryParams = {start: '100', q: 'owner:me'};
 
     await element.updateComplete;
 
@@ -303,7 +303,7 @@ describe('mr-issue-list', () => {
 
   it('updateSortSpec prepends new option to existing sort', async () => {
     element.columns = ['ID', 'Summary', 'Owner'];
-    element.queryParams = {sort: '-summary+owner'};
+    element._queryParams = {sort: '-summary+owner'};
 
     await element.updateComplete;
 
@@ -315,7 +315,7 @@ describe('mr-issue-list', () => {
 
   it('updateSortSpec removes existing instances of sorted column', async () => {
     element.columns = ['ID', 'Summary', 'Owner'];
-    element.queryParams = {sort: '-summary+owner+owner'};
+    element._queryParams = {sort: '-summary+owner+owner'};
 
     await element.updateComplete;
 
@@ -346,7 +346,7 @@ describe('mr-issue-list', () => {
 
   it('showOnly adds new search term to query', async () => {
     element.currentQuery = 'owner:me';
-    element.queryParams = {};
+    element._queryParams = {};
 
     await element.updateComplete;
 

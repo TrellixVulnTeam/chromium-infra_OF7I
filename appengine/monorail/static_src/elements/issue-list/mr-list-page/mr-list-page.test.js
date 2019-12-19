@@ -81,7 +81,7 @@ describe('mr-list-page', () => {
   it('shows no issues when no search results', async () => {
     element.fetchingIssueList = false;
     element.totalIssues = 0;
-    element.queryParams = {q: 'owner:me'};
+    element._queryParams = {q: 'owner:me'};
 
     await element.updateComplete;
 
@@ -100,7 +100,7 @@ describe('mr-list-page', () => {
   it('offers consider closed issues when no open results', async () => {
     element.fetchingIssueList = false;
     element.totalIssues = 0;
-    element.queryParams = {q: 'owner:me', can: '2'};
+    element._queryParams = {q: 'owner:me', can: '2'};
 
     await element.updateComplete;
 
@@ -108,7 +108,7 @@ describe('mr-list-page', () => {
 
     assert.isFalse(considerClosed.hidden);
 
-    element.queryParams = {q: 'owner:me', can: '1'};
+    element._queryParams = {q: 'owner:me', can: '1'};
     element.fetchingIssueList = false;
 
     await element.updateComplete;
@@ -116,74 +116,73 @@ describe('mr-list-page', () => {
     assert.isTrue(considerClosed.hidden);
   });
 
-  it('refreshes when queryParams.sort changes', async () => {
+  it('refreshes when _queryParams.sort changes', async () => {
     sinon.stub(element, 'refresh');
 
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 1);
 
-    element.queryParams = {colspec: 'Summary+ID'};
+    element._queryParams = {colspec: 'Summary+ID'};
 
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 1);
 
-    element.queryParams = {sort: '-Summary'};
-
+    element._queryParams = {sort: '-Summary'};
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 2);
 
     element.refresh.restore();
   });
 
-  it('startIndex parses queryParams for value', () => {
+  it('startIndex parses _queryParams for value', () => {
     // Default value.
-    element.queryParams = {};
+    element._queryParams = {};
     assert.equal(element.startIndex, 0);
 
     // Int.
-    element.queryParams = {start: 2};
+    element._queryParams = {start: 2};
     assert.equal(element.startIndex, 2);
 
     // String.
-    element.queryParams = {start: '5'};
+    element._queryParams = {start: '5'};
     assert.equal(element.startIndex, 5);
 
     // Negative value.
-    element.queryParams = {start: -5};
+    element._queryParams = {start: -5};
     assert.equal(element.startIndex, 0);
 
     // NaN
-    element.queryParams = {start: 'lol'};
+    element._queryParams = {start: 'lol'};
     assert.equal(element.startIndex, 0);
   });
 
-  it('maxItems parses queryParams for value', () => {
+  it('maxItems parses _queryParams for value', () => {
     // Default value.
-    element.queryParams = {};
+    element._queryParams = {};
     assert.equal(element.maxItems, DEFAULT_ISSUES_PER_PAGE);
 
     // Int.
-    element.queryParams = {num: 50};
+    element._queryParams = {num: 50};
     assert.equal(element.maxItems, 50);
 
     // String.
-    element.queryParams = {num: '33'};
+    element._queryParams = {num: '33'};
     assert.equal(element.maxItems, 33);
 
     // NaN
-    element.queryParams = {num: 'lol'};
+    element._queryParams = {num: 'lol'};
     assert.equal(element.maxItems, DEFAULT_ISSUES_PER_PAGE);
   });
 
   it('parses groupby parameter correctly', () => {
-    element.queryParams = {groupby: 'Priority+Status'};
+    element._queryParams = {groupby: 'Priority+Status'};
 
     assert.deepEqual(element.groups,
         ['Priority', 'Status']);
   });
 
   it('groupby parsing preserves dashed parameters', () => {
-    element.queryParams = {groupby: 'Priority+Custom-Status'};
+    element._queryParams = {groupby: 'Priority+Custom-Status'};
 
     assert.deepEqual(element.groups,
         ['Priority', 'Custom-Status']);
@@ -196,7 +195,7 @@ describe('mr-list-page', () => {
     });
 
     it('issue count hidden when no issues', async () => {
-      element.queryParams = {num: 10, start: 0};
+      element._queryParams = {num: 10, start: 0};
       element.totalIssues = 0;
 
       await element.updateComplete;
@@ -207,7 +206,7 @@ describe('mr-list-page', () => {
     });
 
     it('issue count renders on first page', async () => {
-      element.queryParams = {num: 10, start: 0};
+      element._queryParams = {num: 10, start: 0};
       element.totalIssues = 100;
 
       await element.updateComplete;
@@ -218,7 +217,7 @@ describe('mr-list-page', () => {
     });
 
     it('issue count renders on middle page', async () => {
-      element.queryParams = {num: 10, start: 50};
+      element._queryParams = {num: 10, start: 50};
       element.totalIssues = 100;
 
       await element.updateComplete;
@@ -229,7 +228,7 @@ describe('mr-list-page', () => {
     });
 
     it('issue count renders on last page', async () => {
-      element.queryParams = {num: 10, start: 95};
+      element._queryParams = {num: 10, start: 95};
       element.totalIssues = 100;
 
       await element.updateComplete;
@@ -240,7 +239,7 @@ describe('mr-list-page', () => {
     });
 
     it('issue count renders on single page', async () => {
-      element.queryParams = {num: 100, start: 0};
+      element._queryParams = {num: 100, start: 0};
       element.totalIssues = 33;
 
       await element.updateComplete;
@@ -251,7 +250,7 @@ describe('mr-list-page', () => {
     });
 
     it('next and prev hidden on single page', async () => {
-      element.queryParams = {num: 500, start: 0};
+      element._queryParams = {num: 500, start: 0};
       element.totalIssues = 10;
 
       await element.updateComplete;
@@ -264,7 +263,7 @@ describe('mr-list-page', () => {
     });
 
     it('prev hidden on first page', async () => {
-      element.queryParams = {num: 10, start: 0};
+      element._queryParams = {num: 10, start: 0};
       element.totalIssues = 30;
 
       await element.updateComplete;
@@ -277,7 +276,7 @@ describe('mr-list-page', () => {
     });
 
     it('next hidden on last page', async () => {
-      element.queryParams = {num: 10, start: 9};
+      element._queryParams = {num: 10, start: 9};
       element.totalIssues = 5;
 
       await element.updateComplete;
@@ -290,7 +289,7 @@ describe('mr-list-page', () => {
     });
 
     it('next and prev shown on middle page', async () => {
-      element.queryParams = {num: 10, start: 50};
+      element._queryParams = {num: 10, start: 50};
       element.totalIssues = 100;
 
       await element.updateComplete;

@@ -149,7 +149,7 @@ export class MrListPage extends connectStore(LitElement) {
       ></mr-update-issue-hotlists>
       <mr-change-columns
         .columns=${this.columns}
-        .queryParams=${this.queryParams}
+        .queryParams=${this._queryParams}
       ></mr-change-columns>
     `;
   }
@@ -167,7 +167,7 @@ export class MrListPage extends connectStore(LitElement) {
           <p>
             The search query:
           </p>
-          <strong>${this.queryParams.q}</strong>
+          <strong>${this._queryParams.q}</strong>
           <p>
             did not generate any results.
           </p>
@@ -183,7 +183,7 @@ export class MrListPage extends connectStore(LitElement) {
           <a
             href=${this._urlWithNewParams({can: 1})}
             class="no-issues-block consider-closed"
-            ?hidden=${this.queryParams.can === '1'}
+            ?hidden=${this._queryParams.can === '1'}
           >
             Consider closed issues
           </a>
@@ -195,8 +195,8 @@ export class MrListPage extends connectStore(LitElement) {
       <mr-issue-list
         .issues=${this.issues}
         .projectName=${this.projectName}
-        .queryParams=${this.queryParams}
-        .initialCursor=${this.queryParams.cursor}
+        .queryParams=${this._queryParams}
+        .initialCursor=${this._queryParams.cursor}
         .currentQuery=${this.currentQuery}
         .currentCan=${this.currentCan}
         .columns=${this.columns}
@@ -268,7 +268,7 @@ export class MrListPage extends connectStore(LitElement) {
           ` : ''}
           <mr-mode-selector
             .projectName=${this.projectName}
-            .queryParams=${this.queryParams}
+            .queryParams=${this._queryParams}
             value="list"
           ></mr-mode-selector>
         </div>
@@ -281,7 +281,8 @@ export class MrListPage extends connectStore(LitElement) {
     return {
       issues: {type: Array},
       totalIssues: {type: Number},
-      queryParams: {type: Object},
+      /** @private {Object} */
+      _queryParams: {type: Object},
       projectName: {type: String},
       fetchingIssueList: {type: Boolean},
       selectedIssues: {type: Array},
@@ -312,7 +313,7 @@ export class MrListPage extends connectStore(LitElement) {
     this.issues = [];
     this.fetchingIssueList = false;
     this.selectedIssues = [];
-    this.queryParams = {};
+    this._queryParams = {};
     this.columns = [];
     this._usersProjects = new Map();
 
@@ -357,12 +358,12 @@ export class MrListPage extends connectStore(LitElement) {
         changedProperties.has('currentQuery') ||
         changedProperties.has('currentCan')) {
       this.refresh();
-    } else if (changedProperties.has('queryParams')) {
-      const oldParams = changedProperties.get('queryParams') || {};
+    } else if (changedProperties.has('_queryParams')) {
+      const oldParams = changedProperties.get('_queryParams') || {};
 
       const shouldRefresh = PARAMS_THAT_TRIGGER_REFRESH.some((param) => {
         const oldValue = oldParams[param];
-        const newValue = this.queryParams[param];
+        const newValue = this._queryParams[param];
         return oldValue !== newValue;
       });
 
@@ -377,7 +378,7 @@ export class MrListPage extends connectStore(LitElement) {
 
   refresh() {
     store.dispatch(issue.fetchIssueList(
-        {...this.queryParams, q: this.currentQuery, can: this.currentCan},
+        {...this._queryParams, q: this.currentQuery, can: this.currentCan},
         this.projectName,
         {maxItems: this.maxItems, start: this.startIndex}));
   }
@@ -403,6 +404,8 @@ export class MrListPage extends connectStore(LitElement) {
     this.currentQuery = sitewide.currentQuery(state);
     this.currentCan = sitewide.currentCan(state);
     this.columns = sitewide.currentColumns(state);
+
+    this._queryParams = sitewide.queryParams(state);
   }
 
   get starringEnabled() {
@@ -416,15 +419,15 @@ export class MrListPage extends connectStore(LitElement) {
   }
 
   get groups() {
-    return parseColSpec(this.queryParams.groupby);
+    return parseColSpec(this._queryParams.groupby);
   }
 
   get maxItems() {
-    return Number.parseInt(this.queryParams.num) || DEFAULT_ISSUES_PER_PAGE;
+    return Number.parseInt(this._queryParams.num) || DEFAULT_ISSUES_PER_PAGE;
   }
 
   get startIndex() {
-    const num = Number.parseInt(this.queryParams.start) || 0;
+    const num = Number.parseInt(this._queryParams.start) || 0;
     return Math.max(0, num);
   }
 
@@ -437,7 +440,7 @@ export class MrListPage extends connectStore(LitElement) {
   _urlWithNewParams(newParams) {
     // TODO(zhangtiff): replace list_new with list when switching over.
     const baseUrl = `/p/${this.projectName}/issues/list_new`;
-    return urlWithNewParams(baseUrl, this.queryParams, newParams);
+    return urlWithNewParams(baseUrl, this._queryParams, newParams);
   }
 
   noneSelectedAlert(action) {
@@ -462,7 +465,7 @@ export class MrListPage extends connectStore(LitElement) {
     if (!issues || !issues.length) return this.noneSelectedAlert('edit');
     const params = {
       ids: issues.map((issue) => issue.localId).join(','),
-      q: this.queryParams && this.queryParams.q,
+      q: this._queryParams && this._queryParams.q,
     };
     this.page(`/p/${this.projectName}/issues/bulkedit?${qs.stringify(params)}`);
   }

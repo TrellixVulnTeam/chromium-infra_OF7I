@@ -5,6 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 import {connectStore} from 'reducers/base.js';
 import * as project from 'reducers/project.js';
+import * as sitewide from 'reducers/sitewide.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 import '../mr-chart/mr-chart.js';
 
@@ -55,14 +56,14 @@ export class MrChartPage extends connectStore(LitElement) {
     return html`
       <div class="list-controls">
         <mr-mode-selector
-          .projectName=${this.projectName}
-          .queryParams=${this.queryParams}
+          .projectName=${this._projectName}
+          .queryParams=${this._queryParams}
           .value=${'chart'}
         ></mr-mode-selector>
       </div>
       <mr-chart
-        .projectName=${this.projectName}
-        .queryParams=${this.queryParams}
+        .projectName=${this._projectName}
+        .queryParams=${this._queryParams}
       ></mr-chart>
 
       <div>
@@ -83,14 +84,16 @@ export class MrChartPage extends connectStore(LitElement) {
   /** @override */
   static get properties() {
     return {
-      projectName: {type: String},
-      queryParams: {type: Object},
+      _projectName: {type: String},
+      /** @private {Object} */
+      _queryParams: {type: Object},
     };
   }
 
   /** @override */
   stateChanged(state) {
-    this.projectName = project.viewedProjectName(state);
+    this._projectName = project.viewedProjectName(state);
+    this._queryParams = sitewide.queryParams(state);
   }
 };
 customElements.define('mr-chart-page', MrChartPage);
