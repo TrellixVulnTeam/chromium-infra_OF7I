@@ -426,8 +426,8 @@ func TestCreateCommentSelection(t *testing.T) {
 		commentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
 			Message:              "Not in Change",
 			Path:                 "dir/file.txt",
-			StartLine:            3,
-			EndLine:              4,
+			StartLine:            10,
+			EndLine:              11,
 			ShowOnUnchangedLines: true,
 		})
 		comments := []*track.Comment{
@@ -451,8 +451,8 @@ func TestCreateCommentSelection(t *testing.T) {
 		commentJSON, err := (&jsonpb.Marshaler{}).MarshalToString(&tricium.Data_Comment{
 			Message:              "Not in Change",
 			Path:                 "dir/file.txt",
-			StartLine:            3,
-			EndLine:              4,
+			StartLine:            10,
+			EndLine:              11,
 			ShowOnUnchangedLines: false,
 		})
 		comments := []*track.Comment{
