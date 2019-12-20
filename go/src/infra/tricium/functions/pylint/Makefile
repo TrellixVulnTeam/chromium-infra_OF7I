@@ -15,10 +15,7 @@ python:
 			cipd ensure -ensure-file - -root python
 
 pylint:
-	# The following command fails when the vpython pip is used,
-	# but the pip from the python fetched doesn't work; instead,
-	# for now, depend on a system-wide pip. See crbug.com/983222.
-	PYTHONUSERBASE=pylint /usr/bin/pip install --ignore-installed --user pylint
+	pip install --ignore-installed --root pylint --no-compile pylint
 
 clean:
 	rm -rf pylint_parser pylint python out
