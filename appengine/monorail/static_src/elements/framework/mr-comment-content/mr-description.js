@@ -6,7 +6,7 @@ import {LitElement, html, css} from 'lit-element';
 import './mr-comment-content.js';
 import './mr-attachment.js';
 
-import {standardTimeShort} from
+import {relativeTime} from
   'elements/chops/chops-timestamp/chops-timestamp-helpers';
 
 
@@ -88,16 +88,25 @@ export class MrDescription extends LitElement {
     `;
   }
 
+  /**
+   * Updates the element's selectedIndex when the user changes the select menu.
+   * @param {Event} evt
+   */
   _selectChanged(evt) {
     if (!evt || !evt.target) return;
     this.selectedIndex = Number.parseInt(evt.target.value);
   }
 }
 
+/**
+ * Template helper for rendering relative time.
+ * @param {number} unixTime Unix timestamp in seconds.
+ * @return {string} human readable timestamp.
+ */
 function _relativeTime(unixTime) {
   unixTime = Number.parseInt(unixTime);
   if (Number.isNaN(unixTime)) return;
-  return standardTimeShort(new Date(unixTime * 1000));
+  return relativeTime(new Date(unixTime * 1000));
 }
 
 customElements.define('mr-description', MrDescription);

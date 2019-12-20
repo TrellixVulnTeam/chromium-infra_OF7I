@@ -26,61 +26,84 @@ export const SHORT_FORMATTER = new Intl.DateTimeFormat(DEFAULT_DATE_LOCALE, {
   day: 'numeric',
 });
 
+export const MS_PER_MINUTE = 60 * 1000;
+export const MS_PER_HOUR = MS_PER_MINUTE * 60;
+export const MS_PER_DAY = MS_PER_HOUR * 24;
+export const MS_PER_MONTH = MS_PER_DAY * 30;
+
+/**
+ * Helper to determine if a Date was less than a month ago.
+ * @param {Date} date The date to check.
+ * @return {boolean} Whether the date was less than a
+ *   month ago.
+ */
+function isLessThanAMonthAgo(date) {
+  const now = new Date();
+  const msDiff = Math.abs(Math.floor((now.getTime() - date.getTime())));
+  return msDiff < MS_PER_MONTH;
+}
+
+/**
+ * Displays timestamp in a standardized format to be re-used.
+ * @param {Date} date
+ * @return {string}
+ */
 export function standardTime(date) {
   if (!date) return;
   const absoluteTime = FORMATTER.format(date);
-  const timeAgo = relativeTime(date);
-  const timeAgoBit = timeAgo ? ` (${timeAgo})` : '';
+
+  let timeAgoBit = '';
+  if (isLessThanAMonthAgo(date)) {
+    // Only show relative time if the time is less than a
+    // month ago because otherwise, it's not as useful.
+    timeAgoBit = ` (${relativeTime(date)})`;
+  }
   return `${absoluteTime}${timeAgoBit}`;
 }
 
-export function standardTimeShort(date) {
-  if (!date) return;
-  // For a "short" timestamp, display relative time or a short absolute time
-  // if it's been a long time.
-  const timeAgo = relativeTime(date);
-  if (timeAgo) return timeAgo;
-  return SHORT_FORMATTER.format(date);
-}
-
+/**
+ * Displays a timestamp in a format that's easy for a human to immediately
+ * reason about, based on long ago the time was.
+ * @param {Date} date native JavaScript Data Object.
+ * @return {string} Human-readable string of the date.
+ */
 export function relativeTime(date) {
   if (!date) return;
 
   const now = new Date();
-  let secondDiff = Math.floor((now.getTime() - date.getTime()) / 1000);
+  let msDiff = now.getTime() - date.getTime();
 
   // Use different wording depending on whether the time is in the
   // future or past.
-  const pastOrPresentSuffix = secondDiff < 0 ? 'from now' : 'ago';
+  const pastOrPresentSuffix = msDiff < 0 ? 'from now' : 'ago';
+  msDiff = Math.abs(msDiff);
 
-  secondDiff = Math.abs(secondDiff);
-  const minuteDiff = Math.floor(secondDiff / 60);
-  const hourDiff = Math.floor(minuteDiff / 60);
-  const dayDiff = Math.floor(hourDiff / 24);
-
-  if (!minuteDiff) {
+  if (msDiff < MS_PER_MINUTE) {
     // Less than a minute.
     return 'just now';
-  } else if (!hourDiff) {
+  } else if (msDiff < MS_PER_HOUR) {
     // Less than an hour.
-    if (minuteDiff === 1) {
+    const minutes = Math.floor(msDiff / MS_PER_MINUTE);
+    if (minutes === 1) {
       return `a minute ${pastOrPresentSuffix}`;
     }
-    return `${minuteDiff} minutes ${pastOrPresentSuffix}`;
-  } else if (!dayDiff) {
+    return `${minutes} minutes ${pastOrPresentSuffix}`;
+  } else if (msDiff < MS_PER_DAY) {
     // Less than an day.
-    if (hourDiff === 1) {
+    const hours = Math.floor(msDiff / MS_PER_HOUR);
+    if (hours === 1) {
       return `an hour ${pastOrPresentSuffix}`;
     }
-    return `${hourDiff} hours ${pastOrPresentSuffix}`;
-  } else if (dayDiff < 30) {
+    return `${hours} hours ${pastOrPresentSuffix}`;
+  } else if (msDiff < MS_PER_MONTH) {
     // Less than a month.
-    if (dayDiff === 1) {
+    const days = Math.floor(msDiff / MS_PER_DAY);
+    if (days === 1) {
       return `a day ${pastOrPresentSuffix}`;
     }
-    return `${dayDiff} days ${pastOrPresentSuffix}`;
+    return `${days} days ${pastOrPresentSuffix}`;
   }
 
-  // Don't show relative time if it's been a long time ago.
-  return '';
+  // A month or more ago. Better to show an exact date at this point.
+  return SHORT_FORMATTER.format(date);
 }

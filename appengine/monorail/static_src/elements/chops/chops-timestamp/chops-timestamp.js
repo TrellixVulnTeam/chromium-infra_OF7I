@@ -4,7 +4,7 @@
 
 import {LitElement, html} from 'lit-element';
 
-import {standardTime, standardTimeShort} from './chops-timestamp-helpers';
+import {standardTime, relativeTime} from './chops-timestamp-helpers.js';
 
 /**
  * `<chops-timestamp>`
@@ -37,6 +37,9 @@ export class ChopsTimestamp extends LitElement {
     };
   }
 
+  /**
+   * @return {string} Human-readable timestamp.
+   */
   get _displayedTime() {
     const date = this._date;
     const short = this.short;
@@ -44,7 +47,7 @@ export class ChopsTimestamp extends LitElement {
     //   based on set intervals.
     if (!date) return;
     if (short) {
-      return standardTimeShort(date);
+      return relativeTime(date);
     }
     return standardTime(date);
   }
@@ -58,6 +61,13 @@ export class ChopsTimestamp extends LitElement {
     super.update(changedProperties);
   }
 
+  /**
+   * Turns a timestamp string into a native JavaScript Date Object.
+   * @param {string} timestamp Timestamp string in either an ISO format or
+   *   Unix timestamp format. If Unix time, the function expects the time in
+   *   seconds, not milliseconds.
+   * @return {Date}
+   */
   _parseTimestamp(timestamp) {
     if (!timestamp) return;
 

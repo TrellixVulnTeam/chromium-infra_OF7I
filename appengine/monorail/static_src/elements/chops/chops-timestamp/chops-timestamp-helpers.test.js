@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {FORMATTER, SHORT_FORMATTER, standardTime, standardTimeShort,
+import {FORMATTER, MS_PER_MONTH, standardTime,
   relativeTime} from './chops-timestamp-helpers.js';
 import sinon from 'sinon';
 
@@ -26,19 +26,25 @@ describe('chops-timestamp-helpers', () => {
     clock.restore();
   });
 
-  it('standardTime', () => {
-    let date = new Date();
-    assert.equal(standardTime(date), `${FORMATTER.format(date)} (just now)`);
+  describe('standardTime', () => {
+    it('shows relative timestamp when less than a month ago', () => {
+      const date = new Date();
+      assert.equal(standardTime(date), `${FORMATTER.format(date)} (just now)`);
+    });
 
-    date = new Date(1548808276 * 1000);
-    assert.equal(standardTime(date), FORMATTER.format(date));
-  });
+    it('no relative time when more than a month in the future', () => {
+      const date = new Date(1548808276 * 1000);
+      assert.equal(standardTime(date), 'Tue, Jan 29, 2019, 4:31 PM PST');
+    });
 
-  it('standardTimeShort', () => {
-    assert.equal(standardTimeShort(new Date()), `just now`);
+    it('no relative time when more than a month in the past', () => {
+      // Jan 29, 2019, 4:31 PM PST
+      const now = 1548808276 * 1000;
+      clock.tick(now);
 
-    const date = new Date(1548808276 * 1000);
-    assert.equal(standardTimeShort(date), SHORT_FORMATTER.format(date));
+      const date = new Date(now - MS_PER_MONTH);
+      assert.equal(standardTime(date), 'Sun, Dec 30, 2018, 4:31 PM PST');
+    });
   });
 
   it('relativeTime future', () => {
@@ -65,7 +71,8 @@ describe('chops-timestamp-helpers', () => {
     assert.equal(relativeTime(new Date(29 * 24 * 60 * 60 * 1000)),
         `29 days from now`);
 
-    assert.equal(relativeTime(new Date(30 * 24 * 60 * 60 * 1000)), '');
+    assert.equal(relativeTime(new Date(30 * 24 * 60 * 60 * 1000)),
+        'Jan 30, 1970');
   });
 
   it('relativeTime past', () => {
@@ -100,6 +107,6 @@ describe('chops-timestamp-helpers', () => {
         baseTime - 29 * 24 * 60 * 60 * 1000)), `29 days ago`);
 
     assert.equal(relativeTime(new Date(
-        baseTime - 30 * 24 * 60 * 60 * 1000)), '');
+        baseTime - 30 * 24 * 60 * 60 * 1000)), 'Dec 4, 1969');
   });
 });
