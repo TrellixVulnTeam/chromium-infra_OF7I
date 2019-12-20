@@ -19,6 +19,9 @@ let idCount = 1;
  * native that can receive change handlers and has a 'value' property which
  * can be read and set.
  *
+ * NOTE: This element disables ShadowDOM for accessibility reasons: to allow
+ * aria attributes from the outside to reference features in this element.
+ *
  * @customElement
  */
 export class ChopsAutocomplete extends LitElement {
@@ -27,8 +30,8 @@ export class ChopsAutocomplete extends LitElement {
     const completions = this.completions;
     const currentValue = this._prefix.trim().toLowerCase();
     const index = this._selectedIndex;
-    const currentCompletion = index >= 0
-      && index < completions.length ? completions[index] : '';
+    const currentCompletion = index >= 0 &&
+      index < completions.length ? completions[index] : '';
 
     return html`
       <style>
@@ -66,7 +69,8 @@ export class ChopsAutocomplete extends LitElement {
           transition: background 0.2s ease-in-out;
         }
         .chops-autocomplete-container tr[data-selected] {
-          background: var(--chops-blue-100);
+          background: var(--chops-active-choice-bg);
+          text-decoration: underline;
         }
         .chops-autocomplete-container td {
           padding: 0.25em 8px;
@@ -98,8 +102,8 @@ export class ChopsAutocomplete extends LitElement {
                 @mouseover=${this._hoverCompletion}
                 @mousedown=${this._clickCompletion}
                 role="option"
-                aria-selected=${completion.toLowerCase()
-                  === currentValue ? 'true' : 'false'}
+                aria-selected=${completion.toLowerCase() ===
+                  currentValue ? 'true' : 'false'}
               >
                 <td class="completion">
                   ${this._renderCompletion(completion)}
@@ -266,8 +270,8 @@ export class ChopsAutocomplete extends LitElement {
           this.completions.length ? 'true' : 'false');
       }
 
-      if (changedProperties.has('_selectedIndex')
-          || changedProperties.has('completions')) {
+      if (changedProperties.has('_selectedIndex') ||
+          changedProperties.has('completions')) {
         this._updateAriaActiveDescendant(this._forRef);
 
         this._scrollCompletionIntoView(this._selectedIndex);
@@ -309,8 +313,8 @@ export class ChopsAutocomplete extends LitElement {
     // If the compltion is below the viewport for the container.
     if (distanceFromTop > (container.offsetHeight - completion.offsetHeight)) {
       // Position the compltion at the bottom of the container.
-      container.scrollTop = completion.offsetTop - (container.offsetHeight
-        - completion.offsetHeight);
+      container.scrollTop = completion.offsetTop - (container.offsetHeight -
+        completion.offsetHeight);
     }
   }
 
@@ -347,8 +351,8 @@ export class ChopsAutocomplete extends LitElement {
     const matchDict = {};
     const accepted = [];
     matchDict;
-    for (let i = 0; i < this.strings.length
-        && accepted.length < this.max; i++) {
+    for (let i = 0; i < this.strings.length &&
+        accepted.length < this.max; i++) {
       const s = this.strings[i];
       let matchIndex = this._matchIndex(this._prefix, s);
       let matches = matchIndex >= 0;
@@ -375,8 +379,8 @@ export class ChopsAutocomplete extends LitElement {
 
   _matchIndex(prefix, s) {
     const matchStart = s.toLowerCase().indexOf(prefix.toLocaleLowerCase());
-    if (matchStart === 0
-        || (matchStart > 0 && s[matchStart - 1].match(DELIMITER_REGEX))) {
+    if (matchStart === 0 ||
+        (matchStart > 0 && s[matchStart - 1].match(DELIMITER_REGEX))) {
       return matchStart;
     }
     return -1;
@@ -437,8 +441,8 @@ export class ChopsAutocomplete extends LitElement {
       // TODO(zhangtiff): Add Tab to this case as well once all issue detail
       // inputs use chops-autocomplete.
         e.preventDefault();
-        if (this._selectedIndex >= 0
-            && this._selectedIndex <= completions.length) {
+        if (this._selectedIndex >= 0 &&
+            this._selectedIndex <= completions.length) {
           this.completeValue(completions[this._selectedIndex]);
         }
         break;

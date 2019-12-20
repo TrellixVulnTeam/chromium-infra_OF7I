@@ -17,6 +17,7 @@ import {HARDCODED_FIELD_GROUPS, valuesForField, fieldDefsWithGroup,
 import 'shared/typedef.js';
 import {AVAILABLE_CUES, cueNames, specToCueName,
   cueNameToSpec} from 'elements/help/mr-cue/cue-helpers.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 
 /**
@@ -28,38 +29,41 @@ import {AVAILABLE_CUES, cueNames, specToCueName,
 export class MrMetadata extends connectStore(LitElement) {
   /** @override */
   static get styles() {
-    return css`
-      :host {
-        display: table;
-        table-layout: fixed;
-        width: 100%;
-      }
-      td, th {
-        padding: 0.5em 4px;
-        vertical-align: top;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-      td {
-        width: 60%;
-      }
-      td.allow-overflow {
-        overflow: visible;
-      }
-      th {
-        text-align: left;
-        width: 40%;
-      }
-      .group-separator {
-        border-top: var(--chops-normal-border);
-      }
-      .group-title {
-        font-weight: normal;
-        font-style: oblique;
-        border-bottom: var(--chops-normal-border);
-        text-align: center;
-      }
-    `;
+    return [
+      SHARED_STYLES,
+      css`
+        :host {
+          display: table;
+          table-layout: fixed;
+          width: 100%;
+        }
+        td, th {
+          padding: 0.5em 4px;
+          vertical-align: top;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+        td {
+          width: 60%;
+        }
+        td.allow-overflow {
+          overflow: visible;
+        }
+        th {
+          text-align: left;
+          width: 40%;
+        }
+        .group-separator {
+          border-top: var(--chops-normal-border);
+        }
+        .group-title {
+          font-weight: normal;
+          font-style: oblique;
+          border-bottom: var(--chops-normal-border);
+          text-align: center;
+        }
+    `,
+    ];
   }
 
   /** @override */

@@ -10,7 +10,7 @@ const DEFAULT_INPUT_KEYS = [13, 32];
 /**
  * `<chops-button>` displays a styled button component with a few niceties.
  *
- * @customElement
+ * @customElement chops-button
  * @demo /demo/chops-button_demo.html
  */
 export class ChopsButton extends LitElement {
@@ -29,7 +29,7 @@ export class ChopsButton extends LitElement {
         justify-content: center;
         user-select: none;
         transition: filter 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-        font-family: Roboto, Noto, sans-serif;
+        font-family: var(--chops-font-family);
       }
       :host([hidden]) {
         display: none;

@@ -48,7 +48,7 @@ pre.prettyprint {
     white-space: -moz-pre-wrap;
     white-space: -pre-wrap;
     white-space: -o-pre-wrap;
-    font-family: 'Roboto', 'Noto', sans-serif;
+    font-family: var(--chops-font-family);
 }
 
 .issuecomment {
@@ -135,7 +135,7 @@ pre.prettyprint {
 }
 
 .closed_colors {
-  --mr-flipper-link-color: #00c;
+  -: var(--chops-link-color);
 }
 
 .closed_colors td.issueheader, .closed_colors td.issueheader a {
@@ -151,7 +151,7 @@ pre.prettyprint {
 }
 
 #spam_banner a {
-    color: #00c;
+    color: var(--chops-link-color);
 }
 
 .issuepage { margin-top: 0; }
@@ -188,10 +188,6 @@ pre.prettyprint {
 
 .issueheader .ichcommands a {
     color: #555;
-}
-
-.issuecomment:hover .ichcommands a, .issueheader:hover .ichcommands a {
-    text-decoration: underline;
 }
 
 .issuecommentbody:focus {
@@ -278,10 +274,9 @@ pre.prettyprint {
 }
 
 .fakelink {
-    color: #0000cc;
+    color: var(--chops-link-color);
     cursor: pointer;
     white-space: nowrap;
-    text-decoration: underline;
 }
 
 .undef { color: #666; }
@@ -316,7 +311,7 @@ div td .questionmark { color: #a03; }
 
 td u {
     margin-left: .3em;
-    color: #0000cc;
+    color: var(--chops-link-color);
     cursor: pointer;
     white-space: nowrap;
     text-decoration: none;
@@ -561,7 +556,7 @@ td.rowwidgets { padding: 2px 2px 0 7px; }
 }
 
 .drag_container th {
-  color: #00c;
+  color: var(--chops-link-color);
   background: var(--chops-table-header-bg);
   text-align: left;
 }

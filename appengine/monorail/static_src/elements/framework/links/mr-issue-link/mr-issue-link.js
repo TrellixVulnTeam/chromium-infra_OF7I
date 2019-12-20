@@ -5,6 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 import {ifDefined} from 'lit-html/directives/if-defined';
 import {issueRefToString, issueRefToUrl} from 'shared/converters.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 import '../../mr-dropdown/mr-dropdown.js';
 import '../../../help/mr-cue/mr-fed-ref-cue.js';
 
@@ -17,16 +18,19 @@ import '../../../help/mr-cue/mr-fed-ref-cue.js';
 export class MrIssueLink extends LitElement {
   /** @override */
   static get styles() {
-    return css`
-      a[is-closed] {
-        text-decoration: line-through;
-      }
-      mr-dropdown {
-        width: var(--chops-main-font-size);
-        --mr-dropdown-icon-font-size: var(--chops-main-font-size);
-        --mr-dropdown-menu-min-width: 100px;
-      }
-    `;
+    return [
+      SHARED_STYLES,
+      css`
+        a[is-closed] {
+          text-decoration: line-through;
+        }
+        mr-dropdown {
+          width: var(--chops-main-font-size);
+          --mr-dropdown-icon-font-size: var(--chops-main-font-size);
+          --mr-dropdown-menu-min-width: 100px;
+        }
+      `,
+    ];
   }
 
   /** @override */

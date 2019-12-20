@@ -27,12 +27,6 @@ export class MrEditIssue extends connectStore(LitElement) {
   static get styles() {
     return [
       SHARED_STYLES,
-      css`
-        h2 a {
-          text-decoration: none;
-          color: var(--mr-content-heading-color);
-        }
-      `,
     ];
   }
 

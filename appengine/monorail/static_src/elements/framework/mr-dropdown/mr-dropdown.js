@@ -4,6 +4,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {ifDefined} from 'lit-html/directives/if-defined';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 export const SCREENREADER_ATTRIBUTE_ERROR = `For screenreader support,
   mr-dropdown must always have either a label or a text property defined.`;
@@ -29,132 +30,139 @@ export const SCREENREADER_ATTRIBUTE_ERROR = `For screenreader support,
 export class MrDropdown extends LitElement {
   /** @override */
   static get styles() {
-    return [css`
-      :host {
-        position: relative;
-        display: inline-block;
-        height: 100%;
-        font-size: inherit;
-        --mr-dropdown-icon-color: var(--chops-primary-icon-color);
-        --mr-dropdown-icon-font-size: var(--chops-icon-font-size);
-        --mr-dropdown-anchor-font-weight: initial;
-        --mr-dropdown-anchor-padding: 4px 0.25em;
-        --mr-dropdown-anchor-justify-content: center;
-        --mr-dropdown-menu-max-height: initial;
-        --mr-dropdown-menu-overflow: initial;
-        --mr-dropdown-menu-min-width: 120%;
-        --mr-dropdown-menu-font-size: var(--chops-large-font-size);
-        --mr-dropdown-menu-icon-size: var(--chops-icon-font-size);
-      }
-      :host([hidden]) {
-        display: none;
-        visibility: hidden;
-      }
-      :host(:not([opened])) .menu {
-        display: none;
-        visibility: hidden;
-      }
-      strong {
-        font-size: var(--chops-large-font-size);
-      }
-      i.material-icons {
-        font-size: var(--mr-dropdown-icon-font-size);
-        display: inline-block;
-        color: var(--mr-dropdown-icon-color);
-        padding: 0 2px;
-        box-sizing: border-box;
-      }
-      i.material-icons[hidden],
-      .menu-item > i.material-icons[hidden] {
-        display: none;
-      }
-      .menu-item > i.material-icons {
-        display: block;
-        font-size: var(--mr-dropdown-menu-icon-size);
-        width: var(--mr-dropdown-menu-icon-size);
-        height: var(--mr-dropdown-menu-icon-size);
-        margin-right: 8px;
-      }
-      .anchor:disabled {
-        color: var(--chops-button-disabled-color);
-      }
-      .anchor {
-        box-sizing: border-box;
-        background: none;
-        border: none;
-        font-size: inherit;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: var(--mr-dropdown-anchor-justify-content);
-        cursor: pointer;
-        padding: var(--mr-dropdown-anchor-padding);
-        color: var(--chops-link-color);
-        font-weight: var(--mr-dropdown-anchor-font-weight);
-      }
-      /* menuAlignment options: right, left, side. */
-      .menu.right {
-        right: 0px;
-      }
-      .menu.left {
-        left: 0px;
-      }
-      .menu.side {
-        left: 100%;
-        top: 0;
-      }
-      .menu {
-        font-size: var(--mr-dropdown-menu-font-size);
-        position: absolute;
-        min-width: var(--mr-dropdown-menu-min-width);
-        max-height: var(--mr-dropdown-menu-max-height);
-        overflow: var(--mr-dropdown-menu-overflow);
-        top: 90%;
-        display: block;
-        background: white;
-        border: var(--chops-accessible-border);
-        z-index: 990;
-        box-shadow: 2px 3px 8px 0px hsla(0, 0%, 0%, 0.3);
-      }
-      .menu-item {
-        background: none;
-        margin: 0;
-        border: 0;
-        box-sizing: border-box;
-        text-decoration: none;
-        white-space: nowrap;
-        display: flex;
-        align-items: center;
-        justify-content: left;
-        width: 100%;
-        padding: 0.25em 8px;
-        transition: 0.2s background ease-in-out;
-      }
-      .menu-item[hidden] {
-        display: none;
-      }
-      mr-dropdown.menu-item {
-        width: 100%;
-        padding: 0;
-        --mr-dropdown-anchor-padding: 0.25em 8px;
-        --mr-dropdown-anchor-justify-content: space-between;
-      }
-      .menu hr {
-        width: 96%;
-        margin: 0 2%;
-        border: 0;
-        height: 1px;
-        background: hsl(0, 0%, 80%);
-      }
-      .menu a {
-        cursor: pointer;
-        color: var(--chops-link-color);
-      }
-      .menu a:hover, .menu-item mr-dropdown:hover {
-        background: hsl(0, 0%, 90%);
-      }
-    `];
+    return [
+      SHARED_STYLES,
+      css`
+        :host {
+          position: relative;
+          display: inline-block;
+          height: 100%;
+          font-size: inherit;
+          font-family: var(--chops-font-family);
+          --mr-dropdown-icon-color: var(--chops-primary-icon-color);
+          --mr-dropdown-icon-font-size: var(--chops-icon-font-size);
+          --mr-dropdown-anchor-font-weight: var(--chops-link-font-weight);
+          --mr-dropdown-anchor-padding: 4px 0.25em;
+          --mr-dropdown-anchor-justify-content: center;
+          --mr-dropdown-menu-max-height: initial;
+          --mr-dropdown-menu-overflow: initial;
+          --mr-dropdown-menu-min-width: 120%;
+          --mr-dropdown-menu-font-size: var(--chops-large-font-size);
+          --mr-dropdown-menu-icon-size: var(--chops-icon-font-size);
+        }
+        :host([hidden]) {
+          display: none;
+          visibility: hidden;
+        }
+        :host(:not([opened])) .menu {
+          display: none;
+          visibility: hidden;
+        }
+        strong {
+          font-size: var(--chops-large-font-size);
+        }
+        i.material-icons {
+          font-size: var(--mr-dropdown-icon-font-size);
+          display: inline-block;
+          color: var(--mr-dropdown-icon-color);
+          padding: 0 2px;
+          box-sizing: border-box;
+        }
+        i.material-icons[hidden],
+        .menu-item > i.material-icons[hidden] {
+          display: none;
+        }
+        .menu-item > i.material-icons {
+          display: block;
+          font-size: var(--mr-dropdown-menu-icon-size);
+          width: var(--mr-dropdown-menu-icon-size);
+          height: var(--mr-dropdown-menu-icon-size);
+          margin-right: 8px;
+        }
+        .anchor:disabled {
+          color: var(--chops-button-disabled-color);
+        }
+        button.anchor {
+          box-sizing: border-box;
+          background: none;
+          border: none;
+          font-size: inherit;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: var(--mr-dropdown-anchor-justify-content);
+          cursor: pointer;
+          padding: var(--mr-dropdown-anchor-padding);
+          color: var(--chops-link-color);
+          font-weight: var(--mr-dropdown-anchor-font-weight);
+          font-family: inherit;
+        }
+        /* menuAlignment options: right, left, side. */
+        .menu.right {
+          right: 0px;
+        }
+        .menu.left {
+          left: 0px;
+        }
+        .menu.side {
+          left: 100%;
+          top: 0;
+        }
+        .menu {
+          font-size: var(--mr-dropdown-menu-font-size);
+          position: absolute;
+          min-width: var(--mr-dropdown-menu-min-width);
+          max-height: var(--mr-dropdown-menu-max-height);
+          overflow: var(--mr-dropdown-menu-overflow);
+          top: 90%;
+          display: block;
+          background: white;
+          border: var(--chops-accessible-border);
+          z-index: 990;
+          box-shadow: 2px 3px 8px 0px hsla(0, 0%, 0%, 0.3);
+          font-family: inherit;
+        }
+        .menu-item {
+          background: none;
+          margin: 0;
+          border: 0;
+          box-sizing: border-box;
+          text-decoration: none;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          justify-content: left;
+          width: 100%;
+          padding: 0.25em 8px;
+          transition: 0.2s background ease-in-out;
+
+        }
+        .menu-item[hidden] {
+          display: none;
+        }
+        mr-dropdown.menu-item {
+          width: 100%;
+          padding: 0;
+          --mr-dropdown-anchor-padding: 0.25em 8px;
+          --mr-dropdown-anchor-justify-content: space-between;
+        }
+        .menu hr {
+          width: 96%;
+          margin: 0 2%;
+          border: 0;
+          height: 1px;
+          background: hsl(0, 0%, 80%);
+        }
+        .menu a {
+          cursor: pointer;
+          color: var(--chops-link-color);
+        }
+        .menu a:hover, .menu a:focus {
+          background: var(--chops-active-choice-bg);
+        }
+      `,
+    ];
   }
 
   /** @override */

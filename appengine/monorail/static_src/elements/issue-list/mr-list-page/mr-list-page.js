@@ -13,6 +13,7 @@ import * as sitewide from 'reducers/sitewide.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import {parseColSpec} from 'shared/issue-fields.js';
 import {urlWithNewParams, userIsMember} from 'shared/helpers.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/chops/chops-snackbar/chops-snackbar.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
@@ -34,96 +35,100 @@ const SNACKBAR_LOADING = 'Loading issues...';
 export class MrListPage extends connectStore(LitElement) {
   /** @override */
   static get styles() {
-    return css`
-      :host {
-        display: block;
-        box-sizing: border-box;
-        width: 100%;
-        padding: 0.5em 8px;
-      }
-      .container-loading,
-      .container-no-issues {
-        width: 100%;
-        padding: 0 8px;
-        font-size: var(--chops-main-font-size);
-      }
-      .container-no-issues {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-      }
-      .container-no-issues p {
-        margin: 0.5em;
-      }
-      .no-issues-block {
-        display: block;
-        padding: 1em 16px;
-        margin-top: 1em;
-        flex-grow: 1;
-        width: 300px;
-        max-width: 100%;
-        text-align: center;
-        background: var(--chops-blue-50);
-        border-radius: 8px;
-        border-bottom: var(--chops-normal-border);
-      }
-      .no-issues-block[hidden] {
-        display: none;
-      }
-      .list-controls {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        padding: 0.5em 0;
-      }
-      .edit-actions {
-        flex-grow: 0;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-      }
-      .edit-actions button {
-        height: 100%;
-        background: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        border-right: var(--chops-normal-border);
-        font-size: var(--chops-normal-font-size);
-        cursor: pointer;
-        transition: 0.2s background ease-in-out;
-        color: var(--chops-link-color);
-        line-height: 160%;
-        padding: 0.25em 8px;
-      }
-      .edit-actions button:hover {
-        background: var(--chops-blue-50);
-      }
-      .right-controls {
-        flex-grow: 0;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-      }
-      .next-link, .prev-link {
-        display: inline-block;
-        margin: 0 8px;
-      }
-      mr-mode-selector {
-        margin-left: 8px;
-      }
-      .testing-notice {
-        box-sizing: border-box;
-        padding: 4px 0.5em;
-        text-align: center;
-        background: var(--chops-notice-bubble-bg);
-        border: var(--chops-normal-border);
-        width: 100%;
-      }
-    `;
+    return [
+      SHARED_STYLES,
+      css`
+        :host {
+          display: block;
+          box-sizing: border-box;
+          width: 100%;
+          padding: 0.5em 8px;
+        }
+        .container-loading,
+        .container-no-issues {
+          width: 100%;
+          padding: 0 8px;
+          font-size: var(--chops-main-font-size);
+        }
+        .container-no-issues {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        .container-no-issues p {
+          margin: 0.5em;
+        }
+        .no-issues-block {
+          display: block;
+          padding: 1em 16px;
+          margin-top: 1em;
+          flex-grow: 1;
+          width: 300px;
+          max-width: 100%;
+          text-align: center;
+          background: var(--chops-primary-accent-bg);
+          border-radius: 8px;
+          border-bottom: var(--chops-normal-border);
+        }
+        .no-issues-block[hidden] {
+          display: none;
+        }
+        .list-controls {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          padding: 0.5em 0;
+        }
+        .edit-actions {
+          flex-grow: 0;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+        }
+        .edit-actions button {
+          height: 100%;
+          background: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          border-right: var(--chops-normal-border);
+          font-size: var(--chops-normal-font-size);
+          cursor: pointer;
+          transition: 0.2s background ease-in-out;
+          color: var(--chops-link-color);
+          font-weight: var(--chops-link-font-weight);
+          line-height: 160%;
+          padding: 0.25em 8px;
+        }
+        .edit-actions button:hover {
+          background: var(--chops-active-choice-bg);
+        }
+        .right-controls {
+          flex-grow: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+        }
+        .next-link, .prev-link {
+          display: inline-block;
+          margin: 0 8px;
+        }
+        mr-mode-selector {
+          margin-left: 8px;
+        }
+        .testing-notice {
+          box-sizing: border-box;
+          padding: 4px 0.5em;
+          text-align: center;
+          background: var(--chops-notice-bubble-bg);
+          border: var(--chops-normal-border);
+          width: 100%;
+        }
+      `,
+    ];
   }
 
   /** @override */
@@ -154,6 +159,9 @@ export class MrListPage extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   */
   _renderListBody() {
     if (this.fetchingIssueList && !this.totalIssues) {
       return html`
@@ -208,6 +216,9 @@ export class MrListPage extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   */
   _renderControls() {
     const maxItems = this.maxItems;
     const startIndex = this.startIndex;

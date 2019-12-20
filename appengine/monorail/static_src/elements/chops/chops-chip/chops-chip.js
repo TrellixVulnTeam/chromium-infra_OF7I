@@ -39,7 +39,7 @@ export class ChopsChip extends LitElement {
         border: 1px solid var(--chops-chip-bg-color);
       }
       :host(:focus) {
-        background: var(--chops-primary-accent-bg);
+        background: var(--chops-active-choice-bg);
         border: 1px solid var(--chops-light-accent-color);
       }
       :host([hidden]) {

@@ -9,12 +9,9 @@ export const SHARED_STYLES = css`
     --mr-edit-field-padding: 0.125em 4px;
     --mr-edit-field-width: 90%;
     --mr-input-grid-gap: 6px;
-    --mr-content-heading-color: hsl(227, 60%, 39%);
   }
-
+  /** Converts a <button> to look like an <a> tag. */
   .linkify {
-    text-decoration: underline;
-    color: var(--chops-link-color);
     display: inline;
     padding: 0;
     margin: 0;
@@ -24,6 +21,18 @@ export const SHARED_STYLES = css`
   }
   h1, h2, h3, h4 {
     background: none;
+  }
+  div, span, button, p {
+    font-family: var(--chops-font-family);
+  }
+  a, chops-button, a.button, .button, .linkify {
+    color: var(--chops-link-color);
+    text-decoration: none;
+    font-weight: var(--chops-link-font-weight);
+    font-family: var(--chops-font-family);
+  }
+  a:hover {
+    text-decoration: underline;
   }
   a.button, .button {
     /* Links that look like buttons. */
@@ -44,7 +53,6 @@ export const SHARED_STYLES = css`
     padding: 0.25em 8px;
     margin: 0;
     margin-left: auto;
-    color: var(--chops-link-color);
   }
   chops-button i.material-icons, a.button i.material-icons, .button i.material-icons {
     display: block;
@@ -68,7 +76,7 @@ export const SHARED_STYLES = css`
     font-weight: normal;
     line-height: 1;
     padding: 0.25em 0;
-    color: var(--mr-content-heading-color);
+    color: var(--chops-link-color);
     margin: 0;
     margin-top: 0.25em;
     border-bottom: var(--chops-normal-border);

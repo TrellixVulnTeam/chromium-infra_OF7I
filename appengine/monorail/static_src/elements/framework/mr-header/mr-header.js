@@ -75,6 +75,9 @@ export class MrHeader extends connectStore(LitElement) {
           border: 0;
           height: 30px;
         }
+        a.home-link:hover {
+          text-decoration: none;
+        }
         mr-search-bar {
           margin-left: 8px;
           flex-grow: 2;
@@ -103,7 +106,10 @@ export class MrHeader extends connectStore(LitElement) {
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-      <a href=${this.projectName ? `/p/${this.projectName}/` : '/'}>
+      <a
+        href=${this.projectName ? `/p/${this.projectName}/` : '/'}
+        class="home-link"
+      >
         ${this.projectThumbnailUrl ? html`
           <img
             class="project-logo"

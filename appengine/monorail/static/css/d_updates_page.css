@@ -89,18 +89,14 @@ ul.activity-stream div.details span.ot-project-summary {
 }
 ul.activity-stream div.details a,
 ul.activity-stream span.details-inline a {
-  color: #7777cc;
+  color: var(--chops-link-color);
 }
 a.showAll,
 a.hideAll {
-  color: #0000CC;
-}
-ul.activity-stream div.details a:visited,
-ul.activity-stream span.details-inline a:visited {
-  color: #a376cc;
+  color: var(--chops-link-color);
 }
 body.detailedInfo_hidden ul.activity-stream a.details {
-  color: #0000cc;
+  color: var(--chops-link-color);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -112,11 +108,11 @@ ul.activity-stream div.details pre {
 }
 ul.activity-stream span.content a.ot-profile-link-1,
 ul.activity-stream span.content a.ot-project-link-1 {
-  color: #00C;
+  color: var(--chops-link-color);
 }
 ul.activity-stream span.content a.ot-profile-link-2,
 ul.activity-stream span.content a.ot-project-link-2 {
-  color: #77C;
+  color: var(--chops-link-color);
 }
 ul.activity-stream div.details span.ot-revlogs-br-1 {
   display: block;
@@ -151,11 +147,13 @@ div.display-error {
   padding: 3em;
 }
 .results td a {
-  color: #0000CC;
+  color: var(--chops-link-color);
+}
+.results td a:hover {
   text-decoration: underline;
 }
 .results td a.closed_ref {
-  color: #0000CC;
+  color: var(--chops-link-color);
   text-decoration: line-through;
 }
 .results td {

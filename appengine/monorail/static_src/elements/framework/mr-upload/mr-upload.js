@@ -37,7 +37,7 @@ export class MrUpload extends LitElement {
         }
         :host([highlighted]) {
           border-color: var(--chops-primary-accent-color);
-          background: var(--chops-primary-accent-bg);
+          background: var(--chops-active-choice-bg);
         }
         input[type="file"] {
           /* We need the file uploader to be hidden but still accessible. */

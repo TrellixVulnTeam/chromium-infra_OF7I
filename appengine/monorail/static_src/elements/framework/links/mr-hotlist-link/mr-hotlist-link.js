@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {LitElement, html} from 'lit-element';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 /**
  * `<mr-hotlist-link>`
@@ -11,6 +12,11 @@ import {LitElement, html} from 'lit-element';
  *
  */
 export class MrHotlistLink extends LitElement {
+  /** @override */
+  static get styles() {
+    return SHARED_STYLES;
+  }
+
   /** @override */
   render() {
     if (!this.hotlist) return html``;

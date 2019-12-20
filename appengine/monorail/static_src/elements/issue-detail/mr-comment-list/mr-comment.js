@@ -14,6 +14,7 @@ import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import {isShortlinkValid} from 'shared/federated.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 // Match: projectName:localIdFormat
@@ -69,63 +70,66 @@ export class MrComment extends LitElement {
 
   /** @override */
   static get styles() {
-    return css`
-      :host {
-        display: block;
-        margin: 1.5em 0 0 0;
-      }
-      :host([highlighted]) {
-        border: 1px solid var(--chops-primary-accent-color);
-        box-shadow: 0 0 4px 4px var(--chops-primary-accent-bg);
-      }
-      :host([hidden]) {
-        display: none;
-      }
-      .comment-header {
-        background: var(--chops-card-heading-bg);
-        padding: 3px 1px 1px 8px;
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        box-sizing: border-box;
-      }
-      .comment-header a {
-        display: inline-flex;
-      }
-      .role-label {
-        background-color: var(--chops-gray-600);
-        border-radius: 3px;
-        color: white;
-        display: inline-block;
-        padding: 2px 4px;
-        font-size: 75%;
-        font-weight: bold;
-        line-height: 14px;
-        vertical-align: text-bottom;
-        margin-left: 16px;
-      }
-      .comment-options {
-        float: right;
-        text-align: right;
-        text-decoration: none;
-      }
-      .comment-body {
-        margin: 4px;
-        box-sizing: border-box;
-      }
-      .deleted-comment-notice {
-        margin-left: 4px;
-      }
-      .issue-diff {
-        background: var(--chops-card-details-bg);
-        display: inline-block;
-        padding: 4px 8px;
-        width: 100%;
-        box-sizing: border-box;
-      }
-    `;
+    return [
+      SHARED_STYLES,
+      css`
+        :host {
+          display: block;
+          margin: 1.5em 0 0 0;
+        }
+        :host([highlighted]) {
+          border: 1px solid var(--chops-primary-accent-color);
+          box-shadow: 0 0 4px 4px var(--chops-active-choice-bg);
+        }
+        :host([hidden]) {
+          display: none;
+        }
+        .comment-header {
+          background: var(--chops-card-heading-bg);
+          padding: 3px 1px 1px 8px;
+          width: 100%;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          box-sizing: border-box;
+        }
+        .comment-header a {
+          display: inline-flex;
+        }
+        .role-label {
+          background-color: var(--chops-gray-600);
+          border-radius: 3px;
+          color: white;
+          display: inline-block;
+          padding: 2px 4px;
+          font-size: 75%;
+          font-weight: bold;
+          line-height: 14px;
+          vertical-align: text-bottom;
+          margin-left: 16px;
+        }
+        .comment-options {
+          float: right;
+          text-align: right;
+          text-decoration: none;
+        }
+        .comment-body {
+          margin: 4px;
+          box-sizing: border-box;
+        }
+        .deleted-comment-notice {
+          margin-left: 4px;
+        }
+        .issue-diff {
+          background: var(--chops-card-details-bg);
+          display: inline-block;
+          padding: 4px 8px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+      `,
+    ];
   }
 
   /** @override */
@@ -139,6 +143,9 @@ export class MrComment extends LitElement {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   */
   _renderHeading() {
     return html`
       <div
@@ -164,6 +171,9 @@ export class MrComment extends LitElement {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   */
   _renderByline() {
     if (_shouldShowComment(this._isExpandedIfDeleted, this.comment)) {
       return html`
@@ -181,6 +191,9 @@ export class MrComment extends LitElement {
     }
   }
 
+  /**
+   * @return {TemplateResult}
+   */
   _renderDiff() {
     if (!(this.comment.descriptionNum || this.comment.amendments)) return '';
 
@@ -204,6 +217,9 @@ export class MrComment extends LitElement {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   */
   _renderBody() {
     const commentContent = this._showOriginalContent ?
       this.comment.inboundMessage :

@@ -6,7 +6,12 @@ import {LitElement, html, css} from 'lit-element';
 import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
 import * as sitewide from 'reducers/sitewide.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 
+/**
+ * Class for displaying a single flipper.
+ * @extends {LitElement}
+ */
 export default class MrFlipper extends connectStore(LitElement) {
   /** @override */
   static get properties() {
@@ -77,46 +82,47 @@ export default class MrFlipper extends connectStore(LitElement) {
 
   /** @override */
   static get styles() {
-    return css`
-      :host {
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-        --mr-flipper-link-color: var(--chops-link-color);
-      }
-      /* Use visibility instead of display:hidden for hiding in order to
-       * avoid popping when elements are made visible. */
-      .row a[hidden], .counts[hidden] {
-        visibility: hidden;
-      }
-      .counts[hidden] {
-        display: block;
-      }
-      .row a {
-        display: block;
-        padding: 0.25em 0;
-        color: var(--mr-flipper-link-color);
-      }
-      .row a, .row div {
-        flex: 1;
-        white-space: nowrap;
-        padding: 0 2px;
-      }
-      .row .counts {
-        padding: 0 16px;
-      }
-      .row {
-        display: flex;
-        align-items: baseline;
-        text-align: center;
-        flex-direction: row;
-      }
-      @media (max-width: 960px) {
+    return [
+      SHARED_STYLES,
+      css`
         :host {
-          display: inline-block;
+          display: flex;
+          justify-content: center;
+          flex-direction: column;
         }
-      }
-    `;
+        /* Use visibility instead of display:hidden for hiding in order to
+        * avoid popping when elements are made visible. */
+        .row a[hidden], .counts[hidden] {
+          visibility: hidden;
+        }
+        .counts[hidden] {
+          display: block;
+        }
+        .row a {
+          display: block;
+          padding: 0.25em 0;
+        }
+        .row a, .row div {
+          flex: 1;
+          white-space: nowrap;
+          padding: 0 2px;
+        }
+        .row .counts {
+          padding: 0 16px;
+        }
+        .row {
+          display: flex;
+          align-items: baseline;
+          text-align: center;
+          flex-direction: row;
+        }
+        @media (max-width: 960px) {
+          :host {
+            display: inline-block;
+          }
+        }
+      `,
+    ];
   }
 
   /** @override */

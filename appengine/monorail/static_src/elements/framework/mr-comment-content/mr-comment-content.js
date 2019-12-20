@@ -8,6 +8,7 @@ import {autolink} from 'autolink.js';
 import {connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 /**
  * `<mr-comment-content>`
@@ -42,24 +43,27 @@ export class MrCommentContent extends connectStore(LitElement) {
 
   /** @override */
   static get styles() {
-    return css`
-      :host {
-        word-break: break-word;
-        font-size: var(--chops-main-font-size);
-        line-height: 130%;
-        font-family: var(--mr-toggled-font-family);
-      }
-      :host([isDeleted]) {
-        color: #888;
-        font-style: italic;
-      }
-      .line {
-        white-space: pre-wrap;
-      }
-      .strike-through {
-        text-decoration: line-through;
-      }
-    `;
+    return [
+      SHARED_STYLES,
+      css`
+        :host {
+          word-break: break-word;
+          font-size: var(--chops-main-font-size);
+          line-height: 130%;
+          font-family: var(--mr-toggled-font-family);
+        }
+        :host([isDeleted]) {
+          color: #888;
+          font-style: italic;
+        }
+        .line {
+          white-space: pre-wrap;
+        }
+        .strike-through {
+          text-decoration: line-through;
+        }
+      `,
+    ];
   }
 
   /** @override */

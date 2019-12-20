@@ -5,12 +5,19 @@
   --chops-purple-50: #f3e5f5;
   --chops-purple-700: #7b1fa2;
   --chops-blue-50: #e3f2fd;
+  /*
+    Additional blue added on top of the 2014 Material Design palette because
+    blue 50 is too low contrast for backgrounds. Made from mixing blue 50
+    and blue 100.
+  */
+  --chops-blue-75: #d9edfc;
   --chops-blue-100: #bbdefb;
   --chops-blue-300: #64b5f6;
   --chops-blue-700: #1976d2;
   --chops-blue-900: #01579b;
   --chops-green-50: #e8f5e9;
   --chops-green-800: #2e7d32;
+  --chops-light-green-25: #f4f9ed;
   --chops-light-green-50: #f1f8e9;
   --chops-yellow-50: #fffde7;
   --chops-orange-50: #fff3e0;
@@ -23,25 +30,26 @@
   --chops-gray-600: #757575;
   --chops-gray-700: #616161;
   --chops-gray-800: #424242;
+  --chops-blue-gray-25: #f1f3f4;
   --chops-blue-gray-50: #eceff1;  /* Similar to grimoire. */
 
   --chops-primary-header-bg: white;
-  --chops-secondary-header-bg: var(--chops-blue-gray-50);
-  --chops-sidebar-bg: var(--chops-blue-gray-50);
+  --chops-secondary-header-bg: var(--chops-blue-gray-25);
+  --chops-sidebar-bg: var(--chops-blue-gray-25);
   --chops-page-bg: white;
   --chops-footer-bg: white;
   --chops-primary-icon-color: var(--chops-gray-800);
   --chops-text-color: #222;
 
-  --chops-normal-border: 1px solid hsl(0, 0%, 83%);
+  --chops-normal-border: 1px solid hsl(0, 0%, 85%);
   /* Border color for situations when contrast is important. */
   --chops-accessible-border: 1px solid var(--chops-gray-400);
   --chops-radius: 6px;
   --chops-shadow: none;
 
-  /* TODO(zhangtiff): Replace this with Material Design blue once all
-   * instances of links styled with #00c have been replaced. */
-  --chops-link-color: #00c;
+  --chops-font-family: 'Roboto', 'Noto', sans-serif;
+  --chops-link-color: var(--chops-primary-accent-color);
+  --chops-link-font-weight: 500;
   --chops-light-accent-color: var(--chops-blue-300);
   --chops-primary-accent-color: var(--chops-blue-700);
   --chops-primary-accent-bg: var(--chops-blue-50);
@@ -55,7 +63,7 @@
   --chops-button-radius: 4px;
   --chops-choice-bg: var(--chops-blue-gray-50);
   --chops-choice-color: var(--chops-gray-600);
-  --chops-active-choice-bg: var(--chops-blue-50);
+  --chops-active-choice-bg: var(--chops-blue-75);
   --chops-active-choice-color: var(--chops-primary-accent-color);
 
   --chops-error-bubble-bg: var(--chops-red-50);
@@ -77,6 +85,11 @@
   --chops-main-font-size: 13px;
   --chops-large-font-size: 15px;
   --chops-icon-font-size: 20px;
+
+  /* A few Monorail-specific CSS variables. */
+  --monorail-header-height: 44px;
+  --monorail-metadata-open-bg: var(--chops-light-green-25);
+  --monorail-metadata-closed-bg: var(--chops-blue-gray-25);
 }
 
 
@@ -84,9 +97,20 @@ body {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Roboto', 'Noto', sans-serif;
+  font-family: var(--chops-font-family);
   line-height: 1.4;
   font-size: var(--chops-main-font-size);
   min-width: 300px;
   background: var(--chops-page-bg);
+}
+
+/* Global styles for the EZT pages. */
+a {
+  color: var(--chops-link-color);
+  text-decoration: none;
+  font-weight: var(--chops-link-font-weight);
+}
+
+a:hover {
+  text-decoration: underline;
 }

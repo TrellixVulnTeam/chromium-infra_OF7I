@@ -159,7 +159,7 @@ export default class MrChart extends LitElement {
         border-radius: 4px;
       }
       .choice.shown {
-        background: var(--chops-blue-50);
+        background: var(--chops-active-choice-bg);
       }
       .choice {
         padding: 4px 10px;
@@ -169,7 +169,7 @@ export default class MrChart extends LitElement {
         display: inline-block;
       }
       .choice.checked {
-        background: var(--chops-blue-50);
+        background: var(--chops-active-choice-bg);
       }
       p .warning-message {
         display: none;

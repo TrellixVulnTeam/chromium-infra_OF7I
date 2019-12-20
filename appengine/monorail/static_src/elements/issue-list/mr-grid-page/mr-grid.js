@@ -11,6 +11,7 @@ import * as project from 'reducers/project.js';
 import {issueRefToUrl} from 'shared/converters.js';
 import {setHasAny} from 'shared/helpers.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 import {extractGridData, makeGridCellKey} from './extract-grid-data.js';
 
@@ -168,31 +169,34 @@ export class MrGrid extends connectStore(LitElement) {
 
   /** @override */
   static get styles() {
-    return css`
-      table {
-        table-layout: auto;
-        border-collapse: collapse;
-        width: 98%;
-        margin: 0.5em 1%;
-        text-align: left;
-      }
-      th {
-        border: 1px solid white;
-        padding: 5px;
-        background-color: var(--chops-table-header-bg);
-        white-space: nowrap;
-      }
-      td {
-        border: var(--chops-table-divider);
-        padding-left: 0.3em;
-        background-color: white;
-        vertical-align: top;
-      }
-      mr-issue-link {
-        display: inline-block;
-        margin-right: 8px;
-      }
-    `;
+    return [
+      SHARED_STYLES,
+      css`
+        table {
+          table-layout: auto;
+          border-collapse: collapse;
+          width: 98%;
+          margin: 0.5em 1%;
+          text-align: left;
+        }
+        th {
+          border: 1px solid white;
+          padding: 5px;
+          background-color: var(--chops-table-header-bg);
+          white-space: nowrap;
+        }
+        td {
+          border: var(--chops-table-divider);
+          padding-left: 0.3em;
+          background-color: white;
+          vertical-align: top;
+        }
+        mr-issue-link {
+          display: inline-block;
+          margin-right: 8px;
+        }
+      `,
+    ];
   }
 
   /** @override */

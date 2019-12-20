@@ -7,6 +7,7 @@ import {LitElement, html, css} from 'lit-element';
 import {connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 
 const NULL_DISPLAY_NAME_VALUES = [EMPTY_FIELD_VALUE, 'a_deleted_user'];
@@ -20,25 +21,28 @@ const NULL_DISPLAY_NAME_VALUES = [EMPTY_FIELD_VALUE, 'a_deleted_user'];
 export class MrUserLink extends connectStore(LitElement) {
   /** @override */
   static get styles() {
-    return css`
-      :host {
-        display: inline-block;
-        white-space: nowrap;
-      }
-      i.inline-icon {
-        font-size: var(--chops-icon-font-size);
-        color: #B71C1C;
-        vertical-align: bottom;
-        cursor: pointer;
-      }
-      i.material-icons[hidden] {
-        display: none;
-      }
-      .availability-notice {
-        color: #B71C1C;
-        font-weight: bold;
-      }
-    `;
+    return [
+      SHARED_STYLES,
+      css`
+        :host {
+          display: inline-block;
+          white-space: nowrap;
+        }
+        i.inline-icon {
+          font-size: var(--chops-icon-font-size);
+          color: #B71C1C;
+          vertical-align: bottom;
+          cursor: pointer;
+        }
+        i.material-icons[hidden] {
+          display: none;
+        }
+        .availability-notice {
+          color: #B71C1C;
+          font-weight: bold;
+        }
+      `,
+    ];
   }
 
   /** @override */

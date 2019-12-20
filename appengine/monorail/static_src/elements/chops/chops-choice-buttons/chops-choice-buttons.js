@@ -89,6 +89,7 @@ export class ChopsChoiceButtons extends LitElement {
         cursor: pointer;
         border: 0;
         color: var(--chops-gray-700);
+        font-weight: var(--chops-link-font-weight);
         font-size: var(--chops-normal-font-size);
         margin: 0.1em 4px;
         padding: 4px 10px;
@@ -98,8 +99,9 @@ export class ChopsChoiceButtons extends LitElement {
         border-radius: 16px;
       }
       button[selected], a[selected] {
-        background: var(--chops-blue-50);
-        color: var(--chops-blue-900);
+        background: var(--chops-active-choice-bg);
+        color: var(--chops-link-color);
+        font-weight: var(--chops-link-font-weight);
         border-radius: 16px;
       }
     `;

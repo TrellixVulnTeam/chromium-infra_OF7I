@@ -21,7 +21,7 @@
     text-align: left;
     cursor: pointer;
 }
-.popup td { color: #0000cc; padding: 2px; }
+.popup td { color: var(--chops-link-color); padding: 2px; }
 .popup tr:hover { background: #f9edbe; }
 .subpopup { border-width: 1px 2px 2px 1px; }
 
@@ -61,8 +61,7 @@ tr.grid .idcount {
 }
 
 tr.grid .idcount a, .results .id a {
-    color: #0000cc;
-    text-decoration: underline;
+    color: var(--chops-link-color);
 }
 
 tr.grid .idcount a {

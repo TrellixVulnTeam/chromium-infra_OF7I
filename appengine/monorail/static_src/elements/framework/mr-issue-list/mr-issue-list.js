@@ -29,6 +29,7 @@ import {
   setHasAny,
   objectValuesForKeys,
 } from 'shared/helpers.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {parseColSpec, EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import './mr-show-columns-dropdown.js';
 
@@ -68,149 +69,149 @@ const CSV_DATA_PREFIX = 'This file contains the same information as ' +
 export class MrIssueList extends connectStore(LitElement) {
   /** @override */
   static get styles() {
-    return css`
-      :host {
-        display: table;
-        width: 100%;
-        font-size: var(--chops-main-font-size);
-      }
-      .edit-widget-container {
-        display: flex;
-        flex-wrap: no-wrap;
-        align-items: center;
-      }
-      mr-star-button {
-        --mr-star-button-size: 18px;
-        margin-bottom: 1px;
-        margin-left: 4px;
-      }
-      input[type="checkbox"] {
-        cursor: pointer;
-        margin: 0 4px;
-        width: 16px;
-        height: 16px;
-        border-radius: 2px;
-        box-sizing: border-box;
-        appearance: none;
-        -webkit-appearance: none;
-        border: 2px solid var(--chops-gray-400);
-        position: relative;
-        background: white;
-      }
-      th input[type="checkbox"] {
-        border-color: var(--chops-gray-500);
-      }
-      input[type="checkbox"]:checked {
-        background: var(--chops-primary-accent-color);
-        border-color: var(--chops-primary-accent-color);
-      }
-      input[type="checkbox"]:checked::after {
-        left: 1px;
-        top: 2px;
-        position: absolute;
-        content: "";
-        width: 8px;
-        height: 4px;
-        border: 2px solid white;
-        border-right: none;
-        border-top: none;
-        transform: rotate(-45deg);
-      }
-      td, th.group-header {
-        padding: 4px 8px;
-        text-overflow: ellipsis;
-        border-bottom: var(--chops-normal-border);
-        cursor: pointer;
-        font-weight: normal;
-      }
-      .group-header-content {
-        height: 100%;
-        width: 100%;
-        align-items: center;
-        display: flex;
-      }
-      th.group-header i.material-icons {
-        font-size: var(--chops-icon-font-size);
-        color: var(--chops-primary-icon-color);
-        margin-right: 4px;
-      }
-      td.ignore-navigation {
-        cursor: default;
-      }
-      th {
-        background: var(--chops-table-header-bg);
-        white-space: nowrap;
-        text-align: left;
-        z-index: 10;
-        border-bottom: var(--chops-normal-border);
-      }
-      th.first-column {
-        padding: 3px 8px;
-      }
-      th > mr-dropdown, th > mr-show-columns-dropdown {
-        font-weight: normal;
-        color: var(--chops-link-color);
-        --mr-dropdown-icon-color: var(--chops-link-color);
-        --mr-dropdown-anchor-padding: 3px 8px;
-        --mr-dropdown-anchor-font-weight: bold;
-        --mr-dropdown-menu-min-width: 150px;
-      }
-      tr {
-        padding: 0 8px;
-      }
-      tr[selected] {
-        background: var(--chops-selected-bg);
-      }
-      .first-column {
-        border-left: 4px solid transparent;
-      }
-      tr[cursored] > td.first-column {
-        border-left: 4px solid var(--chops-blue-700);
-      }
-      mr-crbug-link {
-        /* We need the shortlink to be hidden but still accessible.
-         * The opacity attribute visually hides a link while still
-         * keeping it in the DOM.opacity. */
-        --mr-crbug-link-opacity: 0;
-        --mr-crbug-link-opacity-focused: 1;
-      }
-      td:hover > mr-crbug-link {
-        --mr-crbug-link-opacity: 1;
-      }
-      .col-summary, .header-summary {
-        /* Setting a table cell to 100% width makes it take up
-         * all remaining space in the table, not the full width of
-         * the table. */
-        width: 100%;
-      }
-      .summary-label {
-        display: inline-block;
-        margin: 0 2px;
-        color: var(--chops-green-800);
-        text-decoration: none;
-        font-size: 90%;
-      }
-      .summary-label:hover {
-        text-decoration: underline;
-      }
-
-      .csv-download-container {
-        border-bottom: none;
-        text-align: end;
-        cursor: default;
-      }
-
-      #hidden-data-link {
-        display: none;
-      }
-
-      @media (min-width: 1024px) {
-        .first-row th {
-          position: sticky;
-          top: var(--monorail-header-height);
+    return [
+      SHARED_STYLES,
+      css`
+        :host {
+          display: table;
+          width: 100%;
+          font-size: var(--chops-main-font-size);
         }
-      }
-    `;
+        .edit-widget-container {
+          display: flex;
+          flex-wrap: no-wrap;
+          align-items: center;
+        }
+        mr-star-button {
+          --mr-star-button-size: 18px;
+          margin-bottom: 1px;
+          margin-left: 4px;
+        }
+        input[type="checkbox"] {
+          cursor: pointer;
+          margin: 0 4px;
+          width: 16px;
+          height: 16px;
+          border-radius: 2px;
+          box-sizing: border-box;
+          appearance: none;
+          -webkit-appearance: none;
+          border: 2px solid var(--chops-gray-400);
+          position: relative;
+          background: white;
+        }
+        th input[type="checkbox"] {
+          border-color: var(--chops-gray-500);
+        }
+        input[type="checkbox"]:checked {
+          background: var(--chops-primary-accent-color);
+          border-color: var(--chops-primary-accent-color);
+        }
+        input[type="checkbox"]:checked::after {
+          left: 1px;
+          top: 2px;
+          position: absolute;
+          content: "";
+          width: 8px;
+          height: 4px;
+          border: 2px solid white;
+          border-right: none;
+          border-top: none;
+          transform: rotate(-45deg);
+        }
+        td, th.group-header {
+          padding: 4px 8px;
+          text-overflow: ellipsis;
+          border-bottom: var(--chops-normal-border);
+          cursor: pointer;
+          font-weight: normal;
+        }
+        .group-header-content {
+          height: 100%;
+          width: 100%;
+          align-items: center;
+          display: flex;
+        }
+        th.group-header i.material-icons {
+          font-size: var(--chops-icon-font-size);
+          color: var(--chops-primary-icon-color);
+          margin-right: 4px;
+        }
+        td.ignore-navigation {
+          cursor: default;
+        }
+        th {
+          background: var(--chops-table-header-bg);
+          white-space: nowrap;
+          text-align: left;
+          z-index: 10;
+          border-bottom: var(--chops-normal-border);
+        }
+        th.first-column {
+          padding: 3px 8px;
+        }
+        th > mr-dropdown, th > mr-show-columns-dropdown {
+          font-weight: normal;
+          color: var(--chops-link-color);
+          --mr-dropdown-icon-color: var(--chops-link-color);
+          --mr-dropdown-anchor-padding: 3px 8px;
+          --mr-dropdown-anchor-font-weight: bold;
+          --mr-dropdown-menu-min-width: 150px;
+        }
+        tr {
+          padding: 0 8px;
+        }
+        tr[selected] {
+          background: var(--chops-selected-bg);
+        }
+        .first-column {
+          border-left: 4px solid transparent;
+        }
+        tr[cursored] > td.first-column {
+          border-left: 4px solid var(--chops-blue-700);
+        }
+        mr-crbug-link {
+          /* We need the shortlink to be hidden but still accessible.
+          * The opacity attribute visually hides a link while still
+          * keeping it in the DOM.opacity. */
+          --mr-crbug-link-opacity: 0;
+          --mr-crbug-link-opacity-focused: 1;
+        }
+        td:hover > mr-crbug-link {
+          --mr-crbug-link-opacity: 1;
+        }
+        .col-summary, .header-summary {
+          /* Setting a table cell to 100% width makes it take up
+          * all remaining space in the table, not the full width of
+          * the table. */
+          width: 100%;
+        }
+        .summary-label {
+          display: inline-block;
+          margin: 0 2px;
+          color: var(--chops-green-800);
+          text-decoration: none;
+          font-size: 90%;
+        }
+        .summary-label:hover {
+          text-decoration: underline;
+        }
+        .csv-download-container {
+          border-bottom: none;
+          text-align: end;
+          cursor: default;
+        }
+        #hidden-data-link {
+          display: none;
+        }
+        @media (min-width: 1024px) {
+          .first-row th {
+            position: sticky;
+            top: var(--monorail-header-height);
+          }
+        }
+      `,
+    ];
   }
 
   /** @override */
