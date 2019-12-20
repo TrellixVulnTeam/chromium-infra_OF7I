@@ -11,7 +11,8 @@ test: pylint_parser
 	./pylint_parser -input=test -output=out
 
 python:
-	cipd install -root python infra/python/cpython/linux-amd64
+	echo "infra/python/cpython/linux-amd64 version:2.7.17.chromium.21.3pp" | \
+			cipd ensure -ensure-file - -root python
 
 pylint:
 	# The following command fails when the vpython pip is used,

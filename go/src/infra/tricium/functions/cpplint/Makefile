@@ -14,7 +14,8 @@ cpplint.cipd: cpplint_parser python cpplint.py
 	cipd pkg-build -pkg-def cipd.yaml -out cpplint.cipd
 
 python:
-	cipd install -root python infra/python/cpython/linux-amd64
+	echo "infra/python/cpython/linux-amd64 version:2.7.17.chromium.21.3pp" | \
+			cipd ensure -ensure-file - -root python
 
 cpplint.py:
 	curl https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/master/cpplint.py\?format\=TEXT \
