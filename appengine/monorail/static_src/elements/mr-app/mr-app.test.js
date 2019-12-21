@@ -34,6 +34,61 @@ describe('mr-app', () => {
     assert.instanceOf(element, MrApp);
   });
 
+  describe('snackbar handling', () => {
+    beforeEach(() => {
+      sinon.spy(store, 'dispatch');
+    });
+
+    afterEach(() => {
+      store.dispatch.restore();
+    });
+
+    it('renders no snackbars', async () => {
+      element._snackbars = [];
+
+      await element.updateComplete;
+
+      const snackbars =
+        element.shadowRoot.querySelectorAll('chops-snackbar');
+
+      assert.equal(snackbars.length, 0);
+    });
+
+    it('renders multiple snackbars', async () => {
+      element._snackbars = [
+        {text: 'Snackbar one', id: 'one'},
+        {text: 'Snackbar two', id: 'two'},
+        {text: 'Snackbar three', id: 'thre'},
+      ];
+
+      await element.updateComplete;
+
+      const snackbars =
+        element.shadowRoot.querySelectorAll('chops-snackbar');
+
+      assert.equal(snackbars.length, 3);
+
+      assert.include(snackbars[0].textContent, 'Snackbar one');
+      assert.include(snackbars[1].textContent, 'Snackbar two');
+      assert.include(snackbars[2].textContent, 'Snackbar three');
+    });
+
+    it('closing snackbar hides snackbar', async () => {
+      element._snackbars = [
+        {text: 'Snackbar', id: 'one'},
+      ];
+
+      await element.updateComplete;
+
+      const snackbar = element.shadowRoot.querySelector('chops-snackbar');
+
+      snackbar.close();
+
+      sinon.assert.calledWith(store.dispatch,
+          {type: 'HIDE_SNACKBAR', id: 'one'});
+    });
+  });
+
   it('_preRouteHandler calls next()', () => {
     const ctx = {};
 

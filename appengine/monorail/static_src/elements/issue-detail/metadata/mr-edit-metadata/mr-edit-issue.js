@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 
-import 'elements/chops/chops-snackbar/chops-snackbar.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
@@ -47,9 +46,6 @@ export class MrEditIssue extends connectStore(LitElement) {
       <h2 id="makechanges" class="medium-heading">
         <a href="#makechanges">Add a comment and make changes</a>
       </h2>
-      <chops-snackbar ?hidden=${!this._issueUpdated}>
-        Your comment was added.
-      </chops-snackbar>
       <mr-edit-metadata
         formName="Issue Edit"
         .ownerName=${this._ownerDisplayName(this.issue.ownerRef)}
@@ -119,12 +115,6 @@ export class MrEditIssue extends connectStore(LitElement) {
       focusId: {
         type: String,
       },
-      _issueUpdated: {
-        type: Boolean,
-      },
-      _awaitingSave: {
-        type: Boolean,
-      },
       _fieldDefs: {
         type: Array,
       },
@@ -160,23 +150,33 @@ export class MrEditIssue extends connectStore(LitElement) {
       }
     }
 
-    if (this.issue && changedProperties.has('issue')) {
-      if (this._awaitingSave) {
-        // This is the first update cycle after an issue update has finished
-        // saving.
-        this._awaitingSave = false;
-        this._issueUpdated = true;
+    if (changedProperties.has('updatingIssue')) {
+      const isUpdating = this.updatingIssue;
+      const wasUpdating = changedProperties.get('updatingIssue');
+
+      // When an issue finishes updating, we want to show a snackbar, record
+      // issue update time metrics, and reset the edit form.
+      if (!isUpdating && wasUpdating) {
+        this._showCommentAddedSnackbar();
+
+        // Record metrics on when the issue editing event finished.
+        if (this.clientLogger.started('issue-update')) {
+          this.clientLogger.logEnd('issue-update', 'computer-time', 120 * 1000);
+        }
+
+        // Reset the edit form when a user's action finishes.
         this.reset();
       }
     }
+  }
 
-    if (changedProperties.has('_issueUpdated') && this._issueUpdated) {
-      // This case runs after the update cycle when the snackbar telling the
-      // user their issue has been updates shows up.
-      if (this.clientLogger.started('issue-update')) {
-        this.clientLogger.logEnd('issue-update', 'computer-time', 120 * 1000);
-      }
-    }
+  // TODO(crbug.com/monorail/6933): Remove the need for this wrapper.
+  /**
+   * Snows a snackbar telling the user they added a comment to the issue.
+   */
+  _showCommentAddedSnackbar() {
+    store.dispatch(ui.showSnackbar(ui.snackbarNames.ISSUE_COMMENT_ADDED,
+        'Your comment was added.'));
   }
 
   /**
@@ -216,9 +216,6 @@ export class MrEditIssue extends connectStore(LitElement) {
 
     if (message.commentContent || message.delta || message.uploads) {
       this.clientLogger.logStart('issue-update', 'computer-time');
-
-      this._issueUpdated = false;
-      this._awaitingSave = true;
 
       store.dispatch(issue.update(message));
     }

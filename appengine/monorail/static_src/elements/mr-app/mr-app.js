@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
+import {repeat} from 'lit-html/directives/repeat';
 import page from 'page';
 import qs from 'qs';
 
@@ -22,6 +23,7 @@ import 'elements/framework/mr-header/mr-header.js';
 import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
 import 'elements/help/mr-cue/mr-cue.js';
 import {cueNames} from 'elements/help/mr-cue/cue-helpers.js';
+import 'elements/chops/chops-snackbar/chops-snackbar.js';
 
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 
@@ -44,6 +46,20 @@ export class MrApp extends connectStore(LitElement) {
         }
         main {
           border-top: var(--chops-normal-border);
+        }
+        .snackbar-container {
+          position: fixed;
+          bottom: 1em;
+          left: 1em;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          z-index: 1000;
+        }
+        /** Unfix <chops-snackbar> to allow stacking. */
+        chops-snackbar {
+          position: static;
+          margin-top: 0.5em;
         }
       `,
     ];
@@ -75,7 +91,21 @@ export class MrApp extends connectStore(LitElement) {
         centered
       ></mr-cue>
       <main>${this._renderPage()}</main>
+      <div class="snackbar-container" aria-live="polite">
+        ${repeat(this._snackbars, (snackbar) => html`
+          <chops-snackbar
+            @close=${this._closeSnackbar.bind(this, snackbar.id)}
+          >${snackbar.text}</chops-snackbar>
+        `)}
+      </div>
     `;
+  }
+
+  /**
+   * @param {string} id The name of the snackbar to close.
+   */
+  _closeSnackbar(id) {
+    store.dispatch(ui.hideSnackbar(id));
   }
 
   /**
@@ -158,6 +188,10 @@ export class MrApp extends connectStore(LitElement) {
        * browser tab. ie: equivalent to the <title> tag.
        */
       pageTitle: {type: String},
+      /**
+       * Array of snackbar objects to render.
+       */
+      _snackbars: {type: Array},
     };
   }
 
@@ -166,6 +200,7 @@ export class MrApp extends connectStore(LitElement) {
     super();
     this.queryParams = {};
     this.dirtyForms = [];
+    this.userDisplayName = '';
 
     /**
      * @type {PageJS.Context}
@@ -180,6 +215,7 @@ export class MrApp extends connectStore(LitElement) {
     this.dirtyForms = ui.dirtyForms(state);
     this.queryParams = sitewide.queryParams(state);
     this.pageTitle = sitewide.pageTitle(state);
+    this._snackbars = ui.snackbars(state);
   }
 
   /** @override */

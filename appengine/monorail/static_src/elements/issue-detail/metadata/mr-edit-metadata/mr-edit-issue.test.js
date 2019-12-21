@@ -42,6 +42,20 @@ describe('mr-edit-issue', () => {
     header.scrollIntoView.restore();
   });
 
+  it('snows snackbar when editing finishes', async () => {
+    sinon.stub(element, '_showCommentAddedSnackbar');
+
+    element.updatingIssue = true;
+    await element.updateComplete;
+
+    sinon.assert.notCalled(element._showCommentAddedSnackbar);
+
+    element.updatingIssue = false;
+    await element.updateComplete;
+
+    sinon.assert.calledOnce(element._showCommentAddedSnackbar);
+  });
+
   it('shows current status even if not defined for project', async () => {
     await element.updateComplete;
 

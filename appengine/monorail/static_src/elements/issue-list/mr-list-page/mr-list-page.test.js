@@ -34,12 +34,10 @@ describe('mr-list-page', () => {
     const loading = element.shadowRoot.querySelector('.container-loading');
     const noIssues = element.shadowRoot.querySelector('.container-no-issues');
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
-    const snackbar = element.shadowRoot.querySelector('chops-snackbar');
 
     assert.equal(loading.textContent.trim(), 'Loading...');
     assert.isNull(noIssues);
     assert.isNull(issueList);
-    assert.isTrue(snackbar.hidden);
   });
 
   it('does not clear existing issue list when loading new issues', async () => {
@@ -58,7 +56,6 @@ describe('mr-list-page', () => {
     assert.isNotNull(issueList);
     // TODO(crbug.com/monorail/6560): We intend for the snackbar to be shown,
     // but it is hidden because the store thinks we have 0 total issues.
-    // assert.isFalse(snackbar.hidden);
   });
 
   it('shows list when done loading', async () => {
@@ -70,12 +67,63 @@ describe('mr-list-page', () => {
     const loading = element.shadowRoot.querySelector('.container-loading');
     const noIssues = element.shadowRoot.querySelector('.container-no-issues');
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
-    const snackbar = element.shadowRoot.querySelector('chops-snackbar');
 
     assert.isNull(loading);
     assert.isNull(noIssues);
     assert.isNotNull(issueList);
-    assert.isTrue(snackbar.hidden);
+  });
+
+  describe('issue loading snackbar', () => {
+    beforeEach(() => {
+      sinon.spy(store, 'dispatch');
+    });
+
+    afterEach(() => {
+      store.dispatch.restore();
+    });
+
+    it('shows snackbar when loading new list of issues', async () => {
+      sinon.stub(element, 'stateChanged');
+      sinon.stub(element, '_showIssueLoadingSnackbar');
+
+      element.fetchingIssueList = true;
+      element.totalIssues = 1;
+      element.issues = [{localId: 1, projectName: 'chromium'}];
+
+      await element.updateComplete;
+
+      sinon.assert.calledOnce(element._showIssueLoadingSnackbar);
+    });
+
+    it('hides snackbar when issues are done loading', async () => {
+      element.fetchingIssueList = true;
+      element.totalIssues = 1;
+      element.issues = [{localId: 1, projectName: 'chromium'}];
+
+      await element.updateComplete;
+
+      sinon.assert.neverCalledWith(store.dispatch,
+          {type: 'HIDE_SNACKBAR', id: 'FETCH_ISSUE_LIST'});
+
+      element.fetchingIssueList = false;
+
+      await element.updateComplete;
+
+      sinon.assert.calledWith(store.dispatch,
+          {type: 'HIDE_SNACKBAR', id: 'FETCH_ISSUE_LIST'});
+    });
+
+    it('shows snackbar on issue loading error', async () => {
+      sinon.stub(element, 'stateChanged');
+      sinon.stub(element, '_showIssueErrorSnackbar');
+
+      element._fetchIssueListError = 'Something went wrong';
+
+      await element.updateComplete;
+
+      sinon.assert.calledWith(element._showIssueErrorSnackbar,
+          'Something went wrong');
+    });
   });
 
   it('shows no issues when no search results', async () => {
@@ -487,20 +535,17 @@ describe('mr-list-page', () => {
         {localId: 2, projectName: 'test'},
       ];
       element.projectName = 'test';
+      sinon.stub(element, '_showHotlistSaveSnackbar');
 
       await element.updateComplete;
 
       const dialog = element.shadowRoot.querySelector(
           'mr-update-issue-hotlists');
-      sinon.stub(dialog, 'open');
+
       element.addToHotlist();
-
       dialog.dispatchEvent(new Event('saveSuccess'));
-      await element.updateComplete;
 
-      const snackbar = element.shadowRoot.querySelector(
-          'chops-snackbar');
-      assert.isFalse(snackbar.hidden);
+      sinon.assert.calledOnce(element._showHotlistSaveSnackbar);
     });
   });
 });

@@ -10,11 +10,11 @@ import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
 import * as user from 'reducers/user.js';
 import * as sitewide from 'reducers/sitewide.js';
+import * as ui from 'reducers/ui.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import {parseColSpec} from 'shared/issue-fields.js';
 import {urlWithNewParams, userIsMember} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import 'elements/chops/chops-snackbar/chops-snackbar.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 // eslint-disable-next-line max-len
@@ -47,6 +47,7 @@ export class MrListPage extends connectStore(LitElement) {
         .container-loading,
         .container-no-issues {
           width: 100%;
+          box-sizing: border-box;
           padding: 0 8px;
           font-size: var(--chops-main-font-size);
         }
@@ -139,9 +140,6 @@ export class MrListPage extends connectStore(LitElement) {
     // eslint-disable-next-line
     const feedbackUrl = `https://bugs.chromium.org/p/monorail/issues/entry?labels=UI-Refresh-Feedback&cc=zhangtiff@chromium.org&summary=Feedback+on+the+new+Monorail+UI&components=UI`;
     return html`
-      <chops-snackbar ?hidden=${!this._snackbarText}>
-        ${this._snackbarText}
-      </chops-snackbar>
       <div class="testing-notice">
         Thanks for trying out the new list view! If you encounter any issues,
         please <a href=${feedbackUrl}>file feedback</a>.
@@ -150,7 +148,7 @@ export class MrListPage extends connectStore(LitElement) {
       ${this._renderListBody()}
       <mr-update-issue-hotlists
         .issueRefs=${selectedRefs}
-        @saveSuccess=${this._onHotlistSaveSuccess}
+        @saveSuccess=${this._showHotlistSaveSnackbar}
       ></mr-update-issue-hotlists>
       <mr-change-columns
         .columns=${this.columns}
@@ -300,11 +298,6 @@ export class MrListPage extends connectStore(LitElement) {
       columns: {type: Array},
       userDisplayName: {type: String},
       /**
-       * The most recent snackbar message shown.
-       * Note: we rely on it hiding itself after a timeout.
-       */
-      _snackbarText: {type: String},
-      /**
        * The current search string the user is querying for.
        */
       currentQuery: {type: String},
@@ -315,6 +308,7 @@ export class MrListPage extends connectStore(LitElement) {
       _isLoggedIn: {type: Boolean},
       _currentUser: {type: Object},
       _usersProjects: {type: Object},
+      _fetchIssueListError: {type: String},
     };
   };
 
@@ -385,8 +379,51 @@ export class MrListPage extends connectStore(LitElement) {
     if (changedProperties.has('userDisplayName')) {
       store.dispatch(issue.fetchStarredIssues());
     }
+
+    if (changedProperties.has('fetchingIssueList')) {
+      const wasFetching = changedProperties.get('fetchingIssueList');
+      const isFetching = this.fetchingIssueList;
+      // Show a snackbar if waiting for issues to load but only when there's
+      // already a different, non-empty issue list loaded. This approach avoids
+      // clearing the issue list for a loading screen.
+      if (isFetching && this.totalIssues > 0) {
+        this._showIssueLoadingSnackbar();
+      }
+      if (wasFetching && !isFetching) {
+        this._hideIssueLoadingSnackbar();
+      }
+    }
+
+    if (changedProperties.has('_fetchIssueListError') &&
+        this._fetchIssueListError) {
+      this._showIssueErrorSnackbar(this._fetchIssueListError);
+    }
   }
 
+  // TODO(crbug.com/monorail/6933): Remove the need for this wrapper.
+  /** Dispatches a Redux action to show an issues loading snackbar.  */
+  _showIssueLoadingSnackbar() {
+    store.dispatch(ui.showSnackbar(ui.snackbarNames.FETCH_ISSUE_LIST,
+        SNACKBAR_LOADING, 0));
+  }
+
+  /** Dispatches a Redux action to hide the issue loading snackbar.  */
+  _hideIssueLoadingSnackbar() {
+    store.dispatch(ui.hideSnackbar(ui.snackbarNames.FETCH_ISSUE_LIST));
+  }
+
+  /**
+   * Shows a snackbar telling the user their issue loading failed.
+   * @param {string} error The error to display.
+   */
+  _showIssueErrorSnackbar(error) {
+    store.dispatch(ui.showSnackbar(ui.snackbarNames.FETCH_ISSUE_LIST_ERROR,
+        error));
+  }
+
+  /**
+   * Refreshes the list of issues show.
+   */
   refresh() {
     store.dispatch(issue.fetchIssueList(
         {...this._queryParams, q: this.currentQuery, can: this.currentCan},
@@ -404,13 +441,9 @@ export class MrListPage extends connectStore(LitElement) {
     this.issues = (issue.issueList(state) || []);
     this.totalIssues = (issue.totalIssues(state) || 0);
     this.fetchingIssueList = issue.requests(state).fetchIssueList.requesting;
-    // Show a message if waiting for issues to load (after initial load).
-    if (this.fetchingIssueList && this.totalIssues > 0) {
-      this._snackbarText = SNACKBAR_LOADING;
-    }
-    if (!this.fetchingIssueList && this._snackbarText == SNACKBAR_LOADING) {
-      this._snackbarText = undefined;
-    }
+
+    const error = issue.requests(state).fetchIssueList.error;
+    this._fetchIssueListError = error ? error.message : '';
 
     this.currentQuery = sitewide.currentQuery(state);
     this.currentCan = sitewide.currentCan(state);
@@ -419,24 +452,40 @@ export class MrListPage extends connectStore(LitElement) {
     this._queryParams = sitewide.queryParams(state);
   }
 
+  /**
+   * @return {boolean} Whether the user is able to star the issues in the list.
+   */
   get starringEnabled() {
     return this._isLoggedIn;
   }
 
+  /**
+   * @return {boolean} Whether the user has permissions to edit the issues in
+   *   the list.
+   */
   get editingEnabled() {
     return this._isLoggedIn && (userIsMember(this._currentUser,
         this.projectName, this._usersProjects) ||
         this._currentUser.isSiteAdmin);
   }
 
+  /**
+   * @return {Array<string>} Array of columns to group by.
+   */
   get groups() {
     return parseColSpec(this._queryParams.groupby);
   }
 
+  /**
+   * @return {number} Maximum number of issues to load for this query.
+   */
   get maxItems() {
     return Number.parseInt(this._queryParams.num) || DEFAULT_ISSUES_PER_PAGE;
   }
 
+  /**
+   * @return {number} Number of issues to offset by, based on pagination.
+   */
   get startIndex() {
     const num = Number.parseInt(this._queryParams.start) || 0;
     return Math.max(0, num);
@@ -454,26 +503,43 @@ export class MrListPage extends connectStore(LitElement) {
     return urlWithNewParams(baseUrl, this._queryParams, newParams);
   }
 
+  /**
+   * Shows the user an alert telling them their action won't work.
+   * @param {string} action Text describing what you're trying to do.
+   */
   noneSelectedAlert(action) {
     // TODO(zhangtiff): Replace this with a modal for a more modern feel.
     alert(`Please select some issues to ${action}.`);
   }
 
+  /**
+   * Opens the the column selector.
+   */
   changeColumns() {
     this.shadowRoot.querySelector('mr-change-columns').open();
   }
 
+  /**
+   * Opens a modal to add the selected issues to a hotlist.
+   */
   addToHotlist() {
     const issues = this.selectedIssues;
     if (!issues || !issues.length) {
-      return this.noneSelectedAlert('add to hotlists');
+      this.noneSelectedAlert('add to hotlists');
+      return;
     }
     this.shadowRoot.querySelector('mr-update-issue-hotlists').open();
   }
 
+  /**
+   * Redirects the user to the bulk edit page for the issues they've selected.
+   */
   bulkEdit() {
     const issues = this.selectedIssues;
-    if (!issues || !issues.length) return this.noneSelectedAlert('edit');
+    if (!issues || !issues.length) {
+      this.noneSelectedAlert('edit');
+      return;
+    }
     const params = {
       ids: issues.map((issue) => issue.localId).join(','),
       q: this._queryParams && this._queryParams.q,
@@ -482,10 +548,16 @@ export class MrListPage extends connectStore(LitElement) {
   }
 
   /** Shows user confirmation that their hotlist changes were saved. */
-  _onHotlistSaveSuccess() {
-    this._snackbarText = 'Hotlists updated';
+  _showHotlistSaveSnackbar() {
+    store.dispatch(ui.showSnackbar(ui.snackbarNames.UPDATE_HOTLISTS_SUCCESS,
+        'Hotlists updated.'));
   }
 
+  /**
+   * Flags the selected issues as spam.
+   * @param {boolean} flagAsSpam If true, flag as spam. If false, unflag
+   *   as spam.
+   */
   async _flagIssues(flagAsSpam = true) {
     const issues = this.selectedIssues;
     if (!issues || !issues.length) {
@@ -510,9 +582,13 @@ export class MrListPage extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Syncs this component's selected issues with the child component's selected
+   * issues.
+   */
   _setSelectedIssues() {
     const issueListRef = this.shadowRoot.querySelector('mr-issue-list');
-    if (!issueListRef) return [];
+    if (!issueListRef) return;
 
     this.selectedIssues = issueListRef.selectedIssues;
   }

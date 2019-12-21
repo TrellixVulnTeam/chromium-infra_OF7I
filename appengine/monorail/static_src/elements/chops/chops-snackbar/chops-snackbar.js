@@ -4,7 +4,6 @@
 
 import {LitElement, html, css} from 'lit-element';
 
-const DEFAULT_TIMEOUT = 10;
 
 /**
  * `<chops-snackbar>`
@@ -21,16 +20,13 @@ export class ChopsSnackbar extends LitElement {
         background-color: #333;
         border-radius: 6px;
         bottom: 1em;
+        left: 1em;
         color: hsla(0, 0%, 100%, .87);
         display: flex;
         font-size: var(--chops-large-font-size);
-        left: 1em;
         padding: 16px;
         position: fixed;
         z-index: 1000;
-      }
-      :host([hidden]) {
-        visibility: hidden;
       }
       button {
         background: none;
@@ -45,32 +41,6 @@ export class ChopsSnackbar extends LitElement {
   }
 
   /** @override */
-  static get properties() {
-    return {
-      timeout: {
-        type: Number,
-      },
-      hidden: {
-        type: Boolean,
-        reflect: true,
-      },
-    };
-  }
-
-  /** @override */
-  constructor() {
-    super();
-    this.timeout = DEFAULT_TIMEOUT;
-  }
-
-  /** @override */
-  updated(changedProperties) {
-    if (changedProperties.has('hidden') && !this.hidden) {
-      setTimeout(this.close.bind(this), this.timeout * 1000);
-    }
-  }
-
-  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -81,8 +51,11 @@ export class ChopsSnackbar extends LitElement {
     `;
   }
 
+  /**
+   * Closes the snackbar.
+   */
   close() {
-    this.hidden = true;
+    this.dispatchEvent(new CustomEvent('close'));
   }
 }
 
