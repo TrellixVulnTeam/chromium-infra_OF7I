@@ -27,8 +27,17 @@ OWNER, which you can find via `cipd acl-list <prefix>` command, e.g.:
 === Edit permissions to view LUCI BigQuery data ===
 
 Data type: <Swarming host> | Buildbucket | CQ
-Table/View:
-Readers to add/remove:
+
+LUCI Project:
+(or link to cr-buildbucket.cfg file)
+
+Table / View:
+(for Buildbucket and CQ, default is to get access to a view scoped for one or
+several related LUCI projects)
+
+MDB or google groups readers to add/remove:
+
+
 **NOTE to whoever handles a bug: add "BigQuery Data Viewer" role only.
 
 
