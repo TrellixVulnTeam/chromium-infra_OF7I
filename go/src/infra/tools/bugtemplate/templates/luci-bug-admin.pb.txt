@@ -2,7 +2,7 @@ summary: "Requesting a change"
 
 description: <<END
 
-This is http://go/bug-luci-admin.
+This is http://go/luci-bug-admin.
 
 Please fill out the relevant section and **delete the others** and also adjust
 the summary to match your request.
