@@ -34,6 +34,11 @@ class TestBigQueryHelper(unittest.TestCase):
     bqh.send_rows(self.bq_client, self.dataset_id, self.table_id, rows)
     self.mock_create_rows.assert_any_call(self.table, rows)
 
+  def test_send_iterable_rows(self):
+    rows = [('a',), ('b',), ('c',)]
+    bqh.send_rows(self.bq_client, self.dataset_id, self.table_id, iter(rows))
+    self.mock_create_rows.assert_any_call(self.table, rows)
+
   def test_batch_sizes(self):
     rows = [('a',), ('b',), ('c',)]
     bqh.send_rows(self.bq_client, self.dataset_id, self.table_id, rows, 0)
