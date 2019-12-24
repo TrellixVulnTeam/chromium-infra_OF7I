@@ -30,14 +30,7 @@ data:
       # packages.
       - config
       - path_hacks
-      # TODO(vadimsh): Depends on depot_tools.
-      - services/git_cache_updater
       - tools/bucket
-      - tools/docgen
-      # Depends on presence of .git directory. See crbug.com/515744.
-      - tools/antibody
-      # Depends on infra/node/node.py and also a npm module.
-      - tools/testjs
 
   # Launcher with dependencies, knows how to boot venv.
   - file: run.py
