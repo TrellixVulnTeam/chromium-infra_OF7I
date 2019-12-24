@@ -8,11 +8,13 @@ import (
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/luci/appengine/gaesecrets"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/config/server/cfgclient"
 	"go.chromium.org/luci/config/server/cfgclient/textproto"
 	"go.chromium.org/luci/config/validation"
 	"go.chromium.org/luci/server/router"
+	"go.chromium.org/luci/server/secrets"
 	"golang.org/x/net/context"
 )
 
@@ -22,7 +24,10 @@ const configFile = "config.cfg"
 type contextKeyType struct{}
 
 // unique key used to store and retrieve context.
-var contextKey = contextKeyType{}
+var (
+	contextKey        = contextKeyType{}
+	secretInDatastore = "hwid"
+)
 
 // Get returns the config in c, or panics.
 // See also Use and Middleware.
@@ -46,13 +51,24 @@ func Middleware(c *router.Context, next router.Handler) {
 		http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	// We store HWID server secret in datastore in production. The fallback to
+	// config file is only for local development.
+	ctx := gaesecrets.Use(c.Context, &gaesecrets.Config{
+		NoAutogenerate: true,
+	})
+	secret, err := secrets.GetSecret(ctx, secretInDatastore)
+	if err == nil {
+		cfg.HwidSecret = string(secret.Current)
+	}
+
 	c.Context = Use(c.Context, &cfg)
 	next(c)
 }
 
 // Use installs cfg into c.
-func Use(c context.Context, cfg *Config) context.Context {
-	return context.WithValue(c, contextKey, cfg)
+func Use(ctx context.Context, cfg *Config) context.Context {
+	return context.WithValue(ctx, contextKey, cfg)
 }
 
 // SetupValidation adds validation rules for configuration data pushed via luci-config.

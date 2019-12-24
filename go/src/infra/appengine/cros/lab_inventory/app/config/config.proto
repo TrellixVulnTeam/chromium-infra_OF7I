@@ -26,6 +26,8 @@ message Config {
   LuciAuthGroup status_writers = 4;
   LuciAuthGroup setup_writers = 5;
   LuciAuthGroup privileged_writers = 6;
+
+  string hwid_secret = 7;
 }
 
 message AdminService {
