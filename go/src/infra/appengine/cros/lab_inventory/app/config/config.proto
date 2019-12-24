@@ -28,6 +28,8 @@ message Config {
   LuciAuthGroup privileged_writers = 6;
 
   string hwid_secret = 7;
+
+  Gitiles device_config_source = 8;
 }
 
 message AdminService {
@@ -35,3 +37,13 @@ message AdminService {
   string host = 1;
 }
 
+message Gitiles{
+  // The gitiles host name, e.g. 'chrome-internal.googlesource.com'.
+  string host = 1;
+  // The project (repo) name, e.g. 'chromeos/infra/config'.
+  string project = 2;
+  // The commit hash/branch to be checked out, e.g. 'refs/heads/master'.
+  string committish = 3;
+  // The path of the file to be downloaded, e.g. 'path/to/file.cfg'.
+  string path = 4;
+}
