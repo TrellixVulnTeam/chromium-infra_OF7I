@@ -13,12 +13,15 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
 const autoservRelpath = "server/autoserv"
+
+const offloadPath = "LOGDATA_DIR"
 
 // AutoservArgs is the arguments for creating an autoserv command.
 type AutoservArgs struct {
@@ -37,6 +40,7 @@ type AutoservArgs struct {
 	Lab                bool
 	LocalOnlyHostInfo  bool
 	NoTee              bool
+	OffloadDir         string
 	ParentJobID        int
 	Provision          bool
 	Repair             bool
@@ -102,6 +106,9 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 	}
 	if cmd.NoTee {
 		args = append(args, "-n")
+	}
+	if cmd.OffloadDir != "" {
+		c.Environment[offloadPath] = cmd.OffloadDir
 	}
 	if cmd.ParentJobID != 0 {
 		args = append(args, fmt.Sprintf("--parent_job_id=%d", cmd.ParentJobID))
@@ -212,6 +219,7 @@ func DutPreparationCommand(c Config, cmd *DutPreparationArgs) *exec.Cmd {
 // Config describes where the Autotest directory is.
 type Config struct {
 	AutotestDir string
+	Environment map[string]string
 }
 
 // command creates an exec.Cmd for running an executable file in the
@@ -219,7 +227,13 @@ type Config struct {
 func command(c Config, relpath string, args ...string) *exec.Cmd {
 	path := filepath.Join(c.AutotestDir, relpath)
 	log.Printf("Running Autotest command %s %s", path, args)
-	return exec.Command(path, args...)
+	cmd := exec.Command(path, args...)
+	envVars := os.Environ()
+	for k, v := range c.Environment {
+		envVars = append(envVars, k+"="+v)
+	}
+	cmd.Env = envVars
+	return cmd
 }
 
 // WriteKeyvals writes a map of keyvals in the format Autotest expects.

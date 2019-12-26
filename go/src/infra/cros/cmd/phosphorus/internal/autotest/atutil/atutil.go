@@ -94,6 +94,16 @@ func TKOParse(c autotest.Config, resultsDir string, w io.Writer) (failed int, er
 	return n, nil
 }
 
+// Create client-usable dir for file offloading to Isolate, if given a path
+// If not given a path, noop, including for tasks where a path would not
+// be meaningful
+func createOutputDir(a *autotest.AutoservArgs) error {
+	if a.OffloadDir == "" {
+		return nil
+	}
+	return os.MkdirAll(a.OffloadDir, 0666)
+}
+
 // runTask runs an autoserv task.
 //
 // Result.TestsFailed is always zero.
@@ -102,6 +112,7 @@ func runTask(ctx context.Context, c autotest.Config, a *autotest.AutoservArgs, w
 	cmd := autotest.AutoservCommand(c, a)
 	cmd.Stdout = w
 	cmd.Stderr = w
+	createOutputDir(a)
 
 	var err error
 	r.RunResult, err = osutil.RunWithAbort(ctx, cmd)

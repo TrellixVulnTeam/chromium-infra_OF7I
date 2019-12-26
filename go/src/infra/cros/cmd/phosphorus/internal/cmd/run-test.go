@@ -100,6 +100,7 @@ func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) error {
 			ResultsDir:  dir,
 		},
 		Hosts:             r.DutHostnames,
+		IsolatedOutputDir: r.GetEnvironment().GetIsolatedOutputDir(),
 		LocalOnlyHostInfo: true,
 		RequireSSP:        !r.GetAutotest().GetIsClientTest(),
 	}
