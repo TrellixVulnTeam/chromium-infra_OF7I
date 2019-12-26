@@ -9,6 +9,7 @@ export const SHARED_STYLES = css`
     --mr-edit-field-padding: 0.125em 4px;
     --mr-edit-field-width: 90%;
     --mr-input-grid-gap: 6px;
+    font-family: var(--chops-font-family);
   }
   /** Converts a <button> to look like an <a> tag. */
   .linkify {
@@ -21,9 +22,6 @@ export const SHARED_STYLES = css`
   }
   h1, h2, h3, h4 {
     background: none;
-  }
-  div, span, button, p {
-    font-family: var(--chops-font-family);
   }
   a, chops-button, a.button, .button, .linkify {
     color: var(--chops-link-color);

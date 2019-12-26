@@ -12,14 +12,29 @@ describe('mr-comment-content', () => {
   beforeEach(() => {
     element = document.createElement('mr-comment-content');
     document.body.appendChild(element);
+
+    document.body.style.setProperty('--mr-toggled-font-family', 'Some-font');
   });
 
   afterEach(() => {
     document.body.removeChild(element);
+
+    document.body.style.removeProperty('--mr-toggled-font-family');
   });
 
   it('initializes', () => {
     assert.instanceOf(element, MrCommentContent);
+  });
+
+  it('changes rendered font based on --mr-toggled-font-family', async () => {
+    element.content = 'A comment';
+
+    await element.updateComplete;
+
+    const fontFamily = window.getComputedStyle(element).getPropertyValue(
+        'font-family');
+
+    assert.equal(fontFamily, 'Some-font');
   });
 
   it('does not render spurious spaces', async () => {
