@@ -6,7 +6,8 @@
   "devDependencies": {
     "axe-core": "^3.4.0",
     "babel-eslint": "^10.0.3",
-    "chai": "^3.5.0",
+    "chai": "^4.2.0",
+    "chai-dom": "^1.8.1",
     "circular-dependency-plugin": "^5.2.0",
     "deep-equal": "^1.1.0",
     "eslint": "^6.6.0",

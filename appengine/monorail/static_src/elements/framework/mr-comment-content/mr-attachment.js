@@ -33,16 +33,13 @@ export class MrAttachment extends connectStore(LitElement) {
     return [
       SHARED_STYLES,
       css`
-        .attachment-view {
-          margin-left: 8px;
-        }
+        .attachment-view,
         .attachment-download {
           margin-left: 8px;
+          display: block;
         }
         .attachment-delete {
-          margin-left: 8px;
-        }
-        .attachment-delete-button {
+          margin-left: 16px;
           color: var(--chops-button-color);
           background: var(--chops-button-bg);
           border-color: transparent;
@@ -62,7 +59,7 @@ export class MrAttachment extends connectStore(LitElement) {
         .filename {
           margin-left: 8px;
           display: flex;
-          justify-contents: space-between;
+          justify-content: space-between;
           align-items: center;
         }
         .filename-deleted {
@@ -93,34 +90,30 @@ export class MrAttachment extends connectStore(LitElement) {
           ` : ''}
           <b>${this.attachment.filename}</b>
           ${this.canDelete ? html`
-            <div class="attachment-delete">
-              <chops-button
-                class="attachment-delete-button"
-                @click=${this._deleteAttachment}>
-                ${this.attachment.isDeleted ? 'Undelete' : 'Delete'}
-              </chops-button>
-            </div>
+            <chops-button
+              class="attachment-delete"
+              @click=${this._deleteAttachment}>
+              ${this.attachment.isDeleted ? 'Undelete' : 'Delete'}
+            </chops-button>
           ` : ''}
         </div>
         ${!this.attachment.isDeleted ? html`
           <div class="comment-attachment-header">
             <div class="filesize">${_bytesOrKbOrMb(this.attachment.size)}</div>
-            <div class="attachment-view" .hidden=${!this.attachment.viewUrl}>
+            ${this.attachment.viewUrl ? html`
               <a
-                id="view-link"
+                class="attachment-view"
                 href=${this.attachment.viewUrl}
                 target="_blank"
               >View</a>
-            </div>
-            <div
-              class="attachment-download"
-              .hidden=${!this.attachment.downloadUrl}>
+            `: ''}
+            ${this.attachment.downloadUrl ? html`
               <a
-                id="download-link"
+                class="attachment-download"
                 href=${this.attachment.downloadUrl}
                 target="_blank"
               >Download</a>
-            </div>
+            `: ''}
           </div>
           ${this.attachment.thumbnailUrl ? html`
             <a href=${this.attachment.viewUrl} target="_blank">

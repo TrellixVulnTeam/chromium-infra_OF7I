@@ -208,7 +208,8 @@ export const labelPrefixOptions = createSelector(
 );
 
 // Some labels are implicitly used as custom fields in the grid and list view.
-// Make this an Array to keep casing in tact.
+// Make this an Array to keep casing in tact. Only labels with more than one
+// option are included, to reduce noise.
 export const labelPrefixFields = createSelector(
     labelPrefixOptions, (map) => {
       const prefixes = [];

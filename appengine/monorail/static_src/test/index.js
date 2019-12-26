@@ -7,5 +7,10 @@
  * in the static_src folder that have the ".test.js" extension.
  */
 
+import chai from 'chai';
+import chaiDom from 'chai-dom';
+
+chai.use(chaiDom);
+
 const testsContext = require.context('../', true, /\.test\.js$/);
 testsContext.keys().forEach(testsContext);

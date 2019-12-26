@@ -37,9 +37,9 @@ describe('MonorailTSMon', () => {
 
   it('generateClientId', () => {
     const clientID = MonorailTSMon.generateClientId();
-    assert.isNaN(clientID);
+    assert.isNotNumber(clientID);
     const clientIDNum = parseInt(clientID, 32);
-    assert.isNotNaN(clientIDNum);
+    assert.isNumber(clientIDNum);
     assert.isAtLeast(clientIDNum, 0);
     assert.isAtMost(clientIDNum, Math.pow(2, 32));
   });

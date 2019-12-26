@@ -113,13 +113,13 @@ describe('extract headings from x and y attributes', () => {
     const data = extractGridData(issues, 'Blocking', '', fieldExtractor);
 
     const expectedIssues = new Map();
-    expectedIssues.set('test-projectA:1 + All', [{'blockedOnIssueRefs':
+    expectedIssues.set('test-projectA:1 + All', [{'blockingIssueRefs':
       [{'localId': 1, 'projectName': 'test-projectA'}]},
-    {'blockedOnIssueRefs':
+    {'blockingIssueRefs':
       [{'localId': 1, 'projectName': 'test-projectA'}]}]);
-    expectedIssues.set('test-projectA:3 + All', [{'blockedOnIssueRefs':
+    expectedIssues.set('test-projectA:3 + All', [{'blockingIssueRefs':
       [{'localId': 3, 'projectName': 'test-projectA'}]}]);
-    expectedIssues.set('test-projectB:3 + All', [{'blockedOnIssueRefs':
+    expectedIssues.set('test-projectB:3 + All', [{'blockingIssueRefs':
       [{'localId': 3, 'projectName': 'test-projectB'}]}]);
     expectedIssues.set('---- + All', [{'otherIssueProperty': 'issueProperty'}]);
 

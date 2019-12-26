@@ -132,9 +132,8 @@ describe('mr-attachment', () => {
   it('view link is not displayed if not given', async () => {
     element.attachment = {};
     await element.updateComplete;
-    const viewLink = element.shadowRoot.querySelector('#view-link');
-    assert.isNotNull(viewLink);
-    expect(viewLink).be.hidden;
+    const viewLink = element.shadowRoot.querySelector('.attachment-view');
+    assert.isNull(viewLink);
   });
 
   it('view link is displayed if given', async () => {
@@ -142,18 +141,18 @@ describe('mr-attachment', () => {
       viewUrl: 'http://example.com/attachment.foo',
     };
     await element.updateComplete;
-    const viewLink = element.shadowRoot.querySelector('#view-link');
+    const viewLink = element.shadowRoot.querySelector('.attachment-view');
     assert.isNotNull(viewLink);
-    expect(viewLink).be.visible;
+    expect(viewLink).to.be.displayed;
     assert.equal(viewLink.href, 'http://example.com/attachment.foo');
   });
 
   it('download link is not displayed if not given', async () => {
     element.attachment = {};
     await element.updateComplete;
-    const downloadLink = element.shadowRoot.querySelector('#download-link');
-    assert.isNotNull(downloadLink);
-    expect(downloadLink).be.hidden;
+    const downloadLink = element.shadowRoot.querySelector(
+        '.attachment-download');
+    assert.isNull(downloadLink);
   });
 
   it('download link is displayed if given', async () => {
@@ -161,9 +160,10 @@ describe('mr-attachment', () => {
       downloadUrl: 'http://example.com/attachment.foo',
     };
     await element.updateComplete;
-    const downloadLink = element.shadowRoot.querySelector('#download-link');
+    const downloadLink = element.shadowRoot.querySelector(
+        '.attachment-download');
     assert.isNotNull(downloadLink);
-    expect(downloadLink).be.visible;
+    expect(downloadLink).to.be.displayed;
     assert.equal(downloadLink.href, 'http://example.com/attachment.foo');
   });
 });

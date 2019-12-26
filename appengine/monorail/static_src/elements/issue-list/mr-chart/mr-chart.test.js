@@ -88,7 +88,7 @@ describe('mr-chart', () => {
     it('makes a series of XHR calls', async () => {
       await dataLoadedPromise;
       for (let i = 0; i < 6; i++) {
-        assert.deepEqual(element.values[i], {});
+        assert.deepEqual(element.values[i], new Map());
       }
     });
 
@@ -126,7 +126,7 @@ describe('mr-chart', () => {
       });
 
       await element._fetchData(new Date());
-      assert.deepEqual(element.values[0], {});
+      assert.deepEqual(element.values[0], new Map());
     });
 
     it('Retrieve data under groupby feature', async () => {

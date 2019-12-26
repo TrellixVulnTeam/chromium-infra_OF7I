@@ -507,7 +507,8 @@ export default class MrChart extends LitElement {
   /**
    * fetch data at timestamp
    * @param {number} timestamp
-   * @return {Object}
+   * @return {{date: number, issues: Array<Map.<string, number>>,
+   *   unsupportedField: string, searchLimitReached: string}}
    */
   async _fetchDataAtTimestamp(timestamp) {
     const query = this.queryParams.q || '';

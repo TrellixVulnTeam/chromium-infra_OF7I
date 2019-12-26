@@ -26,12 +26,12 @@ describe('chops-dialog', () => {
 
     await element.updateComplete;
 
-    expect(element).be.hidden;
+    expect(element).not.to.be.visible;
 
     element.opened = true;
 
     await element.updateComplete;
 
-    expect(element).be.visible;
+    expect(element).to.be.visible;
   });
 });

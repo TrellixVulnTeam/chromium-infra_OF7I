@@ -341,7 +341,7 @@ describe('mr-issue-list', () => {
     await element.updateComplete;
 
     assert.deepEqual(element._uniqueValuesByColumn,
-        new Map([['project', new Set(['chromium', 'other'])]]));
+        new Map([['project', new Set(['chromium', 'chrOmiUm', 'other'])]]));
   });
 
   it('showOnly adds new search term to query', async () => {

@@ -219,7 +219,7 @@ describe('user', () => {
         },
       });
 
-      assert.deepEqual(user.projects(state), new Map([
+      assert.deepEqual(user.projectsPerUser(state), new Map([
         ['123', {
           ownerOf: ['chromium'],
           memberOf: ['v8'],

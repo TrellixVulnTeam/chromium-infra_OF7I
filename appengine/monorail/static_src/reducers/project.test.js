@@ -134,6 +134,7 @@ describe('project selectors', () => {
         ],
       }},
     }), new Map([
+      ['one', ['One']],
       ['two', ['tWo', 'tWo-options']],
       ['hello', ['hello-world', 'hello-me']],
     ]));
