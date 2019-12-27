@@ -359,6 +359,20 @@ export class MrListPage extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
+    if (changedProperties.has('fetchingIssueList')) {
+      const wasFetching = changedProperties.get('fetchingIssueList');
+      const isFetching = this.fetchingIssueList;
+      // Show a snackbar if waiting for issues to load but only when there's
+      // already a different, non-empty issue list loaded. This approach avoids
+      // clearing the issue list for a loading screen.
+      if (isFetching && this.totalIssues > 0) {
+        this._showIssueLoadingSnackbar();
+      }
+      if (wasFetching && !isFetching) {
+        this._hideIssueLoadingSnackbar();
+      }
+    }
+
     if (changedProperties.has('projectName') ||
         changedProperties.has('currentQuery') ||
         changedProperties.has('currentCan')) {
@@ -378,20 +392,6 @@ export class MrListPage extends connectStore(LitElement) {
     }
     if (changedProperties.has('userDisplayName')) {
       store.dispatch(issue.fetchStarredIssues());
-    }
-
-    if (changedProperties.has('fetchingIssueList')) {
-      const wasFetching = changedProperties.get('fetchingIssueList');
-      const isFetching = this.fetchingIssueList;
-      // Show a snackbar if waiting for issues to load but only when there's
-      // already a different, non-empty issue list loaded. This approach avoids
-      // clearing the issue list for a loading screen.
-      if (isFetching && this.totalIssues > 0) {
-        this._showIssueLoadingSnackbar();
-      }
-      if (wasFetching && !isFetching) {
-        this._hideIssueLoadingSnackbar();
-      }
     }
 
     if (changedProperties.has('_fetchIssueListError') &&
