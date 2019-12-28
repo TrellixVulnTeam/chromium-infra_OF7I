@@ -264,6 +264,8 @@ var testValidCSVTable = []struct {
 	{true, "missing powerunit_hostname and powerunit_outlet", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,DUT_POOL_QUOTA"},
 	{true, "defaulted critical pool", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,"},
 	{true, "invalid critical pool is self-serve pool", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,aaaaaaaaaa"},
+	{true, "self-serve pool with internal dash", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,aaaaa-aaaa"},
+	{false, "leading dash bad in pool name", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,-aaa"},
 	{false, "invalid multiple critical pool is self-serve pool", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,DUT_POOL_QUOTA DUT_POOL_CQ"},
 	{false, "pool with bad characters is bad", "xxx-host,xxx-board,xxx-model,xxx-servo_host,xxx-servo_port,xxx-servo_serial,,,pool@@@@@"},
 }

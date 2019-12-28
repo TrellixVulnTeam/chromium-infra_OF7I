@@ -17,9 +17,10 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-// looksLikeValidPool heuristically checks a string to see if it looks like a valid pool
-// currently this means "is it a valid C identifier"
-var looksLikeValidPool = regexp.MustCompile(`\A[A-Za-z_][A-za-z0-9_]*\z`).MatchString
+// looksLikeValidPool heuristically checks a string to see if it looks like a valid pool.
+// A heuristically valid pool name contains only a-z, A-Z, 0-9, -, and _ .
+// A pool name cannot begin with - and 0-9 .
+var looksLikeValidPool = regexp.MustCompile(`\A[A-Za-z_][-A-za-z0-9_]*\z`).MatchString
 
 const defaultCriticalPool = "DUT_POOL_QUOTA"
 
@@ -556,7 +557,7 @@ func splitPoolList(pools ...string) (criticalPools []string, selfServePools []st
 			return nil, nil, fmt.Errorf("splitPoolList: empty pool is invalid")
 		}
 		if !looksLikeValidPool(pool) {
-			return nil, nil, fmt.Errorf("splitPoolList: pool (%s) does not conform to [a-zA-Z_][a-zA-Z0-9_]*", pool)
+			return nil, nil, fmt.Errorf("splitPoolList: pool (%s) does not conform to [a-zA-Z_][-a-zA-Z0-9_]*", pool)
 		}
 		_, isCriticalPool := inventory.SchedulableLabels_DUTPool_value[pool]
 
