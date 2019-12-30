@@ -1716,3 +1716,7 @@ ALTER TABLE Invalidate CHANGE kind
   kind ENUM('user', 'usergroup', 'project', 'issue', 'issue_id', 'hotlist', 'comment', 'template', 'hotlist_id');
 
 
+================================================================
+2019-12-30: Set custom revision_url_format for pigweed project.
+
+UPDATE Project SET revision_url_format = 'https://pigweed-review.git.corp.google.com/q/{revnum}' WHERE project_name='pigweed';
