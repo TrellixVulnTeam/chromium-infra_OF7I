@@ -15,6 +15,8 @@ import (
 
 	"github.com/maruel/subcommands"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
+
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_tool"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -46,13 +48,13 @@ var WaitTask = &subcommands.Command{
 type waitTaskRun struct {
 	subcommands.CommandRunBase
 	authFlags   authcli.Flags
-	envFlags    envFlags
+	envFlags    cmdlib.EnvFlags
 	timeoutMins int
 }
 
 func (c *waitTaskRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -70,11 +72,11 @@ func (c *waitTaskRun) innerRun(a subcommands.Application, env subcommands.Env) e
 func (c *waitTaskRun) innerRunBuildbucket(a subcommands.Application, env subcommands.Env) (*skylab_tool.WaitTaskResult, error) {
 	taskID, err := parseBBTaskID(c.Flags.Arg(0))
 	if err != nil {
-		return nil, NewUsageError(c.Flags, err.Error())
+		return nil, cmdlib.NewUsageError(c.Flags, err.Error())
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	ctx, cancel := maybeWithTimeout(ctx, c.timeoutMins)
+	ctx, cancel := cmdlib.MaybeWithTimeout(ctx, c.timeoutMins)
 	defer cancel(context.Canceled)
 
 	bClient, err := bb.NewClient(ctx, c.envFlags.Env(), c.authFlags)
@@ -173,7 +175,7 @@ func sleepOrCancel(ctx context.Context, duration time.Duration) error {
 }
 
 func printJSONResults(w io.Writer, m *skylab_tool.WaitTaskResult) {
-	err := jsonPBMarshaller.Marshal(w, m)
+	err := cmdlib.JSONPBMarshaller.Marshal(w, m)
 	if err != nil {
 		panic(err)
 	}

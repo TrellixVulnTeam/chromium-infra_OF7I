@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/libs/skylab/inventory"
@@ -58,7 +59,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/l
 type addLabstationRun struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
-	envFlags     envFlags
+	envFlags     cmdlib.EnvFlags
 	newSpecsFile string
 	tail         bool
 	mcsv         bool
@@ -67,7 +68,7 @@ type addLabstationRun struct {
 // Run implements the subcommands.CommandRun interface.
 func (c *addLabstationRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -77,11 +78,11 @@ func (c *addLabstationRun) innerRun(a subcommands.Application, args []string, en
 	var specs []*inventory.DeviceUnderTest
 	var err error
 	if len(args) > 0 {
-		return NewUsageError(c.Flags, "unexpected positional args: %s", args)
+		return cmdlib.NewUsageError(c.Flags, "unexpected positional args: %s", args)
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

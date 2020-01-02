@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/libs/skylab/inventory"
@@ -71,7 +72,7 @@ image is already downloaded onto the external drive.`)
 type addDutRun struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
-	envFlags     envFlags
+	envFlags     cmdlib.EnvFlags
 	newSpecsFile string
 	tail         bool
 	mcsv         bool
@@ -85,7 +86,7 @@ type addDutRun struct {
 // Run implements the subcommands.CommandRun interface.
 func (c *addDutRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -95,11 +96,11 @@ func (c *addDutRun) innerRun(a subcommands.Application, args []string, env subco
 	var specs []*inventory.DeviceUnderTest
 	var err error
 	if len(args) > 0 {
-		return NewUsageError(c.Flags, "unexpected positional args: %s", args)
+		return cmdlib.NewUsageError(c.Flags, "unexpected positional args: %s", args)
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmd/skylab/internal/bb"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 )
@@ -55,7 +56,7 @@ This command does not wait for the build to start running.`,
 type backfillRequestRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 
 	buildID         int64
 	buildTags       []string
@@ -66,7 +67,7 @@ type backfillRequestRun struct {
 
 func (c *backfillRequestRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -137,13 +138,13 @@ func isInFlight(b *bb.Build) bool {
 // validateArgs ensures that the command line arguments are
 func (c *backfillRequestRun) validateArgs() error {
 	if c.Flags.NArg() != 0 {
-		return NewUsageError(c.Flags, fmt.Sprintf("got %d positional arguments, want 0", c.Flags.NArg()))
+		return cmdlib.NewUsageError(c.Flags, fmt.Sprintf("got %d positional arguments, want 0", c.Flags.NArg()))
 	}
 	switch {
 	case c.isBuildIDSet() && c.isBuildTagsSet():
-		return NewUsageError(c.Flags, "use only one of -id and -tag")
+		return cmdlib.NewUsageError(c.Flags, "use only one of -id and -tag")
 	case !(c.isBuildIDSet() || c.isBuildTagsSet()):
-		return NewUsageError(c.Flags, "must use one of -id or -tag")
+		return cmdlib.NewUsageError(c.Flags, "must use one of -id or -tag")
 	}
 	return nil
 }

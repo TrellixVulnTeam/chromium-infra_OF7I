@@ -12,6 +12,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/maruel/subcommands"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/libs/skylab/inventory"
 )
 
@@ -36,13 +37,13 @@ func (c *validateNewDutJSONRun) Run(a subcommands.Application, args []string, en
 		contents, err := ioutil.ReadFile(path)
 		if err != nil {
 			fmt.Fprintf(a.GetErr(), "error validating (%s)\n", path)
-			PrintError(a.GetErr(), err)
+			cmdlib.PrintError(a.GetErr(), err)
 			return 1
 		}
 		var spec inventory.DeviceUnderTest
 		if err := jsonpb.Unmarshal(bytes.NewReader(contents), &spec); err != nil {
 			fmt.Fprintf(a.GetOut(), "BAD\t%s\n", path)
-			PrintError(a.GetErr(), err)
+			cmdlib.PrintError(a.GetErr(), err)
 			malformedTally++
 			continue
 		}

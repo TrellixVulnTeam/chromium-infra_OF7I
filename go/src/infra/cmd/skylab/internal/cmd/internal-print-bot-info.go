@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/swarming"
@@ -39,14 +40,14 @@ For internal use only.`,
 type internalPrintBotInfoRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 
 	byHostname bool
 }
 
 func (c *internalPrintBotInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s: %s\n", progName, err)
+		fmt.Fprintf(a.GetErr(), "%s: %s\n", cmdlib.ProgName, err)
 		return 1
 	}
 	return 0
@@ -54,11 +55,11 @@ func (c *internalPrintBotInfoRun) Run(a subcommands.Application, args []string, 
 
 func (c *internalPrintBotInfoRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 1 {
-		return NewUsageError(c.Flags, "exactly one DUT_ID must be provided")
+		return cmdlib.NewUsageError(c.Flags, "exactly one DUT_ID must be provided")
 	}
 	dutID := args[0]
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

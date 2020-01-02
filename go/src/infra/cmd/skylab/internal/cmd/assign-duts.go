@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -39,13 +40,13 @@ If omitted, one is automatically chosen.`)
 type assignDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 	server    string
 }
 
 func (c *assignDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s: %s\n", progName, err)
+		fmt.Fprintf(a.GetErr(), "%s: %s\n", cmdlib.ProgName, err)
 		return 1
 	}
 	return 0
@@ -70,7 +71,7 @@ func (c *assignDutsRun) innerRun(a subcommands.Application, args []string, env s
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

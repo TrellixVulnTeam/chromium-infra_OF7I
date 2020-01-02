@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/swarming"
 	"infra/libs/skylab/worker"
@@ -38,12 +39,12 @@ This command does not wait for the task to start running.`,
 type repairRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 }
 
 func (c *repairRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s: %s\n", progName, err)
+		fmt.Fprintf(a.GetErr(), "%s: %s\n", cmdlib.ProgName, err)
 		return 1
 	}
 	return 0
@@ -51,7 +52,7 @@ func (c *repairRun) Run(a subcommands.Application, args []string, env subcommand
 
 func (c *repairRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	h, err := newHTTPClient(ctx, &c.authFlags)
+	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return errors.Annotate(err, "failed to create http client").Err()
 	}

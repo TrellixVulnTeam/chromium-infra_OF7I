@@ -18,6 +18,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -43,14 +44,14 @@ taken from or returned to the SPARE pool.`,
 type resizePoolRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 
 	spare string
 }
 
 func (c *resizePoolRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -58,18 +59,18 @@ func (c *resizePoolRun) Run(a subcommands.Application, args []string, env subcom
 
 func (c *resizePoolRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 3 {
-		return NewUsageError(c.Flags, "want 3 arguments, have %d", len(args))
+		return cmdlib.NewUsageError(c.Flags, "want 3 arguments, have %d", len(args))
 	}
 	target := args[0]
 	model := args[1]
 	s, err := strconv.ParseInt(args[2], 0, 32)
 	if err != nil {
-		return NewUsageError(c.Flags, "want positive 32 bit integer for size, have %s", args[1])
+		return cmdlib.NewUsageError(c.Flags, "want positive 32 bit integer for size, have %s", args[1])
 	}
 	size := int32(s)
 
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

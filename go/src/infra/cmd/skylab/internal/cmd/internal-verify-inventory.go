@@ -12,6 +12,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/libs/skylab/inventory"
 )
 
@@ -73,7 +74,7 @@ type internalVerifyInventory struct {
 
 func (c *internalVerifyInventory) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), errors.Annotate(err, "internal-verify-inventory").Err())
+		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "internal-verify-inventory").Err())
 		return 1
 	}
 	return 0
@@ -81,7 +82,7 @@ func (c *internalVerifyInventory) Run(a subcommands.Application, args []string, 
 
 func (c *internalVerifyInventory) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if narg := c.Flags.NArg(); narg != 1 {
-		return NewUsageError(c.Flags, "want 1 positional argument, have %d", narg)
+		return cmdlib.NewUsageError(c.Flags, "want 1 positional argument, have %d", narg)
 	}
 	ddir := c.Flags.Arg(0)
 	if _, err := os.Stat(ddir); os.IsNotExist(err) {

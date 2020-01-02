@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/data/strpair"
 	flagx "go.chromium.org/luci/common/flag"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/cmd/recipe"
 )
 
@@ -48,7 +49,7 @@ e.g., reef-canary/R73-11580.0.0.`)
 		`Additional provisionable labels to use for the test
 (e.g. cheets-version:git_pi-arc/cheets_x86_64).  May be specified
 multiple times.  Optional.`)
-	fl.IntVar(&c.priority, "priority", defaultTaskPriority,
+	fl.IntVar(&c.priority, "priority", cmdlib.DefaultTaskPriority,
 		`Specify the priority of the test [50,255].  A high value means this test
 will be executed in a low priority. If the tasks runs in a quotascheduler controlled pool, this value will be ignored.`)
 	fl.IntVar(&c.timeoutMins, "timeout-mins", 30, "Task runtime timeout.")
@@ -66,19 +67,19 @@ specified multiple times.`)
 
 func (c *createRunCommon) ValidateArgs(fl flag.FlagSet) error {
 	if c.board == "" {
-		return NewUsageError(fl, "missing -board")
+		return cmdlib.NewUsageError(fl, "missing -board")
 	}
 	if c.pool == "" {
-		return NewUsageError(fl, "missing -pool")
+		return cmdlib.NewUsageError(fl, "missing -pool")
 	}
 	if c.image == "" {
-		return NewUsageError(fl, "missing -image")
+		return cmdlib.NewUsageError(fl, "missing -image")
 	}
 	if c.priority < 50 || c.priority > 255 {
-		return NewUsageError(fl, "priority should in [50,255]")
+		return cmdlib.NewUsageError(fl, "priority should in [50,255]")
 	}
 	if !c.buildBucket {
-		return NewUsageError(fl, "-bb=False is deprecated")
+		return cmdlib.NewUsageError(fl, "-bb=False is deprecated")
 	}
 	return nil
 }

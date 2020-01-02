@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/swarming"
 )
@@ -42,7 +43,7 @@ var DutList = &subcommands.Command{
 type dutListRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 
 	board        string
 	model        string
@@ -64,7 +65,7 @@ func (c *dutListRun) getUseInventory() bool {
 
 func (c *dutListRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), errors.Annotate(err, "dut-list").Err())
+		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "dut-list").Err())
 		return 1
 	}
 	return 0
@@ -72,11 +73,11 @@ func (c *dutListRun) Run(a subcommands.Application, args []string, env subcomman
 
 func (c *dutListRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 0 {
-		return NewUsageError(c.Flags, "unexpected positional argument.")
+		return cmdlib.NewUsageError(c.Flags, "unexpected positional argument.")
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

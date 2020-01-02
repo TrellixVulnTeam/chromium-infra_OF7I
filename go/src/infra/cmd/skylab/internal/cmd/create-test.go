@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/bb"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/cmd/recipe"
 	"infra/cmd/skylab/internal/site"
 )
@@ -43,7 +44,7 @@ type createTestRun struct {
 	subcommands.CommandRunBase
 	createRunCommon
 	authFlags    authcli.Flags
-	envFlags     envFlags
+	envFlags     cmdlib.EnvFlags
 	client       bool
 	testArgs     string
 	parentTaskID string
@@ -56,7 +57,7 @@ func (c *createTestRun) validateArgs() error {
 	}
 
 	if c.Flags.NArg() == 0 {
-		return NewUsageError(c.Flags, "missing test name")
+		return cmdlib.NewUsageError(c.Flags, "missing test name")
 	}
 
 	return nil
@@ -64,7 +65,7 @@ func (c *createTestRun) validateArgs() error {
 
 func (c *createTestRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0

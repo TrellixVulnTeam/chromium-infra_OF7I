@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/bb"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -46,7 +47,7 @@ type createTestPlanRun struct {
 	subcommands.CommandRunBase
 	createRunCommon
 	authFlags    authcli.Flags
-	envFlags     envFlags
+	envFlags     cmdlib.EnvFlags
 	testplanPath string
 	legacySuite  string
 }
@@ -62,7 +63,7 @@ func (c *createTestPlanRun) validateArgs() error {
 
 func (c *createTestPlanRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -112,7 +113,7 @@ func (c *createTestPlanRun) readTestPlan(path string) (*test_platform.Request_Te
 	defer file.Close()
 
 	testPlan := test_platform.Request_TestPlan{}
-	if err := jsonPBUnmarshaller.Unmarshal(file, &testPlan); err != nil {
+	if err := cmdlib.JSONPBUnmarshaller.Unmarshal(file, &testPlan); err != nil {
 		return nil, errors.Annotate(err, "read test plan").Err()
 	}
 

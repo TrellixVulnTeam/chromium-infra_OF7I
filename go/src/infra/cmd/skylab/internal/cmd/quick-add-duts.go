@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/inventory"
 )
@@ -40,14 +41,14 @@ if the DUTs were successfully deployed to autotest prior to adding them to skyla
 type quickAddDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 	tail      bool
 }
 
 // Run implements the subcommands.CommandRun interface.
 func (c *quickAddDutsRun) Run(app subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(app, args, env); err != nil {
-		PrintError(app.GetErr(), err)
+		cmdlib.PrintError(app.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -55,7 +56,7 @@ func (c *quickAddDutsRun) Run(app subcommands.Application, args []string, env su
 
 func (c *quickAddDutsRun) innerRun(app subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(app, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/appengine/drone-queen/api"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -42,12 +43,12 @@ You must be in the respective inspectors group to use this.`,
 type queenInspectDronesRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 }
 
 func (c *queenInspectDronesRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), errors.Annotate(err, "queen-inspect-drones").Err())
+		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "queen-inspect-drones").Err())
 		return 1
 	}
 	return 0
@@ -55,7 +56,7 @@ func (c *queenInspectDronesRun) Run(a subcommands.Application, args []string, en
 
 func (c *queenInspectDronesRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

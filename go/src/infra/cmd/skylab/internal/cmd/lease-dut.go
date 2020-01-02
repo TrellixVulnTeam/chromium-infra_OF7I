@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/swarming"
 )
@@ -39,13 +40,13 @@ Do not build automation around this subcommand.`,
 type leaseDutRun struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
-	envFlags     envFlags
+	envFlags     cmdlib.EnvFlags
 	leaseMinutes int
 }
 
 func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -53,12 +54,12 @@ func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcomma
 
 func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 1 {
-		return NewUsageError(c.Flags, "exactly one host required")
+		return cmdlib.NewUsageError(c.Flags, "exactly one host required")
 	}
 	host := args[0]
 
 	ctx := cli.GetContext(a, c, env)
-	h, err := newHTTPClient(ctx, &c.authFlags)
+	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return errors.Annotate(err, "failed to create http client").Err()
 	}

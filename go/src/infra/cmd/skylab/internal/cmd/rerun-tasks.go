@@ -10,6 +10,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -40,7 +41,7 @@ var RerunTasks = &subcommands.Command{
 type rerunTasksRun struct {
 	subcommands.CommandRunBase
 	authFlags      authcli.Flags
-	envFlags       envFlags
+	envFlags       cmdlib.EnvFlags
 	outputJSON     bool
 	taskIds        []string
 	tags           []string
@@ -51,7 +52,7 @@ type rerunTasksRun struct {
 
 func (c *rerunTasksRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0

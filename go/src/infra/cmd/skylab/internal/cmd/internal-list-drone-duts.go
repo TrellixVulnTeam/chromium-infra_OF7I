@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -35,12 +36,12 @@ For internal use only.`,
 type internalListDroneDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 }
 
 func (c *internalListDroneDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s: %s\n", progName, err)
+		fmt.Fprintf(a.GetErr(), "%s: %s\n", cmdlib.ProgName, err)
 		return 1
 	}
 	return 0
@@ -48,11 +49,11 @@ func (c *internalListDroneDutsRun) Run(a subcommands.Application, args []string,
 
 func (c *internalListDroneDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 1 {
-		return NewUsageError(c.Flags, "exactly one HOSTNAME must be provided")
+		return cmdlib.NewUsageError(c.Flags, "exactly one HOSTNAME must be provided")
 	}
 	hostname := args[0]
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

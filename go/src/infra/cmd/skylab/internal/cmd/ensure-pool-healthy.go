@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 )
 
 // EnsurePoolHealthy subcommand: Balance DUT pools
@@ -51,7 +52,7 @@ To change the number of DUTs in a pool, use resize-pool.`,
 type ensurePoolHealthyRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 
 	dryrun bool
 	spare  string
@@ -59,7 +60,7 @@ type ensurePoolHealthyRun struct {
 
 func (c *ensurePoolHealthyRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -67,7 +68,7 @@ func (c *ensurePoolHealthyRun) Run(a subcommands.Application, args []string, env
 
 func (c *ensurePoolHealthyRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
@@ -156,7 +157,7 @@ func (c *ensurePoolHealthyRun) printEnsurePoolHealthyResult(w io.Writer, model, 
 
 func (c *ensurePoolHealthyRun) getTargetPool(args []string) (string, error) {
 	if len(args) < 1 {
-		return "", NewUsageError(c.Flags, "want at least 1 arguments, have none")
+		return "", cmdlib.NewUsageError(c.Flags, "want at least 1 arguments, have none")
 	}
 	return args[0], nil
 }
@@ -164,7 +165,7 @@ func (c *ensurePoolHealthyRun) getTargetPool(args []string) (string, error) {
 func (c *ensurePoolHealthyRun) getModels(ctx context.Context, hc *http.Client, args []string) ([]string, error) {
 	numModelPosArgs := len(args) - 1
 	if numModelPosArgs < 1 {
-		return []string{}, NewUsageError(c.Flags, "want at least 1 model positional argument, have %d", numModelPosArgs)
+		return []string{}, cmdlib.NewUsageError(c.Flags, "want at least 1 model positional argument, have %d", numModelPosArgs)
 	}
 	return args[1:], nil
 }

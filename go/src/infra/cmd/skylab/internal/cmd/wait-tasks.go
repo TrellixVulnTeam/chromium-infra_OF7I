@@ -18,6 +18,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/bb"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -45,14 +46,14 @@ var WaitTasks = &subcommands.Command{
 type waitTasksRun struct {
 	subcommands.CommandRunBase
 	authFlags   authcli.Flags
-	envFlags    envFlags
+	envFlags    cmdlib.EnvFlags
 	timeoutMins int
 	buildBucket bool
 }
 
 func (c *waitTasksRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -62,7 +63,7 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 	uniqueIDs := stringset.NewFromSlice(args...)
 
 	ctx := cli.GetContext(a, c, env)
-	ctx, cancel := maybeWithTimeout(ctx, c.timeoutMins)
+	ctx, cancel := cmdlib.MaybeWithTimeout(ctx, c.timeoutMins)
 	defer cancel(context.Canceled)
 
 	results, err := waitMultiBuildbucket(ctx, uniqueIDs, c.authFlags, c.envFlags.Env())
@@ -99,7 +100,7 @@ func (c *waitTasksRun) innerRun(a subcommands.Application, args []string, env su
 	}
 
 	multiErr := errors.NewMultiError(consumeErr)
-	outputJSON, err := jsonPBMarshaller.MarshalToString(&skylab_tool.WaitTasksResult{
+	outputJSON, err := cmdlib.JSONPBMarshaller.MarshalToString(&skylab_tool.WaitTasksResult{
 		Incomplete: consumeErr != nil,
 		Results:    resArr,
 	})

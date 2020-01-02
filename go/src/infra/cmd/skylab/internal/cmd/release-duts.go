@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/swarming"
 )
@@ -37,12 +38,12 @@ Do not build automation around this subcommand.`,
 type releaseDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 }
 
 func (c *releaseDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -50,12 +51,12 @@ func (c *releaseDutsRun) Run(a subcommands.Application, args []string, env subco
 
 func (c *releaseDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if c.Flags.NArg() == 0 {
-		return NewUsageError(c.Flags, "must specify at least 1 DUT")
+		return cmdlib.NewUsageError(c.Flags, "must specify at least 1 DUT")
 	}
 	hostnames := c.Flags.Args()
 
 	ctx := cli.GetContext(a, c, env)
-	h, err := newHTTPClient(ctx, &c.authFlags)
+	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return errors.Annotate(err, "failed to create http client").Err()
 	}

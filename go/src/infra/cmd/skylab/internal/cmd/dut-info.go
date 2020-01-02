@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/inventory"
 )
@@ -58,7 +59,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/
 type dutInfoRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 
 	asJSON bool
 	full   bool
@@ -66,7 +67,7 @@ type dutInfoRun struct {
 
 func (c *dutInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), errors.Annotate(err, "dut-info").Err())
+		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "dut-info").Err())
 		return 1
 	}
 	return 0
@@ -74,11 +75,11 @@ func (c *dutInfoRun) Run(a subcommands.Application, args []string, env subcomman
 
 func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 1 {
-		return NewUsageError(c.Flags, "want 1 argument, have %d", len(args))
+		return cmdlib.NewUsageError(c.Flags, "want 1 argument, have %d", len(args))
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}

@@ -23,6 +23,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	iv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
@@ -61,15 +62,15 @@ again.`,
 type removeDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags     authcli.Flags
-	envFlags      envFlags
+	envFlags      cmdlib.EnvFlags
 	server        string
 	delete        bool
-	removalReason removalReason
+	removalReason cmdlib.RemovalReason
 }
 
 func (c *removeDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -80,7 +81,7 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
@@ -120,18 +121,18 @@ func (c *removeDutsRun) validateArgs() error {
 	if c.Flags.NArg() == 0 {
 		errs = append(errs, "must specify at least 1 DUT")
 	}
-	if c.removalReason.bug == "" && !c.delete {
+	if c.removalReason.Bug == "" && !c.delete {
 		errs = append(errs, "-bug is required when not deleting")
 	}
-	if c.removalReason.bug != "" && !validBug(c.removalReason.bug) {
+	if c.removalReason.Bug != "" && !validBug(c.removalReason.Bug) {
 		errs = append(errs, "-bug must match crbug.com/NNNN or b/NNNN")
 	}
 	// Limit to roughly one line, like a commit message first line.
-	if len(c.removalReason.comment) > 80 {
+	if len(c.removalReason.Comment) > 80 {
 		errs = append(errs, "-reason is too long (use the bug for details)")
 	}
 	if len(errs) > 0 {
-		return NewUsageError(c.Flags, strings.Join(errs, ", "))
+		return cmdlib.NewUsageError(c.Flags, strings.Join(errs, ", "))
 	}
 	return nil
 }
@@ -164,14 +165,14 @@ func (c *removeDutsRun) removeDUTs(ctx context.Context, ic fleet.InventoryClient
 }
 
 // removeRequest builds a RPC remove request.
-func removeRequest(server string, hostnames []string, rr removalReason) (fleet.RemoveDutsFromDronesRequest, error) {
+func removeRequest(server string, hostnames []string, rr cmdlib.RemovalReason) (fleet.RemoveDutsFromDronesRequest, error) {
 	req := fleet.RemoveDutsFromDronesRequest{
 		Removals: make([]*fleet.RemoveDutsFromDronesRequest_Item, len(hostnames)),
 	}
 	reason := inventory.RemovalReason{
-		Bug:        &rr.bug,
-		Comment:    &rr.comment,
-		ExpireTime: protoTimestamp(rr.expire),
+		Bug:        &rr.Bug,
+		Comment:    &rr.Comment,
+		ExpireTime: protoTimestamp(rr.Expire),
 	}
 	enc, err := proto.Marshal(&reason)
 	if err != nil {
@@ -198,7 +199,7 @@ func protoTimestamp(t time.Time) *inventory.Timestamp {
 
 func (c *removeDutsRun) deleteDUTs(ctx context.Context, stdout io.Writer) (modified bool, err error) {
 	hostnames := c.Flags.Args()
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return false, err
 	}

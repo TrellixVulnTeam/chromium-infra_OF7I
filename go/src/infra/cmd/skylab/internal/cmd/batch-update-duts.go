@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 )
@@ -62,7 +63,7 @@ hostname2,powerunit_hostname=fake_host,powerunit_outlet=fake_outlet
 type batchUpdateDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 	pool      string
 	inputFile string
 }
@@ -70,7 +71,7 @@ type batchUpdateDutsRun struct {
 // Run implements the subcommands.CommandRun interface.
 func (c *batchUpdateDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -79,13 +80,13 @@ func (c *batchUpdateDutsRun) Run(a subcommands.Application, args []string, env s
 func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	hostnames := c.Flags.Args()
 	if len(hostnames) > 0 && c.inputFile != "" {
-		return NewUsageError(c.Flags, "inputFile or HOSTNAMES are mutually exclusive, can only specify one of them")
+		return cmdlib.NewUsageError(c.Flags, "inputFile or HOSTNAMES are mutually exclusive, can only specify one of them")
 	}
 	if len(hostnames) == 0 && c.inputFile == "" {
-		return NewUsageError(c.Flags, "must specify at least one hostname or pass in a file via -f")
+		return cmdlib.NewUsageError(c.Flags, "must specify at least one hostname or pass in a file via -f")
 	}
 	if len(hostnames) > 0 && c.pool == "" {
-		return NewUsageError(c.Flags, "must specify non-empty pool to update")
+		return cmdlib.NewUsageError(c.Flags, "must specify non-empty pool to update")
 	}
 
 	var req *fleet.BatchUpdateDutsRequest
@@ -105,7 +106,7 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	}
 
 	ctx := cli.GetContext(a, c, env)
-	hc, err := newHTTPClient(ctx, &c.authFlags)
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return errors.Annotate(err, "fail to new http client").Err()
 	}

@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/bb"
+	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/cmd/recipe"
 	"infra/cmd/skylab/internal/site"
 )
@@ -40,7 +41,7 @@ type createSuiteRun struct {
 	subcommands.CommandRunBase
 	createRunCommon
 	authFlags authcli.Flags
-	envFlags  envFlags
+	envFlags  cmdlib.EnvFlags
 	orphan    bool
 	json      bool
 	taskName  string
@@ -48,7 +49,7 @@ type createSuiteRun struct {
 
 func (c *createSuiteRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -71,7 +72,7 @@ func (c *createSuiteRun) validateArgs() error {
 	}
 
 	if c.Flags.NArg() == 0 {
-		return NewUsageError(c.Flags, "missing suite name")
+		return cmdlib.NewUsageError(c.Flags, "missing suite name")
 	}
 
 	if c.orphan {
