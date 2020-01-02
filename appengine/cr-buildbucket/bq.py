@@ -80,7 +80,7 @@ def _process_pull_task_batch(queue_name, dataset, table_name):
   # says "We recommend using about 500 rows per request".
   # We are using less because otherwise we tend to hit the 10 MB per request
   # limit.
-  tasks = q.lease_tasks(lease_duration.total_seconds(), 300)
+  tasks = q.lease_tasks(lease_duration.total_seconds(), 150)
   if not tasks:
     return 0, 0
 
