@@ -116,7 +116,7 @@ func (r *TaskSet) CheckTasksAndRetry(ctx context.Context, client swarming.Client
 // shouldRetry computes if the given testRun should be retried.
 func (r *TaskSet) shouldRetry(ctx context.Context, tr *testRun) (bool, error) {
 	if !tr.AttemptedAtLeastOnce() {
-		return false, errors.Reason("should retry: can't retry a never-tried test").Err()
+		return false, errors.Reason("shouldRetry: can't retry a never-tried test").Err()
 	}
 	if tr.AttemptsRemaining() <= 0 {
 		logging.Debugf(ctx, "Not retrying %s. Hit the test retry limit.", tr.Name)
@@ -140,7 +140,7 @@ func (r *TaskSet) shouldRetry(ctx context.Context, tr *testRun) (bool, error) {
 	case test_platform.TaskState_VERDICT_PASSED_ON_RETRY:
 		return false, nil
 	default:
-		return false, errors.Reason("should retry: unknown verdict %s", verdict.String()).Err()
+		return false, errors.Reason("shouldRetry: unknown verdict %s", verdict.String()).Err()
 	}
 }
 
