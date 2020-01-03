@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cmd
+package queen
 
 import (
 	"github.com/maruel/subcommands"
@@ -17,8 +17,8 @@ import (
 	"infra/cmd/skylab/internal/site"
 )
 
-// QueenPushDuts subcommand: Inspect drone queen DUT info.
-var QueenPushDuts = &subcommands.Command{
+// PushDuts subcommand: Inspect drone queen DUT info.
+var PushDuts = &subcommands.Command{
 	UsageLine: "queen-push-duts",
 	ShortDesc: "Push drone queen DUTs",
 	LongDesc: `Push drone queen DUTs.
@@ -31,20 +31,20 @@ This command is unstable.
 
 You must be in the inventory providers group to use this.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &queenPushDutsRun{}
+		c := &pushDutsRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		return c
 	},
 }
 
-type queenPushDutsRun struct {
+type pushDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  cmdlib.EnvFlags
 }
 
-func (c *queenPushDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *pushDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "queen-push-duts").Err())
 		return 1
@@ -52,7 +52,7 @@ func (c *queenPushDutsRun) Run(a subcommands.Application, args []string, env sub
 	return 0
 }
 
-func (c *queenPushDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *pushDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {

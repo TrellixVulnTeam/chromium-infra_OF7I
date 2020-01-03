@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/common/logging/gologger"
 
 	"infra/cmd/skylab/internal/cmd"
+	"infra/cmd/skylab/internal/cmd/queen"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -61,9 +62,9 @@ func getApplication() *cli.Application {
 			cmd.Repair,
 			cmd.RerunTasks,
 			subcommands.Section("Drone Queen Inspection"),
-			cmd.QueenInspectDuts,
-			cmd.QueenInspectDrones,
-			cmd.QueenPushDuts,
+			queen.InspectDuts,
+			queen.InspectDrones,
+			queen.PushDuts,
 			subcommands.Section("Internal use"),
 			cmd.InternalListDroneDuts,
 			cmd.InternalPrintBotInfo,

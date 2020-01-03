@@ -2,14 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cmd
+package queen
 
 import (
 	"bufio"
 	"fmt"
 	"text/tabwriter"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -21,11 +20,11 @@ import (
 	"infra/cmd/skylab/internal/site"
 )
 
-// QueenInspectDrones subcommand: Inspect drone queen DUT info.
-var QueenInspectDrones = &subcommands.Command{
-	UsageLine: "queen-inspect-drones",
-	ShortDesc: "inspect drone queen drone info",
-	LongDesc: `Inspect drone queen drone info.
+// InspectDuts subcommand: Inspect drone queen DUT info.
+var InspectDuts = &subcommands.Command{
+	UsageLine: "queen-inspect-duts",
+	ShortDesc: "inspect drone queen DUT info",
+	LongDesc: `Inspect drone queen DUT info.
 
 This command is for developer inspection and debugging of drone queen state.
 Do not use this command as part of scripts or pipelines.
@@ -33,28 +32,28 @@ This command is unstable.
 
 You must be in the respective inspectors group to use this.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &queenInspectDronesRun{}
+		c := &inspectDutsRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		return c
 	},
 }
 
-type queenInspectDronesRun struct {
+type inspectDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  cmdlib.EnvFlags
 }
 
-func (c *queenInspectDronesRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *inspectDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "queen-inspect-drones").Err())
+		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "queen-inspect-duts").Err())
 		return 1
 	}
 	return 0
 }
 
-func (c *queenInspectDronesRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *inspectDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
@@ -67,7 +66,7 @@ func (c *queenInspectDronesRun) innerRun(a subcommands.Application, args []strin
 		Options: site.DefaultPRPCOptions,
 	})
 
-	res, err := ic.ListDrones(ctx, &api.ListDronesRequest{})
+	res, err := ic.ListDuts(ctx, &api.ListDutsRequest{})
 	if err != nil {
 		return err
 	}
@@ -76,14 +75,10 @@ func (c *queenInspectDronesRun) innerRun(a subcommands.Application, args []strin
 	defer bw.Flush()
 	tw := tabwriter.NewWriter(bw, 0, 2, 2, ' ', 0)
 	defer tw.Flush()
-	fmt.Fprintf(tw, "Drone\tExpiration\tDescription\t\n")
-	for _, d := range res.GetDrones() {
-		t, err := ptypes.Timestamp(d.GetExpirationTime())
-		if err != nil {
-			fmt.Fprintf(a.GetErr(), "Error parsing expiration time: %s", err)
-		}
+	fmt.Fprintf(tw, "DUT\tDrone\tDraining\t\n")
+	for _, d := range res.GetDuts() {
 		fmt.Fprintf(tw, "%v\t%v\t%v\t\n",
-			d.GetId(), t, d.GetDroneDescription())
+			d.GetId(), d.GetAssignedDrone(), d.GetDraining())
 	}
 	return nil
 }
