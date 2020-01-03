@@ -24,6 +24,8 @@ import {createReducer, createRequestReducer} from './redux-helpers.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 
+/** @typedef {import('redux').AnyAction} AnyAction */
+
 // Actions
 export const SELECT = 'hotlist/SELECT';
 
@@ -53,13 +55,14 @@ export const FETCH_ITEMS_FAILURE = 'hotlist/FETCH_ITEMS_FAILURE';
 /**
  * All Hotlist data indexed by HotlistRefString.
  * @param {Object<string, Hotlist>} state The mapping of existing Hotlist data.
- * @param {import('redux').AnyAction} action A Redux action.
+ * @param {AnyAction} action
+ * @param {Hotlist} action.hotlist The hotlist that was fetched.
  * @return {Object.<string, Hotlist>}
  */
 export const hotlistsReducer = createReducer({}, {
-  [FETCH_SUCCESS]: (state, action) => {
+  [FETCH_SUCCESS]: (state, {hotlist}) => {
     const newState = {...state};
-    newState[hotlistToRefString(action.hotlist)] = action.hotlist;
+    newState[hotlistToRefString(hotlist)] = hotlist;
     return newState;
   },
 });
@@ -67,32 +70,35 @@ export const hotlistsReducer = createReducer({}, {
 /**
  * All Hotlist items indexed by HotlistRefString.
  * @param {Object<string, Array<HotlistItem>>} state
- * @param {import('redux').AnyAction} action A Redux action.
+ * @param {AnyAction} action
+ * @param {HotlistRef} action.hotlistRef A reference to the hotlist that items
+ *   were fetched from.
+ * @param {Array<HotlistItem>} action.items The hotlist items fetched.
  * @return {Object.<string, Array<HotlistItem>>}
  */
 export const hotlistItemsReducer = createReducer({}, {
-  [FETCH_ITEMS_SUCCESS]: (state, action) => ({
+  [FETCH_ITEMS_SUCCESS]: (state, {hotlistRef, items}) => ({
     ...state,
-    [hotlistRefToString(action.hotlistRef)]: action.items,
+    [hotlistRefToString(hotlistRef)]: items,
   }),
 });
 
 /**
  * A reference to the currently viewed Hotlist.
  * @param {?Hotlist} state The existing HotlistRef.
- * @param {import('redux').AnyAction} action A Redux action.
+ * @param {AnyAction} action
  * @return {?Hotlist}
  */
 export const hotlistRefReducer = createReducer(null, {
-  [SELECT]: (_state, action) => action.hotlistRef,
-  [FETCH_SUCCESS]: (state, action) => {
+  [SELECT]: (_state, {hotlistRef}) => hotlistRef,
+  [FETCH_SUCCESS]: (state, {hotlist}) => {
     // The original HotlistRef may be missing the displayName or userId.
     // If we just fetched the referenced Hotlist, update the missing info.
     if (!state) {
       return state;
     }
 
-    const newRef = hotlistToRef(action.hotlist);
+    const newRef = hotlistToRef(hotlist);
     const sameName = state.name === newRef.name;
     const sameOwner = state.owner.userId === newRef.owner.userId ||
       state.owner.displayName === newRef.owner.displayName;
@@ -118,7 +124,7 @@ export const reducer = combineReducers({
 /**
  * Returns all the Hotlist data in the store as
  * a mapping of HotlistRef string to Hotlist.
- * @param {any} state The Redux store.
+ * @param {any} state
  * @return {Object.<string, Hotlist>}
  */
 export const hotlists = (state) => state.hotlist.hotlists;
@@ -126,21 +132,21 @@ export const hotlists = (state) => state.hotlist.hotlists;
 /**
  * Returns all the Hotlist items in the store as a mapping of
  * HotlistRef string to its respective array of HotlistItems.
- * @param {any} state The Redux store.
+ * @param {any} state
  * @return {Object.<string, Array<HotlistItem>>}
  */
 export const hotlistItems = (state) => state.hotlist.hotlistItems;
 
 /**
  * Returns the currently viewed HotlistRef, or null if there is none.
- * @param {any} state The Redux store.
+ * @param {any} state
  * @return {?HotlistRef}
  */
 export const hotlistRef = (state) => state.hotlist.hotlistRef;
 
 /**
  * Returns the currently viewed Hotlist, or null if there is none.
- * @param {any} state The Redux store.
+ * @param {any} state
  * @return {?Hotlist}
  */
 export const viewedHotlist = createSelector([hotlists, hotlistRef],
@@ -154,7 +160,7 @@ export const viewedHotlist = createSelector([hotlists, hotlistRef],
 /**
  * Returns an Array containing the items in the currently viewed Hotlist,
  * or empty Array if there is no current HotlistRef or no data.
- * @param {any} state The Redux store.
+ * @param {any} state
  * @return {Array<HotlistItem>}
  */
 export const viewedHotlistItems = createSelector([hotlistItems, hotlistRef],

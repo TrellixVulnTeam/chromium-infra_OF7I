@@ -27,6 +27,8 @@ import {prpcClient} from 'prpc-client-instance.js';
 import loadGapi, {fetchGapiEmail} from 'shared/gapi-loader.js';
 import 'shared/typedef.js';
 
+/** @typedef {import('redux').AnyAction} AnyAction */
+
 // Actions
 const SET_ISSUE_REF = 'SET_ISSUE_REF';
 
@@ -143,9 +145,18 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
 */
 
 // Helpers for the reducers.
+
+/**
+ * Overrides local data for single approval on an Issue object with fresh data.
+ * Note that while an Issue can have multiple approvals, this function only
+ * refreshes data for a single approval.
+ * @param {Issue} issue Issue Object being updated.
+ * @param {ApprovalDef} approval A single approval to override in the issue.
+ * @return {Issue} Issue with updated approval data.
+ */
 const updateApprovalValues = (issue, approval) => {
   if (!issue.approvalValues) return issue;
-  const newApprovals = issue.approvalValues.map((item, i) => {
+  const newApprovals = issue.approvalValues.map((item) => {
     if (item.fieldRef.fieldName === approval.fieldRef.fieldName) {
       // PhaseRef isn't populated on the response so we want to make sure
       // it doesn't overwrite the original phaseRef with {}.
@@ -158,14 +169,20 @@ const updateApprovalValues = (issue, approval) => {
 
 // Reducers
 
-// A Reducer that normalizes Issue Objects in Redux actions.
-// TODO(crbug.com/monorail/5953): Finish converting all other issue
+// TODO(crbug.com/monorail/6882): Finish converting all other issue
 //   actions to use this format.
+/**
+ * Adds issues fetched by a ListIssues request to the Redux store in a
+ * normalized format.
+ * @param {Object.<IssueRefString, Issue>} state Redux state.
+ * @param {AnyAction} action
+ * @param {Array<Issue>} action.issues The list of issues that was fetched.
+ */
 export const issuesByRefStringReducer = createReducer({}, {
-  [FETCH_ISSUE_LIST_UPDATE]: (state, action) => {
+  [FETCH_ISSUE_LIST_UPDATE]: (state, {issues}) => {
     const newState = {...state};
 
-    action.issues.forEach((issue) => {
+    issues.forEach((issue) => {
       const issueRefString = issueToIssueRefString(issue);
 
       newState[issueRefString] = {
@@ -178,59 +195,147 @@ export const issuesByRefStringReducer = createReducer({}, {
   },
 });
 
+/**
+ * Sets a reference for the issue that the user is currently viewing.
+ * Note that this only handles the issue's numeric localId, not projectName.
+ * Project name is inferred from separate state to reference the current project
+ * the user is viewing.
+ * @param {number} state Name of the currently viewed issue localId.
+ * @param {AnyAction} action
+ * @param {number} action.localId The updated localId to view.
+ * @return {number}
+ */
 const localIdReducer = createReducer(0, {
-  [SET_ISSUE_REF]: (state, action) => action.localId || state,
+  [SET_ISSUE_REF]: (state, {localId}) => localId || state,
 });
 
+/**
+ * Changes the project that the user is viewing based on the viewed issue ref.
+ * @param {string} state Name of the currently viewed project.
+ * @param {AnyAction} action
+ * @param {string} action.projectName Name of the new project to view.
+ * @return {string}
+ */
 const projectNameReducer = createReducer('', {
-  [SET_ISSUE_REF]: (state, action) => action.projectName || state,
+  [SET_ISSUE_REF]: (state, {projectName}) => projectName || state,
 });
 
+/**
+ * Updates data in the store for the issue the user is currently viewing. This
+ * reducer handles many different possible actions that cause issue data to be
+ * updated.
+ * @param {Issue} state The issue data being mutated.
+ * @param {AnyAction} action
+ * @param {Issue=} action.issue New Issue Object to override values with.
+ * @param {number=} action.starCount Number of stars the issue has. This changes
+ *   when a user stars an issue and needs to be updated.
+ * @param {ApprovalDef=} action.approval A new approval to update the issue
+ *   with.
+ * @return {Issue}
+ */
 const currentIssueReducer = createReducer({}, {
-  [FETCH_SUCCESS]: (_state, action) => action.issue,
-  [STAR_SUCCESS]: (state, action) => {
-    return {...state, starCount: action.starCount};
+  [FETCH_SUCCESS]: (_state, {issue}) => issue,
+  [STAR_SUCCESS]: (state, {starCount}) => {
+    return {...state, starCount};
   },
-  [CONVERT_SUCCESS]: (_state, action) => action.issue,
-  [UPDATE_SUCCESS]: (_state, action) => action.issue,
-  [UPDATE_APPROVAL_SUCCESS]: (state, action) => {
-    return updateApprovalValues(state, action.approval);
+  [CONVERT_SUCCESS]: (_state, {issue}) => issue,
+  [UPDATE_SUCCESS]: (_state, {issue}) => issue,
+  [UPDATE_APPROVAL_SUCCESS]: (state, {approval}) => {
+    return updateApprovalValues(state, approval);
   },
 });
 
+/**
+ * Reducer to manage updating the list of hotlists attached to an Issue.
+ * @param {Array<Hotlist>} state List of issue hotlists.
+ * @param {AnyAction} action
+ * @param {Array<Hotlist>} action.hotlists New list of hotlists.
+ * @return {Array<Hotlist>}
+ */
 const hotlistsReducer = createReducer([], {
-  [FETCH_HOTLISTS_SUCCESS]: (_, action) => action.hotlists,
+  [FETCH_HOTLISTS_SUCCESS]: (_, {hotlists}) => hotlists,
 });
 
-export const issueListReducer = createReducer([], {
+/**
+ * @typedef {Object} IssueListState
+ * @property {Array<IssueRefString>} issues The list of issues being viewed,
+ *   in a normalized form.
+ * @property {number} progress The percentage of issues loaded. Used for
+ *   incremental loading of issues in the grid view.
+ * @property {number} totalResults The total number of issues matching the
+ *   query.
+ */
+
+/**
+ * Handles the state of the currently viewed issue list. This reducer
+ * stores this data in normalized form.
+ * @param {IssueListState} state
+ * @param {AnyAction} action
+ * @param {Array<Issue>} action.issues Issues that were fetched.
+ * @param {number} state.progress New percentage of issues have been loaded.
+ * @param {number} state.totalResults The total number of issues matching the
+ *   query.
+ * @return {IssueListState}
+ */
+export const issueListReducer = createReducer({}, {
   [FETCH_ISSUE_LIST_UPDATE]: (_state, {issues, progress, totalResults}) => ({
     issueRefs: issues.map(issueToIssueRefString), progress, totalResults,
   }),
 });
 
+/**
+ * Updates the comments attached to the currently viewed issue.
+ * @param {Array<IssueComment>} state The list of comments in an issue.
+ * @param {AnyAction} action
+ * @param {Array<IssueComment>} action.comments Fetched comments.
+ * @return {Array<IssueComment>}
+ */
 const commentsReducer = createReducer([], {
-  [FETCH_COMMENTS_SUCCESS]: (_state, action) => action.comments,
+  [FETCH_COMMENTS_SUCCESS]: (_state, {comments}) => comments,
 });
 
 // TODO(crbug.com/monorail/5953): Come up with some way to refactor
 // autolink.js's reference code to allow avoiding duplicate lookups
 // with data already in Redux state.
+/**
+ * For autolinking, this reducer stores the dereferenced data for bits
+ * of data that were referenced in comments. For example, comments might
+ * include user emails or IDs for other issues, and this state slice would
+ * store the full Objects for that data.
+ * @param {Array<CommentReference>} state
+ * @param {AnyAction} action
+ * @param {Array<CommentReference>} action.commentReferences New references
+ *   to store.
+ * @return {Array<CommentReference>}
+ */
 const commentReferencesReducer = createReducer({}, {
   [FETCH_COMMENTS_START]: (_state, _action) => ({}),
-  [FETCH_COMMENT_REFERENCES_SUCCESS]: (_state, action) => {
-    return action.commentReferences;
+  [FETCH_COMMENT_REFERENCES_SUCCESS]: (_state, {commentReferences}) => {
+    return commentReferences;
   },
 });
 
+/**
+ * Handles state for related issues such as blocking and blocked on issues,
+ * including federated references that could reference external issues outside
+ * Monorail.
+ * @param {Object.<IssueRefString, Issue>} state
+ * @param {AnyAction} action
+ * @param {Object.<IssueRefString, Issue>=} action.relatedIssues New related
+ *   issues.
+ * @param {Array<IssueRef>=} action.fedRefIssueRefs List of fetched federated
+ *   issue references.
+ * @return {Object.<IssueRefString, Issue>}
+ */
 export const relatedIssuesReducer = createReducer({}, {
-  [FETCH_RELATED_ISSUES_SUCCESS]: (_state, action) => action.relatedIssues,
-  [FETCH_FEDERATED_REFERENCES_SUCCESS]: (state, action) => {
-    if (!action.fedRefIssueRefs) {
+  [FETCH_RELATED_ISSUES_SUCCESS]: (_state, {relatedIssues}) => relatedIssues,
+  [FETCH_FEDERATED_REFERENCES_SUCCESS]: (state, {fedRefIssueRefs}) => {
+    if (!fedRefIssueRefs) {
       return state;
     }
 
     const fedRefStates = {};
-    action.fedRefIssueRefs.forEach((ref) => {
+    fedRefIssueRefs.forEach((ref) => {
       fedRefStates[ref.extIdentifier] = ref;
     });
 
@@ -239,34 +344,77 @@ export const relatedIssuesReducer = createReducer({}, {
   },
 });
 
+/**
+ * Stores data for users referenced by issue. ie: Owner, CC, etc.
+ * @param {Object.<string, User>} state
+ * @param {AnyAction} action
+ * @param {Object.<string, User>} action.referencedUsers
+ * @return {Object.<string, User>}
+ */
 const referencedUsersReducer = createReducer({}, {
-  [FETCH_REFERENCED_USERS_SUCCESS]: (_state, action) => action.referencedUsers,
+  [FETCH_REFERENCED_USERS_SUCCESS]: (_state, {referencedUsers}) =>
+    referencedUsers,
 });
 
+/**
+ * Handles updating state of all starred issues.
+ * @param {Object.<IssueRefString, boolean>} state Set of starred issues,
+ *   stored in a serializeable Object form.
+ * @param {AnyAction} action
+ * @param {IssueRef=} action.issueRef An issue with a star state being updated.
+ * @param {boolean=} action.starred Whether the issue is starred or unstarred.
+ * @param {Array<IssueRef>=} action.starredIssueRefs A list of starred issues.
+ * @return {Object.<IssueRefString, boolean>}
+ */
 export const starredIssuesReducer = createReducer({}, {
-  [STAR_SUCCESS]: (state, action) => {
-    return {...state, [action.ref]: action.starred};
+  [STAR_SUCCESS]: (state, {issueRef, starred}) => {
+    return {...state, [issueRefToString(issueRef)]: starred};
   },
-  [FETCH_ISSUES_STARRED_SUCCESS]: (_state, action) => {
-    return action.starredIssues.reduce((obj, ref) => ({
-      ...obj, [ref]: true}), {});
+  [FETCH_ISSUES_STARRED_SUCCESS]: (_state, {starredIssueRefs}) => {
+    return starredIssueRefs.reduce((obj, issueRef) => ({
+      ...obj, [issueRefToString(issueRef)]: true}), {});
   },
-  [FETCH_IS_STARRED_SUCCESS]: (state, action) => {
-    const ref = issueRefToString(action.ref.issueRef);
-    return {...state, [ref]: action.starred};
+  [FETCH_IS_STARRED_SUCCESS]: (state, {issueRef, starred}) => {
+    const refString = issueRefToString(issueRef);
+    return {...state, [refString]: starred};
   },
 });
 
+/**
+ * Adds the result of an IssuePresubmit response to the Redux store.
+ * @param {Object} state Initial Redux state.
+ * @param {AnyAction} action
+ * @param {Object} action.presubmitResponse The issue
+ *   presubmit response Object.
+ * @return {Object}
+ */
 const presubmitResponseReducer = createReducer({}, {
-  [PRESUBMIT_SUCCESS]: (_state, action) => action.presubmitResponse,
+  [PRESUBMIT_SUCCESS]: (_state, {presubmitResponse}) => presubmitResponse,
 });
 
+/**
+ * To display the results of our ML component predictor, this reducer updates
+ * the store with a recommended component name for the currently viewed issue.
+ * @param {string} state The name of the component recommended by the
+ *   prediction.
+ * @param {AnyAction} action
+ * @param {string} action.component Predicted component name.
+ * @return {string}
+ */
 const predictedComponentReducer = createReducer('', {
-  [PREDICT_COMPONENT_SUCCESS]: (_state, action) => action.component,
+  [PREDICT_COMPONENT_SUCCESS]: (_state, {component}) => component,
 });
 
+/**
+ * Stores the user's permissions for a given issue.
+ * @param {Array<string>} state Permission list. Each permission is a string
+ *   with the name of the permission.
+ * @param {AnyAction} action
+ * @param {Array<string>} action.permissions The fetched permission data.
+ * @return {Array<string>}
+ */
 const permissionsReducer = createReducer([], {
-  [FETCH_PERMISSIONS_SUCCESS]: (_state, action) => action.permissions,
+  [FETCH_PERMISSIONS_SUCCESS]: (_state, {permissions}) => permissions,
 });
 
 const requestsReducer = combineReducers({
@@ -973,7 +1121,7 @@ export const fetchIsStarred = (message) => async (dispatch) => {
     dispatch({
       type: FETCH_IS_STARRED_SUCCESS,
       starred: resp.isStarred,
-      ref: message,
+      issueRef: message.issueRef,
     });
   } catch (error) {
     dispatch({type: FETCH_IS_STARRED_FAILURE, error});
@@ -987,9 +1135,8 @@ export const fetchStarredIssues = () => async (dispatch) => {
     const resp = await prpcClient.call(
         'monorail.Issues', 'ListStarredIssues', {},
     );
-    const issueIds = (resp.starredIssueRefs || []).map(
-        (ref) => issueRefToString(ref));
-    dispatch({type: FETCH_ISSUES_STARRED_SUCCESS, starredIssues: issueIds});
+    dispatch({type: FETCH_ISSUES_STARRED_SUCCESS,
+      starredIssueRefs: resp.starredIssueRefs});
   } catch (error) {
     dispatch({type: FETCH_ISSUES_STARRED_FAILURE, error});
   };
@@ -1005,13 +1152,12 @@ export const star = (issueRef, starred) => async (dispatch) => {
     const resp = await prpcClient.call(
         'monorail.Issues', 'StarIssue', message,
     );
-    const ref = issueRefToString(issueRef);
 
     dispatch({
       type: STAR_SUCCESS,
       starCount: resp.starCount,
-      ref: ref,
-      starred: starred,
+      issueRef,
+      starred,
       requestKey,
     });
   } catch (error) {

@@ -16,9 +16,7 @@ const DEFAULT_REQUEST_KEY = '*';
 
 export const createKeyedRequestReducer = (start, success, failure) => {
   return createReducer({}, {
-    [start]: (state, action) => {
-      const requestKey = action.requestKey || DEFAULT_REQUEST_KEY;
-
+    [start]: (state, {requestKey = DEFAULT_REQUEST_KEY}) => {
       return {
         ...state,
         [requestKey]: {
@@ -27,9 +25,7 @@ export const createKeyedRequestReducer = (start, success, failure) => {
         },
       };
     },
-    [success]: (state, action) =>{
-      const requestKey = action.requestKey || DEFAULT_REQUEST_KEY;
-
+    [success]: (state, {requestKey = DEFAULT_REQUEST_KEY}) =>{
       return {
         ...state,
         [requestKey]: {
@@ -38,14 +34,12 @@ export const createKeyedRequestReducer = (start, success, failure) => {
         },
       };
     },
-    [failure]: (state, action) => {
-      const requestKey = action.requestKey || DEFAULT_REQUEST_KEY;
-
+    [failure]: (state, {requestKey = DEFAULT_REQUEST_KEY, error}) => {
       return {
         ...state,
         [requestKey]: {
           requesting: false,
-          error: action.error,
+          error,
         },
       };
     },
@@ -62,9 +56,9 @@ export const createRequestReducer = (start, success, failure) => {
       requesting: false,
       error: null,
     }),
-    [failure]: (_state, action) => ({
+    [failure]: (_state, {error}) => ({
       requesting: false,
-      error: action.error,
+      error,
     }),
   });
 };

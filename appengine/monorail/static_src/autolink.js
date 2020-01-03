@@ -332,10 +332,28 @@ function createIssueRefRun(projectName, localId, summary, isClosed, content,
   };
 }
 
+/**
+ * @typedef {Object} CommentReference
+ * @property {string} componentName A key identifying the kind of autolinking
+ *   text the reference matches.
+ * @property {Array<any>} existingRefs Array of full data for referenced
+ *   Objects. Each entry in this Array could be any kind of data depending
+ *   on what the text references. For example, the Array could contain Issue
+ *   or User Objects.
+ */
+
+/**
+ * Iterates through a list of comments, requests data for referenced objects
+ * in those comments, and returns all fetched data.
+ * @param {Array<IssueComment>} comments Array of comments to check.
+ * @param {string} currentProjectName Project these comments exist in the
+ *   context of.
+ * @return {Promise<Array<CommentReference>>}
+ */
 function getReferencedArtifacts(comments, currentProjectName) {
   return new Promise((resolve, reject) => {
     const fetchPromises = [];
-    Components.forEach(({lookup, extractRefs, refRegs, replacer}, componentName) => {
+    Components.forEach(({lookup, extractRefs, refRegs}, componentName) => {
       if (lookup !== null) {
         const refs = [];
         refRegs.forEach((re) => {

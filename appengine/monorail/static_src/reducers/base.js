@@ -12,6 +12,8 @@ import * as sitewide from './sitewide.js';
 import * as user from './user.js';
 import * as ui from './ui.js';
 
+/** @typedef {import('redux').AnyAction} AnyAction */
+
 // Actions
 const RESET_STATE = 'RESET_STATE';
 
@@ -38,8 +40,14 @@ const reducer = combineReducers({
   ui: ui.reducer,
 });
 
+/**
+ * The top level reducer function that all actions pass through.
+ * @param {any} state
+ * @param {AnyAction} action
+ * @return {any}
+ */
 function rootReducer(state, action) {
-  if (action.type == RESET_STATE) {
+  if (action.type === RESET_STATE) {
     state = undefined;
   }
   return reducer(state, action);
@@ -48,6 +56,12 @@ function rootReducer(state, action) {
 // Selectors
 
 // Action Creators
+
+/**
+ * Changes Redux state back to its default initial state. Primarily
+ * used in testing.
+ * @return {AnyAction} An action to reset Redux state to default.
+ */
 export const resetState = () => ({type: RESET_STATE});
 
 // Store
@@ -59,9 +73,24 @@ export const store = createStore(rootReducer, composeEnhancers(
     applyMiddleware(thunk),
 ));
 
+/**
+ * Class mixin function that connects a given HTMLElement class to our
+ * store instance.
+ * @link https://pwa-starter-kit.polymer-project.org/redux-and-state-management#connecting-an-element-to-the-store
+ * @param {typeof HTMLElement} class
+ * @return {function} New class type with connected features.
+ */
 export const connectStore = connect(store);
 
-// Promise to allow waiting for a state update. Useful in testing.
+/**
+ * Promise to allow waiting for a state update. Useful in testing.
+ * @example
+ * store.dispatch(updateState());
+ * await stateUpdated;
+ * doThingWithUpdatedState();
+ *
+ * @type {Promise}
+ */
 export const stateUpdated = new Promise((resolve) => {
   store.subscribe(resolve);
 });

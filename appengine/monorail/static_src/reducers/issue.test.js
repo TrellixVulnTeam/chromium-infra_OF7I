@@ -947,11 +947,9 @@ describe('issue', () => {
             {
               type: issue.FETCH_IS_STARRED_SUCCESS,
               starred: false,
-              ref: {
-                issueRef: {
-                  projectName: 'proj',
-                  localId: 1,
-                },
+              issueRef: {
+                projectName: 'proj',
+                localId: 1,
               },
             },
         );
@@ -961,9 +959,10 @@ describe('issue', () => {
       it('FETCH_ISSUES_STARRED_SUCCESS updates the starredIssues object',
           () => {
             const state = {};
-            const starredIssues = ['proj:1', 'proj:2'];
+            const starredIssueRefs = [{projectName: 'proj', localId: 1},
+              {projectName: 'proj', localId: 2}];
             const newState = issue.starredIssuesReducer(state,
-                {type: issue.FETCH_ISSUES_STARRED_SUCCESS, starredIssues},
+                {type: issue.FETCH_ISSUES_STARRED_SUCCESS, starredIssueRefs},
             );
             assert.deepEqual(newState, {'proj:1': true, 'proj:2': true});
           });
@@ -971,7 +970,11 @@ describe('issue', () => {
       it('STAR_SUCCESS updates the starredIssues object', () => {
         const state = {'proj:1': true, 'proj:2': false};
         const newState = issue.starredIssuesReducer(state,
-            {type: issue.STAR_SUCCESS, starred: true, ref: 'proj:2'});
+            {
+              type: issue.STAR_SUCCESS,
+              starred: true,
+              issueRef: {projectName: 'proj', localId: 2},
+            });
         assert.deepEqual(newState, {'proj:1': true, 'proj:2': true});
       });
     });
@@ -1011,8 +1014,8 @@ describe('issue', () => {
       });
 
       it('fetching if an issue is starred', async () => {
-        const message = {projectName: 'proj', localId: 1};
-        const action = issue.fetchIsStarred(message);
+        const issueRef = {projectName: 'proj', localId: 1};
+        const action = issue.fetchIsStarred({issueRef});
 
         prpcCall.returns(Promise.resolve({isStarred: true}));
 
@@ -1022,13 +1025,13 @@ describe('issue', () => {
 
         sinon.assert.calledWith(
             prpcClient.call, 'monorail.Issues',
-            'IsIssueStarred', message,
+            'IsIssueStarred', {issueRef},
         );
 
         sinon.assert.calledWith(dispatch, {
           type: issue.FETCH_IS_STARRED_SUCCESS,
           starred: true,
-          ref: message,
+          issueRef,
         });
       });
 
@@ -1050,7 +1053,7 @@ describe('issue', () => {
 
         sinon.assert.calledWith(dispatch, {
           type: issue.FETCH_ISSUES_STARRED_SUCCESS,
-          starredIssues: ['proj:1'],
+          starredIssueRefs,
         });
       });
 
@@ -1077,7 +1080,7 @@ describe('issue', () => {
         sinon.assert.calledWith(dispatch, {
           type: issue.STAR_SUCCESS,
           starCount: 1,
-          ref: 'proj:1',
+          issueRef,
           starred: false,
           requestKey: 'proj:1',
         });

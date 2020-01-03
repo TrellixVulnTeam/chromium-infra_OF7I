@@ -5,6 +5,8 @@
 import {combineReducers} from 'redux';
 import {createReducer} from './redux-helpers.js';
 
+/** @typedef {import('redux').AnyAction} AnyAction */
+
 const DEFAULT_SNACKBAR_TIMEOUT_MS = 10 * 1000;
 
 
@@ -47,17 +49,28 @@ const HIDE_SNACKBAR = 'HIDE_SNACKBAR';
 */
 
 // Reducers
+
+
 const navigationCountReducer = createReducer(0, {
   [INCREMENT_NAVIGATION_COUNT]: (state) => state + 1,
 });
 
+/**
+ * Saves state on which forms have been edited, to warn the user
+ * about possible data loss when they navigate away from a page.
+ * @param {Array<string>} state Dirty form names.
+ * @param {AnyAction} action
+ * @param {string} action.name The name of the form being updated.
+ * @param {boolean} action.isDirty Whether the form is dirty or not dirty.
+ * @return {Array<string>}
+ */
 const dirtyFormsReducer = createReducer([], {
-  [REPORT_DIRTY_FORM]: (state, action) => {
+  [REPORT_DIRTY_FORM]: (state, {name, isDirty}) => {
     const newState = [...state];
-    const index = state.indexOf(action.name);
-    if (action.isDirty && index === -1) {
-      newState.push(action.name);
-    } else if (!action.isDirty && index !== -1) {
+    const index = state.indexOf(name);
+    if (isDirty && index === -1) {
+      newState.push(name);
+    } else if (!isDirty && index !== -1) {
       newState.splice(index, 1);
     }
     return newState;
@@ -72,7 +85,9 @@ const focusIdReducer = createReducer(null, {
 /**
  * Updates snackbar state.
  * @param {Array<Snackbar>} state A snackbar-shaped slice of Redux state.
- * @param {import('redux').AnyAction} action
+ * @param {AnyAction} action
+ * @param {string} action.text The text to display in the snackbar.
+ * @param {string} action.id A unique global ID for the snackbar.
  * @return {Array<Snackbar>} New snackbar state.
  */
 export const snackbarsReducer = createReducer([], {
