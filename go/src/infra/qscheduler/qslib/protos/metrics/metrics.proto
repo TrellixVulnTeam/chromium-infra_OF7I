@@ -249,4 +249,6 @@ message SchedulerState {
           repeated float balance = 2;
   }
   repeated Account accounts = 5;
+
+  string pool_id = 6;
 }
