@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cmd
+package internalcmds
 
 import (
 	"fmt"
@@ -16,15 +16,15 @@ import (
 	"infra/libs/skylab/inventory"
 )
 
-// InternalVerifyInventory subcommand: Verify inventory.
-var InternalVerifyInventory = &subcommands.Command{
+// VerifyInventory subcommand: Verify inventory.
+var VerifyInventory = &subcommands.Command{
 	UsageLine: "internal-verify-inventory [-inv-type TYPE]... DATA_DIR",
 	ShortDesc: "verify skylab inventory.",
 	LongDesc: `Verify skylab inventory.
 
 For internal use only.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &internalVerifyInventory{}
+		c := &verifyInventory{}
 		c.Flags.Var(&c.typeToVerify, "inv-type", inventoryTypeUsage())
 		return c
 	},
@@ -67,12 +67,12 @@ func (i *inventoryTypes) Set(value string) error {
 	return nil
 }
 
-type internalVerifyInventory struct {
+type verifyInventory struct {
 	subcommands.CommandRunBase
 	typeToVerify inventoryTypes
 }
 
-func (c *internalVerifyInventory) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *verifyInventory) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "internal-verify-inventory").Err())
 		return 1
@@ -80,7 +80,7 @@ func (c *internalVerifyInventory) Run(a subcommands.Application, args []string, 
 	return 0
 }
 
-func (c *internalVerifyInventory) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *verifyInventory) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if narg := c.Flags.NArg(); narg != 1 {
 		return cmdlib.NewUsageError(c.Flags, "want 1 positional argument, have %d", narg)
 	}

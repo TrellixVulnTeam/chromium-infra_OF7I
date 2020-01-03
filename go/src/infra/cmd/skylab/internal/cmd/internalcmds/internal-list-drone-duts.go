@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cmd
+package internalcmds
 
 import (
 	"bufio"
@@ -18,28 +18,28 @@ import (
 	"infra/cmd/skylab/internal/site"
 )
 
-// InternalListDroneDuts subcommand: List DUTs for a drone.
-var InternalListDroneDuts = &subcommands.Command{
+// ListDroneDuts subcommand: List DUTs for a drone.
+var ListDroneDuts = &subcommands.Command{
 	UsageLine: "internal-list-drone-duts HOSTNAME",
 	ShortDesc: "list DUTs for a drone",
 	LongDesc: `List DUTs for a drone.
 
 For internal use only.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &internalListDroneDutsRun{}
+		c := &listDroneDutsRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		return c
 	},
 }
 
-type internalListDroneDutsRun struct {
+type listDroneDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  cmdlib.EnvFlags
 }
 
-func (c *internalListDroneDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *listDroneDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), "%s: %s\n", cmdlib.ProgName, err)
 		return 1
@@ -47,7 +47,7 @@ func (c *internalListDroneDutsRun) Run(a subcommands.Application, args []string,
 	return 0
 }
 
-func (c *internalListDroneDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *listDroneDutsRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 1 {
 		return cmdlib.NewUsageError(c.Flags, "exactly one HOSTNAME must be provided")
 	}

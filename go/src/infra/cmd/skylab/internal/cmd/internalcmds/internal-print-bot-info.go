@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cmd
+package internalcmds
 
 import (
 	"encoding/json"
@@ -21,15 +21,15 @@ import (
 	"infra/libs/skylab/inventory/swarming"
 )
 
-// InternalPrintBotInfo subcommand: Print Swarming dimensions for a DUT.
-var InternalPrintBotInfo = &subcommands.Command{
+// PrintBotInfo subcommand: Print Swarming dimensions for a DUT.
+var PrintBotInfo = &subcommands.Command{
 	UsageLine: "internal-print-bot-info DUT_ID",
 	ShortDesc: "print Swarming bot info for a DUT",
 	LongDesc: `Print Swarming bot info for a DUT.
 
 For internal use only.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &internalPrintBotInfoRun{}
+		c := &printBotInfoRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.byHostname, "by-hostname", false, "Lookup by hostname instead of ID.")
@@ -37,7 +37,7 @@ For internal use only.`,
 	},
 }
 
-type internalPrintBotInfoRun struct {
+type printBotInfoRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  cmdlib.EnvFlags
@@ -45,7 +45,7 @@ type internalPrintBotInfoRun struct {
 	byHostname bool
 }
 
-func (c *internalPrintBotInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *printBotInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), "%s: %s\n", cmdlib.ProgName, err)
 		return 1
@@ -53,7 +53,7 @@ func (c *internalPrintBotInfoRun) Run(a subcommands.Application, args []string, 
 	return 0
 }
 
-func (c *internalPrintBotInfoRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 1 {
 		return cmdlib.NewUsageError(c.Flags, "exactly one DUT_ID must be provided")
 	}
