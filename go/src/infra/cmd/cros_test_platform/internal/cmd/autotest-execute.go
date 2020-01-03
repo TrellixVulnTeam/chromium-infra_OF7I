@@ -6,15 +6,8 @@ package cmd
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/maruel/subcommands"
-
-	"infra/cmd/cros_test_platform/internal/execution"
-
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -49,53 +42,5 @@ func (c *autotestExecuteRun) Run(a subcommands.Application, args []string, env s
 }
 
 func (c *autotestExecuteRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	requests, err := c.readRequests()
-	if err != nil {
-		return err
-	}
-	switch {
-	case len(requests) == 0:
-		return errors.Reason("zero requests").Err()
-	case len(requests) > 1:
-		return errors.Reason("multiple requests unsupported (got %d)", len(requests)).Err()
-	}
-	request := requests[0]
-
-	if err = c.validateRequest(request); err != nil {
-		return err
-	}
-
-	ctx := cli.GetContext(a, c, env)
-	ctx = setupLogging(ctx)
-
-	client, err := swarmingClient(ctx, request.Config.AutotestProxy)
-	if err != nil {
-		return err
-	}
-
-	runner := execution.NewAutotestRunner(request.Enumeration.AutotestInvocations, request.RequestParams, request.GetConfig().GetAutotestBackend())
-
-	maxDuration, err := ptypes.Duration(request.RequestParams.Time.MaximumDuration)
-	if err != nil {
-		maxDuration = 12 * time.Hour
-	}
-
-	resps, err := c.handleRequests(ctx, maxDuration, runner, client, nil)
-	if err != nil && !containsSomeResponse(resps) {
-		// Catastrophic error. There is no reasonable response to write.
-		return err
-	}
-	return c.writeResponsesWithError(resps, err)
-}
-
-func (c *autotestExecuteRun) validateRequest(request *steps.ExecuteRequest) error {
-	if err := c.validateRequestCommon(request); err != nil {
-		return err
-	}
-
-	if request.Config.AutotestProxy == nil {
-		return fmt.Errorf("nil request.config.autotest_proxy")
-	}
-
-	return nil
+	return errors.Reason("autotest-execute is deprecated").Err()
 }
