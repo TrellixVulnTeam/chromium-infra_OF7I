@@ -17,7 +17,7 @@ import 'shared/typedef.js';
 export const SELECT = 'project/SELECT';
 
 const FETCH_CONFIG_START = 'project/FETCH_CONFIG_START';
-const FETCH_CONFIG_SUCCESS = 'project/FETCH_CONFIG_SUCCESS';
+export const FETCH_CONFIG_SUCCESS = 'project/FETCH_CONFIG_SUCCESS';
 const FETCH_CONFIG_FAILURE = 'project/FETCH_CONFIG_FAILURE';
 
 export const FETCH_PRESENTATION_CONFIG_START =
@@ -34,62 +34,72 @@ export const FETCH_VISIBLE_MEMBERS_SUCCESS =
 export const FETCH_VISIBLE_MEMBERS_FAILURE =
   'project/FETCH_VISIBLE_MEMBERS_FAILURE';
 
-
 const FETCH_TEMPLATES_START = 'project/FETCH_TEMPLATES_START';
-const FETCH_TEMPLATES_SUCCESS = 'project/FETCH_TEMPLATES_SUCCESS';
+export const FETCH_TEMPLATES_SUCCESS = 'project/FETCH_TEMPLATES_SUCCESS';
 const FETCH_TEMPLATES_FAILURE = 'project/FETCH_TEMPLATES_FAILURE';
 
 const FETCH_FIELDS_LIST_START = 'project/FETCH_FIELDS_LIST_START';
-const FETCH_FIELDS_LIST_SUCCESS = 'project/FETCH_FIELDS_LIST_SUCCESS';
+export const FETCH_FIELDS_LIST_SUCCESS = 'project/FETCH_FIELDS_LIST_SUCCESS';
 const FETCH_FIELDS_LIST_FAILURE = 'project/FECTH_FIELDS_LIST_FAILURE';
 
 /* State Shape
 {
   name: string,
-  config: Config,
-  presentationConfig: PresentationConfig,
-  templates: Array<TemplateDef>,
+
+  configs: Object.<string, Config>,
+  presentationConfigs: Object.<string, PresentationConfig>,
+  visibleMembers:
+      Object.<string, {userRefs: Array<UserRef>, groupRefs: Array<UserRef>}>,
+  templates: Object.<string, Array<TemplateDef>>,
+
   requests: {
     fetchConfig: ReduxRequestState,
-    fetchTemplates: ReduxRequestState,
     fetchFields: ReduxRequestState,
+    fetchMembers: ReduxRequestState,
+    fetchTemplates: ReduxRequestState,
   },
 }
 */
 
 // Reducers
 export const nameReducer = createReducer(null, {
-  [SELECT]: (_state, action) => action.projectName,
+  [SELECT]: (_state, {projectName}) => projectName,
 });
 
-const configReducer = createReducer({}, {
-  [FETCH_CONFIG_SUCCESS]: (_state, action) => {
-    return action.config;
-  },
-  [FETCH_FIELDS_LIST_SUCCESS]: (state, action) => {
-    return {
+export const configsReducer = createReducer({}, {
+  [FETCH_CONFIG_SUCCESS]: (state, {projectName, config}) => ({
+    ...state,
+    [projectName]: config,
+  }),
+  [FETCH_FIELDS_LIST_SUCCESS]: (state, {projectName, fieldDefs}) => ({
+    ...state,
+    [projectName]: {
+      ...state[projectName],
+      fieldDefs: fieldDefs,
+    },
+  }),
+});
+
+export const presentationConfigsReducer = createReducer({}, {
+  [FETCH_PRESENTATION_CONFIG_SUCCESS]:
+    (state, {projectName, presentationConfig}) => ({
       ...state,
-      fieldDefs: action.fieldDefs,
-    };
-  },
-});
-
-const presentationConfigReducer = createReducer({}, {
-  [FETCH_PRESENTATION_CONFIG_SUCCESS]: (_state, action) => {
-    return action.presentationConfig;
-  },
+      [projectName]: presentationConfig,
+    }),
 });
 
 export const visibleMembersReducer = createReducer({}, {
-  [FETCH_VISIBLE_MEMBERS_SUCCESS]: (_state, action) => {
-    return action.visibleMembers;
-  },
+  [FETCH_VISIBLE_MEMBERS_SUCCESS]: (state, {projectName, visibleMembers}) => ({
+    ...state,
+    [projectName]: visibleMembers,
+  }),
 });
 
-const templatesReducer = createReducer([], {
-  [FETCH_TEMPLATES_SUCCESS]: (_state, action) => {
-    return action.projectTemplates.templates;
-  },
+export const templatesReducer = createReducer({}, {
+  [FETCH_TEMPLATES_SUCCESS]: (state, {projectName, templates}) => ({
+    ...state,
+    [projectName]: templates,
+  }),
 });
 
 const requestsReducer = combineReducers({
@@ -109,8 +119,8 @@ const requestsReducer = combineReducers({
 
 export const reducer = combineReducers({
   name: nameReducer,
-  config: configReducer,
-  presentationConfig: presentationConfigReducer,
+  configs: configsReducer,
+  presentationConfigs: presentationConfigsReducer,
   visibleMembers: visibleMembersReducer,
   templates: templatesReducer,
   requests: requestsReducer,
@@ -118,21 +128,36 @@ export const reducer = combineReducers({
 
 // Selectors
 export const project = (state) => state.project || {};
-export const viewedProjectName = createSelector(project,
-    (project) => project.name || null);
-export const config = createSelector(project,
-    (project) => project.config || {});
-export const projectName = createSelector(config,
-    (config) => config.projectName);
-export const visibleMembers = createSelector(project,
-    (project) => project.visibleMembers || {});
-export const presentationConfig = createSelector(project,
-    (project) => project.presentationConfig || {});
+
+export const viewedProjectName =
+  createSelector(project, (project) => project.name || null);
+
+export const configs =
+  createSelector(project, (project) => project.configs || {});
+export const presentationConfigs =
+  createSelector(project, (project) => project.presentationConfigs || {});
+export const visibleMembers =
+  createSelector(project, (project) => project.visibleMembers || {});
+export const templates =
+  createSelector(project, (project) => project.templates || {});
+
+export const viewedConfig = createSelector(
+    [viewedProjectName, configs],
+    (projectName, configs) => configs[projectName] || {});
+export const viewedPresentationConfig = createSelector(
+    [viewedProjectName, presentationConfigs],
+    (projectName, configs) => configs[projectName] || {});
+export const viewedVisibleMembers = createSelector(
+    [viewedProjectName, visibleMembers],
+    (projectName, visibleMembers) => visibleMembers[projectName] || {});
+export const viewedTemplates = createSelector(
+    [viewedProjectName, templates],
+    (projectName, templates) => templates[projectName] || []);
 
 /**
  * Get the default columns for the currently viewed project.
  */
-export const defaultColumns = createSelector(presentationConfig,
+export const defaultColumns = createSelector(viewedPresentationConfig,
     ({defaultColSpec}) =>{
       if (defaultColSpec) {
         return parseColSpec(defaultColSpec);
@@ -144,12 +169,12 @@ export const defaultColumns = createSelector(presentationConfig,
 /**
  * Get the default query for the currently viewed project.
  */
-export const defaultQuery = createSelector(presentationConfig,
+export const defaultQuery = createSelector(viewedPresentationConfig,
     (config) => config.defaultQuery || '');
 
 // Look up components by path.
 export const componentsMap = createSelector(
-    config,
+    viewedConfig,
     (config) => {
       if (!config || !config.componentDefs) return new Map();
       const acc = new Map();
@@ -161,7 +186,7 @@ export const componentsMap = createSelector(
 );
 
 export const fieldDefs = createSelector(
-    config, (config) => ((config && config.fieldDefs) || []),
+    viewedConfig, (config) => ((config && config.fieldDefs) || []),
 );
 
 export const fieldDefMap = createSelector(
@@ -175,7 +200,7 @@ export const fieldDefMap = createSelector(
 );
 
 export const labelDefs = createSelector(
-    config, (config) => ((config && config.labelDefs) || []),
+    viewedConfig, (config) => ((config && config.labelDefs) || []),
 );
 
 // labelDefs stored in an easily findable format with label names as keys.
@@ -253,7 +278,7 @@ export const enumFieldDefs = createSelector(
  *   given issue and field name to find the string value for that field, in
  *   the issue.
  */
-export const extractFieldValuesFromIssue = createSelector(projectName,
+export const extractFieldValuesFromIssue = createSelector(viewedProjectName,
     labelPrefixSet, fieldDefMap,
     (projectName, labelPrefixSet, fieldDefMap) => {
       return (issue, fieldName) => stringValuesForIssueField(issue, fieldName,
@@ -372,7 +397,7 @@ const fetchConfig = (projectName) => async (dispatch) => {
 
   try {
     const resp = await getConfig;
-    dispatch({type: FETCH_CONFIG_SUCCESS, config: resp});
+    dispatch({type: FETCH_CONFIG_SUCCESS, projectName, config: resp});
   } catch (error) {
     dispatch({type: FETCH_CONFIG_FAILURE, error});
   }
@@ -384,7 +409,11 @@ export const fetchPresentationConfig = (projectName) => async (dispatch) => {
   try {
     const presentationConfig = await prpcClient.call(
         'monorail.Projects', 'GetPresentationConfig', {projectName});
-    dispatch({type: FETCH_PRESENTATION_CONFIG_SUCCESS, presentationConfig});
+    dispatch({
+      type: FETCH_PRESENTATION_CONFIG_SUCCESS,
+      projectName,
+      presentationConfig,
+    });
   } catch (error) {
     dispatch({type: FETCH_PRESENTATION_CONFIG_FAILURE, error});
   }
@@ -396,7 +425,11 @@ export const fetchVisibleMembers = (projectName) => async (dispatch) => {
   try {
     const visibleMembers = await prpcClient.call(
         'monorail.Projects', 'GetVisibleMembers', {projectName});
-    dispatch({type: FETCH_VISIBLE_MEMBERS_SUCCESS, visibleMembers});
+    dispatch({
+      type: FETCH_VISIBLE_MEMBERS_SUCCESS,
+      projectName,
+      visibleMembers,
+    });
   } catch (error) {
     dispatch({type: FETCH_VISIBLE_MEMBERS_FAILURE, error});
   }
@@ -413,7 +446,11 @@ const fetchTemplates = (projectName) => async (dispatch) => {
 
   try {
     const resp = await listTemplates;
-    dispatch({type: FETCH_TEMPLATES_SUCCESS, projectTemplates: resp});
+    dispatch({
+      type: FETCH_TEMPLATES_SUCCESS,
+      projectName,
+      templates: resp.templates,
+    });
   } catch (error) {
     dispatch({type: FETCH_TEMPLATES_FAILURE, error});
   }
@@ -430,7 +467,7 @@ export const fetchFields = (projectName) => async (dispatch) => {
         },
     );
     const fieldDefs = (resp.fieldDefs || []);
-    dispatch({type: FETCH_FIELDS_LIST_SUCCESS, fieldDefs});
+    dispatch({type: FETCH_FIELDS_LIST_SUCCESS, projectName, fieldDefs});
   } catch (error) {
     dispatch({type: FETCH_FIELDS_LIST_FAILURE});
   }

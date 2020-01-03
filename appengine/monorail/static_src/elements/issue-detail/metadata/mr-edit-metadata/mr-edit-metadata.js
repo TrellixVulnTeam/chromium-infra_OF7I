@@ -707,7 +707,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.issueRef = issue.issueRef(state);
     this.presubmitResponse = issue.presubmitResponse(state);
     this.predictedComponent = issue.predictedComponent(state);
-    this.projectConfig = project.project(state).config;
+    this.projectConfig = project.viewedConfig(state);
     this.projectName = issue.issueRef(state).projectName;
     this.issuePermissions = issue.permissions(state);
     this.optionsPerEnumField = project.optionsPerEnumField(state);

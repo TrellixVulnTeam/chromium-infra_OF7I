@@ -133,7 +133,7 @@ export class MrEditIssue extends connectStore(LitElement) {
     this.issue = issue.issue(state);
     this.issueRef = issue.issueRef(state);
     this.comments = issue.comments(state);
-    this.projectConfig = project.project(state).config;
+    this.projectConfig = project.viewedConfig(state);
     this.updatingIssue = issue.requests(state).update.requesting;
     this.updateError = issue.requests(state).update.error;
     this.focusId = ui.focusId(state);

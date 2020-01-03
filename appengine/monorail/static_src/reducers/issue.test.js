@@ -566,16 +566,24 @@ describe('issue', () => {
     }), []);
 
     assert.deepEqual(issue.fieldDefs({
-      project: {config: {
-        fieldDefs: [
-          {fieldRef: {fieldName: 'intyInt', type: fieldTypes.INT_TYPE}},
-          {fieldRef: {fieldName: 'enum', type: fieldTypes.ENUM_TYPE}},
-          {fieldRef: {fieldName: 'nonApplicable', type: fieldTypes.STR_TYPE},
-            applicableType: 'None'},
-          {fieldRef: {fieldName: 'defectsOnly', type: fieldTypes.STR_TYPE},
-            applicableType: 'Defect'},
-        ],
-      }},
+      project: {
+        name: 'chromium',
+        configs: {
+          chromium: {
+            fieldDefs: [
+              {fieldRef: {fieldName: 'intyInt', type: fieldTypes.INT_TYPE}},
+              {fieldRef: {fieldName: 'enum', type: fieldTypes.ENUM_TYPE}},
+              {
+                fieldRef:
+                  {fieldName: 'nonApplicable', type: fieldTypes.STR_TYPE},
+                applicableType: 'None',
+              },
+              {fieldRef: {fieldName: 'defectsOnly', type: fieldTypes.STR_TYPE},
+                applicableType: 'Defect'},
+            ],
+          },
+        },
+      },
       ...wrapIssue({
         fieldValues: [
           {fieldRef: {fieldName: 'Type'}, value: 'Defect'},
@@ -591,14 +599,21 @@ describe('issue', () => {
 
   it('fieldDefs skips approval fields for all issues', () => {
     assert.deepEqual(issue.fieldDefs({
-      project: {config: {
-        fieldDefs: [
-          {fieldRef: {fieldName: 'test', type: fieldTypes.INT_TYPE}},
-          {fieldRef: {fieldName: 'ignoreMe', type: fieldTypes.APPROVAL_TYPE}},
-          {fieldRef: {fieldName: 'LookAway', approvalName: 'ThisIsAnApproval'}},
-          {fieldRef: {fieldName: 'phaseField'}, isPhaseField: true},
-        ],
-      }},
+      project: {
+        name: 'chromium',
+        configs: {
+          chromium: {
+            fieldDefs: [
+              {fieldRef: {fieldName: 'test', type: fieldTypes.INT_TYPE}},
+              {fieldRef:
+                {fieldName: 'ignoreMe', type: fieldTypes.APPROVAL_TYPE}},
+              {fieldRef:
+                {fieldName: 'LookAway', approvalName: 'ThisIsAnApproval'}},
+              {fieldRef: {fieldName: 'phaseField'}, isPhaseField: true},
+            ],
+          },
+        },
+      },
       ...wrapIssue(),
     }), [
       {fieldRef: {fieldName: 'test', type: fieldTypes.INT_TYPE}},
@@ -607,12 +622,20 @@ describe('issue', () => {
 
   it('fieldDefs includes non applicable fields when values defined', () => {
     assert.deepEqual(issue.fieldDefs({
-      project: {config: {
-        fieldDefs: [
-          {fieldRef: {fieldName: 'nonApplicable', type: fieldTypes.STR_TYPE},
-            applicableType: 'None'},
-        ],
-      }},
+      project: {
+        name: 'chromium',
+        configs: {
+          chromium: {
+            fieldDefs: [
+              {
+                fieldRef:
+                  {fieldName: 'nonApplicable', type: fieldTypes.STR_TYPE},
+                applicableType: 'None',
+              },
+            ],
+          },
+        },
+      },
       ...wrapIssue({
         fieldValues: [
           {fieldRef: {fieldName: 'nonApplicable'}, value: 'v1'},
@@ -1065,7 +1088,7 @@ describe('issue', () => {
 
 /**
  * Return a container object wrapping input
- * @param {Object} currentIssue
+ * @param {Object=} currentIssue
  * @return {Object}
  */
 function wrapIssue(currentIssue) {

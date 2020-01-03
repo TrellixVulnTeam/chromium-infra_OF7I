@@ -213,7 +213,7 @@ export class MrHeader extends connectStore(LitElement) {
     const currentUser = user.user(state);
     this.isSiteAdmin = currentUser ? currentUser.isSiteAdmin : false;
 
-    const presentationConfig = project.presentationConfig(state);
+    const presentationConfig = project.viewedPresentationConfig(state);
     this.presentationConfig = presentationConfig;
     // Set separately in order allow EZT pages to load project logo before
     // the GetPresentationConfig pRPC request.

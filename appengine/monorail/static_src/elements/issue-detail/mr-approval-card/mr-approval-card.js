@@ -274,7 +274,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     this.user = user.user(state);
     this.issue = issue.issue(state);
     this.issueRef = issue.issueRef(state);
-    this.projectConfig = project.project(state).config;
+    this.projectConfig = project.viewedConfig(state);
     this.updatingApproval = issue.requests(state).updateApproval.requesting;
     this.updateError = issue.requests(state).updateApproval.error;
   }

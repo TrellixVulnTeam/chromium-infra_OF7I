@@ -37,8 +37,8 @@ export const FETCH_ITEMS_FAILURE = 'hotlist/FETCH_ITEMS_FAILURE';
 
 /* State Shape
 {
-  hotlists: Object.<HotlistRefString, Hotlist>,
-  hotlistItems: Object.<HotlistRefString, Array<HotlistItem>>,
+  hotlists: Object.<string, Hotlist>,
+  hotlistItems: Object.<string, Array<HotlistItem>>,
 
   hotlistRef: HotlistRef,
 
@@ -71,11 +71,10 @@ export const hotlistsReducer = createReducer({}, {
  * @return {Object.<string, Array<HotlistItem>>}
  */
 export const hotlistItemsReducer = createReducer({}, {
-  [FETCH_ITEMS_SUCCESS]: (state, action) => {
-    const newState = {...state};
-    newState[hotlistRefToString(action.hotlistRef)] = action.items;
-    return newState;
-  },
+  [FETCH_ITEMS_SUCCESS]: (state, action) => ({
+    ...state,
+    [hotlistRefToString(action.hotlistRef)]: action.items,
+  }),
 });
 
 /**

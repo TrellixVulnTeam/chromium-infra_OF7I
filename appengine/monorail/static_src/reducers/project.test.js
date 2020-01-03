@@ -6,188 +6,190 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import {prpcClient} from 'prpc-client-instance.js';
 import * as project from './project.js';
+import * as example from 'shared/test/constants-project.js';
 import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
 
 describe('project reducers', () => {
-  it('nameReducer', () => {
-    const action = {type: project.SELECT, projectName: 'project-name'};
-    const actual = project.nameReducer(null, action);
-    assert.deepEqual(actual, 'project-name');
+  it('root reducer initial state', () => {
+    const actual = project.reducer(undefined, {type: null});
+    const expected = {
+      name: null,
+      configs: {},
+      presentationConfigs: {},
+      visibleMembers: {},
+      templates: {},
+      requests: {
+        fetchConfig: {
+          error: null,
+          requesting: false,
+        },
+        fetchFields: {
+          error: null,
+          requesting: false,
+        },
+        fetchMembers: {
+          error: null,
+          requesting: false,
+        },
+        fetchTemplates: {
+          error: null,
+          requesting: false,
+        },
+      },
+    };
+    assert.deepEqual(actual, expected);
   });
 
-  it('visibleMembersReducer', () => {
-    assert.deepEqual(project.visibleMembersReducer({}, {
-      type: project.FETCH_VISIBLE_MEMBERS_SUCCESS,
-      visibleMembers: {userRefs: [{userId: '123'}]},
-    }), {userRefs: [{userId: '123'}]});
+  it('name', () => {
+    const action = {type: project.SELECT, projectName: example.PROJECT_NAME};
+    assert.deepEqual(project.nameReducer(null, action), example.PROJECT_NAME);
+  });
 
-    const initialState = {
-      groupRefs: [{userId: '543'}],
+  it('configs updates when fetching Config', () => {
+    const action = {
+      type: project.FETCH_CONFIG_SUCCESS,
+      projectName: example.PROJECT_NAME,
+      config: example.CONFIG,
     };
+    const expected = {[example.PROJECT_NAME]: example.CONFIG};
+    assert.deepEqual(project.configsReducer({}, action), expected);
+  });
 
-    // Overrides existing state.
-    assert.deepEqual(project.visibleMembersReducer(initialState, {
+  it('configs updates when fetching fields list', () => {
+    const action = {
+      type: project.FETCH_FIELDS_LIST_SUCCESS,
+      projectName: example.PROJECT_NAME,
+      fieldDefs: example.FIELD_DEFS,
+    };
+    const expected = {[example.PROJECT_NAME]: {fieldDefs: example.FIELD_DEFS}};
+    assert.deepEqual(project.configsReducer({}, action), expected);
+  });
+
+  it('presentationConfigs', () => {
+    const action = {
+      type: project.FETCH_PRESENTATION_CONFIG_SUCCESS,
+      projectName: example.PROJECT_NAME,
+      presentationConfig: example.PRESENTATION_CONFIG,
+    };
+    const expected = {[example.PROJECT_NAME]: example.PRESENTATION_CONFIG};
+    assert.deepEqual(project.presentationConfigsReducer({}, action), expected);
+  });
+
+  it('visibleMembers', () => {
+    const action = {
       type: project.FETCH_VISIBLE_MEMBERS_SUCCESS,
-      visibleMembers: {userRefs: [{userId: '123'}]},
-    }), {userRefs: [{userId: '123'}]});
+      projectName: example.PROJECT_NAME,
+      visibleMembers: example.VISIBLE_MEMBERS,
+    };
+    const expected = {[example.PROJECT_NAME]: example.VISIBLE_MEMBERS};
+    assert.deepEqual(project.visibleMembersReducer({}, action), expected);
+  });
 
-    // Unrelated action does not affect state.
-    assert.deepEqual(project.visibleMembersReducer(initialState, {
-      type: 'no-op',
-      visibleMembers: {userRefs: [{userId: '123'}]},
-    }), initialState);
+  it('templates', () => {
+    const action = {
+      type: project.FETCH_TEMPLATES_SUCCESS,
+      projectName: example.PROJECT_NAME,
+      templates: [example.TEMPLATE_DEF],
+    };
+    const expected = {[example.PROJECT_NAME]: [example.TEMPLATE_DEF]};
+    assert.deepEqual(project.templatesReducer({}, action), expected);
   });
 });
 
 describe('project selectors', () => {
   it('viewedProjectName', () => {
-    const state = {project: {name: 'project-name'}};
-    assert.deepEqual(project.viewedProjectName(state), 'project-name');
+    const actual = project.viewedProjectName(example.STATE);
+    assert.deepEqual(actual, example.PROJECT_NAME);
   });
 
-  it('visibleMembers', () => {
-    assert.deepEqual(project.visibleMembers({}), {});
-    assert.deepEqual(project.visibleMembers({project: {}}), {});
-    assert.deepEqual(project.visibleMembers({project: {
-      visibleMembers: {
-        userRefs: [{displayName: 'test@example.com', userId: '123'}],
-        groupRefs: [],
-      },
-    }}), {
-      userRefs: [{displayName: 'test@example.com', userId: '123'}],
-      groupRefs: [],
-    });
+  it('viewedVisibleMembers', () => {
+    assert.deepEqual(project.viewedVisibleMembers({}), {});
+    assert.deepEqual(project.viewedVisibleMembers({project: {}}), {});
+    assert.deepEqual(project.viewedVisibleMembers(
+        {project: {visibleMembers: {}}}), {});
+    const actual = project.viewedVisibleMembers(example.STATE);
+    assert.deepEqual(actual, example.VISIBLE_MEMBERS);
   });
 
-  it('presentationConfig', () => {
-    assert.deepEqual(project.presentationConfig({}), {});
-    assert.deepEqual(project.presentationConfig({project: {}}), {});
-    assert.deepEqual(project.presentationConfig({project: {
-      presentationConfig: {
-        projectThumbnailUrl: 'test.png',
-      },
-    }}), {
-      projectThumbnailUrl: 'test.png',
-    });
+  it('viewedPresentationConfig', () => {
+    assert.deepEqual(project.viewedPresentationConfig({}), {});
+    assert.deepEqual(project.viewedPresentationConfig({project: {}}), {});
+    const actual = project.viewedPresentationConfig(example.STATE);
+    assert.deepEqual(actual, example.PRESENTATION_CONFIG);
   });
 
   it('defaultColumns', () => {
     assert.deepEqual(project.defaultColumns({}), SITEWIDE_DEFAULT_COLUMNS);
-    assert.deepEqual(project.defaultColumns({project: {}}),
+    assert.deepEqual(
+        project.defaultColumns({project: {}}), SITEWIDE_DEFAULT_COLUMNS);
+    assert.deepEqual(
+        project.defaultColumns({project: {presentationConfig: {}}}),
         SITEWIDE_DEFAULT_COLUMNS);
-    assert.deepEqual(project.defaultColumns({project: {
-      presentationConfig: {},
-    }}), SITEWIDE_DEFAULT_COLUMNS);
-    assert.deepEqual(project.defaultColumns({project: {
-      presentationConfig: {defaultColSpec: 'ID+Summary+AllLabels'},
-    }}), ['ID', 'Summary', 'AllLabels']);
+    const expected = ['ID', 'Summary', 'AllLabels'];
+    assert.deepEqual(project.defaultColumns(example.STATE), expected);
   });
 
   it('defaultQuery', () => {
     assert.deepEqual(project.defaultQuery({}), '');
     assert.deepEqual(project.defaultQuery({project: {}}), '');
-    assert.deepEqual(project.defaultQuery({project: {
-      presentationConfig: {
-        defaultQuery: 'owner:me',
-      },
-    }}), 'owner:me');
+    const actual = project.defaultQuery(example.STATE);
+    assert.deepEqual(actual, example.DEFAULT_QUERY);
   });
 
   it('fieldDefs', () => {
     assert.deepEqual(project.fieldDefs({project: {}}), []);
     assert.deepEqual(project.fieldDefs({project: {config: {}}}), []);
-    assert.deepEqual(project.fieldDefs({
-      project: {config: {fieldDefs: [{fieldRef: {fieldName: 'test'}}]}},
-    }), [{fieldRef: {fieldName: 'test'}}]);
+    const actual = project.fieldDefs(example.STATE);
+    assert.deepEqual(actual, example.FIELD_DEFS);
   });
 
   it('labelDefMap', () => {
     assert.deepEqual(project.labelDefMap({project: {}}), new Map());
     assert.deepEqual(project.labelDefMap({project: {config: {}}}), new Map());
-    assert.deepEqual(project.labelDefMap({
-      project: {config: {
-        labelDefs: [
-          {label: 'One'},
-          {label: 'tWo'},
-          {label: 'hello-world', docstring: 'hmmm'},
-        ],
-      }},
-    }), new Map([
+    const expected = new Map([
       ['one', {label: 'One'}],
-      ['two', {label: 'tWo'}],
+      ['enum', {label: 'EnUm'}],
+      ['enum-options', {label: 'eNuM-Options'}],
       ['hello-world', {label: 'hello-world', docstring: 'hmmm'}],
-    ]));
+      ['hello-me', {label: 'hello-me', docstring: 'hmmm'}],
+    ]);
+    assert.deepEqual(project.labelDefMap(example.STATE), expected);
   });
 
   it('labelPrefixOptions', () => {
     assert.deepEqual(project.labelPrefixOptions({project: {}}), new Map());
-    assert.deepEqual(project.labelPrefixOptions({project: {config: {}}}),
-        new Map());
-    assert.deepEqual(project.labelPrefixOptions({
-      project: {config: {
-        labelDefs: [
-          {label: 'One'},
-          {label: 'tWo'},
-          {label: 'tWo-options'},
-          {label: 'hello-world', docstring: 'hmmm'},
-          {label: 'hello-me', docstring: 'hmmm'},
-        ],
-      }},
-    }), new Map([
+    assert.deepEqual(project.labelPrefixOptions(
+        {project: {config: {}}}), new Map());
+    const expected = new Map([
       ['one', ['One']],
-      ['two', ['tWo', 'tWo-options']],
+      ['enum', ['EnUm', 'eNuM-Options']],
       ['hello', ['hello-world', 'hello-me']],
-    ]));
+    ]);
+    assert.deepEqual(project.labelPrefixOptions(example.STATE), expected);
   });
 
   it('labelPrefixFields', () => {
     assert.deepEqual(project.labelPrefixFields({project: {}}), []);
     assert.deepEqual(project.labelPrefixFields({project: {config: {}}}), []);
-    assert.deepEqual(project.labelPrefixFields({
-      project: {config: {
-        labelDefs: [
-          {label: 'One'},
-          {label: 'tWo'},
-          {label: 'tWo-options'},
-          {label: 'hello-world', docstring: 'hmmm'},
-          {label: 'hello-me', docstring: 'hmmm'},
-        ],
-      }},
-    }), ['tWo', 'hello']);
+    const expected = ['EnUm', 'hello'];
+    assert.deepEqual(project.labelPrefixFields(example.STATE), expected);
   });
 
   it('enumFieldDefs', () => {
     assert.deepEqual(project.enumFieldDefs({project: {}}), []);
     assert.deepEqual(project.enumFieldDefs({project: {config: {}}}), []);
-    assert.deepEqual(project.enumFieldDefs({
-      project: {config: {fieldDefs: [
-        {fieldRef: {fieldName: 'test'}},
-        {fieldRef: {fieldName: 'enum', type: fieldTypes.ENUM_TYPE}},
-        {fieldRef: {fieldName: 'ignore', type: fieldTypes.DATE_TYPE}},
-      ]}},
-    }), [{fieldRef: {fieldName: 'enum', type: fieldTypes.ENUM_TYPE}}]);
+    const expected = [example.FIELD_DEF_ENUM];
+    assert.deepEqual(project.enumFieldDefs(example.STATE), expected);
   });
 
   it('optionsPerEnumField', () => {
     assert.deepEqual(project.optionsPerEnumField({project: {}}), new Map());
-    assert.deepEqual(project.optionsPerEnumField({
-      project: {config: {
-        fieldDefs: [
-          {fieldRef: {fieldName: 'ignore', type: fieldTypes.DATE_TYPE}},
-          {fieldRef: {fieldName: 'eNum', type: fieldTypes.ENUM_TYPE}},
-        ],
-        labelDefs: [
-          {label: 'enum-one'},
-          {label: 'ENUM-tWo'},
-          {label: 'not-enum-three'},
-        ],
-      }},
-    }), new Map([
+    const expected = new Map([
       ['enum', [
-        {label: 'enum-one', optionName: 'one'},
-        {label: 'ENUM-tWo', optionName: 'tWo'},
+        {label: 'eNuM-Options', optionName: 'Options'},
       ]],
-    ]));
+    ]);
+    assert.deepEqual(project.optionsPerEnumField(example.STATE), expected);
   });
 
   describe('extractTypeForFieldName', () => {
@@ -303,8 +305,9 @@ describe('project selectors', () => {
     });
 
     it('gets types for custom fields', () => {
-      typeExtractor = project.extractTypeForFieldName({
-        project: {config: {fieldDefs: [
+      typeExtractor = project.extractTypeForFieldName({project: {
+        name: example.PROJECT_NAME,
+        configs: {[example.PROJECT_NAME]: {fieldDefs: [
           {fieldRef: {fieldName: 'CustomIntField', type: 'INT_TYPE'}},
           {fieldRef: {fieldName: 'CustomStrField', type: 'STR_TYPE'}},
           {fieldRef: {fieldName: 'CustomUserField', type: 'USER_TYPE'}},
@@ -312,7 +315,7 @@ describe('project selectors', () => {
           {fieldRef: {fieldName: 'CustomApprovalField',
             type: 'APPROVAL_TYPE'}},
         ]}},
-      });
+      }});
 
       assert.deepEqual(typeExtractor('CustomIntField'), fieldTypes.INT_TYPE);
       assert.deepEqual(typeExtractor('CustomStrField'), fieldTypes.STR_TYPE);
@@ -323,12 +326,13 @@ describe('project selectors', () => {
     });
 
     it('defaults to string type for other fields', () => {
-      typeExtractor = project.extractTypeForFieldName({
-        project: {config: {fieldDefs: [
+      typeExtractor = project.extractTypeForFieldName({project: {
+        name: example.PROJECT_NAME,
+        configs: {[example.PROJECT_NAME]: {fieldDefs: [
           {fieldRef: {fieldName: 'CustomIntField', type: 'INT_TYPE'}},
           {fieldRef: {fieldName: 'CustomUserField', type: 'USER_TYPE'}},
         ]}},
-      });
+      }});
 
       assert.deepEqual(typeExtractor('FakeUserField'), fieldTypes.STR_TYPE);
       assert.deepEqual(typeExtractor('NotOwner'), fieldTypes.STR_TYPE);
@@ -554,9 +558,12 @@ describe('project selectors', () => {
         ];
         fieldExtractor = project.extractFieldValuesFromIssue({
           project: {
-            config: {
-              projectName: 'chromium',
-              fieldDefs,
+            name: example.PROJECT_NAME,
+            configs: {
+              [example.PROJECT_NAME]: {
+                projectName: 'chromium',
+                fieldDefs,
+              },
             },
           },
         });
@@ -613,10 +620,13 @@ describe('project selectors', () => {
         ];
         fieldExtractor = project.extractFieldValuesFromIssue({
           project: {
-            config: {
-              projectName: 'chromium',
-              fieldDefs,
-              labelDefs,
+            name: example.PROJECT_NAME,
+            configs: {
+              [example.PROJECT_NAME]: {
+                projectName: 'chromium',
+                fieldDefs,
+                labelDefs,
+              },
             },
           },
         });
@@ -675,14 +685,17 @@ describe('project selectors', () => {
 
         fieldExtractor = project.extractFieldValuesFromIssue({
           project: {
-            config: {
-              projectName: 'chromium',
-              labelDefs: [
-                {label: 'test-1'},
-                {label: 'test-2'},
-                {label: 'milestone-1'},
-                {label: 'milestone-2'},
-              ],
+            name: example.PROJECT_NAME,
+            configs: {
+              [example.PROJECT_NAME]: {
+                projectName: 'chromium',
+                labelDefs: [
+                  {label: 'test-1'},
+                  {label: 'test-2'},
+                  {label: 'milestone-1'},
+                  {label: 'milestone-2'},
+                ],
+              },
             },
           },
         });
@@ -698,15 +711,18 @@ describe('project selectors', () => {
   it('fieldDefsByApprovalName', () => {
     assert.deepEqual(project.fieldDefsByApprovalName({project: {}}), new Map());
 
-    assert.deepEqual(project.fieldDefsByApprovalName({project: {config: {
-      fieldDefs: [
-        {fieldRef: {fieldName: 'test', type: fieldTypes.INT_TYPE}},
-        {fieldRef: {fieldName: 'ignoreMe', type: fieldTypes.APPROVAL_TYPE}},
-        {fieldRef: {fieldName: 'yay', approvalName: 'ThisIsAnApproval'}},
-        {fieldRef: {fieldName: 'ImAField', approvalName: 'ThisIsAnApproval'}},
-        {fieldRef: {fieldName: 'TalkToALawyer', approvalName: 'Legal'}},
-      ],
-    }}}), new Map([
+    assert.deepEqual(project.fieldDefsByApprovalName({project: {
+      name: example.PROJECT_NAME,
+      configs: {[example.PROJECT_NAME]: {
+        fieldDefs: [
+          {fieldRef: {fieldName: 'test', type: fieldTypes.INT_TYPE}},
+          {fieldRef: {fieldName: 'ignoreMe', type: fieldTypes.APPROVAL_TYPE}},
+          {fieldRef: {fieldName: 'yay', approvalName: 'ThisIsAnApproval'}},
+          {fieldRef: {fieldName: 'ImAField', approvalName: 'ThisIsAnApproval'}},
+          {fieldRef: {fieldName: 'TalkToALawyer', approvalName: 'Legal'}},
+        ],
+      }},
+    }}), new Map([
       ['ThisIsAnApproval', [
         {fieldRef: {fieldName: 'yay', approvalName: 'ThisIsAnApproval'}},
         {fieldRef: {fieldName: 'ImAField', approvalName: 'ThisIsAnApproval'}},
@@ -755,6 +771,7 @@ describe('project action creators', () => {
 
     sinon.assert.calledWith(dispatch, {
       type: project.FETCH_PRESENTATION_CONFIG_SUCCESS,
+      projectName: 'chromium',
       presentationConfig: {projectThumbnailUrl: 'test'},
     });
   });
@@ -777,6 +794,7 @@ describe('project action creators', () => {
 
     sinon.assert.calledWith(dispatch, {
       type: project.FETCH_VISIBLE_MEMBERS_SUCCESS,
+      projectName: 'chromium',
       visibleMembers: {userRefs: [{userId: '123'}]},
     });
   });

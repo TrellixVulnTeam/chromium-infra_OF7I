@@ -49,7 +49,7 @@ export class MrAutocomplete extends connectStore(ChopsAutocomplete) {
 
   /** @override */
   stateChanged(state) {
-    const visibleMembers = project.visibleMembers(state);
+    const visibleMembers = project.viewedVisibleMembers(state);
     const userProjects = user.projects(state);
     this.vocabularies = {
       'project': this._setupProjectVocabulary(userProjects),

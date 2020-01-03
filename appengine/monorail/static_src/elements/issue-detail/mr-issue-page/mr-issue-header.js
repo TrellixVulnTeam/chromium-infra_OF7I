@@ -203,7 +203,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
   stateChanged(state) {
     this.issue = issue.issue(state);
     this.issuePermissions = issue.permissions(state);
-    this.projectTemplates = project.project(state).templates;
+    this.projectTemplates = project.viewedTemplates(state);
     this.usersProjects = user.projectsPerUser(state);
 
     const restrictions = issue.restrictions(state);

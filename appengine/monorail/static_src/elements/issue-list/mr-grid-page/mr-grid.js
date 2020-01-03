@@ -253,7 +253,7 @@ export class MrGrid extends connectStore(LitElement) {
     this._extractFieldValuesFromIssue =
       project.extractFieldValuesFromIssue(state);
     this._extractTypeForFieldName = project.extractTypeForFieldName(state);
-    this._statusDefs = project.config(state).statusDefs;
+    this._statusDefs = project.viewedConfig(state).statusDefs;
   }
 
   /** @override */

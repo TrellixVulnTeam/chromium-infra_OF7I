@@ -84,7 +84,7 @@ export const bannerTime = createSelector(sitewide,
 export const queryParams = createSelector(sitewide,
     (sitewide) => sitewide.queryParams || {});
 export const pageTitle = createSelector(sitewide,
-    project.config, project.presentationConfig,
+    project.viewedConfig, project.viewedPresentationConfig,
     (sitewide, projectConfig, presentationConfig) => {
       const titlePieces = [];
 

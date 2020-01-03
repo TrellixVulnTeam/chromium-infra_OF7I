@@ -38,8 +38,11 @@ describe('sitewide selectors', () => {
       assert.equal(sitewide.pageTitle({
         sitewide: {pageTitle: 'Page'},
         project: {
-          config: {projectName: 'chromium'},
-          presentationConfig: {projectSummary: 'Open source browser'},
+          name: 'chromium',
+          configs: {chromium: {projectName: 'chromium'}},
+          presentationConfigs: {
+            chromium: {projectSummary: 'Open source browser'},
+          },
         },
       }), 'Page - chromium - Open source browser - Monorail');
     });
@@ -57,14 +60,20 @@ describe('sitewide selectors', () => {
 
     it('uses project default columns', () => {
       assert.deepEqual(sitewide.currentColumns({project: {
-        presentationConfig: {defaultColSpec: 'ID+Summary+AllLabels'},
+        name: 'chromium',
+        presentationConfigs: {
+          chromium: {defaultColSpec: 'ID+Summary+AllLabels'},
+        },
       }}), ['ID', 'Summary', 'AllLabels']);
     });
 
     it('columns in URL query params override all defaults', () => {
       assert.deepEqual(sitewide.currentColumns({
         project: {
-          presentationConfig: {defaultColSpec: 'ID+Summary+AllLabels'},
+          name: 'chromium',
+          presentationConfigs: {
+            chromium: {defaultColSpec: 'ID+Summary+AllLabels'},
+          },
         },
         sitewide: {
           queryParams: {colspec: 'ID+Summary+ColumnName+Priority'},
@@ -103,8 +112,9 @@ describe('sitewide selectors', () => {
 
     it('uses project default when no params', () => {
       assert.deepEqual(sitewide.currentQuery({project: {
-        presentationConfig: {
-          defaultQuery: 'owner:me',
+        name: 'chromium',
+        presentationConfigs: {
+          chromium: {defaultQuery: 'owner:me'},
         },
       }}), 'owner:me');
     });
@@ -112,8 +122,9 @@ describe('sitewide selectors', () => {
     it('URL query params override default query', () => {
       assert.deepEqual(sitewide.currentQuery({
         project: {
-          presentationConfig: {
-            defaultQuery: 'owner:me',
+          name: 'chromium',
+          presentationConfigs: {
+            chromium: {defaultQuery: 'owner:me'},
           },
         },
         sitewide: {
@@ -125,8 +136,9 @@ describe('sitewide selectors', () => {
     it('empty string in param overrides default project query', () => {
       assert.deepEqual(sitewide.currentQuery({
         project: {
-          presentationConfig: {
-            defaultQuery: 'owner:me',
+          name: 'chromium',
+          presentationConfigs: {
+            chromium: {defaultQuery: 'owner:me'},
           },
         },
         sitewide: {
@@ -138,8 +150,9 @@ describe('sitewide selectors', () => {
     it('undefined query param does not override default search', () => {
       assert.deepEqual(sitewide.currentQuery({
         project: {
-          presentationConfig: {
-            defaultQuery: 'owner:me',
+          name: 'chromium',
+          presentationConfigs: {
+            chromium: {defaultQuery: 'owner:me'},
           },
         },
         sitewide: {

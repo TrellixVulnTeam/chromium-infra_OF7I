@@ -234,7 +234,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     this.issue = issue.issue(state);
     this.issueRef = issue.issueRef(state);
     this.user = user.user(state);
-    this.projectConfig = project.project(state).config;
+    this.projectConfig = project.viewedConfig(state);
     this.blocking = issue.blockingIssues(state);
     this.sortedBlockedOn = issue.sortedBlockedOn(state);
     this.mergedInto = issue.mergedInto(state);

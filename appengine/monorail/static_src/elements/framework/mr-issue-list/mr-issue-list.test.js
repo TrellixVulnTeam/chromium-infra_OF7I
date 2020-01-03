@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 import {assert} from 'chai';
 import sinon from 'sinon';
+import {stringValuesForIssueField} from 'shared/issue-fields.js';
 import {MrIssueList} from './mr-issue-list.js';
-import {extractFieldValuesFromIssue} from 'reducers/project.js';
 
 let element;
 
@@ -1020,8 +1020,8 @@ describe('mr-issue-list', () => {
       element.columns = ['ID'];
       element.projectName = projectName;
 
-      element._extractFieldValuesFromIssue = extractFieldValuesFromIssue(
-          {project: {config: {projectName}}});
+      element._extractFieldValuesFromIssue = (issue, fieldName) =>
+        stringValuesForIssueField(issue, fieldName, projectName);
 
       let result;
       result = element._convertIssueToPlaintextArray({

@@ -124,7 +124,7 @@ export class MrConvertIssue extends connectStore(LitElement) {
     this.convertIssueError = issue.requests(state).convert.error;
     this.issueRef = issue.issueRef(state);
     this.issuePermissions = issue.permissions(state);
-    this.projectTemplates = project.project(state).templates;
+    this.projectTemplates = project.viewedTemplates(state);
   }
 
   /** @override */

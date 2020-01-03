@@ -97,7 +97,7 @@ export class MrCommentContent extends connectStore(LitElement) {
     this.commentReferences = issue.commentReferences(state);
     this.projectName = issue.issueRef(state).projectName;
     this.revisionUrlFormat =
-      project.presentationConfig(state).revisionUrlFormat;
+      project.viewedPresentationConfig(state).revisionUrlFormat;
   }
 }
 customElements.define('mr-comment-content', MrCommentContent);

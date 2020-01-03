@@ -68,7 +68,7 @@ describe('mr-cue', () => {
   it('code of conduct is specific to the project', async () => {
     element.prefsLoaded = true;
     element.cuePrefName = 'code_of_conduct';
-    element.project.config.projectName = 'fuchsia';
+    element.projectName = 'fuchsia';
 
     await element.updateComplete;
 

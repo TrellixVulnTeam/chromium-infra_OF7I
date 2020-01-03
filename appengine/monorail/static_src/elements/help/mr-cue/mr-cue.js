@@ -157,10 +157,8 @@ export class MrCue extends connectStore(LitElement) {
   * @return {string} the URL for the code of conduct.
    */
   get codeOfConductUrl() {
-    const projectName = (this.project && this.project.config &&
-                         this.project.config.projectName);
     // TODO(jrobbins): Store this in the DB and pass it via the API.
-    if (projectName === 'fuchsia') {
+    if (this.projectName === 'fuchsia') {
       return 'https://fuchsia.dev/fuchsia-src/CODE_OF_CONDUCT';
     }
     return ('https://chromium.googlesource.com/' +
@@ -243,7 +241,7 @@ export class MrCue extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.project = project.project(state);
+    this.projectName = project.viewedProjectName(state);
     this.issue = issue.issue(state);
     this.referencedUsers = issue.referencedUsers(state);
     this.user = user.user(state);

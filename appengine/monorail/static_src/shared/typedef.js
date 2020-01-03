@@ -64,7 +64,7 @@
  * @property {number} fieldId
  * @property {string} fieldName
  * @property {FieldType} type
- * @property {string} approvalName
+ * @property {string=} approvalName
  */
 
 /**
@@ -269,8 +269,8 @@
  *
  * @typedef {Object} LabelDef
  * @property {string} label
- * @property {string} docstring
- * @property {boolean} deprecated
+ * @property {string=} docstring
+ * @property {boolean=} deprecated
  */
 
 /**
@@ -294,15 +294,15 @@
  *
  * @typedef {Object} FieldDef
  * @property {FieldRef} fieldRef
- * @property {string} applicableType
- * @property {boolean} isRequired
- * @property {boolean} isNiche
- * @property {boolean} isMultivalued
- * @property {string} docstring
- * @property {Array<UserRef>} adminRefs
- * @property {boolean} isPhaseField
- * @property {Array<UserRef>} userChoices
- * @property {Array<LabelDef>} enumChoices
+ * @property {string=} applicableType
+ * @property {boolean=} isRequired
+ * @property {boolean=} isNiche
+ * @property {boolean=} isMultivalued
+ * @property {string=} docstring
+ * @property {Array<UserRef>=} adminRefs
+ * @property {boolean=} isPhaseField
+ * @property {Array<UserRef>=} userChoices
+ * @property {Array<LabelDef>=} enumChoices
  */
 
 /**
@@ -319,14 +319,14 @@
  *
  * @typedef {Object} Config
  * @property {string} projectName
- * @property {Array<StatusDef>} statusDefs
- * @property {Array<StatusRef>} statusesOfferMerge
- * @property {Array<LabelDef>} labelDefs
- * @property {Array<string>} exclusiveLabelPrefixes
- * @property {Array<ComponentDef>} componentDefs
- * @property {Array<FieldDef>} fieldDefs
- * @property {Array<ApprovalDef>} approvalDefs
- * @property {boolean} restrictToKnown
+ * @property {Array<StatusDef>=} statusDefs
+ * @property {Array<StatusRef>=} statusesOfferMerge
+ * @property {Array<LabelDef>=} labelDefs
+ * @property {Array<string>=} exclusiveLabelPrefixes
+ * @property {Array<ComponentDef>=} componentDefs
+ * @property {Array<FieldDef>=} fieldDefs
+ * @property {Array<ApprovalDef>=} approvalDefs
+ * @property {boolean=} restrictToKnown
  */
 
 
@@ -334,16 +334,16 @@
  * A PresentationConfig Object returned by the pRPC API project_objects.proto.
  *
  * @typedef {Object} PresentationConfig
- * @property {string} projectThumbnailUrl
- * @property {string} projectSummary
- * @property {string} customIssueEntryUrl
- * @property {string} defaultQuery
- * @property {Array<SavedQuery>} savedQueries
- * @property {string} revisionUrlFormat
- * @property {string} defaultColSpec
- * @property {string} defaultSortSpec
- * @property {string} defaultXAttr
- * @property {string} defaultYAttr
+ * @property {String=} projectThumbnailUrl
+ * @property {string=} projectSummary
+ * @property {string=} customIssueEntryUrl
+ * @property {string=} defaultQuery
+ * @property {Array<SavedQuery>=} savedQueries
+ * @property {string=} revisionUrlFormat
+ * @property {string=} defaultColSpec
+ * @property {string=} defaultSortSpec
+ * @property {string=} defaultXAttr
+ * @property {string=} defaultYAttr
  */
 
 /**
@@ -351,20 +351,20 @@
  *
  * @typedef {Object} TemplateDef
  * @property {string} templateName
- * @property {string} content
- * @property {string} summary
- * @property {boolean} summaryMustBeEdited
- * @property {UserRef} ownerRef
- * @property {StatusRef} statusRef
- * @property {Array<LabelRef>} labelRefs
- * @property {boolean} membersOnly
- * @property {boolean} ownerDefaultsToMember
- * @property {Array<UserRef>} adminRefs
- * @property {Array<FieldValue>} fieldValues
- * @property {Array<ComponentRef>} componentRefs
- * @property {boolean} componentRequired
- * @property {Array<Approval>} approvalValues
- * @property {Array<PhaseDef>} phases
+ * @property {string=} content
+ * @property {string=} summary
+ * @property {boolean=} summaryMustBeEdited
+ * @property {UserRef=} ownerRef
+ * @property {StatusRef=} statusRef
+ * @property {Array<LabelRef>=} labelRefs
+ * @property {boolean=} membersOnly
+ * @property {boolean=} ownerDefaultsToMember
+ * @property {Array<UserRef>=} adminRefs
+ * @property {Array<FieldValue>=} fieldValues
+ * @property {Array<ComponentRef>=} componentRefs
+ * @property {boolean=} componentRequired
+ * @property {Array<Approval>=} approvalValues
+ * @property {Array<PhaseDef>=} phases
  */
 
 
