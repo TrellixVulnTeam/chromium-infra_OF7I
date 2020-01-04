@@ -8,7 +8,7 @@ import mock
 
 from google.appengine.ext import ndb
 
-from proto import project_config_pb2
+from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from test import test_util
 from test.test_util import future
 import config

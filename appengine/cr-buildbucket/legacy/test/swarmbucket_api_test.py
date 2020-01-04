@@ -11,7 +11,7 @@ from testing_utils import testing
 
 from legacy import api_common
 from legacy import swarmbucket_api
-from proto import service_config_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
 from test.test_util import future
 import config

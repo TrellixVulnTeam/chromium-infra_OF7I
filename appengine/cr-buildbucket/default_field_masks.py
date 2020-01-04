@@ -8,8 +8,8 @@ from google.protobuf import field_mask_pb2
 
 from components import protoutil
 
-from proto import build_pb2
-from proto import rpc_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2
 
 
 def _build_default_field_paths(prefix=''):  # pragma: no cover

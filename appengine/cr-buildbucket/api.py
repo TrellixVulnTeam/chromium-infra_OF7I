@@ -16,11 +16,11 @@ from components import prpc
 from components import utils
 
 # Some of these imports are required to populate proto symbol db.
-from proto import common_pb2
-from proto import build_pb2  # pylint: disable=unused-import
-from proto import rpc_pb2  # pylint: disable=unused-import
-from proto import rpc_prpc_pb2
-from proto import step_pb2  # pylint: disable=unused-import
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2  # pylint: disable=unused-import
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2  # pylint: disable=unused-import
+from go.chromium.org.luci.buildbucket.proto import rpc_prpc_pb2
+from go.chromium.org.luci.buildbucket.proto import step_pb2  # pylint: disable=unused-import
 
 import bbutil
 import buildtags

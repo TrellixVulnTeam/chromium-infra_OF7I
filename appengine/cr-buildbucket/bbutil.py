@@ -10,7 +10,7 @@ Has "bb" prefix to avoid confusion with components.utils.
 from google.protobuf import json_format
 from google.protobuf import struct_pb2
 
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 
 TRINARY_TO_BOOLISH = {
     common_pb2.UNSET: None,

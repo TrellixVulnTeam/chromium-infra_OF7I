@@ -16,7 +16,7 @@ from components import auth
 from components import utils
 import gae_ts_mon
 
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 import buildtags
 import config
 import errors

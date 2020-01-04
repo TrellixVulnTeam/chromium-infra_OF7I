@@ -15,10 +15,10 @@ from components.prpc import context as prpc_context
 from testing_utils import testing
 import mock
 
-from proto import build_pb2
-from proto import common_pb2
-from proto import rpc_pb2
-from proto import notification_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2
+from go.chromium.org.luci.buildbucket.proto import notification_pb2
 from test import test_util
 import api
 import bbutil

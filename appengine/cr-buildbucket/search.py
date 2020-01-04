@@ -15,8 +15,8 @@ from protorpc import messages
 
 from components import utils
 
-from proto import build_pb2
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 import buildtags
 import config
 import errors

@@ -10,7 +10,7 @@ import gae_ts_mon
 from test import test_util
 from test.test_util import future
 from testing_utils import testing
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 import config
 import metrics
 import model

@@ -12,10 +12,10 @@ from google.protobuf import struct_pb2
 from testing_utils import testing
 import mock
 
-from proto import build_pb2
-from proto import common_pb2
-from proto import rpc_pb2
-from proto import service_config_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
 import bbutil
 import config

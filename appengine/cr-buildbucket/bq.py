@@ -18,7 +18,7 @@ from components import net
 from components import utils
 import bqh
 
-from proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
 import model
 import tq
 

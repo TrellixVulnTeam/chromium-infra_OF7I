@@ -45,9 +45,9 @@ from components import net
 from components import utils
 
 from legacy import api_common
-from proto import common_pb2
-from proto import launcher_pb2
-from proto import service_config_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import launcher_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import config
 import errors
 import events

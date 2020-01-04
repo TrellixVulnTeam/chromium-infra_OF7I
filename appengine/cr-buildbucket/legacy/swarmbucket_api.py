@@ -17,7 +17,7 @@ import gae_ts_mon
 
 from legacy import api
 from legacy import api_common
-from proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
 import config
 import errors
 import flatten_swarmingcfg

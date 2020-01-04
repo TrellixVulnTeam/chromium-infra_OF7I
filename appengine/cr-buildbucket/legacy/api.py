@@ -23,10 +23,10 @@ from components import utils
 import gae_ts_mon
 
 from legacy import api_common
-from proto import build_pb2
-from proto import common_pb2
-from proto import project_config_pb2
-from proto import rpc_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import project_config_pb2
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2
 import backfill_tag_index
 import bbutil
 import buildtags

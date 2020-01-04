@@ -11,7 +11,7 @@ covered by other modules.
 import errors
 import re
 
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 
 DELIMITER = ':'
 

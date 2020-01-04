@@ -10,7 +10,7 @@ from google.appengine.ext import ndb
 
 from components import utils
 
-from proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
 from test import test_util
 from testing_utils import testing
 import bulkproc

@@ -15,7 +15,7 @@ from google.appengine.ext import ndb
 
 from components import auth
 
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 import bq
 import metrics
 import notifications

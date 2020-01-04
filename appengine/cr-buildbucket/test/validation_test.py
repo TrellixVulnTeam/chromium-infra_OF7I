@@ -12,11 +12,11 @@ from google.protobuf import struct_pb2
 from google.protobuf import text_format
 from parameterized import parameterized
 
-from proto import build_pb2
-from proto import common_pb2
-from proto import notification_pb2
-from proto import rpc_pb2
-from proto import step_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import notification_pb2
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2
+from go.chromium.org.luci.buildbucket.proto import step_pb2
 
 import validation
 

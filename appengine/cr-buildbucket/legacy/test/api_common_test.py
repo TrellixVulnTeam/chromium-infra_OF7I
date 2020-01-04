@@ -13,8 +13,8 @@ from test import test_util
 from testing_utils import testing
 
 from legacy import api_common
-from proto import common_pb2
-from proto import service_config_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import bbutil
 import config
 import model

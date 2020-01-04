@@ -27,11 +27,11 @@ import mock
 import webapp2
 
 from legacy import api_common
-from proto import build_pb2
-from proto import common_pb2
-from proto import launcher_pb2
-from proto import project_config_pb2
-from proto import service_config_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import launcher_pb2
+from go.chromium.org.luci.buildbucket.proto import project_config_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
 from test.test_util import future, future_exception
 import bbutil
@@ -121,9 +121,7 @@ class TaskDefTest(BaseTest):
             'bb-${build_id}-${project}-${builder}',
         'priority':
             100,
-        'tags': [
-            'luci_project:${project}',
-        ],
+        'tags': ['luci_project:${project}'],
         'task_slices': [{
             'properties': {
                 'extra_args': [

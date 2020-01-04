@@ -16,7 +16,7 @@ import threading
 
 from components import cipd
 
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 
 import buildtags
 import config

@@ -12,9 +12,9 @@ from google.protobuf import timestamp_pb2
 from testing_utils import testing
 from test import test_util
 
-from proto import build_pb2
-from proto import common_pb2
-from proto import step_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import step_pb2
 import bbutil
 import model
 

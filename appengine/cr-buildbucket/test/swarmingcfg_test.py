@@ -13,8 +13,8 @@ from parameterized import parameterized
 from components import config as config_component
 from testing_utils import testing
 
-from proto import project_config_pb2
-from proto import service_config_pb2
+from go.chromium.org.luci.buildbucket.proto import project_config_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import config_test
 import errors
 import swarmingcfg
@@ -496,7 +496,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
         '',
         ['builder bad: deprecated luci_migration_host field must be removed.'],
     )
-
 
   @parameterized.expand([
       (['a:b'], ''),

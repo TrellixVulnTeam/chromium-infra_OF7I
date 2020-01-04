@@ -17,8 +17,8 @@ from google.appengine.ext.ndb import msgprop
 from google.protobuf import struct_pb2
 from protorpc import messages
 
-from proto import build_pb2
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 import buildtags
 import config
 

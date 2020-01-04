@@ -20,7 +20,7 @@ import webapp2
 from components import decorators
 from components import utils
 
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 import events
 import model
 

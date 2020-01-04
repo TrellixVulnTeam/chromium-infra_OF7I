@@ -12,7 +12,7 @@ from testing_utils import testing
 
 from test import test_util
 from test.test_util import future
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 import expiration
 import model
 

@@ -14,8 +14,8 @@ from test import test_util
 from testing_utils import testing
 import mock
 
-from proto import build_pb2
-from proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 from test import test_util
 import bq
 import bqh

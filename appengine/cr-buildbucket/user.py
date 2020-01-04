@@ -19,7 +19,7 @@ from components import auth
 from components import utils
 
 from protorpc import messages
-from proto import project_config_pb2
+from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 import config
 import errors
 

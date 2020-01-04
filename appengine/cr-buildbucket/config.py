@@ -24,8 +24,8 @@ from components import gitiles
 from components import utils
 from components.config import validation
 
-from proto import project_config_pb2
-from proto import service_config_pb2
+from go.chromium.org.luci.buildbucket.proto import project_config_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
 
 CURRENT_BUCKET_SCHEMA_VERSION = 5
