@@ -251,4 +251,7 @@ message SchedulerState {
   repeated Account accounts = 5;
 
   string pool_id = 6;
+
+  // Time is the time at which the snapshot was created.
+  google.protobuf.Timestamp time = 7;
 }
