@@ -5,26 +5,18 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"strings"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 
 	"infra/cmd/cros_test_platform/internal/site"
-	"infra/cmd/cros_test_platform/internal/trafficsplit"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/migration/scheduler"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/auth/client/authcli"
-	"go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
-	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
 
 // SchedulerTrafficSplit implements the `scheduler-traffic-split` subcommand.
@@ -87,40 +79,10 @@ func (c *schedulerTrafficSplitRun) innerRun(a subcommands.Application, args []st
 		return errors.Reason("zero requests").Err()
 	}
 
-	if c.directAllToSkylab {
-		return c.sendAllToSkylab(requests)
+	if !c.directAllToSkylab {
+		return errors.Reason("traffic split via config is deprecated").Err()
 	}
-	return c.respondUsingConfig(ctx, requests)
-}
-
-func (c *schedulerTrafficSplitRun) respondUsingConfig(ctx context.Context, requests []*steps.SchedulerTrafficSplitRequest) error {
-	if err := ensureIdenticalConfigs(requests); err != nil {
-		return err
-	}
-
-	split, err := c.getTrafficSplitConfig(ctx, requests[0].Config)
-	if err != nil {
-		return err
-	}
-
-	resps := make([]*steps.SchedulerTrafficSplitResponse, len(requests))
-	merr := errors.NewMultiError()
-	for i, r := range requests {
-		if resp, err := trafficsplit.ApplyToRequest(r.Request, split); err == nil {
-			resps[i] = resp
-		} else {
-			logPotentiallyRelevantRules(ctx, r.Request, split.Rules)
-			merr = append(merr, err)
-		}
-	}
-	if merr.First() != nil {
-		return merr
-	}
-
-	if autotestResponseCount(resps) > 0 && len(resps) > 1 {
-		return errors.Reason("multiple requests with autotest backend: %s", resps).Err()
-	}
-	return c.writeResponses(resps)
+	return c.sendAllToSkylab(requests)
 }
 
 func (c *schedulerTrafficSplitRun) sendAllToSkylab(requests []*steps.SchedulerTrafficSplitRequest) error {
@@ -195,29 +157,6 @@ func (c *schedulerTrafficSplitRun) unzipTaggedRequests(trs map[string]*steps.Sch
 	return ts, rs
 }
 
-func ensureIdenticalConfigs(rs []*steps.SchedulerTrafficSplitRequest) error {
-	if len(rs) == 0 {
-		return nil
-	}
-	c := rs[0].GetConfig()
-	for _, o := range rs[1:] {
-		if !proto.Equal(c, o.GetConfig()) {
-			return errors.Reason("mismatched configs: %s vs %s", c, o.GetConfig()).Err()
-		}
-	}
-	return nil
-}
-
-func autotestResponseCount(rs []*steps.SchedulerTrafficSplitResponse) int {
-	c := 0
-	for _, r := range rs {
-		if r.GetAutotestRequest() != nil {
-			c++
-		}
-	}
-	return c
-}
-
 func (c *schedulerTrafficSplitRun) writeResponses(resps []*steps.SchedulerTrafficSplitResponse) error {
 	r := &steps.SchedulerTrafficSplitResponses{
 		Responses: resps,
@@ -237,82 +176,4 @@ func (c *schedulerTrafficSplitRun) zipTaggedResponses(ts []string, rs []*steps.S
 		m[ts[i]] = rs[i]
 	}
 	return m
-}
-
-func (c *schedulerTrafficSplitRun) getTrafficSplitConfig(ctx context.Context, config *config.Config_SchedulerMigration) (*scheduler.TrafficSplit, error) {
-	g, err := c.newGitilesClient(ctx, config.GitilesHost)
-	if err != nil {
-		return nil, errors.Annotate(err, "get traffic split config").Err()
-	}
-	text, err := c.downloadTrafficSplitConfig(ctx, g, config)
-	if err != nil {
-		return nil, errors.Annotate(err, "get traffic split config").Err()
-	}
-	var split scheduler.TrafficSplit
-	if err := unmarshaller.Unmarshal(strings.NewReader(text), &split); err != nil {
-		return nil, errors.Annotate(err, "get traffic split config").Err()
-	}
-	return &split, nil
-}
-
-func (c *schedulerTrafficSplitRun) newGitilesClient(ctx context.Context, host string) (gitilespb.GitilesClient, error) {
-	h, err := newAuthenticatedHTTPClient(ctx, &c.authFlags)
-	if err != nil {
-		return nil, errors.Annotate(err, "new gitiles client").Err()
-	}
-	return gitiles.NewRESTClient(h, host, true)
-}
-
-// downloadTrafficSplitConfig returns the contents of the config downloaded from Gitiles.
-func (c *schedulerTrafficSplitRun) downloadTrafficSplitConfig(ctx context.Context, client gitilespb.GitilesClient, config *config.Config_SchedulerMigration) (string, error) {
-	res, err := client.DownloadFile(ctx, &gitilespb.DownloadFileRequest{
-		Project:    config.GitProject,
-		Committish: config.Commitish,
-		Path:       config.FilePath,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
-	})
-	if err != nil {
-		return "", errors.Annotate(err, "download from gitiles").Err()
-	}
-	return res.Contents, nil
-}
-
-func logPotentiallyRelevantRules(ctx context.Context, request *test_platform.Request, rules []*scheduler.Rule) {
-	f := trafficsplit.NewRuleFilter(rules)
-	logger := logging.Get(ctx)
-	logger.Warningf("No matching rule found for %s. Printing partially matching rules...", request)
-
-	m := request.GetParams().GetHardwareAttributes().GetModel()
-	if pr := f.ForModel(m); len(pr) > 0 {
-		logger.Infof("Following rules match requested model: %s", formatFirstFewRules(pr))
-	} else {
-		logger.Warningf("No rules matched requested model %s.", m)
-	}
-
-	b := request.GetParams().GetSoftwareAttributes().GetBuildTarget().GetName()
-	if pr := f.ForBuildTarget(b); len(pr) > 0 {
-		logger.Infof("Following rules match requested buildTarget: %s", formatFirstFewRules(pr))
-	} else {
-		logger.Warningf("No rules matched requested build target %s.", b)
-	}
-
-	s := request.GetParams().GetScheduling()
-	if pr := f.ForScheduling(s); len(pr) > 0 {
-		logger.Infof("Following rules match requested scheduling: %s", formatFirstFewRules(pr))
-	} else {
-		logger.Warningf("No rules matched requested scheduling %s.", s)
-	}
-}
-
-func formatFirstFewRules(rules []*scheduler.Rule) string {
-	const numRulesToPrint = 5
-	rulesToPrint := rules
-	if len(rulesToPrint) > numRulesToPrint {
-		rulesToPrint = rulesToPrint[:numRulesToPrint]
-	}
-	s := fmt.Sprintf("%v", rulesToPrint)
-	if len(s) > numRulesToPrint {
-		s = fmt.Sprintf("%s... [%d more]", s, len(s)-numRulesToPrint)
-	}
-	return s
 }
