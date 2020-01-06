@@ -45,7 +45,7 @@ build.presubmit(
     cq_group = 'depot_tools cq',
     repo_name = 'depot_tools',
     run_hooks = False,
-    os = 'Windows',
+    os = 'Windows-10',
 )
 
 
