@@ -56,6 +56,10 @@ class BugLineParserTest(unittest.TestCase):
          'Fixed: proj:#128'),
         ({'bugs': {'proj': [129]}, 'fixed': {'proj': [129]}},
          'Fixed: crbug.com/proj/129'),
+        ({'bugs': {'default': [130, 131]}, 'fixed': {'default': [131]}},
+         'Bug: 130\nFixed: 131'),
+        ({'bugs': {'default': [132, 133]}, 'fixed': {'default': [132]}},
+         'Fixed: 132\nBug: 133'),
     ]
     for expected, bug_line in test_cases:
       log_entry = LogEntry(msg=bug_line)
