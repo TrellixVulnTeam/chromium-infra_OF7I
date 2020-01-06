@@ -486,6 +486,18 @@ wheel: <
 
 * *universal*
 
+### 19.3.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/attrs-py2_py3"
+  version: "version:19.3.0"
+>
+```
+
+
+* *universal*
+
 ## **backport_ipaddress**
 
 ### 0.1
@@ -1655,12 +1667,12 @@ wheel: <
 
 ## **infra_libs**
 
-### 2.0.9
+### 2.0.10
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/infra_libs-py2"
-  version: "version:2.0.9"
+  version: "version:2.0.10"
 >
 ```
 

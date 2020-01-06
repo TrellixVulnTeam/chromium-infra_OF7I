@@ -535,6 +535,7 @@ SPECS.update({
         Universal('atomicwrites', '1.3.0'),
         Universal('attrs', '17.4.0'),
         Universal('attrs', '18.2.0'),
+        Universal('attrs', '19.3.0'),
         Universal('backports.functools_lru_cache', '1.5'),
         Universal('backports.shutil_get_terminal_size', '1.0.0'),
         Universal('blessings', '1.7'),
