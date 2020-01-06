@@ -16,9 +16,12 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/logging/gologger"
 
-	"infra/cmd/skylab/internal/cmd"
 	"infra/cmd/skylab/internal/cmd/internalcmds"
+	"infra/cmd/skylab/internal/cmd/inventory"
+	"infra/cmd/skylab/internal/cmd/meta"
+	"infra/cmd/skylab/internal/cmd/pool"
 	"infra/cmd/skylab/internal/cmd/queen"
+	"infra/cmd/skylab/internal/cmd/tasks"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -31,37 +34,37 @@ func getApplication() *cli.Application {
 		},
 		Commands: []*subcommands.Command{
 			subcommands.CmdHelp,
-			cmd.Update,
-			cmd.Version,
+			meta.Update,
+			meta.Version,
 			subcommands.Section("Authentication"),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			subcommands.Section("Inventory Queries"),
-			cmd.DutInfo,
-			cmd.DutList,
-			cmd.ListRemovedDuts,
+			inventory.DutInfo,
+			inventory.DutList,
+			inventory.ListRemovedDuts,
 			subcommands.Section("Inventory Operations"),
-			cmd.AddDut,
-			cmd.QuickAddDuts,
-			cmd.AddLabstation,
-			cmd.ValidateNewDutJSON,
-			cmd.AssignDuts,
-			cmd.RemoveDuts,
-			cmd.UpdateDut,
-			cmd.BatchUpdateDuts,
+			inventory.AddDut,
+			inventory.QuickAddDuts,
+			inventory.AddLabstation,
+			inventory.ValidateNewDutJSON,
+			inventory.AssignDuts,
+			inventory.RemoveDuts,
+			inventory.UpdateDut,
+			inventory.BatchUpdateDuts,
 			subcommands.Section("Pool Operations"),
-			cmd.EnsurePoolHealthy,
-			cmd.ResizePool,
+			pool.EnsurePoolHealthy,
+			pool.ResizePool,
 			subcommands.Section("Tasks"),
-			cmd.BackfillRequest,
-			cmd.CreateTest,
-			cmd.CreateSuite,
-			cmd.CreateTestPlan,
-			cmd.LeaseDut,
-			cmd.ReleaseDuts,
-			cmd.Repair,
-			cmd.RerunTasks,
+			tasks.BackfillRequest,
+			tasks.CreateTest,
+			tasks.CreateSuite,
+			tasks.CreateTestPlan,
+			tasks.LeaseDut,
+			tasks.ReleaseDuts,
+			tasks.Repair,
+			tasks.RerunTasks,
 			subcommands.Section("Drone Queen Inspection"),
 			queen.InspectDuts,
 			queen.InspectDrones,
