@@ -106,7 +106,7 @@ func (is *InventoryServerImpl) DeleteCrosDevices(ctx context.Context, req *api.D
 	}
 	deletingResults := datastore.DeleteDevicesByIds(ctx, ids)
 	deletingResultsByHostname := datastore.DeleteDevicesByHostnames(ctx, hostnames)
-	*deletingResults = append(*deletingResults, *deletingResultsByHostname...)
+	deletingResults = append(deletingResults, deletingResultsByHostname...)
 
 	removedDevices := make([]*api.DeviceOpResult, 0, maxLen)
 	failedDevices := make([]*api.DeviceOpResult, 0, maxLen)

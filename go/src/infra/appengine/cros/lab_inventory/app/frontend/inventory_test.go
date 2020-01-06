@@ -172,14 +172,13 @@ func TestDeleteCrosDevices(t *testing.T) {
 		},
 	}
 	devID1 := api.DeviceID{
-		Id: &api.DeviceID_ChromeosDeviceId{
-			ChromeosDeviceId: "ASSET_ID_123",
-		},
+		Id: &api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: "ASSET_ID_123"},
 	}
 	devID2 := api.DeviceID{
-		Id: &api.DeviceID_Hostname{
-			Hostname: "dut1",
-		},
+		Id: &api.DeviceID_Hostname{Hostname: "dut1"},
+	}
+	devIDNonExisting := api.DeviceID{
+		Id: &api.DeviceID_Hostname{Hostname: "ghost"},
 	}
 	Convey("Delete Chrome OS devices", t, func() {
 		ctx := testingContext()
@@ -211,11 +210,21 @@ func TestDeleteCrosDevices(t *testing.T) {
 
 			So(rsp.FailedDevices, ShouldHaveLength, 0)
 		})
-		Convey("Bad request", func() {
+
+		Convey("Bad request: duplicated ID", func() {
 			req := &api.DeleteCrosDevicesRequest{Ids: []*api.DeviceID{&devID1, &devID1}}
 			rsp, err := tf.Inventory.DeleteCrosDevices(tf.C, req)
 			So(rsp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Duplicated id found")
+		})
+
+		Convey("Delete non existing device", func() {
+			req := &api.DeleteCrosDevicesRequest{Ids: []*api.DeviceID{&devIDNonExisting}}
+			rsp, err := tf.Inventory.DeleteCrosDevices(tf.C, req)
+			// Remove nonexisting devices is regarded as a good operation.
+			So(rsp.RemovedDevices, ShouldHaveLength, 1)
+			So(err, ShouldBeNil)
 		})
 	})
 }

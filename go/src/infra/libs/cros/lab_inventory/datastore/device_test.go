@@ -112,26 +112,33 @@ func TestRemoveDevices(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	Convey("Remove devices from datastore", t, func() {
+		devsToAdd := []*lab.ChromeOSDevice{
+			mockDut("dut1", "", "labstation1"),
+			mockDut("dut2", "UUID:02", "labstation1"),
+			mockLabstation("labstation1", "ASSET_ID_123"),
+		}
+		_, err := AddDevices(ctx, devsToAdd)
+		So(err, ShouldBeNil)
+
+		datastore.GetTestable(ctx).Consistent(true)
+
 		Convey("Remove non-existing devices by Ids and hostnames", func() {
 			resp := DeleteDevicesByIds(ctx, []string{"1234", "abcd"})
 			So(resp.Passed(), ShouldHaveLength, 2)
 			So(resp.Failed(), ShouldHaveLength, 0)
 
-			resp = DeleteDevicesByHostnames(ctx, []string{"dut1", "labstation1"})
+			resp = DeleteDevicesByHostnames(ctx, []string{"dutX", "labstationX"})
 			So(resp.Passed(), ShouldHaveLength, 2)
 			So(resp.Failed(), ShouldHaveLength, 0)
-		})
-		Convey("Happy path", func() {
 
-			devsToAdd := []*lab.ChromeOSDevice{
-				mockDut("dut1", "", "labstation1"),
-				mockDut("dut2", "", "labstation1"),
-				mockLabstation("labstation1", "ASSET_ID_123"),
-			}
-			_, err := AddDevices(ctx, devsToAdd)
+			// There are still 3 device entities unchanged.
+			var devs []*DeviceEntity
+			err = datastore.GetAll(ctx, datastore.NewQuery(DeviceKind), &devs)
 			So(err, ShouldBeNil)
+			So(devs, ShouldHaveLength, 3)
+		})
 
-			datastore.GetTestable(ctx).Consistent(true)
+		Convey("Happy path", func() {
 			var devs []*DeviceEntity
 			err = datastore.GetAll(ctx, datastore.NewQuery(DeviceKind), &devs)
 			So(err, ShouldBeNil)
@@ -155,6 +162,7 @@ func TestRemoveDevices(t *testing.T) {
 		})
 	})
 }
+
 func TestGetDevices(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")

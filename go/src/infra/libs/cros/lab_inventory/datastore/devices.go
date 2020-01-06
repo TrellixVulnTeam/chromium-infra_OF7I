@@ -126,13 +126,15 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 // DeleteDevicesByIds deletes entities by specified Ids.
 // The datastore implementation doesn't raise error when deleting non-existing
 // entities: https://github.com/googleapis/google-cloud-go/issues/501
-func DeleteDevicesByIds(ctx context.Context, ids []string) *DeviceOpResults {
+func DeleteDevicesByIds(ctx context.Context, ids []string) DeviceOpResults {
 	removingResults := make(DeviceOpResults, len(ids))
-	entities := make([]DeviceEntity, len(ids))
+	entities := make([]*DeviceEntity, len(ids))
 	for i, id := range ids {
-		removingResults[i].Entity = &entities[i]
-		entities[i].ID = DeviceEntityID(id)
-		entities[i].Parent = fakeAcestorKey(ctx)
+		entities[i] = &DeviceEntity{
+			ID:     DeviceEntityID(id),
+			Parent: fakeAcestorKey(ctx),
+		}
+		removingResults[i].Entity = entities[i]
 	}
 	if err := datastore.Delete(ctx, entities); err != nil {
 		for i, e := range err.(errors.MultiError) {
@@ -142,11 +144,11 @@ func DeleteDevicesByIds(ctx context.Context, ids []string) *DeviceOpResults {
 			removingResults[i].logError(e)
 		}
 	}
-	return &removingResults
+	return removingResults
 }
 
 // DeleteDevicesByHostnames deletes entities by specified hostnames.
-func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOpResults {
+func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpResults {
 	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
 	removingResults := make(DeviceOpResults, len(hostnames))
 	entities := make([]*DeviceEntity, 0, len(hostnames))
@@ -154,6 +156,7 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOp
 
 	// Filter out invalid input hostnames.
 	for i, hostname := range hostnames {
+		removingResults[i].Entity = &DeviceEntity{Hostname: hostname}
 		var devs []*DeviceEntity
 		if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
 			removingResults[i].logError(errors.Annotate(err, "failed to get host by hostname %s", hostname).Err())
@@ -181,7 +184,7 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOp
 			entityResults[i].logError(e)
 		}
 	}
-	return &removingResults
+	return removingResults
 }
 
 // TODO (guocb) Get HWID data and device config data.
