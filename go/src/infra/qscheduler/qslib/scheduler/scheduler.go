@@ -115,6 +115,11 @@ func (s *Scheduler) ToProto() *protos.Scheduler {
 	}
 }
 
+// ToSnapshot returns the snapshot of the pool's scheduler state in metrics.SchedulerState's proto.
+func (s *Scheduler) ToSnapshot(poolID string) *metrics.SchedulerState {
+	return s.state.toMetricsSchedulerState(poolID)
+}
+
 // AddAccount creates a new account with the given id, config, and initialBalance
 // (or zero balance if nil).
 //
