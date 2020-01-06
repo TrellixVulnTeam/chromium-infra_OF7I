@@ -73,10 +73,10 @@ export class MrLaunchOverview extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    if (!issue.issue(state)) return;
+    if (!issue.viewedIssue(state)) return;
 
-    this.approvals = issue.issue(state).approvalValues || [];
-    this.phases = issue.issue(state).phases || [];
+    this.approvals = issue.viewedIssue(state).approvalValues || [];
+    this.phases = issue.viewedIssue(state).phases || [];
   }
 
   /** @override */

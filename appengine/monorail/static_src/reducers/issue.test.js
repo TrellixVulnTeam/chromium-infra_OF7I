@@ -160,8 +160,9 @@ describe('issue', () => {
   });
 
   it('issue', () => {
-    assert.deepEqual(issue.issue(wrapIssue()), {});
-    assert.deepEqual(issue.issue(wrapIssue({localId: 100})), {localId: 100});
+    assert.deepEqual(issue.viewedIssue(wrapIssue()), {});
+    assert.deepEqual(issue.viewedIssue(wrapIssue({localId: 100})),
+        {localId: 100});
   });
 
   describe('issueList', () => {

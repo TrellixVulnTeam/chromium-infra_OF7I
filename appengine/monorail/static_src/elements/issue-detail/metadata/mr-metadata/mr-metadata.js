@@ -329,7 +329,7 @@ export class MrMetadata extends connectStore(LitElement) {
   stateChanged(state) {
     this.fieldValueMap = issue.fieldValueMap(state);
     this.issueType = issue.type(state);
-    this.issueRef = issue.issueRef(state);
+    this.issueRef = issue.viewedIssueRef(state);
     this.relatedIssues = issue.relatedIssues(state);
   }
 }

@@ -133,7 +133,7 @@ export class MrEditDescription extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.commentsByApproval = issue.commentsByApprovalName(state);
-    this.issueRef = issue.issueRef(state);
+    this.issueRef = issue.viewedIssueRef(state);
   }
 
   async open(e) {

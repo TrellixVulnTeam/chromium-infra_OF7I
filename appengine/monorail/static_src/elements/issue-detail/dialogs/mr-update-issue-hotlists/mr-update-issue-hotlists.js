@@ -144,7 +144,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.viewedIssueRef = issue.issueRef(state);
+    this.viewedIssueRef = issue.viewedIssueRef(state);
     this.user = user.user(state);
     this.userHotlists = user.user(state).hotlists;
   }

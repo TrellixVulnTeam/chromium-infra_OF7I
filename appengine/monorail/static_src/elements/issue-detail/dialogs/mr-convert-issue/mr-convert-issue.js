@@ -122,7 +122,7 @@ export class MrConvertIssue extends connectStore(LitElement) {
   stateChanged(state) {
     this.convertingIssue = issue.requests(state).convert.requesting;
     this.convertIssueError = issue.requests(state).convert.error;
-    this.issueRef = issue.issueRef(state);
+    this.issueRef = issue.viewedIssueRef(state);
     this.issuePermissions = issue.permissions(state);
     this.projectTemplates = project.viewedTemplates(state);
   }

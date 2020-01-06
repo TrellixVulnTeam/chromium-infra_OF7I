@@ -130,8 +130,8 @@ export class MrEditIssue extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issue = issue.issue(state);
-    this.issueRef = issue.issueRef(state);
+    this.issue = issue.viewedIssue(state);
+    this.issueRef = issue.viewedIssueRef(state);
     this.comments = issue.comments(state);
     this.projectConfig = project.viewedConfig(state);
     this.updatingIssue = issue.requests(state).update.requesting;

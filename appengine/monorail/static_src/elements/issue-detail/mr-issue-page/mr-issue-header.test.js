@@ -27,11 +27,11 @@ describe('mr-issue-header', () => {
   });
 
   it('updating issue id changes header', function() {
-    assert.equal(issue.issueRef(store.getState()).localId, 0);
+    assert.equal(issue.viewedIssueRef(store.getState()).localId, 0);
     store.dispatch(issue.setIssueRef(1));
-    assert.equal(issue.issueRef(store.getState()).localId, 1);
+    assert.equal(issue.viewedIssueRef(store.getState()).localId, 1);
     store.dispatch({type: issue.FETCH_SUCCESS, issue: {summary: 'test'}});
-    assert.deepEqual(issue.issue(store.getState()), {summary: 'test'});
+    assert.deepEqual(issue.viewedIssue(store.getState()), {summary: 'test'});
     // TODO(zhangtiff): Figure out how to properly test
     // state changes propagating to the element. As is, state
     // changes don't seem to actually make it to the element.

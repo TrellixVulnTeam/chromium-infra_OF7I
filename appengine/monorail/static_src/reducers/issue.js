@@ -502,12 +502,12 @@ const RESTRICT_VIEW_PREFIX = 'restrict-view-';
 const RESTRICT_EDIT_PREFIX = 'restrict-editissue-';
 const RESTRICT_COMMENT_PREFIX = 'restrict-addissuecomment-';
 
-export const issueRef = (state) => state.issue.issueRef;
+export const viewedIssueRef = (state) => state.issue.issueRef;
 
 // TODO(zhangtiff): Eventually Monorail's Redux state will store
 // multiple issues, and this selector will have to find the viewed
 // issue based on a viewed issue ref.
-export const issue = (state) => state.issue.currentIssue;
+export const viewedIssue = (state) => state.issue.currentIssue;
 
 export const comments = (state) => state.issue.comments;
 export const commentsLoaded = (state) => state.issue.commentsLoaded;
@@ -597,12 +597,12 @@ export const commentsByApprovalName = createSelector(
 );
 
 export const fieldValues = createSelector(
-    issue,
+    viewedIssue,
     (issue) => issue && issue.fieldValues,
 );
 
 export const labelRefs = createSelector(
-    issue,
+    viewedIssue,
     (issue) => issue && issue.labelRefs,
 );
 
@@ -652,7 +652,7 @@ export const restrictions = createSelector(
 );
 
 export const isOpen = createSelector(
-    issue,
+    viewedIssue,
     (issue) => issue && issue.statusRef && issue.statusRef.meansOpen || false);
 
 // Returns a function that, given an issue and its related issues,
@@ -693,17 +693,17 @@ const mapRefsWithRelated = (blocking) => {
 };
 
 export const blockingIssues = createSelector(
-    issue, relatedIssues,
+    viewedIssue, relatedIssues,
     mapRefsWithRelated(true),
 );
 
 export const blockedOnIssues = createSelector(
-    issue, relatedIssues,
+    viewedIssue, relatedIssues,
     mapRefsWithRelated(false),
 );
 
 export const mergedInto = createSelector(
-    issue, relatedIssues,
+    viewedIssue, relatedIssues,
     (issue, relatedIssues) => {
       if (!issue || !issue.mergedIntoIssueRef) return {};
       const key = issueRefToString(issue.mergedIntoIssueRef);
@@ -732,7 +732,7 @@ export const fieldValueMap = createSelector(
 
 // Get the list of full componentDefs for the viewed issue.
 export const components = createSelector(
-    issue,
+    viewedIssue,
     project.componentsMap,
     (issue, components) => {
       if (!issue || !issue.componentRefs) return [];

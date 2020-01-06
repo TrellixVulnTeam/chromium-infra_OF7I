@@ -157,7 +157,7 @@ export class MrRelatedIssues extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issueRef = issue.issueRef(state);
+    this.issueRef = issue.viewedIssueRef(state);
     this.issuePermissions = issue.permissions(state);
     this.sortedBlockedOn = issue.sortedBlockedOn(state);
   }

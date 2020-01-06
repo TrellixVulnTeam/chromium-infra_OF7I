@@ -704,11 +704,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
   stateChanged(state) {
     this.fieldValueMap = issue.fieldValueMap(state);
     this.issueType = issue.type(state);
-    this.issueRef = issue.issueRef(state);
+    this.issueRef = issue.viewedIssueRef(state);
     this.presubmitResponse = issue.presubmitResponse(state);
     this.predictedComponent = issue.predictedComponent(state);
     this.projectConfig = project.viewedConfig(state);
-    this.projectName = issue.issueRef(state).projectName;
+    this.projectName = issue.viewedIssueRef(state).projectName;
     this.issuePermissions = issue.permissions(state);
     this.optionsPerEnumField = project.optionsPerEnumField(state);
     // Access boolean value from allStarredIssues

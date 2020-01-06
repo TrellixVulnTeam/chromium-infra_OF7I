@@ -201,7 +201,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issue = issue.issue(state);
+    this.issue = issue.viewedIssue(state);
     this.issuePermissions = issue.permissions(state);
     this.projectTemplates = project.viewedTemplates(state);
     this.usersProjects = user.projectsPerUser(state);

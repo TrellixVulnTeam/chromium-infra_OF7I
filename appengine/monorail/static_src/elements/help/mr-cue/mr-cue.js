@@ -242,7 +242,7 @@ export class MrCue extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.projectName = project.viewedProjectName(state);
-    this.issue = issue.issue(state);
+    this.issue = issue.viewedIssue(state);
     this.referencedUsers = issue.referencedUsers(state);
     this.user = user.user(state);
     this.prefs = user.prefs(state);

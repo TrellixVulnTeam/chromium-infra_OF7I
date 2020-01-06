@@ -311,9 +311,9 @@ export class MrIssuePage extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.projectName = project.viewedProjectName(state);
-    this.issue = issue.issue(state);
+    this.issue = issue.viewedIssue(state);
     this.issueHotlists = issue.hotlists(state);
-    this.issueRef = issue.issueRef(state);
+    this.issueRef = issue.viewedIssueRef(state);
     this.fetchIssueError = issue.requests(state).fetch.error;
     this.fetchingIssue = issue.requests(state).fetch.requesting;
     this.fetchingProjectConfig = project.fetchingConfig(state);

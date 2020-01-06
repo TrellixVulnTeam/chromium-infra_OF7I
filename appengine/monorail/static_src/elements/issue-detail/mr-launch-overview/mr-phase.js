@@ -184,8 +184,8 @@ export class MrPhase extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.fieldValueMap = issue.fieldValueMap(state);
-    this.issue = issue.issue(state);
-    this.issueRef = issue.issueRef(state);
+    this.issue = issue.viewedIssue(state);
+    this.issueRef = issue.viewedIssueRef(state);
     this.updatingIssue = issue.requests(state).update.requesting;
     this.updateIssueError = issue.requests(state).update.error;
     this.fieldDefs = project.fieldDefsForPhases(state);

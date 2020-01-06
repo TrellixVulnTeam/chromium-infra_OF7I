@@ -95,7 +95,7 @@ export class MrCommentContent extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.commentReferences = issue.commentReferences(state);
-    this.projectName = issue.issueRef(state).projectName;
+    this.projectName = issue.viewedIssueRef(state).projectName;
     this.revisionUrlFormat =
       project.viewedPresentationConfig(state).revisionUrlFormat;
   }
