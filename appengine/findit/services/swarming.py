@@ -109,7 +109,6 @@ def CreateNewSwarmingTaskRequestTemplate(runner_id, ref_task_id, ref_request,
   #   1. A gtest became flaky on CQ, but Findit was not automatically
   #      triggered to run any analysis because:
   #      * the test is not flaky enough
-  #      * chromium-try-flakes has filed/updated too many bugs
   #   2. The test got disabled, but no culprit was identified.
   #   3. Some developer starts the investigation and requests Findit to
   #      analyze the flaky test.

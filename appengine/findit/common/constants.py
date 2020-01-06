@@ -38,14 +38,12 @@ COMPILE_STEP_NAME = 'compile'
 # TODO: move this to config.
 # Whitelisted prod app ids for authorized access to Findit prod.
 WHITELISTED_APP_ACCOUNTS = [
-    'chromium-try-flakes@appspot.gserviceaccount.com',
     'findit-for-me@appspot.gserviceaccount.com',
     'sheriff-o-matic@appspot.gserviceaccount.com',
 ]
 
 # Whitelisted staging app ids for authorized access to Findit staging.
 WHITELISTED_STAGING_APP_ACCOUNTS = [
-    'chromium-try-flakes-staging@appspot.gserviceaccount.com',
     'findit-for-me-staging@appspot.gserviceaccount.com',
     'sheriff-o-matic-staging@appspot.gserviceaccount.com',
 ]

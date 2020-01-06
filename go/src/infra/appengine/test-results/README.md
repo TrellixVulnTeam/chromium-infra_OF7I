@@ -84,9 +84,6 @@ Infrastructure to provide useful data for developers:
 
 * [Flakiness Dashboard] allows to have a quick look at recent test runs to help
   the pattern of failures and platforms which are affected.
-* [Chromium Try Flakes app] reports flaky tests on the bug tracker, e.g. see
-  [issue 707664]. Without test results it can only file bugs for the whole step
-  containing a flaky test, e.g. see [issue 707545].
 * [Flakiness Surface], which is still in development, uses this data to show the
   tests that have highest flakiness and will in future provide detailed
   information about each specific test to help finding the root cause and fixing
@@ -118,7 +115,6 @@ If something is unclear, please let us know at infra-dev+flakiness@chromium.org
 and we’ll use your feedback to improve this doc.
 
 [Flakiness Dashboard]: https://test-results.appspot.com/dashboards/flakiness_dashboard.html#testType=interactive_ui_tests%20(with%20patch)&tests=WebViewInteractiveTests%2FWebViewDragDropInteractiveTest.DragDropWithinWebView%2F1
-[Chromium Try Flakes app]: http://chromium-try-flakes.appspot.com/
 [issue 707664]: https://bugs.chromium.org/p/chromium/issues/detail?id=707664
 [issue 707545]: https://bugs.chromium.org/p/chromium/issues/detail?id=707545
 [Flakiness Surface]: https://test-results.appspot.com/flakiness
