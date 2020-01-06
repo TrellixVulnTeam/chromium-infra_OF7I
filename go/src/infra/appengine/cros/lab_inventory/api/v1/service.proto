@@ -9,6 +9,8 @@ package inventory;
 option go_package = "api";
 
 import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
+import "go.chromium.org/chromiumos/infra/proto/src/device/config.proto";
+import "go.chromium.org/chromiumos/infra/proto/src/manufacturing/config.proto";
 
 service Inventory {
   // AddCrosDevices adds new Chrome OS devices to the inventory.
@@ -51,11 +53,24 @@ message AddCrosDevicesResponse {
 }
 
 message GetCrosDevicesRequest {
-  repeated string hostname = 1;
+  repeated DeviceID ids = 1;
+}
+
+message HwidData {
+  string sku = 1;
+  string variant = 2;
+}
+
+message ExtendedDeviceData {
+  lab.ChromeOSDevice lab_config = 1;
+  device.Config device_config = 2;
+  manufacturing.Config manufacturing_config = 3;
+  HwidData hwid_data = 4;
 }
 
 message GetCrosDevicesResponse {
-
+  repeated ExtendedDeviceData data = 1;
+  repeated DeviceOpResult failed_devices = 2;
 }
 
 message UpdateDutsStatusRequest {
