@@ -410,8 +410,6 @@ type stateRecord struct {
 
 // stateNode is the datastore entity used to represent a shard of
 // quotascheduler state.
-//
-// TODO(akeshet): Add a cleanup mechanism that removes stale graph entities.
 type stateNode struct {
 	_kind string `gae:"$kind,stateNode"`
 
@@ -435,8 +433,6 @@ type stateNode struct {
 // writeNodes writes the byte array to as many nodes as necessary, and returns
 // their IDs.
 func writeNodes(ctx context.Context, bytes []byte, poolID string, generation int64) ([]string, error) {
-	// TODO(akeshet): Tune this for a good balance between staying safely below
-	// upper limit and using fewer shards.
 	maxBytes := 900000
 	var shards [][]byte
 	for offset := 0; offset < len(bytes); offset += maxBytes {

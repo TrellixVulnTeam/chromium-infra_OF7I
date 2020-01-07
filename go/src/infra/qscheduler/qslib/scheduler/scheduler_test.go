@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO(akeshet): Port these tests to scheduler_api_test.go (so that they
-// exercice only the package's exported interface) and then delete this file.
-
 package scheduler
 
 import (

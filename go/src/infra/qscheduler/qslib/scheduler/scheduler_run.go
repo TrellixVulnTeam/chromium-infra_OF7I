@@ -100,8 +100,6 @@ func (run *schedulerRun) Run(e EventSink) []*Assignment {
 
 	// A final pass matches free jobs (in the FreeBucket) to any remaining
 	// idle workers. The reprioritize and preempt stages do not apply here.
-	// TODO(akeshet): Consider a final sorting step here, so that FIFO ordering is respected among
-	// FreeBucket jobs, including those that were moved the the throttled list during the pass above.
 	workerMatches := run.computeIdleWorkerMatches(FreeBucket)
 	output = append(output, run.assignToIdleWorkers(FreeBucket, workerMatches, true, e)...)
 	output = append(output, run.assignToIdleWorkers(FreeBucket, workerMatches, false, e)...)
@@ -354,11 +352,7 @@ func (run *schedulerRun) reprioritizeRunningTasks(priority Priority, events Even
 		workersAt[ap] = append(workersAt[ap], worker)
 	}
 
-	// TODO(akeshet): jobs that are currently running, but have no corresponding account,
-	// should be demoted immediately to the FreeBucket (probably their account
-	// was deleted while running).
 	for accountID, fullBalance := range state.balances {
-		// TODO(akeshet): move the body of this loop to own function.
 		accountConfig, ok := config.AccountConfigs[accountID]
 		if !ok {
 			panic(fmt.Sprintf("There was a balance for unknown account %s", accountID))
@@ -383,9 +377,6 @@ func (run *schedulerRun) reprioritizeRunningTasks(priority Priority, events Even
 		}
 	}
 }
-
-// TODO(akeshet): Consider unifying doDemote and doPromote somewhat
-// to reuse more code.
 
 // doDemote is a helper function used by reprioritizeRunningTasks
 // which demotes some jobs (selected from candidates) from priority to priority + 1.

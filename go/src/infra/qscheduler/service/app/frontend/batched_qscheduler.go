@@ -38,8 +38,6 @@ type BatchedQSchedulerServer struct {
 
 	// batchersLock governs access to batchers.
 	batchersLock sync.RWMutex
-
-	// TODO(akeshet): Add close / shutdown handlers.
 }
 
 // NewBatchedServer initializes a new BatchedQSchedulerServer
@@ -67,7 +65,6 @@ func (s *BatchedQSchedulerServer) getOrCreateBatcher(schedulerID string) *state.
 	}
 	batcher = state.NewBatcher(schedulerID)
 	store := nodestore.For(schedulerID)
-	// TODO(akeshet): close all started batchers in the server's close handler.
 	batcher.Start(store)
 	s.batchers[schedulerID] = batcher
 	return batcher
@@ -161,8 +158,10 @@ func (s *BatchedQSchedulerServer) GetCallbacks(ctx context.Context, r *swarming.
 
 	var requestIDs []string
 
-	// TODO(akeshet): Select the N% most stale items, rather than 5% of tasks
-	// with uniform randomness.
+	// Note: This implementation returns 1% (uniformly random) waiting requests,
+	// and 5% (uniformly random) running requests. It would be better to select
+	// the N% most stale items instead.
+
 	for rid := range sp.Scheduler.GetWaitingRequests() {
 		if rand.Int31n(100) == 0 {
 			requestIDs = append(requestIDs, string(rid))

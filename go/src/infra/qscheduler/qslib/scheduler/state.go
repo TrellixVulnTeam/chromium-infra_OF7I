@@ -46,11 +46,6 @@ type state struct {
 	// to worker id for running tasks. This is used to optimize certain lookups, however
 	// workers is the authoritative source.
 	runningRequestsCache map[RequestID]WorkerID
-
-	// TODO(akeshet): Add a store of (completed request id, timestamp) that will
-	// allow us to remember all the tasks that were completed within the last
-	// X hours, and ignore any possible extremely-stale AddRequest calls we get
-	// about them.
 }
 
 // fanoutGroup identifies the group (for a given request) over which per-account
@@ -231,7 +226,6 @@ func (s *state) addNewRequest(ctx context.Context, r *TaskRequest, t time.Time, 
 		&metrics.TaskEvent_EnqueuedDetails{Tags: tags}))
 }
 
-// TODO(akeshet): Move this helper method to the stringset library.
 func setEquals(a stringset.Set, b stringset.Set) bool {
 	if a.Len() != b.Len() {
 		return false
@@ -250,18 +244,6 @@ func (s *state) markIdle(workerID WorkerID, labels stringset.Set, t time.Time, e
 
 	// Ignore call if our state is newer.
 	if t.Before(w.latestConfirmedTime()) {
-		if !t.Before(w.confirmedTime) {
-			// TODO(akeshet): Once a diagnostic/logging layer exists, log this case.
-			// This case means that the following order of events happened:
-			// 1) We marked worker as idle at t=0.
-			// 2) We received a request at t=2, and matched it to that worker.
-			// 3) We received an "is idle" call for that worker at t=1.
-			//
-			// This is most likely due to out-of-order message delivery. In any case
-			// it should be fairly harmless, as it will self-heal once we receive a
-			// later markIdle call for this worker or notifyRequest for this
-			// match at t=3.
-		}
 		return
 	}
 

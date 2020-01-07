@@ -209,7 +209,6 @@ func (s *QSchedulerViewServerImpl) ListAccounts(ctx context.Context, r *qschedul
 	if err != nil {
 		return nil, err
 	}
-	// TODO(akeshet): Add API to Scheduler so we can decouple from the proto representation.
 	sProto := sp.Scheduler.ToProto()
 	resp = &qscheduler.ListAccountsResponse{
 		Accounts: sProto.Config.AccountConfigs,

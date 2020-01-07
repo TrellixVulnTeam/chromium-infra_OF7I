@@ -114,8 +114,6 @@ func protoToTaskRequest(rid RequestID, p *protos.TaskRequest, labelMap map[uint6
 	}
 }
 
-// TODO(akeshet): Move mapBuilder to internal package.
-
 // mapBuilder builds a uint64<->string map, with each unique string being
 // given a unique integer key.
 //

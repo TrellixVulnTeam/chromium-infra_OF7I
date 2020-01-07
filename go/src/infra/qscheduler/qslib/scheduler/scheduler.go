@@ -254,8 +254,6 @@ func (s *Scheduler) Unassign(ctx context.Context, requestID RequestID, workerID 
 	worker := s.state.workers[workerID]
 	request := worker.runningTask.request
 	e.AddEvent(eventUnassigned(request, worker, s.state, t, &metrics.TaskEvent_UnassignedDetails{}))
-	// TODO(akeshet): Consider whether cost spent on this unassigned request
-	// should be refunded to account.
 	s.state.deleteWorker(workerID)
 	s.state.queuedRequests[request.ID] = request
 	return nil

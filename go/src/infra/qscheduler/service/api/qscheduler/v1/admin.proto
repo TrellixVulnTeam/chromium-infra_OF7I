@@ -43,8 +43,6 @@ service QSchedulerAdmin {
     rpc DeleteSchedulerPool(DeleteSchedulerPoolRequest) returns (DeleteSchedulerPoolResponse);
 }
 
-
-// TODO(akeshet): Rename to CreatePoolScheduler CreateScheduler.
 message CreateSchedulerPoolRequest {
     // PoolId is the unique id of this scheduler pool.
     string pool_id = 1;
@@ -80,14 +78,6 @@ message ModAccountRequest {
   string pool_id = 1;
 
   string account_id = 2;
-
-  // TODO(akeshet): Here and in ModSchedulerPoolRequest, use
-  // a google.protobuf.FieldMask (from google/protobuf/field_mask.proto)
-  // and a bare protos.AccountConfig to specify values to overwrite, rather
-  // than these wrapper values.
-  //
-  // This is blocked on crbug.com/935649 which will provide golang
-  // implementation of FieldMask semantics.
 
   repeated float charge_rate = 3;
 

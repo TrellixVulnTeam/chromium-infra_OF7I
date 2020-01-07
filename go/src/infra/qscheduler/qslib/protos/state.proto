@@ -120,10 +120,4 @@ message Worker {
   repeated uint64 label_ids = 4;
 
   google.protobuf.Timestamp modified_time = 5;
-
-  // TODO(akeshet): Add the concept of an Inactive worker, which will exist
-  // in the scheduler State object, but will be ignored for scheduling purposes.
-  // Instead of deleting workers when they are neither running nor idle, we will
-  // retain them so we can remember their confirmed time, allowing us to ignore
-  // backward-in-time updates.
 }

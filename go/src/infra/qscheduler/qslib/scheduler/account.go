@@ -23,8 +23,6 @@ const (
 	// no quota account or have an empty quota account.
 	FreeBucket Priority = NumPriorities
 
-	// TODO(akeshet): Make the following thresholds configurable.
-
 	// PromoteThreshold is the account balance at which the scheduler will consider
 	// promoting jobs.
 	PromoteThreshold = 600.0

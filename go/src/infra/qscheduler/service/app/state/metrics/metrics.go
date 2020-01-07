@@ -95,8 +95,6 @@ var (
 		field.Int("priority"),
 	)
 
-	// TODO(akeshet): Deprecate and delete this metric in favor of
-	// qscheduler/state/task_state which already incorporates it.
 	gaugeQueueSize = metric.NewInt(
 		"qscheduler/state/queue_size",
 		"The number of tasks in the queue.",
@@ -291,7 +289,7 @@ func RecordStateGaugeMetrics(ctx context.Context, s *scheduler.Scheduler, schedu
 			runningPerPriority[priority]++
 		}
 	}
-	// TODO(akeshet): Include accurate information on priority of queued tasks, rather than arbitrary NumPriorities value.
+	// TODO(crbug.com/1027758): Include accurate information on priority of queued tasks, rather than arbitrary NumPriorities value.
 	gaugeTaskState.Set(ctx, int64(len(s.GetWaitingRequests())), schedulerID, "waiting", scheduler.NumPriorities)
 	gaugeBotState.Set(ctx, idleBots, schedulerID, "idle", scheduler.NumPriorities)
 	for priority, val := range runningPerPriority {

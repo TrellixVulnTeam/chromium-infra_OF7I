@@ -14,9 +14,7 @@
 
 /*
 Package reconciler provides a wrapper around a global state scheduler to be used
-by a per-worker pulling dispatcher. TODO(akeshet): Rename this package to
-something more descriptive but still succinct. Options include: broker,
-distributor, mediator, etc.
+by a per-worker pulling dispatcher.
 
 The primary scheduler.Scheduler implementation intended to be used by reconciler
 is the quotascheduler algorithm as implemented in qslib/scheduler. The primary
@@ -44,7 +42,6 @@ import (
 
 // WorkerQueueTimeout is the time after which a task will return to the queue
 // if it was assigned to a worker but the worker never picked it up.
-// TODO(akeshet): Make this a configurable value.
 const WorkerQueueTimeout = time.Duration(10) * time.Minute
 
 // New returns a new initialized State instance.
@@ -223,9 +220,6 @@ func (state *State) NotifyTaskRunning(ctx context.Context, s *scheduler.Schedule
 			delete(state.proto.WorkerQueues, string(wid))
 		} else {
 			logging.Debugf(ctx, "Reconciler: ignoring non-forward RUNNING notification with request %s on worker %s.", rid, wid)
-			// TODO(akeshet): Consider whether we should delete from workerqueue
-			// here for non-forward updates that are still a (wid, rid) match
-			// for the expected assignment.
 		}
 	}
 }
@@ -236,8 +230,6 @@ func (state *State) NotifyTaskAbsent(ctx context.Context, s *scheduler.Scheduler
 	rid := update.RequestID
 	t := update.Time
 	s.NotifyTaskAbsent(ctx, rid, t, events)
-	// TODO(akeshet): Add an inverse map from aborting request -> previous
-	// worker to avoid the need for this iteration through all workers.
 	for wid, q := range state.proto.WorkerQueues {
 		if q.TaskToAbort == string(rid) && tutils.Timestamp(q.EnqueueTime).Before(t) {
 			delete(state.proto.WorkerQueues, wid)

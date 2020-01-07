@@ -36,7 +36,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// TODO(akeshet): Rename to CreatePoolScheduler CreateScheduler.
 type CreateSchedulerPoolRequest struct {
 	// PoolId is the unique id of this scheduler pool.
 	PoolId string `protobuf:"bytes,1,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`

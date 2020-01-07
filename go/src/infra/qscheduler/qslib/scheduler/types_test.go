@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO(akeshet): The tests in this file make use of a lot of unexported
-// methods and fields. It would be better if they were rewritten to use
-// only the exported API of the scheduler. That would also entail building
-// an exported API for getting job prioritization.
-
 package scheduler
 
 import (
