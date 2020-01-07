@@ -36,6 +36,7 @@ type wordSegment struct {
 const (
 	commentsJSONPath = "comment_formats.json"
 	dictPath         = "dictionary.txt"
+	minWordLength    = 4
 )
 
 // state is the comment processing state machine.
@@ -60,7 +61,6 @@ var (
 		"backed",      // as in "backed by"
 		"bae",         // person name
 		"ba",          // person name
-		"ba",          // very short word, shouldn't be flagged
 		"cancelation", // alternative of cancellation
 		"cant",        // contraction, may appear in variable names
 		"cas",         // abbr. for Content Addressed Storage
@@ -316,6 +316,11 @@ func analyzeWords(commentWord, stopPattern string,
 
 		// Check if the word is in the ignore list (even if camelcased).
 		if inSlice(strings.ToLower(wordToCheck), ignoredWords) {
+			continue
+		}
+
+		// Very short words are more likely to be false positives.
+		if len(wordToCheck) < minWordLength {
 			continue
 		}
 
