@@ -4,10 +4,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 
-/**
- * @type {Array<string>} Array of Event.key names that trigger a button.
- */
-const DEFAULT_INPUT_KEYS = ['Enter', 'Space'];
+const DEFAULT_INPUT_KEYS = [13, 32];
 
 
 /**
@@ -83,30 +80,35 @@ export class ChopsButton extends LitElement {
       inputKeys: {
         type: Array,
       },
+      /**
+       * If true, the element currently has focus. Changed through focus
+       * and blur event listeners.
+       */
+      focused: {
+        type: Boolean,
+        reflect: true,
+      },
       /** Whether the button should have a shadow or not. */
       raised: {
         type: Boolean,
         value: false,
         reflect: true,
       },
-      /**
-       * Used for accessibility to state that this component is a button.
-       * Do not override.
-       */
+      /** Used for accessibility to state that this component is a button. **/
       role: {
         type: String,
         value: 'button',
         reflect: true,
       },
-      /**
-       * Causes the button to be focusable for accessbility.
-       * Do not override.
-       */
+      /** Causes the button to be focusable for accessbility. **/
       tabindex: {
         type: Number,
         reflect: true,
       },
-      _boundActivateOnKeypress: {
+      _boundKeypressHandler: {
+        type: Object,
+      },
+      _boundFocusBlurHandler: {
         type: Object,
       },
     };
@@ -116,37 +118,42 @@ export class ChopsButton extends LitElement {
   constructor() {
     super();
 
+    this.focused = false;
     this.raised = false;
     this.tabindex = 0;
 
-    this._boundActivateOnKeypress = this._activateOnKeypress.bind(this);
+    this._boundKeypressHandler = this._keypressHandler.bind(this);
+    this._boundFocusBlurHandler = this._focusBlurHandler.bind(this);
   }
 
   /** @override */
   connectedCallback() {
     super.connectedCallback();
 
-    window.addEventListener('keypress', this._boundActivateOnKeypress, true);
+    window.addEventListener('keypress', this._boundKeypressHandler, true);
+    this.addEventListener('focus', this._boundFocusBlurHandler, true);
+    this.addEventListener('blur', this._boundFocusBlurHandler, true);
   }
 
   /** @override */
   disconnectedCallback() {
     super.disconnectedCallback();
-    window.removeEventListener('keypress', this._boundActivateOnKeypress,
+    window.removeEventListener('keypress', this._boundKeypressHandler,
         true);
   }
 
-  /**
-   * Implement the native browser behavior where a button can be activated
-   * by a KeyboardEvent. ie: usually Enter and Space.
-   * @param {KeyboardEvent} event
-   */
-  _activateOnKeypress(event) {
+  _keypressHandler(event) {
+    if (!this.focused) return;
     const keys = this.inputKeys || DEFAULT_INPUT_KEYS;
-    if (keys.includes(event.key)) {
+    const keyCode = event.keyCode;
+    if (keys.includes(keyCode)) {
       this.click();
       event.preventDefault();
     }
+  }
+
+  _focusBlurHandler(event) {
+    this.focused = event.type === 'focus';
   }
 }
 customElements.define('chops-button', ChopsButton);
