@@ -12,8 +12,8 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cmd/cros_test_platform/internal/execution/internal/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
+	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 )
 

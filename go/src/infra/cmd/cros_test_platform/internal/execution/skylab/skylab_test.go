@@ -35,8 +35,8 @@ import (
 	"go.chromium.org/luci/common/logging/memlogger"
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
 
-	"infra/cmd/cros_test_platform/internal/execution/internal/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
+	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 )
 
