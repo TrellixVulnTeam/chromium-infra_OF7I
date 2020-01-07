@@ -67,7 +67,7 @@ type dutInfoRun struct {
 
 func (c *dutInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "dut-info").Err())
+		cmdlib.PrintError(a, errors.Annotate(err, "dut-info").Err())
 		return 1
 	}
 	return 0

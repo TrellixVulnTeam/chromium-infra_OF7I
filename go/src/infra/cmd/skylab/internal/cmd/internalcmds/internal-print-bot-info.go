@@ -47,7 +47,7 @@ type printBotInfoRun struct {
 
 func (c *printBotInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s: %s\n", cmdlib.ProgName, err)
+		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
 		return 1
 	}
 	return 0

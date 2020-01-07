@@ -68,7 +68,7 @@ type addLabstationRun struct {
 // Run implements the subcommands.CommandRun interface.
 func (c *addLabstationRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		cmdlib.PrintError(a.GetErr(), err)
+		cmdlib.PrintError(a, err)
 		return 1
 	}
 	return 0

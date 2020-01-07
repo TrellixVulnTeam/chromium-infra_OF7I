@@ -26,9 +26,6 @@ import (
 	"infra/libs/skylab/common/errctx"
 )
 
-// ProgName is the name of the command executing.
-const ProgName = "skylab"
-
 // DefaultTaskPriority is the default priority for a swarming task.
 var DefaultTaskPriority = 140
 
@@ -59,7 +56,7 @@ func (f commonFlags) DebugLogger(a subcommands.Application) *log.Logger {
 	if f.debug {
 		out = a.GetErr()
 	}
-	return log.New(out, ProgName, log.LstdFlags|log.Lshortfile)
+	return log.New(out, a.GetName(), log.LstdFlags|log.Lshortfile)
 }
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.
@@ -122,11 +119,11 @@ type UserErrorReporter interface {
 // PrintError reports errors back to the user.
 //
 // Detailed error information is printed if err is a UserErrorReporter.
-func PrintError(w io.Writer, err error) {
+func PrintError(a subcommands.Application, err error) {
 	if u, ok := err.(UserErrorReporter); ok {
-		u.ReportUserError(w)
+		u.ReportUserError(a.GetErr())
 	} else {
-		fmt.Fprintf(w, "%s: %s\n", ProgName, err)
+		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
 	}
 }
 

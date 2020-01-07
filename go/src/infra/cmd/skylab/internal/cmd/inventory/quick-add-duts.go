@@ -48,7 +48,7 @@ type quickAddDutsRun struct {
 // Run implements the subcommands.CommandRun interface.
 func (c *quickAddDutsRun) Run(app subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(app, args, env); err != nil {
-		cmdlib.PrintError(app.GetErr(), err)
+		cmdlib.PrintError(app, err)
 		return 1
 	}
 	return 0

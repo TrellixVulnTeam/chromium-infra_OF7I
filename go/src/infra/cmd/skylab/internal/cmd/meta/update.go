@@ -15,7 +15,6 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 )
 
@@ -43,7 +42,7 @@ type updateRun struct {
 
 func (c *updateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s: %s\n", cmdlib.ProgName, err)
+		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
 		return 1
 	}
 	return 0
@@ -65,8 +64,8 @@ func (c *updateRun) innerRun(a subcommands.Application, args []string, env subco
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-	fmt.Fprintf(a.GetErr(), "%s: You may need to run skylab login again after the update\n", cmdlib.ProgName)
-	fmt.Fprintf(a.GetErr(), "%s: Run skylab whoami to check login status\n", cmdlib.ProgName)
+	fmt.Fprintf(a.GetErr(), "%s: You may need to run skylab login again after the update\n", a.GetName())
+	fmt.Fprintf(a.GetErr(), "%s: Run skylab whoami to check login status\n", a.GetName())
 	return nil
 }
 

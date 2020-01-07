@@ -48,7 +48,7 @@ type inspectDronesRun struct {
 
 func (c *inspectDronesRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "queen-inspect-drones").Err())
+		cmdlib.PrintError(a, errors.Annotate(err, "queen-inspect-drones").Err())
 		return 1
 	}
 	return 0

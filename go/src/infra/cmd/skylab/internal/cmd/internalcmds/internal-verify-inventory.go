@@ -74,7 +74,7 @@ type verifyInventory struct {
 
 func (c *verifyInventory) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "internal-verify-inventory").Err())
+		cmdlib.PrintError(a, errors.Annotate(err, "internal-verify-inventory").Err())
 		return 1
 	}
 	return 0

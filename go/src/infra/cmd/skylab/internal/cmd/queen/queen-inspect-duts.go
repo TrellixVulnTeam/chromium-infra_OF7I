@@ -47,7 +47,7 @@ type inspectDutsRun struct {
 
 func (c *inspectDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		cmdlib.PrintError(a.GetErr(), errors.Annotate(err, "queen-inspect-duts").Err())
+		cmdlib.PrintError(a, errors.Annotate(err, "queen-inspect-duts").Err())
 		return 1
 	}
 	return 0
