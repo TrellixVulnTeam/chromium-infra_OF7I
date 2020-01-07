@@ -305,15 +305,6 @@ class ScheduleBuildRequestTests(BaseTestCase):
         msg, r'dimensions: key "a" and expiration 0s are not unique'
     )
 
-  def test_expiration_not_suported(self):
-    msg = rpc_pb2.ScheduleBuildRequest(
-        builder=dict(project='chromium', bucket='try', builder='linux-rel'),
-        dimensions=[
-            dict(key='a', value='b', expiration=dict(seconds=10)),
-        ],
-    )
-    self.assert_invalid(msg, r'dimensions\[0\]\.expiration: not supported')
-
   def test_no_builder_and_template_build_id(self):
     msg = rpc_pb2.ScheduleBuildRequest()
     self.assert_invalid(msg, 'builder or template_build_id is required')
