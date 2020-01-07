@@ -23,9 +23,9 @@ import (
 	"go.chromium.org/luci/common/isolatedclient"
 	"go.chromium.org/luci/common/logging"
 
-	"infra/cmd/cros_test_platform/internal/execution"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/isolate/getter"
+	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/libs/skylab/common/errctx"
 	"infra/libs/skylab/swarming"
 )
@@ -111,7 +111,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		taskID = env["SWARMING_TASK_ID"].Value
 	}
 
-	runner, err := execution.NewSkylabRunner(ctx, cfg.SkylabWorker, taskID, requests)
+	runner, err := skylab.NewRunner(ctx, cfg.SkylabWorker, taskID, requests)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 	}
 	return nil
 }
-func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {
+func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner *skylab.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("cros_test_platform request timeout (after %s)", maximumDuration))
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, t, gf)

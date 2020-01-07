@@ -10,6 +10,7 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"time"
 
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
@@ -22,11 +23,29 @@ type Runner struct {
 	running bool
 }
 
-// NewRunner returns a new Runner for executing the provided TaskSets.
-func NewRunner(taskSets ...*TaskSet) *Runner {
+// NewRunnerWithTaskSets returns a new Runner for executing the provided
+// TaskSets.
+//
+// This constructor is only used by unittests.
+func NewRunnerWithTaskSets(taskSets ...*TaskSet) *Runner {
 	return &Runner{
 		taskSets: taskSets,
 	}
+}
+
+// NewRunner returns a Runner that will execute the given tests.
+func NewRunner(ctx context.Context, workerConfig *config.Config_SkylabWorker, parentTaskID string, requests []*steps.ExecuteRequest) (*Runner, error) {
+	ts := make([]*TaskSet, len(requests))
+	for i, r := range requests {
+		var err error
+		ts[i], err = NewTaskSet(ctx, r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
+		if err != nil {
+			return nil, errors.Annotate(err, "new skylab runner").Err()
+		}
+	}
+	return &Runner{
+		taskSets: ts,
+	}, nil
 }
 
 // LaunchAndWait launches a skylab execution and waits for it to complete,
