@@ -7,7 +7,6 @@ package skylab
 import (
 	"context"
 	"fmt"
-	"infra/cmd/cros_test_platform/internal/execution/internal/common"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/autotest/labels"
 	"infra/libs/skylab/request"
@@ -184,7 +183,7 @@ const (
 
 func (a *argsGenerator) provisionableDimensions() ([]string, error) {
 	deps := a.params.SoftwareDependencies
-	builds, err := common.ExtractBuilds(deps)
+	builds, err := extractBuilds(deps)
 	if err != nil {
 		return nil, errors.Annotate(err, "get provisionable dimensions").Err()
 	}
@@ -234,7 +233,7 @@ const (
 // parsing the "label" keyval.
 func (a *argsGenerator) constructDisplayNameFromRequestParams(ctx context.Context, kv map[string]string) string {
 	testName := a.invocation.GetTest().GetName()
-	builds, err := common.ExtractBuilds(a.params.SoftwareDependencies)
+	builds, err := extractBuilds(a.params.SoftwareDependencies)
 	if err != nil {
 		logging.Warningf(ctx,
 			"Failed to get build due to error %s\n Defaulting to test name as display name: %s",
@@ -304,4 +303,39 @@ func (a *argsGenerator) swarmingTags(cmd *worker.Command) []string {
 	// and other "special tags" from being client-specified here.
 	tags = append(tags, a.params.GetDecorations().GetTags()...)
 	return tags
+}
+
+// builds describes the build names that were requested by a test_platform
+// invocation.
+type builds struct {
+	ChromeOS   string
+	FirmwareRW string
+	FirmwareRO string
+}
+
+// extractBuilds extracts builds that were requested by the test_platform invocation.
+func extractBuilds(deps []*test_platform.Request_Params_SoftwareDependency) (*builds, error) {
+	b := &builds{}
+	for _, dep := range deps {
+		switch d := dep.Dep.(type) {
+		case *test_platform.Request_Params_SoftwareDependency_ChromeosBuild:
+			if already := b.ChromeOS; already != "" {
+				return nil, errors.Reason("duplicate ChromeOS builds (%s, %s)", already, d.ChromeosBuild).Err()
+			}
+			b.ChromeOS = d.ChromeosBuild
+		case *test_platform.Request_Params_SoftwareDependency_RoFirmwareBuild:
+			if already := b.FirmwareRO; already != "" {
+				return nil, errors.Reason("duplicate RO Firmware builds (%s, %s)", already, d.RoFirmwareBuild).Err()
+			}
+			b.FirmwareRO = d.RoFirmwareBuild
+		case *test_platform.Request_Params_SoftwareDependency_RwFirmwareBuild:
+			if already := b.FirmwareRW; already != "" {
+				return nil, errors.Reason("duplicate RW Firmware builds (%s, %s)", already, d.RwFirmwareBuild).Err()
+			}
+			b.FirmwareRW = d.RwFirmwareBuild
+		default:
+			return nil, errors.Reason("unknown dep %+v", dep).Err()
+		}
+	}
+	return b, nil
 }
