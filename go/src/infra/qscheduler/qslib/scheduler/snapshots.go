@@ -16,6 +16,7 @@ package scheduler
 
 import (
 	"infra/qscheduler/qslib/protos/metrics"
+	"infra/qscheduler/qslib/tutils"
 	"sort"
 )
 
@@ -50,6 +51,7 @@ func (s *state) toMetricsSchedulerState(poolID string) *metrics.SchedulerState {
 		RunningWorkers: sortWorkerByID(runningWorkers),
 		Accounts:       sortAccountByID(accounts),
 		PoolId:         poolID,
+		Time:           tutils.TimestampProto(s.lastUpdateTime),
 	}
 }
 

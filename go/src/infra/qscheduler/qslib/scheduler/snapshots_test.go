@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"infra/qscheduler/qslib/protos/metrics"
+	"infra/qscheduler/qslib/tutils"
 
 	"github.com/google/go-cmp/cmp"
 	. "github.com/smartystreets/goconvey/convey"
@@ -127,6 +128,7 @@ func TestToMetricsSchedulerState(t *testing.T) {
 				RunningWorkers: runningWorkers,
 				Accounts:       accounts,
 				PoolId:         pool,
+				Time:           tutils.TimestampProto(tm),
 			}
 			got := s.state.toMetricsSchedulerState(pool)
 			diff := cmp.Diff(got, want)
