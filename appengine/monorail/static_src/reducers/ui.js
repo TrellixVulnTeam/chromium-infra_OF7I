@@ -144,7 +144,7 @@ export const setFocusId = (focusId) => {
  * @param {string} text The text to be shown in the snackbar.
  * @param {number} timeout An optional timeout in milliseconds for how
  *   long to wait to dismiss a snackbar.
- * @return {function(function): void}
+ * @return {function(function): Promise<void>}
  */
 export const showSnackbar = (id, text,
     timeout = DEFAULT_SNACKBAR_TIMEOUT_MS) => (dispatch) => {

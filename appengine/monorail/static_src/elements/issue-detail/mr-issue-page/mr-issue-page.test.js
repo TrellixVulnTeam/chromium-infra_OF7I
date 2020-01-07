@@ -185,22 +185,25 @@ describe('mr-issue-page', () => {
       issue: {localId: 111, projectName: 'test'},
     });
     const deletePromise = Promise.resolve({});
+
     sinon.spy(element, '_undeleteIssue');
+
     prpcClient.call.withArgs('monorail.Issues', 'GetIssue', {issueRef})
         .onFirstCall().returns(deletedIssuePromise)
         .onSecondCall().returns(issuePromise);
     prpcClient.call.withArgs('monorail.Issues', 'DeleteIssue',
         {delete: false, issueRef}).returns(deletePromise);
 
-    store.dispatch(
-        issue.setIssueRef(issueRef.localId, issueRef.projectName));
+    store.dispatch(issue.viewIssue(issueRef));
+    store.dispatch(issue.fetchIssuePageData(issueRef));
 
     await deletedIssuePromise;
-
     await element.updateComplete;
+
     populateElementReferences();
 
-    assert.deepEqual(element.issue, {isDeleted: true});
+    assert.deepEqual(element.issue,
+        {isDeleted: true, localId: 111, projectName: 'test'});
     assert.isNull(issueElement);
     assert.isNotNull(deletedElement);
 
@@ -226,6 +229,7 @@ describe('mr-issue-page', () => {
     assert.deepEqual(element.issue, {localId: 111, projectName: 'test'});
 
     await element.updateComplete;
+
     populateElementReferences();
     assert.isNotNull(issueElement);
 

@@ -16,7 +16,8 @@ import {autolink} from 'autolink.js';
 import {fieldTypes, extractTypeForIssue,
   fieldValuesToMap} from 'shared/issue-fields.js';
 import {removePrefix, objectToMap} from 'shared/helpers.js';
-import {issueRefToString, issueToIssueRefString} from 'shared/converters.js';
+import {issueRefToString, issueToIssueRefString,
+  issueStringToRef} from 'shared/converters.js';
 import {fromShortlink} from 'shared/federated.js';
 import {createReducer, createRequestReducer,
   createKeyedRequestReducer} from './redux-helpers.js';
@@ -30,11 +31,11 @@ import 'shared/typedef.js';
 /** @typedef {import('redux').AnyAction} AnyAction */
 
 // Actions
-const SET_ISSUE_REF = 'SET_ISSUE_REF';
+export const VIEW_ISSUE = 'VIEW_ISSUE';
 
-export const FETCH_START = 'FETCH_START';
-export const FETCH_SUCCESS = 'FETCH_SUCCESS';
-export const FETCH_FAILURE = 'FETCH_FAILURE';
+export const FETCH_START = 'issue/FETCH_START';
+export const FETCH_SUCCESS = 'issue/FETCH_SUCCESS';
+export const FETCH_FAILURE = 'issue/FETCH_FAILURE';
 
 const FETCH_HOTLISTS_START = 'FETCH_HOTLISTS_START';
 const FETCH_HOTLISTS_SUCCESS = 'FETCH_HOTLISTS_SUCCESS';
@@ -105,8 +106,7 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
 {
   issuesByRefString: Object.<IssueRefString, Issue>,
 
-  issueRef: IssueRef,
-  currentIssue: Issue,
+  viewedIssueRef: IssueRefString,
 
   hotlists: Array<Hotlist>,
   issueList: {
@@ -169,6 +169,20 @@ const updateApprovalValues = (issue, approval) => {
 
 // Reducers
 
+/**
+ * Creates a new issuesByRefString Object with a single issue's data
+ * edited.
+ * @param {Object.<IssueRefString, Issue>} issuesByRefString
+ * @param {Issue} issue The new issue data to add to the state.
+ * @return {Object.<IssueRefString, Issue>}
+ */
+const updateSingleIssueInState = (issuesByRefString, issue) => {
+  return {
+    ...issuesByRefString,
+    [issueToIssueRefString(issue)]: issue,
+  };
+};
+
 // TODO(crbug.com/monorail/6882): Finish converting all other issue
 //   actions to use this format.
 /**
@@ -177,6 +191,12 @@ const updateApprovalValues = (issue, approval) => {
  * @param {Object.<IssueRefString, Issue>} state Redux state.
  * @param {AnyAction} action
  * @param {Array<Issue>} action.issues The list of issues that was fetched.
+ * @param {Issue=} action.issue The issue being updated.
+ * @param {number=} action.starCount Number of stars the issue has. This changes
+ *   when a user stars an issue and needs to be updated.
+ * @param {ApprovalDef=} action.approval A new approval to update the issue
+ *   with.
+ * @param {IssueRef=} action.issueRef A specific IssueRef to update.
  */
 export const issuesByRefStringReducer = createReducer({}, {
   [FETCH_ISSUE_LIST_UPDATE]: (state, {issues}) => {
@@ -193,56 +213,42 @@ export const issuesByRefStringReducer = createReducer({}, {
 
     return newState;
   },
+  [FETCH_SUCCESS]: (state, {issue}) => updateSingleIssueInState(state, issue),
+  [CONVERT_SUCCESS]: (state, {issue}) => updateSingleIssueInState(state, issue),
+  [UPDATE_SUCCESS]: (state, {issue}) => updateSingleIssueInState(state, issue),
+  [UPDATE_APPROVAL_SUCCESS]: (state, {issueRef, approval}) => {
+    const issueRefString = issueToIssueRefString(issueRef);
+    const originalIssue = state[issueRefString] || {};
+    const newIssue = updateApprovalValues(originalIssue, approval);
+    return {
+      ...state,
+      [issueRefString]: {
+        ...newIssue,
+      },
+    };
+  },
+  [STAR_SUCCESS]: (state, {issueRef, starCount}) => {
+    const issueRefString = issueToIssueRefString(issueRef);
+    const originalIssue = state[issueRefString] || {};
+    return {
+      ...state,
+      [issueRefString]: {
+        ...originalIssue,
+        starCount,
+      },
+    };
+  },
 });
 
 /**
  * Sets a reference for the issue that the user is currently viewing.
- * Note that this only handles the issue's numeric localId, not projectName.
- * Project name is inferred from separate state to reference the current project
- * the user is viewing.
- * @param {number} state Name of the currently viewed issue localId.
+ * @param {IssueRefString} state Currently viewed issue.
  * @param {AnyAction} action
- * @param {number} action.localId The updated localId to view.
- * @return {number}
+ * @param {IssueRef} action.issueRef The updated localId to view.
+ * @return {IssueRefString}
  */
-const localIdReducer = createReducer(0, {
-  [SET_ISSUE_REF]: (state, {localId}) => localId || state,
-});
-
-/**
- * Changes the project that the user is viewing based on the viewed issue ref.
- * @param {string} state Name of the currently viewed project.
- * @param {AnyAction} action
- * @param {string} action.projectName Name of the new project to view.
- * @return {string}
- */
-const projectNameReducer = createReducer('', {
-  [SET_ISSUE_REF]: (state, {projectName}) => projectName || state,
-});
-
-/**
- * Updates data in the store for the issue the user is currently viewing. This
- * reducer handles many different possible actions that cause issue data to be
- * updated.
- * @param {Issue} state The issue data being mutated.
- * @param {AnyAction} action
- * @param {Issue=} action.issue New Issue Object to override values with.
- * @param {number=} action.starCount Number of stars the issue has. This changes
- *   when a user stars an issue and needs to be updated.
- * @param {ApprovalDef=} action.approval A new approval to update the issue
- *   with.
- * @return {Issue}
- */
-const currentIssueReducer = createReducer({}, {
-  [FETCH_SUCCESS]: (_state, {issue}) => issue,
-  [STAR_SUCCESS]: (state, {starCount}) => {
-    return {...state, starCount};
-  },
-  [CONVERT_SUCCESS]: (_state, {issue}) => issue,
-  [UPDATE_SUCCESS]: (_state, {issue}) => issue,
-  [UPDATE_APPROVAL_SUCCESS]: (state, {approval}) => {
-    return updateApprovalValues(state, approval);
-  },
+const viewedIssueRefReducer = createReducer('', {
+  [VIEW_ISSUE]: (state, {issueRef}) => issueRefToString(issueRef) || state,
 });
 
 /**
@@ -474,14 +480,9 @@ const requestsReducer = combineReducers({
 });
 
 export const reducer = combineReducers({
-  issueRef: combineReducers({
-    localId: localIdReducer,
-    projectName: projectNameReducer,
-  }),
+  viewedIssueRef: viewedIssueRefReducer,
 
   issuesByRefString: issuesByRefStringReducer,
-
-  currentIssue: currentIssueReducer,
 
   hotlists: hotlistsReducer,
   issueList: issueListReducer,
@@ -502,12 +503,38 @@ const RESTRICT_VIEW_PREFIX = 'restrict-view-';
 const RESTRICT_EDIT_PREFIX = 'restrict-editissue-';
 const RESTRICT_COMMENT_PREFIX = 'restrict-addissuecomment-';
 
-export const viewedIssueRef = (state) => state.issue.issueRef;
+/**
+ * Selector to retrieve all normalized Issue data in the Redux store,
+ * keyed by IssueRefString.
+ * @param {any} state
+ * @return {Object.<IssueRefString, Issue>}
+ */
+const issuesByRefString = (state) => state.issue.issuesByRefString;
 
-// TODO(zhangtiff): Eventually Monorail's Redux state will store
-// multiple issues, and this selector will have to find the viewed
-// issue based on a viewed issue ref.
-export const viewedIssue = (state) => state.issue.currentIssue;
+/**
+ * Selector to get a reference to the currently viewed issue, in string form.
+ * @param {any} state
+ * @return {IssueRefString}
+ */
+const viewedIssueRefString = (state) => state.issue.viewedIssueRef;
+
+/**
+ * Selector to get a reference to the currently viewed issue.
+ * @param {any} state
+ * @return {IssueRef}
+ */
+export const viewedIssueRef = createSelector(viewedIssueRefString,
+    (viewedIssueRefString) => issueStringToRef(viewedIssueRefString));
+
+/**
+ * Selector to get the full Issue data for the currently viewed issue.
+ * @param {any} state
+ * @return {Issue}
+ */
+export const viewedIssue = createSelector(issuesByRefString,
+    viewedIssueRefString,
+    (issuesByRefString, viewedIssueRefString) =>
+      issuesByRefString[viewedIssueRefString] || {});
 
 export const comments = (state) => state.issue.comments;
 export const commentsLoaded = (state) => state.issue.commentsLoaded;
@@ -518,7 +545,6 @@ export const commentReferences = createSelector(_commentReferences,
 
 export const hotlists = (state) => state.issue.hotlists;
 
-const issuesByRefString = (state) => state.issue.issuesByRefString;
 const stateIssueList = (state) => state.issue.issueList;
 export const issueList = createSelector(
     issuesByRefString,
@@ -777,9 +803,13 @@ export const fieldDefs = createSelector(
 );
 
 // Action Creators
-export const setIssueRef = (localId, projectName) => {
-  return {type: SET_ISSUE_REF, localId, projectName};
-};
+/**
+ * Tells Redux that the user has navigated to an issue page and is now
+ * viewing a new issue.
+ * @param {IssueRef} issueRef The issue that the user is viewing.
+ * @return {AnyAction}
+ */
+export const viewIssue = (issueRef) => ({type: VIEW_ISSUE, issueRef});
 
 export const fetchCommentReferences = (comments, projectName) => {
   return async (dispatch) => {
@@ -919,7 +949,15 @@ export const fetchRelatedIssues = (issue) => async (dispatch) => {
   };
 };
 
-export const fetchIssuePageData = (message) => async (dispatch) => {
+/**
+ * Fetches issue data needed to display a detailed view of a single
+ * issue. This function dispatches many actions to handle the fetching
+ * of issue comments, permissions, star state, and more.
+ * @param {IssueRef} issueRef The issue that the user is viewing.
+ * @return {function(function): Promise<void>}
+ */
+export const fetchIssuePageData = (issueRef) => async (dispatch) => {
+  const message = {issueRef};
   dispatch(fetchComments(message));
   dispatch(fetch(message));
   dispatch(fetchPermissions(message));
@@ -927,14 +965,21 @@ export const fetchIssuePageData = (message) => async (dispatch) => {
 };
 
 export const fetch = (message) => async (dispatch) => {
+  const {issueRef} = message;
   dispatch({type: FETCH_START});
 
   try {
     const resp = await prpcClient.call(
         'monorail.Issues', 'GetIssue', message,
     );
+
     const movedToRef = resp.movedToRef;
-    const issue = {...resp.issue};
+
+    // The API can return deleted issue objects that don't have issueRef data
+    // specified. For this case, we want to make sure a projectName and localId
+    // are still provided to the frontend to ensure that keying issues still
+    // works.
+    const issue = {...issueRef, ...resp.issue};
     if (movedToRef) {
       issue.movedToRef = movedToRef;
     }
@@ -1198,14 +1243,15 @@ export const predictComponent = (projectName, text) => async (dispatch) => {
 };
 
 export const updateApproval = (message) => async (dispatch) => {
+  const {issueRef} = message;
   dispatch({type: UPDATE_APPROVAL_START});
 
   try {
-    const resp = await prpcClient.call(
+    const {approval} = await prpcClient.call(
         'monorail.Issues', 'UpdateApproval', message);
 
-    dispatch({type: UPDATE_APPROVAL_SUCCESS, approval: resp.approval});
-    const baseMessage = {issueRef: message.issueRef};
+    dispatch({type: UPDATE_APPROVAL_SUCCESS, approval, issueRef});
+    const baseMessage = {issueRef};
     dispatch(fetch(baseMessage));
     dispatch(fetchComments(baseMessage));
   } catch (error) {

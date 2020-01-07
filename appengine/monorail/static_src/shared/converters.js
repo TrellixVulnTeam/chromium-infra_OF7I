@@ -269,14 +269,14 @@ export function componentRefsToStrings(componentRefs) {
  * Takes a String with a project name and issue ID in Monorail's canonical
  * IssueRef format and converts it into an IssueRef Object.
  *
- * @param {string} defaultProjectName The implied projectName if none is
- *   specified.
  * @param {IssueRefString} idStr A String of the format projectName:1234, a
  *   standard issue ID input format used across Monorail.
+ * @param {string=} defaultProjectName The implied projectName if none is
+ *   specified.
  * @return {IssueRef}
  * @throws {UserInputError} If the IssueRef string is invalidly formatted.
  */
-export function issueStringToRef(defaultProjectName, idStr) {
+export function issueStringToRef(idStr, defaultProjectName) {
   if (!idStr) return {};
 
   // If the string includes a slash, it's an external tracker ref.
@@ -290,27 +290,35 @@ export function issueStringToRef(defaultProjectName, idStr) {
         `Invalid issue ref: ${idStr}. Expected [projectName:]issueId.`);
   }
   const projectName = matches[1] ? matches[1] : defaultProjectName;
+
+  if (!projectName) {
+    throw new UserInputError(
+        `Issue ref must include a project name or specify a default project.`);
+  }
+
   const localId = Number.parseInt(matches[2]);
   return {localId, projectName};
 }
 
 /**
- * Takes a String with a project name and issue ID in Monorail's canonical
- * IssueRef format and converts it into an IssueRef Object.
+ * Takes an IssueRefString and converts it into an IssueRef Object, checking
+ * that it's not the same as another specified issueRef. ie: validates that an
+ * inputted blocking issue is not the same as the issue being blocked.
  *
- * @param {string} projectName The current project the user is viewing.
- * @param {number} localId The ID of the issue the user is viewing.
+ * @param {IssueRef} issueRef The issue that the IssueRefString is being
+ *   compared to.
  * @param {IssueRefString} idStr A String of the format projectName:1234, a
  *   standard issue ID input format used across Monorail.
  * @return {IssueRef}
  * @throws {UserInputError} If the IssueRef string is invalidly formatted
  *   or if the issue is equivalent to the linked issue.
  */
-export function issueStringToBlockingRef(projectName, localId, idStr) {
+export function issueStringToBlockingRef(issueRef, idStr) {
   // TODO(zhangtiff): Consider simplifying this helper function to only validate
   // that an issue does not block itself rather than also doing string parsing.
-  const result = issueStringToRef(projectName, idStr);
-  if (result.projectName === projectName && result.localId === localId) {
+  const result = issueStringToRef(idStr, issueRef.projectName);
+  if (result.projectName === issueRef.projectName &&
+      result.localId === issueRef.localId) {
     throw new UserInputError(
         `Invalid issue ref: ${idStr
         }. Cannot merge or block an issue on itself.`);
@@ -322,13 +330,13 @@ export function issueStringToBlockingRef(projectName, localId, idStr) {
  * Converts an IssueRef into a canonical String format. ie: "project:1234"
  *
  * @param {IssueRef} ref
- * @param {string} projectName The current project context. The
+ * @param {string=} projectName The current project context. The
  *   generated String excludes the projectName if it matches the
  *   project the user is currently viewing, to create simpler
  *   issue ID links.
  * @return {IssueRefString} A String representing the pieces of an IssueRef.
  */
-export function issueRefToString(ref, projectName) {
+export function issueRefToString(ref, projectName = undefined) {
   if (!ref) return '';
 
   if (ref.hasOwnProperty('extIdentifier')) {
@@ -361,15 +369,16 @@ export function issueToIssueRef(issue) {
  * Converts a full Issue Object into an IssueRefString
  *
  * @param {Issue} issue A full Issue Object.
- * @param {string} projectName The default project the String should assume.
+ * @param {string=} defaultProjectName The default project the String should
+ *   assume.
  * @return {IssueRefString} A String with all the data needed to
  *   construct an IssueRef.
  */
-export function issueToIssueRefString(issue, projectName) {
+export function issueToIssueRefString(issue, defaultProjectName = undefined) {
   if (!issue) return '';
 
   const ref = issueToIssueRef(issue);
-  return issueRefToString(ref, projectName);
+  return issueRefToString(ref, defaultProjectName);
 }
 
 /**

@@ -8,7 +8,7 @@ import {createSelector} from 'reselect';
 import {store, resetState} from './base.js';
 import * as issue from './issue.js';
 import {fieldTypes} from 'shared/issue-fields.js';
-import {issueToIssueRef} from 'shared/converters.js';
+import {issueToIssueRef, issueRefToString} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import {getSigninInstance} from 'shared/gapi-loader.js';
 
@@ -19,6 +19,7 @@ describe('issue', () => {
   beforeEach(() => {
     store.dispatch(resetState());
   });
+
   describe('reducers', () => {
     describe('issueByRefReducer', () => {
       it('no-op on unmatching action', () => {
@@ -159,10 +160,12 @@ describe('issue', () => {
     });
   });
 
-  it('issue', () => {
+  it('viewedIssue', () => {
     assert.deepEqual(issue.viewedIssue(wrapIssue()), {});
-    assert.deepEqual(issue.viewedIssue(wrapIssue({localId: 100})),
-        {localId: 100});
+    assert.deepEqual(
+        issue.viewedIssue(wrapIssue({projectName: 'proj', localId: 100})),
+        {projectName: 'proj', localId: 100},
+    );
   });
 
   describe('issueList', () => {
@@ -306,7 +309,7 @@ describe('issue', () => {
         ['chicken-phase', 'cow-phase', 'dog-phase']);
   });
 
-  it('blockingIssues', () => {
+  describe('blockingIssues', () => {
     const relatedIssues = {
       ['proj:1']: {
         localId: 1,
@@ -324,56 +327,73 @@ describe('issue', () => {
         labelRefs: [],
       },
     };
-    const stateNoReferences = {issue: {
-      currentIssue: {
-        blockingIssueRefs: [{localId: 1, projectName: 'proj'}],
-      },
-      relatedIssues: {},
-    }};
-    assert.deepEqual(issue.blockingIssues(stateNoReferences),
-        [{localId: 1, projectName: 'proj'}],
-    );
 
-    const stateNoIssues = {issue: {
-      currentIssue: {
-        blockingIssueRefs: [],
-      },
-      relatedIssues: relatedIssues,
-    }};
-    assert.deepEqual(issue.blockingIssues(stateNoIssues), []);
+    it('returns references when no issue data', () => {
+      const stateNoReferences = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockingIssueRefs: [{localId: 1, projectName: 'proj'}],
+          },
+          {relatedIssues: {}},
+      );
+      assert.deepEqual(issue.blockingIssues(stateNoReferences),
+          [{localId: 1, projectName: 'proj'}],
+      );
+    });
 
-    const stateIssuesWithReferences = {issue: {
-      currentIssue: {
-        blockingIssueRefs: [
-          {localId: 1, projectName: 'proj'},
-          {localId: 332, projectName: 'chromium'},
-        ],
-      },
-      relatedIssues: relatedIssues,
-    }};
-    assert.deepEqual(issue.blockingIssues(stateIssuesWithReferences),
-        [
-          {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
-          {localId: 332, projectName: 'chromium', labelRefs: []},
-        ]);
+    it('returns empty when no blocking issues', () => {
+      const stateNoIssues = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockingIssueRefs: [],
+          },
+          {relatedIssues},
+      );
+      assert.deepEqual(issue.blockingIssues(stateNoIssues), []);
+    });
 
-    const stateIssuesWithFederatedReferences = {issue: {
-      currentIssue: {
-        blockingIssueRefs: [
-          {localId: 1, projectName: 'proj'},
-          {extIdentifier: 'b/1234'},
-        ],
-      },
-      relatedIssues: relatedIssues,
-    }};
-    assert.deepEqual(issue.blockingIssues(stateIssuesWithFederatedReferences),
-        [
-          {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
-          {extIdentifier: 'b/1234'},
-        ]);
+    it('returns full issues when deferenced data present', () => {
+      const stateIssuesWithReferences = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockingIssueRefs: [
+              {localId: 1, projectName: 'proj'},
+              {localId: 332, projectName: 'chromium'},
+            ],
+          },
+          {relatedIssues},
+      );
+      assert.deepEqual(issue.blockingIssues(stateIssuesWithReferences),
+          [
+            {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
+            {localId: 332, projectName: 'chromium', labelRefs: []},
+          ]);
+    });
+
+    it('returns federated references', () => {
+      const stateIssuesWithFederatedReferences = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockingIssueRefs: [
+              {localId: 1, projectName: 'proj'},
+              {extIdentifier: 'b/1234'},
+            ],
+          },
+          {relatedIssues},
+      );
+      assert.deepEqual(issue.blockingIssues(stateIssuesWithFederatedReferences),
+          [
+            {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
+            {extIdentifier: 'b/1234'},
+          ]);
+    });
   });
 
-  it('blockedOnIssues', () => {
+  describe('blockedOnIssues', () => {
     const relatedIssues = {
       ['proj:1']: {
         localId: 1,
@@ -391,56 +411,74 @@ describe('issue', () => {
         labelRefs: [],
       },
     };
-    const stateNoReferences = {issue: {
-      currentIssue: {
-        blockedOnIssueRefs: [{localId: 1, projectName: 'proj'}],
-      },
-      relatedIssues: {},
-    }};
-    assert.deepEqual(issue.blockedOnIssues(stateNoReferences),
-        [{localId: 1, projectName: 'proj'}],
-    );
 
-    const stateNoIssues = {issue: {
-      currentIssue: {
-        blockedOnIssueRefs: [],
-      },
-      relatedIssues: relatedIssues,
-    }};
-    assert.deepEqual(issue.blockedOnIssues(stateNoIssues), []);
+    it('returns references when no issue data', () => {
+      const stateNoReferences = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockedOnIssueRefs: [{localId: 1, projectName: 'proj'}],
+          },
+          {relatedIssues: {}},
+      );
+      assert.deepEqual(issue.blockedOnIssues(stateNoReferences),
+          [{localId: 1, projectName: 'proj'}],
+      );
+    });
 
-    const stateIssuesWithReferences = {issue: {
-      currentIssue: {
-        blockedOnIssueRefs: [
-          {localId: 1, projectName: 'proj'},
-          {localId: 332, projectName: 'chromium'},
-        ],
-      },
-      relatedIssues: relatedIssues,
-    }};
-    assert.deepEqual(issue.blockedOnIssues(stateIssuesWithReferences),
-        [
-          {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
-          {localId: 332, projectName: 'chromium', labelRefs: []},
-        ]);
+    it('returns empty when no blocking issues', () => {
+      const stateNoIssues = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockedOnIssueRefs: [],
+          },
+          {relatedIssues},
+      );
+      assert.deepEqual(issue.blockedOnIssues(stateNoIssues), []);
+    });
 
-    const stateIssuesWithFederatedReferences = {issue: {
-      currentIssue: {
-        blockedOnIssueRefs: [
-          {localId: 1, projectName: 'proj'},
-          {extIdentifier: 'b/1234'},
-        ],
-      },
-      relatedIssues: relatedIssues,
-    }};
-    assert.deepEqual(issue.blockedOnIssues(stateIssuesWithFederatedReferences),
-        [
-          {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
-          {extIdentifier: 'b/1234'},
-        ]);
+    it('returns full issues when deferenced data present', () => {
+      const stateIssuesWithReferences = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockedOnIssueRefs: [
+              {localId: 1, projectName: 'proj'},
+              {localId: 332, projectName: 'chromium'},
+            ],
+          },
+          {relatedIssues},
+      );
+      assert.deepEqual(issue.blockedOnIssues(stateIssuesWithReferences),
+          [
+            {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
+            {localId: 332, projectName: 'chromium', labelRefs: []},
+          ]);
+    });
+
+    it('returns federated references', () => {
+      const stateIssuesWithFederatedReferences = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockedOnIssueRefs: [
+              {localId: 1, projectName: 'proj'},
+              {extIdentifier: 'b/1234'},
+            ],
+          },
+          {relatedIssues},
+      );
+      assert.deepEqual(
+          issue.blockedOnIssues(stateIssuesWithFederatedReferences),
+          [
+            {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
+            {extIdentifier: 'b/1234'},
+          ]);
+    });
   });
 
-  it('sortedBlockedOn', () => {
+  describe('sortedBlockedOn', () => {
     const relatedIssues = {
       ['proj:1']: {
         localId: 1,
@@ -468,78 +506,104 @@ describe('issue', () => {
         statusRef: {meansOpen: true},
       },
     };
-    const stateNoReferences = {issue: {
-      currentIssue: {
-        blockedOnIssueRefs: [
-          {localId: 3, projectName: 'proj'},
-          {localId: 1, projectName: 'proj'},
-        ],
-      },
-      relatedIssues: {},
-    }};
-    assert.deepEqual(issue.sortedBlockedOn(stateNoReferences), [
-      {localId: 3, projectName: 'proj'},
-      {localId: 1, projectName: 'proj'},
-    ]);
-    const stateReferences = {issue: {
-      currentIssue: {
-        blockedOnIssueRefs: [
-          {localId: 3, projectName: 'proj'},
-          {localId: 1, projectName: 'proj'},
-        ],
-      },
-      relatedIssues: relatedIssues,
-    }};
-    assert.deepEqual(issue.sortedBlockedOn(stateReferences), [
-      {localId: 1, projectName: 'proj', statusRef: {meansOpen: true}},
-      {localId: 3, projectName: 'proj', statusRef: {meansOpen: false}},
-    ]);
-    const statePreservesArrayOrder = {issue: {
-      currentIssue: {
-        blockedOnIssueRefs: [
-          {localId: 5, projectName: 'proj'}, // Closed
-          {localId: 1, projectName: 'proj'}, // Open
-          {localId: 4, projectName: 'proj'}, // Closed
-          {localId: 3, projectName: 'proj'}, // Closed
-          {localId: 332, projectName: 'chromium'}, // Open
-        ],
-      },
-      relatedIssues: relatedIssues,
-    }};
-    assert.deepEqual(issue.sortedBlockedOn(statePreservesArrayOrder),
-        [
-          {localId: 1, projectName: 'proj', statusRef: {meansOpen: true}},
-          {localId: 332, projectName: 'chromium', statusRef: {meansOpen: true}},
-          {localId: 5, projectName: 'proj', statusRef: {meansOpen: false}},
-          {localId: 4, projectName: 'proj', statusRef: {meansOpen: false}},
-          {localId: 3, projectName: 'proj', statusRef: {meansOpen: false}},
-        ],
-    );
+
+    it('does not sort references when no issue data', () => {
+      const stateNoReferences = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockedOnIssueRefs: [
+              {localId: 3, projectName: 'proj'},
+              {localId: 1, projectName: 'proj'},
+            ],
+          },
+          {relatedIssues: {}},
+      );
+      assert.deepEqual(issue.sortedBlockedOn(stateNoReferences), [
+        {localId: 3, projectName: 'proj'},
+        {localId: 1, projectName: 'proj'},
+      ]);
+    });
+
+    it('sorts open issues first when issue data available', () => {
+      const stateReferences = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockedOnIssueRefs: [
+              {localId: 3, projectName: 'proj'},
+              {localId: 1, projectName: 'proj'},
+            ],
+          },
+          {relatedIssues},
+      );
+      assert.deepEqual(issue.sortedBlockedOn(stateReferences), [
+        {localId: 1, projectName: 'proj', statusRef: {meansOpen: true}},
+        {localId: 3, projectName: 'proj', statusRef: {meansOpen: false}},
+      ]);
+    });
+
+    it('preserves original order on ties', () => {
+      const statePreservesArrayOrder = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            blockedOnIssueRefs: [
+              {localId: 5, projectName: 'proj'}, // Closed
+              {localId: 1, projectName: 'proj'}, // Open
+              {localId: 4, projectName: 'proj'}, // Closed
+              {localId: 3, projectName: 'proj'}, // Closed
+              {localId: 332, projectName: 'chromium'}, // Open
+            ],
+          },
+          {relatedIssues},
+      );
+      assert.deepEqual(issue.sortedBlockedOn(statePreservesArrayOrder),
+          [
+            {localId: 1, projectName: 'proj', statusRef: {meansOpen: true}},
+            {localId: 332, projectName: 'chromium',
+              statusRef: {meansOpen: true}},
+            {localId: 5, projectName: 'proj', statusRef: {meansOpen: false}},
+            {localId: 4, projectName: 'proj', statusRef: {meansOpen: false}},
+            {localId: 3, projectName: 'proj', statusRef: {meansOpen: false}},
+          ],
+      );
+    });
   });
 
-  it('mergedInto', () => {
-    assert.deepEqual(issue.mergedInto(wrapIssue()), {});
-    assert.deepEqual(issue.mergedInto(wrapIssue({
-      mergedIntoIssueRef: {localId: 22, projectName: 'proj'},
-    })), {
-      localId: 22,
-      projectName: 'proj',
+  describe('mergedInto', () => {
+    it('empty', () => {
+      assert.deepEqual(issue.mergedInto(wrapIssue()), {});
     });
 
-    const merged = issue.mergedInto({
-      issue: {
-        currentIssue: {
-          mergedIntoIssueRef: {localId: 22, projectName: 'proj'},
-        },
-        relatedIssues: {
-          ['proj:22']: {localId: 22, projectName: 'proj', summary: 'test'},
-        },
-      },
+    it('gets mergedInto ref for viewed issue', () => {
+      const state = issue.mergedInto(wrapIssue({
+        projectName: 'project',
+        localId: 123,
+        mergedIntoIssueRef: {localId: 22, projectName: 'proj'},
+      }));
+      assert.deepEqual(state, {
+        localId: 22,
+        projectName: 'proj',
+      });
     });
-    assert.deepEqual(merged, {
-      localId: 22,
-      projectName: 'proj',
-      summary: 'test',
+
+    it('gets full mergedInto issue data when it exists in the store', () => {
+      const state = wrapIssue(
+          {
+            projectName: 'project',
+            localId: 123,
+            mergedIntoIssueRef: {localId: 22, projectName: 'proj'},
+          }, {
+            relatedIssues: {
+              ['proj:22']: {localId: 22, projectName: 'proj', summary: 'test'},
+            },
+          });
+      assert.deepEqual(issue.mergedInto(state), {
+        localId: 22,
+        projectName: 'proj',
+        summary: 'test',
+      });
     });
   });
 
@@ -655,6 +719,16 @@ describe('issue', () => {
 
     afterEach(() => {
       prpcCall.restore();
+    });
+
+    it('viewIssue creates action with issueRef', () => {
+      assert.deepEqual(
+          issue.viewIssue({projectName: 'proj', localId: 123}),
+          {
+            type: issue.VIEW_ISSUE,
+            issueRef: {projectName: 'proj', localId: 123},
+          },
+      );
     });
 
     it('predictComponent sends prediction request', async () => {
@@ -1091,10 +1165,30 @@ describe('issue', () => {
 });
 
 /**
- * Return a container object wrapping input
- * @param {Object=} currentIssue
+ * Return an initial Redux state with a given viewed issue.
+ * @param {Issue=} viewedIssue The viewed issue.
+ * @param {Object=} otherValues Any other state values that need
+ *   to be initialized.
  * @return {Object}
  */
-function wrapIssue(currentIssue) {
-  return {issue: {currentIssue: {...currentIssue}}};
+function wrapIssue(viewedIssue, otherValues = {}) {
+  if (!viewedIssue) {
+    return {
+      issue: {
+        issuesByRefString: {},
+        ...otherValues,
+      },
+    };
+  }
+
+  const ref = issueRefToString(viewedIssue);
+  return {
+    issue: {
+      viewedIssueRef: ref,
+      issuesByRefString: {
+        [ref]: {...viewedIssue},
+      },
+      ...otherValues,
+    },
+  };
 }

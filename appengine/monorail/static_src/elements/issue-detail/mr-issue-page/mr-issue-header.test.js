@@ -26,16 +26,14 @@ describe('mr-issue-header', () => {
     assert.instanceOf(element, MrIssueHeader);
   });
 
-  it('updating issue id changes header', function() {
-    assert.equal(issue.viewedIssueRef(store.getState()).localId, 0);
-    store.dispatch(issue.setIssueRef(1));
-    assert.equal(issue.viewedIssueRef(store.getState()).localId, 1);
-    store.dispatch({type: issue.FETCH_SUCCESS, issue: {summary: 'test'}});
-    assert.deepEqual(issue.viewedIssue(store.getState()), {summary: 'test'});
-    // TODO(zhangtiff): Figure out how to properly test
-    // state changes propagating to the element. As is, state
-    // changes don't seem to actually make it to the element.
-    // assert.deepEqual(element.issue, {summary: 'test'});
+  it('updating issue id changes header', () => {
+    store.dispatch({type: issue.VIEW_ISSUE,
+      issueRef: {localId: 1, projectName: 'test'}});
+    store.dispatch({type: issue.FETCH_SUCCESS,
+      issue: {localId: 1, projectName: 'test', summary: 'test'}});
+
+    assert.deepEqual(element.issue, {localId: 1, projectName: 'test',
+      summary: 'test'});
   });
 
   it('_issueOptions toggles spam', () => {

@@ -147,47 +147,50 @@ describe('componentRefsToStrings', () => {
 describe('issueStringToRef', () => {
   it('converts issue default project', () => {
     assert.deepEqual(
-        issueStringToRef('proj', '1234'),
+        issueStringToRef('1234', 'proj'),
         {projectName: 'proj', localId: 1234});
   });
 
   it('converts issue with project', () => {
     assert.deepEqual(
-        issueStringToRef('proj', 'foo:1234'),
+        issueStringToRef('foo:1234', 'proj'),
         {projectName: 'foo', localId: 1234});
   });
 
   it('converts external issue references', () => {
     assert.deepEqual(
-        issueStringToRef('proj', 'b/123456'),
+        issueStringToRef('b/123456', 'proj'),
         {extIdentifier: 'b/123456'});
   });
 
   it('throws on invalid input', () => {
-    assert.throws(() => issueStringToRef('proj', 'foo'));
+    assert.throws(() => issueStringToRef('foo', 'proj'));
   });
 });
 
 describe('issueStringToBlockingRef', () => {
   it('converts issue default project', () => {
     assert.deepEqual(
-        issueStringToBlockingRef('proj', 1, '1234'),
+        issueStringToBlockingRef({projectName: 'proj', localId: 1}, '1234'),
         {projectName: 'proj', localId: 1234});
   });
 
   it('converts issue with project', () => {
     assert.deepEqual(
-        issueStringToBlockingRef('proj', 1, 'foo:1234'),
+        issueStringToBlockingRef({projectName: 'proj', localId: 1}, 'foo:1234'),
         {projectName: 'foo', localId: 1234});
   });
 
   it('throws on invalid input', () => {
-    assert.throws(() => issueStringToBlockingRef('proj', 1, 'foo'));
+    assert.throws(() => issueStringToBlockingRef(
+        {projectName: 'proj', localId: 1}, 'foo'));
   });
 
   it('throws when blocking an issue on itself', () => {
-    assert.throws(() => issueStringToBlockingRef('proj', 123, 'proj:123'));
-    assert.throws(() => issueStringToBlockingRef('proj', 123, '123'));
+    assert.throws(() => issueStringToBlockingRef(
+        {projectName: 'proj', localId: 123}, 'proj:123'));
+    assert.throws(() => issueStringToBlockingRef(
+        {projectName: 'proj', localId: 123}, '123'));
   });
 });
 

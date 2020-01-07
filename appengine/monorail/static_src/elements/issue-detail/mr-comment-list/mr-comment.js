@@ -204,7 +204,7 @@ export class MrComment extends LitElement {
           ${_issuesForAmendment(delta, this.comment.projectName).map((issue) => html`
             <mr-issue-link
               projectName=${this.comment.projectName}
-              .issue=${issue.issue}
+              .issue=${issue.viewedIssue}
               text=${issue.text}
             ></mr-issue-link>
           `)}

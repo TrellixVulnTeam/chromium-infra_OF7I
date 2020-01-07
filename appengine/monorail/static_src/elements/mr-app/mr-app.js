@@ -357,6 +357,12 @@ export class MrApp extends connectStore(LitElement) {
   _selectProject(ctx, next) {
     store.dispatch(project.select(ctx.params.project));
     store.dispatch(project.fetch(ctx.params.project));
+
+    // TODO(crbug.com/monorail/5828): Remove this once the old autocomplete
+    // code is deprecated.
+    // eslint-disable-next-line new-cap
+    window.TKR_fetchOptions(ctx.params.project);
+
     next();
   }
 
@@ -372,8 +378,12 @@ export class MrApp extends connectStore(LitElement) {
     await import(/* webpackChunkName: "mr-issue-page" */
         '../issue-detail/mr-issue-page/mr-issue-page.js');
 
-    store.dispatch(issue.setIssueRef(
-        Number.parseInt(ctx.queryParams.id), ctx.params.project));
+    const issueRef = {
+      localId: Number.parseInt(ctx.queryParams.id),
+      projectName: ctx.params.project,
+    };
+    store.dispatch(issue.viewIssue(issueRef));
+    store.dispatch(issue.fetchIssuePageData(issueRef));
     this.page = 'detail';
     next();
   }

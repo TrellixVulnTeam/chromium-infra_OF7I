@@ -5,6 +5,7 @@
 import {assert} from 'chai';
 import {MrCue} from './mr-cue.js';
 import page from 'page';
+import {rootReducer} from 'reducers/base.js';
 
 let element;
 
@@ -27,10 +28,9 @@ describe('mr-cue', () => {
   });
 
   it('stateChanged', () => {
-    const state = {
+    const state = rootReducer({
       user: {currentUser: {prefs: new Map(), prefsLoaded: false}},
-      issue: {},
-    };
+    }, {});
     element.stateChanged(state);
     assert.deepEqual(element.prefs, new Map());
     assert.isFalse(element.prefsLoaded);

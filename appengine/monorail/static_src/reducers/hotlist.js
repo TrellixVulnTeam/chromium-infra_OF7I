@@ -175,7 +175,7 @@ export const viewedHotlistItems = createSelector([hotlistItems, hotlistRef],
 /**
  * Action creator to set the currently viewed Hotlist.
  * @param {HotlistRef} hotlistRef A reference to the Hotlist to select.
- * @return {function(function): void}
+ * @return {function(function): Promise<void>}
  */
 export const select = (hotlistRef) => {
   return (dispatch) => dispatch({type: SELECT, hotlistRef});

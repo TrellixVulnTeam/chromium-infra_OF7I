@@ -715,7 +715,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /** @override */
   updated(changedProperties) {
     if (changedProperties.has('initialCursor')) {
-      const ref = issueStringToRef(this.projectName, this.initialCursor);
+      const ref = issueStringToRef(this.initialCursor, this.projectName);
       const row = this._getRowFromIssueRef(ref);
       if (row) {
         row.focus();
@@ -800,7 +800,7 @@ export class MrIssueList extends connectStore(LitElement) {
       return this._localCursor;
     }
     if (this.initialCursor) {
-      return issueStringToRef(this.projectName, this.initialCursor);
+      return issueStringToRef(this.initialCursor, this.projectName);
     }
     return {};
   }
@@ -1037,8 +1037,8 @@ export class MrIssueList extends connectStore(LitElement) {
    * @param {HTMLTableRowElement} row
    */
   _setRowAsCursor(row) {
-    this._localCursor = issueStringToRef(this.projectName,
-        row.dataset.issueRef);
+    this._localCursor = issueStringToRef(row.dataset.issueRef,
+        this.projectName);
     row.focus();
   }
 

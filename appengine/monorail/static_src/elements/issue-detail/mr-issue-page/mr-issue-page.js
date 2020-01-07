@@ -178,6 +178,10 @@ export class MrIssuePage extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * Render the issue.
+   * @return {TemplateResult}
+   */
   _renderIssue() {
     const issueIsEmpty = !this.issue || !this.issue.localId;
     const movedToRef = this.issue.movedToRef;
@@ -236,7 +240,7 @@ export class MrIssuePage extends connectStore(LitElement) {
       return html`
         <div
           class="container-outside"
-          @open-dialog=${this._onOpenDialog}
+          @open-dialog=${this._openDialog}
           id="issue"
         >
           <aside class="metadata-container">
@@ -337,32 +341,18 @@ export class MrIssuePage extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
-    if (changedProperties.has('issueRef')) {
-      if (this.issueRef.localId && this.issueRef.projectName &&
-          !this.fetchingIssue) {
-        // Reload the issue data when the id changes.
-        store.dispatch(issue.fetchIssuePageData({issueRef: this.issueRef}));
-      }
-
-      const oldRef = changedProperties.get('issueRef');
-      const oldProjectName = oldRef && oldRef.projectName;
-      if (this.issueRef.projectName && oldProjectName !==
-          this.issueRef.projectName) {
-        store.dispatch(project.fetch(this.issueRef.projectName));
-
-        // TODO(ehmaldonado): Remove once the old autocomplete code is
-        // deprecated.
-        // eslint-disable-next-line new-cap
-        window.TKR_fetchOptions(this.issueRef.projectName);
-      }
-    }
-
     if (changedProperties.has('issueRef') || changedProperties.has('issue')) {
       const title = this._pageTitle(this.issueRef, this.issue);
       store.dispatch(sitewide.setPageTitle(title));
     }
   }
 
+  /**
+   * Generates a title for the currently viewed page based on issue data.
+   * @param {IssueRef} issueRef
+   * @param {Issue} issue
+   * @return {string}
+   */
   _pageTitle(issueRef, issue) {
     const titlePieces = [];
     if (issueRef.localId) {
@@ -381,16 +371,23 @@ export class MrIssuePage extends connectStore(LitElement) {
     return titlePieces.join(' - ');
   }
 
-  _onOpenDialog(e) {
+  /**
+   * Opens a dialog with a specific ID based on an Event.
+   * @param {CustomEvent} e
+   */
+  _openDialog(e) {
     this.shadowRoot.querySelector('#' + e.detail.dialogId).open(e);
   }
 
+  /**
+   * Undeletes the current issue.
+   */
   _undeleteIssue() {
     prpcClient.call('monorail.Issues', 'DeleteIssue', {
       issueRef: this.issueRef,
       delete: false,
     }).then(() => {
-      store.dispatch(issue.fetchIssuePageData({issueRef: this.issueRef}));
+      store.dispatch(issue.fetchIssuePageData(this.issueRef));
     });
   }
 }

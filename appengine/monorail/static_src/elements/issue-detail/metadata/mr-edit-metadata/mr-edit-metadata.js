@@ -795,6 +795,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.showNicheFields = !this.showNicheFields;
   }
 
+  /**
+   * @return {IssueDelta}
+   * @throws {UserInputError}
+   */
   get delta() {
     try {
       this.error = '';
@@ -806,6 +810,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Generates a change between the initial Issue state and what the user
+   * inputted.
+   * @return {IssueDelta}
+   */
   _getDelta() {
     const result = {};
     const root = this.shadowRoot;
@@ -817,7 +826,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
       const statusDelta = statusInput.delta;
       if (statusDelta.mergedInto) {
         result.mergedIntoRef = issueStringToBlockingRef(
-            projectName, localId, statusDelta.mergedInto);
+            {projectName, localId}, statusDelta.mergedInto);
       }
       if (statusDelta.status) {
         result.status = statusDelta.status;
@@ -859,18 +868,20 @@ export class MrEditMetadata extends connectStore(LitElement) {
       }
 
       if (this._canEditIssue) {
+        const blockerAddFn = (refString) =>
+          issueStringToBlockingRef({projectName, localId}, refString);
+        const blockerRemoveFn = (refString) =>
+          issueStringToRef(refString, projectName);
         this._updateDeltaWithAddedAndRemoved(
             result, 'labels', 'labelRefs', labelStringToRef);
         this._updateDeltaWithAddedAndRemoved(
             result, 'components', 'compRefs', componentStringToRef);
         this._updateDeltaWithAddedAndRemoved(
             result, 'blockedOn', 'blockedOnRefs',
-            issueStringToBlockingRef.bind(null, projectName, localId),
-            issueStringToRef.bind(null, projectName));
+            blockerAddFn, blockerRemoveFn);
         this._updateDeltaWithAddedAndRemoved(
             result, 'blocking', 'blockingRefs',
-            issueStringToBlockingRef.bind(null, projectName, localId),
-            issueStringToRef.bind(null, projectName));
+            blockerAddFn, blockerRemoveFn);
       }
     }
 
@@ -886,6 +897,17 @@ export class MrEditMetadata extends connectStore(LitElement) {
     return result;
   }
 
+  /**
+   * Helper function for adding values for a single field to a delta.
+   * @param {IssueDelta} delta A delta Object that's edited in place.
+   * @param {string} fieldName Name of the field being edited.
+   * @param {string} key The key in the delta Object that changes will be
+   *   saved in.
+   * @param {function(string): any} addFn A function to specify how to format
+   *   the message for a given added field.
+   * @param {function(string): any} removeFn A function to specify how to format
+   *   the message for a given removed field.
+   */
   _updateDeltaWithAddedAndRemoved(delta, fieldName, key, addFn, removeFn) {
     const input = this.shadowRoot.querySelector(`#${fieldName}Input`);
     if (!input) return;

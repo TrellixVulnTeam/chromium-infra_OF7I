@@ -46,7 +46,7 @@ const reducer = combineReducers({
  * @param {AnyAction} action
  * @return {any}
  */
-function rootReducer(state, action) {
+export function rootReducer(state, action) {
   if (action.type === RESET_STATE) {
     state = undefined;
   }

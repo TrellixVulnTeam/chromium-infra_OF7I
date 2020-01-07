@@ -373,7 +373,7 @@ export const fetchingConfig = (state) => {
 /**
  * Action creator to set the currently viewed Project.
  * @param {string} projectName The name of the Project to select.
- * @return {function(function): void}
+ * @return {function(function): Promise<void>}
  */
 export const select = (projectName) => {
   return (dispatch) => dispatch({type: SELECT, projectName});
