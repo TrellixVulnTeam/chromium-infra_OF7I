@@ -43,6 +43,7 @@ disable=
   locally-enabled,
   logging-not-lazy,
   missing-docstring,
+  missing-return-type-doc, # Noisy return type warning from docparams plugin.
   no-self-use,
   protected-access,
   reimported,
@@ -252,3 +253,15 @@ max-public-methods=20
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
 overgeneral-exceptions=Exception
+
+
+[PLUGINS]
+
+# Validate a docstring's "Args:" and "Returns:" sections. This requires that
+# each param entry be of the following form:
+#
+#   foo (SomeType or OtherType): This is the description.
+#
+# Note the "or" separating different possible types. A comma can also be used
+# instead of "or".
+load-plugins=pylint.extensions.docparams
