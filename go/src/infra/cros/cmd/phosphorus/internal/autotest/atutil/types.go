@@ -153,7 +153,7 @@ type HostTest struct {
 	HostlessTest
 	Hosts             []string
 	LocalOnlyHostInfo bool
-	IsolatedOutputDir string
+	OffloadDir        string
 	ParentJobID       int
 	RequireSSP        bool
 	TestSourceBuild   string
@@ -165,7 +165,7 @@ func (t *HostTest) AutoservArgs() *autotest.AutoservArgs {
 	args.HostInfoSubDir = hostInfoSubDir
 	args.Hosts = t.Hosts
 	args.LocalOnlyHostInfo = t.LocalOnlyHostInfo
-	args.OffloadDir = t.IsolatedOutputDir
+	args.OffloadDir = t.OffloadDir
 	args.ParentJobID = t.ParentJobID
 	args.RequireSSP = t.RequireSSP
 	args.TestSourceBuild = t.TestSourceBuild

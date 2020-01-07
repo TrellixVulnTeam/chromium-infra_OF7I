@@ -21,7 +21,7 @@ import (
 
 const autoservRelpath = "server/autoserv"
 
-const offloadPath = "LOGDATA_DIR"
+const offloadPath = "SYNCHRONOUS_OFFLOAD_DIR"
 
 // AutoservArgs is the arguments for creating an autoserv command.
 type AutoservArgs struct {

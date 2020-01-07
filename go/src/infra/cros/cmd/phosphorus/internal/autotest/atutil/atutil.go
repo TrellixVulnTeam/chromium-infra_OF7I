@@ -94,7 +94,7 @@ func TKOParse(c autotest.Config, resultsDir string, w io.Writer) (failed int, er
 	return n, nil
 }
 
-// Create client-usable dir for file offloading to Isolate, if given a path
+// Create client-usable dir for file offloading to GS, if given a path
 // If not given a path, noop, including for tasks where a path would not
 // be meaningful
 func createOutputDir(a *autotest.AutoservArgs) error {
