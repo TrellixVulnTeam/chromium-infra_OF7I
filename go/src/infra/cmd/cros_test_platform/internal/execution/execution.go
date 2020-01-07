@@ -8,12 +8,10 @@ package execution
 import (
 	"context"
 
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cmd/cros_test_platform/internal/execution/internal/autotest"
 	"infra/cmd/cros_test_platform/internal/execution/internal/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
@@ -38,10 +36,4 @@ func NewSkylabRunner(ctx context.Context, workerConfig *config.Config_SkylabWork
 		}
 	}
 	return skylab.NewRunner(ts...), nil
-}
-
-// NewAutotestRunner returns a Runner that will execute the given tests in
-// the autotest environment.
-func NewAutotestRunner(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, config *config.Config_AutotestBackend) Runner {
-	return autotest.New(tests, params, config)
 }
