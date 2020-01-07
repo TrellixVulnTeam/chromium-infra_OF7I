@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -16,13 +17,17 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/isolatedclient"
+	"go.chromium.org/luci/common/logging"
 
 	"infra/cmd/cros_test_platform/internal/execution"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/isolate/getter"
+	"infra/libs/skylab/common/errctx"
+	"infra/libs/skylab/swarming"
 )
 
 // SkylabExecute subcommand: Run a set of enumerated tests against skylab backend.
@@ -32,13 +37,23 @@ var SkylabExecute = &subcommands.Command{
 	LongDesc:  `Run a set of enumerated tests against skylab backend.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &skylabExecuteRun{}
-		c.addFlags()
+		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path to JSON ExecuteRequests to read.")
+		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to JSON ExecuteResponses to write.")
+		c.Flags.BoolVar(&c.tagged, "tagged", true, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
 }
 
 type skylabExecuteRun struct {
-	commonExecuteRun
+	subcommands.CommandRunBase
+	inputPath  string
+	outputPath string
+
+	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
+	// - recipe has transitioned to using tagged requests
+	// - autotest-execute has been deleted (this just reduces the work required).
+	tagged      bool
+	orderedTags []string
 }
 
 func (c *skylabExecuteRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -53,6 +68,18 @@ func (c *skylabExecuteRun) Run(a subcommands.Application, args []string, env sub
 		fmt.Fprintf(a.GetErr(), "%s\n", err)
 	}
 	return exitCode(err)
+}
+
+func (c *skylabExecuteRun) validateArgs() error {
+	if c.inputPath == "" {
+		return fmt.Errorf("-input_json not specified")
+	}
+
+	if c.outputPath == "" {
+		return fmt.Errorf("-output_json not specified")
+	}
+
+	return nil
 }
 
 func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
@@ -113,12 +140,44 @@ func sameHost(urlA, urlB string) bool {
 	return a.Host == b.Host
 }
 
+func containsSomeResponse(rs []*steps.ExecuteResponse) bool {
+	for _, r := range rs {
+		if r != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *skylabExecuteRun) readRequests() ([]*steps.ExecuteRequest, error) {
+	var rs steps.ExecuteRequests
+	if err := readRequest(c.inputPath, &rs); err != nil {
+		return nil, err
+	}
+	if !c.tagged {
+		return rs.Requests, nil
+	}
+	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
+	c.orderedTags = ts
+	return reqs, nil
+}
+
+func (c *skylabExecuteRun) unzipTaggedRequests(trs map[string]*steps.ExecuteRequest) ([]string, []*steps.ExecuteRequest) {
+	var ts []string
+	var rs []*steps.ExecuteRequest
+	for t, r := range trs {
+		ts = append(ts, t)
+		rs = append(rs, r)
+	}
+	return ts, rs
+}
+
 func (c *skylabExecuteRun) validateRequests(requests []*steps.ExecuteRequest) error {
 	if len(requests) == 0 {
 		return errors.Reason("zero requests").Err()
 	}
 	for _, r := range requests {
-		if err := c.validateRequestCommon(r); err != nil {
+		if err := c.validateRequest(r); err != nil {
 			return errors.Annotate(err, "validate request %s", r).Err()
 		}
 	}
@@ -144,6 +203,16 @@ func (c *skylabExecuteRun) validateRequests(requests []*steps.ExecuteRequest) er
 	return nil
 }
 
+func (c *skylabExecuteRun) validateRequest(request *steps.ExecuteRequest) error {
+	if request == nil {
+		return fmt.Errorf("nil request")
+	}
+	if request.Config == nil {
+		return fmt.Errorf("nil request.config")
+	}
+	return nil
+}
+
 func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 	if cfg.SkylabSwarming == nil {
 		return fmt.Errorf("nil request.config.skylab_swarming")
@@ -155,6 +224,33 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 		return fmt.Errorf("nil request.config.skylab_worker")
 	}
 	return nil
+}
+func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner execution.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {
+	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("cros_test_platform request timeout (after %s)", maximumDuration))
+	defer cancel(context.Canceled)
+	err := runner.LaunchAndWait(ctx, t, gf)
+	return runner.Responses(t), err
+}
+
+func (c *skylabExecuteRun) writeResponsesWithError(resps []*steps.ExecuteResponse, err error) error {
+	r := &steps.ExecuteResponses{
+		Responses: resps,
+	}
+	if c.tagged {
+		r.TaggedResponses = c.zipTaggedResponses(c.orderedTags, resps)
+	}
+	return writeResponseWithError(c.outputPath, r, err)
+}
+
+func (c *skylabExecuteRun) zipTaggedResponses(ts []string, rs []*steps.ExecuteResponse) map[string]*steps.ExecuteResponse {
+	if len(ts) != len(rs) {
+		panic(fmt.Sprintf("got %d responses for %d tags (%s)", len(rs), len(ts), ts))
+	}
+	m := make(map[string]*steps.ExecuteResponse)
+	for i := range ts {
+		m[ts[i]] = rs[i]
+	}
+	return m
 }
 
 func (c *skylabExecuteRun) getterFactory(conf *config.Config_Isolate) isolate.GetterFactory {
@@ -168,4 +264,33 @@ func (c *skylabExecuteRun) getterFactory(conf *config.Config_Isolate) isolate.Ge
 
 		return getter.New(isolateClient), nil
 	}
+}
+
+func httpClient(ctx context.Context, authJSONPath string) (*http.Client, error) {
+	// TODO(akeshet): Specify ClientID and ClientSecret fields.
+	options := auth.Options{
+		ServiceAccountJSONPath: authJSONPath,
+		Scopes:                 []string{auth.OAuthScopeEmail},
+	}
+	a := auth.NewAuthenticator(ctx, auth.SilentLogin, options)
+	h, err := a.Client()
+	if err != nil {
+		return nil, errors.Annotate(err, "create http client").Err()
+	}
+	return h, nil
+}
+
+func swarmingClient(ctx context.Context, c *config.Config_Swarming) (*swarming.Client, error) {
+	logging.Debugf(ctx, "Creating swarming client from config %v", c)
+	hClient, err := httpClient(ctx, c.AuthJsonPath)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := swarming.New(ctx, hClient, c.Server)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
