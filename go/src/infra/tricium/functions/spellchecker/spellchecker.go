@@ -176,8 +176,12 @@ func main() {
 		}
 	}
 
-	// Also check the commit message.
-	analyzeFile(bufio.NewScanner(strings.NewReader(input.CommitMessage)), "", true, nil, results)
+	// In the commit description, people's names are may be listed in some
+	// footer values, values, including: Commit-Queue, Auto-Submit,
+	// Reviewed-by, etc. Here we check the commit message but without the
+	// footers, to avoid some false positives.
+	message := stripFooterParagraph(input.CommitMessage)
+	analyzeFile(bufio.NewScanner(strings.NewReader(message)), "", true, nil, results)
 
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, results)
@@ -185,6 +189,31 @@ func main() {
 		log.Panicf("Failed to write RESULTS data: %v", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
+}
+
+// stripFooterParagraph removes any footer flags from a commit description.
+//
+// The behavior is meant to be consistent with the footer parsing behavior in
+// depot_tools/git_footers.py. Specifically, all footer flags are located in
+// the last paragraph, unless there is only one paragraph, in which case there
+// are no footers.
+//
+// This function doesn't remove any characters from elsewhere in the message
+// besides the end, since that might lead to incorrect comment line or column
+// numbers.
+func stripFooterParagraph(message string) string {
+	lines := strings.Split(strings.TrimRightFunc(message, unicode.IsSpace), "\n")
+	i := len(lines) - 1
+	for ; i >= 0; i-- {
+		if len(strings.TrimSpace(lines[i])) == 0 {
+			break
+		}
+	}
+	if i == -1 {
+		// Only one paragraph.
+		return message
+	}
+	return strings.Join(lines[:i], "\n")
 }
 
 // Analyzes file line by line to find misspellings within comments.

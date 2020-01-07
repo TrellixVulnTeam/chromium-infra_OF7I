@@ -735,3 +735,23 @@ func TestCommentCaseMatching(t *testing.T) {
 		So(matchCase("don't", "Target"), ShouldEqual, "Don't")
 	})
 }
+
+func TestStripLastParagraph(t *testing.T) {
+	Convey("stripFooterParagraph removes last paragraph with footers", t, func() {
+		So(
+			stripFooterParagraph("Summary\n\ntext\n\nReviewed-by: Personn Naime\n\n"),
+			ShouldEqual, "Summary\n\ntext")
+	})
+
+	Convey("stripFooterParagraph doesn't remove single-paragraph message", t, func() {
+		So(
+			stripFooterParagraph("Summary\ntext\n"),
+			ShouldEqual, "Summary\ntext\n")
+	})
+
+	Convey("stripFooterParagraph handles non-empty 'blank lines'", t, func() {
+		So(
+			stripFooterParagraph("Summary\n \nChange-Id: I12342\nBug: 1234\n"),
+			ShouldEqual, "Summary")
+	})
+}
