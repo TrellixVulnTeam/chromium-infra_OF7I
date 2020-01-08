@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/logging/gologger"
 
 	"infra/cmd/stable_version2/internal/cmd"
+	"infra/cmd/stable_version2/internal/cmd/version"
 	"infra/cmd/stable_version2/internal/site"
 )
 
@@ -33,6 +34,8 @@ func getApplication() *cli.Application {
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
 			subcommands.Section("Internal use (not for direct human use)"),
 			cmd.UpdateWithOmaha,
+			subcommands.Section("Misc"),
+			version.Cmd,
 		},
 	}
 }
