@@ -190,9 +190,13 @@ func (m *AdminService) GetHost() string {
 }
 
 type Gitiles struct {
-	Host                 string   `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Project              string   `protobuf:"bytes,2,opt,name=project,proto3" json:"project,omitempty"`
-	Committish           string   `protobuf:"bytes,3,opt,name=committish,proto3" json:"committish,omitempty"`
+	// The gitiles host name, e.g. 'chrome-internal.googlesource.com'.
+	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	// The project (repo) name, e.g. 'chromeos/infra/config'.
+	Project string `protobuf:"bytes,2,opt,name=project,proto3" json:"project,omitempty"`
+	// The commit hash/branch to be checked out, e.g. 'refs/heads/master'.
+	Committish string `protobuf:"bytes,3,opt,name=committish,proto3" json:"committish,omitempty"`
+	// The path of the file to be downloaded, e.g. 'path/to/file.cfg'.
 	Path                 string   `protobuf:"bytes,4,opt,name=path,proto3" json:"path,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`

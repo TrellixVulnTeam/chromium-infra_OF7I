@@ -82,11 +82,13 @@ message UpdateDutsStatusResponse {
 }
 
 message UpdateCrosDevicesSetupRequest {
-
+  repeated lab.ChromeOSDevice devices = 1;
+  string reason = 2;
 }
 
 message UpdateCrosDevicesSetupResponse {
-
+  repeated DeviceOpResult updated_devices = 1;
+  repeated DeviceOpResult failed_devices = 2;
 }
 
 message DeleteCrosDevicesRequest {
