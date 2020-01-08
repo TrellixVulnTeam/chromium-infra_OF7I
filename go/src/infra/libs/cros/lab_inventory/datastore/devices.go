@@ -234,51 +234,99 @@ func GetAllDevices(ctx context.Context) (DeviceOpResults, error) {
 	return DeviceOpResults(result), nil
 }
 
-// UpdateDeviceSetup updates the content of lab.ChromeOSDevice.
-func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (DeviceOpResults, error) {
-	updatingResults := make(DeviceOpResults, len(devices))
-	entities := make([]DeviceEntity, len(devices))
-	for i, d := range devices {
-		updatingResults[i].Data = devices[i]
-		updatingResults[i].Entity = &entities[i]
-		entities[i].ID = DeviceEntityID(d.GetId().GetValue())
-		entities[i].Parent = fakeAcestorKey(ctx)
+func updateEntities(ctx context.Context, opResults DeviceOpResults, additionalFilter func()) func(context.Context) error {
+	maxLen := len(opResults)
+	entities := make([]*DeviceEntity, maxLen)
+	for i := range opResults {
+		entities[i] = opResults[i].Entity
 	}
 	f := func(ctx context.Context) error {
 		if err := datastore.Get(ctx, entities); err != nil {
 			for i, e := range err.(errors.MultiError) {
-				updatingResults[i].logError(e)
+				opResults[i].logError(errors.Annotate(e, "failed to get entities").Err())
 			}
 		}
-
-		entitiesToUpdate := make([]*DeviceEntity, 0, len(devices))
-		entityIndexes := make([]int, 0, len(devices))
-		for i, r := range updatingResults {
+		if additionalFilter != nil {
+			additionalFilter()
+		}
+		entities = []*DeviceEntity{}
+		entityIndexes := make([]int, 0, maxLen)
+		updatedTime := time.Now().UTC()
+		for i, r := range opResults {
 			if r.Err != nil {
 				continue
 			}
-			labConfig, err := proto.Marshal(r.Data)
-			if err != nil {
-				r.logError(err)
+			if err := r.Entity.UpdatePayload(r.Data, updatedTime); err != nil {
+				r.logError(errors.Annotate(err, "failed to update payload").Err())
 				continue
 			}
-			r.Entity.LabConfig = labConfig
-			entitiesToUpdate = append(entitiesToUpdate, r.Entity)
+			entities = append(entities, r.Entity)
 			entityIndexes = append(entityIndexes, i)
 		}
-		if err := datastore.Put(ctx, entitiesToUpdate); err != nil {
+		if err := datastore.Put(ctx, entities); err != nil {
 			for i, e := range err.(errors.MultiError) {
-				if e == nil {
-					continue
-				}
-				updatingResults[entityIndexes[i]].logError(e)
+				opResults[entityIndexes[i]].logError(errors.Annotate(e, "failed to save entity to datastore").Err())
 			}
 		}
 		return nil
 	}
+	return f
+}
+
+// UpdateDeviceSetup updates the content of lab.ChromeOSDevice.
+func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (DeviceOpResults, error) {
+	updatingResults := make(DeviceOpResults, len(devices))
+	entities := make([]*DeviceEntity, len(devices))
+	for i, d := range devices {
+		entities[i] = &DeviceEntity{
+			ID:     DeviceEntityID(d.GetId().GetValue()),
+			Parent: fakeAcestorKey(ctx),
+		}
+		updatingResults[i].Data = devices[i]
+		updatingResults[i].Entity = entities[i]
+	}
+	f := updateEntities(ctx, updatingResults, nil)
+
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return updatingResults, err
 	}
-	// TODO (guocb) Track the change.
+	return updatingResults, nil
+}
+
+// UpdateDutsStatus updates dut status of testing related.
+func UpdateDutsStatus(ctx context.Context, states []*lab.DutState) (DeviceOpResults, error) {
+	maxLen := len(states)
+	updatingResults := make(DeviceOpResults, maxLen)
+	entities := make([]*DeviceEntity, maxLen)
+	// The Id must be a valid Id of DeviceUnderTest.
+	for i, s := range states {
+		entities[i] = &DeviceEntity{
+			ID:     DeviceEntityID(s.GetId().GetValue()),
+			Parent: fakeAcestorKey(ctx),
+		}
+		updatingResults[i].Data = states[i]
+		updatingResults[i].Entity = entities[i]
+	}
+	filter := func() {
+		// The returned device must be DeviceUnderTest.
+		var d lab.ChromeOSDevice
+		for i, e := range entities {
+			if err := e.GetCrosDeviceProto(&d); err != nil {
+				updatingResults[i].logError(errors.Annotate(err, "failed to get proto of entity %v", e).Err())
+				continue
+			}
+			if d.GetDut() == nil {
+				updatingResults[i].logError(errors.Reason("entity %v isn't a DUT", e).Err())
+				continue
+			}
+		}
+	}
+	// We cannot filter entities inside `updateEntities` as the filtering is
+	// after on the entity retrieving.
+	f := updateEntities(ctx, updatingResults, filter)
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return updatingResults, err
+	}
 	return updatingResults, nil
 }

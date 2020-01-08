@@ -245,3 +245,78 @@ func TestUpdateDeviceSetup(t *testing.T) {
 
 	})
 }
+
+func TestUpdateDutsStatus(t *testing.T) {
+	t.Parallel()
+
+	Convey("Update dut status in datastore", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+
+		devsToAdd := []*lab.ChromeOSDevice{
+			mockDut("dut1", "UUID:01", "labstation1"),
+			mockLabstation("labstation1", "UUID:02"),
+		}
+		_, err := AddDevices(ctx, devsToAdd)
+		So(err, ShouldBeNil)
+
+		datastore.GetTestable(ctx).Consistent(true)
+		Convey("Update status of non-existing dut", func() {
+			state := lab.DutState{Id: &lab.ChromeOSDeviceID{Value: "ghost"}}
+			result, err := UpdateDutsStatus(ctx, []*lab.DutState{
+				&state,
+				{Id: &lab.ChromeOSDeviceID{Value: "UUID:01"}},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			passed := result.Passed()
+			So(passed, ShouldHaveLength, 1)
+			So(passed[0].Entity.ID, ShouldEqual, "UUID:01")
+
+			failed := result.Failed()
+			So(failed, ShouldHaveLength, 1)
+			So(failed[0].Entity.ID, ShouldEqual, "ghost")
+		})
+		Convey("Update dut state", func() {
+			state := lab.DutState{
+				Id:    &lab.ChromeOSDeviceID{Value: "UUID:01"},
+				Servo: lab.PeripheralState_NOT_CONNECTED,
+			}
+			result, err := UpdateDutsStatus(ctx, []*lab.DutState{&state})
+			if err != nil {
+				t.Fatal(err)
+			}
+			passed := result.Passed()
+			So(passed, ShouldHaveLength, 1)
+			So(passed[0].Entity.ID, ShouldEqual, "UUID:01")
+
+			failed := result.Failed()
+			So(failed, ShouldBeEmpty)
+
+			// Read from datastore and verify the result.
+			s := DeviceEntity{ID: "UUID:01", Parent: fakeAcestorKey(ctx)}
+			if err := datastore.Get(ctx, &s); err != nil {
+				t.Errorf("cannot get dut state by id %v: %v", s, err)
+			}
+			var p lab.DutState
+			if err := s.GetDutStateProto(&p); err != nil {
+				t.Errorf("Cannot get proto message of dut state %v: %v", s, err)
+			}
+			So(p.GetServo(), ShouldEqual, lab.PeripheralState_NOT_CONNECTED)
+		})
+
+		Convey("Cannot update status of a labstation", func() {
+			state := lab.DutState{Id: &lab.ChromeOSDeviceID{Value: "UUID:02"}}
+			result, err := UpdateDutsStatus(ctx, []*lab.DutState{&state})
+			if err != nil {
+				t.Fatal(err)
+			}
+			passed := result.Passed()
+			So(passed, ShouldBeEmpty)
+
+			failed := result.Failed()
+			So(failed, ShouldHaveLength, 1)
+			So(failed[0].Entity.ID, ShouldEqual, "UUID:02")
+		})
+	})
+}
