@@ -19,20 +19,18 @@ import (
 const entityKind = "DevConfig"
 
 func getDeviceConfigIDStr(cfgid *device.ConfigId) string {
-	var platformID, modelID, variantID, brandID string
+	// TODO (guocb) Add `BranchID` as part of DeviceConfigID.
+	var platformID, modelID, variantID string
 	if v := cfgid.GetPlatformId(); v != nil {
-		platformID = v.GetValue()
+		platformID = strings.ToLower(v.GetValue())
 	}
 	if v := cfgid.GetModelId(); v != nil {
-		modelID = v.GetValue()
+		modelID = strings.ToLower(v.GetValue())
 	}
 	if v := cfgid.GetVariantId(); v != nil {
-		variantID = v.GetValue()
+		variantID = strings.ToLower(v.GetValue())
 	}
-	if v := cfgid.GetBrandId(); v != nil {
-		brandID = v.GetValue()
-	}
-	return strings.Join([]string{platformID, modelID, variantID, brandID}, ".")
+	return strings.Join([]string{platformID, modelID, variantID}, ".")
 
 }
 

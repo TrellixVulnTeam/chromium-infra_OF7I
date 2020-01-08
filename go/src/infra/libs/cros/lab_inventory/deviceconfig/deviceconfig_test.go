@@ -99,10 +99,10 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 
 	Convey("Test get device config from datastore", t, func() {
 		err := datastore.Put(ctx, []devcfgEntity{
-			{ID: "platform.model.variant.brand1"},
-			{ID: "platform.model.variant.brand2"},
+			{ID: "platform.model.variant1"},
+			{ID: "platform.model.variant2"},
 			{
-				ID:        "platform.model.variant.brand3",
+				ID:        "platform.model.variant3",
 				DevConfig: []byte("bad data"),
 			},
 		})
@@ -113,13 +113,13 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 				{
 					PlatformId: &device.PlatformId{Value: "platform"},
 					ModelId:    &device.ModelId{Value: "model"},
-					VariantId:  &device.VariantId{Value: "variant"},
+					VariantId:  &device.VariantId{Value: "variant1"},
 					BrandId:    &device.BrandId{Value: "brand1"},
 				},
 				{
 					PlatformId: &device.PlatformId{Value: "platform"},
 					ModelId:    &device.ModelId{Value: "model"},
-					VariantId:  &device.VariantId{Value: "variant"},
+					VariantId:  &device.VariantId{Value: "variant2"},
 					BrandId:    &device.BrandId{Value: "brand2"},
 				},
 			})
@@ -127,12 +127,25 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 			So(devcfg, ShouldHaveLength, 2)
 		})
 
+		Convey("Device id is case insensitive", func() {
+			devcfg, err := GetCachedConfig(ctx, []*device.ConfigId{
+				{
+					PlatformId: &device.PlatformId{Value: "PLATFORM"},
+					ModelId:    &device.ModelId{Value: "model"},
+					VariantId:  &device.VariantId{Value: "variant1"},
+					BrandId:    &device.BrandId{Value: "brand1"},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(devcfg, ShouldHaveLength, 1)
+		})
+
 		Convey("Data unmarshal error", func() {
 			_, err := GetCachedConfig(ctx, []*device.ConfigId{
 				{
 					PlatformId: &device.PlatformId{Value: "platform"},
 					ModelId:    &device.ModelId{Value: "model"},
-					VariantId:  &device.VariantId{Value: "variant"},
+					VariantId:  &device.VariantId{Value: "variant3"},
 					BrandId:    &device.BrandId{Value: "brand3"},
 				},
 			})
@@ -145,7 +158,7 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 				{
 					PlatformId: &device.PlatformId{Value: "platform"},
 					ModelId:    &device.ModelId{Value: "model"},
-					VariantId:  &device.VariantId{Value: "variant"},
+					VariantId:  &device.VariantId{Value: "variant-nonexisting"},
 					BrandId:    &device.BrandId{Value: "nonexisting"},
 				},
 			})
