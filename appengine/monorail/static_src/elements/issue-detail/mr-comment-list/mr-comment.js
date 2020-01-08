@@ -201,11 +201,11 @@ export class MrComment extends LitElement {
       <div class="issue-diff">
         ${(this.comment.amendments || []).map((delta) => html`
           <strong>${delta.fieldName}:</strong>
-          ${_issuesForAmendment(delta, this.comment.projectName).map((issue) => html`
+          ${_issuesForAmendment(delta, this.comment.projectName).map((issueForAmendment) => html`
             <mr-issue-link
               projectName=${this.comment.projectName}
-              .issue=${issue.viewedIssue}
-              text=${issue.text}
+              .issue=${issueForAmendment.issue}
+              text=${issueForAmendment.text}
             ></mr-issue-link>
           `)}
           ${!_amendmentHasIssueRefs(delta.fieldName) ? delta.newOrDeltaValue : ''}
