@@ -93,7 +93,7 @@ func TestAddDevices(t *testing.T) {
 			So(dsResp.Failed(), ShouldHaveLength, 1)
 
 			So(dsResp.Passed()[0].Entity.ID, ShouldEqual, "ID_PASS")
-			So(dsResp.Failed()[0].Device.GetId().GetValue(), ShouldEqual, "ID_FAIL")
+			So(dsResp.Failed()[0].Data.(*lab.ChromeOSDevice).GetId().GetValue(), ShouldEqual, "ID_FAIL")
 		})
 		Convey("Add device with existing ID", func() {
 			devsToAdd := []*lab.ChromeOSDevice{
@@ -104,7 +104,7 @@ func TestAddDevices(t *testing.T) {
 			So(dsResp.Passed(), ShouldHaveLength, 0)
 			So(dsResp.Failed(), ShouldHaveLength, 1)
 
-			So(dsResp.Failed()[0].Device.GetId().GetValue(), ShouldEqual, "ID_PASS")
+			So(dsResp.Failed()[0].Data.(*lab.ChromeOSDevice).GetId().GetValue(), ShouldEqual, "ID_PASS")
 		})
 	})
 }

@@ -7,13 +7,13 @@ package datastore
 import (
 	"time"
 
-	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	"github.com/golang/protobuf/proto"
 )
 
 // DeviceOpResult is the common response of all device-related datastore
 // functions.
 type DeviceOpResult struct {
-	Device    *lab.ChromeOSDevice
+	Data      proto.Message
 	Entity    *DeviceEntity
 	Err       error
 	Timestamp time.Time

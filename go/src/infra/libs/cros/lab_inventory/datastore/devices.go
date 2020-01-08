@@ -70,7 +70,7 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 
 	addingResults := make(DeviceOpResults, len(devices))
 	for i, d := range devices {
-		addingResults[i].Device = d
+		addingResults[i].Data = d
 	}
 
 	f := func(ctx context.Context) error {
@@ -81,8 +81,8 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 		// instead of a reference.
 		for i := range addingResults {
 			devToAdd := &addingResults[i]
-			hostname := utils.GetHostname(devToAdd.Device)
-			id := devToAdd.Device.GetId().GetValue()
+			hostname := utils.GetHostname(devToAdd.Data.(*lab.ChromeOSDevice))
+			id := devToAdd.Data.(*lab.ChromeOSDevice).GetId().GetValue()
 
 			devToAdd.Entity = &DeviceEntity{
 				ID:       DeviceEntityID(id),
@@ -90,12 +90,12 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 				Parent:   fakeAcestorKey(ctx),
 			}
 
-			if err := sanityCheckForAdding(ctx, devToAdd.Device, q); err != nil {
+			if err := sanityCheckForAdding(ctx, devToAdd.Data.(*lab.ChromeOSDevice), q); err != nil {
 				devToAdd.logError(err)
 				continue
 			}
 
-			labConfig, err := proto.Marshal(devToAdd.Device)
+			labConfig, err := proto.Marshal(devToAdd.Data.(*lab.ChromeOSDevice))
 			if err != nil {
 				devToAdd.logError(errors.Annotate(err, fmt.Sprintf("fail to marshal device <%s:%s>", hostname, id), err).Err())
 				continue
@@ -108,9 +108,6 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 		}
 		if err := datastore.Put(ctx, entities); err != nil {
 			for i, e := range err.(errors.MultiError) {
-				if e == nil {
-					continue
-				}
 				entityResults[i].logError(e)
 			}
 		}
@@ -137,9 +134,6 @@ func DeleteDevicesByIds(ctx context.Context, ids []string) DeviceOpResults {
 	}
 	if err := datastore.Delete(ctx, entities); err != nil {
 		for i, e := range err.(errors.MultiError) {
-			if e == nil {
-				continue
-			}
 			removingResults[i].logError(e)
 		}
 	}
@@ -177,9 +171,6 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpR
 	}
 	if err := datastore.Delete(ctx, entities); err != nil {
 		for i, e := range err.(errors.MultiError) {
-			if e == nil {
-				continue
-			}
 			entityResults[i].logError(e)
 		}
 	}
@@ -197,9 +188,6 @@ func GetDevicesByIds(ctx context.Context, ids []string) DeviceOpResults {
 	}
 	if err := datastore.Get(ctx, entities); err != nil {
 		for i, e := range err.(errors.MultiError) {
-			if e == nil {
-				continue
-			}
 			retrievingResults[i].logError(e)
 		}
 	}
@@ -251,7 +239,7 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (Devi
 	updatingResults := make(DeviceOpResults, len(devices))
 	entities := make([]DeviceEntity, len(devices))
 	for i, d := range devices {
-		updatingResults[i].Device = devices[i]
+		updatingResults[i].Data = devices[i]
 		updatingResults[i].Entity = &entities[i]
 		entities[i].ID = DeviceEntityID(d.GetId().GetValue())
 		entities[i].Parent = fakeAcestorKey(ctx)
@@ -259,9 +247,6 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (Devi
 	f := func(ctx context.Context) error {
 		if err := datastore.Get(ctx, entities); err != nil {
 			for i, e := range err.(errors.MultiError) {
-				if e == nil {
-					continue
-				}
 				updatingResults[i].logError(e)
 			}
 		}
@@ -272,7 +257,7 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (Devi
 			if r.Err != nil {
 				continue
 			}
-			labConfig, err := proto.Marshal(r.Device)
+			labConfig, err := proto.Marshal(r.Data)
 			if err != nil {
 				r.logError(err)
 				continue
