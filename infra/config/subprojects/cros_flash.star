@@ -56,6 +56,7 @@ luci.builder(
     # checkouts and caches. Consequently, this builder exists to trigger the
     # recipes via buildbucket.
     executable = infra.recipe('cros_flash'),
+    service_account = 'cros-flash@chops-service-accounts.iam.gserviceaccount.com',
     dimensions = {
         'os': 'ChromeOS',
         'pool': 'chrome-cros-dut',
