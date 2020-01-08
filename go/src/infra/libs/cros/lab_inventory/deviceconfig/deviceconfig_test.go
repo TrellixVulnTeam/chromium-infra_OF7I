@@ -68,7 +68,7 @@ var deviceConfigJSON = `
 }
 `
 
-func TestUpdateDeviceConfigCache(t *testing.T) {
+func TestUpdateDatastore(t *testing.T) {
 	Convey("Test update device config cache", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		ctl := gomock.NewController(t)
@@ -82,7 +82,7 @@ func TestUpdateDeviceConfigCache(t *testing.T) {
 			nil,
 		)
 		Convey("Happy path", func() {
-			err := UpdateDeviceConfigCache(ctx, gitilesMock, "", "", "")
+			err := UpdateDatastore(ctx, gitilesMock, "", "", "")
 			So(err, ShouldBeNil)
 			// There should be 2 entities created in datastore.
 			var cfgs []*devcfgEntity
@@ -109,7 +109,7 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Happy path", func() {
-			devcfg, err := GetCachedDeviceConfig(ctx, []*device.ConfigId{
+			devcfg, err := GetCachedConfig(ctx, []*device.ConfigId{
 				{
 					PlatformId: &device.PlatformId{Value: "platform"},
 					ModelId:    &device.ModelId{Value: "model"},
@@ -128,7 +128,7 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 		})
 
 		Convey("Data unmarshal error", func() {
-			_, err := GetCachedDeviceConfig(ctx, []*device.ConfigId{
+			_, err := GetCachedConfig(ctx, []*device.ConfigId{
 				{
 					PlatformId: &device.PlatformId{Value: "platform"},
 					ModelId:    &device.ModelId{Value: "model"},
@@ -137,11 +137,11 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 				},
 			})
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "unmarshal device config data")
+			So(err.Error(), ShouldContainSubstring, "unmarshal config data")
 		})
 
 		Convey("Get nonexisting data", func() {
-			_, err := GetCachedDeviceConfig(ctx, []*device.ConfigId{
+			_, err := GetCachedConfig(ctx, []*device.ConfigId{
 				{
 					PlatformId: &device.PlatformId{Value: "platform"},
 					ModelId:    &device.ModelId{Value: "model"},
@@ -150,7 +150,7 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 				},
 			})
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "get cached device config data")
+			So(err.Error(), ShouldContainSubstring, "get cached config data")
 		})
 	})
 }

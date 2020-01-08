@@ -29,7 +29,7 @@ type InventoryServerImpl struct {
 
 var (
 	getHwidDataFunc     = hwid.GetHwidData
-	getDeviceConfigFunc = deviceconfig.GetCachedDeviceConfig
+	getDeviceConfigFunc = deviceconfig.GetCachedConfig
 )
 
 func getPassedResults(results []datastore.DeviceOpResult) []*api.DeviceOpResult {
@@ -93,7 +93,7 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 	failedDevices := make([]*api.DeviceOpResult, 0, len(extendedData))
 	for i := range devCfgs {
 		if err == nil || err.(errors.MultiError)[i] == nil {
-			extendedData[i].DeviceConfig = devCfgs[i]
+			extendedData[i].DeviceConfig = devCfgs[i].(*device.Config)
 			newExtendedData = append(newExtendedData, extendedData[i])
 		} else {
 			failedDevices = append(failedDevices, &api.DeviceOpResult{

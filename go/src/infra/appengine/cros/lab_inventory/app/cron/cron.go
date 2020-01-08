@@ -19,6 +19,7 @@ import (
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
+	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 )
@@ -44,14 +45,14 @@ func dumpToBQCronHandler(c *router.Context) (err error) {
 func syncDevConfigHandler(c *router.Context) error {
 	logging.Infof(c.Context, "Start syncing device_config repo")
 	cfg := config.Get(c.Context).GetDeviceConfigSource()
-	cli, err := deviceconfig.NewGitilesClient(c.Context, cfg.GetHost())
+	cli, err := cfg2datastore.NewGitilesClient(c.Context, cfg.GetHost())
 	if err != nil {
 		return err
 	}
 	project := cfg.GetProject()
 	committish := cfg.GetCommittish()
 	path := cfg.GetPath()
-	return deviceconfig.UpdateDeviceConfigCache(c.Context, cli, project, committish, path)
+	return deviceconfig.UpdateDatastore(c.Context, cli, project, committish, path)
 }
 
 func dumpChangeHistoryToBQCronHandler(c *router.Context) error {

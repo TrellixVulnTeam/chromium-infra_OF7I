@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
@@ -273,8 +274,12 @@ func TestGetCrosDevices(t *testing.T) {
 		getHwidDataFunc = func(ctx context.Context, hwidstr string, secret string) (*hwid.Data, error) {
 			return &hwid.Data{Sku: "sku", Variant: "variant"}, nil
 		}
-		getDeviceConfigFunc = func(ctx context.Context, ids []*device.ConfigId) ([]*device.Config, error) {
-			return make([]*device.Config, len(ids)), nil
+		getDeviceConfigFunc = func(ctx context.Context, ids []*device.ConfigId) ([]proto.Message, error) {
+			fakeCfgs := make([]proto.Message, len(ids))
+			for i := range fakeCfgs {
+				fakeCfgs[i] = &device.Config{}
+			}
+			return fakeCfgs, nil
 		}
 
 		Convey("Happy path", func() {
@@ -303,12 +308,12 @@ func TestGetCrosDevices(t *testing.T) {
 			getHwidDataFunc = func(ctx context.Context, hwidstr string, secret string) (*hwid.Data, error) {
 				return &hwid.Data{Sku: "sku", Variant: "variant"}, nil
 			}
-			getDeviceConfigFunc = func(ctx context.Context, ids []*device.ConfigId) ([]*device.Config, error) {
+			getDeviceConfigFunc = func(ctx context.Context, ids []*device.ConfigId) ([]proto.Message, error) {
 				errs := make([]error, len(ids))
 				for i := range ids {
 					errs[i] = errors.New("get device config error")
 				}
-				return make([]*device.Config, len(ids)), errors.NewMultiError(errs...)
+				return make([]proto.Message, len(ids)), errors.NewMultiError(errs...)
 			}
 			reqGet := &api.GetCrosDevicesRequest{
 				Ids: []*api.DeviceID{&devID1, &devID2},
