@@ -9,6 +9,7 @@ package inventory;
 option go_package = "api";
 
 import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
+import "go.chromium.org/chromiumos/infra/proto/src/lab/dut_state.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/device/config.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/manufacturing/config.proto";
 
@@ -74,11 +75,13 @@ message GetCrosDevicesResponse {
 }
 
 message UpdateDutsStatusRequest {
-
+  repeated lab.DutState states = 1;
+  string reason = 2;
 }
 
 message UpdateDutsStatusResponse {
-
+  repeated DeviceOpResult updated_devices = 1;
+  repeated DeviceOpResult failed_devices = 2;
 }
 
 message UpdateCrosDevicesSetupRequest {
