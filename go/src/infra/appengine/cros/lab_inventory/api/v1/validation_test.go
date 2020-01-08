@@ -208,3 +208,36 @@ func TestUpdateCrosDevicesSetupValidation(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateDutStatusValidation(t *testing.T) {
+	t.Parallel()
+	state1 := lab.DutState{
+		Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
+	}
+	Convey("Update DUT status", t, func() {
+		Convey("empty request", func() {
+			req := &UpdateDutsStatusRequest{}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("zero devices", func() {
+			req := &UpdateDutsStatusRequest{States: nil}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "no devices to update")
+		})
+
+		Convey("Request has two identical entries", func() {
+			req := &UpdateDutsStatusRequest{States: []*lab.DutState{&state1, &state1}}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Duplicated id found")
+		})
+		Convey("Happy path", func() {
+			req := &UpdateDutsStatusRequest{States: []*lab.DutState{&state1}}
+			err := req.Validate()
+			So(err, ShouldBeNil)
+		})
+	})
+}

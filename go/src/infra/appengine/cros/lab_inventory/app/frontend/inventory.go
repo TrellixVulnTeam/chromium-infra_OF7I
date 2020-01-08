@@ -7,7 +7,6 @@ package frontend
 import (
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/common/errors"
@@ -113,7 +112,7 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 	failedDevices := make([]*api.DeviceOpResult, 0, len(devices))
 	for _, r := range devices {
 		var labData lab.ChromeOSDevice
-		if err := proto.Unmarshal(r.Entity.LabConfig, &labData); err != nil {
+		if err := r.Entity.GetCrosDeviceProto(&labData); err != nil {
 			logging.Errorf(ctx, "Wrong lab config data of device entity %s", r.Entity)
 			failedDevices = append(failedDevices, &api.DeviceOpResult{
 				Id:       string(r.Entity.ID),
@@ -200,7 +199,25 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return &api.UpdateDutsStatusResponse{}, nil
+
+	if err = req.Validate(); err != nil {
+		return nil, err
+	}
+	updatingResults, err := datastore.UpdateDutsStatus(ctx, req.States)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedDevices := getPassedResults(updatingResults)
+	failedDevices := getFailedResults(updatingResults, false)
+	resp = &api.UpdateDutsStatusResponse{
+		UpdatedDevices: updatedDevices,
+		FailedDevices:  failedDevices,
+	}
+	if len(failedDevices) > 0 {
+		err = errors.Reason("failed to update some (or all) device state").Tag(grpcutil.UnknownTag).Err()
+	}
+	return resp, err
 }
 
 // UpdateCrosDevicesSetup updates the selected Chrome OS devices setup data in

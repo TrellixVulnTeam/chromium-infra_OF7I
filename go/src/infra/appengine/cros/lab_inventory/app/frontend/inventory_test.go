@@ -397,3 +397,62 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateDutsStatus(t *testing.T) {
+	t.Parallel()
+	dut1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{
+				Hostname:    "dut1",
+				Peripherals: &lab.Peripherals{},
+			},
+		},
+	}
+	labstation1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{Value: "UUID:02"},
+		Device: &lab.ChromeOSDevice_Labstation{
+			Labstation: &lab.Labstation{Hostname: "labstation1"},
+		},
+	}
+	Convey("Update Dut status", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		req := &api.AddCrosDevicesRequest{
+			Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+		}
+		resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp.PassedDevices, ShouldHaveLength, 2)
+
+		Convey("Happy path", func() {
+			req := &api.UpdateDutsStatusRequest{
+				States: []*lab.DutState{
+					{
+						Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
+					},
+				}}
+			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.UpdatedDevices, ShouldHaveLength, 1)
+			So(resp.UpdatedDevices[0].Id, ShouldEqual, "UUID:01")
+		})
+
+		Convey("Cannot update a labstation", func() {
+			req := &api.UpdateDutsStatusRequest{
+				States: []*lab.DutState{
+					{
+						Id: &lab.ChromeOSDeviceID{Value: "UUID:02"},
+					},
+				}}
+			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.FailedDevices[0].ErrorMsg, ShouldContainSubstring, "labstation")
+		})
+	})
+}

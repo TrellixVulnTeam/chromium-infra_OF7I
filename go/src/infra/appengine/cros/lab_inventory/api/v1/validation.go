@@ -114,3 +114,22 @@ func (r *UpdateCrosDevicesSetupRequest) Validate() error {
 	}
 	return nil
 }
+
+// Validate validates input requests and return error if it's not.
+func (r *UpdateDutsStatusRequest) Validate() error {
+	if r.States == nil || len(r.States) == 0 {
+		return status.Errorf(codes.InvalidArgument, "no devices to update")
+	}
+	// There must be no dupicated ID in the request.
+	idChecker, duplicatedID := checkDuplicatedString()
+	defer close(idChecker)
+
+	for _, d := range r.States {
+		id := d.GetId().GetValue()
+		if idChecker <- id; <-duplicatedID {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Duplicated id found: %s", id))
+		}
+	}
+	return nil
+
+}
