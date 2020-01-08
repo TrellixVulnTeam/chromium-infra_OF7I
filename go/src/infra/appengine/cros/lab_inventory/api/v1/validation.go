@@ -87,3 +87,12 @@ func (r *DeleteCrosDevicesRequest) Validate() error {
 	}
 	return nil
 }
+
+// Validate validates getting requests must be non-empty and return error if
+// it's not.
+func (r *GetCrosDevicesRequest) Validate() error {
+	if r.Ids == nil || len(r.Ids) == 0 {
+		return status.Errorf(codes.InvalidArgument, "must specify device ID(s) to get")
+	}
+	return nil
+}

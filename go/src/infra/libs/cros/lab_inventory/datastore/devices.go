@@ -187,10 +187,8 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpR
 	return removingResults
 }
 
-// TODO (guocb) Get HWID data and device config data.
-
 // GetDevicesByIds returns entities by specified ids.
-func GetDevicesByIds(ctx context.Context, ids []string) *DeviceOpResults {
+func GetDevicesByIds(ctx context.Context, ids []string) DeviceOpResults {
 	retrievingResults := make(DeviceOpResults, len(ids))
 	entities := make([]DeviceEntity, len(ids))
 	for i, id := range ids {
@@ -206,16 +204,17 @@ func GetDevicesByIds(ctx context.Context, ids []string) *DeviceOpResults {
 			retrievingResults[i].logError(e)
 		}
 	}
-	return &retrievingResults
+	return retrievingResults
 }
 
 // GetDevicesByHostnames returns entities by specified hostnames.
-func GetDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOpResults {
+func GetDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpResults {
 	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
 	retrievingResults := make(DeviceOpResults, len(hostnames))
 
 	// Filter out invalid input hostnames.
 	for i, hostname := range hostnames {
+		retrievingResults[i].Entity = &DeviceEntity{Hostname: hostname}
 		var devs []*DeviceEntity
 		if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
 			retrievingResults[i].logError(errors.Annotate(err, "failed to get host by hostname %s", hostname).Err())
@@ -231,15 +230,19 @@ func GetDevicesByHostnames(ctx context.Context, hostnames []string) *DeviceOpRes
 		}
 		retrievingResults[i].Entity = devs[0]
 	}
-	return &retrievingResults
+	return retrievingResults
 }
 
 // GetAllDevices returns all device entities.
-func GetAllDevices(ctx context.Context) ([]*DeviceEntity, error) {
+func GetAllDevices(ctx context.Context) (DeviceOpResults, error) {
 	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
 	var devs []*DeviceEntity
 	if err := datastore.GetAll(ctx, q, &devs); err != nil {
 		return nil, errors.Annotate(err, "failed to get all hosts").Err()
 	}
-	return devs, nil
+	result := make([]DeviceOpResult, len(devs))
+	for i, d := range devs {
+		result[i].Entity = d
+	}
+	return DeviceOpResults(result), nil
 }

@@ -142,3 +142,33 @@ func TestDeleteDevicesValidation(t *testing.T) {
 		})
 	})
 }
+
+func TestGetDevicesValidation(t *testing.T) {
+	t.Parallel()
+
+	hostname := DeviceID{
+		Id: &DeviceID_Hostname{
+			Hostname: "the_hostname",
+		},
+	}
+	id := DeviceID{
+		Id: &DeviceID_ChromeosDeviceId{
+			ChromeosDeviceId: "UUID:123",
+		},
+	}
+	Convey("Delete devices from storage backend", t, func() {
+		Convey("Empty request", func() {
+			req := GetCrosDevicesRequest{}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "must specify device ID(s)")
+		})
+		Convey("Happy path", func() {
+			req := GetCrosDevicesRequest{
+				Ids: []*DeviceID{&hostname, &id},
+			}
+			err := req.Validate()
+			So(err, ShouldBeNil)
+		})
+	})
+}
