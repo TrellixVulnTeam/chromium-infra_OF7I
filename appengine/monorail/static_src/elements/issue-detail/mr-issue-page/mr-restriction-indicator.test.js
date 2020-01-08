@@ -72,7 +72,7 @@ describe('mr-restriction-indicator', () => {
     await element.updateComplete;
 
     const restrictString =
-      'Only users with Google and hello permission can view this issue.';
+      'Only users with Google and hello permission or issue reporter may view.';
     assert.equal(element._restrictionText, restrictString);
 
     assert.include(element.shadowRoot.textContent, restrictString);
@@ -88,7 +88,7 @@ describe('mr-restriction-indicator', () => {
     await element.updateComplete;
 
     const restrictString =
-      'Only users with Editor and world permission may make changes.';
+      'Only users with Editor and world permission or issue reporter may edit.';
     assert.equal(element._restrictionText, restrictString);
 
     assert.include(element.shadowRoot.textContent, restrictString);
@@ -104,7 +104,7 @@ describe('mr-restriction-indicator', () => {
     await element.updateComplete;
 
     const restrictString =
-      'Only users with commentor permission may comment.';
+      'Only users with commentor permission or issue reporter may comment.';
     assert.equal(element._restrictionText, restrictString);
 
     assert.include(element.shadowRoot.textContent, restrictString);
