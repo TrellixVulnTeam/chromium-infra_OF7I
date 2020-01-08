@@ -16,7 +16,9 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 
+	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/utils"
 )
 
@@ -252,16 +254,22 @@ func updateEntities(ctx context.Context, opResults DeviceOpResults, additionalFi
 		entities = []*DeviceEntity{}
 		entityIndexes := make([]int, 0, maxLen)
 		updatedTime := time.Now().UTC()
+		var changes changehistory.Changes
 		for i, r := range opResults {
 			if r.Err != nil {
 				continue
 			}
-			if err := r.Entity.UpdatePayload(r.Data, updatedTime); err != nil {
+			c, err := r.Entity.UpdatePayload(r.Data, updatedTime)
+			if err != nil {
 				r.logError(errors.Annotate(err, "failed to update payload").Err())
 				continue
 			}
+			changes = append(changes, c...)
 			entities = append(entities, r.Entity)
 			entityIndexes = append(entityIndexes, i)
+		}
+		if err := changes.SaveToDatastore(ctx); err != nil {
+			logging.Errorf(ctx, "Failed to save change history to datastore: %s", err)
 		}
 		if err := datastore.Put(ctx, entities); err != nil {
 			for i, e := range err.(errors.MultiError) {

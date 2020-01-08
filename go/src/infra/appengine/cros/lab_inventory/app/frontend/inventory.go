@@ -16,6 +16,7 @@ import (
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
+	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/datastore"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/cros/lab_inventory/hwid"
@@ -203,7 +204,7 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	updatingResults, err := datastore.UpdateDutsStatus(ctx, req.States)
+	updatingResults, err := datastore.UpdateDutsStatus(changehistory.Use(ctx, req.Reason), req.States)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +231,7 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	updatingResults, err := datastore.UpdateDeviceSetup(ctx, req.Devices)
+	updatingResults, err := datastore.UpdateDeviceSetup(changehistory.Use(ctx, req.Reason), req.Devices)
 	if err != nil {
 		return nil, err
 	}

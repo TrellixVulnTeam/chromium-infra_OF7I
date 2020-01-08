@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
 
+	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/utils"
 )
 
@@ -48,50 +49,52 @@ func (e *DeviceEntity) GetDutStateProto(p *lab.DutState) error {
 	return nil
 }
 
-func (e *DeviceEntity) updateLabConfig(p *lab.ChromeOSDevice) error {
+func (e *DeviceEntity) updateLabConfig(p *lab.ChromeOSDevice) (changehistory.Changes, error) {
 	var oldMsg lab.ChromeOSDevice
 	if err := proto.Unmarshal(e.LabConfig, &oldMsg); err != nil {
-		return err
+		return nil, err
 	}
 	if proto.Equal(p, &oldMsg) {
 		// Do nothing if the proto message is identical.
-		return nil
+		return nil, nil
 	}
 	data, err := proto.Marshal(p)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	changes := changehistory.LogChromeOSDeviceChanges(p, &oldMsg)
 
 	e.LabConfig = data
 	e.Hostname = utils.GetHostname(p)
 
-	return nil
+	return changes, nil
 }
 
-func (e *DeviceEntity) updateDutState(p *lab.DutState) error {
+func (e *DeviceEntity) updateDutState(p *lab.DutState) (changehistory.Changes, error) {
 	var oldMsg lab.DutState
 	if err := proto.Unmarshal(e.DutState, &oldMsg); err != nil {
-		return err
+		return nil, err
 	}
 	if proto.Equal(p, &oldMsg) {
 		// Do nothing if the proto message is identical.
-		return nil
+		return nil, nil
 	}
 	data, err := proto.Marshal(p)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	changes := changehistory.LogDutStateChanges(e.Hostname, p, &oldMsg)
 
 	e.DutState = data
-	return nil
+	return changes, nil
 }
 
 // UpdatePayload sets the proto data to the entity.
-func (e *DeviceEntity) UpdatePayload(p proto.Message, t time.Time) (err error) {
+func (e *DeviceEntity) UpdatePayload(p proto.Message, t time.Time) (changes changehistory.Changes, err error) {
 	if v, ok := p.(*lab.ChromeOSDevice); ok {
-		err = e.updateLabConfig(v)
+		changes, err = e.updateLabConfig(v)
 	} else if v, ok := p.(*lab.DutState); ok {
-		err = e.updateDutState(v)
+		changes, err = e.updateDutState(v)
 	}
 	e.Updated = t
 	return
