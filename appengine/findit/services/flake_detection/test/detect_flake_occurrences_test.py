@@ -538,7 +538,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
     # Flake's last_occurred_time is earlier and tags are different, updated.
     occurrence_2 = FlakeOccurrence.Create(
-        flake_type=FlakeType.CQ_FALSE_REJECTION,
+        flake_type=FlakeType.RETRY_WITH_PATCH,
         build_id=124,
         step_ui_name=step_ui_name,
         test_name=test_name,
@@ -550,7 +550,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
         time_happened=datetime(2018, 1, 1, 2),
         gerrit_cl_id=gerrit_cl_id,
         parent_flake_key=flake_key,
-        tags=['tag2::v2'])
+        tags=['tag2::v2', 'is_skipped::True'])
     occurrence_2.put()
     _UpdateFlakeMetadata([occurrence_2])
     flake = flake_key.get()
@@ -559,7 +559,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
     # Flake's last_occurred_time is later and tags are the same, not updated.
     occurrence_3 = FlakeOccurrence.Create(
-        flake_type=FlakeType.CQ_FALSE_REJECTION,
+        flake_type=FlakeType.RETRY_WITH_PATCH,
         build_id=125,
         step_ui_name=step_ui_name,
         test_name=test_name,
@@ -571,7 +571,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
         time_happened=datetime(2018, 1, 1),
         gerrit_cl_id=gerrit_cl_id,
         parent_flake_key=flake_key,
-        tags=['tag2::v2'])
+        tags=['tag2::v2', 'is_skipped::False'])
     occurrence_3.put()
     _UpdateFlakeMetadata([occurrence_3])
     flake = flake_key.get()
@@ -829,6 +829,73 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
     flake2 = Flake.Get(luci_project, 'step1', 's1_t2')
     self.assertIsNotNone(flake2)
+
+  @mock.patch.object(detect_flake_occurrences, '_UpdateFlakeMetadata')
+  @mock.patch.object(Flake, 'NormalizeStepName', return_value='step1')
+  @mock.patch.object(Flake, 'NormalizeTestName')
+  @mock.patch.object(Flake, 'GetTestLabelName')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
+  @mock.patch.object(step_util, 'GetStepLogFromBuildObject')
+  def testProcessBuildForSkippedFlakes(self, mock_metadata, mock_build,
+                                       mock_normalized_test_name,
+                                       mock_lable_name, *_):
+    flake_type_enum = FlakeType.RETRY_WITH_PATCH
+    build_id = 123
+    luci_project = 'luci_project'
+    luci_bucket = 'luci_bucket'
+    luci_builder = 'luci_builder'
+    legacy_master_name = 'legacy_master_name'
+    start_time = datetime(2019, 3, 6)
+    end_time = datetime(2019, 3, 6, 0, 0, 10)
+
+    findit_step = Step()
+    findit_step.name = 'FindIt Flakiness'
+    step1 = Step()
+    step1.name = 'step1 (with patch)'
+    step1.start_time.FromDatetime(start_time)
+    step1.end_time.FromDatetime(end_time)
+    builder = BuilderID(
+        project=luci_project,
+        bucket=luci_bucket,
+        builder=luci_builder,
+    )
+    build = Build(id=build_id, builder=builder, number=build_id)
+    build.steps.extend([findit_step, step1])
+    build.input.properties['mastername'] = legacy_master_name
+    build.input.properties['patch_project'] = 'chromium/src'
+    mock_change = build.input.gerrit_changes.add()
+    mock_change.host = 'mock.gerrit.host'
+    mock_change.change = 12345
+    mock_change.patchset = 1
+    mock_build.return_value = build
+
+    def _MockTestName(test_name, _step_ui_name):  # pylint: disable=unused-argument
+      return test_name
+
+    mock_normalized_test_name.side_effect = _MockTestName
+    mock_lable_name.side_effect = _MockTestName
+
+    flakiness_metadata = {
+        'Failing With Patch Tests That Caused Build Failure': {},
+        'Step Layer Flakiness': {
+            'step1 (with patch)': ['t1'],
+        },
+        'Step Layer Skipped Known Flakiness': {
+            'step1 (with patch)': ['t2'],
+        },
+    }
+    mock_metadata.return_value = flakiness_metadata
+
+    detect_flake_occurrences.ProcessBuildForFlakes(
+        detect_flake_occurrences.DetectFlakesFromFlakyCQBuildParam(
+            build_id=build_id,
+            flake_type_desc=FLAKE_TYPE_DESCRIPTIONS[flake_type_enum]))
+
+    self.assertEqual(2, len(FlakeOccurrence.query().fetch()))
+    skipped_occurrences = FlakeOccurrence.query(
+        FlakeOccurrence.tags == 'is_skipped::True').fetch()
+    self.assertEqual(1, len(skipped_occurrences))
+    self.assertEqual('t2', skipped_occurrences[0].test_name)
 
   @mock.patch.object(taskqueue, 'add')
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')

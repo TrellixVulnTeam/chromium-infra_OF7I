@@ -88,12 +88,22 @@ _FLAKE_TYPE_TO_FLAKINESS_METADATA_CATEGORY = {
         'Step Layer Flakiness',
 }
 
+# Name of the category that identifies the failed tests in a CQ build that were
+# skipped retrying because they're already known to be flaky.
+#
+# Flake Portal needs this information to differentiate a skipped known failed
+# flaky failure from a one that succeeded when retried.
+_SKIPPED_FLAKINESS_METADATA_CATEGORY = 'Step Layer Skipped Known Flakiness'
+
 _DETECT_FLAKES_IN_BUILD_TASK_URL = (
     '/flake/detection/task/detect-flakes-from-build')
 
 _FLAKE_TASK_CACHED_SECONDS = 24 * 60 * 60
 
 _FLAKINESS_METADATA_STEP = 'FindIt Flakiness'
+
+# A http client that can be reused.
+_HTTP_CLIENT = FinditHttpClient()
 
 
 def _CreateFlakeFromRow(row):
@@ -174,6 +184,7 @@ def _CreateFlakeOccurrenceFromRow(row, flake_type_enum):
       'test_type::%s' % step_ui_name.split(' ', 1)[0],  # e.g. "flavored_tests"
       'step::%s' % step_ui_name,  # e.g. "flavored_tests on Mac 10.13"
       'flake::%s' % normalized_test_name,
+      'is_skipped::%s' % row.get('is_skipped', False),
   ]
 
   suite = _GetTestSuiteForOccurrence(row, normalized_test_name,
@@ -316,8 +327,11 @@ def _UpdateFlakeMetadata(all_occurrences):
     for occurrence in occurrences:
       new_tags.update(occurrence.tags)
 
-    changed = False
+    # is_skipped tag is only meaningful to flake occurrences.
+    new_tags.discard('is_skipped::True')
+    new_tags.discard('is_skipped::False')
 
+    changed = False
     if (not flake.last_occurred_time or
         flake.last_occurred_time < new_latest_occurred_time):
       # There are new occurrences.
@@ -620,7 +634,7 @@ def StoreDetectedCIFlakes(master_name, builder_name, build_number, flaky_tests):
       'test_start_msec': time_util.GetUTCNow(),
       # No affected gerrit cls for CI flakes, set related fields to None.
       'gerrit_project': None,
-      'gerrit_cl_id': -1
+      'gerrit_cl_id': -1,
   }
 
   local_flakes = []
@@ -643,7 +657,19 @@ def StoreDetectedCIFlakes(master_name, builder_name, build_number, flaky_tests):
       flake_type=flake_type_desc, num_occurrences=len(new_occurrences))
 
 
-def GetFlakesFromFlakyCQBuild(build_id, build_pb, flake_type_enum):
+def _GetFlakinessMetadata(build_id, build_pb):
+  """A helper method to get flakiness metadata from a CQ build."""
+  flakiness_metadata = step_util.GetStepLogFromBuildObject(
+      build_pb,
+      _FLAKINESS_METADATA_STEP,
+      _HTTP_CLIENT,
+      log_name='step_metadata')
+  assert flakiness_metadata, (
+      'Failed to get flakiness_metadata for build {}'.format(build_id))
+  return flakiness_metadata
+
+
+def _GetFlakesFromFlakyCQBuild(build_id, build_pb, flake_type_enum):
   """Looks for a specific type of flakes from a CQ build.
 
   This function currently supports two types of flakes:
@@ -673,13 +699,21 @@ def GetFlakesFromFlakyCQBuild(build_id, build_pb, flake_type_enum):
   assert flake_category, '{} is not covered by flakiness metadata.'.format(
       FLAKE_TYPE_DESCRIPTIONS.get(flake_type_enum))
 
-  http_client = FinditHttpClient()
-  flakiness_metadata = step_util.GetStepLogFromBuildObject(
-      build_pb, _FLAKINESS_METADATA_STEP, http_client, log_name='step_metadata')
-  assert flakiness_metadata, (
-      'Failed to get flakiness_metadata for build {}'.format(build_id))
+  return _GetFlakinessMetadata(build_id, build_pb).get(flake_category, {})
 
-  return flakiness_metadata.get(flake_category) or {}
+
+def _GetSkippedFlakesFromFlakyCQBuild(build_id, build_pb):
+  """Gets skipped flakes from a CQ build.
+
+  Args:
+    build_id (int): Id of the build.
+    build_pb (buildbucket build.proto): Information of the build.
+
+  Returns:
+    A dict that maps from step ui name to a list of test names.
+  """
+  return _GetFlakinessMetadata(build_id, build_pb).get(
+      _SKIPPED_FLAKINESS_METADATA_CATEGORY, {})
 
 
 def ProcessBuildForFlakes(task_param):
@@ -721,8 +755,6 @@ def ProcessBuildForFlakes(task_param):
   if not gerrit_cl_id:
     return
 
-  flake_info = GetFlakesFromFlakyCQBuild(build_id, build_pb, flake_type_enum)
-
   row = {
       'luci_project': luci_project,
       'luci_bucket': luci_bucket,
@@ -731,22 +763,34 @@ def ProcessBuildForFlakes(task_param):
       'legacy_build_number': legacy_build_number,
       'build_id': build_id,
       'gerrit_project': gerrit_project,
-      'gerrit_cl_id': gerrit_cl_id
+      'gerrit_cl_id': gerrit_cl_id,
   }
 
   new_flakes = []
   new_occurrences = []
-  for step_ui_name, tests in flake_info.iteritems():
-    # Uses the start time of a step as the flake happen time.
-    step_start_time, _ = step_util.GetStepStartAndEndTime(
-        build_pb, step_ui_name)
-    row['step_ui_name'] = step_ui_name
-    row['test_start_msec'] = step_start_time
-    for test in tests:
-      row['test_name'] = test
-      new_flakes.append(_CreateFlakeFromRow(row))
-      new_occurrences.append(
-          _CreateFlakeOccurrenceFromRow(row, flake_type_enum))
+
+  def CreateFlakes(flake_info):
+    for step_ui_name, tests in flake_info.iteritems():
+      # Uses the start time of a step as the flake happen time.
+      step_start_time, _ = step_util.GetStepStartAndEndTime(
+          build_pb, step_ui_name)
+      row['step_ui_name'] = step_ui_name
+      row['test_start_msec'] = step_start_time
+      for test in tests:
+        row['test_name'] = test
+        new_flakes.append(_CreateFlakeFromRow(row))
+        new_occurrences.append(
+            _CreateFlakeOccurrenceFromRow(row, flake_type_enum))
+
+  CreateFlakes(_GetFlakesFromFlakyCQBuild(build_id, build_pb, flake_type_enum))
+
+  # For RETRY_WITH_PATCH flake, a special case is that when a test failed with
+  # patch, but is skipped/ignored because it's already known to be flaky on ToT.
+  # To differentiate them from flake occurrences that failed with patch and
+  # succeeded when retrying, tag them with "is_skipped::True" label.
+  if flake_type_enum == FlakeType.RETRY_WITH_PATCH:
+    row['is_skipped'] = True
+    CreateFlakes(_GetSkippedFlakesFromFlakyCQBuild(build_id, build_pb))
 
   _StoreMultipleLocalEntities(new_flakes)
   _StoreMultipleLocalEntities(new_occurrences)
