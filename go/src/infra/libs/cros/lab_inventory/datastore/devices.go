@@ -104,7 +104,6 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 			devToAdd.Entity.LabConfig = labConfig
 
 			entities = append(entities, devToAdd.Entity)
-			fmt.Println("add dev", devToAdd.Entity)
 			entityResults = append(entityResults, devToAdd)
 		}
 		if err := datastore.Put(ctx, entities); err != nil {
@@ -245,4 +244,56 @@ func GetAllDevices(ctx context.Context) (DeviceOpResults, error) {
 		result[i].Entity = d
 	}
 	return DeviceOpResults(result), nil
+}
+
+// UpdateDeviceSetup updates the content of lab.ChromeOSDevice.
+func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (DeviceOpResults, error) {
+	updatingResults := make(DeviceOpResults, len(devices))
+	entities := make([]DeviceEntity, len(devices))
+	for i, d := range devices {
+		updatingResults[i].Device = devices[i]
+		updatingResults[i].Entity = &entities[i]
+		entities[i].ID = DeviceEntityID(d.GetId().GetValue())
+		entities[i].Parent = fakeAcestorKey(ctx)
+	}
+	f := func(ctx context.Context) error {
+		if err := datastore.Get(ctx, entities); err != nil {
+			for i, e := range err.(errors.MultiError) {
+				if e == nil {
+					continue
+				}
+				updatingResults[i].logError(e)
+			}
+		}
+
+		entitiesToUpdate := make([]*DeviceEntity, 0, len(devices))
+		entityIndexes := make([]int, 0, len(devices))
+		for i, r := range updatingResults {
+			if r.Err != nil {
+				continue
+			}
+			labConfig, err := proto.Marshal(r.Device)
+			if err != nil {
+				r.logError(err)
+				continue
+			}
+			r.Entity.LabConfig = labConfig
+			entitiesToUpdate = append(entitiesToUpdate, r.Entity)
+			entityIndexes = append(entityIndexes, i)
+		}
+		if err := datastore.Put(ctx, entitiesToUpdate); err != nil {
+			for i, e := range err.(errors.MultiError) {
+				if e == nil {
+					continue
+				}
+				updatingResults[entityIndexes[i]].logError(e)
+			}
+		}
+		return nil
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return updatingResults, err
+	}
+	// TODO (guocb) Track the change.
+	return updatingResults, nil
 }

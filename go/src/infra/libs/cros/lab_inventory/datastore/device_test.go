@@ -211,3 +211,37 @@ func TestGetDevices(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateDeviceSetup(t *testing.T) {
+	t.Parallel()
+
+	Convey("Update devices setup in datastore", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+
+		devsToAdd := []*lab.ChromeOSDevice{
+			mockDut("dut1", "UUID:01", "labstation1"),
+			mockLabstation("labstation1", "UUID:02"),
+		}
+		_, err := AddDevices(ctx, devsToAdd)
+		So(err, ShouldBeNil)
+
+		datastore.GetTestable(ctx).Consistent(true)
+		Convey("Update non-existing devices", func() {
+			result, err := UpdateDeviceSetup(ctx, []*lab.ChromeOSDevice{
+				mockDut("dut1", "UUID:ghost", ""),
+				mockDut("dut1", "UUID:01", "labstation2"),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			passed := result.Passed()
+			So(passed, ShouldHaveLength, 1)
+			So(passed[0].Entity.ID, ShouldEqual, "UUID:01")
+
+			failed := result.Failed()
+			So(failed, ShouldHaveLength, 1)
+			So(failed[0].Entity.ID, ShouldEqual, "UUID:ghost")
+		})
+
+	})
+}
