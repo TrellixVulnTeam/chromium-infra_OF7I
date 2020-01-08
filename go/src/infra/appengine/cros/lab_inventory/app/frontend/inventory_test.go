@@ -332,3 +332,68 @@ func TestGetCrosDevices(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateCrosDevicesSetup(t *testing.T) {
+	t.Parallel()
+	dut1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{
+				Hostname:    "dut1",
+				Peripherals: &lab.Peripherals{},
+			},
+		},
+	}
+	labstation1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{Value: "UUID:02"},
+		Device: &lab.ChromeOSDevice_Labstation{
+			Labstation: &lab.Labstation{Hostname: "labstation1"},
+		},
+	}
+	Convey("Update Chrome OS devices setup", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		req := &api.AddCrosDevicesRequest{
+			Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+		}
+		resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp.PassedDevices, ShouldHaveLength, 2)
+
+		Convey("Happy path", func() {
+			servo := lab.Servo{
+				ServoHostname: "labstation1",
+				ServoPort:     1234,
+				ServoSerial:   "SN0001",
+				ServoType:     "v3",
+			}
+			dut1.GetDut().GetPeripherals().Servo = &servo
+			labstation1.GetLabstation().Servos = []*lab.Servo{&servo}
+
+			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{&dut1, &labstation1}}
+			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
+
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.UpdatedDevices, ShouldHaveLength, 2)
+
+		})
+
+		Convey("Update non-existing devices", func() {
+			ghost := lab.ChromeOSDevice{
+				Id: &lab.ChromeOSDeviceID{Value: "UUID:ghost"},
+				Device: &lab.ChromeOSDevice_Dut{
+					Dut: &lab.DeviceUnderTest{Hostname: "dut1"},
+				},
+			}
+			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{&ghost}}
+			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.FailedDevices, ShouldHaveLength, 1)
+			So(resp.FailedDevices[0].ErrorMsg, ShouldContainSubstring, "no such entity")
+		})
+	})
+}

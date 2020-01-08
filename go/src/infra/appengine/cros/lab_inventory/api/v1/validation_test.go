@@ -172,3 +172,39 @@ func TestGetDevicesValidation(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateCrosDevicesSetupValidation(t *testing.T) {
+	t.Parallel()
+	dut1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{Hostname: "dut1"},
+		},
+	}
+	Convey("Update Chrome OS devices setup", t, func() {
+		Convey("empty request", func() {
+			req := &UpdateCrosDevicesSetupRequest{}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("zero devices", func() {
+			req := &UpdateCrosDevicesSetupRequest{Devices: nil}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "no devices to update")
+		})
+
+		Convey("Request has two identical entries", func() {
+			req := &UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{&dut1, &dut1}}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Duplicated id found")
+		})
+		Convey("Happy path", func() {
+			req := &UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{&dut1}}
+			err := req.Validate()
+			So(err, ShouldBeNil)
+		})
+	})
+}

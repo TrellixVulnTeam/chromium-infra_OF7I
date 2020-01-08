@@ -209,7 +209,25 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return &api.UpdateCrosDevicesSetupResponse{}, nil
+
+	if err = req.Validate(); err != nil {
+		return nil, err
+	}
+	updatingResults, err := datastore.UpdateDeviceSetup(ctx, req.Devices)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedDevices := getPassedResults(updatingResults)
+	failedDevices := getFailedResults(updatingResults, false)
+	resp = &api.UpdateCrosDevicesSetupResponse{
+		UpdatedDevices: updatedDevices,
+		FailedDevices:  failedDevices,
+	}
+	if len(failedDevices) > 0 {
+		err = errors.Reason("failed to update some (or all) devices").Tag(grpcutil.UnknownTag).Err()
+	}
+	return resp, err
 }
 
 // DeleteCrosDevices delete the selelcted devices from the inventory.
