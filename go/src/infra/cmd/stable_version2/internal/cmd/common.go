@@ -16,24 +16,42 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-const programName = "stable_version2"
-const omahaStatusFile = "omaha_status.json"
-const omahaGsPath = "gs://chromeos-build-release-console/omaha_status.json"
-const gerritHost = "chrome-internal-review.googlesource.com"
-const gitilesHost = "chrome-internal.googlesource.com"
-const project = "chromeos/infra/config"
-const branch = "master"
-const stableVersionConfigPath = "lab_platform/stable_version_data/stable_versions.cfg"
+// ProgramName is the name of the current executable.
+const ProgramName = "stable_version2"
 
-func printError(w io.Writer, err error) {
-	fmt.Fprintf(w, "%s: %s\n", programName, err)
+// OmahaStatusFile is the name of the file with stable version information in it.
+const OmahaStatusFile = "omaha_status.json"
+
+// OmahaGSPath is the full google-storage path to the omaha status file
+const OmahaGSPath = "gs://chromeos-build-release-console/omaha_status.json"
+
+// GerritHost is the Gerrit host that manages the repo with the stable version config file.
+const GerritHost = "chrome-internal-review.googlesource.com"
+
+// GitilesHost is the host of the gitiles service.
+const GitilesHost = "chrome-internal.googlesource.com"
+
+// Project is the path to the repo root within Gitiles.
+const Project = "chromeos/infra/config"
+
+// Branch is the name of the branch that we're modifying.
+const Branch = "master"
+
+// StableVersionConfigPath is the path to the stable version config file relative to the repo root.
+const StableVersionConfigPath = "lab_platform/stable_version_data/stable_versions.cfg"
+
+// PrintError writes an error to stderr with the correct program name.
+func PrintError(w io.Writer, err error) {
+	fmt.Fprintf(w, "%s: %s\n", ProgramName, err)
 }
 
-func setupLogging(ctx context.Context) context.Context {
+// SetupLogging sets the log level
+func SetupLogging(ctx context.Context) context.Context {
 	return logging.SetLevel(ctx, logging.Debug)
 }
 
-func newAuthenticatedTransport(ctx context.Context, f *authcli.Flags) (http.RoundTripper, error) {
+// NewAuthenticatedTransport creates a new authenticated transport
+func NewAuthenticatedTransport(ctx context.Context, f *authcli.Flags) (http.RoundTripper, error) {
 	o, err := f.Options()
 	if err != nil {
 		return nil, errors.Annotate(err, "create authenticated transport").Err()
@@ -42,7 +60,8 @@ func newAuthenticatedTransport(ctx context.Context, f *authcli.Flags) (http.Roun
 	return a.Transport()
 }
 
-func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) {
+// NewHTTPClient creates a new HTTP Client with the given authentication options.
+func NewHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) {
 	o, err := f.Options()
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to get auth options").Err()

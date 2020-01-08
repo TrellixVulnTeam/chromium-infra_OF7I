@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cmd
+package omaha
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
+	"infra/cmd/stable_version2/internal/cmd"
 	gslib "infra/cmd/stable_version2/internal/gs"
 	"infra/cmd/stable_version2/internal/site"
 	"infra/cmd/stable_version2/internal/utils"
@@ -59,7 +60,7 @@ type updateWithOmahaRun struct {
 // Run implements the subcommands.CommandRun interface.
 func (c *updateWithOmahaRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		printError(a.GetErr(), err)
+		cmd.PrintError(a.GetErr(), err)
 		return 1
 	}
 	return 0
@@ -67,10 +68,10 @@ func (c *updateWithOmahaRun) Run(a subcommands.Application, args []string, env s
 
 func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	ctx = setupLogging(ctx)
+	ctx = cmd.SetupLogging(ctx)
 	f := &c.authFlags
 
-	outDir, err := ioutil.TempDir("", programName)
+	outDir, err := ioutil.TempDir("", cmd.ProgramName)
 	if err != nil {
 		return err
 	}
@@ -80,7 +81,7 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 		}
 	}()
 
-	t, err := newAuthenticatedTransport(ctx, f)
+	t, err := cmd.NewAuthenticatedTransport(ctx, f)
 	if err != nil {
 		return errors.Annotate(err, "create authenticated transport").Err()
 	}
@@ -96,11 +97,11 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 	}
 
 	// Fetch existing stable version
-	hc, err := newHTTPClient(ctx, f)
+	hc, err := cmd.NewHTTPClient(ctx, f)
 	if err != nil {
 		return err
 	}
-	gc, err := gitlib.NewClient(ctx, hc, gerritHost, gitilesHost, project, branch)
+	gc, err := gitlib.NewClient(ctx, hc, cmd.GerritHost, cmd.GitilesHost, cmd.Project, cmd.Branch)
 	if err != nil {
 		return err
 	}
@@ -150,8 +151,8 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 
 // Get CrOS stable version from omaha status file.
 func getGSCrosSV(ctx context.Context, outDir string, gsc gslib.Client) ([]*sv.StableCrosVersion, error) {
-	localOSFile := filepath.Join(outDir, omahaStatusFile)
-	if err := gsc.Download(omahaGsPath, localOSFile); err != nil {
+	localOSFile := filepath.Join(outDir, cmd.OmahaStatusFile)
+	if err := gsc.Download(cmd.OmahaGSPath, localOSFile); err != nil {
 		return nil, err
 	}
 	omahaBytes, err := ioutil.ReadFile(localOSFile)
@@ -166,13 +167,13 @@ func getGSCrosSV(ctx context.Context, outDir string, gsc gslib.Client) ([]*sv.St
 }
 
 func getGitSV(ctx context.Context, gc *gitlib.Client) (*sv.StableVersions, error) {
-	res, err := gc.GetFile(ctx, stableVersionConfigPath)
+	res, err := gc.GetFile(ctx, cmd.StableVersionConfigPath)
 	if err != nil {
 		return nil, err
 	}
 	// TODO(xixuan): make it a subcommand to check the config file's validity and call it in builder.
 	if res == "" {
-		logging.Warningf(ctx, "empty stable version config file: %s", stableVersionConfigPath)
+		logging.Warningf(ctx, "empty stable version config file: %s", cmd.StableVersionConfigPath)
 		return nil, err
 	}
 	var allSV sv.StableVersions
@@ -256,7 +257,7 @@ func commitNew(ctx context.Context, gc *gitlib.Client, updatedCros []*sv.StableC
 	}
 
 	u := map[string]string{
-		stableVersionConfigPath: newContent,
+		cmd.StableVersionConfigPath: newContent,
 	}
 	changeInfo, err := gc.UpdateFiles(ctx, "Update stable version (automatically)", u)
 	if err != nil {
