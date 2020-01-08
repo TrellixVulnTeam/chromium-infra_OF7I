@@ -30,6 +30,7 @@ message Config {
   string hwid_secret = 7;
 
   Gitiles device_config_source = 8;
+  Gitiles manufacturing_config_source = 9;
 }
 
 message AdminService {

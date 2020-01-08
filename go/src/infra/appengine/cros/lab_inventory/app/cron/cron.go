@@ -22,6 +22,7 @@ import (
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/deviceconfig"
+	"infra/libs/cros/lab_inventory/manufacturingconfig"
 )
 
 // InstallHandlers installs handlers for cron jobs that are part of this app.
@@ -33,6 +34,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/dump-to-bq", mwCron, logAndSetHTTPErr(dumpToBQCronHandler))
 
 	r.GET("/internal/cron/sync-dev-config", mwCron, logAndSetHTTPErr(syncDevConfigHandler))
+
+	r.GET("/internal/cron/sync-manufacturing-config", mwCron, logAndSetHTTPErr(syncManufacturingConfigHandler))
 
 	r.GET("/internal/cron/changehistory-to-bq", mwCron, logAndSetHTTPErr(dumpChangeHistoryToBQCronHandler))
 }
@@ -53,6 +56,19 @@ func syncDevConfigHandler(c *router.Context) error {
 	committish := cfg.GetCommittish()
 	path := cfg.GetPath()
 	return deviceconfig.UpdateDatastore(c.Context, cli, project, committish, path)
+}
+
+func syncManufacturingConfigHandler(c *router.Context) error {
+	logging.Infof(c.Context, "Start syncing manufacturing_config repo")
+	cfg := config.Get(c.Context).GetManufacturingConfigSource()
+	cli, err := cfg2datastore.NewGitilesClient(c.Context, cfg.GetHost())
+	if err != nil {
+		return err
+	}
+	project := cfg.GetProject()
+	committish := cfg.GetCommittish()
+	path := cfg.GetPath()
+	return manufacturingconfig.UpdateDatastore(c.Context, cli, project, committish, path)
 }
 
 func dumpChangeHistoryToBQCronHandler(c *router.Context) error {

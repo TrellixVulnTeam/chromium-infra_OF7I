@@ -5,6 +5,9 @@ cron:
 - description: Device config data periodic refresh
   url: /internal/cron/sync-dev-config
   schedule: every 1 hours
+- description: Manufacturing config data periodic refresh
+  url: /internal/cron/sync-manufacturing-config
+  schedule: every 1 hours
 - description: Inventory change history periodic dump to bigquery
   url: /internal/cron/changehistory-to-bq
   schedule: every 10 minutes
