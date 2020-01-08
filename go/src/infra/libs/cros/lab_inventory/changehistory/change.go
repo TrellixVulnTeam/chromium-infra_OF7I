@@ -23,16 +23,17 @@ const DatastoreKind = "ChangeHistory"
 
 // Change tracks the change of a ChromeOSDevice.
 type Change struct {
-	_kind       string `gae:"$kind,ChangeHistory"`
-	DeviceID    string
-	Hostname    string
-	Label       string
-	OldValue    string
-	NewValue    string
-	Updated     time.Time
-	ByWhomName  string
-	ByWhomEmail string
-	Comment     string
+	_kind       string    `gae:"$kind,ChangeHistory"`
+	ID          int64     `gae:"$id"`
+	DeviceID    string    `gae:",noindex"`
+	Hostname    string    `gae:",noindex"`
+	Label       string    `gae:",noindex"`
+	OldValue    string    `gae:",noindex"`
+	NewValue    string    `gae:",noindex"`
+	Updated     time.Time `gae:",noindex"`
+	ByWhomName  string    `gae:",noindex"`
+	ByWhomEmail string    `gae:",noindex"`
+	Comment     string    `gae:",noindex"`
 }
 
 // Changes is a slice of Change.
@@ -77,6 +78,21 @@ func (c Changes) SaveToDatastore(ctx context.Context) error {
 		return errors.Annotate(err, "failed to save changes to datastore").Err()
 	}
 	return nil
+}
+
+// LoadFromDatastore loads all Changes entities from datastore.
+func LoadFromDatastore(ctx context.Context) (Changes, error) {
+	q := datastore.NewQuery(DatastoreKind)
+	var changes Changes
+	if err := datastore.GetAll(ctx, q, &changes); err != nil {
+		return nil, err
+	}
+	return changes, nil
+}
+
+// FlushDatastore deletes changes dumped to bigquery from datastore.
+func FlushDatastore(ctx context.Context, changes Changes) error {
+	return datastore.Delete(ctx, changes)
 }
 
 // LogDutStateChanges logs the change of the given DutState.

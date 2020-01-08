@@ -8,11 +8,18 @@ package cron
 import (
 	"net/http"
 
+	"cloud.google.com/go/bigquery"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
+	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/appengine/gaemiddleware"
+	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
 
+	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
+	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 )
 
@@ -25,6 +32,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/dump-to-bq", mwCron, logAndSetHTTPErr(dumpToBQCronHandler))
 
 	r.GET("/internal/cron/sync-dev-config", mwCron, logAndSetHTTPErr(syncDevConfigHandler))
+
+	r.GET("/internal/cron/changehistory-to-bq", mwCron, logAndSetHTTPErr(dumpChangeHistoryToBQCronHandler))
 }
 
 func dumpToBQCronHandler(c *router.Context) (err error) {
@@ -43,6 +52,51 @@ func syncDevConfigHandler(c *router.Context) error {
 	committish := cfg.GetCommittish()
 	path := cfg.GetPath()
 	return deviceconfig.UpdateDeviceConfigCache(c.Context, cli, project, committish, path)
+}
+
+func dumpChangeHistoryToBQCronHandler(c *router.Context) error {
+	ctx := c.Context
+	logging.Infof(c.Context, "Start to dump change history to bigquery")
+	project := info.AppID(ctx)
+	dataset := "inventory"
+	table := "changehistory"
+
+	client, err := bigquery.NewClient(ctx, project)
+	if err != nil {
+		return err
+	}
+	up := bq.NewUploader(ctx, client, dataset, table)
+	up.SkipInvalidRows = true
+	up.IgnoreUnknownValues = true
+
+	changes, err := changehistory.LoadFromDatastore(ctx)
+	if err != nil {
+		return err
+	}
+	msgs := make([]proto.Message, len(changes))
+	for i, c := range changes {
+		updatedTime, _ := ptypes.TimestampProto(c.Updated)
+		msgs[i] = &apibq.ChangeHistory{
+			Id:          c.DeviceID,
+			Hostname:    c.Hostname,
+			Label:       c.Label,
+			OldValue:    c.OldValue,
+			NewValue:    c.NewValue,
+			UpdatedTime: updatedTime,
+			ByWhom: &apibq.ChangeHistory_User{
+				Name:  c.ByWhomName,
+				Email: c.ByWhomEmail,
+			},
+			Comment: c.Comment,
+		}
+	}
+
+	logging.Debugf(ctx, "Uploading %d records of change history", len(msgs))
+	if err := up.Put(ctx, msgs...); err != nil {
+		return err
+	}
+	logging.Debugf(ctx, "Cleaning %d records of change history from datastore", len(msgs))
+	return changehistory.FlushDatastore(ctx, changes)
 }
 
 func logAndSetHTTPErr(f func(c *router.Context) error) func(*router.Context) {
