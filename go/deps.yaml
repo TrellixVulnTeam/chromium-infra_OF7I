@@ -127,8 +127,7 @@ import:
   - user
   - cmd/aedeploy
 - package: cloud.google.com/go
-  # TODO(vadimsh): Unpin once google.golang.org/genproto is unpinned.
-  version: 0fd5feb1e2a15ca337bd028006006f20368ff83e
+  version: master
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -138,10 +137,7 @@ import:
   - spanner
   - profiler
 - package: google.golang.org/genproto
-  # Pin until https://github.com/googleapis/go-genproto/issues/269 is resolved.
-  # If it's not resolved, ping vadimsh@, there are workarounds we can do on our
-  # side.
-  version: 6bbd007550de91f00332b51032ea2cd88b87e799
+  version: master
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
