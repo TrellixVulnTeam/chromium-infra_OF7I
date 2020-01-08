@@ -1,0 +1,10 @@
+package: chromiumos/infra/fleet-tlw/${platform}
+description: TLW implementation for Chrome OS Fleet Lab
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/fleet-tlw
+root: ../../go/bin
+data:
+  - file: fleet-tlw${exe_suffix}
+  - version_file: .versions/fleet-tlw${exe_suffix}.cipd_version
