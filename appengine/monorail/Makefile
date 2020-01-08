@@ -39,8 +39,8 @@ help:
 	@echo "Available commands:"
 	@sed -n '/^[a-zA-Z0-9_.]*:/s/:.*//p' <Makefile
 
-# Run "eval `../../go/env.py`" before running the following
-prpc_proto:
+# Run "eval `../../go/env.py`" before running the following prpc_proto commands
+prpc_proto_v0:
 	touch ../../ENV/lib/python2.7/site-packages/google/__init__.py
 	PYTHONPATH=../../ENV/lib/python2.7/site-packages \
 	PATH=../../luci/appengine/components/tools:$(PATH) \
@@ -48,6 +48,15 @@ prpc_proto:
 	--python_out=. --prpc-python_out=. api/api_proto/*.proto
 	cd ../../go/src/infra/monorailv2 && \
 	cproto -proto-path ../../../../appengine/monorail/ ../../../../appengine/monorail/api/api_proto/
+prpc_proto_v1:
+	touch ../../ENV/lib/python2.7/site-packages/google/__init__.py
+	PYTHONPATH=../../ENV/lib/python2.7/site-packages \
+	PATH=../../luci/appengine/components/tools:$(PATH) \
+	../../cipd/protoc \
+	--python_out=. --prpc-python_out=. api/v1/api_proto/*.proto
+	cd ../../go/src/infra/monorailv2 && \
+	cproto -proto-path ../../../../appengine/monorail/ ../../../../appengine/monorail/api/v1/api_proto/
+
 
 
 test:

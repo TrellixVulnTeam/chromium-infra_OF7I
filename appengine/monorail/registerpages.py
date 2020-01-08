@@ -9,10 +9,10 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
-
 import webapp2
-
 import settings
+
+from components import prpc
 
 from features import autolink
 from features import dateaction
@@ -99,7 +99,8 @@ from tracker import templatecreate
 from tracker import templatedetail
 from tracker import fltconversion
 
-from api import api_service
+from api import api_routes as api_routes_v0
+from api.v1 import api_routes as api_routes_v1
 
 
 class ServletRegistry(object):
@@ -172,7 +173,13 @@ class ServletRegistry(object):
     self._RegisterWebComponentsHanders()
     self._RegisterRedirects()
     self._RegisterInboundMail()
-    api_service.RegisterApiHandlers(self, services)
+
+    # Register pRPC API routes
+    prpc_server = prpc.Server()
+    api_routes_v0.RegisterApiHandlers(prpc_server, services)
+    api_routes_v1.RegisterApiHandlers(prpc_server, services)
+    self.routes.extend(prpc_server.get_routes())
+
     autolink.RegisterAutolink(services)
     # Error pages should be the last to register.
     self._RegisterErrorPages()

@@ -14,7 +14,7 @@
 # All APIs are served under the /prpc/* path space. Each service gets its own
 # namespace under that, and each method is an individual endpoints. For example,
 #   POST https://bugs.chromium.org/prpc/monorail.Users/GetUser
-# would be a call to the UsersServicer.GetUser method.
+# would be a call to the api.users_servicer.UsersServicer.GetUser method.
 #
 # Note that this is not a RESTful API, although it is CRUDy. All requests are
 # POSTs, all methods take exactly one input, and all methods return exactly
@@ -32,14 +32,15 @@ from api import issues_servicer
 from api import projects_servicer
 from api import sitewide_servicer
 from api import users_servicer
-from components import prpc
 
 
-def RegisterApiHandlers(registry, services):
-  server = prpc.Server()
-  server.add_service(features_servicer.FeaturesServicer(services))
-  server.add_service(issues_servicer.IssuesServicer(services))
-  server.add_service(projects_servicer.ProjectsServicer(services))
-  server.add_service(sitewide_servicer.SitewideServicer(services))
-  server.add_service(users_servicer.UsersServicer(services))
-  registry.routes.extend(server.get_routes())
+def RegisterApiHandlers(prpc_server, services):
+  """Registers pRPC API services. And makes their routes
+  available in prpc_server.get_routes().
+  """
+
+  prpc_server.add_service(features_servicer.FeaturesServicer(services))
+  prpc_server.add_service(issues_servicer.IssuesServicer(services))
+  prpc_server.add_service(projects_servicer.ProjectsServicer(services))
+  prpc_server.add_service(sitewide_servicer.SitewideServicer(services))
+  prpc_server.add_service(users_servicer.UsersServicer(services))

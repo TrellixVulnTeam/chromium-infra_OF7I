@@ -1,0 +1,20 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file or at
+// https://developers.google.com/open-source/licenses/bsd
+
+// This file defines protobufs for issues and related business
+// objects, e.g., field values, comments, and attachments.
+
+syntax = "proto3";
+
+package monorail.v1;
+
+
+// Next available tag: 3
+message Issue {
+  // Resource name of the issue.
+  // Format: projects/{project_name}/issues/{local_id}
+  string name = 1;
+  string summary = 2;
+}
