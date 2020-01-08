@@ -60,3 +60,14 @@ func UpdateDatastore(ctx context.Context, client gitiles.GitilesClient, project,
 
 	return cfg2datastore.SyncProtoToDatastore(ctx, cfgs, newManufacturingCfgEntity)
 }
+
+// GetCachedConfig gets the manufacturing config data from datastore.
+func GetCachedConfig(ctx context.Context, cfgIds []*manufacturing.ConfigID) ([]proto.Message, error) {
+	entities := make([]cfg2datastore.EntityInterface, len(cfgIds))
+	for i, c := range cfgIds {
+		entities[i] = &manufacturingCfgEntity{
+			ID: c.GetValue(),
+		}
+	}
+	return cfg2datastore.GetCachedCfgByIds(ctx, entities)
+}

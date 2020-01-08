@@ -9,6 +9,7 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
@@ -20,6 +21,7 @@ import (
 	"infra/libs/cros/lab_inventory/datastore"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/cros/lab_inventory/hwid"
+	"infra/libs/cros/lab_inventory/manufacturingconfig"
 	"infra/libs/cros/lab_inventory/utils"
 )
 
@@ -28,8 +30,9 @@ type InventoryServerImpl struct {
 }
 
 var (
-	getHwidDataFunc     = hwid.GetHwidData
-	getDeviceConfigFunc = deviceconfig.GetCachedConfig
+	getHwidDataFunc            = hwid.GetHwidData
+	getDeviceConfigFunc        = deviceconfig.GetCachedConfig
+	getManufacturingConfigFunc = manufacturingconfig.GetCachedConfig
 )
 
 func getPassedResults(results []datastore.DeviceOpResult) []*api.DeviceOpResult {
@@ -106,6 +109,30 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 	return newExtendedData, failedDevices
 }
 
+func getManufacturingConfigData(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
+	// Start to retrieve device config data.
+	cfgIds := make([]*manufacturing.ConfigID, len(extendedData))
+	for i, d := range extendedData {
+		cfgIds[i] = d.LabConfig.ManufacturingId
+	}
+	devCfgs, err := getManufacturingConfigFunc(ctx, cfgIds)
+	newExtendedData := make([]*api.ExtendedDeviceData, 0, len(extendedData))
+	failedDevices := make([]*api.DeviceOpResult, 0, len(extendedData))
+	for i := range devCfgs {
+		if err == nil || err.(errors.MultiError)[i] == nil {
+			extendedData[i].ManufacturingConfig = devCfgs[i].(*manufacturing.Config)
+			newExtendedData = append(newExtendedData, extendedData[i])
+		} else {
+			failedDevices = append(failedDevices, &api.DeviceOpResult{
+				Id:       extendedData[i].LabConfig.GetId().GetValue(),
+				Hostname: utils.GetHostname(extendedData[i].LabConfig),
+				ErrorMsg: err.(errors.MultiError)[i].Error(),
+			})
+		}
+	}
+	return newExtendedData, failedDevices
+}
+
 func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResult) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
 	logging.Debugf(ctx, "Get exteneded data for %d devcies", len(devices))
 	secret := config.Get(ctx).HwidSecret
@@ -137,12 +164,13 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 				Sku:     hwidData.Sku,
 				Variant: hwidData.Variant,
 			},
-			// TODO (guocb)Add manufactoring data.
-			// TODO (guocb) Get dut state data.
 		})
 	}
 	// Get device config in a batch.
 	extendedData, moreFailedDevices := getDeviceConfigData(ctx, extendedData)
+	failedDevices = append(failedDevices, moreFailedDevices...)
+
+	extendedData, moreFailedDevices = getManufacturingConfigData(ctx, extendedData)
 	failedDevices = append(failedDevices, moreFailedDevices...)
 	return extendedData, failedDevices
 }

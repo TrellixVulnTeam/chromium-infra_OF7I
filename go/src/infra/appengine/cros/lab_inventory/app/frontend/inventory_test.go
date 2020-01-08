@@ -14,6 +14,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/auth"
@@ -278,6 +279,13 @@ func TestGetCrosDevices(t *testing.T) {
 			fakeCfgs := make([]proto.Message, len(ids))
 			for i := range fakeCfgs {
 				fakeCfgs[i] = &device.Config{}
+			}
+			return fakeCfgs, nil
+		}
+		getManufacturingConfigFunc = func(ctx context.Context, ids []*manufacturing.ConfigID) ([]proto.Message, error) {
+			fakeCfgs := make([]proto.Message, len(ids))
+			for i := range fakeCfgs {
+				fakeCfgs[i] = &manufacturing.Config{}
 			}
 			return fakeCfgs, nil
 		}
