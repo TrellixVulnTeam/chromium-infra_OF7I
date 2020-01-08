@@ -43,6 +43,7 @@
  * Types defined in common.proto.
  */
 
+
 /**
  * A ComponentRef Object returned by the pRPC API common.proto.
  *
@@ -251,6 +252,15 @@
 
 /**
  * Types defined in project_objects.proto.
+ */
+
+/**
+ * A Project Object returned by the pRPC API project_objects.proto.
+ *
+ * @typedef {Object} Project
+ * @property {string} name
+ * @property {string} summary
+ * @property {string=} description
  */
 
 /**

@@ -75,6 +75,19 @@ export class MrHeader extends connectStore(LitElement) {
           border: 0;
           height: 30px;
         }
+        a.home-link {
+          color: var(--chops-gray-900);
+          letter-spacing: 0.5px;
+          font-size: 18px;
+          font-weight: 400;
+          display: flex;
+          font-stretch: 100%;
+          padding-left: 8px;
+        }
+        a.home-link img {
+          /** Cover up default padding with the custom logo. */
+          margin-left: -8px;
+        }
         a.home-link:hover {
           text-decoration: none;
         }
@@ -98,40 +111,43 @@ export class MrHeader extends connectStore(LitElement) {
           margin-left: auto;
           justify-content: flex-end;
         }
+        .hamburger-icon:hover {
+          text-decoration: none;
+        }
       `,
     ];
   }
 
   /** @override */
   render() {
+    const isProjectScope = !!this.projectName;
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <a class="hamburger-icon" title="Main menu" ?hidden=${isProjectScope}>
+        <i class="material-icons">menu</i>
+      </a>
       <a
-        href=${this.projectName ? `/p/${this.projectName}/` : '/'}
+        href=${isProjectScope ? `/p/${this.projectName}/` : '/'}
         class="home-link"
       >
         ${this.projectThumbnailUrl ? html`
           <img
             class="project-logo"
             src=${this.projectThumbnailUrl}
-            title="Issues"
+            title=${this.projectName}
           />
-        ` : ''}
-        <i
-          class="material-icons"
-          title="Issues"
-          ?hidden=${this.projectThumbnailUrl}
-        >home</i>
+        ` : 'Monorail'}
       </a>
       <mr-dropdown
         class="project-selector"
-        .text=${this.projectName || 'Select a project'}
+        .text=${this.projectName}
         .items=${this._projectDropdownItems}
+        ?hidden=${!isProjectScope}
         menuAlignment="left"
         title=${this.presentationConfig.projectSummary}
       ></mr-dropdown>
       <a
-        ?hidden=${!this.projectName}
+        ?hidden=${!isProjectScope}
         class="button emphasized new-issue-link"
         href=${this.issueEntryUrl}
       >
@@ -144,7 +160,7 @@ export class MrHeader extends connectStore(LitElement) {
         .initialCan=${this._currentCan}
         .initialQuery=${this._currentQuery}
         .queryParams=${this.queryParams}
-        ?hidden=${!this.projectName}
+        ?hidden=${!isProjectScope}
       ></mr-search-bar>
 
       <div class="right-section">
@@ -152,7 +168,7 @@ export class MrHeader extends connectStore(LitElement) {
           icon="settings"
           label="Project Settings"
           .items=${this._projectSettingsItems}
-          ?hidden=${!this.projectName}
+          ?hidden=${!isProjectScope}
         ></mr-dropdown>
 
         ${this.userDisplayName ? html`

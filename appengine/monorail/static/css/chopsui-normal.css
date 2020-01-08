@@ -30,6 +30,7 @@
   --chops-gray-600: #757575;
   --chops-gray-700: #616161;
   --chops-gray-800: #424242;
+  --chops-gray-900: #212121;
   --chops-blue-gray-25: #f1f3f4;
   --chops-blue-gray-50: #eceff1;  /* Similar to grimoire. */
 
@@ -37,7 +38,7 @@
   --chops-secondary-header-bg: var(--chops-blue-gray-25);
   --chops-sidebar-bg: var(--chops-blue-gray-25);
   --chops-page-bg: white;
-  --chops-footer-bg: white;
+  --chops-footer-bg: transparent;
   --chops-primary-icon-color: var(--chops-gray-800);
   --chops-text-color: #222;
 
@@ -47,6 +48,7 @@
   --chops-radius: 6px;
   --chops-shadow: none;
 
+  --chops-primary-font-color: var(--chops-gray-800);
   --chops-font-family: 'Roboto', 'Noto', sans-serif;
   --chops-link-color: var(--chops-primary-accent-color);
   --chops-link-font-weight: 500;
@@ -65,6 +67,7 @@
   --chops-choice-color: var(--chops-gray-600);
   --chops-active-choice-bg: var(--chops-blue-75);
   --chops-active-choice-color: var(--chops-primary-accent-color);
+  --chops-transition-time: 0.1s;
 
   --chops-error-bubble-bg: var(--chops-red-50);
   --chops-notice-bubble-bg: var(--chops-orange-50);

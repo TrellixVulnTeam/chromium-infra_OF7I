@@ -10,6 +10,7 @@ export const SHARED_STYLES = css`
     --mr-edit-field-width: 90%;
     --mr-input-grid-gap: 6px;
     font-family: var(--chops-font-family);
+    color: var(--chops-primary-font-color);
   }
   /** Converts a <button> to look like an <a> tag. */
   .linkify {
@@ -29,7 +30,7 @@ export const SHARED_STYLES = css`
     font-weight: var(--chops-link-font-weight);
     font-family: var(--chops-font-family);
   }
-  a:hover {
+  a:hover, .linkify:hover {
     text-decoration: underline;
   }
   a.button, .button {

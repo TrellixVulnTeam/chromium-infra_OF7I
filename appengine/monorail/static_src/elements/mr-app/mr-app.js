@@ -113,33 +113,38 @@ export class MrApp extends connectStore(LitElement) {
    * @return {TemplateResult}
    */
   _renderPage() {
-    if (this.page === 'detail') {
-      return html`
-        <mr-issue-page
-          .userDisplayName=${this.userDisplayName}
-          .loginUrl=${this.loginUrl}
-        ></mr-issue-page>
-      `;
-    } else if (this.page === 'grid') {
-      return html`
-        <mr-grid-page
-          .userDisplayName=${this.userDisplayName}
-        ></mr-grid-page>
-      `;
-    } else if (this.page === 'list') {
-      return html`
-        <mr-list-page
-          .userDisplayName=${this.userDisplayName}
-        ></mr-list-page>
-      `;
-    } else if (this.page === 'chart') {
-      return html`<mr-chart-page></mr-chart-page>`;
-    } else if (this.page === 'hotlist-details') {
-      return html`<mr-hotlist-details-page></mr-hotlist-details-page>`;
-    } else if (this.page === 'hotlist-issues') {
-      return html`<mr-hotlist-issues-page></mr-hotlist-issues-page>`;
-    } else if (this.page === 'hotlist-people') {
-      return html`<mr-hotlist-people-page></mr-hotlist-people-page>`;
+    switch (this.page) {
+      case 'detail':
+        return html`
+          <mr-issue-page
+            .userDisplayName=${this.userDisplayName}
+            .loginUrl=${this.loginUrl}
+          ></mr-issue-page>
+        `;
+      case 'grid':
+        return html`
+          <mr-grid-page
+            .userDisplayName=${this.userDisplayName}
+          ></mr-grid-page>
+        `;
+      case 'list':
+        return html`
+          <mr-list-page
+            .userDisplayName=${this.userDisplayName}
+          ></mr-list-page>
+        `;
+      case 'chart':
+        return html`<mr-chart-page></mr-chart-page>`;
+      case 'projects':
+        return html`<mr-projects-page></mr-projects-page>`;
+      case 'hotlist-details':
+        return html`<mr-hotlist-details-page></mr-hotlist-details-page>`;
+      case 'hotlist-issues':
+        return html`<mr-hotlist-issues-page></mr-hotlist-issues-page>`;
+      case 'hotlist-people':
+        return html`<mr-hotlist-people-page></mr-hotlist-people-page>`;
+      default:
+        return;
     }
   }
 
@@ -256,9 +261,13 @@ export class MrApp extends connectStore(LitElement) {
     // not before.
     // This may change if we change the granularity of our bundling.
     page('*', this._preRouteHandler.bind(this));
+
+    page('/p', '/projects');
+    page('/projects', this._loadProjectsPage.bind(this));
     page('/p/:project/issues/list_new', this._loadListPage.bind(this));
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this));
     page('/p/:project/*', this._selectProject.bind(this));
+
     page(
         '/users/:user/hotlists/:hotlist',
         this._selectHotlist, this._loadHotlistIssuesPage.bind(this));
@@ -363,6 +372,18 @@ export class MrApp extends connectStore(LitElement) {
     // eslint-disable-next-line new-cap
     window.TKR_fetchOptions(ctx.params.project);
 
+    next();
+  }
+
+  /**
+   * Loads and triggers rendering for the list of all projects.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
+  async _loadProjectsPage(ctx, next) {
+    await import(/* webpackChunkName: "mr-projects-page" */
+        '../projects/mr-projects-page/mr-projects-page.js');
+    this.page = 'projects';
     next();
   }
 
