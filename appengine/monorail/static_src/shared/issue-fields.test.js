@@ -381,4 +381,46 @@ describe('stringValuesForIssueField', () => {
           projectName, fieldDefMap, labelPrefixSet), ['UI', 'Goodies']);
     });
   });
+
+  describe('composite fields', () => {
+    beforeEach(() => {
+      // Set clock to some specified date for relative time.
+      const initialTime = 365 * 24 * 60 * 60;
+
+      clock = sinon.useFakeTimers({
+        now: new Date(initialTime * 1000),
+        shouldAdvanceTime: false,
+      });
+
+      issue = {
+        localId: 33,
+        projectName: 'chromium',
+        summary: 'Test summary',
+        closedTimestamp: initialTime - 120, // 2 minutes ago
+        modifiedTimestamp: initialTime - 60, // a minute ago
+        openedTimestamp: initialTime - 24 * 60 * 60, // a day ago
+        statusModifiedTimestamp: initialTime - 60, // a minute ago
+        statusRef: {status: 'Duplicate'},
+      };
+    });
+
+    afterEach(() => {
+      clock.restore();
+    });
+
+    it('computes strings for Status/Closed', () => {
+      const fieldName = 'Status/Closed';
+
+      assert.deepEqual(stringValuesForIssueField(issue, fieldName),
+          ['Duplicate', '2 minutes ago']);
+    });
+
+    it('ignores nonexistant fields', () => {
+      const fieldName = 'Owner/Status';
+
+      assert.isFalse(issue.hasOwnProperty('ownerRef'));
+      assert.deepEqual(stringValuesForIssueField(issue, fieldName),
+          ['Duplicate']);
+    });
+  });
 });

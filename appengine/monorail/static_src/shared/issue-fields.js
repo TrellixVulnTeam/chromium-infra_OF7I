@@ -295,7 +295,32 @@ export const defaultIssueFieldMap = Object.freeze(
 export const DEFAULT_ISSUE_FIELD_LIST = defaultIssueFields.map(
     (field) => field.fieldName);
 
+/**
+ * Wrapper that extracts potentially composite field values from issue
+ * @param {Issue} issue
+ * @param {string} fieldName
+ * @param {string} projectName
+ * @param {Map} fieldDefMap
+ * @param {Set} labelPrefixSet
+ * @return {Array<string>}
+ */
 export const stringValuesForIssueField = (issue, fieldName, projectName,
+    fieldDefMap = new Map(), labelPrefixSet = new Set()) => {
+  // Split composite fields into each segment
+  return fieldName.split('/').flatMap((fieldKey) => stringValuesExtractor(
+      issue, fieldKey, projectName, fieldDefMap, labelPrefixSet));
+};
+
+/**
+ * Extract string values of an issue's field
+ * @param {Issue} issue
+ * @param {string} fieldName
+ * @param {string} projectName
+ * @param {Map} fieldDefMap
+ * @param {Set} labelPrefixSet
+ * @return {Array<string>}
+ */
+const stringValuesExtractor = (issue, fieldName, projectName,
     fieldDefMap = new Map(), labelPrefixSet = new Set()) => {
   const fieldKey = fieldName.toLowerCase();
 
