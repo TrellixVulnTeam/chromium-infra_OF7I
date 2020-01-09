@@ -5,10 +5,33 @@
 import {LitElement, html} from 'lit-element';
 import {NON_EDITING_KEY_EVENTS} from 'shared/dom-helpers.js';
 
+/**
+ * @type {RegExp} Autocomplete options are matched at word boundaries. This
+ *   Regex specifies what counts as a boundary between words.
+ */
 const DELIMITER_REGEX = /[^a-z0-9]+/i;
-const DEFAULT_REPLACER = (input, value) => input.value = value;
+
+/**
+ * A function to specify what happens to the input element an autocomplete
+ * instance is attached to when a user selects an autocomplete option. This
+ * constant specifies the default behavior where a form's entire value is
+ * replaced with the selected value.
+ * @param {HTMLInputElement} input An input element.
+ * @param {string} value The value of the selected autocomplete option.
+ */
+const DEFAULT_REPLACER = (input, value) => {
+  input.value = value;
+};
+
+/**
+ * @type {number} The default maximum of completions to render at a time.
+ */
 const DEFAULT_MAX_COMPLETIONS = 200;
 
+/**
+ * @type {number} Globally shared counter for autocomplete instances to help
+ *   ensure that no two <chops-autocomplete> options have the same ID.
+ */
 let idCount = 1;
 
 /**
@@ -22,7 +45,7 @@ let idCount = 1;
  * NOTE: This element disables ShadowDOM for accessibility reasons: to allow
  * aria attributes from the outside to reference features in this element.
  *
- * @customElement
+ * @customElement chops-autocomplete
  */
 export class ChopsAutocomplete extends LitElement {
   /** @override */
@@ -119,6 +142,12 @@ export class ChopsAutocomplete extends LitElement {
     `;
   }
 
+  /**
+   * Renders a single autocomplete result.
+   * @param {string} completion The string for the currently selected
+   *   autocomplete value.
+   * @return {TemplateResult}
+   */
   _renderCompletion(completion) {
     const matchDict = this._matchDict;
 
@@ -136,6 +165,11 @@ export class ChopsAutocomplete extends LitElement {
     return html`${start}<b>${middle}</b>${end}`;
   }
 
+  /**
+   * Finds the docstring for a given autocomplete result and renders it.
+   * @param {string} completion The autocomplete result rendered.
+   * @return {TemplateResult}
+   */
   _renderDocstring(completion) {
     const matchDict = this._matchDict;
     const docDict = this.docDict;
@@ -209,9 +243,9 @@ export class ChopsAutocomplete extends LitElement {
       _selectedIndex: {type: Number},
       _prefix: {type: String},
       _forRef: {type: Object},
-      _boundFocusHandler: {type: Object},
+      _boundToggleCompletionsOnFocus: {type: Object},
       _boundNavigateCompletions: {type: Object},
-      _boundKeyInputHandler: {type: Object},
+      _boundUpdateCompletions: {type: Object},
       _oldAttributes: {type: Object},
     };
   }
@@ -231,13 +265,15 @@ export class ChopsAutocomplete extends LitElement {
     this._matchDict = {};
     this._selectedIndex = -1;
     this._prefix = '';
-    this._boundFocusHandler = this._focusHandler.bind(this);
-    this._boundKeyInputHandler = this._keyInputHandler.bind(this);
+    this._boundToggleCompletionsOnFocus =
+      this._toggleCompletionsOnFocus.bind(this);
+    this._boundUpdateCompletions = this._updateCompletions.bind(this);
     this._boundNavigateCompletions = this._navigateCompletions.bind(this);
     this._oldAttributes = {};
   }
 
   // Disable shadow DOM to allow aria attributes to propagate.
+  /** @override */
   createRenderRoot() {
     return this;
   }
@@ -279,6 +315,12 @@ export class ChopsAutocomplete extends LitElement {
     }
   }
 
+  /**
+   * Sets the aria-activedescendant attribute of the element (ie: an input form)
+   * that the autocomplete is attached to, in order to tell screenreaders about
+   * which autocomplete option is currently selected.
+   * @param {HTMLInputElement} element
+   */
   _updateAriaActiveDescendant(element) {
     const i = this._selectedIndex;
 
@@ -294,6 +336,12 @@ export class ChopsAutocomplete extends LitElement {
     }
   }
 
+  /**
+   * When a user moves up or down from an autocomplete option that's at the top
+   * or bottom of the autocomplete option container, we must scroll the
+   * container to make sure the user always sees the option they've selected.
+   * @param {number} i The index of the autocomplete option to put into view.
+   */
   _scrollCompletionIntoView(i) {
     const selectedId = completionId(this.id, i);
 
@@ -320,7 +368,6 @@ export class ChopsAutocomplete extends LitElement {
 
   /**
    * Changes the input's value according to the rules of the replacer function.
-   *
    * @param {string} value - the value to swap in.
    * @return {undefined}
    */
@@ -335,7 +382,6 @@ export class ChopsAutocomplete extends LitElement {
 
   /**
    * Computes autocomplete values matching the current input in the field.
-   *
    * @return {Boolean} Whether any completions were found.
    */
   showCompletions() {
@@ -377,6 +423,16 @@ export class ChopsAutocomplete extends LitElement {
     return !!this.completions.length;
   }
 
+  /**
+   * Finds where a given user input matches an autocomplete option. Note that
+   * a match is only found if the substring is at either the beginning of the
+   * string or the beginning of a delimited section of the string. Hence, we
+   * refer to the "needle" in this function a "prefix".
+   * @param {string} prefix The value that the user inputed into the form.
+   * @param {string} s The autocomplete option that's being compared.
+   * @return {number} An integer for what index the substring is found in the
+   *   autocomplete option. Returns -1 if no match.
+   */
   _matchIndex(prefix, s) {
     const matchStart = s.toLowerCase().indexOf(prefix.toLocaleLowerCase());
     if (matchStart === 0 ||
@@ -386,12 +442,19 @@ export class ChopsAutocomplete extends LitElement {
     return -1;
   }
 
+  /**
+   * Hides autocomplete options.
+   */
   hideCompletions() {
     this.completions = [];
     this._prefix = '';
     this._selectedIndex = -1;
   }
 
+  /**
+   * Sets an autocomplete option that a user hovers over as the selected option.
+   * @param {MouseEvent} e
+   */
   _hoverCompletion(e) {
     const target = e.currentTarget;
 
@@ -403,6 +466,11 @@ export class ChopsAutocomplete extends LitElement {
     }
   }
 
+  /**
+   * Sets the value of the form input that the user is editing to the
+   * autocomplete option that the user just clicked.
+   * @param {MouseEvent} e
+   */
   _clickCompletion(e) {
     e.preventDefault();
     const target = e.currentTarget;
@@ -411,7 +479,12 @@ export class ChopsAutocomplete extends LitElement {
     this.completeValue(target.dataset.value);
   }
 
-  _focusHandler(e) {
+  /**
+   * Hides and shows the autocomplete completions when a user focuses and
+   * unfocuses a form.
+   * @param {FocusEvent} e
+   */
+  _toggleCompletionsOnFocus(e) {
     const target = e.target;
 
     // Check if the input is focused or not.
@@ -422,6 +495,12 @@ export class ChopsAutocomplete extends LitElement {
     }
   }
 
+  /**
+   * Implements hotkeys to allow the user to navigate autocomplete options with
+   * their keyboard. ie: pressing up and down to select options or Esc to close
+   * the form.
+   * @param {KeyboardEvent} e
+   */
   _navigateCompletions(e) {
     const completions = this.completions;
     if (!completions.length) return;
@@ -453,6 +532,9 @@ export class ChopsAutocomplete extends LitElement {
     }
   }
 
+  /**
+   * Selects the completion option above the current one.
+   */
   _navigateUp() {
     const completions = this.completions;
     this._selectedIndex -= 1;
@@ -461,6 +543,9 @@ export class ChopsAutocomplete extends LitElement {
     }
   }
 
+  /**
+   * Selects the completion option below the current one.
+   */
   _navigateDown() {
     const completions = this.completions;
     this._selectedIndex += 1;
@@ -469,18 +554,30 @@ export class ChopsAutocomplete extends LitElement {
     }
   }
 
-  _keyInputHandler(e) {
+  /**
+   * Recomputes autocomplete completions when the user types a new input.
+   * Ignores KeyboardEvents that don't change the input value of the form
+   * to prevent excess recomputations.
+   * @param {KeyboardEvent} e
+   */
+  _updateCompletions(e) {
     if (NON_EDITING_KEY_EVENTS.has(e.key)) return;
     this.showCompletions();
   }
 
+  /**
+   * Initializes the input element that this autocomplete instance is
+   * attached to with aria attributes required for accessibility.
+   * @param {HTMLInputElement} node The input element that the autocomplete is
+   *   attached to.
+   */
   _connectAutocomplete(node) {
     if (!node) return;
 
-    node.addEventListener('keyup', this._boundKeyInputHandler);
+    node.addEventListener('keyup', this._boundUpdateCompletions);
     node.addEventListener('keydown', this._boundNavigateCompletions);
-    node.addEventListener('focus', this._boundFocusHandler);
-    node.addEventListener('blur', this._boundFocusHandler);
+    node.addEventListener('focus', this._boundToggleCompletionsOnFocus);
+    node.addEventListener('blur', this._boundToggleCompletionsOnFocus);
 
     this._oldAttributes = {
       'aria-owns': node.getAttribute('aria-owns'),
@@ -496,13 +593,20 @@ export class ChopsAutocomplete extends LitElement {
     node.setAttribute('aria-activedescendant', '');
   }
 
+  /**
+   * When <chops-autocomplete> is disconnected or moved to a difference form,
+   * this function removes the side effects added by <chops-autocomplete> on the
+   * input element that <chops-autocomplete> is attached to.
+   * @param {HTMLInputElement} node The input element that the autocomplete is
+   *   attached to.
+   */
   _disconnectAutocomplete(node) {
     if (!node) return;
 
-    node.removeEventListener('keyup', this._boundKeyInputHandler);
+    node.removeEventListener('keyup', this._boundUpdateCompletions);
     node.removeEventListener('keydown', this._boundNavigateCompletions);
-    node.removeEventListener('focus', this._boundFocusHandler);
-    node.removeEventListener('blur', this._boundFocusHandler);
+    node.removeEventListener('focus', this._boundToggleCompletionsOnFocus);
+    node.removeEventListener('blur', this._boundToggleCompletionsOnFocus);
 
     for (const key of Object.keys(this._oldAttributes)) {
       node.setAttribute(key, this._oldAttributes[key]);
@@ -511,6 +615,16 @@ export class ChopsAutocomplete extends LitElement {
   }
 }
 
+/**
+ * Generates a unique HTML ID for a given autocomplete option, for use by
+ * aria-activedescendant. Note that because the autocomplete element has
+ * ShadowDOM disabled, we need to make sure the ID is specific enough to be
+ * globally unique across the entire application.
+ * @param {string} prefix A unique prefix to differentiate this autocomplete
+ *   instance from other autocomplete instances.
+ * @param {number} i The index of the autocomplete option.
+ * @return {string} A unique HTML ID for a given autocomplete option.
+ */
 function completionId(prefix, i) {
   return `${prefix}-option-${i}`;
 }
