@@ -301,14 +301,13 @@ export const DEFAULT_ISSUE_FIELD_LIST = defaultIssueFields.map(
  * @param {string} fieldName
  * @param {string} projectName
  * @param {Map} fieldDefMap
- * @param {Set} labelPrefixSet
  * @return {Array<string>}
  */
 export const stringValuesForIssueField = (issue, fieldName, projectName,
-    fieldDefMap = new Map(), labelPrefixSet = new Set()) => {
+    fieldDefMap = new Map()) => {
   // Split composite fields into each segment
   return fieldName.split('/').flatMap((fieldKey) => stringValuesExtractor(
-      issue, fieldKey, projectName, fieldDefMap, labelPrefixSet));
+      issue, fieldKey, projectName, fieldDefMap));
 };
 
 /**
@@ -317,11 +316,10 @@ export const stringValuesForIssueField = (issue, fieldName, projectName,
  * @param {string} fieldName
  * @param {string} projectName
  * @param {Map} fieldDefMap
- * @param {Set} labelPrefixSet
  * @return {Array<string>}
  */
 const stringValuesExtractor = (issue, fieldName, projectName,
-    fieldDefMap = new Map(), labelPrefixSet = new Set()) => {
+    fieldDefMap = new Map()) => {
   const fieldKey = fieldName.toLowerCase();
 
   // Look at whether the field is a built in field first.
@@ -386,19 +384,15 @@ const stringValuesExtractor = (issue, fieldName, projectName,
     }
   }
 
-  // Label options are last in precedence.
-  if (labelPrefixSet.has(fieldKey)) {
-    const matchingLabels = (issue.labelRefs || []).filter((labelRef) => {
-      const labelPrefixKey = labelNameToLabelPrefix(
-          labelRef.label).toLowerCase();
-      return fieldKey === labelPrefixKey;
-    });
-    const labelPrefix = fieldKey + '-';
-    return matchingLabels.map(
-        (labelRef) => removePrefix(labelRef.label, labelPrefix));
-  }
-
-  return [];
+  // Handle custom labels and ad hoc labels last.
+  const matchingLabels = (issue.labelRefs || []).filter((labelRef) => {
+    const labelPrefixKey = labelNameToLabelPrefix(
+        labelRef.label).toLowerCase();
+    return fieldKey === labelPrefixKey;
+  });
+  const labelPrefix = fieldKey + '-';
+  return matchingLabels.map(
+      (labelRef) => removePrefix(labelRef.label, labelPrefix));
 };
 
 // TODO(zhangtiff): Implement hotlist specific fields: Rank, Added, Adder.

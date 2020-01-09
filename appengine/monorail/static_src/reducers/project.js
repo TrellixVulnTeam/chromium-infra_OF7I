@@ -279,10 +279,10 @@ export const enumFieldDefs = createSelector(
  *   the issue.
  */
 export const extractFieldValuesFromIssue = createSelector(viewedProjectName,
-    labelPrefixSet, fieldDefMap,
-    (projectName, labelPrefixSet, fieldDefMap) => {
+    fieldDefMap,
+    (projectName, fieldDefMap) => {
       return (issue, fieldName) => stringValuesForIssueField(issue, fieldName,
-          projectName, fieldDefMap, labelPrefixSet);
+          projectName, fieldDefMap);
     },
 );
 

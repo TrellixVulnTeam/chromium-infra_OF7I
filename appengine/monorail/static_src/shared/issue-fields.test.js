@@ -350,9 +350,8 @@ describe('stringValuesForIssueField', () => {
         ['astring', {fieldRef: {type: 'STR_TYPE', fieldName: 'aString'}}],
       ]);
       issue.labelRefs = [{label: 'aString-ignore'}];
-      const labelPrefixSet = new Set(['aString']);
       assert.deepEqual(stringValuesForIssueField(issue, 'aString',
-          projectName, fieldDefMap, labelPrefixSet), ['test', 'test2']);
+          projectName, fieldDefMap), ['test', 'test2']);
     });
   });
 
@@ -374,11 +373,12 @@ describe('stringValuesForIssueField', () => {
     it('gets values for label prefixes', () => {
       const projectName = 'chromium';
       const fieldDefMap = new Map();
-      const labelPrefixSet = new Set(['test', 'milestone']);
       assert.deepEqual(stringValuesForIssueField(issue, 'test',
-          projectName, fieldDefMap, labelPrefixSet), ['label', 'label-2']);
+          projectName, fieldDefMap), ['label', 'label-2']);
       assert.deepEqual(stringValuesForIssueField(issue, 'Milestone',
-          projectName, fieldDefMap, labelPrefixSet), ['UI', 'Goodies']);
+          projectName, fieldDefMap), ['UI', 'Goodies']);
+      assert.deepEqual(stringValuesForIssueField(issue, 'ignore',
+          projectName, fieldDefMap), ['me']);
     });
   });
 
