@@ -14,11 +14,215 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	. "github.com/smartystreets/goconvey/convey"
 
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/ptypes"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
 )
+
+func TestBuilderID(t *testing.T) {
+	Convey("Given request arguments that specify a builder ID", t, func() {
+		id := buildbucket_pb.BuilderID{
+			Project: "foo-project",
+			Bucket:  "foo-bucket",
+			Builder: "foo-builder",
+		}
+		args := request.Args{
+			BuilderID: &id,
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest()
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have a builder ID.", func() {
+				So(req.Builder, ShouldNotBeNil)
+				diff := pretty.Compare(req.Builder, id)
+				So(diff, ShouldBeEmpty)
+			})
+		})
+	})
+}
+
+func TestDimensionsBB(t *testing.T) {
+	Convey("Given request arguments that specify provisionable and regular dimenisons and inventory labels", t, func() {
+		model := "foo-model"
+		args := request.Args{
+			Dimensions:                       []string{"k1:v1"},
+			ProvisionableDimensions:          []string{"provisionable-k2:v2", "provisionable-k3:v3"},
+			ProvisionableDimensionExpiration: 30 * time.Second,
+			SchedulableLabels:                inventory.SchedulableLabels{Model: &model},
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest()
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have correct dimensions.", func() {
+				So(req.Dimensions, ShouldHaveLength, 4)
+
+				want := []*buildbucket_pb.RequestedDimension{
+					{
+						Key:        "provisionable-k2",
+						Value:      "v2",
+						Expiration: ptypes.DurationProto(30 * time.Second),
+					},
+					{
+						Key:        "provisionable-k3",
+						Value:      "v3",
+						Expiration: ptypes.DurationProto(30 * time.Second),
+					},
+					{
+						Key:   "k1",
+						Value: "v1",
+					},
+					{
+						Key:   "label-model",
+						Value: "foo-model",
+					},
+				}
+
+				diff := pretty.Compare(sortBBDimensions(req.Dimensions), sortBBDimensions(want))
+				So(diff, ShouldBeEmpty)
+			})
+		})
+	})
+}
+
+func TestPropertiesBB(t *testing.T) {
+	Convey("Given request arguments that specify provisionable dimensions and test", t, func() {
+		test := skylab_test_runner.Request_Test{
+			Harness: &skylab_test_runner.Request_Test_Autotest_{
+				Autotest: &skylab_test_runner.Request_Test_Autotest{
+					Name:     "foo-test",
+					TestArgs: "a1=v1 a2=v2",
+					Keyvals: map[string]string{
+						"k1": "v1",
+						"k2": "v2",
+					},
+					IsClientTest: true,
+					DisplayName:  "fancy-name",
+				},
+			},
+		}
+		args := request.Args{
+			ProvisionableDimensions:          []string{"provisionable-k1:v1", "provisionable-k2:v2"},
+			ProvisionableDimensionExpiration: 30 * time.Second,
+			Test:                             &test,
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest()
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have correct properties.", func() {
+				So(req.Properties, ShouldNotBeNil)
+
+				reqStruct, ok := req.Properties.Fields["request"]
+				So(ok, ShouldBeTrue)
+
+				m := jsonpb.Marshaler{}
+				s, err := m.MarshalToString(reqStruct)
+				So(err, ShouldBeNil)
+
+				var got skylab_test_runner.Request
+				err = jsonpb.UnmarshalString(s, &got)
+				So(err, ShouldBeNil)
+
+				want := skylab_test_runner.Request{
+					Prejob: &skylab_test_runner.Request_Prejob{
+						ProvisionableLabels: map[string]string{
+							"k1": "v1",
+							"k2": "v2",
+						},
+					},
+					Test: &test,
+				}
+
+				diff := pretty.Compare(got, want)
+				So(diff, ShouldBeEmpty)
+			})
+		})
+	})
+}
+
+func TestTagsBB(t *testing.T) {
+	Convey("Given request arguments that specify tags", t, func() {
+		args := request.Args{
+			SwarmingTags: []string{"k1:v1", "k2:v2"},
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest()
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have correct tags.", func() {
+				So(req.Tags, ShouldHaveLength, 2)
+
+				want := []*buildbucket_pb.StringPair{
+					{
+						Key:   "k1",
+						Value: "v1",
+					},
+					{
+						Key:   "k2",
+						Value: "v2",
+					},
+				}
+
+				diff := pretty.Compare(sortBBStringPairs(req.Tags), sortBBStringPairs(want))
+				So(diff, ShouldBeEmpty)
+			})
+		})
+	})
+}
+
+func TestPriorityBB(t *testing.T) {
+	Convey("Given request arguments that specify tags", t, func() {
+		args := request.Args{
+			Priority: 42,
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest()
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have correct priority.", func() {
+				So(req.Priority, ShouldEqual, 42)
+			})
+		})
+	})
+}
+
+func TestStatusTopicBB(t *testing.T) {
+	Convey("Given request arguments that specify a Pubsub topic for status updates", t, func() {
+		args := request.Args{
+			StatusTopic: "a topic name",
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest()
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have the Pubsub topic assigned.", func() {
+				So(req.Notify, ShouldNotBeNil)
+				So(req.Notify.PubsubTopic, ShouldEqual, "a topic name")
+			})
+		})
+	})
+}
+
+func TestNoStatusTopicBB(t *testing.T) {
+	Convey("Given request arguments that specify a Pubsub topic for status updates", t, func() {
+		args := request.Args{}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest()
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have no notify field.", func() {
+				So(req.Notify, ShouldBeNil)
+			})
+		})
+	})
+}
 
 func TestProvisionableDimensions(t *testing.T) {
 	Convey("Given request arguments that specify provisionable and regular dimenisons and inventory labels", t, func() {
@@ -192,6 +396,20 @@ func toStringPairs(ss []string) []*swarming.SwarmingRpcsStringPair {
 		}
 	}
 	return ret
+}
+
+func sortBBStringPairs(dims []*buildbucket_pb.StringPair) []*buildbucket_pb.StringPair {
+	sort.SliceStable(dims, func(i, j int) bool {
+		return dims[i].Key < dims[j].Key || (dims[i].Key == dims[j].Key && dims[i].Value < dims[j].Value)
+	})
+	return dims
+}
+
+func sortBBDimensions(dims []*buildbucket_pb.RequestedDimension) []*buildbucket_pb.RequestedDimension {
+	sort.SliceStable(dims, func(i, j int) bool {
+		return dims[i].Key < dims[j].Key || (dims[i].Key == dims[j].Key && dims[i].Value < dims[j].Value)
+	})
+	return dims
 }
 
 func sortDimensions(dims []*swarming.SwarmingRpcsStringPair) []*swarming.SwarmingRpcsStringPair {

@@ -11,6 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/ptypes"
+	structpb "github.com/golang/protobuf/ptypes/struct"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/data/strpair"
 	"go.chromium.org/luci/common/errors"
@@ -23,20 +28,22 @@ import (
 // Args defines the set of arguments for creating a request.
 type Args struct {
 	// Cmd specifies the payload command to run for the request.
-	Cmd          worker.Command
+	Cmd worker.Command
+	// TODO(crbug.com/1033291): Rename to Skylab tags.
 	SwarmingTags []string
 	// ProvisionableDimensions specifies the provisionable dimensions in raw
 	// string form; e.g. {"provisionable-cros-version:foo-cq-R75-1.2.3.4"}
 	ProvisionableDimensions []string
+	// ProvisionableDimensionExpiration specifies the interval of time
+	// during which Swarming will attempt to find a bot matching optional
+	// (i.e. provisionable) dimensions. After the expiration time Swarming
+	// will only use required dimensions for finding the bot.
+	ProvisionableDimensionExpiration time.Duration
 	// Dimensions specifies swarming dimensions in raw string form.
 	//
 	// It is preferable to specify dimensions via the SchedulableLabels
 	// argument. This argument should only be used for user-supplied freeform
 	// dimensions; e.g. {"label-power:battery"}
-	//
-	// TODO(akeshet): This feature is needed to support `skylab create-test`
-	// which allows arbitrary user-specified dimensions. If and when that
-	// feature is dropped, then this feature can be dropped as well.
 	Dimensions []string
 	// SchedulableLabels specifies schedulable label requirements that will
 	// be translated to dimensions.
@@ -46,6 +53,193 @@ type Args struct {
 	ParentTaskID      string
 	//Pubsub Topic for status updates on the tests run for the request
 	StatusTopic string
+	// BuilderID identifies the builder that will run the test task.
+	BuilderID *buildbucket_pb.BuilderID
+	// Test describes the test to be run.
+	Test *skylab_test_runner.Request_Test
+}
+
+// NewBBRequest returns the Buildbucket request to create the test_runner build
+// with these arguments.
+func (a *Args) NewBBRequest() (*buildbucket_pb.ScheduleBuildRequest, error) {
+	bbDims, err := a.getBBDimensions()
+	if err != nil {
+		return nil, errors.Annotate(err, "create bb request").Err()
+	}
+
+	provisionableLabels, err := provisionDims(a.ProvisionableDimensions).StrippedDict()
+	if err != nil {
+		return nil, errors.Annotate(err, "create bb request").Err()
+	}
+
+	// TODO(crbug.com/1036559#c1): Add timeouts.
+	req, err := requestToStructPB(&skylab_test_runner.Request{
+		Prejob: &skylab_test_runner.Request_Prejob{
+			ProvisionableLabels: provisionableLabels,
+		},
+		Test: a.Test,
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "create bb request").Err()
+	}
+
+	props := &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"request": req,
+		},
+	}
+
+	tags, err := parseBBStringPairs(a.SwarmingTags)
+	if err != nil {
+		return nil, errors.Annotate(err, "create bb request").Err()
+	}
+
+	return &buildbucket_pb.ScheduleBuildRequest{
+		Builder:    a.BuilderID,
+		Properties: props,
+		Tags:       tags,
+		Dimensions: bbDims,
+		Priority:   int32(a.Priority),
+		Swarming: &buildbucket_pb.ScheduleBuildRequest_Swarming{
+			ParentRunId: a.ParentTaskID,
+		},
+		Notify: newNotificationConfig(a.StatusTopic),
+	}, nil
+}
+
+// getBBDimensions returns both required and optional dimensions that will be
+// used to match this request with a Swarming bot.
+func (a *Args) getBBDimensions() ([]*buildbucket_pb.RequestedDimension, error) {
+	ret := schedulableLabelsToBBDimensions(a.SchedulableLabels)
+
+	pd, err := dims(a.ProvisionableDimensions).BBDimensions()
+	if err != nil {
+		return nil, errors.Annotate(err, "get BB dimensions").Err()
+	}
+
+	if a.ProvisionableDimensionExpiration != 0 {
+		setDimensionExpiration(pd, a.ProvisionableDimensionExpiration)
+	}
+
+	ret = append(ret, pd...)
+
+	extraDims, err := dims(a.Dimensions).BBDimensions()
+	if err != nil {
+		return nil, errors.Annotate(err, "get BB dimensions").Err()
+	}
+	ret = append(ret, extraDims...)
+	return ret, nil
+}
+
+func schedulableLabelsToBBDimensions(inv inventory.SchedulableLabels) []*buildbucket_pb.RequestedDimension {
+	var ret []*buildbucket_pb.RequestedDimension
+	id := swarming_inventory.Convert(&inv)
+	for key, values := range id {
+		for _, value := range values {
+			ret = append(ret, &buildbucket_pb.RequestedDimension{
+				Key:   key,
+				Value: value,
+			})
+		}
+	}
+	return ret
+}
+
+// TODO(zamorzaev): make the type public and refactor the clients to use it.
+type dims []string
+
+// BBDimensions converts a dims of the form "foo:bar" to BB rpc requested
+// dimensions.
+func (d dims) BBDimensions() ([]*buildbucket_pb.RequestedDimension, error) {
+	ret := make([]*buildbucket_pb.RequestedDimension, len(d))
+	for i, dim := range d {
+		k, v := strpair.Parse(dim)
+		if v == "" {
+			return nil, fmt.Errorf("malformed dimension with key '%s' has no value", k)
+		}
+		ret[i] = &buildbucket_pb.RequestedDimension{
+			Key:   k,
+			Value: v,
+		}
+	}
+	return ret, nil
+}
+
+// setDimensionExpiration adds an expiration to each requested dimension.
+func setDimensionExpiration(d []*buildbucket_pb.RequestedDimension, expiration time.Duration) {
+	for _, dim := range d {
+		dim.Expiration = ptypes.DurationProto(expiration)
+	}
+}
+
+type provisionDims dims
+
+// StrippedDict converts provisionable dimensions to labels.
+func (p provisionDims) StrippedDict() (map[string]string, error) {
+	ret := make(map[string]string)
+	for _, pd := range p.StrippedDims() {
+		k, v := strpair.Parse(pd)
+		if v == "" {
+			return nil, fmt.Errorf("malformed provisionable dimension with key '%s' has no value", k)
+		}
+		ret[k] = v
+	}
+	return ret, nil
+}
+
+// StrippedDims removes "provisionable-" prefix.
+func (p provisionDims) StrippedDims() []string {
+	ret := make([]string, len(p))
+	for i, l := range p {
+		ret[i] = strings.TrimPrefix(l, "provisionable-")
+	}
+	return ret
+}
+
+// parseBBStringPairs converts strings of the form "foo:bar" to BB rpc string
+// pairs.
+func parseBBStringPairs(tags []string) ([]*buildbucket_pb.StringPair, error) {
+	ret := make([]*buildbucket_pb.StringPair, len(tags))
+	for i, t := range tags {
+		k, v := strpair.Parse(t)
+		if v == "" {
+			return nil, fmt.Errorf("malformed tag with key '%s' has no value", k)
+		}
+		ret[i] = &buildbucket_pb.StringPair{
+			Key:   k,
+			Value: v,
+		}
+	}
+	return ret, nil
+}
+
+// requestToStructPB converts a skylab_test_runner.Request into a Struct
+// with the same JSON presentation.
+func requestToStructPB(from *skylab_test_runner.Request) (*structpb.Value, error) {
+	m := jsonpb.Marshaler{}
+	jsonStr, err := m.MarshalToString(from)
+	if err != nil {
+		return nil, err
+	}
+	reqStruct := &structpb.Struct{}
+	if err := jsonpb.UnmarshalString(jsonStr, reqStruct); err != nil {
+		return nil, err
+	}
+	return &structpb.Value{
+		Kind: &structpb.Value_StructValue{StructValue: reqStruct},
+	}, nil
+}
+
+// newNotificationConfig constructs a valid NotificationConfig.
+func newNotificationConfig(topic string) *buildbucket_pb.NotificationConfig {
+	if topic == "" {
+		// BB will crash if it encounters a non-nil NotificationConfig with an
+		// empty PubsubTopic.
+		return nil
+	}
+	return &buildbucket_pb.NotificationConfig{
+		PubsubTopic: topic,
+	}
 }
 
 // SwarmingNewTaskRequest returns the Swarming request to create the Skylab
@@ -106,7 +300,7 @@ func getSlices(cmd worker.Command, staticDimensions []*swarming.SwarmingRpcsStri
 	slices[0] = taskSlice(cmd.Args(), s0Dims, timeout)
 
 	if len(provisionableDimensions) != 0 {
-		cmd.ProvisionLabels = provisionDimensionsToLabels(provisionableDimensions)
+		cmd.ProvisionLabels = provisionDims(provisionableDimensions).StrippedDims()
 		s1Dims := dims
 		slices = append(slices, taskSlice(cmd.Args(), s1Dims, timeout))
 	}
@@ -138,15 +332,6 @@ func taskSlice(command []string, dimensions []*swarming.SwarmingRpcsStringPair, 
 			ExecutionTimeoutSecs: int64(timeout.Seconds()),
 		},
 	}
-}
-
-// provisionDimensionsToLabels converts provisionable dimensions to labels.
-func provisionDimensionsToLabels(dims []string) []string {
-	labels := make([]string, len(dims))
-	for i, l := range dims {
-		labels[i] = strings.TrimPrefix(l, "provisionable-")
-	}
-	return labels
 }
 
 // stringToPairs converts a slice of strings in foo:bar form to a slice of swarming
