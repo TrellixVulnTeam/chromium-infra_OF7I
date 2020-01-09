@@ -15,8 +15,9 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 // AssignDuts subcommand: AssignDuts a DUT to a drone.
@@ -40,7 +41,7 @@ If omitted, one is automatically chosen.`)
 type assignDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  cmdlib.EnvFlags
+	envFlags  skycmdlib.EnvFlags
 	server    string
 }
 

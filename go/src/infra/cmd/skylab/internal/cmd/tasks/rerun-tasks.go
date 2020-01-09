@@ -10,8 +10,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag"
 
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 const showTaskLimit = 5
@@ -41,7 +42,7 @@ var RerunTasks = &subcommands.Command{
 type rerunTasksRun struct {
 	subcommands.CommandRunBase
 	authFlags      authcli.Flags
-	envFlags       cmdlib.EnvFlags
+	envFlags       skycmdlib.EnvFlags
 	outputJSON     bool
 	taskIds        []string
 	tags           []string

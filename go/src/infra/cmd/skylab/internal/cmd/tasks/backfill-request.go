@@ -22,9 +22,10 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmd/skylab/internal/bb"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
+	"infra/cmdsupport/cmdlib"
 )
 
 // BackfillRequest subcommand: Backfill unsuccessful results for a previous
@@ -56,7 +57,7 @@ This command does not wait for the build to start running.`,
 type backfillRequestRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  cmdlib.EnvFlags
+	envFlags  skycmdlib.EnvFlags
 
 	buildID         int64
 	buildTags       []string

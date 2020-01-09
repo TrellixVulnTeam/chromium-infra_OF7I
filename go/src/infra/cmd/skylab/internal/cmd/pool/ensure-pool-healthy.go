@@ -22,7 +22,8 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmdsupport/cmdlib"
 )
 
 // EnsurePoolHealthy subcommand: Balance DUT pools
@@ -52,7 +53,7 @@ To change the number of DUTs in a pool, use resize-pool.`,
 type ensurePoolHealthyRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  cmdlib.EnvFlags
+	envFlags  skycmdlib.EnvFlags
 
 	dryrun bool
 	spare  string

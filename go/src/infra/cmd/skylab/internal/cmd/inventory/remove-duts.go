@@ -23,10 +23,11 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	iv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
+	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
 )
 
@@ -62,10 +63,10 @@ again.`,
 type removeDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags     authcli.Flags
-	envFlags      cmdlib.EnvFlags
+	envFlags      skycmdlib.EnvFlags
 	server        string
 	delete        bool
-	removalReason cmdlib.RemovalReason
+	removalReason skycmdlib.RemovalReason
 }
 
 func (c *removeDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -165,7 +166,7 @@ func (c *removeDutsRun) removeDUTs(ctx context.Context, ic fleet.InventoryClient
 }
 
 // removeRequest builds a RPC remove request.
-func removeRequest(server string, hostnames []string, rr cmdlib.RemovalReason) (fleet.RemoveDutsFromDronesRequest, error) {
+func removeRequest(server string, hostnames []string, rr skycmdlib.RemovalReason) (fleet.RemoveDutsFromDronesRequest, error) {
 	req := fleet.RemoveDutsFromDronesRequest{
 		Removals: make([]*fleet.RemoveDutsFromDronesRequest_Item, len(hostnames)),
 	}

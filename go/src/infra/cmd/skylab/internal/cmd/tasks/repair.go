@@ -15,8 +15,9 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/swarming"
 	"infra/libs/skylab/worker"
 )
@@ -39,7 +40,7 @@ This command does not wait for the task to start running.`,
 type repairRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  cmdlib.EnvFlags
+	envFlags  skycmdlib.EnvFlags
 }
 
 func (c *repairRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {

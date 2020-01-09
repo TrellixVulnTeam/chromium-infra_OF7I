@@ -12,7 +12,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/maruel/subcommands"
 
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
 )
 

@@ -17,9 +17,10 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
+	"infra/cmdsupport/cmdlib"
 )
 
 // BatchUpdateDuts subcommand: batch update duts with some common labels.
@@ -63,7 +64,7 @@ hostname2,powerunit_hostname=fake_host,powerunit_outlet=fake_outlet
 type batchUpdateDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  cmdlib.EnvFlags
+	envFlags  skycmdlib.EnvFlags
 	pool      string
 	inputFile string
 }

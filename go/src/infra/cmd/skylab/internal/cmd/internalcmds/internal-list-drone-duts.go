@@ -14,8 +14,9 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 // ListDroneDuts subcommand: List DUTs for a drone.
@@ -36,7 +37,7 @@ For internal use only.`,
 type listDroneDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  cmdlib.EnvFlags
+	envFlags  skycmdlib.EnvFlags
 }
 
 func (c *listDroneDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {

@@ -14,8 +14,9 @@ import (
 	"go.chromium.org/luci/common/data/strpair"
 	flagx "go.chromium.org/luci/common/flag"
 
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/cmd/recipe"
+	"infra/cmdsupport/cmdlib"
 )
 
 // createRunCommon encapsulates parameters that are common to
@@ -49,7 +50,7 @@ e.g., reef-canary/R73-11580.0.0.`)
 		`Additional provisionable labels to use for the test
 (e.g. cheets-version:git_pi-arc/cheets_x86_64).  May be specified
 multiple times.  Optional.`)
-	fl.IntVar(&c.priority, "priority", cmdlib.DefaultTaskPriority,
+	fl.IntVar(&c.priority, "priority", skycmdlib.DefaultTaskPriority,
 		`Specify the priority of the test [50,255].  A high value means this test
 will be executed in a low priority. If the tasks runs in a quotascheduler controlled pool, this value will be ignored.`)
 	fl.IntVar(&c.timeoutMins, "timeout-mins", 30, "Task runtime timeout.")

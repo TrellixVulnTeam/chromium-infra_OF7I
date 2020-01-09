@@ -15,8 +15,9 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/swarming"
 )
 
@@ -40,7 +41,7 @@ Do not build automation around this subcommand.`,
 type leaseDutRun struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
-	envFlags     cmdlib.EnvFlags
+	envFlags     skycmdlib.EnvFlags
 	leaseMinutes int
 }
 

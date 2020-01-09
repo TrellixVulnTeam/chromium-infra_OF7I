@@ -15,7 +15,8 @@ import (
 
 	"github.com/maruel/subcommands"
 
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmdsupport/cmdlib"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_tool"
@@ -48,7 +49,7 @@ var WaitTask = &subcommands.Command{
 type waitTaskRun struct {
 	subcommands.CommandRunBase
 	authFlags   authcli.Flags
-	envFlags    cmdlib.EnvFlags
+	envFlags    skycmdlib.EnvFlags
 	timeoutMins int
 }
 

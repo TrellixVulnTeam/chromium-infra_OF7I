@@ -13,8 +13,9 @@ import (
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/drone-queen/api"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 // PushDuts subcommand: Inspect drone queen DUT info.
@@ -41,7 +42,7 @@ You must be in the inventory providers group to use this.`,
 type pushDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  cmdlib.EnvFlags
+	envFlags  skycmdlib.EnvFlags
 }
 
 func (c *pushDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {

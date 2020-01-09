@@ -12,7 +12,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
 )
 

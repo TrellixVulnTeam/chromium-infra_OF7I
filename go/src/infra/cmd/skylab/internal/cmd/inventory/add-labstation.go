@@ -16,9 +16,10 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
+	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
 )
 
@@ -59,7 +60,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/l
 type addLabstationRun struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
-	envFlags     cmdlib.EnvFlags
+	envFlags     skycmdlib.EnvFlags
 	newSpecsFile string
 	tail         bool
 	mcsv         bool

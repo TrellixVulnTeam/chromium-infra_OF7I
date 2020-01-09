@@ -16,8 +16,9 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/appengine/drone-queen/api"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 // InspectDuts subcommand: Inspect drone queen DUT info.
@@ -42,7 +43,7 @@ You must be in the respective inspectors group to use this.`,
 type inspectDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
-	envFlags  cmdlib.EnvFlags
+	envFlags  skycmdlib.EnvFlags
 }
 
 func (c *inspectDutsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {

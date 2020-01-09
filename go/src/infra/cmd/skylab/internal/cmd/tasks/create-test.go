@@ -13,9 +13,10 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/bb"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/cmd/recipe"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 // CreateTest subcommand: create a test task.
@@ -44,7 +45,7 @@ type createTestRun struct {
 	subcommands.CommandRunBase
 	createRunCommon
 	authFlags    authcli.Flags
-	envFlags     cmdlib.EnvFlags
+	envFlags     skycmdlib.EnvFlags
 	client       bool
 	testArgs     string
 	parentTaskID string

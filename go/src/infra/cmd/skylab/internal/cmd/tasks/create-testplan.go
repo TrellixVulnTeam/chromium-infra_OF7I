@@ -15,8 +15,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/bb"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 // CreateTestPlan subcommand: create a testplan task.
@@ -47,7 +48,7 @@ type createTestPlanRun struct {
 	subcommands.CommandRunBase
 	createRunCommon
 	authFlags    authcli.Flags
-	envFlags     cmdlib.EnvFlags
+	envFlags     skycmdlib.EnvFlags
 	testplanPath string
 	legacySuite  string
 }

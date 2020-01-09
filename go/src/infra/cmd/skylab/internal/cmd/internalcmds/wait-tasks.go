@@ -18,8 +18,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab/internal/bb"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 )
 
 // WaitTasks subcommand: wait for tasks to finish.
@@ -46,7 +47,7 @@ var WaitTasks = &subcommands.Command{
 type waitTasksRun struct {
 	subcommands.CommandRunBase
 	authFlags   authcli.Flags
-	envFlags    cmdlib.EnvFlags
+	envFlags    skycmdlib.EnvFlags
 	timeoutMins int
 	buildBucket bool
 }
