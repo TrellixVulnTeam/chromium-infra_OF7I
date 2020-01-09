@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	chromeReleaseBotAcc = "chrome-release-bot@chromium.org"
-	mergeApprovedLabel  = "Merge-Approved-%s"
+	chromeReleaseBotAcc        = "chrome-release-bot@chromium.org"
+	chromeReleaseAutoRollerAcc = "chromium-release-autoroll@skia-public.iam.gserviceaccount.com"
+	mergeApprovedLabel         = "Merge-Approved-%s"
 )
 
 var chromeTPMs = []string{"cmasso@chromium.org", "cmasso@google.com",
@@ -51,7 +52,7 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 	result.RuleResultStatus = ruleFailed
 
 	// Exclude Chrome release bot changes
-	if rc.AuthorAccount == chromeReleaseBotAcc {
+	if rc.AuthorAccount == chromeReleaseBotAcc || rc.AuthorAccount == chromeReleaseAutoRollerAcc {
 		result.RuleResultStatus = rulePassed
 		return result
 	}
