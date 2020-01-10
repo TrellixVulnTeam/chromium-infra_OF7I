@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/logging/gologger"
 
 	"infra/cmd/stable_version2/internal/cmd/omaha"
+	"infra/cmd/stable_version2/internal/cmd/validateconfig"
 	"infra/cmd/stable_version2/internal/cmd/version"
 	"infra/cmd/stable_version2/internal/site"
 )
@@ -32,6 +33,8 @@ func getApplication() *cli.Application {
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
+			subcommands.Section("Validation"),
+			validateconfig.Cmd,
 			subcommands.Section("Misc"),
 			version.Cmd,
 			subcommands.Section("Internal use (not for direct human use)"),
