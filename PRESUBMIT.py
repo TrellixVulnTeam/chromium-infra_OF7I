@@ -471,6 +471,8 @@ def CommonChecks(input_api, output_api):  # pragma: no cover
       input_api, output_api, source_file_filter=third_party_filter))
   output.extend(
       input_api.canned_checks.CheckPatchFormatted(input_api, output_api))
+  output.extend(
+      input_api.canned_checks.CheckOwnersFormat(input_api, output_api))
 
   return output
 
