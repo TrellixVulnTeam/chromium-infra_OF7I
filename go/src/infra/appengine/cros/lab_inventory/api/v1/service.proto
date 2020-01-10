@@ -67,6 +67,7 @@ message ExtendedDeviceData {
   device.Config device_config = 2;
   manufacturing.Config manufacturing_config = 3;
   HwidData hwid_data = 4;
+  lab.DutState dut_state = 5;
 }
 
 message GetCrosDevicesResponse {

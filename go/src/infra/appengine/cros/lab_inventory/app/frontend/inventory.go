@@ -153,6 +153,11 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 			})
 			continue
 		}
+		var dutState lab.DutState
+		if err := r.Entity.GetDutStateProto(&dutState); err != nil {
+			addFailedDevice(ctx, &failedDevices, &labData, err, "unmarshal dut state data")
+			continue
+		}
 		hwidData, err := getHwidDataFunc(ctx, labData.GetManufacturingId().GetValue(), secret)
 		if err != nil {
 			operation := fmt.Sprintf("get HWID data of %s", labData.GetManufacturingId().GetValue())
@@ -161,6 +166,7 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 		}
 		extendedData = append(extendedData, &api.ExtendedDeviceData{
 			LabConfig: &labData,
+			DutState:  &dutState,
 			HwidData: &api.HwidData{
 				Sku:     hwidData.Sku,
 				Variant: hwidData.Variant,
