@@ -264,12 +264,6 @@ const defaultIssueFields = Object.freeze([
     type: fieldTypes.USER_TYPE,
     extractor: (issue) => wrapValueIfExists(issue.ownerRef),
   }, {
-    // TODO(zhangtiff): Call ListReferencedUsers if the user views the
-    // OwnerLastVisit column to get the timestamps for each owner's last visit.
-    fieldName: 'OwnerLastVisit',
-    type: fieldTypes.TIME_TYPE,
-    extractor: (issue) => [],
-  }, {
     fieldName: 'OwnerModified',
     type: fieldTypes.TIME_TYPE,
     extractor: (issue) => [issue.ownerModifiedTimestamp],

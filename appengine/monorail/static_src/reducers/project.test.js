@@ -291,10 +291,6 @@ describe('project selectors', () => {
         assert.deepEqual(typeExtractor('Owner'), fieldTypes.USER_TYPE);
       });
 
-      it('gets type for OwnerLastVisit', () => {
-        assert.deepEqual(typeExtractor('OwnerLastVisit'), fieldTypes.TIME_TYPE);
-      });
-
       it('gets type for OwnerModified', () => {
         assert.deepEqual(typeExtractor('OwnerModified'), fieldTypes.TIME_TYPE);
       });
