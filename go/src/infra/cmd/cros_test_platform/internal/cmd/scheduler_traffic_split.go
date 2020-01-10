@@ -47,9 +47,6 @@ type schedulerTrafficSplitRun struct {
 	// A fast-path flag that replaces the traffic splitter logic with a mostly
 	// trivial redirection to Skylab.
 	directAllToSkylab bool
-
-	// TODO(crbug.com/1002941) Internally transition to tagged requests only.
-	orderedTags []string
 }
 
 func (c *schedulerTrafficSplitRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -67,24 +64,24 @@ func (c *schedulerTrafficSplitRun) innerRun(a subcommands.Application, args []st
 	ctx := cli.GetContext(a, c, env)
 	ctx = setupLogging(ctx)
 
-	requests, err := c.readRequests()
+	rs, err := c.readRequests()
 	if err != nil {
 		return err
 	}
-	if len(requests) == 0 {
+
+	if len(rs) == 0 {
 		return errors.Reason("zero requests").Err()
 	}
-
 	if !c.directAllToSkylab {
 		return errors.Reason("traffic split via config is deprecated").Err()
 	}
-	return c.sendAllToSkylab(requests)
+	return c.sendAllToSkylab(rs)
 }
 
-func (c *schedulerTrafficSplitRun) sendAllToSkylab(requests []*steps.SchedulerTrafficSplitRequest) error {
-	resps := make([]*steps.SchedulerTrafficSplitResponse, len(requests))
-	for i, r := range requests {
-		resps[i] = c.sendToSkylab(r.Request)
+func (c *schedulerTrafficSplitRun) sendAllToSkylab(reqs map[string]*steps.SchedulerTrafficSplitRequest) error {
+	resps := make(map[string]*steps.SchedulerTrafficSplitResponse, len(reqs))
+	for t, r := range reqs {
+		resps[t] = c.sendToSkylab(r.Request)
 	}
 	return c.writeResponses(resps)
 }
@@ -130,39 +127,16 @@ func (c *schedulerTrafficSplitRun) processCLIArgs(args []string) error {
 	return nil
 }
 
-func (c *schedulerTrafficSplitRun) readRequests() ([]*steps.SchedulerTrafficSplitRequest, error) {
+func (c *schedulerTrafficSplitRun) readRequests() (map[string]*steps.SchedulerTrafficSplitRequest, error) {
 	var rs steps.SchedulerTrafficSplitRequests
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
-	c.orderedTags = ts
-	return reqs, nil
+	return rs.TaggedRequests, nil
 }
 
-func (c *schedulerTrafficSplitRun) unzipTaggedRequests(trs map[string]*steps.SchedulerTrafficSplitRequest) ([]string, []*steps.SchedulerTrafficSplitRequest) {
-	var ts []string
-	var rs []*steps.SchedulerTrafficSplitRequest
-	for t, r := range trs {
-		ts = append(ts, t)
-		rs = append(rs, r)
-	}
-	return ts, rs
-}
-
-func (c *schedulerTrafficSplitRun) writeResponses(resps []*steps.SchedulerTrafficSplitResponse) error {
+func (c *schedulerTrafficSplitRun) writeResponses(resps map[string]*steps.SchedulerTrafficSplitResponse) error {
 	return writeResponse(c.outputPath, &steps.SchedulerTrafficSplitResponses{
-		TaggedResponses: c.zipTaggedResponses(c.orderedTags, resps),
+		TaggedResponses: resps,
 	})
-}
-
-func (c *schedulerTrafficSplitRun) zipTaggedResponses(ts []string, rs []*steps.SchedulerTrafficSplitResponse) map[string]*steps.SchedulerTrafficSplitResponse {
-	if len(ts) != len(rs) {
-		panic(fmt.Sprintf("got %d responses for %d tags (%s)", len(rs), len(ts), ts))
-	}
-	m := make(map[string]*steps.SchedulerTrafficSplitResponse)
-	for i := range ts {
-		m[ts[i]] = rs[i]
-	}
-	return m
 }
