@@ -39,7 +39,6 @@ var SkylabExecute = &subcommands.Command{
 		c := &skylabExecuteRun{}
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path to JSON ExecuteRequests to read.")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to JSON ExecuteResponses to write.")
-		c.Flags.BoolVar(&c.tagged, "tagged", true, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
 }
@@ -49,10 +48,7 @@ type skylabExecuteRun struct {
 	inputPath  string
 	outputPath string
 
-	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
-	// - recipe has transitioned to using tagged requests
-	// - autotest-execute has been deleted (this just reduces the work required).
-	tagged      bool
+	// TODO(crbug.com/1002941) Internally transition to tagged requests only.
 	orderedTags []string
 }
 
@@ -154,9 +150,6 @@ func (c *skylabExecuteRun) readRequests() ([]*steps.ExecuteRequest, error) {
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	if !c.tagged {
-		return rs.Requests, nil
-	}
 	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
 	c.orderedTags = ts
 	return reqs, nil
@@ -234,10 +227,7 @@ func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration t
 
 func (c *skylabExecuteRun) writeResponsesWithError(resps []*steps.ExecuteResponse, err error) error {
 	r := &steps.ExecuteResponses{
-		Responses: resps,
-	}
-	if c.tagged {
-		r.TaggedResponses = c.zipTaggedResponses(c.orderedTags, resps)
+		TaggedResponses: c.zipTaggedResponses(c.orderedTags, resps),
 	}
 	return writeResponseWithError(c.outputPath, r, err)
 }

@@ -33,7 +33,6 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.SchedulerTrafficSplitRequests")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.SchedulerTrafficSplitResponses should be written.")
 		c.Flags.BoolVar(&c.directAllToSkylab, "rip-cautotest", true, "Cautotest is now at peace. Use a simple forwarding rule to send all traffic to Skylab.")
-		c.Flags.BoolVar(&c.tagged, "tagged", true, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
 }
@@ -49,10 +48,7 @@ type schedulerTrafficSplitRun struct {
 	// trivial redirection to Skylab.
 	directAllToSkylab bool
 
-	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
-	// - recipe has transitioned to using tagged requests
-	// - autotest-execute has been deleted (this just reduces the work required).
-	tagged      bool
+	// TODO(crbug.com/1002941) Internally transition to tagged requests only.
 	orderedTags []string
 }
 
@@ -139,9 +135,6 @@ func (c *schedulerTrafficSplitRun) readRequests() ([]*steps.SchedulerTrafficSpli
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	if !c.tagged {
-		return rs.Requests, nil
-	}
 	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
 	c.orderedTags = ts
 	return reqs, nil
@@ -158,13 +151,9 @@ func (c *schedulerTrafficSplitRun) unzipTaggedRequests(trs map[string]*steps.Sch
 }
 
 func (c *schedulerTrafficSplitRun) writeResponses(resps []*steps.SchedulerTrafficSplitResponse) error {
-	r := &steps.SchedulerTrafficSplitResponses{
-		Responses: resps,
-	}
-	if c.tagged {
-		r.TaggedResponses = c.zipTaggedResponses(c.orderedTags, resps)
-	}
-	return writeResponse(c.outputPath, r)
+	return writeResponse(c.outputPath, &steps.SchedulerTrafficSplitResponses{
+		TaggedResponses: c.zipTaggedResponses(c.orderedTags, resps),
+	})
 }
 
 func (c *schedulerTrafficSplitRun) zipTaggedResponses(ts []string, rs []*steps.SchedulerTrafficSplitResponse) map[string]*steps.SchedulerTrafficSplitResponse {

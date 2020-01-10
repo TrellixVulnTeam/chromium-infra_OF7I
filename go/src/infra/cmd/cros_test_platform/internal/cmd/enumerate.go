@@ -42,7 +42,6 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.EnumerationRequests")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.EnumerationResponses should be written.")
 		c.Flags.BoolVar(&c.debug, "debug", false, "Print debugging information to stderr.")
-		c.Flags.BoolVar(&c.tagged, "tagged", true, "Transitional flag to enable tagged requests and responses.")
 		return c
 	},
 }
@@ -55,9 +54,7 @@ type enumerateRun struct {
 	outputPath string
 	debug      bool
 
-	// TODO(crbug.com/1002941) Completely transition to tagged requests only, once
-	// - recipe has transitioned to using tagged requests
-	tagged      bool
+	// TODO(crbug.com/1002941) Internally transition to tagged requests only.
 	orderedTags []string
 }
 
@@ -194,9 +191,6 @@ func (c *enumerateRun) readRequests() ([]*steps.EnumerationRequest, error) {
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	if !c.tagged {
-		return rs.Requests, nil
-	}
 	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
 	c.orderedTags = ts
 	return reqs, nil
@@ -214,10 +208,7 @@ func (c *enumerateRun) unzipTaggedRequests(trs map[string]*steps.EnumerationRequ
 
 func (c *enumerateRun) writeResponsesWithError(resps []*steps.EnumerationResponse, err error) error {
 	r := &steps.EnumerationResponses{
-		Responses: resps,
-	}
-	if c.tagged {
-		r.TaggedResponses = c.zipTaggedResponses(c.orderedTags, resps)
+		TaggedResponses: c.zipTaggedResponses(c.orderedTags, resps),
 	}
 	return writeResponseWithError(c.outputPath, r, err)
 }
