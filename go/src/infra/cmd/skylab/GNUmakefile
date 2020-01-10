@@ -14,7 +14,7 @@ test: check-environment
 check: test
 
 .PHONY: clean
-clean: check-environment
+clean:
 	$(RM) ./skylab
 
 .PHONY: check-environment
