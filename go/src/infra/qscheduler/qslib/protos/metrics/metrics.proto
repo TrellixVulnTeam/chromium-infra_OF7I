@@ -224,6 +224,7 @@ message EventList {
   repeated TaskEvent events = 1;
 }
 
+// TODO: Remove SchedulerState once the Task/Worker/Account type is implemented.
 // SchedulerState represents the scheuler state.
 message SchedulerState {
   message Task {
@@ -254,4 +255,71 @@ message SchedulerState {
 
   // Time is the time at which the snapshot was created.
   google.protobuf.Timestamp time = 7;
+}
+
+// Task represents a single task in the snapshot of a scheduler state.
+message Task {
+  // Id is the ID of this task.
+  message ID {
+    string name = 1;
+  }
+  ID id = 1;
+
+  // The quota scheduler pool that contains the account of this task.
+  Pool pool = 2;
+
+  // The account that the task attached.
+  Account.ID account_id = 3;
+
+  // The worker Id if this task is assigned, or empty if the task is queued.
+  Worker.ID worker_id = 4;
+
+  repeated string base_labels = 5;
+  repeated string provisionable_labels = 6;
+
+  // The last updated time of the scheduler state where the Task was read.
+  google.protobuf.Timestamp snapshot_time = 7;
+}
+
+// Worker represents a single worker in the snapshot of a scheduler state.
+message Worker {
+  // Id is the ID of this worker.
+  message ID {
+    string name = 1;
+  }
+  ID id = 1;
+
+  // The quota scheduler pool this worker serves.
+  Pool pool = 2;
+
+  // The task that is running on this worker. Empty if this worker is idle.
+  Task.ID task_id = 3;
+
+  repeated string labels = 4;
+
+  // The last updated time of the scheduler state where the Worker was read.
+  google.protobuf.Timestamp snapshot_time = 5;
+}
+
+// Account represents a single account in the snapshot of a scheduler state.
+message Account {
+  // Id is the quotascheduler account ID.
+  message ID {
+    string name = 1;
+  }
+  ID id = 1;
+
+  // The quota scheduler pool that contains this account.
+  Pool pool = 2;
+
+  // Account's balance at this time.
+  repeated float balance = 3;
+
+  // The last updated time of the scheduler state where the Account was read.
+  google.protobuf.Timestamp snapshot_time = 4;
+}
+
+// Pool represents a quota scheduler pool.
+message Pool {
+  string id = 1;
 }
