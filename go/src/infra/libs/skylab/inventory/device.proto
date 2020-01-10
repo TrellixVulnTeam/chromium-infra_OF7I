@@ -314,7 +314,7 @@ message HardwareCapabilities {
   optional bool touchpad = 10;
   optional bool touchscreen = 18;
 
-  // NEXT TAG: 9
+  // NEXT TAG: 13
   enum VideoAcceleration {
     VIDEO_ACCELERATION_INVALID = 0;
     VIDEO_ACCELERATION_H264 = 1;
@@ -325,6 +325,10 @@ message HardwareCapabilities {
     VIDEO_ACCELERATION_ENC_VP9 = 6;
     VIDEO_ACCELERATION_VP9_2 = 7;
     VIDEO_ACCELERATION_ENC_VP9_2 = 8;
+    VIDEO_ACCELERATION_H265 = 9;
+    VIDEO_ACCELERATION_ENC_H265 = 10;
+    VIDEO_ACCELERATION_MJPG = 11;
+    VIDEO_ACCELERATION_ENC_MJPG = 12;
   }
   repeated VideoAcceleration video_acceleration = 11;
 }
