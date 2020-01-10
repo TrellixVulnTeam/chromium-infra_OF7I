@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
 
@@ -81,9 +82,11 @@ func UpdateDatastore(ctx context.Context, client gitiles.GitilesClient, project,
 func GetCachedConfig(ctx context.Context, cfgIds []*device.ConfigId) ([]proto.Message, error) {
 	entities := make([]cfg2datastore.EntityInterface, len(cfgIds))
 	for i, c := range cfgIds {
-		entities[i] = &devcfgEntity{
+		e := devcfgEntity{
 			ID: getDeviceConfigIDStr(c),
 		}
+		logging.Debugf(ctx, "Getting devconfig for ID: '%s'", e.ID)
+		entities[i] = &e
 	}
 	return cfg2datastore.GetCachedCfgByIds(ctx, entities)
 }

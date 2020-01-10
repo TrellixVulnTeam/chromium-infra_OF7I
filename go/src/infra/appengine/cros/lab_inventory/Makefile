@@ -52,6 +52,5 @@ cleanup-dev:
 	gae.py cleanup -A $(GCP_PROJECT_DEV) --app-dir $(APP_PATH)
 
 up-prod:
-	gae.py upload -A $(GCP_PROJECT) --app-dir $(APP_PATH) -f
-	gae.py switch -A $(GCP_PROJECT) --app-dir $(APP_PATH) -f
+	gae.py upload -A $(GCP_PROJECT) --app-dir $(APP_PATH) -f --switch
 

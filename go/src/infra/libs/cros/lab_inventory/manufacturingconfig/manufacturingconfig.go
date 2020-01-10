@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gitiles"
 
 	"infra/libs/cros/lab_inventory/cfg2datastore"
@@ -68,6 +69,7 @@ func GetCachedConfig(ctx context.Context, cfgIds []*manufacturing.ConfigID) ([]p
 		entities[i] = &manufacturingCfgEntity{
 			ID: c.GetValue(),
 		}
+		logging.Debugf(ctx, "Getting manufacturing config for '%s'", c.GetValue())
 	}
 	return cfg2datastore.GetCachedCfgByIds(ctx, entities)
 }

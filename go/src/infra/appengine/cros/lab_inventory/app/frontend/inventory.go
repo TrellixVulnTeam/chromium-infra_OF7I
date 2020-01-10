@@ -99,9 +99,11 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 			extendedData[i].DeviceConfig = devCfgs[i].(*device.Config)
 			newExtendedData = append(newExtendedData, extendedData[i])
 		} else {
+			hostname := utils.GetHostname(extendedData[i].LabConfig)
+			logging.Debugf(ctx, "failed to get device config data for %s: %s", hostname, err.Error())
 			failedDevices = append(failedDevices, &api.DeviceOpResult{
 				Id:       extendedData[i].LabConfig.GetId().GetValue(),
-				Hostname: utils.GetHostname(extendedData[i].LabConfig),
+				Hostname: hostname,
 				ErrorMsg: err.(errors.MultiError)[i].Error(),
 			})
 		}
@@ -115,17 +117,19 @@ func getManufacturingConfigData(ctx context.Context, extendedData []*api.Extende
 	for i, d := range extendedData {
 		cfgIds[i] = d.LabConfig.ManufacturingId
 	}
-	devCfgs, err := getManufacturingConfigFunc(ctx, cfgIds)
+	mCfgs, err := getManufacturingConfigFunc(ctx, cfgIds)
 	newExtendedData := make([]*api.ExtendedDeviceData, 0, len(extendedData))
 	failedDevices := make([]*api.DeviceOpResult, 0, len(extendedData))
-	for i := range devCfgs {
+	for i := range mCfgs {
 		if err == nil || err.(errors.MultiError)[i] == nil {
-			extendedData[i].ManufacturingConfig = devCfgs[i].(*manufacturing.Config)
+			extendedData[i].ManufacturingConfig = mCfgs[i].(*manufacturing.Config)
 			newExtendedData = append(newExtendedData, extendedData[i])
 		} else {
+			hostname := utils.GetHostname(extendedData[i].LabConfig)
+			logging.Debugf(ctx, "failed to get device config data for %s: %s", hostname, err.Error())
 			failedDevices = append(failedDevices, &api.DeviceOpResult{
 				Id:       extendedData[i].LabConfig.GetId().GetValue(),
-				Hostname: utils.GetHostname(extendedData[i].LabConfig),
+				Hostname: hostname,
 				ErrorMsg: err.(errors.MultiError)[i].Error(),
 			})
 		}
@@ -151,6 +155,7 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 		}
 		hwidData, err := getHwidDataFunc(ctx, labData.GetManufacturingId().GetValue(), secret)
 		if err != nil {
+			logging.Debugf(ctx, "failed to get HWID data for %s: %s", labData.GetManufacturingId().GetValue(), err.Error())
 			failedDevices = append(failedDevices, &api.DeviceOpResult{
 				Id:       string(r.Entity.ID),
 				Hostname: r.Entity.Hostname,

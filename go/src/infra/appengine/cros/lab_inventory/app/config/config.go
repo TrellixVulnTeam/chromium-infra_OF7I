@@ -6,6 +6,7 @@ package config
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/appengine/gaesecrets"
@@ -59,7 +60,16 @@ func Middleware(c *router.Context, next router.Handler) {
 	})
 	secret, err := secrets.GetSecret(ctx, secretInDatastore)
 	if err == nil {
+		// The HWID must be a valid plain text string. No control characters.
+		s := string(secret.Current)
+		if s != url.QueryEscape(s) {
+			logging.WithError(err).Errorf(c.Context, "wrong hwid secret configured: '%v'", url.QueryEscape(s))
+			http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 		cfg.HwidSecret = string(secret.Current)
+	} else {
+		logging.Infof(c.Context, "Cannot get HWID server secret from datastore: %s", err.Error())
 	}
 
 	c.Context = Use(c.Context, &cfg)
