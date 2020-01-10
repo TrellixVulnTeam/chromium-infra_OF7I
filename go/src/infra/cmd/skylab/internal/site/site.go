@@ -17,11 +17,12 @@ import (
 
 // Environment contains environment specific values.
 type Environment struct {
-	LUCIProject     string
-	SwarmingService string
-	LogDogHost      string
-	AdminService    string
-	QueenService    string
+	LUCIProject      string
+	SwarmingService  string
+	LogDogHost       string
+	InventoryService string
+	AdminService     string
+	QueenService     string
 	// QueenDroneHostname is only used by queen-push-duts.
 	QueenDroneHostname string
 	ServiceAccount     string
@@ -65,6 +66,7 @@ var Prod = Environment{
 	LUCIProject:        "chromeos",
 	SwarmingService:    "https://chromeos-swarming.appspot.com/",
 	LogDogHost:         "luci-logdog.appspot.com",
+	InventoryService:   "cros-lab-inventory.appspot.com",
 	AdminService:       "chromeos-skylab-bot-fleet.appspot.com",
 	QueenService:       "drone-queen-prod.appspot.com",
 	QueenDroneHostname: "drone-queen-ENVIRONMENT_PROD",
@@ -81,6 +83,7 @@ var Dev = Environment{
 	LUCIProject:        "chromeos",
 	SwarmingService:    "https://chromium-swarm-dev.appspot.com/",
 	LogDogHost:         "luci-logdog-dev.appspot.com",
+	InventoryService:   "cros-lab-inventory-dev.appspot.com",
 	AdminService:       "skylab-staging-bot-fleet.appspot.com",
 	QueenService:       "drone-queen-dev.appspot.com",
 	QueenDroneHostname: "drone-queen-ENVIRONMENT_STAGING",

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -21,8 +22,10 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
+	invv2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmd/skylab/internal/inventoryv2"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
@@ -53,6 +56,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/
 
 		c.Flags.BoolVar(&c.asJSON, "json", false, "Print inventory as JSON-encoded protobuf. Implies -full.")
 		c.Flags.BoolVar(&c.full, "full", false, "Print full DUT information, including less frequently used fields.")
+		c.Flags.BoolVar(&c.v2, "v2", false, "[INTERNAL ONLY] Use ChromeOS Lab inventory v2 service.")
 		return c
 	},
 }
@@ -64,6 +68,7 @@ type dutInfoRun struct {
 
 	asJSON bool
 	full   bool
+	v2     bool
 }
 
 func (c *dutInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -85,13 +90,7 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
-	ic := fleet.NewInventoryPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    e.AdminService,
-		Options: site.DefaultPRPCOptions,
-	})
-
-	dut, err := getDutInfo(ctx, ic, args[0])
+	dut, err := getDutInfo(ctx, hc, e, args[0], c.v2)
 	if err != nil {
 		return err
 	}
@@ -108,7 +107,24 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 	}
 }
 
-func getDutInfo(ctx context.Context, ic fleet.InventoryClient, hostname string) (*inventory.DeviceUnderTest, error) {
+func getDutInfo(ctx context.Context, hc *http.Client, e site.Environment, hostname string, version2 bool) (*inventory.DeviceUnderTest, error) {
+	if version2 {
+		dutV2, err := inventoryv2.GetDutInfo(ctx, hc, e, hostname)
+		if err != nil {
+			return nil, err
+		}
+		return invv2.AdaptToV1DutSpec(dutV2)
+	}
+	return getDutInfoV1(ctx, hc, e, hostname)
+}
+
+func getDutInfoV1(ctx context.Context, hc *http.Client, e site.Environment, hostname string) (*inventory.DeviceUnderTest, error) {
+	ic := fleet.NewInventoryPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    e.AdminService,
+		Options: site.DefaultPRPCOptions,
+	})
+
 	resp, err := ic.GetDutInfo(ctx, &fleet.GetDutInfoRequest{Hostname: hostname})
 	if err != nil {
 		return nil, errors.Annotate(err, "get dutinfo for %s", hostname).Err()

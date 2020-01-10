@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -105,7 +106,7 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		Options: site.DefaultPRPCOptions,
 	})
 
-	oldSpecs, err := getOldDeviceSpecs(ctx, ic, hostname)
+	oldSpecs, err := getOldDeviceSpecs(ctx, hc, e, hostname, false)
 	if err != nil {
 		return err
 	}
@@ -228,8 +229,8 @@ func (c *updateDutRun) stageImageToUsb() bool {
 
 // getOldDeviceSpecs gets the current device specs for hostname from
 // crosskylabadmin.
-func getOldDeviceSpecs(ctx context.Context, ic fleet.InventoryClient, hostname string) (*inventory.DeviceUnderTest, error) {
-	oldDut, err := getDutInfo(ctx, ic, hostname)
+func getOldDeviceSpecs(ctx context.Context, hc *http.Client, e site.Environment, hostname string, version2 bool) (*inventory.DeviceUnderTest, error) {
+	oldDut, err := getDutInfo(ctx, hc, e, hostname, version2)
 	if err != nil {
 		return nil, errors.Annotate(err, "get old specs").Err()
 	}
