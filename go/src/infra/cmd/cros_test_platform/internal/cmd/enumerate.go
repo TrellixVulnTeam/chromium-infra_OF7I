@@ -53,9 +53,6 @@ type enumerateRun struct {
 	inputPath  string
 	outputPath string
 	debug      bool
-
-	// TODO(crbug.com/1002941) Internally transition to tagged requests only.
-	orderedTags []string
 }
 
 func (c *enumerateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -73,11 +70,11 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	ctx := cli.GetContext(a, c, env)
 	ctx = setupLogging(ctx)
 
-	requests, err := c.readRequests()
+	taggedRequests, err := c.readRequests()
 	if err != nil {
 		return err
 	}
-	if len(requests) == 0 {
+	if len(taggedRequests) == 0 {
 		return errors.Reason("zero requests").Err()
 	}
 
@@ -92,9 +89,9 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	// TODO(crbug.com/1012863) Properly handle recoverable error in some
 	// requests. Currently a catastrophic error in any request immediately
 	// aborts all requests.
-	tms := make([]*api.TestMetadataResponse, len(requests))
+	tms := make(map[string]*api.TestMetadataResponse)
 	merr := errors.NewMultiError()
-	for i, r := range requests {
+	for t, r := range taggedRequests {
 		m := r.GetMetadata().GetTestMetadataUrl()
 		if m == "" {
 			return errors.Reason("empty request.metadata.test_metadata_url in %s", r).Err()
@@ -116,7 +113,7 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 			// Catastrophic error. There is no reasonable response to write.
 			return writableErr
 		}
-		tms[i] = tm
+		tms[t] = tm
 		merr = append(merr, writableErr)
 	}
 	var writableErr error
@@ -124,18 +121,18 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 		writableErr = merr
 	}
 
-	resps := make([]*steps.EnumerationResponse, len(requests))
+	resps := make(map[string]*steps.EnumerationResponse)
 	merr = errors.NewMultiError()
-	for i := range requests {
-		if ts, err := c.enumerate(tms[i], requests[i]); err != nil {
+	for t, r := range taggedRequests {
+		if ts, err := c.enumerate(tms[t], r); err != nil {
 			merr = append(merr, err)
 		} else {
-			resps[i] = &steps.EnumerationResponse{AutotestInvocations: ts}
+			resps[t] = &steps.EnumerationResponse{AutotestInvocations: ts}
 		}
 	}
 
 	if c.debug {
-		c.debugDump(ctx, requests, tms, resps, merr)
+		c.debugDump(ctx, taggedRequests, tms, resps, merr)
 	}
 	if merr.First() != nil {
 		return merr
@@ -143,7 +140,7 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	return c.writeResponsesWithError(resps, writableErr)
 }
 
-func (c *enumerateRun) debugDump(ctx context.Context, reqs []*steps.EnumerationRequest, tms []*api.TestMetadataResponse, resps []*steps.EnumerationResponse, merr errors.MultiError) {
+func (c *enumerateRun) debugDump(ctx context.Context, reqs map[string]*steps.EnumerationRequest, tms map[string]*api.TestMetadataResponse, resps map[string]*steps.EnumerationResponse, merr errors.MultiError) {
 	logging.Infof(ctx, "## Begin debug dump")
 	if len(reqs) != len(tms) {
 		panic(fmt.Sprintf("%d metadata for %d requests", len(tms), len(reqs)))
@@ -163,13 +160,13 @@ func (c *enumerateRun) debugDump(ctx context.Context, reqs []*steps.EnumerationR
 	logging.Infof(ctx, "###")
 	logging.Infof(ctx, "")
 
-	for i := range reqs {
-		logging.Infof(ctx, "Request: %s", pretty.Sprint(reqs[i]))
-		logging.Infof(ctx, "Response: %s", pretty.Sprint(resps[i]))
-		logging.Infof(ctx, "Test Metadata: %s", pretty.Sprint(tms[i]))
+	for t := range reqs {
+		logging.Infof(ctx, "Tag: %s", t)
+		logging.Infof(ctx, "Request: %s", pretty.Sprint(reqs[t]))
+		logging.Infof(ctx, "Response: %s", pretty.Sprint(resps[t]))
+		logging.Infof(ctx, "Test Metadata: %s", pretty.Sprint(tms[t]))
 		logging.Infof(ctx, "")
 	}
-
 	logging.Infof(ctx, "## End debug dump")
 }
 
@@ -186,42 +183,19 @@ func (c *enumerateRun) processCLIArgs(args []string) error {
 	return nil
 }
 
-func (c *enumerateRun) readRequests() ([]*steps.EnumerationRequest, error) {
+func (c *enumerateRun) readRequests() (map[string]*steps.EnumerationRequest, error) {
 	var rs steps.EnumerationRequests
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
-	c.orderedTags = ts
-	return reqs, nil
+	return rs.TaggedRequests, nil
 }
 
-func (c *enumerateRun) unzipTaggedRequests(trs map[string]*steps.EnumerationRequest) ([]string, []*steps.EnumerationRequest) {
-	var ts []string
-	var rs []*steps.EnumerationRequest
-	for t, r := range trs {
-		ts = append(ts, t)
-		rs = append(rs, r)
-	}
-	return ts, rs
-}
-
-func (c *enumerateRun) writeResponsesWithError(resps []*steps.EnumerationResponse, err error) error {
+func (c *enumerateRun) writeResponsesWithError(resps map[string]*steps.EnumerationResponse, err error) error {
 	r := &steps.EnumerationResponses{
-		TaggedResponses: c.zipTaggedResponses(c.orderedTags, resps),
+		TaggedResponses: resps,
 	}
 	return writeResponseWithError(c.outputPath, r, err)
-}
-
-func (c *enumerateRun) zipTaggedResponses(ts []string, rs []*steps.EnumerationResponse) map[string]*steps.EnumerationResponse {
-	if len(ts) != len(rs) {
-		panic(fmt.Sprintf("got %d responses for %d tags (%s)", len(rs), len(ts), ts))
-	}
-	m := make(map[string]*steps.EnumerationResponse)
-	for i := range ts {
-		m[ts[i]] = rs[i]
-	}
-	return m
 }
 
 func (c *enumerateRun) gsPath(requests []*steps.EnumerationRequest) (gs.Path, error) {
