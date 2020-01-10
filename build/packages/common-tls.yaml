@@ -1,0 +1,10 @@
+package: chromiumos/infra/common-tls/${platform}
+description: Common Test Lab Services implementation for Chrome OS
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/common-tls
+root: ../../go/bin
+data:
+  - file: common-tls${exe_suffix}
+  - version_file: .versions/common-tls${exe_suffix}.cipd_version
