@@ -9,14 +9,10 @@ class FlakeType(messages.Enum):
   """Enumerates types of flakes for FlakeOccurrence."""
 
   # A flaky test that caused a CL to be incorrectly rejected by CQ.
-  # For how this type of flake occurrence is detected, please refer to:
-  # services/flake_detection/flaky_tests.cq_false_rejection.sql.
   CQ_FALSE_REJECTION = 1
 
   # A flaky test that failed in the (with patch) steps, but passed in retry
   # steps such as (retry with patch) or (retry shards with patch).
-  # For how this type of flake occurrence is detected, please refer to:
-  # services/flake_detection/flaky_tests.retry_with_patch.sql.
   # this type name remains to be RETRY_WITH_PATCH because it's used in
   # FlakeOccurrence keys.
   RETRY_WITH_PATCH = 2
