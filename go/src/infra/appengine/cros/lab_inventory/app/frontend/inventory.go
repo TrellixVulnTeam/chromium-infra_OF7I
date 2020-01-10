@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"fmt"
 	"strings"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
@@ -85,6 +86,17 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 	return resp, err
 }
 
+func addFailedDevice(ctx context.Context, failedDevices *[]*api.DeviceOpResult, dev *lab.ChromeOSDevice, err error, operation string) {
+	hostname := utils.GetHostname(dev)
+	logging.Errorf(ctx, "failed to %s for %s: %s", operation, hostname, err.Error())
+	*failedDevices = append(*failedDevices, &api.DeviceOpResult{
+		Id:       dev.GetId().GetValue(),
+		Hostname: hostname,
+		ErrorMsg: err.Error(),
+	})
+
+}
+
 func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
 	// Start to retrieve device config data.
 	devCfgIds := make([]*device.ConfigId, len(extendedData))
@@ -99,13 +111,7 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 			extendedData[i].DeviceConfig = devCfgs[i].(*device.Config)
 			newExtendedData = append(newExtendedData, extendedData[i])
 		} else {
-			hostname := utils.GetHostname(extendedData[i].LabConfig)
-			logging.Debugf(ctx, "failed to get device config data for %s: %s", hostname, err.Error())
-			failedDevices = append(failedDevices, &api.DeviceOpResult{
-				Id:       extendedData[i].LabConfig.GetId().GetValue(),
-				Hostname: hostname,
-				ErrorMsg: err.(errors.MultiError)[i].Error(),
-			})
+			addFailedDevice(ctx, &failedDevices, extendedData[i].LabConfig, err.(errors.MultiError)[i], "get device config data")
 		}
 	}
 	return newExtendedData, failedDevices
@@ -125,13 +131,7 @@ func getManufacturingConfigData(ctx context.Context, extendedData []*api.Extende
 			extendedData[i].ManufacturingConfig = mCfgs[i].(*manufacturing.Config)
 			newExtendedData = append(newExtendedData, extendedData[i])
 		} else {
-			hostname := utils.GetHostname(extendedData[i].LabConfig)
-			logging.Debugf(ctx, "failed to get device config data for %s: %s", hostname, err.Error())
-			failedDevices = append(failedDevices, &api.DeviceOpResult{
-				Id:       extendedData[i].LabConfig.GetId().GetValue(),
-				Hostname: hostname,
-				ErrorMsg: err.(errors.MultiError)[i].Error(),
-			})
+			addFailedDevice(ctx, &failedDevices, extendedData[i].LabConfig, err.(errors.MultiError)[i], "get manufacturing config data")
 		}
 	}
 	return newExtendedData, failedDevices
@@ -155,12 +155,8 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 		}
 		hwidData, err := getHwidDataFunc(ctx, labData.GetManufacturingId().GetValue(), secret)
 		if err != nil {
-			logging.Debugf(ctx, "failed to get HWID data for %s: %s", labData.GetManufacturingId().GetValue(), err.Error())
-			failedDevices = append(failedDevices, &api.DeviceOpResult{
-				Id:       string(r.Entity.ID),
-				Hostname: r.Entity.Hostname,
-				ErrorMsg: err.Error(),
-			})
+			operation := fmt.Sprintf("get HWID data of %s", labData.GetManufacturingId().GetValue())
+			addFailedDevice(ctx, &failedDevices, &labData, err, operation)
 			continue
 		}
 		extendedData = append(extendedData, &api.ExtendedDeviceData{
