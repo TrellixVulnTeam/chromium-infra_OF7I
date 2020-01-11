@@ -13,12 +13,11 @@ import 'elements/framework/mr-comment-content/mr-attachment.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
-import {isShortlinkValid} from 'shared/federated.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
+import {issueStringToRef} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';
+import 'shared/typedef.js';
 
-// Match: projectName:localIdFormat
-const ISSUE_ID_REGEX = /(?:-?([a-z0-9-]+):)?(\d+)/i;
 const ISSUE_REF_FIELD_NAMES = [
   'Blocking',
   'Blockedon',
@@ -153,7 +152,9 @@ export class MrComment extends LitElement {
         aria-level=${this.headingLevel}
         class="comment-header">
         <div>
-          <a href="?id=${this.comment.localId}#c${this.comment.sequenceNum}"
+          <a
+            href="?id=${this.comment.localId}#c${this.comment.sequenceNum}"
+            class="comment-link"
           >Comment ${this.comment.sequenceNum}</a>
 
           ${this._renderByline()}
@@ -246,6 +247,11 @@ export class MrComment extends LitElement {
     `;
   }
 
+  /**
+   * Displays three dot menu options available to the current user for a given
+   * comment.
+   * @return {Array<MenuItem>}
+   */
   get _commentOptions() {
     const options = [];
     if (_canExpandDeletedComment(this.comment)) {
@@ -283,28 +289,57 @@ export class MrComment extends LitElement {
     return options;
   }
 
+  /**
+   * Toggles whether the email of the user who deleted the comment should be
+   * shown.
+   */
   _toggleShowOriginalContent() {
     this._showOriginalContent = !this._showOriginalContent;
   }
 
+  /**
+   * Change if deleted content for a comment is shown or not.
+   */
   _toggleHideDeletedComment() {
     this._isExpandedIfDeleted = !this._isExpandedIfDeleted;
   }
 }
 
+/**
+ * Says whether a comment should be shown or not.
+ * @param {boolean} isExpandedIfDeleted If the user has chosen to see the
+ *   deleted comment.
+ * @param {IssueComment} comment
+ * @return {boolean} If the comment should be shown.
+ */
 function _shouldShowComment(isExpandedIfDeleted, comment) {
   return !comment.isDeleted || isExpandedIfDeleted;
 }
 
+/**
+ * Whether the user can view additional comment options like flagging or
+ * deleting.
+ * @param {IssueComment} comment
+ * @return {boolean}
+ */
 function _shouldOfferCommentOptions(comment) {
   return comment.canDelete || comment.canFlag;
 }
 
+/**
+ * Whether a user has permission to view a given deleted comment.
+ * @param {IssueComment} comment
+ * @return {boolean}
+ */
 function _canExpandDeletedComment(comment) {
   return ((comment.isSpam && comment.canFlag) ||
           (comment.isDeleted && comment.canDelete));
 }
 
+/**
+ * Deletes a given comment or undeletes it if it's already deleted.
+ * @param {IssueComment} comment The comment to delete.
+ */
 async function _deleteComment(comment) {
   const issueRef = {
     projectName: comment.projectName,
@@ -318,6 +353,11 @@ async function _deleteComment(comment) {
   store.dispatch(issue.fetchComments({issueRef}));
 }
 
+/**
+ * Sends a request to flag a comment as spam. Flags or unflags based on
+ * the comments existing isSpam state.
+ * @param {IssueComment} comment The comment to flag.
+ */
 async function _flagComment(comment) {
   const issueRef = {
     projectName: comment.projectName,
@@ -331,6 +371,14 @@ async function _flagComment(comment) {
   store.dispatch(issue.fetchComments({issueRef}));
 }
 
+/**
+ * Finds if a given change in a comment contains issues (ie: for Blocking or
+ * BlockedOn edits), then formats those issues into a list to be rendered by the
+ * frontend.
+ * @param {Amendment} delta
+ * @param {string} projectName The project name the user is currently viewing.
+ * @return {Array<{issue: Issue, text: string}>}
+ */
 function _issuesForAmendment(delta, projectName) {
   if (!_amendmentHasIssueRefs(delta.fieldName) ||
       !delta.newOrDeltaValue) {
@@ -338,19 +386,28 @@ function _issuesForAmendment(delta, projectName) {
   }
   // TODO(ehmaldonado): Request the issue to check for permissions and display
   // the issue summary.
-  return delta.newOrDeltaValue.split(' ').map((issueRef) => {
-    const matches = issueRef.match(ISSUE_ID_REGEX);
+  return delta.newOrDeltaValue.split(' ').map((deltaValue) => {
+    let refString = deltaValue;
+
+    // When an issue is removed, its ID is prepended with a minus sign.
+    if (refString.startsWith('-')) {
+      refString = refString.substr(1);
+    }
+    const issueRef = issueStringToRef(refString, projectName);
     return {
       issue: {
-        projectName: matches[1] ? matches[1] : projectName,
-        localId: matches[2],
-        extIdentifier: isShortlinkValid(issueRef) ? issueRef : null,
+        ...issueRef,
       },
-      text: issueRef,
+      text: deltaValue,
     };
   });
 }
 
+/**
+ * Check if a field is one of the field types that accepts issues as input.
+ * @param {string} fieldName
+ * @return {boolean} If the field contains issues.
+ */
 function _amendmentHasIssueRefs(fieldName) {
   return ISSUE_REF_FIELD_NAMES.includes(fieldName);
 }

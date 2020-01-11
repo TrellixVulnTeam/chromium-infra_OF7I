@@ -55,7 +55,7 @@ export class MrIssueLink extends LitElement {
     return html`
       <a
         id="bugLink"
-        href=${issueRefToUrl(this.issue, this.queryParams)}
+        href=${this.href}
         title=${ifDefined(this.issue && this.issue.summary)}
         ?is-closed=${this.isClosed}
       >${this._linkText}</a>
@@ -89,6 +89,13 @@ export class MrIssueLink extends LitElement {
     const link = this.shadowRoot.querySelector('a');
     if (!link) return;
     link.click();
+  }
+
+  /**
+   * @return {string} Where this issue links to.
+   */
+  get href() {
+    return issueRefToUrl(this.issue, this.queryParams);
   }
 
   get isClosed() {
