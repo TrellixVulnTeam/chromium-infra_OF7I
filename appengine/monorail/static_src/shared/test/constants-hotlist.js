@@ -34,7 +34,7 @@ export const HOTLIST_ITEM = Object.freeze({
 /** @type {HotlistItem} */
 export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   issue: ISSUE_OTHER_PROJECT,
-  rank: 1,
+  rank: 2,
   adderRef: USER_REF,
   addedTimestamp: 1575000000,
   note: 'Note',

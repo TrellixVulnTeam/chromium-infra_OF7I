@@ -6,7 +6,6 @@ import {LitElement, html, css} from 'lit-element';
 
 import page from 'page';
 import {connectStore, store} from 'reducers/base.js';
-import * as project from 'reducers/project.js';
 import * as issue from 'reducers/issue.js';
 import * as sitewide from 'reducers/sitewide.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
@@ -243,6 +242,7 @@ export class MrIssueList extends connectStore(LitElement) {
               title="Show columns"
               menuAlignment="right"
               .columns=${this.columns}
+              .defaultFields=${this.defaultFields}
               .queryParams=${this._queryParams}
               .phaseNames=${this._phaseNames}
             ></mr-show-columns-dropdown>
@@ -507,7 +507,7 @@ export class MrIssueList extends connectStore(LitElement) {
           `)}
         `;
     }
-    const values = this._extractFieldValuesFromIssue(issue, column);
+    const values = this.extractFieldValues(issue, column);
     return values.join(', ');
   }
 
@@ -518,6 +518,17 @@ export class MrIssueList extends connectStore(LitElement) {
        * Array of columns to display.
        */
       columns: {type: Array},
+      /**
+       * Array of built in fields that are available outside of project
+       * configuration.
+       */
+      defaultFields: {type: Array},
+      /**
+       * A function that takes in an issue and a field name and returns the
+       * value for that field in the issue. This function accepts custom fields,
+       * built in fields, and ad hoc fields computed from label prefixes.
+       */
+      extractFieldValues: {type: Object},
       /**
        * Array of columns that are used as groups for issues.
        */
@@ -583,12 +594,6 @@ export class MrIssueList extends connectStore(LitElement) {
        */
       _selectedIssues: {type: Object},
       /**
-       * A function that takes in an issue and a field name and returns the
-       * value for that field in the issue. This function accepts custom fields,
-       * built in fields, and ad hoc fields computed from label prefixes.
-       */
-      _extractFieldValuesFromIssue: {type: Object},
-      /**
        * List of unique phase names for all phases in issues.
        */
       _phaseNames: {type: Array},
@@ -625,6 +630,8 @@ export class MrIssueList extends connectStore(LitElement) {
     this.starringEnabled = false;
     /** @type {Array} */
     this.columns = ['ID', 'Summary'];
+    /** @type {Array<string>} */
+    this.defaultFields = [];
     /** @type {Array} */
     this.groups = [];
     /**
@@ -641,7 +648,7 @@ export class MrIssueList extends connectStore(LitElement) {
      * @param {string} _fieldName
      * @return {Array<string>}
      */
-    this._extractFieldValuesFromIssue = (_issue, _fieldName) => [];
+    this.extractFieldValues = (_issue, _fieldName) => [];
 
     this._hiddenGroups = new Set();
 
@@ -668,8 +675,6 @@ export class MrIssueList extends connectStore(LitElement) {
     this._starringIssues = issue.starringIssues(state);
 
     this._phaseNames = (issue.issueListPhaseNames(state) || []);
-    this._extractFieldValuesFromIssue = project.extractFieldValuesFromIssue(
-        state);
     this._queryParams = sitewide.queryParams(state);
   }
 
@@ -702,8 +707,7 @@ export class MrIssueList extends connectStore(LitElement) {
       this._lastSelectedCheckbox = -1;
     }
 
-    const valuesByColumnArgs = ['issues', 'columns',
-      '_extractFieldValuesFromIssue'];
+    const valuesByColumnArgs = ['issues', 'columns', 'extractFieldValues'];
     if (setHasAny(changedProperties, valuesByColumnArgs)) {
       this._uniqueValuesByColumn = this._computeUniqueValuesByColumn(
           ...objectValuesForKeys(this, valuesByColumnArgs));
@@ -818,7 +822,7 @@ export class MrIssueList extends connectStore(LitElement) {
     const keyPieces = [];
 
     groups.forEach((group) => {
-      const values = this._extractFieldValuesFromIssue(issue, group);
+      const values = this.extractFieldValues(issue, group);
       if (!values.length) {
         keyPieces.push(`-has:${group}`);
       } else {
@@ -1235,7 +1239,7 @@ export class MrIssueList extends connectStore(LitElement) {
    */
   _convertIssueToPlaintextArray(issue) {
     return this.columns.map((column) => {
-      return this._extractFieldValuesFromIssue(issue, column).join(', ');
+      return this.extractFieldValues(issue, column).join(', ');
     });
   }
 

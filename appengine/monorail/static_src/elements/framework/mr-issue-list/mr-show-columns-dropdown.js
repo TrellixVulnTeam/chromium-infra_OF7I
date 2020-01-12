@@ -7,7 +7,7 @@ import page from 'page';
 import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
 import * as project from 'reducers/project.js';
-import {DEFAULT_ISSUE_FIELD_LIST, fieldTypes} from 'shared/issue-fields.js';
+import {fieldTypes} from 'shared/issue-fields.js';
 
 
 /**
@@ -55,7 +55,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
        * Array of built in fields that are available outside of project
        * configuration.
        */
-      defaultIssueFields: {type: Array},
+      defaultFields: {type: Array},
       _fieldDefs: {type: Array},
       _labelPrefixFields: {type: Array},
       // TODO(zhangtiff): Delete this legacy integration after removing
@@ -73,9 +73,8 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
     this.icon = 'more_horiz';
     this.columns = [];
     this.phaseNames = [];
+    this.defaultFields = [];
 
-    // TODO(zhangtiff): Make this use more fields for hotlists.
-    this.defaultIssueFields = DEFAULT_ISSUE_FIELD_LIST;
     this._fieldDefs = [];
     this._labelPrefixFields = [];
 
@@ -91,7 +90,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
   /** @override */
   update(changedProperties) {
     this.items = this.columnOptions(
-        this.defaultIssueFields, this._fieldDefs, this._labelPrefixFields,
+        this.defaultFields, this._fieldDefs, this._labelPrefixFields,
         this.columns, this.phaseNames);
 
     super.update(changedProperties);

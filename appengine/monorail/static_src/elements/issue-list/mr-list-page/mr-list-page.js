@@ -12,7 +12,7 @@ import * as user from 'reducers/user.js';
 import * as sitewide from 'reducers/sitewide.js';
 import * as ui from 'reducers/ui.js';
 import {prpcClient} from 'prpc-client-instance.js';
-import {parseColSpec} from 'shared/issue-fields.js';
+import {DEFAULT_ISSUE_FIELD_LIST, parseColSpec} from 'shared/issue-fields.js';
 import {urlWithNewParams, userIsMember} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
@@ -206,6 +206,8 @@ export class MrListPage extends connectStore(LitElement) {
         .currentQuery=${this.currentQuery}
         .currentCan=${this.currentCan}
         .columns=${this.columns}
+        .defaultFields=${DEFAULT_ISSUE_FIELD_LIST}
+        .extractFieldValues=${this._extractFieldValues}
         .groups=${this.groups}
         ?selectionEnabled=${this.editingEnabled}
         ?starringEnabled=${this.starringEnabled}
@@ -305,6 +307,12 @@ export class MrListPage extends connectStore(LitElement) {
        * The current canned query the user is searching for.
        */
       currentCan: {type: String},
+      /**
+       * A function that takes in an issue and a field name and returns the
+       * value for that field in the issue. This function accepts custom fields,
+       * built in fields, and ad hoc fields computed from label prefixes.
+       */
+      _extractFieldValues: {type: Object},
       _isLoggedIn: {type: Boolean},
       _currentUser: {type: Object},
       _usersProjects: {type: Object},
@@ -334,6 +342,13 @@ export class MrListPage extends connectStore(LitElement) {
         handler: () => this._flagIssues(false),
       },
     ];
+
+    /**
+     * @param {Issue} _issue
+     * @param {string} _fieldName
+     * @return {Array<string>}
+     */
+    this._extractFieldValues = (_issue, _fieldName) => [];
 
     // Expose page.js for test stubbing.
     this.page = page;
@@ -450,6 +465,8 @@ export class MrListPage extends connectStore(LitElement) {
     this.columns = sitewide.currentColumns(state);
 
     this._queryParams = sitewide.queryParams(state);
+
+    this._extractFieldValues = project.extractFieldValuesFromIssue(state);
   }
 
   /**

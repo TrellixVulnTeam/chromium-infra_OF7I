@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 import {assert} from 'chai';
 import sinon from 'sinon';
+import * as project from 'reducers/project.js';
 import {stringValuesForIssueField} from 'shared/issue-fields.js';
 import {MrIssueList} from './mr-issue-list.js';
 
@@ -17,6 +18,7 @@ const listRowIsFocused = (element, i) => {
 describe('mr-issue-list', () => {
   beforeEach(() => {
     element = document.createElement('mr-issue-list');
+    element.extractFieldValues = project.extractFieldValuesFromIssue({});
     document.body.appendChild(element);
 
     sinon.stub(element, '_baseUrl').returns('/p/chromium/issues/list');
@@ -1020,7 +1022,7 @@ describe('mr-issue-list', () => {
       element.columns = ['ID'];
       element.projectName = projectName;
 
-      element._extractFieldValuesFromIssue = (issue, fieldName) =>
+      element.extractFieldValues = (issue, fieldName) =>
         stringValuesForIssueField(issue, fieldName, projectName);
 
       let result;
@@ -1037,18 +1039,18 @@ describe('mr-issue-list', () => {
       assert.equal(`${otherProjectName}:${localId}`, result[0]);
     });
 
-    it('uses _extractFieldValuesFromIssue', () => {
+    it('uses extractFieldValues', () => {
       element.columns = ['summary', 'notsummary', 'anotherColumn'];
-      element._extractFieldValuesFromIssue = sinon.fake.returns(['a', 'b']);
+      element.extractFieldValues = sinon.fake.returns(['a', 'b']);
 
       element._convertIssueToPlaintextArray({summary: 'test issue'});
-      sinon.assert.callCount(element._extractFieldValuesFromIssue,
+      sinon.assert.callCount(element.extractFieldValues,
           element.columns.length);
     });
 
-    it('joins the result of _extractFieldValuesFromIssue with ", "', () => {
+    it('joins the result of extractFieldValues with ", "', () => {
       element.columns = ['notSummary'];
-      element._extractFieldValuesFromIssue = sinon.fake.returns(['a', 'b']);
+      element.extractFieldValues = sinon.fake.returns(['a', 'b']);
 
       const result = element._convertIssueToPlaintextArray({
         summary: 'test issue',

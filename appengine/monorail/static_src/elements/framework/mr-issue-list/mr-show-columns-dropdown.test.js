@@ -27,7 +27,7 @@ describe('mr-show-columns-dropdown', () => {
   });
 
   it('clicking unset column in show columns menu adds new column', async () => {
-    element.defaultIssueFields = ['ID'];
+    element.defaultFields = ['ID'];
     element.columns = [];
 
     sinon.stub(element, 'addColumn');
@@ -40,7 +40,7 @@ describe('mr-show-columns-dropdown', () => {
   });
 
   it('clicking set column in show columns menu removes column', async () => {
-    element.defaultIssueFields = ['ID'];
+    element.defaultFields = ['ID'];
     element.columns = ['ID'];
 
     sinon.stub(element, 'removeColumn');
@@ -53,7 +53,7 @@ describe('mr-show-columns-dropdown', () => {
   });
 
   it('sorts default column options', async () => {
-    element.defaultIssueFields = ['ID', 'Summary', 'AllLabels'];
+    element.defaultFields = ['ID', 'Summary', 'AllLabels'];
     element.columns = [];
 
     // Re-compute menu items on update.
@@ -73,7 +73,7 @@ describe('mr-show-columns-dropdown', () => {
   });
 
   it('sorts selected columns above unselected columns', async () => {
-    element.defaultIssueFields = ['ID', 'Summary', 'AllLabels'];
+    element.defaultFields = ['ID', 'Summary', 'AllLabels'];
     element.columns = ['ID'];
 
     // Re-compute menu items on update.
@@ -93,7 +93,7 @@ describe('mr-show-columns-dropdown', () => {
   });
 
   it('sorts field defs and label prefix column options', async () => {
-    element.defaultIssueFields = ['ID', 'Summary'];
+    element.defaultFields = ['ID', 'Summary'];
     element.columns = [];
     element._fieldDefs = [
       {fieldRef: {fieldName: 'HelloWorld'}},
@@ -127,7 +127,7 @@ describe('mr-show-columns-dropdown', () => {
   });
 
   it('add approver fields for approval type fields', async () => {
-    element.defaultIssueFields = [];
+    element.defaultFields = [];
     element.columns = [];
     element._fieldDefs = [
       {fieldRef: {fieldName: 'HelloWorld', type: 'APPROVAL_TYPE'}},
@@ -146,7 +146,7 @@ describe('mr-show-columns-dropdown', () => {
   });
 
   it('phase field columns are correctly named', async () => {
-    element.defaultIssueFields = [];
+    element.defaultFields = [];
     element.columns = [];
     element._fieldDefs = [
       {fieldRef: {fieldName: 'Number', type: 'INT_TYPE'}, isPhaseField: true},
