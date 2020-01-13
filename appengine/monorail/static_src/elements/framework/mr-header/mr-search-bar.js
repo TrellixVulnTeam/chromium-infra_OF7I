@@ -116,6 +116,7 @@ export class MrSearchBar extends LitElement {
         padding: 0;
       }
       select {
+        color: var(--chops-primary-font-color);
         display: flex;
         align-items: center;
         justify-content: flex-start;

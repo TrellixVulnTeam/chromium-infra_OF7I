@@ -93,7 +93,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
           font-size: var(--chops-main-font-size);
           width: 100%;
           line-height: 140%;
-          color: var(--chops-text-color);
+          color: var(--chops-primary-font-color);
         }
         .role-label {
           background-color: var(--chops-gray-600);

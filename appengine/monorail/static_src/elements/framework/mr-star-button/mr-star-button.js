@@ -37,10 +37,10 @@ export class MrStarButton extends connectStore(LitElement) {
       }
       i.material-icons {
         font-size: var(--mr-star-button-size);
-        color: var(--chops-gray-500);
+        color: var(--chops-primary-icon-color);
       }
       i.material-icons.starred {
-        color: var(--chops-blue-700);
+        color: var(--chops-primary-accent-color);
       }
     `;
   }

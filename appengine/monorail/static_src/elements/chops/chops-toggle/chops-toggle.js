@@ -17,7 +17,7 @@ export class ChopsToggle extends LitElement {
     return css`
       :host {
         --chops-toggle-bg: none;
-        --chops-toggle-color: black;
+        --chops-toggle-color: var(--chops-primary-font-color);
         --chops-toggle-hover-bg: rgba(0, 0, 0, 0.3);
         --chops-toggle-focus-border: hsl(193, 82%, 63%);
         --chops-toggle-checked-bg: rgba(0, 0, 0, 0.6);
@@ -29,7 +29,7 @@ export class ChopsToggle extends LitElement {
         cursor: pointer;
         align-items: center;
         padding: 2px 4px;
-        border: 1px solid #ccc;
+        border: var(--chops-normal-border);
         border-radius: var(--chops-button-radius);
       }
       input[type="checkbox"] {

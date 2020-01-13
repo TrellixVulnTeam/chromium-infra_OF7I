@@ -31,6 +31,14 @@
   --chops-gray-700: #616161;
   --chops-gray-800: #424242;
   --chops-gray-900: #212121;
+
+  /* To make grays used for font styles and icons maintain consistent
+   * contrast ratios across colored backgrounds, we repesent them as pure black
+   * with opacity set. */
+  --chops-gray-700-alpha: hsla(0, 0%, 0%, 0.62);
+  --chops-gray-800-alpha: hsla(0, 0%, 0%, 0.74);
+  --chops-gray-900-alpha: hsla(0, 0%, 0%, 0.87);
+
   --chops-blue-gray-25: #f1f3f4;
   --chops-blue-gray-50: #eceff1;  /* Similar to grimoire. */
 
@@ -39,8 +47,7 @@
   --chops-sidebar-bg: var(--chops-blue-gray-25);
   --chops-page-bg: white;
   --chops-footer-bg: transparent;
-  --chops-primary-icon-color: var(--chops-gray-800);
-  --chops-text-color: #222;
+  --chops-primary-icon-color: var(--chops-gray-700-alpha);
 
   --chops-normal-border: 1px solid hsl(0, 0%, 85%);
   /* Border color for situations when contrast is important. */
@@ -48,7 +55,7 @@
   --chops-radius: 6px;
   --chops-shadow: none;
 
-  --chops-primary-font-color: var(--chops-gray-800);
+  --chops-primary-font-color: var(--chops-gray-900-alpha);
   --chops-font-family: 'Roboto', 'Noto', sans-serif;
   --chops-link-color: var(--chops-primary-accent-color);
   --chops-link-font-weight: 500;
@@ -58,7 +65,7 @@
   --chops-primary-button-bg: var(--chops-primary-accent-color);
   --chops-primary-button-color: white;
   --chops-button-bg: var(--chops-gray-200);
-  --chops-button-color: black;
+  --chops-button-color: #000000;
   --chops-button-disabled-bg: var(--chops-gray-300);
   --chops-button-disabled-color: var(--chops-gray-600);
   --chops-button-border: none;
@@ -105,6 +112,7 @@ body {
   font-size: var(--chops-main-font-size);
   min-width: 300px;
   background: var(--chops-page-bg);
+  color: var(--chops-primary-font-color);
 }
 
 /* Global styles for the EZT pages. */

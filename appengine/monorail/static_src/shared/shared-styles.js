@@ -11,6 +11,7 @@ export const SHARED_STYLES = css`
     --mr-input-grid-gap: 6px;
     font-family: var(--chops-font-family);
     color: var(--chops-primary-font-color);
+    font-size: var(--chops-main-font-size);
   }
   /** Converts a <button> to look like an <a> tag. */
   .linkify {

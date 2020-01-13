@@ -32,7 +32,7 @@ export class MrMultiInput extends LitElement {
         }
         .derived {
           font-style: italic;
-          color: var(--chops-text-color);
+          color: var(--chops-primary-font-color);
         }
         input {
           box-sizing: border-box;
