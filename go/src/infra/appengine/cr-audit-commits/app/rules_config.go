@@ -279,6 +279,31 @@ var RuleMap = map[string]*RepoConfig{
 			"autoroll-rules-skia": AutoRollRulesDEPSAndTasks("skia-autoroll@skia-public.iam.gserviceaccount.com"),
 		},
 	},
+	"fuchsia-recipes-master": {
+		BaseRepoURL: "https://fuchsia.googlesource.com/infra/recipes.git",
+		GerritURL:   "https://fuchsia-review.googlesource.com",
+		BranchName:  "refs/heads/master",
+		// No special meaning, ToT as of the time this line was added.
+		StartingCommit:  "54c641caf04e0247cb15718553239bd00dced4eb",
+		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailProject: "fuchsia",
+		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
+		Rules: map[string]RuleSet{
+			"manual-changes": AccountRules{
+				Account: "*",
+				Rules: []Rule{
+					ChangeReviewed{},
+				},
+				notificationFunction: func(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+					// TODO(maruel): Replace with fileBugForTBRViolation if a Infra>Audit
+					// component is created in Fuchsia issue tracker.
+					components := []string{"Infra"}
+					labels := []string{"CommitLog-Audit-Violation", "TBR-Violation"}
+					return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
+				},
+			},
+		},
+	},
 	"fuchsia-topaz-master": {
 		BaseRepoURL: "https://fuchsia.googlesource.com/topaz.git",
 		GerritURL:   "https://fuchsia-review.googlesource.com",
