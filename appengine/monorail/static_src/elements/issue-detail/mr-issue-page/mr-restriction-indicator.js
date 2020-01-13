@@ -152,7 +152,7 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
       } permission or issue reporter may view.`;
     } else if ('edit' in restrictions && restrictions['edit'].length) {
       return `Only users with ${arrayToEnglish(restrictions['edit'])
-      } permission or issue reporter may edit.`;
+      } permission may edit.`;
     } else if ('comment' in restrictions && restrictions['comment'].length) {
       return `Only users with ${arrayToEnglish(restrictions['comment'])
       } permission or issue reporter may comment.`;

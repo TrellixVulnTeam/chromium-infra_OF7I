@@ -88,7 +88,7 @@ describe('mr-restriction-indicator', () => {
     await element.updateComplete;
 
     const restrictString =
-      'Only users with Editor and world permission or issue reporter may edit.';
+      'Only users with Editor and world permission may edit.';
     assert.equal(element._restrictionText, restrictString);
 
     assert.include(element.shadowRoot.textContent, restrictString);
