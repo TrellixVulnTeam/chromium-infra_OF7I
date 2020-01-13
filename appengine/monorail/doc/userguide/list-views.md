@@ -115,6 +115,10 @@ For longer sets of results, project members can export CSV files:
 1.  Choose the menu item to upload a file.
 1.  Upload the CSV file that was download.
 
+The exported CSV will only contain data on that page. If the list is longer
+than one page either shorten the search result or go to the next page and
+click the `CSV` link again.
+
 ## How to group rows
 
 The issue list can group rows and show a group heading. For example, issues

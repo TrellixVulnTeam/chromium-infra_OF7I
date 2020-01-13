@@ -209,6 +209,7 @@ export class MrListPage extends connectStore(LitElement) {
         .defaultFields=${DEFAULT_ISSUE_FIELD_LIST}
         .extractFieldValues=${this._extractFieldValues}
         .groups=${this.groups}
+        .userDisplayName=${this.userDisplayName}
         ?selectionEnabled=${this.editingEnabled}
         ?starringEnabled=${this.starringEnabled}
         @selectionChange=${this._setSelectedIssues}

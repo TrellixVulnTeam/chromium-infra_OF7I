@@ -6,21 +6,16 @@
 export const CSV_DATA_HREF_PREFIX = 'data:text/csv;charset=utf-8,';
 
 /**
- * CSV files are at risk for the PDF content sniffing by Acrobat Reader.
- * Prefix with over 1024 bytes of static content to avoid content sniffing.
- * @const {string}
- */
-export const SNIFF_PREVENTION = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-='; // eslint-disable-line max-len
-
-/**
  * Format array into plaintext csv
  * @param {Array<Array>} data
  * @return {string}
  */
 export const convertListContentToCsv = (data) => {
-  return data.reduce((acc, row) => {
-    return `${acc}\n${row.map(preventCSVInjectionAndStringify).join(',')}`;
+  const result = data.reduce((acc, row) => {
+    return `${acc}\r\n${row.map(preventCSVInjectionAndStringify).join(',')}`;
   }, '');
+  // Remove leading /r and /n
+  return result.slice(2);
 };
 
 /**
@@ -46,20 +41,15 @@ export const preventCSVInjectionAndStringify = (cell) => {
 };
 
 /**
- * Prepare data for csv download:
- *  - Prepend sniffing prevention
- *  - Optionally prepend instructions on how to modify csv content
- *  - Convert array of array into csv format
+ * Prepare data for csv download by converting array of array into csv string
  * @param {Array<Array<string>>} data
  * @param {Array<string>=} headers Column headers
- * @param {string=} prefix
  * @return {string} CSV formatted string
  */
-export const prepareDataForDownload = (data, headers = [], prefix = '') => {
+export const prepareDataForDownload = (data, headers = []) => {
   const mainContent = [headers, ...data];
 
-  return `${SNIFF_PREVENTION}${prefix && ('\n' + prefix)}` +
-      convertListContentToCsv(mainContent);
+  return `${convertListContentToCsv(mainContent)}`;
 };
 
 /**

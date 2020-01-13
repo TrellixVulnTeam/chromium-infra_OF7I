@@ -52,13 +52,6 @@ const MIDDLE_BUTTON = 1;
  */
 const UNGROUPABLE_COLUMNS = new Set(['id', 'summary']);
 
-/** @const {string} Csv instructions on how to modify columns. */
-const CSV_DATA_PREFIX = 'This file contains the same information as ' +
-'the issue list web page but in CSV format.\nYou can adjust the columns ' +
-'of the CSV file by adjusting the columns shown on the web page\n' +
-'before clicking the CSV link.\n';
-
-
 /**
  * `<mr-issue-list>`
  *
@@ -250,11 +243,14 @@ export class MrIssueList extends connectStore(LitElement) {
         </tr>
         ${this._renderIssues()}
       </tbody>
-      <tfoot><tr><td colspan=999 class="csv-download-container">
-        <a id="download-link" @click=${this._downloadCsv} href>CSV</a>
-        <a id="hidden-data-link" download="monorail-issues.csv"
-          href=${this._csvDataHref}></a>
-      </td></tr></tfoot>
+      ${this.userDisplayName && html`
+        <tfoot><tr><td colspan=999 class="csv-download-container">
+          <a id="download-link" aria-label="Download page as CSV"
+              @click=${this._downloadCsv} href>CSV</a>
+          <a id="hidden-data-link" download="monorail-issues.csv"
+            href=${this._csvDataHref}></a>
+        </td></tr></tfoot>
+      `}
     `;
   }
 
@@ -582,6 +578,10 @@ export class MrIssueList extends connectStore(LitElement) {
        */
       initialCursor: {type: String},
       /**
+       * Logged in user's display name
+       */
+      userDisplayName: {type: String},
+      /**
        * IssueRef Object specifying which issue the user is currently focusing.
        */
       _localCursor: {type: Object},
@@ -634,6 +634,7 @@ export class MrIssueList extends connectStore(LitElement) {
     this.defaultFields = [];
     /** @type {Array} */
     this.groups = [];
+    this.userDisplayName = '';
     /**
      * @type {string}
      * Role attribute set for accessibility. Do not override.
@@ -1260,26 +1261,26 @@ export class MrIssueList extends connectStore(LitElement) {
   async _downloadCsv(event) {
     event.preventDefault();
 
-    // convert issues to array of arrays of strings
-    const issueData = this._convertIssuesToPlaintextArrays();
+    if (this.userDisplayName) {
+      // convert issues to array of arrays of strings
+      const issueData = this._convertIssuesToPlaintextArrays();
 
-    // convert the data into csv formatted string.
-    const csvDataString = prepareDataForDownload(issueData,
-        this.columns,
-        CSV_DATA_PREFIX);
+      // convert the data into csv formatted string.
+      const csvDataString = prepareDataForDownload(issueData, this.columns);
 
-    // construct data href
-    const href = constructHref(csvDataString);
+      // construct data href
+      const href = constructHref(csvDataString);
 
-    // modify a tag's href
-    this._csvDataHref = href;
-    await this.requestUpdate('_csvDataHref');
+      // modify a tag's href
+      this._csvDataHref = href;
+      await this.requestUpdate('_csvDataHref');
 
-    // click to trigger download
-    this._dataLink.click();
+      // click to trigger download
+      this._dataLink.click();
 
-    // reset dataHref
-    this._csvDataHref = '';
+      // reset dataHref
+      this._csvDataHref = '';
+    }
   }
 };
 

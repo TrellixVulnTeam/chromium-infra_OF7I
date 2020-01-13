@@ -1081,6 +1081,7 @@ describe('mr-issue-list', () => {
     let convertStub;
 
     beforeEach(() => {
+      element.userDisplayName = 'notempty';
       _downloadCsvSpy = sinon.spy(element, '_downloadCsv');
       convertStub = sinon
           .stub(element, '_convertIssuesToPlaintextArrays')
@@ -1090,6 +1091,13 @@ describe('mr-issue-list', () => {
     afterEach(() => {
       _downloadCsvSpy.restore();
       convertStub.restore();
+    });
+
+    it('hides download link for anonymous users', async () => {
+      element.userDisplayName = '';
+      await element.updateComplete;
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
+      assert.isNull(downloadLink);
     });
 
     it('renders a #download-link', async () => {
@@ -1176,6 +1184,22 @@ describe('mr-issue-list', () => {
 
       await element.requestUpdate('_csvDataHref');
       assert.equal('', element._csvDataHref);
+      element._dataLink.click.restore();
+    });
+
+    it('does nothing for anonymous users', async () => {
+      await element.updateComplete;
+
+      element.userDisplayName = '';
+
+      const downloadStub = sinon.stub(element._dataLink, 'click');
+
+      const downloadLink = element.shadowRoot.querySelector('#download-link');
+
+      downloadLink.click();
+      await element.requestUpdate('_csvDataHref');
+      sinon.assert.notCalled(downloadStub);
+
       element._dataLink.click.restore();
     });
   });

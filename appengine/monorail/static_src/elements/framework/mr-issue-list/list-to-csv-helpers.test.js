@@ -9,7 +9,6 @@ import {
   convertListContentToCsv,
   prepareDataForDownload,
   preventCSVInjectionAndStringify,
-  SNIFF_PREVENTION,
 } from './list-to-csv-helpers.js';
 
 describe('constructHref', () => {
@@ -46,43 +45,35 @@ describe('constructHref', () => {
 });
 
 describe('convertListContentToCsv', () => {
-  it('joins rows with new line characters', () => {
+  it('joins rows with carriage return and line feed, CRLF', () => {
     const input = [['foobar'], ['fizzbuzz']];
-    const expected = '\n"foobar"\n"fizzbuzz"';
+    const expected = '"foobar"\r\n"fizzbuzz"';
     assert.equal(expected, convertListContentToCsv(input));
   });
 
   it('joins columns with commas', () => {
     const input = [['foo', 'bar', 'fizz', 'buzz']];
-    const expected = '\n"foo","bar","fizz","buzz"';
+    const expected = '"foo","bar","fizz","buzz"';
     assert.equal(expected, convertListContentToCsv(input));
   });
 
-  it('starts with a new line character', () => {
+  it('starts with non-empty row', () => {
     const input = [['foobar']];
-    const expected = '\n"foobar"';
-    assert.equal(expected, convertListContentToCsv(input));
+    const expected = '"foobar"';
+    const result = convertListContentToCsv(input);
+    assert.equal(expected, result);
+    assert.isFalse(result.startsWith('\r\n'));
   });
 });
 
 describe('prepareDataForDownload', () => {
-  it('prepends sniff prevention', () => {
-    const result = prepareDataForDownload([['a']]);
-    assert.equal(SNIFF_PREVENTION, result.split('\n')[0]);
-  });
-
-  it('prepends prefix', () => {
-    const prefix = 'foobar';
-    const result = prepareDataForDownload([['a']], undefined, prefix);
-    assert.equal(prefix, result.split('\n')[1]);
-  });
-
   it('prepends header row', () => {
     const headers = ['column1', 'column2'];
     const result = prepareDataForDownload([['a', 'b']], headers);
 
     const expected = `"column1","column2"`;
-    assert.equal(expected, result.split('\n')[1]);
+    assert.equal(expected, result.split('\r\n')[0]);
+    assert.isTrue(result.startsWith(expected));
   });
 });
 
@@ -123,8 +114,8 @@ describe('preventCSVInjectionAndStringify', () => {
   });
 
   it('can handle strings containing commas and new line chars', () => {
-    const input = `""new"",\nline  "" "",\nand 'end', and end`;
-    const expected = `"""""new"""",\nline  """" """",\nand 'end', and end"`;
+    const input = `""new"",\r\nline  "" "",\r\nand 'end', and end`;
+    const expected = `"""""new"""",\r\nline  """" """",\r\nand 'end', and end"`;
     assert.equal(expected, preventCSVInjectionAndStringify(input));
   });
 
