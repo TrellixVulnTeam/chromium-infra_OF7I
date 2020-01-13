@@ -795,3 +795,7 @@ def ProcessBuildForFlakes(task_param):
   _StoreMultipleLocalEntities(new_flakes)
   _StoreMultipleLocalEntities(new_occurrences)
   _UpdateFlakeMetadata(new_occurrences)
+
+  monitoring.OnFlakeDetectionDetectNewOccurrences(
+      flake_type=FLAKE_TYPE_DESCRIPTIONS.get(flake_type_enum, 'N/A'),
+      num_occurrences=len(new_occurrences))
