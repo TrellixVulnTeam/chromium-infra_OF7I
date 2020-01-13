@@ -106,6 +106,19 @@ if ! (bqschemaupdater -force \
 fi
 
 if ! (bqschemaupdater -force \
+    -message apibq.DeviceConfigInventory  \
+    -table "${APPID}".inventory.deviceconfig); then
+  echo ""
+  echo ""
+  echo "Oh no! You may need to restart from scratch. You can do so with:"
+  echo ""
+  echo "  bq rm ${APPID}:inventory.deviceconfig"
+  echo ""
+  echo "and run this script again."
+  exit 1
+fi
+
+if ! (bqschemaupdater -force \
     -message apibq.ChangeHistory \
     -table "${APPID}".inventory.changehistory); then
   echo ""
