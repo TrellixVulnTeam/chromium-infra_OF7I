@@ -21,12 +21,14 @@ type inventoryClient interface {
 	addManyDUTsToFleet(context.Context, []*inventory.CommonDeviceSpecs, bool) (string, []*inventory.CommonDeviceSpecs, error)
 }
 
-func newInventoryClient(ctx context.Context, host string) (inventoryClient, error) {
-	return &gitStoreClient{}, nil
-}
-
 type gitStoreClient struct {
 	store *gitstore.InventoryStore
+}
+
+func newGitStoreClient(ctx context.Context, gs *gitstore.InventoryStore) (inventoryClient, error) {
+	return &gitStoreClient{
+		store: gs,
+	}, nil
 }
 
 func (client *gitStoreClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {

@@ -164,15 +164,15 @@ func (is *ServerImpl) newStore(ctx context.Context) (*gitstore.InventoryStore, e
 }
 
 func (is *ServerImpl) newInventoryClient(ctx context.Context) (inventoryClient, error) {
-	client, err := newInventoryClient(ctx, "")
+	gitstore, err := is.newStore(ctx)
 	if err != nil {
-		return nil, errors.Annotate(err, "create inventory client").Err()
+		return nil, errors.Annotate(err, "create duo client").Err()
 	}
-	s, err := is.newStore(ctx)
+
+	client, err := newDuoClient(ctx, gitstore, "")
 	if err != nil {
-		return nil, errors.Annotate(err, "create git store").Err()
+		return nil, errors.Annotate(err, "create duo client").Err()
 	}
-	client.(*gitStoreClient).store = s
 	return client, nil
 }
 
