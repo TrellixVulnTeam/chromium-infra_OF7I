@@ -60,7 +60,10 @@ if appengine_util.IsInProductionApp():
 
 # "flake-detection-backend" module.
 flake_detection_backend_web_pages_handler_mappings = [
-    ('/flake/detection/cron/detect-flakes', detect_flakes.DetectFlakesCronJob),
+    ('/flake/detection/cron/detect-hidden-flakes',
+     detect_flakes.DetectHiddenFlakesCronJob),
+    ('/flake/detection/cron/detect-non-hidden-flakes',
+     detect_flakes.DetectNonHiddenFlakesCronJob),
     ('/flake/detection/cron/generate-flakiness-report',
      generate_report.PrepareFlakinessReport),
     ('/flake/detection/cron/process-flakes',

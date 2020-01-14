@@ -19,9 +19,16 @@ cron:
   url: /waterfall/cron/obscure-emails
   schedule: every day 00:00
 
-- description: Query and store flakes.
-  url: /flake/detection/cron/detect-flakes
+# Hidden flakes uses a different schedule because is much more expensive to run.
+- description: Query and store hidden flakes.
+  url: /flake/detection/cron/detect-hidden-flakes
   schedule: every 2 hours
+  retry_parameters:
+    job_retry_limit: 0
+
+- description: Query and store non-hidden flakes.
+  url: /flake/detection/cron/detect-non-hidden-flakes
+  schedule: every 5 minutes
   retry_parameters:
     job_retry_limit: 0
 
@@ -42,7 +49,7 @@ cron:
 
 - description: File bugs and trigger analyses on selected flakes.
   url: /flake/detection/cron/process-flakes
-  schedule: every 2 hours
+  schedule: every 5 minutes
   retry_parameters:
     job_retry_limit: 0
 

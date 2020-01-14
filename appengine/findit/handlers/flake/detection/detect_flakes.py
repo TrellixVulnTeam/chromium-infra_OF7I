@@ -17,29 +17,30 @@ from services.flake_detection import detect_flake_occurrences
 from services.flake_detection.detect_flake_occurrences import (
     DetectFlakesFromFlakyCQBuildParam)
 
-_TOTAL_FLAKE_TYPES = [
-    FlakeType.CQ_FALSE_REJECTION,
-    FlakeType.RETRY_WITH_PATCH,
-    FlakeType.CQ_HIDDEN_FLAKE,
-]
-
 _NON_HIDDEN_FLAKE_TYPES = [
     FlakeType.CQ_FALSE_REJECTION,
     FlakeType.RETRY_WITH_PATCH,
 ]
 
 
-class DetectFlakesCronJob(BaseHandler):
+class DetectHiddenFlakesCronJob(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
-    # Cron jobs run independently of each other. Therefore, there is no
-    # guarantee that they will run either sequentially or simultaneously.
+    taskqueue.add(
+        method='GET',
+        queue_name=constants.FLAKE_DETECTION_QUEUE,
+        target=constants.FLAKE_DETECTION_BACKEND,
+        url='/flake/detection/task/detect-flakes?flake_type={}'.format(
+            urllib2.quote(FLAKE_TYPE_DESCRIPTIONS[FlakeType.CQ_HIDDEN_FLAKE])))
+    return {'return_code': 200}
 
-    for flake_type in _TOTAL_FLAKE_TYPES:
-      # Running flake detection tasks concurrently doesn't bring much benefits,
-      # so use task queue to enforce that at most one detection task can be
-      # executed at any time to avoid any potential race condition.
+
+class DetectNonHiddenFlakesCronJob(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def HandleGet(self):
+    for flake_type in _NON_HIDDEN_FLAKE_TYPES:
       taskqueue.add(
           method='GET',
           queue_name=constants.FLAKE_DETECTION_QUEUE,

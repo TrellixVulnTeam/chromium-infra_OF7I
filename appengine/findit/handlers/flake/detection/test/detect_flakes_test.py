@@ -20,22 +20,25 @@ from waterfall.test.wf_testcase import WaterfallTestCase
 class DetectFlakesCronJobTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication(
       [
-          ('/flake/detection/cron/detect-flakes',
-           detect_flakes.DetectFlakesCronJob),
+          ('/flake/detection/cron/detect-hidden-flakes',
+           detect_flakes.DetectHiddenFlakesCronJob),
+          ('/flake/detection/cron/detect-non-hidden-flakes',
+           detect_flakes.DetectNonHiddenFlakesCronJob),
       ],
       debug=True,
   )
 
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testTaskAddedToQueue(self, mocked_is_request_from_appself):
-    response = self.test_app.get('/flake/detection/cron/detect-flakes')
+    response = self.test_app.get('/flake/detection/cron/detect-hidden-flakes')
     self.assertEqual(200, response.status_int)
-    response = self.test_app.get('/flake/detection/cron/detect-flakes')
+    response = self.test_app.get(
+        '/flake/detection/cron/detect-non-hidden-flakes')
     self.assertEqual(200, response.status_int)
 
     tasks = self.taskqueue_stub.get_filtered_tasks(
         queue_names='flake-detection-queue')
-    self.assertEqual(6, len(tasks))
+    self.assertEqual(3, len(tasks))
     self.assertTrue(mocked_is_request_from_appself.called)
 
 
