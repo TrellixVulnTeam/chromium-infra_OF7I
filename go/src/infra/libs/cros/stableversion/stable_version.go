@@ -81,12 +81,12 @@ func sortSV(s *sv.StableVersions) {
 	sort.SliceStable(c, func(i, j int) bool {
 		return strings.ToLower(crosSVKey(c[i])) < strings.ToLower(crosSVKey(c[j]))
 	})
-	fi := s.Firmware
-	sort.SliceStable(fi, func(i, j int) bool {
-		return strings.ToLower(firmwareSVKey(fi[i])) < strings.ToLower(firmwareSVKey(fi[j]))
-	})
 	faft := s.Faft
 	sort.SliceStable(faft, func(i, j int) bool {
 		return strings.ToLower(faftSVKey(faft[i])) < strings.ToLower(faftSVKey(faft[j]))
+	})
+	fi := s.Firmware
+	sort.SliceStable(fi, func(i, j int) bool {
+		return strings.ToLower(firmwareSVKey(fi[i])) < strings.ToLower(firmwareSVKey(fi[j]))
 	})
 }

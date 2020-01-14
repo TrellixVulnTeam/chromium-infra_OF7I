@@ -13,8 +13,11 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
+
+	"github.com/google/go-cmp/cmp"
 )
 
+// TODO(gregorynisbet): replace with table-driven test
 func TestCompareCrOSVersions(t *testing.T) {
 	Convey("Test v1 > v2", t, func() {
 		v1 := "R2-2.3.4"
@@ -51,6 +54,7 @@ func TestCompareCrOSVersions(t *testing.T) {
 	})
 }
 
+// TODO(gregorynisbet): replace with table-driven test
 func TestValidateCrOSVersion(t *testing.T) {
 	good := func(s string) {
 		if err := ValidateCrOSVersion(s); err != nil {
@@ -69,6 +73,7 @@ func TestValidateCrOSVersion(t *testing.T) {
 	bad("Google_Rammus.11275.41.0")
 }
 
+// TODO(gregorynisbet): replace with table-driven test
 func TestSerializeCrOSVersion(t *testing.T) {
 	out := SerializeCrOSVersion(1, 2, 3, 4)
 	if out != "R1-2.3.4" {
@@ -76,6 +81,7 @@ func TestSerializeCrOSVersion(t *testing.T) {
 	}
 }
 
+// TODO(gregorynisbet): replace with table-driven test
 func TestParseCrOSVersion(t *testing.T) {
 	Convey("Test parsing CrOS Version", t, func() {
 		release, tip, branch, branchBranch, err := ParseCrOSVersion("R1-2.3.4")
@@ -90,46 +96,7 @@ func TestParseCrOSVersion(t *testing.T) {
 	})
 }
 
-func TestValidateFirmwareVersion(t *testing.T) {
-	good := func(s string) {
-		if err := ValidateFirmwareVersion(s); err != nil {
-			t.Errorf("expected `%s' to be good (%s)", s, err)
-		}
-	}
-	bad := func(s string) {
-		if ValidateFirmwareVersion(s) == nil {
-			t.Errorf("expected `%s' to be bad", s)
-		}
-	}
-	bad("")
-	bad("R1-2.3.4")
-	good("a-firmware/R1-2.3.4")
-	good("octopus-firmware/R72-11297.75.0")
-	bad("Google_Rammus.11275.41.0")
-}
-
-func TestSerializeFirmwareVersion(t *testing.T) {
-	out := SerializeFirmwareVersion("a", 1, 2, 3, 4)
-	if out != "a-firmware/R1-2.3.4" {
-		t.Errorf("expected: R1-2.3.4 got:%s", out)
-	}
-}
-
-func TestParseFirmwareVersion(t *testing.T) {
-	Convey("Test Parsing Firwmare Version", t, func() {
-		platform, release, tip, branch, branchBranch, err := ParseFirmwareVersion("a-firmware/R1-2.3.4")
-		if err != nil {
-			t.Errorf("expected a-firmware/R1-2.3.4 to parse: %s", err)
-		} else {
-			So(platform, ShouldEqual, "a")
-			So(release, ShouldEqual, 1)
-			So(tip, ShouldEqual, 2)
-			So(branch, ShouldEqual, 3)
-			So(branchBranch, ShouldEqual, 4)
-		}
-	})
-}
-
+// TODO(gregorynisbet): replace with table-driven test
 func TestValidateFaftVersion(t *testing.T) {
 	good := func(s string) {
 		if err := ValidateFaftVersion(s); err != nil {
@@ -143,21 +110,66 @@ func TestValidateFaftVersion(t *testing.T) {
 	}
 	bad("")
 	bad("R1-2.3.4")
+	good("a-firmware/R1-2.3.4")
+	good("octopus-firmware/R72-11297.75.0")
+	bad("Google_Rammus.11275.41.0")
+}
+
+// TODO(gregorynisbet): replace with table-driven test
+func TestSerializeFaftVersion(t *testing.T) {
+	out := SerializeFaftVersion("a", 1, 2, 3, 4)
+	if out != "a-firmware/R1-2.3.4" {
+		t.Errorf("expected: R1-2.3.4 got:%s", out)
+	}
+}
+
+// TODO(gregorynisbet): replace with table-driven test
+func TestParseFaftVersion(t *testing.T) {
+	Convey("Test Parsing Firwmare Version", t, func() {
+		platform, release, tip, branch, branchBranch, err := ParseFaftVersion("a-firmware/R1-2.3.4")
+		if err != nil {
+			t.Errorf("expected a-firmware/R1-2.3.4 to parse: %s", err)
+		} else {
+			So(platform, ShouldEqual, "a")
+			So(release, ShouldEqual, 1)
+			So(tip, ShouldEqual, 2)
+			So(branch, ShouldEqual, 3)
+			So(branchBranch, ShouldEqual, 4)
+		}
+	})
+}
+
+// TODO(gregorynisbet): replace with table-driven test
+func TestValidateFirmwareVersion(t *testing.T) {
+	good := func(s string) {
+		if err := ValidateFirmwareVersion(s); err != nil {
+			t.Errorf("expected `%s' to be good (%s)", s, err)
+		}
+	}
+	bad := func(s string) {
+		if ValidateFirmwareVersion(s) == nil {
+			t.Errorf("expected `%s' to be bad", s)
+		}
+	}
+	bad("")
+	bad("R1-2.3.4")
 	bad("a-firmware/R1-2.3.4")
 	bad("octopus-firmware/R72-11297.75.0")
 	good("Google_Rammus.11275.41.0")
 }
 
-func TestSerializeFaftVersion(t *testing.T) {
-	out := SerializeFaftVersion("Google", "Rammus", 11275, 41, 0)
+// TODO(gregorynisbet): replace with table-driven test
+func TestSerializeFirmwareVersion(t *testing.T) {
+	out := SerializeFirmwareVersion("Google", "Rammus", 11275, 41, 0)
 	if out != "Google_Rammus.11275.41.0" {
 		t.Errorf("expected: R1-2.3.4 got:%s", out)
 	}
 }
 
-func TestParseFaftVersion(t *testing.T) {
-	Convey("Test Parsing RW Firmware Version", t, func() {
-		company, platform, tip, branch, branchBranch, err := ParseFaftVersion("Google_Rammus.11275.41.0")
+// TODO(gregorynisbet): replace with table-driven test
+func TestParseFirmwareVersion(t *testing.T) {
+	Convey("Test Parsing RW Faft Version", t, func() {
+		company, platform, tip, branch, branchBranch, err := ParseFirmwareVersion("Google_Rammus.11275.41.0")
 		if err != nil {
 			t.Errorf("expected Google_Rammus.11275.41.0 to parse: %s", err)
 		} else {
@@ -170,6 +182,7 @@ func TestParseFaftVersion(t *testing.T) {
 	})
 }
 
+// TODO(gregorynisbet): replace with table-driven test
 func TestAddUpdatedCros(t *testing.T) {
 	old := makeBaseStableVersions(
 		[]versions{
@@ -206,6 +219,7 @@ func TestAddUpdatedCros(t *testing.T) {
 	})
 }
 
+// TODO(gregorynisbet): replace with table-driven test
 func TestAddUpdatedFirmware(t *testing.T) {
 	old := makeBaseStableVersions(
 		nil,
@@ -242,6 +256,7 @@ func TestAddUpdatedFirmware(t *testing.T) {
 	})
 }
 
+// TODO(gregorynisbet): replace with table-driven test
 func TestWriteSVToString(t *testing.T) {
 	Convey("Test order of stable versions after writing to strings", t, func() {
 		all := makeBaseStableVersions(
@@ -334,9 +349,8 @@ func TestWriteSVToString(t *testing.T) {
 	]
 }`
 		s, err := WriteSVToString(all)
-		fmt.Println(s)
-		fmt.Println("~~~~~~~")
-		fmt.Println(source)
+		diff := cmp.Diff(s, source)
+		fmt.Printf("17f08250-8616-4063-b748-8a161b5c7489 (%s)\n", diff)
 		So(err, ShouldBeNil)
 		So(s, ShouldEqual, source)
 	})
