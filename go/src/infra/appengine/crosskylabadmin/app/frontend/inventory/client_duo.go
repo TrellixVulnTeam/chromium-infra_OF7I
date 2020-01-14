@@ -16,7 +16,8 @@ import (
 	"infra/libs/skylab/inventory"
 )
 
-// TODO (guocb) Add deadline to ensure it won't hung.
+var timeoutForEachDUT = 50 * time.Millisecond
+
 type duoClient struct {
 	gc *gitStoreClient
 	ic *invServiceClient
@@ -49,14 +50,21 @@ func (client *duoClient) willDupToV2() bool {
 }
 
 func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
+	if client.willDupToV2() {
+		go func() {
+			// Set timeout for RPC call to inventory.
+			// The timeout should correlated to how many DUTs being operated.
+			ctx2, cancel := context.WithTimeout(ctx, time.Duration(len(nds))*timeoutForEachDUT)
+			defer cancel()
+			url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx2, nds, pickServoPort)
+			logging.Infof(ctx2, "[v2] add dut result: %s, %s", url2, err2)
+			logging.Infof(ctx2, "[v2] spec returned: %s", ds2)
+		}()
+	}
+
 	url, ds, err := client.gc.addManyDUTsToFleet(ctx, nds, pickServoPort)
 	logging.Infof(ctx, "[v1] add dut result: %s, %s", url, err)
 	logging.Infof(ctx, "[v1] spec returned: %s", ds)
 
-	if client.willDupToV2() {
-		url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx, ds, pickServoPort)
-		logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
-		logging.Infof(ctx, "[v2] spec returned: %s", ds2)
-	}
 	return url, ds, err
 }

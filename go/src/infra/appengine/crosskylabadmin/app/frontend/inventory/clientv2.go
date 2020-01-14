@@ -35,11 +35,11 @@ func newInvServiceClient(ctx context.Context, host string) (inventoryClient, err
 	return &invServiceClient{client: ic}, nil
 }
 
-func (client *invServiceClient) logInfo(ctx context.Context, t string, s ...interface{}) {
-	logging.Infof(ctx, fmt.Sprintf("InventoryV2Clinet: %s", t), s...)
+func (c *invServiceClient) logInfo(ctx context.Context, t string, s ...interface{}) {
+	logging.Infof(ctx, fmt.Sprintf("[InventoryV2Client]: %s", t), s...)
 }
 
-func (client *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
+func (c *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
 	// In case there's any panic happens in the new code.
 	defer func() {
 		if r := recover(); r != nil {
@@ -47,9 +47,9 @@ func (client *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*i
 		}
 	}()
 
-	client.logInfo(ctx, "Access inventory service as user: %s", auth.CurrentUser(ctx))
-	client.logInfo(ctx, "Adapter old data to inventory v2 proto")
-	client.logInfo(ctx, "Call server RPC to add devices")
-	client.logInfo(ctx, "Adapt the result back to old data format")
+	c.logInfo(ctx, "Access inventory service as user: %s", auth.CurrentUser(ctx))
+	c.logInfo(ctx, "Adapter old data to inventory v2 proto")
+	c.logInfo(ctx, "Call server RPC to add devices")
+	c.logInfo(ctx, "Adapt the result back to old data format")
 	return "No URL provided by inventory v2", nds, nil
 }
