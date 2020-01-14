@@ -441,10 +441,13 @@ export class MrListPage extends connectStore(LitElement) {
    * Refreshes the list of issues show.
    */
   refresh() {
-    store.dispatch(issue.fetchIssueList(
-        {...this._queryParams, q: this.currentQuery, can: this.currentCan},
-        this.projectName,
-        {maxItems: this.maxItems, start: this.startIndex}));
+    store.dispatch(issue.fetchIssueList(this.projectName, {
+      ...this._queryParams,
+      q: this.currentQuery,
+      can: this.currentCan,
+      maxItems: this.maxItems,
+      start: this.startIndex,
+    }));
   }
 
   /** @override */

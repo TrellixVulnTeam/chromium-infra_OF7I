@@ -121,8 +121,11 @@ export class MrGridPage extends connectStore(LitElement) {
 
   /** @private */
   _fetchMatchingIssues() {
-    store.dispatch(issue.fetchIssueList(this._queryParams,
-        this.projectName, {maxItems: 500}, 12));
+    store.dispatch(issue.fetchIssueList(this.projectName, {
+      ...this._queryParams,
+      maxItems: 500, // 500 items * 12 calls = max of 6,000 issues.
+      maxCalls: 12,
+    }));
   }
 
   /** @override */

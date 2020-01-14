@@ -766,8 +766,8 @@ describe('issue', () => {
         };
       });
 
-      store.dispatch(issue.fetchIssueList({q: 'owner:me', can: '4'},
-          'chromium'));
+      store.dispatch(issue.fetchIssueList('chromium',
+          {q: 'owner:me', can: '4'}));
 
       sinon.assert.calledWith(prpcCall, 'monorail.Issues', 'ListIssues', {
         query: 'owner:me',
@@ -782,8 +782,8 @@ describe('issue', () => {
     it('fetchIssueList does not set can when can is NaN', async () => {
       prpcCall.callsFake(() => ({}));
 
-      store.dispatch(issue.fetchIssueList({q: 'owner:me',
-        can: 'four-leaf-clover'}, 'chromium'));
+      store.dispatch(issue.fetchIssueList('chromium', {q: 'owner:me',
+        can: 'four-leaf-clover'}));
 
       sinon.assert.calledWith(prpcCall, 'monorail.Issues', 'ListIssues', {
         query: 'owner:me',
@@ -804,7 +804,8 @@ describe('issue', () => {
       });
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList({}, 'chromium', {maxItems: 3}, 2);
+      const action = issue.fetchIssueList('chromium',
+          {maxItems: 3, maxCalls: 2});
       await action(dispatch);
 
       sinon.assert.calledTwice(prpcCall);
@@ -827,7 +828,8 @@ describe('issue', () => {
       prpcCall.onThirdCall().returns({issues: [{localId: 3}], totalResults: 6});
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList({}, 'chromium', {maxItems: 1}, 3);
+      const action = issue.fetchIssueList('chromium',
+          {maxItems: 1, maxCalls: 3});
       await action(dispatch);
 
       sinon.assert.calledWith(dispatch, {
@@ -843,7 +845,8 @@ describe('issue', () => {
       prpcCall.onFirstCall().returns({issues: [], totalResults: 0});
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList({}, 'chromium', {maxItems: 1}, 1);
+      const action = issue.fetchIssueList('chromium',
+          {maxItems: 1, maxCalls: 1});
       await action(dispatch);
 
       sinon.assert.calledWith(dispatch, {
@@ -859,7 +862,8 @@ describe('issue', () => {
       prpcCall.onFirstCall().returns({issues: []});
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList({}, 'chromium', {maxItems: 1}, 1);
+      const action = issue.fetchIssueList('chromium',
+          {maxItems: 1, maxCalls: 1});
       await action(dispatch);
 
       sinon.assert.calledWith(dispatch, {
@@ -875,7 +879,8 @@ describe('issue', () => {
       prpcCall.onFirstCall().returns({});
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList({}, 'chromium', {maxItems: 1}, 1);
+      const action = issue.fetchIssueList('chromium',
+          {maxItems: 1, maxCalls: 1});
       await action(dispatch);
 
       sinon.assert.calledWith(dispatch, {

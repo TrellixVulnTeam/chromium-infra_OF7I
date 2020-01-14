@@ -453,7 +453,7 @@ export class MrSearchBar extends LitElement {
         // TODO(zhangtiff): Replace this event with Redux once all of Monorail
         // uses Redux.
         // This is needed because navigating to the exact same page does not
-        // cause any changes to happen.
+        // cause a URL change to happen.
         this.dispatchEvent(new Event('refreshList',
             {'composed': true, 'bubbles': true}));
       } else {

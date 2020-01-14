@@ -1019,30 +1019,47 @@ export const fetchHotlists = (issue) => async (dispatch) => {
  * action creator supports batching multiple async requests to support the grid
  * view's ability to load up to 6,000 issues in one page load.
  *
- * @param {Object} params Options for which issues to fetch.
- * @param {string} [params.q] The query string for the search.
- * @param {string} [params.can] The ID of the canned query for the search.
- * @param {string} [params.groupby] The spec of which fields to group by.
- * @param {string} [params.sort] The spec of which fields to sort by.
  * @param {string} projectName The project to fetch issues from.
- * @param {Object} pagination Object with info on how many issues to fetch and
- *   how many issues to offset.
- * @param {number} maxCalls The maximum number of API calls to make. Combined
- *   with pagination.maxItems, this defines the maximum number of issues this
- *   method can fetch.
- * @return {Function}
+ * @param {Object} params Options for which issues to fetch.
+ * @param {string=} params.q The query string for the search.
+ * @param {string=} params.can The ID of the canned query for the search.
+ * @param {string=} params.groupby The spec of which fields to group by.
+ * @param {string=} params.sort The spec of which fields to sort by.
+ * @param {number=} params.start What cursor index to start at.
+ * @param {number=} params.maxItems How many items to fetch per page.
+ * @param {number=} params.maxCalls The maximum number of API calls to make.
+ *   Combined with pagination.maxItems, this defines the maximum number of
+ *   issues this method can fetch.
+ * @return {function(function): Promise<void>}
  */
 export const fetchIssueList =
-  (params, projectName, pagination = {}, maxCalls = 1) => async (dispatch) => {
+  (projectName, {q = undefined, can = undefined, groupby = undefined,
+    sort = undefined, start = undefined, maxItems = undefined,
+    maxCalls = 1,
+  }) => async (dispatch) => {
     let updateData = {};
     const promises = [];
     const issuesByRequest = [];
     let issueLimit;
     let totalIssues;
     let totalCalls;
-    const itemsPerCall = (pagination.maxItems || 1000);
+    const itemsPerCall = maxItems || 1000;
 
-    const can = Number.parseInt(params.can) || undefined;
+    const cannedQuery = Number.parseInt(can) || undefined;
+
+    const pagination = {
+      ...(start && {start}),
+      ...(maxItems && {maxItems}),
+    };
+
+    const message = {
+      projectNames: [projectName],
+      query: q,
+      cannedQuery,
+      groupBySpec: groupby,
+      sortSpec: sort,
+      pagination,
+    };
 
     dispatch({type: FETCH_ISSUE_LIST_START});
 
@@ -1052,14 +1069,7 @@ export const fetchIssueList =
       // TODO(zhangtiff): Refactor this action creator when adding issue
       // list pagination.
       const resp = await prpcClient.call(
-          'monorail.Issues', 'ListIssues', {
-            query: params.q,
-            cannedQuery: can,
-            projectNames: [projectName],
-            pagination: pagination,
-            groupBySpec: params.groupby,
-            sortSpec: params.sort,
-          });
+          'monorail.Issues', 'ListIssues', message);
 
       // prpcClient is not actually a protobuf client and therefore not
       // hydrating default values. See crbug.com/monorail/6641
@@ -1095,12 +1105,8 @@ export const fetchIssueList =
         promises[i - 1] = (async () => {
           const resp = await prpcClient.call(
               'monorail.Issues', 'ListIssues', {
-                query: params.q,
-                cannedQuery: can,
-                projectNames: [projectName],
+                ...message,
                 pagination: {start: i * itemsPerCall, maxItems: itemsPerCall},
-                groupBySpec: params.groupby,
-                sortSpec: params.sort,
               });
           issuesByRequest[i] = (resp.issues || []);
           // sort the issues in the correct order.
