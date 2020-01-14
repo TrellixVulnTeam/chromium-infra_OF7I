@@ -39,6 +39,10 @@ message Config {
 
   // StableVersionConfig determines the location of stable version related information
   StableVersionConfig stable_version_config = 8;
+
+  // InventoryProvider contains configuration of inventory provider, e.g.
+  // inventory v2 service.
+  InventoryProvider inventory_provider = 9;
 }
 
 // Swarming contains information about the Swarming instance that hosts the bots
@@ -234,4 +238,13 @@ message StableVersionConfig {
   // The path, relative to the repo root, of the stable version data file
   // example: "lab_platform/stable_version_data/stable_versions.cfg"
   string stable_version_data_path = 5;
+}
+
+message InventoryProvider{
+  // The inventory service hostname, e.g. "cros-lab-inventory.appspot.com".
+  string host = 1;
+  // The ratio (a number in [0, 100]) of traffic duplicated to inventory
+  // service. Just for testing purpose.
+  // TODO (guocb) Remove `traffic_ratio` after migration.
+  uint32 traffic_ratio = 2;
 }
