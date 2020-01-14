@@ -164,12 +164,13 @@ func (is *ServerImpl) newStore(ctx context.Context) (*gitstore.InventoryStore, e
 }
 
 func (is *ServerImpl) newInventoryClient(ctx context.Context) (inventoryClient, error) {
+	cfg := config.Get(ctx).InventoryProvider
 	gitstore, err := is.newStore(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "create duo client").Err()
 	}
 
-	client, err := newDuoClient(ctx, gitstore, "")
+	client, err := newDuoClient(ctx, gitstore, cfg.GetHost(), int(cfg.GetTrafficRatio()))
 	if err != nil {
 		return nil, errors.Annotate(err, "create duo client").Err()
 	}

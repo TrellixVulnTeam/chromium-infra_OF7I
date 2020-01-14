@@ -6,6 +6,8 @@ package inventory
 
 import (
 	"context"
+	"math/rand"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -15,14 +17,17 @@ import (
 )
 
 // TODO (guocb) Add deadline to ensure it won't hung.
-// TODO (guocb) Add traffic control.
 // TODO (guocb) Recover the workflow in case of panic.
 type duoClient struct {
 	gc *gitStoreClient
 	ic *invServiceClient
+
+	// A number in [0, 100] indicate the traffic duplicated to inventory
+	// service.
+	trafficRatio int
 }
 
-func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string) (inventoryClient, error) {
+func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string, trafficRatio int) (inventoryClient, error) {
 	gc, err := newGitStoreClient(ctx, gs)
 	if err != nil {
 		return nil, errors.Annotate(err, "create git client").Err()
@@ -33,9 +38,15 @@ func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string)
 		return gc, nil
 	}
 	return &duoClient{
-		gc: gc.(*gitStoreClient),
-		ic: ic.(*invServiceClient),
+		gc:           gc.(*gitStoreClient),
+		ic:           ic.(*invServiceClient),
+		trafficRatio: trafficRatio,
 	}, nil
+}
+
+func (client *duoClient) willDupToV2() bool {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return r.Intn(100) < client.trafficRatio
 }
 
 func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
@@ -43,8 +54,10 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 	logging.Infof(ctx, "[v1] add dut result: %s, %s", url, err)
 	logging.Infof(ctx, "[v1] spec returned: %s", ds)
 
-	url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx, ds, pickServoPort)
-	logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
-	logging.Infof(ctx, "[v2] spec returned: %s", ds2)
+	if client.willDupToV2() {
+		url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx, ds, pickServoPort)
+		logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
+		logging.Infof(ctx, "[v2] spec returned: %s", ds2)
+	}
 	return url, ds, err
 }
