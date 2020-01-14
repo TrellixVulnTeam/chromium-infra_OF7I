@@ -172,7 +172,8 @@ func setDutState(p *inventory.Peripherals, s *lab.DutState) {
 }
 
 // AdaptToV1DutSpec adapts ExtendedDeviceData to inventory.DeviceUnderTest of
-// inventory v1.
+// inventory v1 defined in
+// https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/libs/skylab/inventory/device.proto
 func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, error) {
 	p := data.LabConfig.GetDut().GetPeripherals()
 	var attrs attributes
