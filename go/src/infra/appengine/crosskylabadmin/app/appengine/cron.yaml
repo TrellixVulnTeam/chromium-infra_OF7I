@@ -44,6 +44,5 @@ cron:
 
 - description: dump stable version to datastore
   url: /internal/cron/dump-stable-version-to-datastore
-  schedule: every 60 minutes
-  retry_parameters:
-    job_retry_limit: 3
+  # No retry, if it fails it can catch the next cron train.
+  schedule: every 3 minutes
