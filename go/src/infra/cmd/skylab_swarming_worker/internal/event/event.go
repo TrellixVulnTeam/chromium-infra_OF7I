@@ -64,6 +64,9 @@ const (
 	// handler may mark the host as dirty if the handler is
 	// tracking host dirtiness.
 	HostRunning Event = "host_running"
+	// NeedsDeploy indicates that the host fails the deploy task and needs
+	// to be deployed again.
+	HostNeedsDeploy Event = "host_needs_deploy"
 )
 
 // Handler is the type for valid functions to pass to Handle.

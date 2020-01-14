@@ -32,6 +32,12 @@ const (
 	HostNeedsCleanup HostState = "needs_cleanup"
 	HostNeedsReset   HostState = "needs_reset"
 	HostRepairFailed HostState = "repair_failed"
+	// TODO(xixuan): https://bugs.chromium.org/p/chromium/issues/detail?id=1025040#c19
+	// This needs_deploy state may be lost and get changed to needs_repair when the
+	// local state file of each bot on drone gets wiped, which usually happens when bots
+	// get restarted. Drone container image upgrade, drone server memory overflow, or
+	// drone server restart can cause the swarming bots to restart.
+	HostNeedsDeploy HostState = "needs_deploy"
 
 	// Deprecated
 	HostRunning HostState = "running"
