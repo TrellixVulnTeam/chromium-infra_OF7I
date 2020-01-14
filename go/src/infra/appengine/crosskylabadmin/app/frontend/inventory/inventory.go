@@ -163,6 +163,19 @@ func (is *ServerImpl) newStore(ctx context.Context) (*gitstore.InventoryStore, e
 	return gitstore.NewInventoryStore(gerritC, gitilesC), nil
 }
 
+func (is *ServerImpl) newInventoryClient(ctx context.Context) (inventoryClient, error) {
+	client, err := newInventoryClient(ctx, "")
+	if err != nil {
+		return nil, errors.Annotate(err, "create inventory client").Err()
+	}
+	s, err := is.newStore(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "create git store").Err()
+	}
+	client.(*gitStoreClient).store = s
+	return client, nil
+}
+
 func (is *ServerImpl) newStableVersionGitClient(ctx context.Context) (git.ClientInterface, error) {
 	if is.StableVersionGitClientFactory != nil {
 		return is.StableVersionGitClientFactory(ctx)

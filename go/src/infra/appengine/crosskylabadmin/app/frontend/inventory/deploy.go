@@ -61,7 +61,7 @@ func (is *ServerImpl) DeployDut(ctx context.Context, req *fleet.DeployDutRequest
 		}
 	}
 
-	s, err := is.newStore(ctx)
+	ic, err := is.newInventoryClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (is *ServerImpl) DeployDut(ctx context.Context, req *fleet.DeployDutRequest
 	actions := req.GetActions()
 	options := req.GetOptions()
 
-	ds := deployManyDUTs(ctx, s, sc, attemptID, allSpecs, actions, options)
+	ds := deployManyDUTs(ctx, ic, sc, attemptID, allSpecs, actions, options)
 	updateDeployStatusIgnoringErrors(ctx, attemptID, ds)
 	return &fleet.DeployDutResponse{DeploymentId: attemptID}, nil
 }
@@ -225,13 +225,13 @@ func initializeDeployAttempt(ctx context.Context) (string, error) {
 }
 
 // deploy many DUTs simultaneously.
-func deployManyDUTs(ctx context.Context, s *gitstore.InventoryStore, sc clients.SwarmingClient, attemptID string, nds []*inventory.CommonDeviceSpecs, a *fleet.DutDeploymentActions, o *fleet.DutDeploymentOptions) *deploy.Status {
+func deployManyDUTs(ctx context.Context, ic inventoryClient, sc clients.SwarmingClient, attemptID string, nds []*inventory.CommonDeviceSpecs, a *fleet.DutDeploymentActions, o *fleet.DutDeploymentOptions) *deploy.Status {
 	// TODO(gregorynisbet): consider policy for amalgamating many errors into a coherent description
 	// of how deployManyDUTs failed.
 	ds := &deploy.Status{Status: fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS}
 	// Add DUTs to fleet first synchronously, don't proceed with scheduling tasks
 	// unless we've succeeded in adding the DUTs to the inventory.
-	url, newDevices, err := addManyDUTsToFleet(ctx, s, nds, o.GetAssignServoPortIfMissing())
+	url, newDevices, err := ic.addManyDUTsToFleet(ctx, nds, o.GetAssignServoPortIfMissing())
 	ds.ChangeURL = url
 	if err != nil {
 		failDeployStatus(ctx, ds, fmt.Sprintf("failed to add DUT(s) to fleet: %s", err))
@@ -254,77 +254,6 @@ func deployManyDUTs(ctx context.Context, s *gitstore.InventoryStore, sc clients.
 		ds.TaskIDs = append(ds.TaskIDs, taskID)
 	}
 	return ds
-}
-
-func addManyDUTsToFleet(ctx context.Context, s *gitstore.InventoryStore, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
-	var respURL string
-	newDeviceToID := make(map[*inventory.CommonDeviceSpecs]string)
-
-	f := func() error {
-		var ds []*inventory.CommonDeviceSpecs
-
-		for _, nd := range nds {
-			ds = append(ds, proto.Clone(nd).(*inventory.CommonDeviceSpecs))
-		}
-
-		if err := s.Refresh(ctx); err != nil {
-			return errors.Annotate(err, "add dut to fleet").Err()
-		}
-
-		// New cache after refreshing store.
-		c := newGlobalInvCache(ctx, s)
-
-		for i, d := range ds {
-			hostname := d.GetHostname()
-			logging.Infof(ctx, "add device to fleet: %s", hostname)
-			if _, ok := c.hostnameToID[hostname]; ok {
-				logging.Infof(ctx, "dut with hostname %s already exists, skip adding", hostname)
-				continue
-			}
-			if pickServoPort && !hasServoPortAttribute(d) {
-				if err := assignNewServoPort(s.Lab.Duts, d); err != nil {
-					logging.Infof(ctx, "fail to assign new servo port, skip adding")
-					continue
-				}
-			}
-			nid := addDUTToStore(s, d)
-			newDeviceToID[nds[i]] = nid
-		}
-
-		// TODO(ayatane): Implement this better than just regenerating the cache.
-		c = newGlobalInvCache(ctx, s)
-
-		for _, id := range newDeviceToID {
-			if _, err := assignDUT(ctx, c, id); err != nil {
-				return errors.Annotate(err, "add dut to fleet").Err()
-			}
-		}
-
-		firstHostname := "<empty>"
-		if len(ds) > 0 {
-			firstHostname = ds[0].GetHostname()
-		}
-
-		url, err := s.Commit(ctx, fmt.Sprintf("Add %d new DUT(s) : %s ...", len(ds), firstHostname))
-		if err != nil {
-			return errors.Annotate(err, "add dut to fleet").Err()
-		}
-
-		respURL = url
-		for _, nd := range nds {
-			id := newDeviceToID[nd]
-			nd.Id = &id
-		}
-		return nil
-	}
-
-	err := retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "addManyDUTsToFleet"))
-
-	newDevices := make([]*inventory.CommonDeviceSpecs, 0)
-	for nd := range newDeviceToID {
-		newDevices = append(newDevices, nd)
-	}
-	return respURL, newDevices, err
 }
 
 const (
