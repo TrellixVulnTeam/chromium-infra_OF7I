@@ -60,6 +60,7 @@ SELECT
     "$.mastername") AS mastername,
   s.name step,
   ANY_VALUE(b.latest.status) status,
+  ANY_VALUE(b.latest.critical) critical,
   ANY_VALUE(b.latest.output.gitiles_commit) output_commit,
   ANY_VALUE(b.latest.input.gitiles_commit) input_commit,
   FARM_FINGERPRINT(STRING_AGG(tr.path, "\n"

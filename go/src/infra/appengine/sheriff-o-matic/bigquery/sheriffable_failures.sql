@@ -106,7 +106,7 @@ SELECT
   s.bucket AS Bucket,
   s.builder AS Builder,
   s.mastername AS MasterName,
-  t.critical AS Critical,
+  s.critical AS Critical,
   s.step AS StepName,
   s.test_names_fp as TestNamesFingerprint,
   s.test_names_trunc as TestNamesTrunc,
