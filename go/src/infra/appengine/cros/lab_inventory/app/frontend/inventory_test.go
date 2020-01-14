@@ -24,6 +24,8 @@ import (
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
+	"infra/libs/cros/lab_inventory/datastore"
+	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/cros/lab_inventory/hwid"
 )
 
@@ -298,6 +300,74 @@ func TestGetCrosDevices(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(rsp.FailedDevices, ShouldBeEmpty)
 			So(rsp.Data, ShouldHaveLength, 2)
+		})
+
+		Convey("Happy path with real device config", func() {
+			realDutID1 := api.DeviceID{
+				Id: &api.DeviceID_Hostname{Hostname: "real_dut1"},
+			}
+			realDutID2 := api.DeviceID{
+				Id: &api.DeviceID_Hostname{Hostname: "real_dut2"},
+			}
+			realDut1 := lab.ChromeOSDevice{
+				Id: &lab.ChromeOSDeviceID{},
+				DeviceConfigId: &device.ConfigId{
+					PlatformId: &device.PlatformId{
+						Value: "falco_li",
+					},
+					ModelId: &device.ModelId{
+						Value: "falco_li",
+					},
+				},
+				Device: &lab.ChromeOSDevice_Dut{
+					Dut: &lab.DeviceUnderTest{Hostname: "real_dut1"},
+				},
+			}
+			realDut2 := lab.ChromeOSDevice{
+				Id: &lab.ChromeOSDeviceID{},
+				DeviceConfigId: &device.ConfigId{
+					PlatformId: &device.PlatformId{
+						Value: "hana",
+					},
+					ModelId: &device.ModelId{
+						Value: "hana",
+					},
+				},
+				Device: &lab.ChromeOSDevice_Dut{
+					Dut: &lab.DeviceUnderTest{Hostname: "real_dut2"},
+				},
+			}
+			_, err := datastore.AddDevices(ctx, []*lab.ChromeOSDevice{&realDut1, &realDut2})
+			So(err, ShouldBeNil)
+			reqGet := &api.GetCrosDevicesRequest{
+				Ids: []*api.DeviceID{&realDutID1, &realDutID2},
+			}
+
+			getDeviceConfigFunc = func(ctx context.Context, ids []*device.ConfigId) ([]proto.Message, error) {
+				m := map[string]*device.Config{
+					"slippy.falco.": {
+						GpuFamily: "real_gpu",
+					},
+				}
+				fakeCfgs := make([]proto.Message, 0)
+				for _, id := range ids {
+					if dc, ok := m[deviceconfig.GetDeviceConfigIDStr(id)]; ok {
+						fakeCfgs = append(fakeCfgs, dc)
+					} else {
+						fakeCfgs = append(fakeCfgs, &device.Config{})
+					}
+				}
+				return fakeCfgs, nil
+			}
+			rsp, err := tf.Inventory.GetCrosDevices(tf.C, reqGet)
+			So(err, ShouldBeNil)
+			So(rsp.Data, ShouldHaveLength, 2)
+			resultM := make(map[string]string, 0)
+			for _, d := range rsp.Data {
+				resultM[d.GetLabConfig().GetDut().GetHostname()] = d.GetDeviceConfig().GetGpuFamily()
+			}
+			So(resultM["real_dut1"], ShouldEqual, "real_gpu")
+			So(resultM["real_dut2"], ShouldEqual, "")
 		})
 
 		Convey("Bad hwid server", func() {

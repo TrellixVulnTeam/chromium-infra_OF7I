@@ -101,7 +101,9 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 	// Start to retrieve device config data.
 	devCfgIds := make([]*device.ConfigId, len(extendedData))
 	for i, d := range extendedData {
-		devCfgIds[i] = d.LabConfig.DeviceConfigId
+		logging.Debugf(ctx, "before convert: %#v", d.LabConfig.DeviceConfigId)
+		devCfgIds[i] = deviceconfig.ConvertValidDeviceConfigID(d.LabConfig.DeviceConfigId)
+		logging.Debugf(ctx, "real device config ID: %#v", devCfgIds[i])
 	}
 	devCfgs, err := getDeviceConfigFunc(ctx, devCfgIds)
 	newExtendedData := make([]*api.ExtendedDeviceData, 0, len(extendedData))

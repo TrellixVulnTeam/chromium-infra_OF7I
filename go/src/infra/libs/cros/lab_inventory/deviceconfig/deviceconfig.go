@@ -19,7 +19,8 @@ import (
 
 const entityKind = "DevConfig"
 
-func getDeviceConfigIDStr(cfgid *device.ConfigId) string {
+// GetDeviceConfigIDStr returns a string as device config short name.
+func GetDeviceConfigIDStr(cfgid *device.ConfigId) string {
 	// TODO (guocb) Add `BranchID` as part of DeviceConfigID.
 	var platformID, modelID, variantID string
 	if v := cfgid.GetPlatformId(); v != nil {
@@ -61,7 +62,7 @@ func newDevCfgEntity(msg proto.Message) (cfg2datastore.EntityInterface, error) {
 		return nil, err
 	}
 	return &devcfgEntity{
-		ID:        getDeviceConfigIDStr(msg.(*device.Config).GetId()),
+		ID:        GetDeviceConfigIDStr(msg.(*device.Config).GetId()),
 		DevConfig: cfgData,
 	}, nil
 }
@@ -83,7 +84,7 @@ func GetCachedConfig(ctx context.Context, cfgIds []*device.ConfigId) ([]proto.Me
 	entities := make([]cfg2datastore.EntityInterface, len(cfgIds))
 	for i, c := range cfgIds {
 		e := devcfgEntity{
-			ID: getDeviceConfigIDStr(c),
+			ID: GetDeviceConfigIDStr(c),
 		}
 		logging.Debugf(ctx, "Getting devconfig for ID: '%s'", e.ID)
 		entities[i] = &e
