@@ -17,7 +17,6 @@ import (
 )
 
 // TODO (guocb) Add deadline to ensure it won't hung.
-// TODO (guocb) Recover the workflow in case of panic.
 type duoClient struct {
 	gc *gitStoreClient
 	ic *invServiceClient

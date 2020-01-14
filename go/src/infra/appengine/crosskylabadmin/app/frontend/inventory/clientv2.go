@@ -40,6 +40,13 @@ func (client *invServiceClient) logInfo(ctx context.Context, t string, s ...inte
 }
 
 func (client *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
+	// In case there's any panic happens in the new code.
+	defer func() {
+		if r := recover(); r != nil {
+			logging.Errorf(ctx, "Recovered in addManyDUTsToFleet(%s)", r)
+		}
+	}()
+
 	client.logInfo(ctx, "Access inventory service as user: %s", auth.CurrentUser(ctx))
 	client.logInfo(ctx, "Adapter old data to inventory v2 proto")
 	client.logInfo(ctx, "Call server RPC to add devices")
