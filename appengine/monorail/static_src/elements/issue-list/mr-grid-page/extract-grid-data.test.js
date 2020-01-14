@@ -4,11 +4,11 @@
 
 import {assert} from 'chai';
 import {extractGridData} from './extract-grid-data.js';
-import {extractFieldValuesFromIssue,
-  extractTypeForFieldName} from 'reducers/project.js';
+import {extractFieldValuesFromIssue as fieldExtractor,
+  extractTypeForFieldName as typeExtractor} from 'reducers/project.js';
 
-const fieldExtractor = extractFieldValuesFromIssue({});
-const typeExtractor = extractTypeForFieldName({});
+const extractFieldValuesFromIssue = fieldExtractor({});
+const extractTypeForFieldName = typeExtractor({});
 
 
 describe('extract headings from x and y attributes', () => {
@@ -18,7 +18,10 @@ describe('extract headings from x and y attributes', () => {
       {'localId': 2, 'projectName': 'test'},
     ];
 
-    const data = extractGridData(issues, '', '', fieldExtractor);
+    const data = extractGridData({
+      issues,
+      extractFieldValuesFromIssue,
+    });
 
     const expectedIssues = new Map([
       ['All + All', [
@@ -38,7 +41,8 @@ describe('extract headings from x and y attributes', () => {
       {'attachmentCount': 1},
     ];
 
-    const data = extractGridData(issues, 'Attachments', '', fieldExtractor);
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: 'Attachments'});
 
     const expectedIssues = new Map([
       ['0 + All', [{'attachmentCount': 0}]],
@@ -55,7 +59,8 @@ describe('extract headings from x and y attributes', () => {
       {'blockedOnIssueRefs': [{'localId': 21}]},
       {'otherIssueProperty': 'issueProperty'},
     ];
-    const data = extractGridData(issues, 'Blocked', '', fieldExtractor);
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: 'Blocked', yFieldName: ''});
 
     const expectedIssues = new Map();
     expectedIssues.set('Yes + All',
@@ -79,7 +84,9 @@ describe('extract headings from x and y attributes', () => {
       {'blockedOnIssueRefs': [
         {'localId': 1, 'projectName': 'test-projectA'}]},
     ];
-    const data = extractGridData(issues, 'BlockedOn', '', fieldExtractor);
+
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: 'BlockedOn', yFieldName: ''});
 
     const expectedIssues = new Map();
     expectedIssues.set('test-projectB:3 + All', [{'blockedOnIssueRefs':
@@ -92,8 +99,8 @@ describe('extract headings from x and y attributes', () => {
       [{'localId': 1, 'projectName': 'test-projectA'}]}]);
     expectedIssues.set('---- + All', [{'otherIssueProperty': 'issueProperty'}]);
 
-    assert.deepEqual(data.xHeadings, ['test-projectA:1',
-      'test-projectA:3', 'test-projectB:3', '----']);
+    assert.deepEqual(data.xHeadings, ['----', 'test-projectA:1',
+      'test-projectA:3', 'test-projectB:3']);
     assert.deepEqual(data.yHeadings, ['All']);
     assert.deepEqual(data.groupedIssues, expectedIssues);
   });
@@ -110,7 +117,8 @@ describe('extract headings from x and y attributes', () => {
       {'blockingIssueRefs': [
         {'localId': 3, 'projectName': 'test-projectB'}]},
     ];
-    const data = extractGridData(issues, 'Blocking', '', fieldExtractor);
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: 'Blocking', yFieldName: ''});
 
     const expectedIssues = new Map();
     expectedIssues.set('test-projectA:1 + All', [{'blockingIssueRefs':
@@ -123,8 +131,8 @@ describe('extract headings from x and y attributes', () => {
       [{'localId': 3, 'projectName': 'test-projectB'}]}]);
     expectedIssues.set('---- + All', [{'otherIssueProperty': 'issueProperty'}]);
 
-    assert.deepEqual(data.xHeadings, ['test-projectA:1',
-      'test-projectA:3', 'test-projectB:3', '----']);
+    assert.deepEqual(data.xHeadings, ['----', 'test-projectA:1',
+      'test-projectA:3', 'test-projectB:3']);
     assert.deepEqual(data.yHeadings, ['All']);
     assert.deepEqual(data.groupedIssues, expectedIssues);
   });
@@ -136,7 +144,8 @@ describe('extract headings from x and y attributes', () => {
       {'componentRefs': [{'path': 'API'}]},
       {'componentRefs': [{'path': 'UI'}]},
     ];
-    const data = extractGridData(issues, 'Component', '', fieldExtractor);
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: 'Component', yFieldName: ''});
 
     const expectedIssues = new Map();
     expectedIssues.set('UI + All', [{'componentRefs': [{'path': 'UI'}]},
@@ -144,7 +153,7 @@ describe('extract headings from x and y attributes', () => {
     expectedIssues.set('API + All', [{'componentRefs': [{'path': 'API'}]}]);
     expectedIssues.set('---- + All', [{'otherIssueProperty': 'issueProperty'}]);
 
-    assert.deepEqual(data.xHeadings, ['API', 'UI', '----']);
+    assert.deepEqual(data.xHeadings, ['----', 'API', 'UI']);
     assert.deepEqual(data.yHeadings, ['All']);
     assert.deepEqual(data.groupedIssues, expectedIssues);
   });
@@ -154,7 +163,8 @@ describe('extract headings from x and y attributes', () => {
       {'reporterRef': {'displayName': 'testA@google.com'}},
       {'reporterRef': {'displayName': 'testB@google.com'}},
     ];
-    const data = extractGridData(issues, '', 'Reporter', fieldExtractor);
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: '', yFieldName: 'Reporter'});
 
     const expectedIssues = new Map();
     expectedIssues.set('All + testA@google.com',
@@ -171,7 +181,8 @@ describe('extract headings from x and y attributes', () => {
     const issues = [
       {'starCount': 1}, {'starCount': 6}, {'starCount': 1},
     ];
-    const data = extractGridData(issues, '', 'Stars', fieldExtractor);
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: '', yFieldName: 'Stars'});
 
     const expectedIssues = new Map();
     expectedIssues.set('All + 1', [{'starCount': 1}, {'starCount': 1}]);
@@ -195,8 +206,8 @@ describe('extract headings from x and y attributes', () => {
       {status: 'Accepted'},
     ];
 
-    const data = extractGridData(
-        issues, '', 'Status', fieldExtractor, typeExtractor, statusDefs);
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {yFieldName: 'Status', extractTypeForFieldName, statusDefs});
 
     const expectedIssues = new Map();
     expectedIssues.set(
@@ -221,7 +232,8 @@ describe('extract headings from x and y attributes', () => {
       {'labelRefs': [{'label': 'Type-Defect'}]},
       {'labelRefs': [{'label': 'Type-Enhancement'}]},
     ];
-    const data = extractGridData(issues, '', 'Type', fieldExtractor);
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {yFieldName: 'Type'});
 
     const expectedIssues = new Map();
     expectedIssues.set('All + Defect', [
@@ -234,7 +246,44 @@ describe('extract headings from x and y attributes', () => {
       [{'label': 'Pri-2'}, {'label': 'Milestone-2000Q1'}]}]);
 
     assert.deepEqual(data.xHeadings, ['All']);
-    assert.deepEqual(data.yHeadings, ['Defect', 'Enhancement', '----']);
+    assert.deepEqual(data.yHeadings, ['----', 'Defect', 'Enhancement']);
     assert.deepEqual(data.groupedIssues, expectedIssues);
+  });
+
+  it('puts predefined labels ahead of ad hoc labels', () => {
+    const issues = [
+      {'labelRefs': [{'label': 'Pri-2'}, {'label': 'Type-Defect'}]},
+      {'labelRefs': [{'label': 'Type-Defect'}]},
+      {'labelRefs': [{'label': 'Type-Enhancement'}]},
+      {'labelRefs': [{'label': 'Type-AAA'}]},
+    ];
+    const labelPrefixValueMap = new Map([
+      ['Pri', new Set(['2'])],
+      ['Type', new Set(['Defect', 'Enhancement'])],
+    ]);
+
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: 'Type', yFieldName: 'Pri', labelPrefixValueMap});
+
+    assert.deepEqual(data.xHeadings, ['Defect', 'Enhancement', 'AAA']);
+    assert.deepEqual(data.yHeadings, ['----', '2']);
+  });
+
+  it('has priority order of predefined, empty, then ad hoc labels', () => {
+    const issues = [
+      {'labelRefs': [{'label': 'Pri-2'}, {'label': 'Milestone-2000Q1'}]},
+      {'labelRefs': [{'label': 'Type-Defect'}]},
+      {'labelRefs': [{'label': 'Type-Enhancement'}]},
+      {'labelRefs': [{'label': 'Type-AAA'}]},
+    ];
+    const labelPrefixValueMap = new Map([
+      ['Pri', new Set(['2'])],
+      ['Type', new Set(['Defect', 'Enhancement'])],
+    ]);
+
+    const data = extractGridData({issues, extractFieldValuesFromIssue},
+        {xFieldName: 'Type', yFieldName: 'Pri', labelPrefixValueMap});
+
+    assert.deepEqual(data.xHeadings, ['Defect', 'Enhancement', '----', 'AAA']);
   });
 });

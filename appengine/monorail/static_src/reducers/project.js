@@ -9,7 +9,7 @@ import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS, defaultIssueFieldMap,
   parseColSpec, stringValuesForIssueField} from 'shared/issue-fields.js';
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
-  labelNameToLabelPrefix} from 'shared/converters.js';
+  labelNameToLabelPrefix, labelNameToLabelValue} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 
@@ -214,38 +214,42 @@ export const labelDefMap = createSelector(
     },
 );
 
-// Find the options that exist for a given label prefix.
-export const labelPrefixOptions = createSelector(
-    labelDefs, (labelDefs) => {
-      const prefixMap = new Map();
-      labelDefs.forEach((ld) => {
-        const prefix = labelNameToLabelPrefix(ld.label).toLowerCase();
+/**
+ * A selector that builds a map where keys are label prefixes
+ * and values equal to sets of possible values corresponding to the prefix
+ * @param {Object} state Current Redux state.
+ * @return {Map}
+ */
+export const labelPrefixValueMap = createSelector(labelDefs, (labelDefs) => {
+  const prefixMap = new Map();
+  labelDefs.forEach((ld) => {
+    const prefix = labelNameToLabelPrefix(ld.label);
 
-        if (prefixMap.has(prefix)) {
-          prefixMap.get(prefix).push(ld.label);
-        } else {
-          prefixMap.set(prefix, [ld.label]);
-        }
-      });
+    if (prefixMap.has(prefix)) {
+      prefixMap.get(prefix).add(labelNameToLabelValue(ld.label));
+    } else {
+      prefixMap.set(prefix, new Set([labelNameToLabelValue(ld.label)]));
+    }
+  });
 
-      return prefixMap;
-    },
-);
+  return prefixMap;
+});
 
-// Some labels are implicitly used as custom fields in the grid and list view.
-// Make this an Array to keep casing in tact. Only labels with more than one
-// option are included, to reduce noise.
+/**
+ * A selector that builds an array of label prefixes, keeping casing intact
+ * Some labels are implicitly used as custom fields in the grid and list view.
+ * Only labels with more than one option are included, to reduce noise.
+ * @param {Object} state Current Redux state.
+ * @return {Array}
+ */
 export const labelPrefixFields = createSelector(
-    labelPrefixOptions, (map) => {
+    labelPrefixValueMap, (map) => {
       const prefixes = [];
 
-      map.forEach((options) => {
+      map.forEach((options, prefix) => {
       // Ignore label prefixes with only one value.
-        if (options.length > 1) {
-        // Pick the first label defined to set the casing for the prefix value.
-        // This shouldn't be too important of a decision because most labels
-        // with shared prefixes should use the same casing across labels.
-          prefixes.push(labelNameToLabelPrefix(options[0]));
+        if (options.size > 1) {
+          prefixes.push(prefix);
         }
       });
 
@@ -253,7 +257,11 @@ export const labelPrefixFields = createSelector(
     },
 );
 
-// Wrap label prefixes in a Set for fast lookup.
+/**
+ * A selector that wraps labelPrefixFields arrays as set for fast lookup.
+ * @param {Object} state Current Redux state.
+ * @return {Set}
+ */
 export const labelPrefixSet = createSelector(
     labelPrefixFields, (fields) => new Set(fields.map(
         (field) => field.toLowerCase())),

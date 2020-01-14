@@ -202,7 +202,7 @@ export function fieldNameToLabelPrefix(fieldName) {
 
 /**
  * Truncates a label to include only the label's prefix, delimited
- * by '-'. Labels that share the same prefix are implciitly treated like
+ * by '-'. Labels that share the same prefix are implicitly treated like
  * enum fields in certain parts of Monorail's UI.
  *
  * @param {string} label The name of the label.
@@ -211,6 +211,18 @@ export function fieldNameToLabelPrefix(fieldName) {
 export function labelNameToLabelPrefix(label) {
   if (!label) return;
   return label.split('-')[0];
+}
+
+/**
+ * Truncates a label to include only the label's value, delimited
+ * by '-'.
+ *
+ * @param {string} label The name of the label.
+ * @return {string} The label's value.
+ */
+export function labelNameToLabelValue(label) {
+  if (!label) return;
+  return isOneWordLabel(label) ? label : label.split('-').slice(1).join('-');
 }
 
 /**

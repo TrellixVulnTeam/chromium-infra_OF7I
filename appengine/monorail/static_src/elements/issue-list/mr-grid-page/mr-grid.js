@@ -164,6 +164,7 @@ export class MrGrid extends connectStore(LitElement) {
       _extractFieldValuesFromIssue: {type: Object},
       _extractTypeForFieldName: {type: Object},
       _statusDefs: {type: Array},
+      _labelPrefixValueMap: {type: Map},
     };
   }
 
@@ -246,6 +247,12 @@ export class MrGrid extends connectStore(LitElement) {
      * @type {Array<StatusDef>}
      */
     this._statusDefs;
+
+    /**
+     * Mapping predefined label prefix to set of values
+     * @type {Map}
+     */
+    this._labelPrefixValueMap = new Map();
   }
 
   /** @override */
@@ -254,16 +261,24 @@ export class MrGrid extends connectStore(LitElement) {
       project.extractFieldValuesFromIssue(state);
     this._extractTypeForFieldName = project.extractTypeForFieldName(state);
     this._statusDefs = project.viewedConfig(state).statusDefs;
+    this._labelPrefixValueMap = project.labelPrefixValueMap(state);
   }
 
   /** @override */
   update(changedProperties) {
     if (setHasAny(changedProperties, PROPERTIES_TRIGGERING_GROUPING)) {
       if (this._extractFieldValuesFromIssue) {
-        const gridData = extractGridData(
-            this.issues, this.xField, this.yField,
-            this._extractFieldValuesFromIssue, this._extractTypeForFieldName,
-            this._statusDefs);
+        const gridData = extractGridData({
+          issues: this.issues,
+          extractFieldValuesFromIssue: this._extractFieldValuesFromIssue,
+        }, {
+          xFieldName: this.xField,
+          yFieldName: this.yField,
+          extractTypeForFieldName: this._extractTypeForFieldName,
+          statusDef: this._statusDefs,
+          labelPrefixValueMap: this._labelPrefixValueMap,
+        });
+
         this._xHeadings = gridData.xHeadings;
         this._yHeadings = gridData.yHeadings;
         this._groupedIssues = gridData.groupedIssues;

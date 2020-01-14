@@ -10,7 +10,8 @@ import {displayNameToUserRef, userIdOrDisplayNameToUserRef, labelStringToRef,
   componentStringToRef, componentRefToString, componentRefsToStrings,
   issueStringToRef, issueStringToBlockingRef, issueRefToString,
   issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefix,
-  commentListToDescriptionList, valueToFieldValue, issueToIssueRef,
+  labelNameToLabelValue, commentListToDescriptionList, valueToFieldValue,
+  issueToIssueRef,
 } from './converters.js';
 
 describe('displayNameToUserRef', () => {
@@ -108,6 +109,15 @@ describe('labelNameToLabelPrefix', () => {
     assert.deepEqual(labelNameToLabelPrefix('test-hello'), 'test');
     assert.deepEqual(labelNameToLabelPrefix('WHATEVER-this-label-is'),
         'WHATEVER');
+  });
+});
+
+describe('labelNameToLabelValue', () => {
+  it('converts labelName', () => {
+    assert.deepEqual(labelNameToLabelValue('test'), 'test');
+    assert.deepEqual(labelNameToLabelValue('test-hello'), 'hello');
+    assert.deepEqual(labelNameToLabelValue('WHATEVER-this-label-is'),
+        'this-label-is');
   });
 });
 

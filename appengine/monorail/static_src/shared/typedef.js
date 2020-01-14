@@ -344,7 +344,7 @@
  * A PresentationConfig Object returned by the pRPC API project_objects.proto.
  *
  * @typedef {Object} PresentationConfig
- * @property {String=} projectThumbnailUrl
+ * @property {string=} projectThumbnailUrl
  * @property {string=} projectSummary
  * @property {string=} customIssueEntryUrl
  * @property {string=} defaultQuery

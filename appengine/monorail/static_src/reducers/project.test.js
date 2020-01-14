@@ -156,22 +156,23 @@ describe('project selectors', () => {
     assert.deepEqual(project.labelDefMap(example.STATE), expected);
   });
 
-  it('labelPrefixOptions', () => {
-    assert.deepEqual(project.labelPrefixOptions({project: {}}), new Map());
-    assert.deepEqual(project.labelPrefixOptions(
+  it('labelPrefixValueMap', () => {
+    assert.deepEqual(project.labelPrefixValueMap({project: {}}), new Map());
+    assert.deepEqual(project.labelPrefixValueMap(
         {project: {config: {}}}), new Map());
     const expected = new Map([
-      ['one', ['One']],
-      ['enum', ['EnUm', 'eNuM-Options']],
-      ['hello', ['hello-world', 'hello-me']],
+      ['One', new Set(['One'])],
+      ['EnUm', new Set(['EnUm'])],
+      ['eNuM', new Set(['Options'])],
+      ['hello', new Set(['world', 'me'])],
     ]);
-    assert.deepEqual(project.labelPrefixOptions(example.STATE), expected);
+    assert.deepEqual(project.labelPrefixValueMap(example.STATE), expected);
   });
 
   it('labelPrefixFields', () => {
     assert.deepEqual(project.labelPrefixFields({project: {}}), []);
     assert.deepEqual(project.labelPrefixFields({project: {config: {}}}), []);
-    const expected = ['EnUm', 'hello'];
+    const expected = ['hello'];
     assert.deepEqual(project.labelPrefixFields(example.STATE), expected);
   });
 

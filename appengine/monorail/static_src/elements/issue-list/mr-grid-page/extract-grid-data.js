@@ -131,7 +131,7 @@ function sortHeadings(headingSet, fieldName, extractTypeForFieldName,
   }
 
   // Track whether EMPTY_FIELD_VALUE is present, and ensure that
-  // it is sorted to the last position even for custom fields.
+  // it is sorted to the first position of custom fields.
   // TODO(jessan): although convenient, it is bad practice to mutate parameters.
   const hasEmptyFieldValue = headingSet.delete(EMPTY_FIELD_VALUE);
   const headingsList = [...headingSet];
@@ -139,7 +139,7 @@ function sortHeadings(headingSet, fieldName, extractTypeForFieldName,
   headingsList.sort(sorter);
 
   if (hasEmptyFieldValue) {
-    headingsList.push(EMPTY_FIELD_VALUE);
+    headingsList.unshift(EMPTY_FIELD_VALUE);
   }
   return headingsList;
 }
@@ -173,22 +173,28 @@ function prepareHeadings(
 
 /**
  * Groups issues by their values for the given fields.
- *
- * @param {Array<Issue>} issues The issues we are grouping.
- * @param {string=} xFieldName name of the field for grouping columns.
- * @param {string=} yFieldName name of the field for grouping rows.
- * @param {function(Issue, string): Array<string>} extractFieldValuesFromIssue
- * @param {function(string): string=} extractTypeForFieldName
- * @param {Array<StatusDef>=} statusDefs
+ * @param {Array<Issue>} required.issues The issues we are grouping
+ * @param {function(Issue, string): Array<string>}
+ *     required.extractFieldValuesFromIssue
+ * @param {string=} options.xFieldName name of the field for grouping columns
+ * @param {string=} options.yFieldName name of the field for grouping rows
+ * @param {function(string): string=} options.extractTypeForFieldName
+ * @param {Array=} options.statusDefs
+ * @param {Map=} options.labelPrefixValueMap
  * @return {!Object} Grid data
  *   - groupedIssues: A map of issues grouped by thir xField and yField values.
  *   - xHeadings: sorted headings for columns.
  *   - yHeadings: sorted headings for rows.
  */
-export function extractGridData(
-    issues, xFieldName = '', yFieldName = '', extractFieldValuesFromIssue,
-    extractTypeForFieldName, statusDefs = []) {
-  const xHeadingsSet = new Set();
+export function extractGridData({issues, extractFieldValuesFromIssue}, {
+  xFieldName = '',
+  yFieldName = '',
+  extractTypeForFieldName = undefined,
+  statusDefs = [],
+  labelPrefixValueMap = new Map(),
+} = {}) {
+  const xHeadingsPredefinedSet = new Set();
+  const xHeadingsAdHocSet = new Set();
   const yHeadingsSet = new Set();
   const groupedIssues = new Map();
   for (const issue of issues) {
@@ -204,7 +210,12 @@ export function extractGridData(
     // Find every combo of 'xValue yValue' that the issue belongs to
     // and add it into that cell. Also record each header used.
     for (const xHeading of xHeadings) {
-      xHeadingsSet.add(xHeading);
+      if (labelPrefixValueMap.has(xFieldName) &&
+          labelPrefixValueMap.get(xFieldName).has(xHeading)) {
+        xHeadingsPredefinedSet.add(xHeading);
+      } else {
+        xHeadingsAdHocSet.add(xHeading);
+      }
       for (const yHeading of yHeadings) {
         yHeadingsSet.add(yHeading);
         const cellKey = makeGridCellKey(xHeading, yHeading);
@@ -217,10 +228,25 @@ export function extractGridData(
     }
   }
 
+  // Predefined labels to be ordered in front of ad hoc labels
+  const xHeadings = [
+    ...sortHeadings(
+        xHeadingsPredefinedSet,
+        xFieldName,
+        extractTypeForFieldName,
+        statusDefs,
+    ),
+    ...sortHeadings(
+        xHeadingsAdHocSet,
+        xFieldName,
+        extractTypeForFieldName,
+        statusDefs,
+    ),
+  ];
+
   return {
     groupedIssues,
-    xHeadings: sortHeadings(xHeadingsSet, xFieldName, extractTypeForFieldName,
-        statusDefs),
+    xHeadings,
     yHeadings: sortHeadings(yHeadingsSet, yFieldName, extractTypeForFieldName,
         statusDefs),
   };
