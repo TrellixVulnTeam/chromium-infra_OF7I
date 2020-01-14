@@ -12,12 +12,11 @@ from waterfall.test.wf_testcase import WaterfallTestCase
 
 
 class UpdateFlakeCountsCronTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication(
-      [
-          ('/flake/detection/cron/update-flake-counts',
-           update_flake_counts.UpdateFlakeCountsCron),
-      ],
-      debug=True)
+  app_module = webapp2.WSGIApplication([
+      ('/flake/detection/cron/update-flake-counts',
+       update_flake_counts.UpdateFlakeCountsCron),
+  ],
+                                       debug=True)
 
   def setUp(self):
     super(UpdateFlakeCountsCronTest, self).setUp()
@@ -31,18 +30,17 @@ class UpdateFlakeCountsCronTest(WaterfallTestCase):
     self.assertEqual(200, response.status_int)
 
     tasks = self.taskqueue_stub.get_filtered_tasks(
-        queue_names='flake-detection-queue')
+        queue_names='flake-detection-multitask-queue')
     self.assertEqual(2, len(tasks))
     self.assertTrue(mocked_is_request_from_appself.called)
 
 
 class UpdateFlakeCountsTaskTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication(
-      [
-          ('/flake/detection/task/update-flake-counts',
-           update_flake_counts.UpdateFlakeCountsTask),
-      ],
-      debug=True)
+  app_module = webapp2.WSGIApplication([
+      ('/flake/detection/task/update-flake-counts',
+       update_flake_counts.UpdateFlakeCountsTask),
+  ],
+                                       debug=True)
 
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   @mock.patch.object(update_flake_counts_service, 'UpdateFlakeCounts')

@@ -14,15 +14,9 @@ class ProcessFlakesCronJob(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
-    # Cron jobs run independently of each other. Therefore, there is no
-    # guarantee that they will run either sequentially or simultaneously.
-    #
-    # Running flake detection tasks concurrently doesn't bring much benefits, so
-    # use task queue to enforce that at most one detection task can be executed
-    # at any time to avoid any potential race condition.
     taskqueue.add(
         method='GET',
-        queue_name=constants.FLAKE_DETECTION_QUEUE,
+        queue_name=constants.FLAKE_DETECTION_MULTITASK_QUEUE,
         target=constants.FLAKE_DETECTION_BACKEND,
         url='/flake/detection/task/process-flakes')
     return {'return_code': 200}

@@ -29,7 +29,7 @@ class DetectHiddenFlakesCronJob(BaseHandler):
   def HandleGet(self):
     taskqueue.add(
         method='GET',
-        queue_name=constants.FLAKE_DETECTION_QUEUE,
+        queue_name=constants.FLAKE_DETECTION_MULTITASK_QUEUE,
         target=constants.FLAKE_DETECTION_BACKEND,
         url='/flake/detection/task/detect-flakes?flake_type={}'.format(
             urllib2.quote(FLAKE_TYPE_DESCRIPTIONS[FlakeType.CQ_HIDDEN_FLAKE])))
@@ -43,7 +43,7 @@ class DetectNonHiddenFlakesCronJob(BaseHandler):
     for flake_type in _NON_HIDDEN_FLAKE_TYPES:
       taskqueue.add(
           method='GET',
-          queue_name=constants.FLAKE_DETECTION_QUEUE,
+          queue_name=constants.FLAKE_DETECTION_MULTITASK_QUEUE,
           target=constants.FLAKE_DETECTION_BACKEND,
           url='/flake/detection/task/detect-flakes?flake_type={}'.format(
               urllib2.quote(FLAKE_TYPE_DESCRIPTIONS[flake_type])))

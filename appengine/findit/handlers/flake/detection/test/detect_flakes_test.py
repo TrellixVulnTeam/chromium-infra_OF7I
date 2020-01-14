@@ -37,7 +37,7 @@ class DetectFlakesCronJobTest(WaterfallTestCase):
     self.assertEqual(200, response.status_int)
 
     tasks = self.taskqueue_stub.get_filtered_tasks(
-        queue_names='flake-detection-queue')
+        queue_names='flake-detection-multitask-queue')
     self.assertEqual(3, len(tasks))
     self.assertTrue(mocked_is_request_from_appself.called)
 

@@ -18,7 +18,7 @@ class UpdateFlakeCountsCron(BaseHandler):
     # data consistency: at most one task can be executed any time in that queue.
     taskqueue.add(
         method='GET',
-        queue_name=constants.FLAKE_DETECTION_QUEUE,
+        queue_name=constants.FLAKE_DETECTION_MULTITASK_QUEUE,
         target=constants.FLAKE_DETECTION_BACKEND,
         url='/flake/detection/task/update-flake-counts')
     return {'return_code': 200}
