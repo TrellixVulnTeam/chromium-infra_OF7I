@@ -51,6 +51,7 @@ import (
 	dataSV "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/appengine/drone-queen/api"
+	sv "infra/libs/cros/stableversion"
 	"infra/libs/cros/stableversion/git"
 	"infra/libs/skylab/inventory"
 )
@@ -600,7 +601,7 @@ func getStableVersionRecords(ctx context.Context, stableVersions *lab_platform.S
 		buildTarget := item.GetKey().GetBuildTarget().GetName()
 		model := item.GetKey().GetModelId().GetValue()
 		version := item.GetVersion()
-		key, err := dataSV.JoinBuildTargetModel(buildTarget, model)
+		key, err := sv.JoinBuildTargetModel(buildTarget, model)
 		if err != nil {
 			logging.Infof(ctx, "buildTarget and/or model contains invalid sequence: %s", err)
 			continue
@@ -611,7 +612,7 @@ func getStableVersionRecords(ctx context.Context, stableVersions *lab_platform.S
 		buildTarget := item.GetKey().GetBuildTarget().GetName()
 		model := item.GetKey().GetModelId().GetValue()
 		version := item.GetVersion()
-		key, err := dataSV.JoinBuildTargetModel(buildTarget, model)
+		key, err := sv.JoinBuildTargetModel(buildTarget, model)
 		if err != nil {
 			logging.Infof(ctx, "buildTarget and/or model contains invalid sequence: %s", err)
 			continue

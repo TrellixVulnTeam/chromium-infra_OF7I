@@ -18,11 +18,12 @@ package stableversion
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+
+	libsv "infra/libs/cros/stableversion"
 )
 
 const (
@@ -47,33 +48,6 @@ type firmwareStableVersionEntity struct {
 	_kind    string `gae:"$kind,firmwareStableVersion"`
 	ID       string `gae:"$id"`
 	Firmware string
-}
-
-const separator = ";"
-
-// JoinBuildTargetModel -- join a buildTarget string and a model string to produce a combined key
-func JoinBuildTargetModel(buildTarget string, model string) (string, error) {
-	if err := ValidateJoinBuildTargetModel(buildTarget, model); err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s%s%s", buildTarget, separator, model), nil
-}
-
-// ValidateJoinBuildTargetModel -- checks that a buildTarget and model are valid
-func ValidateJoinBuildTargetModel(buildTarget string, model string) error {
-	if buildTarget == "" {
-		return fmt.Errorf("ValidateJoinBuildTargetModel: buildTarget cannot be \"\"")
-	}
-	if model == "" {
-		return fmt.Errorf("ValidateJoinBuildTargetModel: model cannot be \"\"")
-	}
-	if strings.Contains(buildTarget, separator) {
-		return fmt.Errorf("ValidateJoinBuildTargetModel: buildTarget cannot contain separator")
-	}
-	if strings.Contains(model, separator) {
-		return fmt.Errorf("ValidateJoinBuildTargetModel: model cannot contain separator")
-	}
-	return nil
 }
 
 // GetCrosStableVersion gets a stable version for ChromeOS from datastore
@@ -108,7 +82,7 @@ func PutManyCrosStableVersion(ctx context.Context, crosOfBuildTarget map[string]
 
 // GetFirmwareStableVersion takes a buildtarget and a model and produces a firmware stable version from datastore
 func GetFirmwareStableVersion(ctx context.Context, buildTarget string, model string) (string, error) {
-	key, err := JoinBuildTargetModel(buildTarget, model)
+	key, err := libsv.JoinBuildTargetModel(buildTarget, model)
 	if err != nil {
 		return "", errors.Annotate(err, "GetFirmwareStableVersion").Err()
 	}
@@ -121,7 +95,7 @@ func GetFirmwareStableVersion(ctx context.Context, buildTarget string, model str
 
 // PutSingleFirmwareStableVersion is a convenience wrapper around PutManyFirmwareStableVersion
 func PutSingleFirmwareStableVersion(ctx context.Context, buildTarget string, model string, firmware string) error {
-	key, err := JoinBuildTargetModel(buildTarget, model)
+	key, err := libsv.JoinBuildTargetModel(buildTarget, model)
 	if err != nil {
 		return err
 	}
@@ -143,7 +117,7 @@ func PutManyFirmwareStableVersion(ctx context.Context, firmwareOfJoinedKey map[s
 
 // GetFaftStableVersion takes a model and a buildtarget and produces a faft stable version from datastore
 func GetFaftStableVersion(ctx context.Context, buildTarget string, model string) (string, error) {
-	key, err := JoinBuildTargetModel(buildTarget, model)
+	key, err := libsv.JoinBuildTargetModel(buildTarget, model)
 	if err != nil {
 		return "", errors.Annotate(err, "GetFaftStableVersion").Err()
 	}
@@ -156,7 +130,7 @@ func GetFaftStableVersion(ctx context.Context, buildTarget string, model string)
 
 // PutSingleFaftStableVersion is a convenience wrapper around PutManyFaftStableVersion
 func PutSingleFaftStableVersion(ctx context.Context, buildTarget string, model string, faft string) error {
-	key, err := JoinBuildTargetModel(buildTarget, model)
+	key, err := libsv.JoinBuildTargetModel(buildTarget, model)
 	if err != nil {
 		return err
 	}

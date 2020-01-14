@@ -85,21 +85,6 @@ func TestUpdateAndGet(t *testing.T) {
 	})
 }
 
-func TestJoinBuildTargetModel(t *testing.T) {
-	Convey("test joining buildTarget and model", t, func() {
-		Convey("non-empty strings good", func() {
-			s, err := JoinBuildTargetModel("a", "m")
-			So(s, ShouldEqual, "a;m")
-			So(err, ShouldBeNil)
-		})
-		Convey("empty string bad", func() {
-			s, err := JoinBuildTargetModel("", "m")
-			So(s, ShouldEqual, "")
-			So(err, ShouldNotBeNil)
-		})
-	})
-}
-
 func TestRemoveEmptyKeyOrValue(t *testing.T) {
 	Convey("remove non-conforming keys and values", t, func() {
 		ctx := context.Background()

@@ -90,3 +90,30 @@ func sortSV(s *sv.StableVersions) {
 		return strings.ToLower(firmwareSVKey(fi[i])) < strings.ToLower(firmwareSVKey(fi[j]))
 	})
 }
+
+const separator = ";"
+
+// JoinBuildTargetModel -- join a buildTarget string and a model string to produce a combined key
+func JoinBuildTargetModel(buildTarget string, model string) (string, error) {
+	if err := ValidateJoinBuildTargetModel(buildTarget, model); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s%s%s", buildTarget, separator, model), nil
+}
+
+// ValidateJoinBuildTargetModel -- checks that a buildTarget and model are valid
+func ValidateJoinBuildTargetModel(buildTarget string, model string) error {
+	if buildTarget == "" {
+		return fmt.Errorf("ValidateJoinBuildTargetModel: buildTarget cannot be \"\"")
+	}
+	if model == "" {
+		return fmt.Errorf("ValidateJoinBuildTargetModel: model cannot be \"\"")
+	}
+	if strings.Contains(buildTarget, separator) {
+		return fmt.Errorf("ValidateJoinBuildTargetModel: buildTarget cannot contain separator")
+	}
+	if strings.Contains(model, separator) {
+		return fmt.Errorf("ValidateJoinBuildTargetModel: model cannot contain separator")
+	}
+	return nil
+}
