@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package version
+package meta
 
 import (
 	"context"
@@ -11,12 +11,10 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"infra/cmd/stable_version2/internal/site"
-
-	"infra/cmd/stable_version2/internal/cmd"
 )
 
-// Cmd version subcommand: Print version of stable_version2 tool.
-var Cmd = &subcommands.Command{
+// Version is a command that prints version of stable_version2 tool.
+var Version = &subcommands.Command{
 	UsageLine: "version",
 	ShortDesc: "print stable_version2 tool version",
 	LongDesc:  "Print stable_version2 tool version.",
@@ -40,12 +38,12 @@ func (c *command) Run(a subcommands.Application, args []string, env subcommands.
 	return 0
 }
 func (c *command) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	p, err := cmd.FindStableVersion2Package()
+	p, err := findStableVersion2Package()
 	if err != nil {
 		return err
 	}
 	ctx := context.Background()
-	d, err := cmd.Describe(ctx, p.Package, p.Pin.InstanceID)
+	d, err := describe(ctx, p.Package, p.Pin.InstanceID)
 	if err != nil {
 		return err
 	}

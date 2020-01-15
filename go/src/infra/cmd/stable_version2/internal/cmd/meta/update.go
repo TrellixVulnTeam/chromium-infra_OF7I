@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package update
+package meta
 
 import (
 	"fmt"
@@ -12,12 +12,11 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 
-	"infra/cmd/stable_version2/internal/cmd"
 	"infra/cmd/stable_version2/internal/site"
 )
 
-// Cmd updates the stable_version2 tool.
-var Cmd = &subcommands.Command{
+// Update is the command to update the stable_version2 tool.
+var Update = &subcommands.Command{
 	UsageLine: "update",
 	ShortDesc: "update stable_version2 tool",
 	LongDesc: `Update stable_version2 tool.
@@ -43,11 +42,11 @@ func (c *updateRun) Run(a subcommands.Application, args []string, env subcommand
 }
 
 func (c *updateRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	d, err := cmd.ExecutableDir()
+	d, err := executableDir()
 	if err != nil {
 		return err
 	}
-	root, err := cmd.FindCIPDRootDir(d)
+	root, err := findCIPDRootDir(d)
 	if err != nil {
 		return err
 	}

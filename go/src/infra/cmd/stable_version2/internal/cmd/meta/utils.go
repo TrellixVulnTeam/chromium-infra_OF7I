@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cmd
+package meta
 
 import (
 	"context"
@@ -17,13 +17,13 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-// FindStableVersion2Package locates the CIPD package containing the current executable
-func FindStableVersion2Package() (*cipd.Package, error) {
-	d, err := ExecutableDir()
+// findStableVersion2Package locates the CIPD package containing the current executable
+func findStableVersion2Package() (*cipd.Package, error) {
+	d, err := executableDir()
 	if err != nil {
 		return nil, errors.Annotate(err, "find stable_version2 package").Err()
 	}
-	root, err := FindCIPDRootDir(d)
+	root, err := findCIPDRootDir(d)
 	if err != nil {
 		return nil, errors.Annotate(err, "find stable_version2 package").Err()
 	}
@@ -40,9 +40,9 @@ func FindStableVersion2Package() (*cipd.Package, error) {
 	return nil, errors.Reason("find stable_version2 package: not found").Err()
 }
 
-// ExecutableDir returns the directory the current executable came
+// executableDir returns the directory the current executable came
 // from.
-func ExecutableDir() (string, error) {
+func executableDir() (string, error) {
 	p, err := os.Executable()
 	if err != nil {
 		return "", errors.Annotate(err, "get executable directory").Err()
@@ -50,22 +50,22 @@ func ExecutableDir() (string, error) {
 	return filepath.Dir(p), nil
 }
 
-// FindCIPDRootDir finds the root directory of the CIPD package.
-func FindCIPDRootDir(dir string) (string, error) {
+// findCIPDRootDir finds the root directory of the CIPD package.
+func findCIPDRootDir(dir string) (string, error) {
 	a, err := filepath.Abs(dir)
 	if err != nil {
 		return "", errors.Annotate(err, "find CIPD root dir").Err()
 	}
 	for d := a; d != "/"; d = filepath.Dir(d) {
-		if IsCIPDRootDir(d) {
+		if isCIPDRootDir(d) {
 			return d, nil
 		}
 	}
 	return "", errors.Reason("find CIPD root dir: no CIPD root above %s", dir).Err()
 }
 
-// IsCIPDRootDir heuristically checks whether a given directory looks like a CIPD root directory.
-func IsCIPDRootDir(dir string) bool {
+// isCIPDRootDir heuristically checks whether a given directory looks like a CIPD root directory.
+func isCIPDRootDir(dir string) bool {
 	fi, err := os.Stat(filepath.Join(dir, ".cipd"))
 	if err != nil {
 		return false
@@ -75,8 +75,8 @@ func IsCIPDRootDir(dir string) bool {
 
 const service = "https://chrome-infra-packages.appspot.com"
 
-// Describe returns information about a package instances.
-func Describe(ctx context.Context, pkg, version string) (*luciCipd.InstanceDescription, error) {
+// describe returns information about a package instances.
+func describe(ctx context.Context, pkg, version string) (*luciCipd.InstanceDescription, error) {
 	opts := luciCipd.ClientOptions{
 		ServiceURL:      service,
 		AnonymousClient: http.DefaultClient,
