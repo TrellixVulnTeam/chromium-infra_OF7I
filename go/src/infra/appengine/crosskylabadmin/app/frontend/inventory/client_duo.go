@@ -68,3 +68,7 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 
 	return url, ds, err
 }
+
+func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {
+	return "", nil
+}

@@ -53,3 +53,6 @@ func (c *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*invent
 	c.logInfo(ctx, "Adapt the result back to old data format")
 	return "No URL provided by inventory v2", nds, nil
 }
+func (c *invServiceClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {
+	return "", nil
+}
