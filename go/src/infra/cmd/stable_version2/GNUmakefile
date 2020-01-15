@@ -16,6 +16,8 @@ check: test
 .PHONY: clean
 clean:
 	$(RM) ./stable_version2
+	$(RM) -r ./.cipd
+	$(RM) -r ./.versions
 
 .PHONY: check-environment
 check-environment:

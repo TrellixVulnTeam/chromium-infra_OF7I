@@ -19,11 +19,11 @@ import (
 
 // FindStableVersion2Package locates the CIPD package containing the current executable
 func FindStableVersion2Package() (*cipd.Package, error) {
-	d, err := executableDir()
+	d, err := ExecutableDir()
 	if err != nil {
 		return nil, errors.Annotate(err, "find stable_version2 package").Err()
 	}
-	root, err := findCIPDRootDir(d)
+	root, err := FindCIPDRootDir(d)
 	if err != nil {
 		return nil, errors.Annotate(err, "find stable_version2 package").Err()
 	}
@@ -40,9 +40,9 @@ func FindStableVersion2Package() (*cipd.Package, error) {
 	return nil, errors.Reason("find stable_version2 package: not found").Err()
 }
 
-// executableDir returns the directory the current executable came
+// ExecutableDir returns the directory the current executable came
 // from.
-func executableDir() (string, error) {
+func ExecutableDir() (string, error) {
 	p, err := os.Executable()
 	if err != nil {
 		return "", errors.Annotate(err, "get executable directory").Err()
@@ -50,20 +50,22 @@ func executableDir() (string, error) {
 	return filepath.Dir(p), nil
 }
 
-func findCIPDRootDir(dir string) (string, error) {
+// FindCIPDRootDir finds the root directory of the CIPD package.
+func FindCIPDRootDir(dir string) (string, error) {
 	a, err := filepath.Abs(dir)
 	if err != nil {
 		return "", errors.Annotate(err, "find CIPD root dir").Err()
 	}
 	for d := a; d != "/"; d = filepath.Dir(d) {
-		if isCIPDRootDir(d) {
+		if IsCIPDRootDir(d) {
 			return d, nil
 		}
 	}
 	return "", errors.Reason("find CIPD root dir: no CIPD root above %s", dir).Err()
 }
 
-func isCIPDRootDir(dir string) bool {
+// IsCIPDRootDir heuristically checks whether a given directory looks like a CIPD root directory.
+func IsCIPDRootDir(dir string) bool {
 	fi, err := os.Stat(filepath.Join(dir, ".cipd"))
 	if err != nil {
 		return false
