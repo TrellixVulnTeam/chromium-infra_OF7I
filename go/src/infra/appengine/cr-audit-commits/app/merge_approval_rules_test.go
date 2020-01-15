@@ -55,7 +55,7 @@ func TestMergeApprovalRules(t *testing.T) {
 				cl: &monorail.ListCommentsResponse{
 					Items: []*monorail.Comment{
 						{
-							Author: &monorail.AtomPerson{Name: "cmasso@chromium.org"},
+							Author: &monorail.AtomPerson{Name: "benmason@chromium.org"},
 							Updates: &monorail.Update{
 								Status: "Fixed",
 								Labels: []string{
@@ -82,7 +82,7 @@ func TestMergeApprovalRules(t *testing.T) {
 				cl: &monorail.ListCommentsResponse{
 					Items: []*monorail.Comment{
 						{
-							Author: &monorail.AtomPerson{Name: "cmasso@chromium.org"},
+							Author: &monorail.AtomPerson{Name: "benmason@chromium.org"},
 							Updates: &monorail.Update{
 								Status: "Fixed",
 								Labels: []string{
@@ -109,7 +109,7 @@ func TestMergeApprovalRules(t *testing.T) {
 				cl: &monorail.ListCommentsResponse{
 					Items: []*monorail.Comment{
 						{
-							Author: &monorail.AtomPerson{Name: "cmasso@chromium.org"},
+							Author: &monorail.AtomPerson{Name: "benmason@chromium.org"},
 							Updates: &monorail.Update{
 								Status: "Fixed",
 								Labels: []string{
@@ -137,7 +137,7 @@ func TestMergeApprovalRules(t *testing.T) {
 				cl: &monorail.ListCommentsResponse{
 					Items: []*monorail.Comment{
 						{
-							Author: &monorail.AtomPerson{Name: "cmasso@chromium.org"},
+							Author: &monorail.AtomPerson{Name: "benmason@chromium.org"},
 							Updates: &monorail.Update{
 								Status: "Fixed",
 								Labels: []string{},
@@ -170,7 +170,7 @@ func TestMergeApprovalRules(t *testing.T) {
 		})
 		Convey("Change to commit is authored by a Chrome TPM", func() {
 			rc.CommitMessage = "This change's author is a Chrome TPM"
-			rc.AuthorAccount = "cmasso@chromium.org"
+			rc.AuthorAccount = "benmason@chromium.org"
 			// Run rule
 			rr := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
 			// Check result code
@@ -179,7 +179,7 @@ func TestMergeApprovalRules(t *testing.T) {
 		})
 		Convey("Change to commit is committed by a Chrome TPM", func() {
 			rc.CommitMessage = "This change's committer is a Chrome TPM"
-			rc.CommitterAccount = "cmasso@chromium.org"
+			rc.CommitterAccount = "benmason@chromium.org"
 			// Run rule
 			rr := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
 			// Check result code

@@ -19,9 +19,7 @@ const (
 	mergeApprovedLabel         = "Merge-Approved-%s"
 )
 
-var chromeTPMs = []string{"cmasso@chromium.org", "cmasso@google.com",
-	"govind@chromium.org", "govind@google.com",
-	"abdulsyed@chromium.org", "abdulsyed@google.com",
+var chromeTPMs = []string{"govind@chromium.org", "govind@google.com",
 	"srinivassista@chromium.org", "srinivassista@google.com",
 	"bhthompson@chromium.org", "bhthompson@google.com",
 	"josafat@chromium.org", "josafat@chromium.org",
@@ -36,6 +34,8 @@ var chromeTPMs = []string{"cmasso@chromium.org", "cmasso@google.com",
 	"shawnku@chromium.org", "shawnku@google.com",
 	"kariahda@chromium.org", "kariahda@google.com",
 	"djmm@chromium.org", "djmm@google.com",
+	"pbommana@google.com", "pbommana@chromium.org",
+	"bindusuvarna@google.com", "bindusuvarna@chromium.org",
 	"dgagnon@chromium.org", "dgagnon@google.com"}
 
 // OnlyMergeApprovedChange is a Rule that verifies that only approved changes are merged into a release branch.
