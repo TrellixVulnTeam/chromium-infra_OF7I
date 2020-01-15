@@ -1,3 +1,21 @@
+# Release Notes sheriff-o-matic 2020-01-16
+
+- 2 commits, 2 bugs affected since 3e52891 (2020-01-07T22:49:32Z)
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [Get build criticality from latest build instead of step_status_transition](https://chromium-review.googlesource.com/c/infra/infra/+/1994752) (nqmtuan@google.com)
+- [fix bq command in create_views.sh](https://chromium-review.googlesource.com/c/infra/infra/+/1994751) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1002965](https://crbug.com/1002965)
+  -  [https://crbug.com/1041298](https://crbug.com/1041298)
+
+
 # Release Notes sheriff-o-matic 2019-12-18
 
 - 3 commits, 1 bugs affected since 5eb0791 ()

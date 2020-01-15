@@ -116,8 +116,8 @@ make relnotes
 Note that you may need to authenticate for deployment as
 described below in order to have `make relnotes` work properly this way.
 
-Copy and paste the output into the top of `README.md` and make any manual edits
-if necessary.
+Copy and paste the output into the top of `RELNOTES.md` and make any manual
+edits if necessary.
 
 You can also use the optional flags `-since-date YYYY-MM-DD` or
 `-since-hash=<git short hash>` if you need to manually specify the range
@@ -137,7 +137,7 @@ Then:
 such a version will cause alerts to fire (plus, you shouldn't deploy uncommitted code :).
 - Go to the Versions section of the
 [App Engine Console](https://appengine.google.com/) and update the default
-version of the app services. **Important**: *Rembember to update both the "default" and "analyzer"
+version of the app services. **Important**: *Remember to update both the "default" and "analyzer"
 services* by clicking the "Migrate traffic" button. Having the default and analyzer services running different versions
 may cause errors and/or monitoring alerts to fire.
 - Wait for a while, making sure that the graphs looks fine and there is no abnormality in https://viceroy.corp.google.com/chrome_infra/Appengine/sheriff_o_matic_prod?duration=1h
