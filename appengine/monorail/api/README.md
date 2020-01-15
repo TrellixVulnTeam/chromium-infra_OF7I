@@ -47,5 +47,5 @@ In order to regenerate the python server and client stubs from the `.proto`
 files, run this command:
 
 ```bash
-$ make prpc_proto_v0
+$ make prpc_proto
 ```

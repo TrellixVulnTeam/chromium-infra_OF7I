@@ -57,12 +57,7 @@ prpc_proto_v1:
 	cd ../../go/src/infra/monorailv2 && \
 	cproto -proto-path ../../../../appengine/monorail/ ../../../../appengine/monorail/api/v1/api_proto/
 
-prpc_proto_google:
-	touch ../../ENV/lib/python2.7/site-packages/google/__init__.py
-	PYTHONPATH=../../ENV/lib/python2.7/site-packages \
-	PATH=../../luci/appengine/components/tools:$(PATH) \
-	../../cipd/protoc \
-	--python_out=. --prpc-python_out=. google/api/*.proto
+
 
 test:
 	../../test.py test appengine/monorail
