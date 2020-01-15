@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/lucictx"
 
+	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/cmd/skylab_swarming_worker/internal/admin"
 )
@@ -42,6 +43,26 @@ func InventoryClient(ctx context.Context, b *Info) (fleet.InventoryClient, error
 	c, err := admin.NewInventoryClient(ctx, b.AdminService, o)
 	if err != nil {
 		return nil, errors.Annotate(err, "create inventory client").Err()
+	}
+	return c, nil
+}
+
+// InventoryV2Client returns an InventoryClient for the current Swarming
+// bot task. The context should use an explicit service account using
+// WithTaskAccount or WithSystemAccount; otherwise the default service
+// account is used.
+func InventoryV2Client(ctx context.Context, b *Info) (invV2.InventoryClient, error) {
+	o := auth.Options{
+		Method: auth.LUCIContextMethod,
+		Scopes: []string{
+			auth.OAuthScopeEmail,
+			"https://www.googleapis.com/auth/cloud-platform",
+		},
+	}
+	pc, err := admin.NewPrpcClient(ctx, b.InventoryService, o)
+	c := invV2.NewInventoryPRPCClient(pc)
+	if err != nil {
+		return nil, errors.Annotate(err, "create inventory V2 client").Err()
 	}
 	return c, nil
 }

@@ -14,8 +14,10 @@ import (
 	"log"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/common/errors"
 
+	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/libs/skylab/inventory"
 
@@ -192,16 +194,22 @@ type labelUpdater struct {
 
 // update is a dutinfo.UpdateFunc for updating DUT inventory labels.
 // If adminServiceURL is empty, this method does nothing.
-func (u labelUpdater) update(dutID string, old *inventory.SchedulableLabels, new *inventory.SchedulableLabels) error {
+func (u labelUpdater) update(dutID string, old *inventory.SchedulableLabels, new *inventory.SchedulableLabels, newAttr []*inventory.KeyValue) error {
 	if u.botInfo.AdminService == "" || !u.updateLabels {
 		log.Printf("Skipping label update since no admin service was provided")
 		return nil
 	}
-	log.Printf("Calling admin service to update labels")
 	ctx, err := swmbot.WithTaskAccount(u.ctx)
 	if err != nil {
 		return errors.Annotate(err, "update inventory labels").Err()
 	}
+
+	log.Printf("Calling inventory v2 to update")
+	if err := u.updateV2(ctx, dutID, old, new, newAttr); err != nil {
+		log.Printf("fail to update to inventory V2: %#v", err)
+	}
+
+	log.Printf("Calling admin service to update labels")
 	client, err := swmbot.InventoryClient(ctx, u.botInfo)
 	if err != nil {
 		return errors.Annotate(err, "update inventory labels").Err()
@@ -218,6 +226,75 @@ func (u labelUpdater) update(dutID string, old *inventory.SchedulableLabels, new
 		log.Printf("Updated DUT labels at %s", url)
 	}
 	return nil
+}
+
+func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutState {
+	state := lab.DutState{
+		Id: &lab.ChromeOSDeviceID{Value: dutID},
+	}
+	p := l.GetPeripherals()
+	if p != nil {
+		if p.GetServo() {
+			state.Servo = lab.PeripheralState_WORKING
+		} else {
+			state.Servo = lab.PeripheralState_NOT_CONNECTED
+		}
+		if p.GetChameleon() {
+			state.Chameleon = lab.PeripheralState_WORKING
+		} else {
+			state.Chameleon = lab.PeripheralState_UNKNOWN
+		}
+		if p.GetAudioLoopbackDongle() {
+			state.AudioLoopbackDongle = lab.PeripheralState_WORKING
+		} else {
+			state.AudioLoopbackDongle = lab.PeripheralState_UNKNOWN
+		}
+	} else {
+		state.Servo = lab.PeripheralState_UNKNOWN
+		state.Chameleon = lab.PeripheralState_UNKNOWN
+		state.AudioLoopbackDongle = lab.PeripheralState_UNKNOWN
+	}
+	return &state
+}
+
+func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inventory.SchedulableLabels, newAttr []*inventory.KeyValue) error {
+	oldState := getStatesFromLabel(dutID, old)
+	newState := getStatesFromLabel(dutID, new)
+	if proto.Equal(newState, oldState) {
+		log.Printf("Skipping dut state update since there are no changes")
+		return nil
+	}
+
+	req := u.makeV2Request(dutID, new, newAttr)
+	client, err := swmbot.InventoryV2Client(ctx, u.botInfo)
+	if err != nil {
+		return errors.Annotate(err, "update inventory V2 labels").Err()
+	}
+	resp, err := client.UpdateDutsStatus(ctx, req)
+	log.Printf("resp for inventory V2 update: %#v", resp)
+	if err != nil {
+		return errors.Annotate(err, "update inventory V2 labels").Err()
+	}
+	return nil
+}
+
+func (u labelUpdater) makeV2Request(dutID string, newL *inventory.SchedulableLabels, newAttr []*inventory.KeyValue) *invV2.UpdateDutsStatusRequest {
+	dutMeta := invV2.DutMeta{
+		ChromeosDeviceId: dutID,
+	}
+	for _, kv := range newAttr {
+		if kv.GetKey() == "serial_number" {
+			dutMeta.SerialNumber = kv.GetValue()
+		}
+		if kv.GetKey() == "HWID" {
+			dutMeta.HwID = kv.GetValue()
+		}
+	}
+	return &invV2.UpdateDutsStatusRequest{
+		States:   []*lab.DutState{getStatesFromLabel(dutID, newL)},
+		Reason:   "state update from ssw",
+		DutMetas: []*invV2.DutMeta{&dutMeta},
+	}
 }
 
 func (u labelUpdater) makeRequest(dutID string, old *inventory.SchedulableLabels, new *inventory.SchedulableLabels) (*fleet.UpdateDutLabelsRequest, error) {

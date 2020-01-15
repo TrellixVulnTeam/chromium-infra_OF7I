@@ -30,6 +30,18 @@ func NewInventoryClient(ctx context.Context, url string, o auth.Options) (fleet.
 	return ic, nil
 }
 
+// NewPrpcClient creates a prpc client.
+func NewPrpcClient(ctx context.Context, url string, o auth.Options) (*prpc.Client, error) {
+	hc, err := httpClient(ctx, o)
+	if err != nil {
+		return nil, errors.Annotate(err, "create inventory admin client").Err()
+	}
+	return &prpc.Client{
+		C:    hc,
+		Host: url,
+	}, nil
+}
+
 // httpClient returns an HTTP client with authentication set up.
 func httpClient(ctx context.Context, o auth.Options) (*http.Client, error) {
 	a := auth.NewAuthenticator(ctx, auth.SilentLogin, o)

@@ -17,13 +17,14 @@ import (
 
 // Info contains information about the current Swarming bot.
 type Info struct {
-	AdminService    string
-	AutotestPath    string
-	DUTID           string
-	LuciferBinDir   string
-	ParserPath      string
-	SwarmingService string
-	Task            Task
+	AdminService     string
+	AutotestPath     string
+	DUTID            string
+	InventoryService string
+	LuciferBinDir    string
+	ParserPath       string
+	SwarmingService  string
+	Task             Task
 }
 
 // GetInfo returns the Info for the current Swarming bot, built from
@@ -43,12 +44,14 @@ type Info struct {
 //   SWARMING_TASK_ID: task id of the swarming task being serviced.
 func GetInfo() *Info {
 	return &Info{
-		AdminService:    os.Getenv("ADMIN_SERVICE"),
-		AutotestPath:    os.Getenv("AUTOTEST_DIR"),
-		DUTID:           os.Getenv("SKYLAB_DUT_ID"),
-		LuciferBinDir:   os.Getenv("LUCIFER_TOOLS_DIR"),
-		ParserPath:      os.Getenv("PARSER_PATH"),
-		SwarmingService: os.Getenv("SWARMING_SERVICE"),
+		AdminService: os.Getenv("ADMIN_SERVICE"),
+		AutotestPath: os.Getenv("AUTOTEST_DIR"),
+		DUTID:        os.Getenv("SKYLAB_DUT_ID"),
+		// TODO(xixuan): Replace it with env variables. For testing now.
+		InventoryService: "cros-lab-inventory.appspot.com",
+		LuciferBinDir:    os.Getenv("LUCIFER_TOOLS_DIR"),
+		ParserPath:       os.Getenv("PARSER_PATH"),
+		SwarmingService:  os.Getenv("SWARMING_SERVICE"),
 		Task: Task{
 			RunID: os.Getenv("SWARMING_TASK_ID"),
 		},
