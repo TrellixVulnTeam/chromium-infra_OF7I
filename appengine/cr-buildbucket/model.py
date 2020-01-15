@@ -113,7 +113,7 @@ class Build(ndb.Model):
       schema.
 
     The idea is taken from Swarming TaskRequest entity:
-    https://code.google.com/p/swarming/source/browse/appengine/swarming/server/task_request.py#329
+    https://source.chromium.org/chromium/_/chromium/infra/luci/luci-py/+/a4a91d5e1e14b8b866b68b68bc1055b0b8ffef3b:appengine/swarming/server/task_request.py;l=1380-1404
   """
 
   # ndb library sometimes silently ignores memcache errors
