@@ -80,10 +80,7 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 		PassedDevices: passedDevices,
 		FailedDevices: failedDevices,
 	}
-	if len(failedDevices) > 0 {
-		err = errors.Reason("failed to add some (or all) devices").Tag(grpcutil.UnknownTag).Err()
-	}
-	return resp, err
+	return resp, nil
 }
 
 func addFailedDevice(ctx context.Context, failedDevices *[]*api.DeviceOpResult, dev *lab.ChromeOSDevice, err error, operation string) {

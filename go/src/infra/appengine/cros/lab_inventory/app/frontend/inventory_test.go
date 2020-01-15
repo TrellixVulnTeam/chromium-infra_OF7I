@@ -150,7 +150,7 @@ func TestAddCrosDevices(t *testing.T) {
 			So(resp.PassedDevices[0].Hostname, ShouldEqual, "dut1")
 
 			resp, err = tf.Inventory.AddCrosDevices(tf.C, req2)
-			So(err, ShouldNotBeNil)
+			So(err, ShouldBeNil)
 			So(resp.FailedDevices, ShouldHaveLength, 1)
 			So(resp.PassedDevices, ShouldHaveLength, 1)
 
