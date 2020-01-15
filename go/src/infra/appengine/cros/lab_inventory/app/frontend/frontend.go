@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/discovery"
 	"go.chromium.org/luci/grpc/grpcmon"
 	"go.chromium.org/luci/grpc/grpcutil"
@@ -39,6 +40,7 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 // checkAccess verifies that the request is from an authorized user.
 func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.Context, error) {
+	logging.Infof(ctx, "%s requests the RPC %s", auth.CurrentUser(ctx), rpcName)
 	cfg := config.Get(ctx)
 	var accessGroup *config.LuciAuthGroup
 	switch rpcName {
@@ -53,8 +55,10 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 	default:
 		return ctx, status.Errorf(codes.Unimplemented, rpcName)
 	}
-	allow, err := auth.IsMember(ctx, accessGroup.GetValue())
+	group := accessGroup.GetValue()
+	allow, err := auth.IsMember(ctx, group)
 	if err != nil {
+		logging.Warningf(ctx, "Check group '%s' membership failed: %s", group, err.Error())
 		return ctx, status.Errorf(codes.Internal, "can't check access group membership: %s", err)
 	}
 	if !allow {
