@@ -85,3 +85,7 @@ func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.C
 	logging.Infof(ctx, "[v1] update dut result: %s, %s", url, err)
 	return url, err
 }
+
+func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
+	return "", []string{}, nil
+}

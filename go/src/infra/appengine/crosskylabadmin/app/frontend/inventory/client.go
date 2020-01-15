@@ -22,6 +22,7 @@ import (
 type inventoryClient interface {
 	addManyDUTsToFleet(context.Context, []*inventory.CommonDeviceSpecs, bool) (string, []*inventory.CommonDeviceSpecs, error)
 	updateDUTSpecs(context.Context, *inventory.CommonDeviceSpecs, *inventory.CommonDeviceSpecs, bool) (string, error)
+	deleteDUTsFromFleet(context.Context, []string) (string, []string, error)
 }
 
 type gitStoreClient struct {
@@ -40,6 +41,10 @@ func (client *gitStoreClient) addManyDUTsToFleet(ctx context.Context, nds []*inv
 
 func (client *gitStoreClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {
 	return updateDUTSpecs(ctx, client.store, od, nd, pickServoPort)
+}
+
+func (client *gitStoreClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
+	return deleteDUTsFromFleet(ctx, client.store, ids)
 }
 
 func addManyDUTsToFleet(ctx context.Context, s *gitstore.InventoryStore, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
@@ -156,4 +161,32 @@ func updateDUTSpecs(ctx context.Context, s *gitstore.InventoryStore, od, nd *inv
 	}
 	err := retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "updateDUTSpecs"))
 	return respURL, err
+}
+
+func deleteDUTsFromFleet(ctx context.Context, s *gitstore.InventoryStore, ids []string) (string, []string, error) {
+	var changeURL string
+	var removedIDs []string
+	f := func() error {
+		if err2 := s.Refresh(ctx); err2 != nil {
+			return err2
+		}
+		removedDUTs := removeDUTWithHostnames(s, ids)
+		url, err2 := s.Commit(ctx, fmt.Sprintf("delete %d duts", len(removedDUTs)))
+		if gitstore.IsEmptyErr(err2) {
+			return nil
+		}
+		if err2 != nil {
+			return err2
+		}
+
+		// Captured variables only on success, hence at most once.
+		changeURL = url
+		removedIDs = make([]string, 0, len(removedDUTs))
+		for _, d := range removedDUTs {
+			removedIDs = append(removedIDs, d.GetCommon().GetId())
+		}
+		return nil
+	}
+	err := retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "DeleteDut"))
+	return changeURL, removedIDs, err
 }

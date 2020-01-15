@@ -35,7 +35,6 @@ import (
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -172,34 +171,12 @@ func (is *ServerImpl) DeleteDuts(ctx context.Context, req *fleet.DeleteDutsReque
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	s, err := is.newStore(ctx)
+	ic, err := is.newInventoryClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var changeURL string
-	var removedIDs []string
-	f := func() error {
-		if err2 := s.Refresh(ctx); err2 != nil {
-			return err2
-		}
-		removedDUTs := removeDUTWithHostnames(s, req.Hostnames)
-		url, err2 := s.Commit(ctx, fmt.Sprintf("delete %d duts", len(removedDUTs)))
-		if gitstore.IsEmptyErr(err2) {
-			return nil
-		}
-		if err2 != nil {
-			return err2
-		}
-
-		// Captured variables only on success, hence at most once.
-		changeURL = url
-		removedIDs = make([]string, 0, len(removedDUTs))
-		for _, d := range removedDUTs {
-			removedIDs = append(removedIDs, d.GetCommon().GetId())
-		}
-		return nil
-	}
-	if err = retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "DeleteDut")); err != nil {
+	changeURL, removedIDs, err := ic.deleteDUTsFromFleet(ctx, req.Hostnames)
+	if err != nil {
 		return nil, err
 	}
 
@@ -207,7 +184,6 @@ func (is *ServerImpl) DeleteDuts(ctx context.Context, req *fleet.DeleteDutsReque
 		ChangeUrl: changeURL,
 		Ids:       removedIDs,
 	}, nil
-
 }
 
 // initializeDeployAttempt initializes internal state for a deployment attempt.

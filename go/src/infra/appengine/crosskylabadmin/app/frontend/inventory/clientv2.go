@@ -63,3 +63,7 @@ func (c *invServiceClient) updateDUTSpecs(ctx context.Context, od, nd *inventory
 
 	return "fake udpate URL", nil
 }
+
+func (c *invServiceClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
+	return "", []string{}, nil
+}
