@@ -10,11 +10,28 @@ syntax = "proto3";
 
 package monorail.v1;
 
+import "google/api/resource.proto";
 
+
+// Documents and tracks a bug, task, or feature request within a Project.
 // Next available tag: 3
 message Issue {
+  option (google.api.resource) = {
+    type: "api.crbug.com/Issue"
+    pattern: "project/{project_name}/issues/{issue_id}"
+  };
   // Resource name of the issue.
-  // Format: projects/{project_name}/issues/{local_id}
   string name = 1;
+  // TODO(monorail:6988): The UI limits summary length while the backend does not.
+  // Resolve this discrepancy.
   string summary = 2;
+  // TODO(monorail:6988): Add remaining fields for Issue.
+}
+
+
+// Specifies a column in an issues list view.
+// Next available tag: 2
+message IssuesListColumn {
+  // Column name shown in the column header.
+  string column = 1;
 }

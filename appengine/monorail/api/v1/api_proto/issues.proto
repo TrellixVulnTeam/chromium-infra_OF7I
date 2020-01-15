@@ -7,15 +7,29 @@ syntax = "proto3";
 
 package monorail.v1;
 
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "api/v1/api_proto/issue_objects.proto";
 
+// Issues service includes all methods needed for managing Issues.
 service Issues {
-  rpc GetIssue (GetIssueRequest) returns (Issue) {}
+  // Returns the requested Issue.
+  // TODO(monorail:6988): Document possible errors when implemented.
+  rpc GetIssue (GetIssueRequest) returns (Issue) {
+    option (google.api.http) = {
+      post: "/prpc/monorail.v1.Issues/GetIssue"
+      body: "*"
+    };
+  }
 }
 
 
+// The request message for Issues.GetIssue.
 // Next available tag: 2
 message GetIssueRequest {
-  // The name of the issue to request, see Issue.name.
-  string name = 1;
+  // The name of the issue to request.
+  string name = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/Issue"},
+      (google.api.field_behavior) = REQUIRED ];
 }
