@@ -12,6 +12,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -19,8 +20,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$api/v1/api_proto/issue_objects.proto\x12\x0bmonorail.v1\"&\n\x05Issue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\tb\x06proto3')
-)
+  serialized_pb=_b('\n$api/v1/api_proto/issue_objects.proto\x12\x0bmonorail.v1\x1a&google_proto/google/api/resource.proto\"j\n\x05Issue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t:B\xea\x41?\n\x13\x61pi.crbug.com/Issue\x12(project/{project_name}/issues/{issue_id}\"\"\n\x10IssuesListColumn\x12\x0e\n\x06\x63olumn\x18\x01 \x01(\tb\x06proto3')
+  ,
+  dependencies=[google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,])
 
 
 
@@ -52,17 +54,49 @@ _ISSUE = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
+  serialized_options=_b('\352A?\n\023api.crbug.com/Issue\022(project/{project_name}/issues/{issue_id}'),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=93,
+  serialized_end=199,
+)
+
+
+_ISSUESLISTCOLUMN = _descriptor.Descriptor(
+  name='IssuesListColumn',
+  full_name='monorail.v1.IssuesListColumn',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='column', full_name='monorail.v1.IssuesListColumn.column', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
   serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=53,
-  serialized_end=91,
+  serialized_start=201,
+  serialized_end=235,
 )
 
 DESCRIPTOR.message_types_by_name['Issue'] = _ISSUE
+DESCRIPTOR.message_types_by_name['IssuesListColumn'] = _ISSUESLISTCOLUMN
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Issue = _reflection.GeneratedProtocolMessageType('Issue', (_message.Message,), dict(
@@ -72,5 +106,13 @@ Issue = _reflection.GeneratedProtocolMessageType('Issue', (_message.Message,), d
   ))
 _sym_db.RegisterMessage(Issue)
 
+IssuesListColumn = _reflection.GeneratedProtocolMessageType('IssuesListColumn', (_message.Message,), dict(
+  DESCRIPTOR = _ISSUESLISTCOLUMN,
+  __module__ = 'api.v1.api_proto.issue_objects_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.IssuesListColumn)
+  ))
+_sym_db.RegisterMessage(IssuesListColumn)
 
+
+_ISSUE._options = None
 # @@protoc_insertion_point(module_scope)

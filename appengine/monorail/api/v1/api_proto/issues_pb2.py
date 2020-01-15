@@ -12,6 +12,9 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from google_proto.google.api import annotations_pb2 as google__proto_dot_google_dot_api_dot_annotations__pb2
+from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
+from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
 from api.v1.api_proto import issue_objects_pb2 as api_dot_v1_dot_api__proto_dot_issue__objects__pb2
 
 
@@ -20,9 +23,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1d\x61pi/v1/api_proto/issues.proto\x12\x0bmonorail.v1\x1a$api/v1/api_proto/issue_objects.proto\"\x1f\n\x0fGetIssueRequest\x12\x0c\n\x04name\x18\x01 \x01(\t2H\n\x06Issues\x12>\n\x08GetIssue\x12\x1c.monorail.v1.GetIssueRequest\x1a\x12.monorail.v1.Issue\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x1d\x61pi/v1/api_proto/issues.proto\x12\x0bmonorail.v1\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x32t\n\x06Issues\x12j\n\x08GetIssue\x12\x1c.monorail.v1.GetIssueRequest\x1a\x12.monorail.v1.Issue\",\x82\xd3\xe4\x93\x02&\"!/prpc/monorail.v1.Issues/GetIssue:\x01*b\x06proto3')
   ,
-  dependencies=[api_dot_v1_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,])
+  dependencies=[google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,])
 
 
 
@@ -40,7 +43,7 @@ _GETISSUEREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      serialized_options=_b('\372A\025\n\023api.crbug.com/Issue\340A\002'), file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -53,8 +56,8 @@ _GETISSUEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=84,
-  serialized_end=115,
+  serialized_start=213,
+  serialized_end=273,
 )
 
 DESCRIPTOR.message_types_by_name['GetIssueRequest'] = _GETISSUEREQUEST
@@ -68,6 +71,7 @@ GetIssueRequest = _reflection.GeneratedProtocolMessageType('GetIssueRequest', (_
 _sym_db.RegisterMessage(GetIssueRequest)
 
 
+_GETISSUEREQUEST.fields_by_name['name']._options = None
 
 _ISSUES = _descriptor.ServiceDescriptor(
   name='Issues',
@@ -75,8 +79,8 @@ _ISSUES = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=117,
-  serialized_end=189,
+  serialized_start=275,
+  serialized_end=391,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetIssue',
@@ -85,7 +89,7 @@ _ISSUES = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_GETISSUEREQUEST,
     output_type=api_dot_v1_dot_api__proto_dot_issue__objects__pb2._ISSUE,
-    serialized_options=None,
+    serialized_options=_b('\202\323\344\223\002&\"!/prpc/monorail.v1.Issues/GetIssue:\001*'),
   ),
 ])
 _sym_db.RegisterServiceDescriptor(_ISSUES)
