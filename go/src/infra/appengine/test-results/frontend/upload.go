@@ -35,6 +35,7 @@ func requestOK(ctx *router.Context) bool {
 		return true
 	}
 	// Only bots should upload test results. Check IP address against a whitelist.
+	// TODO(crbug.com/1042193): remove this hack.
 	whitelisted, err := auth.GetState(c).DB().IsInWhitelist(
 		c, auth.GetState(c).PeerIP(), "bots")
 	if err != nil {
