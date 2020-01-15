@@ -87,5 +87,16 @@ func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.C
 }
 
 func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
-	return "", []string{}, nil
+	if client.willDupToV2() {
+		go func() {
+			ctx2, cancel := context.WithTimeout(ctx, time.Duration(len(ids))*timeoutForEachDUT)
+			defer cancel()
+			url2, deletedIds2, err2 := client.ic.deleteDUTsFromFleet(ctx2, ids)
+			logging.Infof(ctx2, "[v2] delete dut result: %s, %s, %s", url2, deletedIds2, err2)
+		}()
+	}
+	url, deletedIds, err := client.gc.deleteDUTsFromFleet(ctx, ids)
+	logging.Infof(ctx, "[v1] delete dut result: %s, %s, %s", url, deletedIds, err)
+
+	return url, deletedIds, err
 }

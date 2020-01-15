@@ -65,5 +65,11 @@ func (c *invServiceClient) updateDUTSpecs(ctx context.Context, od, nd *inventory
 }
 
 func (c *invServiceClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
-	return "", []string{}, nil
+	defer func() {
+		if r := recover(); r != nil {
+			logging.Errorf(ctx, "Recovered in deleteDUTsFromFleet(%s)", r)
+		}
+	}()
+
+	return "fake delete URL", []string{}, nil
 }
