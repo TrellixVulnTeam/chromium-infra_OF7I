@@ -14,6 +14,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -299,6 +300,66 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (Devi
 		return updatingResults, err
 	}
 	return updatingResults, nil
+}
+
+// DutMeta refers to the metadata to be stored for a DUT.
+type DutMeta struct {
+	SerialNumber string
+	HwID         string
+}
+
+// UpdateDutMeta updates dut serial number and hwid for a given host.
+func UpdateDutMeta(ctx context.Context, meta map[string]DutMeta) (DeviceOpResults, error) {
+	ids := make([]string, 0, len(meta))
+	for i := range meta {
+		ids = append(ids, i)
+	}
+	results := GetDevicesByIds(ctx, ids)
+
+	var updateResults DeviceOpResults
+	var failedResults DeviceOpResults
+	for _, r := range results {
+		if r.Err != nil {
+			failedResults = append(failedResults, r)
+			continue
+		}
+		var labData lab.ChromeOSDevice
+		if err := r.Entity.GetCrosDeviceProto(&labData); err != nil {
+			r.logError(err)
+			logging.Debugf(ctx, "fail to parse proto for entity: %#v", r.Entity)
+			failedResults = append(failedResults, r)
+			continue
+		}
+		hid := string(r.Entity.ID)
+		if labData.SerialNumber != "" && labData.ManufacturingId != nil {
+			r.logError(errors.New("meta is already set"))
+			failedResults = append(failedResults, r)
+			continue
+		}
+		labData.SerialNumber = meta[hid].SerialNumber
+		if labData.ManufacturingId == nil {
+			labData.ManufacturingId = &manufacturing.ConfigID{
+				Value: meta[hid].HwID,
+			}
+		} else {
+			labData.ManufacturingId.Value = meta[hid].HwID
+		}
+
+		r := DeviceOpResult{
+			Entity: &DeviceEntity{
+				ID:     r.Entity.ID,
+				Parent: fakeAcestorKey(ctx),
+			},
+			Data: &labData,
+		}
+		updateResults = append(updateResults, r)
+	}
+	f := updateEntities(ctx, updateResults, nil)
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return updateResults, err
+	}
+	return append(updateResults, failedResults...), nil
 }
 
 // UpdateDutsStatus updates dut status of testing related.

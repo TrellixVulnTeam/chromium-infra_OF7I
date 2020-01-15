@@ -246,6 +246,46 @@ func TestUpdateDeviceSetup(t *testing.T) {
 	})
 }
 
+func TestUpdateDutMeta(t *testing.T) {
+	t.Parallel()
+
+	Convey("Update devices setup in datastore", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+
+		devsToAdd := []*lab.ChromeOSDevice{
+			mockDut("dut1", "UUID:01", "labstation1"),
+		}
+		_, err := AddDevices(ctx, devsToAdd)
+		So(err, ShouldBeNil)
+
+		datastore.GetTestable(ctx).Consistent(true)
+		Convey("Update meta", func() {
+			meta := map[string]DutMeta{
+				"UUID:01": {
+					SerialNumber: "serial2",
+					HwID:         "hwid2",
+				},
+				"UUID:ghost": {},
+			}
+			result, err := UpdateDutMeta(ctx, meta)
+			if err != nil {
+				t.Fatal(err)
+			}
+			passed := result.Passed()
+			So(passed, ShouldHaveLength, 1)
+			So(passed[0].Entity.ID, ShouldEqual, "UUID:01")
+			var p lab.ChromeOSDevice
+			passed[0].Entity.GetCrosDeviceProto(&p)
+			So(p.GetSerialNumber(), ShouldEqual, "serial2")
+			So(p.GetManufacturingId().GetValue(), ShouldEqual, "hwid2")
+
+			failed := result.Failed()
+			So(failed, ShouldHaveLength, 1)
+			So(failed[0].Entity.ID, ShouldEqual, "UUID:ghost")
+		})
+	})
+}
+
 func TestUpdateDutsStatus(t *testing.T) {
 	t.Parallel()
 

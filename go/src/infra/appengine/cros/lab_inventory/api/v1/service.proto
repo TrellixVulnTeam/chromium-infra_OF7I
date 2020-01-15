@@ -78,6 +78,16 @@ message GetCrosDevicesResponse {
 message UpdateDutsStatusRequest {
   repeated lab.DutState states = 1;
   string reason = 2;
+  // Currently there's no way to get such info before deployment. So temporarily set them
+  // in the request via DutMeta to backfill hwID and serial number.
+  // TODO: find a better way for these infos.
+  repeated DutMeta dut_metas = 3;
+}
+
+message DutMeta {
+  string chromeos_device_id = 1;
+  string serial_number = 2;
+  string hwID = 3;
 }
 
 message UpdateDutsStatusResponse {

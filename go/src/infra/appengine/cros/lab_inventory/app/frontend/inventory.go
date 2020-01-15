@@ -241,6 +241,19 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
+
+	meta := make(map[string]datastore.DutMeta, len(req.GetDutMetas()))
+	for _, d := range req.GetDutMetas() {
+		meta[d.GetChromeosDeviceId()] = datastore.DutMeta{
+			SerialNumber: d.GetSerialNumber(),
+			HwID:         d.GetHwID(),
+		}
+	}
+	_, err = datastore.UpdateDutMeta(ctx, meta)
+	if err != nil {
+		return nil, err
+	}
+
 	updatingResults, err := datastore.UpdateDutsStatus(changehistory.Use(ctx, req.Reason), req.States)
 	if err != nil {
 		return nil, err

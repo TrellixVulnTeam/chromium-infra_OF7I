@@ -214,6 +214,9 @@ func TestUpdateDutStatusValidation(t *testing.T) {
 	state1 := lab.DutState{
 		Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
 	}
+	dutMeta1 := DutMeta{
+		ChromeosDeviceId: "UUID:11",
+	}
 	Convey("Update DUT status", t, func() {
 		Convey("empty request", func() {
 			req := &UpdateDutsStatusRequest{}
@@ -233,6 +236,24 @@ func TestUpdateDutStatusValidation(t *testing.T) {
 			err := req.Validate()
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Duplicated id found")
+		})
+		Convey("Request has two identical dut metas", func() {
+			req := &UpdateDutsStatusRequest{
+				States:   []*lab.DutState{&state1},
+				DutMetas: []*DutMeta{&dutMeta1, &dutMeta1},
+			}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Duplicated id found in meta")
+		})
+		Convey("Request has unmatched meta and state", func() {
+			req := &UpdateDutsStatusRequest{
+				States:   []*lab.DutState{&state1},
+				DutMetas: []*DutMeta{&dutMeta1},
+			}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Cannot update meta without valid dut states")
 		})
 		Convey("Happy path", func() {
 			req := &UpdateDutsStatusRequest{States: []*lab.DutState{&state1}}

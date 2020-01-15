@@ -169,6 +169,10 @@ func logServosChange(old []*lab.Servo, newData []*lab.Servo) (changes Changes) {
 }
 
 func logServoChange(old *lab.Servo, newData *lab.Servo) (changes Changes) {
+	if old == nil && newData == nil {
+		changes.log("servos", old, newData)
+		return
+	}
 	servo := old
 	if servo == nil {
 		servo = newData

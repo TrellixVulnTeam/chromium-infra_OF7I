@@ -524,6 +524,35 @@ func TestUpdateDutsStatus(t *testing.T) {
 			So(resp.UpdatedDevices[0].Id, ShouldEqual, "UUID:01")
 		})
 
+		Convey("Happy path with dut meta", func() {
+			req := &api.UpdateDutsStatusRequest{
+				States: []*lab.DutState{
+					{
+						Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
+					},
+				},
+				DutMetas: []*api.DutMeta{
+					{
+						ChromeosDeviceId: "UUID:01",
+						SerialNumber:     "serial2",
+						HwID:             "hwid2",
+					},
+				},
+			}
+			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.UpdatedDevices, ShouldHaveLength, 1)
+			So(resp.UpdatedDevices[0].Id, ShouldEqual, "UUID:01")
+
+			r := datastore.GetDevicesByIds(ctx, []string{"UUID:01"})
+			So(r, ShouldHaveLength, 1)
+			var p lab.ChromeOSDevice
+			r[0].Entity.GetCrosDeviceProto(&p)
+			So(p.GetSerialNumber(), ShouldEqual, "serial2")
+			So(p.GetManufacturingId().GetValue(), ShouldEqual, "hwid2")
+		})
+
 		Convey("Cannot update a labstation", func() {
 			req := &api.UpdateDutsStatusRequest{
 				States: []*lab.DutState{

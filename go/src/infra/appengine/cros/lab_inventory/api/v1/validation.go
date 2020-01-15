@@ -124,12 +124,28 @@ func (r *UpdateDutsStatusRequest) Validate() error {
 	idChecker, duplicatedID := checkDuplicatedString()
 	defer close(idChecker)
 
+	idWithStates := make(map[string]bool, len(r.States))
 	for _, d := range r.States {
 		id := d.GetId().GetValue()
+		idWithStates[id] = true
 		if idChecker <- id; <-duplicatedID {
 			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Duplicated id found: %s", id))
 		}
 	}
-	return nil
 
+	idChecker2, duplicatedID2 := checkDuplicatedString()
+	for _, d := range r.GetDutMetas() {
+		id := d.GetChromeosDeviceId()
+		if idChecker2 <- id; <-duplicatedID2 {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Duplicated id found in meta : %s", id))
+		}
+	}
+
+	for _, d := range r.GetDutMetas() {
+		id := d.GetChromeosDeviceId()
+		if _, ok := idWithStates[id]; !ok {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Cannot update meta without valid dut states: %s", id))
+		}
+	}
+	return nil
 }
