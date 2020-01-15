@@ -56,6 +56,7 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 			// The timeout should correlated to how many DUTs being operated.
 			ctx2, cancel := context.WithTimeout(ctx, time.Duration(len(nds))*timeoutForEachDUT)
 			defer cancel()
+
 			url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx2, nds, pickServoPort)
 			logging.Infof(ctx2, "[v2] add dut result: %s, %s", url2, err2)
 			logging.Infof(ctx2, "[v2] spec returned: %s", ds2)
@@ -70,5 +71,17 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 }
 
 func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {
-	return "", nil
+	if client.willDupToV2() {
+		go func() {
+			ctx2, cancel := context.WithTimeout(ctx, timeoutForEachDUT)
+			defer cancel()
+
+			url2, err2 := client.ic.updateDUTSpecs(ctx2, od, nd, pickServoPort)
+			logging.Infof(ctx2, "[v2] add dut result: %s, %s", url2, err2)
+		}()
+	}
+
+	url, err := client.gc.updateDUTSpecs(ctx, od, nd, pickServoPort)
+	logging.Infof(ctx, "[v1] update dut result: %s, %s", url, err)
+	return url, err
 }
