@@ -15,7 +15,6 @@
 // crosskylabadmin app. These interfaces provide a way to fake/stub out the API
 // calls for tests.
 
-// Package mock contains mocks for client interfaces from the parent package.
-package mock
+package clients
 
-//go:generate ./mockgen-wrapper
+//go:generate mockgen -source swarming.go -destination mock/swarming.mock.go -package mock
