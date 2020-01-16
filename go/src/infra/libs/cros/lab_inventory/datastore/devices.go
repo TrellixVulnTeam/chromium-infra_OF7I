@@ -273,7 +273,11 @@ func updateEntities(ctx context.Context, opResults DeviceOpResults, additionalFi
 			logging.Errorf(ctx, "Failed to save change history to datastore: %s", err)
 		}
 		if err := datastore.Put(ctx, entities); err != nil {
-			for i, e := range err.(errors.MultiError) {
+			merr, ok := err.(errors.MultiError)
+			if !ok {
+				return err
+			}
+			for i, e := range merr {
 				opResults[entityIndexes[i]].logError(errors.Annotate(e, "failed to save entity to datastore").Err())
 			}
 		}
