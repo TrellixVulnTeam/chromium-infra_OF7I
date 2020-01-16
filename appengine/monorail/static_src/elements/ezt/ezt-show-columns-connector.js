@@ -12,6 +12,7 @@ import * as sitewide from 'reducers/sitewide.js';
 import 'elements/framework/mr-issue-list/mr-show-columns-dropdown.js';
 import {parseColSpec} from 'shared/issue-fields.js';
 import {equalsIgnoreCase} from 'shared/helpers.js';
+import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 /**
  * `<ezt-show-columns-connector>`
@@ -24,6 +25,7 @@ export class EztShowColumnsConnector extends connectStore(LitElement) {
   render() {
     return html`
       <mr-show-columns-dropdown
+        .defaultFields=${DEFAULT_ISSUE_FIELD_LIST}
         .columns=${this.columns}
         .queryParams=${this.queryParams}
         .phaseNames=${this.phaseNames}
