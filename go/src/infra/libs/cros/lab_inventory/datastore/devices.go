@@ -23,8 +23,11 @@ import (
 	"infra/libs/cros/lab_inventory/utils"
 )
 
-// UUIDPrefix is the prefix we used to identify the system generated ID.
-const UUIDPrefix = "UUID"
+const (
+	// UUIDPrefix is the prefix we used to identify the system generated ID.
+	UUIDPrefix       = "UUID"
+	dutIDPlaceholder = "IGNORED"
+)
 
 // A query in transaction requires to have Ancestor filter, see
 // https://cloud.google.com/appengine/docs/standard/python/datastore/query-restrictions#queries_inside_transactions_must_include_ancestor_filters
@@ -35,7 +38,7 @@ func fakeAcestorKey(ctx context.Context) *datastore.Key {
 func addMissingID(devices []*lab.ChromeOSDevice) {
 	// Use uuid as the device ID if asset id is not present.
 	for _, d := range devices {
-		if d.GetId() == nil || d.GetId().GetValue() == "" {
+		if d.GetId() == nil || d.GetId().GetValue() == "" || d.GetId().GetValue() == dutIDPlaceholder {
 			d.Id = &lab.ChromeOSDeviceID{
 				Value: fmt.Sprintf("%s:%s", UUIDPrefix, uuid.New().String()),
 			}

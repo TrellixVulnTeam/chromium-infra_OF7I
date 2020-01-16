@@ -8,9 +8,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime/debug"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
 
@@ -44,14 +47,69 @@ func (c *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*invent
 	defer func() {
 		if r := recover(); r != nil {
 			logging.Errorf(ctx, "Recovered in addManyDUTsToFleet(%s)", r)
+			debug.PrintStack()
 		}
 	}()
 
+	// TODO (guocb) Support the option `pickServoPort`.
+
 	c.logInfo(ctx, "Access inventory service as user: %s", auth.CurrentUser(ctx))
-	c.logInfo(ctx, "Adapter old data to inventory v2 proto")
-	c.logInfo(ctx, "Call server RPC to add devices")
-	c.logInfo(ctx, "Adapt the result back to old data format")
-	return "No URL provided by inventory v2", nds, nil
+	// The labstation below is automatically generated according to the
+	// servo_host attribute of the DUT. The labstation objects may not have all
+	// servo data, so don't write the labstation data to inventory (as it may
+	// erase some the servo list). The only exception is, there's 0 DUTs to be
+	// deployed, i.e. the current session is just a "labstation deployment".
+	// TODO (guocb) Improve this.
+
+	devicesToAdd, labstations, _, err := api.ImportFromV1DutSpecs(nds)
+	if err != nil {
+		logging.Errorf(ctx, "failed to import DUT specs: %s", err)
+		return "", nil, err
+	}
+	if len(devicesToAdd) == 0 {
+		devicesToAdd = labstations
+	}
+
+	var rsp *api.AddCrosDevicesResponse
+	f := func() error {
+		rsp, err = c.client.AddCrosDevices(ctx, &api.AddCrosDevicesRequest{
+			Devices: devicesToAdd,
+		})
+		return err
+	}
+	err = retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "addManyDUTsToFleet v2"))
+	if err != nil {
+		return "", nil, err
+	}
+
+	passedDevSpecs := getPassedDevSpecs(nds, rsp.GetPassedDevices())
+	failedDevices := rsp.GetFailedDevices()
+	msgs := make([]string, 0, len(failedDevices))
+	for _, d := range failedDevices {
+		msgs = append(msgs, d.GetErrorMsg())
+	}
+	if len(msgs) > 0 {
+		err = errors.Reason(strings.Join(msgs, ",")).Err()
+	}
+	return "URL N/A", passedDevSpecs, err
+}
+
+func getPassedDevSpecs(allDevSpecs []*inventory.CommonDeviceSpecs, passedDevices []*api.DeviceOpResult) []*inventory.CommonDeviceSpecs {
+	// The response only has hostname/id, so we need to get other data from the
+	// input.
+	nameToSpec := map[string]*inventory.CommonDeviceSpecs{}
+	passedDevSpecs := make([]*inventory.CommonDeviceSpecs, 0, len(allDevSpecs))
+	for i := range allDevSpecs {
+		nameToSpec[allDevSpecs[i].GetHostname()] = allDevSpecs[i]
+	}
+
+	for _, d := range passedDevices {
+		pd := nameToSpec[d.GetHostname()]
+		id := d.GetId()
+		pd.Id = &id // The ID may be newly assigned by inventory service.
+		passedDevSpecs = append(passedDevSpecs, pd)
+	}
+	return passedDevSpecs
 }
 
 func (c *invServiceClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {

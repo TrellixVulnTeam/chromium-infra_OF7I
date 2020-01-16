@@ -16,7 +16,7 @@ import (
 	"infra/libs/skylab/inventory"
 )
 
-var timeoutForEachDUT = 50 * time.Millisecond
+var timeoutForEachDUT = 1 * time.Second
 
 type duoClient struct {
 	gc *gitStoreClient
@@ -52,7 +52,7 @@ func (client *duoClient) willDupToV2() bool {
 func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
 	if client.willDupToV2() {
 		go func() {
-			// Set timeout for RPC call to inventory.
+			// Set timeout for RPC call to inventory v2.
 			// The timeout should correlated to how many DUTs being operated.
 			ctx2, cancel := context.WithTimeout(ctx, time.Duration(len(nds))*timeoutForEachDUT)
 			defer cancel()
