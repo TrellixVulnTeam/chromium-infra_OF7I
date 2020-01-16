@@ -113,6 +113,15 @@ describe('mr-list-page', () => {
           {type: 'HIDE_SNACKBAR', id: 'FETCH_ISSUE_LIST'});
     });
 
+    it('hides snackbar when <mr-list-page> disconnects', async () => {
+      document.body.removeChild(element);
+
+      sinon.assert.calledWith(store.dispatch,
+          {type: 'HIDE_SNACKBAR', id: 'FETCH_ISSUE_LIST'});
+
+      document.body.appendChild(element);
+    });
+
     it('shows snackbar on issue loading error', async () => {
       sinon.stub(element, 'stateChanged');
       sinon.stub(element, '_showIssueErrorSnackbar');

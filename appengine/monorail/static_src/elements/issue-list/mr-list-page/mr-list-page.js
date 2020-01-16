@@ -371,6 +371,8 @@ export class MrListPage extends connectStore(LitElement) {
     super.disconnectedCallback();
 
     window.removeEventListener('refreshList', this._boundRefresh);
+
+    this._hideIssueLoadingSnackbar();
   }
 
   /** @override */
