@@ -21,6 +21,8 @@ import (
 	"infra/libs/skylab/swarming"
 )
 
+const threeDaysInMinutes = 3 * 24 * 60
+
 // LeaseDut subcommand: Lease a DUT for debugging.
 var LeaseDut = &subcommands.Command{
 	UsageLine: "lease-dut HOST",
@@ -33,7 +35,8 @@ Do not build automation around this subcommand.`,
 		c := &leaseDutRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.IntVar(&c.leaseMinutes, "minutes", 60, "Duration of lease.")
+		// use a float so that large values passed on the command line are NOT wrapped.
+		c.Flags.Float64Var(&c.leaseMinutes, "minutes", 60, "Duration of lease.")
 		return c
 	},
 }
@@ -42,7 +45,7 @@ type leaseDutRun struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     skycmdlib.EnvFlags
-	leaseMinutes int
+	leaseMinutes float64
 }
 
 func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -56,6 +59,12 @@ func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcomma
 func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if len(args) != 1 {
 		return cmdlib.NewUsageError(c.Flags, "exactly one host required")
+	}
+	if c.leaseMinutes < 0 {
+		return cmdlib.NewUsageError(c.Flags, fmt.Sprintf("minutes to lease (%d) cannot be negative", int64(c.leaseMinutes)))
+	}
+	if c.leaseMinutes > threeDaysInMinutes {
+		return cmdlib.NewUsageError(c.Flags, "Lease duration (%d minutes) cannot exceed 3 days [%d minutes]", int64(c.leaseMinutes), threeDaysInMinutes)
 	}
 	host := args[0]
 
@@ -118,6 +127,7 @@ func createLeaseTask(ctx context.Context, t *swarming.Client, e site.Environment
 				{Key: "pool", Value: "ChromeOSSkylab"},
 				{Key: "dut_name", Value: lt.host},
 			},
+			// lt.duration.Seconds() is guaranteed to be much less than -1 + 2^63
 			ExecutionTimeoutSecs: int64(lt.duration.Seconds()),
 		},
 	}}
