@@ -1,7 +1,8 @@
 .PHONY: test
 WCT_PATH = ./node_modules/web-component-tester/bin/wct
 VULCANIZE_PATH = ./node_modules/vulcanize/bin/vulcanize
-GAE_PY?= ../../../../../../gcloud/bin/dev_appserver.py
+DEVSERVER_PY = ../../../../../../gcloud/bin/dev_appserver.py
+GAE_PY = ../../../../../luci/appengine/components/tools/gae.py
 
 default: help
 
@@ -28,11 +29,11 @@ relnotes:
 	go run ../../tools/relnotes/relnotes.go -app sheriff-o-matic -extra-paths .,../../monitoring/analyzer,../../monitoring/client,../../monitoring/messages
 
 getversion_prod:
-	$(eval VERS := $(shell ./gae.py version -p ./frontend -A sheriff-o-matic | cut -c 1-35))
+	$(eval VERS := $(shell $(GAE_PY) version -p ./frontend -A sheriff-o-matic | cut -c 1-35))
 	echo version is $(VERS)
 
 getversion_staging:
-	$(eval VERS := $(shell ./gae.py version -p ./frontend -A sheriff-o-matic-staging | cut -c 1-35))
+	$(eval VERS := $(shell $(GAE_PY) version -p ./frontend -A sheriff-o-matic-staging | cut -c 1-35))
 	echo version is $(VERS)
 
 deploy_prod: build getversion_prod
@@ -59,9 +60,9 @@ deploy_staging: build getversion_staging
 	rm frontend/elements/som-app/som-app.vulcanized.html
 
 devserver:
-	$(GAE_PY) frontend/app.yaml backend/app.yaml
+	$(DEVSERVER_PY) frontend/app.yaml backend/app.yaml
 
 # The -remote commands expose the app so that it is externally
 # accessible by hostname:port, rather than just localhost:port.
 devserver_remote:
-	$(GAE_PY) --host $$HOSTNAME frontend/app.yaml backend/app.yaml
+	$(DEVSERVER_PY) --host $$HOSTNAME frontend/app.yaml backend/app.yaml
