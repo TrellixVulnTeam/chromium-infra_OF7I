@@ -84,13 +84,23 @@ func setDutPeripherals(p *inventory.Peripherals, c *inventory.HardwareCapabiliti
 	p.Camerabox = &(d.Camerabox)
 }
 
+func setDutPools(labels *inventory.SchedulableLabels, inputPools []lab.DeviceUnderTest_DUTPool) {
+	var pools []inventory.SchedulableLabels_DUTPool
+	for _, p := range inputPools {
+		pools = append(pools, inventory.SchedulableLabels_DUTPool(p))
+	}
+	labels.CriticalPools = pools
+}
+
 func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Config) {
 	l.Phase = (*inventory.SchedulableLabels_Phase)(&(m.DevicePhase))
 	l.Cr50Phase = (*inventory.SchedulableLabels_CR50_Phase)(&(m.Cr50Phase))
 	// TODO (guocb) cr50_key_env?
 }
 
-func setDeviceConfig(p *inventory.Peripherals, c *inventory.HardwareCapabilities, d *device.Config) {
+func setDeviceConfig(labels *inventory.SchedulableLabels, d *device.Config) {
+	p := labels.GetPeripherals()
+	c := labels.GetCapabilities()
 	if d == nil {
 		return
 	}
@@ -106,8 +116,12 @@ func setDeviceConfig(p *inventory.Peripherals, c *inventory.HardwareCapabilities
 
 	for _, f := range d.GetHardwareFeatures() {
 		switch f {
+		case device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD:
+			c.Detachablebase = &trueValue
 		case device.Config_HARDWARE_FEATURE_BLUETOOTH:
 			c.Bluetooth = &trueValue
+		case device.Config_HARDWARE_FEATURE_FINGERPRINT:
+			c.Fingerprint = &trueValue
 		case device.Config_HARDWARE_FEATURE_FLASHROM:
 			c.Flashrom = &trueValue
 		case device.Config_HARDWARE_FEATURE_HOTWORDING:
@@ -147,6 +161,24 @@ func setDeviceConfig(p *inventory.Peripherals, c *inventory.HardwareCapabilities
 			acc = append(acc, inventory.HardwareCapabilities_VideoAcceleration(v))
 		}
 		c.VideoAcceleration = acc
+	}
+
+	// Set CTS_ABI & CTS_CPU.
+	switch d.GetCpu() {
+	case device.Config_X86, device.Config_X86_64:
+		labels.CtsAbi = []inventory.SchedulableLabels_CTSABI{
+			inventory.SchedulableLabels_CTS_ABI_X86,
+		}
+		labels.CtsCpu = []inventory.SchedulableLabels_CTSCPU{
+			inventory.SchedulableLabels_CTS_CPU_X86,
+		}
+	case device.Config_ARM, device.Config_ARM64:
+		labels.CtsAbi = []inventory.SchedulableLabels_CTSABI{
+			inventory.SchedulableLabels_CTS_ABI_ARM,
+		}
+		labels.CtsCpu = []inventory.SchedulableLabels_CTSCPU{
+			inventory.SchedulableLabels_CTS_CPU_ARM,
+		}
 	}
 }
 
@@ -200,8 +232,9 @@ func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, err
 		Capabilities: &capa,
 		Peripherals:  &peri,
 	}
+	setDutPools(&labels, data.GetLabConfig().GetDut().GetCriticalPools())
 	setDutPeripherals(&peri, &capa, p)
-	setDeviceConfig(&peri, &capa, data.GetDeviceConfig())
+	setDeviceConfig(&labels, data.GetDeviceConfig())
 	setManufacturingConfig(&labels, data.GetManufacturingConfig())
 	setHwidData(&labels, data.GetHwidData())
 	setDutState(&peri, data.GetDutState())

@@ -222,6 +222,10 @@ func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegist
 		peri.Rpm = rpm
 	}
 
+	var pools []lab.DeviceUnderTest_DUTPool
+	for _, p := range olddata.Labels.CriticalPools {
+		pools = append(pools, lab.DeviceUnderTest_DUTPool(p))
+	}
 	newDut := lab.ChromeOSDevice{
 		Id:              &lab.ChromeOSDeviceID{Value: olddata.GetId()},
 		SerialNumber:    olddata.GetSerialNumber(),
@@ -230,8 +234,9 @@ func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegist
 		DeviceConfigId: getDeviceConfigID(olddata.GetLabels()),
 		Device: &lab.ChromeOSDevice_Dut{
 			Dut: &lab.DeviceUnderTest{
-				Hostname:    olddata.GetHostname(),
-				Peripherals: peri,
+				Hostname:      olddata.GetHostname(),
+				Peripherals:   peri,
+				CriticalPools: pools,
 			},
 		},
 	}
@@ -244,7 +249,7 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 	if _, existing := servoHostRegister[hostname]; existing {
 		return nil
 	}
-	hwid, _, _, err := importAttributes(olddata.GetAttributes())
+	hwid, _, rpm, err := importAttributes(olddata.GetAttributes())
 	if err != nil {
 		return err
 	}
@@ -257,6 +262,7 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 		Device: &lab.ChromeOSDevice_Labstation{
 			Labstation: &lab.Labstation{
 				Hostname: hostname,
+				Rpm:      rpm,
 			},
 		},
 	}
