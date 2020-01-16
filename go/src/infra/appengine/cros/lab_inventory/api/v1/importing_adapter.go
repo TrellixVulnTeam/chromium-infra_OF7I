@@ -116,20 +116,23 @@ func importRpm(rpm **lab.RPM, key string, value string) {
 	}
 }
 
-func importAttributes(attrs []*inventory.KeyValue) (hwid string, servo *lab.Servo, rpm *lab.RPM, err error) {
+func importAttributes(attrs []*inventory.KeyValue) (hwid string, servo *lab.Servo, rpm *lab.RPM) {
+	skipServo := false
 	for _, attr := range attrs {
 		value := attr.GetValue()
 		switch key := attr.GetKey(); key {
 		case "HWID":
 			hwid = value
 		case "servo_host", "servo_port", "servo_serial", "servo_type":
-			err = importServo(&servo, key, value)
-			if err != nil {
-				return
+			if err := importServo(&servo, key, value); err != nil {
+				skipServo = true
 			}
 		case "powerunit_hostname", "powerunit_outlet":
 			importRpm(&rpm, key, value)
 		}
+	}
+	if skipServo {
+		servo = nil
 	}
 	return
 }
@@ -206,10 +209,7 @@ func getPeripherals(peripherals *inventory.Peripherals, capabilities *inventory.
 }
 
 func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegister, olddata *inventory.CommonDeviceSpecs) error {
-	hwid, servo, rpm, err := importAttributes(olddata.GetAttributes())
-	if err != nil {
-		return err
-	}
+	hwid, servo, rpm := importAttributes(olddata.GetAttributes())
 
 	oldPeri := olddata.Labels.Peripherals
 	oldCapa := olddata.Labels.Capabilities
@@ -249,10 +249,7 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 	if _, existing := servoHostRegister[hostname]; existing {
 		return nil
 	}
-	hwid, _, rpm, err := importAttributes(olddata.GetAttributes())
-	if err != nil {
-		return err
-	}
+	hwid, _, rpm := importAttributes(olddata.GetAttributes())
 	servoHostRegister[hostname] = &lab.ChromeOSDevice{
 		Id:              &lab.ChromeOSDeviceID{Value: olddata.GetId()},
 		SerialNumber:    olddata.GetSerialNumber(),
