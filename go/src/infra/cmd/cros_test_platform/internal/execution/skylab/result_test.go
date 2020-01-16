@@ -5,15 +5,16 @@
 package skylab
 
 import (
+	"sort"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
-
-	"infra/cmd/cros_test_platform/internal/execution/swarming"
 )
 
 type fakeURLer struct{}
@@ -21,8 +22,6 @@ type fakeURLer struct{}
 func (f *fakeURLer) GetTaskURL(_ string) string {
 	return ""
 }
-
-var urler swarming.URLer = &fakeURLer{}
 
 // Test that autotest results for a single completed task map correctly.
 func TestSingleAutotestTaskResults(t *testing.T) {
@@ -121,8 +120,7 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 		for _, c := range cases {
 			Convey(c.description, func() {
 				Convey("then task results are correctly converted to verdict.", func() {
-					attempt := &attempt{autotestResult: c.result, state: jsonrpc.TaskState_COMPLETED, taskID: "foo-task-ID"}
-					result := toTaskResult("", attempt, 5, urler)
+					result := callToTaskResults(c.result)
 					So(result.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 					So(result.State.Verdict, ShouldEqual, c.expectVerdict)
 					So(result.Attempt, ShouldEqual, 5)
@@ -132,4 +130,92 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestAutotestTestCases(t *testing.T) {
+	Convey("Given a single task's autotest results", t, func() {
+		cases := []struct {
+			description     string
+			result          *skylab_test_runner.Result_Autotest
+			expectTestCases []*steps.ExecuteResponse_TaskResult_TestCaseResult
+		}{
+			{
+				description: "with no autotest results",
+			},
+			{
+				description: "with no test cases",
+				result:      &skylab_test_runner.Result_Autotest{},
+			},
+			{
+				description: "with multiple test cases",
+				result: &skylab_test_runner.Result_Autotest{
+					TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+						{
+							Name:    "foo-pass",
+							Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS,
+						},
+						{
+							Name:    "foo-fail",
+							Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL,
+						},
+						{
+							Name: "foo-undefined",
+						},
+					},
+				},
+				expectTestCases: []*steps.ExecuteResponse_TaskResult_TestCaseResult{
+					{
+						Name:    "foo-pass",
+						Verdict: test_platform.TaskState_VERDICT_PASSED,
+					},
+					{
+						Name:    "foo-fail",
+						Verdict: test_platform.TaskState_VERDICT_FAILED,
+					},
+					{
+						Name: "foo-undefined",
+					},
+				},
+			},
+			{
+				description: "with a test case that has an informational string",
+				result: &skylab_test_runner.Result_Autotest{
+					TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+						{
+							Name:                 "foo-fail",
+							Verdict:              skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL,
+							HumanReadableSummary: "Something horrible happened.",
+						},
+					},
+				},
+				expectTestCases: []*steps.ExecuteResponse_TaskResult_TestCaseResult{
+					{
+						Name:                 "foo-fail",
+						Verdict:              test_platform.TaskState_VERDICT_FAILED,
+						HumanReadableSummary: "Something horrible happened.",
+					},
+				},
+			},
+		}
+		for _, c := range cases {
+			Convey(c.description, func() {
+				Convey("then test cases are reported correctly.", func() {
+					result := callToTaskResults(c.result)
+					sort.SliceStable(result.TestCases, func(i, j int) bool {
+						return result.TestCases[i].Name < result.TestCases[j].Name
+					})
+					sort.SliceStable(c.expectTestCases, func(i, j int) bool {
+						return c.expectTestCases[i].Name < c.expectTestCases[j].Name
+					})
+					So(result.TestCases, ShouldResembleProto, c.expectTestCases)
+				})
+			})
+		}
+	})
+}
+
+func callToTaskResults(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
+	urler := &fakeURLer{}
+	attempt := &attempt{autotestResult: autotestResult, state: jsonrpc.TaskState_COMPLETED, taskID: "foo-task-ID"}
+	return toTaskResult("", attempt, 5, urler)
 }

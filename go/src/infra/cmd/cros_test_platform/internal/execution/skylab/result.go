@@ -87,6 +87,7 @@ func toTaskResult(testName string, attempt *attempt, attemptNum int, urler swarm
 		LogData: &common.TaskLogData{
 			GsUrl: gsURL,
 		},
-		Attempt: int32(attemptNum),
+		Attempt:   int32(attemptNum),
+		TestCases: attempt.TestCases(),
 	}
 }

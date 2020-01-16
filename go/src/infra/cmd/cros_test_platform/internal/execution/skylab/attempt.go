@@ -12,6 +12,7 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
@@ -111,4 +112,26 @@ func (a *attempt) FetchResults(ctx context.Context, client swarming.Client, gf i
 	default:
 	}
 	return nil
+}
+
+var liftTestCaseRunnerVerdict = map[skylab_test_runner.Result_Autotest_TestCase_Verdict]test_platform.TaskState_Verdict{
+	skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS: test_platform.TaskState_VERDICT_PASSED,
+	skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL: test_platform.TaskState_VERDICT_FAILED,
+}
+
+func (a *attempt) TestCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
+	tcs := a.autotestResult.GetTestCases()
+	if len(tcs) == 0 {
+		// Prefer a nil over an empty slice since it's the proto default.
+		return nil
+	}
+	ret := make([]*steps.ExecuteResponse_TaskResult_TestCaseResult, len(tcs))
+	for i, tc := range tcs {
+		ret[i] = &steps.ExecuteResponse_TaskResult_TestCaseResult{
+			Name:                 tc.Name,
+			Verdict:              liftTestCaseRunnerVerdict[tc.Verdict],
+			HumanReadableSummary: tc.HumanReadableSummary,
+		}
+	}
+	return ret
 }
