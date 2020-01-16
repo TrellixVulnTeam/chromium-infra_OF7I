@@ -20,84 +20,101 @@ import (
 	"sort"
 )
 
-// Transfer the state struct to metrics.SchedulerState proto.
-func (s *state) toMetricsSchedulerState(poolID string) *metrics.SchedulerState {
-	accounts := make([]*metrics.SchedulerState_Account, 0, len(s.balances))
+// Snapshot represents the scheduler state at a specified timestamp.
+type Snapshot struct {
+	Accounts []*metrics.Account
+	Tasks    []*metrics.Task
+	Workers  []*metrics.Worker
+}
+
+func (s *state) snapshot(poolID string) *Snapshot {
+	return &Snapshot{
+		s.accountSnapshot(poolID),
+		s.taskSnapshot(poolID),
+		s.workerSnapshot(poolID),
+	}
+}
+
+func (s *state) accountSnapshot(PoolID string) []*metrics.Account {
+	accounts := make([]*metrics.Account, 0, len(s.balances))
 	for aid, bal := range s.balances {
-		accounts = append(accounts, toMetricsAccount(aid, bal))
+		bCopy := bal
+		accounts = append(accounts, &metrics.Account{
+			Id:           &metrics.Account_ID{Name: string(aid)},
+			Pool:         &metrics.Pool{Id: PoolID},
+			Balance:      bCopy[:],
+			SnapshotTime: tutils.TimestampProto(s.lastUpdateTime),
+		})
 	}
+	return sortAccountByID(accounts)
+}
 
-	queuedTasks := make([]*metrics.SchedulerState_Task, 0, len(s.queuedRequests))
+func (s *state) taskSnapshot(PoolID string) []*metrics.Task {
+	tasks := make([]*metrics.Task, 0, len(s.queuedRequests)+len(s.workers))
 	for _, rq := range s.queuedRequests {
-		queuedTasks = append(queuedTasks, toMetricsTask(rq))
+		tasks = append(tasks, &metrics.Task{
+			Id:                  &metrics.Task_ID{Name: string(rq.ID)},
+			Pool:                &metrics.Pool{Id: string(PoolID)},
+			AccountId:           &metrics.Account_ID{Name: string(rq.AccountID)},
+			WorkerId:            &metrics.Worker_ID{Name: ""},
+			BaseLabels:          sortLabels(rq.BaseLabels),
+			ProvisionableLabels: sortLabels(rq.ProvisionableLabels),
+			SnapshotTime:        tutils.TimestampProto(s.lastUpdateTime),
+		})
 	}
-
-	runningTasks := make([]*metrics.SchedulerState_Task, 0, len(s.workers))
-	runningWorkers := make([]*metrics.SchedulerState_Worker, 0, len(s.workers))
-	idleWorkers := make([]*metrics.SchedulerState_Worker, 0, len(s.workers))
-	for _, worker := range s.workers {
-		if worker.IsIdle() {
-			idleWorkers = append(idleWorkers, toMetricsWorker(worker))
-			continue
+	for _, w := range s.workers {
+		if !w.IsIdle() {
+			rq := w.runningTask.request
+			tasks = append(tasks, &metrics.Task{
+				Id:                  &metrics.Task_ID{Name: string(rq.ID)},
+				Pool:                &metrics.Pool{Id: string(PoolID)},
+				AccountId:           &metrics.Account_ID{Name: string(rq.AccountID)},
+				WorkerId:            &metrics.Worker_ID{Name: string(w.ID)},
+				BaseLabels:          sortLabels(rq.BaseLabels),
+				ProvisionableLabels: sortLabels(rq.ProvisionableLabels),
+				SnapshotTime:        tutils.TimestampProto(s.lastUpdateTime),
+			})
 		}
-		runningWorkers = append(runningWorkers, toMetricsWorker(worker))
-		runningTasks = append(runningTasks, toMetricsTask(worker.runningTask.request))
 	}
-
-	return &metrics.SchedulerState{
-		QueuedTasks:    sortTaskByID(queuedTasks),
-		RunningTasks:   sortTaskByID(runningTasks),
-		IdleWorkers:    sortWorkerByID(idleWorkers),
-		RunningWorkers: sortWorkerByID(runningWorkers),
-		Accounts:       sortAccountByID(accounts),
-		PoolId:         poolID,
-		Time:           tutils.TimestampProto(s.lastUpdateTime),
-	}
+	return sortTaskByID(tasks)
 }
 
-func toMetricsAccount(id AccountID, balance Balance) *metrics.SchedulerState_Account {
-	bCopy := balance
-	return &metrics.SchedulerState_Account{Id: string(id), Balance: bCopy[:]}
+func (s *state) workerSnapshot(PoolID string) []*metrics.Worker {
+	workers := make([]*metrics.Worker, 0, len(s.workers))
+	for _, w := range s.workers {
+		taskID := ""
+		if !w.IsIdle() {
+			taskID = string(w.runningTask.request.ID)
+		}
+		workers = append(workers, &metrics.Worker{
+			Id:           &metrics.Worker_ID{Name: string(w.ID)},
+			Pool:         &metrics.Pool{Id: string(PoolID)},
+			TaskId:       &metrics.Task_ID{Name: taskID},
+			Labels:       sortLabels(w.Labels.ToSlice()),
+			SnapshotTime: tutils.TimestampProto(s.lastUpdateTime),
+		})
+
+	}
+	return sortWorkerByID(workers)
 }
 
-func toMetricsTask(rq *TaskRequest) *metrics.SchedulerState_Task {
-	return &metrics.SchedulerState_Task{
-		Id:                  string(rq.ID),
-		AccountId:           string(rq.AccountID),
-		BaseLabels:          sortLabels(rq.BaseLabels),
-		ProvisionableLabels: sortLabels(rq.ProvisionableLabels),
-	}
-}
-
-func toMetricsWorker(w *Worker) *metrics.SchedulerState_Worker {
-	var taskID string
-	if !w.IsIdle() {
-		taskID = string(w.runningTask.request.ID)
-	}
-	return &metrics.SchedulerState_Worker{
-		Id:     string(w.ID),
-		Labels: sortLabels(w.Labels.ToSlice()),
-		TaskId: taskID,
-	}
-}
-
-func sortAccountByID(accounts []*metrics.SchedulerState_Account) []*metrics.SchedulerState_Account {
+func sortAccountByID(accounts []*metrics.Account) []*metrics.Account {
 	sort.Slice(accounts, func(i, j int) bool {
-		return accounts[i].GetId() < accounts[j].GetId()
+		return accounts[i].GetId().GetName() < accounts[j].GetId().GetName()
 	})
 	return accounts
 }
 
-func sortTaskByID(tasks []*metrics.SchedulerState_Task) []*metrics.SchedulerState_Task {
+func sortTaskByID(tasks []*metrics.Task) []*metrics.Task {
 	sort.Slice(tasks, func(i, j int) bool {
-		return tasks[i].GetId() < tasks[j].GetId()
+		return tasks[i].GetId().GetName() < tasks[j].GetId().GetName()
 	})
 	return tasks
 }
 
-func sortWorkerByID(workers []*metrics.SchedulerState_Worker) []*metrics.SchedulerState_Worker {
+func sortWorkerByID(workers []*metrics.Worker) []*metrics.Worker {
 	sort.Slice(workers, func(i, j int) bool {
-		return workers[i].GetId() < workers[j].GetId()
+		return workers[i].GetId().GetName() < workers[j].GetId().GetName()
 	})
 	return workers
 }

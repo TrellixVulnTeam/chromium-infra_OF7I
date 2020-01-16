@@ -54,84 +54,97 @@ func TestToMetricsSchedulerState(t *testing.T) {
 
 		Convey("test the state is transformed to metrics.SchedulerState.", func() {
 			pool := "foo_pool"
-			accounts := []*metrics.SchedulerState_Account{
+			accounts := []*metrics.Account{
 				{
-					Id:      "aid1",
-					Balance: []float32{5, 4, 3, 2, 1},
+					Id:           &metrics.Account_ID{Name: "aid1"},
+					Balance:      []float32{5, 4, 3, 2, 1},
+					Pool:         &metrics.Pool{Id: pool},
+					SnapshotTime: tutils.TimestampProto(tm),
 				},
 				{
-					Id:      "aid2",
-					Balance: []float32{1, 2, 3, 4, 5},
-				},
-			}
-
-			queuedTasks := []*metrics.SchedulerState_Task{
-				{
-					Id:                  "req3",
-					AccountId:           "a1",
-					BaseLabels:          []string{"base 5", "base 6"},
-					ProvisionableLabels: []string{"provision 5", "provision 6"},
-				},
-				{
-					Id:                  "req4",
-					AccountId:           "a1",
-					BaseLabels:          []string{"base 7", "base 8"},
-					ProvisionableLabels: []string{"provision 7", "provision 8"},
+					Id:           &metrics.Account_ID{Name: "aid2"},
+					Balance:      []float32{1, 2, 3, 4, 5},
+					Pool:         &metrics.Pool{Id: pool},
+					SnapshotTime: tutils.TimestampProto(tm),
 				},
 			}
 
-			runningTasks := []*metrics.SchedulerState_Task{
+			tasks := []*metrics.Task{
 				{
-					Id:                  "req1",
-					AccountId:           "a1",
+					Id:                  &metrics.Task_ID{Name: "req1"},
+					AccountId:           &metrics.Account_ID{Name: "a1"},
+					WorkerId:            &metrics.Worker_ID{Name: "worker 1"},
 					BaseLabels:          []string{"base 1", "base 2"},
 					ProvisionableLabels: []string{"provision 1", "provision 2"},
+					Pool:                &metrics.Pool{Id: pool},
+					SnapshotTime:        tutils.TimestampProto(tm),
 				},
 				{
-					Id:                  "req2",
-					AccountId:           "a1",
+					Id:                  &metrics.Task_ID{Name: "req2"},
+					AccountId:           &metrics.Account_ID{Name: "a1"},
+					WorkerId:            &metrics.Worker_ID{Name: "worker 2"},
 					BaseLabels:          []string{"base 3", "base 4"},
 					ProvisionableLabels: []string{"provision 3", "provision 4"},
+					Pool:                &metrics.Pool{Id: pool},
+					SnapshotTime:        tutils.TimestampProto(tm),
+				},
+				{
+					Id:                  &metrics.Task_ID{Name: "req3"},
+					AccountId:           &metrics.Account_ID{Name: "a1"},
+					WorkerId:            &metrics.Worker_ID{Name: ""},
+					BaseLabels:          []string{"base 5", "base 6"},
+					ProvisionableLabels: []string{"provision 5", "provision 6"},
+					Pool:                &metrics.Pool{Id: pool},
+					SnapshotTime:        tutils.TimestampProto(tm),
+				},
+				{
+					Id:                  &metrics.Task_ID{Name: "req4"},
+					AccountId:           &metrics.Account_ID{Name: "a1"},
+					WorkerId:            &metrics.Worker_ID{Name: ""},
+					BaseLabels:          []string{"base 7", "base 8"},
+					ProvisionableLabels: []string{"provision 7", "provision 8"},
+					Pool:                &metrics.Pool{Id: pool},
+					SnapshotTime:        tutils.TimestampProto(tm),
 				},
 			}
 
-			idleWorkers := []*metrics.SchedulerState_Worker{
+			workers := []*metrics.Worker{
 				{
-					Id:     "worker 3",
-					TaskId: "",
-					Labels: []string{"base bar", "base foo"},
+					Id:           &metrics.Worker_ID{Name: "worker 1"},
+					TaskId:       &metrics.Task_ID{Name: "req1"},
+					Labels:       []string{"base 1", "base 2"},
+					Pool:         &metrics.Pool{Id: pool},
+					SnapshotTime: tutils.TimestampProto(tm),
 				},
 				{
-					Id:     "worker 4",
-					TaskId: "",
-					Labels: []string{"base bar", "base foo"},
+					Id:           &metrics.Worker_ID{Name: "worker 2"},
+					TaskId:       &metrics.Task_ID{Name: "req2"},
+					Labels:       []string{"base 3", "base 4"},
+					Pool:         &metrics.Pool{Id: pool},
+					SnapshotTime: tutils.TimestampProto(tm),
+				},
+				{
+					Id:           &metrics.Worker_ID{Name: "worker 3"},
+					TaskId:       &metrics.Task_ID{Name: ""},
+					Labels:       []string{"base bar", "base foo"},
+					Pool:         &metrics.Pool{Id: pool},
+					SnapshotTime: tutils.TimestampProto(tm),
+				},
+				{
+					Id:           &metrics.Worker_ID{Name: "worker 4"},
+					TaskId:       &metrics.Task_ID{Name: ""},
+					Labels:       []string{"base bar", "base foo"},
+					Pool:         &metrics.Pool{Id: pool},
+					SnapshotTime: tutils.TimestampProto(tm),
 				},
 			}
 
-			runningWorkers := []*metrics.SchedulerState_Worker{
-				{
-					Id:     "worker 1",
-					TaskId: "req1",
-					Labels: []string{"base 1", "base 2"},
-				},
-				{
-					Id:     "worker 2",
-					TaskId: "req2",
-					Labels: []string{"base 3", "base 4"},
-				},
+			want := &Snapshot{
+				accounts,
+				tasks,
+				workers,
 			}
-
-			want := &metrics.SchedulerState{
-				QueuedTasks:    queuedTasks,
-				RunningTasks:   runningTasks,
-				IdleWorkers:    idleWorkers,
-				RunningWorkers: runningWorkers,
-				Accounts:       accounts,
-				PoolId:         pool,
-				Time:           tutils.TimestampProto(tm),
-			}
-			got := s.state.toMetricsSchedulerState(pool)
-			diff := cmp.Diff(got, want)
+			diff := cmp.Diff(s.state.snapshot(pool), want)
 			So(diff, ShouldBeBlank)
 		})
 	})
