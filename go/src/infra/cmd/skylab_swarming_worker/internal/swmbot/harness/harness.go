@@ -194,27 +194,34 @@ type labelUpdater struct {
 
 // update is a dutinfo.UpdateFunc for updating DUT inventory labels.
 // If adminServiceURL is empty, this method does nothing.
-func (u labelUpdater) update(dutID string, old *inventory.SchedulableLabels, new *inventory.SchedulableLabels, newAttr []*inventory.KeyValue) error {
-	if u.botInfo.AdminService == "" || !u.updateLabels {
-		log.Printf("Skipping label update since no admin service was provided")
-		return nil
-	}
+func (u labelUpdater) update(dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error {
 	ctx, err := swmbot.WithTaskAccount(u.ctx)
 	if err != nil {
 		return errors.Annotate(err, "update inventory labels").Err()
 	}
 
-	log.Printf("Calling inventory v2 to update")
-	if err := u.updateV2(ctx, dutID, old, new, newAttr); err != nil {
+	log.Printf("Calling inventory v2 to update state")
+	if err := u.updateV2(ctx, dutID, old, new); err != nil {
 		log.Printf("fail to update to inventory V2: %#v", err)
 	}
 
 	log.Printf("Calling admin service to update labels")
+	oldLabels := old.GetCommon().GetLabels()
+	newLabels := new.GetCommon().GetLabels()
+	if proto.Equal(oldLabels, newLabels) {
+		log.Printf("Skipping label update since there are no changes")
+		return nil
+	}
+	if u.botInfo.AdminService == "" || !u.updateLabels {
+		log.Printf("Skipping label update since no admin service was provided")
+		return nil
+	}
+	log.Printf("Labels changed from %s to %s", oldLabels.String(), newLabels.String())
 	client, err := swmbot.InventoryClient(ctx, u.botInfo)
 	if err != nil {
 		return errors.Annotate(err, "update inventory labels").Err()
 	}
-	req, err := u.makeRequest(dutID, old, new)
+	req, err := u.makeRequest(dutID, oldLabels, newLabels)
 	if err != nil {
 		return errors.Annotate(err, "update inventory labels").Err()
 	}
@@ -257,32 +264,11 @@ func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutSt
 	return &state
 }
 
-func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inventory.SchedulableLabels, newAttr []*inventory.KeyValue) error {
-	oldState := getStatesFromLabel(dutID, old)
-	newState := getStatesFromLabel(dutID, new)
-	if proto.Equal(newState, oldState) {
-		log.Printf("Skipping dut state update since there are no changes")
-		return nil
-	}
-
-	req := u.makeV2Request(dutID, new, newAttr)
-	client, err := swmbot.InventoryV2Client(ctx, u.botInfo)
-	if err != nil {
-		return errors.Annotate(err, "update inventory V2 labels").Err()
-	}
-	resp, err := client.UpdateDutsStatus(ctx, req)
-	log.Printf("resp for inventory V2 update: %#v", resp)
-	if err != nil {
-		return errors.Annotate(err, "update inventory V2 labels").Err()
-	}
-	return nil
-}
-
-func (u labelUpdater) makeV2Request(dutID string, newL *inventory.SchedulableLabels, newAttr []*inventory.KeyValue) *invV2.UpdateDutsStatusRequest {
+func getMetaFromAttributes(dutID string, attr []*inventory.KeyValue) *invV2.DutMeta {
 	dutMeta := invV2.DutMeta{
 		ChromeosDeviceId: dutID,
 	}
-	for _, kv := range newAttr {
+	for _, kv := range attr {
 		if kv.GetKey() == "serial_number" {
 			dutMeta.SerialNumber = kv.GetValue()
 		}
@@ -290,11 +276,39 @@ func (u labelUpdater) makeV2Request(dutID string, newL *inventory.SchedulableLab
 			dutMeta.HwID = kv.GetValue()
 		}
 	}
-	return &invV2.UpdateDutsStatusRequest{
-		States:   []*lab.DutState{getStatesFromLabel(dutID, newL)},
-		Reason:   "state update from ssw",
-		DutMetas: []*invV2.DutMeta{&dutMeta},
+	return &dutMeta
+}
+
+func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inventory.DeviceUnderTest) error {
+	oldState := getStatesFromLabel(dutID, old.GetCommon().GetLabels())
+	newState := getStatesFromLabel(dutID, new.GetCommon().GetLabels())
+	oldMeta := getMetaFromAttributes(dutID, old.GetCommon().GetAttributes())
+	newMeta := getMetaFromAttributes(dutID, new.GetCommon().GetAttributes())
+
+	if u.botInfo.InventoryService == "" {
+		log.Printf("Skipping label update since no inventory service was provided")
+		return nil
 	}
+	if proto.Equal(newState, oldState) && proto.Equal(oldMeta, newMeta) {
+		log.Printf("Skipping dut state update since there are no changes")
+		return nil
+	}
+
+	req := invV2.UpdateDutsStatusRequest{
+		States:   []*lab.DutState{newState},
+		Reason:   "state update from ssw",
+		DutMetas: []*invV2.DutMeta{newMeta},
+	}
+	client, err := swmbot.InventoryV2Client(ctx, u.botInfo)
+	if err != nil {
+		return errors.Annotate(err, "update inventory V2 labels").Err()
+	}
+	resp, err := client.UpdateDutsStatus(ctx, &req)
+	log.Printf("resp for inventory V2 update: %#v", resp)
+	if err != nil {
+		return errors.Annotate(err, "update inventory V2 labels").Err()
+	}
+	return nil
 }
 
 func (u labelUpdater) makeRequest(dutID string, old *inventory.SchedulableLabels, new *inventory.SchedulableLabels) (*fleet.UpdateDutLabelsRequest, error) {

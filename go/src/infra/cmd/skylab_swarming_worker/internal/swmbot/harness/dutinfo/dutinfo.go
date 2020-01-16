@@ -25,8 +25,8 @@ import (
 // Store holds a DUT's inventory info and adds a Close method.
 type Store struct {
 	DUT            *inventory.DeviceUnderTest
+	oldDUT         *inventory.DeviceUnderTest
 	StableVersions map[string]string
-	oldLabels      *inventory.SchedulableLabels
 	updateFunc     UpdateFunc
 }
 
@@ -42,18 +42,14 @@ func (s *Store) Close() error {
 	c := s.DUT.GetCommon()
 	new := c.GetLabels()
 	inventory.SortLabels(new)
-	old := s.oldLabels
+	old := s.oldDUT.GetCommon().GetLabels()
 	inventory.SortLabels(old)
 	if new.GetUselessSwitch() {
 		*new.UselessSwitch = false
 	}
-	if proto.Equal(new, old) {
-		log.Printf("Skipping label update since there are no changes")
-		return nil
-	}
-	log.Printf("Labels changed from %s to %s", old.String(), new.String())
+
 	log.Printf("Calling label update function")
-	if err := s.updateFunc(c.GetId(), old, new, c.GetAttributes()); err != nil {
+	if err := s.updateFunc(c.GetId(), s.oldDUT, s.DUT); err != nil {
 		return errors.Annotate(err, "close DUT inventory").Err()
 	}
 	s.updateFunc = nil
@@ -62,10 +58,7 @@ func (s *Store) Close() error {
 
 // UpdateFunc is used to implement inventory updating for any changes
 // to the loaded DUT info.
-// newAttr is passed to backfill hwid and serial_number.
-// We can only get it from running deployment task now.
-// TODO(xixuan): remove newAttr when hwid and serial_number are achievable from external team.
-type UpdateFunc func(dutID string, old *inventory.SchedulableLabels, new *inventory.SchedulableLabels, newAttr []*inventory.KeyValue) error
+type UpdateFunc func(dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error
 
 // LoadCached loads the bot's DUT's info from the inventory. Returned inventory
 // data may be slightly stale compared to the source of truth of the inventory.
@@ -145,7 +138,7 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc)
 	// once we reach this point, sv is guaranteed to be non-nil
 	store := &Store{
 		DUT:            &d,
-		oldLabels:      proto.Clone(d.GetCommon().GetLabels()).(*inventory.SchedulableLabels),
+		oldDUT:         proto.Clone(&d).(*inventory.DeviceUnderTest),
 		updateFunc:     uf,
 		StableVersions: sv,
 	}
