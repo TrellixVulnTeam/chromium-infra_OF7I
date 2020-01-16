@@ -1095,7 +1095,7 @@ describe('issue', () => {
 
       it('fetching if an issue is starred', async () => {
         const issueRef = {projectName: 'proj', localId: 1};
-        const action = issue.fetchIsStarred({issueRef});
+        const action = issue.fetchIsStarred(issueRef);
 
         prpcCall.returns(Promise.resolve({isStarred: true}));
 

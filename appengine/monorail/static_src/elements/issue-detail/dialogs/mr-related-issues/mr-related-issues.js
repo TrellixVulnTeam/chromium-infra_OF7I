@@ -12,6 +12,11 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {ISSUE_EDIT_PERMISSION} from 'shared/permissions';
 import {prpcClient} from 'prpc-client-instance.js';
 
+/**
+ * `<mr-related-issues>`
+ *
+ * Component for showing a mini list view of blocking issues to users.
+ */
 export class MrRelatedIssues extends connectStore(LitElement) {
   /** @override */
   static get styles() {
@@ -286,9 +291,7 @@ export class MrRelatedIssues extends connectStore(LitElement) {
         });
 
     reorderRequest.then((response) => {
-      store.dispatch(issue.fetch({
-        issueRef: this.issueRef,
-      }));
+      store.dispatch(issue.fetch(this.issueRef));
     }, (error) => {
       this.reset();
       this.error = error.description;

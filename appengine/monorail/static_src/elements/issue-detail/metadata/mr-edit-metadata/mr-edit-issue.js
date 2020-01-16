@@ -282,11 +282,7 @@ export class MrEditIssue extends connectStore(LitElement) {
    */
   _presubmitIssue(issueDelta) {
     if (Object.keys(issueDelta).length) {
-      const message = {
-        issueDelta,
-        issueRef: this.issueRef,
-      };
-      store.dispatch(issue.presubmit(message));
+      store.dispatch(issue.presubmit(this.issueRef, issueDelta));
     }
   }
 

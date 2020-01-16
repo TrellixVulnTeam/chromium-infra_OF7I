@@ -350,7 +350,7 @@ async function _deleteComment(comment) {
     sequenceNum: comment.sequenceNum,
     delete: comment.isDeleted === undefined,
   });
-  store.dispatch(issue.fetchComments({issueRef}));
+  store.dispatch(issue.fetchComments(issueRef));
 }
 
 /**
@@ -368,7 +368,7 @@ async function _flagComment(comment) {
     sequenceNum: comment.sequenceNum,
     flag: comment.isSpam === undefined,
   });
-  store.dispatch(issue.fetchComments({issueRef}));
+  store.dispatch(issue.fetchComments(issueRef));
 }
 
 /**

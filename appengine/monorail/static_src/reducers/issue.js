@@ -957,20 +957,22 @@ export const fetchRelatedIssues = (issue) => async (dispatch) => {
  * @return {function(function): Promise<void>}
  */
 export const fetchIssuePageData = (issueRef) => async (dispatch) => {
-  const message = {issueRef};
-  dispatch(fetchComments(message));
-  dispatch(fetch(message));
-  dispatch(fetchPermissions(message));
-  dispatch(fetchIsStarred(message));
+  dispatch(fetchComments(issueRef));
+  dispatch(fetch(issueRef));
+  dispatch(fetchPermissions(issueRef));
+  dispatch(fetchIsStarred(issueRef));
 };
 
-export const fetch = (message) => async (dispatch) => {
-  const {issueRef} = message;
+/**
+ * @param {IssueRef} issueRef Which issue to fetch.
+ * @return {function(function): Promise<void>}
+ */
+export const fetch = (issueRef) => async (dispatch) => {
   dispatch({type: FETCH_START});
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'GetIssue', message,
+        'monorail.Issues', 'GetIssue', {issueRef},
     );
 
     const movedToRef = resp.movedToRef;
@@ -988,7 +990,7 @@ export const fetch = (message) => async (dispatch) => {
 
     if (!issue.isDeleted && !movedToRef) {
       dispatch(fetchRelatedIssues(issue));
-      dispatch(fetchHotlists(message.issueRef));
+      dispatch(fetchHotlists(issueRef));
       dispatch(fetchReferencedUsers(issue));
       dispatch(user.fetchProjects([issue.reporterRef]));
     }
@@ -997,12 +999,17 @@ export const fetch = (message) => async (dispatch) => {
   }
 };
 
-export const fetchHotlists = (issue) => async (dispatch) => {
+/**
+ * Gets the hotlists that a given issue is in.
+ * @param {IssueRef} issueRef
+ * @return {function(function): Promise<void>}
+ */
+export const fetchHotlists = (issueRef) => async (dispatch) => {
   dispatch({type: FETCH_HOTLISTS_START});
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Features', 'ListHotlistsByIssue', {issue});
+        'monorail.Features', 'ListHotlistsByIssue', {issue: issueRef});
 
     const hotlists = (resp.hotlists || []);
     hotlists.sort((hotlistA, hotlistB) => {
@@ -1129,12 +1136,17 @@ export const fetchIssueList =
     };
   };
 
-export const fetchPermissions = (message) => async (dispatch) => {
+/**
+ * Fetches the currently logged in user's permissions for a given issue.
+ * @param {Issue} issueRef
+ * @return {function(function): Promise<void>}
+ */
+export const fetchPermissions = (issueRef) => async (dispatch) => {
   dispatch({type: FETCH_PERMISSIONS_START});
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'ListIssuePermissions', message,
+        'monorail.Issues', 'ListIssuePermissions', {issueRef},
     );
 
     dispatch({type: FETCH_PERMISSIONS_SUCCESS, permissions: resp.permissions});
@@ -1143,16 +1155,22 @@ export const fetchPermissions = (message) => async (dispatch) => {
   };
 };
 
-export const fetchComments = (message) => async (dispatch) => {
+/**
+ * Fetches comments for an issue. Note that issue descriptions are also
+ * comments.
+ * @param {IssueRef} issueRef
+ * @return {function(function): Promise<void>}
+ */
+export const fetchComments = (issueRef) => async (dispatch) => {
   dispatch({type: FETCH_COMMENTS_START});
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'ListComments', message);
+        'monorail.Issues', 'ListComments', {issueRef});
 
     dispatch({type: FETCH_COMMENTS_SUCCESS, comments: resp.comments});
     dispatch(fetchCommentReferences(
-        resp.comments, message.issueRef.projectName));
+        resp.comments, issueRef.projectName));
 
     const commenterRefs = (resp.comments || []).map(
         (comment) => comment.commenter);
@@ -1162,23 +1180,32 @@ export const fetchComments = (message) => async (dispatch) => {
   };
 };
 
-export const fetchIsStarred = (message) => async (dispatch) => {
+/**
+ * Gets whether the logged in user has starred a given issue.
+ * @param {IssueRef} issueRef
+ * @return {function(function): Promise<void>}
+ */
+export const fetchIsStarred = (issueRef) => async (dispatch) => {
   dispatch({type: FETCH_IS_STARRED_START});
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'IsIssueStarred', message,
+        'monorail.Issues', 'IsIssueStarred', {issueRef},
     );
 
     dispatch({
       type: FETCH_IS_STARRED_SUCCESS,
       starred: resp.isStarred,
-      issueRef: message.issueRef,
+      issueRef: issueRef,
     });
   } catch (error) {
     dispatch({type: FETCH_IS_STARRED_FAILURE, error});
   };
 };
 
+/**
+ * Fetch all of a logged in user's starred issues.
+ * @return {function(function): Promise<void>}
+ */
 export const fetchStarredIssues = () => async (dispatch) => {
   dispatch({type: FETCH_ISSUES_STARRED_START});
 
@@ -1193,6 +1220,12 @@ export const fetchStarredIssues = () => async (dispatch) => {
   };
 };
 
+/**
+ * Stars or unstars an issue.
+ * @param {IssueRef} issueRef The issue to star.
+ * @param {boolean} starred Whether to star or unstar.
+ * @return {function(function): Promise<void>}
+ */
 export const star = (issueRef, starred) => async (dispatch) => {
   const requestKey = issueRefToString(issueRef);
 
@@ -1216,12 +1249,19 @@ export const star = (issueRef, starred) => async (dispatch) => {
   }
 };
 
-export const presubmit = (message) => async (dispatch) => {
+/**
+ * Runs a presubmit request to find warnings to show the user before an issue
+ * edit is saved.
+ * @param {IssueRef} issueRef The issue being edited.
+ * @param {IssueDelta} issueDelta The user's in flight changes to the issue.
+ * @return {function(function): Promise<void>}
+ */
+export const presubmit = (issueRef, issueDelta) => async (dispatch) => {
   dispatch({type: PRESUBMIT_START});
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'PresubmitIssue', message);
+        'monorail.Issues', 'PresubmitIssue', {issueRef, issueDelta});
 
     dispatch({type: PRESUBMIT_SUCCESS, presubmitResponse: resp});
   } catch (error) {
@@ -1229,6 +1269,13 @@ export const presubmit = (message) => async (dispatch) => {
   }
 };
 
+/**
+ * Sends a request to run ML on a user's edits to guess what component
+ * might fit an issue.
+ * @param {string} projectName The project this check is happening in.
+ * @param {string} text Text to run prediction against.
+ * @return {function(function): Promise<void>}
+ */
 export const predictComponent = (projectName, text) => async (dispatch) => {
   dispatch({type: PREDICT_COMPONENT_START});
 
@@ -1257,9 +1304,8 @@ export const updateApproval = (message) => async (dispatch) => {
         'monorail.Issues', 'UpdateApproval', message);
 
     dispatch({type: UPDATE_APPROVAL_SUCCESS, approval, issueRef});
-    const baseMessage = {issueRef};
-    dispatch(fetch(baseMessage));
-    dispatch(fetchComments(baseMessage));
+    dispatch(fetch(issueRef));
+    dispatch(fetchComments(issueRef));
   } catch (error) {
     dispatch({type: UPDATE_APPROVAL_FAILURE, error: error});
   };
@@ -1273,8 +1319,7 @@ export const update = (message) => async (dispatch) => {
         'monorail.Issues', 'UpdateIssue', message);
 
     dispatch({type: UPDATE_SUCCESS, issue: resp.issue});
-    const fetchCommentsMessage = {issueRef: message.issueRef};
-    dispatch(fetchComments(fetchCommentsMessage));
+    dispatch(fetchComments(message.issueRef));
     dispatch(fetchRelatedIssues(resp.issue));
     dispatch(fetchReferencedUsers(resp.issue));
   } catch (error) {
@@ -1282,15 +1327,28 @@ export const update = (message) => async (dispatch) => {
   };
 };
 
-export const convert = (message) => async (dispatch) => {
+/**
+ * Converts an issue from one template to another. This is used for changing
+ * launch issues.
+ * @param {IssueRef} issueRef
+ * @param {Object} options
+ * @param {string=} options.templateName
+ * @param {string=} options.commentContent
+ * @param {boolean=} options.sendEmail
+ * @return {function(function): Promise<void>}
+ */
+export const convert = (issueRef, {templateName = '',
+  commentContent = '', sendEmail = true},
+) => async (dispatch) => {
   dispatch({type: CONVERT_START});
 
   try {
     const resp = await prpcClient.call(
-        'monorail.Issues', 'ConvertIssueApprovalsTemplate', message);
+        'monorail.Issues', 'ConvertIssueApprovalsTemplate',
+        {issueRef, templateName, commentContent, sendEmail});
 
     dispatch({type: CONVERT_SUCCESS, issue: resp.issue});
-    const fetchCommentsMessage = {issueRef: message.issueRef};
+    const fetchCommentsMessage = {issueRef};
     dispatch(fetchComments(fetchCommentsMessage));
   } catch (error) {
     dispatch({type: CONVERT_FAILURE, error: error});

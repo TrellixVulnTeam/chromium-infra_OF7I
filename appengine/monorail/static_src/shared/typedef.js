@@ -235,6 +235,29 @@
  */
 
 /**
+ * A IssueDelta Object returned by the pRPC API issue_objects.proto.
+ *
+ * @typedef {Object} IssueDelta
+ * @property {string=} status
+ * @property {UserRef=} ownerRef
+ * @property {Array<UserRef>=} ccRefsAdd
+ * @property {Array<UserRef>=} ccRefsRemove
+ * @property {Array<ComponentRef>=} compRefsAdd
+ * @property {Array<ComponentRef>=} compRefsRemove
+ * @property {Array<LabelRef>=} labelRefsAdd
+ * @property {Array<LabelRef>=} labelRefsRemove
+ * @property {Array<FieldValue>=} fieldValsAdd
+ * @property {Array<FieldValue>=} fieldValsRemove
+ * @property {Array<FieldRef>=} fieldsClear
+ * @property {Array<IssueRef>=} blockedOnRefsAdd
+ * @property {Array<IssueRef>=} blockedOnRefsRemove
+ * @property {Array<IssueRef>=} blockingRefsAdd
+ * @property {Array<IssueRef>=} blockingRefsRemove
+ * @property {IssueRef=} mergedIntoRef
+ * @property {string=} summary
+ */
+
+/**
  * An PhaseDef Object returned by the pRPC API issue_objects.proto.
  *
  * @typedef {Object} PhaseDef

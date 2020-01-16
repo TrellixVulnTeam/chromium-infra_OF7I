@@ -19,6 +19,7 @@ import 'elements/framework/mr-code-font-toggle/mr-code-font-toggle.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import {ISSUE_EDIT_PERMISSION, ISSUE_DELETE_PERMISSION,
   ISSUE_FLAGSPAM_PERMISSION} from 'shared/permissions.js';
+import {issueToIssueRef} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 const DELETE_ISSUE_CONFIRMATION_NOTICE = `\
@@ -266,6 +267,10 @@ export class MrIssueHeader extends connectStore(LitElement) {
     return editOptions.concat(riskyOptions);
   }
 
+  /**
+   * Marks an issue as either spam or not spam based on whether the issue
+   * was spam.
+   */
   _markIssue() {
     prpcClient.call('monorail.Issues', 'FlagIssues', {
       issueRefs: [{
@@ -274,37 +279,32 @@ export class MrIssueHeader extends connectStore(LitElement) {
       }],
       flag: !this.issue.isSpam,
     }).then(() => {
-      const message = {
-        issueRef: {
-          projectName: this.issue.projectName,
-          localId: this.issue.localId,
-        },
-      };
-      store.dispatch(issue.fetch(message));
+      store.dispatch(issue.fetch({
+        projectName: this.issue.projectName,
+        localId: this.issue.localId,
+      }));
     });
   }
 
+  /**
+   * Deletes an issue.
+   */
   _deleteIssue() {
     const ok = confirm(DELETE_ISSUE_CONFIRMATION_NOTICE);
     if (ok) {
+      const issueRef = issueToIssueRef(this.issue);
       prpcClient.call('monorail.Issues', 'DeleteIssue', {
-        issueRef: {
-          projectName: this.issue.projectName,
-          localId: this.issue.localId,
-        },
+        issueRef,
         delete: true,
       }).then(() => {
-        const message = {
-          issueRef: {
-            projectName: this.issue.projectName,
-            localId: this.issue.localId,
-          },
-        };
-        store.dispatch(issue.fetch(message));
+        store.dispatch(issue.fetch(issueRef));
       });
     }
   }
 
+  /**
+   * Launches the dialog to edit an issue's description.
+   */
   _openEditDescription() {
     this.dispatchEvent(new CustomEvent('open-dialog', {
       bubbles: true,

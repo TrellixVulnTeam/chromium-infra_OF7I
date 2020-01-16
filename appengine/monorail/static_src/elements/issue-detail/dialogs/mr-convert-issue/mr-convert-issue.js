@@ -154,14 +154,19 @@ export class MrConvertIssue extends connectStore(LitElement) {
     dialog.close();
   }
 
+  /**
+   * Resets the user's input.
+   */
   reset() {
     this.shadowRoot.querySelector('#convertIssueForm').reset();
   }
 
+  /**
+   * Dispatches a Redux action to convert the issue to a new template.
+   */
   save() {
     const commentContent = this.shadowRoot.querySelector('#commentContent');
-    store.dispatch(issue.convert({
-      issueRef: this.issueRef,
+    store.dispatch(issue.convert(this.issueRef, {
       templateName: this.selectedTemplate,
       commentContent: commentContent.value,
       sendEmail: this.sendEmail,

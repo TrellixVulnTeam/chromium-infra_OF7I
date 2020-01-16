@@ -136,6 +136,9 @@ export class MrAttachment extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * Deletes a given attachment in a comment.
+   */
   _deleteAttachment() {
     const issueRef = {
       projectName: this.projectName,
@@ -152,7 +155,7 @@ export class MrAttachment extends connectStore(LitElement) {
         });
 
     promise.then(() => {
-      store.dispatch(issue.fetchComments({issueRef}));
+      store.dispatch(issue.fetchComments(issueRef));
     }, (error) => {
       console.log('Failed to (un)delete attachment', error);
     });
