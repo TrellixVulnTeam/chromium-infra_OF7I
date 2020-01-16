@@ -771,6 +771,12 @@ def ProcessBuildForFlakes(task_param):
 
   def CreateFlakes(flake_info):
     for step_ui_name, tests in flake_info.iteritems():
+      # Don't accept the flake data for a step if there are too many flakes to
+      # avoid noises because it's most likely indicating that there is a bug in
+      # the CL instead of actual flakes.
+      if len(tests) > 100:
+        continue
+
       # Uses the start time of a step as the flake happen time.
       step_start_time, _ = step_util.GetStepStartAndEndTime(
           build_pb, step_ui_name)

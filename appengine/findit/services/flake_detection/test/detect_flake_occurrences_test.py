@@ -836,6 +836,67 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
   @mock.patch.object(Flake, 'GetTestLabelName')
   @mock.patch.object(buildbucket_client, 'GetV2Build')
   @mock.patch.object(step_util, 'GetStepLogFromBuildObject')
+  def testProcessBuildForFlakesWithTooManyFlakes(
+      self, mock_metadata, mock_build, mock_normalized_test_name,
+      mock_lable_name, *_):
+    flake_type_enum = FlakeType.CQ_FALSE_REJECTION
+    build_id = 123
+    luci_project = 'luci_project'
+    luci_bucket = 'luci_bucket'
+    luci_builder = 'luci_builder'
+    legacy_master_name = 'legacy_master_name'
+    start_time = datetime(2019, 3, 6)
+    end_time = datetime(2019, 3, 6, 0, 0, 10)
+
+    findit_step = Step()
+    findit_step.name = 'FindIt Flakiness'
+    step1 = Step()
+    step1.name = 'step1 (with patch)'
+    step1.start_time.FromDatetime(start_time)
+    step1.end_time.FromDatetime(end_time)
+    builder = BuilderID(
+        project=luci_project,
+        bucket=luci_bucket,
+        builder=luci_builder,
+    )
+    build = Build(id=build_id, builder=builder, number=build_id)
+    build.steps.extend([findit_step, step1])
+    build.input.properties['mastername'] = legacy_master_name
+    build.input.properties['patch_project'] = 'chromium/src'
+    mock_change = build.input.gerrit_changes.add()
+    mock_change.host = 'mock.gerrit.host'
+    mock_change.change = 12345
+    mock_change.patchset = 1
+    mock_build.return_value = build
+
+    def _MockTestName(test_name, _step_ui_name):  # pylint: disable=unused-argument
+      return test_name
+
+    mock_normalized_test_name.side_effect = _MockTestName
+    mock_lable_name.side_effect = _MockTestName
+
+    flakiness_metadata = {
+        'Failing With Patch Tests That Caused Build Failure': {
+            'step1 (with patch)': ['t%d' % i for i in range(1, 400)]
+        },
+        'Step Layer Flakiness': {}
+    }
+    mock_metadata.return_value = flakiness_metadata
+
+    detect_flake_occurrences.ProcessBuildForFlakes(
+        detect_flake_occurrences.DetectFlakesFromFlakyCQBuildParam(
+            build_id=build_id,
+            flake_type_desc=FLAKE_TYPE_DESCRIPTIONS[flake_type_enum]))
+
+    flake1_occurrence_num = FlakeOccurrence.query().count()
+    self.assertEqual(0, flake1_occurrence_num)
+
+  @mock.patch.object(detect_flake_occurrences, '_UpdateFlakeMetadata')
+  @mock.patch.object(Flake, 'NormalizeStepName', return_value='step1')
+  @mock.patch.object(Flake, 'NormalizeTestName')
+  @mock.patch.object(Flake, 'GetTestLabelName')
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
+  @mock.patch.object(step_util, 'GetStepLogFromBuildObject')
   def testProcessBuildForSkippedFlakes(self, mock_metadata, mock_build,
                                        mock_normalized_test_name,
                                        mock_lable_name, *_):
