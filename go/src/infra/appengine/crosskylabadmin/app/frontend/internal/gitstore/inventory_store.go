@@ -74,7 +74,7 @@ func (e emptyError) Error() string {
 func (g *InventoryStore) commitInfrastructure(ctx context.Context, changed map[string]string, toDelete map[string]bool, path string) error {
 	is, err := inventory.WriteInfrastructureToString(g.Infrastructure)
 	if err != nil {
-		return errors.Annotate(err, "inventory store commit").Err()
+		return errors.Annotate(err, "InventoryStore::commitInfrastructure: inventory store commit").Err()
 	}
 	if is != g.latestFiles[path] {
 		changed[path] = is
@@ -92,7 +92,7 @@ func (g *InventoryStore) commitDuts(ctx context.Context, changed map[string]stri
 		}
 		ls, err := inventory.WriteLabToString(oneDutLab)
 		if err != nil {
-			return errors.Annotate(err, "inventory store commit").Err()
+			return errors.Annotate(err, "InventoryStore::commitDuts: inventory store commit").Err()
 		}
 		if ls != g.latestFiles[p] {
 			changed[p] = ls
@@ -136,12 +136,12 @@ func (g *InventoryStore) commitAll(ctx context.Context, reason string) (string, 
 
 	cn, err := commitFileContents(ctx, g.gerritC, ic.Project, ic.Branch, g.latestSHA1, reason, changed)
 	if err != nil {
-		return "", errors.Annotate(err, "inventory store commit").Err()
+		return "", errors.Annotate(err, "InventoryStore::commitAll: inventory store commit: commitFileContents: ").Err()
 	}
 
 	u, err := changeURL(ic.GerritHost, ic.Project, cn)
 	if err != nil {
-		return "", errors.Annotate(err, "inventory store commit").Err()
+		return "", errors.Annotate(err, "InventoryStore::commitAll: inventory store commit: changeURL: ").Err()
 	}
 
 	// Successful commit implies our refreshed data is not longer current, so
@@ -186,14 +186,14 @@ func (g *InventoryStore) Commit(ctx context.Context, reason string) (string, err
 	}
 
 	if g.latestSHA1 == "" {
-		return "", errors.New("can not commit invalid store")
+		return "", errors.New("InventoryStore::Commit: can not commit invalid store ")
 	}
 
 	changed := make(map[string]string)
 
 	ls, err := inventory.WriteLabToString(g.Lab)
 	if err != nil {
-		return "", errors.Annotate(err, "inventory store commit").Err()
+		return "", errors.Annotate(err, "InventoryStore::Commit: inventory store commit: write lab to string: ").Err()
 	}
 	if ls != g.latestFiles[ic.LabDataPath] {
 		changed[ic.LabDataPath] = ls
@@ -201,24 +201,24 @@ func (g *InventoryStore) Commit(ctx context.Context, reason string) (string, err
 
 	is, err := inventory.WriteInfrastructureToString(g.Infrastructure)
 	if err != nil {
-		return "", errors.Annotate(err, "inventory store commit").Err()
+		return "", errors.Annotate(err, "InventoryStore::Commit: inventory store commit: write infrastructure to string: ").Err()
 	}
 	if is != g.latestFiles[ic.InfrastructureDataPath] {
 		changed[ic.InfrastructureDataPath] = is
 	}
 
 	if len(changed) == 0 {
-		return "", emptyError{errors.New("inventory store commit: nothing to commit")}
+		return "", emptyError{errors.New("InventoryStore::Commit: inventory store commit: nothing to commit")}
 	}
 
 	cn, err := commitFileContents(ctx, g.gerritC, ic.Project, ic.Branch, g.latestSHA1, reason, changed)
 	if err != nil {
-		return "", errors.Annotate(err, "inventory store commit").Err()
+		return "", errors.Annotate(err, "InventoryStore::Commit: inventory store commit: commitFileContents: ").Err()
 	}
 
 	u, err := changeURL(ic.GerritHost, ic.Project, cn)
 	if err != nil {
-		return "", errors.Annotate(err, "inventory store commit").Err()
+		return "", errors.Annotate(err, "InventoryStore::Commit: inventory store commit: changeURL: ").Err()
 	}
 
 	// Successful commit implies our refreshed data is not longer current, so
