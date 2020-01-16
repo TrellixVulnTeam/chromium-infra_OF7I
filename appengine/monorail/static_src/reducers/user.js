@@ -182,6 +182,13 @@ export const projects = createSelector(projectsPerUser, userRef,
     (projectsMap, userRef) => projectsMap.get(userRefToId(userRef)) || {});
 
 // Action Creators
+/**
+ * Fetches the data required to view the logged in user.
+ * @param {string} displayName The display name of the logged in user. Note that
+ *   while usernames may be hidden for users in Monorail, the logged in user
+ *   will always be able to view their own name.
+ * @return {function(function): Promise<void>}
+ */
 export const fetch = (displayName) => async (dispatch) => {
   dispatch({type: FETCH_START});
 
@@ -264,8 +271,7 @@ export const fetchPrefs = () => async (dispatch) => {
  *
  * @param {Object} newPrefs
  * @param {boolean} saveChanges
- *
- * @return {Function}
+ * @return {function(function): Promise<void>}
  */
 export const setPrefs = (newPrefs, saveChanges = true) => async (dispatch) => {
   if (!saveChanges) {

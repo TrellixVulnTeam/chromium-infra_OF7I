@@ -33,7 +33,7 @@ module.exports = function(config) {
           'Chart',
           // TODO(ehmaldonado): Remove once the old autocomplete code is
           // deprecated.
-          'TKR_fetchOptions',
+          'TKR_populateAutocomplete',
           // All of the below are necessary for loading gapi.js.
           'gapi',
           '__gapiLoadPromise',

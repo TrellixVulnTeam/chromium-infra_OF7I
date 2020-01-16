@@ -367,11 +367,6 @@ export class MrApp extends connectStore(LitElement) {
     store.dispatch(project.select(ctx.params.project));
     store.dispatch(project.fetch(ctx.params.project));
 
-    // TODO(crbug.com/monorail/5828): Remove this once the old autocomplete
-    // code is deprecated.
-    // eslint-disable-next-line new-cap
-    window.TKR_fetchOptions(ctx.params.project);
-
     next();
   }
 

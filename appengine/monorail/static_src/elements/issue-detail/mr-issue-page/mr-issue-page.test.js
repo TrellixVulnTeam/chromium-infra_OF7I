@@ -31,14 +31,14 @@ describe('mr-issue-page', () => {
     document.body.appendChild(element);
     sinon.stub(prpcClient, 'call');
     // TODO(ehmaldonado): Remove once the old autocomplete code is deprecated.
-    window.TKR_fetchOptions = () => {};
+    window.TKR_populateAutocomplete = () => {};
   });
 
   afterEach(() => {
     document.body.removeChild(element);
     prpcClient.call.restore();
     // TODO(ehmaldonado): Remove once the old autocomplete code is deprecated.
-    window.TKR_fetchOptions = undefined;
+    window.TKR_populateAutocomplete = undefined;
   });
 
   it('initializes', () => {

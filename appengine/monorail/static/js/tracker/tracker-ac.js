@@ -118,7 +118,7 @@ let TKR_autoCompleteStore;
 /**
  * An array of autocomplete stores used for user-type custom fields.
  */
-let TKR_userAutocompleteStores = [];
+const TKR_userAutocompleteStores = [];
 
 
 /**
@@ -168,11 +168,11 @@ function TKR_acSubstituteWithComma(inputValue, caret, completable, completion) {
  */
 function TKR_fullComplete(prefix, labelDefs) {
   if (!prefix.startsWith('*')) return null;
-  let out = [];
+  const out = [];
   for (let i = 0; i < labelDefs.length; i++) {
     out.push(new _AC_Completion(labelDefs[i].name,
-      labelDefs[i].name,
-      labelDefs[i].doc));
+        labelDefs[i].name,
+        labelDefs[i].doc));
   }
   return out;
 }
@@ -191,26 +191,26 @@ function TKR_fullComplete(prefix, labelDefs) {
  */
 function TKR_openClosedComplete(prefix, openStatusDefs, closedStatusDefs) {
   if (!prefix.startsWith('*')) return null;
-  let out = [];
+  const out = [];
   out.push({heading: 'Open Statuses:'}); // TODO: i18n
   for (var i = 0; i < openStatusDefs.length; i++) {
     out.push(new _AC_Completion(openStatusDefs[i].name,
-      openStatusDefs[i].name,
-      openStatusDefs[i].doc));
+        openStatusDefs[i].name,
+        openStatusDefs[i].doc));
   }
   out.push({heading: 'Closed Statuses:'}); // TODO: i18n
   for (var i = 0; i < closedStatusDefs.length; i++) {
     out.push(new _AC_Completion(closedStatusDefs[i].name,
-      closedStatusDefs[i].name,
-      closedStatusDefs[i].doc));
+        closedStatusDefs[i].name,
+        closedStatusDefs[i].doc));
   }
   return out;
 }
 
 
 function TKR_setUpHotlistsStore(hotlists) {
-  let docdict = {};
-  let ref_strs = [];
+  const docdict = {};
+  const ref_strs = [];
 
   for (let i = 0; i < hotlists.length; i++) {
     ref_strs.push(hotlists[i]['ref_str']);
@@ -243,7 +243,7 @@ let TKR_statusWords = [];
  * docstring.
  */
 function TKR_setUpStatusStore(openStatusDefs, closedStatusDefs) {
-  let docdict = {};
+  const docdict = {};
   TKR_statusWords = [];
   for (var i = 0; i < openStatusDefs.length; i++) {
     var status = openStatusDefs[i];
@@ -271,9 +271,9 @@ function TKR_setUpStatusStore(openStatusDefs, closedStatusDefs) {
   };
 
   TKR_statusStore.completions = function(prefix, tofilter) {
-    let fullList = TKR_openClosedComplete(prefix,
-      openStatusDefs,
-      closedStatusDefs);
+    const fullList = TKR_openClosedComplete(prefix,
+        openStatusDefs,
+        closedStatusDefs);
     if (fullList) return fullList;
     return _AC_SimpleStore.prototype.completions.call(this, prefix, tofilter);
   };
@@ -295,15 +295,15 @@ function TKR_addACItem(items, docDict, item, docStr) {
  * Adds a group of three items related to a date field.
  */
 function TKR_addACDateItems(items, docDict, fieldName, humanReadable) {
-  let today = new Date();
-  let todayStr = (today.getFullYear() + '-' + (today.getMonth() + 1) + '-' +
+  const today = new Date();
+  const todayStr = (today.getFullYear() + '-' + (today.getMonth() + 1) + '-' +
     today.getDate());
   TKR_addACItem(items, docDict, fieldName + '>today-1',
-    humanReadable + ' within the last N days');
+      humanReadable + ' within the last N days');
   TKR_addACItem(items, docDict, fieldName + '>' + todayStr,
-    humanReadable + ' after the specified date');
+      humanReadable + ' after the specified date');
   TKR_addACItem(items, docDict, fieldName + '<today-1',
-    humanReadable + ' more than N days ago');
+      humanReadable + ' more than N days ago');
 }
 
 /**
@@ -314,10 +314,10 @@ function TKR_addACDateItems(items, docDict, fieldName, humanReadable) {
  * search terms.
  */
 function TKR_addACItemList(
-  items, docDict, searchOp, acDefs, opt_old, opt_new) {
+    items, docDict, searchOp, acDefs, opt_old, opt_new) {
   let item;
   for (let i = 0; i < acDefs.length; i++) {
-    let nameAndDoc = acDefs[i];
+    const nameAndDoc = acDefs[i];
     item = searchOp + nameAndDoc.name;
     if (opt_old) {
       // Preserve any leading minus-sign.
@@ -337,17 +337,17 @@ function TKR_addACItemList(
  * all normal options.
  */
 function TKR_setUpSearchStore(
-  labelDefs, memberDefs, openDefs, closedDefs, componentDefs, fieldDefs,
-  indMemberDefs) {
+    labelDefs, memberDefs, openDefs, closedDefs, componentDefs, fieldDefs,
+    indMemberDefs) {
   let searchWords = [];
-  let searchWordsNeg = [];
-  let docDict = {};
+  const searchWordsNeg = [];
+  const docDict = {};
 
   // Treat Key-Value and OneWord labels separately.
-  let keyValueLabelDefs = [];
-  let oneWordLabelDefs = [];
+  const keyValueLabelDefs = [];
+  const oneWordLabelDefs = [];
   for (var i = 0; i < labelDefs.length; i++) {
-    let nameAndDoc = labelDefs[i];
+    const nameAndDoc = labelDefs[i];
     if (nameAndDoc.name.indexOf('-') == -1) {
       oneWordLabelDefs.push(nameAndDoc);
     } else {
@@ -357,27 +357,27 @@ function TKR_setUpSearchStore(
 
   // Autocomplete for custom fields.
   for (i = 0; i < fieldDefs.length; i++) {
-    let fieldName = fieldDefs[i]['field_name'];
-    let fieldType = fieldDefs[i]['field_type'];
+    const fieldName = fieldDefs[i]['field_name'];
+    const fieldType = fieldDefs[i]['field_type'];
     if (fieldType == 'ENUM_TYPE') {
-      let choices = fieldDefs[i]['choices'];
+      const choices = fieldDefs[i]['choices'];
       TKR_addACItemList(searchWords, docDict, fieldName + '=', choices);
       TKR_addACItemList(searchWordsNeg, docDict, '-' + fieldName + '=', choices);
     } else if (fieldType == 'STR_TYPE') {
       TKR_addACItem(searchWords, docDict, fieldName + ':',
-        fieldDefs[i]['docstring']);
+          fieldDefs[i]['docstring']);
     } else if (fieldType == 'DATE_TYPE') {
       TKR_addACItem(searchWords, docDict, fieldName + ':',
-        fieldDefs[i]['docstring']);
+          fieldDefs[i]['docstring']);
       TKR_addACDateItems(searchWords, docDict, fieldName, fieldName);
     } else {
       TKR_addACItem(searchWords, docDict, fieldName + '=',
-        fieldDefs[i]['docstring']);
+          fieldDefs[i]['docstring']);
     }
     TKR_addACItem(searchWords, docDict, 'has:' + fieldName,
-      'Issues with any ' + fieldName + ' value');
+        'Issues with any ' + fieldName + ' value');
     TKR_addACItem(searchWordsNeg, docDict, '-has:' + fieldName,
-      'Issues with no ' + fieldName + ' value');
+        'Issues with no ' + fieldName + ' value');
   }
 
   // Add suggestions with "me" first, because otherwise they may be impossible
@@ -391,9 +391,9 @@ function TKR_setUpSearchStore(
     TKR_addACItem(searchWords, docDict, 'reporter:me', 'Issues I reported');
     TKR_addACItem(searchWordsNeg, docDict, '-reporter:me', 'Issues reported by others');
     TKR_addACItem(searchWords, docDict, 'commentby:me',
-      'Issues that I commented on');
+        'Issues that I commented on');
     TKR_addACItem(searchWordsNeg, docDict, '-commentby:me',
-      'Issues that I didn\'t comment on');
+        'Issues that I didn\'t comment on');
   }
 
   TKR_addACItemList(searchWords, docDict, '', keyValueLabelDefs, '-', '=');
@@ -404,18 +404,18 @@ function TKR_setUpSearchStore(
   TKR_addACItemList(searchWords, docDict, 'component:', componentDefs);
   TKR_addACItemList(searchWordsNeg, docDict, '-component:', componentDefs);
   TKR_addACItem(searchWords, docDict, 'has:component',
-    'Issues with any components specified');
+      'Issues with any components specified');
   TKR_addACItem(searchWordsNeg, docDict, '-has:component',
-    'Issues with no components specified');
+      'Issues with no components specified');
 
   TKR_addACItemList(searchWords, docDict, 'owner:', indMemberDefs);
   TKR_addACItemList(searchWordsNeg, docDict, '-owner:', indMemberDefs);
   TKR_addACItemList(searchWords, docDict, 'cc:', memberDefs);
   TKR_addACItemList(searchWordsNeg, docDict, '-cc:', memberDefs);
   TKR_addACItem(searchWords, docDict, 'has:cc',
-    'Issues with any cc\'d users');
+      'Issues with any cc\'d users');
   TKR_addACItem(searchWordsNeg, docDict, '-has:cc',
-    'Issues with no cc\'d users');
+      'Issues with no cc\'d users');
   TKR_addACItemList(searchWords, docDict, 'reporter:', memberDefs);
   TKR_addACItemList(searchWordsNeg, docDict, '-reporter:', memberDefs);
   TKR_addACItemList(searchWords, docDict, 'status:', openDefs);
@@ -423,63 +423,63 @@ function TKR_setUpSearchStore(
   TKR_addACItemList(searchWords, docDict, 'status:', closedDefs);
   TKR_addACItemList(searchWordsNeg, docDict, '-status:', closedDefs);
   TKR_addACItem(searchWords, docDict, 'has:status',
-    'Issues with any status');
+      'Issues with any status');
   TKR_addACItem(searchWordsNeg, docDict, '-has:status',
-    'Issues with no status');
+      'Issues with no status');
 
   TKR_addACItem(searchWords, docDict, 'is:blocked',
-    'Issues that are blocked');
+      'Issues that are blocked');
   TKR_addACItem(searchWordsNeg, docDict, '-is:blocked',
-    'Issues that are not blocked');
+      'Issues that are not blocked');
   TKR_addACItem(searchWords, docDict, 'has:blockedon',
-    'Issues that are blocked');
+      'Issues that are blocked');
   TKR_addACItem(searchWordsNeg, docDict, '-has:blockedon',
-    'Issues that are not blocked');
+      'Issues that are not blocked');
   TKR_addACItem(searchWords, docDict, 'has:blocking',
-    'Issues that are blocking other issues');
+      'Issues that are blocking other issues');
   TKR_addACItem(searchWordsNeg, docDict, '-has:blocking',
-    'Issues that are not blocking other issues');
+      'Issues that are not blocking other issues');
   TKR_addACItem(searchWords, docDict, 'has:mergedinto',
-    'Issues that were merged into other issues');
+      'Issues that were merged into other issues');
   TKR_addACItem(searchWordsNeg, docDict, '-has:mergedinto',
-    'Issues that were not merged into other issues');
+      'Issues that were not merged into other issues');
 
   TKR_addACItem(searchWords, docDict, 'is:starred',
-    'Starred by me');
+      'Starred by me');
   TKR_addACItem(searchWordsNeg, docDict, '-is:starred',
-    'Not starred by me');
+      'Not starred by me');
   TKR_addACItem(searchWords, docDict, 'stars>10',
-    'More than 10 stars');
+      'More than 10 stars');
   TKR_addACItem(searchWords, docDict, 'stars>100',
-    'More than 100 stars');
+      'More than 100 stars');
   TKR_addACItem(searchWords, docDict, 'summary:',
-    'Search within the summary field');
+      'Search within the summary field');
 
   TKR_addACItemList(searchWords, docDict, 'commentby:', memberDefs);
   TKR_addACItem(searchWords, docDict, 'attachment:',
-    'Search within attachment names');
+      'Search within attachment names');
   TKR_addACItem(searchWords, docDict, 'attachments>5',
-    'Has more than 5 attachments');
+      'Has more than 5 attachments');
   TKR_addACItem(searchWords, docDict, 'is:open', 'Issues that are open');
   TKR_addACItem(searchWordsNeg, docDict, '-is:open', 'Issues that are closed');
   TKR_addACItem(searchWords, docDict, 'has:owner',
-    'Issues with some owner');
+      'Issues with some owner');
   TKR_addACItem(searchWordsNeg, docDict, '-has:owner',
-    'Issues with no owner');
+      'Issues with no owner');
   TKR_addACItem(searchWords, docDict, 'has:attachments',
-    'Issues with some attachments');
+      'Issues with some attachments');
   TKR_addACItem(searchWords, docDict, 'id:1,2,3',
-    'Match only the specified issues');
+      'Match only the specified issues');
   TKR_addACItem(searchWords, docDict, 'id<100000',
-    'Issues with IDs under 100,000');
+      'Issues with IDs under 100,000');
   TKR_addACItem(searchWords, docDict, 'blockedon:1',
-    'Blocked on the specified issues');
+      'Blocked on the specified issues');
   TKR_addACItem(searchWords, docDict, 'blocking:1',
-    'Blocking the specified issues');
+      'Blocking the specified issues');
   TKR_addACItem(searchWords, docDict, 'mergedinto:1',
-    'Merged into the specified issues');
+      'Merged into the specified issues');
   TKR_addACItem(searchWords, docDict, 'is:ownerbouncing',
-    'Issues with owners we cannot contact');
+      'Issues with owners we cannot contact');
   TKR_addACItem(searchWords, docDict, 'is:spam', 'Issues classified as spam');
   // We do not suggest -is:spam because it is implicit.
 
@@ -490,7 +490,7 @@ function TKR_setUpSearchStore(
   TKR_addACDateItems(searchWords, docDict, 'ownerlastvisit', 'Owner last visit');
   TKR_addACDateItems(searchWords, docDict, 'statusmodified', 'Status field modified');
   TKR_addACDateItems(
-    searchWords, docDict, 'componentmodified', 'Component field modified');
+      searchWords, docDict, 'componentmodified', 'Component field modified');
 
   TKR_projectQueryStore = new _AC_SimpleStore(searchWords, docDict);
 
@@ -531,15 +531,15 @@ function TKR_setUpSearchStore(
  * autocomplete menu.
  */
 function TKR_setUpQuickEditStore(
-  labelDefs, memberDefs, openDefs, closedDefs, indMemberDefs) {
-  let qeWords = [];
-  let docDict = {};
+    labelDefs, memberDefs, openDefs, closedDefs, indMemberDefs) {
+  const qeWords = [];
+  const docDict = {};
 
   // Treat Key-Value and OneWord labels separately.
-  let keyValueLabelDefs = [];
-  let oneWordLabelDefs = [];
+  const keyValueLabelDefs = [];
+  const oneWordLabelDefs = [];
   for (let i = 0; i < labelDefs.length; i++) {
-    let nameAndDoc = labelDefs[i];
+    const nameAndDoc = labelDefs[i];
     if (nameAndDoc.name.indexOf('-') == -1) {
       oneWordLabelDefs.push(nameAndDoc);
     } else {
@@ -592,8 +592,8 @@ function TKR_setUpQuickEditStore(
  */
 function TKR_setUpCustomPermissionsStore(customPermissions) {
   customPermissions = customPermissions || [];
-  let permWords = ['View', 'EditIssue', 'AddIssueComment', 'DeleteIssue'];
-  let docdict = {
+  const permWords = ['View', 'EditIssue', 'AddIssueComment', 'DeleteIssue'];
+  const docdict = {
     'View': '', 'EditIssue': '', 'AddIssueComment': '', 'DeleteIssue': ''};
   for (let i = 0; i < customPermissions.length; i++) {
     permWords.push(customPermissions[i]);
@@ -621,9 +621,9 @@ function TKR_setUpCustomPermissionsStore(customPermissions) {
  * @param {Array} nonGroupMemberDefs an array of member objects who are not groups.
  */
 function TKR_setUpMemberStore(memberDefs, nonGroupMemberDefs) {
-  let memberWords = [];
-  let indMemberWords = [];
-  let docdict = {};
+  const memberWords = [];
+  const indMemberWords = [];
+  const docdict = {};
 
   memberDefs.forEach((memberDef) => {
     memberWords.push(memberDef.name);
@@ -636,7 +636,7 @@ function TKR_setUpMemberStore(memberDefs, nonGroupMemberDefs) {
   TKR_memberListStore = new _AC_SimpleStore(memberWords, docdict);
 
   TKR_memberListStore.completions = function(prefix, tofilter) {
-    let fullList = TKR_fullComplete(prefix, memberDefs);
+    const fullList = TKR_fullComplete(prefix, memberDefs);
     if (fullList) return fullList;
     return _AC_SimpleStore.prototype.completions.call(this, prefix, tofilter);
   };
@@ -658,7 +658,7 @@ function TKR_setUpMemberStore(memberDefs, nonGroupMemberDefs) {
   };
 
   TKR_ownerStore.completions = function(prefix, tofilter) {
-    let fullList = TKR_fullComplete(prefix, nonGroupMemberDefs);
+    const fullList = TKR_fullComplete(prefix, nonGroupMemberDefs);
     if (fullList) return fullList;
     return _AC_SimpleStore.prototype.completions.call(this, prefix, tofilter);
   };
@@ -682,21 +682,21 @@ function TKR_setUpMemberStore(memberDefs, nonGroupMemberDefs) {
 function TKR_setUpUserAutocompleteStores(fieldDefs) {
   fieldDefs.forEach((fieldDef) => {
     if (fieldDef.qualifiedMembers) {
-      let us = makeOneUserAutocompleteStore(fieldDef);
+      const us = makeOneUserAutocompleteStore(fieldDef);
       TKR_userAutocompleteStores['custom_' + fieldDef['field_id']] = us;
     }
   });
 }
 
 function makeOneUserAutocompleteStore(fieldDef) {
-  let memberWords = [];
-  let docdict = {};
+  const memberWords = [];
+  const docdict = {};
   for (const member of fieldDef.qualifiedMembers) {
     memberWords.push(member.name);
     docdict[member.name] = member.doc;
   }
 
-  let userStore = new _AC_SimpleStore(memberWords, docdict);
+  const userStore = new _AC_SimpleStore(memberWords, docdict);
   userStore.commaCompletes = false;
 
   userStore.substitute =
@@ -705,7 +705,7 @@ function makeOneUserAutocompleteStore(fieldDef) {
   };
 
   userStore.completions = function(prefix, tofilter) {
-    let fullList = TKR_fullComplete(prefix, fieldDef.qualifiedMembers);
+    const fullList = TKR_fullComplete(prefix, fieldDef.qualifiedMembers);
     if (fullList) return fullList;
     return _AC_SimpleStore.prototype.completions.call(this, prefix, tofilter);
   };
@@ -725,16 +725,16 @@ function makeOneUserAutocompleteStore(fieldDef) {
  * @param {Array} componentDefs An array of definitions of components.
  */
 function TKR_setUpComponentStore(componentDefs) {
-  let componentWords = [];
-  let docdict = {};
+  const componentWords = [];
+  const docdict = {};
   for (let i = 0; i < componentDefs.length; i++) {
-    let component = componentDefs[i];
+    const component = componentDefs[i];
     componentWords.push(component.name);
     docdict[component.name] = component.doc;
   }
 
   const completions = function(prefix, tofilter) {
-    let fullList = TKR_fullComplete(prefix, componentDefs);
+    const fullList = TKR_fullComplete(prefix, componentDefs);
     if (fullList) return fullList;
     return _AC_SimpleStore.prototype.completions.call(this, prefix, tofilter);
   };
@@ -780,9 +780,9 @@ function TKR_setUpLabelStore(labelDefs) {
   TKR_labelWords = [];
   const TKR_labelPrefixes = [];
   const labelPrefs = new Set();
-  let docdict = {};
+  const docdict = {};
   for (let i = 0; i < labelDefs.length; i++) {
-    let label = labelDefs[i];
+    const label = labelDefs[i];
     TKR_labelWords.push(label.name);
     TKR_labelPrefixes.push(label.name.split('-')[0]);
     docdict[label.name] = label.doc;
@@ -817,13 +817,13 @@ function TKR_setUpLabelStore(labelDefs) {
     }
     let start = 0;
     for (let i = cursor; --i >= 0;) {
-      let c = inputValue.charAt(i);
+      const c = inputValue.charAt(i);
       if (c === ' ' || c === ',') {
         start = i + 1;
         break;
       }
     }
-    let questionPos = inputValue.indexOf('?');
+    const questionPos = inputValue.indexOf('?');
     if (questionPos >= 0) {
       // Ignore any "?" character and anything after it.
       inputValue = inputValue.substring(start, questionPos);
@@ -832,7 +832,7 @@ function TKR_setUpLabelStore(labelDefs) {
     if (inputValue.lastIndexOf('-') > 0 && !ac_everTyped) {
       // Act like a menu: offer all alternative values for the same prefix.
       result = inputValue.substring(
-        start, Math.min(cursor, inputValue.lastIndexOf('-')));
+          start, Math.min(cursor, inputValue.lastIndexOf('-')));
     }
     if (inputValue.startsWith('Restrict-') && !ac_everTyped) {
       // If user is in the middle of 2nd part, use that to narrow the choices.
@@ -840,7 +840,7 @@ function TKR_setUpLabelStore(labelDefs) {
       // If they completed 2nd part, give all choices matching 2-part prefix.
       if (inputValue.lastIndexOf('-') > 8) {
         result = inputValue.substring(
-          start, Math.min(cursor, inputValue.lastIndexOf('-') + 1));
+            start, Math.min(cursor, inputValue.lastIndexOf('-') + 1));
       }
     }
 
@@ -849,10 +849,10 @@ function TKR_setUpLabelStore(labelDefs) {
 
   const computeAvoid = function() {
     const labelTextFields = Array.from(
-      document.querySelectorAll('.labelinput'));
+        document.querySelectorAll('.labelinput'));
     const otherTextFields = labelTextFields.filter(
-      tf => (tf !== ac_focusedInput && tf.value));
-    return otherTextFields.map(tf => tf.value);
+        (tf) => (tf !== ac_focusedInput && tf.value));
+    return otherTextFields.map((tf) => tf.value);
   };
 
 
@@ -861,17 +861,17 @@ function TKR_setUpLabelStore(labelDefs) {
       let comps = TKR_fullComplete(prefix, labeldic);
       if (comps === null) {
         comps = _AC_SimpleStore.prototype.completions.call(
-          this, prefix, tofilter);
+            this, prefix, tofilter);
       }
 
       const filteredComps = [];
-      for (let completion of comps) {
+      for (const completion of comps) {
         const completionLower = completion.value.toLowerCase();
         const labelPrefix = completionLower.split('-')[0];
         let alreadyUsed = false;
-        let isExclusive = FindInArray(TKR_exclPrefixes, labelPrefix) !== -1;
+        const isExclusive = FindInArray(TKR_exclPrefixes, labelPrefix) !== -1;
         if (isExclusive) {
-          for (let usedLabel of ac_avoidValues) {
+          for (const usedLabel of ac_avoidValues) {
             if (usedLabel.startsWith(labelPrefix + '-')) {
               alreadyUsed = true;
               break;
@@ -879,7 +879,7 @@ function TKR_setUpLabelStore(labelDefs) {
           }
         }
         if (!alreadyUsed) {
-         filteredComps.push(completion);
+          filteredComps.push(completion);
         }
       }
 
@@ -905,7 +905,7 @@ function TKR_setUpLabelStore(labelDefs) {
  */
 function TKR_setUpAutoCompleteStore(choices) {
   TKR_autoCompleteStore = new _AC_SimpleStore(choices);
-  let choicesDefs = [];
+  const choicesDefs = [];
   for (let i = 0; i < choices.length; ++i) {
     choicesDefs.push({'name': choices[i], 'doc': ''});
   }
@@ -924,17 +924,17 @@ function TKR_setUpAutoCompleteStore(choices) {
     let comps = TKR_fullComplete(prefix, choicesDefs);
     if (comps == null) {
       comps = _AC_SimpleStore.prototype.completions.call(
-        this, prefix, tofilter);
+          this, prefix, tofilter);
     }
 
-    let usedComps = {};
-    let textFields = document.getElementsByTagName('input');
+    const usedComps = {};
+    const textFields = document.getElementsByTagName('input');
     for (var i = 0; i < textFields.length; ++i) {
       if (textFields[i].classList.contains('autocomplete')) {
         usedComps[textFields[i].value] = true;
       }
     }
-    let unusedComps = [];
+    const unusedComps = [];
     for (i = 0; i < comps.length; ++i) {
       if (!usedComps[comps[i].value]) {
         unusedComps.push(comps[i]);
@@ -981,7 +981,7 @@ function TKR_setUpAutoCompleteStore(choices) {
 /**
  * XMLHTTP object used to fetch autocomplete options from the server.
  */
-let TKR_optionsXmlHttp = undefined;
+const TKR_optionsXmlHttp = undefined;
 
 /**
  * Contact the server to fetch the set of autocomplete options for the
@@ -994,12 +994,12 @@ function TKR_fetchUserProjects(multiValue) {
   // Set a request token to prevent XSRF leaking of user project lists.
   const userRefs = [{displayName: window.CS_env.loggedInUserEmail}];
   const userProjectsPromise = window.prpcClient.call(
-    'monorail.Users', 'GetUsersProjects', {userRefs});
+      'monorail.Users', 'GetUsersProjects', {userRefs});
   userProjectsPromise.then((response) => {
     const userProjects = response.usersProjects[0];
     const projects = (userProjects.ownerOf || [])
-      .concat(userProjects.memberOf || [])
-      .concat(userProjects.contributorTo || []);
+        .concat(userProjects.memberOf || [])
+        .concat(userProjects.contributorTo || []);
     projects.sort();
     if (projects) {
       TKR_setUpProjectStore(projects, multiValue);
@@ -1017,8 +1017,8 @@ function TKR_fetchUserProjects(multiValue) {
  *                  multiple values.
  */
 function TKR_setUpProjectStore(projects, multiValue) {
-  let projectsDefs = [];
-  let docdict = {};
+  const projectsDefs = [];
+  const docdict = {};
   for (let i = 0; i < projects.length; ++i) {
     projectsDefs.push({'name': projects[i], 'doc': ''});
     docdict[projects[i]] = '';
@@ -1037,7 +1037,7 @@ function TKR_setUpProjectStore(projects, multiValue) {
   }
 
   TKR_projectStore.completions = function(prefix, tofilter) {
-    let fullList = TKR_fullComplete(prefix, projectsDefs);
+    const fullList = TKR_fullComplete(prefix, projectsDefs);
     if (fullList) return fullList;
     return _AC_SimpleStore.prototype.completions.call(this, prefix, tofilter);
   };
@@ -1046,7 +1046,7 @@ function TKR_setUpProjectStore(projects, multiValue) {
     if (inputValue == '') return '*project';
     if (multiValue) {
       return _AC_SimpleStore.prototype.completable.call(
-        this, inputValue, cursor);
+          this, inputValue, cursor);
     } else {
       return inputValue;
     }
@@ -1056,11 +1056,11 @@ function TKR_setUpProjectStore(projects, multiValue) {
 
 /**
  * Convert the object resulting of a monorail.Projects ListStatuses to
- * the format expected by TKR_fetchOptions.
+ * the format expected by TKR_populateAutocomplete.
  * @param {object} statusesResponse A pRPC ListStatusesResponse object.
  */
 function TKR_convertStatuses(statusesResponse) {
-  let statusDefs = statusesResponse.statusDefs || [];
+  const statusDefs = statusesResponse.statusDefs || [];
   const jsonData = {};
 
   // Split statusDefs into open and closed name-doc objects.
@@ -1088,11 +1088,11 @@ function TKR_convertStatuses(statusesResponse) {
 
 /**
  * Convert the object resulting of a monorail.Projects ListComponents to
- * the format expected by TKR_fetchOptions.
+ * the format expected by TKR_populateAutocomplete.
  * @param {object} componentsResponse A pRPC ListComponentsResponse object.
  */
 function TKR_convertComponents(componentsResponse) {
-  let componentDefs = (componentsResponse.componentDefs || []);
+  const componentDefs = (componentsResponse.componentDefs || []);
   const jsonData = {};
 
   // Filter out deprecated components and normalize to name-doc object.
@@ -1112,19 +1112,30 @@ function TKR_convertComponents(componentsResponse) {
 
 /**
  * Convert the object resulting of a monorail.Projects GetLabelOptions
- * call to the format expected by TKR_fetchOptions.
+ * call to the format expected by TKR_populateAutocomplete.
  * @param {object} labelsResponse A pRPC GetLabelOptionsResponse.
+ * @param {Array<FieldDef>} fieldDefs FieldDefs from a project config, used to
+ *   mask labels that are used to implement custom enum fields.
  */
-function TKR_convertLabels(labelsResponse) {
-  let labelOptions = (labelsResponse.labelOptions || []);
-  let exclusiveLabelPrefixes = (labelsResponse.exclusiveLabelPrefixes || []);
+function TKR_convertLabels(labelsResponse, fieldDefs) {
+  const labelDefs = (labelsResponse.labelDefs || []);
+  const exclusiveLabelPrefixes = (labelsResponse.exclusiveLabelPrefixes || []);
   const jsonData = {};
 
-  jsonData.labels = labelOptions.map(
-    (label) => ({name: label.label, doc: label.docstring}));
+  const maskedLabels = new Set();
+  fieldDefs.forEach((fd) => {
+    if (fd.enumChoices) {
+      fd.enumChoices.forEach(({label}) => {
+        maskedLabels.add(`${fd.fieldRef.fieldName}-${label}`);
+      });
+    }
+  });
+
+  jsonData.labels = labelDefs.filter(({label}) => !maskedLabels.has(label)).map(
+      (label) => ({name: label.label, doc: label.docstring}));
 
   jsonData.excl_prefixes = exclusiveLabelPrefixes.map(
-    (prefix) => prefix.toLowerCase());
+      (prefix) => prefix.toLowerCase());
 
   return jsonData;
 }
@@ -1132,21 +1143,21 @@ function TKR_convertLabels(labelsResponse) {
 
 /**
  * Convert the object resulting of a monorail.Projects GetVisibleMembers
- * call to the format expected by TKR_fetchOptions.
+ * call to the format expected by TKR_populateAutocomplete.
  * @param {object} visibleMembersResponse A pRPC GetVisibleMembersResponse.
  */
 function TKR_convertVisibleMembers(visibleMembersResponse) {
-  let groupRefs = (visibleMembersResponse.groupRefs || []);
-  let userRefs = (visibleMembersResponse.userRefs || []);
+  const groupRefs = (visibleMembersResponse.groupRefs || []);
+  const userRefs = (visibleMembersResponse.userRefs || []);
   const jsonData = {};
 
   const groupEmails = new Set(groupRefs.map(
-    (groupRef) => groupRef.displayName));
+      (groupRef) => groupRef.displayName));
 
   jsonData.memberEmails = userRefs.map(
-    (userRef) => ({name: userRef.displayName}));
+      (userRef) => ({name: userRef.displayName}));
   jsonData.nonGroupEmails = jsonData.memberEmails.filter(
-    (memberEmail) => !groupEmails.has(memberEmail));
+      (memberEmail) => !groupEmails.has(memberEmail));
 
   return jsonData;
 }
@@ -1154,11 +1165,11 @@ function TKR_convertVisibleMembers(visibleMembersResponse) {
 
 /**
  * Convert the object resulting of a monorail.Projects ListFields to
- * the format expected by TKR_fetchOptions.
+ * the format expected by TKR_populateAutocomplete.
  * @param {object} fieldsResponse A pRPC ListFieldsResponse object.
  */
 function TKR_convertFields(fieldsResponse) {
-  let fieldDefs = (fieldsResponse.fieldDefs || []);
+  const fieldDefs = (fieldsResponse.fieldDefs || []);
   const jsonData = {};
 
   jsonData.fields = fieldDefs.map((field) =>
@@ -1168,10 +1179,10 @@ function TKR_convertFields(fieldsResponse) {
       field_type: field.fieldRef.type,
       docstring: field.docstring,
       choices: (field.enumChoices || []).map(
-        (choice) => ({name: choice.label, doc: choice.docstring})),
+          (choice) => ({name: choice.label, doc: choice.docstring})),
       qualifiedMembers: (field.userChoices || []).map(
-        (userRef) => ({name: userRef.displayName})),
-    })
+          (userRef) => ({name: userRef.displayName})),
+    }),
   );
 
   return jsonData;
@@ -1180,7 +1191,7 @@ function TKR_convertFields(fieldsResponse) {
 
 /**
  * Convert the object resulting of a monorail.Features ListHotlistsByUser
- * call to the format expected by TKR_fetchOptions.
+ * call to the format expected by TKR_populateAutocomplete.
  * @param {object} hotlistsResponse A pRPC ListHotlistsByUserResponse object.
  */
 function TKR_convertHotlists(hotlistsResponse) {
@@ -1188,8 +1199,8 @@ function TKR_convertHotlists(hotlistsResponse) {
     return [];
   }
 
-  let seen = new Set();
-  let ambiguousNames = new Set();
+  const seen = new Set();
+  const ambiguousNames = new Set();
 
   hotlistsResponse.hotlists.forEach((hotlist) => {
     if (seen.has(hotlist.name)) {
@@ -1209,98 +1220,24 @@ function TKR_convertHotlists(hotlistsResponse) {
   return hotlists;
 }
 
-
 /**
- * Contact the server to fetch the set of autocomplete options for the
- * current project.  This is done with XMLHTTPRequest because the list
- * could be long, and most of the time, the user will only view an
- * issue not edit it.
- * @param {string} projectName The name of the current project.
+ * Fetch data required for the legacy autocomplete that the SPA does not
+ * otherwise already fetch.
+ * @param {string} projectName
  */
 function TKR_fetchOptions(projectName) {
-  let logger = null;
-  // TODO(jeffcarp): Replace this dependency reliance with ES modules.
-  if (typeof(ClientLogger) === 'function' && typeof(ga) === 'function') {
-    logger = new ClientLogger('autocomplete');
-    logger.logStart('populate-options', 'user-time');
-  }
-
-  const projectRequestMessage = {
-    project_name: projectName};
-
-  const fieldsRequestMessage = {
-    project_name: projectName,
-    include_user_choices: true};
-
   const userRequestMessage = {
     user: {
       display_name: window.CS_env.loggedInUserEmail,
     }};
+  const projectRequestMessage = {
+    project_name: projectName};
 
-  const statusesPromise = window.prpcClient.call(
-    'monorail.Projects', 'ListStatuses', projectRequestMessage);
-  const componentsPromise = window.prpcClient.call(
-    'monorail.Projects', 'ListComponents', projectRequestMessage);
-  const labelsPromise = window.prpcClient.call(
-    'monorail.Projects', 'GetLabelOptions', projectRequestMessage);
-  const visibleMembersPromise = window.prpcClient.call(
-    'monorail.Projects', 'GetVisibleMembers', projectRequestMessage);
-  const fieldsPromise = window.prpcClient.call(
-    'monorail.Projects', 'ListFields', fieldsRequestMessage);
-  const customPermissionsPromise = window.prpcClient.call(
-    'monorail.Projects', 'GetCustomPermissions', projectRequestMessage);
   const hotlistsPromise = window.prpcClient.call(
-    'monorail.Features', 'ListHotlistsByUser', userRequestMessage);
+      'monorail.Features', 'ListHotlistsByUser', userRequestMessage);
 
-  const allPromises = [];
-
-  allPromises.push(
-    statusesPromise.then((statusesResponse) => {
-      const jsonData = TKR_convertStatuses(statusesResponse);
-
-      TKR_setUpStatusStore(jsonData.open, jsonData.closed);
-      TKR_restrict_to_known = jsonData.strict;
-
-      return jsonData;
-    }));
-
-  allPromises.push(
-    componentsPromise.then((componentsResponse) => {
-      const jsonData = TKR_convertComponents(componentsResponse);
-
-      TKR_setUpComponentStore(jsonData.components);
-
-      return jsonData;
-    }));
-
-  allPromises.push(
-    labelsPromise.then((labelsResponse) => {
-      const jsonData = TKR_convertLabels(labelsResponse);
-
-      TKR_exclPrefixes = jsonData.excl_prefixes;
-      TKR_setUpLabelStore(jsonData.labels);
-
-      return jsonData;
-    }));
-
-  allPromises.push(
-    visibleMembersPromise.then((visibleMembersResponse) => {
-      const jsonData = TKR_convertVisibleMembers(visibleMembersResponse);
-
-      TKR_setUpMemberStore(jsonData.memberEmails, jsonData.nonGroupEmails);
-      TKR_prepOwnerField(jsonData.memberEmails);
-
-      return jsonData;
-    }));
-
-  allPromises.push(
-    fieldsPromise.then((fieldsResponse) => {
-      const jsonData = TKR_convertFields(fieldsResponse);
-
-      TKR_setUpUserAutocompleteStores(jsonData.fields);
-
-      return jsonData;
-    }));
+  const customPermissionsPromise = window.prpcClient.call(
+      'monorail.Projects', 'GetCustomPermissions', projectRequestMessage);
 
   // We won't need custom permissions or hotlists later, so there's no need to
   // add them to allPromises.
@@ -1311,30 +1248,52 @@ function TKR_fetchOptions(projectName) {
   hotlistsPromise.then((hotlistsResponse) => {
     TKR_setUpHotlistsStore(TKR_convertHotlists(hotlistsResponse));
   });
+}
 
-  Promise.all(allPromises).then((responses) => {
-    // Merge result objects.
-    const jsonData = {};
-    for (const response of responses) {
-      Object.assign(jsonData, response);
-    }
 
-    /* QuickEdit is not yet in Monorail. crbug.com/monorail/1926
-    TKR_setUpQuickEditStore(
-       jsonData.labels, jsonData.memberEmails, jsonData.open, jsonData.closed,
-       jsonData.nonGroupEmails);
-    */
+/**
+ * Add project config data that's already been fetched to the legacy
+ * autocomplete.
+ * @param {Config} projectConfig Returned projectConfig data.
+ * @param {GetVisibleMembersResponse} visibleMembers
+ */
+function TKR_populateAutocomplete(projectConfig, visibleMembers) {
+  const {statusDefs, componentDefs, labelDefs, fieldDefs,
+    exclusiveLabelPrefixes, projectName} = projectConfig;
 
-    // We need to wait until both exclusive prefixes (in configPromise) and
-    // labels (in labelsPromise) have been read.
-    TKR_prepLabelAC(TKR_labelFieldIDPrefix);
+  const {memberEmails, nonGroupEmails} =
+    TKR_convertVisibleMembers(visibleMembers);
+  TKR_setUpMemberStore(memberEmails, nonGroupEmails);
+  TKR_prepOwnerField(memberEmails);
 
-    TKR_setUpSearchStore(
+  const {open, closed, strict} = TKR_convertStatuses({statusDefs});
+  TKR_setUpStatusStore(open, closed);
+  TKR_restrict_to_known = strict;
+
+  const {components} = TKR_convertComponents({componentDefs});
+  TKR_setUpComponentStore(components);
+
+  const {excl_prefixes, labels} = TKR_convertLabels(
+      {labelDefs, exclusiveLabelPrefixes}, fieldDefs);
+  TKR_exclPrefixes = excl_prefixes;
+  TKR_setUpLabelStore(labels);
+
+  const {fields} = TKR_convertFields({fieldDefs});
+  TKR_setUpUserAutocompleteStores(fields);
+
+  /* QuickEdit is not yet in Monorail. crbug.com/monorail/1926
+  TKR_setUpQuickEditStore(
       jsonData.labels, jsonData.memberEmails, jsonData.open, jsonData.closed,
-      jsonData.components, jsonData.fields, jsonData.nonGroupEmails);
+      jsonData.nonGroupEmails);
+  */
 
-    if (logger) {
-      logger.logEnd('populate-options', 'user-time');
-    }
-  });
+  // We need to wait until both exclusive prefixes (in configPromise) and
+  // labels (in labelsPromise) have been read.
+  TKR_prepLabelAC(TKR_labelFieldIDPrefix);
+
+  TKR_setUpSearchStore(
+      labels, memberEmails, open, closed,
+      components, fields, nonGroupEmails);
+
+  TKR_fetchOptions(projectName);
 }

@@ -121,7 +121,7 @@ let TKR_nextFileID = 1;
  *  e.g. issue update form and issue description update form
  */
 function TKR_addAttachmentFields(id, attachprompt_id,
-  attachafile_id, attachmaxsize_id) {
+    attachafile_id, attachmaxsize_id) {
   if (TKR_nextFileID >= 16) {
     return;
   }
@@ -141,11 +141,11 @@ function TKR_addAttachmentFields(id, attachprompt_id,
   let label = TKR_createChild(div, 'label', null, null, 'Attach file:');
   label.setAttribute('for', id);
   let input = TKR_createChild(
-    div, 'input', null, id, null, 'width:auto;margin-left:17px');
+      div, 'input', null, id, null, 'width:auto;margin-left:17px');
   input.setAttribute('type', 'file');
   input.name = id;
   let removeLink = TKR_createChild(
-    div, 'a', null, null, 'Remove', 'font-size:x-small');
+      div, 'a', null, null, 'Remove', 'font-size:x-small');
   removeLink.href = '#';
   removeLink.addEventListener('click', function(event) {
     let target = event.target;
@@ -173,10 +173,10 @@ function TKR_openIssueUpdateForm() {
   TKR_goToAnchor('makechanges');
   TKR_forceProperTableWidth();
   window.setTimeout(
-    function() {
-      document.getElementById('addCommentTextArea').focus();
-    },
-    100);
+      function() {
+        document.getElementById('addCommentTextArea').focus();
+      },
+      100);
 }
 
 
@@ -216,33 +216,33 @@ function TKR_selectTemplate(widget) {
 
   $(TKR_PROMPT_MEMBERS_ONLY_CHECKBOX_ID).disabled = disabled;
   $(TKR_PROMPT_MEMBERS_ONLY_CHECKBOX_ID).checked = $(
-    'members_only_' + TKR_currentTemplateIndex).value == 'yes';
+      'members_only_' + TKR_currentTemplateIndex).value == 'yes';
   $(TKR_PROMPT_SUMMARY_EDITOR_ID).disabled = disabled;
   $(TKR_PROMPT_SUMMARY_EDITOR_ID).value = $(
-    'summary_' + TKR_currentTemplateIndex).value;
+      'summary_' + TKR_currentTemplateIndex).value;
   $(TKR_PROMPT_SUMMARY_MUST_BE_EDITED_CHECKBOX_ID).disabled = disabled;
   $(TKR_PROMPT_SUMMARY_MUST_BE_EDITED_CHECKBOX_ID).checked = $(
-    'summary_must_be_edited_' + TKR_currentTemplateIndex).value == 'yes';
+      'summary_must_be_edited_' + TKR_currentTemplateIndex).value == 'yes';
   content_editor.disabled = disabled;
   content_editor.value = $('content_' + TKR_currentTemplateIndex).value;
   $(TKR_PROMPT_STATUS_EDITOR_ID).disabled = disabled;
   $(TKR_PROMPT_STATUS_EDITOR_ID).value = $(
-    'status_' + TKR_currentTemplateIndex).value;
+      'status_' + TKR_currentTemplateIndex).value;
   $(TKR_PROMPT_OWNER_EDITOR_ID).disabled = disabled;
   $(TKR_PROMPT_OWNER_EDITOR_ID).value = $(
-    'owner_' + TKR_currentTemplateIndex).value;
+      'owner_' + TKR_currentTemplateIndex).value;
   $(TKR_OWNER_DEFAULTS_TO_MEMBER_CHECKBOX_ID).disabled = disabled;
   $(TKR_OWNER_DEFAULTS_TO_MEMBER_CHECKBOX_ID).checked = $(
-    'owner_defaults_to_member_' + TKR_currentTemplateIndex).value == 'yes';
+      'owner_defaults_to_member_' + TKR_currentTemplateIndex).value == 'yes';
   $(TKR_COMPONENT_REQUIRED_CHECKBOX_ID).disabled = disabled;
   $(TKR_COMPONENT_REQUIRED_CHECKBOX_ID).checked = $(
-    'component_required_' + TKR_currentTemplateIndex).value == 'yes';
+      'component_required_' + TKR_currentTemplateIndex).value == 'yes';
   $(TKR_OWNER_DEFAULTS_TO_MEMBER_AREA_ID).disabled = disabled;
   $(TKR_OWNER_DEFAULTS_TO_MEMBER_AREA_ID).style.display =
       $(TKR_PROMPT_OWNER_EDITOR_ID).value ? 'none' : '';
   $(TKR_PROMPT_COMPONENTS_EDITOR_ID).disabled = disabled;
   $(TKR_PROMPT_COMPONENTS_EDITOR_ID).value = $(
-    'components_' + TKR_currentTemplateIndex).value;
+      'components_' + TKR_currentTemplateIndex).value;
 
   // Blank out all custom field editors first, then fill them in during the next loop.
   for (var i = 0; i < TKR_fieldIDs.length; i++) {
@@ -264,7 +264,7 @@ function TKR_selectTemplate(widget) {
 
   $(TKR_PROMPT_ADMIN_NAMES_EDITOR_ID).disabled = disabled;
   $(TKR_PROMPT_ADMIN_NAMES_EDITOR_ID).value = $(
-    'admin_names_' + TKR_currentTemplateIndex).value;
+      'admin_names_' + TKR_currentTemplateIndex).value;
 
   let numNonDeletedTemplates = 0;
   for (var i = 0; i < TKR_templateNames.length; i++) {
@@ -292,7 +292,7 @@ function TKR_newTemplate() {
   let newIndex = TKR_templateNames.length;
   let templateName = prompt('Name of new template?', '');
   templateName = templateName.replace(
-    /[&<>"]/g, '' // " help emacs highlighing
+      /[&<>"]/g, '', // " help emacs highlighting
   );
   if (!templateName) return;
 
@@ -307,16 +307,16 @@ function TKR_newTemplate() {
   TKR_templateNames.push(templateName);
 
   let templateOption = TKR_createChild(
-    $('template_menu'), 'option', null, null, templateName);
+      $('template_menu'), 'option', null, null, templateName);
   templateOption.value = newIndex;
   templateOption.selected = 'selected';
 
   let developerOption = TKR_createChild(
-    $('default_template_for_developers'), 'option', null, null, templateName);
+      $('default_template_for_developers'), 'option', null, null, templateName);
   developerOption.value = templateName;
 
   let userOption = TKR_createChild(
-    $('default_template_for_users'), 'option', null, null, templateName);
+      $('default_template_for_users'), 'option', null, null, templateName);
   userOption.value = templateName;
 
   TKR_selectTemplate($('template_menu'));
@@ -330,9 +330,9 @@ function TKR_newTemplate() {
 function TKR_addTemplateHiddenFields(templateIndex, templateName) {
   let parentEl = $('adminTemplates');
   TKR_appendHiddenField(
-    parentEl, 'template_id_' + templateIndex, 'template_id_' + templateIndex, '0');
+      parentEl, 'template_id_' + templateIndex, 'template_id_' + templateIndex, '0');
   TKR_appendHiddenField(parentEl, 'name_' + templateIndex,
-    'name_' + templateIndex, templateName);
+      'name_' + templateIndex, templateName);
   TKR_appendHiddenField(parentEl, 'members_only_' + templateIndex);
   TKR_appendHiddenField(parentEl, 'summary_' + templateIndex);
   TKR_appendHiddenField(parentEl, 'summary_must_be_edited_' + templateIndex);
@@ -340,15 +340,15 @@ function TKR_addTemplateHiddenFields(templateIndex, templateName) {
   TKR_appendHiddenField(parentEl, 'status_' + templateIndex);
   TKR_appendHiddenField(parentEl, 'owner_' + templateIndex);
   TKR_appendHiddenField(
-    parentEl, 'owner_defaults_to_member_' + templateIndex,
-    'owner_defaults_to_member_' + templateIndex, 'yes');
+      parentEl, 'owner_defaults_to_member_' + templateIndex,
+      'owner_defaults_to_member_' + templateIndex, 'yes');
   TKR_appendHiddenField(parentEl, 'component_required_' + templateIndex);
   TKR_appendHiddenField(parentEl, 'components_' + templateIndex);
 
   var i = 0;
   while ($('label_0_' + i)) {
     TKR_appendHiddenField(parentEl, 'label_' + templateIndex,
-      'label_' + templateIndex + '_' + i);
+        'label_' + templateIndex + '_' + i);
     i++;
   }
 
@@ -359,8 +359,8 @@ function TKR_addTemplateHiddenFields(templateIndex, templateName) {
 
   TKR_appendHiddenField(parentEl, 'admin_names_' + templateIndex);
   TKR_appendHiddenField(
-    parentEl, 'can_edit_' + templateIndex, 'can_edit_' + templateIndex,
-    'yes');
+      parentEl, 'can_edit_' + templateIndex, 'can_edit_' + templateIndex,
+      'yes');
 }
 
 
@@ -383,7 +383,7 @@ function TKR_appendHiddenField(parentEl, name, opt_id, opt_value) {
 function TKR_deleteTemplate() {
   // Mark the current template name as deleted.
   TKR_templateNames.splice(
-    TKR_currentTemplateIndex, 1, TKR_DELETED_PROMPT_NAME);
+      TKR_currentTemplateIndex, 1, TKR_DELETED_PROMPT_NAME);
   $('name_' + TKR_currentTemplateIndex).value = TKR_DELETED_PROMPT_NAME;
   _toggleHidden($('edit_panel'));
   $('delbtn').disabled = 'disabled';
@@ -403,7 +403,7 @@ function TKR_rebuildTemplateMenu() {
   for (let i = 0; i < TKR_templateNames.length; i++) {
     if (TKR_templateNames[i] != TKR_DELETED_PROMPT_NAME) {
       let option = TKR_createChild(
-        parentEl, 'option', null, null, TKR_templateNames[i]);
+          parentEl, 'option', null, null, TKR_templateNames[i]);
       option.value = i;
     }
   }
@@ -422,7 +422,7 @@ function TKR_rebuildDefaultTemplateMenu(menuID) {
   for (let i = 0; i < TKR_templateNames.length; i++) {
     if (TKR_templateNames[i] != TKR_DELETED_PROMPT_NAME) {
       let option = TKR_createChild(
-        parentEl, 'option', null, null, TKR_templateNames[i]);
+          parentEl, 'option', null, null, TKR_templateNames[i]);
       option.values = TKR_templateNames[i];
       if (defaultTemplateName == TKR_templateNames[i]) {
         option.setAttribute('selected', 'selected');
@@ -783,7 +783,7 @@ function TKR_confirmNovelLabel(textField) {
   }
   if (!containsReservedPrefix && textFieldWarningDisplayed) {
     TKR_labelsWithReservedPrefixes.splice(
-      TKR_labelsWithReservedPrefixes.indexOf(textField), 1);
+        TKR_labelsWithReservedPrefixes.indexOf(textField), 1);
   }
 
   let conflictsWithReserved = false;
@@ -800,7 +800,7 @@ function TKR_confirmNovelLabel(textField) {
   }
   if (!conflictsWithReserved && textFieldWarningDisplayed) {
     TKR_labelsConflictingWithReserved.splice(
-      TKR_labelsConflictingWithReserved.indexOf(textField), 1);
+        TKR_labelsConflictingWithReserved.indexOf(textField), 1);
   }
 
   if (isNovel) {
@@ -1075,7 +1075,7 @@ async function TKR_handleDetailActions(localId) {
     $('copy_issue_form_fragment').style.display = 'none';
     $('move_issue_form_fragment').style.display = 'none';
     let ok = confirm(
-      'Normally, you should just close issues by setting their status ' +
+        'Normally, you should just close issues by setting their status ' +
       'to a closed value.\n' +
       'Are you sure you want to delete this issue?');
     if (ok) {
@@ -1151,7 +1151,7 @@ function GetSelectedIssuesRefs() {
     let checkbox = document.getElementById('cb_' + issueRefs[i]['id']);
     if (checkbox == null) {
       checkbox = document.getElementById(
-        'cb_' + issueRefs[i]['project_name'] + ':' + issueRefs[i]['id']);
+          'cb_' + issueRefs[i]['project_name'] + ':' + issueRefs[i]['id']);
     }
     if (checkbox && checkbox.checked) {
       selectedIssueRefs.push(issueRefs[i]);
@@ -1454,11 +1454,11 @@ function TKR_addGroupBy(colIndex) {
  * Add a multi-valued custom field editing widget.
  */
 function TKR_addMultiFieldValueWidget(
-  el, field_id, field_type, opt_validate_1, opt_validate_2, field_phase_name) {
+    el, field_id, field_type, opt_validate_1, opt_validate_2, field_phase_name) {
   let widget = document.createElement('INPUT');
   widget.name = (field_phase_name && (
-    field_phase_name != '')) ? `custom_${field_id}_${field_phase_name}`
-    : `custom_${field_id}`;
+    field_phase_name != '')) ? `custom_${field_id}_${field_phase_name}` :
+    `custom_${field_id}`;
   if (field_type == 'str' || field_type =='url') {
     widget.size = 90;
   }
@@ -1561,16 +1561,16 @@ async function saveNote(textBox, hotlistID) {
   const projectName = textBox.getAttribute('projectname');
   const localId = textBox.getAttribute('localid');
   await window.prpcClient.call(
-    'monorail.Features', 'UpdateHotlistIssueNote', {
-      hotlistRef: {
-        hotlistId: hotlistID,
-      },
-      issueRef: {
-        projectName: textBox.getAttribute('projectname'),
-        localId: textBox.getAttribute('localid'),
-      },
-      note: textBox.value,
-    });
+      'monorail.Features', 'UpdateHotlistIssueNote', {
+        hotlistRef: {
+          hotlistId: hotlistID,
+        },
+        issueRef: {
+          projectName: textBox.getAttribute('projectname'),
+          localId: textBox.getAttribute('localid'),
+        },
+        note: textBox.value,
+      });
   $(`itemnote_${projectName}_${localId}`).value = textBox.value;
 }
 
@@ -1583,7 +1583,7 @@ function TKR_loadStatusSelect(projectName, selectId, selected, isBulkEdit=false)
   const projectRequestMessage = {
     project_name: projectName};
   const statusesPromise = window.prpcClient.call(
-    'monorail.Projects', 'ListStatuses', projectRequestMessage);
+      'monorail.Projects', 'ListStatuses', projectRequestMessage);
   statusesPromise.then((statusesResponse) => {
     const jsonData = TKR_convertStatuses(statusesResponse);
     const statusSelect = document.getElementById(selectId);
@@ -1658,7 +1658,7 @@ function renderFilterRulesSection(section_id, heading, value_why_list) {
     let value = value_why_list[i].value;
     let why = value_why_list[i].why;
     let span = section.appendChild(
-      document.createElement('span'));
+        document.createElement('span'));
     span.textContent = value;
     if (why) span.setAttribute('title', why);
   }
@@ -1685,7 +1685,7 @@ function renderFilterRulesListSection(section_id, heading, value_why_list) {
     let value = value_why_list[i].value;
     let why = value_why_list[i].why;
     let span = listItem.appendChild(
-      document.createElement('span'));
+        document.createElement('span'));
     span.textContent = value;
     if (why) span.setAttribute('title', why);
   }
@@ -1705,7 +1705,7 @@ function TKR_presubmit() {
   }
 
   const inputs = issue_form.querySelectorAll(
-    'input:not([type="file"]), textarea, select');
+      'input:not([type="file"]), textarea, select');
   if (!inputs) {
     return;
   }
@@ -1736,7 +1736,7 @@ function TKR_presubmit() {
     issue_delta: issueDelta,
   };
   const presubmitPromise = window.prpcClient.call(
-    'monorail.Issues', 'PresubmitIssue', presubmitMessage);
+      'monorail.Issues', 'PresubmitIssue', presubmitMessage);
 
   presubmitPromise.then((response) => {
     $('owner_avail_state').style.display = (
@@ -1748,27 +1748,27 @@ function TKR_presubmit() {
     let derived_labels;
     if (response.derivedLabels) {
       derived_labels = renderFilterRulesSection(
-        'preview_filterrules_labels', 'Labels', response.derivedLabels);
+          'preview_filterrules_labels', 'Labels', response.derivedLabels);
     }
     let derived_owner_email;
     if (response.derivedOwners) {
       derived_owner_email = renderFilterRulesSection(
-        'preview_filterrules_owner', 'Owner', response.derivedOwners[0]);
+          'preview_filterrules_owner', 'Owner', response.derivedOwners[0]);
     }
     let derived_cc_emails;
     if (response.derivedCcs) {
       derived_cc_emails = renderFilterRulesSection(
-        'preview_filterrules_ccs', 'Cc', response.derivedCcs);
+          'preview_filterrules_ccs', 'Cc', response.derivedCcs);
     }
     let warnings;
     if (response.warnings) {
       warnings = renderFilterRulesListSection(
-        'preview_filterrules_warnings', 'Warnings', response.warnings);
+          'preview_filterrules_warnings', 'Warnings', response.warnings);
     }
     let errors;
     if (response.errors) {
       errors = renderFilterRulesListSection(
-        'preview_filterrules_errors', 'Errors', response.errors);
+          'preview_filterrules_errors', 'Errors', response.errors);
     }
 
     if (derived_labels || derived_owner_email || derived_cc_emails ||

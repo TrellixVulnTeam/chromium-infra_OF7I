@@ -86,7 +86,6 @@ _handleListActions = TKR_handleListActions;
 _handleDetailActions = TKR_handleDetailActions;
 
 _loadStatusSelect = TKR_loadStatusSelect;
-_fetchOptions = TKR_fetchOptions;
 _fetchUserProjects = TKR_fetchUserProjects;
 _setACOptions = TKR_setUpAutoCompleteStore;
 _openIssueUpdateForm = TKR_openIssueUpdateForm;

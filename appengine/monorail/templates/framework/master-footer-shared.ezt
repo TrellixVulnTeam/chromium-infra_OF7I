@@ -74,8 +74,6 @@ runOnLoad(function() {
   [end]
 
   [if-any project]
-    _fetchOptions('[projectname]', CS_env.token,
-        [project.cached_content_timestamp]);
     _fetchUserProjects(false);
   [end]
   _onload();

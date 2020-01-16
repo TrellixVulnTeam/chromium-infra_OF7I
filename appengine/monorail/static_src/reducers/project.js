@@ -387,16 +387,32 @@ export const select = (projectName) => {
   return (dispatch) => dispatch({type: SELECT, projectName});
 };
 
+/**
+ * Fetches data required to view project.
+ * @param {string} projectName
+ * @return {function(function): Promise<void>}
+ */
 export const fetch = (projectName) => async (dispatch) => {
-  dispatch(fetchConfig(projectName));
+  const config = await dispatch(fetchConfig(projectName));
+
   // TODO(zhangtiff): Split up GetConfig into multiple calls to
   // GetLabelOptions, ListComponents, etc.
   // dispatch(fetchFields(projectName));
   dispatch(fetchPresentationConfig(projectName));
-  dispatch(fetchVisibleMembers(projectName));
+  const visibleMembers = await dispatch(fetchVisibleMembers(projectName));
   dispatch(fetchTemplates(projectName));
+
+  // TODO(crbug.com/monorail/5828): Remove window.TKR_populateAutocomplete once
+  // the old autocomplete code is deprecated.
+  window.TKR_populateAutocomplete(config, visibleMembers);
 };
 
+/**
+ * Fetches project configuration including things like the custom fields in a
+ * project, the statuses, etc.
+ * @param {string} projectName
+ * @return {function(function): Promise<Config>}
+ */
 const fetchConfig = (projectName) => async (dispatch) => {
   dispatch({type: FETCH_CONFIG_START});
 
@@ -406,6 +422,7 @@ const fetchConfig = (projectName) => async (dispatch) => {
   try {
     const resp = await getConfig;
     dispatch({type: FETCH_CONFIG_SUCCESS, projectName, config: resp});
+    return resp;
   } catch (error) {
     dispatch({type: FETCH_CONFIG_FAILURE, error});
   }
@@ -427,6 +444,11 @@ export const fetchPresentationConfig = (projectName) => async (dispatch) => {
   }
 };
 
+/**
+ * Fetches the project members that the user is able to view.
+ * @param {string} projectName
+ * @return {function(function): Promise<GetVisibleMembersResponse>}
+ */
 export const fetchVisibleMembers = (projectName) => async (dispatch) => {
   dispatch({type: FETCH_VISIBLE_MEMBERS_START});
 
@@ -438,6 +460,7 @@ export const fetchVisibleMembers = (projectName) => async (dispatch) => {
       projectName,
       visibleMembers,
     });
+    return visibleMembers;
   } catch (error) {
     dispatch({type: FETCH_VISIBLE_MEMBERS_FAILURE, error});
   }
