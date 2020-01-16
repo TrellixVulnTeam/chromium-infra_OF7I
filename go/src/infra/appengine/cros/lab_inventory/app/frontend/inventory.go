@@ -229,6 +229,16 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 	return resp, nil
 }
 
+func logDeviceOpResults(ctx context.Context, res datastore.DeviceOpResults) {
+	for _, r := range res {
+		if r.Err == nil {
+			logging.Debugf(ctx, "Device ID %s: succeed", r.Entity.ID)
+		} else {
+			logging.Debugf(ctx, "Device ID %s: %s", r.Entity.ID, r.Err)
+		}
+	}
+}
+
 // UpdateDutsStatus updates selected Duts' status labels related to testing.
 func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.UpdateDutsStatusRequest) (resp *api.UpdateDutsStatusResponse, err error) {
 	defer func() {
@@ -246,8 +256,11 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 			HwID:         d.GetHwID(),
 		}
 	}
-	_, err = datastore.UpdateDutMeta(ctx, meta)
+	metaUpdateResults, err := datastore.UpdateDutMeta(ctx, meta)
+	logging.Debugf(ctx, "Meta update results")
+	logDeviceOpResults(ctx, metaUpdateResults)
 	if err != nil {
+		logging.Errorf(ctx, "fail to update dut meta: %s", err.Error())
 		return nil, err
 	}
 
@@ -255,6 +268,8 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 	if err != nil {
 		return nil, err
 	}
+	logging.Debugf(ctx, "State update results")
+	logDeviceOpResults(ctx, updatingResults)
 
 	updatedDevices := getPassedResults(updatingResults)
 	failedDevices := getFailedResults(updatingResults, false)
