@@ -97,9 +97,6 @@ var Dev = Environment{
 
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra
 // defaults.
-//
-// TODO(ayatane): This is copied from the Go swarming client.  We
-// should probably get our own OAuth client credentials at some point.
 var DefaultAuthOptions = auth.Options{
 	// Note that ClientSecret is not really a secret since it's hardcoded into
 	// the source code (and binaries). It's totally fine, as long as it's callback
