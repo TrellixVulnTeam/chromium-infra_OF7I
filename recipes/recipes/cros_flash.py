@@ -80,10 +80,17 @@ def RunSteps(api, properties):
   api.chromium.set_config('chromium')
   api.chromium_checkout.ensure_checkout({})
 
+  # Public bots flashing public images don't have full access to the GS bucket.
+  # This causes them to fail unless they're fully anonymous, which triggers a
+  # separate flashing codepath.
+  env = {}
+  if '-full' in properties.xbuddy_path:
+    env = {'BOTO_CONFIG': '/dev/null'}
+
   # chromite's own virtual env setup conflicts with vpython, so temporarily
   # subvert vpython for the duration of the flash.
   src_dir = api.path['cache'].join('builder', 'src')
-  with api.context(cwd=src_dir):
+  with api.context(cwd=src_dir, env=env):
     with api.chromite.with_system_python():
       chromite_bin_path = src_dir.join('third_party', 'chromite', 'bin')
       arg_list = [
@@ -109,10 +116,12 @@ def RunSteps(api, properties):
 
 
 def GenTests(api):
-  yield api.test(
-      'basic_test',
-      api.platform('linux', 64),
-      api.properties(xbuddy_path='xbuddy://some/image/path',),
-      api.post_process(post_process.StatusSuccess),
-      api.post_process(post_process.DropExpectation)
-  )
+  yield api.test('basic_test', api.platform('linux', 64),
+                 api.properties(xbuddy_path='xbuddy://some/image/path',),
+                 api.post_process(post_process.StatusSuccess),
+                 api.post_process(post_process.DropExpectation))
+
+  yield api.test('full_image_test', api.platform('linux', 64),
+                 api.properties(xbuddy_path='xbuddy://some-full/image/path',),
+                 api.post_process(post_process.StatusSuccess),
+                 api.post_process(post_process.DropExpectation))
