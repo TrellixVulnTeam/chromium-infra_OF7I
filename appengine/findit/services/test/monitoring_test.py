@@ -136,3 +136,11 @@ class MonitoringTest(wf_testcase.WaterfallTestCase):
         'operation': 'create',
     }
     mock_common_monitoring.assert_called_once_with(parameters)
+
+  @mock.patch.object(common_monitoring.cq_flake_responses, 'increment_by')
+  def testOnCqFlakeResponses(self, mock_common_monitoring):
+    monitoring.OnCqFlakeResponses(True, 5)
+    parameters = {
+        'is_flaky': True,
+    }
+    mock_common_monitoring.assert_called_once_with(5, parameters)

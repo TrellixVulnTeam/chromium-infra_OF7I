@@ -140,6 +140,12 @@ flake_detection_issues = gae_ts_mon.CounterMetric(
         gae_ts_mon.StringField('operation'),
     ])
 
+cq_flake_responses = gae_ts_mon.CounterMetric(
+    'findit/cq-flaky-test-responses',
+    'Number of requested tests whether determined as flaky or not', [
+        gae_ts_mon.BooleanField('is_flaky'),
+    ])
+
 code_coverage_cq_errors = gae_ts_mon.CounterMetric(
     'code-coverage/cq-bot-errors',
     'Number of cq builds with coverage data step failures', [

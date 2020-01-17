@@ -46,6 +46,7 @@ from model.wf_analysis import WfAnalysis
 from model.wf_suspected_cl import WfSuspectedCL
 from model.wf_swarming_task import WfSwarmingTask
 from model.wf_try_job import WfTryJob
+from services import monitoring
 from services.apis import AsyncProcessFlakeReport
 from waterfall import buildbot
 from waterfall import suspected_cl_util
@@ -1067,6 +1068,9 @@ class FindItApi(remote.Service):
         for t in request.tests
     ]
     flakes = [f.get_result() for f in futures if f.get_result()]
+    monitoring.OnCqFlakeResponses(True, len(flakes))
+    monitoring.OnCqFlakeResponses(False, len(request.tests) - len(flakes))
+
     response = _CQFlakeResponse(flakes=flakes)
     logging.info('Response: %s', response)
     return response

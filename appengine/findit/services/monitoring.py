@@ -131,3 +131,13 @@ def OnFlakeDetectionCreateOrUpdateIssues(operation):
     operation: Type of the operation: create and update.
   """
   monitoring.flake_detection_issues.increment({'operation': operation})
+
+
+def OnCqFlakeResponses(is_flaky, num_tests):
+  """Used to monitor number of flaky/non-flaky tests responded to cq request.
+
+  Args:
+    is_flaky (bool): Whether these tests are determined as flaky or not.
+    num_tests (int): Number of tests.
+  """
+  monitoring.cq_flake_responses.increment_by(num_tests, {'is_flaky': is_flaky})
