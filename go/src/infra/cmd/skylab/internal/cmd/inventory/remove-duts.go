@@ -25,6 +25,7 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	iv "infra/cmd/skylab/internal/inventory"
+	"infra/cmd/skylab/internal/inventoryv2"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
@@ -55,6 +56,7 @@ again.`,
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.server, "drone", "", "Drone to remove DUTs from.")
 		c.Flags.BoolVar(&c.delete, "delete", false, "Delete DUT from inventory.")
+		c.Flags.BoolVar(&c.v2, "v2", false, "[INTERNAL ONLY] Use ChromeOS Lab inventory v2 service.")
 		c.removalReason.Register(&c.Flags)
 		return c
 	},
@@ -66,6 +68,7 @@ type removeDutsRun struct {
 	envFlags      skycmdlib.EnvFlags
 	server        string
 	delete        bool
+	v2            bool
 	removalReason skycmdlib.RemovalReason
 }
 
@@ -87,28 +90,36 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 	e := c.envFlags.Env()
-	ic := fleet.NewInventoryPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    e.AdminService,
-		Options: site.DefaultPRPCOptions,
-	})
-
 	hostnames := c.Flags.Args()
 	prompt := userinput.CLIPrompt(a.GetOut(), os.Stdin, false)
 	if !prompt(fmt.Sprintf("Ready to remove hosts: %v", hostnames)) {
 		return nil
 	}
 
-	modified, err := c.removeDUTs(ctx, ic, a.GetOut())
-	if err != nil {
-		return err
-	}
-	if c.delete {
-		mod, err := c.deleteDUTs(ctx, a.GetOut())
+	var modified bool
+	if c.v2 {
+		modified, err = inventoryv2.RemoveDevices(ctx, hc, e, hostnames, c.delete)
 		if err != nil {
 			return err
 		}
-		modified = modified || mod
+	} else {
+		ic := fleet.NewInventoryPRPCClient(&prpc.Client{
+			C:       hc,
+			Host:    e.AdminService,
+			Options: site.DefaultPRPCOptions,
+		})
+
+		modified, err = c.removeDUTs(ctx, ic, a.GetOut())
+		if err != nil {
+			return err
+		}
+		if c.delete {
+			mod, err := c.deleteDUTs(ctx, a.GetOut())
+			if err != nil {
+				return err
+			}
+			modified = modified || mod
+		}
 	}
 	if !modified {
 		fmt.Fprintln(a.GetOut(), "No DUTs modified")

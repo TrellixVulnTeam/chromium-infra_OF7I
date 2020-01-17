@@ -6,7 +6,9 @@ package inventoryv2
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
@@ -15,14 +17,17 @@ import (
 	"infra/cmd/skylab/internal/site"
 )
 
-// GetDutInfo gets the dut information from inventory v2 service.
-func GetDutInfo(ctx context.Context, hc *http.Client, e site.Environment, hostname string) (*api.ExtendedDeviceData, error) {
-	ic := api.NewInventoryPRPCClient(&prpc.Client{
+func newInventoryClient(hc *http.Client, e site.Environment) api.InventoryClient {
+	return api.NewInventoryPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.InventoryService,
 		Options: site.DefaultPRPCOptions,
 	})
-	rsp, err := ic.GetCrosDevices(ctx, &api.GetCrosDevicesRequest{
+}
+
+// GetDutInfo gets the dut information from inventory v2 service.
+func GetDutInfo(ctx context.Context, hc *http.Client, e site.Environment, hostname string) (*api.ExtendedDeviceData, error) {
+	rsp, err := newInventoryClient(hc, e).GetCrosDevices(ctx, &api.GetCrosDevicesRequest{
 		Ids: []*api.DeviceID{
 			{
 				Id: &api.DeviceID_Hostname{Hostname: hostname},
@@ -37,4 +42,29 @@ func GetDutInfo(ctx context.Context, hc *http.Client, e site.Environment, hostna
 		return nil, errors.Reason("[v2] failed to get device %s: %s", result.Hostname, result.ErrorMsg).Err()
 	}
 	return rsp.Data[0], nil
+}
+
+// RemoveDevices removes devices from drones, and optionally removes them from
+// the inventory.
+// TODO (guocb) implement removing from drone only.
+func RemoveDevices(ctx context.Context, hc *http.Client, e site.Environment, hostnames []string, deleteFromInventoryAlso bool) (bool, error) {
+	var devIds []*api.DeviceID
+	for _, h := range hostnames {
+		devIds = append(devIds, &api.DeviceID{Id: &api.DeviceID_Hostname{Hostname: h}})
+	}
+	rsp, err := newInventoryClient(hc, e).DeleteCrosDevices(ctx, &api.DeleteCrosDevicesRequest{
+		Ids: devIds,
+	})
+	if err != nil {
+		return false, errors.Annotate(err, "[v2] remove devices for %s ...", hostnames[0]).Err()
+	}
+	if len(rsp.FailedDevices) > 0 {
+		var reasons []string
+		for _, d := range rsp.FailedDevices {
+			reasons = append(reasons, fmt.Sprintf("%s:%s", d.Hostname, d.ErrorMsg))
+		}
+		return false, errors.Reason("[v2] failed to remove device: %s", strings.Join(reasons, ", ")).Err()
+	}
+	return len(rsp.RemovedDevices) > 0, nil
+
 }
