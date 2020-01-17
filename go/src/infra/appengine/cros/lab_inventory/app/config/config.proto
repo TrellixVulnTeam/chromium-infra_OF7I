@@ -31,6 +31,10 @@ message Config {
 
   Gitiles device_config_source = 8;
   Gitiles manufacturing_config_source = 9;
+
+  // Environment managed by this instance of app, e.g. ENVIRONMENT_STAGING,
+  // ENVIRONMENT_PROD, etc.
+  string environment = 10;
 }
 
 message AdminService {

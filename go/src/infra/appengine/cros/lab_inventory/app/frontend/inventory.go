@@ -21,6 +21,7 @@ import (
 	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/datastore"
 	"infra/libs/cros/lab_inventory/deviceconfig"
+	"infra/libs/cros/lab_inventory/dronecfg"
 	"infra/libs/cros/lab_inventory/hwid"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
 	"infra/libs/cros/lab_inventory/utils"
@@ -62,6 +63,29 @@ func getFailedResults(results []datastore.DeviceOpResult, hideUUID bool) []*api.
 	return failedDevices
 }
 
+func updateDroneCfg(ctx context.Context, devices []*api.DeviceOpResult, addDuts bool) (err error) {
+	// Merge the new DUTs to drones.
+	var duts []dronecfg.DUT
+	for _, d := range devices {
+		duts = append(duts, dronecfg.DUT{Hostname: d.Hostname, ID: d.Id})
+	}
+	toChange := []dronecfg.Entity{
+		{
+			Hostname: dronecfg.QueenDroneName(config.Get(ctx).Environment),
+			DUTs:     duts,
+		},
+	}
+	if addDuts {
+		err = dronecfg.MergeDutsToDrones(ctx, toChange, nil)
+	} else {
+		err = dronecfg.MergeDutsToDrones(ctx, nil, toChange)
+	}
+	if err != nil {
+		err = errors.Annotate(err, "update drone config").Err()
+	}
+	return err
+}
+
 // AddCrosDevices adds new Chrome OS devices to the inventory.
 func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddCrosDevicesRequest) (resp *api.AddCrosDevicesResponse, err error) {
 	defer func() {
@@ -75,6 +99,10 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 		return nil, errors.Annotate(err, "internal error").Tag(grpcutil.InternalTag).Err()
 	}
 	passedDevices := getPassedResults(*addingResults)
+	if err := updateDroneCfg(ctx, passedDevices, true); err != nil {
+		return nil, errors.Annotate(err, "add cros devices").Err()
+	}
+
 	failedDevices := getFailedResults(*addingResults, true)
 	resp = &api.AddCrosDevicesResponse{
 		PassedDevices: passedDevices,
@@ -299,6 +327,11 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 	}
 
 	updatedDevices := getPassedResults(updatingResults)
+	// Update dronecfg datastore in case there are any DUTs get renamed.
+	if err := updateDroneCfg(ctx, updatedDevices, true); err != nil {
+		return nil, errors.Annotate(err, "update cros device setup").Err()
+	}
+
 	failedDevices := getFailedResults(updatingResults, false)
 	resp = &api.UpdateCrosDevicesSetupResponse{
 		UpdatedDevices: updatedDevices,
@@ -325,6 +358,10 @@ func (is *InventoryServerImpl) DeleteCrosDevices(ctx context.Context, req *api.D
 	deletingResults = append(deletingResults, deletingResultsByHostname...)
 
 	removedDevices := getPassedResults(deletingResults)
+	if err := updateDroneCfg(ctx, removedDevices, false); err != nil {
+		return nil, errors.Annotate(err, "delete cros devices").Err()
+	}
+
 	failedDevices := getFailedResults(deletingResults, false)
 	resp = &api.DeleteCrosDevicesResponse{
 		RemovedDevices: removedDevices,
