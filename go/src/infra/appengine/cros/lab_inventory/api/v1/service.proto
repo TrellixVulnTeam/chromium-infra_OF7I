@@ -13,6 +13,10 @@ import "go.chromium.org/chromiumos/infra/proto/src/lab/dut_state.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/device/config.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/manufacturing/config.proto";
 
+// The RPCs below to get/add/update/delete devices support batch operation, and
+// the response contains the detail result for each device. The RPCs return OK
+// code as long as the operation complete, regardless if it succeeds on all
+// devices or not.
 service Inventory {
   // AddCrosDevices adds new Chrome OS devices to the inventory.
   rpc AddCrosDevices(AddCrosDevicesRequest) returns (AddCrosDevicesResponse);

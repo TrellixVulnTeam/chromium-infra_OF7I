@@ -473,7 +473,7 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			}
 			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{&ghost}}
 			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
-			So(err, ShouldNotBeNil)
+			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.FailedDevices, ShouldHaveLength, 1)
 			So(resp.FailedDevices[0].ErrorMsg, ShouldContainSubstring, "no such entity")
@@ -561,7 +561,7 @@ func TestUpdateDutsStatus(t *testing.T) {
 					},
 				}}
 			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
-			So(err, ShouldNotBeNil)
+			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.FailedDevices, ShouldHaveLength, 1)
 			So(resp.FailedDevices[0].ErrorMsg, ShouldContainSubstring, "labstation")

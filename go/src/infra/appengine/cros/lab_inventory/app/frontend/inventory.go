@@ -305,10 +305,7 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 		UpdatedDevices: updatedDevices,
 		FailedDevices:  failedDevices,
 	}
-	if len(failedDevices) > 0 {
-		err = errors.Reason("failed to update some (or all) device state").Tag(grpcutil.UnknownTag).Err()
-	}
-	return resp, err
+	return resp, nil
 }
 
 // UpdateCrosDevicesSetup updates the selected Chrome OS devices setup data in
@@ -337,10 +334,7 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 		UpdatedDevices: updatedDevices,
 		FailedDevices:  failedDevices,
 	}
-	if len(failedDevices) > 0 {
-		err = errors.Reason("failed to update some (or all) devices").Tag(grpcutil.UnknownTag).Err()
-	}
-	return resp, err
+	return resp, nil
 }
 
 // DeleteCrosDevices delete the selelcted devices from the inventory.
@@ -367,8 +361,5 @@ func (is *InventoryServerImpl) DeleteCrosDevices(ctx context.Context, req *api.D
 		RemovedDevices: removedDevices,
 		FailedDevices:  failedDevices,
 	}
-	if len(failedDevices) > 0 {
-		err = errors.Reason("failed to remove some (or all) devices").Tag(grpcutil.UnknownTag).Err()
-	}
-	return resp, err
+	return resp, nil
 }
