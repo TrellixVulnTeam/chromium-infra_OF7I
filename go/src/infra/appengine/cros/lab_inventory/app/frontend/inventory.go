@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
@@ -158,6 +159,13 @@ func getManufacturingConfigData(ctx context.Context, extendedData []*api.Extende
 			extendedData[i].ManufacturingConfig = mCfgs[i].(*manufacturing.Config)
 			newExtendedData = append(newExtendedData, extendedData[i])
 		} else {
+			// Ignore errors if the ID doesn't exist in manufacturing config.
+			if ds.IsErrNoSuchEntity(err.(errors.MultiError)[i]) {
+				logging.Errorf(ctx, "No matched manufacturing config found: %s", cfgIds[i])
+				newExtendedData = append(newExtendedData, extendedData[i])
+				continue
+			}
+
 			addFailedDevice(ctx, &failedDevices, extendedData[i].LabConfig, err.(errors.MultiError)[i], "get manufacturing config data")
 		}
 	}

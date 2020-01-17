@@ -111,12 +111,12 @@ func GetCachedCfgByIds(ctx context.Context, entities []EntityInterface) ([]proto
 	// unmarshalling.
 	for i := range entities {
 		if err != nil && err.(errors.MultiError)[i] != nil {
-			logging.Debugf(ctx, "failed to get cached config for %v: %s", entities[i], err.Error())
-			newErr.Assign(i, errors.Annotate(err.(errors.MultiError)[i], "get cached config data").Err())
+			logging.Errorf(ctx, "failed to get cached config for %v: %s", entities[i], err.Error())
+			newErr.Assign(i, err)
 			continue
 		}
 		if cfg, err := entities[i].GetMessagePayload(); err != nil {
-			logging.Warningf(ctx, "failed to unmarshal data for %v: %s", entities[i], err.Error())
+			logging.Errorf(ctx, "failed to unmarshal data for %v: %s", entities[i], err.Error())
 			newErr.Assign(i, errors.Annotate(err, "unmarshal config data").Err())
 		} else {
 			result[i] = cfg

@@ -93,9 +93,21 @@ func setDutPools(labels *inventory.SchedulableLabels, inputPools []lab.DeviceUnd
 }
 
 func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Config) {
+	if m == nil {
+		return
+	}
 	l.Phase = (*inventory.SchedulableLabels_Phase)(&(m.DevicePhase))
 	l.Cr50Phase = (*inventory.SchedulableLabels_CR50_Phase)(&(m.Cr50Phase))
-	// TODO (guocb) cr50_key_env?
+	cr50Env := ""
+	switch m.Cr50KeyEnv {
+	case manufacturing.Config_CR50_KEYENV_PROD:
+		cr50Env = "prod"
+	case manufacturing.Config_CR50_KEYENV_DEV:
+		cr50Env = "dev"
+	}
+	if cr50Env != "" {
+		l.Cr50RoKeyid = &cr50Env
+	}
 }
 
 func setDeviceConfig(labels *inventory.SchedulableLabels, d *device.Config) {

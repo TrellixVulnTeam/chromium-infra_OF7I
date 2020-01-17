@@ -98,7 +98,7 @@ func TestGetCachedManufacturingConfig(t *testing.T) {
 				{Value: "GHOST"},
 			})
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "get cached config data")
+			So(err.Error(), ShouldContainSubstring, "no such entity")
 		})
 	})
 }
