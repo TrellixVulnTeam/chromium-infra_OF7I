@@ -318,6 +318,7 @@ export class MrListPage extends connectStore(LitElement) {
       _currentUser: {type: Object},
       _usersProjects: {type: Object},
       _fetchIssueListError: {type: String},
+      _fetchingPresentationConfig: {type: Boolean},
     };
   };
 
@@ -391,9 +392,11 @@ export class MrListPage extends connectStore(LitElement) {
       }
     }
 
-    if (changedProperties.has('projectName') ||
+    if ((changedProperties.has('projectName') ||
         changedProperties.has('currentQuery') ||
-        changedProperties.has('currentCan')) {
+        changedProperties.has('currentCan') ||
+        changedProperties.has('_fetchingPresentationConfig')) &&
+        !this._fetchingPresentationConfig) {
       this.refresh();
     } else if (changedProperties.has('_queryParams')) {
       const oldParams = changedProperties.get('_queryParams') || {};
@@ -473,6 +476,8 @@ export class MrListPage extends connectStore(LitElement) {
     this._queryParams = sitewide.queryParams(state);
 
     this._extractFieldValues = project.extractFieldValuesFromIssue(state);
+    this._fetchingPresentationConfig =
+        project.fetchingPresentationConfig(state);
   }
 
   /**

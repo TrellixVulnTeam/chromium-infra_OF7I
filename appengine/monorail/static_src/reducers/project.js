@@ -56,6 +56,7 @@ const FETCH_FIELDS_LIST_FAILURE = 'project/FECTH_FIELDS_LIST_FAILURE';
     fetchConfig: ReduxRequestState,
     fetchFields: ReduxRequestState,
     fetchMembers: ReduxRequestState,
+    fetchPresentationConfig: ReduxRequestState,
     fetchTemplates: ReduxRequestState,
   },
 }
@@ -109,6 +110,10 @@ const requestsReducer = combineReducers({
       FETCH_VISIBLE_MEMBERS_START,
       FETCH_VISIBLE_MEMBERS_SUCCESS,
       FETCH_VISIBLE_MEMBERS_FAILURE),
+  fetchPresentationConfig: createRequestReducer(
+      FETCH_PRESENTATION_CONFIG_START,
+      FETCH_PRESENTATION_CONFIG_SUCCESS,
+      FETCH_PRESENTATION_CONFIG_FAILURE),
   fetchTemplates: createRequestReducer(
       FETCH_TEMPLATES_START, FETCH_TEMPLATES_SUCCESS, FETCH_TEMPLATES_FAILURE),
   fetchFields: createRequestReducer(
@@ -377,6 +382,16 @@ export const fetchingConfig = (state) => {
   return state.project.requests.fetchConfig.requesting;
 };
 
+/**
+ * Shorthand method for detecting whether we are currently
+ * fetching presentationConcifg
+ * @param {Object} state Current Redux state.
+ * @return {boolean}
+ */
+export const fetchingPresentationConfig = (state) => {
+  return state.project.requests.fetchPresentationConfig.requesting;
+};
+
 // Action Creators
 /**
  * Action creator to set the currently viewed Project.
@@ -393,17 +408,20 @@ export const select = (projectName) => {
  * @return {function(function): Promise<void>}
  */
 export const fetch = (projectName) => async (dispatch) => {
-  const config = await dispatch(fetchConfig(projectName));
+  const configPromise = dispatch(fetchConfig(projectName));
+  const visibleMembersPromise = dispatch(fetchVisibleMembers(projectName));
 
   // TODO(zhangtiff): Split up GetConfig into multiple calls to
   // GetLabelOptions, ListComponents, etc.
   // dispatch(fetchFields(projectName));
   dispatch(fetchPresentationConfig(projectName));
-  const visibleMembers = await dispatch(fetchVisibleMembers(projectName));
   dispatch(fetchTemplates(projectName));
 
   // TODO(crbug.com/monorail/5828): Remove window.TKR_populateAutocomplete once
   // the old autocomplete code is deprecated.
+  const [config, visibleMembers] = await Promise.all([
+    configPromise,
+    visibleMembersPromise]);
   window.TKR_populateAutocomplete(config, visibleMembers);
 };
 

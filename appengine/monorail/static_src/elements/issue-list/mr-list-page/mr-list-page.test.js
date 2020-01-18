@@ -191,6 +191,48 @@ describe('mr-list-page', () => {
     element.refresh.restore();
   });
 
+  it('refreshes when currentQuery changes', async () => {
+    sinon.stub(element, 'refresh');
+
+    await element.updateComplete;
+    sinon.assert.callCount(element.refresh, 1);
+
+    element.currentQuery = 'some query term';
+
+    await element.updateComplete;
+    sinon.assert.callCount(element.refresh, 2);
+
+    element.refresh.restore();
+  });
+
+  it('refreshes when not fetching presentation config', async () => {
+    sinon.stub(element, 'refresh');
+
+    element._fetchingPresentationConfig = true;
+    element.currentQuery = 'some query term';
+
+    await element.updateComplete;
+    sinon.assert.callCount(element.refresh, 0);
+
+    element.refresh.restore();
+  });
+
+  it('refreshes if presentation config fetch finishes last', async () => {
+    sinon.stub(element, 'refresh');
+
+    element._fetchingPresentationConfig = true;
+
+    await element.updateComplete;
+    sinon.assert.callCount(element.refresh, 0);
+
+    element._fetchingPresentationConfig = false;
+
+    await element.updateComplete;
+    sinon.assert.callCount(element.refresh, 1);
+
+    element.refresh.restore();
+  });
+
   it('startIndex parses _queryParams for value', () => {
     // Default value.
     element._queryParams = {};

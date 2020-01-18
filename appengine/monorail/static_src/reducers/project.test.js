@@ -31,6 +31,10 @@ describe('project reducers', () => {
           error: null,
           requesting: false,
         },
+        fetchPresentationConfig: {
+          error: null,
+          requesting: false,
+        },
         fetchTemplates: {
           error: null,
           requesting: false,
@@ -191,6 +195,12 @@ describe('project selectors', () => {
       ]],
     ]);
     assert.deepEqual(project.optionsPerEnumField(example.STATE), expected);
+  });
+
+  it('fetchingPresentationConfig', () => {
+    const projectState = project.reducer(undefined, {type: null});
+    assert.equal(false,
+        projectState.requests.fetchPresentationConfig.requesting);
   });
 
   describe('extractTypeForFieldName', () => {
