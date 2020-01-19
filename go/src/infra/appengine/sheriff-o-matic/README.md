@@ -160,6 +160,22 @@ In order to deploy to App Engine, you will need to be a member of the
 project (either sheriff-o-matic or sheriff-o-matic-staging). Before your first
 deployment, you will have to run `./gae.py login` to authenticate yourself.
 
+### Modifying BigQuery views
+
+If you modify the SQL files for bigquery views (sheriffable_failures.sql, failing_steps.sql, step_status_transitions.sql), the steps to deploy your changes are as follows:
+- `cd ./bigquery`
+- Run `./create_views.sh` to deploy your change to staging
+- Verify that everything works as expected
+- Create a CL with your changes and get it reviewed
+- Land your change
+- Modify the file create_views.sh to point to prod by setting `APP_ID=sheriff-o-matic`
+- Run `./create_views.sh` again to deploy your change to prod
+- Verify that everything works as expected in prod
+- Revert the change in create_views.sh by setting `APP_ID=sheriff-o-matic-staging`
+
+If you want to revert your deployment, simply checkout master and run `./create_view.sh` again for staging and prod
+
+
 ## Configuring and populating devserver SoM with alerts
 
 Once you have a server running locally, you'll want to add at least one
