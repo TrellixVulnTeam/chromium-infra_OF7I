@@ -1,9 +1,0 @@
-[include "master-header-shared.ezt"]
-
-[include "../webpack-out/ezt-footer-scripts-package.ezt"]
-
-<script type="module" nonce="[nonce]">
-// Load and instantiate pRPC client before any other script.
-window.prpcClient = new window.AutoRefreshPrpcClient(
-  CS_env.token, CS_env.tokenExpiresSec);
-</script>

@@ -29,57 +29,67 @@ window.prpcClient = new AutoRefreshPrpcClient(
   nonce="[nonce]"
 ></script>
 
-<script type="text/javascript" defer src="[version_base]/static/js/framework/externs.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/framework/env.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/framework/framework-ajax.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/framework/framework-cues.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/framework/framework-display.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/framework/framework-menu.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/framework/framework-myhotlists.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/framework/framework-stars.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/framework/project-name-check.js" nonce="[nonce]"></script>
-<script type="text/javascript" defer src="[version_base]/static/js/graveyard/xmlhttp.js" nonce="[nonce]"></script>
+[if-any is_ezt]
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/externs.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/env.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/framework-ajax.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/framework-cues.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/framework-display.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/framework-menu.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/framework-myhotlists.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/framework-stars.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/framework/project-name-check.js" nonce="[nonce]"></script>
+  <script type="text/javascript" defer src="[version_base]/static/js/graveyard/xmlhttp.js" nonce="[nonce]"></script>
+[end]
 [include "footer-script.ezt"]
 
 
-<script type="text/javascript" nonce="[nonce]">
-runOnLoad(function() {
-  var toggles = document.getElementsByClassName("toggleHidden");
-  for (var i = 0; i < toggles.length; ++i) {
-    var toggle = toggles[[]i];
-    toggle.addEventListener("click", function (event) {
-        _toggleHidden(event.target);
-        event.preventDefault();
-    });
-  }
+[if-any is_ezt]
+  <script type="text/javascript" nonce="[nonce]">
+  runOnLoad(function() {
+    var toggles = document.getElementsByClassName("toggleHidden");
+    for (var i = 0; i < toggles.length; ++i) {
+      var toggle = toggles[[]i];
+      toggle.addEventListener("click", function (event) {
+          _toggleHidden(event.target);
+          event.preventDefault();
+      });
+    }
 
-  toggles = document.getElementsByClassName("toggleCollapse");
-  for (var i = 0; i < toggles.length; ++i) {
-    var toggle = toggles[[]i];
-    toggle.addEventListener("click", function (event) {
-        _toggleCollapse(event.target);
-        event.preventDefault();
-    });
-  }
+    toggles = document.getElementsByClassName("toggleCollapse");
+    for (var i = 0; i < toggles.length; ++i) {
+      var toggle = toggles[[]i];
+      toggle.addEventListener("click", function (event) {
+          _toggleCollapse(event.target);
+          event.preventDefault();
+      });
+    }
 
-  [if-any form_token]
-     var tokenFields = document.querySelectorAll("input[[]name=token]");
-     for (var i = 0; i < tokenFields.length; ++i) {
-       var field = tokenFields[[]i];
-       field.form.addEventListener("submit", function(event) {
-           refreshTokens(
-               event, "[form_token]", "[form_token_path]", [token_expires_sec]);
-       });
-     }
-  [end]
+    [if-any form_token]
+      var tokenFields = document.querySelectorAll("input[[]name=token]");
+      for (var i = 0; i < tokenFields.length; ++i) {
+        var field = tokenFields[[]i];
+        field.form.addEventListener("submit", function(event) {
+            refreshTokens(
+                event, "[form_token]", "[form_token_path]", [token_expires_sec]);
+        });
+      }
+    [end]
 
-  [if-any project]
-    _fetchUserProjects(false);
-  [end]
-  _onload();
+    [if-any project]
+      _fetchUserProjects(false);
+    [end]
+    _onload();
 
-});
-</script>
+  });
+  </script>
+[else]
+  <script type="text/javascript" nonce="[nonce]">
+  runOnLoad(function() {
+    TKR_install_ac();
+  });
+  </script>
+[end]
 
 <script type="text/javascript" nonce="[nonce]">
 runOnLoad(function() {

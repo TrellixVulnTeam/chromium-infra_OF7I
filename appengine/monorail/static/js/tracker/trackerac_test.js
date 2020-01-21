@@ -5,7 +5,7 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-var feedData = {
+const feedData = {
   'open': [{name: 'New', doc: 'Newly reported'},
     {name: 'Started', doc: 'Work has begun'}],
   'closed': [{name: 'Fixed', doc: 'Problem was fixed'},
@@ -48,8 +48,8 @@ function completionsEqual(strings, completions) {
 }
 
 function assertHasCompletion(s, acStore) {
-  let ch = s.charAt(0).toLowerCase();
-  let firstCharMapArray = acStore.firstCharMap_[ch];
+  const ch = s.charAt(0).toLowerCase();
+  const firstCharMapArray = acStore.firstCharMap_[ch];
   assertNotNull(!firstCharMapArray);
   for (let i = 0; i < firstCharMapArray.length; i++) {
     if (s == firstCharMapArray[i].value) return;
@@ -65,17 +65,17 @@ function assertHasAllCompletions(stringArray, acStore) {
 }
 
 function acStoreToString(acStore) {
-  let allCompletions = [];
-  for (let ch in acStore.firstCharMap_) {
+  const allCompletions = [];
+  for (const ch in acStore.firstCharMap_) {
     if (acStore.firstCharMap_.hasOwnProperty(ch)) {
-      let firstCharArray = acStore.firstCharMap_[ch];
+      const firstCharArray = acStore.firstCharMap_[ch];
       for (let i = 0; i < firstCharArray.length; i++) {
         allCompletions[firstCharArray[i].value] = true;
       }
     }
   }
-  let parts = [];
-  for (let comp in allCompletions) {
+  const parts = [];
+  for (const comp in allCompletions) {
     if (allCompletions.hasOwnProperty(comp)) {
       parts.push(comp);
     }
@@ -86,47 +86,47 @@ function acStoreToString(acStore) {
 function testSetUpStatusStore() {
   TKR_setUpStatusStore(feedData.open, feedData.closed);
   assertElementsEqual(
-    ['New', 'Started', 'Fixed', 'Invalid'],
-    TKR_statusWords);
+      ['New', 'Started', 'Fixed', 'Invalid'],
+      TKR_statusWords);
   assertHasAllCompletions(
-    ['New', 'Started', 'Fixed', 'Invalid'],
-    TKR_statusStore);
+      ['New', 'Started', 'Fixed', 'Invalid'],
+      TKR_statusStore);
 }
 
 function testSetUpSearchStore() {
   TKR_setUpSearchStore(
-    feedData.labels, feedData.members, feedData.open, feedData.closed);
+      feedData.labels, feedData.members, feedData.open, feedData.closed);
   assertHasAllCompletions(
-    ['status:New', 'status:Started', 'status:Fixed', 'status:Invalid',
-      '-status:New', '-status:Started', '-status:Fixed', '-status:Invalid',
-      'Type=Defect', '-Type=Defect', 'Type=Enhancement', '-Type=Enhancement',
-      'label:Hot', 'label:Cold', '-label:Hot', '-label:Cold',
-      'owner:jrobbins', 'cc:jrobbins', '-owner:jrobbins', '-cc:jrobbins',
-      'summary:', 'opened-after:today-1', 'commentby:me', 'reporter:me'],
-    TKR_searchStore);
+      ['status:New', 'status:Started', 'status:Fixed', 'status:Invalid',
+        '-status:New', '-status:Started', '-status:Fixed', '-status:Invalid',
+        'Type=Defect', '-Type=Defect', 'Type=Enhancement', '-Type=Enhancement',
+        'label:Hot', 'label:Cold', '-label:Hot', '-label:Cold',
+        'owner:jrobbins', 'cc:jrobbins', '-owner:jrobbins', '-cc:jrobbins',
+        'summary:', 'opened-after:today-1', 'commentby:me', 'reporter:me'],
+      TKR_searchStore);
 }
 
 function testSetUpQuickEditStore() {
   TKR_setUpQuickEditStore(
-    feedData.labels, feedData.members, feedData.open, feedData.closed);
+      feedData.labels, feedData.members, feedData.open, feedData.closed);
   assertHasAllCompletions(
-    ['status=New', 'status=Started', 'status=Fixed', 'status=Invalid',
-      'Type=Defect', 'Type=Enhancement', 'Hot', 'Cold', '-Hot', '-Cold',
-      'owner=jrobbins', 'owner=me', 'cc=jrobbins', 'cc=me', 'cc=-jrobbins',
-      'cc=-me', 'summary=""', 'owner=----'],
-    TKR_quickEditStore);
+      ['status=New', 'status=Started', 'status=Fixed', 'status=Invalid',
+        'Type=Defect', 'Type=Enhancement', 'Hot', 'Cold', '-Hot', '-Cold',
+        'owner=jrobbins', 'owner=me', 'cc=jrobbins', 'cc=me', 'cc=-jrobbins',
+        'cc=-me', 'summary=""', 'owner=----'],
+      TKR_quickEditStore);
 }
 
 function testSetUpLabelStore() {
   TKR_setUpLabelStore(feedData.labels);
   assertHasAllCompletions(
-    ['Type-Defect', 'Type-Enhancement', 'Hot', 'Cold'],
-    TKR_labelStore);
+      ['Type-Defect', 'Type-Enhancement', 'Hot', 'Cold'],
+      TKR_labelStore);
 }
 
 function testSetUpMembersStore() {
   TKR_setUpMemberStore(feedData.members);
   assertHasAllCompletions(
-    ['jrobbins', 'jrobbins@chromium.org'],
-    TKR_memberListStore);
+      ['jrobbins', 'jrobbins@chromium.org'],
+      TKR_memberListStore);
 }

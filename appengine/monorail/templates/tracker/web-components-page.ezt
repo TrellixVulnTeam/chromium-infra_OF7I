@@ -3,7 +3,9 @@
 [else]
   [define title]Monorail[end]
 [end]
-[include "../framework/polymer-header.ezt"]
+
+[define is_ezt][end]
+[include "../framework/master-header-shared.ezt"]
 
 [include "../webpack-out/mr-app.ezt"]
 

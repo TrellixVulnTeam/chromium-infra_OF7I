@@ -4,6 +4,7 @@
      arg0: Can be "showtabs", "showusertabs" or "showusergrouptabs" to select which top-plevel tabs are shown.
      arg1: String like "t1", "t2", "t3" to identify the currently active tab.
 ]
+[define is_ezt]Yes[end]
 [include "master-header-shared.ezt"]
 
 <script type="text/javascript"
