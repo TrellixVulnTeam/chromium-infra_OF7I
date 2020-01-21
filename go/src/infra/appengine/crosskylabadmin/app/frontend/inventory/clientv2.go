@@ -119,7 +119,33 @@ func (c *invServiceClient) updateDUTSpecs(ctx context.Context, od, nd *inventory
 		}
 	}()
 
-	return "fake udpate URL", nil
+	devicesToUpdate, labstations, _, err := api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{nd})
+	if err != nil {
+		logging.Errorf(ctx, "failed to import DUT specs: %s", err)
+		return "", err
+	}
+	if len(devicesToUpdate) == 0 {
+		devicesToUpdate = labstations
+	}
+
+	f := func() error {
+		if rsp, err := c.client.UpdateCrosDevicesSetup(ctx, &api.UpdateCrosDevicesSetupRequest{
+			Devices: devicesToUpdate,
+			// TODO (guocb) Add reason why update.
+		}); err != nil {
+			return err
+		} else if len(rsp.FailedDevices) > 0 {
+			// There's only one device under updating.
+			return errors.Reason(rsp.FailedDevices[0].ErrorMsg).Err()
+		}
+		return nil
+	}
+	err = retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "updateDUTSpecs v2"))
+	if err != nil {
+		return "", errors.Annotate(err, "update DUT spects").Err()
+	}
+
+	return "URL N/A", nil
 }
 
 func (c *invServiceClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
