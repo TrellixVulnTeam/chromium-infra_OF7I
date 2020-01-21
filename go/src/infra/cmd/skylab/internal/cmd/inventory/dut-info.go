@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -20,12 +19,10 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/grpc/prpc"
 
-	invv2 "infra/appengine/cros/lab_inventory/api/v1"
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	"infra/cmd/skylab/internal/inventoryv2"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
@@ -90,7 +87,9 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
-	dut, err := getDutInfo(ctx, hc, e, args[0], c.v2)
+	ic := NewInventoryClient(hc, e, c.v2)
+	dut, err := ic.GetDutInfo(ctx, args[0], true)
+
 	if err != nil {
 		return err
 	}
@@ -107,33 +106,39 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 	}
 }
 
-func getDutInfo(ctx context.Context, hc *http.Client, e site.Environment, hostname string, version2 bool) (*inventory.DeviceUnderTest, error) {
-	if version2 {
-		dutV2, err := inventoryv2.GetDutInfo(ctx, hc, e, hostname)
-		if err != nil {
-			return nil, err
-		}
-		return invv2.AdaptToV1DutSpec(dutV2)
+func (client *inventoryClientV1) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
+	req := &fleet.GetDutInfoRequest{Id: id}
+	if byHostname {
+		req = &fleet.GetDutInfoRequest{Hostname: id}
 	}
-	return getDutInfoV1(ctx, hc, e, hostname)
-}
-
-func getDutInfoV1(ctx context.Context, hc *http.Client, e site.Environment, hostname string) (*inventory.DeviceUnderTest, error) {
-	ic := fleet.NewInventoryPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    e.AdminService,
-		Options: site.DefaultPRPCOptions,
-	})
-
-	resp, err := ic.GetDutInfo(ctx, &fleet.GetDutInfoRequest{Hostname: hostname})
+	resp, err := client.ic.GetDutInfo(ctx, req)
 	if err != nil {
-		return nil, errors.Annotate(err, "get dutinfo for %s", hostname).Err()
+		return nil, errors.Annotate(err, "get dutinfo for %s", id).Err()
 	}
 	var dut inventory.DeviceUnderTest
 	if err := proto.Unmarshal(resp.Spec, &dut); err != nil {
-		return nil, errors.Annotate(err, "get dutinfo for %s", hostname).Err()
+		return nil, errors.Annotate(err, "get dutinfo for %s", id).Err()
 	}
 	return &dut, nil
+}
+
+// GetDutInfo gets the dut information from inventory v2 service.
+func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
+	devID := &invV2Api.DeviceID{Id: &invV2Api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: id}}
+	if byHostname {
+		devID = &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: id}}
+	}
+	rsp, err := client.ic.GetCrosDevices(ctx, &invV2Api.GetCrosDevicesRequest{
+		Ids: []*invV2Api.DeviceID{devID},
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "[v2] get dutinfo for %s", id).Err()
+	}
+	if len(rsp.FailedDevices) > 0 {
+		result := rsp.FailedDevices[0]
+		return nil, errors.Reason("[v2] failed to get device %s: %s", result.Hostname, result.ErrorMsg).Err()
+	}
+	return invV2Api.AdaptToV1DutSpec(rsp.Data[0])
 }
 
 // printHumanizedInfoShort prints the most commonly used dut information in a

@@ -20,12 +20,11 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/gerrit"
-	"go.chromium.org/luci/grpc/prpc"
 
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	iv "infra/cmd/skylab/internal/inventory"
-	"infra/cmd/skylab/internal/inventoryv2"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
@@ -96,30 +95,17 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		return nil
 	}
 
-	var modified bool
-	if c.v2 {
-		modified, err = inventoryv2.RemoveDevices(ctx, hc, e, hostnames, c.delete)
+	ic := NewInventoryClient(hc, e, c.v2)
+	modified, err := ic.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
+	if err != nil {
+		return err
+	}
+	if c.delete {
+		mod, err := ic.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, a.GetOut())
 		if err != nil {
 			return err
 		}
-	} else {
-		ic := fleet.NewInventoryPRPCClient(&prpc.Client{
-			C:       hc,
-			Host:    e.AdminService,
-			Options: site.DefaultPRPCOptions,
-		})
-
-		modified, err = c.removeDUTs(ctx, ic, a.GetOut())
-		if err != nil {
-			return err
-		}
-		if c.delete {
-			mod, err := c.deleteDUTs(ctx, a.GetOut())
-			if err != nil {
-				return err
-			}
-			modified = modified || mod
-		}
+		modified = modified || mod
 	}
 	if !modified {
 		fmt.Fprintln(a.GetOut(), "No DUTs modified")
@@ -160,12 +146,12 @@ func validBug(bug string) bool {
 	return false
 }
 
-func (c *removeDutsRun) removeDUTs(ctx context.Context, ic fleet.InventoryClient, stdout io.Writer) (modified bool, err error) {
-	req, err := removeRequest(c.server, c.Flags.Args(), c.removalReason)
+func (client *inventoryClientV1) removeDUTs(ctx context.Context, drone string, hostnames []string, rr skycmdlib.RemovalReason, stdout io.Writer) (modified bool, err error) {
+	req, err := removeRequest(drone, hostnames, rr)
 	if err != nil {
 		return false, err
 	}
-	resp, err := ic.RemoveDutsFromDrones(ctx, &req)
+	resp, err := client.ic.RemoveDutsFromDrones(ctx, &req)
 	if err != nil {
 		return false, err
 	}
@@ -174,6 +160,33 @@ func (c *removeDutsRun) removeDUTs(ctx context.Context, ic fleet.InventoryClient
 	}
 	_ = printRemovals(stdout, resp)
 	return true, nil
+}
+
+func (client *inventoryClientV2) removeDUTs(ctx context.Context, drone string, hostnames []string, rr skycmdlib.RemovalReason, stdout io.Writer) (bool, error) {
+	var devIds []*invV2Api.DeviceID
+	for _, h := range hostnames {
+		devIds = append(devIds, &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: h}})
+	}
+	rsp, err := client.ic.DeleteCrosDevices(ctx, &invV2Api.DeleteCrosDevicesRequest{
+		Ids: devIds,
+	})
+	if err != nil {
+		return false, errors.Annotate(err, "[v2] remove devices for %s ...", hostnames[0]).Err()
+	}
+	if len(rsp.FailedDevices) > 0 {
+		var reasons []string
+		for _, d := range rsp.FailedDevices {
+			reasons = append(reasons, fmt.Sprintf("%s:%s", d.Hostname, d.ErrorMsg))
+		}
+		return false, errors.Reason("[v2] failed to remove device: %s", strings.Join(reasons, ", ")).Err()
+	}
+	b := bufio.NewWriter(stdout)
+	fmt.Fprintln(b, "Deleted DUT hostnames")
+	for _, d := range rsp.RemovedDevices {
+		fmt.Fprintln(b, d.Hostname)
+	}
+	b.Flush()
+	return len(rsp.RemovedDevices) > 0, nil
 }
 
 // removeRequest builds a RPC remove request.
@@ -209,9 +222,8 @@ func protoTimestamp(t time.Time) *inventory.Timestamp {
 	}
 }
 
-func (c *removeDutsRun) deleteDUTs(ctx context.Context, stdout io.Writer) (modified bool, err error) {
-	hostnames := c.Flags.Args()
-	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
+func (client *inventoryClientV1) deleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, stdout io.Writer) (modified bool, err error) {
+	hc, err := cmdlib.NewHTTPClient(ctx, authFlags)
 	if err != nil {
 		return false, err
 	}
@@ -248,6 +260,10 @@ func (c *removeDutsRun) deleteDUTs(ctx context.Context, stdout io.Writer) (modif
 
 	_ = printDeletions(stdout, cn, hostnames)
 	return true, nil
+}
+
+func (client *inventoryClientV2) deleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, stdout io.Writer) (modified bool, err error) {
+	return
 }
 
 // printRemovals prints a table of DUT removals from drones.
