@@ -8,14 +8,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/grpc/prpc"
 
-	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	invcli "infra/cmd/skylab/internal/cmd/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
@@ -34,6 +32,7 @@ For internal use only.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.byHostname, "by-hostname", false, "Lookup by hostname instead of ID.")
+		c.Flags.BoolVar(&c.v2, "v2", false, "[INTERNAL ONLY] Use ChromeOS Lab inventory v2 service.")
 		return c
 	},
 }
@@ -43,6 +42,7 @@ type printBotInfoRun struct {
 	authFlags authcli.Flags
 	envFlags  skycmdlib.EnvFlags
 
+	v2         bool
 	byHostname bool
 }
 
@@ -65,28 +65,15 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 		return err
 	}
 	siteEnv := c.envFlags.Env()
-	ic := fleet.NewInventoryPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    siteEnv.AdminService,
-		Options: site.DefaultPRPCOptions,
-	})
-	var req fleet.GetDutInfoRequest
-	if c.byHostname {
-		req.Hostname = dutID
-	} else {
-		req.Id = dutID
-	}
-	res, err := ic.GetDutInfo(ctx, &req)
+	ic := invcli.NewInventoryClient(hc, siteEnv, c.v2)
+	d, err := ic.GetDutInfo(ctx, dutID, c.byHostname)
 	if err != nil {
 		return err
 	}
-	var d inventory.DeviceUnderTest
-	if err = proto.Unmarshal(res.GetSpec(), &d); err != nil {
-		return err
-	}
+
 	stderr := a.GetErr()
 	r := func(e error) { fmt.Fprintf(stderr, "sanitize dimensions: %s\n", err) }
-	bi := botInfoForDUT(&d, r)
+	bi := botInfoForDUT(d, r)
 	enc, err := json.Marshal(bi)
 	if err != nil {
 		return err
