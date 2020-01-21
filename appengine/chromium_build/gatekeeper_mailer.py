@@ -24,7 +24,7 @@ jinja_environment = jinja2.Environment(
     autoescape=True)
 jinja_environment.filters['urlquote'] = urlquote
 
-# From buildbot's results.py.
+# Carried over from old buildbot result codes.
 SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, RETRY = range(6)
 Results = ["success", "warnings", "failure", "skipped", "exception", "retry"]
 

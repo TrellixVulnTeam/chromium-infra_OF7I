@@ -8,7 +8,6 @@ import inspect
 import os
 import re
 
-import app
 import handler
 
 from tests.testing_utils import testing
@@ -64,15 +63,3 @@ class CbTestCase(testing.AppengineTestCase):
   def write_file(self, filename, content):
     with open(self._get_path(filename), 'w') as fh:
       fh.write(content)
-  
-  @staticmethod
-  def save_page(localpath, content):
-    page_data = {}
-    page_data['content'] = content
-    fetch_timestamp = datetime.datetime.now()
-    model = app.Page(localpath=localpath, content=None,
-                     fetch_timestamp=fetch_timestamp)
-    model.put()
-    app.save_page(model, localpath=localpath, fetch_timestamp=fetch_timestamp,
-                  page_data=page_data)
-    return model

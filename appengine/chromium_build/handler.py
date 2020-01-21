@@ -4,7 +4,6 @@
 
 import webapp2
 
-import app
 import base_page
 import gae_ts_mon
 
@@ -14,8 +13,6 @@ class MainAction(base_page.BasePage):
     self.redirect('https://ci.chromium.org/p/chromium/g/main/console')
 
 
-# Call initial bootstrap for the app module.
-app.bootstrap()
 base_page.bootstrap()
 
 # GAE will cache |application| across requests if we set it here.  See

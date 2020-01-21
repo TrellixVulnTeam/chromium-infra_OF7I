@@ -9,6 +9,9 @@ import json
 import random
 import time
 
+# TODO: Remove this dependency. It was reasonable when this whole
+# application required BeautifulSoup, but now that all the rest of
+# that logic is gone, just using it for testing is overkill.
 from third_party.BeautifulSoup.BeautifulSoup import BeautifulSoup
 
 from tests import cb
