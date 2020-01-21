@@ -27,7 +27,6 @@ WIN_ENABLED_PACKAGES = [
 
   'infra/services/service_manager',
 
-  'packages/infra_libs/infra_libs/event_mon',
   'packages/infra_libs/infra_libs/infra_types',
   'packages/infra_libs/infra_libs/logs',
   'packages/infra_libs/infra_libs/time_functions',
