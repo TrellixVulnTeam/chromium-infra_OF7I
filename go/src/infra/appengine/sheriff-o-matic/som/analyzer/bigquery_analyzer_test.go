@@ -409,6 +409,67 @@ func TestGenerateSQLQuery(t *testing.T) {
 		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
+	Convey("Test generate SQL query for release branch", t, func() {
+		treeName := "release_branch"
+		tree := &model.Tree{
+			Name: treeName,
+		}
+		So(datastore.Put(c, tree), ShouldBeNil)
+		datastore.GetTestable(c).CatchupIndexes()
+		expected := `
+			SELECT
+			  Project,
+			  Bucket,
+			  Builder,
+			  MasterName,
+			  StepName,
+			  TestNamesFingerprint,
+			  TestNamesTrunc,
+			  NumTests,
+			  BuildIdBegin,
+			  BuildIdEnd,
+			  BuildNumberBegin,
+			  BuildNumberEnd,
+			  CPRangeOutputBegin,
+			  CPRangeOutputEnd,
+			  CPRangeInputBegin,
+			  CPRangeInputEnd,
+			  CulpritIdRangeBegin,
+			  CulpritIdRangeEnd,
+			  StartTime,
+			  BuildStatus
+			FROM
+				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
+			WHERE
+			(
+				project = "chrome"
+				AND bucket IN ("ci", "official")
+				AND (
+					MasterName IN (
+						"official.chrome",
+						"official.chrome.continuous",
+						"official.ios"
+					)
+					OR
+					builder IN (
+						"android-arm-beta-tests",
+						"android-arm-stable-tests",
+						"android-arm64-beta-tests",
+						"android-arm64-stable-tests"
+					)
+				)
+			)
+			OR
+			(
+				project = "chromium"
+				AND bucket in ("ci-beta", "ci-stable")
+			)
+			LIMIT
+				1000
+		`
+		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
+		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	})
 	Convey("Test generate SQL query for default builders", t, func() {
 		expected := `
 			SELECT

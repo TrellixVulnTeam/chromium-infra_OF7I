@@ -132,6 +132,34 @@ const iosFailuresQuery = selectFromWhere + `
 	)
 `
 
+const releaseBranchFailuresQuery = selectFromWhere + `
+	(
+		project = "chrome"
+		AND bucket IN ("ci", "official")
+		AND (
+			MasterName IN (
+				"official.chrome",
+				"official.chrome.continuous",
+				"official.ios"
+			)
+			OR
+			builder IN (
+				"android-arm-beta-tests",
+				"android-arm-stable-tests",
+				"android-arm64-beta-tests",
+				"android-arm64-stable-tests"
+			)
+		)
+	)
+	OR
+	(
+		project = "chromium"
+		AND bucket in ("ci-beta", "ci-stable")
+	)
+	LIMIT
+		1000
+`
+
 type failureRow struct {
 	TestNamesFingerprint bigquery.NullInt64
 	TestNamesTrunc       bigquery.NullString
@@ -223,6 +251,8 @@ func generateSQLQuery(ctx context.Context, tree string, appID string) string {
 		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter)
 	case "chromium.perf":
 		return fmt.Sprintf(failuresQuery, appID, "chrome", tree, tree)
+	case "release_branch":
+		return fmt.Sprintf(releaseBranchFailuresQuery, appID, "chrome")
 	default:
 		return fmt.Sprintf(failuresQuery, appID, "chromium", tree, tree)
 	}
