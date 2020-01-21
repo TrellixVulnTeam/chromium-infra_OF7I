@@ -6,7 +6,6 @@ threadsafe: true
 
 inbound_services:
 - warmup
-- xmpp_message
 
 handlers:
 - url: /(.*\.(html|js|txt|ttf))
