@@ -294,13 +294,7 @@ var RuleMap = map[string]*RepoConfig{
 				Rules: []Rule{
 					ChangeReviewed{},
 				},
-				notificationFunction: func(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
-					// TODO(maruel): Replace with fileBugForTBRViolation if a Infra>Audit
-					// component is created in Fuchsia issue tracker.
-					components := []string{"Infra"}
-					labels := []string{"CommitLog-Audit-Violation", "TBR-Violation"}
-					return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
-				},
+				notificationFunction: fileBugForTBRViolation,
 			},
 		},
 	},
