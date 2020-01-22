@@ -122,26 +122,26 @@ func TestSet(t *testing.T) {
 			So(files[0].Executable, ShouldBeFalse)
 			So(files[1].Executable, ShouldBeTrue)
 		})
-	}
 
-	Convey("Follows symlinks", t, func(c C) {
-		dir := newTempDir(c)
-		dir.touch("file")
-		dir.mkdir("dir")
-		dir.touch("dir/a")
-		dir.mkdir("stage")
-		dir.symlink("stage/filelink", "file")
-		dir.symlink("stage/dirlink", "dir")
-		dir.symlink("stage/broken", "broken") // skipped
+		Convey("Follows symlinks", t, func(c C) {
+			dir := newTempDir(c)
+			dir.touch("file")
+			dir.mkdir("dir")
+			dir.touch("dir/a")
+			dir.mkdir("stage")
+			dir.symlink("stage/filelink", "file")
+			dir.symlink("stage/dirlink", "dir")
+			dir.symlink("stage/broken", "broken") // skipped
 
-		s := &Set{}
-		So(s.AddFromDisk(dir.join("stage"), ""), ShouldBeNil)
-		So(collect(s), ShouldResemble, []string{
-			"D dirlink",
-			"F dirlink/a",
-			"F filelink",
+			s := &Set{}
+			So(s.AddFromDisk(dir.join("stage"), ""), ShouldBeNil)
+			So(collect(s), ShouldResemble, []string{
+				"D dirlink",
+				"F dirlink/a",
+				"F filelink",
+			})
 		})
-	})
+	}
 
 	Convey("ToTar works", t, func(c C) {
 		s := prepSet()
