@@ -95,13 +95,21 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		return nil
 	}
 
-	ic := NewInventoryClient(hc, e, c.v2)
-	modified, err := ic.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
+	// Inventory v1 is the default client.
+	// Only the result from main inventory client will be printed out.
+	icMain := NewInventoryClient(hc, e, false)
+	icBackup := NewInventoryClient(hc, e, true)
+	if c.v2 {
+		icMain, icBackup = icBackup, icMain
+	}
+	icBackup.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
+	modified, err := icMain.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
 	if err != nil {
 		return err
 	}
 	if c.delete {
-		mod, err := ic.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, a.GetOut())
+		icBackup.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, a.GetOut())
+		mod, err := icMain.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, a.GetOut())
 		if err != nil {
 			return err
 		}
@@ -181,10 +189,12 @@ func (client *inventoryClientV2) removeDUTs(ctx context.Context, drone string, h
 		return false, errors.Reason("[v2] failed to remove device: %s", strings.Join(reasons, ", ")).Err()
 	}
 	b := bufio.NewWriter(stdout)
+	fmt.Fprintln(b, "== Inventory v2: output begin ==")
 	fmt.Fprintln(b, "Deleted DUT hostnames")
 	for _, d := range rsp.RemovedDevices {
 		fmt.Fprintln(b, d.Hostname)
 	}
+	fmt.Fprintln(b, "== Inventory v2: output end ==")
 	b.Flush()
 	return len(rsp.RemovedDevices) > 0, nil
 }
