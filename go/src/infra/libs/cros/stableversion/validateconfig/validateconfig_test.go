@@ -32,7 +32,7 @@ func errorWithDefault(e error, def string) string {
 // parseStableVersionsOrPanic is a helper function that's used in tests to feed
 // a stable version file contained in a string literal to a test.
 func parseStableVersionsOrPanic(contents []byte) *labPlatform.StableVersions {
-	out, err := parseStableVersions(contents)
+	out, err := ParseStableVersions(contents)
 	if err != nil {
 		panic(err.Error())
 	}

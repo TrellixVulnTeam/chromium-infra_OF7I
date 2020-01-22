@@ -111,7 +111,7 @@ func InspectBuffer(contents []byte) error {
 	if !isValidJSON(contents) {
 		return fmt.Errorf(FileNotJSON)
 	}
-	sv, err := parseStableVersions(contents)
+	sv, err := ParseStableVersions(contents)
 	if err != nil {
 		return err
 	}
@@ -129,9 +129,9 @@ func isValidJSON(contents []byte) bool {
 	return true
 }
 
-// parseStableVersions takes a byte array and attempts to parse a stable version
+// ParseStableVersions takes a byte array and attempts to parse a stable version
 // proto file out of it.
-func parseStableVersions(contents []byte) (*labPlatform.StableVersions, error) {
+func ParseStableVersions(contents []byte) (*labPlatform.StableVersions, error) {
 	var allSV labPlatform.StableVersions
 	if err := unmarshaller.Unmarshal(bytes.NewReader(contents), &allSV); err != nil {
 		return nil, fmt.Errorf("JSON does not conform to schema: %s", err.Error())
