@@ -22,7 +22,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='cq.config',
   syntax='proto3',
   serialized_options=_b('Z,go.chromium.org/luci/cq/api/config/v2;config\242\376#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfg'),
-  serialized_pb=_b('\n.go.chromium.org/luci/cq/api/config/v2/cq.proto\x12\tcq.config\x1a\x1egoogle/protobuf/duration.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"\xd5\x01\n\x06\x43onfig\x12\x1b\n\x13\x64raining_start_time\x18\x01 \x01(\t\x12\x1a\n\x0e\x63q_status_host\x18\x02 \x01(\tB\x02\x18\x01\x12\x30\n\x0esubmit_options\x18\x03 \x01(\x0b\x32\x18.cq.config.SubmitOptions\x12-\n\rconfig_groups\x18\x04 \x03(\x0b\x32\x16.cq.config.ConfigGroup\x12\x31\n\x16project_scoped_account\x18\x05 \x01(\x0e\x32\x11.cq.config.Toggle\"R\n\rSubmitOptions\x12\x11\n\tmax_burst\x18\x01 \x01(\x05\x12.\n\x0b\x62urst_delay\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xb9\x02\n\x0b\x43onfigGroup\x12-\n\x06gerrit\x18\x01 \x03(\x0b\x32\x1d.cq.config.ConfigGroup.Gerrit\x12*\n\x0b\x63ombine_cls\x18\x04 \x01(\x0b\x32\x15.cq.config.CombineCLs\x12\'\n\tverifiers\x18\x02 \x01(\x0b\x32\x14.cq.config.Verifiers\x12#\n\x08\x66\x61llback\x18\x05 \x01(\x0e\x32\x11.cq.config.Toggle\x1a{\n\x06Gerrit\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x37\n\x08projects\x18\x02 \x03(\x0b\x32%.cq.config.ConfigGroup.Gerrit.Project\x1a+\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nref_regexp\x18\x02 \x03(\tJ\x04\x08\x03\x10\x04\"D\n\nCombineCLs\x12\x36\n\x13stabilization_delay\x18\x01 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xb5\n\n\tVerifiers\x12?\n\x11gerrit_cq_ability\x18\x01 \x01(\x0b\x32$.cq.config.Verifiers.GerritCQAbility\x12\x34\n\x0btree_status\x18\x02 \x01(\x0b\x32\x1f.cq.config.Verifiers.TreeStatus\x12+\n\x06tryjob\x18\x03 \x01(\x0b\x32\x1b.cq.config.Verifiers.Tryjob\x12/\n\x08\x63qlinter\x18\x04 \x01(\x0b\x32\x1d.cq.config.Verifiers.CQLinter\x12\'\n\x04\x66\x61ke\x18\x05 \x01(\x0b\x32\x19.cq.config.Verifiers.Fake\x1a\xee\x01\n\x0fGerritCQAbility\x12\x16\n\x0e\x63ommitter_list\x18\x01 \x03(\t\x12\x1b\n\x13\x64ry_run_access_list\x18\x02 \x03(\t\x12#\n\x1b\x61llow_submit_with_open_deps\x18\x03 \x01(\x08\x12Q\n\x1a\x61llow_owner_if_submittable\x18\x04 \x01(\x0e\x32-.cq.config.Verifiers.GerritCQAbility.CQAction\".\n\x08\x43QAction\x12\t\n\x05UNSET\x10\x00\x12\x0b\n\x07\x44RY_RUN\x10\x01\x12\n\n\x06\x43OMMIT\x10\x02\x1a\x19\n\nTreeStatus\x12\x0b\n\x03url\x18\x01 \x01(\t\x1a\xd4\x05\n\x06Tryjob\x12\x35\n\x08\x62uilders\x18\x01 \x03(\x0b\x32#.cq.config.Verifiers.Tryjob.Builder\x12=\n\x0cretry_config\x18\x02 \x01(\x0b\x32\'.cq.config.Verifiers.Tryjob.RetryConfig\x12/\n\x14\x63\x61ncel_stale_tryjobs\x18\x03 \x01(\x0e\x32\x11.cq.config.Toggle\x1a\x9b\x02\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fincludable_only\x18\t \x01(\x08\x12\x15\n\rdisable_reuse\x18\x02 \x01(\x08\x12\x14\n\x0ctriggered_by\x18\x03 \x01(\t\x12\x1d\n\x15\x65xperiment_percentage\x18\x04 \x01(\x02\x12\x44\n\requivalent_to\x18\x05 \x01(\x0b\x32-.cq.config.Verifiers.Tryjob.EquivalentBuilder\x12\x17\n\x0flocation_regexp\x18\x06 \x03(\t\x12\x1f\n\x17location_regexp_exclude\x18\x07 \x03(\t\x12\x1d\n\x15owner_whitelist_group\x18\x08 \x03(\t\x1aT\n\x11\x45quivalentBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12\x1d\n\x15owner_whitelist_group\x18\x03 \x01(\t\x1a!\n\x11IncludableBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x1a\x8b\x01\n\x0bRetryConfig\x12\x14\n\x0csingle_quota\x18\x01 \x01(\x05\x12\x14\n\x0cglobal_quota\x18\x02 \x01(\x05\x12\x16\n\x0e\x66\x61ilure_weight\x18\x03 \x01(\x05\x12 \n\x18transient_failure_weight\x18\x04 \x01(\x05\x12\x16\n\x0etimeout_weight\x18\x05 \x01(\x05\x1a\n\n\x08\x43QLinter\x1a;\n\x04\x46\x61ke\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x65ventual_state\x18\x02 \x01(\t\x12\r\n\x05\x64\x65lay\x18\x03 \x01(\x05*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02\x42uZ,go.chromium.org/luci/cq/api/config/v2;config\xa2\xfe#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfgb\x06proto3')
+  serialized_pb=_b('\n.go.chromium.org/luci/cq/api/config/v2/cq.proto\x12\tcq.config\x1a\x1egoogle/protobuf/duration.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"\xd5\x01\n\x06\x43onfig\x12\x1b\n\x13\x64raining_start_time\x18\x01 \x01(\t\x12\x1a\n\x0e\x63q_status_host\x18\x02 \x01(\tB\x02\x18\x01\x12\x30\n\x0esubmit_options\x18\x03 \x01(\x0b\x32\x18.cq.config.SubmitOptions\x12-\n\rconfig_groups\x18\x04 \x03(\x0b\x32\x16.cq.config.ConfigGroup\x12\x31\n\x16project_scoped_account\x18\x05 \x01(\x0e\x32\x11.cq.config.Toggle\"R\n\rSubmitOptions\x12\x11\n\tmax_burst\x18\x01 \x01(\x05\x12.\n\x0b\x62urst_delay\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xc7\x02\n\x0b\x43onfigGroup\x12\x0c\n\x04name\x18\x06 \x01(\t\x12-\n\x06gerrit\x18\x01 \x03(\x0b\x32\x1d.cq.config.ConfigGroup.Gerrit\x12*\n\x0b\x63ombine_cls\x18\x04 \x01(\x0b\x32\x15.cq.config.CombineCLs\x12\'\n\tverifiers\x18\x02 \x01(\x0b\x32\x14.cq.config.Verifiers\x12#\n\x08\x66\x61llback\x18\x05 \x01(\x0e\x32\x11.cq.config.Toggle\x1a{\n\x06Gerrit\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x37\n\x08projects\x18\x02 \x03(\x0b\x32%.cq.config.ConfigGroup.Gerrit.Project\x1a+\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nref_regexp\x18\x02 \x03(\tJ\x04\x08\x03\x10\x04\"D\n\nCombineCLs\x12\x36\n\x13stabilization_delay\x18\x01 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xb5\n\n\tVerifiers\x12?\n\x11gerrit_cq_ability\x18\x01 \x01(\x0b\x32$.cq.config.Verifiers.GerritCQAbility\x12\x34\n\x0btree_status\x18\x02 \x01(\x0b\x32\x1f.cq.config.Verifiers.TreeStatus\x12+\n\x06tryjob\x18\x03 \x01(\x0b\x32\x1b.cq.config.Verifiers.Tryjob\x12/\n\x08\x63qlinter\x18\x04 \x01(\x0b\x32\x1d.cq.config.Verifiers.CQLinter\x12\'\n\x04\x66\x61ke\x18\x05 \x01(\x0b\x32\x19.cq.config.Verifiers.Fake\x1a\xee\x01\n\x0fGerritCQAbility\x12\x16\n\x0e\x63ommitter_list\x18\x01 \x03(\t\x12\x1b\n\x13\x64ry_run_access_list\x18\x02 \x03(\t\x12#\n\x1b\x61llow_submit_with_open_deps\x18\x03 \x01(\x08\x12Q\n\x1a\x61llow_owner_if_submittable\x18\x04 \x01(\x0e\x32-.cq.config.Verifiers.GerritCQAbility.CQAction\".\n\x08\x43QAction\x12\t\n\x05UNSET\x10\x00\x12\x0b\n\x07\x44RY_RUN\x10\x01\x12\n\n\x06\x43OMMIT\x10\x02\x1a\x19\n\nTreeStatus\x12\x0b\n\x03url\x18\x01 \x01(\t\x1a\xd4\x05\n\x06Tryjob\x12\x35\n\x08\x62uilders\x18\x01 \x03(\x0b\x32#.cq.config.Verifiers.Tryjob.Builder\x12=\n\x0cretry_config\x18\x02 \x01(\x0b\x32\'.cq.config.Verifiers.Tryjob.RetryConfig\x12/\n\x14\x63\x61ncel_stale_tryjobs\x18\x03 \x01(\x0e\x32\x11.cq.config.Toggle\x1a\x9b\x02\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fincludable_only\x18\t \x01(\x08\x12\x15\n\rdisable_reuse\x18\x02 \x01(\x08\x12\x14\n\x0ctriggered_by\x18\x03 \x01(\t\x12\x1d\n\x15\x65xperiment_percentage\x18\x04 \x01(\x02\x12\x44\n\requivalent_to\x18\x05 \x01(\x0b\x32-.cq.config.Verifiers.Tryjob.EquivalentBuilder\x12\x17\n\x0flocation_regexp\x18\x06 \x03(\t\x12\x1f\n\x17location_regexp_exclude\x18\x07 \x03(\t\x12\x1d\n\x15owner_whitelist_group\x18\x08 \x03(\t\x1aT\n\x11\x45quivalentBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12\x1d\n\x15owner_whitelist_group\x18\x03 \x01(\t\x1a!\n\x11IncludableBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x1a\x8b\x01\n\x0bRetryConfig\x12\x14\n\x0csingle_quota\x18\x01 \x01(\x05\x12\x14\n\x0cglobal_quota\x18\x02 \x01(\x05\x12\x16\n\x0e\x66\x61ilure_weight\x18\x03 \x01(\x05\x12 \n\x18transient_failure_weight\x18\x04 \x01(\x05\x12\x16\n\x0etimeout_weight\x18\x05 \x01(\x05\x1a\n\n\x08\x43QLinter\x1a;\n\x04\x46\x61ke\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x65ventual_state\x18\x02 \x01(\t\x12\r\n\x05\x64\x65lay\x18\x03 \x01(\x05*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02\x42uZ,go.chromium.org/luci/cq/api/config/v2;config\xa2\xfe#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfgb\x06proto3')
   ,
   dependencies=[google_dot_protobuf_dot_duration__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_options__pb2.DESCRIPTOR,])
 
@@ -47,8 +47,8 @@ _TOGGLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2164,
-  serialized_end=2200,
+  serialized_start=2178,
+  serialized_end=2214,
 )
 _sym_db.RegisterEnumDescriptor(_TOGGLE)
 
@@ -79,8 +79,8 @@ _VERIFIERS_GERRITCQABILITY_CQACTION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1289,
-  serialized_end=1335,
+  serialized_start=1303,
+  serialized_end=1349,
 )
 _sym_db.RegisterEnumDescriptor(_VERIFIERS_GERRITCQABILITY_CQACTION)
 
@@ -215,8 +215,8 @@ _CONFIGGROUP_GERRIT_PROJECT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=707,
-  serialized_end=750,
+  serialized_start=721,
+  serialized_end=764,
 )
 
 _CONFIGGROUP_GERRIT = _descriptor.Descriptor(
@@ -252,8 +252,8 @@ _CONFIGGROUP_GERRIT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=627,
-  serialized_end=750,
+  serialized_start=641,
+  serialized_end=764,
 )
 
 _CONFIGGROUP = _descriptor.Descriptor(
@@ -264,28 +264,35 @@ _CONFIGGROUP = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='gerrit', full_name='cq.config.ConfigGroup.gerrit', index=0,
+      name='name', full_name='cq.config.ConfigGroup.name', index=0,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='gerrit', full_name='cq.config.ConfigGroup.gerrit', index=1,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='combine_cls', full_name='cq.config.ConfigGroup.combine_cls', index=1,
+      name='combine_cls', full_name='cq.config.ConfigGroup.combine_cls', index=2,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='verifiers', full_name='cq.config.ConfigGroup.verifiers', index=2,
+      name='verifiers', full_name='cq.config.ConfigGroup.verifiers', index=3,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='fallback', full_name='cq.config.ConfigGroup.fallback', index=3,
+      name='fallback', full_name='cq.config.ConfigGroup.fallback', index=4,
       number=5, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -304,7 +311,7 @@ _CONFIGGROUP = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=443,
-  serialized_end=756,
+  serialized_end=770,
 )
 
 
@@ -334,8 +341,8 @@ _COMBINECLS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=758,
-  serialized_end=826,
+  serialized_start=772,
+  serialized_end=840,
 )
 
 
@@ -387,8 +394,8 @@ _VERIFIERS_GERRITCQABILITY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1097,
-  serialized_end=1335,
+  serialized_start=1111,
+  serialized_end=1349,
 )
 
 _VERIFIERS_TREESTATUS = _descriptor.Descriptor(
@@ -417,8 +424,8 @@ _VERIFIERS_TREESTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1337,
-  serialized_end=1362,
+  serialized_start=1351,
+  serialized_end=1376,
 )
 
 _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
@@ -503,8 +510,8 @@ _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1543,
-  serialized_end=1826,
+  serialized_start=1557,
+  serialized_end=1840,
 )
 
 _VERIFIERS_TRYJOB_EQUIVALENTBUILDER = _descriptor.Descriptor(
@@ -547,8 +554,8 @@ _VERIFIERS_TRYJOB_EQUIVALENTBUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1828,
-  serialized_end=1912,
+  serialized_start=1842,
+  serialized_end=1926,
 )
 
 _VERIFIERS_TRYJOB_INCLUDABLEBUILDER = _descriptor.Descriptor(
@@ -577,8 +584,8 @@ _VERIFIERS_TRYJOB_INCLUDABLEBUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1914,
-  serialized_end=1947,
+  serialized_start=1928,
+  serialized_end=1961,
 )
 
 _VERIFIERS_TRYJOB_RETRYCONFIG = _descriptor.Descriptor(
@@ -635,8 +642,8 @@ _VERIFIERS_TRYJOB_RETRYCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1950,
-  serialized_end=2089,
+  serialized_start=1964,
+  serialized_end=2103,
 )
 
 _VERIFIERS_TRYJOB = _descriptor.Descriptor(
@@ -679,8 +686,8 @@ _VERIFIERS_TRYJOB = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1365,
-  serialized_end=2089,
+  serialized_start=1379,
+  serialized_end=2103,
 )
 
 _VERIFIERS_CQLINTER = _descriptor.Descriptor(
@@ -702,8 +709,8 @@ _VERIFIERS_CQLINTER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2091,
-  serialized_end=2101,
+  serialized_start=2105,
+  serialized_end=2115,
 )
 
 _VERIFIERS_FAKE = _descriptor.Descriptor(
@@ -746,8 +753,8 @@ _VERIFIERS_FAKE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2103,
-  serialized_end=2162,
+  serialized_start=2117,
+  serialized_end=2176,
 )
 
 _VERIFIERS = _descriptor.Descriptor(
@@ -804,8 +811,8 @@ _VERIFIERS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=829,
-  serialized_end=2162,
+  serialized_start=843,
+  serialized_end=2176,
 )
 
 _CONFIG.fields_by_name['submit_options'].message_type = _SUBMITOPTIONS
