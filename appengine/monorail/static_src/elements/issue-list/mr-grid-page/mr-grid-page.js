@@ -76,6 +76,7 @@ export class MrGridPage extends connectStore(LitElement) {
       fields: {type: Array},
       progress: {type: Number},
       totalIssues: {type: Number},
+      _fetchingPresentationConfig: {type: Boolean},
     };
   };
 
@@ -107,15 +108,19 @@ export class MrGridPage extends connectStore(LitElement) {
    * @return {Boolean}
    */
   _shouldFetchMatchingIssues(changedProperties) {
-    if (changedProperties.has('projectName')) {
-      return true;
-    }
-    if (changedProperties.has('_queryParams')) {
-      return compareProps(
-          this._queryParams,
-          changedProperties.get('_queryParams'));
-    }
+    if (!this._fetchingPresentationConfig) {
+      if (changedProperties.has('projectName') ||
+          changedProperties.has('_fetchingPresentationConfig')) {
+        return true;
+      }
+      if (changedProperties.has('_queryParams')) {
+        return compareProps(
+            this._queryParams,
+            changedProperties.get('_queryParams'));
+      }
 
+      return false;
+    }
     return false;
   }
 
@@ -123,6 +128,7 @@ export class MrGridPage extends connectStore(LitElement) {
   _fetchMatchingIssues() {
     store.dispatch(issue.fetchIssueList(this.projectName, {
       ...this._queryParams,
+      q: this._currentQuery,
       maxItems: 500, // 500 items * 12 calls = max of 6,000 issues.
       maxCalls: 12,
     }));
@@ -135,6 +141,9 @@ export class MrGridPage extends connectStore(LitElement) {
     this.progress = (issue.issueListProgress(state) || 0);
     this.totalIssues = (issue.totalIssues(state) || 0);
     this._queryParams = sitewide.queryParams(state);
+    this._currentQuery = sitewide.currentQuery(state);
+    this._fetchingPresentationConfig =
+        project.fetchingPresentationConfig(state);
   }
 
   /** @override */

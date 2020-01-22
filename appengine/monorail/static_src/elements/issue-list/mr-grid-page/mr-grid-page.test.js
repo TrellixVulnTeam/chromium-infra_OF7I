@@ -83,6 +83,25 @@ describe('mr-grid-page', () => {
       result = element._shouldFetchMatchingIssues(changedProps);
       assert.isTrue(result);
     });
+
+    it('returns false when fetchingPresentationConfig', () => {
+      element._fetchingPresentationConfig = true;
+
+      const changedProps = new Map();
+      changedProps.set('projectName', 'anything');
+      const result = element._shouldFetchMatchingIssues(changedProps);
+
+      assert.isFalse(result);
+    });
+
+    it('returns true when presentationConfig fetch completes', () => {
+      element._fetchingPresentationConfig = false;
+
+      const changedProps = new Map();
+      changedProps.set('_fetchingPresentationConfig', true);
+      const result = element._shouldFetchMatchingIssues(changedProps);
+
+      assert.isTrue(result);
+    });
   });
 });
-
