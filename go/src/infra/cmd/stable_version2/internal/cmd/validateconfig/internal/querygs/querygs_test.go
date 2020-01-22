@@ -340,3 +340,9 @@ func validateErrorContainsSubstring(e error, msg string) error {
 		return fmt.Errorf("expected error (%s) to contain (%s), but it did not", e.Error(), msg)
 	}
 }
+
+func unmarshalOrPanic(content string, dest interface{}) {
+	if err := json.Unmarshal([]byte(content), dest); err != nil {
+		panic(err.Error())
+	}
+}

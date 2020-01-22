@@ -164,7 +164,7 @@ func TestInspectBuffer(t *testing.T) {
 	t.Parallel()
 	for _, tt := range testInspectBufferData {
 		t.Run(tt.uuid, func(t *testing.T) {
-			e := InspectBuffer([]byte(tt.in))
+			_, e := InspectBuffer([]byte(tt.in))
 			if !errorStartsWithDWIM(e, tt.out) {
 				msg := fmt.Sprintf("uuid (%s): name (%s): got: (%q), want: (%q)", tt.uuid, tt.name, e.Error(), tt.out)
 				t.Errorf(msg)

@@ -5,14 +5,18 @@
 package validateconfig
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/cli"
 
 	"github.com/maruel/subcommands"
 	"infra/cmd/stable_version2/internal/cmd"
+	"infra/cmd/stable_version2/internal/cmd/validateconfig/internal/querygs"
 	"infra/cmd/stable_version2/internal/site"
+	"infra/cmd/stable_version2/internal/utils"
 	vc "infra/libs/cros/stableversion/validateconfig"
 )
 
@@ -47,15 +51,43 @@ func (c *command) Run(a subcommands.Application, args []string, env subcommands.
 }
 
 func (c *command) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	ctx := cli.GetContext(a, c, env)
+	ctx = cmd.SetupLogging(ctx)
+
 	if len(args) == 0 {
 		return errors.New("need at least one file")
 	}
 	if len(args) > 1 {
 		return errors.New("validating multiple files not yet supported")
 	}
-	if err := vc.InspectFile(args[0]); err != nil {
-		return err
+	sv, err := vc.InspectFile(args[0])
+	if err != nil {
+		return fmt.Errorf("inspecting file: %s", err)
 	}
+
+	t, err := cmd.NewAuthenticatedTransport(ctx, &c.authFlags)
+	if err != nil {
+		return fmt.Errorf("creating authenticated transport: %s", err)
+	}
+	var r querygs.Reader
+	if err := r.Init(ctx, t, utils.Unmarshaller, "validate-config"); err != nil {
+		return fmt.Errorf("initializing Google Storage client: %s", err)
+	}
+
+	res, err := r.ValidateConfig(sv)
+	if err != nil {
+		return fmt.Errorf("valdating config using Google Storage: %s", err)
+	}
+	res.RemoveWhitelistedDUTs()
+	msg, err := json.MarshalIndent(res, "", "    ")
+	if err != nil {
+		panic("failed to marshal JSON")
+	}
+	if count := res.AnomalyCount(); count > 0 {
+		fmt.Printf("%s\n", msg)
+		return fmt.Errorf("(%d) errors detected", count)
+	}
+
 	fmt.Printf("%s\n", vc.FileSeemsLegit)
 	return nil
 }

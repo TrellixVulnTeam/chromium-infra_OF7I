@@ -45,6 +45,34 @@ type ValidationResult struct {
 	InvalidVersions []*VersionMismatch `json:"invalid_versions"`
 }
 
+// RemoveWhitelistedDUTs removes DUTs that are whitelisted from the validation error summary.
+// examples include labstations
+func (r *ValidationResult) RemoveWhitelistedDUTs() {
+	var newMissingBoards []string
+	var newFailedToLookup []*BoardModel
+	if len(r.MissingBoards) != 0 {
+		for _, item := range r.MissingBoards {
+			if !missingBoardWhitelist[item] {
+				newMissingBoards = append(newMissingBoards, item)
+			}
+		}
+	}
+	if len(r.FailedToLookup) != 0 {
+		for _, item := range r.FailedToLookup {
+			if !failedToLookupWhiteList[fmt.Sprintf("%s;%s", item.BuildTarget, item.Model)] {
+				newFailedToLookup = append(newFailedToLookup, item)
+			}
+		}
+	}
+	r.MissingBoards = newMissingBoards
+	r.FailedToLookup = newFailedToLookup
+}
+
+// AnomalyCount counts the total number of issues found in the results summary.
+func (r *ValidationResult) AnomalyCount() int {
+	return len(r.MissingBoards) + len(r.FailedToLookup) + len(r.InvalidVersions)
+}
+
 type downloader func(gsPath gs.Path) ([]byte, error)
 
 // Reader reads metadata.json files from google storage and caches the result.

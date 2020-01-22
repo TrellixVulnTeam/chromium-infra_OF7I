@@ -90,32 +90,32 @@ func makeShallowlyMalformedFaftEntry(message string, index int, buildTarget stri
 const FileSeemsLegit = "File appears to be a valid stable version config file."
 
 // InspectFile takes a path and determines what, if anything, is wrong with a stable_versions.cfg file.
-func InspectFile(path string) error {
+func InspectFile(path string) (*labPlatform.StableVersions, error) {
 	buf, err := ioutil.ReadFile(path)
 	// TODO(gregorynisbet): finer grained errors for when you don't have permission to read a file or for when
 	// the path is a directory
 	if err != nil {
-		return fmt.Errorf(FileNotReadable, err.Error())
+		return nil, fmt.Errorf(FileNotReadable, err.Error())
 	}
 	return InspectBuffer(buf)
 }
 
 // InspectBuffer takes file contents and determines what, if anything, is wrong with a stable_versions.cfg file.
-func InspectBuffer(contents []byte) error {
+func InspectBuffer(contents []byte) (*labPlatform.StableVersions, error) {
 	if len(contents) == 0 {
-		return fmt.Errorf(FileLenZero)
+		return nil, fmt.Errorf(FileLenZero)
 	}
 	if !utf8.ValidString(string(contents)) {
-		return fmt.Errorf(FileNotUTF8)
+		return nil, fmt.Errorf(FileNotUTF8)
 	}
 	if !isValidJSON(contents) {
-		return fmt.Errorf(FileNotJSON)
+		return nil, fmt.Errorf(FileNotJSON)
 	}
 	sv, err := ParseStableVersions(contents)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return validateStableVersions(sv)
+	return sv, validateStableVersions(sv)
 }
 
 // isValidJSON determines whether a byte array contains valid JSON or not.
