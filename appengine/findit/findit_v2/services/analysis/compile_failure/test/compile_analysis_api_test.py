@@ -6,9 +6,9 @@ from datetime import datetime
 import mock
 import textwrap
 
-from buildbucket_proto import common_pb2
-from buildbucket_proto.build_pb2 import Build
-from buildbucket_proto.build_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import BuilderID
 
 from findit_v2.model.compile_failure import CompileFailureGroup
 from findit_v2.model.culprit_action import CulpritAction

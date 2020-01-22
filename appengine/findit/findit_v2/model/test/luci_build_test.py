@@ -5,9 +5,9 @@
 from datetime import datetime
 import mock
 
-from buildbucket_proto import common_pb2
-from buildbucket_proto.build_pb2 import Build
-from buildbucket_proto.build_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import BuilderID
 from google.appengine.ext import ndb
 
 from findit_v2.model import luci_build

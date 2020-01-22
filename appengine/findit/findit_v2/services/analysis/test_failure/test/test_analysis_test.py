@@ -5,10 +5,10 @@
 from datetime import datetime
 import mock
 
-from buildbucket_proto import common_pb2
-from buildbucket_proto.build_pb2 import Build
-from buildbucket_proto.build_pb2 import BuilderID
-from buildbucket_proto.step_pb2 import Step
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
 from google.appengine.ext import ndb
 
 from findit_v2.model.gitiles_commit import Culprit

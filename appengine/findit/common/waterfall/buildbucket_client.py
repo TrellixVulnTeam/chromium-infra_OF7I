@@ -7,14 +7,14 @@ import collections
 import json
 import logging
 
-from buildbucket_proto import common_pb2
-from buildbucket_proto.build_pb2 import Build
-from buildbucket_proto.build_pb2 import BuilderID
-from buildbucket_proto.rpc_pb2 import BuildPredicate
-from buildbucket_proto.rpc_pb2 import GetBuildRequest
-from buildbucket_proto.rpc_pb2 import ScheduleBuildRequest
-from buildbucket_proto.rpc_pb2 import SearchBuildsRequest
-from buildbucket_proto.rpc_pb2 import SearchBuildsResponse
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import BuildPredicate
+from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import GetBuildRequest
+from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import ScheduleBuildRequest
+from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import SearchBuildsRequest
+from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import SearchBuildsResponse
 from common.findit_http_client import FinditHttpClient
 from libs.math.integers import constrain
 

@@ -5,9 +5,9 @@
 import hashlib
 import mock
 
-from buildbucket_proto.build_pb2 import Build
-from buildbucket_proto.common_pb2 import Log
-from buildbucket_proto.step_pb2 import Step
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto.common_pb2 import Log
+from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
 from common.waterfall import buildbucket_client
 from findit_v2.model.gitiles_commit import Culprit
 from findit_v2.services.chromium_api import ChromiumProjectAPI

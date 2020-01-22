@@ -5,7 +5,7 @@
 from collections import defaultdict
 import logging
 
-from buildbucket_proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 
 from findit_v2.model.messages.findit_result import (
     BuildFailureAnalysisResponse)

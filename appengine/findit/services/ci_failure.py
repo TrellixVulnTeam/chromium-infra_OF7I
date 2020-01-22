@@ -6,7 +6,7 @@
 from collections import defaultdict
 import logging
 
-from buildbucket_proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 
 from common.findit_http_client import FinditHttpClient
 from common.waterfall import failure_type

@@ -7,9 +7,9 @@ import json
 import mock
 import textwrap
 
-from buildbucket_proto.build_pb2 import Build
-from buildbucket_proto.build_pb2 import BuilderID
-from buildbucket_proto.step_pb2 import Step
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
 from google.appengine.api import taskqueue
 
 from common.waterfall import buildbucket_client

@@ -8,7 +8,7 @@ import inspect
 import json
 import logging
 
-from buildbucket_proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 from google.protobuf.field_mask_pb2 import FieldMask
 
 from common.constants import SUPPORTED_ISOLATED_SCRIPT_TESTS

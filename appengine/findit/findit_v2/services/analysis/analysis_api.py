@@ -6,7 +6,7 @@
 from collections import defaultdict
 import logging
 
-from buildbucket_proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 from google.appengine.ext import ndb
 from google.protobuf.field_mask_pb2 import FieldMask
 

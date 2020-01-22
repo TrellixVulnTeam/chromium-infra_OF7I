@@ -5,7 +5,7 @@
 from datetime import datetime
 import mock
 
-from buildbucket_proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
 from google.protobuf.field_mask_pb2 import FieldMask
 
 from common.constants import DEFAULT_SERVICE_ACCOUNT

@@ -5,8 +5,8 @@
 import mock
 import unittest
 
-from buildbucket_proto import common_pb2
-from buildbucket_proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
 
 from findit_v2.services import constants
 from findit_v2.services.analysis.compile_failure import compile_analysis

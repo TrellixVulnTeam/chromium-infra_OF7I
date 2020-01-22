@@ -9,7 +9,7 @@ import mock
 import webapp2
 
 from google.appengine.api import taskqueue
-from buildbucket_proto.build_pb2 import Build
+from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
 from testing_utils.testing import AppengineTestCase
 
 from common.findit_http_client import FinditHttpClient
