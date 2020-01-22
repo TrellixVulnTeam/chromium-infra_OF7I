@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 import unittest
 
+from framework import exceptions
+from testing import fake
 from tracker import rerank_helpers
 
 
@@ -17,6 +19,57 @@ rerank_helpers.MAX_RANKING = 10
 
 
 class Rerank_HelpersTest(unittest.TestCase):
+
+  def setUp(self):
+    self.PAST_TIME = 12345
+    hotlist_item_fields = [
+        (78904, 31, 111, self.PAST_TIME, 'note'),
+        (78903, 21, 222, self.PAST_TIME, 'note'),
+        (78902, 11, 111, self.PAST_TIME, 'note'),
+        (78901, 1, 222, self.PAST_TIME, 'note')]
+    self.hotlist = fake.Hotlist(
+        'hotlist_name', 1234, hotlist_item_fields=hotlist_item_fields)
+
+  # Tested in tests for RerankHotlistItems.
+  def testGetHotlistRerankChanges_FirstPosition(self):
+    moved_issue_ids = [78903, 78902]
+    target_position = 0
+    changed_ranks = rerank_helpers.GetHotlistRerankChanges(
+        self.hotlist.items, moved_issue_ids, target_position)
+    self.assertEqual(changed_ranks, [(78903, 5), (78902, 15), (78901, 25)])
+
+  def testGetHotlistRerankChanges_LastPosition(self):
+    moved_issue_ids = [78903, 78902]
+    target_position = 2
+    changed_ranks = rerank_helpers.GetHotlistRerankChanges(
+        self.hotlist.items, moved_issue_ids, target_position)
+    self.assertEqual(changed_ranks, [(78904, 3), (78903, 6), (78902, 9)])
+
+  def testGetHotlistRerankChanges_Middle(self):
+    moved_issue_ids = [78903]
+    target_position = 1
+    changed_ranks = rerank_helpers.GetHotlistRerankChanges(
+        self.hotlist.items, moved_issue_ids, target_position)
+    self.assertEqual(changed_ranks, [(78903, 6)])
+
+  def testGetHotlistRerankChanges_InvalidMoveIds(self):
+    moved_issue_ids = [78909]
+    target_position = 1
+    with self.assertRaises(exceptions.InputException):
+      rerank_helpers.GetHotlistRerankChanges(
+          self.hotlist.items, moved_issue_ids, target_position)
+
+    target_position = -1
+    with self.assertRaises(exceptions.InputException):
+      rerank_helpers.GetHotlistRerankChanges(
+          self.hotlist.items, moved_issue_ids, target_position)
+
+  def testGetHotlistRerankChanges_InvalidPosition(self):
+    moved_issue_ids = [78909]
+    target_position = 8
+    with self.assertRaises(exceptions.InputException):
+      rerank_helpers.GetHotlistRerankChanges(
+          self.hotlist.items, moved_issue_ids, target_position)
 
   def testGetInsertRankings(self):
     lower = [(1, 0)]

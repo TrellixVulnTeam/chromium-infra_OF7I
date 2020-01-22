@@ -4474,6 +4474,79 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.AddIssuesToHotlists([1, 2, 3], [4, 5, 6], None)
 
+  def createRerankHotlist(self):
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    hotlist_items = [
+        (78904, 31, self.user_3.user_id, self.PAST_TIME, 'note'),
+        (78903, 21, self.user_1.user_id, self.PAST_TIME, 'note'),
+        (78902, 11, self.user_2.user_id, self.PAST_TIME, 'note'),
+        (78901, 1, self.user_1.user_id, self.PAST_TIME, 'note')]
+    return self.work_env.services.features.TestAddHotlist(
+        'HotlistName', owner_ids=owner_ids, editor_ids=editor_ids,
+        hotlist_item_fields=hotlist_items)
+
+  def testRerankHotlistItems(self):
+    """We can rerank hotlist items to the middle."""
+    hotlist = self.createRerankHotlist()
+    moved_ids = [78901, 78903]
+    target_position = 1
+    self.SignIn(self.user_2.user_id)
+    with self.work_env as we:
+      updated_hotlist = we.RerankHotlistItems(
+          hotlist.hotlist_id, moved_ids, target_position)
+
+    self.assertEqual(
+        [item.issue_id for item in updated_hotlist.items],
+        [78902, 78901, 78903, 78904])
+
+  def testRerankHotlistIssues_NoPerms(self):
+    """We don't let non editors/owners update issue ranks."""
+    hotlist = self.createRerankHotlist()
+    moved_ids = [78901]
+    target_position = 0
+    self.SignIn(self.user_3.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.RerankHotlistItems(
+            hotlist.hotlist_id, moved_ids, target_position)
+
+  def testRerankHotlistIssues_MoveEntireList(self):
+    hotlist = self.createRerankHotlist()
+    moved_ids = [78902, 78901, 78904, 78903]
+    target_position = 0
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+      updated_hotlist = we.RerankHotlistItems(
+          hotlist.hotlist_id, moved_ids, target_position)
+
+    self.assertEqual(
+        [item.issue_id for item in updated_hotlist.items],
+        [78902, 78901, 78904, 78903])
+
+  def testRerankHotlistIssues_SamePosition(self):
+    hotlist = self.createRerankHotlist()
+    moved_ids = [78902]
+    target_position = 1
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+      updated_hotlist = we.RerankHotlistItems(
+          hotlist.hotlist_id, moved_ids, target_position)
+
+    self.assertEqual(
+        [item.issue_id for item in updated_hotlist.items],
+        [78901, 78902, 78903, 78904])
+
+  def testRerankHotlistIssues_NoItemsGiven(self):
+    hotlist = self.createRerankHotlist()
+    moved_ids = []
+    target_position = 1
+    self.SignIn(self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.RerankHotlistItems(
+            hotlist.hotlist_id, moved_ids, target_position)
+
   def testRerankHotlistIssues_SplitAbove(self):
     """We can rerank issues in a hotlist with split_above = true."""
     owner_ids = [self.user_1.user_id]

@@ -2461,6 +2461,45 @@ class WorkEnv(object):
           self.mc.cnxn, hotlist_ids, added_tuples, self.services.issue,
           self.services.chart)
 
+  def RerankHotlistItems(self, hotlist_id, moved_issue_ids, target_position):
+    # type: (int, list(int), int) -> Hotlist
+    """Rerank the moved items for a hotlist.
+        e.g. For a hotlist with items (a, b, c, d, e), if moved_issue_ids were
+        [e.issue_id, c.issue_id] and target_position were 0, the hotlist items
+        would be reranked as (e, c, a, b, d).
+
+    Args:
+      hotlist_id: A hotlist ID of the hotlist to rerank.
+      moved_issue_ids: A list of issue IDs to be moved together, in the order
+        they should have after the reranking.
+      target_position: The index, starting at 0, of the new position the
+        first issue in moved_issue_ids should have. This value cannot be greater
+        than (len(hotlist.items) - len(moved_issue_ids)).
+
+    Returns:
+      The updated hotlist.
+
+    Raises:
+      PermissionException: If the user lacks permissions to rerank the hotlist.
+      NoSuchHotlistException: If the hotlist is not found.
+      InputException: If the target_position or moved_issue_ids are not valid.
+    """
+    hotlist = self.GetHotlist(hotlist_id)
+    self._AssertUserCanEditHotlist(hotlist)
+    if not moved_issue_ids:
+      raise exceptions.InputException('`moved_issue_ids` empty.')
+
+    rank_changes = rerank_helpers.GetHotlistRerankChanges(
+        hotlist.items, moved_issue_ids, target_position)
+    if rank_changes:
+      relations_to_change = dict(rank_changes)
+      self.services.features.UpdateHotlistItemsFields(
+          self.mc.cnxn, hotlist_id, new_ranks=relations_to_change)
+
+    return self.GetHotlist(hotlist.hotlist_id)
+
+  # TODO(crbug/monorail/7031): Remove this method
+  # and corresponding v0 prpc method.
   def RerankHotlistIssues(self, hotlist_id, moved_ids, target_id, split_above):
     """Rerank the moved issues for the hotlist.
 
