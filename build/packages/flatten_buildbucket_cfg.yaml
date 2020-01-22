@@ -23,6 +23,12 @@ data:
       - .*\.pyc
       - \.git/.*
 
+  # Compiled protos.
+  - file: infra/init_python_pb2.py
+  - dir: python_pb2
+    exclude:
+      - .*\.pyc
+
   - file: infra/__init__.py
   - file: infra/libs/__init__.py
   - file: infra/tools/__init__.py

@@ -23,14 +23,16 @@ import subprocess
 import sys
 import threading
 import time
-import xml.etree.ElementTree as xml
 
 import google.protobuf.message
 import infra_libs
+
 from infra_libs import luci_auth
 from infra.libs import git
-from infra.libs.buildbucket.proto import common_pb2
-from infra.libs.buildbucket.proto import rpc_pb2
+
+from infra import init_python_pb2  # pylint: disable=unused-import
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2
 
 
 class RunLogger(logging.Filter):

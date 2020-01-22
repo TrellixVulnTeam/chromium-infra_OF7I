@@ -10,7 +10,7 @@ INFRA=$(GCLIENT_ROOT)/infra
 LUCI_GO=$(INFRA)/go/src/go.chromium.org/luci
 TOOLS=$(INFRA)/luci/appengine/components/tools
 
-all: regen
+all: regenerate
 
 $(INFRA)/cipd/protoc:
 	cd $(INFRA) && gclient runhooks
@@ -19,7 +19,7 @@ $(TOOLS)/protoc-gen-prpc-python:
 	echo "Run gclient sync yourself"
 	exit 1
 
-regen: $(INFRA)/cipd/protoc $(TOOLS)/protoc-gen-prpc-python
+regenerate: $(INFRA)/cipd/protoc $(TOOLS)/protoc-gen-prpc-python
 	rm -rf ./go
 	$(INFRA)/cipd/protoc \
 		--proto_path $(INFRA)/go/src \

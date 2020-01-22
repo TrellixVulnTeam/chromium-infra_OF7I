@@ -16,8 +16,11 @@ import tempfile
 import unittest
 
 import google.protobuf.message
-from infra.libs.buildbucket.proto import common_pb2
-from infra.libs.buildbucket.proto import rpc_pb2
+
+from infra import init_python_pb2  # pylint: disable=unused-import
+from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2
+
 from infra.services.lkgr_finder import lkgr_lib
 from infra.services.lkgr_finder.status_generator import StatusGeneratorStub
 

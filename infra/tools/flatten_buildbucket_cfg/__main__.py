@@ -8,7 +8,10 @@
 import sys
 
 from google.protobuf import text_format
-from infra.libs.buildbucket.proto.config import project_config_pb2
+
+from infra import init_python_pb2  # pylint: disable=unused-import
+from go.chromium.org.luci.buildbucket.proto import project_config_pb2
+
 from infra.libs.buildbucket.swarming import flatten_swarmingcfg
 from infra.libs.protoutil import multiline_proto
 
