@@ -19,6 +19,69 @@ var (
 	falseValue bool = false
 )
 
+var arcBoardMap = map[string]bool{
+	"asuka":                   true,
+	"atlas":                   true,
+	"auron_paine":             true,
+	"auron_yuna":              true,
+	"banon":                   true,
+	"bob":                     true,
+	"caroline":                true,
+	"caroline-ndktranslation": true,
+	"cave":                    true,
+	"celes":                   true,
+	"chell":                   true,
+	"coral":                   true,
+	"cyan":                    true,
+	"edgar":                   true,
+	"elm":                     true,
+	"eve":                     true,
+	"fizz":                    true,
+	"gandof":                  true,
+	"gnawty":                  true,
+	"grunt":                   true,
+	"hana":                    true,
+	"hatch":                   true,
+	"jacuzzi":                 true,
+	"kalista":                 true,
+	"kefka":                   true,
+	"kevin":                   true,
+	"kukui":                   true,
+	"lars":                    true,
+	"lulu":                    true,
+	"nami":                    true,
+	"nautilus":                true,
+	"nocturne":                true,
+	"octopus":                 true,
+	"pyro":                    true,
+	"rammus":                  true,
+	"reef":                    true,
+	"reks":                    true,
+	"relm":                    true,
+	"samus":                   true,
+	"sand":                    true,
+	"sarien":                  true,
+	"sarien-kvm":              true,
+	"scarlet":                 true,
+	"sentry":                  true,
+	"setzer":                  true,
+	"snappy":                  true,
+	"soraka":                  true,
+	"squawks":                 true,
+	"sumo":                    true,
+	"terra":                   true,
+	"ultima":                  true,
+	"veyron_fievel":           true,
+	"veyron_jaq":              true,
+	"veyron_jerry":            true,
+	"veyron_mickey":           true,
+	"veyron_mighty":           true,
+	"veyron_minnie":           true,
+	"veyron_speedy":           true,
+	"veyron_tiger":            true,
+	"wizpig":                  true,
+}
+
 type attributes []*inventory.KeyValue
 
 func (a *attributes) append(key string, value string) *attributes {
@@ -234,7 +297,9 @@ func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, err
 	ostype := inventory.SchedulableLabels_OS_TYPE_CROS
 	peri := inventory.Peripherals{}
 	capa := inventory.HardwareCapabilities{}
+	_, arc := arcBoardMap[data.LabConfig.GetDeviceConfigId().GetPlatformId().GetValue()]
 	labels := inventory.SchedulableLabels{
+		Arc:          &arc,
 		OsType:       &ostype,
 		Platform:     &(data.LabConfig.GetDeviceConfigId().GetPlatformId().Value),
 		Board:        &(data.LabConfig.GetDeviceConfigId().GetPlatformId().Value),
