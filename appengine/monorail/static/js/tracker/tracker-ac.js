@@ -4,6 +4,8 @@
  * license that can be found in the LICENSE file or at
  * https://developers.google.com/open-source/licenses/bsd
  */
+/* eslint-disable camelcase */
+/* eslint-disable no-unused-vars */
 
 /**
  * This file contains the autocomplete configuration logic that is
@@ -1192,32 +1194,31 @@ function TKR_convertFields(fieldsResponse) {
 /**
  * Convert the object resulting of a monorail.Features ListHotlistsByUser
  * call to the format expected by TKR_populateAutocomplete.
- * @param {object} hotlistsResponse A pRPC ListHotlistsByUserResponse object.
+ * @param {Array<Hotlist>} hotlists A lists of hotlists
+ * @return {Array<{ref_str: string, summary: string}>}
  */
-function TKR_convertHotlists(hotlistsResponse) {
-  if (hotlistsResponse.hotlists === undefined) {
+function TKR_convertHotlists(hotlists) {
+  if (hotlists === undefined) {
     return [];
   }
 
   const seen = new Set();
   const ambiguousNames = new Set();
 
-  hotlistsResponse.hotlists.forEach((hotlist) => {
+  hotlists.forEach((hotlist) => {
     if (seen.has(hotlist.name)) {
       ambiguousNames.add(hotlist.name);
     }
     seen.add(hotlist.name);
   });
 
-  const hotlists = hotlistsResponse.hotlists.map((hotlist) => {
+  return hotlists.map((hotlist) => {
     let ref_str = hotlist.name;
     if (ambiguousNames.has(hotlist.name)) {
       ref_str = hotlist.owner_ref.display_name + ':' + ref_str;
     }
     return {ref_str: ref_str, summary: hotlist.summary};
   });
-
-  return hotlists;
 }
 
 /**
@@ -1226,15 +1227,8 @@ function TKR_convertHotlists(hotlistsResponse) {
  * @param {string} projectName
  */
 function TKR_fetchOptions(projectName) {
-  const userRequestMessage = {
-    user: {
-      display_name: window.CS_env.loggedInUserEmail,
-    }};
   const projectRequestMessage = {
     project_name: projectName};
-
-  const hotlistsPromise = window.prpcClient.call(
-      'monorail.Features', 'ListHotlistsByUser', userRequestMessage);
 
   const customPermissionsPromise = window.prpcClient.call(
       'monorail.Projects', 'GetCustomPermissions', projectRequestMessage);
@@ -1244,10 +1238,15 @@ function TKR_fetchOptions(projectName) {
   customPermissionsPromise.then((customPermissionsResponse) => {
     TKR_setUpCustomPermissionsStore(customPermissionsResponse.permissions);
   });
+}
 
-  hotlistsPromise.then((hotlistsResponse) => {
-    TKR_setUpHotlistsStore(TKR_convertHotlists(hotlistsResponse));
-  });
+
+/**
+ * Initializes hotlists in autocomplete store.
+ * @param {Array<Hotlist>} hotlists
+ */
+function TKR_populateHotlistAutocomplete(hotlists) {
+  TKR_setUpHotlistsStore(TKR_convertHotlists(hotlists));
 }
 
 

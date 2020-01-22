@@ -215,8 +215,15 @@ export const fetch = (displayName) => async (dispatch) => {
     const userRef = userToUserRef(user);
 
     dispatch(fetchProjects([userRef]));
-    dispatch(fetchHotlists(userRef));
+    const hotlistsPromise = dispatch(fetchHotlists(userRef));
     dispatch(fetchPrefs());
+
+    hotlistsPromise.then((hotlists) => {
+      // TODO(crbug.com/monorail/5828): Remove
+      // window.TKR_populateHotlistAutocomplete once the old
+      // autocomplete code is deprecated.
+      window.TKR_populateHotlistAutocomplete(hotlists);
+    });
   } catch (error) {
     dispatch({type: FETCH_FAILURE, error});
   };
@@ -233,6 +240,11 @@ export const fetchProjects = (userRefs) => async (dispatch) => {
   }
 };
 
+/**
+ * Fetches all of a given user's hotlists.
+ * @param {UserRef} userRef The user to fetch hotlists for.
+ * @return {function(function): Promise<Array<Hotlist>>}
+ */
 export const fetchHotlists = (userRef) => async (dispatch) => {
   dispatch({type: FETCH_HOTLISTS_START});
 
@@ -245,6 +257,8 @@ export const fetchHotlists = (userRef) => async (dispatch) => {
       return hotlistA.name.localeCompare(hotlistB.name);
     });
     dispatch({type: FETCH_HOTLISTS_SUCCESS, hotlists});
+
+    return hotlists;
   } catch (error) {
     dispatch({type: FETCH_HOTLISTS_FAILURE, error});
   };
