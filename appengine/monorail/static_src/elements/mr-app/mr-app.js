@@ -19,6 +19,7 @@ import * as sitewide from 'reducers/sitewide.js';
 import {userIdOrDisplayNameToUserRef} from 'shared/converters.js';
 import {arrayToEnglish} from 'shared/helpers.js';
 import {trackPageChange} from 'shared/ga-helpers.js';
+import 'elements/issue-list/mr-list-page/mr-list-page.js';
 import 'elements/framework/mr-header/mr-header.js';
 import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
 import 'elements/help/mr-cue/mr-cue.js';
@@ -424,8 +425,6 @@ export class MrApp extends connectStore(LitElement) {
         this.page = 'chart';
         break;
       default:
-        await import(/* webpackChunkName: "mr-list-page" */
-            '../issue-list/mr-list-page/mr-list-page.js');
         this.page = 'list';
         break;
     }
