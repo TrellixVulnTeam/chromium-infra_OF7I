@@ -195,6 +195,16 @@ type labelUpdater struct {
 // update is a dutinfo.UpdateFunc for updating DUT inventory labels.
 // If adminServiceURL is empty, this method does nothing.
 func (u labelUpdater) update(dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error {
+	// WARNING: This is an indirect check of if the job is a repair job.
+	// By design, only repair job is allowed to update labels and has updateLabels set.
+	// https://chromium.git.corp.google.com/infra/infra/+/7ae58795dd4badcfe9eadf4e109e27a498bed04c/go/src/infra/cmd/skylab_swarming_worker/main.go#207
+	// And only repair job sets its local task account.
+	// We cannot move this check later as swmbot.WithTaskAccount will fail for non-repair job.
+	if u.botInfo.AdminService == "" || !u.updateLabels {
+		log.Printf("Skipping label update since no admin service was provided")
+		return nil
+	}
+
 	ctx, err := swmbot.WithTaskAccount(u.ctx)
 	if err != nil {
 		return errors.Annotate(err, "update inventory labels").Err()
@@ -210,10 +220,6 @@ func (u labelUpdater) update(dutID string, old *inventory.DeviceUnderTest, new *
 	newLabels := new.GetCommon().GetLabels()
 	if proto.Equal(oldLabels, newLabels) {
 		log.Printf("Skipping label update since there are no changes")
-		return nil
-	}
-	if u.botInfo.AdminService == "" || !u.updateLabels {
-		log.Printf("Skipping label update since no admin service was provided")
 		return nil
 	}
 	log.Printf("Labels changed from %s to %s", oldLabels.String(), newLabels.String())
