@@ -81,43 +81,38 @@ func createCrosDevice(results *[]*lab.ChromeOSDevice, servoHostRegister servoHos
 	return nil
 }
 
-func importServo(servo **lab.Servo, key string, value string) error {
-	if *servo == nil {
-		*servo = new(lab.Servo)
-	}
-	s := *servo
+func importServo(servo *lab.Servo, key string, value string) error {
 	switch key {
 	case "servo_host":
-		s.ServoHostname = value
+		servo.ServoHostname = value
 	case "servo_port":
 		port, err := strconv.Atoi(value)
 		if err != nil {
 			return errors.Reason("invalid servo port: %s", value).Err()
 		}
-		s.ServoPort = int32(port)
+		servo.ServoPort = int32(port)
 	case "servo_serial":
-		s.ServoSerial = value
+		servo.ServoSerial = value
 	case "servo_type":
-		s.ServoType = value
+		servo.ServoType = value
 	}
 	return nil
 }
 
-func importRpm(rpm **lab.RPM, key string, value string) {
-	r := *rpm
-	if r == nil {
-		r = new(lab.RPM)
-	}
+func importRpm(rpm *lab.RPM, key string, value string) {
 	switch key {
 	case "powerunit_hostname":
-		r.PowerunitName = value
+		rpm.PowerunitName = value
 	case "powerunit_outlet":
-		r.PowerunitOutlet = value
+		rpm.PowerunitOutlet = value
 	}
 }
 
-func importAttributes(attrs []*inventory.KeyValue) (hwid string, servo *lab.Servo, rpm *lab.RPM) {
+func importAttributes(attrs []*inventory.KeyValue) (string, *lab.Servo, *lab.RPM) {
 	skipServo := false
+	var hwid string
+	var servo lab.Servo
+	var rpm lab.RPM
 	for _, attr := range attrs {
 		value := attr.GetValue()
 		switch key := attr.GetKey(); key {
@@ -132,9 +127,9 @@ func importAttributes(attrs []*inventory.KeyValue) (hwid string, servo *lab.Serv
 		}
 	}
 	if skipServo {
-		servo = nil
+		return hwid, nil, &rpm
 	}
-	return
+	return hwid, &servo, &rpm
 }
 
 func getChameleonType(oldperi *inventory.Peripherals) []lab.ChameleonType {
@@ -178,13 +173,13 @@ func getDeviceConfigID(labels *inventory.SchedulableLabels) *dev_proto.ConfigId 
 			// Use sku (an integer) instead of HwidSKU (a string).
 			Value: strings.ToLower(labels.GetSku()),
 		},
-		BrandId: &dev_proto.BrandId{
-			Value: strings.ToLower(labels.GetBrand()),
-		},
 	}
 }
 
-func getPeripherals(peripherals *inventory.Peripherals, capabilities *inventory.HardwareCapabilities) *lab.Peripherals {
+func getPeripherals(l *inventory.SchedulableLabels) *lab.Peripherals {
+	peripherals := l.GetPeripherals()
+	capabilities := l.GetCapabilities()
+	testHints := l.GetTestCoverageHints()
 	p := lab.Peripherals{
 		Chameleon: &lab.Chameleon{
 			AudioBoard:           peripherals.GetAudioBoard(),
@@ -201,19 +196,57 @@ func getPeripherals(peripherals *inventory.Peripherals, capabilities *inventory.
 		Touch: &lab.Touch{
 			Mimo: peripherals.GetMimo(),
 		},
-		Carrier:   capabilities.GetCarrier().String(),
+		Carrier:   parseCarrier(capabilities.GetCarrier()),
 		Camerabox: peripherals.GetCamerabox(),
+		Chaos:     testHints.GetChaosDut(),
 	}
+	getCables(&p, testHints)
 	getConnectedCamera(&p, peripherals)
 	return &p
+}
+
+func parseCarrier(c inventory.HardwareCapabilities_Carrier) string {
+	return strings.ToLower(c.String()[len("CARRIER_"):])
+}
+
+func getCables(p *lab.Peripherals, testHints *inventory.TestCoverageHints) {
+	if testHints.GetTestAudiojack() {
+		p.Cable = append(p.Cable, &lab.Cable{
+			Type: lab.CableType_CABLE_AUDIOJACK,
+		})
+	}
+	if testHints.GetTestUsbaudio() {
+		p.Cable = append(p.Cable, &lab.Cable{
+			Type: lab.CableType_CABLE_USBAUDIO,
+		})
+	}
+	if testHints.GetTestUsbprinting() {
+		p.Cable = append(p.Cable, &lab.Cable{
+			Type: lab.CableType_CABLE_USBPRINTING,
+		})
+	}
+	if testHints.GetTestHdmiaudio() {
+		p.Cable = append(p.Cable, &lab.Cable{
+			Type: lab.CableType_CABLE_HDMIAUDIO,
+		})
+	}
+}
+
+func getPools(l *inventory.SchedulableLabels) []string {
+	var pools []string
+	for _, p := range l.GetCriticalPools() {
+		pools = append(pools, inventory.SchedulableLabels_DUTPool_name[int32(p)])
+	}
+	for _, p := range l.GetSelfServePools() {
+		pools = append(pools, p)
+	}
+	return pools
 }
 
 func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegister, olddata *inventory.CommonDeviceSpecs) error {
 	hwid, servo, rpm := importAttributes(olddata.GetAttributes())
 
-	oldPeri := olddata.Labels.Peripherals
-	oldCapa := olddata.Labels.Capabilities
-	peri := getPeripherals(oldPeri, oldCapa)
+	peri := getPeripherals(olddata.Labels)
 	if servo != nil {
 		servoHostRegister.addServo(servo)
 		peri.Servo = servo
@@ -222,10 +255,7 @@ func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegist
 		peri.Rpm = rpm
 	}
 
-	var pools []lab.DeviceUnderTest_DUTPool
-	for _, p := range olddata.Labels.CriticalPools {
-		pools = append(pools, lab.DeviceUnderTest_DUTPool(p))
-	}
+	pools := getPools(olddata.GetLabels())
 	newDut := lab.ChromeOSDevice{
 		Id:              &lab.ChromeOSDeviceID{Value: olddata.GetId()},
 		SerialNumber:    olddata.GetSerialNumber(),
@@ -234,9 +264,9 @@ func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegist
 		DeviceConfigId: getDeviceConfigID(olddata.GetLabels()),
 		Device: &lab.ChromeOSDevice_Dut{
 			Dut: &lab.DeviceUnderTest{
-				Hostname:      olddata.GetHostname(),
-				Peripherals:   peri,
-				CriticalPools: pools,
+				Hostname:    olddata.GetHostname(),
+				Peripherals: peri,
+				Pools:       pools,
 			},
 		},
 	}
@@ -249,7 +279,7 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 	if _, existing := servoHostRegister[hostname]; existing {
 		return nil
 	}
-	hwid, _, rpm := importAttributes(olddata.GetAttributes())
+	hwid, servo, rpm := importAttributes(olddata.GetAttributes())
 	servoHostRegister[hostname] = &lab.ChromeOSDevice{
 		Id:              &lab.ChromeOSDeviceID{Value: olddata.GetId()},
 		SerialNumber:    olddata.GetSerialNumber(),
@@ -260,6 +290,8 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 			Labstation: &lab.Labstation{
 				Hostname: hostname,
 				Rpm:      rpm,
+				Servos:   []*lab.Servo{servo},
+				Pools:    getPools(olddata.GetLabels()),
 			},
 		},
 	}

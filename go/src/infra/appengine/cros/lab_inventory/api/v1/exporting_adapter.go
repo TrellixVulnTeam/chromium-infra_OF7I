@@ -82,6 +82,10 @@ var arcBoardMap = map[string]bool{
 	"wizpig":                  true,
 }
 
+var appMap = map[string]bool{
+	"hotrod": true,
+}
+
 type attributes []*inventory.KeyValue
 
 func (a *attributes) append(key string, value string) *attributes {
@@ -95,7 +99,7 @@ func (a *attributes) append(key string, value string) *attributes {
 	return a
 }
 
-func setDutPeripherals(p *inventory.Peripherals, c *inventory.HardwareCapabilities, d *lab.Peripherals) {
+func setDutPeripherals(p *inventory.Peripherals, c *inventory.HardwareCapabilities, hint *inventory.TestCoverageHints, d *lab.Peripherals) {
 	if d == nil {
 		return
 	}
@@ -106,10 +110,10 @@ func setDutPeripherals(p *inventory.Peripherals, c *inventory.HardwareCapabiliti
 			cType := inventory.Peripherals_ChameleonType(c)
 			if cType != inventory.Peripherals_CHAMELEON_TYPE_INVALID {
 				p.Chameleon = &trueValue
-				p.ChameleonType = []inventory.Peripherals_ChameleonType{cType}
-				p.AudioBoard = &chameleon.AudioBoard
+				p.ChameleonType = append(p.ChameleonType, cType)
 			}
 		}
+		p.AudioBoard = &chameleon.AudioBoard
 	}
 
 	p.Huddly = &falseValue
@@ -142,17 +146,40 @@ func setDutPeripherals(p *inventory.Peripherals, c *inventory.HardwareCapabiliti
 		p.Mimo = &(touch.Mimo)
 	}
 
-	carrier := inventory.HardwareCapabilities_Carrier(inventory.HardwareCapabilities_Carrier_value[d.GetCarrier()])
+	carrierKey := fmt.Sprintf("CARRIER_%s", strings.ToUpper(d.GetCarrier()))
+	carrier := inventory.HardwareCapabilities_Carrier(inventory.HardwareCapabilities_Carrier_value[carrierKey])
 	c.Carrier = &carrier
 	p.Camerabox = &(d.Camerabox)
+
+	hint.ChaosDut = &(d.Chaos)
+	for _, c := range d.GetCable() {
+		switch c.GetType() {
+		case lab.CableType_CABLE_AUDIOJACK:
+			hint.TestAudiojack = &trueValue
+		case lab.CableType_CABLE_USBAUDIO:
+			hint.TestUsbaudio = &trueValue
+		case lab.CableType_CABLE_USBPRINTING:
+			hint.TestUsbprinting = &trueValue
+		case lab.CableType_CABLE_HDMIAUDIO:
+			hint.TestHdmiaudio = &trueValue
+		}
+	}
 }
 
-func setDutPools(labels *inventory.SchedulableLabels, inputPools []lab.DeviceUnderTest_DUTPool) {
-	var pools []inventory.SchedulableLabels_DUTPool
+func setDutPools(labels *inventory.SchedulableLabels, hint *inventory.TestCoverageHints, inputPools []string) {
 	for _, p := range inputPools {
-		pools = append(pools, inventory.SchedulableLabels_DUTPool(p))
+		v, ok := inventory.SchedulableLabels_DUTPool_value[p]
+		if ok {
+			labels.CriticalPools = append(labels.CriticalPools, inventory.SchedulableLabels_DUTPool(v))
+		} else {
+			labels.SelfServePools = append(labels.SelfServePools, p)
+		}
+
+		if _, ok := appMap[p]; ok {
+			hint.HangoutApp = &trueValue
+			hint.MeetApp = &trueValue
+		}
 	}
-	labels.CriticalPools = pools
 }
 
 func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Config) {
@@ -291,26 +318,33 @@ func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, err
 		append("serial_number", data.GetLabConfig().GetSerialNumber()).
 		append("servo_host", p.GetServo().GetServoHostname()).
 		append("servo_port", fmt.Sprintf("%v", p.GetServo().GetServoPort())).
-		append("servo_type", p.GetServo().GetServoType()).
-		append("servo_serial", p.GetServo().GetServoSerial())
+		append("servo_serial", p.GetServo().GetServoSerial()).
+		append("servo_type", p.GetServo().GetServoType())
 
 	ostype := inventory.SchedulableLabels_OS_TYPE_CROS
 	peri := inventory.Peripherals{}
 	capa := inventory.HardwareCapabilities{}
+	hint := inventory.TestCoverageHints{}
 	_, arc := arcBoardMap[data.LabConfig.GetDeviceConfigId().GetPlatformId().GetValue()]
+	// Use GetXXX in case any object is nil.
+	platform := data.LabConfig.GetDeviceConfigId().GetPlatformId().GetValue()
+	brand := data.LabConfig.GetDeviceConfigId().GetBrandId().GetValue()
+	model := data.LabConfig.GetDeviceConfigId().GetModelId().GetValue()
+	variant := data.LabConfig.GetDeviceConfigId().GetVariantId().GetValue()
 	labels := inventory.SchedulableLabels{
-		Arc:          &arc,
-		OsType:       &ostype,
-		Platform:     &(data.LabConfig.GetDeviceConfigId().GetPlatformId().Value),
-		Board:        &(data.LabConfig.GetDeviceConfigId().GetPlatformId().Value),
-		Brand:        &(data.LabConfig.GetDeviceConfigId().GetBrandId().Value),
-		Model:        &(data.LabConfig.GetDeviceConfigId().GetModelId().Value),
-		Sku:          &(data.LabConfig.GetDeviceConfigId().GetVariantId().Value),
-		Capabilities: &capa,
-		Peripherals:  &peri,
+		Arc:               &arc,
+		OsType:            &ostype,
+		Platform:          &(platform),
+		Board:             &(platform),
+		Brand:             &(brand),
+		Model:             &(model),
+		Sku:               &(variant),
+		Capabilities:      &capa,
+		Peripherals:       &peri,
+		TestCoverageHints: &hint,
 	}
-	setDutPools(&labels, data.GetLabConfig().GetDut().GetCriticalPools())
-	setDutPeripherals(&peri, &capa, p)
+	setDutPools(&labels, &hint, data.GetLabConfig().GetDut().GetPools())
+	setDutPeripherals(&peri, &capa, &hint, p)
 	setDeviceConfig(&labels, data.GetDeviceConfig())
 	setManufacturingConfig(&labels, data.GetManufacturingConfig())
 	setHwidData(&labels, data.GetHwidData())
