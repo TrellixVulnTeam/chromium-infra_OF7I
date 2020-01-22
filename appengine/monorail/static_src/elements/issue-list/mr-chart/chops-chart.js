@@ -34,6 +34,7 @@ export class ChopsChart extends LitElement {
       data: {type: Object},
       options: {type: Object},
       _chart: {type: Object},
+      _chartConstructor: {type: Object},
     };
   }
 
@@ -47,12 +48,14 @@ export class ChopsChart extends LitElement {
 
   /**
    * Dynamically chartJs to reduce single EZT bundle size
-   * Move to top-of-file import once EZT is deprecated
+   * Move to static import once EZT is deprecated
    */
   async connectedCallback() {
     super.connectedCallback();
     /* eslint-disable max-len */
-    await import(/* webpackChunkName: "chartjs" */ 'chart.js/dist/Chart.bundle.min.js');
+    const {default: Chart} = await import(
+        /* webpackChunkName: "chartjs" */ 'chart.js/dist/Chart.bundle.min.js');
+    this._chartConstructor = Chart;
   }
 
   /**
@@ -61,15 +64,18 @@ export class ChopsChart extends LitElement {
    * @param {Map} changedProperties
    */
   updated(changedProperties) {
-    if (!this._chart) {
-      const {type, data, options} = this;
-      const ctx = this.shadowRoot.querySelector('canvas').getContext('2d');
-      this._chart = new window.Chart(ctx, {type, data, options});
-    } else if (
-      changedProperties.has('type') ||
-      changedProperties.has('data') ||
-      changedProperties.has('options')) {
-      this._updateChart();
+    // Make sure chartJS has loaded before attempting to create a chart
+    if (this._chartConstructor) {
+      if (!this._chart) {
+        const {type, data, options} = this;
+        const ctx = this.shadowRoot.querySelector('canvas').getContext('2d');
+        this._chart = new this._chartConstructor(ctx, {type, data, options});
+      } else if (
+        changedProperties.has('type') ||
+        changedProperties.has('data') ||
+        changedProperties.has('options')) {
+        this._updateChart();
+      }
     }
   }
 
