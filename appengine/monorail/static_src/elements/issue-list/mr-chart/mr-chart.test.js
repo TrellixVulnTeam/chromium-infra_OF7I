@@ -142,6 +142,23 @@ describe('mr-chart', () => {
       }
       MrChart.prototype._fetchDataAtTimestamp.restore();
     });
+
+    it('_fetchDataAtTimestamp does has no default query or can', async () => {
+      await element._fetchData();
+
+      sinon.assert.calledWith(
+          prpcClient.call,
+          'monorail.Issues',
+          'IssueSnapshot',
+          {
+            cannedQuery: undefined,
+            groupBy: undefined,
+            hotlistId: undefined,
+            query: undefined,
+            projectName: 'rutabaga',
+            timestamp: 1540857599,
+          });
+    });
   });
 
   describe('start date change detection', () => {

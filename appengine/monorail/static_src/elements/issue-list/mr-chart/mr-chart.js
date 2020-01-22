@@ -511,8 +511,8 @@ export default class MrChart extends LitElement {
    *   unsupportedField: string, searchLimitReached: string}}
    */
   async _fetchDataAtTimestamp(timestamp) {
-    const query = this.queryParams.q || '';
-    const cannedQuery = this.queryParams.can || '';
+    const query = this.queryParams.q;
+    const cannedQuery = this.queryParams.can;
     const message = {
       timestamp: timestamp,
       projectName: this.projectName,
