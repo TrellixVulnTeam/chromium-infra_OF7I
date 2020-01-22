@@ -388,9 +388,9 @@ func (h *State) legacyAllRotations(ctx *router.Context, _ string) (string, error
 		buildLegacyRotation(dateMap, k, shifts)
 	}
 	// Troopers rotation.
-	ts, err := h.legacyCalendar.TrooperShifts(ctx, trooperCal, matchSummary, trooperShift, start, end)
+	ts, err := h.calendar.TrooperShifts(ctx, trooperCal, matchSummary, trooperShift, start, end)
 	if err != nil {
-		return "", err
+		logging.Errorf(ctx.Context, "Fetching calendar events for: Troopers failed: %v", err)
 	}
 	buildLegacyRotation(dateMap, trooperRota, ts)
 	res.Rotations = append(res.Rotations, trooperRota)

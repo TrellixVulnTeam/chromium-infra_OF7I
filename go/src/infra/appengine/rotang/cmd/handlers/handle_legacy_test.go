@@ -912,7 +912,6 @@ func TestLegacyAllRotations(t *testing.T) {
 	}, {
 		name:    "Cal fail",
 		calFail: true,
-		fail:    true,
 		ctx: &router.Context{
 			Context: ctx,
 			Writer:  httptest.NewRecorder(),
