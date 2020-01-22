@@ -287,6 +287,73 @@ func TestValidateConfig(t *testing.T) {
 	}
 }
 
+var testRemoveWhiteListData = []struct {
+	name string
+	uuid string
+	in   string
+	out  string
+}{
+	{
+		"nothing to remove from empty result",
+		"bb30b384-38a6-4eb4-aa2c-b09815106d0a",
+		"{}",
+		"{}",
+	},
+	{
+		"remove explicitly whitelisted board buddy_cfm",
+		"ef203c4d-6224-44df-ba80-9253dc47e4f7",
+		`{
+			"missing_boards": ["buddy_cfm"]
+		}`,
+		"{}",
+	},
+	{
+		"don't remove non-whitelisted board",
+		"41655030-dd58-481f-bcb4-4be4dfc01f07",
+		`{
+			"missing_boards": ["NOT A WHITELISTED BOARD"]
+		}`,
+		`{
+			"missing_boards": ["NOT A WHITELISTED BOARD"]
+		}`,
+	},
+	{
+		"fizz-labstation is never present in the metadata.json file",
+		"ff146760-fa2a-4495-aaea-42708843e6a1",
+		`{
+			"failed_to_lookup": [{"build_target": "fizz-labstation", "model": "fizz-labstation"}]
+		}`,
+		"{}",
+	},
+	{
+		"leave non-whitelisted build target in place",
+		"24d51d50-8d34-498f-8c1d-b15341dfc549",
+		`{
+			"failed_to_lookup": [{"build_target": "NOT WHITELISTED", "model": "NOT WHITELISTED"}]
+		}`,
+		`{
+			"failed_to_lookup": [{"build_target": "NOT WHITELISTED", "model": "NOT WHITELISTED"}]
+		}`,
+	},
+}
+
+func TestRemoveWhiteList(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testRemoveWhiteListData {
+		t.Run(tt.uuid, func(t *testing.T) {
+			var in ValidationResult
+			var out ValidationResult
+			unmarshalOrPanic(tt.in, &in)
+			unmarshalOrPanic(tt.out, &out)
+			in.RemoveWhitelistedDUTs()
+			if diff := cmp.Diff(out, in); diff != "" {
+				msg := fmt.Sprintf("uuid (%s): unexpected diff (%s)", tt.uuid, diff)
+				t.Errorf(msg)
+			}
+		})
+	}
+}
+
 func makeConstantDownloader(content string) downloader {
 	return func(gsPath gs.Path) ([]byte, error) {
 		return []byte(content), nil
