@@ -4,8 +4,10 @@
 package datastore
 
 import (
+	"context"
 	"testing"
 
+	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
@@ -50,6 +52,39 @@ func mockLabstation(hostname, id string) *lab.ChromeOSDevice {
 	}
 }
 
+func getEntityByID(ctx context.Context, t *testing.T, id DeviceEntityID) *DeviceEntity {
+	d := DeviceEntity{ID: id, Parent: fakeAcestorKey(ctx)}
+	if err := datastore.Get(ctx, &d); err != nil {
+		t.Errorf("cannot get device by id %s: %v", id, err)
+	}
+	return &d
+}
+
+func getLabConfigByID(ctx context.Context, t *testing.T, id DeviceEntityID) *lab.ChromeOSDevice {
+	d := getEntityByID(ctx, t, id)
+	var labConfig lab.ChromeOSDevice
+	if err := proto.Unmarshal(d.LabConfig, &labConfig); err != nil {
+		t.Errorf("cannot unmarshal labconfig of %s: %v", id, err)
+	}
+	return &labConfig
+}
+
+func getLabConfigByHostname(ctx context.Context, t *testing.T, hostname string) *lab.ChromeOSDevice {
+	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx)).Eq("Hostname", hostname)
+	var devices []DeviceEntity
+	if err := datastore.GetAll(ctx, q, &devices); err != nil {
+		t.Errorf("cannot query from the datastore for %s: %s", hostname, err)
+	}
+	So(devices, ShouldHaveLength, 1)
+
+	d := devices[0]
+	var labConfig lab.ChromeOSDevice
+	if err := proto.Unmarshal(d.LabConfig, &labConfig); err != nil {
+		t.Errorf("cannot unmarshal labconfig of %s: %v", d.ID, err)
+	}
+	return &labConfig
+}
+
 func TestAddDevices(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
@@ -59,7 +94,7 @@ func TestAddDevices(t *testing.T) {
 				mockDut("dut1", "", "labstation1"),
 				mockLabstation("labstation1", "ASSET_ID_123"),
 			}
-			dsResp, err := AddDevices(ctx, devsToAdd)
+			dsResp, err := AddDevices(ctx, devsToAdd, false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -71,10 +106,7 @@ func TestAddDevices(t *testing.T) {
 			}
 			got := make([]string, len(devsToAdd))
 			for i, result := range dsResp.Passed() {
-				d := DeviceEntity{ID: result.Entity.ID, Parent: fakeAcestorKey(ctx)}
-				if err := datastore.Get(ctx, &d); err != nil {
-					t.Errorf("cannot get device by id %s: %v", result.Entity.ID, err)
-				}
+				d := getEntityByID(ctx, t, result.Entity.ID)
 				got[i] = d.Hostname
 			}
 			So(got, ShouldResemble, want)
@@ -82,13 +114,64 @@ func TestAddDevices(t *testing.T) {
 			So(devsToAdd[1].GetId().GetValue(), ShouldEqual, "ASSET_ID_123")
 
 		})
+		Convey("Add 2 duts and 1 labstation with servo port auto assigned", func() {
+			dut1 := mockDut("dut1-1", "id-1", "labstation10")
+			dut1.GetDut().GetPeripherals().GetServo().ServoPort = 0
+			dut1.GetDut().GetPeripherals().GetServo().ServoSerial = "SN1"
+			dut2 := mockDut("dut1-2", "id-2", "labstation10")
+			dut2.GetDut().GetPeripherals().GetServo().ServoPort = 0
+			dut2.GetDut().GetPeripherals().GetServo().ServoSerial = "SN2"
+
+			labstation := &lab.ChromeOSDevice{
+				Device: &lab.ChromeOSDevice_Labstation{
+					Labstation: &lab.Labstation{
+						Hostname: "labstation10",
+						Servos: []*lab.Servo{
+							{ServoPort: 9999, ServoSerial: "SN9999"},
+							{ServoPort: 9998, ServoSerial: "SN9998"},
+							{ServoPort: 9996, ServoSerial: "SN9996"},
+						},
+					},
+				},
+			}
+			devsToAdd := []*lab.ChromeOSDevice{dut1, labstation, dut2}
+			dsResp, err := AddDevices(ctx, devsToAdd, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			So(dsResp.Passed(), ShouldHaveLength, len(devsToAdd))
+			So(dsResp.Failed(), ShouldHaveLength, 0)
+
+			// The servo ports are assigned.
+			{
+				ports := []int{}
+				labConfig := getLabConfigByID(ctx, t, DeviceEntityID("id-1"))
+				ports = append(ports, int(labConfig.GetDut().GetPeripherals().GetServo().GetServoPort()))
+				labConfig = getLabConfigByID(ctx, t, DeviceEntityID("id-2"))
+				ports = append(ports, int(labConfig.GetDut().GetPeripherals().GetServo().GetServoPort()))
+				So(ports, ShouldResemble, []int{9997, 9995})
+			}
+
+			// There's a labstation saved to datastore and has two servos
+			// attached.
+			{
+				labConfig := getLabConfigByHostname(ctx, t, "labstation10")
+				So(labConfig.GetLabstation().GetServos(), ShouldHaveLength, 5)
+				ports := []int{}
+				for _, s := range labConfig.GetLabstation().GetServos() {
+					ports = append(ports, int(s.GetServoPort()))
+				}
+				So(ports, ShouldResemble, []int{9999, 9998, 9997, 9996, 9995})
+			}
+		})
+
 		Convey("Add device with existing hostname", func() {
 			devsToAdd := []*lab.ChromeOSDevice{
 				mockDut("dut1", "ID_FAIL", "labstation1"),
 				mockDut("dut2", "ID_PASS", "labstation1"),
 			}
 
-			dsResp, _ := AddDevices(ctx, devsToAdd)
+			dsResp, _ := AddDevices(ctx, devsToAdd, false)
 			So(dsResp.Passed(), ShouldHaveLength, 1)
 			So(dsResp.Failed(), ShouldHaveLength, 1)
 
@@ -100,7 +183,7 @@ func TestAddDevices(t *testing.T) {
 				mockDut("dut3", "ID_PASS", "labstation1"),
 			}
 
-			dsResp, _ := AddDevices(ctx, devsToAdd)
+			dsResp, _ := AddDevices(ctx, devsToAdd, false)
 			So(dsResp.Passed(), ShouldHaveLength, 0)
 			So(dsResp.Failed(), ShouldHaveLength, 1)
 
@@ -108,6 +191,7 @@ func TestAddDevices(t *testing.T) {
 		})
 	})
 }
+
 func TestRemoveDevices(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
@@ -117,7 +201,7 @@ func TestRemoveDevices(t *testing.T) {
 			mockDut("dut2", "UUID:02", "labstation1"),
 			mockLabstation("labstation1", "ASSET_ID_123"),
 		}
-		_, err := AddDevices(ctx, devsToAdd)
+		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)
 
 		datastore.GetTestable(ctx).Consistent(true)
@@ -188,7 +272,7 @@ func TestGetDevices(t *testing.T) {
 			mockDut("dut1", "", "labstation1"),
 			mockLabstation("labstation1", "ASSET_ID_123"),
 		}
-		_, err := AddDevices(ctx, devsToAdd)
+		_, err := AddDevices(ctx, devsToAdd, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -222,7 +306,7 @@ func TestUpdateDeviceSetup(t *testing.T) {
 			mockDut("dut1", "UUID:01", "labstation1"),
 			mockLabstation("labstation1", "UUID:02"),
 		}
-		_, err := AddDevices(ctx, devsToAdd)
+		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)
 
 		datastore.GetTestable(ctx).Consistent(true)
@@ -255,7 +339,7 @@ func TestUpdateDutMeta(t *testing.T) {
 		devsToAdd := []*lab.ChromeOSDevice{
 			mockDut("dut1", "UUID:01", "labstation1"),
 		}
-		_, err := AddDevices(ctx, devsToAdd)
+		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)
 
 		datastore.GetTestable(ctx).Consistent(true)
@@ -296,7 +380,7 @@ func TestUpdateDutsStatus(t *testing.T) {
 			mockDut("dut1", "UUID:01", "labstation1"),
 			mockLabstation("labstation1", "UUID:02"),
 		}
-		_, err := AddDevices(ctx, devsToAdd)
+		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)
 
 		datastore.GetTestable(ctx).Consistent(true)

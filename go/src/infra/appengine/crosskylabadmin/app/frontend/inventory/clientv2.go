@@ -51,15 +51,7 @@ func (c *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*invent
 		}
 	}()
 
-	// TODO (guocb) Support the option `pickServoPort`.
-
 	c.logInfo(ctx, "Access inventory service as user: %s", auth.CurrentUser(ctx))
-	// The labstation below is automatically generated according to the
-	// servo_host attribute of the DUT. The labstation objects may not have all
-	// servo data, so don't write the labstation data to inventory (as it may
-	// erase some the servo list). The only exception is, there's 0 DUTs to be
-	// deployed, i.e. the current session is just a "labstation deployment".
-	// TODO (guocb) Improve this.
 
 	devicesToAdd, labstations, _, err := api.ImportFromV1DutSpecs(nds)
 	if err != nil {
@@ -73,7 +65,8 @@ func (c *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*invent
 	var rsp *api.AddCrosDevicesResponse
 	f := func() error {
 		rsp, err = c.client.AddCrosDevices(ctx, &api.AddCrosDevicesRequest{
-			Devices: devicesToAdd,
+			Devices:       devicesToAdd,
+			PickServoPort: pickServoPort,
 		})
 		return err
 	}

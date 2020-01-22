@@ -50,6 +50,7 @@ message DeviceID {
 
 message AddCrosDevicesRequest {
   repeated lab.ChromeOSDevice devices = 1;
+  bool pick_servo_port = 2;
 }
 
 message AddCrosDevicesResponse {

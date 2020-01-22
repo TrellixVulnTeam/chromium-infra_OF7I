@@ -38,6 +38,8 @@ func fakeAcestorKey(ctx context.Context) *datastore.Key {
 func addMissingID(devices []*lab.ChromeOSDevice) {
 	// Use uuid as the device ID if asset id is not present.
 	for _, d := range devices {
+		// TODO (guocb) Erase the id passed in as long as it's not asset id to
+		// ensure the ID is unique.
 		if d.GetId() == nil || d.GetId().GetValue() == "" || d.GetId().GetValue() == dutIDPlaceholder {
 			d.Id = &lab.ChromeOSDeviceID{
 				Value: fmt.Sprintf("%s:%s", UUIDPrefix, uuid.New().String()),
@@ -69,7 +71,7 @@ func sanityCheckForAdding(ctx context.Context, d *lab.ChromeOSDevice, q *datasto
 }
 
 // AddDevices creates a new Device datastore entity with a unique ID.
-func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpResults, error) {
+func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoPort bool) (*DeviceOpResults, error) {
 	updatedTime := time.Now().UTC()
 
 	addMissingID(devices)
@@ -79,6 +81,8 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 		addingResults[i].Data = d
 	}
 
+	r := newServoHostRegistryFromProtoMsgs(ctx, devices)
+
 	f := func(ctx context.Context) error {
 		q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
 		entities := make([]*DeviceEntity, 0, len(devices))
@@ -87,8 +91,9 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 		// instead of a reference.
 		for i := range addingResults {
 			devToAdd := &addingResults[i]
-			hostname := utils.GetHostname(devToAdd.Data.(*lab.ChromeOSDevice))
-			id := devToAdd.Data.(*lab.ChromeOSDevice).GetId().GetValue()
+			message := devToAdd.Data.(*lab.ChromeOSDevice)
+			hostname := utils.GetHostname(message)
+			id := message.GetId().GetValue()
 
 			devToAdd.Entity = &DeviceEntity{
 				ID:       DeviceEntityID(id),
@@ -96,12 +101,18 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 				Parent:   fakeAcestorKey(ctx),
 			}
 
-			if err := sanityCheckForAdding(ctx, devToAdd.Data.(*lab.ChromeOSDevice), q); err != nil {
+			if err := sanityCheckForAdding(ctx, message, q); err != nil {
 				devToAdd.logError(err)
 				continue
 			}
 
-			labConfig, err := proto.Marshal(devToAdd.Data.(*lab.ChromeOSDevice))
+			if dut := message.GetDut(); dut != nil {
+				// Update associated labstation if the DUT has a new servo. Also
+				// assign new servo port if specified.
+				r.amendServoToLabstation(ctx, dut, assignServoPort)
+			}
+
+			labConfig, err := proto.Marshal(message)
 			if err != nil {
 				devToAdd.logError(errors.Annotate(err, fmt.Sprintf("fail to marshal device <%s:%s>", hostname, id), err).Err())
 				continue
@@ -111,13 +122,14 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice) (*DeviceOpRe
 
 			entities = append(entities, devToAdd.Entity)
 			entityResults = append(entityResults, devToAdd)
+
 		}
 		if err := datastore.Put(ctx, entities); err != nil {
 			for i, e := range err.(errors.MultiError) {
 				entityResults[i].logError(e)
 			}
 		}
-		return nil
+		return r.saveToDatastore(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return &addingResults, err

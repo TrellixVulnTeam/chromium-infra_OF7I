@@ -337,7 +337,7 @@ func TestGetCrosDevices(t *testing.T) {
 					Dut: &lab.DeviceUnderTest{Hostname: "real_dut2"},
 				},
 			}
-			_, err := datastore.AddDevices(ctx, []*lab.ChromeOSDevice{&realDut1, &realDut2})
+			_, err := datastore.AddDevices(ctx, []*lab.ChromeOSDevice{&realDut1, &realDut2}, false)
 			So(err, ShouldBeNil)
 			reqGet := &api.GetCrosDevicesRequest{
 				Ids: []*api.DeviceID{&realDutID1, &realDutID2},

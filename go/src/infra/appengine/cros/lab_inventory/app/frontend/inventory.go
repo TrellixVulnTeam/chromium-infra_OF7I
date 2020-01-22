@@ -95,7 +95,7 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	addingResults, err := datastore.AddDevices(ctx, req.Devices)
+	addingResults, err := datastore.AddDevices(ctx, req.Devices, req.PickServoPort)
 	if err != nil {
 		return nil, errors.Annotate(err, "internal error").Tag(grpcutil.InternalTag).Err()
 	}
