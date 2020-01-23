@@ -1116,10 +1116,10 @@ function TKR_convertComponents(componentsResponse) {
  * Convert the object resulting of a monorail.Projects GetLabelOptions
  * call to the format expected by TKR_populateAutocomplete.
  * @param {object} labelsResponse A pRPC GetLabelOptionsResponse.
- * @param {Array<FieldDef>} fieldDefs FieldDefs from a project config, used to
+ * @param {Array<FieldDef>=} fieldDefs FieldDefs from a project config, used to
  *   mask labels that are used to implement custom enum fields.
  */
-function TKR_convertLabels(labelsResponse, fieldDefs) {
+function TKR_convertLabels(labelsResponse, fieldDefs = []) {
   const labelDefs = (labelsResponse.labelDefs || []);
   const exclusiveLabelPrefixes = (labelsResponse.exclusiveLabelPrefixes || []);
   const jsonData = {};
