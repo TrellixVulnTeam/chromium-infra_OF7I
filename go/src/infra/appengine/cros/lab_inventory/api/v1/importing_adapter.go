@@ -85,6 +85,9 @@ func importServo(servo *lab.Servo, key string, value string) error {
 	switch key {
 	case "servo_host":
 		servo.ServoHostname = value
+		if value == "" {
+			return errors.Reason("invalid servo hostname: '%s'", value).Err()
+		}
 	case "servo_port":
 		port, err := strconv.Atoi(value)
 		if err != nil {
