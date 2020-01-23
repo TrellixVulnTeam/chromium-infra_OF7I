@@ -125,7 +125,7 @@ The supported URLs include:
 When you type an issue description or comment, Monorail will automatically
 convert some parts of the text into HTML links. The following are supported:
 
-*   `issue 123` links to issue 123 in the current project.
+*   `issue 123` or `bug 123` link to issue 123 in the current project.
 
 *   `issue project:123` links to issue 123 in the specified project.
 
@@ -136,6 +136,8 @@ convert some parts of the text into HTML links. The following are supported:
 
 *   A git hash links to http://crrev.com for the specified commit, unless
     otherwise specified in the project.
+
+*   `comment 6` or `#c6` link to the 6th comment in the current issue thread.
 
 *   `go/link-name` links to your page through Google’s shortlink service
 
