@@ -107,7 +107,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		taskID = env["SWARMING_TASK_ID"].Value
 	}
 
-	runner, err := skylab.NewRunner(ctx, cfg.SkylabWorker, taskID, requests)
+	runner, err := skylab.NewRunner(cfg.SkylabWorker, taskID, requests)
 	if err != nil {
 		return err
 	}

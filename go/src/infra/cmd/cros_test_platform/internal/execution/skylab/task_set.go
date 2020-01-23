@@ -29,10 +29,10 @@ type TaskSet struct {
 }
 
 // NewTaskSet creates a new TaskSet.
-func NewTaskSet(ctx context.Context, tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*TaskSet, error) {
+func NewTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*TaskSet, error) {
 	testRuns := make([]*testRun, len(tests))
 	for i, test := range tests {
-		t, err := newTestRun(ctx, test, params, workerConfig, parentTaskID)
+		t, err := newTestRun(test, params, workerConfig, parentTaskID)
 		if err != nil {
 			return nil, errors.Annotate(err, "new task set").Err()
 		}

@@ -24,7 +24,7 @@ type testRun struct {
 	attempts      []*attempt
 }
 
-func newTestRun(ctx context.Context, invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*testRun, error) {
+func newTestRun(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*testRun, error) {
 	t := testRun{runnable: true, Name: invocation.GetTest().GetName()}
 	t.argsGenerator = argsGenerator{invocation: invocation, params: params, workerConfig: workerConfig, parentTaskID: parentTaskID}
 	t.maxAttempts = 1 + int(inferTestMaxRetries(invocation))

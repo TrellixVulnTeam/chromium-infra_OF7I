@@ -256,7 +256,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 		}
 
 		Convey("when running a skylab execution", func() {
-			ts, err := skylab.NewTaskSet(ctx, invs, basicParams(), basicConfig(), "foo-parent-task-id")
+			ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 			So(err, ShouldBeNil)
 			run := skylab.NewRunnerWithTaskSets(ts)
 			err = run.LaunchAndWait(ctx, swarming, gf)
@@ -296,7 +296,7 @@ func TestLaunchAndWaitTest(t *testing.T) {
 		invs = append(invs, clientTestInvocation("", ""), clientTestInvocation("", ""))
 
 		Convey("when running a skylab execution", func() {
-			ts, err := skylab.NewTaskSet(ctx, invs, basicParams(), basicConfig(), "foo-parent-task-id")
+			ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 			So(err, ShouldBeNil)
 			run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -375,7 +375,7 @@ func TestTaskStates(t *testing.T) {
 				getter.SetAutotestResultGenerator(autotestResultAlwaysEmpty)
 				gf := fakeGetterFactory(getter)
 
-				ts, err := skylab.NewTaskSet(ctx, invs, basicParams(), basicConfig(), "foo-parent-task-id")
+				ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
 				err = run.LaunchAndWait(ctx, swarming, gf)
@@ -399,7 +399,7 @@ func TestServiceError(t *testing.T) {
 		gf := fakeGetterFactory(getter)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := skylab.NewTaskSet(ctx, invs, basicParams(), basicConfig(), "foo-parent-task-id")
+		ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -431,7 +431,7 @@ func TestTaskURL(t *testing.T) {
 		gf := fakeGetterFactory(getter)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := skylab.NewTaskSet(ctx, invs, basicParams(), basicConfig(), "foo-parent-task-id")
+		ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -456,7 +456,7 @@ func TestIncompleteWait(t *testing.T) {
 		gf := fakeGetterFactory(getter)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := skylab.NewTaskSet(ctx, invs, basicParams(), basicConfig(), "foo-parent-task-id")
+		ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -495,7 +495,7 @@ func TestRequestArguments(t *testing.T) {
 		inv.DisplayName = "given_name"
 		invs := []*steps.EnumerationResponse_AutotestInvocation{inv}
 
-		ts, err := skylab.NewTaskSet(ctx, invs, basicParams(), basicConfig(), "foo-parent-task-id")
+		ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -648,7 +648,7 @@ func TestInvocationKeyvals(t *testing.T) {
 		Convey("and a request without keyvals", func() {
 			p := basicParams()
 			p.Decorations = nil
-			ts, err := skylab.NewTaskSet(ctx, invs, p, basicConfig(), "foo-parent-task-id")
+			ts, err := skylab.NewTaskSet(invs, p, basicConfig(), "foo-parent-task-id")
 			So(err, ShouldBeNil)
 			run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -674,7 +674,7 @@ func TestInvocationKeyvals(t *testing.T) {
 					"suite": "someOtherSuite",
 				},
 			}
-			ts, err := skylab.NewTaskSet(ctx, invs, p, basicConfig(), "foo-parent-task-id")
+			ts, err := skylab.NewTaskSet(invs, p, basicConfig(), "foo-parent-task-id")
 			So(err, ShouldBeNil)
 			run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -744,7 +744,7 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 			}
 
 			Convey("created commands include common suite keyval and different label keyvals", func() {
-				ts, err := skylab.NewTaskSet(ctx, invs, p, basicConfig(), "foo-parent-task-id")
+				ts, err := skylab.NewTaskSet(invs, p, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
 				err = run.LaunchAndWait(ctx, swarming, gf)
@@ -786,7 +786,7 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 				inv.Test.MaxRetries = 2
 			}
 			Convey("for skylab execution", func() {
-				ts, err := skylab.NewTaskSet(ctx, invs, params, basicConfig(), "foo-parent-task-id")
+				ts, err := skylab.NewTaskSet(invs, params, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
 				err = run.LaunchAndWait(ctx, swarming, gf)
@@ -1030,7 +1030,7 @@ func TestRetries(t *testing.T) {
 				}
 				var ml memlogger.MemLogger
 				ctx = logging.SetFactory(ctx, func(context.Context) logging.Logger { return &ml })
-				ts, err := skylab.NewTaskSet(ctx, c.invocations, params, basicConfig(), "foo-parent-task-id")
+				ts, err := skylab.NewTaskSet(c.invocations, params, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
 				err = run.LaunchAndWait(ctx, swarming, gf)
@@ -1109,7 +1109,7 @@ func TestClientTestArg(t *testing.T) {
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("name1", "")}
 
-		ts, err := skylab.NewTaskSet(ctx, invs, basicParams(), basicConfig(), "foo-parent-task-id")
+		ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -1138,7 +1138,7 @@ func TestQuotaSchedulerAccount(t *testing.T) {
 			QuotaAccount: "foo-account",
 		}
 
-		ts, err := skylab.NewTaskSet(ctx, invs, params, basicConfig(), "foo-parent-task-id")
+		ts, err := skylab.NewTaskSet(invs, params, basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -1170,7 +1170,7 @@ func TestUnmanagedPool(t *testing.T) {
 			UnmanagedPool: "foo-pool",
 		}
 
-		ts, err := skylab.NewTaskSet(ctx, invs, params, basicConfig(), "foo-parent-task-id")
+		ts, err := skylab.NewTaskSet(invs, params, basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
@@ -1210,7 +1210,7 @@ func TestResponseVerdict(t *testing.T) {
 		getter := newFakeGetter()
 		gf := fakeGetterFactory(getter)
 
-		taskSets, err := skylab.NewTaskSet(ctx, invs, params, basicConfig(), "foo-parent-task-id")
+		taskSets, err := skylab.NewTaskSet(invs, params, basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(taskSets)
 
@@ -1324,7 +1324,7 @@ func TestIncompatibleDependencies(t *testing.T) {
 		swarming := newFakeSwarming("")
 		for _, c := range cases {
 			Convey(fmt.Sprintf("with %s", c.Tag), func() {
-				ts, err := skylab.NewTaskSet(ctx, c.Invs, c.Params, basicConfig(), "foo-parent-task-id")
+				ts, err := skylab.NewTaskSet(c.Invs, c.Params, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
 				err = run.LaunchAndWait(ctx, swarming, fakeGetterFactory(newFakeGetter()))

@@ -34,11 +34,11 @@ func NewRunnerWithTaskSets(taskSets ...*TaskSet) *Runner {
 }
 
 // NewRunner returns a Runner that will execute the given tests.
-func NewRunner(ctx context.Context, workerConfig *config.Config_SkylabWorker, parentTaskID string, requests []*steps.ExecuteRequest) (*Runner, error) {
+func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, requests []*steps.ExecuteRequest) (*Runner, error) {
 	ts := make([]*TaskSet, len(requests))
 	for i, r := range requests {
 		var err error
-		ts[i], err = NewTaskSet(ctx, r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
+		ts[i], err = NewTaskSet(r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
 		if err != nil {
 			return nil, errors.Annotate(err, "new skylab runner").Err()
 		}
