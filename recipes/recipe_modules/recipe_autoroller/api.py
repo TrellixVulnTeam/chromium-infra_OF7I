@@ -107,7 +107,7 @@ def get_commit_message(roll_result):
       blame.append('  https://crrev.com/%s (%s)' % (commit['revision'],
                                                     commit['author_email']))
       summary = commit['message_lines']
-      summary = message[0] if message else 'n/a'
+      summary = summary[0] if summary else 'n/a'
       blame.append('    %s' % summary)
 
   message += '\n%s\n' % '\n'.join(blame)
