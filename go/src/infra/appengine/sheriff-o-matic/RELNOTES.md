@@ -1,3 +1,20 @@
+# Release Notes sheriff-o-matic 2020-01-21
+
+- 2 commits, 1 bugs affected since 529726b ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [Add a rotation for sheriffing official builders to SoM](https://chromium-review.googlesource.com/c/infra/infra/+/1980292) (nqmtuan@google.com)
+- [Add instructions to deploy SQL changes](https://chromium-review.googlesource.com/c/infra/infra/+/2007554) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1034650](https://crbug.com/1034650)
+  
+
 # Release Notes sheriff-o-matic 2020-01-16
 
 - 2 commits, 2 bugs affected since 3e52891 (2020-01-07T22:49:32Z)
