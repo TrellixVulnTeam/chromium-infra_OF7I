@@ -60,6 +60,7 @@ message AddCrosDevicesResponse {
 
 message GetCrosDevicesRequest {
   repeated DeviceID ids = 1;
+  repeated string models = 2;
 }
 
 message HwidData {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
@@ -266,12 +267,23 @@ func TestGetDevices(t *testing.T) {
 			So(result.Passed(), ShouldBeEmpty)
 			So(result.Failed(), ShouldHaveLength, 2)
 		})
+		Convey("Get by models", func() {
+			result, err := GetDevicesByModels(ctx, []string{"model1", "model2"})
+			So(err, ShouldBeNil)
+			So(result.Passed(), ShouldBeEmpty)
+			So(result.Failed(), ShouldBeEmpty)
+		})
 	})
 	Convey("Get devices from a non-empty datastore", t, func() {
-		devsToAdd := []*lab.ChromeOSDevice{
-			mockDut("dut1", "", "labstation1"),
-			mockLabstation("labstation1", "ASSET_ID_123"),
+		dut1 := mockDut("dut1", "", "labstation1")
+		labstation1 := mockLabstation("labstation1", "ASSET_ID_123")
+		dut1.DeviceConfigId = &device.ConfigId{
+			ModelId: &device.ModelId{Value: "model1"},
 		}
+		labstation1.DeviceConfigId = &device.ConfigId{
+			ModelId: &device.ModelId{Value: "model2"},
+		}
+		devsToAdd := []*lab.ChromeOSDevice{dut1, labstation1}
 		_, err := AddDevices(ctx, devsToAdd, false)
 		if err != nil {
 			t.Fatal(err)
@@ -292,6 +304,13 @@ func TestGetDevices(t *testing.T) {
 			So(result.Passed(), ShouldHaveLength, 1)
 			So(result.Passed()[0].Entity.Hostname, ShouldEqual, "dut1")
 			So(result.Failed(), ShouldHaveLength, 1)
+		})
+		Convey("Get by models", func() {
+			result, err := GetDevicesByModels(ctx, []string{"model3", "model1"})
+			So(err, ShouldBeNil)
+			So(result.Passed(), ShouldHaveLength, 1)
+			So(result.Passed()[0].Entity.Hostname, ShouldEqual, "dut1")
+			So(result.Failed(), ShouldHaveLength, 0)
 		})
 	})
 }

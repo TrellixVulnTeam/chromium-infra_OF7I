@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
@@ -240,16 +241,47 @@ func GetDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpResu
 	return retrievingResults
 }
 
-// GetAllDevices returns all device entities.
+// GetAllDevices  returns all device entities.
+//
+// TODO(guocb) optimize for performance if needed.
 func GetAllDevices(ctx context.Context) (DeviceOpResults, error) {
 	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
 	var devs []*DeviceEntity
 	if err := datastore.GetAll(ctx, q, &devs); err != nil {
-		return nil, errors.Annotate(err, "failed to get all hosts").Err()
+		return nil, errors.Annotate(err, "failed to get all devices").Err()
 	}
 	result := make([]DeviceOpResult, len(devs))
 	for i, d := range devs {
 		result[i].Entity = d
+	}
+	return DeviceOpResults(result), nil
+}
+
+// GetDevicesByModels returns all device entities of models.
+//
+// TODO(guocb) optimize for performance if needed.
+func GetDevicesByModels(ctx context.Context, models []string) (DeviceOpResults, error) {
+	if len(models) == 0 {
+		return nil, nil
+	}
+	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
+	var devs []*DeviceEntity
+	if err := datastore.GetAll(ctx, q, &devs); err != nil {
+		return nil, errors.Annotate(err, "failed to get all devices").Err()
+	}
+	modelSet := stringset.NewFromSlice(models...)
+	result := make([]DeviceOpResult, 0, len(devs))
+	for _, d := range devs {
+		var labConfig lab.ChromeOSDevice
+		if err := d.GetCrosDeviceProto(&labConfig); err != nil {
+			logging.Errorf(ctx, "failed to unmarshal lab config data for %s", d.Hostname)
+			continue
+		}
+		if !modelSet.Has(labConfig.GetDeviceConfigId().GetModelId().GetValue()) {
+			continue
+		}
+
+		result = append(result, DeviceOpResult{Entity: d})
 	}
 	return DeviceOpResults(result), nil
 }

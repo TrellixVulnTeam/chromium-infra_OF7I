@@ -250,9 +250,14 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 	}
 
 	hostnames, devIds := extractHostnamesAndDeviceIDs(ctx, req)
-	var result []datastore.DeviceOpResult
-	r := ([]datastore.DeviceOpResult)(datastore.GetDevicesByIds(ctx, devIds))
-	result = append(r, datastore.GetDevicesByHostnames(ctx, hostnames)...)
+	models := req.GetModels()
+	result := ([]datastore.DeviceOpResult)(datastore.GetDevicesByIds(ctx, devIds))
+	result = append(result, datastore.GetDevicesByHostnames(ctx, hostnames)...)
+	byModels, err := datastore.GetDevicesByModels(ctx, models)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, byModels...)
 
 	extendedData, moreFailedDevices := getExtendedDeviceData(ctx, datastore.DeviceOpResults(result).Passed())
 	failedDevices := getFailedResults(result, false)
