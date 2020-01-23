@@ -17,11 +17,16 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
 
+	"go.chromium.org/luci/grpc/prpc"
+	"go.chromium.org/luci/server/auth"
+	"golang.org/x/oauth2"
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
+	dronequeenapi "infra/appengine/drone-queen/api"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/deviceconfig"
+	"infra/libs/cros/lab_inventory/dronecfg"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
 )
 
@@ -38,6 +43,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/sync-manufacturing-config", mwCron, logAndSetHTTPErr(syncManufacturingConfigHandler))
 
 	r.GET("/internal/cron/changehistory-to-bq", mwCron, logAndSetHTTPErr(dumpChangeHistoryToBQCronHandler))
+
+	r.GET("/internal/cron/push-to-drone-queen", mwCron, logAndSetHTTPErr(pushToDroneQueenCronHnadler))
 }
 
 func dumpToBQCronHandler(c *router.Context) (err error) {
@@ -114,6 +121,41 @@ func dumpChangeHistoryToBQCronHandler(c *router.Context) error {
 	}
 	logging.Debugf(ctx, "Cleaning %d records of change history from datastore", len(msgs))
 	return changehistory.FlushDatastore(ctx, changes)
+}
+
+func pushToDroneQueenCronHnadler(c *router.Context) error {
+	ctx := c.Context
+	logging.Infof(c.Context, "Start to push inventory to drone queen")
+	queenHostname := config.Get(ctx).QueenService
+	if queenHostname == "" {
+		logging.Infof(ctx, "No drone queen service configured.")
+		return nil
+	}
+
+	droneQueenRecord, err := dronecfg.Get(ctx, dronecfg.QueenDroneName(config.Get(ctx).Environment))
+	if err != nil {
+		return err
+	}
+
+	duts := make([]string, len(droneQueenRecord.DUTs))
+	for i := range duts {
+		duts[i] = droneQueenRecord.DUTs[i].Hostname
+	}
+	ts, err := auth.GetTokenSource(ctx, auth.AsSelf)
+	if err != nil {
+		return err
+	}
+	h := oauth2.NewClient(ctx, ts)
+	client := dronequeenapi.NewInventoryProviderPRPCClient(&prpc.Client{
+		C:    h,
+		Host: queenHostname,
+	})
+	logging.Debugf(ctx, "DUTs to declare: %#v", duts)
+	_, err = client.DeclareDuts(ctx, &dronequeenapi.DeclareDutsRequest{Duts: duts})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func logAndSetHTTPErr(f func(c *router.Context) error) func(*router.Context) {

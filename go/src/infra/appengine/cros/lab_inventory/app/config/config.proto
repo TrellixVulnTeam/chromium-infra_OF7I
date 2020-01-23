@@ -35,6 +35,9 @@ message Config {
   // Environment managed by this instance of app, e.g. ENVIRONMENT_STAGING,
   // ENVIRONMENT_PROD, etc.
   string environment = 10;
+
+  // The hostname of drone-queen service to push inventory to.
+  string queen_service = 11;
 }
 
 message AdminService {

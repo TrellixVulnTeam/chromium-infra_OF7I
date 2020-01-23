@@ -11,3 +11,6 @@ cron:
 - description: Inventory change history periodic dump to bigquery
   url: /internal/cron/changehistory-to-bq
   schedule: every 10 minutes
+- description: Push inventory to drone queen
+  url: /internal/cron/push-to-drone-queen
+  schedule: every 10 minutes
