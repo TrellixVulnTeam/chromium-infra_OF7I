@@ -12,6 +12,7 @@ Use:
 import os
 import sys
 
-pb2_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'python_pb2')
+pb2_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(
+    __file__))), 'python_pb2')
 if pb2_dir not in sys.path:  # pragma: no cover
   sys.path.append(pb2_dir)
