@@ -139,3 +139,20 @@ func TestCopyDCAmongLabels(t *testing.T) {
 		t.Errorf("device config differ -want +got, %s", diff)
 	}
 }
+
+func TestCopyDCAmongEmptyLabels(t *testing.T) {
+	var want CommonDeviceSpecs
+	if err := proto.UnmarshalText(fullCommonSpec, &want); err != nil {
+		t.Fatalf("error unmarshalling example common specs: %s", err.Error())
+	}
+	var got CommonDeviceSpecs
+	if err := proto.UnmarshalText(testCommonSpec, &got); err != nil {
+		t.Fatalf("error unmarshalling testing common specs: %s", err.Error())
+	}
+	got.Labels.Capabilities = nil
+	got.Labels.Peripherals = nil
+	CopyDCAmongLabels(got.Labels, want.Labels)
+	if diff := pretty.Compare(want, got); diff != "" {
+		t.Errorf("device config differ -want +got, %s", diff)
+	}
+}

@@ -121,18 +121,34 @@ func ConvertDeviceConfig(dc *device.Config, spec *CommonDeviceSpecs) {
 func CopyDCAmongLabels(to *SchedulableLabels, from *SchedulableLabels) {
 	toC := to.GetCapabilities()
 	fromC := from.GetCapabilities()
-	toC.GpuFamily = fromC.GpuFamily
-	toC.Graphics = fromC.Graphics
-	toC.Power = fromC.Power
-	toC.Storage = fromC.Storage
-	toC.VideoAcceleration = fromC.VideoAcceleration
-	toC.Bluetooth = fromC.Bluetooth
-	toC.InternalDisplay = fromC.InternalDisplay
-	toC.Webcam = fromC.Webcam
-	toC.Flashrom = fromC.Flashrom
-	toC.Hotwording = fromC.Hotwording
-	toC.Lucidsleep = fromC.Lucidsleep
-	toC.Touchpad = fromC.Touchpad
-	toC.Touchscreen = fromC.Touchscreen
-	to.GetPeripherals().Stylus = from.GetPeripherals().Stylus
+	if fromC == nil {
+		to.Capabilities = nil
+	} else {
+		if toC == nil {
+			to.Capabilities = &HardwareCapabilities{}
+		}
+		toC = to.GetCapabilities()
+		toC.GpuFamily = fromC.GpuFamily
+		toC.Graphics = fromC.Graphics
+		toC.Power = fromC.Power
+		toC.Storage = fromC.Storage
+		toC.VideoAcceleration = fromC.VideoAcceleration
+		toC.Bluetooth = fromC.Bluetooth
+		toC.InternalDisplay = fromC.InternalDisplay
+		toC.Webcam = fromC.Webcam
+		toC.Flashrom = fromC.Flashrom
+		toC.Hotwording = fromC.Hotwording
+		toC.Lucidsleep = fromC.Lucidsleep
+		toC.Touchpad = fromC.Touchpad
+		toC.Touchscreen = fromC.Touchscreen
+	}
+
+	if from.GetPeripherals() == nil {
+		to.Peripherals = nil
+	} else {
+		if to.GetPeripherals() == nil {
+			to.Peripherals = &Peripherals{}
+		}
+		to.GetPeripherals().Stylus = from.GetPeripherals().Stylus
+	}
 }
