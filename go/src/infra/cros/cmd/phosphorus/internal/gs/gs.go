@@ -134,3 +134,14 @@ func NewAuthedClient(ctx context.Context, f *authcli.Flags) (AuthedClient, error
 	}
 	return &realAuthedClient{client: cli}, nil
 }
+
+// Concat Extend a GS path with the provided file names
+func Concat(prefix string, parts ...string) Path {
+	if len(parts) == 0 {
+		return Path(prefix)
+	}
+	return Path(
+		gcgs.Path(prefix).Concat(parts[0], (parts[1:])...),
+	)
+	// TODO: switch to gcgs.MakeConcatPath when crrev/2008476 is in the deps
+}
