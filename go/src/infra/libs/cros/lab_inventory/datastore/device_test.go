@@ -305,15 +305,17 @@ func TestUpdateDeviceSetup(t *testing.T) {
 		devsToAdd := []*lab.ChromeOSDevice{
 			mockDut("dut1", "UUID:01", "labstation1"),
 			mockLabstation("labstation1", "UUID:02"),
+			mockLabstation("labstation2", "UUID:03"),
 		}
 		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)
 
 		datastore.GetTestable(ctx).Consistent(true)
 		Convey("Update non-existing devices", func() {
+			dut1 := mockDut("dut1", "UUID:01", "labstation2")
 			result, err := UpdateDeviceSetup(ctx, []*lab.ChromeOSDevice{
-				mockDut("dut1", "UUID:ghost", ""),
-				mockDut("dut1", "UUID:01", "labstation2"),
+				mockDut("dut1", "UUID:ghost", "labstation1"),
+				dut1,
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -338,6 +340,7 @@ func TestUpdateDutMeta(t *testing.T) {
 
 		devsToAdd := []*lab.ChromeOSDevice{
 			mockDut("dut1", "UUID:01", "labstation1"),
+			mockLabstation("labstation1", ""),
 		}
 		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)

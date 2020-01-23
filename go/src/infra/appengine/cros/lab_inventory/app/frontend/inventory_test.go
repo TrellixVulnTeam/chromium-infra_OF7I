@@ -103,17 +103,19 @@ func TestAddCrosDevices(t *testing.T) {
 	dut1 := lab.ChromeOSDevice{
 		Id: &lab.ChromeOSDeviceID{},
 		Device: &lab.ChromeOSDevice_Dut{
-			Dut: &lab.DeviceUnderTest{
-				Hostname: "dut1",
-			},
+			Dut: &lab.DeviceUnderTest{Hostname: "dut1"},
+		},
+	}
+	dut2 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{Hostname: "dut2"},
 		},
 	}
 	labstation1 := lab.ChromeOSDevice{
 		Id: &lab.ChromeOSDeviceID{},
 		Device: &lab.ChromeOSDevice_Labstation{
-			Labstation: &lab.Labstation{
-				Hostname: "labstation1",
-			},
+			Labstation: &lab.Labstation{Hostname: "labstation1"},
 		},
 	}
 	Convey("Add Chrome OS devices", t, func() {
@@ -121,12 +123,14 @@ func TestAddCrosDevices(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		Convey("Add new devices", func() {
-			req := &api.AddCrosDevicesRequest{
-				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+			for _, d := range []*lab.ChromeOSDevice{&dut1, &labstation1} {
+				req := &api.AddCrosDevicesRequest{
+					Devices: []*lab.ChromeOSDevice{d},
+				}
+				resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+				So(err, ShouldBeNil)
+				So(resp.PassedDevices, ShouldHaveLength, 1)
 			}
-			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp.PassedDevices, ShouldHaveLength, 2)
 		})
 		Convey("Fail the input validation check", func() {
 			req := &api.AddCrosDevicesRequest{
@@ -141,7 +145,7 @@ func TestAddCrosDevices(t *testing.T) {
 				Devices: []*lab.ChromeOSDevice{&dut1},
 			}
 			req2 := &api.AddCrosDevicesRequest{
-				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+				Devices: []*lab.ChromeOSDevice{&dut1, &dut2},
 			}
 			resp, err := tf.Inventory.AddCrosDevices(tf.C, req1)
 			So(err, ShouldBeNil)
@@ -155,7 +159,7 @@ func TestAddCrosDevices(t *testing.T) {
 			So(resp.PassedDevices, ShouldHaveLength, 1)
 
 			So(resp.FailedDevices[0].Hostname, ShouldEqual, "dut1")
-			So(resp.PassedDevices[0].Hostname, ShouldEqual, "labstation1")
+			So(resp.PassedDevices[0].Hostname, ShouldEqual, "dut2")
 		})
 	})
 }
@@ -194,12 +198,14 @@ func TestDeleteCrosDevices(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		Convey("Happy path", func() {
-			req := &api.AddCrosDevicesRequest{
-				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+			for _, d := range []*lab.ChromeOSDevice{&dut1, &labstation1} {
+				req := &api.AddCrosDevicesRequest{
+					Devices: []*lab.ChromeOSDevice{d},
+				}
+				resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+				So(err, ShouldBeNil)
+				So(resp.PassedDevices, ShouldHaveLength, 1)
 			}
-			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp.PassedDevices, ShouldHaveLength, 2)
 
 			reqDelete := &api.DeleteCrosDevicesRequest{
 				Ids: []*api.DeviceID{&devID1, &devID2},
@@ -267,12 +273,14 @@ func TestGetCrosDevices(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 
-		req := &api.AddCrosDevicesRequest{
-			Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+		for _, d := range []*lab.ChromeOSDevice{&dut1, &labstation1} {
+			req := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{d},
+			}
+			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
 		}
-		resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp.PassedDevices, ShouldHaveLength, 2)
 
 		getHwidDataFunc = func(ctx context.Context, hwidstr string, secret string) (*hwid.Data, error) {
 			return &hwid.Data{Sku: "sku", Variant: "variant"}, nil
@@ -438,12 +446,14 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 
-		req := &api.AddCrosDevicesRequest{
-			Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+		for _, d := range []*lab.ChromeOSDevice{&labstation1, &dut1} {
+			req := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{d},
+			}
+			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
 		}
-		resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp.PassedDevices, ShouldHaveLength, 2)
 
 		Convey("Happy path", func() {
 			servo := lab.Servo{
@@ -503,12 +513,14 @@ func TestUpdateDutsStatus(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 
-		req := &api.AddCrosDevicesRequest{
-			Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+		for _, d := range []*lab.ChromeOSDevice{&dut1, &labstation1} {
+			req := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{d},
+			}
+			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
 		}
-		resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp.PassedDevices, ShouldHaveLength, 2)
 
 		Convey("Happy path", func() {
 			req := &api.UpdateDutsStatusRequest{

@@ -18,17 +18,19 @@ func TestAddDevicesValidation(t *testing.T) {
 		dut1 := lab.ChromeOSDevice{
 			Id: &lab.ChromeOSDeviceID{},
 			Device: &lab.ChromeOSDevice_Dut{
-				Dut: &lab.DeviceUnderTest{
-					Hostname: "dut1",
-				},
+				Dut: &lab.DeviceUnderTest{Hostname: "dut1"},
 			},
 		}
 		labstation1 := lab.ChromeOSDevice{
 			Id: &lab.ChromeOSDeviceID{},
 			Device: &lab.ChromeOSDevice_Labstation{
-				Labstation: &lab.Labstation{
-					Hostname: "labstation1",
-				},
+				Labstation: &lab.Labstation{Hostname: "labstation1"},
+			},
+		}
+		labstation2 := lab.ChromeOSDevice{
+			Id: &lab.ChromeOSDeviceID{},
+			Device: &lab.ChromeOSDevice_Labstation{
+				Labstation: &lab.Labstation{Hostname: "labstation2"},
 			},
 		}
 		Convey("Empty request", func() {
@@ -48,33 +50,38 @@ func TestAddDevicesValidation(t *testing.T) {
 		Convey("Missing hostname", func() {
 			labstation1.GetLabstation().Hostname = ""
 			req := AddCrosDevicesRequest{
-				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+				Devices: []*lab.ChromeOSDevice{&labstation1, &labstation2},
 			}
 			err := req.Validate()
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Hostname is missing")
 		})
 		Convey("Duplicated hostnames", func() {
-			dut1.GetDut().Hostname = "dut1"
-			labstation1.GetLabstation().Hostname = "dut1"
+			labstation2.GetLabstation().Hostname = "labstation1"
 			req := AddCrosDevicesRequest{
-				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+				Devices: []*lab.ChromeOSDevice{&labstation1, &labstation2},
 			}
 			err := req.Validate()
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Duplicated hostname found: dut1")
+			So(err.Error(), ShouldContainSubstring, "Duplicated hostname found: labstation1")
 		})
 		Convey("Duplicated ID", func() {
-			dut1.GetDut().Hostname = "dut1"
-			dut1.Id.Value = "ID"
-			labstation1.GetLabstation().Hostname = "labstation1"
 			labstation1.Id.Value = "ID"
+			labstation2.Id.Value = "ID"
 			req := AddCrosDevicesRequest{
-				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+				Devices: []*lab.ChromeOSDevice{&labstation1, &labstation2},
 			}
 			err := req.Validate()
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Duplicated id found: ID")
+		})
+		Convey("Mix DUT and labstation", func() {
+			req := AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{&dut1, &labstation2},
+			}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "mix")
 		})
 		Convey("Happy path", func() {
 			dut1.GetDut().Hostname = "dut1"
@@ -82,7 +89,7 @@ func TestAddDevicesValidation(t *testing.T) {
 			labstation1.GetLabstation().Hostname = "labstation1"
 			labstation1.Id.Value = ""
 			req := AddCrosDevicesRequest{
-				Devices: []*lab.ChromeOSDevice{&dut1, &labstation1},
+				Devices: []*lab.ChromeOSDevice{&labstation1, &labstation2},
 			}
 			err := req.Validate()
 			So(err, ShouldBeNil)

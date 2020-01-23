@@ -109,7 +109,9 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoP
 			if dut := message.GetDut(); dut != nil {
 				// Update associated labstation if the DUT has a new servo. Also
 				// assign new servo port if specified.
-				r.amendServoToLabstation(ctx, dut, assignServoPort)
+				if err := r.amendServoToLabstation(ctx, dut, assignServoPort); err != nil {
+					return err
+				}
 			}
 
 			labConfig, err := proto.Marshal(message)

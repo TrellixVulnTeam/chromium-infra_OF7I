@@ -30,6 +30,10 @@ func checkDuplicatedString() (input chan string, result chan bool) {
 }
 
 // Validate validates input requests and return error if it's not.
+//
+// All devices should have unique hostname and/or id.
+// Doesn't allow mix of DUT and labstation in RPC request. They should be
+// deployed separatedly.
 func (r *AddCrosDevicesRequest) Validate() error {
 	if r.Devices == nil || len(r.Devices) == 0 {
 		return status.Errorf(codes.InvalidArgument, "no devices to add")
@@ -40,6 +44,7 @@ func (r *AddCrosDevicesRequest) Validate() error {
 	idChecker, duplicatedID := checkDuplicatedString()
 	defer close(idChecker)
 
+	hasDut, hasLabstation := false, false
 	for _, d := range r.Devices {
 		// Hostname is required.
 		hostname := utils.GetHostname(d)
@@ -57,6 +62,15 @@ func (r *AddCrosDevicesRequest) Validate() error {
 			if idChecker <- id; <-duplicatedID {
 				return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Duplicated id found: %s", id))
 			}
+		}
+		switch {
+		case d.GetDut() != nil:
+			hasDut = true
+		case d.GetLabstation() != nil:
+			hasLabstation = true
+		}
+		if hasDut && hasLabstation {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("DUT and labstation mixed in one request"))
 		}
 	}
 	return nil
