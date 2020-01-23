@@ -38,18 +38,21 @@ var (
 	getManufacturingConfigFunc = manufacturingconfig.GetCachedConfig
 )
 
-func getPassedResults(results []datastore.DeviceOpResult) []*api.DeviceOpResult {
+func getPassedResults(ctx context.Context, results []datastore.DeviceOpResult) []*api.DeviceOpResult {
 	passedDevices := make([]*api.DeviceOpResult, 0, len(results))
 	for _, res := range datastore.DeviceOpResults(results).Passed() {
 		r := new(api.DeviceOpResult)
 		r.Id = string(res.Entity.ID)
 		r.Hostname = res.Entity.Hostname
 		passedDevices = append(passedDevices, r)
+		logging.Debugf(ctx, "Added: %s: %s", r.Hostname, r.Id)
 	}
+	logging.Infof(ctx, "%d device(s) passed", len(passedDevices))
+
 	return passedDevices
 }
 
-func getFailedResults(results []datastore.DeviceOpResult, hideUUID bool) []*api.DeviceOpResult {
+func getFailedResults(ctx context.Context, results []datastore.DeviceOpResult, hideUUID bool) []*api.DeviceOpResult {
 	failedDevices := make([]*api.DeviceOpResult, 0, len(results))
 	for _, res := range datastore.DeviceOpResults(results).Failed() {
 		r := new(api.DeviceOpResult)
@@ -60,7 +63,9 @@ func getFailedResults(results []datastore.DeviceOpResult, hideUUID bool) []*api.
 			r.Id = id
 		}
 		failedDevices = append(failedDevices, r)
+		logging.Errorf(ctx, "Failed: %s: %s: %s", r.Hostname, r.Id, r.ErrorMsg)
 	}
+	logging.Errorf(ctx, "%d device(s) failed", len(failedDevices))
 	return failedDevices
 }
 
@@ -99,12 +104,12 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 	if err != nil {
 		return nil, errors.Annotate(err, "internal error").Tag(grpcutil.InternalTag).Err()
 	}
-	passedDevices := getPassedResults(*addingResults)
+	passedDevices := getPassedResults(ctx, *addingResults)
 	if err := updateDroneCfg(ctx, passedDevices, true); err != nil {
 		return nil, errors.Annotate(err, "add cros devices").Err()
 	}
 
-	failedDevices := getFailedResults(*addingResults, true)
+	failedDevices := getFailedResults(ctx, *addingResults, true)
 	resp = &api.AddCrosDevicesResponse{
 		PassedDevices: passedDevices,
 		FailedDevices: failedDevices,
@@ -214,6 +219,7 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 
 	extendedData, moreFailedDevices = getManufacturingConfigData(ctx, extendedData)
 	failedDevices = append(failedDevices, moreFailedDevices...)
+	logging.Debugf(ctx, "Got extended data for %d device(s)", len(extendedData))
 	return extendedData, failedDevices
 }
 
@@ -250,17 +256,19 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 	}
 
 	hostnames, devIds := extractHostnamesAndDeviceIDs(ctx, req)
-	models := req.GetModels()
 	result := ([]datastore.DeviceOpResult)(datastore.GetDevicesByIds(ctx, devIds))
+	logging.Debugf(ctx, "Get %d devices by ID", len(result))
 	result = append(result, datastore.GetDevicesByHostnames(ctx, hostnames)...)
-	byModels, err := datastore.GetDevicesByModels(ctx, models)
+	logging.Debugf(ctx, "Get %d more devices by hostname", len(result))
+	byModels, err := datastore.GetDevicesByModels(ctx, req.GetModels())
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "get devices by models").Err()
 	}
 	result = append(result, byModels...)
+	logging.Debugf(ctx, "Get %d more devices by models", len(result))
 
 	extendedData, moreFailedDevices := getExtendedDeviceData(ctx, datastore.DeviceOpResults(result).Passed())
-	failedDevices := getFailedResults(result, false)
+	failedDevices := getFailedResults(ctx, result, false)
 	failedDevices = append(failedDevices, moreFailedDevices...)
 
 	resp = &api.GetCrosDevicesResponse{
@@ -312,8 +320,8 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 	logging.Debugf(ctx, "State update results")
 	logDeviceOpResults(ctx, updatingResults)
 
-	updatedDevices := getPassedResults(updatingResults)
-	failedDevices := getFailedResults(updatingResults, false)
+	updatedDevices := getPassedResults(ctx, updatingResults)
+	failedDevices := getFailedResults(ctx, updatingResults, false)
 	resp = &api.UpdateDutsStatusResponse{
 		UpdatedDevices: updatedDevices,
 		FailedDevices:  failedDevices,
@@ -336,13 +344,13 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 		return nil, err
 	}
 
-	updatedDevices := getPassedResults(updatingResults)
+	updatedDevices := getPassedResults(ctx, updatingResults)
 	// Update dronecfg datastore in case there are any DUTs get renamed.
 	if err := updateDroneCfg(ctx, updatedDevices, true); err != nil {
 		return nil, errors.Annotate(err, "update cros device setup").Err()
 	}
 
-	failedDevices := getFailedResults(updatingResults, false)
+	failedDevices := getFailedResults(ctx, updatingResults, false)
 	resp = &api.UpdateCrosDevicesSetupResponse{
 		UpdatedDevices: updatedDevices,
 		FailedDevices:  failedDevices,
@@ -364,12 +372,12 @@ func (is *InventoryServerImpl) DeleteCrosDevices(ctx context.Context, req *api.D
 	deletingResultsByHostname := datastore.DeleteDevicesByHostnames(ctx, hostnames)
 	deletingResults = append(deletingResults, deletingResultsByHostname...)
 
-	removedDevices := getPassedResults(deletingResults)
+	removedDevices := getPassedResults(ctx, deletingResults)
 	if err := updateDroneCfg(ctx, removedDevices, false); err != nil {
 		return nil, errors.Annotate(err, "delete cros devices").Err()
 	}
 
-	failedDevices := getFailedResults(deletingResults, false)
+	failedDevices := getFailedResults(ctx, deletingResults, false)
 	resp = &api.DeleteCrosDevicesResponse{
 		RemovedDevices: removedDevices,
 		FailedDevices:  failedDevices,
