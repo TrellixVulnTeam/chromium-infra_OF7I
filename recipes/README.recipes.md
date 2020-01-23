@@ -745,7 +745,7 @@ flashing the DUT. The basic steps of this recipe are:
 &mdash; **def [RunSteps](/recipes/recipes/cros_flash.py#62)(api, properties):**
 ### *recipes* / [cros\_flash\_scheduler](/recipes/recipes/cros_flash_scheduler.py)
 
-[DEPS](/recipes/recipes/cros_flash_scheduler.py#31): [build/swarming\_client][build/recipe_modules/swarming_client], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/cros_flash_scheduler.py#29): [build/swarming\_client][build/recipe_modules/swarming_client], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 This recipe is used to keep Chrome's pools of CrOS DUTs up to date.
 
@@ -760,15 +760,15 @@ This recipe is intended to run several times during MTV's off-peak hours. Its
 builder should be backed by a single thin Ubuntu VM, while the tasks it launches
 run the cros_flash recipe and run on DUT swarming bots.
 
-&mdash; **def [RunSteps](/recipes/recipes/cros_flash_scheduler.py#225)(api, swarming_server, swarming_pool, device_type, bb_host, random_seed, flashing_builder, flashing_builder_bucket, image_type, jobs_per_host):**
+&mdash; **def [RunSteps](/recipes/recipes/cros_flash_scheduler.py#212)(api, swarming_server, swarming_pool, device_type, bb_host, random_seed, flashing_builder, flashing_builder_bucket, image_type):**
 
-&mdash; **def [get\_bots\_in\_pool](/recipes/recipes/cros_flash_scheduler.py#99)(api, swarming_server, pool, device_type):**
+&mdash; **def [get\_bots\_in\_pool](/recipes/recipes/cros_flash_scheduler.py#89)(api, swarming_server, pool, device_type):**
 
 Returns the list of bots that belong to the given pool.
 
 This uses swarming.py's bot/list query, and returns the resulting bots.
 
-&mdash; **def [get\_closest\_available\_version](/recipes/recipes/cros_flash_scheduler.py#157)(api, board, image_type, lkgm_base):**
+&mdash; **def [get\_closest\_available\_version](/recipes/recipes/cros_flash_scheduler.py#144)(api, board, image_type, lkgm_base):**
 
 Returns the GS path of the latest image for the given board and lkgm.
 
@@ -784,7 +784,7 @@ Returns tuple of:
   The 5-digit manifest for the latest image.
   Xbuddy path for the latest image.
 
-&mdash; **def [trigger\_flash](/recipes/recipes/cros_flash_scheduler.py#196)(api, bot, xbuddy_path, flashing_builder, flashing_builder_bucket):**
+&mdash; **def [trigger\_flash](/recipes/recipes/cros_flash_scheduler.py#183)(api, bot, xbuddy_path, flashing_builder, flashing_builder_bucket):**
 ### *recipes* / [depot\_tools\_builder](/recipes/recipes/depot_tools_builder.py)
 
 [DEPS](/recipes/recipes/depot_tools_builder.py#7): [build/zip][build/recipe_modules/zip], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]

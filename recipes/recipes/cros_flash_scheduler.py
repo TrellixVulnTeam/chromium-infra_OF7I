@@ -18,8 +18,6 @@ builder should be backed by a single thin Ubuntu VM, while the tasks it launches
 run the cros_flash recipe and run on DUT swarming bots.
 """
 
-from collections import defaultdict
-
 import base64
 import math
 import re
@@ -85,14 +83,6 @@ PROPERTIES = {
       kind=str,
       help='Type of image to be flashed [release, release-tryjob, full, etc.]',
       default='full'),
-  'jobs_per_host': Property(
-      kind=int,
-      help='Maximum number of host jobs that a host can execute concurrently.',
-      # Currently available hosts in the lab happen to be dell servers running
-      # on Intel Xeon CPUs, which can flash 3 bots in parallel. This value was
-      # determined experimentally and increasing it might lead to flaky flash
-      # jobs.
-      default=3),
 }
 
 
@@ -138,9 +128,6 @@ class DUTBot(object):
       if d['key'] == 'device_os':
         self.os = d['value'][0]
         break
-    # The only available place where host is referenced is 'authenticated_as'
-    # TODO: Add 'parent_name' field to bots dimensions (crbug.com/953107)
-    self.parent = swarming_dict['authenticated_as']
 
   def update_status(self, api):
     cmd = [
@@ -224,7 +211,7 @@ def trigger_flash(api, bot, xbuddy_path, flashing_builder,
 
 def RunSteps(api, swarming_server, swarming_pool, device_type, bb_host,
              random_seed, flashing_builder, flashing_builder_bucket,
-             image_type, jobs_per_host):
+             image_type):
   # Recipe-runtime import of random to avoid "Non-whitelisted" recipe errors.
   # TODO(crbug.com/913124): Remove this.
   import random
@@ -260,6 +247,7 @@ def RunSteps(api, swarming_server, swarming_pool, device_type, bb_host,
       api, swarming_server, swarming_pool, device_type)
   if not all_bots:
     api.python.failing_step('no bots online', '')
+
   unhealthy_bots = []
   up_to_date_bots = []
   out_of_date_bots = []
@@ -287,37 +275,15 @@ def RunSteps(api, swarming_server, swarming_pool, device_type, bb_host,
         'No flashes are necessary since all bots are up to date.']
     return
 
-  # Select a subset of bots to flash such that at least 67% of the pool stays
-  # online for the tests to run. Bots are selected randomly with two
-  # constraints
-  #   1. No host can flash more than jobs_per_host number of devicecs at once.
-  #   2. Cannot have more than 33% of bots being flashed at any given time.
-  out_of_date_bots_per_host = defaultdict(list)
-  bots_to_flash = list()
-  for bot in out_of_date_bots:
-    out_of_date_bots_per_host[bot.parent].append(bot)
-
-  for host in out_of_date_bots_per_host:
-    # If the host has greater than jobs_per_host to be flashed, randomly
-    # sample the bots.
-    if len(out_of_date_bots_per_host[host]) > jobs_per_host:
-      subset = random.sample(out_of_date_bots_per_host[host], jobs_per_host)
-      step_result.presentation.logs['dropped bots from {}'.format(host)] = (
-          bot.id for bot in (set(out_of_date_bots_per_host[host]) -
-                             set(subset)))
-      out_of_date_bots_per_host[host] = subset
-
+  # Select a subset (of at least 10 and up to 33%) of the DUTs to flash.
+  # This ensures that at least 67% of the pool stays online so tests can
+  # continue to run.
   num_available_bots = len(up_to_date_bots) + len(out_of_date_bots)
-  # 33% of available bots or minimum of 1 bot
-  max_num_to_flash = max(num_available_bots / 3, 1)
-  for bot_list in out_of_date_bots_per_host.itervalues():
-    bots_to_flash.extend(bot_list)
-
-  # If the number of bots selected to flash is greater than 33% of available
-  # bots then randomly sample the required number of bots
-  if len(bots_to_flash) > max_num_to_flash:
-    bots_to_flash = random.sample(bots_to_flash, max_num_to_flash)
-
+  max_num_to_flash = max(num_available_bots / 3, 10)
+  # Swarming's api returns bots sorted alphabetically. We don't want to
+  # always flash the bots in the same order, so make a random selection.
+  bots_to_flash = random.sample(
+      out_of_date_bots, min(max_num_to_flash, len(out_of_date_bots)))
   flashing_requests = set()
   with api.step.nest('flash bots'):
     for bot in bots_to_flash:
@@ -405,9 +371,8 @@ def RunSteps(api, swarming_server, swarming_pool, device_type, bb_host,
 
 
 def GenTests(api):
-  def bot_json(parent, bot_id, os, quarantined=False):
+  def bot_json(bot_id, os, quarantined=False):
     return {
-      'authenticated_as': 'bot:' + parent,
       'bot_id': bot_id,
       'quarantined': quarantined,
       'is_dead': False,
@@ -474,16 +439,13 @@ def GenTests(api):
         'get all bots',
         stdout=api.json.output({
           'items': [
-            bot_json('host_1', 'up_to_date_bot', '12345'),
-            bot_json('host_2', 'out_of_date_bot_1', '11111'),
-            bot_json('host_2', 'out_of_date_bot_2', '11111'),
-            bot_json('host_2', 'out_of_date_bot_3', '11111'),
-            bot_json('host_2', 'out_of_date_bot_4', '11111'),
-            bot_json('host_1', 'unhealthy_bot', '12345', quarantined=True),
+            bot_json('up_to_date_bot', '12345'),
+            bot_json('out_of_date_bot', '11111'),
+            bot_json('unhealthy_bot', '12345', quarantined=True),
           ]
         })) +
     api.step_data(
-        'flash bots.out_of_date_bot_2',
+        'flash bots.out_of_date_bot',
         stdout=api.json.output(bb_json_put('1234567890'))) +
     # Build finises after the third buildbucket query.
     api.step_data(
@@ -497,23 +459,19 @@ def GenTests(api):
         stdout=api.json.output(bb_json_get('1234567890'))) +
     # First the bot's online but out of date.
     api.step_data(
-        'wait for bots to become available again.get status of '
-        'out_of_date_bot_2',
-        stdout=api.json.output(
-            bot_json('host_2', 'out_of_date_bot_2', '11111'))) +
+        'wait for bots to become available again.get status of out_of_date_bot',
+        stdout=api.json.output(bot_json('out_of_date_bot', '11111'))) +
     # Then the bot's quarantined.
     api.step_data(
         'wait for bots to become available again.'
-            'get status of out_of_date_bot_2 (2)',
+            'get status of out_of_date_bot (2)',
         stdout=api.json.output(
-            bot_json('host_2', 'out_of_date_bot_2', '12345',
-                     quarantined=True))) +
+            bot_json('out_of_date_bot', '12345', quarantined=True))) +
     # Finally it's healthy and up to date.
     api.step_data(
         'wait for bots to become available again.'
-            'get status of out_of_date_bot_2 (3)',
-        stdout=api.json.output(
-            bot_json('host_2', 'out_of_date_bot_2', '12345'))) +
+            'get status of out_of_date_bot (3)',
+        stdout=api.json.output(bot_json('out_of_date_bot', '12345'))) +
     api.step_data(
         'retrigger myself',
         stdout=api.json.output(bb_json_put('1234567890'))) +
@@ -525,7 +483,7 @@ def GenTests(api):
     api.step_data(
         'get all bots',
         stdout=api.json.output({
-          'items': [bot_json('host', 'out_of_date_bot', '11111')]
+          'items': [bot_json('out_of_date_bot', '11111')]
         })) +
     api.step_data(
         'flash bots.out_of_date_bot',
@@ -541,7 +499,7 @@ def GenTests(api):
     test_props('bot_offline_after_flashing') +
     api.step_data(
         'get all bots',
-        stdout=api.json.output({'items': [bot_json('host', 'bot', '11111')]})) +
+        stdout=api.json.output({'items': [bot_json('bot', '11111')]})) +
     api.step_data(
         'flash bots.bot',
         stdout=api.json.output(bb_json_put('1234567890'))) +
@@ -550,8 +508,7 @@ def GenTests(api):
         stdout=api.json.output(bb_json_get('1234567890'))) +
     api.step_data(
         'wait for bots to become available again.get status of bot',
-        stdout=api.json.output(bot_json('host', 'bot', '11111',
-                                        quarantined=True))) +
+        stdout=api.json.output(bot_json('bot', '11111', quarantined=True))) +
     api.post_process(
         post_process.MustRun, '1 bots dropped offline after the flash') +
     api.post_process(post_process.DropExpectation)
@@ -560,8 +517,7 @@ def GenTests(api):
   for i in xrange(2, 11):
     offline_after_flashing_test += api.step_data(
         'wait for bots to become available again.get status of bot (%d)' % i,
-        stdout=api.json.output(bot_json('host', 'bot', '11111',
-                                        quarantined=True)))
+        stdout=api.json.output(bot_json('bot', '11111', quarantined=True)))
   yield offline_after_flashing_test
 
   yield (
@@ -606,8 +562,8 @@ def GenTests(api):
         'get all bots',
         stdout=api.json.output({
           'items': [
-            bot_json('host', 'bot2', '12345'),
-            bot_json('host', 'bot1', '12345'),
+            bot_json('bot2', '12345'),
+            bot_json('bot1', '12345'),
           ]
         })) +
     api.post_process(post_process.StatusSuccess) +
