@@ -176,15 +176,16 @@ describe('mr-list-page', () => {
   it('refreshes when _queryParams.sort changes', async () => {
     sinon.stub(element, 'refresh');
 
+    element._queryParams = {q: ''};
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 1);
 
-    element._queryParams = {colspec: 'Summary+ID'};
+    element._queryParams = {q: '', colspec: 'Summary+ID'};
 
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 1);
 
-    element._queryParams = {sort: '-Summary'};
+    element._queryParams = {q: '', sort: '-Summary'};
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 2);
 
@@ -194,6 +195,7 @@ describe('mr-list-page', () => {
   it('refreshes when currentQuery changes', async () => {
     sinon.stub(element, 'refresh');
 
+    element._queryParams = {q: ''};
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 1);
 

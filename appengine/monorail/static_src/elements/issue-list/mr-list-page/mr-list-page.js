@@ -13,7 +13,11 @@ import * as sitewide from 'reducers/sitewide.js';
 import * as ui from 'reducers/ui.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import {DEFAULT_ISSUE_FIELD_LIST, parseColSpec} from 'shared/issue-fields.js';
-import {urlWithNewParams, userIsMember} from 'shared/helpers.js';
+import {
+  shouldWaitForDefaultQuery,
+  urlWithNewParams,
+  userIsMember,
+} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
@@ -392,25 +396,6 @@ export class MrListPage extends connectStore(LitElement) {
       }
     }
 
-    if ((changedProperties.has('projectName') ||
-        changedProperties.has('currentQuery') ||
-        changedProperties.has('currentCan') ||
-        changedProperties.has('_fetchingPresentationConfig')) &&
-        !this._fetchingPresentationConfig) {
-      this.refresh();
-    } else if (changedProperties.has('_queryParams')) {
-      const oldParams = changedProperties.get('_queryParams') || {};
-
-      const shouldRefresh = PARAMS_THAT_TRIGGER_REFRESH.some((param) => {
-        const oldValue = oldParams[param];
-        const newValue = this._queryParams[param];
-        return oldValue !== newValue;
-      });
-
-      if (shouldRefresh) {
-        this.refresh();
-      }
-    }
     if (changedProperties.has('userDisplayName')) {
       store.dispatch(issue.fetchStarredIssues());
     }
@@ -419,6 +404,39 @@ export class MrListPage extends connectStore(LitElement) {
         this._fetchIssueListError) {
       this._showIssueErrorSnackbar(this._fetchIssueListError);
     }
+
+    const shouldRefresh = this._shouldRefresh(changedProperties);
+    if (shouldRefresh) this.refresh();
+  }
+
+  /**
+   * Considers if list-page should fetch ListIssues
+   * @param {Map} changedProperties
+   * @return {Booealn}
+   */
+  _shouldRefresh(changedProperties) {
+    const wait = shouldWaitForDefaultQuery(this._queryParams);
+
+    if (wait) {
+      if (changedProperties.has('_fetchingPresentationConfig') &&
+        !this._fetchingPresentationConfig) {
+        return true;
+      }
+    } else if (changedProperties.has('projectName') ||
+          changedProperties.has('currentQuery') ||
+          changedProperties.has('currentCan')) {
+      return true;
+    } else if (changedProperties.has('_queryParams')) {
+      const oldParams = changedProperties.get('_queryParams') || {};
+
+      const shouldRefresh = PARAMS_THAT_TRIGGER_REFRESH.some((param) => {
+        const oldValue = oldParams[param];
+        const newValue = this._queryParams[param];
+        return oldValue !== newValue;
+      });
+      return shouldRefresh;
+    }
+    return false;
   }
 
   // TODO(crbug.com/monorail/6933): Remove the need for this wrapper.

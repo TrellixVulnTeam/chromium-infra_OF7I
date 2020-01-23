@@ -5,8 +5,14 @@
 import qs from 'qs';
 
 
-// With lists a and b, get the elements that are in a but not in b.
-// result = a - b
+/**
+ * With lists a and b, get the elements that are in a but not in b.
+ * result = a - b
+ * @param {Array} listA
+ * @param {Array} listB
+ * @param {function} equals
+ * @return {Array}
+ */
 export function arrayDifference(listA, listB, equals) {
   if (!equals) {
     equals = (a, b) => (a === b);
@@ -34,11 +40,22 @@ export function setHasAny(set, values) {
   return false;
 }
 
-// Check if a string has a prefix, ignoring case.
+/**
+ * Check if a string has a prefix, ignoring case.
+ * @param {string} str
+ * @param {string} prefix
+ * @return {boolean}
+ */
 export function hasPrefix(str, prefix) {
   return str.toLowerCase().startsWith(prefix.toLowerCase());
 }
 
+/**
+ * Returns a string without specified prefix
+ * @param {string} str
+ * @param {string} prefix
+ * @return {string}
+ */
 export function removePrefix(str, prefix) {
   return str.substr(prefix.length);
 }
@@ -75,10 +92,21 @@ export function objectValuesForKeys(obj, keys = []) {
   return keys.map((key) => ((key in obj) ? obj[key] : undefined));
 }
 
+/**
+ * Checks to see if object has no keys
+ * @param {Object} obj
+ * @return {boolean}
+ */
 export function isEmptyObject(obj) {
   return Object.keys(obj).length === 0;
 }
 
+/**
+ * Checks if two strings are equal, case-insensitive
+ * @param {string} a
+ * @param {string} b
+ * @return {boolean}
+ */
 export function equalsIgnoreCase(a, b) {
   if (a == b) return true;
   if (!a || !b) return false;
@@ -164,3 +192,13 @@ export function createObjectComparisonFunc(props) {
         .some((propName) => newVal[propName] !== oldVal[propName]);
   };
 }
+
+/**
+ * Calculates whether to wait for memberDefaultQuery to exist prior
+ * to fetching IssueList. Logged in users may use a default query.
+ * @param {Object} queryParams
+ * @return {boolean}
+ */
+export const shouldWaitForDefaultQuery = (queryParams) => {
+  return !queryParams.hasOwnProperty('q');
+};

@@ -67,6 +67,7 @@ describe('mr-grid-page', () => {
     });
 
     it('returns true for projectName', () => {
+      element._queryParams = {q: ''};
       const changedProps = new Map();
       changedProps.set('projectName', 'anything');
       const result = element._shouldFetchMatchingIssues(changedProps);
@@ -74,6 +75,7 @@ describe('mr-grid-page', () => {
     });
 
     it('depends on _queryParam\'s q and can when _queryParams changes', () => {
+      element._queryParams = {q: ''};
       const changedProps = new Map();
       changedProps.set('_queryParams', {can: '1'});
       let result = element._shouldFetchMatchingIssues(changedProps);

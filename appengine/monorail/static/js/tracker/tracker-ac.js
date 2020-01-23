@@ -1015,7 +1015,7 @@ function TKR_fetchUserProjects(multiValue) {
  * current user has visibility into. The store has some monorail-specific
  * methods.
  * @param {Array} projects An array of project names.
- * @param {Boolean} multiValue Determines whether the store should support
+ * @param {boolean} multiValue Determines whether the store should support
  *                  multiple values.
  */
 function TKR_setUpProjectStore(projects, multiValue) {

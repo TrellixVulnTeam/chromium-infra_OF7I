@@ -382,7 +382,7 @@ export class ChopsAutocomplete extends LitElement {
 
   /**
    * Computes autocomplete values matching the current input in the field.
-   * @return {Boolean} Whether any completions were found.
+   * @return {boolean} Whether any completions were found.
    */
   showCompletions() {
     if (!this._forRef) {

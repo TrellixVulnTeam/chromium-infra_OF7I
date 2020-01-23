@@ -6,7 +6,10 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {store, connectStore} from 'reducers/base.js';
-import {createObjectComparisonFunc} from 'shared/helpers.js';
+import {
+  createObjectComparisonFunc,
+  shouldWaitForDefaultQuery,
+} from 'shared/helpers.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
@@ -105,12 +108,17 @@ export class MrGridPage extends connectStore(LitElement) {
   /**
    * Computes whether to fetch matching issues based on changedProperties
    * @param {Map} changedProperties
-   * @return {Boolean}
+   * @return {boolean}
    */
   _shouldFetchMatchingIssues(changedProperties) {
-    if (!this._fetchingPresentationConfig) {
-      if (changedProperties.has('projectName') ||
-          changedProperties.has('_fetchingPresentationConfig')) {
+    const wait = shouldWaitForDefaultQuery(this._queryParams);
+    if (wait) {
+      if (changedProperties.has('_fetchingPresentationConfig') &&
+        !this._fetchingPresentationConfig) {
+        return true;
+      }
+    } else {
+      if (changedProperties.has('projectName')) {
         return true;
       }
       if (changedProperties.has('_queryParams')) {
@@ -118,8 +126,6 @@ export class MrGridPage extends connectStore(LitElement) {
             this._queryParams,
             changedProperties.get('_queryParams'));
       }
-
-      return false;
     }
     return false;
   }
