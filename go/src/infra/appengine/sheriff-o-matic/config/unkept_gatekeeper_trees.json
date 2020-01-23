@@ -3,5 +3,19 @@
         "masters": {
             "https://build.chromium.org/p/chromium.gpu.fyi": ["*"]
         }
-     }
+     },
+    "release_branch": {
+        "masters": {
+            "https://build.chromium.org/p/chrome": ["*"],
+            "https://build.chromium.org/p/chromium": ["*"],
+            "https://build.chromium.org/p/chromium.chromiumos": ["*"],
+            "https://build.chromium.org/p/chromium.gpu": ["*"],
+            "https://build.chromium.org/p/chromium.linux": ["*"],
+            "https://build.chromium.org/p/chromium.mac": ["*"],
+            "https://build.chromium.org/p/chromium.memory": ["*"],
+            "https://build.chromium.org/p/chromium.win": ["*"],
+            "https://build.chromium.org/p/chromium.android": ["*"],
+            "https://build.chromium.org/p/chromium.fyi": ["*"]
+        }
+    }
 }

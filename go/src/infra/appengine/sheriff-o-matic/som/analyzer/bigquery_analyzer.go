@@ -133,31 +133,10 @@ const iosFailuresQuery = selectFromWhere + `
 `
 
 const releaseBranchFailuresQuery = selectFromWhere + `
-	(
-		project = "chrome"
-		AND bucket IN ("ci", "official")
-		AND (
-			MasterName IN (
-				"official.chrome",
-				"official.chrome.continuous",
-				"official.ios"
-			)
-			OR
-			builder IN (
-				"android-arm-beta-tests",
-				"android-arm-stable-tests",
-				"android-arm64-beta-tests",
-				"android-arm64-stable-tests"
-			)
-		)
-	)
-	OR
-	(
-		project = "chromium"
-		AND bucket in ("ci-beta", "ci-stable")
-	)
-	LIMIT
-		1000
+	project = "chromium"
+	AND bucket in ("ci-beta", "ci-stable")
+LIMIT
+	1000
 `
 
 type failureRow struct {
