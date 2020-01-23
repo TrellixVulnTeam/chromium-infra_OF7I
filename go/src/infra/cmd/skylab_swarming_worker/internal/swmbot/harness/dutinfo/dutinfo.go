@@ -14,9 +14,11 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/retry"
 
+	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/libs/skylab/inventory"
@@ -67,7 +69,7 @@ type UpdateFunc func(dutID string, old *inventory.DeviceUnderTest, new *inventor
 // with any changes to the info, using a supplied UpdateFunc.  If UpdateFunc is
 // nil, the inventory is not updated.
 func LoadCached(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
-	return load(ctx, b, f, getCached)
+	return load(ctx, b, f, getCached, getDutInfoFromV2)
 }
 
 // LoadFresh loads the bot's DUT's info from the inventory. Returned inventory
@@ -79,10 +81,12 @@ func LoadCached(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, erro
 // with any changes to the info, using a supplied UpdateFunc.  If UpdateFunc is
 // nil, the inventory is not updated.
 func LoadFresh(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
-	return load(ctx, b, f, getUncached)
+	return load(ctx, b, f, getUncached, getDutInfoFromV2)
 }
 
 type getDutInfoFunc func(context.Context, fleet.InventoryClient, *fleet.GetDutInfoRequest) (*fleet.GetDutInfoResponse, error)
+
+type getDutInfoFuncV2 func(context.Context, invV2.InventoryClient, *invV2.GetCrosDevicesRequest) (*invV2.GetCrosDevicesResponse, error)
 
 // getStableVersion fetches the current stable version from an inventory client
 func getStableVersion(ctx context.Context, client fleet.InventoryClient, hostname string) (map[string]string, error) {
@@ -110,11 +114,42 @@ func getStableVersion(ctx context.Context, client fleet.InventoryClient, hostnam
 	return s, nil
 }
 
-func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc) (*Store, error) {
+func loadFromV2(ctx context.Context, b *swmbot.Info, gf getDutInfoFuncV2) (*inventory.DeviceUnderTest, error) {
+	client, err := swmbot.InventoryV2Client(ctx, b)
+	if err != nil {
+		return nil, errors.Annotate(err, "load from inventory V2: initialize V2 client").Err()
+	}
+	req := invV2.GetCrosDevicesRequest{
+		Ids: []*invV2.DeviceID{
+			{
+				Id: &invV2.DeviceID_ChromeosDeviceId{
+					ChromeosDeviceId: b.DUTID,
+				},
+			},
+		},
+	}
+	resp, err := gf(ctx, client, &req)
+	if err != nil {
+		return nil, errors.Annotate(err, "load from inventory V2").Err()
+	}
+	dut, err := invV2.AdaptToV1DutSpec(resp.GetData()[0])
+	if err != nil {
+		return nil, errors.Annotate(err, "load from inventory V2: fail to convert").Err()
+	}
+	return dut, nil
+}
+
+func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc, gfV2 getDutInfoFuncV2) (*Store, error) {
 	ctx, err := swmbot.WithSystemAccount(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "load DUT host info").Err()
 	}
+	log.Printf("Loading DUT info from Inventory V2")
+	dutV2, err := loadFromV2(ctx, b, gfV2)
+	if err != nil {
+		log.Printf("fail to load DUT from inventory V2: %#v", err)
+	}
+
 	c, err := swmbot.InventoryClient(ctx, b)
 	if err != nil {
 		return nil, errors.Annotate(err, "load DUT host info").Err()
@@ -127,6 +162,8 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc)
 	if err := proto.Unmarshal(resp.Spec, &d); err != nil {
 		return nil, errors.Annotate(err, "load DUT host info").Err()
 	}
+
+	log.Printf("Comparison between V1 & V2: \n%s", pretty.Compare(dutV2, &d))
 	// TODO(gregorynisbet): should failure to get the stableversion information
 	// cause the entire request to error out?
 	hostname := d.GetCommon().GetHostname()
@@ -143,6 +180,18 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc)
 		StableVersions: sv,
 	}
 	return store, nil
+}
+
+func getDutInfoFromV2(ctx context.Context, c invV2.InventoryClient, req *invV2.GetCrosDevicesRequest) (*invV2.GetCrosDevicesResponse, error) {
+	resp, err := c.GetCrosDevices(ctx, req)
+	if err != nil {
+		return nil, errors.Annotate(err, "get dut info from inventory V2").Err()
+	}
+	if len(resp.GetFailedDevices()) > 0 {
+		f := resp.GetFailedDevices()[0]
+		return nil, errors.New(fmt.Sprintf("fail to load %s from V2: %s", f.GetHostname(), f.GetErrorMsg()))
+	}
+	return resp, nil
 }
 
 // getCached obtains DUT info from the inventory service ignoring cache
