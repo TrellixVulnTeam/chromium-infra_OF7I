@@ -123,7 +123,8 @@ func (c *invServiceClient) updateDUTSpecs(ctx context.Context, od, nd *inventory
 
 	f := func() error {
 		if rsp, err := c.client.UpdateCrosDevicesSetup(ctx, &api.UpdateCrosDevicesSetupRequest{
-			Devices: devicesToUpdate,
+			Devices:       devicesToUpdate,
+			PickServoPort: pickServoPort,
 			// TODO (guocb) Add reason why update.
 		}); err != nil {
 			return err

@@ -103,6 +103,7 @@ message UpdateDutsStatusResponse {
 message UpdateCrosDevicesSetupRequest {
   repeated lab.ChromeOSDevice devices = 1;
   string reason = 2;
+  bool pick_servo_port = 3;
 }
 
 message UpdateCrosDevicesSetupResponse {

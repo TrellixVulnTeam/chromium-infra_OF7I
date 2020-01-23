@@ -304,9 +304,10 @@ func updateEntities(ctx context.Context, opResults DeviceOpResults, additionalFi
 }
 
 // UpdateDeviceSetup updates the content of lab.ChromeOSDevice.
-func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (DeviceOpResults, error) {
+func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoPort bool) (DeviceOpResults, error) {
 	updatingResults := make(DeviceOpResults, len(devices))
 	entities := make([]*DeviceEntity, len(devices))
+	r := newServoHostRegistryFromProtoMsgs(ctx, devices)
 	for i, d := range devices {
 		entities[i] = &DeviceEntity{
 			ID:     DeviceEntityID(d.GetId().GetValue()),
@@ -314,8 +315,23 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice) (Devi
 		}
 		updatingResults[i].Data = devices[i]
 		updatingResults[i].Entity = entities[i]
+
+		if dut := devices[i].GetDut(); dut != nil {
+			if err := r.amendServoToLabstation(ctx, dut, assignServoPort); err != nil {
+				return nil, err
+			}
+		}
 	}
-	f := updateEntities(ctx, updatingResults, nil)
+	f := func(ctx context.Context) error {
+		err := updateEntities(ctx, updatingResults, nil)(ctx)
+		if err != nil {
+			return errors.Annotate(err, "save updated entities").Err()
+		}
+		if err := r.saveToDatastore(ctx); err != nil {
+			return errors.Annotate(err, "save changed labstations caused by updated DUT").Err()
+		}
+		return nil
+	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return updatingResults, err

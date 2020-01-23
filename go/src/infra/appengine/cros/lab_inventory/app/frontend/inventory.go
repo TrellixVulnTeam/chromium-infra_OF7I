@@ -326,7 +326,7 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	updatingResults, err := datastore.UpdateDeviceSetup(changehistory.Use(ctx, req.Reason), req.Devices)
+	updatingResults, err := datastore.UpdateDeviceSetup(changehistory.Use(ctx, req.Reason), req.Devices, req.PickServoPort)
 	if err != nil {
 		return nil, err
 	}
