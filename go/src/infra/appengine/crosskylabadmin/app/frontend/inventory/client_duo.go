@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
+	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/libs/skylab/inventory"
 )
@@ -102,4 +103,36 @@ func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) 
 	logging.Infof(ctx, "[v1] delete dut result: %s, %s, %s", url, deletedIds, err)
 
 	return url, deletedIds, err
+}
+
+func (client *duoClient) selectDutsFromInventory(ctx context.Context, sel *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error) {
+	if client.willDupToV2() {
+		go func() {
+			// Cannot know how many duts will be reutrned, so hard code the
+			// timeout.
+			ctx2, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			duts, _ := client.ic.selectDutsFromInventory(ctx2, sel)
+			logging.Infof(ctx2, "[v2] select duts by %v", sel)
+			if len(duts) > 0 {
+				logging.Infof(ctx2, "[v2] selecting returns '%s'...(total %d duts)", duts[0].GetCommon().GetHostname(), len(duts))
+			} else {
+				logging.Infof(ctx2, "[v2] selecting returns 0 duts")
+			}
+
+		}()
+	}
+	return client.gc.selectDutsFromInventory(ctx, sel)
+}
+
+func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes []*fleet.PoolChange) (string, error) {
+	if client.willDupToV2() {
+		go func() {
+			ctx2, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			u, err := client.ic.commitBalancePoolChanges(ctx2, changes)
+			logging.Infof(ctx2, "[v2] Commit balancing pool result: %s: %s", u, err)
+		}()
+	}
+	return client.gc.commitBalancePoolChanges(ctx, changes)
 }

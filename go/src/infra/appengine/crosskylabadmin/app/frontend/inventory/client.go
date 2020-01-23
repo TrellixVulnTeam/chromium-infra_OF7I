@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/libs/skylab/inventory"
 )
@@ -23,6 +24,8 @@ type inventoryClient interface {
 	addManyDUTsToFleet(context.Context, []*inventory.CommonDeviceSpecs, bool) (string, []*inventory.CommonDeviceSpecs, error)
 	updateDUTSpecs(context.Context, *inventory.CommonDeviceSpecs, *inventory.CommonDeviceSpecs, bool) (string, error)
 	deleteDUTsFromFleet(context.Context, []string) (string, []string, error)
+	selectDutsFromInventory(context.Context, *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error)
+	commitBalancePoolChanges(context.Context, []*fleet.PoolChange) (string, error)
 }
 
 type gitStoreClient struct {
@@ -45,6 +48,14 @@ func (client *gitStoreClient) updateDUTSpecs(ctx context.Context, od, nd *invent
 
 func (client *gitStoreClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
 	return deleteDUTsFromFleet(ctx, client.store, ids)
+}
+
+func (client *gitStoreClient) selectDutsFromInventory(ctx context.Context, sel *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error) {
+	return selectDutsFromInventory(ctx, client.store, sel)
+}
+
+func (client *gitStoreClient) commitBalancePoolChanges(ctx context.Context, changes []*fleet.PoolChange) (string, error) {
+	return commitBalancePoolChanges(ctx, client.store, changes)
 }
 
 func addManyDUTsToFleet(ctx context.Context, s *gitstore.InventoryStore, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
@@ -189,4 +200,33 @@ func deleteDUTsFromFleet(ctx context.Context, s *gitstore.InventoryStore, ids []
 	}
 	err := retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "DeleteDut"))
 	return changeURL, removedIDs, err
+}
+
+func selectDutsFromInventory(ctx context.Context, store *gitstore.InventoryStore, sel *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error) {
+	if err := store.Refresh(ctx); err != nil {
+		return nil, err
+	}
+	duts, err := GetDutsByEnvironment(ctx, store)
+	if err != nil {
+		return nil, nil
+	}
+	var filteredDuts []*inventory.DeviceUnderTest
+	for _, d := range duts {
+		if sel == nil || dutMatchesSelector(d, sel) {
+			filteredDuts = append(filteredDuts, d)
+		}
+	}
+	return filteredDuts, nil
+}
+
+func commitBalancePoolChanges(ctx context.Context, store *gitstore.InventoryStore, changes []*fleet.PoolChange) (string, error) {
+	if len(changes) == 0 {
+		// No inventory changes are required.
+		// TODO(pprabhu) add a unittest enforcing this.
+		return "", nil
+	}
+	if err := applyChanges(ctx, store.Lab, changes); err != nil {
+		return "", errors.Annotate(err, "apply balance pool changes").Err()
+	}
+	return store.Commit(ctx, "balance pool")
 }

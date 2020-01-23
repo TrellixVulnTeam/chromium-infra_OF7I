@@ -19,7 +19,6 @@ import (
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/dutpool"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/swarming"
 	"infra/libs/skylab/inventory"
 	"sync"
@@ -68,15 +67,15 @@ func (is *ServerImpl) balancePoolsNoRetry(ctx context.Context, req *fleet.Balanc
 		return nil, err
 	}
 
-	store, err := is.newStore(ctx)
+	ic, err := is.newInventoryClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err = store.Refresh(ctx); err != nil {
+
+	duts, err := ic.selectDutsFromInventory(ctx, req.DutSelector)
+	if err != nil {
 		return nil, err
 	}
-
-	duts := selectDutsFromInventory(ctx, store, req.DutSelector)
 	if len(duts) == 0 {
 		// Technically correct: No DUTs were selected so both target and spare are
 		// empty and healthy and no changes were required.
@@ -115,7 +114,7 @@ func (is *ServerImpl) balancePoolsNoRetry(ctx context.Context, req *fleet.Balanc
 
 	changes := collectChanges(resp.ModelResult)
 	if !req.GetOptions().GetDryrun() {
-		u, err := is.commitBalancePoolChanges(ctx, store, changes)
+		u, err := ic.commitBalancePoolChanges(ctx, changes)
 		if err != nil {
 			return nil, err
 		}
@@ -150,20 +149,17 @@ func (is *ServerImpl) ResizePool(ctx context.Context, req *fleet.ResizePoolReque
 }
 
 func (is *ServerImpl) resizePoolNoRetry(ctx context.Context, req *fleet.ResizePoolRequest) (*fleet.ResizePoolResponse, error) {
-	store, err := is.newStore(ctx)
+	ic, err := is.newInventoryClient(ctx)
+
+	duts, err := ic.selectDutsFromInventory(ctx, req.DutSelector)
 	if err != nil {
 		return nil, err
 	}
-	if err = store.Refresh(ctx); err != nil {
-		return nil, err
-	}
-
-	duts := selectDutsFromInventory(ctx, store, req.DutSelector)
 	changes, err := dutpool.Resize(duts, req.TargetPool, int(req.TargetPoolSize), req.SparePool)
 	if err != nil {
 		return nil, err
 	}
-	u, err := is.commitBalancePoolChanges(ctx, store, changes)
+	u, err := ic.commitBalancePoolChanges(ctx, changes)
 	if err != nil {
 		return nil, err
 	}
@@ -171,32 +167,6 @@ func (is *ServerImpl) resizePoolNoRetry(ctx context.Context, req *fleet.ResizePo
 		Url:     u,
 		Changes: changes,
 	}, nil
-}
-
-func (is *ServerImpl) commitBalancePoolChanges(ctx context.Context, store *gitstore.InventoryStore, changes []*fleet.PoolChange) (string, error) {
-	if len(changes) == 0 {
-		// No inventory changes are required.
-		// TODO(pprabhu) add a unittest enforcing this.
-		return "", nil
-	}
-	if err := applyChanges(ctx, store.Lab, changes); err != nil {
-		return "", errors.Annotate(err, "apply balance pool changes").Err()
-	}
-	return store.Commit(ctx, "balance pool")
-}
-
-func selectDutsFromInventory(ctx context.Context, store *gitstore.InventoryStore, sel *fleet.DutSelector) []*inventory.DeviceUnderTest {
-	duts, err := GetDutsByEnvironment(ctx, store)
-	if err != nil {
-		return nil
-	}
-	var filteredDuts []*inventory.DeviceUnderTest
-	for _, d := range duts {
-		if sel == nil || dutMatchesSelector(d, sel) {
-			filteredDuts = append(filteredDuts, d)
-		}
-	}
-	return filteredDuts
 }
 
 func dutMatchesSelector(d *inventory.DeviceUnderTest, sel *fleet.DutSelector) bool {

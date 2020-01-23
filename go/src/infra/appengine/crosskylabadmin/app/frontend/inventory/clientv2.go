@@ -17,7 +17,9 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
 
+	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	api "infra/appengine/cros/lab_inventory/api/v1"
+	invV1Api "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/libs/skylab/inventory"
 )
 
@@ -150,4 +152,120 @@ func (c *invServiceClient) deleteDUTsFromFleet(ctx context.Context, ids []string
 	}()
 
 	return "fake delete URL", []string{}, nil
+}
+
+func (c *invServiceClient) selectDutsFromInventory(ctx context.Context, sel *invV1Api.DutSelector) ([]*inventory.DeviceUnderTest, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logging.Errorf(ctx, "Recovered in deleteDUTsFromFleet(%s)", r)
+		}
+	}()
+
+	var rsp *api.GetCrosDevicesResponse
+	f := func() (err error) {
+		ids := []*api.DeviceID{}
+
+		if sel.GetHostname() != "" {
+			ids = append(ids, &api.DeviceID{
+				Id: &api.DeviceID_Hostname{Hostname: sel.GetHostname()},
+			})
+		}
+		if sel.GetId() != "" {
+			ids = append(ids, &api.DeviceID{
+				Id: &api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: sel.GetId()},
+			})
+		}
+		var models []string
+		if sel.GetModel() != "" {
+			models = append(models, sel.GetModel())
+		}
+		rsp, err = c.client.GetCrosDevices(ctx, &api.GetCrosDevicesRequest{Ids: ids, Models: models})
+		return
+	}
+	err := retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "selectorDutsFromInventory v2"))
+	if err != nil {
+		return nil, nil
+	}
+	result := []*inventory.DeviceUnderTest{}
+	for _, d := range rsp.GetData() {
+		if r, err := api.AdaptToV1DutSpec(d); err != nil {
+			continue
+		} else {
+			result = append(result, r)
+		}
+	}
+	return result, nil
+}
+
+func (c *invServiceClient) commitBalancePoolChanges(ctx context.Context, changes []*invV1Api.PoolChange) (string, error) {
+	ids := make([]*api.DeviceID, len(changes))
+	changesMap := map[string]*invV1Api.PoolChange{}
+	for i := range changes {
+		ids[i] = &api.DeviceID{
+			Id: &api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: changes[i].GetDutId()},
+		}
+		changesMap[changes[i].GetDutId()] = changes[i]
+	}
+	var rsp *api.GetCrosDevicesResponse
+	f := func() (err error) {
+		rsp, err = c.client.GetCrosDevices(ctx, &api.GetCrosDevicesRequest{Ids: ids})
+		return
+	}
+	err := retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "commitBalancePoolChanges v2: Get Devices"))
+	if err != nil {
+		return "", err
+	}
+
+	changedDuts := make([]*lab.ChromeOSDevice, 0, len(rsp.GetData()))
+	for _, d := range rsp.GetData() {
+		dev := d.GetLabConfig()
+		dut := dev.GetDut()
+		if dut == nil {
+			continue
+		}
+		change := changesMap[dev.GetId().GetValue()]
+		if changePool(dut, change.OldPool, change.NewPool) {
+			changedDuts = append(changedDuts, dev)
+		}
+	}
+	if len(changedDuts) == 0 {
+		logging.Debugf(ctx, "no pool changes to commit")
+		return "", nil
+	}
+
+	var rspCommit *api.UpdateCrosDevicesSetupResponse
+	f = func() (err error) {
+		rspCommit, err = c.client.UpdateCrosDevicesSetup(ctx, &api.UpdateCrosDevicesSetupRequest{
+			Devices:       changedDuts,
+			Reason:        "balance pool",
+			PickServoPort: false,
+		})
+		return
+	}
+	err = retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "commitBalancePoolChanges v2: Commit changes"))
+	if err != nil {
+		return "", err
+	}
+
+	failedDevices := rspCommit.GetFailedDevices()
+	msgs := make([]string, 0, len(failedDevices))
+	for _, d := range failedDevices {
+		msgs = append(msgs, d.GetErrorMsg())
+	}
+	if len(msgs) > 0 {
+		return "", errors.Reason(strings.Join(msgs, ",")).Err()
+	}
+	return "URL N/A", nil
+}
+
+func changePool(dut *lab.DeviceUnderTest, oldPool, newPool string) bool {
+	pools := dut.GetPools()
+	modified := false
+	for i, p := range pools {
+		if p == oldPool {
+			pools[i] = newPool
+			modified = true
+		}
+	}
+	return modified
 }
