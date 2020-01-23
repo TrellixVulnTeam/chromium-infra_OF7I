@@ -45,29 +45,20 @@ class RepoData(object):
     }
 
 
-COMMIT_MESSAGE_HEADER = (
-"""
+COMMIT_MESSAGE_HEADER = ("""
 This is an automated CL created by the recipe roller. This CL rolls recipe
-changes from upstream projects (e.g. depot_tools) into downstream projects
-(e.g. tools/build).
+changes from upstream projects (%s) into this repository.
 """)
 
-
-NON_TRIVIAL_MESSAGE = (
-"""
-
+NON_TRIVIAL_MESSAGE = ("""
 Please review the expectation changes, and LGTM+CQ.
-"""
-)
+""")
 
-COMMIT_MESSAGE_INFO = (
-"""
-
+COMMIT_MESSAGE_INFO = ("""
 More info is at https://goo.gl/zkKdpD. Use https://goo.gl/noib3a to file a bug.
 """)
 
-COMMIT_MESSAGE_FOOTER = (
-"""
+COMMIT_MESSAGE_FOOTER = ("""
 Recipe-Tryjob-Bypass-Reason: Autoroller
 Bugdroid-Send-Email: False
 """)
@@ -97,31 +88,30 @@ def get_commit_message(roll_result):
   """Construct a roll commit message from 'recipes.py autoroll' result.
   """
   picked = roll_result['picked_roll_details']
-
+  commit_infos = picked['commit_infos']
+  roll_projects = sorted(commit_infos.keys())
   trivial = roll_result['trivial']
+
   message = 'Roll recipe dependencies (%s).\n' % (
       'trivial' if trivial else 'nontrivial')
-  message += COMMIT_MESSAGE_HEADER
+
+  message += COMMIT_MESSAGE_HEADER % (', '.join(roll_projects))
+
   if not trivial:
     message += NON_TRIVIAL_MESSAGE
+
+  blame = []
+  for project, commits in commit_infos.iteritems():
+    blame.append('%s:' % project)
+    for commit in commits:
+      blame.append('  https://crrev.com/%s (%s)' % (commit['revision'],
+                                                    commit['author_email']))
+      summary = commit['message_lines']
+      summary = message[0] if message else 'n/a'
+      blame.append('    %s' % summary)
+
+  message += '\n%s\n' % '\n'.join(blame)
   message += COMMIT_MESSAGE_INFO
-
-  commit_infos = picked['commit_infos']
-
-  def get_blame(commit_infos):
-    blame = []
-    for project, commits in commit_infos.iteritems():
-      blame.append('%s:' % project)
-      for commit in commits:
-        message = commit['message_lines']
-        # TODO(phajdan.jr): truncate long messages.
-        message = message[0] if message else 'n/a'
-        blame.append('  https://crrev.com/%s %s (%s)' % (
-            commit['revision'], message, commit['author_email']))
-    return blame
-
-  message += '%s\n' % '\n'.join(get_blame(commit_infos))
-  message += '\n'
   message += COMMIT_MESSAGE_FOOTER
   return message
 
@@ -304,7 +294,6 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       s = spec.autoroll_recipe_options.trivial
       if s.tbr_emails:
         upload_args.append('--tbrs=%s' % (','.join(s.tbr_emails)))
-
       upload_args.append('--tbr-owners')
 
       if s.automatic_commit:
@@ -315,11 +304,12 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       s = spec.autoroll_recipe_options.nontrivial
       if s.extra_reviewer_emails:
         upload_args.append('--reviewers=%s' % ','.join(s.extra_reviewer_emails))
-
       upload_args.append('--r-owners')
 
       if s.automatic_commit_dry_run:
         upload_args.append('--cq-dry-run')
+      if s.set_autosubmit:
+        upload_args.append('--enable-auto-submit')
 
     cc_list = set()
     for commits in picked_details['commit_infos'].itervalues():

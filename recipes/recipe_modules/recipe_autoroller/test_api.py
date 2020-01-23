@@ -12,9 +12,15 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
   _EXTRA_REVIEWERS = ('foo@chromium.org', 'foo@bar.example.com',
                       'meep@example.com')
 
-  def repo_spec(self, tbr_emails=_TBR_EMAILS, extra_reviewers=_EXTRA_REVIEWERS,
-                disable_reason='', trivial_commit=True, trivial_dryrun=False,
-                nontrivial_dryrun=True, include_autoroll_options=True):
+  def repo_spec(self,
+                tbr_emails=_TBR_EMAILS,
+                extra_reviewers=_EXTRA_REVIEWERS,
+                disable_reason='',
+                trivial_commit=True,
+                trivial_dryrun=False,
+                nontrivial_dryrun=True,
+                nontrivial_autosubmit=True,
+                include_autoroll_options=True):
     spec = {
       'api_version': 2,
       'deps': {
@@ -23,16 +29,17 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
     }
     if include_autoroll_options:
       spec['autoroll_recipe_options'] = {
-        'trivial': {
-          'tbr_emails': list(tbr_emails),
-          'automatic_commit': trivial_commit,
-          'dry_run': trivial_dryrun,
-        },
-        'nontrivial': {
-          'extra_reviewer_emails': list(extra_reviewers),
-          'automatic_commit_dry_run': nontrivial_dryrun,
-        },
-        'disable_reason': disable_reason,
+          'trivial': {
+              'tbr_emails': list(tbr_emails),
+              'automatic_commit': trivial_commit,
+              'dry_run': trivial_dryrun,
+          },
+          'nontrivial': {
+              'extra_reviewer_emails': list(extra_reviewers),
+              'automatic_commit_dry_run': nontrivial_dryrun,
+              'set_autosubmit': nontrivial_autosubmit,
+          },
+          'disable_reason': disable_reason,
       }
     return spec
 

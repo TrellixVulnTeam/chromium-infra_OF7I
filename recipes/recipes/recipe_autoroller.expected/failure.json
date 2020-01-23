@@ -185,7 +185,8 @@
       "@@@STEP_LOG_LINE@json.output@        \"foo@chromium.org\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"foo@bar.example.com\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"meep@example.com\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      ]@@@",
+      "@@@STEP_LOG_LINE@json.output@      ], @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"set_autosubmit\": true@@@",
       "@@@STEP_LOG_LINE@json.output@    }, @@@",
       "@@@STEP_LOG_LINE@json.output@    \"trivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"automatic_commit\": true, @@@",
@@ -264,7 +265,8 @@
       "@@@STEP_LOG_LINE@json.output@              \"foo@chromium.org\", @@@",
       "@@@STEP_LOG_LINE@json.output@              \"foo@bar.example.com\", @@@",
       "@@@STEP_LOG_LINE@json.output@              \"meep@example.com\"@@@",
-      "@@@STEP_LOG_LINE@json.output@            ]@@@",
+      "@@@STEP_LOG_LINE@json.output@            ], @@@",
+      "@@@STEP_LOG_LINE@json.output@            \"set_autosubmit\": true@@@",
       "@@@STEP_LOG_LINE@json.output@          }, @@@",
       "@@@STEP_LOG_LINE@json.output@          \"trivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@            \"automatic_commit\": true, @@@",
@@ -285,7 +287,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"trivial\": null@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@candidate #1@{\"api_version\": 2, \"autoroll_recipe_options\": {\"disable_reason\": \"\", \"nontrivial\": {\"automatic_commit_dry_run\": true, \"extra_reviewer_emails\": [\"foo@chromium.org\", \"foo@bar.example.com\", \"meep@example.com\"]}, \"trivial\": {\"automatic_commit\": true, \"dry_run\": false, \"tbr_emails\": [\"foo@bar.example.com\", \"meep@example.com\"]}}, \"deps\": {\"recipe_engine\": {}}}@@@",
+      "@@@STEP_LOG_LINE@candidate #1@{\"api_version\": 2, \"autoroll_recipe_options\": {\"disable_reason\": \"\", \"nontrivial\": {\"automatic_commit_dry_run\": true, \"extra_reviewer_emails\": [\"foo@chromium.org\", \"foo@bar.example.com\", \"meep@example.com\"], \"set_autosubmit\": true}, \"trivial\": {\"automatic_commit\": true, \"dry_run\": false, \"tbr_emails\": [\"foo@bar.example.com\", \"meep@example.com\"]}}, \"deps\": {\"recipe_engine\": {}}}@@@",
       "@@@STEP_LOG_END@candidate #1@@@"
     ]
   },
