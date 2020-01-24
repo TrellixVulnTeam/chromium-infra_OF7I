@@ -755,6 +755,7 @@ func timeMustParse(in string) time.Time {
 }
 
 func TestShiftsToEvents(t *testing.T) {
+	ctx := gaetesting.TestingContext()
 	tests := []struct {
 		name   string
 		fail   bool
@@ -861,7 +862,7 @@ func TestShiftsToEvents(t *testing.T) {
 	}
 
 	for _, tst := range tests {
-		shifts, err := shiftsToEvents(tst.cfg, tst.shifts)
+		shifts, err := shiftsToEvents(ctx, tst.cfg, tst.shifts)
 		if got, want := (err != nil), tst.fail; got != want {
 			t.Errorf("%s: shiftsToEvents(_, _) = %t want: %t, err: %v", tst.name, got, want, err)
 			continue

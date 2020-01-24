@@ -54,7 +54,7 @@ func (c *Calendar) CreateEvent(ctx *router.Context, cfg *rotang.Configuration, s
 		return nil, err
 	}
 
-	events, err := shiftsToEvents(cfg, shifts)
+	events, err := shiftsToEvents(ctx.Context, cfg, shifts)
 	if err != nil {
 		return nil, err
 	}
@@ -334,12 +334,13 @@ func eventsToShifts(ctx context.Context, events *gcal.Events, name string, shift
 	return res, nil
 }
 
-func shiftsToEvents(cfg *rotang.Configuration, shifts []rotang.ShiftEntry) ([]*gcal.Event, error) {
+func shiftsToEvents(ctx context.Context, cfg *rotang.Configuration, shifts []rotang.ShiftEntry) ([]*gcal.Event, error) {
 	if cfg == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "all arguments must be set")
 	}
 	var res []*gcal.Event
 	for _, s := range shifts {
+		logging.Infof(ctx, "Reading Rota shift: %+v", s)
 		var att []*gcal.EventAttendee
 		sum := cfg.Config.Name
 		if len(cfg.Config.Shifts.Shifts) > 1 {
@@ -358,7 +359,7 @@ func shiftsToEvents(cfg *rotang.Configuration, shifts []rotang.ShiftEntry) ([]*g
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, &gcal.Event{
+		evt := gcal.Event{
 			Summary:     sum,
 			Attendees:   att,
 			Description: desc,
@@ -366,7 +367,9 @@ func shiftsToEvents(cfg *rotang.Configuration, shifts []rotang.ShiftEntry) ([]*g
 			End:         end,
 			// Show calendar events as "Available" rather than "Busy".
 			Transparency: "transparent",
-		})
+		}
+		logging.Infof(ctx, "Inserting Google Calendar event with START: %+v and END: %+v", start, end)
+		res = append(res, &evt)
 	}
 	return res, nil
 }
@@ -467,7 +470,7 @@ func (c *Calendar) UpdateEvent(ctx *router.Context, cfg *rotang.Configuration, u
 		return nil, err
 	}
 
-	events, err := shiftsToEvents(cfg, []rotang.ShiftEntry{*updated})
+	events, err := shiftsToEvents(ctx.Context, cfg, []rotang.ShiftEntry{*updated})
 	if err != nil {
 		return nil, err
 	}
