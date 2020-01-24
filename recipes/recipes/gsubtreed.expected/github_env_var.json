@@ -152,6 +152,11 @@
     "env": {
       "GIT_USER_AGENT": null
     },
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
     "name": "gsubtreed",
     "~followup_annotations": [
       "@@@STEP_TEXT@</br></br>some/path: 5</br>some: 10@@@",

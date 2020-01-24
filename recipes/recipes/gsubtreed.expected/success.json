@@ -134,6 +134,24 @@
   },
   {
     "cmd": [
+      "git_cache.py",
+      "populate",
+      "--reset-fetch-config",
+      "--break-locks",
+      "--cache-dir",
+      "[CACHE]/builder/gsubtreed-work-dir",
+      "--verbose",
+      "https://host.googlesource.com/my/repo"
+    ],
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "name": "populate"
+  },
+  {
+    "cmd": [
       "python",
       "-u",
       "[CACHE]/builder/solution/infra/run.py",
@@ -149,6 +167,11 @@
       "/path/to/tmp/json",
       "https://host.googlesource.com/my/repo"
     ],
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
     "name": "gsubtreed",
     "~followup_annotations": [
       "@@@STEP_TEXT@</br></br>some/path: 5</br>some: 10@@@",

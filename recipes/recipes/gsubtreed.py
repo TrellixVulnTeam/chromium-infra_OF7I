@@ -16,14 +16,16 @@ from recipe_engine.recipe_api import Property
 
 
 DEPS = [
-  'depot_tools/gclient',
-  'recipe_engine/context',
-  'recipe_engine/file',
-  'recipe_engine/json',
-  'recipe_engine/path',
-  'recipe_engine/properties',
-  'recipe_engine/python',
-  'recipe_engine/step',
+    'depot_tools/depot_tools',
+    'depot_tools/gclient',
+    'recipe_engine/context',
+    'recipe_engine/file',
+    'recipe_engine/json',
+    'recipe_engine/path',
+    'recipe_engine/properties',
+    'recipe_engine/python',
+    'recipe_engine/step',
+    'depot_tools/git',
 ]
 
 PROPERTIES = {
@@ -55,27 +57,38 @@ def RunSteps(api, target_repo, cycle_time_sec, max_error_count):
     api.gclient.runhooks()
 
   env = {}
+  prepopulate = True
   # github.com apparently has a hard time with our user agents.
   if urlparse.urlparse(target_repo).hostname.endswith('github.com'):
     env['GIT_USER_AGENT'] = None
+    prepopulate = False
 
   # Run the daemon for CYCLE_TIME_SEC seconds.
   # TODO(iannucci): Make infra.run a module
   try:
-    with api.context(env=env):
-      api.python(
-          'gsubtreed',
-          solution_path.join('infra', 'run.py'),
-          [
-            'infra.services.gsubtreed',
-            '--verbose',
-            '--duration', str(cycle_time_sec),
-            '--max_errors', str(max_error_count),
-            '--repo_dir',
-            api.path['cache'].join('builder', 'gsubtreed-work-dir'),
-            '--json_output', api.json.output(add_json_log=False),
-            target_repo,
-          ])
+    repo_path = api.path['cache'].join('builder', 'gsubtreed-work-dir')
+    with api.context(env=env), api.depot_tools.on_path():
+      if prepopulate:
+        api.step(
+            name='populate',
+            cmd=[
+                'git_cache.py', 'populate', '--reset-fetch-config',
+                '--break-locks', '--cache-dir', repo_path, '--verbose',
+                target_repo
+            ])
+      api.python('gsubtreed', solution_path.join('infra', 'run.py'), [
+          'infra.services.gsubtreed',
+          '--verbose',
+          '--duration',
+          str(cycle_time_sec),
+          '--max_errors',
+          str(max_error_count),
+          '--repo_dir',
+          repo_path,
+          '--json_output',
+          api.json.output(add_json_log=False),
+          target_repo,
+      ])
   finally:
     step_result = api.step.active_result
     # Add a list of generates commits to the build page.
