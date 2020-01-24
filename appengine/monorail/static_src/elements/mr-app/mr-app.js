@@ -356,6 +356,9 @@ export class MrApp extends connectStore(LitElement) {
     // Save the context of this page to be compared to later.
     this._currentContext = ctx;
 
+    // Reset the scroll position after a new page has rendered.
+    window.scrollTo(0, 0);
+
     next();
   }
 

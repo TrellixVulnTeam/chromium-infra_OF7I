@@ -144,6 +144,17 @@ describe('mr-app', () => {
     assert.deepEqual(element._currentContext, {path: '1234'});
   });
 
+  it('_postRouteHandler scrolls page to top', () => {
+    sinon.stub(window, 'scrollTo');
+
+    const ctx = {path: '1234'};
+    element._postRouteHandler(ctx, next);
+
+    sinon.assert.calledWith(window.scrollTo, 0, 0);
+
+    window.scrollTo.restore();
+  });
+
   it('_loadIssuePage loads issue page', async () => {
     await element._loadIssuePage({
       queryParams: {id: '234'},
