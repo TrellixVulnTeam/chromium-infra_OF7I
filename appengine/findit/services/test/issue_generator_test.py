@@ -171,7 +171,7 @@ class IssueGeneratorTest(WaterfallTestCase):
         'summary=Flake%20Detection%20-%20Wrong%20result%3A%20'
         'Tests in step&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org/p/chromium/flake-portal/flakes?bug_id={}'
-        '%0A%0AWhat is wrong?%0A%0A').format(flake_issue.issue_id)
+        '%0A%0AIssue%20Description:%0A%0A').format(flake_issue.issue_id)
     expected_description = _EXPECTED_GROUP_FIRST_COMMENT.format(
         flake_issue.issue_id, wrong_result_link)
     self.assertEqual(expected_description,
@@ -187,7 +187,7 @@ class IssueGeneratorTest(WaterfallTestCase):
         'summary=Flake%20Detection%20-%20Wrong%20result%3A%20'
         '12345&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org/p/chromium/flake-portal/flakes?bug_id={}'
-        '%0A%0AWhat is wrong?%0A%0A').format(bug_id)
+        '%0A%0AIssue%20Description:%0A%0A').format(bug_id)
     sheriff_queue_message = (
         'Since these tests are still flaky, this issue has been moved back onto'
         ' the Sheriff Bug Queue if it hasn\'t already.')

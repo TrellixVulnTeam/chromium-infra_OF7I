@@ -99,7 +99,7 @@ _FLAKE_DETECTION_WRONG_RESULTS_BUG_LINK = (
     'components=Infra%3ETest%3EFlakiness&'
     'summary=Flake%20Detection%20-%20Wrong%20result%3A%20'
     '{summary}&comment=Link%20to%20flake%20details%3A%20{flake_link}'
-    '%0A%0AWhat is wrong?%0A%0A')
+    '%0A%0AIssue%20Description:%0A%0A')
 
 _FLAKE_DETECTION_PREVIOUS_TRACKING_BUG = (
     '\nThis flaky test was previously tracked in bug {}.\n')

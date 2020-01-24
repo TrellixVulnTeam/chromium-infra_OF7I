@@ -351,8 +351,8 @@ class FlakeReportUtilTest(WaterfallTestCase):
         'summary=Flake%20Detection%20-%20Wrong%20'
         'result%3A%20test&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org'
-        '/p/chromium/flake-portal/flakes/occurrences?key={}%0A%0AWhat is wrong?'
-        '%0A%0A').format(flake.key.urlsafe())
+        '/p/chromium/flake-portal/flakes/occurrences?key={}%0A%0AIssue%20'
+        'Description:%0A%0A').format(flake.key.urlsafe())
 
     expected_description = textwrap.dedent("""
 test_label is flaky.
@@ -490,8 +490,8 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
         '&summary=Flake%20Detection%20-%20Wrong%20'
         'result%3A%20test&comment=Link%20to%20flake%20details%3A%20'
         'https://analysis.chromium.org'
-        '/p/chromium/flake-portal/flakes/occurrences?key={}%0A%0AWhat is wrong?'
-        '%0A%0A').format(flake.key.urlsafe())
+        '/p/chromium/flake-portal/flakes/occurrences?key={}%0A%0AIssue%20'
+        'Description:%0A%0A').format(flake.key.urlsafe())
 
     sheriff_queue_message = (
         'Since these tests are still flaky, this issue has been moved back onto'
