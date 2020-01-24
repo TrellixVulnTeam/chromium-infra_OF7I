@@ -5,9 +5,11 @@
 package validateconfig
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -17,6 +19,7 @@ import (
 	"infra/cmd/stable_version2/internal/cmd/validateconfig/internal/querygs"
 	"infra/cmd/stable_version2/internal/site"
 	"infra/cmd/stable_version2/internal/utils"
+	gitlib "infra/libs/cros/stableversion/git"
 	vc "infra/libs/cros/stableversion/validateconfig"
 )
 
@@ -34,6 +37,7 @@ Its intended consumer is a submit hook that runs in the infra/config repo.
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 
 		c.Flags.BoolVar(&c.alwaysExitZero, "always-exit-zero", false, "exit successfully regardless of what errors occur.")
+		c.Flags.BoolVar(&c.remoteFile, "remote-file", false, "get file from Gitiles instead of locally.")
 		return c
 	},
 }
@@ -42,6 +46,7 @@ type command struct {
 	subcommands.CommandRunBase
 	authFlags      authcli.Flags
 	alwaysExitZero bool
+	remoteFile     bool
 }
 
 func (c *command) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -60,13 +65,31 @@ func (c *command) innerRun(a subcommands.Application, args []string, env subcomm
 	ctx := cli.GetContext(a, c, env)
 	ctx = cmd.SetupLogging(ctx)
 
-	if len(args) == 0 {
-		return errors.New("need at least one file")
+	var contents []byte
+	if c.remoteFile {
+		var err error
+		if len(args) != 0 {
+			return errors.New("cannot provide explicit file when using remote file")
+		}
+		contents, err = fetchGitPath(ctx, cmd.StableVersionConfigPath, &c.authFlags)
+		if err != nil {
+			return fmt.Errorf("getting remote file contents: %s", err)
+		}
+	} else {
+		var err error
+		if len(args) == 0 {
+			return errors.New("need at least one file")
+		}
+		if len(args) > 1 {
+			return errors.New("validating multiple files not yet supported")
+		}
+		contents, err = ioutil.ReadFile(args[0])
+		if err != nil {
+			return fmt.Errorf("reading local file: %s", err)
+		}
 	}
-	if len(args) > 1 {
-		return errors.New("validating multiple files not yet supported")
-	}
-	sv, err := vc.InspectFile(args[0])
+
+	sv, err := vc.InspectBuffer(contents)
 	if err != nil {
 		return fmt.Errorf("inspecting file: %s", err)
 	}
@@ -96,4 +119,20 @@ func (c *command) innerRun(a subcommands.Application, args []string, env subcomm
 
 	fmt.Printf("%s\n", vc.FileSeemsLegit)
 	return nil
+}
+
+func fetchGitPath(ctx context.Context, path string, f *authcli.Flags) ([]byte, error) {
+	hc, err := cmd.NewHTTPClient(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	gc, err := gitlib.NewClient(ctx, hc, cmd.GerritHost, cmd.GitilesHost, cmd.Project, cmd.Branch)
+	if err != nil {
+		return nil, fmt.Errorf("creating client: %s", err.Error())
+	}
+	res, err := gc.GetFile(ctx, cmd.StableVersionConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("getting file: %s", err.Error())
+	}
+	return []byte(res), nil
 }
