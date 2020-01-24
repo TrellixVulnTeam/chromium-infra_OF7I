@@ -22,6 +22,8 @@
     'v8/ci': {  # bucket alias: luci.v8.ci
       'builders': [
         # client.v8
+        'V8 Fuchsia - builder',
+        'V8 Fuchsia - debug builder',
         'V8 Linux - arm64 - sim - MSAN',
         'V8 Linux - builder',
         'V8 Linux - debug builder',
