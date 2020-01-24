@@ -33,19 +33,25 @@ Its intended consumer is a submit hook that runs in the infra/config repo.
 		c := &command{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 
+		c.Flags.BoolVar(&c.alwaysExitZero, "always-exit-zero", false, "exit successfully regardless of what errors occur.")
 		return c
 	},
 }
 
 type command struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
+	authFlags      authcli.Flags
+	alwaysExitZero bool
 }
 
 func (c *command) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	failure := 1
+	if c.alwaysExitZero {
+		failure = 0
+	}
 	if err := c.innerRun(a, args, env); err != nil {
 		cmd.PrintError(a.GetErr(), err)
-		return 1
+		return failure
 	}
 	return 0
 }
