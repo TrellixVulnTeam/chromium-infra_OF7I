@@ -93,7 +93,7 @@ def chromium_genfiles(short_name, name, os=None):
           path = 'generated',
           name = 'codesearch_git_genfiles_repo',
       )],
-      execution_timeout = 5 * time.hour,
+      execution_timeout = 6 * time.hour,
       category = 'gen',
       short_name = short_name,
       # Gen builders are triggered by the initiator's recipe.
