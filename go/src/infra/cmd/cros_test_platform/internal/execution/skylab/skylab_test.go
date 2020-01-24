@@ -1367,7 +1367,10 @@ func testInvocationWithDependency(name string, deps ...string) *steps.Enumeratio
 }
 
 func getSingleResponse(r *skylab.Runner, client swarming.Client) *steps.ExecuteResponse {
-	resps := r.Responses(client)
+	resps := make([]*steps.ExecuteResponse, 0, 1)
+	for _, resp := range r.Responses(client) {
+		resps = append(resps, resp)
+	}
 	So(resps, ShouldHaveLength, 1)
 	return resps[0]
 }

@@ -47,9 +47,6 @@ type skylabExecuteRun struct {
 	subcommands.CommandRunBase
 	inputPath  string
 	outputPath string
-
-	// TODO(crbug.com/1002941) Internally transition to tagged requests only.
-	orderedTags []string
 }
 
 func (c *skylabExecuteRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -90,7 +87,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		return err
 	}
 
-	cfg := requests[0].Config
+	cfg := extractOneConfig(requests)
 	client, err := swarmingClient(ctx, cfg.SkylabSwarming)
 	if err != nil {
 		return err
@@ -111,12 +108,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 	if err != nil {
 		return err
 	}
-	maxDuration, err := ptypes.Duration(requests[0].RequestParams.Time.MaximumDuration)
-	if err != nil {
-		maxDuration = 12 * time.Hour
-	}
-
-	resps, err := c.handleRequests(ctx, maxDuration, runner, client, gf)
+	resps, err := c.handleRequests(ctx, inferTimeout(requests), runner, client, gf)
 	if err != nil && !containsSomeResponse(resps) {
 		// Catastrophic error. There is no reasonable response to write.
 		return err
@@ -136,7 +128,7 @@ func sameHost(urlA, urlB string) bool {
 	return a.Host == b.Host
 }
 
-func containsSomeResponse(rs []*steps.ExecuteResponse) bool {
+func containsSomeResponse(rs map[string]*steps.ExecuteResponse) bool {
 	for _, r := range rs {
 		if r != nil {
 			return true
@@ -145,54 +137,70 @@ func containsSomeResponse(rs []*steps.ExecuteResponse) bool {
 	return false
 }
 
-func (c *skylabExecuteRun) readRequests() ([]*steps.ExecuteRequest, error) {
+func extractOneConfig(trs map[string]*steps.ExecuteRequest) *config.Config {
+	for _, r := range trs {
+		return r.Config
+	}
+	return nil
+}
+
+const defaultTaskTimout = 12 * time.Hour
+
+func inferTimeout(trs map[string]*steps.ExecuteRequest) time.Duration {
+	for _, r := range trs {
+		if maxDuration, err := ptypes.Duration(r.RequestParams.Time.MaximumDuration); err == nil {
+			return maxDuration
+		}
+		return defaultTaskTimout
+	}
+	return defaultTaskTimout
+}
+
+func (c *skylabExecuteRun) readRequests() (map[string]*steps.ExecuteRequest, error) {
 	var rs steps.ExecuteRequests
 	if err := readRequest(c.inputPath, &rs); err != nil {
 		return nil, err
 	}
-	ts, reqs := c.unzipTaggedRequests(rs.TaggedRequests)
-	c.orderedTags = ts
-	return reqs, nil
+	return rs.TaggedRequests, nil
 }
 
-func (c *skylabExecuteRun) unzipTaggedRequests(trs map[string]*steps.ExecuteRequest) ([]string, []*steps.ExecuteRequest) {
-	var ts []string
-	var rs []*steps.ExecuteRequest
-	for t, r := range trs {
-		ts = append(ts, t)
-		rs = append(rs, r)
-	}
-	return ts, rs
-}
-
-func (c *skylabExecuteRun) validateRequests(requests []*steps.ExecuteRequest) error {
-	if len(requests) == 0 {
+func (c *skylabExecuteRun) validateRequests(trs map[string]*steps.ExecuteRequest) error {
+	if len(trs) == 0 {
 		return errors.Reason("zero requests").Err()
 	}
-	for _, r := range requests {
+
+	for t, r := range trs {
 		if err := c.validateRequest(r); err != nil {
-			return errors.Annotate(err, "validate request %s", r).Err()
+			return errors.Annotate(err, "validate request %s", t).Err()
 		}
 	}
-	if err := c.validateRequestConfig(requests[0].Config); err != nil {
-		return errors.Annotate(err, "validate request %s", requests[0]).Err()
+
+	var sTag string
+	var sReq *steps.ExecuteRequest
+	for t, r := range trs {
+		sTag = t
+		sReq = r
+		break
 	}
 
-	cfg := requests[0].Config
-	for _, r := range requests[1:] {
+	sCfg := sReq.Config
+	if err := c.validateRequestConfig(sCfg); err != nil {
+		return errors.Annotate(err, "validate request %s", sTag).Err()
+	}
+	for t, r := range trs {
 		o := r.Config
-		if !proto.Equal(cfg, o) {
-			return errors.Reason("mistmatched config: %s vs %s", cfg, o).Err()
-		}
-	}
-	timeout := requests[0].RequestParams.Time.MaximumDuration
-	for _, r := range requests[1:] {
-		o := r.RequestParams.Time.MaximumDuration
-		if !proto.Equal(timeout, o) {
-			return errors.Reason("per-request timeout support unimplemented: %s vs %s", timeout, o).Err()
+		if !proto.Equal(sCfg, o) {
+			return errors.Reason("validate request: mistmatched config: %s[%#v] vs %s[%#v]", sTag, sCfg, t, o).Err()
 		}
 	}
 
+	sTimeout := sReq.RequestParams.Time.MaximumDuration
+	for t, r := range trs {
+		o := r.RequestParams.Time.MaximumDuration
+		if !proto.Equal(sTimeout, o) {
+			return errors.Reason("validate request: per-request timeout support unimplemented: %s[%s] vs %s[%s]", sTag, sTimeout, t, o).Err()
+		}
+	}
 	return nil
 }
 
@@ -218,29 +226,16 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 	}
 	return nil
 }
-func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner *skylab.Runner, t *swarming.Client, gf isolate.GetterFactory) ([]*steps.ExecuteResponse, error) {
+func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner *skylab.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("cros_test_platform request timeout (after %s)", maximumDuration))
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, t, gf)
 	return runner.Responses(t), err
 }
 
-func (c *skylabExecuteRun) writeResponsesWithError(resps []*steps.ExecuteResponse, err error) error {
-	r := &steps.ExecuteResponses{
-		TaggedResponses: c.zipTaggedResponses(c.orderedTags, resps),
-	}
+func (c *skylabExecuteRun) writeResponsesWithError(resps map[string]*steps.ExecuteResponse, err error) error {
+	r := &steps.ExecuteResponses{TaggedResponses: resps}
 	return writeResponseWithError(c.outputPath, r, err)
-}
-
-func (c *skylabExecuteRun) zipTaggedResponses(ts []string, rs []*steps.ExecuteResponse) map[string]*steps.ExecuteResponse {
-	if len(ts) != len(rs) {
-		panic(fmt.Sprintf("got %d responses for %d tags (%s)", len(rs), len(ts), ts))
-	}
-	m := make(map[string]*steps.ExecuteResponse)
-	for i := range ts {
-		m[ts[i]] = rs[i]
-	}
-	return m
 }
 
 func (c *skylabExecuteRun) getterFactory(conf *config.Config_Isolate) isolate.GetterFactory {

@@ -6,6 +6,7 @@ package skylab
 
 import (
 	"context"
+	"fmt"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"time"
@@ -18,9 +19,8 @@ import (
 
 // Runner is a new Skylab task set runner.
 type Runner struct {
-	taskSets []*TaskSet
-
-	running bool
+	taskSets map[string]*TaskSet
+	running  bool
 }
 
 // NewRunnerWithTaskSets returns a new Runner for executing the provided
@@ -28,17 +28,21 @@ type Runner struct {
 //
 // This constructor is only used by unittests.
 func NewRunnerWithTaskSets(taskSets ...*TaskSet) *Runner {
-	return &Runner{
-		taskSets: taskSets,
+	r := &Runner{
+		taskSets: make(map[string]*TaskSet),
 	}
+	for i, ts := range taskSets {
+		r.taskSets[fmt.Sprintf("task%d", i)] = ts
+	}
+	return r
 }
 
 // NewRunner returns a Runner that will execute the given tests.
-func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, requests []*steps.ExecuteRequest) (*Runner, error) {
-	ts := make([]*TaskSet, len(requests))
-	for i, r := range requests {
+func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, requests map[string]*steps.ExecuteRequest) (*Runner, error) {
+	ts := make(map[string]*TaskSet)
+	for t, r := range requests {
 		var err error
-		ts[i], err = NewTaskSet(r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
+		ts[t], err = NewTaskSet(r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
 		if err != nil {
 			return nil, errors.Annotate(err, "new skylab runner").Err()
 		}
@@ -78,18 +82,18 @@ func (r *Runner) LaunchAndWait(ctx context.Context, client swarming.Client, gf i
 }
 
 func (r *Runner) launchTasks(ctx context.Context, client swarming.Client) error {
-	for _, ts := range r.taskSets {
+	for t, ts := range r.taskSets {
 		if err := ts.LaunchTasks(ctx, client); err != nil {
-			return errors.Annotate(err, "launch tasks for request [%v]", ts).Err()
+			return errors.Annotate(err, "launch tasks for %s", t).Err()
 		}
 	}
 	return nil
 }
 
 func (r *Runner) checkTasksAndRetry(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
-	for _, ts := range r.taskSets {
+	for t, ts := range r.taskSets {
 		if err := ts.CheckTasksAndRetry(ctx, client, gf); err != nil {
-			return errors.Annotate(err, "check tasks and retry for request [%v]", ts).Err()
+			return errors.Annotate(err, "check tasks and retry for %s", t).Err()
 		}
 	}
 	return nil
@@ -105,11 +109,11 @@ func (r *Runner) completed() bool {
 }
 
 // Responses constructs responses for each taskSet managed by the Runner.
-func (r *Runner) Responses(urler swarming.URLer) []*steps.ExecuteResponse {
+func (r *Runner) Responses(urler swarming.URLer) map[string]*steps.ExecuteResponse {
 	running := r.running
-	resps := make([]*steps.ExecuteResponse, len(r.taskSets))
-	for i, ts := range r.taskSets {
-		resps[i] = ts.response(urler, running)
+	resps := make(map[string]*steps.ExecuteResponse)
+	for t, ts := range r.taskSets {
+		resps[t] = ts.response(urler, running)
 	}
 	return resps
 }
