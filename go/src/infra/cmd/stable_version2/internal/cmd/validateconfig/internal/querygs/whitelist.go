@@ -31,6 +31,7 @@ var missingBoardWhitelist map[string]bool = stringSliceToStringSet([]string{
 	"rikku_cfm",
 	"samus_cheets",
 	"samus_kernelnext",
+	"sarien_kvm",
 	"storm",
 	"umaro",
 	"veyron_gus",
