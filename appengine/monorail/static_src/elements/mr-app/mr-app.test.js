@@ -155,6 +155,13 @@ describe('mr-app', () => {
     window.scrollTo.restore();
   });
 
+  it('_postRouteHandler does not call next', () => {
+    const ctx = {path: '1234'};
+    element._postRouteHandler(ctx, next);
+
+    sinon.assert.notCalled(next);
+  });
+
   it('_loadIssuePage loads issue page', async () => {
     await element._loadIssuePage({
       queryParams: {id: '234'},

@@ -358,8 +358,6 @@ export class MrApp extends connectStore(LitElement) {
 
     // Reset the scroll position after a new page has rendered.
     window.scrollTo(0, 0);
-
-    next();
   }
 
   /**
