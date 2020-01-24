@@ -1,3 +1,20 @@
+# Release Notes sheriff-o-matic 2020-01-23
+
+- 2 commits, 1 bugs affected since 44920e5 ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [Release note 21 Jan](https://chromium-review.googlesource.com/c/infra/infra/+/2010446) (nqmtuan@google.com)
+- [Fix the list of builders for release branch](https://chromium-review.googlesource.com/c/infra/infra/+/2016302) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1034650](https://crbug.com/1034650)
+  
+
 # Release Notes sheriff-o-matic 2020-01-21
 
 - 2 commits, 1 bugs affected since 529726b ()
