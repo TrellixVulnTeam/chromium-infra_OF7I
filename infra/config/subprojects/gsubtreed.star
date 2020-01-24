@@ -12,6 +12,7 @@ def gsubtreed_cron(
       target_repo,
       execution_timeout=None,
       schedule=None,
+      cores='2',
   ):
   luci.builder(
       name = name,
@@ -26,7 +27,7 @@ def gsubtreed_cron(
       dimensions = {
           'os': 'Ubuntu-16.04',
           'cpu': 'x86-64',
-          'cores': '2',
+          'cores': cores,
           'pool': 'luci.infra.cron',
           'builderless': '1',
       },
@@ -48,6 +49,10 @@ gsubtreed_cron(
     execution_timeout = 3 * time.hour,
     # We want to have minimal delay.
     schedule = 'continuously',
+    # Needs a beefier machine than standard 2-core.
+    # TODO(crbug.com/1045490): Move back to 2-core if/when crrev.com/c/2003420
+    # fixes this.
+    cores = '8',
 )
 gsubtreed_cron(
     name = 'gsubtreed-chromiumos-platform2',
