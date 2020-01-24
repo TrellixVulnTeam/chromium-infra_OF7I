@@ -137,14 +137,7 @@ var labstationInV2 = lab.ChromeOSDevice{
 		Labstation: &lab.Labstation{
 			Hostname: "test_labstation_host",
 			Pools:    []string{"labstation_main"},
-			Servos: []*lab.Servo{
-				{
-					ServoHostname: "servo2",
-					ServoPort:     int32(9999),
-					ServoSerial:   "serial2",
-					ServoType:     "v4",
-				},
-			},
+			Servos:   []*lab.Servo{},
 			Rpm: &lab.RPM{
 				PowerunitName:   "test_power_unit_name",
 				PowerunitOutlet: "test_power_unit_outlet2",

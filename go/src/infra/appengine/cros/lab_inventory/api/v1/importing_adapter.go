@@ -111,28 +111,37 @@ func importRpm(rpm *lab.RPM, key string, value string) {
 	}
 }
 
+// importAttributes imports the "Attributes" section of inventory v1 specs. It
+// returns HWID, servo and rpm if they are in the section, ortherwise returns
+// empty string or nil.
 func importAttributes(attrs []*inventory.KeyValue) (string, *lab.Servo, *lab.RPM) {
 	skipServo := false
 	var hwid string
-	var servo lab.Servo
-	var rpm lab.RPM
+	var servo *lab.Servo
+	var rpm *lab.RPM
 	for _, attr := range attrs {
 		value := attr.GetValue()
 		switch key := attr.GetKey(); key {
 		case "HWID":
 			hwid = value
 		case "servo_host", "servo_port", "servo_serial", "servo_type":
-			if err := importServo(&servo, key, value); err != nil {
+			if servo == nil {
+				servo = new(lab.Servo)
+			}
+			if err := importServo(servo, key, value); err != nil {
 				skipServo = true
 			}
 		case "powerunit_hostname", "powerunit_outlet":
-			importRpm(&rpm, key, value)
+			if rpm == nil {
+				rpm = new(lab.RPM)
+			}
+			importRpm(rpm, key, value)
 		}
 	}
 	if skipServo {
-		return hwid, nil, &rpm
+		return hwid, nil, rpm
 	}
-	return hwid, &servo, &rpm
+	return hwid, servo, rpm
 }
 
 func getChameleonType(oldperi *inventory.Peripherals) []lab.ChameleonType {
@@ -282,7 +291,7 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 	if _, existing := servoHostRegister[hostname]; existing {
 		return nil
 	}
-	hwid, servo, rpm := importAttributes(olddata.GetAttributes())
+	hwid, _, rpm := importAttributes(olddata.GetAttributes())
 	servoHostRegister[hostname] = &lab.ChromeOSDevice{
 		Id:              &lab.ChromeOSDeviceID{Value: olddata.GetId()},
 		SerialNumber:    olddata.GetSerialNumber(),
@@ -293,7 +302,7 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 			Labstation: &lab.Labstation{
 				Hostname: hostname,
 				Rpm:      rpm,
-				Servos:   []*lab.Servo{servo},
+				Servos:   []*lab.Servo{},
 				Pools:    getPools(olddata.GetLabels()),
 			},
 		},
