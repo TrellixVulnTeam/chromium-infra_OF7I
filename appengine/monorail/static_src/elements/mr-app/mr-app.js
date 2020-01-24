@@ -366,8 +366,10 @@ export class MrApp extends connectStore(LitElement) {
    * @param {function} next Passes execution on to the next registered callback.
    */
   _selectProject(ctx, next) {
-    store.dispatch(project.select(ctx.params.project));
-    store.dispatch(project.fetch(ctx.params.project));
+    if (project.viewedProjectName(store.getState()) !== ctx.params.project) {
+      store.dispatch(project.select(ctx.params.project));
+      store.dispatch(project.fetch(ctx.params.project));
+    }
 
     next();
   }

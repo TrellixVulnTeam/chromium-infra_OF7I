@@ -6,6 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import {MrApp} from './mr-app.js';
 import {store, resetState} from 'reducers/base.js';
+import {select} from 'reducers/project.js';
 
 let element;
 let next;
@@ -28,6 +29,7 @@ describe('mr-app', () => {
   afterEach(() => {
     global.ga.resetHistory();
     document.body.removeChild(element);
+    next.reset();
   });
 
   it('initializes', () => {
@@ -206,5 +208,42 @@ describe('mr-app', () => {
 
     const gridPage = element.shadowRoot.querySelector('mr-grid-page');
     assert.isDefined(gridPage, 'grid page is defined');
+  });
+
+  describe('_selectProject', () => {
+    beforeEach(() => {
+      sinon.spy(store, 'dispatch');
+    });
+
+    afterEach(() => {
+      store.dispatch.restore();
+    });
+
+    it('selects and fetches project', () => {
+      const projectName = 'chromium';
+      assert.notEqual(store.getState().project.name, projectName);
+
+      element._selectProject(
+          {params: {project: projectName}},
+          next);
+
+      sinon.assert.calledTwice(store.dispatch);
+    });
+
+    it('skips selecting and fetching when project isn\'t changing', () => {
+      const projectName = 'chromium';
+
+      store.dispatch.restore();
+      store.dispatch(select(projectName));
+      sinon.spy(store, 'dispatch');
+
+      assert.equal(store.getState().project.name, projectName);
+
+      element._selectProject(
+          {params: {project: projectName}},
+          next);
+
+      sinon.assert.notCalled(store.dispatch);
+    });
   });
 });
