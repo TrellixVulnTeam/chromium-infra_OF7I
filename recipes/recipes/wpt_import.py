@@ -76,8 +76,8 @@ def RunSteps(api):
     args = [
       '--credentials-json',
       creds,
-      # '--auto-update',
-      # '--auto-file-bugs',
+      '--auto-update',
+      '--auto-file-bugs',
     ]
 
     try:
