@@ -263,9 +263,7 @@
       "-u",
       "[START_DIR]/src/third_party/blink/tools/wpt_import.py",
       "--credentials-json",
-      "[CLEANUP]/wpt-import-export.json",
-      "--auto-update",
-      "--auto-file-bugs"
+      "[CLEANUP]/wpt-import-export.json"
     ],
     "cwd": "[START_DIR]/src/third_party/blink",
     "name": "Import changes from WPT to Chromium"
