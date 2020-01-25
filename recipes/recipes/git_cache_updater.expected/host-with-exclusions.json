@@ -167,9 +167,9 @@
       "https://chromium.googlesource.com/apps"
     ],
     "cost": {
-      "cpu": 500,
+      "cpu": 2000,
       "disk": 0,
-      "memory": 89,
+      "memory": 400,
       "net": 10
     },
     "env": {
@@ -321,9 +321,9 @@
       "https://chromium.googlesource.com/chromium/src"
     ],
     "cost": {
-      "cpu": 500,
+      "cpu": 2000,
       "disk": 0,
-      "memory": 89,
+      "memory": 400,
       "net": 10
     },
     "env": {

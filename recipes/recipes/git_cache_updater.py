@@ -117,11 +117,11 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
           step_test_data=lambda: api.raw_io.test_api.stream_output(
               api.git.test_api.count_objects_output(10)))
 
-      # Scale the memory cost of this update by size-pack raised to 1.5. This is
+      # Scale the memory cost of this update by size-pack squared. This is
       # an arbitrary scaling factor, but it allows multiple small repos to run
       # in parallel but allows large repos (e.g. chromium) to exclusively use
       # all the memory on the system.
-      mem_cost = int((stats['size'] + stats['size-pack']) ** 1.5)
+      mem_cost = int((stats['size'] + stats['size-pack']) ** 2)
       if mem_cost == 0:
         # some repos can be empty (e.g. they're an "ACL-only" repo), and
         # update-bootstrap doesn't like that, so skip them.
@@ -146,7 +146,11 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
           'git_cache.py', 'update-bootstrap',
           '--skip-populate', '--prune',
         ] + opts + gc_aggressive_opt,
-        cost=api.step.ResourceCost(memory=mem_cost, net=10))
+        cost=api.step.ResourceCost(
+            cpu=api.step.CPU_CORE*2,
+            memory=mem_cost,
+            net=10,
+        ))
 
     summary.step_text = "[ok]"
     return OK
