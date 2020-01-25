@@ -254,32 +254,30 @@ export class MrApp extends connectStore(LitElement) {
     // Start a cron task to periodically request the status from the server.
     getServerStatusCron.start();
 
-    // NOTE: In most cases, we want more general route handlers like
-    // _initializeViewedProject() and _selectHotlist() to come AFTER more
-    // specific route handlers. This is because the more specific route
-    // handlers usually load the bundle for a given page, and we want the
-    // actions caused by these handlers to happen after a bundle has loaded,
-    // not before.
-    // This may change if we change the granularity of our bundling.
+    const postRouteHandler = this._postRouteHandler.bind(this);
+
     page('*', this._preRouteHandler.bind(this));
 
     page('/p', '/projects');
     page('/projects', this._loadProjectsPage.bind(this));
-    page('/p/:project/issues/list_new', this._loadListPage.bind(this));
-    page('/p/:project/issues/detail', this._loadIssuePage.bind(this));
-    page('/p/:project/*', this._selectProject.bind(this));
 
+    page('/p/:project/*', this._selectProject.bind(this));
+    page('/p/:project/issues/list_new', this._loadListPage.bind(this),
+        postRouteHandler);
+    page('/p/:project/issues/detail', this._loadIssuePage.bind(this),
+        postRouteHandler);
+
+    page('/users/:user/hotlists/:hotlist/*', this._selectHotlist);
     page(
         '/users/:user/hotlists/:hotlist',
-        this._selectHotlist, this._loadHotlistIssuesPage.bind(this));
+        this._loadHotlistIssuesPage.bind(this), postRouteHandler);
     page(
         '/users/:user/hotlists/:hotlist/details',
-        this._loadHotlistDetailsPage.bind(this));
+        this._loadHotlistDetailsPage.bind(this), postRouteHandler);
     page(
         '/users/:user/hotlists/:hotlist/people',
-        this._loadHotlistPeoplePage.bind(this));
-    page('/users/:user/hotlists/:hotlist/*', this._selectHotlist);
-    page('*', this._postRouteHandler.bind(this));
+        this._loadHotlistPeoplePage.bind(this), postRouteHandler);
+
     page();
   }
 
