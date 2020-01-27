@@ -9,13 +9,16 @@ from __future__ import division
 from __future__ import absolute_import
 
 from tracker import tracker_constants
+from project import project_constants
 
 DEFAULT_COL_SPEC = 'Rank Project Status Type ID Stars Owner Summary Modified'
 DEFAULT_RESULTS_PER_PAGE = 100
 OTHER_BUILT_IN_COLS = (
     tracker_constants.OTHER_BUILT_IN_COLS + ['Adder', 'Added', 'Note'])
 # pylint: disable=line-too-long
-ISSUE_INPUT_REGEX = "[a-z0-9][-a-z0-9]*[a-z0-9]:\d+(([,]|\s)+[a-z0-9][-a-z0-9]*[a-z0-9]:\d+)*"
+ISSUE_INPUT_REGEX = '%s:\d+(([,]|\s)+%s:\d+)*' % (
+    project_constants.PROJECT_NAME_PATTERN,
+    project_constants.PROJECT_NAME_PATTERN)
 
 QUEUE_NOTIFICATIONS = 'notifications'
 QUEUE_OUTBOUND_EMAIL = 'outboundemail'

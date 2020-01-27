@@ -105,7 +105,7 @@ from api.v1 import api_routes as api_routes_v1
 
 class ServletRegistry(object):
 
-  _PROJECT_NAME_REGEX = r'[a-z0-9][-a-z0-9]*[a-z0-9]'
+  _PROJECT_NAME_REGEX = project_constants.PROJECT_NAME_PATTERN
   _USERNAME_REGEX = r'[-+\w=.%]+(@([-a-z0-9]+\.)*[a-z0-9]+)?'
   _HOTLIST_ID_NAME_REGEX = r'\d+|[a-zA-Z][-0-9a-zA-Z\.]*'
 
