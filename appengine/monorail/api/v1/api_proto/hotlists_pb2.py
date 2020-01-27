@@ -14,6 +14,7 @@ _sym_db = _symbol_database.Default()
 
 from api.v1.api_proto import feature_objects_pb2 as api_dot_v1_dot_api__proto_dot_feature__objects__pb2
 from google.protobuf import field_mask_pb2 as google_dot_protobuf_dot_field__mask__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
 from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
 from google_proto.google.api import annotations_pb2 as google__proto_dot_google_dot_api_dot_annotations__pb2
@@ -24,9 +25,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1f\x61pi/v1/api_proto/hotlists.proto\x12\x0bmonorail.v1\x1a&api/v1/api_proto/feature_objects.proto\x1a google/protobuf/field_mask.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a)google_proto/google/api/annotations.proto\"\x92\x01\n\x14UpdateHotlistRequest\x12\x44\n\x07hotlist\x18\x01 \x01(\x0b\x32\x14.monorail.v1.HotlistB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\xe0\x41\x02\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\x32\x89\x01\n\x08Hotlists\x12}\n\rUpdateHotlist\x12!.monorail.v1.UpdateHotlistRequest\x1a\x14.monorail.v1.Hotlist\"3\x82\xd3\xe4\x93\x02-\"(/prpc/monorail.v1.Hotlists/UpdateHotlist:\x01*b\x06proto3')
+  serialized_pb=_b('\n\x1f\x61pi/v1/api_proto/hotlists.proto\x12\x0bmonorail.v1\x1a&api/v1/api_proto/feature_objects.proto\x1a google/protobuf/field_mask.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a)google_proto/google/api/annotations.proto\"\x92\x01\n\x14UpdateHotlistRequest\x12\x44\n\x07hotlist\x18\x01 \x01(\x0b\x32\x14.monorail.v1.HotlistB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\xe0\x41\x02\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\"\xa0\x01\n\x19RerankHotlistItemsRequest\x12+\n\x04name\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\xe0\x41\x02\x12\x38\n\rhotlist_items\x18\x02 \x03(\tB!\xfa\x41\x1b\n\x19\x61pi.crbug.com/HotlistItem\xe0\x41\x02\x12\x1c\n\x0ftarget_position\x18\x03 \x01(\rB\x03\xe0\x41\x02\x32\x9a\x02\n\x08Hotlists\x12}\n\rUpdateHotlist\x12!.monorail.v1.UpdateHotlistRequest\x1a\x14.monorail.v1.Hotlist\"3\x82\xd3\xe4\x93\x02-\"(/prpc/monorail.v1.Hotlists/UpdateHotlist:\x01*\x12\x8e\x01\n\x12RerankHotlistItems\x12&.monorail.v1.RerankHotlistItemsRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x02\x32\"-/prpc/monorail.v1.Hotlists/RerankHotlistItems:\x01*b\x06proto3')
   ,
-  dependencies=[api_dot_v1_dot_api__proto_dot_feature__objects__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,])
+  dependencies=[api_dot_v1_dot_api__proto_dot_feature__objects__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,])
 
 
 
@@ -64,13 +65,59 @@ _UPDATEHOTLISTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=252,
-  serialized_end=398,
+  serialized_start=281,
+  serialized_end=427,
+)
+
+
+_RERANKHOTLISTITEMSREQUEST = _descriptor.Descriptor(
+  name='RerankHotlistItemsRequest',
+  full_name='monorail.v1.RerankHotlistItemsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='monorail.v1.RerankHotlistItemsRequest.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\027\n\025api.crbug.com/Hotlist\340A\002'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='hotlist_items', full_name='monorail.v1.RerankHotlistItemsRequest.hotlist_items', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\033\n\031api.crbug.com/HotlistItem\340A\002'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='target_position', full_name='monorail.v1.RerankHotlistItemsRequest.target_position', index=2,
+      number=3, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\340A\002'), file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=430,
+  serialized_end=590,
 )
 
 _UPDATEHOTLISTREQUEST.fields_by_name['hotlist'].message_type = api_dot_v1_dot_api__proto_dot_feature__objects__pb2._HOTLIST
 _UPDATEHOTLISTREQUEST.fields_by_name['update_mask'].message_type = google_dot_protobuf_dot_field__mask__pb2._FIELDMASK
 DESCRIPTOR.message_types_by_name['UpdateHotlistRequest'] = _UPDATEHOTLISTREQUEST
+DESCRIPTOR.message_types_by_name['RerankHotlistItemsRequest'] = _RERANKHOTLISTITEMSREQUEST
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 UpdateHotlistRequest = _reflection.GeneratedProtocolMessageType('UpdateHotlistRequest', (_message.Message,), dict(
@@ -80,9 +127,19 @@ UpdateHotlistRequest = _reflection.GeneratedProtocolMessageType('UpdateHotlistRe
   ))
 _sym_db.RegisterMessage(UpdateHotlistRequest)
 
+RerankHotlistItemsRequest = _reflection.GeneratedProtocolMessageType('RerankHotlistItemsRequest', (_message.Message,), dict(
+  DESCRIPTOR = _RERANKHOTLISTITEMSREQUEST,
+  __module__ = 'api.v1.api_proto.hotlists_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.RerankHotlistItemsRequest)
+  ))
+_sym_db.RegisterMessage(RerankHotlistItemsRequest)
+
 
 _UPDATEHOTLISTREQUEST.fields_by_name['hotlist']._options = None
 _UPDATEHOTLISTREQUEST.fields_by_name['update_mask']._options = None
+_RERANKHOTLISTITEMSREQUEST.fields_by_name['name']._options = None
+_RERANKHOTLISTITEMSREQUEST.fields_by_name['hotlist_items']._options = None
+_RERANKHOTLISTITEMSREQUEST.fields_by_name['target_position']._options = None
 
 _HOTLISTS = _descriptor.ServiceDescriptor(
   name='Hotlists',
@@ -90,8 +147,8 @@ _HOTLISTS = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=401,
-  serialized_end=538,
+  serialized_start=593,
+  serialized_end=875,
   methods=[
   _descriptor.MethodDescriptor(
     name='UpdateHotlist',
@@ -101,6 +158,15 @@ _HOTLISTS = _descriptor.ServiceDescriptor(
     input_type=_UPDATEHOTLISTREQUEST,
     output_type=api_dot_v1_dot_api__proto_dot_feature__objects__pb2._HOTLIST,
     serialized_options=_b('\202\323\344\223\002-\"(/prpc/monorail.v1.Hotlists/UpdateHotlist:\001*'),
+  ),
+  _descriptor.MethodDescriptor(
+    name='RerankHotlistItems',
+    full_name='monorail.v1.Hotlists.RerankHotlistItems',
+    index=1,
+    containing_service=None,
+    input_type=_RERANKHOTLISTITEMSREQUEST,
+    output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
+    serialized_options=_b('\202\323\344\223\0022\"-/prpc/monorail.v1.Hotlists/RerankHotlistItems:\001*'),
   ),
 ])
 _sym_db.RegisterServiceDescriptor(_HOTLISTS)

@@ -9,6 +9,7 @@ package monorail.v1;
 
 import "api/v1/api_proto/feature_objects.proto";
 import "google/protobuf/field_mask.proto";
+import "google/protobuf/empty.proto";
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "google_proto/google/api/annotations.proto";
@@ -24,6 +25,19 @@ service Hotlists {
       body: "*"
     };
   }
+  // Reranks a hotlist's items.
+  //
+  // Raises:
+  //   NOT_FOUND if the hotlist to rerank is not found.
+  //   PERMISSION_DENIED if the requester is not allowed to rerank the hotlist.
+  //   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
+  //   is empty or contains items not in the Hotlist.
+  rpc RerankHotlistItems (RerankHotlistItemsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/prpc/monorail.v1.Hotlists/RerankHotlistItems"
+      body: "*"
+    };
+  }
 }
 
 
@@ -36,4 +50,23 @@ message UpdateHotlistRequest {
       (google.api.field_behavior) = REQUIRED ];
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+// The request used to rerank a Hotlist.
+// Next available tag: 4
+message RerankHotlistItemsRequest {
+  // Resource name of the Hotlist to rerank.
+  string name = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"},
+      (google.api.field_behavior) = REQUIRED ];
+  // HotlistItems to be moved. The order of `hotlist_items` will
+  // determine the order of these items after they have been moved.
+  // E.g. With items [a, b, c, d, e], moving [d, c] to `target_position` 3, will
+  // result in items [a, b, e, d, c].
+  repeated string hotlist_items = 2 [
+      (google.api.resource_reference) = {type: "api.crbug.com/HotlistItem"},
+      (google.api.field_behavior) = REQUIRED ];
+  // Target starting position of the moved items.
+  // `target_position` must be between 0 and (# hotlist items - # items being moved).
+  uint32 target_position = 3 [ (google.api.field_behavior) = REQUIRED ];
 }
