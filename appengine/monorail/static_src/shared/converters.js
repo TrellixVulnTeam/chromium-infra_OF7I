@@ -11,10 +11,36 @@
 
 import qs from 'qs';
 
-import {equalsIgnoreCase} from './helpers.js';
+import {equalsIgnoreCase, capitalizeFirst} from './helpers.js';
 import {fromShortlink} from 'shared/federated.js';
 import {UserInputError} from 'shared/errors.js';
 import './typedef.js';
+
+/**
+ * Common restriction labels to do things users frequently want to do
+ * with restrictions.
+ * This code is a frontend replication of old Python server code that
+ * hardcoded specific restriction labels.
+ * @type {Array<LabelDef>}
+ */
+const FREQUENT_ISSUE_RESTRICTIONS = Object.freeze([
+  {
+    label: 'Restrict-View-EditIssue',
+    docstring: 'Only users who can edit the issue may access it',
+  },
+  {
+    label: 'Restrict-AddIssueComment-EditIssue',
+    docstring: 'Only users who can edit the issue may add comments',
+  },
+]);
+
+/**
+ * The set of actions that permissions on an issue can be applied to.
+ * For example, in the Restrict-View-Google label, "View" is an action.
+ * @type {Array<string>}
+ */
+const STANDARD_ISSUE_ACTIONS = [
+  'View', 'EditIssue', 'AddIssueComment', 'DeleteIssue', 'FlagSpam'];
 
 // A Regex defining the canonical String format used in Monorail for allowing
 // users to input structured localId and projectName values in free text inputs.
@@ -185,6 +211,45 @@ export function labelRefsToOneWordLabels(labelRefs) {
 export function isOneWordLabel(label = '') {
   const words = label.split('-');
   return words.length === 1;
+}
+
+/**
+ * Creates a LabelDef Object for a restriction label given an action
+ * and a permission.
+ * @param {string} action What action a restriction is applied to.
+ *   eg. "View", "EditIssue", "AddIssueComment".
+ * @param {string} permission The permission group that has access to
+ *   the restricted behavior. eg. "Google".
+ * @return {LabelDef}
+ */
+export function _makeRestrictionLabel(action, permission) {
+  const perm = capitalizeFirst(permission);
+  return {
+    label: `Restrict-${action}-${perm}`,
+    docstring: `Permission ${perm} needed to use ${action}`,
+  };
+}
+
+/**
+ * Given a list of custom permissions defined for a project, this function
+ * generates simulated LabelDef objects for those permissions + default
+ * restriction labels that all projects should have.
+ * @param {Array<string>=} customPermissions
+ * @param {Array<string>=} actions
+ * @param {Array<LabelDef>=} defaultRestrictionLabels Configurable default
+ *   restriction labels to include regardless of custom permissions.
+ * @return {Array<LabelDef>}
+ */
+export function restrictionLabelsForPermissions(customPermissions = [],
+    actions = STANDARD_ISSUE_ACTIONS,
+    defaultRestrictionLabels = FREQUENT_ISSUE_RESTRICTIONS) {
+  const labels = [];
+  actions.forEach((action) => {
+    customPermissions.forEach((permission) => {
+      labels.push(_makeRestrictionLabel(action, permission));
+    });
+  });
+  return [...labels, ...defaultRestrictionLabels];
 }
 
 /**

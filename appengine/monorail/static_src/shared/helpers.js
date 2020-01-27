@@ -41,6 +41,15 @@ export function setHasAny(set, values) {
 }
 
 /**
+ * Capitalize the first letter of a given string.
+ * @param {string} str
+ * @return {string}
+ */
+export function capitalizeFirst(str) {
+  return `${str.charAt(0).toUpperCase()}${str.substring(1)}`;
+}
+
+/**
  * Check if a string has a prefix, ignoring case.
  * @param {string} str
  * @param {string} prefix

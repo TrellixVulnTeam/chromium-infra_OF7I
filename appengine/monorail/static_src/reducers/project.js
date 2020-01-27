@@ -9,9 +9,12 @@ import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS, defaultIssueFieldMap,
   parseColSpec, stringValuesForIssueField} from 'shared/issue-fields.js';
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
-  labelNameToLabelPrefix, labelNameToLabelValue} from 'shared/converters.js';
+  labelNameToLabelPrefix, labelNameToLabelValue,
+  restrictionLabelsForPermissions} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
+
+/** @typedef {import('redux').AnyAction} AnyAction */
 
 // Actions
 export const SELECT = 'project/SELECT';
@@ -27,6 +30,14 @@ export const FETCH_PRESENTATION_CONFIG_SUCCESS =
 export const FETCH_PRESENTATION_CONFIG_FAILURE =
   'project/FETCH_PRESENTATION_CONFIG_FAILURE';
 
+export const FETCH_CUSTOM_PERMISSIONS_START =
+  'project/FETCH_CUSTOM_PERMISSIONS_START';
+export const FETCH_CUSTOM_PERMISSIONS_SUCCESS =
+  'project/FETCH_CUSTOM_PERMISSIONS_SUCCESS';
+export const FETCH_CUSTOM_PERMISSIONS_FAILURE =
+  'project/FETCH_CUSTOM_PERMISSIONS_FAILURE';
+
+
 export const FETCH_VISIBLE_MEMBERS_START =
   'project/FETCH_VISIBLE_MEMBERS_START';
 export const FETCH_VISIBLE_MEMBERS_SUCCESS =
@@ -38,24 +49,21 @@ const FETCH_TEMPLATES_START = 'project/FETCH_TEMPLATES_START';
 export const FETCH_TEMPLATES_SUCCESS = 'project/FETCH_TEMPLATES_SUCCESS';
 const FETCH_TEMPLATES_FAILURE = 'project/FETCH_TEMPLATES_FAILURE';
 
-const FETCH_FIELDS_LIST_START = 'project/FETCH_FIELDS_LIST_START';
-export const FETCH_FIELDS_LIST_SUCCESS = 'project/FETCH_FIELDS_LIST_SUCCESS';
-const FETCH_FIELDS_LIST_FAILURE = 'project/FECTH_FIELDS_LIST_FAILURE';
-
 /* State Shape
 {
   name: string,
 
   configs: Object.<string, Config>,
   presentationConfigs: Object.<string, PresentationConfig>,
+  customPermissions: Object.<string, Array<string>>,
   visibleMembers:
       Object.<string, {userRefs: Array<UserRef>, groupRefs: Array<UserRef>}>,
   templates: Object.<string, Array<TemplateDef>>,
 
   requests: {
     fetchConfig: ReduxRequestState,
-    fetchFields: ReduxRequestState,
-    fetchMembers: ReduxRequestState,
+    fetchMembers: ReduxRequestState
+    fetchCustomPermissions: ReduxRequestState,
     fetchPresentationConfig: ReduxRequestState,
     fetchTemplates: ReduxRequestState,
   },
@@ -72,13 +80,6 @@ export const configsReducer = createReducer({}, {
     ...state,
     [projectName]: config,
   }),
-  [FETCH_FIELDS_LIST_SUCCESS]: (state, {projectName, fieldDefs}) => ({
-    ...state,
-    [projectName]: {
-      ...state[projectName],
-      fieldDefs: fieldDefs,
-    },
-  }),
 });
 
 export const presentationConfigsReducer = createReducer({}, {
@@ -86,6 +87,21 @@ export const presentationConfigsReducer = createReducer({}, {
     (state, {projectName, presentationConfig}) => ({
       ...state,
       [projectName]: presentationConfig,
+    }),
+});
+
+
+/**
+ * Adds custom permissions to Redux in a normalized state.
+ * @param {Object.<string, Array<String>>} state Redux state.
+ * @param {AnyAction} Action
+ * @return {Object.<string, Array<String>>}
+ */
+export const customPermissionsReducer = createReducer({}, {
+  [FETCH_CUSTOM_PERMISSIONS_SUCCESS]:
+    (state, {projectName, permissions}) => ({
+      ...state,
+      [projectName]: permissions,
     }),
 });
 
@@ -110,21 +126,22 @@ const requestsReducer = combineReducers({
       FETCH_VISIBLE_MEMBERS_START,
       FETCH_VISIBLE_MEMBERS_SUCCESS,
       FETCH_VISIBLE_MEMBERS_FAILURE),
+  fetchCustomPermissions: createRequestReducer(
+      FETCH_CUSTOM_PERMISSIONS_START,
+      FETCH_CUSTOM_PERMISSIONS_SUCCESS,
+      FETCH_CUSTOM_PERMISSIONS_FAILURE),
   fetchPresentationConfig: createRequestReducer(
       FETCH_PRESENTATION_CONFIG_START,
       FETCH_PRESENTATION_CONFIG_SUCCESS,
       FETCH_PRESENTATION_CONFIG_FAILURE),
   fetchTemplates: createRequestReducer(
       FETCH_TEMPLATES_START, FETCH_TEMPLATES_SUCCESS, FETCH_TEMPLATES_FAILURE),
-  fetchFields: createRequestReducer(
-      FETCH_FIELDS_LIST_START,
-      FETCH_FIELDS_LIST_SUCCESS,
-      FETCH_FIELDS_LIST_FAILURE),
 });
 
 export const reducer = combineReducers({
   name: nameReducer,
   configs: configsReducer,
+  customPermissions: customPermissionsReducer,
   presentationConfigs: presentationConfigsReducer,
   visibleMembers: visibleMembersReducer,
   templates: templatesReducer,
@@ -411,18 +428,22 @@ export const fetch = (projectName) => async (dispatch) => {
   const configPromise = dispatch(fetchConfig(projectName));
   const visibleMembersPromise = dispatch(fetchVisibleMembers(projectName));
 
-  // TODO(zhangtiff): Split up GetConfig into multiple calls to
-  // GetLabelOptions, ListComponents, etc.
-  // dispatch(fetchFields(projectName));
   dispatch(fetchPresentationConfig(projectName));
   dispatch(fetchTemplates(projectName));
 
+  const customPermissionsPromise = dispatch(
+      fetchCustomPermissions(projectName));
+
   // TODO(crbug.com/monorail/5828): Remove window.TKR_populateAutocomplete once
   // the old autocomplete code is deprecated.
-  const [config, visibleMembers] = await Promise.all([
+  const [config, visibleMembers, customPermissions] = await Promise.all([
     configPromise,
-    visibleMembersPromise]);
-  window.TKR_populateAutocomplete(config, visibleMembers);
+    visibleMembersPromise,
+    customPermissionsPromise]);
+  config.labelDefs = [...config.labelDefs,
+    ...restrictionLabelsForPermissions(customPermissions)];
+  // eslint-disable-next-line new-cap
+  window.TKR_populateAutocomplete(config, visibleMembers, customPermissions);
 };
 
 /**
@@ -438,9 +459,9 @@ const fetchConfig = (projectName) => async (dispatch) => {
       'monorail.Projects', 'GetConfig', {projectName});
 
   try {
-    const resp = await getConfig;
-    dispatch({type: FETCH_CONFIG_SUCCESS, projectName, config: resp});
-    return resp;
+    const config = await getConfig;
+    dispatch({type: FETCH_CONFIG_SUCCESS, projectName, config});
+    return config;
   } catch (error) {
     dispatch({type: FETCH_CONFIG_FAILURE, error});
   }
@@ -459,6 +480,28 @@ export const fetchPresentationConfig = (projectName) => async (dispatch) => {
     });
   } catch (error) {
     dispatch({type: FETCH_PRESENTATION_CONFIG_FAILURE, error});
+  }
+};
+
+/**
+ * Fetches custom permissions defined for a project.
+ * @param {string} projectName
+ * @return {function(function): Promise<Array<string>>}
+ */
+export const fetchCustomPermissions = (projectName) => async (dispatch) => {
+  dispatch({type: FETCH_CUSTOM_PERMISSIONS_START});
+
+  try {
+    const {permissions} = await prpcClient.call(
+        'monorail.Projects', 'GetCustomPermissions', {projectName});
+    dispatch({
+      type: FETCH_CUSTOM_PERMISSIONS_SUCCESS,
+      projectName,
+      permissions,
+    });
+    return permissions;
+  } catch (error) {
+    dispatch({type: FETCH_CUSTOM_PERMISSIONS_FAILURE, error});
   }
 };
 
@@ -502,22 +545,5 @@ const fetchTemplates = (projectName) => async (dispatch) => {
     });
   } catch (error) {
     dispatch({type: FETCH_TEMPLATES_FAILURE, error});
-  }
-};
-
-export const fetchFields = (projectName) => async (dispatch) => {
-  dispatch({type: FETCH_FIELDS_LIST_START});
-
-  try {
-    const resp = await prpcClient.call(
-        'monorail.Projects', 'ListFields', {
-          projectName: projectName,
-          includeUserChoices: true,
-        },
-    );
-    const fieldDefs = (resp.fieldDefs || []);
-    dispatch({type: FETCH_FIELDS_LIST_SUCCESS, projectName, fieldDefs});
-  } catch (error) {
-    dispatch({type: FETCH_FIELDS_LIST_FAILURE});
   }
 };

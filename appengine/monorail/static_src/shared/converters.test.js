@@ -6,7 +6,8 @@ import {assert} from 'chai';
 import {UserInputError} from 'shared/errors.js';
 import {displayNameToUserRef, userIdOrDisplayNameToUserRef, labelStringToRef,
   labelRefToString, labelRefsToStrings, labelRefsToOneWordLabels,
-  isOneWordLabel, statusRefToString, statusRefsToStrings,
+  isOneWordLabel, _makeRestrictionLabel, restrictionLabelsForPermissions,
+  statusRefToString, statusRefsToStrings,
   componentStringToRef, componentRefToString, componentRefsToStrings,
   issueStringToRef, issueStringToBlockingRef, issueRefToString,
   issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefix,
@@ -92,6 +93,55 @@ describe('isOneWordLabel', () => {
 
     assert.isFalse(isOneWordLabel('Restrict-View-EditIssue'));
     assert.isFalse(isOneWordLabel('Type-Feature'));
+  });
+});
+
+describe('_makeRestrictionLabel', () => {
+  it('creates label', () => {
+    assert.deepEqual(_makeRestrictionLabel('View', 'Google'), {
+      label: `Restrict-View-Google`,
+      docstring: `Permission Google needed to use View`,
+    });
+  });
+
+  it('capitalizes permission name', () => {
+    assert.deepEqual(_makeRestrictionLabel('EditIssue', 'security'), {
+      label: `Restrict-EditIssue-Security`,
+      docstring: `Permission Security needed to use EditIssue`,
+    });
+  });
+});
+
+describe('restrictionLabelsForPermissions', () => {
+  it('creates labels for permissions and actions', () => {
+    assert.deepEqual(restrictionLabelsForPermissions(['google', 'security'],
+        ['View', 'EditIssue'], []), [
+      {
+        label: 'Restrict-View-Google',
+        docstring: 'Permission Google needed to use View',
+      }, {
+        label: 'Restrict-View-Security',
+        docstring: 'Permission Security needed to use View',
+      }, {
+        label: 'Restrict-EditIssue-Google',
+        docstring: 'Permission Google needed to use EditIssue',
+      }, {
+        label: 'Restrict-EditIssue-Security',
+        docstring: 'Permission Security needed to use EditIssue',
+      },
+    ]);
+  });
+
+  it('appends default labels when specified', () => {
+    assert.deepEqual(restrictionLabelsForPermissions(['Google'], ['View'], [
+      {label: 'Restrict-Hello-World', docstring: 'description of label'},
+    ]), [
+      {
+        label: 'Restrict-View-Google',
+        docstring: 'Permission Google needed to use View',
+      },
+      {label: 'Restrict-Hello-World', docstring: 'description of label'},
+    ]);
   });
 });
 

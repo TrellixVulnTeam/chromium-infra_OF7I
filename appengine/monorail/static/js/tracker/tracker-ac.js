@@ -1221,25 +1221,6 @@ function TKR_convertHotlists(hotlists) {
   });
 }
 
-/**
- * Fetch data required for the legacy autocomplete that the SPA does not
- * otherwise already fetch.
- * @param {string} projectName
- */
-function TKR_fetchOptions(projectName) {
-  const projectRequestMessage = {
-    project_name: projectName};
-
-  const customPermissionsPromise = window.prpcClient.call(
-      'monorail.Projects', 'GetCustomPermissions', projectRequestMessage);
-
-  // We won't need custom permissions or hotlists later, so there's no need to
-  // add them to allPromises.
-  customPermissionsPromise.then((customPermissionsResponse) => {
-    TKR_setUpCustomPermissionsStore(customPermissionsResponse.permissions);
-  });
-}
-
 
 /**
  * Initializes hotlists in autocomplete store.
@@ -1255,8 +1236,10 @@ function TKR_populateHotlistAutocomplete(hotlists) {
  * autocomplete.
  * @param {Config} projectConfig Returned projectConfig data.
  * @param {GetVisibleMembersResponse} visibleMembers
+ * @param {Array<string>} customPermissions
  */
-function TKR_populateAutocomplete(projectConfig, visibleMembers) {
+function TKR_populateAutocomplete(projectConfig, visibleMembers,
+    customPermissions = []) {
   const {statusDefs, componentDefs, labelDefs, fieldDefs,
     exclusiveLabelPrefixes, projectName} = projectConfig;
 
@@ -1294,5 +1277,5 @@ function TKR_populateAutocomplete(projectConfig, visibleMembers) {
       labels, memberEmails, open, closed,
       components, fields, nonGroupEmails);
 
-  TKR_fetchOptions(projectName);
+  TKR_setUpCustomPermissionsStore(customPermissions);
 }

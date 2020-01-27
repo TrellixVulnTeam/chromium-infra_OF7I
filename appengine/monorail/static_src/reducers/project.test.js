@@ -16,6 +16,7 @@ describe('project reducers', () => {
       name: null,
       configs: {},
       presentationConfigs: {},
+      customPermissions: {},
       visibleMembers: {},
       templates: {},
       requests: {
@@ -23,7 +24,7 @@ describe('project reducers', () => {
           error: null,
           requesting: false,
         },
-        fetchFields: {
+        fetchCustomPermissions: {
           error: null,
           requesting: false,
         },
@@ -59,14 +60,14 @@ describe('project reducers', () => {
     assert.deepEqual(project.configsReducer({}, action), expected);
   });
 
-  it('configs updates when fetching fields list', () => {
+  it('customPermissions', () => {
     const action = {
-      type: project.FETCH_FIELDS_LIST_SUCCESS,
+      type: project.FETCH_CUSTOM_PERMISSIONS_SUCCESS,
       projectName: example.PROJECT_NAME,
-      fieldDefs: example.FIELD_DEFS,
+      permissions: example.CUSTOM_PERMISSIONS,
     };
-    const expected = {[example.PROJECT_NAME]: {fieldDefs: example.FIELD_DEFS}};
-    assert.deepEqual(project.configsReducer({}, action), expected);
+    const expected = {[example.PROJECT_NAME]: example.CUSTOM_PERMISSIONS};
+    assert.deepEqual(project.customPermissionsReducer({}, action), expected);
   });
 
   it('presentationConfigs', () => {
@@ -758,6 +759,29 @@ describe('project action creators', () => {
     project.select('project-name')(dispatch);
     const action = {type: project.SELECT, projectName: 'project-name'};
     sinon.assert.calledWith(dispatch, action);
+  });
+
+  it('fetchCustomPermissions', async () => {
+    const action = project.fetchCustomPermissions('chromium');
+
+    prpcClient.call.returns(Promise.resolve({permissions: ['google']}));
+
+    await action(dispatch);
+
+    sinon.assert.calledWith(dispatch,
+        {type: project.FETCH_CUSTOM_PERMISSIONS_START});
+
+    sinon.assert.calledWith(
+        prpcClient.call,
+        'monorail.Projects',
+        'GetCustomPermissions',
+        {projectName: 'chromium'});
+
+    sinon.assert.calledWith(dispatch, {
+      type: project.FETCH_CUSTOM_PERMISSIONS_SUCCESS,
+      projectName: 'chromium',
+      permissions: ['google'],
+    });
   });
 
   it('fetchPresentationConfig', async () => {

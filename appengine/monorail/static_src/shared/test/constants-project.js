@@ -56,6 +56,9 @@ export const PRESENTATION_CONFIG = Object.freeze({
   defaultQuery: DEFAULT_QUERY,
 });
 
+/** @type {Array<string>} */
+export const CUSTOM_PERMISSIONS = ['google', 'security'];
+
 /** @type {{userRefs: Array<UserRef>, groupRefs: Array<UserRef>}} */
 export const VISIBLE_MEMBERS = Object.freeze({
   userRefs: [USER_REF],

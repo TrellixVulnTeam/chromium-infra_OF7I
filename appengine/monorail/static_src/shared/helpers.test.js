@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {arrayDifference, setHasAny, hasPrefix, objectToMap, objectValuesForKeys,
-  equalsIgnoreCase, immutableSplice, userIsMember,
+import {arrayDifference, setHasAny, capitalizeFirst, hasPrefix, objectToMap,
+  objectValuesForKeys, equalsIgnoreCase, immutableSplice, userIsMember,
   urlWithNewParams, createObjectComparisonFunc} from './helpers.js';
 
 
@@ -61,6 +61,24 @@ describe('setHasAny', () => {
     assert.isTrue(setHasAny(new Set(['hello', 'world']), ['world']));
     assert.isTrue(setHasAny(new Set([1, 2, 3]), [3, 4, 5]));
     assert.isTrue(setHasAny(new Set([1, 2, 3]), [1, 3]));
+  });
+});
+
+describe('capitalizeFirst', () => {
+  it('empty string', () => {
+    assert.equal(capitalizeFirst(''), '');
+  });
+
+  it('ignores non-letters', () => {
+    assert.equal(capitalizeFirst('8fcsdf'), '8fcsdf');
+  });
+
+  it('preserves existing caps', () => {
+    assert.equal(capitalizeFirst('HELLO world'), 'HELLO world');
+  });
+
+  it('capitalizes lowercase', () => {
+    assert.equal(capitalizeFirst('hello world'), 'Hello world');
   });
 });
 
