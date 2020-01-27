@@ -29,13 +29,19 @@ import (
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server"
+	"go.chromium.org/luci/server/gaeemulation"
+	"go.chromium.org/luci/server/module"
 )
 
 func main() {
+	modules := []module.Module{
+		gaeemulation.NewModuleFromFlags(),
+	}
+
 	cfgLoader := config.Loader{}
 	cfgLoader.RegisterFlags(flag.CommandLine)
 
-	server.Main(nil, func(srv *server.Server) error {
+	server.Main(nil, modules, func(srv *server.Server) error {
 		// Don't check groups when running in dev mode, for simplicity.
 		frontend.SkipAuthorization = !srv.Options.Prod
 
@@ -54,7 +60,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-		srv.RegisterCleanup(func() { bi.CloseAndDrain(srv.Context) })
+		srv.RegisterCleanup(bi.CloseAndDrain)
 
 		// Make config and eventlog implementations available to all handlers.
 		srv.Context = config.Use(srv.Context, cfgLoader.Config)
