@@ -48,6 +48,7 @@ from framework import warmup
 
 from project import peopledetail
 from project import peoplelist
+from project import project_constants
 from project import projectadmin
 from project import projectadminadvanced
 from project import projectexport
