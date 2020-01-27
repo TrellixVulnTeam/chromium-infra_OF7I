@@ -36,7 +36,10 @@ import (
 // InstallHandlers installs the handlers implemented by the frontend package.
 func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	api := prpc.Server{
-		UnaryServerInterceptor: grpcmon.NewUnaryServerInterceptor(grpcutil.NewUnaryServerPanicCatcher(nil)),
+		UnaryServerInterceptor: grpcutil.ChainUnaryServerInterceptors(
+			grpcmon.UnaryServerInterceptor,
+			grpcutil.UnaryServerPanicCatcherInterceptor,
+		),
 	}
 	fleet.RegisterTrackerServer(&api, &fleet.DecoratedTracker{
 		Service: &TrackerServerImpl{},

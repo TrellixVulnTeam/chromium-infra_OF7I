@@ -24,7 +24,6 @@ import (
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -34,11 +33,11 @@ import (
 
 // InstallHandlers installs the handlers implemented by the frontend package.
 func InstallHandlers(r *router.Router, mw router.MiddlewareChain) {
-	var si grpc.UnaryServerInterceptor
-	si = grpcutil.NewUnaryServerPanicCatcher(si)
-	si = grpcmon.NewUnaryServerInterceptor(si)
 	s := prpc.Server{
-		UnaryServerInterceptor: si,
+		UnaryServerInterceptor: grpcutil.ChainUnaryServerInterceptors(
+			grpcmon.UnaryServerInterceptor,
+			grpcutil.UnaryServerPanicCatcherInterceptor,
+		),
 	}
 	var q DroneQueenImpl
 	api.RegisterDroneServer(&s, &api.DecoratedDrone{
