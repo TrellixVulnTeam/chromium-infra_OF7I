@@ -269,7 +269,7 @@ export class MrApp extends connectStore(LitElement) {
 
     page('/users/:user/hotlists/:hotlist/*', this._selectHotlist);
     page(
-        '/users/:user/hotlists/:hotlist',
+        '/users/:user/hotlists/:hotlist', this._selectHotlist,
         this._loadHotlistIssuesPage.bind(this), postRouteHandler);
     page(
         '/users/:user/hotlists/:hotlist/details',
