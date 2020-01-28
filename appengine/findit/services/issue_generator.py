@@ -513,7 +513,7 @@ class FlakeAnalysisIssueGenerator(FlakyTestIssueGenerator):
     flaky_test_labels = self._GetCommonFlakyTestLabel()
     flaky_test_labels.append(priority)
     flaky_test_labels.append(issue_constants.FINDIT_ANALYZED_LABEL_TEXT)
-    if self.GetAutoAssignOwner():
+    if self.GetAutoAssignOwner() or self.GetComponents():
       flaky_test_labels.remove(issue_constants.SHERIFF_CHROMIUM_LABEL)
     return flaky_test_labels
 
@@ -587,6 +587,8 @@ class FlakeDetectionIssueGenerator(FlakyTestIssueGenerator):
     priority = self.GetPriority()
     flaky_test_labels.append(priority)
     flaky_test_labels.append(issue_constants.FLAKE_DETECTION_LABEL_TEXT)
+    if self.GetComponents():
+      flaky_test_labels.remove(issue_constants.SHERIFF_CHROMIUM_LABEL)
     return flaky_test_labels
 
   def OnIssueCreated(self):
@@ -772,6 +774,8 @@ class FlakeDetectionGroupIssueGenerator(BaseFlakeIssueGenerator):
     priority = self.GetPriority()
     flaky_test_labels.append(priority)
     flaky_test_labels.append(issue_constants.FLAKE_DETECTION_LABEL_TEXT)
+    if self.GetComponents():
+      flaky_test_labels.remove(issue_constants.SHERIFF_CHROMIUM_LABEL)
     return flaky_test_labels
 
   def OnIssueCreated(self):

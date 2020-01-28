@@ -370,10 +370,7 @@ If the result above is wrong, please file a bug using this link:
 Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
         flake.key.urlsafe(), expected_wrong_result_link)
 
-    expected_labels = [
-        'Type-Bug', 'Test-Flaky', 'Test-Flake-Detected', 'Pri-1',
-        'Sheriff-Chromium'
-    ]
+    expected_labels = ['Type-Bug', 'Test-Flaky', 'Test-Flake-Detected', 'Pri-1']
 
     self.assertTrue(mock_create_bug_fn.called)
     self.assertFalse(mock_update_bug_fn.called)
@@ -1166,8 +1163,10 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
     self.assertTrue(mock_first_comment.called)
 
     expected_labels = [
-        'Type-Bug', 'Test-Flaky', 'Test-Flake-Detected', 'Pri-1',
-        'Sheriff-Chromium'
+        'Type-Bug',
+        'Test-Flaky',
+        'Test-Flake-Detected',
+        'Pri-1',
     ]
     issue = mock_create_bug.call_args_list[0][0][0]
     self.assertEqual(['Blink'], issue.components)

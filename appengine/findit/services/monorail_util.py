@@ -254,9 +254,15 @@ def UpdateIssueWithIssueGenerator(issue_id, issue_generator, reopen=False):
     if label.startswith('Pri-'):
       continue
 
-    if (label == issue_constants.SHERIFF_CHROMIUM_LABEL and
-        not issue_generator.ShouldRestoreChromiumSheriffLabel()):
-      continue
+    if label == issue_constants.SHERIFF_CHROMIUM_LABEL:
+      if not issue_generator.ShouldRestoreChromiumSheriffLabel():
+        continue
+
+      if issue.owner:
+        continue
+
+      if issue.components:
+        continue
 
     if label not in issue.labels:
       issue.labels.append(label)

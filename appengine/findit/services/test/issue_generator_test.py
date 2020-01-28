@@ -159,6 +159,11 @@ class IssueGeneratorTest(WaterfallTestCase):
     self.assertEqual(expected_description,
                      self._GetIssueGenerator().GetDescription())
 
+  def testGetLabels(self):
+    self.assertListEqual(
+        ['Type-Bug', 'Test-Flaky', 'Pri-1', 'Test-Flake-Detected'],
+        self._GetIssueGenerator().GetLabels())
+
   def testGetFirstCommentWhenBugJustCreated(self):
     issue_generator_new = self._GetIssueGenerator()
     flake_issue = FlakeIssue.Create('chromium', 12345)
