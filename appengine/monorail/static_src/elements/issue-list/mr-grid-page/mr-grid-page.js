@@ -79,7 +79,7 @@ export class MrGridPage extends connectStore(LitElement) {
       fields: {type: Array},
       progress: {type: Number},
       totalIssues: {type: Number},
-      _fetchingPresentationConfig: {type: Boolean},
+      _presentationConfigLoaded: {type: Boolean},
     };
   };
 
@@ -91,6 +91,7 @@ export class MrGridPage extends connectStore(LitElement) {
     /** @type {string} */
     this.projectName;
     this._queryParams = {};
+    this._presentationConfigLoaded = false;
   };
 
   /** @override */
@@ -112,11 +113,11 @@ export class MrGridPage extends connectStore(LitElement) {
    */
   _shouldFetchMatchingIssues(changedProperties) {
     const wait = shouldWaitForDefaultQuery(this._queryParams);
-    if (wait) {
-      if (changedProperties.has('_fetchingPresentationConfig') &&
-        !this._fetchingPresentationConfig) {
-        return true;
-      }
+    if (wait && !this._presentationConfigLoaded) {
+      return false;
+    } else if (wait && this._presentationConfigLoaded &&
+        changedProperties.has('_presentationConfigLoaded')) {
+      return true;
     } else {
       if (changedProperties.has('projectName')) {
         return true;
@@ -148,8 +149,8 @@ export class MrGridPage extends connectStore(LitElement) {
     this.totalIssues = (issue.totalIssues(state) || 0);
     this._queryParams = sitewide.queryParams(state);
     this._currentQuery = sitewide.currentQuery(state);
-    this._fetchingPresentationConfig =
-        project.fetchingPresentationConfig(state);
+    this._presentationConfigLoaded =
+      project.viewedPresentationConfigLoaded(state);
   }
 
   /** @override */

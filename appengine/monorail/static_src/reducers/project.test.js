@@ -198,6 +198,28 @@ describe('project selectors', () => {
     assert.deepEqual(project.optionsPerEnumField(example.STATE), expected);
   });
 
+  it('viewedPresentationConfigLoaded', () => {
+    const loadConfigAction = {
+      type: project.FETCH_PRESENTATION_CONFIG_SUCCESS,
+      projectName: example.PROJECT_NAME,
+      presentationConfig: example.PRESENTATION_CONFIG,
+    };
+    const selectProjectAction = {
+      type: project.SELECT,
+      projectName: example.PROJECT_NAME,
+    };
+    let projectState = {};
+
+    assert.equal(false, project.viewedPresentationConfigLoaded(
+        {project: projectState}));
+
+    projectState = project.reducer(projectState, selectProjectAction);
+    projectState = project.reducer(projectState, loadConfigAction);
+
+    assert.equal(true, project.viewedPresentationConfigLoaded(
+        {project: projectState}));
+  });
+
   it('fetchingPresentationConfig', () => {
     const projectState = project.reducer(undefined, {type: null});
     assert.equal(false,

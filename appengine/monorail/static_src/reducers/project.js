@@ -59,6 +59,7 @@ const FETCH_TEMPLATES_FAILURE = 'project/FETCH_TEMPLATES_FAILURE';
   visibleMembers:
       Object.<string, {userRefs: Array<UserRef>, groupRefs: Array<UserRef>}>,
   templates: Object.<string, Array<TemplateDef>>,
+  presentationConfigsLoaded: Object.<string, boolean>,
 
   requests: {
     fetchConfig: ReduxRequestState,
@@ -89,7 +90,6 @@ export const presentationConfigsReducer = createReducer({}, {
       [projectName]: presentationConfig,
     }),
 });
-
 
 /**
  * Adds custom permissions to Redux in a normalized state.
@@ -169,6 +169,12 @@ export const viewedConfig = createSelector(
 export const viewedPresentationConfig = createSelector(
     [viewedProjectName, presentationConfigs],
     (projectName, configs) => configs[projectName] || {});
+
+// TODO(crbug.com/monorail/7080): Come up with a more clear and
+// consistent pattern for determining when data is loaded.
+export const viewedPresentationConfigLoaded = createSelector(
+    [viewedProjectName, presentationConfigs],
+    (projectName, configs) => !!configs[projectName]);
 export const viewedVisibleMembers = createSelector(
     [viewedProjectName, visibleMembers],
     (projectName, visibleMembers) => visibleMembers[projectName] || {});

@@ -207,10 +207,10 @@ describe('mr-list-page', () => {
     element.refresh.restore();
   });
 
-  it('refreshes when not fetching presentation config', async () => {
+  it('does not refresh when presentation config not fetched', async () => {
     sinon.stub(element, 'refresh');
 
-    element._fetchingPresentationConfig = true;
+    element._presentationConfigLoaded = false;
     element.currentQuery = 'some query term';
 
     await element.updateComplete;
@@ -222,12 +222,13 @@ describe('mr-list-page', () => {
   it('refreshes if presentation config fetch finishes last', async () => {
     sinon.stub(element, 'refresh');
 
-    element._fetchingPresentationConfig = true;
+    element._presentationConfigLoaded = false;
 
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 0);
 
-    element._fetchingPresentationConfig = false;
+    element._presentationConfigLoaded = true;
+    element.currentQuery = 'some query term';
 
     await element.updateComplete;
     sinon.assert.callCount(element.refresh, 1);

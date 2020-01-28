@@ -322,7 +322,7 @@ export class MrListPage extends connectStore(LitElement) {
       _currentUser: {type: Object},
       _usersProjects: {type: Object},
       _fetchIssueListError: {type: String},
-      _fetchingPresentationConfig: {type: Boolean},
+      _presentationConfigLoaded: {type: Boolean},
     };
   };
 
@@ -335,6 +335,7 @@ export class MrListPage extends connectStore(LitElement) {
     this._queryParams = {};
     this.columns = [];
     this._usersProjects = new Map();
+    this._presentationConfigLoaded = false;
 
     this._boundRefresh = this.refresh.bind(this);
 
@@ -412,16 +413,15 @@ export class MrListPage extends connectStore(LitElement) {
   /**
    * Considers if list-page should fetch ListIssues
    * @param {Map} changedProperties
-   * @return {Booealn}
+   * @return {boolean}
    */
   _shouldRefresh(changedProperties) {
     const wait = shouldWaitForDefaultQuery(this._queryParams);
-
-    if (wait) {
-      if (changedProperties.has('_fetchingPresentationConfig') &&
-        !this._fetchingPresentationConfig) {
-        return true;
-      }
+    if (wait && !this._presentationConfigLoaded) {
+      return false;
+    } else if (wait && this._presentationConfigLoaded &&
+        changedProperties.has('_presentationConfigLoaded')) {
+      return true;
     } else if (changedProperties.has('projectName') ||
           changedProperties.has('currentQuery') ||
           changedProperties.has('currentCan')) {
@@ -494,8 +494,8 @@ export class MrListPage extends connectStore(LitElement) {
     this._queryParams = sitewide.queryParams(state);
 
     this._extractFieldValues = project.extractFieldValuesFromIssue(state);
-    this._fetchingPresentationConfig =
-        project.fetchingPresentationConfig(state);
+    this._presentationConfigLoaded =
+      project.viewedPresentationConfigLoaded(state);
   }
 
   /**

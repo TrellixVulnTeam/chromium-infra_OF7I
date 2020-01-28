@@ -86,8 +86,8 @@ describe('mr-grid-page', () => {
       assert.isTrue(result);
     });
 
-    it('returns false when fetchingPresentationConfig', () => {
-      element._fetchingPresentationConfig = true;
+    it('returns false when presentation config not loaded', () => {
+      element._presentationConfigLoaded = false;
 
       const changedProps = new Map();
       changedProps.set('projectName', 'anything');
@@ -97,10 +97,10 @@ describe('mr-grid-page', () => {
     });
 
     it('returns true when presentationConfig fetch completes', () => {
-      element._fetchingPresentationConfig = false;
+      element._presentationConfigLoaded = true;
 
       const changedProps = new Map();
-      changedProps.set('_fetchingPresentationConfig', true);
+      changedProps.set('_presentationConfigLoaded', false);
       const result = element._shouldFetchMatchingIssues(changedProps);
 
       assert.isTrue(result);
