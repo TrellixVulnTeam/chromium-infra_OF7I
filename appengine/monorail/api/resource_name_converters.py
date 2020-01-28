@@ -27,6 +27,11 @@ HOTLIST_ITEM_NAME_RE = re.compile(
         HOTLIST_PATTERN,
         project_constants.PROJECT_NAME_PATTERN))
 
+# Constants that hold the template patterns for creating resource names.
+HOTLIST_NAME_TMPL = 'hotlists/{hotlist_id}'
+HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
+    HOTLIST_NAME_TMPL)
+
 
 def _GetResourceNameMatch(name, regex):
   # (string, Pattern[str]) -> Match[str]
@@ -64,7 +69,7 @@ def IngestHotlistName(name):
 
 
 def IngestHotlistItemNames(cnxn, names, services):
-  # List[Tuple[project_name, issue_local_id]] -> Collection(ints)
+  # (MonorailConnection, Sequence[str], Services -> Sequence[int]
   """Takes HotlistItem resource names and returns the associated Issues' IDs.
 
   Args:
@@ -106,3 +111,46 @@ def IngestHotlistItemNames(cnxn, names, services):
     raise exceptions.NoSuchIssueException(
         'Issue(s) %r associated with HotlistItems not found' % misses)
   return issue_ids
+
+
+def ConvertHotlistName(hotlist):
+  # Hotlist -> string
+  """Takes a Hotlist and returns the Hotlist's resource name.
+
+  Args:
+    hotlist: Hotlist protorpc object.
+
+  Returns:
+    The resource name of the Hotlist
+  """
+  return HOTLIST_NAME_TMPL.format(hotlist_id=hotlist.hotlist_id)
+
+
+def ConvertHotlistItemNames(cnxn, hotlist, services):
+  # MonorailConnection, Hotlist, Services -> List[str]
+  """Takes a Hotlist and returns the Hotlist items' resource names.
+
+  Args:
+    cnxn: MonorailConnection
+    hotlist: Hotlist protorpc object.
+    services: Services object for connections to backend services.
+
+  Returns:
+    List of resource names of the Hotlist's items in the same order
+      that they appear in the Hotlist.
+  """
+  issue_ids = [item.issue_id for item in hotlist.items]
+
+  # {issue_id: (project_name, local_id),...}
+  issue_refs_dict = services.issue.LookupIssueRefs(cnxn, issue_ids)
+
+  names = []
+  for issue_id in issue_ids:
+    project_name, local_id = issue_refs_dict.get(issue_id, (None, None))
+    if project_name and local_id:
+      names.append(
+          HOTLIST_ITEM_NAME_TMPL.format(
+              hotlist_id=hotlist.hotlist_id,
+              project_name=project_name, local_id=local_id))
+
+  return names

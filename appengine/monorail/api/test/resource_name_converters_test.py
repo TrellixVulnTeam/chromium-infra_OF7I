@@ -22,8 +22,11 @@ class ResourceNameConverterTest(unittest.TestCase):
   def setUp(self):
     self.services = service_manager.Services(
         issue=fake.IssueService(),
-        project=fake.ProjectService())
+        project=fake.ProjectService(),
+        user=fake.UserService(),
+        features=fake.FeaturesService())
     self.cnxn = fake.MonorailConnection()
+    self.PAST_TIME = 12345
     self.project_1 = self.services.project.TestAddProject(
         'proj', project_id=789)
     self.project_2 = self.services.project.TestAddProject(
@@ -37,6 +40,17 @@ class ResourceNameConverterTest(unittest.TestCase):
         project_name=self.project_2.project_name)
     self.services.issue.TestAddIssue(self.issue_1)
     self.services.issue.TestAddIssue(self.issue_2)
+
+    self.user_1 = self.services.user.TestAddUser('user_111@example.com', 111)
+    self.user_2 = self.services.user.TestAddUser('user_222@example.com', 222)
+    self.user_3 = self.services.user.TestAddUser('user_333@example.com', 333)
+
+    hotlist_items = [
+        (self.issue_1.issue_id, 9, self.user_2.user_id, self.PAST_TIME, 'note'),
+        (self.issue_2.issue_id, 1, self.user_1.user_id, self.PAST_TIME, 'note')]
+    self.hotlist_1 = self.services.features.TestAddHotlist(
+        'HotlistName', owner_ids=[], editor_ids=[],
+        hotlist_item_fields=hotlist_items)
 
   def testGetResourceNameMatch(self):
     """We can get a resource name match."""
@@ -87,3 +101,22 @@ class ResourceNameConverterTest(unittest.TestCase):
         'hotlists/78909/items/%s.5' % (self.project_2.project_name)]
     with self.assertRaises(exceptions.NoSuchIssueException):
       rnc.IngestHotlistItemNames(self.cnxn, names, self.services)
+
+  def testConvertHotlistName(self):
+    """We can get a Hotlist's resource name."""
+    self.assertEqual(
+        rnc.ConvertHotlistName(
+            self.hotlist_1), 'hotlists/%s' % self.hotlist_1.hotlist_id)
+
+  def testConvertHotlistItemNames(self):
+    """We can get Hotlist items' resource names."""
+    expected_names = [
+        'hotlists/%s/items/%s.%s' % (
+            self.hotlist_1.hotlist_id, self.project_1.project_name,
+            self.issue_1.local_id),
+        'hotlists/%s/items/%s.%s' % (
+            self.hotlist_1.hotlist_id, self.project_2.project_name,
+            self.issue_2.local_id)]
+    self.assertEqual(
+        rnc.ConvertHotlistItemNames(self.cnxn, self.hotlist_1, self.services),
+        expected_names)
