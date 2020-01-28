@@ -17,6 +17,7 @@ import (
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/swarming"
 )
@@ -37,6 +38,7 @@ Do not build automation around this subcommand.`,
 		c.envFlags.Register(&c.Flags)
 		// use a float so that large values passed on the command line are NOT wrapped.
 		c.Flags.Float64Var(&c.leaseMinutes, "minutes", 60, "Duration of lease.")
+		c.Flags.StringVar(&c.leaseReason, "reason", "", "The reason to perform this lease, it must match crbug.com/NNNN or b/NNNN.")
 		return c
 	},
 }
@@ -46,6 +48,7 @@ type leaseDutRun struct {
 	authFlags    authcli.Flags
 	envFlags     skycmdlib.EnvFlags
 	leaseMinutes float64
+	leaseReason  string
 }
 
 func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -66,6 +69,12 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	if c.leaseMinutes > threeDaysInMinutes {
 		return cmdlib.NewUsageError(c.Flags, "Lease duration (%d minutes) cannot exceed 3 days [%d minutes]", int64(c.leaseMinutes), threeDaysInMinutes)
 	}
+	if len(c.leaseReason) > 30 {
+		return cmdlib.NewUsageError(c.Flags, "the lease reason is limited in 30 characters")
+	}
+	if userinput.ValidBug(c.leaseReason) {
+		return cmdlib.NewUsageError(c.Flags, "the lease reason must match crbug.com/NNNN or b/NNNN")
+	}
 	host := args[0]
 
 	ctx := cli.GetContext(a, c, env)
@@ -82,6 +91,7 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	lt := leaseTask{
 		host:     host,
 		duration: time.Duration(c.leaseMinutes) * time.Minute,
+		reason:   c.leaseReason,
 	}
 	id, err := createLeaseTask(ctx, client, e, lt)
 	if err != nil {
@@ -115,6 +125,7 @@ poll:
 type leaseTask struct {
 	host     string
 	duration time.Duration
+	reason   string
 }
 
 func createLeaseTask(ctx context.Context, t *swarming.Client, e site.Environment, lt leaseTask) (taskID string, err error) {
@@ -141,6 +152,7 @@ func createLeaseTask(ctx context.Context, t *swarming.Client, e site.Environment
 			// harmless otherwise.
 			"qs_account:leases",
 			fmt.Sprintf("dut-name:%s", lt.host),
+			fmt.Sprintf("lease-reason:%s", lt.reason),
 		},
 		TaskSlices:     slices,
 		Priority:       10,

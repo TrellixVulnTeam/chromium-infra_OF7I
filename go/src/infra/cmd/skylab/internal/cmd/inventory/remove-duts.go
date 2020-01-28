@@ -130,7 +130,7 @@ func (c *removeDutsRun) validateArgs() error {
 	if c.removalReason.Bug == "" && !c.delete {
 		errs = append(errs, "-bug is required when not deleting")
 	}
-	if c.removalReason.Bug != "" && !validBug(c.removalReason.Bug) {
+	if c.removalReason.Bug != "" && !userinput.ValidBug(c.removalReason.Bug) {
 		errs = append(errs, "-bug must match crbug.com/NNNN or b/NNNN")
 	}
 	// Limit to roughly one line, like a commit message first line.
@@ -141,17 +141,6 @@ func (c *removeDutsRun) validateArgs() error {
 		return cmdlib.NewUsageError(c.Flags, strings.Join(errs, ", "))
 	}
 	return nil
-}
-
-// validBug returns true if the given bug string is acceptably formatted.
-func validBug(bug string) bool {
-	if strings.HasPrefix(bug, "b/") {
-		return true
-	}
-	if strings.HasPrefix(bug, "crbug.com/") {
-		return true
-	}
-	return false
 }
 
 func (client *inventoryClientV1) removeDUTs(ctx context.Context, drone string, hostnames []string, rr skycmdlib.RemovalReason, stdout io.Writer) (modified bool, err error) {
