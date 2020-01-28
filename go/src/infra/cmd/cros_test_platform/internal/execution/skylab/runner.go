@@ -52,6 +52,12 @@ func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, re
 	}, nil
 }
 
+// Clients bundles local interfaces to various remote services used by Runner.
+type Clients struct {
+	Swarming      swarming.Client
+	IsolateGetter isolate.GetterFactory
+}
+
 // LaunchAndWait launches a skylab execution and waits for it to complete,
 // polling for new results periodically, and retrying tests that need retry,
 // based on retry policy.
@@ -59,14 +65,14 @@ func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, re
 // If the supplied context is cancelled prior to completion, or some other error
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
-func (r *Runner) LaunchAndWait(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
+func (r *Runner) LaunchAndWait(ctx context.Context, clients Clients) error {
 	defer func() { r.running = false }()
 
-	if err := r.launchTasks(ctx, client); err != nil {
+	if err := r.launchTasks(ctx, clients.Swarming); err != nil {
 		return err
 	}
 	for {
-		if err := r.checkTasksAndRetry(ctx, client, gf); err != nil {
+		if err := r.checkTasksAndRetry(ctx, clients.Swarming, clients.IsolateGetter); err != nil {
 			return err
 		}
 		if r.completed() {

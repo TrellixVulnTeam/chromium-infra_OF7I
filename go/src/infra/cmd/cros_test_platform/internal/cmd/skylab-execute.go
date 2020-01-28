@@ -229,7 +229,10 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner *skylab.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("cros_test_platform request timeout (after %s)", maximumDuration))
 	defer cancel(context.Canceled)
-	err := runner.LaunchAndWait(ctx, t, gf)
+	err := runner.LaunchAndWait(ctx, skylab.Clients{
+		Swarming:      t,
+		IsolateGetter: gf,
+	})
 	return runner.Responses(t), err
 }
 

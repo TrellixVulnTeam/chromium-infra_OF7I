@@ -248,8 +248,6 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 
 		swarming := newFakeSwarming("")
 		swarming.SetCannedBotExistsResponse(false)
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{
 			clientTestInvocation("", ""),
@@ -259,7 +257,10 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 			ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 			So(err, ShouldBeNil)
 			run := skylab.NewRunnerWithTaskSets(ts)
-			err = run.LaunchAndWait(ctx, swarming, gf)
+			err = run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(newFakeGetter()),
+			})
 			So(err, ShouldBeNil)
 
 			resp := getSingleResponse(run, swarming)
@@ -287,10 +288,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 func TestLaunchAndWaitTest(t *testing.T) {
 	Convey("Given two enumerated test", t, func() {
 		ctx := context.Background()
-
 		swarming := newFakeSwarming("")
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		var invs []*steps.EnumerationResponse_AutotestInvocation
 		invs = append(invs, clientTestInvocation("", ""), clientTestInvocation("", ""))
@@ -300,7 +298,10 @@ func TestLaunchAndWaitTest(t *testing.T) {
 			So(err, ShouldBeNil)
 			run := skylab.NewRunnerWithTaskSets(ts)
 
-			err = run.LaunchAndWait(ctx, swarming, gf)
+			err = run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(newFakeGetter()),
+			})
 			So(err, ShouldBeNil)
 
 			resp := getSingleResponse(run, swarming)
@@ -368,17 +369,19 @@ func TestTaskStates(t *testing.T) {
 		}
 		for _, c := range cases {
 			Convey(c.description, func() {
+				ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
+				So(err, ShouldBeNil)
+				run := skylab.NewRunnerWithTaskSets(ts)
+
 				swarming := newFakeSwarming("")
 				swarming.setTaskState(c.swarmingState)
 				swarming.setHasOutputRef(c.hasRef)
 				getter := newFakeGetter()
 				getter.SetAutotestResultGenerator(autotestResultAlwaysEmpty)
-				gf := fakeGetterFactory(getter)
-
-				ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
-				So(err, ShouldBeNil)
-				run := skylab.NewRunnerWithTaskSets(ts)
-				err = run.LaunchAndWait(ctx, swarming, gf)
+				err = run.LaunchAndWait(ctx, skylab.Clients{
+					Swarming:      swarming,
+					IsolateGetter: fakeGetterFactory(getter),
+				})
 				So(err, ShouldBeNil)
 
 				Convey("then the task state is correct.", func() {
@@ -395,8 +398,6 @@ func TestServiceError(t *testing.T) {
 	Convey("Given a single enumerated test", t, func() {
 		ctx := context.Background()
 		swarming := newFakeSwarming("")
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
 		ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
@@ -405,7 +406,10 @@ func TestServiceError(t *testing.T) {
 
 		Convey("when the swarming service immediately returns errors, that error is surfaced as a launch error.", func() {
 			swarming.setError(fmt.Errorf("foo error"))
-			err := run.LaunchAndWait(ctx, swarming, gf)
+			err = run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(newFakeGetter()),
+			})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "launch attempt")
 			So(err.Error(), ShouldContainSubstring, "foo error")
@@ -415,7 +419,10 @@ func TestServiceError(t *testing.T) {
 			swarming.setCallback(func() {
 				swarming.setError(fmt.Errorf("foo error"))
 			})
-			err := run.LaunchAndWait(ctx, swarming, gf)
+			err = run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(newFakeGetter()),
+			})
 			So(err.Error(), ShouldContainSubstring, "tick for task")
 			So(err.Error(), ShouldContainSubstring, "foo error")
 		})
@@ -427,15 +434,16 @@ func TestTaskURL(t *testing.T) {
 		ctx := context.Background()
 		swarming_service := "https://foo.bar.com/"
 		swarming := newFakeSwarming(swarming_service)
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
 		ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, swarming, gf)
+		err = run.LaunchAndWait(ctx, skylab.Clients{
+			Swarming:      swarming,
+			IsolateGetter: fakeGetterFactory(newFakeGetter()),
+		})
 		So(err, ShouldBeNil)
 
 		resp := getSingleResponse(run, swarming)
@@ -449,11 +457,8 @@ func TestTaskURL(t *testing.T) {
 func TestIncompleteWait(t *testing.T) {
 	Convey("Given a run that is cancelled while running, error and response reflect cancellation.", t, func() {
 		ctx, cancel := context.WithCancel(context.Background())
-
 		swarming := newFakeSwarming("")
 		swarming.setTaskState(jsonrpc.TaskState_RUNNING)
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
 		ts, err := skylab.NewTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id")
@@ -463,7 +468,10 @@ func TestIncompleteWait(t *testing.T) {
 		wg := sync.WaitGroup{}
 		wg.Add(1)
 		go func() {
-			err = run.LaunchAndWait(ctx, swarming, gf)
+			err = run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(newFakeGetter()),
+			})
 			wg.Done()
 		}()
 
@@ -486,8 +494,6 @@ func TestRequestArguments(t *testing.T) {
 	Convey("Given a server test with autotest labels", t, func() {
 		ctx := context.Background()
 		swarming := newFakeSwarming("")
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		inv := serverTestInvocation("name1", "foo-arg1 foo-arg2")
 		addAutotestDependency(inv, "cr50:pvt")
@@ -499,7 +505,10 @@ func TestRequestArguments(t *testing.T) {
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, swarming, gf)
+		err = run.LaunchAndWait(ctx, skylab.Clients{
+			Swarming:      swarming,
+			IsolateGetter: fakeGetterFactory(newFakeGetter()),
+		})
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have correct parameters.", func() {
@@ -630,8 +639,6 @@ func TestInvocationKeyvals(t *testing.T) {
 	Convey("Given an enumeration with a suite keyval", t, func() {
 		ctx := context.Background()
 		swarming := newFakeSwarming("")
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{
 			{
@@ -652,7 +659,10 @@ func TestInvocationKeyvals(t *testing.T) {
 			So(err, ShouldBeNil)
 			run := skylab.NewRunnerWithTaskSets(ts)
 
-			err = run.LaunchAndWait(ctx, swarming, gf)
+			err = run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(newFakeGetter()),
+			})
 			So(err, ShouldBeNil)
 			Convey("created command includes invocation suite keyval", func() {
 				So(swarming.createCalls, ShouldHaveLength, 1)
@@ -678,7 +688,10 @@ func TestInvocationKeyvals(t *testing.T) {
 			So(err, ShouldBeNil)
 			run := skylab.NewRunnerWithTaskSets(ts)
 
-			err = run.LaunchAndWait(ctx, swarming, gf)
+			err = run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(newFakeGetter()),
+			})
 			So(err, ShouldBeNil)
 			Convey("created command includes request suite keyval", func() {
 				So(swarming.createCalls, ShouldHaveLength, 1)
@@ -716,8 +729,6 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 	Convey("Given a request with a suite keyval", t, func() {
 		ctx := context.Background()
 		swarming := newFakeSwarming("")
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		p := basicParams()
 		p.Decorations = &test_platform.Request_Params_Decorations{
@@ -747,7 +758,10 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 				ts, err := skylab.NewTaskSet(invs, p, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
-				err = run.LaunchAndWait(ctx, swarming, gf)
+				err = run.LaunchAndWait(ctx, skylab.Clients{
+					Swarming:      swarming,
+					IsolateGetter: fakeGetterFactory(newFakeGetter()),
+				})
 				So(err, ShouldBeNil)
 
 				So(swarming.createCalls, ShouldHaveLength, 2)
@@ -777,7 +791,6 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 			Allow: true,
 		}
 		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 		Convey("and two tests that always fail and retry limit", func() {
 			getter.SetAutotestResultGenerator(autotestResultAlwaysFail)
 			invs := invocationsWithServerTests("name1", "name2")
@@ -789,7 +802,10 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 				ts, err := skylab.NewTaskSet(invs, params, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
-				err = run.LaunchAndWait(ctx, swarming, gf)
+				err = run.LaunchAndWait(ctx, skylab.Clients{
+					Swarming:      swarming,
+					IsolateGetter: fakeGetterFactory(getter),
+				})
 				So(err, ShouldBeNil)
 				resp := getSingleResponse(run, swarming)
 				Convey("response should contain two enumerated results", func() {
@@ -840,7 +856,6 @@ func TestRetries(t *testing.T) {
 		swarming := newFakeSwarming("")
 		params := basicParams()
 		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		cases := []struct {
 			name        string
@@ -1033,7 +1048,10 @@ func TestRetries(t *testing.T) {
 				ts, err := skylab.NewTaskSet(c.invocations, params, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
-				err = run.LaunchAndWait(ctx, swarming, gf)
+				err = run.LaunchAndWait(ctx, skylab.Clients{
+					Swarming:      swarming,
+					IsolateGetter: fakeGetterFactory(getter),
+				})
 				So(err, ShouldBeNil)
 				resp := getSingleResponse(run, swarming)
 
@@ -1113,7 +1131,10 @@ func TestClientTestArg(t *testing.T) {
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, swarming, fakeGetterFactory(newFakeGetter()))
+		err = run.LaunchAndWait(ctx, skylab.Clients{
+			Swarming:      swarming,
+			IsolateGetter: fakeGetterFactory(newFakeGetter()),
+		})
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have correct parameters.", func() {
@@ -1142,7 +1163,10 @@ func TestQuotaSchedulerAccount(t *testing.T) {
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, swarming, fakeGetterFactory(newFakeGetter()))
+		err = run.LaunchAndWait(ctx, skylab.Clients{
+			Swarming:      swarming,
+			IsolateGetter: fakeGetterFactory(newFakeGetter()),
+		})
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have a tag specifying the correct quota account and run in the quota pool.", func() {
@@ -1174,7 +1198,10 @@ func TestUnmanagedPool(t *testing.T) {
 		So(err, ShouldBeNil)
 		run := skylab.NewRunnerWithTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, swarming, fakeGetterFactory(newFakeGetter()))
+		err = run.LaunchAndWait(ctx, skylab.Clients{
+			Swarming:      swarming,
+			IsolateGetter: fakeGetterFactory(newFakeGetter()),
+		})
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request run in the unmanaged pool.", func() {
@@ -1207,8 +1234,6 @@ func TestResponseVerdict(t *testing.T) {
 		swarming := newFakeSwarming("")
 		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
 		params := basicParams()
-		getter := newFakeGetter()
-		gf := fakeGetterFactory(getter)
 
 		taskSets, err := skylab.NewTaskSet(invs, params, basicConfig(), "foo-parent-task-id")
 		So(err, ShouldBeNil)
@@ -1228,7 +1253,10 @@ func TestResponseVerdict(t *testing.T) {
 				defer wg.Done()
 				// Can't verify error returned is nil because Convey() doesn't
 				// like assertions in goroutines.
-				_ = run.LaunchAndWait(ctx, swarming, gf)
+				_ = run.LaunchAndWait(ctx, skylab.Clients{
+					Swarming:      swarming,
+					IsolateGetter: fakeGetterFactory(newFakeGetter()),
+				})
 			}()
 
 			resp := getSingleResponse(run, swarming)
@@ -1237,17 +1265,24 @@ func TestResponseVerdict(t *testing.T) {
 		})
 
 		Convey("when the test passed, response verdict is correct.", func() {
+			getter := newFakeGetter()
 			getter.SetAutotestResultGenerator(autotestResultAlwaysPass)
-
-			run.LaunchAndWait(ctx, swarming, gf)
+			run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(getter),
+			})
 			resp := getSingleResponse(run, swarming)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_PASSED)
 		})
 
 		Convey("when the test failed, response verdict is correct.", func() {
+			getter := newFakeGetter()
 			getter.SetAutotestResultGenerator(autotestResultAlwaysFail)
-			run.LaunchAndWait(ctx, swarming, gf)
+			run.LaunchAndWait(ctx, skylab.Clients{
+				Swarming:      swarming,
+				IsolateGetter: fakeGetterFactory(getter),
+			})
 			resp := getSingleResponse(run, swarming)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
@@ -1260,7 +1295,10 @@ func TestResponseVerdict(t *testing.T) {
 			wg.Add(1)
 			var err error
 			go func() {
-				err = run.LaunchAndWait(ctx, swarming, gf)
+				err = run.LaunchAndWait(ctx, skylab.Clients{
+					Swarming:      swarming,
+					IsolateGetter: fakeGetterFactory(newFakeGetter()),
+				})
 				wg.Done()
 			}()
 
@@ -1327,7 +1365,10 @@ func TestIncompatibleDependencies(t *testing.T) {
 				ts, err := skylab.NewTaskSet(c.Invs, c.Params, basicConfig(), "foo-parent-task-id")
 				So(err, ShouldBeNil)
 				run := skylab.NewRunnerWithTaskSets(ts)
-				err = run.LaunchAndWait(ctx, swarming, fakeGetterFactory(newFakeGetter()))
+				err = run.LaunchAndWait(ctx, skylab.Clients{
+					Swarming:      swarming,
+					IsolateGetter: fakeGetterFactory(newFakeGetter()),
+				})
 				So(err, ShouldBeNil)
 
 				resp := getSingleResponse(run, swarming)
