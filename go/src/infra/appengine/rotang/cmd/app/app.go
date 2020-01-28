@@ -81,7 +81,7 @@ var feedbackButton = template.HTML(`
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','https://storage.googleapis.com/crdx-feedback.appspot.com/feedback.js','crdx');
 
-  crdx('setFeedbackButtonLink', 'https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EProdTech%3ERotation');
+  crdx('setFeedbackButtonLink', 'https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ESheriffing%3ERotations');
 	</script>
 `)
 

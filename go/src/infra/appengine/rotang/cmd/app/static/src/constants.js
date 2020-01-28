@@ -25,4 +25,4 @@ export const TimeZones = [
   {name: 'US/Pacific', description: 'PST'},
   {name: 'UTC', description: 'UTC'},
 ];
-export const BugList = 'https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EProdTech%3ERotation';
+export const BugList = 'https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ESheriffing%3ERotations';
