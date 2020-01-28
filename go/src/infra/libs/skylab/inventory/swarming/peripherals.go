@@ -50,6 +50,9 @@ func boolPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels) 
 	if p.GetWificell() {
 		dims["label-wificell"] = []string{"True"}
 	}
+	if p.GetRouter_802_11Ax() {
+		dims["label-router_802_11ax"] = []string{"True"}
+	}
 }
 
 func boolPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -65,6 +68,7 @@ func boolPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dime
 	d = assignLastBoolValueAndDropKey(d, p.Servo, "label-servo")
 	d = assignLastBoolValueAndDropKey(d, p.Stylus, "label-stylus")
 	d = assignLastBoolValueAndDropKey(d, p.Wificell, "label-wificell")
+	d = assignLastBoolValueAndDropKey(d, p.Router_802_11Ax, "label-router_802_11ax")
 	return d
 }
 

@@ -48,6 +48,7 @@ peripherals: {
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
+  router_802_11ax: true
 }
 os_type: 2
 model: "modelval"
@@ -146,6 +147,7 @@ var fullLabels = []string{
 	"power:powerval",
 	"recovery_test",
 	"reference_design:reef",
+	"router_802_11ax",
 	"servo",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
 	"storage:storageval",

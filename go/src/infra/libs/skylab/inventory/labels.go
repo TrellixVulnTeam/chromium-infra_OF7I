@@ -52,6 +52,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 			Servo:               new(bool),
 			Stylus:              new(bool),
 			Wificell:            new(bool),
+			Router_802_11Ax:     new(bool),
 		},
 		Platform:        new(string),
 		Phase:           new(SchedulableLabels_Phase),

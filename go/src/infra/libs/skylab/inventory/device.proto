@@ -341,7 +341,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 14
+// NEXT TAG: 15
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -376,6 +376,10 @@ message Peripherals {
   optional bool camerabox = 13;
   // Is this device inside a hermetic wifi cell.
   optional bool wificell = 4;
+
+  // Indicate if the device is in a pre-setup environment with 802.11ax routers.
+  // crbug.com/1044786
+  optional bool router_802_11ax = 14;
 }
 
 // These labels are used by the CI system to provide test coverage hints to

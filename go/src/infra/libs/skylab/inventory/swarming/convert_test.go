@@ -47,6 +47,7 @@ peripherals: {
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
+  router_802_11ax: true
 }
 os_type: 2
 model: "modelval"
@@ -140,6 +141,7 @@ var fullDimensions = Dimensions{
 	"label-servo":            {"True"},
 	"label-sku":              {"skuval"},
 	"label-brand":            {"HOMH"},
+	"label-router_802_11ax":  {"True"},
 	"label-storage":          {"storageval"},
 	"label-stylus":           {"True"},
 	"label-telephony":        {"telephonyval"},

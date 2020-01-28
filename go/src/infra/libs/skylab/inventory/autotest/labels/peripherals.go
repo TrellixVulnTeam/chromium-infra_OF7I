@@ -55,6 +55,9 @@ func boolPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 	if p.GetWificell() {
 		labels = append(labels, "wificell")
 	}
+	if p.GetRouter_802_11Ax() {
+		labels = append(labels, "router_802_11ax")
+	}
 	return labels
 }
 
@@ -102,6 +105,8 @@ func boolPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) [
 			*p.Stylus = true
 		case "wificell":
 			*p.Wificell = true
+		case "router_802_11ax":
+			*p.Router_802_11Ax = true
 		default:
 			continue
 		}
