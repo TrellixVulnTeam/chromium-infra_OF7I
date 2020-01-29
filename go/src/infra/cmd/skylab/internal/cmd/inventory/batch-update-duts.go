@@ -5,6 +5,7 @@
 package inventory
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -14,8 +15,8 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/grpc/prpc"
 
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
@@ -56,6 +57,7 @@ hostname2,powerunit_hostname=fake_host,powerunit_outlet=fake_outlet
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.pool, "pool", "DUT_POOL_QUOTA", "The pool to update for the given hostnames")
 		c.Flags.StringVar(&c.inputFile, "input_file", "", "A file which contains a list of hostnames, and required info to update at each line. It's mutually exclusive with all other parameters")
+		c.Flags.BoolVar(&c.v2, "v2", false, "[INTERNAL ONLY] Use ChromeOS Lab inventory v2 service.")
 
 		return c
 	},
@@ -67,6 +69,7 @@ type batchUpdateDutsRun struct {
 	envFlags  skycmdlib.EnvFlags
 	pool      string
 	inputFile string
+	v2        bool
 }
 
 // Run implements the subcommands.CommandRun interface.
@@ -112,16 +115,23 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 		return errors.Annotate(err, "fail to new http client").Err()
 	}
 	e := c.envFlags.Env()
-	ic := fleet.NewInventoryPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    e.AdminService,
-		Options: site.DefaultPRPCOptions,
-	})
-	ds, err := ic.BatchUpdateDuts(ctx, req)
+	// Inventory v1 is the default client.
+	icMain := NewInventoryClient(hc, e, false)
+	icBackup := NewInventoryClient(hc, e, true)
+	if c.v2 {
+		icMain, icBackup = icBackup, icMain
+	}
+
+	icBackup.batchUpdateDUTs(ctx, req, a.GetOut())
+	return icMain.batchUpdateDUTs(ctx, req, a.GetOut())
+}
+
+func (client *inventoryClientV1) batchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {
+	ds, err := client.ic.BatchUpdateDuts(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "fail to update Duts").Err()
 	}
-	if err := printUpdates(a.GetOut(), ds); err != nil {
+	if err := printUpdates(writer, ds); err != nil {
 		return errors.Annotate(err, "fail to print updates").Err()
 	}
 	return nil
@@ -148,4 +158,28 @@ func printUpdates(w io.Writer, ds *fleet.BatchUpdateDutsResponse) (err error) {
 		fmt.Fprintf(tw, "Inventory change URL:\t%s\n", ds.GetUrl())
 	}
 	return tw.Flush()
+}
+
+func (client *inventoryClientV2) batchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {
+	properties := make([]*invV2Api.DeviceProperty, len(req.GetDutProperties()))
+	for i, r := range req.GetDutProperties() {
+		properties[i] = &invV2Api.DeviceProperty{
+			Hostname: r.GetHostname(),
+			Pool:     r.GetPool(),
+			Rpm: &invV2Api.DeviceProperty_Rpm{
+				PowerunitName:   r.GetRpm().GetPowerunitHostname(),
+				PowerunitOutlet: r.GetRpm().GetPowerunitOutlet(),
+			},
+		}
+	}
+	_, err := client.ic.BatchUpdateDevices(ctx, &invV2Api.BatchUpdateDevicesRequest{
+		DeviceProperties: properties,
+	})
+	if err != nil {
+		return errors.Annotate(err, "[v2] fail to update Duts").Err()
+	}
+	fmt.Fprintln(writer, "== Inventory v2: output begin ==")
+	fmt.Fprintln(writer, "[v2] Successfully batch updated.")
+	fmt.Fprintln(writer, "== Inventory v2: output end ==")
+	return nil
 }
