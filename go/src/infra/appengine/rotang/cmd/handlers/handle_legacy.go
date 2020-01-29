@@ -327,7 +327,6 @@ var rotaToName = map[string][2]string{
 	"ios":                     {"Chrome iOS Build Sheriff", ""},
 	"perf":                    {"Chromium Perf Regression Sheriff Rotation", ""},
 	"sdk":                     {"ChOps DevX SDK Triage Rotation", ""},
-	"sheriff-o-matic":         {"Sheriff-o-Matic Bug Triage Rotation", ""},
 	"stability":               {"Chromium Stability Sheriff", ""},
 	"v8_infra_triage":         {"V8 Infra Bug Triage Rotation", ""},
 	// "v8":                      {"V8 Sheriff", ""}, // Nothing in their calendar.
