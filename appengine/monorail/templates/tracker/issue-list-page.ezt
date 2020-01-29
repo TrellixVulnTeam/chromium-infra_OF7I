@@ -43,19 +43,11 @@
   </table>
   </div>
 
-  [if-any grid_mode]
-    [include "issue-grid-controls-bottom.ezt"]
-  [end]
-
   [if-any list_mode]
     [include "issue-list-controls-bottom.ezt"]
     [for panels][# There will always be exactly one panel]
       [include "issue-list-menus.ezt"]
     [end]
-  [end]
-
-  [if-any chart_mode]
-    [include "issue-chart-controls-bottom.ezt"]
   [end]
 </div>
 

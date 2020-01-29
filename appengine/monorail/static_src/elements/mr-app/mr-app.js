@@ -260,9 +260,8 @@ export class MrApp extends connectStore(LitElement) {
 
     page('/p', '/projects');
     page('/projects', this._loadProjectsPage.bind(this));
-
     page('/p/:project/*', this._selectProject.bind(this));
-    page('/p/:project/issues/list_new', this._loadListPage.bind(this),
+    page('/p/:project/issues/list', this._loadListPage.bind(this),
         postRouteHandler);
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this),
         postRouteHandler);

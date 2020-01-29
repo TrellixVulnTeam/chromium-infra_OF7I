@@ -641,116 +641,185 @@ class Servlet(webapp2.RequestHandler):
 
     base_data = {
         # EZT does not have constants for True and False, so we pass them in.
-        'True': ezt.boolean(True),
-        'False': ezt.boolean(False),
-
-        'local_mode': ezt.boolean(settings.local_mode),
-
-        'site_name': settings.site_name,
-        'show_search_metadata': ezt.boolean(False),
-        'page_template': self._PAGE_TEMPLATE,
-        'main_tab_mode': self._MAIN_TAB_MODE,
-        'project_summary': project_summary,
-        'project_home_page': project_home_page,
-        'project_thumbnail_url': project_thumbnail_url,
-
-        'hotlist_id': mr.hotlist_id,
-        'hotlist': hotlist_view,
-
-        'hostport': mr.request.host,
-        'absolute_base_url': '%s://%s' % (mr.request.scheme, mr.request.host),
-        'project_home_url': None,
-        'link_rel_canonical': None,  # For specifying <link rel="canonical">
-        'projectname': mr.project_name,
-        'project': project_view,
-        'project_is_restricted': ezt.boolean(_ProjectIsRestricted(mr)),
-        'offer_contributor_list': ezt.boolean(
-            permissions.CanViewContributorList(mr, mr.project)),
-        'logged_in_user': mr.auth.user_view,
-        'form_token': None,  # Set to a value below iff the user is logged in.
-        'form_token_path': None,
-        'token_expires_sec': None,
-        'xhr_token': None,  # Set to a value below iff the user is logged in.
-        'flag_spam_token': None,
-        'nonce': nonce,
-        'perms': mr.perms,
-        'warnings': mr.warnings,
-        'errors': mr.errors,
-
-        'viewed_username': viewed_username,
-        'viewed_user': mr.viewed_user_auth.user_view,
-        'viewed_user_pb': template_helpers.PBProxy(
-            mr.viewed_user_auth.user_pb),
-        'viewing_self': ezt.boolean(viewing_self),
-        'viewed_user_id': mr.viewed_user_auth.user_id,
-        'offer_saved_queries_subtab': ezt.boolean(offer_saved_queries_subtab),
-
-        'currentPageURL': mr.current_page_url,
-        'currentPageURLEncoded': mr.current_page_url_encoded,
-        'login_url': login_url,
-        'logout_url': logout_url,
-        'logout_url_goto_home': logout_url_goto_home,
-        'continue_issue_id': mr.continue_issue_id,
-        'feedback_email': settings.feedback_email,
-        'category_css': None,  # Used to specify a category of stylesheet
-        'category2_css': None, # specify a 2nd category of stylesheet if needed.
-        'page_css': None,  # Used to add a stylesheet to a specific page.
-
-        'can': mr.can,
-        'query': mr.query,
-        'colspec': None,
-        'sortspec': mr.sort_spec,
+        'True':
+            ezt.boolean(True),
+        'False':
+            ezt.boolean(False),
+        'local_mode':
+            ezt.boolean(settings.local_mode),
+        'site_name':
+            settings.site_name,
+        'show_search_metadata':
+            ezt.boolean(False),
+        'page_template':
+            self._PAGE_TEMPLATE,
+        'main_tab_mode':
+            self._MAIN_TAB_MODE,
+        'project_summary':
+            project_summary,
+        'project_home_page':
+            project_home_page,
+        'project_thumbnail_url':
+            project_thumbnail_url,
+        'hotlist_id':
+            mr.hotlist_id,
+        'hotlist':
+            hotlist_view,
+        'hostport':
+            mr.request.host,
+        'absolute_base_url':
+            '%s://%s' % (mr.request.scheme, mr.request.host),
+        'project_home_url':
+            None,
+        'link_rel_canonical':
+            None,  # For specifying <link rel="canonical">
+        'projectname':
+            mr.project_name,
+        'project':
+            project_view,
+        'project_is_restricted':
+            ezt.boolean(_ProjectIsRestricted(mr)),
+        'offer_contributor_list':
+            ezt.boolean(permissions.CanViewContributorList(mr, mr.project)),
+        'logged_in_user':
+            mr.auth.user_view,
+        'form_token':
+            None,  # Set to a value below iff the user is logged in.
+        'form_token_path':
+            None,
+        'token_expires_sec':
+            None,
+        'xhr_token':
+            None,  # Set to a value below iff the user is logged in.
+        'flag_spam_token':
+            None,
+        'nonce':
+            nonce,
+        'perms':
+            mr.perms,
+        'warnings':
+            mr.warnings,
+        'errors':
+            mr.errors,
+        'viewed_username':
+            viewed_username,
+        'viewed_user':
+            mr.viewed_user_auth.user_view,
+        'viewed_user_pb':
+            template_helpers.PBProxy(mr.viewed_user_auth.user_pb),
+        'viewing_self':
+            ezt.boolean(viewing_self),
+        'viewed_user_id':
+            mr.viewed_user_auth.user_id,
+        'offer_saved_queries_subtab':
+            ezt.boolean(offer_saved_queries_subtab),
+        'currentPageURL':
+            mr.current_page_url,
+        'currentPageURLEncoded':
+            mr.current_page_url_encoded,
+        'login_url':
+            login_url,
+        'logout_url':
+            logout_url,
+        'logout_url_goto_home':
+            logout_url_goto_home,
+        'continue_issue_id':
+            mr.continue_issue_id,
+        'feedback_email':
+            settings.feedback_email,
+        'category_css':
+            None,  # Used to specify a category of stylesheet
+        'category2_css':
+            None,  # specify a 2nd category of stylesheet if needed.
+        'page_css':
+            None,  # Used to add a stylesheet to a specific page.
+        'can':
+            mr.can,
+        'query':
+            mr.query,
+        'colspec':
+            None,
+        'sortspec':
+            mr.sort_spec,
 
         # Options for issuelist display
-        'grid_x_attr': grid_x_attr,
-        'grid_y_attr': grid_y_attr,
-        'grid_cell_mode': mr.cells,
-        'grid_mode': None,
-        'list_mode': None,
-        'chart_mode': None,
-
-        'issue_entry_url': issue_entry_url,
-        'is_cross_project': ezt.boolean(False),
+        'grid_x_attr':
+            grid_x_attr,
+        'grid_y_attr':
+            grid_y_attr,
+        'grid_cell_mode':
+            mr.cells,
+        'grid_mode':
+            None,
+        'list_mode':
+            None,
+        'chart_mode':
+            None,
+        'issue_entry_url':
+            issue_entry_url,
+        'is_cross_project':
+            ezt.boolean(False),
 
         # for project search (some also used in issue search)
-        'start': mr.start,
-        'num': mr.num,
-        'groupby': mr.group_by_spec,
-        'q_field_size': (
-            min(framework_constants.MAX_ARTIFACT_SEARCH_FIELD_SIZE,
-                max(framework_constants.MIN_ARTIFACT_SEARCH_FIELD_SIZE,
-                    len(mr.query) + framework_constants.AUTOSIZE_STEP))),
-        'mode': None,  # Display mode, e.g., grid mode.
-        'ajah': mr.ajah,
-        'table_title': mr.table_title,
-
-        'alerts': alerts.AlertsView(mr),  # For alert.ezt
-        'project_alert': project_alert,
-
-        'title': None,  # First part of page title
-        'title_summary': None,  # Appended to title on artifact detail pages
+        'start':
+            mr.start,
+        'num':
+            mr.num,
+        'groupby':
+            mr.group_by_spec,
+        'q_field_size': (min(
+            framework_constants.MAX_ARTIFACT_SEARCH_FIELD_SIZE,
+            max(framework_constants.MIN_ARTIFACT_SEARCH_FIELD_SIZE,
+                len(mr.query) + framework_constants.AUTOSIZE_STEP))),
+        'mode':
+            None,  # Display mode, e.g., grid mode.
+        'ajah':
+            mr.ajah,
+        'table_title':
+            mr.table_title,
+        'alerts':
+            alerts.AlertsView(mr),  # For alert.ezt
+        'project_alert':
+            project_alert,
+        'title':
+            None,  # First part of page title
+        'title_summary':
+            None,  # Appended to title on artifact detail pages
 
         # TODO(jrobbins): make sure that the templates use
         # project_read_only for project-mutative actions and if any
         # uses of read_only remain.
-        'project_read_only': ezt.boolean(project_read_only),
-        'site_read_only': ezt.boolean(settings.read_only),
-        'banner_time': servlet_helpers.GetBannerTime(settings.banner_time),
-        'read_only': ezt.boolean(settings.read_only or project_read_only),
-        'site_banner_message': settings.banner_message,
-        'robots_no_index': None,
-        'analytics_id': settings.analytics_id,
-
-        'is_project_starred': ezt.boolean(is_project_starred),
-
-        'version_base': version_base,
-        'app_version': app_version,
-        'gapi_client_id': settings.gapi_client_id,
-        'viewing_user_page': ezt.boolean(False),
-        'old_ui_url': None,
-
-        'is_member': ezt.boolean(False),
-        }
+        'project_read_only':
+            ezt.boolean(project_read_only),
+        'site_read_only':
+            ezt.boolean(settings.read_only),
+        'banner_time':
+            servlet_helpers.GetBannerTime(settings.banner_time),
+        'read_only':
+            ezt.boolean(settings.read_only or project_read_only),
+        'site_banner_message':
+            settings.banner_message,
+        'robots_no_index':
+            None,
+        'analytics_id':
+            settings.analytics_id,
+        'is_project_starred':
+            ezt.boolean(is_project_starred),
+        'version_base':
+            version_base,
+        'app_version':
+            app_version,
+        'gapi_client_id':
+            settings.gapi_client_id,
+        'viewing_user_page':
+            ezt.boolean(False),
+        'old_ui_url':
+            None,
+        'new_ui_url':
+            None,
+        'is_member':
+            ezt.boolean(False),
+    }
 
     if mr.project:
       base_data['project_home_url'] = '/p/%s' % mr.project_name

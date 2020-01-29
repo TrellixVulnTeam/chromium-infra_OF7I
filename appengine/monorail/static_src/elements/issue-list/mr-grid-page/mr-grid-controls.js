@@ -177,9 +177,7 @@ export class MrGridControls extends connectStore(LitElement) {
   }
 
   _updatedGridViewUrl(newParams, deletedParams) {
-    // TODO(zhangtiff): Replace /list_new with /list when switching the new grid
-    // view to default.
-    return urlWithNewParams(`/p/${this.projectName}/issues/list_new`,
+    return urlWithNewParams(`/p/${this.projectName}/issues/list`,
         this.queryParams, newParams, deletedParams);
   }
 };

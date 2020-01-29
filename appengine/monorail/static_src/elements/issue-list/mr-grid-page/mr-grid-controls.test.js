@@ -48,7 +48,7 @@ describe('mr-grid-controls', () => {
     dropdownRows.dispatchEvent(new Event('change'));
 
     sinon.assert.calledWith(element._page,
-        '/p/chromium/issues/list_new?x=Keep');
+        '/p/chromium/issues/list?x=Keep');
   });
 
   it('selecting col updates x param', async () => {
@@ -74,7 +74,7 @@ describe('mr-grid-controls', () => {
     dropdownCols.dispatchEvent(new Event('change'));
 
     sinon.assert.calledWith(element._page,
-        '/p/chromium/issues/list_new?y=Keep');
+        '/p/chromium/issues/list?y=Keep');
   });
 
   it('cellOptions computes URLs with queryParams and projectName', async () => {
@@ -83,11 +83,11 @@ describe('mr-grid-controls', () => {
 
     assert.deepEqual(element.cellOptions, [
       {text: 'Tile', value: 'tiles',
-        url: '/p/chromium/issues/list_new?q=hello-world'},
+        url: '/p/chromium/issues/list?q=hello-world'},
       {text: 'IDs', value: 'ids',
-        url: '/p/chromium/issues/list_new?q=hello-world&cells=ids'},
+        url: '/p/chromium/issues/list?q=hello-world&cells=ids'},
       {text: 'Counts', value: 'counts',
-        url: '/p/chromium/issues/list_new?q=hello-world&cells=counts'},
+        url: '/p/chromium/issues/list?q=hello-world&cells=counts'},
     ]);
   });
 });

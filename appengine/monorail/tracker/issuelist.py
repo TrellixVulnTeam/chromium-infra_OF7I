@@ -163,7 +163,8 @@ class IssueList(servlet.Servlet):
 
     new_ui_url = ''
     if hasattr(self.request, 'url'):
-      new_ui_url = self.request.url.replace('issues/list', 'issues/list_new')
+      new_ui_url = self.request.url.replace(urls.ISSUE_LIST_OLD,
+                                            urls.ISSUE_LIST)
 
     # monorail:6336, needed for <ezt-show-columns-connector>
     phase_names = _GetAllPhaseNames(pipeline.visible_results)

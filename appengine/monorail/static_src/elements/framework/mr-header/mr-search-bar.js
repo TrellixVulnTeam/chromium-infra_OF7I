@@ -431,12 +431,10 @@ export class MrSearchBar extends LitElement {
    * @param {boolean} newTab
    */
   _navigateToList(params, newTab = false) {
-    // TODO(zhangtiff): Remove this check once list_new is removed
-    // when the new list page switches to default.
-    const isNewPage = window.location.pathname.endsWith('list_new');
+    const isOldPage = window.location.pathname.endsWith('list_old');
 
-    const pathname = `/p/${this.projectName}/issues/${isNewPage ?
-      'list_new' : 'list'}`;
+    const pathname = `/p/${this.projectName}/issues/${isOldPage ?
+      'list_old' : 'list'}`;
 
     const hasChanges = !window.location.pathname.startsWith(pathname) ||
       this.queryParams.q !== params.q ||
@@ -449,15 +447,15 @@ export class MrSearchBar extends LitElement {
     } else if (hasChanges) {
       this._page(url);
     } else {
-      if (isNewPage) {
+      if (isOldPage) {
+        location.reload();
+      } else {
         // TODO(zhangtiff): Replace this event with Redux once all of Monorail
         // uses Redux.
         // This is needed because navigating to the exact same page does not
         // cause a URL change to happen.
         this.dispatchEvent(new Event('refreshList',
             {'composed': true, 'bubbles': true}));
-      } else {
-        location.reload();
       }
     }
   }

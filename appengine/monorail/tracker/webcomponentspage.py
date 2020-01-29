@@ -38,9 +38,7 @@ class WebComponentsPage(servlet.Servlet):
       Dict of values used by EZT for rendering the page.
     """
     # Create link to view in old UI for the list view pages.
-    old_ui_url = ''
-    if self.request.url.find('issues/list_new') >= 0:
-      old_ui_url = self.request.url.replace('issues/list_new', 'issues/list')
+    old_ui_url = self.request.url.replace('issues/list', 'issues/list_old')
 
     return {
        'local_id': mr.local_id,
@@ -54,4 +52,13 @@ class IssueDetailRedirect(servlet.Servlet):
         'Redirecting from approval page to the new issue detail page.')
     url = framework_helpers.FormatAbsoluteURL(
         mr, urls.ISSUE_DETAIL, id=mr.local_id)
-    return self.redirect(url, abort=True)
+    return self.redirect(url, abort=True, permanent=True)
+
+
+class IssueListRedirect(servlet.Servlet):
+
+  def GatherPageData(self, mr):
+    logging.info('Redirecting from list_new to list.')
+
+    url = self.request.url.replace(urls.ISSUE_NEW_GRID, urls.ISSUE_LIST)
+    return self.redirect(url, abort=True, permanent=True)

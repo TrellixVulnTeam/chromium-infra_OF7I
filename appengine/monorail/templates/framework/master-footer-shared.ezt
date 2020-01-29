@@ -5,7 +5,11 @@
     <a href="[old_ui_url]">
       View in the old UI
     </a>
-  [end]
+  [else][if-any new_ui_url]
+    <a href="[new_ui_url]">
+      View in the new UI
+    </a>
+  [end][end]
 
   <a href="https://bugs.chromium.org/p/monorail/adminIntro" title="Monorail [app_version]">About Monorail</a>
   <a href="https://chromium.googlesource.com/infra/infra/+/master/appengine/monorail/doc/userguide/README.md">User Guide</a>

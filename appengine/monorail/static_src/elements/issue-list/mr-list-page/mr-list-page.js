@@ -124,14 +124,6 @@ export class MrListPage extends connectStore(LitElement) {
         mr-mode-selector {
           margin-left: 8px;
         }
-        .testing-notice {
-          box-sizing: border-box;
-          padding: 4px 0.5em;
-          text-align: center;
-          background: var(--chops-notice-bubble-bg);
-          border: var(--chops-normal-border);
-          width: 100%;
-        }
       `,
     ];
   }
@@ -141,13 +133,7 @@ export class MrListPage extends connectStore(LitElement) {
     const selectedRefs = this.selectedIssues.map(
         ({localId, projectName}) => ({localId, projectName}));
 
-    // eslint-disable-next-line
-    const feedbackUrl = `https://bugs.chromium.org/p/monorail/issues/entry?labels=UI-Refresh-Feedback&cc=zhangtiff@chromium.org&summary=Feedback+on+the+new+Monorail+UI&components=UI`;
     return html`
-      <div class="testing-notice">
-        Thanks for trying out the new list view! If you encounter any issues,
-        please <a href=${feedbackUrl}>file feedback</a>.
-      </div>
       ${this._renderControls()}
       ${this._renderListBody()}
       <mr-update-issue-hotlists
@@ -544,8 +530,7 @@ export class MrListPage extends connectStore(LitElement) {
    * @return {string} the new URL.
    */
   _urlWithNewParams(newParams) {
-    // TODO(zhangtiff): replace list_new with list when switching over.
-    const baseUrl = `/p/${this.projectName}/issues/list_new`;
+    const baseUrl = `/p/${this.projectName}/issues/list`;
     return urlWithNewParams(baseUrl, this._queryParams, newParams);
   }
 
