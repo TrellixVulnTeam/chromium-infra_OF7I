@@ -127,7 +127,7 @@ export class MrHeader extends connectStore(LitElement) {
         <i class="material-icons">menu</i>
       </a>
       <a
-        href=${isProjectScope ? `/p/${this.projectName}/` : '/'}
+        href=${isProjectScope ? `/p/${this.projectName}/issues/list` : '/'}
         class="home-link"
       >
         ${this.projectThumbnailUrl ? html`
@@ -273,7 +273,7 @@ export class MrHeader extends connectStore(LitElement) {
       items.push({text: 'My Projects', separator: true});
 
       projects.forEach((project) => {
-        items.push({text: project, url: `/p/${project}/`});
+        items.push({text: project, url: `/p/${project}/issues/list`});
       });
     }
 
@@ -282,7 +282,7 @@ export class MrHeader extends connectStore(LitElement) {
       items.push({text: 'Starred Projects', separator: true});
 
       starredProjects.forEach((project) => {
-        items.push({text: project, url: `/p/${project}/`});
+        items.push({text: project, url: `/p/${project}/issues/list`});
       });
     }
 

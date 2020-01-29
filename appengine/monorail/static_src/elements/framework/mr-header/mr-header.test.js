@@ -108,14 +108,14 @@ describe('mr-header', () => {
     // deepInclude once we upgrade Chai.
     // My Projects
     assert.equal(items[1].text, 'chromium');
-    assert.equal(items[1].url, '/p/chromium/');
+    assert.equal(items[1].url, '/p/chromium/issues/list');
     assert.equal(items[2].text, 'skia');
-    assert.equal(items[2].url, '/p/skia/');
+    assert.equal(items[2].url, '/p/skia/issues/list');
     assert.equal(items[3].text, 'v8');
-    assert.equal(items[3].url, '/p/v8/');
+    assert.equal(items[3].url, '/p/v8/issues/list');
 
     // Starred Projects
     assert.equal(items[5].text, 'gerrit');
-    assert.equal(items[5].url, '/p/gerrit/');
+    assert.equal(items[5].url, '/p/gerrit/issues/list');
   });
 });
