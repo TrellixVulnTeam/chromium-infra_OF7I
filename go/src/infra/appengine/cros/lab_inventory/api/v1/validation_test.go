@@ -96,6 +96,7 @@ func TestAddDevicesValidation(t *testing.T) {
 		})
 	})
 }
+
 func TestDeleteDevicesValidation(t *testing.T) {
 	t.Parallel()
 
@@ -264,6 +265,58 @@ func TestUpdateDutStatusValidation(t *testing.T) {
 		})
 		Convey("Happy path", func() {
 			req := &UpdateDutsStatusRequest{States: []*lab.DutState{&state1}}
+			err := req.Validate()
+			So(err, ShouldBeNil)
+		})
+	})
+}
+
+func TestBatchUpdateDevicesValidation(t *testing.T) {
+	t.Parallel()
+	Convey("Batch update devcies", t, func() {
+		Convey("empty request", func() {
+			req := &BatchUpdateDevicesRequest{}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "no devices")
+		})
+		Convey("duplicated hostname", func() {
+			req := &BatchUpdateDevicesRequest{
+				DeviceProperties: []*DeviceProperty{
+					{Hostname: "host", Pool: "pool"},
+					{Hostname: "host"},
+				},
+			}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Duplicated hostname")
+		})
+		Convey("no property", func() {
+			req := &BatchUpdateDevicesRequest{DeviceProperties: []*DeviceProperty{{Hostname: "host"}}}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "nothing to update")
+		})
+		Convey("no hostname", func() {
+			req := &BatchUpdateDevicesRequest{DeviceProperties: []*DeviceProperty{{Pool: "pool"}}}
+			err := req.Validate()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Hostname is missing")
+		})
+		Convey("happy path 1", func() {
+			req := &BatchUpdateDevicesRequest{
+				DeviceProperties: []*DeviceProperty{{Hostname: "host", Pool: "pool"}},
+			}
+			err := req.Validate()
+			So(err, ShouldBeNil)
+		})
+		Convey("happy path 2", func() {
+			req := &BatchUpdateDevicesRequest{
+				DeviceProperties: []*DeviceProperty{{
+					Hostname: "host",
+					Rpm:      &DeviceProperty_Rpm{PowerunitName: "rpm host"},
+				}},
+			}
 			err := req.Validate()
 			So(err, ShouldBeNil)
 		})

@@ -148,6 +148,7 @@ func (r *UpdateDutsStatusRequest) Validate() error {
 	}
 
 	idChecker2, duplicatedID2 := checkDuplicatedString()
+	defer close(idChecker2)
 	for _, d := range r.GetDutMetas() {
 		id := d.GetChromeosDeviceId()
 		if idChecker2 <- id; <-duplicatedID2 {
@@ -159,6 +160,34 @@ func (r *UpdateDutsStatusRequest) Validate() error {
 		id := d.GetChromeosDeviceId()
 		if _, ok := idWithStates[id]; !ok {
 			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Cannot update meta without valid dut states: %s", id))
+		}
+	}
+	return nil
+}
+
+// Validate validates input requests and return error if it's not.
+func (r *BatchUpdateDevicesRequest) Validate() error {
+	if len(r.GetDeviceProperties()) == 0 {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf("no devices to update"))
+	}
+	hostnameChecker, duplicatedHostname := checkDuplicatedString()
+	defer close(hostnameChecker)
+	for _, p := range r.GetDeviceProperties() {
+		// Hostname is required.
+		hostname := p.GetHostname()
+		if hostname == "" {
+			return status.Errorf(codes.InvalidArgument, "Hostname is missing")
+		}
+		// Hostname must be unique.
+		if hostnameChecker <- hostname; <-duplicatedHostname {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("Duplicated hostname found: %s", hostname))
+		}
+
+		if p.GetPool() != "" {
+			continue
+		}
+		if rpm := p.GetRpm(); rpm == nil || (rpm.GetPowerunitName() == "" && rpm.GetPowerunitOutlet() == "") {
+			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("nothing to update for %s", hostname))
 		}
 	}
 	return nil

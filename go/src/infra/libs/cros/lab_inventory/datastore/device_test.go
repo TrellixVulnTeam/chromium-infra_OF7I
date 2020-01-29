@@ -471,3 +471,47 @@ func TestUpdateDutsStatus(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchUpdateDevices(t *testing.T) {
+	t.Parallel()
+
+	Convey("Batch update devices", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+
+		devsToAdd := []*lab.ChromeOSDevice{
+			mockDut("dut1", "UUID:01", "labstation1"),
+			mockLabstation("labstation1", "UUID:02"),
+		}
+		_, err := AddDevices(ctx, devsToAdd, false)
+		So(err, ShouldBeNil)
+
+		datastore.GetTestable(ctx).Consistent(true)
+		Convey("update non-existing devices", func() {
+			err := BatchUpdateDevices(ctx, []*DeviceProperty{
+				{Hostname: "dut2"},
+			})
+			So(err, ShouldBeNil)
+		})
+		Convey("update pools", func() {
+			err := BatchUpdateDevices(ctx, []*DeviceProperty{
+				{Hostname: "dut1", Pool: "pool1"},
+			})
+			So(err, ShouldBeNil)
+			labConfig := getLabConfigByHostname(ctx, t, "dut1")
+			So(labConfig.GetDut().GetPools(), ShouldResemble, []string{"pool1"})
+		})
+		Convey("update multiple devices", func() {
+			err := BatchUpdateDevices(ctx, []*DeviceProperty{
+				{Hostname: "dut1", Pool: "pool2"},
+				{Hostname: "labstation1", PowerunitName: "powerunit", Pool: "pool3"},
+			})
+			So(err, ShouldBeNil)
+			labConfig := getLabConfigByHostname(ctx, t, "dut1")
+			So(labConfig.GetDut().GetPools(), ShouldResemble, []string{"pool2"})
+
+			labConfig = getLabConfigByHostname(ctx, t, "labstation1")
+			So(labConfig.GetLabstation().GetRpm().GetPowerunitName(), ShouldEqual, "powerunit")
+			So(labConfig.GetLabstation().GetPools(), ShouldResemble, []string{"pool3"})
+		})
+	})
+}

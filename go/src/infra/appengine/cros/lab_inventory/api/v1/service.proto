@@ -33,6 +33,9 @@ service Inventory {
 
   // DeleteCrosDevices delete the selelcted devices from the inventory.
   rpc DeleteCrosDevices(DeleteCrosDevicesRequest) returns (DeleteCrosDevicesResponse);
+
+  // BatchUpdateDevices updates some specific device properties in batch.
+  rpc BatchUpdateDevices(BatchUpdateDevicesRequest) returns (BatchUpdateDevicesResponse);
 }
 
 message DeviceOpResult{
@@ -121,4 +124,23 @@ message DeleteCrosDevicesResponse {
 
   // Devices cannot be removed for any reason.
   repeated DeviceOpResult failed_devices = 2;
+}
+
+message DeviceProperty {
+  string hostname = 1;
+  string pool = 2;
+
+  message Rpm {
+    string powerunit_name = 1;
+    string powerunit_outlet = 2;
+  }
+  Rpm rpm = 3;
+}
+
+message BatchUpdateDevicesRequest {
+  repeated DeviceProperty device_properties = 1;
+}
+
+message BatchUpdateDevicesResponse {
+
 }

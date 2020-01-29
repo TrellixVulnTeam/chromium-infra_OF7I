@@ -107,3 +107,20 @@ func (s *DecoratedInventory) DeleteCrosDevices(ctx context.Context, req *DeleteC
 	}
 	return
 }
+
+func (s *DecoratedInventory) BatchUpdateDevices(ctx context.Context, req *BatchUpdateDevicesRequest) (rsp *BatchUpdateDevicesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchUpdateDevices", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchUpdateDevices(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchUpdateDevices", rsp, err)
+	}
+	return
+}

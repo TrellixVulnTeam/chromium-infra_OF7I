@@ -468,3 +468,76 @@ func UpdateDutsStatus(ctx context.Context, states []*lab.DutState) (DeviceOpResu
 	}
 	return updatingResults, nil
 }
+
+// DeviceProperty specifies some device property.
+type DeviceProperty struct {
+	Hostname        string
+	Pool            string
+	PowerunitName   string
+	PowerunitOutlet string
+}
+
+// BatchUpdateDevices updates devices of some specific properties in a batch.
+func BatchUpdateDevices(ctx context.Context, duts []*DeviceProperty) error {
+	var hostnames []string
+	propertyMap := map[string]*DeviceProperty{}
+	for _, d := range duts {
+		hostnames = append(hostnames, d.Hostname)
+		propertyMap[d.Hostname] = d
+	}
+	now := time.Now().UTC()
+	setRpm := func(rpm *lab.RPM, p *DeviceProperty) {
+		if p.PowerunitName != "" {
+			rpm.PowerunitName = p.PowerunitName
+		}
+		if p.PowerunitOutlet != "" {
+			rpm.PowerunitOutlet = p.PowerunitOutlet
+		}
+	}
+	f := func(ctx context.Context) error {
+		var changes changehistory.Changes
+		entities := make([]*DeviceEntity, 0, len(duts))
+		for _, r := range GetDevicesByHostnames(ctx, hostnames).Passed() {
+			var labConfig lab.ChromeOSDevice
+			if err := r.Entity.GetCrosDeviceProto(&labConfig); err != nil {
+				logging.Errorf(ctx, "Cannot get lab config from entity %v: %s", r.Entity, err.Error())
+				continue
+			}
+			p := propertyMap[r.Entity.Hostname]
+			if dut := labConfig.GetDut(); dut != nil {
+				if p.Pool != "" {
+					dut.Pools = []string{p.Pool}
+				}
+				if peri := dut.GetPeripherals(); peri == nil {
+					dut.Peripherals = &lab.Peripherals{
+						Rpm: &lab.RPM{},
+					}
+				} else if peri.GetRpm() == nil {
+					peri.Rpm = &lab.RPM{}
+				}
+				setRpm(dut.GetPeripherals().GetRpm(), p)
+			}
+			if labstation := labConfig.GetLabstation(); labstation != nil {
+				if p.Pool != "" {
+					labstation.Pools = []string{p.Pool}
+				}
+				if labstation.GetRpm() == nil {
+					labstation.Rpm = &lab.RPM{}
+				}
+				setRpm(labstation.GetRpm(), p)
+			}
+			c, err := r.Entity.UpdatePayload(&labConfig, now)
+			if err != nil {
+				r.logError(errors.Annotate(err, "failed to update payload").Err())
+				continue
+			}
+			changes = append(changes, c...)
+			entities = append(entities, r.Entity)
+		}
+		if err := changes.SaveToDatastore(ctx); err != nil {
+			logging.Errorf(ctx, "Failed to save change history to datastore: %s", err)
+		}
+		return datastore.Put(ctx, entities)
+	}
+	return datastore.RunInTransaction(ctx, f, nil)
+}
