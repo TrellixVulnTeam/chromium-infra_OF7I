@@ -112,7 +112,7 @@ class MonorailServicer(object):
       self.AssertBaseChecks(request, metadata)
       requester_auth = self.GetAndAssertRequesterAuth(
           cnxn, metadata, self.services)
-      logging.info('request proto is:\n%r\n', requester_auth.email)
+      logging.info('request proto is:\n%r\n', request)
       logging.info('requester is %r', requester_auth.email)
 
       if self.rate_limiter:
