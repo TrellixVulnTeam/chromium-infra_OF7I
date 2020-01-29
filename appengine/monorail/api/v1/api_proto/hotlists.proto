@@ -17,11 +17,27 @@ import "google_proto/google/api/annotations.proto";
 
 // Hotlists service includes all methods needed for managing Hotlists.
 service Hotlists {
+  // Returns the requested Hotlist.
+  // TODO(crbug/monorail/6988): Document possible errors when implemented.
+  rpc GetHotlist (GetHotlistRequest) returns (Hotlist) {
+    option (google.api.http) = {
+      post: "/prpc/monorail.v1.Hotlists/GetHotlist"
+      body: "*"
+    };
+  }
   // Updates a hotlist.
-  // TODO(monorail:6988): Document possible errors when implemented.
+  // TODO(crbug/monorail/6988): Document possible errors when implemented.
   rpc UpdateHotlist (UpdateHotlistRequest) returns (Hotlist) {
     option (google.api.http) = {
       post: "/prpc/monorail.v1.Hotlists/UpdateHotlist"
+      body: "*"
+    };
+  }
+  // Returns a list of all HotlistItems in the hotlist.
+  // TODO(crbug/monorail/6988): Document possible errors when implemented.
+  rpc ListHotlistItems (ListHotlistItemsRequest) returns (ListHotlistItemsResponse) {
+    option (google.api.http) = {
+      post: "/prpc/monorail.v1.Hotlists/ListHotlistItems"
       body: "*"
     };
   }
@@ -41,16 +57,65 @@ service Hotlists {
 }
 
 
-// The request used to update a Hotlist.
+// Request message for GetHotlist method.
+// Next available tag: 2
+message GetHotlistRequest {
+  // The name of the hotlist to retrieve.
+  string name = 1 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"}];
+}
+
+
+// Request message for UpdateHotlist method.
 // Next available tag: 2
 message UpdateHotlistRequest {
   // The hotlist's `name` field is used to identify the hotlist to be updated.
   Hotlist hotlist = 1 [
-      (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"},
-      (google.api.field_behavior) = REQUIRED ];
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"} ];
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2 [ (google.api.field_behavior) = REQUIRED ];
 }
+
+
+// Request message for ListHotlistItems method.
+// Next available tag: 5
+message ListHotlistItemsRequest {
+  // The parent hotlist, which owns this collection of items.
+  string parent = 1 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {child_type: "api.crbug.com/HotlistItem"} ];
+  // The maximum number of items to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 1000 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+  // The string of comma separated field names used to order the items.
+  // Adding '-' before a field, reverses the sort order.
+  // E.g. 'stars,-priority' sorts the items by priority, high to low, then
+  // by number of stars, low to high.
+  // If unspecified, items will be ordered by their rank in the parent.
+  string order_by = 3;
+  // A page token, received from a previous `ListHotlistItems` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListHotlistItems` must
+  // match the call that provided the page token.
+  string page_token = 4;
+}
+
+
+// Response to ListHotlistItems call.
+// Next available tag: 3
+message ListHotlistItemsResponse {
+  // The items from the specified hotlist.
+  repeated HotlistItem items = 1;
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
 
 // The request used to rerank a Hotlist.
 // Next available tag: 4
