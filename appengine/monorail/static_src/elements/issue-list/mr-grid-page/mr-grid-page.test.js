@@ -4,7 +4,7 @@
 
 import {assert} from 'chai';
 import sinon from 'sinon';
-import {MrGridPage, refetchTriggeringProps} from './mr-grid-page.js';
+import {MrGridPage} from './mr-grid-page.js';
 
 let element;
 
@@ -41,23 +41,30 @@ describe('mr-grid-page', () => {
     assert.equal(error.trim(), 'Your search did not generate any results.');
   });
 
-  it('calls to fetchIssueList made when q changes', async () => {
+  it('calls to fetchIssueList made when _currentQuery changes', async () => {
     await element.updateComplete;
     const issueListCall = sinon.stub(element, '_fetchMatchingIssues');
     element._queryParams = {x: 'Blocked'};
     await element.updateComplete;
     sinon.assert.notCalled(issueListCall);
 
-    element._queryParams = {q: 'cc:me'};
+    element._presentationConfigLoaded = true;
+    element._currentQuery = 'cc:me';
     await element.updateComplete;
     sinon.assert.calledOnce(issueListCall);
   });
 
-  describe('refetchTriggeringProps', () => {
-    it('includes q and can', () => {
-      assert.isTrue(refetchTriggeringProps.has('q'));
-      assert.isTrue(refetchTriggeringProps.has('can'));
-    });
+  it('calls to fetchIssueList made when _currentCan changes', async () => {
+    await element.updateComplete;
+    const issueListCall = sinon.stub(element, '_fetchMatchingIssues');
+    element._queryParams = {y: 'Blocked'};
+    await element.updateComplete;
+    sinon.assert.notCalled(issueListCall);
+
+    element._presentationConfigLoaded = true;
+    element._currentCan = 1;
+    await element.updateComplete;
+    sinon.assert.calledOnce(issueListCall);
   });
 
   describe('_shouldFetchMatchingIssues', () => {
@@ -74,15 +81,25 @@ describe('mr-grid-page', () => {
       assert.isTrue(result);
     });
 
-    it('depends on _queryParam\'s q and can when _queryParams changes', () => {
-      element._queryParams = {q: ''};
-      const changedProps = new Map();
-      changedProps.set('_queryParams', {can: '1'});
-      let result = element._shouldFetchMatchingIssues(changedProps);
-      assert.isTrue(result);
+    it('returns true when _currentQuery changes', () => {
+      element._presentationConfigLoaded = true;
 
-      changedProps.set('_queryParams', {q: 'anything'});
-      result = element._shouldFetchMatchingIssues(changedProps);
+      element._currentQuery = 'owner:me';
+      const changedProps = new Map();
+      changedProps.set('_currentQuery', '');
+
+      const result = element._shouldFetchMatchingIssues(changedProps);
+      assert.isTrue(result);
+    });
+
+    it('returns true when _currentCan changes', () => {
+      element._presentationConfigLoaded = true;
+
+      element._currentCan = 1;
+      const changedProps = new Map();
+      changedProps.set('_currentCan', 2);
+
+      const result = element._shouldFetchMatchingIssues(changedProps);
       assert.isTrue(result);
     });
 

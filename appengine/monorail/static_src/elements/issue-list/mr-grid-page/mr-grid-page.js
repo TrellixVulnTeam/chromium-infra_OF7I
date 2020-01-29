@@ -6,10 +6,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {store, connectStore} from 'reducers/base.js';
-import {
-  createObjectComparisonFunc,
-  shouldWaitForDefaultQuery,
-} from 'shared/helpers.js';
+import {shouldWaitForDefaultQuery} from 'shared/helpers.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
@@ -17,16 +14,6 @@ import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import './mr-grid-controls.js';
 import './mr-grid.js';
 
-/**
- * Set of query parameters properties that should trigger refetch
- * @type {Set<string>}
- */
-export const refetchTriggeringProps = new Set(['q', 'can']);
-
-/**
- * Checks two objects are not equal based on a set of property keys.
- */
-const compareProps = createObjectComparisonFunc(refetchTriggeringProps);
 /**
  * <mr-grid-page>
  *
@@ -80,6 +67,16 @@ export class MrGridPage extends connectStore(LitElement) {
       progress: {type: Number},
       totalIssues: {type: Number},
       _presentationConfigLoaded: {type: Boolean},
+      /**
+       * The current search string the user is querying for.
+       * Project default if not specified.
+       */
+      _currentQuery: {type: String},
+      /**
+       * The current canned query the user is searching for.
+       * Project default if not specified.
+       */
+      _currentCan: {type: String},
     };
   };
 
@@ -118,15 +115,10 @@ export class MrGridPage extends connectStore(LitElement) {
     } else if (wait && this._presentationConfigLoaded &&
         changedProperties.has('_presentationConfigLoaded')) {
       return true;
-    } else {
-      if (changedProperties.has('projectName')) {
-        return true;
-      }
-      if (changedProperties.has('_queryParams')) {
-        return compareProps(
-            this._queryParams,
-            changedProperties.get('_queryParams'));
-      }
+    } else if (changedProperties.has('projectName') ||
+        changedProperties.has('_currentQuery') ||
+        changedProperties.has('_currentCan')) {
+      return true;
     }
     return false;
   }
@@ -136,6 +128,7 @@ export class MrGridPage extends connectStore(LitElement) {
     store.dispatch(issue.fetchIssueList(this.projectName, {
       ...this._queryParams,
       q: this._currentQuery,
+      can: this._currentCan,
       maxItems: 500, // 500 items * 12 calls = max of 6,000 issues.
       maxCalls: 12,
     }));
@@ -149,6 +142,7 @@ export class MrGridPage extends connectStore(LitElement) {
     this.totalIssues = (issue.totalIssues(state) || 0);
     this._queryParams = sitewide.queryParams(state);
     this._currentQuery = sitewide.currentQuery(state);
+    this._currentCan = sitewide.currentCan(state);
     this._presentationConfigLoaded =
       project.viewedPresentationConfigLoaded(state);
   }
