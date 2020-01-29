@@ -61,7 +61,7 @@ export class MrEditIssue extends connectStore(LitElement) {
         .mergedInto=${issue.mergedIntoIssueRef}
         .labelNames=${this._labelNames}
         .derivedLabels=${this._derivedLabels}
-        .error=${this.updateError && (this.updateError.description || this.updateError.message)}
+        .error=${this.updateError}
         ?saving=${this.updatingIssue}
         @save=${this.save}
         @discard=${this.reset}
@@ -107,7 +107,7 @@ export class MrEditIssue extends connectStore(LitElement) {
        * An error response, if one exists.
        */
       updateError: {
-        type: Object,
+        type: String,
       },
       /**
        * Hash from the URL, used to support the 'r' hot key for making changes.
@@ -126,6 +126,7 @@ export class MrEditIssue extends connectStore(LitElement) {
     super();
 
     this.clientLogger = new ClientLogger('issues');
+    this.updateError = '';
   }
 
   /** @override */
@@ -135,7 +136,9 @@ export class MrEditIssue extends connectStore(LitElement) {
     this.comments = issue.comments(state);
     this.projectConfig = project.viewedConfig(state);
     this.updatingIssue = issue.requests(state).update.requesting;
-    this.updateError = issue.requests(state).update.error;
+
+    const error = issue.requests(state).update.error;
+    this.updateError = error && (error.description || error.message);
     this.focusId = ui.focusId(state);
     this._fieldDefs = issue.fieldDefs(state);
   }
@@ -157,15 +160,16 @@ export class MrEditIssue extends connectStore(LitElement) {
       // When an issue finishes updating, we want to show a snackbar, record
       // issue update time metrics, and reset the edit form.
       if (!isUpdating && wasUpdating) {
-        this._showCommentAddedSnackbar();
+        if (!this.updateError) {
+          this._showCommentAddedSnackbar();
+          // Reset the edit form when a user's action finishes.
+          this.reset();
+        }
 
         // Record metrics on when the issue editing event finished.
         if (this.clientLogger.started('issue-update')) {
           this.clientLogger.logEnd('issue-update', 'computer-time', 120 * 1000);
         }
-
-        // Reset the edit form when a user's action finishes.
-        this.reset();
       }
     }
   }

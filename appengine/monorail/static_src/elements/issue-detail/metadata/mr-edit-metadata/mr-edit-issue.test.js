@@ -42,18 +42,36 @@ describe('mr-edit-issue', () => {
     header.scrollIntoView.restore();
   });
 
-  it('snows snackbar when editing finishes', async () => {
+  it('shows snackbar and resets form when editing finishes', async () => {
+    sinon.stub(element, 'reset');
     sinon.stub(element, '_showCommentAddedSnackbar');
 
     element.updatingIssue = true;
     await element.updateComplete;
 
     sinon.assert.notCalled(element._showCommentAddedSnackbar);
+    sinon.assert.notCalled(element.reset);
 
     element.updatingIssue = false;
     await element.updateComplete;
 
     sinon.assert.calledOnce(element._showCommentAddedSnackbar);
+    sinon.assert.calledOnce(element.reset);
+  });
+
+  it('does not show snackbar or reset form on edit error', async () => {
+    sinon.stub(element, 'reset');
+    sinon.stub(element, '_showCommentAddedSnackbar');
+
+    element.updatingIssue = true;
+    await element.updateComplete;
+
+    element.updateError = 'The save failed';
+    element.updatingIssue = false;
+    await element.updateComplete;
+
+    sinon.assert.notCalled(element._showCommentAddedSnackbar);
+    sinon.assert.notCalled(element.reset);
   });
 
   it('shows current status even if not defined for project', async () => {
