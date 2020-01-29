@@ -45,7 +45,7 @@ func getPassedResults(ctx context.Context, results []datastore.DeviceOpResult) [
 		r.Id = string(res.Entity.ID)
 		r.Hostname = res.Entity.Hostname
 		passedDevices = append(passedDevices, r)
-		logging.Debugf(ctx, "Added: %s: %s", r.Hostname, r.Id)
+		logging.Debugf(ctx, "Passed: %s: %s", r.Hostname, r.Id)
 	}
 	logging.Infof(ctx, "%d device(s) passed", len(passedDevices))
 
@@ -65,7 +65,12 @@ func getFailedResults(ctx context.Context, results []datastore.DeviceOpResult, h
 		failedDevices = append(failedDevices, r)
 		logging.Errorf(ctx, "Failed: %s: %s: %s", r.Hostname, r.Id, r.ErrorMsg)
 	}
-	logging.Errorf(ctx, "%d device(s) failed", len(failedDevices))
+	if failedCount := len(failedDevices); failedCount > 0 {
+		logging.Errorf(ctx, "%d device(s) failed", failedCount)
+	} else {
+		logging.Infof(ctx, "0 devices failed")
+	}
+
 	return failedDevices
 }
 
