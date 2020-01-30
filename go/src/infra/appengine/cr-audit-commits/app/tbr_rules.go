@@ -31,6 +31,7 @@ const (
 var TBRWhiteList = stringset.NewFromSlice(
 	"recipe-mega-autoroller@chops-service-accounts.iam.gserviceaccount.com",
 	"chromium-autoroll@skia-public.iam.gserviceaccount.com",
+	"image-builder@chops-service-accounts.iam.gserviceaccount.com",
 )
 
 // getMaxLabelValue determines the highest possible value of a vote for a given
