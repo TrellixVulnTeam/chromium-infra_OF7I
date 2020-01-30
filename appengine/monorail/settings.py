@@ -442,9 +442,6 @@ date_action_ping_author = 'monorail'
 # because the `int(10) unsigned` column type in MySQL is 32 bits.
 maximum_snapshot_period_end = 4294967295
 
-# Percent of requests to report to cloud tracing.
-trace_fraction = 0.1
-
 # The maximum number of rows chart queries can scan.
 chart_query_max_rows = 10000
 

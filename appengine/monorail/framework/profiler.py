@@ -39,8 +39,9 @@ PHASE_TIME = ts_mon.CumulativeDistributionMetric(
     'Time spent in profiler phases, in ms',
     [ts_mon.StringField('phase')])
 
-# trace_service does not like very long names.
-MAX_PHASE_NAME_LENGTH = 200
+# trace_service requires names less than 128 bytes
+# https://cloud.google.com/trace/docs/reference/v1/rest/v1/projects.traces#Trace
+MAX_PHASE_NAME_LENGTH = 128
 
 
 class Profiler(object):
@@ -102,11 +103,16 @@ class Profiler(object):
       logging.info('would have sent trace: %s', spans)
       return
 
+    # Format of trace_context: 'TRACE_ID/SPAN_ID;o=TRACE_TRUE'
+    # (from https://cloud.google.com/trace/docs/troubleshooting#force-trace)
+    # TODO(crbug/monorail:7086): Respect the o=TRACE_TRUE part.
+    # Note: on Appngine it seems ';o=1' is omitted rather than set to 0.
     trace_id, root_span_id = self.trace_context.split(';')[0].split('/')
     for s in spans:
+      # TODO(crbug/monorail:7087): Consider setting `parentSpanId` to
+      # `root_span_id` for the children of `top_phase`.
       if not 'parentSpanId' in s:
         s['parentSpanId'] = root_span_id
-
     traces_body = {
       'projectId': self.project_id,
       'traceId': trace_id,
@@ -115,9 +121,7 @@ class Profiler(object):
     body = {
       'traces': [traces_body]
     }
-
-    # TODO(seanmccullough): Do this async so it doesn't
-    # delay the response to the browser.
+    # TODO(crbug/monorail:7088): Do this async so it doesn't delay the response.
     request = self.trace_service.projects().patchTraces(
         projectId=self.project_id, body=body)
     _res = request.execute()

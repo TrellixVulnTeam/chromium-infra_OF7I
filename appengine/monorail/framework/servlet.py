@@ -35,7 +35,6 @@ from third_party import httpagentparser
 from google.appengine.api import app_identity
 from google.appengine.api import modules
 from google.appengine.api import users
-from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
 
 import webapp2
@@ -80,15 +79,18 @@ GC_EVENT_REQUEST = ts_mon.CounterMetric(
     'Counts of requests that triggered at least one GC event',
     [])
 
-# TODO(seanmccullough): Move this to services? Or context?
+# TODO(crbug/monorail:7084): Find a better home for this code.
 trace_service = None
-if app_identity.get_application_id() != 'testing-app':
-  logging.warning('app id: %s', app_identity.get_application_id())
-  try:
-    credentials = GoogleCredentials.get_application_default()
-    trace_service = discovery.build('cloudtrace', 'v1', credentials=credentials)
-  except Exception as e:
-    logging.warning('could not get trace service: %s', e)
+# TOD0(crbug/monorail:7082): Re-enable this once we have a solution that doesn't
+# inur clatency, or when we're actively using Cloud Tracing data.
+# if app_identity.get_application_id() != 'testing-app':
+#   logging.warning('app id: %s', app_identity.get_application_id())
+#   try:
+#     credentials = GoogleCredentials.get_application_default()
+#     trace_service = discovery.build(
+#         'cloudtrace', 'v1', credentials=credentials)
+#   except Exception as e:
+#     logging.warning('could not get trace service: %s', e)
 
 
 class MethodNotSupportedError(NotImplementedError):
@@ -191,8 +193,9 @@ class Servlet(webapp2.RequestHandler):
     if 'X-Cloud-Trace-Context' in self.request.headers:
       self.mr.profiler.trace_context = (
           self.request.headers.get('X-Cloud-Trace-Context'))
-    if trace_service is not None:
-      self.mr.profiler.trace_service = trace_service
+    # TOD0(crbug/monorail:7082): Re-enable tracing.
+    # if trace_service is not None:
+    #   self.mr.profiler.trace_service = trace_service
 
     if self.services.cache_manager:
       # TODO(jrobbins): don't do this step if invalidation_timestep was
@@ -268,9 +271,14 @@ class Servlet(webapp2.RequestHandler):
     if settings.enable_profiler_logging:
       self.mr.profiler.LogStats()
 
-    if (self.mr.profiler.trace_context is not None and
-        random.random() < settings.trace_fraction):
-      self.mr.profiler.ReportTrace()
+    # TOD0(crbug/monorail:7082, crbug/monorail:7088): Re-enable this when we
+    # have solved the latency, or when we really need the profiler data.
+    # if self.mr.profiler.trace_context is not None:
+    #   try:
+    #     self.mr.profiler.ReportTrace()
+    #   except Exception as ex:
+    #     # We never want Cloud Tracing to cause a user-facing error.
+    #     logging.warning('Ignoring exception reporting Cloud Trace %s', ex)
 
   def _AddHelpDebugPageData(self, page_data):
     with self.mr.profiler.Phase('help and debug data'):
