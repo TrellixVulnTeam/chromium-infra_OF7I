@@ -311,16 +311,24 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  StartTime,
 			  BuildStatus
 			FROM
-				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
-			WHERE project = "chromium"
+				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
+			WHERE
+			(
+				project = "chrome"
+				AND MasterName = "internal.bling.main"
+			)
+			OR (
+				project = "chromium"
 				AND MasterName IN ("chromium.mac")
 				AND builder IN (
 					"ios-device",
 					"ios-device-xcode-clang",
 					"ios-simulator",
 					"ios-simulator-full-configs",
-					"ios-simulator-xcode-clang"
+					"ios-simulator-xcode-clang",
+					"ios-simulator-noncq"
 				)
+			)
 		`
 		actual := generateSQLQuery(c, "ios", "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))

@@ -121,14 +121,21 @@ LIMIT
 // This list of builders is from
 // https://cs.chromium.org/chromium/build/scripts/slave/recipe_modules/gatekeeper/resources/gatekeeper_trees.json?l=44
 const iosFailuresQuery = selectFromWhere + `
-	project = "chromium"
-	AND MasterName IN ("chromium.mac")
-	AND builder IN (
-		"ios-device",
-		"ios-device-xcode-clang",
-		"ios-simulator",
-		"ios-simulator-full-configs",
-		"ios-simulator-xcode-clang"
+	(
+		project = "chrome"
+		AND MasterName = "internal.bling.main"
+	)
+	OR (
+		project = "chromium"
+		AND MasterName IN ("chromium.mac")
+		AND builder IN (
+			"ios-device",
+			"ios-device-xcode-clang",
+			"ios-simulator",
+			"ios-simulator-full-configs",
+			"ios-simulator-xcode-clang",
+			"ios-simulator-noncq"
+		)
 	)
 `
 
@@ -225,7 +232,7 @@ func generateSQLQuery(ctx context.Context, tree string, appID string) string {
 	case "chromeos":
 		return fmt.Sprintf(crosFailuresQuery, appID, "chromeos")
 	case "ios":
-		return fmt.Sprintf(iosFailuresQuery, appID, "chromium")
+		return fmt.Sprintf(iosFailuresQuery, appID, "chrome")
 	case "fuchsia":
 		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter)
 	case "chromium.perf":
