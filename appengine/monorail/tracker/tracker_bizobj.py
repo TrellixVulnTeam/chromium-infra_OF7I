@@ -890,7 +890,7 @@ def ApplyLabelChanges(issue, config, labels_add, labels_remove):
   """Updates the PB issue's labels and returns the amendment or None."""
   canon_labels_add = [framework_bizobj.CanonicalizeLabel(l)
                       for l in labels_add]
-  canon_labels_add = [l for l in canon_labels_add if l]
+  labels_add = [l for l in canon_labels_add if l]
   canon_labels_remove = [framework_bizobj.CanonicalizeLabel(l)
                          for l in labels_remove]
   labels_remove = [l for l in canon_labels_remove if l]

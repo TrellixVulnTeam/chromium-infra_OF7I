@@ -509,7 +509,7 @@ def UpdateIssuePermissions(
     return PermissionSet([VIEW], perms.consider_restrictions)
 
   # The EDIT_ISSUE permission might have been removed due to restrictions, but
-  # the owner has always permission to edit it.
+  # the owner always has permission to edit it.
   if effective_ids and tracker_bizobj.GetOwnerId(issue) in effective_ids:
     filtered_perms.add(EDIT_ISSUE.lower())
 

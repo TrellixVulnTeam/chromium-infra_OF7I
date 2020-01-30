@@ -1109,11 +1109,14 @@ class BizobjTest(unittest.TestCase):
     self.assertIsNone(actual.summary)
 
   def testApplyLabelChanges_RemoveAndAdd(self):
-    issue = tracker_pb2.Issue(labels=['tobe-removed', 'tobe-notremoved'])
+    issue = tracker_pb2.Issue(
+        labels=['tobe-removed', 'tobe-notremoved', 'tobe-removed-2'])
     amendment = tracker_bizobj.ApplyLabelChanges(
-        issue, self.config, [u'tobe-added'], [u'tobe-removed'])
+        issue, self.config,
+        [u'tobe-added', 'to:be-added-2'],
+        [u'tobe-removed', u'to:be-removed-2'])
     self.assertEqual(amendment, tracker_bizobj.MakeLabelsAmendment(
-        ['tobe-added'], ['tobe-removed']))
+        ['tobe-added', 'tobe-added-2'], ['tobe-removed', 'tobe-removed-2']))
 
   def testApplyLabelChanges_RemoveInvalidLabel(self):
     issue = tracker_pb2.Issue(labels=[])
