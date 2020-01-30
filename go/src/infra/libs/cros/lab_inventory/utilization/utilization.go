@@ -1,16 +1,6 @@
-// Copyright 2019 The LUCI Authors.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
 
 // Package utilization provides functions to report DUT utilization metrics.
 package utilization
@@ -18,8 +8,9 @@ package utilization
 import (
 	"context"
 	"fmt"
-	"infra/libs/skylab/inventory"
+	invV1 "infra/libs/skylab/inventory"
 
+	invV2 "go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/tsmon/field"
@@ -58,7 +49,7 @@ var serverMetric = metric.NewInt(
 )
 
 // ReportInventoryMetrics reports the inventory metrics to monarch.
-func ReportInventoryMetrics(ctx context.Context, duts []*inventory.DeviceUnderTest) {
+func ReportInventoryMetrics(ctx context.Context, duts []*invV1.DeviceUnderTest) {
 	logging.Infof(ctx, "report inventory metrics for %d duts", len(duts))
 	c := make(inventoryCounter)
 	for _, d := range duts {
@@ -68,8 +59,20 @@ func ReportInventoryMetrics(ctx context.Context, duts []*inventory.DeviceUnderTe
 	c.Report(ctx)
 }
 
+// ReportInventoryMetricsV2 reports the inventory metrics to monarch.
+func ReportInventoryMetricsV2(ctx context.Context, devices []*invV2.ChromeOSDevice, environment string) {
+	logging.Infof(ctx, "report inventory metrics for %d devices", len(devices))
+	c := make(inventoryCounter)
+	for _, d := range devices {
+		b := getBucketForDevice(d)
+		b.environment = environment
+		c[b]++
+	}
+	c.Report(ctx)
+}
+
 // ReportServerMetrics reports the servers metrics to monarch.
-func ReportServerMetrics(ctx context.Context, servers []*inventory.Server) {
+func ReportServerMetrics(ctx context.Context, servers []*invV1.Server) {
 	logging.Infof(ctx, "report inventory metrics for %d servers", len(servers))
 	c := make(serverCounter)
 	for _, d := range servers {
@@ -96,7 +99,7 @@ func (c serverCounter) Report(ctx context.Context) {
 type inventoryCounter map[bucket]int
 type serverCounter map[serverBucket]int
 
-func getBucketForDUT(d *inventory.DeviceUnderTest) bucket {
+func getBucketForDUT(d *invV1.DeviceUnderTest) bucket {
 	b := bucket{
 		board:       "[None]",
 		model:       "[None]",
@@ -109,7 +112,7 @@ func getBucketForDUT(d *inventory.DeviceUnderTest) bucket {
 	var pools []string
 	cp := l.GetCriticalPools()
 	for _, p := range cp {
-		pools = append(pools, inventory.SchedulableLabels_DUTPool_name[int32(p)])
+		pools = append(pools, invV1.SchedulableLabels_DUTPool_name[int32(p)])
 	}
 	pools = append(pools, l.GetSelfServePools()...)
 	b.pool = getReportPool(pools)
@@ -117,7 +120,24 @@ func getBucketForDUT(d *inventory.DeviceUnderTest) bucket {
 	return b
 }
 
-func getBucketForServer(s *inventory.Server) serverBucket {
+func getBucketForDevice(d *invV2.ChromeOSDevice) bucket {
+	devCfg := d.GetDeviceConfigId()
+	b := bucket{
+		board:       devCfg.GetPlatformId().GetValue(),
+		model:       devCfg.GetModelId().GetValue(),
+		pool:        "[None]",
+		environment: "[None]",
+	}
+	if dut := d.GetDut(); dut != nil {
+		b.pool = getReportPool(dut.GetPools())
+	}
+	if labstation := d.GetLabstation(); labstation != nil {
+		b.pool = getReportPool(labstation.GetPools())
+	}
+	return b
+}
+
+func getBucketForServer(s *invV1.Server) serverBucket {
 	b := serverBucket{
 		hostname:    "[None]",
 		environment: "[None]",
@@ -288,7 +308,7 @@ func summarizeValues(vs []string) string {
 }
 
 func isManagedPool(p string) bool {
-	_, ok := inventory.SchedulableLabels_DUTPool_value[p]
+	_, ok := invV1.SchedulableLabels_DUTPool_value[p]
 	return ok
 }
 

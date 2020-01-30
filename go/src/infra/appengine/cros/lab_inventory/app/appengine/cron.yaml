@@ -14,3 +14,8 @@ cron:
 - description: Push inventory to drone queen
   url: /internal/cron/push-to-drone-queen
   schedule: every 10 minutes
+
+# TODO(guocb) uncoment this when rollout inventory v2.
+# - description: report metrics of Duts in inventory.
+#   url: /internal/cron/report-inventory
+#   schedule: every 5 minutes

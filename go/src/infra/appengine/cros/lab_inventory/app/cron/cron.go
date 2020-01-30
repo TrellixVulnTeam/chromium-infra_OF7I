@@ -15,16 +15,17 @@ import (
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/server/router"
-
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/router"
 	"golang.org/x/oauth2"
+
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
 	dronequeenapi "infra/appengine/drone-queen/api"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
+	"infra/libs/cros/lab_inventory/datastore"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/cros/lab_inventory/dronecfg"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
@@ -44,7 +45,9 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	r.GET("/internal/cron/changehistory-to-bq", mwCron, logAndSetHTTPErr(dumpChangeHistoryToBQCronHandler))
 
-	r.GET("/internal/cron/push-to-drone-queen", mwCron, logAndSetHTTPErr(pushToDroneQueenCronHnadler))
+	r.GET("/internal/cron/push-to-drone-queen", mwCron, logAndSetHTTPErr(pushToDroneQueenCronHandler))
+
+	r.GET("/internal/cron/report-inventory", mwCron, logAndSetHTTPErr(reportInventoryCronHandler))
 }
 
 func dumpToBQCronHandler(c *router.Context) (err error) {
@@ -123,7 +126,7 @@ func dumpChangeHistoryToBQCronHandler(c *router.Context) error {
 	return changehistory.FlushDatastore(ctx, changes)
 }
 
-func pushToDroneQueenCronHnadler(c *router.Context) error {
+func pushToDroneQueenCronHandler(c *router.Context) error {
 	ctx := c.Context
 	logging.Infof(c.Context, "Start to push inventory to drone queen")
 	queenHostname := config.Get(ctx).QueenService
@@ -156,6 +159,11 @@ func pushToDroneQueenCronHnadler(c *router.Context) error {
 		return err
 	}
 	return nil
+}
+
+func reportInventoryCronHandler(c *router.Context) error {
+	logging.Infof(c.Context, "start reporting inventory")
+	return datastore.ReportInventory(c.Context, config.Get(c.Context).Environment)
 }
 
 func logAndSetHTTPErr(f func(c *router.Context) error) func(*router.Context) {
