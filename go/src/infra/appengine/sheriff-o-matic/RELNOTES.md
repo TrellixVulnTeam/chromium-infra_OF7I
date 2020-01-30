@@ -1,3 +1,21 @@
+# Release Notes sheriff-o-matic 2020-01-30
+
+- 3 commits, 1 bugs affected since b089436 (2020-01-23T05:03:37Z)
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [Fix iOS builders](https://chromium-review.googlesource.com/c/infra/infra/+/2024647) (nqmtuan@google.com)
+- [Release note 23 Jan](https://chromium-review.googlesource.com/c/infra/infra/+/2016304) (nqmtuan@google.com)
+- [Release note 21 Jan](https://chromium-review.googlesource.com/c/infra/infra/+/2010446) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/802192](https://crbug.com/802192)
+
+
 # Release Notes sheriff-o-matic 2020-01-23
 
 - 2 commits, 1 bugs affected since 44920e5 ()
