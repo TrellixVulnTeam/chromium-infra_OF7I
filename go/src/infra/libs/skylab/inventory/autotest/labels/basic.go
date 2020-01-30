@@ -45,6 +45,10 @@ func basicConverter(ls *inventory.SchedulableLabels) []string {
 		lv := "reference_design:" + v
 		labels = append(labels, lv)
 	}
+	if v := ls.GetWifiChip(); v != "" {
+		lv := "wifi_chip:" + v
+		labels = append(labels, lv)
+	}
 	switch v := ls.GetEcType(); v {
 	case inventory.SchedulableLabels_EC_TYPE_CHROME_OS:
 		labels = append(labels, "ec:cros")
@@ -101,6 +105,8 @@ func basicReverter(ls *inventory.SchedulableLabels, labels []string) []string {
 			*ls.Phase = t(vals[vn])
 		case "reference_design":
 			*ls.ReferenceDesign = v
+		case "wifi_chip":
+			*ls.WifiChip = v
 		case "variant":
 			ls.Variant = append(ls.Variant, v)
 		default:

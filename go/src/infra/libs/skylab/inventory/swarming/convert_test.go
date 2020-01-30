@@ -31,6 +31,7 @@ test_coverage_hints {
 }
 self_serve_pools: "poolval"
 reference_design: "reef"
+wifi_chip: "wireless_xxxx"
 platform: "platformval"
 phase: 8
 peripherals: {
@@ -163,6 +164,7 @@ var fullDimensions = Dimensions{
 	"label-cr50_ro_version": {"11.12.13"},
 	"label-cr50_rw_keyid":   {"b"},
 	"label-cr50_rw_version": {"21.22.23"},
+	"label-wifi_chip":       {"wireless_xxxx"},
 }
 
 func TestConvertEmpty(t *testing.T) {

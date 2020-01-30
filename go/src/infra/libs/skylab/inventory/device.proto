@@ -143,7 +143,7 @@ message Shard {
 //
 // Keep sorted by field name.
 //
-// NEXT TAG: 32
+// NEXT TAG: 33
 message SchedulableLabels {
   // Whether this device supports ARC execution environment.
   optional bool arc = 20;
@@ -278,6 +278,9 @@ message SchedulableLabels {
   optional bool useless_switch = 23;
 
   repeated string variant = 17;
+
+  // Come from manufacturing config: crbug.com/1046971
+  optional string wifi_chip = 32;
 }
 
 // Keep sorted by field name.

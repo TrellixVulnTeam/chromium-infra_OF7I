@@ -32,6 +32,7 @@ test_coverage_hints {
 }
 self_serve_pools: "poolval"
 reference_design: "reef"
+wifi_chip: "wireless_xxxx"
 platform: "platformval"
 phase: 4
 peripherals: {
@@ -163,6 +164,7 @@ var fullLabels = []string{
 	"use_lid",
 	"variant:somevariant",
 	"webcam",
+	"wifi_chip:wireless_xxxx",
 	"wificell",
 }
 

@@ -36,6 +36,9 @@ func basicConverter(dims Dimensions, ls *inventory.SchedulableLabels) {
 	if v := ls.GetReferenceDesign(); v != "" {
 		dims["label-reference_design"] = []string{v}
 	}
+	if v := ls.GetWifiChip(); v != "" {
+		dims["label-wifi_chip"] = []string{v}
+	}
 	if v := ls.GetEcType(); v != inventory.SchedulableLabels_EC_TYPE_INVALID {
 		dims["label-ec_type"] = []string{v.String()}
 	}
@@ -58,6 +61,7 @@ func basicReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
 	d = assignLastStringValueAndDropKey(d, ls.Brand, "label-brand")
 	d = assignLastStringValueAndDropKey(d, ls.Platform, "label-platform")
 	d = assignLastStringValueAndDropKey(d, ls.ReferenceDesign, "label-reference_design")
+	d = assignLastStringValueAndDropKey(d, ls.WifiChip, "label-wifi_chip")
 	if v, ok := getLastStringValue(d, "label-ec_type"); ok {
 		if ec, ok := inventory.SchedulableLabels_ECType_value[v]; ok {
 			*ls.EcType = inventory.SchedulableLabels_ECType(ec)
