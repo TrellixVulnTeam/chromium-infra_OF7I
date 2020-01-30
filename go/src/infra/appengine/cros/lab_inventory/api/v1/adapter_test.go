@@ -70,6 +70,7 @@ var devInV2 = lab.ChromeOSDevice{
 				Wifi: &lab.Wifi{
 					Wificell:    true,
 					AntennaConn: lab.Wifi_CONN_CONDUCTIVE,
+					Router:      lab.Wifi_ROUTER_802_11AX,
 				},
 				Touch: &lab.Touch{
 					Mimo: true,
@@ -268,6 +269,7 @@ common {
 			ptzpro2: true
 			camerabox: true
 			wificell: true
+			router_802_11ax: true
 		}
 		phase: PHASE_DVT
 		platform: "coral"

@@ -160,6 +160,13 @@ func getAntennaConn(peri *inventory.Peripherals) lab.Wifi_AntennaConnection {
 	return lab.Wifi_CONN_OTA
 }
 
+func getRouter(peri *inventory.Peripherals) lab.Wifi_Router {
+	if peri.GetRouter_802_11Ax() {
+		return lab.Wifi_ROUTER_802_11AX
+	}
+	return lab.Wifi_ROUTER_UNSPECIFIED
+}
+
 func getConnectedCamera(peri *lab.Peripherals, oldPeri *inventory.Peripherals) {
 	if oldPeri.GetHuddly() {
 		peri.ConnectedCamera = append(peri.ConnectedCamera, &lab.Camera{
@@ -204,6 +211,7 @@ func getPeripherals(l *inventory.SchedulableLabels) *lab.Peripherals {
 		Wifi: &lab.Wifi{
 			Wificell:    peripherals.GetWificell(),
 			AntennaConn: getAntennaConn(peripherals),
+			Router:      getRouter(peripherals),
 		},
 		Touch: &lab.Touch{
 			Mimo: peripherals.GetMimo(),

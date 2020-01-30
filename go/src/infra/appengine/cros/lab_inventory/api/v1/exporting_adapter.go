@@ -140,6 +140,9 @@ func setDutPeripherals(p *inventory.Peripherals, c *inventory.HardwareCapabiliti
 		} else {
 			p.Conductive = &falseValue
 		}
+		if wifi.GetRouter() == lab.Wifi_ROUTER_802_11AX {
+			p.Router_802_11Ax = &trueValue
+		}
 	}
 
 	if touch := d.GetTouch(); touch != nil {
