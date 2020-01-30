@@ -28,6 +28,7 @@ import (
 	"github.com/google/uuid"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/sync/parallel"
 
 	"infra/qscheduler/qslib/reconciler"
 	"infra/qscheduler/qslib/scheduler"
@@ -443,7 +444,6 @@ func writeNodes(ctx context.Context, bytes []byte, poolID string, generation int
 		}
 		shards = append(shards, bytes[start:end])
 	}
-
 	nodes := make([]interface{}, len(shards))
 	IDs := make([]string, len(shards))
 	for i, shard := range shards {
@@ -458,11 +458,17 @@ func writeNodes(ctx context.Context, bytes []byte, poolID string, generation int
 		nodes[i] = node
 		IDs[i] = ID
 	}
-
-	if err := datastore.Put(ctx, nodes...); err != nil {
+	err := parallel.FanOutIn(func(c chan<- func() error) {
+		for _, node := range nodes {
+			node := node
+			c <- func() error {
+				return datastore.Put(ctx, node)
+			}
+		}
+	})
+	if err != nil {
 		return nil, errors.Annotate(err, "write nodes").Err()
 	}
-
 	return IDs, nil
 }
 
