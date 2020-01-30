@@ -45,6 +45,9 @@ const PRIMARY_BUTTON = 0;
 /** @const {number} Button property value of DOM auxclick event */
 const MIDDLE_BUTTON = 1;
 
+/** @const {string} A short transition to ease movement of list items. */
+const EASE_OUT_TRANSITION = 'transform 0.05s cubic-bezier(0, 0, 0.2, 1)';
+
 /**
  * Really high cardinality attributes like ID and Summary are unlikely to be
  * useful if grouped, so it's better to just hide the option.
@@ -139,7 +142,7 @@ export class MrIssueList extends connectStore(LitElement) {
           z-index: 10;
           border-bottom: var(--chops-normal-border);
         }
-        th.first-column {
+        th.selection-header {
           padding: 3px 8px;
         }
         th > mr-dropdown, th > mr-show-columns-dropdown {
@@ -156,10 +159,10 @@ export class MrIssueList extends connectStore(LitElement) {
         tr[selected] {
           background: var(--chops-selected-bg);
         }
-        .first-column {
+        td:first-child, th:first-child {
           border-left: 4px solid transparent;
         }
-        tr[cursored] > td.first-column {
+        tr[cursored] > td:first-child {
           border-left: 4px solid var(--chops-blue-700);
         }
         mr-crbug-link {
@@ -188,6 +191,21 @@ export class MrIssueList extends connectStore(LitElement) {
         .summary-label:hover {
           text-decoration: underline;
         }
+        td.draggable i {
+          opacity: 0;
+        }
+        td.draggable {
+          color: var(--chops-primary-icon-color);
+          cursor: grab;
+          padding-left: 0;
+          padding-right: 0;
+        }
+        tr.dragged {
+          opacity: 0.74;
+        }
+        tr:hover td.draggable i {
+          opacity: 1;
+        }
         .csv-download-container {
           border-bottom: none;
           text-align: end;
@@ -213,9 +231,10 @@ export class MrIssueList extends connectStore(LitElement) {
 
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-      <tbody>
+      <thead>
         <tr class="first-row">
-          <th class="first-column">
+          ${this.rerankEnabled ? html`<th></th>` : ''}
+          <th class="selection-header">
             <div class="edit-widget-container">
               ${this.selectionEnabled ? html`
                 <input
@@ -241,6 +260,8 @@ export class MrIssueList extends connectStore(LitElement) {
             ></mr-show-columns-dropdown>
           </th>
         </tr>
+      </thead>
+      <tbody>
         ${this._renderIssues()}
       </tbody>
       ${this.userDisplayName && html`
@@ -408,39 +429,34 @@ export class MrIssueList extends connectStore(LitElement) {
    * @return {TemplateResult}
    */
   _renderRow(issue, i, isHidden = false) {
-    const draggable = this.rerankEnabled && this.rerankEnabled(issue);
     const rowSelected = this._selectedIssues.has(issueRefToString(issue));
     const id = issueRefToString(issue);
     const cursorId = issueRefToString(this.cursor);
     const hasCursor = cursorId === id;
+    const dragged = this._dragging && rowSelected;
 
     return html`
       <tr
-        class="row-${i} list-row ${i === this.srcIndex ? 'dragged' : ''}"
+        class="row-${i} list-row ${dragged ? 'dragged' : ''}"
         ?selected=${rowSelected}
         ?cursored=${hasCursor}
         ?hidden=${isHidden}
-        draggable=${draggable}
         data-issue-ref=${id}
         data-index=${i}
-        @dragstart=${this._dragstart}
-        @dragend=${this._dragend}
-        @dragover=${this._dragover}
-        @drop=${this._dragdrop}
         @focus=${this._setRowAsCursorOnFocus}
         @click=${this._clickIssueRow}
         @auxclick=${this._clickIssueRow}
         @keydown=${this._keydownIssueRow}
         tabindex="0"
       >
-        <td class="first-column ignore-navigation">
+        ${this.rerankEnabled ? html`
+          <td class="draggable ignore-navigation"
+              @mousedown=${this._onMouseDown}>
+            <i class="material-icons" title="Drag issue">drag_indicator</i>
+          </td>
+        ` : ''}
+        <td class="ignore-navigation">
           <div class="edit-widget-container">
-            ${draggable ? html`
-              <i
-                class="material-icons draggable"
-                title="Drag issue"
-              >drag_indicator</i>
-            ` : ''}
             ${this.selectionEnabled ? html`
               <input
                 class="issue-checkbox"
@@ -537,7 +553,7 @@ export class MrIssueList extends connectStore(LitElement) {
        * A function that takes in an issue and computes whether
        * reranking should be enabled for a given issue.
        */
-      rerankEnabled: {type: Object},
+      rerankEnabled: {type: Boolean},
       /**
        * Whether issues should be selectable or not.
        */
@@ -598,6 +614,10 @@ export class MrIssueList extends connectStore(LitElement) {
        */
       _phaseNames: {type: Array},
       /**
+       * True iff the user is dragging issues.
+       */
+      _dragging: {type: Boolean},
+      /**
        * CSV data in data HREF format, used to download csv
        */
       _csvDataHref: {type: String},
@@ -625,6 +645,8 @@ export class MrIssueList extends connectStore(LitElement) {
     /** @type {string} */
     this.currentQuery = '';
     /** @type {boolean} */
+    this.rerankEnabled = false;
+    /** @type {boolean} */
     this.selectionEnabled = false;
     /** @type {boolean} */
     this.starringEnabled = false;
@@ -641,8 +663,12 @@ export class MrIssueList extends connectStore(LitElement) {
      */
     this.role = 'table';
 
-    /** @type {function} */
+    /** @type {function(KeyboardEvent): void} */
     this._boundRunListHotKeys = this._runListHotKeys.bind(this);
+    /** @type {function(MouseEvent): void} */
+    this._boundOnMouseMove = this._onMouseMove.bind(this);
+    /** @type {function(MouseEvent): void} */
+    this._boundOnMouseUp = this._onMouseUp.bind(this);
 
     /**
      * @param {Issue} _issue
@@ -658,6 +684,10 @@ export class MrIssueList extends connectStore(LitElement) {
     this._starringIssues = new Map();
 
     this._uniqueValuesByColumn = new Map();
+
+    this._dragging = false;
+    this._mouseX = null;
+    this._mouseY = null;
 
     /** @type {number} */
     this._lastSelectedCheckbox = -1;
@@ -1057,6 +1087,24 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
+   * Returns an Array containing every <tr> in the list, excluding the header.
+   * @return {Array<HTMLTableRowElement>}
+   */
+  _getRows() {
+    return Array.from(this.shadowRoot.querySelectorAll('.list-row'));
+  }
+
+  /**
+   * Returns an Array containing every selected <tr> in the list.
+   * @return {Array<HTMLTableRowElement>}
+   */
+  _getSelectedRows() {
+    return this._getRows().filter((row) => {
+      return this._selectedIssues.has(row.dataset.issueRef);
+    });
+  }
+
+  /**
    * @param {IssueRef} issueRef Issue to star
    */
   _starIssue(issueRef) {
@@ -1181,7 +1229,196 @@ export class MrIssueList extends connectStore(LitElement) {
   }
 
   /**
-   * Handle click and auxclick on issue row
+   * Handles mouseDown to start drag events.
+   * @param {MouseEvent} event
+   */
+  _onMouseDown(event) {
+    event.cancelable && event.preventDefault();
+
+    this._mouseX = event.clientX;
+    this._mouseY = event.clientY;
+
+    this._setRowAsCursor(event.currentTarget.parentNode);
+    this._startDrag();
+
+    // We add the event listeners to window because the mouse can go out of the
+    // bounds of the target element. window.mouseUp still triggers even if the
+    // mouse is outside the browser window.
+    window.addEventListener('mousemove', this._boundOnMouseMove);
+    window.addEventListener('mouseup', this._boundOnMouseUp);
+  }
+
+  /**
+   * Handles mouseMove to continue drag events.
+   * @param {MouseEvent} event
+   */
+  _onMouseMove(event) {
+    event.cancelable && event.preventDefault();
+
+    const x = event.clientX - this._mouseX;
+    const y = event.clientY - this._mouseY;
+    this._continueDrag(x, y);
+  }
+
+  /**
+   * Handles mouseUp to end drag events.
+   * @param {MouseEvent} event
+   */
+  _onMouseUp(event) {
+    event.cancelable && event.preventDefault();
+
+    window.removeEventListener('mousemove', this._boundOnMouseMove);
+    window.removeEventListener('mouseup', this._boundOnMouseUp);
+
+    this._endDrag(event.clientY - this._mouseY);
+  }
+
+  /**
+   * Gives a visual indicator that we've started dragging an issue row.
+   */
+  _startDrag() {
+    this._dragging = true;
+
+    // If the dragged row is not selected, select it.
+    // TODO(dtu): Allow dragging an existing selection for multi-drag.
+    const issueRefString = issueRefToString(this.cursor);
+    this._selectedIssues = new Set();
+    this._updateSelectedIssues([issueRefString], true);
+  }
+
+  /**
+   * @param {number} x The x-distance the cursor has moved since mouseDown.
+   * @param {number} y The y-distance the cursor has moved since mouseDown.
+   */
+  _continueDrag(x, y) {
+    // Unselected rows: Transition them to their new positions.
+    const [rows, initialIndex, finalIndex] = this._computeRerank(y);
+    this._translateRows(rows, initialIndex, finalIndex);
+
+    // Selected rows: Stick them to the cursor. No transition.
+    for (const row of this._getSelectedRows()) {
+      row.style.transform = `translate(${x}px, ${y}px`;
+    };
+  }
+
+  /**
+   * @param {number} y The y-distance the cursor has moved since mouseDown.
+   */
+  _endDrag(y) {
+    this._dragging = false;
+
+    // Unselected rows: Transition them to their new positions.
+    const [rows, initialIndex, finalIndex] = this._computeRerank(y);
+    const targetTranslation =
+        this._translateRows(rows, initialIndex, finalIndex);
+
+    // Selected rows: Transition them to their final positions
+    // and reset their opacity.
+    const selectedRows = this._getSelectedRows();
+    for (const row of selectedRows) {
+      row.style.transition = EASE_OUT_TRANSITION;
+      row.style.transform = `translate(0px, ${targetTranslation}px)`;
+    };
+
+    // Submit the change.
+    // TODO(dtu): Submit the change with the new PRPC API.
+  }
+
+  /**
+   * @param {number} from
+   * @param {number} to
+   * @param {HTMLTableRowElement} target
+   */
+  async _rerankIssues(from, to, target) {
+    // Reset all transitions and transforms.
+    for (const row of this._getRows()) {
+      row.style.transition = '';
+      row.style.transform = '';
+    };
+
+    // Fetch new issue list.
+    const newIssues = [...this.issues];
+    newIssues.splice(to, 0, newIssues.splice(from, 1)[0]);
+    this.issues = newIssues;
+
+    // Set the cursor to the new row.
+    // In order to focus the correct element, we need the DOM to be in sync
+    // with the issue list. We modified this.issues, so wait for a re-render.
+    await this.updateComplete;
+    this.shadowRoot.querySelector(`.list-row[data-index="${to}"]`).focus();
+  }
+
+  /**
+   * Computes the starting and ending indices of the cursor row,
+   * given how far the mouse has been dragged in the y-direction.
+   * The indices assume the cursor row has been removed from the list.
+   * @param {number} y The y-distance the cursor has moved since mouseDown.
+   * @return {[Array<HTMLTableRowElement>, number, number]} A tuple containing:
+   *     An Array of table rows with the cursor row removed.
+   *     The initial index of the cursor row.
+   *     The final index of the cursor row.
+   */
+  _computeRerank(y) {
+    const row = this._getCursorElement();
+    const rows = this._getRows();
+    const listTop = row.parentNode.offsetTop;
+
+    // Find the initial index of the cursor row.
+    // TODO(dtu): If we support multi-drag, this should be the adjusted index of
+    // the first selected row after collapsing spaces in the selected group.
+    const initialIndex = rows.indexOf(row);
+    rows.splice(initialIndex, 1);
+
+    // Compute the initial and final y-positions of the top
+    // of the cursor row relative to the top of the list.
+    const initialY = row.offsetTop - listTop;
+    const finalY = initialY + y;
+
+    // Compute the final index of the cursor row.
+    // The break points are the halfway marks of each row.
+    let finalIndex = 0;
+    for (finalIndex = 0; finalIndex < rows.length; ++finalIndex) {
+      const rowTop = rows[finalIndex].offsetTop - listTop -
+          (finalIndex >= initialIndex ? row.scrollHeight : 0);
+      const breakpoint = rowTop + rows[finalIndex].scrollHeight / 2;
+      if (breakpoint > finalY) {
+        break;
+      }
+    }
+
+    return [rows, initialIndex, finalIndex];
+  }
+
+  /**
+   * @param {Array<HTMLTableRowElement>} rows Array of table rows with the
+   *    cursor row removed.
+   * @param {number} initialIndex The initial index of the cursor row.
+   * @param {number} finalIndex The final index of the cursor row.
+   * @return {number} The number of pixels the cursor row moved.
+   */
+  _translateRows(rows, initialIndex, finalIndex) {
+    const firstIndex = Math.min(initialIndex, finalIndex);
+    const lastIndex = Math.max(initialIndex, finalIndex);
+
+    const rowHeight = this._getCursorElement().scrollHeight;
+    const translation = initialIndex < finalIndex ? -rowHeight : rowHeight;
+
+    let targetTranslation = 0;
+    for (let i = 0; i < rows.length; ++i) {
+      rows[i].style.transition = EASE_OUT_TRANSITION;
+      if (i >= firstIndex && i < lastIndex) {
+        rows[i].style.transform = `translate(0px, ${translation}px)`;
+        targetTranslation += rows[i].scrollHeight;
+      } else {
+        rows[i].style.transform = '';
+      }
+    }
+
+    return initialIndex < finalIndex ? targetTranslation : -targetTranslation;
+  }
+
+  /**
+   * Handle click and auxclick on issue row.
    * @param {MouseEvent} event
    */
   _clickIssueRow(event) {

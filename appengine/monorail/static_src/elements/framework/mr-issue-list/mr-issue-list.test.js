@@ -1076,6 +1076,43 @@ describe('mr-issue-list', () => {
     });
   });
 
+  it('drag-and-drop', async () => {
+    element.rerankEnabled = true;
+    element.issues = [
+      {projectName: 'project', localId: 123, summary: 'test issue'},
+      {projectName: 'project', localId: 456, summary: 'I have a summary'},
+      {projectName: 'project', localId: 789, summary: 'third issue'},
+    ];
+    await element.updateComplete;
+
+    const rows = element._getRows();
+
+    // Mouse down on the middle element!
+    const secondRow = rows[1];
+    const dragHandle = secondRow.firstElementChild;
+    const mouseDown = new MouseEvent('mousedown', {clientX: 0, clientY: 0});
+    dragHandle.dispatchEvent(mouseDown);
+
+    assert.deepEqual(element._dragging, true);
+    assert.deepEqual(element.cursor, {projectName: 'project', localId: 456});
+    assert.deepEqual(element.selectedIssues, [element.issues[1]]);
+
+    // Drag the middle element to the end!
+    const mouseMove = new MouseEvent('mousemove', {clientX: 0, clientY: 100});
+    window.dispatchEvent(mouseMove);
+
+    assert.deepEqual(rows[0].style['transform'], '');
+    assert.deepEqual(rows[1].style['transform'], 'translate(0px, 100px)');
+    assert.match(rows[2].style['transform'], /^translate\(0px, -\d+px\)$/);
+
+    // Mouse up!
+    const mouseUp = new MouseEvent('mouseup', {clientX: 0, clientY: 100});
+    window.dispatchEvent(mouseUp);
+
+    assert.deepEqual(element._dragging, false);
+    assert.match(rows[1].style['transform'], /^translate\(0px, \d+px\)$/);
+  });
+
   describe('CSV download', () => {
     let _downloadCsvSpy;
     let convertStub;

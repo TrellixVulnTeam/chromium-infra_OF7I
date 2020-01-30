@@ -27,6 +27,11 @@ describe('mr-hotlist-issues-page', () => {
     assert.instanceOf(element, MrHotlistIssuesPage);
   });
 
+  it('shows loading message with null hotlist', async () => {
+    await element.updateComplete;
+    assert.include(element.shadowRoot.innerHTML, 'Loading');
+  });
+
   it('renders hotlist items with one project', async () => {
     element.hotlist = example.HOTLIST;
     element.hotlistItems = [example.HOTLIST_ITEM];

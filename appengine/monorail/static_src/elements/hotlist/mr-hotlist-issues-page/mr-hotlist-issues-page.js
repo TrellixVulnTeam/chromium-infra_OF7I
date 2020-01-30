@@ -46,6 +46,10 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
 
   /** @override */
   render() {
+    if (!this.hotlist) {
+      return html`Loading...`;
+    }
+
     const issues = prepareIssues(this.hotlistItems);
 
     const allProjectNamesEqual = issues.length && issues.every(
@@ -66,6 +70,8 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
         .columns=${this.hotlist.defaultColSpec.split(' ')}
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
+        ?rerankEnabled=${true}
+        ?selectionEnabled=${true}
       ></mr-issue-list>
     `;
   }

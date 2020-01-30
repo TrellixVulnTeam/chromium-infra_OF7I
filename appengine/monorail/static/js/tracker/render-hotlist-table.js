@@ -35,9 +35,10 @@ function createWidgets(tableRow, readOnly, userLoggedIn) {
   let widgets = document.createElement('td');
   widgets.setAttribute('class', 'rowwidgets nowrap');
 
-  let gripper = document.createElement('a');
-  gripper.setAttribute('class', 'gripper');
-  gripper.textContent = '\u2059';
+  let gripper = document.createElement('i');
+  gripper.setAttribute('class', 'material-icons gripper');
+  gripper.setAttribute('title', 'Drag issue');
+  gripper.textContent = 'drag_indicator';
   widgets.appendChild(gripper);
 
   if (!readOnly) {
