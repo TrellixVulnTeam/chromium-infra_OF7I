@@ -29,8 +29,8 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/metrics/utilization"
 	swarming_utils "infra/appengine/crosskylabadmin/app/frontend/internal/swarming"
+	"infra/libs/cros/lab_inventory/utilization"
 )
 
 // SwarmingFactory is a constructor for a SwarmingClient.
