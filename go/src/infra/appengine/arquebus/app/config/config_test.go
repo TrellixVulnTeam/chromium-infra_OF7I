@@ -45,6 +45,7 @@ func TestConfigValidator(t *testing.T) {
 		return "my_app", nil
 	})
 	SetupValidation(rules)
+	rules.Freeze()
 	validate := func(cfg *Config) error {
 		c := validation.Context{Context: context.Background()}
 		err := rules.ValidateConfig(
