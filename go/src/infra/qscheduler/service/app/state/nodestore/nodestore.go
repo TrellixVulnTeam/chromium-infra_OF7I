@@ -458,7 +458,7 @@ func writeNodes(ctx context.Context, bytes []byte, poolID string, generation int
 		nodes[i] = node
 		IDs[i] = ID
 	}
-	err := parallel.FanOutIn(func(c chan<- func() error) {
+	err := parallel.WorkPool(10, func(c chan<- func() error) {
 		for _, node := range nodes {
 			node := node
 			c <- func() error {
@@ -478,8 +478,15 @@ func loadNodes(ctx context.Context, nodeIDs []string) (*blob.QSchedulerPoolState
 	for i, ID := range nodeIDs {
 		nodes[i] = &stateNode{ID: ID}
 	}
-
-	if err := datastore.Get(ctx, nodes...); err != nil {
+	err := parallel.WorkPool(10, func(c chan<- func() error) {
+		for _, node := range nodes {
+			node := node
+			c <- func() error {
+				return datastore.Get(ctx, node)
+			}
+		}
+	})
+	if err != nil {
 		return nil, err
 	}
 

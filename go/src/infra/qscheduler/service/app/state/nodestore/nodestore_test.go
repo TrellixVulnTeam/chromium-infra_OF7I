@@ -191,9 +191,9 @@ func TestLargeState(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("a very large state spanning 10 child nodes can be stored.", func() {
-			// Given uuid size, 70k accounts causes state to be large enough to
-			// be spread over 10 nodes.
-			nAccounts := 70 * 1000
+			// Given uuid size, 140k accounts causes state to be large enough to
+			// be spread over 20 nodes.
+			nAccounts := 140 * 1000
 			err := store.Run(ctx, &createUniqueAccounts{nAccounts: nAccounts})
 			So(err, ShouldBeNil)
 
@@ -202,8 +202,8 @@ func TestLargeState(t *testing.T) {
 			So(len(state.Scheduler.Config().AccountConfigs), ShouldEqual, nAccounts)
 
 			count, err := datastore.Count(ctx, datastore.NewQuery("stateNode"))
-			// 1 node for generation 0; 10 for generation 1.
-			So(count, ShouldEqual, 11)
+			// 1 node for generation 0; 20 for generation 1.
+			So(count, ShouldEqual, 21)
 		})
 	})
 }
