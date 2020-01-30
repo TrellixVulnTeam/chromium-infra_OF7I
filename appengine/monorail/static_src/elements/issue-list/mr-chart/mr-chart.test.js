@@ -143,7 +143,7 @@ describe('mr-chart', () => {
       MrChart.prototype._fetchDataAtTimestamp.restore();
     });
 
-    it('_fetchDataAtTimestamp does has no default query or can', async () => {
+    it('_fetchDataAtTimestamp has no default query or can', async () => {
       await element._fetchData();
 
       sinon.assert.calledWith(
@@ -488,6 +488,19 @@ describe('mr-chart', () => {
 
         const expectedGroupBy = {value: '', display: 'None'};
         assert.deepEqual(MrChart.getGroupByFromQuery(input), expectedGroupBy);
+      });
+
+      it('only returns valid groupBy values', () => {
+        const invalidKeys = ['pri', 'reporter', 'stars'];
+
+        const queryParams = {groupBy: ''};
+
+        invalidKeys.forEach((key) => {
+          queryParams.groupBy = key;
+          const expected = {value: '', display: 'None'};
+          const result = MrChart.getGroupByFromQuery(queryParams);
+          assert.deepEqual(result, expected);
+        });
       });
     });
   });

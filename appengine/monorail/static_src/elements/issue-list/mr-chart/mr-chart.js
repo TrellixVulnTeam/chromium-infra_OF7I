@@ -86,6 +86,17 @@ export const subscribedQuery = new Set([
 const queryParamsHaveChanged = createObjectComparisonFunc(subscribedQuery);
 
 /**
+ * Mapping between query param's groupby value and chart application data.
+ * @type {Object}
+ */
+const groupByMapping = {
+  'open': {display: 'Is open', value: 'open'},
+  'owner': {display: 'Owner', value: 'owner'},
+  'comonent': {display: 'Component', value: 'component'},
+  'status': {display: 'Status', value: 'status'},
+};
+
+/**
  * `<mr-chart>`
  *
  * Component rendering the chart view
@@ -519,6 +530,7 @@ export default class MrChart extends LitElement {
       query: query,
       cannedQuery: cannedQuery,
       hotlistId: this.hotlistId,
+      groupBy: undefined,
     };
     if (this.groupBy.value !== '') {
       message['groupBy'] = this.groupBy.value;
@@ -1011,32 +1023,19 @@ export default class MrChart extends LitElement {
    * @return {Object<string, string>}
    */
   static getGroupByFromQuery(queryParams) {
-    if (queryParams.hasOwnProperty('groupby')) {
-      const groupBy = {value: queryParams['groupby']};
-      switch (queryParams['groupby']) {
-        case '':
-          groupBy['display'] = 'None';
-          break;
-        case 'open':
-          groupBy['display'] = 'Is open';
-          break;
-        case 'owner':
-          groupBy['display'] = 'Owner';
-          break;
-        case 'component':
-          groupBy['display'] = 'Component';
-          break;
-        case 'status':
-          groupBy['display'] = 'Status';
-          break;
-        default:
-          groupBy['display'] = queryParams['labelprefix'];
-          groupBy['labelPrefix'] = queryParams['labelprefix'];
-      }
-      return groupBy;
-    } else {
-      return {groupBy: '', display: 'None'};
-    }
+    const defaultValue = {display: 'None', value: ''};
+
+    const labelMapping = {
+      'label': {
+        display: queryParams.labelprefix,
+        value: 'label',
+        labelPrefix: queryParams.labelprefix,
+      },
+    };
+
+    return groupByMapping[queryParams.groupby] ||
+        labelMapping[queryParams.groupby] ||
+        defaultValue;
   }
 }
 
