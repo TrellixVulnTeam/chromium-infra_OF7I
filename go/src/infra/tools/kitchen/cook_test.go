@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -229,6 +230,25 @@ func TestCook(t *testing.T) {
 				So(exitCode, ShouldEqual, 1)
 				So(result.Status, ShouldEqual, buildbucketpb.Status_FAILURE)
 				So(result.SummaryMarkdown, ShouldEqual, recipeResult.GetFailure().HumanReason)
+			})
+			Convey("long summary markdown", func() {
+				recipeResult := &recipe_engine.Result{
+					OneofResult: &recipe_engine.Result_Failure{
+						Failure: &recipe_engine.Failure{
+							HumanReason: strings.Repeat("step failed ", 600),
+							FailureType: &recipe_engine.Failure_Failure{
+								Failure: &recipe_engine.StepFailure{
+									Step: "bot_update",
+								},
+							},
+						},
+					},
+				}
+				result, exitCode := run(recipeResult, 1)
+				So(exitCode, ShouldEqual, 1)
+				So(result.Status, ShouldEqual, buildbucketpb.Status_FAILURE)
+				expectedSummary := recipeResult.GetFailure().HumanReason[:maxSummaryLength-3] + "..."
+				So(result.SummaryMarkdown, ShouldEqual, expectedSummary)
 			})
 		})
 	})

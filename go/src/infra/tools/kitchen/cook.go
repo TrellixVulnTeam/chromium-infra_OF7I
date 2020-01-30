@@ -64,6 +64,9 @@ const (
 	// logDogViewerURLTag is a special LogDog tag that is recognized by the LogDog
 	// viewer as a link to the log stream's build page.
 	logDogViewerURLTag = "logdog.viewer_url"
+
+	// Buildbucket rejects RPCs if SummaryMarkdown is longer than this.
+	maxSummaryLength = 4000
 )
 
 // cmdCook runs a recipe.
@@ -478,6 +481,13 @@ func (c *cookRun) run(ctx context.Context, args []string, env environ.Env) (*bui
 		req.Build.Status = buildbucketpb.Status_FAILURE
 		req.Build.SummaryMarkdown = result.RecipeResult.GetFailure().HumanReason
 		req.UpdateMask.Paths = append(req.UpdateMask.Paths, "build.status", "build.summary_markdown")
+	}
+
+	// Buildbucket rejects the request if SummaryMarkdown is longer than a
+	// certain length.
+	if len(req.Build.SummaryMarkdown) > maxSummaryLength {
+		dots := "..."
+		req.Build.SummaryMarkdown = req.Build.SummaryMarkdown[:maxSummaryLength-len(dots)] + dots
 	}
 
 	if c.CallUpdateBuild {
