@@ -95,12 +95,11 @@ func (l *evtLogger) start(ctx context.Context) error {
 	defer close(l.evtCh)
 
 	evtBuf := []*crit_event.LogRequestLite_LogEventLite{}
-	clck := clock.Get(ctx)
 
 	flush := func(evts []*crit_event.LogRequestLite_LogEventLite) error {
 		// TODO: Auth, retry/backoff etc.
 		req := &crit_event.LogRequestLite{
-			RequestTimeMs: proto.Int64(clck.Now().Unix()),
+			RequestTimeMs: proto.Int64(clock.Now(ctx).Unix()),
 			LogSourceName: proto.String("CHROME_INFRA"),
 			LogEvent:      evts,
 		}
@@ -142,7 +141,7 @@ func (l *evtLogger) start(ctx context.Context) error {
 	// multiple simultaneous flush operations can stack up.
 	// - If flush operation fail, there is no retry mechanism (yet) and they
 	// will just log an error locally.
-	ticker := clck.After(ctx, l.cfg.Interval)
+	ticker := clock.After(ctx, l.cfg.Interval)
 	for {
 		select {
 		case evt := <-l.evtCh:
@@ -174,7 +173,7 @@ func (l *evtLogger) start(ctx context.Context) error {
 				// we can now reset it safely.
 				evtBuf = []*crit_event.LogRequestLite_LogEventLite{}
 			}
-			ticker = clck.After(ctx, time.Second)
+			ticker = clock.After(ctx, time.Second)
 		}
 	}
 }
