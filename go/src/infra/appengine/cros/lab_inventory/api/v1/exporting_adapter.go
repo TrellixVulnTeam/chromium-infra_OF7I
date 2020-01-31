@@ -354,7 +354,9 @@ func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, err
 	setDutPeripherals(&peri, &capa, &hint, p)
 	setDeviceConfig(&labels, data.GetDeviceConfig())
 	setManufacturingConfig(&labels, data.GetManufacturingConfig())
-	setHwidData(&labels, data.GetHwidData())
+	if hwidData := data.GetHwidData(); hwidData != nil {
+		setHwidData(&labels, hwidData)
+	}
 	setDutState(&peri, data.GetDutState())
 
 	dut := inventory.DeviceUnderTest{

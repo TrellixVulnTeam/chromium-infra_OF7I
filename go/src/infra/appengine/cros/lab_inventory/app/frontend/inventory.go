@@ -212,10 +212,18 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 		hwid := labData.GetManufacturingId().GetValue()
 		if hwid == "" {
 			logging.Warningf(ctx, "%v has empty HWID.", r.Entity.Hostname)
+			data.HwidData = &api.HwidData{
+				Sku:     "",
+				Variant: "",
+			}
 		} else if hwidData, err := getHwidDataFunc(ctx, hwid, secret); err != nil {
 			// HWID server may cannot find records for the HWID. Ignore the
 			// error for now.
 			logging.Warningf(ctx, "Ignored error: failed to get response from HWID server for %s", hwid)
+			data.HwidData = &api.HwidData{
+				Sku:     "",
+				Variant: "",
+			}
 		} else {
 			data.HwidData = &api.HwidData{
 				Sku:     hwidData.Sku,
@@ -285,6 +293,7 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 	// Create a fake extended data in case there's nothing returned.
 	// TODO (guocb) remove this.
 	if len(extendedData) == 0 {
+		logging.Warningf(ctx, "no data returned, so returned a fake one.")
 		extendedData = []*api.ExtendedDeviceData{
 			{},
 		}
