@@ -23,10 +23,8 @@ function nest(s, root) {
   return curr;
 }
 
-const ChOpsJSONReporter = function(
-    baseReporterDecorator, config, helper, logger) {
+const ChOpsJSONReporter = function(config, helper, logger) {
   const log = logger.create('chopsui-json-reporter');
-  baseReporterDecorator(this);
   const reporterConfig = config.chopsUiReporter || {};
   const stdout = typeof reporterConfig.stdout !== 'undefined' ?
     reporterConfig.stdout : false;
@@ -80,7 +78,7 @@ const ChOpsJSONReporter = function(
   };
 };
 
-ChOpsJSONReporter.$inject = ['baseReporterDecorator', 'config', 'helper',
+ChOpsJSONReporter.$inject = ['config', 'helper',
   'logger'];
 
 // PUBLISH DI MODULE
