@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/maruel/subcommands"
@@ -26,6 +27,8 @@ import (
 	svlib "infra/libs/cros/stableversion"
 	gitlib "infra/libs/cros/stableversion/git"
 )
+
+var veyronPattern = regexp.MustCompile(`\Aveyron.*\z`)
 
 // UpdateWithOmaha subcommand: read stable version in omaha json file in GS.
 var UpdateWithOmaha = &subcommands.Command{
@@ -202,6 +205,11 @@ func compareCrosSV(ctx context.Context, newCrosSV []*sv.StableCrosVersion, oldCr
 	var updated []*sv.StableCrosVersion
 	for _, nsv := range newCrosSV {
 		k := nsv.GetKey().GetBuildTarget().GetName()
+		// TODO(crbug.com/1047031)
+		if veyronPattern.Match([]byte(k)) {
+			logging.Debugf(ctx, "skipping veyron entry: %s", k)
+			continue
+		}
 		v, ok := oldMap[k]
 		if ok {
 			nv := nsv.GetVersion()
