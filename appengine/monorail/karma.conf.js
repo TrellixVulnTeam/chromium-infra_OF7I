@@ -91,7 +91,6 @@ module.exports = function(config) {
       'karma-parallel',
       'karma-sinon',
       'karma-sourcemap-loader',
-      'karma-spec-reporter',
       'karma-webpack',
       '@chopsui/karma-reporter',
     ],
@@ -128,7 +127,7 @@ module.exports = function(config) {
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['mocha', 'spec', 'chopsui-json'].concat(
+    reporters: ['mocha', 'chopsui-json'].concat(
       coverage ? ['coverage'] : []),
 
 
