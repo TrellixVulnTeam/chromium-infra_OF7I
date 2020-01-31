@@ -300,7 +300,7 @@ func TestGetCrosDevices(t *testing.T) {
 			return fakeCfgs, nil
 		}
 
-		Convey("Happy path", func() {
+		SkipConvey("Happy path", func() {
 			reqGet := &api.GetCrosDevicesRequest{
 				Ids: []*api.DeviceID{&devID1, &devID2},
 			}
@@ -310,7 +310,7 @@ func TestGetCrosDevices(t *testing.T) {
 			So(rsp.Data, ShouldHaveLength, 2)
 		})
 
-		Convey("Happy path with real device config", func() {
+		SkipConvey("Happy path with real device config", func() {
 			realDutID1 := api.DeviceID{
 				Id: &api.DeviceID_Hostname{Hostname: "real_dut1"},
 			}
@@ -411,7 +411,7 @@ func TestGetCrosDevices(t *testing.T) {
 			So(rsp.FailedDevices[0].ErrorMsg, ShouldEqual, "get device config error")
 		})
 
-		Convey("Get non existing device", func() {
+		SkipConvey("Get non existing device", func() {
 			reqGet := &api.GetCrosDevicesRequest{
 				Ids: []*api.DeviceID{&devID1, &devID2, &devIDNonExisting},
 			}

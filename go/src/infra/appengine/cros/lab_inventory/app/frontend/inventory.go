@@ -273,6 +273,9 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
+	if true {
+		return nil, errors.Reason("Disabled temporarily").Err()
+	}
 
 	hostnames, devIds := extractHostnamesAndDeviceIDs(ctx, req)
 	result := ([]datastore.DeviceOpResult)(datastore.GetDevicesByIds(ctx, devIds))
