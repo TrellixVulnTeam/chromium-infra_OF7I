@@ -31,7 +31,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -160,7 +159,7 @@ func mainInner(a *args) error {
 		gsBucket = sec.GetGoogleStorage().GetBucket()
 	}
 
-	luciferErr := runLuciferTask(i, a, annotWriter, ta)
+	luciferErr := runLuciferTask(i, a, ta)
 
 	if luciferErr != nil {
 		// Attempt to parse results regardless of lucifer errors.
@@ -218,17 +217,17 @@ func updatesInventory(taskName string) bool {
 	return task == "repair"
 }
 
-func runLuciferTask(i *harness.Info, a *args, logdogOutput io.Writer, ta lucifer.TaskArgs) error {
+func runLuciferTask(i *harness.Info, a *args, ta lucifer.TaskArgs) error {
 	if n, ok := getAdminTask(a.taskName); ok {
-		if err := runAdminTask(i, n, logdogOutput, ta); err != nil {
+		if err := runAdminTask(i, n, ta); err != nil {
 			return errors.Wrap(err, "run admin task")
 		}
 	} else if isDeployTask(a) {
-		if err := runDeployTask(i, a.deployActions, logdogOutput, ta); err != nil {
+		if err := runDeployTask(i, a.deployActions, ta); err != nil {
 			return errors.Wrap(err, "run deploy task")
 		}
 	} else {
-		if err := runTest(i, a, logdogOutput, ta); err != nil {
+		if err := runTest(i, a, ta); err != nil {
 			return errors.Wrap(err, "run test")
 		}
 	}
@@ -257,7 +256,7 @@ func isDeployTask(a *args) bool {
 }
 
 // runTest runs a test.
-func runTest(i *harness.Info, a *args, logdogOutput io.Writer, ta lucifer.TaskArgs) (err error) {
+func runTest(i *harness.Info, a *args, ta lucifer.TaskArgs) (err error) {
 	// TODO(ayatane): Always reboot between each test for now.
 	tc := prejobTaskControl{
 		runReset:     true,
@@ -280,7 +279,7 @@ func runTest(i *harness.Info, a *args, logdogOutput io.Writer, ta lucifer.TaskAr
 	cmd := lucifer.TestCommand(i.LuciferConfig(), r)
 	f := event.ForwardAbortSignal(r.AbortSock)
 	defer f.Close()
-	lr, err := runLuciferCommand(i, logdogOutput, cmd)
+	lr, err := runLuciferCommand(i, cmd)
 	if err != nil {
 		return errors.Wrap(err, "run lucifer failed")
 	}
@@ -337,7 +336,7 @@ func choosePrejobTask(tc prejobTaskControl, hostDirty, hostProtected bool) const
 }
 
 // runAdminTask runs an admin task.  name is the name of the task.
-func runAdminTask(i *harness.Info, name string, logdogOutput io.Writer, ta lucifer.TaskArgs) (err error) {
+func runAdminTask(i *harness.Info, name string, ta lucifer.TaskArgs) (err error) {
 	r := lucifer.AdminTaskArgs{
 		TaskArgs: ta,
 		Host:     i.DUTName,
@@ -347,7 +346,7 @@ func runAdminTask(i *harness.Info, name string, logdogOutput io.Writer, ta lucif
 	cmd := lucifer.AdminTaskCommand(i.LuciferConfig(), r)
 	f := event.ForwardAbortSignal(r.AbortSock)
 	defer f.Close()
-	if _, err := runLuciferCommand(i, logdogOutput, cmd); err != nil {
+	if _, err := runLuciferCommand(i, cmd); err != nil {
 		return errors.Wrap(err, "run lucifer failed")
 	}
 	return nil
@@ -356,7 +355,7 @@ func runAdminTask(i *harness.Info, name string, logdogOutput io.Writer, ta lucif
 // runDeployTask runs a deploy task using lucifer.
 //
 // actions is a possibly empty comma separated list of deploy actions to run
-func runDeployTask(i *harness.Info, actions string, logdogOutput io.Writer, ta lucifer.TaskArgs) error {
+func runDeployTask(i *harness.Info, actions string, ta lucifer.TaskArgs) error {
 	r := lucifer.DeployTaskArgs{
 		TaskArgs: ta,
 		Host:     i.DUTName,
@@ -366,7 +365,7 @@ func runDeployTask(i *harness.Info, actions string, logdogOutput io.Writer, ta l
 	cmd := lucifer.DeployTaskCommand(i.LuciferConfig(), r)
 	f := event.ForwardAbortSignal(r.AbortSock)
 	defer f.Close()
-	if _, err := runLuciferCommand(i, logdogOutput, cmd); err != nil {
+	if _, err := runLuciferCommand(i, cmd); err != nil {
 		return errors.Wrap(err, "run deploy task")
 	}
 	return nil

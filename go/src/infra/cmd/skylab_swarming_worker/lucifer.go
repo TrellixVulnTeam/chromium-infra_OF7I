@@ -5,7 +5,6 @@
 package main
 
 import (
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -21,14 +20,11 @@ type luciferResult struct {
 }
 
 // runLuciferCommand runs a Lucifer exec.Cmd and processes Lucifer events.
-func runLuciferCommand(i *harness.Info, w io.Writer, cmd *exec.Cmd) (*luciferResult, error) {
+func runLuciferCommand(i *harness.Info, cmd *exec.Cmd) (*luciferResult, error) {
 	log.Printf("Running %s %s", cmd.Path, strings.Join(cmd.Args, " "))
 	cmd.Stderr = os.Stderr
 
 	r := &luciferResult{}
-	if w == nil {
-		w = os.Stdout
-	}
 	f := func(e event.Event, m string) {
 		switch {
 		case e == event.TestFailed && m != "autoserv":
