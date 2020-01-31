@@ -16,7 +16,8 @@ import (
 )
 
 var (
-	hwidServerURL = "https://chromeos-hwid.appspot.com/api/chromeoshwid/v1/%s/%s/?key=%s"
+	hwidServerURL              = "https://chromeos-hwid.appspot.com/api/chromeoshwid/v1/%s/%s/?key=%s"
+	hwidServerResponseErrorKey = "error"
 )
 
 // Data we interested from HWID server.
@@ -42,6 +43,14 @@ func callHwidServer(rpc string, hwid string, secret string) ([]byte, error) {
 	}
 	if rsp.StatusCode != http.StatusOK {
 		return nil, errors.Reason("HWID server responsonse was not OK: %s", body).Err()
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+	// HWID server response errors as a json stream with 200 code.
+	if v, ok := result[hwidServerResponseErrorKey]; ok {
+		return nil, errors.Reason(v.(string)).Err()
 	}
 	return body, nil
 }

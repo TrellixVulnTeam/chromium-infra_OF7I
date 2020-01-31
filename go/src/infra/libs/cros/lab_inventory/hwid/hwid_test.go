@@ -44,6 +44,20 @@ var dutlabelJSON string = `
  ]
 }
 `
+var hwidErrorResponseJSON string = `
+{
+ "error": "No metadata present for the requested board: NOCTURNE TEST 3421",
+ "possible_labels": [
+  "sku",
+  "phase",
+  "touchscreen",
+  "touchpad",
+  "variant",
+  "stylus",
+  "hwid_component"
+ ]
+}
+`
 
 func TestGetHwidData(t *testing.T) {
 	ctx := gaetesting.TestingContextWithAppID("go-test")
@@ -60,6 +74,18 @@ func TestGetHwidData(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(data.Sku, ShouldEqual, hwidSku)
 			So(data.Variant, ShouldEqual, hwidVariant)
+		})
+
+		Convey("Error response", func() {
+			mockHwidServerForDutLabel := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, hwidErrorResponseJSON)
+			}))
+			defer mockHwidServerForDutLabel.Close()
+			hwidServerURL = mockHwidServerForDutLabel.URL + "/%s/%s/%s"
+
+			_, err := GetHwidData(ctx, "AMPTON C3B-A2B-D2K-H9I-A2S", "secret")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "No metadata present for the requested board")
 		})
 
 		Convey("Invaid key", func() {

@@ -5,7 +5,6 @@
 package frontend
 
 import (
-	"fmt"
 	"strings"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
@@ -203,20 +202,20 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 			addFailedDevice(ctx, &failedDevices, &labData, err, "unmarshal dut state data")
 			continue
 		}
-		hwidData, err := getHwidDataFunc(ctx, labData.GetManufacturingId().GetValue(), secret)
-		if err != nil {
-			operation := fmt.Sprintf("get HWID data of %s", labData.GetManufacturingId().GetValue())
-			addFailedDevice(ctx, &failedDevices, &labData, err, operation)
-			continue
+		if hwidData, err := getHwidDataFunc(ctx, labData.GetManufacturingId().GetValue(), secret); err != nil {
+			// HWID server may cannot find records for the HWID. Ignore the
+			// error for now.
+			logging.Errorf(ctx, "failed to get response from HWID server for %s", labData.GetManufacturingId().GetValue())
+		} else {
+			extendedData = append(extendedData, &api.ExtendedDeviceData{
+				LabConfig: &labData,
+				DutState:  &dutState,
+				HwidData: &api.HwidData{
+					Sku:     hwidData.Sku,
+					Variant: hwidData.Variant,
+				},
+			})
 		}
-		extendedData = append(extendedData, &api.ExtendedDeviceData{
-			LabConfig: &labData,
-			DutState:  &dutState,
-			HwidData: &api.HwidData{
-				Sku:     hwidData.Sku,
-				Variant: hwidData.Variant,
-			},
-		})
 	}
 	// Get device config in a batch.
 	extendedData, moreFailedDevices := getDeviceConfigData(ctx, extendedData)

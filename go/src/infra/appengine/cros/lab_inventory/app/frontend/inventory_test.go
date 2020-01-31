@@ -378,7 +378,7 @@ func TestGetCrosDevices(t *testing.T) {
 			So(resultM["real_dut2"], ShouldEqual, "")
 		})
 
-		Convey("Bad hwid server", func() {
+		SkipConvey("Bad hwid server", func() {
 			getHwidDataFunc = hwid.GetHwidData
 			reqGet := &api.GetCrosDevicesRequest{
 				Ids: []*api.DeviceID{&devID1, &devID2},
