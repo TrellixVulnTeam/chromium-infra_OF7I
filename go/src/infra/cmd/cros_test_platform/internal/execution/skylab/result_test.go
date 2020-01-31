@@ -17,12 +17,6 @@ import (
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
 )
 
-type fakeURLer struct{}
-
-func (f *fakeURLer) GetTaskURL(_ string) string {
-	return ""
-}
-
 // Test that autotest results for a single completed task map correctly.
 func TestSingleAutotestTaskResults(t *testing.T) {
 	Convey("Given a single task's autotest results", t, func() {
@@ -215,7 +209,6 @@ func TestAutotestTestCases(t *testing.T) {
 }
 
 func callToTaskResults(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
-	urler := &fakeURLer{}
 	attempt := &attempt{autotestResult: autotestResult, state: jsonrpc.TaskState_COMPLETED, taskID: "foo-task-ID"}
-	return toTaskResult("", attempt, 5, urler)
+	return toTaskResult("", attempt, 5)
 }

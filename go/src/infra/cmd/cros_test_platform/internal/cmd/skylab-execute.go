@@ -233,7 +233,7 @@ func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration t
 		Swarming:      t,
 		IsolateGetter: gf,
 	})
-	return runner.Responses(t), err
+	return runner.Responses(), err
 }
 
 func (c *skylabExecuteRun) writeResponsesWithError(resps map[string]*steps.ExecuteResponse, err error) error {

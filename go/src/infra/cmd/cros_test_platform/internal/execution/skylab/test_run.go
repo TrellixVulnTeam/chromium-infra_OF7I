@@ -112,7 +112,7 @@ func (t *testRun) Completed() bool {
 	return a != nil && a.Completed()
 }
 
-func (t *testRun) TaskResult(urler swarming.URLer) []*steps.ExecuteResponse_TaskResult {
+func (t *testRun) TaskResult() []*steps.ExecuteResponse_TaskResult {
 	if !t.runnable {
 		return []*steps.ExecuteResponse_TaskResult{
 			{
@@ -127,7 +127,7 @@ func (t *testRun) TaskResult(urler swarming.URLer) []*steps.ExecuteResponse_Task
 
 	ret := make([]*steps.ExecuteResponse_TaskResult, len(t.attempts))
 	for i, a := range t.attempts {
-		ret[i] = toTaskResult(t.Name, a, i, urler)
+		ret[i] = toTaskResult(t.Name, a, i)
 	}
 	return ret
 }

@@ -21,7 +21,6 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
-	"infra/cmd/cros_test_platform/internal/execution/swarming"
 )
 
 const resultsFileName = "results.json"
@@ -64,7 +63,7 @@ func getAutotestResult(ctx context.Context, sResult *swarming_api.SwarmingRpcsTa
 	return a, nil
 }
 
-func toTaskResult(testName string, attempt *attempt, attemptNum int, urler swarming.URLer) *steps.ExecuteResponse_TaskResult {
+func toTaskResult(testName string, attempt *attempt, attemptNum int) *steps.ExecuteResponse_TaskResult {
 	// TODO(akeshet): Determine these URLs in a more principled way. See crbug.com/987487
 	// for context.
 	logURL := fmt.Sprintf(
@@ -82,7 +81,7 @@ func toTaskResult(testName string, attempt *attempt, attemptNum int, urler swarm
 			LifeCycle: taskStateToLifeCycle[attempt.state],
 			Verdict:   attempt.Verdict(),
 		},
-		TaskUrl: urler.GetTaskURL(attempt.taskID),
+		TaskUrl: attempt.URL(),
 		LogUrl:  logURL,
 		LogData: &common.TaskLogData{
 			GsUrl: gsURL,

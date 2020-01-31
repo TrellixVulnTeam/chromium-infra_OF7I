@@ -15,14 +15,9 @@ import (
 	"infra/libs/skylab/swarming"
 )
 
-// URLer defines an interface to turn task IDs into task URLs.
-type URLer interface {
-	GetTaskURL(taskID string) string
-}
-
 // Client defines an interface used to interact with a swarming service.
 type Client interface {
-	URLer
+	GetTaskURL(taskID string) string
 	BotExists(context.Context, []*swarming_api.SwarmingRpcsStringPair) (bool, error)
 	CreateTask(context.Context, *swarming_api.SwarmingRpcsNewTaskRequest) (*swarming_api.SwarmingRpcsTaskRequestMetadata, error)
 	GetResults(ctx context.Context, IDs []string) ([]*swarming_api.SwarmingRpcsTaskResult, error)

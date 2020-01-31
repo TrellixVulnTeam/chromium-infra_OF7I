@@ -15,7 +15,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
 
-	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"infra/libs/skylab/inventory"
 )
 
@@ -187,10 +186,10 @@ var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCyc
 	jsonrpc.TaskState_TIMED_OUT: test_platform.TaskState_LIFE_CYCLE_ABORTED,
 }
 
-func (r *TaskSet) response(urler swarming.URLer, running bool) *steps.ExecuteResponse {
+func (r *TaskSet) response(running bool) *steps.ExecuteResponse {
 	resp := &steps.ExecuteResponse{
-		TaskResults:         r.taskResults(urler),
-		ConsolidatedResults: r.results(urler),
+		TaskResults:         r.taskResults(),
+		ConsolidatedResults: r.results(),
 		State: &test_platform.TaskState{
 			Verdict:   r.verdict(),
 			LifeCycle: r.lifecycle(running),
@@ -238,18 +237,18 @@ func successfulVerdict(v test_platform.TaskState_Verdict) bool {
 	}
 }
 
-func (r *TaskSet) results(urler swarming.URLer) []*steps.ExecuteResponse_ConsolidatedResult {
+func (r *TaskSet) results() []*steps.ExecuteResponse_ConsolidatedResult {
 	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(r.testRuns))
 	for i, test := range r.testRuns {
 		rs[i] = &steps.ExecuteResponse_ConsolidatedResult{
-			Attempts: test.TaskResult(urler),
+			Attempts: test.TaskResult(),
 		}
 	}
 	return rs
 }
 
-func (r *TaskSet) taskResults(urler swarming.URLer) []*steps.ExecuteResponse_TaskResult {
-	results := r.results(urler)
+func (r *TaskSet) taskResults() []*steps.ExecuteResponse_TaskResult {
+	results := r.results()
 	var trs []*steps.ExecuteResponse_TaskResult
 	for _, result := range results {
 		trs = append(trs, result.Attempts...)

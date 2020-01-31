@@ -115,11 +115,11 @@ func (r *Runner) completed() bool {
 }
 
 // Responses constructs responses for each taskSet managed by the Runner.
-func (r *Runner) Responses(urler swarming.URLer) map[string]*steps.ExecuteResponse {
+func (r *Runner) Responses() map[string]*steps.ExecuteResponse {
 	running := r.running
 	resps := make(map[string]*steps.ExecuteResponse)
 	for t, ts := range r.taskSets {
-		resps[t] = ts.response(urler, running)
+		resps[t] = ts.response(running)
 	}
 	return resps
 }

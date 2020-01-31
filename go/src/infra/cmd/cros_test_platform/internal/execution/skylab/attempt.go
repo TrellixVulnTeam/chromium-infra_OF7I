@@ -20,6 +20,7 @@ import (
 type attempt struct {
 	args   request.Args
 	taskID string
+	url    string
 	state  jsonrpc.TaskState
 	// Note: If we ever begin supporting other harnesses's result formats
 	// then this field will change to a *skylab_test_runner.Result.
@@ -41,7 +42,8 @@ func (a *attempt) Launch(ctx context.Context, clients Clients) error {
 		return errors.Annotate(err, "launch attempt for %s", a.TaskName()).Err()
 	}
 	a.taskID = resp.TaskId
-	logging.Infof(ctx, "Launched attempt for %s as task %s", a.TaskName(), clients.Swarming.GetTaskURL(a.taskID))
+	a.url = clients.Swarming.GetTaskURL(a.taskID)
+	logging.Infof(ctx, "Launched attempt for %s as task %s", a.TaskName(), a.url)
 	return nil
 }
 
@@ -133,4 +135,8 @@ func (a *attempt) TestCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult
 		}
 	}
 	return ret
+}
+
+func (a *attempt) URL() string {
+	return a.url
 }

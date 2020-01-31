@@ -36,7 +36,6 @@ import (
 
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
-	"infra/cmd/cros_test_platform/internal/execution/swarming"
 )
 
 // fakeSwarming implements skylab.Swarming
@@ -263,7 +262,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			resp := getSingleResponse(run, swarming)
+			resp := getSingleResponse(run)
 			So(resp, ShouldNotBeNil)
 
 			Convey("then task result is complete with unspecified verdict.", func() {
@@ -304,7 +303,7 @@ func TestLaunchAndWaitTest(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			resp := getSingleResponse(run, swarming)
+			resp := getSingleResponse(run)
 			So(resp, ShouldNotBeNil)
 
 			Convey("then results for all tests are reflected.", func() {
@@ -385,7 +384,7 @@ func TestTaskStates(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("then the task state is correct.", func() {
-					resp := getSingleResponse(run, swarming)
+					resp := getSingleResponse(run)
 					So(resp.TaskResults, ShouldHaveLength, 1)
 					So(resp.TaskResults[0].State, ShouldResemble, c.expectTaskState)
 				})
@@ -446,7 +445,7 @@ func TestTaskURL(t *testing.T) {
 		})
 		So(err, ShouldBeNil)
 
-		resp := getSingleResponse(run, swarming)
+		resp := getSingleResponse(run)
 		So(resp.TaskResults, ShouldHaveLength, 1)
 		taskURL := resp.TaskResults[0].TaskUrl
 		So(taskURL, ShouldStartWith, swarming_service)
@@ -480,7 +479,7 @@ func TestIncompleteWait(t *testing.T) {
 
 		So(err.Error(), ShouldContainSubstring, context.Canceled.Error())
 
-		resp := getSingleResponse(run, swarming)
+		resp := getSingleResponse(run)
 		So(resp, ShouldNotBeNil)
 		So(resp.TaskResults, ShouldHaveLength, 1)
 		So(resp.TaskResults[0].State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_RUNNING)
@@ -807,7 +806,7 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 					IsolateGetter: fakeGetterFactory(getter),
 				})
 				So(err, ShouldBeNil)
-				resp := getSingleResponse(run, swarming)
+				resp := getSingleResponse(run)
 				Convey("response should contain two enumerated results", func() {
 					So(resp.ConsolidatedResults, ShouldHaveLength, 2)
 				})
@@ -1053,7 +1052,7 @@ func TestRetries(t *testing.T) {
 					IsolateGetter: fakeGetterFactory(getter),
 				})
 				So(err, ShouldBeNil)
-				resp := getSingleResponse(run, swarming)
+				resp := getSingleResponse(run)
 
 				Convey("each attempt request should have a unique logdog url in the.", func() {
 					s := map[string]bool{}
@@ -1259,7 +1258,7 @@ func TestResponseVerdict(t *testing.T) {
 				})
 			}()
 
-			resp := getSingleResponse(run, swarming)
+			resp := getSingleResponse(run)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_RUNNING)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
 		})
@@ -1271,7 +1270,7 @@ func TestResponseVerdict(t *testing.T) {
 				Swarming:      swarming,
 				IsolateGetter: fakeGetterFactory(getter),
 			})
-			resp := getSingleResponse(run, swarming)
+			resp := getSingleResponse(run)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_PASSED)
 		})
@@ -1283,7 +1282,7 @@ func TestResponseVerdict(t *testing.T) {
 				Swarming:      swarming,
 				IsolateGetter: fakeGetterFactory(getter),
 			})
-			resp := getSingleResponse(run, swarming)
+			resp := getSingleResponse(run)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
@@ -1306,7 +1305,7 @@ func TestResponseVerdict(t *testing.T) {
 			wg.Wait()
 			So(err, ShouldNotBeNil)
 
-			resp := getSingleResponse(run, swarming)
+			resp := getSingleResponse(run)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_ABORTED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
@@ -1371,7 +1370,7 @@ func TestIncompatibleDependencies(t *testing.T) {
 				})
 				So(err, ShouldBeNil)
 
-				resp := getSingleResponse(run, swarming)
+				resp := getSingleResponse(run)
 				So(resp, ShouldNotBeNil)
 
 				Convey("then task result is rejected with unspecified verdict.", func() {
@@ -1407,9 +1406,9 @@ func testInvocationWithDependency(name string, deps ...string) *steps.Enumeratio
 	return &inv
 }
 
-func getSingleResponse(r *skylab.Runner, client swarming.Client) *steps.ExecuteResponse {
+func getSingleResponse(r *skylab.Runner) *steps.ExecuteResponse {
 	resps := make([]*steps.ExecuteResponse, 0, 1)
-	for _, resp := range r.Responses(client) {
+	for _, resp := range r.Responses() {
 		resps = append(resps, resp)
 	}
 	So(resps, ShouldHaveLength, 1)
