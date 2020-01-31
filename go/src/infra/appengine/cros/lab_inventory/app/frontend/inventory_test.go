@@ -390,7 +390,7 @@ func TestGetCrosDevices(t *testing.T) {
 			So(rsp.FailedDevices[0].ErrorMsg, ShouldContainSubstring, "HWID server responsonse was not OK")
 		})
 
-		Convey("Failed to get device config", func() {
+		SkipConvey("Failed to get device config", func() {
 			getHwidDataFunc = func(ctx context.Context, hwidstr string, secret string) (*hwid.Data, error) {
 				return &hwid.Data{Sku: "sku", Variant: "variant"}, nil
 			}

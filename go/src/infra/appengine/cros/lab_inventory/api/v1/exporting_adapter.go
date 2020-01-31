@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+	"go.chromium.org/luci/common/errors"
 	"infra/libs/skylab/inventory"
 )
 
@@ -312,6 +313,9 @@ func setDutState(p *inventory.Peripherals, s *lab.DutState) {
 // inventory v1 defined in
 // https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/libs/skylab/inventory/device.proto
 func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, error) {
+	if data == nil {
+		return nil, errors.Reason("nil ext data to adapt").Err()
+	}
 	p := data.LabConfig.GetDut().GetPeripherals()
 	var attrs attributes
 	attrs.

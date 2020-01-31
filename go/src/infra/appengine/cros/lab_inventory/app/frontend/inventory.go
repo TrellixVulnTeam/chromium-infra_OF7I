@@ -146,10 +146,10 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 	for i := range devCfgs {
 		if err == nil || err.(errors.MultiError)[i] == nil {
 			extendedData[i].DeviceConfig = devCfgs[i].(*device.Config)
-			newExtendedData = append(newExtendedData, extendedData[i])
 		} else {
-			addFailedDevice(ctx, &failedDevices, extendedData[i].LabConfig, err.(errors.MultiError)[i], "get device config data")
+			logging.Warningf(ctx, "Ignored error: cannot get device config for %v", devCfgs[i])
 		}
+		newExtendedData = append(newExtendedData, extendedData[i])
 	}
 	return newExtendedData, failedDevices
 }
@@ -188,6 +188,7 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 	failedDevices := make([]*api.DeviceOpResult, 0, len(devices))
 	for _, r := range devices {
 		var labData lab.ChromeOSDevice
+		logging.Debugf(ctx, "get ext data for %v", r.Entity.Hostname)
 		if err := r.Entity.GetCrosDeviceProto(&labData); err != nil {
 			logging.Errorf(ctx, "Wrong lab config data of device entity %s", r.Entity)
 			failedDevices = append(failedDevices, &api.DeviceOpResult{
@@ -281,6 +282,13 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 	failedDevices := getFailedResults(ctx, result, false)
 	failedDevices = append(failedDevices, moreFailedDevices...)
 
+	// Create a fake extended data in case there's nothing returned.
+	// TODO (guocb) remove this.
+	if len(extendedData) == 0 {
+		extendedData = []*api.ExtendedDeviceData{
+			{},
+		}
+	}
 	resp = &api.GetCrosDevicesResponse{
 		Data:          extendedData,
 		FailedDevices: failedDevices,
