@@ -7,11 +7,17 @@ import argparse
 import os
 import sys
 
+from pkg_resources import parse_version
+
 import requests
 
 
 def do_latest():
-  print requests.get('https://golang.org/VERSION?m=text').text.replace('go', '')
+  versions = []
+  for release in requests.get('https://golang.org/dl/?mode=json').json():
+    versions.append(parse_version(release['version'].replace('go', '')))
+  versions.sort()
+  print versions[-1]
 
 
 def do_checkout(version, platform, kind, checkout_path):
