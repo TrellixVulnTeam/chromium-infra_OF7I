@@ -254,9 +254,8 @@ export class MrIssueList extends connectStore(LitElement) {
               title="Show columns"
               menuAlignment="right"
               .columns=${this.columns}
+              .issues=${this.issues}
               .defaultFields=${this.defaultFields}
-              .queryParams=${this._queryParams}
-              .phaseNames=${this._phaseNames}
             ></mr-show-columns-dropdown>
           </th>
         </tr>

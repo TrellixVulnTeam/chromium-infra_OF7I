@@ -27,7 +27,6 @@ export class EztShowColumnsConnector extends connectStore(LitElement) {
       <mr-show-columns-dropdown
         .defaultFields=${DEFAULT_ISSUE_FIELD_LIST}
         .columns=${this.columns}
-        .queryParams=${this.queryParams}
         .phaseNames=${this.phaseNames}
         .onHideColumn=${(name) => this.onHideColumn(name)}
         .onShowColumn=${(name) => this.onShowColumn(name)}

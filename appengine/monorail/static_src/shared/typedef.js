@@ -218,7 +218,7 @@
  * @property {Array<IssueRef>=} danglingBlockedOnRefs
  * @property {Array<IssueRef>=} danglingBlockingRefs
  * @property {IssueRef=} mergedIntoIssueRef
- * @property {FieldValue=} fieldValues
+ * @property {Array<FieldValue>=} fieldValues
  * @property {boolean=} isDeleted
  * @property {UserRef=} reporterRef
  * @property {number=} openedTimestamp

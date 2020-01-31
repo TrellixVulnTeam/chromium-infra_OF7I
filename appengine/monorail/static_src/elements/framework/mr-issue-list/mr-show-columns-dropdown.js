@@ -7,6 +7,8 @@ import page from 'page';
 import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
 import * as project from 'reducers/project.js';
+import * as sitewide from 'reducers/sitewide.js';
+import {labelNameToLabelPrefix} from 'shared/converters.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 
 
@@ -48,8 +50,13 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
        */
       columns: {type: Array},
       /**
+       * Array of displayed issues.
+       */
+      issues: {type: Array},
+      /**
        * Array of unique phase names to prepend to phase field columns.
        */
+      // TODO(dtu): Delete after removing EZT hotlist issue list.
       phaseNames: {type: Array},
       /**
        * Array of built in fields that are available outside of project
@@ -59,7 +66,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
       _fieldDefs: {type: Array},
       _labelPrefixFields: {type: Array},
       // TODO(zhangtiff): Delete this legacy integration after removing
-      // the list view.
+      // the EZT issue list view.
       onHideColumn: {type: Object},
       onShowColumn: {type: Object},
     };
@@ -69,33 +76,75 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
   constructor() {
     super();
 
+    // Inherited from MrDropdown.
     this.label = 'Show columns';
     this.icon = 'more_horiz';
+
     this.columns = [];
+    /** @type {Array<Issue>} */
+    this.issues = [];
     this.phaseNames = [];
     this.defaultFields = [];
 
+    // TODO(dtu): Delete after removing EZT hotlist issue list.
     this._fieldDefs = [];
     this._labelPrefixFields = [];
 
+    this._queryParams = {};
     this._page = page;
+
+    // TODO(zhangtiff): Delete this legacy integration after removing
+    // the EZT issue list view.
+    this.onHideColumn = null;
+    this.onShowColumn = null;
   }
 
   /** @override */
   stateChanged(state) {
     this._fieldDefs = project.fieldDefs(state) || [];
     this._labelPrefixFields = project.labelPrefixFields(state) || [];
+    this._queryParams = sitewide.queryParams(state);
   }
 
   /** @override */
   update(changedProperties) {
-    this.items = this.columnOptions(
-        this.defaultFields, this._fieldDefs, this._labelPrefixFields,
-        this.columns, this.phaseNames);
+    if (this.issues.length) {
+      this.items = this.columnOptions();
+    } else {
+      // TODO(dtu): Delete after removing EZT hotlist issue list.
+      this.items = this.columnOptionsEzt(
+          this.defaultFields, this._fieldDefs, this._labelPrefixFields,
+          this.columns, this.phaseNames);
+    }
 
     super.update(changedProperties);
   }
 
+  /**
+   * Computes the column options available in the list view based on the Issues.
+   * @return {Array<MenuItem>}
+   */
+  columnOptions() {
+    const issueFields = this.issues.map(_columnsFromIssue).flat();
+    const availableFields = new Set([...issueFields, ...this.defaultFields]);
+    this.columns.forEach((field) => availableFields.delete(field));
+    const sortedFields = [...availableFields].sort();
+
+    return [
+      ...this.columns.map((field, i) => ({
+        icon: 'check',
+        text: field,
+        handler: () => this._removeColumn(i),
+      })),
+      ...sortedFields.map((field) => ({
+        icon: '',
+        text: field,
+        handler: () => this._addColumn(field),
+      })),
+    ];
+  }
+
+  // TODO(dtu): Delete after removing EZT hotlist issue list.
   /**
    * Computes the column options available in the list view based on project
    * config data.
@@ -110,7 +159,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
    *   viewed issue list.
    * @return {Array<MenuItem>}
    */
-  columnOptions(defaultFields, fieldDefs, labelPrefixes, selectedColumns,
+  columnOptionsEzt(defaultFields, fieldDefs, labelPrefixes, selectedColumns,
       phaseNames) {
     const selectedOptions = new Set(
         selectedColumns.map((col) => col.toLowerCase()));
@@ -162,12 +211,12 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
       ...selectedColumns.map((field, i) => ({
         icon: 'check',
         text: field,
-        handler: () => this.removeColumn(i),
+        handler: () => this._removeColumn(i),
       })),
       ...sortedFields.map((field) => ({
         icon: '',
         text: field,
-        handler: () => this.addColumn(field),
+        handler: () => this._addColumn(field),
       })),
     ];
   }
@@ -193,7 +242,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
    *
    * @param {number} i the issue column to be removed.
    */
-  removeColumn(i) {
+  _removeColumn(i) {
     if (this.onHideColumn) {
       if (!this.onHideColumn(this.columns[i])) {
         return;
@@ -201,7 +250,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
     }
     const columns = [...this.columns];
     columns.splice(i, 1);
-    this.reloadColspec(columns);
+    this._reloadColspec(columns);
   }
 
   /**
@@ -209,13 +258,13 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
    *
    * @param {string} name of the new column added.
    */
-  addColumn(name) {
+  _addColumn(name) {
     if (this.onShowColumn) {
       if (!this.onShowColumn(name)) {
         return;
       }
     }
-    this.reloadColspec([...this.columns, name]);
+    this._reloadColspec([...this.columns, name]);
   }
 
   /**
@@ -224,7 +273,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
    *
    * @param {Array} newColumns the new colspec to set in the URL.
    */
-  reloadColspec(newColumns) {
+  _reloadColspec(newColumns) {
     this._updateQueryParams({colspec: newColumns.join(' ')});
   }
 
@@ -236,7 +285,7 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
    * Object to be updated.
    */
   _updateQueryParams(newParams) {
-    const params = {...this.queryParams, ...newParams};
+    const params = {...this._queryParams, ...newParams};
     this._page(`${this._baseUrl()}?${qs.stringify(params)}`);
   }
 
@@ -249,6 +298,31 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
   _baseUrl() {
     return window.location.pathname;
   }
+}
+
+/**
+ * Computes all list view columns set in a given Issue.
+ * @param {Issue} issue An Issue object.
+ * @return {Array<string>}
+ */
+function _columnsFromIssue(issue) {
+  const approvalValues = issue.approvalValues || [];
+  const fieldValues = issue.fieldValues || [];
+  const labelRefs = issue.labelRefs || [];
+  return [
+    ...approvalValues.map((approval) => approval.fieldRef.fieldName),
+    ...approvalValues.map(
+        (approval) => approval.fieldRef.fieldName + '-Approver'),
+    ...fieldValues.map((fieldValue) => {
+      if (fieldValue.phaseRef) {
+        return fieldValue.phaseRef.phaseName + '.' +
+            fieldValue.fieldRef.fieldName;
+      } else {
+        return fieldValue.fieldRef.fieldName;
+      }
+    }),
+    ...labelRefs.map((labelRef) => labelNameToLabelPrefix(labelRef.label)),
+  ];
 }
 
 customElements.define('mr-show-columns-dropdown', MrShowColumnsDropdown);
