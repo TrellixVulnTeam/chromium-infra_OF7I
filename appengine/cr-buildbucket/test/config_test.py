@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import copy
+import hashlib
 import logging
 
 from parameterized import parameterized
@@ -349,7 +350,29 @@ class ConfigTest(testing.AppengineTestCase):
             id='master.tryserver.v8',
             entity_schema_version=config.CURRENT_BUCKET_SCHEMA_VERSION,
             revision='sha1:cfc761d7a953a72ddea8f3d4c9a28e69777ca22c',
-            config=MASTER_TRYSERVER_V8
+            config=MASTER_TRYSERVER_V8,
+        ),
+    ]
+    self.assertEqual(actual, expected)
+
+    actual = config.Builder.query().fetch()
+    actual = sorted(actual, key=lambda b: b.key)
+    expected = [
+        config.Builder(
+            parent=ndb.Key(config.Project, 'chromium', config.Bucket, 'try'),
+            id='linux',
+            config=LUCI_CHROMIUM_TRY.swarming.builders[0],
+            config_hash=hashlib.sha256(
+                LUCI_CHROMIUM_TRY.swarming.builders[0].SerializeToString()
+            ).hexdigest(),
+        ),
+        config.Builder(
+            parent=ndb.Key(config.Project, 'dart', config.Bucket, 'try'),
+            id='linux',
+            config=LUCI_DART_TRY.swarming.builders[0],
+            config_hash=hashlib.sha256(
+                LUCI_DART_TRY.swarming.builders[0].SerializeToString()
+            ).hexdigest(),
         ),
     ]
     self.assertEqual(actual, expected)
@@ -358,6 +381,14 @@ class ConfigTest(testing.AppengineTestCase):
   def test_cron_update_buckets_with_existing(self, get_project_configs):
     chromium_buildbucket_cfg = parse_cfg(
         '''
+        builder_mixins {
+          name: "recipe-x"
+          recipe {
+            cipd_package: "infra/recipe_bundle"
+            cipd_version: "refs/heads/master"
+            name: "x"
+          }
+        }
         buckets {
           name: "master.tryserver.chromium.linux"
           acls {
@@ -369,7 +400,6 @@ class ConfigTest(testing.AppengineTestCase):
             group: "tryjob-access"
           }
         }
-
         buckets {
           name: "master.tryserver.chromium.mac"
           acls {
@@ -381,7 +411,50 @@ class ConfigTest(testing.AppengineTestCase):
             group: "tryjob-access"
           }
         }
+        buckets {
+          name: "try"
+          acls {
+            role: READER
+            group: "all"
+          }
+          acls {
+            role: SCHEDULER
+            identity: "johndoe@example.com"
+          }
+          swarming {
+            hostname: "swarming.example.com"
+            task_template_canary_percentage { value: 10 }
+            builder_defaults {
+              mixins: "recipe-x"
+            }
+            builders {
+              name: "linux"
+              dimensions: "os:Linux"
+            }
+          }
+        }
         '''
+    )
+
+    dart_buildbucket_cfg = parse_cfg(
+        '''
+      buckets {
+        name: "try"
+        swarming {
+          builder_defaults {
+            dimensions: "pool:Dart.LUCI"
+            recipe {
+              cipd_package: "infra/recipe_bundle"
+              cipd_version: "refs/heads/master"
+              name: "x"
+            }
+          }
+          builders {
+            name: "linux"
+          }
+        }
+      }
+      '''
     )
 
     v8_buildbucket_cfg = parse_cfg(
@@ -397,14 +470,31 @@ class ConfigTest(testing.AppengineTestCase):
     )
     get_project_configs.return_value = {
         'chromium': ('new!', chromium_buildbucket_cfg, None),
+        'dart': ('deadbeef', dart_buildbucket_cfg, None),
         'v8': ('deadbeef', v8_buildbucket_cfg, None),
     }
 
+    # Will be updated.
     config.put_bucket('chromium', 'deadbeef', MASTER_TRYSERVER_CHROMIUM_LINUX)
     # Will not be updated.
     config.put_bucket('v8', 'deadbeef', MASTER_TRYSERVER_V8)
     # Will be deleted.
     config.put_bucket('chromium', 'deadbeef', MASTER_TRYSERVER_CHROMIUM_WIN)
+    # Will be deleted.
+    config.put_bucket('chromium', 'deadbeef', LUCI_CHROMIUM_TRY)
+
+    # Will be updated.
+    config.put_builders(
+        'chromium', 'try', project_config_pb2.Builder(name='linux')
+    )
+    # Will not be updated.
+    config.put_builders('dart', 'try', LUCI_DART_TRY.swarming.builders[0])
+    # Will be deleted.
+    config.put_builders('dart', 'try', project_config_pb2.Builder(name='linux'))
+    # Will be deleted.
+    config.put_builders(
+        'chromium', 'try', LUCI_CHROMIUM_TRY.swarming.builders[0]
+    )
 
     config.cron_update_buckets()
 
@@ -426,6 +516,20 @@ class ConfigTest(testing.AppengineTestCase):
             config=MASTER_TRYSERVER_CHROMIUM_MAC,
         ),
         config.Bucket(
+            parent=ndb.Key(config.Project, 'chromium'),
+            id='try',
+            entity_schema_version=config.CURRENT_BUCKET_SCHEMA_VERSION,
+            revision='new!',
+            config=short_bucket_cfg(LUCI_CHROMIUM_TRY),
+        ),
+        config.Bucket(
+            parent=ndb.Key(config.Project, 'dart'),
+            id='try',
+            entity_schema_version=config.CURRENT_BUCKET_SCHEMA_VERSION,
+            revision='deadbeef',
+            config=short_bucket_cfg(LUCI_DART_TRY),
+        ),
+        config.Bucket(
             parent=ndb.Key(config.Project, 'v8'),
             id='master.tryserver.v8',
             entity_schema_version=config.CURRENT_BUCKET_SCHEMA_VERSION,
@@ -435,23 +539,46 @@ class ConfigTest(testing.AppengineTestCase):
     ]
     self.assertEqual(actual, expected)
 
+    actual = config.Builder.query().fetch()
+    actual = sorted(actual, key=lambda b: b.key)
+    expected = [
+        config.Builder(
+            parent=ndb.Key(config.Project, 'chromium', config.Bucket, 'try'),
+            id='linux',
+            config=LUCI_CHROMIUM_TRY.swarming.builders[0],
+            config_hash=hashlib.sha256(
+                LUCI_CHROMIUM_TRY.swarming.builders[0].SerializeToString()
+            ).hexdigest(),
+        ),
+        config.Builder(
+            parent=ndb.Key(config.Project, 'dart', config.Bucket, 'try'),
+            id='linux',
+            config=LUCI_DART_TRY.swarming.builders[0],
+            config_hash=hashlib.sha256(
+                LUCI_DART_TRY.swarming.builders[0].SerializeToString()
+            ).hexdigest(),
+        ),
+    ]
+    self.assertEqual(actual, expected)
+
   @mock.patch('components.config.get_project_configs', autospec=True)
   def test_cron_update_buckets_with_broken_configs(self, get_project_configs):
-    config.put_bucket('chromium', 'deadbeef', MASTER_TRYSERVER_CHROMIUM_LINUX)
+    config.put_bucket('dart', 'deadbeef', LUCI_DART_TRY)
+    config.put_builders('dart', 'try', LUCI_DART_TRY.swarming.builders[0])
 
     get_project_configs.return_value = {
-        'chromium': (
-            'new!', None, config_component.ConfigFormatError('broken!')
-        ),
+        'dart': ('new!', None, config_component.ConfigFormatError('broken!')),
     }
 
     config.cron_update_buckets()
 
-    # We must not delete buckets defined in a project that currently have a
-    # broken config.
-    bucket_id = 'chromium/' + MASTER_TRYSERVER_CHROMIUM_LINUX.name
-    _, actual = config.get_bucket(bucket_id)
-    self.assertEqual(actual, MASTER_TRYSERVER_CHROMIUM_LINUX)
+    # We must not delete buckets or builders defined in a project that currently
+    # have a broken config.
+    _, actual = config.get_bucket('dart/try')
+    self.assertEqual(actual, short_bucket_cfg(LUCI_DART_TRY))
+    actual = config.Builder.make_key('dart', 'try', 'linux').get()
+    self.assertTrue(actual)
+    self.assertEqual(actual.config, LUCI_DART_TRY.swarming.builders[0])
 
   def cfg_validation_test(self, cfg, expected_messages):
     ctx = config_component.validation.Context()

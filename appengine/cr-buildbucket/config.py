@@ -28,7 +28,7 @@ from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
 
-CURRENT_BUCKET_SCHEMA_VERSION = 5
+CURRENT_BUCKET_SCHEMA_VERSION = 6
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
 
 
@@ -254,6 +254,42 @@ class Bucket(ndb.Model):
     return format_bucket_id(self.project_id, self.bucket_name)
 
 
+class Builder(ndb.Model):
+  """Stores builder configuration.
+
+  Updated in cron_update_buckets() along with buckets.
+
+  Entity key:
+    Parent is Bucket. Id is a builder name.
+  """
+
+  @classmethod
+  def _get_kind(cls):
+    # "Builder" conflicts with model.Builder.
+    return 'Bucket.Builder'
+
+  # Binary config content.
+  config = datastore_utils.ProtobufProperty(project_config_pb2.Builder)
+  # Hash used for fast deduplication of configs. Set automatically on put.
+  config_hash = ndb.StringProperty(required=True)
+
+  @staticmethod
+  def compute_hash(cfg):
+    """Computes a hash for a builder config."""
+    return hashlib.sha256(cfg.SerializeToString()).hexdigest()
+
+  def _pre_put_hook(self):
+    assert self.config.name == self.key.id()
+    assert not self.config_hash
+    self.config_hash = self.compute_hash(self.config)
+
+  @staticmethod
+  def make_key(project_id, bucket_id, builder_name):
+    return ndb.Key(
+        Project, project_id, Bucket, bucket_id, Builder, builder_name
+    )
+
+
 def short_bucket_name(bucket_name):
   """Returns bucket name without "luci.<project_id>." prefix."""
   parts = bucket_name.split('.', 2)
@@ -362,6 +398,14 @@ def put_bucket(project_id, revision, bucket_cfg):
   ).put()
 
 
+def put_builders(project_id, bucket_id, *builder_cfgs):
+  builders = [
+      Builder(key=Builder.make_key(project_id, bucket_id, b.name), config=b)
+      for b in builder_cfgs
+  ]
+  ndb.put_multi(builders)
+
+
 def cron_update_buckets():
   """Synchronizes bucket entities with configs fetched from luci-config.
 
@@ -375,15 +419,15 @@ def cron_update_buckets():
       cfg_path(), project_config_pb2.BuildbucketCfg
   )
 
-  to_delete = collections.defaultdict(set)  # project_id -> ndb keys
+  buckets_to_delete = collections.defaultdict(set)  # project_id -> ndb keys
   for key in Bucket.query().fetch(keys_only=True):
-    to_delete[key.parent().id()].add(key)
+    buckets_to_delete[key.parent().id()].add(key)
 
   for project_id, (revision, project_cfg, _) in config_map.iteritems():
     if project_cfg is None:
       logging.error('config of project %s is broken', project_id)
       # Do not delete all buckets of a broken project.
-      to_delete.pop(project_id, None)
+      buckets_to_delete.pop(project_id, None)
       continue
 
     # revision is None in file-system mode. Use SHA1 of the config as revision.
@@ -397,7 +441,7 @@ def cron_update_buckets():
       bucket_key = Bucket.make_key(
           project_id, short_bucket_name(bucket_cfg.name)
       )
-      to_delete[project_id].discard(bucket_key)
+      buckets_to_delete[project_id].discard(bucket_key)
       bucket = bucket_key.get()
       if (bucket and
           bucket.entity_schema_version == CURRENT_BUCKET_SCHEMA_VERSION and
@@ -420,6 +464,9 @@ def cron_update_buckets():
 
       _normalize_acls(bucket_cfg.acls)
 
+      builders = {b.key: b for b in Builder.query(ancestor=bucket_key).fetch()}
+      builders_to_delete = set(builders)
+      builders_to_put = []
       if bucket_cfg.HasField('swarming'):
         # Pull builder defaults out and apply defaults.
         defaults = bucket_cfg.swarming.builder_defaults
@@ -443,10 +490,20 @@ def cron_update_buckets():
           flatten_swarmingcfg.flatten_builder(
               b, defaults, builder_mixins_by_name
           )
+          builder_key = Builder.make_key(project_id, bucket_key.id(), b.name)
+          builders_to_delete.discard(builder_key)
+          builder = builders.get(builder_key)
+          if builder and builder.config_hash == Builder.compute_hash(b):
+            continue
+          builders_to_put.append(b)
+
+      # TODO(crbug/917873): Remove builders from the bucket config before put.
+      # Requires updating every location that needs builder info to fetch
+      # builder entities instead of assuming bucket entities will contain them.
 
       # pylint: disable=no-value-for-parameter
-      @ndb.transactional(xg=True)
-      def update_bucket():
+      @ndb.transactional()
+      def update_entities():
         bucket = bucket_key.get()
         if (bucket and
             bucket.entity_schema_version == CURRENT_BUCKET_SCHEMA_VERSION and
@@ -454,15 +511,20 @@ def cron_update_buckets():
           return
 
         put_bucket(project_id, revision, bucket_cfg)
+        put_builders(project_id, bucket_key.id(), *builders_to_put)
+        ndb.delete_multi(list(builders_to_delete))
         logging.info('Updated bucket %s to revision %s', bucket_key, revision)
 
-      update_bucket()
+      update_entities()
 
-  # Delete non-existing buckets.
-  to_delete_flat = sum([list(n) for n in to_delete.itervalues()], [])
-  if to_delete_flat:
-    logging.warning('Deleting buckets: %s', ', '.join(map(str, to_delete_flat)))
-    ndb.delete_multi(to_delete_flat)
+  # Delete non-existent buckets (and all associated builders).
+  for buckets in buckets_to_delete.itervalues():
+    to_delete = list(buckets)
+    for b in buckets:
+      to_delete.extend(Builder.query(ancestor=b).fetch(keys_only=True))
+    if to_delete:
+      logging.warning('Deleting entities: %s', ' '.join(map(str, to_delete)))
+      ndb.transaction(lambda: ndb.delete_multi(to_delete))
 
 
 def get_buildbucket_cfg_url(project_id):
