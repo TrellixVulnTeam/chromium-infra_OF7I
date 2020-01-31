@@ -267,7 +267,7 @@ export class MrIssueList extends connectStore(LitElement) {
         <tfoot><tr><td colspan=999 class="csv-download-container">
           <a id="download-link" aria-label="Download page as CSV"
               @click=${this._downloadCsv} href>CSV</a>
-          <a id="hidden-data-link" download="monorail-issues.csv"
+          <a id="hidden-data-link" download="${this.projectName}-issues.csv"
             href=${this._csvDataHref}></a>
         </td></tr></tfoot>
       `}

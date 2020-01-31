@@ -118,6 +118,8 @@ For longer sets of results, project members can export CSV files:
 The exported CSV will only contain data on that page. If the list is longer
 than one page either shorten the search result or go to the next page and
 click the `CSV` link again.
+You can also increase the pagination size to 1000 to include more results per
+page by adding &num=1000 to the query parameter
 
 ## How to group rows
 

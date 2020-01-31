@@ -37,7 +37,7 @@ class IssueListCsv(issuelist.IssueList):
 
     xsrf.ValidateToken(
         mr.token, mr.auth.user_id,
-        '/p/%s%s.do' % (mr.project_name, urls.ISSUE_LIST))
+        '/p/%s%s.do' % (mr.project_name, urls.ISSUE_LIST_OLD))
 
     # Sets headers to allow the response to be downloaded.
     self.content_type = 'text/csv; charset=UTF-8'
