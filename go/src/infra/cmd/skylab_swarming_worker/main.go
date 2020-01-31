@@ -63,17 +63,17 @@ func main() {
 }
 
 type args struct {
-	taskName            string
-	logdogAnnotationURL string
 	adminService        string
+	deployActions       string
 	forceFreshInventory bool
+	isolatedOutdir      string
+	logdogAnnotationURL string
+	sideEffectsConfig   string
+	taskName            string
 	xClientTest         bool
 	xKeyvals            map[string]string
 	xProvisionLabels    []string
 	xTestArgs           string
-	deployActions       string
-	isolatedOutdir      string
-	sideEffectsConfig   string
 }
 
 func parseArgs() *args {
