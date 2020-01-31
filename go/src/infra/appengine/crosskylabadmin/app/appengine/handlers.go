@@ -37,13 +37,14 @@ func main() {
 	r := router.New()
 	mwBase := standard.Base().Extend(config.Middleware)
 
-	// Install auth, config and tsmon handlers.
+	// Install config at first: crbug.com/1047567#4
+	config.SetupValidation()
+
+	// Install auth and tsmon handlers.
 	standard.InstallHandlers(r)
 	frontend.InstallHandlers(r, mwBase)
 	cron.InstallHandlers(r, mwBase)
 	queue.InstallHandlers(r, mwBase)
-
-	config.SetupValidation()
 
 	http.DefaultServeMux.Handle("/", r)
 
