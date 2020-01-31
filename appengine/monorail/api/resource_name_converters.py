@@ -10,7 +10,9 @@ While some Ingest methods need to check for the existence of resources as
 a side-effect of producing their IDs, other layers that call these methods
 should always do their own validity checking.
 
-ConvertFoo methods takes protorpc objects and returns resource name.
+ConvertFoo methods take object ids
+(and sometimes a MonorailConnection and ServiceManager)
+and return resource names.
 """
 
 import re
@@ -27,10 +29,14 @@ HOTLIST_ITEM_NAME_RE = re.compile(
         HOTLIST_PATTERN,
         project_constants.PROJECT_NAME_PATTERN))
 
+USER_NAME_RE = re.compile(r'users\/(?P<user_id>\d+)$')
+
 # Constants that hold the template patterns for creating resource names.
 HOTLIST_NAME_TMPL = 'hotlists/{hotlist_id}'
 HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
     HOTLIST_NAME_TMPL)
+
+USER_NAME_TMPL = 'users/{user_id}'
 
 
 def _GetResourceNameMatch(name, regex):
@@ -50,6 +56,8 @@ def _GetResourceNameMatch(name, regex):
         'Invalid resource name: %s.' % name)
   return match
 
+
+# Hotlists
 
 def IngestHotlistName(name):
   # string -> int
@@ -113,32 +121,36 @@ def IngestHotlistItemNames(cnxn, names, services):
   return issue_ids
 
 
-def ConvertHotlistName(hotlist):
-  # Hotlist -> string
+def ConvertHotlistName(hotlist_id):
+  # int -> str
   """Takes a Hotlist and returns the Hotlist's resource name.
 
   Args:
-    hotlist: Hotlist protorpc object.
+    hotlist_id: ID of the Hotlist.
 
   Returns:
-    The resource name of the Hotlist
+    The resource name of the Hotlist.
   """
-  return HOTLIST_NAME_TMPL.format(hotlist_id=hotlist.hotlist_id)
+  return HOTLIST_NAME_TMPL.format(hotlist_id=hotlist_id)
 
 
-def ConvertHotlistItemNames(cnxn, hotlist, services):
-  # MonorailConnection, Hotlist, Services -> List[str]
+def ConvertHotlistItemNames(cnxn, hotlist_id, services):
+  # MonorailConnection, Hotlist, Services -> Sequence[str]
   """Takes a Hotlist and returns the Hotlist items' resource names.
 
   Args:
-    cnxn: MonorailConnection
-    hotlist: Hotlist protorpc object.
+    cnxn: MonorailConnection object.
+    hotlist_id: ID of the Hotlist.
     services: Services object for connections to backend services.
 
   Returns:
     List of resource names of the Hotlist's items in the same order
       that they appear in the Hotlist.
+
+  Raises:
+    NoSuchHotlistException if a Hotlist with the hotlist_id does not exist.
   """
+  hotlist = services.features.GetHotlist(cnxn, hotlist_id)
   issue_ids = [item.issue_id for item in hotlist.items]
 
   # {issue_id: (project_name, local_id),...}
@@ -152,5 +164,45 @@ def ConvertHotlistItemNames(cnxn, hotlist, services):
           HOTLIST_ITEM_NAME_TMPL.format(
               hotlist_id=hotlist.hotlist_id,
               project_name=project_name, local_id=local_id))
+
+  return names
+
+
+# Users
+
+def IngestUserNames(names):
+  # Sequence[str] -> Sequence[int]
+  """Takes a User resource names and returns the User IDs.
+
+  Args:
+    names: List of User resource names.
+
+  Returns:
+    List of User IDs in the same order as names.
+
+  Raises:
+    InputException if an resource name does not have a valid format.
+  """
+  ids = []
+  for name in names:
+    match = _GetResourceNameMatch(name, USER_NAME_RE)
+    ids.append(int(match.group('user_id')))
+
+  return ids
+
+
+def ConvertUserNames(user_ids):
+  # Sequence[int] -> Sequence[str]
+  """Takes a List of Users and returns the User's resource names.
+
+  Args:
+    user_ids: List of User IDs.
+
+  Returns:
+    List of user resource names in the same order as user_ids.
+  """
+  names = []
+  for user_id in user_ids:
+    names.append(USER_NAME_TMPL.format(user_id=user_id))
 
   return names

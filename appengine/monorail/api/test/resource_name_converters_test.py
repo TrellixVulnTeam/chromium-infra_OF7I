@@ -76,10 +76,8 @@ class ResourceNameConverterTest(unittest.TestCase):
   def testIngestHotlistItemNames(self):
     """We can get Issue IDs from HotlistItems resource names."""
     names = [
-        'hotlists/78909/items/%s.%d' % (
-            self.project_1.project_name, self.issue_1.local_id),
-        'hotlists/78909/items/%s.%d' % (
-            self.project_2.project_name, self.issue_2.local_id)]
+        'hotlists/78909/items/proj.1',
+        'hotlists/78909/items/goose.2']
     self.assertEqual(
         rnc.IngestHotlistItemNames(self.cnxn, names, self.services),
         [self.issue_1.issue_id, self.issue_2.issue_id])
@@ -87,8 +85,7 @@ class ResourceNameConverterTest(unittest.TestCase):
   def testIngestHotlistItemNames_ProjectNotFound(self):
     """Exception is raised if a project is not found."""
     names = [
-        'hotlists/78909/items/%s.%d' % (
-            self.project_1.project_name, self.issue_1.local_id),
+        'hotlists/78909/items/proj.1',
         'hotlists/78909/items/chicken.2']
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.IngestHotlistItemNames(self.cnxn, names, self.services)
@@ -96,27 +93,37 @@ class ResourceNameConverterTest(unittest.TestCase):
   def testIngestHotlistItems_IssueNotFound(self):
     """Exception is raised if an Issue is not found."""
     names = [
-        'hotlists/78909/items/%s.%d' % (
-            self.project_1.project_name, self.issue_1.local_id),
-        'hotlists/78909/items/%s.5' % (self.project_2.project_name)]
+        'hotlists/78909/items/proj.1',
+        'hotlists/78909/items/goose.5']
     with self.assertRaises(exceptions.NoSuchIssueException):
       rnc.IngestHotlistItemNames(self.cnxn, names, self.services)
 
   def testConvertHotlistName(self):
     """We can get a Hotlist's resource name."""
-    self.assertEqual(
-        rnc.ConvertHotlistName(
-            self.hotlist_1), 'hotlists/%s' % self.hotlist_1.hotlist_id)
+    self.assertEqual(rnc.ConvertHotlistName(10), 'hotlists/10')
 
   def testConvertHotlistItemNames(self):
     """We can get Hotlist items' resource names."""
     expected_names = [
-        'hotlists/%s/items/%s.%s' % (
-            self.hotlist_1.hotlist_id, self.project_1.project_name,
-            self.issue_1.local_id),
-        'hotlists/%s/items/%s.%s' % (
-            self.hotlist_1.hotlist_id, self.project_2.project_name,
-            self.issue_2.local_id)]
+        'hotlists/7739/items/proj.1',
+        'hotlists/7739/items/goose.2']
     self.assertEqual(
-        rnc.ConvertHotlistItemNames(self.cnxn, self.hotlist_1, self.services),
+        rnc.ConvertHotlistItemNames(
+            self.cnxn, self.hotlist_1.hotlist_id, self.services),
         expected_names)
+
+  def testIngestUserNames(self):
+    """We can get User IDs from User resource names."""
+    names = ['users/111', 'users/222']
+    expected_ids = [111, 222]
+    self.assertEqual(rnc.IngestUserNames(names), expected_ids)
+
+  def testConvertUserNames(self):
+    """We can get User resource names."""
+    expected_names = ['users/111', 'users/222', 'users/333']
+    user_ids = [111, 222, 333]
+    self.assertEqual(rnc.ConvertUserNames(user_ids), expected_names)
+
+  def testConvertUserNames_Empty(self):
+    """We can process an empty Users list."""
+    self.assertEqual(rnc.ConvertUserNames([]), [])
