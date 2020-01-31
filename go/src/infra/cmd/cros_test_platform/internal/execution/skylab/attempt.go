@@ -6,7 +6,6 @@ package skylab
 
 import (
 	"context"
-	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"infra/libs/skylab/request"
 
@@ -32,17 +31,17 @@ func (a *attempt) TaskName() string {
 	return a.args.Cmd.TaskName
 }
 
-func (a *attempt) Launch(ctx context.Context, client swarming.Client) error {
+func (a *attempt) Launch(ctx context.Context, clients Clients) error {
 	req, err := a.args.SwarmingNewTaskRequest()
 	if err != nil {
 		return errors.Annotate(err, "launch attempt for %s", a.TaskName()).Err()
 	}
-	resp, err := client.CreateTask(ctx, req)
+	resp, err := clients.Swarming.CreateTask(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "launch attempt for %s", a.TaskName()).Err()
 	}
 	a.taskID = resp.TaskId
-	logging.Infof(ctx, "Launched attempt for %s as task %s", a.TaskName(), client.GetTaskURL(a.taskID))
+	logging.Infof(ctx, "Launched attempt for %s as task %s", a.TaskName(), clients.Swarming.GetTaskURL(a.taskID))
 	return nil
 }
 
@@ -81,8 +80,8 @@ func (a *attempt) Verdict() test_platform.TaskState_Verdict {
 
 // FetchResults fetches the latest swarming and isolate state of the given attempt,
 // and updates the attempt accordingly.
-func (a *attempt) FetchResults(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
-	results, err := client.GetResults(ctx, []string{a.taskID})
+func (a *attempt) FetchResults(ctx context.Context, clients Clients) error {
+	results, err := clients.Swarming.GetResults(ctx, []string{a.taskID})
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
@@ -99,7 +98,7 @@ func (a *attempt) FetchResults(ctx context.Context, client swarming.Client, gf i
 	switch {
 	// Task ran to completion.
 	case swarming.CompletedTaskStates[state]:
-		r, err := getAutotestResult(ctx, result, gf)
+		r, err := getAutotestResult(ctx, result, clients.IsolateGetter)
 		if err != nil {
 			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", a.taskID, err.Error())
 			r = &skylab_test_runner.Result_Autotest{Incomplete: true}

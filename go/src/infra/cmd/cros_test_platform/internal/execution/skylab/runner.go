@@ -68,11 +68,11 @@ type Clients struct {
 func (r *Runner) LaunchAndWait(ctx context.Context, clients Clients) error {
 	defer func() { r.running = false }()
 
-	if err := r.launchTasks(ctx, clients.Swarming); err != nil {
+	if err := r.launchTasks(ctx, clients); err != nil {
 		return err
 	}
 	for {
-		if err := r.checkTasksAndRetry(ctx, clients.Swarming, clients.IsolateGetter); err != nil {
+		if err := r.checkTasksAndRetry(ctx, clients); err != nil {
 			return err
 		}
 		if r.completed() {
@@ -87,18 +87,18 @@ func (r *Runner) LaunchAndWait(ctx context.Context, clients Clients) error {
 	}
 }
 
-func (r *Runner) launchTasks(ctx context.Context, client swarming.Client) error {
+func (r *Runner) launchTasks(ctx context.Context, clients Clients) error {
 	for t, ts := range r.taskSets {
-		if err := ts.LaunchTasks(ctx, client); err != nil {
+		if err := ts.LaunchTasks(ctx, clients); err != nil {
 			return errors.Annotate(err, "launch tasks for %s", t).Err()
 		}
 	}
 	return nil
 }
 
-func (r *Runner) checkTasksAndRetry(ctx context.Context, client swarming.Client, gf isolate.GetterFactory) error {
+func (r *Runner) checkTasksAndRetry(ctx context.Context, clients Clients) error {
 	for t, ts := range r.taskSets {
-		if err := ts.CheckTasksAndRetry(ctx, client, gf); err != nil {
+		if err := ts.CheckTasksAndRetry(ctx, clients); err != nil {
 			return errors.Annotate(err, "check tasks and retry for %s", t).Err()
 		}
 	}

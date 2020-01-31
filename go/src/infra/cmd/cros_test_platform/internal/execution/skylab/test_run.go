@@ -83,13 +83,13 @@ func (t *testRun) ValidateDependencies(ctx context.Context, client swarming.Clie
 	return exists, nil
 }
 
-func (t *testRun) LaunchAttempt(ctx context.Context, client swarming.Client) error {
+func (t *testRun) LaunchAttempt(ctx context.Context, clients Clients) error {
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
 		return err
 	}
 	a := attempt{args: args}
-	if err := a.Launch(ctx, client); err != nil {
+	if err := a.Launch(ctx, clients); err != nil {
 		return err
 	}
 	t.attempts = append(t.attempts, &a)
