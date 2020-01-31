@@ -155,7 +155,7 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 }
 
 func getManufacturingConfigData(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
-	// Start to retrieve device config data.
+	// Start to retrieve manufacturing config data.
 	cfgIds := make([]*manufacturing.ConfigID, len(extendedData))
 	for i, d := range extendedData {
 		cfgIds[i] = d.LabConfig.ManufacturingId
@@ -170,7 +170,7 @@ func getManufacturingConfigData(ctx context.Context, extendedData []*api.Extende
 		} else {
 			// Ignore errors if the ID doesn't exist in manufacturing config.
 			if ds.IsErrNoSuchEntity(err.(errors.MultiError)[i]) {
-				logging.Errorf(ctx, "No matched manufacturing config found: %s", cfgIds[i])
+				logging.Warningf(ctx, "Ingored error: No matched manufacturing config found: %s", cfgIds[i])
 				newExtendedData = append(newExtendedData, extendedData[i])
 				continue
 			}
@@ -202,20 +202,26 @@ func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 			addFailedDevice(ctx, &failedDevices, &labData, err, "unmarshal dut state data")
 			continue
 		}
-		if hwidData, err := getHwidDataFunc(ctx, labData.GetManufacturingId().GetValue(), secret); err != nil {
+
+		data := api.ExtendedDeviceData{
+			LabConfig: &labData,
+			DutState:  &dutState,
+		}
+
+		hwid := labData.GetManufacturingId().GetValue()
+		if hwid == "" {
+			logging.Warningf(ctx, "%v has empty HWID.", r.Entity.Hostname)
+		} else if hwidData, err := getHwidDataFunc(ctx, hwid, secret); err != nil {
 			// HWID server may cannot find records for the HWID. Ignore the
 			// error for now.
-			logging.Errorf(ctx, "failed to get response from HWID server for %s", labData.GetManufacturingId().GetValue())
+			logging.Warningf(ctx, "Ignored error: failed to get response from HWID server for %s", hwid)
 		} else {
-			extendedData = append(extendedData, &api.ExtendedDeviceData{
-				LabConfig: &labData,
-				DutState:  &dutState,
-				HwidData: &api.HwidData{
-					Sku:     hwidData.Sku,
-					Variant: hwidData.Variant,
-				},
-			})
+			data.HwidData = &api.HwidData{
+				Sku:     hwidData.Sku,
+				Variant: hwidData.Variant,
+			}
 		}
+		extendedData = append(extendedData, &data)
 	}
 	// Get device config in a batch.
 	extendedData, moreFailedDevices := getDeviceConfigData(ctx, extendedData)
