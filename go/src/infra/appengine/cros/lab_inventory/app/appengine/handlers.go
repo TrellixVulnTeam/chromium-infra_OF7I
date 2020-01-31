@@ -24,12 +24,13 @@ func main() {
 	mathrand.SeedRandomly()
 	r := router.New()
 	mwBase := standard.Base().Extend(config.Middleware)
+
+	config.SetupValidation()
+
 	// Install auth, config and tsmon handlers.
 	standard.InstallHandlers(r)
 	frontend.InstallHandlers(r, mwBase)
 	cron.InstallHandlers(r, mwBase)
-
-	config.SetupValidation()
 
 	http.DefaultServeMux.Handle("/", r)
 
