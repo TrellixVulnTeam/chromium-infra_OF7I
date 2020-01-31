@@ -43,7 +43,6 @@ import (
 
 	"infra/cmd/skylab_swarming_worker/internal/annotations"
 	"infra/cmd/skylab_swarming_worker/internal/autotest/constants"
-	"infra/cmd/skylab_swarming_worker/internal/event"
 	"infra/cmd/skylab_swarming_worker/internal/fifo"
 	"infra/cmd/skylab_swarming_worker/internal/lucifer"
 	"infra/cmd/skylab_swarming_worker/internal/parser"
@@ -277,9 +276,7 @@ func runTest(i *harness.Info, a *args, ta lucifer.TaskArgs) (err error) {
 	}
 
 	cmd := lucifer.TestCommand(i.LuciferConfig(), r)
-	f := event.ForwardAbortSignal(r.AbortSock)
-	defer f.Close()
-	lr, err := runLuciferCommand(i, cmd)
+	lr, err := runLuciferCommand(cmd, i, r.AbortSock)
 	if err != nil {
 		return errors.Wrap(err, "run lucifer failed")
 	}
@@ -344,9 +341,7 @@ func runAdminTask(i *harness.Info, name string, ta lucifer.TaskArgs) (err error)
 	}
 
 	cmd := lucifer.AdminTaskCommand(i.LuciferConfig(), r)
-	f := event.ForwardAbortSignal(r.AbortSock)
-	defer f.Close()
-	if _, err := runLuciferCommand(i, cmd); err != nil {
+	if _, err := runLuciferCommand(cmd, i, r.AbortSock); err != nil {
 		return errors.Wrap(err, "run lucifer failed")
 	}
 	return nil
@@ -363,9 +358,7 @@ func runDeployTask(i *harness.Info, actions string, ta lucifer.TaskArgs) error {
 	}
 
 	cmd := lucifer.DeployTaskCommand(i.LuciferConfig(), r)
-	f := event.ForwardAbortSignal(r.AbortSock)
-	defer f.Close()
-	if _, err := runLuciferCommand(i, cmd); err != nil {
+	if _, err := runLuciferCommand(cmd, i, r.AbortSock); err != nil {
 		return errors.Wrap(err, "run deploy task")
 	}
 	return nil

@@ -20,9 +20,12 @@ type luciferResult struct {
 }
 
 // runLuciferCommand runs a Lucifer exec.Cmd and processes Lucifer events.
-func runLuciferCommand(i *harness.Info, cmd *exec.Cmd) (*luciferResult, error) {
+func runLuciferCommand(cmd *exec.Cmd, i *harness.Info, abortSock string) (*luciferResult, error) {
 	log.Printf("Running %s %s", cmd.Path, strings.Join(cmd.Args, " "))
 	cmd.Stderr = os.Stderr
+
+	af := event.ForwardAbortSignal(abortSock)
+	defer af.Close()
 
 	r := &luciferResult{}
 	f := func(e event.Event, m string) {
