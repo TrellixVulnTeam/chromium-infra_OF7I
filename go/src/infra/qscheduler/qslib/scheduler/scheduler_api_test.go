@@ -37,7 +37,9 @@ var FreeBucket = scheduler.FreeBucket
 func TestMatchAndUnassign(t *testing.T) {
 	Convey("Given 2 tasks and 2 idle workers", t, func() {
 		ctx := context.Background()
-		tm := time.Unix(0, 0)
+		tm := time.Now().Add(-10 * time.Hour)
+		t1 := time.Now().Add(-10 * time.Hour)
+		t2 := time.Now().Add(-47 * time.Hour)
 		s := scheduler.New(tm)
 		w1 := scheduler.WorkerID("w1")
 		w2 := scheduler.WorkerID("w2")
@@ -45,8 +47,10 @@ func TestMatchAndUnassign(t *testing.T) {
 		r2 := scheduler.RequestID("r2")
 		s.MarkIdle(ctx, w1, stringset.New(0), tm, scheduler.NullEventSink)
 		s.MarkIdle(ctx, w2, stringset.NewFromSlice("label1"), tm, scheduler.NullEventSink)
-		s.AddRequest(ctx, scheduler.NewTaskRequest(r1, "a1", stringset.NewFromSlice("label1"), nil, tm), tm, nil, scheduler.NullEventSink)
-		s.AddRequest(ctx, scheduler.NewTaskRequest(r2, "a1", stringset.NewFromSlice("label2"), nil, tm), tm, nil, scheduler.NullEventSink)
+		// r1 should remain in the queue after unassign.
+		s.AddRequest(ctx, scheduler.NewTaskRequest(r1, "a1", stringset.NewFromSlice("label1"), nil, t1), t1, nil, scheduler.NullEventSink)
+		// r2 should disappear since it has hit the hard timeout(46H).
+		s.AddRequest(ctx, scheduler.NewTaskRequest(r2, "a1", stringset.NewFromSlice("label2"), nil, t2), t2, nil, scheduler.NullEventSink)
 		c := scheduler.NewAccountConfig(0, 0, nil, false, "")
 		s.AddAccount(ctx, "a1", c, []float32{2, 0, 0})
 		Convey("when scheduling jobs", func() {
@@ -67,19 +71,19 @@ func TestMatchAndUnassign(t *testing.T) {
 				So(muts, ShouldBeEmpty)
 			})
 			Convey("when jobs are unassigned", func() {
-				err := s.Unassign(ctx, r1, w2, tm, scheduler.NullEventSink)
+				err := s.Unassign(ctx, r1, w2, t1, scheduler.NullEventSink)
 				So(err, ShouldBeNil)
-				err = s.Unassign(ctx, r2, w1, tm, scheduler.NullEventSink)
+				err = s.Unassign(ctx, r2, w1, t2, scheduler.NullEventSink)
 				So(err, ShouldBeNil)
 				Convey("then they are no longer assigned.", func() {
 					So(s.IsAssigned(r1, w2), ShouldBeFalse)
 					So(s.IsAssigned(r2, w1), ShouldBeFalse)
 				})
-				Convey("then they can be matched again when scheduling jobs.", func() {
+				Convey("then they can be matched again when scheduling jobs if the task did not expire.", func() {
 					s.MarkIdle(ctx, w1, stringset.New(0), tm, scheduler.NullEventSink)
 					s.MarkIdle(ctx, w2, stringset.NewFromSlice("label1"), tm, scheduler.NullEventSink)
 					muts := s.RunOnce(ctx, scheduler.NullEventSink)
-					So(muts, ShouldHaveLength, 2)
+					So(muts, ShouldHaveLength, 1)
 				})
 			})
 		})

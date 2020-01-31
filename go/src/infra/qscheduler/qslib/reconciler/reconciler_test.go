@@ -176,7 +176,7 @@ func TestOneAssignment(t *testing.T) {
 func TestQueuedAssignment(t *testing.T) {
 	Convey("Given an empty scheduler and reconciler state", t, func() {
 		ctx := context.Background()
-		t0 := time.Unix(0, 0)
+		t0 := time.Now().Add(-10 * time.Hour)
 		r := New()
 		s := scheduler.New(t0)
 		Convey("given a worker with a label is idle", func() {
@@ -195,7 +195,7 @@ func TestQueuedAssignment(t *testing.T) {
 				Convey("when a different worker without that label calls AssignTasks", func() {
 					otherWorkerID := scheduler.WorkerID("Worker2")
 					otherWorker := &IdleWorker{otherWorkerID, stringset.New(0)}
-					t1 := time.Unix(1, 0)
+					t1 := time.Now().Add(-10 * time.Hour)
 					as := r.AssignTasks(ctx, s, t1, scheduler.NullEventSink, otherWorker)
 					Convey("then it is given no task.", func() {
 						So(as, ShouldBeEmpty)

@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/logging"
 
 	"infra/qscheduler/qslib/protos"
 	"infra/qscheduler/qslib/protos/metrics"
@@ -255,6 +256,11 @@ func (s *Scheduler) Unassign(ctx context.Context, requestID RequestID, workerID 
 	request := worker.runningTask.request
 	e.AddEvent(eventUnassigned(request, worker, s.state, t, &metrics.TaskEvent_UnassignedDetails{}))
 	s.state.deleteWorker(workerID)
+	// Drop the tasks exceeding the max timeout.
+	if isBeyondMaximalTimeout(request) {
+		logging.Debugf(ctx, "unassign: request %s has expired", request.ID)
+		return nil
+	}
 	s.state.queuedRequests[request.ID] = request
 	return nil
 }
@@ -325,4 +331,11 @@ func (s *Scheduler) expireWorkers() {
 			delete(s.state.workers, wid)
 		}
 	}
+}
+
+// isBeyondMaximalTimeout checks if the task exceeded the maximal possible timeout.
+func isBeyondMaximalTimeout(r *TaskRequest) bool {
+	maxQueueingHours := 46.0
+	now := time.Now()
+	return now.Sub(r.EnqueueTime).Hours() > maxQueueingHours
 }
