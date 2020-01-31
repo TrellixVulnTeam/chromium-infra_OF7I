@@ -50,12 +50,15 @@ FOLLOWER_ROLE = 'FOLLOWER_ROLE'
 
 def Hotlist(
     hotlist_name, hotlist_id, hotlist_item_fields=None,
-    is_private=False, owner_ids=None, editor_ids=None, follower_ids=None):
+    is_private=False, owner_ids=None, editor_ids=None, follower_ids=None,
+    default_col_spec=None, summary=None, description=None):
   hotlist_id = hotlist_id or hash(hotlist_name)
   return features_pb2.MakeHotlist(
       hotlist_name, hotlist_item_fields=hotlist_item_fields,
       hotlist_id=hotlist_id, is_private=is_private, owner_ids=owner_ids or [],
-      editor_ids=editor_ids or [], follower_ids=follower_ids or [])
+      editor_ids=editor_ids or [], follower_ids=follower_ids or [],
+      default_col_spec=default_col_spec, summary=summary,
+      description=description)
 
 def HotlistItem(issue_id, rank=None, adder_id=None, date_added=None, note=None):
   return features_pb2.MakeHotlistItem(issue_id=issue_id, rank=rank,

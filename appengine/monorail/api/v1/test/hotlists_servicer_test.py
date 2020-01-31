@@ -12,6 +12,7 @@ import unittest
 
 from api import resource_name_converters as rnc
 from api.v1 import hotlists_servicer
+from api.v1 import converters
 from api.v1.api_proto import hotlists_pb2
 from framework import exceptions
 from framework import monorailcontext
@@ -90,3 +91,14 @@ class HotlistsServicerTest(unittest.TestCase):
         [item.issue_id for item in updated_hotlist.items],
         [self.issue_4.issue_id, self.issue_3.issue_id,
          self.issue_1.issue_id, self.issue_2.issue_id])
+
+  def testGetHotlist(self):
+    """We can get a Hotlist."""
+    request = hotlists_pb2.GetHotlistRequest(
+        name=rnc.ConvertHotlistName(self.hotlist_1.hotlist_id))
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    api_hotlist = self.CallWrapped(self.hotlists_svcr.GetHotlist, mc, request)
+    self.assertEqual(api_hotlist, converters.ConvertHotlist(self.hotlist_1))

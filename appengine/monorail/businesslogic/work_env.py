@@ -2000,6 +2000,7 @@ class WorkEnv(object):
         default_col_spec=default_col_spec)
 
   def GetHotlist(self, hotlist_id, use_cache=True):
+    # int, Optional[bool] -> Hotlist
     """Return the specified hotlist.
 
     Args:
@@ -2011,6 +2012,7 @@ class WorkEnv(object):
 
     Raises:
       NoSuchHotlistException: There is no hotlist with that ID.
+      PermissionException: The user is not allowed to view the hotlist.
     """
     if hotlist_id is None:
       raise exceptions.InputException('No hotlist specified')
