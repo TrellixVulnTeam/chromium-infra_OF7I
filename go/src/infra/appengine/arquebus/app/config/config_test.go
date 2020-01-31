@@ -40,12 +40,13 @@ func createOncallSource(rotation string) *UserSource_Oncall {
 
 func TestConfigValidator(t *testing.T) {
 	t.Parallel()
+
 	rules := &validation.RuleSet{}
 	rules.RegisterVar("appid", func(context.Context) (string, error) {
 		return "my_app", nil
 	})
 	SetupValidation(rules)
-	rules.Freeze()
+
 	validate := func(cfg *Config) error {
 		c := validation.Context{Context: context.Background()}
 		err := rules.ValidateConfig(
