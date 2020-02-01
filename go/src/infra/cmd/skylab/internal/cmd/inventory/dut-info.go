@@ -138,6 +138,9 @@ func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHo
 		result := rsp.FailedDevices[0]
 		return nil, errors.Reason("[v2] failed to get device %s: %s", result.Hostname, result.ErrorMsg).Err()
 	}
+	if len(rsp.Data) != 1 {
+		return nil, errors.Reason("[v2] no info returned for %s", id).Err()
+	}
 	return invV2Api.AdaptToV1DutSpec(rsp.Data[0])
 }
 
