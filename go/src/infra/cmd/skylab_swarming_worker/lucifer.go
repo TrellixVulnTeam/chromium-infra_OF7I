@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/exec"
@@ -20,12 +21,14 @@ type luciferResult struct {
 }
 
 // runLuciferCommand runs a Lucifer exec.Cmd and processes Lucifer events.
-func runLuciferCommand(cmd *exec.Cmd, i *harness.Info, abortSock string) (*luciferResult, error) {
+func runLuciferCommand(ctx context.Context, cmd *exec.Cmd, i *harness.Info, abortSock string) (*luciferResult, error) {
 	log.Printf("Running %s %s", cmd.Path, strings.Join(cmd.Args, " "))
 	cmd.Stderr = os.Stderr
 
 	af := event.ForwardAbortSignal(abortSock)
 	defer af.Close()
+	df := event.AbortWhenDone(ctx, abortSock)
+	defer df()
 
 	r := &luciferResult{}
 	f := func(e event.Event, m string) {

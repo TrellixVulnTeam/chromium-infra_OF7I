@@ -35,6 +35,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	protoCommon "go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
@@ -62,6 +63,7 @@ func main() {
 
 type args struct {
 	adminService        string
+	deadline            time.Time
 	deployActions       string
 	forceFreshInventory bool
 	isolatedOutdir      string
@@ -99,6 +101,8 @@ func parseArgs() *args {
 		"Directory to place isolated output into. Generate no isolated output if not set.")
 	flag.StringVar(&a.sideEffectsConfig, "side-effect-config", "",
 		"JSONpb string of side_effects.Config to be dropped into the results directory. No file is created if empty.")
+	flag.Var(lflag.Time(&a.deadline), "deadline",
+		"Soft deadline for completion, formatted as stiptime. Wrap-up actions may outlive this deadline.")
 	flag.Parse()
 
 	return a
@@ -158,7 +162,7 @@ func mainInner(a *args) error {
 		gsBucket = sec.GetGoogleStorage().GetBucket()
 	}
 
-	luciferErr := runLuciferTask(i, a, ta)
+	luciferErr := runLuciferTask(ctx, i, a, ta)
 
 	if luciferErr != nil {
 		// Attempt to parse results regardless of lucifer errors.
@@ -216,17 +220,24 @@ func updatesInventory(taskName string) bool {
 	return task == "repair"
 }
 
-func runLuciferTask(i *harness.Info, a *args, ta lucifer.TaskArgs) error {
+func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.TaskArgs) error {
+	if !a.deadline.IsZero() {
+		var c context.CancelFunc
+		ctx, c = context.WithDeadline(ctx, a.deadline)
+		defer c()
+	}
+
 	if n, ok := getAdminTask(a.taskName); ok {
-		if err := runAdminTask(i, n, ta); err != nil {
+		if err := runAdminTask(ctx, i, n, ta); err != nil {
 			return errors.Wrap(err, "run admin task")
 		}
 	} else if isDeployTask(a) {
-		if err := runDeployTask(i, a.deployActions, ta); err != nil {
+		if err := runDeployTask(ctx, i, a.deployActions, ta); err != nil {
 			return errors.Wrap(err, "run deploy task")
 		}
 	} else {
-		if err := runTest(i, a, ta); err != nil {
+		if err := runTest(ctx, i, a, ta); err != nil {
+
 			return errors.Wrap(err, "run test")
 		}
 	}
@@ -255,7 +266,7 @@ func isDeployTask(a *args) bool {
 }
 
 // runTest runs a test.
-func runTest(i *harness.Info, a *args, ta lucifer.TaskArgs) (err error) {
+func runTest(ctx context.Context, i *harness.Info, a *args, ta lucifer.TaskArgs) (err error) {
 	// TODO(ayatane): Always reboot between each test for now.
 	tc := prejobTaskControl{
 		runReset:     true,
@@ -276,7 +287,7 @@ func runTest(i *harness.Info, a *args, ta lucifer.TaskArgs) (err error) {
 	}
 
 	cmd := lucifer.TestCommand(i.LuciferConfig(), r)
-	lr, err := runLuciferCommand(cmd, i, r.AbortSock)
+	lr, err := runLuciferCommand(ctx, cmd, i, r.AbortSock)
 	if err != nil {
 		return errors.Wrap(err, "run lucifer failed")
 	}
@@ -333,7 +344,7 @@ func choosePrejobTask(tc prejobTaskControl, hostDirty, hostProtected bool) const
 }
 
 // runAdminTask runs an admin task.  name is the name of the task.
-func runAdminTask(i *harness.Info, name string, ta lucifer.TaskArgs) (err error) {
+func runAdminTask(ctx context.Context, i *harness.Info, name string, ta lucifer.TaskArgs) (err error) {
 	r := lucifer.AdminTaskArgs{
 		TaskArgs: ta,
 		Host:     i.DUTName,
@@ -341,7 +352,7 @@ func runAdminTask(i *harness.Info, name string, ta lucifer.TaskArgs) (err error)
 	}
 
 	cmd := lucifer.AdminTaskCommand(i.LuciferConfig(), r)
-	if _, err := runLuciferCommand(cmd, i, r.AbortSock); err != nil {
+	if _, err := runLuciferCommand(ctx, cmd, i, r.AbortSock); err != nil {
 		return errors.Wrap(err, "run lucifer failed")
 	}
 	return nil
@@ -350,7 +361,7 @@ func runAdminTask(i *harness.Info, name string, ta lucifer.TaskArgs) (err error)
 // runDeployTask runs a deploy task using lucifer.
 //
 // actions is a possibly empty comma separated list of deploy actions to run
-func runDeployTask(i *harness.Info, actions string, ta lucifer.TaskArgs) error {
+func runDeployTask(ctx context.Context, i *harness.Info, actions string, ta lucifer.TaskArgs) error {
 	r := lucifer.DeployTaskArgs{
 		TaskArgs: ta,
 		Host:     i.DUTName,
@@ -358,7 +369,7 @@ func runDeployTask(i *harness.Info, actions string, ta lucifer.TaskArgs) error {
 	}
 
 	cmd := lucifer.DeployTaskCommand(i.LuciferConfig(), r)
-	if _, err := runLuciferCommand(cmd, i, r.AbortSock); err != nil {
+	if _, err := runLuciferCommand(ctx, cmd, i, r.AbortSock); err != nil {
 		return errors.Wrap(err, "run deploy task")
 	}
 	return nil

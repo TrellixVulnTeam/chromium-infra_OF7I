@@ -8,7 +8,6 @@ package event
 
 import (
 	"log"
-	"net"
 	"os"
 	"os/signal"
 
@@ -52,16 +51,4 @@ func listenAndAbort(c <-chan os.Signal, path string) {
 			log.Printf("Error sending abort for signal: %s", err)
 		}
 	}
-}
-
-// abort sends an abort datagram to the socket at the given path.
-func abort(path string) error {
-	c, err := net.Dial("unixgram", path)
-	if err != nil {
-		return err
-	}
-	// The value sent does not matter.
-	b := []byte("abort")
-	_, err = c.Write(b)
-	return err
 }
