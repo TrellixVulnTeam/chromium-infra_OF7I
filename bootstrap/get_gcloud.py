@@ -28,7 +28,7 @@ def main():
   cipd_ensure_list(os.path.join(os.path.abspath(options.dest), 'gcloud'), [
     (
       'infra/3pp/tools/gcloud/${os=mac,linux}-${arch=amd64}',
-      'version:272.0.0.chromium0',
+      'version:278.0.0.chromium0',
     ),
   ])
   return 0
