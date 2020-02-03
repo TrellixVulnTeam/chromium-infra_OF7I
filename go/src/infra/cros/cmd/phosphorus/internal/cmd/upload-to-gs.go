@@ -8,6 +8,9 @@ import (
 	"context"
 	"fmt"
 	"infra/cros/cmd/phosphorus/internal/gs"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/maruel/subcommands"
@@ -58,7 +61,7 @@ func (c *uploadToGSRun) innerRun(a subcommands.Application, args []string, env s
 
 	ctx := cli.GetContext(a, c, env)
 
-	path, err := runGSUploadStep(ctx, c.authFlags, r)
+	path, err := runGSUploadStep(ctx, c.authFlags, r, a.GetErr())
 	if err != nil {
 		return err
 	}
@@ -91,9 +94,18 @@ func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 }
 
 // runGSUploadStep uploads all files in the specified directory to GS.
-func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest) (string, error) {
+func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest, errorFile io.Writer) (string, error) {
 	gsPath := gs.Concat(r.GetGsDirectory(), "synchronous_offloads", r.GetTaskId())
 	localPath := r.GetConfig().GetTask().GetSynchronousOffloadDir()
+	defer func() {
+		err := os.RemoveAll(localPath)
+		if err != nil {
+			fmt.Fprintf(errorFile,
+				"error removing temp dir: %s\n dir contents: %s\n",
+				err, dirList(localPath),
+			)
+		}
+	}()
 	w, err := createDirWriter(ctx, localPath, gsPath, &authFlags)
 	if err != nil {
 		return "", err
@@ -111,4 +123,33 @@ func createDirWriter(ctx context.Context, localPath string, gsPath gs.Path, auth
 		return nil, err
 	}
 	return gs.NewDirWriter(localPath, gsPath, cli)
+}
+
+// Gives a list of files and directories under the given path. Intended for
+// debugging a failed tempdir removal.
+func dirList(absPath string) string {
+	ch := make(chan string)
+	files := make([]string, 0)
+	ctx, can := context.WithCancel(context.Background())
+	defer can()
+	go func() {
+		for {
+			select {
+			case f := <-ch:
+				files = append(files, f)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	fileName := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			ch <- fmt.Sprintf("err %s while checking path %s", err, path)
+		} else {
+			ch <- path
+		}
+		return err
+	}
+	_ = filepath.Walk(absPath, fileName)
+	return strings.Join(files, ", ")
 }

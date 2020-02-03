@@ -96,7 +96,8 @@ func TKOParse(c autotest.Config, resultsDir string, w io.Writer) (failed int, er
 
 // Create client-usable dir for file offloading to GS, if given a path
 // If not given a path, noop, including for tasks where a path would not
-// be meaningful
+// be meaningful. This may cause an error if a task where an offload path is
+// not meaningful has the directory set.
 func createOutputDir(a *autotest.AutoservArgs) error {
 	if a.OffloadDir == "" {
 		return nil
@@ -112,7 +113,9 @@ func runTask(ctx context.Context, c autotest.Config, a *autotest.AutoservArgs, w
 	cmd := autotest.AutoservCommand(c, a)
 	cmd.Stdout = w
 	cmd.Stderr = w
-	createOutputDir(a)
+	if err := createOutputDir(a); err != nil {
+		return nil, err
+	}
 
 	var err error
 	r.RunResult, err = osutil.RunWithAbort(ctx, cmd)
