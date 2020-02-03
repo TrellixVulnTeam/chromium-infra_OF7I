@@ -132,6 +132,9 @@ func loadFromV2(ctx context.Context, b *swmbot.Info, gf getDutInfoFuncV2) (*inve
 	if err != nil {
 		return nil, errors.Annotate(err, "load from inventory V2").Err()
 	}
+	if len(resp.GetData()) == 0 {
+		return nil, errors.New("load from inventory V2: no results from V2 (neither successful nor failed)")
+	}
 	dut, err := invV2.AdaptToV1DutSpec(resp.GetData()[0])
 	if err != nil {
 		return nil, errors.Annotate(err, "load from inventory V2: fail to convert").Err()
