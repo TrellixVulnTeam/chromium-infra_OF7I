@@ -98,10 +98,23 @@ var devInV2 = lab.ChromeOSDevice{
 }
 
 var servoLabstationInV2 = lab.ChromeOSDevice{
+	Id:              &lab.ChromeOSDeviceID{Value: "test_labstation2"},
+	SerialNumber:    "labstation2_serial",
+	ManufacturingId: &manufacturing.ConfigID{Value: "labstation2_hwid"},
+	DeviceConfigId: &device.ConfigId{
+		PlatformId: &device.PlatformId{Value: "guado"},
+		ModelId:    &device.ModelId{Value: "test_model"},
+		VariantId:  &device.VariantId{Value: ""},
+	},
 	Device: &lab.ChromeOSDevice_Labstation{
 		Labstation: &lab.Labstation{
 			Hostname: "test_servo",
 			Servos:   []*lab.Servo{&servoInV2},
+			Rpm: &lab.RPM{
+				PowerunitName:   "test_power_unit_name",
+				PowerunitOutlet: "test_power_unit_outlet3",
+			},
+			Pools: []string{"labstation_main"},
 		},
 	},
 }
@@ -335,6 +348,37 @@ common {
 }
 `
 
+// The servo host associated with test_dut.
+const labstation2TextProto = `
+common {
+	attributes {
+		key: "HWID",
+		value: "labstation2_hwid",
+	}
+	attributes {
+		key: "powerunit_hostname",
+		value: "test_power_unit_name",
+	}
+	attributes {
+		key: "powerunit_outlet",
+		value: "test_power_unit_outlet3",
+	}
+	attributes {
+		key: "serial_number"
+		value: "labstation2_serial"
+	}
+	id: "test_labstation2"
+	hostname: "test_servo"
+	serial_number: "labstation2_serial"
+	labels {
+		os_type: OS_TYPE_LABSTATION
+		self_serve_pools: "labstation_main"
+		model: "test_model"
+		board: "guado"
+	}
+}
+`
+
 func TestAdaptToV1DutSpec(t *testing.T) {
 	t.Parallel()
 
@@ -371,7 +415,11 @@ func TestImportFromV1DutSpecs(t *testing.T) {
 		err = proto.UnmarshalText(labstationTextProto, &l1)
 		So(err, ShouldBeNil)
 
-		devices, labstations, states, err := ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{d1.GetCommon(), l1.GetCommon()})
+		var l2 inventory.DeviceUnderTest
+		err = proto.UnmarshalText(labstation2TextProto, &l2)
+		So(err, ShouldBeNil)
+
+		devices, labstations, states, err := ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{d1.GetCommon(), l1.GetCommon(), l2.GetCommon()})
 		// Verify devices
 		So(len(devices), ShouldEqual, 1)
 		So(proto.Equal(devices[0], &devInV2), ShouldBeTrue)

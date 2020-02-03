@@ -296,11 +296,8 @@ func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegist
 
 func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.CommonDeviceSpecs) error {
 	hostname := olddata.GetHostname()
-	if _, existing := servoHostRegister[hostname]; existing {
-		return nil
-	}
 	hwid, _, rpm := importAttributes(olddata.GetAttributes())
-	servoHostRegister[hostname] = &lab.ChromeOSDevice{
+	servoHost := &lab.ChromeOSDevice{
 		Id:              &lab.ChromeOSDeviceID{Value: olddata.GetId()},
 		SerialNumber:    olddata.GetSerialNumber(),
 		DeviceConfigId:  getDeviceConfigID(olddata.GetLabels()),
@@ -315,6 +312,11 @@ func createLabstation(servoHostRegister servoHostRegister, olddata *inventory.Co
 			},
 		},
 	}
+	// The one in servoHostRegister may have some servos registered.
+	if s, existing := servoHostRegister[hostname]; existing {
+		servoHost.GetLabstation().Servos = s.GetLabstation().GetServos()
+	}
+	servoHostRegister[hostname] = servoHost
 	return nil
 }
 
