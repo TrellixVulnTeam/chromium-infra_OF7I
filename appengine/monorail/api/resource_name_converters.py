@@ -22,12 +22,16 @@ from framework import exceptions
 from project import project_constants
 
 # Constants that hold regex patterns for resource names.
-HOTLIST_PATTERN = 'hotlists\/(?P<hotlist_id>\d+)'
+HOTLIST_PATTERN = r'hotlists\/(?P<hotlist_id>\d+)'
 HOTLIST_NAME_RE = re.compile(r'%s$' % HOTLIST_PATTERN)
 HOTLIST_ITEM_NAME_RE = re.compile(
     r'%s\/items\/(?P<project_name>%s)\.(?P<local_id>\d+)$' % (
         HOTLIST_PATTERN,
         project_constants.PROJECT_NAME_PATTERN))
+
+ISSUE_PATTERN = (r'projects\/(?P<project>%s)\/issues\/(?P<local_id>\d+)' %
+                 project_constants.PROJECT_NAME_PATTERN)
+ISSUE_NAME_RE = re.compile(r'%s$' % ISSUE_PATTERN)
 
 USER_NAME_RE = re.compile(r'users\/(?P<user_id>\d+)$')
 
@@ -36,11 +40,13 @@ HOTLIST_NAME_TMPL = 'hotlists/{hotlist_id}'
 HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
     HOTLIST_NAME_TMPL)
 
+ISSUE_NAME_TMPL = 'projects/{project}/issues/{local_id}'
+
 USER_NAME_TMPL = 'users/{user_id}'
 
 
 def _GetResourceNameMatch(name, regex):
-  # (string, Pattern[str]) -> Match[str]
+  # (str, Pattern[str]) -> Match[str]
   """Takes a resource name and returns the regex match.
 
   Args:
@@ -60,7 +66,7 @@ def _GetResourceNameMatch(name, regex):
 # Hotlists
 
 def IngestHotlistName(name):
-  # string -> int
+  # str -> int
   """Takes a Hotlist resource name and returns the Hotlist ID.
 
   Args:
@@ -120,7 +126,6 @@ def IngestHotlistItemNames(cnxn, names, services):
         'Issue(s) %r associated with HotlistItems not found' % misses)
   return issue_ids
 
-
 def ConvertHotlistName(hotlist_id):
   # int -> str
   """Takes a Hotlist and returns the Hotlist's resource name.
@@ -167,6 +172,38 @@ def ConvertHotlistItemNames(cnxn, hotlist_id, services):
 
   return names
 
+
+# Issues
+
+def IngestIssueName(name):
+  # str -> int
+  """Takes an Issue resource name and returns its global ID.
+
+  Args:
+    name: Resource name of an Issue.
+
+  Returns:
+    The global Issue ID associated with the name.
+
+  Raises:
+    InputException if the given name does not have a valid format.
+  """
+  _GetResourceNameMatch(name, ISSUE_NAME_RE)
+  raise Exception('Not implemented')
+
+
+def ConvertIssueName(project, local_id):
+  # str, int -> str
+  """Takes a project and local_id returns the corresponding Issue resource name.
+
+  Args:
+    project: The string representing the project of the Issue.
+    local_id: The local_id of the issue.
+
+  Returns:
+    The resource name of the Issue.
+  """
+  return ISSUE_NAME_TMPL.format(project=project, local_id=local_id)
 
 # Users
 

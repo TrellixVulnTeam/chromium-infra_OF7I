@@ -112,6 +112,30 @@ class ResourceNameConverterTest(unittest.TestCase):
             self.cnxn, self.hotlist_1.hotlist_id, self.services),
         expected_names)
 
+  def testIngestIssueName_NotImplemented(self):
+    """IngestIssueName is not yet implemented."""
+    with self.assertRaises(Exception):
+      rnc.IngestIssueName('projects/proj/issues/1')
+
+  def testIngestIssueName_InvalidLocalId(self):
+    """Issue resource name Local IDs are digits."""
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestIssueName('projects/proj/issues/x')
+
+  def testIngestIssueName_InvalidProjectId(self):
+    """Project names are more than 1 character."""
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestIssueName('projects/p/issues/1')
+
+  def testIngestIssueName_InvalidFormat(self):
+    """Issue resource names must begin with the project resource name."""
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestIssueName('issues/1')
+
+  def testConvertIssueName(self):
+    """We can create an Issue resource name from the project and local ID."""
+    self.assertEqual(rnc.ConvertIssueName('proj', 1), 'projects/proj/issues/1')
+
   def testIngestUserNames(self):
     """We can get User IDs from User resource names."""
     names = ['users/111', 'users/222']
