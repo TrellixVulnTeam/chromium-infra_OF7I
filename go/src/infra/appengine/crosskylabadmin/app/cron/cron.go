@@ -56,6 +56,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	// Update device config asynchronously.
 	r.GET("/internal/cron/update-device-configs", mwCron, logAndSetHTTPErr(updateDeviceConfigCronHandler))
+	// Update (part of) manufacturing config asynchronously.
+	r.GET("/internal/cron/update-manufacturing-configs", mwCron, logAndSetHTTPErr(updateManufacturingConfigCronHandler))
 
 	// Report Bot metrics.
 	r.GET("/internal/cron/report-bots", mwCron, logAndSetHTTPErr(reportBotsCronHandler))
@@ -78,6 +80,16 @@ func updateDeviceConfigCronHandler(c *router.Context) (err error) {
 		return err
 	}
 	logging.Infof(c.Context, "update device config successfully")
+	return nil
+}
+
+func updateManufacturingConfigCronHandler(c *router.Context) (err error) {
+	inv := createInventoryServer(c)
+	if _, err := inv.UpdateManufacturingConfig(c.Context, &fleet.UpdateManufacturingConfigRequest{}); err != nil {
+		logging.Errorf(c.Context, "fail to update manufacturing config: %s", err.Error())
+		return err
+	}
+	logging.Infof(c.Context, "update manufacturing config successfully")
 	return nil
 }
 

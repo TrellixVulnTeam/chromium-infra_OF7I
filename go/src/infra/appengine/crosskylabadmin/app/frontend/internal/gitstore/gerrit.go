@@ -61,7 +61,7 @@ func commitFileContents(ctx context.Context, client gerrit.GerritClient, project
 	for path, contents := range fileContents {
 		const limit = 5000
 		if n := len(contents); n <= limit {
-			logging.Debugf(ctx, "changing file %v contents to: %s", path, contents)
+			logging.Debugf(ctx, "changing file %v contents", path)
 		} else {
 			logging.Debugf(ctx, "changing file %v contents to (truncated, total %v): %s", path, n, contents[:limit])
 		}

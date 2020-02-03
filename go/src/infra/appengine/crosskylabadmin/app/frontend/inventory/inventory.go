@@ -28,6 +28,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	authclient "go.chromium.org/luci/auth"
 	gitilesApi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
@@ -241,6 +242,84 @@ func updateDeviceConfig(ctx context.Context, deviceConfigs map[string]*device.Co
 		return "", errors.Annotate(err, "fail to update device config").Err()
 	}
 	return url, nil
+}
+
+// UpdateManufacturingConfig backfill parts of manufacturing config to inventory V1.
+func (is *ServerImpl) UpdateManufacturingConfig(ctx context.Context, req *fleet.UpdateManufacturingConfigRequest) (resp *fleet.UpdateManufacturingConfigResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	cfg := config.Get(ctx).Inventory
+	gitilesC, err := is.newGitilesClient(ctx, cfg.GitilesHost)
+	if err != nil {
+		return nil, errors.Annotate(err, "fail to update manufacturing config").Err()
+	}
+	configs, err := GetManufacturingConfig(ctx, gitilesC)
+	if err != nil {
+		return nil, errors.Annotate(err, "fail to fetch manufacturing configs").Err()
+	}
+	store, err := is.newStore(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := store.Refresh(ctx); err != nil {
+		return nil, errors.Annotate(err, "fail to refresh inventory store").Err()
+	}
+	url, err := updateManufacturingConfig(ctx, configs, store)
+	if err != nil {
+		return nil, err
+	}
+	logging.Infof(ctx, "successfully update manufacturing config: %s", url)
+
+	return &fleet.UpdateManufacturingConfigResponse{
+		ChangeUrl: url,
+	}, nil
+}
+
+func updateManufacturingConfig(ctx context.Context, configs map[string]*manufacturing.Config, s *gitstore.InventoryStore) (string, error) {
+	for _, d := range s.Lab.GetDuts() {
+		if looksLikeLabstation(d.GetCommon().GetHostname()) {
+			continue
+		}
+		hwid, err := getHWID(d)
+		if err != nil || hwid == "" {
+			logging.Errorf(ctx, "missing HWID: %s", err)
+			continue
+		}
+		c, ok := configs[hwid]
+		if !ok {
+			logging.Errorf(ctx, "non-existing HWID: %s (%s)", hwid, d.GetCommon().GetHostname())
+			continue
+		}
+		l := d.GetCommon().GetLabels()
+		if l.WifiChip == nil {
+			l.WifiChip = new(string)
+		}
+		*l.WifiChip = c.GetWifiChip()
+	}
+	url, err := s.Commit(ctx, fmt.Sprintf("Update manufacturing config"))
+	if gitstore.IsEmptyErr(err) {
+		return "no commit for empty diff", nil
+	}
+	if err != nil {
+		return "", errors.Annotate(err, "fail to update manufacturing config").Err()
+	}
+	return url, nil
+}
+
+func getHWID(dut *inventory.DeviceUnderTest) (string, error) {
+	attrs := dut.GetCommon().GetAttributes()
+	if len(attrs) == 0 {
+		return "", fmt.Errorf("attributes for dut with hostname (%s) is unexpectedly empty", dut.GetCommon().GetHostname())
+	}
+	for _, item := range attrs {
+		key := item.GetKey()
+		value := item.GetValue()
+		if key == "HWID" {
+			return value, nil
+		}
+	}
+	return "", fmt.Errorf("no \"HWID\" attribute for hostname (%s)", dut.GetCommon().GetHostname())
 }
 
 // UpdateDutLabels implements the method from fleet.InventoryServer interface.

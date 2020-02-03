@@ -184,6 +184,16 @@ message Inventory {
 
   // If using multi files for inventory. See crbug.com/1008442 for details.
   bool multifile = 15;
+
+  // Git project containing the manufacturing config.
+  string manufacturing_config_project = 16;
+
+  // Git branch from the manufacturing config project to be used.
+  string manufacturing_config_branch = 17;
+
+  // The device config file path.
+  // e.g. manufacturingconfig/generated/manufacturing_configs.cfg
+  string manufacturing_config_path = 18;
 }
 
 message PoolBalancer {

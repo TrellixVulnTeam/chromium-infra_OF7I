@@ -140,6 +140,16 @@ service Inventory {
 
   // Report inventory metrics.
   rpc ReportInventory(ReportInventoryRequest) returns (ReportInventoryResponse);
+
+  // Backfill (part of) manufacturing config.
+  rpc UpdateManufacturingConfig(UpdateManufacturingConfigRequest) returns (UpdateManufacturingConfigResponse);
+}
+
+message UpdateManufacturingConfigRequest {
+}
+
+message UpdateManufacturingConfigResponse {
+  string change_url = 1;
 }
 
 message ReportInventoryRequest {}

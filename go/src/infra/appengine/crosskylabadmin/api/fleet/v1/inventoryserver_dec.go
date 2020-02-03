@@ -362,3 +362,20 @@ func (s *DecoratedInventory) ReportInventory(ctx context.Context, req *ReportInv
 	}
 	return
 }
+
+func (s *DecoratedInventory) UpdateManufacturingConfig(ctx context.Context, req *UpdateManufacturingConfigRequest) (rsp *UpdateManufacturingConfigResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateManufacturingConfig", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateManufacturingConfig(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateManufacturingConfig", rsp, err)
+	}
+	return
+}
