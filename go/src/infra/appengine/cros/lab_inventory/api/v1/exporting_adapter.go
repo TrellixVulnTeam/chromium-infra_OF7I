@@ -312,7 +312,13 @@ func setDutState(p *inventory.Peripherals, s *lab.DutState) {
 // AdaptToV1DutSpec adapts ExtendedDeviceData to inventory.DeviceUnderTest of
 // inventory v1 defined in
 // https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/libs/skylab/inventory/device.proto
-func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, error) {
+func AdaptToV1DutSpec(data *ExtendedDeviceData) (dut *inventory.DeviceUnderTest, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Reason("Recovered from %v", r).Err()
+		}
+	}()
+
 	if data == nil || data.LabConfig == nil || data.LabConfig.GetDut() == nil {
 		return nil, errors.Reason("nil ext data to adapt").Err()
 	}
@@ -359,7 +365,7 @@ func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, err
 	}
 	setDutState(&peri, data.GetDutState())
 
-	dut := inventory.DeviceUnderTest{
+	dut = &inventory.DeviceUnderTest{
 		Common: &inventory.CommonDeviceSpecs{
 			Id:           &(data.LabConfig.GetId().Value),
 			SerialNumber: &(data.LabConfig.SerialNumber),
@@ -368,5 +374,5 @@ func AdaptToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, err
 			Labels:       &labels,
 		},
 	}
-	return &dut, nil
+	return
 }
