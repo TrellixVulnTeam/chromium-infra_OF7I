@@ -8,6 +8,8 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
+	"os/signal"
 )
 
 // AbortWhenDone forwards an abort message to an abort socket when provided
@@ -40,4 +42,43 @@ func abort(path string) error {
 	b := []byte("abort")
 	_, err = c.Write(b)
 	return err
+}
+
+// ForwardAbortSignal catches termination signals and forwards them as
+// abort messages to an abort socket.  This function spawns a
+// goroutine and modifies the process signal handlers.  Both of these
+// are cleaned up when the returned Forwarder is closed.
+func ForwardAbortSignal(path string) *Forwarder {
+	c := make(chan os.Signal, 1)
+	notifyOnAbort(c)
+	go listenAndAbort(c, path)
+	return &Forwarder{c: c}
+}
+
+// Forwarder encapsulates cleanup for ForwardAbortSignal.
+type Forwarder struct {
+	c chan<- os.Signal
+}
+
+// Close cleans up signal forwarding stuff.  Subsequent calls do
+// nothing.
+func (f *Forwarder) Close() {
+	if f.c == nil {
+		return
+	}
+	signal.Stop(f.c)
+	close(f.c)
+	f.c = nil
+}
+
+// listenAndAbort sends an abort to an abort socket when signals are
+// received.  This function is intended to be used as a goroutine for
+// handling signals.  This function returns when the channel is
+// closed.
+func listenAndAbort(c <-chan os.Signal, path string) {
+	for range c {
+		if err := abort(path); err != nil {
+			log.Printf("Error sending abort for signal: %s", err)
+		}
+	}
 }
