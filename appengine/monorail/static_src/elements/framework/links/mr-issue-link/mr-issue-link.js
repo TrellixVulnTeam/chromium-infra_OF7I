@@ -58,9 +58,7 @@ export class MrIssueLink extends LitElement {
         href=${this.href}
         title=${ifDefined(this.issue && this.issue.summary)}
         ?is-closed=${this.isClosed}
-      >${this._linkText}</a>
-      ${fedRefInfo}
-    `;
+      >${this._linkText}</a>${fedRefInfo}`;
   }
 
   /** @override */

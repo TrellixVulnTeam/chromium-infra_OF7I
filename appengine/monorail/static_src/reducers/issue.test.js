@@ -1060,6 +1060,57 @@ describe('issue', () => {
     });
 
     describe('selectors', () => {
+      describe('issueForRefString', () => {
+        const noIssues = issue.issueForRefString(wrapIssue({}));
+        const withIssue = issue.issueForRefString(wrapIssue({
+          projectName: 'test',
+          localId: 1,
+          summary: 'hello world',
+        }));
+
+        it('returns issue ref when no issue data', () => {
+          assert.deepEqual(noIssues('1', 'chromium'), {
+            localId: 1,
+            projectName: 'chromium',
+          });
+
+          assert.deepEqual(noIssues('chromium:2', 'ignore'), {
+            localId: 2,
+            projectName: 'chromium',
+          });
+
+          assert.deepEqual(noIssues('other:3'), {
+            localId: 3,
+            projectName: 'other',
+          });
+
+          assert.deepEqual(withIssue('other:3'), {
+            localId: 3,
+            projectName: 'other',
+          });
+        });
+
+        it('returns full issue data when available', () => {
+          assert.deepEqual(withIssue('1', 'test'), {
+            projectName: 'test',
+            localId: 1,
+            summary: 'hello world',
+          });
+
+          assert.deepEqual(withIssue('test:1', 'other'), {
+            projectName: 'test',
+            localId: 1,
+            summary: 'hello world',
+          });
+
+          assert.deepEqual(withIssue('test:1'), {
+            projectName: 'test',
+            localId: 1,
+            summary: 'hello world',
+          });
+        });
+      });
+
       it('starredIssues', () => {
         const state = {issue:
           {starredIssues: {'proj:1': true, 'proj:2': false}}};

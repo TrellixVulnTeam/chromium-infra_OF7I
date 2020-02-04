@@ -388,5 +388,3 @@ const stringValuesExtractor = (issue, fieldName, projectName,
   return matchingLabels.map(
       (labelRef) => removePrefix(labelRef.label, labelPrefix));
 };
-
-// TODO(zhangtiff): Implement hotlist specific fields: Rank, Added, Adder.

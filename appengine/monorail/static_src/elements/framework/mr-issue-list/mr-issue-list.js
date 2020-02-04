@@ -56,6 +56,12 @@ const EASE_OUT_TRANSITION = 'transform 0.05s cubic-bezier(0, 0, 0.2, 1)';
 const UNGROUPABLE_COLUMNS = new Set(['id', 'summary']);
 
 /**
+ * Columns that should render as issue links.
+ * @const {Set<string>}
+ */
+const ISSUE_COLUMNS = new Set(['id', 'mergedinto', 'blockedon', 'blocking']);
+
+/**
  * `<mr-issue-list>`
  *
  * A list of issues intended to be used in multiple contexts.
@@ -478,7 +484,7 @@ export class MrIssueList extends connectStore(LitElement) {
 
         ${this.columns.map((column) => html`
           <td class="col-${column.toLowerCase()}">
-            ${this._renderCell(column, issue) || EMPTY_FIELD_VALUE}
+            ${this._renderCell(column, issue)}
           </td>
         `)}
 
@@ -496,29 +502,37 @@ export class MrIssueList extends connectStore(LitElement) {
    * @private
    */
   _renderCell(column, issue) {
-    // Fields that need to render more than strings happen first.
-    switch (column.toLowerCase()) {
-      case 'id':
+    const columnName = column.toLowerCase();
+    if (columnName === 'summary') {
+      return html`
+        ${issue.summary}
+        ${labelRefsToOneWordLabels(issue.labelRefs).map(({label}) => html`
+          <a
+            class="summary-label"
+            href="${this._baseUrl()}?q=label%3A${label}"
+          >${label}</a>
+        `)}
+      `;
+    }
+    const values = this.extractFieldValues(issue, column);
+
+    if (!values.length) return EMPTY_FIELD_VALUE;
+
+    // TODO(zhangtiff): Make this based on the "ISSUE" field type rather than a
+    // hardcoded list of issue fields.
+    if (ISSUE_COLUMNS.has(columnName)) {
+      return values.map((issueRefString, i) => {
+        const issue = this._issueForRefString(issueRefString, this.projectName);
         return html`
-           <mr-issue-link
+          <mr-issue-link
             .projectName=${this.projectName}
             .issue=${issue}
             .queryParams=${this._queryParams}
             short
-          ></mr-issue-link>
+          ></mr-issue-link>${values.length - 1 > i ? ', ' : ''}
         `;
-      case 'summary':
-        return html`
-          ${issue.summary}
-          ${labelRefsToOneWordLabels(issue.labelRefs).map(({label}) => html`
-            <a
-              class="summary-label"
-              href="${this._baseUrl()}?q=label%3A${label}"
-            >${label}</a>
-          `)}
-        `;
+      });
     }
-    const values = this.extractFieldValues(issue, column);
     return values.join(', ');
   }
 
@@ -620,6 +634,10 @@ export class MrIssueList extends connectStore(LitElement) {
        * CSV data in data HREF format, used to download csv
        */
       _csvDataHref: {type: String},
+      /**
+       * Function to get a full Issue object for a given ref string.
+       */
+      _issueForRefString: {type: Object},
     };
   };
 
@@ -676,6 +694,14 @@ export class MrIssueList extends connectStore(LitElement) {
      */
     this.extractFieldValues = (_issue, _fieldName) => [];
 
+    /**
+     * @param {IssueRefString} _issueRefString
+     * @param {string} projectName The currently viewed project.
+     * @return {Issue}
+     */
+    this._issueForRefString = (_issueRefString, projectName) =>
+      issueStringToRef(_issueRefString, projectName);
+
     this._hiddenGroups = new Set();
 
     this._starredIssues = new Set();
@@ -706,6 +732,8 @@ export class MrIssueList extends connectStore(LitElement) {
 
     this._phaseNames = (issue.issueListPhaseNames(state) || []);
     this._queryParams = sitewide.queryParams(state);
+
+    this._issueForRefString = issue.issueForRefString(state);
   }
 
   /** @override */

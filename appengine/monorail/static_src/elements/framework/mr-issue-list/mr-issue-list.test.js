@@ -55,6 +55,8 @@ describe('mr-issue-list', () => {
   it('one word labels render in summary column', async () => {
     element.issues = [
       {
+        projectName: 'test',
+        localId: 1,
         summary: 'test issue',
         labelRefs: [
           {label: 'ignore-multi-word-labels'},
@@ -80,6 +82,60 @@ describe('mr-issue-list', () => {
         '/p/chromium/issues/list?q=label%3AA11y');
   });
 
+  it('blocking column renders issue links', async () => {
+    element.issues = [
+      {
+        projectName: 'test',
+        localId: 1,
+        blockingIssueRefs: [
+          {projectName: 'test', localId: 2},
+          {projectName: 'test', localId: 3},
+        ],
+      },
+    ];
+    element.columns = ['Blocking'];
+
+    await element.updateComplete;
+
+    const blocking = element.shadowRoot.querySelector('.col-blocking');
+    const link = blocking.querySelector('mr-issue-link');
+    assert.equal(link.href, '/p/test/issues/detail?id=2');
+  });
+
+  it('blockedOn column renders issue links', async () => {
+    element.issues = [
+      {
+        projectName: 'test',
+        localId: 1,
+        blockedOnIssueRefs: [{projectName: 'test', localId: 2}],
+      },
+    ];
+    element.columns = ['BlockedOn'];
+
+    await element.updateComplete;
+
+    const blocking = element.shadowRoot.querySelector('.col-blockedon');
+    const link = blocking.querySelector('mr-issue-link');
+    assert.equal(link.href, '/p/test/issues/detail?id=2');
+  });
+
+  it('mergedInto column renders issue link', async () => {
+    element.issues = [
+      {
+        projectName: 'test',
+        localId: 1,
+        mergedIntoIssueRef: {projectName: 'test', localId: 2},
+      },
+    ];
+    element.columns = ['MergedInto'];
+
+    await element.updateComplete;
+
+    const blocking = element.shadowRoot.querySelector('.col-mergedinto');
+    const link = blocking.querySelector('mr-issue-link');
+    assert.equal(link.href, '/p/test/issues/detail?id=2');
+  });
+
   it('clicking issue link does not trigger _navigateToIssue', async () => {
     sinon.stub(element, '_navigateToIssue');
 
@@ -90,8 +146,8 @@ describe('mr-issue-list', () => {
     window.addEventListener('click', clickIntercepter);
 
     element.issues = [
-      {summary: 'test issue'},
-      {summary: 'I have a summary'},
+      {projectName: 'test', localId: 1, summary: 'test issue'},
+      {projectName: 'test', localId: 2, summary: 'I have a summary'},
     ];
     element.columns = ['ID'];
 
@@ -434,8 +490,8 @@ describe('mr-issue-list', () => {
   it('starring disabled when starringEnabled is false', async () => {
     element.starringEnabled = false;
     element.issues = [
-      {summary: 'test issue'},
-      {summary: 'I have a summary'},
+      {projectName: 'test', localId: 1, summary: 'test issue'},
+      {projectName: 'test', localId: 2, summary: 'I have a summary'},
     ];
 
     await element.updateComplete;
@@ -458,8 +514,8 @@ describe('mr-issue-list', () => {
     it('selections disabled when selectionEnabled is false', async () => {
       element.selectionEnabled = false;
       element.issues = [
-        {summary: 'test issue'},
-        {summary: 'I have a summary'},
+        {projectName: 'test', localId: 1, summary: 'test issue'},
+        {projectName: 'test', localId: 2, summary: 'I have a summary'},
       ];
 
       await element.updateComplete;

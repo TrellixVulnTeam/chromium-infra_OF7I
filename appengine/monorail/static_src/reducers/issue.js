@@ -512,6 +512,26 @@ const RESTRICT_COMMENT_PREFIX = 'restrict-addissuecomment-';
 const issuesByRefString = (state) => state.issue.issuesByRefString;
 
 /**
+ * Selector to return a function to retrieve a given Issue Object from
+ * the Redux store.
+ * @param {any} state
+ * @return {function(IssueRefString, string): Issue}
+ */
+export const issueForRefString = createSelector(issuesByRefString,
+    (issuesByRefString) => (issueRefString, projectName = undefined) => {
+      // In some contexts, an issue ref string will omit a project name,
+      // assuming the default project to be the project name. We never
+      // omit the project name in strings used as keys, so we have to
+      // make sure issue ref strings contain the project name.
+      const ref = issueStringToRef(issueRefString, projectName);
+      const refString = issueRefToString(ref);
+      if (issuesByRefString.hasOwnProperty(refString)) {
+        return issuesByRefString[refString];
+      }
+      return issueStringToRef(refString, projectName);
+    });
+
+/**
  * Selector to get a reference to the currently viewed issue, in string form.
  * @param {any} state
  * @return {IssueRefString}
