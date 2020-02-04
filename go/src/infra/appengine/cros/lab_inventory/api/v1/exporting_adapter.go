@@ -6,6 +6,7 @@ package api
 
 import (
 	"fmt"
+	"runtime/debug"
 	"strings"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
@@ -16,8 +17,9 @@ import (
 )
 
 var (
-	trueValue  bool = true
-	falseValue bool = false
+	trueValue   bool   = true
+	falseValue  bool   = false
+	emptyString string = ""
 )
 
 var arcBoardMap = map[string]bool{
@@ -100,10 +102,14 @@ func (a *attributes) append(key string, value string) *attributes {
 	return a
 }
 
-func setDutPeripherals(p *inventory.Peripherals, c *inventory.HardwareCapabilities, hint *inventory.TestCoverageHints, d *lab.Peripherals) {
+func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) {
 	if d == nil {
 		return
 	}
+
+	p := labels.Peripherals
+	c := labels.Capabilities
+	hint := labels.TestCoverageHints
 
 	p.AudioBoard = &falseValue
 	if chameleon := d.GetChameleon(); chameleon != nil {
@@ -170,7 +176,7 @@ func setDutPeripherals(p *inventory.Peripherals, c *inventory.HardwareCapabiliti
 	}
 }
 
-func setDutPools(labels *inventory.SchedulableLabels, hint *inventory.TestCoverageHints, inputPools []string) {
+func setDutPools(labels *inventory.SchedulableLabels, inputPools []string) {
 	for _, p := range inputPools {
 		v, ok := inventory.SchedulableLabels_DUTPool_value[p]
 		if ok {
@@ -180,8 +186,8 @@ func setDutPools(labels *inventory.SchedulableLabels, hint *inventory.TestCovera
 		}
 
 		if _, ok := appMap[p]; ok {
-			hint.HangoutApp = &trueValue
-			hint.MeetApp = &trueValue
+			labels.TestCoverageHints.HangoutApp = &trueValue
+			labels.TestCoverageHints.MeetApp = &trueValue
 		}
 	}
 }
@@ -289,7 +295,8 @@ func setDeviceConfig(labels *inventory.SchedulableLabels, d *device.Config) {
 }
 
 func setHwidData(l *inventory.SchedulableLabels, h *HwidData) {
-	l.HwidSku = &(h.Sku)
+	sku := h.GetSku()
+	l.HwidSku = &sku
 	l.Variant = []string{
 		h.GetVariant(),
 	}
@@ -303,10 +310,35 @@ func setDutStateHelper(s lab.PeripheralState, target **bool) {
 		*target = &falseValue
 	}
 }
+
 func setDutState(p *inventory.Peripherals, s *lab.DutState) {
 	setDutStateHelper(s.GetServo(), &(p.Servo))
 	setDutStateHelper(s.GetChameleon(), &(p.Chameleon))
 	setDutStateHelper(s.GetAudioLoopbackDongle(), &(p.AudioLoopbackDongle))
+}
+
+func createDutLabels(lc *lab.ChromeOSDevice, ostype *inventory.SchedulableLabels_OSType) *inventory.SchedulableLabels {
+	devcfgID := lc.GetDeviceConfigId()
+	_, arc := arcBoardMap[devcfgID.GetPlatformId().GetValue()]
+	// Use GetXXX in case any object is nil.
+	platform := devcfgID.GetPlatformId().GetValue()
+	brand := devcfgID.GetBrandId().GetValue()
+	model := devcfgID.GetModelId().GetValue()
+	variant := devcfgID.GetVariantId().GetValue()
+
+	labels := inventory.SchedulableLabels{
+		Arc:               &arc,
+		OsType:            ostype,
+		Platform:          &platform,
+		Board:             &platform,
+		Brand:             &brand,
+		Model:             &model,
+		Sku:               &variant,
+		Capabilities:      &inventory.HardwareCapabilities{},
+		Peripherals:       &inventory.Peripherals{},
+		TestCoverageHints: &inventory.TestCoverageHints{},
+	}
+	return &labels
 }
 
 // AdaptToV1DutSpec adapts ExtendedDeviceData to inventory.DeviceUnderTest of
@@ -315,64 +347,152 @@ func setDutState(p *inventory.Peripherals, s *lab.DutState) {
 func AdaptToV1DutSpec(data *ExtendedDeviceData) (dut *inventory.DeviceUnderTest, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.Reason("Recovered from %v", r).Err()
+			err = errors.Reason("Recovered from %v\n%s", r, debug.Stack()).Err()
 		}
 	}()
 
-	if data == nil || data.LabConfig == nil || data.LabConfig.GetDut() == nil {
+	if data.GetLabConfig() == nil {
 		return nil, errors.Reason("nil ext data to adapt").Err()
 	}
-	p := data.LabConfig.GetDut().GetPeripherals()
+	if data.GetLabConfig().GetDut() != nil {
+		return adaptV2DutToV1DutSpec(data)
+	}
+	if data.GetLabConfig().GetLabstation() != nil {
+		return adaptV2LabstationToV1DutSpec(data)
+	}
+	panic("We should never reach here!")
+}
+
+func adaptV2DutToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, error) {
+	lc := data.GetLabConfig()
+	p := lc.GetDut().GetPeripherals()
+	sn := lc.GetSerialNumber()
 	var attrs attributes
 	attrs.
-		append("HWID", data.GetLabConfig().GetManufacturingId().GetValue()).
+		append("HWID", lc.GetManufacturingId().GetValue()).
 		append("powerunit_hostname", p.GetRpm().GetPowerunitName()).
 		append("powerunit_outlet", p.GetRpm().GetPowerunitOutlet()).
-		append("serial_number", data.GetLabConfig().GetSerialNumber()).
+		append("serial_number", sn).
 		append("servo_host", p.GetServo().GetServoHostname()).
 		append("servo_port", fmt.Sprintf("%v", p.GetServo().GetServoPort())).
 		append("servo_serial", p.GetServo().GetServoSerial()).
 		append("servo_type", p.GetServo().GetServoType())
 
 	ostype := inventory.SchedulableLabels_OS_TYPE_CROS
-	peri := inventory.Peripherals{}
-	capa := inventory.HardwareCapabilities{}
-	hint := inventory.TestCoverageHints{}
-	_, arc := arcBoardMap[data.LabConfig.GetDeviceConfigId().GetPlatformId().GetValue()]
-	// Use GetXXX in case any object is nil.
-	platform := data.LabConfig.GetDeviceConfigId().GetPlatformId().GetValue()
-	brand := data.LabConfig.GetDeviceConfigId().GetBrandId().GetValue()
-	model := data.LabConfig.GetDeviceConfigId().GetModelId().GetValue()
-	variant := data.LabConfig.GetDeviceConfigId().GetVariantId().GetValue()
-	labels := inventory.SchedulableLabels{
-		Arc:               &arc,
-		OsType:            &ostype,
-		Platform:          &(platform),
-		Board:             &(platform),
-		Brand:             &(brand),
-		Model:             &(model),
-		Sku:               &(variant),
-		Capabilities:      &capa,
-		Peripherals:       &peri,
-		TestCoverageHints: &hint,
-	}
-	setDutPools(&labels, &hint, data.GetLabConfig().GetDut().GetPools())
-	setDutPeripherals(&peri, &capa, &hint, p)
-	setDeviceConfig(&labels, data.GetDeviceConfig())
-	setManufacturingConfig(&labels, data.GetManufacturingConfig())
-	if hwidData := data.GetHwidData(); hwidData != nil {
-		setHwidData(&labels, hwidData)
-	}
-	setDutState(&peri, data.GetDutState())
 
-	dut = &inventory.DeviceUnderTest{
+	labels := createDutLabels(lc, &ostype)
+
+	setDutPools(labels, lc.GetDut().GetPools())
+	setDutPeripherals(labels, p)
+	setDeviceConfig(labels, data.GetDeviceConfig())
+	setManufacturingConfig(labels, data.GetManufacturingConfig())
+	setHwidData(labels, data.GetHwidData())
+	setDutState(labels.Peripherals, data.GetDutState())
+
+	id := lc.GetId().GetValue()
+	hostname := lc.GetDut().Hostname
+	dut := &inventory.DeviceUnderTest{
 		Common: &inventory.CommonDeviceSpecs{
-			Id:           &(data.LabConfig.GetId().Value),
-			SerialNumber: &(data.LabConfig.SerialNumber),
-			Hostname:     &(data.LabConfig.GetDut().Hostname),
+			Id:           &id,
+			SerialNumber: &sn,
+			Hostname:     &hostname,
 			Attributes:   attrs,
-			Labels:       &labels,
+			Labels:       labels,
 		},
 	}
-	return
+	return dut, nil
+}
+
+func adaptV2LabstationToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest, error) {
+	lc := data.GetLabConfig()
+	l := lc.GetLabstation()
+	sn := lc.GetSerialNumber()
+
+	var attrs attributes
+	attrs.
+		append("HWID", lc.GetManufacturingId().GetValue()).
+		append("powerunit_hostname", l.GetRpm().GetPowerunitName()).
+		append("powerunit_outlet", l.GetRpm().GetPowerunitOutlet()).
+		append("serial_number", sn)
+	ostype := inventory.SchedulableLabels_OS_TYPE_LABSTATION
+	labels := createDutLabels(lc, &ostype)
+	// Hardcode labstation labels.
+	labels.Platform = &emptyString
+	acOnly := "AC_only"
+	carrierInvalid := inventory.HardwareCapabilities_CARRIER_INVALID
+	labels.Capabilities = &inventory.HardwareCapabilities{
+		Atrus:           &falseValue,
+		Bluetooth:       &falseValue,
+		Carrier:         &carrierInvalid,
+		Detachablebase:  &falseValue,
+		Fingerprint:     &falseValue,
+		Flashrom:        &falseValue,
+		GpuFamily:       &emptyString,
+		Graphics:        &emptyString,
+		Hotwording:      &falseValue,
+		InternalDisplay: &falseValue,
+		Lucidsleep:      &falseValue,
+		Modem:           &emptyString,
+		Power:           &acOnly,
+		Storage:         &emptyString,
+		Telephony:       &emptyString,
+		Webcam:          &falseValue,
+		Touchpad:        &falseValue,
+		Touchscreen:     &falseValue,
+	}
+	cr50PhaseInvalid := inventory.SchedulableLabels_CR50_PHASE_INVALID
+	labels.Cr50Phase = &cr50PhaseInvalid
+	labels.Cr50RoKeyid = &emptyString
+	labels.Cr50RoVersion = &emptyString
+	labels.Cr50RwKeyid = &emptyString
+	labels.Cr50RwVersion = &emptyString
+	ecTypeInvalid := inventory.SchedulableLabels_EC_TYPE_INVALID
+	labels.EcType = &ecTypeInvalid
+	labels.WifiChip = &emptyString
+
+	labels.Peripherals = &inventory.Peripherals{
+		AudioBoard:          &falseValue,
+		AudioBox:            &falseValue,
+		AudioLoopbackDongle: &falseValue,
+		Chameleon:           &falseValue,
+		ChameleonType:       []inventory.Peripherals_ChameleonType{inventory.Peripherals_CHAMELEON_TYPE_INVALID},
+		Conductive:          &falseValue,
+		Huddly:              &falseValue,
+		Mimo:                &falseValue,
+		Servo:               &falseValue,
+		Stylus:              &falseValue,
+		Camerabox:           &falseValue,
+		Wificell:            &falseValue,
+		Router_802_11Ax:     &falseValue,
+	}
+
+	labels.TestCoverageHints = &inventory.TestCoverageHints{
+		ChaosDut:        &falseValue,
+		ChaosNightly:    &falseValue,
+		Chromesign:      &falseValue,
+		HangoutApp:      &falseValue,
+		MeetApp:         &falseValue,
+		RecoveryTest:    &falseValue,
+		TestAudiojack:   &falseValue,
+		TestHdmiaudio:   &falseValue,
+		TestUsbaudio:    &falseValue,
+		TestUsbprinting: &falseValue,
+		UsbDetect:       &falseValue,
+		UseLid:          &falseValue,
+	}
+	setHwidData(labels, data.GetHwidData())
+	labels.Variant = nil
+	setDutPools(labels, l.GetPools())
+	id := lc.GetId().GetValue()
+	hostname := l.GetHostname()
+	dut := &inventory.DeviceUnderTest{
+		Common: &inventory.CommonDeviceSpecs{
+			Id:           &id,
+			SerialNumber: &sn,
+			Hostname:     &hostname,
+			Attributes:   attrs,
+			Labels:       labels,
+		},
+	}
+	return dut, nil
 }

@@ -347,6 +347,96 @@ common {
 	}
 }
 `
+const labstationProtoFromV2 = `
+common {
+	attributes {
+		key: "HWID",
+		value: "labstation_hwid",
+	}
+	attributes {
+		key: "powerunit_hostname",
+		value: "test_power_unit_name",
+	}
+	attributes {
+		key: "powerunit_outlet",
+		value: "test_power_unit_outlet2",
+	}
+	attributes {
+		key: "serial_number"
+		value: "labstation_serial"
+	}
+	id: "test_labstation"
+	hostname: "test_labstation_host"
+	serial_number: "labstation_serial"
+	labels {
+		arc: false
+		os_type: OS_TYPE_LABSTATION
+		self_serve_pools: "labstation_main"
+		model: "test_model"
+		board: "guado"
+		brand: ""
+		sku: ""
+        capabilities {
+          atrus: false
+          bluetooth: false
+          carrier: CARRIER_INVALID
+          detachablebase: false
+          fingerprint: false
+          flashrom: false
+          gpu_family: ""
+          graphics: ""
+          hotwording: false
+          internal_display: false
+          lucidsleep: false
+          modem: ""
+          power: "AC_only"
+          storage: ""
+          telephony: ""
+          webcam: false
+          touchpad: false
+          touchscreen: false
+        }
+        cr50_phase: CR50_PHASE_INVALID
+        cr50_ro_keyid: ""
+        cr50_ro_version: ""
+        cr50_rw_keyid: ""
+        cr50_rw_version: ""
+        ec_type: EC_TYPE_INVALID
+        hwid_sku: ""
+		peripherals {
+          audio_board: false
+          audio_box: false
+          audio_loopback_dongle: false
+          chameleon: false
+          chameleon_type: CHAMELEON_TYPE_INVALID
+          conductive: false
+          huddly: false
+          mimo: false
+          servo: false
+          stylus: false
+          camerabox: false
+          wificell: false
+          router_802_11ax: false
+		}
+		platform:""
+        test_coverage_hints {
+            chaos_dut: false
+            chaos_nightly: false
+            chromesign: false
+            hangout_app: false
+            meet_app: false
+            recovery_test: false
+            test_audiojack: false
+            test_hdmiaudio: false
+            test_usbaudio: false
+            test_usbprinting: false
+            usb_detect: false
+            use_lid: false
+        }
+        wifi_chip: ""
+	}
+}
+`
 
 // The servo host associated with test_dut.
 const labstation2TextProto = `
@@ -390,15 +480,63 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 			Duts: []*inventory.DeviceUnderTest{&d1},
 		})
 		So(err, ShouldBeNil)
+		dataCopy := data
 
-		d, err := AdaptToV1DutSpec(&data)
+		Convey("empty input", func() {
+			_, err := AdaptToV1DutSpec(&ExtendedDeviceData{})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "nil ext data to adapt")
+		})
+		Convey("empty hwid data", func() {
+			dataCopy.HwidData = nil
+			d, err := AdaptToV1DutSpec(&dataCopy)
+			So(err, ShouldBeNil)
+			So(d.GetCommon().GetHostname(), ShouldEqual, "test_host")
+		})
+		Convey("empty device config", func() {
+			dataCopy.DeviceConfig = nil
+			d, err := AdaptToV1DutSpec(&dataCopy)
+			So(err, ShouldBeNil)
+			So(d.GetCommon().GetHostname(), ShouldEqual, "test_host")
+		})
+		Convey("empty manufacturing config", func() {
+			dataCopy.ManufacturingConfig = nil
+			d, err := AdaptToV1DutSpec(&dataCopy)
+			So(err, ShouldBeNil)
+			So(d.GetCommon().GetHostname(), ShouldEqual, "test_host")
+		})
+		Convey("happy path", func() {
+			d, err := AdaptToV1DutSpec(&data)
+			So(err, ShouldBeNil)
+			s, err := inventory.WriteLabToString(&inventory.Lab{
+				Duts: []*inventory.DeviceUnderTest{d},
+			})
+			So(err, ShouldBeNil)
+			So(s1, ShouldEqual, s)
+			So(proto.Equal(&d1, d), ShouldBeTrue)
+		})
+	})
+
+	Convey("Verify labstation v2 => v1", t, func() {
+		var labstation inventory.DeviceUnderTest
+		err := proto.UnmarshalText(labstationProtoFromV2, &labstation)
 		So(err, ShouldBeNil)
+
+		extLabstaion := ExtendedDeviceData{
+			LabConfig: &labstationInV2,
+		}
+		d, err := AdaptToV1DutSpec(&extLabstaion)
+		So(err, ShouldBeNil)
+
 		s, err := inventory.WriteLabToString(&inventory.Lab{
 			Duts: []*inventory.DeviceUnderTest{d},
 		})
 		So(err, ShouldBeNil)
-		So(s1, ShouldEqual, s)
-		So(proto.Equal(&d1, d), ShouldBeTrue)
+		strLabstation, err := inventory.WriteLabToString(&inventory.Lab{
+			Duts: []*inventory.DeviceUnderTest{&labstation},
+		})
+		So(err, ShouldBeNil)
+		So(s, ShouldEqual, strLabstation)
 	})
 }
 
