@@ -150,7 +150,7 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc,
 	log.Printf("Loading DUT info from Inventory V2")
 	dutV2, err := loadFromV2(ctx, b, gfV2)
 	if err != nil {
-		log.Printf("fail to load DUT from inventory V2: %#v", err)
+		log.Printf("(not fatal) fail to load DUT from inventory V2: %s", err)
 	}
 
 	c, err := swmbot.InventoryClient(ctx, b)
