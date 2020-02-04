@@ -18,16 +18,16 @@ import (
 	"infra/libs/skylab/inventory"
 )
 
-// TaskSet encapsulates the running state of a set of tasks, to satisfy
-// a Skylab Execution.
-type TaskSet struct {
+// RequestTaskSet encapsulates the running state of the set of tasks for one
+// cros_test_platform request.
+type RequestTaskSet struct {
 	testRuns         []*testRun
 	globalMaxRetries int32
 	retries          int32
 }
 
-// NewTaskSet creates a new TaskSet.
-func NewTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*TaskSet, error) {
+// NewRequestTaskSet creates a new RequestTaskSet.
+func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*RequestTaskSet, error) {
 	testRuns := make([]*testRun, len(tests))
 	for i, test := range tests {
 		t, err := newTestRun(test, params, workerConfig, parentTaskID)
@@ -36,14 +36,14 @@ func NewTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *t
 		}
 		testRuns[i] = t
 	}
-	return &TaskSet{
+	return &RequestTaskSet{
 		testRuns:         testRuns,
 		globalMaxRetries: inferGlobalMaxRetries(params),
 	}, nil
 }
 
-// Completed returns true if all test runs in this task set have completed.
-func (r *TaskSet) Completed() bool {
+// Completed returns true if all tasks for this request have completed.
+func (r *RequestTaskSet) Completed() bool {
 	for _, t := range r.testRuns {
 		if !t.Completed() {
 			return false
@@ -59,8 +59,8 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 	return maxInt32IfZero(params.GetRetry().GetMax())
 }
 
-// LaunchTasks launches initial tasks for all the testRuns in this task set.
-func (r *TaskSet) LaunchTasks(ctx context.Context, clients Clients) error {
+// LaunchTasks launches initial tasks for all the tests in this request.
+func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients Clients) error {
 	for _, testRun := range r.testRuns {
 		runnable, err := testRun.ValidateDependencies(ctx, clients.Swarming)
 		if err != nil {
@@ -77,9 +77,9 @@ func (r *TaskSet) LaunchTasks(ctx context.Context, clients Clients) error {
 	return nil
 }
 
-// CheckTasksAndRetry checks the status of currently running tasks and retries
-// failed tasks when allowed.
-func (r *TaskSet) CheckTasksAndRetry(ctx context.Context, clients Clients) error {
+// CheckTasksAndRetry checks the status of currently running tasks for this
+// request and retries failed tasks when allowed.
+func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients Clients) error {
 	for _, testRun := range r.testRuns {
 		if testRun.Completed() {
 			continue
@@ -111,8 +111,8 @@ func (r *TaskSet) CheckTasksAndRetry(ctx context.Context, clients Clients) error
 	return nil
 }
 
-// shouldRetry computes if the given testRun should be retried.
-func (r *TaskSet) shouldRetry(ctx context.Context, tr *testRun) (bool, error) {
+// shouldRetry computes if the given test should be retried.
+func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testRun) (bool, error) {
 	if !tr.AttemptedAtLeastOnce() {
 		return false, errors.Reason("shouldRetry: can't retry a never-tried test").Err()
 	}
@@ -142,7 +142,7 @@ func (r *TaskSet) shouldRetry(ctx context.Context, tr *testRun) (bool, error) {
 	}
 }
 
-func (r *TaskSet) globalRetriesRemaining() int32 {
+func (r *RequestTaskSet) globalRetriesRemaining() int32 {
 	return r.globalMaxRetries - r.retries
 }
 
@@ -186,7 +186,7 @@ var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCyc
 	jsonrpc.TaskState_TIMED_OUT: test_platform.TaskState_LIFE_CYCLE_ABORTED,
 }
 
-func (r *TaskSet) response(running bool) *steps.ExecuteResponse {
+func (r *RequestTaskSet) response(running bool) *steps.ExecuteResponse {
 	resp := &steps.ExecuteResponse{
 		TaskResults:         r.taskResults(),
 		ConsolidatedResults: r.results(),
@@ -198,7 +198,7 @@ func (r *TaskSet) response(running bool) *steps.ExecuteResponse {
 	return resp
 }
 
-func (r *TaskSet) lifecycle(running bool) test_platform.TaskState_LifeCycle {
+func (r *RequestTaskSet) lifecycle(running bool) test_platform.TaskState_LifeCycle {
 	switch {
 	case r.Completed():
 		return test_platform.TaskState_LIFE_CYCLE_COMPLETED
@@ -212,7 +212,7 @@ func (r *TaskSet) lifecycle(running bool) test_platform.TaskState_LifeCycle {
 	}
 }
 
-func (r *TaskSet) verdict() test_platform.TaskState_Verdict {
+func (r *RequestTaskSet) verdict() test_platform.TaskState_Verdict {
 	v := test_platform.TaskState_VERDICT_PASSED
 	if !r.Completed() {
 		v = test_platform.TaskState_VERDICT_UNSPECIFIED
@@ -237,7 +237,7 @@ func successfulVerdict(v test_platform.TaskState_Verdict) bool {
 	}
 }
 
-func (r *TaskSet) results() []*steps.ExecuteResponse_ConsolidatedResult {
+func (r *RequestTaskSet) results() []*steps.ExecuteResponse_ConsolidatedResult {
 	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(r.testRuns))
 	for i, test := range r.testRuns {
 		rs[i] = &steps.ExecuteResponse_ConsolidatedResult{
@@ -247,7 +247,7 @@ func (r *TaskSet) results() []*steps.ExecuteResponse_ConsolidatedResult {
 	return rs
 }
 
-func (r *TaskSet) taskResults() []*steps.ExecuteResponse_TaskResult {
+func (r *RequestTaskSet) taskResults() []*steps.ExecuteResponse_TaskResult {
 	results := r.results()
 	var trs []*steps.ExecuteResponse_TaskResult
 	for _, result := range results {

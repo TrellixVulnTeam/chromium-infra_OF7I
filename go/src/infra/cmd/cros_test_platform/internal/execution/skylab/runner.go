@@ -17,38 +17,38 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-// Runner is a new Skylab task set runner.
+// Runner manages task sets for multiple cros_test_platform requests.
 type Runner struct {
-	taskSets map[string]*TaskSet
-	running  bool
+	requestTaskSets map[string]*RequestTaskSet
+	running         bool
 }
 
-// NewRunnerWithTaskSets returns a new Runner for executing the provided
-// TaskSets.
+// NewRunnerWithRequestTaskSets returns a new Runner to manage the provided
+// RequestTaskSets.
 //
 // This constructor is only used by unittests.
-func NewRunnerWithTaskSets(taskSets ...*TaskSet) *Runner {
+func NewRunnerWithRequestTaskSets(requestTaskSets ...*RequestTaskSet) *Runner {
 	r := &Runner{
-		taskSets: make(map[string]*TaskSet),
+		requestTaskSets: make(map[string]*RequestTaskSet),
 	}
-	for i, ts := range taskSets {
-		r.taskSets[fmt.Sprintf("task%d", i)] = ts
+	for i, ts := range requestTaskSets {
+		r.requestTaskSets[fmt.Sprintf("task%d", i)] = ts
 	}
 	return r
 }
 
-// NewRunner returns a Runner that will execute the given tests.
+// NewRunner returns a Runner that will execute the given requests.
 func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, requests map[string]*steps.ExecuteRequest) (*Runner, error) {
-	ts := make(map[string]*TaskSet)
+	ts := make(map[string]*RequestTaskSet)
 	for t, r := range requests {
 		var err error
-		ts[t], err = NewTaskSet(r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
+		ts[t], err = NewRequestTaskSet(r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
 		if err != nil {
 			return nil, errors.Annotate(err, "new skylab runner").Err()
 		}
 	}
 	return &Runner{
-		taskSets: ts,
+		requestTaskSets: ts,
 	}, nil
 }
 
@@ -88,7 +88,7 @@ func (r *Runner) LaunchAndWait(ctx context.Context, clients Clients) error {
 }
 
 func (r *Runner) launchTasks(ctx context.Context, clients Clients) error {
-	for t, ts := range r.taskSets {
+	for t, ts := range r.requestTaskSets {
 		if err := ts.LaunchTasks(ctx, clients); err != nil {
 			return errors.Annotate(err, "launch tasks for %s", t).Err()
 		}
@@ -97,7 +97,7 @@ func (r *Runner) launchTasks(ctx context.Context, clients Clients) error {
 }
 
 func (r *Runner) checkTasksAndRetry(ctx context.Context, clients Clients) error {
-	for t, ts := range r.taskSets {
+	for t, ts := range r.requestTaskSets {
 		if err := ts.CheckTasksAndRetry(ctx, clients); err != nil {
 			return errors.Annotate(err, "check tasks and retry for %s", t).Err()
 		}
@@ -106,7 +106,7 @@ func (r *Runner) checkTasksAndRetry(ctx context.Context, clients Clients) error 
 }
 
 func (r *Runner) completed() bool {
-	for _, ts := range r.taskSets {
+	for _, ts := range r.requestTaskSets {
 		if !ts.Completed() {
 			return false
 		}
@@ -114,11 +114,11 @@ func (r *Runner) completed() bool {
 	return true
 }
 
-// Responses constructs responses for each taskSet managed by the Runner.
+// Responses constructs responses for each request managed by the Runner.
 func (r *Runner) Responses() map[string]*steps.ExecuteResponse {
 	running := r.running
 	resps := make(map[string]*steps.ExecuteResponse)
-	for t, ts := range r.taskSets {
+	for t, ts := range r.requestTaskSets {
 		resps[t] = ts.response(running)
 	}
 	return resps
