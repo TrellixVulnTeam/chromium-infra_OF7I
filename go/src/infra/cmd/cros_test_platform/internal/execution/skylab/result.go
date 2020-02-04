@@ -63,30 +63,30 @@ func getAutotestResult(ctx context.Context, sResult *swarming_api.SwarmingRpcsTa
 	return a, nil
 }
 
-func toTaskResult(testName string, attempt *attempt, attemptNum int) *steps.ExecuteResponse_TaskResult {
+func toTaskResult(testName string, t *task, attemptNum int) *steps.ExecuteResponse_TaskResult {
 	// TODO(akeshet): Determine these URLs in a more principled way. See crbug.com/987487
 	// for context.
 	logURL := fmt.Sprintf(
 		"https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-%s/",
-		attempt.taskID,
+		t.ID,
 	)
 	gsURL := fmt.Sprintf(
 		"gs://chromeos-autotest-results/swarming-%s/",
-		attempt.taskID,
+		t.ID,
 	)
 
 	return &steps.ExecuteResponse_TaskResult{
 		Name: testName,
 		State: &test_platform.TaskState{
-			LifeCycle: taskStateToLifeCycle[attempt.state],
-			Verdict:   attempt.Verdict(),
+			LifeCycle: taskStateToLifeCycle[t.state],
+			Verdict:   t.Verdict(),
 		},
-		TaskUrl: attempt.URL(),
+		TaskUrl: t.URL(),
 		LogUrl:  logURL,
 		LogData: &common.TaskLogData{
 			GsUrl: gsURL,
 		},
 		Attempt:   int32(attemptNum),
-		TestCases: attempt.TestCases(),
+		TestCases: t.TestCases(),
 	}
 }

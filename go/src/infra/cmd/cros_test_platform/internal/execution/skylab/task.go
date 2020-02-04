@@ -17,55 +17,55 @@ import (
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
 )
 
-type attempt struct {
-	args   request.Args
-	taskID string
-	url    string
-	state  jsonrpc.TaskState
+type task struct {
+	args  request.Args
+	ID    string
+	url   string
+	state jsonrpc.TaskState
 	// Note: If we ever begin supporting other harnesses's result formats
 	// then this field will change to a *skylab_test_runner.Result.
 	// For now, the autotest-specific variant is more convenient.
 	autotestResult *skylab_test_runner.Result_Autotest
 }
 
-func (a *attempt) TaskName() string {
-	return a.args.Cmd.TaskName
+func (t *task) Name() string {
+	return t.args.Cmd.TaskName
 }
 
-func (a *attempt) Launch(ctx context.Context, clients Clients) error {
-	req, err := a.args.SwarmingNewTaskRequest()
+func (t *task) Launch(ctx context.Context, clients Clients) error {
+	req, err := t.args.SwarmingNewTaskRequest()
 	if err != nil {
-		return errors.Annotate(err, "launch attempt for %s", a.TaskName()).Err()
+		return errors.Annotate(err, "launch attempt for %s", t.Name()).Err()
 	}
 	resp, err := clients.Swarming.CreateTask(ctx, req)
 	if err != nil {
-		return errors.Annotate(err, "launch attempt for %s", a.TaskName()).Err()
+		return errors.Annotate(err, "launch attempt for %s", t.Name()).Err()
 	}
-	a.taskID = resp.TaskId
-	a.url = clients.Swarming.GetTaskURL(a.taskID)
-	logging.Infof(ctx, "Launched attempt for %s as task %s", a.TaskName(), a.url)
+	t.ID = resp.TaskId
+	t.url = clients.Swarming.GetTaskURL(t.ID)
+	logging.Infof(ctx, "Launched attempt for %s as task %s", t.Name(), t.url)
 	return nil
 }
 
-// Completed returns whether the current attempt is complete.
-func (a *attempt) Completed() bool {
-	return a.autotestResult != nil
+// Completed returns whether the current task is complete.
+func (t *task) Completed() bool {
+	return t.autotestResult != nil
 }
 
-func (a *attempt) Verdict() test_platform.TaskState_Verdict {
-	if !a.Completed() {
+func (t *task) Verdict() test_platform.TaskState_Verdict {
+	if !t.Completed() {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
-	if a.autotestResult == nil {
+	if t.autotestResult == nil {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
-	if a.autotestResult.Incomplete {
+	if t.autotestResult.Incomplete {
 		return test_platform.TaskState_VERDICT_FAILED
 	}
 
 	// By default (if no test cases ran), then there is no verdict.
 	verdict := test_platform.TaskState_VERDICT_NO_VERDICT
-	for _, c := range a.autotestResult.GetTestCases() {
+	for _, c := range t.autotestResult.GetTestCases() {
 		switch c.Verdict {
 		case skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL:
 			// Any case failing means the flat verdict is a failure.
@@ -80,14 +80,14 @@ func (a *attempt) Verdict() test_platform.TaskState_Verdict {
 	return verdict
 }
 
-// FetchResults fetches the latest swarming and isolate state of the given attempt,
-// and updates the attempt accordingly.
-func (a *attempt) FetchResults(ctx context.Context, clients Clients) error {
-	results, err := clients.Swarming.GetResults(ctx, []string{a.taskID})
+// FetchResults fetches the latest swarming and isolate state of the given task,
+// and updates the task accordingly.
+func (t *task) FetchResults(ctx context.Context, clients Clients) error {
+	results, err := clients.Swarming.GetResults(ctx, []string{t.ID})
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
-	result, err := unpackResult(results, a.taskID)
+	result, err := unpackResult(results, t.ID)
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
@@ -95,20 +95,20 @@ func (a *attempt) FetchResults(ctx context.Context, clients Clients) error {
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
-	a.state = state
+	t.state = state
 
 	switch {
 	// Task ran to completion.
 	case swarming.CompletedTaskStates[state]:
 		r, err := getAutotestResult(ctx, result, clients.IsolateGetter)
 		if err != nil {
-			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", a.taskID, err.Error())
+			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", t.ID, err.Error())
 			r = &skylab_test_runner.Result_Autotest{Incomplete: true}
 		}
-		a.autotestResult = r
+		t.autotestResult = r
 	// Task no longer running, but didn't run to completion.
 	case !swarming.UnfinishedTaskStates[state]:
-		a.autotestResult = &skylab_test_runner.Result_Autotest{Incomplete: true}
+		t.autotestResult = &skylab_test_runner.Result_Autotest{Incomplete: true}
 	// Task is still running.
 	default:
 	}
@@ -120,8 +120,8 @@ var liftTestCaseRunnerVerdict = map[skylab_test_runner.Result_Autotest_TestCase_
 	skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL: test_platform.TaskState_VERDICT_FAILED,
 }
 
-func (a *attempt) TestCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
-	tcs := a.autotestResult.GetTestCases()
+func (t *task) TestCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
+	tcs := t.autotestResult.GetTestCases()
 	if len(tcs) == 0 {
 		// Prefer a nil over an empty slice since it's the proto default.
 		return nil
@@ -137,6 +137,6 @@ func (a *attempt) TestCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult
 	return ret
 }
 
-func (a *attempt) URL() string {
-	return a.url
+func (t *task) URL() string {
+	return t.url
 }

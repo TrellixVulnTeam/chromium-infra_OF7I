@@ -70,7 +70,7 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients Clients) error
 			testTaskSet.MarkNotRunnable()
 			continue
 		}
-		if err := testTaskSet.LaunchAttempt(ctx, clients); err != nil {
+		if err := testTaskSet.LaunchTask(ctx, clients); err != nil {
 			return err
 		}
 	}
@@ -85,25 +85,25 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients Clients
 			continue
 		}
 
-		latestAttempt := testTaskSet.GetLatestAttempt()
-		if err := latestAttempt.FetchResults(ctx, clients); err != nil {
-			return errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
+		latestTask := testTaskSet.GetLatestTask()
+		if err := latestTask.FetchResults(ctx, clients); err != nil {
+			return errors.Annotate(err, "tick for task %s", latestTask.ID).Err()
 		}
 
 		if !testTaskSet.Completed() {
 			continue
 		}
 
-		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestAttempt.taskID, testTaskSet.Name, latestAttempt.Verdict())
+		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestTask.ID, testTaskSet.Name, latestTask.Verdict())
 
 		shouldRetry, err := r.shouldRetry(ctx, testTaskSet)
 		if err != nil {
-			return errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
+			return errors.Annotate(err, "tick for task %s", latestTask.ID).Err()
 		}
 		if shouldRetry {
 			logging.Debugf(ctx, "Retrying %s", testTaskSet.Name)
-			if err := testTaskSet.LaunchAttempt(ctx, clients); err != nil {
-				return errors.Annotate(err, "tick for task %s: retry test", latestAttempt.taskID).Err()
+			if err := testTaskSet.LaunchTask(ctx, clients); err != nil {
+				return errors.Annotate(err, "tick for task %s: retry test", latestTask.ID).Err()
 			}
 			r.retries++
 		}
@@ -125,8 +125,8 @@ func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testTaskSet) (bool
 		return false, nil
 	}
 
-	latestAttempt := tr.GetLatestAttempt()
-	switch verdict := latestAttempt.Verdict(); verdict {
+	latestTask := tr.GetLatestTask()
+	switch verdict := latestTask.Verdict(); verdict {
 	case test_platform.TaskState_VERDICT_UNSPECIFIED:
 		fallthrough
 	case test_platform.TaskState_VERDICT_FAILED:

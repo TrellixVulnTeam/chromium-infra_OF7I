@@ -22,7 +22,7 @@ type testTaskSet struct {
 	Name          string
 	maxAttempts   int
 	runnable      bool
-	attempts      []*attempt
+	tasks         []*task
 }
 
 func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*testTaskSet, error) {
@@ -47,7 +47,7 @@ func maxInt32IfZero(v int32) int32 {
 }
 
 func (t *testTaskSet) AttemptsRemaining() int {
-	r := t.maxAttempts - len(t.attempts)
+	r := t.maxAttempts - len(t.tasks)
 	if r > 0 {
 		return r
 	}
@@ -55,7 +55,7 @@ func (t *testTaskSet) AttemptsRemaining() int {
 }
 
 func (t *testTaskSet) AttemptedAtLeastOnce() bool {
-	return len(t.attempts) > 0
+	return len(t.tasks) > 0
 }
 
 // ValidateDependencies checks whether this test has dependencies satisfied by
@@ -84,16 +84,16 @@ func (t *testTaskSet) ValidateDependencies(ctx context.Context, client swarming.
 	return exists, nil
 }
 
-func (t *testTaskSet) LaunchAttempt(ctx context.Context, clients Clients) error {
+func (t *testTaskSet) LaunchTask(ctx context.Context, clients Clients) error {
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
 		return err
 	}
-	a := attempt{args: args}
+	a := task{args: args}
 	if err := a.Launch(ctx, clients); err != nil {
 		return err
 	}
-	t.attempts = append(t.attempts, &a)
+	t.tasks = append(t.tasks, &a)
 	return nil
 }
 
@@ -104,12 +104,12 @@ func (t *testTaskSet) MarkNotRunnable() {
 	t.runnable = false
 }
 
-// Completed determines whether we have completed an attempt for this test.
+// Completed determines whether we have completed a task for this test.
 func (t *testTaskSet) Completed() bool {
 	if !t.runnable {
 		return true
 	}
-	a := t.GetLatestAttempt()
+	a := t.GetLatestTask()
 	return a != nil && a.Completed()
 }
 
@@ -126,8 +126,8 @@ func (t *testTaskSet) TaskResult() []*steps.ExecuteResponse_TaskResult {
 		}
 	}
 
-	ret := make([]*steps.ExecuteResponse_TaskResult, len(t.attempts))
-	for i, a := range t.attempts {
+	ret := make([]*steps.ExecuteResponse_TaskResult, len(t.tasks))
+	for i, a := range t.tasks {
 		ret[i] = toTaskResult(t.Name, a, i)
 	}
 	return ret
@@ -137,19 +137,19 @@ func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
 	if !t.runnable {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
-	failedEarlierAttempt := false
-	for _, a := range t.attempts {
+	failedEarlierTask := false
+	for _, a := range t.tasks {
 		switch a.Verdict() {
 		case test_platform.TaskState_VERDICT_NO_VERDICT:
 			return test_platform.TaskState_VERDICT_NO_VERDICT
 		case test_platform.TaskState_VERDICT_PASSED:
-			if failedEarlierAttempt {
+			if failedEarlierTask {
 				return test_platform.TaskState_VERDICT_PASSED_ON_RETRY
 			}
 			return test_platform.TaskState_VERDICT_PASSED
 		case test_platform.TaskState_VERDICT_FAILED,
 			test_platform.TaskState_VERDICT_UNSPECIFIED:
-			failedEarlierAttempt = true
+			failedEarlierTask = true
 		default:
 			return test_platform.TaskState_VERDICT_FAILED
 		}
@@ -157,9 +157,9 @@ func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
 	return test_platform.TaskState_VERDICT_FAILED
 }
 
-func (t *testTaskSet) GetLatestAttempt() *attempt {
-	if len(t.attempts) == 0 {
+func (t *testTaskSet) GetLatestTask() *task {
+	if len(t.tasks) == 0 {
 		return nil
 	}
-	return t.attempts[len(t.attempts)-1]
+	return t.tasks[len(t.tasks)-1]
 }

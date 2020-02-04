@@ -209,6 +209,6 @@ func TestAutotestTestCases(t *testing.T) {
 }
 
 func callToTaskResults(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
-	attempt := &attempt{autotestResult: autotestResult, state: jsonrpc.TaskState_COMPLETED, taskID: "foo-task-ID"}
-	return toTaskResult("", attempt, 5)
+	t := &task{autotestResult: autotestResult, state: jsonrpc.TaskState_COMPLETED, ID: "foo-task-ID"}
+	return toTaskResult("", t, 5)
 }
