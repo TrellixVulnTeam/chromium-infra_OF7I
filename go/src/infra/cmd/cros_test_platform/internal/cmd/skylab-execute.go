@@ -79,15 +79,16 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 	ctx := cli.GetContext(a, c, env)
 	ctx = setupLogging(ctx)
 
-	requests, err := c.readRequests()
-	if err != nil {
-		return err
-	}
-	if err := c.validateRequests(requests); err != nil {
+	var request steps.ExecuteRequests
+	if err := readRequest(c.inputPath, &request); err != nil {
 		return err
 	}
 
-	cfg := extractOneConfig(requests)
+	if err := c.validateRequests(request.TaggedRequests); err != nil {
+		return err
+	}
+
+	cfg := extractOneConfig(request.TaggedRequests)
 	client, err := swarmingClient(ctx, cfg.SkylabSwarming)
 	if err != nil {
 		return err
@@ -104,11 +105,12 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		taskID = env["SWARMING_TASK_ID"].Value
 	}
 
-	runner, err := skylab.NewRunner(cfg.SkylabWorker, taskID, requests)
+	runner, err := skylab.NewRunner(cfg.SkylabWorker, taskID, request.TaggedRequests)
 	if err != nil {
 		return err
 	}
-	resps, err := c.handleRequests(ctx, inferTimeout(requests), runner, client, gf)
+
+	resps, err := c.handleRequests(ctx, inferTimeout(request.TaggedRequests), runner, client, gf)
 	if err != nil && !containsSomeResponse(resps) {
 		// Catastrophic error. There is no reasonable response to write.
 		return err
@@ -154,14 +156,6 @@ func inferTimeout(trs map[string]*steps.ExecuteRequest) time.Duration {
 		return defaultTaskTimout
 	}
 	return defaultTaskTimout
-}
-
-func (c *skylabExecuteRun) readRequests() (map[string]*steps.ExecuteRequest, error) {
-	var rs steps.ExecuteRequests
-	if err := readRequest(c.inputPath, &rs); err != nil {
-		return nil, err
-	}
-	return rs.TaggedRequests, nil
 }
 
 func (c *skylabExecuteRun) validateRequests(trs map[string]*steps.ExecuteRequest) error {
