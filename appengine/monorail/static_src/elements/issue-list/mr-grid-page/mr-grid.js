@@ -275,7 +275,7 @@ export class MrGrid extends connectStore(LitElement) {
           xFieldName: this.xField,
           yFieldName: this.yField,
           extractTypeForFieldName: this._extractTypeForFieldName,
-          statusDef: this._statusDefs,
+          statusDefs: this._statusDefs,
           labelPrefixValueMap: this._labelPrefixValueMap,
         });
 

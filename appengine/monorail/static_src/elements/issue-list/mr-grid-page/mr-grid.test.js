@@ -88,6 +88,45 @@ describe('mr-grid', () => {
     assert.deepEqual(tile.issue, testIssue);
   });
 
+  it('renders status groups in statusDef order', async () => {
+    element._statusDefs = [
+      {status: 'UltraNew'},
+      {status: 'New'},
+      {status: 'Accepted'},
+    ];
+
+    element.issues = [
+      {localId: 2, projectName: 'monorail', statusRef: {status: 'New'}},
+      {localId: 4, projectName: 'monorail', statusRef: {status: 'Accepted'}},
+      {localId: 3, projectName: 'monorail', statusRef: {status: 'New'}},
+      {localId: 1, projectName: 'monorail', statusRef: {status: 'UltraNew'}},
+    ];
+
+    element.cellMode = 'IDs';
+    element.xField = 'Status';
+    element.yField = '';
+
+    await element.updateComplete;
+
+    const rows = element.shadowRoot.querySelectorAll('tr');
+
+    const colHeaders = rows[0].querySelectorAll('th');
+    assert.equal(colHeaders[1].textContent.trim(), 'UltraNew');
+    assert.equal(colHeaders[2].textContent.trim(), 'New');
+    assert.equal(colHeaders[3].textContent.trim(), 'Accepted');
+
+    const issueCells = rows[1].querySelectorAll('td');
+
+    const ultraNewIssues = issueCells[0].querySelectorAll('mr-issue-link');
+    assert.equal(ultraNewIssues.length, 1);
+
+    const newIssues = issueCells[1].querySelectorAll('mr-issue-link');
+    assert.equal(newIssues.length, 2);
+
+    const acceptedIssues = issueCells[2].querySelectorAll('mr-issue-link');
+    assert.equal(acceptedIssues.length, 1);
+  });
+
   it('computes href for multiple items in counts mode', async () => {
     element.cellMode = 'Counts';
 
