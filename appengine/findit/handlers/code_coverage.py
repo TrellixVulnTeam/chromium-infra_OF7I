@@ -54,37 +54,27 @@ _SOURCE_FILE_GS_BUCKET = 'source-files-for-coverage'
 _LUCI_PROJECT_REGEX = re.compile(r'^/p/(.+)/coverage.*')
 
 
-def _GetAllowedGitilesHosts():
-  """Returns a set of gitiles hosts that the service supports.
+def _GetAllowedGitilesConfigs():
+  """Returns the set of valid gitiles configurations.
 
-  Example config:
-  {
-    'allowed_gitiles_hosts': ['chromium.googlesource.com'],
-  }
-  """
-  return set(waterfall_config.GetCodeCoverageSettings().get(
-      'allowed_gitiles_hosts', []))
-
-
-def _GetAllowedProjectsForPerCL(host):
-  """Returns a set of Gerrit projects that the service supports.
-
-  The main use case is to filter out per-cl coverage data requests whose
-  projects are not supported yet to avoid wasting time and resource quering the
-  datastore.
+  The returned structure contains the tree of valid hosts, projects, and refs.
 
   Please note that the hosts in the config are gitiles hosts instead of gerrit
   hosts, such as: 'chromium.googlesource.com'.
 
   Example config:
   {
-    'allowed_projects_for_per_cl': {
-        'chromium.googlesource.com': ['chromium/src'],
-    },
+    'allowed_gitiles_configs': {
+      'chromium.googlesource.com': {
+        'chromium/src': [
+          'refs/heads/master',
+        ]
+      }
+    }
   }
   """
-  return set(waterfall_config.GetCodeCoverageSettings().get(
-      'allowed_projects_for_per_cl', {}).get(host, []))
+  return waterfall_config.GetCodeCoverageSettings().get(
+      'allowed_gitiles_configs', {})
 
 
 def _GetBlacklistedDeps():
@@ -339,16 +329,12 @@ def _GetMatchedDependencyRepository(report, file_path):  # pragma: no cover.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
 
-  dependency = None
   for dep in report.manifest:
-    if file_path.startswith(dep.path):
-      dependency = dep
-      break
+    if file_path.startswith(
+        dep.path) and dep.server_host in _GetAllowedGitilesConfigs():
+      return dep
 
-  if not dependency or dependency.server_host not in _GetAllowedGitilesHosts():
-    return None
-
-  return dependency
+  return None
 
 
 def _ComposeSourceFileGsPath(report, file_path, revision):
@@ -1097,19 +1083,13 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('patchset=%d', patchset)
     logging.info('type=%s', data_type)
 
-    if host.replace('-review', '') not in _GetAllowedGitilesHosts():
+    configs = _GetAllowedGitilesConfigs()
+    if project not in configs.get(host.replace('-review', ''), {}):
       return BaseHandler.CreateError(
-          error_message='Host "%s" is not whitelisted.' % host,
-          return_code=400,
-          allowed_origin='*')
-
-    if project not in _GetAllowedProjectsForPerCL(host.replace('-review', '')):
-      kwargs = {'is_project_supported': False}
-      return BaseHandler.CreateError(
-          error_message='Project "%s" is not supported.' % project,
+          error_message='"%s/%s" is not supported.' % (host, project),
           return_code=400,
           allowed_origin='*',
-          **kwargs)
+          is_project_supported=False)
 
     if data_type not in ('lines', 'percentages'):
       return BaseHandler.CreateError(
@@ -1295,14 +1275,16 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('path=%s', path)
     logging.info('platform=%s', platform)
 
-    if not project:
-      return BaseHandler.CreateError('Invalid request', 400)
+    configs = _GetAllowedGitilesConfigs()
+    if ref not in configs.get(host, {}).get(project, []):
+      return BaseHandler.CreateError(
+          '"%s/%s/+/%s" is not supported.' % (host, project, ref), 400)
 
     logging.info('Servicing coverage data for postsubmit')
     platform_info_map = _GetPostsubmitPlatformInfoMap(luci_project)
     if platform not in platform_info_map:
       return BaseHandler.CreateError('Platform: %s is not supported' % platform,
-                                     404)
+                                     400)
     bucket = platform_info_map[platform]['bucket']
     builder = platform_info_map[platform]['builder']
     warning = platform_info_map[platform].get('warning')

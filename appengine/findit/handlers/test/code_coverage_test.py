@@ -198,9 +198,14 @@ class FetchSourceFileTest(WaterfallTestCase):
 
   def setUp(self):
     super(FetchSourceFileTest, self).setUp()
-    self.UpdateUnitTestConfigSettings('code_coverage_settings', {
-        'allowed_gitiles_hosts': ['chromium.googlesource.com'],
-    })
+    self.UpdateUnitTestConfigSettings(
+        'code_coverage_settings', {
+            'allowed_gitiles_configs': {
+                'chromium.googlesource.com': {
+                    'chromium/src': ['refs/heads/master',]
+                }
+            },
+        })
 
   def tearDown(self):
     self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
@@ -589,9 +594,10 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     self.UpdateUnitTestConfigSettings(
         'code_coverage_settings', {
             'serve_presubmit_coverage_data': True,
-            'allowed_gitiles_hosts': ['chromium.googlesource.com'],
-            'allowed_projects_for_per_cl': {
-                'chromium.googlesource.com': ['chromium/src'],
+            'allowed_gitiles_configs': {
+                'chromium.googlesource.com': {
+                    'chromium/src': ['refs/heads/master',]
+                }
             },
             'postsubmit_platform_info_map': {
                 'chromium': {
