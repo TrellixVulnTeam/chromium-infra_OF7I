@@ -1,0 +1,8 @@
+name: luci/logdog/archivist
+extends: ../../../base.yaml
+
+contextdir: ../../../../../go/src/go.chromium.org/luci/logdog/server/cmd/logdog_archivist/docker
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/logdog/server/cmd/logdog_archivist

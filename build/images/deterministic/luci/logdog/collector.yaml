@@ -1,0 +1,8 @@
+name: luci/logdog/collector
+extends: ../../../base.yaml
+
+contextdir: ../../../../../go/src/go.chromium.org/luci/logdog/server/cmd/logdog_collector/docker
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/logdog/server/cmd/logdog_collector
