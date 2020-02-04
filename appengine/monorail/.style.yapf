@@ -2,5 +2,4 @@
 based_on_style = chromium
 
 # Full list of knobs: https://github.com/google/yapf#knobs
-blank_line_before_module_docstring = true
 split_before_first_argument = true
