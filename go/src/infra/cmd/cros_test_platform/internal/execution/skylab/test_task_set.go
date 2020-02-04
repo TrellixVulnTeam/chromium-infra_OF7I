@@ -16,7 +16,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-type testRun struct {
+// testTaskSet encapsulates the running state of the set of tasks for one test.
+type testTaskSet struct {
 	argsGenerator argsGenerator
 	Name          string
 	maxAttempts   int
@@ -24,8 +25,8 @@ type testRun struct {
 	attempts      []*attempt
 }
 
-func newTestRun(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*testRun, error) {
-	t := testRun{runnable: true, Name: invocation.GetTest().GetName()}
+func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*testTaskSet, error) {
+	t := testTaskSet{runnable: true, Name: invocation.GetTest().GetName()}
 	t.argsGenerator = argsGenerator{invocation: invocation, params: params, workerConfig: workerConfig, parentTaskID: parentTaskID}
 	t.maxAttempts = 1 + int(inferTestMaxRetries(invocation))
 	return &t, nil
@@ -45,7 +46,7 @@ func maxInt32IfZero(v int32) int32 {
 	return v
 }
 
-func (t *testRun) AttemptsRemaining() int {
+func (t *testTaskSet) AttemptsRemaining() int {
 	r := t.maxAttempts - len(t.attempts)
 	if r > 0 {
 		return r
@@ -53,13 +54,13 @@ func (t *testRun) AttemptsRemaining() int {
 	return 0
 }
 
-func (t *testRun) AttemptedAtLeastOnce() bool {
+func (t *testTaskSet) AttemptedAtLeastOnce() bool {
 	return len(t.attempts) > 0
 }
 
 // ValidateDependencies checks whether this test has dependencies satisfied by
 // at least one Skylab bot.
-func (t *testRun) ValidateDependencies(ctx context.Context, client swarming.Client) (bool, error) {
+func (t *testTaskSet) ValidateDependencies(ctx context.Context, client swarming.Client) (bool, error) {
 	if err := t.argsGenerator.CheckConsistency(); err != nil {
 		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
 		return false, nil
@@ -83,7 +84,7 @@ func (t *testRun) ValidateDependencies(ctx context.Context, client swarming.Clie
 	return exists, nil
 }
 
-func (t *testRun) LaunchAttempt(ctx context.Context, clients Clients) error {
+func (t *testTaskSet) LaunchAttempt(ctx context.Context, clients Clients) error {
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
 		return err
@@ -99,12 +100,12 @@ func (t *testRun) LaunchAttempt(ctx context.Context, clients Clients) error {
 // MarkNotRunnable marks this test run as being unable to run.
 //
 // In particular, this means that this test run is Completed().
-func (t *testRun) MarkNotRunnable() {
+func (t *testTaskSet) MarkNotRunnable() {
 	t.runnable = false
 }
 
 // Completed determines whether we have completed an attempt for this test.
-func (t *testRun) Completed() bool {
+func (t *testTaskSet) Completed() bool {
 	if !t.runnable {
 		return true
 	}
@@ -112,7 +113,7 @@ func (t *testRun) Completed() bool {
 	return a != nil && a.Completed()
 }
 
-func (t *testRun) TaskResult() []*steps.ExecuteResponse_TaskResult {
+func (t *testTaskSet) TaskResult() []*steps.ExecuteResponse_TaskResult {
 	if !t.runnable {
 		return []*steps.ExecuteResponse_TaskResult{
 			{
@@ -132,7 +133,7 @@ func (t *testRun) TaskResult() []*steps.ExecuteResponse_TaskResult {
 	return ret
 }
 
-func (t *testRun) Verdict() test_platform.TaskState_Verdict {
+func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
 	if !t.runnable {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
@@ -156,7 +157,7 @@ func (t *testRun) Verdict() test_platform.TaskState_Verdict {
 	return test_platform.TaskState_VERDICT_FAILED
 }
 
-func (t *testRun) GetLatestAttempt() *attempt {
+func (t *testTaskSet) GetLatestAttempt() *attempt {
 	if len(t.attempts) == 0 {
 		return nil
 	}

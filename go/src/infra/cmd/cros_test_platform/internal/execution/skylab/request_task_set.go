@@ -21,30 +21,30 @@ import (
 // RequestTaskSet encapsulates the running state of the set of tasks for one
 // cros_test_platform request.
 type RequestTaskSet struct {
-	testRuns         []*testRun
+	testTaskSets     []*testTaskSet
 	globalMaxRetries int32
 	retries          int32
 }
 
 // NewRequestTaskSet creates a new RequestTaskSet.
 func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*RequestTaskSet, error) {
-	testRuns := make([]*testRun, len(tests))
+	testTaskSets := make([]*testTaskSet, len(tests))
 	for i, test := range tests {
-		t, err := newTestRun(test, params, workerConfig, parentTaskID)
+		t, err := newTestTaskSet(test, params, workerConfig, parentTaskID)
 		if err != nil {
 			return nil, errors.Annotate(err, "new task set").Err()
 		}
-		testRuns[i] = t
+		testTaskSets[i] = t
 	}
 	return &RequestTaskSet{
-		testRuns:         testRuns,
+		testTaskSets:     testTaskSets,
 		globalMaxRetries: inferGlobalMaxRetries(params),
 	}, nil
 }
 
 // Completed returns true if all tasks for this request have completed.
 func (r *RequestTaskSet) Completed() bool {
-	for _, t := range r.testRuns {
+	for _, t := range r.testTaskSets {
 		if !t.Completed() {
 			return false
 		}
@@ -61,16 +61,16 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 
 // LaunchTasks launches initial tasks for all the tests in this request.
 func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients Clients) error {
-	for _, testRun := range r.testRuns {
-		runnable, err := testRun.ValidateDependencies(ctx, clients.Swarming)
+	for _, testTaskSet := range r.testTaskSets {
+		runnable, err := testTaskSet.ValidateDependencies(ctx, clients.Swarming)
 		if err != nil {
 			return err
 		}
 		if !runnable {
-			testRun.MarkNotRunnable()
+			testTaskSet.MarkNotRunnable()
 			continue
 		}
-		if err := testRun.LaunchAttempt(ctx, clients); err != nil {
+		if err := testTaskSet.LaunchAttempt(ctx, clients); err != nil {
 			return err
 		}
 	}
@@ -80,29 +80,29 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients Clients) error
 // CheckTasksAndRetry checks the status of currently running tasks for this
 // request and retries failed tasks when allowed.
 func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients Clients) error {
-	for _, testRun := range r.testRuns {
-		if testRun.Completed() {
+	for _, testTaskSet := range r.testTaskSets {
+		if testTaskSet.Completed() {
 			continue
 		}
 
-		latestAttempt := testRun.GetLatestAttempt()
+		latestAttempt := testTaskSet.GetLatestAttempt()
 		if err := latestAttempt.FetchResults(ctx, clients); err != nil {
 			return errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
 		}
 
-		if !testRun.Completed() {
+		if !testTaskSet.Completed() {
 			continue
 		}
 
-		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestAttempt.taskID, testRun.Name, latestAttempt.Verdict())
+		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestAttempt.taskID, testTaskSet.Name, latestAttempt.Verdict())
 
-		shouldRetry, err := r.shouldRetry(ctx, testRun)
+		shouldRetry, err := r.shouldRetry(ctx, testTaskSet)
 		if err != nil {
 			return errors.Annotate(err, "tick for task %s", latestAttempt.taskID).Err()
 		}
 		if shouldRetry {
-			logging.Debugf(ctx, "Retrying %s", testRun.Name)
-			if err := testRun.LaunchAttempt(ctx, clients); err != nil {
+			logging.Debugf(ctx, "Retrying %s", testTaskSet.Name)
+			if err := testTaskSet.LaunchAttempt(ctx, clients); err != nil {
 				return errors.Annotate(err, "tick for task %s: retry test", latestAttempt.taskID).Err()
 			}
 			r.retries++
@@ -112,7 +112,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients Clients
 }
 
 // shouldRetry computes if the given test should be retried.
-func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testRun) (bool, error) {
+func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testTaskSet) (bool, error) {
 	if !tr.AttemptedAtLeastOnce() {
 		return false, errors.Reason("shouldRetry: can't retry a never-tried test").Err()
 	}
@@ -217,7 +217,7 @@ func (r *RequestTaskSet) verdict() test_platform.TaskState_Verdict {
 	if !r.Completed() {
 		v = test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
-	for _, t := range r.testRuns {
+	for _, t := range r.testTaskSets {
 		if !successfulVerdict(t.Verdict()) {
 			v = test_platform.TaskState_VERDICT_FAILED
 			break
@@ -238,8 +238,8 @@ func successfulVerdict(v test_platform.TaskState_Verdict) bool {
 }
 
 func (r *RequestTaskSet) results() []*steps.ExecuteResponse_ConsolidatedResult {
-	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(r.testRuns))
-	for i, test := range r.testRuns {
+	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(r.testTaskSets))
+	for i, test := range r.testTaskSets {
 		rs[i] = &steps.ExecuteResponse_ConsolidatedResult{
 			Attempts: test.TaskResult(),
 		}
