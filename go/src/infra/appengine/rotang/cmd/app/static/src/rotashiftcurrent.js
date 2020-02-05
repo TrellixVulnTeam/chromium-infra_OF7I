@@ -12,18 +12,6 @@ class RotaShiftCurrent extends LitElement {
 
   constructor() {
     super();
-    this.datesFixed = false;
-  }
-
-  toDateTime(ss) {
-    for (let split of ss) {
-      for (let shift of split.Shifts) {
-        shift.StartTime = DateTime.fromISO(shift.StartTime.toString())
-          .setZone(constants.zone);
-        shift.EndTime = DateTime.fromISO(shift.EndTime.toString())
-          .setZone(constants.zone);
-      }
-    }
   }
 
   addMember(splitIdx, shiftIdx) {
@@ -141,11 +129,11 @@ class RotaShiftCurrent extends LitElement {
         </td>
         <td>
           <input type="text" name="shiftStart" class="roInput"
-        value="${i.StartTime.toFormat(constants.timeFormat)}" readonly>
+        value="${DateTime.fromISO(i.StartTime, {zone: constants.zone}).toFormat(constants.timeFormat)}" readonly>
         </td>
         <td>
           <input type="text" name="shiftEnd" class="roInput"
-        value="${i.EndTime.toFormat(constants.timeFormat)}" readonly>
+        value="${DateTime.fromISO(i.EndTime, {zone: constants.zone}).toFormat(constants.timeFormat)}" readonly>
         </td>
         <td>
           <input type=text id="${this.commentID(splitIdx, shiftIdx)}"
@@ -165,13 +153,6 @@ class RotaShiftCurrent extends LitElement {
   }
 
   render() {
-    if (!this.datesFixed) {
-      if (this.shifts && this.shifts.SplitShifts &&
-        this.shifts.SplitShifts.length > 0) {
-        this.toDateTime(this.shifts.SplitShifts);
-        this.datesFixed = true;
-      }
-    }
     return html`
       <style>
         .tooltip {

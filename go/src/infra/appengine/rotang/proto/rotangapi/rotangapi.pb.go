@@ -1350,11 +1350,11 @@ var fileDescriptor_67f93f086ae77577 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // OncallInfoClient is the client API for OncallInfo service.
 //
@@ -1417,10 +1417,10 @@ func (c *oncallInfoPRPCClient) MigrationInfo(ctx context.Context, in *MigrationI
 }
 
 type oncallInfoClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewOncallInfoClient(cc *grpc.ClientConn) OncallInfoClient {
+func NewOncallInfoClient(cc grpc.ClientConnInterface) OncallInfoClient {
 	return &oncallInfoClient{cc}
 }
 
@@ -1630,10 +1630,10 @@ func (c *rotationAdminPRPCClient) DeleteExternal(ctx context.Context, in *Delete
 }
 
 type rotationAdminClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewRotationAdminClient(cc *grpc.ClientConn) RotationAdminClient {
+func NewRotationAdminClient(cc grpc.ClientConnInterface) RotationAdminClient {
 	return &rotationAdminClient{cc}
 }
 
@@ -1771,10 +1771,10 @@ func (c *memberAdminPRPCClient) MakeAllMembersOwners(ctx context.Context, in *Ma
 }
 
 type memberAdminClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewMemberAdminClient(cc *grpc.ClientConn) MemberAdminClient {
+func NewMemberAdminClient(cc grpc.ClientConnInterface) MemberAdminClient {
 	return &memberAdminClient{cc}
 }
 
