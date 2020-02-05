@@ -300,7 +300,7 @@ func TestGetCrosDevices(t *testing.T) {
 			return fakeCfgs, nil
 		}
 
-		SkipConvey("Happy path", func() {
+		Convey("Happy path", func() {
 			reqGet := &api.GetCrosDevicesRequest{
 				Ids: []*api.DeviceID{&devID1, &devID2},
 			}
@@ -310,7 +310,7 @@ func TestGetCrosDevices(t *testing.T) {
 			So(rsp.Data, ShouldHaveLength, 2)
 		})
 
-		SkipConvey("Happy path with real device config", func() {
+		Convey("Happy path with real device config", func() {
 			realDutID1 := api.DeviceID{
 				Id: &api.DeviceID_Hostname{Hostname: "real_dut1"},
 			}
@@ -378,19 +378,22 @@ func TestGetCrosDevices(t *testing.T) {
 			So(resultM["real_dut2"], ShouldEqual, "")
 		})
 
-		SkipConvey("Bad hwid server", func() {
+		Convey("Bad hwid server", func() {
 			getHwidDataFunc = hwid.GetHwidData
 			reqGet := &api.GetCrosDevicesRequest{
 				Ids: []*api.DeviceID{&devID1, &devID2},
 			}
 			rsp, err := tf.Inventory.GetCrosDevices(tf.C, reqGet)
 			So(err, ShouldBeNil)
-			So(rsp.Data, ShouldHaveLength, 0)
-			So(rsp.FailedDevices, ShouldHaveLength, 2)
-			So(rsp.FailedDevices[0].ErrorMsg, ShouldContainSubstring, "HWID server responsonse was not OK")
+			So(rsp.Data, ShouldHaveLength, 2)
+			So(rsp.FailedDevices, ShouldHaveLength, 0)
+			So(rsp.Data[0].LabConfig, ShouldNotBeNil)
+			So(rsp.Data[0].HwidData, ShouldBeNil)
+			So(rsp.Data[1].LabConfig, ShouldNotBeNil)
+			So(rsp.Data[1].HwidData, ShouldBeNil)
 		})
 
-		SkipConvey("Failed to get device config", func() {
+		Convey("Failed to get device config", func() {
 			getHwidDataFunc = func(ctx context.Context, hwidstr string, secret string) (*hwid.Data, error) {
 				return &hwid.Data{Sku: "sku", Variant: "variant"}, nil
 			}
@@ -406,12 +409,15 @@ func TestGetCrosDevices(t *testing.T) {
 			}
 			rsp, err := tf.Inventory.GetCrosDevices(tf.C, reqGet)
 			So(err, ShouldBeNil)
-			So(rsp.Data, ShouldHaveLength, 0)
-			So(rsp.FailedDevices, ShouldHaveLength, 2)
-			So(rsp.FailedDevices[0].ErrorMsg, ShouldEqual, "get device config error")
+			So(rsp.Data, ShouldHaveLength, 2)
+			So(rsp.FailedDevices, ShouldHaveLength, 0)
+			So(rsp.Data[0].LabConfig, ShouldNotBeNil)
+			So(rsp.Data[0].DeviceConfig, ShouldBeNil)
+			So(rsp.Data[1].LabConfig, ShouldNotBeNil)
+			So(rsp.Data[1].DeviceConfig, ShouldBeNil)
 		})
 
-		SkipConvey("Get non existing device", func() {
+		Convey("Get non existing device", func() {
 			reqGet := &api.GetCrosDevicesRequest{
 				Ids: []*api.DeviceID{&devID1, &devID2, &devIDNonExisting},
 			}
