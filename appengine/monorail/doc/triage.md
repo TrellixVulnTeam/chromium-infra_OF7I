@@ -6,12 +6,12 @@ issues reported by our users and take appropriate actions.
 
 ## Triage responsibilities
 
-When you have the monorail triage shift, you are responsible for the
-weekly deploy on either Monday early afternoon or Tuesday morning.
-How-to is in the [deployment.md](deployment.md).
+[Deploy](deployment.md) Monorail on either Monday early afternoon or Tuesday morning.
 
-When you have a monorail triage shift, look at each issue in the
-[untriaged queue](https://bugs.chromium.org/p/monorail/issues/list?can=2&q=-has%3Aqueue+-has%3Aowner)
+[Review](https://team-review.git.corp.google.com/q/repo:cluster-fuzzteam/sheriffbot) and [deploy](go/chops-workflow-sheriffbot#deployment) Sheriffbot's new CL's.
+
+Look at each issue in the
+[Monorail untriaged queue](https://bugs.chromium.org/p/monorail/issues/list?can=2&q=-has%3Aqueue+-has%3Aowner) and [Sheriffbot untriaged queue](https://bugs.chromium.org/p/chromium/issues/list?q=component%3ATools%3EStability%3ESheriffbot%20status%3Auntriaged&can=2)
 and do the following:
 
 * If it is an urgent issue that affects operation of the site, notify the monorail chat or
@@ -46,7 +46,7 @@ If you have questions, feel free to chat with members of the monorail team.
 * Try to look at incoming issues daily.
 * If you have limited time, scan for urgent issues first.
 * Try to have the triage queue empty on Monday mornings.
-* If you cannot take your shift, trade with another monorail team member, or chat with jrobbins.
+* If you cannot take your shift, trade with another monorail team member.
 
 
 ## Queues
