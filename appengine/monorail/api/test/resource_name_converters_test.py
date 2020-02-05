@@ -112,25 +112,52 @@ class ResourceNameConverterTest(unittest.TestCase):
             self.cnxn, self.hotlist_1.hotlist_id, self.services),
         expected_names)
 
-  def testIngestIssueName_NotImplemented(self):
-    """IngestIssueName is not yet implemented."""
-    with self.assertRaises(Exception):
-      rnc.IngestIssueName('projects/proj/issues/1')
+  def testIngestIssueName(self):
+    """We can get an Issue global id from its resource name."""
+    self.assertEqual(
+        rnc.IngestIssueName(self.cnxn, 'projects/proj/issues/1', self.services),
+        self.issue_1.issue_id)
+
+  def testIngestIssueName_ProjectDoesNotExist(self):
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.IngestIssueName(self.cnxn, 'projects/noproj/issues/1', self.services)
+
+  def testIngestIssueName_IssueDoesNotExist(self):
+    with self.assertRaises(exceptions.NoSuchIssueException):
+      rnc.IngestIssueName(self.cnxn, 'projects/proj/issues/2', self.services)
 
   def testIngestIssueName_InvalidLocalId(self):
     """Issue resource name Local IDs are digits."""
     with self.assertRaises(exceptions.InputException):
-      rnc.IngestIssueName('projects/proj/issues/x')
+      rnc.IngestIssueName(self.cnxn, 'projects/proj/issues/x', self.services)
 
   def testIngestIssueName_InvalidProjectId(self):
     """Project names are more than 1 character."""
     with self.assertRaises(exceptions.InputException):
-      rnc.IngestIssueName('projects/p/issues/1')
+      rnc.IngestIssueName(self.cnxn, 'projects/p/issues/1', self.services)
 
   def testIngestIssueName_InvalidFormat(self):
     """Issue resource names must begin with the project resource name."""
     with self.assertRaises(exceptions.InputException):
-      rnc.IngestIssueName('issues/1')
+      rnc.IngestIssueName(self.cnxn, 'issues/1', self.services)
+
+  def testIngestIssueNames(self):
+    """We can get an Issue global ids from resource names."""
+    self.assertEqual(
+        rnc.IngestIssueNames(
+            self.cnxn, ['projects/proj/issues/1', 'projects/goose/issues/2'],
+            self.services), [self.issue_1.issue_id, self.issue_2.issue_id])
+
+  def testIngestIssueNames_EmptyList(self):
+    """We get an empty list when providing an empty list of issue names."""
+    self.assertEqual(rnc.IngestIssueNames(self.cnxn, [], self.services), [])
+
+  def testIngestIssueNames_OneDoesNotExist(self):
+    """We get an exception if one issue name provided does not exist."""
+    with self.assertRaises(exceptions.NoSuchIssueException):
+      rnc.IngestIssueNames(
+          self.cnxn, ['projects/proj/issues/1', 'projects/proj/issues/2'],
+          self.services)
 
   def testConvertIssueName(self):
     """We can create an Issue resource name from the project and local ID."""

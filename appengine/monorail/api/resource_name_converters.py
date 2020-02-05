@@ -63,6 +63,28 @@ def _GetResourceNameMatch(name, regex):
   return match
 
 
+def _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services):
+  # (MonorailConnection, Sequence[Tuple(str, int)], Services -> Sequence[int]
+  """Fetches issue IDs using the given project/local ID pairs."""
+  # Fetch Project ids from Project names.
+  project_ids_by_name = services.project.LookupProjectIDs(
+      cnxn, [pair[0] for pair in project_local_id_pairs])
+
+  # Create (project_id, issue_local_id) pairs from project_local_id_pairs.
+  project_id_local_ids = []
+  for project_name, local_id in project_local_id_pairs:
+    try:
+      project_id = project_ids_by_name[project_name]
+      project_id_local_ids.append((project_id, local_id))
+    except KeyError:
+      raise exceptions.NoSuchProjectException(
+          'Project %s not found' % project_name)
+
+  issue_ids, misses = services.issue.LookupIssueIDs(cnxn, project_id_local_ids)
+  if misses:
+    raise exceptions.NoSuchIssueException('Issue(s) %r not found' % misses)
+  return issue_ids
+
 # Hotlists
 
 def IngestHotlistName(name):
@@ -99,32 +121,13 @@ def IngestHotlistItemNames(cnxn, names, services):
     NoSuchProjectException if an Issue's Project is not found.
     NoSuchIssueException if an Issue is not found.
   """
-  project_names_local_id = []
+  project_local_id_pairs = []
   for name in names:
     match = _GetResourceNameMatch(name, HOTLIST_ITEM_NAME_RE)
-    project_names_local_id.append(
+    project_local_id_pairs.append(
         (match.group('project_name'), int(match.group('local_id'))))
+  return _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services)
 
-  # Fetch Project ids from Project names.
-  project_ids_by_name = services.project.LookupProjectIDs(
-      cnxn, [pair[0] for pair in project_names_local_id])
-
-  # Create (project_id, issue_local_id) pairs from project_names_local_id
-  project_id_local_ids = []
-  for project_name, local_id in project_names_local_id:
-    try:
-      project_id = project_ids_by_name[project_name]
-      project_id_local_ids.append((project_id, local_id))
-    except KeyError:
-      raise exceptions.NoSuchProjectException(
-          'project %s not found' % project_name)
-
-  issue_ids, misses = services.issue.LookupIssueIDs(
-      cnxn, project_id_local_ids)
-  if misses:
-    raise exceptions.NoSuchIssueException(
-        'Issue(s) %r associated with HotlistItems not found' % misses)
-  return issue_ids
 
 def ConvertHotlistName(hotlist_id):
   # int -> str
@@ -172,24 +175,54 @@ def ConvertHotlistItemNames(cnxn, hotlist_id, services):
 
   return names
 
-
 # Issues
 
-def IngestIssueName(name):
-  # str -> int
+
+def IngestIssueName(cnxn, name, services):
+  # MonorailConnection, str, Services -> int
   """Takes an Issue resource name and returns its global ID.
 
   Args:
+    cnxn: MonorailConnection object.
     name: Resource name of an Issue.
+    services: Services object for connections to backend services.
 
   Returns:
     The global Issue ID associated with the name.
 
   Raises:
     InputException if the given name does not have a valid format.
+    NoSuchIssueException if the Issue does not exist.
+    NoSuchProjectException if an Issue's Project is not found.
+
   """
-  _GetResourceNameMatch(name, ISSUE_NAME_RE)
-  raise Exception('Not implemented')
+  return IngestIssueNames(cnxn, [name], services)[0]
+
+
+def IngestIssueNames(cnxn, names, services):
+  # MonorailConnection, Sequence[str], Services -> Sequence[int]
+  """Returns global IDs for the given Issue resource names.
+
+  Args:
+    cnxn: MonorailConnection object.
+    names: Resource names of zero or more issues.
+    services: Services object for connections to backend services.
+
+  Returns:
+    The global IDs for the issues.
+
+  Raises:
+    InputException if a resource name does not have a valid format.
+    NoSuchIssueException if an Issue is not found.
+    NoSuchProjectException if an Issue's Project is not found.
+  """
+  project_local_id_pairs = []
+  for name in names:
+    match = _GetResourceNameMatch(name, ISSUE_NAME_RE)
+    project_local_id_pairs.append(
+        (match.group('project'), int(match.group('local_id'))))
+  return _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services)
+
 
 
 def ConvertIssueName(project, local_id):
