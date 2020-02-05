@@ -92,7 +92,7 @@ cron:
     max_doublings: 5
 
 - description: Update Release Branch alerts
-  url: /_cron/analyze/release_branch
+  url: /_cron/analyze/chrome_browser_release
   schedule: every 5 minutes
   target: analyzer
   retry_parameters:

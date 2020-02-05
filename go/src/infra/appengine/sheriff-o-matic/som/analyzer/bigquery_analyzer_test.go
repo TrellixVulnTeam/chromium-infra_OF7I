@@ -418,7 +418,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 	Convey("Test generate SQL query for release branch", t, func() {
-		treeName := "release_branch"
+		treeName := "chrome_browser_release"
 		tree := &model.Tree{
 			Name: treeName,
 		}

@@ -237,7 +237,7 @@ func generateSQLQuery(ctx context.Context, tree string, appID string) string {
 		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter)
 	case "chromium.perf":
 		return fmt.Sprintf(failuresQuery, appID, "chrome", tree, tree)
-	case "release_branch":
+	case "chrome_browser_release":
 		return fmt.Sprintf(releaseBranchFailuresQuery, appID, "chrome")
 	default:
 		return fmt.Sprintf(failuresQuery, appID, "chromium", tree, tree)

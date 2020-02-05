@@ -148,7 +148,7 @@
     <chops-header logo-src="[[_treeLogo]]" app-title="Sheriff-o-Matic">
       <iron-icon slot="before-header" id="toggleDrawer" on-tap="_toggleDrawer" icon="menu"></iron-icon>
       <div slot="subheader" id="treeTitle">
-        &gt; [[_pathIdentifier]]
+        &gt; [[_tree.display_name]]
       </div>
       <template is="dom-if" if="[[_isPerfTree]]">
         <div class="perfWarningBanner">

@@ -17,5 +17,19 @@
             "https://build.chromium.org/p/chromium.android": ["*"],
             "https://build.chromium.org/p/chromium.fyi": ["*"]
         }
+    },
+    "chrome_browser_release": {
+        "masters": {
+            "https://build.chromium.org/p/chrome": ["*"],
+            "https://build.chromium.org/p/chromium": ["*"],
+            "https://build.chromium.org/p/chromium.chromiumos": ["*"],
+            "https://build.chromium.org/p/chromium.gpu": ["*"],
+            "https://build.chromium.org/p/chromium.linux": ["*"],
+            "https://build.chromium.org/p/chromium.mac": ["*"],
+            "https://build.chromium.org/p/chromium.memory": ["*"],
+            "https://build.chromium.org/p/chromium.win": ["*"],
+            "https://build.chromium.org/p/chromium.android": ["*"],
+            "https://build.chromium.org/p/chromium.fyi": ["*"]
+        }
     }
 }

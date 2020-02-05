@@ -68,6 +68,6 @@ cron:
   target: analyzer
 
 - description: Update Release Branch alerts
-  url: /_cron/analyze/release_branch
+  url: /_cron/analyze/chrome_browser_release
   schedule: every 24 hours
   target: analyzer
