@@ -136,9 +136,9 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 	// Start to retrieve device config data.
 	devCfgIds := make([]*device.ConfigId, len(extendedData))
 	for i, d := range extendedData {
-		logging.Debugf(ctx, "before convert: %#v", d.LabConfig.DeviceConfigId)
+		logging.Debugf(ctx, "before convert: %s", d.LabConfig.DeviceConfigId.String())
 		devCfgIds[i] = deviceconfig.ConvertValidDeviceConfigID(d.LabConfig.DeviceConfigId)
-		logging.Debugf(ctx, "real device config ID: %#v", devCfgIds[i])
+		logging.Debugf(ctx, "real device config ID: %s", devCfgIds[i].String())
 	}
 	devCfgs, err := getDeviceConfigFunc(ctx, devCfgIds)
 	newExtendedData := make([]*api.ExtendedDeviceData, 0, len(extendedData))
@@ -181,7 +181,9 @@ func getManufacturingConfigData(ctx context.Context, extendedData []*api.Extende
 	return newExtendedData, failedDevices
 }
 
-func getExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResult) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
+// GetExtendedDeviceData gets the lab data joined with device config,
+// manufacturing config, etc.
+func GetExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResult) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
 	logging.Debugf(ctx, "Get exteneded data for %d devcies", len(devices))
 	secret := config.Get(ctx).HwidSecret
 	extendedData := make([]*api.ExtendedDeviceData, 0, len(devices))
@@ -289,7 +291,7 @@ func (is *InventoryServerImpl) GetCrosDevices(ctx context.Context, req *api.GetC
 	result = append(result, byModels...)
 	logging.Debugf(ctx, "Get %d more devices by models", len(result))
 
-	extendedData, moreFailedDevices := getExtendedDeviceData(ctx, datastore.DeviceOpResults(result).Passed())
+	extendedData, moreFailedDevices := GetExtendedDeviceData(ctx, datastore.DeviceOpResults(result).Passed())
 	failedDevices := getFailedResults(ctx, result, false)
 	failedDevices = append(failedDevices, moreFailedDevices...)
 

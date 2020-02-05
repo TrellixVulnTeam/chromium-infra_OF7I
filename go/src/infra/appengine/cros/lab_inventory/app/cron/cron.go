@@ -22,6 +22,7 @@ import (
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
+	"infra/appengine/cros/lab_inventory/app/migration"
 	dronequeenapi "infra/appengine/drone-queen/api"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
@@ -48,6 +49,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/push-to-drone-queen", mwCron, logAndSetHTTPErr(pushToDroneQueenCronHandler))
 
 	r.GET("/internal/cron/report-inventory", mwCron, logAndSetHTTPErr(reportInventoryCronHandler))
+
+	r.GET("/internal/cron/compare-inventory", mwCron, logAndSetHTTPErr(compareInventoryCronHandler))
 }
 
 func dumpToBQCronHandler(c *router.Context) (err error) {
@@ -164,6 +167,11 @@ func pushToDroneQueenCronHandler(c *router.Context) error {
 func reportInventoryCronHandler(c *router.Context) error {
 	logging.Infof(c.Context, "start reporting inventory")
 	return datastore.ReportInventory(c.Context, config.Get(c.Context).Environment)
+}
+
+func compareInventoryCronHandler(c *router.Context) error {
+	logging.Infof(c.Context, "start to comparing inventory from v1 and v2")
+	return migration.CompareInventory(c.Context)
 }
 
 func logAndSetHTTPErr(f func(c *router.Context) error) func(*router.Context) {

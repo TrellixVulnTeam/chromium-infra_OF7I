@@ -32,6 +32,10 @@ message Config {
   Gitiles device_config_source = 8;
   Gitiles manufacturing_config_source = 9;
 
+  // The git repo information of inventory v1.
+  // TODO(guocb) remove this after migration.
+  InventoryV1Repo inventory = 12;
+
   // Environment managed by this instance of app, e.g. ENVIRONMENT_STAGING,
   // ENVIRONMENT_PROD, etc.
   string environment = 10;
@@ -54,4 +58,13 @@ message Gitiles{
   string committish = 3;
   // The path of the file to be downloaded, e.g. 'path/to/file.cfg'.
   string path = 4;
+}
+
+message InventoryV1Repo{
+  string host = 1;
+  string project = 2;
+  string branch = 3;
+  string lab_data_path = 4;
+  string infrastructure_data_path = 5;
+  bool multifile = 6;
 }
