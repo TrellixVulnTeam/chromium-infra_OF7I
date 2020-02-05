@@ -75,10 +75,16 @@ class HotlistsServicerTest(unittest.TestCase):
 
   def testRerankHotlistItems(self):
     """We can rerank a Hotlist."""
+    hotlist_resource_name = rnc.ConvertHotlistName(self.hotlist_1.hotlist_id)
+    item_names_dict = rnc.ConvertHotlistItemNames(
+        self.cnxn, self.hotlist_1.hotlist_id,
+        [item.issue_id for item in self.hotlist_1.items], self.services)
     request = hotlists_pb2.RerankHotlistItemsRequest(
-        name=rnc.ConvertHotlistName(self.hotlist_1.hotlist_id),
-        hotlist_items=rnc.ConvertHotlistItemNames(
-            self.cnxn, self.hotlist_1.hotlist_id, self.services)[:2],
+        name=hotlist_resource_name,
+        hotlist_items=[
+            item_names_dict[self.issue_4.issue_id],
+            item_names_dict[self.issue_3.issue_id]
+        ],
         target_position=0)
 
     mc = monorailcontext.MonorailContext(

@@ -129,6 +129,7 @@ def IngestHotlistItemNames(cnxn, names, services):
   return _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services)
 
 
+
 def ConvertHotlistName(hotlist_id):
   # int -> str
   """Takes a Hotlist and returns the Hotlist's resource name.
@@ -142,38 +143,31 @@ def ConvertHotlistName(hotlist_id):
   return HOTLIST_NAME_TMPL.format(hotlist_id=hotlist_id)
 
 
-def ConvertHotlistItemNames(cnxn, hotlist_id, services):
-  # MonorailConnection, Hotlist, Services -> Sequence[str]
-  """Takes a Hotlist and returns the Hotlist items' resource names.
+def ConvertHotlistItemNames(cnxn, hotlist_id, issue_ids, services):
+  # MonorailConnection, int, Collection[int], Services -> Mapping[int, str]
+  """Takes a Hotlist ID and HotlistItem's issue_ids and returns
+     the Hotlist items' resource names.
 
   Args:
     cnxn: MonorailConnection object.
-    hotlist_id: ID of the Hotlist.
+    hotlist_id: ID of the Hotlist the items belong to.
+    issue_ids: List of Issue IDs that are part of the hotlist's items.
     services: Services object for connections to backend services.
 
   Returns:
-    List of resource names of the Hotlist's items in the same order
-      that they appear in the Hotlist.
-
-  Raises:
-    NoSuchHotlistException if a Hotlist with the hotlist_id does not exist.
+    Dict of Issue IDs to HotlistItem resource names for Issues that are found.
   """
-  hotlist = services.features.GetHotlist(cnxn, hotlist_id)
-  issue_ids = [item.issue_id for item in hotlist.items]
-
   # {issue_id: (project_name, local_id),...}
   issue_refs_dict = services.issue.LookupIssueRefs(cnxn, issue_ids)
 
-  names = []
+  issue_ids_to_names = {}
   for issue_id in issue_ids:
     project_name, local_id = issue_refs_dict.get(issue_id, (None, None))
     if project_name and local_id:
-      names.append(
-          HOTLIST_ITEM_NAME_TMPL.format(
-              hotlist_id=hotlist.hotlist_id,
-              project_name=project_name, local_id=local_id))
+      issue_ids_to_names[issue_id] = HOTLIST_ITEM_NAME_TMPL.format(
+          hotlist_id=hotlist_id, project_name=project_name, local_id=local_id)
 
-  return names
+  return issue_ids_to_names
 
 # Issues
 
@@ -225,18 +219,48 @@ def IngestIssueNames(cnxn, names, services):
 
 
 
-def ConvertIssueName(project, local_id):
-  # str, int -> str
-  """Takes a project and local_id returns the corresponding Issue resource name.
+def ConvertIssueName(cnxn, issue_id, services):
+  # MonorailConnection, int, Service -> str
+  """Takes an Issue ID and returns the corresponding Issue resource name.
 
   Args:
-    project: The string representing the project of the Issue.
-    local_id: The local_id of the issue.
+    mc: MonorailConnection object.
+    issue_id: The ID of the issue.
+    services: Service object.
 
   Returns:
     The resource name of the Issue.
+
+  Raises:
+    NoSuchIssueException if the issue is not found.
   """
-  return ISSUE_NAME_TMPL.format(project=project, local_id=local_id)
+  name = ConvertIssueNames(cnxn, [issue_id], services).get(issue_id)
+  if not name:
+    raise exceptions.NoSuchIssueException()
+  return name
+
+
+def ConvertIssueNames(cnxn, issue_ids, services):
+  # MonorailConnection, Collection[int], Service -> Mapping[int, str]
+  """Takes Issue IDs and returns the Issue resource names.
+
+  Args:
+    cnxn: MonorailConnection object.
+    issue_ids: List of Issue IDs
+    services: Service object.
+
+  Returns:
+    Dict of Issue IDs to Issue resource names for Issues that are found.
+  """
+  issue_ids_to_names = {}
+  issue_refs_dict = services.issue.LookupIssueRefs(cnxn, issue_ids)
+  for issue_id in issue_ids:
+    project, local_id = issue_refs_dict.get(issue_id, (None, None))
+    if project and local_id:
+      issue_ids_to_names[issue_id] = ISSUE_NAME_TMPL.format(
+          project=project, local_id=local_id)
+  return issue_ids_to_names
+
 
 # Users
 
@@ -262,17 +286,18 @@ def IngestUserNames(names):
 
 
 def ConvertUserNames(user_ids):
-  # Sequence[int] -> Sequence[str]
+  # Collection[int] -> Mapping[int, str]
+
   """Takes a List of Users and returns the User's resource names.
 
   Args:
     user_ids: List of User IDs.
 
   Returns:
-    List of user resource names in the same order as user_ids.
+    Dict of User IDs to User resource names for all given user_ids.
   """
-  names = []
+  user_ids_to_names = {}
   for user_id in user_ids:
-    names.append(USER_NAME_TMPL.format(user_id=user_id))
+    user_ids_to_names[user_id] = USER_NAME_TMPL.format(user_id=user_id)
 
-  return names
+  return user_ids_to_names

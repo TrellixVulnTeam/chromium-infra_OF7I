@@ -104,13 +104,14 @@ class ResourceNameConverterTest(unittest.TestCase):
 
   def testConvertHotlistItemNames(self):
     """We can get Hotlist items' resource names."""
-    expected_names = [
-        'hotlists/7739/items/proj.1',
-        'hotlists/7739/items/goose.2']
+    expected_dict = {
+        self.hotlist_1.items[0].issue_id: 'hotlists/7739/items/proj.1',
+        self.hotlist_1.items[1].issue_id: 'hotlists/7739/items/goose.2',
+    }
     self.assertEqual(
         rnc.ConvertHotlistItemNames(
-            self.cnxn, self.hotlist_1.hotlist_id, self.services),
-        expected_names)
+            self.cnxn, self.hotlist_1.hotlist_id, expected_dict.keys(),
+            self.services), expected_dict)
 
   def testIngestIssueName(self):
     """We can get an Issue global id from its resource name."""
@@ -160,8 +161,22 @@ class ResourceNameConverterTest(unittest.TestCase):
           self.services)
 
   def testConvertIssueName(self):
-    """We can create an Issue resource name from the project and local ID."""
-    self.assertEqual(rnc.ConvertIssueName('proj', 1), 'projects/proj/issues/1')
+    """We can create an Issue resource name from an issue_id."""
+    self.assertEqual(
+        rnc.ConvertIssueName(self.cnxn, self.issue_1.issue_id, self.services),
+        'projects/proj/issues/1')
+
+  def testConvertIssueName_NotFound(self):
+    """Exception is raised if the issue is not found."""
+    with self.assertRaises(exceptions.NoSuchIssueException):
+      rnc.ConvertIssueName(self.cnxn, 3279, self.services)
+
+  def testConvertIssueNames(self):
+    """We can create Issue resource names from issue_ids."""
+    self.assertEqual(
+        rnc.ConvertIssueNames(
+            self.cnxn, [self.issue_1.issue_id, 3279], self.services),
+        {self.issue_1.issue_id: 'projects/proj/issues/1'})
 
   def testIngestUserNames(self):
     """We can get User IDs from User resource names."""
@@ -171,10 +186,9 @@ class ResourceNameConverterTest(unittest.TestCase):
 
   def testConvertUserNames(self):
     """We can get User resource names."""
-    expected_names = ['users/111', 'users/222', 'users/333']
-    user_ids = [111, 222, 333]
-    self.assertEqual(rnc.ConvertUserNames(user_ids), expected_names)
+    expected_dict = {111: 'users/111', 222: 'users/222', 333: 'users/333'}
+    self.assertEqual(rnc.ConvertUserNames(expected_dict.keys()), expected_dict)
 
   def testConvertUserNames_Empty(self):
     """We can process an empty Users list."""
-    self.assertEqual(rnc.ConvertUserNames([]), [])
+    self.assertEqual(rnc.ConvertUserNames([]), {})
