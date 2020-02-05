@@ -231,7 +231,8 @@ def _GetCQFlakeAsync(project, bucket, builder, test):
     A _CQFlake if the test is flaky, otherwise, None.
   """
   query = FlakeOccurrence.query(
-      FlakeOccurrence.flake_type == FlakeType.RETRY_WITH_PATCH,
+      ndb.OR(FlakeOccurrence.flake_type == FlakeType.RETRY_WITH_PATCH,
+             FlakeOccurrence.flake_type == FlakeType.CQ_FALSE_REJECTION),
       FlakeOccurrence.build_configuration.luci_project == project,
       FlakeOccurrence.build_configuration.luci_bucket == bucket,
       FlakeOccurrence.build_configuration.luci_builder == builder,
