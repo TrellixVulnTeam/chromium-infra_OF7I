@@ -3,6 +3,11 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+# The default timezone for crons in App Engine is UTC.
+# See: https://cloud.google.com/appengine/docs/standard/python/config/cronref#syntax
+# To avoid potential bugs with Daylight Savings Time, please do
+# not use timezones other than UTC.
+
 cron:
 - description: keep the databases loaded
   url: /p/chromium/issues/list
@@ -21,8 +26,7 @@ cron:
   schedule: every 1 minutes
 - description: export spam model training examples
   url: /_cron/spamDataExport
-  timezone: US/Pacific
-  schedule: every day 01:00
+  schedule: every day 09:00
 - description: fetch api clients from luci-config
   url: /_cron/loadApiClientConfigs
   schedule: every 30 minutes synchronized
@@ -31,17 +35,13 @@ cron:
   schedule: every monday 01:00
 - description: ping all issues with date fields that arrived
   url: /_cron/dateAction
-  timezone: US/Pacific
-  schedule: every day 04:00
+  schedule: every day 12:00
 - description: retrain spam model with GCS training data
   url: /_cron/spamTraining
-  timezone: US/Pacific
-  schedule: every day 2:00
+  schedule: every day 10:00
 - description: export component model training examples
   url: /_cron/componentDataExport
-  timezone: US/Pacific
-  schedule: every mon 1:00
+  schedule: every mon 9:00
 - description: sync monorail's user lists with wipeout-lite
   url: /_cron/wipeoutSync
-  timezone: US/Pacific
-  schedule: every day 01:00
+  schedule: every day 09:00
