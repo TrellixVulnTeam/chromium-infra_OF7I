@@ -66,7 +66,7 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	if c.leaseMinutes < 0 {
 		return cmdlib.NewUsageError(c.Flags, fmt.Sprintf("minutes to lease (%d) cannot be negative", int64(c.leaseMinutes)))
 	}
-	if c.leaseMinutes > threeDaysInMinutes {
+	if c.leaseMinutes >= threeDaysInMinutes {
 		return cmdlib.NewUsageError(c.Flags, "Lease duration (%d minutes) cannot exceed 3 days [%d minutes]", int64(c.leaseMinutes), threeDaysInMinutes)
 	}
 	if len(c.leaseReason) > 30 {
