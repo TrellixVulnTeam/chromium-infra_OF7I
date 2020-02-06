@@ -3,12 +3,10 @@
 # found in the LICENSE file.
 
 DEPS = [
-    'depot_tools/tryserver',
     'infra_checkout',
     'recipe_engine/buildbucket',
     'recipe_engine/platform',
     'recipe_engine/raw_io',
-    'recipe_engine/runtime',
 ]
 
 def RunSteps(api):
@@ -17,8 +15,7 @@ def RunSteps(api):
   co.commit_change()
   co.get_changed_files()
   if api.platform.is_linux:
-    with api.tryserver.set_failure_hash():
-      co.run_presubmit_in_go_env()
+    co.run_presubmit_in_go_env()
 
 
 def GenTests(api):
@@ -30,7 +27,6 @@ def GenTests(api):
     yield (
         api.test(plat) +
         api.platform(plat, 64) +
-        api.runtime(is_luci=True, is_experimental=False) +
         api.buildbucket.try_build(
             project='infra',
             bucket='try',

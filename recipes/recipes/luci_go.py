@@ -6,14 +6,12 @@ from recipe_engine.recipe_api import Property
 
 DEPS = [
   'depot_tools/osx_sdk',
-  'depot_tools/tryserver',
   'infra_checkout',
   'recipe_engine/buildbucket',
   'recipe_engine/context',
   'recipe_engine/json',
   'recipe_engine/platform',
   'recipe_engine/properties',
-  'recipe_engine/runtime',
 ]
 
 PROPERTIES = {
@@ -48,8 +46,7 @@ def RunSteps(api, GOARCH, run_integration_tests):
   with api.context(env=env), api.osx_sdk('mac'):
     co.ensure_go_env()
     if is_presubmit:
-      with api.tryserver.set_failure_hash():
-        co.run_presubmit_in_go_env()
+      co.run_presubmit_in_go_env()
     else:
       co.go_env_step('go', 'build', 'go.chromium.org/luci/...')
       co.go_env_step('go', 'test', 'go.chromium.org/luci/...')
@@ -64,7 +61,6 @@ def GenTests(api):
     yield (
       api.test('luci_go_%s' % plat) +
       api.platform(plat, 64) +
-      api.runtime(is_luci=True, is_experimental=False) +
       api.buildbucket.ci_build(
           'infra', 'ci', 'luci-gae-trusty-64',
           git_repo="https://chromium.googlesource.com/infra/infra",
@@ -76,7 +72,6 @@ def GenTests(api):
 
   yield (
     api.test('presubmit_try_job') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.buildbucket.try_build(
         'infra', 'try', 'Luci-go Presubmit', change_number=607472, patch_set=2,
     ) + api.step_data('presubmit', api.json.output([[]]))
@@ -85,7 +80,6 @@ def GenTests(api):
   yield (
     api.test('override_GOARCH') +
     api.platform('linux', 64) +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.buildbucket.try_build(
         'infra', 'try', 'luci-go-trusty-64',
         git_repo='https://chromium.googlesource.com/infra/luci/luci-go',
@@ -96,7 +90,6 @@ def GenTests(api):
 
   yield (
     api.test('integration_tests') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.buildbucket.try_build(
         'infra', 'try', 'integration_tests', change_number=607472, patch_set=2,
     ) +

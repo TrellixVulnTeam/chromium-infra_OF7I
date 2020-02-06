@@ -3,14 +3,12 @@
 # found in the LICENSE file.
 
 DEPS = [
-  'depot_tools/tryserver',
   'infra_checkout',
   'recipe_engine/buildbucket',
   'recipe_engine/context',
   'recipe_engine/json',
   'recipe_engine/platform',
   'recipe_engine/properties',
-  'recipe_engine/runtime',
 ]
 
 LUCI_GAE_PATH_IN_INFRA = 'infra/go/src/go.chromium.org/gae'
@@ -26,8 +24,7 @@ def RunSteps(api):
 
   co.ensure_go_env()
   if is_presubmit:
-    with api.tryserver.set_failure_hash():
-      co.run_presubmit_in_go_env()
+    co.run_presubmit_in_go_env()
   else:
     co.go_env_step('go', 'build', 'go.chromium.org/gae/...')
     co.go_env_step('go', 'test', 'go.chromium.org/gae/...')
@@ -40,7 +37,6 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('luci_gae') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.buildbucket.ci_build(
         'infra', 'ci', 'luci-gae-linux64',
         git_repo="https://chromium.googlesource.com/infra/infra",
@@ -51,7 +47,6 @@ def GenTests(api):
   )
   yield (
     api.test('presubmit_try_job') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.buildbucket.try_build(
         'infra', 'try', 'Luci-GAE Presubmit',
         git_repo='https://chromium.googlesource.com/infra/luci/gae',
