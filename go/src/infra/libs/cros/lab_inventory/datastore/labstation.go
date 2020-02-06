@@ -7,6 +7,7 @@ package datastore
 import (
 	"context"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -83,6 +84,10 @@ func (r servoHostRegistry) getServoHost(ctx context.Context, hostname string) (*
 	return r[hostname].message.GetLabstation(), nil
 }
 
+func looksLikeLabstation(hostname string) bool {
+	return strings.Contains(hostname, "labstation")
+}
+
 // When we create/update a DUT, we must also add/update the servo information to the
 // associated labstation. Optionally, we should also assign a servo port to the
 // DUT.
@@ -92,6 +97,18 @@ func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.De
 		return nil
 	}
 	servoHostname := servo.GetServoHostname()
+
+	// If the servo host is a servo v3, just assign port 9999 to servo if
+	// required, and do nothing else since one servo host has maximum one servo.
+	if !looksLikeLabstation(servoHostname) {
+		if assignServoPort && servo.GetServoPort() == 0 {
+			servo.ServoPort = servoPortRangeUpperLimit
+		}
+		return nil
+	}
+
+	// For labstation, we need to merge the current servo information to the
+	// labstation servo list.
 	servoHost, err := r.getServoHost(ctx, servoHostname)
 	if err != nil {
 		return err
