@@ -7,8 +7,10 @@ package inventory
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/retry"
@@ -16,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/libs/skylab/inventory"
 )
@@ -26,6 +29,7 @@ type inventoryClient interface {
 	deleteDUTsFromFleet(context.Context, []string) (string, []string, error)
 	selectDutsFromInventory(context.Context, *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error)
 	commitBalancePoolChanges(context.Context, []*fleet.PoolChange) (string, error)
+	getDutInfo(context.Context, *fleet.GetDutInfoRequest) ([]byte, time.Time, error)
 }
 
 type gitStoreClient struct {
@@ -56,6 +60,24 @@ func (client *gitStoreClient) selectDutsFromInventory(ctx context.Context, sel *
 
 func (client *gitStoreClient) commitBalancePoolChanges(ctx context.Context, changes []*fleet.PoolChange) (string, error) {
 	return commitBalancePoolChanges(ctx, client.store, changes)
+}
+
+func (client *gitStoreClient) getDutInfo(ctx context.Context, req *fleet.GetDutInfoRequest) ([]byte, time.Time, error) {
+	var dut *dsinventory.DeviceUnderTest
+	var now time.Time
+	var err error
+	if req.Id != "" {
+		dut, err = dsinventory.GetSerializedDUTByID(ctx, req.Id)
+	} else {
+		dut, err = dsinventory.GetSerializedDUTByHostname(ctx, req.Hostname)
+	}
+	if err != nil {
+		if datastore.IsErrNoSuchEntity(err) {
+			return nil, now, status.Errorf(codes.NotFound, err.Error())
+		}
+		return nil, now, err
+	}
+	return dut.Data, dut.Updated, nil
 }
 
 func addManyDUTsToFleet(ctx context.Context, s *gitstore.InventoryStore, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {

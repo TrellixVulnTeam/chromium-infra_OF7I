@@ -62,22 +62,17 @@ func (is *ServerImpl) GetDutInfo(ctx context.Context, req *fleet.GetDutInfoReque
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	var dut *dsinventory.DeviceUnderTest
-	if req.Id != "" {
-		dut, err = dsinventory.GetSerializedDUTByID(ctx, req.Id)
-	} else {
-		dut, err = dsinventory.GetSerializedDUTByHostname(ctx, req.Hostname)
-	}
-
+	ic, err := is.newInventoryClient(ctx)
 	if err != nil {
-		if datastore.IsErrNoSuchEntity(err) {
-			return nil, status.Errorf(codes.NotFound, err.Error())
-		}
+		return nil, err
+	}
+	data, updated, err := ic.getDutInfo(ctx, req)
+	if err != nil {
 		return nil, err
 	}
 	return &fleet.GetDutInfoResponse{
-		Spec:    dut.Data,
-		Updated: google.NewTimestamp(dut.Updated),
+		Spec:    data,
+		Updated: google.NewTimestamp(updated),
 	}, nil
 }
 

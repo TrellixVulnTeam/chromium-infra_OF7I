@@ -54,6 +54,11 @@ func (client *duoClient) willWriteToV2() bool {
 	return r.Intn(100) < client.writeTrafficRatio
 }
 
+func (client *duoClient) willReadFromV2() bool {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return r.Intn(100) < client.readTrafficRatio
+}
+
 func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
 
 	// Add DUTs to v1 first as it backfill DUT id and servo port. Then pass new
@@ -139,4 +144,13 @@ func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes [
 		}()
 	}
 	return client.gc.commitBalancePoolChanges(ctx, changes)
+}
+
+func (client *duoClient) getDutInfo(ctx context.Context, req *fleet.GetDutInfoRequest) ([]byte, time.Time, error) {
+	if client.willReadFromV2() {
+		dut, now, err := client.ic.getDutInfo(ctx, req)
+		logging.Infof(ctx, "[v2] GetDutInfo result: %#v: %s", req, err)
+		return dut, now, err
+	}
+	return client.gc.getDutInfo(ctx, req)
 }
