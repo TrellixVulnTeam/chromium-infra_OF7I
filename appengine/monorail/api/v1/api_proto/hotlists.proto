@@ -93,8 +93,8 @@ message ListHotlistItemsRequest {
   int32 page_size = 2;
   // The string of comma separated field names used to order the items.
   // Adding '-' before a field, reverses the sort order.
-  // E.g. 'stars,-priority' sorts the items by priority, high to low, then
-  // by number of stars, low to high.
+  // E.g. 'stars,-status' sorts the items by number of stars low to high, then
+  // status high to low.
   // If unspecified, items will be ordered by their rank in the parent.
   string order_by = 3;
   // A page token, received from a previous `ListHotlistItems` call.
