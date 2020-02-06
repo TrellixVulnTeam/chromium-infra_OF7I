@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package skylab
+// Package args contains the logic for assembling all data required for
+// creating an individual task request.
+package args
 
 import (
 	"context"
@@ -24,31 +26,46 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-type argsGenerator struct {
-	invocation   *steps.EnumerationResponse_AutotestInvocation
-	params       *test_platform.Request_Params
+// Generator defines the set of inputs for creating a request.Args object.
+type Generator struct {
+	// invocation describes test harness-level data and metadata.
+	invocation *steps.EnumerationResponse_AutotestInvocation
+	// params describes scheduling parameters and task-level metadata.
+	params *test_platform.Request_Params
+	// workerConfig describes the skylab_swarming_worker-specific environment.
 	workerConfig *config.Config_SkylabWorker
+	// parentTaskID is the Swarming ID of the CTP task.
 	parentTaskID string
+}
+
+// NewGenerator constructs an args Generator.
+func NewGenerator(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) *Generator {
+	return &Generator{
+		invocation:   invocation,
+		params:       params,
+		workerConfig: workerConfig,
+		parentTaskID: parentTaskID,
+	}
 }
 
 // CheckConsistency checks the internal consistency of the various inputs to the
 // argument generation logic.
-func (a *argsGenerator) CheckConsistency() error {
-	el := a.enumerationInventoryLabels()
+func (g *Generator) CheckConsistency() error {
+	el := g.enumerationInventoryLabels()
 
-	rb := a.params.GetSoftwareAttributes().GetBuildTarget().GetName()
+	rb := g.params.GetSoftwareAttributes().GetBuildTarget().GetName()
 	eb := el.GetBoard()
 	if nonEmptyAndDifferent(rb, eb) {
 		return errors.Reason("incompatible board dependency: request (%s) vs. enumeration (%s)", rb, eb).Err()
 	}
 
-	rm := a.params.GetHardwareAttributes().GetModel()
+	rm := g.params.GetHardwareAttributes().GetModel()
 	em := el.GetModel()
 	if nonEmptyAndDifferent(rm, em) {
 		return errors.Reason("incompatible model dependency: request (%s) vs. enumeration (%s)", rm, em).Err()
 	}
 
-	ud := a.getUnsupportedDependencies()
+	ud := g.getUnsupportedDependencies()
 	if len(ud) > 0 {
 		return errors.Reason("unsupported request dependencies: %s", strings.Join(ud, ", ")).Err()
 	}
@@ -60,8 +77,8 @@ func nonEmptyAndDifferent(a, b string) bool {
 	return a != "" && b != "" && a != b
 }
 
-func (a *argsGenerator) enumerationInventoryLabels() *inventory.SchedulableLabels {
-	deps := a.invocation.Test.Dependencies
+func (g *Generator) enumerationInventoryLabels() *inventory.SchedulableLabels {
+	deps := g.invocation.Test.Dependencies
 	flatDims := make([]string, len(deps))
 	for i, dep := range deps {
 		flatDims[i] = dep.Label
@@ -69,10 +86,10 @@ func (a *argsGenerator) enumerationInventoryLabels() *inventory.SchedulableLabel
 	return labels.Revert(flatDims)
 }
 
-func (a *argsGenerator) getUnsupportedDependencies() []string {
-	el := a.enumerationInventoryLabels()
-	unsupported := stringset.New(len(a.invocation.Test.Dependencies))
-	for _, dep := range a.invocation.Test.Dependencies {
+func (g *Generator) getUnsupportedDependencies() []string {
+	el := g.enumerationInventoryLabels()
+	unsupported := stringset.New(len(g.invocation.Test.Dependencies))
+	for _, dep := range g.invocation.Test.Dependencies {
 		unsupported.Add(dep.Label)
 	}
 	for _, label := range labels.Convert(el) {
@@ -86,36 +103,36 @@ func (a *argsGenerator) getUnsupportedDependencies() []string {
 
 // GenerateArgs generates request.Args, combining all the inputs to
 // argsGenerator.
-func (a *argsGenerator) GenerateArgs(ctx context.Context) (request.Args, error) {
-	isClient, err := a.isClientTest()
+func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
+	isClient, err := g.isClientTest()
 	if err != nil {
 		return request.Args{}, errors.Annotate(err, "create request args").Err()
 	}
 
-	provisionableDimensions, err := a.provisionableDimensions()
+	provisionableDimensions, err := g.provisionableDimensions()
 	if err != nil {
 		return request.Args{}, errors.Annotate(err, "create request args").Err()
 	}
 
-	timeout, err := a.timeout()
+	timeout, err := g.timeout()
 	if err != nil {
 		return request.Args{}, errors.Annotate(err, "create request args").Err()
 	}
 
-	kv := a.baseKeyvals()
-	a.updateWithInvocationKeyvals(kv)
-	a.addKeyvalsForDisplayName(ctx, kv)
+	kv := g.baseKeyvals()
+	g.updateWithInvocationKeyvals(kv)
+	g.addKeyvalsForDisplayName(ctx, kv)
 
 	cmd := &worker.Command{
-		TaskName:        a.invocation.Test.Name,
+		TaskName:        g.invocation.Test.Name,
 		ClientTest:      isClient,
 		OutputToIsolate: true,
-		TestArgs:        a.invocation.TestArgs,
+		TestArgs:        g.invocation.TestArgs,
 		Keyvals:         kv,
 	}
-	cmd.Config(wrap(a.workerConfig))
+	cmd.Config(wrap(g.workerConfig))
 
-	labels, err := a.inventoryLabels()
+	labels, err := g.inventoryLabels()
 	if err != nil {
 		return request.Args{}, errors.Annotate(err, "create request args").Err()
 	}
@@ -123,38 +140,51 @@ func (a *argsGenerator) GenerateArgs(ctx context.Context) (request.Args, error) 
 	return request.Args{
 		Cmd:                     *cmd,
 		SchedulableLabels:       *labels,
-		Dimensions:              a.params.GetFreeformAttributes().GetSwarmingDimensions(),
-		ParentTaskID:            a.parentTaskID,
-		Priority:                a.params.GetScheduling().GetPriority(),
+		Dimensions:              g.params.GetFreeformAttributes().GetSwarmingDimensions(),
+		ParentTaskID:            g.parentTaskID,
+		Priority:                g.params.GetScheduling().GetPriority(),
 		ProvisionableDimensions: provisionableDimensions,
-		StatusTopic:             a.params.GetNotification().GetPubsubTopic(),
-		SwarmingTags:            a.swarmingTags(cmd),
+		StatusTopic:             g.params.GetNotification().GetPubsubTopic(),
+		SwarmingTags:            g.swarmingTags(cmd),
 		Timeout:                 timeout,
 	}, nil
 
 }
 
-func (a *argsGenerator) isClientTest() (bool, error) {
-	switch a.invocation.Test.ExecutionEnvironment {
+func (g *Generator) isClientTest() (bool, error) {
+	switch g.invocation.Test.ExecutionEnvironment {
 	case build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT:
 		return true, nil
 	case build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER:
 		return false, nil
 	default:
-		return false, errors.Reason("unknown exec environment %s", a.invocation.Test.ExecutionEnvironment).Err()
+		return false, errors.Reason("unknown exec environment %s", g.invocation.Test.ExecutionEnvironment).Err()
 	}
 }
 
-func (a *argsGenerator) inventoryLabels() (*inventory.SchedulableLabels, error) {
-	inv := a.enumerationInventoryLabels()
-	if a.params.GetSoftwareAttributes().GetBuildTarget() != nil {
-		*inv.Board = a.params.SoftwareAttributes.BuildTarget.Name
+var poolMap = map[test_platform.Request_Params_Scheduling_ManagedPool]inventory.SchedulableLabels_DUTPool{
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_ARC_PRESUBMIT: inventory.SchedulableLabels_DUT_POOL_ARC_PRESUBMIT,
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_BVT:           inventory.SchedulableLabels_DUT_POOL_BVT,
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_CONTINUOUS:    inventory.SchedulableLabels_DUT_POOL_CONTINUOUS,
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_CQ:            inventory.SchedulableLabels_DUT_POOL_CQ,
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_CTS_PERBUILD:  inventory.SchedulableLabels_DUT_POOL_CTS_PERBUILD,
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_CTS:           inventory.SchedulableLabels_DUT_POOL_CTS,
+	// TODO(akeshet): This mapping is inexact. Requests that specify a quota account should not
+	// specify a pool, and should go routed to the quota pool automatically.
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_QUOTA:  inventory.SchedulableLabels_DUT_POOL_QUOTA,
+	test_platform.Request_Params_Scheduling_MANAGED_POOL_SUITES: inventory.SchedulableLabels_DUT_POOL_SUITES,
+}
+
+func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
+	inv := g.enumerationInventoryLabels()
+	if g.params.GetSoftwareAttributes().GetBuildTarget() != nil {
+		*inv.Board = g.params.SoftwareAttributes.BuildTarget.Name
 	}
-	if a.params.GetHardwareAttributes().GetModel() != "" {
-		*inv.Model = a.params.HardwareAttributes.Model
+	if g.params.GetHardwareAttributes().GetModel() != "" {
+		*inv.Model = g.params.HardwareAttributes.Model
 	}
 
-	if p := a.params.GetScheduling().GetPool(); p != nil {
+	if p := g.params.GetScheduling().GetPool(); p != nil {
 		switch v := p.(type) {
 		case *test_platform.Request_Params_Scheduling_ManagedPool_:
 			pool, ok := poolMap[v.ManagedPool]
@@ -181,8 +211,8 @@ const (
 	prefixFirmwareRW = "fwrw-version"
 )
 
-func (a *argsGenerator) provisionableDimensions() ([]string, error) {
-	deps := a.params.SoftwareDependencies
+func (g *Generator) provisionableDimensions() ([]string, error) {
+	deps := g.params.SoftwareDependencies
 	builds, err := extractBuilds(deps)
 	if err != nil {
 		return nil, errors.Annotate(err, "get provisionable dimensions").Err()
@@ -201,25 +231,25 @@ func (a *argsGenerator) provisionableDimensions() ([]string, error) {
 	return dims, nil
 }
 
-func (a *argsGenerator) timeout() (time.Duration, error) {
-	if a.params.Time == nil {
+func (g *Generator) timeout() (time.Duration, error) {
+	if g.params.Time == nil {
 		return 0, errors.Reason("get timeout: nil params.time").Err()
 	}
-	duration, err := ptypes.Duration(a.params.Time.MaximumDuration)
+	duration, err := ptypes.Duration(g.params.Time.MaximumDuration)
 	if err != nil {
 		return 0, errors.Annotate(err, "get timeout").Err()
 	}
 	return duration, nil
 }
 
-func (a *argsGenerator) addKeyvalsForDisplayName(ctx context.Context, kv map[string]string) {
+func (g *Generator) addKeyvalsForDisplayName(ctx context.Context, kv map[string]string) {
 	const displayNameKey = "label"
 
-	if a.invocation.DisplayName != "" {
-		kv[displayNameKey] = a.invocation.DisplayName
+	if g.invocation.DisplayName != "" {
+		kv[displayNameKey] = g.invocation.DisplayName
 		return
 	}
-	kv[displayNameKey] = a.constructDisplayNameFromRequestParams(ctx, kv)
+	kv[displayNameKey] = g.constructDisplayNameFromRequestParams(ctx, kv)
 }
 
 const (
@@ -231,9 +261,9 @@ const (
 // (aka "label") keyval to obtain semantic information about the request.
 // TODO(crbug.com/1003490): Drop this once result reporting is updated to stop
 // parsing the "label" keyval.
-func (a *argsGenerator) constructDisplayNameFromRequestParams(ctx context.Context, kv map[string]string) string {
-	testName := a.invocation.GetTest().GetName()
-	builds, err := extractBuilds(a.params.SoftwareDependencies)
+func (g *Generator) constructDisplayNameFromRequestParams(ctx context.Context, kv map[string]string) string {
+	testName := g.invocation.GetTest().GetName()
+	builds, err := extractBuilds(g.params.SoftwareDependencies)
 	if err != nil {
 		logging.Warningf(ctx,
 			"Failed to get build due to error %s\n Defaulting to test name as display name: %s",
@@ -255,29 +285,29 @@ func (a *argsGenerator) constructDisplayNameFromRequestParams(ctx context.Contex
 	return build + "/" + suite + "/" + testName
 }
 
-func (a *argsGenerator) updateWithInvocationKeyvals(kv map[string]string) {
-	for k, v := range a.invocation.GetResultKeyvals() {
+func (g *Generator) updateWithInvocationKeyvals(kv map[string]string) {
+	for k, v := range g.invocation.GetResultKeyvals() {
 		if _, ok := kv[k]; !ok {
 			kv[k] = v
 		}
 	}
 }
 
-func (a *argsGenerator) baseKeyvals() map[string]string {
+func (g *Generator) baseKeyvals() map[string]string {
 	keyvals := make(map[string]string)
-	for k, v := range a.params.GetDecorations().GetAutotestKeyvals() {
+	for k, v := range g.params.GetDecorations().GetAutotestKeyvals() {
 		keyvals[k] = v
 	}
-	if a.parentTaskID != "" {
+	if g.parentTaskID != "" {
 		// This keyval is inspected by some downstream results consumers such as
 		// goldeneye and stainless.
 		// TODO(akeshet): Consider whether parameter-specified parent_job_id
 		// should be respected if it was specified.
-		keyvals["parent_job_id"] = a.parentTaskID
+		keyvals["parent_job_id"] = g.parentTaskID
 	}
 	// These build related keyvals are used by gs_offlaoder's CTS results
 	// offload hook.
-	for _, sd := range a.params.GetSoftwareDependencies() {
+	for _, sd := range g.params.GetSoftwareDependencies() {
 		if b := sd.GetChromeosBuild(); b != "" {
 			keyvals["build"] = b
 		}
@@ -291,17 +321,17 @@ func (a *argsGenerator) baseKeyvals() map[string]string {
 	return keyvals
 }
 
-func (a *argsGenerator) swarmingTags(cmd *worker.Command) []string {
+func (g *Generator) swarmingTags(cmd *worker.Command) []string {
 	tags := []string{
-		"luci_project:" + a.workerConfig.LuciProject,
+		"luci_project:" + g.workerConfig.LuciProject,
 		"log_location:" + cmd.LogDogAnnotationURL,
 	}
-	if qa := a.params.GetScheduling().GetQuotaAccount(); qa != "" {
+	if qa := g.params.GetScheduling().GetQuotaAccount(); qa != "" {
 		tags = append(tags, "qs_account:"+qa)
 	}
 	// TODO(akeshet): Consider whether to ban qs_account, luci_project, log_location,
 	// and other "special tags" from being client-specified here.
-	tags = append(tags, a.params.GetDecorations().GetTags()...)
+	tags = append(tags, g.params.GetDecorations().GetTags()...)
 	return tags
 }
 

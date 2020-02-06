@@ -6,6 +6,7 @@ package skylab
 
 import (
 	"context"
+	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"math"
 
@@ -18,7 +19,7 @@ import (
 
 // testTaskSet encapsulates the running state of the set of tasks for one test.
 type testTaskSet struct {
-	argsGenerator argsGenerator
+	argsGenerator *args.Generator
 	Name          string
 	maxAttempts   int
 	runnable      bool
@@ -27,7 +28,7 @@ type testTaskSet struct {
 
 func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*testTaskSet, error) {
 	t := testTaskSet{runnable: true, Name: invocation.GetTest().GetName()}
-	t.argsGenerator = argsGenerator{invocation: invocation, params: params, workerConfig: workerConfig, parentTaskID: parentTaskID}
+	t.argsGenerator = args.NewGenerator(invocation, params, workerConfig, parentTaskID)
 	t.maxAttempts = 1 + int(inferTestMaxRetries(invocation))
 	return &t, nil
 }
