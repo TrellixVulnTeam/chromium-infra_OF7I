@@ -38,11 +38,11 @@ func NewRunnerWithRequestTaskSets(requestTaskSets ...*RequestTaskSet) *Runner {
 }
 
 // NewRunner returns a Runner that will execute the given requests.
-func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, requests map[string]*steps.ExecuteRequest) (*Runner, error) {
+func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, requests map[string]*steps.ExecuteRequest) (*Runner, error) {
 	ts := make(map[string]*RequestTaskSet)
 	for t, r := range requests {
 		var err error
-		ts[t], err = NewRequestTaskSet(r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID)
+		ts[t], err = NewRequestTaskSet(r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID, deadline)
 		if err != nil {
 			return nil, errors.Annotate(err, "new skylab runner").Err()
 		}

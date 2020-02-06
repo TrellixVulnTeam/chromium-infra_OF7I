@@ -9,6 +9,7 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"math"
+	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
@@ -26,9 +27,9 @@ type testTaskSet struct {
 	tasks         []*task
 }
 
-func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*testTaskSet, error) {
+func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time) (*testTaskSet, error) {
 	t := testTaskSet{runnable: true, Name: invocation.GetTest().GetName()}
-	t.argsGenerator = args.NewGenerator(invocation, params, workerConfig, parentTaskID)
+	t.argsGenerator = args.NewGenerator(invocation, params, workerConfig, parentTaskID, deadline)
 	t.maxAttempts = 1 + int(inferTestMaxRetries(invocation))
 	return &t, nil
 }

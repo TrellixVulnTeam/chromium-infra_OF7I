@@ -106,15 +106,16 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		taskID = env["SWARMING_TASK_ID"].Value
 	}
 
-	runner, err := skylab.NewRunner(cfg.SkylabWorker, taskID, request.TaggedRequests)
-	if err != nil {
-		return err
-	}
-
 	d, err := inferDeadline(&request)
 	if err != nil {
 		return err
 	}
+
+	runner, err := skylab.NewRunner(cfg.SkylabWorker, taskID, d, request.TaggedRequests)
+	if err != nil {
+		return err
+	}
+
 	resps, err := c.handleRequests(ctx, d, runner, client, gf)
 	if err != nil && !containsSomeResponse(resps) {
 		// Catastrophic error. There is no reasonable response to write.

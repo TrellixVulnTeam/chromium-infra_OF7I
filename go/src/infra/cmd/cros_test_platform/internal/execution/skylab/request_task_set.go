@@ -6,6 +6,7 @@ package skylab
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
@@ -25,10 +26,10 @@ type RequestTaskSet struct {
 }
 
 // NewRequestTaskSet creates a new RequestTaskSet.
-func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) (*RequestTaskSet, error) {
+func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time) (*RequestTaskSet, error) {
 	testTaskSets := make([]*testTaskSet, len(tests))
 	for i, test := range tests {
-		t, err := newTestTaskSet(test, params, workerConfig, parentTaskID)
+		t, err := newTestTaskSet(test, params, workerConfig, parentTaskID, deadline)
 		if err != nil {
 			return nil, errors.Annotate(err, "new task set").Err()
 		}

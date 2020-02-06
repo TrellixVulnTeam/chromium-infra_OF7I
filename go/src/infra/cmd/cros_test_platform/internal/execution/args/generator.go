@@ -36,15 +36,17 @@ type Generator struct {
 	workerConfig *config.Config_SkylabWorker
 	// parentTaskID is the Swarming ID of the CTP task.
 	parentTaskID string
+	deadline     time.Time
 }
 
 // NewGenerator constructs an args Generator.
-func NewGenerator(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string) *Generator {
+func NewGenerator(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time) *Generator {
 	return &Generator{
 		invocation:   invocation,
 		params:       params,
 		workerConfig: workerConfig,
 		parentTaskID: parentTaskID,
+		deadline:     deadline,
 	}
 }
 
