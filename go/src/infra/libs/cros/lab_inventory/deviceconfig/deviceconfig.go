@@ -56,6 +56,10 @@ func (e *devcfgEntity) GetMessagePayload() (proto.Message, error) {
 	return &cfg, nil
 }
 
+func (e *devcfgEntity) GetID() string {
+	return e.ID
+}
+
 func newDevCfgEntity(msg proto.Message) (cfg2datastore.EntityInterface, error) {
 	cfgData, err := proto.Marshal(msg)
 	if err != nil {

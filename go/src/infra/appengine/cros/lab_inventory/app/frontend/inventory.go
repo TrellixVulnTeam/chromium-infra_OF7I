@@ -10,7 +10,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
@@ -132,23 +131,77 @@ func addFailedDevice(ctx context.Context, failedDevices *[]*api.DeviceOpResult, 
 
 }
 
-func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
-	// Start to retrieve device config data.
-	devCfgIds := make([]*device.ConfigId, len(extendedData))
-	for i, d := range extendedData {
-		logging.Debugf(ctx, "before convert: %s", d.LabConfig.DeviceConfigId.String())
-		devCfgIds[i] = deviceconfig.ConvertValidDeviceConfigID(d.LabConfig.DeviceConfigId)
-		logging.Debugf(ctx, "real device config ID: %s", devCfgIds[i].String())
+func getHwidDataInBatch(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
+	// Deduplicate the HWIDs in devices to improve the query performance.
+	secret := config.Get(ctx).HwidSecret
+	hwids := make([]string, 0, len(extendedData))
+	idToHwidData := map[string]*hwid.Data{}
+	for _, d := range extendedData {
+		hwid := d.LabConfig.GetManufacturingId().GetValue()
+		if hwid == "" {
+			logging.Warningf(ctx, "%v has empty HWID.", utils.GetHostname(d.LabConfig))
+		}
+		if _, found := idToHwidData[hwid]; found {
+			continue
+		}
+		hwids = append(hwids, hwid)
+		idToHwidData[hwid] = nil
 	}
-	devCfgs, err := getDeviceConfigFunc(ctx, devCfgIds)
+
+	for _, hwid := range hwids {
+		if hwid == "" {
+			continue
+		}
+		if hwidData, err := getHwidDataFunc(ctx, hwid, secret); err == nil {
+			idToHwidData[hwid] = hwidData
+		} else {
+			// HWID server may cannot find records for the HWID. Ignore the
+			// error for now.
+			logging.Warningf(ctx, "Ignored error: failed to get response from HWID server for %s", hwid)
+		}
+	}
 	newExtendedData := make([]*api.ExtendedDeviceData, 0, len(extendedData))
-	failedDevices := make([]*api.DeviceOpResult, 0, len(extendedData))
+	for i := range extendedData {
+		hwid := extendedData[i].LabConfig.GetManufacturingId().GetValue()
+		if hwidData := idToHwidData[hwid]; hwidData != nil {
+			extendedData[i].HwidData = &api.HwidData{
+				Sku:     hwidData.Sku,
+				Variant: hwidData.Variant,
+			}
+		}
+		newExtendedData = append(newExtendedData, extendedData[i])
+	}
+	return newExtendedData, nil
+}
+
+func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
+	// Deduplicate the device config ids to improve the query performance.
+	devCfgIds := make([]*device.ConfigId, 0, len(extendedData))
+	idToDevCfg := map[string]*device.Config{}
+	for _, d := range extendedData {
+		convertedID := deviceconfig.ConvertValidDeviceConfigID(d.LabConfig.GetDeviceConfigId())
+		if _, found := idToDevCfg[convertedID.String()]; found {
+			continue
+		}
+		logging.Debugf(ctx, "before convert: %s", d.LabConfig.DeviceConfigId.String())
+		logging.Debugf(ctx, "real device config ID: %s", convertedID.String())
+		devCfgIds = append(devCfgIds, convertedID)
+		idToDevCfg[convertedID.String()] = nil
+	}
+
+	devCfgs, err := getDeviceConfigFunc(ctx, devCfgIds)
 	for i := range devCfgs {
 		if err == nil || err.(errors.MultiError)[i] == nil {
-			extendedData[i].DeviceConfig = devCfgs[i].(*device.Config)
+			idToDevCfg[devCfgIds[i].String()] = devCfgs[i].(*device.Config)
 		} else {
-			logging.Warningf(ctx, "Ignored error: cannot get device config for %v", devCfgs[i])
+			logging.Warningf(ctx, "Ignored error: cannot get device config for %v: %v", devCfgIds[i], err.(errors.MultiError)[i])
 		}
+	}
+	newExtendedData := make([]*api.ExtendedDeviceData, 0, len(extendedData))
+	failedDevices := make([]*api.DeviceOpResult, 0, len(extendedData))
+	for i := range extendedData {
+		convertedID := deviceconfig.ConvertValidDeviceConfigID(extendedData[i].LabConfig.GetDeviceConfigId())
+		extendedData[i].DeviceConfig = idToDevCfg[convertedID.String()]
 		newExtendedData = append(newExtendedData, extendedData[i])
 	}
 	return newExtendedData, failedDevices
@@ -156,27 +209,28 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 
 func getManufacturingConfigData(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
 	// Start to retrieve manufacturing config data.
-	cfgIds := make([]*manufacturing.ConfigID, len(extendedData))
-	for i, d := range extendedData {
-		cfgIds[i] = d.LabConfig.ManufacturingId
+	cfgIds := make([]*manufacturing.ConfigID, 0, len(extendedData))
+	idToCfg := map[string]*manufacturing.Config{}
+	for _, d := range extendedData {
+		if _, found := idToCfg[d.LabConfig.ManufacturingId.String()]; found {
+			continue
+		}
+		cfgIds = append(cfgIds, d.LabConfig.ManufacturingId)
+		idToCfg[d.LabConfig.ManufacturingId.String()] = nil
 	}
 	mCfgs, err := getManufacturingConfigFunc(ctx, cfgIds)
+	for i, d := range mCfgs {
+		if err == nil || err.(errors.MultiError)[i] == nil {
+			idToCfg[cfgIds[i].String()] = d.(*manufacturing.Config)
+		} else {
+			logging.Warningf(ctx, "Ignored error: cannot get manufacturing config for %v: %v", cfgIds[i], err.(errors.MultiError)[i])
+		}
+	}
 	newExtendedData := make([]*api.ExtendedDeviceData, 0, len(extendedData))
 	failedDevices := make([]*api.DeviceOpResult, 0, len(extendedData))
-	for i := range mCfgs {
-		if err == nil || err.(errors.MultiError)[i] == nil {
-			extendedData[i].ManufacturingConfig = mCfgs[i].(*manufacturing.Config)
-			newExtendedData = append(newExtendedData, extendedData[i])
-		} else {
-			// Ignore errors if the ID doesn't exist in manufacturing config.
-			if ds.IsErrNoSuchEntity(err.(errors.MultiError)[i]) {
-				logging.Warningf(ctx, "Ingored error: No matched manufacturing config found: %s", cfgIds[i])
-				newExtendedData = append(newExtendedData, extendedData[i])
-				continue
-			}
-
-			addFailedDevice(ctx, &failedDevices, extendedData[i].LabConfig, err.(errors.MultiError)[i], "get manufacturing config data")
-		}
+	for i := range extendedData {
+		extendedData[i].ManufacturingConfig = idToCfg[extendedData[i].LabConfig.GetManufacturingId().String()]
+		newExtendedData = append(newExtendedData, extendedData[i])
 	}
 	return newExtendedData, failedDevices
 }
@@ -185,7 +239,6 @@ func getManufacturingConfigData(ctx context.Context, extendedData []*api.Extende
 // manufacturing config, etc.
 func GetExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResult) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {
 	logging.Debugf(ctx, "Get exteneded data for %d devcies", len(devices))
-	secret := config.Get(ctx).HwidSecret
 	extendedData := make([]*api.ExtendedDeviceData, 0, len(devices))
 	failedDevices := make([]*api.DeviceOpResult, 0, len(devices))
 	for _, r := range devices {
@@ -210,24 +263,14 @@ func GetExtendedDeviceData(ctx context.Context, devices []datastore.DeviceOpResu
 			LabConfig: &labData,
 			DutState:  &dutState,
 		}
-
-		hwid := labData.GetManufacturingId().GetValue()
-		if hwid == "" {
-			logging.Warningf(ctx, "%v has empty HWID.", r.Entity.Hostname)
-		} else if hwidData, err := getHwidDataFunc(ctx, hwid, secret); err != nil {
-			// HWID server may cannot find records for the HWID. Ignore the
-			// error for now.
-			logging.Warningf(ctx, "Ignored error: failed to get response from HWID server for %s", hwid)
-		} else {
-			data.HwidData = &api.HwidData{
-				Sku:     hwidData.Sku,
-				Variant: hwidData.Variant,
-			}
-		}
 		extendedData = append(extendedData, &data)
 	}
+	// Get HWID data in a batch.
+	extendedData, moreFailedDevices := getHwidDataInBatch(ctx, extendedData)
+	failedDevices = append(failedDevices, moreFailedDevices...)
+
 	// Get device config in a batch.
-	extendedData, moreFailedDevices := getDeviceConfigData(ctx, extendedData)
+	extendedData, moreFailedDevices = getDeviceConfigData(ctx, extendedData)
 	failedDevices = append(failedDevices, moreFailedDevices...)
 
 	extendedData, moreFailedDevices = getManufacturingConfigData(ctx, extendedData)

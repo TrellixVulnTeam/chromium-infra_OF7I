@@ -38,6 +38,10 @@ func (e *manufacturingCfgEntity) GetMessagePayload() (proto.Message, error) {
 	return &cfg, nil
 }
 
+func (e *manufacturingCfgEntity) GetID() string {
+	return e.ID
+}
+
 func newManufacturingCfgEntity(msg proto.Message) (cfg2datastore.EntityInterface, error) {
 	cfgData, err := proto.Marshal(msg)
 	if err != nil {
@@ -69,7 +73,7 @@ func GetCachedConfig(ctx context.Context, cfgIds []*manufacturing.ConfigID) ([]p
 		entities[i] = &manufacturingCfgEntity{
 			ID: c.GetValue(),
 		}
-		logging.Debugf(ctx, "Getting manufacturing config for '%s'", c.GetValue())
+		logging.Debugf(ctx, "Getting manufacturing config for %#v", c.GetValue())
 	}
 	return cfg2datastore.GetCachedCfgByIds(ctx, entities)
 }

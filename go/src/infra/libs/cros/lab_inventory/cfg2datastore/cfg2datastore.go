@@ -25,6 +25,7 @@ import (
 type EntityInterface interface {
 	SetUpdatedTime(time.Time)
 	GetMessagePayload() (proto.Message, error)
+	GetID() string
 }
 
 // NewGitilesClient returns a gitiles client to access the device config data.
@@ -111,16 +112,16 @@ func GetCachedCfgByIds(ctx context.Context, entities []EntityInterface) ([]proto
 	// unmarshalling.
 	for i := range entities {
 		if err != nil && err.(errors.MultiError)[i] != nil {
-			logging.Errorf(ctx, "failed to get cached config for %v: %s", entities[i], err.Error())
+			logging.Errorf(ctx, "failed to get cached config for %v: %s", entities[i].GetID(), err.Error())
 			newErr.Assign(i, err)
 			continue
 		}
 		if cfg, err := entities[i].GetMessagePayload(); err != nil {
-			logging.Errorf(ctx, "failed to unmarshal data for %v: %s", entities[i], err.Error())
+			logging.Errorf(ctx, "failed to unmarshal data for %v: %s", entities[i].GetID(), err.Error())
 			newErr.Assign(i, errors.Annotate(err, "unmarshal config data").Err())
 		} else {
 			result[i] = cfg
-			logging.Debugf(ctx, "successfully got cached config")
+			logging.Debugf(ctx, "successfully got cached config for %v", entities[i].GetID())
 		}
 	}
 	return result, newErr.Get()
