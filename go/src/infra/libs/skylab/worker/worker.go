@@ -24,21 +24,20 @@ const isolatedOutdirMagicVal = "${ISOLATED_OUTDIR}"
 
 // Command is a constructor for skylab_swarming_worker commands.
 type Command struct {
-	// Path to skylab_swarming_worker.  The default is DefaultPath.
-	Path string
-
-	// TaskName is required.
-	TaskName string
+	Actions    string
+	ClientTest bool
+	ForceFresh bool
+	Keyvals    map[string]string
 	// LogDogAnnotationURL can be set automatically with Env.
 	LogDogAnnotationURL string
-	ForceFresh          bool
-	ClientTest          bool
-	ProvisionLabels     []string
-	Keyvals             map[string]string
-	TestArgs            string
-	Actions             string
 	// If true, pass the magic var ${ISOLATED_OUTDIR} to the worker.
 	OutputToIsolate bool
+	// Path to skylab_swarming_worker.  The default is DefaultPath.
+	Path            string
+	ProvisionLabels []string
+	// TaskName is required.
+	TaskName string
+	TestArgs string
 }
 
 // Args returns the arg strings for running the command.
@@ -49,20 +48,15 @@ func (c *Command) Args() []string {
 	} else {
 		args = append(args, DefaultPath)
 	}
-	if c.TaskName != "" {
-		args = append(args, "-task-name", c.TaskName)
-	}
-	if c.LogDogAnnotationURL != "" {
-		args = append(args, "-logdog-annotation-url", c.LogDogAnnotationURL)
-	}
-	if c.ForceFresh {
-		args = append(args, "-force-fresh")
+
+	if c.Actions != "" {
+		args = append(args, "-actions", c.Actions)
 	}
 	if c.ClientTest {
 		args = append(args, "-client-test")
 	}
-	if len(c.ProvisionLabels) > 0 {
-		args = append(args, "-provision-labels", strings.Join(c.ProvisionLabels, ","))
+	if c.ForceFresh {
+		args = append(args, "-force-fresh")
 	}
 	if c.Keyvals != nil {
 		b, err := json.Marshal(c.Keyvals)
@@ -72,14 +66,20 @@ func (c *Command) Args() []string {
 		}
 		args = append(args, "-keyvals", string(b))
 	}
-	if c.TestArgs != "" {
-		args = append(args, "-test-args", c.TestArgs)
-	}
-	if c.Actions != "" {
-		args = append(args, "-actions", c.Actions)
+	if c.LogDogAnnotationURL != "" {
+		args = append(args, "-logdog-annotation-url", c.LogDogAnnotationURL)
 	}
 	if c.OutputToIsolate {
 		args = append(args, "-isolated-outdir", isolatedOutdirMagicVal)
+	}
+	if len(c.ProvisionLabels) > 0 {
+		args = append(args, "-provision-labels", strings.Join(c.ProvisionLabels, ","))
+	}
+	if c.TaskName != "" {
+		args = append(args, "-task-name", c.TaskName)
+	}
+	if c.TestArgs != "" {
+		args = append(args, "-test-args", c.TestArgs)
 	}
 	return args
 }
