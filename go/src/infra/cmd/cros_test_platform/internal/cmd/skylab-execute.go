@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/isolatedclient"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/proto/google"
 
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/isolate/getter"
@@ -110,7 +111,11 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		return err
 	}
 
-	resps, err := c.handleRequests(ctx, inferTimeout(request.TaggedRequests), runner, client, gf)
+	d, err := inferDeadline(&request)
+	if err != nil {
+		return err
+	}
+	resps, err := c.handleRequests(ctx, d, runner, client, gf)
 	if err != nil && !containsSomeResponse(resps) {
 		// Catastrophic error. There is no reasonable response to write.
 		return err
@@ -144,6 +149,14 @@ func extractOneConfig(trs map[string]*steps.ExecuteRequest) *config.Config {
 		return r.Config
 	}
 	return nil
+}
+
+func inferDeadline(r *steps.ExecuteRequests) (time.Time, error) {
+	c := google.TimeFromProto(r.GetBuild().GetCreateTime())
+	if c.IsZero() {
+		return c, errors.Reason("infer deadline: build creation time not known").Err()
+	}
+	return c.Add(inferTimeout(r.TaggedRequests)), nil
 }
 
 const defaultTaskTimout = 12 * time.Hour
@@ -220,8 +233,8 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 	}
 	return nil
 }
-func (c *skylabExecuteRun) handleRequests(ctx context.Context, maximumDuration time.Duration, runner *skylab.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
-	ctx, cancel := errctx.WithTimeout(ctx, maximumDuration, fmt.Errorf("cros_test_platform request timeout (after %s)", maximumDuration))
+func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *skylab.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
+	ctx, cancel := errctx.WithDeadline(ctx, deadline, fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline))
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, skylab.Clients{
 		Swarming:      t,
