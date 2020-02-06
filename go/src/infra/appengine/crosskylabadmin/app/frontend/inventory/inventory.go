@@ -172,7 +172,7 @@ func (is *ServerImpl) newInventoryClient(ctx context.Context) (inventoryClient, 
 		return nil, errors.Annotate(err, "create duo client").Err()
 	}
 
-	client, err := newDuoClient(ctx, gitstore, cfg.GetHost(), int(cfg.GetTrafficRatio()))
+	client, err := newDuoClient(ctx, gitstore, cfg.GetHost(), int(cfg.GetReadTrafficRatio()), int(cfg.GetWriteTrafficRatio()))
 	if err != nil {
 		return nil, errors.Annotate(err, "create duo client").Err()
 	}

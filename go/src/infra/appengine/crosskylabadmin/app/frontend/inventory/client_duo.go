@@ -23,12 +23,15 @@ type duoClient struct {
 	gc *gitStoreClient
 	ic *invServiceClient
 
-	// A number in [0, 100] indicate the traffic duplicated to inventory
-	// service.
-	trafficRatio int
+	// A number in [0, 100] indicate the write traffic (deploy/update)
+	// duplicated to inventory v2 service.
+	writeTrafficRatio int
+	// A number in [0, 100] indicate the read traffic fanning out to inventory
+	// v2 service.
+	readTrafficRatio int
 }
 
-func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string, trafficRatio int) (inventoryClient, error) {
+func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string, readTrafficRatio, writeTrafficRatio int) (inventoryClient, error) {
 	gc, err := newGitStoreClient(ctx, gs)
 	if err != nil {
 		return nil, errors.Annotate(err, "create git client").Err()
@@ -39,15 +42,16 @@ func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string,
 		return gc, nil
 	}
 	return &duoClient{
-		gc:           gc.(*gitStoreClient),
-		ic:           ic.(*invServiceClient),
-		trafficRatio: trafficRatio,
+		gc:                gc.(*gitStoreClient),
+		ic:                ic.(*invServiceClient),
+		readTrafficRatio:  readTrafficRatio,
+		writeTrafficRatio: writeTrafficRatio,
 	}, nil
 }
 
-func (client *duoClient) willDupToV2() bool {
+func (client *duoClient) willWriteToV2() bool {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return r.Intn(100) < client.trafficRatio
+	return r.Intn(100) < client.writeTrafficRatio
 }
 
 func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
@@ -58,7 +62,7 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 	logging.Infof(ctx, "[v1] add dut result: %s, %s", url, err)
 	logging.Infof(ctx, "[v1] spec returned: %s", ds)
 
-	if client.willDupToV2() {
+	if client.willWriteToV2() {
 		go func() {
 			// Set timeout for RPC call to inventory v2.
 			// The timeout should correlated to how many DUTs being operated.
@@ -75,7 +79,7 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 }
 
 func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {
-	if client.willDupToV2() {
+	if client.willWriteToV2() {
 		go func() {
 			ctx2, cancel := context.WithTimeout(ctx, timeoutForEachDUT)
 			defer cancel()
@@ -91,7 +95,7 @@ func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.C
 }
 
 func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
-	if client.willDupToV2() {
+	if client.willWriteToV2() {
 		go func() {
 			ctx2, cancel := context.WithTimeout(ctx, time.Duration(len(ids))*timeoutForEachDUT)
 			defer cancel()
@@ -106,7 +110,7 @@ func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) 
 }
 
 func (client *duoClient) selectDutsFromInventory(ctx context.Context, sel *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error) {
-	if client.willDupToV2() {
+	if client.willWriteToV2() {
 		go func() {
 			// Cannot know how many duts will be reutrned, so hard code the
 			// timeout.
@@ -126,7 +130,7 @@ func (client *duoClient) selectDutsFromInventory(ctx context.Context, sel *fleet
 }
 
 func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes []*fleet.PoolChange) (string, error) {
-	if client.willDupToV2() {
+	if client.willWriteToV2() {
 		go func() {
 			ctx2, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()

@@ -253,8 +253,16 @@ message StableVersionConfig {
 message InventoryProvider{
   // The inventory service hostname, e.g. "cros-lab-inventory.appspot.com".
   string host = 1;
-  // The ratio (a number in [0, 100]) of traffic duplicated to inventory
-  // service. Just for testing purpose.
-  // TODO (guocb) Remove `traffic_ratio` after migration.
-  uint32 traffic_ratio = 2;
+
+  // TODO (guocb) Remove `traffic_ratio` `read_traffic_ratio` and
+  // `write_traffic_ratio` after migration.
+  uint32 traffic_ratio = 2 [deprecated=true];
+
+  // The ratio (a number in [0, 100]) of reading traffic FAN OUT to inventory
+  // service. Just for migrating purpose.
+  uint32 read_traffic_ratio = 3;
+
+  // The ratio (a number in [0, 100]) of reading traffic DUPLICATED to
+  // inventory service. Just for migrating purpose.
+  uint32 write_traffic_ratio = 4;
 }
