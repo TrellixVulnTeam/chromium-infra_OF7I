@@ -1273,8 +1273,18 @@ class WorkEnv(object):
         # Load target issue again to get the updated star count.
         merged_into_issue = self.GetIssue(
             merged_into_issue.issue_id, use_cache=False)
-        tracker_helpers.MergeCCsAndAddComment(
+        merge_comment_pb = tracker_helpers.MergeCCsAndAddComment(
             self.services, self.mc, issue, merged_into_issue)
+        # Send notification emails.
+        hostport = framework_helpers.GetHostPort(
+            project_name=merged_into_project.project_name)
+        reporter_id = self.mc.auth.user_id
+        send_notifications.PrepareAndSendIssueChangeNotification(
+            merged_into_issue.issue_id,
+            hostport,
+            reporter_id,
+            send_email=send_email,
+            comment_id=merge_comment_pb.id)
       self.services.project.UpdateRecentActivity(
           self.mc.cnxn, issue.project_id)
 

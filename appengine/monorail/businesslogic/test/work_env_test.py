@@ -1825,42 +1825,72 @@ class WorkEnvTest(unittest.TestCase):
                      cm.exception.message)
 
   @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testUpdateIssue_MergeInto(self, _fake_pasicn):
-    """We can merge issue 1 into issue 2, including CCs and starrers."""
+  def testUpdateIssue_MergeInto(self, fake_pasicn, fake_pasibn):
+    """We can merge Issue 1 (merged_issue) into Issue 2 (merged_into_issue),
+       including CCs and starrers."""
     self.SignIn()
-    issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
-    issue2 = fake.MakeTestIssue(789, 2, 'summary2', 'Available', 111)
-    self.services.issue.TestAddIssue(issue)
-    self.services.issue.TestAddIssue(issue2)
+    merged_issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
+    merged_into_issue = fake.MakeTestIssue(789, 2, 'summary2', 'Available', 111)
+    self.services.issue.TestAddIssue(merged_issue)
+    self.services.issue.TestAddIssue(merged_into_issue)
     delta = tracker_pb2.IssueDelta(
-        merged_into=issue2.issue_id,
-        status='Duplicate')
+        merged_into=merged_into_issue.issue_id, status='Duplicate')
 
-    issue.cc_ids = [111, 222, 333, 444]
+    merged_issue.cc_ids = [111, 222, 333, 444]
     self.services.issue_star.SetStarsBatch(
-        'cnxn', 'service', 'config', issue.issue_id, [111, 222, 333], True)
+        'cnxn', 'service', 'config', merged_issue.issue_id, [111, 222, 333],
+        True)
     self.services.issue_star.SetStarsBatch(
-        'cnxn', 'service', 'config', issue2.issue_id, [555], True)
+        'cnxn', 'service', 'config', merged_into_issue.issue_id, [555], True)
     with self.work_env as we:
-      we.UpdateIssue(issue, delta, '')
+      we.UpdateIssue(merged_issue, delta, '')
 
-    comments = self.services.issue.GetCommentsForIssue('cnxn', issue2.issue_id)
+    merged_into_issue_comments = self.services.issue.GetCommentsForIssue(
+        'cnxn', merged_into_issue.issue_id)
 
     # Original issue marked as duplicate.
-    self.assertEqual('Duplicate', issue.status)
+    self.assertEqual('Duplicate', merged_issue.status)
     # Target issue has original issue's CCs.
-    self.assertEqual([444, 333, 222, 111], issue2.cc_ids)
+    self.assertEqual([444, 333, 222, 111], merged_into_issue.cc_ids)
     # A comment was added to the target issue.
+    merged_into_issue_comment = merged_into_issue_comments[-1]
     self.assertEqual(
         'Issue 1 has been merged into this issue.',
-        comments[-1].content)
+        merged_into_issue_comment.content)
     source_starrers = self.services.issue_star.LookupItemStarrers(
-        'cnxn', issue.issue_id)
+        'cnxn', merged_issue.issue_id)
     self.assertItemsEqual([111, 222, 333], source_starrers)
     target_starrers = self.services.issue_star.LookupItemStarrers(
-        'cnxn', issue2.issue_id)
+        'cnxn', merged_into_issue.issue_id)
     self.assertItemsEqual([111, 222, 333, 555], target_starrers)
+    # Notifications should be sent for both
+    # the merged issue and the merged_into issue.
+    merged_issue_comments = self.services.issue.GetCommentsForIssue(
+        'cnxn', merged_issue.issue_id)
+    merged_issue_comment = merged_issue_comments[-1]
+    hostport = 'testing-app.appspot.com'
+    execute_calls = [
+        mock.call(
+            merged_into_issue.issue_id,
+            hostport,
+            111,
+            send_email=True,
+            comment_id=merged_into_issue_comment.id),
+        mock.call(
+            merged_issue.issue_id,
+            hostport,
+            111,
+            send_email=True,
+            old_owner_id=111,
+            comment_id=merged_issue_comment.id)
+    ]
+    fake_pasicn.assert_has_calls(execute_calls)
+    self.assertEqual(2, fake_pasicn.call_count)
+    fake_pasibn.assert_called_once_with(
+        merged_issue.issue_id, hostport, [], 111, send_email=True)
 
   def testUpdateIssue_MergeIntoRestrictedIssue(self):
     """We cannot merge into an issue we cannot view and edit."""
