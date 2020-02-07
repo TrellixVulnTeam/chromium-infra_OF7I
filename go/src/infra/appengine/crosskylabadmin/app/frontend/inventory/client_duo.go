@@ -147,7 +147,7 @@ func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes [
 }
 
 func (client *duoClient) getDutInfo(ctx context.Context, req *fleet.GetDutInfoRequest) ([]byte, time.Time, error) {
-	if client.willReadFromV2() {
+	if !req.MustFromV1 && client.willReadFromV2() {
 		dut, now, err := client.ic.getDutInfo(ctx, req)
 		logging.Infof(ctx, "[v2] GetDutInfo result: %#v: %s", req, err)
 		return dut, now, err

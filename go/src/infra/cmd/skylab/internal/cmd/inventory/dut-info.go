@@ -88,7 +88,7 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 	}
 	e := c.envFlags.Env()
 	ic := NewInventoryClient(hc, e, c.v2)
-	dut, err := ic.GetDutInfo(ctx, args[0], true)
+	dut, err := ic.GetDutInfo(ctx, args[0], true, false)
 
 	if err != nil {
 		return err
@@ -106,10 +106,10 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 	}
 }
 
-func (client *inventoryClientV1) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
-	req := &fleet.GetDutInfoRequest{Id: id}
+func (client *inventoryClientV1) GetDutInfo(ctx context.Context, id string, byHostname, mustFromV1 bool) (*inventory.DeviceUnderTest, error) {
+	req := &fleet.GetDutInfoRequest{Id: id, MustFromV1: mustFromV1}
 	if byHostname {
-		req = &fleet.GetDutInfoRequest{Hostname: id}
+		req = &fleet.GetDutInfoRequest{Hostname: id, MustFromV1: mustFromV1}
 	}
 	resp, err := client.ic.GetDutInfo(ctx, req)
 	if err != nil {
@@ -123,7 +123,7 @@ func (client *inventoryClientV1) GetDutInfo(ctx context.Context, id string, byHo
 }
 
 // GetDutInfo gets the dut information from inventory v2 service.
-func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
+func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHostname, _ bool) (*inventory.DeviceUnderTest, error) {
 	devID := &invV2Api.DeviceID{Id: &invV2Api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: id}}
 	if byHostname {
 		devID = &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: id}}

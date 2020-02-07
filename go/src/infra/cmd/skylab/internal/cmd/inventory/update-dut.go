@@ -230,7 +230,7 @@ func (c *updateDutRun) stageImageToUsb() bool {
 // getOldDeviceSpecs gets the current device specs for hostname from
 // crosskylabadmin.
 func getOldDeviceSpecs(ctx context.Context, hc *http.Client, e site.Environment, hostname string, version2 bool) (*inventory.DeviceUnderTest, error) {
-	oldDut, err := NewInventoryClient(hc, e, version2).GetDutInfo(ctx, hostname, true)
+	oldDut, err := NewInventoryClient(hc, e, version2).GetDutInfo(ctx, hostname, true, true)
 	if err != nil {
 		return nil, errors.Annotate(err, "get old specs").Err()
 	}

@@ -617,6 +617,11 @@ message GetDutInfoRequest {
   //
   // One of id or hostname is required.
   string hostname = 2;
+
+  // Indicates if the request must be routed to v1. Otherwise the routing will
+  // be determined by traffic control algorithm.
+  // TODO(guocb) Remove this after inventory v2 migration.
+  bool must_from_v1 = 3;
 }
 
 message GetDutInfoResponse {

@@ -22,7 +22,7 @@ import (
 // Client defines the common interface for the inventory client used by
 // various command line tools.
 type Client interface {
-	GetDutInfo(context.Context, string, bool) (*inventory.DeviceUnderTest, error)
+	GetDutInfo(context.Context, string, bool, bool) (*inventory.DeviceUnderTest, error)
 	removeDUTs(context.Context, string, []string, cmdlib.RemovalReason, io.Writer) (bool, error)
 	deleteDUTs(context.Context, []string, *authcli.Flags, io.Writer) (bool, error)
 	batchUpdateDUTs(context.Context, *invV1Api.BatchUpdateDutsRequest, io.Writer) error

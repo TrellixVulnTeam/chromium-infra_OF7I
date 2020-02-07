@@ -6,7 +6,7 @@ package mock
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	v1 "go.chromium.org/luci/common/api/swarming/swarming/v1"
+	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	strpair "go.chromium.org/luci/common/data/strpair"
 	context "golang.org/x/net/context"
 	clients "infra/appengine/crosskylabadmin/app/clients"
@@ -37,10 +37,10 @@ func (m *MockSwarmingClient) EXPECT() *MockSwarmingClientMockRecorder {
 }
 
 // ListAliveIdleBotsInPool mocks base method
-func (m *MockSwarmingClient) ListAliveIdleBotsInPool(c context.Context, pool string, dims strpair.Map) ([]*v1.SwarmingRpcsBotInfo, error) {
+func (m *MockSwarmingClient) ListAliveIdleBotsInPool(c context.Context, pool string, dims strpair.Map) ([]*swarming.SwarmingRpcsBotInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAliveIdleBotsInPool", c, pool, dims)
-	ret0, _ := ret[0].([]*v1.SwarmingRpcsBotInfo)
+	ret0, _ := ret[0].([]*swarming.SwarmingRpcsBotInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -52,10 +52,10 @@ func (mr *MockSwarmingClientMockRecorder) ListAliveIdleBotsInPool(c, pool, dims 
 }
 
 // ListAliveBotsInPool mocks base method
-func (m *MockSwarmingClient) ListAliveBotsInPool(arg0 context.Context, arg1 string, arg2 strpair.Map) ([]*v1.SwarmingRpcsBotInfo, error) {
+func (m *MockSwarmingClient) ListAliveBotsInPool(arg0 context.Context, arg1 string, arg2 strpair.Map) ([]*swarming.SwarmingRpcsBotInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAliveBotsInPool", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]*v1.SwarmingRpcsBotInfo)
+	ret0, _ := ret[0].([]*swarming.SwarmingRpcsBotInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -81,10 +81,10 @@ func (mr *MockSwarmingClientMockRecorder) ListBotTasks(id interface{}) *gomock.C
 }
 
 // ListRecentTasks mocks base method
-func (m *MockSwarmingClient) ListRecentTasks(c context.Context, tags []string, state string, limit int) ([]*v1.SwarmingRpcsTaskResult, error) {
+func (m *MockSwarmingClient) ListRecentTasks(c context.Context, tags []string, state string, limit int) ([]*swarming.SwarmingRpcsTaskResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListRecentTasks", c, tags, state, limit)
-	ret0, _ := ret[0].([]*v1.SwarmingRpcsTaskResult)
+	ret0, _ := ret[0].([]*swarming.SwarmingRpcsTaskResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -96,10 +96,10 @@ func (mr *MockSwarmingClientMockRecorder) ListRecentTasks(c, tags, state, limit 
 }
 
 // ListSortedRecentTasksForBot mocks base method
-func (m *MockSwarmingClient) ListSortedRecentTasksForBot(c context.Context, botID string, limit int) ([]*v1.SwarmingRpcsTaskResult, error) {
+func (m *MockSwarmingClient) ListSortedRecentTasksForBot(c context.Context, botID string, limit int) ([]*swarming.SwarmingRpcsTaskResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListSortedRecentTasksForBot", c, botID, limit)
-	ret0, _ := ret[0].([]*v1.SwarmingRpcsTaskResult)
+	ret0, _ := ret[0].([]*swarming.SwarmingRpcsTaskResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -126,10 +126,10 @@ func (mr *MockSwarmingClientMockRecorder) CreateTask(c, name, args interface{}) 
 }
 
 // GetTaskResult mocks base method
-func (m *MockSwarmingClient) GetTaskResult(ctx context.Context, tid string) (*v1.SwarmingRpcsTaskResult, error) {
+func (m *MockSwarmingClient) GetTaskResult(ctx context.Context, tid string) (*swarming.SwarmingRpcsTaskResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTaskResult", ctx, tid)
-	ret0, _ := ret[0].(*v1.SwarmingRpcsTaskResult)
+	ret0, _ := ret[0].(*swarming.SwarmingRpcsTaskResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -164,10 +164,10 @@ func (m *MockBotTasksCursor) EXPECT() *MockBotTasksCursorMockRecorder {
 }
 
 // Next mocks base method
-func (m *MockBotTasksCursor) Next(arg0 context.Context, arg1 int64) ([]*v1.SwarmingRpcsTaskResult, error) {
+func (m *MockBotTasksCursor) Next(arg0 context.Context, arg1 int64) ([]*swarming.SwarmingRpcsTaskResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Next", arg0, arg1)
-	ret0, _ := ret[0].([]*v1.SwarmingRpcsTaskResult)
+	ret0, _ := ret[0].([]*swarming.SwarmingRpcsTaskResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
