@@ -266,6 +266,7 @@ common {
 		cts_abi: CTS_ABI_ARM
 		cts_cpu: CTS_CPU_ARM
 		cr50_ro_keyid: "prod"
+		ec_type: EC_TYPE_CHROME_OS
 		hwid_sku: "test_sku"
 		model: "test_model"
 		os_type: OS_TYPE_CROS
