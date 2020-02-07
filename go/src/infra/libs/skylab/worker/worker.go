@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // DefaultPath is the default path for skylab_swarming_worker.
@@ -26,6 +27,7 @@ const isolatedOutdirMagicVal = "${ISOLATED_OUTDIR}"
 type Command struct {
 	Actions    string
 	ClientTest bool
+	Deadline   time.Time
 	ForceFresh bool
 	Keyvals    map[string]string
 	// LogDogAnnotationURL can be set automatically with Env.
@@ -54,6 +56,9 @@ func (c *Command) Args() []string {
 	}
 	if c.ClientTest {
 		args = append(args, "-client-test")
+	}
+	if !c.Deadline.IsZero() {
+		args = append(args, "-deadline", stiptime(c.Deadline))
 	}
 	if c.ForceFresh {
 		args = append(args, "-force-fresh")
@@ -117,4 +122,10 @@ type logDogURL struct {
 
 func (u logDogURL) String() string {
 	return fmt.Sprintf("logdog://%s/%s/%s/+/annotations", u.Host, u.Project, u.Prefix)
+}
+
+const stipLayout = "2006-01-02T15:04:05.99Z0700"
+
+func stiptime(t time.Time) string {
+	return t.In(time.UTC).Format(stipLayout)
 }
