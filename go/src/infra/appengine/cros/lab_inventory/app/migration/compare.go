@@ -177,6 +177,142 @@ func CompareInventory(ctx context.Context) error {
 }
 
 func filterOutKnownDifference(d1, d2 *inventory.DeviceUnderTest) {
+	alignBooleans(d1, d2)
 	// Add other know difference here.
-	d1.GetCommon().Environment = d2.GetCommon().Environment
+	cmn1 := d1.GetCommon()
+	cmn2 := d2.GetCommon()
+	c1 := cmn1.GetLabels().GetCapabilities()
+	c2 := cmn2.GetLabels().GetCapabilities()
+
+	cmn1.Environment = cmn2.Environment
+
+	c1.Modem = c2.Modem
+	c1.Telephony = c2.Telephony
+}
+
+func alignBooleans(d1, d2 *inventory.DeviceUnderTest) {
+	c1 := d1.GetCommon().GetLabels().GetCapabilities()
+	c2 := d2.GetCommon().GetLabels().GetCapabilities()
+	p1 := d1.GetCommon().GetLabels().GetPeripherals()
+	p2 := d2.GetCommon().GetLabels().GetPeripherals()
+	h1 := d1.GetCommon().GetLabels().GetTestCoverageHints()
+	h2 := d2.GetCommon().GetLabels().GetTestCoverageHints()
+
+	alignBooleansInCapabilities(c1, c2)
+	alignBooleansInPeripherals(p1, p2)
+	alignBooleansInTestCoverageHints(h1, h2)
+}
+
+func alignBooleansInPeripherals(p1, p2 *inventory.Peripherals) {
+	if p1.GetAudioBoard() == p2.GetAudioBoard() {
+		p1.AudioBoard = p2.AudioBoard
+	}
+	if p1.GetAudioBox() == p2.GetAudioBox() {
+		p1.AudioBox = p2.AudioBox
+	}
+	if p1.GetAudioLoopbackDongle() == p2.GetAudioLoopbackDongle() {
+		p1.AudioLoopbackDongle = p2.AudioLoopbackDongle
+	}
+	if p1.GetChameleon() == p2.GetChameleon() {
+		p1.Chameleon = p2.Chameleon
+	}
+	if p1.GetConductive() == p2.GetConductive() {
+		p1.Conductive = p2.Conductive
+	}
+	if p1.GetHuddly() == p2.GetHuddly() {
+		p1.Huddly = p2.Huddly
+	}
+	if p1.GetMimo() == p2.GetMimo() {
+		p1.Mimo = p2.Mimo
+	}
+	if p1.GetServo() == p2.GetServo() {
+		p1.Servo = p2.Servo
+	}
+	if p1.GetStylus() == p2.GetStylus() {
+		p1.Stylus = p2.Stylus
+	}
+	if p1.GetCamerabox() == p2.GetCamerabox() {
+		p1.Camerabox = p2.Camerabox
+	}
+	if p1.GetWificell() == p2.GetWificell() {
+		p1.Wificell = p2.Wificell
+	}
+	if p1.GetRouter_802_11Ax() == p2.GetRouter_802_11Ax() {
+		p1.Router_802_11Ax = p2.Router_802_11Ax
+	}
+}
+
+func alignBooleansInCapabilities(c1, c2 *inventory.HardwareCapabilities) {
+	if c1.GetAtrus() == c2.GetAtrus() {
+		c1.Atrus = c2.Atrus
+	}
+	if c1.GetBluetooth() == c2.GetBluetooth() {
+		c1.Bluetooth = c2.Bluetooth
+	}
+	if c1.GetDetachablebase() == c2.GetDetachablebase() {
+		c1.Detachablebase = c2.Detachablebase
+	}
+	if c1.GetFingerprint() == c2.GetFingerprint() {
+		c1.Fingerprint = c2.Fingerprint
+	}
+	if c1.GetFlashrom() == c2.GetFlashrom() {
+		c1.Flashrom = c2.Flashrom
+	}
+	if c1.GetHotwording() == c2.GetHotwording() {
+		c1.Hotwording = c2.Hotwording
+	}
+	if c1.GetInternalDisplay() == c2.GetInternalDisplay() {
+		c1.InternalDisplay = c2.InternalDisplay
+	}
+	if c1.GetLucidsleep() == c2.GetLucidsleep() {
+		c1.Lucidsleep = c2.Lucidsleep
+	}
+	if c1.GetWebcam() == c2.GetWebcam() {
+		c1.Webcam = c2.Webcam
+	}
+	if c1.GetTouchpad() == c2.GetTouchpad() {
+		c1.Touchpad = c2.Touchpad
+	}
+	if c1.GetTouchscreen() == c2.GetTouchscreen() {
+		c1.Touchscreen = c2.Touchscreen
+	}
+}
+
+func alignBooleansInTestCoverageHints(h1, h2 *inventory.TestCoverageHints) {
+	if h1.GetChaosDut() == h2.GetChaosDut() {
+		h1.ChaosDut = h2.ChaosDut
+	}
+	if h1.GetChaosNightly() == h2.GetChaosNightly() {
+		h1.ChaosNightly = h2.ChaosNightly
+	}
+	if h1.GetChromesign() == h2.GetChromesign() {
+		h1.Chromesign = h2.Chromesign
+	}
+	if h1.GetHangoutApp() == h2.GetHangoutApp() {
+		h1.HangoutApp = h2.HangoutApp
+	}
+	if h1.GetMeetApp() == h2.GetMeetApp() {
+		h1.MeetApp = h2.MeetApp
+	}
+	if h1.GetRecoveryTest() == h2.GetRecoveryTest() {
+		h1.RecoveryTest = h2.RecoveryTest
+	}
+	if h1.GetTestAudiojack() == h2.GetTestAudiojack() {
+		h1.TestAudiojack = h2.TestAudiojack
+	}
+	if h1.GetTestHdmiaudio() == h2.GetTestHdmiaudio() {
+		h1.TestHdmiaudio = h2.TestHdmiaudio
+	}
+	if h1.GetTestUsbaudio() == h2.GetTestUsbaudio() {
+		h1.TestUsbaudio = h2.TestUsbaudio
+	}
+	if h1.GetTestUsbprinting() == h2.GetTestUsbprinting() {
+		h1.TestUsbprinting = h2.TestUsbprinting
+	}
+	if h1.GetUsbDetect() == h2.GetUsbDetect() {
+		h1.UsbDetect = h2.UsbDetect
+	}
+	if h1.GetUseLid() == h2.GetUseLid() {
+		h1.UseLid = h2.UseLid
+	}
 }

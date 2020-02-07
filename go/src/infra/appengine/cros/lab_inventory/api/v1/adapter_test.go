@@ -298,8 +298,9 @@ common {
 		variant: "test_variant"
 		critical_pools: DUT_POOL_QUOTA
 		self_serve_pools: "hotrod"
+		wifi_chip: ""
 	}
-} 
+}
 `
 
 const labstationTextProto = `

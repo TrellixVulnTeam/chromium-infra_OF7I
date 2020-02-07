@@ -149,6 +149,8 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 		}
 		if wifi.GetRouter() == lab.Wifi_ROUTER_802_11AX {
 			p.Router_802_11Ax = &trueValue
+		} else {
+			p.Router_802_11Ax = &falseValue
 		}
 	}
 
@@ -208,6 +210,8 @@ func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Con
 	if cr50Env != "" {
 		l.Cr50RoKeyid = &cr50Env
 	}
+	wifiChip := m.GetWifiChip()
+	l.WifiChip = &wifiChip
 }
 
 func setDeviceConfig(labels *inventory.SchedulableLabels, d *device.Config) {
