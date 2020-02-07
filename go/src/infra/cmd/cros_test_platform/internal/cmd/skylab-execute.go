@@ -24,6 +24,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/google"
 
+	"infra/cmd/cros_test_platform/internal/execution/attempt"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/isolate/getter"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
@@ -237,7 +238,7 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *skylab.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithDeadline(ctx, deadline, fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline))
 	defer cancel(context.Canceled)
-	err := runner.LaunchAndWait(ctx, skylab.Clients{
+	err := runner.LaunchAndWait(ctx, attempt.Clients{
 		Swarming:      t,
 		IsolateGetter: gf,
 	})

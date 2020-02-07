@@ -6,15 +6,14 @@ package skylab
 
 import (
 	"context"
+	"infra/cmd/cros_test_platform/internal/execution/attempt"
 	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/swarming/proto/jsonrpc"
 )
 
 // RequestTaskSet encapsulates the running state of the set of tasks for one
@@ -59,7 +58,7 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 }
 
 // LaunchTasks launches initial tasks for all the tests in this request.
-func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients Clients) error {
+func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients attempt.Clients) error {
 	for _, testTaskSet := range r.testTaskSets {
 		runnable, err := testTaskSet.ValidateDependencies(ctx, clients.Swarming)
 		if err != nil {
@@ -78,7 +77,7 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients Clients) error
 
 // CheckTasksAndRetry checks the status of currently running tasks for this
 // request and retries failed tasks when allowed.
-func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients Clients) error {
+func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients attempt.Clients) error {
 	for _, testTaskSet := range r.testTaskSets {
 		if testTaskSet.Completed() {
 			continue
@@ -143,33 +142,6 @@ func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testTaskSet) (bool
 
 func (r *RequestTaskSet) globalRetriesRemaining() int32 {
 	return r.globalMaxRetries - r.retries
-}
-
-func unpackResult(results []*swarming_api.SwarmingRpcsTaskResult, taskID string) (*swarming_api.SwarmingRpcsTaskResult, error) {
-	if len(results) != 1 {
-		return nil, errors.Reason("expected 1 result for task id %s, got %d", taskID, len(results)).Err()
-	}
-
-	result := results[0]
-	if result.TaskId != taskID {
-		return nil, errors.Reason("expected result for task id %s, got %s", taskID, result.TaskId).Err()
-	}
-
-	return result, nil
-}
-
-var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCycle{
-	jsonrpc.TaskState_BOT_DIED:  test_platform.TaskState_LIFE_CYCLE_ABORTED,
-	jsonrpc.TaskState_CANCELED:  test_platform.TaskState_LIFE_CYCLE_CANCELLED,
-	jsonrpc.TaskState_COMPLETED: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-	// TODO(akeshet): This mapping is inexact. Add a lifecycle entry for this.
-	jsonrpc.TaskState_EXPIRED:     test_platform.TaskState_LIFE_CYCLE_CANCELLED,
-	jsonrpc.TaskState_KILLED:      test_platform.TaskState_LIFE_CYCLE_ABORTED,
-	jsonrpc.TaskState_NO_RESOURCE: test_platform.TaskState_LIFE_CYCLE_REJECTED,
-	jsonrpc.TaskState_PENDING:     test_platform.TaskState_LIFE_CYCLE_PENDING,
-	jsonrpc.TaskState_RUNNING:     test_platform.TaskState_LIFE_CYCLE_RUNNING,
-	// TODO(akeshet): This mapping is inexact. Add a lifecycle entry for this.
-	jsonrpc.TaskState_TIMED_OUT: test_platform.TaskState_LIFE_CYCLE_ABORTED,
 }
 
 func (r *RequestTaskSet) response(running bool) *steps.ExecuteResponse {

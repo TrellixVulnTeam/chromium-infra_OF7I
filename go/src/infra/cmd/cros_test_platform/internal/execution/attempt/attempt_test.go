@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package skylab
+package attempt
 
 import (
 	"sort"
@@ -209,6 +209,6 @@ func TestAutotestTestCases(t *testing.T) {
 }
 
 func callToTaskResults(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
-	t := &task{autotestResult: autotestResult, state: jsonrpc.TaskState_COMPLETED, ID: "foo-task-ID"}
-	return toTaskResult("", t, 5)
+	t := &Task{autotestResult: autotestResult, state: jsonrpc.TaskState_COMPLETED, ID: "foo-task-ID"}
+	return t.Result(5)
 }

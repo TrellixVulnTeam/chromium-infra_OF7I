@@ -7,8 +7,7 @@ package skylab
 import (
 	"context"
 	"fmt"
-	"infra/cmd/cros_test_platform/internal/execution/isolate"
-	"infra/cmd/cros_test_platform/internal/execution/swarming"
+	"infra/cmd/cros_test_platform/internal/execution/attempt"
 	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
@@ -52,12 +51,6 @@ func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, de
 	}, nil
 }
 
-// Clients bundles local interfaces to various remote services used by Runner.
-type Clients struct {
-	Swarming      swarming.Client
-	IsolateGetter isolate.GetterFactory
-}
-
 // LaunchAndWait launches a skylab execution and waits for it to complete,
 // polling for new results periodically, and retrying tests that need retry,
 // based on retry policy.
@@ -65,7 +58,7 @@ type Clients struct {
 // If the supplied context is cancelled prior to completion, or some other error
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
-func (r *Runner) LaunchAndWait(ctx context.Context, clients Clients) error {
+func (r *Runner) LaunchAndWait(ctx context.Context, clients attempt.Clients) error {
 	defer func() { r.running = false }()
 
 	if err := r.launchTasks(ctx, clients); err != nil {
@@ -87,7 +80,7 @@ func (r *Runner) LaunchAndWait(ctx context.Context, clients Clients) error {
 	}
 }
 
-func (r *Runner) launchTasks(ctx context.Context, clients Clients) error {
+func (r *Runner) launchTasks(ctx context.Context, clients attempt.Clients) error {
 	for t, ts := range r.requestTaskSets {
 		if err := ts.LaunchTasks(ctx, clients); err != nil {
 			return errors.Annotate(err, "launch tasks for %s", t).Err()
@@ -96,7 +89,7 @@ func (r *Runner) launchTasks(ctx context.Context, clients Clients) error {
 	return nil
 }
 
-func (r *Runner) checkTasksAndRetry(ctx context.Context, clients Clients) error {
+func (r *Runner) checkTasksAndRetry(ctx context.Context, clients attempt.Clients) error {
 	for t, ts := range r.requestTaskSets {
 		if err := ts.CheckTasksAndRetry(ctx, clients); err != nil {
 			return errors.Annotate(err, "check tasks and retry for %s", t).Err()
