@@ -28,8 +28,8 @@ else:  # pragma: no cover
 HOME_DIR = os.path.expanduser('~')
 GIT_COOKIE_DIR = os.path.join(HOME_DIR, '.git-credential-cache')
 GIT_COOKIE = os.path.join(GIT_COOKIE_DIR, 'cookie')
-ACQUIRE_URL = ('http://169.254.169.254/0.1/meta-data/service-accounts/'
-               'default/acquire')
+ACQUIRE_URL = ('http://metadata.google.internal/computeMetadata/v1/instance'
+               '/service-accounts/default/token')
 
 COOKIE_SPEC = {
     'version': 0,
@@ -147,7 +147,7 @@ class GitCookieDaemon(object):
     def _inner():
       url = self.acquire_url
       LOGGER.debug('Acquiring git token from %s', url)
-      r = requests.get(url, timeout=60)
+      r = requests.get(url, headers={'Metadata-Flavor': 'Google'}, timeout=60)
       r.raise_for_status()
       return r.json()
     return _inner()
@@ -155,15 +155,14 @@ class GitCookieDaemon(object):
   def update_cookie(self):
     LOGGER.info('Updating Git Cookie')
     token = self._get_token()
-    next_expires = token['expiresAt']
+    next_expires = time.time() + token['expires_in']
 
     fd, tmp_jar = tempfile.mkstemp(dir=os.path.dirname(self.cookie_file))
     os.close(fd)  # We just need the namespace, we don't need the fd.
     cookie_jar = cookielib.MozillaCookieJar(tmp_jar)
-    cookie_jar.set_cookie(cookielib.Cookie(
-      value=token['accessToken'],
-      expires=next_expires,
-      **COOKIE_SPEC))
+    cookie_jar.set_cookie(
+        cookielib.Cookie(
+            value=token['access_token'], expires=next_expires, **COOKIE_SPEC))
     cookie_jar.save()
     shutil.move(tmp_jar, self.cookie_file)
     os.chmod(self.cookie_file, 0700)

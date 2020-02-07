@@ -37,8 +37,8 @@ class FakeRequestGetResponse(object):
 
   def json(self):
     return {
-      'expiresAt': 123,
-      'accessToken': 'foo',
+        'access_token': 'foo',
+        'expires_in': 123,
     }
 
 
@@ -46,8 +46,8 @@ class FakeRequestGet(object):
   def __init__(self):
     self.history = []
 
-  def __call__(self, url, **kargs):
-    self.history.append({'url': url, 'kargs': kargs})
+  def __call__(self, url, **kwargs):
+    self.history.append({'url': url, 'kwargs': kwargs})
     return FakeRequestGetResponse()
 
 

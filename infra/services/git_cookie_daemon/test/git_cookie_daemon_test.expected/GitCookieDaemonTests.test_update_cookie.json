@@ -2,7 +2,8 @@
   "logs": [],
   "urls": [
     {
-      "kargs": {
+      "kwargs": {
+        "headers": {"Metadata-Flavor": "Google"},
         "timeout": 60
       },
       "url": "bar"
