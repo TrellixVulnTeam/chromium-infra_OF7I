@@ -7,7 +7,7 @@ package execution
 import (
 	"context"
 	"infra/cmd/cros_test_platform/internal/execution/args"
-	"infra/cmd/cros_test_platform/internal/execution/attempt"
+	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"math"
 	"time"
@@ -25,7 +25,7 @@ type testTaskSet struct {
 	Name          string
 	maxAttempts   int
 	runnable      bool
-	tasks         []*attempt.Task
+	tasks         []*skylab.Task
 }
 
 func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time) (*testTaskSet, error) {
@@ -87,12 +87,12 @@ func (t *testTaskSet) ValidateDependencies(ctx context.Context, client swarming.
 	return exists, nil
 }
 
-func (t *testTaskSet) LaunchTask(ctx context.Context, clients attempt.Clients) error {
+func (t *testTaskSet) LaunchTask(ctx context.Context, clients skylab.Clients) error {
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
 		return err
 	}
-	a := attempt.NewTask(args)
+	a := skylab.NewTask(args)
 	if err := a.Launch(ctx, clients); err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
 	return test_platform.TaskState_VERDICT_FAILED
 }
 
-func (t *testTaskSet) GetLatestTask() *attempt.Task {
+func (t *testTaskSet) GetLatestTask() *skylab.Task {
 	if len(t.tasks) == 0 {
 		return nil
 	}

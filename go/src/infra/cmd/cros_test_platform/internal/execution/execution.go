@@ -7,7 +7,7 @@ package execution
 import (
 	"context"
 	"fmt"
-	"infra/cmd/cros_test_platform/internal/execution/attempt"
+	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
@@ -58,7 +58,7 @@ func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, de
 // If the supplied context is cancelled prior to completion, or some other error
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
-func (r *Runner) LaunchAndWait(ctx context.Context, clients attempt.Clients) error {
+func (r *Runner) LaunchAndWait(ctx context.Context, clients skylab.Clients) error {
 	defer func() { r.running = false }()
 
 	if err := r.launchTasks(ctx, clients); err != nil {
@@ -80,7 +80,7 @@ func (r *Runner) LaunchAndWait(ctx context.Context, clients attempt.Clients) err
 	}
 }
 
-func (r *Runner) launchTasks(ctx context.Context, clients attempt.Clients) error {
+func (r *Runner) launchTasks(ctx context.Context, clients skylab.Clients) error {
 	for t, ts := range r.requestTaskSets {
 		if err := ts.LaunchTasks(ctx, clients); err != nil {
 			return errors.Annotate(err, "launch tasks for %s", t).Err()
@@ -89,7 +89,7 @@ func (r *Runner) launchTasks(ctx context.Context, clients attempt.Clients) error
 	return nil
 }
 
-func (r *Runner) checkTasksAndRetry(ctx context.Context, clients attempt.Clients) error {
+func (r *Runner) checkTasksAndRetry(ctx context.Context, clients skylab.Clients) error {
 	for t, ts := range r.requestTaskSets {
 		if err := ts.CheckTasksAndRetry(ctx, clients); err != nil {
 			return errors.Annotate(err, "check tasks and retry for %s", t).Err()

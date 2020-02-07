@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package attempt contains the logic for running individual test tasks.
-package attempt
+// Package skylab contains the logic for running individual test tasks.
+package skylab
 
 import (
 	"bytes"
@@ -34,7 +34,7 @@ type Clients struct {
 // Task represents an individual test task.
 type Task struct {
 	args  request.Args
-	ID    string
+	id    string
 	url   string
 	state jsonrpc.TaskState
 	// Note: If we ever begin supporting other harnesses's result formats
@@ -63,8 +63,8 @@ func (t *Task) Launch(ctx context.Context, clients Clients) error {
 	if err != nil {
 		return errors.Annotate(err, "launch attempt for %s", t.Name()).Err()
 	}
-	t.ID = resp.TaskId
-	t.url = clients.Swarming.GetTaskURL(t.ID)
+	t.id = resp.TaskId
+	t.url = clients.Swarming.GetTaskURL(t.id)
 	logging.Infof(ctx, "Launched attempt for %s as task %s", t.Name(), t.url)
 	return nil
 }
@@ -107,11 +107,11 @@ func (t *Task) Verdict() test_platform.TaskState_Verdict {
 // FetchResults fetches the latest swarming and isolate state of the given task,
 // and updates the task accordingly.
 func (t *Task) FetchResults(ctx context.Context, clients Clients) error {
-	results, err := clients.Swarming.GetResults(ctx, []string{t.ID})
+	results, err := clients.Swarming.GetResults(ctx, []string{t.id})
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
-	result, err := unpackResult(results, t.ID)
+	result, err := unpackResult(results, t.id)
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
@@ -126,7 +126,7 @@ func (t *Task) FetchResults(ctx context.Context, clients Clients) error {
 	case swarming.CompletedTaskStates[state]:
 		r, err := getAutotestResult(ctx, result, clients.IsolateGetter)
 		if err != nil {
-			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", t.ID, err.Error())
+			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", t.id, err.Error())
 			r = &skylab_test_runner.Result_Autotest{Incomplete: true}
 		}
 		t.autotestResult = r
@@ -240,11 +240,11 @@ var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCyc
 func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 	logURL := fmt.Sprintf(
 		"https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-%s/",
-		t.ID,
+		t.id,
 	)
 	gsURL := fmt.Sprintf(
 		"gs://chromeos-autotest-results/swarming-%s/",
-		t.ID,
+		t.id,
 	)
 
 	return &steps.ExecuteResponse_TaskResult{
@@ -261,4 +261,9 @@ func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 		Attempt:   int32(attemptNum),
 		TestCases: t.TestCases(),
 	}
+}
+
+// ID returns the Swarming task ID.
+func (t *Task) ID() string {
+	return t.id
 }

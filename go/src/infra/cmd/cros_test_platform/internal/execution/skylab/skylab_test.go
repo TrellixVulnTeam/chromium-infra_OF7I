@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package attempt
+package skylab
 
 import (
 	"sort"
@@ -114,7 +114,7 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 		for _, c := range cases {
 			Convey(c.description, func() {
 				Convey("then task results are correctly converted to verdict.", func() {
-					result := callToTaskResults(c.result)
+					result := callTaskResult(c.result)
 					So(result.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 					So(result.State.Verdict, ShouldEqual, c.expectVerdict)
 					So(result.Attempt, ShouldEqual, 5)
@@ -194,7 +194,7 @@ func TestAutotestTestCases(t *testing.T) {
 		for _, c := range cases {
 			Convey(c.description, func() {
 				Convey("then test cases are reported correctly.", func() {
-					result := callToTaskResults(c.result)
+					result := callTaskResult(c.result)
 					sort.SliceStable(result.TestCases, func(i, j int) bool {
 						return result.TestCases[i].Name < result.TestCases[j].Name
 					})
@@ -208,7 +208,11 @@ func TestAutotestTestCases(t *testing.T) {
 	})
 }
 
-func callToTaskResults(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
-	t := &Task{autotestResult: autotestResult, state: jsonrpc.TaskState_COMPLETED, ID: "foo-task-ID"}
+func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
+	t := &Task{
+		autotestResult: autotestResult,
+		id:             "foo-task-ID",
+		state:          jsonrpc.TaskState_COMPLETED,
+	}
 	return t.Result(5)
 }

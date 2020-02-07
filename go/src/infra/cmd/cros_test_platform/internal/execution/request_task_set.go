@@ -6,7 +6,7 @@ package execution
 
 import (
 	"context"
-	"infra/cmd/cros_test_platform/internal/execution/attempt"
+	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
@@ -58,7 +58,7 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 }
 
 // LaunchTasks launches initial tasks for all the tests in this request.
-func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients attempt.Clients) error {
+func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients skylab.Clients) error {
 	for _, testTaskSet := range r.testTaskSets {
 		runnable, err := testTaskSet.ValidateDependencies(ctx, clients.Swarming)
 		if err != nil {
@@ -77,7 +77,7 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients attempt.Client
 
 // CheckTasksAndRetry checks the status of currently running tasks for this
 // request and retries failed tasks when allowed.
-func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients attempt.Clients) error {
+func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients skylab.Clients) error {
 	for _, testTaskSet := range r.testTaskSets {
 		if testTaskSet.Completed() {
 			continue
@@ -85,23 +85,23 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients attempt
 
 		latestTask := testTaskSet.GetLatestTask()
 		if err := latestTask.FetchResults(ctx, clients); err != nil {
-			return errors.Annotate(err, "tick for task %s", latestTask.ID).Err()
+			return errors.Annotate(err, "tick for task %s", latestTask.ID()).Err()
 		}
 
 		if !testTaskSet.Completed() {
 			continue
 		}
 
-		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestTask.ID, testTaskSet.Name, latestTask.Verdict())
+		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestTask.ID(), testTaskSet.Name, latestTask.Verdict())
 
 		shouldRetry, err := r.shouldRetry(ctx, testTaskSet)
 		if err != nil {
-			return errors.Annotate(err, "tick for task %s", latestTask.ID).Err()
+			return errors.Annotate(err, "tick for task %s", latestTask.ID()).Err()
 		}
 		if shouldRetry {
 			logging.Debugf(ctx, "Retrying %s", testTaskSet.Name)
 			if err := testTaskSet.LaunchTask(ctx, clients); err != nil {
-				return errors.Annotate(err, "tick for task %s: retry test", latestTask.ID).Err()
+				return errors.Annotate(err, "tick for task %s: retry test", latestTask.ID()).Err()
 			}
 			r.retries++
 		}
