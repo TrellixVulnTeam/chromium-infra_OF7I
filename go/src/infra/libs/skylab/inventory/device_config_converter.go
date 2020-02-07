@@ -63,6 +63,12 @@ func ConvertDeviceConfig(dc *device.Config, spec *CommonDeviceSpecs) {
 		case device.Config_HARDWARE_FEATURE_TOUCHSCREEN:
 			c.Touchscreen = new(bool)
 			*c.Touchscreen = true
+		case device.Config_HARDWARE_FEATURE_DETACHABLE_KEYBOARD:
+			c.Detachablebase = new(bool)
+			*c.Detachablebase = true
+		case device.Config_HARDWARE_FEATURE_FINGERPRINT:
+			c.Fingerprint = new(bool)
+			*c.Fingerprint = true
 		default:
 		}
 	}
@@ -115,10 +121,31 @@ func ConvertDeviceConfig(dc *device.Config, spec *CommonDeviceSpecs) {
 		default:
 		}
 	}
+
+	l := spec.GetLabels()
+	switch dc.GetCpu() {
+	case device.Config_X86, device.Config_X86_64:
+		l.CtsAbi = []SchedulableLabels_CTSABI{
+			SchedulableLabels_CTS_ABI_X86,
+		}
+		l.CtsCpu = []SchedulableLabels_CTSCPU{
+			SchedulableLabels_CTS_CPU_X86,
+		}
+	case device.Config_ARM, device.Config_ARM64:
+		l.CtsAbi = []SchedulableLabels_CTSABI{
+			SchedulableLabels_CTS_ABI_ARM,
+		}
+		l.CtsCpu = []SchedulableLabels_CTSCPU{
+			SchedulableLabels_CTS_CPU_ARM,
+		}
+	}
 }
 
 // CopyDCAmongLabels copy device configs between two schedulable labels.
 func CopyDCAmongLabels(to *SchedulableLabels, from *SchedulableLabels) {
+	if from == nil || to == nil {
+		return
+	}
 	toC := to.GetCapabilities()
 	fromC := from.GetCapabilities()
 	if fromC == nil {
@@ -141,6 +168,8 @@ func CopyDCAmongLabels(to *SchedulableLabels, from *SchedulableLabels) {
 		toC.Lucidsleep = fromC.Lucidsleep
 		toC.Touchpad = fromC.Touchpad
 		toC.Touchscreen = fromC.Touchscreen
+		toC.Detachablebase = fromC.Detachablebase
+		toC.Fingerprint = fromC.Fingerprint
 	}
 
 	if from.GetPeripherals() == nil {
@@ -151,4 +180,7 @@ func CopyDCAmongLabels(to *SchedulableLabels, from *SchedulableLabels) {
 		}
 		to.GetPeripherals().Stylus = from.GetPeripherals().Stylus
 	}
+
+	to.CtsCpu = from.CtsCpu
+	to.CtsAbi = from.CtsAbi
 }

@@ -42,7 +42,9 @@ const fullDeviceConfig = `
 				"HARDWARE_FEATURE_WEBCAM",
 				"HARDWARE_FEATURE_TOUCHPAD",
 				"HARDWARE_FEATURE_TOUCHSCREEN",
-				"HARDWARE_FEATURE_STYLUS"
+				"HARDWARE_FEATURE_STYLUS",
+				"HARDWARE_FEATURE_DETACHABLE_KEYBOARD",
+				"HARDWARE_FEATURE_FINGERPRINT"
 			],
 			"power": "POWER_SUPPLY_BATTERY",
 			"storage": "STORAGE_MMC",
@@ -52,7 +54,8 @@ const fullDeviceConfig = `
 				"VIDEO_ACCELERATION_VP8",
 				"VIDEO_ACCELERATION_ENC_VP8",
 				"VIDEO_ACCELERATION_ENC_VP9"
-			]
+			],
+			"cpu": "ARM64"
 		}
 	]
 }
@@ -71,6 +74,8 @@ labels: {
 		storage: "mmc"
 		touchpad: true
 		touchscreen: true
+		detachablebase: true
+		fingerprint: true
 		video_acceleration: 1
 		video_acceleration: 2
 		video_acceleration: 3
@@ -81,6 +86,8 @@ labels: {
 	peripherals: {
 		stylus: true
 	}
+	cts_abi: 1
+	cts_cpu: 1
 }
 `
 
