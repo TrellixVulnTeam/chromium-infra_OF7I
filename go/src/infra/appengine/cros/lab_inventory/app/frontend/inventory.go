@@ -212,16 +212,23 @@ func getManufacturingConfigData(ctx context.Context, extendedData []*api.Extende
 	cfgIds := make([]*manufacturing.ConfigID, 0, len(extendedData))
 	idToCfg := map[string]*manufacturing.Config{}
 	for _, d := range extendedData {
-		if _, found := idToCfg[d.LabConfig.ManufacturingId.String()]; found {
+		manufacturingID := d.LabConfig.GetManufacturingId()
+		if manufacturingID.GetValue() == "" {
+			// We use manufacturingID as Key to query datastore. When it's
+			// empty, datastore.Get will fail due to incomplete key and all
+			// entities queried in same request will be <nil>.
 			continue
 		}
-		cfgIds = append(cfgIds, d.LabConfig.ManufacturingId)
-		idToCfg[d.LabConfig.ManufacturingId.String()] = nil
+		if _, found := idToCfg[manufacturingID.GetValue()]; found {
+			continue
+		}
+		cfgIds = append(cfgIds, manufacturingID)
+		idToCfg[manufacturingID.GetValue()] = nil
 	}
 	mCfgs, err := getManufacturingConfigFunc(ctx, cfgIds)
 	for i, d := range mCfgs {
 		if err == nil || err.(errors.MultiError)[i] == nil {
-			idToCfg[cfgIds[i].String()] = d.(*manufacturing.Config)
+			idToCfg[cfgIds[i].GetValue()] = d.(*manufacturing.Config)
 		} else {
 			logging.Warningf(ctx, "Ignored error: cannot get manufacturing config for %v: %v", cfgIds[i], err.(errors.MultiError)[i])
 		}
@@ -229,7 +236,9 @@ func getManufacturingConfigData(ctx context.Context, extendedData []*api.Extende
 	newExtendedData := make([]*api.ExtendedDeviceData, 0, len(extendedData))
 	failedDevices := make([]*api.DeviceOpResult, 0, len(extendedData))
 	for i := range extendedData {
-		extendedData[i].ManufacturingConfig = idToCfg[extendedData[i].LabConfig.GetManufacturingId().String()]
+		if manufacturingID := extendedData[i].LabConfig.GetManufacturingId().GetValue(); manufacturingID != "" {
+			extendedData[i].ManufacturingConfig = idToCfg[manufacturingID]
+		}
 		newExtendedData = append(newExtendedData, extendedData[i])
 	}
 	return newExtendedData, failedDevices

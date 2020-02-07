@@ -113,6 +113,7 @@ func getV2Duts(ctx context.Context) (stringset.Set, map[string]*inventory.Device
 		v1Dut, err := api.AdaptToV1DutSpec(d)
 		if err != nil {
 			logging.Warningf(ctx, "Adapter failure: %s", err.Error())
+			continue
 		}
 		name := v1Dut.GetCommon().GetHostname()
 		hostnames = append(hostnames, name)
