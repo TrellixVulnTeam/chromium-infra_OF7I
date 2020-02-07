@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package skylab_test
+package execution_test
 
 import (
 	"context"
@@ -34,14 +34,14 @@ import (
 	"go.chromium.org/luci/common/logging/memlogger"
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
 
+	"infra/cmd/cros_test_platform/internal/execution"
 	"infra/cmd/cros_test_platform/internal/execution/attempt"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
-	"infra/cmd/cros_test_platform/internal/execution/skylab"
 )
 
 var noDeadline time.Time
 
-// fakeSwarming implements skylab.Swarming
+// fakeSwarming implements skylab_api.Swarming
 type fakeSwarming struct {
 	nextID      int
 	nextState   jsonrpc.TaskState
@@ -256,9 +256,9 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 		}
 
 		Convey("when running a skylab execution", func() {
-			ts, err := skylab.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+			ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 			So(err, ShouldBeNil)
-			run := skylab.NewRunnerWithRequestTaskSets(ts)
+			run := execution.NewRunnerWithRequestTaskSets(ts)
 			err = run.LaunchAndWait(ctx, attempt.Clients{
 				Swarming:      swarming,
 				IsolateGetter: fakeGetterFactory(newFakeGetter()),
@@ -296,9 +296,9 @@ func TestLaunchAndWaitTest(t *testing.T) {
 		invs = append(invs, clientTestInvocation("", ""), clientTestInvocation("", ""))
 
 		Convey("when running a skylab execution", func() {
-			ts, err := skylab.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+			ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 			So(err, ShouldBeNil)
-			run := skylab.NewRunnerWithRequestTaskSets(ts)
+			run := execution.NewRunnerWithRequestTaskSets(ts)
 
 			err = run.LaunchAndWait(ctx, attempt.Clients{
 				Swarming:      swarming,
@@ -371,9 +371,9 @@ func TestTaskStates(t *testing.T) {
 		}
 		for _, c := range cases {
 			Convey(c.description, func() {
-				ts, err := skylab.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
-				run := skylab.NewRunnerWithRequestTaskSets(ts)
+				run := execution.NewRunnerWithRequestTaskSets(ts)
 
 				swarming := newFakeSwarming("")
 				swarming.setTaskState(c.swarmingState)
@@ -402,9 +402,9 @@ func TestServiceError(t *testing.T) {
 		swarming := newFakeSwarming("")
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := skylab.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
-		run := skylab.NewRunnerWithRequestTaskSets(ts)
+		run := execution.NewRunnerWithRequestTaskSets(ts)
 
 		Convey("when the swarming service immediately returns errors, that error is surfaced as a launch error.", func() {
 			swarming.setError(fmt.Errorf("foo error"))
@@ -438,9 +438,9 @@ func TestTaskURL(t *testing.T) {
 		swarming := newFakeSwarming(swarming_service)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := skylab.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
-		run := skylab.NewRunnerWithRequestTaskSets(ts)
+		run := execution.NewRunnerWithRequestTaskSets(ts)
 
 		err = run.LaunchAndWait(ctx, attempt.Clients{
 			Swarming:      swarming,
@@ -463,9 +463,9 @@ func TestIncompleteWait(t *testing.T) {
 		swarming.setTaskState(jsonrpc.TaskState_RUNNING)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := skylab.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
-		run := skylab.NewRunnerWithRequestTaskSets(ts)
+		run := execution.NewRunnerWithRequestTaskSets(ts)
 
 		wg := sync.WaitGroup{}
 		wg.Add(1)
@@ -503,9 +503,9 @@ func TestRequestArguments(t *testing.T) {
 		inv.DisplayName = "given_name"
 		invs := []*steps.EnumerationResponse_AutotestInvocation{inv}
 
-		ts, err := skylab.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
-		run := skylab.NewRunnerWithRequestTaskSets(ts)
+		run := execution.NewRunnerWithRequestTaskSets(ts)
 
 		err = run.LaunchAndWait(ctx, attempt.Clients{
 			Swarming:      swarming,
@@ -657,9 +657,9 @@ func TestInvocationKeyvals(t *testing.T) {
 		Convey("and a request without keyvals", func() {
 			p := basicParams()
 			p.Decorations = nil
-			ts, err := skylab.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
+			ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
 			So(err, ShouldBeNil)
-			run := skylab.NewRunnerWithRequestTaskSets(ts)
+			run := execution.NewRunnerWithRequestTaskSets(ts)
 
 			err = run.LaunchAndWait(ctx, attempt.Clients{
 				Swarming:      swarming,
@@ -686,9 +686,9 @@ func TestInvocationKeyvals(t *testing.T) {
 					"suite": "someOtherSuite",
 				},
 			}
-			ts, err := skylab.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
+			ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
 			So(err, ShouldBeNil)
-			run := skylab.NewRunnerWithRequestTaskSets(ts)
+			run := execution.NewRunnerWithRequestTaskSets(ts)
 
 			err = run.LaunchAndWait(ctx, attempt.Clients{
 				Swarming:      swarming,
@@ -757,9 +757,9 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 			}
 
 			Convey("created commands include common suite keyval and different label keyvals", func() {
-				ts, err := skylab.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
-				run := skylab.NewRunnerWithRequestTaskSets(ts)
+				run := execution.NewRunnerWithRequestTaskSets(ts)
 				err = run.LaunchAndWait(ctx, attempt.Clients{
 					Swarming:      swarming,
 					IsolateGetter: fakeGetterFactory(newFakeGetter()),
@@ -801,9 +801,9 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 				inv.Test.MaxRetries = 2
 			}
 			Convey("for skylab execution", func() {
-				ts, err := skylab.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
-				run := skylab.NewRunnerWithRequestTaskSets(ts)
+				run := execution.NewRunnerWithRequestTaskSets(ts)
 				err = run.LaunchAndWait(ctx, attempt.Clients{
 					Swarming:      swarming,
 					IsolateGetter: fakeGetterFactory(getter),
@@ -1047,9 +1047,9 @@ func TestRetries(t *testing.T) {
 				}
 				var ml memlogger.MemLogger
 				ctx = logging.SetFactory(ctx, func(context.Context) logging.Logger { return &ml })
-				ts, err := skylab.NewRequestTaskSet(c.invocations, params, basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(c.invocations, params, basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
-				run := skylab.NewRunnerWithRequestTaskSets(ts)
+				run := execution.NewRunnerWithRequestTaskSets(ts)
 				err = run.LaunchAndWait(ctx, attempt.Clients{
 					Swarming:      swarming,
 					IsolateGetter: fakeGetterFactory(getter),
@@ -1129,9 +1129,9 @@ func TestClientTestArg(t *testing.T) {
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("name1", "")}
 
-		ts, err := skylab.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
-		run := skylab.NewRunnerWithRequestTaskSets(ts)
+		run := execution.NewRunnerWithRequestTaskSets(ts)
 
 		err = run.LaunchAndWait(ctx, attempt.Clients{
 			Swarming:      swarming,
@@ -1161,9 +1161,9 @@ func TestQuotaSchedulerAccount(t *testing.T) {
 			QuotaAccount: "foo-account",
 		}
 
-		ts, err := skylab.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
-		run := skylab.NewRunnerWithRequestTaskSets(ts)
+		run := execution.NewRunnerWithRequestTaskSets(ts)
 
 		err = run.LaunchAndWait(ctx, attempt.Clients{
 			Swarming:      swarming,
@@ -1196,9 +1196,9 @@ func TestUnmanagedPool(t *testing.T) {
 			UnmanagedPool: "foo-pool",
 		}
 
-		ts, err := skylab.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
-		run := skylab.NewRunnerWithRequestTaskSets(ts)
+		run := execution.NewRunnerWithRequestTaskSets(ts)
 
 		err = run.LaunchAndWait(ctx, attempt.Clients{
 			Swarming:      swarming,
@@ -1237,9 +1237,9 @@ func TestResponseVerdict(t *testing.T) {
 		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
 		params := basicParams()
 
-		taskSets, err := skylab.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		taskSets, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
-		run := skylab.NewRunnerWithRequestTaskSets(taskSets)
+		run := execution.NewRunnerWithRequestTaskSets(taskSets)
 
 		// TODO(crbug.com/1001746, akeshet) Fix this test.
 		// This test is broken even after adding locks around testRun.attempts because it is possible that the
@@ -1364,9 +1364,9 @@ func TestIncompatibleDependencies(t *testing.T) {
 		swarming := newFakeSwarming("")
 		for _, c := range cases {
 			Convey(fmt.Sprintf("with %s", c.Tag), func() {
-				ts, err := skylab.NewRequestTaskSet(c.Invs, c.Params, basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(c.Invs, c.Params, basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
-				run := skylab.NewRunnerWithRequestTaskSets(ts)
+				run := execution.NewRunnerWithRequestTaskSets(ts)
 				err = run.LaunchAndWait(ctx, attempt.Clients{
 					Swarming:      swarming,
 					IsolateGetter: fakeGetterFactory(newFakeGetter()),
@@ -1409,7 +1409,7 @@ func testInvocationWithDependency(name string, deps ...string) *steps.Enumeratio
 	return &inv
 }
 
-func getSingleResponse(r *skylab.Runner) *steps.ExecuteResponse {
+func getSingleResponse(r *execution.Runner) *steps.ExecuteResponse {
 	resps := make([]*steps.ExecuteResponse, 0, 1)
 	for _, resp := range r.Responses() {
 		resps = append(resps, resp)

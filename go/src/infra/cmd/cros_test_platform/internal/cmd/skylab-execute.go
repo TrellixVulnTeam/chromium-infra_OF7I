@@ -24,10 +24,10 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/google"
 
+	"infra/cmd/cros_test_platform/internal/execution"
 	"infra/cmd/cros_test_platform/internal/execution/attempt"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/isolate/getter"
-	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/libs/skylab/common/errctx"
 	"infra/libs/skylab/swarming"
 )
@@ -112,7 +112,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		return err
 	}
 
-	runner, err := skylab.NewRunner(cfg.SkylabWorker, taskID, d, request.TaggedRequests)
+	runner, err := execution.NewRunner(cfg.SkylabWorker, taskID, d, request.TaggedRequests)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 	}
 	return nil
 }
-func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *skylab.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
+func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *execution.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithDeadline(ctx, deadline, fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline))
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, attempt.Clients{
