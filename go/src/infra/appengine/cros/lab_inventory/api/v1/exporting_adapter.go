@@ -210,6 +210,8 @@ func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Con
 	}
 	if cr50Env != "" {
 		l.Cr50RoKeyid = &cr50Env
+	} else {
+		l.Cr50RoKeyid = &emptyString
 	}
 	wifiChip := m.GetWifiChip()
 	l.WifiChip = &wifiChip

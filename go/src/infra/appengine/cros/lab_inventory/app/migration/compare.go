@@ -182,13 +182,36 @@ func filterOutKnownDifference(d1, d2 *inventory.DeviceUnderTest) {
 	// Add other know difference here.
 	cmn1 := d1.GetCommon()
 	cmn2 := d2.GetCommon()
-	c1 := cmn1.GetLabels().GetCapabilities()
-	c2 := cmn2.GetLabels().GetCapabilities()
+	l1 := cmn1.GetLabels()
+	l2 := cmn2.GetLabels()
+	c1 := l1.GetCapabilities()
+	c2 := l2.GetCapabilities()
 
 	cmn1.Environment = cmn2.Environment
 
 	c1.Modem = c2.Modem
 	c1.Telephony = c2.Telephony
+
+	l1.ReferenceDesign = l2.ReferenceDesign
+	l1.Brand = l2.Brand
+	l1.Platform = l2.Platform
+	l1.Cr50RwKeyid = l2.Cr50RwKeyid
+	l1.Cr50RwVersion = l2.Cr50RwVersion
+	l1.Cr50RoVersion = l2.Cr50RoVersion
+	l1.CtsAbi = l2.CtsAbi
+	l1.CtsCpu = l2.CtsCpu
+
+	c1.VideoAcceleration = c2.VideoAcceleration
+
+	attrBlackList := stringset.NewFromSlice("stashed_labels", "job_repo_url")
+	var newAttrs []*inventory.KeyValue
+	for _, attr := range cmn1.GetAttributes() {
+		if attrBlackList.Has(attr.GetKey()) {
+			continue
+		}
+		newAttrs = append(newAttrs, attr)
+	}
+	cmn1.Attributes = newAttrs
 }
 
 func alignBooleans(d1, d2 *inventory.DeviceUnderTest) {
