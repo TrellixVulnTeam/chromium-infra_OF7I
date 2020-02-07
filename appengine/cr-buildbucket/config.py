@@ -284,9 +284,9 @@ class Builder(ndb.Model):
     self.config_hash = self.compute_hash(self.config)
 
   @staticmethod
-  def make_key(project_id, bucket_id, builder_name):
+  def make_key(project_id, bucket_name, builder_name):
     return ndb.Key(
-        Project, project_id, Bucket, bucket_id, Builder, builder_name
+        Project, project_id, Bucket, bucket_name, Builder, builder_name
     )
 
 
@@ -398,9 +398,9 @@ def put_bucket(project_id, revision, bucket_cfg):
   ).put()
 
 
-def put_builders(project_id, bucket_id, *builder_cfgs):
+def put_builders(project_id, bucket_name, *builder_cfgs):
   builders = [
-      Builder(key=Builder.make_key(project_id, bucket_id, b.name), config=b)
+      Builder(key=Builder.make_key(project_id, bucket_name, b.name), config=b)
       for b in builder_cfgs
   ]
   ndb.put_multi(builders)

@@ -79,7 +79,8 @@ class CreationTest(testing.AppengineTestCase):
         }
         '''
     )
-    config.put_bucket('chromium', 'a' * 40, self.chromium_try)
+    config.put_bucket('chromium', 'try', self.chromium_try)
+    config.put_builders('chromium', 'try', *self.chromium_try.swarming.builders)
     self.create_sync_task = self.patch(
         'swarming.create_sync_task',
         autospec=True,
@@ -111,8 +112,10 @@ class CreationTest(testing.AppengineTestCase):
 
   @contextlib.contextmanager
   def mutate_builder_cfg(self):
-    yield self.chromium_try.swarming.builders[0]
-    config.put_bucket('chromium', 'a' * 40, self.chromium_try)
+    mutable = self.chromium_try.swarming.builders[0]
+    yield mutable
+    config.put_bucket('chromium', 'try', self.chromium_try)
+    config.put_builders('chromium', 'try', mutable)
 
   def build_request(self, schedule_build_request_fields=None, **kwargs):
     schedule_build_request_fields = schedule_build_request_fields or {}
@@ -167,6 +170,18 @@ class CreationTest(testing.AppengineTestCase):
     req = self.build_request(dict(builder=builder_id))
     (_, ex), = creation.add_many_async([req]).get_result()
     self.assertIsInstance(ex, errors.BuilderNotFoundError)
+
+  def test_non_existing_builder_legacy(self):
+    config.put_bucket(
+        'legacy', 'try', test_util.parse_bucket_cfg('name: "luci.legacy.try"')
+    )
+    builder_id = build_pb2.BuilderID(
+        project='legacy',
+        bucket='try',
+        builder='non-existing',
+    )
+    build = self.add(dict(builder=builder_id))
+    self.assertIsNotNone(build)
 
   def test_critical(self):
     build = self.add(dict(critical=common_pb2.YES))

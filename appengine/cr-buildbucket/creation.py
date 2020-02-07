@@ -412,18 +412,31 @@ def add_many_async(build_requests):
   settings = yield config.get_settings_async()
 
   # Fetch and index configs.
+  builder_keys = set()
+  for r in build_requests:
+    b = r.schedule_build_request.builder
+    builder_keys.add(config.Builder.make_key(b.project, b.bucket, b.builder))
+  # {bucket_id: {builder_name: cfg}}
+  builder_cfgs = collections.defaultdict(dict)
+  for b in ndb.get_multi(builder_keys):
+    if b:
+      bucket_id = config.format_bucket_id(
+          b.key.parent().parent().id(),
+          b.key.parent().id()
+      )
+      builder_cfgs[bucket_id][b.config.name] = b.config
+
+  # Legacy buckets didn't allow defining builders. Therefore not found errors
+  # should only be reported for non-legacy buckets. Fetch buckets in order to
+  # check whether they are legacy or not in case a builder isn't found.
   bucket_ids = {br.bucket_id for br in build_requests}
   bucket_cfgs = yield config.get_buckets_async(bucket_ids)
-  builder_cfgs = {}  # {bucket_id: {builder_name: cfg}}
-  for bucket_id, bucket_cfg in bucket_cfgs.iteritems():
-    builder_cfgs[bucket_id] = {b.name: b for b in bucket_cfg.swarming.builders}
 
   # Prepare NewBuild objects.
   new_builds = []
   for r in build_requests:
     builder = r.schedule_build_request.builder.builder
-    bucket_builder_cfgs = builder_cfgs[r.bucket_id]
-    builder_cfg = bucket_builder_cfgs.get(builder)
+    builder_cfg = builder_cfgs.get(r.bucket_id, {}).get(builder)
 
     # Apply builder config overrides, if any.
     # Exists for backward compatibility, runs only in V1 code path.
@@ -432,7 +445,9 @@ def add_many_async(build_requests):
       r.override_builder_cfg(builder_cfg)
 
     nb = NewBuild(r, builder_cfg)
-    if bucket_builder_cfgs and not builder_cfg:
+    # Only report not found for non-legacy buckets (i.e. has swarming config).
+    if not builder_cfg and config.is_swarming_config(bucket_cfgs[r.bucket_id]):
+      b = r.schedule_build_request.builder
       nb.exception = errors.BuilderNotFoundError(
           'builder "%s" not found in bucket "%s"' % (builder, r.bucket_id)
       )
