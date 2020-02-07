@@ -16,7 +16,7 @@ cron:
   url: /internal/cron/update-device-configs
   schedule: every 5 minutes
 
-- description: sync manufacturing configs to inventory file and datastore
+- description: sync manufacturing configs to inventory file
   url: /internal/cron/update-manufacturing-configs
   schedule: every 5 minutes
 

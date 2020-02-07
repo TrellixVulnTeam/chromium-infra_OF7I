@@ -52,6 +52,7 @@ import (
 	dataSV "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/appengine/drone-queen/api"
+	"infra/libs/cros/lab_inventory/manufacturingconfig"
 	sv "infra/libs/cros/stableversion"
 	"infra/libs/cros/stableversion/git"
 	"infra/libs/skylab/inventory"
@@ -292,10 +293,7 @@ func updateManufacturingConfig(ctx context.Context, configs map[string]*manufact
 			continue
 		}
 		l := d.GetCommon().GetLabels()
-		if l.WifiChip == nil {
-			l.WifiChip = new(string)
-		}
-		*l.WifiChip = c.GetWifiChip()
+		manufacturingconfig.ConvertMCToV1Labels(c, l)
 	}
 	url, err := s.Commit(ctx, fmt.Sprintf("Update manufacturing config"))
 	if gitstore.IsEmptyErr(err) {
