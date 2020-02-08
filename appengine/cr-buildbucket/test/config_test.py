@@ -33,6 +33,13 @@ def short_bucket_cfg(cfg):
   return cfg
 
 
+def without_builders(cfg):
+  cfg = copy.deepcopy(cfg)
+  if config.is_swarming_config(cfg):
+    del cfg.swarming.builders[:]
+  return cfg
+
+
 LUCI_CHROMIUM_TRY = test_util.parse_bucket_cfg(
     '''
     name: "luci.chromium.try"
@@ -149,15 +156,35 @@ class ConfigTest(testing.AppengineTestCase):
     config.put_bucket('chromium', 'deadbeef', LUCI_CHROMIUM_TRY)
     rev, cfg = config.get_bucket('chromium/try')
     self.assertEqual(rev, 'deadbeef')
-    self.assertEqual(cfg, short_bucket_cfg(LUCI_CHROMIUM_TRY))
+    self.assertEqual(cfg, without_builders(short_bucket_cfg(LUCI_CHROMIUM_TRY)))
 
     self.assertIsNone(config.get_bucket('chromium/nonexistent')[0])
 
   def test_get_buckets_async(self):
     config.put_bucket('chromium', 'deadbeef', MASTER_TRYSERVER_CHROMIUM_LINUX)
+    config.put_builders(
+        'chromium', 'master.tryserver.chromium.linux',
+        *MASTER_TRYSERVER_CHROMIUM_LINUX.swarming.builders
+    )
     config.put_bucket('chromium', 'deadbeef', LUCI_CHROMIUM_TRY)
+    config.put_builders('chromium', 'try', *LUCI_CHROMIUM_TRY.swarming.builders)
     config.put_bucket('dart', 'deadbeef', LUCI_DART_TRY)
+    config.put_builders('dart', 'try', *LUCI_DART_TRY.swarming.builders)
+
+    # Without builders.
     actual = config.get_buckets_async().get_result()
+    expected = {
+        'chromium/master.tryserver.chromium.linux':
+            without_builders(MASTER_TRYSERVER_CHROMIUM_LINUX),
+        'chromium/try':
+            without_builders(short_bucket_cfg(LUCI_CHROMIUM_TRY)),
+        'dart/try':
+            without_builders(short_bucket_cfg(LUCI_DART_TRY)),
+    }
+    self.assertEqual(actual, expected)
+
+    # With builders.
+    actual = config.get_buckets_async(include_builders=True).get_result()
     expected = {
         'chromium/master.tryserver.chromium.linux':
             MASTER_TRYSERVER_CHROMIUM_LINUX,
@@ -170,10 +197,28 @@ class ConfigTest(testing.AppengineTestCase):
 
   def test_get_buckets_async_with_bucket_ids(self):
     config.put_bucket('chromium', 'deadbeef', LUCI_CHROMIUM_TRY)
+    config.put_builders('chromium', 'try', *LUCI_CHROMIUM_TRY.swarming.builders)
     config.put_bucket('chromium', 'deadbeef', MASTER_TRYSERVER_CHROMIUM_WIN)
-    bid = 'chromium/try'
-    actual = config.get_buckets_async([bid]).get_result()
-    expected = {'chromium/try': short_bucket_cfg(LUCI_CHROMIUM_TRY)}
+    config.put_builders(
+        'chromium', 'master.tryserver.chromium.win',
+        *MASTER_TRYSERVER_CHROMIUM_WIN.swarming.builders
+    )
+
+    # Without builders.
+    actual = config.get_buckets_async(bucket_ids=['chromium/try']).get_result()
+    expected = {
+        'chromium/try': without_builders(short_bucket_cfg(LUCI_CHROMIUM_TRY))
+    }
+    self.assertEqual(actual, expected)
+
+    # With builders.
+    actual = config.get_buckets_async(
+        bucket_ids=['chromium/master.tryserver.chromium.win'],
+        include_builders=True
+    ).get_result()
+    expected = {
+        'chromium/master.tryserver.chromium.win': MASTER_TRYSERVER_CHROMIUM_WIN
+    }
     self.assertEqual(actual, expected)
 
   def test_get_buckets_async_with_bucket_ids_not_found(self):
@@ -575,7 +620,7 @@ class ConfigTest(testing.AppengineTestCase):
     # We must not delete buckets or builders defined in a project that currently
     # have a broken config.
     _, actual = config.get_bucket('dart/try')
-    self.assertEqual(actual, short_bucket_cfg(LUCI_DART_TRY))
+    self.assertEqual(actual, without_builders(short_bucket_cfg(LUCI_DART_TRY)))
     actual = config.Builder.make_key('dart', 'try', 'linux').get()
     self.assertTrue(actual)
     self.assertEqual(actual.config, LUCI_DART_TRY.swarming.builders[0])

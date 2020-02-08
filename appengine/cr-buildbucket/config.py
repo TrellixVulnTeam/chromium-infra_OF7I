@@ -28,7 +28,7 @@ from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
 
-CURRENT_BUCKET_SCHEMA_VERSION = 6
+CURRENT_BUCKET_SCHEMA_VERSION = 7
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
 
 
@@ -305,26 +305,45 @@ def is_swarming_config(cfg):
 
 @ndb.non_transactional
 @ndb.tasklet
-def get_buckets_async(bucket_ids=None):
+def get_buckets_async(bucket_ids=None, include_builders=False):
   """Returns configured buckets.
 
   If bucket_ids is None, returns all buckets.
   Otherwise returns only specified buckets.
   If a bucket does not exist, returns a None map value.
+  By default, builder configs are omitted.
 
   Returns:
     {bucket_id: project_config_pb2.Bucket} dict.
   """
+  cfgs = {}
   if bucket_ids is not None:
     bucket_ids = list(bucket_ids)
     keys = [Bucket.make_key(*parse_bucket_id(bid)) for bid in bucket_ids]
+    cfgs = {bid: None for bid in bucket_ids}
     buckets = yield ndb.get_multi_async(keys)
-    raise ndb.Return({
-        bid: b.config if b else None for bid, b in zip(bucket_ids, buckets)
-    })
   else:
     buckets = yield Bucket.query().fetch_async()
-    raise ndb.Return({b.bucket_id: b.config for b in buckets})
+  cfgs.update({b.bucket_id: b.config for b in buckets if b})
+
+  builders = {}  # bucket_id -> [builders]
+  if include_builders:
+    futures = {}
+    for bucket_id in cfgs:
+      bucket_key = Bucket.make_key(*parse_bucket_id(bucket_id))
+      futures[bucket_id] = Builder.query(ancestor=bucket_key).fetch_async()
+    for bucket_id, f in futures.iteritems():
+      builders[bucket_id] = f.get_result()
+
+  for bucket_id, cfg in cfgs.iteritems():
+    if is_swarming_config(cfg):
+      del cfg.swarming.builders[:]
+      cfg.swarming.builders.extend(
+          sorted([b.config for b in builders.get(bucket_id, [])],
+                 key=lambda b: b.name)
+      )
+
+  raise ndb.Return(cfgs)
 
 
 @utils.memcache_async(
@@ -361,6 +380,8 @@ def get_bucket_async(bucket_id):
   bucket = yield key.get_async()
   if bucket is None:
     raise ndb.Return(None, None)
+  if is_swarming_config(bucket.config):  # pragma: no cover
+    del bucket.config.swarming.builders[:]
   raise ndb.Return(bucket.revision, bucket.config)
 
 

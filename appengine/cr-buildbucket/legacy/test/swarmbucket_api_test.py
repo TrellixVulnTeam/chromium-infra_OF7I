@@ -98,6 +98,7 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     '''
     )
     config.put_bucket('chromium', 'deadbeef', chromium_cfg)
+    config.put_builders('chromium', 'try', *chromium_cfg.swarming.builders)
 
     v8_cfg = test_util.parse_bucket_cfg(
         '''

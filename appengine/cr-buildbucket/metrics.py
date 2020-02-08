@@ -333,8 +333,8 @@ def update_global_metrics():
     builder_ids.add((bucket_id, builder))
 
   all_luci_bucket_ids = {
-      bid for bid, config in config.get_buckets_async().get_result().iteritems()
-      if config and config.swarming.builders
+      bid for bid, cfg in config.get_buckets_async().get_result().iteritems()
+      if cfg and config.is_swarming_config(cfg)
   }
 
   # Collect a list of counting/latency queries.

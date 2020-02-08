@@ -144,9 +144,11 @@ class SwarmbucketApi(remote.Service):
       # bucket_ids is None => all buckets are available.
 
     res = GetBuildersResponseMessage()
-    buckets = config.get_buckets_async(bucket_ids).get_result()
+    buckets = config.get_buckets_async(
+        bucket_ids=bucket_ids, include_builders=True
+    ).get_result()
     for bucket_id, cfg in buckets.iteritems():
-      if not cfg or not cfg.swarming.builders:
+      if not cfg or not config.is_swarming_config(cfg):
         continue
 
       def to_dims(b):
@@ -188,17 +190,11 @@ class SwarmbucketApi(remote.Service):
           request.build_request
       )
 
-      # Find builder config.
       builder_id = build_request.schedule_build_request.builder
-      builder_cfg = None
-      bucket_id = config.format_bucket_id(builder_id.project, builder_id.bucket)
-      _, bucket_cfg = config.get_bucket_async(bucket_id).get_result()
-      assert bucket_cfg, 'if there is no bucket, access check would fail'
-      for cfg in bucket_cfg.swarming.builders:  # pragma: no branch
-        if cfg.name == builder_id.builder:
-          builder_cfg = cfg
-          break
-      if not builder_cfg:
+      builder = config.Builder.make_key(
+          builder_id.project, builder_id.bucket, builder_id.builder
+      ).get()
+      if not builder:
         raise endpoints.NotFoundException(
             'Builder %s/%s/%s not found' %
             (builder_id.project, builder_id.bucket, builder_id.builder)
@@ -209,7 +205,7 @@ class SwarmbucketApi(remote.Service):
       # Create a fake build and prepare a task definition.
       identity = auth.get_current_identity()
       build = build_request.create_build_async(
-          1, settings, builder_cfg, identity, utils.utcnow()
+          1, settings, builder.config, identity, utils.utcnow()
       ).get_result()
       assert build.proto.HasField('infra')
       build.proto.number = 1
@@ -232,15 +228,14 @@ class SwarmbucketApi(remote.Service):
     bucket_id = api.convert_bucket(request.bucket)
     if not user.can_set_next_number_async(bucket_id).get_result():
       raise endpoints.ForbiddenException('access denied')
-    _, bucket = config.get_bucket(bucket_id)
 
-    if not any(b.name == request.builder for b in bucket.swarming.builders):
+    project, bucket = config.parse_bucket_id(bucket_id)
+    if not config.Builder.make_key(project, bucket, request.builder).get():
       raise endpoints.BadRequestException(
           'builder "%s" not found in bucket "%s"' %
           (request.builder, bucket_id)
       )
 
-    project, bucket = config.parse_bucket_id(bucket_id)
     builder_id = build_pb2.BuilderID(
         project=project, bucket=bucket, builder=request.builder
     )
