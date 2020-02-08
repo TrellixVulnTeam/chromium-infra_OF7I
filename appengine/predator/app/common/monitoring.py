@@ -9,7 +9,8 @@ reports_processed = gae_ts_mon.CounterMetric(
     'Metric counting the number of crash reports that Predator has processed. '
     'Contains fields describing whether Predator was successful at finding a '
     'regression range, a components, or suspect changes for each report.',
-    [gae_ts_mon.BooleanField('found_suspects'),
+    [gae_ts_mon.IntegerField('suspect_count'),
+     gae_ts_mon.BooleanField('found_suspects'),
      gae_ts_mon.BooleanField('found_components'),
      gae_ts_mon.BooleanField('has_regression_range'),
      gae_ts_mon.StringField('client_id'),

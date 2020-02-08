@@ -96,6 +96,7 @@ class CrashAnalysis(ndb.Model):
   found_components = ndb.BooleanProperty(indexed=True)
 
   # Correct results.
+  suspect_count = ndb.IntegerProperty(indexed=True)
   culprit_regression_range = ndb.JsonProperty(indexed=False)
   culprit_cls = ndb.JsonProperty(indexed=False)
   culprit_components = ndb.JsonProperty(indexed=False)

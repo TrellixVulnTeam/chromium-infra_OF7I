@@ -310,11 +310,13 @@ class PredatorTest(AppengineTestCase):
     analysis = predator.CreateAnalysis({'signature': 'sig'})
     analysis.status = analysis_status.COMPLETED
     analysis.found_suspects = True
+    analysis.suspect_count = 1
     analysis.found_components = True
     analysis.has_regression_range = True
 
     predator.UpdateMetrics(analysis)
     mock_reports_processed.increment.assert_called_with({
+        'suspect_count': 1,
         'found_suspects': True,
         'found_components': True,
         'has_regression_range': True,

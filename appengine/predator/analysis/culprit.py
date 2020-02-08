@@ -110,6 +110,7 @@ class Culprit(namedtuple('Culprit',
       result['suspected_cls'] = [cl.ToDict() for cl in self.suspected_cls]
 
     tags = {
+      'suspect_count': len(self.suspected_cls) if self.suspected_cls else 0,
       'found_suspects': bool(self.suspected_cls),
       'has_regression_range': bool(self.regression_range),
       'found_project': bool(self.project),

@@ -274,6 +274,7 @@ class PredatorApp(object):
 
   def UpdateMetrics(self, analysis):
     monitoring.reports_processed.increment({
+        'suspect_count': analysis.suspect_count,
         'found_suspects': analysis.found_suspects,
         'found_components': analysis.found_components,
         'has_regression_range': analysis.has_regression_range,
