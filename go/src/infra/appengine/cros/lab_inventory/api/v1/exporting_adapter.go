@@ -324,7 +324,7 @@ func setDutState(p *inventory.Peripherals, s *lab.DutState) {
 	setDutStateHelper(s.GetAudioLoopbackDongle(), &(p.AudioLoopbackDongle))
 }
 
-func createDutLabels(lc *lab.ChromeOSDevice, ostype *inventory.SchedulableLabels_OSType) *inventory.SchedulableLabels {
+func createDutLabels(lc *lab.ChromeOSDevice, osType *inventory.SchedulableLabels_OSType) *inventory.SchedulableLabels {
 	devcfgID := lc.GetDeviceConfigId()
 	_, arc := arcBoardMap[devcfgID.GetPlatformId().GetValue()]
 	// Use GetXXX in case any object is nil.
@@ -335,7 +335,7 @@ func createDutLabels(lc *lab.ChromeOSDevice, ostype *inventory.SchedulableLabels
 
 	labels := inventory.SchedulableLabels{
 		Arc:               &arc,
-		OsType:            ostype,
+		OsType:            osType,
 		Platform:          &platform,
 		Board:             &platform,
 		Brand:             &brand,
@@ -390,9 +390,15 @@ func adaptV2DutToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest
 		append("servo_serial", p.GetServo().GetServoSerial()).
 		append("servo_type", p.GetServo().GetServoType())
 
-	ostype := inventory.SchedulableLabels_OS_TYPE_CROS
+	osType := inventory.SchedulableLabels_OS_TYPE_INVALID
+	if board := lc.GetDeviceConfigId().GetPlatformId().GetValue(); board != "" {
+		var found bool
+		if osType, found = boardToOsTypeMapping[board]; !found {
+			osType = inventory.SchedulableLabels_OS_TYPE_CROS
+		}
+	}
 
-	labels := createDutLabels(lc, &ostype)
+	labels := createDutLabels(lc, &osType)
 
 	setDutPools(labels, lc.GetDut().GetPools())
 	setDutPeripherals(labels, p)
@@ -426,8 +432,8 @@ func adaptV2LabstationToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUn
 		append("powerunit_hostname", l.GetRpm().GetPowerunitName()).
 		append("powerunit_outlet", l.GetRpm().GetPowerunitOutlet()).
 		append("serial_number", sn)
-	ostype := inventory.SchedulableLabels_OS_TYPE_LABSTATION
-	labels := createDutLabels(lc, &ostype)
+	osType := inventory.SchedulableLabels_OS_TYPE_LABSTATION
+	labels := createDutLabels(lc, &osType)
 	// Hardcode labstation labels.
 	labels.Platform = &emptyString
 	acOnly := "AC_only"

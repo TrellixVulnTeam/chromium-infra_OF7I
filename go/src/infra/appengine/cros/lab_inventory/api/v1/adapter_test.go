@@ -507,6 +507,29 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(d.GetCommon().GetHostname(), ShouldEqual, "test_host")
 		})
+		Convey("may os_type", func() {
+			board := "fizz-moblab"
+			osType := inventory.SchedulableLabels_OS_TYPE_MOBLAB
+			d := proto.Clone(&d1).(*inventory.DeviceUnderTest)
+			d.GetCommon().GetLabels().Board = &board
+			d.GetCommon().GetLabels().Platform = &board
+			d.GetCommon().GetLabels().OsType = &osType
+			d.GetCommon().GetLabels().Arc = &falseValue
+			d.GetCommon().GetLabels().EcType = nil
+			s1, err := inventory.WriteLabToString(&inventory.Lab{
+				Duts: []*inventory.DeviceUnderTest{d},
+			})
+			So(err, ShouldBeNil)
+
+			dataCopy.LabConfig = proto.Clone(data.LabConfig).(*lab.ChromeOSDevice)
+			dataCopy.LabConfig.GetDeviceConfigId().GetPlatformId().Value = board
+			d2, err := AdaptToV1DutSpec(&dataCopy)
+			So(err, ShouldBeNil)
+			s2, err := inventory.WriteLabToString(&inventory.Lab{
+				Duts: []*inventory.DeviceUnderTest{d2},
+			})
+			So(s1, ShouldEqual, s2)
+		})
 		Convey("happy path", func() {
 			d, err := AdaptToV1DutSpec(&data)
 			So(err, ShouldBeNil)
