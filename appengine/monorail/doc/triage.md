@@ -11,7 +11,7 @@ issues reported by our users and take appropriate actions.
 [Review](https://team-review.git.corp.google.com/q/repo:cluster-fuzzteam/sheriffbot) and [deploy](http://go/chops-workflow-sheriffbot#deployment) Sheriffbot's new CL's.
 
 Look at each issue in the
-[Monorail untriaged queue](https://bugs.chromium.org/p/monorail/issues/list?can=2&q=-has%3Aqueue+-has%3Aowner) and [Sheriffbot untriaged queue](https://bugs.chromium.org/p/chromium/issues/list?q=component%3ATools%3EStability%3ESheriffbot%20status%3Auntriaged&can=2)
+[Monorail untriaged queue](https://bugs.chromium.org/p/monorail/issues/list?can=2&q=-has%3Aqueue+-has%3Aowner) and [Sheriffbot untriaged queue](http://crbug.com/?q=component%3DTools%3EStability%3ESheriffbot%20status%3Auntriaged&can=2)
 and do the following:
 
 * If it is an urgent issue that affects operation of the site, notify the monorail chat or
