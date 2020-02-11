@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 import unittest
 
+from google.protobuf import timestamp_pb2
+
 from api.v1 import converters
 from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import issue_objects_pb2
@@ -17,6 +19,32 @@ from testing import fake
 from services import service_manager
 
 class ConverterFunctionsTest(unittest.TestCase):
+
+  def setUp(self):
+    self.services = service_manager.Services(
+        issue=fake.IssueService(), project=fake.ProjectService())
+    self.cnxn = fake.MonorailConnection()
+    self.PAST_TIME = 12345
+    self.project_1 = self.services.project.TestAddProject(
+        'proj', project_id=789)
+    self.project_2 = self.services.project.TestAddProject(
+        'goose', project_id=788)
+    self.issue_1 = fake.MakeTestIssue(
+        self.project_1.project_id,
+        1,
+        'sum',
+        'New',
+        111,
+        project_name=self.project_1.project_name)
+    self.issue_2 = fake.MakeTestIssue(
+        self.project_2.project_id,
+        2,
+        'sum',
+        'New',
+        111,
+        project_name=self.project_2.project_name)
+    self.services.issue.TestAddIssue(self.issue_1)
+    self.services.issue.TestAddIssue(self.issue_2)
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -51,3 +79,38 @@ class ConverterFunctionsTest(unittest.TestCase):
         summary=hotlist.summary,
         description=hotlist.description)
     self.assertEqual(converters.ConvertHotlist(hotlist), expected_api_hotlist)
+
+  def testConvertHotlistItems(self):
+    """We can convert HotlistItems."""
+    hotlist_item_fields = [
+        (self.issue_1.issue_id, 21, 111, self.PAST_TIME, 'note2'),
+        (78900, 11, 222, self.PAST_TIME, 'note3'),  # Does not exist.
+        (self.issue_2.issue_id, 1, 222, self.PAST_TIME, 'note1'),
+    ]
+    hotlist = fake.Hotlist(
+        'Hotlist-Name', 241, hotlist_item_fields=hotlist_item_fields)
+    api_items = converters.ConvertHotlistItems(
+        self.cnxn, hotlist.hotlist_id, hotlist.items, self.services)
+    expected_items = [
+        feature_objects_pb2.HotlistItem(
+            name='hotlists/241/items/proj.1',
+            issue='projects/proj/issues/1',
+            rank=1,
+            adder='users/111',
+            create_time=timestamp_pb2.Timestamp().FromSeconds(self.PAST_TIME),
+            note='note2'),
+        feature_objects_pb2.HotlistItem(
+            name='hotlists/241/items/goose.2',
+            issue='projects/goose/issues/2',
+            rank=0,
+            adder='users/222',
+            create_time=timestamp_pb2.Timestamp().FromSeconds(self.PAST_TIME),
+            note='note1')
+    ]
+    self.assertEqual(api_items, expected_items)
+
+  def testConvertHotlistItems_Empty(self):
+    hotlist = fake.Hotlist('Hotlist-Name', 241)
+    api_items = converters.ConvertHotlistItems(
+        self.cnxn, hotlist.hotlist_id, hotlist.items, self.services)
+    self.assertEqual(api_items, [])

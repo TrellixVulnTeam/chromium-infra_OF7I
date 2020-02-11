@@ -287,7 +287,6 @@ def IngestUserNames(names):
 
 def ConvertUserNames(user_ids):
   # Collection[int] -> Mapping[int, str]
-
   """Takes a List of Users and returns the User's resource names.
 
   Args:
