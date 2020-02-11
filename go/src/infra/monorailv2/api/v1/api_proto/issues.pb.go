@@ -69,39 +69,196 @@ func (m *GetIssueRequest) GetName() string {
 	return ""
 }
 
+// The request message for Issues.SearchIssues.
+// Next available tag: 6
+type SearchIssuesRequest struct {
+	// The name of the Project in which to search issues.
+	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
+	// The query string can contain any number of free text and
+	// field search expressions.
+	// Please see https://bugs.chromium.org/p/chromium/issues/searchtips for more
+	// details of how the query string works.
+	Query string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	// The maximum number of items to return. The service may return fewer than
+	// this value.
+	// If unspecified, at most 1000 items will be returned.
+	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `SearchIssues` call.
+	// Provide this to retrieve the subsequent page.
+	//
+	// When paginating, all other parameters provided to `SearchIssues` must match
+	// the call that provided the page token.
+	PageToken string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// The string of comma separated field names used to order the items.
+	// Adding '-' before a field, reverses the sort order.
+	// E.g. 'stars,-status' sorts the items by number of stars, high to low,
+	// then by status, low to high.
+	OrderBy              string   `protobuf:"bytes,5,opt,name=order_by,json=orderBy,proto3" json:"order_by,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SearchIssuesRequest) Reset()         { *m = SearchIssuesRequest{} }
+func (m *SearchIssuesRequest) String() string { return proto.CompactTextString(m) }
+func (*SearchIssuesRequest) ProtoMessage()    {}
+func (*SearchIssuesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_da7675e39ac6c753, []int{1}
+}
+
+func (m *SearchIssuesRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SearchIssuesRequest.Unmarshal(m, b)
+}
+func (m *SearchIssuesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SearchIssuesRequest.Marshal(b, m, deterministic)
+}
+func (m *SearchIssuesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SearchIssuesRequest.Merge(m, src)
+}
+func (m *SearchIssuesRequest) XXX_Size() int {
+	return xxx_messageInfo_SearchIssuesRequest.Size(m)
+}
+func (m *SearchIssuesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SearchIssuesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SearchIssuesRequest proto.InternalMessageInfo
+
+func (m *SearchIssuesRequest) GetParent() string {
+	if m != nil {
+		return m.Parent
+	}
+	return ""
+}
+
+func (m *SearchIssuesRequest) GetQuery() string {
+	if m != nil {
+		return m.Query
+	}
+	return ""
+}
+
+func (m *SearchIssuesRequest) GetPageSize() int32 {
+	if m != nil {
+		return m.PageSize
+	}
+	return 0
+}
+
+func (m *SearchIssuesRequest) GetPageToken() string {
+	if m != nil {
+		return m.PageToken
+	}
+	return ""
+}
+
+func (m *SearchIssuesRequest) GetOrderBy() string {
+	if m != nil {
+		return m.OrderBy
+	}
+	return ""
+}
+
+// The response message for Issues.SearchIssues.
+// Next available tag: 3
+type SearchIssuesResponse struct {
+	// Issues matching the given request.
+	Issues []*Issue `protobuf:"bytes,1,rep,name=issues,proto3" json:"issues,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken        string   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SearchIssuesResponse) Reset()         { *m = SearchIssuesResponse{} }
+func (m *SearchIssuesResponse) String() string { return proto.CompactTextString(m) }
+func (*SearchIssuesResponse) ProtoMessage()    {}
+func (*SearchIssuesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_da7675e39ac6c753, []int{2}
+}
+
+func (m *SearchIssuesResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SearchIssuesResponse.Unmarshal(m, b)
+}
+func (m *SearchIssuesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SearchIssuesResponse.Marshal(b, m, deterministic)
+}
+func (m *SearchIssuesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SearchIssuesResponse.Merge(m, src)
+}
+func (m *SearchIssuesResponse) XXX_Size() int {
+	return xxx_messageInfo_SearchIssuesResponse.Size(m)
+}
+func (m *SearchIssuesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SearchIssuesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SearchIssuesResponse proto.InternalMessageInfo
+
+func (m *SearchIssuesResponse) GetIssues() []*Issue {
+	if m != nil {
+		return m.Issues
+	}
+	return nil
+}
+
+func (m *SearchIssuesResponse) GetNextPageToken() string {
+	if m != nil {
+		return m.NextPageToken
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*GetIssueRequest)(nil), "monorail.v1.GetIssueRequest")
+	proto.RegisterType((*SearchIssuesRequest)(nil), "monorail.v1.SearchIssuesRequest")
+	proto.RegisterType((*SearchIssuesResponse)(nil), "monorail.v1.SearchIssuesResponse")
 }
 
 func init() { proto.RegisterFile("api/v1/api_proto/issues.proto", fileDescriptor_da7675e39ac6c753) }
 
 var fileDescriptor_da7675e39ac6c753 = []byte{
-	// 255 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4d, 0x2c, 0xc8, 0xd4,
-	0x2f, 0x33, 0xd4, 0x4f, 0x2c, 0xc8, 0x8c, 0x2f, 0x28, 0xca, 0x2f, 0xc9, 0xd7, 0xcf, 0x2c, 0x2e,
-	0x2e, 0x4d, 0x2d, 0xd6, 0x03, 0x73, 0x84, 0xb8, 0x73, 0xf3, 0xf3, 0xf2, 0x8b, 0x12, 0x33, 0x73,
-	0xf4, 0xca, 0x0c, 0xa5, 0x34, 0xd3, 0xf3, 0xf3, 0xd3, 0x73, 0x52, 0xa1, 0xea, 0x20, 0x1c, 0x90,
-	0x46, 0xfd, 0xc4, 0xbc, 0xbc, 0xfc, 0x92, 0xc4, 0x92, 0xcc, 0xfc, 0x3c, 0xa8, 0x3e, 0x29, 0x1d,
-	0x5c, 0x4a, 0xd3, 0x32, 0x53, 0x73, 0x52, 0xe2, 0x93, 0x52, 0x33, 0x12, 0xcb, 0x32, 0xf3, 0x8b,
-	0xa0, 0xaa, 0xd5, 0x70, 0xa9, 0x2e, 0x4a, 0x2d, 0xce, 0x2f, 0x2d, 0x4a, 0x4e, 0x85, 0xaa, 0x53,
-	0xc1, 0xee, 0xd8, 0xf8, 0xfc, 0xa4, 0xac, 0xd4, 0xe4, 0x12, 0xa8, 0xdd, 0x4a, 0x4e, 0x5c, 0xfc,
-	0xee, 0xa9, 0x25, 0x9e, 0x20, 0x99, 0xa0, 0xd4, 0xc2, 0xd2, 0xd4, 0xe2, 0x12, 0x21, 0x7d, 0x2e,
-	0x96, 0xbc, 0xc4, 0xdc, 0x54, 0x09, 0x46, 0x05, 0x46, 0x0d, 0x4e, 0x27, 0xe9, 0x07, 0x8e, 0x4c,
-	0xbf, 0x1c, 0x45, 0xb9, 0x84, 0x13, 0x0b, 0x32, 0xf5, 0x92, 0x8b, 0x92, 0x4a, 0xd3, 0xf5, 0x92,
-	0xf3, 0x73, 0xf5, 0x21, 0x3a, 0xc0, 0x0a, 0x8d, 0x4a, 0xb8, 0xd8, 0xc0, 0xdc, 0x62, 0xa1, 0x2c,
-	0x2e, 0x0e, 0x98, 0x69, 0x42, 0x32, 0x7a, 0x48, 0xc1, 0xa1, 0x87, 0x66, 0x89, 0x94, 0x10, 0x8a,
-	0x2c, 0x58, 0x4a, 0x49, 0xa7, 0xe9, 0xf2, 0x93, 0xc9, 0x4c, 0x6a, 0x4a, 0x8a, 0xfa, 0x05, 0x45,
-	0x05, 0xc9, 0xfa, 0x18, 0x0a, 0x8a, 0xf5, 0x61, 0xa6, 0x58, 0x31, 0x6a, 0x25, 0xb1, 0x81, 0x3d,
-	0x60, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xfe, 0x52, 0xcd, 0x51, 0x95, 0x01, 0x00, 0x00,
+	// 446 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x92, 0xc1, 0x6e, 0x13, 0x31,
+	0x10, 0x86, 0xe5, 0xb4, 0x09, 0xe9, 0x14, 0x54, 0xc9, 0x6d, 0xc5, 0x92, 0x12, 0x29, 0x5d, 0x41,
+	0x14, 0xa2, 0x6a, 0x4d, 0x8b, 0xb8, 0xf4, 0xd6, 0x5c, 0x10, 0xb7, 0x2a, 0xe5, 0xbe, 0xf2, 0x6e,
+	0x87, 0xd4, 0x21, 0xb1, 0x5d, 0xdb, 0x1b, 0x91, 0x1c, 0x91, 0x78, 0x02, 0x9e, 0x86, 0xe7, 0xe0,
+	0x05, 0x38, 0xf0, 0x14, 0x88, 0x03, 0x5a, 0xaf, 0x23, 0x25, 0x90, 0xf4, 0x38, 0x33, 0xdf, 0xff,
+	0xcf, 0xbf, 0x9e, 0x85, 0x36, 0xd7, 0x82, 0xcd, 0xce, 0x19, 0xd7, 0x22, 0xd5, 0x46, 0x39, 0xc5,
+	0x84, 0xb5, 0x05, 0xda, 0xc4, 0x17, 0x74, 0x7f, 0xaa, 0xa4, 0x32, 0x5c, 0x4c, 0x92, 0xd9, 0x79,
+	0xeb, 0xd5, 0x48, 0xa9, 0xd1, 0x04, 0x03, 0x57, 0x15, 0xa5, 0x90, 0x71, 0x29, 0x95, 0xe3, 0x4e,
+	0x28, 0x19, 0x74, 0xad, 0xb3, 0x6d, 0xe8, 0x47, 0x81, 0x93, 0xdb, 0x34, 0xc3, 0x3b, 0x3e, 0x13,
+	0xca, 0x04, 0xba, 0xbb, 0x8d, 0x36, 0x68, 0x55, 0x61, 0x72, 0x0c, 0xdc, 0x8b, 0xcd, 0x61, 0x53,
+	0x95, 0x8d, 0x31, 0x77, 0x61, 0x77, 0x3c, 0x80, 0x83, 0x77, 0xe8, 0xde, 0x97, 0x93, 0x21, 0xde,
+	0x17, 0x68, 0x1d, 0x65, 0xb0, 0x2b, 0xf9, 0x14, 0x23, 0xd2, 0x21, 0xbd, 0xbd, 0xc1, 0xc9, 0xcf,
+	0xab, 0xda, 0xef, 0xab, 0x63, 0x38, 0xe4, 0x5a, 0x24, 0xb9, 0xc9, 0x8a, 0x51, 0x92, 0xab, 0x29,
+	0xab, 0x14, 0x1e, 0x8c, 0xbf, 0x13, 0x38, 0xbc, 0x41, 0x6e, 0xf2, 0x3b, 0xdf, 0xb5, 0x4b, 0xa3,
+	0xb7, 0xd0, 0xd0, 0xdc, 0xa0, 0x74, 0xc1, 0xaa, 0xed, 0xad, 0x9e, 0xc2, 0xf1, 0xba, 0xd5, 0xb5,
+	0x51, 0x65, 0xa2, 0x61, 0x80, 0xe9, 0x11, 0xd4, 0xef, 0x0b, 0x34, 0xf3, 0xa8, 0x56, 0xaa, 0x86,
+	0x55, 0x41, 0x4f, 0x60, 0x4f, 0xf3, 0x11, 0xa6, 0x56, 0x2c, 0x30, 0xda, 0xe9, 0x90, 0x5e, 0x7d,
+	0xd8, 0x2c, 0x1b, 0x37, 0x62, 0x81, 0xb4, 0x0d, 0xe0, 0x87, 0x4e, 0x7d, 0x42, 0x19, 0xed, 0x7a,
+	0x9d, 0xc7, 0x3f, 0x94, 0x0d, 0xfa, 0x0c, 0x9a, 0xca, 0xdc, 0xa2, 0x49, 0xb3, 0x79, 0x54, 0xf7,
+	0xc3, 0x47, 0xbe, 0x1e, 0xcc, 0xe3, 0x31, 0x1c, 0xad, 0x47, 0xb7, 0x5a, 0x49, 0x8b, 0xb4, 0x0f,
+	0x8d, 0xea, 0xb6, 0x11, 0xe9, 0xec, 0xf4, 0xf6, 0x2f, 0x68, 0xb2, 0x72, 0xdc, 0xa4, 0xfa, 0xfa,
+	0x40, 0xd0, 0x2e, 0x1c, 0x48, 0xfc, 0xec, 0xd2, 0x95, 0x08, 0x55, 0xf4, 0x27, 0x65, 0xfb, 0x7a,
+	0x19, 0xe3, 0xe2, 0x0f, 0x81, 0x46, 0xb5, 0x86, 0x8e, 0xa1, 0xb9, 0x7c, 0x76, 0xfa, 0x7c, 0xcd,
+	0xfa, 0x9f, 0x6b, 0xb4, 0x36, 0x2c, 0x8e, 0xcf, 0xbe, 0xfc, 0xf8, 0xf5, 0xad, 0xd6, 0x8d, 0x4f,
+	0x99, 0x36, 0x3a, 0x67, 0xff, 0x01, 0x96, 0x2d, 0x5d, 0x2e, 0x49, 0x9f, 0x7e, 0x25, 0xf0, 0x78,
+	0xf5, 0x1b, 0x69, 0x67, 0xcd, 0x72, 0xc3, 0xe5, 0x5a, 0xa7, 0x0f, 0x10, 0xd5, 0x03, 0xc5, 0xaf,
+	0x7d, 0x86, 0x7e, 0xfc, 0x72, 0x6b, 0x86, 0x55, 0xd9, 0x25, 0xe9, 0x67, 0x0d, 0xff, 0xc7, 0xbd,
+	0xf9, 0x1b, 0x00, 0x00, 0xff, 0xff, 0x78, 0xa0, 0x0c, 0x08, 0x46, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // IssuesClient is the client API for Issues service.
 //
@@ -110,6 +267,9 @@ type IssuesClient interface {
 	// Returns the requested Issue.
 	// TODO(monorail:6988): Document possible errors when implemented.
 	GetIssue(ctx context.Context, in *GetIssueRequest, opts ...grpc.CallOption) (*Issue, error)
+	// Searches over issues within the specified project.
+	// TODO(monorail:6988): Document possible errors when implemented.
+	SearchIssues(ctx context.Context, in *SearchIssuesRequest, opts ...grpc.CallOption) (*SearchIssuesResponse, error)
 }
 type issuesPRPCClient struct {
 	client *prpc.Client
@@ -128,11 +288,20 @@ func (c *issuesPRPCClient) GetIssue(ctx context.Context, in *GetIssueRequest, op
 	return out, nil
 }
 
-type issuesClient struct {
-	cc *grpc.ClientConn
+func (c *issuesPRPCClient) SearchIssues(ctx context.Context, in *SearchIssuesRequest, opts ...grpc.CallOption) (*SearchIssuesResponse, error) {
+	out := new(SearchIssuesResponse)
+	err := c.client.Call(ctx, "monorail.v1.Issues", "SearchIssues", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-func NewIssuesClient(cc *grpc.ClientConn) IssuesClient {
+type issuesClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewIssuesClient(cc grpc.ClientConnInterface) IssuesClient {
 	return &issuesClient{cc}
 }
 
@@ -145,11 +314,23 @@ func (c *issuesClient) GetIssue(ctx context.Context, in *GetIssueRequest, opts .
 	return out, nil
 }
 
+func (c *issuesClient) SearchIssues(ctx context.Context, in *SearchIssuesRequest, opts ...grpc.CallOption) (*SearchIssuesResponse, error) {
+	out := new(SearchIssuesResponse)
+	err := c.cc.Invoke(ctx, "/monorail.v1.Issues/SearchIssues", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IssuesServer is the server API for Issues service.
 type IssuesServer interface {
 	// Returns the requested Issue.
 	// TODO(monorail:6988): Document possible errors when implemented.
 	GetIssue(context.Context, *GetIssueRequest) (*Issue, error)
+	// Searches over issues within the specified project.
+	// TODO(monorail:6988): Document possible errors when implemented.
+	SearchIssues(context.Context, *SearchIssuesRequest) (*SearchIssuesResponse, error)
 }
 
 // UnimplementedIssuesServer can be embedded to have forward compatible implementations.
@@ -158,6 +339,9 @@ type UnimplementedIssuesServer struct {
 
 func (*UnimplementedIssuesServer) GetIssue(ctx context.Context, req *GetIssueRequest) (*Issue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetIssue not implemented")
+}
+func (*UnimplementedIssuesServer) SearchIssues(ctx context.Context, req *SearchIssuesRequest) (*SearchIssuesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchIssues not implemented")
 }
 
 func RegisterIssuesServer(s prpc.Registrar, srv IssuesServer) {
@@ -182,6 +366,24 @@ func _Issues_GetIssue_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Issues_SearchIssues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchIssuesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssuesServer).SearchIssues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/monorail.v1.Issues/SearchIssues",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssuesServer).SearchIssues(ctx, req.(*SearchIssuesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Issues_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "monorail.v1.Issues",
 	HandlerType: (*IssuesServer)(nil),
@@ -189,6 +391,10 @@ var _Issues_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetIssue",
 			Handler:    _Issues_GetIssue_Handler,
+		},
+		{
+			MethodName: "SearchIssues",
+			Handler:    _Issues_SearchIssues_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -22,6 +22,14 @@ service Issues {
       body: "*"
     };
   }
+  // Searches over issues within the specified project.
+  // TODO(monorail:6988): Document possible errors when implemented.
+  rpc SearchIssues (SearchIssuesRequest) returns (SearchIssuesResponse) {
+    option (google.api.http) = {
+      post: "/prpc/monorail.v1.Issues/SearchIssues"
+      body: "*"
+    };
+  }
 }
 
 
@@ -32,4 +40,44 @@ message GetIssueRequest {
   string name = 1 [
       (google.api.resource_reference) = {type: "api.crbug.com/Issue"},
       (google.api.field_behavior) = REQUIRED ];
+}
+
+// The request message for Issues.SearchIssues.
+// Next available tag: 6
+message SearchIssuesRequest {
+  // The name of the Project in which to search issues.
+  string parent = 1 [
+    (google.api.resource_reference) = {type: "api.crbug.com/Project"},
+    (google.api.field_behavior) = REQUIRED ];
+  // The query string can contain any number of free text and
+  // field search expressions.
+  // Please see https://bugs.chromium.org/p/chromium/issues/searchtips for more
+  // details of how the query string works.
+  string query = 2;
+  // The maximum number of items to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 1000 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+  // A page token, received from a previous `SearchIssues` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `SearchIssues` must match
+  // the call that provided the page token.
+  string page_token = 4;
+  // The string of comma separated field names used to order the items.
+  // Adding '-' before a field, reverses the sort order.
+  // E.g. 'stars,-status' sorts the items by number of stars, high to low,
+  // then by status, low to high.
+  string order_by = 5;
+}
+
+// The response message for Issues.SearchIssues.
+// Next available tag: 3
+message SearchIssuesResponse {
+  // Issues matching the given request.
+  repeated Issue issues = 1;
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
 }

@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1d\x61pi/v1/api_proto/issues.proto\x12\x0bmonorail.v1\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x32t\n\x06Issues\x12j\n\x08GetIssue\x12\x1c.monorail.v1.GetIssueRequest\x1a\x12.monorail.v1.Issue\",\x82\xd3\xe4\x93\x02&\"!/prpc/monorail.v1.Issues/GetIssue:\x01*b\x06proto3')
+  serialized_pb=_b('\n\x1d\x61pi/v1/api_proto/issues.proto\x12\x0bmonorail.v1\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"\x8c\x01\n\x13SearchIssuesRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v1.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xfc\x01\n\x06Issues\x12j\n\x08GetIssue\x12\x1c.monorail.v1.GetIssueRequest\x1a\x12.monorail.v1.Issue\",\x82\xd3\xe4\x93\x02&\"!/prpc/monorail.v1.Issues/GetIssue:\x01*\x12\x85\x01\n\x0cSearchIssues\x12 .monorail.v1.SearchIssuesRequest\x1a!.monorail.v1.SearchIssuesResponse\"0\x82\xd3\xe4\x93\x02*\"%/prpc/monorail.v1.Issues/SearchIssues:\x01*b\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,])
 
@@ -60,7 +60,107 @@ _GETISSUEREQUEST = _descriptor.Descriptor(
   serialized_end=273,
 )
 
+
+_SEARCHISSUESREQUEST = _descriptor.Descriptor(
+  name='SearchIssuesRequest',
+  full_name='monorail.v1.SearchIssuesRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='parent', full_name='monorail.v1.SearchIssuesRequest.parent', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\027\n\025api.crbug.com/Project\340A\002'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='query', full_name='monorail.v1.SearchIssuesRequest.query', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='page_size', full_name='monorail.v1.SearchIssuesRequest.page_size', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='page_token', full_name='monorail.v1.SearchIssuesRequest.page_token', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='order_by', full_name='monorail.v1.SearchIssuesRequest.order_by', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=276,
+  serialized_end=416,
+)
+
+
+_SEARCHISSUESRESPONSE = _descriptor.Descriptor(
+  name='SearchIssuesResponse',
+  full_name='monorail.v1.SearchIssuesResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='issues', full_name='monorail.v1.SearchIssuesResponse.issues', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='next_page_token', full_name='monorail.v1.SearchIssuesResponse.next_page_token', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=418,
+  serialized_end=501,
+)
+
+_SEARCHISSUESRESPONSE.fields_by_name['issues'].message_type = api_dot_v1_dot_api__proto_dot_issue__objects__pb2._ISSUE
 DESCRIPTOR.message_types_by_name['GetIssueRequest'] = _GETISSUEREQUEST
+DESCRIPTOR.message_types_by_name['SearchIssuesRequest'] = _SEARCHISSUESREQUEST
+DESCRIPTOR.message_types_by_name['SearchIssuesResponse'] = _SEARCHISSUESRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 GetIssueRequest = _reflection.GeneratedProtocolMessageType('GetIssueRequest', (_message.Message,), dict(
@@ -70,8 +170,23 @@ GetIssueRequest = _reflection.GeneratedProtocolMessageType('GetIssueRequest', (_
   ))
 _sym_db.RegisterMessage(GetIssueRequest)
 
+SearchIssuesRequest = _reflection.GeneratedProtocolMessageType('SearchIssuesRequest', (_message.Message,), dict(
+  DESCRIPTOR = _SEARCHISSUESREQUEST,
+  __module__ = 'api.v1.api_proto.issues_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.SearchIssuesRequest)
+  ))
+_sym_db.RegisterMessage(SearchIssuesRequest)
+
+SearchIssuesResponse = _reflection.GeneratedProtocolMessageType('SearchIssuesResponse', (_message.Message,), dict(
+  DESCRIPTOR = _SEARCHISSUESRESPONSE,
+  __module__ = 'api.v1.api_proto.issues_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.SearchIssuesResponse)
+  ))
+_sym_db.RegisterMessage(SearchIssuesResponse)
+
 
 _GETISSUEREQUEST.fields_by_name['name']._options = None
+_SEARCHISSUESREQUEST.fields_by_name['parent']._options = None
 
 _ISSUES = _descriptor.ServiceDescriptor(
   name='Issues',
@@ -79,8 +194,8 @@ _ISSUES = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=275,
-  serialized_end=391,
+  serialized_start=504,
+  serialized_end=756,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetIssue',
@@ -90,6 +205,15 @@ _ISSUES = _descriptor.ServiceDescriptor(
     input_type=_GETISSUEREQUEST,
     output_type=api_dot_v1_dot_api__proto_dot_issue__objects__pb2._ISSUE,
     serialized_options=_b('\202\323\344\223\002&\"!/prpc/monorail.v1.Issues/GetIssue:\001*'),
+  ),
+  _descriptor.MethodDescriptor(
+    name='SearchIssues',
+    full_name='monorail.v1.Issues.SearchIssues',
+    index=1,
+    containing_service=None,
+    input_type=_SEARCHISSUESREQUEST,
+    output_type=_SEARCHISSUESRESPONSE,
+    serialized_options=_b('\202\323\344\223\002*\"%/prpc/monorail.v1.Issues/SearchIssues:\001*'),
   ),
 ])
 _sym_db.RegisterServiceDescriptor(_ISSUES)

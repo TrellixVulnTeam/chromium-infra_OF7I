@@ -134,8 +134,8 @@ type ListHotlistItemsRequest struct {
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// The string of comma separated field names used to order the items.
 	// Adding '-' before a field, reverses the sort order.
-	// E.g. 'stars,-priority' sorts the items by priority, high to low, then
-	// by number of stars, low to high.
+	// E.g. 'stars,-status' sorts the items by number of stars low to high, then
+	// status high to low.
 	// If unspecified, items will be ordered by their rank in the parent.
 	OrderBy string `protobuf:"bytes,3,opt,name=order_by,json=orderBy,proto3" json:"order_by,omitempty"`
 	// A page token, received from a previous `ListHotlistItems` call.
@@ -375,11 +375,11 @@ var fileDescriptor_56a2c4cb0040a55a = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // HotlistsClient is the client API for Hotlists service.
 //
@@ -448,10 +448,10 @@ func (c *hotlistsPRPCClient) RerankHotlistItems(ctx context.Context, in *RerankH
 }
 
 type hotlistsClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewHotlistsClient(cc *grpc.ClientConn) HotlistsClient {
+func NewHotlistsClient(cc grpc.ClientConnInterface) HotlistsClient {
 	return &hotlistsClient{cc}
 }
 
