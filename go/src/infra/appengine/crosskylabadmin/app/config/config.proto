@@ -265,4 +265,10 @@ message InventoryProvider{
   // The ratio (a number in [0, 100]) of reading traffic DUPLICATED to
   // inventory service. Just for migrating purpose.
   uint32 write_traffic_ratio = 4;
+
+  // The device uuids for migration testing.
+  repeated string testing_device_uuids = 5;
+
+  // The device names for migration testing.
+  repeated string testing_device_names = 6;
 }

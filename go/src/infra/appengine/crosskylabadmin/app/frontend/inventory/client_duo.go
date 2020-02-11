@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"time"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
@@ -29,9 +30,15 @@ type duoClient struct {
 	// A number in [0, 100] indicate the read traffic fanning out to inventory
 	// v2 service.
 	readTrafficRatio int
+
+	// The uuids of migration test devices.
+	testingDeviceUUIDs stringset.Set
+
+	// The uuids of migration test devices.
+	testingDeviceNames stringset.Set
 }
 
-func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string, readTrafficRatio, writeTrafficRatio int) (inventoryClient, error) {
+func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string, readTrafficRatio, writeTrafficRatio int, testingUUIDs, testingNames []string) (inventoryClient, error) {
 	gc, err := newGitStoreClient(ctx, gs)
 	if err != nil {
 		return nil, errors.Annotate(err, "create git client").Err()
@@ -42,10 +49,12 @@ func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string,
 		return gc, nil
 	}
 	return &duoClient{
-		gc:                gc.(*gitStoreClient),
-		ic:                ic.(*invServiceClient),
-		readTrafficRatio:  readTrafficRatio,
-		writeTrafficRatio: writeTrafficRatio,
+		gc:                 gc.(*gitStoreClient),
+		ic:                 ic.(*invServiceClient),
+		readTrafficRatio:   readTrafficRatio,
+		writeTrafficRatio:  writeTrafficRatio,
+		testingDeviceUUIDs: stringset.NewFromSlice(testingUUIDs...),
+		testingDeviceNames: stringset.NewFromSlice(testingNames...),
 	}, nil
 }
 
@@ -54,7 +63,16 @@ func (client *duoClient) willWriteToV2() bool {
 	return r.Intn(100) < client.writeTrafficRatio
 }
 
-func (client *duoClient) willReadFromV2() bool {
+func (client *duoClient) willReadFromV2(req *fleet.GetDutInfoRequest) bool {
+	if req.MustFromV1 {
+		return false
+	}
+	if client.testingDeviceUUIDs.Has(req.GetId()) {
+		return true
+	}
+	if client.testingDeviceNames.Has(req.GetHostname()) {
+		return true
+	}
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return r.Intn(100) < client.readTrafficRatio
 }
@@ -147,7 +165,7 @@ func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes [
 }
 
 func (client *duoClient) getDutInfo(ctx context.Context, req *fleet.GetDutInfoRequest) ([]byte, time.Time, error) {
-	if !req.MustFromV1 && client.willReadFromV2() {
+	if client.willReadFromV2(req) {
 		dut, now, err := client.ic.getDutInfo(ctx, req)
 		logging.Infof(ctx, "[v2] GetDutInfo result: %#v: %s", req, err)
 		return dut, now, err
