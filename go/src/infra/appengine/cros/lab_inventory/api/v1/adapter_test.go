@@ -515,7 +515,6 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 			d.GetCommon().GetLabels().Platform = &board
 			d.GetCommon().GetLabels().OsType = &osType
 			d.GetCommon().GetLabels().Arc = &falseValue
-			d.GetCommon().GetLabels().EcType = nil
 			s1, err := inventory.WriteLabToString(&inventory.Lab{
 				Duts: []*inventory.DeviceUnderTest{d},
 			})

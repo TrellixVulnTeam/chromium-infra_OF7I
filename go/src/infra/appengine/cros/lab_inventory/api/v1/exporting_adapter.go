@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
+	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/skylab/inventory"
 )
 
@@ -347,7 +348,10 @@ func createDutLabels(lc *lab.ChromeOSDevice, osType *inventory.SchedulableLabels
 	}
 
 	ecTypeCros := inventory.SchedulableLabels_EC_TYPE_CHROME_OS
-	if stringset.NewFromSlice(crosEcTypeBoards...).Has(platform) {
+	mappedPlatform := deviceconfig.BoardToPlatformMap[platform]
+
+	boardsHasCrosEc := stringset.NewFromSlice(crosEcTypeBoards...)
+	if boardsHasCrosEc.Has(platform) || boardsHasCrosEc.Has(mappedPlatform) {
 		labels.EcType = &ecTypeCros
 	}
 	return &labels
