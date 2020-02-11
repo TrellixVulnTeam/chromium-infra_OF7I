@@ -9,16 +9,19 @@ from libs import time_util
 from model import analysis_approach_type
 from model.base_build_model import BaseBuildModel
 from model.wf_culprit import WfCulprit
+from waterfall import buildbot
 
 
 def _GetBuildInfoAsDict(culprit):
   """Returns the list of failed builds associated with the given culprit."""
 
   def ConvertBuildInfoToADict(build_info):
+    _, bucket = buildbot.GetLuciProjectAndBucketForMaster(build_info[0])
     return {
         'master_name': build_info[0],
         'builder_name': build_info[1],
         'build_number': build_info[2],
+        'bucket': bucket,
     }
 
   def GetListOfTryJobBuilds(builds):

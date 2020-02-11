@@ -51,6 +51,7 @@ class CulpritTest(testing.AppengineTestCase):
             'master_name': 'm',
             'builder_name': 'b1',
             'build_number': '1',
+            'bucket': 'ci',
         }],
         'key':
             suspected_cl.key.urlsafe(),
@@ -68,5 +69,6 @@ class CulpritTest(testing.AppengineTestCase):
         'master_name': 'm',
         'builder_name': 'b',
         'build_number': 1,
+        'bucket': 'ci',
     }]
     self.assertEqual(expected_builds, builds)
