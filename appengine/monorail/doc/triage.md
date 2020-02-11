@@ -8,7 +8,7 @@ issues reported by our users and take appropriate actions.
 
 [Deploy](deployment.md) Monorail on either Monday early afternoon or Tuesday morning.
 
-[Review](https://team-review.git.corp.google.com/q/repo:cluster-fuzzteam/sheriffbot) and [deploy](go/chops-workflow-sheriffbot#deployment) Sheriffbot's new CL's.
+[Review](https://team-review.git.corp.google.com/q/repo:cluster-fuzzteam/sheriffbot) and [deploy](http://go/chops-workflow-sheriffbot#deployment) Sheriffbot's new CL's.
 
 Look at each issue in the
 [Monorail untriaged queue](https://bugs.chromium.org/p/monorail/issues/list?can=2&q=-has%3Aqueue+-has%3Aowner) and [Sheriffbot untriaged queue](https://bugs.chromium.org/p/chromium/issues/list?q=component%3ATools%3EStability%3ESheriffbot%20status%3Auntriaged&can=2)
