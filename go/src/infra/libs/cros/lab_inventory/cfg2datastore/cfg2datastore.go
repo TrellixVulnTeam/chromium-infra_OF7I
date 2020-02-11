@@ -7,6 +7,7 @@ package cfg2datastore
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -68,7 +69,9 @@ func DownloadCfgProto(ctx context.Context, client gitiles.GitilesClient, project
 		return err
 	}
 
-	if err := jsonpb.UnmarshalString(content, msg); err != nil {
+	if err := (&jsonpb.Unmarshaler{
+		AllowUnknownFields: true,
+	}).Unmarshal(strings.NewReader(content), msg); err != nil {
 		return err
 	}
 	return nil

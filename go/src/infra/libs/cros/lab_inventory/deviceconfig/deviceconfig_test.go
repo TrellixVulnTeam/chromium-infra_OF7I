@@ -19,6 +19,7 @@ var deviceConfigJSON = `
 {
 	"configs": [
 		{
+			"unkonwnField": "hahaha",
 			"id": {
 				"platformId": {
 					"value": "Arcada"

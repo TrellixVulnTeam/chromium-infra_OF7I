@@ -22,7 +22,8 @@ var manufacturingConfigJSON = `
 			"manufacturingId": {
 				"value": "TERRA D25-E4C-A2I-A6A-A6L"
 			},
-			"devicePhase": "PHASE_PVT"
+			"devicePhase": "PHASE_PVT",
+			"unknownField": "value"
 		},
 		{
 			"manufacturingId": {
