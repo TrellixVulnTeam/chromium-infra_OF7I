@@ -8,8 +8,8 @@
       "RECIPE_REPO[depot_tools]/gsutil.py",
       "----",
       "cp",
-      "gs://chromium-browser-official/chromium-69.0.3491.0.tar.xz",
-      "[START_DIR]/build_dir/chromium-69.0.3491.0.tar.xz"
+      "gs://chromium-browser-official/chromium-80.0.3987.76.tar.xz",
+      "[START_DIR]/build_dir/chromium-80.0.3987.76.tar.xz"
     ],
     "infra_step": true,
     "name": "gsutil download_url"
@@ -18,7 +18,7 @@
     "cmd": [
       "tar",
       "-xJf",
-      "[START_DIR]/build_dir/chromium-69.0.3491.0.tar.xz",
+      "[START_DIR]/build_dir/chromium-80.0.3987.76.tar.xz",
       "-C",
       "[START_DIR]/build_dir"
     ],
@@ -28,10 +28,10 @@
     "cmd": [
       "python",
       "-u",
-      "[START_DIR]/build_dir/chromium-69.0.3491.0/build/linux/sysroot_scripts/install-sysroot.py",
+      "[START_DIR]/build_dir/chromium-80.0.3987.76/build/linux/sysroot_scripts/install-sysroot.py",
       "--arch=amd64"
     ],
-    "cwd": "[START_DIR]/build_dir/chromium-69.0.3491.0",
+    "cwd": "[START_DIR]/build_dir/chromium-80.0.3987.76",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -43,12 +43,13 @@
     "cmd": [
       "python",
       "-u",
-      "[START_DIR]/build_dir/chromium-69.0.3491.0/tools/clang/scripts/update.py",
+      "[START_DIR]/build_dir/chromium-80.0.3987.76/tools/clang/scripts/update.py",
       "--force-local-build",
+      "--skip-checkout",
       "--without-android",
-      "--skip-checkout"
+      "--without-fuchsia"
     ],
-    "cwd": "[START_DIR]/build_dir/chromium-69.0.3491.0",
+    "cwd": "[START_DIR]/build_dir/chromium-80.0.3987.76",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -60,15 +61,15 @@
     "cmd": [
       "python",
       "-u",
-      "[START_DIR]/build_dir/chromium-69.0.3491.0/tools/gn/bootstrap/bootstrap.py",
+      "[START_DIR]/build_dir/chromium-80.0.3987.76/tools/gn/bootstrap/bootstrap.py",
       "--gn-gen-args=is_debug=false enable_nacl=false is_official_build=true enable_distro_version_check=false use_system_libjpeg=true use_v8_context_snapshot=false",
       "--use-custom-libcxx"
     ],
-    "cwd": "[START_DIR]/build_dir/chromium-69.0.3491.0",
+    "cwd": "[START_DIR]/build_dir/chromium-80.0.3987.76",
     "env": {
-      "AR": "[START_DIR]/build_dir/chromium-69.0.3491.0/third_party/llvm-build/Release+Asserts/bin/llvm-ar",
-      "CC": "[START_DIR]/build_dir/chromium-69.0.3491.0/third_party/llvm-build/Release+Asserts/bin/clang",
-      "CXX": "[START_DIR]/build_dir/chromium-69.0.3491.0/third_party/llvm-build/Release+Asserts/bin/clang++",
+      "AR": "[START_DIR]/build_dir/chromium-80.0.3987.76/third_party/llvm-build/Release+Asserts/bin/llvm-ar",
+      "CC": "[START_DIR]/build_dir/chromium-80.0.3987.76/third_party/llvm-build/Release+Asserts/bin/clang",
+      "CXX": "[START_DIR]/build_dir/chromium-80.0.3987.76/third_party/llvm-build/Release+Asserts/bin/clang++",
       "LDFLAGS": "-fuse-ld=lld"
     },
     "env_suffixes": {
@@ -80,18 +81,9 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "[START_DIR]/build_dir/chromium-69.0.3491.0/third_party/depot_tools/download_from_google_storage.py",
-      "--no_resume",
-      "--extract",
-      "--no_auth",
-      "--bucket",
-      "chromium-nodejs/8.9.1",
-      "-s",
-      "third_party/node/linux/node-linux-x64.tar.gz.sha1"
+      "[START_DIR]/build_dir/chromium-80.0.3987.76/third_party/node/update_node_binaries"
     ],
-    "cwd": "[START_DIR]/build_dir/chromium-69.0.3491.0",
+    "cwd": "[START_DIR]/build_dir/chromium-80.0.3987.76",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -103,7 +95,7 @@
     "cmd": [
       "python",
       "-u",
-      "[START_DIR]/build_dir/chromium-69.0.3491.0/build/linux/unbundle/replace_gn_files.py",
+      "[START_DIR]/build_dir/chromium-80.0.3987.76/build/linux/unbundle/replace_gn_files.py",
       "--system-libraries",
       "fontconfig",
       "freetype",
@@ -113,7 +105,7 @@
       "opus",
       "snappy"
     ],
-    "cwd": "[START_DIR]/build_dir/chromium-69.0.3491.0",
+    "cwd": "[START_DIR]/build_dir/chromium-80.0.3987.76",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -128,7 +120,7 @@
       "out/Release",
       "chrome/installer/linux"
     ],
-    "cwd": "[START_DIR]/build_dir/chromium-69.0.3491.0",
+    "cwd": "[START_DIR]/build_dir/chromium-80.0.3987.76",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
