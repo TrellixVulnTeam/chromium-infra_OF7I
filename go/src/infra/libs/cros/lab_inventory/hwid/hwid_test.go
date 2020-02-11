@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 )
 
@@ -69,11 +71,47 @@ func TestGetHwidData(t *testing.T) {
 			}))
 			defer mockHwidServerForDutLabel.Close()
 			hwidServerURL = mockHwidServerForDutLabel.URL + "/%s/%s/%s"
+			hwid := "HWID 1"
 
-			data, err := GetHwidData(ctx, "AMPTON C3B-A2B-D2K-H9I-A2S", "secret")
+			data, err := GetHwidData(ctx, hwid, "secret")
 			So(err, ShouldBeNil)
 			So(data.Sku, ShouldEqual, hwidSku)
 			So(data.Variant, ShouldEqual, hwidVariant)
+
+			Convey("Use cached data", func() {
+				mockHwidServerForDutLabel := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					fmt.Fprintln(w, hwidErrorResponseJSON)
+				}))
+				defer mockHwidServerForDutLabel.Close()
+				hwidServerURL = mockHwidServerForDutLabel.URL + "/%s/%s/%s"
+
+				data, err := GetHwidData(ctx, hwid, "secret")
+				So(err, ShouldBeNil)
+				So(data.Sku, ShouldEqual, hwidSku)
+				So(data.Variant, ShouldEqual, hwidVariant)
+
+			})
+		})
+		Convey("Use stale cached data", func() {
+			longTimeAgo := time.Now().UTC().Add(-72 * time.Hour)
+			hwidForStaleData := "hwid for stale data"
+			e2 := hwidEntity{
+				ID: hwidForStaleData,
+				Data: Data{
+					Sku:     "stale sku",
+					Variant: "stale variant",
+				},
+				Updated: longTimeAgo,
+			}
+			err := datastore.Put(ctx, &e2)
+			So(err, ShouldBeNil)
+
+			e3 := hwidEntity{ID: hwidForStaleData}
+			datastore.Get(ctx, &e3)
+			data, err := GetHwidData(ctx, hwidForStaleData, "secret")
+			So(err, ShouldBeNil)
+			So(data.Sku, ShouldEqual, "stale sku")
+			So(data.Variant, ShouldEqual, "stale variant")
 		})
 
 		Convey("Error response", func() {
@@ -83,7 +121,7 @@ func TestGetHwidData(t *testing.T) {
 			defer mockHwidServerForDutLabel.Close()
 			hwidServerURL = mockHwidServerForDutLabel.URL + "/%s/%s/%s"
 
-			_, err := GetHwidData(ctx, "AMPTON C3B-A2B-D2K-H9I-A2S", "secret")
+			_, err := GetHwidData(ctx, "HWID 2", "secret")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "No metadata present for the requested board")
 		})
@@ -96,7 +134,7 @@ func TestGetHwidData(t *testing.T) {
 			defer mockHwidServer.Close()
 			hwidServerURL = mockHwidServer.URL + "/%s/%s/%s"
 
-			_, err := GetHwidData(ctx, "AMPTON C3B-A2B-D2K-H9I-A2S", "secret")
+			_, err := GetHwidData(ctx, "HWID 3", "secret")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "bad key")
 		})

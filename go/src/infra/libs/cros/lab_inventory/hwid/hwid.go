@@ -11,13 +11,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 )
 
 var (
 	hwidServerURL              = "https://chromeos-hwid.appspot.com/api/chromeoshwid/v1/%s/%s/?key=%s"
 	hwidServerResponseErrorKey = "error"
+	cacheMaxAge                = 10 * time.Minute
 )
 
 // Data we interested from HWID server.
@@ -27,6 +31,13 @@ type Data struct {
 	// The variant string returned by hwid server. It's not the variant (aka
 	// SKU).
 	Variant string
+}
+
+type hwidEntity struct {
+	_kind   string `gae:"$kind,HwidData"`
+	ID      string `gae:"$id"`
+	Data    Data   `gae:",noindex"`
+	Updated time.Time
 }
 
 func callHwidServer(rpc string, hwid string, secret string) ([]byte, error) {
@@ -56,8 +67,34 @@ func callHwidServer(rpc string, hwid string, secret string) ([]byte, error) {
 }
 
 // GetHwidData gets the hwid data from hwid server.
-func GetHwidData(ctx context.Context, hwid string, secret string) (*Data, error) {
-	// TODO (guocb) cache the hwid data.
+func GetHwidData(ctx context.Context, hwid, secret string) (*Data, error) {
+	now := time.Now().UTC()
+	e := hwidEntity{ID: hwid}
+	errFromDatastore := datastore.Get(ctx, &e)
+	if errFromDatastore == nil {
+		if now.Sub(e.Updated) < cacheMaxAge {
+			logging.Debugf(ctx, "HWID HIT: %#v", hwid)
+			return &e.Data, nil
+		}
+	}
+	logging.Debugf(ctx, "HWID MISS or STALE: %#v", hwid)
+	d, err := getDataFromHwidServer(ctx, hwid, secret)
+	if err != nil {
+		if errFromDatastore == nil {
+			logging.Warningf(ctx, "Use stale data as HWID server failed: %s", err.Error())
+			return &e.Data, nil
+		}
+		return nil, err
+	}
+	e.Data = *d
+	e.Updated = now
+	if err := datastore.Put(ctx, &e); err != nil {
+		logging.Warningf(ctx, "failed to cache hwid: %#v: %s", hwid, err.Error())
+	}
+	return d, nil
+}
+
+func getDataFromHwidServer(ctx context.Context, hwid string, secret string) (*Data, error) {
 	data := Data{}
 	rspBody, err := callHwidServer("dutlabel", hwid, secret)
 	if err != nil {
