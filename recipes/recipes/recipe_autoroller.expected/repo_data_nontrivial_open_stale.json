@@ -233,7 +233,6 @@
       "status",
       "--issue",
       "123456789",
-      "--gerrit",
       "--field",
       "status"
     ],

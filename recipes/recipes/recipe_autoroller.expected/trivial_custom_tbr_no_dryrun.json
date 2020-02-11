@@ -371,7 +371,6 @@
       "--cc=foo@chromium.org",
       "--bypass-hooks",
       "-f",
-      "--gerrit",
       "--message-file",
       "Roll recipe dependencies (trivial).\n\nThis is an automated CL created by the recipe roller. This CL rolls recipe\nchanges from upstream projects (recipe_engine) into this repository.\n\nrecipe_engine:\n  https://crrev.com/123abc (foo@chromium.org)\n    some commit message\n\nMore info is at https://goo.gl/zkKdpD. Use https://goo.gl/noib3a to file a bug.\n\nRecipe-Tryjob-Bypass-Reason: Autoroller\nBugdroid-Send-Email: False\n"
     ],

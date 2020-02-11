@@ -219,10 +219,9 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       # trivial rolls), but they e.g. fail to land, causing staleness.
 
       # We're about to upload a new CL, so make sure the old one is closed.
-      # Pass --gerrit flag to match upload args below.
       if cl_status != 'closed':
         with self.m.context(cwd=workdir):
-          self.m.git_cl('set-close', ['--issue', repo_data.issue, '--gerrit'],
+          self.m.git_cl('set-close', ['--issue', repo_data.issue],
                         name='git cl set-close')
     return None
 
@@ -317,7 +316,6 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
         cc_list.add(commit['author_email'])
     upload_args.append('--cc=%s' % ','.join(sorted(cc_list)))
     upload_args.extend(['--bypass-hooks', '-f'])
-    upload_args.extend(['--gerrit'])
 
     commit_message = get_commit_message(roll_result)
 
@@ -386,12 +384,9 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       cat_result.presentation.step_text += ' (trivial)'
 
     with self.m.context(cwd=workdir):
-      # We need to explicitly pass --gerrit for git cl status --issue .
-      # To keep things concistent, we also pass --gerrit for all other
-      # git cl calls in the autoroller.
       status_result = self.m.git_cl(
           'status',
-          ['--issue', repo_data.issue, '--gerrit', '--field', 'status'],
+          ['--issue', repo_data.issue, '--field', 'status'],
           name='git cl status', stdout=self.m.raw_io.output(),
           step_test_data=lambda: self.m.raw_io.test_api.stream_output(
               'foo')
