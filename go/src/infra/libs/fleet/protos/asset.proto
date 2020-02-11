@@ -1,0 +1,25 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet;
+
+// Next Tag: 3
+message ChopsAsset {
+  // Asset's state and location
+  string id = 1;
+  Location location = 2;
+}
+
+// Next Tag: 7
+message Location {
+  // Location of the asset in the lab
+  string lab = 1;
+  string aisle = 2;
+  string row = 3;
+  string rack = 4;
+  string shelf = 5;
+  string position = 6;
+}
