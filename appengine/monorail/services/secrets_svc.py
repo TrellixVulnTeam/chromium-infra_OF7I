@@ -44,6 +44,7 @@ class Secrets(ndb.Model):
   # Keys we use to generate tokens.
   xsrf_key = ndb.StringProperty(required=True)
   email_key = ndb.StringProperty(required=True)
+  pagination_key = ndb.StringProperty(required=True)
 
   # Keys for other APIs that we use.
   recaptcha_public_key = ndb.StringProperty()
@@ -55,6 +56,7 @@ def MakeSecrets():
   secrets = Secrets(id=GLOBAL_KEY)
   secrets.xsrf_key = framework_helpers.MakeRandomKey()
   secrets.email_key = framework_helpers.MakeRandomKey()
+  secrets.pagination_key = framework_helpers.MakeRandomKey()
   # Note that recaptcha keys are not generated.  An admin
   # will need to set them via the Google Cloud Console.
   return secrets
@@ -83,6 +85,11 @@ def GetXSRFKey():
 def GetEmailKey():
   """Return a secret key string used to generate email tokens."""
   return GetSecrets().email_key
+
+
+def GetPaginationKey():
+  """Return a secret key string used to generate pagination tokens."""
+  return GetSecrets().pagination_key
 
 
 def GetRecaptchaPublicKey():
