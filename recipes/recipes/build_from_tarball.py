@@ -106,7 +106,7 @@ def RunSteps(api):
 
       api.python(
           'Build clang.',
-          api.path.join(src_dir, 'tools', 'clang', 'scripts', 'update.py'), [
+          api.path.join(src_dir, 'tools', 'clang', 'scripts', 'build.py'), [
               '--force-local-build', '--skip-checkout', '--without-android',
               '--without-fuchsia'
           ])
