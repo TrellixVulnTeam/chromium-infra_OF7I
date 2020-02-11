@@ -130,10 +130,8 @@ const iosFailuresQuery = selectFromWhere + `
 		AND MasterName IN ("chromium.mac")
 		AND builder IN (
 			"ios-device",
-			"ios-device-xcode-clang",
 			"ios-simulator",
 			"ios-simulator-full-configs",
-			"ios-simulator-xcode-clang",
 			"ios-simulator-noncq"
 		)
 	)
