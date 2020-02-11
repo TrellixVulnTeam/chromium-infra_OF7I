@@ -27,7 +27,8 @@ const fullMC = `
 			"devicePhase": "PHASE_PVT",
 			"cr50Phase": "CR50_PHASE_PVT",
 			"cr50KeyEnv": "CR50_KEYENV_PROD",
-			"wifiChip": "test_wifichip"
+			"wifiChip": "test_wifichip",
+			"hwidComponent": ["battery/testbattery", "storage/teststorage"]
 		},
 		{
 			"manufacturingId": {
@@ -35,7 +36,8 @@ const fullMC = `
 			},
 			"cr50Phase": "CR50_PHASE_PVT",
 			"cr50KeyEnv": "CR50_KEYENV_PROD",
-			"wifiChip": "test_wifichip"
+			"wifiChip": "test_wifichip",
+			"hwidComponent": ["battery/testbattery", "storage/teststorage"]
 		},
 		{
 			"manufacturingId": {
@@ -43,7 +45,8 @@ const fullMC = `
 			},
 			"devicePhase": "PHASE_PVT",
 			"cr50KeyEnv": "CR50_KEYENV_PROD",
-			"wifiChip": "test_wifichip"
+			"wifiChip": "test_wifichip",
+			"hwidComponent": ["battery/testbattery", "storage/teststorage"]
 		},
 		{
 			"manufacturingId": {
@@ -51,7 +54,8 @@ const fullMC = `
 			},
 			"devicePhase": "PHASE_PVT",
 			"cr50Phase": "CR50_PHASE_PVT",
-			"wifiChip": "test_wifichip"
+			"wifiChip": "test_wifichip",
+			"hwidComponent": ["battery/testbattery", "storage/teststorage"]
 		},
 		{
 			"manufacturingId": {
@@ -60,6 +64,15 @@ const fullMC = `
 			"devicePhase": "PHASE_PVT",
 			"cr50Phase": "CR50_PHASE_PVT",
 			"cr50KeyEnv": "CR50_KEYENV_PROD"
+		},
+		{
+			"manufacturingId": {
+				"value": "test_mid"
+			},
+			"devicePhase": "PHASE_PVT",
+			"cr50Phase": "CR50_PHASE_PVT",
+			"cr50KeyEnv": "CR50_KEYENV_PROD",
+			"wifiChip": "test_wifichip"
 		}
 	]
 }
@@ -93,6 +106,7 @@ func TestConvertMCToV1Labels(t *testing.T) {
 		So(l.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_PVT)
 		So(l.GetCr50RoKeyid(), ShouldEqual, "prod")
 		So(l.GetWifiChip(), ShouldEqual, "test_wifichip")
+		So(l.GetHwidComponent(), ShouldResemble, []string{"battery/testbattery", "storage/teststorage"})
 	})
 
 	Convey("Verify empty manufacturing config", t, func() {
@@ -105,6 +119,7 @@ func TestConvertMCToV1Labels(t *testing.T) {
 		So(l.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_INVALID)
 		So(l.GetCr50RoKeyid(), ShouldBeEmpty)
 		So(l.GetWifiChip(), ShouldBeEmpty)
+		So(l.GetHwidComponent(), ShouldBeEmpty)
 	})
 
 	Convey("Verify empty labels", t, func() {
@@ -121,6 +136,7 @@ func TestConvertMCToV1Labels(t *testing.T) {
 		So(l.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_PVT)
 		So(l.GetCr50RoKeyid(), ShouldEqual, "prod")
 		So(l.GetWifiChip(), ShouldEqual, "test_wifichip")
+		So(l.GetHwidComponent(), ShouldResemble, []string{"battery/testbattery", "storage/teststorage"})
 	})
 
 	Convey("Verify empty cr50 phase", t, func() {
@@ -132,6 +148,7 @@ func TestConvertMCToV1Labels(t *testing.T) {
 		So(l.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_INVALID)
 		So(l.GetCr50RoKeyid(), ShouldEqual, "prod")
 		So(l.GetWifiChip(), ShouldEqual, "test_wifichip")
+		So(l.GetHwidComponent(), ShouldResemble, []string{"battery/testbattery", "storage/teststorage"})
 	})
 
 	Convey("Verify empty cr50 env", t, func() {
@@ -143,6 +160,7 @@ func TestConvertMCToV1Labels(t *testing.T) {
 		So(l.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_PVT)
 		So(l.GetCr50RoKeyid(), ShouldBeEmpty)
 		So(l.GetWifiChip(), ShouldEqual, "test_wifichip")
+		So(l.GetHwidComponent(), ShouldResemble, []string{"battery/testbattery", "storage/teststorage"})
 	})
 
 	Convey("Verify empty wifi chip", t, func() {
@@ -154,5 +172,18 @@ func TestConvertMCToV1Labels(t *testing.T) {
 		So(l.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_PVT)
 		So(l.GetCr50RoKeyid(), ShouldEqual, "prod")
 		So(l.GetWifiChip(), ShouldBeEmpty)
+		So(l.GetHwidComponent(), ShouldBeEmpty)
+	})
+
+	Convey("Verify empty hwid component", t, func() {
+		err := proto.UnmarshalText(testV1Spec, &got)
+		So(err, ShouldBeNil)
+		ConvertMCToV1Labels(allConfigs.GetValue()[5], got.GetLabels())
+		l := got.GetLabels()
+		So(l.GetPhase(), ShouldEqual, inventory.SchedulableLabels_PHASE_PVT)
+		So(l.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_PVT)
+		So(l.GetCr50RoKeyid(), ShouldEqual, "prod")
+		So(l.GetWifiChip(), ShouldEqual, "test_wifichip")
+		So(l.GetHwidComponent(), ShouldBeEmpty)
 	})
 }

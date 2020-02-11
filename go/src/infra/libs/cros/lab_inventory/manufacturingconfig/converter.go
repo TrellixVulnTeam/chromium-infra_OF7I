@@ -30,4 +30,5 @@ func ConvertMCToV1Labels(m *manufacturing.Config, l *inventory.SchedulableLabels
 		l.WifiChip = new(string)
 	}
 	*l.WifiChip = m.GetWifiChip()
+	l.HwidComponent = m.GetHwidComponent()
 }

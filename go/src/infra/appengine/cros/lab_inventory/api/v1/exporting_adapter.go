@@ -216,6 +216,8 @@ func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Con
 	}
 	wifiChip := m.GetWifiChip()
 	l.WifiChip = &wifiChip
+	hwidComponent := m.GetHwidComponent()
+	l.HwidComponent = hwidComponent
 }
 
 func setDeviceConfig(labels *inventory.SchedulableLabels, d *device.Config) {
