@@ -91,7 +91,7 @@ func (s SSHStub) handleFakeSSHConn(c net.Conn) {
 
 	_, chans, reqs, err := ssh.NewServerConn(c, config)
 	if err != nil {
-		s.Logger.Printf("SSHStub: %s", err)
+		s.logf("SSHStub: %s", err)
 		return
 	}
 	go ssh.DiscardRequests(reqs)
@@ -102,14 +102,14 @@ func (s SSHStub) handleFakeSSHConn(c net.Conn) {
 		}
 		channel, requests, err := newChannel.Accept()
 		if err != nil {
-			s.Logger.Printf("SSHStub: %s", err)
+			s.logf("SSHStub: %s", err)
 			return
 		}
 
 		block := make(chan struct{}, 1)
 		go func(in <-chan *ssh.Request) {
 			for req := range in {
-				s.Logger.Printf("SSHStub: got request: %#v", req)
+				s.logf("SSHStub: got request: %#v", req)
 				req.Reply(req.Type == "exec", nil)
 				if req.Type == "exec" {
 					block <- struct{}{}
@@ -122,10 +122,16 @@ func (s SSHStub) handleFakeSSHConn(c net.Conn) {
 			<-block
 			_, err = channel.Write(s.Output)
 			if err != nil {
-				s.Logger.Printf("SSHStub: write output: %s", err)
+				s.logf("SSHStub: write output: %s", err)
 			}
 			_, _ = channel.SendRequest("exit-status", false, ssh.Marshal(exitStatusMsg{s.ExitStatus}))
 		}()
+	}
+}
+
+func (s SSHStub) logf(format string, args ...interface{}) {
+	if s.Logger != nil {
+		s.Logger.Printf(format, args...)
 	}
 }
 
