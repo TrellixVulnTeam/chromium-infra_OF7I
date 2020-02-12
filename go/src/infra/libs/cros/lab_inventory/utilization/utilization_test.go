@@ -45,6 +45,17 @@ func TestReportMetrics(t *testing.T) {
 			So(dutmonMetric.Get(ctx, "reef", "electro", "some_random_pool", "Ready", false), ShouldEqual, 3)
 		})
 
+		Convey("ReportMetric should report dut_state as Running when dut_state is ready and task id is not null", func() {
+			bi := &swarming.SwarmingRpcsBotInfo{State: "BUSY", TaskId: "foobar", Dimensions: []*swarming.SwarmingRpcsStringListPair{
+				{Key: "dut_state", Value: []string{"ready"}},
+				{Key: "label-board", Value: []string{"reef"}},
+				{Key: "label-model", Value: []string{"electro"}},
+				{Key: "label-pool", Value: []string{"some_random_pool"}},
+			}}
+			ReportMetrics(ctx, []*swarming.SwarmingRpcsBotInfo{bi, bi, bi})
+			So(dutmonMetric.Get(ctx, "reef", "electro", "some_random_pool", "Running", false), ShouldEqual, 3)
+		})
+
 		Convey("ReportMetric with managed pool should report pool correctly", func() {
 			bi := &swarming.SwarmingRpcsBotInfo{State: "IDLE", Dimensions: []*swarming.SwarmingRpcsStringListPair{
 				{Key: "dut_state", Value: []string{"ready"}},

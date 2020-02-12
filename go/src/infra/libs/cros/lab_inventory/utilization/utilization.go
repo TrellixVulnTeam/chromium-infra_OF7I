@@ -270,8 +270,13 @@ func getStatusForBotInfo(bi *swarming.SwarmingRpcsBotInfo) status {
 		return "[None]"
 	}
 
+	botBusy := bi.TaskId != ""
+
 	switch dutState {
 	case "ready":
+		if botBusy {
+			return "Running"
+		}
 		return "Ready"
 	case "running":
 		return "Running"
