@@ -10,8 +10,22 @@ syntax = "proto3";
 
 package monorail.v1;
 
+import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
 
+// States that an issue or its comments can be in (aip.dev/216).
+// Next available tag: 4
+enum IssueContentState {
+  // The default value. This value is used if the state is omitted.
+  STATE_UNSPECIFIED = 0;
+  // The Issue or Comment is available.
+  ACTIVE = 1;
+  // The Issue or Comment has been deleted.
+  DELETED = 2;
+  // The Issue or Comment has been flagged as spam.
+  SPAM = 3;
+}
 
 // Documents and tracks a bug, task, or feature request within a Project.
 // Next available tag: 3
@@ -20,6 +34,7 @@ message Issue {
     type: "api.crbug.com/Issue"
     pattern: "project/{project_name}/issues/{issue_id}"
   };
+
   // Resource name of the issue.
   string name = 1;
   // TODO(monorail:6988): The UI limits summary length while the backend does not.
@@ -34,4 +49,34 @@ message Issue {
 message IssuesListColumn {
   // Column name shown in the column header.
   string column = 1;
+}
+
+// Represents a comment and any associated changes to an Issue.
+//
+// Comments cannot be Created or Updated through standard methods. The
+// OUTPUT_ONLY annotations here indicate fields that would never be provided
+// by the user even if these methods were made available.
+// Next available tag: 7
+message Comment {
+  option (google.api.resource) = {
+    type: "api.crbug.com/Comment" // issuecomment?
+    pattern: "projects/{project_id}/issues/{issue_id}/comments/{comment_id}"
+  };
+
+  // Resource name of the comment.
+  string name = 1;
+  // The state of the comment.
+  IssueContentState state = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  // The text of the comment.
+  string content = 3;
+  // Resource name of the author of the comment.
+  string commenter = 4 [
+    (google.api.resource_reference) = {type: "api.crbug.com/User"},
+    (google.api.field_behavior) = OUTPUT_ONLY ];
+  // The time this comment was added to the Issue.
+  google.protobuf.Timestamp create_time = 5 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  // Optional string full text of an email that caused this comment to be added.
+  string inbound_message = 6 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // TODO(monorail:7186): add remaining fields for comment.
 }

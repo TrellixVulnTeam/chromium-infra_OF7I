@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1d\x61pi/v1/api_proto/issues.proto\x12\x0bmonorail.v1\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"\x8c\x01\n\x13SearchIssuesRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v1.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xfc\x01\n\x06Issues\x12j\n\x08GetIssue\x12\x1c.monorail.v1.GetIssueRequest\x1a\x12.monorail.v1.Issue\",\x82\xd3\xe4\x93\x02&\"!/prpc/monorail.v1.Issues/GetIssue:\x01*\x12\x85\x01\n\x0cSearchIssues\x12 .monorail.v1.SearchIssuesRequest\x1a!.monorail.v1.SearchIssuesResponse\"0\x82\xd3\xe4\x93\x02*\"%/prpc/monorail.v1.Issues/SearchIssues:\x01*b\x06proto3')
+  serialized_pb=_b('\n\x1d\x61pi/v1/api_proto/issues.proto\x12\x0bmonorail.v1\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"\x8c\x01\n\x13SearchIssuesRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v1.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n\x13ListCommentsRequest\x12+\n\x06parent\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"W\n\x14ListCommentsResponse\x12&\n\x08\x63omments\x18\x01 \x03(\x0b\x32\x14.monorail.v1.Comment\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\x84\x03\n\x06Issues\x12j\n\x08GetIssue\x12\x1c.monorail.v1.GetIssueRequest\x1a\x12.monorail.v1.Issue\",\x82\xd3\xe4\x93\x02&\"!/prpc/monorail.v1.Issues/GetIssue:\x01*\x12\x85\x01\n\x0cSearchIssues\x12 .monorail.v1.SearchIssuesRequest\x1a!.monorail.v1.SearchIssuesResponse\"0\x82\xd3\xe4\x93\x02*\"%/prpc/monorail.v1.Issues/SearchIssues:\x01*\x12\x85\x01\n\x0cListComments\x12 .monorail.v1.ListCommentsRequest\x1a!.monorail.v1.ListCommentsResponse\"0\x82\xd3\xe4\x93\x02*\"%/prpc/monorail.v1.Issues/ListComments:\x01*b\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,])
 
@@ -157,10 +157,96 @@ _SEARCHISSUESRESPONSE = _descriptor.Descriptor(
   serialized_end=501,
 )
 
+
+_LISTCOMMENTSREQUEST = _descriptor.Descriptor(
+  name='ListCommentsRequest',
+  full_name='monorail.v1.ListCommentsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='parent', full_name='monorail.v1.ListCommentsRequest.parent', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\025\n\023api.crbug.com/Issue\340A\002'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='page_size', full_name='monorail.v1.ListCommentsRequest.page_size', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='page_token', full_name='monorail.v1.ListCommentsRequest.page_token', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=503,
+  serialized_end=608,
+)
+
+
+_LISTCOMMENTSRESPONSE = _descriptor.Descriptor(
+  name='ListCommentsResponse',
+  full_name='monorail.v1.ListCommentsResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='comments', full_name='monorail.v1.ListCommentsResponse.comments', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='next_page_token', full_name='monorail.v1.ListCommentsResponse.next_page_token', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=610,
+  serialized_end=697,
+)
+
 _SEARCHISSUESRESPONSE.fields_by_name['issues'].message_type = api_dot_v1_dot_api__proto_dot_issue__objects__pb2._ISSUE
+_LISTCOMMENTSRESPONSE.fields_by_name['comments'].message_type = api_dot_v1_dot_api__proto_dot_issue__objects__pb2._COMMENT
 DESCRIPTOR.message_types_by_name['GetIssueRequest'] = _GETISSUEREQUEST
 DESCRIPTOR.message_types_by_name['SearchIssuesRequest'] = _SEARCHISSUESREQUEST
 DESCRIPTOR.message_types_by_name['SearchIssuesResponse'] = _SEARCHISSUESRESPONSE
+DESCRIPTOR.message_types_by_name['ListCommentsRequest'] = _LISTCOMMENTSREQUEST
+DESCRIPTOR.message_types_by_name['ListCommentsResponse'] = _LISTCOMMENTSRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 GetIssueRequest = _reflection.GeneratedProtocolMessageType('GetIssueRequest', (_message.Message,), dict(
@@ -184,9 +270,24 @@ SearchIssuesResponse = _reflection.GeneratedProtocolMessageType('SearchIssuesRes
   ))
 _sym_db.RegisterMessage(SearchIssuesResponse)
 
+ListCommentsRequest = _reflection.GeneratedProtocolMessageType('ListCommentsRequest', (_message.Message,), dict(
+  DESCRIPTOR = _LISTCOMMENTSREQUEST,
+  __module__ = 'api.v1.api_proto.issues_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.ListCommentsRequest)
+  ))
+_sym_db.RegisterMessage(ListCommentsRequest)
+
+ListCommentsResponse = _reflection.GeneratedProtocolMessageType('ListCommentsResponse', (_message.Message,), dict(
+  DESCRIPTOR = _LISTCOMMENTSRESPONSE,
+  __module__ = 'api.v1.api_proto.issues_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.ListCommentsResponse)
+  ))
+_sym_db.RegisterMessage(ListCommentsResponse)
+
 
 _GETISSUEREQUEST.fields_by_name['name']._options = None
 _SEARCHISSUESREQUEST.fields_by_name['parent']._options = None
+_LISTCOMMENTSREQUEST.fields_by_name['parent']._options = None
 
 _ISSUES = _descriptor.ServiceDescriptor(
   name='Issues',
@@ -194,8 +295,8 @@ _ISSUES = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=504,
-  serialized_end=756,
+  serialized_start=700,
+  serialized_end=1088,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetIssue',
@@ -214,6 +315,15 @@ _ISSUES = _descriptor.ServiceDescriptor(
     input_type=_SEARCHISSUESREQUEST,
     output_type=_SEARCHISSUESRESPONSE,
     serialized_options=_b('\202\323\344\223\002*\"%/prpc/monorail.v1.Issues/SearchIssues:\001*'),
+  ),
+  _descriptor.MethodDescriptor(
+    name='ListComments',
+    full_name='monorail.v1.Issues.ListComments',
+    index=2,
+    containing_service=None,
+    input_type=_LISTCOMMENTSREQUEST,
+    output_type=_LISTCOMMENTSRESPONSE,
+    serialized_options=_b('\202\323\344\223\002*\"%/prpc/monorail.v1.Issues/ListComments:\001*'),
   ),
 ])
 _sym_db.RegisterServiceDescriptor(_ISSUES)

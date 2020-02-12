@@ -3,6 +3,7 @@
 
 import sys
 _b=sys.version_info[0]<3 and (lambda x:x) or (lambda x:x.encode('latin1'))
+from google.protobuf.internal import enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
@@ -12,7 +13,9 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
 from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
+from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -20,10 +23,45 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$api/v1/api_proto/issue_objects.proto\x12\x0bmonorail.v1\x1a&google_proto/google/api/resource.proto\"j\n\x05Issue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t:B\xea\x41?\n\x13\x61pi.crbug.com/Issue\x12(project/{project_name}/issues/{issue_id}\"\"\n\x10IssuesListColumn\x12\x0e\n\x06\x63olumn\x18\x01 \x01(\tb\x06proto3')
+  serialized_pb=_b('\n$api/v1/api_proto/issue_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"j\n\x05Issue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t:B\xea\x41?\n\x13\x61pi.crbug.com/Issue\x12(project/{project_name}/issues/{issue_id}\"\"\n\x10IssuesListColumn\x12\x0e\n\x06\x63olumn\x18\x01 \x01(\t\"\xba\x02\n\x07\x43omment\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x32\n\x05state\x18\x02 \x01(\x0e\x32\x1e.monorail.v1.IssueContentStateB\x03\xe0\x41\x03\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12-\n\tcommenter\x18\x04 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x1c\n\x0finbound_message\x18\x06 \x01(\tB\x03\xe0\x41\x03:Y\xea\x41V\n\x15\x61pi.crbug.com/Comment\x12=projects/{project_id}/issues/{issue_id}/comments/{comment_id}*M\n\x11IssueContentState\x12\x15\n\x11STATE_UNSPECIFIED\x10\x00\x12\n\n\x06\x41\x43TIVE\x10\x01\x12\x0b\n\x07\x44\x45LETED\x10\x02\x12\x08\n\x04SPAM\x10\x03\x62\x06proto3')
   ,
-  dependencies=[google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,])
+  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 
+_ISSUECONTENTSTATE = _descriptor.EnumDescriptor(
+  name='IssueContentState',
+  full_name='monorail.v1.IssueContentState',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='STATE_UNSPECIFIED', index=0, number=0,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='ACTIVE', index=1, number=1,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='DELETED', index=2, number=2,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='SPAM', index=3, number=3,
+      serialized_options=None,
+      type=None),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=633,
+  serialized_end=710,
+)
+_sym_db.RegisterEnumDescriptor(_ISSUECONTENTSTATE)
+
+IssueContentState = enum_type_wrapper.EnumTypeWrapper(_ISSUECONTENTSTATE)
+STATE_UNSPECIFIED = 0
+ACTIVE = 1
+DELETED = 2
+SPAM = 3
 
 
 
@@ -60,8 +98,8 @@ _ISSUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=93,
-  serialized_end=199,
+  serialized_start=172,
+  serialized_end=278,
 )
 
 
@@ -91,12 +129,82 @@ _ISSUESLISTCOLUMN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=201,
-  serialized_end=235,
+  serialized_start=280,
+  serialized_end=314,
 )
 
+
+_COMMENT = _descriptor.Descriptor(
+  name='Comment',
+  full_name='monorail.v1.Comment',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='monorail.v1.Comment.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='state', full_name='monorail.v1.Comment.state', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\340A\003'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='content', full_name='monorail.v1.Comment.content', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='commenter', full_name='monorail.v1.Comment.commenter', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\024\n\022api.crbug.com/User\340A\003'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='create_time', full_name='monorail.v1.Comment.create_time', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\340A\003'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='inbound_message', full_name='monorail.v1.Comment.inbound_message', index=5,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\340A\003'), file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=_b('\352AV\n\025api.crbug.com/Comment\022=projects/{project_id}/issues/{issue_id}/comments/{comment_id}'),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=317,
+  serialized_end=631,
+)
+
+_COMMENT.fields_by_name['state'].enum_type = _ISSUECONTENTSTATE
+_COMMENT.fields_by_name['create_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 DESCRIPTOR.message_types_by_name['Issue'] = _ISSUE
 DESCRIPTOR.message_types_by_name['IssuesListColumn'] = _ISSUESLISTCOLUMN
+DESCRIPTOR.message_types_by_name['Comment'] = _COMMENT
+DESCRIPTOR.enum_types_by_name['IssueContentState'] = _ISSUECONTENTSTATE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Issue = _reflection.GeneratedProtocolMessageType('Issue', (_message.Message,), dict(
@@ -113,6 +221,18 @@ IssuesListColumn = _reflection.GeneratedProtocolMessageType('IssuesListColumn', 
   ))
 _sym_db.RegisterMessage(IssuesListColumn)
 
+Comment = _reflection.GeneratedProtocolMessageType('Comment', (_message.Message,), dict(
+  DESCRIPTOR = _COMMENT,
+  __module__ = 'api.v1.api_proto.issue_objects_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.Comment)
+  ))
+_sym_db.RegisterMessage(Comment)
+
 
 _ISSUE._options = None
+_COMMENT.fields_by_name['state']._options = None
+_COMMENT.fields_by_name['commenter']._options = None
+_COMMENT.fields_by_name['create_time']._options = None
+_COMMENT.fields_by_name['inbound_message']._options = None
+_COMMENT._options = None
 # @@protoc_insertion_point(module_scope)
