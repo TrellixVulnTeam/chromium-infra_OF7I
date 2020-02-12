@@ -101,6 +101,7 @@ func mainImpl(c context.Context, argv []string, env environ.Env) int {
 		defaultConfig.SpecLoader.CommonSpecNames = []string{".vpython3"}
 		defaultConfig.SpecLoader.PartnerSuffix = ".vpython3"
 		defaultConfig.DefaultSpec.PythonVersion = "3"
+		defaultConfig.VpythonOptIn = true
 	}
 	return defaultConfig.Main(c, argv, env)
 }
