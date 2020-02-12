@@ -5,21 +5,10 @@
 import {LitElement, html, css} from 'lit-element';
 import {ifDefined} from 'lit-html/directives/if-defined';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
+import 'shared/typedef.js';
 
 export const SCREENREADER_ATTRIBUTE_ERROR = `For screenreader support,
   mr-dropdown must always have either a label or a text property defined.`;
-
-/**
- * An Object for specifying what to display in a single entry in the
- * dropdown list.
- *
- * @typedef {Object} MenuItem
- * @property {string=} text The text to display in the menu.
- * @property {string=} icon A Material Design icon shown left of the text.
- * @property {Array<MenuItem>=} items A specification for a nested submenu.
- * @property {function=} handler An optional click handler for an item.
- * @property {string=} url A link for the menu item to navigate to.
- */
 
 /**
  * `<mr-dropdown>`

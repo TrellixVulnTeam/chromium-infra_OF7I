@@ -10,6 +10,7 @@ import * as hotlist from 'reducers/hotlist.js';
 import * as project from 'reducers/project.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
+import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
 /**
  * A HotlistItem with the Issue flattened into the top-level,
@@ -33,7 +34,9 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
     return css`
       :host {
         display: block;
-        padding: 0.5em 8px;
+      }
+      dl {
+        margin: 16px 24px;
       }
       dt {
         font-weight: bold;
@@ -46,28 +49,31 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    if (!this.hotlist) {
+    if (!this._hotlist) {
       return html`Loading...`;
     }
 
-    const issues = prepareIssues(this.hotlistItems);
+    const issues = prepareIssues(this._hotlistItems);
 
     const allProjectNamesEqual = issues.length && issues.every(
         (issue) => issue.projectName === issues[0].projectName);
     const projectName = allProjectNamesEqual ? issues[0].projectName : null;
 
     return html`
-      <h1>Hotlist ${this.hotlist.name}</h1>
+      <mr-hotlist-header .name=${this._hotlist.name} selected=0>
+      </mr-hotlist-header>
+
       <dl>
         <dt>Summary</dt>
-        <dd>${this.hotlist.summary}</dd>
+        <dd>${this._hotlist.summary}</dd>
         <dt>Description</dt>
-        <dd>${this.hotlist.description}</dd>
+        <dd>${this._hotlist.description}</dd>
       </dl>
+
       <mr-issue-list
         .issues=${issues}
         .projectName=${projectName}
-        .columns=${this.hotlist.defaultColSpec.split(' ')}
+        .columns=${this._hotlist.defaultColSpec.split(' ')}
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
         ?rerankEnabled=${true}
@@ -79,8 +85,8 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
   /** @override */
   static get properties() {
     return {
-      hotlist: {type: Object},
-      hotlistItems: {type: Array},
+      _hotlist: {type: Object},
+      _hotlistItems: {type: Array},
       _extractFieldValuesFromIssue: {type: Object},
     };
   };
@@ -89,9 +95,9 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
   constructor() {
     super();
     /** @type {Hotlist=} */
-    this.hotlist = null;
+    this._hotlist = null;
     /** @type {Array<HotlistItem>} */
-    this.hotlistItems = [];
+    this._hotlistItems = [];
     /**
      * @param {Issue} _issue
      * @param {string} _fieldName
@@ -102,8 +108,8 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.hotlist = hotlist.viewedHotlist(state);
-    this.hotlistItems = hotlist.viewedHotlistItems(state);
+    this._hotlist = hotlist.viewedHotlist(state);
+    this._hotlistItems = hotlist.viewedHotlistItems(state);
     this._extractFieldValuesFromIssue =
       project.extractFieldValuesFromIssue(state);
   }

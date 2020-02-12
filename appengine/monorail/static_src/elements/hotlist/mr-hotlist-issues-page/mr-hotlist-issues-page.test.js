@@ -33,8 +33,8 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('renders hotlist items with one project', async () => {
-    element.hotlist = example.HOTLIST;
-    element.hotlistItems = [example.HOTLIST_ITEM];
+    element._hotlist = example.HOTLIST;
+    element._hotlistItems = [example.HOTLIST_ITEM];
     await element.updateComplete;
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
@@ -42,8 +42,8 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('renders hotlist items with multiple projects', async () => {
-    element.hotlist = example.HOTLIST;
-    element.hotlistItems = [
+    element._hotlist = example.HOTLIST;
+    element._hotlistItems = [
       example.HOTLIST_ITEM,
       example.HOTLIST_ITEM_OTHER_PROJECT,
     ];
@@ -65,11 +65,11 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('computes strings for HotlistIssue fields', async () => {
-    element.hotlist = {
+    element._hotlist = {
       ...example.HOTLIST,
       defaultColSpec: 'Summary Rank Added Adder Note',
     };
-    element.hotlistItems = [{
+    element._hotlistItems = [{
       issue: {projectName: 'project-name', localId: 1234, summary: 'Summary'},
       rank: 53,
       adderRef: {displayName: 'example@example.com'},

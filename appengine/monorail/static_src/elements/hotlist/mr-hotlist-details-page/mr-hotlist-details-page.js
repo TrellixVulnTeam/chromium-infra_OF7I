@@ -5,6 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 import {connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
+import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
 /** Hotlist Details page */
 export class MrHotlistDetailsPage extends connectStore(LitElement) {
@@ -13,7 +14,9 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
     return css`
       :host {
         display: block;
-        padding: 0.5em 8px;
+      }
+      section {
+        margin: 16px 24px;
       }
       dt {
         font-weight: bold;
@@ -26,20 +29,23 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    if (!this.hotlist) {
+    if (!this._hotlist) {
       return html`Loading...`;
     }
 
     return html`
+      <mr-hotlist-header .name=${this._hotlist.name} selected=2>
+      </mr-hotlist-header>
+
       <section>
         <h1>Hotlist Settings</h1>
         <dl>
           <dt>Name</dt>
-          <dd>${this.hotlist.name}</dd>
+          <dd>${this._hotlist.name}</dd>
           <dt>Summary</dt>
-          <dd>${this.hotlist.summary}</dd>
+          <dd>${this._hotlist.summary}</dd>
           <dt>Description</dt>
-          <dd>${this.hotlist.description}</dd>
+          <dd>${this._hotlist.description}</dd>
         </dl>
       </section>
 
@@ -47,7 +53,7 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
         <h1>Hotlist Defaults</h1>
         <dl>
           <dt>Default columns shown in list view</dt>
-          <dd>${this.hotlist.defaultColSpec}</dd>
+          <dd>${this._hotlist.defaultColSpec}</dd>
         </dl>
       </section>
 
@@ -56,7 +62,7 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
         <dl>
           <dt>Who can view this hotlist</dt>
           <dd>
-            ${this.hotlist.isPrivate ?
+            ${this._hotlist.isPrivate ?
               'Members only' : 'Anyone on the Internet'}
           </dd>
         </dl>
@@ -71,19 +77,19 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
   /** @override */
   static get properties() {
     return {
-      hotlist: {type: Object},
+      _hotlist: {type: Object},
     };
   }
 
   /** @override */
   constructor() {
     super();
-    this.hotlist = null;
+    this._hotlist = null;
   }
 
   /** @override */
   stateChanged(state) {
-    this.hotlist = hotlist.viewedHotlist(state);
+    this._hotlist = hotlist.viewedHotlist(state);
   }
 };
 

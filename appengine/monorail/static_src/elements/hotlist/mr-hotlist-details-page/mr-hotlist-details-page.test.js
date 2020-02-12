@@ -6,10 +6,12 @@ import {assert} from 'chai';
 import * as example from 'shared/test/constants-hotlist.js';
 import {MrHotlistDetailsPage} from './mr-hotlist-details-page.js';
 
+/** @type {MrHotlistDetailsPage} */
 let element;
 
 describe('mr-hotlist-details-page', () => {
   beforeEach(() => {
+    // @ts-ignore
     element = document.createElement('mr-hotlist-details-page');
     document.body.appendChild(element);
   });
@@ -28,13 +30,13 @@ describe('mr-hotlist-details-page', () => {
   });
 
   it('renders hotlist', async () => {
-    element.hotlist = example.HOTLIST;
+    element._hotlist = example.HOTLIST;
     await element.updateComplete;
   });
 
   it('renders private hotlist', async () => {
-    element.hotlist = {...example.HOTLIST};
-    element.hotlist.isPrivate = true;
+    element._hotlist = {...example.HOTLIST};
+    element._hotlist.isPrivate = true;
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'Members only');
   });
