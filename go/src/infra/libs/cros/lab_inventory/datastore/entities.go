@@ -11,9 +11,11 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/common/errors"
 
 	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/utils"
+	"infra/libs/fleet/protos"
 )
 
 // DeviceEntityID represents the ID of a device. We prefer use asset id as the id.
@@ -103,3 +105,78 @@ func (e *DeviceEntity) UpdatePayload(p proto.Message, t time.Time) (changes chan
 func (e *DeviceEntity) String() string {
 	return fmt.Sprintf("<%s:%s>", e.Hostname, e.ID)
 }
+
+/* Asset Entity and helper functions*/
+
+// AssetEntityName is the datastore entity kind for Asset entities.
+const AssetEntityName string = "Asset"
+
+// AssetEntity is a datastore entity that tracks the asset.
+type AssetEntity struct {
+	_kind    string `gae:"$kind,asset"`
+	ID       string `gae:"$id"`
+	Lab      string
+	Location []byte         `gae:",noindex"`
+	Parent   *datastore.Key `gae:"$parent"`
+}
+
+// AssetStateEntityName is the datastore entity kind for Asset state entities.
+const AssetStateEntityName string = "AssetState"
+
+// AssetStateEntity is the datastore that tracks the asset state.
+type AssetStateEntity struct {
+	_kind   string           `gae:"$kind,assetstate"`
+	ID      string           `gae:"$id"`
+	State   fleet.AssetState `gae:",noindex"`
+	Updated time.Time
+	Parent  *datastore.Key `gae:"$parent"`
+}
+
+func (e *AssetEntity) String() string {
+	return fmt.Sprintf("<%s>:%s", e.ID, e.Lab)
+}
+
+// NewAssetEntity creates an AssetEntity object from ChopsAsset object
+func NewAssetEntity(a *fleet.ChopsAsset, parent *datastore.Key) (*AssetEntity, error) {
+	if a.GetId() == "" {
+		return nil, errors.Reason("Missing asset tag").Err()
+	}
+	location, err := proto.Marshal(a.GetLocation())
+	if err != nil {
+		return nil, err
+	}
+	return &AssetEntity{
+		ID:       a.GetId(),
+		Lab:      a.GetLocation().GetLab(),
+		Location: location,
+		Parent:   parent,
+	}, nil
+}
+
+// NewAssetStateEntity creates an AssetStateEntity object based on input.
+func NewAssetStateEntity(a *fleet.ChopsAsset, state fleet.State, updated time.Time, parent *datastore.Key) (*AssetStateEntity, error) {
+	if a.GetId() == "" {
+		return nil, errors.Reason("Missing asset tag").Err()
+	}
+	return &AssetStateEntity{
+		ID: a.GetId(),
+		State: fleet.AssetState{
+			Id:    a.GetId(),
+			State: state,
+		},
+		Updated: updated,
+		Parent:  parent,
+	}, nil
+}
+
+// ToChopsAsset returns a ChopsAsset object
+func (e *AssetEntity) ToChopsAsset() (*fleet.ChopsAsset, error) {
+	var location fleet.Location
+	err := proto.Unmarshal(e.Location, &location)
+	return &fleet.ChopsAsset{
+		Id:       e.ID,
+		Location: &location,
+	}, err
+}
+
+/* Asset Entity and helper functions end */

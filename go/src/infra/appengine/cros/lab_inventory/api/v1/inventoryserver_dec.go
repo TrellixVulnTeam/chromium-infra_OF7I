@@ -124,3 +124,71 @@ func (s *DecoratedInventory) BatchUpdateDevices(ctx context.Context, req *BatchU
 	}
 	return
 }
+
+func (s *DecoratedInventory) AddAssets(ctx context.Context, req *AssetList) (rsp *AssetResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "AddAssets", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.AddAssets(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "AddAssets", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedInventory) GetAssets(ctx context.Context, req *AssetIDList) (rsp *AssetResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetAssets", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetAssets(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetAssets", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedInventory) DeleteAssets(ctx context.Context, req *AssetIDList) (rsp *AssetIDResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteAssets", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteAssets(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteAssets", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedInventory) UpdateAssets(ctx context.Context, req *AssetList) (rsp *AssetResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateAssets", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateAssets(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateAssets", rsp, err)
+	}
+	return
+}

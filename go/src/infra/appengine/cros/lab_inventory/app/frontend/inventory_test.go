@@ -27,6 +27,7 @@ import (
 	"infra/libs/cros/lab_inventory/datastore"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/cros/lab_inventory/hwid"
+	"infra/libs/fleet/protos"
 )
 
 type testFixture struct {
@@ -583,6 +584,231 @@ func TestUpdateDutsStatus(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp.FailedDevices, ShouldHaveLength, 1)
 			So(resp.FailedDevices[0].ErrorMsg, ShouldContainSubstring, "labstation")
+		})
+	})
+}
+func mockAsset(id, lab string) *fleet.ChopsAsset {
+	return &fleet.ChopsAsset{
+		Id: id,
+		Location: &fleet.Location{
+			Lab:      lab,
+			Row:      "Phobos-3",
+			Rack:     "Deimos-0",
+			Shelf:    "Olympus-Mons",
+			Position: "Amazonis-Planitia",
+		},
+	}
+}
+
+func assertLocationEqual(a, b *fleet.Location) {
+	So(a.GetLab(), ShouldEqual, b.GetLab())
+	So(a.GetRow(), ShouldEqual, b.GetRow())
+	So(a.GetRack(), ShouldEqual, b.GetRack())
+	So(a.GetShelf(), ShouldEqual, b.GetShelf())
+	So(a.GetPosition(), ShouldEqual, b.GetPosition())
+}
+
+func TestAddAsset(t *testing.T) {
+	t.Parallel()
+
+	asset1 := mockAsset("4675636B596F75", "lab1")
+	asset2 := mockAsset("4675636B596F76", "lab2")
+	asset3 := mockAsset("", "")
+
+	Convey("AddAsset", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		Convey("Add asset with tag", func() {
+			req := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset1},
+			}
+			resp, err := tf.Inventory.AddAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Failed, ShouldHaveLength, 0)
+			So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+		})
+		Convey("Add asset without tag", func() {
+			req := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset3},
+			}
+			resp, err := tf.Inventory.AddAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Failed, ShouldHaveLength, 1)
+			So(resp.Passed, ShouldHaveLength, 0)
+		})
+		Convey("Add existing asset", func() {
+			req1 := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset1},
+			}
+			resp, err := tf.Inventory.AddAssets(tf.C, req1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Failed, ShouldHaveLength, 0)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+			req2 := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset1, asset2},
+			}
+			resp, err = tf.Inventory.AddAssets(tf.C, req2)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Failed, ShouldHaveLength, 1)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset2.GetId())
+			So(resp.Failed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+		})
+	})
+}
+
+func TestUpdateAsset(t *testing.T) {
+	t.Parallel()
+
+	asset1 := mockAsset("4675636B596F75", "lab1")
+	asset2 := mockAsset("4675636B596F76", "lab2")
+	asset3 := mockAsset("4675636B596F76", "lab3")
+	asset4 := mockAsset("", "")
+
+	Convey("UpdateAsset", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+
+		Convey("Update non-existing asset", func() {
+			req := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset1},
+			}
+			resp, err := tf.Inventory.UpdateAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Passed, ShouldHaveLength, 0)
+			So(resp.Failed, ShouldHaveLength, 1)
+			So(resp.Failed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+		})
+		Convey("Update asset without tag", func() {
+			req := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset4},
+			}
+			resp, err := tf.Inventory.UpdateAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Failed, ShouldHaveLength, 1)
+			So(resp.Passed, ShouldHaveLength, 0)
+		})
+		Convey("Update existing asset", func() {
+			req1 := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset2},
+			}
+			resp, err := tf.Inventory.AddAssets(tf.C, req1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Failed, ShouldHaveLength, 0)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset2.GetId())
+			req2 := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset1, asset3},
+			}
+			resp, err = tf.Inventory.UpdateAssets(tf.C, req2)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.Failed, ShouldHaveLength, 1)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Failed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+			So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset3.GetId())
+
+			req := &api.AssetIDList{Id: []string{asset2.GetId()}}
+			resp, err = tf.Inventory.GetAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.Passed[0].Asset.GetLocation().GetLab(), ShouldEqual, asset3.GetLocation().GetLab())
+		})
+	})
+}
+
+func TestGetAsset(t *testing.T) {
+	t.Parallel()
+
+	asset1 := mockAsset("4675636B596F75", "lab1")
+
+	Convey("GetAsset", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		req := &api.AssetList{
+			Asset: []*fleet.ChopsAsset{asset1},
+		}
+		resp, err := tf.Inventory.AddAssets(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp.Passed, ShouldHaveLength, 1)
+		So(resp.Passed[0].ErrorMsg, ShouldEqual, "")
+		So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+		assertLocationEqual(resp.Passed[0].Asset.GetLocation(), asset1.Location)
+		Convey("Get Asset from ID", func() {
+			req := &api.AssetIDList{Id: []string{asset1.GetId()}}
+			resp, err = tf.Inventory.GetAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Passed[0].ErrorMsg, ShouldEqual, "")
+			So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+			assertLocationEqual(resp.Passed[0].Asset.GetLocation(), asset1.Location)
+		})
+		Convey("Get Asset from non existent ID", func() {
+			req := &api.AssetIDList{Id: []string{
+				"4675636B596F76",
+			}}
+			resp, err = tf.Inventory.GetAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.Failed, ShouldHaveLength, 1)
+			So(resp.Failed[0].ErrorMsg, ShouldNotEqual, "")
+			So(resp.Failed[0].Asset.GetId(), ShouldEqual, "4675636B596F76")
+		})
+	})
+}
+
+func TestDeleteAsset(t *testing.T) {
+	t.Parallel()
+
+	asset1 := mockAsset("4675636B596F75", "lab1")
+	asset2 := mockAsset("4675636B596F76", "lab2")
+
+	Convey("DeleteAsset", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Delete Asset from ID", func() {
+			req := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset1},
+			}
+			resp, err := tf.Inventory.AddAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+			req1 := &api.AssetIDList{Id: []string{asset1.GetId()}}
+			resp1, err := tf.Inventory.DeleteAssets(tf.C, req1)
+			So(err, ShouldBeNil)
+			So(resp1.Passed, ShouldHaveLength, 1)
+			So(resp1.Passed[0].Id, ShouldEqual, asset1.GetId())
+		})
+		Convey("Delete non-existent Asset", func() {
+			req := &api.AssetList{
+				Asset: []*fleet.ChopsAsset{asset1},
+			}
+			resp, err := tf.Inventory.AddAssets(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.Passed, ShouldHaveLength, 1)
+			So(resp.Passed[0].Asset.GetId(), ShouldEqual, asset1.GetId())
+			req1 := &api.AssetIDList{
+				Id: []string{asset1.GetId(), asset2.GetId()},
+			}
+			resp2, err := tf.Inventory.DeleteAssets(tf.C, req1)
+			So(err, ShouldBeNil)
+			So(resp2.Failed, ShouldHaveLength, 1)
+			So(resp2.Passed, ShouldHaveLength, 1)
+			So(resp2.Failed[0].Id, ShouldEqual, asset2.GetId())
+			So(resp2.Passed[0].Id, ShouldEqual, asset1.GetId())
 		})
 	})
 }

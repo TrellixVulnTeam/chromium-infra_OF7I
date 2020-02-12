@@ -474,3 +474,103 @@ func (is *InventoryServerImpl) BatchUpdateDevices(ctx context.Context, req *api.
 
 	return &api.BatchUpdateDevicesResponse{}, nil
 }
+
+// AddAssets adds a record of the given asset to datastore
+func (is *InventoryServerImpl) AddAssets(ctx context.Context, req *api.AssetList) (response *api.AssetResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	logging.Debugf(ctx, "Input request: %#v", req)
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	res, err := datastore.AddAssets(ctx, req.Asset)
+	passed, failed := seperateAssetResults(res)
+	response = &api.AssetResponse{
+		Passed: passed,
+		Failed: failed,
+	}
+	return response, err
+}
+
+// UpdateAssets updates a record of the given asset to datastore
+func (is *InventoryServerImpl) UpdateAssets(ctx context.Context, req *api.AssetList) (response *api.AssetResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	logging.Debugf(ctx, "Input request: %#v", req)
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	res, err := datastore.UpdateAssets(ctx, req.Asset)
+	passed, failed := seperateAssetResults(res)
+	response = &api.AssetResponse{
+		Passed: passed,
+		Failed: failed,
+	}
+	return response, err
+}
+
+// GetAssets retrieves the asset information given its asset ID
+func (is *InventoryServerImpl) GetAssets(ctx context.Context, req *api.AssetIDList) (response *api.AssetResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	res := datastore.GetAssetsByID(ctx, req.Id)
+	passed, failed := seperateAssetResults(res)
+	response = &api.AssetResponse{
+		Passed: passed,
+		Failed: failed,
+	}
+	return response, err
+}
+
+// DeleteAssets deletes the asset information from datastore
+func (is *InventoryServerImpl) DeleteAssets(ctx context.Context, req *api.AssetIDList) (response *api.AssetIDResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	res := datastore.DeleteAsset(ctx, req.Id)
+	passed, failed := seperateAssetIDResults(res)
+	return &api.AssetIDResponse{
+		Passed: passed,
+		Failed: failed,
+	}, err
+}
+
+func seperateAssetIDResults(a []*datastore.AssetOpResult) (pAssetIDs, fAssetIDs []*api.AssetIDResult) {
+	passed, failed := seperateAssetResults(a)
+	pAssetIDs = make([]*api.AssetIDResult, 0, len(passed))
+	fAssetIDs = make([]*api.AssetIDResult, 0, len(failed))
+	toAssetIDResult := func(b *api.AssetResult) *api.AssetIDResult {
+		return &api.AssetIDResult{
+			Id:       b.Asset.GetId(),
+			ErrorMsg: b.ErrorMsg,
+		}
+	}
+	for _, res := range passed {
+		pAssetIDs = append(pAssetIDs, toAssetIDResult(res))
+	}
+	for _, res := range failed {
+		fAssetIDs = append(fAssetIDs, toAssetIDResult(res))
+	}
+	return pAssetIDs, fAssetIDs
+}
+
+func seperateAssetResults(results []*datastore.AssetOpResult) (success, failure []*api.AssetResult) {
+	successResults := make([]*api.AssetResult, 0, len(results))
+	failureResults := make([]*api.AssetResult, 0, len(results))
+	for _, res := range results {
+		if res.Err != nil {
+			var failedResult api.AssetResult
+			failedResult.Asset = res.ToAsset()
+			failedResult.ErrorMsg = res.Err.Error()
+			failureResults = append(failureResults, &failedResult)
+		} else {
+			var successResult api.AssetResult
+			successResult.Asset = res.ToAsset()
+			successResults = append(successResults, &successResult)
+		}
+	}
+	return successResults, failureResults
+}

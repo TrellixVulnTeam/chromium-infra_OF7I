@@ -12,6 +12,7 @@ import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/lab/dut_state.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/device/config.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/manufacturing/config.proto";
+import "infra/libs/fleet/protos/asset.proto";
 
 // The RPCs below to get/add/update/delete devices support batch operation, and
 // the response contains the detail result for each device. The RPCs return OK
@@ -36,6 +37,18 @@ service Inventory {
 
   // BatchUpdateDevices updates some specific device properties in batch.
   rpc BatchUpdateDevices(BatchUpdateDevicesRequest) returns (BatchUpdateDevicesResponse);
+
+  // Add asset information
+  rpc AddAssets(AssetList) returns (AssetResponse);
+
+  // Get asset information
+  rpc GetAssets(AssetIDList) returns (AssetResponse);
+
+  // Delete asset information
+  rpc DeleteAssets(AssetIDList) returns (AssetIDResponse);
+
+  // Update asset information
+  rpc UpdateAssets(AssetList) returns (AssetResponse);
 }
 
 message DeviceOpResult{
@@ -142,5 +155,32 @@ message BatchUpdateDevicesRequest {
 }
 
 message BatchUpdateDevicesResponse {
+}
 
+message AssetResult {
+  fleet.ChopsAsset asset = 1;
+  string error_msg = 2;
+}
+
+message AssetList {
+  repeated fleet.ChopsAsset asset = 1;
+}
+
+message AssetResponse {
+  repeated AssetResult passed = 1;
+  repeated AssetResult failed = 2;
+}
+
+message AssetIDList {
+  repeated string id = 1;
+}
+
+message AssetIDResult {
+  string id = 1;
+  string error_msg = 2;
+}
+
+message AssetIDResponse {
+  repeated AssetIDResult passed = 1;
+  repeated AssetIDResult failed = 2;
 }

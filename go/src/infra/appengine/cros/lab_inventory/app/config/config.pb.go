@@ -71,7 +71,7 @@ type Config struct {
 	HwidSecret                string         `protobuf:"bytes,7,opt,name=hwid_secret,json=hwidSecret,proto3" json:"hwid_secret,omitempty"`
 	DeviceConfigSource        *Gitiles       `protobuf:"bytes,8,opt,name=device_config_source,json=deviceConfigSource,proto3" json:"device_config_source,omitempty"`
 	ManufacturingConfigSource *Gitiles       `protobuf:"bytes,9,opt,name=manufacturing_config_source,json=manufacturingConfigSource,proto3" json:"manufacturing_config_source,omitempty"`
-	// The git repo informaiton of inventory v1.
+	// The git repo information of inventory v1.
 	// TODO(guocb) remove this after migration.
 	Inventory *InventoryV1Repo `protobuf:"bytes,12,opt,name=inventory,proto3" json:"inventory,omitempty"`
 	// Environment managed by this instance of app, e.g. ENVIRONMENT_STAGING,

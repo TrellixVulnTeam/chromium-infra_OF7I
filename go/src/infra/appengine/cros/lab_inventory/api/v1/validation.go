@@ -192,3 +192,11 @@ func (r *BatchUpdateDevicesRequest) Validate() error {
 	}
 	return nil
 }
+
+// Validate validates input requests of AddAssets and UpdateAssets.
+func (r *AssetList) Validate() error {
+	if r.Asset == nil || len(r.Asset) == 0 {
+		return status.Errorf(codes.InvalidArgument, "no asset to add/update")
+	}
+	return nil
+}
