@@ -32,6 +32,7 @@ func MakeTestClient(ctx context.Context) (*grpc.ClientConn, net.Listener) {
 // WiringFake is a fake implementation of tls.WiringServer for testing.
 type WiringFake struct {
 	tls.UnimplementedWiringServer
+	// DUTAddress is a static string to return for OpenDutPort.
 	DUTAddress string
 }
 
@@ -51,10 +52,12 @@ func (s WiringFake) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest
 }
 
 // SSHStub is a stub implementation of an SSH server for testing.
+// It returns canned stdout output and exist status.
 type SSHStub struct {
 	Output     []byte
 	ExitStatus uint32
-	Logger     Logger
+	// Logger is used to print messages for debugging if set.
+	Logger Logger
 }
 
 // Serve serves the service using the listener.
