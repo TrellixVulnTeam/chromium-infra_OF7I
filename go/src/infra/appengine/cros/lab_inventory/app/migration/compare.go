@@ -6,11 +6,15 @@ package migration
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/golang/protobuf/proto"
 	"github.com/pmezard/go-difflib/difflib"
+	"go.chromium.org/gae/service/info"
 	authclient "go.chromium.org/luci/auth"
 	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/data/stringset"
@@ -38,7 +42,7 @@ func newGitilesClient(c context.Context, host string) (gitiles.GitilesClient, er
 const (
 	stagingEnv     = "ENVIRONMENT_STAGING"
 	prodEnv        = "ENVIRONMENT_PROD"
-	maxErrorLogged = 10
+	maxErrorLogged = 30
 )
 
 func getV1Duts(ctx context.Context) (stringset.Set, map[string]*inventory.DeviceUnderTest, error) {
@@ -122,20 +126,48 @@ func getV2Duts(ctx context.Context) (stringset.Set, map[string]*inventory.Device
 	return stringset.NewFromSlice(hostnames...), dutMap, nil
 }
 
+func logDiffBetweenDutLists(ctx context.Context, lhs, rhs stringset.Set, msg string) {
+	if d := lhs.Difference(rhs); d.Len() > 0 {
+		logging.Warningf(ctx, msg)
+		d.Iter(func(name string) bool {
+			logging.Warningf(ctx, "%#v", name)
+			return true
+		})
+	} else {
+		logging.Infof(ctx, "No result of %#v", msg)
+	}
+}
+
+func getCloudStorageWriter(ctx context.Context) *storage.Writer {
+	storageClient, err := storage.NewClient(ctx)
+	if err != nil {
+		logging.Warningf(ctx, "failed to create cloud storage client")
+		return nil
+	}
+	bucketName := fmt.Sprintf("%s.appspot.com", info.AppID(ctx))
+	bucket := storageClient.Bucket(bucketName)
+	filename := fmt.Sprintf("inv_diff.%s.log", time.Now().UTC().Format("2006-01-02T03:04:05"))
+	logging.Infof(ctx, "All inventory diff will be saved to https://storage.cloud.google.com/%s/%s", bucketName, filename)
+	return bucket.Object(filename).NewWriter(ctx)
+}
+
+func logDiffOfOneDut(ctx context.Context, cw *storage.Writer, count *int, diffText string) {
+	if *count > maxErrorLogged {
+		logging.Warningf(ctx, "and more difference ...")
+	}
+	logging.Warningf(ctx, diffText)
+	*count++
+	if cw == nil {
+		return
+	}
+	if _, err := fmt.Fprintf(cw, diffText); err != nil {
+		logging.Warningf(ctx, "failed to write to cloud storage: %s", err.Error())
+	}
+}
+
 // CompareInventory compares the inventory from v1 and v2 and log the
 // difference.
 func CompareInventory(ctx context.Context) error {
-	logDifference := func(lhs, rhs stringset.Set, msg string) {
-		if d := lhs.Difference(rhs); d.Len() > 0 {
-			logging.Warningf(ctx, msg)
-			d.Iter(func(name string) bool {
-				logging.Warningf(ctx, "%#v", name)
-				return true
-			})
-		} else {
-			logging.Infof(ctx, "No result of %#v", msg)
-		}
-	}
 	v1Duts, v1DutMap, err := getV1Duts(ctx)
 	if err != nil {
 		return err
@@ -144,8 +176,18 @@ func CompareInventory(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	logDifference(v1Duts, v2Duts, "Devices only in v1")
-	logDifference(v2Duts, v1Duts, "Devices only in v2")
+	logDiffBetweenDutLists(ctx, v1Duts, v2Duts, "Devices only in v1")
+	logDiffBetweenDutLists(ctx, v2Duts, v1Duts, "Devices only in v2")
+
+	cw := getCloudStorageWriter(ctx)
+	defer func() {
+		if cw != nil {
+			fmt.Fprintf(cw, "This is the end.")
+			if err := cw.Close(); err != nil {
+				logging.Warningf(ctx, "failed to close cloud storage writer: %s", err)
+			}
+		}
+	}()
 
 	count := 0
 	v1Duts.Intersect(v2Duts).Iter(func(name string) bool {
@@ -165,15 +207,11 @@ func CompareInventory(ctx context.Context) error {
 			return true
 		}
 		if diffText != "" {
-			if count > maxErrorLogged {
-				logging.Warningf(ctx, "and more difference ...")
-				return false // Break the iteration.
-			}
-			logging.Warningf(ctx, "%#v is different: \n%s", name, diffText)
-			count++
+			logDiffOfOneDut(ctx, cw, &count, fmt.Sprintf("%#v is different: \n%s", name, diffText))
 		}
 		return true
 	})
+	logging.Infof(ctx, "That's all what I have.")
 	return nil
 }
 
@@ -203,7 +241,7 @@ func filterOutKnownDifference(d1, d2 *inventory.DeviceUnderTest) {
 
 	c1.VideoAcceleration = c2.VideoAcceleration
 
-	attrBlackList := stringset.NewFromSlice("stashed_labels", "job_repo_url")
+	attrBlackList := stringset.NewFromSlice("stashed_labels", "job_repo_url", "outlet_changed")
 	var newAttrs []*inventory.KeyValue
 	for _, attr := range cmn1.GetAttributes() {
 		if attrBlackList.Has(attr.GetKey()) {

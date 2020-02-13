@@ -15,7 +15,7 @@ cron:
   url: /internal/cron/push-to-drone-queen
   schedule: every 10 minutes
 
-- description: Compare iventory from V1 and V2
+- description: Compare inventory from V1 and V2
   url: /internal/cron/compare-inventory
   schedule: every 24 hours
 
