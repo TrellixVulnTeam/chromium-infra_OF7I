@@ -19,7 +19,6 @@ cron:
   url: /internal/cron/compare-inventory
   schedule: every 24 hours
 
-# TODO(guocb) uncoment this when rollout inventory v2.
-# - description: report metrics of Duts in inventory.
-#   url: /internal/cron/report-inventory
-#   schedule: every 5 minutes
+- description: report metrics of Duts in inventory.
+  url: /internal/cron/report-inventory
+  schedule: every 5 minutes

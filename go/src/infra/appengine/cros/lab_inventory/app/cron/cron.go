@@ -166,7 +166,11 @@ func pushToDroneQueenCronHandler(c *router.Context) error {
 
 func reportInventoryCronHandler(c *router.Context) error {
 	logging.Infof(c.Context, "start reporting inventory")
-	return datastore.ReportInventory(c.Context, config.Get(c.Context).Environment)
+	if config.Get(c.Context).EnableInventoryReporting {
+		return datastore.ReportInventory(c.Context, config.Get(c.Context).Environment)
+	}
+	logging.Infof(c.Context, "not enabled yet")
+	return nil
 }
 
 func compareInventoryCronHandler(c *router.Context) error {

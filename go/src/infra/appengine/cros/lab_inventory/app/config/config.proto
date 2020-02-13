@@ -42,6 +42,9 @@ message Config {
 
   // The hostname of drone-queen service to push inventory to.
   string queen_service = 11;
+
+  // Report the DUT utilization or not.
+  bool enable_inventory_reporting = 13;
 }
 
 message AdminService {
