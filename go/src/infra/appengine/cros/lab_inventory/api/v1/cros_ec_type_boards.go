@@ -40,6 +40,7 @@ var crosEcTypeBoards = []string{
 	"sentry",
 	"snappy",
 	"soraka",
+	"strago",
 	"veyron",
 	"veyron-fievel",
 	"veyron-mickey",
