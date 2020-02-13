@@ -28,7 +28,7 @@ from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
 
-CURRENT_BUCKET_SCHEMA_VERSION = 7
+CURRENT_BUCKET_SCHEMA_VERSION = 8
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
 
 
@@ -411,6 +411,9 @@ def put_bucket(project_id, revision, bucket_cfg):
   # Use short name in both entity key and config contents.
   short_bucket_cfg = copy.deepcopy(bucket_cfg)
   short_bucket_cfg.name = short_bucket_name(short_bucket_cfg.name)
+  # Trim builders. They're stored in separate Builder entities.
+  if is_swarming_config(short_bucket_cfg):
+    del short_bucket_cfg.swarming.builders[:]
   Bucket(
       key=Bucket.make_key(project_id, short_bucket_cfg.name),
       entity_schema_version=CURRENT_BUCKET_SCHEMA_VERSION,
