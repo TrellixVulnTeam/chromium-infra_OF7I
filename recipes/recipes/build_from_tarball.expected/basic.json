@@ -44,7 +44,6 @@
       "python",
       "-u",
       "[START_DIR]/build_dir/chromium-80.0.3987.76/tools/clang/scripts/build.py",
-      "--force-local-build",
       "--skip-checkout",
       "--without-android",
       "--without-fuchsia"

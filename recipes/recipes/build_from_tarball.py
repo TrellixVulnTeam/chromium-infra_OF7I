@@ -99,6 +99,7 @@ def RunSteps(api):
           # TODO(thomasanderson): Add libminizip-dev to sysroots.
           # 'zlib',
       ]
+
       api.python(
           'Download sysroot.',
           api.path.join(src_dir, 'build', 'linux', 'sysroot_scripts',
@@ -106,27 +107,25 @@ def RunSteps(api):
 
       api.python(
           'Build clang.',
-          api.path.join(src_dir, 'tools', 'clang', 'scripts', 'build.py'), [
-              '--force-local-build', '--skip-checkout', '--without-android',
-              '--without-fuchsia'
-          ])
+          api.path.join(src_dir, 'tools', 'clang', 'scripts', 'build.py'),
+          ['--skip-checkout', '--without-android', '--without-fuchsia'])
 
-      gn_bootstrap_args = [
-          '--gn-gen-args=%s' % ' '.join(gn_args), '--use-custom-libcxx'
-      ]
       with api.context(env=gn_bootstrap_env):
         api.python(
             'Bootstrap gn.',
             api.path.join(src_dir, 'tools', 'gn', 'bootstrap', 'bootstrap.py'),
-            gn_bootstrap_args)
+            ['--gn-gen-args=%s' % ' '.join(gn_args), '--use-custom-libcxx'])
+
       api.step('Download nodejs.', [
           api.path.join(src_dir, 'third_party', 'node', 'update_node_binaries')
       ])
+
       api.python(
           'Unbundle libraries.',
           api.path.join(src_dir, 'build', 'linux', 'unbundle',
                         'replace_gn_files.py'),
           ['--system-libraries'] + unbundle_libs)
+
       api.step('Build chrome.',
                ['ninja', '-C', 'out/Release', 'chrome/installer/linux'])
   finally:
