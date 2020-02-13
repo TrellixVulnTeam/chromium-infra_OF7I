@@ -2,10 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# UpdateBuild accepts large steps. Python is slow to process these
-# requests. Given GIL, it blocks all other requests.
-# Process such requests on the backend to avoid overloading frontend.
-
 dispatch:
+  # UpdateBuild accepts large steps. Python is slow to process these requests.
+  # Given global interpreter lock, it blocks all other requests. Process such
+  # requests on the backend to avoid overloading frontend.
   - url: "*/prpc/buildbucket.v2.Builds/UpdateBuild"
     service: backend
+
+  # Serve rpcexplorer from go service. Actual prpc calls are still served from
+  # still served from python. default-go service lives here:
+  # https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/appengine/frontend
+  - url: "*/rpcexplorer/*"
+    service: default-go
