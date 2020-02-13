@@ -29,6 +29,7 @@ class HotlistsServicerTest(unittest.TestCase):
         features=fake.FeaturesService(),
         issue=fake.IssueService(),
         project=fake.ProjectService(),
+        config=fake.ConfigService(),
         user=fake.UserService(),
         usergroup=fake.UserGroupService())
     self.hotlists_svcr = hotlists_servicer.HotlistsServicer(
@@ -59,28 +60,67 @@ class HotlistsServicerTest(unittest.TestCase):
     self.services.issue.TestAddIssue(self.issue_4)
 
     hotlist_items = [
-        (self.issue_4.issue_id,
-         31, self.user_3.user_id, self.PAST_TIME, 'note'),
-        (self.issue_3.issue_id,
-         21, self.user_1.user_id, self.PAST_TIME, 'note'),
-        (self.issue_2.issue_id,
-         11, self.user_2.user_id, self.PAST_TIME, 'note'),
-        (self.issue_1.issue_id, 1, self.user_1.user_id, self.PAST_TIME, 'note')]
+        (
+            self.issue_4.issue_id, 31, self.user_3.user_id, self.PAST_TIME,
+            'note5'),
+        (
+            self.issue_3.issue_id, 21, self.user_1.user_id, self.PAST_TIME,
+            'note1'),
+        (
+            self.issue_2.issue_id, 11, self.user_2.user_id, self.PAST_TIME,
+            'note2'),
+        (
+            self.issue_1.issue_id, 1, self.user_1.user_id, self.PAST_TIME,
+            'note4')
+    ]
     self.hotlist_1 = self.services.features.TestAddHotlist(
         'HotlistName', owner_ids=[self.user_1.user_id],
         editor_ids=[self.user_2.user_id], hotlist_item_fields=hotlist_items)
+    self.hotlist_resource_name = rnc.ConvertHotlistName(
+        self.hotlist_1.hotlist_id)
 
   def CallWrapped(self, wrapped_handler, *args, **kwargs):
     return wrapped_handler.wrapped(self.hotlists_svcr, *args, **kwargs)
 
+  # TODO(crbug/monorail/7104): Add page_token tests when implemented.
+  def testListHotlistItems(self):
+    """We can list a Hotlist's HotlistItems."""
+    request = hotlists_pb2.ListHotlistItemsRequest(
+        parent=self.hotlist_resource_name, page_size=2, order_by='note,stars')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(
+        self.hotlists_svcr.ListHotlistItems, mc, request)
+    expected_items = converters.ConvertHotlistItems(
+        mc.cnxn, self.hotlist_1.hotlist_id,
+        [self.hotlist_1.items[1], self.hotlist_1.items[2]], self.services)
+    self.assertEqual(
+        response, hotlists_pb2.ListHotlistItemsResponse(items=expected_items))
+
+  def testListHotlistItems_Empty(self):
+    """We can return a response if the Hotlist has no items"""
+    empty_hotlist = self.services.features.TestAddHotlist(
+        'Empty',
+        owner_ids=[self.user_1.user_id],
+        editor_ids=[self.user_2.user_id],
+        hotlist_item_fields=[])
+    hotlist_resource_name = rnc.ConvertHotlistName(empty_hotlist.hotlist_id)
+    request = hotlists_pb2.ListHotlistItemsRequest(parent=hotlist_resource_name)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(
+        self.hotlists_svcr.ListHotlistItems, mc, request)
+    self.assertEqual(response, hotlists_pb2.ListHotlistItemsResponse(items=[]))
+
   def testRerankHotlistItems(self):
     """We can rerank a Hotlist."""
-    hotlist_resource_name = rnc.ConvertHotlistName(self.hotlist_1.hotlist_id)
     item_names_dict = rnc.ConvertHotlistItemNames(
         self.cnxn, self.hotlist_1.hotlist_id,
         [item.issue_id for item in self.hotlist_1.items], self.services)
     request = hotlists_pb2.RerankHotlistItemsRequest(
-        name=hotlist_resource_name,
+        name=self.hotlist_resource_name,
         hotlist_items=[
             item_names_dict[self.issue_4.issue_id],
             item_names_dict[self.issue_3.issue_id]
@@ -100,8 +140,7 @@ class HotlistsServicerTest(unittest.TestCase):
 
   def testGetHotlist(self):
     """We can get a Hotlist."""
-    request = hotlists_pb2.GetHotlistRequest(
-        name=rnc.ConvertHotlistName(self.hotlist_1.hotlist_id))
+    request = hotlists_pb2.GetHotlistRequest(name=self.hotlist_resource_name)
 
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.user_1.email)

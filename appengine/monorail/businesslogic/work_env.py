@@ -2033,6 +2033,8 @@ class WorkEnv(object):
     self._AssertUserCanViewHotlist(hotlist)
     return hotlist
 
+  # TODO(crbug/monorail/7104): Remove group_by_spec argument and pre-pend
+  # values to sort_spec.
   def ListHotlistItems(self, hotlist_id, max_items, start, can, sort_spec,
                        group_by_spec, use_cache=True):
     # (int, int, int, int, str, str, bool) -> (
@@ -2075,6 +2077,7 @@ class WorkEnv(object):
         sort_spec, group_by_spec, harmonized_config, self.services,
         self.mc.profiler)
 
+    # TODO(crbug/monorail/7104): Coerce max_items if max_items too high.
     if not start or start < 1:
       range_start = 0
     else:

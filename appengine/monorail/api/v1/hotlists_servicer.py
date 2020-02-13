@@ -16,6 +16,7 @@ from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import hotlists_pb2
 from api.v1.api_proto import hotlists_prpc_pb2
 from businesslogic import work_env
+from tracker import tracker_constants
 
 
 class HotlistsServicer(monorail_servicer.MonorailServicer):
@@ -26,6 +27,37 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
   """
 
   DESCRIPTION = hotlists_prpc_pb2.HotlistsServiceDescription
+
+  @monorail_servicer.PRPCMethod
+  def ListHotlistItems(self, mc, request):
+    # MonorailConnection, ListHotlistItemsRequest -> ListHotlistItemsResponse
+    """pRPC API method that implements ListHotlistItems.
+
+      Raises:
+        NoSuchHotlistException if the hotlist is not found.
+        PermissionException if the user is not allowed to view the hotlist.
+        InputException if the request.page_token is invalid or the request does
+          not match the previous request that provided the given page_token.
+    """
+    hotlist_id = rnc.IngestHotlistName(request.parent)
+
+    # TODO(crbug/monorail/7104): take start from request.page_token
+    start = 0
+    sort_spec = request.order_by.replace(',', ' ')
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      visible_hotlist_items, _harmonized_config = we.ListHotlistItems(
+          hotlist_id, request.page_size, start,
+          tracker_constants.ALL_ISSUES_CAN, sort_spec, '')
+
+    # TODO(crbug/monorail/7104): plug in next_page_token when it's been
+    # implemented.
+    next_page_token = ''
+    return hotlists_pb2.ListHotlistItemsResponse(
+        items=converters.ConvertHotlistItems(
+            mc.cnxn, hotlist_id, visible_hotlist_items, self.services),
+        next_page_token=next_page_token)
+
 
   @monorail_servicer.PRPCMethod
   def RerankHotlistItems(self, mc, request):
@@ -42,7 +74,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
     hotlist_id = rnc.IngestHotlistName(request.name)
     moved_issue_ids = rnc.IngestHotlistItemNames(
-        mc, request.hotlist_items, self.services)
+        mc.cnxn, request.hotlist_items, self.services)
 
     with work_env.WorkEnv(mc, self.services) as we:
       we.RerankHotlistItems(
