@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/logging/gologger"
 
+	"infra/cmd/stable_version2/internal/cmd/dump"
 	"infra/cmd/stable_version2/internal/cmd/meta"
 	"infra/cmd/stable_version2/internal/cmd/omaha"
 	"infra/cmd/stable_version2/internal/cmd/validateconfig"
@@ -33,6 +34,8 @@ func getApplication() *cli.Application {
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
+			subcommands.Section("Utility"),
+			dump.Cmd,
 			subcommands.Section("Validation"),
 			validateconfig.Cmd,
 			subcommands.Section("Misc"),
