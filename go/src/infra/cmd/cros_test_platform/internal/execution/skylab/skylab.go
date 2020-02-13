@@ -22,7 +22,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/isolated"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/swarming/proto/jsonrpc"
 )
 
 // Clients bundles local interfaces to various remote services used by Runner.
@@ -33,10 +32,10 @@ type Clients struct {
 
 // Task represents an individual test task.
 type Task struct {
-	args  request.Args
-	id    string
-	url   string
-	state jsonrpc.TaskState
+	args      request.Args
+	id        string
+	url       string
+	lifeCycle test_platform.TaskState_LifeCycle
 	// Note: If we ever begin supporting other harnesses's result formats
 	// then this field will change to a *skylab_test_runner.Result.
 	// For now, the autotest-specific variant is more convenient.
@@ -104,6 +103,18 @@ func (t *Task) Verdict() test_platform.TaskState_Verdict {
 	return verdict
 }
 
+// Tasks with these life cycles contain test results.
+// E.g. this excludes killed tasks as they have no chance to produce results.
+var lifeCyclesWithResults = map[test_platform.TaskState_LifeCycle]bool{
+	test_platform.TaskState_LIFE_CYCLE_COMPLETED: true,
+}
+
+// The life cycles that are not final.
+var transientLifeCycles = map[test_platform.TaskState_LifeCycle]bool{
+	test_platform.TaskState_LIFE_CYCLE_PENDING: true,
+	test_platform.TaskState_LIFE_CYCLE_RUNNING: true,
+}
+
 // FetchResults fetches the latest swarming and isolate state of the given task,
 // and updates the task accordingly.
 func (t *Task) FetchResults(ctx context.Context, clients Clients) error {
@@ -115,15 +126,16 @@ func (t *Task) FetchResults(ctx context.Context, clients Clients) error {
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
-	state, err := swarming.AsTaskState(result.State)
+
+	lc, err := swarming.AsLifeCycle(result.State)
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
-	t.state = state
+	t.lifeCycle = lc
 
 	switch {
 	// Task ran to completion.
-	case swarming.CompletedTaskStates[state]:
+	case lifeCyclesWithResults[lc]:
 		r, err := getAutotestResult(ctx, result, clients.IsolateGetter)
 		if err != nil {
 			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", t.id, err.Error())
@@ -131,7 +143,7 @@ func (t *Task) FetchResults(ctx context.Context, clients Clients) error {
 		}
 		t.autotestResult = r
 	// Task no longer running, but didn't run to completion.
-	case !swarming.UnfinishedTaskStates[state]:
+	case !transientLifeCycles[lc]:
 		t.autotestResult = &skylab_test_runner.Result_Autotest{Incomplete: true}
 	// Task is still running.
 	default:
@@ -220,20 +232,6 @@ func getAutotestResult(ctx context.Context, sResult *swarming_api.SwarmingRpcsTa
 	return a, nil
 }
 
-var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCycle{
-	jsonrpc.TaskState_BOT_DIED:  test_platform.TaskState_LIFE_CYCLE_ABORTED,
-	jsonrpc.TaskState_CANCELED:  test_platform.TaskState_LIFE_CYCLE_CANCELLED,
-	jsonrpc.TaskState_COMPLETED: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-	// TODO(akeshet): This mapping is inexact. Add a lifecycle entry for this.
-	jsonrpc.TaskState_EXPIRED:     test_platform.TaskState_LIFE_CYCLE_CANCELLED,
-	jsonrpc.TaskState_KILLED:      test_platform.TaskState_LIFE_CYCLE_ABORTED,
-	jsonrpc.TaskState_NO_RESOURCE: test_platform.TaskState_LIFE_CYCLE_REJECTED,
-	jsonrpc.TaskState_PENDING:     test_platform.TaskState_LIFE_CYCLE_PENDING,
-	jsonrpc.TaskState_RUNNING:     test_platform.TaskState_LIFE_CYCLE_RUNNING,
-	// TODO(akeshet): This mapping is inexact. Add a lifecycle entry for this.
-	jsonrpc.TaskState_TIMED_OUT: test_platform.TaskState_LIFE_CYCLE_ABORTED,
-}
-
 // Result constructs a TaskResults out of the data already contained in the
 // Task object. In order to get the latest result, FetchResult needs to be
 // called first.
@@ -250,7 +248,7 @@ func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 	return &steps.ExecuteResponse_TaskResult{
 		Name: t.Name(),
 		State: &test_platform.TaskState{
-			LifeCycle: taskStateToLifeCycle[t.state],
+			LifeCycle: t.lifeCycle,
 			Verdict:   t.Verdict(),
 		},
 		TaskUrl: t.URL(),

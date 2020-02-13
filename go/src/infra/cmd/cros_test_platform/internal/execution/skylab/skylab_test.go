@@ -14,7 +14,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	"go.chromium.org/luci/swarming/proto/jsonrpc"
 )
 
 // Test that autotest results for a single completed task map correctly.
@@ -212,7 +211,7 @@ func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.E
 	t := &Task{
 		autotestResult: autotestResult,
 		id:             "foo-task-ID",
-		state:          jsonrpc.TaskState_COMPLETED,
+		lifeCycle:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	}
 	return t.Result(5)
 }

@@ -8,6 +8,7 @@ package swarming
 import (
 	"context"
 
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/swarming/proto/jsonrpc"
@@ -27,24 +28,23 @@ type Client interface {
 // swarming.Client is the reference implementation of the Client interface.
 var _ Client = &swarming.Client{}
 
-// UnfinishedTaskStates indicate swarming states that correspond to non-final
-// tasks.
-var UnfinishedTaskStates = map[jsonrpc.TaskState]bool{
-	jsonrpc.TaskState_PENDING: true,
-	jsonrpc.TaskState_RUNNING: true,
+var taskStateToLifeCycle = map[jsonrpc.TaskState]test_platform.TaskState_LifeCycle{
+	jsonrpc.TaskState_BOT_DIED:    test_platform.TaskState_LIFE_CYCLE_ABORTED,
+	jsonrpc.TaskState_CANCELED:    test_platform.TaskState_LIFE_CYCLE_CANCELLED,
+	jsonrpc.TaskState_COMPLETED:   test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+	jsonrpc.TaskState_EXPIRED:     test_platform.TaskState_LIFE_CYCLE_CANCELLED,
+	jsonrpc.TaskState_KILLED:      test_platform.TaskState_LIFE_CYCLE_ABORTED,
+	jsonrpc.TaskState_NO_RESOURCE: test_platform.TaskState_LIFE_CYCLE_REJECTED,
+	jsonrpc.TaskState_PENDING:     test_platform.TaskState_LIFE_CYCLE_PENDING,
+	jsonrpc.TaskState_RUNNING:     test_platform.TaskState_LIFE_CYCLE_RUNNING,
+	jsonrpc.TaskState_TIMED_OUT:   test_platform.TaskState_LIFE_CYCLE_ABORTED,
 }
 
-// CompletedTaskStates indicate swarming states that correspond to final-tasks
-// in which the task executed to completion.
-var CompletedTaskStates = map[jsonrpc.TaskState]bool{
-	jsonrpc.TaskState_COMPLETED: true,
-}
-
-// AsTaskState converts the string swarming task state into enum representation.
-func AsTaskState(state string) (jsonrpc.TaskState, error) {
+// AsLifeCycle converts the string swarming task state into enum representation.
+func AsLifeCycle(state string) (test_platform.TaskState_LifeCycle, error) {
 	val, ok := jsonrpc.TaskState_value[state]
 	if !ok {
-		return jsonrpc.TaskState_INVALID, errors.Reason("invalid task state %s", state).Err()
+		return test_platform.TaskState_LIFE_CYCLE_UNSPECIFIED, errors.Reason("invalid task state %s", state).Err()
 	}
-	return jsonrpc.TaskState(val), nil
+	return taskStateToLifeCycle[jsonrpc.TaskState(val)], nil
 }
