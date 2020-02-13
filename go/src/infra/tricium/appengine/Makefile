@@ -5,18 +5,24 @@
 # Several commands here assume that the Go environment is set up,
 # e.g. by running `eval $(infra/go/env.py)`.
 
+.PHONY: default help frontend rpcexplorer deploy_prod deploy_dev
+
 default: help
 
 help:
 	@echo "Available commands:"
 	@sed -n '/^[a-zA-Z0-9_]*:/s/:.*//p' < Makefile
 
-build:
-	cd ../../../go.chromium.org/luci/web && ./web.py build rpcexplorer
+frontend:
 	cd frontend/ui && make build
 
-deploy_prod: build
+# Building rpcexplorer is optional.
+# This appears broken now, see crbug.com/1042421.
+rpcexplorer:
+	cd ../../../go.chromium.org/luci/web && ./web.py build rpcexplorer
+
+deploy_prod: frontend
 	gae.py upload --switch --app-id=tricium-prod
 
-deploy_dev: build
+deploy_dev: frontend
 	gae.py upload --switch --app-id=tricium-dev
