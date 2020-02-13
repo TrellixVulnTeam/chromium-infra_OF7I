@@ -174,6 +174,16 @@ adhoc_builder(
     schedule = 'with 10m interval',
 )
 
+# TODO(crbug/1030061): Confirm >1MB config support and remove.
+def create_unused_builder_configs(n):
+  for i in range(n):
+    adhoc_builder(
+        name = 'test-unused-%d' % i,
+        os = 'Ubuntu',
+        executable = infra.recipe('do not trigger me'),
+    )
+
+create_unused_builder_configs(5000)
 
 luci.notifier(
     name = 'nodir-spam',
