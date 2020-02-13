@@ -305,7 +305,7 @@ func (c *invServiceClient) getDutInfo(ctx context.Context, req *invV1Api.GetDutI
 		return data, now, nil
 	}
 	if devices := rsp.GetFailedDevices(); len(devices) == 1 {
-		if msg := devices[0].ErrorMsg; strings.Contains(msg, "No such host:") {
+		if msg := devices[0].ErrorMsg; strings.Contains(msg, "No such host:") || strings.Contains(msg, "datastore: no such entity") {
 			return nil, now, status.Errorf(codes.NotFound, msg)
 		}
 		return nil, now, errors.Reason(devices[0].ErrorMsg).Err()
