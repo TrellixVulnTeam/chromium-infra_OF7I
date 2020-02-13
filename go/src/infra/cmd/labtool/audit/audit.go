@@ -40,6 +40,7 @@ func (c auditApp) GetCommands() []*subcommands.Command {
 		subcommands.CmdHelp,
 		ScannerCmd,
 		LoglsCmd,
+		RerunCmd,
 	}
 }
 

@@ -313,3 +313,20 @@ func getStats(logPath, resPath, tstampStr string) *LogStats {
 	}
 	return stats
 }
+
+// GetAssetsInOrder reads a group of assets from log file.
+func GetAssetsInOrder(logFile string) ([]*fleet.ChopsAsset, error) {
+	f, err := os.Open(logFile)
+	defer f.Close()
+	if err != nil {
+		return nil, err
+	}
+	recs, err := csv.NewReader(f).ReadAll()
+	assets := []*fleet.ChopsAsset{}
+	for _, i := range recs {
+		if a, _ := stringListToAsset(i); a != nil {
+			assets = append(assets, a)
+		}
+	}
+	return assets, err
+}
