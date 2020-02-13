@@ -8,15 +8,26 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"go.chromium.org/luci/common/errors"
 
 	"infra/libs/fleet/protos"
 )
 
 // TimeFormat for all timestamps handled by labtools
 var timeFormat = "2006-01-02-15:04:05"
+
+// The tab writer which defines the write format
+var tw = tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
+
+// The formatter for log and result file names
+var logFileExp = regexp.MustCompile(`[\d]{4}(-[\d]{1,2}){3}(:[\d]{1,2}){2}-log$`)
+var resFileExp = regexp.MustCompile(`[\d]{4}(-[\d]{1,2}){3}(:[\d]{1,2}){2}-res$`)
 
 // The length of the string list that an asset will be converted to.
 // 1 for ID and 6 for location
@@ -52,6 +63,14 @@ type LogStats struct {
 	// The failure when generating the stats
 	FailureMsg []string
 }
+
+// LogStatsList refers to a list of log stats.
+type LogStatsList []*LogStats
+
+// LogStats sort functions
+func (l LogStatsList) Less(i, j int) bool { return l[i].Tstamp.After(l[j].Tstamp) }
+func (l LogStatsList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
+func (l LogStatsList) Len() int           { return len(l) }
 
 // populateStatistics generates the stats of a round of scans by log and res file.
 func populateStatistics(logPath, resPath string, tStamp time.Time) (*LogStats, error) {
@@ -92,7 +111,7 @@ func (lstats *LogStats) populateLogFile() error {
 		lstats.ScannedAssetCount = len(recs)
 		lstats.ScannedLocationCount = len(scannedLocations)
 	} else {
-		lstats.FailureMsg = append(lstats.FailureMsg, fmt.Sprintf("Fail to read file %s: %s\n", lstats.LogPath, err.Error()))
+		return errors.Annotate(err, "fail to read file %s", lstats.LogPath).Err()
 	}
 
 	lstats.ScannedAssets = scannedAssets
@@ -129,7 +148,7 @@ func (lstats *LogStats) populateResFile() error {
 			}
 		}
 	} else {
-		lstats.FailureMsg = append(lstats.FailureMsg, fmt.Sprintf("Fail to read file %s: %s\n", lstats.ResPath, err.Error()))
+		return errors.Annotate(err, "fail to read file %s", lstats.ResPath).Err()
 	}
 	lstats.MismatchedAssets = mismatchedAssets
 	return nil
@@ -187,39 +206,110 @@ func stringListToAsset(csv []string) (a *fleet.ChopsAsset, err error) {
 	}, nil
 }
 
-func printLogStatsAndResult(l *LogStats, index int) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
-	defer w.Flush()
-	if len(l.FailureMsg) > 0 {
-		fmt.Fprintln(w, "\nErrors in reading stats")
-		for _, msg := range l.FailureMsg {
-			fmt.Fprintln(w, msg)
-		}
-		return
-	}
+// PrintLogStatsAndResult prints the stats and results for a specified audit scan run.
+func PrintLogStatsAndResult(l *LogStats, index int) {
+	defer tw.Flush()
+	PrintLogStats(LogStatsList{l}, 1)
 
-	fmt.Fprintln(w, "\nOverall Stats:")
-	fmt.Fprintln(w, "Index\t\tTime\t\tAssets Scanned\tUnique Assets\tUnique Locations\tSuccessful Assets\tFailed Assets\t")
-	ts := l.Tstamp.Format(timeFormat)
-	out := fmt.Sprintf("%d\t\t%s\t\t%d\t%d\t%d\t%d\t%d\t", index, ts, l.ScannedAssetCount, len(l.ScannedAssets), len(l.ScannedLocations), l.SuccessfulAssetScan, l.FailedAssetScan)
-	fmt.Fprintln(w, out)
-
-	fmt.Fprintln(w, "\nSuccessful assets:")
-	fmt.Fprintln(w, "Action\t\tNumber of Assets")
+	fmt.Fprintln(tw, "\nSuccessful assets:")
+	fmt.Fprintln(tw, "Action\t\tNumber of Assets")
 	successAssets, failedAssets := l.parseAssets()
 	for action, a := range successAssets {
-		fmt.Fprintln(w, fmt.Sprintf("%s\t\t%d", action, len(a)))
+		fmt.Fprintln(tw, fmt.Sprintf("%s\t\t%d", action, len(a)))
 	}
 	if len(failedAssets) == 0 {
-		fmt.Fprintln(w, "\nNo failed assets")
+		fmt.Fprintln(tw, "\nNo failed assets")
 		return
 	}
-	fmt.Fprintln(w, "\nFailed assets:")
-	fmt.Fprintln(w, "Asset Tag\t\tAction\t\tLocation\t\tError")
+	fmt.Fprintln(tw, "\nFailed assets:")
+	fmt.Fprintln(tw, "Asset Tag\t\tAction\t\tLocation\t\tError")
 	for _, assets := range failedAssets {
 		for _, a := range assets {
-			out = fmt.Sprintf("%s\t\t%s\t\t%s\t\t%s", a.Asset.GetId(), a.Action, a.Asset.GetLocation(), a.ErrorMsg)
-			fmt.Fprintln(w, out)
+			out := fmt.Sprintf("%s\t\t%s\t\t%s\t\t%s", a.Asset.GetId(), a.Action, a.Asset.GetLocation(), a.ErrorMsg)
+			fmt.Fprintln(tw, out)
 		}
 	}
+}
+
+func printLogStatsTitle() {
+	fmt.Fprintln(tw, "Index\t\tTime\t\tAssets Scanned\tUnique Assets\tUnique Locations\tSuccessful Assets\tFailed Assets\t")
+}
+
+// PrintLogStats prints infos for a batch of audit scan runs.
+func PrintLogStats(l LogStatsList, limit int) {
+	defer tw.Flush()
+	fmt.Fprintln(tw, "\nOverall Stats:")
+	if len(l) > limit && limit > 0 {
+		l = l[:limit]
+	}
+	fmt.Fprintln(tw, "Index\t\tTime\t\tAssets Scanned\tUnique Assets\tUnique Locations\tSuccessful Assets\tFailed Assets\t")
+	for i, lstats := range l {
+		printOneLog(i, lstats, tw)
+	}
+}
+
+func printOneLog(index int, lstats *LogStats, tw *tabwriter.Writer) {
+	if len(lstats.FailureMsg) > 0 {
+		out := fmt.Sprintf("%d\t\tErrors:\t\t\t\t\t\t%s\t", index, strings.Join(lstats.FailureMsg, "; "))
+		fmt.Fprintln(tw, out)
+		return
+	}
+	out := fmt.Sprintf(
+		"%d\t\t%s\t\t%d\t%d\t%d\t%d\t%d\t",
+		index,
+		lstats.Tstamp.Format(timeFormat),
+		lstats.ScannedAssetCount,
+		len(lstats.ScannedAssets),
+		len(lstats.ScannedLocations),
+		lstats.SuccessfulAssetScan,
+		lstats.FailedAssetScan,
+	)
+	fmt.Fprintln(tw, out)
+}
+
+// ListLogs lists the logs and return the stats for each of the audit runs.
+func ListLogs(dir string) (LogStatsList, error) {
+	if _, err := os.Stat(dir); err != nil {
+		return nil, err
+	}
+	res := []*LogStats{}
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Println(fmt.Sprintf("Fail to walk through %s", path))
+			return err
+		}
+		if logFileExp.MatchString(info.Name()) {
+			timeStampStr := strings.Trim(info.Name(), "-log")
+			resPath := filepath.Join(dir, timeStampStr+"-res")
+			logPath := filepath.Join(dir, info.Name())
+			stats := getStats(logPath, resPath, timeStampStr)
+			res = append(res, stats)
+		}
+		return err
+	})
+	return res, err
+}
+
+func getStats(logPath, resPath, tstampStr string) *LogStats {
+	tStamp, err := time.Parse(timeFormat, tstampStr)
+	if err != nil {
+		return &LogStats{
+			FailureMsg: []string{fmt.Sprintf("Fail to parse timestamp in filename: %s", logPath)},
+		}
+	}
+
+	if _, err := os.Stat(resPath); err != nil {
+		return &LogStats{
+			FailureMsg: []string{fmt.Sprintf("Fail to locate result file: %s", resPath)},
+			Tstamp:     tStamp,
+		}
+	}
+	stats, err := populateStatistics(logPath, resPath, tStamp)
+	if err != nil {
+		return &LogStats{
+			FailureMsg: []string{err.Error()},
+			Tstamp:     tStamp,
+		}
+	}
+	return stats
 }

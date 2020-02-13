@@ -49,14 +49,14 @@ var ScannerCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.shelf, "s", "", "Default Shelf")
 		c.Flags.StringVar(&c.position, "p", "", "Default position")
 		c.Flags.StringVar(&c.zone, "z", "", "Default Zone")
-		c.Flags.StringVar(&c.logDir, "log-dir", getHomeDir(), `Dir to store logs. Two types of logs
+		c.Flags.StringVar(&c.logDir, "log-dir", getLogDir(), `Dir to store logs. Two types of logs
 		are stored here. Logs with <timestamp>-log filename store the asset-location inputs in order.
 		Logs with <timestamp>-res filename store the results of datastore transactions.`)
 		return c
 	},
 }
 
-func getHomeDir() string {
+func getLogDir() string {
 	// Attempt to use home dir for logs, failing which use /tmp
 	home, err := os.UserHomeDir()
 	if err != nil {
