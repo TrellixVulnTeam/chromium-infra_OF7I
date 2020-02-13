@@ -55,7 +55,6 @@ again.`,
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.server, "drone", "", "Drone to remove DUTs from.")
 		c.Flags.BoolVar(&c.delete, "delete", false, "Delete DUT from inventory.")
-		c.Flags.BoolVar(&c.v2, "v2", false, "[INTERNAL ONLY] Use ChromeOS Lab inventory v2 service.")
 		c.removalReason.Register(&c.Flags)
 		return c
 	},
@@ -67,7 +66,6 @@ type removeDutsRun struct {
 	envFlags      skycmdlib.EnvFlags
 	server        string
 	delete        bool
-	v2            bool
 	removalReason skycmdlib.RemovalReason
 }
 
@@ -95,13 +93,11 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		return nil
 	}
 
-	// Inventory v1 is the default client.
-	// Only the result from main inventory client will be printed out.
-	icMain := NewInventoryClient(hc, e, false)
-	icBackup := NewInventoryClient(hc, e, true)
-	if c.v2 {
-		icMain, icBackup = icBackup, icMain
-	}
+	// Use the default inventory configured in site.go.
+	fmt.Fprintln(a.GetOut(), "= The default inventory system is", e.DefaultInventory, "=")
+	icMain := NewInventoryClient(hc, e, true)
+	icBackup := NewInventoryClient(hc, e, false)
+
 	icBackup.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
 	modified, err := icMain.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
 	if err != nil {

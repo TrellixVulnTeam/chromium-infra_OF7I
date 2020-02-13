@@ -57,7 +57,6 @@ hostname2,powerunit_hostname=fake_host,powerunit_outlet=fake_outlet
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.pool, "pool", "DUT_POOL_QUOTA", "The pool to update for the given hostnames")
 		c.Flags.StringVar(&c.inputFile, "input_file", "", "A file which contains a list of hostnames, and required info to update at each line. It's mutually exclusive with all other parameters")
-		c.Flags.BoolVar(&c.v2, "v2", false, "[INTERNAL ONLY] Use ChromeOS Lab inventory v2 service.")
 
 		return c
 	},
@@ -69,7 +68,6 @@ type batchUpdateDutsRun struct {
 	envFlags  skycmdlib.EnvFlags
 	pool      string
 	inputFile string
-	v2        bool
 }
 
 // Run implements the subcommands.CommandRun interface.
@@ -115,12 +113,11 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 		return errors.Annotate(err, "fail to new http client").Err()
 	}
 	e := c.envFlags.Env()
-	// Inventory v1 is the default client.
-	icMain := NewInventoryClient(hc, e, false)
-	icBackup := NewInventoryClient(hc, e, true)
-	if c.v2 {
-		icMain, icBackup = icBackup, icMain
-	}
+
+	// Use the default inventory configured in site.go.
+	fmt.Fprintln(a.GetOut(), "= The default inventory system is", e.DefaultInventory, "=")
+	icMain := NewInventoryClient(hc, e, true)
+	icBackup := NewInventoryClient(hc, e, false)
 
 	icBackup.batchUpdateDUTs(ctx, req, a.GetOut())
 	return icMain.batchUpdateDUTs(ctx, req, a.GetOut())

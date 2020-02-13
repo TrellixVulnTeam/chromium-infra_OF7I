@@ -32,7 +32,7 @@ For internal use only.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.byHostname, "by-hostname", false, "Lookup by hostname instead of ID.")
-		c.Flags.BoolVar(&c.v2, "v2", false, "[INTERNAL ONLY] Use ChromeOS Lab inventory v2 service.")
+		invcli.AddSwitchInventoryFlag(&c.useBackupInventory, c.Flags, c.envFlags)
 		return c
 	},
 }
@@ -42,8 +42,8 @@ type printBotInfoRun struct {
 	authFlags authcli.Flags
 	envFlags  skycmdlib.EnvFlags
 
-	v2         bool
-	byHostname bool
+	useBackupInventory bool
+	byHostname         bool
 }
 
 func (c *printBotInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -65,7 +65,7 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 		return err
 	}
 	siteEnv := c.envFlags.Env()
-	ic := invcli.NewInventoryClient(hc, siteEnv, c.v2)
+	ic := invcli.NewInventoryClient(hc, siteEnv, !c.useBackupInventory)
 	d, err := ic.GetDutInfo(ctx, dutID, c.byHostname, false)
 	if err != nil {
 		return err

@@ -53,7 +53,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/
 
 		c.Flags.BoolVar(&c.asJSON, "json", false, "Print inventory as JSON-encoded protobuf. Implies -full.")
 		c.Flags.BoolVar(&c.full, "full", false, "Print full DUT information, including less frequently used fields.")
-		c.Flags.BoolVar(&c.v2, "v2", false, "[INTERNAL ONLY] Use ChromeOS Lab inventory v2 service.")
+		AddSwitchInventoryFlag(&c.useBackupInventory, c.Flags, c.envFlags)
 		return c
 	},
 }
@@ -63,9 +63,9 @@ type dutInfoRun struct {
 	authFlags authcli.Flags
 	envFlags  skycmdlib.EnvFlags
 
-	asJSON bool
-	full   bool
-	v2     bool
+	asJSON             bool
+	full               bool
+	useBackupInventory bool
 }
 
 func (c *dutInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -87,7 +87,7 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
-	ic := NewInventoryClient(hc, e, c.v2)
+	ic := NewInventoryClient(hc, e, !c.useBackupInventory)
 	dut, err := ic.GetDutInfo(ctx, args[0], true, false)
 
 	if err != nil {

@@ -106,7 +106,7 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		Options: site.DefaultPRPCOptions,
 	})
 
-	oldSpecs, err := getOldDeviceSpecs(ctx, hc, e, hostname, false)
+	oldSpecs, err := getOldDeviceSpecs(ctx, hc, e, hostname)
 	if err != nil {
 		return err
 	}
@@ -115,6 +115,7 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 
+	fmt.Fprintln(a.GetOut(), "= The default inventory system is", e.DefaultInventory, "=")
 	prompt := userinput.CLIPrompt(a.GetOut(), os.Stdin, false)
 	if !prompt(fmt.Sprintf("Ready to update host: %s", hostname)) {
 		return nil
@@ -229,8 +230,8 @@ func (c *updateDutRun) stageImageToUsb() bool {
 
 // getOldDeviceSpecs gets the current device specs for hostname from
 // crosskylabadmin.
-func getOldDeviceSpecs(ctx context.Context, hc *http.Client, e site.Environment, hostname string, version2 bool) (*inventory.DeviceUnderTest, error) {
-	oldDut, err := NewInventoryClient(hc, e, version2).GetDutInfo(ctx, hostname, true, true)
+func getOldDeviceSpecs(ctx context.Context, hc *http.Client, e site.Environment, hostname string) (*inventory.DeviceUnderTest, error) {
+	oldDut, err := NewInventoryClient(hc, e, true).GetDutInfo(ctx, hostname, true, true)
 	if err != nil {
 		return nil, errors.Annotate(err, "get old specs").Err()
 	}
