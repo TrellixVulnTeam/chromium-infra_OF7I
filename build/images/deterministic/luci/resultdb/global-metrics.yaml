@@ -1,0 +1,9 @@
+name: luci/resultdb/global-metrics
+extends: ../../../base.yaml
+
+contextdir: ../../../../../go/src/go.chromium.org/luci/resultdb/cmd/globalmetrics/docker
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/resultdb/cmd/globalmetrics
+    dest: bin/globalmetrics
