@@ -68,7 +68,7 @@ type LogStats struct {
 type LogStatsList []*LogStats
 
 // LogStats sort functions
-func (l LogStatsList) Less(i, j int) bool { return l[i].Tstamp.After(l[j].Tstamp) }
+func (l LogStatsList) Less(i, j int) bool { return l[i].Tstamp.Before(l[j].Tstamp) }
 func (l LogStatsList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 func (l LogStatsList) Len() int           { return len(l) }
 
@@ -209,7 +209,7 @@ func stringListToAsset(csv []string) (a *fleet.ChopsAsset, err error) {
 // PrintLogStatsAndResult prints the stats and results for a specified audit scan run.
 func PrintLogStatsAndResult(l *LogStats, index int) {
 	defer tw.Flush()
-	PrintLogStats(LogStatsList{l}, 1)
+	PrintLogStats(LogStatsList{l}, 1, false)
 
 	fmt.Fprintln(tw, "\nSuccessful assets:")
 	fmt.Fprintln(tw, "Action\t\tNumber of Assets")
@@ -236,15 +236,25 @@ func printLogStatsTitle() {
 }
 
 // PrintLogStats prints infos for a batch of audit scan runs.
-func PrintLogStats(l LogStatsList, limit int) {
+func PrintLogStats(l LogStatsList, limit int, reverse bool) {
 	defer tw.Flush()
 	fmt.Fprintln(tw, "\nOverall Stats:")
+	indexArr := make([]int, len(l))
+	for i := range indexArr {
+		indexArr[i] = i
+	}
 	if len(l) > limit && limit > 0 {
+		if reverse {
+			for i, j := 0, len(l)-1; i < j; i, j = i+1, j-1 {
+				l[i], l[j] = l[j], l[i]
+				indexArr[i], indexArr[j] = indexArr[j], indexArr[i]
+			}
+		}
 		l = l[:limit]
 	}
 	fmt.Fprintln(tw, "Index\t\tTime\t\tAssets Scanned\tUnique Assets\tUnique Locations\tSuccessful Assets\tFailed Assets\t")
 	for i, lstats := range l {
-		printOneLog(i, lstats, tw)
+		printOneLog(indexArr[i], lstats, tw)
 	}
 }
 
