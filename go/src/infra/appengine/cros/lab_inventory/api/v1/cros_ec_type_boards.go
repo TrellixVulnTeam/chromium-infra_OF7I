@@ -8,7 +8,6 @@ package api
 
 var crosEcTypeBoards = []string{
 	"amenia",
-	"arm64",
 	"atlas",
 	"caroline",
 	"chell",
@@ -36,14 +35,12 @@ var crosEcTypeBoards = []string{
 	"poppy",
 	"pyro",
 	"reef",
+	"samus",
 	"sarien",
 	"sentry",
 	"snappy",
 	"soraka",
 	"strago",
 	"veyron",
-	"veyron-fievel",
-	"veyron-mickey",
-	"veyron-tiger",
 	"zork",
 }
