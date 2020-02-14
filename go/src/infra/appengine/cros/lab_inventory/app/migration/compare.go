@@ -40,9 +40,9 @@ func newGitilesClient(c context.Context, host string) (gitiles.GitilesClient, er
 }
 
 const (
-	stagingEnv     = "ENVIRONMENT_STAGING"
-	prodEnv        = "ENVIRONMENT_PROD"
-	maxErrorLogged = 30
+	stagingEnv    = "ENVIRONMENT_STAGING"
+	prodEnv       = "ENVIRONMENT_PROD"
+	maxErrorToLog = 30
 )
 
 func getV1Duts(ctx context.Context) (stringset.Set, map[string]*inventory.DeviceUnderTest, error) {
@@ -84,7 +84,7 @@ func getV2Duts(ctx context.Context) (stringset.Set, map[string]*inventory.Device
 	if l := len(duts.Failed()); l > 0 {
 		logging.Warningf(ctx, "Failed to get %d devices from v2", l)
 		for i, d := range duts.Failed() {
-			if i > maxErrorLogged {
+			if i > maxErrorToLog {
 				logging.Warningf(ctx, "...")
 				break
 			}
@@ -103,7 +103,7 @@ func getV2Duts(ctx context.Context) (stringset.Set, map[string]*inventory.Device
 	if len(failedDevices) > 0 {
 		logging.Warningf(ctx, "Failed to get extended data")
 		for i, d := range failedDevices {
-			if i > maxErrorLogged {
+			if i > maxErrorToLog {
 				logging.Warningf(ctx, "...")
 				break
 			}
@@ -152,10 +152,12 @@ func getCloudStorageWriter(ctx context.Context) *storage.Writer {
 }
 
 func logDiffOfOneDut(ctx context.Context, cw *storage.Writer, count *int, diffText string) {
-	if *count > maxErrorLogged {
+	if *count == maxErrorToLog {
 		logging.Warningf(ctx, "and more difference ...")
 	}
-	logging.Warningf(ctx, diffText)
+	if *count < maxErrorToLog {
+		logging.Warningf(ctx, diffText)
+	}
 	*count++
 	if cw == nil {
 		return
@@ -226,6 +228,7 @@ func filterOutKnownDifference(d1, d2 *inventory.DeviceUnderTest) {
 	c2 := l2.GetCapabilities()
 
 	cmn1.Environment = cmn2.Environment
+	cmn1.SerialNumber = cmn2.SerialNumber
 
 	c1.Modem = c2.Modem
 	c1.Telephony = c2.Telephony
@@ -241,7 +244,7 @@ func filterOutKnownDifference(d1, d2 *inventory.DeviceUnderTest) {
 
 	c1.VideoAcceleration = c2.VideoAcceleration
 
-	attrBlackList := stringset.NewFromSlice("stashed_labels", "job_repo_url", "outlet_changed")
+	attrBlackList := stringset.NewFromSlice("stashed_labels", "job_repo_url", "outlet_changed", "serial_number")
 	var newAttrs []*inventory.KeyValue
 	for _, attr := range cmn1.GetAttributes() {
 		if attrBlackList.Has(attr.GetKey()) {
@@ -253,16 +256,35 @@ func filterOutKnownDifference(d1, d2 *inventory.DeviceUnderTest) {
 }
 
 func alignBooleans(d1, d2 *inventory.DeviceUnderTest) {
-	c1 := d1.GetCommon().GetLabels().GetCapabilities()
-	c2 := d2.GetCommon().GetLabels().GetCapabilities()
-	p1 := d1.GetCommon().GetLabels().GetPeripherals()
-	p2 := d2.GetCommon().GetLabels().GetPeripherals()
-	h1 := d1.GetCommon().GetLabels().GetTestCoverageHints()
-	h2 := d2.GetCommon().GetLabels().GetTestCoverageHints()
+	l1 := d1.GetCommon().Labels
+	l2 := d2.GetCommon().Labels
+	if l1 == nil || l2 == nil {
+		return
+	}
+	if l1.Capabilities == nil {
+		l1.Capabilities = &inventory.HardwareCapabilities{}
+	}
+	if l2.Capabilities == nil {
+		l2.Capabilities = &inventory.HardwareCapabilities{}
+	}
 
-	alignBooleansInCapabilities(c1, c2)
-	alignBooleansInPeripherals(p1, p2)
-	alignBooleansInTestCoverageHints(h1, h2)
+	alignBooleansInCapabilities(l1.Capabilities, l2.Capabilities)
+
+	if l1.Peripherals == nil {
+		l1.Peripherals = &inventory.Peripherals{}
+	}
+	if l2.Peripherals == nil {
+		l2.Peripherals = &inventory.Peripherals{}
+	}
+	alignBooleansInPeripherals(l1.Peripherals, l2.Peripherals)
+
+	if l1.TestCoverageHints == nil {
+		l1.TestCoverageHints = &inventory.TestCoverageHints{}
+	}
+	if l2.TestCoverageHints == nil {
+		l2.TestCoverageHints = &inventory.TestCoverageHints{}
+	}
+	alignBooleansInTestCoverageHints(l1.TestCoverageHints, l2.TestCoverageHints)
 }
 
 func alignBooleansInPeripherals(p1, p2 *inventory.Peripherals) {
