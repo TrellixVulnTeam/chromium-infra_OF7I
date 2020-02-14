@@ -553,9 +553,6 @@ def _create_swarming_task(build):
   # Prepare task definition.
   task_def = compute_task_def(build, settings, fake_build=False)
 
-  # This is to prevent accidental multiple task creation.
-  task_def['request_uuid'] = str(uuid.UUID(int=build_id))
-
   # Insert secret bytes.
   secrets = launcher_pb2.BuildSecrets(
       build_token=tokens.generate_build_token(build_id, task_key),

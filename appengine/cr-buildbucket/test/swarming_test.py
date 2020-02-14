@@ -8,7 +8,6 @@ import copy
 import datetime
 import json
 import logging
-import uuid
 
 from parameterized import parameterized
 
@@ -697,11 +696,9 @@ class SyncBuildTest(BaseTest):
     expected_task_def[u'task_slices'][0][u'properties'][u'secret_bytes'] = (
         base64.b64encode(expected_secrets.SerializeToString())
     )
-    build_id = 1
-    expected_task_def['request_uuid'] = str(uuid.UUID(int=build_id))
 
     net.json_request_async.return_value = future({'task_id': 'x'})
-    swarming._sync_build_and_swarming(build_id, 0)
+    swarming._sync_build_and_swarming(1, 0)
 
     actual_task_def = net.json_request_async.call_args[1]['payload']
     self.assertEqual(actual_task_def, expected_task_def)
