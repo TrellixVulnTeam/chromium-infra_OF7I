@@ -1071,8 +1071,8 @@ class ConfigService(object):
     Returns:
       Integer field_id of the new field definition.
     """
-    assert not (is_required and is_niche), (
-        'A field cannot be both requrired and niche')
+    assert not (is_required and
+                is_niche), ('A field cannot be both required and niche')
     assert date_action_str in DATE_ACTION_ENUM
     field_id = self.fielddef_tbl.InsertRow(
         cnxn, project_id=project_id,
