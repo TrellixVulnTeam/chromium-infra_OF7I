@@ -959,7 +959,11 @@ class SubNotify(webapp2.RequestHandler):
           build_id, hostname
       )
     if not sw.task_id:
-      self.stop('build is not associated with a task yet', redeliver=True)
+      # Do not re-deliver if the build is completed.
+      self.stop(
+          'build is not associated with a task',
+          redeliver=not bundle.build.is_ended,
+      )
     if task_id != sw.task_id:
       self.stop(
           'swarming_task_id %s of build %s does not match %s', sw.task_id,
