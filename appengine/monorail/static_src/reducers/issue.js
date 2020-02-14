@@ -42,7 +42,7 @@ const FETCH_HOTLISTS_SUCCESS = 'FETCH_HOTLISTS_SUCCESS';
 const FETCH_HOTLISTS_FAILURE = 'FETCH_HOTLISTS_FAILURE';
 
 const FETCH_ISSUE_LIST_START = 'FETCH_ISSUE_LIST_START';
-const FETCH_ISSUE_LIST_UPDATE = 'FETCH_ISSUE_LIST_UPDATE';
+export const FETCH_ISSUE_LIST_UPDATE = 'FETCH_ISSUE_LIST_UPDATE';
 const FETCH_ISSUE_LIST_SUCCESS = 'FETCH_ISSUE_LIST_SUCCESS';
 const FETCH_ISSUE_LIST_FAILURE = 'FETCH_ISSUE_LIST_FAILURE';
 
@@ -591,7 +591,15 @@ export const issueListPhaseNames = createSelector(issueList, (issueList) => {
   return Array.from(phaseNamesSet);
 });
 
-export const issueLoaded = (state) => state.issue.issueLoaded;
+/**
+ * @param {any} state
+ * @return {boolean} Whether the currently viewed issue list
+ *   has loaded.
+ */
+export const issueListLoaded = createSelector(
+    stateIssueList,
+    (stateIssueList) => stateIssueList.issueRefs !== undefined);
+
 export const permissions = (state) => state.issue.permissions;
 export const presubmitResponse = (state) => state.issue.presubmitResponse;
 export const predictedComponent = (state) => state.issue.predictedComponent;

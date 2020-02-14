@@ -26,8 +26,8 @@ describe('mr-list-page', () => {
     assert.instanceOf(element, MrListPage);
   });
 
-  it('shows loading when issues loading', async () => {
-    element.fetchingIssueList = true;
+  it('shows loading page when issues not loaded yet', async () => {
+    element._issueListLoaded = false;
 
     await element.updateComplete;
 
@@ -41,7 +41,9 @@ describe('mr-list-page', () => {
   });
 
   it('does not clear existing issue list when loading new issues', async () => {
-    element.fetchingIssueList = true;
+    element._fetchingIssueList = true;
+    element._issueListLoaded = true;
+
     element.totalIssues = 1;
     element.issues = [{localId: 1, projectName: 'chromium'}];
 
@@ -59,7 +61,9 @@ describe('mr-list-page', () => {
   });
 
   it('shows list when done loading', async () => {
-    element.fetchingIssueList = false;
+    element._fetchingIssueList = false;
+    element._issueListLoaded = true;
+
     element.totalIssues = 100;
 
     await element.updateComplete;
@@ -86,7 +90,7 @@ describe('mr-list-page', () => {
       sinon.stub(element, 'stateChanged');
       sinon.stub(element, '_showIssueLoadingSnackbar');
 
-      element.fetchingIssueList = true;
+      element._fetchingIssueList = true;
       element.totalIssues = 1;
       element.issues = [{localId: 1, projectName: 'chromium'}];
 
@@ -96,7 +100,7 @@ describe('mr-list-page', () => {
     });
 
     it('hides snackbar when issues are done loading', async () => {
-      element.fetchingIssueList = true;
+      element._fetchingIssueList = true;
       element.totalIssues = 1;
       element.issues = [{localId: 1, projectName: 'chromium'}];
 
@@ -105,7 +109,7 @@ describe('mr-list-page', () => {
       sinon.assert.neverCalledWith(store.dispatch,
           {type: 'HIDE_SNACKBAR', id: 'FETCH_ISSUE_LIST'});
 
-      element.fetchingIssueList = false;
+      element._fetchingIssueList = false;
 
       await element.updateComplete;
 
@@ -136,7 +140,9 @@ describe('mr-list-page', () => {
   });
 
   it('shows no issues when no search results', async () => {
-    element.fetchingIssueList = false;
+    element._fetchingIssueList = false;
+    element._issueListLoaded = true;
+
     element.totalIssues = 0;
     element._queryParams = {q: 'owner:me'};
 
@@ -155,7 +161,9 @@ describe('mr-list-page', () => {
   });
 
   it('offers consider closed issues when no open results', async () => {
-    element.fetchingIssueList = false;
+    element._fetchingIssueList = false;
+    element._issueListLoaded = true;
+
     element.totalIssues = 0;
     element._queryParams = {q: 'owner:me', can: '2'};
 
@@ -166,7 +174,8 @@ describe('mr-list-page', () => {
     assert.isFalse(considerClosed.hidden);
 
     element._queryParams = {q: 'owner:me', can: '1'};
-    element.fetchingIssueList = false;
+    element._fetchingIssueList = false;
+    element._issueListLoaded = true;
 
     await element.updateComplete;
 

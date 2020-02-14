@@ -151,7 +151,7 @@ export class MrListPage extends connectStore(LitElement) {
    * @return {TemplateResult}
    */
   _renderListBody() {
-    if (this.fetchingIssueList && !this.totalIssues) {
+    if (!this._issueListLoaded) {
       return html`
         <div class="container-loading">
           Loading...
@@ -286,7 +286,8 @@ export class MrListPage extends connectStore(LitElement) {
       /** @private {Object} */
       _queryParams: {type: Object},
       projectName: {type: String},
-      fetchingIssueList: {type: Boolean},
+      _fetchingIssueList: {type: Boolean},
+      _issueListLoaded: {type: Boolean},
       selectedIssues: {type: Array},
       columns: {type: Array},
       userDisplayName: {type: String},
@@ -316,7 +317,8 @@ export class MrListPage extends connectStore(LitElement) {
   constructor() {
     super();
     this.issues = [];
-    this.fetchingIssueList = false;
+    this._fetchingIssueList = false;
+    this._issueListLoaded = false;
     this.selectedIssues = [];
     this._queryParams = {};
     this.columns = [];
@@ -369,9 +371,9 @@ export class MrListPage extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
-    if (changedProperties.has('fetchingIssueList')) {
-      const wasFetching = changedProperties.get('fetchingIssueList');
-      const isFetching = this.fetchingIssueList;
+    if (changedProperties.has('_fetchingIssueList')) {
+      const wasFetching = changedProperties.get('_fetchingIssueList');
+      const isFetching = this._fetchingIssueList;
       // Show a snackbar if waiting for issues to load but only when there's
       // already a different, non-empty issue list loaded. This approach avoids
       // clearing the issue list for a loading screen.
@@ -468,7 +470,8 @@ export class MrListPage extends connectStore(LitElement) {
 
     this.issues = (issue.issueList(state) || []);
     this.totalIssues = (issue.totalIssues(state) || 0);
-    this.fetchingIssueList = issue.requests(state).fetchIssueList.requesting;
+    this._fetchingIssueList = issue.requests(state).fetchIssueList.requesting;
+    this._issueListLoaded = issue.issueListLoaded(state);
 
     const error = issue.requests(state).fetchIssueList.error;
     this._fetchIssueListError = error ? error.message : '';

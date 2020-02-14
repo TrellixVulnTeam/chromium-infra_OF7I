@@ -171,7 +171,7 @@ describe('issue', () => {
   describe('issueList', () => {
     it('issueList', () => {
       const stateWithEmptyIssueList = {issue: {
-        issueList: [],
+        issueList: {},
       }};
       assert.deepEqual(issue.issueList(stateWithEmptyIssueList), []);
 
@@ -211,6 +211,26 @@ describe('issue', () => {
       assert.equal(typeof reference1, 'object');
       assert.equal(typeof reference2, 'object');
       assert.equal(reference1, reference2);
+    });
+  });
+
+  describe('issueListLoaded', () => {
+    const stateWithEmptyIssueList = {issue: {
+      issueList: {},
+    }};
+
+    it('false when no issue list', () => {
+      assert.isFalse(issue.issueListLoaded(stateWithEmptyIssueList));
+    });
+
+    it('true after issues loaded, even when empty', () => {
+      const issueList = issue.issueListReducer({}, {
+        type: issue.FETCH_ISSUE_LIST_UPDATE,
+        issues: [],
+        progress: 1,
+        totalResults: 0,
+      });
+      assert.isTrue(issue.issueListLoaded({issue: {issueList}}));
     });
   });
 
