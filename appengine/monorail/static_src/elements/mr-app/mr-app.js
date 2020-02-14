@@ -20,6 +20,7 @@ import {userIdOrDisplayNameToUserRef} from 'shared/converters.js';
 import {arrayToEnglish} from 'shared/helpers.js';
 import {trackPageChange} from 'shared/ga-helpers.js';
 import 'elements/issue-list/mr-list-page/mr-list-page.js';
+import 'elements/issue-entry/mr-issue-entry-page.js';
 import 'elements/framework/mr-header/mr-header.js';
 import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
 import 'elements/help/mr-cue/mr-cue.js';
@@ -121,6 +122,13 @@ export class MrApp extends connectStore(LitElement) {
             .userDisplayName=${this.userDisplayName}
             .loginUrl=${this.loginUrl}
           ></mr-issue-page>
+        `;
+      case 'entry':
+        return html`
+          <mr-issue-entry-page
+            .userDisplayName=${this.userDisplayName}
+            .loginUrl=${this.loginUrl}
+          ></mr-issue-entry-page>
         `;
       case 'grid':
         return html`
@@ -264,6 +272,8 @@ export class MrApp extends connectStore(LitElement) {
     page('/p/:project/issues/list', this._loadListPage.bind(this),
         postRouteHandler);
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this),
+        postRouteHandler);
+    page('/p/:project/issues/entry_new', this._loadEntryPage.bind(this),
         postRouteHandler);
 
     page('/users/:user/hotlists/:hotlist/*', this._selectHotlist);
@@ -428,6 +438,16 @@ export class MrApp extends connectStore(LitElement) {
         this.page = 'list';
         break;
     }
+    next();
+  }
+
+  /**
+   * Load the issue entry page
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
+  _loadEntryPage(ctx, next) {
+    this.page = 'entry';
     next();
   }
 
