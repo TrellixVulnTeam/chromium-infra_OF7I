@@ -85,26 +85,27 @@ class ConverterFunctionsTest(unittest.TestCase):
     hotlist_item_fields = [
         (self.issue_1.issue_id, 21, 111, self.PAST_TIME, 'note2'),
         (78900, 11, 222, self.PAST_TIME, 'note3'),  # Does not exist.
-        (self.issue_2.issue_id, 1, 222, self.PAST_TIME, 'note1'),
+        (self.issue_2.issue_id, 1, 222, None, 'note1'),
     ]
     hotlist = fake.Hotlist(
         'Hotlist-Name', 241, hotlist_item_fields=hotlist_item_fields)
     api_items = converters.ConvertHotlistItems(
         self.cnxn, hotlist.hotlist_id, hotlist.items, self.services)
+    expected_create_time = timestamp_pb2.Timestamp()
+    expected_create_time.FromSeconds(self.PAST_TIME)
     expected_items = [
         feature_objects_pb2.HotlistItem(
             name='hotlists/241/items/proj.1',
             issue='projects/proj/issues/1',
             rank=1,
             adder='users/111',
-            create_time=timestamp_pb2.Timestamp().FromSeconds(self.PAST_TIME),
+            create_time=expected_create_time,
             note='note2'),
         feature_objects_pb2.HotlistItem(
             name='hotlists/241/items/goose.2',
             issue='projects/goose/issues/2',
             rank=0,
             adder='users/222',
-            create_time=timestamp_pb2.Timestamp().FromSeconds(self.PAST_TIME),
             note='note1')
     ]
     self.assertEqual(api_items, expected_items)

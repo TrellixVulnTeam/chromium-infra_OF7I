@@ -93,13 +93,14 @@ def ConvertHotlistItems(cnxn, hotlist_id, items, services):
 
   api_items = []
   for item in found_items:
-    api_items.append(
-        feature_objects_pb2.HotlistItem(
-            name=resource_names_dict.get(item.issue_id),
-            issue=issue_names_dict.get(item.issue_id),
-            rank=friendly_ranks_dict[item.rank],
-            adder=adder_names_dict.get(item.adder_id),
-            create_time=timestamp_pb2.Timestamp().FromSeconds(item.date_added),
-            note=item.note))
+      api_item = feature_objects_pb2.HotlistItem(
+          name=resource_names_dict.get(item.issue_id),
+          issue=issue_names_dict.get(item.issue_id),
+          rank=friendly_ranks_dict[item.rank],
+          adder=adder_names_dict.get(item.adder_id),
+          note=item.note)
+      if item.date_added:
+        api_item.create_time.FromSeconds(item.date_added)
+      api_items.append(api_item)
 
   return api_items
