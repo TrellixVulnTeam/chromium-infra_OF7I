@@ -17,7 +17,7 @@ import {fieldTypes, extractTypeForIssue,
   fieldValuesToMap} from 'shared/issue-fields.js';
 import {removePrefix, objectToMap} from 'shared/helpers.js';
 import {issueRefToString, issueToIssueRefString,
-  issueStringToRef} from 'shared/converters.js';
+  issueStringToRef, nameToRefString} from 'shared/converters.js';
 import {fromShortlink} from 'shared/federated.js';
 import {createReducer, createRequestReducer,
   createKeyedRequestReducer} from './redux-helpers.js';
@@ -510,6 +510,14 @@ const RESTRICT_COMMENT_PREFIX = 'restrict-addissuecomment-';
  * @return {Object.<IssueRefString, Issue>}
  */
 const issuesByRefString = (state) => state.issue.issuesByRefString;
+
+/**
+ * Selector to return a function to retrieve an Issue from the Redux store.
+ * @param {any} state
+ * @return {function(string): Issue}
+ */
+export const issue = createSelector(issuesByRefString,
+    (issuesByRefString) => (name) => issuesByRefString[nameToRefString(name)]);
 
 /**
  * Selector to return a function to retrieve a given Issue Object from

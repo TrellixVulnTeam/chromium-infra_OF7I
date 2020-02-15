@@ -4,6 +4,8 @@
 
 import 'shared/typedef.js';
 
+export const NAME = 'projects/project-name/issues/1234';
+
 /** @type {Issue} */
 export const ISSUE = Object.freeze({
   projectName: 'project-name',

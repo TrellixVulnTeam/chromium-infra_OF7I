@@ -7,6 +7,7 @@ import sinon from 'sinon';
 import {createSelector} from 'reselect';
 import {store, resetState} from './base.js';
 import * as issue from './issue.js';
+import * as example from 'shared/test/constants-issue.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 import {issueToIssueRef, issueRefToString} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';
@@ -1080,6 +1081,11 @@ describe('issue', () => {
     });
 
     describe('selectors', () => {
+      describe('issue', () => {
+        const selector = issue.issue(wrapIssue(example.ISSUE));
+        assert.deepEqual(selector(example.NAME), example.ISSUE);
+      });
+
       describe('issueForRefString', () => {
         const noIssues = issue.issueForRefString(wrapIssue({}));
         const withIssue = issue.issueForRefString(wrapIssue({

@@ -12,7 +12,7 @@ import {displayNameToUserRef, userIdOrDisplayNameToUserRef, labelStringToRef,
   issueStringToRef, issueStringToBlockingRef, issueRefToString,
   issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefix,
   labelNameToLabelValue, commentListToDescriptionList, valueToFieldValue,
-  issueToIssueRef,
+  issueToIssueRef, nameToRefString,
 } from './converters.js';
 
 describe('displayNameToUserRef', () => {
@@ -332,6 +332,10 @@ describe('issueRefToUrl', () => {
     issueRefToUrl(ref, queryParams);
     assert.equal(EXPECTED, JSON.stringify(queryParams));
   });
+});
+
+it('nameToRefString', () => {
+  assert.equal(nameToRefString('projects/proj-name/issues/2'), 'proj-name:2');
 });
 
 describe('commentListToDescriptionList', () => {

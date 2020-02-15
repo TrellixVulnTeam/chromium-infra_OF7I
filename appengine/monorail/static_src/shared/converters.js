@@ -504,6 +504,17 @@ export function issueRefsToStrings(arr, projectName) {
 }
 
 /**
+ * Converts an issue name in the v1 API to an IssueRefString in the v0 API.
+ * @param {string} name The v1 Issue name, e.g. 'projects/proj-name/issues/123'
+ * @return {IssueRefString} A String with all the data needed to
+ *   construct an IssueRef.
+ */
+export function nameToRefString(name) {
+  const nameParts = name.split('/');
+  return `${nameParts[1]}:${nameParts[3]}`;
+}
+
+/**
  * Since Monorail stores issue descriptions and description updates as comments,
  * this function exists to filter a list of comments to get only those comments
  * that are marked as descriptions.
