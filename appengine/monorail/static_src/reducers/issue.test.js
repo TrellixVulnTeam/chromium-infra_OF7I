@@ -25,35 +25,36 @@ describe('issue', () => {
     describe('issueByRefReducer', () => {
       it('no-op on unmatching action', () => {
         const action = {
-          type: 'FETCH_ISSUE_LIST_FAKE_ACTION',
-          issues: [
-            {localId: 1, projectName: 'chromium', summary: 'hello-world'},
-          ],
+          type: 'FAKE_ACTION',
+          issues: [example.ISSUE_OTHER_PROJECT],
         };
         assert.deepEqual(issue.issuesByRefStringReducer({}, action), {});
 
-        assert.deepEqual(issue.issuesByRefStringReducer({
-          ['chromium:1']: {localId: 1, projectName: 'chromium'},
-        }, action), {
-          ['chromium:1']: {localId: 1, projectName: 'chromium'},
-        });
+        const state = {[example.ISSUE_REF_STRING]: example.ISSUE};
+        assert.deepEqual(issue.issuesByRefStringReducer(state, action), state);
       });
 
       it('handles FETCH_ISSUE_LIST_UPDATE', () => {
         const newState = issue.issuesByRefStringReducer({}, {
-          type: 'FETCH_ISSUE_LIST_UPDATE',
-          issues: [
-            {localId: 1, projectName: 'chromium', summary: 'hello-world'},
-            {localId: 2, projectName: 'monorail', summary: 'Test'},
-          ],
+          type: issue.FETCH_ISSUE_LIST_UPDATE,
+          issues: [example.ISSUE, example.ISSUE_OTHER_PROJECT],
           totalResults: 2,
           progress: 1,
         });
         assert.deepEqual(newState, {
-          'chromium:1': {localId: 1, projectName: 'chromium',
-            summary: 'hello-world'},
-          'monorail:2': {localId: 2, projectName: 'monorail',
-            summary: 'Test'},
+          [example.ISSUE_REF_STRING]: example.ISSUE,
+          [example.ISSUE_OTHER_PROJECT_REF_STRING]: example.ISSUE_OTHER_PROJECT,
+        });
+      });
+
+      it('handles FETCH_ISSUES_SUCCESS', () => {
+        const newState = issue.issuesByRefStringReducer({}, {
+          type: issue.FETCH_ISSUES_SUCCESS,
+          issues: [example.ISSUE, example.ISSUE_OTHER_PROJECT],
+        });
+        assert.deepEqual(newState, {
+          [example.ISSUE_REF_STRING]: example.ISSUE,
+          [example.ISSUE_OTHER_PROJECT_REF_STRING]: example.ISSUE_OTHER_PROJECT,
         });
       });
     });
@@ -776,6 +777,44 @@ describe('issue', () => {
       sinon.assert.calledWith(dispatch, {
         type: 'PREDICT_COMPONENT_SUCCESS',
         component: 'UI>Test',
+      });
+    });
+
+    describe('fetchIssues', () => {
+      it('success', async () => {
+        const response = {
+          openRefs: [example.ISSUE],
+          closedRefs: [example.ISSUE_OTHER_PROJECT],
+        };
+        prpcClient.call.returns(Promise.resolve(response));
+        const dispatch = sinon.stub();
+
+        await issue.fetchIssues([example.ISSUE_REF])(dispatch);
+
+        sinon.assert.calledWith(dispatch, {type: issue.FETCH_ISSUES_START});
+
+        const args = {issueRefs: [example.ISSUE_REF]};
+        sinon.assert.calledWith(
+            prpcClient.call, 'monorail.Issues', 'ListReferencedIssues', args);
+
+        const action = {
+          type: issue.FETCH_ISSUES_SUCCESS,
+          issues: [example.ISSUE, example.ISSUE_OTHER_PROJECT],
+        };
+        sinon.assert.calledWith(dispatch, action);
+      });
+
+      it('failure', async () => {
+        prpcClient.call.throws();
+        const dispatch = sinon.stub();
+
+        await issue.fetchIssues([example.ISSUE_REF])(dispatch);
+
+        const action = {
+          type: issue.FETCH_ISSUES_FAILURE,
+          error: sinon.match.any,
+        };
+        sinon.assert.calledWith(dispatch, action);
       });
     });
 

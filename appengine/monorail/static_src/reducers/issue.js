@@ -37,8 +37,12 @@ export const FETCH_START = 'issue/FETCH_START';
 export const FETCH_SUCCESS = 'issue/FETCH_SUCCESS';
 export const FETCH_FAILURE = 'issue/FETCH_FAILURE';
 
+export const FETCH_ISSUES_START = 'issue/FETCH_ISSUES_START';
+export const FETCH_ISSUES_SUCCESS = 'issue/FETCH_ISSUES_SUCCESS';
+export const FETCH_ISSUES_FAILURE = 'issue/FETCH_ISSUES_FAILURE';
+
 const FETCH_HOTLISTS_START = 'FETCH_HOTLISTS_START';
-const FETCH_HOTLISTS_SUCCESS = 'FETCH_HOTLISTS_SUCCESS';
+export const FETCH_HOTLISTS_SUCCESS = 'FETCH_HOTLISTS_SUCCESS';
 const FETCH_HOTLISTS_FAILURE = 'FETCH_HOTLISTS_FAILURE';
 
 const FETCH_ISSUE_LIST_START = 'FETCH_ISSUE_LIST_START';
@@ -203,17 +207,23 @@ export const issuesByRefStringReducer = createReducer({}, {
     const newState = {...state};
 
     issues.forEach((issue) => {
-      const issueRefString = issueToIssueRefString(issue);
-
-      newState[issueRefString] = {
-        ...newState[issueRefString],
-        ...issue,
-      };
+      const refString = issueToIssueRefString(issue);
+      newState[refString] = {...newState[refString], ...issue};
     });
 
     return newState;
   },
   [FETCH_SUCCESS]: (state, {issue}) => updateSingleIssueInState(state, issue),
+  [FETCH_ISSUES_SUCCESS]: (state, {issues}) => {
+    const newState = {...state};
+
+    issues.forEach((issue) => {
+      const refString = issueToIssueRefString(issue);
+      newState[refString] = {...newState[refString], ...issue};
+    });
+
+    return newState;
+  },
   [CONVERT_SUCCESS]: (state, {issue}) => updateSingleIssueInState(state, issue),
   [UPDATE_SUCCESS]: (state, {issue}) => updateSingleIssueInState(state, issue),
   [UPDATE_APPROVAL_SUCCESS]: (state, {issueRef, approval}) => {
@@ -426,6 +436,8 @@ const permissionsReducer = createReducer([], {
 const requestsReducer = combineReducers({
   fetch: createRequestReducer(
       FETCH_START, FETCH_SUCCESS, FETCH_FAILURE),
+  fetchIssues: createRequestReducer(
+      FETCH_ISSUES_START, FETCH_ISSUES_SUCCESS, FETCH_ISSUES_FAILURE),
   fetchHotlists: createRequestReducer(
       FETCH_HOTLISTS_START, FETCH_HOTLISTS_SUCCESS, FETCH_HOTLISTS_FAILURE),
   fetchIssueList: createRequestReducer(
@@ -514,7 +526,7 @@ const issuesByRefString = (state) => state.issue.issuesByRefString;
 /**
  * Selector to return a function to retrieve an Issue from the Redux store.
  * @param {any} state
- * @return {function(string): Issue}
+ * @return {function(string): ?Issue}
  */
 export const issue = createSelector(issuesByRefString,
     (issuesByRefString) => (name) => issuesByRefString[nameToRefString(name)]);
@@ -1032,6 +1044,25 @@ export const fetch = (issueRef) => async (dispatch) => {
     }
   } catch (error) {
     dispatch({type: FETCH_FAILURE, error});
+  }
+};
+
+/**
+ * Action creator to fetch multiple Issues.
+ * @param {Array<IssueRef>} issueRefs An Array of Issue references to fetch.
+ * @return {function(function): Promise<void>}
+ */
+export const fetchIssues = (issueRefs) => async (dispatch) => {
+  dispatch({type: FETCH_ISSUES_START});
+
+  try {
+    const {openRefs, closedRefs} = await prpcClient.call(
+        'monorail.Issues', 'ListReferencedIssues', {issueRefs});
+    const issues = [...openRefs || [], ...closedRefs || []];
+
+    dispatch({type: FETCH_ISSUES_SUCCESS, issues});
+  } catch (error) {
+    dispatch({type: FETCH_ISSUES_FAILURE, error});
   }
 };
 
