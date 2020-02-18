@@ -15,6 +15,14 @@ class BuildTokenTests(testing.AppengineTestCase):
     token = tokens.generate_build_token(build_id, task_key)
     tokens.validate_build_token(token, build_id, task_key)
 
+    # TODO(crbug.com/1052144): remove belows after task_key removal.
+    tokens.validate_build_token(token, build_id, None)
+
+    token = tokens.BuildToken.generate(
+        tokens._token_message(build_id, task_key)
+    )
+    tokens.validate_build_token(token, build_id, task_key)
+
   def test_roundtrip_no_task_key(self):
     build_id = 1234567890
     task_key = None

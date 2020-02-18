@@ -23,11 +23,15 @@ def _token_message(build_id, task_key):
   return str(build_id)
 
 
-def generate_build_token(build_id, task_key):
+def generate_build_token(build_id, _):
   """Returns a token associated with the build."""
-  return BuildToken.generate(_token_message(build_id, task_key))
+  return BuildToken.generate(_token_message(build_id, None))
 
 
 def validate_build_token(token, build_id, task_key):
   """Raises auth.InvalidTokenError if the token is invalid."""
-  return BuildToken.validate(token, _token_message(build_id, task_key))
+  try:
+    BuildToken.validate(token, _token_message(build_id, None))
+  except auth.InvalidTokenError:
+    # TODO(crbug.com/1052144): remove this after update.
+    BuildToken.validate(token, _token_message(build_id, task_key))
