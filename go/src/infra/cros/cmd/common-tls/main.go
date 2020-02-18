@@ -37,9 +37,7 @@ func innerMain() error {
 	if err != nil {
 		return err
 	}
-	s := server{
-		conn: c,
-	}
+	s := newServer(c)
 	if err := s.Serve(l); err != nil {
 		return err
 	}

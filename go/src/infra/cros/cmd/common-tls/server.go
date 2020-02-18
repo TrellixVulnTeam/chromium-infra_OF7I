@@ -16,22 +16,62 @@ import (
 )
 
 type server struct {
-	conn *grpc.ClientConn
+	tls.UnimplementedCommonServer
+	// wiringConn is a connection to the wiring service.
+	wiringConn *grpc.ClientConn
+	clientPool *sshClientPool
 }
 
-func (s server) Serve(l net.Listener) error {
+func newServer(c *grpc.ClientConn) server {
+	return server{
+		wiringConn: c,
+	}
+}
+
+func (s *server) Serve(l net.Listener) error {
+	s.clientPool = newSSHClientPool()
+	defer s.clientPool.Close()
+
 	server := grpc.NewServer()
 	tls.RegisterCommonServer(server, s)
 	return server.Serve(l)
 }
 
-func (s server) DutShell(req *tls.DutShellRequest, stream tls.Common_DutShellServer) error {
+func (s *server) DutShell(req *tls.DutShellRequest, stream tls.Common_DutShellServer) error {
 	ctx := stream.Context()
-	c, err := s.sshToDUT(ctx, req.GetDut())
+	addr, err := s.getSSHAddr(ctx, req.GetDut())
 	if err != nil {
 		return fmt.Errorf("DutShell %s %#v: %s", req.GetDut(), req.GetCommand(), err)
 	}
-	session, err := c.NewSession()
+
+	var c *ssh.Client
+	clientOk := false
+	defer func() {
+		if c == nil {
+			return
+		}
+		if clientOk {
+			s.clientPool.Put(addr, c)
+		} else {
+			go c.Close()
+		}
+	}()
+
+	var session *ssh.Session
+	// Retry once, in case we get a bad SSH client out of the pool.
+	for i := 0; i < 2; i++ {
+		c, err = s.clientPool.Get(addr)
+		if err != nil {
+			return fmt.Errorf("DutShell %s %#v: %s", req.GetDut(), req.GetCommand(), err)
+		}
+		session, err = c.NewSession()
+		if err != nil {
+			// This client is probably bad, so close and stop using it.
+			go c.Close()
+			continue
+		}
+		break
+	}
 	if err != nil {
 		return fmt.Errorf("DutShell %s %#v: %s", req.GetDut(), req.GetCommand(), err)
 	}
@@ -42,42 +82,39 @@ func (s server) DutShell(req *tls.DutShellRequest, stream tls.Common_DutShellSer
 	session.Stdout = &stdout
 	session.Stderr = &stderr
 	err = session.Run(req.GetCommand())
+	// TODO(ayatane): Stream output
 	resp := &tls.DutShellResponse{
 		Exited: true,
-		Stdout: stdout.Bytes(),
-		Stderr: stderr.Bytes(),
 	}
-	if err, ok := err.(*ssh.ExitError); ok {
+	switch err := err.(type) {
+	case *ssh.ExitError:
+		clientOk = true
 		resp.Status = int32(err.ExitStatus())
-	} else if err != nil {
+	case *ssh.ExitMissingError:
+		clientOk = true
 		resp.Status = 1
+	default:
+		resp.Status = 1
+		fmt.Fprintf(&stderr, "tls: unknown SSH session error: %s\n", err)
 	}
+	resp.Stdout = stdout.Bytes()
+	resp.Stderr = stderr.Bytes()
 	_ = stream.Send(resp)
 	return nil
 }
 
-func (s server) sshToDUT(ctx context.Context, dut string) (*ssh.Client, error) {
-	c := tls.NewWiringClient(s.conn)
+// getSSHAddr returns the SSH address to use for the DUT, through the wiring service.
+func (s *server) getSSHAddr(ctx context.Context, dut string) (string, error) {
+	c := tls.NewWiringClient(s.wiringConn)
 	resp, err := c.OpenDutPort(ctx, &tls.OpenDutPortRequest{
 		Dut:     dut,
 		DutPort: 22,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("sshToDUT %s: %s", dut, err)
+		return "", err
 	}
 	if s := resp.GetStatus(); s != tls.OpenDutPortResponse_STATUS_OK {
-		return nil, fmt.Errorf("sshToDUT %s: %s %s", dut, s, resp.GetReason())
+		return "", fmt.Errorf("get SSH addr %s: %s %s", dut, s, resp.GetReason())
 	}
-	sshC, err := ssh.Dial("tcp", resp.GetAddress(), &ssh.ClientConfig{
-		// TODO(ayatane): Add auth here.
-		User: "chromeos-test",
-		// We don't care about the host key for DUTs.
-		// Attackers intercepting our connections to DUTs is not part
-		// of our attack profile.
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("sshToDUT %s: %s", dut, err)
-	}
-	return sshC, nil
+	return resp.GetAddress(), nil
 }

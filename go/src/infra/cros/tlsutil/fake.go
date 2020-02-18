@@ -52,7 +52,7 @@ func (s WiringFake) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest
 }
 
 // SSHStub is a stub implementation of an SSH server for testing.
-// It returns canned stdout output and exist status.
+// It returns canned stdout output and exit status.
 type SSHStub struct {
 	Output     []byte
 	ExitStatus uint32
