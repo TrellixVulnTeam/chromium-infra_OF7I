@@ -1,3 +1,29 @@
+# Release Notes sheriff-o-matic 2020-02-18
+
+- 3 commits, 3 bugs affected since 973b32e ()
+- 3 Authors:
+  - nqmtuan@google.com
+  - michaeldo@chromium.org
+  - jojwang@chromium.org
+
+## Changes in this release
+
+- [Fix SoM bug related to array of pointers](https://chromium-review.googlesource.com/c/infra/infra/+/2059040) (nqmtuan@google.com)
+- [[iOS] Remove references to xcode clang bots](https://chromium-review.googlesource.com/c/infra/infra/+/2041889) (michaeldo@chromium.org)
+- [Update sinonjs link in bower.json](https://chromium-review.googlesource.com/c/infra/infra/+/2048866) (jojwang@chromium.org)
+
+
+## Bugs updated, by author
+- jojwang@chromium.org:
+  -  [https://crbug.com/1050469](https://crbug.com/1050469)
+  
+- michaeldo@chromium.org:
+  -  [https://crbug.com/1049646](https://crbug.com/1049646)
+  
+- nqmtuan@google.com:
+  -  [https://crbug.com/1049364](https://crbug.com/1049364)
+  
+
 # Release Notes sheriff-o-matic 2020-01-30
 
 - 3 commits, 1 bugs affected since b089436 (2020-01-23T05:03:37Z)
