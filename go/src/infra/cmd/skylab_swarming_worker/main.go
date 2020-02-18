@@ -51,6 +51,9 @@ import (
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness"
 )
 
+const repairTaskName = "repair"
+const deployTaskName = "deploy"
+
 func main() {
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Starting with args: %s", os.Args)
@@ -205,8 +208,8 @@ func mainInner(a *args) error {
 
 func harnessOptions(a *args) []harness.Option {
 	var ho []harness.Option
-	if updatesInventory(a.taskName) {
-		ho = append(ho, harness.UpdateInventory("repair"))
+	if updatesInventory(a) {
+		ho = append(ho, harness.UpdateInventory(getTaskName(a)))
 	}
 	if a.forceFreshInventory {
 		ho = append(ho, harness.WaitForFreshInventory)
@@ -214,10 +217,24 @@ func harnessOptions(a *args) []harness.Option {
 	return ho
 }
 
-// updatesInventory returns true if the task should update the inventory
-func updatesInventory(taskName string) bool {
-	task, _ := getAdminTask(taskName)
-	return task == "repair"
+// updatesInventory returns true if the task(repair/deploy)
+// should update the inventory else false.
+func updatesInventory(a *args) bool {
+	if isRepairTask(a) || isDeployTask(a) {
+		return true
+	}
+	return false
+}
+
+// getTaskName returns the task name(repair/deploy) for the task.
+func getTaskName(a *args) string {
+	if isRepairTask(a) {
+		return repairTaskName
+	}
+	if isDeployTask(a) {
+		return deployTaskName
+	}
+	return ""
 }
 
 func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.TaskArgs) error {
@@ -262,7 +279,13 @@ func isAdminTask(a *args) bool {
 
 // isDeployTask determines if the given task name corresponds to a deploy task.
 func isDeployTask(a *args) bool {
-	return a.taskName == "deploy"
+	return a.taskName == deployTaskName
+}
+
+// isRepairTask determines if the given task name corresponds to a repair task.
+func isRepairTask(a *args) bool {
+	task, _ := getAdminTask(a.taskName)
+	return task == repairTaskName
 }
 
 // runTest runs a test.
