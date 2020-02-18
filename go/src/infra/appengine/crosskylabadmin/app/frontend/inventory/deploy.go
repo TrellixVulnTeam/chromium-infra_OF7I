@@ -205,6 +205,10 @@ func deployManyDUTs(ctx context.Context, ic inventoryClient, sc clients.Swarming
 	// TODO(gregorynisbet): consider policy for amalgamating many errors into a coherent description
 	// of how deployManyDUTs failed.
 	ds := &deploy.Status{Status: fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS}
+	for _, nd := range nds {
+		id := uuid.New().String()
+		nd.Id = &id
+	}
 	// Add DUTs to fleet first synchronously, don't proceed with scheduling tasks
 	// unless we've succeeded in adding the DUTs to the inventory.
 	url, newDevices, err := ic.addManyDUTsToFleet(ctx, nds, o.GetAssignServoPortIfMissing())
@@ -303,10 +307,8 @@ func findFreePort(used []int) (int, error) {
 
 // addDUTToStore adds a new DUT with the given specs to the store.
 //
-// This function returns a new ID for the added DUT.
+// This function returns the ID for the added DUT.
 func addDUTToStore(s *gitstore.InventoryStore, nd *inventory.CommonDeviceSpecs) string {
-	id := uuid.New().String()
-	nd.Id = &id
 	// TODO(crbug/912977) DUTs under deployment are not marked specially in the
 	// inventory yet. This causes two problems:
 	// - Another admin task (say repair) may get scheduled on the new bot
@@ -316,7 +318,7 @@ func addDUTToStore(s *gitstore.InventoryStore, nd *inventory.CommonDeviceSpecs) 
 	s.Lab.Duts = append(s.Lab.Duts, &inventory.DeviceUnderTest{
 		Common: nd,
 	})
-	return id
+	return *nd.Id
 }
 
 // scheduleDUTPreparationTask schedules a Skylab DUT preparation task.
