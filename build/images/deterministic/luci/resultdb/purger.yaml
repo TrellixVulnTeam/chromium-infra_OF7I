@@ -1,0 +1,9 @@
+name: luci/resultdb/purger
+extends: ../../../base.yaml
+
+contextdir: ../../../../../go/src/go.chromium.org/luci/resultdb/cmd/purger/docker
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/resultdb/cmd/purger
+    dest: bin/purger
