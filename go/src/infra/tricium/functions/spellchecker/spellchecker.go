@@ -56,6 +56,7 @@ var (
 		"alph",        // person name
 		"als",         // abbr. for ambient light sensor
 		"amin",        // person name
+		"synopsys",    // company name
 		"ang",         // person name
 		"anny",        // person name
 		"backed",      // as in "backed by"
