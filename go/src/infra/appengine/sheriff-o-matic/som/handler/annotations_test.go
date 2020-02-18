@@ -70,7 +70,7 @@ func TestFilterAnnotations(t *testing.T) {
 
 func TestFilterDuplicateBugs(t *testing.T) {
 	Convey("Test filter annotation", t, func() {
-		bugs := []*model.MonorailBug{
+		bugs := []model.MonorailBug{
 			{
 				BugID:     "bug_1",
 				ProjectID: "project_1",
@@ -99,7 +99,7 @@ func TestFilterDuplicateBugs(t *testing.T) {
 
 func TestConstructQueryFromBugList(t *testing.T) {
 	Convey("Test construct query from bug list", t, func() {
-		bugs := []*model.MonorailBug{
+		bugs := []model.MonorailBug{
 			{
 				BugID:     "bug_1",
 				ProjectID: "project_1",
@@ -155,10 +155,24 @@ func TestAnnotations(t *testing.T) {
 		monorailMux := http.NewServeMux()
 		monorailResponse := func(w http.ResponseWriter, r *http.Request) {
 			logging.Errorf(c, "got monorailMux request")
+			query := r.FormValue("q")
 			res := &monorail.IssuesListResponse{
 				Items:        []*monorail.Issue{},
 				TotalResults: 0,
 			}
+			if query == "id:333,444" {
+				res = &monorail.IssuesListResponse{
+					Items:        []*monorail.Issue{{Id: 333}, {Id: 444}},
+					TotalResults: 2,
+				}
+			}
+			if query == "id:555,666" {
+				res = &monorail.IssuesListResponse{
+					Items:        []*monorail.Issue{{Id: 555}, {Id: 666}},
+					TotalResults: 2,
+				}
+			}
+
 			bytes, err := json.Marshal(res)
 			if err != nil {
 				logging.Errorf(c, "error marshaling response: %v", err)
@@ -381,6 +395,44 @@ func TestAnnotations(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(w.Code, ShouldEqual, 200)
 				So(string(b), ShouldEqual, "{}")
+			})
+
+			ann := &model.Annotation{
+				KeyDigest: fmt.Sprintf("%x", sha1.Sum([]byte("foobar"))),
+				Key:       "foobar",
+				Bugs:      []model.MonorailBug{{BugID: "333", ProjectID: "chromium"}, {BugID: "444", ProjectID: "chromium"}},
+			}
+
+			ann1 := &model.Annotation{
+				KeyDigest: fmt.Sprintf("%x", sha1.Sum([]byte("foobar1"))),
+				Key:       "foobar1",
+				Bugs:      []model.MonorailBug{{BugID: "555", ProjectID: "fuchsia"}, {BugID: "666", ProjectID: "fuchsia"}},
+			}
+
+			So(datastore.Put(c, ann), ShouldBeNil)
+			So(datastore.Put(c, ann1), ShouldBeNil)
+			datastore.GetTestable(c).CatchupIndexes()
+
+			Convey("query alerts which have multiple bugs", func() {
+				ah.RefreshAnnotationsHandler(&router.Context{
+					Context: c,
+					Writer:  w,
+					Request: makeGetRequest(),
+				})
+
+				b, err := ioutil.ReadAll(w.Body)
+				So(err, ShouldBeNil)
+				So(w.Code, ShouldEqual, 200)
+
+				var result map[string]interface{}
+				json.Unmarshal(b, &result)
+				expected := map[string]interface{}{
+					"333": map[string]interface{}{"id": float64(333)},
+					"444": map[string]interface{}{"id": float64(444)},
+					"555": map[string]interface{}{"id": float64(555)},
+					"666": map[string]interface{}{"id": float64(666)},
+				}
+				So(result, ShouldResemble, expected)
 			})
 		})
 	})

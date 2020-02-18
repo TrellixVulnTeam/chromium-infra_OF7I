@@ -163,7 +163,7 @@ func (ah *AnnotationHandler) RefreshAnnotationsHandler(ctx *router.Context) {
 
 // Builds a map keyed by projectId (i.e "chromium", "fuchsia"), value contains
 // the monorail query string.
-func constructQueryFromBugList(bugs []*model.MonorailBug) map[string]string {
+func constructQueryFromBugList(bugs []model.MonorailBug) map[string]string {
 	queries := map[string]string{}
 	for _, bug := range bugs {
 		if val, ok := queries[bug.ProjectID]; ok {
@@ -175,9 +175,9 @@ func constructQueryFromBugList(bugs []*model.MonorailBug) map[string]string {
 	return queries
 }
 
-func filterDuplicateBugs(bugs []*model.MonorailBug) []*model.MonorailBug {
+func filterDuplicateBugs(bugs []model.MonorailBug) []model.MonorailBug {
 	bugIds := map[string]interface{}{}
-	filteredBugs := []*model.MonorailBug{}
+	filteredBugs := []model.MonorailBug{}
 	for _, bug := range bugs {
 		if _, exist := bugIds[bug.BugID]; !exist {
 			bugIds[bug.BugID] = nil
@@ -193,7 +193,7 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 
 	q := datastore.NewQuery("Annotation")
 	results := []*model.Annotation{}
-	allBugs := []*model.MonorailBug{}
+	allBugs := []model.MonorailBug{}
 	datastore.GetAll(c, q, &results)
 
 	// Monorail takes queries of the format id:1,2,3 (gets bugs with those ids).
@@ -203,7 +203,7 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 
 	for _, annotation := range results {
 		for _, b := range annotation.Bugs {
-			allBugs = append(allBugs, &b)
+			allBugs = append(allBugs, b)
 		}
 	}
 
