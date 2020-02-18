@@ -63,7 +63,7 @@ class BaseTestResults(object):
     """Returns True if test results contains all tests, False otherwise.
 
     For gtest, each shard contains all_tests so it should always be True;
-    For webkit_layout_tests, this should be True only if the test result is a
+    For blink_web_tests, this should be True only if the test result is a
       full result of a task (meaning it should not be result of a single shard
       from a multi-shards task), False otherwise.
     """

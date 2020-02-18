@@ -109,7 +109,7 @@ def _NormalizePath(path):
 def GetTestLocation(build_id, step_name, test_name, normalized_test_name):
   """Returns a TestLocation for the given test.
 
-  Currently only supports webkit_layout_tests and Gtests.
+  Currently only supports blink_web_tests and Gtests.
 
   Args:
     build_id (int): Build id of the build.
@@ -117,8 +117,8 @@ def GetTestLocation(build_id, step_name, test_name, normalized_test_name):
     test_name (str): The name of the test.
     normalized_step_name (str): The normalized version of the step name.
   """
-  if 'webkit_layout_tests' in step_name:
-    # For Webkit layout tests, assume that the normalized test name is
+  if 'webkit_layout_tests' in step_name or 'blink_web_tests' in step_name:
+    # For blink_web_tests, assume that the normalized test name is
     # the directory name.
     return TestLocation(
         file_path=_NormalizePath('third_party/blink/web_tests/%s' %

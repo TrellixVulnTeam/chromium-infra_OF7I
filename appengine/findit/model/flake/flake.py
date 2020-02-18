@@ -53,9 +53,9 @@ class Flake(ndb.Model):
   # 'viz_browser_tests (with patch) on Android' -> 'browser_tests'.
   #
   # For script Tests, base_test_target equals the test target name with one
-  # exception: '.*_webkit_layout_tests' maps to 'webkit_layout_tests'.
+  # exception: '.*_blink_web_tests' maps to 'blink_web_tests'.
   # For example,
-  # 'site_per_process_webkit_layout_tests (with patch)' -> 'webkit_layout_tests'
+  # 'site_per_process_blink_web_tests (with patch)' -> 'blink_web_tests'
   # and 'chromedriver_py_tests (with patch)' -> 'chromedriver_py_tests'.
   normalized_step_name = ndb.StringProperty(required=True)
 
@@ -176,6 +176,7 @@ class Flake(ndb.Model):
         build_number=build_number,
         step_name=step_name)
     if isolate_target_name:
+      # TODO(crbug.com/1050188): Remove webkit_layout_tests.
       if 'webkit_layout_tests' in isolate_target_name:
         return 'webkit_layout_tests'
 
@@ -259,7 +260,7 @@ class Flake(ndb.Model):
     example, 'A/ColorSpaceTest.PRE_PRE_testNullTransform/137' maps to
     'ColorSpaceTest.testNullTransform'.
 
-    Removes queries from test names if they are webkit_layout_tests. For
+    Removes queries from test names if they are blink_web_tests. For
     example, 'external/wpt/editing/run/inserttext.html?2001-last' maps to
     'external/wpt/editing/run/inserttext.html'
 
@@ -267,27 +268,28 @@ class Flake(ndb.Model):
     If not given, goes through all normalizers for different types of tests.
     Note that without step name, this function is not perfect, for example,
     a/suite/c.html can be both a type parameterized version of suite.html gtest
-    or a webkit_layout_tests.
+    or a blink_web_tests.
 
     Args:
       test_name: Any test name, and it can be original test name containing
                  parameters, normalized test name (no-op) or a test label name
                  with masks.
       step_name: The original step name, needed to identify the type of the
-                 test, such as webkit_layout_tests, gtests.
+                 test, such as blink_web_tests, gtests.
 
     Returns:
       Normalized version of the given test name.
     """
-    if step_name and 'webkit_layout_tests' in step_name:
-      return test_name_util.RemoveSuffixFromWebkitLayoutTestName(
-          test_name_util.RemoveVirtualLayersFromWebkitLayoutTestName(test_name))
+    if step_name and (
+        'webkit_layout_tests' in step_name or 'blink_web_tests' in step_name):
+      return test_name_util.RemoveSuffixFromBlinkWebTestName(
+          test_name_util.RemoveVirtualLayersFromBlinkWebTestName(test_name))
 
     test_name = test_name_util.RemoveAllPrefixesFromGTestName(
         test_name_util.RemoveParametersFromGTestName(test_name))
 
-    return test_name_util.RemoveSuffixFromWebkitLayoutTestName(
-        test_name_util.RemoveVirtualLayersFromWebkitLayoutTestName(test_name))
+    return test_name_util.RemoveSuffixFromBlinkWebTestName(
+        test_name_util.RemoveVirtualLayersFromBlinkWebTestName(test_name))
 
   @staticmethod
   def GetTestLabelName(test_name, step_name):
@@ -298,15 +300,15 @@ class Flake(ndb.Model):
 
     Args:
       test_name: The original test name, and it may contain parameters and
-                 prefixes for gtests and queries for webkit_layout_tests.
+                 prefixes for gtests and queries for blink_web_tests.
       step_name: The original step name, needed to identify the type of the
-                 test, such as webkit_layout_tests, gtests.
+                 test, such as blink_web_tests, gtests.
 
     Returns:
       A test name with the variable parts being replaced with mask '*'.
     """
-    if 'webkit_layout_tests' in step_name:
-      return test_name_util.ReplaceSuffixFromWebkitLayoutTestNameWithMask(
+    if 'webkit_layout_tests' in step_name or 'blink_web_tests' in step_name:
+      return test_name_util.ReplaceSuffixFromBlinkWebTestNameWithMask(
           test_name)
 
     return test_name_util.ReplaceAllPrefixesFromGtestNameWithMask(

@@ -78,10 +78,10 @@ class TestTagUtilTest(WaterfallTestCase):
         test_tag_util.GetTestLocation(123, 'step_name', 'test_name',
                                       'normalized_test_name').file_path)
 
-  def testGetTestLocationWebkit(self, *_):
+  def testGetTestLocationBWT(self, *_):
     self.assertEqual(
         'third_party/blink/web_tests/normalized_test_name',
-        test_tag_util.GetTestLocation(123, 'webkit_layout_tests_step_name',
+        test_tag_util.GetTestLocation(123, 'blink_web_tests',
                                       'test_name',
                                       'normalized_test_name').file_path)
 

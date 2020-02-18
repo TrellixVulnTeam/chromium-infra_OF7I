@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from libs.test_results.webkit_layout_test_results import WebkitLayoutTestResults
+from libs.test_results.blink_web_test_results import BlinkWebTestResults
 from waterfall.test import wf_testcase
 
 _SAMPLE_TEST_RESULTS = {
@@ -179,11 +179,11 @@ _SAMPLE_FLATTEN_TEST_RESULTS = {
 }
 
 
-class WebkitLayoutTestResultsTest(wf_testcase.WaterfallTestCase):
+class BlinkWebTestResultsTest(wf_testcase.WaterfallTestCase):
 
   def setUp(self):
-    super(WebkitLayoutTestResultsTest, self).setUp()
-    self.test_result = WebkitLayoutTestResults(_SAMPLE_TEST_RESULTS)
+    super(BlinkWebTestResultsTest, self).setUp()
+    self.test_result = BlinkWebTestResults(_SAMPLE_TEST_RESULTS)
 
   def testDoesTestExist(self):
     existing_test_name = (
@@ -195,7 +195,7 @@ class WebkitLayoutTestResultsTest(wf_testcase.WaterfallTestCase):
 
   def testIsTestEnabledWhenResultEmpty(self):
     test_name = 'test'
-    self.assertFalse(WebkitLayoutTestResults(None).IsTestEnabled(test_name))
+    self.assertFalse(BlinkWebTestResults(None).IsTestEnabled(test_name))
 
   def testIsTestEnabledWhenDisabled(self):
     test_name = 'virtual/spv2/fast/css/error-in-last-decl.html'
@@ -208,7 +208,7 @@ class WebkitLayoutTestResultsTest(wf_testcase.WaterfallTestCase):
   def testGetMergedTestResultsAddDifferentTypes(self):
     shard_results = [_SAMPLE_TEST_RESULTS, {'tests': {}, 'skipped': '0'}]
     with self.assertRaises(Exception):
-      WebkitLayoutTestResults.GetMergedTestResults(shard_results)
+      BlinkWebTestResults.GetMergedTestResults(shard_results)
 
   def testGetMergedTestResultsAddNonAddableTypes(self):
     shard_results = [{
@@ -219,17 +219,17 @@ class WebkitLayoutTestResultsTest(wf_testcase.WaterfallTestCase):
         'skipped': '0'
     }]
     with self.assertRaises(Exception):
-      WebkitLayoutTestResults.GetMergedTestResults(shard_results)
+      BlinkWebTestResults.GetMergedTestResults(shard_results)
 
   def testGetMergedTestResultsMatchingValuesUnmatched(self):
     shard_results = [{'path_delimiter': '.'}, {'path_delimiter': '/'}]
     with self.assertRaises(Exception):
-      WebkitLayoutTestResults.GetMergedTestResults(shard_results)
+      BlinkWebTestResults.GetMergedTestResults(shard_results)
 
   def testGetMergedTestResultsOneShard(self):
     self.assertEqual(
         _SAMPLE_FLATTEN_TEST_RESULTS,
-        WebkitLayoutTestResults.GetMergedTestResults([_SAMPLE_TEST_RESULTS]))
+        BlinkWebTestResults.GetMergedTestResults([_SAMPLE_TEST_RESULTS]))
 
   def testGetMergedTestResults(self):
     shard_results = [
@@ -389,20 +389,20 @@ class WebkitLayoutTestResultsTest(wf_testcase.WaterfallTestCase):
 
     self.assertEqual(
         expected_result,
-        WebkitLayoutTestResults.GetMergedTestResults(shard_results))
+        BlinkWebTestResults.GetMergedTestResults(shard_results))
 
   def testIsTestResultsInExpectedFormatMatch(self):
     self.assertTrue(
-        WebkitLayoutTestResults.IsTestResultsInExpectedFormat(
+        BlinkWebTestResults.IsTestResultsInExpectedFormat(
             _SAMPLE_TEST_RESULTS))
 
   def testIsTestResultsInExpectedFormatNotMatch(self):
     self.assertFalse(
-        WebkitLayoutTestResults.IsTestResultsInExpectedFormat('log'))
+        BlinkWebTestResults.IsTestResultsInExpectedFormat('log'))
 
   def testGetFailedTestsInformationNone(self):
     self.assertEqual(({}, {}),
-                     WebkitLayoutTestResults({}).GetFailedTestsInformation())
+                     BlinkWebTestResults({}).GetFailedTestsInformation())
 
   def testGetFailedTestsInformation(self):
     log, tests = self.test_result.GetFailedTestsInformation()
@@ -418,11 +418,11 @@ class WebkitLayoutTestResultsTest(wf_testcase.WaterfallTestCase):
     self.assertTrue(self.test_result.IsTestResultUseful())
 
   def testTaskHasNoUsefulResult(self):
-    self.assertFalse(WebkitLayoutTestResults({}).IsTestResultUseful())
+    self.assertFalse(BlinkWebTestResults({}).IsTestResultUseful())
 
   def testGetClassifiedTestResultsLogEmpty(self):
     self.assertEqual({},
-                     WebkitLayoutTestResults(None).GetClassifiedTestResults())
+                     BlinkWebTestResults(None).GetClassifiedTestResults())
 
   def testGetClassifiedTestResults(self):
     expected_statuses = {
@@ -560,7 +560,7 @@ class WebkitLayoutTestResultsTest(wf_testcase.WaterfallTestCase):
   def testFlattenTestResultsAlreadyFlattened(self):
     self.assertEqual(
         _SAMPLE_FLATTEN_TEST_RESULTS,
-        WebkitLayoutTestResults.FlattenTestResults(
+        BlinkWebTestResults.FlattenTestResults(
             _SAMPLE_FLATTEN_TEST_RESULTS))
 
   def testResultWasExpected(self):
@@ -573,9 +573,9 @@ class WebkitLayoutTestResultsTest(wf_testcase.WaterfallTestCase):
 
     for case in cases:
       self.assertEqual(
-          case[2], WebkitLayoutTestResults.ResultWasExpected(case[0], case[1]))
+          case[2], BlinkWebTestResults.ResultWasExpected(case[0], case[1]))
 
   def testcontains_all_tests(self):
-    self.assertTrue(WebkitLayoutTestResults({}).contains_all_tests)
+    self.assertTrue(BlinkWebTestResults({}).contains_all_tests)
     self.assertFalse(
-        WebkitLayoutTestResults({}, partial_result=True).contains_all_tests)
+        BlinkWebTestResults({}, partial_result=True).contains_all_tests)

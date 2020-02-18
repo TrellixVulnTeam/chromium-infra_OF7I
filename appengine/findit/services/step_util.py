@@ -17,7 +17,7 @@ from common.waterfall import buildbucket_client
 from gae_libs.caches import PickledMemCache
 from infra_api_clients import logdog_util
 from libs.cache_decorator import Cached
-from libs.test_results.webkit_layout_test_results import WebkitLayoutTestResults
+from libs.test_results.blink_web_test_results import BlinkWebTestResults
 from model.isolated_target import IsolatedTarget
 from services import constants
 from services import swarming
@@ -296,10 +296,10 @@ def IsStepSupportedByFindit(test_result_object, step_name, master_name):
   """Checks if a test step is currently supported by Findit.
 
   Currently Findit supports all gtest test steps;
-  for isolated-script-tests, Findit only supports webkit_layout_tests.
+  for isolated-script-tests, Findit only supports blink_web_tests.
 
   * If there isn't a parser for the test_result of the step, it's not supported;
-  * If the step is an isolated-script-test step but not webkit_layout_tests,
+  * If the step is an isolated-script-test step but not blink_web_tests,
     it's not supported.
   * If the step is set to unsupported in config, it's not supported.
   """
@@ -311,7 +311,7 @@ def IsStepSupportedByFindit(test_result_object, step_name, master_name):
 
   # TODO(crbug/836317): remove the special check for step_name when Findit
   # supports all isolated_script_tests.
-  if (isinstance(test_result_object, WebkitLayoutTestResults) and
+  if (isinstance(test_result_object, BlinkWebTestResults) and
       step_name not in SUPPORTED_ISOLATED_SCRIPT_TESTS):
     return False
   return True

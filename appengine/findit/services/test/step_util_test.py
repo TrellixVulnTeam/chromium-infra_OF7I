@@ -16,7 +16,7 @@ from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
 from common.waterfall import buildbucket_client
 from infra_api_clients import logdog_util
 from libs.test_results.gtest_test_results import GtestTestResults
-from libs.test_results.webkit_layout_test_results import WebkitLayoutTestResults
+from libs.test_results.blink_web_test_results import BlinkWebTestResults
 from model.isolated_target import IsolatedTarget
 from model.wf_build import WfBuild
 from services import step_util
@@ -232,19 +232,19 @@ class StepUtilTest(wf_testcase.WaterfallTestCase):
   def testStepNotSupportedByFindit(self, _):
     self.assertFalse(
         step_util.IsStepSupportedByFindit(
-            WebkitLayoutTestResults(None), 'step', 'm'))
+            BlinkWebTestResults(None), 'step', 'm'))
 
   def testIsStepSupportedByFinditOtherIsolatedScriptTest(self):
     self.assertFalse(
         step_util.IsStepSupportedByFindit(
-            WebkitLayoutTestResults(None), 'telemetry_perf_tests', 'm'))
+            BlinkWebTestResults(None), 'telemetry_perf_tests', 'm'))
 
   @mock.patch.object(
       waterfall_config, 'StepIsSupportedForMaster', return_value=True)
-  def testIsStepSupportedByFinditWebkitLayoutTests(self, _):
+  def testIsStepSupportedByFinditBlinkWebTests(self, _):
     self.assertTrue(
         step_util.IsStepSupportedByFindit(
-            WebkitLayoutTestResults(None), 'webkit_layout_tests', 'm'))
+            BlinkWebTestResults(None), 'blink_web_tests', 'm'))
 
   @mock.patch.object(
       waterfall_config, 'StepIsSupportedForMaster', return_value=True)

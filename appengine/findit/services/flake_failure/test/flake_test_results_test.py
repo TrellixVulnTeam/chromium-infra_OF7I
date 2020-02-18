@@ -60,7 +60,7 @@ class FlakeTestResultsTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(
         (3, 1), flake_test_results.GetCountsFromSwarmingRerun(test_results))
 
-  def testGetCountsFromSwarmingRerunWebkitLayoutTest(self):
+  def testGetCountsFromSwarmingRerunBlinkWebTest(self):
     test_results = {
         'seconds_since_epoch': 1522268603,
         'tests': {

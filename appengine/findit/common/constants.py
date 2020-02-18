@@ -75,4 +75,5 @@ AUTO_ROLLER_ACCOUNT_PATTERN = re.compile(
     r'.*chromium.*-autoroll@skia-(corp|public|buildbots)(\.google\.com)?\.iam\.'
     r'gserviceaccount\.com')
 
-SUPPORTED_ISOLATED_SCRIPT_TESTS = ['webkit_layout_tests']
+# TODO(crbug.com/1050188): remove webkit_layout_tests.
+SUPPORTED_ISOLATED_SCRIPT_TESTS = ['webkit_layout_tests', 'blink_web_tests']

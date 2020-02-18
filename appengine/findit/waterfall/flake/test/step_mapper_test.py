@@ -8,7 +8,7 @@ from common.findit_http_client import FinditHttpClient
 from infra_api_clients.swarming.swarming_task_data import SwarmingTaskData
 from libs.test_results import test_results_util
 from libs.test_results.gtest_test_results import GtestTestResults
-from libs.test_results.webkit_layout_test_results import WebkitLayoutTestResults
+from libs.test_results.blink_web_test_results import BlinkWebTestResults
 from model.flake.analysis.flake_analysis_request import BuildStep
 from services import ci_failure
 from services import step_util
@@ -192,7 +192,7 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(test_results_util, 'GetTestResultObject')
   def testFindMatchingWaterfallStepNotSupportOtherIsolatedScriptTests(
       self, mock_object, *_):
-    mock_object.return_value = WebkitLayoutTestResults(None)
+    mock_object.return_value = BlinkWebTestResults(None)
     step_mapper.FindMatchingWaterfallStep(self.wf_build_step, 'test1')
     self.assertTrue(self.wf_build_step.swarmed)
     self.assertFalse(self.wf_build_step.supported)
@@ -207,15 +207,15 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
       return_value=wf_testcase.SAMPLE_STEP_METADATA)
   @mock.patch.object(step_util, 'IsStepSupportedByFindit', return_value=True)
   @mock.patch.object(
-      WebkitLayoutTestResults, 'DoesTestExist', side_effect=[False, True])
+      BlinkWebTestResults, 'DoesTestExist', side_effect=[False, True])
   @mock.patch.object(test_results_util, 'GetTestResultObject')
   def testFindMatchingWaterfallStepCheckAllShards(self, mock_object, *_):
     mock_object.side_effect = [
-        WebkitLayoutTestResults({}, partial_result=True),
-        WebkitLayoutTestResults({}, partial_result=True)
+        BlinkWebTestResults({}, partial_result=True),
+        BlinkWebTestResults({}, partial_result=True)
     ]
     step_mapper.FindMatchingWaterfallStep(self.wf_build_step,
-                                          'webkit_layout_tests')
+                                          'blink_web_tests')
     self.assertTrue(self.wf_build_step.swarmed)
     self.assertTrue(self.wf_build_step.supported)
 
@@ -231,7 +231,7 @@ class StepMapperTest(wf_testcase.WaterfallTestCase):
       test_results_util, 'GetTestResultObject', return_value=None)
   def testFindMatchingWaterfallStepNoTestResultObject(self, *_):
     step_mapper.FindMatchingWaterfallStep(self.wf_build_step,
-                                          'webkit_layout_tests')
+                                          'blink_web_tests')
     self.assertTrue(self.wf_build_step.swarmed)
     self.assertFalse(self.wf_build_step.supported)
 

@@ -99,7 +99,7 @@ class FlakeTest(wf_testcase.WaterfallTestCase):
       step_util,
       'LegacyGetIsolateTargetName',
       return_value='webkit_layout_tests_exparchive')
-  def testLegacyNormalizeStepNameForWebkitLayoutTests(
+  def testLegacyNormalizeStepNameForBlinkWebTests(
       self, mocked_get_isolate_target_name, mocked_get_canonical_step_name):
     self.assertEqual(
         'webkit_layout_tests',
@@ -200,7 +200,7 @@ class FlakeTest(wf_testcase.WaterfallTestCase):
 
     self.assertEqual('a.html', Flake.NormalizeTestName('a/b.html'))
     self.assertEqual('a/b.html',
-                     Flake.NormalizeTestName('a/b.html', 'webkit_layout_tests'))
+                     Flake.NormalizeTestName('a/b.html', 'blink_web_tests'))
 
   def testGetTestLabelName(self):
     self.assertEqual('suite.test',
@@ -221,11 +221,11 @@ class FlakeTest(wf_testcase.WaterfallTestCase):
         Flake.GetTestLabelName('a/suite.PRE_PRE_test/0', 'base_unittests'))
 
     self.assertEqual('a/b.html',
-                     Flake.NormalizeTestName('a/b.html', 'webkit_layout_tests'))
+                     Flake.NormalizeTestName('a/b.html', 'blink_web_tests'))
 
     self.assertEqual(
         'a/b.html?*',
-        Flake.GetTestLabelName('a/b.html?1000-2000', 'webkit_layout_tests'))
+        Flake.GetTestLabelName('a/b.html?1000-2000', 'blink_web_tests'))
 
   def testGetId(self):
     luci_project = 'chromium'

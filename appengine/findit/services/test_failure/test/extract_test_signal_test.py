@@ -102,11 +102,11 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
         TestFailureInfo.FromSerializable(failure_info), None)
     self.assertEqual(_FAILURE_SIGNALS, signals)
 
-  def testGetSignalFromStepLogForWlt(self):
+  def testGetSignalFromStepLogForBWT(self):
     master_name = 'm'
     builder_name = 'b'
     build_number = 123
-    step_name = 'webkit_layout_tests'
+    step_name = 'blink_web_tests'
 
     failure_info = {
         'master_name': master_name,
@@ -115,7 +115,7 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
         'failed': True,
         'chromium_revision': 'a_git_hash',
         'failed_steps': {
-            'webkit_layout_tests': {
+            'blink_web_tests': {
                 'last_pass': 122,
                 'current_failure': 123,
                 'first_failure': 123,
@@ -141,7 +141,7 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
     self.assertIsNotNone(step.log_data)
     self.assertEqual({
         'third_party/blink/web_tests/fast/test.html': []
-    }, signals['webkit_layout_tests']['files'])
+    }, signals['blink_web_tests']['files'])
 
   @mock.patch.object(
       step_util, 'GetWaterfallBuildStepLog', return_value=_ABC_TEST_FAILURE_LOG)

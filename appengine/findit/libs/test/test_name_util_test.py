@@ -133,42 +133,42 @@ class TestNameUtilTest(wf_testcase.WaterfallTestCase):
         'FixedCommandTest/*.InvalidCommand',
         test_name_util.ReplaceParametersFromGtestNameWithMask(test_name))
 
-  def testRemoveQueriesFromWebkitLayoutTests(self):
+  def testRemoveQueriesFromBlinkWebTests(self):
     test_name = 'external/wpt/editing/run/inserttext.html?2001-last'
     self.assertEqual(
         'external/wpt/editing/run/inserttext.html',
-        test_name_util.RemoveSuffixFromWebkitLayoutTestName(test_name))
+        test_name_util.RemoveSuffixFromBlinkWebTestName(test_name))
 
-  def testRemoveMaskedQueriesFromWebkitLayoutTests(self):
+  def testRemoveMaskedQueriesFromBlinkWebTests(self):
     test_name = 'external/wpt/editing/run/inserttext.html?*'
     self.assertEqual(
         'external/wpt/editing/run/inserttext.html',
-        test_name_util.RemoveSuffixFromWebkitLayoutTestName(test_name))
+        test_name_util.RemoveSuffixFromBlinkWebTestName(test_name))
 
-  def testReplaceQueriesFromWebkitLayoutTestsWithMask(self):
+  def testReplaceQueriesFromBlinkWebTestsWithMask(self):
     test_name = 'external/wpt/editing/run/inserttext.html?2001-last'
     self.assertEqual(
         'external/wpt/editing/run/inserttext.html?*',
-        test_name_util.ReplaceSuffixFromWebkitLayoutTestNameWithMask(test_name))
+        test_name_util.ReplaceSuffixFromBlinkWebTestNameWithMask(test_name))
 
-  def testRemoveVirtualLayersFromWebkitLayoutTestName(self):
+  def testRemoveVirtualLayersFromBlinkWebTestName(self):
     virtual_test_name = 'virtual/wpt/editing/run/inserttext.html'
     test_name = 'editing/run/inserttext.html'
     self.assertEqual(
         test_name,
-        test_name_util.RemoveVirtualLayersFromWebkitLayoutTestName(
+        test_name_util.RemoveVirtualLayersFromBlinkWebTestName(
             virtual_test_name))
     self.assertEqual(
         test_name,
-        test_name_util.RemoveVirtualLayersFromWebkitLayoutTestName(test_name))
+        test_name_util.RemoveVirtualLayersFromBlinkWebTestName(test_name))
 
   def testGetTestSuiteName(self):
     self.assertEqual(
         'a/b/c',
         test_name_util.GetTestSuiteName('a/b/c/page.html',
-                                        'webkit_layout_tests'))
+                                        'blink_web_tests'))
     self.assertIsNone(
-        test_name_util.GetTestSuiteName('page.html', 'webkit_layout_tests'))
+        test_name_util.GetTestSuiteName('page.html', 'blink_web_tests'))
     self.assertEqual(
         'suite', test_name_util.GetTestSuiteName('suite.test', 'browser_tests'))
     self.assertEqual(

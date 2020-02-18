@@ -147,8 +147,8 @@ class WfSwarmingTaskTest(unittest.TestCase):
     self.assertEqual(expected_reproducible_flaky_tests,
                      task.reproducible_flaky_tests)
 
-  def testClassifiedTestsWebkitLayoutTest(self):
-    task = WfSwarmingTask.Create('m', 'b', 122, 'webkit_layout_test')
+  def testClassifiedTestsBlinkWebTest(self):
+    task = WfSwarmingTask.Create('m', 'b', 122, 'blink_web_tests')
     classified_results_dict = {
         'bluetooth/requestDevice/chooser/new-scan-device-changed.html': {
             'total_run': 1,

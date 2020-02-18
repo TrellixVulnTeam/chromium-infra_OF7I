@@ -6,7 +6,7 @@ import base64
 import mock
 
 from libs.test_results.gtest_test_results import GtestTestResults
-from libs.test_results.webkit_layout_test_results import WebkitLayoutTestResults
+from libs.test_results.blink_web_test_results import BlinkWebTestResults
 from services.test_failure import test_results_service
 from waterfall.test import wf_testcase
 
@@ -58,7 +58,7 @@ class TestResultsUtilTest(wf_testcase.WaterfallTestCase):
             }
         },
     }
-    test_results = WebkitLayoutTestResults(test_results_json)
+    test_results = BlinkWebTestResults(test_results_json)
 
     expected_failed_test_log = {
         'bluetooth/requestDevice/chooser/new-scan-device-changed.html': (

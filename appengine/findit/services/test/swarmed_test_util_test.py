@@ -13,7 +13,7 @@ from infra_api_clients.swarming import swarming_util
 from libs import analysis_status
 from libs.test_results import test_results_util
 from libs.test_results.gtest_test_results import GtestTestResults
-from libs.test_results.webkit_layout_test_results import WebkitLayoutTestResults
+from libs.test_results.blink_web_test_results import BlinkWebTestResults
 from model.wf_swarming_task import WfSwarmingTask
 from services import constants
 from services import isolate
@@ -103,11 +103,11 @@ class SwarmedTestUtilTest(wf_testcase.WaterfallTestCase):
       'GetTestResultForSwarmingTask',
       return_value='test_result_log')
   @mock.patch.object(
-      WebkitLayoutTestResults, 'DoesTestExist', return_value=False)
+      BlinkWebTestResults, 'DoesTestExist', return_value=False)
   @mock.patch.object(
       test_results_util,
       'GetTestResultObject',
-      return_value=WebkitLayoutTestResults({}, partial_result=True))
+      return_value=BlinkWebTestResults({}, partial_result=True))
   def testIsTestEnabledTestNotExistForAllShards(self, *_):
     tasks = [_MockedTask('123'), _MockedTask('456')]
     self.assertFalse(swarmed_test_util.IsTestEnabled('test', tasks))

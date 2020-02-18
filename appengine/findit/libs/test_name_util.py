@@ -18,7 +18,7 @@ _VALUE_PARAMETERIZED_GTESTS_REGEX = re.compile(
 _TYPE_PARAMETERIZED_GTESTS_REGEX = re.compile(
     r'^([\w\*]+/)?(\w+)/[\w\*]+\.(\w+)$')
 
-# Regular expression for a webkit_layout_test name.
+# Regular expression for a blink_web_test name.
 _LAYOUT_TEST_NAME_PATTERN = re.compile(r'^(([^/]+/)+[^/]+\.[a-zA-Z]+).*$')
 _VIRTUAL_LAYOUT_TEST_NAME_PATTERN = re.compile(r'^virtual/[^/]+/(.*)$')
 
@@ -130,8 +130,8 @@ def ReplaceAllPrefixesFromGtestNameWithMask(test_name):
   return '%s.*%s' % (suite, test)
 
 
-def RemoveSuffixFromWebkitLayoutTestName(test_name):
-  """Removes suffix part from webkit_layout_test names if applicable.
+def RemoveSuffixFromBlinkWebTestName(test_name):
+  """Removes suffix part from blink_web_test names if applicable.
 
   For example, 'external/wpt/editing/run/delete.html?1001-2000' should become
   'external/wpt/editing/run/delete.html' after removing the queries.
@@ -149,10 +149,10 @@ def RemoveSuffixFromWebkitLayoutTestName(test_name):
   return test_name
 
 
-def ReplaceSuffixFromWebkitLayoutTestNameWithMask(test_name):
-  """Replaces the suffix parts of webkit_layout_test names with mask: '*'.
+def ReplaceSuffixFromBlinkWebTestNameWithMask(test_name):
+  """Replaces the suffix parts of blink_web_test names with mask: '*'.
 
-  This method works the same way as |RemoveSuffixFromWebkitLayoutTestName|
+  This method works the same way as |RemoveSuffixFromBlinkWebTestName|
   except that the suffix parts are replaced with '*' instead of being removed.
   For example, 'external/delete.html?1001-2000' -> 'external/delete.html?*'.
 
@@ -162,15 +162,15 @@ def ReplaceSuffixFromWebkitLayoutTestNameWithMask(test_name):
   Returns:
     A test name with suffixes being replaced with '*'.
   """
-  test_name_without_suffixes = RemoveSuffixFromWebkitLayoutTestName(test_name)
+  test_name_without_suffixes = RemoveSuffixFromBlinkWebTestName(test_name)
   if test_name_without_suffixes == test_name:
     return test_name
 
   return '%s?*' % test_name_without_suffixes
 
 
-def RemoveVirtualLayersFromWebkitLayoutTestName(test_name):
-  """Removes virtual layers from webkit_layout_test names if applicable.
+def RemoveVirtualLayersFromBlinkWebTestName(test_name):
+  """Removes virtual layers from blink_web_test names if applicable.
 
   For example, 'virtual/abc/def/g.html' should become 'def/g.html' after
   removing the layers.
@@ -204,8 +204,10 @@ def GetTestSuiteName(normalized_test_name, step_ui_name):
   Returns:
     The test suite name if it's gtest/layout test/java test, otherwise None.
   """
-  # For Webkit layout tests, the suite name is the immediate directory.
-  if 'webkit_layout_tests' in step_ui_name:
+  # TODO(crbug.com/1050188): remove 'webkit_layout_tests' after 2 weeks from the
+  # step rename is completed.
+  # For blink_web_tests, the suite name is the immediate directory.
+  if 'webkit_layout_tests' in step_ui_name or 'blink_web_tests' in step_ui_name:
     index = normalized_test_name.rfind('/')
     if index > 0:
       return normalized_test_name[:index]

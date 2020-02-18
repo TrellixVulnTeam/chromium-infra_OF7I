@@ -43,7 +43,7 @@ def _ParseFlakeSwarmingTaskOutput(task_data, output_json, error, parameters):
       successes = None
     elif (tries == 1 and task_data['state'] == constants.STATE_COMPLETED and
           not task_data.get('failure') and not task_data.get('infra_failure')):
-      # webkit_layout_tests special case: test results will be combined into
+      # blink_web_tests special case: test results will be combined into
       # one if all results are the same.
       # Use iterations instead assuming the test repeated that many times.
       # Currently only do this if task completes successfully.

@@ -57,12 +57,12 @@ _BASE_FILE_PATH = 'third_party/blink/web_tests'
 _VIRTUAL_TEST_NAME_PATTERN = re.compile(r'^virtual/[^/]+/(.*)$')
 
 
-class WebkitLayoutTestResults(BaseTestResults):
+class BlinkWebTestResults(BaseTestResults):
 
   def __init__(self, raw_test_results_json, partial_result=False):
-    super(WebkitLayoutTestResults, self).__init__(raw_test_results_json,
+    super(BlinkWebTestResults, self).__init__(raw_test_results_json,
                                                   partial_result)
-    self.test_results_json = WebkitLayoutTestResults.FlattenTestResults(
+    self.test_results_json = BlinkWebTestResults.FlattenTestResults(
         raw_test_results_json)
 
   def DoesTestExist(self, test_name):
@@ -108,7 +108,7 @@ class WebkitLayoutTestResults(BaseTestResults):
     Returns:
       failed_test_log: Logs for failed tests, currently empty string.
       reliable_failed_tests: reliable failed tests, and the base name for each
-        test - For webkit_layout_test base name should be the same as test name.
+        test - For blink_web_tests base name should be the same as test name.
     """
     if not self.test_results_json or not self.test_results_json.get('tests'):
       return {}, {}
@@ -160,7 +160,7 @@ class WebkitLayoutTestResults(BaseTestResults):
       there will be two tests generated from it, external/wpt/foo.window.html
       and external/wpt/foo.worker.html.
 
-    There will be no line number info for webkit_layout_tests because typically
+    There will be no line number info for blink_web_tests because typically
     a file is a test.
 
     Note: Since the test location is gotten from heuristic, it will not be as
@@ -172,8 +172,8 @@ class WebkitLayoutTestResults(BaseTestResults):
     if not self.DoesTestExist(test_name):
       return None, 'test_location not found for %s.' % test_name
 
-    test_name = test_name_util.RemoveSuffixFromWebkitLayoutTestName(
-        test_name_util.RemoveVirtualLayersFromWebkitLayoutTestName(test_name))
+    test_name = test_name_util.RemoveSuffixFromBlinkWebTestName(
+        test_name_util.RemoveVirtualLayersFromBlinkWebTestName(test_name))
 
     return {
         'line': None,
@@ -181,7 +181,7 @@ class WebkitLayoutTestResults(BaseTestResults):
     }, None
 
   def GetClassifiedTestResults(self):
-    """Parses webkit_layout_test results, counts and classifies test results by:
+    """Parses blink_web_tests results, counts and classifies test results by:
       * status_group: passes/failures/skips/unknowns,
       * status: actual result status.
 
@@ -196,7 +196,7 @@ class WebkitLayoutTestResults(BaseTestResults):
       * num_unexpected_results: total number of runs with unexpected results,
       * results: classified test results in 4 groups: passes, failures, skips
         and unknowns. There's another 'notruns' group for gtests, but not
-        meaningful for webkit_layout_test, so it will always be empty here.
+        meaningful for blink_web_tests, so it will always be empty here.
     """
     if not self.IsTestResultUseful():
       return {}
@@ -289,7 +289,7 @@ class WebkitLayoutTestResults(BaseTestResults):
         not isinstance(test_results_json.get('tests'), dict)):
       return False
 
-    flattened = WebkitLayoutTestResults.FlattenTestResults(test_results_json)
+    flattened = BlinkWebTestResults.FlattenTestResults(test_results_json)
     return all(
         isinstance(i, dict) and i.get('actual') and i.get('expected')
         for i in flattened['tests'].itervalues())
@@ -307,7 +307,7 @@ class WebkitLayoutTestResults(BaseTestResults):
       return test_results_json
 
     sample_key = test_results_json['tests'].keys()[0]
-    path_delimiter = WebkitLayoutTestResults._GetPathDelimiter(
+    path_delimiter = BlinkWebTestResults._GetPathDelimiter(
         test_results_json)
     if path_delimiter in sample_key:
       # This should not happen in raw data, assuming the test results log is
@@ -356,7 +356,7 @@ class WebkitLayoutTestResults(BaseTestResults):
     """
 
     if len(shard_results) == 1:
-      return WebkitLayoutTestResults.FlattenTestResults(shard_results[0])
+      return BlinkWebTestResults.FlattenTestResults(shard_results[0])
 
     def MergeAddable(key, merged_value, shard_value):
       if (merged_value and not isinstance(merged_value, type(shard_value))):
@@ -407,7 +407,7 @@ class WebkitLayoutTestResults(BaseTestResults):
           merged_results[key].update(value)
 
     for shard_result in shard_results:
-      MergeShards(WebkitLayoutTestResults.FlattenTestResults(shard_result))
+      MergeShards(BlinkWebTestResults.FlattenTestResults(shard_result))
 
     return merged_results
 
