@@ -20,16 +20,18 @@ type server struct {
 	// wiringConn is a connection to the wiring service.
 	wiringConn *grpc.ClientConn
 	clientPool *sshClientPool
+	sshConfig  *ssh.ClientConfig
 }
 
-func newServer(c *grpc.ClientConn) server {
+func newServer(c *grpc.ClientConn, sshConfig *ssh.ClientConfig) server {
 	return server{
 		wiringConn: c,
+		sshConfig:  sshConfig,
 	}
 }
 
 func (s *server) Serve(l net.Listener) error {
-	s.clientPool = newSSHClientPool()
+	s.clientPool = newSSHClientPool(s.sshConfig)
 	defer s.clientPool.Close()
 
 	server := grpc.NewServer()

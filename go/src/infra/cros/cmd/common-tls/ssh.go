@@ -6,7 +6,6 @@ package main
 
 import (
 	"sync"
-	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -29,12 +28,14 @@ import (
 // in the pool.
 type sshClientPool struct {
 	sync.Mutex
-	pool map[string][]*ssh.Client
+	pool   map[string][]*ssh.Client
+	config *ssh.ClientConfig
 }
 
-func newSSHClientPool() *sshClientPool {
+func newSSHClientPool(c *ssh.ClientConfig) *sshClientPool {
 	return &sshClientPool{
-		pool: make(map[string][]*ssh.Client),
+		pool:   make(map[string][]*ssh.Client),
+		config: c,
 	}
 }
 
@@ -47,7 +48,7 @@ func (p *sshClientPool) Get(host string) (*ssh.Client, error) {
 		return c, nil
 	}
 	p.Unlock()
-	return dial(host)
+	return ssh.Dial("tcp", host, p.config)
 }
 
 func (p *sshClientPool) Put(host string, c *ssh.Client) {
@@ -66,17 +67,4 @@ func (p *sshClientPool) Close() error {
 		delete(p.pool, hostname)
 	}
 	return nil
-}
-
-func dial(addr string) (*ssh.Client, error) {
-	return ssh.Dial("tcp", addr, &ssh.ClientConfig{
-		// TODO(ayatane): Add auth here.
-		User: "chromeos-test",
-		// We don't care about the host key for DUTs.
-		// Attackers intercepting our connections to DUTs is not part
-		// of our attack profile.
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         5 * time.Second,
-	})
-
 }

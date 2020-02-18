@@ -9,15 +9,19 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
+	"time"
 
+	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 )
 
 var (
 	port       = flag.Int("port", 0, "Port to listen to")
 	wiringPort = flag.Int("wiring-port", 0, "Port for the TLS wiring service")
+	sshKey     = flag.String("ssh-key", "", "Path to SSH key for DUTs (no auth if unset)")
 )
 
 func main() {
@@ -28,18 +32,46 @@ func main() {
 
 func innerMain() error {
 	flag.Parse()
-	c, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", *wiringPort), grpc.WithInsecure())
+	sshConfig := &ssh.ClientConfig{
+		User: "chromeos-test",
+		// We don't care about the host key for DUTs.
+		// Attackers intercepting our connections to DUTs is not part
+		// of our attack profile.
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         5 * time.Second,
+	}
+	if *sshKey != "" {
+		m, err := authMethodWithKey(*sshKey)
+		if err != nil {
+			return err
+		}
+		sshConfig.Auth = []ssh.AuthMethod{m}
+	}
+	// TODO(ayatane): Handle if the wiring service connection drops.
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", *wiringPort), grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+	defer conn.Close()
 	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", *port))
 	if err != nil {
 		return err
 	}
-	s := newServer(c)
+	s := newServer(conn, sshConfig)
 	if err := s.Serve(l); err != nil {
 		return err
 	}
 	return nil
+}
+
+func authMethodWithKey(keyfile string) (ssh.AuthMethod, error) {
+	key, err := ioutil.ReadFile(keyfile)
+	if err != nil {
+		return nil, fmt.Errorf("read ssh key: %s", err)
+	}
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("read ssh key %s: %s", keyfile, err)
+	}
+	return ssh.PublicKeys(signer), nil
 }

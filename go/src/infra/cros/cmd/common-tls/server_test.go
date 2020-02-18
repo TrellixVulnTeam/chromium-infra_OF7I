@@ -9,14 +9,22 @@ import (
 	"fmt"
 	"net"
 	"testing"
+	"time"
 
 	"infra/cros/tlsutil"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/chromiumos/infra/proto/go/tls"
+	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 )
+
+var sshConfig = &ssh.ClientConfig{
+	User:            "go-test-user",
+	HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	Timeout:         5 * time.Second,
+}
 
 func TestWithSSHStub(t *testing.T) {
 	t.Parallel()
@@ -52,7 +60,7 @@ func testDutShell(t *testing.T, wiringConn *grpc.ClientConn) {
 	ctx := context.Background()
 	serverConn, serverListener := tlsutil.MakeTestClient(ctx)
 	defer serverListener.Close()
-	s := newServer(wiringConn)
+	s := newServer(wiringConn, sshConfig)
 	go s.Serve(serverListener)
 
 	c := tls.NewCommonClient(serverConn)
