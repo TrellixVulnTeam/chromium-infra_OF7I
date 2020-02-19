@@ -39,7 +39,7 @@ type workerParams struct {
 	finishedCleanly chan bool
 
 	// These read-only globals are meant to be read by the goroutines.
-	rules map[string]RuleSet
+	rules map[string]AccountRules
 
 	clients *Clients
 }
@@ -173,10 +173,12 @@ func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *worke
 	}()
 
 	for _, rs := range wp.rules {
-		ars := rs.(AccountRules)
 		if rs.MatchesRelevantCommit(rc) {
-			ap.TriggeringAccount = ars.Account
-			for _, r := range ars.Rules {
+			ap.TriggeringAccount = rc.AuthorAccount
+			if rs.Account != "*" {
+				ap.TriggeringAccount = rs.Account
+			}
+			for _, r := range rs.Rules {
 				select {
 				case <-ctx.Done():
 					rc.Retries++

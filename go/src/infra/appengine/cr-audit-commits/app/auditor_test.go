@@ -92,7 +92,7 @@ func TestAuditor(t *testing.T) {
 				GerritURL:      "https://dummy-review.googlesource.com",
 				BranchName:     "refs/heads/master",
 				StartingCommit: "000000",
-				Rules: map[string]RuleSet{"rules": AccountRules{
+				Rules: map[string]AccountRules{"rules": {
 					Account: "dummy@test.com",
 					Rules: []Rule{
 						DummyRule{
@@ -242,7 +242,7 @@ func TestAuditor(t *testing.T) {
 						}
 					})
 					Convey("Some fail", func() {
-						dummyRuleTmp := RuleMap["dummy-repo"].Rules["rules"].(AccountRules).Rules[0].(DummyRule)
+						dummyRuleTmp := RuleMap["dummy-repo"].Rules["rules"].Rules[0].(DummyRule)
 						dummyRuleTmp.result.RuleResultStatus = ruleFailed
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
@@ -258,7 +258,7 @@ func TestAuditor(t *testing.T) {
 						}
 					})
 					Convey("Some panic", func() {
-						RuleMap["dummy-repo"].Rules["rules"].(AccountRules).Rules[0] = panicRule{}
+						RuleMap["dummy-repo"].Rules["rules"].Rules[0] = panicRule{}
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
 						So(resp.StatusCode, ShouldEqual, 200)

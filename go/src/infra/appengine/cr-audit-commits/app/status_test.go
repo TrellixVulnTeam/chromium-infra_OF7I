@@ -58,7 +58,7 @@ func TestStatusPage(t *testing.T) {
 				GerritURL:      "https://new-review.googlesource.com",
 				BranchName:     "master",
 				StartingCommit: "000000",
-				Rules: map[string]RuleSet{"rules": AccountRules{
+				Rules: map[string]AccountRules{"rules": {
 					Account: "new@test.com",
 					Rules: []Rule{
 						DummyRule{

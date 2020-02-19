@@ -19,7 +19,7 @@ import (
 	"infra/monorail"
 )
 
-// sendEmailForFinditViolation is not actually used by any RuleSet its purpose
+// sendEmailForFinditViolation is not actually used by any AccountRules its purpose
 // is to illustrate how one would use sendEmailForViolation to notify about
 // violations via email.
 func sendEmailForFinditViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
@@ -45,7 +45,7 @@ func TestNotifier(t *testing.T) {
 				MonorailAPIURL:  "https://monorail-fake.appspot.com/_ah/api/monorail/v1",
 				MonorailProject: "fakeproject",
 				NotifierEmail:   "notifier@cr-audit-commits-test.appspotmail.com",
-				Rules: map[string]RuleSet{"rules": AccountRules{
+				Rules: map[string]AccountRules{"rules": {
 					Account: "author@test.com",
 					Rules: []Rule{
 						DummyRule{
@@ -183,7 +183,7 @@ func TestNotifier(t *testing.T) {
 				MonorailAPIURL:  "https://monorail-fake.appspot.com/_ah/api/monorail/v1",
 				MonorailProject: "fakeproject",
 				NotifierEmail:   "notifier@cr-audit-commits-test.appspotmail.com",
-				Rules: map[string]RuleSet{"rulesAck": AccountRules{
+				Rules: map[string]AccountRules{"rulesAck": {
 					Account: "author@test.com",
 					Rules: []Rule{
 						DummyRule{
@@ -237,7 +237,7 @@ func TestNotifier(t *testing.T) {
 				MonorailAPIURL:  "https://monorail-fake.appspot.com/_ah/api/monorail/v1",
 				MonorailProject: "fakeproject",
 				NotifierEmail:   "notifier@cr-audit-commits-test.appspotmail.com",
-				Rules: map[string]RuleSet{"rulesEmail": AccountRules{
+				Rules: map[string]AccountRules{"rulesEmail": {
 					Account: "author@test.com",
 					Rules: []Rule{
 						DummyRule{

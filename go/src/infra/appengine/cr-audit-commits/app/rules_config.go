@@ -45,7 +45,7 @@ type RepoConfig struct { // These are expected to be hard-coded.
 	MonorailProject string
 	// Do not use "AuditFailure" as a key in this map, it may cause a clash
 	// with the notification state for failed audits.
-	Rules              map[string]RuleSet
+	Rules              map[string]AccountRules
 	NotifierEmail      string
 	DynamicRefFunction DynamicRefFunc
 }
@@ -95,7 +95,7 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
+		Rules: map[string]AccountRules{
 			"autoroll-rules-chromium": AutoRollRulesForFilesAndDirs(
 				"chromium-autoroll@skia-public.iam.gserviceaccount.com",
 				[]string{
@@ -111,7 +111,7 @@ var RuleMap = map[string]*RepoConfig{
 				}),
 			"autoroll-rules-chromium-internal": AutoRollRulesDEPS("chromium-internal-autoroll@skia-corp.google.com.iam.gserviceaccount.com"),
 			"autoroll-rules-wpt":               AutoRollRulesLayoutTests("wpt-autoroller@chops-service-accounts.iam.gserviceaccount.com"),
-			"findit-rules": AccountRules{
+			"findit-rules": {
 				Account: "findit-for-me@appspot.gserviceaccount.com",
 				Rules: []Rule{
 					AutoCommitsPerDay{},
@@ -124,7 +124,7 @@ var RuleMap = map[string]*RepoConfig{
 				},
 				notificationFunction: fileBugForFinditViolation,
 			},
-			"release-bot-rules": AccountRules{
+			"release-bot-rules": {
 				Account: "chrome-release-bot@chromium.org",
 				Rules: []Rule{
 					OnlyModifiesFilesAndDirsRule{
@@ -148,8 +148,8 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
-			"manual-changes": AccountRules{
+		Rules: map[string]AccountRules{
+			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
 					ChangeReviewed{},
@@ -171,8 +171,8 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
-			"manual-changes": AccountRules{
+		Rules: map[string]AccountRules{
+			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
 					ChangeReviewed{},
@@ -190,8 +190,8 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
-			"manual-changes": AccountRules{
+		Rules: map[string]AccountRules{
+			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
 					ChangeReviewed{},
@@ -217,8 +217,8 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
-			"manual-changes": AccountRules{
+		Rules: map[string]AccountRules{
+			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
 					ChangeReviewed{},
@@ -233,15 +233,15 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
-			"merge-approval-rules": AccountRules{
+		Rules: map[string]AccountRules{
+			"merge-approval-rules": {
 				Account: "*",
 				Rules: []Rule{
 					OnlyMergeApprovedChange{},
 				},
 				notificationFunction: fileBugForMergeApprovalViolation,
 			},
-			"merge-ack-rules": AccountRules{
+			"merge-ack-rules": {
 				Account: "*",
 				Rules: []Rule{
 					AcknowledgeMerge{},
@@ -260,7 +260,7 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
+		Rules: map[string]AccountRules{
 			"autoroll-rules-skia": AutoRollRulesForFilesAndDirs("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{fileDEPS}, dirsSKCMS),
 			"bookmaker":           AutoRollRulesAPIDocs("skia-bookmaker@skia-swarming-bots.iam.gserviceaccount.com"),
 			"recreate-skps":       AutoRollRulesForFilesAndDirs("skia-recreate-skps@skia-swarming-bots.iam.gserviceaccount.com", []string{SkiaAsset("go_deps"), SkiaAsset("skp"), "go.mod", "go.sum", "infra/bots/tasks.json"}, []string{}),
@@ -275,11 +275,11 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
+		Rules: map[string]AccountRules{
 			"autoroll-rules-skia": AutoRollRulesDEPSAndTasks("skia-autoroll@skia-public.iam.gserviceaccount.com"),
 		},
 	},
-	"fuchsia-recipes-master": {
+	"fuchsia-infra-recipes-master": {
 		BaseRepoURL: "https://fuchsia.googlesource.com/infra/recipes.git",
 		GerritURL:   "https://fuchsia-review.googlesource.com",
 		BranchName:  "refs/heads/master",
@@ -288,8 +288,8 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
-			"manual-changes": AccountRules{
+		Rules: map[string]AccountRules{
+			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
 					ChangeReviewed{},
@@ -307,33 +307,22 @@ var RuleMap = map[string]*RepoConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]RuleSet{
+		Rules: map[string]AccountRules{
 			"autoroll-rules-skia": AutoRollRulesSkiaManifest("skia-fuchsia-autoroll@skia-buildbots.google.com.iam.gserviceaccount.com"),
 		},
 	},
 }
 
-// RuleSet is a group of rules that can be decided to apply or not to a
-// specific commit, as a unit.
-//
-// Note that the methods in this interface are not rules, but tests that can
-// decide whether the rules in the set apply to a given commit.
-type RuleSet interface {
-	MatchesCommit(*git.Commit) bool
-	MatchesRelevantCommit(*RelevantCommit) bool
-	NotificationFunction() NotificationFunc
-}
-
-// AccountRules is a RuleSet that applies to a commit if the commit has a given
+// AccountRules is a rule that applies to a commit if the commit has a given
 // account as either its author or its committer.
 type AccountRules struct {
+	// Account is the account to filter on for account specific rules.
 	Account              string
 	Rules                []Rule
 	notificationFunction NotificationFunc
 }
 
-// NotificationFunction exposes the NotificationFunc assigned to this struct
-// as required by the RuleSet interface.
+// NotificationFunction exposes the NotificationFunc assigned to this struct.
 func (ar AccountRules) NotificationFunction() NotificationFunc {
 	return ar.notificationFunction
 }
