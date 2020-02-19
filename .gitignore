@@ -34,3 +34,4 @@ reasons.sqlite
 .coverage
 .expect_tests_coverage*
 .vscode
+.idea

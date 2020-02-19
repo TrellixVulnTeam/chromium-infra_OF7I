@@ -5,6 +5,9 @@
 package swarming
 
 import (
+	"strings"
+
+	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"infra/libs/skylab/inventory"
 )
 
@@ -77,6 +80,12 @@ func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 	for _, v := range p.GetChameleonType() {
 		appendDim(dims, "label-chameleon_type", v.String())
 	}
+
+	if invSState := p.GetServoState(); invSState != inventory.PeripheralState_UNKNOWN {
+		if labSState, ok := lab.PeripheralState_name[int32(invSState)]; ok {
+			dims["label-servo_state"] = []string{labSState}
+		}
+	}
 }
 
 func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -89,5 +98,15 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 		}
 	}
 	delete(d, "label-chameleon_type")
+
+	if labSStateName, ok := getLastStringValue(d, "label-servo_state"); ok {
+		servoState := inventory.PeripheralState_UNKNOWN
+		if ssIndex, ok := lab.PeripheralState_value[strings.ToUpper(labSStateName)]; ok {
+			servoState = inventory.PeripheralState(ssIndex)
+		}
+		p.ServoState = &servoState
+		delete(d, "label-servo_state")
+	}
+
 	return d
 }

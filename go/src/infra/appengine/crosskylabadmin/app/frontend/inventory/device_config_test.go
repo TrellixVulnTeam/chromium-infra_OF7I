@@ -220,6 +220,7 @@ func newSchedulableLabels(board, model, variant string) *inventory.SchedulableLa
 			Huddly:              new(bool),
 			Mimo:                new(bool),
 			Servo:               new(bool),
+			ServoState:          new(inventory.PeripheralState),
 			Stylus:              new(bool),
 			Wificell:            new(bool),
 		},

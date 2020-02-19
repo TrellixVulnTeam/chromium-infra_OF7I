@@ -7,6 +7,7 @@ package labels
 import (
 	"strings"
 
+	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"infra/libs/skylab/inventory"
 )
 
@@ -64,11 +65,19 @@ func boolPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 	var labels []string
 	p := ls.GetPeripherals()
+
 	for _, v := range p.GetChameleonType() {
 		const plen = 15 // len("CHAMELEON_TYPE_")
 		lv := "chameleon:" + strings.ToLower(v.String()[plen:])
 		labels = append(labels, lv)
 	}
+	if invSState := p.GetServoState(); invSState != inventory.PeripheralState_UNKNOWN {
+		if labSState, ok := lab.PeripheralState_name[int32(invSState)]; ok {
+			lv := "servo_state:" + strings.ToLower(labSState)
+			labels = append(labels, lv)
+		}
+	}
+
 	return labels
 }
 
@@ -129,6 +138,14 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 			type t = inventory.Peripherals_ChameleonType
 			vals := inventory.Peripherals_ChameleonType_value
 			p.ChameleonType = append(p.ChameleonType, t(vals[vn]))
+		case "servo_state":
+			if v == "" {
+				continue
+			}
+			if labSStateVal, ok := lab.PeripheralState_value[strings.ToUpper(v)]; ok {
+				servoState := inventory.PeripheralState(labSStateVal)
+				p.ServoState = &servoState
+			}
 		default:
 			continue
 		}

@@ -5,6 +5,7 @@
 package labels
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 
@@ -39,6 +40,7 @@ peripherals: {
   wificell: true
   stylus: true
   servo: true
+  servo_state: 3
   mimo: true
   huddly: true
   conductive: true
@@ -150,6 +152,7 @@ var fullLabels = []string{
 	"reference_design:reef",
 	"router_802_11ax",
 	"servo",
+	"servo_state:broken",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
 	"storage:storageval",
 	"stylus",
@@ -192,12 +195,86 @@ func TestConvertFull(t *testing.T) {
 	}
 }
 
+var servoStateConvertStateCases = []struct {
+	stateValue   int32
+	expectLabels []string
+}{
+	{0, []string{}},
+	{1, []string{"servo_state:working"}},
+	{2, []string{"servo_state:not_connected"}},
+	{3, []string{"servo_state:broken"}},
+	{5, []string{}}, //wrong value
+}
+
+func TestConvertServoStateWorking(t *testing.T) {
+	for _, testCase := range servoStateConvertStateCases {
+		t.Run("State value is "+string(testCase.stateValue), func(t *testing.T) {
+			var ls inventory.SchedulableLabels
+			protoText := fmt.Sprintf(`peripherals: { servo_state: %v}`, testCase.stateValue)
+			if err := proto.UnmarshalText(protoText, &ls); err != nil {
+				t.Fatalf("Error unmarshalling example text: %s", err)
+			}
+			want := testCase.expectLabels
+			got := Convert(&ls)
+			if diff := pretty.Compare(want, got); diff != "" {
+				t.Errorf(
+					"Convert servo_state %v got labels differ -want +got, %s",
+					testCase.stateValue,
+					diff)
+			}
+		})
+	}
+}
+
 func TestRevertEmpty(t *testing.T) {
 	t.Parallel()
 	want := inventory.NewSchedulableLabels()
 	got := Revert(nil)
 	if diff := pretty.Compare(want, *got); diff != "" {
 		t.Errorf("labels differ -want +got, %s", diff)
+	}
+}
+
+func TestRevertServoStateWithWrongCase(t *testing.T) {
+	t.Parallel()
+	want := inventory.NewSchedulableLabels()
+	*want.Peripherals.ServoState = inventory.PeripheralState_NOT_CONNECTED
+	labels := []string{"servo_state:Not_Connected"}
+	got := Revert(labels)
+	if diff := pretty.Compare(want, *got); diff != "" {
+		t.Errorf("labels differ -want +got, %s", diff)
+	}
+}
+
+var servoStateRevertCaseTests = []struct {
+	labelValue  string
+	expectState inventory.PeripheralState
+}{
+	{"Something", inventory.PeripheralState_UNKNOWN},
+	{"WorKing", inventory.PeripheralState_WORKING},
+	{"working", inventory.PeripheralState_WORKING},
+	{"WORKING", inventory.PeripheralState_WORKING},
+	{"Not_Connected", inventory.PeripheralState_NOT_CONNECTED},
+	{"noT_CONnected", inventory.PeripheralState_NOT_CONNECTED},
+	{"BroKen", inventory.PeripheralState_BROKEN},
+	{"BROKEN", inventory.PeripheralState_BROKEN},
+	{"broken", inventory.PeripheralState_BROKEN},
+}
+
+func TestRevertServoStateWithWrongValue(t *testing.T) {
+	for _, testCase := range servoStateRevertCaseTests {
+		t.Run(testCase.labelValue, func(t *testing.T) {
+			want := inventory.NewSchedulableLabels()
+			*want.Peripherals.ServoState = testCase.expectState
+			labels := []string{fmt.Sprintf("servo_state:%s", testCase.labelValue)}
+			got := Revert(labels)
+			if diff := pretty.Compare(want, *got); diff != "" {
+				t.Errorf(
+					"Revert servo_state from %v made labels differ -want +got, %s",
+					testCase.labelValue,
+					diff)
+			}
+		})
 	}
 }
 

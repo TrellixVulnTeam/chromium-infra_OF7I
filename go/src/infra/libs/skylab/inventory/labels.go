@@ -50,6 +50,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 			Huddly:              new(bool),
 			Mimo:                new(bool),
 			Servo:               new(bool),
+			ServoState:          new(PeripheralState),
 			Stylus:              new(bool),
 			Wificell:            new(bool),
 			Router_802_11Ax:     new(bool),
