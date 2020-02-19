@@ -171,8 +171,8 @@
   },
   'googleapis_common_protos': {
     'build': '0',
-    'gs': 'c7ce97beeadceebb1eb10b4dbcd52c0fc664c686.tar.gz',
-    'version': '1.5.2'
+    'gs': '8c6afd809b01acf9f4c2586bdde1f383d308a585.tar.gz',
+    'version': '1.6.0'
   },
   'google_auth_httplib2': {
     'build': '0',
