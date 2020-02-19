@@ -115,9 +115,9 @@ var transientLifeCycles = map[test_platform.TaskState_LifeCycle]bool{
 	test_platform.TaskState_LIFE_CYCLE_RUNNING: true,
 }
 
-// FetchResults fetches the latest swarming and isolate state of the given task,
+// Refresh fetches the latest swarming and isolate state of the given task,
 // and updates the task accordingly.
-func (t *Task) FetchResults(ctx context.Context, clients Clients) error {
+func (t *Task) Refresh(ctx context.Context, clients Clients) error {
 	results, err := clients.Swarming.GetResults(ctx, []string{t.id})
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
