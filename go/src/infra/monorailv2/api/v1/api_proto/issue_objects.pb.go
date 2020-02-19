@@ -59,98 +59,84 @@ func (IssueContentState) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3be6850bd655a92b, []int{0}
 }
 
-// Documents and tracks a bug, task, or feature request within a Project.
+// Potential states for an approval.
+// TODO(monorail:7193): comments below along with user guide for approvals.
+// Next available tag: 8
+type Issue_ApprovalStatus int32
+
+const (
+	Issue_NOT_SET          Issue_ApprovalStatus = 0
+	Issue_NEEDS_REVIEW     Issue_ApprovalStatus = 1
+	Issue_NA               Issue_ApprovalStatus = 2
+	Issue_REVIEW_REQUESTED Issue_ApprovalStatus = 3
+	Issue_REVIEW_STARTED   Issue_ApprovalStatus = 4
+	Issue_NEED_INFO        Issue_ApprovalStatus = 5
+	Issue_APPROVED         Issue_ApprovalStatus = 6
+	Issue_NOT_APPROVED     Issue_ApprovalStatus = 7
+)
+
+var Issue_ApprovalStatus_name = map[int32]string{
+	0: "NOT_SET",
+	1: "NEEDS_REVIEW",
+	2: "NA",
+	3: "REVIEW_REQUESTED",
+	4: "REVIEW_STARTED",
+	5: "NEED_INFO",
+	6: "APPROVED",
+	7: "NOT_APPROVED",
+}
+
+var Issue_ApprovalStatus_value = map[string]int32{
+	"NOT_SET":          0,
+	"NEEDS_REVIEW":     1,
+	"NA":               2,
+	"REVIEW_REQUESTED": 3,
+	"REVIEW_STARTED":   4,
+	"NEED_INFO":        5,
+	"APPROVED":         6,
+	"NOT_APPROVED":     7,
+}
+
+func (x Issue_ApprovalStatus) String() string {
+	return proto.EnumName(Issue_ApprovalStatus_name, int32(x))
+}
+
+func (Issue_ApprovalStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1, 0}
+}
+
+// Many values on an issue can be set either explicitly or by a rule.
 // Next available tag: 3
-type Issue struct {
-	// Resource name of the issue.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// TODO(monorail:6988): The UI limits summary length while the backend does
-	// not. Resolve this discrepancy.
-	Summary              string   `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type Issue_Derivation int32
+
+const (
+	// The default derivation. This value is used if the derivation is omitted.
+	Issue_DERIVATION_UNSPECIFIED Issue_Derivation = 0
+	// The value was explicitly set on the issue.
+	Issue_EXPLICT Issue_Derivation = 1
+	// Value was auto-applied to the issue based on a project's rule. See
+	// monorail/doc/userguide/project-owners.md#how-to-configure-filter-rules
+	Issue_RULE Issue_Derivation = 2
+)
+
+var Issue_Derivation_name = map[int32]string{
+	0: "DERIVATION_UNSPECIFIED",
+	1: "EXPLICT",
+	2: "RULE",
 }
 
-func (m *Issue) Reset()         { *m = Issue{} }
-func (m *Issue) String() string { return proto.CompactTextString(m) }
-func (*Issue) ProtoMessage()    {}
-func (*Issue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3be6850bd655a92b, []int{0}
+var Issue_Derivation_value = map[string]int32{
+	"DERIVATION_UNSPECIFIED": 0,
+	"EXPLICT":                1,
+	"RULE":                   2,
 }
 
-func (m *Issue) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Issue.Unmarshal(m, b)
-}
-func (m *Issue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Issue.Marshal(b, m, deterministic)
-}
-func (m *Issue) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Issue.Merge(m, src)
-}
-func (m *Issue) XXX_Size() int {
-	return xxx_messageInfo_Issue.Size(m)
-}
-func (m *Issue) XXX_DiscardUnknown() {
-	xxx_messageInfo_Issue.DiscardUnknown(m)
+func (x Issue_Derivation) String() string {
+	return proto.EnumName(Issue_Derivation_name, int32(x))
 }
 
-var xxx_messageInfo_Issue proto.InternalMessageInfo
-
-func (m *Issue) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *Issue) GetSummary() string {
-	if m != nil {
-		return m.Summary
-	}
-	return ""
-}
-
-// Specifies a column in an issues list view.
-// Next available tag: 2
-type IssuesListColumn struct {
-	// Column name shown in the column header.
-	Column               string   `protobuf:"bytes,1,opt,name=column,proto3" json:"column,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *IssuesListColumn) Reset()         { *m = IssuesListColumn{} }
-func (m *IssuesListColumn) String() string { return proto.CompactTextString(m) }
-func (*IssuesListColumn) ProtoMessage()    {}
-func (*IssuesListColumn) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3be6850bd655a92b, []int{1}
-}
-
-func (m *IssuesListColumn) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_IssuesListColumn.Unmarshal(m, b)
-}
-func (m *IssuesListColumn) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_IssuesListColumn.Marshal(b, m, deterministic)
-}
-func (m *IssuesListColumn) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuesListColumn.Merge(m, src)
-}
-func (m *IssuesListColumn) XXX_Size() int {
-	return xxx_messageInfo_IssuesListColumn.Size(m)
-}
-func (m *IssuesListColumn) XXX_DiscardUnknown() {
-	xxx_messageInfo_IssuesListColumn.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_IssuesListColumn proto.InternalMessageInfo
-
-func (m *IssuesListColumn) GetColumn() string {
-	if m != nil {
-		return m.Column
-	}
-	return ""
+func (Issue_Derivation) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1, 1}
 }
 
 // Represents a comment and any associated changes to an Issue.
@@ -158,7 +144,7 @@ func (m *IssuesListColumn) GetColumn() string {
 // Comments cannot be Created or Updated through standard methods. The
 // OUTPUT_ONLY annotations here indicate fields that would never be provided
 // by the user even if these methods were made available.
-// Next available tag: 7
+// Next available tag: 8.
 type Comment struct {
 	// Resource name of the comment.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -171,7 +157,9 @@ type Comment struct {
 	// The time this comment was added to the Issue.
 	CreateTime *timestamp.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// Optional string full text of an email that caused this comment to be added.
-	InboundMessage       string   `protobuf:"bytes,6,opt,name=inbound_message,json=inboundMessage,proto3" json:"inbound_message,omitempty"`
+	InboundMessage string `protobuf:"bytes,6,opt,name=inbound_message,json=inboundMessage,proto3" json:"inbound_message,omitempty"`
+	// The approval this comment is associated with, if applicable.
+	Approval             string   `protobuf:"bytes,7,opt,name=approval,proto3" json:"approval,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -181,7 +169,7 @@ func (m *Comment) Reset()         { *m = Comment{} }
 func (m *Comment) String() string { return proto.CompactTextString(m) }
 func (*Comment) ProtoMessage()    {}
 func (*Comment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3be6850bd655a92b, []int{2}
+	return fileDescriptor_3be6850bd655a92b, []int{0}
 }
 
 func (m *Comment) XXX_Unmarshal(b []byte) error {
@@ -244,54 +232,736 @@ func (m *Comment) GetInboundMessage() string {
 	return ""
 }
 
-// The value of an approval for an issue.
-// Next available tag: 2
-type ApprovalValue struct {
-	// The resource name of the approval value.
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+func (m *Comment) GetApproval() string {
+	if m != nil {
+		return m.Approval
+	}
+	return ""
+}
+
+// Documents and tracks a bug, task, or feature request within a Project.
+// Next available tag: 25
+type Issue struct {
+	// Resource name of the issue.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// TODO(monorail:6988): The UI limits summary length while the backend does
+	// not. Resolve this discrepancy.
+	Summary string `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`
+	// The state of the issue.
+	State IssueContentState `protobuf:"varint,3,opt,name=state,proto3,enum=monorail.v1.IssueContentState" json:"state,omitempty"`
+	// The current status of the issue.
+	Status *Issue_StatusValue `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	// Longer text describing the issue.
+	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	// The user who created the issue.
+	Reporter string `protobuf:"bytes,6,opt,name=reporter,proto3" json:"reporter,omitempty"`
+	// The user currently responsible for the issue.
+	Owner *Issue_UserValue `protobuf:"bytes,7,opt,name=owner,proto3" json:"owner,omitempty"`
+	// Additional users receiving notifications on the issue.
+	CcUsers []*Issue_UserValue `protobuf:"bytes,8,rep,name=cc_users,json=ccUsers,proto3" json:"cc_users,omitempty"`
+	// Labels applied to the issue
+	Labels []*Issue_LabelValue `protobuf:"bytes,9,rep,name=labels,proto3" json:"labels,omitempty"`
+	// Components the issue is associated with.
+	Components []*Issue_ComponentValue `protobuf:"bytes,10,rep,name=components,proto3" json:"components,omitempty"`
+	// Values for custom fields on the issue.
+	FieldValues []*Issue_FieldValue `protobuf:"bytes,11,rep,name=field_values,json=fieldValues,proto3" json:"field_values,omitempty"`
+	// An issue can be merged into another. If this value is set, the issue
+	// to referred should be considered the primary source for further updates.
+	MergedIntoIssueRef *IssueRef `protobuf:"bytes,12,opt,name=merged_into_issue_ref,json=mergedIntoIssueRef,proto3" json:"merged_into_issue_ref,omitempty"`
+	// Issues preventing the completion of this issue.
+	BlockedOnIssueRefs []*IssueRef `protobuf:"bytes,13,rep,name=blocked_on_issue_refs,json=blockedOnIssueRefs,proto3" json:"blocked_on_issue_refs,omitempty"`
+	// Issues for which this issue is blocking completion.
+	BlockingIssueRefs []*IssueRef `protobuf:"bytes,14,rep,name=blocking_issue_refs,json=blockingIssueRefs,proto3" json:"blocking_issue_refs,omitempty"`
+	// The time the issue was reported.
+	CreateTime *timestamp.Timestamp `protobuf:"bytes,15,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// The most recent time the issue was closed.
+	CloseTime *timestamp.Timestamp `protobuf:"bytes,16,opt,name=close_time,json=closeTime,proto3" json:"close_time,omitempty"`
+	// The most recent time the issue was modified.
+	ModifyTime *timestamp.Timestamp `protobuf:"bytes,17,opt,name=modify_time,json=modifyTime,proto3" json:"modify_time,omitempty"`
+	// The most recent time a component value was modified.
+	ComponentModifyTime *timestamp.Timestamp `protobuf:"bytes,18,opt,name=component_modify_time,json=componentModifyTime,proto3" json:"component_modify_time,omitempty"`
+	// The most recent time the status value was modified.
+	StatusModifyTime *timestamp.Timestamp `protobuf:"bytes,19,opt,name=status_modify_time,json=statusModifyTime,proto3" json:"status_modify_time,omitempty"`
+	// The most recent time the owner made a modification to the issue.
+	OwnerModifyTime *timestamp.Timestamp `protobuf:"bytes,20,opt,name=owner_modify_time,json=ownerModifyTime,proto3" json:"owner_modify_time,omitempty"`
+	// The number of attachments associated with the issue.
+	AttachmentCount uint32 `protobuf:"varint,21,opt,name=attachment_count,json=attachmentCount,proto3" json:"attachment_count,omitempty"`
+	// The number of users who have starred the issue.
+	StarCount uint32 `protobuf:"varint,22,opt,name=star_count,json=starCount,proto3" json:"star_count,omitempty"`
+	// Values set on approvals associated with the issue (if applicable).
+	ApprovalValues []*Issue_ApprovalValue `protobuf:"bytes,23,rep,name=approval_values,json=approvalValues,proto3" json:"approval_values,omitempty"`
+	// Phases the issue's approval can go through (if applicable).
+	// Once created, these cannot be changed.
+	// TODO(monorail:7193): add user guide for phases/approvals.
+	Phases               []string `protobuf:"bytes,24,rep,name=phases,proto3" json:"phases,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ApprovalValue) Reset()         { *m = ApprovalValue{} }
-func (m *ApprovalValue) String() string { return proto.CompactTextString(m) }
-func (*ApprovalValue) ProtoMessage()    {}
-func (*ApprovalValue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3be6850bd655a92b, []int{3}
+func (m *Issue) Reset()         { *m = Issue{} }
+func (m *Issue) String() string { return proto.CompactTextString(m) }
+func (*Issue) ProtoMessage()    {}
+func (*Issue) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1}
 }
 
-func (m *ApprovalValue) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ApprovalValue.Unmarshal(m, b)
+func (m *Issue) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Issue.Unmarshal(m, b)
 }
-func (m *ApprovalValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ApprovalValue.Marshal(b, m, deterministic)
+func (m *Issue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Issue.Marshal(b, m, deterministic)
 }
-func (m *ApprovalValue) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ApprovalValue.Merge(m, src)
+func (m *Issue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issue.Merge(m, src)
 }
-func (m *ApprovalValue) XXX_Size() int {
-	return xxx_messageInfo_ApprovalValue.Size(m)
+func (m *Issue) XXX_Size() int {
+	return xxx_messageInfo_Issue.Size(m)
 }
-func (m *ApprovalValue) XXX_DiscardUnknown() {
-	xxx_messageInfo_ApprovalValue.DiscardUnknown(m)
+func (m *Issue) XXX_DiscardUnknown() {
+	xxx_messageInfo_Issue.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ApprovalValue proto.InternalMessageInfo
+var xxx_messageInfo_Issue proto.InternalMessageInfo
 
-func (m *ApprovalValue) GetName() string {
+func (m *Issue) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
+func (m *Issue) GetSummary() string {
+	if m != nil {
+		return m.Summary
+	}
+	return ""
+}
+
+func (m *Issue) GetState() IssueContentState {
+	if m != nil {
+		return m.State
+	}
+	return IssueContentState_STATE_UNSPECIFIED
+}
+
+func (m *Issue) GetStatus() *Issue_StatusValue {
+	if m != nil {
+		return m.Status
+	}
+	return nil
+}
+
+func (m *Issue) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
+}
+
+func (m *Issue) GetReporter() string {
+	if m != nil {
+		return m.Reporter
+	}
+	return ""
+}
+
+func (m *Issue) GetOwner() *Issue_UserValue {
+	if m != nil {
+		return m.Owner
+	}
+	return nil
+}
+
+func (m *Issue) GetCcUsers() []*Issue_UserValue {
+	if m != nil {
+		return m.CcUsers
+	}
+	return nil
+}
+
+func (m *Issue) GetLabels() []*Issue_LabelValue {
+	if m != nil {
+		return m.Labels
+	}
+	return nil
+}
+
+func (m *Issue) GetComponents() []*Issue_ComponentValue {
+	if m != nil {
+		return m.Components
+	}
+	return nil
+}
+
+func (m *Issue) GetFieldValues() []*Issue_FieldValue {
+	if m != nil {
+		return m.FieldValues
+	}
+	return nil
+}
+
+func (m *Issue) GetMergedIntoIssueRef() *IssueRef {
+	if m != nil {
+		return m.MergedIntoIssueRef
+	}
+	return nil
+}
+
+func (m *Issue) GetBlockedOnIssueRefs() []*IssueRef {
+	if m != nil {
+		return m.BlockedOnIssueRefs
+	}
+	return nil
+}
+
+func (m *Issue) GetBlockingIssueRefs() []*IssueRef {
+	if m != nil {
+		return m.BlockingIssueRefs
+	}
+	return nil
+}
+
+func (m *Issue) GetCreateTime() *timestamp.Timestamp {
+	if m != nil {
+		return m.CreateTime
+	}
+	return nil
+}
+
+func (m *Issue) GetCloseTime() *timestamp.Timestamp {
+	if m != nil {
+		return m.CloseTime
+	}
+	return nil
+}
+
+func (m *Issue) GetModifyTime() *timestamp.Timestamp {
+	if m != nil {
+		return m.ModifyTime
+	}
+	return nil
+}
+
+func (m *Issue) GetComponentModifyTime() *timestamp.Timestamp {
+	if m != nil {
+		return m.ComponentModifyTime
+	}
+	return nil
+}
+
+func (m *Issue) GetStatusModifyTime() *timestamp.Timestamp {
+	if m != nil {
+		return m.StatusModifyTime
+	}
+	return nil
+}
+
+func (m *Issue) GetOwnerModifyTime() *timestamp.Timestamp {
+	if m != nil {
+		return m.OwnerModifyTime
+	}
+	return nil
+}
+
+func (m *Issue) GetAttachmentCount() uint32 {
+	if m != nil {
+		return m.AttachmentCount
+	}
+	return 0
+}
+
+func (m *Issue) GetStarCount() uint32 {
+	if m != nil {
+		return m.StarCount
+	}
+	return 0
+}
+
+func (m *Issue) GetApprovalValues() []*Issue_ApprovalValue {
+	if m != nil {
+		return m.ApprovalValues
+	}
+	return nil
+}
+
+func (m *Issue) GetPhases() []string {
+	if m != nil {
+		return m.Phases
+	}
+	return nil
+}
+
+// The value of an approval for an issue.
+// Next available tag: 7
+type Issue_ApprovalValue struct {
+	// The resource name of the approval.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The users able to approve the issue.
+	Approvers []string `protobuf:"bytes,2,rep,name=approvers,proto3" json:"approvers,omitempty"`
+	// The current status of the approval.
+	Status Issue_ApprovalStatus `protobuf:"varint,3,opt,name=status,proto3,enum=monorail.v1.Issue_ApprovalStatus" json:"status,omitempty"`
+	// The time the approval value was last set.
+	SetTime *timestamp.Timestamp `protobuf:"bytes,4,opt,name=set_time,json=setTime,proto3" json:"set_time,omitempty"`
+	// The user who most recently set the issue
+	Setter string `protobuf:"bytes,5,opt,name=setter,proto3" json:"setter,omitempty"`
+	// The phase the approval is associated with (if applicable).
+	Phase                string   `protobuf:"bytes,6,opt,name=phase,proto3" json:"phase,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Issue_ApprovalValue) Reset()         { *m = Issue_ApprovalValue{} }
+func (m *Issue_ApprovalValue) String() string { return proto.CompactTextString(m) }
+func (*Issue_ApprovalValue) ProtoMessage()    {}
+func (*Issue_ApprovalValue) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1, 0}
+}
+
+func (m *Issue_ApprovalValue) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Issue_ApprovalValue.Unmarshal(m, b)
+}
+func (m *Issue_ApprovalValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Issue_ApprovalValue.Marshal(b, m, deterministic)
+}
+func (m *Issue_ApprovalValue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issue_ApprovalValue.Merge(m, src)
+}
+func (m *Issue_ApprovalValue) XXX_Size() int {
+	return xxx_messageInfo_Issue_ApprovalValue.Size(m)
+}
+func (m *Issue_ApprovalValue) XXX_DiscardUnknown() {
+	xxx_messageInfo_Issue_ApprovalValue.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Issue_ApprovalValue proto.InternalMessageInfo
+
+func (m *Issue_ApprovalValue) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Issue_ApprovalValue) GetApprovers() []string {
+	if m != nil {
+		return m.Approvers
+	}
+	return nil
+}
+
+func (m *Issue_ApprovalValue) GetStatus() Issue_ApprovalStatus {
+	if m != nil {
+		return m.Status
+	}
+	return Issue_NOT_SET
+}
+
+func (m *Issue_ApprovalValue) GetSetTime() *timestamp.Timestamp {
+	if m != nil {
+		return m.SetTime
+	}
+	return nil
+}
+
+func (m *Issue_ApprovalValue) GetSetter() string {
+	if m != nil {
+		return m.Setter
+	}
+	return ""
+}
+
+func (m *Issue_ApprovalValue) GetPhase() string {
+	if m != nil {
+		return m.Phase
+	}
+	return ""
+}
+
+// A possibly rule-derived component for the issue.
+// Next available tag: 3
+type Issue_ComponentValue struct {
+	// The component.
+	Component string `protobuf:"bytes,1,opt,name=component,proto3" json:"component,omitempty"`
+	// How the component was derived.
+	Derivation           Issue_Derivation `protobuf:"varint,2,opt,name=derivation,proto3,enum=monorail.v1.Issue_Derivation" json:"derivation,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *Issue_ComponentValue) Reset()         { *m = Issue_ComponentValue{} }
+func (m *Issue_ComponentValue) String() string { return proto.CompactTextString(m) }
+func (*Issue_ComponentValue) ProtoMessage()    {}
+func (*Issue_ComponentValue) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1, 1}
+}
+
+func (m *Issue_ComponentValue) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Issue_ComponentValue.Unmarshal(m, b)
+}
+func (m *Issue_ComponentValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Issue_ComponentValue.Marshal(b, m, deterministic)
+}
+func (m *Issue_ComponentValue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issue_ComponentValue.Merge(m, src)
+}
+func (m *Issue_ComponentValue) XXX_Size() int {
+	return xxx_messageInfo_Issue_ComponentValue.Size(m)
+}
+func (m *Issue_ComponentValue) XXX_DiscardUnknown() {
+	xxx_messageInfo_Issue_ComponentValue.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Issue_ComponentValue proto.InternalMessageInfo
+
+func (m *Issue_ComponentValue) GetComponent() string {
+	if m != nil {
+		return m.Component
+	}
+	return ""
+}
+
+func (m *Issue_ComponentValue) GetDerivation() Issue_Derivation {
+	if m != nil {
+		return m.Derivation
+	}
+	return Issue_DERIVATION_UNSPECIFIED
+}
+
+// A value of a custom field for an issue.
+// Next available tag: 5
+type Issue_FieldValue struct {
+	// The project-defined field associated with this value
+	Field string `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
+	// The value associated with the field.
+	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	// How the value was derived.
+	Derivation Issue_Derivation `protobuf:"varint,3,opt,name=derivation,proto3,enum=monorail.v1.Issue_Derivation" json:"derivation,omitempty"`
+	// Issues with phase-specific fields can have values for each phase.
+	Phase                string   `protobuf:"bytes,4,opt,name=phase,proto3" json:"phase,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Issue_FieldValue) Reset()         { *m = Issue_FieldValue{} }
+func (m *Issue_FieldValue) String() string { return proto.CompactTextString(m) }
+func (*Issue_FieldValue) ProtoMessage()    {}
+func (*Issue_FieldValue) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1, 2}
+}
+
+func (m *Issue_FieldValue) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Issue_FieldValue.Unmarshal(m, b)
+}
+func (m *Issue_FieldValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Issue_FieldValue.Marshal(b, m, deterministic)
+}
+func (m *Issue_FieldValue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issue_FieldValue.Merge(m, src)
+}
+func (m *Issue_FieldValue) XXX_Size() int {
+	return xxx_messageInfo_Issue_FieldValue.Size(m)
+}
+func (m *Issue_FieldValue) XXX_DiscardUnknown() {
+	xxx_messageInfo_Issue_FieldValue.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Issue_FieldValue proto.InternalMessageInfo
+
+func (m *Issue_FieldValue) GetField() string {
+	if m != nil {
+		return m.Field
+	}
+	return ""
+}
+
+func (m *Issue_FieldValue) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
+}
+
+func (m *Issue_FieldValue) GetDerivation() Issue_Derivation {
+	if m != nil {
+		return m.Derivation
+	}
+	return Issue_DERIVATION_UNSPECIFIED
+}
+
+func (m *Issue_FieldValue) GetPhase() string {
+	if m != nil {
+		return m.Phase
+	}
+	return ""
+}
+
+// A possibly rule-derived label for an issue.
+// Next available tag: 3
+type Issue_LabelValue struct {
+	// The label.
+	Label string `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
+	// How the label was derived.
+	Derivation           Issue_Derivation `protobuf:"varint,2,opt,name=derivation,proto3,enum=monorail.v1.Issue_Derivation" json:"derivation,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *Issue_LabelValue) Reset()         { *m = Issue_LabelValue{} }
+func (m *Issue_LabelValue) String() string { return proto.CompactTextString(m) }
+func (*Issue_LabelValue) ProtoMessage()    {}
+func (*Issue_LabelValue) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1, 3}
+}
+
+func (m *Issue_LabelValue) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Issue_LabelValue.Unmarshal(m, b)
+}
+func (m *Issue_LabelValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Issue_LabelValue.Marshal(b, m, deterministic)
+}
+func (m *Issue_LabelValue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issue_LabelValue.Merge(m, src)
+}
+func (m *Issue_LabelValue) XXX_Size() int {
+	return xxx_messageInfo_Issue_LabelValue.Size(m)
+}
+func (m *Issue_LabelValue) XXX_DiscardUnknown() {
+	xxx_messageInfo_Issue_LabelValue.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Issue_LabelValue proto.InternalMessageInfo
+
+func (m *Issue_LabelValue) GetLabel() string {
+	if m != nil {
+		return m.Label
+	}
+	return ""
+}
+
+func (m *Issue_LabelValue) GetDerivation() Issue_Derivation {
+	if m != nil {
+		return m.Derivation
+	}
+	return Issue_DERIVATION_UNSPECIFIED
+}
+
+// A possibly rule-derived status for an issue.
+// Next available tag: 3
+type Issue_StatusValue struct {
+	// The status of the issue.
+	Status string `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	// How the status was derived.
+	Derivation           Issue_Derivation `protobuf:"varint,2,opt,name=derivation,proto3,enum=monorail.v1.Issue_Derivation" json:"derivation,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *Issue_StatusValue) Reset()         { *m = Issue_StatusValue{} }
+func (m *Issue_StatusValue) String() string { return proto.CompactTextString(m) }
+func (*Issue_StatusValue) ProtoMessage()    {}
+func (*Issue_StatusValue) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1, 4}
+}
+
+func (m *Issue_StatusValue) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Issue_StatusValue.Unmarshal(m, b)
+}
+func (m *Issue_StatusValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Issue_StatusValue.Marshal(b, m, deterministic)
+}
+func (m *Issue_StatusValue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issue_StatusValue.Merge(m, src)
+}
+func (m *Issue_StatusValue) XXX_Size() int {
+	return xxx_messageInfo_Issue_StatusValue.Size(m)
+}
+func (m *Issue_StatusValue) XXX_DiscardUnknown() {
+	xxx_messageInfo_Issue_StatusValue.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Issue_StatusValue proto.InternalMessageInfo
+
+func (m *Issue_StatusValue) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *Issue_StatusValue) GetDerivation() Issue_Derivation {
+	if m != nil {
+		return m.Derivation
+	}
+	return Issue_DERIVATION_UNSPECIFIED
+}
+
+// A possibly rule-derived user value on an issue.
+// Next available tag: 3
+type Issue_UserValue struct {
+	// The user.
+	User string `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	// How the user value was derived.
+	Derivation           Issue_Derivation `protobuf:"varint,2,opt,name=derivation,proto3,enum=monorail.v1.Issue_Derivation" json:"derivation,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *Issue_UserValue) Reset()         { *m = Issue_UserValue{} }
+func (m *Issue_UserValue) String() string { return proto.CompactTextString(m) }
+func (*Issue_UserValue) ProtoMessage()    {}
+func (*Issue_UserValue) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{1, 5}
+}
+
+func (m *Issue_UserValue) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Issue_UserValue.Unmarshal(m, b)
+}
+func (m *Issue_UserValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Issue_UserValue.Marshal(b, m, deterministic)
+}
+func (m *Issue_UserValue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issue_UserValue.Merge(m, src)
+}
+func (m *Issue_UserValue) XXX_Size() int {
+	return xxx_messageInfo_Issue_UserValue.Size(m)
+}
+func (m *Issue_UserValue) XXX_DiscardUnknown() {
+	xxx_messageInfo_Issue_UserValue.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Issue_UserValue proto.InternalMessageInfo
+
+func (m *Issue_UserValue) GetUser() string {
+	if m != nil {
+		return m.User
+	}
+	return ""
+}
+
+func (m *Issue_UserValue) GetDerivation() Issue_Derivation {
+	if m != nil {
+		return m.Derivation
+	}
+	return Issue_DERIVATION_UNSPECIFIED
+}
+
+// Specifies a column in an issues list view.
+// Next available tag: 2
+type IssuesListColumn struct {
+	// Column name shown in the column header.
+	Column               string   `protobuf:"bytes,1,opt,name=column,proto3" json:"column,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *IssuesListColumn) Reset()         { *m = IssuesListColumn{} }
+func (m *IssuesListColumn) String() string { return proto.CompactTextString(m) }
+func (*IssuesListColumn) ProtoMessage()    {}
+func (*IssuesListColumn) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{2}
+}
+
+func (m *IssuesListColumn) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_IssuesListColumn.Unmarshal(m, b)
+}
+func (m *IssuesListColumn) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_IssuesListColumn.Marshal(b, m, deterministic)
+}
+func (m *IssuesListColumn) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuesListColumn.Merge(m, src)
+}
+func (m *IssuesListColumn) XXX_Size() int {
+	return xxx_messageInfo_IssuesListColumn.Size(m)
+}
+func (m *IssuesListColumn) XXX_DiscardUnknown() {
+	xxx_messageInfo_IssuesListColumn.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_IssuesListColumn proto.InternalMessageInfo
+
+func (m *IssuesListColumn) GetColumn() string {
+	if m != nil {
+		return m.Column
+	}
+	return ""
+}
+
+// Refers to an issue that may or may not be tracked in Monorail.
+// Only one of `issue` and `ext_identifier` should be set.
+// Next available tag: 3
+type IssueRef struct {
+	// Resource name of an issue tracked in Monorail
+	Issue string `protobuf:"bytes,1,opt,name=issue,proto3" json:"issue,omitempty"`
+	// For referencing external issues, e.g. b/1234, or a dangling reference
+	// to an old 'codesite' issue.
+	// TODO(monorail:7208): add more documentation on dangling references.
+	ExtIdentifier        string   `protobuf:"bytes,2,opt,name=ext_identifier,json=extIdentifier,proto3" json:"ext_identifier,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *IssueRef) Reset()         { *m = IssueRef{} }
+func (m *IssueRef) String() string { return proto.CompactTextString(m) }
+func (*IssueRef) ProtoMessage()    {}
+func (*IssueRef) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3be6850bd655a92b, []int{3}
+}
+
+func (m *IssueRef) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_IssueRef.Unmarshal(m, b)
+}
+func (m *IssueRef) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_IssueRef.Marshal(b, m, deterministic)
+}
+func (m *IssueRef) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssueRef.Merge(m, src)
+}
+func (m *IssueRef) XXX_Size() int {
+	return xxx_messageInfo_IssueRef.Size(m)
+}
+func (m *IssueRef) XXX_DiscardUnknown() {
+	xxx_messageInfo_IssueRef.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_IssueRef proto.InternalMessageInfo
+
+func (m *IssueRef) GetIssue() string {
+	if m != nil {
+		return m.Issue
+	}
+	return ""
+}
+
+func (m *IssueRef) GetExtIdentifier() string {
+	if m != nil {
+		return m.ExtIdentifier
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterEnum("monorail.v1.IssueContentState", IssueContentState_name, IssueContentState_value)
-	proto.RegisterType((*Issue)(nil), "monorail.v1.Issue")
-	proto.RegisterType((*IssuesListColumn)(nil), "monorail.v1.IssuesListColumn")
+	proto.RegisterEnum("monorail.v1.Issue_ApprovalStatus", Issue_ApprovalStatus_name, Issue_ApprovalStatus_value)
+	proto.RegisterEnum("monorail.v1.Issue_Derivation", Issue_Derivation_name, Issue_Derivation_value)
 	proto.RegisterType((*Comment)(nil), "monorail.v1.Comment")
-	proto.RegisterType((*ApprovalValue)(nil), "monorail.v1.ApprovalValue")
+	proto.RegisterType((*Issue)(nil), "monorail.v1.Issue")
+	proto.RegisterType((*Issue_ApprovalValue)(nil), "monorail.v1.Issue.ApprovalValue")
+	proto.RegisterType((*Issue_ComponentValue)(nil), "monorail.v1.Issue.ComponentValue")
+	proto.RegisterType((*Issue_FieldValue)(nil), "monorail.v1.Issue.FieldValue")
+	proto.RegisterType((*Issue_LabelValue)(nil), "monorail.v1.Issue.LabelValue")
+	proto.RegisterType((*Issue_StatusValue)(nil), "monorail.v1.Issue.StatusValue")
+	proto.RegisterType((*Issue_UserValue)(nil), "monorail.v1.Issue.UserValue")
+	proto.RegisterType((*IssuesListColumn)(nil), "monorail.v1.IssuesListColumn")
+	proto.RegisterType((*IssueRef)(nil), "monorail.v1.IssueRef")
 }
 
 func init() {
@@ -299,38 +969,90 @@ func init() {
 }
 
 var fileDescriptor_3be6850bd655a92b = []byte{
-	// 518 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x52, 0xdf, 0x6b, 0x13, 0x41,
-	0x10, 0x36, 0xbf, 0xed, 0x04, 0x6b, 0xba, 0x5a, 0x39, 0x22, 0x68, 0x08, 0x22, 0xa5, 0x94, 0x5b,
-	0x5a, 0x05, 0x35, 0xbe, 0x78, 0x4d, 0x4e, 0x08, 0x34, 0x12, 0x92, 0xb4, 0x0f, 0x82, 0x1c, 0x7b,
-	0xd7, 0x6d, 0x3c, 0xb9, 0xbd, 0x3d, 0x77, 0xf7, 0x02, 0x12, 0xf2, 0xe2, 0x5f, 0xda, 0xe7, 0x3c,
-	0xf8, 0x07, 0xf8, 0x24, 0xb7, 0xbb, 0xc1, 0x06, 0x5b, 0x7c, 0xba, 0xf9, 0x66, 0xbe, 0xef, 0xe6,
-	0x9b, 0x99, 0x85, 0x17, 0x24, 0x8b, 0xf1, 0xe2, 0x18, 0x93, 0x2c, 0x0e, 0x32, 0xc1, 0x15, 0xc7,
-	0xb1, 0x94, 0x39, 0x0d, 0x78, 0xf8, 0x8d, 0x46, 0x4a, 0xba, 0x3a, 0x87, 0x9a, 0x8c, 0xa7, 0x5c,
-	0x90, 0x38, 0x71, 0x17, 0xc7, 0xed, 0xa3, 0x39, 0xe7, 0xf3, 0x84, 0x5a, 0xba, 0x01, 0x85, 0x1e,
-	0x5f, 0xc5, 0x34, 0xb9, 0x0c, 0x42, 0xfa, 0x95, 0x2c, 0x62, 0x2e, 0x8c, 0xb4, 0xfd, 0xf2, 0x2e,
-	0xb6, 0xa0, 0x92, 0xe7, 0x22, 0xa2, 0x96, 0xf7, 0xdc, 0x96, 0x34, 0x0a, 0xf3, 0x2b, 0xac, 0x62,
-	0x46, 0xa5, 0x22, 0x2c, 0x33, 0x84, 0xee, 0x77, 0xa8, 0x0d, 0x0b, 0x6b, 0x08, 0x41, 0x35, 0x25,
-	0x8c, 0x3a, 0xa5, 0x4e, 0xe9, 0x60, 0x67, 0xa2, 0x63, 0xe4, 0x40, 0x43, 0xe6, 0x8c, 0x11, 0xf1,
-	0xc3, 0x29, 0xeb, 0xf4, 0x06, 0xf6, 0x7a, 0x6b, 0xef, 0x0d, 0x3c, 0x22, 0x59, 0xec, 0x46, 0x22,
-	0xcc, 0xe7, 0x6e, 0xc4, 0x19, 0x36, 0xff, 0xe9, 0x64, 0x82, 0x17, 0x43, 0xe2, 0xa5, 0x0d, 0x56,
-	0x66, 0x76, 0x89, 0x97, 0xfa, 0xbb, 0xea, 0x1e, 0x42, 0x4b, 0x53, 0xe5, 0x59, 0x2c, 0x55, 0x9f,
-	0x27, 0x39, 0x4b, 0xd1, 0x13, 0xa8, 0x47, 0x3a, 0xb2, 0xfd, 0x2d, 0xea, 0xfe, 0x2a, 0x43, 0xa3,
-	0xcf, 0x19, 0xa3, 0xa9, 0xba, 0xd5, 0xe1, 0x3b, 0xa8, 0x49, 0x45, 0x14, 0xd5, 0xfe, 0x76, 0x4f,
-	0x9e, 0xb9, 0x37, 0x56, 0xea, 0xea, 0x2e, 0x7d, 0x9e, 0x2a, 0x9a, 0xaa, 0x69, 0xc1, 0x3a, 0xad,
-	0x5c, 0x7b, 0x95, 0x89, 0x51, 0x14, 0xc3, 0x45, 0xa6, 0xe6, 0x54, 0xcc, 0x70, 0x16, 0xa2, 0xb7,
-	0xb0, 0x13, 0x99, 0x9e, 0x54, 0x38, 0xd5, 0xa2, 0x76, 0xda, 0xbe, 0xf6, 0x2a, 0xbf, 0xbd, 0xc7,
-	0x80, 0xb6, 0x47, 0x3e, 0x97, 0x54, 0x4c, 0xfe, 0x92, 0xd1, 0x07, 0x68, 0x46, 0x82, 0x12, 0x45,
-	0x83, 0x62, 0xcf, 0x4e, 0xad, 0x53, 0x3a, 0x68, 0x9e, 0xb4, 0x5d, 0x73, 0x04, 0x77, 0x73, 0x04,
-	0x77, 0xb6, 0x39, 0x82, 0x31, 0x04, 0x46, 0x53, 0x64, 0xd1, 0x11, 0x3c, 0x8c, 0xd3, 0x90, 0xe7,
-	0xe9, 0x65, 0xc0, 0xa8, 0x94, 0x64, 0x4e, 0x9d, 0xba, 0x76, 0xa0, 0x99, 0xbb, 0xb6, 0x36, 0x32,
-	0xa5, 0xde, 0x78, 0xed, 0x8d, 0x60, 0x7f, 0xdb, 0xd3, 0x66, 0x5d, 0xaf, 0xed, 0xfe, 0xe5, 0x9d,
-	0x97, 0xc0, 0xd6, 0xb8, 0xc4, 0x4b, 0x1b, 0xad, 0xba, 0x3f, 0x4b, 0xf0, 0xc0, 0xcb, 0x32, 0xc1,
-	0x17, 0x24, 0xb9, 0x20, 0xc9, 0xed, 0x0f, 0xa3, 0xf7, 0x65, 0xed, 0x7d, 0x86, 0xa7, 0xdb, 0x7d,
-	0xb7, 0x55, 0xef, 0xff, 0xdf, 0x9d, 0xdc, 0x14, 0x48, 0xbc, 0xdc, 0xe0, 0xd5, 0xe1, 0x08, 0xf6,
-	0xfe, 0xb9, 0x1d, 0xda, 0x87, 0xbd, 0xe9, 0xcc, 0x9b, 0xf9, 0xc1, 0xf9, 0xa7, 0xe9, 0xd8, 0xef,
-	0x0f, 0x3f, 0x0e, 0xfd, 0x41, 0xeb, 0x1e, 0x02, 0xa8, 0x7b, 0xfd, 0xd9, 0xf0, 0xc2, 0x6f, 0x95,
-	0x50, 0x13, 0x1a, 0x03, 0xff, 0xcc, 0x9f, 0xf9, 0x83, 0x56, 0x19, 0xdd, 0x87, 0xea, 0x74, 0xec,
-	0x8d, 0x5a, 0x95, 0xb0, 0xae, 0x17, 0xff, 0xea, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xd8, 0x2a,
-	0x1e, 0xaa, 0x96, 0x03, 0x00, 0x00,
+	// 1346 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x56, 0x4b, 0x6f, 0xdb, 0x46,
+	0x17, 0x8d, 0xde, 0xd2, 0x95, 0x2d, 0xd3, 0xe3, 0x47, 0x18, 0x25, 0x5f, 0xa2, 0x08, 0x5f, 0x0b,
+	0x23, 0x0d, 0x24, 0xc4, 0xcd, 0xa3, 0x31, 0x90, 0x36, 0x8c, 0xc4, 0xa0, 0x42, 0xfd, 0x2a, 0x25,
+	0xbb, 0xdd, 0x11, 0x14, 0x35, 0x72, 0xd8, 0x8a, 0x1c, 0x81, 0x33, 0x72, 0x12, 0x04, 0xe9, 0xa2,
+	0x3f, 0xa0, 0xe8, 0xef, 0xe8, 0xa6, 0xdb, 0xfe, 0x9c, 0xac, 0xb3, 0xee, 0x4a, 0xab, 0x62, 0x1e,
+	0xa4, 0x24, 0x47, 0x4a, 0x14, 0x78, 0x45, 0xce, 0xcc, 0x39, 0x67, 0xce, 0xdc, 0x3b, 0x73, 0x67,
+	0xe0, 0xff, 0xce, 0xd0, 0xab, 0x9f, 0xdf, 0xab, 0x3b, 0x43, 0xcf, 0x1e, 0x86, 0x84, 0x91, 0xba,
+	0x47, 0xe9, 0x08, 0xdb, 0xa4, 0xfb, 0x0b, 0x76, 0x19, 0xad, 0x89, 0x3e, 0x54, 0xf4, 0x49, 0x40,
+	0x42, 0xc7, 0x1b, 0xd4, 0xce, 0xef, 0x95, 0xef, 0x9e, 0x11, 0x72, 0x36, 0xc0, 0x0a, 0x2e, 0x1b,
+	0x9c, 0x5f, 0xef, 0x7b, 0x78, 0xd0, 0xb3, 0xbb, 0xf8, 0x85, 0x73, 0xee, 0x91, 0x50, 0x52, 0xcb,
+	0x5f, 0x2e, 0x42, 0x87, 0x98, 0x92, 0x51, 0xe8, 0x62, 0x85, 0xbb, 0xa5, 0x86, 0x44, 0xab, 0x3b,
+	0xea, 0xd7, 0x99, 0xe7, 0x63, 0xca, 0x1c, 0x7f, 0x28, 0x01, 0xd5, 0xbf, 0x53, 0x90, 0x6b, 0x10,
+	0xdf, 0xc7, 0x01, 0x43, 0x08, 0xd2, 0x81, 0xe3, 0x63, 0x3d, 0x51, 0x49, 0xec, 0x14, 0x2c, 0xf1,
+	0x8f, 0x1e, 0x43, 0x86, 0x32, 0x87, 0x61, 0x3d, 0x59, 0x49, 0xec, 0x94, 0x76, 0x6f, 0xd6, 0xa6,
+	0x3c, 0xd7, 0x5a, 0x7c, 0x51, 0x0d, 0x12, 0x30, 0x1c, 0xb0, 0x36, 0x47, 0x3d, 0x4b, 0xbd, 0x33,
+	0x52, 0x96, 0x64, 0x20, 0x1d, 0x72, 0xae, 0x1c, 0xd3, 0x53, 0x42, 0x31, 0x6a, 0xa2, 0x6f, 0xa0,
+	0xe0, 0xca, 0x39, 0x71, 0xa8, 0xa7, 0xf9, 0xd8, 0xb3, 0xf2, 0x3b, 0x23, 0x35, 0x36, 0x36, 0x01,
+	0x39, 0x43, 0xaf, 0xe6, 0x86, 0xdd, 0xd1, 0x59, 0xcd, 0x25, 0x7e, 0xfd, 0x84, 0xe2, 0xd0, 0x9a,
+	0x80, 0xd1, 0x53, 0x28, 0xba, 0x21, 0x76, 0x18, 0xb6, 0xf9, 0x42, 0xf4, 0x4c, 0x25, 0xb1, 0x53,
+	0xdc, 0x2d, 0xd7, 0xe4, 0x2a, 0x6b, 0xd1, 0x2a, 0x6b, 0x9d, 0x68, 0x95, 0xd2, 0x10, 0x48, 0x0e,
+	0xef, 0x45, 0x77, 0x61, 0xcd, 0x0b, 0xba, 0x64, 0x14, 0xf4, 0x6c, 0x1f, 0x53, 0xea, 0x9c, 0x61,
+	0x3d, 0x2b, 0x1c, 0x08, 0x64, 0x49, 0x8d, 0x1d, 0xc8, 0x21, 0xb4, 0x07, 0x79, 0x67, 0x38, 0x0c,
+	0xc9, 0xb9, 0x33, 0xd0, 0x73, 0x02, 0x76, 0x73, 0x6c, 0x5c, 0x87, 0x6b, 0xb3, 0x2e, 0x0d, 0x05,
+	0x69, 0xe2, 0xbe, 0x15, 0xe3, 0xf7, 0x4e, 0xde, 0x1b, 0x16, 0x94, 0x67, 0x91, 0x2a, 0x62, 0x32,
+	0xde, 0xf7, 0x87, 0x21, 0x11, 0xfb, 0xa1, 0xfe, 0x46, 0xfd, 0xbd, 0x95, 0xfb, 0x84, 0xd6, 0xdf,
+	0x88, 0xef, 0xdb, 0xba, 0x5a, 0x39, 0xad, 0xbf, 0x51, 0x7f, 0x6f, 0xab, 0xff, 0x6e, 0x42, 0x46,
+	0xc8, 0xcc, 0xcd, 0x97, 0x0e, 0x39, 0x3a, 0xf2, 0x7d, 0x27, 0x7c, 0x2d, 0x32, 0x56, 0xb0, 0xa2,
+	0x26, 0xba, 0x1f, 0x65, 0x32, 0xb5, 0x4c, 0x26, 0xa3, 0x24, 0x3e, 0x84, 0x2c, 0xff, 0x19, 0x51,
+	0x91, 0xa7, 0xe2, 0x3c, 0x5a, 0xad, 0x2d, 0x00, 0xa7, 0xce, 0x60, 0x84, 0x2d, 0x85, 0x46, 0x15,
+	0x28, 0xf6, 0x30, 0x75, 0x43, 0x6f, 0xc8, 0x3c, 0x12, 0x88, 0x44, 0x15, 0xac, 0xe9, 0x2e, 0xf4,
+	0x10, 0xf2, 0x21, 0x1e, 0x92, 0x90, 0xef, 0x81, 0xec, 0x27, 0xf7, 0x40, 0x8c, 0x45, 0xbb, 0x90,
+	0x21, 0x2f, 0x03, 0x1c, 0x8a, 0x7c, 0x14, 0x77, 0x6f, 0xcc, 0x31, 0xc4, 0x19, 0xd2, 0x8e, 0x84,
+	0xa2, 0x47, 0x90, 0x77, 0x5d, 0x7b, 0x44, 0x71, 0x48, 0xf5, 0x7c, 0x25, 0xf5, 0x49, 0x5a, 0xce,
+	0x75, 0x79, 0x83, 0xa2, 0x07, 0x90, 0x1d, 0x38, 0x5d, 0x3c, 0xa0, 0x7a, 0x41, 0xd0, 0xfe, 0x37,
+	0x87, 0xb6, 0xcf, 0x01, 0x6a, 0xf5, 0x12, 0x8c, 0x0c, 0x00, 0x97, 0xf8, 0x43, 0x12, 0xf0, 0xdc,
+	0xe9, 0x20, 0xa8, 0xb7, 0xe7, 0x50, 0x1b, 0x11, 0x48, 0xd2, 0xa7, 0x48, 0xe8, 0x29, 0xac, 0xc8,
+	0x93, 0x7f, 0xce, 0x87, 0xa8, 0x5e, 0x5c, 0x38, 0xff, 0x73, 0x0e, 0x93, 0x02, 0xc5, 0x7e, 0xfc,
+	0x4f, 0xd1, 0xf7, 0xb0, 0xe5, 0xe3, 0xf0, 0x0c, 0xf7, 0x6c, 0x2f, 0x60, 0xc4, 0x96, 0x15, 0x28,
+	0xc4, 0x7d, 0x7d, 0x45, 0x04, 0x6e, 0xeb, 0x43, 0x29, 0x0b, 0xf7, 0x2d, 0x24, 0x39, 0xad, 0x80,
+	0x91, 0xa8, 0x8f, 0x2b, 0x75, 0x07, 0xc4, 0xfd, 0x15, 0xf7, 0x6c, 0x12, 0x4c, 0x84, 0xa8, 0xbe,
+	0x2a, 0x4c, 0x2d, 0x52, 0x52, 0x9c, 0xa3, 0x20, 0xea, 0xa2, 0xc8, 0x84, 0x0d, 0xd1, 0xeb, 0x05,
+	0x67, 0xd3, 0x3a, 0xa5, 0x8f, 0xe9, 0xac, 0x47, 0x8c, 0x89, 0xcc, 0x85, 0x32, 0xb0, 0xf6, 0xf9,
+	0x65, 0xe0, 0x5b, 0x00, 0x77, 0x40, 0xa8, 0x12, 0xd0, 0x96, 0x13, 0x28, 0x08, 0x8a, 0xe0, 0x3f,
+	0x85, 0xa2, 0x4f, 0x7a, 0x5e, 0xff, 0xb5, 0x14, 0x58, 0x5f, 0xd2, 0x81, 0xe4, 0x08, 0x85, 0x36,
+	0x6c, 0xc5, 0xe9, 0xb6, 0xa7, 0xb5, 0xd0, 0x72, 0x5a, 0x1b, 0x31, 0xfb, 0x60, 0x22, 0x7a, 0x00,
+	0x48, 0x1e, 0xc0, 0x19, 0xc5, 0x8d, 0xe5, 0x14, 0x35, 0x49, 0x9d, 0x92, 0xfb, 0x01, 0xd6, 0xc5,
+	0x01, 0x9a, 0x51, 0xdb, 0x5c, 0x4e, 0x6d, 0x4d, 0x30, 0xa7, 0xc4, 0x6a, 0xa0, 0x39, 0x8c, 0x39,
+	0xee, 0x0b, 0x5e, 0xc7, 0x6c, 0x97, 0x8c, 0x02, 0xa6, 0x6f, 0x55, 0x12, 0x3b, 0xab, 0x0a, 0x3f,
+	0x19, 0x6c, 0xf0, 0x31, 0x54, 0x05, 0xa0, 0xcc, 0x09, 0x15, 0x72, 0x7b, 0x82, 0x2c, 0xf0, 0x6e,
+	0x89, 0x69, 0xc1, 0x5a, 0x54, 0x6f, 0xa3, 0x83, 0x72, 0x55, 0xec, 0xa5, 0xca, 0x9c, 0x83, 0x12,
+	0x95, 0x69, 0x79, 0x56, 0x4a, 0xce, 0x74, 0x93, 0xa2, 0x6d, 0xc8, 0x0e, 0x5f, 0x38, 0x14, 0x53,
+	0x5d, 0xaf, 0xa4, 0x76, 0x0a, 0x96, 0x6a, 0x95, 0xff, 0x49, 0xc2, 0xea, 0x0c, 0x13, 0xed, 0x4e,
+	0xd7, 0xdd, 0x4f, 0x5e, 0x08, 0xb2, 0x2e, 0x3f, 0x80, 0x82, 0x9c, 0x8f, 0x97, 0xa0, 0x24, 0x9f,
+	0xe0, 0xd9, 0xd5, 0x85, 0xf7, 0x5d, 0x8c, 0x44, 0x8f, 0xe3, 0xf2, 0x2b, 0xab, 0xf6, 0xed, 0x8f,
+	0x2c, 0x4b, 0x96, 0xe1, 0xb8, 0x02, 0xef, 0x41, 0x9e, 0x62, 0x26, 0x53, 0x96, 0x5e, 0x2e, 0x65,
+	0x39, 0x8a, 0x99, 0x48, 0x55, 0x1d, 0xb2, 0x14, 0x33, 0x5e, 0x99, 0x45, 0xe1, 0x5e, 0x6c, 0x55,
+	0xc1, 0xd0, 0x26, 0x64, 0x44, 0xb8, 0x64, 0x25, 0xb7, 0x64, 0xa3, 0xfc, 0x47, 0x02, 0x4a, 0xb3,
+	0x25, 0x0e, 0x3d, 0x11, 0x57, 0xbf, 0xec, 0x51, 0x01, 0xbc, 0x35, 0x36, 0x6e, 0x5c, 0xbc, 0x27,
+	0x63, 0x16, 0x8f, 0xe0, 0x84, 0x81, 0x9e, 0x00, 0xf4, 0x70, 0xe8, 0x9d, 0x3b, 0xe2, 0x56, 0x91,
+	0x6f, 0x92, 0x79, 0x35, 0xb1, 0x19, 0x83, 0xac, 0x29, 0x42, 0xf9, 0xaf, 0x04, 0xc0, 0xa4, 0x5c,
+	0xa2, 0x7b, 0x90, 0x11, 0x05, 0x53, 0x19, 0xb9, 0x3e, 0x36, 0x74, 0xd8, 0x9e, 0x35, 0x22, 0xd0,
+	0xdc, 0x84, 0x44, 0xf2, 0x85, 0x8a, 0x7d, 0xa6, 0x6e, 0x57, 0xd9, 0xb8, 0x60, 0x2b, 0xf5, 0x99,
+	0xb6, 0x26, 0xd1, 0x4b, 0x4f, 0x47, 0xef, 0x37, 0x80, 0xc9, 0xd5, 0xc2, 0xbd, 0x8a, 0xcb, 0xe5,
+	0x23, 0x5e, 0x05, 0x5a, 0x78, 0x15, 0xc8, 0xcb, 0x06, 0xeb, 0xf7, 0x04, 0x14, 0xa7, 0xae, 0x76,
+	0x74, 0x3f, 0xde, 0x8b, 0xd2, 0xc2, 0x8d, 0xb1, 0x71, 0x0d, 0xae, 0xce, 0x5a, 0x90, 0x78, 0xee,
+	0x21, 0xda, 0x86, 0x97, 0x34, 0xf1, 0x12, 0x0a, 0xf1, 0xb5, 0x8c, 0xbe, 0x82, 0x34, 0xbf, 0xc3,
+	0xd5, 0xfc, 0x0b, 0x37, 0xa5, 0x00, 0x5d, 0x72, 0xe2, 0xea, 0x9f, 0x09, 0x28, 0xcd, 0x9e, 0x2c,
+	0x54, 0x84, 0xdc, 0xe1, 0x51, 0xc7, 0x6e, 0x9b, 0x1d, 0xed, 0x0a, 0xd2, 0x60, 0xe5, 0xd0, 0x34,
+	0x9b, 0x6d, 0xdb, 0x32, 0x4f, 0x5b, 0xe6, 0x4f, 0x5a, 0x02, 0x65, 0x21, 0x79, 0x68, 0x68, 0x49,
+	0xb4, 0x09, 0x9a, 0xec, 0xb3, 0x2d, 0xf3, 0xc7, 0x13, 0xb3, 0xdd, 0x31, 0x9b, 0x5a, 0x0a, 0x21,
+	0x28, 0xa9, 0xde, 0x76, 0xc7, 0xb0, 0x78, 0x5f, 0x1a, 0xad, 0x42, 0x81, 0x6b, 0xd8, 0xad, 0xc3,
+	0xe7, 0x47, 0x5a, 0x06, 0xad, 0x40, 0xde, 0x38, 0x3e, 0xb6, 0x8e, 0x4e, 0xcd, 0xa6, 0x96, 0x15,
+	0x13, 0x1c, 0x75, 0xec, 0xb8, 0x27, 0x57, 0xfd, 0x0e, 0x60, 0x62, 0x16, 0x95, 0x61, 0xbb, 0x69,
+	0x5a, 0xad, 0x53, 0xa3, 0xd3, 0x3a, 0x3a, 0xb4, 0x4f, 0x0e, 0xdb, 0xc7, 0x66, 0xa3, 0xf5, 0xbc,
+	0x65, 0x36, 0xb5, 0x2b, 0xdc, 0xa9, 0xf9, 0xf3, 0xf1, 0x7e, 0xab, 0xd1, 0xd1, 0x12, 0x28, 0x0f,
+	0x69, 0xeb, 0x64, 0xdf, 0xd4, 0x92, 0x7b, 0x7b, 0xef, 0x8d, 0x47, 0xb0, 0x31, 0xe7, 0x45, 0x8a,
+	0x2a, 0xea, 0x01, 0xba, 0xf0, 0x25, 0x5a, 0xbd, 0x03, 0x9a, 0x80, 0xd2, 0x7d, 0x8f, 0xb2, 0x06,
+	0x19, 0x8c, 0xfc, 0x80, 0x97, 0x4c, 0x57, 0xfc, 0xa9, 0x27, 0xa8, 0x6a, 0x55, 0x1d, 0xc8, 0xc7,
+	0x6f, 0x87, 0x1a, 0x64, 0x84, 0x82, 0x4a, 0x9a, 0x3e, 0x36, 0xb6, 0xe6, 0x5a, 0xb0, 0x24, 0x0c,
+	0x7d, 0x01, 0x25, 0xfc, 0x8a, 0xd9, 0x5e, 0x0f, 0x07, 0xcc, 0xeb, 0x7b, 0x38, 0x54, 0x27, 0x6d,
+	0x15, 0xbf, 0x62, 0xad, 0xb8, 0xf3, 0xce, 0x01, 0xac, 0x7f, 0xf0, 0x66, 0x45, 0x5b, 0xb0, 0xde,
+	0xee, 0x18, 0x1d, 0xf3, 0x42, 0x34, 0x00, 0xb2, 0x46, 0xa3, 0xd3, 0x3a, 0x35, 0xb5, 0x04, 0x8f,
+	0x4c, 0xd3, 0xdc, 0x37, 0x79, 0xfc, 0x93, 0x3c, 0x32, 0xed, 0x63, 0xe3, 0x40, 0x4b, 0x75, 0xb3,
+	0xa2, 0x24, 0x7e, 0xfd, 0x5f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x16, 0x14, 0xc2, 0xad, 0xb9, 0x0d,
+	0x00, 0x00,
 }

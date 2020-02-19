@@ -14,51 +14,15 @@ import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
-// States that an issue or its comments can be in (aip.dev/216).
-// Next available tag: 4
-enum IssueContentState {
-  // The default value. This value is used if the state is omitted.
-  STATE_UNSPECIFIED = 0;
-  // The Issue or Comment is available.
-  ACTIVE = 1;
-  // The Issue or Comment has been deleted.
-  DELETED = 2;
-  // The Issue or Comment has been flagged as spam.
-  SPAM = 3;
-}
-
-// Documents and tracks a bug, task, or feature request within a Project.
-// Next available tag: 3
-message Issue {
-  option (google.api.resource) = {
-    type: "api.crbug.com/Issue"
-    pattern: "project/{project}/issues/{issue}"
-  };
-
-  // Resource name of the issue.
-  string name = 1;
-  // TODO(monorail:6988): The UI limits summary length while the backend does
-  // not. Resolve this discrepancy.
-  string summary = 2;
-  // TODO(monorail:6988): Add remaining fields for Issue.
-}
-
-// Specifies a column in an issues list view.
-// Next available tag: 2
-message IssuesListColumn {
-  // Column name shown in the column header.
-  string column = 1;
-}
-
 // Represents a comment and any associated changes to an Issue.
 //
 // Comments cannot be Created or Updated through standard methods. The
 // OUTPUT_ONLY annotations here indicate fields that would never be provided
 // by the user even if these methods were made available.
-// Next available tag: 7
+// Next available tag: 8.
 message Comment {
   option (google.api.resource) = {
-    type: "api.crbug.com/Comment"
+    type: "api.crbug.com/IssueComment"
     pattern: "projects/{project}/issues/{issue}/comments/{comment}"
   };
 
@@ -78,20 +42,218 @@ message Comment {
       [(google.api.field_behavior) = OUTPUT_ONLY];
   // Optional string full text of an email that caused this comment to be added.
   string inbound_message = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
-
+  // The approval this comment is associated with, if applicable.
+  string approval = 7
+      [(google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" }];
   // TODO(monorail:7186): add remaining fields for comment.
 }
 
-// The value of an approval for an issue.
-// Next available tag: 2
-message ApprovalValue {
+// Documents and tracks a bug, task, or feature request within a Project.
+// Next available tag: 25
+message Issue {
   option (google.api.resource) = {
-    type: "api.crbug.com/ApprovalValue"
-    pattern: "projects/{project}/issues/{issue}/approvalValues/{approval}"
+    type: "api.crbug.com/Issue"
+    pattern: "project/{project}/issues/{issue}"
   };
 
-  // The resource name of the approval value.
-  string name = 1;
+  // Potential states for an approval.
+  // TODO(monorail:7193): comments below along with user guide for approvals.
+  // Next available tag: 8
+  enum ApprovalStatus {
+    NOT_SET = 0;
+    NEEDS_REVIEW = 1;
+    NA = 2;
+    REVIEW_REQUESTED = 3;
+    REVIEW_STARTED = 4;
+    NEED_INFO = 5;
+    APPROVED = 6;
+    NOT_APPROVED = 7;
+  }
 
-  // TODO(monorail:7194): Add fields from v0 approval.
+  // Many values on an issue can be set either explicitly or by a rule.
+  // Next available tag: 3
+  enum Derivation {
+    // The default derivation. This value is used if the derivation is omitted.
+    DERIVATION_UNSPECIFIED = 0;
+    // The value was explicitly set on the issue.
+    EXPLICT = 1;
+    // Value was auto-applied to the issue based on a project's rule. See
+    // monorail/doc/userguide/project-owners.md#how-to-configure-filter-rules
+    RULE = 2;
+  }
+
+  // The value of an approval for an issue.
+  // Next available tag: 7
+  message ApprovalValue {
+    // The resource name of the approval.
+    string name = 1 [
+      (google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" }
+    ];
+    // The users able to approve the issue.
+    repeated string approvers = 2
+        [(google.api.resource_reference) = { type: "api.crbug.com/User" }];
+    // The current status of the approval.
+    ApprovalStatus status = 3;
+    // The time the approval value was last set.
+    google.protobuf.Timestamp set_time = 4
+        [(google.api.field_behavior) = OUTPUT_ONLY];
+    // The user who most recently set the issue
+    string setter = 5
+        [(google.api.resource_reference) = { type: "api.crbug.com/User" }];
+    // The phase the approval is associated with (if applicable).
+    string phase = 6;
+  }
+
+  // A possibly rule-derived component for the issue.
+  // Next available tag: 3
+  message ComponentValue {
+    // The component.
+    string component = 1 [
+      (google.api.resource_reference) = { type: "api.crbug.com/ComponentDef" }
+    ];
+    // How the component was derived.
+    Derivation derivation = 2;
+  }
+
+  // A value of a custom field for an issue.
+  // Next available tag: 5
+  message FieldValue {
+    // The project-defined field associated with this value
+    string field = 1
+        [(google.api.resource_reference) = { type: "api.crbug.com/FieldDef" }];
+    // The value associated with the field.
+    string value = 2;
+    // How the value was derived.
+    Derivation derivation = 3;
+    // Issues with phase-specific fields can have values for each phase.
+    string phase = 4;
+  }
+
+  // A possibly rule-derived label for an issue.
+  // Next available tag: 3
+  message LabelValue {
+    // The label.
+    string label = 1
+        [(google.api.resource_reference) = { type: "api.crbug.com/LabelDef" }];
+    // How the label was derived.
+    Derivation derivation = 2;
+  }
+
+  // A possibly rule-derived status for an issue.
+  // Next available tag: 3
+  message StatusValue {
+    // The status of the issue.
+    string status = 1
+        [(google.api.resource_reference) = { type: "api.crbug.com/StatusDef" }];
+    // How the status was derived.
+    Derivation derivation = 2;
+  }
+
+  // A possibly rule-derived user value on an issue.
+  // Next available tag: 3
+  message UserValue {
+    // The user.
+    string user = 1
+        [(google.api.resource_reference) = { type: "api.crbug.com/User" }];
+    // How the user value was derived.
+    Derivation derivation = 2;
+  }
+
+  // Resource name of the issue.
+  string name = 1;
+  // A brief summary of the issue. Generally displayed as a user-facing title.
+  // TODO(monorail:6988): The UI limits summary length while the backend does
+  // not. Resolve this discrepancy.
+  string summary = 2;
+  // The state of the issue.
+  IssueContentState state = 3;
+  // The current status of the issue.
+  StatusValue status = 4;
+  // Longer text describing the issue.
+  string description = 5;
+  // The user who created the issue.
+  string reporter = 6 [
+    (google.api.resource_reference) = { type: "api.crbug.com/User" },
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+  // The user currently responsible for the issue.
+  UserValue owner = 7;
+  // Additional users receiving notifications on the issue.
+  repeated UserValue cc_users = 8;
+  // Labels applied to the issue
+  repeated LabelValue labels = 9;
+  // Components the issue is associated with.
+  repeated ComponentValue components = 10;
+  // Values for custom fields on the issue.
+  repeated FieldValue field_values = 11;
+  // An issue can be merged into another. If this value is set, the issue
+  // to referred should be considered the primary source for further updates.
+  IssueRef merged_into_issue_ref = 12;
+  // Issues preventing the completion of this issue.
+  repeated IssueRef blocked_on_issue_refs = 13;
+  // Issues for which this issue is blocking completion.
+  repeated IssueRef blocking_issue_refs = 14;
+  // The time the issue was reported.
+  google.protobuf.Timestamp create_time = 15
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The most recent time the issue was closed.
+  google.protobuf.Timestamp close_time = 16
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The most recent time the issue was modified.
+  google.protobuf.Timestamp modify_time = 17
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The most recent time a component value was modified.
+  google.protobuf.Timestamp component_modify_time = 18
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The most recent time the status value was modified.
+  google.protobuf.Timestamp status_modify_time = 19
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The most recent time the owner made a modification to the issue.
+  google.protobuf.Timestamp owner_modify_time = 20
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The number of attachments associated with the issue.
+  uint32 attachment_count = 21 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The number of users who have starred the issue.
+  uint32 star_count = 22 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Values set on approvals associated with the issue (if applicable).
+  repeated ApprovalValue approval_values = 23;
+
+  // Phases the issue's approval can go through (if applicable).
+  // Once created, these cannot be changed.
+  // TODO(monorail:7193): add user guide for phases/approvals.
+  repeated string phases = 24;
+}
+
+// States that an issue or its comments can be in (aip.dev/216).
+// Next available tag: 4
+enum IssueContentState {
+  // The default value. This value is used if the state is omitted.
+  STATE_UNSPECIFIED = 0;
+  // The Issue or Comment is available.
+  ACTIVE = 1;
+  // The Issue or Comment has been deleted.
+  DELETED = 2;
+  // The Issue or Comment has been flagged as spam.
+  SPAM = 3;
+}
+
+// Specifies a column in an issues list view.
+// Next available tag: 2
+message IssuesListColumn {
+  // Column name shown in the column header.
+  string column = 1;
+}
+
+// Refers to an issue that may or may not be tracked in Monorail.
+// Only one of `issue` and `ext_identifier` should be set.
+// Next available tag: 3
+message IssueRef {
+  // Resource name of an issue tracked in Monorail
+  string issue = 1
+      [(google.api.resource_reference) = { type: "api.crbug.com/Issue" }];
+  // For referencing external issues, e.g. b/1234, or a dangling reference
+  // to an old 'codesite' issue.
+  // TODO(monorail:7208): add more documentation on dangling references.
+  string ext_identifier = 2;
 }
