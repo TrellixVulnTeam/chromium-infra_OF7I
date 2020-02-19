@@ -62,6 +62,10 @@ gsubtreed_cron(
     target_repo = 'https://chromium.googlesource.com/external/github.com/llvm-mirror/clang',
 )
 gsubtreed_cron(
+    name = 'gsubtreed-llvm-project',
+    target_repo = 'https://chromium.googlesource.com/external/github.com/llvm/llvm-project',
+)
+gsubtreed_cron(
     name = 'gsubtreed-selenium',
     target_repo = 'https://chromium.googlesource.com/external/github.com/SeleniumHQ/selenium',
 )
