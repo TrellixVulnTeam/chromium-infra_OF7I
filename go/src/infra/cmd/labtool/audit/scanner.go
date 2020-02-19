@@ -160,7 +160,7 @@ func (c *bcScanner) parseLoop() {
 		*      -> Any input that doesn't fit the other three options is
 		*         considered as Asset tag and assetList updated
 		 */
-		if isLocation(iput) {
+		if utils.IsLocation(iput) {
 			currLoc = c.getLocation(iput)
 			u.AddAsset(assetList)
 			assetList = []*fleet.ChopsAsset{}
@@ -233,11 +233,6 @@ func (c *bcScanner) getLocation(iput string) (loc *fleet.Location) {
 
 /* Regular expressions to match various parts of the input string - START */
 
-var locations = []*regexp.Regexp{
-	regexp.MustCompile(`ROW[\d]*-RACK[\d]*-HOST[\d]*`),
-	regexp.MustCompile(`chromeos[\d]*-row[\d]*-rack[\d]*-host[\d]*`),
-}
-
 var num = regexp.MustCompile(`[0-9]+`)
 
 var labs = []*regexp.Regexp{
@@ -260,16 +255,6 @@ var hosts = []*regexp.Regexp{
 }
 
 /* Regular expressions to match various parts of the input string - END */
-
-// Determines if the input string describes a location
-func isLocation(iput string) bool {
-	for _, exp := range locations {
-		if exp.MatchString(iput) {
-			return true
-		}
-	}
-	return false
-}
 
 // Determines if the input string describes close action
 // Not supported the barcode for scanning yet.
