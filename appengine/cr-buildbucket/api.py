@@ -241,20 +241,23 @@ def prepare_schedule_build_request_async(req):
       load_infra=False,
   )
 
+  # Remove empty msgs so empty objects ("{}") won't appear during serialization.
+  non_empty_or_none = lambda m: m if len(m.ListFields()) != 0 else None
+
   # First initialize the new request based on the build.
   new_req = rpc_pb2.ScheduleBuildRequest(
       builder=bp.builder,
       canary=bp.canary,
       experimental=bp.input.experimental,
-      properties=bp.input.properties,
-      gitiles_commit=bp.input.gitiles_commit,
+      properties=non_empty_or_none(bp.input.properties),
+      gitiles_commit=non_empty_or_none(bp.input.gitiles_commit),
       gerrit_changes=bp.input.gerrit_changes,
       tags=bp.tags,
       dimensions=bp.infra.buildbucket.requested_dimensions,
       priority=bp.infra.swarming.priority,
       # Don't copy notify and fields because they are not build configuration.
       critical=bp.critical,
-      exe=bp.exe,
+      exe=non_empty_or_none(bp.exe),
       # Don't copy swarming or we are likely to create a dead-born build
       # due to completed parent.
   )

@@ -704,6 +704,39 @@ class ScheduleBuildTests(BaseTestCase):
     self.assertEqual(actual_req.exe, template_build.proto.exe)
     self.assertEqual(actual_req.swarming.parent_run_id, '')
 
+  @mock.patch('creation.add_async', autospec=True)
+  @mock.patch('service.get_async', autospec=True)
+  def test_schedule_build_doesnt_inject_empty_structs(
+      self, get_async, add_async
+  ):
+    template_build = test_util.build(
+        id=44,
+        builder=dict(project='chromium', bucket='try', builder='linux'),
+        canary=common_pb2.YES,
+        input=build_pb2.Build.Input(),
+        critical=common_pb2.YES,
+        infra=build_pb2.BuildInfra(),
+    )
+    template_build.proto.ClearField('exe')
+    get_async.return_value = future(template_build)
+    add_async.return_value = future(
+        test_util.build(
+            id=54,
+            builder=dict(project='chromium', bucket='try', builder='linux'),
+            canary=common_pb2.NO,
+            input=build_pb2.Build.Input(),
+            critical=common_pb2.NO,
+            infra=build_pb2.BuildInfra(),
+        ),
+    )
+    req = rpc_pb2.ScheduleBuildRequest(template_build_id=44)
+    self.call(self.api.ScheduleBuild, req)
+    add_async.assert_called_once_with(mock.ANY)
+    actual_req = add_async.mock_calls[0][1][0].schedule_build_request
+    self.assertFalse(actual_req.HasField('properties'))
+    self.assertFalse(actual_req.HasField('gitiles_commit'))
+    self.assertFalse(actual_req.HasField('exe'))
+
   @mock.patch('service.get_async', autospec=True)
   def test_schedule_with_template_build_id_not_found(self, get_async):
     get_async.return_value = future(None)
