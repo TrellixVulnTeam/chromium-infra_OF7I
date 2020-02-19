@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$api/v1/api_proto/issue_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"j\n\x05Issue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t:B\xea\x41?\n\x13\x61pi.crbug.com/Issue\x12(project/{project_name}/issues/{issue_id}\"\"\n\x10IssuesListColumn\x12\x0e\n\x06\x63olumn\x18\x01 \x01(\t\"\xba\x02\n\x07\x43omment\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x32\n\x05state\x18\x02 \x01(\x0e\x32\x1e.monorail.v1.IssueContentStateB\x03\xe0\x41\x03\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12-\n\tcommenter\x18\x04 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x1c\n\x0finbound_message\x18\x06 \x01(\tB\x03\xe0\x41\x03:Y\xea\x41V\n\x15\x61pi.crbug.com/Comment\x12=projects/{project_id}/issues/{issue_id}/comments/{comment_id}*M\n\x11IssueContentState\x12\x15\n\x11STATE_UNSPECIFIED\x10\x00\x12\n\n\x06\x41\x43TIVE\x10\x01\x12\x0b\n\x07\x44\x45LETED\x10\x02\x12\x08\n\x04SPAM\x10\x03\x62\x06proto3')
+  serialized_pb=_b('\n$api/v1/api_proto/issue_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"b\n\x05Issue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t::\xea\x41\x37\n\x13\x61pi.crbug.com/Issue\x12 project/{project}/issues/{issue}\"\"\n\x10IssuesListColumn\x12\x0e\n\x06\x63olumn\x18\x01 \x01(\t\"\xb1\x02\n\x07\x43omment\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x32\n\x05state\x18\x02 \x01(\x0e\x32\x1e.monorail.v1.IssueContentStateB\x03\xe0\x41\x03\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12-\n\tcommenter\x18\x04 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x1c\n\x0finbound_message\x18\x06 \x01(\tB\x03\xe0\x41\x03:P\xea\x41M\n\x15\x61pi.crbug.com/Comment\x12\x34projects/{project}/issues/{issue}/comments/{comment}\"|\n\rApprovalValue\x12\x0c\n\x04name\x18\x01 \x01(\t:]\xea\x41Z\n\x1b\x61pi.crbug.com/ApprovalValue\x12;projects/{project}/issues/{issue}/approvalValues/{approval}*M\n\x11IssueContentState\x12\x15\n\x11STATE_UNSPECIFIED\x10\x00\x12\n\n\x06\x41\x43TIVE\x10\x01\x12\x0b\n\x07\x44\x45LETED\x10\x02\x12\x08\n\x04SPAM\x10\x03\x62\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 
@@ -52,8 +52,8 @@ _ISSUECONTENTSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=633,
-  serialized_end=710,
+  serialized_start=742,
+  serialized_end=819,
 )
 _sym_db.RegisterEnumDescriptor(_ISSUECONTENTSTATE)
 
@@ -92,14 +92,14 @@ _ISSUE = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=_b('\352A?\n\023api.crbug.com/Issue\022(project/{project_name}/issues/{issue_id}'),
+  serialized_options=_b('\352A7\n\023api.crbug.com/Issue\022 project/{project}/issues/{issue}'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
   serialized_start=172,
-  serialized_end=278,
+  serialized_end=270,
 )
 
 
@@ -129,8 +129,8 @@ _ISSUESLISTCOLUMN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=280,
-  serialized_end=314,
+  serialized_start=272,
+  serialized_end=306,
 )
 
 
@@ -189,14 +189,45 @@ _COMMENT = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=_b('\352AV\n\025api.crbug.com/Comment\022=projects/{project_id}/issues/{issue_id}/comments/{comment_id}'),
+  serialized_options=_b('\352AM\n\025api.crbug.com/Comment\0224projects/{project}/issues/{issue}/comments/{comment}'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=317,
-  serialized_end=631,
+  serialized_start=309,
+  serialized_end=614,
+)
+
+
+_APPROVALVALUE = _descriptor.Descriptor(
+  name='ApprovalValue',
+  full_name='monorail.v1.ApprovalValue',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='monorail.v1.ApprovalValue.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=_b('\352AZ\n\033api.crbug.com/ApprovalValue\022;projects/{project}/issues/{issue}/approvalValues/{approval}'),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=616,
+  serialized_end=740,
 )
 
 _COMMENT.fields_by_name['state'].enum_type = _ISSUECONTENTSTATE
@@ -204,6 +235,7 @@ _COMMENT.fields_by_name['create_time'].message_type = google_dot_protobuf_dot_ti
 DESCRIPTOR.message_types_by_name['Issue'] = _ISSUE
 DESCRIPTOR.message_types_by_name['IssuesListColumn'] = _ISSUESLISTCOLUMN
 DESCRIPTOR.message_types_by_name['Comment'] = _COMMENT
+DESCRIPTOR.message_types_by_name['ApprovalValue'] = _APPROVALVALUE
 DESCRIPTOR.enum_types_by_name['IssueContentState'] = _ISSUECONTENTSTATE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -228,6 +260,13 @@ Comment = _reflection.GeneratedProtocolMessageType('Comment', (_message.Message,
   ))
 _sym_db.RegisterMessage(Comment)
 
+ApprovalValue = _reflection.GeneratedProtocolMessageType('ApprovalValue', (_message.Message,), dict(
+  DESCRIPTOR = _APPROVALVALUE,
+  __module__ = 'api.v1.api_proto.issue_objects_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.ApprovalValue)
+  ))
+_sym_db.RegisterMessage(ApprovalValue)
+
 
 _ISSUE._options = None
 _COMMENT.fields_by_name['state']._options = None
@@ -235,4 +274,5 @@ _COMMENT.fields_by_name['commenter']._options = None
 _COMMENT.fields_by_name['create_time']._options = None
 _COMMENT.fields_by_name['inbound_message']._options = None
 _COMMENT._options = None
+_APPROVALVALUE._options = None
 # @@protoc_insertion_point(module_scope)

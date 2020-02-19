@@ -1,0 +1,101 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file or at
+// https://developers.google.com/open-source/licenses/bsd
+
+// This file defines protobufs for projects and their resources.
+
+syntax = "proto3";
+
+package monorail.v1;
+
+import "google_proto/google/api/field_behavior.proto";
+import "google_proto/google/api/resource.proto";
+
+// The top level organization of issues in Monorail.
+//
+// See monorail/doc/userguide/concepts.md#Projects-and-roles.
+// and monorail/doc/userguide/project-owners.md#why-does-monorail-have-projects
+// Next available tag: 2
+message Project {
+  option (google.api.resource) = {
+    type: "api.crbug.com/Project"
+    pattern: "projects/{project}"
+  };
+
+  // Resource name of the project.
+  string name = 1;
+}
+
+// Potential steps along the development process that an issue can be in.
+//
+// See monorail/doc/userguide/project-owners.md#How-to-configure-statuses
+// (-- aip.dev/not-precedent: "Status" should be reserved for HTTP/gRPC codes
+//     per aip.dev/216. Monorail's Status  preceded the AIP standards, and is
+//     used extensively throughout the system.)
+// Next available tag: 2
+message StatusDef {
+  option (google.api.resource) = {
+    type: "api.crbug.com/StatusDef"
+    pattern: "projects/{project}/statusDefs/{statusDef}"
+  };
+
+  // Resource name of the status.
+  string name = 1;
+}
+
+// Well-known labels that can be applied to issues within the project.
+//
+// See monorail/doc/userguide/concepts.md#issue-fields-and-labels.
+// Next available tag: 2
+message LabelDef {
+  option (google.api.resource) = {
+    type: "api.crbug.com/LabelDef"
+    pattern: "projects/{project}/labelDefs/{labelDef}"
+  };
+
+  // Resource name of the label.
+  string name = 1;
+}
+
+// Custom fields defined for the project.
+//
+// See monorail/doc/userguide/concepts.md#issue-fields-and-labels.
+// Next available tag: 2
+message FieldDef {
+  option (google.api.resource) = {
+    type: "api.crbug.com/FieldDef"
+    pattern: "projects/{project}/fieldDefs/{fieldDef}"
+  };
+
+  // Resource name of the field.
+  string name = 1;
+}
+
+// A high level definition of the part of the software affected by an issue.
+//
+// See monorail/doc/userguide/project-owners.md#how-to-configure-components.
+// Next available tag: 2
+message ComponentDef {
+  option (google.api.resource) = {
+    type: "api.crbug.com/ComponentDef"
+    pattern: "projects/{project}/componentDefs/{componentDef}"
+  };
+
+  // Resource name of the component.
+  string name = 1;
+}
+
+// Defines approvals that issues within the project may need.
+//
+// TODO(monorail:7193): Add documentation for approvals.
+// Next available tag: 2
+message ApprovalDef {
+  option (google.api.resource) = {
+    type: "api.crbug.com/ApprovalDef"
+    pattern: "projects/{project}/approvalDefs/{approvalDef}"
+  };
+
+  // Resource name of the approval.
+  string name = 1;
+}
