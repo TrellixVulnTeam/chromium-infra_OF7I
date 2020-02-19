@@ -216,6 +216,17 @@ func CompareInventory(ctx context.Context) error {
 	logging.Infof(ctx, "That's all what I have.")
 	return nil
 }
+func filterAttrs(attrs []*inventory.KeyValue, toRemove ...string) []*inventory.KeyValue {
+	toRemoveSet := stringset.NewFromSlice(toRemove...)
+	var newAttrs []*inventory.KeyValue
+	for _, attr := range attrs {
+		if toRemoveSet.Has(attr.GetKey()) {
+			continue
+		}
+		newAttrs = append(newAttrs, attr)
+	}
+	return newAttrs
+}
 
 func filterOutKnownDifference(d1, d2 *inventory.DeviceUnderTest) {
 	alignBooleans(d1, d2)
@@ -244,15 +255,8 @@ func filterOutKnownDifference(d1, d2 *inventory.DeviceUnderTest) {
 
 	c1.VideoAcceleration = c2.VideoAcceleration
 
-	attrBlackList := stringset.NewFromSlice("stashed_labels", "job_repo_url", "outlet_changed", "serial_number")
-	var newAttrs []*inventory.KeyValue
-	for _, attr := range cmn1.GetAttributes() {
-		if attrBlackList.Has(attr.GetKey()) {
-			continue
-		}
-		newAttrs = append(newAttrs, attr)
-	}
-	cmn1.Attributes = newAttrs
+	cmn1.Attributes = filterAttrs(cmn1.GetAttributes(), "stashed_labels", "job_repo_url", "outlet_changed", "serial_number", "HWID")
+	cmn2.Attributes = filterAttrs(cmn2.GetAttributes(), "serial_number", "HWID")
 }
 
 func alignBooleans(d1, d2 *inventory.DeviceUnderTest) {
