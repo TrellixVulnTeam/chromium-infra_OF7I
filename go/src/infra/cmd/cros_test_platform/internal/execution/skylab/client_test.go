@@ -12,11 +12,13 @@ import (
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 
 	"infra/libs/skylab/request"
+	"infra/libs/skylab/worker"
 )
 
 // fakeSwarming implements skylab_api.Swarming
 type fakeSwarming struct {
-	botExists bool
+	botExists   bool
+	createCalls []*swarming_api.SwarmingRpcsNewTaskRequest
 }
 
 func newFakeSwarming() *fakeSwarming {
@@ -26,7 +28,10 @@ func newFakeSwarming() *fakeSwarming {
 }
 
 func (f *fakeSwarming) CreateTask(ctx context.Context, req *swarming_api.SwarmingRpcsNewTaskRequest) (*swarming_api.SwarmingRpcsTaskRequestMetadata, error) {
-	return nil, nil
+	f.createCalls = append(f.createCalls, req)
+	return &swarming_api.SwarmingRpcsTaskRequestMetadata{
+		TaskId: "foo-id",
+	}, nil
 }
 
 func (f *fakeSwarming) GetResults(ctx context.Context, IDs []string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
@@ -71,6 +76,26 @@ func TestExistingBot(t *testing.T) {
 			exists, err := skylab.ValidateArgs(context.Background(), &request.Args{})
 			So(err, ShouldBeNil)
 			So(exists, ShouldBeTrue)
+		})
+	})
+}
+
+func TestLaunch(t *testing.T) {
+	Convey("When a task is launched", t, func() {
+		swarming := newFakeSwarming()
+		skylab := &Client{
+			Swarming: swarming,
+		}
+		task, err := skylab.LaunchTask(context.Background(), &request.Args{
+			Cmd: worker.Command{
+				TaskName: "foo-name",
+			},
+		})
+		So(err, ShouldBeNil)
+		Convey("the Swarming client is called with the correct args", func() {
+			So(task, ShouldNotBeNil)
+			So(swarming.createCalls, ShouldHaveLength, 1)
+			So(swarming.createCalls[0].Name, ShouldEqual, "foo-name")
 		})
 	})
 }

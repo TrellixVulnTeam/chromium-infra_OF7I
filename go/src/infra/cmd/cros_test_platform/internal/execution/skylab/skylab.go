@@ -26,10 +26,9 @@ import (
 
 // Task represents an individual test task.
 type Task struct {
-	args      request.Args
-	id        string
-	url       string
-	lifeCycle test_platform.TaskState_LifeCycle
+	args          request.Args
+	taskReference *TaskReference
+	lifeCycle     test_platform.TaskState_LifeCycle
 	// Note: If we ever begin supporting other harnesses's result formats
 	// then this field will change to a *skylab_test_runner.Result.
 	// For now, the autotest-specific variant is more convenient.
@@ -47,18 +46,14 @@ func (t *Task) Name() string {
 }
 
 // Launch sends an RPC request to start the task.
-func (t *Task) Launch(ctx context.Context, clients Client) error {
-	req, err := t.args.SwarmingNewTaskRequest()
+func (t *Task) Launch(ctx context.Context, c Client) error {
+	ref, err := c.LaunchTask(ctx, &t.args)
 	if err != nil {
 		return errors.Annotate(err, "launch attempt for %s", t.Name()).Err()
 	}
-	resp, err := clients.Swarming.CreateTask(ctx, req)
-	if err != nil {
-		return errors.Annotate(err, "launch attempt for %s", t.Name()).Err()
-	}
-	t.id = resp.TaskId
-	t.url = clients.Swarming.GetTaskURL(t.id)
-	logging.Infof(ctx, "Launched attempt for %s as task %s", t.Name(), t.url)
+	t.taskReference = ref
+	t.lifeCycle = test_platform.TaskState_LIFE_CYCLE_PENDING
+	logging.Infof(ctx, "Launched attempt for %s as task %s", t.Name(), t.URL())
 	return nil
 }
 
@@ -112,11 +107,11 @@ var transientLifeCycles = map[test_platform.TaskState_LifeCycle]bool{
 // Refresh fetches the latest swarming and isolate state of the given task,
 // and updates the task accordingly.
 func (t *Task) Refresh(ctx context.Context, clients Client) error {
-	results, err := clients.Swarming.GetResults(ctx, []string{t.id})
+	results, err := clients.Swarming.GetResults(ctx, []string{t.SwarmingTaskID()})
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
-	result, err := unpackResult(results, t.id)
+	result, err := unpackResult(results, t.SwarmingTaskID())
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()
 	}
@@ -132,7 +127,7 @@ func (t *Task) Refresh(ctx context.Context, clients Client) error {
 	case lifeCyclesWithResults[lc]:
 		r, err := getAutotestResult(ctx, result, clients.IsolateGetter)
 		if err != nil {
-			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", t.id, err.Error())
+			logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", t.SwarmingTaskID(), err.Error())
 			r = &skylab_test_runner.Result_Autotest{Incomplete: true}
 		}
 		t.autotestResult = r
@@ -183,7 +178,7 @@ func (t *Task) TestCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
 
 // URL return the URL of the task page.
 func (t *Task) URL() string {
-	return t.url
+	return t.taskReference.URL()
 }
 
 const resultsFileName = "results.json"
@@ -232,11 +227,11 @@ func getAutotestResult(ctx context.Context, sResult *swarming_api.SwarmingRpcsTa
 func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 	logURL := fmt.Sprintf(
 		"https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-%s/",
-		t.id,
+		t.SwarmingTaskID(),
 	)
 	gsURL := fmt.Sprintf(
 		"gs://chromeos-autotest-results/swarming-%s/",
-		t.id,
+		t.SwarmingTaskID(),
 	)
 
 	return &steps.ExecuteResponse_TaskResult{
@@ -255,7 +250,7 @@ func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 	}
 }
 
-// ID returns the Swarming task ID.
-func (t *Task) ID() string {
-	return t.id
+// SwarmingTaskID returns the Swarming task ID.
+func (t *Task) SwarmingTaskID() string {
+	return t.taskReference.SwarmingTaskID()
 }

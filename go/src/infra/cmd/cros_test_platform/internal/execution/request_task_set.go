@@ -85,23 +85,23 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 
 		latestTask := testTaskSet.GetLatestTask()
 		if err := latestTask.Refresh(ctx, c); err != nil {
-			return errors.Annotate(err, "tick for task %s", latestTask.ID()).Err()
+			return errors.Annotate(err, "tick for task %s", latestTask.URL()).Err()
 		}
 
 		if !testTaskSet.Completed() {
 			continue
 		}
 
-		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestTask.ID(), testTaskSet.Name, latestTask.Verdict())
+		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestTask.URL(), testTaskSet.Name, latestTask.Verdict())
 
 		shouldRetry, err := r.shouldRetry(ctx, testTaskSet)
 		if err != nil {
-			return errors.Annotate(err, "tick for task %s", latestTask.ID()).Err()
+			return errors.Annotate(err, "tick for task %s", latestTask.URL()).Err()
 		}
 		if shouldRetry {
 			logging.Debugf(ctx, "Retrying %s", testTaskSet.Name)
 			if err := testTaskSet.LaunchTask(ctx, c); err != nil {
-				return errors.Annotate(err, "tick for task %s: retry test", latestTask.ID()).Err()
+				return errors.Annotate(err, "tick for task %s: retry test", latestTask.URL()).Err()
 			}
 			r.retries++
 		}

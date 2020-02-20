@@ -210,8 +210,10 @@ func TestAutotestTestCases(t *testing.T) {
 func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
 	t := &Task{
 		autotestResult: autotestResult,
-		id:             "foo-task-ID",
-		lifeCycle:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+		taskReference: &TaskReference{
+			swarmingTaskID: "foo-task-ID",
+		},
+		lifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	}
 	return t.Result(5)
 }
