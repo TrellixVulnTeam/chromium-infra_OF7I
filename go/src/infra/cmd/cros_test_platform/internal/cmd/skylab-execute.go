@@ -238,7 +238,7 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *execution.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithDeadline(ctx, deadline, fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline))
 	defer cancel(context.Canceled)
-	err := runner.LaunchAndWait(ctx, skylab.Clients{
+	err := runner.LaunchAndWait(ctx, skylab.Client{
 		Swarming:      t,
 		IsolateGetter: gf,
 	})

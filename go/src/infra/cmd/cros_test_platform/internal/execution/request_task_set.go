@@ -58,9 +58,9 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 }
 
 // LaunchTasks launches initial tasks for all the tests in this request.
-func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients skylab.Clients) error {
+func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error {
 	for _, testTaskSet := range r.testTaskSets {
-		runnable, err := testTaskSet.ValidateDependencies(ctx, clients.Swarming)
+		runnable, err := testTaskSet.ValidateDependencies(ctx, c)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients skylab.Clients
 			testTaskSet.MarkNotRunnable()
 			continue
 		}
-		if err := testTaskSet.LaunchTask(ctx, clients); err != nil {
+		if err := testTaskSet.LaunchTask(ctx, c); err != nil {
 			return err
 		}
 	}
@@ -77,14 +77,14 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, clients skylab.Clients
 
 // CheckTasksAndRetry checks the status of currently running tasks for this
 // request and retries failed tasks when allowed.
-func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients skylab.Clients) error {
+func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client) error {
 	for _, testTaskSet := range r.testTaskSets {
 		if testTaskSet.Completed() {
 			continue
 		}
 
 		latestTask := testTaskSet.GetLatestTask()
-		if err := latestTask.Refresh(ctx, clients); err != nil {
+		if err := latestTask.Refresh(ctx, c); err != nil {
 			return errors.Annotate(err, "tick for task %s", latestTask.ID()).Err()
 		}
 
@@ -100,7 +100,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, clients skylab.
 		}
 		if shouldRetry {
 			logging.Debugf(ctx, "Retrying %s", testTaskSet.Name)
-			if err := testTaskSet.LaunchTask(ctx, clients); err != nil {
+			if err := testTaskSet.LaunchTask(ctx, c); err != nil {
 				return errors.Annotate(err, "tick for task %s: retry test", latestTask.ID()).Err()
 			}
 			r.retries++

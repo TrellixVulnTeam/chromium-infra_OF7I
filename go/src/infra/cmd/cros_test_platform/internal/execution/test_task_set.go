@@ -8,7 +8,6 @@ import (
 	"context"
 	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
-	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"math"
 	"time"
 
@@ -63,7 +62,7 @@ func (t *testTaskSet) AttemptedAtLeastOnce() bool {
 
 // ValidateDependencies checks whether this test has dependencies satisfied by
 // at least one Skylab bot.
-func (t *testTaskSet) ValidateDependencies(ctx context.Context, client swarming.Client) (bool, error) {
+func (t *testTaskSet) ValidateDependencies(ctx context.Context, c skylab.Client) (bool, error) {
 	if err := t.argsGenerator.CheckConsistency(); err != nil {
 		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
 		return false, nil
@@ -77,7 +76,7 @@ func (t *testTaskSet) ValidateDependencies(ctx context.Context, client swarming.
 	if err != nil {
 		return false, errors.Annotate(err, "validate dependencies").Err()
 	}
-	exists, err := client.BotExists(ctx, dims)
+	exists, err := c.Swarming.BotExists(ctx, dims)
 	if err != nil {
 		return false, errors.Annotate(err, "validate dependencies").Err()
 	}
@@ -87,13 +86,13 @@ func (t *testTaskSet) ValidateDependencies(ctx context.Context, client swarming.
 	return exists, nil
 }
 
-func (t *testTaskSet) LaunchTask(ctx context.Context, clients skylab.Clients) error {
+func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
 		return err
 	}
 	a := skylab.NewTask(args)
-	if err := a.Launch(ctx, clients); err != nil {
+	if err := a.Launch(ctx, c); err != nil {
 		return err
 	}
 	t.tasks = append(t.tasks, a)

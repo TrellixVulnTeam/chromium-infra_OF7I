@@ -24,12 +24,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-// Clients bundles local interfaces to various remote services used by Runner.
-type Clients struct {
-	Swarming      swarming.Client
-	IsolateGetter isolate.GetterFactory
-}
-
 // Task represents an individual test task.
 type Task struct {
 	args      request.Args
@@ -53,7 +47,7 @@ func (t *Task) Name() string {
 }
 
 // Launch sends an RPC request to start the task.
-func (t *Task) Launch(ctx context.Context, clients Clients) error {
+func (t *Task) Launch(ctx context.Context, clients Client) error {
 	req, err := t.args.SwarmingNewTaskRequest()
 	if err != nil {
 		return errors.Annotate(err, "launch attempt for %s", t.Name()).Err()
@@ -117,7 +111,7 @@ var transientLifeCycles = map[test_platform.TaskState_LifeCycle]bool{
 
 // Refresh fetches the latest swarming and isolate state of the given task,
 // and updates the task accordingly.
-func (t *Task) Refresh(ctx context.Context, clients Clients) error {
+func (t *Task) Refresh(ctx context.Context, clients Client) error {
 	results, err := clients.Swarming.GetResults(ctx, []string{t.id})
 	if err != nil {
 		return errors.Annotate(err, "fetch results").Err()

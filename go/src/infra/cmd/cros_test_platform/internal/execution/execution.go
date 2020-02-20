@@ -58,14 +58,14 @@ func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, de
 // If the supplied context is cancelled prior to completion, or some other error
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
-func (r *Runner) LaunchAndWait(ctx context.Context, clients skylab.Clients) error {
+func (r *Runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
 	defer func() { r.running = false }()
 
-	if err := r.launchTasks(ctx, clients); err != nil {
+	if err := r.launchTasks(ctx, c); err != nil {
 		return err
 	}
 	for {
-		if err := r.checkTasksAndRetry(ctx, clients); err != nil {
+		if err := r.checkTasksAndRetry(ctx, c); err != nil {
 			return err
 		}
 		if r.completed() {
@@ -80,18 +80,18 @@ func (r *Runner) LaunchAndWait(ctx context.Context, clients skylab.Clients) erro
 	}
 }
 
-func (r *Runner) launchTasks(ctx context.Context, clients skylab.Clients) error {
+func (r *Runner) launchTasks(ctx context.Context, c skylab.Client) error {
 	for t, ts := range r.requestTaskSets {
-		if err := ts.LaunchTasks(ctx, clients); err != nil {
+		if err := ts.LaunchTasks(ctx, c); err != nil {
 			return errors.Annotate(err, "launch tasks for %s", t).Err()
 		}
 	}
 	return nil
 }
 
-func (r *Runner) checkTasksAndRetry(ctx context.Context, clients skylab.Clients) error {
+func (r *Runner) checkTasksAndRetry(ctx context.Context, c skylab.Client) error {
 	for t, ts := range r.requestTaskSets {
-		if err := ts.CheckTasksAndRetry(ctx, clients); err != nil {
+		if err := ts.CheckTasksAndRetry(ctx, c); err != nil {
 			return errors.Annotate(err, "check tasks and retry for %s", t).Err()
 		}
 	}
