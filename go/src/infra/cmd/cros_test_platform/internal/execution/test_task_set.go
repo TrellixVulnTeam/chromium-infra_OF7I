@@ -72,18 +72,7 @@ func (t *testTaskSet) ValidateDependencies(ctx context.Context, c skylab.Client)
 	if err != nil {
 		return false, errors.Annotate(err, "validate dependencies").Err()
 	}
-	dims, err := args.StaticDimensions()
-	if err != nil {
-		return false, errors.Annotate(err, "validate dependencies").Err()
-	}
-	exists, err := c.Swarming.BotExists(ctx, dims)
-	if err != nil {
-		return false, errors.Annotate(err, "validate dependencies").Err()
-	}
-	if !exists {
-		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions %+v.", t.Name, dims)
-	}
-	return exists, nil
+	return c.ValidateArgs(ctx, &args)
 }
 
 func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
