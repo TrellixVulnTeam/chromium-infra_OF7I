@@ -41,6 +41,13 @@ RE_PROJECT_NAME = re.compile(
     '^%s$' % _RE_PROJECT_NAME_PATTERN_VERBOSE, re.VERBOSE)
 
 
+# Pattern to match a valid column header name.
+RE_COLUMN_NAME = r'\w+[\w+-.]*\w+'
+
+# Compiled regexp to match a valid column specification.
+RE_COLUMN_SPEC = re.compile('(%s(\s%s)*)*$' % (RE_COLUMN_NAME, RE_COLUMN_NAME))
+
+
 def IsValidProjectName(s):
   """Return true if the given string is a valid project name."""
   return (RE_PROJECT_NAME.match(s) and
@@ -82,6 +89,12 @@ def IsPriviledgedDomainUser(email):
     return user_domain in settings.priviledged_user_domains
 
   return False
+
+
+def IsValidColumnSpec(col_spec):
+  # type: str -> bool
+  """Return true if the given column specification is valid."""
+  return re.match(RE_COLUMN_SPEC, col_spec)
 
 
 # String translation table to catch a common typos in label names.

@@ -320,6 +320,27 @@ class AllProjectMembersTest(unittest.TestCase):
                      [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
 
+class IsValidColumnSpecTest(unittest.TestCase):
+
+  def testIsValidColumnSpec(self):
+    self.assertTrue(
+        framework_bizobj.IsValidColumnSpec('some columns hey-honk hay.honk'))
+
+    self.assertTrue(framework_bizobj.IsValidColumnSpec('some'))
+
+    self.assertTrue(framework_bizobj.IsValidColumnSpec(''))
+
+  def testIsValidColumnSpec_NotValid(self):
+    self.assertFalse(
+        framework_bizobj.IsValidColumnSpec('some columns hey-honk hay.'))
+
+    self.assertFalse(framework_bizobj.IsValidColumnSpec('some columns hey-'))
+
+    self.assertFalse(framework_bizobj.IsValidColumnSpec('-some columns hey'))
+
+    self.assertFalse(framework_bizobj.IsValidColumnSpec('some .columns hey'))
+
+
 class ValidatePrefTest(unittest.TestCase):
 
   def testUnknown(self):
