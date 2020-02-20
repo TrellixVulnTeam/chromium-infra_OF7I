@@ -101,10 +101,6 @@ func (f *fakeSwarming) GetTaskURL(taskID string) string {
 	return f.server + "/task=" + taskID
 }
 
-func (f *fakeSwarming) GetTaskOutputs(ctx context.Context, IDs []string) ([]*swarming_api.SwarmingRpcsTaskOutput, error) {
-	return nil, nil
-}
-
 // setTaskState causes this fake to start returning the given state of all future
 func (f *fakeSwarming) setTaskState(state jsonrpc.TaskState) {
 	f.nextState = state

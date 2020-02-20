@@ -22,7 +22,6 @@ type Client interface {
 	BotExists(context.Context, []*swarming_api.SwarmingRpcsStringPair) (bool, error)
 	CreateTask(context.Context, *swarming_api.SwarmingRpcsNewTaskRequest) (*swarming_api.SwarmingRpcsTaskRequestMetadata, error)
 	GetResults(ctx context.Context, IDs []string) ([]*swarming_api.SwarmingRpcsTaskResult, error)
-	GetTaskOutputs(ctx context.Context, IDs []string) ([]*swarming_api.SwarmingRpcsTaskOutput, error)
 }
 
 // swarming.Client is the reference implementation of the Client interface.
