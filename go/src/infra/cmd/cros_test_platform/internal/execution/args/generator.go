@@ -126,11 +126,12 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 	g.addKeyvalsForDisplayName(ctx, kv)
 
 	cmd := &worker.Command{
-		TaskName:        g.invocation.Test.Name,
 		ClientTest:      isClient,
-		OutputToIsolate: true,
-		TestArgs:        g.invocation.TestArgs,
+		Deadline:        g.deadline,
 		Keyvals:         kv,
+		OutputToIsolate: true,
+		TaskName:        g.invocation.Test.Name,
+		TestArgs:        g.invocation.TestArgs,
 	}
 	cmd.Config(wrap(g.workerConfig))
 
