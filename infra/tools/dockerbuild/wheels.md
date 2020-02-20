@@ -255,6 +255,20 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **Pympler**
+
+### 0.8
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pympler-py2_py3"
+  version: "version:0.8"
+>
+```
+
+
+* *universal*
+
 ## **SQLAlchemy**
 
 ### 1.2.5
