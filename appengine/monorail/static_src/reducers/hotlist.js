@@ -38,6 +38,10 @@ export const FETCH_ITEMS_START = 'hotlist/FETCH_ITEMS_START';
 export const FETCH_ITEMS_SUCCESS = 'hotlist/FETCH_ITEMS_SUCCESS';
 export const FETCH_ITEMS_FAILURE = 'hotlist/FETCH_ITEMS_FAILURE';
 
+export const RERANK_ITEMS_START = 'hotlist/RERANK_ITEMS_START';
+export const RERANK_ITEMS_SUCCESS = 'hotlist/RERANK_ITEMS_SUCCESS';
+export const RERANK_ITEMS_FAILURE = 'hotlist/RERANK_ITEMS_FAILURE';
+
 /* State Shape
 {
   name: string,
@@ -92,6 +96,8 @@ const requestsReducer = combineReducers({
       FETCH_START, FETCH_SUCCESS, FETCH_FAILURE),
   fetchItems: createRequestReducer(
       FETCH_ITEMS_START, FETCH_ITEMS_SUCCESS, FETCH_ITEMS_FAILURE),
+  rerankItems: createRequestReducer(
+      RERANK_ITEMS_START, RERANK_ITEMS_SUCCESS, RERANK_ITEMS_FAILURE),
 });
 
 export const reducer = combineReducers({
@@ -194,6 +200,28 @@ export const fetchItems = (name) => async (dispatch) => {
     dispatch({type: FETCH_ITEMS_SUCCESS, name, items});
   } catch (error) {
     dispatch({type: FETCH_ITEMS_FAILURE, error});
+  };
+};
+
+/**
+ * Action creator to fetch the items in a Hotlist.
+ * @param {string} name The name of the Hotlist to fetch.
+ * @param {Array<String>} items The names of the HotlistItems to move.
+ * @param {number} index The index to insert the moved items.
+ * @return {function(function): Promise<void>}
+ */
+export const rerankItems = (name, items, index) => async (dispatch) => {
+  dispatch({type: RERANK_ITEMS_START});
+
+  try {
+    const args = {name, hotlistItems: items, targetPosition: index};
+    await prpcClient.call('monorail.v1.Hotlists', 'RerankHotlistItems', args);
+
+    dispatch({type: RERANK_ITEMS_SUCCESS});
+
+    await dispatch(fetchItems(name));
+  } catch (error) {
+    dispatch({type: RERANK_ITEMS_FAILURE, error});
   };
 };
 

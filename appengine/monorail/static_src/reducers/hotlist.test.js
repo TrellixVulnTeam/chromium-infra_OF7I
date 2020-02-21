@@ -27,6 +27,10 @@ describe('hotlist', () => {
             error: null,
             requesting: false,
           },
+          rerankItems: {
+            error: null,
+            requesting: false,
+          },
         },
       };
       assert.deepEqual(actual, expected);
@@ -186,6 +190,40 @@ describe('hotlist', () => {
 
         const action = {
           type: hotlist.FETCH_ITEMS_FAILURE,
+          error: sinon.match.any,
+        };
+        sinon.assert.calledWith(dispatch, action);
+      });
+    });
+
+    describe('rerankItems', () => {
+      it('success', async () => {
+        prpcClient.call.returns(Promise.resolve({}));
+
+        const items = [example.HOTLIST_ITEM_NAME];
+        await hotlist.rerankItems(example.NAME, items, 0)(dispatch);
+
+        sinon.assert.calledWith(dispatch, {type: hotlist.RERANK_ITEMS_START});
+
+        const args = {
+          name: example.NAME,
+          hotlistItems: items,
+          targetPosition: 0,
+        };
+        sinon.assert.calledWith(
+            prpcClient.call, 'monorail.v1.Hotlists',
+            'RerankHotlistItems', args);
+
+        sinon.assert.calledWith(dispatch, {type: hotlist.RERANK_ITEMS_SUCCESS});
+      });
+
+      it('failure', async () => {
+        prpcClient.call.throws();
+
+        await hotlist.rerankItems(example.NAME, [], 0)(dispatch);
+
+        const action = {
+          type: hotlist.RERANK_ITEMS_FAILURE,
           error: sinon.match.any,
         };
         sinon.assert.calledWith(dispatch, action);

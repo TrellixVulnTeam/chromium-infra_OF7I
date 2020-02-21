@@ -77,7 +77,7 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
         .columns=${this._hotlist.defaultColumns.map((col) => col.column)}
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
-        ?rerankEnabled=${true}
+        .rerank=${hotlist.rerankItems.bind(null, this._hotlist.name)}
         ?selectionEnabled=${true}
       ></mr-issue-list>
     `;
@@ -134,6 +134,7 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
 
     return itemsWithData.map((item) => ({
       ...this._issue(item.issue),
+      name: item.name,
       rank: item.rank || 0,
       adder: item.adder, // TODO(dtu): Fetch the User's displayName.
       createTime: item.createTime,

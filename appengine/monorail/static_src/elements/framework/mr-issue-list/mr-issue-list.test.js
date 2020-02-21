@@ -1133,7 +1133,7 @@ describe('mr-issue-list', () => {
   });
 
   it('drag-and-drop', async () => {
-    element.rerankEnabled = true;
+    element.rerank = () => {};
     element.issues = [
       {projectName: 'project', localId: 123, summary: 'test issue'},
       {projectName: 'project', localId: 456, summary: 'I have a summary'},

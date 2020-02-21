@@ -239,7 +239,7 @@ export class MrIssueList extends connectStore(LitElement) {
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <thead>
         <tr class="first-row">
-          ${this.rerankEnabled ? html`<th></th>` : ''}
+          ${this.rerank ? html`<th></th>` : ''}
           <th class="selection-header">
             <div class="edit-widget-container">
               ${this.selectionEnabled ? html`
@@ -448,13 +448,14 @@ export class MrIssueList extends connectStore(LitElement) {
         ?hidden=${isHidden}
         data-issue-ref=${id}
         data-index=${i}
+        data-name=${issue.name}
         @focus=${this._setRowAsCursorOnFocus}
         @click=${this._clickIssueRow}
         @auxclick=${this._clickIssueRow}
         @keydown=${this._keydownIssueRow}
         tabindex="0"
       >
-        ${this.rerankEnabled ? html`
+        ${this.rerank ? html`
           <td class="draggable ignore-navigation"
               @mousedown=${this._onMouseDown}>
             <i class="material-icons" title="Drag issue">drag_indicator</i>
@@ -563,10 +564,10 @@ export class MrIssueList extends connectStore(LitElement) {
        */
       issues: {type: Array},
       /**
-       * A function that takes in an issue and computes whether
-       * reranking should be enabled for a given issue.
+       * A Redux action creator that calls the API to rerank the issues
+       * in the list. If set, reranking is enabled for this issue list.
        */
-      rerankEnabled: {type: Boolean},
+      rerank: {type: Object},
       /**
        * Whether issues should be selectable or not.
        */
@@ -661,8 +662,13 @@ export class MrIssueList extends connectStore(LitElement) {
     this._queryParams = {};
     /** @type {string} */
     this.currentQuery = '';
-    /** @type {boolean} */
-    this.rerankEnabled = false;
+    /**
+     * @param {string} name
+     * @param {Array<String>} items
+     * @param {number} index
+     * @return {function(function): Promise<void>}
+     */
+    this.rerank = null;
     /** @type {boolean} */
     this.selectionEnabled = false;
     /** @type {boolean} */
@@ -1331,7 +1337,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * @param {number} y The y-distance the cursor has moved since mouseDown.
    */
-  _endDrag(y) {
+  async _endDrag(y) {
     this._dragging = false;
 
     // Unselected rows: Transition them to their new positions.
@@ -1348,31 +1354,21 @@ export class MrIssueList extends connectStore(LitElement) {
     };
 
     // Submit the change.
-    // TODO(dtu): Submit the change with the new PRPC API.
-  }
+    const items = selectedRows.map((row) => row.dataset.name);
+    await store.dispatch(this.rerank(items, finalIndex));
 
-  /**
-   * @param {number} from
-   * @param {number} to
-   * @param {HTMLTableRowElement} target
-   */
-  async _rerankIssues(from, to, target) {
-    // Reset all transitions and transforms.
+    // Reset the transforms.
     for (const row of this._getRows()) {
       row.style.transition = '';
       row.style.transform = '';
     };
 
-    // Fetch new issue list.
-    const newIssues = [...this.issues];
-    newIssues.splice(to, 0, newIssues.splice(from, 1)[0]);
-    this.issues = newIssues;
-
     // Set the cursor to the new row.
     // In order to focus the correct element, we need the DOM to be in sync
     // with the issue list. We modified this.issues, so wait for a re-render.
     await this.updateComplete;
-    this.shadowRoot.querySelector(`.list-row[data-index="${to}"]`).focus();
+    const selector = `.list-row[data-index="${finalIndex}"]`;
+    this.shadowRoot.querySelector(selector).focus();
   }
 
   /**

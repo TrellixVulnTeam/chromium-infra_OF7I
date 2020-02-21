@@ -21,9 +21,11 @@ export const HOTLIST = Object.freeze({
   hotlistPrivacy: 1,
 });
 
+export const HOTLIST_ITEM_NAME = NAME + '/items/56';
+
 /** @type {HotlistItemV1} */
 export const HOTLIST_ITEM = Object.freeze({
-  name: NAME + '/items/56',
+  name: HOTLIST_ITEM_NAME,
   issue: issue.NAME,
   // rank: The API excludes the rank field if it's 0.
   adder: user.NAME,
