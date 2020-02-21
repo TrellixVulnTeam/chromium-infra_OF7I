@@ -2,51 +2,49 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {ISSUE, ISSUE_OTHER_PROJECT} from './constants-issue.js';
-import {USER_REF} from './constants-user.js';
+import * as issue from './constants-issue.js';
+import * as user from './constants-user.js';
 import 'shared/typedef.js';
 
-/** @type {HotlistRef} */
-export const HOTLIST_REF = Object.freeze({
-  owner: USER_REF,
-  name: 'Hotlist-Name',
-});
+/** @type {string} */
+export const NAME = 'hotlists/1234';
 
-/** @type {Hotlist} */
+/** @type {HotlistV1} */
 export const HOTLIST = Object.freeze({
-  ownerRef: USER_REF,
-  name: 'Hotlist-Name',
+  name: NAME,
+  displayName: 'Hotlist-Name',
+  owner: 'users/1',
+  editors: ['users/2', 'users/3'],
   summary: 'Summary',
   description: 'Description',
-  defaultColSpec: 'Rank ID Summary',
-  isPrivate: false,
+  defaultColumns: [{column: 'Rank'}, {column: 'ID'}, {column: 'Summary'}],
+  hotlistPrivacy: 1,
 });
 
-/** @type {HotlistItem} */
+/** @type {HotlistItemV1} */
 export const HOTLIST_ITEM = Object.freeze({
-  issue: ISSUE,
-  rank: 1,
-  adderRef: USER_REF,
-  addedTimestamp: 1575000000,
+  name: NAME + '/items/56',
+  issue: issue.NAME,
+  // rank: The API excludes the rank field if it's 0.
+  adder: user.NAME,
+  createTime: '2020-01-01T12:00:00Z',
   note: 'Note',
 });
 
-/** @type {HotlistItem} */
+/** @type {HotlistItemV1} */
 export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
-  issue: ISSUE_OTHER_PROJECT,
-  rank: 2,
-  adderRef: USER_REF,
-  addedTimestamp: 1575000000,
+  name: NAME + '/items/78',
+  issue: issue.NAME_OTHER_PROJECT,
+  rank: 1,
+  adder: user.NAME,
+  createTime: '2020-01-01T12:00:00Z',
   note: 'Note',
 });
 
-/** @type {string} */
-export const HOTLIST_REF_STRING = '12345678:Hotlist-Name';
+/** @type {Object.<string, HotlistV1>} */
+export const HOTLISTS = Object.freeze({[NAME]: HOTLIST});
 
-/** @type {Object.<string, Hotlist>} */
-export const HOTLISTS = Object.freeze({[HOTLIST_REF_STRING]: HOTLIST});
-
-/** @type {Object.<string, Array<HotlistItem>>} */
+/** @type {Object.<string, Array<HotlistItemV1>>} */
 export const HOTLIST_ITEMS = Object.freeze({
-  [HOTLIST_REF_STRING]: [HOTLIST_ITEM],
+  [NAME]: [HOTLIST_ITEM],
 });

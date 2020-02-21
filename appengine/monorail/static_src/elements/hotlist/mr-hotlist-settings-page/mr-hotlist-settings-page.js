@@ -7,8 +7,8 @@ import {connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
-/** Hotlist Details page */
-export class MrHotlistDetailsPage extends connectStore(LitElement) {
+/** Hotlist Settings page */
+export class MrHotlistSettingsPage extends connectStore(LitElement) {
   /** @override */
   static get styles() {
     return css`
@@ -33,15 +33,17 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
       return html`Loading...`;
     }
 
+    const defaultColumns = this._hotlist.defaultColumns
+        .map((col) => col.column).join(' ');
     return html`
-      <mr-hotlist-header .name=${this._hotlist.name} selected=2>
+      <mr-hotlist-header .name=${this._hotlist.displayName} selected=2>
       </mr-hotlist-header>
 
       <section>
         <h1>Hotlist Settings</h1>
         <dl>
           <dt>Name</dt>
-          <dd>${this._hotlist.name}</dd>
+          <dd>${this._hotlist.displayName}</dd>
           <dt>Summary</dt>
           <dd>${this._hotlist.summary}</dd>
           <dt>Description</dt>
@@ -53,7 +55,7 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
         <h1>Hotlist Defaults</h1>
         <dl>
           <dt>Default columns shown in list view</dt>
-          <dd>${this._hotlist.defaultColSpec}</dd>
+          <dd>${defaultColumns}</dd>
         </dl>
       </section>
 
@@ -62,8 +64,8 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
         <dl>
           <dt>Who can view this hotlist</dt>
           <dd>
-            ${this._hotlist.isPrivate ?
-              'Members only' : 'Anyone on the Internet'}
+            ${this._hotlist.hotlistPrivacy ?
+              'Anyone on the internet' : 'Members only'}
           </dd>
         </dl>
         <p>
@@ -93,4 +95,4 @@ export class MrHotlistDetailsPage extends connectStore(LitElement) {
   }
 };
 
-customElements.define('mr-hotlist-details-page', MrHotlistDetailsPage);
+customElements.define('mr-hotlist-settings-page', MrHotlistSettingsPage);

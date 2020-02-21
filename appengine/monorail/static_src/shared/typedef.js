@@ -284,6 +284,13 @@
  * @property {string} phaseName
  */
 
+/**
+ * An Object returned by the pRPC v1 API from feature_objects.proto.
+ *
+ * @typedef {Object} IssuesListColumn
+ * @property {string} column
+ */
+
 
 /**
  * Types defined in project_objects.proto.
@@ -430,6 +437,20 @@
  */
 
 /**
+ * A Hotlist Object returned by the pRPC v1 API from feature_objects.proto.
+ *
+ * @typedef {Object} HotlistV1
+ * @property {string} name
+ * @property {string=} displayName
+ * @property {string=} owner
+ * @property {Array<string>=} editors
+ * @property {string=} summary
+ * @property {string=} description
+ * @property {Array<IssuesListColumn>=} defaultColumns
+ * @property {number=} hotlistPrivacy
+ */
+
+/**
  * A HotlistItem Object returned by the pRPC API features_objects.proto.
  *
  * @typedef {Object} HotlistItem
@@ -437,6 +458,18 @@
  * @property {number=} rank
  * @property {UserRef=} adderRef
  * @property {number=} addedTimestamp
+ * @property {string=} note
+ */
+
+/**
+ * A HotlistItem Object returned by the pRPC v1 API from feature_objects.proto.
+ *
+ * @typedef {Object} HotlistItemV1
+ * @property {string=} name
+ * @property {string=} issue
+ * @property {number=} rank
+ * @property {string=} adder
+ * @property {string=} createTime
  * @property {string=} note
  */
 

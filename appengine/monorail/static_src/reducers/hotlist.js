@@ -8,9 +8,9 @@
  * on the frontend.
  *
  * The Hotlist data is stored in a normalized format.
- * `hotlists` stores all Hotlist data indexed by HotlistRefString.
- * `hotlistItems` stores all Hotlist items indexed by HotlistRefString.
- * `hotlistRef` is a reference to the currently viewed Hotlist.
+ * `hotlists` stores all Hotlist data indexed by Hotlist name.
+ * `hotlistItems` stores all Hotlist items indexed by Hotlist name.
+ * `name` is a reference to the currently viewed Hotlist.
  * `hotlist` is a selector that gets the currently viewed Hotlist data.
  *
  * Reference: https://github.com/erikras/ducks-modular-redux
@@ -18,9 +18,10 @@
 
 import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
-import {hotlistToRef, hotlistToRefString, hotlistRefToString}
-  from 'shared/converters-hotlist.js';
+import {userIdOrDisplayNameToUserRef, issueNameToRef}
+  from 'shared/converters.js';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
+import * as issue from './issue.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 
@@ -39,13 +40,14 @@ export const FETCH_ITEMS_FAILURE = 'hotlist/FETCH_ITEMS_FAILURE';
 
 /* State Shape
 {
-  hotlists: Object.<string, Hotlist>,
-  hotlistItems: Object.<string, Array<HotlistItem>>,
+  name: string,
 
-  hotlistRef: HotlistRef,
+  hotlists: Object<string, HotlistV1>,
+  hotlistItems: Object<string, Array<HotlistItemV1>>,
 
   requests: {
     fetch: ReduxRequestState,
+    fetchItems: ReduxRequestState,
   },
 }
 */
@@ -53,147 +55,120 @@ export const FETCH_ITEMS_FAILURE = 'hotlist/FETCH_ITEMS_FAILURE';
 // Reducers
 
 /**
- * All Hotlist data indexed by HotlistRefString.
- * @param {Object<string, Hotlist>} state The mapping of existing Hotlist data.
+ * A reference to the currently viewed Hotlist.
+ * @param {?string} state The existing Hotlist name.
+ * @param {AnyAction} action
+ * @return {?string}
+ */
+export const nameReducer = createReducer(null, {
+  [SELECT]: (_state, {name}) => name,
+});
+
+/**
+ * All Hotlist data indexed by Hotlist name.
+ * @param {Object<string, HotlistV1>} state The existing Hotlist data.
  * @param {AnyAction} action
  * @param {Hotlist} action.hotlist The hotlist that was fetched.
- * @return {Object.<string, Hotlist>}
+ * @return {Object<string, HotlistV1>}
  */
 export const hotlistsReducer = createReducer({}, {
-  [FETCH_SUCCESS]: (state, {hotlist}) => {
-    const newState = {...state};
-    newState[hotlistToRefString(hotlist)] = hotlist;
-    return newState;
-  },
+  [FETCH_SUCCESS]: (state, {hotlist}) => ({...state, [hotlist.name]: hotlist}),
 });
 
 /**
- * All Hotlist items indexed by HotlistRefString.
- * @param {Object<string, Array<HotlistItem>>} state
+ * All Hotlist items indexed by Hotlist name.
+ * @param {Object<string, Array<HotlistItemV1>>} state The existing items.
  * @param {AnyAction} action
- * @param {HotlistRef} action.hotlistRef A reference to the hotlist that items
- *   were fetched from.
- * @param {Array<HotlistItem>} action.items The hotlist items fetched.
- * @return {Object.<string, Array<HotlistItem>>}
+ * @param {name} action.name A reference to the Hotlist.
+ * @param {Array<HotlistItemV1>} action.items The Hotlist items fetched.
+ * @return {Object<string, Array<HotlistItemV1>>}
  */
 export const hotlistItemsReducer = createReducer({}, {
-  [FETCH_ITEMS_SUCCESS]: (state, {hotlistRef, items}) => ({
-    ...state,
-    [hotlistRefToString(hotlistRef)]: items,
-  }),
-});
-
-/**
- * A reference to the currently viewed Hotlist.
- * @param {?Hotlist} state The existing HotlistRef.
- * @param {AnyAction} action
- * @return {?Hotlist}
- */
-export const hotlistRefReducer = createReducer(null, {
-  [SELECT]: (_state, {hotlistRef}) => hotlistRef,
-  [FETCH_SUCCESS]: (state, {hotlist}) => {
-    // The original HotlistRef may be missing the displayName or userId.
-    // If we just fetched the referenced Hotlist, update the missing info.
-    if (!state) {
-      return state;
-    }
-
-    const newRef = hotlistToRef(hotlist);
-    const sameName = state.name === newRef.name;
-    const sameOwner = state.owner.userId === newRef.owner.userId ||
-      state.owner.displayName === newRef.owner.displayName;
-    const oldRefMissingField = !state.owner.userId || !state.owner.displayName;
-    return sameName && sameOwner && oldRefMissingField ? newRef : state;
-  },
+  [FETCH_ITEMS_SUCCESS]: (state, {name, items}) => ({...state, [name]: items}),
 });
 
 const requestsReducer = combineReducers({
   fetch: createRequestReducer(
       FETCH_START, FETCH_SUCCESS, FETCH_FAILURE),
+  fetchItems: createRequestReducer(
+      FETCH_ITEMS_START, FETCH_ITEMS_SUCCESS, FETCH_ITEMS_FAILURE),
 });
 
 export const reducer = combineReducers({
+  name: nameReducer,
+
   hotlists: hotlistsReducer,
   hotlistItems: hotlistItemsReducer,
-  hotlistRef: hotlistRefReducer,
 
   requests: requestsReducer,
 });
 
 // Selectors
+
 /**
- * Returns all the Hotlist data in the store as
- * a mapping of HotlistRef string to Hotlist.
+ * Returns the currently viewed Hotlist name, or null if there is none.
  * @param {any} state
- * @return {Object.<string, Hotlist>}
+ * @return {?string}
+ */
+export const name = (state) => state.hotlist.name;
+
+/**
+ * Returns all the Hotlist data in the store as a mapping from name to Hotlist.
+ * @param {any} state
+ * @return {Object<string, HotlistV1>}
  */
 export const hotlists = (state) => state.hotlist.hotlists;
 
 /**
- * Returns all the Hotlist items in the store as a mapping of
- * HotlistRef string to its respective array of HotlistItems.
+ * Returns all the Hotlist items in the store as a mapping
+ * from a Hotlist name to its respective array of HotlistItems.
  * @param {any} state
- * @return {Object.<string, Array<HotlistItem>>}
+ * @return {Object<string, Array<HotlistItemV1>>}
  */
 export const hotlistItems = (state) => state.hotlist.hotlistItems;
 
 /**
- * Returns the currently viewed HotlistRef, or null if there is none.
- * @param {any} state
- * @return {?HotlistRef}
- */
-export const hotlistRef = (state) => state.hotlist.hotlistRef;
-
-/**
  * Returns the currently viewed Hotlist, or null if there is none.
  * @param {any} state
- * @return {?Hotlist}
+ * @return {?HotlistV1}
  */
-export const viewedHotlist = createSelector([hotlists, hotlistRef],
-    (hotlists, hotlistRef) => {
-      if (!hotlistRef) {
-        return null;
-      }
-      return hotlists[hotlistRefToString(hotlistRef)] || null;
-    });
+export const viewedHotlist = createSelector(
+    [hotlists, name],
+    (hotlists, name) => name && hotlists[name] || null);
 
 /**
  * Returns an Array containing the items in the currently viewed Hotlist,
- * or empty Array if there is no current HotlistRef or no data.
+ * or [] if there is no current Hotlist or no Hotlist data.
  * @param {any} state
- * @return {Array<HotlistItem>}
+ * @return {Array<HotlistItemV1>}
  */
-export const viewedHotlistItems = createSelector([hotlistItems, hotlistRef],
-    (hotlistItems, hotlistRef) => {
-      if (!hotlistRef) {
-        return [];
-      }
-      return hotlistItems[hotlistRefToString(hotlistRef)] || [];
-    });
+export const viewedHotlistItems = createSelector(
+    [hotlistItems, name],
+    (hotlistItems, name) => name && hotlistItems[name] || []);
 
 // Action Creators
+
 /**
  * Action creator to set the currently viewed Hotlist.
- * @param {HotlistRef} hotlistRef A reference to the Hotlist to select.
- * @return {function(function): Promise<void>}
+ * @param {string} name The name of the Hotlist to select.
+ * @return {AnyAction}
  */
-export const select = (hotlistRef) => {
-  return (dispatch) => dispatch({type: SELECT, hotlistRef});
-};
+export const select = (name) => ({type: SELECT, name});
 
 /**
  * Action creator to fetch a Hotlist object.
- * @param {HotlistRef} hotlistRef A reference to the Hotlist to fetch.
+ * @param {string} name The name of the Hotlist to fetch.
  * @return {function(function): Promise<void>}
  */
-export const fetch = (hotlistRef) => async (dispatch) => {
+export const fetch = (name) => async (dispatch) => {
   dispatch({type: FETCH_START});
 
   try {
-    const resp = await prpcClient.call(
-        'monorail.Features', 'GetHotlist', {hotlistRef});
+    /** @type {HotlistV1} */
+    const hotlist = await prpcClient.call(
+        'monorail.v1.Hotlists', 'GetHotlist', {name});
 
-    dispatch({type: FETCH_SUCCESS, hotlist: resp.hotlist});
+    dispatch({type: FETCH_SUCCESS, hotlist});
   } catch (error) {
     dispatch({type: FETCH_FAILURE, error});
   };
@@ -201,18 +176,47 @@ export const fetch = (hotlistRef) => async (dispatch) => {
 
 /**
  * Action creator to fetch the items in a Hotlist.
- * @param {HotlistRef} hotlistRef A reference to the Hotlist to fetch.
+ * @param {string} name The name of the Hotlist to fetch.
  * @return {function(function): Promise<void>}
  */
-export const fetchItems = (hotlistRef) => async (dispatch) => {
+export const fetchItems = (name) => async (dispatch) => {
   dispatch({type: FETCH_ITEMS_START});
 
   try {
-    const resp = await prpcClient.call(
-        'monorail.Features', 'ListHotlistItems', {hotlistRef});
+    const args = {parent: name, orderBy: 'rank'};
+    /** @type {{items: Array<HotlistItemV1>}} */
+    const {items} = await prpcClient.call(
+        'monorail.v1.Hotlists', 'ListHotlistItems', args);
 
-    dispatch({type: FETCH_ITEMS_SUCCESS, hotlistRef, items: resp.items});
+    const issueRefs = items.map((item) => issueNameToRef(item.issue));
+    dispatch(issue.fetchIssues(issueRefs));
+
+    dispatch({type: FETCH_ITEMS_SUCCESS, name, items});
   } catch (error) {
     dispatch({type: FETCH_ITEMS_FAILURE, error});
+  };
+};
+
+// Helpers
+
+/**
+ * Helper to fetch a Hotlist ID given its owner and name.
+ * @param {string} owner The Hotlist owner's user id or display name.
+ * @param {string} hotlist The Hotlist's id or display name.
+ * @return {Promise<?string>}
+ */
+export const getHotlistName = async (owner, hotlist) => {
+  const hotlistRef = {
+    owner: userIdOrDisplayNameToUserRef(owner),
+    name: hotlist,
+  };
+
+  try {
+    /** @type {{hotlistId: number}} */
+    const {hotlistId} = await prpcClient.call(
+        'monorail.Features', 'GetHotlistID', {hotlistRef});
+    return 'hotlists/' + hotlistId;
+  } catch (error) {
+    return null;
   };
 };

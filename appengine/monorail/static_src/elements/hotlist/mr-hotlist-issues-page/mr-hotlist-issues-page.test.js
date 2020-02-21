@@ -3,9 +3,11 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 import * as project from 'reducers/project.js';
 import * as example from 'shared/test/constants-hotlist.js';
-import {MrHotlistIssuesPage, prepareIssues} from './mr-hotlist-issues-page.js';
+import * as exampleIssue from 'shared/test/constants-issue.js';
+import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
 
 /** @type {MrHotlistIssuesPage} */
 let element;
@@ -35,10 +37,11 @@ describe('mr-hotlist-issues-page', () => {
   it('renders hotlist items with one project', async () => {
     element._hotlist = example.HOTLIST;
     element._hotlistItems = [example.HOTLIST_ITEM];
+    element._issue = () => exampleIssue.ISSUE;
     await element.updateComplete;
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
-    assert.notInclude(issueList.shadowRoot.innerHTML, 'other-project-name');
+    assert.deepEqual(issueList.projectName, 'project-name');
   });
 
   it('renders hotlist items with multiple projects', async () => {
@@ -47,42 +50,45 @@ describe('mr-hotlist-issues-page', () => {
       example.HOTLIST_ITEM,
       example.HOTLIST_ITEM_OTHER_PROJECT,
     ];
+    element._issue = (name) => ({
+      [exampleIssue.NAME]: exampleIssue.ISSUE,
+      [exampleIssue.NAME_OTHER_PROJECT]: exampleIssue.ISSUE_OTHER_PROJECT,
+    }[name]);
     await element.updateComplete;
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
-    assert.include(issueList.shadowRoot.innerHTML, 'other-project-name');
-  });
-
-  it('sorts items by Rank', async () => {
-    const hotlistIssues = prepareIssues([
-      example.HOTLIST_ITEM_OTHER_PROJECT,
-      example.HOTLIST_ITEM,
-    ]);
-
-    assert.lengthOf(hotlistIssues, 2);
-    assert.equal(hotlistIssues[0].rank, 1);
-    assert.equal(hotlistIssues[1].rank, 2);
+    assert.isNull(issueList.projectName);
   });
 
   it('computes strings for HotlistIssue fields', async () => {
-    element._hotlist = {
-      ...example.HOTLIST,
-      defaultColSpec: 'Summary Rank Added Adder Note',
-    };
-    element._hotlistItems = [{
-      issue: {projectName: 'project-name', localId: 1234, summary: 'Summary'},
-      rank: 53,
-      adderRef: {displayName: 'example@example.com'},
-      addedTimestamp: Date.now() / 1000 - 24 * 60 * 60, // a day ago
-      note: 'Note',
-    }];
-    await element.updateComplete;
+    const clock = sinon.useFakeTimers(24 * 60 * 60 * 1000);
 
-    const issueList = element.shadowRoot.querySelector('mr-issue-list');
-    assert.include(issueList.shadowRoot.innerHTML, 'Summary');
-    assert.include(issueList.shadowRoot.innerHTML, '53');
-    assert.include(issueList.shadowRoot.innerHTML, 'a day ago');
-    assert.include(issueList.shadowRoot.innerHTML, 'example@example.com');
-    assert.include(issueList.shadowRoot.innerHTML, 'Note');
+    try {
+      element._hotlist = {
+        ...example.HOTLIST,
+        defaultColumns: [
+          {column: 'Summary'}, {column: 'Rank'}, {column: 'Added'},
+          {column: 'Adder'}, {column: 'Note'},
+        ],
+      };
+      element._hotlistItems = [{
+        issue: exampleIssue.NAME,
+        rank: 52,
+        adder: 'users/5678',
+        createTime: new Date(0).toISOString(),
+        note: 'Note',
+      }];
+      element._issue = () => ({...exampleIssue.ISSUE, summary: 'Summary'});
+      await element.updateComplete;
+
+      const issueList = element.shadowRoot.querySelector('mr-issue-list');
+      assert.include(issueList.shadowRoot.innerHTML, 'Summary');
+      assert.include(issueList.shadowRoot.innerHTML, '53');
+      assert.include(issueList.shadowRoot.innerHTML, 'a day ago');
+      assert.include(issueList.shadowRoot.innerHTML, 'users/5678');
+      assert.include(issueList.shadowRoot.innerHTML, 'Note');
+    } finally {
+      clock.restore();
+    }
   });
 });

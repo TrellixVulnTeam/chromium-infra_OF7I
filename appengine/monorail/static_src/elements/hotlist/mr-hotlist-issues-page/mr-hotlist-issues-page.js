@@ -7,6 +7,7 @@ import {relativeTime}
   from 'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
 import {connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
+import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
@@ -16,7 +17,7 @@ import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
  * A HotlistItem with the Issue flattened into the top-level,
  * containing the intersection of the fields of HotlistItem and Issue.
  *
- * @typedef {Issue & HotlistItem} HotlistIssue
+ * @typedef {Issue & HotlistItemV1} HotlistIssue
  */
 
 const DEFAULT_HOTLIST_FIELDS = Object.freeze([
@@ -53,14 +54,14 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       return html`Loading...`;
     }
 
-    const issues = prepareIssues(this._hotlistItems);
+    const issues = this.prepareIssues(this._hotlistItems);
 
     const allProjectNamesEqual = issues.length && issues.every(
         (issue) => issue.projectName === issues[0].projectName);
     const projectName = allProjectNamesEqual ? issues[0].projectName : null;
 
     return html`
-      <mr-hotlist-header .name=${this._hotlist.name} selected=0>
+      <mr-hotlist-header .name=${this._hotlist.displayName} selected=0>
       </mr-hotlist-header>
 
       <dl>
@@ -73,7 +74,7 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       <mr-issue-list
         .issues=${issues}
         .projectName=${projectName}
-        .columns=${this._hotlist.defaultColSpec.split(' ')}
+        .columns=${this._hotlist.defaultColumns.map((col) => col.column)}
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
         ?rerankEnabled=${true}
@@ -87,6 +88,7 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
     return {
       _hotlist: {type: Object},
       _hotlistItems: {type: Array},
+      _issue: {type: Object},
       _extractFieldValuesFromIssue: {type: Object},
     };
   };
@@ -94,10 +96,15 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
   /** @override */
   constructor() {
     super();
-    /** @type {Hotlist=} */
+    /** @type {?HotlistV1} */
     this._hotlist = null;
-    /** @type {Array<HotlistItem>} */
+    /** @type {Array<HotlistItemV1>} */
     this._hotlistItems = [];
+    /**
+     * @param {string} _name
+     * @return {?Issue}
+     */
+    this._issue = (_name) => null;
     /**
      * @param {Issue} _issue
      * @param {string} _fieldName
@@ -110,8 +117,28 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
   stateChanged(state) {
     this._hotlist = hotlist.viewedHotlist(state);
     this._hotlistItems = hotlist.viewedHotlistItems(state);
+    this._issue = issue.issue(state);
     this._extractFieldValuesFromIssue =
       project.extractFieldValuesFromIssue(state);
+  }
+
+  /**
+   * @param {Array<HotlistItemV1>} items
+   * @return {Array<HotlistIssue>}
+   */
+  prepareIssues(items) {
+    // Filter out issues that haven't been fetched yet or failed to fetch.
+    // Example: if the user doesn't have permissions to view the issue.
+    // <mr-issue-list> assumes that certain fields are included in each Issue.
+    const itemsWithData = items.filter((item) => this._issue(item.issue));
+
+    return itemsWithData.map((item) => ({
+      ...this._issue(item.issue),
+      rank: item.rank || 0,
+      adder: item.adder, // TODO(dtu): Fetch the User's displayName.
+      createTime: item.createTime,
+      note: item.note,
+    }));
   }
 
   /**
@@ -122,37 +149,17 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
   _extractFieldValues(hotlistIssue, fieldName) {
     switch (fieldName) {
       case 'Added':
-        return [relativeTime(new Date(hotlistIssue.addedTimestamp * 1000))];
+        return [relativeTime(new Date(hotlistIssue.createTime))];
       case 'Adder':
-        return [hotlistIssue.adderRef.displayName];
+        return [hotlistIssue.adder];
       case 'Note':
         return [hotlistIssue.note];
       case 'Rank':
-        return [String(hotlistIssue.rank)];
+        return [String(hotlistIssue.rank + 1)];
       default:
         return this._extractFieldValuesFromIssue(hotlistIssue, fieldName);
     }
   }
 };
-
-/**
- * @param {Array<HotlistItem>} hotlistItems
- * @return {Array<HotlistIssue>}
- */
-export function prepareIssues(hotlistItems) {
-  /** @type {Array<HotlistIssue>} */
-  const issues = hotlistItems.map((hotlistItem) => {
-    return {
-      ...hotlistItem.issue,
-      addedTimestamp: hotlistItem.addedTimestamp,
-      adderRef: hotlistItem.adderRef,
-      note: hotlistItem.note,
-      rank: hotlistItem.rank,
-    };
-  });
-
-  issues.sort((a, b) => a.rank - b.rank);
-  return issues;
-}
 
 customElements.define('mr-hotlist-issues-page', MrHotlistIssuesPage);

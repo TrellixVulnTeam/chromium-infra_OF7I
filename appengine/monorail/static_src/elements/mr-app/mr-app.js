@@ -16,7 +16,6 @@ import * as issue from 'reducers/issue.js';
 import * as user from 'reducers/user.js';
 import * as ui from 'reducers/ui.js';
 import * as sitewide from 'reducers/sitewide.js';
-import {userIdOrDisplayNameToUserRef} from 'shared/converters.js';
 import {arrayToEnglish} from 'shared/helpers.js';
 import {trackPageChange} from 'shared/ga-helpers.js';
 import 'elements/issue-list/mr-list-page/mr-list-page.js';
@@ -146,12 +145,12 @@ export class MrApp extends connectStore(LitElement) {
         return html`<mr-chart-page></mr-chart-page>`;
       case 'projects':
         return html`<mr-projects-page></mr-projects-page>`;
-      case 'hotlist-details':
-        return html`<mr-hotlist-details-page></mr-hotlist-details-page>`;
       case 'hotlist-issues':
         return html`<mr-hotlist-issues-page></mr-hotlist-issues-page>`;
       case 'hotlist-people':
         return html`<mr-hotlist-people-page></mr-hotlist-people-page>`;
+      case 'hotlist-settings':
+        return html`<mr-hotlist-settings-page></mr-hotlist-settings-page>`;
       default:
         return;
     }
@@ -266,6 +265,17 @@ export class MrApp extends connectStore(LitElement) {
 
     page('*', this._preRouteHandler.bind(this));
 
+    page('/hotlists/:hotlist', (ctx) => {
+      page.redirect(`/hotlists/${ctx.params.hotlist}/issues`);
+    });
+    page('/hotlists/:hotlist/*', this._selectHotlist);
+    page('/hotlists/:hotlist/issues',
+        this._loadHotlistIssuesPage.bind(this), postRouteHandler);
+    page('/hotlists/:hotlist/people',
+        this._loadHotlistPeoplePage.bind(this), postRouteHandler);
+    page('/hotlists/:hotlist/settings',
+        this._loadHotlistSettingsPage.bind(this), postRouteHandler);
+
     page('/p', '/projects');
     page('/projects', this._loadProjectsPage.bind(this));
     page('/p/:project/*', this._selectProject.bind(this));
@@ -276,16 +286,15 @@ export class MrApp extends connectStore(LitElement) {
     page('/p/:project/issues/entry_new', this._loadEntryPage.bind(this),
         postRouteHandler);
 
-    page('/users/:user/hotlists/:hotlist/*', this._selectHotlist);
-    page(
-        '/users/:user/hotlists/:hotlist', this._selectHotlist,
-        this._loadHotlistIssuesPage.bind(this), postRouteHandler);
-    page(
-        '/users/:user/hotlists/:hotlist/details',
-        this._loadHotlistDetailsPage.bind(this), postRouteHandler);
-    page(
-        '/users/:user/hotlists/:hotlist/people',
-        this._loadHotlistPeoplePage.bind(this), postRouteHandler);
+    // Redirects from old hotlist pages to SPA hotlist pages.
+    const hotlistRedirect = (pageName) => async (ctx) => {
+      const name =
+          await hotlist.getHotlistName(ctx.params.user, ctx.params.hotlist);
+      page.redirect(`/${name}/${pageName}`);
+    };
+    page('/users/:user/hotlists/:hotlist', hotlistRedirect('issues'));
+    page('/users/:user/hotlists/:hotlist/people', hotlistRedirect('people'));
+    page('/users/:user/hotlists/:hotlist/details', hotlistRedirect('settings'));
 
     page();
   }
@@ -458,25 +467,10 @@ export class MrApp extends connectStore(LitElement) {
    * @param {function} next Passes execution on to the next registered callback.
    */
   _selectHotlist(ctx, next) {
-    const hotlistRef = {
-      owner: userIdOrDisplayNameToUserRef(ctx.params.user),
-      name: ctx.params.hotlist,
-    };
-    store.dispatch(hotlist.select(hotlistRef));
-    store.dispatch(hotlist.fetch(hotlistRef));
-    store.dispatch(hotlist.fetchItems(hotlistRef));
-    next();
-  }
-
-  /**
-   * Loads mr-hotlist-details-page.js and makes it the currently viewed page.
-   * @param {PageJS.Context} ctx A page.js Context containing routing state.
-   * @param {function} next Passes execution on to the next registered callback.
-   */
-  async _loadHotlistDetailsPage(ctx, next) {
-    await import(/* webpackChunkName: "mr-hotlist-details-page" */
-        `../hotlist/mr-hotlist-details-page/mr-hotlist-details-page.js`);
-    this.page = 'hotlist-details';
+    const name = 'hotlists/' + ctx.params.hotlist;
+    store.dispatch(hotlist.select(name));
+    store.dispatch(hotlist.fetch(name));
+    store.dispatch(hotlist.fetchItems(name));
     next();
   }
 
@@ -501,6 +495,18 @@ export class MrApp extends connectStore(LitElement) {
     await import(/* webpackChunkName: "mr-hotlist-people-page" */
         `../hotlist/mr-hotlist-people-page/mr-hotlist-people-page.js`);
     this.page = 'hotlist-people';
+    next();
+  }
+
+  /**
+   * Loads mr-hotlist-settings-page.js and makes it the currently viewed page.
+   * @param {PageJS.Context} ctx A page.js Context containing routing state.
+   * @param {function} next Passes execution on to the next registered callback.
+   */
+  async _loadHotlistSettingsPage(ctx, next) {
+    await import(/* webpackChunkName: "mr-hotlist-settings-page" */
+        `../hotlist/mr-hotlist-settings-page/mr-hotlist-settings-page.js`);
+    this.page = 'hotlist-settings';
     next();
   }
 

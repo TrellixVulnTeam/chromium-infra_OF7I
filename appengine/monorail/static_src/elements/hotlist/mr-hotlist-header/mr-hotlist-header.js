@@ -5,12 +5,12 @@
 import {LitElement, html, css} from 'lit-element';
 import 'elements/framework/mr-tabs/mr-tabs.js';
 
-/** @type {Array<MenuItem>} */
-const _MENU_ITEMS = [
+/** @type {readonly MenuItem[]} */
+const _MENU_ITEMS = Object.freeze([
   {
     icon: 'list',
     text: 'Issues',
-    url: '.',
+    url: 'issues',
   },
   {
     icon: 'people',
@@ -20,9 +20,9 @@ const _MENU_ITEMS = [
   {
     icon: 'settings',
     text: 'Settings',
-    url: 'details',
+    url: 'settings',
   },
-];
+]);
 
 /** Hotlist Issues page */
 export class MrHotlistHeader extends LitElement {

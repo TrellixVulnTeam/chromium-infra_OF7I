@@ -20,6 +20,8 @@ export const ISSUE = Object.freeze({
   localId: 1234,
 });
 
+export const NAME_OTHER_PROJECT = 'projects/other-project-name/issues/1234';
+
 export const ISSUE_OTHER_PROJECT_REF_STRING = 'other-project-name:1234';
 
 /** @type {Issue} */

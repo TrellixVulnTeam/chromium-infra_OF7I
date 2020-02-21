@@ -12,7 +12,7 @@ import {displayNameToUserRef, userIdOrDisplayNameToUserRef, labelStringToRef,
   issueStringToRef, issueStringToBlockingRef, issueRefToString,
   issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefix,
   labelNameToLabelValue, commentListToDescriptionList, valueToFieldValue,
-  issueToIssueRef, nameToRefString,
+  issueToIssueRef, issueNameToRef, issueNameToRefString,
 } from './converters.js';
 
 describe('displayNameToUserRef', () => {
@@ -334,8 +334,14 @@ describe('issueRefToUrl', () => {
   });
 });
 
-it('nameToRefString', () => {
-  assert.equal(nameToRefString('projects/proj-name/issues/2'), 'proj-name:2');
+it('issueNameToRef', () => {
+  const actual = issueNameToRef('projects/project-name/issues/2');
+  assert.deepEqual(actual, {projectName: 'project-name', localId: 2});
+});
+
+it('issueNameToRefString', () => {
+  const actual = issueNameToRefString('projects/project-name/issues/2');
+  assert.equal(actual, 'project-name:2');
 });
 
 describe('commentListToDescriptionList', () => {

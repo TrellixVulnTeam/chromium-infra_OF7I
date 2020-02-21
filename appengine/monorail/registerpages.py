@@ -425,6 +425,8 @@ class ServletRegistry(object):
 
   def _RegisterWebComponentsHanders(self):
     """Register page handlers that are handled by WebComponentsPage."""
+    self._AddRoute(
+        '/hotlists<unused:.*>', webcomponentspage.WebComponentsPage, 'GET')
     self._AddRoute('/projects<unused:.*>', webcomponentspage.WebComponentsPage,
                    'GET')
     self._AddRoute('/users<unused:.*>', webcomponentspage.WebComponentsPage,

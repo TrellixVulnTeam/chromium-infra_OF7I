@@ -4,15 +4,15 @@
 
 import {assert} from 'chai';
 import * as example from 'shared/test/constants-hotlist.js';
-import {MrHotlistDetailsPage} from './mr-hotlist-details-page.js';
+import {MrHotlistSettingsPage} from './mr-hotlist-settings-page.js';
 
-/** @type {MrHotlistDetailsPage} */
+/** @type {MrHotlistSettingsPage} */
 let element;
 
-describe('mr-hotlist-details-page', () => {
+describe('mr-hotlist-settings-page', () => {
   beforeEach(() => {
     // @ts-ignore
-    element = document.createElement('mr-hotlist-details-page');
+    element = document.createElement('mr-hotlist-settings-page');
     document.body.appendChild(element);
   });
 
@@ -21,7 +21,7 @@ describe('mr-hotlist-details-page', () => {
   });
 
   it('initializes', async () => {
-    assert.instanceOf(element, MrHotlistDetailsPage);
+    assert.instanceOf(element, MrHotlistSettingsPage);
   });
 
   it('shows loading message with null hotlist', async () => {
@@ -35,8 +35,7 @@ describe('mr-hotlist-details-page', () => {
   });
 
   it('renders private hotlist', async () => {
-    element._hotlist = {...example.HOTLIST};
-    element._hotlist.isPrivate = true;
+    element._hotlist = {...example.HOTLIST, hotlistPrivacy: 0};
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'Members only');
   });

@@ -17,7 +17,7 @@ import {fieldTypes, extractTypeForIssue,
   fieldValuesToMap} from 'shared/issue-fields.js';
 import {removePrefix, objectToMap} from 'shared/helpers.js';
 import {issueRefToString, issueToIssueRefString,
-  issueStringToRef, nameToRefString} from 'shared/converters.js';
+  issueStringToRef, issueNameToRefString} from 'shared/converters.js';
 import {fromShortlink} from 'shared/federated.js';
 import {createReducer, createRequestReducer,
   createKeyedRequestReducer} from './redux-helpers.js';
@@ -528,8 +528,8 @@ const issuesByRefString = (state) => state.issue.issuesByRefString;
  * @param {any} state
  * @return {function(string): ?Issue}
  */
-export const issue = createSelector(issuesByRefString,
-    (issuesByRefString) => (name) => issuesByRefString[nameToRefString(name)]);
+export const issue = createSelector(issuesByRefString, (issuesByRefString) =>
+  (name) => issuesByRefString[issueNameToRefString(name)]);
 
 /**
  * Selector to return a function to retrieve a given Issue Object from

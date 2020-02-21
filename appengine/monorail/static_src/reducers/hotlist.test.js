@@ -15,17 +15,27 @@ describe('hotlist', () => {
     it('root reducer initial state', () => {
       const actual = hotlist.reducer(undefined, {type: null});
       const expected = {
+        name: null,
         hotlists: {},
         hotlistItems: {},
-        hotlistRef: null,
         requests: {
           fetch: {
+            error: null,
+            requesting: false,
+          },
+          fetchItems: {
             error: null,
             requesting: false,
           },
         },
       };
       assert.deepEqual(actual, expected);
+    });
+
+    it('name updates on SELECT', () => {
+      const action = {type: hotlist.SELECT, name: example.NAME};
+      const actual = hotlist.nameReducer(null, action);
+      assert.deepEqual(actual, example.NAME);
     });
 
     it('hotlists updates on FETCH_SUCCESS', () => {
@@ -37,53 +47,20 @@ describe('hotlist', () => {
     it('hotlistItems updates on FETCH_ITEMS_SUCCESS', () => {
       const action = {
         type: hotlist.FETCH_ITEMS_SUCCESS,
-        hotlistRef: example.HOTLIST_REF,
+        name: example.NAME,
         items: [example.HOTLIST_ITEM],
       };
       const actual = hotlist.hotlistItemsReducer({}, action);
       assert.deepEqual(actual, example.HOTLIST_ITEMS);
     });
-
-    describe('hotlistRef', () => {
-      it('updates on SELECT', () => {
-        const action = {type: hotlist.SELECT, hotlistRef: example.HOTLIST_REF};
-        const actual = hotlist.hotlistRefReducer(null, action);
-        assert.deepEqual(actual, example.HOTLIST_REF);
-      });
-
-      it('updates on FETCH_SUCCESS', () => {
-        const state = {owner: {userId: 12345678}, name: 'Hotlist-Name'};
-        const action = {type: hotlist.FETCH_SUCCESS, hotlist: example.HOTLIST};
-        const actual = hotlist.hotlistRefReducer(state, action);
-        assert.deepEqual(actual, example.HOTLIST_REF);
-      });
-
-      it('doesn\'t update on FETCH_SUCCESS if different hotlist name', () => {
-        const state = {owner: {userId: 12345678}, name: 'Another-Hotlist-Name'};
-        const action = {type: hotlist.FETCH_SUCCESS, hotlist: example.HOTLIST};
-        assert.deepEqual(hotlist.hotlistRefReducer(state, action), state);
-      });
-
-      it('doesn\'t update on FETCH_SUCCESS if different hotlist owner', () => {
-        const state = {owner: {userId: 87654321}, name: 'Hotlist-Name'};
-        const action = {type: hotlist.FETCH_SUCCESS, hotlist: example.HOTLIST};
-        assert.deepEqual(hotlist.hotlistRefReducer(state, action), state);
-      });
-
-      it('doesn\'t update on FETCH_SUCCESS if refs are exactly equal', () => {
-        const action = {type: hotlist.FETCH_SUCCESS, hotlist: example.HOTLIST};
-        const actual = hotlist.hotlistRefReducer(example.HOTLIST_REF, action);
-        assert.deepEqual(actual, example.HOTLIST_REF);
-      });
-
-      it('doesn\'t update on FETCH_SUCCESS if null', () => {
-        const action = {type: hotlist.FETCH_SUCCESS, hotlist: example.HOTLIST};
-        assert.deepEqual(hotlist.hotlistRefReducer(null, action), null);
-      });
-    });
   });
 
   describe('selectors', () => {
+    it('name', () => {
+      const state = {hotlist: {name: example.NAME}};
+      assert.deepEqual(hotlist.name(state), example.NAME);
+    });
+
     it('hotlists', () => {
       const state = {hotlist: {hotlists: example.HOTLISTS}};
       assert.deepEqual(hotlist.hotlists(state), example.HOTLISTS);
@@ -94,30 +71,22 @@ describe('hotlist', () => {
       assert.deepEqual(hotlist.hotlistItems(state), example.HOTLIST_ITEMS);
     });
 
-    it('hotlistRef', () => {
-      const state = {hotlist: {hotlistRef: example.HOTLIST_REF}};
-      assert.deepEqual(hotlist.hotlistRef(state), example.HOTLIST_REF);
-    });
-
     describe('viewedHotlist', () => {
       it('normal case', () => {
         const state = {hotlist: {
+          name: example.NAME,
           hotlists: example.HOTLISTS,
-          hotlistRef: example.HOTLIST_REF,
         }};
         assert.deepEqual(hotlist.viewedHotlist(state), example.HOTLIST);
       });
 
-      it('no hotlistRef', () => {
-        const state = {hotlist: {hotlists: example.HOTLISTS, hotlistRef: null}};
+      it('no name', () => {
+        const state = {hotlist: {name: null, hotlists: example.HOTLISTS}};
         assert.deepEqual(hotlist.viewedHotlist(state), null);
       });
 
       it('hotlist not found', () => {
-        const state = {hotlist: {
-          hotlists: {},
-          hotlistRef: example.HOTLIST_REF,
-        }};
+        const state = {hotlist: {name: example.NAME, hotlists: {}}};
         assert.deepEqual(hotlist.viewedHotlist(state), null);
       });
     });
@@ -125,26 +94,23 @@ describe('hotlist', () => {
     describe('viewedHotlistItems', () => {
       it('normal case', () => {
         const state = {hotlist: {
+          name: example.NAME,
           hotlistItems: example.HOTLIST_ITEMS,
-          hotlistRef: example.HOTLIST_REF,
         }};
         const actual = hotlist.viewedHotlistItems(state);
         assert.deepEqual(actual, [example.HOTLIST_ITEM]);
       });
 
-      it('no hotlistRef', () => {
+      it('no name', () => {
         const state = {hotlist: {
+          name: null,
           hotlistItems: example.HOTLIST_ITEMS,
-          hotlistRef: null,
         }};
         assert.deepEqual(hotlist.viewedHotlistItems(state), []);
       });
 
       it('hotlist not found', () => {
-        const state = {hotlist: {
-          hotlistItems: {},
-          hotlistRef: example.HOTLIST_REF,
-        }};
+        const state = {hotlist: {name: example.NAME, hotlistItems: {}}};
         assert.deepEqual(hotlist.viewedHotlistItems(state), []);
       });
     });
@@ -161,22 +127,22 @@ describe('hotlist', () => {
     });
 
     it('select', () => {
-      hotlist.select(example.HOTLIST_REF)(dispatch);
-      const action = {type: hotlist.SELECT, hotlistRef: example.HOTLIST_REF};
-      sinon.assert.calledWith(dispatch, action);
+      const actual = hotlist.select(example.NAME);
+      const expected = {type: hotlist.SELECT, name: example.NAME};
+      assert.deepEqual(actual, expected);
     });
 
     describe('fetch', () => {
       it('success', async () => {
-        prpcClient.call.returns(Promise.resolve({hotlist: example.HOTLIST}));
+        prpcClient.call.returns(Promise.resolve(example.HOTLIST));
 
-        await hotlist.fetch(example.HOTLIST_REF)(dispatch);
+        await hotlist.fetch(example.NAME)(dispatch);
 
         sinon.assert.calledWith(dispatch, {type: hotlist.FETCH_START});
 
-        const args = {hotlistRef: example.HOTLIST_REF};
+        const args = {name: example.NAME};
         sinon.assert.calledWith(
-            prpcClient.call, 'monorail.Features', 'GetHotlist', args);
+            prpcClient.call, 'monorail.v1.Hotlists', 'GetHotlist', args);
 
         const action = {type: hotlist.FETCH_SUCCESS, hotlist: example.HOTLIST};
         sinon.assert.calledWith(dispatch, action);
@@ -185,7 +151,7 @@ describe('hotlist', () => {
       it('failure', async () => {
         prpcClient.call.throws();
 
-        await hotlist.fetch(example.HOTLIST_REF)(dispatch);
+        await hotlist.fetch(example.NAME)(dispatch);
 
         const action = {type: hotlist.FETCH_FAILURE, error: sinon.match.any};
         sinon.assert.calledWith(dispatch, action);
@@ -197,17 +163,17 @@ describe('hotlist', () => {
         const response = {items: [example.HOTLIST_ITEM]};
         prpcClient.call.returns(Promise.resolve(response));
 
-        await hotlist.fetchItems(example.HOTLIST_REF)(dispatch);
+        await hotlist.fetchItems(example.NAME)(dispatch);
 
         sinon.assert.calledWith(dispatch, {type: hotlist.FETCH_ITEMS_START});
 
-        const args = {hotlistRef: example.HOTLIST_REF};
+        const args = {parent: example.NAME, orderBy: 'rank'};
         sinon.assert.calledWith(
-            prpcClient.call, 'monorail.Features', 'ListHotlistItems', args);
+            prpcClient.call, 'monorail.v1.Hotlists', 'ListHotlistItems', args);
 
         const action = {
           type: hotlist.FETCH_ITEMS_SUCCESS,
-          hotlistRef: example.HOTLIST_REF,
+          name: example.NAME,
           items: [example.HOTLIST_ITEM],
         };
         sinon.assert.calledWith(dispatch, action);
@@ -216,13 +182,47 @@ describe('hotlist', () => {
       it('failure', async () => {
         prpcClient.call.throws();
 
-        await hotlist.fetchItems(example.HOTLIST_REF)(dispatch);
+        await hotlist.fetchItems(example.NAME)(dispatch);
 
         const action = {
           type: hotlist.FETCH_ITEMS_FAILURE,
           error: sinon.match.any,
         };
         sinon.assert.calledWith(dispatch, action);
+      });
+    });
+  });
+
+  describe('helpers', () => {
+    beforeEach(() => {
+      sinon.stub(prpcClient, 'call');
+      dispatch = sinon.stub();
+    });
+
+    afterEach(() => {
+      prpcClient.call.restore();
+    });
+
+    describe('getHotlistName', () => {
+      it('success', async () => {
+        const response = {hotlistId: '1234'};
+        prpcClient.call.returns(Promise.resolve(response));
+
+        const name = await hotlist.getHotlistName('foo@bar.com', 'hotlist');
+        assert.deepEqual(name, 'hotlists/1234');
+
+        const args = {hotlistRef: {
+          owner: {displayName: 'foo@bar.com'},
+          name: 'hotlist',
+        }};
+        sinon.assert.calledWith(
+            prpcClient.call, 'monorail.Features', 'GetHotlistID', args);
+      });
+
+      it('failure', async () => {
+        prpcClient.call.throws();
+
+        assert.isNull(await hotlist.getHotlistName('foo@bar.com', 'hotlist'));
       });
     });
   });

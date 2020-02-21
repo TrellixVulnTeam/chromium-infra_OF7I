@@ -4,6 +4,8 @@
 
 import 'shared/typedef.js';
 
+export const NAME = 'users/12345678';
+
 /** @type {UserRef} */
 export const USER_REF = Object.freeze({
   userId: 12345678,
