@@ -2270,8 +2270,17 @@ class FeaturesService(object):
                                hotlist_item_fields=hotlist_item_fields,
                                default_col_spec=default_col_spec)
 
-  def UpdateHotlist(self, cnxn, hotlist_id, name=None, summary=None,
-                    description=None, is_private=None, default_col_spec=None):
+  def UpdateHotlist(
+      self,
+      cnxn,
+      hotlist_id,
+      name=None,
+      summary=None,
+      description=None,
+      is_private=None,
+      default_col_spec=None,
+      owner_id=None,
+      add_editor_ids=None):
     hotlist = self.hotlists_by_id.get(hotlist_id)
     if not hotlist:
       raise features_svc.NoSuchHotlistException(

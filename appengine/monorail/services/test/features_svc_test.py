@@ -789,18 +789,73 @@ Delete.assert_called_once_with(
         hotlist_id=[hotlist_id],
         order_by=[('rank DESC', []), ('issue_id', [])]).AndReturn(issue_rows)
 
-  def SetUpUpdateHotlist(self, hotlist_id, delta):
-    self.features_service.hotlist_tbl.Update(
-        self.cnxn, delta, id=hotlist_id)
+  def SetUpUpdateHotlist(self, hotlist_id):
+    hotlist_rows = [
+        (hotlist_id, 'hotlist2', 'test hotlist 2', 'test hotlist', False, '')
+    ]
+    role_rows = [(hotlist_id, 111, 'owner')]
+
+    self.features_service.hotlist_tbl.Select = mock.Mock(
+        return_value=hotlist_rows)
+    self.features_service.hotlist2user_tbl.Select = mock.Mock(
+        return_value=role_rows)
+    self.features_service.hotlist2issue_tbl.Select = mock.Mock(return_value=[])
+
+    self.features_service.hotlist_tbl.Update = mock.Mock()
+    self.features_service.hotlist2user_tbl.Delete = mock.Mock()
+    self.features_service.hotlist2user_tbl.InsertRows = mock.Mock()
 
   def testUpdateHotlist(self):
-    self.SetUpGetHotlists(456, role_rows=[(456, 111, 'owner')])
-    delta = {'summary': 'A better one-line summary'}
-    self.SetUpUpdateHotlist(456, delta)
-    self.mox.ReplayAll()
+    hotlist_id = 456
+    self.SetUpUpdateHotlist(hotlist_id)
+
     self.features_service.UpdateHotlist(
-        self.cnxn, 456, summary='A better one-line summary')
-    self.mox.VerifyAll()
+        self.cnxn,
+        hotlist_id,
+        summary='A better one-line summary',
+        owner_id=333,
+        add_editor_ids=[444, 555])
+    delta = {'summary': 'A better one-line summary'}
+    self.features_service.hotlist_tbl.Update.assert_called_once_with(
+        self.cnxn, delta, id=hotlist_id, commit=False)
+    self.features_service.hotlist2user_tbl.Delete.assert_called_once_with(
+        self.cnxn, hotlist_id=hotlist_id, role='owner', commit=False)
+    add_role_rows = [
+        (hotlist_id, 333, 'owner'), (hotlist_id, 444, 'editor'),
+        (hotlist_id, 555, 'editor')
+    ]
+    self.features_service.hotlist2user_tbl.InsertRows.assert_called_once_with(
+        self.cnxn, features_svc.HOTLIST2USER_COLS, add_role_rows, commit=False)
+
+  def testUpdateHotlist_NoRoleChanges(self):
+    hotlist_id = 456
+    self.SetUpUpdateHotlist(hotlist_id)
+
+    self.features_service.UpdateHotlist(self.cnxn, hotlist_id, name='chicken')
+    delta = {'name': 'chicken'}
+    self.features_service.hotlist_tbl.Update.assert_called_once_with(
+        self.cnxn, delta, id=hotlist_id, commit=False)
+    self.features_service.hotlist2user_tbl.Delete.assert_not_called()
+    self.features_service.hotlist2user_tbl.InsertRows.assert_not_called()
+
+  def testUpdateHotlist_NoOwnerChange(self):
+    hotlist_id = 456
+    self.SetUpUpdateHotlist(hotlist_id)
+
+    self.features_service.UpdateHotlist(
+        self.cnxn, hotlist_id, name='chicken', add_editor_ids=[
+            333,
+        ])
+    delta = {'name': 'chicken'}
+    self.features_service.hotlist_tbl.Update.assert_called_once_with(
+        self.cnxn, delta, id=hotlist_id, commit=False)
+    self.features_service.hotlist2user_tbl.Delete.assert_not_called()
+    self.features_service.hotlist2user_tbl.InsertRows.assert_called_once_with(
+        self.cnxn,
+        features_svc.HOTLIST2USER_COLS, [
+            (hotlist_id, 333, 'editor'),
+        ],
+        commit=False)
 
   def SetUpUpdateHotlistItemsFields(self, hotlist_id, issue_ids):
     hotlist_rows = [(hotlist_id, 'hotlist', '', '', True, '')]
@@ -1024,7 +1079,7 @@ Delete.assert_called_once_with(
     self.features_service.hotlist2user_tbl.Delete = mock.Mock()
     self.features_service.hotlist2issue_tbl.Delete = mock.Mock()
     self.features_service.hotlist_tbl.Delete = mock.Mock()
-     # cache invalidation mocks
+    # cache invalidation mocks
     self.features_service.hotlist_2lc.InvalidateKeys = mock.Mock()
     self.features_service.hotlist_id_2lc.InvalidateKeys = mock.Mock()
     self.features_service.hotlist_user_to_ids.InvalidateKeys = mock.Mock()

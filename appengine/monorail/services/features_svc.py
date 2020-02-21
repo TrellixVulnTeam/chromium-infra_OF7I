@@ -743,8 +743,16 @@ class FeaturesService(object):
     return hotlist
 
   def UpdateHotlist(
-      self, cnxn, hotlist_id, name=None, summary=None, description=None,
-      is_private=None, default_col_spec=None):
+      self,
+      cnxn,
+      hotlist_id,
+      name=None,
+      summary=None,
+      description=None,
+      is_private=None,
+      default_col_spec=None,
+      owner_id=None,
+      add_editor_ids=None):
     """Update the DB with the given hotlist information."""
     # Note: If something is None, it does not get changed to None,
     # it just does not get updated.
@@ -764,7 +772,21 @@ class FeaturesService(object):
     if default_col_spec is not None:
       delta['default_col_spec'] = default_col_spec
 
-    self.hotlist_tbl.Update(cnxn, delta, id=hotlist_id)
+
+    self.hotlist_tbl.Update(cnxn, delta, id=hotlist_id, commit=False)
+    insert_rows = []
+    if owner_id is not None:
+      insert_rows.append((hotlist_id, owner_id, 'owner'))
+      self.hotlist2user_tbl.Delete(
+          cnxn, hotlist_id=hotlist_id, role='owner', commit=False)
+    if add_editor_ids:
+      insert_rows.extend(
+          [(hotlist_id, user_id, 'editor') for user_id in add_editor_ids])
+    if insert_rows:
+      self.hotlist2user_tbl.InsertRows(
+          cnxn, HOTLIST2USER_COLS, insert_rows, commit=False)
+
+    cnxn.Commit()
 
     self.hotlist_2lc.InvalidateKeys(cnxn, [hotlist_id])
     if not hotlist.owner_ids:  # Should never happen.
@@ -786,6 +808,10 @@ class FeaturesService(object):
       hotlist.is_private = is_private
     if default_col_spec is not None:
       hotlist.default_col_spec = default_col_spec
+    if owner_id is not None:
+      hotlist.owner_ids = [owner_id]
+    if add_editor_ids:
+      hotlist.editor_ids.extend(add_editor_ids)
 
   def AddIssueToHotlists(self, cnxn, hotlist_ids, issue_tuple, issue_svc,
                          chart_svc, commit=True):
