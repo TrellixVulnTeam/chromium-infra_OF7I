@@ -105,7 +105,12 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 	}
 	addingResults, err := datastore.AddDevices(ctx, req.Devices, req.PickServoPort)
 	if err != nil {
-		return nil, errors.Annotate(err, "internal error").Tag(grpcutil.InternalTag).Err()
+		// Return specific error code if the labstation is not deployed yet, so
+		// client won't retry in this case.
+		if strings.Contains(err.Error(), "Deploy it first") {
+			return nil, errors.Annotate(err, "add cros devices").Tag(grpcutil.InvalidArgumentTag).Err()
+		}
+		return nil, errors.Annotate(err, "add cros devices").Tag(grpcutil.InternalTag).Err()
 	}
 	passedDevices := getPassedResults(ctx, *addingResults)
 	if err := updateDroneCfg(ctx, passedDevices, true); err != nil {
