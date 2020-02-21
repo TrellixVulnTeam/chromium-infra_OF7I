@@ -36,7 +36,8 @@ var chromeTPMs = []string{"govind@chromium.org", "govind@google.com",
 	"djmm@chromium.org", "djmm@google.com",
 	"pbommana@google.com", "pbommana@chromium.org",
 	"bindusuvarna@google.com", "bindusuvarna@chromium.org",
-	"dgagnon@chromium.org", "dgagnon@google.com"}
+	"dgagnon@chromium.org", "dgagnon@google.com",
+	"adetaylor@google.com", "adetaylor@chromium.org"}
 
 // OnlyMergeApprovedChange is a Rule that verifies that only approved changes are merged into a release branch.
 type OnlyMergeApprovedChange struct{}
