@@ -14,9 +14,9 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
-	"go.chromium.org/luci/hardcoded/chromeinfra"
 
 	"infra/cmd/labtool/audit"
+	"infra/cmd/labtool/site"
 )
 
 func getApplication() *cli.Application {
@@ -29,9 +29,9 @@ func getApplication() *cli.Application {
 		Commands: []*subcommands.Command{
 			subcommands.CmdHelp,
 			subcommands.Section("Authentication"),
-			authcli.SubcommandInfo(chromeinfra.DefaultAuthOptions(), "whoami", false),
-			authcli.SubcommandLogin(chromeinfra.DefaultAuthOptions(), "login", false),
-			authcli.SubcommandLogout(chromeinfra.DefaultAuthOptions(), "logout", false),
+			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
+			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
+			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
 			subcommands.Section("Asset Management"),
 			audit.AuditCmd,
 		},
