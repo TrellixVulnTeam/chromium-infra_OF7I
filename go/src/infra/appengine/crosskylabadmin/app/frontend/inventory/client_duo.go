@@ -18,8 +18,6 @@ import (
 	"infra/libs/skylab/inventory"
 )
 
-var timeoutForEachDUT = 1 * time.Second
-
 type duoClient struct {
 	gc *gitStoreClient
 	ic *invServiceClient
@@ -79,16 +77,9 @@ func (client *duoClient) willReadFromV2(req *fleet.GetDutInfoRequest) bool {
 
 func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
 	if client.willWriteToV2() {
-		go func() {
-			// Set timeout for RPC call to inventory v2.
-			// The timeout should correlated to how many DUTs being operated.
-			ctx2, cancel := context.WithTimeout(ctx, time.Duration(len(nds))*timeoutForEachDUT)
-			defer cancel()
-
-			url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx2, nds, pickServoPort)
-			logging.Infof(ctx2, "[v2] add dut result: %s, %s", url2, err2)
-			logging.Infof(ctx2, "[v2] spec returned: %s", ds2)
-		}()
+		url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx, nds, pickServoPort)
+		logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
+		logging.Infof(ctx, "[v2] spec returned: %s", ds2)
 	}
 
 	url, ds, err := client.gc.addManyDUTsToFleet(ctx, nds, pickServoPort)
@@ -99,13 +90,8 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 
 func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {
 	if client.willWriteToV2() {
-		go func() {
-			ctx2, cancel := context.WithTimeout(ctx, timeoutForEachDUT)
-			defer cancel()
-
-			url2, err2 := client.ic.updateDUTSpecs(ctx2, od, nd, pickServoPort)
-			logging.Infof(ctx2, "[v2] add dut result: %s, %s", url2, err2)
-		}()
+		url2, err2 := client.ic.updateDUTSpecs(ctx, od, nd, pickServoPort)
+		logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
 	}
 
 	url, err := client.gc.updateDUTSpecs(ctx, od, nd, pickServoPort)
@@ -115,12 +101,8 @@ func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.C
 
 func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
 	if client.willWriteToV2() {
-		go func() {
-			ctx2, cancel := context.WithTimeout(ctx, time.Duration(len(ids))*timeoutForEachDUT)
-			defer cancel()
-			url2, deletedIds2, err2 := client.ic.deleteDUTsFromFleet(ctx2, ids)
-			logging.Infof(ctx2, "[v2] delete dut result: %s, %s, %s", url2, deletedIds2, err2)
-		}()
+		url2, deletedIds2, err2 := client.ic.deleteDUTsFromFleet(ctx, ids)
+		logging.Infof(ctx, "[v2] delete dut result: %s, %s, %s", url2, deletedIds2, err2)
 	}
 	url, deletedIds, err := client.gc.deleteDUTsFromFleet(ctx, ids)
 	logging.Infof(ctx, "[v1] delete dut result: %s, %s, %s", url, deletedIds, err)
@@ -130,32 +112,21 @@ func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) 
 
 func (client *duoClient) selectDutsFromInventory(ctx context.Context, sel *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error) {
 	if client.willWriteToV2() {
-		go func() {
-			// Cannot know how many duts will be reutrned, so hard code the
-			// timeout.
-			ctx2, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-			duts, _ := client.ic.selectDutsFromInventory(ctx2, sel)
-			logging.Infof(ctx2, "[v2] select duts by %v", sel)
-			if len(duts) > 0 {
-				logging.Infof(ctx2, "[v2] selecting returns '%s'...(total %d duts)", duts[0].GetCommon().GetHostname(), len(duts))
-			} else {
-				logging.Infof(ctx2, "[v2] selecting returns 0 duts")
-			}
-
-		}()
+		duts, _ := client.ic.selectDutsFromInventory(ctx, sel)
+		logging.Infof(ctx, "[v2] select duts by %v", sel)
+		if len(duts) > 0 {
+			logging.Infof(ctx, "[v2] selecting returns '%s'...(total %d duts)", duts[0].GetCommon().GetHostname(), len(duts))
+		} else {
+			logging.Infof(ctx, "[v2] selecting returns 0 duts")
+		}
 	}
 	return client.gc.selectDutsFromInventory(ctx, sel)
 }
 
 func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes []*fleet.PoolChange) (string, error) {
 	if client.willWriteToV2() {
-		go func() {
-			ctx2, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-			u, err := client.ic.commitBalancePoolChanges(ctx2, changes)
-			logging.Infof(ctx2, "[v2] Commit balancing pool result: %s: %s", u, err)
-		}()
+		u, err := client.ic.commitBalancePoolChanges(ctx, changes)
+		logging.Infof(ctx, "[v2] Commit balancing pool result: %s: %s", u, err)
 	}
 	return client.gc.commitBalancePoolChanges(ctx, changes)
 }
