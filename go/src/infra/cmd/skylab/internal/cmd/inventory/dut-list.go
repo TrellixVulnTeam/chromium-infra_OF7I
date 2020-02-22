@@ -22,11 +22,13 @@ import (
 
 // DutList subcommand: Get DUT information
 var DutList = &subcommands.Command{
-	UsageLine: "dut-list [-pool] [-model] [-board] HOSTNAME",
+	UsageLine: "dut-list [-pool POOL] [-model MODEL] [-board BOARD]",
 	ShortDesc: "List hostnames of devices matching search criteria",
 	LongDesc: `List hostnames of devices matching search criteria.
 
-	Search criteria includes pool, model, board, servo_type`,
+	If no criteria are provided, dut-list will list all the DUT hostnames in Skylab.
+
+	Search criteria include pool, model, board`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &dutListRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -117,7 +119,7 @@ func dimsOfDutListParams(params dutListParams) ([]*swarming_api.SwarmingRpcsStri
 		out.Value = value
 		return out
 	}
-	var out []*swarming_api.SwarmingRpcsStringPair
+	out := []*swarming_api.SwarmingRpcsStringPair{makePair("pool", "ChromeOSSkylab")}
 	if params.model != "" {
 		out = append(out, makePair("label-model", params.model))
 	}
