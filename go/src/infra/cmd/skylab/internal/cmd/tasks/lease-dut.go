@@ -75,7 +75,10 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	if userinput.ValidBug(c.leaseReason) {
 		return cmdlib.NewUsageError(c.Flags, "the lease reason must match crbug.com/NNNN or b/NNNN")
 	}
-	host := args[0]
+	host := skycmdlib.FixSuspiciousHostname(args[0])
+	if host != args[0] {
+		fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", args[0], host)
+	}
 
 	ctx := cli.GetContext(a, c, env)
 	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)

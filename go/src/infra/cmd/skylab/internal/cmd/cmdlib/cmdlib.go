@@ -6,6 +6,7 @@ package cmdlib
 
 import (
 	"flag"
+	"strings"
 	"time"
 
 	"infra/cmd/skylab/internal/site"
@@ -52,4 +53,16 @@ func (rr *RemovalReason) Register(f *flag.FlagSet) {
 	f.StringVar(&rr.Bug, "bug", "", "Bug link for why DUT is being removed.  Required.")
 	f.StringVar(&rr.Comment, "comment", "", "Short comment about why DUT is being removed.")
 	f.Var(lflag.RelativeTime{T: &rr.Expire}, "expires-in", "Expire removal reason in `days`.")
+}
+
+// FixSuspiciousHostname checks whether a hostname is suspicious and potentially indicates a bug of some kind.
+// The prefix "crossk-" is suspicious and should be removed. The suffix ".cros" is also suspicious and should be removed.
+func FixSuspiciousHostname(hostname string) string {
+	if strings.HasPrefix(hostname, "crossk-") {
+		return strings.TrimPrefix(hostname, "crossk-")
+	}
+	if strings.HasSuffix(hostname, ".cros") {
+		return strings.TrimSuffix(hostname, ".cros")
+	}
+	return hostname
 }
