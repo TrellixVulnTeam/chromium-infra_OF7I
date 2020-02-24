@@ -62,6 +62,10 @@ func (c *updateRun) innerRun(a subcommands.Application, args []string, env subco
 	cmd.Stdout = a.GetOut()
 	cmd.Stderr = a.GetErr()
 	if err := cmd.Run(); err != nil {
+		if strings.Contains(err.Error(), " failed to update packages") {
+			fmt.Printf("skylab has insufficient permissions to update itself.\n")
+			fmt.Printf("please run 'sudo env PATH=\"$PATH\" skylab update'\n")
+		}
 		return err
 	}
 	fmt.Fprintf(a.GetErr(), "%s: You may need to run skylab login again after the update\n", a.GetName())
