@@ -8,6 +8,7 @@ package dronecfg
 
 import (
 	"context"
+	"sort"
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
@@ -34,11 +35,18 @@ func dutsUnion(self, other []DUT) []DUT {
 	for _, d := range other {
 		idToDut[d.ID] = d
 	}
-	result := make([]DUT, len(idToDut))
+	// Sort DUT list by the order of ID.
+	dutCount := len(idToDut)
+	result := make([]DUT, dutCount)
+	keys := make([]string, dutCount)
 	idx := 0
-	for _, v := range idToDut {
-		result[idx] = v
+	for k := range idToDut {
+		keys[idx] = k
 		idx++
+	}
+	sort.Strings(keys)
+	for i, k := range keys {
+		result[i] = idToDut[k]
 	}
 	return result
 }
