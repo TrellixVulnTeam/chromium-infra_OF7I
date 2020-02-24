@@ -51,13 +51,21 @@ func (f commonFlags) DebugLogger(a subcommands.Application) *log.Logger {
 	return log.New(out, a.GetName(), log.LstdFlags|log.Lshortfile)
 }
 
-// NewHTTPClient returns an HTTP client with authentication set up.
-func NewHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) {
+// NewAuthenticator creates a new authenticator based on flags.
+func NewAuthenticator(ctx context.Context, f *authcli.Flags) (*auth.Authenticator, error) {
 	o, err := f.Options()
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to get auth options").Err()
+		return nil, errors.Annotate(err, "create authenticator").Err()
 	}
-	a := auth.NewAuthenticator(ctx, auth.OptionalLogin, o)
+	return auth.NewAuthenticator(ctx, auth.SilentLogin, o), nil
+}
+
+// NewHTTPClient returns an HTTP client with authentication set up.
+func NewHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) {
+	a, err := NewAuthenticator(ctx, f)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to create HTTP client").Err()
+	}
 	c, err := a.Client()
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to create HTTP client").Err()
