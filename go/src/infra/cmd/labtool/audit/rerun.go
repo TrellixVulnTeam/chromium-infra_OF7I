@@ -89,7 +89,12 @@ func (c *rerun) innerRun(a subcommands.Application, args []string, env subcomman
 		Options: site.DefaultPRPCOptions,
 	})
 
-	u, err := utils.NewUpdater(ctx, ic, c.logDir)
+	gsc, err := getGSClient(ctx, &c.authFlags)
+	if err != nil {
+		return err
+	}
+
+	u, err := utils.NewUpdater(ctx, ic, gsc, c.logDir)
 	if err != nil {
 		return err
 	}

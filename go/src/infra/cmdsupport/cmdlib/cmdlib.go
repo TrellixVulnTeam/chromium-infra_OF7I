@@ -73,6 +73,15 @@ func NewHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 	return c, nil
 }
 
+// NewAuthenticatedTransport creates a new authenticated transport
+func NewAuthenticatedTransport(ctx context.Context, f *authcli.Flags) (http.RoundTripper, error) {
+	at, err := NewAuthenticator(ctx, f)
+	if err != nil {
+		return nil, errors.Annotate(err, "create authenticated transport").Err()
+	}
+	return at.Transport()
+}
+
 // UserErrorReporter reports a detailed error message to the user.
 //
 // PrintError() uses a UserErrorReporter to print multi-line user error details

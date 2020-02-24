@@ -6,6 +6,7 @@ package audit
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleetAPI "infra/appengine/cros/lab_inventory/api/v1"
@@ -122,7 +124,13 @@ func (c *bcScanner) exec(a subcommands.Application, args []string, env subcomman
 	if err := createLogDir(c.logDir); err != nil {
 		return err
 	}
-	u, err := utils.NewUpdater(ctx, ic, c.logDir)
+
+	gsc, err := getGSClient(ctx, &c.authFlags)
+	if err != nil {
+		return err
+	}
+
+	u, err := utils.NewUpdater(ctx, ic, gsc, c.logDir)
 	if err != nil {
 		return err
 	}
@@ -130,6 +138,14 @@ func (c *bcScanner) exec(a subcommands.Application, args []string, env subcomman
 	go c.signalCatcher()
 	c.parseLoop()
 	return err
+}
+
+func getGSClient(ctx context.Context, f *authcli.Flags) (gs.Client, error) {
+	t, err := cmdlib.NewAuthenticatedTransport(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	return gs.NewProdClient(ctx, t)
 }
 
 var currLoc *fleet.Location
