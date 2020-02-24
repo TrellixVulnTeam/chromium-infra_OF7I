@@ -5,6 +5,7 @@
 package skylab
 
 import (
+	"context"
 	"sort"
 	"testing"
 
@@ -114,6 +115,7 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 			Convey(c.description, func() {
 				Convey("then task results are correctly converted to verdict.", func() {
 					result := callTaskResult(c.result)
+					So(result, ShouldNotBeNil)
 					So(result.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 					So(result.State.Verdict, ShouldEqual, c.expectVerdict)
 					So(result.Attempt, ShouldEqual, 5)
@@ -207,13 +209,31 @@ func TestAutotestTestCases(t *testing.T) {
 	})
 }
 
+type stubTaskReference struct {
+	url        string
+	swarmingID string
+}
+
+func (r *stubTaskReference) URL() string {
+	return r.url
+}
+
+func (r *stubTaskReference) SwarmingTaskID() string {
+	return r.swarmingID
+}
+
+func (r *stubTaskReference) FetchResults(_ context.Context) (*FetchResultsResponse, error) {
+	return nil, nil
+}
+
 func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
 	t := &Task{
-		autotestResult: autotestResult,
-		taskReference: &TaskReference{
-			swarmingTaskID: "foo-task-ID",
+		taskReference: &stubTaskReference{
+			url:        "foo-URL",
+			swarmingID: "foo-task-ID",
 		},
-		lifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+		autotestResult: autotestResult,
+		lifeCycle:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	}
 	return t.Result(5)
 }

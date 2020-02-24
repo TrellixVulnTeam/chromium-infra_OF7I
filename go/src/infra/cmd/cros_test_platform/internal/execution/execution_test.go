@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes/duration"
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -25,143 +24,106 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/common/data/stringset"
-	"go.chromium.org/luci/common/isolated"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/memlogger"
-	"go.chromium.org/luci/swarming/proto/jsonrpc"
 
 	"infra/cmd/cros_test_platform/internal/execution"
-	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
+	"infra/libs/skylab/inventory"
+	"infra/libs/skylab/request"
 )
 
 var noDeadline time.Time
 
-// fakeSwarming implements skylab_api.Swarming
-type fakeSwarming struct {
-	nextID      int
-	nextState   jsonrpc.TaskState
-	nextError   error
-	callback    func()
-	server      string
-	createCalls []*swarming_api.SwarmingRpcsNewTaskRequest
-	getCalls    [][]string
-	hasRef      bool
-	botExists   bool
+type fakeTaskReference struct {
+	skylab *fakeSkylab
 }
 
-func (f *fakeSwarming) CreateTask(ctx context.Context, req *swarming_api.SwarmingRpcsNewTaskRequest) (*swarming_api.SwarmingRpcsTaskRequestMetadata, error) {
-	defer f.callback()
-	f.nextID++
-	f.createCalls = append(f.createCalls, req)
-	if f.nextError != nil {
-		return nil, f.nextError
+func (r *fakeTaskReference) FetchResults(context.Context) (*skylab.FetchResultsResponse, error) {
+	r.skylab.numResultsCalls += 1
+	if r.skylab.nextError != nil {
+		return nil, r.skylab.nextError
 	}
-	resp := &swarming_api.SwarmingRpcsTaskRequestMetadata{TaskId: fmt.Sprintf("task%d", f.nextID)}
-	return resp, nil
+	return &skylab.FetchResultsResponse{
+		Result: &skylab_test_runner.Result{
+			Harness: &skylab_test_runner.Result_AutotestResult{
+				AutotestResult: r.skylab.autotestResultGenerator(),
+			},
+		},
+		LifeCycle: r.skylab.nextLifeCycle,
+	}, nil
 }
 
-func (f *fakeSwarming) GetResults(ctx context.Context, IDs []string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
-	defer f.callback()
-	f.getCalls = append(f.getCalls, IDs)
-	if f.nextError != nil {
-		return nil, f.nextError
+func (r *fakeTaskReference) URL() string {
+	return r.skylab.url
+}
+
+func (r *fakeTaskReference) SwarmingTaskID() string {
+	return ""
+}
+
+var _ skylab.TaskReference = &fakeTaskReference{}
+
+type fakeSkylab struct {
+	autotestResultGenerator autotestResultGenerator
+	botExists               bool
+	callback                func()
+	launchCalls             []*request.Args
+	nextError               error
+	nextLifeCycle           test_platform.TaskState_LifeCycle
+	numResultsCalls         int
+	url                     string
+}
+
+func newFakeSkylab() *fakeSkylab {
+	return &fakeSkylab{
+		autotestResultGenerator: autotestResultAlwaysPass,
+		botExists:               true,
+		callback:                func() {},
+		nextLifeCycle:           test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	}
-
-	var ref *swarming_api.SwarmingRpcsFilesRef
-	if f.hasRef {
-		ref = &swarming_api.SwarmingRpcsFilesRef{}
-	}
-
-	results := make([]*swarming_api.SwarmingRpcsTaskResult, len(IDs))
-	for i, taskID := range IDs {
-		results[i] = &swarming_api.SwarmingRpcsTaskResult{
-			TaskId:     taskID,
-			State:      jsonrpc.TaskState_name[int32(f.nextState)],
-			OutputsRef: ref,
-		}
-	}
-	return results, nil
-}
-
-func (f *fakeSwarming) BotExists(ctx context.Context, dims []*swarming_api.SwarmingRpcsStringPair) (bool, error) {
-	return f.botExists, nil
-}
-
-func (f *fakeSwarming) SetCannedBotExistsResponse(b bool) {
-	f.botExists = b
-}
-
-func (f *fakeSwarming) GetTaskURL(taskID string) string {
-	// Note: this is not the true swarming task URL schema.
-	return f.server + "/task=" + taskID
-}
-
-// setTaskState causes this fake to start returning the given state of all future
-func (f *fakeSwarming) setTaskState(state jsonrpc.TaskState) {
-	f.nextState = state
-}
-
-func (f *fakeSwarming) setHasOutputRef(has bool) {
-	f.hasRef = has
 }
 
 // setError causes this fake to start returning the given error on all
 // future API calls.
-func (f *fakeSwarming) setError(err error) {
-	f.nextError = err
+func (s *fakeSkylab) setError(err error) {
+	s.nextError = err
 }
 
 // setCallback causes this fake to call the given callback function, immediately
 // prior to the return of every future API call.
-func (f *fakeSwarming) setCallback(fn func()) {
-	f.callback = fn
+func (s *fakeSkylab) setCallback(fn func()) {
+	s.callback = fn
 }
 
-func newFakeSwarming(server string) *fakeSwarming {
-	return &fakeSwarming{
-		nextState: jsonrpc.TaskState_COMPLETED,
-		callback:  func() {},
-		server:    server,
-		hasRef:    true,
-		botExists: true,
+func (s *fakeSkylab) setURL(url string) {
+	s.url = url
+}
+
+func (s *fakeSkylab) setLifeCycle(lc test_platform.TaskState_LifeCycle) {
+	s.nextLifeCycle = lc
+}
+
+func (s *fakeSkylab) setAutotestResultGenerator(f autotestResultGenerator) {
+	s.autotestResultGenerator = f
+}
+
+func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, error) {
+	return s.botExists, nil
+}
+
+func (s *fakeSkylab) LaunchTask(_ context.Context, req *request.Args) (skylab.TaskReference, error) {
+	defer s.callback()
+	if s.nextError != nil {
+		return nil, s.nextError
 	}
-}
-
-type fakeGetter struct {
-	autotestResultGenerator autotestResultGenerator
-}
-
-func (g *fakeGetter) GetFile(_ context.Context, _ isolated.HexDigest, _ string) ([]byte, error) {
-	r := skylab_test_runner.Result{
-		Harness: &skylab_test_runner.Result_AutotestResult{AutotestResult: g.autotestResultGenerator()},
-	}
-	m := &jsonpb.Marshaler{}
-	s, err := m.MarshalToString(&r)
-	if err != nil {
-		panic(fmt.Sprintf("error when marshalling %#v: %s", r, err))
-	}
-	return []byte(s), nil
-}
-
-func (g *fakeGetter) SetAutotestResultGenerator(f autotestResultGenerator) {
-	g.autotestResultGenerator = f
-}
-
-func newFakeGetter() *fakeGetter {
-	f := &fakeGetter{}
-	f.SetAutotestResultGenerator(autotestResultAlwaysPass)
-	return f
-}
-
-func fakeGetterFactory(getter isolate.Getter) isolate.GetterFactory {
-	return func(_ context.Context, _ string) (isolate.Getter, error) {
-		return getter, nil
-	}
+	s.launchCalls = append(s.launchCalls, req)
+	return &fakeTaskReference{
+		skylab: s,
+	}, nil
 }
 
 func invocation(name string, args string, e build_api.AutotestTest_ExecutionEnvironment) *steps.EnumerationResponse_AutotestInvocation {
@@ -244,8 +206,8 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 	Convey("Given one test invocation but non existent bots", t, func() {
 		ctx := context.Background()
 
-		swarming := newFakeSwarming("")
-		swarming.SetCannedBotExistsResponse(false)
+		skylab := newFakeSkylab()
+		skylab.botExists = false
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{
 			clientTestInvocation("", ""),
@@ -255,10 +217,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 			ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 			So(err, ShouldBeNil)
 			run := execution.NewRunnerWithRequestTaskSets(ts)
-			err = run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(newFakeGetter()),
-			})
+			err = run.LaunchAndWait(ctx, skylab)
 			So(err, ShouldBeNil)
 
 			resp := getSingleResponse(run)
@@ -275,9 +234,9 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 				So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 				So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 			})
-			Convey("and no skylab swarming tasks are created.", func() {
-				So(swarming.getCalls, ShouldHaveLength, 0)
-				So(swarming.createCalls, ShouldHaveLength, 0)
+			Convey("and no skylab tasks are created.", func() {
+				So(skylab.launchCalls, ShouldHaveLength, 0)
+				So(skylab.numResultsCalls, ShouldEqual, 0)
 			})
 		})
 	})
@@ -286,7 +245,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 func TestLaunchAndWaitTest(t *testing.T) {
 	Convey("Given two enumerated test", t, func() {
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 
 		var invs []*steps.EnumerationResponse_AutotestInvocation
 		invs = append(invs, clientTestInvocation("", ""), clientTestInvocation("", ""))
@@ -296,10 +255,7 @@ func TestLaunchAndWaitTest(t *testing.T) {
 			So(err, ShouldBeNil)
 			run := execution.NewRunnerWithRequestTaskSets(ts)
 
-			err = run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(newFakeGetter()),
-			})
+			err = run.LaunchAndWait(ctx, skylab)
 			So(err, ShouldBeNil)
 
 			resp := getSingleResponse(run)
@@ -311,9 +267,9 @@ func TestLaunchAndWaitTest(t *testing.T) {
 					So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 				}
 			})
-			Convey("then the expected number of external swarming calls are made.", func() {
-				So(swarming.getCalls, ShouldHaveLength, 2)
-				So(swarming.createCalls, ShouldHaveLength, 2)
+			Convey("then the expected number of external Skylab calls are made.", func() {
+				So(skylab.launchCalls, ShouldHaveLength, 2)
+				So(skylab.numResultsCalls, ShouldEqual, 2)
 			})
 		})
 	})
@@ -323,7 +279,7 @@ func TestLaunchAndWaitTest(t *testing.T) {
 // autotest result is not available from a task, because the task didn't run
 // far enough to output one.
 //
-// For detailed tests on the handling of autotest test results, see result_test.go.
+// For detailed tests on the handling of autotest test results, see results_test.go.
 func TestTaskStates(t *testing.T) {
 	Convey("Given a single test", t, func() {
 		ctx := context.Background()
@@ -332,37 +288,24 @@ func TestTaskStates(t *testing.T) {
 		invs = append(invs, clientTestInvocation("", ""))
 
 		cases := []struct {
-			description     string
-			swarmingState   jsonrpc.TaskState
-			hasRef          bool
-			expectTaskState *test_platform.TaskState
+			description   string
+			lifeCycle     test_platform.TaskState_LifeCycle
+			expectVerdict test_platform.TaskState_Verdict
 		}{
 			{
-				description:   "with expired state",
-				swarmingState: jsonrpc.TaskState_EXPIRED,
-				hasRef:        false,
-				expectTaskState: &test_platform.TaskState{
-					LifeCycle: test_platform.TaskState_LIFE_CYCLE_CANCELLED,
-					Verdict:   test_platform.TaskState_VERDICT_FAILED,
-				},
+				description:   "that was never scheduled",
+				lifeCycle:     test_platform.TaskState_LIFE_CYCLE_CANCELLED,
+				expectVerdict: test_platform.TaskState_VERDICT_FAILED,
 			},
 			{
-				description:   "with killed state",
-				swarmingState: jsonrpc.TaskState_KILLED,
-				hasRef:        false,
-				expectTaskState: &test_platform.TaskState{
-					LifeCycle: test_platform.TaskState_LIFE_CYCLE_ABORTED,
-					Verdict:   test_platform.TaskState_VERDICT_FAILED,
-				},
+				description:   "that was killed",
+				lifeCycle:     test_platform.TaskState_LIFE_CYCLE_ABORTED,
+				expectVerdict: test_platform.TaskState_VERDICT_FAILED,
 			},
 			{
-				description:   "with completed state",
-				swarmingState: jsonrpc.TaskState_COMPLETED,
-				hasRef:        true,
-				expectTaskState: &test_platform.TaskState{
-					LifeCycle: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-					Verdict:   test_platform.TaskState_VERDICT_NO_VERDICT,
-				},
+				description:   "that completed",
+				lifeCycle:     test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+				expectVerdict: test_platform.TaskState_VERDICT_FAILED,
 			},
 		}
 		for _, c := range cases {
@@ -371,21 +314,17 @@ func TestTaskStates(t *testing.T) {
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
 
-				swarming := newFakeSwarming("")
-				swarming.setTaskState(c.swarmingState)
-				swarming.setHasOutputRef(c.hasRef)
-				getter := newFakeGetter()
-				getter.SetAutotestResultGenerator(autotestResultAlwaysEmpty)
-				err = run.LaunchAndWait(ctx, skylab.Client{
-					Swarming:      swarming,
-					IsolateGetter: fakeGetterFactory(getter),
-				})
+				skylab := newFakeSkylab()
+				skylab.setLifeCycle(c.lifeCycle)
+				skylab.setAutotestResultGenerator(autotestResultAlwaysEmpty)
+				err = run.LaunchAndWait(ctx, skylab)
 				So(err, ShouldBeNil)
 
 				Convey("then the task state is correct.", func() {
 					resp := getSingleResponse(run)
 					So(resp.TaskResults, ShouldHaveLength, 1)
-					So(resp.TaskResults[0].State, ShouldResemble, c.expectTaskState)
+					So(resp.TaskResults[0].State.LifeCycle, ShouldEqual, c.lifeCycle)
+					So(resp.TaskResults[0].State.Verdict, ShouldResemble, c.expectVerdict)
 				})
 			})
 		}
@@ -395,32 +334,27 @@ func TestTaskStates(t *testing.T) {
 func TestServiceError(t *testing.T) {
 	Convey("Given a single enumerated test", t, func() {
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
 		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
-		Convey("when the swarming service immediately returns errors, that error is surfaced as a launch error.", func() {
-			swarming.setError(fmt.Errorf("foo error"))
-			err = run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(newFakeGetter()),
-			})
+		Convey("when the skylab service immediately returns errors, that error is surfaced as a launch error.", func() {
+			skylab.setError(fmt.Errorf("foo error"))
+			err = run.LaunchAndWait(ctx, skylab)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "launch attempt")
 			So(err.Error(), ShouldContainSubstring, "foo error")
 		})
 
-		Convey("when the swarming service starts returning errors after the initial launch calls, that errors is surfaced as a wait error.", func() {
-			swarming.setCallback(func() {
-				swarming.setError(fmt.Errorf("foo error"))
+		Convey("when the skylab service starts returning errors after the initial launch calls, that errors is surfaced as a wait error.", func() {
+			skylab.setCallback(func() {
+				skylab.setError(fmt.Errorf("foo error"))
 			})
-			err = run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(newFakeGetter()),
-			})
+			err = run.LaunchAndWait(ctx, skylab)
+			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "tick for task")
 			So(err.Error(), ShouldContainSubstring, "foo error")
 		})
@@ -428,35 +362,31 @@ func TestServiceError(t *testing.T) {
 }
 
 func TestTaskURL(t *testing.T) {
-	Convey("Given a single enumerated test running to completion, its task URL is well formed.", t, func() {
+	Convey("Given a single enumerated test running to completion, its task URL is propagated correctly.", t, func() {
 		ctx := context.Background()
-		swarming_service := "https://foo.bar.com/"
-		swarming := newFakeSwarming(swarming_service)
+		skylab := newFakeSkylab()
+		skylab.setURL("foo-url")
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
 		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, skylab.Client{
-			Swarming:      swarming,
-			IsolateGetter: fakeGetterFactory(newFakeGetter()),
-		})
+		err = run.LaunchAndWait(ctx, skylab)
 		So(err, ShouldBeNil)
 
 		resp := getSingleResponse(run)
 		So(resp.TaskResults, ShouldHaveLength, 1)
-		taskURL := resp.TaskResults[0].TaskUrl
-		So(taskURL, ShouldStartWith, swarming_service)
-		So(taskURL, ShouldEndWith, "1")
+		So(resp.TaskResults[0].TaskUrl, ShouldEqual, "foo-url")
 	})
 }
 
 func TestIncompleteWait(t *testing.T) {
 	Convey("Given a run that is cancelled while running, error and response reflect cancellation.", t, func() {
 		ctx, cancel := context.WithCancel(context.Background())
-		swarming := newFakeSwarming("")
-		swarming.setTaskState(jsonrpc.TaskState_RUNNING)
+
+		skylab := newFakeSkylab()
+		skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
 		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
@@ -466,32 +396,27 @@ func TestIncompleteWait(t *testing.T) {
 		wg := sync.WaitGroup{}
 		wg.Add(1)
 		go func() {
-			err = run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(newFakeGetter()),
-			})
+			err = run.LaunchAndWait(ctx, skylab)
 			wg.Done()
 		}()
 
 		cancel()
 		wg.Wait()
 
+		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, context.Canceled.Error())
 
 		resp := getSingleResponse(run)
 		So(resp, ShouldNotBeNil)
 		So(resp.TaskResults, ShouldHaveLength, 1)
 		So(resp.TaskResults[0].State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_RUNNING)
-		// TODO(akeshet): Ensure that response either reflects the error or
-		// has an incomplete flag, once that part of the response proto is
-		// defined.
 	})
 }
 
 func TestRequestArguments(t *testing.T) {
 	Convey("Given a server test with autotest labels", t, func() {
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 
 		inv := serverTestInvocation("name1", "foo-arg1 foo-arg2")
 		addAutotestDependency(inv, "cr50:pvt")
@@ -503,28 +428,24 @@ func TestRequestArguments(t *testing.T) {
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, skylab.Client{
-			Swarming:      swarming,
-			IsolateGetter: fakeGetterFactory(newFakeGetter()),
-		})
+		err = run.LaunchAndWait(ctx, skylab)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have correct parameters.", func() {
-			So(swarming.createCalls, ShouldHaveLength, 1)
-			create := swarming.createCalls[0]
-			So(create.TaskSlices, ShouldHaveLength, 2)
+			So(skylab.launchCalls, ShouldHaveLength, 1)
+			launchArgs := skylab.launchCalls[0]
 
-			So(create.Tags, ShouldContain, "luci_project:foo-luci-project")
-			So(create.Tags, ShouldContain, "foo-tag1")
-			So(create.Tags, ShouldContain, "foo-tag2")
-			So(create.ParentTaskId, ShouldEqual, "foo-parent-task-id")
+			So(launchArgs.SwarmingTags, ShouldContain, "luci_project:foo-luci-project")
+			So(launchArgs.SwarmingTags, ShouldContain, "foo-tag1")
+			So(launchArgs.SwarmingTags, ShouldContain, "foo-tag2")
+			So(launchArgs.ParentTaskID, ShouldEqual, "foo-parent-task-id")
 
-			So(create.Priority, ShouldEqual, 79)
+			So(launchArgs.Priority, ShouldEqual, 79)
 
 			prefix := "log_location:"
 			var logdogURL string
 			matchingTags := 0
-			for _, tag := range create.Tags {
+			for _, tag := range launchArgs.SwarmingTags {
 				if strings.HasPrefix(tag, prefix) {
 					matchingTags++
 					So(tag, ShouldEndWith, "+/annotations")
@@ -536,45 +457,31 @@ func TestRequestArguments(t *testing.T) {
 			So(logdogURL, ShouldStartWith, "logdog://foo-logdog-host/foo-luci-project/skylab/")
 			So(logdogURL, ShouldEndWith, "/+/annotations")
 
-			for i, slice := range create.TaskSlices {
-				flatCommand := strings.Join(slice.Properties.Command, " ")
+			So(launchArgs.Cmd.TaskName, ShouldEqual, "name1")
+			So(launchArgs.Cmd.ClientTest, ShouldBeFalse)
 
-				So(flatCommand, ShouldContainSubstring, "-task-name name1")
-				So(flatCommand, ShouldNotContainSubstring, "-client-test")
+			// Logdog annotation url argument should match the associated tag's url.
+			So(launchArgs.Cmd.LogDogAnnotationURL, ShouldEqual, logdogURL)
 
-				// Logdog annotation url argument should match the associated tag's url.
-				So(flatCommand, ShouldContainSubstring, "-logdog-annotation-url "+logdogURL)
+			So(launchArgs.Cmd.TestArgs, ShouldEqual, "foo-arg1 foo-arg2")
 
-				So(flatCommand, ShouldContainSubstring, "-test-args foo-arg1 foo-arg2")
-				So(slice.Properties.Command, ShouldContain, "-test-args")
-				So(slice.Properties.Command, ShouldContain, "foo-arg1 foo-arg2")
+			So(launchArgs.Cmd.Keyvals["k1"], ShouldEqual, "v1")
+			So(launchArgs.Cmd.Keyvals["parent_job_id"], ShouldEqual, "foo-parent-task-id")
+			So(launchArgs.Cmd.Keyvals["label"], ShouldEqual, "given_name")
 
-				keyvals := extractKeyvalsArgument(flatCommand)
-				So(keyvals, ShouldNotBeEmpty)
-				So(keyvals, ShouldContainSubstring, `"k1":"v1"`)
-				So(keyvals, ShouldContainSubstring, `"parent_job_id":"foo-parent-task-id"`)
-				So(keyvals, ShouldContainSubstring, `"label":"given_name"`)
+			So(launchArgs.ProvisionableDimensions, ShouldHaveLength, 3)
+			So(launchArgs.ProvisionableDimensions, ShouldContain, "provisionable-cros-version:foo-build")
+			So(launchArgs.ProvisionableDimensions, ShouldContain, "provisionable-fwro-version:foo-ro-firmware")
+			So(launchArgs.ProvisionableDimensions, ShouldContain, "provisionable-fwrw-version:foo-rw-firmware")
 
-				provisionArg := "-provision-labels cros-version:foo-build,fwro-version:foo-ro-firmware,fwrw-version:foo-rw-firmware"
+			So(launchArgs.SchedulableLabels.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_PVT)
+			So(launchArgs.SchedulableLabels.GetModel(), ShouldEqual, "foo-model")
+			So(launchArgs.SchedulableLabels.GetBoard(), ShouldEqual, "foo-board")
+			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 1)
+			So(launchArgs.SchedulableLabels.GetCriticalPools()[0], ShouldEqual, inventory.SchedulableLabels_DUT_POOL_CQ)
 
-				if i == 0 {
-					So(flatCommand, ShouldNotContainSubstring, provisionArg)
-				} else {
-					So(flatCommand, ShouldContainSubstring, provisionArg)
-				}
-
-				So(flatCommand, ShouldNotContainSubstring, "cleanup-reboot")
-
-				flatDimensions := make([]string, len(slice.Properties.Dimensions))
-				for i, d := range slice.Properties.Dimensions {
-					flatDimensions[i] = d.Key + ":" + d.Value
-				}
-				So(flatDimensions, ShouldContain, "label-cr50_phase:CR50_PHASE_PVT")
-				So(flatDimensions, ShouldContain, "label-model:foo-model")
-				So(flatDimensions, ShouldContain, "label-board:foo-board")
-				So(flatDimensions, ShouldContain, "label-pool:DUT_POOL_CQ")
-				So(flatDimensions, ShouldContain, "freeform-key:freeform-value")
-			}
+			So(launchArgs.Dimensions, ShouldHaveLength, 1)
+			So(launchArgs.Dimensions, ShouldContain, "freeform-key:freeform-value")
 		})
 	})
 }
@@ -595,7 +502,7 @@ func extractKeyvalsArgument(cmd string) string {
 type autotestResultGenerator func() *skylab_test_runner.Result_Autotest
 
 func autotestResultAlwaysEmpty() *skylab_test_runner.Result_Autotest {
-	return &skylab_test_runner.Result_Autotest{}
+	return nil
 }
 
 // generateAutotestResultsFromSlice returns a autotestResultGenerator that
@@ -636,7 +543,7 @@ func autotestResultAlwaysFail() *skylab_test_runner.Result_Autotest {
 func TestInvocationKeyvals(t *testing.T) {
 	Convey("Given an enumeration with a suite keyval", t, func() {
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{
 			{
@@ -657,21 +564,15 @@ func TestInvocationKeyvals(t *testing.T) {
 			So(err, ShouldBeNil)
 			run := execution.NewRunnerWithRequestTaskSets(ts)
 
-			err = run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(newFakeGetter()),
-			})
+			err = run.LaunchAndWait(ctx, skylab)
 			So(err, ShouldBeNil)
 			Convey("created command includes invocation suite keyval", func() {
-				So(swarming.createCalls, ShouldHaveLength, 1)
-				create := swarming.createCalls[0]
-				So(create.TaskSlices, ShouldHaveLength, 2)
-				for _, slice := range create.TaskSlices {
-					flatCommand := strings.Join(slice.Properties.Command, " ")
-					keyvals := extractKeyvalsArgument(flatCommand)
-					So(keyvals, ShouldContainSubstring, `"suite":"someSuite"`)
-					So(keyvals, ShouldContainSubstring, `"label":"foo-build/someSuite/someTest"`)
-				}
+				So(skylab.launchCalls, ShouldHaveLength, 1)
+				launchArgs := skylab.launchCalls[0]
+				flatCommand := strings.Join(launchArgs.Cmd.Args(), " ")
+				keyvals := extractKeyvalsArgument(flatCommand)
+				So(keyvals, ShouldContainSubstring, `"suite":"someSuite"`)
+				So(keyvals, ShouldContainSubstring, `"label":"foo-build/someSuite/someTest"`)
 			})
 		})
 
@@ -686,21 +587,15 @@ func TestInvocationKeyvals(t *testing.T) {
 			So(err, ShouldBeNil)
 			run := execution.NewRunnerWithRequestTaskSets(ts)
 
-			err = run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(newFakeGetter()),
-			})
+			err = run.LaunchAndWait(ctx, skylab)
 			So(err, ShouldBeNil)
 			Convey("created command includes request suite keyval", func() {
-				So(swarming.createCalls, ShouldHaveLength, 1)
-				create := swarming.createCalls[0]
-				So(create.TaskSlices, ShouldHaveLength, 2)
-				for _, slice := range create.TaskSlices {
-					flatCommand := strings.Join(slice.Properties.Command, " ")
-					keyvals := extractKeyvalsArgument(flatCommand)
-					So(keyvals, ShouldContainSubstring, `"suite":"someOtherSuite"`)
-					So(keyvals, ShouldContainSubstring, `"label":"foo-build/someOtherSuite/someTest"`)
-				}
+				So(skylab.launchCalls, ShouldHaveLength, 1)
+				launchArgs := skylab.launchCalls[0]
+				flatCommand := strings.Join(launchArgs.Cmd.Args(), " ")
+				keyvals := extractKeyvalsArgument(flatCommand)
+				So(keyvals, ShouldContainSubstring, `"suite":"someOtherSuite"`)
+				So(keyvals, ShouldContainSubstring, `"label":"foo-build/someOtherSuite/someTest"`)
 			})
 		})
 	})
@@ -726,7 +621,7 @@ func loggerDebug(ml memlogger.MemLogger) string {
 func TestKeyvalsAcrossTestRuns(t *testing.T) {
 	Convey("Given a request with a suite keyval", t, func() {
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 
 		p := basicParams()
 		p.Decorations = &test_platform.Request_Params_Decorations{
@@ -756,17 +651,13 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 				ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
-				err = run.LaunchAndWait(ctx, skylab.Client{
-					Swarming:      swarming,
-					IsolateGetter: fakeGetterFactory(newFakeGetter()),
-				})
+				err = run.LaunchAndWait(ctx, skylab)
 				So(err, ShouldBeNil)
 
-				So(swarming.createCalls, ShouldHaveLength, 2)
+				So(skylab.launchCalls, ShouldHaveLength, 2)
 				cmd := make([]string, 2)
-				for i, cc := range swarming.createCalls {
-					So(cc.TaskSlices, ShouldNotBeEmpty)
-					cmd[i] = strings.Join(cc.TaskSlices[0].Properties.Command, " ")
+				for i, ls := range skylab.launchCalls {
+					cmd[i] = strings.Join(ls.Cmd.Args(), " ")
 				}
 				kv0 := extractKeyvalsArgument(cmd[0])
 				So(kv0, ShouldContainSubstring, `"suite":"someSuite"`)
@@ -783,14 +674,13 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 	Convey("Given a request with retry enabled", t, func() {
 		ctx := context.Background()
 		ctx = setFakeTimeWithImmediateTimeout(ctx)
-		swarming := newFakeSwarming("")
 		params := basicParams()
 		params.Retry = &test_platform.Request_Params_Retry{
 			Allow: true,
 		}
-		getter := newFakeGetter()
+		skylab := newFakeSkylab()
 		Convey("and two tests that always fail and retry limit", func() {
-			getter.SetAutotestResultGenerator(autotestResultAlwaysFail)
+			skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
 			invs := invocationsWithServerTests("name1", "name2")
 			for _, inv := range invs {
 				inv.Test.AllowRetries = true
@@ -800,10 +690,7 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 				ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
-				err = run.LaunchAndWait(ctx, skylab.Client{
-					Swarming:      swarming,
-					IsolateGetter: fakeGetterFactory(getter),
-				})
+				err = run.LaunchAndWait(ctx, skylab)
 				So(err, ShouldBeNil)
 				resp := getSingleResponse(run)
 				Convey("response should contain two enumerated results", func() {
@@ -851,9 +738,8 @@ func TestRetries(t *testing.T) {
 		ts.SetTimerCallback(func(d time.Duration, t clock.Timer) {
 			ts.Add(2 * d)
 		})
-		swarming := newFakeSwarming("")
 		params := basicParams()
-		getter := newFakeGetter()
+		skylab := newFakeSkylab()
 
 		cases := []struct {
 			name        string
@@ -1035,7 +921,7 @@ func TestRetries(t *testing.T) {
 		}
 		for _, c := range cases {
 			Convey(c.name, func() {
-				getter.SetAutotestResultGenerator(c.autotestResultGenerator)
+				skylab.setAutotestResultGenerator(c.autotestResultGenerator)
 				params.Retry = c.retryParams
 				for _, inv := range c.invocations {
 					inv.Test.AllowRetries = c.testAllowRetry
@@ -1046,28 +932,25 @@ func TestRetries(t *testing.T) {
 				ts, err := execution.NewRequestTaskSet(c.invocations, params, basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
-				err = run.LaunchAndWait(ctx, skylab.Client{
-					Swarming:      swarming,
-					IsolateGetter: fakeGetterFactory(getter),
-				})
+				err = run.LaunchAndWait(ctx, skylab)
 				So(err, ShouldBeNil)
 				resp := getSingleResponse(run)
 
 				Convey("each attempt request should have a unique logdog url in the.", func() {
 					s := map[string]bool{}
-					for _, req := range swarming.createCalls {
-						url, ok := extractLogdogUrlFromCommand(req.TaskSlices[0].Properties.Command)
+					for _, req := range skylab.launchCalls {
+						url, ok := extractLogdogUrlFromCommand(req.Cmd.Args())
 						So(ok, ShouldBeTrue)
 						s[url] = true
 					}
-					So(s, ShouldHaveLength, len(swarming.createCalls))
+					So(s, ShouldHaveLength, len(skylab.launchCalls))
 				})
 				// TODO(crbug.com/1003874, pprabhu) This test case is in the wrong place.
 				// Once the hack to manipulate logdog URL is removed, this block can also be dropped.
 				Convey("the logdog url in the command and in tags should match.", func() {
-					for _, req := range swarming.createCalls {
-						cmdURL, _ := extractLogdogUrlFromCommand(req.TaskSlices[0].Properties.Command)
-						tagURL := extractLogdogUrlFromTags(req.Tags)
+					for _, req := range skylab.launchCalls {
+						cmdURL, _ := extractLogdogUrlFromCommand(req.Cmd.Args())
+						tagURL := extractLogdogUrlFromTags(req.SwarmingTags)
 						So(cmdURL, ShouldEqual, tagURL)
 					}
 				})
@@ -1121,7 +1004,7 @@ func extractLogdogUrlFromTags(tags []string) string {
 func TestClientTestArg(t *testing.T) {
 	Convey("Given a client test", t, func() {
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("name1", "")}
 
@@ -1129,20 +1012,12 @@ func TestClientTestArg(t *testing.T) {
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, skylab.Client{
-			Swarming:      swarming,
-			IsolateGetter: fakeGetterFactory(newFakeGetter()),
-		})
+		err = run.LaunchAndWait(ctx, skylab)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have correct parameters.", func() {
-			So(swarming.createCalls, ShouldHaveLength, 1)
-			create := swarming.createCalls[0]
-			So(create.TaskSlices, ShouldHaveLength, 2)
-			for _, slice := range create.TaskSlices {
-				flatCommand := strings.Join(slice.Properties.Command, " ")
-				So(flatCommand, ShouldContainSubstring, "-client-test")
-			}
+			So(skylab.launchCalls, ShouldHaveLength, 1)
+			So(skylab.launchCalls[0].Cmd.ClientTest, ShouldBeTrue)
 		})
 	})
 }
@@ -1150,7 +1025,7 @@ func TestClientTestArg(t *testing.T) {
 func TestQuotaSchedulerAccount(t *testing.T) {
 	Convey("Given a client test and a selected quota account", t, func() {
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
 		params := basicParams()
 		params.Scheduling.Pool = &test_platform.Request_Params_Scheduling_QuotaAccount{
@@ -1161,23 +1036,16 @@ func TestQuotaSchedulerAccount(t *testing.T) {
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, skylab.Client{
-			Swarming:      swarming,
-			IsolateGetter: fakeGetterFactory(newFakeGetter()),
-		})
+		err = run.LaunchAndWait(ctx, skylab)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have a tag specifying the correct quota account and run in the quota pool.", func() {
-			So(swarming.createCalls, ShouldHaveLength, 1)
-			create := swarming.createCalls[0]
-			So(create.Tags, ShouldContain, "qs_account:foo-account")
-			for _, slice := range create.TaskSlices {
-				flatDimensions := make([]string, len(slice.Properties.Dimensions))
-				for i, d := range slice.Properties.Dimensions {
-					flatDimensions[i] = d.Key + ":" + d.Value
-				}
-				So(flatDimensions, ShouldContain, "label-pool:DUT_POOL_QUOTA")
-			}
+			So(skylab.launchCalls, ShouldHaveLength, 1)
+			launchArgs := skylab.launchCalls[0]
+			So(launchArgs.SwarmingTags, ShouldContain, "qs_account:foo-account")
+			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 0)
+			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 1)
+			So(launchArgs.SchedulableLabels.GetCriticalPools()[0], ShouldEqual, inventory.SchedulableLabels_DUT_POOL_QUOTA)
 		})
 	})
 }
@@ -1185,7 +1053,7 @@ func TestQuotaSchedulerAccount(t *testing.T) {
 func TestUnmanagedPool(t *testing.T) {
 	Convey("Given a client test and an unmanaged pool.", t, func() {
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
 		params := basicParams()
 		params.Scheduling.Pool = &test_platform.Request_Params_Scheduling_UnmanagedPool{
@@ -1196,22 +1064,15 @@ func TestUnmanagedPool(t *testing.T) {
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
-		err = run.LaunchAndWait(ctx, skylab.Client{
-			Swarming:      swarming,
-			IsolateGetter: fakeGetterFactory(newFakeGetter()),
-		})
+		err = run.LaunchAndWait(ctx, skylab)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request run in the unmanaged pool.", func() {
-			So(swarming.createCalls, ShouldHaveLength, 1)
-			create := swarming.createCalls[0]
-			for _, slice := range create.TaskSlices {
-				flatDimensions := make([]string, len(slice.Properties.Dimensions))
-				for i, d := range slice.Properties.Dimensions {
-					flatDimensions[i] = d.Key + ":" + d.Value
-				}
-				So(flatDimensions, ShouldContain, "label-pool:foo-pool")
-			}
+			So(skylab.launchCalls, ShouldHaveLength, 1)
+			launchArgs := skylab.launchCalls[0]
+			So(launchArgs.SchedulableLabels.GetCriticalPools(), ShouldHaveLength, 0)
+			So(launchArgs.SchedulableLabels.GetSelfServePools(), ShouldHaveLength, 1)
+			So(launchArgs.SchedulableLabels.GetSelfServePools()[0], ShouldEqual, "foo-pool")
 		})
 	})
 }
@@ -1229,7 +1090,7 @@ func TestResponseVerdict(t *testing.T) {
 			ts.Add(2 * d)
 		})
 
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
 		params := basicParams()
 
@@ -1241,7 +1102,7 @@ func TestResponseVerdict(t *testing.T) {
 		// This test is broken even after adding locks around testRun.attempts because it is possible that the
 		// assertions at the end are run before LaunchAndWait() does anything. That is not the intent of this test.
 		SkipConvey("when tests are still running, response verdict is correct.", func() {
-			swarming.setTaskState(jsonrpc.TaskState_RUNNING)
+			skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
 
 			wg := sync.WaitGroup{}
 			defer wg.Wait()
@@ -1251,10 +1112,7 @@ func TestResponseVerdict(t *testing.T) {
 				defer wg.Done()
 				// Can't verify error returned is nil because Convey() doesn't
 				// like assertions in goroutines.
-				_ = run.LaunchAndWait(ctx, skylab.Client{
-					Swarming:      swarming,
-					IsolateGetter: fakeGetterFactory(newFakeGetter()),
-				})
+				_ = run.LaunchAndWait(ctx, skylab)
 			}()
 
 			resp := getSingleResponse(run)
@@ -1263,40 +1121,29 @@ func TestResponseVerdict(t *testing.T) {
 		})
 
 		Convey("when the test passed, response verdict is correct.", func() {
-			getter := newFakeGetter()
-			getter.SetAutotestResultGenerator(autotestResultAlwaysPass)
-			run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(getter),
-			})
+			skylab.setAutotestResultGenerator(autotestResultAlwaysPass)
+			run.LaunchAndWait(ctx, skylab)
 			resp := getSingleResponse(run)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_PASSED)
 		})
 
 		Convey("when the test failed, response verdict is correct.", func() {
-			getter := newFakeGetter()
-			getter.SetAutotestResultGenerator(autotestResultAlwaysFail)
-			run.LaunchAndWait(ctx, skylab.Client{
-				Swarming:      swarming,
-				IsolateGetter: fakeGetterFactory(getter),
-			})
+			skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
+			run.LaunchAndWait(ctx, skylab)
 			resp := getSingleResponse(run)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
 
 		Convey("when an error cancels the run, response verdict is correct.", func() {
-			swarming.setTaskState(jsonrpc.TaskState_RUNNING)
+			skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			var err error
 			go func() {
-				err = run.LaunchAndWait(ctx, skylab.Client{
-					Swarming:      swarming,
-					IsolateGetter: fakeGetterFactory(newFakeGetter()),
-				})
+				err = run.LaunchAndWait(ctx, skylab)
 				wg.Done()
 			}()
 
@@ -1357,16 +1204,13 @@ func TestIncompatibleDependencies(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		swarming := newFakeSwarming("")
+		skylab := newFakeSkylab()
 		for _, c := range cases {
 			Convey(fmt.Sprintf("with %s", c.Tag), func() {
 				ts, err := execution.NewRequestTaskSet(c.Invs, c.Params, basicConfig(), "foo-parent-task-id", noDeadline)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
-				err = run.LaunchAndWait(ctx, skylab.Client{
-					Swarming:      swarming,
-					IsolateGetter: fakeGetterFactory(newFakeGetter()),
-				})
+				err = run.LaunchAndWait(ctx, skylab)
 				So(err, ShouldBeNil)
 
 				resp := getSingleResponse(run)
@@ -1384,8 +1228,8 @@ func TestIncompatibleDependencies(t *testing.T) {
 					So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 				})
 				Convey("and no skylab swarming tasks are created.", func() {
-					So(swarming.getCalls, ShouldHaveLength, 0)
-					So(swarming.createCalls, ShouldHaveLength, 0)
+					So(skylab.launchCalls, ShouldHaveLength, 0)
+					So(skylab.numResultsCalls, ShouldEqual, 0)
 				})
 			})
 		}

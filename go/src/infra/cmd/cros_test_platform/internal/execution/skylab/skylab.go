@@ -21,7 +21,7 @@ import (
 // Task represents an individual test task.
 type Task struct {
 	args          request.Args
-	taskReference *TaskReference
+	taskReference TaskReference
 	lifeCycle     test_platform.TaskState_LifeCycle
 	// Note: If we ever begin supporting other harnesses's result formats
 	// then this field will change to a *skylab_test_runner.Result.
@@ -51,9 +51,15 @@ func (t *Task) Launch(ctx context.Context, c Client) error {
 	return nil
 }
 
+// The life cycles that are not final.
+var transientLifeCycles = map[test_platform.TaskState_LifeCycle]bool{
+	test_platform.TaskState_LIFE_CYCLE_PENDING: true,
+	test_platform.TaskState_LIFE_CYCLE_RUNNING: true,
+}
+
 // Completed returns whether the current task is complete.
 func (t *Task) Completed() bool {
-	return t.autotestResult != nil
+	return !transientLifeCycles[t.lifeCycle]
 }
 
 // Verdict aggregates the information about test cases contained in a task into
@@ -86,15 +92,9 @@ func (t *Task) Verdict() test_platform.TaskState_Verdict {
 	return verdict
 }
 
-// The life cycles that are not final.
-var transientLifeCycles = map[test_platform.TaskState_LifeCycle]bool{
-	test_platform.TaskState_LIFE_CYCLE_PENDING: true,
-	test_platform.TaskState_LIFE_CYCLE_RUNNING: true,
-}
-
-// Refresh fetches the latest swarming and isolate state of the given task,
-// and updates the task accordingly.
-func (t *Task) Refresh(ctx context.Context, clients Client) error {
+// Refresh fetches the state of the given task and updates the task
+// accordingly.
+func (t *Task) Refresh(ctx context.Context) error {
 	resp, err := t.taskReference.FetchResults(ctx)
 
 	if err != nil {

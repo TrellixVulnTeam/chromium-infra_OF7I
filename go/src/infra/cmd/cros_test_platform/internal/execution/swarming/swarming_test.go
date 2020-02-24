@@ -1,24 +1,25 @@
-// Copyright 2020 The Chromium Authors. All rights reserved.
+// Copyright 2019 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package skylab
+package swarming
 
 import (
 	"context"
 	"fmt"
+	"infra/cmd/cros_test_platform/internal/execution/isolate"
+	"infra/libs/skylab/worker"
 	"testing"
+
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 
 	"github.com/golang/protobuf/jsonpb"
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/isolated"
 
-	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/libs/skylab/request"
-	"infra/libs/skylab/worker"
 )
 
 type fakeResultStore map[string]map[string]*skylab_test_runner.Result
@@ -121,8 +122,8 @@ func TestNonExistentBot(t *testing.T) {
 	Convey("When arguments ask for a non-existent bot", t, func() {
 		swarming := newFakeSwarming()
 		swarming.setCannedBotExistsResponse(false)
-		skylab := &Client{
-			Swarming: swarming,
+		skylab := &rawSwarmingSkylabClient{
+			swarmingClient: swarming,
 		}
 		Convey("the validation fails.", func() {
 			exists, err := skylab.ValidateArgs(context.Background(), &request.Args{})
@@ -136,8 +137,8 @@ func TestExistingBot(t *testing.T) {
 	Convey("When arguments ask for an existing bot", t, func() {
 		swarming := newFakeSwarming()
 		swarming.setCannedBotExistsResponse(true)
-		skylab := &Client{
-			Swarming: swarming,
+		skylab := &rawSwarmingSkylabClient{
+			swarmingClient: swarming,
 		}
 		Convey("the validation passes.", func() {
 			exists, err := skylab.ValidateArgs(context.Background(), &request.Args{})
@@ -150,8 +151,8 @@ func TestExistingBot(t *testing.T) {
 func TestLaunch(t *testing.T) {
 	Convey("When a task is launched", t, func() {
 		swarming := newFakeSwarming()
-		skylab := &Client{
-			Swarming: swarming,
+		skylab := &rawSwarmingSkylabClient{
+			swarmingClient: swarming,
 		}
 		task, err := skylab.LaunchTask(context.Background(), &request.Args{
 			Cmd: worker.Command{
@@ -173,9 +174,9 @@ func TestCompletedTask(t *testing.T) {
 		swarming := newFakeSwarming()
 		i := fakeResultStore{}
 		i.AddResult("foo-isolated", "results.json", &skylab_test_runner.Result{})
-		skylab := &Client{
-			Swarming:      swarming,
-			IsolateGetter: fakeGetterFactory(i),
+		skylab := &rawSwarmingSkylabClient{
+			swarmingClient: swarming,
+			isolateGetter:  fakeGetterFactory(i),
 		}
 		task, err := skylab.LaunchTask(ctx, &request.Args{})
 		So(err, ShouldBeNil)
@@ -196,8 +197,8 @@ func TestUnfinishedTask(t *testing.T) {
 	Convey("When a task is launched and is killed", t, func() {
 		ctx := context.Background()
 		swarming := newFakeSwarming()
-		skylab := &Client{
-			Swarming: swarming,
+		skylab := &rawSwarmingSkylabClient{
+			swarmingClient: swarming,
 		}
 		task, err := skylab.LaunchTask(ctx, &request.Args{})
 		So(err, ShouldBeNil)
@@ -218,9 +219,8 @@ func TestMissingIsolate(t *testing.T) {
 	Convey("When a task is launched, completes and is missing an isolated output", t, func() {
 		ctx := context.Background()
 		swarming := newFakeSwarming()
-		skylab := &Client{
-			Swarming:      swarming,
-			IsolateGetter: fakeGetterFactory(nil),
+		skylab := &rawSwarmingSkylabClient{
+			swarmingClient: swarming,
 		}
 		task, err := skylab.LaunchTask(ctx, &request.Args{})
 		So(err, ShouldBeNil)

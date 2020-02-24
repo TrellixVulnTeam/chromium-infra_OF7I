@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 	"time"
 
@@ -17,19 +16,14 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/isolatedclient"
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/google"
 
 	"infra/cmd/cros_test_platform/internal/execution"
-	"infra/cmd/cros_test_platform/internal/execution/isolate"
-	"infra/cmd/cros_test_platform/internal/execution/isolate/getter"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
+	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"infra/libs/skylab/common/errctx"
-	"infra/libs/skylab/swarming"
 )
 
 // SkylabExecute subcommand: Run a set of enumerated tests against skylab backend.
@@ -91,11 +85,10 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 	}
 
 	cfg := extractOneConfig(request.TaggedRequests)
-	client, err := swarmingClient(ctx, cfg.SkylabSwarming)
+	client, err := swarming.NewSkylabClient(ctx, cfg)
 	if err != nil {
 		return err
 	}
-	gf := c.getterFactory(cfg.SkylabIsolate)
 
 	var taskID string
 	// taskID will be used as the parent task ID for child jobs created by
@@ -117,7 +110,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		return err
 	}
 
-	resps, err := c.handleRequests(ctx, d, runner, client, gf)
+	resps, err := c.handleRequests(ctx, d, runner, client)
 	if err != nil && !containsSomeResponse(resps) {
 		// Catastrophic error. There is no reasonable response to write.
 		return err
@@ -235,59 +228,14 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 	}
 	return nil
 }
-func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *execution.Runner, t *swarming.Client, gf isolate.GetterFactory) (map[string]*steps.ExecuteResponse, error) {
+func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *execution.Runner, skylab skylab.Client) (map[string]*steps.ExecuteResponse, error) {
 	ctx, cancel := errctx.WithDeadline(ctx, deadline, fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline))
 	defer cancel(context.Canceled)
-	err := runner.LaunchAndWait(ctx, skylab.Client{
-		Swarming:      t,
-		IsolateGetter: gf,
-	})
+	err := runner.LaunchAndWait(ctx, skylab)
 	return runner.Responses(), err
 }
 
 func (c *skylabExecuteRun) writeResponsesWithError(resps map[string]*steps.ExecuteResponse, err error) error {
 	r := &steps.ExecuteResponses{TaggedResponses: resps}
 	return writeResponseWithError(c.outputPath, r, err)
-}
-
-func (c *skylabExecuteRun) getterFactory(conf *config.Config_Isolate) isolate.GetterFactory {
-	return func(ctx context.Context, server string) (isolate.Getter, error) {
-		hClient, err := httpClient(ctx, conf.AuthJsonPath)
-		if err != nil {
-			return nil, err
-		}
-
-		isolateClient := isolatedclient.New(nil, hClient, server, isolatedclient.DefaultNamespace, nil, nil)
-
-		return getter.New(isolateClient), nil
-	}
-}
-
-func httpClient(ctx context.Context, authJSONPath string) (*http.Client, error) {
-	// TODO(akeshet): Specify ClientID and ClientSecret fields.
-	options := auth.Options{
-		ServiceAccountJSONPath: authJSONPath,
-		Scopes:                 []string{auth.OAuthScopeEmail},
-	}
-	a := auth.NewAuthenticator(ctx, auth.SilentLogin, options)
-	h, err := a.Client()
-	if err != nil {
-		return nil, errors.Annotate(err, "create http client").Err()
-	}
-	return h, nil
-}
-
-func swarmingClient(ctx context.Context, c *config.Config_Swarming) (*swarming.Client, error) {
-	logging.Debugf(ctx, "Creating swarming client from config %v", c)
-	hClient, err := httpClient(ctx, c.AuthJsonPath)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := swarming.New(ctx, hClient, c.Server)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
 }
