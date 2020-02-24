@@ -34,6 +34,7 @@ do not match the existing ones. Otherwise, reset the DUT via
 	CommandRun: func() subcommands.CommandRun {
 		c := &prejobRun{}
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.PrejobRequest")
+		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to write JSON encoded test_platform.phosphorus.PrejobResponse to")
 		return c
 	},
 }
@@ -74,7 +75,15 @@ func (c *prejobRun) innerRun(a subcommands.Application, args []string, env subco
 		ctx, c = context.WithDeadline(ctx, d)
 		defer c()
 	}
+	if err := runPrejob(ctx, r); err != nil {
+		return err
+	}
+	return writeJSONPb(c.outputPath, &phosphorus.PrejobResponse{
+		State: phosphorus.PrejobResponse_SUCCEEDED,
+	})
+}
 
+func runPrejob(ctx context.Context, r phosphorus.PrejobRequest) error {
 	if contains(r.ExistingProvisionableLabels, r.DesiredProvisionableLabels) {
 		return runReset(ctx, r)
 	}

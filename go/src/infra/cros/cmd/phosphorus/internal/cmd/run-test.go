@@ -32,6 +32,7 @@ A wrapper around 'autoserv'.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &runTestRun{}
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.phosphorus.RunTestRequest")
+		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path to write JSON encoded test_platform.phosphorus.RunTestResponse to")
 		return c
 	},
 }
@@ -72,7 +73,12 @@ func (c *runTestRun) innerRun(a subcommands.Application, args []string, env subc
 		ctx, c = context.WithDeadline(ctx, d)
 		defer c()
 	}
-	return runTestStep(ctx, r)
+	if err := runTestStep(ctx, r); err != nil {
+		return err
+	}
+	return writeJSONPb(c.outputPath, &phosphorus.RunTestResponse{
+		State: phosphorus.RunTestResponse_SUCCEEDED,
+	})
 }
 
 func validateRunTestRequest(r phosphorus.RunTestRequest) error {
