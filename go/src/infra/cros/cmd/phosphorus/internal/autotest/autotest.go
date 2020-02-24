@@ -21,6 +21,7 @@ import (
 
 const autoservRelpath = "server/autoserv"
 
+// This is shared by tests and autotest/files/server/autoserv, do not change it
 const offloadPath = "SYNCHRONOUS_OFFLOAD_DIR"
 
 // AutoservArgs is the arguments for creating an autoserv command.
