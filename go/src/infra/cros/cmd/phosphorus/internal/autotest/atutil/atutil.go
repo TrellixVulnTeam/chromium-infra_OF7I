@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.chromium.org/luci/common/logging"
 
 	"infra/cros/cmd/phosphorus/internal/autotest"
 	"infra/cros/cmd/phosphorus/internal/osutil"
@@ -127,9 +128,7 @@ func runTask(ctx context.Context, c autotest.Config, a *autotest.AutoservArgs, w
 	} else {
 		return r, errors.New("RunAutoserv: failed to get exit status: unknown process state")
 	}
-	if r.Exit != 0 {
-		return r, errors.Errorf("RunAutoserv: exited %d", r.Exit)
-	}
+	logging.Infof(ctx, "RunAutoserv: exited %d", r.Exit)
 	return r, nil
 }
 
@@ -140,7 +139,8 @@ func runTask(ctx context.Context, c autotest.Config, a *autotest.AutoservArgs, w
 // finished timestamp.
 func runTest(ctx context.Context, c autotest.Config, a *autotest.AutoservArgs, w io.Writer) (*Result, error) {
 	r, err := runTask(ctx, c, a, w)
-	if !r.Started {
+	if !r.Started || r.Exit != 0 {
+		// autoserv did not exit cleanly so artifacts may not be present.
 		return r, err
 	}
 	p := filepath.Join(a.ResultsDir, autoservPidFile)

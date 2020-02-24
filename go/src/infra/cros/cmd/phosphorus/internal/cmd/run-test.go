@@ -73,12 +73,22 @@ func (c *runTestRun) innerRun(a subcommands.Application, args []string, env subc
 		ctx, c = context.WithDeadline(ctx, d)
 		defer c()
 	}
-	if err := runTestStep(ctx, r); err != nil {
+	ar, err := runTestStep(ctx, r)
+	if err != nil {
 		return err
 	}
-	return writeJSONPb(c.outputPath, &phosphorus.RunTestResponse{
-		State: phosphorus.RunTestResponse_SUCCEEDED,
-	})
+	return writeJSONPb(c.outputPath, c.response(ar))
+}
+
+func (c *runTestRun) response(r *atutil.Result) *phosphorus.RunTestResponse {
+	if r.Success() {
+		return &phosphorus.RunTestResponse{
+			State: phosphorus.RunTestResponse_SUCCEEDED,
+		}
+	}
+	return &phosphorus.RunTestResponse{
+		State: phosphorus.RunTestResponse_FAILED,
+	}
 }
 
 func validateRunTestRequest(r phosphorus.RunTestRequest) error {
@@ -100,7 +110,7 @@ func validateRunTestRequest(r phosphorus.RunTestRequest) error {
 }
 
 // runTestStep runs an individual test. It is a wrapper around autoserv.
-func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) error {
+func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
 
 	dir := filepath.Join(r.Config.Task.ResultsDir, "autoserv_test")
@@ -120,11 +130,10 @@ func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) error {
 		RequireSSP:        !r.GetAutotest().GetIsClientTest(),
 	}
 
-	_, err := atutil.RunAutoserv(ctx, j, t, os.Stdout)
-
+	ar, err := atutil.RunAutoserv(ctx, j, t, os.Stdout)
 	if err != nil {
-		return errors.Wrap(err, "run test")
+		return nil, errors.Wrap(err, "run test")
 	}
 
-	return nil
+	return ar, nil
 }

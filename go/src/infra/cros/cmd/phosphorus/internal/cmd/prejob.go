@@ -75,15 +75,25 @@ func (c *prejobRun) innerRun(a subcommands.Application, args []string, env subco
 		ctx, c = context.WithDeadline(ctx, d)
 		defer c()
 	}
-	if err := runPrejob(ctx, r); err != nil {
+	ar, err := runPrejob(ctx, r)
+	if err != nil {
 		return err
 	}
-	return writeJSONPb(c.outputPath, &phosphorus.PrejobResponse{
-		State: phosphorus.PrejobResponse_SUCCEEDED,
-	})
+	return writeJSONPb(c.outputPath, c.response(ar))
 }
 
-func runPrejob(ctx context.Context, r phosphorus.PrejobRequest) error {
+func (c *prejobRun) response(r *atutil.Result) *phosphorus.PrejobResponse {
+	if r.Success() {
+		return &phosphorus.PrejobResponse{
+			State: phosphorus.PrejobResponse_SUCCEEDED,
+		}
+	}
+	return &phosphorus.PrejobResponse{
+		State: phosphorus.PrejobResponse_FAILED,
+	}
+}
+
+func runPrejob(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
 	if contains(r.ExistingProvisionableLabels, r.DesiredProvisionableLabels) {
 		return runReset(ctx, r)
 	}
@@ -116,52 +126,41 @@ func contains(x, y map[string]string) bool {
 
 // runProvisions provisions a single host. It is a wrapper around
 // `autoserv --provision`. It cannot modify its point arguments.
-func runProvision(ctx context.Context, r phosphorus.PrejobRequest) error {
+func runProvision(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
-
 	var labels []string
 	for k, v := range r.DesiredProvisionableLabels {
 		labels = append(labels, k+":"+v)
 	}
-
 	subDir := fmt.Sprintf("provision_%s", r.DutHostname)
 	fullPath := filepath.Join(r.Config.Task.ResultsDir, subDir)
-
 	p := &atutil.Provision{
 		Host:              r.DutHostname,
 		Labels:            labels,
 		LocalOnlyHostInfo: true,
 		ResultsDir:        fullPath,
 	}
-
-	_, err := atutil.RunAutoserv(ctx, j, p, os.Stdout)
-
+	ar, err := atutil.RunAutoserv(ctx, j, p, os.Stdout)
 	if err != nil {
-		return errors.Wrap(err, "run provision")
+		return nil, errors.Wrap(err, "run provision")
 	}
-
-	return nil
+	return ar, nil
 }
 
 // runProvisions provisions a single host. It is a wrapper around
 // `autoserv --reset`.
-func runReset(ctx context.Context, r phosphorus.PrejobRequest) error {
+func runReset(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {
 	j := getMainJob(r.Config)
-
 	subDir := fmt.Sprintf("prejob_%s", r.DutHostname)
 	fullPath := filepath.Join(r.Config.Task.ResultsDir, subDir)
-
 	a := &atutil.AdminTask{
 		Host:       r.DutHostname,
 		ResultsDir: fullPath,
 		Type:       atutil.Reset,
 	}
-
-	_, err := atutil.RunAutoserv(ctx, j, a, os.Stdout)
-
+	ar, err := atutil.RunAutoserv(ctx, j, a, os.Stdout)
 	if err != nil {
-		return errors.Wrap(err, "run reset")
+		return nil, errors.Wrap(err, "run reset")
 	}
-
-	return nil
+	return ar, nil
 }
