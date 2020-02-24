@@ -29,6 +29,8 @@ regenerate: $(INFRA)/cipd/protoc $(TOOLS)/protoc-gen-prpc-python
 		$(LUCI_GO)/cq/api/bigquery/*.proto \
 		$(LUCI_GO)/cq/api/recipe/v1/*.proto \
 		$(LUCI_GO)/cq/api/config/v2/*.proto \
+		$(LUCI_GO)/resultdb/proto/rpc/v1/*.proto \
+		$(LUCI_GO)/resultdb/proto/type/*.proto \
 		$(LUCI_GO)/server/auth/delegation/messages/*.proto  \
 		$(LUCI_GO)/swarming/proto/api/*.proto \
 		$(LUCI_GO)/tokenserver/api/*.proto  \
