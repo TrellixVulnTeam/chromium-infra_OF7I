@@ -5,29 +5,35 @@
 package skylab
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"infra/cmd/cros_test_platform/internal/execution/isolate"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"infra/libs/skylab/request"
 
+	"github.com/golang/protobuf/jsonpb"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/isolated"
 	"go.chromium.org/luci/common/logging"
 )
 
 // TaskReference is an opaque way to identify a task.
 type TaskReference struct {
+	swarmingClient swarming.Client
+	isolateGetter  isolate.GetterFactory
 	swarmingTaskID string
 	url            string
 }
 
-// URL is the Swarming URL of the task.
-func (t *TaskReference) URL() string {
-	return t.url
-}
-
-// SwarmingTaskID is the Swarming ID of the task.
-func (t *TaskReference) SwarmingTaskID() string {
-	return t.swarmingTaskID
+// FetchResultsResponse is an implementation-independent container for
+// information about running and finished tasks.
+type FetchResultsResponse struct {
+	Result    *skylab_test_runner.Result
+	LifeCycle test_platform.TaskState_LifeCycle
 }
 
 // Client bundles local interfaces to various remote services used by Runner.
@@ -65,7 +71,106 @@ func (c *Client) LaunchTask(ctx context.Context, args *request.Args) (*TaskRefer
 		return nil, errors.Annotate(err, "launch attempt for %s", args.Cmd.TaskName).Err()
 	}
 	return &TaskReference{
+		isolateGetter:  c.IsolateGetter,
+		swarmingClient: c.Swarming,
 		swarmingTaskID: resp.TaskId,
 		url:            c.Swarming.GetTaskURL(resp.TaskId),
 	}, nil
+}
+
+// Tasks with these life cycles contain test results.
+// E.g. this excludes killed tasks as they have no chance to produce results.
+var lifeCyclesWithResults = map[test_platform.TaskState_LifeCycle]bool{
+	test_platform.TaskState_LIFE_CYCLE_COMPLETED: true,
+}
+
+// FetchResults fetches the latest state and results of the given task.
+func (t *TaskReference) FetchResults(ctx context.Context) (*FetchResultsResponse, error) {
+	results, err := t.swarmingClient.GetResults(ctx, []string{t.swarmingTaskID})
+	if err != nil {
+		return nil, errors.Annotate(err, "fetch results for task %s", t.URL()).Err()
+	}
+	result, err := extractSingleResultWithID(results, t.swarmingTaskID)
+	if err != nil {
+		return nil, errors.Annotate(err, "fetch results for task %s", t.URL()).Err()
+	}
+
+	lc, err := swarming.AsLifeCycle(result.State)
+	if err != nil {
+		return nil, errors.Annotate(err, "fetch results for task %s", t.URL()).Err()
+	}
+
+	if !lifeCyclesWithResults[lc] {
+		return &FetchResultsResponse{LifeCycle: lc}, nil
+	}
+
+	r, err := downloadTestRunnerResult(ctx, result, t.isolateGetter)
+	if err != nil {
+		// This error may happen if test task exited abnormally, so it is
+		// handled similarly to a cancelled task rather than a Swarming error.
+		logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", t.URL(), err.Error())
+		return &FetchResultsResponse{LifeCycle: lc}, nil
+	}
+
+	return &FetchResultsResponse{
+		LifeCycle: lc,
+		Result:    r,
+	}, nil
+}
+
+// URL is the Swarming URL of the task.
+func (t *TaskReference) URL() string {
+	return t.url
+}
+
+// SwarmingTaskID is the Swarming ID of the task.
+func (t *TaskReference) SwarmingTaskID() string {
+	return t.swarmingTaskID
+}
+
+func extractSingleResultWithID(results []*swarming_api.SwarmingRpcsTaskResult, taskID string) (*swarming_api.SwarmingRpcsTaskResult, error) {
+	if len(results) != 1 {
+		return nil, errors.Reason("expected 1 result for task id %s, got %d", taskID, len(results)).Err()
+	}
+
+	result := results[0]
+	if result.TaskId != taskID {
+		return nil, errors.Reason("expected result for task id %s, got %s", taskID, result.TaskId).Err()
+	}
+
+	return result, nil
+}
+
+const resultsFileName = "results.json"
+
+func downloadTestRunnerResult(ctx context.Context, sResult *swarming_api.SwarmingRpcsTaskResult, gf isolate.GetterFactory) (*skylab_test_runner.Result, error) {
+	if sResult == nil {
+		return nil, errors.Reason("download result: nil swarming result").Err()
+	}
+
+	taskID := sResult.TaskId
+	outputRef := sResult.OutputsRef
+	if outputRef == nil {
+		return nil, fmt.Errorf("download result for task %s: task has no output ref", taskID)
+	}
+
+	getter, err := gf(ctx, outputRef.Isolatedserver)
+	if err != nil {
+		return nil, errors.Annotate(err, "download result for task %s", taskID).Err()
+	}
+
+	logging.Debugf(ctx, "fetching result for task %s from isolate ref %+v", taskID, outputRef)
+	content, err := getter.GetFile(ctx, isolated.HexDigest(outputRef.Isolated), resultsFileName)
+	if err != nil {
+		return nil, errors.Annotate(err, "download result for task %s", taskID).Err()
+	}
+
+	var r skylab_test_runner.Result
+
+	err = jsonpb.Unmarshal(bytes.NewReader(content), &r)
+	if err != nil {
+		return nil, errors.Annotate(err, "download result for task %s", taskID).Err()
+	}
+
+	return &r, nil
 }
