@@ -8,10 +8,8 @@ package dronecfg
 
 import (
 	"context"
-	"sort"
 
 	"go.chromium.org/gae/service/datastore"
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -28,23 +26,33 @@ type Entity struct {
 	DUTs     []DUT  `gae:",noindex"`
 }
 
-func modifyDUTs(self []DUT, operator func(stringset.Set, stringset.Set) stringset.Set, other []DUT) []DUT {
-	dutMap := map[string]DUT{}
-	for _, d := range append(self, other...) {
-		dutMap[d.ID] = d
+func dutsUnion(self, other []DUT) []DUT {
+	idToDut := map[string]DUT{}
+	for _, d := range self {
+		idToDut[d.ID] = d
 	}
-	getIds := func(duts []DUT) []string {
-		var result []string
-		for _, d := range duts {
-			result = append(result, d.ID)
+	for _, d := range other {
+		idToDut[d.ID] = d
+	}
+	result := make([]DUT, len(idToDut))
+	idx := 0
+	for _, v := range idToDut {
+		result[idx] = v
+		idx++
+	}
+	return result
+}
+
+func dutsDifference(self, other []DUT) []DUT {
+	dutToRemove := map[string]bool{}
+	for _, d := range other {
+		dutToRemove[d.ID] = true
+	}
+	result := make([]DUT, 0, len(self))
+	for _, d := range self {
+		if _, found := dutToRemove[d.ID]; !found {
+			result = append(result, d)
 		}
-		return result
-	}
-	resultIds := operator(stringset.NewFromSlice(getIds(self)...), stringset.NewFromSlice(getIds(other)...)).ToSlice()
-	sort.Strings(resultIds)
-	var result []DUT
-	for _, id := range resultIds {
-		result = append(result, dutMap[id])
 	}
 	return result
 }
@@ -68,10 +76,10 @@ func MergeDutsToDrones(ctx context.Context, dronesToAddDut []Entity, dronesToRem
 			return err
 		}
 		for _, d := range dronesToAddDut {
-			dronesMap[d.Hostname].DUTs = modifyDUTs(dronesMap[d.Hostname].DUTs, stringset.Set.Union, d.DUTs)
+			dronesMap[d.Hostname].DUTs = dutsUnion(dronesMap[d.Hostname].DUTs, d.DUTs)
 		}
 		for _, d := range dronesToRemoveDut {
-			dronesMap[d.Hostname].DUTs = modifyDUTs(dronesMap[d.Hostname].DUTs, stringset.Set.Difference, d.DUTs)
+			dronesMap[d.Hostname].DUTs = dutsDifference(dronesMap[d.Hostname].DUTs, d.DUTs)
 		}
 		// Keep drones with 0 DUTs in datastore.
 		if err := datastore.Put(ctx, drones); err != nil {
