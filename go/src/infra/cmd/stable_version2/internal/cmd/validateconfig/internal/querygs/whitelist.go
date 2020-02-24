@@ -11,6 +11,7 @@ package querygs
 var missingBoardWhitelist map[string]bool = stringSliceToStringSet([]string{
 	"buddy_cfm",
 	"caroline_arcnext",
+	"caroline_kernelnext",
 	"caroline_ndktranslation",
 	"cid",
 	"cyan_kernelnext",
