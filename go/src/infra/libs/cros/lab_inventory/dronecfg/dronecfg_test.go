@@ -5,6 +5,7 @@
 package dronecfg
 
 import (
+	"sort"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -53,8 +54,9 @@ func TestDroneConfig(t *testing.T) {
 				t.Fatal(err)
 			}
 			So(cfg.DUTs, ShouldHaveLength, 2)
-			So(cfg.DUTs[0].Hostname, ShouldEqual, dutName)
-			So(cfg.DUTs[1].Hostname, ShouldEqual, dut2Name)
+			dutNames := []string{cfg.DUTs[0].Hostname, cfg.DUTs[1].Hostname}
+			sort.Strings(dutNames)
+			So(dutNames, ShouldResemble, []string{dutName, dut2Name})
 
 			Convey("Remove a DUT from the dorne", func() {
 				e := Entity{
