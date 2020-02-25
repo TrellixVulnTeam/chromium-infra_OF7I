@@ -271,4 +271,7 @@ message InventoryProvider{
 
   // The device names for migration testing.
   repeated string testing_device_names = 6;
+
+  // The flag to control if we write to inventory v1.
+  bool inventory_v2_only = 7;
 }

@@ -34,9 +34,12 @@ type duoClient struct {
 
 	// The uuids of migration test devices.
 	testingDeviceNames stringset.Set
+
+	// If we still write to v1.
+	inventoryV2Only bool
 }
 
-func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string, readTrafficRatio, writeTrafficRatio int, testingUUIDs, testingNames []string) (inventoryClient, error) {
+func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string, readTrafficRatio, writeTrafficRatio int, testingUUIDs, testingNames []string, inventoryV2Only bool) (inventoryClient, error) {
 	gc, err := newGitStoreClient(ctx, gs)
 	if err != nil {
 		return nil, errors.Annotate(err, "create git client").Err()
@@ -53,6 +56,7 @@ func newDuoClient(ctx context.Context, gs *gitstore.InventoryStore, host string,
 		writeTrafficRatio:  writeTrafficRatio,
 		testingDeviceUUIDs: stringset.NewFromSlice(testingUUIDs...),
 		testingDeviceNames: stringset.NewFromSlice(testingNames...),
+		inventoryV2Only:    inventoryV2Only,
 	}, nil
 }
 
@@ -80,6 +84,10 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 		url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx, nds, pickServoPort)
 		logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
 		logging.Infof(ctx, "[v2] spec returned: %s", ds2)
+
+		if client.inventoryV2Only {
+			return url2, ds2, err2
+		}
 	}
 
 	url, ds, err := client.gc.addManyDUTsToFleet(ctx, nds, pickServoPort)
@@ -92,6 +100,10 @@ func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.C
 	if client.willWriteToV2() {
 		url2, err2 := client.ic.updateDUTSpecs(ctx, od, nd, pickServoPort)
 		logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
+
+		if client.inventoryV2Only {
+			return url2, err2
+		}
 	}
 
 	url, err := client.gc.updateDUTSpecs(ctx, od, nd, pickServoPort)
@@ -103,7 +115,12 @@ func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) 
 	if client.willWriteToV2() {
 		url2, deletedIds2, err2 := client.ic.deleteDUTsFromFleet(ctx, ids)
 		logging.Infof(ctx, "[v2] delete dut result: %s, %s, %s", url2, deletedIds2, err2)
+
+		if client.inventoryV2Only {
+			return url2, deletedIds2, err2
+		}
 	}
+
 	url, deletedIds, err := client.gc.deleteDUTsFromFleet(ctx, ids)
 	logging.Infof(ctx, "[v1] delete dut result: %s, %s, %s", url, deletedIds, err)
 
@@ -112,12 +129,16 @@ func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) 
 
 func (client *duoClient) selectDutsFromInventory(ctx context.Context, sel *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error) {
 	if client.willWriteToV2() {
-		duts, _ := client.ic.selectDutsFromInventory(ctx, sel)
+		duts, err := client.ic.selectDutsFromInventory(ctx, sel)
 		logging.Infof(ctx, "[v2] select duts by %v", sel)
 		if len(duts) > 0 {
 			logging.Infof(ctx, "[v2] selecting returns '%s'...(total %d duts)", duts[0].GetCommon().GetHostname(), len(duts))
 		} else {
 			logging.Infof(ctx, "[v2] selecting returns 0 duts")
+		}
+
+		if client.inventoryV2Only {
+			return duts, err
 		}
 	}
 	return client.gc.selectDutsFromInventory(ctx, sel)
@@ -127,6 +148,10 @@ func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes [
 	if client.willWriteToV2() {
 		u, err := client.ic.commitBalancePoolChanges(ctx, changes)
 		logging.Infof(ctx, "[v2] Commit balancing pool result: %s: %s", u, err)
+
+		if client.inventoryV2Only {
+			return u, err
+		}
 	}
 	return client.gc.commitBalancePoolChanges(ctx, changes)
 }
