@@ -28,9 +28,9 @@ export const RpcCode = Object.freeze({
   UNAUTHENTICATED: 16
 });
 
-const rpcCodeNames = {};
+const rpcCodeNames: {[key: number]: string} = {};
 for (const name in RpcCode) {
-  rpcCodeNames[RpcCode[name]] = name;
+  rpcCodeNames[RpcCode[name as keyof typeof RpcCode]] = name;
 }
 
 /**
@@ -39,8 +39,19 @@ for (const name in RpcCode) {
  * @return {string|undefined} the code name of the corresponding gRPC code
  * or undefined if not found.
  */
-export function rpcCodeToCodeName(rpcCode) {
+export function rpcCodeToCodeName(rpcCode: number) {
   return rpcCodeNames[rpcCode];
+}
+
+export interface PrpcClientOptions {
+  // pRPC server host, defaults to current document host.
+  host?: string;
+  // OAuth 2.0 access token to use in RPC.
+  accessToken?: string;
+  // If true, use HTTP instead of HTTPS. Defaults to false.
+  insecure?: boolean;
+  // If supplied, use this function instead of fetch.
+  fetchImpl?: typeof fetch;
 }
 
 /**
@@ -48,6 +59,11 @@ export function rpcCodeToCodeName(rpcCode) {
  * Protocol: https://godoc.org/go.chromium.org/luci/grpc/prpc
  */
 export class PrpcClient {
+  public readonly host: string;
+  public readonly accessToken: string | null;
+  public readonly insecure: boolean;
+  public readonly fetchImpl: typeof fetch;
+
   /**
    * @constructor
    * @param options {Object} with the following (all optional) config options:
@@ -57,7 +73,7 @@ export class PrpcClient {
    * - fetchImpl {function} if supplied, use this function instead of fetch.
    *   Defaults to `window.fetch`.
    */
-  constructor(options = null) {
+  public constructor(options: PrpcClientOptions | null = null) {
     options = options || {};
     this.host = options.host || document.location.host;
     this.accessToken = options.accessToken || null;
@@ -82,7 +98,7 @@ export class PrpcClient {
    * @return {Promise<Object>} a promise resolving the response message
    * or rejecting with an error..
    */
-  async call(service, method, message, additionalHeaders) {
+  public async call(service: string, method: string, message: object, additionalHeaders?: {[key: string]: string}) {
     if (!service) {
       throw new TypeError("missing required argument: service");
     }
@@ -110,7 +126,7 @@ export class PrpcClient {
     }
 
     const rpcCode = Number.parseInt(
-      response.headers.get("X-Prpc-Grpc-Code"),
+      response.headers.get("X-Prpc-Grpc-Code")!,
       10
     );
     if (Number.isNaN(rpcCode)) {
@@ -140,8 +156,8 @@ export class PrpcClient {
   /**
    * @return {Object} the options used in fetch().
    */
-  _requestOptions(message, additionalHeaders) {
-    const headers = {
+  private _requestOptions(message: object, additionalHeaders?: {[key: string]: string}): RequestInit {
+    const headers: {[key: string]: string} = {
       accept: "application/json",
       "content-type": "application/json"
     };
@@ -165,23 +181,23 @@ export class PrpcClient {
  * Data class representing an error returned from pRPC-gRPC.
  */
 export class GrpcError extends Error {
+  public readonly codeName: string;
+
   /**
    * @constructor
    * @param code {number} gRPC code.
    * @param description {string} error message.
    */
-  constructor(code, description) {
+  public constructor(public readonly code: number, public readonly description: string) {
     super();
     if (code === null) {
       throw new Error("missing required argument: code");
     }
 
-    this.code = code;
     this.codeName = rpcCodeToCodeName(code);
-    this.description = description;
   }
 
-  get message() {
+  public get message() {
     return `code: ${this.code} (${this.codeName}) desc: ${this.description}`;
   }
 }
@@ -190,17 +206,14 @@ export class GrpcError extends Error {
  * Data class representing a violation of the pRPC protocol.
  */
 export class ProtocolError extends Error {
-  constructor(httpStatus, description) {
+  public constructor(public readonly httpStatus: number, public readonly description: string) {
     super();
     if (httpStatus === null) {
       throw new Error("missing required argument: httpStatus");
     }
-
-    this.httpStatus = httpStatus;
-    this.description = description;
   }
 
-  get message() {
+  public get message() {
     return `status: ${this.httpStatus} desc: ${this.description}`;
   }
 }

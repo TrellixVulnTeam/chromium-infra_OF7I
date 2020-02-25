@@ -1,11 +1,16 @@
 {
   "name": "@chopsui/prpc-client",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "pRPC client for making requests.",
-  "main": "prpc-client.js",
+  "main": "dist/prpc-client.js",
+  "types": "dist/prpc-client.d.ts",
   "scripts": {
+    "prepare": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "The Chromium Authors",
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "SEE LICENSE IN LICENSE",
+  "devDependencies": {
+    "typescript": "^3.7.5"
+  }
 }
