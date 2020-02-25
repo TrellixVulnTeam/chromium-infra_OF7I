@@ -245,6 +245,10 @@ def publish_tarball(api):
       ['touch', api.path['checkout'].join(
           'chrome', 'test', 'data', 'webui', 'i18n_process_css_test.html')])
 
+  api.file.copy(
+      'copy clang-format', api.chromium.resource('clang-format'),
+      api.path['checkout'].join('buildtools', 'linux64', 'clang-format'))
+
   update_script = 'update.py'
   update_args = ['--force-local-build']
   if [int(x) for x in version.split('.')] >= [76, 0, 3784, 0]:

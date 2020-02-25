@@ -231,6 +231,20 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "RECIPE_MODULE[build::chromium]/resources/clang-format",
+      "[START_DIR]/src/buildtools/linux64/clang-format"
+    ],
+    "infra_step": true,
+    "name": "copy clang-format"
+  },
+  {
+    "cmd": [
       "[START_DIR]/src/tools/clang/scripts/build.py",
       "--without-android",
       "--use-system-cmake",
