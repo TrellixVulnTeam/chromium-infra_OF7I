@@ -143,7 +143,6 @@ def build_bundle(for_creation=False, **build_proto_fields):  # pragma: no cover
       parameters={},
       url='https://ci.example.com/%d' % proto.id,
       is_luci=True,
-      swarming_task_key='swarming_task_key',
   )
   b.update_v1_status_fields()
   if proto.input.HasField('gitiles_commit'):

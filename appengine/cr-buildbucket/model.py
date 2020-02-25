@@ -142,15 +142,6 @@ class Build(ndb.Model):
   # creation.py or fix_builds.py.
   proto = datastore_utils.ProtobufProperty(build_pb2.Build)
 
-  # A randomly generated key associated with the created swarming task.
-  # Embedded in a build token provided to a swarming task in secret bytes.
-  # Needed in case Buildbucket unintentionally creates multiple swarming tasks
-  # associated with the build.
-  # Populated by swarming.py on swarming task creation.
-  # A part of the message in build token (tokens.py) required for UpdateBuild
-  # api.
-  swarming_task_key = ndb.StringProperty(indexed=False)
-
   # == proto-derived properties ================================================
   #
   # These properties are derived from "proto" properties.

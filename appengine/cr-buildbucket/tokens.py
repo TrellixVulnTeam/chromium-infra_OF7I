@@ -14,24 +14,16 @@ class BuildToken(auth.TokenKind):
   secret_key = auth.SecretKey('build_id')
 
 
-def _token_message(build_id, task_key):
+def _token_message(build_id):
   assert isinstance(build_id, (int, long)), build_id
-  assert task_key is None or (isinstance(task_key, basestring) and task_key)
-  # TODO(nodir): always require task_key.
-  if task_key:
-    return [str(build_id), task_key]
   return str(build_id)
 
 
-def generate_build_token(build_id, _):
+def generate_build_token(build_id):
   """Returns a token associated with the build."""
-  return BuildToken.generate(_token_message(build_id, None))
+  return BuildToken.generate(_token_message(build_id))
 
 
-def validate_build_token(token, build_id, task_key):
+def validate_build_token(token, build_id):
   """Raises auth.InvalidTokenError if the token is invalid."""
-  try:
-    BuildToken.validate(token, _token_message(build_id, None))
-  except auth.InvalidTokenError:
-    # TODO(crbug.com/1052144): remove this after update.
-    BuildToken.validate(token, _token_message(build_id, task_key))
+  return BuildToken.validate(token, _token_message(build_id))

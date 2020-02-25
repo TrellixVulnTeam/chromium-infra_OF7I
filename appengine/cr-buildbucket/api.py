@@ -332,7 +332,7 @@ def validate_build_token(build, ctx):
   # build.swarming_task_key is None.
 
   try:
-    tokens.validate_build_token(token, build.key.id(), build.swarming_task_key)
+    tokens.validate_build_token(token, build.key.id())
   except auth.InvalidTokenError as e:
     raise StatusError(prpc.StatusCode.UNAUTHENTICATED, '%s', e.message)
 

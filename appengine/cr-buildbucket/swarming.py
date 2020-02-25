@@ -546,8 +546,6 @@ def _create_swarming_task(build):
   logging.info('creating a task on %s', sw.hostname)
   build_id = build.proto.id
 
-  task_key = str(uuid.uuid4())
-
   settings = config.get_settings_async().get_result()
 
   # Prepare task definition.
@@ -555,7 +553,7 @@ def _create_swarming_task(build):
 
   # Insert secret bytes.
   secrets = launcher_pb2.BuildSecrets(
-      build_token=tokens.generate_build_token(build_id, task_key),
+      build_token=tokens.generate_build_token(build_id),
   )
   secret_bytes_b64 = base64.b64encode(secrets.SerializeToString())
   for ts in task_def['task_slices']:
@@ -575,7 +573,7 @@ def _create_swarming_task(build):
         delegation_tag='buildbucket:bucket:%s' % build.bucket_id,
         deadline=30,
         # Try only once so we don't have multiple swarming tasks with same
-        # task_key and valid token, otherwise they will race.
+        # build_id and valid token, otherwise they will race.
         max_attempts=1,
     ).get_result()
     new_task_id = res['task_id']
@@ -618,7 +616,6 @@ def _create_swarming_task(build):
     bundle = model.BuildBundle.get(build_id, infra=True)
     if not bundle:  # pragma: no cover
       return False
-    build = bundle.build
 
     with bundle.infra.mutate() as infra:
       sw = infra.swarming
@@ -628,8 +625,6 @@ def _create_swarming_task(build):
 
       sw.task_id = new_task_id
 
-    assert not build.swarming_task_key
-    build.swarming_task_key = task_key
     bundle.put()
     return True
 
