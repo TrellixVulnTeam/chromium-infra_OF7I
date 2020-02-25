@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	trueValue   bool   = true
-	falseValue  bool   = false
-	emptyString string = ""
+	trueValue            bool   = true
+	falseValue           bool   = false
+	emptyString          string = ""
+	invServoStateUnknown        = inventory.PeripheralState_UNKNOWN
 )
 
 var arcBoardMap = map[string]bool{
@@ -315,13 +316,22 @@ func setHwidData(l *inventory.SchedulableLabels, h *HwidData) {
 func setDutStateHelper(s lab.PeripheralState, target **bool) {
 	switch s {
 	case lab.PeripheralState_WORKING:
+		fallthrough
+	case lab.PeripheralState_BROKEN:
 		*target = &trueValue
 	case lab.PeripheralState_NOT_CONNECTED:
 		*target = &falseValue
 	}
 }
+func setServoState(s lab.PeripheralState, target **inventory.PeripheralState) {
+	if s != lab.PeripheralState_UNKNOWN {
+		value := inventory.PeripheralState(s)
+		*target = &value
+	}
+}
 
 func setDutState(p *inventory.Peripherals, s *lab.DutState) {
+	setServoState(s.GetServo(), &(p.ServoState))
 	setDutStateHelper(s.GetServo(), &(p.Servo))
 	setDutStateHelper(s.GetChameleon(), &(p.Chameleon))
 	setDutStateHelper(s.GetAudioLoopbackDongle(), &(p.AudioLoopbackDongle))
@@ -484,6 +494,7 @@ func adaptV2LabstationToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUn
 		Huddly:              &falseValue,
 		Mimo:                &falseValue,
 		Servo:               &falseValue,
+		ServoState:          &invServoStateUnknown,
 		Stylus:              &falseValue,
 		Camerabox:           &falseValue,
 		Wificell:            &falseValue,

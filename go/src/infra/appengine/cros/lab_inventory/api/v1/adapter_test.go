@@ -123,7 +123,7 @@ var devInV2State = lab.DutState{
 	Id: &lab.ChromeOSDeviceID{
 		Value: "test_dut",
 	},
-	Servo:               lab.PeripheralState_WORKING,
+	Servo:               lab.PeripheralState_BROKEN,
 	Chameleon:           lab.PeripheralState_WORKING,
 	AudioLoopbackDongle: lab.PeripheralState_NOT_CONNECTED,
 }
@@ -415,6 +415,7 @@ common {
           huddly: false
           mimo: false
           servo: false
+          servo_state: UNKNOWN
           stylus: false
           camerabox: false
           wificell: false
@@ -529,6 +530,42 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 			})
 			So(s1, ShouldEqual, s2)
 		})
+		Convey("servo_state is empty by default", func() {
+			d, err := AdaptToV1DutSpec(&dataCopy)
+			So(err, ShouldBeNil)
+			So(d.GetCommon().GetLabels().GetPeripherals().ServoState, ShouldBeNil)
+			So(d.GetCommon().GetLabels().GetPeripherals().Servo, ShouldBeNil)
+		})
+		Convey("servo_state is broken", func() {
+			dataCopy.DutState = &lab.DutState{}
+			dataCopy.DutState.Servo = lab.PeripheralState_BROKEN
+			d, err := AdaptToV1DutSpec(&dataCopy)
+			So(err, ShouldBeNil)
+			So(*d.GetCommon().GetLabels().GetPeripherals().ServoState,
+				ShouldEqual,
+				inventory.PeripheralState_BROKEN)
+			So(*d.GetCommon().GetLabels().GetPeripherals().Servo, ShouldEqual, true)
+		})
+		Convey("servo_state is working", func() {
+			dataCopy.DutState = &lab.DutState{}
+			dataCopy.DutState.Servo = lab.PeripheralState_WORKING
+			d, err := AdaptToV1DutSpec(&dataCopy)
+			So(err, ShouldBeNil)
+			So(*d.GetCommon().GetLabels().GetPeripherals().ServoState,
+				ShouldEqual,
+				inventory.PeripheralState_WORKING)
+			So(*d.GetCommon().GetLabels().GetPeripherals().Servo, ShouldEqual, true)
+		})
+		Convey("servo_state is not_connected", func() {
+			dataCopy.DutState = &lab.DutState{}
+			dataCopy.DutState.Servo = lab.PeripheralState_NOT_CONNECTED
+			d, err := AdaptToV1DutSpec(&dataCopy)
+			So(err, ShouldBeNil)
+			So(*d.GetCommon().GetLabels().GetPeripherals().ServoState,
+				ShouldEqual,
+				inventory.PeripheralState_NOT_CONNECTED)
+			So(*d.GetCommon().GetLabels().GetPeripherals().Servo, ShouldEqual, false)
+		})
 		Convey("happy path", func() {
 			d, err := AdaptToV1DutSpec(&data)
 			So(err, ShouldBeNil)
@@ -571,7 +608,8 @@ func TestImportFromV1DutSpecs(t *testing.T) {
 		var d1 inventory.DeviceUnderTest
 		err := proto.UnmarshalText(dutTextProto, &d1)
 		// Set servo state for testing dutState creation.
-		d1.GetCommon().GetLabels().GetPeripherals().Servo = &trueValue
+		inventoryServoStateBroken := inventory.PeripheralState_BROKEN
+		d1.GetCommon().GetLabels().GetPeripherals().ServoState = &inventoryServoStateBroken
 		So(err, ShouldBeNil)
 		var l1 inventory.DeviceUnderTest
 		err = proto.UnmarshalText(labstationTextProto, &l1)
@@ -581,7 +619,11 @@ func TestImportFromV1DutSpecs(t *testing.T) {
 		err = proto.UnmarshalText(labstation2TextProto, &l2)
 		So(err, ShouldBeNil)
 
-		devices, labstations, states, err := ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{d1.GetCommon(), l1.GetCommon(), l2.GetCommon()})
+		devices, labstations, states, err := ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{
+			d1.GetCommon(),
+			l1.GetCommon(),
+			l2.GetCommon(),
+		})
 		// Verify devices
 		So(len(devices), ShouldEqual, 1)
 		So(proto.Equal(devices[0], &devInV2), ShouldBeTrue)
@@ -594,6 +636,52 @@ func TestImportFromV1DutSpecs(t *testing.T) {
 		// Verify dut states.
 		So(len(states), ShouldEqual, 1)
 		So(proto.Equal(states[0], &devInV2State), ShouldBeTrue)
+
+		Convey("set servo from servo_state", func() {
+			*d1.GetCommon().GetLabels().GetPeripherals().ServoState = inventory.PeripheralState_WORKING
+			d1.GetCommon().GetLabels().GetPeripherals().Servo = &falseValue
+			_, _, states, err = ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{
+				d1.GetCommon(),
+			})
+			So(err, ShouldBeNil)
+			So(states[0].GetServo(), ShouldEqual, lab.PeripheralState_WORKING)
+		})
+		Convey("set servo from servo when servo_state is UNKNOWN and servo is true", func() {
+			*d1.GetCommon().GetLabels().GetPeripherals().ServoState = inventory.PeripheralState_UNKNOWN
+			d1.GetCommon().GetLabels().GetPeripherals().Servo = &trueValue
+			_, _, states, err = ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{
+				d1.GetCommon(),
+			})
+			So(err, ShouldBeNil)
+			So(states[0].GetServo(), ShouldEqual, lab.PeripheralState_WORKING)
+		})
+		Convey("set servo from servo when servo_state is nil  and servo is true", func() {
+			d1.GetCommon().GetLabels().GetPeripherals().ServoState = nil
+			d1.GetCommon().GetLabels().GetPeripherals().Servo = &trueValue
+			_, _, states, err = ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{
+				d1.GetCommon(),
+			})
+			So(err, ShouldBeNil)
+			So(states[0].GetServo(), ShouldEqual, lab.PeripheralState_WORKING)
+		})
+		Convey("set servo from servo when servo_state is nil  and servo is false", func() {
+			d1.GetCommon().GetLabels().GetPeripherals().ServoState = nil
+			d1.GetCommon().GetLabels().GetPeripherals().Servo = &falseValue
+			_, _, states, err = ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{
+				d1.GetCommon(),
+			})
+			So(err, ShouldBeNil)
+			So(states[0].GetServo(), ShouldEqual, lab.PeripheralState_NOT_CONNECTED)
+		})
+		Convey("set servo from servo_state 2", func() {
+			*d1.GetCommon().GetLabels().GetPeripherals().ServoState = inventory.PeripheralState_BROKEN
+			d1.GetCommon().GetLabels().GetPeripherals().Servo = &falseValue
+			_, _, states, err = ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{
+				d1.GetCommon(),
+			})
+			So(err, ShouldBeNil)
+			So(states[0].GetServo(), ShouldEqual, lab.PeripheralState_BROKEN)
+		})
 	})
 }
 

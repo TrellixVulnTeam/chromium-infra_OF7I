@@ -327,6 +327,17 @@ func boolToDutState(state bool) lab.PeripheralState {
 	return lab.PeripheralState_NOT_CONNECTED
 }
 
+func getServoState(peri *inventory.Peripherals) lab.PeripheralState {
+	if peri == nil {
+		return lab.PeripheralState_NOT_CONNECTED
+	}
+	if peri.GetServoState() != inventory.PeripheralState_UNKNOWN {
+		return lab.PeripheralState(peri.GetServoState())
+	}
+
+	return boolToDutState(peri.GetServo())
+}
+
 func createDutState(states *[]*lab.DutState, olddata *inventory.CommonDeviceSpecs) {
 	if ostype := olddata.GetLabels().GetOsType(); ostype == inventory.SchedulableLabels_OS_TYPE_LABSTATION {
 		return
@@ -334,7 +345,7 @@ func createDutState(states *[]*lab.DutState, olddata *inventory.CommonDeviceSpec
 	peri := olddata.GetLabels().GetPeripherals()
 	*states = append(*states, &lab.DutState{
 		Id:                  &lab.ChromeOSDeviceID{Value: olddata.GetId()},
-		Servo:               boolToDutState(peri.GetServo()),
+		Servo:               getServoState(peri),
 		Chameleon:           boolToDutState(peri.GetChameleon()),
 		AudioLoopbackDongle: boolToDutState(peri.GetAudioLoopbackDongle()),
 	})
