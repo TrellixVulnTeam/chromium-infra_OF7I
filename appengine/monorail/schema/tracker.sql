@@ -126,6 +126,7 @@ CREATE TABLE FieldDef (
   is_deleted BOOLEAN,  -- If true, reap this field def after all values reaped.
   approval_id INT,
   is_phase_field BOOLEAN DEFAULT FALSE,
+  RestrictedField BOOLEAN DEFAULT FALSE, -- If true, editors are restricted to the FieldDef2Editors tbl.
 
   PRIMARY KEY (id),
   UNIQUE KEY (project_id, field_name),
@@ -140,6 +141,18 @@ CREATE TABLE FieldDef2Admin (
   PRIMARY KEY (field_id, admin_id),
   FOREIGN KEY (field_id) REFERENCES FieldDef(id),
   FOREIGN KEY (admin_id) REFERENCES User(user_id)
+) ENGINE=INNODB;
+
+
+CREATE TABLE FieldDef2Editor (
+  field_id INT NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  project_id SMALLINT UNSIGNED NOT NULL,
+
+  PRIMARY KEY (field_id, user_id),
+  FOREIGN KEY (field_id) REFERENCES FieldDef(id),
+  FOREIGN KEY (user_id) REFERENCES User(user_id),
+  FOREIGN KEY (project_id) REFERENCES Project(project_id)
 ) ENGINE=INNODB;
 
 

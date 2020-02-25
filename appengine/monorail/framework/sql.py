@@ -545,7 +545,7 @@ class Statement(object):
 
   @classmethod
   def MakeSelect(cls, table_name, cols, distinct=False, or_where_conds=False):
-    """Constuct a SELECT statement."""
+    """Construct a SELECT statement."""
     assert _IsValidTableName(table_name)
     assert all(_IsValidColumnName(col) for col in cols)
     main_clause = 'SELECT%s %s FROM %s' % (
@@ -555,7 +555,7 @@ class Statement(object):
   @classmethod
   def MakeInsert(
       cls, table_name, cols, new_values, replace=False, ignore=False):
-    """Constuct an INSERT statement."""
+    """Construct an INSERT statement."""
     if replace == True:
       return cls.MakeReplace(table_name, cols, new_values, ignore)
     assert _IsValidTableName(table_name)
@@ -584,7 +584,7 @@ class Statement(object):
 
   @classmethod
   def MakeUpdate(cls, table_name, delta):
-    """Constuct an UPDATE statement."""
+    """Construct an UPDATE statement."""
     assert _IsValidTableName(table_name)
     assert all(_IsValidColumnName(col) for col in delta.keys())
     update_strs = []
@@ -599,7 +599,7 @@ class Statement(object):
 
   @classmethod
   def MakeIncrement(cls, table_name, col_name, step=1):
-    """Constuct an UPDATE statement that increments and returns a counter."""
+    """Construct an UPDATE statement that increments and returns a counter."""
     assert _IsValidTableName(table_name)
     assert _IsValidColumnName(col_name)
 
@@ -611,7 +611,7 @@ class Statement(object):
 
   @classmethod
   def MakeDelete(cls, table_name, or_where_conds=False):
-    """Constuct a DELETE statement."""
+    """Construct a DELETE statement."""
     assert _IsValidTableName(table_name)
     main_clause = 'DELETE FROM %s' % table_name
     return cls(main_clause, or_where_conds=or_where_conds)

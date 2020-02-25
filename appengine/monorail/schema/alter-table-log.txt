@@ -1720,3 +1720,21 @@ ALTER TABLE Invalidate CHANGE kind
 2019-12-30: Set custom revision_url_format for pigweed project.
 
 UPDATE Project SET revision_url_format = 'https://pigweed-review.git.corp.google.com/q/{revnum}' WHERE project_name='pigweed';
+
+================================================================
+2020-02-19: Create table for editors of a field. Also, add column in FieldDef
+to indicate if the editors of that field are being restricted.
+
+CREATE TABLE FieldDef2Editor (
+  field_id INT NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  project_id SMALLINT UNSIGNED NOT NULL,
+
+  PRIMARY KEY (field_id, user_id),
+  FOREIGN KEY (field_id) REFERENCES FieldDef(id),
+  FOREIGN KEY (user_id) REFERENCES User(user_id),
+  FOREIGN KEY (project_id) REFERENCES Project(project_id)
+) ENGINE=INNODB;
+
+
+ALTER TABLE FieldDef ADD COLUMN RestrictedField BOOL DEFAULT FALSE;
