@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -90,22 +89,12 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		return err
 	}
 
-	var taskID string
-	// taskID will be used as the parent task ID for child jobs created by
-	// this execution. This is only valid if the child runs on the same swarming
-	// instance as the parent (which is not true for cros_test_platform-dev).
-	// TODO(crbug.com/994289): Move cros_test_platform-dev to the same instance
-	// as its child jobs, then delete this conditional.
-	if sameHost(env["SWARMING_SERVER"].Value, cfg.SkylabSwarming.Server) {
-		taskID = env["SWARMING_TASK_ID"].Value
-	}
-
 	d, err := inferDeadline(&request)
 	if err != nil {
 		return err
 	}
 
-	runner, err := execution.NewRunner(cfg.SkylabWorker, taskID, d, request.TaggedRequests)
+	runner, err := execution.NewRunner(cfg.SkylabWorker, env["SWARMING_TASK_ID"].Value, d, request.TaggedRequests)
 	if err != nil {
 		return err
 	}
@@ -116,18 +105,6 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 		return err
 	}
 	return c.writeResponsesWithError(resps, err)
-}
-
-func sameHost(urlA, urlB string) bool {
-	a, err := url.Parse(urlA)
-	if err != nil {
-		return false
-	}
-	b, err := url.Parse(urlB)
-	if err != nil {
-		return false
-	}
-	return a.Host == b.Host
 }
 
 func containsSomeResponse(rs map[string]*steps.ExecuteResponse) bool {
