@@ -465,7 +465,7 @@ export class MrListPage extends connectStore(LitElement) {
   stateChanged(state) {
     this.projectName = project.viewedProjectName(state);
     this._isLoggedIn = user.isLoggedIn(state);
-    this._currentUser = user.user(state);
+    this._currentUser = user.currentUser(state);
     this._usersProjects = user.projectsPerUser(state);
 
     this.issues = (issue.issueList(state) || []);

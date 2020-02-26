@@ -271,7 +271,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
       this._allSurveys = commentListToDescriptionList(comments);
     }
     this.focusId = ui.focusId(state);
-    this.user = user.user(state);
+    this.user = user.currentUser(state);
     this.issue = issue.viewedIssue(state);
     this.issueRef = issue.viewedIssueRef(state);
     this.projectConfig = project.viewedConfig(state);

@@ -226,7 +226,7 @@ export class MrHeader extends connectStore(LitElement) {
 
     this.userProjects = user.projects(state);
 
-    const currentUser = user.user(state);
+    const currentUser = user.currentUser(state);
     this.isSiteAdmin = currentUser ? currentUser.isSiteAdmin : false;
 
     const presentationConfig = project.viewedPresentationConfig(state);

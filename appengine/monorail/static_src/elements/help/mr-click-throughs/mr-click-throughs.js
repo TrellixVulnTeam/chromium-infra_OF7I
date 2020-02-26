@@ -126,7 +126,7 @@ export class MrClickThroughs extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.prefs = user.prefs(state);
-    this.prefsLoaded = user.user(state).prefsLoaded;
+    this.prefsLoaded = user.currentUser(state).prefsLoaded;
   }
 
   get _showPrivacyDialog() {

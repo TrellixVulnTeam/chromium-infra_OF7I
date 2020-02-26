@@ -244,10 +244,10 @@ export class MrCue extends connectStore(LitElement) {
     this.projectName = project.viewedProjectName(state);
     this.issue = issue.viewedIssue(state);
     this.referencedUsers = issue.referencedUsers(state);
-    this.user = user.user(state);
+    this.user = user.currentUser(state);
     this.prefs = user.prefs(state);
     this.signedIn = this.user && this.user.userId;
-    this.prefsLoaded = user.user(state).prefsLoaded;
+    this.prefsLoaded = user.currentUser(state).prefsLoaded;
 
     const queryString = window.location.search.substring(1);
     const queryParams = qs.parse(queryString);
