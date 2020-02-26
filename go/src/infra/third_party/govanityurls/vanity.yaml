@@ -1,6 +1,14 @@
 host: go.chromium.org
 
 paths:
+  /chromiumos/infra/config:
+    repo: https://chromium.googlesource.com/chromiumos/config
+    vcs: git
+    display: >
+      https://chromium.googlesource.com/chromiumos/config
+      https://chromium.googlesource.com/chromiumos/config/+/master{/dir}
+      https://chromium.googlesource.com/chromiumos/config/+/master{/dir}/{file}#{line}
+
   /chromiumos/infra/go:
     repo: https://chromium.googlesource.com/chromiumos/infra/go
     vcs: git
