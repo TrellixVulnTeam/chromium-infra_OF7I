@@ -13,16 +13,12 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
 const autoservRelpath = "server/autoserv"
-
-// This is shared by tests and autotest/files/server/autoserv, do not change it
-const offloadPath = "SYNCHRONOUS_OFFLOAD_DIR"
 
 // AutoservArgs is the arguments for creating an autoserv command.
 type AutoservArgs struct {
@@ -109,7 +105,9 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 		args = append(args, "-n")
 	}
 	if cmd.OffloadDir != "" {
-		c.Environment[offloadPath] = cmd.OffloadDir
+		// contra the proto, this is used as a relative path within
+		// autotest, relative to the results directory
+		args = append(args, "--sync-offload-dir", cmd.OffloadDir)
 	}
 	if cmd.ParentJobID != 0 {
 		args = append(args, fmt.Sprintf("--parent_job_id=%d", cmd.ParentJobID))
@@ -220,7 +218,6 @@ func DutPreparationCommand(c Config, cmd *DutPreparationArgs) *exec.Cmd {
 // Config describes where the Autotest directory is.
 type Config struct {
 	AutotestDir string
-	Environment map[string]string
 }
 
 // command creates an exec.Cmd for running an executable file in the
@@ -228,13 +225,7 @@ type Config struct {
 func command(c Config, relpath string, args ...string) *exec.Cmd {
 	path := filepath.Join(c.AutotestDir, relpath)
 	log.Printf("Running Autotest command %s %s", path, args)
-	cmd := exec.Command(path, args...)
-	envVars := os.Environ()
-	for k, v := range c.Environment {
-		envVars = append(envVars, k+"="+v)
-	}
-	cmd.Env = envVars
-	return cmd
+	return exec.Command(path, args...)
 }
 
 // WriteKeyvals writes a map of keyvals in the format Autotest expects.
