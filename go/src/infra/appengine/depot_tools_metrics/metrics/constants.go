@@ -110,6 +110,7 @@ var (
 		"cherry_pick",
 		"cleanup_dir",
 		"clear",
+		"clang_format",
 		"clobber",
 		"clober",
 		"color",
