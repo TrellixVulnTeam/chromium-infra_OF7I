@@ -1,13 +1,21 @@
 host: go.chromium.org
 
 paths:
-  /luci:
-    repo: https://chromium.googlesource.com/infra/luci/luci-go
+  /chromiumos/infra/go:
+    repo: https://chromium.googlesource.com/chromiumos/infra/go
     vcs: git
     display: >
-      https://chromium.googlesource.com/infra/luci/luci-go
-      https://chromium.googlesource.com/infra/luci/luci-go/+/master{/dir}
-      https://chromium.googlesource.com/infra/luci/luci-go/+/master{/dir}/{file}#{line}
+      https://chromium.googlesource.com/chromiumos/infra/go
+      https://chromium.googlesource.com/chromiumos/infra/go/+/master{/dir}
+      https://chromium.googlesource.com/chromiumos/infra/go/+/master{/dir}/{file}#{line}
+
+  /chromiumos/infra/proto:
+    repo: https://chromium.googlesource.com/chromiumos/infra/proto
+    vcs: git
+    display: >
+      https://chromium.googlesource.com/chromiumos/infra/proto
+      https://chromium.googlesource.com/chromiumos/infra/proto/+/master{/dir}
+      https://chromium.googlesource.com/chromiumos/infra/proto/+/master{/dir}/{file}#{line}
 
   /gae:
     repo: https://chromium.googlesource.com/infra/luci/gae
@@ -25,18 +33,10 @@ paths:
       https://chromium.googlesource.com/infra/goma/server/+/master{/dir}
       https://chromium.googlesource.com/infra/goma/server/+/master{/dir}/{file}#{line}
 
-  /chromiumos/infra/go:
-    repo: https://chromium.googlesource.com/chromiumos/infra/go
+  /luci:
+    repo: https://chromium.googlesource.com/infra/luci/luci-go
     vcs: git
     display: >
-      https://chromium.googlesource.com/chromiumos/infra/go
-      https://chromium.googlesource.com/chromiumos/infra/go/+/master{/dir}
-      https://chromium.googlesource.com/chromiumos/infra/go/+/master{/dir}/{file}#{line}
-
-  /chromiumos/infra/proto:
-    repo: https://chromium.googlesource.com/chromiumos/infra/proto
-    vcs: git
-    display: >
-      https://chromium.googlesource.com/chromiumos/infra/proto
-      https://chromium.googlesource.com/chromiumos/infra/proto/+/master{/dir}
-      https://chromium.googlesource.com/chromiumos/infra/proto/+/master{/dir}/{file}#{line}
+      https://chromium.googlesource.com/infra/luci/luci-go
+      https://chromium.googlesource.com/infra/luci/luci-go/+/master{/dir}
+      https://chromium.googlesource.com/infra/luci/luci-go/+/master{/dir}/{file}#{line}
