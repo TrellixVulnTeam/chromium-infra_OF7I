@@ -82,14 +82,16 @@ func (c *prejobRun) innerRun(a subcommands.Application, args []string, env subco
 }
 
 func (c *prejobRun) response(r *atutil.Result) *phosphorus.PrejobResponse {
-	if r.Success() {
-		return &phosphorus.PrejobResponse{
-			State: phosphorus.PrejobResponse_SUCCEEDED,
-		}
+	var s phosphorus.PrejobResponse_State
+	switch {
+	case r.Success():
+		s = phosphorus.PrejobResponse_SUCCEEDED
+	case r.RunResult.Aborted:
+		s = phosphorus.PrejobResponse_ABORTED
+	default:
+		s = phosphorus.PrejobResponse_FAILED
 	}
-	return &phosphorus.PrejobResponse{
-		State: phosphorus.PrejobResponse_FAILED,
-	}
+	return &phosphorus.PrejobResponse{State: s}
 }
 
 func runPrejob(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Result, error) {

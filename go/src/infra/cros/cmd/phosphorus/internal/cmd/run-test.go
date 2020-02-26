@@ -80,14 +80,16 @@ func (c *runTestRun) innerRun(a subcommands.Application, args []string, env subc
 }
 
 func (c *runTestRun) response(r *atutil.Result) *phosphorus.RunTestResponse {
-	if r.Success() {
-		return &phosphorus.RunTestResponse{
-			State: phosphorus.RunTestResponse_SUCCEEDED,
-		}
+	var s phosphorus.RunTestResponse_State
+	switch {
+	case r.Success():
+		s = phosphorus.RunTestResponse_SUCCEEDED
+	case r.RunResult.Aborted:
+		s = phosphorus.RunTestResponse_ABORTED
+	default:
+		s = phosphorus.RunTestResponse_FAILED
 	}
-	return &phosphorus.RunTestResponse{
-		State: phosphorus.RunTestResponse_FAILED,
-	}
+	return &phosphorus.RunTestResponse{State: s}
 }
 
 func validateRunTestRequest(r phosphorus.RunTestRequest) error {
