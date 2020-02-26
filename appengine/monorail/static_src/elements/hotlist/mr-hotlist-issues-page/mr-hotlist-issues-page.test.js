@@ -67,8 +67,8 @@ describe('mr-hotlist-issues-page', () => {
       element._hotlist = {
         ...example.HOTLIST,
         defaultColumns: [
-          {column: 'Summary'}, {column: 'Rank'}, {column: 'Added'},
-          {column: 'Adder'}, {column: 'Note'},
+          {column: 'Summary'}, {column: 'Rank'},
+          {column: 'Added'}, {column: 'Adder'},
         ],
       };
       element._hotlistItems = [{
@@ -76,7 +76,6 @@ describe('mr-hotlist-issues-page', () => {
         rank: 52,
         adder: 'users/5678',
         createTime: new Date(0).toISOString(),
-        note: 'Note',
       }];
       element._issue = () => ({...exampleIssue.ISSUE, summary: 'Summary'});
       await element.updateComplete;
@@ -86,7 +85,6 @@ describe('mr-hotlist-issues-page', () => {
       assert.include(issueList.shadowRoot.innerHTML, '53');
       assert.include(issueList.shadowRoot.innerHTML, 'a day ago');
       assert.include(issueList.shadowRoot.innerHTML, 'users/5678');
-      assert.include(issueList.shadowRoot.innerHTML, 'Note');
     } finally {
       clock.restore();
     }

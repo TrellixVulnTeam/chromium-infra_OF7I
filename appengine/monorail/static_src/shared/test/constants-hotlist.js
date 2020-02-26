@@ -30,7 +30,6 @@ export const HOTLIST_ITEM = Object.freeze({
   // rank: The API excludes the rank field if it's 0.
   adder: user.NAME,
   createTime: '2020-01-01T12:00:00Z',
-  note: 'Note',
 });
 
 /** @type {HotlistItemV1} */
@@ -40,7 +39,6 @@ export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   rank: 1,
   adder: user.NAME,
   createTime: '2020-01-01T12:00:00Z',
-  note: 'Note',
 });
 
 /** @type {Object.<string, HotlistV1>} */

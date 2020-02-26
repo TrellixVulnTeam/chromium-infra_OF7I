@@ -25,7 +25,6 @@ const DEFAULT_HOTLIST_FIELDS = Object.freeze([
   ...DEFAULT_ISSUE_FIELD_LIST,
   'Added',
   'Adder',
-  'Note',
   'Rank',
 ]);
 
@@ -152,7 +151,6 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       rank: item.rank || 0,
       adder: item.adder, // TODO(dtu): Fetch the User's displayName.
       createTime: item.createTime,
-      note: item.note,
     }));
   }
 
@@ -167,8 +165,6 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
         return [relativeTime(new Date(hotlistIssue.createTime))];
       case 'Adder':
         return [hotlistIssue.adder];
-      case 'Note':
-        return [hotlistIssue.note];
       case 'Rank':
         return [String(hotlistIssue.rank + 1)];
       default:
