@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 
 	"infra/cmd/labtool/audit"
+	"infra/cmd/labtool/query"
 	"infra/cmd/labtool/site"
 )
 
@@ -34,6 +35,7 @@ func getApplication() *cli.Application {
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
 			subcommands.Section("Asset Management"),
 			audit.AuditCmd,
+			query.GetAssetsCmd,
 		},
 	}
 }
