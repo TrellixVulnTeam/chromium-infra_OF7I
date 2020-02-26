@@ -20,13 +20,15 @@ import (
 
 // Task represents an individual test task.
 type Task struct {
-	args          request.Args
-	taskReference TaskReference
-	lifeCycle     test_platform.TaskState_LifeCycle
+	args request.Args
 	// Note: If we ever begin supporting other harnesses's result formats
 	// then this field will change to a *skylab_test_runner.Result.
 	// For now, the autotest-specific variant is more convenient.
 	autotestResult *skylab_test_runner.Result_Autotest
+	lifeCycle      test_platform.TaskState_LifeCycle
+	swarmingTaskID string
+	taskReference  TaskReference
+	url            string
 }
 
 // NewTask initializes a Task object.
@@ -47,6 +49,8 @@ func (t *Task) Launch(ctx context.Context, c Client) error {
 	}
 	t.taskReference = ref
 	t.lifeCycle = test_platform.TaskState_LIFE_CYCLE_PENDING
+	t.swarmingTaskID = c.SwarmingTaskID(ref)
+	t.url = c.URL(ref)
 	logging.Infof(ctx, "Launched attempt for %s as task %s", t.Name(), t.URL())
 	return nil
 }
@@ -94,8 +98,8 @@ func (t *Task) Verdict() test_platform.TaskState_Verdict {
 
 // Refresh fetches the state of the given task and updates the task
 // accordingly.
-func (t *Task) Refresh(ctx context.Context) error {
-	resp, err := t.taskReference.FetchResults(ctx)
+func (t *Task) Refresh(ctx context.Context, c Client) error {
+	resp, err := c.FetchResults(ctx, t.taskReference)
 
 	if err != nil {
 		return errors.Annotate(err, "refresh task").Err()
@@ -143,7 +147,7 @@ func (t *Task) TestCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
 
 // URL return the URL of the task page.
 func (t *Task) URL() string {
-	return t.taskReference.URL()
+	return t.url
 }
 
 // Result constructs a TaskResults out of the data already contained in the
@@ -152,11 +156,11 @@ func (t *Task) URL() string {
 func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 	logURL := fmt.Sprintf(
 		"https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-%s/",
-		t.SwarmingTaskID(),
+		t.swarmingTaskID,
 	)
 	gsURL := fmt.Sprintf(
 		"gs://chromeos-autotest-results/swarming-%s/",
-		t.SwarmingTaskID(),
+		t.swarmingTaskID,
 	)
 
 	return &steps.ExecuteResponse_TaskResult{
@@ -173,9 +177,4 @@ func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 		Attempt:   int32(attemptNum),
 		TestCases: t.TestCases(),
 	}
-}
-
-// SwarmingTaskID returns the Swarming task ID.
-func (t *Task) SwarmingTaskID() string {
-	return t.taskReference.SwarmingTaskID()
 }

@@ -118,51 +118,39 @@ func (c *rawSwarmingSkylabClient) ValidateArgs(ctx context.Context, args *reques
 func (c *rawSwarmingSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (skylab.TaskReference, error) {
 	req, err := args.SwarmingNewTaskRequest()
 	if err != nil {
-		return nil, errors.Annotate(err, "launch attempt for %s", args.Cmd.TaskName).Err()
+		return "", errors.Annotate(err, "launch attempt for %s", args.Cmd.TaskName).Err()
 	}
 	resp, err := c.swarmingClient.CreateTask(ctx, req)
 	if err != nil {
-		return nil, errors.Annotate(err, "launch attempt for %s", args.Cmd.TaskName).Err()
+		return "", errors.Annotate(err, "launch attempt for %s", args.Cmd.TaskName).Err()
 	}
-	url := c.swarmingClient.GetTaskURL(resp.TaskId)
-	return &rawSwarmingTaskReference{
-		isolateGetter:  c.isolateGetter,
-		swarmingClient: c.swarmingClient,
-		swarmingTaskID: resp.TaskId,
-		url:            url,
-	}, nil
-}
-
-type rawSwarmingTaskReference struct {
-	isolateGetter  isolate.GetterFactory
-	swarmingClient Client
-	swarmingTaskID string
-	url            string
+	return skylab.TaskReference(resp.TaskId), nil
 }
 
 // FetchResults fetches the latest state and results of the given task.
-func (t *rawSwarmingTaskReference) FetchResults(ctx context.Context) (*skylab.FetchResultsResponse, error) {
-	results, err := t.swarmingClient.GetResults(ctx, []string{t.swarmingTaskID})
+func (c *rawSwarmingSkylabClient) FetchResults(ctx context.Context, t skylab.TaskReference) (*skylab.FetchResultsResponse, error) {
+	id := string(t)
+	results, err := c.swarmingClient.GetResults(ctx, []string{id})
 	if err != nil {
-		return nil, errors.Annotate(err, "fetch results for task %s", t.swarmingTaskID).Err()
+		return nil, errors.Annotate(err, "fetch results for task %s", t).Err()
 	}
-	result, err := unpackResult(results, t.swarmingTaskID)
+	result, err := unpackResult(results, id)
 	if err != nil {
-		return nil, errors.Annotate(err, "fetch results for task %s", t.swarmingTaskID).Err()
+		return nil, errors.Annotate(err, "fetch results for task %s", t).Err()
 	}
 
 	lc, err := asLifeCycle(result.State)
 	if err != nil {
-		return nil, errors.Annotate(err, "fetch results for task %s", t.swarmingTaskID).Err()
+		return nil, errors.Annotate(err, "fetch results for task %s", t).Err()
 	}
 
 	if !lifeCyclesWithResults[lc] {
 		return &skylab.FetchResultsResponse{LifeCycle: lc}, nil
 	}
 
-	r, err := extractResult(ctx, result, t.isolateGetter)
+	r, err := extractResult(ctx, result, c.isolateGetter)
 	if err != nil {
-		logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", t.swarmingTaskID, err.Error())
+		logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", id, err.Error())
 		return &skylab.FetchResultsResponse{LifeCycle: lc}, nil
 	}
 
@@ -173,13 +161,13 @@ func (t *rawSwarmingTaskReference) FetchResults(ctx context.Context) (*skylab.Fe
 }
 
 // URL is the Swarming URL of the task.
-func (t *rawSwarmingTaskReference) URL() string {
-	return t.url
+func (c *rawSwarmingSkylabClient) URL(t skylab.TaskReference) string {
+	return c.swarmingClient.GetTaskURL(string(t))
 }
 
 // SwarmingTaskID is the Swarming ID of the task.
-func (t *rawSwarmingTaskReference) SwarmingTaskID() string {
-	return t.swarmingTaskID
+func (c *rawSwarmingSkylabClient) SwarmingTaskID(t skylab.TaskReference) string {
+	return string(t)
 }
 
 func unpackResult(results []*swarming_api.SwarmingRpcsTaskResult, taskID string) (*swarming_api.SwarmingRpcsTaskResult, error) {

@@ -14,11 +14,7 @@ import (
 )
 
 // TaskReference is an implementation-independent way to identify Skylab tasks.
-type TaskReference interface {
-	FetchResults(context.Context) (*FetchResultsResponse, error)
-	SwarmingTaskID() string
-	URL() string
-}
+type TaskReference string
 
 // FetchResultsResponse is an implementation-independent container for
 // information about running and finished tasks.
@@ -32,4 +28,7 @@ type FetchResultsResponse struct {
 type Client interface {
 	ValidateArgs(context.Context, *request.Args) (bool, error)
 	LaunchTask(context.Context, *request.Args) (TaskReference, error)
+	FetchResults(context.Context, TaskReference) (*FetchResultsResponse, error)
+	SwarmingTaskID(TaskReference) string
+	URL(TaskReference) string
 }

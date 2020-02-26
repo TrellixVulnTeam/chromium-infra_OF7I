@@ -84,7 +84,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 		}
 
 		latestTask := testTaskSet.GetLatestTask()
-		if err := latestTask.Refresh(ctx); err != nil {
+		if err := latestTask.Refresh(ctx, c); err != nil {
 			return errors.Annotate(err, "tick for task %s", latestTask.URL()).Err()
 		}
 

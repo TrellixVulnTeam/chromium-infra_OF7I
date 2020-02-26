@@ -180,11 +180,11 @@ func TestCompletedTask(t *testing.T) {
 		}
 		task, err := skylab.LaunchTask(ctx, &request.Args{})
 		So(err, ShouldBeNil)
-		swarming.setTaskState(task.SwarmingTaskID(), "COMPLETED")
-		swarming.setTaskIsolatedHash(task.SwarmingTaskID(), "foo-isolated")
+		swarming.setTaskState(skylab.SwarmingTaskID(task), "COMPLETED")
+		swarming.setTaskIsolatedHash(skylab.SwarmingTaskID(task), "foo-isolated")
 
 		Convey("the task results are reported correctly.", func() {
-			res, err := task.FetchResults(ctx)
+			res, err := skylab.FetchResults(ctx, task)
 			So(err, ShouldBeNil)
 			So(res, ShouldNotBeNil)
 			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
@@ -202,11 +202,11 @@ func TestUnfinishedTask(t *testing.T) {
 		}
 		task, err := skylab.LaunchTask(ctx, &request.Args{})
 		So(err, ShouldBeNil)
-		swarming.setTaskState(task.SwarmingTaskID(), "KILLED")
-		swarming.setTaskIsolatedHash(task.SwarmingTaskID(), "ignored-isolated")
+		swarming.setTaskState(skylab.SwarmingTaskID(task), "KILLED")
+		swarming.setTaskIsolatedHash(skylab.SwarmingTaskID(task), "ignored-isolated")
 
 		Convey("no results are reported.", func() {
-			res, err := task.FetchResults(ctx)
+			res, err := skylab.FetchResults(ctx, task)
 			So(err, ShouldBeNil)
 			So(res, ShouldNotBeNil)
 			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_ABORTED)
@@ -224,10 +224,10 @@ func TestMissingIsolate(t *testing.T) {
 		}
 		task, err := skylab.LaunchTask(ctx, &request.Args{})
 		So(err, ShouldBeNil)
-		swarming.setTaskState(task.SwarmingTaskID(), "COMPLETED")
+		swarming.setTaskState(skylab.SwarmingTaskID(task), "COMPLETED")
 
 		Convey("no results are reported.", func() {
-			res, err := task.FetchResults(ctx)
+			res, err := skylab.FetchResults(ctx, task)
 			So(err, ShouldBeNil)
 			So(res, ShouldNotBeNil)
 			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)

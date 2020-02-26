@@ -5,7 +5,6 @@
 package skylab
 
 import (
-	"context"
 	"sort"
 	"testing"
 
@@ -209,31 +208,11 @@ func TestAutotestTestCases(t *testing.T) {
 	})
 }
 
-type stubTaskReference struct {
-	url        string
-	swarmingID string
-}
-
-func (r *stubTaskReference) URL() string {
-	return r.url
-}
-
-func (r *stubTaskReference) SwarmingTaskID() string {
-	return r.swarmingID
-}
-
-func (r *stubTaskReference) FetchResults(_ context.Context) (*FetchResultsResponse, error) {
-	return nil, nil
-}
-
 func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.ExecuteResponse_TaskResult {
 	t := &Task{
-		taskReference: &stubTaskReference{
-			url:        "foo-URL",
-			swarmingID: "foo-task-ID",
-		},
 		autotestResult: autotestResult,
 		lifeCycle:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+		swarmingTaskID: "foo-task-ID",
 	}
 	return t.Result(5)
 }

@@ -38,35 +38,6 @@ import (
 
 var noDeadline time.Time
 
-type fakeTaskReference struct {
-	skylab *fakeSkylab
-}
-
-func (r *fakeTaskReference) FetchResults(context.Context) (*skylab.FetchResultsResponse, error) {
-	r.skylab.numResultsCalls += 1
-	if r.skylab.nextError != nil {
-		return nil, r.skylab.nextError
-	}
-	return &skylab.FetchResultsResponse{
-		Result: &skylab_test_runner.Result{
-			Harness: &skylab_test_runner.Result_AutotestResult{
-				AutotestResult: r.skylab.autotestResultGenerator(),
-			},
-		},
-		LifeCycle: r.skylab.nextLifeCycle,
-	}, nil
-}
-
-func (r *fakeTaskReference) URL() string {
-	return r.skylab.url
-}
-
-func (r *fakeTaskReference) SwarmingTaskID() string {
-	return ""
-}
-
-var _ skylab.TaskReference = &fakeTaskReference{}
-
 type fakeSkylab struct {
 	autotestResultGenerator autotestResultGenerator
 	botExists               bool
@@ -118,12 +89,33 @@ func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, error) 
 func (s *fakeSkylab) LaunchTask(_ context.Context, req *request.Args) (skylab.TaskReference, error) {
 	defer s.callback()
 	if s.nextError != nil {
-		return nil, s.nextError
+		return skylab.TaskReference(""), s.nextError
 	}
 	s.launchCalls = append(s.launchCalls, req)
-	return &fakeTaskReference{
-		skylab: s,
+	return skylab.TaskReference(""), nil
+}
+
+func (s *fakeSkylab) FetchResults(context.Context, skylab.TaskReference) (*skylab.FetchResultsResponse, error) {
+	s.numResultsCalls += 1
+	if s.nextError != nil {
+		return nil, s.nextError
+	}
+	return &skylab.FetchResultsResponse{
+		Result: &skylab_test_runner.Result{
+			Harness: &skylab_test_runner.Result_AutotestResult{
+				AutotestResult: s.autotestResultGenerator(),
+			},
+		},
+		LifeCycle: s.nextLifeCycle,
 	}, nil
+}
+
+func (s *fakeSkylab) SwarmingTaskID(skylab.TaskReference) string {
+	return ""
+}
+
+func (s *fakeSkylab) URL(skylab.TaskReference) string {
+	return s.url
 }
 
 func invocation(name string, args string, e build_api.AutotestTest_ExecutionEnvironment) *steps.EnumerationResponse_AutotestInvocation {
