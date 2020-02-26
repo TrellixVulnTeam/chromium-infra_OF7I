@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import page from 'page';
 import {LitElement, html, css} from 'lit-element';
 
 /**
@@ -18,6 +19,30 @@ export class MrIssueEntryPage extends LitElement {
         margin: 0;
       }
     `;
+  }
+
+  /** @override */
+  static get properties() {
+    return {
+      userDisplayName: {type: String},
+      loginUrl: {type: String},
+    };
+  }
+
+  /** @override */
+  constructor() {
+    super();
+
+    /* dependency injection for testing purpose */
+    this._page = page;
+  }
+
+  /** @override */
+  connectedCallback() {
+    super.connectedCallback();
+    if (!this.userDisplayName) {
+      this._page(this.loginUrl);
+    }
   }
 
   /** @override */
