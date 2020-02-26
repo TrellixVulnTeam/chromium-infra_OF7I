@@ -344,6 +344,10 @@ class MonorailServicer(object):
       logging.info('Bad XSRF token: %r', e.message)
       prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
       prpc_context.set_details('Bad XSRF token.')
+    elif exc_type == exceptions.PageTokenException:
+      prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
+      prpc_context.set_details(
+          'Page token invalid or incorrect for the accompanying request')
     else:
       return False  # Re-raise any exception from programming errors.
     return True  # It if was one of the cases above, don't reraise.

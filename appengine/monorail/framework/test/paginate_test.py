@@ -10,8 +10,56 @@ from __future__ import absolute_import
 
 import unittest
 
+from google.appengine.ext import testbed
+
+from framework import exceptions
 from framework import paginate
 from testing import testing_helpers
+from proto import secrets_pb2
+
+
+class PageTokenTest(unittest.TestCase):
+
+  def setUp(self):
+    self.testbed = testbed.Testbed()
+    self.testbed.activate()
+    self.testbed.init_memcache_stub()
+    self.testbed.init_datastore_v3_stub()
+
+  def testGeneratePageToken_DiffRequests(self):
+    request_cont_1 = secrets_pb2.ListRequestContents(
+        parent='same', page_size=1, order_by='same', query='same')
+    request_cont_2 = secrets_pb2.ListRequestContents(
+        parent='same', page_size=2, order_by='same', query='same')
+    start = 10
+    self.assertNotEqual(
+        paginate.GeneratePageToken(request_cont_1, start),
+        paginate.GeneratePageToken(request_cont_2, start))
+
+  def testValidateAndParsePageToken(self):
+    request_cont_1 = secrets_pb2.ListRequestContents(
+        parent='projects/chicken', page_size=1, order_by='boks', query='hay')
+    start = 2
+    token = paginate.GeneratePageToken(request_cont_1, start)
+    self.assertEqual(
+        start,
+        paginate.ValidateAndParsePageToken(token, request_cont_1))
+
+  def testValidateAndParsePageToken_InvalidContents(self):
+    request_cont_1 = secrets_pb2.ListRequestContents(
+        parent='projects/chicken', page_size=1, order_by='boks', query='hay')
+    start = 2
+    token = paginate.GeneratePageToken(request_cont_1, start)
+
+    request_cont_diff = secrets_pb2.ListRequestContents(
+        parent='projects/goose', page_size=1, order_by='boks', query='hay')
+    with self.assertRaises(exceptions.PageTokenException):
+      paginate.ValidateAndParsePageToken(token, request_cont_diff)
+
+  def testValidateAndParsePageToken_InvalidTokenFormat(self):
+    request_cont = secrets_pb2.ListRequestContents()
+    with self.assertRaises(exceptions.PageTokenException):
+      paginate.ValidateAndParsePageToken('sldkfj87', request_cont)
 
 
 class PaginateTest(unittest.TestCase):

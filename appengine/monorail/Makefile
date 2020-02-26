@@ -64,6 +64,13 @@ prpc_proto_google:
 	../../cipd/protoc \
 	--python_out=. --prpc-python_out=. google_proto/google/api/*.proto
 
+business_proto:
+	touch ../../ENV/lib/python2.7/site-packages/google/__init__.py
+	PYTHONPATH=../../ENV/lib/python2.7/site-packages \
+	PATH=../../luci/appengine/components/tools:$(PATH) \
+	../../cipd/protoc \
+	--python_out=. --prpc-python_out=. proto/*.proto
+
 test:
 	../../test.py test appengine/monorail
 

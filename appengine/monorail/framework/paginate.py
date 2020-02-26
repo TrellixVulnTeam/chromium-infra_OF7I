@@ -9,11 +9,68 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
+import hmac
 
 from third_party import ezt
+from google.protobuf import message
 
 import settings
+from framework import exceptions
 from framework import framework_helpers
+from services import secrets_svc
+from proto import secrets_pb2
+
+# TODO(crbug/monorail/6988):Create Paginator class in API level to keep
+# code separate and simple.
+
+def GeneratePageToken(request_contents, start):
+  # secrets_pb2.ListRequestContents, int -> str
+  """Encrypts a List requests's contents and generates a next page token.
+
+  Args:
+    request_contents: ListRequestContents object that holds data given by the
+      request.
+    start: int start index that should be used for the subsequent request.
+
+  Returns:
+    String next_page_token that is a serialized PageTokenContents object.
+  """
+  digester = hmac.new(secrets_svc.GetPaginationKey())
+  digester.update(request_contents.SerializeToString())
+  token_contents = secrets_pb2.PageTokenContents(
+      start=start,
+      encrypted_list_request_contents=digester.digest())
+  return token_contents.SerializeToString()
+
+
+def ValidateAndParsePageToken(token, request_contents):
+  # bytes, secrets_pb2.ListRequestContents -> int
+  """Returns the start index of the page if the token is valid.
+
+  Args:
+    token: String token given in a ListFoo API request.
+    request_contents: ListRequestContents object that holds data given by the
+      request.
+
+  Returns:
+    The start index that should be used when getting the requested page.
+
+  Raises:
+    PageTokenException: if the token is invalid or incorrect for the given
+      request_contents.
+  """
+  token_contents = secrets_pb2.PageTokenContents()
+  try:
+    token_contents.ParseFromString(token)
+  except message.DecodeError:
+    raise exceptions.PageTokenException('Invalid page token.')
+
+  start = token_contents.start
+  expected_token = GeneratePageToken(request_contents, start)
+  if hmac.compare_digest(token, expected_token):
+    return start
+  raise exceptions.PageTokenException('Incorrect page token.')
+
 
 # If extracting items_per_page and start values from a MonorailRequest object,
 # keep in mind that mr.num and mr.GetPositiveIntParam may return different

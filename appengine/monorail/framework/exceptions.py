@@ -120,3 +120,8 @@ class InvalidExternalIssueReference(Error):
       b/123456789
   """
   pass
+
+
+class PageTokenException(Error):
+  """Incorrect page tokens."""
+  pass
