@@ -17,10 +17,6 @@ const ROTATIONS = {
       url: 'https://rota-ng.appspot.com/legacy/sheriff_cr_cros_gardeners.json',
     },
     {
-      name: 'Infra Deputy',
-      url: 'https://rotation.googleplex.com/json?id=5660790132572160',
-    },
-    {
       name: 'Morning Planner',
       url: 'https://rotation.googleplex.com/json?id=140009',
     },
