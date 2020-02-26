@@ -91,4 +91,20 @@ describe('mr-hotlist-issues-page', () => {
       clock.restore();
     }
   });
+
+  it('filters and shows closed issues', async () => {
+    element._hotlist = example.HOTLIST;
+    element._hotlistItems = [example.HOTLIST_ITEM];
+    element._issue = () => exampleIssue.ISSUE_CLOSED;
+    await element.updateComplete;
+
+    const issueList = element.shadowRoot.querySelector('mr-issue-list');
+    assert.equal(issueList.issues.length, 0);
+
+    element.shadowRoot.querySelector('chops-filter-chips').select('Closed');
+    await element.updateComplete;
+
+    assert.isTrue(element._filter.Closed);
+    assert.equal(issueList.issues.length, 1);
+  });
 });

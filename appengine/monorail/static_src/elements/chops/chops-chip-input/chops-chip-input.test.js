@@ -6,7 +6,7 @@ import {assert} from 'chai';
 import {ChopsChipInput} from './chops-chip-input.js';
 let element;
 
-describe('mr-chip-input', () => {
+describe('chops-chip-input', () => {
   beforeEach(() => {
     element = document.createElement('chops-chip-input');
     document.body.appendChild(element);
@@ -106,7 +106,7 @@ describe('mr-chip-input', () => {
     await element.updateComplete;
 
     const chips = element.shadowRoot.querySelectorAll('chops-chip');
-    chips[1].clickIcon();
+    chips[1].clickButton();
 
     await element.updateComplete;
 

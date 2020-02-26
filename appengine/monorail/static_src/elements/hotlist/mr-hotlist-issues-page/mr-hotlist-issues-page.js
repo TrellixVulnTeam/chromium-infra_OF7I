@@ -10,6 +10,7 @@ import * as hotlist from 'reducers/hotlist.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
+import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
@@ -36,14 +37,15 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       :host {
         display: block;
       }
-      dl {
+      p, div {
         margin: 16px 24px;
       }
-      dt {
-        font-weight: bold;
+      div {
+        display: flex;
+        align-items: center;
       }
-      dd {
-        margin: 0;
+      chops-filter-chips {
+        margin-left: 6px;
       }
     `;
   }
@@ -54,7 +56,7 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       return html`Loading...`;
     }
 
-    const issues = this.prepareIssues(this._hotlistItems);
+    const issues = this._prepareIssues(this._hotlistItems);
 
     const allProjectNamesEqual = issues.length && issues.every(
         (issue) => issue.projectName === issues[0].projectName);
@@ -64,12 +66,16 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       <mr-hotlist-header .name=${this._hotlist.displayName} selected=0>
       </mr-hotlist-header>
 
-      <dl>
-        <dt>Summary</dt>
-        <dd>${this._hotlist.summary}</dd>
-        <dt>Description</dt>
-        <dd>${this._hotlist.description}</dd>
-      </dl>
+      <p>${this._hotlist.summary}</p>
+
+      <div>
+        Filter by Status
+        <chops-filter-chips
+            .options=${['Open', 'Closed']}
+            .selected=${this._filter}
+            @change=${this._onFilterChange}
+        </chops-filter-chips>
+      </div>
 
       <mr-issue-list
         .issues=${issues}
@@ -90,6 +96,7 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       _hotlistItems: {type: Array},
       _issue: {type: Object},
       _extractFieldValuesFromIssue: {type: Object},
+      _filter: {type: Object},
     };
   };
 
@@ -111,6 +118,8 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
      * @return {Array<string>}
      */
     this._extractFieldValuesFromIssue = (_issue, _fieldName) => [];
+    /** @type {Object<string, boolean>} */
+    this._filter = {Open: true};
   }
 
   /** @override */
@@ -126,13 +135,18 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
    * @param {Array<HotlistItemV1>} items
    * @return {Array<HotlistIssue>}
    */
-  prepareIssues(items) {
+  _prepareIssues(items) {
     // Filter out issues that haven't been fetched yet or failed to fetch.
     // Example: if the user doesn't have permissions to view the issue.
     // <mr-issue-list> assumes that certain fields are included in each Issue.
     const itemsWithData = items.filter((item) => this._issue(item.issue));
 
-    return itemsWithData.map((item) => ({
+    const filteredItems = itemsWithData.filter((item) => {
+      return this._filter.Open && this._issue(item.issue).statusRef.meansOpen ||
+          this._filter.Closed && !this._issue(item.issue).statusRef.meansOpen;
+    });
+
+    return filteredItems.map((item) => ({
       ...this._issue(item.issue),
       name: item.name,
       rank: item.rank || 0,
@@ -160,6 +174,13 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       default:
         return this._extractFieldValuesFromIssue(hotlistIssue, fieldName);
     }
+  }
+
+  /**
+   * @param {Event} e A change event fired by <chops-filter-chips>.
+   */
+  _onFilterChange(e) {
+    this._filter = e.target.selected;
   }
 };
 

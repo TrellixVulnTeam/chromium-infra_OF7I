@@ -26,7 +26,7 @@ describe('chops-chip', () => {
     await element.updateComplete;
     assert.isNull(element.shadowRoot.querySelector('button'));
 
-    element.icon = 'close';
+    element.buttonIcon = 'close';
 
     await element.updateComplete;
 
@@ -36,11 +36,11 @@ describe('chops-chip', () => {
   it('clicking icon fires event', async () => {
     const onClickStub = sinon.stub();
 
-    element.icon = 'close';
+    element.buttonIcon = 'close';
 
     await element.updateComplete;
 
-    element.addEventListener('click-icon', onClickStub);
+    element.addEventListener('click-button', onClickStub);
 
     assert.isFalse(onClickStub.calledOnce);
 

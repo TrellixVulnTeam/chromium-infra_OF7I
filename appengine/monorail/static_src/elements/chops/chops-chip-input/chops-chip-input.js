@@ -83,14 +83,13 @@ export class ChopsChipInput extends LitElement {
         />
         <chops-chip
           ?hidden=${i === this.collapsedChipIndex}
-          icon="close"
           class="chip-${i}"
-          role="button"
           data-index=${i}
           aria-label="${this.name} value #${i} ${value}"
           role="button"
-          .trailingIconLabel="Remove ${this.name}"
-          @click-icon=${this._removeValue}
+          buttonIcon="close"
+          .buttonLabel="Remove ${this.name}"
+          @click-button=${this._removeValue}
           @dblclick=${this._editChip}
           @keydown=${this._interactWithChips}
           @blur=${this._changeFocus}
