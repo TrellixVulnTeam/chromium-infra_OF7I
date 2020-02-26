@@ -5,10 +5,8 @@
 package utils
 
 import (
-	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
@@ -17,9 +15,8 @@ import (
 const gsBucket = "cros-lab-inventory.appspot.com"
 const scanLogPath = "assetScanLogs"
 
-func upload(sc gs.Client, localFilePath string) error {
-	p := gs.Path(fmt.Sprintf("gs://%s/%s/%s", gsBucket, scanLogPath, filepath.Base(localFilePath)))
-	wr, err := sc.NewWriter(p)
+func upload(sc gs.Client, localFilePath string, remoteFilePath string) error {
+	wr, err := sc.NewWriter(gs.Path(remoteFilePath))
 	if err != nil {
 		return err
 	}

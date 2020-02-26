@@ -32,6 +32,7 @@ type Updater struct {
 	timeStamp   time.Time                // The time that this updater is run and logged
 	client      fleetAPI.InventoryClient // RPC client
 	gsClient    gs.Client                // Google storage client
+	username    string                   // The user that runs the updater
 	ctx         context.Context
 	wg          sync.WaitGroup // Used to sync updater thread
 }
@@ -48,7 +49,7 @@ func makeFile(logDir, filename string) (*os.File, error) {
 }
 
 // NewUpdater create a new updater
-func NewUpdater(ctx context.Context, c fleetAPI.InventoryClient, gsc gs.Client, logDir string) (u *Updater, err error) {
+func NewUpdater(ctx context.Context, c fleetAPI.InventoryClient, gsc gs.Client, logDir, username string) (u *Updater, err error) {
 	// Logfiles are prefixed with timestamp
 	curTime := time.Now()
 	timestamp := curTime.Format(timeFormat)
@@ -72,6 +73,7 @@ func NewUpdater(ctx context.Context, c fleetAPI.InventoryClient, gsc gs.Client, 
 		timeStamp:   curTime,
 		client:      c,
 		gsClient:    gsc,
+		username:    username,
 		dtChannel:   channel,
 		logFileLoc:  logDir,
 		ctx:         ctx,
@@ -225,13 +227,23 @@ func (u *Updater) logResults(state string, asset *fleet.ChopsAsset, action, err 
 }
 
 func (u *Updater) uploadLogs() error {
-	fmt.Printf("Uploading %s\n", u.logFilePath)
-	if err := upload(u.gsClient, u.logFilePath); err != nil {
-		return err
-	}
-	fmt.Printf("Uploading %s\n", u.resFilePath)
-	if err := upload(u.gsClient, u.resFilePath); err != nil {
-		return err
+	paths := u.getUploadPaths()
+	for localFilePath, remoteFilePath := range paths {
+		fmt.Printf("Uploading %s (empty file won't be uploaded) \n", localFilePath)
+		if err := upload(u.gsClient, localFilePath, remoteFilePath); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func (u *Updater) getUploadPaths() map[string]string {
+	res := make(map[string]string, 0)
+	res[u.logFilePath] = remotePath(u.username, filepath.Base(u.logFilePath))
+	res[u.resFilePath] = remotePath(u.username, filepath.Base(u.resFilePath))
+	return res
+}
+
+func remotePath(username, filename string) string {
+	return fmt.Sprintf("gs://%s/%s/%s/%s", gsBucket, scanLogPath, username, filename)
 }

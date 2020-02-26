@@ -81,6 +81,12 @@ func (c *rerun) innerRun(a subcommands.Application, args []string, env subcomman
 	if err != nil {
 		return err
 	}
+
+	username, err := getUsername(ctx, &c.authFlags, a.GetOut())
+	if err != nil {
+		return err
+	}
+
 	e := c.envFlags.Env()
 	fmt.Printf("Using inventory service %s\n", e)
 	ic := fleetAPI.NewInventoryPRPCClient(&prpc.Client{
@@ -94,7 +100,7 @@ func (c *rerun) innerRun(a subcommands.Application, args []string, env subcomman
 		return err
 	}
 
-	u, err := utils.NewUpdater(ctx, ic, gsc, c.logDir)
+	u, err := utils.NewUpdater(ctx, ic, gsc, c.logDir, username)
 	if err != nil {
 		return err
 	}
