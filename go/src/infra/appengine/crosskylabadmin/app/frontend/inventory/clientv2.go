@@ -276,7 +276,7 @@ func changePool(dut *lab.DeviceUnderTest, oldPool, newPool string) bool {
 
 func (c *invServiceClient) getDutInfo(ctx context.Context, req *invV1Api.GetDutInfoRequest) ([]byte, time.Time, error) {
 	var devID *api.DeviceID
-	var now time.Time
+	now := time.Now().UTC()
 	if req.Id != "" {
 		devID = &api.DeviceID{Id: &api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: req.Id}}
 	} else {
