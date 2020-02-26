@@ -126,7 +126,7 @@ CREATE TABLE FieldDef (
   is_deleted BOOLEAN,  -- If true, reap this field def after all values reaped.
   approval_id INT,
   is_phase_field BOOLEAN DEFAULT FALSE,
-  RestrictedField BOOLEAN DEFAULT FALSE, -- If true, editors are restricted to the FieldDef2Editors tbl.
+  is_restricted_field BOOLEAN DEFAULT FALSE, -- If true, editors are restricted to the FieldDef2Editors tbl.
 
   PRIMARY KEY (id),
   UNIQUE KEY (project_id, field_name),
