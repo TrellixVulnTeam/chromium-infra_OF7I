@@ -130,3 +130,16 @@ if ! (bqschemaupdater -force \
   echo "and run this script again."
   exit 1
 fi
+
+if ! (bqschemaupdater -force \
+    -message apibq.RegisteredAsset \
+    -table "${APPID}".inventory.registered_assets); then
+  echo ""
+  echo ""
+  echo "Oh no! You may need to restart from scratch. You can do so with:"
+  echo ""
+  echo "  bq rm ${APPID}:inventory.registered_assets"
+  echo ""
+  echo "and run this script again."
+  exit 1
+fi

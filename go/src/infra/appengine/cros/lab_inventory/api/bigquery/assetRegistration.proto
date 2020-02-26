@@ -1,0 +1,16 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package apibq;
+
+import "google/protobuf/timestamp.proto";
+import "infra/libs/fleet/protos/asset.proto";
+
+message RegisteredAsset {
+    string id = 1;
+    fleet.ChopsAsset asset = 2;
+    google.protobuf.Timestamp updated_time = 3;
+}
