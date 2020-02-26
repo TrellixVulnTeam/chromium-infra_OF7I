@@ -24,6 +24,7 @@ import (
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/migration"
 	dronequeenapi "infra/appengine/drone-queen/api"
+	bqlib "infra/libs/cros/lab_inventory/bq"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/datastore"
@@ -39,6 +40,8 @@ import (
 func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	mwCron := mwBase.Extend(gaemiddleware.RequireCron)
 	r.GET("/internal/cron/dump-to-bq", mwCron, logAndSetHTTPErr(dumpToBQCronHandler))
+
+	r.GET("/internal/cron/dump-registered-assets-snapshot", mwCron, logAndSetHTTPErr(dumpRegisteredAssetsCronHandler))
 
 	r.GET("/internal/cron/sync-dev-config", mwCron, logAndSetHTTPErr(syncDevConfigHandler))
 
@@ -82,6 +85,23 @@ func syncManufacturingConfigHandler(c *router.Context) error {
 	committish := cfg.GetCommittish()
 	path := cfg.GetPath()
 	return manufacturingconfig.UpdateDatastore(c.Context, cli, project, committish, path)
+}
+
+func dumpRegisteredAssetsCronHandler(c *router.Context) error {
+	ctx := c.Context
+	logging.Infof(ctx, "Start to dump registered assets to bigquery")
+
+	uploader, err := bqlib.InitBQUploader(ctx, info.AppID(ctx), "inventory", "registered_assets")
+	if err != nil {
+		return err
+	}
+	msgs := bqlib.GetRegisteredAssetsProtos(ctx)
+	logging.Debugf(ctx, "Dumping %d records to bigquery", len(msgs))
+	if err := uploader.Put(ctx, msgs...); err != nil {
+		return err
+	}
+	logging.Debugf(ctx, "Dump is successfully finished")
+	return nil
 }
 
 func dumpChangeHistoryToBQCronHandler(c *router.Context) error {

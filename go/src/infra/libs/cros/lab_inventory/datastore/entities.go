@@ -113,7 +113,7 @@ const AssetEntityName string = "Asset"
 
 // AssetEntity is a datastore entity that tracks the asset.
 type AssetEntity struct {
-	_kind    string `gae:"$kind,asset"`
+	_kind    string `gae:"$kind,Asset"`
 	ID       string `gae:"$id"`
 	Lab      string
 	Location []byte         `gae:",noindex"`
@@ -125,7 +125,7 @@ const AssetStateEntityName string = "AssetState"
 
 // AssetStateEntity is the datastore that tracks the asset state.
 type AssetStateEntity struct {
-	_kind   string           `gae:"$kind,assetstate"`
+	_kind   string           `gae:"$kind,AssetState"`
 	ID      string           `gae:"$id"`
 	State   fleet.AssetState `gae:",noindex"`
 	Updated time.Time

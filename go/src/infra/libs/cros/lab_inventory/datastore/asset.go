@@ -65,6 +65,22 @@ func UpdateAssets(ctx context.Context, assets []*fleet.ChopsAsset) ([]*AssetOpRe
 	return putAssets(ctx, assets, true)
 }
 
+// GetAllAssets returns all assets from datastore.
+func GetAllAssets(ctx context.Context) ([]*fleet.ChopsAsset, error) {
+	q := datastore.NewQuery(AssetEntityName).Ancestor(fakeAncestorKey(ctx))
+	var assetEntities []*AssetEntity
+	if err := datastore.GetAll(ctx, q, &assetEntities); err != nil {
+		return nil, err
+	}
+	assets := make([]*fleet.ChopsAsset, 0)
+	for _, ae := range assetEntities {
+		if a, err := ae.ToChopsAsset(); err == nil {
+			assets = append(assets, a)
+		}
+	}
+	return assets, nil
+}
+
 // GetAssetsByID returns the asset(s) matching the AssetID
 func GetAssetsByID(ctx context.Context, ids []string) []*AssetOpResult {
 	queryResults := make([]*AssetOpResult, len(ids))

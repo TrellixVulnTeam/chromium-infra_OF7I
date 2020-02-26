@@ -22,3 +22,7 @@ cron:
 - description: report metrics of Duts in inventory.
   url: /internal/cron/report-inventory
   schedule: every 5 minutes
+
+- description: Dump registered assets
+  url: /internal/cron/dump-registered-assets-snapshot
+  schedule: every 24 hours

@@ -144,6 +144,28 @@ func TestUpdateAsset(t *testing.T) {
 	})
 }
 
+func TestGetAllAssets(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	asset1 := mockAsset("45673456237895", "lab1")
+	asset2 := mockAsset("45673456237896", "lab2")
+	Convey("Get all assets from datastore", t, func() {
+		req := []*fleet.ChopsAsset{asset1, asset2}
+		res, err := AddAssets(ctx, req)
+		So(err, ShouldBeNil)
+		So(res, ShouldHaveLength, 2)
+		So(res[0].Err, ShouldBeNil)
+		So(res[1].Err, ShouldBeNil)
+		// Verify
+		assets, err := GetAllAssets(ctx)
+		So(err, ShouldBeNil)
+		So(assets, ShouldHaveLength, 2)
+		want := []string{"45673456237895", "45673456237896"}
+		get := []string{assets[0].GetId(), assets[1].GetId()}
+		So(get, ShouldResemble, want)
+	})
+}
+
 func TestGetAssetsByID(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
