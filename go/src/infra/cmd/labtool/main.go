@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 
 	"infra/cmd/labtool/audit"
+	"infra/cmd/labtool/meta"
 	"infra/cmd/labtool/query"
 	"infra/cmd/labtool/site"
 )
@@ -29,6 +30,8 @@ func getApplication() *cli.Application {
 		},
 		Commands: []*subcommands.Command{
 			subcommands.CmdHelp,
+			subcommands.Section("Meta"),
+			meta.Version,
 			subcommands.Section("Authentication"),
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),

@@ -6,14 +6,21 @@
 package cipd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
+	"go.chromium.org/luci/cipd/client/cipd"
 	"go.chromium.org/luci/common/errors"
 )
+
+const service = "https://chrome-infra-packages.appspot.com"
 
 // Package contains information about an installed package.
 type Package struct {
@@ -90,4 +97,80 @@ func jsonCmdOutput(applicationName string) jsonCmdOutputFunc {
 		}
 		return out, nil
 	}
+}
+
+// FindPackage find the package by a given package name.
+func FindPackage(packageName, cipdPackagePath string) (*Package, error) {
+	errAnnotation := fmt.Sprintf("find package %s", packageName)
+	d, err := executableDir()
+	if err != nil {
+		return nil, errors.Annotate(err, errAnnotation).Err()
+	}
+	root, err := findCIPDRootDir(d)
+	if err != nil {
+		return nil, errors.Annotate(err, errAnnotation).Err()
+	}
+	pkgs, err := InstalledPackages(packageName)(root)
+	if err != nil {
+		return nil, errors.Annotate(err, errAnnotation).Err()
+	}
+	for _, p := range pkgs {
+		if !strings.HasPrefix(p.Package, cipdPackagePath) {
+			continue
+		}
+		return &p, nil
+	}
+	return nil, errors.Reason(fmt.Sprintf("%s package: not found in %s", packageName, root)).Err()
+}
+
+// DescribePackage returns information about a package instances.
+func DescribePackage(ctx context.Context, pkg, version string) (*cipd.InstanceDescription, error) {
+	opts := cipd.ClientOptions{
+		ServiceURL:      service,
+		AnonymousClient: http.DefaultClient,
+	}
+	client, err := cipd.NewClient(opts)
+	if err != nil {
+		return nil, errors.Annotate(err, "describe package").Err()
+	}
+	pin, err := client.ResolveVersion(ctx, pkg, version)
+	if err != nil {
+		return nil, errors.Annotate(err, "describe package").Err()
+	}
+	d, err := client.DescribeInstance(ctx, pin, nil)
+	if err != nil {
+		return nil, errors.Annotate(err, "describe package").Err()
+	}
+	return d, nil
+}
+
+func findCIPDRootDir(dir string) (string, error) {
+	a, err := filepath.Abs(dir)
+	if err != nil {
+		return "", errors.Annotate(err, "find CIPD root dir").Err()
+	}
+	for d := a; d != "/"; d = filepath.Dir(d) {
+		if isCIPDRootDir(d) {
+			return d, nil
+		}
+	}
+	return "", errors.Reason("find CIPD root dir: no CIPD root above %s", dir).Err()
+}
+
+func isCIPDRootDir(dir string) bool {
+	fi, err := os.Stat(filepath.Join(dir, ".cipd"))
+	if err != nil {
+		return false
+	}
+	return fi.Mode().IsDir()
+}
+
+// executableDir returns the directory the current executable came
+// from.
+func executableDir() (string, error) {
+	p, err := os.Executable()
+	if err != nil {
+		return "", errors.Annotate(err, "get executable directory").Err()
+	}
+	return filepath.Dir(p), nil
 }
