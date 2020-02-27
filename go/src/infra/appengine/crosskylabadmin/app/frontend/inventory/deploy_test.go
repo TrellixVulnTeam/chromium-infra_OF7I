@@ -435,6 +435,20 @@ func TestDeployDut(t *testing.T) {
 			So(err, ShouldNotBeNil)
 		})
 
+		Convey("DeployDut rejects deployment of labsations with wrong os_type", func() {
+			ignoredID := "This ID is ignored"
+			dutHostname := "my-labstation123"
+			specs := &inventory.CommonDeviceSpecs{
+				Id:       &ignoredID,
+				Hostname: &dutHostname,
+			}
+			_, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
+				NewSpecs: marshalOrPanicMany(specs),
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "OS_TYPE_LABSTATION")
+		})
+
 		Convey("DeployDut with valid new_specs triggers deploy", func() {
 			// Id is a required field, so must be set.
 			// But a new ID is assigned on deployment.

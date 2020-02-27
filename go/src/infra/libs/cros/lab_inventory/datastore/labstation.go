@@ -63,7 +63,7 @@ func (r servoHostRegistry) getServoHost(ctx context.Context, hostname string) (*
 		}
 		switch len(servoHosts) {
 		case 0:
-			return nil, errors.Reason("labstation %s not deployed yet. Deploy it first please.", hostname).Err()
+			return nil, errors.Reason("labstation %s was not deployed yet. Deploy it first by `skylab add-labstation` please.", hostname).Err()
 		case 1:
 			entity := servoHosts[0]
 			var crosDev lab.ChromeOSDevice
@@ -81,7 +81,13 @@ func (r servoHostRegistry) getServoHost(ctx context.Context, hostname string) (*
 		}
 
 	}
-	return r[hostname].message.GetLabstation(), nil
+	labstation := r[hostname].message.GetLabstation()
+	if labstation == nil {
+		// A labstation may be deployed as a DUT due to errors. We check here in
+		// case the checking in deployment doesn't work in some cases.
+		return nil, errors.Reason("device was not deployed as a labstation: %s", hostname).Err()
+	}
+	return labstation, nil
 }
 
 func looksLikeLabstation(hostname string) bool {

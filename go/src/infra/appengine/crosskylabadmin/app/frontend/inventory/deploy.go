@@ -95,7 +95,7 @@ func (is *ServerImpl) RedeployDut(ctx context.Context, req *fleet.RedeployDutReq
 	if err != nil {
 		return nil, err
 	}
-	newSpecs, err := parseDUTSpecs(req.GetNewSpecs())
+	newSpecs, err := parseAndEnsureDUTSpecs(req.GetNewSpecs())
 	if err != nil {
 		return nil, err
 	}
@@ -460,11 +460,24 @@ func parseDUTSpecs(specs []byte) (*inventory.CommonDeviceSpecs, error) {
 	return &parsed, nil
 }
 
+func parseAndEnsureDUTSpecs(specs []byte) (*inventory.CommonDeviceSpecs, error) {
+	parsed, err := parseDUTSpecs(specs)
+	if err != nil {
+		return nil, err
+	}
+	// If the host is a labstation, ensure the os_type has correct value.
+	hostname := parsed.GetHostname()
+	if looksLikeLabstation(hostname) && parsed.GetLabels().GetOsType() != inventory.SchedulableLabels_OS_TYPE_LABSTATION {
+		return nil, errors.Reason("The os_type of %s must be OS_TYPE_LABSTATION (please ensure to use `skylab add-labstation` for labstations deployment)", hostname).Err()
+	}
+	return parsed, nil
+}
+
 func parseManyDUTSpecs(specsArr [][]byte) ([]*inventory.CommonDeviceSpecs, error) {
 	var out []*inventory.CommonDeviceSpecs
 	out = make([]*inventory.CommonDeviceSpecs, 0, len(specsArr))
 	for _, item := range specsArr {
-		if parsed, err := parseDUTSpecs(item); err == nil {
+		if parsed, err := parseAndEnsureDUTSpecs(item); err == nil {
 			out = append(out, parsed)
 		} else {
 			return nil, err
