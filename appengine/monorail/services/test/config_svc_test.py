@@ -186,10 +186,12 @@ class ConfigRowTwoLevelCacheTest(unittest.TestCase):
                            (2, 789, 2, 'Fixed', False, 'doc', False)]
     self.labeldef_rows = [(1, 789, 1, 'Security', 'doc', False),
                           (2, 789, 2, 'UX', 'doc', False)]
-    self.fielddef_rows = [(1, 789, None, 'Field', 'INT_TYPE',
-                           'Defect', '', False, False, False,
-                           1, 99, None, '', '', None, 'NEVER', 'no_action',
-                           'doc', False, None, False)]
+    self.fielddef_rows = [
+        (
+            1, 789, None, 'Field', 'INT_TYPE', 'Defect', '', False, False,
+            False, 1, 99, None, '', '', None, 'NEVER', 'no_action', 'doc',
+            False, None, False, False)
+    ]
     self.approvaldef2approver_rows = [(2, 101, 789), (2, 102, 789)]
     self.approvaldef2survey_rows = [(2, 'Q1\nQ2\nQ3', 789)]
     self.fielddef2admin_rows = []
@@ -754,19 +756,24 @@ class ConfigServiceTest(unittest.TestCase):
 
   def SetUpUpdateApprovals_Default(
       self, approval_id, approver_rows, survey_row):
-      self.config_service.approvaldef2approver_tbl.Delete(
-          self.cnxn, approval_id=approval_id, commit=False)
+    self.config_service.approvaldef2approver_tbl.Delete(
+        self.cnxn, approval_id=approval_id, commit=False)
 
-      self.config_service.approvaldef2approver_tbl.InsertRows(
-          self.cnxn, config_svc.APPROVALDEF2APPROVER_COLS,
-          approver_rows, commit=False)
+    self.config_service.approvaldef2approver_tbl.InsertRows(
+        self.cnxn,
+        config_svc.APPROVALDEF2APPROVER_COLS,
+        approver_rows,
+        commit=False)
 
-      approval_id, survey, project_id = survey_row
-      self.config_service.approvaldef2survey_tbl.Delete(
-          self.cnxn, approval_id=approval_id, commit=False)
-      self.config_service.approvaldef2survey_tbl.InsertRow(
-          self.cnxn, approval_id=approval_id, survey=survey,
-          project_id=project_id, commit=False)
+    approval_id, survey, project_id = survey_row
+    self.config_service.approvaldef2survey_tbl.Delete(
+        self.cnxn, approval_id=approval_id, commit=False)
+    self.config_service.approvaldef2survey_tbl.InsertRow(
+        self.cnxn,
+        approval_id=approval_id,
+        survey=survey,
+        project_id=project_id,
+        commit=False)
 
   def testStoreConfig(self):
     config = tracker_bizobj.MakeDefaultProjectIssueConfig(789)
@@ -874,14 +881,27 @@ class ConfigServiceTest(unittest.TestCase):
 
   def SetUpCreateFieldDef(self, project_id):
     self.config_service.fielddef_tbl.InsertRow(
-        self.cnxn, project_id=project_id,
-        field_name='PercentDone', field_type='int_type',
-        applicable_type='Defect', applicable_predicate='',
-        is_required=False, is_multivalued=False, is_niche=False,
-        min_value=1, max_value=100, regex=None,
-        needs_member=None, needs_perm=None,
-        grants_perm=None, notify_on='never', date_action='no_action',
-        docstring='doc', approval_id=None, is_phase_field=False,
+        self.cnxn,
+        project_id=project_id,
+        field_name='PercentDone',
+        field_type='int_type',
+        applicable_type='Defect',
+        applicable_predicate='',
+        is_required=False,
+        is_multivalued=False,
+        is_niche=False,
+        min_value=1,
+        max_value=100,
+        regex=None,
+        needs_member=None,
+        needs_perm=None,
+        grants_perm=None,
+        notify_on='never',
+        date_action='no_action',
+        docstring='doc',
+        approval_id=None,
+        is_phase_field=False,
+        is_restricted_field=True,
         commit=False).AndReturn(1)
     self.config_service.fielddef2admin_tbl.InsertRows(
         self.cnxn, config_svc.FIELDDEF2ADMIN_COLS, [], commit=False)
@@ -892,8 +912,25 @@ class ConfigServiceTest(unittest.TestCase):
 
     self.mox.ReplayAll()
     field_id = self.config_service.CreateFieldDef(
-        self.cnxn, 789, 'PercentDone', 'int_type', 'Defect', '', False, False,
-        False, 1, 100, None, None, None, None, 0, 'no_action', 'doc', [])
+        self.cnxn,
+        789,
+        'PercentDone',
+        'int_type',
+        'Defect',
+        '',
+        False,
+        False,
+        False,
+        1,
+        100,
+        None,
+        None,
+        None,
+        None,
+        0,
+        'no_action',
+        'doc', [],
+        is_restricted_field=True)
     self.mox.VerifyAll()
     self.assertEqual(1, field_id)
 
@@ -927,11 +964,21 @@ class ConfigServiceTest(unittest.TestCase):
 
   def testUpdateFieldDef_Normal(self):
     new_values = dict(
-        field_name='newname', applicable_type='defect',
-        applicable_predicate='pri:1', is_required=True, is_niche=True,
-        is_multivalued=True, min_value=32, max_value=212, regex='a.*b',
-        needs_member=True, needs_perm='EditIssue', grants_perm='DeleteIssue',
-        notify_on='any_comment', docstring='new doc')
+        field_name='newname',
+        applicable_type='defect',
+        applicable_predicate='pri:1',
+        is_required=True,
+        is_niche=True,
+        is_multivalued=True,
+        min_value=32,
+        max_value=212,
+        regex='a.*b',
+        needs_member=True,
+        needs_perm='EditIssue',
+        grants_perm='DeleteIssue',
+        notify_on='any_comment',
+        docstring='new doc',
+        is_restricted_field=True)
     self.SetUpUpdateFieldDef(1, new_values)
 
     self.mox.ReplayAll()

@@ -401,6 +401,9 @@ class FieldDef(messages.Message):
   # These fields should only be associated with issue phases
   is_phase_field = messages.BooleanField(22, default=False)
 
+  # boolean that indicates if this field is restricted
+  is_restricted_field = messages.BooleanField(23, default=False)
+
 
 class ComponentDef(messages.Message):
   """This stores info about a component in a project."""

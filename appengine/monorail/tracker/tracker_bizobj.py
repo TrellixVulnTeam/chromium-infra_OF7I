@@ -256,24 +256,49 @@ def MakeApprovalValue(approval_id, approver_ids=None, status=None,
 
 
 def MakeFieldDef(
-    field_id, project_id, field_name, field_type_int, applic_type, applic_pred,
-    is_required, is_niche, is_multivalued, min_value, max_value, regex,
-    needs_member, needs_perm, grants_perm, notify_on, date_action, docstring,
-    is_deleted, approval_id=None, is_phase_field=False):
+    field_id,
+    project_id,
+    field_name,
+    field_type_int,
+    applic_type,
+    applic_pred,
+    is_required,
+    is_niche,
+    is_multivalued,
+    min_value,
+    max_value,
+    regex,
+    needs_member,
+    needs_perm,
+    grants_perm,
+    notify_on,
+    date_action,
+    docstring,
+    is_deleted,
+    approval_id=None,
+    is_phase_field=False,
+    is_restricted_field=False):
   """Make a FieldDef PB for the given FieldDef table row tuple."""
   if isinstance(date_action, string_types):
     date_action = date_action.upper()
   fd = tracker_pb2.FieldDef(
-      field_id=field_id, project_id=project_id, field_name=field_name,
-      field_type=field_type_int, is_required=bool(is_required),
+      field_id=field_id,
+      project_id=project_id,
+      field_name=field_name,
+      field_type=field_type_int,
+      is_required=bool(is_required),
       is_niche=bool(is_niche),
-      is_multivalued=bool(is_multivalued), docstring=docstring,
-      is_deleted=bool(is_deleted), applicable_type=applic_type or '',
+      is_multivalued=bool(is_multivalued),
+      docstring=docstring,
+      is_deleted=bool(is_deleted),
+      applicable_type=applic_type or '',
       applicable_predicate=applic_pred or '',
-      needs_member=bool(needs_member), grants_perm=grants_perm or '',
+      needs_member=bool(needs_member),
+      grants_perm=grants_perm or '',
       notify_on=tracker_pb2.NotifyTriggers(notify_on or 0),
       date_action=tracker_pb2.DateAction(date_action or 0),
-      is_phase_field=bool(is_phase_field))
+      is_phase_field=bool(is_phase_field),
+      is_restricted_field=bool(is_restricted_field))
   if min_value is not None:
     fd.min_value = min_value
   if max_value is not None:

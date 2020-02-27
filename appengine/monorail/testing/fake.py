@@ -1221,11 +1221,29 @@ class ConfigService(object):
     return project_config
 
   def CreateFieldDef(
-      self, cnxn, project_id, field_name, field_type_str, applic_type,
-      applic_pred, is_required, is_niche, is_multivalued,
-      min_value, max_value, regex, needs_member, needs_perm,
-      grants_perm, notify_on, date_action_str, docstring, admin_ids,
-      approval_id=None, is_phase_field=False):
+      self,
+      cnxn,
+      project_id,
+      field_name,
+      field_type_str,
+      applic_type,
+      applic_pred,
+      is_required,
+      is_niche,
+      is_multivalued,
+      min_value,
+      max_value,
+      regex,
+      needs_member,
+      needs_perm,
+      grants_perm,
+      notify_on,
+      date_action_str,
+      docstring,
+      admin_ids,
+      approval_id=None,
+      is_phase_field=False,
+      is_restricted_field=False):
     config = self.GetProjectConfig(cnxn, project_id)
     field_type = tracker_pb2.FieldTypes(field_type_str)
     field_id = self.next_field_id
@@ -1234,7 +1252,7 @@ class ConfigService(object):
         field_id, project_id, field_name, field_type, applic_type, applic_pred,
         is_required, is_niche, is_multivalued, min_value, max_value, regex,
         needs_member, needs_perm, grants_perm, notify_on, date_action_str,
-        docstring, False, approval_id, is_phase_field)
+        docstring, False, approval_id, is_phase_field, is_restricted_field)
     config.field_defs.append(fd)
     self.StoreConfig(cnxn, config)
     return field_id
@@ -1247,11 +1265,27 @@ class ConfigService(object):
     self.StoreConfig(cnxn, config)
 
   def UpdateFieldDef(
-      self, cnxn, project_id, field_id, field_name=None,
-      applicable_type=None, applicable_predicate=None, is_required=None,
-      is_niche=None, is_multivalued=None, min_value=None, max_value=None,
-      regex=None, needs_member=None, needs_perm=None, grants_perm=None,
-      notify_on=None, date_action=None, docstring=None, admin_ids=None):
+      self,
+      cnxn,
+      project_id,
+      field_id,
+      field_name=None,
+      applicable_type=None,
+      applicable_predicate=None,
+      is_required=None,
+      is_niche=None,
+      is_multivalued=None,
+      min_value=None,
+      max_value=None,
+      regex=None,
+      needs_member=None,
+      needs_perm=None,
+      grants_perm=None,
+      notify_on=None,
+      date_action=None,
+      docstring=None,
+      admin_ids=None,
+      is_restricted_field=None):
     config = self.GetProjectConfig(cnxn, project_id)
     fd = tracker_bizobj.FindFieldDefByID(field_id, config)
     # pylint: disable=multiple-statements
@@ -1269,6 +1303,8 @@ class ConfigService(object):
       fd.date_action = config_svc.DATE_ACTION_ENUM.index(date_action)
     if docstring is not None: fd.docstring = docstring
     if admin_ids is not None: fd.admin_ids = admin_ids
+    if is_restricted_field is not None:
+      fd.is_restricted_field = is_restricted_field
     self.StoreConfig(cnxn, config)
 
   def CreateComponentDef(

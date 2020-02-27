@@ -295,38 +295,96 @@ class BizobjTest(unittest.TestCase):
     self.assertEqual(1, fd.field_id)
     self.assertEqual(None, fd.approval_id)
     self.assertFalse(fd.is_phase_field)
+    self.assertFalse(fd.is_restricted_field)
 
   def testMakeFieldDef_Full(self):
     fd = tracker_bizobj.MakeFieldDef(
-        1, 789, 'Size', tracker_pb2.FieldTypes.INT_TYPE, None, None,
-        False, False, False, 1, 100, None, False,
-        None, None, None, 'no_action', 'Some field', False, approval_id=4,
-        is_phase_field=True)
+        1,
+        789,
+        'Size',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        None,
+        False,
+        False,
+        False,
+        1,
+        100,
+        None,
+        False,
+        None,
+        None,
+        None,
+        'no_action',
+        'Some field',
+        False,
+        approval_id=4,
+        is_phase_field=True,
+        is_restricted_field=True)
     self.assertEqual(1, fd.min_value)
     self.assertEqual(100, fd.max_value)
     self.assertEqual(4, fd.approval_id)
     self.assertTrue(fd.is_phase_field)
+    self.assertTrue(fd.is_restricted_field)
 
     fd = tracker_bizobj.MakeFieldDef(
-        1, 789, 'Size', tracker_pb2.FieldTypes.STR_TYPE, None, None,
-        False, False, False, None, None, 'A.*Z', False,
-        'EditIssue', None, None, 'no_action', 'Some field', False, 4)
+        1,
+        789,
+        'Size',
+        tracker_pb2.FieldTypes.STR_TYPE,
+        None,
+        None,
+        False,
+        False,
+        False,
+        None,
+        None,
+        'A.*Z',
+        False,
+        'EditIssue',
+        None,
+        None,
+        'no_action',
+        'Some field',
+        False,
+        4,
+        is_restricted_field=False)
     self.assertEqual('A.*Z', fd.regex)
     self.assertEqual('EditIssue', fd.needs_perm)
     self.assertEqual(4, fd.approval_id)
+    self.assertFalse(fd.is_restricted_field)
 
   def testMakeFieldDef_IntBools(self):
     fd = tracker_bizobj.MakeFieldDef(
-        1, 789, 'Size', tracker_pb2.FieldTypes.INT_TYPE, None, None,
-        0, 0, 0, 1, 100, None, 0,
-        None, None, None, 'no_action', 'Some field', 0, approval_id=4,
-        is_phase_field=1)
+        1,
+        789,
+        'Size',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        None,
+        0,
+        0,
+        0,
+        1,
+        100,
+        None,
+        0,
+        None,
+        None,
+        None,
+        'no_action',
+        'Some field',
+        0,
+        approval_id=4,
+        is_phase_field=1,
+        is_restricted_field=1)
     self.assertFalse(fd.is_required)
     self.assertFalse(fd.is_niche)
     self.assertFalse(fd.is_multivalued)
     self.assertFalse(fd.needs_member)
     self.assertFalse(fd.is_deleted)
     self.assertTrue(fd.is_phase_field)
+    self.assertTrue(fd.is_restricted_field)
 
   def testMakeFieldValue(self):
     # Only the first value counts.
@@ -2038,7 +2096,7 @@ class BizobjTest(unittest.TestCase):
     fv3 = tracker_bizobj.MakeFieldValue(
         1, 47, None, None, None, None, False, phase_id=1) # should replace fv4
 
-     # Adding one replaces all values since the field is single-valued.
+    # Adding one replaces all values since the field is single-valued.
     merged_fvs, fvs_added_dict, fvs_removed_dict = tracker_bizobj._MergeFields(
         [fv1, fv2], [fv3], [], [fd])
     self.assertEqual([fv2, fv3], merged_fvs)

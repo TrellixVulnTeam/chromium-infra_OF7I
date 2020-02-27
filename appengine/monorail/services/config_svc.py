@@ -58,7 +58,8 @@ FIELDDEF_COLS = [
     'applicable_predicate', 'is_required', 'is_niche', 'is_multivalued',
     'min_value', 'max_value', 'regex', 'needs_member', 'needs_perm',
     'grants_perm', 'notify_on', 'date_action', 'docstring', 'is_deleted',
-    'approval_id', 'is_phase_field']
+    'approval_id', 'is_phase_field', 'is_restricted_field'
+]
 FIELDDEF2ADMIN_COLS = ['field_id', 'admin_id']
 COMPONENTDEF_COLS = ['id', 'project_id', 'path', 'docstring', 'deprecated',
                      'created', 'creator_id', 'modified', 'modifier_id']
@@ -266,11 +267,12 @@ class ConfigTwoLevelCache(caches.AbstractTwoLevelCache):
 
   def _UnpackFieldDef(self, fielddef_row):
     """Partially construct a FieldDef object using info from a DB row."""
-    (field_id, project_id, _rank, field_name, field_type,
-     applic_type, applic_pred, is_required, is_niche, is_multivalued,
-     min_value, max_value, regex, needs_member, needs_perm,
-     grants_perm, notify_on_str, date_action_str, docstring,
-     is_deleted, approval_id, is_phase_field) = fielddef_row
+    (
+        field_id, project_id, _rank, field_name, field_type, applic_type,
+        applic_pred, is_required, is_niche, is_multivalued, min_value,
+        max_value, regex, needs_member, needs_perm, grants_perm, notify_on_str,
+        date_action_str, docstring, is_deleted, approval_id, is_phase_field,
+        is_restricted_field) = fielddef_row
     if notify_on_str == 'any_comment':
       notify_on = tracker_pb2.NotifyTriggers.ANY_COMMENT
     else:
@@ -285,7 +287,7 @@ class ConfigTwoLevelCache(caches.AbstractTwoLevelCache):
         tracker_pb2.FieldTypes(field_type.upper()), applic_type, applic_pred,
         is_required, is_niche, is_multivalued, min_value, max_value, regex,
         needs_member, needs_perm, grants_perm, notify_on, date_action,
-        docstring, is_deleted, approval_id, is_phase_field)
+        docstring, is_deleted, approval_id, is_phase_field, is_restricted_field)
 
   def _UnpackComponentDef(
       self, cd_row, component2admin_rows, component2cc_rows,
@@ -1037,11 +1039,29 @@ class ConfigService(object):
   ### Custom field definitions
 
   def CreateFieldDef(
-      self, cnxn, project_id, field_name, field_type_str, applic_type,
-      applic_pred, is_required, is_niche, is_multivalued,
-      min_value, max_value, regex, needs_member, needs_perm,
-      grants_perm, notify_on, date_action_str, docstring, admin_ids,
-      approval_id=None, is_phase_field=False):
+      self,
+      cnxn,
+      project_id,
+      field_name,
+      field_type_str,
+      applic_type,
+      applic_pred,
+      is_required,
+      is_niche,
+      is_multivalued,
+      min_value,
+      max_value,
+      regex,
+      needs_member,
+      needs_perm,
+      grants_perm,
+      notify_on,
+      date_action_str,
+      docstring,
+      admin_ids,
+      approval_id=None,
+      is_phase_field=False,
+      is_restricted_field=False):
     """Create a new field definition with the given info.
 
     Args:
@@ -1067,6 +1087,7 @@ class ConfigService(object):
       admin_ids: list of additional user IDs who can edit this field def.
       approval_id: field_id of approval field this field belongs to.
       is_phase_field: True if field should only be associated with issue phases.
+      is_restricted_field: True if field has its edition restricted.
 
     Returns:
       Integer field_id of the new field definition.
@@ -1075,16 +1096,28 @@ class ConfigService(object):
                 is_niche), ('A field cannot be both required and niche')
     assert date_action_str in DATE_ACTION_ENUM
     field_id = self.fielddef_tbl.InsertRow(
-        cnxn, project_id=project_id,
-        field_name=field_name, field_type=field_type_str,
-        applicable_type=applic_type, applicable_predicate=applic_pred,
-        is_required=is_required, is_niche=is_niche,
+        cnxn,
+        project_id=project_id,
+        field_name=field_name,
+        field_type=field_type_str,
+        applicable_type=applic_type,
+        applicable_predicate=applic_pred,
+        is_required=is_required,
+        is_niche=is_niche,
         is_multivalued=is_multivalued,
-        min_value=min_value, max_value=max_value, regex=regex,
-        needs_member=needs_member, needs_perm=needs_perm,
-        grants_perm=grants_perm, notify_on=NOTIFY_ON_ENUM[notify_on],
-        date_action=date_action_str, docstring=docstring,
-        approval_id=approval_id, is_phase_field=is_phase_field, commit=False)
+        min_value=min_value,
+        max_value=max_value,
+        regex=regex,
+        needs_member=needs_member,
+        needs_perm=needs_perm,
+        grants_perm=grants_perm,
+        notify_on=NOTIFY_ON_ENUM[notify_on],
+        date_action=date_action_str,
+        docstring=docstring,
+        approval_id=approval_id,
+        is_phase_field=is_phase_field,
+        is_restricted_field=is_restricted_field,
+        commit=False)
     self.fielddef2admin_tbl.InsertRows(
         cnxn, FIELDDEF2ADMIN_COLS,
         [(field_id, admin_id) for admin_id in admin_ids],
@@ -1160,11 +1193,27 @@ class ConfigService(object):
   # TODO(jrobbins): GC deleted field defs after field values are gone.
 
   def UpdateFieldDef(
-      self, cnxn, project_id, field_id, field_name=None,
-      applicable_type=None, applicable_predicate=None, is_required=None,
-      is_niche=None, is_multivalued=None, min_value=None, max_value=None,
-      regex=None, needs_member=None, needs_perm=None, grants_perm=None,
-      notify_on=None, date_action=None, docstring=None, admin_ids=None):
+      self,
+      cnxn,
+      project_id,
+      field_id,
+      field_name=None,
+      applicable_type=None,
+      applicable_predicate=None,
+      is_required=None,
+      is_niche=None,
+      is_multivalued=None,
+      min_value=None,
+      max_value=None,
+      regex=None,
+      needs_member=None,
+      needs_perm=None,
+      grants_perm=None,
+      notify_on=None,
+      date_action=None,
+      docstring=None,
+      admin_ids=None,
+      is_restricted_field=None):
     """Update the specified field definition."""
     new_values = {}
     if field_name is not None:
@@ -1198,6 +1247,8 @@ class ConfigService(object):
       new_values['date_action'] = date_action
     if docstring is not None:
       new_values['docstring'] = docstring
+    if is_restricted_field is not None:
+      new_values['is_restricted_field'] = is_restricted_field
 
     self.fielddef_tbl.Update(cnxn, new_values, id=field_id, commit=False)
     self.fielddef2admin_tbl.Delete(cnxn, field_id=field_id, commit=False)
