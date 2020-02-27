@@ -102,6 +102,7 @@ var (
 		"tast",        // name of a ChromeOS test
 		"te",          // TE is a HTTP request header
 		"tho",         // informal variant of though
+		"thru",        // informal variant of through
 		"tim",         // person name
 		"vertexes",    // alternative of vertices
 		"wan",         // person name
