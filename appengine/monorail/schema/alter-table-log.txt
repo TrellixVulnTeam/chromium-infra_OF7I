@@ -1729,7 +1729,7 @@ CREATE TABLE FieldDef2Editor (
   field_id INT NOT NULL,
   editor_id INT UNSIGNED NOT NULL,
 
-  PRIMARY KEY (field_id, user_id),
+  PRIMARY KEY (field_id, editor_id),
   FOREIGN KEY (field_id) REFERENCES FieldDef(id),
   FOREIGN KEY (editor_id) REFERENCES User(user_id)
 ) ENGINE=INNODB;
