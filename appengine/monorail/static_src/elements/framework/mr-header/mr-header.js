@@ -120,37 +120,33 @@ export class MrHeader extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    const isProjectScope = !!this.projectName;
+    return this.projectName ?
+        this._renderProjectScope() : this._renderNonProjectScope();
+  }
+
+  /**
+   * @return {TemplateResult}
+   */
+  _renderProjectScope() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-      <a class="hamburger-icon" title="Main menu" ?hidden=${isProjectScope}>
-        <i class="material-icons">menu</i>
-      </a>
-      <a
-        href=${isProjectScope ? `/p/${this.projectName}/issues/list` : '/'}
-        class="home-link"
-      >
+      <a href="/p/${this.projectName}/issues/list" class="home-link">
         ${this.projectThumbnailUrl ? html`
           <img
             class="project-logo"
             src=${this.projectThumbnailUrl}
             title=${this.projectName}
           />
-        ` : 'Monorail'}
+        ` : this.projectName}
       </a>
       <mr-dropdown
         class="project-selector"
         .text=${this.projectName}
         .items=${this._projectDropdownItems}
-        ?hidden=${!isProjectScope}
         menuAlignment="left"
         title=${this.presentationConfig.projectSummary}
       ></mr-dropdown>
-      <a
-        ?hidden=${!isProjectScope}
-        class="button emphasized new-issue-link"
-        href=${this.issueEntryUrl}
-      >
+      <a class="button emphasized new-issue-link" href=${this.issueEntryUrl}>
         New issue
       </a>
       <mr-search-bar
@@ -160,7 +156,6 @@ export class MrHeader extends connectStore(LitElement) {
         .initialCan=${this._currentCan}
         .initialQuery=${this._currentQuery}
         .queryParams=${this.queryParams}
-        ?hidden=${!isProjectScope}
       ></mr-search-bar>
 
       <div class="right-section">
@@ -168,21 +163,44 @@ export class MrHeader extends connectStore(LitElement) {
           icon="settings"
           label="Project Settings"
           .items=${this._projectSettingsItems}
-          ?hidden=${!isProjectScope}
         ></mr-dropdown>
 
-        ${this.userDisplayName ? html`
-          <mr-account-dropdown
-            .userDisplayName=${this.userDisplayName}
-            .logoutUrl=${this.logoutUrl}
-            .loginUrl=${this.loginUrl}
-          ></mr-account-dropdown>
-        `: ''}
-        <a
-          href=${this.loginUrl}
-          ?hidden=${this.userDisplayName}
-        >Sign in</a>
+        ${this._renderAccount()}
       </div>
+    `;
+  }
+
+  /**
+   * @return {TemplateResult}
+   */
+  _renderNonProjectScope() {
+    return html`
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <a class="hamburger-icon" title="Main menu">
+        <i class="material-icons">menu</i>
+      </a>
+      <a href="/" class="home-link">Monorail</a>
+
+      <div class="right-section">
+        ${this._renderAccount()}
+      </div>
+    `;
+  }
+
+  /**
+   * @return {TemplateResult}
+   */
+  _renderAccount() {
+    if (!this.userDisplayName) {
+      return html`<a href=${this.loginUrl}>Sign in</a>`;
+    }
+
+    return html`
+      <mr-account-dropdown
+        .userDisplayName=${this.userDisplayName}
+        .logoutUrl=${this.logoutUrl}
+        .loginUrl=${this.loginUrl}
+      ></mr-account-dropdown>
     `;
   }
 
