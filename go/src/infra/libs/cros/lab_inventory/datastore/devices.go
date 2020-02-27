@@ -560,5 +560,4 @@ func ReportInventory(ctx context.Context, environment string) error {
 	}
 	utilization.ReportInventoryMetricsV2(ctx, devices, environment)
 	return nil
-
 }
