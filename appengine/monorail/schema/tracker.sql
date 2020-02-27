@@ -146,13 +146,11 @@ CREATE TABLE FieldDef2Admin (
 
 CREATE TABLE FieldDef2Editor (
   field_id INT NOT NULL,
-  user_id INT UNSIGNED NOT NULL,
-  project_id SMALLINT UNSIGNED NOT NULL,
+  editor_id INT UNSIGNED NOT NULL,
 
   PRIMARY KEY (field_id, user_id),
   FOREIGN KEY (field_id) REFERENCES FieldDef(id),
-  FOREIGN KEY (user_id) REFERENCES User(user_id),
-  FOREIGN KEY (project_id) REFERENCES Project(project_id)
+  FOREIGN KEY (editor_id) REFERENCES User(user_id)
 ) ENGINE=INNODB;
 
 
