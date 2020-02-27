@@ -40,6 +40,11 @@ type runTestRun struct {
 	commonRun
 }
 
+type autoservResult struct {
+	CmdResult  *atutil.Result
+	ResultsDir string
+}
+
 func (c *runTestRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.validateArgs(); err != nil {
 		fmt.Fprintln(a.GetErr(), err.Error())
@@ -76,20 +81,24 @@ func (c *runTestRun) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	return writeJSONPb(c.outputPath, c.response(ar))
+	return writeJSONPb(c.outputPath, runTestResponse(ar))
 }
 
-func (c *runTestRun) response(r *atutil.Result) *phosphorus.RunTestResponse {
-	var s phosphorus.RunTestResponse_State
-	switch {
-	case r.Success():
-		s = phosphorus.RunTestResponse_SUCCEEDED
-	case r.RunResult.Aborted:
-		s = phosphorus.RunTestResponse_ABORTED
-	default:
-		s = phosphorus.RunTestResponse_FAILED
+func runTestResponse(r *autoservResult) *phosphorus.RunTestResponse {
+	return &phosphorus.RunTestResponse{
+		ResultsDir: r.ResultsDir,
+		State:      runTestState(r.CmdResult),
 	}
-	return &phosphorus.RunTestResponse{State: s}
+}
+
+func runTestState(r *atutil.Result) phosphorus.RunTestResponse_State {
+	if r.Success() {
+		return phosphorus.RunTestResponse_SUCCEEDED
+	}
+	if r.RunResult.Aborted {
+		return phosphorus.RunTestResponse_ABORTED
+	}
+	return phosphorus.RunTestResponse_FAILED
 }
 
 func validateRunTestRequest(r phosphorus.RunTestRequest) error {
@@ -111,7 +120,7 @@ func validateRunTestRequest(r phosphorus.RunTestRequest) error {
 }
 
 // runTestStep runs an individual test. It is a wrapper around autoserv.
-func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) (*atutil.Result, error) {
+func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) (*autoservResult, error) {
 	j := getMainJob(r.Config)
 
 	dir := filepath.Join(r.Config.Task.ResultsDir, "autoserv_test")
@@ -135,6 +144,8 @@ func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) (*atutil.Resu
 	if err != nil {
 		return nil, errors.Wrap(err, "run test")
 	}
-
-	return ar, nil
+	return &autoservResult{
+		CmdResult:  ar,
+		ResultsDir: dir,
+	}, nil
 }
