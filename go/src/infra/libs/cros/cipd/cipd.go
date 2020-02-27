@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -100,7 +101,7 @@ func jsonCmdOutput(applicationName string) jsonCmdOutputFunc {
 }
 
 // FindPackage find the package by a given package name.
-func FindPackage(packageName, cipdPackagePath string) (*Package, error) {
+func FindPackage(packageName, cipdInstalledPath string) (*Package, error) {
 	errAnnotation := fmt.Sprintf("find package %s", packageName)
 	d, err := executableDir()
 	if err != nil {
@@ -115,7 +116,7 @@ func FindPackage(packageName, cipdPackagePath string) (*Package, error) {
 		return nil, errors.Annotate(err, errAnnotation).Err()
 	}
 	for _, p := range pkgs {
-		if !strings.HasPrefix(p.Package, cipdPackagePath) {
+		if !strings.HasPrefix(p.Package, cipdInstalledPath) {
 			continue
 		}
 		return &p, nil
@@ -142,6 +143,26 @@ func DescribePackage(ctx context.Context, pkg, version string) (*cipd.InstanceDe
 		return nil, errors.Annotate(err, "describe package").Err()
 	}
 	return d, nil
+}
+
+// UpdatePackage updates a given package by its cipd path.
+func UpdatePackage(cipdInstalledPath string, outWriter io.Writer, errWriter io.Writer) error {
+	d, err := executableDir()
+	if err != nil {
+		return err
+	}
+	root, err := findCIPDRootDir(d)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("cipd", "ensure", "-root", root, "-ensure-file", "-")
+	cmd.Stdin = strings.NewReader(fmt.Sprintf("%s${platform} latest", cipdInstalledPath))
+	cmd.Stdout = outWriter
+	cmd.Stderr = errWriter
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func findCIPDRootDir(dir string) (string, error) {

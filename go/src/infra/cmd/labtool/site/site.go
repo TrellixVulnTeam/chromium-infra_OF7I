@@ -71,3 +71,6 @@ func SecretsDir() string {
 //
 // This is provided so it can be overridden for testing.
 var DefaultPRPCOptions *prpc.Options
+
+// CipdInstalledPath is the installed path for labtool package.
+var CipdInstalledPath = "chromiumos/infra/labtool/"

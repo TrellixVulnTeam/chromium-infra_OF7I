@@ -41,7 +41,7 @@ func (c *versionRun) Run(a subcommands.Application, args []string, env subcomman
 }
 
 func (c *versionRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	p, err := cipd.FindPackage("labtool", "chromiumos/infra/labtool/")
+	p, err := cipd.FindPackage("labtool", site.CipdInstalledPath)
 	if err != nil {
 		return err
 	}

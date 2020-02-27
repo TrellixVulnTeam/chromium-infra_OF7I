@@ -32,6 +32,7 @@ func getApplication() *cli.Application {
 			subcommands.CmdHelp,
 			subcommands.Section("Meta"),
 			meta.Version,
+			meta.Update,
 			subcommands.Section("Authentication"),
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
