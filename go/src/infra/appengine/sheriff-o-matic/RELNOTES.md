@@ -1,3 +1,23 @@
+# Release Notes sheriff-o-matic 2020-02-27
+
+- 3 commits, 2 bugs affected since c79fa52 (2020-02-18T00:33:43Z)
+- 2 Authors:
+  - jsca@google.com
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [Improve code to show oncalls in SoM.](https://chromium-review.googlesource.com/c/infra/infra/+/2073417) (jsca@google.com)
+- [Fetch infra deputy rotation from frog.googleplex.com.](https://chromium-review.googlesource.com/c/infra/infra/+/2071435) (jsca@google.com)
+- [Release note 18 Feb](https://chromium-review.googlesource.com/c/infra/infra/+/2060532) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1055520](https://crbug.com/1055520)
+  -  [https://crbug.com/1056005](https://crbug.com/1056005)
+  
+
 # Release Notes sheriff-o-matic 2020-02-18
 
 - 3 commits, 3 bugs affected since 973b32e ()
