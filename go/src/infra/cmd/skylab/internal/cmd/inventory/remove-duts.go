@@ -98,13 +98,19 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 	icMain := NewInventoryClient(hc, e, true)
 	icBackup := NewInventoryClient(hc, e, false)
 
-	icBackup.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
+	if e.DefaultInventoryOnly {
+		fmt.Fprintln(a.GetOut(), "= Skip the operation on backup inventory system. =")
+	} else {
+		icBackup.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
+	}
 	modified, err := icMain.removeDUTs(ctx, c.server, c.Flags.Args(), c.removalReason, a.GetOut())
 	if err != nil {
 		return err
 	}
 	if c.delete {
-		icBackup.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, a.GetOut())
+		if !e.DefaultInventoryOnly {
+			icBackup.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, a.GetOut())
+		}
 		mod, err := icMain.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, a.GetOut())
 		if err != nil {
 			return err

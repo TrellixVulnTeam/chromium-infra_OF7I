@@ -17,13 +17,14 @@ import (
 
 // Environment contains environment specific values.
 type Environment struct {
-	LUCIProject      string
-	SwarmingService  string
-	LogDogHost       string
-	InventoryService string
-	DefaultInventory string
-	AdminService     string
-	QueenService     string
+	LUCIProject          string
+	SwarmingService      string
+	LogDogHost           string
+	InventoryService     string
+	DefaultInventory     string
+	DefaultInventoryOnly bool
+	AdminService         string
+	QueenService         string
 	// QueenDroneHostname is only used by queen-push-duts.
 	QueenDroneHostname string
 	ServiceAccount     string
@@ -66,15 +67,16 @@ const defaultInventory = "v1"
 
 // Prod is the environment for prod.
 var Prod = Environment{
-	LUCIProject:        "chromeos",
-	SwarmingService:    "https://chromeos-swarming.appspot.com/",
-	LogDogHost:         "luci-logdog.appspot.com",
-	InventoryService:   "cros-lab-inventory.appspot.com",
-	DefaultInventory:   defaultInventory,
-	AdminService:       "chromeos-skylab-bot-fleet.appspot.com",
-	QueenService:       "drone-queen-prod.appspot.com",
-	QueenDroneHostname: "drone-queen-ENVIRONMENT_PROD",
-	ServiceAccount:     "skylab-admin-task@chromeos-service-accounts.iam.gserviceaccount.com",
+	LUCIProject:          "chromeos",
+	SwarmingService:      "https://chromeos-swarming.appspot.com/",
+	LogDogHost:           "luci-logdog.appspot.com",
+	InventoryService:     "cros-lab-inventory.appspot.com",
+	DefaultInventory:     defaultInventory,
+	DefaultInventoryOnly: false,
+	AdminService:         "chromeos-skylab-bot-fleet.appspot.com",
+	QueenService:         "drone-queen-prod.appspot.com",
+	QueenDroneHostname:   "drone-queen-ENVIRONMENT_PROD",
+	ServiceAccount:       "skylab-admin-task@chromeos-service-accounts.iam.gserviceaccount.com",
 
 	BuildbucketHost:    "cr-buildbucket.appspot.com",
 	BuildbucketProject: "chromeos",
@@ -84,15 +86,16 @@ var Prod = Environment{
 
 // Dev is the environment for dev.
 var Dev = Environment{
-	LUCIProject:        "chromeos",
-	SwarmingService:    "https://chromium-swarm-dev.appspot.com/",
-	LogDogHost:         "luci-logdog-dev.appspot.com",
-	InventoryService:   "cros-lab-inventory-dev.appspot.com",
-	DefaultInventory:   defaultInventory,
-	AdminService:       "skylab-staging-bot-fleet.appspot.com",
-	QueenService:       "drone-queen-dev.appspot.com",
-	QueenDroneHostname: "drone-queen-ENVIRONMENT_STAGING",
-	ServiceAccount:     "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
+	LUCIProject:          "chromeos",
+	SwarmingService:      "https://chromium-swarm-dev.appspot.com/",
+	LogDogHost:           "luci-logdog-dev.appspot.com",
+	InventoryService:     "cros-lab-inventory-dev.appspot.com",
+	DefaultInventory:     defaultInventory,
+	DefaultInventoryOnly: false,
+	AdminService:         "skylab-staging-bot-fleet.appspot.com",
+	QueenService:         "drone-queen-dev.appspot.com",
+	QueenDroneHostname:   "drone-queen-ENVIRONMENT_STAGING",
+	ServiceAccount:       "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
 
 	BuildbucketHost:    "cr-buildbucket.appspot.com",
 	BuildbucketProject: "chromeos",

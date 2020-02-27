@@ -119,7 +119,11 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	icMain := NewInventoryClient(hc, e, true)
 	icBackup := NewInventoryClient(hc, e, false)
 
-	icBackup.batchUpdateDUTs(ctx, req, a.GetOut())
+	if e.DefaultInventoryOnly {
+		fmt.Fprintln(a.GetOut(), "= Skip the operation on backup inventory system. =")
+	} else {
+		icBackup.batchUpdateDUTs(ctx, req, a.GetOut())
+	}
 	return icMain.batchUpdateDUTs(ctx, req, a.GetOut())
 }
 
