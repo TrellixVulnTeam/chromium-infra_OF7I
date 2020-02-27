@@ -13,20 +13,16 @@ const ROTATIONS = {
   ],
   'chromeos': [
     {
-      name: 'Gardener',
-      url: 'https://rota-ng.appspot.com/legacy/sheriff_cr_cros_gardeners.json',
-    },
-    {
-      name: 'Morning Planner',
-      url: 'https://rotation.googleplex.com/json?id=140009',
-    },
-    {
       name: 'Moblab Peeler',
       url: 'https://rotation.googleplex.com/json?id=6383984776839168',
     },
     {
       name: 'Jetstream Sheriff',
       url: 'https://rotation.googleplex.com/json?id=5186988682510336',
+    },
+    {
+      name: 'Morning Planner',
+      url: 'https://rotation.googleplex.com/json?id=140009',
     },
   ],
   'chromium': [
@@ -70,6 +66,10 @@ class SomDrawer extends Polymer.Element {
         notify: true,
       },
       _rotations: {
+        type: Object,
+        value: ROTATIONS,
+      },
+      _currentOncalls: {
         type: Array,
         value: null,
       },
@@ -133,13 +133,17 @@ class SomDrawer extends Polymer.Element {
   }
 
   _treeChanged(tree) {
-    if (!(tree && ROTATIONS[tree.name])) {
+    if (!(tree && this._rotations[tree.name])) {
       return;
     }
 
-    this._rotations = [];
+    this._currentOncalls = [];
     const self = this;
-    ROTATIONS[tree.name].forEach(function(rotation) {
+    this._rotations[tree.name].forEach(function(rotation, index) {
+      self.push('_currentOncalls', {
+        name: rotation.name,
+        people: 'Loading...',
+      });
       switch (rotation.url.split('/')[2]) {
         case 'rota-ng.appspot.com':
           fetch(rotation.url, {
@@ -147,9 +151,9 @@ class SomDrawer extends Polymer.Element {
           }).then(function(response) {
             return response.json();
           }).then(function(response) {
-            self.push('_rotations', {
+            self.splice('_currentOncalls', index, 1, {
               name: rotation.name,
-              people: response.emails,
+              people: response.emails.join(', '),
             });
           });
           break;
@@ -160,9 +164,9 @@ class SomDrawer extends Polymer.Element {
           }).then(function(response) {
             return response.json();
           }).then(function(response) {
-            self.push('_rotations', {
+            self.splice('_currentOncalls', index, 1, {
               name: rotation.name,
-              people: [response.primary],
+              people: response.primary,
             });
           });
           break;
@@ -173,13 +177,15 @@ class SomDrawer extends Polymer.Element {
           }).then(function(response) {
             return response.json();
           }).then(function(response) {
+            const people = [];
             response.forEach(function(entry) {
-              if (entry.position == '1') {
-                self.push('_rotations', {
-                  name: rotation.name,
-                  people: [entry.person],
-                });
+              if (entry.person) {
+                people.push(entry.person);
               }
+            });
+            self.splice('_currentOncalls', index, 1, {
+              name: rotation.name,
+              people: people.length ? people.join(', ') : 'None',
             });
           });
           break;

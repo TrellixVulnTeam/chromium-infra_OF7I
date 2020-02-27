@@ -32,6 +32,14 @@
       label {
         padding-left: 14px;
       }
+      .rotation-name {
+        font-weight: bold;
+        margin-top: 14px;
+        padding-left: 14px;
+      }
+      .rotation-members {
+        padding-left: 28px;
+      }
       ul {
         margin-top: 0.5em;
         padding-left: 48px;
@@ -123,14 +131,10 @@
         </template>
       </ul>
 
-      <template is="dom-if" if="[[_rotations]]">
-        <template is="dom-repeat" items="[[_rotations]]" as="rotation">
-          <label>[[rotation.name]]</label>
-          <ul>
-            <template is="dom-repeat" items="[[rotation.people]]" as="person">
-              <li>[[person]]</li>
-            </template>
-          </ul>
+      <template is="dom-if" if="[[_currentOncalls]]">
+        <template is="dom-repeat" items="[[_currentOncalls]]" as="rotation">
+          <div class="rotation-name">[[rotation.name]]</div>
+          <div class="rotation-members">[[rotation.people]]</div>
         </template>
       </template>
     </iron-collapse>

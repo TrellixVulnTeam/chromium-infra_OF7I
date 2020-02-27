@@ -81,20 +81,92 @@
       });
     });
 
-    test('computes sheriffs from JSON', function(done) {
+    test('computes sheriffs from rota-ng JSON', function(done) {
       const body = {emails: ['foo@example.com', 'bar@example.com']};
       const init = {status: 200, headers: responseHeaders.json};
       const response = new window.Response(JSON.stringify(body), init);
       stubbedFetch.returns(Promise.resolve(response));
 
+      element._rotations = {
+        'chromium': [
+          {
+            name: 'Chromium Sheriff',
+            url: 'https://rota-ng.appspot.com/legacy/sheriff.json',
+          },
+        ],
+      };
       element.tree = {'name': 'chromium'};
 
       flush(function () {
-        assert.equal(1, element._rotations.length);
+        assert.equal(1, element._currentOncalls.length);
         assert.deepEqual({
           name: 'Chromium Sheriff',
-          people: ['foo@example.com', 'bar@example.com'],
-        }, element._rotations[0]);
+          people: 'foo@example.com, bar@example.com',
+        }, element._currentOncalls[0]);
+        done();
+      });
+    });
+
+    test('computes sheriffs from oncall JSON', function(done) {
+      const body = [{
+        "person": "foo",
+        "position": 1,
+      },{
+        "person": "bar",
+        "position": 2,
+      }];
+      const init = {status: 200, headers: responseHeaders.json};
+      const response = new window.Response(JSON.stringify(body), init);
+      stubbedFetch.returns(Promise.resolve(response));
+
+      element._rotations = {
+        'chromeos': [
+          {
+            name: 'CI Bobby',
+            url: 'https://oncall.corp.google.com/chromeos-ci-eng/json',
+          },
+        ],
+      };
+      element.tree = {'name': 'chromeos'};
+
+      flush(function () {
+        assert.equal(1, element._currentOncalls.length);
+        assert.deepEqual({
+          name: 'CI Bobby',
+          people: 'foo, bar',
+        }, element._currentOncalls[0]);
+        done();
+      });
+    });
+
+    test('computes sheriffs from oncall JSON with nobody oncall', function(done) {
+      const body = [{
+        "person": "",
+        "position": 1,
+      },{
+        "person": "",
+        "position": 2,
+      }];
+      const init = {status: 200, headers: responseHeaders.json};
+      const response = new window.Response(JSON.stringify(body), init);
+      stubbedFetch.returns(Promise.resolve(response));
+
+      element._rotations = {
+        'chromeos': [
+          {
+            name: 'CI Bobby',
+            url: 'https://oncall.corp.google.com/chromeos-ci-eng/json',
+          },
+        ],
+      };
+      element.tree = {'name': 'chromeos'};
+
+      flush(function () {
+        assert.equal(1, element._currentOncalls.length);
+        assert.deepEqual({
+          name: 'CI Bobby',
+          people: 'None',
+        }, element._currentOncalls[0]);
         done();
       });
     });
