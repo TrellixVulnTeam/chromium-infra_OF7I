@@ -4,9 +4,11 @@
 
 import {assert} from 'chai';
 import sinon from 'sinon';
+
 import * as project from 'reducers/project.js';
 import * as example from 'shared/test/constants-hotlist.js';
 import * as exampleIssue from 'shared/test/constants-issue.js';
+
 import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
 
 /** @type {MrHotlistIssuesPage} */
@@ -35,6 +37,7 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('renders hotlist items with one project', async () => {
+    sinon.stub(element, 'stateChanged');
     element._hotlist = example.HOTLIST;
     element._hotlistItems = [example.HOTLIST_ITEM];
     element._issue = () => exampleIssue.ISSUE;
@@ -45,6 +48,7 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('renders hotlist items with multiple projects', async () => {
+    sinon.stub(element, 'stateChanged');
     element._hotlist = example.HOTLIST;
     element._hotlistItems = [
       example.HOTLIST_ITEM,
@@ -61,6 +65,7 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('computes strings for HotlistIssue fields', async () => {
+    sinon.stub(element, 'stateChanged');
     const clock = sinon.useFakeTimers(24 * 60 * 60 * 1000);
 
     try {
@@ -91,6 +96,7 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('filters and shows closed issues', async () => {
+    sinon.stub(element, 'stateChanged');
     element._hotlist = example.HOTLIST;
     element._hotlistItems = [example.HOTLIST_ITEM];
     element._issue = () => exampleIssue.ISSUE_CLOSED;

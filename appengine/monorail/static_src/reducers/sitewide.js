@@ -11,6 +11,7 @@ import {SITEWIDE_DEFAULT_CAN, parseColSpec} from 'shared/issue-fields.js';
 
 // Actions
 const SET_PAGE_TITLE = 'SET_PAGE_TITLE';
+const SET_HEADER_TITLE = 'SET_HEADER_TITLE';
 const SET_QUERY_PARAMS = 'SET_QUERY_PARAMS';
 
 // Async actions
@@ -23,6 +24,7 @@ const GET_SERVER_STATUS_SUCCESS = 'GET_SERVER_STATUS_SUCCESS';
   bannerMessage: String,
   bannerTime: Number,
   pageTitle: String,
+  headerTitle: String,
   queryParams: Object,
   readOnly: Boolean,
   requests: {
@@ -46,11 +48,15 @@ const bannerTimeReducer = createReducer(0, {
  * Handle state for the current document title.
  */
 const pageTitleReducer = createReducer('', {
-  [SET_PAGE_TITLE]: (_state, action) => action.title || '',
+  [SET_PAGE_TITLE]: (_state, {title}) => title,
+});
+
+const headerTitleReducer = createReducer('', {
+  [SET_HEADER_TITLE]: (_state, {title}) => title,
 });
 
 const queryParamsReducer = createReducer({}, {
-  [SET_QUERY_PARAMS]: (_state, action) => action.queryParams || {},
+  [SET_QUERY_PARAMS]: (_state, {queryParams}) => queryParams || {},
 });
 
 const readOnlyReducer = createReducer(false, {
@@ -71,6 +77,7 @@ export const reducer = combineReducers({
   readOnly: readOnlyReducer,
   queryParams: queryParamsReducer,
   pageTitle: pageTitleReducer,
+  headerTitle: headerTitleReducer,
 
   requests: requestsReducer,
 });
@@ -99,10 +106,12 @@ export const pageTitle = createSelector(
         titlePieces.push(projectConfig.projectName);
       }
 
-      return titlePieces.join(' - ');
+      return titlePieces.join(' - ') || 'Monorail';
     });
-export const readOnly = createSelector(sitewide,
-    (sitewide) => sitewide.readOnly);
+export const headerTitle =
+    createSelector(sitewide, (sitewide) => sitewide.headerTitle);
+export const readOnly =
+    createSelector(sitewide, (sitewide) => sitewide.readOnly);
 
 /**
  * Compute the current columns that the user is viewing in the list
@@ -144,19 +153,12 @@ export const requests = createSelector(sitewide,
     (sitewide) => sitewide.requests || {});
 
 // Action Creators
-export const setQueryParams = (params) => {
-  return {
-    type: SET_QUERY_PARAMS,
-    queryParams: params,
-  };
-};
+export const setQueryParams =
+    (queryParams) => ({type: SET_QUERY_PARAMS, queryParams});
 
-export const setPageTitle = (title) => {
-  return {
-    type: SET_PAGE_TITLE,
-    title,
-  };
-};
+export const setPageTitle = (title) => ({type: SET_PAGE_TITLE, title});
+
+export const setHeaderTitle = (title) => ({type: SET_HEADER_TITLE, title});
 
 export const getServerStatus = () => async (dispatch) => {
   dispatch({type: GET_SERVER_STATUS_START});

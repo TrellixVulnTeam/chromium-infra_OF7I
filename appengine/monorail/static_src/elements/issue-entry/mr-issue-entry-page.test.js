@@ -8,7 +8,7 @@ import {MrIssueEntryPage} from './mr-issue-entry-page.js';
 
 let element;
 
-describe.only('mr-issue-entry-page', () => {
+describe('mr-issue-entry-page', () => {
   beforeEach(() => {
     element = document.createElement('mr-issue-entry-page');
     document.body.appendChild(element);

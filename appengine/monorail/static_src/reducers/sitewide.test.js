@@ -29,22 +29,19 @@ describe('sitewide selectors', () => {
       assert.equal(sitewide.pageTitle({sitewide: {}}), 'Monorail');
     });
 
-    it('prepends local page title when one exists', () => {
+    it('uses local page title when one exists', () => {
       assert.equal(sitewide.pageTitle(
-          {sitewide: {pageTitle: 'Issue Detail'}}), 'Issue Detail - Monorail');
+          {sitewide: {pageTitle: 'Issue Detail'}}), 'Issue Detail');
     });
 
-    it('shows data for view project', () => {
+    it('shows name of viewed project', () => {
       assert.equal(sitewide.pageTitle({
         sitewide: {pageTitle: 'Page'},
         project: {
           name: 'chromium',
           configs: {chromium: {projectName: 'chromium'}},
-          presentationConfigs: {
-            chromium: {projectSummary: 'Open source browser'},
-          },
         },
-      }), 'Page - chromium - Open source browser - Monorail');
+      }), 'Page - chromium');
     });
   });
 

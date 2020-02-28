@@ -24,6 +24,11 @@ const _MENU_ITEMS = Object.freeze([
   },
 ]);
 
+// TODO(dtu): Put this inside <mr-header>. Currently, we can't do this because
+// the sticky table headers rely on having a fixed header height. We need to
+// add a scrolling context to the page in order to have a dynamic-height
+// sticky, and to do that the footer needs to be in the scrolling context. So,
+// the footer needs to be SPA-ified.
 /** Hotlist Issues page */
 export class MrHotlistHeader extends LitElement {
   /** @override */
@@ -43,7 +48,6 @@ export class MrHotlistHeader extends LitElement {
   /** @override */
   render() {
     return html`
-      <h1>Hotlist ${this.name}</h1>
       <nav>
         <mr-tabs .items=${_MENU_ITEMS} .selected=${this.selected}></mr-tabs>
       </nav>
@@ -53,7 +57,6 @@ export class MrHotlistHeader extends LitElement {
   /** @override */
   static get properties() {
     return {
-      name: {type: String},
       selected: {type: Number},
     };
   };
@@ -61,8 +64,6 @@ export class MrHotlistHeader extends LitElement {
   /** @override */
   constructor() {
     super();
-    /** @type {string} */
-    this.name = '';
     /** @type {number} */
     this.selected = 0;
   }

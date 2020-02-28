@@ -3,7 +3,10 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
+
 import * as example from 'shared/test/constants-hotlist.js';
+
 import {MrHotlistSettingsPage} from './mr-hotlist-settings-page.js';
 
 /** @type {MrHotlistSettingsPage} */
@@ -30,11 +33,13 @@ describe('mr-hotlist-settings-page', () => {
   });
 
   it('renders hotlist', async () => {
+    sinon.stub(element, 'stateChanged');
     element._hotlist = example.HOTLIST;
     await element.updateComplete;
   });
 
   it('renders private hotlist', async () => {
+    sinon.stub(element, 'stateChanged');
     element._hotlist = {...example.HOTLIST, hotlistPrivacy: 0};
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'Members only');

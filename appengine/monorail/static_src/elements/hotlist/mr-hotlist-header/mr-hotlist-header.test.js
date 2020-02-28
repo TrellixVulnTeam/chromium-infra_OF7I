@@ -24,11 +24,9 @@ describe('mr-hotlist-header', () => {
   });
 
   it('renders', async () => {
-    element.name = 'Hotlist Name';
     element.selected = 2;
     await element.updateComplete;
 
-    assert.include(element.shadowRoot.innerHTML, 'Hotlist Name');
     assert.equal(element.shadowRoot.querySelector('mr-tabs').selected, 2);
   });
 });

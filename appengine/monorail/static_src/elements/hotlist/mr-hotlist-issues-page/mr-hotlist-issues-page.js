@@ -3,13 +3,17 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
+
 import {relativeTime}
   from 'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
-import {connectStore} from 'reducers/base.js';
+import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
+
+import {store, connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
-import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
+import * as sitewide from 'reducers/sitewide.js';
+
 import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
@@ -51,10 +55,16 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    if (!this._hotlist) {
-      return html`Loading...`;
-    }
+    return html`
+      <mr-hotlist-header selected=0></mr-hotlist-header>
+      ${this._hotlist ? this._renderPage() : 'Loading...'}
+    `;
+  }
 
+  /**
+   * @return {TemplateResult}
+   */
+  _renderPage() {
     const issues = this._prepareIssues(this._hotlistItems);
 
     const allProjectNamesEqual = issues.length && issues.every(
@@ -62,9 +72,6 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
     const projectName = allProjectNamesEqual ? issues[0].projectName : null;
 
     return html`
-      <mr-hotlist-header .name=${this._hotlist.displayName} selected=0>
-      </mr-hotlist-header>
-
       <p>${this._hotlist.summary}</p>
 
       <div>
@@ -128,6 +135,16 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
     this._issue = issue.issue(state);
     this._extractFieldValuesFromIssue =
       project.extractFieldValuesFromIssue(state);
+  }
+
+  /** @override */
+  updated(changedProperties) {
+    if (changedProperties.has('_hotlist') && this._hotlist) {
+      const pageTitle = 'Issues - ' + this._hotlist.displayName;
+      store.dispatch(sitewide.setPageTitle(pageTitle));
+      const headerTitle = 'Hotlist ' + this._hotlist.displayName;
+      store.dispatch(sitewide.setHeaderTitle(headerTitle));
+    }
   }
 
   /**

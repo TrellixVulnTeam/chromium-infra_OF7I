@@ -3,8 +3,11 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
-import {connectStore} from 'reducers/base.js';
+
+import {store, connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
+import * as sitewide from 'reducers/sitewide.js';
+
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
 /** Hotlist Settings page */
@@ -29,16 +32,19 @@ export class MrHotlistSettingsPage extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    if (!this._hotlist) {
-      return html`Loading...`;
-    }
+    return html`
+      <mr-hotlist-header selected=2></mr-hotlist-header>
+      ${this._hotlist ? this._renderPage() : 'Loading...'}
+    `;
+  }
 
+  /**
+   * @return {TemplateResult}
+   */
+  _renderPage() {
     const defaultColumns = this._hotlist.defaultColumns
         .map((col) => col.column).join(' ');
     return html`
-      <mr-hotlist-header .name=${this._hotlist.displayName} selected=2>
-      </mr-hotlist-header>
-
       <section>
         <h1>Hotlist Settings</h1>
         <dl>
@@ -92,6 +98,16 @@ export class MrHotlistSettingsPage extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this._hotlist = hotlist.viewedHotlist(state);
+  }
+
+  /** @override */
+  updated(changedProperties) {
+    if (changedProperties.has('_hotlist') && this._hotlist) {
+      const pageTitle = 'Settings - ' + this._hotlist.displayName;
+      store.dispatch(sitewide.setPageTitle(pageTitle));
+      const headerTitle = 'Hotlist ' + this._hotlist.displayName;
+      store.dispatch(sitewide.setHeaderTitle(headerTitle));
+    }
   }
 };
 

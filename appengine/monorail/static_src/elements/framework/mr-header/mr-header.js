@@ -75,7 +75,7 @@ export class MrHeader extends connectStore(LitElement) {
           border: 0;
           height: 30px;
         }
-        a.home-link {
+        .home-link {
           color: var(--chops-gray-900);
           letter-spacing: 0.5px;
           font-size: 18px;
@@ -179,7 +179,9 @@ export class MrHeader extends connectStore(LitElement) {
       <a class="hamburger-icon" title="Main menu">
         <i class="material-icons">menu</i>
       </a>
-      <a href="/" class="home-link">Monorail</a>
+      ${this._headerTitle ?
+          html`<span class="home-link">${this._headerTitle}</span>` :
+          html`<a href="/" class="home-link">Monorail</a>`}
 
       <div class="right-section">
         ${this._renderAccount()}
@@ -222,6 +224,7 @@ export class MrHeader extends connectStore(LitElement) {
       //   frontend with logic similar to ComputeIssueEntryURL().
       issueEntryUrl: {type: String},
       clientLogger: {type: Object},
+      _headerTitle: {type: String},
       _currentQuery: {type: String},
       _currentCan: {type: String},
     };
@@ -236,6 +239,8 @@ export class MrHeader extends connectStore(LitElement) {
     this.isSiteAdmin = false;
 
     this.clientLogger = new ClientLogger('mr-header');
+
+    this._headerTitle = '';
   }
 
   /** @override */
@@ -252,6 +257,8 @@ export class MrHeader extends connectStore(LitElement) {
     // Set separately in order allow EZT pages to load project logo before
     // the GetPresentationConfig pRPC request.
     this.projectThumbnailUrl = presentationConfig.projectThumbnailUrl;
+
+    this._headerTitle = sitewide.headerTitle(state);
 
     this._currentQuery = sitewide.currentQuery(state);
     this._currentCan = sitewide.currentCan(state);

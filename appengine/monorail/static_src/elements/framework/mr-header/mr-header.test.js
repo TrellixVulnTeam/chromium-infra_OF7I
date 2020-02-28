@@ -28,6 +28,7 @@ describe('mr-header', () => {
 
   it('presentationConfig renders', async () => {
     element.issueEntryUrl = 'https://google.com/test/';
+    element.projectName = 'best-project';
     element.projectThumbnailUrl = 'http://images.google.com/';
     element.presentationConfig = {
       projectSummary: 'The best project',
