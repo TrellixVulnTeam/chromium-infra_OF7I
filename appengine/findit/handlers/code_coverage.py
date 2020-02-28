@@ -42,6 +42,7 @@ from model.code_coverage import FileCoverageData
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
+from services import bigquery_helper as bq
 from waterfall import waterfall_config
 
 # The regex to extract the build id from the url path.
@@ -434,6 +435,35 @@ def _GetFileContentFromGitiles(report, file_path,
   return repo.GetSource(relative_file_path, revision)
 
 
+def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries):
+  """Create a bigquery row containing coverage data.
+
+  Returns a dict whose keys are column names and values are column values
+  corresponding to the schema of the code coverage bigquery tables. This is
+  suitable for passing to bigquery APIs.
+  """
+  row = {
+      'project': commit.project,
+      'builder': builder.builder,
+      'bucket': builder.bucket,
+      'host': commit.host,
+      'ref': commit.ref,
+      'commit': commit.id,
+      'commit_timestamp': commit_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f%z'),
+      'path': path,
+  }
+
+  for metric in summaries:
+    if metric['name'] == 'line':
+      row['line_covered'] = metric['covered']
+      row['line_total'] = metric['total']
+    elif metric['name'] == 'branch':
+      row['branch_covered'] = metric['covered']
+      row['branch_total'] = metric['total']
+
+  return row
+
+
 def _IsReportSuspicious(report):
   """Returns True if the newly generated report is suspicious to be incorrect.
 
@@ -541,6 +571,8 @@ class ProcessCodeCoverageData(BaseHandler):
         visible=False)
     report.put()
 
+    component_bq_rows = []
+    directory_bq_rows = []
     # Save the file-level, directory-level and line-level coverage data.
     for data_type in ('dirs', 'components', 'files', 'file_shards'):
       sub_data = data.get(data_type)
@@ -615,10 +647,25 @@ class ProcessCodeCoverageData(BaseHandler):
                 builder=builder.builder,
                 data=group_data)
 
+            bq_row = _CreateBigqueryRow(commit, change_log.committer.time,
+                                        builder, group_data['path'],
+                                        group_data['summaries'])
+            if actual_data_type == 'dirs':
+              directory_bq_rows.append(bq_row)
+            else:
+              component_bq_rows.append(bq_row)
+
           entities.append(coverage_data)
           entities, total = FlushEntries(entities, total, last=False)
         del dataset  # Explicitly release memory.
       FlushEntries(entities, total, last=True)
+
+      if directory_bq_rows:
+        bq.ReportRowsToBigquery(directory_bq_rows, 'findit-for-me',
+                                'code_coverage_summaries', 'directories')
+      if component_bq_rows:
+        bq.ReportRowsToBigquery(component_bq_rows, 'findit-for-me',
+                                'code_coverage_summaries', 'components')
 
       if component_summaries:
         component_summaries.sort(key=lambda x: x['path'])

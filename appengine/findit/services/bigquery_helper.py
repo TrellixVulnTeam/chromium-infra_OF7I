@@ -500,3 +500,25 @@ def ReportEventsToBigquery(events_and_ids, project_id, dataset_id, table_id):
 
   return InsertRequest(_GetBigqueryClient(), project_id, dataset_id, table_id,
                        rows)
+
+
+def ReportRowsToBigquery(data, project_id, dataset_id, table_id):
+  """Streams the given rows to a table.
+
+  Args:
+    data ([dict]): List of dictionaries, where each dictionary represents a row
+        to be inserted in the table. The keys are column names and the values
+        are the corresponding values.
+    project_id (str): Project Id in google cloud.
+    dataset_id (str): Dataset Id in Bigquery.
+    table_id (str): Table Id in Bigquery.
+
+  Returns:
+    (boolean) True if success, false otherwise.
+  """
+  rows = [{
+      'json': datum,
+  } for datum in data]
+
+  return InsertRequest(_GetBigqueryClient(), project_id, dataset_id, table_id,
+                       rows)
