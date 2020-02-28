@@ -26,7 +26,7 @@ import (
 	"infra/cmd/labtool/site"
 	"infra/cmd/labtool/utils"
 	"infra/cmdsupport/cmdlib"
-	"infra/libs/fleet/protos"
+	fleet "infra/libs/fleet/protos"
 )
 
 // ScannerCmd runs with the scanner to scan lab assets.
@@ -320,7 +320,7 @@ func (c *bcScanner) defaultLocation() *fleet.Location {
 
 func (c *bcScanner) signalCatcher() {
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan)
+	signal.Notify(sigChan, os.Interrupt)
 	s := <-sigChan
 	fmt.Println("Caught signal: ", s)
 	if len(assetList) != 0 {
