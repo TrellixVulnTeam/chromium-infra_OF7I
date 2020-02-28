@@ -70,6 +70,10 @@ Those fields are:
 
 * `components=` a comma-separated list of component paths
 
+* `blocking=` a comma-separated list of bugs the new issue will block
+
+* `blockedon=` a comma-separated list of bugs the new issue is blocked by
+
 ## Chrome custom search engines
 
 An easy way to skip a step when searching for issues is to define a keyword for
