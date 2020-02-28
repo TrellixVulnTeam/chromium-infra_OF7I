@@ -35,6 +35,10 @@ deps = {
      "{chromium_git}/infra/luci/gae@" +
      "2580da480a892e3fe495b069d6c4a450500dcd42",
 
+  "infra/go/src/go.chromium.org/chromiumos/config":
+     "{chromium_git}/chromiumos/config@" +
+     "bc029d3633ebae3a75386fd35dd666c930bd505f",
+
   "infra/go/src/go.chromium.org/chromiumos/infra/proto":
      "{chromium_git}/chromiumos/infra/proto@" +
      "a9a1b4d254559f45278ff6c9d2382a77741c1f2c",
