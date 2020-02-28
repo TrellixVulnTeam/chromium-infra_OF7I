@@ -33,11 +33,11 @@ LABEL_ROW_SHARDS = config_svc.LABEL_ROW_SHARDS
 
 def MakeConfigService(cache_manager, my_mox):
   config_service = config_svc.ConfigService(cache_manager)
-  for table_var in [
-      'projectissueconfig_tbl', 'statusdef_tbl', 'labeldef_tbl', 'fielddef_tbl',
-      'fielddef2admin_tbl', 'componentdef_tbl', 'component2admin_tbl',
-      'component2cc_tbl', 'component2label_tbl', 'approvaldef2approver_tbl',
-      'approvaldef2survey_tbl']:
+  for table_var in ['projectissueconfig_tbl', 'statusdef_tbl', 'labeldef_tbl',
+                    'fielddef_tbl', 'fielddef2admin_tbl', 'fielddef2editor_tbl',
+                    'componentdef_tbl', 'component2admin_tbl',
+                    'component2cc_tbl', 'component2label_tbl',
+                    'approvaldef2approver_tbl', 'approvaldef2survey_tbl']:
     setattr(config_service, table_var, my_mox.CreateMock(sql.SQLTableManager))
 
   return config_service
@@ -194,7 +194,8 @@ class ConfigRowTwoLevelCacheTest(unittest.TestCase):
     ]
     self.approvaldef2approver_rows = [(2, 101, 789), (2, 102, 789)]
     self.approvaldef2survey_rows = [(2, 'Q1\nQ2\nQ3', 789)]
-    self.fielddef2admin_rows = []
+    self.fielddef2admin_rows = [(1, 111), (1, 222)]
+    self.fielddef2editor_rows = [(1, 111), (1, 222), (1, 333)]
     self.componentdef_rows = []
     self.component2admin_rows = []
     self.component2cc_rows = []
@@ -206,16 +207,16 @@ class ConfigRowTwoLevelCacheTest(unittest.TestCase):
 
   def testDeserializeIssueConfigs_Empty(self):
     config_dict = self.config_2lc._DeserializeIssueConfigs(
-        [], [], [], [], [], [], [], [], [], [], [])
+        [], [], [], [], [], [], [], [], [], [], [], [])
     self.assertEqual({}, config_dict)
 
   def testDeserializeIssueConfigs_Normal(self):
     config_dict = self.config_2lc._DeserializeIssueConfigs(
         self.config_rows, self.statusdef_rows, self.labeldef_rows,
-        self.fielddef_rows, self.fielddef2admin_rows, self.componentdef_rows,
-        self.component2admin_rows, self.component2cc_rows,
-        self.component2label_rows, self.approvaldef2approver_rows,
-        self.approvaldef2survey_rows)
+        self.fielddef_rows, self.fielddef2admin_rows, self.fielddef2editor_rows,
+        self.componentdef_rows, self.component2admin_rows,
+        self.component2cc_rows, self.component2label_rows,
+        self.approvaldef2approver_rows, self.approvaldef2survey_rows)
     self.assertItemsEqual([789], list(config_dict.keys()))
     config = config_dict[789]
     self.assertEqual(789, config.project_id)
@@ -224,6 +225,10 @@ class ConfigRowTwoLevelCacheTest(unittest.TestCase):
     self.assertEqual(len(self.statusdef_rows), len(config.well_known_statuses))
     self.assertEqual(len(self.fielddef_rows), len(config.field_defs))
     self.assertEqual(len(self.componentdef_rows), len(config.component_defs))
+    self.assertEqual(
+        len(self.fielddef2admin_rows), len(config.field_defs[0].admin_ids))
+    self.assertEqual(
+        len(self.fielddef2editor_rows), len(config.field_defs[0].editor_ids))
     self.assertEqual(len(self.approvaldef2approver_rows),
                      len(config.approval_defs[0].approver_ids))
     self.assertEqual(config.approval_defs[0].survey, 'Q1\nQ2\nQ3')
@@ -257,6 +262,9 @@ class ConfigRowTwoLevelCacheTest(unittest.TestCase):
     self.config_service.fielddef2admin_tbl.Select(
         self.cnxn, cols=config_svc.FIELDDEF2ADMIN_COLS,
         field_id=field_ids).AndReturn(self.fielddef2admin_rows)
+    self.config_service.fielddef2editor_tbl.Select(
+        self.cnxn, cols=config_svc.FIELDDEF2EDITOR_COLS,
+        field_id=field_ids).AndReturn(self.fielddef2editor_rows)
 
     self.config_service.componentdef_tbl.Select(
         self.cnxn, cols=config_svc.COMPONENTDEF_COLS, project_id=project_ids,
@@ -641,6 +649,9 @@ class ConfigServiceTest(unittest.TestCase):
     self.config_service.fielddef2admin_tbl.Select(
         self.cnxn, cols=config_svc.FIELDDEF2ADMIN_COLS,
         field_id=[]).AndReturn([])
+    self.config_service.fielddef2editor_tbl.Select(
+        self.cnxn, cols=config_svc.FIELDDEF2EDITOR_COLS, field_id=[]).AndReturn(
+            [])
     self.config_service.componentdef_tbl.Select(
         self.cnxn, cols=config_svc.COMPONENTDEF_COLS,
         is_deleted=False,
@@ -854,6 +865,7 @@ class ConfigServiceTest(unittest.TestCase):
     self.config_service.componentdef_tbl.Update = mock.Mock()
 
     self.config_service.fielddef2admin_tbl.Delete = mock.Mock()
+    self.config_service.fielddef2editor_tbl.Delete = mock.Mock()
     self.config_service.approvaldef2approver_tbl.Delete = mock.Mock()
 
     user_ids = [111, 222, 333]
@@ -874,6 +886,8 @@ class ConfigServiceTest(unittest.TestCase):
 
     self.config_service.fielddef2admin_tbl.Delete.assert_called_once_with(
         self.cnxn, admin_id=user_ids, commit=False, limit=50)
+    self.config_service.fielddef2editor_tbl.Delete.assert_called_once_with(
+        self.cnxn, editor_id=user_ids, commit=False, limit=50)
     self.config_service.approvaldef2approver_tbl.Delete.assert_called_once_with(
         self.cnxn, approver_id=user_ids, commit=False, limit=50)
 

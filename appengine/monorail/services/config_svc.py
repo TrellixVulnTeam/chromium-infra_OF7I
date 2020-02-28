@@ -35,6 +35,7 @@ PROJECTISSUECONFIG_TABLE_NAME = 'ProjectIssueConfig'
 LABELDEF_TABLE_NAME = 'LabelDef'
 FIELDDEF_TABLE_NAME = 'FieldDef'
 FIELDDEF2ADMIN_TABLE_NAME = 'FieldDef2Admin'
+FIELDDEF2EDITOR_TABLE_NAME = 'FieldDef2Editor'
 COMPONENTDEF_TABLE_NAME = 'ComponentDef'
 COMPONENT2ADMIN_TABLE_NAME = 'Component2Admin'
 COMPONENT2CC_TABLE_NAME = 'Component2Cc'
@@ -61,6 +62,7 @@ FIELDDEF_COLS = [
     'approval_id', 'is_phase_field', 'is_restricted_field'
 ]
 FIELDDEF2ADMIN_COLS = ['field_id', 'admin_id']
+FIELDDEF2EDITOR_COLS = ['field_id', 'editor_id']
 COMPONENTDEF_COLS = ['id', 'project_id', 'path', 'docstring', 'deprecated',
                      'created', 'creator_id', 'modified', 'modifier_id']
 COMPONENT2ADMIN_COLS = ['component_id', 'admin_id']
@@ -214,8 +216,8 @@ class FieldRowTwoLevelCache(caches.AbstractTwoLevelCache):
     for (field_id, project_id, rank, field_name, _field_type, _applicable_type,
          _applicable_predicate, _is_required, _is_niche, _is_multivalued,
          _min_value, _max_value, _regex, _needs_member, _needs_perm,
-         _grants_perm, _notify_on, _date_action, docstring,
-         _is_deleted, _approval_id, _is_phase_field) in field_def_rows:
+         _grants_perm, _notify_on, _date_action, docstring, _is_deleted,
+         _approval_id, _is_phase_field, _is_restricted_field) in field_def_rows:
       result_dict[project_id].append(
           (field_id, project_id, rank, field_name, docstring))
 
@@ -310,9 +312,9 @@ class ConfigTwoLevelCache(caches.AbstractTwoLevelCache):
 
   def _DeserializeIssueConfigs(
       self, config_rows, statusdef_rows, labeldef_rows, fielddef_rows,
-      fielddef2admin_rows, componentdef_rows, component2admin_rows,
-      component2cc_rows, component2label_rows, approvaldef2approver_rows,
-      approvaldef2survey_rows):
+      fielddef2admin_rows, fielddef2editor_rows, componentdef_rows,
+      component2admin_rows, component2cc_rows, component2label_rows,
+      approvaldef2approver_rows, approvaldef2survey_rows):
     """Convert the given row tuples into a dict of ProjectIssueConfig PBs."""
     result_dict = {}
     fielddef_dict = {}
@@ -372,6 +374,12 @@ class ConfigTwoLevelCache(caches.AbstractTwoLevelCache):
       if fd:
         fd.admin_ids.append(admin_id)
 
+    for fd2editor_row in fielddef2editor_rows:
+      field_id, editor_id = fd2editor_row
+      fd = fielddef_dict.get(field_id)
+      if fd:
+        fd.editor_ids.append(editor_id)
+
     for cd_row in componentdef_rows:
       cd = self._UnpackComponentDef(
           cd_row, component2admin_rows, component2cc_rows, component2label_rows)
@@ -404,6 +412,8 @@ class ConfigTwoLevelCache(caches.AbstractTwoLevelCache):
     field_ids = [row[0] for row in fielddef_rows]
     fielddef2admin_rows = self.config_service.fielddef2admin_tbl.Select(
         cnxn, cols=FIELDDEF2ADMIN_COLS, field_id=field_ids)
+    fielddef2editor_rows = self.config_service.fielddef2editor_tbl.Select(
+        cnxn, cols=FIELDDEF2EDITOR_COLS, field_id=field_ids)
 
     componentdef_rows = self.config_service.componentdef_tbl.Select(
         cnxn, cols=COMPONENTDEF_COLS, project_id=project_ids,
@@ -418,8 +428,9 @@ class ConfigTwoLevelCache(caches.AbstractTwoLevelCache):
 
     retrieved_dict = self._DeserializeIssueConfigs(
         config_rows, statusdef_rows, labeldef_rows, fielddef_rows,
-        fielddef2admin_rows, componentdef_rows, component2admin_rows,
-        component2cc_rows, component2label_rows, approver_rows, survey_rows)
+        fielddef2admin_rows, fielddef2editor_rows, componentdef_rows,
+        component2admin_rows, component2cc_rows, component2label_rows,
+        approver_rows, survey_rows)
     return retrieved_dict
 
   def FetchItems(self, cnxn, keys):
@@ -451,6 +462,7 @@ class ConfigService(object):
     self.labeldef_tbl = sql.SQLTableManager(LABELDEF_TABLE_NAME)
     self.fielddef_tbl = sql.SQLTableManager(FIELDDEF_TABLE_NAME)
     self.fielddef2admin_tbl = sql.SQLTableManager(FIELDDEF2ADMIN_TABLE_NAME)
+    self.fielddef2editor_tbl = sql.SQLTableManager(FIELDDEF2EDITOR_TABLE_NAME)
     self.componentdef_tbl = sql.SQLTableManager(COMPONENTDEF_TABLE_NAME)
     self.component2admin_tbl = sql.SQLTableManager(COMPONENT2ADMIN_TABLE_NAME)
     self.component2cc_tbl = sql.SQLTableManager(COMPONENT2CC_TABLE_NAME)
@@ -1033,6 +1045,8 @@ class ConfigService(object):
         modifier_id=user_ids, commit=False, limit=limit)
     self.fielddef2admin_tbl.Delete(
         cnxn, admin_id=user_ids, commit=False, limit=limit)
+    self.fielddef2editor_tbl.Delete(
+        cnxn, editor_id=user_ids, commit=False, limit=limit)
     self.approvaldef2approver_tbl.Delete(
         cnxn, approver_id=user_ids, commit=False, limit=limit)
 

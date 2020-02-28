@@ -378,6 +378,7 @@ class FieldDef(messages.Message):
   docstring = messages.StringField(7)
   is_deleted = messages.BooleanField(8, default=False)
   admin_ids = messages.IntegerField(9, repeated=True)
+  editor_ids = messages.IntegerField(24, repeated=True)
 
   # validation details for int_type
   min_value = messages.IntegerField(12)
