@@ -77,15 +77,15 @@ export const reducer = combineReducers({
 
 // Selectors
 export const sitewide = (state) => state.sitewide || {};
-export const bannerMessage = createSelector(sitewide,
-    (sitewide) => sitewide.bannerMessage);
-export const bannerTime = createSelector(sitewide,
-    (sitewide) => sitewide.bannerTime);
-export const queryParams = createSelector(sitewide,
-    (sitewide) => sitewide.queryParams || {});
-export const pageTitle = createSelector(sitewide,
-    project.viewedConfig, project.viewedPresentationConfig,
-    (sitewide, projectConfig, presentationConfig) => {
+export const bannerMessage =
+    createSelector(sitewide, (sitewide) => sitewide.bannerMessage);
+export const bannerTime =
+    createSelector(sitewide, (sitewide) => sitewide.bannerTime);
+export const queryParams =
+    createSelector(sitewide, (sitewide) => sitewide.queryParams || {});
+export const pageTitle = createSelector(
+    sitewide, project.viewedConfig,
+    (sitewide, projectConfig) => {
       const titlePieces = [];
 
       // If a specific page specifies its own page title, add that
@@ -99,14 +99,6 @@ export const pageTitle = createSelector(sitewide,
         titlePieces.push(projectConfig.projectName);
       }
 
-      // If the viewed project has a defined summary, add that summary.
-      if (presentationConfig && presentationConfig.projectSummary) {
-        titlePieces.push(presentationConfig.projectSummary);
-      }
-
-      // TODO(crbug.com/monorail/6470): Change this to be Monorail
-      // Local/Dev/Staging/Prod.
-      titlePieces.push('Monorail');
       return titlePieces.join(' - ');
     });
 export const readOnly = createSelector(sitewide,
