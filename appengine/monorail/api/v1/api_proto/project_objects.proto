@@ -11,6 +11,8 @@ package monorail.v1;
 
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
+import "api/v1/api_proto/issue_objects.proto";
+import "api/v1/api_proto/user_objects.proto";
 
 // The top level organization of issues in Monorail.
 //
@@ -98,4 +100,41 @@ message ApprovalDef {
 
   // Resource name of the approval.
   string name = 1;
+}
+
+// Defines a template for filling issues.
+// Next available tag: 8
+message IssueTemplate {
+  option (google.api.resource) = {
+    type: "api.crbug.com/Template"
+    pattern: "projects/{project}/templates/{template_name}"
+  };
+  // Resource name of the template.
+  string name = 1;
+  // Canonical Issue for this template
+  Issue issue = 2;
+  // Boolean indicating subsequent issue creation must have delta in summary
+  bool summary_must_be_edited = 3;
+  // Visibility permission of template
+  // Next available tag: 3
+  enum TemplatePrivacy {
+    TEMPLATE_PRIVACY_UNSPECIFIED = 0;
+    MEMBERS_ONLY = 1;
+    PUBLIC = 2;
+  }
+  TemplatePrivacy template_privacy = 4;
+  // Indicator of who if anyone should be the default owner of the issue
+  // created with this template.
+  // Next available tag: 2
+  enum DefaultOwner {
+    DEFAULT_OWNER_UNSPECIFIED = 0;
+    // The owner should default to the Issue reporter if the reporter is a
+    // member of the project.
+    PROJECT_MEMBER_REPORTER = 1;
+  }
+  DefaultOwner default_owner= 5;
+  // Boolean indicating whether issue must have a component
+  bool component_required = 6;
+  // List of users who can administer this template
+  repeated User admins = 7;
 }

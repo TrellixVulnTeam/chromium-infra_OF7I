@@ -244,6 +244,7 @@ func (m *Comment) GetApproval() string {
 type Issue struct {
 	// Resource name of the issue.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// A brief summary of the issue. Generally displayed as a user-facing title.
 	// TODO(monorail:6988): The UI limits summary length while the backend does
 	// not. Resolve this discrepancy.
 	Summary string `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`

@@ -1,0 +1,52 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file or at
+// https://developers.google.com/open-source/licenses/bsd
+
+syntax = "proto3";
+
+package monorail.v1;
+
+import "google_proto/google/api/field_behavior.proto";
+import "google_proto/google/api/resource.proto";
+import "google_proto/google/api/annotations.proto";
+import "api/v1/api_proto/project_objects.proto";
+
+
+// Projects service includes all methods needed for managing Projects.
+service Projects {
+  // Returns all templates for specified project.
+  // TODO(crbug/monorail/6988): Document possible errors when implemented.
+  rpc ListIssueTemplates (ListIssueTemplatesRequest) returns (ListIssueTemplatesResponse) {
+    option (google.api.http) = {
+      post: "/prpc/monorail.v1.Projects/ListIssueTemplates"
+      body: "*"
+    };
+  }
+}
+
+// Request message for ListIssueTemplates
+// Next available tag: 4
+message ListIssueTemplatesRequest {
+  // The name of the project these templates belong to.
+  string parent = 1 [
+    (google.api.resource_reference) = {type: "api.crbug.com/Project"},
+    (google.api.field_behavior) = REQUIRED ];
+  // The maximum number of items to return. The service may return fewer than
+  // this value.
+  int32 page_size = 2;
+  // A page token, received from a previous `ListIssueTemplatesRequest` call.
+  // Provide this to retrieve the subsequent page.
+  // When paginating, all other parameters provided to
+  // `ListIssueTemplatesRequest` must match the call that provided the token.
+  string page_token = 3;
+}
+
+// Response message for ListIssueTemplates
+// Next available tag: 3
+message ListIssueTemplatesResponse {
+  repeated IssueTemplate templates = 1;
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}

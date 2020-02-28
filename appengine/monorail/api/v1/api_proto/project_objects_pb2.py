@@ -14,6 +14,8 @@ _sym_db = _symbol_database.Default()
 
 from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
 from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
+from api.v1.api_proto import issue_objects_pb2 as api_dot_v1_dot_api__proto_dot_issue__objects__pb2
+from api.v1.api_proto import user_objects_pb2 as api_dot_v1_dot_api__proto_dot_user__objects__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -21,11 +23,59 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n&api/v1/api_proto/project_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\"G\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t:.\xea\x41+\n\x15\x61pi.crbug.com/Project\x12\x12projects/{project}\"b\n\tStatusDef\x12\x0c\n\x04name\x18\x01 \x01(\t:G\xea\x41\x44\n\x17\x61pi.crbug.com/StatusDef\x12)projects/{project}/statusDefs/{statusDef}\"^\n\x08LabelDef\x12\x0c\n\x04name\x18\x01 \x01(\t:D\xea\x41\x41\n\x16\x61pi.crbug.com/LabelDef\x12\'projects/{project}/labelDefs/{labelDef}\"^\n\x08\x46ieldDef\x12\x0c\n\x04name\x18\x01 \x01(\t:D\xea\x41\x41\n\x16\x61pi.crbug.com/FieldDef\x12\'projects/{project}/fieldDefs/{fieldDef}\"n\n\x0c\x43omponentDef\x12\x0c\n\x04name\x18\x01 \x01(\t:P\xea\x41M\n\x1a\x61pi.crbug.com/ComponentDef\x12/projects/{project}/componentDefs/{componentDef}\"j\n\x0b\x41pprovalDef\x12\x0c\n\x04name\x18\x01 \x01(\t:M\xea\x41J\n\x19\x61pi.crbug.com/ApprovalDef\x12-projects/{project}/approvalDefs/{approvalDef}b\x06proto3')
+  serialized_pb=_b('\n&api/v1/api_proto/project_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\x1a#api/v1/api_proto/user_objects.proto\"G\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t:.\xea\x41+\n\x15\x61pi.crbug.com/Project\x12\x12projects/{project}\"b\n\tStatusDef\x12\x0c\n\x04name\x18\x01 \x01(\t:G\xea\x41\x44\n\x17\x61pi.crbug.com/StatusDef\x12)projects/{project}/statusDefs/{statusDef}\"^\n\x08LabelDef\x12\x0c\n\x04name\x18\x01 \x01(\t:D\xea\x41\x41\n\x16\x61pi.crbug.com/LabelDef\x12\'projects/{project}/labelDefs/{labelDef}\"^\n\x08\x46ieldDef\x12\x0c\n\x04name\x18\x01 \x01(\t:D\xea\x41\x41\n\x16\x61pi.crbug.com/FieldDef\x12\'projects/{project}/fieldDefs/{fieldDef}\"n\n\x0c\x43omponentDef\x12\x0c\n\x04name\x18\x01 \x01(\t:P\xea\x41M\n\x1a\x61pi.crbug.com/ComponentDef\x12/projects/{project}/componentDefs/{componentDef}\"j\n\x0b\x41pprovalDef\x12\x0c\n\x04name\x18\x01 \x01(\t:M\xea\x41J\n\x19\x61pi.crbug.com/ApprovalDef\x12-projects/{project}/approvalDefs/{approvalDef}\"\x8f\x04\n\rIssueTemplate\x12\x0c\n\x04name\x18\x01 \x01(\t\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.v1.Issue\x12\x1e\n\x16summary_must_be_edited\x18\x03 \x01(\x08\x12\x44\n\x10template_privacy\x18\x04 \x01(\x0e\x32*.monorail.v1.IssueTemplate.TemplatePrivacy\x12>\n\rdefault_owner\x18\x05 \x01(\x0e\x32\'.monorail.v1.IssueTemplate.DefaultOwner\x12\x1a\n\x12\x63omponent_required\x18\x06 \x01(\x08\x12!\n\x06\x61\x64mins\x18\x07 \x03(\x0b\x32\x11.monorail.v1.User\"Q\n\x0fTemplatePrivacy\x12 \n\x1cTEMPLATE_PRIVACY_UNSPECIFIED\x10\x00\x12\x10\n\x0cMEMBERS_ONLY\x10\x01\x12\n\n\x06PUBLIC\x10\x02\"J\n\x0c\x44\x65\x66\x61ultOwner\x12\x1d\n\x19\x44\x45\x46\x41ULT_OWNER_UNSPECIFIED\x10\x00\x12\x1b\n\x17PROJECT_MEMBER_REPORTER\x10\x01:I\xea\x41\x46\n\x16\x61pi.crbug.com/Template\x12,projects/{project}/templates/{template_name}b\x06proto3')
   ,
-  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,])
+  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_user__objects__pb2.DESCRIPTOR,])
 
 
+
+_ISSUETEMPLATE_TEMPLATEPRIVACY = _descriptor.EnumDescriptor(
+  name='TemplatePrivacy',
+  full_name='monorail.v1.IssueTemplate.TemplatePrivacy',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='TEMPLATE_PRIVACY_UNSPECIFIED', index=0, number=0,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='MEMBERS_ONLY', index=1, number=1,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='PUBLIC', index=2, number=2,
+      serialized_options=None,
+      type=None),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=1097,
+  serialized_end=1178,
+)
+_sym_db.RegisterEnumDescriptor(_ISSUETEMPLATE_TEMPLATEPRIVACY)
+
+_ISSUETEMPLATE_DEFAULTOWNER = _descriptor.EnumDescriptor(
+  name='DefaultOwner',
+  full_name='monorail.v1.IssueTemplate.DefaultOwner',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='DEFAULT_OWNER_UNSPECIFIED', index=0, number=0,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='PROJECT_MEMBER_REPORTER', index=1, number=1,
+      serialized_options=None,
+      type=None),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=1180,
+  serialized_end=1254,
+)
+_sym_db.RegisterEnumDescriptor(_ISSUETEMPLATE_DEFAULTOWNER)
 
 
 _PROJECT = _descriptor.Descriptor(
@@ -54,8 +104,8 @@ _PROJECT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=141,
-  serialized_end=212,
+  serialized_start=216,
+  serialized_end=287,
 )
 
 
@@ -85,8 +135,8 @@ _STATUSDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=214,
-  serialized_end=312,
+  serialized_start=289,
+  serialized_end=387,
 )
 
 
@@ -116,8 +166,8 @@ _LABELDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=314,
-  serialized_end=408,
+  serialized_start=389,
+  serialized_end=483,
 )
 
 
@@ -147,8 +197,8 @@ _FIELDDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=410,
-  serialized_end=504,
+  serialized_start=485,
+  serialized_end=579,
 )
 
 
@@ -178,8 +228,8 @@ _COMPONENTDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=506,
-  serialized_end=616,
+  serialized_start=581,
+  serialized_end=691,
 )
 
 
@@ -209,16 +259,98 @@ _APPROVALDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=618,
-  serialized_end=724,
+  serialized_start=693,
+  serialized_end=799,
 )
 
+
+_ISSUETEMPLATE = _descriptor.Descriptor(
+  name='IssueTemplate',
+  full_name='monorail.v1.IssueTemplate',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='monorail.v1.IssueTemplate.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='issue', full_name='monorail.v1.IssueTemplate.issue', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='summary_must_be_edited', full_name='monorail.v1.IssueTemplate.summary_must_be_edited', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='template_privacy', full_name='monorail.v1.IssueTemplate.template_privacy', index=3,
+      number=4, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='default_owner', full_name='monorail.v1.IssueTemplate.default_owner', index=4,
+      number=5, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='component_required', full_name='monorail.v1.IssueTemplate.component_required', index=5,
+      number=6, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='admins', full_name='monorail.v1.IssueTemplate.admins', index=6,
+      number=7, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+    _ISSUETEMPLATE_TEMPLATEPRIVACY,
+    _ISSUETEMPLATE_DEFAULTOWNER,
+  ],
+  serialized_options=_b('\352AF\n\026api.crbug.com/Template\022,projects/{project}/templates/{template_name}'),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=802,
+  serialized_end=1329,
+)
+
+_ISSUETEMPLATE.fields_by_name['issue'].message_type = api_dot_v1_dot_api__proto_dot_issue__objects__pb2._ISSUE
+_ISSUETEMPLATE.fields_by_name['template_privacy'].enum_type = _ISSUETEMPLATE_TEMPLATEPRIVACY
+_ISSUETEMPLATE.fields_by_name['default_owner'].enum_type = _ISSUETEMPLATE_DEFAULTOWNER
+_ISSUETEMPLATE.fields_by_name['admins'].message_type = api_dot_v1_dot_api__proto_dot_user__objects__pb2._USER
+_ISSUETEMPLATE_TEMPLATEPRIVACY.containing_type = _ISSUETEMPLATE
+_ISSUETEMPLATE_DEFAULTOWNER.containing_type = _ISSUETEMPLATE
 DESCRIPTOR.message_types_by_name['Project'] = _PROJECT
 DESCRIPTOR.message_types_by_name['StatusDef'] = _STATUSDEF
 DESCRIPTOR.message_types_by_name['LabelDef'] = _LABELDEF
 DESCRIPTOR.message_types_by_name['FieldDef'] = _FIELDDEF
 DESCRIPTOR.message_types_by_name['ComponentDef'] = _COMPONENTDEF
 DESCRIPTOR.message_types_by_name['ApprovalDef'] = _APPROVALDEF
+DESCRIPTOR.message_types_by_name['IssueTemplate'] = _ISSUETEMPLATE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Project = _reflection.GeneratedProtocolMessageType('Project', (_message.Message,), dict(
@@ -263,6 +395,13 @@ ApprovalDef = _reflection.GeneratedProtocolMessageType('ApprovalDef', (_message.
   ))
 _sym_db.RegisterMessage(ApprovalDef)
 
+IssueTemplate = _reflection.GeneratedProtocolMessageType('IssueTemplate', (_message.Message,), dict(
+  DESCRIPTOR = _ISSUETEMPLATE,
+  __module__ = 'api.v1.api_proto.project_objects_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.IssueTemplate)
+  ))
+_sym_db.RegisterMessage(IssueTemplate)
+
 
 _PROJECT._options = None
 _STATUSDEF._options = None
@@ -270,4 +409,5 @@ _LABELDEF._options = None
 _FIELDDEF._options = None
 _COMPONENTDEF._options = None
 _APPROVALDEF._options = None
+_ISSUETEMPLATE._options = None
 # @@protoc_insertion_point(module_scope)
