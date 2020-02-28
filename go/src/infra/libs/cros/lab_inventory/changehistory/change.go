@@ -132,6 +132,7 @@ func logLabstationChange(old *lab.Labstation, newData *lab.Labstation) (changes 
 	}
 	changes.log("hostname", old.GetHostname(), newData.GetHostname())
 	changes = append(changes, logServosChange(old.GetServos(), newData.GetServos())...)
+	changes = append(changes, logRPMChange(old.GetRpm(), newData.GetRpm())...)
 
 	return
 }
@@ -187,6 +188,8 @@ func logDutChange(old *lab.DeviceUnderTest, newData *lab.DeviceUnderTest) (chang
 		return
 	}
 	changes.log("hostname", old.GetHostname(), newData.GetHostname())
+	changes.log("critical_pools", old.GetCriticalPools(), newData.GetCriticalPools())
+	changes.log("pools", old.GetPools(), newData.GetPools())
 	changes = append(changes, logPeripheralsChange(old.GetPeripherals(), newData.GetPeripherals())...)
 	return
 }
@@ -206,6 +209,8 @@ func logPeripheralsChange(old *lab.Peripherals, newData *lab.Peripherals) (chang
 
 	changes.log("carrier", old.GetCarrier(), newData.GetCarrier())
 	changes.log("camerabox", old.GetCamerabox(), newData.GetCamerabox())
+	changes.log("chaos", old.GetChaos(), newData.GetChaos())
+	changes.log("cable", old.GetCable(), newData.GetCable())
 
 	return
 }
@@ -235,6 +240,7 @@ func logAudioChange(old *lab.Audio, newData *lab.Audio) (changes Changes) {
 func logWifiChange(old *lab.Wifi, newData *lab.Wifi) (changes Changes) {
 	changes.log("wificell", old.GetWificell(), newData.GetWificell())
 	changes.log("antenna_conn", old.GetAntennaConn(), newData.GetAntennaConn())
+	changes.log("router", old.GetRouter(), newData.GetRouter())
 	return
 }
 

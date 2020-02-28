@@ -540,7 +540,7 @@ func BatchUpdateDevices(ctx context.Context, duts []*DeviceProperty) error {
 		}
 		return datastore.Put(ctx, entities)
 	}
-	return datastore.RunInTransaction(ctx, f, nil)
+	return datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true})
 }
 
 // ReportInventory reports the inventory metrics.
