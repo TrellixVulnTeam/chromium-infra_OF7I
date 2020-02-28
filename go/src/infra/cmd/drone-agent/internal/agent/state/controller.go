@@ -86,7 +86,7 @@ func runBotForDUT(h ControllerHook, dutID string, s dutSignals) {
 		}
 		b, err := h.StartBot(dutID)
 		if err != nil {
-			// TODO(ayatane): Log error?
+			log.Printf("Fail to start bot %s %s", dutID, err)
 			continue
 		}
 		wait := make(chan struct{})
