@@ -147,7 +147,8 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
       step_util, 'GetWaterfallBuildStepLog', return_value=_ABC_TEST_FAILURE_LOG)
   @mock.patch.object(swarmed_test_util,
                      'RetrieveShardedTestResultsFromIsolatedServer')
-  def testGetSignalFromStepLog(self, mock_gtest, _):
+  # crbug.com/827693
+  def disabled_testGetSignalFromStepLog(self, mock_gtest, _):
     master_name = 'm'
     builder_name = 'b'
     build_number = 123
@@ -449,7 +450,8 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       test_results_util, 'GetTestResultObject', return_value=None)
   @mock.patch.object(extract_signal, 'GetStdoutLog', return_value='log')
-  def testExtractSignalsForTestFailureNoTestResult(self, *_):
+  # crbug.com/827693
+  def disabled_testExtractSignalsForTestFailureNoTestResult(self, *_):
     master_name = 'm'
     builder_name = 'b'
     build_number = 223

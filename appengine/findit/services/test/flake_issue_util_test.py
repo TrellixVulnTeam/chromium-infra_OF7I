@@ -1261,7 +1261,8 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
                      flake_issue_util._GetOrCreateFlakeIssue(1, 'chromium'))
 
   @mock.patch.object(monorail_util, 'GetMonorailIssueForIssueId')
-  def testGetOrCreateFlakeIssueNewIssue(self, mocked_issue):
+  # crbug.com/1056607
+  def disabled_testGetOrCreateFlakeIssueNewIssue(self, mocked_issue):
     mocked_issue.return_value = Issue({
         'id': '2',
         'labels': ['Type-Bug', 'Pri-2'],

@@ -231,7 +231,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
     self.assertEqual(1, len(flake_issues))
     self.assertIn(existing_flake_issue, flake_issues)
 
-  def testCreateIssueNew(self):
+
+  def disabled_testCreateIssueNew(self):  # crbug.com/1056607
     future = detect_disabled_tests._CreateIssue(
         ndb.Key('FlakeIssue', 'chromium@123'))
     future.get_result()
