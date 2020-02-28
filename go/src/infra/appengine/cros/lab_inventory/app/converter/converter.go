@@ -9,12 +9,14 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	"go.chromium.org/luci/common/errors"
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	ds "infra/libs/cros/lab_inventory/datastore"
 )
 
-// ToBQLabInventory converts a DeviceOpResult to a LabInventory item with the same content.
+// ToBQLabInventory converts a DeviceOpResult to a LabInventory item with
+// the same content.
 func ToBQLabInventory(d *ds.DeviceOpResult) (*apibq.LabInventory, error) {
 	dev := &lab.ChromeOSDevice{}
 	id := ""
@@ -42,4 +44,26 @@ func ToBQLabInventory(d *ds.DeviceOpResult) (*apibq.LabInventory, error) {
 		Device:      dev,
 		UpdatedTime: utime,
 	}, nil
+}
+
+// ToBQLabInventorySeq converts a DeviceOpResults into a sequence of
+// items that can be committed to the inventory.
+func ToBQLabInventorySeq(rs ds.DeviceOpResults) ([]*apibq.LabInventory, error) {
+	if rs == nil {
+		return nil, fmt.Errorf("deviceOpResult cannot be nil")
+	}
+	out := make([]*apibq.LabInventory, len(rs))
+	merr := errors.NewMultiError()
+	for i, dev := range rs {
+		item, err := ToBQLabInventory(&dev)
+		if err != nil {
+			merr = append(merr, err)
+			continue
+		}
+		out[i] = item
+	}
+	if len(merr) == 0 {
+		return out, nil
+	}
+	return nil, merr
 }

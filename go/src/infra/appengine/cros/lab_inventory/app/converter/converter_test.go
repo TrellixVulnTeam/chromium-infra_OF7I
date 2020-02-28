@@ -92,6 +92,59 @@ func TestToBQLabInventory(t *testing.T) {
 	}
 }
 
+var testToBQLabInventorySeqData = []struct {
+	name   string
+	in     datastore.DeviceOpResults
+	out    []*apibq.LabInventory
+	isGood bool
+}{
+	{
+		"nil is failure",
+		datastore.DeviceOpResults(nil),
+		nil,
+		false,
+	},
+	{
+		"empty successfully produces nothing",
+		datastore.DeviceOpResults([]datastore.DeviceOpResult{}),
+		[]*apibq.LabInventory{},
+		true,
+	},
+	{
+		"just timestamp",
+		[]datastore.DeviceOpResult{
+			{
+				Timestamp: time.Unix(42, 67),
+			},
+		},
+		[]*apibq.LabInventory{
+			{
+				UpdatedTime: timestampOrPanic(time.Unix(42, 67)),
+				Device:      &lab.ChromeOSDevice{},
+			},
+		},
+		true,
+	},
+}
+
+func TestToBQLabInventorySeq(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testToBQLabInventorySeqData {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := ToBQLabInventorySeq(tt.in)
+			isGood := err == nil
+			if isGood != tt.isGood {
+				t.Errorf("error mismatch: expected (%v) got (%v) err was (%#v)", tt.isGood, isGood, err)
+			}
+			diff := cmp.Diff(tt.out, out)
+			if diff != "" {
+				msg := fmt.Sprintf("unexpected diff (%s)", diff)
+				t.Errorf("%s", msg)
+			}
+		})
+	}
+}
+
 func timestampOrPanic(t time.Time) *timestamp.Timestamp {
 	out, err := ptypes.TimestampProto(t)
 	if err != nil {
