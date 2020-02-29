@@ -112,7 +112,7 @@ const crosFailuresQuery = selectFromWhere + `
 
 const fuchsiaFailuresQuery = selectFromWhere + `
 	Project = %q
-	AND Bucket = "global.try"
+	AND Bucket = "global.roller"
 	AND Builder NOT LIKE "%%bisect%%"
 LIMIT
 	1000
