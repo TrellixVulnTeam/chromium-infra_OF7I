@@ -21,15 +21,15 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n#api/v1/api_proto/user_objects.proto\x12\x0bmonorail.v1\x1a&google_proto/google/api/resource.proto\x1a,google_proto/google/api/field_behavior.proto\"\xf3\x01\n\x04User\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x03\x12-\n\tsite_role\x18\x03 \x01(\x0e\x32\x1a.monorail.v1.User.SiteRole\x12\x1c\n\x14\x61vailability_message\x18\x04 \x01(\t\x12\x37\n\x13linked_primary_user\x18\x05 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\"<\n\x08SiteRole\x12\x19\n\x15SITE_ROLE_UNSPECIFIED\x10\x00\x12\n\n\x06NORMAL\x10\x01\x12\t\n\x05\x41\x44MIN\x10\x02\x62\x06proto3')
+  serialized_pb=_b('\n#api/v1/api_proto/user_objects.proto\x12\x0bmonorail.v1\x1a&google_proto/google/api/resource.proto\x1a,google_proto/google/api/field_behavior.proto\"w\n\x04User\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x03\x12\x1c\n\x14\x61vailability_message\x18\x03 \x01(\t:(\xea\x41%\n\x12\x61pi.crbug.com/User\x12\x0fusers/{user_id}\"\xa4\x02\n\x0cUserSettings\x12-\n\x04name\x18\x01 \x01(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/UserSettings\x12\x35\n\tsite_role\x18\x02 \x01(\x0e\x32\".monorail.v1.UserSettings.SiteRole\x12\x37\n\x13linked_primary_user\x18\x03 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\"<\n\x08SiteRole\x12\x19\n\x15SITE_ROLE_UNSPECIFIED\x10\x00\x12\n\n\x06NORMAL\x10\x01\x12\t\n\x05\x41\x44MIN\x10\x02:7\xea\x41\x34\n\x1a\x61pi.crbug.com/UserSettings\x12\x16usersettings/{user_id}b\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,])
 
 
 
-_USER_SITEROLE = _descriptor.EnumDescriptor(
+_USERSETTINGS_SITEROLE = _descriptor.EnumDescriptor(
   name='SiteRole',
-  full_name='monorail.v1.User.SiteRole',
+  full_name='monorail.v1.UserSettings.SiteRole',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -48,10 +48,10 @@ _USER_SITEROLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=322,
-  serialized_end=382,
+  serialized_start=435,
+  serialized_end=495,
 )
-_sym_db.RegisterEnumDescriptor(_USER_SITEROLE)
+_sym_db.RegisterEnumDescriptor(_USERSETTINGS_SITEROLE)
 
 
 _USER = _descriptor.Descriptor(
@@ -76,22 +76,53 @@ _USER = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=_b('\340A\003'), file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='site_role', full_name='monorail.v1.User.site_role', index=2,
-      number=3, type=14, cpp_type=8, label=1,
+      name='availability_message', full_name='monorail.v1.User.availability_message', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=_b('\352A%\n\022api.crbug.com/User\022\017users/{user_id}'),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=138,
+  serialized_end=257,
+)
+
+
+_USERSETTINGS = _descriptor.Descriptor(
+  name='UserSettings',
+  full_name='monorail.v1.UserSettings',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='monorail.v1.UserSettings.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\034\n\032api.crbug.com/UserSettings'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='site_role', full_name='monorail.v1.UserSettings.site_role', index=1,
+      number=2, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='availability_message', full_name='monorail.v1.User.availability_message', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='linked_primary_user', full_name='monorail.v1.User.linked_primary_user', index=4,
-      number=5, type=9, cpp_type=9, label=1,
+      name='linked_primary_user', full_name='monorail.v1.UserSettings.linked_primary_user', index=2,
+      number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -101,21 +132,22 @@ _USER = _descriptor.Descriptor(
   ],
   nested_types=[],
   enum_types=[
-    _USER_SITEROLE,
+    _USERSETTINGS_SITEROLE,
   ],
-  serialized_options=None,
+  serialized_options=_b('\352A4\n\032api.crbug.com/UserSettings\022\026usersettings/{user_id}'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=139,
-  serialized_end=382,
+  serialized_start=260,
+  serialized_end=552,
 )
 
-_USER.fields_by_name['site_role'].enum_type = _USER_SITEROLE
-_USER_SITEROLE.containing_type = _USER
+_USERSETTINGS.fields_by_name['site_role'].enum_type = _USERSETTINGS_SITEROLE
+_USERSETTINGS_SITEROLE.containing_type = _USERSETTINGS
 DESCRIPTOR.message_types_by_name['User'] = _USER
+DESCRIPTOR.message_types_by_name['UserSettings'] = _USERSETTINGS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 User = _reflection.GeneratedProtocolMessageType('User', (_message.Message,), dict(
@@ -125,7 +157,17 @@ User = _reflection.GeneratedProtocolMessageType('User', (_message.Message,), dic
   ))
 _sym_db.RegisterMessage(User)
 
+UserSettings = _reflection.GeneratedProtocolMessageType('UserSettings', (_message.Message,), dict(
+  DESCRIPTOR = _USERSETTINGS,
+  __module__ = 'api.v1.api_proto.user_objects_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.UserSettings)
+  ))
+_sym_db.RegisterMessage(UserSettings)
+
 
 _USER.fields_by_name['display_name']._options = None
-_USER.fields_by_name['linked_primary_user']._options = None
+_USER._options = None
+_USERSETTINGS.fields_by_name['name']._options = None
+_USERSETTINGS.fields_by_name['linked_primary_user']._options = None
+_USERSETTINGS._options = None
 # @@protoc_insertion_point(module_scope)
