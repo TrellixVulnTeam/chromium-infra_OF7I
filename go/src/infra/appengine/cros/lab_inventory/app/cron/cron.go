@@ -6,7 +6,9 @@
 package cron
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/golang/protobuf/proto"
@@ -22,6 +24,7 @@ import (
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
+	"infra/appengine/cros/lab_inventory/app/converter"
 	"infra/appengine/cros/lab_inventory/app/migration"
 	dronequeenapi "infra/appengine/drone-queen/api"
 	bqlib "infra/libs/cros/lab_inventory/bq"
@@ -42,6 +45,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/dump-to-bq", mwCron, logAndSetHTTPErr(dumpToBQCronHandler))
 
 	r.GET("/internal/cron/dump-registered-assets-snapshot", mwCron, logAndSetHTTPErr(dumpRegisteredAssetsCronHandler))
+
+	r.GET("/internal/cron/dump-inventory-snapshot", mwCron, logAndSetHTTPErr(dumpInventorySnapshot))
 
 	r.GET("/internal/cron/sync-dev-config", mwCron, logAndSetHTTPErr(syncDevConfigHandler))
 
@@ -147,6 +152,47 @@ func dumpChangeHistoryToBQCronHandler(c *router.Context) error {
 	}
 	logging.Debugf(ctx, "Cleaning %d records of change history from datastore", len(msgs))
 	return changehistory.FlushDatastore(ctx, changes)
+}
+
+// dumpInventorySnapshot takes a snapshot of the inventory at the current time and
+// uploads it to bigquery.
+func dumpInventorySnapshot(c *router.Context) error {
+	ctx := c.Context
+	logging.Infof(c.Context, "Start dumping inventory snapshot")
+	project := info.AppID(ctx)
+	dataset := "inventory"
+	table := "lab"
+	client, err := bigquery.NewClient(ctx, project)
+	if err != nil {
+		return fmt.Errorf("bq client: %s", err)
+	}
+
+	logging.Debugf(ctx, "getting all devices")
+	allDevices, err := datastore.GetAllDevices(ctx)
+	logging.Debugf(ctx, "got devices (%d)", len(allDevices))
+	if err != nil {
+		return fmt.Errorf("gathering devices: %s", err)
+	}
+
+	labInventoryItems, err := converter.ToBQLabInventorySeq(allDevices)
+	if err != nil {
+		return fmt.Errorf("failed to convert devices: %s", err)
+	}
+
+	msgs := make([]proto.Message, len(labInventoryItems))
+
+	for i, li := range labInventoryItems {
+		msgs[i] = li
+	}
+
+	logging.Debugf(ctx, "uploading to bigquery dataset (%s) table (%s)", dataset, table)
+	tz, _ := time.LoadLocation("America/Los_Angeles")
+	up := bq.NewUploader(ctx, client, dataset, fmt.Sprintf("%s$%s", table, time.Now().In(tz).Format("20060102")))
+	if err := up.Put(ctx, msgs...); err != nil {
+		return fmt.Errorf("snapshot put: %s", err)
+	}
+	logging.Debugf(ctx, "successfully uploaded to bigquery")
+	return nil
 }
 
 func pushToDroneQueenCronHandler(c *router.Context) error {

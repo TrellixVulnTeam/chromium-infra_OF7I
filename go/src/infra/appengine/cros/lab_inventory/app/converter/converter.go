@@ -47,7 +47,7 @@ func ToBQLabInventory(d *ds.DeviceOpResult) (*apibq.LabInventory, error) {
 }
 
 // ToBQLabInventorySeq converts a DeviceOpResults into a sequence of
-// items that can be committed to the inventory.
+// items that can be committed to bigquery.
 func ToBQLabInventorySeq(rs ds.DeviceOpResults) ([]*apibq.LabInventory, error) {
 	if rs == nil {
 		return nil, fmt.Errorf("deviceOpResult cannot be nil")
