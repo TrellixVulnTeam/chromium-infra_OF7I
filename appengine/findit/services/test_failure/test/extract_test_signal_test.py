@@ -406,7 +406,8 @@ class ExtractTestSignalTest(wf_testcase.WaterfallTestCase):
       'RetrieveShardedTestResultsFromIsolatedServer',
       return_value=None)
   @mock.patch.object(extract_signal, 'GetStdoutLog', return_value=None)
-  def testExtractSignalsForTestFailureNoFailureLog(self, *_):
+  # crbug.com/1056607
+  def disabled_testExtractSignalsForTestFailureNoFailureLog(self, *_):
     master_name = 'm'
     builder_name = 'b'
     build_number = 223
