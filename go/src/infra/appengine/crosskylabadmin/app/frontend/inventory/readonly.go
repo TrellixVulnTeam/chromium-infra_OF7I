@@ -148,11 +148,13 @@ func (is *ServerImpl) ReportInventory(ctx context.Context, req *fleet.ReportInve
 		return nil, err
 	}
 
-	duts, err := GetDutsByEnvironment(ctx, store)
-	if err != nil {
-		return nil, err
+	if !req.GetSkipInventoryMetrics() {
+		duts, err := GetDutsByEnvironment(ctx, store)
+		if err != nil {
+			return nil, err
+		}
+		utilization.ReportInventoryMetrics(ctx, duts)
 	}
-	utilization.ReportInventoryMetrics(ctx, duts)
 	utilization.ReportServerMetrics(ctx, store.Infrastructure.GetServers())
 	return &fleet.ReportInventoryResponse{}, nil
 }

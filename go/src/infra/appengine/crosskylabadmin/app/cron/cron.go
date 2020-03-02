@@ -152,7 +152,10 @@ func reportInventoryCronHandler(c *router.Context) (err error) {
 	}()
 
 	inv := createInventoryServer(c)
-	_, err = inv.ReportInventory(c.Context, &fleet.ReportInventoryRequest{})
+	cfg := config.Get(c.Context)
+	_, err = inv.ReportInventory(c.Context, &fleet.ReportInventoryRequest{
+		SkipInventoryMetrics: cfg.GetInventoryProvider().GetInventoryV2Only(),
+	})
 	return err
 }
 

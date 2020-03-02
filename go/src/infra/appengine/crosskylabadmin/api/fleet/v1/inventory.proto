@@ -152,7 +152,10 @@ message UpdateManufacturingConfigResponse {
   string change_url = 1;
 }
 
-message ReportInventoryRequest {}
+message ReportInventoryRequest {
+  // Skip reporting inventory metrics after we migrate to inventory v2.
+  bool skip_inventory_metrics = 1;
+}
 message ReportInventoryResponse {}
 
 message PushInventoryToQueenRequest {}
