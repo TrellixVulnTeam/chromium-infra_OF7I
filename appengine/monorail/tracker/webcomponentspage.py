@@ -38,7 +38,10 @@ class WebComponentsPage(servlet.Servlet):
       Dict of values used by EZT for rendering the page.
     """
     # Create link to view in old UI for the list view pages.
-    old_ui_url = self.request.url.replace('issues/list', 'issues/list_old')
+    old_ui_url = None
+    url = self.request.url
+    if 'issues/list' in url:
+      old_ui_url = url.replace('issues/list', 'issues/list_old')
 
     return {
        'local_id': mr.local_id,
