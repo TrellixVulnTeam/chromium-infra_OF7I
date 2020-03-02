@@ -27,7 +27,6 @@ cron:
   url: /internal/cron/dump-registered-assets-snapshot
   schedule: every 24 hours
 
-# TODO(gregorynisbet): increase frequency to every 24 hours
 - description: Dump inventory snapshot
   url: /internal/cron/dump-inventory-snapshot
-  schedule: every 99999999 hours
+  schedule: every 24 hours
