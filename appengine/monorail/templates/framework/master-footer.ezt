@@ -11,12 +11,10 @@ a.src=g;m.parentNode.insertBefore(a,m)
 })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
 (function setupGoogleAnalytics() {
+  const _EMAIL_REGEX =
+      ["/([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})/"];
+
   ga('create', '[analytics_id]', {'siteSpeedSampleRate': 100});
-  [if-any viewing_user_page]
-    [# Keep anything that looks like an email address out of GA.]
-    ga('set', 'title', 'A user page');
-    ga('set', 'location', 'A user page URL');
-  [end]
 
   [if-any logged_in_user]
     ga('set', 'dimension1', 'Logged in');
@@ -24,16 +22,11 @@ a.src=g;m.parentNode.insertBefore(a,m)
     ga('set', 'dimension1', 'Not logged in');
   [end]
 
-  const pathname = window.location.pathname;
-
-  // Don't track individual issue detail pages; track them all together.
-  if (pathname.endsWith('/issues/detail')) {
-    ga('set', 'title', 'Issue Detail');
-  }
-
-  // Don't track individual search terms; track all lists together.
-  if (pathname.endsWith('/issues/list')) {
-    ga('set', 'title', 'Issue List');
+  const pathName = window.location.pathname;
+  if (pathName.startsWith('/u')) {
+    [# Keep anything that looks like an email address out of GA.]
+    ga('set', 'title', 'A user page');
+    ga('set', 'location', pathName.replace(_EMAIL_REGEX, 'user@example.com'));
   }
 
   ga('send', 'pageview');
