@@ -374,7 +374,7 @@ func TestTaskURL(t *testing.T) {
 }
 
 func TestIncompleteWait(t *testing.T) {
-	Convey("Given a run that is cancelled while running, error and response reflect cancellation.", t, func() {
+	Convey("Given a run that is cancelled while running, response reflects cancellation.", t, func() {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		skylab := newFakeSkylab()
@@ -394,9 +394,7 @@ func TestIncompleteWait(t *testing.T) {
 
 		cancel()
 		wg.Wait()
-
-		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, context.Canceled.Error())
+		So(err, ShouldBeNil)
 
 		resp := getSingleResponse(run)
 		So(resp, ShouldNotBeNil)
@@ -1128,7 +1126,7 @@ func TestResponseVerdict(t *testing.T) {
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
 
-		Convey("when an error cancels the run, response verdict is correct.", func() {
+		Convey("when execution is aborted (e.g., timeout), response verdict is correct.", func() {
 			skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
 
 			wg := sync.WaitGroup{}
@@ -1141,7 +1139,7 @@ func TestResponseVerdict(t *testing.T) {
 
 			cancel()
 			wg.Wait()
-			So(err, ShouldNotBeNil)
+			So(err, ShouldBeNil)
 
 			resp := getSingleResponse(run)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_ABORTED)

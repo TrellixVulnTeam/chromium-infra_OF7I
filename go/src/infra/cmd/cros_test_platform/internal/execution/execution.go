@@ -74,7 +74,10 @@ func (r *Runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
 
 		select {
 		case <-ctx.Done():
-			return errors.Annotate(ctx.Err(), "wait for tests").Err()
+			// A timeout while waiting for tests to complete is reported as
+			// aborts when summarizing individual tests' results.
+			// The execute step completes without errors.
+			return nil
 		case <-clock.After(ctx, 15*time.Second):
 		}
 	}
