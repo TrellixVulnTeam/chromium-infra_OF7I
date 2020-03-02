@@ -63,15 +63,13 @@ func (e EnvWrapper) GenerateLogPrefix() string {
 	return "skylab/" + uuid.New().String()
 }
 
-const defaultInventory = "v1"
-
 // Prod is the environment for prod.
 var Prod = Environment{
 	LUCIProject:          "chromeos",
 	SwarmingService:      "https://chromeos-swarming.appspot.com/",
 	LogDogHost:           "luci-logdog.appspot.com",
 	InventoryService:     "cros-lab-inventory.appspot.com",
-	DefaultInventory:     defaultInventory,
+	DefaultInventory:     "v1",
 	DefaultInventoryOnly: false,
 	AdminService:         "chromeos-skylab-bot-fleet.appspot.com",
 	QueenService:         "drone-queen-prod.appspot.com",
@@ -90,8 +88,8 @@ var Dev = Environment{
 	SwarmingService:      "https://chromium-swarm-dev.appspot.com/",
 	LogDogHost:           "luci-logdog-dev.appspot.com",
 	InventoryService:     "cros-lab-inventory-dev.appspot.com",
-	DefaultInventory:     defaultInventory,
-	DefaultInventoryOnly: false,
+	DefaultInventory:     "v2",
+	DefaultInventoryOnly: true,
 	AdminService:         "skylab-staging-bot-fleet.appspot.com",
 	QueenService:         "drone-queen-dev.appspot.com",
 	QueenDroneHostname:   "drone-queen-ENVIRONMENT_STAGING",
