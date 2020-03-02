@@ -91,8 +91,8 @@ class UserView(object):
     self.obscure_email = user.obscure_email
     self.banned = ''
 
-    (self.username, self.domain,
-     self.obscured_username, obscured_email) = ParseAndObscureAddress(email)
+    (self.username, self.domain, self.obscured_username,
+     obscured_email) = framework_bizobj.ParseAndObscureAddress(email)
     # No need to obfuscate or reveal client email.
     # Instead display a human-readable username.
     if self.user_id == framework_constants.DELETED_USER_ID:
@@ -143,61 +143,6 @@ def StuffUserView(user_id, email, obscure_email):
   return UserView(user)
 
 
-def ParseAndObscureAddress(email):
-  """Break the given email into username and domain, and obscure.
-
-  Args:
-    email: string email address to process
-
-  Returns:
-    A 4-tuple (username, domain, obscured_username, obscured_email).
-    The obscured_username is truncated the same way that Google Groups does it:
-    it truncates at 8 characters or truncates OFF 3 characters, whichever
-    results in a shorter obscured_username.
-  """
-  if '@' in email:
-    username, user_domain = email.split('@', 1)
-  else:  # don't fail if User table has unexpected email address format.
-    username, user_domain = email, ''
-
-  base_username = username.split('+')[0]
-  cutoff_point = min(8, max(1, len(base_username) - 3))
-  obscured_username = base_username[:cutoff_point]
-  obscured_email = '%s...@%s' %(obscured_username, user_domain)
-
-  return username, user_domain, obscured_username, obscured_email
-
-
-def _ShouldRevealEmail(auth, project, viewed_email):
-  """Decide whether to publish a user's email address.
-
-  Args:
-   auth: The AuthData of the user viewing the email addresses.
-   project: The Project PB to which the viewed users belong.
-   viewed_email: The email of the viewed user.
-
-  Returns:
-    True if email addresses should be published to the logged-in user.
-  """
-  # Case 1: Anon users don't see anything revealed.
-  if auth.user_pb is None:
-    return False
-
-  # Case 2: site admins always see unobscured email addresses.
-  if auth.user_pb.is_site_admin:
-    return True
-
-  # Case 3: Project members see the unobscured email of everyone in a project.
-  if project and framework_bizobj.UserIsInProject(project, auth.effective_ids):
-    return True
-
-  # Case 4: Do not obscure your own email.
-  if viewed_email and auth.user_pb.email == viewed_email:
-    return True
-
-  return False
-
-
 def RevealAllEmailsToMembers(auth, project, users_by_id):
   """Allow project members to see unobscured email addresses in that project.
 
@@ -214,7 +159,7 @@ def RevealAllEmailsToMembers(auth, project, users_by_id):
     publish email address.
   """
   for user_view in users_by_id.values():
-    if _ShouldRevealEmail(auth, project, user_view.email):
+    if framework_bizobj.ShouldRevealEmail(auth, project, user_view.email):
       user_view.RevealEmail()
 
 
@@ -245,7 +190,8 @@ def GetViewedUserDisplayName(mr):
                     and mr.viewed_user_auth.user_view.obscure_email)
   if email_obscured:
     (_username, _domain, _obscured_username,
-     obscured_email) = ParseAndObscureAddress(mr.viewed_user_auth.email)
+     obscured_email) = framework_bizobj.ParseAndObscureAddress(
+         mr.viewed_user_auth.email)
     viewed_user_display_name = obscured_email
   else:
     viewed_user_display_name = mr.viewed_user_auth.email

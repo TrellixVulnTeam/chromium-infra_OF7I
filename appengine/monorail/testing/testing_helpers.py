@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import email
 
 from framework import emailfmt
-from framework import framework_views
+from framework import framework_bizobj
 from proto import user_pb2
 from services import service_manager
 from services import template_svc
@@ -47,9 +47,12 @@ ALERT_EMAIL_HEADER_LINES = HEADER_LINES + [
     (AlertEmailHeader.LABEL, ''),
 ]
 
+
+# TODO(crbug/monorail/7238): this should be moved to framework_bizobj
+# as this is no longer only used for testing.
 def ObscuredEmail(address):
   (_username, _domain, _obs_username,
-   obs_email) = framework_views.ParseAndObscureAddress(address)
+   obs_email) = framework_bizobj.ParseAndObscureAddress(address)
   return obs_email
 
 def MakeMessage(header_list, body):

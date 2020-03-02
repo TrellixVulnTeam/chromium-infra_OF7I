@@ -1674,7 +1674,7 @@ class WorkEnv(object):
     with self.mc.profiler.Phase('Validating proposed parent'):
       # We only offer self-serve account linking to matching usernames.
       (p_username, p_domain,
-       _obs_username, _obs_email) = framework_views.ParseAndObscureAddress(
+       _obs_username, _obs_email) = framework_bizobj.ParseAndObscureAddress(
           parent_email)
       c_view = self.mc.auth.user_view
       if p_username != c_view.username:

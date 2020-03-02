@@ -13,7 +13,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import logging
 import re
 import string
 
@@ -22,6 +21,7 @@ from third_party import six
 import settings
 from framework import framework_constants
 from proto import tracker_pb2
+from services import client_config_svc
 
 
 # Pattern to match a valid project name.  Users of this pattern MUST use
@@ -46,6 +46,99 @@ RE_COLUMN_NAME = r'\w+[\w+-.]*\w+'
 
 # Compiled regexp to match a valid column specification.
 RE_COLUMN_SPEC = re.compile('(%s(\s%s)*)*$' % (RE_COLUMN_NAME, RE_COLUMN_NAME))
+
+
+def ShouldRevealEmail(user_auth, project, viewed_email):
+  # type: AuthData, Project, str -> bool
+  """Decide whether to publish a user's email address.
+
+  Args:
+   auth: The AuthData of the user viewing the email addresses.
+   project: The Project PB to which the viewed user belongs.
+   viewed_email: The email of the viewed user.
+
+  Returns:
+    True if email addresses should be published to the logged-in user.
+  """
+  # Case 1: Anon users don't see anything revealed.
+  if user_auth.user_pb is None:
+    return False
+
+  # Case 2: site admins always see unobscured email addresses.
+  if user_auth.user_pb.is_site_admin:
+    return True
+
+  # Case 3: Project members see the unobscured email of everyone in a project.
+  if project and UserIsInProject(project, user_auth.effective_ids):
+    return True
+
+  # Case 4: Do not obscure your own email.
+  if viewed_email and user_auth.user_pb.email == viewed_email:
+    return True
+
+  return False
+
+
+def ParseAndObscureAddress(email):
+  # type: str -> str
+  """Break the given email into username and domain, and obscure.
+
+  Args:
+    email: string email address to process
+
+  Returns:
+    A 4-tuple (username, domain, obscured_username, obscured_email).
+    The obscured_username is truncated the same way that Google Groups does it:
+    it truncates at 8 characters or truncates OFF 3 characters, whichever
+    results in a shorter obscured_username.
+  """
+  if '@' in email:
+    username, user_domain = email.split('@', 1)
+  else:  # don't fail if User table has unexpected email address format.
+    username, user_domain = email, ''
+
+  base_username = username.split('+')[0]
+  cutoff_point = min(8, max(1, len(base_username) - 3))
+  obscured_username = base_username[:cutoff_point]
+  obscured_email = '%s...@%s' %(obscured_username, user_domain)
+
+  return username, user_domain, obscured_username, obscured_email
+
+
+# TODO(crbug/monorail/7238): allow checking for multiple projects for Hotlists.
+def CreateUserDisplayNames(user_auth, users, project):
+  # type: AuthData, Colections[user_pb2.User], project_pb2.Project ->
+  #   Mapping[int, str]
+  """Create the display names of the given users based on the current user and
+      project.
+
+  Args:
+    user_auth: AuthData object that identifies the logged in user.
+    users: Collection of User PB objects.
+    project: Project PB that the logged in user is viewing the users in.
+
+  Returns:
+    A Dict of user_ids to display names. If a given User does not have an email,
+      the email will be an empty string.
+  """
+  display_names = {}
+  for user in users:
+    if user.user_id == framework_constants.DELETED_USER_ID:
+      display_names[user.user_id] = framework_constants.DELETED_USER_NAME
+    elif not user.email:
+      display_names[user.user_id] = ''
+    elif user.email in client_config_svc.GetServiceAccountMap():
+        display_names[user.user_id] = client_config_svc.GetServiceAccountMap()[
+            user.email]
+    elif ShouldRevealEmail(
+        user_auth, project, user.email) or not user.obscure_email:
+      display_names[user.user_id] = user.email
+    else:
+      (_username, _domain, _obs_username,
+       obs_email) = ParseAndObscureAddress(user.email)
+      display_names[user.user_id] = obs_email
+
+  return display_names
 
 
 def IsValidProjectName(s):
