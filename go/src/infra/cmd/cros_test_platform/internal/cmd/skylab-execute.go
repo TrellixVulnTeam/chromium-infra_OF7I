@@ -100,20 +100,15 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 	}
 
 	resps, err := c.handleRequests(ctx, d, runner, client)
-	if err != nil && !containsSomeResponse(resps) {
-		// Catastrophic error. There is no reasonable response to write.
+	if err != nil {
 		return err
 	}
-	return c.writeResponsesWithError(resps, err)
-}
-
-func containsSomeResponse(rs map[string]*steps.ExecuteResponse) bool {
-	for _, r := range rs {
-		if r != nil {
-			return true
-		}
-	}
-	return false
+	return writeResponse(
+		c.outputPath,
+		&steps.ExecuteResponses{
+			TaggedResponses: resps,
+		},
+	)
 }
 
 func extractOneConfig(trs map[string]*steps.ExecuteRequest) *config.Config {
@@ -210,9 +205,4 @@ func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Tim
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, skylab)
 	return runner.Responses(), err
-}
-
-func (c *skylabExecuteRun) writeResponsesWithError(resps map[string]*steps.ExecuteResponse, err error) error {
-	r := &steps.ExecuteResponses{TaggedResponses: resps}
-	return writeResponseWithError(c.outputPath, r, err)
 }
