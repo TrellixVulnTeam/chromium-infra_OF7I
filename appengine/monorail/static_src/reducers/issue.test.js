@@ -1107,6 +1107,21 @@ describe('issue', () => {
             assert.deepEqual(newState, {'proj:1': true, 'proj:2': true});
           });
 
+      it('FETCH_ISSUES_STARRED_SUCCESS does not time out with 10,000 stars',
+          () => {
+            const state = {};
+            const starredIssueRefs = [];
+            const expected = {};
+            for (let i = 1; i <= 10000; i++) {
+              starredIssueRefs.push({projectName: 'proj', localId: i});
+              expected[`proj:${i}`] = true;
+            }
+            const newState = issue.starredIssuesReducer(state,
+                {type: issue.FETCH_ISSUES_STARRED_SUCCESS, starredIssueRefs},
+            );
+            assert.deepEqual(newState, expected);
+          });
+
       it('STAR_SUCCESS updates the starredIssues object', () => {
         const state = {'proj:1': true, 'proj:2': false};
         const newState = issue.starredIssuesReducer(state,

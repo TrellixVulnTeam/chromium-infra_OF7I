@@ -387,8 +387,11 @@ export const starredIssuesReducer = createReducer({}, {
     return {...state, [issueRefToString(issueRef)]: starred};
   },
   [FETCH_ISSUES_STARRED_SUCCESS]: (_state, {starredIssueRefs}) => {
-    return starredIssueRefs.reduce((obj, issueRef) => ({
-      ...obj, [issueRefToString(issueRef)]: true}), {});
+    const normalizedStars = {};
+    starredIssueRefs.forEach((issueRef) => {
+      normalizedStars[issueRefToString(issueRef)] = true;
+    });
+    return normalizedStars;
   },
   [FETCH_IS_STARRED_SUCCESS]: (state, {issueRef, starred}) => {
     const refString = issueRefToString(issueRef);
