@@ -34,6 +34,9 @@ from tracker import tracker_bizobj
 from tracker import tracker_constants
 
 
+# NOTE: we are in the process of moving away from mox towards mock.
+# This file is a mix of both. All new tests or big test updates should make
+# use of the mock package.
 def MakeFeaturesService(cache_manager, my_mox):
   features_service = features_svc.FeaturesService(cache_manager,
       fake.ConfigService())
@@ -856,6 +859,33 @@ Delete.assert_called_once_with(
             (hotlist_id, 333, 'editor'),
         ],
         commit=False)
+
+  def SetUpRemoveHotlistEditors(self):
+    hotlist = fake.Hotlist(
+        hotlist_name='hotlist',
+        hotlist_id=456,
+        owner_ids=[111],
+        editor_ids=[222, 333, 444])
+    self.features_service.GetHotlist = mock.Mock(return_value=hotlist)
+    self.features_service.hotlist2user_tbl.Delete = mock.Mock()
+    return hotlist
+
+  def testRemoveHotlistEditors(self):
+    """We can remove editors from a hotlist."""
+    hotlist = self.SetUpRemoveHotlistEditors()
+    remove_editor_ids = [222, 333]
+    self.features_service.RemoveHotlistEditors(
+        self.cnxn, hotlist.hotlist_id, remove_editor_ids=remove_editor_ids)
+    self.features_service.hotlist2user_tbl.Delete.assert_called_once_with(
+        self.cnxn, hotlist_id=hotlist.hotlist_id, user_id=remove_editor_ids)
+    self.assertEqual(hotlist.editor_ids, [444])
+
+  def testRemoveHotlistEditors_NoOp(self):
+    """A NoOp update does not trigger and sql table calls."""
+    hotlist = self.SetUpRemoveHotlistEditors()
+    with self.assertRaises(exceptions.InputException):
+      self.features_service.RemoveHotlistEditors(
+          self.cnxn, hotlist.hotlist_id, remove_editor_ids=[])
 
   def SetUpUpdateHotlistItemsFields(self, hotlist_id, issue_ids):
     hotlist_rows = [(hotlist_id, 'hotlist', '', '', True, '')]

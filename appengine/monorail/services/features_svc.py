@@ -813,6 +813,34 @@ class FeaturesService(object):
     if add_editor_ids:
       hotlist.editor_ids.extend(add_editor_ids)
 
+  def RemoveHotlistEditors(self, cnxn, hotlist_id, remove_editor_ids):
+    # type: MonorailConnection, int, Collection[int]
+    """Remove given editors from the specified hotlist.
+
+    Args:
+      cnxn: MonorailConnection object.
+      hotlist_id: int ID of the Hotlist we want to update.
+      remove_editor_ids: collection of existing hotlist editor User IDs
+        that we want to remove from the hotlist.
+
+    Raises:
+      NoSuchHotlistException: if the hotlist is not found.
+      InputException: if there are not editors to remove.
+    """
+    if not remove_editor_ids:
+      raise exceptions.InputException
+    hotlist = self.GetHotlist(cnxn, hotlist_id, use_cache=False)
+    if not hotlist:
+      raise NoSuchHotlistException()
+
+    self.hotlist2user_tbl.Delete(
+        cnxn, hotlist_id=hotlist_id, user_id=remove_editor_ids)
+    self.hotlist_2lc.InvalidateKeys(cnxn, [hotlist_id])
+
+    # Update in-memory data
+    for remove_id in remove_editor_ids:
+      hotlist.editor_ids.remove(remove_id)
+
   def AddIssueToHotlists(self, cnxn, hotlist_ids, issue_tuple, issue_svc,
                          chart_svc, commit=True):
     """Add a single issue, specified in the issue_tuple, to the given hotlists.
