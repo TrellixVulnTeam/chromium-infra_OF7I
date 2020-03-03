@@ -386,13 +386,23 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type HotlistsClient interface {
 	// Returns the requested Hotlist.
-	// TODO(crbug/monorail/6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   NOT_FOUND if the requested hotlist is not found.
+	//   PERMISSION_DENIED if the requester is now allowed to view the hotlist.
+	//   INVALID_ARGUMENT if the given resource name is not valid.
 	GetHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*Hotlist, error)
 	// Updates a hotlist.
+	//
 	// TODO(crbug/monorail/6988): Document possible errors when implemented.
 	UpdateHotlist(ctx context.Context, in *UpdateHotlistRequest, opts ...grpc.CallOption) (*Hotlist, error)
 	// Returns a list of all HotlistItems in the hotlist.
-	// TODO(crbug/monorail/6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   NOT_FOUND if the parent hotlist is not found.
+	//   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
+	//   INVALID_ARGUMENT if the page_token or given hotlist resource name is not
+	//   valid.
 	ListHotlistItems(ctx context.Context, in *ListHotlistItemsRequest, opts ...grpc.CallOption) (*ListHotlistItemsResponse, error)
 	// Reranks a hotlist's items.
 	//
@@ -494,13 +504,23 @@ func (c *hotlistsClient) RerankHotlistItems(ctx context.Context, in *RerankHotli
 // HotlistsServer is the server API for Hotlists service.
 type HotlistsServer interface {
 	// Returns the requested Hotlist.
-	// TODO(crbug/monorail/6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   NOT_FOUND if the requested hotlist is not found.
+	//   PERMISSION_DENIED if the requester is now allowed to view the hotlist.
+	//   INVALID_ARGUMENT if the given resource name is not valid.
 	GetHotlist(context.Context, *GetHotlistRequest) (*Hotlist, error)
 	// Updates a hotlist.
+	//
 	// TODO(crbug/monorail/6988): Document possible errors when implemented.
 	UpdateHotlist(context.Context, *UpdateHotlistRequest) (*Hotlist, error)
 	// Returns a list of all HotlistItems in the hotlist.
-	// TODO(crbug/monorail/6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   NOT_FOUND if the parent hotlist is not found.
+	//   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
+	//   INVALID_ARGUMENT if the page_token or given hotlist resource name is not
+	//   valid.
 	ListHotlistItems(context.Context, *ListHotlistItemsRequest) (*ListHotlistItemsResponse, error)
 	// Reranks a hotlist's items.
 	//

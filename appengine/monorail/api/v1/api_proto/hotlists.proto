@@ -18,7 +18,11 @@ import "google_proto/google/api/annotations.proto";
 // Hotlists service includes all methods needed for managing Hotlists.
 service Hotlists {
   // Returns the requested Hotlist.
-  // TODO(crbug/monorail/6988): Document possible errors when implemented.
+  //
+  // Raises:
+  //   NOT_FOUND if the requested hotlist is not found.
+  //   PERMISSION_DENIED if the requester is now allowed to view the hotlist.
+  //   INVALID_ARGUMENT if the given resource name is not valid.
   rpc GetHotlist (GetHotlistRequest) returns (Hotlist) {
     option (google.api.http) = {
       post: "/prpc/monorail.v1.Hotlists/GetHotlist"
@@ -26,6 +30,7 @@ service Hotlists {
     };
   }
   // Updates a hotlist.
+  //
   // TODO(crbug/monorail/6988): Document possible errors when implemented.
   rpc UpdateHotlist (UpdateHotlistRequest) returns (Hotlist) {
     option (google.api.http) = {
@@ -34,7 +39,12 @@ service Hotlists {
     };
   }
   // Returns a list of all HotlistItems in the hotlist.
-  // TODO(crbug/monorail/6988): Document possible errors when implemented.
+  //
+  // Raises:
+  //   NOT_FOUND if the parent hotlist is not found.
+  //   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
+  //   INVALID_ARGUMENT if the page_token or given hotlist resource name is not
+  //   valid.
   rpc ListHotlistItems (ListHotlistItemsRequest) returns (ListHotlistItemsResponse) {
     option (google.api.http) = {
       post: "/prpc/monorail.v1.Hotlists/ListHotlistItems"
