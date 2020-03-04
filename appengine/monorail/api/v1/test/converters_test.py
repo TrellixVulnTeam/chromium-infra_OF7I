@@ -16,6 +16,7 @@ from api.v1 import converters
 from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import issue_objects_pb2
 from api.v1.api_proto import user_objects_pb2
+from framework import authdata
 from testing import fake
 from testing import testing_helpers
 from services import service_manager
@@ -26,6 +27,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.services = service_manager.Services(
         issue=fake.IssueService(),
         project=fake.ProjectService(),
+        usergroup=fake.UserGroupService(),
         user=fake.UserService())
     self.cnxn = fake.MonorailConnection()
     self.PAST_TIME = 12345
@@ -122,26 +124,18 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(api_items, [])
 
   def testConvertUsers(self):
-    expected_api_user = [
-        user_objects_pb2.User(
-            name='users/111',
-            display_name='one@example.com',
-            availability_message='non-empty-string')
-    ]
-
-    user_pb = testing_helpers.Blank(
-        user_id=111,
-        display_name='one@example.com',
-        email='one@example.com',
-        banned=False,
-        is_site_admin=True,
-        linked_parent_id=None,
-        vacation_message='non-empty-string')
-
-    users = [user_pb]
-
-    user_auth = testing_helpers.Blank(user_pb=user_pb)
+    self.user_1.vacation_message='non-empty-string'
+    user_ids = [self.user_1.user_id]
+    user_auth = authdata.AuthData.FromUser(
+        self.cnxn, self.user_1, self.services)
     project = None
 
+    expected_user_dict = {
+        self.user_1.user_id: user_objects_pb2.User(
+            name='users/111',
+            display_name='one@example.com',
+            availability_message='non-empty-string')}
     self.assertEqual(
-        converters.ConvertUsers(users, user_auth, project), expected_api_user)
+        converters.ConvertUsers(
+            self.cnxn, user_ids, user_auth, project, self.services),
+        expected_user_dict)

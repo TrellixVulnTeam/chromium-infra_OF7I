@@ -109,38 +109,50 @@ def ConvertHotlistItems(cnxn, hotlist_id, items, services):
 
   return api_items
 
+# Users
 
-def ConvertUsers(users, user_auth, project):
-  # List(protorpc.User), AuthData, protorpc.Project ->
-  # List(api_proto.user_objects_pb2.User)
+
+# Because Monorail obscures emails of Users on the site, wherever
+# in the API we would normally use User resource names, we use
+# full User objects instead. For this reason, ConvertUsers is called
+# where we would normally call some ConvertUserResourceNames function.
+# So ConvertUsers follows the patterns in resource_name_converters.py
+# by taking in User IDs and and returning a dict rather than a list.
+# TODO(crbug/monorail/7238): take a list of projects when
+# CreateUserDisplayNames() can take in a list of projects.
+def ConvertUsers(cnxn, user_ids, user_auth, project, services):
+  # type: (MonorailConnection, List(int), AuthData, protorpc.Project,
+  #   Services) -> Map(int, api_proto.user_objects_pb2.User)
   """Convert list of protorpc_users into list of protoc Users.
 
   Args:
-    users: List of protorpc.Users
-    user_auth: AuthData of requester
-    project: currently viewed project
+    cnxn: MonorailConnection object.
+    user_ids: List of User IDs.
+    user_auth: AuthData of the logged-in user.
+    project: currently viewed project.
+    services: Services object for connections to backend services.
 
   Returns:
-    List of equivalent protoc Users.
+    Dict of User IDs to User resource names for all given users.
   """
-  api_users = []
+  user_ids_to_names = {}
 
   # Get display names
-  display_names = framework_bizobj.CreateUserDisplayNames(
-      user_auth, users, project)
+  users_by_id = services.user.GetUsersByIDs(cnxn, user_ids)
+  display_names_by_id = framework_bizobj.CreateUserDisplayNames(
+      user_auth, users_by_id.values(), project)
 
-  for user in users:
-    user_id = user.user_id
+
+  for user_id, user in users_by_id.items():
     name = rnc.ConvertUserNames([user_id]).get(user_id)
 
-    display_name = display_names.get(user_id)
+    display_name = display_names_by_id.get(user_id)
     availability = framework_helpers.GetUserAvailability(user)
     availability_message, _availability_status = availability
 
-    api_users.append(
-        user_objects_pb2.User(
-            name=name,
-            display_name=display_name,
-            availability_message=availability_message))
+    user_ids_to_names[user_id] = user_objects_pb2.User(
+        name=name,
+        display_name=display_name,
+        availability_message=availability_message)
 
-  return api_users
+  return user_ids_to_names
