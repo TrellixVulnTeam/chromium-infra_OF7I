@@ -15,14 +15,18 @@ from google.protobuf import timestamp_pb2
 from api.v1 import converters
 from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import issue_objects_pb2
+from api.v1.api_proto import user_objects_pb2
 from testing import fake
+from testing import testing_helpers
 from services import service_manager
 
 class ConverterFunctionsTest(unittest.TestCase):
 
   def setUp(self):
     self.services = service_manager.Services(
-        issue=fake.IssueService(), project=fake.ProjectService())
+        issue=fake.IssueService(),
+        project=fake.ProjectService(),
+        user=fake.UserService())
     self.cnxn = fake.MonorailConnection()
     self.PAST_TIME = 12345
     self.project_1 = self.services.project.TestAddProject(
@@ -45,6 +49,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         project_name=self.project_2.project_name)
     self.services.issue.TestAddIssue(self.issue_1)
     self.services.issue.TestAddIssue(self.issue_2)
+    self.user_1 = self.services.user.TestAddUser('one@example.com', 111)
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -115,3 +120,28 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_items = converters.ConvertHotlistItems(
         self.cnxn, hotlist.hotlist_id, hotlist.items, self.services)
     self.assertEqual(api_items, [])
+
+  def testConvertUsers(self):
+    expected_api_user = [
+        user_objects_pb2.User(
+            name='users/111',
+            display_name='one@example.com',
+            availability_message='non-empty-string')
+    ]
+
+    user_pb = testing_helpers.Blank(
+        user_id=111,
+        display_name='one@example.com',
+        email='one@example.com',
+        banned=False,
+        is_site_admin=True,
+        linked_parent_id=None,
+        vacation_message='non-empty-string')
+
+    users = [user_pb]
+
+    user_auth = testing_helpers.Blank(user_pb=user_pb)
+    project = None
+
+    self.assertEqual(
+        converters.ConvertUsers(users, user_auth, project), expected_api_user)

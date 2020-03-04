@@ -107,7 +107,7 @@ def ParseAndObscureAddress(email):
 
 # TODO(crbug/monorail/7238): allow checking for multiple projects for Hotlists.
 def CreateUserDisplayNames(user_auth, users, project):
-  # type: AuthData, Colections[user_pb2.User], project_pb2.Project ->
+  # type: AuthData, Collections[user_pb2.User], project_pb2.Project ->
   #   Mapping[int, str]
   """Create the display names of the given users based on the current user and
       project.
@@ -128,8 +128,8 @@ def CreateUserDisplayNames(user_auth, users, project):
     elif not user.email:
       display_names[user.user_id] = ''
     elif user.email in client_config_svc.GetServiceAccountMap():
-        display_names[user.user_id] = client_config_svc.GetServiceAccountMap()[
-            user.email]
+      display_names[user.user_id] = client_config_svc.GetServiceAccountMap()[
+          user.email]
     elif ShouldRevealEmail(
         user_auth, project, user.email) or not user.obscure_email:
       display_names[user.user_id] = user.email

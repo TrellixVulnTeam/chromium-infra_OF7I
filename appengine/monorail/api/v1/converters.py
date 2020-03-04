@@ -13,6 +13,10 @@ from google.protobuf import timestamp_pb2
 from api import resource_name_converters as rnc
 from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import issue_objects_pb2
+from api.v1.api_proto import user_objects_pb2
+
+from framework import framework_bizobj
+from framework import framework_helpers
 
 
 def ConvertHotlist(hotlist):
@@ -93,14 +97,50 @@ def ConvertHotlistItems(cnxn, hotlist_id, items, services):
 
   api_items = []
   for item in found_items:
-      api_item = feature_objects_pb2.HotlistItem(
-          name=resource_names_dict.get(item.issue_id),
-          issue=issue_names_dict.get(item.issue_id),
-          rank=friendly_ranks_dict[item.rank],
-          adder=adder_names_dict.get(item.adder_id),
-          note=item.note)
-      if item.date_added:
-        api_item.create_time.FromSeconds(item.date_added)
-      api_items.append(api_item)
+    api_item = feature_objects_pb2.HotlistItem(
+        name=resource_names_dict.get(item.issue_id),
+        issue=issue_names_dict.get(item.issue_id),
+        rank=friendly_ranks_dict[item.rank],
+        adder=adder_names_dict.get(item.adder_id),
+        note=item.note)
+    if item.date_added:
+      api_item.create_time.FromSeconds(item.date_added)
+    api_items.append(api_item)
 
   return api_items
+
+
+def ConvertUsers(users, user_auth, project):
+  # List(protorpc.User), AuthData, protorpc.Project ->
+  # List(api_proto.user_objects_pb2.User)
+  """Convert list of protorpc_users into list of protoc Users.
+
+  Args:
+    users: List of protorpc.Users
+    user_auth: AuthData of requester
+    project: currently viewed project
+
+  Returns:
+    List of equivalent protoc Users.
+  """
+  api_users = []
+
+  # Get display names
+  display_names = framework_bizobj.CreateUserDisplayNames(
+      user_auth, users, project)
+
+  for user in users:
+    user_id = user.user_id
+    name = rnc.ConvertUserNames([user_id]).get(user_id)
+
+    display_name = display_names.get(user_id)
+    availability = framework_helpers.GetUserAvailability(user)
+    availability_message, _availability_status = availability
+
+    api_users.append(
+        user_objects_pb2.User(
+            name=name,
+            display_name=display_name,
+            availability_message=availability_message))
+
+  return api_users
