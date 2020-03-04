@@ -38,8 +38,9 @@ func NewClient(ctx context.Context, env site.Environment, authFlags authcli.Flag
 	}
 
 	pClient := &prpc.Client{
-		C:    hClient,
-		Host: env.BuildbucketHost,
+		C:       hClient,
+		Host:    env.BuildbucketHost,
+		Options: site.DefaultPRPCOptions,
 	}
 
 	return &Client{

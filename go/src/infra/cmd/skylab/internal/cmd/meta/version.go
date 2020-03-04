@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -53,10 +54,11 @@ func (c *versionRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 
-	fmt.Printf("Package:\t%s\n", p.Package)
-	fmt.Printf("Version:\t%s\n", p.Pin.InstanceID)
-	fmt.Printf("Updated:\t%s\n", d.RegisteredTs)
-	fmt.Printf("Tracking:\t%s\n", p.Tracking)
+	fmt.Printf(fmt.Sprintf("skylab CLI tool: v%s+%s\n", site.VersionNumber, time.Time(d.RegisteredTs).Format("20060102150405")))
+	fmt.Printf("CIPD Package:\t%s\n", p.Package)
+	fmt.Printf("CIPD Version:\t%s\n", p.Pin.InstanceID)
+	fmt.Printf("CIPD Updated:\t%s\n", d.RegisteredTs)
+	fmt.Printf("CIPD Tracking:\t%s\n", p.Tracking)
 	return nil
 }
 

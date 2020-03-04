@@ -6,6 +6,7 @@
 package site
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -115,11 +116,22 @@ var DefaultAuthOptions = auth.Options{
 	Scopes:       []string{auth.OAuthScopeEmail, gitiles.OAuthScope},
 }
 
+// VersionNumber is the version number for the tool. It follows the Semantic
+// Versioning Specification (http://semver.org) and the format is:
+// "MAJOR.MINOR.0+BUILD_TIME".
+// We can ignore the PATCH part (i.e. it's always 0) to make the maintenance
+// work easier.
+// We can also print out the build time (e.g. 20060102150405) as the METADATA
+// when show version to users.
+const VersionNumber = "2.0.0"
+
 // DefaultPRPCOptions is used for PRPC clients.  If it is nil, the
 // default value is used.  See prpc.Options for details.
 //
 // This is provided so it can be overridden for testing.
-var DefaultPRPCOptions *prpc.Options
+var DefaultPRPCOptions *prpc.Options = &prpc.Options{
+	UserAgent: fmt.Sprintf("skylab/%s", VersionNumber),
+}
 
 // SecretsDir returns an absolute path to a directory (in $HOME) to keep secret
 // files in (e.g. OAuth refresh tokens) or an empty string if $HOME can't be
