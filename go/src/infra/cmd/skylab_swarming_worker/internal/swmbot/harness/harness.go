@@ -241,6 +241,7 @@ func (u labelUpdater) update(dutID string, old *inventory.DeviceUnderTest, new *
 	return nil
 }
 
+// TODO(xixuan): move it to lib.
 func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutState {
 	state := lab.DutState{
 		Id: &lab.ChromeOSDeviceID{Value: dutID},
@@ -266,10 +267,12 @@ func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutSt
 		} else {
 			state.AudioLoopbackDongle = lab.PeripheralState_UNKNOWN
 		}
+		state.WorkingBluetoothBtpeer = p.GetWorkingBluetoothBtpeer()
 	} else {
 		state.Servo = lab.PeripheralState_UNKNOWN
 		state.Chameleon = lab.PeripheralState_UNKNOWN
 		state.AudioLoopbackDongle = lab.PeripheralState_UNKNOWN
+		state.WorkingBluetoothBtpeer = 0
 	}
 	return &state
 }

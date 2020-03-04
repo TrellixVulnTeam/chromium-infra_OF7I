@@ -335,6 +335,10 @@ func setDutState(p *inventory.Peripherals, s *lab.DutState) {
 	setDutStateHelper(s.GetServo(), &(p.Servo))
 	setDutStateHelper(s.GetChameleon(), &(p.Chameleon))
 	setDutStateHelper(s.GetAudioLoopbackDongle(), &(p.AudioLoopbackDongle))
+
+	if n := s.GetWorkingBluetoothBtpeer(); n > 0 {
+		p.WorkingBluetoothBtpeer = &n
+	}
 }
 
 func createDutLabels(lc *lab.ChromeOSDevice, osType *inventory.SchedulableLabels_OSType) *inventory.SchedulableLabels {

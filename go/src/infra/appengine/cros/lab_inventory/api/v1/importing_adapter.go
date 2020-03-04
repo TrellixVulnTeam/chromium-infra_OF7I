@@ -344,9 +344,10 @@ func createDutState(states *[]*lab.DutState, olddata *inventory.CommonDeviceSpec
 	}
 	peri := olddata.GetLabels().GetPeripherals()
 	*states = append(*states, &lab.DutState{
-		Id:                  &lab.ChromeOSDeviceID{Value: olddata.GetId()},
-		Servo:               getServoState(peri),
-		Chameleon:           boolToDutState(peri.GetChameleon()),
-		AudioLoopbackDongle: boolToDutState(peri.GetAudioLoopbackDongle()),
+		Id:                     &lab.ChromeOSDeviceID{Value: olddata.GetId()},
+		Servo:                  getServoState(peri),
+		Chameleon:              boolToDutState(peri.GetChameleon()),
+		AudioLoopbackDongle:    boolToDutState(peri.GetAudioLoopbackDongle()),
+		WorkingBluetoothBtpeer: peri.GetWorkingBluetoothBtpeer(),
 	})
 }

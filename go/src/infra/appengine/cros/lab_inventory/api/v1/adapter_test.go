@@ -123,9 +123,10 @@ var devInV2State = lab.DutState{
 	Id: &lab.ChromeOSDeviceID{
 		Value: "test_dut",
 	},
-	Servo:               lab.PeripheralState_BROKEN,
-	Chameleon:           lab.PeripheralState_WORKING,
-	AudioLoopbackDongle: lab.PeripheralState_NOT_CONNECTED,
+	Servo:                  lab.PeripheralState_BROKEN,
+	Chameleon:              lab.PeripheralState_WORKING,
+	AudioLoopbackDongle:    lab.PeripheralState_NOT_CONNECTED,
+	WorkingBluetoothBtpeer: 3,
 }
 
 var labstationInV2 = lab.ChromeOSDevice{
@@ -162,6 +163,7 @@ var labstationInV2 = lab.ChromeOSDevice{
 
 var data = ExtendedDeviceData{
 	LabConfig: &devInV2,
+	DutState:  &devInV2State,
 	DeviceConfig: &device.Config{
 		Id: &device.ConfigId{
 			PlatformId: &device.PlatformId{
@@ -274,6 +276,7 @@ common {
 		peripherals {
 			audio_board: true
 			audio_box: true
+			audio_loopback_dongle: false
 			chameleon: true
 			chameleon_type: CHAMELEON_TYPE_BT_BLE_HID
 			chameleon_type: CHAMELEON_TYPE_BT_PEER
@@ -282,8 +285,11 @@ common {
 			mimo: true
 			ptzpro2: true
 			camerabox: true
+			servo: true
+   			servo_state: BROKEN
 			wificell: true
 			router_802_11ax: true
+			working_bluetooth_btpeer: 3
 		}
 		phase: PHASE_DVT
 		platform: "coral"
@@ -531,6 +537,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 			So(s1, ShouldEqual, s2)
 		})
 		Convey("servo_state is empty by default", func() {
+			dataCopy.DutState = &lab.DutState{}
 			d, err := AdaptToV1DutSpec(&dataCopy)
 			So(err, ShouldBeNil)
 			So(d.GetCommon().GetLabels().GetPeripherals().ServoState, ShouldBeNil)
