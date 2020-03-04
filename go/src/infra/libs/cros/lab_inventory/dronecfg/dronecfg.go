@@ -11,6 +11,9 @@ import (
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+
+	ds "infra/libs/cros/lab_inventory/datastore"
 )
 
 // DUT describes a DUT for the purpose of a drone config.
@@ -108,4 +111,27 @@ const queenDronePrefix = "drone-queen-"
 // be pushed to the drone queen service.
 func QueenDroneName(env string) string {
 	return queenDronePrefix + env
+}
+
+// SyncDeviceList sync the device list of the drone config with the device data
+// from the inventory.
+func SyncDeviceList(ctx context.Context, droneQueenName string) error {
+	var devs []ds.DeviceEntity
+	if err := datastore.GetAll(ctx, datastore.NewQuery(ds.DeviceKind), &devs); err != nil {
+		return errors.Annotate(err, "sync dev list to drone config").Err()
+	}
+	logging.Infof(ctx, "Syncing %s devices to drone config", len(devs))
+	duts := make([]DUT, len(devs))
+	for i := range devs {
+		duts[i] = DUT{ID: string(devs[i].ID), Hostname: devs[i].Hostname}
+	}
+	e, err := Get(ctx, droneQueenName)
+	if err != nil {
+		return errors.Annotate(err, "get drone config").Err()
+	}
+	e.DUTs = duts
+	if err := datastore.Put(ctx, &e); err != nil {
+		return errors.Annotate(err, "save new drone config").Err()
+	}
+	return nil
 }

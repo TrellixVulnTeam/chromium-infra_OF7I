@@ -15,6 +15,10 @@ cron:
   url: /internal/cron/push-to-drone-queen
   schedule: every 10 minutes
 
+- description: Sync all devices to drone config
+  url: /internal/cron/sync-device-list-to-drone-config
+  schedule: every 24 hours
+
 - description: Compare inventory from V1 and V2
   url: /internal/cron/compare-inventory
   schedule: every 24 hours
