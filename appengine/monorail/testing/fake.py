@@ -2081,7 +2081,7 @@ class TemplateService(object):
 
   def __init__(self):
     self.templates_by_id = {}  # template_id: template_pb
-    self.templates_by_project_id = {}  # project_id: template_id
+    self.templates_by_project_id = {}  # project_id: [template_id]
 
   def TestAddIssueTemplateDef(
       self, template_id, project_id, name, content="", summary="",
@@ -2098,7 +2098,9 @@ class TemplateService(object):
         members_only=members_only, phases=phases)
     template.template_id = template_id
     self.templates_by_id[template_id] = template
-    self.templates_by_project_id[project_id] = template_id
+    if project_id not in self.templates_by_project_id:
+      self.templates_by_project_id[project_id] = []
+    self.templates_by_project_id[project_id].append(template_id)
     return template
 
   def GetTemplateById(self, cnxn, template_id):
@@ -2108,6 +2110,10 @@ class TemplateService(object):
     return filter(
         lambda template: template.template_id in template_ids,
         self.templates_by_id.values())
+
+  def GetProjectTemplates(self, cnxn, project_id):
+    template_ids = self.templates_by_project_id[project_id]
+    return self.GetTemplatesById(cnxn, template_ids)
 
   def ExpungeUsersInTemplates(self, cnxn, user_ids, limit=None):
     for _, template in self.templates_by_id.items():
