@@ -2104,6 +2104,11 @@ class TemplateService(object):
   def GetTemplateById(self, cnxn, template_id):
     return self.templates_by_id.get(template_id)
 
+  def GetTemplatesById(self, cnxn, template_ids):
+    return filter(
+        lambda template: template.template_id in template_ids,
+        self.templates_by_id.values())
+
   def ExpungeUsersInTemplates(self, cnxn, user_ids, limit=None):
     for _, template in self.templates_by_id.items():
       template.admin_ids = [user_id for user_id in template.admin_ids

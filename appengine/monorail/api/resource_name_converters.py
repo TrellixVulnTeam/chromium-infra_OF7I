@@ -22,6 +22,10 @@ from framework import exceptions
 from project import project_constants
 
 # Constants that hold regex patterns for resource names.
+PROJECT_NAME_PATTERN = (
+    r'projects\/(?P<project_name>%s)' % project_constants.PROJECT_NAME_PATTERN)
+PROJECT_NAME_RE = re.compile(r'%s$' % PROJECT_NAME_PATTERN)
+
 HOTLIST_PATTERN = r'hotlists\/(?P<hotlist_id>\d+)'
 HOTLIST_NAME_RE = re.compile(r'%s$' % HOTLIST_PATTERN)
 HOTLIST_ITEM_NAME_RE = re.compile(
@@ -43,6 +47,8 @@ HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
 ISSUE_NAME_TMPL = 'projects/{project}/issues/{local_id}'
 
 USER_NAME_TMPL = 'users/{user_id}'
+
+ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_name}'
 
 
 def _GetResourceNameMatch(name, regex):
@@ -300,3 +306,58 @@ def ConvertUserNames(user_ids):
     user_ids_to_names[user_id] = USER_NAME_TMPL.format(user_id=user_id)
 
   return user_ids_to_names
+
+
+# Projects
+
+
+def IngestProjectName(cnxn, name, services):
+  # str -> int
+  """Takes a Project resource name and returns the project id.
+
+  Args:
+    name: Resource name of a Project.
+
+  Returns:
+    The project's id
+
+  Raises:
+    InputException if the given name does not have a valid format.
+  """
+  match = _GetResourceNameMatch(name, PROJECT_NAME_RE)
+  project_name = match.group('project_name')
+
+  id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
+
+  return id_dict.get(project_name)
+
+
+def ConvertTemplateResourceNames(cnxn, project_id, template_ids, services):
+  # MonorailConnection, int, Collection[int] Service -> Mapping[int, str]
+  """Output template resource names in the format of api.crbug.com/Template
+
+  Args:
+    cnxn: MonorailConnection object.
+    project_id: project id of project that templates belong to
+    template_ids: list of template ids
+    services: Service object.
+
+  Returns:
+    Dict of template ID to template resource names for all found template ids.
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  id_to_resource_names = {}
+
+  project_name = services.project.LookupProjectNames(
+      cnxn, [project_id]).get(project_id)
+  if project_name is None:
+    raise exceptions.NoSuchProjectException(project_id)
+  templates = services.template.GetTemplatesById(cnxn, template_ids)
+
+  for template in templates:
+    id_to_resource_names[template.template_id] = ISSUE_TEMPLATE_TMPL.format(
+        project_name=project_name, template_name=template.name)
+
+  return id_to_resource_names

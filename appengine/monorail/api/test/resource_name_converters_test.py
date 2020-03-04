@@ -24,7 +24,8 @@ class ResourceNameConverterTest(unittest.TestCase):
         issue=fake.IssueService(),
         project=fake.ProjectService(),
         user=fake.UserService(),
-        features=fake.FeaturesService())
+        features=fake.FeaturesService(),
+        template=fake.TemplateService())
     self.cnxn = fake.MonorailConnection()
     self.PAST_TIME = 12345
     self.project_1 = self.services.project.TestAddProject(
@@ -51,6 +52,9 @@ class ResourceNameConverterTest(unittest.TestCase):
     self.hotlist_1 = self.services.features.TestAddHotlist(
         'HotlistName', owner_ids=[], editor_ids=[],
         hotlist_item_fields=hotlist_items)
+
+    self.template_1 = self.services.template.TestAddIssueTemplateDef(
+        1, 789, 'template_1_name')
 
   def testGetResourceNameMatch(self):
     """We can get a resource name match."""
@@ -192,3 +196,38 @@ class ResourceNameConverterTest(unittest.TestCase):
   def testConvertUserNames_Empty(self):
     """We can process an empty Users list."""
     self.assertEqual(rnc.ConvertUserNames([]), {})
+
+  def testIngestProjectName(self):
+    """We can get project name from Project resource names."""
+    name = 'projects/{}'.format(self.project_1.project_name)
+    expected = self.project_1.project_id
+    self.assertEqual(
+        rnc.IngestProjectName(self.cnxn, name, self.services), expected)
+
+  def testIngestProjectName_InvalidName(self):
+    """An exception is raised if the Hotlist's resource name is invalid"""
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestProjectName(self.cnxn, 'projects/', self.services)
+
+  def testConvertTemplateResourceNames(self):
+    """We can get IssueTemplate resource names."""
+    expected_resource_name = 'projects/{}/templates/{}'.format(
+        self.project_1.project_name, self.template_1.name)
+    expected = {self.template_1.template_id: expected_resource_name}
+
+    self.assertEqual(
+        rnc.ConvertTemplateResourceNames(
+            self.cnxn, self.project_1.project_id, [self.template_1.template_id],
+            self.services), expected)
+
+  def testConvertTemplateResourceNames_NoSuchProjectException(self):
+    """We get an exception if project with id does not exist."""
+    not_a_project_id = 1999
+    self.assertNotIn(
+        not_a_project_id,
+        self.services.project.GetAllProjects(self.cnxn).keys())
+
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertTemplateResourceNames(
+          self.cnxn, not_a_project_id, [self.template_1.template_id],
+          self.services)
