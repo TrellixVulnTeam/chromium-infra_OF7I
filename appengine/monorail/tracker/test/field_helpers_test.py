@@ -15,6 +15,7 @@ from framework import template_helpers
 from proto import project_pb2
 from proto import tracker_pb2
 from services import service_manager
+from services import config_svc
 from testing import fake
 from testing import testing_helpers
 from tracker import field_helpers
@@ -594,14 +595,30 @@ class FieldHelpersTest(unittest.TestCase):
 
   def testReviseFieldDefFromParsed_INT(self):
     parsed_field_def = field_helpers.ParsedFieldDef(
-        'EstDays', 'int_type', min_value=5, max_value=7, regex='',
-        needs_member=True, needs_perm='Commit', grants_perm='View',
+        'EstDays',
+        'int_type',
+        min_value=5,
+        max_value=7,
+        regex='',
+        needs_member=True,
+        needs_perm='Commit',
+        grants_perm='View',
         notify_on=tracker_pb2.NotifyTriggers.ANY_COMMENT,
-        is_required=True, is_niche=True, importance='required',
-        is_multivalued=True, field_docstring='updated doc', choices_text='',
-        applicable_type='Launch', applicable_predicate='', revised_labels=[],
-        date_action_str='ping_participants', approvers_str='', survey='',
-        parent_approval_name='', is_phase_field=False)
+        is_required=True,
+        is_niche=True,
+        importance='required',
+        is_multivalued=True,
+        field_docstring='updated doc',
+        choices_text='',
+        applicable_type='Launch',
+        applicable_predicate='',
+        revised_labels=[],
+        date_action_str='ping_participants',
+        approvers_str='',
+        survey='',
+        parent_approval_name='',
+        is_phase_field=False,
+        is_restricted_field=False)
 
     fd = tracker_bizobj.MakeFieldDef(
         123, 789, 'EstDays', tracker_pb2.FieldTypes.INT_TYPE, None,
@@ -632,3 +649,77 @@ class FieldHelpersTest(unittest.TestCase):
     self.assertTrue(new_fd.is_multivalued)
     self.assertEqual(new_fd.approval_id, 3)
     self.assertFalse(new_fd.is_phase_field)
+    self.assertFalse(new_fd.is_restricted_field)
+
+  def testParsedFieldDefAssertions_Accepted(self):
+    parsed_fd = field_helpers.ParsedFieldDef(
+        'EstDays',
+        'int_type',
+        min_value=5,
+        max_value=7,
+        regex='',
+        needs_member=True,
+        needs_perm='Commit',
+        grants_perm='View',
+        notify_on=tracker_pb2.NotifyTriggers.ANY_COMMENT,
+        is_required=True,
+        is_niche=False,
+        importance='required',
+        is_multivalued=True,
+        field_docstring='updated doc',
+        choices_text='',
+        applicable_type='Launch',
+        applicable_predicate='',
+        revised_labels=[],
+        date_action_str='ping_participants',
+        approvers_str='',
+        survey='',
+        parent_approval_name='',
+        is_phase_field=False,
+        is_restricted_field=False)
+
+    field_helpers.ParsedFieldDefAssertions(self.mr, parsed_fd)
+    self.assertFalse(self.mr.errors.AnyErrors())
+
+  def testParsedFieldDefAssertions_Rejected(self):
+    parsed_fd = field_helpers.ParsedFieldDef(
+        'restrictApprovalField',
+        'approval_type',
+        min_value=10,
+        max_value=7,
+        regex='/foo(?)/',
+        needs_member=True,
+        needs_perm='Commit',
+        grants_perm='View',
+        notify_on=tracker_pb2.NotifyTriggers.ANY_COMMENT,
+        is_required=True,
+        is_niche=True,
+        importance='required',
+        is_multivalued=True,
+        field_docstring='updated doc',
+        choices_text='',
+        applicable_type='Launch',
+        applicable_predicate='',
+        revised_labels=[],
+        date_action_str='custom_date_action_str',
+        approvers_str='',
+        survey='',
+        parent_approval_name='',
+        is_phase_field=False,
+        is_restricted_field=True)
+
+    field_helpers.ParsedFieldDefAssertions(self.mr, parsed_fd)
+    self.assertTrue(self.mr.errors.AnyErrors())
+
+    self.assertEqual(
+        self.mr.errors.restricted_field,
+        'An approval field cannot be restricted.')
+    self.assertEqual(
+        self.mr.errors.is_niche, 'A field cannot be both required and niche.')
+    self.assertEqual(
+        self.mr.errors.date_action,
+        'The date action should be either: ' + ', '.join(
+            config_svc.DATE_ACTION_ENUM) + '.')
+    self.assertEqual(
+        self.mr.errors.min_value, 'Minimum value must be less than maximum.')
+    self.assertEqual(self.mr.errors.regex, 'Invalid regular expression.')

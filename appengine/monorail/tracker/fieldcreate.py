@@ -116,6 +116,10 @@ class FieldCreate(servlet.Servlet):
     admin_ids, admin_str = tracker_helpers.ParseAdminUsers(
         mr.cnxn, post_data['admin_names'], self.services.user)
 
+    # TODO(crbug/monorail/7275): This condition could potentially be
+    # included in the field_helpers.ParsedFieldDefAssertions method,
+    # just remember that it should be compatible with its usage in
+    # fielddetail.py where there is a very similar condition.
     if parsed.field_type_str == 'approval_type':
       if parsed.approvers_str:
         approver_ids_dict = self.services.user.LookupUserIDs(

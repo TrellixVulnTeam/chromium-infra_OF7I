@@ -33,7 +33,8 @@ ParsedFieldDef = collections.namedtuple(
     'needs_member, needs_perm, grants_perm, notify_on, is_required, '
     'is_niche, importance, is_multivalued, field_docstring, choices_text, '
     'applicable_type, applicable_predicate, revised_labels, date_action_str, '
-    'approvers_str, survey, parent_approval_name, is_phase_field')
+    'approvers_str, survey, parent_approval_name, is_phase_field, '
+    'is_restricted_field')
 
 
 def ParseFieldDefRequest(post_data, config):
@@ -78,13 +79,14 @@ def ParseFieldDefRequest(post_data, config):
   # phases can have labels.
   is_phase_field = ('is_phase_field' in post_data) and (
       field_type_str not in ['approval_type', 'enum_type'])
+  is_restricted_field = 'is_restricted_field' in post_data
 
   return ParsedFieldDef(
-      field_name, field_type_str, min_value, max_value, regex,
-      needs_member, needs_perm, grants_perm, notify_on, is_required, is_niche,
-      importance, is_multivalued, field_docstring, choices_text,
-      applicable_type, applicable_predicate, revised_labels, date_action_str,
-      approvers_str, survey, parent_approval_name, is_phase_field)
+      field_name, field_type_str, min_value, max_value, regex, needs_member,
+      needs_perm, grants_perm, notify_on, is_required, is_niche, importance,
+      is_multivalued, field_docstring, choices_text, applicable_type,
+      applicable_predicate, revised_labels, date_action_str, approvers_str,
+      survey, parent_approval_name, is_phase_field, is_restricted_field)
 
 
 def _ParseChoicesIntoWellKnownLabels(
@@ -340,3 +342,34 @@ def ReviseFieldDefFromParsed(parsed, old_fd):
       parsed.grants_perm, parsed.notify_on, date_action, parsed.field_docstring,
       False, approval_id=old_fd.approval_id or None,
       is_phase_field=old_fd.is_phase_field)
+
+
+def ParsedFieldDefAssertions(mr, parsed):
+  """Checks if new/updated FieldDef is not violating basic assertions.
+      If the assertions are violated, the errors
+      will be included in the mr.errors.
+
+    Args:
+      mr: MonorailRequest object used to hold
+          commonly info parsed from the request.
+      parsed: ParsedFieldDef object used to contain parsed info,
+          in this case regarding a custom field definition.
+    """
+  # TODO(crbug/monorail/7275): This method is meant to eventually
+  # do all assertion checkings (shared by create/update fieldDef)
+  # and assign all mr.errors values.
+  if (parsed.is_required and parsed.is_niche):
+    mr.errors.is_niche = 'A field cannot be both required and niche.'
+  if (parsed.is_restricted_field and parsed.field_type_str == 'approval_type'):
+    mr.errors.restricted_field = 'An approval field cannot be restricted.'
+  if parsed.date_action_str not in config_svc.DATE_ACTION_ENUM:
+    mr.errors.date_action = 'The date action should be either: ' + ', '.join(
+        config_svc.DATE_ACTION_ENUM) + '.'
+  if (parsed.min_value is not None and parsed.max_value is not None and
+      parsed.min_value > parsed.max_value):
+    mr.errors.min_value = 'Minimum value must be less than maximum.'
+  if parsed.regex:
+    try:
+      re.compile(parsed.regex)
+    except re.error:
+      mr.errors.regex = 'Invalid regular expression.'
