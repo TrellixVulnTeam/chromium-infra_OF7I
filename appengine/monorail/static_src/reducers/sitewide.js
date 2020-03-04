@@ -12,7 +12,7 @@ import {SITEWIDE_DEFAULT_CAN, parseColSpec} from 'shared/issue-fields.js';
 // Actions
 const SET_PAGE_TITLE = 'SET_PAGE_TITLE';
 const SET_HEADER_TITLE = 'SET_HEADER_TITLE';
-const SET_QUERY_PARAMS = 'SET_QUERY_PARAMS';
+export const SET_QUERY_PARAMS = 'SET_QUERY_PARAMS';
 
 // Async actions
 const GET_SERVER_STATUS_FAILURE = 'GET_SERVER_STATUS_FAILURE';
@@ -114,18 +114,11 @@ export const readOnly =
     createSelector(sitewide, (sitewide) => sitewide.readOnly);
 
 /**
- * Compute the current columns that the user is viewing in the list
- * view, based on default columns and URL parameters.
+ * Computes the issue list columns from the URL parameters.
  */
 export const currentColumns = createSelector(
-    project.defaultColumns,
     queryParams,
-    (defaultColumns, params = {}) => {
-      if (params.colspec) {
-        return parseColSpec(params.colspec);
-      }
-      return defaultColumns;
-    });
+    (params = {}) => params.colspec ? parseColSpec(params.colspec) : null);
 
 /**
 * Get the default canned query for the currently viewed project.

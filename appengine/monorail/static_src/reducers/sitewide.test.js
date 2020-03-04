@@ -8,7 +8,6 @@ import {assert} from 'chai';
 import {store, stateUpdated, resetState} from 'reducers/base.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import * as sitewide from './sitewide.js';
-import {SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
 
 let prpcCall;
 
@@ -46,36 +45,19 @@ describe('sitewide selectors', () => {
   });
 
   describe('currentColumns', () => {
-    it('defaults to sitewide default columns when no configuration', () => {
-      assert.deepEqual(sitewide.currentColumns({}), SITEWIDE_DEFAULT_COLUMNS);
-      assert.deepEqual(sitewide.currentColumns({project: {}}),
-          SITEWIDE_DEFAULT_COLUMNS);
-      assert.deepEqual(sitewide.currentColumns({project: {
-        presentationConfig: {},
-      }}), SITEWIDE_DEFAULT_COLUMNS);
+    it('returns null no configuration', () => {
+      assert.deepEqual(sitewide.currentColumns({}), null);
+      assert.deepEqual(sitewide.currentColumns({project: {}}), null);
+      const state = {project: {presentationConfig: {}}};
+      assert.deepEqual(sitewide.currentColumns(state), null);
     });
 
-    it('uses project default columns', () => {
-      assert.deepEqual(sitewide.currentColumns({project: {
-        name: 'chromium',
-        presentationConfigs: {
-          chromium: {defaultColSpec: 'ID+Summary+AllLabels'},
-        },
-      }}), ['ID', 'Summary', 'AllLabels']);
-    });
-
-    it('columns in URL query params override all defaults', () => {
-      assert.deepEqual(sitewide.currentColumns({
-        project: {
-          name: 'chromium',
-          presentationConfigs: {
-            chromium: {defaultColSpec: 'ID+Summary+AllLabels'},
-          },
-        },
-        sitewide: {
-          queryParams: {colspec: 'ID+Summary+ColumnName+Priority'},
-        },
-      }), ['ID', 'Summary', 'ColumnName', 'Priority']);
+    it('gets columns from URL query params', () => {
+      const state = {sitewide: {
+        queryParams: {colspec: 'ID+Summary+ColumnName+Priority'},
+      }};
+      const expected = ['ID', 'Summary', 'ColumnName', 'Priority'];
+      assert.deepEqual(sitewide.currentColumns(state), expected);
     });
   });
 

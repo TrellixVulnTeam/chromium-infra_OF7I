@@ -33,7 +33,7 @@ const DEFAULT_HOTLIST_FIELDS = Object.freeze([
 ]);
 
 /** Hotlist Issues page */
-export class MrHotlistIssuesPage extends connectStore(LitElement) {
+export class _MrHotlistIssuesPage extends LitElement {
   /** @override */
   static get styles() {
     return css`
@@ -86,7 +86,7 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
       <mr-issue-list
         .issues=${issues}
         .projectName=${projectName}
-        .columns=${this._hotlist.defaultColumns.map((col) => col.column)}
+        .columns=${this._columns}
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
         .rerank=${hotlist.rerankItems.bind(null, this._hotlist.name)}
@@ -126,25 +126,6 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
     this._extractFieldValuesFromIssue = (_issue, _fieldName) => [];
     /** @type {Object<string, boolean>} */
     this._filter = {Open: true};
-  }
-
-  /** @override */
-  stateChanged(state) {
-    this._hotlist = hotlist.viewedHotlist(state);
-    this._hotlistItems = hotlist.viewedHotlistItems(state);
-    this._issue = issue.issue(state);
-    this._extractFieldValuesFromIssue =
-      project.extractFieldValuesFromIssue(state);
-  }
-
-  /** @override */
-  updated(changedProperties) {
-    if (changedProperties.has('_hotlist') && this._hotlist) {
-      const pageTitle = 'Issues - ' + this._hotlist.displayName;
-      store.dispatch(sitewide.setPageTitle(pageTitle));
-      const headerTitle = 'Hotlist ' + this._hotlist.displayName;
-      store.dispatch(sitewide.setHeaderTitle(headerTitle));
-    }
   }
 
   /**
@@ -197,4 +178,32 @@ export class MrHotlistIssuesPage extends connectStore(LitElement) {
   }
 };
 
+/** Redux-connected version of _MrHotlistIssuesPage. */
+export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
+  /** @override */
+  stateChanged(state) {
+    this._hotlist = hotlist.viewedHotlist(state);
+    this._hotlistItems = hotlist.viewedHotlistItems(state);
+
+    const hotlistColumns =
+        this._hotlist && this._hotlist.defaultColumns.map((col) => col.column);
+    this._columns = sitewide.currentColumns(state) || hotlistColumns;
+
+    this._issue = issue.issue(state);
+    this._extractFieldValuesFromIssue =
+      project.extractFieldValuesFromIssue(state);
+  }
+
+  /** @override */
+  updated(changedProperties) {
+    if (changedProperties.has('_hotlist') && this._hotlist) {
+      const pageTitle = `Issues - ${this._hotlist.displayName}`;
+      store.dispatch(sitewide.setPageTitle(pageTitle));
+      const headerTitle = `Hotlist ${this._hotlist.displayName}`;
+      store.dispatch(sitewide.setHeaderTitle(headerTitle));
+    }
+  }
+};
+
+customElements.define('mr-hotlist-issues-page-base', _MrHotlistIssuesPage);
 customElements.define('mr-hotlist-issues-page', MrHotlistIssuesPage);

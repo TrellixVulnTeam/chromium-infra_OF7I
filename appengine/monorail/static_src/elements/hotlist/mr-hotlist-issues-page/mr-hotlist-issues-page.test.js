@@ -5,7 +5,10 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
+import {store, resetState} from 'reducers/base.js';
+import * as hotlist from 'reducers/hotlist.js';
 import * as project from 'reducers/project.js';
+import * as sitewide from 'reducers/sitewide.js';
 import * as example from 'shared/test/constants-hotlist.js';
 import * as exampleIssue from 'shared/test/constants-issue.js';
 
@@ -14,10 +17,10 @@ import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
 /** @type {MrHotlistIssuesPage} */
 let element;
 
-describe('mr-hotlist-issues-page', () => {
+describe('mr-hotlist-issues-page (unconnected)', () => {
   beforeEach(() => {
     // @ts-ignore
-    element = document.createElement('mr-hotlist-issues-page');
+    element = document.createElement('mr-hotlist-issues-page-base');
     element._extractFieldValuesFromIssue =
       project.extractFieldValuesFromIssue({});
     document.body.appendChild(element);
@@ -27,17 +30,12 @@ describe('mr-hotlist-issues-page', () => {
     document.body.removeChild(element);
   });
 
-  it('initializes', async () => {
-    assert.instanceOf(element, MrHotlistIssuesPage);
-  });
-
   it('shows loading message with null hotlist', async () => {
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'Loading');
   });
 
   it('renders hotlist items with one project', async () => {
-    sinon.stub(element, 'stateChanged');
     element._hotlist = example.HOTLIST;
     element._hotlistItems = [example.HOTLIST_ITEM];
     element._issue = () => exampleIssue.ISSUE;
@@ -48,7 +46,6 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('renders hotlist items with multiple projects', async () => {
-    sinon.stub(element, 'stateChanged');
     element._hotlist = example.HOTLIST;
     element._hotlistItems = [
       example.HOTLIST_ITEM,
@@ -65,23 +62,17 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('computes strings for HotlistIssue fields', async () => {
-    sinon.stub(element, 'stateChanged');
     const clock = sinon.useFakeTimers(24 * 60 * 60 * 1000);
 
     try {
-      element._hotlist = {
-        ...example.HOTLIST,
-        defaultColumns: [
-          {column: 'Summary'}, {column: 'Rank'},
-          {column: 'Added'}, {column: 'Adder'},
-        ],
-      };
+      element._hotlist = example.HOTLIST;
       element._hotlistItems = [{
         issue: exampleIssue.NAME,
         rank: 52,
         adder: 'users/5678',
         createTime: new Date(0).toISOString(),
       }];
+      element._columns = ['Summary', 'Rank', 'Added', 'Adder'];
       element._issue = () => ({...exampleIssue.ISSUE, summary: 'Summary'});
       await element.updateComplete;
 
@@ -96,7 +87,6 @@ describe('mr-hotlist-issues-page', () => {
   });
 
   it('filters and shows closed issues', async () => {
-    sinon.stub(element, 'stateChanged');
     element._hotlist = example.HOTLIST;
     element._hotlistItems = [example.HOTLIST_ITEM];
     element._issue = () => exampleIssue.ISSUE_CLOSED;
@@ -110,5 +100,49 @@ describe('mr-hotlist-issues-page', () => {
 
     assert.isTrue(element._filter.Closed);
     assert.equal(issueList.issues.length, 1);
+  });
+});
+
+describe('mr-hotlist-issues-page (connected)', () => {
+  beforeEach(() => {
+    store.dispatch(resetState());
+    // @ts-ignore
+    element = document.createElement('mr-hotlist-issues-page');
+    element._extractFieldValuesFromIssue =
+      project.extractFieldValuesFromIssue({});
+    document.body.appendChild(element);
+  });
+
+  afterEach(() => {
+    document.body.removeChild(element);
+  });
+
+  it('initializes', () => {
+    assert.instanceOf(element, MrHotlistIssuesPage);
+  });
+
+  it('query string overrides hotlist default columns', () => {
+    const defaultColumns = [{column: 'Rank'}, {column: 'Summary'}];
+    const hotlistWithColumns = {...example.HOTLIST, defaultColumns};
+    store.dispatch(hotlist.select(example.NAME));
+    store.dispatch({type: hotlist.FETCH_SUCCESS, hotlist: hotlistWithColumns});
+
+    assert.deepEqual(element._columns, ['Rank', 'Summary']);
+
+    const queryParams = {colspec: 'Rank ID Summary'};
+    store.dispatch(sitewide.setQueryParams(queryParams));
+
+    assert.deepEqual(element._columns, ['Rank', 'ID', 'Summary']);
+  });
+
+  it('updates page title and header', async () => {
+    const hotlistWithName = {...example.HOTLIST, displayName: 'Hotlist-Name'};
+    store.dispatch(hotlist.select(example.NAME));
+    store.dispatch({type: hotlist.FETCH_SUCCESS, hotlist: hotlistWithName});
+    await element.updateComplete;
+
+    const state = store.getState();
+    assert.deepEqual(sitewide.pageTitle(state), 'Issues - Hotlist-Name');
+    assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
   });
 });

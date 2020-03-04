@@ -468,8 +468,8 @@ export class MrListPage extends connectStore(LitElement) {
     this._currentUser = user.currentUser(state);
     this._usersProjects = user.projectsPerUser(state);
 
-    this.issues = (issue.issueList(state) || []);
-    this.totalIssues = (issue.totalIssues(state) || 0);
+    this.issues = issue.issueList(state) || [];
+    this.totalIssues = issue.totalIssues(state) || 0;
     this._fetchingIssueList = issue.requests(state).fetchIssueList.requesting;
     this._issueListLoaded = issue.issueListLoaded(state);
 
@@ -478,7 +478,8 @@ export class MrListPage extends connectStore(LitElement) {
 
     this.currentQuery = sitewide.currentQuery(state);
     this.currentCan = sitewide.currentCan(state);
-    this.columns = sitewide.currentColumns(state);
+    this.columns =
+        sitewide.currentColumns(state) || project.defaultColumns(state);
 
     this._queryParams = sitewide.queryParams(state);
 
