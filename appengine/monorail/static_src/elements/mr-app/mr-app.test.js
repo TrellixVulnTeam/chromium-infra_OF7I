@@ -100,7 +100,7 @@ describe('mr-app', () => {
   });
 
   it('_preRouteHandler does not call next() on same page nav', () => {
-    element._currentContext = {path: '123'};
+    element._lastContext = {path: '123'};
     const ctx = {path: '123'};
 
     element._preRouteHandler(ctx, next);
@@ -139,23 +139,64 @@ describe('mr-app', () => {
     assert.deepEqual(element.queryParams, {q: '1234'});
   });
 
-  it('_postRouteHandler saves ctx to this._currentContext', () => {
+  it('_postRouteHandler saves ctx to this._lastContext', () => {
     const ctx = {path: '1234'};
     element._postRouteHandler(ctx, next);
 
-    assert.deepEqual(element._currentContext, {path: '1234'});
+    assert.deepEqual(element._lastContext, {path: '1234'});
   });
 
-  it('_postRouteHandler scrolls page to top', () => {
-    sinon.stub(window, 'scrollTo');
+  describe('scroll to the top on page changes', () => {
+    beforeEach(() => {
+      sinon.stub(window, 'scrollTo');
+    });
 
-    const ctx = {path: '1234'};
-    element._postRouteHandler(ctx, next);
+    afterEach(() => {
+      window.scrollTo.restore();
+    });
 
-    sinon.assert.calledWith(window.scrollTo, 0, 0);
+    it('scrolls page to top on initial load', () => {
+      element._lastContext = null;
+      const ctx = {path: '1234'};
+      element._postRouteHandler(ctx, next);
 
-    window.scrollTo.restore();
+      sinon.assert.calledWith(window.scrollTo, 0, 0);
+    });
+
+    it('scrolls page to top on parh change', () => {
+      element._lastContext = {pathname: '/list', path: '/list?q=123',
+        querystring: '?q=123', queryParams: {q: '123'}};
+      const ctx = {pathname: '/other', path: '/other?q=123',
+        querystring: '?q=123', queryParams: {q: '123'}};
+
+      element._postRouteHandler(ctx, next);
+
+      sinon.assert.calledWith(window.scrollTo, 0, 0);
+    });
+
+    it('does not scroll to top when on the same path', () => {
+      element._lastContext = {pathname: '/list', path: '/list?q=123',
+        querystring: '?a=123', queryParams: {a: '123'}};
+      const ctx = {pathname: '/list', path: '/list?q=456',
+        querystring: '?a=456', queryParams: {a: '456'}};
+
+      element._postRouteHandler(ctx, next);
+
+      sinon.assert.notCalled(window.scrollTo);
+    });
+
+    it('scrolls to the top on same path when q param changes', () => {
+      element._lastContext = {pathname: '/list', path: '/list?q=123',
+        querystring: '?q=123', queryParams: {q: '123'}};
+      const ctx = {pathname: '/list', path: '/list?q=456',
+        querystring: '?q=456', queryParams: {q: '456'}};
+
+      element._postRouteHandler(ctx, next);
+
+      sinon.assert.calledWith(window.scrollTo, 0, 0);
+    });
   });
+
 
   it('_postRouteHandler does not call next', () => {
     const ctx = {path: '1234'};
