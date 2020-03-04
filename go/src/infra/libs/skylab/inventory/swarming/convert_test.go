@@ -293,3 +293,21 @@ func cloneDimensions(d Dimensions) Dimensions {
 	}
 	return ret
 }
+
+const fullTextProtoSpecial = `
+variant: ""
+`
+
+var fullDimensionsSpecial = Dimensions{}
+
+func TestConvertSpecial(t *testing.T) {
+	t.Parallel()
+	var ls inventory.SchedulableLabels
+	if err := proto.UnmarshalText(fullTextProtoSpecial, &ls); err != nil {
+		t.Fatalf("Error unmarshalling example text: %s", err)
+	}
+	got := Convert(&ls)
+	if diff := pretty.Compare(fullDimensionsSpecial, got); diff != "" {
+		t.Errorf("labels differ -want +got, %s", diff)
+	}
+}

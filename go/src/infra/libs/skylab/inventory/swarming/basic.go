@@ -49,7 +49,9 @@ func basicConverter(dims Dimensions, ls *inventory.SchedulableLabels) {
 		dims["label-phase"] = []string{v.String()}
 	}
 	for _, v := range ls.GetVariant() {
-		appendDim(dims, "label-variant", v)
+		if v != "" {
+			appendDim(dims, "label-variant", v)
+		}
 	}
 }
 

@@ -108,7 +108,9 @@ func basicReverter(ls *inventory.SchedulableLabels, labels []string) []string {
 		case "wifi_chip":
 			*ls.WifiChip = v
 		case "variant":
-			ls.Variant = append(ls.Variant, v)
+			if v != "" {
+				ls.Variant = append(ls.Variant, v)
+			}
 		default:
 			continue
 		}

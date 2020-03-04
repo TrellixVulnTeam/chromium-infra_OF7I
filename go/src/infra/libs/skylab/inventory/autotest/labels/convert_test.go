@@ -293,3 +293,176 @@ func TestRevertFull(t *testing.T) {
 		t.Errorf("labels differ -want +got, %s", diff)
 	}
 }
+
+const fullTextProtoSpecial = `
+test_coverage_hints {
+  usb_detect: true
+  use_lid: true
+  test_usbprinting: true
+  test_usbaudio: true
+  test_hdmiaudio: true
+  test_audiojack: true
+  recovery_test: true
+  meet_app: true
+  hangout_app: true
+  chromesign: true
+  chaos_nightly: true
+  chaos_dut: true
+}
+self_serve_pools: "poolval"
+reference_design: "reef"
+wifi_chip: "wireless_xxxx"
+platform: "platformval"
+phase: 4
+peripherals: {
+  wificell: true
+  stylus: true
+  servo: true
+  servo_state: 3
+  mimo: true
+  huddly: true
+  conductive: true
+  chameleon_type: 3
+  chameleon_type: 5
+  chameleon: true
+  camerabox: true
+  audio_loopback_dongle: true
+  audio_box: true
+  audio_board: true
+  router_802_11ax: true
+  working_bluetooth_btpeer: 3
+}
+os_type: 2
+model: "modelval"
+sku: "skuval"
+hwid_sku: "eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB"
+brand: "HOMH"
+ec_type: 1
+cts_cpu: 1
+cts_cpu: 2
+cts_abi: 1
+cts_abi: 2
+critical_pools: 2
+critical_pools: 1
+cr50_phase: 2
+cr50_ro_keyid: "prod"
+cr50_ro_version: "1.2.3"
+cr50_rw_keyid: "0xde88588d"
+cr50_rw_version: "9.8.7"
+capabilities {
+  webcam: true
+  video_acceleration: 6
+  video_acceleration: 8
+  touchpad: true
+  touchscreen: true
+  fingerprint: true
+  telephony: "telephonyval"
+  storage: "storageval"
+  power: "powerval"
+  modem: "modemval"
+  lucidsleep: true
+  hotwording: true
+  graphics: "graphicsval"
+  internal_display: true
+  gpu_family: "gpufamilyval"
+  flashrom: true
+  detachablebase: true
+  carrier: 2
+  bluetooth: true
+  atrus: true
+}
+board: "boardval"
+arc: true
+`
+
+var fullLabelsSpecial = []string{
+	"arc",
+	"atrus",
+	"audio_board",
+	"audio_box",
+	"audio_loopback_dongle",
+	"bluetooth",
+	"board:boardval",
+	"brand-code:HOMH",
+	"camerabox",
+	"carrier:tmobile",
+	"chameleon",
+	"chameleon:dp_hdmi",
+	"chameleon:hdmi",
+	"chaos_dut",
+	"chaos_nightly",
+	"chromesign",
+	"conductive:True",
+	"cr50-ro-keyid:prod",
+	"cr50-ro-version:1.2.3",
+	"cr50-rw-keyid:0xde88588d",
+	"cr50-rw-version:9.8.7",
+	"cr50:pvt",
+	"cts_abi_arm",
+	"cts_abi_x86",
+	"cts_cpu_arm",
+	"cts_cpu_x86",
+	"detachablebase",
+	"device-sku:skuval",
+	"ec:cros",
+	"fingerprint",
+	"flashrom",
+	"gpu_family:gpufamilyval",
+	"graphics:graphicsval",
+	"hangout_app",
+	"hotwording",
+	"huddly",
+	"hw_video_acc_enc_vp9",
+	"hw_video_acc_enc_vp9_2",
+	"internal_display",
+	"lucidsleep",
+	"meet_app",
+	"mimo",
+	"model:modelval",
+	"modem:modemval",
+	"os:cros",
+	"phase:DVT2",
+	"platform:platformval",
+	"pool:bvt",
+	"pool:cq",
+	"pool:poolval",
+	"power:powerval",
+	"recovery_test",
+	"reference_design:reef",
+	"router_802_11ax",
+	"servo",
+	"servo_state:broken",
+	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
+	"storage:storageval",
+	"stylus",
+	"telephony:telephonyval",
+	"test_audiojack",
+	"test_hdmiaudio",
+	"test_usbaudio",
+	"test_usbprinting",
+	"touchpad",
+	"touchscreen",
+	"usb_detect",
+	"use_lid",
+	"variant:",
+	"webcam",
+	"wifi_chip:wireless_xxxx",
+	"wificell",
+	"working_bluetooth_btpeer:3",
+}
+
+// Test the special cases in revert, including
+// * empty variant
+func TestRevertSpecial(t *testing.T) {
+	t.Parallel()
+	var want inventory.SchedulableLabels
+	if err := proto.UnmarshalText(fullTextProtoSpecial, &want); err != nil {
+		t.Fatalf("Error unmarshalling example text: %s", err)
+	}
+	labels := make([]string, len(fullLabelsSpecial))
+	copy(labels, fullLabelsSpecial)
+	got := Revert(labels)
+	if diff := pretty.Compare(want, *got); diff != "" {
+		t.Errorf("labels differ -want +got, %s", diff)
+	}
+}
