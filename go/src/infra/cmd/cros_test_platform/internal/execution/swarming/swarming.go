@@ -47,7 +47,7 @@ type rawSwarmingSkylabClient struct {
 
 // NewSkylabClient creates a new skylab.Client.
 func NewSkylabClient(ctx context.Context, cfg *config.Config) (skylab.Client, error) {
-	sc, err := swarmingClient(ctx, cfg.SkylabSwarming)
+	sc, err := NewClient(ctx, cfg.SkylabSwarming)
 	if err != nil {
 		return nil, errors.Annotate(err, "create Skylab client").Err()
 	}
@@ -83,7 +83,8 @@ func httpClient(ctx context.Context, authJSONPath string) (*http.Client, error) 
 	return h, nil
 }
 
-func swarmingClient(ctx context.Context, c *config.Config_Swarming) (*swarming.Client, error) {
+// NewClient creates a new Client.
+func NewClient(ctx context.Context, c *config.Config_Swarming) (*swarming.Client, error) {
 	logging.Debugf(ctx, "Creating swarming client from config %v", c)
 	hClient, err := httpClient(ctx, c.AuthJsonPath)
 	if err != nil {
@@ -100,6 +101,10 @@ func swarmingClient(ctx context.Context, c *config.Config_Swarming) (*swarming.C
 
 // ValidateArgs checks whether this test has dependencies satisfied by
 // at least one Skylab bot.
+//
+// Any changes to this implementation should be also reflected in
+// bbSkylabClient.ValidateArgs
+// TODO(crbug.com/1033287): Remove this implementation.
 func (c *rawSwarmingSkylabClient) ValidateArgs(ctx context.Context, args *request.Args) (bool, error) {
 	dims, err := args.StaticDimensions()
 	if err != nil {
