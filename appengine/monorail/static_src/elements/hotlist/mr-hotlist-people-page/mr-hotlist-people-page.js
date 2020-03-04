@@ -11,7 +11,7 @@ import * as sitewide from 'reducers/sitewide.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
 /** Hotlist People page */
-export class MrHotlistPeoplePage extends connectStore(LitElement) {
+class _MrHotlistPeoplePage extends LitElement {
   /** @override */
   static get styles() {
     return css`
@@ -56,7 +56,10 @@ export class MrHotlistPeoplePage extends connectStore(LitElement) {
     super();
     this._hotlist = null;
   }
+};
 
+/** Redux-connected version of _MrHotlistPeoplePage. */
+export class MrHotlistPeoplePage extends connectStore(_MrHotlistPeoplePage) {
   /** @override */
   stateChanged(state) {
     this._hotlist = hotlist.viewedHotlist(state);
@@ -64,6 +67,8 @@ export class MrHotlistPeoplePage extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
+    super.updated(changedProperties);
+
     if (changedProperties.has('_hotlist') && this._hotlist) {
       const pageTitle = 'People - ' + this._hotlist.displayName;
       store.dispatch(sitewide.setPageTitle(pageTitle));
@@ -71,6 +76,7 @@ export class MrHotlistPeoplePage extends connectStore(LitElement) {
       store.dispatch(sitewide.setHeaderTitle(headerTitle));
     }
   }
-};
+}
 
+customElements.define('mr-hotlist-people-page-base', _MrHotlistPeoplePage);
 customElements.define('mr-hotlist-people-page', MrHotlistPeoplePage);

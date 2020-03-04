@@ -11,7 +11,7 @@ import * as sitewide from 'reducers/sitewide.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
 /** Hotlist Settings page */
-export class MrHotlistSettingsPage extends connectStore(LitElement) {
+class _MrHotlistSettingsPage extends LitElement {
   /** @override */
   static get styles() {
     return css`
@@ -94,7 +94,11 @@ export class MrHotlistSettingsPage extends connectStore(LitElement) {
     super();
     this._hotlist = null;
   }
+};
 
+/** Redux-connected version of _MrHotlistSettingsPage. */
+export class MrHotlistSettingsPage extends connectStore(
+    _MrHotlistSettingsPage) {
   /** @override */
   stateChanged(state) {
     this._hotlist = hotlist.viewedHotlist(state);
@@ -102,6 +106,8 @@ export class MrHotlistSettingsPage extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
+    super.updated(changedProperties);
+
     if (changedProperties.has('_hotlist') && this._hotlist) {
       const pageTitle = 'Settings - ' + this._hotlist.displayName;
       store.dispatch(sitewide.setPageTitle(pageTitle));
@@ -109,6 +115,7 @@ export class MrHotlistSettingsPage extends connectStore(LitElement) {
       store.dispatch(sitewide.setHeaderTitle(headerTitle));
     }
   }
-};
+}
 
+customElements.define('mr-hotlist-settings-page-base', _MrHotlistSettingsPage);
 customElements.define('mr-hotlist-settings-page', MrHotlistSettingsPage);
