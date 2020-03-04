@@ -17,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/proto/google"
 
 	"infra/cros/cmd/phosphorus/internal/autotest/atutil"
 )
@@ -71,7 +72,7 @@ func (c *runTestRun) innerRun(a subcommands.Application, args []string, env subc
 
 	ctx := cli.GetContext(a, c, env)
 
-	if d := timeFromProto(r.Deadline); !d.IsZero() {
+	if d := google.TimeFromProto(r.Deadline); !d.IsZero() {
 		var c context.CancelFunc
 		log.Printf("Running with deadline %s (current time: %s)", d, time.Now().UTC())
 		ctx, c = context.WithDeadline(ctx, d)

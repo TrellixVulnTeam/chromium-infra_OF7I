@@ -8,11 +8,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -102,18 +100,4 @@ func getMainJob(c *phosphorus.Config) *atutil.MainJob {
 		UseLocalHostInfo: true,
 	}
 
-}
-
-// timeFromProto returns the time.Time associated with a Timestamp protobuf.
-//
-// TODO(crbug.com/1055900) Upstream the proper handling of zero timestamp to
-// go.chromium.org/luci/common/proto/google/util.go and remove this function.
-func timeFromProto(t *timestamp.Timestamp) time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	if t.Seconds == 0 && t.Nanos == 0 {
-		return time.Time{}
-	}
-	return time.Unix(t.Seconds, int64(t.Nanos)).UTC()
 }
