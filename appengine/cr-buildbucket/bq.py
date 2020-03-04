@@ -22,6 +22,9 @@ from go.chromium.org.luci.buildbucket.proto import build_pb2
 import model
 import tq
 
+_REQUEST_ROWS_SIZE_LIMIT = 9e6
+_SUCCESS, _TRANSIENT_FAILURE, _PERMANENT_FAILURE = range(3)
+
 
 def enqueue_bq_export_async(build):
   """Enqueues a pull task to export a completed build to BigQuery."""
@@ -101,13 +104,24 @@ def _process_pull_task_batch(queue_name, dataset, table_name):
     else:
       to_insert.append(b)
 
-  row_count = 0
+  inserted_count = 0
   if to_insert:
-    not_inserted_ids = _export_builds(
-        dataset, table_name, to_insert, lease_deadline
+    pairs = [(b, build_pb2.Build()) for b in to_insert]
+    model.builds_to_protos_async(
+        pairs,
+        load_tags=True,
+        load_input_properties=True,
+        load_output_properties=True,
+        load_steps=True,
+        load_infra=True,
+    ).get_result()
+    statuses = _export_builds(
+        dataset, table_name, [pb for _, pb in pairs], lease_deadline
     )
-    row_count = len(to_insert) - len(not_inserted_ids)
-    ids_to_retry.update(not_inserted_ids)
+    inserted_count = len([1 for s in statuses.itervalues() if s == _SUCCESS])
+    ids_to_retry.update(
+        id for id, s in statuses.iteritems() if s == _TRANSIENT_FAILURE
+    )
 
   if ids_to_retry:
     logging.warning('will retry builds %r later', sorted(ids_to_retry))
@@ -117,37 +131,48 @@ def _process_pull_task_batch(queue_name, dataset, table_name):
   ]
   q.delete_tasks(done_tasks)
   logging.info(
-      'inserted %d rows, processed %d tasks', row_count, len(done_tasks)
+      'inserted %d rows, processed %d tasks', inserted_count, len(done_tasks)
   )
   return len(done_tasks), len(tasks)
 
 
-def _export_builds(dataset, table_name, builds, deadline):
+def _export_builds(
+    dataset,
+    table_name,
+    build_protos,
+    deadline,
+    request_size_limit=_REQUEST_ROWS_SIZE_LIMIT,
+):
   """Saves builds to BigQuery.
 
-  Logs insert errors and returns a list of ids of builds that could not be
-  inserted.
+  Mutates build_protos in-place.
+
+  Logs insert errors and returns a dict {build_id: status} where status
+  is one of _PERMANENT_FAILURE, _TRANSIENT_FAILURE, _SUCCESS.
   """
   # BigQuery API doc:
   # https://cloud.google.com/bigquery/docs/reference/rest/v2/tabledata/insertAll
-  logging.info('sending %d rows', len(builds))
-
-  pairs = [(b, build_pb2.Build()) for b in builds]
-  model.builds_to_protos_async(
-      pairs,
-      load_tags=True,
-      load_input_properties=True,
-      load_output_properties=True,
-      load_steps=True,
-      load_infra=True,
-  ).get_result()
+  logging.info('sending %d rows', len(build_protos))
 
   # Clear fields that we don't want in BigQuery.
-  for _, proto in pairs:
+  #
+  for proto in build_protos:
     proto.infra.buildbucket.hostname = ''
     for s in proto.steps:
       s.summary_markdown = ''
       s.ClearField('logs')
+
+  row_statuses = {}  # build_id -> status.
+  # Ensure we are under request size limit.
+  request_size = 0
+  to_insert = []
+  for proto in build_protos:
+    row_size = len(json.dumps(bqh.message_to_dict(proto)))
+    if request_size + row_size > request_size_limit:
+      row_statuses[proto.id] = _TRANSIENT_FAILURE
+    else:
+      request_size += row_size
+      to_insert.append(proto)
 
   res = net.json_request(
       url=((
@@ -167,16 +192,37 @@ def _export_builds(dataset, table_name, builds, deadline):
           'rows': [{
               'insertId': str(p.id),
               'json': bqh.message_to_dict(p),
-          } for _, p in pairs],
+          } for p in to_insert],
       },
       scopes=bqh.INSERT_ROWS_SCOPE,
       # deadline parameter here is duration in seconds.
       deadline=(deadline - utils.utcnow()).total_seconds(),
   )
 
-  failed_ids = []
   for err in res.get('insertErrors', []):
-    _, bp = pairs[err['index']]
-    failed_ids.append(bp.id)
-    logging.error('failed to insert row for build %d: %r', bp.id, err['errors'])
-  return failed_ids
+    bp = build_protos[err['index']]
+    if any(_is_max_size_error(e) for e in err['errors']):
+      row_statuses[bp.id] = _PERMANENT_FAILURE
+      logging.error(
+          'permanently failed to insert row for build %d: %r',
+          bp.id,
+          err['errors'],
+      )
+    else:
+      row_statuses[bp.id] = _TRANSIENT_FAILURE
+      logging.warning(
+          'transiently failed to insert row for build %d: %r',
+          bp.id,
+          err['errors'],
+      )
+
+  for p in to_insert:
+    row_statuses.setdefault(p.id, _SUCCESS)
+
+  assert len(row_statuses) == len(build_protos)
+  return row_statuses
+
+
+def _is_max_size_error(err):
+  # No better way than this.
+  return 'Maximum allowed row size exceeded' in err.get('message', '')

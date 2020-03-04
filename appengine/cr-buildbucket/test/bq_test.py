@@ -10,6 +10,8 @@ from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 from components import net
+from components import utils
+
 from test import test_util
 from testing_utils import testing
 import mock
@@ -17,6 +19,7 @@ import mock
 from go.chromium.org.luci.buildbucket.proto import build_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from test import test_util
+import bbutil
 import bq
 import bqh
 import model
@@ -178,4 +181,55 @@ class BigQueryExportTest(testing.AppengineTestCase):
     self.assertEqual(
         [t.payload for t in deleted],
         [tasks[0].payload, tasks[2].payload],
+    )
+
+  def test_export_builds_request_size_limit(self):
+    statuses = bq._export_builds(
+        dataset='datase',
+        table_name='table',
+        build_protos=[
+            build_pb2.Build(id=1),
+            build_pb2.Build(
+                id=2,
+                # exceeds request size limit
+                input=dict(properties=bbutil.dict_to_struct({'a': 'a' * 1000}))
+            ),
+            build_pb2.Build(id=3),
+        ],
+        deadline=utils.utcnow() + datetime.timedelta(hours=2),
+        request_size_limit=1000,
+    )
+    self.assertEqual(
+        statuses, {
+            1: bq._SUCCESS,
+            2: bq._TRANSIENT_FAILURE,
+            3: bq._SUCCESS,
+        }
+    )
+
+  def test_export_builds_row_size_limit(self):
+    # Mock a response that indicates that one of the rows was too large.
+    net.json_request.return_value = {
+        'insertErrors': [{
+            'index': 1,
+            'errors': [{'message': 'Maximum allowed row size exceeded'}],
+        }],
+    }
+
+    statuses = bq._export_builds(
+        dataset='datase',
+        table_name='table',
+        build_protos=[
+            build_pb2.Build(id=1),
+            build_pb2.Build(id=2),
+            build_pb2.Build(id=3),
+        ],
+        deadline=utils.utcnow() + datetime.timedelta(hours=2),
+    )
+    self.assertEqual(
+        statuses, {
+            1: bq._SUCCESS,
+            2: bq._PERMANENT_FAILURE,
+            3: bq._SUCCESS,
+        }
     )
