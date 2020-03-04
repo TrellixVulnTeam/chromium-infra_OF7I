@@ -115,6 +115,7 @@ class FieldCreate(servlet.Servlet):
 
     admin_ids, admin_str = tracker_helpers.ParseAdminUsers(
         mr.cnxn, post_data['admin_names'], self.services.user)
+    editor_ids, _editor_str = [], []
 
     # TODO(crbug/monorail/7275): This condition could potentially be
     # included in the field_helpers.ParsedFieldDefAssertions method,
@@ -160,13 +161,29 @@ class FieldCreate(servlet.Servlet):
       if approval_fd:
         approval_id = approval_fd.field_id
     field_id = self.services.config.CreateFieldDef(
-        mr.cnxn, mr.project_id, parsed.field_name, parsed.field_type_str,
-        parsed.applicable_type, parsed.applicable_predicate,
-        parsed.is_required, parsed.is_niche, parsed.is_multivalued,
-        parsed.min_value, parsed.max_value, parsed.regex, parsed.needs_member,
-        parsed.needs_perm, parsed.grants_perm, parsed.notify_on,
-        parsed.date_action_str, parsed.field_docstring, admin_ids,
-        approval_id, parsed.is_phase_field)
+        mr.cnxn,
+        mr.project_id,
+        parsed.field_name,
+        parsed.field_type_str,
+        parsed.applicable_type,
+        parsed.applicable_predicate,
+        parsed.is_required,
+        parsed.is_niche,
+        parsed.is_multivalued,
+        parsed.min_value,
+        parsed.max_value,
+        parsed.regex,
+        parsed.needs_member,
+        parsed.needs_perm,
+        parsed.grants_perm,
+        parsed.notify_on,
+        parsed.date_action_str,
+        parsed.field_docstring,
+        admin_ids,
+        editor_ids,
+        approval_id,
+        parsed.is_phase_field,
+        is_restricted_field=False)
     if parsed.field_type_str == 'approval_type':
       revised_approvals = field_helpers.ReviseApprovals(
           field_id, approver_ids, parsed.survey, config)

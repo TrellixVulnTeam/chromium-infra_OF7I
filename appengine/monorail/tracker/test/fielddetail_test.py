@@ -189,7 +189,8 @@ class FieldDetailTest(unittest.TestCase):
         is_multivalued=[],
         docstring=['It is just some field'],
         applicable_type=['Defect'],
-        admin_names=[''])
+        admin_names=['gatsby@example.com'],
+        editor_names=[''])
     url = self.servlet.ProcessFormData(self.mr, post_data)
     self.assertTrue('/fields/detail?field=CPU&saved=1&' in url)
     config = self.services.config.GetProjectConfig(
@@ -199,6 +200,8 @@ class FieldDetailTest(unittest.TestCase):
     self.assertEqual('CPU', fd.field_name)
     self.assertEqual(2, fd.min_value)
     self.assertEqual(98, fd.max_value)
+    self.assertEqual([111], fd.admin_ids)
+    self.assertEqual([], fd.editor_ids)
 
   def testProcessDeleteField(self):
     self.servlet._ProcessDeleteField(self.mr, self.config, self.fd)
@@ -217,13 +220,18 @@ class FieldDetailTest(unittest.TestCase):
 
   def testProcessEditField_Normal(self):
     post_data = fake.PostData(
-        name=['CPU'], field_type=['INT_TYPE'], min_value=['2'],
-        admin_names=[''])
+        name=['CPU'],
+        field_type=['INT_TYPE'],
+        min_value=['2'],
+        admin_names=['gatsby@example.com'],
+        editor_names=[''])
     self.servlet._ProcessEditField(
         self.mr, post_data, self.config, self.fd)
     fd = tracker_bizobj.FindFieldDef('CPU', self.config)
     self.assertEqual('CPU', fd.field_name)
     self.assertEqual(2, fd.min_value)
+    self.assertEqual([111], fd.admin_ids)
+    self.assertEqual([], fd.editor_ids)
 
   def testProcessEditField_Reject(self):
     post_data = fake.PostData(

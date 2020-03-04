@@ -546,8 +546,10 @@ class ProjectsServicerTest(unittest.TestCase):
     for arg in ('applic_type', 'applic_pred', 'is_required', 'is_niche',
                 'is_multivalued', 'min_value', 'max_value', 'regex',
                 'needs_member', 'needs_perm', 'grants_perm', 'notify_on',
-                'date_action_str', 'docstring', 'admin_ids'):
+                'date_action_str', 'docstring'):
       kwargs.setdefault(arg, None)
+    for arg in ('admin_ids', 'editor_ids'):
+      kwargs.setdefault(arg, [])
 
     self.services.config.CreateFieldDef(**kwargs)
 
@@ -675,33 +677,33 @@ class ProjectsServicerTest(unittest.TestCase):
         sorted([user_ref.display_name for user_ref in field.user_choices]))
 
   def testListFields_TwiceIndirectPermission(self):
-     """Test that only direct memberships are considered."""
-     self.AddField('Foo Field', needs_perm='FooPerm')
-     self.project.contributor_ids.extend([777])
-     self.project.contributor_ids.extend([999])
-     self.project.extra_perms = [
-         project_pb2.Project.ExtraPerms(
-             member_id=777,
-             perms=['FooPerm', 'BarPerm'])]
+    """Test that only direct memberships are considered."""
+    self.AddField('Foo Field', needs_perm='FooPerm')
+    self.project.contributor_ids.extend([777])
+    self.project.contributor_ids.extend([999])
+    self.project.extra_perms = [
+        project_pb2.Project.ExtraPerms(
+            member_id=777, perms=['FooPerm', 'BarPerm'])
+    ]
 
-     request = projects_pb2.ListFieldsRequest(
-         project_name='proj', include_user_choices=True)
-     mc = monorailcontext.MonorailContext(
-         self.services, cnxn=self.cnxn, requester='owner@example.com')
-     mc.LookupLoggedInUserPerms(self.project)
-     response = self.CallWrapped(
-         self.projects_svcr.ListFields, mc, request)
+    request = projects_pb2.ListFieldsRequest(
+        project_name='proj', include_user_choices=True)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester='owner@example.com')
+    mc.LookupLoggedInUserPerms(self.project)
+    response = self.CallWrapped(self.projects_svcr.ListFields, mc, request)
 
-     self.assertEqual(1, len(response.field_defs))
-     field = response.field_defs[0]
-     self.assertEqual('Foo Field', field.field_ref.field_name)
-     self.assertEqual(
-         [666, 777, 999],
-         sorted([user_ref.user_id for user_ref in field.user_choices]))
-     self.assertEqual(
-         ['group777@googlegroups.com', 'group999@googlegroups.com',
-          'user_666@example.com'],
-         sorted([user_ref.display_name for user_ref in field.user_choices]))
+    self.assertEqual(1, len(response.field_defs))
+    field = response.field_defs[0]
+    self.assertEqual('Foo Field', field.field_ref.field_name)
+    self.assertEqual(
+        [666, 777, 999],
+        sorted([user_ref.user_id for user_ref in field.user_choices]))
+    self.assertEqual(
+        [
+            'group777@googlegroups.com', 'group999@googlegroups.com',
+            'user_666@example.com'
+        ], sorted([user_ref.display_name for user_ref in field.user_choices]))
 
   def testListFields_NoPermissionsNeeded(self):
     self.AddField('Foo Field')

@@ -36,6 +36,7 @@ class FieldCreateTest(unittest.TestCase):
     self.project = self.services.project.TestAddProject('proj')
     self.mr = testing_helpers.MakeMonorailRequest(
         project=self.project, perms=permissions.OWNER_ACTIVE_PERMISSIONSET)
+    self.services.user.TestAddUser('gatsby@example.com', 111)
 
     self.mox = mox.Mox()
 
@@ -95,7 +96,8 @@ class FieldCreateTest(unittest.TestCase):
         docstring=['It is just some field'],
         applicable_type=['Defect'],
         date_action=['no_action'],
-        admin_names=[''])
+        admin_names=['gatsby@example.com'],
+        editor_names=[''])
     url = self.servlet.ProcessFormData(self.mr, post_data)
     self.assertTrue('/adminLabels?saved=1&' in url)
     config = self.services.config.GetProjectConfig(
@@ -113,7 +115,8 @@ class FieldCreateTest(unittest.TestCase):
     self.assertEqual('It is just some field', fd.docstring)
     self.assertEqual('Defect', fd.applicable_type)
     self.assertEqual('', fd.applicable_predicate)
-    self.assertEqual([], fd.admin_ids)
+    self.assertEqual([111], fd.admin_ids)
+    self.assertEqual([], fd.editor_ids)
 
   def testProcessFormData_RejectNoApprover(self):
     post_data = fake.PostData(

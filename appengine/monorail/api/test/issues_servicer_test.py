@@ -1552,12 +1552,16 @@ class IssuesServicerTest(unittest.TestCase):
         'project_id': self.project.project_id,
         'field_name': name,
         'field_type_str': field_type_str}
-    kwargs.update({
-        arg: None
-        for arg in ('applic_type', 'applic_pred', 'is_required', 'is_niche',
-                    'is_multivalued', 'min_value', 'max_value', 'regex',
-                    'needs_member', 'needs_perm', 'grants_perm', 'notify_on',
-                    'date_action_str', 'docstring', 'admin_ids')})
+    kwargs.update(
+        {
+            arg: None for arg in (
+                'applic_type', 'applic_pred', 'is_required', 'is_niche',
+                'is_multivalued', 'min_value', 'max_value', 'regex',
+                'needs_member', 'needs_perm', 'grants_perm', 'notify_on',
+                'date_action_str', 'docstring')
+        })
+    kwargs.update({arg: [] for arg in ('admin_ids', 'editor_ids')})
+
     return self.services.config.CreateFieldDef(**kwargs)
 
   @patch('testing.fake.FeaturesService.GetFilterRules')
@@ -2562,10 +2566,9 @@ class IssuesServicerTest(unittest.TestCase):
 
   def testListIssuePermissions_IssueGrantedPerms(self):
     self.services.config.CreateFieldDef(
-        self.cnxn, 789, 'Field Name', 'USER_TYPE', None, None, None, None,
-        None, None, None, None, None, None, 'CustomPerm', None, None,
-        'Docstring', [])
-
+        self.cnxn, 789, 'Field Name', 'USER_TYPE', None, None, None, None, None,
+        None, None, None, None, None, 'CustomPerm', None, None, 'Docstring', [],
+        [])
     issue_1 = fake.MakeTestIssue(
         789, 1, 'sum', 'New', 111, project_name='proj', issue_id=1001)
     issue_1.labels = ['Restrict-SetStar-CustomPerm']

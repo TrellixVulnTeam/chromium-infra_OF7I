@@ -1073,6 +1073,7 @@ class ConfigService(object):
       date_action_str,
       docstring,
       admin_ids,
+      editor_ids,
       approval_id=None,
       is_phase_field=False,
       is_restricted_field=False):
@@ -1099,6 +1100,8 @@ class ConfigService(object):
       date_action_str: string saying who to notify when a date arrives.
       docstring: string describing this field.
       admin_ids: list of additional user IDs who can edit this field def.
+      editor_ids: list of additional user IDs
+          who can edit a restricted field value.
       approval_id: field_id of approval field this field belongs to.
       is_phase_field: True if field should only be associated with issue phases.
       is_restricted_field: True if field has its edition restricted.
@@ -1135,6 +1138,11 @@ class ConfigService(object):
     self.fielddef2admin_tbl.InsertRows(
         cnxn, FIELDDEF2ADMIN_COLS,
         [(field_id, admin_id) for admin_id in admin_ids],
+        commit=False)
+    self.fielddef2editor_tbl.InsertRows(
+        cnxn,
+        FIELDDEF2EDITOR_COLS,
+        [(field_id, editor_id) for editor_id in editor_ids],
         commit=False)
     cnxn.Commit()
     self.config_2lc.InvalidateKeys(cnxn, [project_id])
@@ -1227,6 +1235,7 @@ class ConfigService(object):
       date_action=None,
       docstring=None,
       admin_ids=None,
+      editor_ids=None,
       is_restricted_field=None):
     """Update the specified field definition."""
     new_values = {}
@@ -1265,11 +1274,19 @@ class ConfigService(object):
       new_values['is_restricted_field'] = is_restricted_field
 
     self.fielddef_tbl.Update(cnxn, new_values, id=field_id, commit=False)
-    self.fielddef2admin_tbl.Delete(cnxn, field_id=field_id, commit=False)
-    self.fielddef2admin_tbl.InsertRows(
-        cnxn, FIELDDEF2ADMIN_COLS,
-        [(field_id, admin_id) for admin_id in admin_ids],
-        commit=False)
+    if admin_ids is not None:
+      self.fielddef2admin_tbl.Delete(cnxn, field_id=field_id, commit=False)
+      self.fielddef2admin_tbl.InsertRows(
+          cnxn,
+          FIELDDEF2ADMIN_COLS, [(field_id, admin_id) for admin_id in admin_ids],
+          commit=False)
+    if editor_ids is not None:
+      self.fielddef2editor_tbl.Delete(cnxn, field_id=field_id, commit=False)
+      self.fielddef2editor_tbl.InsertRows(
+          cnxn,
+          FIELDDEF2EDITOR_COLS,
+          [(field_id, editor_id) for editor_id in editor_ids],
+          commit=False)
     cnxn.Commit()
     self.config_2lc.InvalidateKeys(cnxn, [project_id])
     self.InvalidateMemcacheForEntireProject(project_id)
@@ -1466,5 +1483,6 @@ class ConfigService(object):
       result.update(tracker_bizobj.UsersInvolvedInTemplate(template))
     for field in config.field_defs:
       result.update(field.admin_ids)
+      result.update(field.editor_ids)
     # TODO(jrobbins): add component owners, auto-cc, and admins.
     return result

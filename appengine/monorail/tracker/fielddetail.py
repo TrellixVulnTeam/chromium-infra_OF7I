@@ -180,6 +180,7 @@ class FieldDetail(servlet.Servlet):
 
     admin_ids, admin_str = tracker_helpers.ParseAdminUsers(
         mr.cnxn, post_data['admin_names'], self.services.user)
+    editor_ids, _editor_str = [], []
 
     if field_def.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
       if parsed.approvers_str:
@@ -205,16 +206,25 @@ class FieldDetail(servlet.Servlet):
       return
 
     self.services.config.UpdateFieldDef(
-        mr.cnxn, mr.project_id, field_def.field_id,
+        mr.cnxn,
+        mr.project_id,
+        field_def.field_id,
         applicable_type=parsed.applicable_type,
         applicable_predicate=parsed.applicable_predicate,
-        is_required=parsed.is_required, is_niche=parsed.is_niche,
-        min_value=parsed.min_value, max_value=parsed.max_value,
-        regex=parsed.regex, needs_member=parsed.needs_member,
-        needs_perm=parsed.needs_perm, grants_perm=parsed.grants_perm,
-        notify_on=parsed.notify_on, is_multivalued=parsed.is_multivalued,
+        is_required=parsed.is_required,
+        is_niche=parsed.is_niche,
+        min_value=parsed.min_value,
+        max_value=parsed.max_value,
+        regex=parsed.regex,
+        needs_member=parsed.needs_member,
+        needs_perm=parsed.needs_perm,
+        grants_perm=parsed.grants_perm,
+        notify_on=parsed.notify_on,
+        is_multivalued=parsed.is_multivalued,
         date_action=parsed.date_action_str,
-        docstring=parsed.field_docstring, admin_ids=admin_ids)
+        docstring=parsed.field_docstring,
+        admin_ids=admin_ids,
+        editor_ids=editor_ids)
 
     if field_def.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
       approval_defs = field_helpers.ReviseApprovals(

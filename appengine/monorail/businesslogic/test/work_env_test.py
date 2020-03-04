@@ -209,7 +209,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.config.CreateFieldDef(
         self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
         None, None, None, None, None, None, None, None, None, None, None, None,
-        None)
+        [], [])
     self.SignIn()
     with self.work_env as we:
       self.assertIsNotNone(we.CheckFieldName(
@@ -217,13 +217,13 @@ class WorkEnvTest(unittest.TestCase):
 
   def testCheckFieldName_FieldIsPrefixOfAnother(self):
     self.services.config.CreateFieldDef(
-        self.cnxn, self.project.project_id, 'Foo', 'STR_TYPE', None, None,
-        None, None, None, None, None, None, None, None, None, None, None, None,
-        None)
+        self.cnxn, self.project.project_id, 'Foo', 'STR_TYPE', None, None, None,
+        None, None, None, None, None, None, None, None, None, None, None, [],
+        [])
     self.services.config.CreateFieldDef(
         self.cnxn, self.project.project_id, 'Field-Foo', 'STR_TYPE', None, None,
         None, None, None, None, None, None, None, None, None, None, None, None,
-        None)
+        [], [])
     self.SignIn()
     with self.work_env as we:
       self.assertIsNotNone(we.CheckFieldName(
@@ -233,7 +233,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.config.CreateFieldDef(
         self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
         None, None, None, None, None, None, None, None, None, None, None, None,
-        None)
+        [], [])
     self.SignIn()
     with self.work_env as we:
       self.assertIsNotNone(we.CheckFieldName(
