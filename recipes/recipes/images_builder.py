@@ -327,6 +327,12 @@ def _roll_built_images(api, spec, images, meta):
     rolled = res.stdout['tags']
     deployments = res.stdout.get('deployments') or []
 
+    # Bail early if there's no new images. In particular we don't want to call
+    # prune_images.py, since if it indeed prunes something we'll end up with
+    # a CL titled "Rolling in new images" that instead just deletes some stuff.
+    if not rolled:  # pragma: no cover
+      return None, None
+
     # Delete old unused tags (if any).
     api.step(
         name='prune_images.py',
@@ -340,19 +346,14 @@ def _roll_built_images(api, spec, images, meta):
     if diff_check.retcode == 0:  # pragma: no cover
       return None, None
 
-    # Generate commit message.
-    desc = [
+    # Generate the commit message.
+    desc = str('\n'.join([
         '[images] Rolling in new images.',
         '',
         'Produced by %s' % api.buildbucket.build_url(),
-    ]
-    if rolled:
-      desc.extend([
-          '',
-          'Added pins:',
-      ])
-      desc.extend('  * %s:%s' % (t['image'], t['tag']['tag']) for t in rolled)
-    desc = str('\n'.join(desc))
+        '',
+        'Added pins:',
+    ] + ['  * %s:%s' % (t['image'], t['tag']['tag']) for t in rolled]))
 
     # List of people to CC based on what staging deployments were updated.
     extra_cc = set()
