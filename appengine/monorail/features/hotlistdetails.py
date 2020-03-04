@@ -36,7 +36,8 @@ class HotlistDetails(servlet.Servlet):
 
   def AssertBasePermission(self, mr):
     super(HotlistDetails, self).AssertBasePermission(mr)
-    if not permissions.CanViewHotlist(mr.auth.effective_ids, mr.perms, mr.hotlist):
+    if not permissions.CanViewHotlist(
+        mr.auth.effective_ids, mr.perms, mr.hotlist):
       raise permissions.PermissionException(
           'User is not allowed to view the hotlist details')
 
@@ -60,6 +61,10 @@ class HotlistDetails(servlet.Servlet):
 
   def ProcessFormData(self, mr, post_data):
     """Process the posted form."""
+    if not permissions.CanAdministerHotlist(
+        mr.auth.effective_ids, mr.perms, mr.hotlist):
+      raise permissions.PermissionException(
+          'User is not allowed to update hotlist settings.')
 
     if post_data.get('deletestate') == 'true':
       hotlist_helpers.RemoveHotlist(mr.cnxn, mr.hotlist_id, self.services)

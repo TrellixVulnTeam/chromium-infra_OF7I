@@ -41,7 +41,6 @@
      <option value="addissues" [if-any add_issues_selected]selected="selected"[end]>Add issues...</option>
      <option value="removeissues">Remove issues...</options>
      <option value="colspec">Change columns...</option>
-     [if-any owner_permissions]<option value="deletehotlist">Delete hotlist</option>[end]
    [end]
      <option value="addtohotlist">Add to hotlist...</option>
    </select>
@@ -84,10 +83,6 @@
        [if-any errors.add_local_ids][errors.add_local_ids][end]
     </span>
   </div>
-</form>
-<form id="deletehotlistform" method="POST" action="/u/[viewed_user_id]/hotlists/[hotlist.name].do">
-  <input type="hidden" name="token" value="[edit_hotlist_token]">
-  <input type="hidden" id="delete" name="deletestate" value="false">
 </form>
 [end]
 

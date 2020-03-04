@@ -1060,9 +1060,6 @@ function TKR_handleListActions(actionsMenu) {
       break;
     case 'issuesperpage':
       break;
-    case 'deletehotlist':
-      HTL_deleteHotlist($('deletehotlistform'));
-      break;
   }
   actionsMenu.value = 'moreactions';
 }

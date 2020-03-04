@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import logging
 import mox
 import unittest
+import mock
 
 from third_party import ezt
 
@@ -27,7 +28,8 @@ class HotlistDetailsTest(unittest.TestCase):
 
   def setUp(self):
     self.user_service = fake.UserService()
-    self.user_service.TestAddUser('111@test.com', 111)
+    self.user_1 = self.user_service.TestAddUser('111@test.com', 111)
+    self.user_2 = self.user_service.TestAddUser('user2@test.com', 222)
     services = service_manager.Services(
         features=fake.FeaturesService(), user=self.user_service)
     self.servlet = hotlistdetails.HotlistDetails(
@@ -97,6 +99,7 @@ class HotlistDetailsTest(unittest.TestCase):
         path='/u/111/hotlists/%s/details' % self.hotlist.hotlist_id,
         services=service_manager.Services(user=self.user_service),
         perms=permissions.EMPTY_PERMISSIONSET)
+    mr.auth.effective_ids = {111}
     mr.auth.user_id = 111
     post_data = fake.PostData(
         name=['hotlist'],
@@ -107,12 +110,31 @@ class HotlistDetailsTest(unittest.TestCase):
     self.assertTrue((
         '/u/111/hotlists/%d/details?saved=' % self.hotlist.hotlist_id) in url)
 
+  @mock.patch('features.hotlist_helpers.RemoveHotlist')
+  def testProcessFormData_DeleteHotlist(self, fake_rh):
+    mr = testing_helpers.MakeMonorailRequest(
+        hotlist=self.hotlist,
+        path='/u/111/hotlists/%s/details' % self.hotlist.hotlist_id,
+        services=service_manager.Services(user=self.user_service),
+        perms=permissions.EMPTY_PERMISSIONSET)
+    mr.auth.effective_ids = {self.user_1.user_id}
+    mr.auth.user_id = self.user_1.user_id
+    mr.auth.email = self.user_1.email
+
+    post_data = fake.PostData(deletestate=['true'])
+    url = self.servlet.ProcessFormData(mr, post_data)
+    fake_rh.assert_called_once_with(
+        mr.cnxn, mr.hotlist_id, self.servlet.services)
+    self.assertTrue(('/u/%s/hotlists?saved=' % self.user_1.email) in url)
+
   def testProcessFormData_RejectTemplate(self):
     mr = testing_helpers.MakeMonorailRequest(
         hotlist=self.hotlist,
         path='/u/111/hotlists/%s/details' % self.hotlist.hotlist_id,
-        services=service_manager.Services(user=self.user_service))
+        services=service_manager.Services(user=self.user_service),
+        perms=permissions.EMPTY_PERMISSIONSET)
     mr.auth.user_id = 111
+    mr.auth.effective_ids = {111}
     post_data = fake.PostData(
         summary = [''],
         name = [''],
@@ -139,8 +161,10 @@ class HotlistDetailsTest(unittest.TestCase):
     mr = testing_helpers.MakeMonorailRequest(
         hotlist=self.hotlist,
         path='/u/111/hotlists/%s/details' % (self.hotlist.hotlist_id),
-        services=service_manager.Services(user=self.user_service))
+        services=service_manager.Services(user=self.user_service),
+        perms=permissions.EMPTY_PERMISSIONSET)
     mr.auth.user_id = 111
+    mr.auth.effective_ids = {111}
     post_data = fake.PostData(
         summary = ['hotlist summary'],
         name = ['FirstHotlist'],
@@ -163,7 +187,10 @@ class HotlistDetailsTest(unittest.TestCase):
     mr = testing_helpers.MakeMonorailRequest(
         hotlist=self.hotlist,
         path='/u/111/hotlists/%s/details' % (self.hotlist.hotlist_id),
-        services=service_manager.Services(user=self.user_service))
+        services=service_manager.Services(user=self.user_service),
+         perms=permissions.EMPTY_PERMISSIONSET)
+    mr.auth.user_id = 111
+    mr.auth.effective_ids = {111}
     post_data = fake.PostData(
         summary = ['hotlist summary'],
         name = ['2badName'],
@@ -181,3 +208,19 @@ class HotlistDetailsTest(unittest.TestCase):
     self.assertEqual(hotlistdetails._MSG_INVALID_HOTLIST_NAME,
                      mr.errors.name)
     self.assertIsNone(url)
+
+  def testProcessFormData_NoPermissions(self):
+    mr = testing_helpers.MakeMonorailRequest(
+        hotlist=self.hotlist,
+        path='/u/111/hotlists/%s/details' % (self.hotlist.hotlist_id),
+        services=service_manager.Services(user=self.user_service),
+        perms=permissions.EMPTY_PERMISSIONSET)
+    mr.auth.user_id = self.user_2.user_id
+    mr.auth.effective_ids = {self.user_2.user_id}
+    post_data = fake.PostData(
+        summary = ['hotlist summary'],
+        name = ['hotlist'],
+        description = ['fake description'],
+        default_col_spec = ['test default col spec'])
+    with self.assertRaises(permissions.PermissionException):
+      self.servlet.ProcessFormData(mr, post_data)

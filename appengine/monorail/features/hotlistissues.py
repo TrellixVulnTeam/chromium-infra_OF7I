@@ -181,11 +181,10 @@ class HotlistIssues(servlet.Servlet):
     return table_view_data
 
   def ProcessFormData(self, mr, post_data):
-    if post_data.get('deletestate') == 'true':
-      hotlist_helpers.RemoveHotlist(mr.cnxn, mr.hotlist_id, self.services)
-      return framework_helpers.FormatAbsoluteURL(
-          mr, '/u/%s/hotlists' % mr.auth.email,
-          saved=1, ts=int(time.time()), include_project=False)
+    if not permissions.CanEditHotlist(
+        mr.auth.effective_ids, mr.perms, mr.hotlist):
+      raise permissions.PermissionException(
+          'User is not allowed to edit this hotlist.')
 
     hotlist_view_url = hotlist_helpers.GetURLOfHotlist(
         mr.cnxn, mr.hotlist, self.services.user)

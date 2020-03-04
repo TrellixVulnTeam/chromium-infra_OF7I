@@ -201,3 +201,11 @@ class HotlistIssuesUnitTest(unittest.TestCase):
     issue_ids = [issue.issue_id for issue in self.test_hotlist.items]
     self.assertTrue(issue5.issue_id in issue_ids)
     self.assertTrue(self.issue3.issue_id in issue_ids)
+
+  def testProcessFormData_NoPermissions(self):
+    post_data = fake.PostData(remove=['false'],
+                              add_local_ids=['project-name:4, project-name:5'])
+    self.mr.auth.effective_ids = {333}
+    self.mr.auth.user_id = 333
+    with self.assertRaises(permissions.PermissionException):
+      self.servlet.ProcessFormData(self.mr, post_data)
