@@ -37,9 +37,9 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
     with work_env.WorkEnv(mc, self.services) as we:
       # Fetch project
-      project = we.GetProject(project_id)
+      _project = we.GetProject(project_id)
       # Fetch templates for project
-      _templates = we.ListProjectTemplates(project)
+      _templates = we.ListProjectTemplates(project_id)
 
     # TODO(kweng) implement and use converter
     return projects_pb2.ListIssueTemplatesResponse(templates=[])

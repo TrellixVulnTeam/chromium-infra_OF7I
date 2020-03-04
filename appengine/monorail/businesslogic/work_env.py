@@ -679,9 +679,10 @@ class WorkEnv(object):
       raise exceptions.NoSuchProjectException()
     return configs[project_id]
 
-  def ListProjectTemplates(self, project):
+  def ListProjectTemplates(self, project_id):
     templates = self.services.template.GetProjectTemplates(
-        self.mc.cnxn, project.project_id)
+        self.mc.cnxn, project_id)
+    project = self.GetProject(project_id)
     # Filter non-viewable templates
     if framework_bizobj.UserIsInProject(project, self.mc.auth.effective_ids):
       return templates

@@ -63,7 +63,7 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
     with work_env.WorkEnv(mc, self.services) as we:
       config = we.GetProjectConfig(project.project_id)
-      templates = we.ListProjectTemplates(project)
+      templates = we.ListProjectTemplates(project.project_id)
 
     with mc.profiler.Phase('converting to response objects'):
       involved_user_ids = tracker_bizobj.UsersInvolvedInTemplates(templates)

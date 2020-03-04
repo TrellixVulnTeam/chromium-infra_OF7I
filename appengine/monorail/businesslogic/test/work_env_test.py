@@ -618,7 +618,7 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn()  # user 111 is a member of self.project
 
     with self.work_env as we:
-      actual = we.ListProjectTemplates(self.project)
+      actual = we.ListProjectTemplates(self.project.project_id)
 
     self.assertEqual(actual, [private_tmpl, public_tmpl])
     self.services.template.GetProjectTemplates.assert_called_once_with(
@@ -631,7 +631,7 @@ class WorkEnvTest(unittest.TestCase):
         private_tmpl, public_tmpl]
 
     with self.work_env as we:
-      actual = we.ListProjectTemplates(self.project)
+      actual = we.ListProjectTemplates(self.project.project_id)
 
     self.assertEqual(actual, [public_tmpl])
     self.services.template.GetProjectTemplates.assert_called_once_with(
