@@ -56,7 +56,7 @@ type Args struct {
 	// BuilderID identifies the builder that will run the test task.
 	BuilderID *buildbucket_pb.BuilderID
 	// Test describes the test to be run.
-	Test *skylab_test_runner.Request_Test
+	TestRunnerRequest *skylab_test_runner.Request
 }
 
 // NewBBRequest returns the Buildbucket request to create the test_runner build
@@ -67,18 +67,8 @@ func (a *Args) NewBBRequest() (*buildbucket_pb.ScheduleBuildRequest, error) {
 		return nil, errors.Annotate(err, "create bb request").Err()
 	}
 
-	provisionableLabels, err := provisionDims(a.ProvisionableDimensions).StrippedDict()
-	if err != nil {
-		return nil, errors.Annotate(err, "create bb request").Err()
-	}
-
 	// TODO(crbug.com/1036559#c1): Add timeouts.
-	req, err := requestToStructPB(&skylab_test_runner.Request{
-		Prejob: &skylab_test_runner.Request_Prejob{
-			ProvisionableLabels: provisionableLabels,
-		},
-		Test: a.Test,
-	})
+	req, err := requestToStructPB(a.TestRunnerRequest)
 	if err != nil {
 		return nil, errors.Annotate(err, "create bb request").Err()
 	}
@@ -173,19 +163,6 @@ func setDimensionExpiration(d []*buildbucket_pb.RequestedDimension, expiration t
 }
 
 type provisionDims dims
-
-// StrippedDict converts provisionable dimensions to labels.
-func (p provisionDims) StrippedDict() (map[string]string, error) {
-	ret := make(map[string]string)
-	for _, pd := range p.StrippedDims() {
-		k, v := strpair.Parse(pd)
-		if v == "" {
-			return nil, fmt.Errorf("malformed provisionable dimension with key '%s' has no value", k)
-		}
-		ret[k] = v
-	}
-	return ret, nil
-}
 
 // StrippedDims removes "provisionable-" prefix.
 func (p provisionDims) StrippedDims() []string {

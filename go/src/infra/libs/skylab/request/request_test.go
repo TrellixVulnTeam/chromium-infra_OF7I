@@ -16,6 +16,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
@@ -32,7 +33,8 @@ func TestBuilderID(t *testing.T) {
 			Builder: "foo-builder",
 		}
 		args := request.Args{
-			BuilderID: &id,
+			BuilderID:         &id,
+			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
 			req, err := args.NewBBRequest()
@@ -55,6 +57,7 @@ func TestDimensionsBB(t *testing.T) {
 			ProvisionableDimensions:          []string{"provisionable-k2:v2", "provisionable-k3:v3"},
 			ProvisionableDimensionExpiration: 30 * time.Second,
 			SchedulableLabels:                inventory.SchedulableLabels{Model: &model},
+			TestRunnerRequest:                &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
 			req, err := args.NewBBRequest()
@@ -92,31 +95,43 @@ func TestDimensionsBB(t *testing.T) {
 }
 
 func TestPropertiesBB(t *testing.T) {
-	Convey("Given request arguments that specify provisionable dimensions and test", t, func() {
-		test := skylab_test_runner.Request_Test{
-			Harness: &skylab_test_runner.Request_Test_Autotest_{
-				Autotest: &skylab_test_runner.Request_Test_Autotest{
-					Name:     "foo-test",
-					TestArgs: "a1=v1 a2=v2",
-					Keyvals: map[string]string{
-						"k1": "v1",
-						"k2": "v2",
+	Convey("Given request arguments that specify a test runner request", t, func() {
+		want := skylab_test_runner.Request{
+			Prejob: &skylab_test_runner.Request_Prejob{
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{
+						Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{
+							ChromeosBuild: "foo-build",
+						},
 					},
-					IsClientTest: true,
-					DisplayName:  "fancy-name",
+				},
+				ProvisionableLabels: map[string]string{
+					"key": "value",
+				},
+			},
+			Test: &skylab_test_runner.Request_Test{
+				Harness: &skylab_test_runner.Request_Test_Autotest_{
+					Autotest: &skylab_test_runner.Request_Test_Autotest{
+						Name:     "foo-test",
+						TestArgs: "a1=v1 a2=v2",
+						Keyvals: map[string]string{
+							"k1": "v1",
+							"k2": "v2",
+						},
+						IsClientTest: true,
+						DisplayName:  "fancy-name",
+					},
 				},
 			},
 		}
 		args := request.Args{
-			ProvisionableDimensions:          []string{"provisionable-k1:v1", "provisionable-k2:v2"},
-			ProvisionableDimensionExpiration: 30 * time.Second,
-			Test:                             &test,
+			TestRunnerRequest: &want,
 		}
-		Convey("when a request is formed", func() {
+		Convey("when a BB request is formed", func() {
 			req, err := args.NewBBRequest()
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
-			Convey("then request should have correct properties.", func() {
+			Convey("it should contain the test runner request.", func() {
 				So(req.Properties, ShouldNotBeNil)
 
 				reqStruct, ok := req.Properties.Fields["request"]
@@ -130,16 +145,6 @@ func TestPropertiesBB(t *testing.T) {
 				err = jsonpb.UnmarshalString(s, &got)
 				So(err, ShouldBeNil)
 
-				want := skylab_test_runner.Request{
-					Prejob: &skylab_test_runner.Request_Prejob{
-						ProvisionableLabels: map[string]string{
-							"k1": "v1",
-							"k2": "v2",
-						},
-					},
-					Test: &test,
-				}
-
 				diff := pretty.Compare(got, want)
 				So(diff, ShouldBeEmpty)
 			})
@@ -150,7 +155,8 @@ func TestPropertiesBB(t *testing.T) {
 func TestTagsBB(t *testing.T) {
 	Convey("Given request arguments that specify tags", t, func() {
 		args := request.Args{
-			SwarmingTags: []string{"k1:v1", "k2:v2"},
+			SwarmingTags:      []string{"k1:v1", "k2:v2"},
+			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
 			req, err := args.NewBBRequest()
@@ -180,7 +186,8 @@ func TestTagsBB(t *testing.T) {
 func TestPriorityBB(t *testing.T) {
 	Convey("Given request arguments that specify tags", t, func() {
 		args := request.Args{
-			Priority: 42,
+			Priority:          42,
+			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
 			req, err := args.NewBBRequest()
@@ -196,7 +203,8 @@ func TestPriorityBB(t *testing.T) {
 func TestStatusTopicBB(t *testing.T) {
 	Convey("Given request arguments that specify a Pubsub topic for status updates", t, func() {
 		args := request.Args{
-			StatusTopic: "a topic name",
+			StatusTopic:       "a topic name",
+			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
 			req, err := args.NewBBRequest()
@@ -212,7 +220,9 @@ func TestStatusTopicBB(t *testing.T) {
 
 func TestNoStatusTopicBB(t *testing.T) {
 	Convey("Given request arguments that specify a Pubsub topic for status updates", t, func() {
-		args := request.Args{}
+		args := request.Args{
+			TestRunnerRequest: &skylab_test_runner.Request{},
+		}
 		Convey("when a request is formed", func() {
 			req, err := args.NewBBRequest()
 			So(err, ShouldBeNil)
