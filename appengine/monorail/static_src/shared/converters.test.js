@@ -10,7 +10,7 @@ import {displayNameToUserRef, userIdOrDisplayNameToUserRef, labelStringToRef,
   statusRefToString, statusRefsToStrings,
   componentStringToRef, componentRefToString, componentRefsToStrings,
   issueStringToRef, issueStringToBlockingRef, issueRefToString,
-  issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefix,
+  issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefixes,
   labelNameToLabelValue, commentListToDescriptionList, valueToFieldValue,
   issueToIssueRef, issueNameToRef, issueNameToRefString,
 } from './converters.js';
@@ -153,21 +153,38 @@ describe('fieldNameToLabelPrefix', () => {
   });
 });
 
-describe('labelNameToLabelPrefix', () => {
+describe('labelNameToLabelPrefixes', () => {
   it('converts labelName', () => {
-    assert.deepEqual(labelNameToLabelPrefix('test'), 'test');
-    assert.deepEqual(labelNameToLabelPrefix('test-hello'), 'test');
-    assert.deepEqual(labelNameToLabelPrefix('WHATEVER-this-label-is'),
-        'WHATEVER');
+    assert.deepEqual(labelNameToLabelPrefixes('test'), []);
+    assert.deepEqual(labelNameToLabelPrefixes('test-hello'), ['test']);
+    assert.deepEqual(labelNameToLabelPrefixes('WHATEVER-this-label-is'),
+        ['WHATEVER', 'WHATEVER-this', 'WHATEVER-this-label']);
   });
 });
 
 describe('labelNameToLabelValue', () => {
+  it('returns null when no matching value found in label', () => {
+    assert.isNull(labelNameToLabelValue('test-hello', ''));
+    assert.isNull(labelNameToLabelValue('', 'test'));
+    assert.isNull(labelNameToLabelValue('test-hello', 'hello'));
+    assert.isNull(labelNameToLabelValue('test-hello', 'tes'));
+    assert.isNull(labelNameToLabelValue('test', 'test'));
+  });
+
   it('converts labelName', () => {
-    assert.deepEqual(labelNameToLabelValue('test'), 'test');
-    assert.deepEqual(labelNameToLabelValue('test-hello'), 'hello');
-    assert.deepEqual(labelNameToLabelValue('WHATEVER-this-label-is'),
-        'this-label-is');
+    assert.deepEqual(labelNameToLabelValue('test-hello', 'test'), 'hello');
+    assert.deepEqual(labelNameToLabelValue('WHATEVER-this-label-is',
+        'WHATEVER'), 'this-label-is');
+    assert.deepEqual(labelNameToLabelValue('WHATEVER-this-label-is',
+        'WHATEVER-this'), 'label-is');
+    assert.deepEqual(labelNameToLabelValue('WHATEVER-this-label-is',
+        'WHATEVER-this-label'), 'is');
+  });
+
+  it('fieldName is case insenstitive', () => {
+    assert.deepEqual(labelNameToLabelValue('test-hello', 'TEST'), 'hello');
+    assert.deepEqual(labelNameToLabelValue('test-hello', 'tEsT'), 'hello');
+    assert.deepEqual(labelNameToLabelValue('TEST-hello', 'test'), 'hello');
   });
 });
 

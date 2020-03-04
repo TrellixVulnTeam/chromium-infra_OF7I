@@ -9,7 +9,7 @@ import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS, defaultIssueFieldMap,
   parseColSpec, stringValuesForIssueField} from 'shared/issue-fields.js';
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
-  labelNameToLabelPrefix, labelNameToLabelValue,
+  labelNameToLabelPrefixes, labelNameToLabelValue,
   restrictionLabelsForPermissions} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
@@ -251,13 +251,16 @@ export const labelDefMap = createSelector(
 export const labelPrefixValueMap = createSelector(labelDefs, (labelDefs) => {
   const prefixMap = new Map();
   labelDefs.forEach((ld) => {
-    const prefix = labelNameToLabelPrefix(ld.label);
+    const prefixes = labelNameToLabelPrefixes(ld.label);
 
-    if (prefixMap.has(prefix)) {
-      prefixMap.get(prefix).add(labelNameToLabelValue(ld.label));
-    } else {
-      prefixMap.set(prefix, new Set([labelNameToLabelValue(ld.label)]));
-    }
+    prefixes.forEach((prefix) => {
+      if (prefixMap.has(prefix)) {
+        prefixMap.get(prefix).add(labelNameToLabelValue(ld.label, prefix));
+      } else {
+        prefixMap.set(prefix, new Set(
+            [labelNameToLabelValue(ld.label, prefix)]));
+      }
+    });
   });
 
   return prefixMap;

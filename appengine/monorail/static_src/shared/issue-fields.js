@@ -5,7 +5,7 @@
 import {relativeTime} from
   'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
 import {labelRefsToStrings, issueRefsToStrings, componentRefsToStrings,
-  userRefsToDisplayNames, statusRefsToStrings, labelNameToLabelPrefix,
+  userRefsToDisplayNames, statusRefsToStrings, labelNameToLabelPrefixes,
 } from './converters.js';
 import {removePrefix} from './helpers.js';
 import {STATUS_ENUM_TO_TEXT} from 'shared/approval-consts.js';
@@ -380,9 +380,9 @@ const stringValuesExtractor = (issue, fieldName, projectName,
 
   // Handle custom labels and ad hoc labels last.
   const matchingLabels = (issue.labelRefs || []).filter((labelRef) => {
-    const labelPrefixKey = labelNameToLabelPrefix(
-        labelRef.label).toLowerCase();
-    return fieldKey === labelPrefixKey;
+    const labelPrefixes = labelNameToLabelPrefixes(
+        labelRef.label).map((prefix) => prefix.toLowerCase());
+    return labelPrefixes.includes(fieldKey);
   });
   const labelPrefix = fieldKey + '-';
   return matchingLabels.map(

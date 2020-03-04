@@ -8,7 +8,7 @@ import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
-import {labelNameToLabelPrefix} from 'shared/converters.js';
+import {labelNameToLabelPrefixes} from 'shared/converters.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 
 
@@ -309,6 +309,10 @@ function _columnsFromIssue(issue) {
   const approvalValues = issue.approvalValues || [];
   const fieldValues = issue.fieldValues || [];
   const labelRefs = issue.labelRefs || [];
+  const labelPrefixes = [];
+  labelRefs.forEach((labelRef) => {
+    labelPrefixes.push(...labelNameToLabelPrefixes(labelRef.label));
+  });
   return [
     ...approvalValues.map((approval) => approval.fieldRef.fieldName),
     ...approvalValues.map(
@@ -321,7 +325,7 @@ function _columnsFromIssue(issue) {
         return fieldValue.fieldRef.fieldName;
       }
     }),
-    ...labelRefs.map((labelRef) => labelNameToLabelPrefix(labelRef.label)),
+    ...labelPrefixes,
   ];
 }
 

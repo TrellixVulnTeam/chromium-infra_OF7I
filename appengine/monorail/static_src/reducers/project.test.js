@@ -166,8 +166,6 @@ describe('project selectors', () => {
     assert.deepEqual(project.labelPrefixValueMap(
         {project: {config: {}}}), new Map());
     const expected = new Map([
-      ['One', new Set(['One'])],
-      ['EnUm', new Set(['EnUm'])],
       ['eNuM', new Set(['Options'])],
       ['hello', new Set(['world', 'me'])],
     ]);
