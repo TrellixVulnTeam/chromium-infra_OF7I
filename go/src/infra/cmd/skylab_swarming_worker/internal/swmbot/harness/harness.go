@@ -259,20 +259,23 @@ func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutSt
 		}
 		if p.GetChameleon() {
 			state.Chameleon = lab.PeripheralState_WORKING
-		} else {
-			state.Chameleon = lab.PeripheralState_UNKNOWN
 		}
 		if p.GetAudioLoopbackDongle() {
 			state.AudioLoopbackDongle = lab.PeripheralState_WORKING
-		} else {
-			state.AudioLoopbackDongle = lab.PeripheralState_UNKNOWN
 		}
 		state.WorkingBluetoothBtpeer = p.GetWorkingBluetoothBtpeer()
-	} else {
-		state.Servo = lab.PeripheralState_UNKNOWN
-		state.Chameleon = lab.PeripheralState_UNKNOWN
-		state.AudioLoopbackDongle = lab.PeripheralState_UNKNOWN
-		state.WorkingBluetoothBtpeer = 0
+		switch l.GetCr50Phase() {
+		case inventory.SchedulableLabels_CR50_PHASE_PVT:
+			state.Cr50Phase = lab.DutState_CR50_PHASE_PVT
+		case inventory.SchedulableLabels_CR50_PHASE_PREPVT:
+			state.Cr50Phase = lab.DutState_CR50_PHASE_PREPVT
+		}
+		switch l.GetCr50RoKeyid() {
+		case "prod":
+			state.Cr50KeyEnv = lab.DutState_CR50_KEYENV_PROD
+		case "dev":
+			state.Cr50KeyEnv = lab.DutState_CR50_KEYENV_DEV
+		}
 	}
 	return &state
 }

@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
+
 	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/skylab/inventory"
 )
@@ -202,19 +203,6 @@ func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Con
 		return
 	}
 	l.Phase = (*inventory.SchedulableLabels_Phase)(&(m.DevicePhase))
-	l.Cr50Phase = (*inventory.SchedulableLabels_CR50_Phase)(&(m.Cr50Phase))
-	cr50Env := ""
-	switch m.Cr50KeyEnv {
-	case manufacturing.Config_CR50_KEYENV_PROD:
-		cr50Env = "prod"
-	case manufacturing.Config_CR50_KEYENV_DEV:
-		cr50Env = "dev"
-	}
-	if cr50Env != "" {
-		l.Cr50RoKeyid = &cr50Env
-	} else {
-		l.Cr50RoKeyid = &emptyString
-	}
 	wifiChip := m.GetWifiChip()
 	l.WifiChip = &wifiChip
 	hwidComponent := m.GetHwidComponent()
@@ -330,7 +318,28 @@ func setServoState(s lab.PeripheralState, target **inventory.PeripheralState) {
 	}
 }
 
-func setDutState(p *inventory.Peripherals, s *lab.DutState) {
+func setCr50Configs(l *inventory.SchedulableLabels, s *lab.DutState) {
+	switch s.GetCr50Phase() {
+	case lab.DutState_CR50_PHASE_PVT:
+		l.Cr50Phase = inventory.SchedulableLabels_CR50_PHASE_PVT.Enum()
+	case lab.DutState_CR50_PHASE_PREPVT:
+		l.Cr50Phase = inventory.SchedulableLabels_CR50_PHASE_PREPVT.Enum()
+	default:
+		l.Cr50Phase = inventory.SchedulableLabels_CR50_PHASE_INVALID.Enum()
+	}
+
+	cr50Env := ""
+	switch s.GetCr50KeyEnv() {
+	case lab.DutState_CR50_KEYENV_PROD:
+		cr50Env = "prod"
+	case lab.DutState_CR50_KEYENV_DEV:
+		cr50Env = "dev"
+	}
+	l.Cr50RoKeyid = &cr50Env
+}
+
+func setDutState(l *inventory.SchedulableLabels, s *lab.DutState) {
+	p := l.Peripherals
 	setServoState(s.GetServo(), &(p.ServoState))
 	setDutStateHelper(s.GetServo(), &(p.Servo))
 	setDutStateHelper(s.GetChameleon(), &(p.Chameleon))
@@ -339,6 +348,7 @@ func setDutState(p *inventory.Peripherals, s *lab.DutState) {
 	if n := s.GetWorkingBluetoothBtpeer(); n > 0 {
 		p.WorkingBluetoothBtpeer = &n
 	}
+	setCr50Configs(l, s)
 }
 
 func createDutLabels(lc *lab.ChromeOSDevice, osType *inventory.SchedulableLabels_OSType) *inventory.SchedulableLabels {
@@ -425,7 +435,7 @@ func adaptV2DutToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest
 	setDeviceConfig(labels, data.GetDeviceConfig())
 	setManufacturingConfig(labels, data.GetManufacturingConfig())
 	setHwidData(labels, data.GetHwidData())
-	setDutState(labels.Peripherals, data.GetDutState())
+	setDutState(labels, data.GetDutState())
 
 	id := lc.GetId().GetValue()
 	hostname := lc.GetDut().Hostname

@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+
 	"infra/libs/skylab/inventory"
 )
 
@@ -127,6 +128,8 @@ var devInV2State = lab.DutState{
 	Chameleon:              lab.PeripheralState_WORKING,
 	AudioLoopbackDongle:    lab.PeripheralState_NOT_CONNECTED,
 	WorkingBluetoothBtpeer: 3,
+	Cr50Phase:              lab.DutState_CR50_PHASE_PVT,
+	Cr50KeyEnv:             lab.DutState_CR50_KEYENV_PROD,
 }
 
 var labstationInV2 = lab.ChromeOSDevice{
@@ -203,8 +206,6 @@ var data = ExtendedDeviceData{
 			Value: "test_hwid",
 		},
 		DevicePhase: manufacturing.Config_PHASE_DVT,
-		Cr50Phase:   manufacturing.Config_CR50_PHASE_PVT,
-		Cr50KeyEnv:  manufacturing.Config_CR50_KEYENV_PROD,
 	},
 }
 

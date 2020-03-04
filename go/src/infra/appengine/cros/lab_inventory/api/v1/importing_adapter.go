@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/common/errors"
+
 	"infra/libs/skylab/inventory"
 )
 
@@ -338,16 +339,42 @@ func getServoState(peri *inventory.Peripherals) lab.PeripheralState {
 	return boolToDutState(peri.GetServo())
 }
 
+func getCr50Phase(l *inventory.SchedulableLabels) lab.DutState_CR50Phase {
+	switch l.GetCr50Phase() {
+	case inventory.SchedulableLabels_CR50_PHASE_PVT:
+		return lab.DutState_CR50_PHASE_PVT
+	case inventory.SchedulableLabels_CR50_PHASE_PREPVT:
+		return lab.DutState_CR50_PHASE_PREPVT
+	}
+	return lab.DutState_CR50_PHASE_INVALID
+}
+
+func getCr50Env(l *inventory.SchedulableLabels) lab.DutState_CR50KeyEnv {
+	switch l.GetCr50RoKeyid() {
+	case "prod":
+		return lab.DutState_CR50_KEYENV_PROD
+	case "dev":
+		return lab.DutState_CR50_KEYENV_DEV
+	}
+	return lab.DutState_CR50_KEYENV_INVALID
+}
+
 func createDutState(states *[]*lab.DutState, olddata *inventory.CommonDeviceSpecs) {
-	if ostype := olddata.GetLabels().GetOsType(); ostype == inventory.SchedulableLabels_OS_TYPE_LABSTATION {
+	labels := olddata.GetLabels()
+	if labels == nil {
 		return
 	}
-	peri := olddata.GetLabels().GetPeripherals()
+	if ostype := labels.GetOsType(); ostype == inventory.SchedulableLabels_OS_TYPE_LABSTATION {
+		return
+	}
+	peri := labels.GetPeripherals()
 	*states = append(*states, &lab.DutState{
 		Id:                     &lab.ChromeOSDeviceID{Value: olddata.GetId()},
 		Servo:                  getServoState(peri),
 		Chameleon:              boolToDutState(peri.GetChameleon()),
 		AudioLoopbackDongle:    boolToDutState(peri.GetAudioLoopbackDongle()),
 		WorkingBluetoothBtpeer: peri.GetWorkingBluetoothBtpeer(),
+		Cr50Phase:              getCr50Phase(labels),
+		Cr50KeyEnv:             getCr50Env(labels),
 	})
 }
