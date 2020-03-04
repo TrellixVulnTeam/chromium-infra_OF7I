@@ -22,11 +22,11 @@ a.src=g;m.parentNode.insertBefore(a,m)
     ga('set', 'dimension1', 'Not logged in');
   [end]
 
-  const pathName = window.location.pathname;
-  if (pathName.startsWith('/u')) {
+  const path = window.location.href.slice(window.location.origin.length);
+  if (path.startsWith('/u')) {
     [# Keep anything that looks like an email address out of GA.]
     ga('set', 'title', 'A user page');
-    ga('set', 'location', pathName.replace(_EMAIL_REGEX, 'user@example.com'));
+    ga('set', 'location', path.replace(_EMAIL_REGEX, 'user@example.com'));
   }
 
   ga('send', 'pageview');
