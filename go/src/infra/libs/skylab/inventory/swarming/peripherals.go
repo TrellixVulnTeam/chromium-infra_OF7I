@@ -5,10 +5,13 @@
 package swarming
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 
-	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"infra/libs/skylab/inventory"
+
+	"go.chromium.org/chromiumos/infra/proto/go/lab"
 )
 
 func init() {
@@ -86,6 +89,16 @@ func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 			dims["label-servo_state"] = []string{labSState}
 		}
 	}
+
+	n := p.GetWorkingBluetoothBtpeer()
+	btpeers := make([]string, n)
+	for i := range btpeers {
+		btpeers[i] = fmt.Sprint(i + 1)
+	}
+	// Empty dimensions may cause swarming page to fail to load: crbug.com/1056285
+	if len(btpeers) > 0 {
+		dims["label-working_bluetooth_btpeer"] = btpeers
+	}
 }
 
 func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -107,6 +120,16 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 		p.ServoState = &servoState
 		delete(d, "label-servo_state")
 	}
+
+	btpeers := d["label-working_bluetooth_btpeer"]
+	max := 0
+	for _, v := range btpeers {
+		if i, err := strconv.Atoi(v); err == nil && i > max {
+			max = i
+		}
+	}
+	*p.WorkingBluetoothBtpeer = int32(max)
+	delete(d, "label-working_bluetooth_btpeer")
 
 	return d
 }

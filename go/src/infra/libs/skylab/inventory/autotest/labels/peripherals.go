@@ -5,10 +5,13 @@
 package labels
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 
-	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"infra/libs/skylab/inventory"
+
+	"go.chromium.org/chromiumos/infra/proto/go/lab"
 )
 
 func init() {
@@ -76,6 +79,10 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 			lv := "servo_state:" + strings.ToLower(labSState)
 			labels = append(labels, lv)
 		}
+	}
+
+	if n := p.GetWorkingBluetoothBtpeer(); n > 0 {
+		labels = append(labels, fmt.Sprintf("working_bluetooth_btpeer:%d", n))
 	}
 
 	return labels
@@ -146,6 +153,12 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 				servoState := inventory.PeripheralState(labSStateVal)
 				p.ServoState = &servoState
 			}
+		case "working_bluetooth_btpeer":
+			i, err := strconv.Atoi(v)
+			if err != nil {
+				*p.WorkingBluetoothBtpeer = 0
+			}
+			*p.WorkingBluetoothBtpeer = int32(i)
 		default:
 			continue
 		}

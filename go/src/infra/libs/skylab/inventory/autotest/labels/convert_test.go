@@ -52,6 +52,7 @@ peripherals: {
   audio_box: true
   audio_board: true
   router_802_11ax: true
+  working_bluetooth_btpeer: 3
 }
 os_type: 2
 model: "modelval"
@@ -169,6 +170,7 @@ var fullLabels = []string{
 	"webcam",
 	"wifi_chip:wireless_xxxx",
 	"wificell",
+	"working_bluetooth_btpeer:3",
 }
 
 func TestConvertEmpty(t *testing.T) {

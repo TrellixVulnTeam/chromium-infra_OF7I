@@ -346,7 +346,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 16
+// NEXT TAG: 17
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -386,6 +386,9 @@ message Peripherals {
   // Indicate if the device is in a pre-setup environment with 802.11ax routers.
   // crbug.com/1044786
   optional bool router_802_11ax = 14;
+
+  // Indicate how many working btpeers for this device: crbug.com/1052511
+  optional int32 working_bluetooth_btpeer = 16;
 }
 
 // copy of enum from dut_state.proto

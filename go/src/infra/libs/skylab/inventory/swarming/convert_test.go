@@ -51,6 +51,7 @@ peripherals: {
   audio_box: true
   audio_board: true
   router_802_11ax: true
+  working_bluetooth_btpeer: 3
 }
 os_type: 2
 model: "modelval"
@@ -160,14 +161,15 @@ var fullDimensions = Dimensions{
 		"VIDEO_ACCELERATION_ENC_VP9",
 		"VIDEO_ACCELERATION_ENC_VP9_2",
 	},
-	"label-webcam":          {"True"},
-	"label-wificell":        {"True"},
-	"label-cr50_phase":      {"CR50_PHASE_PVT"},
-	"label-cr50_ro_keyid":   {"a"},
-	"label-cr50_ro_version": {"11.12.13"},
-	"label-cr50_rw_keyid":   {"b"},
-	"label-cr50_rw_version": {"21.22.23"},
-	"label-wifi_chip":       {"wireless_xxxx"},
+	"label-webcam":                   {"True"},
+	"label-wificell":                 {"True"},
+	"label-cr50_phase":               {"CR50_PHASE_PVT"},
+	"label-cr50_ro_keyid":            {"a"},
+	"label-cr50_ro_version":          {"11.12.13"},
+	"label-cr50_rw_keyid":            {"b"},
+	"label-cr50_rw_version":          {"21.22.23"},
+	"label-wifi_chip":                {"wireless_xxxx"},
+	"label-working_bluetooth_btpeer": {"1", "2", "3"},
 }
 
 func TestConvertEmpty(t *testing.T) {
