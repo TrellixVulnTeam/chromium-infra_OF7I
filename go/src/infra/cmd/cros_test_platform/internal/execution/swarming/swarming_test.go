@@ -18,7 +18,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/isolated"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/logging/memlogger"
 
+	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
 )
 
@@ -125,12 +128,37 @@ func TestNonExistentBot(t *testing.T) {
 		skylab := &rawSwarmingSkylabClient{
 			swarmingClient: swarming,
 		}
+		var ml memlogger.MemLogger
+		ctx := setLogger(context.Background(), &ml)
+		board := "foo-board"
+		args := &request.Args{
+			SchedulableLabels: inventory.SchedulableLabels{
+				Board: &board,
+			},
+		}
 		Convey("the validation fails.", func() {
-			exists, err := skylab.ValidateArgs(context.Background(), &request.Args{})
+			exists, err := skylab.ValidateArgs(ctx, args)
 			So(err, ShouldBeNil)
 			So(exists, ShouldBeFalse)
+			So(loggerOutput(ml, logging.Warning), ShouldContainSubstring, "foo-board")
 		})
 	})
+}
+
+func setLogger(ctx context.Context, l logging.Logger) context.Context {
+	return logging.SetFactory(ctx, func(context.Context) logging.Logger {
+		return l
+	})
+}
+
+func loggerOutput(ml memlogger.MemLogger, level logging.Level) string {
+	out := ""
+	for _, m := range ml.Messages() {
+		if m.Level == level {
+			out = out + m.Msg
+		}
+	}
+	return out
 }
 
 func TestExistingBot(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
@@ -109,7 +110,12 @@ func (c *rawSwarmingSkylabClient) ValidateArgs(ctx context.Context, args *reques
 		return false, errors.Annotate(err, "validate dependencies").Err()
 	}
 	if !exists {
-		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions %+v.", args.Cmd.TaskName, dims)
+		var ds []string
+		for _, dim := range dims {
+			ds = append(ds, fmt.Sprintf("%+v", dim))
+		}
+		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions: %s", args.Cmd.TaskName, strings.Join(ds, ", "))
+
 	}
 	return exists, nil
 }
