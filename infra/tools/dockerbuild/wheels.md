@@ -2050,6 +2050,18 @@ wheel: <
 
 * *universal*
 
+### 5.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/mozlog-py2_py3"
+  version: "version:5.0"
+>
+```
+
+
+* *universal*
+
 ## **mozprocess**
 
 ### 0.26

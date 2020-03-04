@@ -599,6 +599,7 @@ SPECS.update({
         Universal('mozlog', '3.8'),
         Universal('mozlog', '4.1'),
         Universal('mozlog', '4.2.0'),
+        Universal('mozlog', '5.0'),
         Universal('mozprocess', '0.26'),
         Universal('mozterm', '1.0.0'),
         Universal('nose', '1.3.7'),
