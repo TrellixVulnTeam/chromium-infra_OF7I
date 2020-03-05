@@ -8,7 +8,20 @@
     "type": "git",
     "url": "https://chromium.googlesource.com/infra/infra/crdx/chopsui-npm.git"
   },
+  "main": "chops-signin.js",
+  "types": "chops-signin.d.ts",
+  "module": "chops-signin.js",
+  "scripts": {
+    "tsc": "tsc -p tsconfig.json",
+    "lint": "tslint -p tsconfig.json"
+  },
   "dependencies": {
     "lit-element": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/gapi.auth2": "0.0.51",
+    "@types/sinon": "^7.5.2",
+    "tslint": "^5.18.0",
+    "typescript": "^3.7.0"
   }
 }

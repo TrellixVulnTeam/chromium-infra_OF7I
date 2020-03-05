@@ -4,6 +4,10 @@
 
 import {LitElement, html, svg, css} from 'lit-element';
 
+export interface AuthorizationHeader {
+  Authorization?: string;
+}
+
 /**
  * `chops-signin` is a web component that manages signing into services using
  * client-side OAuth via gapi.auth2. chops-signin visually indicates whether the
@@ -21,6 +25,10 @@ import {LitElement, html, svg, css} from 'lit-element';
  *   const headers = await signin.getAuthorizationHeaders();
  */
 export class ChopsSignin extends LitElement {
+  errorMsg?: string;
+  clientId = '';
+  profile?: gapi.auth2.BasicProfile;
+
   constructor() {
     super();
     this._onUserUpdate = this._onUserUpdate.bind(this);
@@ -39,7 +47,7 @@ export class ChopsSignin extends LitElement {
 
   static get styles() {
     return css`
-     :host {
+      :host {
         --chops-signin-size: 32px;
         fill: var(--chops-signin-fill-color, red);
         cursor: pointer;
@@ -62,13 +70,23 @@ export class ChopsSignin extends LitElement {
   render() {
     const profile = getUserProfileSync();
     return html`
-      ${this.errorMsg?
-    html`<div class="error">Error: ${this.errorMsg}</div>` :
-    html`${!profile ?
-      this._icon :
-      profile.getImageUrl() ?
-        html`<img title="Sign out of ${profile.getEmail()}" src="${profile.getImageUrl()}">` :
-        this._icon}`}`;
+      ${this.errorMsg
+        ? html`
+            <div class="error">Error: ${this.errorMsg}</div>
+          `
+        : html`
+            ${!profile
+              ? this._icon
+              : profile.getImageUrl()
+              ? html`
+                  <img
+                    title="Sign out of ${profile.getEmail()}"
+                    src="${profile.getImageUrl()}"
+                  />
+                `
+              : this._icon}
+          `}
+    `;
   }
 
   static get properties() {
@@ -92,9 +110,13 @@ export class ChopsSignin extends LitElement {
     }
   }
 
-  attributeChangedCallback(name, oldval, newval) {
+  attributeChangedCallback(
+    name: string,
+    oldval: string | null,
+    newval: string | null
+  ) {
     super.attributeChangedCallback(name, oldval, newval);
-    if (name == 'client-id') {
+    if (name === 'client-id') {
       this.clientIdChanged();
     }
   }
@@ -119,16 +141,18 @@ export class ChopsSignin extends LitElement {
   }
 
   _onClick() {
-    return authInitializedPromise.then(function() {
-      const auth = gapi.auth2.getAuthInstance();
-      if (auth.currentUser.get().isSignedIn()) {
-        return auth.signOut();
-      } else {
-        return auth.signIn();
-      }
-    }).catch(function(err) {
-      window.console.error(err);
-    });
+    return authInitializedPromise
+      .then(() => {
+        const auth = gapi.auth2.getAuthInstance();
+        if (auth.currentUser.get().isSignedIn()) {
+          return auth.signOut();
+        } else {
+          return auth.signIn();
+        }
+      })
+      .catch(err => {
+        window.console.error(err);
+      });
   }
 }
 
@@ -138,44 +162,48 @@ if (!customElements.get('chops-signin')) {
   customElements.define('chops-signin', ChopsSignin);
 }
 
-export function getAuthInstanceAsync() {
-  return authInitializedPromise.then(function() {
+export function getAuthInstanceAsync(): Promise<gapi.auth2.GoogleAuth> {
+  return authInitializedPromise.then(() => {
     return gapi.auth2.getAuthInstance();
   });
-};
+}
 
-export function getAuthorizationHeadersSync() {
+export function getAuthorizationHeadersSync(): AuthorizationHeader | undefined {
   if (!gapi || !gapi.auth2) return undefined;
   const auth = gapi.auth2.getAuthInstance();
   if (!auth) return undefined;
   const user = auth.currentUser.get();
   if (!user) return {};
   const response = user.getAuthResponse();
-  if (!response) return {};
-  return {Authorization: response.token_type + ' ' + response.access_token};
-};
+  if (!response?.access_token) return {};
+  return {
+    Authorization: response['token_type'] + ' ' + response.access_token,
+  };
+}
 
-export function getUserProfileSync() {
+export function getUserProfileSync(): gapi.auth2.BasicProfile | undefined {
   if (!gapi || !gapi.auth2) return undefined;
   const auth = gapi.auth2.getAuthInstance();
   if (!auth) return undefined;
   const user = auth.currentUser.get();
   if (!user.isSignedIn()) return undefined;
   return user.getBasicProfile();
-};
+}
 
 // This async version waits for gapi.auth2 to finish initializing before
 // getting the profile.
-export function getUserProfileAsync() {
+export function getUserProfileAsync(): Promise<
+  gapi.auth2.BasicProfile | undefined
+> {
   return authInitializedPromise.then(getUserProfileSync);
-};
+}
 
 const RELOAD_EARLY_MS = 60e3;
-let reloadTimerId;
+let reloadTimerId: number | undefined;
 
-export function getAuthorizationHeaders() {
+export function getAuthorizationHeaders(): Promise<AuthorizationHeader> {
   return getAuthInstanceAsync()
-    .then(function(auth) {
+    .then(auth => {
       if (!auth) return undefined;
       const user = auth.currentUser.get();
       const response = user.getAuthResponse();
@@ -183,41 +211,47 @@ export function getAuthorizationHeaders() {
         // The user is not signed in.
         return undefined;
       }
-      if (response.expires_at - RELOAD_EARLY_MS < new Date()) {
+      if (response.expires_at - RELOAD_EARLY_MS < new Date().valueOf()) {
         // The token has expired or is about to expire, so reload it.
         return user.reloadAuthResponse();
       }
       return response;
     })
-    .then(function(response) {
+    .then(response => {
       if (!response) return {};
       if (!reloadTimerId) {
         // Automatically reload when the token is about to expire.
-        const delayMs = response.expires_at - RELOAD_EARLY_MS + 1 - new Date();
+        const delayMs =
+          response.expires_at - RELOAD_EARLY_MS + 1 - new Date().valueOf();
         reloadTimerId = window.setTimeout(reloadAuthorizationHeaders, delayMs);
       }
       return {
-        Authorization: response.token_type + ' ' + response.access_token,
+        Authorization: response['token_type'] + ' ' + response.access_token,
       };
     });
-};
+}
 
 export function reloadAuthorizationHeaders() {
   reloadTimerId = undefined;
-  getAuthorizationHeaders().then(function(headers) {
-    window.dispatchEvent(new CustomEvent(
-      'authorization-headers-reloaded', {detail: {headers}}));
+  getAuthorizationHeaders().then(headers => {
+    window.dispatchEvent(
+      new CustomEvent('authorization-headers-reloaded', { detail: { headers } })
+    );
   });
-};
+}
 
-let resolveAuthInitializedPromise;
-export const authInitializedPromise = new Promise(function(resolve) {
+let resolveAuthInitializedPromise: () => void;
+export const authInitializedPromise = new Promise<void>(resolve => {
   resolveAuthInitializedPromise = resolve;
 });
 
-let gapi;
+let gapi: typeof window.gapi;
 
-export function init(clientId, loadLibraries, extraScopes) {
+export function init(
+  clientId: string,
+  loadLibraries?: string[],
+  extraScopes?: string[]
+) {
   const callbackName = 'gapi' + Math.random();
   const gapiScript = document.createElement('script');
   gapiScript.src = 'https://apis.google.com/js/api.js?onload=' + callbackName;
@@ -227,7 +261,7 @@ export function init(clientId, loadLibraries, extraScopes) {
     document.head.removeChild(gapiScript);
   }
 
-  window[callbackName] = function(args) {
+  window[callbackName] = () => {
     gapi = window.gapi;
     let libraries = 'auth2';
     if (loadLibraries && loadLibraries.length > 0) {
@@ -240,7 +274,7 @@ export function init(clientId, loadLibraries, extraScopes) {
   gapiScript.onerror = removeScript;
   document.head.appendChild(gapiScript);
 
-  function onAuthLoaded(args) {
+  function onAuthLoaded() {
     if (!window.gapi || !gapi.auth2) return;
     if (!document.body) {
       window.addEventListener('load', onAuthLoaded);
@@ -254,8 +288,10 @@ export function init(clientId, loadLibraries, extraScopes) {
       client_id: clientId,
       scope: scopes,
     });
-    auth.currentUser.listen(function(user) {
-      window.dispatchEvent(new CustomEvent('user-update', {detail: {user}}));
+    auth.currentUser.listen(user => {
+      window.dispatchEvent(
+        new CustomEvent('user-update', { detail: { user } })
+      );
       // Start the cycle of setting the reload timer.
       getAuthorizationHeaders();
     });

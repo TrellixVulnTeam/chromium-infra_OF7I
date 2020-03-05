@@ -3,24 +3,29 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import sinon from 'sinon';
-import {init, authInitializedPromise} from './index.js';
+import sinon, {SinonStub} from 'sinon';
+
+import {authInitializedPromise, init} from './chops-signin';
 
 function clearGapiHandlers() {
-  getGapiHandlers().forEach((key) => delete window[key]);
+  getGapiHandlers().forEach(key => delete window[key]);
 }
 
 function getGapiHandlers() {
-  return Object.keys(window).filter((key) => key.startsWith('gapi0'));
+  return Object.keys(window).filter(key => key.startsWith('gapi0'));
 }
 
 beforeEach(() => {
-  window.gapi = sinon.stub();
+  window.gapi = (sinon.stub() as unknown) as typeof window.gapi;
   window.gapi.load = sinon.stub();
-  const authStub = new Promise((resolve) => resolve());
-  authStub.currentUser = sinon.stub();
-  authStub.currentUser.listen = sinon.stub();
-  window.gapi.auth2 = {init: sinon.stub().returns(authStub)};
+  const authStub: Partial<gapi.auth2.GoogleAuth> =
+      new Promise(resolve => resolve());
+  authStub.currentUser =
+      (sinon.stub() as unknown) as typeof authStub.currentUser;
+  authStub.currentUser!.listen = sinon.stub();
+  window.gapi.auth2 = ({
+                        init: sinon.stub().returns(authStub),
+                      } as unknown) as typeof window.gapi.auth2;
 
   sinon.stub(document.head, 'appendChild');
   sinon.stub(document.head, 'removeChild');
@@ -29,9 +34,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  window.gapi.reset();
-  document.head.appendChild.restore();
-  document.head.removeChild.restore();
+  ((window.gapi as unknown) as SinonStub).reset();
+  ((document.head.appendChild as unknown) as SinonStub).restore();
+  ((document.head.removeChild as unknown) as SinonStub).restore();
 });
 
 test('init by default loads the auth2 library', () => {
@@ -40,8 +45,8 @@ test('init by default loads the auth2 library', () => {
   // Call the first (and should be only) global gapi load handler.
   window[getGapiHandlers()[0]]();
 
-  sinon.assert.calledOnce(window.gapi.load);
-  assert.equal(window.gapi.load.args[0][0], 'auth2');
+  sinon.assert.calledOnce(window.gapi.load as SinonStub);
+  assert.equal((window.gapi.load as SinonStub).args[0][0], 'auth2');
 });
 
 test('init allows passing one extra library to load', () => {
@@ -50,8 +55,8 @@ test('init allows passing one extra library to load', () => {
   // Call the first (and should be only) global gapi load handler.
   window[getGapiHandlers()[0]]();
 
-  sinon.assert.calledOnce(window.gapi.load);
-  assert.equal(window.gapi.load.args[0][0], 'auth2:client');
+  sinon.assert.calledOnce(window.gapi.load as SinonStub);
+  assert.equal((window.gapi.load as SinonStub).args[0][0], 'auth2:client');
 });
 
 test('init allows passing multiple extra library to load', () => {
@@ -60,8 +65,9 @@ test('init allows passing multiple extra library to load', () => {
   // Call the first (and should be only) global gapi load handler.
   window[getGapiHandlers()[0]]();
 
-  sinon.assert.calledOnce(window.gapi.load);
-  assert.equal(window.gapi.load.args[0][0], 'auth2:client:rutabaga');
+  sinon.assert.calledOnce(window.gapi.load as SinonStub);
+  assert.equal(
+      (window.gapi.load as SinonStub).args[0][0], 'auth2:client:rutabaga');
 });
 
 test('onAuthLoaded callback passes email scope by default', () => {
@@ -71,10 +77,10 @@ test('onAuthLoaded callback passes email scope by default', () => {
   window[getGapiHandlers()[0]]();
 
   // Call onAuthLoaded handler.
-  window.gapi.load.args[0][1]();
+  (window.gapi.load as SinonStub).args[0][1]();
 
   // Get first call to auth2.init.
-  const actualConfig = window.gapi.auth2.init.args[0][0];
+  const actualConfig = (window.gapi.auth2.init as SinonStub).args[0][0];
   assert.equal(actualConfig.client_id, 'rutabaga');
   assert.equal(actualConfig.scope, 'email');
 });
@@ -86,10 +92,10 @@ test('onAuthLoaded callback allows passing additional scopes', () => {
   window[getGapiHandlers()[0]]();
 
   // Call onAuthLoaded handler.
-  window.gapi.load.args[0][1]();
+  (window.gapi.load as SinonStub).args[0][1]();
 
   // Get first call to auth2.init.
-  const actualConfig = window.gapi.auth2.init.args[0][0];
+  const actualConfig = (window.gapi.auth2.init as SinonStub).args[0][0];
   assert.equal(actualConfig.client_id, 'rutabaga');
   assert.equal(actualConfig.scope, 'email https://scope');
 });
@@ -101,7 +107,7 @@ test('authInitializedPromise resolves when fulfilled', async () => {
     // Call the first (and should be only) global gapi load handler.
     window[getGapiHandlers()[0]]();
     // Call onAuthLoaded handler.
-    window.gapi.load.args[0][1]();
+    (window.gapi.load as SinonStub).args[0][1]();
   }, 10);
 
   // Test it doesn't spin forever.

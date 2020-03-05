@@ -3,8 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {ChopsSignin} from './index.js';
-import {auditA11y} from '../../test-helpers';
+import {auditA11y} from '../../test-helpers/test-helpers';
 
 let element;
 
