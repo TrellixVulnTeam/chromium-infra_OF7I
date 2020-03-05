@@ -233,7 +233,8 @@ func (u labelUpdater) update(dutID string, old *inventory.DeviceUnderTest, new *
 	}
 	resp, err := client.UpdateDutLabels(ctx, req)
 	if err != nil {
-		return errors.Annotate(err, "update inventory labels").Err()
+		log.Printf("(not fatal) fail to update to inventory V1: %#v", err)
+		return nil
 	}
 	if url := resp.GetUrl(); url != "" {
 		log.Printf("Updated DUT labels at %s", url)
