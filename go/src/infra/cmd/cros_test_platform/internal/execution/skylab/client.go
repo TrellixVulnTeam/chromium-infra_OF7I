@@ -7,6 +7,7 @@ package skylab
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 
@@ -15,6 +16,11 @@ import (
 
 // TaskReference is an implementation-independent way to identify Skylab tasks.
 type TaskReference string
+
+// NewTaskReference creates a unique task reference.
+func NewTaskReference() TaskReference {
+	return TaskReference(uuid.New().String())
+}
 
 // FetchResultsResponse is an implementation-independent container for
 // information about running and finished tasks.
