@@ -7,6 +7,7 @@ package bq
 
 import (
 	"context"
+	"time"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/golang/protobuf/proto"
@@ -15,6 +16,12 @@ import (
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/libs/cros/lab_inventory/datastore"
 )
+
+// GetPSTTimeStamp returns the PST timestamp for bq table.
+func GetPSTTimeStamp(t time.Time) string {
+	tz, _ := time.LoadLocation("America/Los_Angeles")
+	return t.In(tz).Format("20060102")
+}
 
 // InitBQUploader initialize a bigquery uploader.
 func InitBQUploader(ctx context.Context, project, dataset, table string) (*bq.Uploader, error) {

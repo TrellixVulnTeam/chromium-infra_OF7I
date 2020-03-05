@@ -98,7 +98,7 @@ func dumpRegisteredAssetsCronHandler(c *router.Context) error {
 	ctx := c.Context
 	logging.Infof(ctx, "Start to dump registered assets to bigquery")
 
-	uploader, err := bqlib.InitBQUploader(ctx, info.AppID(ctx), "inventory", "registered_assets")
+	uploader, err := bqlib.InitBQUploader(ctx, info.AppID(ctx), "inventory", fmt.Sprintf("registered_assets$%s", bqlib.GetPSTTimeStamp(time.Now())))
 	if err != nil {
 		return err
 	}
