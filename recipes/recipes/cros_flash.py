@@ -92,8 +92,9 @@ def RunSteps(api, properties):
   src_dir = api.path['cache'].join('builder', 'src')
   with api.context(cwd=src_dir, env=env):
     with api.chromite.with_system_python():
-      chromite_bin_path = src_dir.join('third_party', 'chromite', 'bin')
-      arg_list = [
+      chromite_cros_bin = src_dir.join('third_party', 'chromite', 'bin', 'cros')
+      cmd = [
+          chromite_cros_bin,
           'flash',
           CROS_DUT_HOSTNAME,
           properties.xbuddy_path,
@@ -102,7 +103,7 @@ def RunSteps(api, properties):
           '--force',  # Force yes to all Y/N prompts.
           '--debug',  # More verbose logging.
       ]
-      api.python('flash DUT', chromite_bin_path.join('cros'), arg_list)
+      api.step('flash DUT', cmd)
 
   # Reauthorize the host's ssh identity with the DUT via ssh-copy-id, using
   # sshpass to pass in the root password.
