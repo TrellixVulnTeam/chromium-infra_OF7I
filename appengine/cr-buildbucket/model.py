@@ -142,6 +142,10 @@ class Build(ndb.Model):
   # creation.py or fix_builds.py.
   proto = datastore_utils.ProtobufProperty(build_pb2.Build)
 
+  # Update token required to finalize the invocation.
+  # Set at invocation creation time.
+  resultdb_update_token = ndb.StringProperty(indexed=False)
+
   # == proto-derived properties ================================================
   #
   # These properties are derived from "proto" properties.

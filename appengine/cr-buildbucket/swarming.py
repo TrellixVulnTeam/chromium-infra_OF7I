@@ -52,6 +52,7 @@ import config
 import errors
 import events
 import model
+import resultdb
 import tokens
 import tq
 import user
@@ -470,8 +471,8 @@ def create_sync_task(build):  # pragma: no cover
   }
 
 
-def _sync_build_and_swarming(build_id, generation):
-  """Synchronizes build and Swarming.
+def _sync_build(build_id, generation):
+  """Synchronizes build with Swarming and ResultDB.
 
   If the swarming task does not exist yet, creates it.
   Otherwise updates the build state to match swarming task state.
@@ -497,6 +498,7 @@ def _sync_build_and_swarming(build_id, generation):
   )
   sw = build.proto.infra.swarming
 
+  resultdb.sync(build)
   if not sw.task_id:
     _create_swarming_task(build)
   else:
@@ -650,7 +652,7 @@ class TaskSyncBuild(webapp2.RequestHandler):  # pragma: no cover
   @decorators.require_taskqueue(SYNC_QUEUE_NAME)
   def post(self, build_id):  # pylint: disable=unused-argument
     body = json.loads(self.request.body)
-    _sync_build_and_swarming(body['id'], body['generation'])
+    _sync_build(body['id'], body['generation'])
 
 
 def _generate_build_url(milo_hostname, build):

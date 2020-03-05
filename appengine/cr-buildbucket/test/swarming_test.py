@@ -66,6 +66,7 @@ class BaseTest(testing.AppengineTestCase):
     self.patch(
         'components.utils.utcnow', autospec=True, side_effect=lambda: self.now
     )
+    self.patch('resultdb.sync', autospec=True, return_value=False)
 
     self.settings = service_config_pb2.SettingsCfg(
         swarming=dict(
@@ -701,7 +702,7 @@ class SyncBuildTest(BaseTest):
     expected_task_def['request_uuid'] = str(uuid.UUID(int=build_id))
 
     net.json_request_async.return_value = future({'task_id': 'x'})
-    swarming._sync_build_and_swarming(build_id, 0)
+    swarming._sync_build(build_id, 0)
 
     actual_task_def = net.json_request_async.call_args[1]['payload']
     self.assertEqual(actual_task_def, expected_task_def)
@@ -961,7 +962,7 @@ class SyncBuildTest(BaseTest):
         return_value=case['task_result'],
     )
 
-    swarming._sync_build_and_swarming(1, 1)
+    swarming._sync_build(1, 1)
 
     build = bundle.build.key.get()
     build_infra = bundle.infra.key.get()
@@ -1006,7 +1007,7 @@ class SyncBuildTest(BaseTest):
     self.build.proto.end_time.FromDatetime(utils.utcnow())
     self.build.put()
 
-    swarming._sync_build_and_swarming(1, 1)
+    swarming._sync_build(1, 1)
     self.assertFalse(tq.enqueue_async.called)
 
 
