@@ -100,6 +100,7 @@ export class _MrHotlistIssuesPage extends LitElement {
     return {
       _hotlist: {type: Object},
       _hotlistItems: {type: Array},
+      _columns: {type: Array},
       _issue: {type: Object},
       _extractFieldValuesFromIssue: {type: Object},
       _filter: {type: Object},
@@ -113,6 +114,8 @@ export class _MrHotlistIssuesPage extends LitElement {
     this._hotlist = null;
     /** @type {Array<HotlistItemV1>} */
     this._hotlistItems = [];
+    /** @type {Array<string>} */
+    this._columns = [];
     /**
      * @param {string} _name
      * @return {?Issue}
@@ -162,7 +165,7 @@ export class _MrHotlistIssuesPage extends LitElement {
       case 'Added':
         return [relativeTime(new Date(hotlistIssue.createTime))];
       case 'Adder':
-        return [hotlistIssue.adder];
+        return [hotlistIssue.adder.displayName];
       case 'Rank':
         return [String(hotlistIssue.rank + 1)];
       default:

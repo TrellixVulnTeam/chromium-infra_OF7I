@@ -4,10 +4,24 @@
 
 import 'shared/typedef.js';
 
-export const NAME = 'users/12345678';
+export const NAME = 'users/1234';
+
+export const DISPLAY_NAME = 'example@example.com';
 
 /** @type {UserRef} */
 export const USER_REF = Object.freeze({
   userId: 12345678,
-  displayName: 'example@example.com',
+  displayName: DISPLAY_NAME,
+});
+
+/** @type {UserV1} */
+export const USER = Object.freeze({
+  name: NAME,
+  displayName: DISPLAY_NAME,
+});
+
+/** @type {UserV1} */
+export const USER_2 = Object.freeze({
+  name: 'users/5678',
+  displayName: 'other_user@example.com',
 });

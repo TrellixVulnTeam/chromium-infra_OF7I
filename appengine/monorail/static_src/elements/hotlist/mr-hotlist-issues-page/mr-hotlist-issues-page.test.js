@@ -11,6 +11,7 @@ import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 import * as example from 'shared/test/constants-hotlist.js';
 import * as exampleIssue from 'shared/test/constants-issue.js';
+import * as exampleUser from 'shared/test/constants-user.js';
 
 import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
 
@@ -69,7 +70,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
       element._hotlistItems = [{
         issue: exampleIssue.NAME,
         rank: 52,
-        adder: 'users/5678',
+        adder: exampleUser.USER,
         createTime: new Date(0).toISOString(),
       }];
       element._columns = ['Summary', 'Rank', 'Added', 'Adder'];
@@ -80,7 +81,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
       assert.include(issueList.shadowRoot.innerHTML, 'Summary');
       assert.include(issueList.shadowRoot.innerHTML, '53');
       assert.include(issueList.shadowRoot.innerHTML, 'a day ago');
-      assert.include(issueList.shadowRoot.innerHTML, 'users/5678');
+      assert.include(issueList.shadowRoot.innerHTML, exampleUser.DISPLAY_NAME);
     } finally {
       clock.restore();
     }

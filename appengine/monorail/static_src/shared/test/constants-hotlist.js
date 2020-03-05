@@ -13,8 +13,8 @@ export const NAME = 'hotlists/1234';
 export const HOTLIST = Object.freeze({
   name: NAME,
   displayName: 'Hotlist-Name',
-  owner: 'users/1',
-  editors: ['users/2', 'users/3'],
+  owner: user.USER,
+  editors: [user.USER_2],
   summary: 'Summary',
   description: 'Description',
   defaultColumns: [{column: 'Rank'}, {column: 'ID'}, {column: 'Summary'}],
@@ -28,7 +28,7 @@ export const HOTLIST_ITEM = Object.freeze({
   name: HOTLIST_ITEM_NAME,
   issue: issue.NAME,
   // rank: The API excludes the rank field if it's 0.
-  adder: user.NAME,
+  adder: user.USER,
   createTime: '2020-01-01T12:00:00Z',
 });
 
@@ -37,7 +37,7 @@ export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   name: NAME + '/items/78',
   issue: issue.NAME_OTHER_PROJECT,
   rank: 1,
-  adder: user.NAME,
+  adder: user.USER,
   createTime: '2020-01-01T12:00:00Z',
 });
 

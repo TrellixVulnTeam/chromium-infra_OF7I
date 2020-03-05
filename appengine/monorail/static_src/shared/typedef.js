@@ -442,8 +442,8 @@
  * @typedef {Object} HotlistV1
  * @property {string} name
  * @property {string=} displayName
- * @property {string=} owner
- * @property {Array<string>=} editors
+ * @property {UserV1=} owner
+ * @property {Array<UserV1>=} editors
  * @property {string=} summary
  * @property {string=} description
  * @property {Array<IssuesListColumn>=} defaultColumns
@@ -468,7 +468,7 @@
  * @property {string=} name
  * @property {string=} issue
  * @property {number=} rank
- * @property {string=} adder
+ * @property {UserV1=} adder
  * @property {string=} createTime
  * @property {string=} note
  */
@@ -487,4 +487,13 @@
  * @property {string=} availability
  * @property {UserRef=} linkedParentRef
  * @property {Array<UserRef>=} linkedChildRefs
+ */
+
+/**
+ * A User Object returned by the pRPC v1 API from user_objects.proto.
+ *
+ * @typedef {Object} UserV1
+ * @property {string=} name
+ * @property {string=} displayName
+ * @property {string=} availabilityMessage
  */
