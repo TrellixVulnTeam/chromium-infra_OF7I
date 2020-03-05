@@ -59,7 +59,6 @@ from framework import urls
 from framework import xsrf
 from proto import project_pb2
 from search import query2ast
-from services import secrets_svc
 from tracker import tracker_views
 
 from infra_libs import ts_mon
@@ -403,7 +402,6 @@ class Servlet(webapp2.RequestHandler):
 
   def _GatherFlagData(self, mr):
     page_data = {
-        'recaptcha_public_key': secrets_svc.GetRecaptchaPublicKey(),
         'project_stars_enabled': ezt.boolean(
             settings.enable_project_stars),
         'user_stars_enabled': ezt.boolean(settings.enable_user_stars),

@@ -295,8 +295,6 @@ class IssueEntry(servlet.Servlet):
     component_ids = tracker_helpers.LookupComponentIDs(
         parsed.components.paths, config, mr.errors)
 
-    # TODO(jrobbins): consider captcha 3 score in API
-
     if not parsed.summary.strip() or parsed.summary == PLACEHOLDER_SUMMARY:
       mr.errors.summary = 'Summary is required'
 

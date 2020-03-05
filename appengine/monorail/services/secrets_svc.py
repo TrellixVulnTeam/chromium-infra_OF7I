@@ -46,10 +46,6 @@ class Secrets(ndb.Model):
   email_key = ndb.StringProperty(required=True)
   pagination_key = ndb.StringProperty(required=True)
 
-  # Keys for other APIs that we use.
-  recaptcha_public_key = ndb.StringProperty()
-  recaptcha_private_key = ndb.StringProperty()
-
 
 def MakeSecrets():
   """Make a new Secrets model with random values for keys."""
@@ -57,8 +53,6 @@ def MakeSecrets():
   secrets.xsrf_key = framework_helpers.MakeRandomKey()
   secrets.email_key = framework_helpers.MakeRandomKey()
   secrets.pagination_key = framework_helpers.MakeRandomKey()
-  # Note that recaptcha keys are not generated.  An admin
-  # will need to set them via the Google Cloud Console.
   return secrets
 
 
@@ -91,28 +85,3 @@ def GetPaginationKey():
   """Return a secret key string used to generate pagination tokens."""
   return GetSecrets().pagination_key
 
-
-def GetRecaptchaPublicKey():
-  """Return our public API key for reCAPTCHA."""
-  if settings.local_mode:
-    return '6LebzNMSAAAAAMY8b_FaZvp8wymUO5Jsa0pIX7HO'
-
-  result = GetSecrets().recaptcha_public_key
-  if not result:
-    logging.warn('No recaptcha_public_key set.  Get one at recaptcha.net.')
-    logging.warn('Store it in Cloud Datastore via the Google Cloud Console.')
-
-  return result
-
-
-def GetRecaptchaPrivateKey():
-  """Return our private API key for reCAPTCHA."""
-  if settings.local_mode:
-    return '6LebzNMSAAAAAHNVNiP2I7aNMv2AmxY5nReE2LZ4'
-
-  result = GetSecrets().recaptcha_private_key
-  if not result:
-    logging.warn('No recaptcha_private_key set.  Get one at recaptcha.net.')
-    logging.warn('Store it in Cloud Datastore via the Google Cloud Console.')
-
-  return result

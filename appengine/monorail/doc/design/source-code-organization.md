@@ -150,7 +150,7 @@ Services layer
    charting queries.
 
 *  `services/secrets_svc.py`: Datastore code for key used to generate
-   XSRF and recaptcha tokens.
+   XSRF tokens.
 
 *  `services/project_svc.py`: Persistence for projects and members.
 
@@ -190,7 +190,7 @@ Framework layer
    `monorailcontext.py`: objects that represent information about the
    incoming request.
 
-*  `framework/xsrf.py`, `banned.py`, and `captcha.py`: Anti-abuse utilities.
+*  `framework/xsrf.py`, `banned.py`: Anti-abuse utilities.
 
 *  `testing/*.py`: Utilities for python unit tests.
 
