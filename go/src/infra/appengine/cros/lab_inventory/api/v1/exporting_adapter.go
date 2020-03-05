@@ -301,21 +301,22 @@ func setHwidData(l *inventory.SchedulableLabels, h *HwidData) {
 	}
 }
 
-func setDutStateHelper(s lab.PeripheralState, target **bool) {
-	switch s {
-	case lab.PeripheralState_WORKING:
-		fallthrough
-	case lab.PeripheralState_BROKEN:
-		*target = &trueValue
-	case lab.PeripheralState_NOT_CONNECTED:
-		*target = &falseValue
+func setDutStateHelper(s lab.PeripheralState) *bool {
+	var val bool
+	if s == lab.PeripheralState_UNKNOWN || s == lab.PeripheralState_NOT_CONNECTED {
+		val = false
+	} else {
+		val = true
 	}
+	return &val
 }
-func setServoState(s lab.PeripheralState, target **inventory.PeripheralState) {
+
+func setServoState(s lab.PeripheralState) *inventory.PeripheralState {
+	target := inventory.PeripheralState_UNKNOWN
 	if s != lab.PeripheralState_UNKNOWN {
-		value := inventory.PeripheralState(s)
-		*target = &value
+		target = inventory.PeripheralState(s)
 	}
+	return &target
 }
 
 func setCr50Configs(l *inventory.SchedulableLabels, s *lab.DutState) {
@@ -340,10 +341,10 @@ func setCr50Configs(l *inventory.SchedulableLabels, s *lab.DutState) {
 
 func setDutState(l *inventory.SchedulableLabels, s *lab.DutState) {
 	p := l.Peripherals
-	setServoState(s.GetServo(), &(p.ServoState))
-	setDutStateHelper(s.GetServo(), &(p.Servo))
-	setDutStateHelper(s.GetChameleon(), &(p.Chameleon))
-	setDutStateHelper(s.GetAudioLoopbackDongle(), &(p.AudioLoopbackDongle))
+	p.ServoState = setServoState(s.GetServo())
+	p.Servo = setDutStateHelper(s.GetServo())
+	p.Chameleon = setDutStateHelper(s.GetChameleon())
+	p.AudioLoopbackDongle = setDutStateHelper(s.GetAudioLoopbackDongle())
 
 	if n := s.GetWorkingBluetoothBtpeer(); n > 0 {
 		p.WorkingBluetoothBtpeer = &n

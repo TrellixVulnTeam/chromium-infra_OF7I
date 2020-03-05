@@ -202,6 +202,7 @@ var servoStateConvertStateCases = []struct {
 	{1, false, "WORKING"},
 	{2, false, "NOT_CONNECTED"},
 	{3, false, "BROKEN"},
+	{4, false, "WRONG_CONFIG"},
 	{5, true, ""}, //wrong value
 }
 
@@ -252,6 +253,8 @@ var servoStateRevertCaseTests = []struct {
 	{"BroKen", inventory.PeripheralState_BROKEN},
 	{"BROKEN", inventory.PeripheralState_BROKEN},
 	{"broken", inventory.PeripheralState_BROKEN},
+	{"Wrong_config", inventory.PeripheralState_WRONG_CONFIG},
+	{"WRONG_CONFIG", inventory.PeripheralState_WRONG_CONFIG},
 }
 
 func TestRevertServoStateInCaseEffect(t *testing.T) {

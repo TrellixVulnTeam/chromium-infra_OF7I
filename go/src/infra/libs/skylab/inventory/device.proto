@@ -397,6 +397,7 @@ enum PeripheralState {
   WORKING = 1;
   NOT_CONNECTED = 2;
   BROKEN = 3;
+  WRONG_CONFIG = 4;
 }
 
 // These labels are used by the CI system to provide test coverage hints to
