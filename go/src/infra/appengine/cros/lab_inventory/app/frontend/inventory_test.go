@@ -238,8 +238,7 @@ func TestDeleteCrosDevices(t *testing.T) {
 		Convey("Delete non existing device", func() {
 			req := &api.DeleteCrosDevicesRequest{Ids: []*api.DeviceID{&devIDNonExisting}}
 			rsp, err := tf.Inventory.DeleteCrosDevices(tf.C, req)
-			// Remove nonexisting devices is regarded as a good operation.
-			So(rsp.RemovedDevices, ShouldHaveLength, 1)
+			So(rsp.RemovedDevices, ShouldHaveLength, 0)
 			So(err, ShouldBeNil)
 		})
 	})

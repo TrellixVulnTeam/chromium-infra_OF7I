@@ -178,9 +178,7 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpR
 			continue
 		}
 		if len(devs) == 0 {
-			// Don't raise any error when there's no entities match
-			// the hostname. This is consistent with the behavior of
-			// removing by ID.
+			removingResults[i].logError(errors.Reason("No such host: %s", hostname).Err())
 			continue
 		}
 		if len(devs) > 1 {

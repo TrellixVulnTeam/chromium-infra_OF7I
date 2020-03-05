@@ -213,8 +213,8 @@ func TestRemoveDevices(t *testing.T) {
 			So(resp.Failed(), ShouldHaveLength, 0)
 
 			resp = DeleteDevicesByHostnames(ctx, []string{"dutX", "labstationX"})
-			So(resp.Passed(), ShouldHaveLength, 2)
-			So(resp.Failed(), ShouldHaveLength, 0)
+			So(resp.Passed(), ShouldHaveLength, 0)
+			So(resp.Failed(), ShouldHaveLength, 2)
 
 			// There are still 3 device entities unchanged.
 			var devs []*DeviceEntity
