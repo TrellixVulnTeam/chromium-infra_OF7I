@@ -55,7 +55,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     next_page_token = ''
     return hotlists_pb2.ListHotlistItemsResponse(
         items=converters.ConvertHotlistItems(
-            mc.cnxn, hotlist_id, visible_hotlist_items, self.services),
+            mc.cnxn, mc.auth, hotlist_id, visible_hotlist_items, self.services),
         next_page_token=next_page_token)
 
 
@@ -98,4 +98,4 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     with work_env.WorkEnv(mc, self.services) as we:
       hotlist = we.GetHotlist(hotlist_id)
 
-    return converters.ConvertHotlist(hotlist)
+    return converters.ConvertHotlist(mc.cnxn, mc.auth, hotlist, self.services)

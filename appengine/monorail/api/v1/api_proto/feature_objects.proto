@@ -14,6 +14,7 @@ import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 import "api/v1/api_proto/issue_objects.proto";
+import "api/v1/api_proto/user_objects.proto";
 
 // A user-owned list of Issues.
 // Next available tag: 9
@@ -27,15 +28,13 @@ message Hotlist {
   string name = 1;
   // `display_name` must follow pattern found at `framework_bizobj.RE_HOTLIST_NAME_PATTERN`.
   string display_name = 2 [ (google.api.field_behavior) = REQUIRED ];
-  // Resource name of the hotlist owner.
+  // User who owns the hotlist.
   // Owners can update hotlist settings, editors, owner, and HotlistItems.
   // TODO(monorail:7023): field_behavior may be changed in the future.
-  string owner = 3 [
-      (google.api.resource_reference) = {type: "api.crbug.com/User"},
-      (google.api.field_behavior) = REQUIRED ];
-  // Resource names of the hotlist editors.
+  User owner = 3 [ (google.api.field_behavior) = REQUIRED ];
+  // Editors of the hotlist.
   // Editors can update hotlist HotlistItems.
-  repeated string editors = 4 [ (google.api.resource_reference) = {type: "api.crbug.com/User"} ];
+  repeated User editors = 4;
   // Summary of the hotlist.
   string summary = 5 [ (google.api.field_behavior) = REQUIRED ];
   // More detailed description of the purpose of the hotlist.
@@ -73,10 +72,8 @@ message HotlistItem {
   // Values will be from 1 to N (the size of the hotlist), each item having a unique rank.
   // Changes to rank must be made in `RerankHotlistItems`.
   uint32 rank = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-  // Resource name of the adder of HotlistItem.
-  string adder = 4 [
-      (google.api.resource_reference) = {type: "api.crbug.com/User"},
-      (google.api.field_behavior) = OUTPUT_ONLY ];
+  // User that added the HotlistItem to the Hotlist.
+  User adder = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
   // The time this HotlistItem was added to the hotlist.
   google.protobuf.Timestamp create_time = 5  [ (google.api.field_behavior) = OUTPUT_ONLY ];
   // User-provided additional details about this item.

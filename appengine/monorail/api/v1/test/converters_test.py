@@ -52,6 +52,8 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.services.issue.TestAddIssue(self.issue_1)
     self.services.issue.TestAddIssue(self.issue_2)
     self.user_1 = self.services.user.TestAddUser('one@example.com', 111)
+    self.user_2 = self.services.user.TestAddUser('two@example.com', 222)
+    self.user_3 = self.services.user.TestAddUser('three@example.com', 333)
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -62,16 +64,31 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_api_hotlist = feature_objects_pb2.Hotlist(
         name='hotlists/240',
         display_name=hotlist.name,
-        owner='users/111',
+        owner=user_objects_pb2.User(
+            name='users/111',
+            display_name=self.user_1.email,
+            availability_message='User never visited'),
         summary=hotlist.summary,
         description=hotlist.description,
-        editors=['users/222', 'users/333'],
+        editors=[
+            user_objects_pb2.User(
+                name='users/222',
+                display_name=testing_helpers.ObscuredEmail(self.user_2.email),
+                availability_message='User never visited'),
+            user_objects_pb2.User(
+                name='users/333',
+                display_name=testing_helpers.ObscuredEmail(self.user_3.email),
+                availability_message='User never visited')],
         hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
             'PUBLIC'),
         default_columns=[
             issue_objects_pb2.IssuesListColumn(column='chicken'),
             issue_objects_pb2.IssuesListColumn(column='goose')])
-    self.assertEqual(converters.ConvertHotlist(hotlist), expected_api_hotlist)
+    user_auth = authdata.AuthData.FromUser(
+        self.cnxn, self.user_1, self.services)
+    self.assertEqual(
+        expected_api_hotlist,
+        converters.ConvertHotlist(self.cnxn, user_auth, hotlist, self.services))
 
   def testConvertHotlist_DefaultValues(self):
     """We can convert a Hotlist with some empty or default values."""
@@ -82,10 +99,16 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_api_hotlist = feature_objects_pb2.Hotlist(
         name='hotlists/241',
         display_name=hotlist.name,
-        owner='users/111',
+        owner=user_objects_pb2.User(
+            name='users/111', display_name=self.user_1.email,
+            availability_message='User never visited'),
         summary=hotlist.summary,
         description=hotlist.description)
-    self.assertEqual(converters.ConvertHotlist(hotlist), expected_api_hotlist)
+    user_auth = authdata.AuthData.FromUser(
+        self.cnxn, self.user_1, self.services)
+    self.assertEqual(
+        expected_api_hotlist,
+        converters.ConvertHotlist(self.cnxn, user_auth, hotlist, self.services))
 
   def testConvertHotlistItems(self):
     """We can convert HotlistItems."""
@@ -96,8 +119,10 @@ class ConverterFunctionsTest(unittest.TestCase):
     ]
     hotlist = fake.Hotlist(
         'Hotlist-Name', 241, hotlist_item_fields=hotlist_item_fields)
+    user_auth = authdata.AuthData.FromUser(
+        self.cnxn, self.user_1, self.services)
     api_items = converters.ConvertHotlistItems(
-        self.cnxn, hotlist.hotlist_id, hotlist.items, self.services)
+        self.cnxn, user_auth, hotlist.hotlist_id, hotlist.items, self.services)
     expected_create_time = timestamp_pb2.Timestamp()
     expected_create_time.FromSeconds(self.PAST_TIME)
     expected_items = [
@@ -105,22 +130,29 @@ class ConverterFunctionsTest(unittest.TestCase):
             name='hotlists/241/items/proj.1',
             issue='projects/proj/issues/1',
             rank=1,
-            adder='users/111',
+            adder=user_objects_pb2.User(
+                name='users/111', display_name=self.user_1.email,
+                availability_message='User never visited'),
             create_time=expected_create_time,
             note='note2'),
         feature_objects_pb2.HotlistItem(
             name='hotlists/241/items/goose.2',
             issue='projects/goose/issues/2',
             rank=0,
-            adder='users/222',
+            adder=user_objects_pb2.User(
+                name='users/222',
+                display_name=testing_helpers.ObscuredEmail(self.user_2.email),
+                availability_message='User never visited'),
             note='note1')
     ]
     self.assertEqual(api_items, expected_items)
 
   def testConvertHotlistItems_Empty(self):
     hotlist = fake.Hotlist('Hotlist-Name', 241)
+    user_auth = authdata.AuthData.FromUser(
+        self.cnxn, self.user_1, self.services)
     api_items = converters.ConvertHotlistItems(
-        self.cnxn, hotlist.hotlist_id, hotlist.items, self.services)
+        self.cnxn, user_auth, hotlist.hotlist_id, hotlist.items, self.services)
     self.assertEqual(api_items, [])
 
   def testConvertUsers(self):

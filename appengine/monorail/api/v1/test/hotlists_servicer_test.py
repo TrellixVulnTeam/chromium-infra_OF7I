@@ -93,8 +93,9 @@ class HotlistsServicerTest(unittest.TestCase):
     response = self.CallWrapped(
         self.hotlists_svcr.ListHotlistItems, mc, request)
     expected_items = converters.ConvertHotlistItems(
-        mc.cnxn, self.hotlist_1.hotlist_id,
-        [self.hotlist_1.items[1], self.hotlist_1.items[2]], self.services)
+        mc.cnxn, mc.auth, self.hotlist_1.hotlist_id,
+        [self.hotlist_1.items[1], self.hotlist_1.items[2]],
+        self.services)
     self.assertEqual(
         response, hotlists_pb2.ListHotlistItemsResponse(items=expected_items))
 
@@ -146,4 +147,6 @@ class HotlistsServicerTest(unittest.TestCase):
         self.services, cnxn=self.cnxn, requester=self.user_1.email)
     mc.LookupLoggedInUserPerms(None)
     api_hotlist = self.CallWrapped(self.hotlists_svcr.GetHotlist, mc, request)
-    self.assertEqual(api_hotlist, converters.ConvertHotlist(self.hotlist_1))
+    self.assertEqual(api_hotlist,
+                     converters.ConvertHotlist(
+                         mc.cnxn, mc.auth, self.hotlist_1, self.services))
