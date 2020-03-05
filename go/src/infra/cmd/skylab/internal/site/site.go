@@ -70,7 +70,7 @@ var Prod = Environment{
 	SwarmingService:      "https://chromeos-swarming.appspot.com/",
 	LogDogHost:           "luci-logdog.appspot.com",
 	InventoryService:     "cros-lab-inventory.appspot.com",
-	DefaultInventory:     "v1",
+	DefaultInventory:     "v2",
 	DefaultInventoryOnly: false,
 	AdminService:         "chromeos-skylab-bot-fleet.appspot.com",
 	QueenService:         "drone-queen-prod.appspot.com",
@@ -129,7 +129,7 @@ const VersionNumber = "2.0.0"
 // default value is used.  See prpc.Options for details.
 //
 // This is provided so it can be overridden for testing.
-var DefaultPRPCOptions *prpc.Options = &prpc.Options{
+var DefaultPRPCOptions = &prpc.Options{
 	UserAgent: fmt.Sprintf("skylab/%s", VersionNumber),
 }
 
