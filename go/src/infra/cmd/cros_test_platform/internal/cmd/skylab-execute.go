@@ -203,10 +203,24 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 	}
 	return nil
 }
+
+var timeoutTag = errors.BoolTag{Key: errors.NewTagKey("this error occured because of timeout")}
+
 func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *execution.Runner, skylab skylab.Client) (map[string]*steps.ExecuteResponse, error) {
-	ctx, cancel := errctx.WithDeadline(ctx, deadline, fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline))
+	tErr := fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline)
+	timeoutTag.Apply(tErr)
+	ctx, cancel := errctx.WithDeadline(ctx, deadline, tErr)
 	defer cancel(context.Canceled)
+
 	err := runner.LaunchAndWait(ctx, skylab)
+	if timeoutTag.In(err) {
+		// Timeout while waiting for tasks is not considered an Test Platform
+		// infrastructure error because root cause is mostly related to fleet
+		// capacity or long test runtimes.
+		logging.Warningf(ctx, "Exited wait dut to timeout: %s", err)
+		logging.Warningf(ctx, "Execution responses will contain test failures as a consequence of the timeout.")
+		err = nil
+	}
 	return runner.Responses(), err
 }
 
