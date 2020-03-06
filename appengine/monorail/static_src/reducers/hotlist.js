@@ -46,8 +46,8 @@ export const RERANK_ITEMS_FAILURE = 'hotlist/RERANK_ITEMS_FAILURE';
 {
   name: string,
 
-  hotlists: Object<string, HotlistV1>,
-  hotlistItems: Object<string, Array<HotlistItemV1>>,
+  hotlists: Object<string, HotlistV3>,
+  hotlistItems: Object<string, Array<HotlistItemV3>>,
 
   requests: {
     fetch: ReduxRequestState,
@@ -70,10 +70,10 @@ export const nameReducer = createReducer(null, {
 
 /**
  * All Hotlist data indexed by Hotlist name.
- * @param {Object<string, HotlistV1>} state The existing Hotlist data.
+ * @param {Object<string, HotlistV3>} state The existing Hotlist data.
  * @param {AnyAction} action
  * @param {Hotlist} action.hotlist The hotlist that was fetched.
- * @return {Object<string, HotlistV1>}
+ * @return {Object<string, HotlistV3>}
  */
 export const hotlistsReducer = createReducer({}, {
   [FETCH_SUCCESS]: (state, {hotlist}) => ({...state, [hotlist.name]: hotlist}),
@@ -81,11 +81,11 @@ export const hotlistsReducer = createReducer({}, {
 
 /**
  * All Hotlist items indexed by Hotlist name.
- * @param {Object<string, Array<HotlistItemV1>>} state The existing items.
+ * @param {Object<string, Array<HotlistItemV3>>} state The existing items.
  * @param {AnyAction} action
  * @param {name} action.name A reference to the Hotlist.
- * @param {Array<HotlistItemV1>} action.items The Hotlist items fetched.
- * @return {Object<string, Array<HotlistItemV1>>}
+ * @param {Array<HotlistItemV3>} action.items The Hotlist items fetched.
+ * @return {Object<string, Array<HotlistItemV3>>}
  */
 export const hotlistItemsReducer = createReducer({}, {
   [FETCH_ITEMS_SUCCESS]: (state, {name, items}) => ({...state, [name]: items}),
@@ -121,7 +121,7 @@ export const name = (state) => state.hotlist.name;
 /**
  * Returns all the Hotlist data in the store as a mapping from name to Hotlist.
  * @param {any} state
- * @return {Object<string, HotlistV1>}
+ * @return {Object<string, HotlistV3>}
  */
 export const hotlists = (state) => state.hotlist.hotlists;
 
@@ -129,14 +129,14 @@ export const hotlists = (state) => state.hotlist.hotlists;
  * Returns all the Hotlist items in the store as a mapping
  * from a Hotlist name to its respective array of HotlistItems.
  * @param {any} state
- * @return {Object<string, Array<HotlistItemV1>>}
+ * @return {Object<string, Array<HotlistItemV3>>}
  */
 export const hotlistItems = (state) => state.hotlist.hotlistItems;
 
 /**
  * Returns the currently viewed Hotlist, or null if there is none.
  * @param {any} state
- * @return {?HotlistV1}
+ * @return {?HotlistV3}
  */
 export const viewedHotlist = createSelector(
     [hotlists, name],
@@ -146,7 +146,7 @@ export const viewedHotlist = createSelector(
  * Returns an Array containing the items in the currently viewed Hotlist,
  * or [] if there is no current Hotlist or no Hotlist data.
  * @param {any} state
- * @return {Array<HotlistItemV1>}
+ * @return {Array<HotlistItemV3>}
  */
 export const viewedHotlistItems = createSelector(
     [hotlistItems, name],
@@ -170,7 +170,7 @@ export const fetch = (name) => async (dispatch) => {
   dispatch({type: FETCH_START});
 
   try {
-    /** @type {HotlistV1} */
+    /** @type {HotlistV3} */
     const hotlist = await prpcClient.call(
         'monorail.v1.Hotlists', 'GetHotlist', {name});
 
@@ -190,7 +190,7 @@ export const fetchItems = (name) => async (dispatch) => {
 
   try {
     const args = {parent: name, orderBy: 'rank'};
-    /** @type {{items: Array<HotlistItemV1>}} */
+    /** @type {{items: Array<HotlistItemV3>}} */
     const {items} = await prpcClient.call(
         'monorail.v1.Hotlists', 'ListHotlistItems', args);
 

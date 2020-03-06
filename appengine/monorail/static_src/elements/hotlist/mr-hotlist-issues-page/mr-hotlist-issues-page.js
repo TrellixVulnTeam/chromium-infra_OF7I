@@ -22,7 +22,7 @@ import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
  * A HotlistItem with the Issue flattened into the top-level,
  * containing the intersection of the fields of HotlistItem and Issue.
  *
- * @typedef {Issue & HotlistItemV1} HotlistIssue
+ * @typedef {Issue & HotlistItemV3} HotlistIssue
  */
 
 const DEFAULT_HOTLIST_FIELDS = Object.freeze([
@@ -110,9 +110,9 @@ export class _MrHotlistIssuesPage extends LitElement {
   /** @override */
   constructor() {
     super();
-    /** @type {?HotlistV1} */
+    /** @type {?HotlistV3} */
     this._hotlist = null;
-    /** @type {Array<HotlistItemV1>} */
+    /** @type {Array<HotlistItemV3>} */
     this._hotlistItems = [];
     /** @type {Array<string>} */
     this._columns = [];
@@ -132,7 +132,7 @@ export class _MrHotlistIssuesPage extends LitElement {
   }
 
   /**
-   * @param {Array<HotlistItemV1>} items
+   * @param {Array<HotlistItemV3>} items
    * @return {Array<HotlistIssue>}
    */
   _prepareIssues(items) {
