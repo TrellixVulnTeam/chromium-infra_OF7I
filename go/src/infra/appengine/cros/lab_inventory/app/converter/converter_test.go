@@ -35,7 +35,10 @@ var testToBQLabInventoryData = []struct {
 	{
 		"just timestamp",
 		&datastore.DeviceOpResult{
-			Timestamp: time.Unix(42, 67),
+			Entity: &datastore.DeviceEntity{
+				LabConfig: []byte{},
+				Updated:   time.Unix(42, 67),
+			},
 		},
 		&apibq.LabInventory{
 			UpdatedTime: timestampOrPanic(time.Unix(42, 67)),
@@ -114,7 +117,10 @@ var testToBQLabInventorySeqData = []struct {
 		"just timestamp",
 		[]datastore.DeviceOpResult{
 			{
-				Timestamp: time.Unix(42, 67),
+				Entity: &datastore.DeviceEntity{
+					LabConfig: []byte{},
+					Updated:   time.Unix(42, 67),
+				},
 			},
 		},
 		[]*apibq.LabInventory{

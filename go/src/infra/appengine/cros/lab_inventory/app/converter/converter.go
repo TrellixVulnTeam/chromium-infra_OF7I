@@ -37,7 +37,7 @@ func ToBQLabInventory(d *ds.DeviceOpResult) (*apibq.LabInventory, error) {
 			return nil, fmt.Errorf("get device proto: %s", err)
 		}
 	}
-	utime, _ := ptypes.TimestampProto(d.Timestamp)
+	utime, _ := ptypes.TimestampProto(d.Entity.Updated)
 	return &apibq.LabInventory{
 		Id:          id,
 		Hostname:    hostname,

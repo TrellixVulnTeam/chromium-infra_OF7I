@@ -16,7 +16,7 @@ type DeviceOpResult struct {
 	Data      proto.Message
 	Entity    *DeviceEntity
 	Err       error
-	Timestamp time.Time
+	Timestamp time.Time // Only used when logging errors.
 }
 
 func (d *DeviceOpResult) logError(err error) {
