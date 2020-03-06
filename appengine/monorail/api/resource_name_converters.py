@@ -52,6 +52,7 @@ ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_name}'
 STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
 LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
 COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
+FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_name}'
 
 
 def _GetResourceNameMatch(name, regex):
@@ -388,7 +389,7 @@ def ConvertStatusDefName(cnxn, status, project_id, services):
       project_name=project.project_name, status=status)
 
 
-def ConvertLabelNames(cnxn, labels, project_id, services):
+def ConvertLabelDefNames(cnxn, labels, project_id, services):
   # MonorailConnection, Collection[str], int, Service -> Mapping[str, str]
   """Takes a list of labels and returns LabelDef resource names
 
@@ -399,7 +400,7 @@ def ConvertLabelNames(cnxn, labels, project_id, services):
     services: Service object.
 
   Returns:
-    Dict of label string to label's resource name
+    Dict of label string to label's resource name for all given `labels`.
 
   Raises:
     NoSuchProjectException if no project exists with given id.
@@ -426,7 +427,8 @@ def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
     services: Service object.
 
   Returns:
-    Dict of component id to component's resource name
+    Dict of component ID to component's resource name for all given
+    `component_ids`
 
   Raises:
     NoSuchProjectException if no project exists with given id.
@@ -438,5 +440,41 @@ def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
   for component_id in component_ids:
     id_dict[component_id] = COMPONENT_DEF_TMPL.format(
         project_name=project.project_name, component_id=component_id)
+
+  return id_dict
+
+
+def ConvertFieldDefNames(cnxn, field_ids, project_id, services):
+  # MonorailConnection, Collection[int], int, Service -> Mapping[int, str]
+  """Takes Field IDs and returns FieldDef resource names
+
+  Args:
+    cnxn: MonorailConnection object.
+    component_ids: List of field ids
+    project_id: project id of project this belongs to
+    services: Service object.
+
+  Returns:
+    Dict of field ID to FieldDef resource name for field defs that are found.
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  project = services.project.GetProject(cnxn, project_id)
+  config = services.config.GetProjectConfig(cnxn, project_id)
+
+  fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+
+  id_dict = {}
+
+  for field_id in field_ids:
+    field_def = fds_by_id.get(field_id)
+    if not field_def:
+      logging.info('Ignoring field referencing a non-existent id: %s', field_id)
+      continue
+    field_name = field_def.field_name
+
+    id_dict[field_id] = FIELD_DEF_TMPL.format(
+        project_name=project.project_name, field_name=field_name)
 
   return id_dict

@@ -25,7 +25,8 @@ class ResourceNameConverterTest(unittest.TestCase):
         project=fake.ProjectService(),
         user=fake.UserService(),
         features=fake.FeaturesService(),
-        template=fake.TemplateService())
+        template=fake.TemplateService(),
+        config=fake.ConfigService())
     self.cnxn = fake.MonorailConnection()
     self.PAST_TIME = 12345
     self.project_1 = self.services.project.TestAddProject(
@@ -56,6 +57,13 @@ class ResourceNameConverterTest(unittest.TestCase):
 
     self.template_1 = self.services.template.TestAddIssueTemplateDef(
         1, 789, 'template_1_name')
+
+    self.field_def_1_name = 'test_field'
+    self.field_def_1 = self.services.config.CreateFieldDef(
+        self.cnxn, self.project_1.project_id, self.field_def_1_name, 'STR_TYPE',
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        None, None, [], [])
+    self.dne_field_def_id = 999999
 
   def testGetResourceNameMatch(self):
     """We can get a resource name match."""
@@ -244,22 +252,22 @@ class ResourceNameConverterTest(unittest.TestCase):
       rnc.ConvertStatusDefName(
           self.cnxn, self.issue_1.status, self.dne_project_id, self.services)
 
-  def testConvertLabelNames(self):
+  def testConvertLabelDefNames(self):
     """We can get Label resource names."""
     expected_label = 'some label'
     expected_resource_name = 'projects/{}/labelDefs/{}'.format(
         self.project_1.project_name, expected_label)
 
     self.assertEqual(
-        rnc.ConvertLabelNames(
+        rnc.ConvertLabelDefNames(
             self.cnxn, [expected_label], self.project_1.project_id,
             self.services), {expected_label: expected_resource_name})
 
-  def testConvertLabelNames_NoSuchProjectException(self):
+  def testConvertLabelDefNames_NoSuchProjectException(self):
     """We can get an exception if project with id does not exist."""
     some_label = 'some label'
     with self.assertRaises(exceptions.NoSuchProjectException):
-      rnc.ConvertLabelNames(
+      rnc.ConvertLabelDefNames(
           self.cnxn, [some_label], self.dne_project_id, self.services)
 
   def testConvertComponentDefNames(self):
@@ -279,3 +287,20 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.ConvertComponentDefNames(
           self.cnxn, [component_id], self.dne_project_id, self.services)
+
+  def testConvertFieldDefNames(self):
+    expected_key = self.field_def_1
+    expected_value = 'projects/{}/fieldDefs/{}'.format(
+        self.project_1.project_name, self.field_def_1_name)
+
+    field_ids = [self.field_def_1, self.dne_field_def_id]
+    self.assertEqual(
+        rnc.ConvertFieldDefNames(
+            self.cnxn, field_ids, self.project_1.project_id, self.services),
+        {expected_key: expected_value})
+
+  def testConvertFieldDefNames_NoSuchProjectException(self):
+    field_ids = [self.field_def_1, self.dne_field_def_id]
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertFieldDefNames(
+          self.cnxn, field_ids, self.dne_project_id, self.services)
