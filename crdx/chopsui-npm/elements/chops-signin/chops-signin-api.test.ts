@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {assert} from 'chai';
-import sinon, {SinonStub} from 'sinon';
+import { assert } from 'chai';
+import sinon, { SinonStub } from 'sinon';
 
-import {authInitializedPromise, init} from './chops-signin';
+import { authInitializedPromise, init } from './chops-signin';
 
 function clearGapiHandlers() {
   getGapiHandlers().forEach(key => delete window[key]);
@@ -18,14 +18,14 @@ function getGapiHandlers() {
 beforeEach(() => {
   window.gapi = (sinon.stub() as unknown) as typeof window.gapi;
   window.gapi.load = sinon.stub();
-  const authStub: Partial<gapi.auth2.GoogleAuth> =
-      new Promise(resolve => resolve());
-  authStub.currentUser =
-      (sinon.stub() as unknown) as typeof authStub.currentUser;
+  const authStub: Partial<gapi.auth2.GoogleAuth> = new Promise(resolve =>
+    resolve()
+  );
+  authStub.currentUser = (sinon.stub() as unknown) as typeof authStub.currentUser;
   authStub.currentUser!.listen = sinon.stub();
   window.gapi.auth2 = ({
-                        init: sinon.stub().returns(authStub),
-                      } as unknown) as typeof window.gapi.auth2;
+    init: sinon.stub().returns(authStub),
+  } as unknown) as typeof window.gapi.auth2;
 
   sinon.stub(document.head, 'appendChild');
   sinon.stub(document.head, 'removeChild');
@@ -67,7 +67,9 @@ test('init allows passing multiple extra library to load', () => {
 
   sinon.assert.calledOnce(window.gapi.load as SinonStub);
   assert.equal(
-      (window.gapi.load as SinonStub).args[0][0], 'auth2:client:rutabaga');
+    (window.gapi.load as SinonStub).args[0][0],
+    'auth2:client:rutabaga'
+  );
 });
 
 test('onAuthLoaded callback passes email scope by default', () => {

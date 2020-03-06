@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, svg, css} from 'lit-element';
+import { LitElement, html, svg, css } from 'lit-element';
 
 export interface AuthorizationHeader {
   Authorization?: string;
@@ -168,22 +168,25 @@ export function getAuthInstanceAsync(): Promise<gapi.auth2.GoogleAuth> {
   });
 }
 
-export function getAuthorizationHeadersSync(): AuthorizationHeader | undefined {
+export function getAuthInstanceSync(): gapi.auth2.GoogleAuth | undefined {
   if (!gapi || !gapi.auth2) return undefined;
-  const auth = gapi.auth2.getAuthInstance();
+  return gapi.auth2.getAuthInstance();
+}
+
+export function getAuthorizationHeadersSync(): AuthorizationHeader | undefined {
+  const auth = getAuthInstanceSync();
   if (!auth) return undefined;
   const user = auth.currentUser.get();
   if (!user) return {};
   const response = user.getAuthResponse();
-  if (!response?.access_token) return {};
+  if (!response || !response.access_token) return {};
   return {
     Authorization: response['token_type'] + ' ' + response.access_token,
   };
 }
 
 export function getUserProfileSync(): gapi.auth2.BasicProfile | undefined {
-  if (!gapi || !gapi.auth2) return undefined;
-  const auth = gapi.auth2.getAuthInstance();
+  const auth = getAuthInstanceSync();
   if (!auth) return undefined;
   const user = auth.currentUser.get();
   if (!user.isSignedIn()) return undefined;
