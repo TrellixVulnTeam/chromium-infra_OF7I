@@ -21,6 +21,9 @@ class _MrHotlistSettingsPage extends LitElement {
       section {
         margin: 16px 24px;
       }
+      h2 {
+        font-weight: normal;
+      }
       dt {
         font-weight: bold;
       }
@@ -46,7 +49,7 @@ class _MrHotlistSettingsPage extends LitElement {
         .map((col) => col.column).join(' ');
     return html`
       <section>
-        <h1>Hotlist Settings</h1>
+        <h2>Hotlist Settings</h2>
         <dl>
           <dt>Name</dt>
           <dd>${this._hotlist.displayName}</dd>
@@ -58,7 +61,7 @@ class _MrHotlistSettingsPage extends LitElement {
       </section>
 
       <section>
-        <h1>Hotlist Defaults</h1>
+        <h2>Hotlist Defaults</h2>
         <dl>
           <dt>Default columns shown in list view</dt>
           <dd>${defaultColumns}</dd>
@@ -66,7 +69,7 @@ class _MrHotlistSettingsPage extends LitElement {
       </section>
 
       <section>
-        <h1>Hotlist Access</h1>
+        <h2>Hotlist Access</h2>
         <dl>
           <dt>Who can view this hotlist</dt>
           <dd>
@@ -92,13 +95,14 @@ class _MrHotlistSettingsPage extends LitElement {
   /** @override */
   constructor() {
     super();
+    /** @type {?HotlistV1} */
     this._hotlist = null;
   }
 };
 
 /** Redux-connected version of _MrHotlistSettingsPage. */
-export class MrHotlistSettingsPage extends connectStore(
-    _MrHotlistSettingsPage) {
+export class MrHotlistSettingsPage
+  extends connectStore(_MrHotlistSettingsPage) {
   /** @override */
   stateChanged(state) {
     this._hotlist = hotlist.viewedHotlist(state);

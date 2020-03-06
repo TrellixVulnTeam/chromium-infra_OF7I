@@ -4,6 +4,10 @@
 
 import {assert} from 'chai';
 
+import {store, resetState} from 'reducers/base.js';
+import * as hotlist from 'reducers/hotlist.js';
+import * as sitewide from 'reducers/sitewide.js';
+
 import * as example from 'shared/test/constants-hotlist.js';
 
 import {MrHotlistSettingsPage} from './mr-hotlist-settings-page.js';
@@ -41,6 +45,8 @@ describe('mr-hotlist-settings-page (unconnected)', () => {
 
 describe('mr-hotlist-settings-page (connected)', () => {
   beforeEach(() => {
+    store.dispatch(resetState());
+    // @ts-ignore
     element = document.createElement('mr-hotlist-settings-page');
     document.body.appendChild(element);
   });
@@ -51,5 +57,16 @@ describe('mr-hotlist-settings-page (connected)', () => {
 
   it('initializes', async () => {
     assert.instanceOf(element, MrHotlistSettingsPage);
+  });
+
+  it('updates page title and header', async () => {
+    const hotlistWithName = {...example.HOTLIST, displayName: 'Hotlist-Name'};
+    store.dispatch(hotlist.select(example.NAME));
+    store.dispatch({type: hotlist.FETCH_SUCCESS, hotlist: hotlistWithName});
+    await element.updateComplete;
+
+    const state = store.getState();
+    assert.deepEqual(sitewide.pageTitle(state), 'Settings - Hotlist-Name');
+    assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
   });
 });

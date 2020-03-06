@@ -103,6 +103,24 @@ export function userToUserRef(user) {
 }
 
 /**
+ * Converts a User resource name to a numeric user ID.
+ * @param {string} name
+ * @return {number}
+ */
+export function userNameToId(name) {
+  return Number.parseInt(name.split('/')[1]);
+}
+
+/**
+ * Converts a v3 API User object to a v0 API UserRef.
+ * @param {UserV3} user
+ * @return {UserRef}
+ */
+export function userV3ToRef(user) {
+  return {userId: userNameToId(user.name), displayName: user.displayName};
+}
+
+/**
  * Convert a UserRef style Object to a userId string.
  *
  * @param {UserRef} userRef Object expected to contain a userId key.

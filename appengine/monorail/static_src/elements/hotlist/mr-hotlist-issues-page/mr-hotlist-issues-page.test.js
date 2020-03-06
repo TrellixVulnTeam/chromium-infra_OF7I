@@ -9,6 +9,7 @@ import {store, resetState} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
+
 import * as example from 'shared/test/constants-hotlist.js';
 import * as exampleIssue from 'shared/test/constants-issue.js';
 import * as exampleUser from 'shared/test/constants-user.js';

@@ -4,7 +4,9 @@
 
 import {assert} from 'chai';
 import {UserInputError} from 'shared/errors.js';
-import {displayNameToUserRef, userIdOrDisplayNameToUserRef, labelStringToRef,
+import * as exampleUser from 'shared/test/constants-user.js';
+import {displayNameToUserRef, userIdOrDisplayNameToUserRef,
+  userNameToId, userV3ToRef, labelStringToRef,
   labelRefToString, labelRefsToStrings, labelRefsToOneWordLabels,
   isOneWordLabel, _makeRestrictionLabel, restrictionLabelsForPermissions,
   statusRefToString, statusRefsToStrings,
@@ -44,6 +46,14 @@ describe('userIdOrDisplayNameToUserRef', () => {
   it('throws if not an email or numeric id', () => {
     assert.throws(() => userIdOrDisplayNameToUserRef('foo'), UserInputError);
   });
+});
+
+it('userNameToId', () => {
+  assert.deepEqual(userNameToId(exampleUser.NAME), exampleUser.ID);
+});
+
+it('userV3ToRef', () => {
+  assert.deepEqual(userV3ToRef(exampleUser.USER), exampleUser.USER_REF);
 });
 
 describe('labelStringToRef', () => {

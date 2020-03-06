@@ -4,10 +4,13 @@
 
 import {LitElement, html, css} from 'lit-element';
 
+import {userV3ToRef} from 'shared/converters.js';
+
 import {store, connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as sitewide from 'reducers/sitewide.js';
 
+import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
 /** Hotlist People page */
@@ -18,8 +21,17 @@ class _MrHotlistPeoplePage extends LitElement {
       :host {
         display: block;
       }
-      p {
+      section {
         margin: 16px 24px;
+      }
+      h2 {
+        font-weight: normal;
+      }
+      ul {
+        padding: 0;
+      }
+      li {
+        list-style-type: none;
       }
     `;
   }
@@ -37,11 +49,35 @@ class _MrHotlistPeoplePage extends LitElement {
    */
   _renderPage() {
     return html`
-      <p>
-        This page is not yet implemented.
-        This will be a list of hotlist members.
-      </p>
+      <section>
+        <h2>Owner</h2>
+        <p>
+          ${this._renderUserLink(this._hotlist.owner)}
+        </p>
+      </section>
+
+      <section>
+        <h2>Editors</h2>
+        ${this._hotlist.editors.length ? html`
+          <ul>
+            ${this._hotlist.editors.map((user) => html`
+              <li>${this._renderUserLink(user)}</li>
+            `)}
+          </ul>
+        ` : html`
+          <p>No editors.</p>
+        `}
+      </section>
     `;
+  }
+
+  /**
+   *
+   * @param {UserV3} user
+   * @return {TemplateResult}
+   */
+  _renderUserLink(user) {
+    return html`<mr-user-link .userRef=${userV3ToRef(user)}></mr-user-link>`;
   }
 
   /** @override */
@@ -54,6 +90,8 @@ class _MrHotlistPeoplePage extends LitElement {
   /** @override */
   constructor() {
     super();
+
+    /** @type {?HotlistV3} */
     this._hotlist = null;
   }
 };

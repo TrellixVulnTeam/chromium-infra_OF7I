@@ -8,9 +8,11 @@ export const NAME = 'users/1234';
 
 export const DISPLAY_NAME = 'example@example.com';
 
+export const ID = 1234;
+
 /** @type {UserRef} */
 export const USER_REF = Object.freeze({
-  userId: 12345678,
+  userId: ID,
   displayName: DISPLAY_NAME,
 });
 

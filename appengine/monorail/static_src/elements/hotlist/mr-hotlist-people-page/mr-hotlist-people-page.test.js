@@ -3,6 +3,11 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+
+import {store, resetState} from 'reducers/base.js';
+import * as hotlist from 'reducers/hotlist.js';
+import * as sitewide from 'reducers/sitewide.js';
+
 import * as example from 'shared/test/constants-hotlist.js';
 
 import {MrHotlistPeoplePage} from './mr-hotlist-people-page.js';
@@ -34,6 +39,7 @@ describe('mr-hotlist-people-page (unconnected)', () => {
 
 describe('mr-hotlist-people-page (connected)', () => {
   beforeEach(() => {
+    store.dispatch(resetState());
     // @ts-ignore
     element = document.createElement('mr-hotlist-people-page');
     document.body.appendChild(element);
@@ -45,5 +51,16 @@ describe('mr-hotlist-people-page (connected)', () => {
 
   it('initializes', async () => {
     assert.instanceOf(element, MrHotlistPeoplePage);
+  });
+
+  it('updates page title and header', async () => {
+    const hotlistWithName = {...example.HOTLIST, displayName: 'Hotlist-Name'};
+    store.dispatch(hotlist.select(example.NAME));
+    store.dispatch({type: hotlist.FETCH_SUCCESS, hotlist: hotlistWithName});
+    await element.updateComplete;
+
+    const state = store.getState();
+    assert.deepEqual(sitewide.pageTitle(state), 'People - Hotlist-Name');
+    assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
   });
 });

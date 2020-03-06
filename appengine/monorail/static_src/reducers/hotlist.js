@@ -173,6 +173,9 @@ export const fetch = (name) => async (dispatch) => {
     /** @type {HotlistV3} */
     const hotlist = await prpcClient.call(
         'monorail.v1.Hotlists', 'GetHotlist', {name});
+    if (!hotlist.editors) {
+      hotlist.editors = [];
+    }
 
     dispatch({type: FETCH_SUCCESS, hotlist});
   } catch (error) {
