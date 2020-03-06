@@ -25,6 +25,7 @@ from framework import exceptions
 from framework import framework_constants
 from framework import sql
 from proto import tracker_pb2
+from proto import features_pb2
 from services import chart_svc
 from services import features_svc
 from services import star_svc
@@ -988,6 +989,157 @@ Delete.assert_called_once_with(
     self.features_service.UpdateHotlistRoles(
         self.cnxn, 456, [111, 222], [333], [])
     self.mox.VerifyAll()
+
+  def SetUpUpdateHotlistIssues(self, items):
+    hotlist = fake.Hotlist(hotlist_name='hotlist', hotlist_id=456)
+    hotlist.items = items
+    self.features_service.GetHotlist = mock.Mock(return_value=hotlist)
+    self.features_service.hotlist2issue_tbl.Delete = mock.Mock()
+    self.features_service.hotlist2issue_tbl.InsertRows = mock.Mock()
+    self.issue_service.GetIssues = mock.Mock()
+    return hotlist
+
+  def testUpdateHotlistIssues_ChangeIssues(self):
+    original_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78902, rank=11, adder_id=333, date_added=2345),  # update
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78904, rank=0, adder_id=333, date_added=2345)  # same
+    ]
+    hotlist = self.SetUpUpdateHotlistIssues(original_items)
+    updated_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78902, rank=13, adder_id=333, date_added=2345),  # update
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78903, rank=23, adder_id=333, date_added=2345)  # new
+    ]
+
+    self.features_service.UpdateHotlistIssues(
+        self.cnxn, hotlist.hotlist_id, updated_items, [], self.issue_service,
+        self.chart_service)
+
+    insert_rows = [
+        (hotlist.hotlist_id, 78902, 13, 333, 2345, ''),
+        (hotlist.hotlist_id, 78903, 23, 333, 2345, '')
+    ]
+    self.features_service.hotlist2issue_tbl.InsertRows.assert_called_once_with(
+        self.cnxn,
+        cols=features_svc.HOTLIST2ISSUE_COLS,
+        row_values=insert_rows,
+        commit=False)
+    self.features_service.hotlist2issue_tbl.Delete.assert_called_once_with(
+        self.cnxn,
+        hotlist_id=hotlist.hotlist_id,
+        issue_id=[78902, 78903],
+        commit=False)
+
+    # New hotlist itmes includes updated_items and unchanged items.
+    expected_all_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78904, rank=0, adder_id=333, date_added=2345),
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78902, rank=13, adder_id=333, date_added=2345),
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78903, rank=23, adder_id=333, date_added=2345)
+    ]
+    self.assertEqual(hotlist.items, expected_all_items)
+
+    # Assert we're storing the new snapshots of the affected issues.
+    self.issue_service.GetIssues.assert_called_once_with(
+        self.cnxn, [78902, 78903])
+
+  def testUpdateHotlistIssues_RemoveIssues(self):
+    original_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78901, rank=10, adder_id=222, date_added=2348),  # remove
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78904, rank=0, adder_id=333, date_added=2345),  # same
+    ]
+    hotlist = self.SetUpUpdateHotlistIssues(original_items)
+    remove_issue_ids = [78901]
+
+    self.features_service.UpdateHotlistIssues(
+        self.cnxn, hotlist.hotlist_id, [], remove_issue_ids, self.issue_service,
+        self.chart_service)
+
+    self.features_service.hotlist2issue_tbl.Delete.assert_called_once_with(
+        self.cnxn,
+        hotlist_id=hotlist.hotlist_id,
+        issue_id=remove_issue_ids,
+        commit=False)
+
+    # New hotlist itmes includes updated_items and unchanged items.
+    expected_all_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78904, rank=0, adder_id=333, date_added=2345)
+    ]
+    self.assertEqual(hotlist.items, expected_all_items)
+
+    # Assert we're storing the new snapshots of the affected issues.
+    self.issue_service.GetIssues.assert_called_once_with(self.cnxn, [78901])
+
+  def testUpdateHotlistIssues_RemoveAndChange(self):
+    original_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78901, rank=10, adder_id=222, date_added=2348),  # remove
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78902, rank=11, adder_id=333, date_added=2345),  # update
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78904, rank=0, adder_id=333, date_added=2345)  # same
+    ]
+    hotlist = self.SetUpUpdateHotlistIssues(original_items)
+    # test 78902 gets added back with `updated_items`
+    remove_issue_ids = [78901, 78902]
+    updated_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78902, rank=13, adder_id=333, date_added=2345),
+    ]
+
+    self.features_service.UpdateHotlistIssues(
+        self.cnxn, hotlist.hotlist_id, updated_items, remove_issue_ids,
+        self.issue_service, self.chart_service)
+
+    delete_calls = [
+        mock.call(
+            self.cnxn,
+            hotlist_id=hotlist.hotlist_id,
+            issue_id=remove_issue_ids,
+            commit=False),
+        mock.call(
+            self.cnxn,
+            hotlist_id=hotlist.hotlist_id,
+            issue_id=[78902],
+            commit=False)
+    ]
+    self.assertEqual(
+        self.features_service.hotlist2issue_tbl.Delete.mock_calls, delete_calls)
+
+    insert_rows = [
+        (hotlist.hotlist_id, 78902, 13, 333, 2345, ''),
+    ]
+    self.features_service.hotlist2issue_tbl.InsertRows.assert_called_once_with(
+        self.cnxn,
+        cols=features_svc.HOTLIST2ISSUE_COLS,
+        row_values=insert_rows,
+        commit=False)
+
+    # New hotlist itmes includes updated_items and unchanged items.
+    expected_all_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78904, rank=0, adder_id=333, date_added=2345),
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78902, rank=13, adder_id=333, date_added=2345),
+    ]
+    self.assertEqual(hotlist.items, expected_all_items)
+
+    # Assert we're storing the new snapshots of the affected issues.
+    self.issue_service.GetIssues.assert_called_once_with(
+        self.cnxn, [78901, 78902])
+
+  def testUpdateHotlistIssues_NoChanges(self):
+    with self.assertRaises(exceptions.InputException):
+      self.features_service.UpdateHotlistIssues(
+          self.cnxn, 456, [], None, self.issue_service, self.chart_service)
 
   def SetUpUpdateHotlistItems(self, cnxn, hotlist_id, remove, added_tuples):
     self.features_service.hotlist2issue_tbl.Delete(

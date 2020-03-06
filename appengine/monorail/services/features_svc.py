@@ -841,6 +841,99 @@ class FeaturesService(object):
     for remove_id in remove_editor_ids:
       hotlist.editor_ids.remove(remove_id)
 
+  def UpdateHotlistIssues(
+      self,
+      cnxn,  # type: sql.MonorailConnection
+      hotlist_id,  # type: int
+      updated_items,  # type: Collection[features_pb2.HotlistItem]
+      remove_issue_ids,  # type: Collection[int]
+      issue_svc,  # type: issue_svc.IssueService
+      chart_svc,  # type: chart_svc.ChartService
+      commit=True  # type: Optional[bool]
+  ):
+    # type: (...) -> None
+    """Update the Issues in a Hotlist.
+       This method removes the given remove_issue_ids from a Hotlist then
+       updates or adds the HotlistItems found in updated_items. HotlistItems
+       in updated_items may exist in the hotlist and just need to be updated
+       or they may be new items that should be added to the Hotlist.
+
+    Args:
+      cnxn: MonorailConnection object.
+      hotlist_id: int ID of the Hotlist to update.
+      updated_items: Collection of HotlistItems that either already exist in
+        the hotlist and need to be updated or needed to be added to the hotlist.
+      remove_issue_ids: Collection of Issue IDs that should be removed from the
+        hotlist.
+      issue_svc: IssueService object.
+      chart_svc: ChartService object.
+
+    Raises:
+      NoSuchHotlistException if a hotlist with the given ID is not found.
+      InputException if no changes were given.
+    """
+    if not updated_items and not remove_issue_ids:
+      raise exceptions.InputException('No changes to make')
+
+    hotlist = self.GetHotlist(cnxn, hotlist_id, use_cache=False)
+    if not hotlist:
+      raise NoSuchHotlistException()
+
+    # Used to hold the updated Hotlist.items to use when updating
+    # the in-memory hotlist.
+    all_hotlist_items = list(hotlist.items)
+
+    # Used to hold ids of issues affected by this change for storing
+    # Issue Snapshots.
+    affected_issue_ids = set()
+
+    if remove_issue_ids:
+      affected_issue_ids.update(remove_issue_ids)
+      self.hotlist2issue_tbl.Delete(
+          cnxn, hotlist_id=hotlist_id, issue_id=remove_issue_ids, commit=False)
+      all_hotlist_items = filter(
+          lambda item: item.issue_id not in remove_issue_ids, all_hotlist_items)
+
+    if updated_items:
+      updated_issue_ids = [item.issue_id for item in updated_items]
+      affected_issue_ids.update(updated_issue_ids)
+      self.hotlist2issue_tbl.Delete(
+          cnxn, hotlist_id=hotlist_id, issue_id=updated_issue_ids, commit=False)
+      insert_rows = []
+      for item in updated_items:
+        insert_rows.append(
+            (
+                hotlist_id, item.issue_id, item.rank, item.adder_id,
+                item.date_added, item.note))
+      self.hotlist2issue_tbl.InsertRows(
+          cnxn, cols=HOTLIST2ISSUE_COLS, row_values=insert_rows, commit=False)
+      all_hotlist_items = filter(
+          lambda item: item.issue_id not in updated_issue_ids,
+          all_hotlist_items)
+      all_hotlist_items.extend(updated_items)
+
+    if commit:
+      cnxn.Commit()
+    self.hotlist_2lc.InvalidateKeys(cnxn, [hotlist_id])
+
+    # Update in-memory hotlist items.
+    hotlist.items = sorted(all_hotlist_items, key=lambda item: item.rank)
+
+    issues = issue_svc.GetIssues(cnxn, list(affected_issue_ids))
+    chart_svc.StoreIssueSnapshots(cnxn, issues, commit=commit)
+
+  # TODO(crbug/monorail/7104): {Add|Remove}IssuesToHotlists both call
+  # UpdateHotlistItems to add/remove issues from a hotlist.
+  # UpdateHotlistItemsFields is called by methods for reranking existing issues
+  # and updating HotlistItem notes.
+  # (1) We are removing notes from HotlistItems. crbug/monorail/####
+  # (2) our v3 AddHotlistItems will allow for inserting new issues to
+  # non-last ranks of a hotlist. So there could be some shared code
+  # for the reranking path and the adding issues path.
+  # UpdateHotlistIssues will be handling adding, removing, and reranking issues.
+  # {Add|Remove}IssueToHotlists, UpdateHotlistItems, UpdateHotlistItemFields
+  # should be removed, once all methods are updated to call UpdateHotlistIssues.
+
   def AddIssueToHotlists(self, cnxn, hotlist_ids, issue_tuple, issue_svc,
                          chart_svc, commit=True):
     """Add a single issue, specified in the issue_tuple, to the given hotlists.
@@ -940,7 +1033,6 @@ class FeaturesService(object):
         for (_hid, issue_id, rank, user_id, ts, note) in insert_rows]
     items.extend(new_hotlist_items)
     hotlist.items = items
-    logging.info(hotlist.items)
 
   def UpdateHotlistItemsFields(
       self, cnxn, hotlist_id, new_ranks=None, new_notes=None, commit=True):
