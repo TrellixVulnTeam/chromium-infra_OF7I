@@ -21,7 +21,6 @@ import {trackPageChange} from 'shared/ga-helpers.js';
 import 'elements/issue-list/mr-list-page/mr-list-page.js';
 import 'elements/issue-entry/mr-issue-entry-page.js';
 import 'elements/framework/mr-header/mr-header.js';
-import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
 import 'elements/help/mr-cue/mr-cue.js';
 import {cueNames} from 'elements/help/mr-cue/cue-helpers.js';
 import 'elements/chops/chops-snackbar/chops-snackbar.js';
@@ -71,11 +70,6 @@ export class MrApp extends connectStore(LitElement) {
   /** @override */
   render() {
     return html`
-      <mr-keystrokes
-        .issueId=${this.queryParams.id}
-        .queryParams=${this.queryParams}
-        .issueEntryUrl=${this.issueEntryUrl}
-      ></mr-keystrokes>
       <mr-header
         .userDisplayName=${this.userDisplayName}
         .issueEntryUrl=${this.issueEntryUrl}

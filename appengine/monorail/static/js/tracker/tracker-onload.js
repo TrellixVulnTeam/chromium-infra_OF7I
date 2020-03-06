@@ -125,7 +125,6 @@ if (document.captureEvents) document.captureEvents(Event.CLICK);
 
 _setupKibblesOnEntryPage = TKR_setupKibblesOnEntryPage;
 _setupKibblesOnListPage = TKR_setupKibblesOnListPage;
-_setupKibblesOnDetailPage = TKR_setupKibblesOnDetailPage;
 
 _checkFieldNameOnServer = TKR_checkFieldNameOnServer;
 _checkLeafName = TKR_checkLeafName;

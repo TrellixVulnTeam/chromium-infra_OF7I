@@ -9,6 +9,7 @@ import * as user from 'reducers/user.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 
+import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
 import '../mr-dropdown/mr-dropdown.js';
 import '../mr-dropdown/mr-account-dropdown.js';
 import './mr-search-bar.js';
@@ -130,6 +131,11 @@ export class MrHeader extends connectStore(LitElement) {
   _renderProjectScope() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <mr-keystrokes
+        .issueId=${this.queryParams.id}
+        .queryParams=${this.queryParams}
+        .issueEntryUrl=${this.issueEntryUrl}
+      ></mr-keystrokes>
       <a href="/p/${this.projectName}/issues/list" class="home-link">
         ${this.projectThumbnailUrl ? html`
           <img
