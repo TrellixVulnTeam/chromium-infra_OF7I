@@ -95,7 +95,7 @@ def ParseTemplateRequest(post_data, config):
 def GetTemplateInfoFromParsed(mr, services, parsed, config):
   """Get Template field info and PBs from a ParsedTemplate."""
 
-  admin_ids, _ = tracker_helpers.ParseAdminUsers(
+  admin_ids, _ = tracker_helpers.ParsePostDataUsers(
       mr.cnxn, parsed.admin_str, services.user)
 
   owner_id = 0

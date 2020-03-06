@@ -168,19 +168,12 @@ class FieldDetail(servlet.Servlet):
 
     parsed = field_helpers.ParseFieldDefRequest(post_data, config)
 
-    if (parsed.min_value is not None and parsed.max_value is not None and
-        parsed.min_value > parsed.max_value):
-      mr.errors.min_value = 'Minimum value must be less than maximum.'
-
-    if parsed.regex:
-      try:
-        re.compile(parsed.regex)
-      except re.error:
-        mr.errors.regex = 'Invalid regular expression.'
-
-    admin_ids, admin_str = tracker_helpers.ParseAdminUsers(
+    admin_ids, admin_str = tracker_helpers.ParsePostDataUsers(
         mr.cnxn, post_data['admin_names'], self.services.user)
-    editor_ids, _editor_str = [], []
+    editor_ids, editor_str = tracker_helpers.ParsePostDataUsers(
+        mr.cnxn, '', self.services.user)
+
+    field_helpers.ParsedFieldDefAssertions(mr, parsed)
 
     if field_def.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
       if parsed.approvers_str:
@@ -198,11 +191,14 @@ class FieldDetail(servlet.Servlet):
           new_field_def, config)
 
       self.PleaseCorrect(
-          mr, field_def=new_field_def_view,
+          mr,
+          field_def=new_field_def_view,
           initial_applicable_type=parsed.applicable_type,
           initial_choices=parsed.choices_text,
-          initial_admins = admin_str,
-          initial_approvers = parsed.approvers_str)
+          initial_admins=admin_str,
+          initial_editors=editor_str,
+          initial_approvers=parsed.approvers_str,
+          initial_is_restricted_field=parsed.is_restricted_field)
       return
 
     self.services.config.UpdateFieldDef(
@@ -224,7 +220,8 @@ class FieldDetail(servlet.Servlet):
         date_action=parsed.date_action_str,
         docstring=parsed.field_docstring,
         admin_ids=admin_ids,
-        editor_ids=editor_ids)
+        editor_ids=editor_ids,
+        is_restricted_field=False)
 
     if field_def.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
       approval_defs = field_helpers.ReviseApprovals(

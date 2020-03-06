@@ -396,8 +396,8 @@ def _ParseBlockers(cnxn, post_data, services, errors, default_project_name,
   for ref_str in re.split('[,;\s]+', entered_str):
     # Handle federated references.
     if federated.IsShortlinkValid(ref_str):
-        federated_ref_strings.append(ref_str)
-        continue
+      federated_ref_strings.append(ref_str)
+      continue
 
     try:
       issue_ref = tracker_bizobj.ParseIssueRef(ref_str)
@@ -943,13 +943,12 @@ def LookupComponentIDs(component_paths, config, errors=None):
   return component_ids
 
 
-def ParseAdminUsers(cnxn, admins_str, user_service):
-  """Parse all the usernames of component, field, or template admins."""
-  admins, _remove = _ClassifyPlusMinusItems(
-      re.split('[,;\s]+', admins_str))
-  all_user_ids = user_service.LookupUserIDs(cnxn, admins, autocreate=True)
-  admin_ids = [all_user_ids[username] for username in admins if username]
-  return admin_ids, admins_str
+def ParsePostDataUsers(cnxn, pd_users_str, user_service):
+  """Parse all the usernames from a users string found in a post data."""
+  emails, _remove = _ClassifyPlusMinusItems(re.split('[,;\s]+', pd_users_str))
+  users_ids_by_email = user_service.LookupUserIDs(cnxn, emails, autocreate=True)
+  user_ids = [users_ids_by_email[username] for username in emails if username]
+  return user_ids, pd_users_str
 
 
 def FilterIssueTypes(config):

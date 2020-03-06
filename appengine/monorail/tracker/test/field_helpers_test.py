@@ -712,7 +712,7 @@ class FieldHelpersTest(unittest.TestCase):
     self.assertTrue(self.mr.errors.AnyErrors())
 
     self.assertEqual(
-        self.mr.errors.restricted_field,
+        self.mr.errors.is_restricted_field,
         'An approval field cannot be restricted.')
     self.assertEqual(
         self.mr.errors.is_niche, 'A field cannot be both required and niche.')

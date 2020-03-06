@@ -209,11 +209,19 @@ class HelpersTest(unittest.TestCase):
         'op_custom_12': ['clear'],
         'op_custom_16_sheep': ['remove'],
         'ignore': 'no matter',}))
-    self.assertEqual(parsed_fields, tracker_helpers.ParsedFields(
-        {1:['https://hello.com'], 12: ['https://blah.com']},
-        {14: ['https://remove.com']}, [12],
-        {15: {'goats': ['2', '3'], 'sheep': ['3', '5']}},
-        {16: {'sheep': ['yarn']}}))
+    self.assertEqual(
+        parsed_fields,
+        tracker_helpers.ParsedFields(
+            {
+                1: ['https://hello.com'],
+                12: ['https://blah.com']
+            }, {14: ['https://remove.com']}, [12],
+            {15: {
+                'goats': ['2', '3'],
+                'sheep': ['3', '5']
+            }}, {16: {
+                'sheep': ['yarn']
+            }}))
 
   def testParseIssueRequestAttachments(self):
     file1 = testing_helpers.Blank(
@@ -822,8 +830,23 @@ class HelpersTest(unittest.TestCase):
   def testLookupComponentIDs(self):
     pass  # TODO(jrobbins): Write this test.
 
-  def testParseAdminUsers(self):
-    pass  # TODO(jrobbins): Write this test.
+  def testParsePostDataUsers(self):
+    pd_users = 'a@example.com, b@example.com'
+
+    pd_users_ids, pd_users_str = tracker_helpers.ParsePostDataUsers(
+        self.cnxn, pd_users, self.services.user)
+
+    self.assertEqual([1, 2], sorted(pd_users_ids))
+    self.assertEqual('a@example.com, b@example.com', pd_users_str)
+
+  def testParsePostDataUsers_Empty(self):
+    pd_users = ''
+
+    pd_users_ids, pd_users_str = tracker_helpers.ParsePostDataUsers(
+        self.cnxn, pd_users, self.services.user)
+
+    self.assertEqual([], sorted(pd_users_ids))
+    self.assertEqual('', pd_users_str)
 
   def testFilterIssueTypes(self):
     pass  # TODO(jrobbins): Write this test.

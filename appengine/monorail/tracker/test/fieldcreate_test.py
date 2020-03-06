@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import mox
+import mock
 import unittest
 import logging
 
@@ -37,6 +38,7 @@ class FieldCreateTest(unittest.TestCase):
     self.mr = testing_helpers.MakeMonorailRequest(
         project=self.project, perms=permissions.OWNER_ACTIVE_PERMISSIONSET)
     self.services.user.TestAddUser('gatsby@example.com', 111)
+    self.services.user.TestAddUser('sport@example.com', 222)
 
     self.mox = mox.Mox()
 
@@ -118,6 +120,50 @@ class FieldCreateTest(unittest.TestCase):
     self.assertEqual([111], fd.admin_ids)
     self.assertEqual([], fd.editor_ids)
 
+
+  @mock.patch('framework.servlet.Servlet.PleaseCorrect')
+  def testProcessFormData_RejectAssertions(self, fake_servlet_pc):
+    post_data = fake.PostData(
+        name=['somefield'],
+        field_type=['INT_TYPE'],
+        min_value=['1'],
+        max_value=['99'],
+        notify_on=['any_comment'],
+        importance=['required'],
+        is_multivalued=['Yes'],
+        docstring=['It is just some field'],
+        applicable_type=['Defect'],
+        date_action=['wrong_date_action'],
+        admin_names=['gatsby@example.com'],
+        editor_names=[''])
+
+    self.servlet.ProcessFormData(self.mr, post_data)
+
+    fake_servlet_pc.assert_called_once_with(
+        self.mr,
+        initial_field_name='somefield',
+        initial_type='INT_TYPE',
+        initial_parent_approval_name='',
+        initial_field_docstring='It is just some field',
+        initial_applicable_type='Defect',
+        initial_applicable_predicate='',
+        initial_needs_member=None,
+        initial_needs_perm='',
+        initial_importance='required',
+        initial_is_multivalued='yes',
+        initial_grants_perm='',
+        initial_notify_on=1,
+        initial_date_action='wrong_date_action',
+        initial_choices='',
+        initial_approvers='',
+        initial_survey='',
+        initial_is_phase_field=False,
+        initial_admins='gatsby@example.com',
+        initial_editors='',
+        initial_is_restricted_field=False)
+    self.assertTrue(self.mr.errors.AnyErrors())
+
+
   def testProcessFormData_RejectNoApprover(self):
     post_data = fake.PostData(
         name=['approvalField'],
@@ -129,7 +175,8 @@ class FieldCreateTest(unittest.TestCase):
 
     self.mox.StubOutWithMock(self.servlet, 'PleaseCorrect')
     self.servlet.PleaseCorrect(
-        self.mr, initial_field_name=post_data.get('name'),
+        self.mr,
+        initial_field_name=post_data.get('name'),
         initial_type=post_data.get('field_type'),
         initial_field_docstring=post_data.get('docstring', ''),
         initial_applicable_type=post_data.get('applical_type', ''),
@@ -140,14 +187,15 @@ class FieldCreateTest(unittest.TestCase):
         initial_is_multivalued=ezt.boolean('is_multivalued' in post_data),
         initial_grants_perm=post_data.get('grants_perm', '').strip(),
         initial_notify_on=0,
-        initial_date_action= post_data.get('date_action'),
+        initial_date_action=post_data.get('date_action'),
         initial_choices=post_data.get('choices', ''),
         initial_approvers=post_data.get('approver_names'),
         initial_parent_approval_name=post_data.get('parent_approval_name', ''),
         initial_survey=post_data.get('survey', ''),
         initial_is_phase_field=False,
-        initial_admins=post_data.get('admin_names')
-    )
+        initial_admins=post_data.get('admin_names'),
+        initial_editors='',
+        initial_is_restricted_field=False)
     self.mox.ReplayAll()
     url = self.servlet.ProcessFormData(self.mr, post_data)
     self.mox.VerifyAll()

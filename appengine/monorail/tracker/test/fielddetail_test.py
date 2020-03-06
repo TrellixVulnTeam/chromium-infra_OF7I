@@ -240,11 +240,14 @@ class FieldDetailTest(unittest.TestCase):
 
     self.mox.StubOutWithMock(self.servlet, 'PleaseCorrect')
     self.servlet.PleaseCorrect(
-        self.mr, field_def=mox.IgnoreArg(),
+        self.mr,
+        field_def=mox.IgnoreArg(),
         initial_applicable_type='',
         initial_choices='',
         initial_admins='',
-        initial_approvers='')
+        initial_editors='',
+        initial_approvers='',
+        initial_is_restricted_field=False)
     self.mox.ReplayAll()
 
     url = self.servlet._ProcessEditField(
@@ -266,11 +269,14 @@ class FieldDetailTest(unittest.TestCase):
 
     self.mox.StubOutWithMock(self.servlet, 'PleaseCorrect')
     self.servlet.PleaseCorrect(
-        self.mr, field_def=mox.IgnoreArg(),
+        self.mr,
+        field_def=mox.IgnoreArg(),
         initial_applicable_type='',
         initial_choices='',
         initial_admins='',
-        initial_approvers='')
+        initial_editors='',
+        initial_approvers='',
+        initial_is_restricted_field=False)
     self.mox.ReplayAll()
 
     url = self.servlet._ProcessEditField(

@@ -1109,9 +1109,6 @@ class ConfigService(object):
     Returns:
       Integer field_id of the new field definition.
     """
-    assert not (is_required and
-                is_niche), ('A field cannot be both required and niche')
-    assert date_action_str in DATE_ACTION_ENUM
     field_id = self.fielddef_tbl.InsertRow(
         cnxn,
         project_id=project_id,
@@ -1266,7 +1263,6 @@ class ConfigService(object):
     if notify_on is not None:
       new_values['notify_on'] = NOTIFY_ON_ENUM[notify_on]
     if date_action is not None:
-      assert date_action in DATE_ACTION_ENUM
       new_values['date_action'] = date_action
     if docstring is not None:
       new_values['docstring'] = docstring

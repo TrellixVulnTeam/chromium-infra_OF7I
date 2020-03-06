@@ -103,19 +103,12 @@ class FieldCreate(servlet.Servlet):
     if field_name_error_msg:
       mr.errors.field_name = field_name_error_msg
 
-    if (parsed.min_value is not None and parsed.max_value is not None and
-        parsed.min_value > parsed.max_value):
-      mr.errors.min_value = 'Minimum value must be less than maximum.'
-
-    if parsed.regex:
-      try:
-        re.compile(parsed.regex)
-      except re.error:
-        mr.errors.regex = 'Invalid regular expression.'
-
-    admin_ids, admin_str = tracker_helpers.ParseAdminUsers(
+    admin_ids, admin_str = tracker_helpers.ParsePostDataUsers(
         mr.cnxn, post_data['admin_names'], self.services.user)
-    editor_ids, _editor_str = [], []
+    editor_ids, editor_str = tracker_helpers.ParsePostDataUsers(
+        mr.cnxn, '', self.services.user)
+
+    field_helpers.ParsedFieldDefAssertions(mr, parsed)
 
     # TODO(crbug/monorail/7275): This condition could potentially be
     # included in the field_helpers.ParsedFieldDefAssertions method,
@@ -132,7 +125,8 @@ class FieldCreate(servlet.Servlet):
 
     if mr.errors.AnyErrors():
       self.PleaseCorrect(
-          mr, initial_field_name=parsed.field_name,
+          mr,
+          initial_field_name=parsed.field_name,
           initial_type=parsed.field_type_str,
           initial_parent_approval_name=parsed.parent_approval_name,
           initial_field_docstring=parsed.field_docstring,
@@ -150,7 +144,8 @@ class FieldCreate(servlet.Servlet):
           initial_survey=parsed.survey,
           initial_is_phase_field=parsed.is_phase_field,
           initial_admins=admin_str,
-      )
+          initial_editors=editor_str,
+          initial_is_restricted_field=parsed.is_restricted_field)
       return
 
     approval_id = None
