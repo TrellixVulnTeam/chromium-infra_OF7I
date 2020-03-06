@@ -64,6 +64,14 @@ service Hotlists {
       body: "*"
     };
   }
+  // Adds new items associated with given issues to a hotlist.
+  //
+  // TODO(crbug/monorail/7104): Document possible errors when implemented.
+  rpc AddHotlistItems (AddHotlistItemsRequest) returns (google.protobuf.Empty) {}
+  // Removes items associated with given issues from a hotlist.
+  //
+  // TODO(crbug/monorali:7104): Document possible errors when implemented.
+  rpc RemoveHotlistItem (RemoveHotlistItemsRequest) returns (google.protobuf.Empty) {}
 }
 
 
@@ -144,4 +152,41 @@ message RerankHotlistItemsRequest {
   // Target starting position of the moved items.
   // `target_position` must be between 0 and (# hotlist items - # items being moved).
   uint32 target_position = 3 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+
+// Request message for an AddHotlistItems call.
+// Next available tag: 4
+message AddHotlistItemsRequest {
+  // Resource name of the Hotlist to add new items to.
+  string parent = 1 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"} ];
+  // Resource names of Issues to associate with new HotlistItems added to `parent`.
+  repeated string issue = 2 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/Issue"} ];
+  // Target starting position of the new items.
+  // `target_position` must be between [0 and # of items that currently exist in
+  // `parent`]. The request will fail if a specified `target_position` is outside
+  // of this range.
+  // New HotlistItems added to a non-last position of the hotlist will
+  // cause ranks of existing HotlistItems below `target_position` to be adjusted.
+  // If no `target_position` is given, new items will be added to the end of
+  // `parent`.
+  uint32 target_position = 3;
+}
+
+
+// Request message for a RemoveHotlistItems call.
+// Next available tag: 3
+message RemoveHotlistItemsRequest {
+  // Resource name of the Hotlist to remove items from.
+  string parent = 1 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"} ];
+  // Resource names of Issues associated with HotlistItems that should be removed.
+  repeated string issue = 2 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/Issue"} ];
 }
