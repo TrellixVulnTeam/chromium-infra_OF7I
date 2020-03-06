@@ -68,6 +68,7 @@ class FieldCreate(servlet.Servlet):
         'initial_parent_approval_name': '',
         'initial_choices': '',
         'initial_admins': '',
+        'initial_editors': '',
         'initial_type': 'enum_type',
         'initial_applicable_type': '',  # That means any issue type
         'initial_applicable_predicate': '',
@@ -81,7 +82,8 @@ class FieldCreate(servlet.Servlet):
         'initial_survey': '',
         'approval_names': approval_names,
         'initial_is_phase_field': ezt.boolean(False),
-        }
+        'initial_is_restricted_field': ezt.boolean(False),
+    }
 
   def ProcessFormData(self, mr, post_data):
     """Validate and store the contents of the issues tracker admin page.

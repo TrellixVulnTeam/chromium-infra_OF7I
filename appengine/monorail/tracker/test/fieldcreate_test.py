@@ -85,6 +85,9 @@ class FieldCreateTest(unittest.TestCase):
         ['Defect', 'Enhancement', 'Task', 'Other'],
         page_data['well_known_issue_types'])
     self.assertEqual(['LaunchApproval'], page_data['approval_names'])
+    self.assertEqual('', page_data['initial_admins'])
+    self.assertEqual('', page_data['initial_editors'])
+    self.assertIsNone(page_data['initial_is_restricted_field'])
 
   def testProcessFormData(self):
     post_data = fake.PostData(
