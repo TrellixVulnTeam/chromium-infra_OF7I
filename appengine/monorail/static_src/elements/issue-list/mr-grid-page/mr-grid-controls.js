@@ -6,12 +6,29 @@ import {LitElement, html, css} from 'lit-element';
 import page from 'page';
 import {connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
 import 'elements/chops/chops-choice-buttons/chops-choice-buttons.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 import './mr-grid-dropdown.js';
-import {getAvailableGridFields} from './extract-grid-data.js';
 import {urlWithNewParams} from 'shared/helpers.js';
+import {fieldsForIssue} from 'shared/issue-fields.js';
+
+// A list of the valid default field names available in an issue grid.
+// High cardinality fields must be excluded, so the grid only includes a subset
+// of AVAILABLE FIELDS.
+export const DEFAULT_GRID_FIELDS = Object.freeze([
+  'Project',
+  'Attachments',
+  'Blocked',
+  'BlockedOn',
+  'Blocking',
+  'Component',
+  'MergedInto',
+  'Reporter',
+  'Stars',
+  'Status',
+  'Type',
+  'Owner',
+]);
 
 /**
  * Component for displaying the controls shown on the Monorail issue grid page.
@@ -97,12 +114,10 @@ export class MrGridControls extends connectStore(LitElement) {
   /** @override */
   constructor() {
     super();
-    this.gridOptions = getAvailableGridFields();
+    this.gridOptions = this._computeGridOptions([]);
     this.queryParams = {};
 
     this.totalIssues = 0;
-    this._fieldDefs = [];
-    this._labelPrefixFields = [];
 
     this._page = page;
   };
@@ -115,33 +130,55 @@ export class MrGridControls extends connectStore(LitElement) {
       queryParams: {type: Object},
       issueCount: {type: Number},
       totalIssues: {type: Number},
-      _fieldDefs: {type: Array},
-      _labelPrefixFields: {type: Object},
+      _issues: {type: Array},
     };
   };
 
   /** @override */
   stateChanged(state) {
-    this.totalIssues = (issue.totalIssues(state) || 0);
-    this._fieldDefs = project.fieldDefs(state) || [];
-    this._labelPrefixFields = project.labelPrefixFields(state) || [];
+    this.totalIssues = issue.totalIssues(state) || 0;
+    this._issues = issue.issueList(state) || [];
   }
 
   /** @override */
   update(changedProperties) {
-    if (changedProperties.has('_fieldDefs') ||
-        changedProperties.has('_labelPrefixFields')) {
-      this.gridOptions = getAvailableGridFields(
-          this._fieldDefs, this._labelPrefixFields);
+    if (changedProperties.has('_issues')) {
+      this.gridOptions = this._computeGridOptions(this._issues);
     }
     super.update(changedProperties);
   }
 
+  /**
+   * Gets what issue filtering options exist on the grid view.
+   * @param {Array<Issue>} issues The issues to find values on.
+   * @param {Array<string>=} defaultFields Available built in fields.
+   * @return {Array<string>} Array of names of fields you can filter by.
+   */
+  _computeGridOptions(issues, defaultFields = DEFAULT_GRID_FIELDS) {
+    const availableFields = new Set(defaultFields);
+    issues.forEach((issue) => {
+      fieldsForIssue(issue, true).forEach((field) => {
+        availableFields.add(field);
+      });
+    });
+    const options = [...availableFields].sort();
+    options.unshift('None');
+    return options;
+  }
+
+  /**
+   * @return {string} What cell mode the user has selected.
+   * ie: Tiles, IDs, Counts
+   */
   get cellType() {
     const cells = this.queryParams.cells;
     return cells || 'tiles';
   }
 
+  /**
+   * @return {Array<Object>} Cell options available to the user, formatted for
+   *   <mr-mode-selector>
+   */
   get cellOptions() {
     return [
       {text: 'Tile', value: 'tiles',
@@ -153,6 +190,11 @@ export class MrGridControls extends connectStore(LitElement) {
     ];
   }
 
+  /**
+   * Changes the URL parameters on the page in response to a user changing
+   * their row setting.
+   * @param {Event} e 'change' event fired by <mr-grid-dropdown>
+   */
   _rowChanged(e) {
     const y = e.target.selection;
     let deletedParams;
@@ -162,6 +204,11 @@ export class MrGridControls extends connectStore(LitElement) {
     this._changeUrlParams({y}, deletedParams);
   }
 
+  /**
+   * Changes the URL parameters on the page in response to a user changing
+   * their col setting.
+   * @param {Event} e 'change' event fired by <mr-grid-dropdown>
+   */
   _colChanged(e) {
     const x = e.target.selection;
     let deletedParams;
@@ -171,11 +218,22 @@ export class MrGridControls extends connectStore(LitElement) {
     this._changeUrlParams({x}, deletedParams);
   }
 
+  /**
+   * Helper method to update URL params with a new grid view URL.
+   * @param {Array<Object>} newParams
+   * @param {Array<string>} deletedParams
+   */
   _changeUrlParams(newParams, deletedParams) {
     const newUrl = this._updatedGridViewUrl(newParams, deletedParams);
     this._page(newUrl);
   }
 
+  /**
+   * Helper to generate a new grid view URL given a set of params.
+   * @param {Array<Object>} newParams
+   * @param {Array<string>} deletedParams
+   * @return {string} The generated URL.
+   */
   _updatedGridViewUrl(newParams, deletedParams) {
     return urlWithNewParams(`/p/${this.projectName}/issues/list`,
         this.queryParams, newParams, deletedParams);

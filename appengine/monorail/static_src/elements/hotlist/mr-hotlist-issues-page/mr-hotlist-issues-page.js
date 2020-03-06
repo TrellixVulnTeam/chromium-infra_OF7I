@@ -80,7 +80,7 @@ export class _MrHotlistIssuesPage extends LitElement {
             .options=${['Open', 'Closed']}
             .selected=${this._filter}
             @change=${this._onFilterChange}
-        </chops-filter-chips>
+        ></chops-filter-chips>
       </div>
 
       <mr-issue-list

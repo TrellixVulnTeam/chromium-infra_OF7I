@@ -3,7 +3,8 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {parseColSpec, stringValuesForIssueField} from './issue-fields.js';
+import {parseColSpec, fieldsForIssue,
+  stringValuesForIssueField} from './issue-fields.js';
 import sinon from 'sinon';
 
 let issue;
@@ -40,6 +41,97 @@ describe('parseColSpec', () => {
   it('spec parsing preserves dashed parameters', () => {
     assert.deepEqual(parseColSpec('ID+Summary+Test-Label+Another-Label'),
         ['ID', 'Summary', 'Test-Label', 'Another-Label']);
+  });
+});
+
+describe('fieldsForIssue', () => {
+  const issue = {
+    projectName: 'proj',
+    localId: 1,
+  };
+
+  const issueWithLabels = {
+    projectName: 'proj',
+    localId: 1,
+    labelRefs: [
+      {label: 'test'},
+      {label: 'hello-world'},
+      {label: 'multi-label-field'},
+    ],
+  };
+
+  const issueWithFieldValues = {
+    projectName: 'proj',
+    localId: 1,
+    fieldValues: [
+      {fieldRef: {fieldName: 'number', type: 'INT_TYPE'}},
+      {fieldRef: {fieldName: 'string', type: 'STR_TYPE'}},
+    ],
+  };
+
+  const issueWithPhases = {
+    projectName: 'proj',
+    localId: 1,
+    fieldValues: [
+      {fieldRef: {fieldName: 'phase-number', type: 'INT_TYPE'},
+        phaseRef: {phaseName: 'phase1'}},
+      {fieldRef: {fieldName: 'phase-string', type: 'STR_TYPE'},
+        phaseRef: {phaseName: 'phase2'}},
+    ],
+  };
+
+  const issueWithApprovals = {
+    projectName: 'proj',
+    localId: 1,
+    approvalValues: [
+      {fieldRef: {fieldName: 'approval', type: 'APPROVAL_TYPE'}},
+    ],
+  };
+
+  it('empty issue issue produces no field names', () => {
+    assert.deepEqual(fieldsForIssue(issue), []);
+    assert.deepEqual(fieldsForIssue(issue, true), []);
+  });
+
+  it('includes label prefixes', () => {
+    assert.deepEqual(fieldsForIssue(issueWithLabels), [
+      'hello',
+      'multi',
+      'multi-label',
+    ]);
+  });
+
+  it('includes field values', () => {
+    assert.deepEqual(fieldsForIssue(issueWithFieldValues), [
+      'number',
+      'string',
+    ]);
+  });
+
+  it('excludes high cardinality field values', () => {
+    assert.deepEqual(fieldsForIssue(issueWithFieldValues, true), [
+      'number',
+    ]);
+  });
+
+  it('includes phase fields', () => {
+    assert.deepEqual(fieldsForIssue(issueWithPhases), [
+      'phase1.phase-number',
+      'phase2.phase-string',
+    ]);
+  });
+
+  it('excludes high cardinality phase fields', () => {
+    assert.deepEqual(fieldsForIssue(issueWithPhases, true), [
+      'phase1.phase-number',
+    ]);
+  });
+
+  it('includes approval values', () => {
+    assert.deepEqual(fieldsForIssue(issueWithApprovals), [
+      'approval',
+      'approval-Approver',
+    ]);
   });
 });
 

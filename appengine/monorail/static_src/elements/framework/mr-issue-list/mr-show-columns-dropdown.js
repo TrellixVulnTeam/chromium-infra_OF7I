@@ -8,8 +8,7 @@ import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
-import {labelNameToLabelPrefixes} from 'shared/converters.js';
-import {fieldTypes} from 'shared/issue-fields.js';
+import {fieldTypes, fieldsForIssue} from 'shared/issue-fields.js';
 
 
 /**
@@ -121,21 +120,29 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
   }
 
   /**
-   * Computes the column options available in the list view based on the Issues.
+   * Computes the column options available in the list view based on Issues.
    * @return {Array<MenuItem>}
    */
   columnOptions() {
-    const issueFields = this.issues.map(_columnsFromIssue).flat();
-    const availableFields = new Set([...issueFields, ...this.defaultFields]);
+    const availableFields = new Set(this.defaultFields);
+    this.issues.forEach((issue) => {
+      fieldsForIssue(issue).forEach((field) => {
+        availableFields.add(field);
+      });
+    });
+
+    // Remove selected columns from available fields.
     this.columns.forEach((field) => availableFields.delete(field));
     const sortedFields = [...availableFields].sort();
 
     return [
+      // Show selected options first.
       ...this.columns.map((field, i) => ({
         icon: 'check',
         text: field,
         handler: () => this._removeColumn(i),
       })),
+      // Unselected options come next.
       ...sortedFields.map((field) => ({
         icon: '',
         text: field,
@@ -298,35 +305,6 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
   _baseUrl() {
     return window.location.pathname;
   }
-}
-
-/**
- * Computes all list view columns set in a given Issue.
- * @param {Issue} issue An Issue object.
- * @return {Array<string>}
- */
-function _columnsFromIssue(issue) {
-  const approvalValues = issue.approvalValues || [];
-  const fieldValues = issue.fieldValues || [];
-  const labelRefs = issue.labelRefs || [];
-  const labelPrefixes = [];
-  labelRefs.forEach((labelRef) => {
-    labelPrefixes.push(...labelNameToLabelPrefixes(labelRef.label));
-  });
-  return [
-    ...approvalValues.map((approval) => approval.fieldRef.fieldName),
-    ...approvalValues.map(
-        (approval) => approval.fieldRef.fieldName + '-Approver'),
-    ...fieldValues.map((fieldValue) => {
-      if (fieldValue.phaseRef) {
-        return fieldValue.phaseRef.phaseName + '.' +
-            fieldValue.fieldRef.fieldName;
-      } else {
-        return fieldValue.fieldRef.fieldName;
-      }
-    }),
-    ...labelPrefixes,
-  ];
 }
 
 customElements.define('mr-show-columns-dropdown', MrShowColumnsDropdown);

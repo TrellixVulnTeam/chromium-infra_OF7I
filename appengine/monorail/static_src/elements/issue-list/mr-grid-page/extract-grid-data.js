@@ -8,56 +8,6 @@ import 'shared/typedef.js';
 
 const DEFAULT_HEADER_VALUE = 'All';
 
-// A list of the valid default field names available in an issue grid.
-// High cardinality fields must be excluded, so the grid only includes a subset
-// of AVAILABLE FIELDS.
-export const DEFAULT_GRID_FIELD_NAMES = [
-  'Project',
-  'Attachments',
-  'Blocked',
-  'BlockedOn',
-  'Blocking',
-  'Component',
-  'MergedInto',
-  'Reporter',
-  'Stars',
-  'Status',
-  'Type',
-  'Owner',
-];
-
-const GROUPABLE_FIELD_TYPES = new Set([
-  fieldTypes.DATE_TYPE,
-  fieldTypes.ENUM_TYPE,
-  fieldTypes.USER_TYPE,
-  fieldTypes.INT_TYPE,
-]);
-
-/**
- * Returns the fields available given these fieldDefs and labelFields.
- *
- * A special value of 'None' will always be prepended to the otherwise sorted
- * list returned.
- *
- * @param {Iterable<FieldDef>=} fieldDefs
- * @param {Iterable<string>=} labelFields
- * @return {Array<string>}
- */
-export function getAvailableGridFields(fieldDefs = [], labelFields = []) {
-  // TODO(jessan): Consider whether the deduplication is needed.
-  const gridFieldSet = new Set([...DEFAULT_GRID_FIELD_NAMES, ...labelFields]);
-  for (const fd of fieldDefs) {
-    if (GROUPABLE_FIELD_TYPES.has(fd.fieldRef.type)) {
-      gridFieldSet.add(fd.fieldRef.fieldName);
-    }
-  };
-
-  const gridFieldList = [...gridFieldSet];
-  gridFieldList.sort();
-  gridFieldList.unshift('None');
-  return gridFieldList;
-};
-
 // Sort headings functions
 // TODO(zhangtiff): Find some way to restructure this code to allow
 // sorting functions to sort with raw types instead of stringified values.

@@ -37,6 +37,13 @@ export const fieldTypes = Object.freeze({
   PROJECT_TYPE: 'PROJECT_TYPE',
 });
 
+const GROUPABLE_FIELD_TYPES = new Set([
+  fieldTypes.DATE_TYPE,
+  fieldTypes.ENUM_TYPE,
+  fieldTypes.USER_TYPE,
+  fieldTypes.INT_TYPE,
+]);
+
 const SPEC_DELIMITER_REGEX = /[\s\+]+/;
 export const SITEWIDE_DEFAULT_COLUMNS = ['ID', 'Type', 'Status',
   'Priority', 'Milestone', 'Owner', 'Summary'];
@@ -388,3 +395,41 @@ const stringValuesExtractor = (issue, fieldName, projectName,
   return matchingLabels.map(
       (labelRef) => removePrefix(labelRef.label, labelPrefix));
 };
+
+/**
+ * Computes all custom fields set in a given Issue, including custom
+ * fields derived from label prefixes and approval values.
+ * @param {Issue} issue An Issue object.
+ * @param {boolean=} exclHighCardinality Whether to exclude fields with a high
+ *   cardinality, like string custom fields for example. This is useful for
+ *   features where issues are grouped by different values because grouping
+ *   by high cardinality fields is not meaningful.
+ * @return {Array<string>}
+ */
+export function fieldsForIssue(issue, exclHighCardinality = false) {
+  const approvalValues = issue.approvalValues || [];
+  let fieldValues = issue.fieldValues || [];
+  const labelRefs = issue.labelRefs || [];
+  const labelPrefixes = [];
+  labelRefs.forEach((labelRef) => {
+    labelPrefixes.push(...labelNameToLabelPrefixes(labelRef.label));
+  });
+  if (exclHighCardinality) {
+    fieldValues = fieldValues.filter(({fieldRef}) =>
+      GROUPABLE_FIELD_TYPES.has(fieldRef.type));
+  }
+  return [
+    ...approvalValues.map((approval) => approval.fieldRef.fieldName),
+    ...approvalValues.map(
+        (approval) => approval.fieldRef.fieldName + '-Approver'),
+    ...fieldValues.map((fieldValue) => {
+      if (fieldValue.phaseRef) {
+        return fieldValue.phaseRef.phaseName + '.' +
+            fieldValue.fieldRef.fieldName;
+      } else {
+        return fieldValue.fieldRef.fieldName;
+      }
+    }),
+    ...labelPrefixes,
+  ];
+}
