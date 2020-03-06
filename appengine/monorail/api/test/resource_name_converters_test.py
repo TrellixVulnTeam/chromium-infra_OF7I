@@ -32,6 +32,7 @@ class ResourceNameConverterTest(unittest.TestCase):
         'proj', project_id=789)
     self.project_2 = self.services.project.TestAddProject(
         'goose', project_id=788)
+    self.dne_project_id = 1999
 
     self.issue_1 = fake.MakeTestIssue(
         self.project_1.project_id, 1, 'sum', 'New', 111,
@@ -209,25 +210,72 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.InputException):
       rnc.IngestProjectName(self.cnxn, 'projects/', self.services)
 
-  def testConvertTemplateResourceNames(self):
+  def testConvertTemplateNames(self):
     """We can get IssueTemplate resource names."""
     expected_resource_name = 'projects/{}/templates/{}'.format(
         self.project_1.project_name, self.template_1.name)
     expected = {self.template_1.template_id: expected_resource_name}
 
     self.assertEqual(
-        rnc.ConvertTemplateResourceNames(
+        rnc.ConvertTemplateNames(
             self.cnxn, self.project_1.project_id, [self.template_1.template_id],
             self.services), expected)
 
-  def testConvertTemplateResourceNames_NoSuchProjectException(self):
+  def testConvertTemplateNames_NoSuchProjectException(self):
     """We get an exception if project with id does not exist."""
-    not_a_project_id = 1999
-    self.assertNotIn(
-        not_a_project_id,
-        self.services.project.GetAllProjects(self.cnxn).keys())
-
     with self.assertRaises(exceptions.NoSuchProjectException):
-      rnc.ConvertTemplateResourceNames(
-          self.cnxn, not_a_project_id, [self.template_1.template_id],
+      rnc.ConvertTemplateNames(
+          self.cnxn, self.dne_project_id, [self.template_1.template_id],
           self.services)
+
+  def testConvertStatusDefName(self):
+    """We can get Status resource name."""
+    expected_resource_name = 'projects/{}/statusDefs/{}'.format(
+        self.project_1.project_name, self.issue_1.status)
+
+    self.assertEqual(
+        rnc.ConvertStatusDefName(
+            self.cnxn, self.issue_1.status, self.project_1.project_id,
+            self.services), expected_resource_name)
+
+  def testConvertStatusDefName_NoSuchProjectException(self):
+    """We can get an exception if project with id does not exist."""
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertStatusDefName(
+          self.cnxn, self.issue_1.status, self.dne_project_id, self.services)
+
+  def testConvertLabelNames(self):
+    """We can get Label resource names."""
+    expected_label = 'some label'
+    expected_resource_name = 'projects/{}/labelDefs/{}'.format(
+        self.project_1.project_name, expected_label)
+
+    self.assertEqual(
+        rnc.ConvertLabelNames(
+            self.cnxn, [expected_label], self.project_1.project_id,
+            self.services), {expected_label: expected_resource_name})
+
+  def testConvertLabelNames_NoSuchProjectException(self):
+    """We can get an exception if project with id does not exist."""
+    some_label = 'some label'
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertLabelNames(
+          self.cnxn, [some_label], self.dne_project_id, self.services)
+
+  def testConvertComponentDefNames(self):
+    """We can get Component resource names."""
+    expected_id = 123456
+    expected_resource_name = 'projects/{}/componentDefs/{}'.format(
+        self.project_1.project_name, expected_id)
+
+    self.assertEqual(
+        rnc.ConvertComponentDefNames(
+            self.cnxn, [expected_id], self.project_1.project_id, self.services),
+        {expected_id: expected_resource_name})
+
+  def testConvertComponentDefNames_NoSuchProjectException(self):
+    """We can get an exception if project with id does not exist."""
+    component_id = 123456
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertComponentDefNames(
+          self.cnxn, [component_id], self.dne_project_id, self.services)

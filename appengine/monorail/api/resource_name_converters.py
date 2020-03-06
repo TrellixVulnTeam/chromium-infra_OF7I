@@ -49,6 +49,9 @@ ISSUE_NAME_TMPL = 'projects/{project}/issues/{local_id}'
 USER_NAME_TMPL = 'users/{user_id}'
 
 ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_name}'
+STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
+LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
+COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
 
 
 def _GetResourceNameMatch(name, regex):
@@ -332,9 +335,9 @@ def IngestProjectName(cnxn, name, services):
   return id_dict.get(project_name)
 
 
-def ConvertTemplateResourceNames(cnxn, project_id, template_ids, services):
+def ConvertTemplateNames(cnxn, project_id, template_ids, services):
   # MonorailConnection, int, Collection[int] Service -> Mapping[int, str]
-  """Output template resource names in the format of api.crbug.com/Template
+  """Takes Template IDs and returns the Templates' resource names
 
   Args:
     cnxn: MonorailConnection object.
@@ -361,3 +364,79 @@ def ConvertTemplateResourceNames(cnxn, project_id, template_ids, services):
         project_name=project_name, template_name=template.name)
 
   return id_to_resource_names
+
+
+def ConvertStatusDefName(cnxn, status, project_id, services):
+  # MonorailConnection, str, int, Service -> str
+  """Takes a status string and returns a StatusDef resource name
+
+  Args:
+    cnxn: MonorailConnection object.
+    status: status name as string
+    project_id: project id of project this belongs to
+    services: Service object.
+
+  Returns:
+    String of status's resource name
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  project = services.project.GetProject(cnxn, project_id)
+
+  return STATUS_DEF_TMPL.format(
+      project_name=project.project_name, status=status)
+
+
+def ConvertLabelNames(cnxn, labels, project_id, services):
+  # MonorailConnection, Collection[str], int, Service -> Mapping[str, str]
+  """Takes a list of labels and returns LabelDef resource names
+
+  Args:
+    cnxn: MonorailConnection object.
+    labels: List of labels as string
+    project_id: project id of project this belongs to
+    services: Service object.
+
+  Returns:
+    Dict of label string to label's resource name
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  project = services.project.GetProject(cnxn, project_id)
+
+  name_dict = {}
+
+  for label in labels:
+    name_dict[label] = LABEL_DEF_TMPL.format(
+        project_name=project.project_name, label=label)
+
+  return name_dict
+
+
+def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
+  # MonorailConnection, Collection[int], int, Service -> Mapping[int, str]
+  """Takes Component IDs and returns ComponentDef resource names
+
+  Args:
+    cnxn: MonorailConnection object.
+    component_ids: List of component ids
+    project_id: project id of project this belongs to
+    services: Service object.
+
+  Returns:
+    Dict of component id to component's resource name
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  project = services.project.GetProject(cnxn, project_id)
+
+  id_dict = {}
+
+  for component_id in component_ids:
+    id_dict[component_id] = COMPONENT_DEF_TMPL.format(
+        project_name=project.project_name, component_id=component_id)
+
+  return id_dict
