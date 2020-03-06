@@ -54,7 +54,7 @@ builder(
 builder(
     name = 'Build From Tarball',
     recipe = 'build_from_tarball',
-    execution_timeout = 3 * time.hour,
+    execution_timeout = 5 * time.hour,
     # Each trigger from 'publish_tarball' should result in a build.
     triggering_policy = scheduler.greedy_batching(max_batch_size=1),
     cores=32,
