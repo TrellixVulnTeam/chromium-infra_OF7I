@@ -13,10 +13,12 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/maruel/subcommands"
 
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/google"
 
 	"infra/cmd/cros_test_platform/internal/execution"
@@ -103,6 +105,7 @@ func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, en
 	if err != nil {
 		return err
 	}
+	c.updateWithEnumerationErrors(ctx, resps, request.TaggedRequests)
 	return writeResponse(
 		c.outputPath,
 		&steps.ExecuteResponses{
@@ -205,4 +208,20 @@ func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Tim
 	defer cancel(context.Canceled)
 	err := runner.LaunchAndWait(ctx, skylab)
 	return runner.Responses(), err
+}
+
+func (c *skylabExecuteRun) updateWithEnumerationErrors(ctx context.Context, resps map[string]*steps.ExecuteResponse, reqs map[string]*steps.ExecuteRequest) {
+	for t, resp := range resps {
+		req, ok := reqs[t]
+		if !ok {
+			panic(fmt.Sprintf("request for non-existent request for %s", t))
+		}
+		if es := req.GetEnumeration().GetErrorSummary(); es != "" {
+			if resp.State == nil {
+				resp.State = &test_platform.TaskState{}
+			}
+			resp.State.Verdict = test_platform.TaskState_VERDICT_FAILED
+			logging.Infof(ctx, "Set request %s to VERDICT_FAILED because of enumeration error: %s", t, es)
+		}
+	}
 }
