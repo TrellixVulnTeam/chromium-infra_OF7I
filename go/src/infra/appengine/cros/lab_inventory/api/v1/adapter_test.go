@@ -209,6 +209,9 @@ var data = ExtendedDeviceData{
 			Value: "test_hwid",
 		},
 		DevicePhase: manufacturing.Config_PHASE_DVT,
+		// Respect manufacturing config more.
+		Cr50Phase:  manufacturing.Config_CR50_PHASE_PVT,
+		Cr50KeyEnv: manufacturing.Config_CR50_KEYENV_PROD,
 	},
 }
 
