@@ -56,21 +56,24 @@ var (
 		"alph",        // person name
 		"als",         // abbr. for ambient light sensor
 		"amin",        // person name
-		"synopsys",    // company name
 		"ang",         // person name
 		"anny",        // person name
 		"backed",      // as in "backed by"
 		"bae",         // person name
 		"ba",          // person name
+		"beng",        // person username
+		"bengr",       // person username
 		"cancelation", // alternative of cancellation
 		"cant",        // contraction, may appear in variable names
 		"cas",         // abbr. for Content Addressed Storage
 		"chang",       // person name
 		"claus",       // person name
 		"copyable",    // used in C++, e.g. is_trivially_copyable
+		"couldnt",     // contraction, may appear in variable names
 		"crasher",     // something that causes a crash
 		"crate",       // Rust keyword
 		"cros",        // CrOS, ChromeOS
+		"dedup",       // variant abbr. of deduplicate
 		"didi",        // person name
 		"doesnt",      // contraction, may appear in variable names
 		"doman",       // person name
@@ -84,12 +87,14 @@ var (
 		"gae",         // abbr. for Google App Engine
 		"harth",       // person name
 		"hart",        // person name
+		"havent",      // contraction, may appear in variable names
 		"hist",        // abbr. for histogram
 		"ith",         // ordinal form of variable i, like nth
 		"lightening",  // present participle of "to lighten"
 		"lod",         // abbr. of level of detail
 		"longe",       // person name
 		"maks",        // person name
+		"minimise",    // valid UK spelling
 		"mut",         // Rust keyword
 		"optin",       // alternative of opt-in
 		"process'",    // possessive of process
@@ -98,7 +103,10 @@ var (
 		"referers",    // HTTP referer header uses one 'r'
 		"sargent",     // person name
 		"seeked",      // JS event
+		"splitted",    // informal variant past tense of split
 		"subprocess'", // possessive of subprocess
+		"supportd",    // proper name of a thing in Chromium src
+		"synopsys",    // company name
 		"tast",        // name of a ChromeOS test
 		"te",          // TE is a HTTP request header
 		"tho",         // informal variant of though
