@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { assert } from 'chai';
-import { auditA11y } from '../../test-helpers/test-helpers';
+import { auditA11y } from '../../../test-helpers/test-helpers';
 
 let element;
 

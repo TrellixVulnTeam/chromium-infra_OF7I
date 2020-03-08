@@ -8,9 +8,10 @@
     "type": "git",
     "url": "https://chromium.googlesource.com/infra/infra/crdx/chopsui-npm.git"
   },
-  "main": "chops-signin.js",
-  "types": "chops-signin.d.ts",
-  "module": "chops-signin.js",
+  "main": "dist/chops-signin.js",
+  "types": "dist/chops-signin.d.ts",
+  "module": "dist/chops-signin.js",
+  "files": ["dist"],
   "scripts": {
     "tsc": "tsc -p tsconfig.json",
     "lint": "tslint -p tsconfig.json"

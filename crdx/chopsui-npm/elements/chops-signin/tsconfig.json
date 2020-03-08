@@ -1,11 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "./",
+    "rootDir": "src",
+    "outDir": "dist",
   },
-  "include": [
-    "*.ts",
-  ],
+  "include": ["src"],
   "files": [
     "node_modules/@types/gapi.auth2/index.d.ts"
   ]

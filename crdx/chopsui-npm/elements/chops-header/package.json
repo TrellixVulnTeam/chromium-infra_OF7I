@@ -4,9 +4,10 @@
   "description": "A shared header element for Chops.",
   "author": "The Chromium Authors",
   "license": "BSD-3-Clause",
-  "main": "chops-header.js",
-  "types": "chops-header.d.ts",
-  "module": "chops-header.js",
+  "main": "dist/chops-header.js",
+  "types": "dist/chops-header.d.ts",
+  "module": "dist/chops-header.js",
+  "files": ["dist"],
   "scripts": {
     "tsc": "tsc -p tsconfig.json",
     "lint": "tslint -p tsconfig.json"
