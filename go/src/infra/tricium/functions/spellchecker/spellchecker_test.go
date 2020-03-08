@@ -103,10 +103,10 @@ func TestSpellCheckerAnalyzeFiles(t *testing.T) {
 		So(results.Comments, ShouldBeEmpty)
 	})
 
-	Convey("Words in TODO notes are not flagged as misspellings.", t, func() {
+	Convey("Words in TODO/FIXME notes are not flagged as misspellings.", t, func() {
 		// Note that just the part in the TODO is not checked; the comment
 		// after the TODO is still checked.
-		fileContent := "TODO(nams): do someting"
+		fileContent := "TODO(nams): do someting\nFIXME(zuser): fix me\n"
 		results := &tricium.Data_Results{}
 		analyzeFile(bufio.NewScanner(strings.NewReader(fileContent)), "test.txt", true, cp[".txt"], results)
 		So(results.Comments, ShouldResemble, []*tricium.Data_Comment{

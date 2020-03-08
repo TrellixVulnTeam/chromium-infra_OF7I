@@ -142,7 +142,7 @@ var (
 	// false positives, we also match when there are prefixes or suffixes.
 	emailPattern = regexp.MustCompile(`\w+@\w+\.\w+`)
 	urlPattern   = regexp.MustCompile(`https?:\/\/\S+`)
-	todoPattern  = regexp.MustCompile(`TODO\S*`)
+	todoPattern  = regexp.MustCompile(`TODO\S*|FIXME\S*|HACK\S`)
 
 	// selects everything except whitespace.
 	whitespaceBreak = regexp.MustCompile(`[^\s]+`)
