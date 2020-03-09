@@ -632,6 +632,12 @@ class FieldDefView(template_helpers.PBProxy):
       self.admins = [user_views.get(admin_id)
                      for admin_id in field_def.admin_ids]
 
+    self.editors = []
+    if user_views:
+      self.editors = [
+          user_views.get(editor_id) for editor_id in field_def.editor_ids
+      ]
+
     if field_def.approval_id:
       self.is_approval_subfield = ezt.boolean(True)
       self.parent_approval_name = tracker_bizobj.FindFieldDefByID(
@@ -640,6 +646,7 @@ class FieldDefView(template_helpers.PBProxy):
       self.is_approval_subfield = ezt.boolean(False)
 
     self.is_phase_field = ezt.boolean(field_def.is_phase_field)
+    self.is_restricted_field = ezt.boolean(field_def.is_restricted_field)
 
 
 class IssueTemplateView(template_helpers.PBProxy):

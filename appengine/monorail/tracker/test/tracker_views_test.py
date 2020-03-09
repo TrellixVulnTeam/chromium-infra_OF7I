@@ -671,11 +671,21 @@ class FieldDefViewTest(unittest.TestCase):
         None, True, True, False, 3, 99, None, False, None, None,
         None, 'no_action', 'descriptive docstring', False, 1, False)
 
+    self.field_def.admin_ids = [222]
+    self.field_def.editor_ids = [111, 333]
+
   def testFieldDefView_Normal(self):
     config = _MakeConfig()
     config.field_defs.append(self.approval_fd)
     config.approval_defs.append(self.approval_def)
-    view = tracker_views.FieldDefView(self.field_def, config)
+
+    user_view_1 = framework_views.StuffUserView(111, 'uv1@example.com', False)
+    user_view_2 = framework_views.StuffUserView(222, 'uv2@example.com', False)
+    user_view_3 = framework_views.StuffUserView(333, 'uv3@example.com', False)
+    user_views = {111: user_view_1, 222: user_view_2, 333: user_view_3}
+    view = tracker_views.FieldDefView(
+        self.field_def, config, user_views=user_views)
+
     self.assertEqual('AffectedUsers', view.field_name)
     self.assertEqual('descriptive docstring', view.docstring_short)
     self.assertEqual('INT_TYPE', view.type_name)
@@ -689,7 +699,10 @@ class FieldDefViewTest(unittest.TestCase):
     self.assertEqual(view.approvers, [])
     self.assertEqual(view.survey, '')
     self.assertEqual(view.survey_questions, [])
+    self.assertEqual(len(view.admins), 1)
+    self.assertEqual(len(view.editors), 2)
     self.assertIsNone(view.is_phase_field)
+    self.assertIsNone(view.is_restricted_field)
 
   def testFieldDefView_Approval(self):
     config = _MakeConfig()

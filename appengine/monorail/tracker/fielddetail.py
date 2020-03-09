@@ -81,7 +81,8 @@ class FieldDetail(servlet.Servlet):
           [field_def.field_id], config)[field_def.field_id]
     else:
       user_views = framework_views.MakeAllUserViews(
-          mr.cnxn, self.services.user, field_def.admin_ids)
+          mr.cnxn, self.services.user, field_def.admin_ids,
+          field_def.editor_ids)
     field_def_view = tracker_views.FieldDefView(
         field_def, config, user_views=user_views, approval_def=approval_def)
 
@@ -103,6 +104,8 @@ class FieldDetail(servlet.Servlet):
 
     initial_admins = ', '.join(sorted([
         uv.email for uv in field_def_view.admins]))
+    initial_editors = ', '.join(
+        sorted([uv.email for uv in field_def_view.editors]))
 
     return {
         'admin_tab_mode': servlet.Servlet.PROCESS_TAB_LABELS,
@@ -111,13 +114,14 @@ class FieldDetail(servlet.Servlet):
         # TODO(jojwang): update when name changes are actually saved
         'uneditable_name': ezt.boolean(True),
         'initial_admins': initial_admins,
+        'initial_editors': initial_editors,
         'initial_applicable_type': field_def.applicable_type,
         'initial_applicable_predicate': field_def.applicable_predicate,
         'initial_approvers': initial_approvers,
         'initial_choices': initial_choices,
         'approval_subfields': [fd for fd in subfields if not fd.is_deleted],
         'well_known_issue_types': well_known_issue_types,
-        }
+    }
 
   def ProcessFormData(self, mr, post_data):
     """Validate and store the contents of the issues tracker admin page.

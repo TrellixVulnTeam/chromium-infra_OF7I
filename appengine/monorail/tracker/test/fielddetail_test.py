@@ -46,6 +46,8 @@ class FieldDetailTest(unittest.TestCase):
         123, 789, 'CPU', tracker_pb2.FieldTypes.INT_TYPE, None,
         '', False, False, False, None, None, '', False, '', '',
         tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.fd.admin_ids = [111]
+    self.fd.editor_ids = [222]
     self.config.field_defs.append(self.fd)
     self.services.user.TestAddUser('gatsby@example.com', 111)
     self.services.user.TestAddUser('sport@example.com', 222)
@@ -112,7 +114,8 @@ class FieldDetailTest(unittest.TestCase):
     self.assertEqual(self.servlet.PROCESS_TAB_LABELS,
                      page_data['admin_tab_mode'])
     self.assertTrue(page_data['allow_edit'])
-    self.assertEqual('', page_data['initial_admins'])
+    self.assertEqual('gatsby@example.com', page_data['initial_admins'])
+    self.assertEqual('sport@example.com', page_data['initial_editors'])
     field_def_view = page_data['field_def']
     self.assertEqual('CPU', field_def_view.field_name)
     self.assertEqual(page_data['approval_subfields'], [])
@@ -124,7 +127,8 @@ class FieldDetailTest(unittest.TestCase):
     self.assertEqual(self.servlet.PROCESS_TAB_LABELS,
                      page_data['admin_tab_mode'])
     self.assertFalse(page_data['allow_edit'])
-    self.assertEqual('', page_data['initial_admins'])
+    self.assertEqual('gatsby@example.com', page_data['initial_admins'])
+    self.assertEqual('sport@example.com', page_data['initial_editors'])
     field_def_view = page_data['field_def']
     self.assertEqual('CPU', field_def_view.field_name)
     self.assertEqual(page_data['approval_subfields'], [])
