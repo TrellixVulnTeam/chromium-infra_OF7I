@@ -1,3 +1,17 @@
+# Release Notes sheriff-o-matic 2020-03-09
+
+- 1 commits, 0 bugs affected since 8ed35c2 ()
+- 1 Authors:
+  - yuanzhi@google.com
+
+## Changes in this release
+
+- [[som][fuchsia] Update fuchsia som bucket name.](https://chromium-review.googlesource.com/c/infra/infra/+/2041030) (yuanzhi@google.com)
+
+
+## Bugs updated, by author
+
+
 # Release Notes sheriff-o-matic 2020-02-27
 
 - 3 commits, 2 bugs affected since c79fa52 (2020-02-18T00:33:43Z)
