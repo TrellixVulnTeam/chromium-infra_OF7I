@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
@@ -25,6 +26,8 @@ import (
 
 type inventoryClient interface {
 	addManyDUTsToFleet(context.Context, []*inventory.CommonDeviceSpecs, bool) (string, []*inventory.CommonDeviceSpecs, error)
+	getAssetsFromRegistration(ctx context.Context, assetList *api.AssetIDList) (*api.AssetResponse, error)
+	updateAssetsInRegistration(ctx context.Context, assetList *api.AssetList) (*api.AssetResponse, error)
 	updateDUTSpecs(context.Context, *inventory.CommonDeviceSpecs, *inventory.CommonDeviceSpecs, bool) (string, error)
 	deleteDUTsFromFleet(context.Context, []string) (string, []string, error)
 	selectDutsFromInventory(context.Context, *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error)
@@ -44,6 +47,16 @@ func newGitStoreClient(ctx context.Context, gs *gitstore.InventoryStore) (invent
 
 func (client *gitStoreClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
 	return addManyDUTsToFleet(ctx, client.store, nds, pickServoPort)
+}
+
+func (client *gitStoreClient) getAssetsFromRegistration(ctx context.Context, assetList *api.AssetIDList) (*api.AssetResponse, error) {
+	// Nothing to get from registration for gitStoreClient
+	return nil, errors.New("gitStoreClient - nothing to get from registration")
+}
+
+func (client *gitStoreClient) updateAssetsInRegistration(ctx context.Context, assetList *api.AssetList) (*api.AssetResponse, error) {
+	// Nothing to update in registration for gitStoreClient
+	return nil, errors.New("gitStoreClient - nothing to update in registration")
 }
 
 func (client *gitStoreClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {

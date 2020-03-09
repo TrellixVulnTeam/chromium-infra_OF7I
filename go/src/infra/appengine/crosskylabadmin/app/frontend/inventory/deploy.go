@@ -21,6 +21,7 @@ import (
 	"sort"
 	"strconv"
 
+	"infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
@@ -28,6 +29,8 @@ import (
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/swarming"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/worker"
+	"infra/libs/cros/lab_inventory/utils"
+	protos "infra/libs/fleet/protos"
 	"infra/libs/skylab/inventory"
 
 	"github.com/golang/protobuf/proto"
@@ -217,6 +220,10 @@ func deployManyDUTs(ctx context.Context, ic inventoryClient, sc clients.Swarming
 		failDeployStatus(ctx, ds, fmt.Sprintf("failed to add DUT(s) to fleet: %s", err))
 		return ds
 	}
+
+	// Update registration datastore
+	updateAssets(ctx, ic, newDevices)
+
 	if a.GetSkipDeployment() {
 		ds.IsFinal = true
 		ds.Status = fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_SUCCEEDED
@@ -234,6 +241,40 @@ func deployManyDUTs(ctx context.Context, ic inventoryClient, sc clients.Swarming
 		ds.TaskIDs = append(ds.TaskIDs, taskID)
 	}
 	return ds
+}
+
+func updateAssets(ctx context.Context, ic inventoryClient, newDevices []*inventory.CommonDeviceSpecs) {
+	if len(newDevices) <= 0 {
+		return
+	}
+	var existingAssetsIDs = make([]string, 0, len(newDevices))
+	var existingAssets = make([]*protos.ChopsAsset, 0, len(newDevices))
+	for _, newDevice := range newDevices {
+		existingAssetsIDs = append(existingAssetsIDs, newDevice.GetId())
+		existingAssets = append(existingAssets,
+			&protos.ChopsAsset{
+				Id:       newDevice.GetId(),
+				Location: utils.GetLocation(newDevice.GetHostname()),
+			})
+	}
+	assetResponse, err := ic.getAssetsFromRegistration(ctx, &api.AssetIDList{Id: existingAssetsIDs})
+	if err == nil {
+		for _, assetResult := range assetResponse.Passed {
+			logging.Infof(ctx, "AssetId: %s , Old Location: %s", assetResult.GetAsset().GetId(), assetResult.GetAsset().GetLocation().String())
+		}
+		for _, assetResult := range assetResponse.Failed {
+			logging.Infof(ctx, "failed to get asset from registration for %s : %s", assetResult.Asset.GetId(), assetResult.GetErrorMsg())
+		}
+	}
+	assetResponse, err = ic.updateAssetsInRegistration(ctx, &api.AssetList{Asset: existingAssets})
+	if err == nil {
+		for _, assetResult := range assetResponse.Passed {
+			logging.Infof(ctx, "AssetId: %s, New Location: %s", assetResult.GetAsset().GetId(), assetResult.GetAsset().GetLocation().String())
+		}
+		for _, assetResult := range assetResponse.Failed {
+			logging.Infof(ctx, "failed to update in registration for %s : %s", assetResult.GetAsset().GetId(), assetResult.GetErrorMsg())
+		}
+	}
 }
 
 const (
@@ -356,6 +397,9 @@ func redeployDUT(ctx context.Context, ic inventoryClient, sc clients.SwarmingCli
 			failDeployStatus(ctx, ds, fmt.Sprintf("failed to update DUT specs: %s", err))
 			return ds
 		}
+		// Update registration datastore
+		newSpecsArr := []*inventory.CommonDeviceSpecs{newSpecs}
+		updateAssets(ctx, ic, newSpecsArr)
 	}
 
 	taskID, err := scheduleDUTPreparationTask(ctx, sc, oldSpecs.GetId(), attemptID, a)

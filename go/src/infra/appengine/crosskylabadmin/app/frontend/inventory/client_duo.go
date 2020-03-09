@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
+	api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/libs/skylab/inventory"
@@ -94,6 +95,18 @@ func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventor
 	logging.Infof(ctx, "[v1] add dut result: %s, %s", url, err)
 	logging.Infof(ctx, "[v1] spec returned: %s", ds)
 	return url, ds, err
+}
+
+func (client *duoClient) getAssetsFromRegistration(ctx context.Context, assetIDList *api.AssetIDList) (*api.AssetResponse, error) {
+	ds, err := client.ic.getAssetsFromRegistration(ctx, assetIDList)
+	logging.Infof(ctx, "[v2] getAssetsFromRegistration assetResponse returned: %s, %s", ds, err)
+	return ds, err
+}
+
+func (client *duoClient) updateAssetsInRegistration(ctx context.Context, assetList *api.AssetList) (*api.AssetResponse, error) {
+	ds, err := client.ic.updateAssetsInRegistration(ctx, assetList)
+	logging.Infof(ctx, "[v2] updateAssetsInRegistration assetResponse returned: %s, %s", ds, err)
+	return ds, err
 }
 
 func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {

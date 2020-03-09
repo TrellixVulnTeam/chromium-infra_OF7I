@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/maruel/subcommands"
@@ -26,6 +25,7 @@ import (
 	"infra/cmd/labtool/site"
 	"infra/cmd/labtool/utils"
 	"infra/cmdsupport/cmdlib"
+	invUtils "infra/libs/cros/lab_inventory/utils"
 	fleet "infra/libs/fleet/protos"
 )
 
@@ -200,7 +200,7 @@ func (c *bcScanner) parseLoop() {
 		*         considered as Asset tag and assetList updated
 		 */
 		if utils.IsLocation(iput) {
-			currLoc = c.getLocation(iput)
+			currLoc = invUtils.GetLocation(iput)
 			u.AddAsset(assetList)
 			assetList = []*fleet.ChopsAsset{}
 		} else if isClose(iput) {
@@ -230,70 +230,6 @@ func (c *bcScanner) parseLoop() {
 func prompt() {
 	fmt.Print("[" + currLoc.String() + "] ")
 }
-
-// getLocation attempts to parse the input string and return a Location object.
-// Default location is updated with values from the string. This is done
-// because the barcodes do not specify the complete location of the asset
-func (c *bcScanner) getLocation(iput string) (loc *fleet.Location) {
-	loc = c.defaultLocation()
-	// Extract lab if it exists
-	for _, exp := range labs {
-		labStr := exp.FindString(iput)
-		if labStr != "" {
-			loc.Lab = labStr
-		}
-	}
-	// Extract row if it exists
-	for _, exp := range rows {
-		rowStr := exp.FindString(iput)
-		if rowStr != "" {
-			loc.Row = num.FindString(rowStr)
-			break
-		}
-	}
-	// Extract rack if it exists
-	for _, exp := range racks {
-		rackStr := exp.FindString(iput)
-		if rackStr != "" {
-			loc.Rack = num.FindString(rackStr)
-			break
-		}
-	}
-	// Extract position if it exists
-	for _, exp := range hosts {
-		positionStr := exp.FindString(iput)
-		if positionStr != "" {
-			loc.Position = num.FindString(positionStr)
-			break
-		}
-	}
-	return loc
-}
-
-/* Regular expressions to match various parts of the input string - START */
-
-var num = regexp.MustCompile(`[0-9]+`)
-
-var labs = []*regexp.Regexp{
-	regexp.MustCompile(`chromeos[\d]*`),
-}
-
-var rows = []*regexp.Regexp{
-	regexp.MustCompile(`ROW[\d]*`),
-	regexp.MustCompile(`row[\d]*`),
-}
-
-var racks = []*regexp.Regexp{
-	regexp.MustCompile(`RACK[\d]*`),
-	regexp.MustCompile(`rack[\d]*`),
-}
-
-var hosts = []*regexp.Regexp{
-	regexp.MustCompile(`HOST[\d]*`),
-	regexp.MustCompile(`host[\d]*`),
-}
-
-/* Regular expressions to match various parts of the input string - END */
 
 // Determines if the input string describes close action
 // Not supported the barcode for scanning yet.

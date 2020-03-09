@@ -93,6 +93,32 @@ func (c *invServiceClient) addManyDUTsToFleet(ctx context.Context, nds []*invent
 	return "URL N/A", passedDevSpecs, err
 }
 
+func (c *invServiceClient) getAssetsFromRegistration(ctx context.Context, assetIDList *api.AssetIDList) (*api.AssetResponse, error) {
+	// In case there's any panic happens in the new code.
+	defer func() {
+		if r := recover(); r != nil {
+			logging.Errorf(ctx, "Recovered in getAssetsFromRegistration(%s)", r)
+			debug.PrintStack()
+		}
+	}()
+	c.logInfo(ctx, "Getting Assets from Registration System as user : %s", auth.CurrentUser(ctx))
+	// getting existing assets from registration system
+	return c.client.GetAssets(ctx, assetIDList)
+}
+
+func (c *invServiceClient) updateAssetsInRegistration(ctx context.Context, assetList *api.AssetList) (*api.AssetResponse, error) {
+	// In case there's any panic happens in the new code.
+	defer func() {
+		if r := recover(); r != nil {
+			logging.Errorf(ctx, "Recovered in updateAssetsInRegistration(%s)", r)
+			debug.PrintStack()
+		}
+	}()
+	c.logInfo(ctx, "Updating Registration System as user : %s", auth.CurrentUser(ctx))
+	// Update existing assets to registration system
+	return c.client.UpdateAssets(ctx, assetList)
+}
+
 func getPassedDevSpecs(allDevSpecs []*inventory.CommonDeviceSpecs, passedDevices []*api.DeviceOpResult) []*inventory.CommonDeviceSpecs {
 	// The response only has hostname/id, so we need to get other data from the
 	// input.
