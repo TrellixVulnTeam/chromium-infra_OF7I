@@ -124,23 +124,57 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	}
 
 	resps := make(map[string]*steps.EnumerationResponse)
-	merr = errors.NewMultiError()
 	for t, r := range taggedRequests {
-		if ts, err := c.enumerate(tms[t], r); err != nil {
-			merr = append(merr, err)
-		} else {
-			resps[t] = &steps.EnumerationResponse{AutotestInvocations: ts}
+		var errs errors.MultiError
+		ts, err := c.enumerate(tms[t], r)
+		resps[t] = &steps.EnumerationResponse{AutotestInvocations: ts}
+		if err != nil {
+			errs = append(errs, err)
+		}
+		if ierrs := validateEnumeration(ts); ierrs != nil {
+			errs = append(errs, ierrs...)
+		}
+		if errs != nil {
+			resps[t].ErrorSummary = errs.Error()
+			dl.LogErrors(ctx, utils.AnnotateEach(errs, "enumerate %s", t))
 		}
 	}
 	dl.LogResponses(ctx, resps)
-	dl.LogErrors(ctx, merr)
 
-	if merr.First() != nil {
-		return merr
-	}
 	return writeResponse(c.outputPath, &steps.EnumerationResponses{
 		TaggedResponses: resps,
 	})
+}
+
+func validateEnumeration(ts []*steps.EnumerationResponse_AutotestInvocation) errors.MultiError {
+	if len(ts) == 0 {
+		return errors.NewMultiError(errors.Reason("empty enumeration").Err())
+	}
+
+	var merr errors.MultiError
+	for _, t := range ts {
+		if err := validateInvocation(t); err != nil {
+			merr = append(merr, errors.Annotate(err, "validate %s", t).Err())
+		}
+	}
+	return errorsOrNil(merr)
+}
+
+func errorsOrNil(merr errors.MultiError) errors.MultiError {
+	if merr.First() != nil {
+		return merr
+	}
+	return nil
+}
+
+func validateInvocation(t *steps.EnumerationResponse_AutotestInvocation) error {
+	if t.GetTest().GetName() == "" {
+		return errors.Reason("empty name").Err()
+	}
+	if t.GetTest().GetExecutionEnvironment() == api.AutotestTest_EXECUTION_ENVIRONMENT_UNSPECIFIED {
+		return errors.Reason("unspecified execution environment").Err()
+	}
+	return nil
 }
 
 func (c *enumerateRun) processCLIArgs(args []string) error {
