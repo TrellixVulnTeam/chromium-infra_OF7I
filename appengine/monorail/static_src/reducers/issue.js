@@ -1365,13 +1365,25 @@ export const predictComponent = (projectName, text) => async (dispatch) => {
   }
 };
 
-export const updateApproval = (message) => async (dispatch) => {
-  const {issueRef} = message;
+/**
+ * Async action creator to update an issue's approval.
+ *
+ * @param {Object} params Options for the approval update.
+ * @param {IssueRef} params.issueRef
+ * @param {FieldRef} params.fieldRef
+ * @param {ApprovalDelta=} params.approvalDelta
+ * @param {string=} params.commentContent
+ * @param {boolean=} params.sendEmail
+ * @return {function(function): Promise<void>}
+ */
+export const updateApproval = ({issueRef, fieldRef, approvalDelta,
+  commentContent, sendEmail}) => async (dispatch) => {
   dispatch({type: UPDATE_APPROVAL_START});
 
   try {
     const {approval} = await prpcClient.call(
-        'monorail.Issues', 'UpdateApproval', message);
+        'monorail.Issues', 'UpdateApproval', {issueRef, fieldRef, approvalDelta,
+          commentContent, sendEmail});
 
     dispatch({type: UPDATE_APPROVAL_SUCCESS, approval, issueRef});
     dispatch(fetch(issueRef));
@@ -1381,17 +1393,33 @@ export const updateApproval = (message) => async (dispatch) => {
   };
 };
 
-export const update = (message) => async (dispatch) => {
+/**
+ * Async action creator to update an issue.
+ *
+ * @param {Object} params Options for the issue update.
+ * @param {IssueRef} params.issueRef
+ * @param {IssueDelta=} params.delta
+ * @param {string=} params.commentContent
+ * @param {boolean=} params.sendEmail
+ * @param {boolean=} params.isDescription
+ * @param {AttachmentUpload} params.uploads
+ * @param {Array<number>=} params.keptAttachments
+ * @return {function(function): Promise<void>}
+ */
+export const update = ({issueRef, delta, commentContent, sendEmail,
+  isDescription, uploads, keptAttachments}) => async (dispatch) => {
   dispatch({type: UPDATE_START});
 
   try {
-    const resp = await prpcClient.call(
-        'monorail.Issues', 'UpdateIssue', message);
+    const {issue} = await prpcClient.call(
+        'monorail.Issues', 'UpdateIssue', {issueRef, delta,
+          commentContent, sendEmail, isDescription, uploads,
+          keptAttachments});
 
-    dispatch({type: UPDATE_SUCCESS, issue: resp.issue});
-    dispatch(fetchComments(message.issueRef));
-    dispatch(fetchRelatedIssues(resp.issue));
-    dispatch(fetchReferencedUsers(resp.issue));
+    dispatch({type: UPDATE_SUCCESS, issue});
+    dispatch(fetchComments(issueRef));
+    dispatch(fetchRelatedIssues(issue));
+    dispatch(fetchReferencedUsers(issue));
   } catch (error) {
     dispatch({type: UPDATE_FAILURE, error: error});
   };
