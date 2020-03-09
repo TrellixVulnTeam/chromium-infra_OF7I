@@ -170,6 +170,20 @@
         done();
       });
     });
+
+    test('shows empty sheriff list for tree with no rotations', function(done) {
+      element._rotations = {
+        'chromium': [],
+      };
+      element._currentOncalls = ['dummy'];
+
+      element.tree = {'name': 'empty'};
+
+      flush(function () {
+        assert.equal(0, element._currentOncalls.length);
+        done();
+      });
+    });
   });
 })();
 </script>

@@ -132,8 +132,13 @@ class SomDrawer extends Polymer.Element {
     return tree && tree.name === 'chromeos';
   }
 
+  _isBrowserBranch(tree) {
+    return tree && tree.name === 'chrome_browser_release';
+  }
+
   _treeChanged(tree) {
     if (!(tree && this._rotations[tree.name])) {
+      this.set('_currentOncalls', []);
       return;
     }
 
