@@ -1155,6 +1155,14 @@ def CanEditFieldDef(effective_ids, perms, project, field_def):
   return perms.CanUsePerm(EDIT_PROJECT, effective_ids, project, [])
 
 
+def CanEditValueForField(effective_ids, perms, project, field_def):
+  """Return True if a user can edit the given field definition value."""
+  if not effective_ids.isdisjoint(field_def.editor_ids):
+    return True  # Field editors can edit that field value.
+
+  return CanEditFieldDef(effective_ids, perms, project, field_def)
+
+
 def CanViewTemplate(effective_ids, perms, project, template):
   """Return True if a user can view the given issue template."""
   if not effective_ids.isdisjoint(template.admin_ids):

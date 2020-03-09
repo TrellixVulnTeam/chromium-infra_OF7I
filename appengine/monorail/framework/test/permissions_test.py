@@ -1729,6 +1729,28 @@ class IssuePermissionsTest(unittest.TestCase):
         {111}, permissions.PermissionSet([]),
         None, fd))
 
+  def testCanEditValueForField_FieldEditor(self):
+    fd = tracker_pb2.FieldDef(editor_ids=[111])
+    perms = permissions.PermissionSet([])
+    self.assertTrue(permissions.CanEditValueForField({111}, perms, None, fd))
+    self.assertFalse(permissions.CanEditValueForField({999}, perms, None, fd))
+
+  def testCanEditValueForField_FieldAdmin(self):
+    fd = tracker_pb2.FieldDef(admin_ids=[111])
+    perms = permissions.PermissionSet([])
+    self.assertTrue(permissions.CanEditValueForField({111}, perms, None, fd))
+    self.assertFalse(permissions.CanEditValueForField({999}, perms, None, fd))
+
+  def testCanEditValueForField_ProjectOwners(self):
+    fd = tracker_pb2.FieldDef()
+    self.assertTrue(
+        permissions.CanEditValueForField(
+            {111}, permissions.PermissionSet([permissions.EDIT_PROJECT]), None,
+            fd))
+    self.assertFalse(
+        permissions.CanEditValueForField(
+            {111}, permissions.PermissionSet([]), None, fd))
+
   def testCanViewTemplate_TemplateAdmin(self):
     td = tracker_pb2.TemplateDef(admin_ids=[111])
     perms = permissions.PermissionSet([])
