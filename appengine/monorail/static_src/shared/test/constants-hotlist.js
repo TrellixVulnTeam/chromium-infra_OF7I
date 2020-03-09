@@ -41,6 +41,15 @@ export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   createTime: '2020-01-01T12:00:00Z',
 });
 
+/** @type {HotlistItemV3} */
+export const HOTLIST_ITEM_CLOSED = Object.freeze({
+  name: NAME + '/items/90',
+  issue: issue.NAME_CLOSED,
+  rank: 2,
+  adder: user.USER,
+  createTime: '2020-01-01T12:00:00Z',
+});
+
 /** @type {Object.<string, HotlistV3>} */
 export const HOTLISTS = Object.freeze({[NAME]: HOTLIST});
 

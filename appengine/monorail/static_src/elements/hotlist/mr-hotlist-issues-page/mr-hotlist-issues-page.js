@@ -89,7 +89,7 @@ export class _MrHotlistIssuesPage extends LitElement {
         .columns=${this._columns}
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
-        .rerank=${hotlist.rerankItems.bind(null, this._hotlist.name)}
+        .rerank=${this._rerank.bind(this)}
         ?selectionEnabled=${true}
       ></mr-issue-list>
     `;
@@ -141,10 +141,7 @@ export class _MrHotlistIssuesPage extends LitElement {
     // <mr-issue-list> assumes that certain fields are included in each Issue.
     const itemsWithData = items.filter((item) => this._issue(item.issue));
 
-    const filteredItems = itemsWithData.filter((item) => {
-      return this._filter.Open && this._issue(item.issue).statusRef.meansOpen ||
-          this._filter.Closed && !this._issue(item.issue).statusRef.meansOpen;
-    });
+    const filteredItems = itemsWithData.filter(this._isShown.bind(this));
 
     return filteredItems.map((item) => ({
       ...this._issue(item.issue),
@@ -179,6 +176,24 @@ export class _MrHotlistIssuesPage extends LitElement {
   _onFilterChange(e) {
     this._filter = e.target.selected;
   }
+
+  /**
+   * Returns true iff the current filter includes the given HotlistItem.
+   * @param {HotlistItemV3} item A HotlistItem in the current Hotlist.
+   * @return {boolean}
+   */
+  _isShown(item) {
+    return this._filter.Open && this._issue(item.issue).statusRef.meansOpen ||
+        this._filter.Closed && !this._issue(item.issue).statusRef.meansOpen;
+  }
+
+  /**
+   * Reranks items in the hotlist, dispatching the action to the Redux store.
+   * @param {Array<String>} items The names of the HotlistItems to move.
+   * @param {number} index The index to insert the moved items.
+   * @return {Promise<void>}
+   */
+  async _rerank(items, index) {}
 };
 
 /** Redux-connected version of _MrHotlistIssuesPage. */
@@ -205,6 +220,23 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
       const headerTitle = `Hotlist ${this._hotlist.displayName}`;
       store.dispatch(sitewide.setHeaderTitle(headerTitle));
     }
+  }
+
+  /** @override */
+  async _rerank(items, index) {
+    // The index given from <mr-issue-list> includes only the items shown in
+    // the list and excludes the items that are being moved. So, we need to
+    // count the hidden items.
+    let shownItems = 0;
+    let hiddenItems = 0;
+    for (let i = 0; shownItems < index && i < this._hotlistItems.length; ++i) {
+      const item = this._hotlistItems[i];
+      if (!this._isShown(item)) ++hiddenItems;
+      if (this._isShown(item) && !items.includes(item.name)) ++shownItems;
+    }
+
+    await store.dispatch(hotlist.rerankItems(
+        this._hotlist.name, items, index + hiddenItems));
   }
 };
 

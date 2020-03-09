@@ -663,10 +663,9 @@ export class MrIssueList extends connectStore(LitElement) {
     /** @type {string} */
     this.currentQuery = '';
     /**
-     * @param {string} name
      * @param {Array<String>} items
      * @param {number} index
-     * @return {function(function): Promise<void>}
+     * @return {Promise<void>}
      */
     this.rerank = null;
     /** @type {boolean} */
@@ -1355,7 +1354,7 @@ export class MrIssueList extends connectStore(LitElement) {
 
     // Submit the change.
     const items = selectedRows.map((row) => row.dataset.name);
-    await store.dispatch(this.rerank(items, finalIndex));
+    await this.rerank(items, finalIndex);
 
     // Reset the transforms.
     for (const row of this._getRows()) {

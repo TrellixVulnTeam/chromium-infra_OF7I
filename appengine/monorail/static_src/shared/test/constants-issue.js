@@ -32,6 +32,8 @@ export const ISSUE_OTHER_PROJECT = Object.freeze({
   statusRef: {status: 'Available', meansOpen: true},
 });
 
+export const NAME_CLOSED = 'projects/project-name/issues/5678';
+
 /** @type {Issue} */
 export const ISSUE_CLOSED = Object.freeze({
   projectName: 'project-name',

@@ -5,6 +5,7 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
+import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as project from 'reducers/project.js';
@@ -146,5 +147,37 @@ describe('mr-hotlist-issues-page (connected)', () => {
     const state = store.getState();
     assert.deepEqual(sitewide.pageTitle(state), 'Issues - Hotlist-Name');
     assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
+  });
+
+  it('reranks', () => {
+    sinon.stub(prpcClient, 'call');
+
+    try {
+      element._hotlist = example.HOTLIST;
+      element._hotlistItems = [
+        example.HOTLIST_ITEM,
+        example.HOTLIST_ITEM_CLOSED,
+        example.HOTLIST_ITEM_OTHER_PROJECT,
+      ];
+      element._issue = (name) => ({
+        [exampleIssue.NAME]: exampleIssue.ISSUE,
+        [exampleIssue.NAME_CLOSED]: exampleIssue.ISSUE_CLOSED,
+        [exampleIssue.NAME_OTHER_PROJECT]: exampleIssue.ISSUE_OTHER_PROJECT,
+      }[name]);
+
+      element._rerank([example.HOTLIST_ITEM_NAME], 1);
+
+      // We can't stub hotlist.rerankItems(), so stub prpcClient.call() instead.
+      // https://github.com/sinonjs/sinon/issues/562
+      const args = {
+        name: example.NAME,
+        hotlistItems: [example.HOTLIST_ITEM_NAME],
+        targetPosition: 2,
+      };
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Hotlists', 'RerankHotlistItems', args);
+    } finally {
+      prpcClient.call.restore();
+    }
   });
 });
