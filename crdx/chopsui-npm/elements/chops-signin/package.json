@@ -1,6 +1,6 @@
 {
   "name": "@chopsui/chops-signin",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A shared signin element for Chops.",
   "author": "The Chromium Authors",
   "license": "BSD-3-Clause",
@@ -11,7 +11,9 @@
   "main": "dist/chops-signin.js",
   "types": "dist/chops-signin.d.ts",
   "module": "dist/chops-signin.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "tsc": "tsc -p tsconfig.json",
     "lint": "tslint -p tsconfig.json"
