@@ -158,6 +158,28 @@ func TestGetTestInNonExistentSuite(t *testing.T) {
 		t.Errorf("Suite.Tests differ, -want +got, %s", diff)
 	}
 }
+func TestGetValidatesTestName(t *testing.T) {
+	fl := newFakeLoader()
+	fl.AddTests([]string{"test", "corrupt_test"})
+	ft := newFakeParseTestControlFn(map[string]*testMetadata{
+		"test":         testWithNameAndSuites("test", []string{"non_existent_suite"}),
+		"corrupt_test": testWithNameAndSuites("", []string{}),
+	})
+	fs := newFakeParseSuiteControlFn(map[string]*api.AutotestSuite{})
+	g := getter{fl, ft, fs}
+	resp, err := g.Get("ignored")
+	if err == nil {
+		t.Fatalf("getter.Get() did not report validation failure")
+	}
+	wantTests := []string{"test"}
+	gotTests := []string{}
+	for _, t := range resp.GetAutotest().GetTests() {
+		gotTests = append(gotTests, t.Name)
+	}
+	if diff := pretty.Compare(wantTests, gotTests); diff != "" {
+		t.Errorf("Tests differ, -want +got, %s", diff)
+	}
+}
 
 // newFakeParseTestControlFn returns a fake parseTestControlFn that returns
 // canned parse results.
@@ -165,10 +187,10 @@ func TestGetTestInNonExistentSuite(t *testing.T) {
 // canned must map *contents of the control file* to their parse results. The
 // returned parseTestControlFn returns error for any control file not in canned.
 func newFakeParseTestControlFn(canned map[string]*testMetadata) parseTestControlFn {
-	return func(text string) (*testMetadata, error) {
+	return func(text string) (*testMetadata, errors.MultiError) {
 		tm, ok := canned[text]
 		if !ok {
-			return nil, errors.Reason("uncanned control file: %s", text).Err()
+			return nil, errors.NewMultiError(errors.Reason("uncanned control file: %s", text).Err())
 		}
 		return tm, nil
 	}
@@ -177,7 +199,8 @@ func newFakeParseTestControlFn(canned map[string]*testMetadata) parseTestControl
 func testWithNameAndSuites(name string, suites []string) *testMetadata {
 	return &testMetadata{
 		AutotestTest: api.AutotestTest{
-			Name: name,
+			Name:                 name,
+			ExecutionEnvironment: api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT,
 		},
 		Suites: suites,
 	}
@@ -190,10 +213,10 @@ func testWithNameAndSuites(name string, suites []string) *testMetadata {
 // returned parseSuiteControlFn returns error for any control file not in
 // canned.
 func newFakeParseSuiteControlFn(canned map[string]*api.AutotestSuite) parseSuiteControlFn {
-	return func(text string) (*api.AutotestSuite, error) {
+	return func(text string) (*api.AutotestSuite, errors.MultiError) {
 		as, ok := canned[text]
 		if !ok {
-			return nil, errors.Reason("uncanned control file: %s", text).Err()
+			return nil, errors.NewMultiError(errors.Reason("uncanned control file: %s", text).Err())
 		}
 		return as, nil
 	}

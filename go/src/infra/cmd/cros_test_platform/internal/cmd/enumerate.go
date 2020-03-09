@@ -16,6 +16,7 @@ import (
 	"infra/cmd/cros_test_platform/internal/autotest/testspec"
 	"infra/cmd/cros_test_platform/internal/enumeration"
 	"infra/cmd/cros_test_platform/internal/site"
+	"infra/cmd/cros_test_platform/internal/utils"
 
 	"github.com/kr/pretty"
 	"github.com/maruel/subcommands"
@@ -109,13 +110,13 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 			return err
 		}
 
-		tm, err := computeMetadata(lp, w)
-		if err != nil && tm == nil {
+		tm, errs := computeMetadata(lp, w)
+		if errs != nil && tm == nil {
 			// Catastrophic error. There is no reasonable response to write.
-			return err
+			return utils.AnnotateEach(errs, "compute metadata for %s", t)
 		}
 		tms[t] = tm
-		merr = append(merr, err)
+		merr = append(merr, utils.AnnotateEach(errs, "compute metadata for %s", t)...)
 	}
 	dl.LogTestMetadata(ctx, tms)
 	if merr.First() != nil {
@@ -219,13 +220,13 @@ func (c *enumerateRun) enumerate(tm *api.TestMetadataResponse, request *steps.En
 	return ts, nil
 }
 
-func computeMetadata(localPaths artifacts.LocalPaths, workspace string) (*api.TestMetadataResponse, error) {
+func computeMetadata(localPaths artifacts.LocalPaths, workspace string) (*api.TestMetadataResponse, errors.MultiError) {
 	extracted := filepath.Join(workspace, "extracted")
 	if err := os.Mkdir(extracted, 0750); err != nil {
-		return nil, errors.Annotate(err, "compute metadata").Err()
+		return nil, errors.NewMultiError(errors.Annotate(err, "compute metadata").Err())
 	}
 	if err := artifacts.ExtractControlFiles(localPaths, extracted); err != nil {
-		return nil, errors.Annotate(err, "compute metadata").Err()
+		return nil, errors.NewMultiError(errors.Annotate(err, "compute metadata").Err())
 	}
 	return testspec.Get(extracted)
 }
@@ -283,13 +284,10 @@ func (l *debugLogger) LogResponses(ctx context.Context, resps map[string]*steps.
 }
 
 func (l *debugLogger) LogErrors(ctx context.Context, merr errors.MultiError) {
-	if !l.enabled {
-		return
-	}
+	// Unlike other debug data, errors are logged regardless of l.enabled
 	if merr.First() == nil {
 		return
 	}
-
 	defer l.debugBlock(ctx, "errors")()
 	for _, err := range merr {
 		logging.Errorf(ctx, "%s", err)
