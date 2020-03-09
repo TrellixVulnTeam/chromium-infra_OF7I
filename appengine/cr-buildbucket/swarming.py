@@ -559,6 +559,7 @@ def _create_swarming_task(build):
   # Insert secret bytes.
   secrets = launcher_pb2.BuildSecrets(
       build_token=tokens.generate_build_token(build_id),
+      resultdb_invocation_update_token=build.resultdb_update_token,
   )
   secret_bytes_b64 = base64.b64encode(secrets.SerializeToString())
   for ts in task_def['task_slices']:
