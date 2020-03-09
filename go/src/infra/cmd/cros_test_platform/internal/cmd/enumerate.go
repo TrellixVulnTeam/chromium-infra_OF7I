@@ -90,9 +90,6 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 		os.RemoveAll(workspace)
 	}()
 
-	// TODO(crbug.com/1012863) Properly handle recoverable error in some
-	// requests. Currently a catastrophic error in any request immediately
-	// aborts all requests.
 	tms := make(map[string]*api.TestMetadataResponse)
 	merr := errors.NewMultiError()
 	for t, r := range taggedRequests {
@@ -112,19 +109,18 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 			return err
 		}
 
-		tm, writableErr := computeMetadata(lp, w)
-		if writableErr != nil && tm == nil {
+		tm, err := computeMetadata(lp, w)
+		if err != nil && tm == nil {
 			// Catastrophic error. There is no reasonable response to write.
-			return writableErr
+			return err
 		}
 		tms[t] = tm
-		merr = append(merr, writableErr)
-	}
-	var writableErr error
-	if merr.First() != nil {
-		writableErr = merr
+		merr = append(merr, err)
 	}
 	dl.LogTestMetadata(ctx, tms)
+	if merr.First() != nil {
+		dl.LogWarnings(ctx, merr)
+	}
 
 	resps := make(map[string]*steps.EnumerationResponse)
 	merr = errors.NewMultiError()
@@ -141,7 +137,9 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	if merr.First() != nil {
 		return merr
 	}
-	return c.writeResponsesWithError(resps, writableErr)
+	return writeResponse(c.outputPath, &steps.EnumerationResponses{
+		TaggedResponses: resps,
+	})
 }
 
 func (c *enumerateRun) processCLIArgs(args []string) error {
@@ -163,13 +161,6 @@ func (c *enumerateRun) readRequests() (map[string]*steps.EnumerationRequest, err
 		return nil, err
 	}
 	return rs.TaggedRequests, nil
-}
-
-func (c *enumerateRun) writeResponsesWithError(resps map[string]*steps.EnumerationResponse, err error) error {
-	r := &steps.EnumerationResponses{
-		TaggedResponses: resps,
-	}
-	return writeResponseWithError(c.outputPath, r, err)
 }
 
 func (c *enumerateRun) gsPath(requests []*steps.EnumerationRequest) (gs.Path, error) {
@@ -300,6 +291,20 @@ func (l *debugLogger) LogErrors(ctx context.Context, merr errors.MultiError) {
 	}
 
 	defer l.debugBlock(ctx, "errors")()
+	for _, err := range merr {
+		logging.Errorf(ctx, "%s", err)
+	}
+}
+
+func (l *debugLogger) LogWarnings(ctx context.Context, merr errors.MultiError) {
+	if !l.enabled {
+		return
+	}
+	if merr.First() == nil {
+		return
+	}
+
+	defer l.debugBlock(ctx, "warnings")()
 	for _, err := range merr {
 		logging.Errorf(ctx, "%s", err)
 	}
