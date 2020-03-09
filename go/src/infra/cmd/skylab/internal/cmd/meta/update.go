@@ -18,6 +18,10 @@ import (
 	"infra/cmd/skylab/internal/site"
 )
 
+// skylabLatest is a fragment of a cipd manifest that is used to install the latest version of the skylab
+// command line tool.
+const skylabLatest = "chromiumos/infra/skylab/${platform} latest"
+
 // Update subcommand: Update skylab tool.
 var Update = &subcommands.Command{
 	UsageLine: "update",
@@ -57,15 +61,8 @@ func (c *updateRun) innerRun(a subcommands.Application, args []string, env subco
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command("cipd", "ensure", "-root", root, "-ensure-file", "-")
-	cmd.Stdin = strings.NewReader("chromiumos/infra/skylab/${platform} latest")
-	cmd.Stdout = a.GetOut()
-	cmd.Stderr = a.GetErr()
-	if err := cmd.Run(); err != nil {
-		if strings.Contains(err.Error(), " failed to update packages") {
-			fmt.Printf("skylab has insufficient permissions to update itself.\n")
-			fmt.Printf("please run 'sudo env PATH=\"$PATH\" skylab update'\n")
-		}
+
+	if err := cipdEnsureLatest(a, root); err != nil {
 		return err
 	}
 	fmt.Fprintf(a.GetErr(), "%s: You may need to run skylab login again after the update\n", a.GetName())
@@ -102,4 +99,39 @@ func isCIPDRootDir(dir string) bool {
 		return false
 	}
 	return fi.Mode().IsDir()
+}
+
+// cipdEnsureLatest takes an application and a directory and runs a command with
+// arguments that will read a cipd manifest from stdin and then run "ensure".
+//
+// Without this function, you need to run `sudo env PATH="$PATH" skylab update` in order to update
+// skylab if skylab was installed as root.
+//
+// cipdEnsureLatest assumes that the directory exists and that the [[dir]]/.cipd directory
+// exists.
+func cipdEnsureLatest(a subcommands.Application, dir string) error {
+	// We create two runnable command objects that update the cipd directory.
+	// One runs as the current user and the other always runs as root.
+	// If the command that runs as the current user fails, then we try the second command.
+	asSelf := exec.Command("cipd", "ensure", "-root", dir, "-ensure-file", "-")
+	asSelf.Stdin = strings.NewReader(skylabLatest)
+	asSelf.Stdout = a.GetOut()
+	asSelf.Stderr = a.GetErr()
+	// Windows does not support sudo
+	pathvar := fmt.Sprintf("PATH=%s", os.Getenv("PATH"))
+	asRootUnix := exec.Command("sudo", "/usr/bin/env", pathvar, "cipd", "ensure", "-root", dir, "-ensure-file", "-")
+	asRootUnix.Stdin = strings.NewReader(skylabLatest)
+	asRootUnix.Stdout = a.GetOut()
+	asRootUnix.Stderr = a.GetErr()
+
+	if err := asSelf.Run(); err == nil {
+		return nil
+	}
+
+	// We unconditionally run `sudo` on all OS's, however, we expect it to fail on Windows.
+	fmt.Fprintf(a.GetErr(), "Retrying as root. Updating skylab through cipd.\n")
+	if err := asRootUnix.Run(); err != nil {
+		return fmt.Errorf("updating cipd as root: %s", err)
+	}
+	return nil
 }
