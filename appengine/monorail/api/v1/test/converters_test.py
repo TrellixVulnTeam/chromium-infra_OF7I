@@ -41,11 +41,12 @@ class ConverterFunctionsTest(unittest.TestCase):
         'sum',
         'New',
         111,
-        project_name=self.project_1.project_name)
+        project_name=self.project_1.project_name,
+        star_count=1)
     self.issue_2 = fake.MakeTestIssue(
         self.project_2.project_id,
         2,
-        'sum',
+        'sum2',
         'New',
         111,
         project_name=self.project_2.project_name)
@@ -154,6 +155,27 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_items = converters.ConvertHotlistItems(
         self.cnxn, user_auth, hotlist.hotlist_id, hotlist.items, self.services)
     self.assertEqual(api_items, [])
+
+  def testConvertIssues(self):
+      """We can convert Issues."""
+      # TODO(jessan): Add self.issue_2 once method fully implemented.
+      issues = [self.issue_1]
+      expected_issues = [
+          issue_objects_pb2.Issue(
+              name='projects/proj/issues/1',
+              summary='sum',
+              state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+              star_count=1
+          )]
+      self.assertEqual(
+          converters.ConvertIssues(self.cnxn, issues, self.services),
+          expected_issues)
+
+  def testConvertIssues_Empty(self):
+      """ConvertIssues works with no issues passed in."""
+      self.assertEqual(
+          converters.ConvertIssues(self.cnxn, [], self.services),
+          [])
 
   def testConvertUsers(self):
     self.user_1.vacation_message='non-empty-string'

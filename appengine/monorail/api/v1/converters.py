@@ -117,6 +117,36 @@ def ConvertHotlistItems(cnxn, user_auth, hotlist_id, items, services):
 
   return api_items
 
+# Issues
+
+def ConvertIssues(cnxn, issues, services):
+  # type: (MonorailConnection, Sequence[proto.tracker_pb2.Issue], Services) ->
+  #     Sequence[api_proto.issue_objects_pb2.Issue]
+  issue_ids = [issue.issue_id for issue in issues]
+  issue_names_dict = rnc.ConvertIssueNames(cnxn, issue_ids, services)
+  found_issues = [
+      issue for issue in issues if issue.issue_id in issue_names_dict
+  ]
+  converted_issues = []
+  for issue in found_issues:
+    content_state = issue_objects_pb2.IssueContentState.Value(
+        'STATE_UNSPECIFIED')
+    if issue.is_spam:
+      content_state = issue_objects_pb2.IssueContentState.Value('SPAM')
+    elif issue.deleted:
+      content_state = issue_objects_pb2.IssueContentState.Value('DELETED')
+    else:
+      content_state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+    converted_issues.append(
+        issue_objects_pb2.Issue(
+            name=issue_names_dict[issue.issue_id],
+            summary=issue.summary,
+            state=content_state,
+            star_count=issue.star_count,
+        ))
+  return converted_issues
+
+
 # Users
 
 

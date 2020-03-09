@@ -235,6 +235,7 @@ enum IssueContentState {
   // The Issue or Comment has been deleted.
   DELETED = 2;
   // The Issue or Comment has been flagged as spam.
+  // Takes precedent over DELETED.
   SPAM = 3;
 }
 
