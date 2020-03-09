@@ -104,30 +104,54 @@ class HotlistIssues(servlet.Servlet):
     except ValueError:
       pass
 
+    new_ui_url = '%s/%s/issues' % (urls.HOTLISTS, mr.hotlist_id)
+
     # Note: The HotlistView is created and returned in servlet.py
-    page_data.update({'owner_permissions': ezt.boolean(owner_permissions),
-                      'editor_permissions': ezt.boolean(editor_permissions),
-                      'issue_tab_mode': 'issueList',
-                      'grid_mode': ezt.boolean(mr.mode == 'grid'),
-                      'list_mode': ezt.boolean(mr.mode == 'list'),
-                      'chart_mode': ezt.boolean(mr.mode == 'chart'),
-                      'page_perms': page_perms,
-                      'colspec': mr.col_spec,
-                      # monorail:6336, used in <ezt-show-columns-connector>
-                      'phasespec': "",
-                      'allow_rerank': ezt.boolean(allow_rerank),
-                      'csv_link': framework_helpers.FormatURL(
-                          [(name, mr.GetParam(name)) for name in
-                           framework_helpers.RECOGNIZED_PARAMS],
-                          '%d/csv' % mr.hotlist_id, num=100),
-                      'is_hotlist': ezt.boolean(True),
-                      'col_spec': mr.col_spec.lower(),
-                      'viewing_user_page': ezt.boolean(True),
-                      # for update-issues-hotlists-dialog in
-                      # issue-list-controls-top.
-                      'user_issue_hotlists': [],
-                      'user_remaining_hotlists': user_hotlists
-                      })
+    page_data.update(
+        {
+            'owner_permissions':
+                ezt.boolean(owner_permissions),
+            'editor_permissions':
+                ezt.boolean(editor_permissions),
+            'issue_tab_mode':
+                'issueList',
+            'grid_mode':
+                ezt.boolean(mr.mode == 'grid'),
+            'list_mode':
+                ezt.boolean(mr.mode == 'list'),
+            'chart_mode':
+                ezt.boolean(mr.mode == 'chart'),
+            'page_perms':
+                page_perms,
+            'colspec':
+                mr.col_spec,
+            # monorail:6336, used in <ezt-show-columns-connector>
+            'phasespec':
+                "",
+            'allow_rerank':
+                ezt.boolean(allow_rerank),
+            'csv_link':
+                framework_helpers.FormatURL(
+                    [
+                        (name, mr.GetParam(name))
+                        for name in framework_helpers.RECOGNIZED_PARAMS
+                    ],
+                    '%d/csv' % mr.hotlist_id,
+                    num=100),
+            'is_hotlist':
+                ezt.boolean(True),
+            'col_spec':
+                mr.col_spec.lower(),
+            'viewing_user_page':
+                ezt.boolean(True),
+            # for update-issues-hotlists-dialog in
+            # issue-list-controls-top.
+            'user_issue_hotlists': [],
+            'user_remaining_hotlists':
+                user_hotlists,
+            'new_ui_url':
+                new_ui_url,
+        })
     return page_data
   # TODO(jojwang): implement peek issue on hover, implement starring issues
 

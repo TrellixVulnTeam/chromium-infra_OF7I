@@ -57,7 +57,8 @@ class HotlistDetails(servlet.Servlet):
         'initial_is_private': ezt.boolean(mr.hotlist.is_private),
         'cant_administer_hotlist': ezt.boolean(cant_administer_hotlist),
         'viewing_user_page': ezt.boolean(True),
-        }
+        'new_ui_url': '%s/%s/settings' % (urls.HOTLISTS, mr.hotlist_id),
+    }
 
   def ProcessFormData(self, mr, post_data):
     """Process the posted form."""

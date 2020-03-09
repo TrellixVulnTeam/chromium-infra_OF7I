@@ -103,7 +103,8 @@ class HotlistPeopleList(servlet.Servlet):
         'placeholder': 'new-owner-username',
         'open_dialog': ezt.boolean(False),
         'viewing_user_page': ezt.boolean(True),
-        }
+        'new_ui_url': '%s/%s/people' % (urls.HOTLISTS, mr.hotlist_id),
+    }
 
   def ProcessFormData(self, mr, post_data):
     """Process the posted form."""
