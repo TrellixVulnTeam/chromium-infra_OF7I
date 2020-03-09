@@ -204,24 +204,22 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 	return nil
 }
 
-var timeoutTag = errors.BoolTag{Key: errors.NewTagKey("this error occured because of timeout")}
-
 func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *execution.Runner, skylab skylab.Client) (map[string]*steps.ExecuteResponse, error) {
-	tErr := fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline)
-	timeoutTag.Apply(tErr)
-	ctx, cancel := errctx.WithDeadline(ctx, deadline, tErr)
-	defer cancel(context.Canceled)
-
-	err := runner.LaunchAndWait(ctx, skylab)
-	if timeoutTag.In(err) {
+	tErr, fErr := runWithDeadline(
+		ctx,
+		func(ctx context.Context) error {
+			return runner.LaunchAndWait(ctx, skylab)
+		},
+		deadline,
+	)
+	if tErr != nil {
 		// Timeout while waiting for tasks is not considered an Test Platform
 		// infrastructure error because root cause is mostly related to fleet
 		// capacity or long test runtimes.
-		logging.Warningf(ctx, "Exited wait dut to timeout: %s", err)
+		logging.Warningf(ctx, "Exited wait dut to timeout: %s", tErr)
 		logging.Warningf(ctx, "Execution responses will contain test failures as a consequence of the timeout.")
-		err = nil
 	}
-	return runner.Responses(), err
+	return runner.Responses(), fErr
 }
 
 func (c *skylabExecuteRun) updateWithEnumerationErrors(ctx context.Context, resps map[string]*steps.ExecuteResponse, reqs map[string]*steps.ExecuteRequest) {
@@ -238,4 +236,23 @@ func (c *skylabExecuteRun) updateWithEnumerationErrors(ctx context.Context, resp
 			logging.Infof(ctx, "Set request %s to VERDICT_FAILED because of enumeration error: %s", t, es)
 		}
 	}
+}
+
+var timeoutTag = errors.BoolTag{Key: errors.NewTagKey("this error occurred because of timeout")}
+
+// runWithDeadline runs f() with the given deadline.
+//
+// In case of a timeout, the error is returned as timeoutError. All other errors
+// are returned as fErr.
+func runWithDeadline(ctx context.Context, f func(context.Context) error, deadline time.Time) (timeoutError error, fErr error) {
+	tErr := fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline)
+	tErr = timeoutTag.Apply(tErr)
+	ctx, cancel := errctx.WithDeadline(ctx, deadline, tErr)
+	defer cancel(context.Canceled)
+
+	ierr := f(ctx)
+	if timeoutTag.In(ierr) {
+		return ierr, nil
+	}
+	return nil, ierr
 }
