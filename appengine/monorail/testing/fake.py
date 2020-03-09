@@ -2208,6 +2208,8 @@ class FeaturesService(object):
     # filter rules, project_id => filterrule_pb
     self.test_rules = collections.defaultdict(list)
 
+    # TODO(crbug/monorail/7104): Confirm that these are never reassigned
+    # to empty {} and then change these to collections.defaultdicts instead.
     # hotlists
     self.test_hotlists = {}  # (hotlist_name, owner_id) => hotlist_pb
     self.hotlists_by_id = {}
@@ -2324,20 +2326,23 @@ class FeaturesService(object):
                                default_col_spec=default_col_spec)
 
   def UpdateHotlist(
-      self,
-      cnxn,
-      hotlist_id,
-      name=None,
-      summary=None,
-      description=None,
-      is_private=None,
-      default_col_spec=None,
-      owner_id=None,
+      self, cnxn, hotlist_id, name=None, summary=None, description=None,
+      is_private=None, default_col_spec=None, owner_id=None,
       add_editor_ids=None):
     hotlist = self.hotlists_by_id.get(hotlist_id)
     if not hotlist:
       raise features_svc.NoSuchHotlistException(
           'Hotlist "%s" not found!' % hotlist_id)
+
+    if owner_id:
+      old_owner_id = hotlist.owner_ids[0]
+      self.test_hotlists.pop((hotlist.name, old_owner_id), None)
+      self.test_hotlists[(hotlist.name, owner_id)] = hotlist
+
+    if add_editor_ids:
+      for editor_id in add_editor_ids:
+        self.hotlists_id_by_user.get(editor_id, []).append(hotlist_id)
+
     if name is not None:
       hotlist.name = name
     if summary is not None:
@@ -2348,6 +2353,10 @@ class FeaturesService(object):
       hotlist.is_private = is_private
     if default_col_spec is not None:
       hotlist.default_col_spec = default_col_spec
+    if owner_id is not None:
+      hotlist.owner_ids = [owner_id]
+    if add_editor_ids:
+      hotlist.editor_ids.extend(add_editor_ids)
 
   def AddIssuesToHotlists(self, cnxn, hotlist_ids, added_tuples, issue_svc,
                           chart_svc, commit=True):

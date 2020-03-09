@@ -71,6 +71,10 @@ class WorkEnvTest(unittest.TestCase):
     self.user_1 = self.services.user.TestAddUser('user_111@example.com', 111)
     self.user_2 = self.services.user.TestAddUser('user_222@example.com', 222)
     self.user_3 = self.services.user.TestAddUser('user_333@example.com', 333)
+    self.hotlist = self.services.features.TestAddHotlist(
+        'myhotlist', summary='old sum', owner_ids=[self.user_1.user_id],
+        editor_ids=[self.user_2.user_id], description='old desc',
+        is_private=True)
     self.mr = testing_helpers.MakeMonorailRequest(project=self.project)
     self.mr.perms = permissions.READ_ONLY_PERMISSIONSET
     self.PAST_TIME = 12345
@@ -3382,6 +3386,101 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.CreateHotlist('name', 'foo', 'bar', [], [], True)
 
+  def testUpdateHotlist(self):
+    """We can update a hotlist."""
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      we.UpdateHotlist(
+          self.hotlist.hotlist_id, hotlist_name=self.hotlist.name,
+          summary='new sum', description='new desc',
+          owner_id=self.user_2.user_id,
+          add_editor_ids=[self.user_1.user_id, self.user_3.user_id],
+          is_private=False)
+      updated_hotlist = we.GetHotlist(self.hotlist.hotlist_id)
+
+    expected_hotlist = features_pb2.Hotlist(
+        hotlist_id=self.hotlist.hotlist_id, name=self.hotlist.name,
+        summary='new sum', description='new desc',
+        owner_ids=[self.user_2.user_id],
+        editor_ids=[self.user_2.user_id,
+                    self.user_3.user_id,
+                    self.user_1.user_id],
+        is_private=False)
+    self.assertEqual(updated_hotlist, expected_hotlist)
+
+  @mock.patch('testing.fake.FeaturesService.UpdateHotlist')
+  def testUpdateHotlist_NoChanges(self, fake_update_hotlist):
+    """The DB does not get updated if all changes are no-op changes"""
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      we.UpdateHotlist(
+          self.hotlist.hotlist_id, hotlist_name=self.hotlist.name,
+          owner_id=self.user_1.user_id,
+          add_editor_ids=[self.user_1.user_id, self.user_2.user_id],
+          is_private=self.hotlist.is_private,
+          default_col_spec=self.hotlist.default_col_spec,
+          summary=self.hotlist.summary,
+          description=self.hotlist.description)
+      updated_hotlist = we.GetHotlist(self.hotlist.hotlist_id)
+
+    self.assertEqual(updated_hotlist, self.hotlist)
+    fake_update_hotlist.assert_not_called()
+
+  def testUpdateHotlist_HotlistNotFound(self):
+    """Error is thrown when a hotlist is not found."""
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(features_svc.NoSuchHotlistException):
+      with self.work_env as we:
+        we.UpdateHotlist(404)
+
+  def testUpdateHotlist_NoPermissions(self):
+    """Error is thrown when the user doesn't have administer permisisons."""
+    self.SignIn(user_id=self.user_2.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.UpdateHotlist(self.hotlist.hotlist_id)
+
+  def testUpdateHotlist_InvalidName(self):
+    """Error is thrown when proposed new name is invalid."""
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.UpdateHotlist(self.hotlist.hotlist_id, hotlist_name='-Chicken')
+
+  def testUpdateHotlist_HotlistAlreadyExistsOwnerChange(self):
+    """Error is thrown proposed owner has hotlist with same name."""
+    _hotlist_conflict = self.work_env.services.features.TestAddHotlist(
+        'myhotlist', summary='old sum', owner_ids=[self.user_2.user_id],
+        description='old desc', hotlist_id=458, is_private=True)
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(features_svc.HotlistAlreadyExists):
+      with self.work_env as we:
+        we.UpdateHotlist(self.hotlist.hotlist_id, owner_id=self.user_2.user_id)
+
+  def testUpdateHotlist_HotlistAlreadyExistsNameChange(self):
+    """Error is thrown when owner already has a hotlist with same name as
+       proposed name."""
+    hotlist_conflict = self.work_env.services.features.TestAddHotlist(
+        'myhotlist2', summary='old sum', owner_ids=[self.user_1.user_id],
+        description='old desc', hotlist_id=458, is_private=True)
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(features_svc.HotlistAlreadyExists):
+      with self.work_env as we:
+        we.UpdateHotlist(
+            self.hotlist.hotlist_id, hotlist_name=hotlist_conflict.name)
+
+  def testUpdateHotlist_HotlistAlreadyExistsNameAndOwnerChange(self):
+    """Error is thrown when new owner already has hotlist with same new name."""
+    hotlist_conflict = self.work_env.services.features.TestAddHotlist(
+        'myhotlist2', summary='old sum', owner_ids=[self.user_2.user_id],
+        description='old desc', hotlist_id=458, is_private=True)
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(features_svc.HotlistAlreadyExists):
+      with self.work_env as we:
+        we.UpdateHotlist(
+            self.hotlist.hotlist_id, owner_id=self.user_2.user_id,
+            hotlist_name=hotlist_conflict.name)
+
   def testUpdateHotlistSettings_AdminCanMakeChange(self):
     """Admins can update hotlist settings."""
     hotlist = self.work_env.services.features.TestAddHotlist(
@@ -3929,15 +4028,15 @@ class WorkEnvTest(unittest.TestCase):
   def testListHotlistsByUser_Normal(self):
     self.work_env.services.features.CreateHotlist(
         self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
-        owner_ids=[111], editor_ids=[])
+        owner_ids=[444], editor_ids=[])
 
     self.SignIn()
     with self.work_env as we:
-      hotlists = we.ListHotlistsByUser(111)
+      hotlists = we.ListHotlistsByUser(444)
 
     self.assertEqual(1, len(hotlists))
     hotlist = hotlists[0]
-    self.assertEqual([111], hotlist.owner_ids)
+    self.assertEqual([444], hotlist.owner_ids)
     self.assertEqual([], hotlist.editor_ids)
     self.assertEqual('Fake-Hotlist', hotlist.name)
     self.assertEqual('Summary', hotlist.summary)
@@ -3963,14 +4062,14 @@ class WorkEnvTest(unittest.TestCase):
   def testListHotlistsByUser_NotSignedIn(self):
     self.work_env.services.features.CreateHotlist(
         self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
-        owner_ids=[111], editor_ids=[])
+        owner_ids=[444], editor_ids=[])
 
     with self.work_env as we:
-      hotlists = we.ListHotlistsByUser(111)
+      hotlists = we.ListHotlistsByUser(444)
 
     self.assertEqual(1, len(hotlists))
     hotlist = hotlists[0]
-    self.assertEqual([111], hotlist.owner_ids)
+    self.assertEqual([444], hotlist.owner_ids)
     self.assertEqual([], hotlist.editor_ids)
     self.assertEqual('Fake-Hotlist', hotlist.name)
     self.assertEqual('Summary', hotlist.summary)
@@ -3989,14 +4088,14 @@ class WorkEnvTest(unittest.TestCase):
 
     self.SignIn()
     with self.work_env as we:
-      hotlists = we.ListHotlistsByUser(111)
+      hotlists = we.ListHotlistsByUser(444)
 
     self.assertEqual(0, len(hotlists))
 
   def testListHotlistsByUser_NoHotlists(self):
     self.SignIn()
     with self.work_env as we:
-      hotlists = we.ListHotlistsByUser(111)
+      hotlists = we.ListHotlistsByUser(444)
 
     self.assertEqual(0, len(hotlists))
 

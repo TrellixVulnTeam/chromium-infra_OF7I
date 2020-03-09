@@ -1952,6 +1952,115 @@ class WorkEnv(object):
 
     return hotlist
 
+  def UpdateHotlist(
+      self, hotlist_id, hotlist_name=None, summary=None, description=None,
+      is_private=None, default_col_spec=None, owner_id=None,
+      add_editor_ids=None):
+    # type: (int, str, str, str, bool, str, int, Collection[int]) -> None
+    """Update the given hotlist.
+
+    If a new value is None, the value does not get updated.
+
+    Args:
+      hotlist_id: hotlist_id of the hotlist to update.
+      hotlist_name: proposed new name for the hotlist.
+      summary: new summary for the hotlist.
+      description: new description for the hotlist.
+      is_private: true if hotlist should be updated to private.
+      default_col_spec: new default columns for hotlist list view.
+      owner_id: User id of the new owner.
+      add_editor_ids: User ids to add as editors.
+
+    Raises:
+      InputException: The given hotlist_id is None or proposed new name is not
+        a valid hotlist name.
+      NoSuchHotlistException: There is no hotlist with the given ID.
+      PermissionException: The logged-in user is not allowed to update
+        this hotlist's settings.
+      NoSuchUserException: Some proposed editors or owner were not found.
+      HotlistAlreadyExists: The (proposed new) hotlist owner already owns a
+        hotlist with the same (proposed) name.
+    """
+    hotlist = self.services.features.GetHotlist(
+        self.mc.cnxn, hotlist_id, use_cache=False)
+    if not permissions.CanAdministerHotlist(
+        self.mc.auth.effective_ids, self.mc.perms, hotlist):
+      raise permissions.PermissionException(
+          'User is not allowed to update hotlist settings.')
+
+    if hotlist.name == hotlist_name:
+      hotlist_name = None
+    if hotlist.owner_ids[0] == owner_id:
+      owner_id = None
+
+    if hotlist_name and not framework_bizobj.IsValidHotlistName(hotlist_name):
+      raise exceptions.InputException(
+          '"%s" is not a valid hotlist name' % hotlist_name)
+
+    # Check (new) owner does not already own a hotlist with the (new) name.
+    if hotlist_name or owner_id:
+      owner_ids = [owner_id] if owner_id else None
+      if self.services.features.LookupHotlistIDs(
+          self.mc.cnxn, [hotlist_name or hotlist.name],
+          owner_ids or hotlist.owner_ids):
+        raise features_svc.HotlistAlreadyExists(
+            'User already owns a hotlist with name %s' %
+            hotlist_name or hotlist.name)
+
+    # Filter out existing editors and users that will be added as owner
+    # or is the current owner.
+    next_owner_id = owner_id or hotlist.owner_ids[0]
+    if add_editor_ids:
+      new_editor_ids_set = {user_id for user_id in add_editor_ids if
+                            user_id not in hotlist.editor_ids and
+                            user_id != next_owner_id}
+      add_editor_ids = list(new_editor_ids_set)
+
+    # Validate user change requests.
+    user_ids = []
+    if add_editor_ids:
+      user_ids.extend(add_editor_ids)
+    else:
+      add_editor_ids = None
+    if owner_id:
+      user_ids.append(owner_id)
+    if user_ids:
+      self.services.user.LookupUserEmails(self.mc.cnxn, user_ids)
+
+    # Check for other no-op changes.
+    if summary == hotlist.summary:
+      summary = None
+    if description == hotlist.description:
+      description = None
+    if is_private == hotlist.is_private:
+      is_private = None
+    if default_col_spec == hotlist.default_col_spec:
+      default_col_spec = None
+
+    if ([hotlist_name, summary, description, is_private, default_col_spec,
+         owner_id, add_editor_ids] ==
+        [None, None, None, None, None, None, None]):
+      logging.info('No updates given')
+      return
+
+    if (summary is not None) and (not summary):
+      raise exceptions.InputException('Hotlist cannot have an empty summary.')
+    if (description is not None) and (not description):
+      raise exceptions.InputException(
+          'Hotlist cannot have an empty description.')
+    if default_col_spec is not None and not framework_bizobj.IsValidColumnSpec(
+        default_col_spec):
+      raise exceptions.InputException(
+          '"%s" is not a valid column spec' % default_col_spec)
+
+    self.services.features.UpdateHotlist(
+        self.mc.cnxn, hotlist_id, name=hotlist_name, summary=summary,
+        description=description, is_private=is_private,
+        default_col_spec=default_col_spec, owner_id=owner_id,
+        add_editor_ids=add_editor_ids)
+
+  # TODO(crbug/monorail/7104): delete UpdateHotlistSettings and
+  # UpdateHotlistRoles
   def UpdateHotlistSettings(
       self, hotlist_id, name=None, summary=None,
       description=None, is_private=None, default_col_spec=None):

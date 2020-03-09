@@ -743,15 +743,8 @@ class FeaturesService(object):
     return hotlist
 
   def UpdateHotlist(
-      self,
-      cnxn,
-      hotlist_id,
-      name=None,
-      summary=None,
-      description=None,
-      is_private=None,
-      default_col_spec=None,
-      owner_id=None,
+      self, cnxn, hotlist_id, name=None, summary=None, description=None,
+      is_private=None, default_col_spec=None, owner_id=None,
       add_editor_ids=None):
     """Update the DB with the given hotlist information."""
     # Note: If something is None, it does not get changed to None,
@@ -771,7 +764,6 @@ class FeaturesService(object):
       delta['is_private'] = is_private
     if default_col_spec is not None:
       delta['default_col_spec'] = default_col_spec
-
 
     self.hotlist_tbl.Update(cnxn, delta, id=hotlist_id, commit=False)
     insert_rows = []
