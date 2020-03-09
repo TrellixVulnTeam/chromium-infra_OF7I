@@ -61,8 +61,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def RerankHotlistItems(self, mc, request):
-    # MonorailConnection, RerankHotlistItemsRequest ->
-    # RerankHotlistItemsResponse
+    # MonorailConnection, RerankHotlistItemsRequest -> Empty
     """pRPC API method that implements RerankHotlistItems.
 
     Raises:
@@ -85,7 +84,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def GetHotlist(self, mc, request):
-    # MonorailConnection, GetHotlistRequest -> GetHotlistResponse
+    # MonorailConnection, GetHotlistRequest -> Hotlist
     """pRPC API method that implements GetHotlist.
 
     Raises:
