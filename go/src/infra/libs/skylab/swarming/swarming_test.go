@@ -77,3 +77,43 @@ func TestSwarmingCallWithRetries_NontransientFailure(t *testing.T) {
 		t.Fatalf("try count actual != expected, %d != %d", count, 1)
 	}
 }
+
+type testTaskListURLForTagsData struct {
+	tags        []string
+	tasklistURL string
+}
+
+func TestTaskListURL(t *testing.T) {
+	swarmingService := "swarming.appspot.com"
+	testCases := []testTaskListURLForTagsData{
+		{
+			tags:        []string{"attemptID:123"},
+			tasklistURL: "https://swarming.appspot.com/tasklist?f=attemptID%3A123",
+		},
+		{
+			tags:        []string{"attemptID:123", "multipleTags:True"},
+			tasklistURL: "https://swarming.appspot.com/tasklist?f=attemptID%3A123&f=multipleTags%3ATrue",
+		},
+	}
+
+	for _, c := range testCases {
+		got := TaskListURLForTags(swarmingService, c.tags)
+		if c.tasklistURL != got {
+			t.Fatalf("Non-matched tasklist URL:\nExpected: %s\nActual %s", c.tasklistURL, got)
+		}
+	}
+}
+
+func TestParseSwarmingHost(t *testing.T) {
+	swarmingService := "chromeos-swarming.appspot.com"
+	toParse := []string{
+		"https://chromeos-swarming.appspot.com/",
+		"https://chromeos-swarming.appspot.com",
+		"chromeos-swarming.appspot.com",
+	}
+	for _, p := range toParse {
+		if s := parseSwarmingHost(p); s != swarmingService {
+			t.Fatalf("Failed to parse %s to %s", p, s)
+		}
+	}
+}

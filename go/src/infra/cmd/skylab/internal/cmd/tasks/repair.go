@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
@@ -63,17 +64,19 @@ func (c *repairRun) innerRun(a subcommands.Application, args []string, env subco
 		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
 
+	repairAttemptID := uuid.New().String()
 	for _, host := range args {
-		id, err := createRepairTask(ctx, client, e, host)
+		id, err := createRepairTask(ctx, client, e, host, repairAttemptID)
 		if err != nil {
 			return err
 		}
 		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(e.SwarmingService, id), host)
 	}
+	fmt.Fprintf(a.GetOut(), "Batch repair task URL: %s\n", swarming.TaskListURLForTags(e.SwarmingService, repairTags(repairAttemptID)))
 	return nil
 }
 
-func createRepairTask(ctx context.Context, t *swarming.Client, e site.Environment, host string) (taskID string, err error) {
+func createRepairTask(ctx context.Context, t *swarming.Client, e site.Environment, host, repairAttemptID string) (taskID string, err error) {
 	c := worker.Command{TaskName: "admin_repair"}
 	c.Config(e.Wrapped())
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
@@ -88,14 +91,16 @@ func createRepairTask(ctx context.Context, t *swarming.Client, e site.Environmen
 		},
 		WaitForCapacity: true,
 	}}
+	tags := []string{
+		fmt.Sprintf("log_location:%s", c.LogDogAnnotationURL),
+		fmt.Sprintf("luci_project:%s", e.LUCIProject),
+		"pool:ChromeOSSkylab",
+		"skylab-tool:repair",
+	}
+	tags = append(tags, repairTags(repairAttemptID)...)
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name: "admin_repair",
-		Tags: []string{
-			fmt.Sprintf("log_location:%s", c.LogDogAnnotationURL),
-			fmt.Sprintf("luci_project:%s", e.LUCIProject),
-			"pool:ChromeOSSkylab",
-			"skylab-tool:repair",
-		},
+		Name:           "admin_repair",
+		Tags:           tags,
 		TaskSlices:     slices,
 		Priority:       25,
 		ServiceAccount: e.ServiceAccount,
@@ -107,4 +112,10 @@ func createRepairTask(ctx context.Context, t *swarming.Client, e site.Environmen
 		return "", errors.Annotate(err, "failed to create task").Err()
 	}
 	return resp.TaskId, nil
+}
+
+func repairTags(attemptID string) []string {
+	return []string{
+		fmt.Sprintf("repairAttemptID:%s", attemptID),
+	}
 }

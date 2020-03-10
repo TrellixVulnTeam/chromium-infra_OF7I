@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -396,4 +397,29 @@ func callWithRetries(ctx context.Context, f func() error) error {
 // TaskURL returns a URL to inspect a task with the given ID.
 func TaskURL(swarmingService string, taskID string) string {
 	return fmt.Sprintf("%stask?id=%s", swarmingService, taskID)
+}
+
+// TaskListURLForTags returns a tasklist URL filtered by the given tags.
+func TaskListURLForTags(swarmingService string, tags []string) string {
+	h := parseSwarmingHost(swarmingService)
+	u := url.URL{
+		Scheme: "https",
+		Host:   h,
+		Path:   "tasklist",
+	}
+	q := u.Query()
+	for _, t := range tags {
+		q.Add("f", t)
+	}
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+func parseSwarmingHost(s string) string {
+	u, err := url.Parse(s)
+	// Not a valid URL, return back the input string.
+	if err != nil || u.Scheme == "" {
+		return s
+	}
+	return u.Host
 }
