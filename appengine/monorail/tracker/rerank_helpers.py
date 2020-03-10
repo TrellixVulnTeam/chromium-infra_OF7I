@@ -22,11 +22,12 @@ MIN_RANKING = 0
 
 def GetHotlistRerankChanges(hotlist_items, moved_issue_ids, target_position):
   # type: (int, Sequence[int], int) -> Collection[Tuple[int, int]]
-  """Computes the changed ranks from a reranking of HotlistItems.
+  """Computes the new ranks from reranking and or inserting of HotlistItems.
 
   Args:
-    hotlist_items: The list of HotlistItems to rerank.
-    moved_issue_ids: A list of issue IDs to be moved together, in the order
+    hotlist_items: The current list of HotlistItems in the Hotlist.
+    moved_issue_ids: A list of issue IDs to be moved/inserted together,
+      in the order
       they should have the reranking.
     target_position: The index, starting at 0, of the new position the
       first issue in moved_issue_ids should occupy in the updated ordering.
@@ -37,13 +38,10 @@ def GetHotlistRerankChanges(hotlist_items, moved_issue_ids, target_position):
     A list of [(issue_id, rank), ...] of HotlistItems that need to be updated.
 
   Raises:
-    InputException: If the target_position or moved_issue_ids are not valid.
+    InputException: If the target_position is not valid.
   """
   # Sort hotlist items by rank.
   sorted_hotlist_items = sorted(hotlist_items, key=lambda item: item.rank)
-  hotlist_issue_ids = [item.issue_id for item in sorted_hotlist_items]
-  if not set(moved_issue_ids).issubset(set(hotlist_issue_ids)):
-    raise exceptions.InputException('An issue to move is not in the hotlist')
   unmoved_hotlist_items = [
       item for item in sorted_hotlist_items
       if item.issue_id not in moved_issue_ids]

@@ -52,13 +52,18 @@ class Rerank_HelpersTest(unittest.TestCase):
         self.hotlist.items, moved_issue_ids, target_position)
     self.assertEqual(changed_ranks, [(78903, 6)])
 
-  def testGetHotlistRerankChanges_InvalidMoveIds(self):
-    moved_issue_ids = [78909]
-    target_position = 1
-    with self.assertRaises(exceptions.InputException):
-      rerank_helpers.GetHotlistRerankChanges(
-          self.hotlist.items, moved_issue_ids, target_position)
 
+  def testGetHotlistRerankChanges_NewMoveIds(self):
+    "We can handle reranking for inserting new issues."
+    moved_issue_ids = [78909, 78910, 78903]
+    target_position = 0
+    changed_ranks = rerank_helpers.GetHotlistRerankChanges(
+        self.hotlist.items, moved_issue_ids, target_position)
+    self.assertEqual(
+        changed_ranks, [(78909, 1), (78910, 3), (78903, 5), (78901, 7)])
+
+  def testGetHotlistRerankChanges_InvalidMovedIds(self):
+    moved_issue_ids = [78903]
     target_position = -1
     with self.assertRaises(exceptions.InputException):
       rerank_helpers.GetHotlistRerankChanges(
