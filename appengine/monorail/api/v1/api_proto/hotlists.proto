@@ -38,6 +38,14 @@ service Hotlists {
       body: "*"
     };
   }
+  // Deletes a hotlist.
+  //
+  rpc DeleteHotlist (GetHotlistRequest) returns (Hotlist) {
+    option (google.api.http) = {
+      post: "/prpc/monorail.v1.Hotlists/DeleteHotlist"
+      body: "*"
+    };
+  }
   // Returns a list of all HotlistItems in the hotlist.
   //
   // Raises:

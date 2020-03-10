@@ -177,7 +177,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
     return {
       issueEntryUrl: {type: String},
       issueId: {type: Number},
-      projectName: {type: String},
+      _projectName: {type: String},
       queryParams: {type: Object},
       _fetchingIsStarred: {type: Boolean},
       _isStarred: {type: Boolean},
@@ -195,15 +195,18 @@ export class MrKeystrokes extends connectStore(LitElement) {
     this._shortcutDocGroups = SHORTCUT_DOC_GROUPS;
     this._opened = false;
     this._starringIssues = new Map();
-    this.projectName = undefined;
+    this._projectName = undefined;
+    this._issuePermissions = [];
     this.issueId = undefined;
     this.queryParams = undefined;
     this.issueEntryUrl = undefined;
+
+    this._page = page;
   }
 
   /** @override */
   stateChanged(state) {
-    this.projectName = project.viewedProjectName(state);
+    this._projectName = project.viewedProjectName(state);
     this._issuePermissions = issue.permissions(state);
 
     const starredIssues = issue.starredIssues(state);
@@ -214,14 +217,15 @@ export class MrKeystrokes extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
-    if (changedProperties.has('projectName') ||
+    if (changedProperties.has('_projectName') ||
         changedProperties.has('issueEntryUrl')) {
-      this._bindProjectKeys(this.projectName, this.issueEntryUrl);
+      this._bindProjectKeys(this._projectName, this.issueEntryUrl);
     }
-    if (changedProperties.has('projectName') || changedProperties.has('issueId') ||
-        changedProperties.has('issuePermissions') ||
+    if (changedProperties.has('_projectName') ||
+        changedProperties.has('issueId') ||
+        changedProperties.has('_issuePermissions') ||
         changedProperties.has('queryParams')) {
-      this._bindIssueDetailKeys(this.projectName, this.issueId,
+      this._bindIssueDetailKeys(this._projectName, this.issueId,
           this._issuePermissions, this.queryParams);
     }
   }
@@ -245,7 +249,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
   /** @private */
   get _issueRef() {
     return {
-      projectName: this.projectName,
+      projectName: this._projectName,
       localId: this.issueId,
     };
   }
@@ -294,7 +298,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
       this._closeDialog();
     });
 
-    Mousetrap.bind('c', () => page(issueEntryUrl));
+    Mousetrap.bind('c', () => this._page(issueEntryUrl));
   }
 
   /** @private */
@@ -317,59 +321,87 @@ export class MrKeystrokes extends connectStore(LitElement) {
 
     if (!projectName || !issueId) return;
 
-    const queryString = qs.stringify(queryParams);
     const projectHomeUrl = `/p/${projectName}`;
 
-    issuePermissions = issuePermissions || [];
+    const queryString = qs.stringify(queryParams);
 
     // TODO(zhangtiff): Update these links when mr-flipper's async request
     // finishes.
-    const listUrl = `${projectHomeUrl}/issues/detail/list?${queryString}`;
     const prevUrl = `${projectHomeUrl}/issues/detail/previous?${queryString}`;
     const nextUrl = `${projectHomeUrl}/issues/detail/next?${queryString}`;
     const canComment = issuePermissions.includes('addissuecomment');
     const canStar = issuePermissions.includes('setstar');
 
+    // Previous issue in list.
+    Mousetrap.bind('k', () => this._page(prevUrl));
 
-    if (prevUrl) {
-      // Previous issue in list.
-      Mousetrap.bind('k', () => page(prevUrl));
-    }
+    // Next issue in list.
+    Mousetrap.bind('j', () => this._page(nextUrl));
 
-    if (nextUrl) {
-      // Next issue in list.
-      Mousetrap.bind('j', () => page(nextUrl));
-    }
-
-    if (listUrl) {
-      // Back to list.
-      Mousetrap.bind('u', () => page(listUrl));
-    }
+    // Back to list.
+    Mousetrap.bind('u', () => this._backToList());
 
     if (canComment) {
       // Navigate to the form to make changes.
-      Mousetrap.bind('r', (e) => {
-        e.preventDefault();
-
-        // Force a hash change even the hash is already makechanges.
-        if (window.location.hash.toLowerCase() === '#makechanges') {
-          window.location.hash = ' ';
-        }
-        window.location.hash = '#makechanges';
-      });
+      Mousetrap.bind('r', () => this._jumpToEditForm());
     }
 
     if (canStar) {
-      Mousetrap.bind('s', () => {
-        // Star an issue.
-        if (!this._fetchingIsStarred && !this._isStarring) {
-          const newIsStarred = !this._isStarred;
-
-          store.dispatch(issue.star(this._issueRef, newIsStarred));
-        }
-      });
+      Mousetrap.bind('s', () => this._starIssue());
     }
   }
+
+  /**
+   * Navigates back to the issue list page.
+   * @private
+   */
+  _backToList() {
+    const params = {...this.queryParams,
+      cursor: issueRefToString(this._issueRef)};
+    const queryString = qs.stringify(params);
+    if (params['hotlist_id']) {
+      // Because hotlist URLs require a server look up to be built from a
+      // hotlist ID, we have to route the request through an extra endpoint
+      // that redirects to the appropriate hotlist.
+      const listUrl = `/p/${this._projectName}/issues/detail/list?${
+        queryString}`;
+      this._page(listUrl);
+
+      // TODO(crbug.com/monorail/6341): Switch to using the new hotlist URL once
+      // hotlists have migrated.
+      // this._page(`/hotlists/${params['hotlist_id']}`);
+    } else {
+      delete params.id;
+      const listUrl = `/p/${this._projectName}/issues/list?${queryString}`;
+      this._page(listUrl);
+    }
+  }
+
+  /**
+   * Scrolls the user to the issue editing form when they press
+   * the 'r' key.
+   * @private
+   */
+  _jumpToEditForm() {
+    // Force a hash change even the hash is already makechanges.
+    if (window.location.hash.toLowerCase() === '#makechanges') {
+      window.location.hash = ' ';
+    }
+    window.location.hash = '#makechanges';
+  }
+
+  /**
+   * Stars the current issue the user is viewing on the issue detail page.
+   * @private
+   */
+  _starIssue() {
+    if (!this._fetchingIsStarred && !this._isStarring) {
+      const newIsStarred = !this._isStarred;
+
+      store.dispatch(issue.star(this._issueRef, newIsStarred));
+    }
+  }
+
 
   /** @private */
   _unbindIssueDetailKeys() {
