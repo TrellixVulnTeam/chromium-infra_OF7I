@@ -16,7 +16,6 @@ import (
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	invV1Api "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cmd/skylab/internal/cmd/cmdlib"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/libs/skylab/inventory"
@@ -36,8 +35,7 @@ func AddSwitchInventoryFlag(theFlag *bool, flags flag.FlagSet, envFlags skycmdli
 // various command line tools.
 type Client interface {
 	GetDutInfo(context.Context, string, bool, bool) (*inventory.DeviceUnderTest, error)
-	removeDUTs(context.Context, string, []string, cmdlib.RemovalReason, io.Writer) (bool, error)
-	deleteDUTs(context.Context, []string, *authcli.Flags, io.Writer) (bool, error)
+	deleteDUTs(context.Context, []string, *authcli.Flags, skycmdlib.RemovalReason, io.Writer) (bool, error)
 	batchUpdateDUTs(context.Context, *invV1Api.BatchUpdateDutsRequest, io.Writer) error
 }
 
