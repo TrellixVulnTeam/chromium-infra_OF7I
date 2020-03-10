@@ -45,10 +45,12 @@ message Hotlist {
   // Privacy level of a Hotlist.
   // Next available tag: 2
   enum HotlistPrivacy {
+    // This value is unused.
+    HOTLIST_PRIVACY_UNSPECIFIED = 0;
     // Only the owner and editors of the hotlist can view the hotlist.
-    PRIVATE = 0;
+    PRIVATE = 1;
     // Anyone on the web can view the hotlist.
-    PUBLIC = 1;
+    PUBLIC = 2;
   }
   HotlistPrivacy hotlist_privacy = 8;
 }

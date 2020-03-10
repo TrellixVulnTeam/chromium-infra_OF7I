@@ -26,9 +26,12 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type IssueTemplate_TemplatePrivacy int32
 
 const (
+	// This value is unused.
 	IssueTemplate_TEMPLATE_PRIVACY_UNSPECIFIED IssueTemplate_TemplatePrivacy = 0
-	IssueTemplate_MEMBERS_ONLY                 IssueTemplate_TemplatePrivacy = 1
-	IssueTemplate_PUBLIC                       IssueTemplate_TemplatePrivacy = 2
+	// Owner project members may view this template.
+	IssueTemplate_MEMBERS_ONLY IssueTemplate_TemplatePrivacy = 1
+	// Anyone on the web can view this template.
+	IssueTemplate_PUBLIC IssueTemplate_TemplatePrivacy = 2
 )
 
 var IssueTemplate_TemplatePrivacy_name = map[int32]string{
@@ -57,6 +60,8 @@ func (IssueTemplate_TemplatePrivacy) EnumDescriptor() ([]byte, []int) {
 type IssueTemplate_DefaultOwner int32
 
 const (
+	// There is no default owner.
+	// This value is used if the default owner is omitted.
 	IssueTemplate_DEFAULT_OWNER_UNSPECIFIED IssueTemplate_DefaultOwner = 0
 	// The owner should default to the Issue reporter if the reporter is a
 	// member of the project.

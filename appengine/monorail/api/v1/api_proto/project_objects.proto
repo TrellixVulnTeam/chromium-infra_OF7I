@@ -118,8 +118,11 @@ message IssueTemplate {
   // Visibility permission of template
   // Next available tag: 3
   enum TemplatePrivacy {
+    // This value is unused.
     TEMPLATE_PRIVACY_UNSPECIFIED = 0;
+    // Owner project members may view this template.
     MEMBERS_ONLY = 1;
+    // Anyone on the web can view this template.
     PUBLIC = 2;
   }
   TemplatePrivacy template_privacy = 4;
@@ -127,6 +130,8 @@ message IssueTemplate {
   // created with this template.
   // Next available tag: 2
   enum DefaultOwner {
+    // There is no default owner.
+    // This value is used if the default owner is omitted.
     DEFAULT_OWNER_UNSPECIFIED = 0;
     // The owner should default to the Issue reporter if the reporter is a
     // member of the project.

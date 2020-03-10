@@ -79,7 +79,7 @@ service Hotlists {
   // Removes items associated with given issues from a hotlist.
   //
   // TODO(crbug/monorali:7104): Document possible errors when implemented.
-  rpc RemoveHotlistItem (RemoveHotlistItemsRequest) returns (google.protobuf.Empty) {}
+  rpc RemoveHotlistItems (RemoveHotlistItemsRequest) returns (google.protobuf.Empty) {}
 }
 
 

@@ -24,7 +24,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n&api/v1/api_proto/feature_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$api/v1/api_proto/issue_objects.proto\x1a#api/v1/api_proto/user_objects.proto\"\x81\x03\n\x07Hotlist\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x02\x12%\n\x05owner\x18\x03 \x01(\x0b\x32\x11.monorail.v1.UserB\x03\xe0\x41\x02\x12\"\n\x07\x65\x64itors\x18\x04 \x03(\x0b\x32\x11.monorail.v1.User\x12\x14\n\x07summary\x18\x05 \x01(\tB\x03\xe0\x41\x02\x12\x18\n\x0b\x64\x65scription\x18\x06 \x01(\tB\x03\xe0\x41\x02\x12\x36\n\x0f\x64\x65\x66\x61ult_columns\x18\x07 \x03(\x0b\x32\x1d.monorail.v1.IssuesListColumn\x12<\n\x0fhotlist_privacy\x18\x08 \x01(\x0e\x32#.monorail.v1.Hotlist.HotlistPrivacy\")\n\x0eHotlistPrivacy\x12\x0b\n\x07PRIVATE\x10\x00\x12\n\n\x06PUBLIC\x10\x01:1\xea\x41.\n\x15\x61pi.crbug.com/Hotlist\x12\x15hotlists/{hotlist_id}\"\x8c\x02\n\x0bHotlistItem\x12\x0c\n\x04name\x18\x01 \x01(\t\x12*\n\x05issue\x18\x02 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x05\x12\x11\n\x04rank\x18\x03 \x01(\rB\x03\xe0\x41\x03\x12%\n\x05\x61\x64\x64\x65r\x18\x04 \x01(\x0b\x32\x11.monorail.v1.UserB\x03\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x0c\n\x04note\x18\x06 \x01(\t:E\xea\x41\x42\n\x19\x61pi.crbug.com/HotlistItem\x12%hotlists/{hotlist_id}/items/{item_id}b\x06proto3')
+  serialized_pb=_b('\n&api/v1/api_proto/feature_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$api/v1/api_proto/issue_objects.proto\x1a#api/v1/api_proto/user_objects.proto\"\xa2\x03\n\x07Hotlist\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x02\x12%\n\x05owner\x18\x03 \x01(\x0b\x32\x11.monorail.v1.UserB\x03\xe0\x41\x02\x12\"\n\x07\x65\x64itors\x18\x04 \x03(\x0b\x32\x11.monorail.v1.User\x12\x14\n\x07summary\x18\x05 \x01(\tB\x03\xe0\x41\x02\x12\x18\n\x0b\x64\x65scription\x18\x06 \x01(\tB\x03\xe0\x41\x02\x12\x36\n\x0f\x64\x65\x66\x61ult_columns\x18\x07 \x03(\x0b\x32\x1d.monorail.v1.IssuesListColumn\x12<\n\x0fhotlist_privacy\x18\x08 \x01(\x0e\x32#.monorail.v1.Hotlist.HotlistPrivacy\"J\n\x0eHotlistPrivacy\x12\x1f\n\x1bHOTLIST_PRIVACY_UNSPECIFIED\x10\x00\x12\x0b\n\x07PRIVATE\x10\x01\x12\n\n\x06PUBLIC\x10\x02:1\xea\x41.\n\x15\x61pi.crbug.com/Hotlist\x12\x15hotlists/{hotlist_id}\"\x8c\x02\n\x0bHotlistItem\x12\x0c\n\x04name\x18\x01 \x01(\t\x12*\n\x05issue\x18\x02 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x05\x12\x11\n\x04rank\x18\x03 \x01(\rB\x03\xe0\x41\x03\x12%\n\x05\x61\x64\x64\x65r\x18\x04 \x01(\x0b\x32\x11.monorail.v1.UserB\x03\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x0c\n\x04note\x18\x06 \x01(\t:E\xea\x41\x42\n\x19\x61pi.crbug.com/HotlistItem\x12%hotlists/{hotlist_id}/items/{item_id}b\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_user__objects__pb2.DESCRIPTOR,])
 
@@ -37,18 +37,22 @@ _HOTLIST_HOTLISTPRIVACY = _descriptor.EnumDescriptor(
   file=DESCRIPTOR,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='PRIVATE', index=0, number=0,
+      name='HOTLIST_PRIVACY_UNSPECIFIED', index=0, number=0,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='PUBLIC', index=1, number=1,
+      name='PRIVATE', index=1, number=1,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='PUBLIC', index=2, number=2,
       serialized_options=None,
       type=None),
   ],
   containing_type=None,
   serialized_options=None,
   serialized_start=543,
-  serialized_end=584,
+  serialized_end=617,
 )
 _sym_db.RegisterEnumDescriptor(_HOTLIST_HOTLISTPRIVACY)
 
@@ -130,7 +134,7 @@ _HOTLIST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=250,
-  serialized_end=635,
+  serialized_end=668,
 )
 
 
@@ -195,8 +199,8 @@ _HOTLISTITEM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=638,
-  serialized_end=906,
+  serialized_start=671,
+  serialized_end=939,
 )
 
 _HOTLIST.fields_by_name['owner'].message_type = api_dot_v1_dot_api__proto_dot_user__objects__pb2._USER
