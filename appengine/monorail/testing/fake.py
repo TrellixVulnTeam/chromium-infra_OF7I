@@ -2368,6 +2368,39 @@ class FeaturesService(object):
     for hotlist_id in hotlist_ids:
       self.UpdateHotlistItems(cnxn, hotlist_id, issue_ids, [], commit=commit)
 
+  def UpdateHotlistIssues(
+      self,
+      cnxn,
+      hotlist_id,
+      updated_items,
+      remove_issue_ids,
+      issue_svc,
+      chart_svc,
+      commit=True):
+    if not updated_items and not remove_issue_ids:
+      raise exceptions.InputException('No changes to make')
+
+    hotlist = self.hotlists_by_id.get(hotlist_id)
+    if not hotlist:
+      raise NoSuchHotlistException()
+
+    updated_ids = [item.issue_id for item in updated_items]
+    items = [
+        item for item in hotlist.items
+        if item.issue_id not in updated_ids + remove_issue_ids
+    ]
+    hotlist.items = sorted(updated_items + items, key=lambda item: item.rank)
+
+    # Remove all removed and updated issues.
+    for issue_id in remove_issue_ids + updated_ids:
+      try:
+        self.hotlists_id_by_issue[issue_id].remove(hotlist_id)
+      except ValueError:
+        pass
+    # Add all new or updated issues.
+    for item in updated_items:
+      self.hotlists_id_by_issue.setdefault(item.issue_id, []).append(hotlist_id)
+
   def UpdateHotlistItems(
       self, cnxn, hotlist_id, remove, added_issue_tuples, commit=True):
     hotlist = self.hotlists_by_id.get(hotlist_id)
