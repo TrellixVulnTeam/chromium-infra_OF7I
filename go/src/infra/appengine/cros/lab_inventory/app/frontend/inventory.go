@@ -107,10 +107,12 @@ func (is *InventoryServerImpl) AddCrosDevices(ctx context.Context, req *api.AddC
 	if err != nil {
 		// Return specific error code if the labstation is not deployed yet, so
 		// client won't retry in this case.
-		if strings.Contains(err.Error(), "Deploy it first") {
-			return nil, errors.Annotate(err, "add cros devices").Tag(grpcutil.InvalidArgumentTag).Err()
+		switch e := err.(type) {
+		case *datastore.LabstationNotDeployedError:
+			return nil, errors.Annotate(e, "add cros devices").Tag(grpcutil.InvalidArgumentTag).Err()
+		default:
+			return nil, errors.Annotate(e, "add cros devices").Tag(grpcutil.InternalTag).Err()
 		}
-		return nil, errors.Annotate(err, "add cros devices").Tag(grpcutil.InternalTag).Err()
 	}
 	passedDevices := getPassedResults(ctx, *addingResults)
 	if err := updateDroneCfg(ctx, passedDevices, true); err != nil {
@@ -411,7 +413,12 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 	}
 	updatingResults, err := datastore.UpdateDeviceSetup(changehistory.Use(ctx, req.Reason), req.Devices, req.PickServoPort)
 	if err != nil {
-		return nil, err
+		switch e := err.(type) {
+		case *datastore.LabstationNotDeployedError:
+			return nil, errors.Annotate(e, "update device setup").Tag(grpcutil.InvalidArgumentTag).Err()
+		default:
+			return nil, e
+		}
 	}
 
 	updatedDevices := getPassedResults(ctx, updatingResults)

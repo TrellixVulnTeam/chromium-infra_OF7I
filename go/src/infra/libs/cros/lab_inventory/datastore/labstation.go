@@ -6,6 +6,7 @@ package datastore
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -21,6 +22,16 @@ const (
 	servoPortRangeUpperLimit = 9999
 	servoPortRangeLowerLimit = 9900
 )
+
+// LabstationNotDeployedError is the error raised when the DUT has no deployed
+// labstation yet.
+type LabstationNotDeployedError struct {
+	hostname string
+}
+
+func (e *LabstationNotDeployedError) Error() string {
+	return fmt.Sprintf("labstation %s was not deployed yet. Deploy it first by `skylab add-labstation` please.", e.hostname)
+}
 
 type servoHostRecord struct {
 	entity     *DeviceEntity
@@ -63,7 +74,7 @@ func (r servoHostRegistry) getServoHost(ctx context.Context, hostname string) (*
 		}
 		switch len(servoHosts) {
 		case 0:
-			return nil, errors.Reason("labstation %s was not deployed yet. Deploy it first by `skylab add-labstation` please.", hostname).Err()
+			return nil, &LabstationNotDeployedError{hostname: hostname}
 		case 1:
 			entity := servoHosts[0]
 			var crosDev lab.ChromeOSDevice
