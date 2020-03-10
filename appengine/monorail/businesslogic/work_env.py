@@ -2586,6 +2586,35 @@ class WorkEnv(object):
           self.mc.cnxn, hotlist_ids, added_tuples, self.services.issue,
           self.services.chart)
 
+  # TODO(crbug/monorai/7104): RemoveHotlistItems and RerankHotlistItems should
+  # replace RemoveIssuesFromHotlist, AddIssuesToHotlists,
+  # RemoveIssuesFromHotlists.
+  # The latter 3 methods are still used in v0 API paths and should be removed
+  # once those v0 API methods are removed.
+  def RemoveHotlistItems(self, hotlist_id, remove_issue_ids):
+    # type: (int, Collection[int]) -> None
+    """Remove given issues from a hotlist.
+
+    Args:
+      hotlist_id: A hotlist ID of the hotlist to remove issues from.
+      remove_issue_ids: A list of issue IDs that belong to HotlistItems
+        we want to remove from the hotlist.
+    """
+    hotlist = self.GetHotlist(hotlist_id)
+    self._AssertUserCanEditHotlist(hotlist)
+    if not remove_issue_ids:
+      raise exceptions.InputException('`remove_issue_ids` empty.')
+
+    item_issue_ids = {item.issue_id for item in hotlist.items}
+    if not (set(remove_issue_ids).issubset(item_issue_ids)):
+      raise exceptions.InputException('item(s) not found in hotlist.')
+
+    # TODO(crbug/monorail/7318): Check user has permission to view every issue
+
+    self.services.features.UpdateHotlistIssues(
+        self.mc.cnxn, hotlist_id, [], remove_issue_ids, self.services.issue,
+        self.services.chart)
+
   def RerankHotlistItems(self, hotlist_id, moved_issue_ids, target_position):
     # type: (int, list(int), int) -> Hotlist
     """Rerank the moved items for a hotlist.

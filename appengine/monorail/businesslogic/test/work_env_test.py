@@ -75,6 +75,8 @@ class WorkEnvTest(unittest.TestCase):
         'myhotlist', summary='old sum', owner_ids=[self.user_1.user_id],
         editor_ids=[self.user_2.user_id], description='old desc',
         is_private=True)
+    # reserved for testing that a hotlist does not exist
+    self.dne_hotlist_id = 1234
     self.mr = testing_helpers.MakeMonorailRequest(project=self.project)
     self.mr.perms = permissions.READ_ONLY_PERMISSIONSET
     self.PAST_TIME = 12345
@@ -4603,7 +4605,7 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.AddIssuesToHotlists([1, 2, 3], [4, 5, 6], None)
 
-  def createRerankHotlist(self):
+  def createHotlistWithItems(self):
     owner_ids = [self.user_1.user_id]
     editor_ids = [self.user_2.user_id]
     hotlist_items = [
@@ -4615,9 +4617,39 @@ class WorkEnvTest(unittest.TestCase):
         'HotlistName', owner_ids=owner_ids, editor_ids=editor_ids,
         hotlist_item_fields=hotlist_items)
 
+  def testRemoveHotlistItems(self):
+    """We can remove issues from a hotlist."""
+    hotlist = self.createHotlistWithItems()
+    self.SignIn(self.user_2.user_id)
+    with self.work_env as we:
+      we.RemoveHotlistItems(hotlist.hotlist_id, [78901, 78903])
+
+    self.assertEqual([item.issue_id for item in hotlist.items], [78902, 78904])
+
+  def testRemoveHotlistItems_NoHotlistPermissions(self):
+    """We raise an exception if user lacks edit permissions in hotlist."""
+    self.SignIn(self.user_3.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.RemoveHotlistItems(self.hotlist.hotlist_id, [78901])
+
+  def testRemoveHotlistItems_NoSuchHotlist(self):
+    """We raise an exception if the hotlist is not found."""
+    with self.assertRaises(features_svc.NoSuchHotlistException):
+      with self.work_env as we:
+        we.RemoveHotlistItems(self.dne_hotlist_id, [78901])
+
+  def testRemoveHotlistItems_ItemNotFound(self):
+    """We raise an exception if user tries to remove item not in hotlist."""
+    hotlist = self.createHotlistWithItems()
+    self.SignIn(self.user_2.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.RemoveHotlistItems(hotlist.hotlist_id, [404])
+
   def testRerankHotlistItems(self):
     """We can rerank hotlist items to the middle."""
-    hotlist = self.createRerankHotlist()
+    hotlist = self.createHotlistWithItems()
     moved_ids = [78901, 78903]
     target_position = 1
     self.SignIn(self.user_2.user_id)
@@ -4631,7 +4663,7 @@ class WorkEnvTest(unittest.TestCase):
 
   def testRerankHotlistIssues_NoPerms(self):
     """We don't let non editors/owners update issue ranks."""
-    hotlist = self.createRerankHotlist()
+    hotlist = self.createHotlistWithItems()
     moved_ids = [78901]
     target_position = 0
     self.SignIn(self.user_3.user_id)
@@ -4641,7 +4673,7 @@ class WorkEnvTest(unittest.TestCase):
             hotlist.hotlist_id, moved_ids, target_position)
 
   def testRerankHotlistIssues_MoveEntireList(self):
-    hotlist = self.createRerankHotlist()
+    hotlist = self.createHotlistWithItems()
     moved_ids = [78902, 78901, 78904, 78903]
     target_position = 0
     self.SignIn(self.user_1.user_id)
@@ -4654,7 +4686,7 @@ class WorkEnvTest(unittest.TestCase):
         [78902, 78901, 78904, 78903])
 
   def testRerankHotlistIssues_SamePosition(self):
-    hotlist = self.createRerankHotlist()
+    hotlist = self.createHotlistWithItems()
     moved_ids = [78902]
     target_position = 1
     self.SignIn(self.user_1.user_id)
@@ -4667,7 +4699,7 @@ class WorkEnvTest(unittest.TestCase):
         [78901, 78902, 78903, 78904])
 
   def testRerankHotlistIssues_NoItemsGiven(self):
-    hotlist = self.createRerankHotlist()
+    hotlist = self.createHotlistWithItems()
     moved_ids = []
     target_position = 1
     self.SignIn(self.user_1.user_id)
