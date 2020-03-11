@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -27,6 +28,7 @@ import (
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
+	protos "infra/libs/fleet/protos"
 	"infra/libs/skylab/inventory"
 )
 
@@ -199,9 +201,48 @@ func (client *inventoryClientV2) deleteDUTs(ctx context.Context, hostnames []str
 	for _, d := range rsp.RemovedDevices {
 		fmt.Fprintln(b, d.Hostname)
 	}
+	// TODO(eshwarn) : move this into DeleteCrosDevices in inventoryV2 layer
+	updateAssets(ctx, client, rsp.RemovedDevices, b)
 	fmt.Fprintln(b, "== Inventory v2: output end ==")
 	b.Flush()
 	return len(rsp.RemovedDevices) > 0, nil
+}
+
+func updateAssets(ctx context.Context, client *inventoryClientV2, deletedDevices []*invV2Api.DeviceOpResult, b io.Writer) {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+	if len(deletedDevices) < 0 {
+		return
+	}
+	var existingAssetsIDs = make([]string, 0, len(deletedDevices))
+	var existingAssets = make([]*protos.ChopsAsset, 0, len(deletedDevices))
+	for _, deletedDevice := range deletedDevices {
+		existingAssetsIDs = append(existingAssetsIDs, deletedDevice.GetId())
+		existingAssets = append(existingAssets,
+			&protos.ChopsAsset{
+				Id:       deletedDevice.GetId(),
+				Location: &protos.Location{},
+			})
+	}
+	assetResponse, _ := client.ic.GetAssets(ctx, &invV2Api.AssetIDList{Id: existingAssetsIDs})
+	if assetResponse != nil {
+		for _, assetResult := range assetResponse.Passed {
+			fmt.Fprintf(b, "AssetId: %s , Old Location: %s\n", assetResult.GetAsset().GetId(), assetResult.GetAsset().GetLocation().String())
+		}
+		for _, assetResult := range assetResponse.Failed {
+			fmt.Fprintf(b, "failed to get asset from registration for %s : %s\n", assetResult.Asset.GetId(), assetResult.GetErrorMsg())
+		}
+	}
+	// Update existing assets in registration system
+	assetResponse, _ = client.ic.UpdateAssets(ctx, &invV2Api.AssetList{Asset: existingAssets})
+	if assetResponse != nil {
+		for _, assetResult := range assetResponse.Passed {
+			fmt.Fprintf(b, "AssetId: %s , New Location: %s\n", assetResult.GetAsset().GetId(), assetResult.GetAsset().GetLocation().String())
+		}
+	}
 }
 
 // printRemovals prints a table of DUT removals from drones.
