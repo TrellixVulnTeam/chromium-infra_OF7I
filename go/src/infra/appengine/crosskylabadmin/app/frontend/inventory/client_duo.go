@@ -80,21 +80,18 @@ func (client *duoClient) willReadFromV2(req *fleet.GetDutInfoRequest) bool {
 	return r.Intn(100) < client.readTrafficRatio
 }
 
-func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (string, []*inventory.CommonDeviceSpecs, error) {
-	if client.willWriteToV2() {
-		url2, ds2, err2 := client.ic.addManyDUTsToFleet(ctx, nds, pickServoPort)
-		logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
-		logging.Infof(ctx, "[v2] spec returned: %s", ds2)
-
-		if client.inventoryV2Only {
-			return url2, ds2, err2
-		}
+func (client *duoClient) addManyDUTsToFleet(ctx context.Context, nds []*inventory.CommonDeviceSpecs, pickServoPort bool) (url string, ds []*inventory.CommonDeviceSpecs, err error) {
+	if !client.inventoryV2Only {
+		url, ds, err = client.gc.addManyDUTsToFleet(ctx, nds, pickServoPort)
+		logging.Infof(ctx, "[v1] add dut result: %s, %s", url, err)
+		logging.Infof(ctx, "[v1] spec returned: %s", ds)
 	}
-
-	url, ds, err := client.gc.addManyDUTsToFleet(ctx, nds, pickServoPort)
-	logging.Infof(ctx, "[v1] add dut result: %s, %s", url, err)
-	logging.Infof(ctx, "[v1] spec returned: %s", ds)
-	return url, ds, err
+	if client.willWriteToV2() {
+		url, ds, err = client.ic.addManyDUTsToFleet(ctx, nds, pickServoPort)
+		logging.Infof(ctx, "[v2] add dut result: %s, %s", url, err)
+		logging.Infof(ctx, "[v2] spec returned: %s", ds)
+	}
+	return
 }
 
 func (client *duoClient) getAssetsFromRegistration(ctx context.Context, assetIDList *api.AssetIDList) (*api.AssetResponse, error) {
@@ -109,64 +106,55 @@ func (client *duoClient) updateAssetsInRegistration(ctx context.Context, assetLi
 	return ds, err
 }
 
-func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (string, error) {
+func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.CommonDeviceSpecs, pickServoPort bool) (url string, err error) {
+	if !client.inventoryV2Only {
+		url, err = client.gc.updateDUTSpecs(ctx, od, nd, pickServoPort)
+		logging.Infof(ctx, "[v1] update dut result: %s, %s", url, err)
+	}
 	if client.willWriteToV2() {
 		url2, err2 := client.ic.updateDUTSpecs(ctx, od, nd, pickServoPort)
-		logging.Infof(ctx, "[v2] add dut result: %s, %s", url2, err2)
-
-		if client.inventoryV2Only {
-			return url2, err2
-		}
+		logging.Infof(ctx, "[v2] update dut result: %s, %s", url2, err2)
 	}
-
-	url, err := client.gc.updateDUTSpecs(ctx, od, nd, pickServoPort)
-	logging.Infof(ctx, "[v1] update dut result: %s, %s", url, err)
-	return url, err
+	return
 }
 
-func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (string, []string, error) {
-	if client.willWriteToV2() {
-		url2, deletedIds2, err2 := client.ic.deleteDUTsFromFleet(ctx, ids)
-		logging.Infof(ctx, "[v2] delete dut result: %s, %s, %s", url2, deletedIds2, err2)
-
-		if client.inventoryV2Only {
-			return url2, deletedIds2, err2
-		}
+func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) (url string, deletedIds []string, err error) {
+	if !client.inventoryV2Only {
+		url, deletedIds, err = client.gc.deleteDUTsFromFleet(ctx, ids)
+		logging.Infof(ctx, "[v1] delete dut result: %s, %s, %s", url, deletedIds, err)
 	}
-
-	url, deletedIds, err := client.gc.deleteDUTsFromFleet(ctx, ids)
-	logging.Infof(ctx, "[v1] delete dut result: %s, %s, %s", url, deletedIds, err)
-
-	return url, deletedIds, err
+	if client.willWriteToV2() {
+		url, deletedIds, err := client.ic.deleteDUTsFromFleet(ctx, ids)
+		logging.Infof(ctx, "[v2] delete dut result: %s, %s, %s", url, deletedIds, err)
+	}
+	return
 }
 
-func (client *duoClient) selectDutsFromInventory(ctx context.Context, sel *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error) {
+func (client *duoClient) selectDutsFromInventory(ctx context.Context, sel *fleet.DutSelector) (duts []*inventory.DeviceUnderTest, err error) {
+	if !client.inventoryV2Only {
+		duts, err = client.gc.selectDutsFromInventory(ctx, sel)
+	}
 	if client.willWriteToV2() {
-		duts, err := client.ic.selectDutsFromInventory(ctx, sel)
+		duts, err = client.ic.selectDutsFromInventory(ctx, sel)
 		logging.Infof(ctx, "[v2] select duts by %v", sel)
 		if len(duts) > 0 {
 			logging.Infof(ctx, "[v2] selecting returns '%s'...(total %d duts)", duts[0].GetCommon().GetHostname(), len(duts))
 		} else {
 			logging.Infof(ctx, "[v2] selecting returns 0 duts")
 		}
-
-		if client.inventoryV2Only {
-			return duts, err
-		}
 	}
-	return client.gc.selectDutsFromInventory(ctx, sel)
+	return
 }
 
-func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes []*fleet.PoolChange) (string, error) {
-	if client.willWriteToV2() {
-		u, err := client.ic.commitBalancePoolChanges(ctx, changes)
-		logging.Infof(ctx, "[v2] Commit balancing pool result: %s: %s", u, err)
-
-		if client.inventoryV2Only {
-			return u, err
-		}
+func (client *duoClient) commitBalancePoolChanges(ctx context.Context, changes []*fleet.PoolChange) (u string, err error) {
+	if !client.inventoryV2Only {
+		u, err = client.gc.commitBalancePoolChanges(ctx, changes)
 	}
-	return client.gc.commitBalancePoolChanges(ctx, changes)
+	if client.willWriteToV2() {
+		u, err = client.ic.commitBalancePoolChanges(ctx, changes)
+		logging.Infof(ctx, "[v2] Commit balancing pool result: %s: %s", u, err)
+	}
+	return
 }
 
 func (client *duoClient) getDutInfo(ctx context.Context, req *fleet.GetDutInfoRequest) ([]byte, time.Time, error) {
