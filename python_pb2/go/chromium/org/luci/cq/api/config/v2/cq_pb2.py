@@ -22,7 +22,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='cq.config',
   syntax='proto3',
   serialized_options=_b('Z,go.chromium.org/luci/cq/api/config/v2;config\242\376#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfg'),
-  serialized_pb=_b('\n.go.chromium.org/luci/cq/api/config/v2/cq.proto\x12\tcq.config\x1a\x1egoogle/protobuf/duration.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"\xd9\x01\n\x06\x43onfig\x12\x1b\n\x13\x64raining_start_time\x18\x01 \x01(\t\x12\x1a\n\x0e\x63q_status_host\x18\x02 \x01(\tB\x02\x18\x01\x12\x30\n\x0esubmit_options\x18\x03 \x01(\x0b\x32\x18.cq.config.SubmitOptions\x12-\n\rconfig_groups\x18\x04 \x03(\x0b\x32\x16.cq.config.ConfigGroup\x12\x35\n\x16project_scoped_account\x18\x05 \x01(\x0e\x32\x11.cq.config.ToggleB\x02\x18\x01\"R\n\rSubmitOptions\x12\x11\n\tmax_burst\x18\x01 \x01(\x05\x12.\n\x0b\x62urst_delay\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xc7\x02\n\x0b\x43onfigGroup\x12\x0c\n\x04name\x18\x06 \x01(\t\x12-\n\x06gerrit\x18\x01 \x03(\x0b\x32\x1d.cq.config.ConfigGroup.Gerrit\x12*\n\x0b\x63ombine_cls\x18\x04 \x01(\x0b\x32\x15.cq.config.CombineCLs\x12\'\n\tverifiers\x18\x02 \x01(\x0b\x32\x14.cq.config.Verifiers\x12#\n\x08\x66\x61llback\x18\x05 \x01(\x0e\x32\x11.cq.config.Toggle\x1a{\n\x06Gerrit\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x37\n\x08projects\x18\x02 \x03(\x0b\x32%.cq.config.ConfigGroup.Gerrit.Project\x1a+\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nref_regexp\x18\x02 \x03(\tJ\x04\x08\x03\x10\x04\"D\n\nCombineCLs\x12\x36\n\x13stabilization_delay\x18\x01 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xe9\n\n\tVerifiers\x12?\n\x11gerrit_cq_ability\x18\x01 \x01(\x0b\x32$.cq.config.Verifiers.GerritCQAbility\x12\x34\n\x0btree_status\x18\x02 \x01(\x0b\x32\x1f.cq.config.Verifiers.TreeStatus\x12+\n\x06tryjob\x18\x03 \x01(\x0b\x32\x1b.cq.config.Verifiers.Tryjob\x12/\n\x08\x63qlinter\x18\x04 \x01(\x0b\x32\x1d.cq.config.Verifiers.CQLinter\x12\'\n\x04\x66\x61ke\x18\x05 \x01(\x0b\x32\x19.cq.config.Verifiers.Fake\x1a\xee\x01\n\x0fGerritCQAbility\x12\x16\n\x0e\x63ommitter_list\x18\x01 \x03(\t\x12\x1b\n\x13\x64ry_run_access_list\x18\x02 \x03(\t\x12#\n\x1b\x61llow_submit_with_open_deps\x18\x03 \x01(\x08\x12Q\n\x1a\x61llow_owner_if_submittable\x18\x04 \x01(\x0e\x32-.cq.config.Verifiers.GerritCQAbility.CQAction\".\n\x08\x43QAction\x12\t\n\x05UNSET\x10\x00\x12\x0b\n\x07\x44RY_RUN\x10\x01\x12\n\n\x06\x43OMMIT\x10\x02\x1a\x19\n\nTreeStatus\x12\x0b\n\x03url\x18\x01 \x01(\t\x1a\x88\x06\n\x06Tryjob\x12\x35\n\x08\x62uilders\x18\x01 \x03(\x0b\x32#.cq.config.Verifiers.Tryjob.Builder\x12=\n\x0cretry_config\x18\x02 \x01(\x0b\x32\'.cq.config.Verifiers.Tryjob.RetryConfig\x12/\n\x14\x63\x61ncel_stale_tryjobs\x18\x03 \x01(\x0e\x32\x11.cq.config.Toggle\x1a\xcf\x02\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fincludable_only\x18\t \x01(\x08\x12\x32\n\x11result_visibility\x18\n \x01(\x0e\x32\x17.cq.config.CommentLevel\x12\x15\n\rdisable_reuse\x18\x02 \x01(\x08\x12\x14\n\x0ctriggered_by\x18\x03 \x01(\t\x12\x1d\n\x15\x65xperiment_percentage\x18\x04 \x01(\x02\x12\x44\n\requivalent_to\x18\x05 \x01(\x0b\x32-.cq.config.Verifiers.Tryjob.EquivalentBuilder\x12\x17\n\x0flocation_regexp\x18\x06 \x03(\t\x12\x1f\n\x17location_regexp_exclude\x18\x07 \x03(\t\x12\x1d\n\x15owner_whitelist_group\x18\x08 \x03(\t\x1aT\n\x11\x45quivalentBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12\x1d\n\x15owner_whitelist_group\x18\x03 \x01(\t\x1a!\n\x11IncludableBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x1a\x8b\x01\n\x0bRetryConfig\x12\x14\n\x0csingle_quota\x18\x01 \x01(\x05\x12\x14\n\x0cglobal_quota\x18\x02 \x01(\x05\x12\x16\n\x0e\x66\x61ilure_weight\x18\x03 \x01(\x05\x12 \n\x18transient_failure_weight\x18\x04 \x01(\x05\x12\x16\n\x0etimeout_weight\x18\x05 \x01(\x05\x1a\n\n\x08\x43QLinter\x1a;\n\x04\x46\x61ke\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x65ventual_state\x18\x02 \x01(\t\x12\r\n\x05\x64\x65lay\x18\x03 \x01(\x05*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02*]\n\x0c\x43ommentLevel\x12\x17\n\x13\x43OMMENT_LEVEL_UNSET\x10\x00\x12\x16\n\x12\x43OMMENT_LEVEL_FULL\x10\x01\x12\x1c\n\x18\x43OMMENT_LEVEL_RESTRICTED\x10\x02\x42uZ,go.chromium.org/luci/cq/api/config/v2;config\xa2\xfe#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfgb\x06proto3')
+  serialized_pb=_b('\n.go.chromium.org/luci/cq/api/config/v2/cq.proto\x12\tcq.config\x1a\x1egoogle/protobuf/duration.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"\xd9\x01\n\x06\x43onfig\x12\x1b\n\x13\x64raining_start_time\x18\x01 \x01(\t\x12\x1a\n\x0e\x63q_status_host\x18\x02 \x01(\tB\x02\x18\x01\x12\x30\n\x0esubmit_options\x18\x03 \x01(\x0b\x32\x18.cq.config.SubmitOptions\x12-\n\rconfig_groups\x18\x04 \x03(\x0b\x32\x16.cq.config.ConfigGroup\x12\x35\n\x16project_scoped_account\x18\x05 \x01(\x0e\x32\x11.cq.config.ToggleB\x02\x18\x01\"R\n\rSubmitOptions\x12\x11\n\tmax_burst\x18\x01 \x01(\x05\x12.\n\x0b\x62urst_delay\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xc7\x02\n\x0b\x43onfigGroup\x12\x0c\n\x04name\x18\x06 \x01(\t\x12-\n\x06gerrit\x18\x01 \x03(\x0b\x32\x1d.cq.config.ConfigGroup.Gerrit\x12*\n\x0b\x63ombine_cls\x18\x04 \x01(\x0b\x32\x15.cq.config.CombineCLs\x12\'\n\tverifiers\x18\x02 \x01(\x0b\x32\x14.cq.config.Verifiers\x12#\n\x08\x66\x61llback\x18\x05 \x01(\x0e\x32\x11.cq.config.Toggle\x1a{\n\x06Gerrit\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x37\n\x08projects\x18\x02 \x03(\x0b\x32%.cq.config.ConfigGroup.Gerrit.Project\x1a+\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nref_regexp\x18\x02 \x03(\tJ\x04\x08\x03\x10\x04\"D\n\nCombineCLs\x12\x36\n\x13stabilization_delay\x18\x01 \x01(\x0b\x32\x19.google.protobuf.Duration\"\x92\x0b\n\tVerifiers\x12?\n\x11gerrit_cq_ability\x18\x01 \x01(\x0b\x32$.cq.config.Verifiers.GerritCQAbility\x12\x34\n\x0btree_status\x18\x02 \x01(\x0b\x32\x1f.cq.config.Verifiers.TreeStatus\x12+\n\x06tryjob\x18\x03 \x01(\x0b\x32\x1b.cq.config.Verifiers.Tryjob\x12/\n\x08\x63qlinter\x18\x04 \x01(\x0b\x32\x1d.cq.config.Verifiers.CQLinter\x12\'\n\x04\x66\x61ke\x18\x05 \x01(\x0b\x32\x19.cq.config.Verifiers.Fake\x1a\xee\x01\n\x0fGerritCQAbility\x12\x16\n\x0e\x63ommitter_list\x18\x01 \x03(\t\x12\x1b\n\x13\x64ry_run_access_list\x18\x02 \x03(\t\x12#\n\x1b\x61llow_submit_with_open_deps\x18\x03 \x01(\x08\x12Q\n\x1a\x61llow_owner_if_submittable\x18\x04 \x01(\x0e\x32-.cq.config.Verifiers.GerritCQAbility.CQAction\".\n\x08\x43QAction\x12\t\n\x05UNSET\x10\x00\x12\x0b\n\x07\x44RY_RUN\x10\x01\x12\n\n\x06\x43OMMIT\x10\x02\x1a\x19\n\nTreeStatus\x12\x0b\n\x03url\x18\x01 \x01(\t\x1a\xb1\x06\n\x06Tryjob\x12\x35\n\x08\x62uilders\x18\x01 \x03(\x0b\x32#.cq.config.Verifiers.Tryjob.Builder\x12=\n\x0cretry_config\x18\x02 \x01(\x0b\x32\'.cq.config.Verifiers.Tryjob.RetryConfig\x12/\n\x14\x63\x61ncel_stale_tryjobs\x18\x03 \x01(\x0e\x32\x11.cq.config.Toggle\x1a\xf8\x02\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fincludable_only\x18\t \x01(\x08\x12\x32\n\x11result_visibility\x18\n \x01(\x0e\x32\x17.cq.config.CommentLevel\x12\x15\n\rdisable_reuse\x18\x02 \x01(\x08\x12\'\n\x0c\x63\x61ncel_stale\x18\x0b \x01(\x0e\x32\x11.cq.config.Toggle\x12\x14\n\x0ctriggered_by\x18\x03 \x01(\t\x12\x1d\n\x15\x65xperiment_percentage\x18\x04 \x01(\x02\x12\x44\n\requivalent_to\x18\x05 \x01(\x0b\x32-.cq.config.Verifiers.Tryjob.EquivalentBuilder\x12\x17\n\x0flocation_regexp\x18\x06 \x03(\t\x12\x1f\n\x17location_regexp_exclude\x18\x07 \x03(\t\x12\x1d\n\x15owner_whitelist_group\x18\x08 \x03(\t\x1aT\n\x11\x45quivalentBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12\x1d\n\x15owner_whitelist_group\x18\x03 \x01(\t\x1a!\n\x11IncludableBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x1a\x8b\x01\n\x0bRetryConfig\x12\x14\n\x0csingle_quota\x18\x01 \x01(\x05\x12\x14\n\x0cglobal_quota\x18\x02 \x01(\x05\x12\x16\n\x0e\x66\x61ilure_weight\x18\x03 \x01(\x05\x12 \n\x18transient_failure_weight\x18\x04 \x01(\x05\x12\x16\n\x0etimeout_weight\x18\x05 \x01(\x05\x1a\n\n\x08\x43QLinter\x1a;\n\x04\x46\x61ke\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x65ventual_state\x18\x02 \x01(\t\x12\r\n\x05\x64\x65lay\x18\x03 \x01(\x05*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02*]\n\x0c\x43ommentLevel\x12\x17\n\x13\x43OMMENT_LEVEL_UNSET\x10\x00\x12\x16\n\x12\x43OMMENT_LEVEL_FULL\x10\x01\x12\x1c\n\x18\x43OMMENT_LEVEL_RESTRICTED\x10\x02\x42uZ,go.chromium.org/luci/cq/api/config/v2;config\xa2\xfe#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfgb\x06proto3')
   ,
   dependencies=[google_dot_protobuf_dot_duration__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_options__pb2.DESCRIPTOR,])
 
@@ -47,8 +47,8 @@ _TOGGLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2234,
-  serialized_end=2270,
+  serialized_start=2275,
+  serialized_end=2311,
 )
 _sym_db.RegisterEnumDescriptor(_TOGGLE)
 
@@ -74,8 +74,8 @@ _COMMENTLEVEL = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2272,
-  serialized_end=2365,
+  serialized_start=2313,
+  serialized_end=2406,
 )
 _sym_db.RegisterEnumDescriptor(_COMMENTLEVEL)
 
@@ -494,42 +494,49 @@ _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='triggered_by', full_name='cq.config.Verifiers.Tryjob.Builder.triggered_by', index=4,
+      name='cancel_stale', full_name='cq.config.Verifiers.Tryjob.Builder.cancel_stale', index=4,
+      number=11, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='triggered_by', full_name='cq.config.Verifiers.Tryjob.Builder.triggered_by', index=5,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='experiment_percentage', full_name='cq.config.Verifiers.Tryjob.Builder.experiment_percentage', index=5,
+      name='experiment_percentage', full_name='cq.config.Verifiers.Tryjob.Builder.experiment_percentage', index=6,
       number=4, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='equivalent_to', full_name='cq.config.Verifiers.Tryjob.Builder.equivalent_to', index=6,
+      name='equivalent_to', full_name='cq.config.Verifiers.Tryjob.Builder.equivalent_to', index=7,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='location_regexp', full_name='cq.config.Verifiers.Tryjob.Builder.location_regexp', index=7,
+      name='location_regexp', full_name='cq.config.Verifiers.Tryjob.Builder.location_regexp', index=8,
       number=6, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='location_regexp_exclude', full_name='cq.config.Verifiers.Tryjob.Builder.location_regexp_exclude', index=8,
+      name='location_regexp_exclude', full_name='cq.config.Verifiers.Tryjob.Builder.location_regexp_exclude', index=9,
       number=7, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='owner_whitelist_group', full_name='cq.config.Verifiers.Tryjob.Builder.owner_whitelist_group', index=9,
+      name='owner_whitelist_group', full_name='cq.config.Verifiers.Tryjob.Builder.owner_whitelist_group', index=10,
       number=8, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -548,7 +555,7 @@ _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1561,
-  serialized_end=1896,
+  serialized_end=1937,
 )
 
 _VERIFIERS_TRYJOB_EQUIVALENTBUILDER = _descriptor.Descriptor(
@@ -591,8 +598,8 @@ _VERIFIERS_TRYJOB_EQUIVALENTBUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1898,
-  serialized_end=1982,
+  serialized_start=1939,
+  serialized_end=2023,
 )
 
 _VERIFIERS_TRYJOB_INCLUDABLEBUILDER = _descriptor.Descriptor(
@@ -621,8 +628,8 @@ _VERIFIERS_TRYJOB_INCLUDABLEBUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1984,
-  serialized_end=2017,
+  serialized_start=2025,
+  serialized_end=2058,
 )
 
 _VERIFIERS_TRYJOB_RETRYCONFIG = _descriptor.Descriptor(
@@ -679,8 +686,8 @@ _VERIFIERS_TRYJOB_RETRYCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2020,
-  serialized_end=2159,
+  serialized_start=2061,
+  serialized_end=2200,
 )
 
 _VERIFIERS_TRYJOB = _descriptor.Descriptor(
@@ -724,7 +731,7 @@ _VERIFIERS_TRYJOB = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1383,
-  serialized_end=2159,
+  serialized_end=2200,
 )
 
 _VERIFIERS_CQLINTER = _descriptor.Descriptor(
@@ -746,8 +753,8 @@ _VERIFIERS_CQLINTER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2161,
-  serialized_end=2171,
+  serialized_start=2202,
+  serialized_end=2212,
 )
 
 _VERIFIERS_FAKE = _descriptor.Descriptor(
@@ -790,8 +797,8 @@ _VERIFIERS_FAKE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2173,
-  serialized_end=2232,
+  serialized_start=2214,
+  serialized_end=2273,
 )
 
 _VERIFIERS = _descriptor.Descriptor(
@@ -849,7 +856,7 @@ _VERIFIERS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=847,
-  serialized_end=2232,
+  serialized_end=2273,
 )
 
 _CONFIG.fields_by_name['submit_options'].message_type = _SUBMITOPTIONS
@@ -869,6 +876,7 @@ _VERIFIERS_GERRITCQABILITY.containing_type = _VERIFIERS
 _VERIFIERS_GERRITCQABILITY_CQACTION.containing_type = _VERIFIERS_GERRITCQABILITY
 _VERIFIERS_TREESTATUS.containing_type = _VERIFIERS
 _VERIFIERS_TRYJOB_BUILDER.fields_by_name['result_visibility'].enum_type = _COMMENTLEVEL
+_VERIFIERS_TRYJOB_BUILDER.fields_by_name['cancel_stale'].enum_type = _TOGGLE
 _VERIFIERS_TRYJOB_BUILDER.fields_by_name['equivalent_to'].message_type = _VERIFIERS_TRYJOB_EQUIVALENTBUILDER
 _VERIFIERS_TRYJOB_BUILDER.containing_type = _VERIFIERS_TRYJOB
 _VERIFIERS_TRYJOB_EQUIVALENTBUILDER.containing_type = _VERIFIERS_TRYJOB
