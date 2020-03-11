@@ -127,12 +127,17 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	for t, r := range taggedRequests {
 		var errs errors.MultiError
 		ts, err := c.enumerate(tms[t], r)
-		resps[t] = &steps.EnumerationResponse{AutotestInvocations: ts}
 		if err != nil {
 			errs = append(errs, err)
 		}
-		if ierrs := validateEnumeration(ts); ierrs != nil {
+		ts, ierrs := validateEnumeration(ts)
+		if ierrs != nil {
 			errs = append(errs, ierrs...)
+		}
+
+		resps[t] = &steps.EnumerationResponse{}
+		if len(ts) > 0 {
+			resps[t].AutotestInvocations = ts
 		}
 		if errs != nil {
 			resps[t].ErrorSummary = errs.Error()
@@ -146,18 +151,21 @@ func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env su
 	})
 }
 
-func validateEnumeration(ts []*steps.EnumerationResponse_AutotestInvocation) errors.MultiError {
+func validateEnumeration(ts []*steps.EnumerationResponse_AutotestInvocation) ([]*steps.EnumerationResponse_AutotestInvocation, errors.MultiError) {
 	if len(ts) == 0 {
-		return errors.NewMultiError(errors.Reason("empty enumeration").Err())
+		return ts, errors.NewMultiError(errors.Reason("empty enumeration").Err())
 	}
 
+	vts := make([]*steps.EnumerationResponse_AutotestInvocation, 0, len(ts))
 	var merr errors.MultiError
 	for _, t := range ts {
 		if err := validateInvocation(t); err != nil {
 			merr = append(merr, errors.Annotate(err, "validate %s", t).Err())
+		} else {
+			vts = append(vts, t)
 		}
 	}
-	return errorsOrNil(merr)
+	return vts, errorsOrNil(merr)
 }
 
 func errorsOrNil(merr errors.MultiError) errors.MultiError {
