@@ -382,6 +382,9 @@ func errIsTransient(err error) bool {
 	if strings.Contains(err.Error(), "connection reset by peer") {
 		return true
 	}
+	if strings.Contains(err.Error(), "unexpected EOF") {
+		return true
+	}
 	return false
 }
 
