@@ -4609,10 +4609,11 @@ class WorkEnvTest(unittest.TestCase):
     owner_ids = [self.user_1.user_id]
     editor_ids = [self.user_2.user_id]
     hotlist_items = [
-        (78904, 31, self.user_3.user_id, self.PAST_TIME, 'note'),
-        (78903, 21, self.user_1.user_id, self.PAST_TIME, 'note'),
-        (78902, 11, self.user_2.user_id, self.PAST_TIME, 'note'),
-        (78901, 1, self.user_1.user_id, self.PAST_TIME, 'note')]
+        (78904, 31, self.user_3.user_id, self.PAST_TIME, ''),
+        (78903, 21, self.user_1.user_id, self.PAST_TIME, ''),
+        (78902, 11, self.user_2.user_id, self.PAST_TIME, ''),
+        (78901, 1, self.user_1.user_id, self.PAST_TIME, '')
+    ]
     return self.work_env.services.features.TestAddHotlist(
         'HotlistName', owner_ids=owner_ids, editor_ids=editor_ids,
         hotlist_item_fields=hotlist_items)
@@ -4647,21 +4648,58 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.RemoveHotlistItems(hotlist.hotlist_id, [404])
 
-  def testRerankHotlistItems(self):
-    """We can rerank hotlist items to the middle."""
+  @mock.patch('time.time')
+  def testRerankHotlistItems(self, fake_time):
+    """We can rerank new and existing hotlist issues."""
+    fake_time.return_value = self.PAST_TIME
     hotlist = self.createHotlistWithItems()
-    moved_ids = [78901, 78903]
+    # moved_ids include new issues not in hotlist: [78907, 78909]
+    moved_ids = [78901, 78907, 78903, 78909]
     target_position = 1
     self.SignIn(self.user_2.user_id)
     with self.work_env as we:
       updated_hotlist = we.RerankHotlistItems(
           hotlist.hotlist_id, moved_ids, target_position)
 
-    self.assertEqual(
-        [item.issue_id for item in updated_hotlist.items],
-        [78902, 78901, 78903, 78904])
+    expected_hotlist_items = [
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78902,
+            rank=11,
+            note='',
+            adder_id=self.user_2.user_id,
+            date_added=self.PAST_TIME),
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78901,
+            rank=14,
+            note='',
+            adder_id=self.user_1.user_id,
+            date_added=self.PAST_TIME),
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78907,
+            rank=19,
+            adder_id=self.user_2.user_id,
+            date_added=self.PAST_TIME),
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78903,
+            rank=24,
+            note='',
+            adder_id=self.user_1.user_id,
+            date_added=self.PAST_TIME),
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78909,
+            rank=29,
+            adder_id=self.user_2.user_id,
+            date_added=self.PAST_TIME),
+        features_pb2.Hotlist.HotlistItem(
+            issue_id=78904,
+            rank=31,
+            note='',
+            adder_id=self.user_3.user_id,
+            date_added=self.PAST_TIME),
+    ]
+    self.assertEqual(updated_hotlist.items, expected_hotlist_items)
 
-  def testRerankHotlistIssues_NoPerms(self):
+  def testRerankHotlistItems_NoPerms(self):
     """We don't let non editors/owners update issue ranks."""
     hotlist = self.createHotlistWithItems()
     moved_ids = [78901]
@@ -4672,7 +4710,7 @@ class WorkEnvTest(unittest.TestCase):
         we.RerankHotlistItems(
             hotlist.hotlist_id, moved_ids, target_position)
 
-  def testRerankHotlistIssues_MoveEntireList(self):
+  def testRerankHotlistItemss_MoveEntireList(self):
     hotlist = self.createHotlistWithItems()
     moved_ids = [78902, 78901, 78904, 78903]
     target_position = 0
@@ -4685,7 +4723,7 @@ class WorkEnvTest(unittest.TestCase):
         [item.issue_id for item in updated_hotlist.items],
         [78902, 78901, 78904, 78903])
 
-  def testRerankHotlistIssues_SamePosition(self):
+  def testRerankHotlistItems_SamePosition(self):
     hotlist = self.createHotlistWithItems()
     moved_ids = [78902]
     target_position = 1
@@ -4698,7 +4736,7 @@ class WorkEnvTest(unittest.TestCase):
         [item.issue_id for item in updated_hotlist.items],
         [78901, 78902, 78903, 78904])
 
-  def testRerankHotlistIssues_NoItemsGiven(self):
+  def testRerankHotlistItems_NoItemsGiven(self):
     hotlist = self.createHotlistWithItems()
     moved_ids = []
     target_position = 1
@@ -4708,6 +4746,8 @@ class WorkEnvTest(unittest.TestCase):
         we.RerankHotlistItems(
             hotlist.hotlist_id, moved_ids, target_position)
 
+  # TODO(crbug/monorail/7104): Remove these tests once RerankHotlistIssues
+  # is deleted.
   def testRerankHotlistIssues_SplitAbove(self):
     """We can rerank issues in a hotlist with split_above = true."""
     owner_ids = [self.user_1.user_id]

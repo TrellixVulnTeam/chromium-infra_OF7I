@@ -2395,7 +2395,7 @@ class FeaturesService(object):
     for issue_id in remove_issue_ids + updated_ids:
       try:
         self.hotlists_id_by_issue[issue_id].remove(hotlist_id)
-      except ValueError:
+      except (ValueError, KeyError):
         pass
     # Add all new or updated issues.
     for item in updated_items:

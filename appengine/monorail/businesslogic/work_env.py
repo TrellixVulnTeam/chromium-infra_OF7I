@@ -73,6 +73,7 @@ from tracker import rerank_helpers
 from tracker import tracker_bizobj
 from tracker import tracker_constants
 from tracker import tracker_helpers
+from proto import features_pb2
 from proto import project_pb2
 from proto import tracker_pb2
 from proto import user_pb2
@@ -2615,20 +2616,37 @@ class WorkEnv(object):
         self.mc.cnxn, hotlist_id, [], remove_issue_ids, self.services.issue,
         self.services.chart)
 
+  # TODO(crbug/monorail/7104): Rename current RerankHotlistItems to
+  # UpdateHotlistItems. Create a new RerankHotlistItems to call
+  # UpdateHotlistItems, after checking the moved_issue_ids only includes issues
+  # that already exist in the Hotlist.
+
+  # TODO(crbug/monorail/7104): Create an AddHotlistItems to call
+  # UpdateHotlistItems, after checking that new_issue_ids don't already exist
+  # in the Hotlist
+
+  # TODO(crbug/monorail/7104): This method will be called for v3's
+  # RerankHotlistItems and AddHotlistItems paths. We decided to not merge
+  # these two v3 methods together as this may confuse the user because these
+  # are different concepts, even though the backend implementation is the same.
   def RerankHotlistItems(self, hotlist_id, moved_issue_ids, target_position):
     # type: (int, list(int), int) -> Hotlist
-    """Rerank the moved items for a hotlist.
+    """Rerank HotlistItems to accommodate moving existing/new issues.
+
+      This method can rerank existing hotlist items or add new hotlist items
+      to the given target_position.
         e.g. For a hotlist with items (a, b, c, d, e), if moved_issue_ids were
-        [e.issue_id, c.issue_id] and target_position were 0, the hotlist items
-        would be reranked as (e, c, a, b, d).
+        [e.issue_id, c.issue_id, new_issue_id] and target_position were 0,
+        the hotlist items would be reranked as (e, c, new_item, a, b, d).
 
     Args:
       hotlist_id: A hotlist ID of the hotlist to rerank.
-      moved_issue_ids: A list of issue IDs to be moved together, in the order
-        they should have after the reranking.
+      moved_issue_ids: A list of issue IDs for new or existing items of the
+        Hotlist, to be moved together, in the order they should have after
+        the reranking.
       target_position: The index, starting at 0, of the new position the
         first issue in moved_issue_ids should have. This value cannot be greater
-        than (len(hotlist.items) - len(moved_issue_ids)).
+        than (# of current hotlist.items not being reranked).
 
     Returns:
       The updated hotlist.
@@ -2643,12 +2661,30 @@ class WorkEnv(object):
     if not moved_issue_ids:
       raise exceptions.InputException('`moved_issue_ids` empty.')
 
-    rank_changes = rerank_helpers.GetHotlistRerankChanges(
+    # TODO(crbug/monorail/7318): Check user has permission to view every issue
+
+    # List[Tuple[issue_id, new_rank]]
+    changed_item_ranks = rerank_helpers.GetHotlistRerankChanges(
         hotlist.items, moved_issue_ids, target_position)
-    if rank_changes:
-      relations_to_change = dict(rank_changes)
-      self.services.features.UpdateHotlistItemsFields(
-          self.mc.cnxn, hotlist_id, new_ranks=relations_to_change)
+
+    items_by_id = {item.issue_id: item for item in hotlist.items}
+    changed_items = []
+    current_time = int(time.time())
+    for issue_id, rank in changed_item_ranks:
+      # Get existing item to update or create new item.
+      item = items_by_id.get(
+          issue_id,
+          features_pb2.Hotlist.HotlistItem(
+              issue_id=issue_id,
+              adder_id=self.mc.auth.user_id,
+              date_added=current_time))
+      item.rank = rank
+      changed_items.append(item)
+
+    if changed_items:
+      self.services.features.UpdateHotlistIssues(
+          self.mc.cnxn, hotlist_id, changed_items, [], self.services.issue,
+          self.services.chart)
 
     return self.GetHotlist(hotlist.hotlist_id)
 
