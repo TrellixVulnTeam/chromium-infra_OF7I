@@ -83,6 +83,27 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
 
   @monorail_servicer.PRPCMethod
+  def RemoveHotlistItems(self, mc, request):
+    # type: (MonorailConnection, RemoveHotlistItemsRequest) -> Empty
+    """pPRC API method that implements RemoveHotlistItems.
+
+    Raises:
+      NoSuchHotlistException if the hotlist is not found.
+      PermissionException if the user is not allowed to edit the hotlist.
+      InputException if the items to be removed are not found in the hotlist.
+    """
+
+    hotlist_id = rnc.IngestHotlistName(request.parent)
+    remove_issue_ids = rnc.IngestIssueNames(
+        mc.cnxn, request.issues, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.RemoveHotlistItems(hotlist_id, remove_issue_ids)
+
+    return empty_pb2.Empty()
+
+
+  @monorail_servicer.PRPCMethod
   def GetHotlist(self, mc, request):
     # MonorailConnection, GetHotlistRequest -> Hotlist
     """pRPC API method that implements GetHotlist.

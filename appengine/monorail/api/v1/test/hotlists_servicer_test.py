@@ -58,6 +58,10 @@ class HotlistsServicerTest(unittest.TestCase):
     self.services.issue.TestAddIssue(self.issue_2)
     self.services.issue.TestAddIssue(self.issue_3)
     self.services.issue.TestAddIssue(self.issue_4)
+    issue_ids = [self.issue_1.issue_id, self.issue_2.issue_id,
+                 self.issue_3.issue_id, self.issue_4.issue_id]
+    self.issue_ids_to_name = rnc.ConvertIssueNames(
+        self.cnxn, issue_ids, self.services)
 
     hotlist_items = [
         (
@@ -138,6 +142,22 @@ class HotlistsServicerTest(unittest.TestCase):
         [item.issue_id for item in updated_hotlist.items],
         [self.issue_4.issue_id, self.issue_3.issue_id,
          self.issue_1.issue_id, self.issue_2.issue_id])
+
+  def testRemoveHotlistItems(self):
+    """We can remove items from a Hotlist."""
+    issue_1_name = self.issue_ids_to_name[self.issue_1.issue_id]
+    issue_2_name = self.issue_ids_to_name[self.issue_2.issue_id]
+    request = hotlists_pb2.RemoveHotlistItemsRequest(
+        parent=self.hotlist_resource_name, issues=[issue_1_name, issue_2_name])
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    self.CallWrapped(self.hotlists_svcr.RemoveHotlistItems, mc, request)
+    updated_hotlist = self.services.features.GetHotlist(
+        self.cnxn, self.hotlist_1.hotlist_id)
+    # The hotlist used to have 4 items and we've removed two.
+    self.assertEqual(len(updated_hotlist.items), 2)
 
   def testGetHotlist(self):
     """We can get a Hotlist."""

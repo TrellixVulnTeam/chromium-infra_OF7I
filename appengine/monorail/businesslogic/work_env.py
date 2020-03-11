@@ -2600,6 +2600,12 @@ class WorkEnv(object):
       hotlist_id: A hotlist ID of the hotlist to remove issues from.
       remove_issue_ids: A list of issue IDs that belong to HotlistItems
         we want to remove from the hotlist.
+
+    Raises:
+      NoSuchHotlistException: If the hotlist is not found.
+      PermissionException: If the user lacks permissions to edit the hotlist.
+      InputException: If there are ids in `remove_issue_ids` that do not exist
+        in the hotlist.
     """
     hotlist = self.GetHotlist(hotlist_id)
     self._AssertUserCanEditHotlist(hotlist)

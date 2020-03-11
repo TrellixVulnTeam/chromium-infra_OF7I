@@ -171,7 +171,7 @@ message AddHotlistItemsRequest {
       (google.api.field_behavior) = REQUIRED,
       (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"} ];
   // Resource names of Issues to associate with new HotlistItems added to `parent`.
-  repeated string issue = 2 [
+  repeated string issues = 2 [
       (google.api.field_behavior) = REQUIRED,
       (google.api.resource_reference) = {type: "api.crbug.com/Issue"} ];
   // Target starting position of the new items.
@@ -194,7 +194,7 @@ message RemoveHotlistItemsRequest {
       (google.api.field_behavior) = REQUIRED,
       (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"} ];
   // Resource names of Issues associated with HotlistItems that should be removed.
-  repeated string issue = 2 [
+  repeated string issues = 2 [
       (google.api.field_behavior) = REQUIRED,
       (google.api.resource_reference) = {type: "api.crbug.com/Issue"} ];
 }
