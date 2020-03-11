@@ -6,8 +6,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -58,19 +56,19 @@ type enumerateRun struct {
 }
 
 func (c *enumerateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	err := c.innerRun(a, args, env)
+	ctx := cli.GetContext(a, c, env)
+	ctx = setupLogging(ctx)
+	err := c.innerRun(ctx, args)
 	if err != nil {
-		fmt.Fprintf(a.GetErr(), "%s\n", err)
+		logApplicationError(ctx, a, err)
 	}
 	return exitCode(err)
 }
 
-func (c *enumerateRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 	if err := c.processCLIArgs(args); err != nil {
 		return err
 	}
-	ctx := cli.GetContext(a, c, env)
-	ctx = setupLogging(ctx)
 
 	dl := debugLogger{enabled: c.debug}
 

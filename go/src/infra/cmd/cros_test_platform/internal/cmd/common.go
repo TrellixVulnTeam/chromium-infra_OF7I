@@ -6,11 +6,13 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
@@ -91,4 +93,13 @@ var partialErrorTag = errors.BoolTag{Key: errors.NewTagKey("partial results are 
 
 func setupLogging(ctx context.Context) context.Context {
 	return logging.SetLevel(ctx, logging.Debug)
+}
+
+// logApplicationError logs the error returned to the entry function of an
+// application.
+func logApplicationError(ctx context.Context, a subcommands.Application, err error) {
+	errors.Log(ctx, err)
+	// Also log to error stream, since logs are directed at the main output
+	// stream.
+	fmt.Fprintf(a.GetErr(), "%s\n", err)
 }

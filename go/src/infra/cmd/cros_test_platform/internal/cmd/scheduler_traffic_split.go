@@ -5,14 +5,13 @@
 package cmd
 
 import (
-	"fmt"
-
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"context"
 
 	"infra/cmd/cros_test_platform/internal/site"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -50,19 +49,19 @@ type schedulerTrafficSplitRun struct {
 }
 
 func (c *schedulerTrafficSplitRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	err := c.innerRun(a, args, env)
+	ctx := cli.GetContext(a, c, env)
+	ctx = setupLogging(ctx)
+	err := c.innerRun(ctx, args)
 	if err != nil {
-		fmt.Fprintf(a.GetErr(), "%s\n", err)
+		logApplicationError(ctx, a, err)
 	}
 	return exitCode(err)
 }
 
-func (c *schedulerTrafficSplitRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *schedulerTrafficSplitRun) innerRun(ctx context.Context, args []string) error {
 	if err := c.processCLIArgs(args); err != nil {
 		return err
 	}
-	ctx := cli.GetContext(a, c, env)
-	ctx = setupLogging(ctx)
 
 	rs, err := c.readRequests()
 	if err != nil {

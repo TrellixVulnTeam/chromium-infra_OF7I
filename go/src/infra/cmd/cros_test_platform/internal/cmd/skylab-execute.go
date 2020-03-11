@@ -53,9 +53,11 @@ func (c *skylabExecuteRun) Run(a subcommands.Application, args []string, env sub
 		return exitCode(err)
 	}
 
-	err := c.innerRun(a, args, env)
+	ctx := cli.GetContext(a, c, env)
+	ctx = setupLogging(ctx)
+	err := c.innerRun(ctx, args, env)
 	if err != nil {
-		fmt.Fprintf(a.GetErr(), "%s\n", err)
+		logApplicationError(ctx, a, err)
 	}
 	return exitCode(err)
 }
@@ -72,10 +74,7 @@ func (c *skylabExecuteRun) validateArgs() error {
 	return nil
 }
 
-func (c *skylabExecuteRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	ctx := cli.GetContext(a, c, env)
-	ctx = setupLogging(ctx)
-
+func (c *skylabExecuteRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	var request steps.ExecuteRequests
 	if err := readRequest(c.inputPath, &request); err != nil {
 		return err

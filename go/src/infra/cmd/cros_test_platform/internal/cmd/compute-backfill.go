@@ -5,11 +5,11 @@
 package cmd
 
 import (
-	"fmt"
+	"context"
+
 	"infra/cmd/cros_test_platform/internal/backfill"
 
 	"github.com/maruel/subcommands"
-
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -38,19 +38,19 @@ type computeBackfillRun struct {
 }
 
 func (c *computeBackfillRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
-	err := c.innerRun(a, args, env)
+	ctx := cli.GetContext(a, c, env)
+	ctx = setupLogging(ctx)
+	err := c.innerRun(ctx, args)
 	if err != nil {
-		fmt.Fprintf(a.GetErr(), "%s\n", err)
+		logApplicationError(ctx, a, err)
 	}
 	return exitCode(err)
 }
 
-func (c *computeBackfillRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *computeBackfillRun) innerRun(ctx context.Context, args []string) error {
 	if err := c.processCLIArgs(args); err != nil {
 		return err
 	}
-	ctx := cli.GetContext(a, c, env)
-	ctx = setupLogging(ctx)
 
 	requests, err := c.readRequests()
 	if err != nil {
