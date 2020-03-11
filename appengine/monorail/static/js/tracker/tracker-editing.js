@@ -64,6 +64,26 @@ let TKR_LABEL_RESERVED_PREFIXES = [
   'derived_label', 'last_comment_by', 'exact_component',
   'explicit_component', 'derived_component'];
 
+
+/**
+ * Appends a given child element to the DOM based on parameters.
+ * @param {HTMLElement} parentEl
+ * @param {string} tag
+ * @param {string} optClassName
+ * @param {string} optID
+ * @param {string} optText
+ * @param {string} optStyle
+*/
+function TKR_createChild(parentEl, tag, optClassName, optID, optText, optStyle) {
+  let el = document.createElement(tag);
+  if (optClassName) el.classList.add(optClassName);
+  if (optID) el.id = optID;
+  if (optText) el.textContent = optText;
+  if (optStyle) el.setAttribute('style', optStyle);
+  parentEl.appendChild(el);
+  return el;
+}
+
 /**
  * Select all the issues on the issue list page.
  */
