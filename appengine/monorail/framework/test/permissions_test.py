@@ -1729,26 +1729,33 @@ class IssuePermissionsTest(unittest.TestCase):
         {111}, permissions.PermissionSet([]),
         None, fd))
 
-  def testCanEditValueForField_FieldEditor(self):
-    fd = tracker_pb2.FieldDef(editor_ids=[111])
-    perms = permissions.PermissionSet([])
-    self.assertTrue(permissions.CanEditValueForField({111}, perms, None, fd))
-    self.assertFalse(permissions.CanEditValueForField({999}, perms, None, fd))
-
-  def testCanEditValueForField_FieldAdmin(self):
-    fd = tracker_pb2.FieldDef(admin_ids=[111])
-    perms = permissions.PermissionSet([])
-    self.assertTrue(permissions.CanEditValueForField({111}, perms, None, fd))
-    self.assertFalse(permissions.CanEditValueForField({999}, perms, None, fd))
-
-  def testCanEditValueForField_ProjectOwners(self):
+  def testCanEditValueForFieldDef_NotRestrictedField(self):
     fd = tracker_pb2.FieldDef()
+    perms = permissions.PermissionSet([])
+    self.assertTrue(permissions.CanEditValueForFieldDef({111}, perms, None, fd))
+
+  def testCanEditValueForFieldDef_RestrictedFieldEditor(self):
+    fd = tracker_pb2.FieldDef(is_restricted_field=True, editor_ids=[111])
+    perms = permissions.PermissionSet([])
+    self.assertTrue(permissions.CanEditValueForFieldDef({111}, perms, None, fd))
+    self.assertFalse(
+        permissions.CanEditValueForFieldDef({999}, perms, None, fd))
+
+  def testCanEditValueForFieldDef_RestrictedFieldAdmin(self):
+    fd = tracker_pb2.FieldDef(is_restricted_field=True, admin_ids=[111])
+    perms = permissions.PermissionSet([])
+    self.assertTrue(permissions.CanEditValueForFieldDef({111}, perms, None, fd))
+    self.assertFalse(
+        permissions.CanEditValueForFieldDef({999}, perms, None, fd))
+
+  def testCanEditValueForFieldDef_ProjectOwners(self):
+    fd = tracker_pb2.FieldDef(is_restricted_field=True)
     self.assertTrue(
-        permissions.CanEditValueForField(
+        permissions.CanEditValueForFieldDef(
             {111}, permissions.PermissionSet([permissions.EDIT_PROJECT]), None,
             fd))
     self.assertFalse(
-        permissions.CanEditValueForField(
+        permissions.CanEditValueForFieldDef(
             {111}, permissions.PermissionSet([]), None, fd))
 
   def testCanViewTemplate_TemplateAdmin(self):

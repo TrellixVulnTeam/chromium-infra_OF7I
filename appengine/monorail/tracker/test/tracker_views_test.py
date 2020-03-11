@@ -345,6 +345,8 @@ class FieldValueViewTest(unittest.TestCase):
     derived_values = [template_helpers.EZTItem(val=88, docstring=None, idx=0)]
     estdays_fvv = tracker_views.FieldValueView(
         self.estdays_fd, self.config, values, derived_values, ['defect'])
+    self.assertEqual(self.estdays_fd, estdays_fvv.field_def.field_def)
+    self.assertTrue(estdays_fvv.is_editable)
     self.assertEqual(values, estdays_fvv.values)
     self.assertEqual(derived_values, estdays_fvv.derived_values)
     self.assertEqual('', estdays_fvv.phase_name)
@@ -687,6 +689,7 @@ class FieldDefViewTest(unittest.TestCase):
         self.field_def, config, user_views=user_views)
 
     self.assertEqual('AffectedUsers', view.field_name)
+    self.assertEqual(self.field_def, view.field_def)
     self.assertEqual('descriptive docstring', view.docstring_short)
     self.assertEqual('INT_TYPE', view.type_name)
     self.assertEqual([], view.choices)

@@ -71,8 +71,8 @@ class IssueBulkEditTest(unittest.TestCase):
     """Restore mocked objects of other modules."""
     self.testbed.deactivate()
     for obj, items in self.mocked_methods.items():
-        for member, previous_value in items.items():
-          setattr(obj, member, previous_value)
+      for member, previous_value in items.items():
+        setattr(obj, member, previous_value)
 
   def testAssertBasePermission(self):
     """Permit users with EDIT_ISSUE and ADD_ISSUE_COMMENT permissions."""
@@ -94,6 +94,65 @@ class IssueBulkEditTest(unittest.TestCase):
 
     page_data = self.servlet.GatherPageData(mr)
     self.assertEqual(1, page_data['num_issues'])
+
+  def testGatherPageData_CustomFieldEdition(self):
+    """Test GPD works in a normal no-corner-cases case."""
+    local_id_1, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, 789, 'issue summary', 'New', None, [], [], [],
+        [], 111, 'test issue')
+    mr = testing_helpers.MakeMonorailRequest(
+        project=self.project, perms=permissions.PermissionSet([]))
+    mr.local_id_list = [local_id_1]
+
+    fd_not_restricted = tracker_bizobj.MakeFieldDef(
+        123,
+        789,
+        'CPU',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=False)
+    self.config.field_defs.append(fd_not_restricted)
+
+    fd_restricted = tracker_bizobj.MakeFieldDef(
+        124,
+        789,
+        'CPU',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    self.config.field_defs.append(fd_restricted)
+
+    page_data = self.servlet.GatherPageData(mr)
+    self.assertTrue(page_data['fields'][0].is_editable)
+    self.assertFalse(page_data['fields'][1].is_editable)
 
   def testGatherPageData_NoIssues(self):
     """Test GPD when no issues are specified in the mr."""

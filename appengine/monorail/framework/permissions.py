@@ -1155,11 +1155,13 @@ def CanEditFieldDef(effective_ids, perms, project, field_def):
   return perms.CanUsePerm(EDIT_PROJECT, effective_ids, project, [])
 
 
-def CanEditValueForField(effective_ids, perms, project, field_def):
-  """Return True if a user can edit the given field definition value."""
+def CanEditValueForFieldDef(effective_ids, perms, project, field_def):
+  """Return True if a user can edit the given field definition value.
+     This method does not check that a user can edit the project issues."""
+  if not field_def.is_restricted_field:
+    return True
   if not effective_ids.isdisjoint(field_def.editor_ids):
-    return True  # Field editors can edit that field value.
-
+    return True
   return CanEditFieldDef(effective_ids, perms, project, field_def)
 
 

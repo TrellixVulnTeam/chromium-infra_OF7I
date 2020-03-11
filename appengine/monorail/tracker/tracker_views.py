@@ -400,6 +400,11 @@ class FieldValueView(object):
         self.values or self.derived_values or
         (self.applicable and not fd.is_niche))
 
+    #FieldValueView does not handle determining if it's editable
+    #by the logged-in user. This can be determined by using
+    #permission.CanEditValueForFieldDef.
+    self.is_editable = ezt.boolean(True)
+
 
 def _PrecomputeInfoForValueViews(labels, derived_labels, field_values, config,
                                  phases):
@@ -569,6 +574,7 @@ class FieldDefView(template_helpers.PBProxy):
     super(FieldDefView, self).__init__(field_def)
 
     self.type_name = str(field_def.field_type)
+    self.field_def = field_def
 
     self.choices = []
     if field_def.field_type == tracker_pb2.FieldTypes.ENUM_TYPE:

@@ -102,12 +102,18 @@ class IssueBulkEdit(servlet.Servlet):
 
     field_views = tracker_views.MakeAllFieldValueViews(
         config, type_label_set, [], [], {}, phases=issue_phases)
-    # Explicitly set all field views to not required. We do not want to force
-    # users to have to set it for issues missing required fields.
-    # See https://bugs.chromium.org/p/monorail/issues/detail?id=500 for more
-    # details.
     for fv in field_views:
+      # Explicitly set all field views to not required. We do not want to force
+      # users to have to set it for issues missing required fields.
+      # See https://bugs.chromium.org/p/monorail/issues/detail?id=500 for more
+      # details.
       fv.field_def.is_required_bool = None
+
+      if permissions.CanEditValueForFieldDef(
+          mr.auth.effective_ids, mr.perms, mr.project, fv.field_def.field_def):
+        fv.is_editable = ezt.boolean(True)
+      else:
+        fv.is_editable = ezt.boolean(False)
 
     with mr.profiler.Phase('making issue proxies'):
       issue_views = [
