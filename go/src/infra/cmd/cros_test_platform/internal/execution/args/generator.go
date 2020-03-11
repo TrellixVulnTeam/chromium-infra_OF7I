@@ -194,6 +194,12 @@ func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
 		*inv.Model = g.params.HardwareAttributes.Model
 	}
 
+	priority := g.params.GetScheduling().GetPriority()
+	qs := g.params.GetScheduling().GetQsAccount()
+	if priority > 0 && qs != "" {
+		panic(fmt.Sprintf("Priority and QsAccount should not both be set. Got Priority: %d and QsAccount: %s", priority, qs))
+	}
+
 	if p := g.params.GetScheduling().GetPool(); p != nil {
 		switch v := p.(type) {
 		case *test_platform.Request_Params_Scheduling_ManagedPool_:
@@ -204,7 +210,12 @@ func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
 			inv.CriticalPools = append(inv.CriticalPools, pool)
 		case *test_platform.Request_Params_Scheduling_UnmanagedPool:
 			inv.SelfServePools = append(inv.SelfServePools, v.UnmanagedPool)
+		// TODO(crbug/1059076) Scheduling_QuotaAccount is deprecated. Use
+		// Scheduling.QsAccount instead.
 		case *test_platform.Request_Params_Scheduling_QuotaAccount:
+			if qs != "" {
+				panic(fmt.Sprintf("QsAccount and QuotaAccount should not both be set. Got Scheduling_QuotaAccount: %s and QsAccount: %s", g.params.GetScheduling().GetQuotaAccount(), qs))
+			}
 			inv.CriticalPools = append(inv.CriticalPools, inventory.SchedulableLabels_DUT_POOL_QUOTA)
 		default:
 			panic(fmt.Sprintf("unhandled scheduling type %#v", p))
@@ -357,18 +368,41 @@ func (g *Generator) baseKeyvals() map[string]string {
 	return keyvals
 }
 
+var reservedTags = map[string]bool{
+	"qs_account":   true,
+	"luci_project": true,
+	"log_location": true,
+}
+
 func (g *Generator) swarmingTags(cmd *worker.Command) []string {
 	tags := []string{
 		"luci_project:" + g.workerConfig.LuciProject,
 		"log_location:" + cmd.LogDogAnnotationURL,
 	}
-	if qa := g.params.GetScheduling().GetQuotaAccount(); qa != "" {
+	if qa := g.params.GetScheduling().GetQsAccount(); qa != "" {
 		tags = append(tags, "qs_account:"+qa)
+	} else {
+		// TODO(crbug/1059076) Drop this after migration, as
+		// Scheduling.QsAccount should be the only field for quota account.
+		if qa := g.params.GetScheduling().GetQuotaAccount(); qa != "" {
+			tags = append(tags, "qs_account:"+qa)
+		}
 	}
-	// TODO(akeshet): Consider whether to ban qs_account, luci_project, log_location,
-	// and other "special tags" from being client-specified here.
-	tags = append(tags, g.params.GetDecorations().GetTags()...)
+	tags = append(tags, removeReservedTags(g.params.GetDecorations().GetTags())...)
 	return tags
+}
+
+// removeReservedTags removes the reserved tags attached by users.
+func removeReservedTags(tags []string) []string {
+	res := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		keyval := strings.Split(tag, ":")
+		if _, isReserved := reservedTags[keyval[0]]; isReserved {
+			continue
+		}
+		res = append(res, tag)
+	}
+	return res
 }
 
 // builds describes the build names that were requested by a test_platform
