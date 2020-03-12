@@ -19,6 +19,7 @@ from go.chromium.org.luci.buildbucket.proto import common_pb2
 import bq
 import metrics
 import notifications
+import resultdb
 
 # Event functions in this file are marked with `# pragma: no cover` because
 # they are called from other modules.
@@ -51,6 +52,7 @@ def on_build_completing_async(build):  # pragma: no cover
   yield (
       notifications.enqueue_notifications_async(build),
       bq.enqueue_bq_export_async(build),
+      resultdb.enqueue_invocation_finalization_async(build),
   )
 
 

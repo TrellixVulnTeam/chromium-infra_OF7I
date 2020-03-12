@@ -25,6 +25,7 @@ import config
 import expiration
 import model
 import notifications
+import resultdb
 import service
 import swarming
 import user
@@ -175,6 +176,8 @@ def get_backend_routes():  # pragma: no cover
                     UnregisterBuilders),
       webapp2.Route(r'/internal/task/buildbucket/notify/<build_id:\d+>',
                     notifications.TaskPublishNotification),
+      webapp2.Route(r'/internal/task/resultdb/finalize/<build_id:\d+>',
+                    resultdb.FinalizeInvocation),
       webapp2.Route(
           r'/internal/task/buildbucket/cancel_swarming_task/<host>/<task_id>',
           TaskCancelSwarmingTask),
