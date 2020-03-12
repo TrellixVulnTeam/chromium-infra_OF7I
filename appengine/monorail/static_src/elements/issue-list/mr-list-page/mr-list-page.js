@@ -19,6 +19,7 @@ import {
   userIsMember,
 } from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
+import 'elements/framework/mr-button-bar/mr-button-bar.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 // eslint-disable-next-line max-len
@@ -85,31 +86,6 @@ export class MrListPage extends connectStore(LitElement) {
           justify-content: space-between;
           width: 100%;
           padding: 0.5em 0;
-        }
-        .edit-actions {
-          flex-grow: 0;
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-        }
-        .edit-actions button {
-          height: 100%;
-          background: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: none;
-          border-right: var(--chops-normal-border);
-          font-size: var(--chops-normal-font-size);
-          cursor: pointer;
-          transition: 0.2s background ease-in-out;
-          color: var(--chops-link-color);
-          font-weight: var(--chops-link-font-weight);
-          line-height: 160%;
-          padding: 0.25em 8px;
-        }
-        .edit-actions button:hover {
-          background: var(--chops-active-choice-bg);
         }
         .right-controls {
           flex-grow: 0;
@@ -219,34 +195,9 @@ export class MrListPage extends connectStore(LitElement) {
 
     return html`
       <div class="list-controls">
-        <div class="edit-actions">
-          ${this.editingEnabled ? html`
-            <button
-              class="bulk-edit-button"
-              @click=${this.bulkEdit}
-            >
-              Bulk edit
-            </button>
-            <button
-              class="add-to-hotlist-button"
-              @click=${this.addToHotlist}
-            >
-              Add to hotlist
-            </button>
-            <button
-              class="change-columns-button"
-              @click=${this.changeColumns}
-            >
-              Change columns
-            </button>
-            <mr-dropdown
-              icon="more_vert"
-              menuAlignment="left"
-              label="More actions..."
-              .items=${this._moreActions}
-            ></mr-dropdown>
-          ` : ''}
-        </div>
+        ${this.editingEnabled ? html`
+          <mr-button-bar .items=${this._actions}></mr-button-bar>
+        ` : ''}
 
         <div class="right-controls">
           ${hasPrev ? html`
@@ -327,15 +278,20 @@ export class MrListPage extends connectStore(LitElement) {
 
     this._boundRefresh = this.refresh.bind(this);
 
-    this._moreActions = [
+    this._actions = [
+      {icon: 'edit', text: 'Bulk edit', handler: this.bulkEdit.bind(this)},
       {
-        text: 'Flag as spam',
-        handler: () => this._flagIssues(true),
+        icon: 'add', text: 'Add to hotlist',
+        handler: this.addToHotlist.bind(this),
       },
       {
-        text: 'Un-flag as spam',
-        handler: () => this._flagIssues(false),
+        icon: 'table_chart', text: 'Change columns',
+        handler: this.changeColumns.bind(this),
       },
+      {icon: 'more_vert', text: 'More actions...', items: [
+        {text: 'Flag as spam', handler: () => this._flagIssues(true)},
+        {text: 'Un-flag as spam', handler: () => this._flagIssues(false)},
+      ]},
     ];
 
     /**

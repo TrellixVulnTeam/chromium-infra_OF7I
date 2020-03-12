@@ -431,8 +431,7 @@ describe('mr-list-page', () => {
 
       await element.updateComplete;
 
-      const editActions = element.shadowRoot.querySelector('.edit-actions');
-      assert.isFalse(editActions.children.length > 0);
+      assert.isNull(element.shadowRoot.querySelector('mr-button-bar'));
     });
 
     it('edit actions hidden when user is not a project member', async () => {
@@ -441,8 +440,7 @@ describe('mr-list-page', () => {
 
       await element.updateComplete;
 
-      const editActions = element.shadowRoot.querySelector('.edit-actions');
-      assert.isFalse(editActions.children.length > 0);
+      assert.isNull(element.shadowRoot.querySelector('mr-button-bar'));
     });
 
     it('edit actions shown when user is a project member', async () => {
@@ -453,13 +451,12 @@ describe('mr-list-page', () => {
 
       await element.updateComplete;
 
-      const editActions = element.shadowRoot.querySelector('.edit-actions');
-      assert.isTrue(editActions.children.length > 0);
+      assert.isNotNull(element.shadowRoot.querySelector('mr-button-bar'));
 
       element.projectName = 'nonmember-project';
       await element.updateComplete;
 
-      assert.isFalse(editActions.children.length > 0);
+      assert.isNull(element.shadowRoot.querySelector('mr-button-bar'));
     });
 
     it('edit actions shown when user is a site admin', async () => {
@@ -468,8 +465,7 @@ describe('mr-list-page', () => {
 
       await element.updateComplete;
 
-      const editActions = element.shadowRoot.querySelector('.edit-actions');
-      assert.isTrue(editActions.children.length > 0);
+      assert.isNotNull(element.shadowRoot.querySelector('mr-button-bar'));
     });
 
     it('bulk edit stops when no issues selected', () => {
@@ -554,11 +550,10 @@ describe('mr-list-page', () => {
 
     it('clicking change columns opens dialog', async () => {
       await element.updateComplete;
-      const button = element.shadowRoot.querySelector('.change-columns-button');
       const dialog = element.shadowRoot.querySelector('mr-change-columns');
       sinon.stub(dialog, 'open');
 
-      button.click();
+      element.changeColumns();
 
       sinon.assert.calledOnce(dialog.open);
     });
