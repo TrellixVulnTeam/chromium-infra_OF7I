@@ -9,8 +9,10 @@
 
 import chai from 'chai';
 import chaiDom from 'chai-dom';
+import chaiString from 'chai-string';
 
 chai.use(chaiDom);
+chai.use(chaiString);
 
 const testsContext = require.context('../', true, /\.test\.js$/);
 testsContext.keys().forEach(testsContext);
