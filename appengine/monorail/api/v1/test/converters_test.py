@@ -172,25 +172,23 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(api_items, [])
 
   def testConvertIssues(self):
-      """We can convert Issues."""
-      # TODO(jessan): Add self.issue_2 once method fully implemented.
-      issues = [self.issue_1]
-      expected_issues = [
-          issue_objects_pb2.Issue(
-              name='projects/proj/issues/1',
-              summary='sum',
-              state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
-              star_count=1
-          )]
-      self.assertEqual(
-          converters.ConvertIssues(self.cnxn, issues, self.services),
-          expected_issues)
+    """We can convert Issues."""
+    # TODO(jessan): Add self.issue_2 once method fully implemented.
+    issues = [self.issue_1]
+    expected_issues = [
+        issue_objects_pb2.Issue(
+            name='projects/proj/issues/1',
+            summary='sum',
+            state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+            star_count=1)
+    ]
+    self.assertEqual(
+        converters.ConvertIssues(self.cnxn, issues, self.services),
+        expected_issues)
 
   def testConvertIssues_Empty(self):
-      """ConvertIssues works with no issues passed in."""
-      self.assertEqual(
-          converters.ConvertIssues(self.cnxn, [], self.services),
-          [])
+    """ConvertIssues works with no issues passed in."""
+    self.assertEqual(converters.ConvertIssues(self.cnxn, [], self.services), [])
 
   def testConvertUsers(self):
     self.user_1.vacation_message='non-empty-string'
@@ -220,7 +218,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_value = issue_objects_pb2.Issue.FieldValue(
         field=expected_name,
         value=expected_str,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICT'),
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
         phase=None)
     output = converters.ConvertFieldValues(
         self.cnxn, [fv], self.project_1.project_id, [], self.services)
@@ -242,7 +240,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_1 = issue_objects_pb2.Issue.FieldValue(
         field=name_1,
         value=expected_str,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICT'),
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
         phase=None)
 
     expected_int = 111111
@@ -261,7 +259,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual([expected_1, expected_2], output)
 
   def testConvertFieldValues_IgnoresNullFieldDefs(self):
-    # It ignores field values referencing a non-existent field
+    """It ignores field values referencing a non-existent field"""
     expected_str = 'some_string_field_value'
     fv_1 = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value=expected_str, derived=False)
@@ -271,7 +269,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_1 = issue_objects_pb2.Issue.FieldValue(
         field=name_1,
         value=expected_str,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICT'),
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
         phase=None)
 
     fv_2 = fake.MakeFieldValue(
@@ -324,7 +322,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(expected, output)
 
   def test_ComputeFieldValueDerivation_EXPLICIT(self):
-    expected = issue_objects_pb2.Issue.Derivation.Value('EXPLICT')
+    expected = issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
     fv = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value='something', derived=False)
     output = converters._ComputeFieldValueDerivation(fv)

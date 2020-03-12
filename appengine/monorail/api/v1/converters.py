@@ -282,4 +282,4 @@ def _ComputeFieldValueDerivation(field_value):
   if field_value.derived:
     return issue_objects_pb2.Issue.Derivation.Value('RULE')
   else:
-    return issue_objects_pb2.Issue.Derivation.Value('EXPLICT')
+    return issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
