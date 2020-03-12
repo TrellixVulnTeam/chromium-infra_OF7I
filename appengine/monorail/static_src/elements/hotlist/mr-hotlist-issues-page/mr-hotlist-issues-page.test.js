@@ -58,6 +58,27 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     assert.isNull(issueList.projectName);
   });
 
+  it('memoizes issues', async () => {
+    element._hotlist = example.HOTLIST;
+    element._items = [example.HOTLIST_ISSUE];
+    await element.updateComplete;
+
+    const issueList = element.shadowRoot.querySelector('mr-issue-list');
+    const issues = issueList.issues;
+
+    // Trigger a render without updating the issue list.
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    assert.strictEqual(issues, issueList.issues);
+
+    // Modify the issue list.
+    element._items = [example.HOTLIST_ISSUE];
+    await element.updateComplete;
+
+    assert.notStrictEqual(issues, issueList.issues);
+  });
+
   it('computes strings for HotlistIssue fields', async () => {
     const clock = sinon.useFakeTimers(24 * 60 * 60 * 1000);
 

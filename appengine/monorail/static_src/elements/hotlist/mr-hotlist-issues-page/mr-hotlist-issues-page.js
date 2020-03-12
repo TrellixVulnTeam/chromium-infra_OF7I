@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
+import {defaultMemoize} from 'reselect';
 
 import {relativeTime}
   from 'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
@@ -57,7 +58,10 @@ export class _MrHotlistIssuesPage extends LitElement {
    * @return {TemplateResult}
    */
   _renderPage() {
-    const items = this._items.filter((item) => this._isShown(item));
+    // Memoize the issues passed to <mr-issue-list> so that
+    // out property updates don't cause it to re-render.
+    const items = _filterIssues(this._filter, this._items);
+
     const allProjectNamesEqual = items.length && items.every(
         (issue) => issue.projectName === items[0].projectName);
     const projectName = allProjectNamesEqual ? items[0].projectName : null;
@@ -143,16 +147,6 @@ export class _MrHotlistIssuesPage extends LitElement {
   }
 
   /**
-   * Returns true iff the current filter includes the given HotlistIssue.
-   * @param {HotlistIssue} item A HotlistIssue in the current Hotlist.
-   * @return {boolean}
-   */
-  _isShown(item) {
-    return this._filter.Open && item.statusRef.meansOpen ||
-        this._filter.Closed && !item.statusRef.meansOpen;
-  }
-
-  /**
    * Reranks items in the hotlist, dispatching the action to the Redux store.
    * @param {Array<String>} items The names of the HotlistItems to move.
    * @param {number} index The index to insert the moved items.
@@ -195,14 +189,35 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
     let hiddenItems = 0;
     for (let i = 0; shownItems < index && i < this._items.length; ++i) {
       const item = this._items[i];
-      if (!this._isShown(item)) ++hiddenItems;
-      if (this._isShown(item) && !items.includes(item.name)) ++shownItems;
+      const isShown = _isShown(this._filter, item);
+      if (!isShown) ++hiddenItems;
+      if (isShown && !items.includes(item.name)) ++shownItems;
     }
 
     await store.dispatch(hotlist.rerankItems(
         this._hotlist.name, items, index + hiddenItems));
   }
 };
+
+const _filterIssues = defaultMemoize(
+    /**
+     * Filters an array of HotlistIssues based on a filter condition. Memoized.
+     * @param {Object<string, boolean>} filter The types of issues to show.
+     * @param {Array<HotlistIssue>} items A HotlistIssue to check.
+     * @return {Array<HotlistIssue>}
+     */
+    (filter, items) => items.filter((item) => _isShown(filter, item)));
+
+/**
+ * Returns true iff the current filter includes the given HotlistIssue.
+ * @param {Object<string, boolean>} filter The types of issues to show.
+ * @param {HotlistIssue} item A HotlistIssue to check.
+ * @return {boolean}
+ */
+function _isShown(filter, item) {
+  return filter.Open && item.statusRef.meansOpen ||
+      filter.Closed && !item.statusRef.meansOpen;
+}
 
 customElements.define('mr-hotlist-issues-page-base', _MrHotlistIssuesPage);
 customElements.define('mr-hotlist-issues-page', MrHotlistIssuesPage);
