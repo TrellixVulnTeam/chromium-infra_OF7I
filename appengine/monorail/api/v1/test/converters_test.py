@@ -12,11 +12,13 @@ import unittest
 
 from google.protobuf import timestamp_pb2
 
+from api import resource_name_converters as rnc
 from api.v1 import converters
 from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import issue_objects_pb2
 from api.v1.api_proto import user_objects_pb2
 from framework import authdata
+from framework import exceptions
 from testing import fake
 from testing import testing_helpers
 from services import service_manager
@@ -28,7 +30,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         issue=fake.IssueService(),
         project=fake.ProjectService(),
         usergroup=fake.UserGroupService(),
-        user=fake.UserService())
+        user=fake.UserService(),
+        config=fake.ConfigService())
     self.cnxn = fake.MonorailConnection()
     self.PAST_TIME = 12345
     self.project_1 = self.services.project.TestAddProject(
@@ -55,6 +58,18 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.user_1 = self.services.user.TestAddUser('one@example.com', 111)
     self.user_2 = self.services.user.TestAddUser('two@example.com', 222)
     self.user_3 = self.services.user.TestAddUser('three@example.com', 333)
+
+    self.field_def_1_name = 'test_field_1'
+    self.field_def_1 = self.services.config.CreateFieldDef(
+        self.cnxn, self.project_1.project_id, self.field_def_1_name, 'STR_TYPE',
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        None, None, [], [])
+    self.field_def_2_name = 'test_field_2'
+    self.field_def_2 = self.services.config.CreateFieldDef(
+        self.cnxn, self.project_1.project_id, self.field_def_2_name, 'INT_TYPE',
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        None, None, [], [])
+    self.dne_field_def_id = 999999
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -193,3 +208,124 @@ class ConverterFunctionsTest(unittest.TestCase):
         converters.ConvertUsers(
             self.cnxn, user_ids, user_auth, project, self.services),
         expected_user_dict)
+
+  def testConvertFieldValues(self):
+    """It ignores field values referencing a non-existent field"""
+    expected_str = 'some_string_field_value'
+    fv = fake.MakeFieldValue(
+        field_id=self.field_def_1, str_value=expected_str, derived=False)
+    expected_name = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_1], self.project_1.project_id,
+        self.services)[self.field_def_1]
+    expected_value = issue_objects_pb2.Issue.FieldValue(
+        field=expected_name,
+        value=expected_str,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICT'),
+        phase=None)
+    output = converters.ConvertFieldValues(
+        self.cnxn, [fv], self.project_1.project_id, [], self.services)
+    self.assertEqual([expected_value], output)
+
+  def testConvertFieldValues_Empty(self):
+    output = converters.ConvertFieldValues(
+        self.cnxn, [], self.project_1.project_id, [], self.services)
+    self.assertEqual([], output)
+
+  def testConvertFieldValues_PreservesOrder(self):
+    """It ignores field values referencing a non-existent field"""
+    expected_str = 'some_string_field_value'
+    fv_1 = fake.MakeFieldValue(
+        field_id=self.field_def_1, str_value=expected_str, derived=False)
+    name_1 = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_1], self.project_1.project_id,
+        self.services)[self.field_def_1]
+    expected_1 = issue_objects_pb2.Issue.FieldValue(
+        field=name_1,
+        value=expected_str,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICT'),
+        phase=None)
+
+    expected_int = 111111
+    fv_2 = fake.MakeFieldValue(
+        field_id=self.field_def_2, int_value=expected_int, derived=True)
+    name_2 = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_2], self.project_1.project_id,
+        self.services).get(self.field_def_2)
+    expected_2 = issue_objects_pb2.Issue.FieldValue(
+        field=name_2,
+        value=str(expected_int),
+        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+        phase=None)
+    output = converters.ConvertFieldValues(
+        self.cnxn, [fv_1, fv_2], self.project_1.project_id, [], self.services)
+    self.assertEqual([expected_1, expected_2], output)
+
+  def testConvertFieldValues_IgnoresNullFieldDefs(self):
+    # It ignores field values referencing a non-existent field
+    expected_str = 'some_string_field_value'
+    fv_1 = fake.MakeFieldValue(
+        field_id=self.field_def_1, str_value=expected_str, derived=False)
+    name_1 = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_1], self.project_1.project_id,
+        self.services)[self.field_def_1]
+    expected_1 = issue_objects_pb2.Issue.FieldValue(
+        field=name_1,
+        value=expected_str,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICT'),
+        phase=None)
+
+    fv_2 = fake.MakeFieldValue(
+        field_id=self.dne_field_def_id, int_value=111111, derived=True)
+    output = converters.ConvertFieldValues(
+        self.cnxn, [fv_1, fv_2], self.project_1.project_id, [], self.services)
+    self.assertEqual([expected_1], output)
+
+  def test_ComputeFieldValueString_None(self):
+    with self.assertRaises(exceptions.InputException):
+      converters._ComputeFieldValueString(None)
+
+  def test_ComputeFieldValueString_INT_TYPE(self):
+    expected = 123158
+    fv = fake.MakeFieldValue(field_id=self.field_def_2, int_value=expected)
+    output = converters._ComputeFieldValueString(fv)
+    self.assertEqual(str(expected), output)
+
+  def test_ComputeFieldValueString_STR_TYPE(self):
+    expected = 'some_string_field_value'
+    fv = fake.MakeFieldValue(field_id=self.field_def_1, str_value=expected)
+    output = converters._ComputeFieldValueString(fv)
+    self.assertEqual(expected, output)
+
+  def test_ComputeFieldValueString_USER_TYPE(self):
+    user_id = self.user_1.user_id
+    expected = rnc.ConvertUserNames([user_id]).get(user_id)
+    fv = fake.MakeFieldValue(field_id=self.dne_field_def_id, user_id=user_id)
+    output = converters._ComputeFieldValueString(fv)
+    self.assertEqual(expected, output)
+
+  def test_ComputeFieldValueString_DATE_TYPE(self):
+    expected = 1234567890
+    fv = fake.MakeFieldValue(
+        field_id=self.dne_field_def_id, date_value=expected)
+    output = converters._ComputeFieldValueString(fv)
+    self.assertEqual(str(expected), output)
+
+  def test_ComputeFieldValueString_URL_TYPE(self):
+    expected = 'some URL'
+    fv = fake.MakeFieldValue(field_id=self.dne_field_def_id, url_value=expected)
+    output = converters._ComputeFieldValueString(fv)
+    self.assertEqual(expected, output)
+
+  def test_ComputeFieldValueDerivation_RULE(self):
+    expected = issue_objects_pb2.Issue.Derivation.Value('RULE')
+    fv = fake.MakeFieldValue(
+        field_id=self.field_def_1, str_value='something', derived=True)
+    output = converters._ComputeFieldValueDerivation(fv)
+    self.assertEqual(expected, output)
+
+  def test_ComputeFieldValueDerivation_EXPLICIT(self):
+    expected = issue_objects_pb2.Issue.Derivation.Value('EXPLICT')
+    fv = fake.MakeFieldValue(
+        field_id=self.field_def_1, str_value='something', derived=False)
+    output = converters._ComputeFieldValueDerivation(fv)
+    self.assertEqual(expected, output)

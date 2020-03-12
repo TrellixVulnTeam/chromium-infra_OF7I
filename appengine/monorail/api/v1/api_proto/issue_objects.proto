@@ -77,7 +77,7 @@ message Issue {
     // The default derivation. This value is used if the derivation is omitted.
     DERIVATION_UNSPECIFIED = 0;
     // The value was explicitly set on the issue.
-    EXPLICT = 1;
+    EXPLICIT = 1;
     // Value was auto-applied to the issue based on a project's rule. See
     // monorail/doc/userguide/project-owners.md#how-to-configure-filter-rules
     RULE = 2;
@@ -123,6 +123,14 @@ message Issue {
     string field = 1
         [(google.api.resource_reference) = { type: "api.crbug.com/FieldDef" }];
     // The value associated with the field.
+    // Mapping of field types to string value:
+    // ENUM_TYPE(int) => str(value)
+    // INT_TYPE(int) => str(value)
+    // STR_TYPE(str) => value
+    // USER_TYPE(int) => the user's resource name
+    // DATE_TYPE(int) => str(int) representing time in seconds since epoch
+    // URL_TYPE(str) => value
+    // APPROVAL_TYPE => Expressed in ApprovalValue messages
     string value = 2;
     // How the value was derived.
     Derivation derivation = 3;

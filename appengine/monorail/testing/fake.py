@@ -79,6 +79,26 @@ def Project(
       contributor_ids=contributor_ids)
 
 
+def MakeFieldValue(
+    field_id,
+    int_value=None,
+    str_value=None,
+    user_id=None,
+    date_value=None,
+    url_value=None,
+    derived=None,
+    phase_id=None):
+  return tracker_pb2.FieldValue(
+      field_id=field_id,
+      int_value=int_value,
+      str_value=str_value,
+      user_id=user_id,
+      date_value=date_value,
+      url_value=url_value,
+      derived=derived,
+      phase_id=phase_id)
+
+
 def MakeTestIssue(
     project_id, local_id, summary, status, owner_id, labels=None,
     derived_labels=None, derived_status=None, merged_into=0, star_count=0,
