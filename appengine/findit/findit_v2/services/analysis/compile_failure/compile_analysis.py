@@ -92,6 +92,9 @@ def AnalyzeCompileFailure(context, build, compile_steps):
   analysis = analysis_api.SaveFailureAnalysis(project_api, context, build,
                                               failures_without_existing_group,
                                               should_group_failures)
+  if not analysis:
+    # No analysis needed for the failures, bail out.
+    return False
 
   # Attempt finding suspected culprits.
   if should_get_suspects:

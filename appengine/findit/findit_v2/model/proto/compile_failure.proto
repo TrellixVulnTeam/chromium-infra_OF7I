@@ -82,4 +82,8 @@ message BuildCompileFailureOutput {
   // Name of the failed compile step.
   // For example: "install packages|installation results".
   string failed_step = 2;
+
+  // Flag indicates if an analysis is needed for this build.
+  // Compile failures on non-critical CrOS builders should not be analyzed.
+  bool needs_bisection = 3;
 }

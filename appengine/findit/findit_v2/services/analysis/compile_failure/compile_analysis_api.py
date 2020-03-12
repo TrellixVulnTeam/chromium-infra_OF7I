@@ -64,7 +64,8 @@ class CompileAnalysisAPI(AnalysisAPI):
         # Default to first_failed_build_id, will be updated later if matching
         # group exists.
         failure_group_build_id=first_failed_build_id,
-        merged_failure_key=merged_failure_key)
+        merged_failure_key=merged_failure_key,
+        properties=properties)
 
   def GetFailureEntitiesForABuild(self, build):
     compile_failure_entities = CompileFailure.query(

@@ -211,6 +211,7 @@ class ChromeOSProjectAPITest(wf_testcase.TestCase):
                 frozenset(self.output_targets): {
                     'properties': {
                         'rule': 'emerge',
+                        'needs_bisection': True,
                     },
                     'first_failed_build': {
                         'id': build_id,

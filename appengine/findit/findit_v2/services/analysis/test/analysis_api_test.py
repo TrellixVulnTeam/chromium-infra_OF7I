@@ -4,6 +4,7 @@
 
 from datetime import datetime
 from datetime import timedelta
+import json
 import mock
 
 from go.chromium.org.luci.buildbucket.proto import common_pb2
@@ -27,6 +28,7 @@ from findit_v2.model.gitiles_commit import GitilesCommit
 from findit_v2.model.luci_build import LuciFailedBuild
 from findit_v2.services.analysis.compile_failure.compile_analysis_api import (
     CompileAnalysisAPI)
+from findit_v2.services.chromeos_api import ChromeOSProjectAPI
 from findit_v2.services.chromium_api import ChromiumProjectAPI
 from findit_v2.services.context import Context
 from findit_v2.services.failure_type import StepTypeEnum
@@ -816,6 +818,62 @@ class AnalysisAPITest(wf_testcase.TestCase):
     self.assertEqual(first_failure.key, compile_failures[0].merged_failure_key)
 
   @mock.patch.object(
+      ChromeOSProjectAPI,
+      'GetRerunBuilderId',
+      return_value='chromium/findit/findit_variables')
+  @mock.patch.object(
+      git, 'GetCommitPositionFromRevision', side_effect=[66680, 66666, 66680])
+  def testSaveFailureAnalysisNoNeed(self, *_):
+      build_311_info = self._GetBuildInfo(311)
+
+      output_target = json.dumps({
+          'category': 'chromeos-base',
+          'packageName': 'target1'
+      })
+
+      detailed_compile_failures = {
+          'install packages': {
+              'failures': {
+                  frozenset([output_target]): {
+                      'properties': {
+                          'rule': 'emerge',
+                          'needs_bisection': False,
+                      },
+                      'first_failed_build': build_311_info,
+                      'last_passed_build': None,
+                  },
+              },
+              'first_failed_build': build_311_info,
+              'last_passed_build': None,
+          },
+      }
+
+      self.analysis_api.SaveFailures(self.context, self.build,
+                                     detailed_compile_failures)
+
+      first_failures_in_current_build = {
+          'failures': {
+              'install packages': {
+                  'atomic_failures': [frozenset([output_target])],
+                  'last_passed_build': {
+                      'id': 310,
+                      'number': 310,
+                      'commit_id': 'git_sha_121',
+                  },
+              },
+          },
+          'last_passed_build': {
+              'id': 310,
+              'number': 310,
+              'commit_id': 'git_sha_121',
+          },
+      }
+      analysis = self.analysis_api.SaveFailureAnalysis(
+          ChromeOSProjectAPI(), self.context, self.build,
+          first_failures_in_current_build, False)
+      self.assertIsNone(analysis)
+
+  @mock.patch.object(
       ChromiumProjectAPI,
       'GetRerunBuilderId',
       return_value='chromium/findit/findit_variables')
@@ -831,6 +889,7 @@ class AnalysisAPITest(wf_testcase.TestCase):
                     'properties': {
                         'properties': {
                             'rule': 'CXX',
+                            'needs_bisection': True,
                         },
                     },
                     'first_failed_build': self.build_info,
@@ -893,18 +952,14 @@ class AnalysisAPITest(wf_testcase.TestCase):
             'failures': {
                 frozenset(['target1', 'target2']): {
                     'properties': {
-                        'properties': {
                             'rule': 'CXX',
-                        },
                     },
                     'first_failed_build': self.build_info,
                     'last_passed_build': build_120_info,
                 },
                 frozenset(['target3']): {
                     'properties': {
-                        'properties': {
                             'rule': 'ACTION',
-                        },
                     },
                     'first_failed_build': self.build_info,
                     'last_passed_build': None,
@@ -946,18 +1001,14 @@ class AnalysisAPITest(wf_testcase.TestCase):
             'failures': {
                 frozenset(['target1', 'target2']): {
                     'properties': {
-                        'properties': {
                             'rule': 'CXX',
-                        },
                     },
                     'first_failed_build': self.build_info,
                     'last_passed_build': build_120_info,
                 },
                 frozenset(['target3']): {
                     'properties': {
-                        'properties': {
                             'rule': 'ACTION',
-                        },
                     },
                     'first_failed_build': self.build_info,
                     'last_passed_build': None,
@@ -1043,18 +1094,14 @@ class AnalysisAPITest(wf_testcase.TestCase):
             'failures': {
                 frozenset(['target1']): {
                     'properties': {
-                        'properties': {
                             'rule': 'CXX',
-                        },
                     },
                     'first_failed_build': self.build_info,
                     'last_passed_build': build_121_info,
                 },
                 frozenset(['target2']): {
                     'properties': {
-                        'properties': {
                             'rule': 'ACTION',
-                        },
                     },
                     'first_failed_build': self.build_info,
                     'last_passed_build': build_121_info,
@@ -1137,9 +1184,7 @@ class AnalysisAPITest(wf_testcase.TestCase):
         'compile': {
             'failures': {
                 frozenset(['target1']): {
-                    'properties': {
                         'rule': 'CXX',
-                    },
                     'first_failed_build': self.build_info,
                     'last_passed_build': build_121_info,
                 },
@@ -1716,18 +1761,14 @@ class AnalysisAPITest(wf_testcase.TestCase):
             'failures': {
                 frozenset(['target1', 'target2']): {
                     'properties': {
-                        'properties': {
                             'rule': 'CXX',
-                        },
                     },
                     'first_failed_build': self.build_info,
                     'last_passed_build': build_120_info,
                 },
                 frozenset(['target3']): {
                     'properties': {
-                        'properties': {
                             'rule': 'ACTION',
-                        },
                     },
                     'first_failed_build': self.build_info,
                     'last_passed_build': None,

@@ -334,13 +334,14 @@ class AnalysisAPI(object):
     # pylint:disable=unused-argument
     return None
 
-  def _GetFailureKeysToAnalyze(self, failure_entities, _project_api):
+  def _GetFailureKeysToAnalyze(self, failure_entities, project_api):
     """Gets failures that'll actually be analyzed in the analysis.
 
     Placeholder for project specific logic, for example in-build failure
     grouping for ChromeOS test failure analysis.
     """
-    return [f.key for f in failure_entities]
+    return [f.key for f in failure_entities if
+            project_api.FailureShouldBeAnalyzed(f)]
 
   def SaveFailures(self, context, build, detailed_failures):
     """Saves the failed build and failures in data store.
@@ -915,7 +916,8 @@ class AnalysisAPI(object):
     # Gets failures that failed the first time in the build.
     first_failures = self._GetFirstFailuresWithoutGroup(
         build, failures_without_existing_group)
-    failure_keys = [f.key for f in first_failures]
+    failure_keys = [
+        f.key for f in first_failures if project_api.FailureShouldBeAnalyzed(f)]
 
     if should_group_failures:
       group = self._CreateFailureGroup(

@@ -132,6 +132,12 @@ class ChromeOSProjectAPI(ProjectAPI):
           ' build %d.', build.id)
       return {}
 
+
+    # Gets build level 'needs_bisection' flag.
+    # The flag will be explicitly set to False if the compile failures are on
+    # non-critical CrOS builders.
+    needs_bisection = build_compile_failure_output.get('needs_bisection', True)
+
     detailed_compile_failures = {
         failed_step: {
             'failures': {},
@@ -146,7 +152,8 @@ class ChromeOSProjectAPI(ProjectAPI):
       output_targets = frozenset(failure['output_targets'])
       failures_dict[output_targets] = {
           'properties': {
-              'rule': failure.get('rule')
+              'rule': failure.get('rule'),
+              'needs_bisection': needs_bisection,
           },
           'first_failed_build': build_info,
           'last_passed_build': None,
@@ -411,8 +418,10 @@ class ChromeOSProjectAPI(ProjectAPI):
     }
 
   def FailureShouldBeAnalyzed(self, failure_entity):
-    """A Cros test failure should not be analyzed if its 'needs_bisection'
+    """
+    * A Cros test failure should not be analyzed if its 'needs_bisection'
     property is False.
+    * A Cros compile failure on a non-critical builder should not be analyzed.
     """
     return failure_entity.properties.get('needs_bisection', True)
 

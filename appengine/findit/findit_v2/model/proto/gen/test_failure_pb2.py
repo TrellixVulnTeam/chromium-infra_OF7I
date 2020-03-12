@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='findit.test_failure',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x12test_failure.proto\x12\x13\x66indit.test_failure\"\xa2\x01\n\x16\x42uildTestFailureOutput\x12Q\n\x10hw_test_failures\x18\x01 \x03(\x0b\x32\x37.findit.test_failure.BuildTestFailureOutput.TestFailure\x1a\x35\n\x0bTestFailure\x12\x13\n\x0b\x66\x61iled_step\x18\x01 \x01(\t\x12\x11\n\ttest_spec\x18\x02 \x01(\t\"\x9f\x01\n\x1a\x42uildRerunTestFailureInput\x12Z\n\x10hw_test_failures\x18\x01 \x03(\x0b\x32@.findit.test_failure.BuildRerunTestFailureInput.RerunTestFailure\x1a%\n\x10RerunTestFailure\x12\x11\n\ttest_spec\x18\x01 \x01(\tb\x06proto3')
+  serialized_pb=_b('\n\x12test_failure.proto\x12\x13\x66indit.test_failure\"\xb1\x01\n\x16\x42uildTestFailureOutput\x12Q\n\x10hw_test_failures\x18\x01 \x03(\x0b\x32\x37.findit.test_failure.BuildTestFailureOutput.TestFailure\x1a\x44\n\x0bTestFailure\x12\x13\n\x0b\x66\x61iled_step\x18\x01 \x01(\t\x12\x11\n\ttest_spec\x18\x02 \x01(\t\x12\r\n\x05suite\x18\x03 \x01(\t\"\xb8\x01\n\x1a\x42uildRerunTestFailureInput\x12Z\n\x10hw_test_failures\x18\x01 \x03(\x0b\x32@.findit.test_failure.BuildRerunTestFailureInput.RerunTestFailure\x12\x17\n\x0fneeds_bisection\x18\x02 \x01(\x08\x1a%\n\x10RerunTestFailure\x12\x11\n\ttest_spec\x18\x01 \x01(\tb\x06proto3')
 )
 
 
@@ -46,6 +46,13 @@ _BUILDTESTFAILUREOUTPUT_TESTFAILURE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='suite', full_name='findit.test_failure.BuildTestFailureOutput.TestFailure.suite', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -59,7 +66,7 @@ _BUILDTESTFAILUREOUTPUT_TESTFAILURE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=153,
-  serialized_end=206,
+  serialized_end=221,
 )
 
 _BUILDTESTFAILUREOUTPUT = _descriptor.Descriptor(
@@ -89,7 +96,7 @@ _BUILDTESTFAILUREOUTPUT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=44,
-  serialized_end=206,
+  serialized_end=221,
 )
 
 
@@ -119,8 +126,8 @@ _BUILDRERUNTESTFAILUREINPUT_RERUNTESTFAILURE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=331,
-  serialized_end=368,
+  serialized_start=371,
+  serialized_end=408,
 )
 
 _BUILDRERUNTESTFAILUREINPUT = _descriptor.Descriptor(
@@ -137,6 +144,13 @@ _BUILDRERUNTESTFAILUREINPUT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='needs_bisection', full_name='findit.test_failure.BuildRerunTestFailureInput.needs_bisection', index=1,
+      number=2, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -149,8 +163,8 @@ _BUILDRERUNTESTFAILUREINPUT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=209,
-  serialized_end=368,
+  serialized_start=224,
+  serialized_end=408,
 )
 
 _BUILDTESTFAILUREOUTPUT_TESTFAILURE.containing_type = _BUILDTESTFAILUREOUTPUT
