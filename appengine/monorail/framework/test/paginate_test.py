@@ -126,7 +126,8 @@ class PaginateTest(unittest.TestCase):
     self.assertTrue(vp.visible)
 
     # Test urls for a hotlist pagination
-    mr = testing_helpers.MakeMonorailRequest(path='/hotlists/17?num=5&start=4')
+    mr = testing_helpers.MakeMonorailRequest(
+        path='/u/hotlists/17?num=5&start=4')
     mr.hotlist_id = 17
     mr.auth.user_id = 112
     vp = paginate.VirtualPagination(12, 5, 4,

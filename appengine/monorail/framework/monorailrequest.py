@@ -85,14 +85,15 @@ class MonorailApiRequest(MonorailRequestBase):
 
     # query parameters
     self.params = {
-      'can': 1,
-      'start': 0,
-      'num': tracker_constants.DEFAULT_RESULTS_PER_PAGE,
-      'q': '',
-      'sort': '',
-      'groupby': '',
-      'projects': [],
-      'hotlists':[]}
+        'can': 1,
+        'start': 0,
+        'num': tracker_constants.DEFAULT_RESULTS_PER_PAGE,
+        'q': '',
+        'sort': '',
+        'groupby': '',
+        'projects': [],
+        'hotlists': []
+    }
     self.use_cached_searches = True
     self.mode = None
 
@@ -478,8 +479,9 @@ class MonorailRequest(MonorailRequestBase):
       else:
         self.hotlist = services.features.GetHotlistByID(
             self.cnxn, self.hotlist_id)
-        if (not self.hotlist) or (self.viewed_user_auth.user_id not in
-                                  self.hotlist.owner_ids):
+        if not self.hotlist or (
+            self.viewed_user_auth.user_id and
+            self.viewed_user_auth.user_id not in self.hotlist.owner_ids):
           webapp2.abort(404, 'invalid hotlist')
 
   def _LookupLoggedInUser(self, services):
@@ -618,9 +620,11 @@ def _ParsePathIdentifiers(path):
   # Strip off any query params
   split_path = path.lstrip('/').split('?')[0].split('/')
   if len(split_path) >= 2:
+    if split_path[0] == 'hotlists':
+      hotlist_id = int(split_path[1])
     if split_path[0] == 'p':
       project_name = split_path[1]
-    if split_path[0] == 'u':
+    if split_path[0] == 'u' or split_path[0] == 'users':
       viewed_user_val = urllib.unquote(split_path[1])
       if len(split_path) >= 4 and split_path[2] == 'hotlists':
         try:
