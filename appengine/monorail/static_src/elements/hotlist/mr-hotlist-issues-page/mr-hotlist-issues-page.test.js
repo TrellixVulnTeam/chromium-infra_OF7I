@@ -12,7 +12,6 @@ import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import * as example from 'shared/test/constants-hotlist.js';
-import * as exampleIssue from 'shared/test/constants-issue.js';
 import * as exampleUser from 'shared/test/constants-user.js';
 
 import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
@@ -40,8 +39,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 
   it('renders hotlist items with one project', async () => {
     element._hotlist = example.HOTLIST;
-    element._hotlistItems = [example.HOTLIST_ITEM];
-    element._issue = () => exampleIssue.ISSUE;
+    element._items = [example.HOTLIST_ISSUE];
     await element.updateComplete;
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
@@ -50,14 +48,10 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 
   it('renders hotlist items with multiple projects', async () => {
     element._hotlist = example.HOTLIST;
-    element._hotlistItems = [
-      example.HOTLIST_ITEM,
-      example.HOTLIST_ITEM_OTHER_PROJECT,
+    element._items = [
+      example.HOTLIST_ISSUE,
+      example.HOTLIST_ISSUE_OTHER_PROJECT,
     ];
-    element._issue = (name) => ({
-      [exampleIssue.NAME]: exampleIssue.ISSUE,
-      [exampleIssue.NAME_OTHER_PROJECT]: exampleIssue.ISSUE_OTHER_PROJECT,
-    }[name]);
     await element.updateComplete;
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
@@ -69,14 +63,14 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 
     try {
       element._hotlist = example.HOTLIST;
-      element._hotlistItems = [{
-        issue: exampleIssue.NAME,
+      element._items = [{
+        ...example.HOTLIST_ISSUE,
+        summary: 'Summary',
         rank: 52,
         adder: exampleUser.USER,
         createTime: new Date(0).toISOString(),
       }];
       element._columns = ['Summary', 'Rank', 'Added', 'Adder'];
-      element._issue = () => ({...exampleIssue.ISSUE, summary: 'Summary'});
       await element.updateComplete;
 
       const issueList = element.shadowRoot.querySelector('mr-issue-list');
@@ -91,8 +85,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 
   it('filters and shows closed issues', async () => {
     element._hotlist = example.HOTLIST;
-    element._hotlistItems = [example.HOTLIST_ITEM];
-    element._issue = () => exampleIssue.ISSUE_CLOSED;
+    element._items = [example.HOTLIST_ISSUE_CLOSED];
     await element.updateComplete;
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
@@ -154,16 +147,11 @@ describe('mr-hotlist-issues-page (connected)', () => {
 
     try {
       element._hotlist = example.HOTLIST;
-      element._hotlistItems = [
-        example.HOTLIST_ITEM,
-        example.HOTLIST_ITEM_CLOSED,
-        example.HOTLIST_ITEM_OTHER_PROJECT,
+      element._items = [
+        example.HOTLIST_ISSUE,
+        example.HOTLIST_ISSUE_CLOSED,
+        example.HOTLIST_ISSUE_OTHER_PROJECT,
       ];
-      element._issue = (name) => ({
-        [exampleIssue.NAME]: exampleIssue.ISSUE,
-        [exampleIssue.NAME_CLOSED]: exampleIssue.ISSUE_CLOSED,
-        [exampleIssue.NAME_OTHER_PROJECT]: exampleIssue.ISSUE_OTHER_PROJECT,
-      }[name]);
 
       element._rerank([example.HOTLIST_ITEM_NAME], 1);
 

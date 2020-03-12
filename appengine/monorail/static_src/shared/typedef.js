@@ -16,6 +16,13 @@
  */
 
 /**
+ * A HotlistItem with the Issue flattened into the top-level,
+ * containing the intersection of the fields of HotlistItem and Issue.
+ *
+ * @typedef {Issue & HotlistItemV3} HotlistIssue
+ */
+
+/**
  * A String containing the data necessary to identify an IssueRef. An IssueRef
  * can reference either an issue in Monorail or an external issue in another
  * tracker.

@@ -4,8 +4,11 @@
 
 import {assert} from 'chai';
 import sinon from 'sinon';
+
 import * as hotlist from './hotlist.js';
 import * as example from 'shared/test/constants-hotlist.js';
+import * as exampleIssue from 'shared/test/constants-issue.js';
+
 import {prpcClient} from 'prpc-client-instance.js';
 
 let dispatch;
@@ -118,6 +121,39 @@ describe('hotlist', () => {
         assert.deepEqual(hotlist.viewedHotlistItems(state), []);
       });
     });
+
+    describe('viewedHotlistIssues', () => {
+      it('normal case', () => {
+        const state = {
+          hotlist: {
+            name: example.NAME,
+            hotlistItems: example.HOTLIST_ITEMS,
+          },
+          issue: {
+            issuesByRefString: {
+              [exampleIssue.ISSUE_REF_STRING]: exampleIssue.ISSUE,
+            },
+          },
+        };
+        const actual = hotlist.viewedHotlistIssues(state);
+        assert.deepEqual(actual, [example.HOTLIST_ISSUE]);
+      });
+
+      it('no issue', () => {
+        const state = {
+          hotlist: {
+            name: example.NAME,
+            hotlistItems: example.HOTLIST_ITEMS,
+          },
+          issue: {
+            issuesByRefString: {
+              [exampleIssue.ISSUE_OTHER_PROJECT_REF_STRING]: exampleIssue.ISSUE,
+            },
+          },
+        };
+        assert.deepEqual(hotlist.viewedHotlistIssues(state), []);
+      });
+    });
   });
 
   describe('action creators', () => {
@@ -178,7 +214,7 @@ describe('hotlist', () => {
         const action = {
           type: hotlist.FETCH_ITEMS_SUCCESS,
           name: example.NAME,
-          items: [example.HOTLIST_ITEM],
+          items: [{...example.HOTLIST_ITEM, rank: 0}],
         };
         sinon.assert.calledWith(dispatch, action);
       });

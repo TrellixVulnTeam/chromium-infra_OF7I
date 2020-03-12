@@ -32,6 +32,9 @@ export const HOTLIST_ITEM = Object.freeze({
   createTime: '2020-01-01T12:00:00Z',
 });
 
+/** @type {HotlistIssue} */
+export const HOTLIST_ISSUE = Object.freeze({...issue.ISSUE, ...HOTLIST_ITEM});
+
 /** @type {HotlistItemV3} */
 export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   name: NAME + '/items/78',
@@ -41,6 +44,11 @@ export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   createTime: '2020-01-01T12:00:00Z',
 });
 
+/** @type {HotlistIssue} */
+export const HOTLIST_ISSUE_OTHER_PROJECT = Object.freeze({
+  ...issue.ISSUE_OTHER_PROJECT, ...HOTLIST_ITEM_OTHER_PROJECT,
+});
+
 /** @type {HotlistItemV3} */
 export const HOTLIST_ITEM_CLOSED = Object.freeze({
   name: NAME + '/items/90',
@@ -48,6 +56,11 @@ export const HOTLIST_ITEM_CLOSED = Object.freeze({
   rank: 2,
   adder: user.USER,
   createTime: '2020-01-01T12:00:00Z',
+});
+
+/** @type {HotlistIssue} */
+export const HOTLIST_ISSUE_CLOSED = Object.freeze({
+  ...issue.ISSUE_CLOSED, ...HOTLIST_ITEM_CLOSED,
 });
 
 /** @type {Object.<string, HotlistV3>} */

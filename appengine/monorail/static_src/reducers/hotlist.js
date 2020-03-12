@@ -152,6 +152,26 @@ export const viewedHotlistItems = createSelector(
     [hotlistItems, name],
     (hotlistItems, name) => name && hotlistItems[name] || []);
 
+/**
+ * Returns an Array containing the HotlistIssues in the currently viewed
+ * Hotlist, or [] if there is no current Hotlist or no Hotlist data.
+ * A HotlistIssue merges the HotlistItem and Issue into one flat object.
+ * @param {any} state
+ * @return {Array<HotlistIssue>}
+ */
+export const viewedHotlistIssues = createSelector(
+    [viewedHotlistItems, issue.issue],
+    (items, getIssue) => {
+      // Filter out issues that haven't been fetched yet or failed to fetch.
+      // Example: if the user doesn't have permissions to view the issue.
+      // <mr-issue-list> assumes that every Issue is populated.
+      const itemsWithData = items.filter((item) => getIssue(item.issue));
+      return itemsWithData.map((item) => ({
+        ...getIssue(item.issue),
+        ...item,
+      }));
+    });
+
 // Action Creators
 
 /**
@@ -196,11 +216,13 @@ export const fetchItems = (name) => async (dispatch) => {
     /** @type {{items: Array<HotlistItemV3>}} */
     const {items} = await prpcClient.call(
         'monorail.v1.Hotlists', 'ListHotlistItems', args);
+    const itemsWithRank =
+        items.map((item) => item.rank ? item : {...item, rank: 0});
 
     const issueRefs = items.map((item) => issueNameToRef(item.issue));
     dispatch(issue.fetchIssues(issueRefs));
 
-    dispatch({type: FETCH_ITEMS_SUCCESS, name, items});
+    dispatch({type: FETCH_ITEMS_SUCCESS, name, items: itemsWithRank});
   } catch (error) {
     dispatch({type: FETCH_ITEMS_FAILURE, error});
   };
