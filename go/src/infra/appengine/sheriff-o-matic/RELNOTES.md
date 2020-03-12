@@ -1,3 +1,21 @@
+# Release Notes sheriff-o-matic 2020-03-13
+
+- 2 commits, 1 bugs affected since bbfd0ca ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - jsca@google.com
+
+## Changes in this release
+
+- [Relnotes 9 March](https://chromium-review.googlesource.com/c/infra/infra/+/2094395) (nqmtuan@google.com)
+- [[som] Show the current branch sheriff in an iframe.](https://chromium-review.googlesource.com/c/infra/infra/+/2087255) (jsca@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1058566](https://crbug.com/1058566)
+
+
 # Release Notes sheriff-o-matic 2020-03-09
 
 - 1 commits, 0 bugs affected since 8ed35c2 ()
