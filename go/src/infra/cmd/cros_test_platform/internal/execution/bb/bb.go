@@ -11,6 +11,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/golang/protobuf/jsonpb"
+	structpb "github.com/golang/protobuf/ptypes/struct"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
+	"google.golang.org/genproto/protobuf/field_mask"
+
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/luci/auth"
 	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
@@ -23,14 +29,14 @@ import (
 	"infra/libs/skylab/request"
 )
 
-type build struct {
+type task struct {
 	bbID int64
 }
 
 type bbSkylabClient struct {
 	swarmingClient swarming.Client
 	bbClient       buildbucket_pb.BuildsClient
-	knownBuilds    map[skylab.TaskReference]build
+	knownTasks     map[skylab.TaskReference]task
 }
 
 // NewSkylabClient creates a new skylab.Client.
@@ -46,7 +52,7 @@ func NewSkylabClient(ctx context.Context, cfg *config.Config) (skylab.Client, er
 	return &bbSkylabClient{
 		swarmingClient: sc,
 		bbClient:       bbc,
-		knownBuilds:    make(map[skylab.TaskReference]build),
+		knownTasks:     make(map[skylab.TaskReference]task),
 	}, nil
 }
 
@@ -110,15 +116,87 @@ func (c *bbSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (sk
 		return "", errors.Annotate(err, "launch task for %s", args.TestRunnerRequest.GetTest().GetAutotest().GetName()).Err()
 	}
 	tr := skylab.NewTaskReference()
-	c.knownBuilds[tr] = build{
+	c.knownTasks[tr] = task{
 		bbID: resp.Id,
 	}
 	return tr, nil
 }
 
-// FetchResults stub.
+// getBuildFieldMask is the list of buildbucket fields that are needed.
+var getBuildFieldMask = []string{
+	"id",
+	// Build details are parsed from the build's output properties.
+	"output.properties",
+	// Build status is used to determine whether the build is complete.
+	"status",
+}
+
+// FetchResults fetches the latest state and results of the given task.
 func (c *bbSkylabClient) FetchResults(ctx context.Context, t skylab.TaskReference) (*skylab.FetchResultsResponse, error) {
-	panic("Not yet implemented.")
+	task, ok := c.knownTasks[t]
+	if !ok {
+		return nil, errors.Reason("fetch results: could not find task among launched tasks").Err()
+	}
+	req := &buildbucket_pb.GetBuildRequest{
+		Id:     task.bbID,
+		Fields: &field_mask.FieldMask{Paths: getBuildFieldMask},
+	}
+	b, err := c.bbClient.GetBuild(ctx, req)
+	if err != nil {
+		return nil, errors.Annotate(err, "fetch results for build %d", task.bbID).Err()
+	}
+
+	lc := bbStatusToLifeCycle[b.Status]
+	if !skylab.LifeCyclesWithResults[lc] {
+		return &skylab.FetchResultsResponse{LifeCycle: lc}, nil
+	}
+
+	res, err := extractResult(b)
+	if err != nil {
+		return nil, errors.Annotate(err, "fetch results for build %d", task.bbID).Err()
+	}
+
+	return &skylab.FetchResultsResponse{
+		Result:    res,
+		LifeCycle: lc,
+	}, nil
+}
+
+var bbStatusToLifeCycle = map[buildbucket_pb.Status]test_platform.TaskState_LifeCycle{
+	buildbucket_pb.Status_SCHEDULED:     test_platform.TaskState_LIFE_CYCLE_PENDING,
+	buildbucket_pb.Status_STARTED:       test_platform.TaskState_LIFE_CYCLE_RUNNING,
+	buildbucket_pb.Status_SUCCESS:       test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+	buildbucket_pb.Status_FAILURE:       test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+	buildbucket_pb.Status_INFRA_FAILURE: test_platform.TaskState_LIFE_CYCLE_ABORTED,
+	buildbucket_pb.Status_CANCELED:      test_platform.TaskState_LIFE_CYCLE_CANCELLED,
+}
+
+func extractResult(from *buildbucket_pb.Build) (*skylab_test_runner.Result, error) {
+	op := from.GetOutput().GetProperties().GetFields()
+	if op == nil {
+		return nil, fmt.Errorf("extract results from build %d: missing output properties", from.Id)
+	}
+	res := op["result"]
+	if res == nil {
+		return nil, fmt.Errorf("extract results from build %d: missing result output property", from.Id)
+	}
+	ret, err := structPBToResult(res)
+	if err != nil {
+		return nil, errors.Annotate(err, "extract results from build %d", from.Id).Err()
+	}
+	return ret, nil
+}
+
+func structPBToResult(from *structpb.Value) (*skylab_test_runner.Result, error) {
+	json, err := (&jsonpb.Marshaler{}).MarshalToString(from)
+	if err != nil {
+		return nil, errors.Annotate(err, "convert struct.Value to skylab_test_runner.Result").Err()
+	}
+	var r skylab_test_runner.Result
+	if err := jsonpb.UnmarshalString(json, &r); err != nil {
+		return nil, errors.Annotate(err, "convert struct.Value to skylab_test_runner.Result").Err()
+	}
+	return &r, nil
 }
 
 // URL stub.

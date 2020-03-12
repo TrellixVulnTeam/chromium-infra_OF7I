@@ -12,6 +12,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
@@ -22,13 +23,6 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/libs/skylab/request"
 )
-
-func newBBSkylabClient(bbc buildbucket_pb.BuildsClient) *bbSkylabClient {
-	return &bbSkylabClient{
-		bbClient:    bbc,
-		knownBuilds: make(map[skylab.TaskReference]build),
-	}
-}
 
 // fakeSwarming implements skylab_api.Swarming.
 type fakeSwarming struct {
@@ -123,17 +117,15 @@ func addBoard(args *request.Args, board string) {
 	args.SchedulableLabels.Board = &board
 }
 
-func TestLaunch(t *testing.T) {
+func TestLaunchRequest(t *testing.T) {
 	Convey("When a task is launched", t, func() {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		bbClient := buildbucket_pb.NewMockBuildsClient(ctrl)
-		skylab := newBBSkylabClient(bbClient)
-		var args request.Args
-		addTestName(&args, "foo-test")
+		tf, cleanup := newTestFixture(t)
+		defer cleanup()
+		args := newArgs()
+		addTestName(args, "foo-test")
 
 		var gotRequest *buildbucket_pb.ScheduleBuildRequest
-		bbClient.EXPECT().ScheduleBuild(
+		tf.bb.EXPECT().ScheduleBuild(
 			gomock.Any(),
 			gomock.Any(),
 		).Do(
@@ -142,7 +134,7 @@ func TestLaunch(t *testing.T) {
 			},
 		).Return(&buildbucket_pb.Build{Id: 42}, nil)
 
-		task, err := skylab.LaunchTask(context.Background(), &args)
+		_, err := tf.skylab.LaunchTask(tf.ctx, args)
 		So(err, ShouldBeNil)
 		Convey("the BB client is called with the correct args.", func() {
 			So(gotRequest, ShouldNotBeNil)
@@ -152,21 +144,11 @@ func TestLaunch(t *testing.T) {
 			req, err := structPBToTestRunnerRequest(gotRequest.Properties.Fields["request"])
 			So(err, ShouldBeNil)
 			So(req.GetTest().GetAutotest().GetName(), ShouldEqual, "foo-test")
-			Convey("and the task reference is recorded correctly.", func() {
-				// TODO(zamorzaev): remove this implementation check once
-				// results tests are added.
-				So(task, ShouldNotBeNil)
-				So(skylab.knownBuilds[task], ShouldNotBeNil)
-				So(skylab.knownBuilds[task].bbID, ShouldEqual, 42)
-			})
 		})
 	})
 }
 
 func addTestName(args *request.Args, name string) {
-	if args.TestRunnerRequest == nil {
-		args.TestRunnerRequest = &skylab_test_runner.Request{}
-	}
 	if args.TestRunnerRequest.Test == nil {
 		args.TestRunnerRequest.Test = &skylab_test_runner.Request_Test{
 			Harness: &skylab_test_runner.Request_Test_Autotest_{
@@ -188,4 +170,183 @@ func structPBToTestRunnerRequest(from *structpb.Value) (*skylab_test_runner.Requ
 		return nil, errors.Annotate(err, "structPBToTestRunnerRequest").Err()
 	}
 	return &req, nil
+}
+
+func TestFetchRequest(t *testing.T) {
+	Convey("When a task is launched and completes", t, func() {
+		tf, cleanup := newTestFixture(t)
+		defer cleanup()
+
+		tf.bb.EXPECT().ScheduleBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&buildbucket_pb.Build{Id: 42}, nil)
+
+		var gotRequest *buildbucket_pb.GetBuildRequest
+		tf.bb.EXPECT().GetBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Do(
+			func(_ context.Context, r *buildbucket_pb.GetBuildRequest) {
+				gotRequest = r
+			},
+		).Return(&buildbucket_pb.Build{}, nil)
+
+		task, err := tf.skylab.LaunchTask(tf.ctx, newArgs())
+		So(err, ShouldBeNil)
+		Convey("as the results are fetched the BB client is called with the correct args.", func() {
+			_, err := tf.skylab.FetchResults(tf.ctx, task)
+			So(err, ShouldBeNil)
+			Convey("the BB client is called with the correct args.", func() {
+				So(gotRequest.Id, ShouldEqual, 42)
+				So(gotRequest.Fields, ShouldNotBeNil)
+				So(gotRequest.Fields.Paths, ShouldContain, "id")
+				So(gotRequest.Fields.Paths, ShouldContain, "output.properties")
+				So(gotRequest.Fields.Paths, ShouldContain, "status")
+			})
+		})
+	})
+}
+
+func TestCompletedTask(t *testing.T) {
+	Convey("When a task is launched and completes", t, func() {
+		tf, cleanup := newTestFixture(t)
+		defer cleanup()
+
+		tf.bb.EXPECT().ScheduleBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&buildbucket_pb.Build{Id: 42}, nil)
+
+		tf.bb.EXPECT().GetBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&buildbucket_pb.Build{
+			Id:     42,
+			Status: buildbucket_pb.Status_SUCCESS,
+			Output: outputProperty("foo-test-case"),
+		}, nil)
+
+		task, err := tf.skylab.LaunchTask(tf.ctx, newArgs())
+		So(err, ShouldBeNil)
+		Convey("the task results are reported correctly.", func() {
+			res, err := tf.skylab.FetchResults(tf.ctx, task)
+			So(err, ShouldBeNil)
+			So(res, ShouldNotBeNil)
+			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
+			So(res.Result, ShouldNotBeNil)
+			So(res.Result.GetAutotestResult().GetTestCases(), ShouldHaveLength, 1)
+			So(res.Result.GetAutotestResult().GetTestCases()[0].GetName(), ShouldEqual, "foo-test-case")
+		})
+	})
+}
+
+func TestCompletedTaskMissingResults(t *testing.T) {
+	Convey("When a task is launched, completes and has no results", t, func() {
+		tf, cleanup := newTestFixture(t)
+		defer cleanup()
+
+		tf.bb.EXPECT().ScheduleBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&buildbucket_pb.Build{Id: 42}, nil)
+
+		tf.bb.EXPECT().GetBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&buildbucket_pb.Build{
+			Id:     42,
+			Status: buildbucket_pb.Status_SUCCESS,
+		}, nil)
+
+		task, err := tf.skylab.LaunchTask(tf.ctx, newArgs())
+		So(err, ShouldBeNil)
+		Convey("an error is returned.", func() {
+			_, err := tf.skylab.FetchResults(tf.ctx, task)
+			// This error is bubbled up as a non-zero exit code of the binary
+			// which is interpreted as an INFRA_FAILURE by the recipe.
+			So(err, ShouldNotBeNil)
+		})
+	})
+}
+
+func TestAbortedTask(t *testing.T) {
+	Convey("When a task is launched and reports an infra failure", t, func() {
+		tf, cleanup := newTestFixture(t)
+		defer cleanup()
+
+		tf.bb.EXPECT().ScheduleBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&buildbucket_pb.Build{Id: 42}, nil)
+
+		tf.bb.EXPECT().GetBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&buildbucket_pb.Build{
+			Id:     42,
+			Status: buildbucket_pb.Status_INFRA_FAILURE,
+			Output: outputProperty("foo-test-case"),
+		}, nil)
+
+		task, err := tf.skylab.LaunchTask(tf.ctx, newArgs())
+		So(err, ShouldBeNil)
+		Convey("results are ignored.", func() {
+			res, err := tf.skylab.FetchResults(tf.ctx, task)
+			So(err, ShouldBeNil)
+			So(res, ShouldNotBeNil)
+			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_ABORTED)
+			So(res.Result, ShouldBeNil)
+		})
+	})
+}
+
+type testFixture struct {
+	ctx    context.Context
+	bb     *buildbucket_pb.MockBuildsClient
+	skylab *bbSkylabClient
+}
+
+func newTestFixture(t *testing.T) (*testFixture, func()) {
+	ctrl := gomock.NewController(t)
+	bb := buildbucket_pb.NewMockBuildsClient(ctrl)
+	return &testFixture{
+		ctx: context.Background(),
+		bb:  bb,
+		skylab: &bbSkylabClient{
+			bbClient:   bb,
+			knownTasks: make(map[skylab.TaskReference]task),
+		},
+	}, ctrl.Finish
+}
+
+func newArgs() *request.Args {
+	return &request.Args{
+		TestRunnerRequest: &skylab_test_runner.Request{},
+	}
+}
+
+func outputProperty(testCase string) *buildbucket_pb.Build_Output {
+	res := &skylab_test_runner.Result{
+		Harness: &skylab_test_runner.Result_AutotestResult{
+			AutotestResult: &skylab_test_runner.Result_Autotest{
+				TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+					{
+						Name:    testCase,
+						Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS,
+					},
+				},
+			},
+		},
+	}
+	json, _ := (&jsonpb.Marshaler{}).MarshalToString(res)
+	var ret structpb.Value
+	jsonpb.UnmarshalString(json, &ret)
+	return &buildbucket_pb.Build_Output{
+		Properties: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"result": &ret,
+			},
+		},
+	}
 }

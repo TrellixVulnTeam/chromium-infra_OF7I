@@ -30,9 +30,3 @@ func asLifeCycle(state string) (test_platform.TaskState_LifeCycle, error) {
 	}
 	return taskStateToLifeCycle[jsonrpc.TaskState(val)], nil
 }
-
-// Tasks with these life cycles contain test results.
-// E.g. this excludes killed tasks as they have no chance to produce results.
-var lifeCyclesWithResults = map[test_platform.TaskState_LifeCycle]bool{
-	test_platform.TaskState_LIFE_CYCLE_COMPLETED: true,
-}

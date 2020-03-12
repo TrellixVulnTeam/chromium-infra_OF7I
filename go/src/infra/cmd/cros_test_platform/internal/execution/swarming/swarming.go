@@ -155,7 +155,7 @@ func (c *rawSwarmingSkylabClient) FetchResults(ctx context.Context, t skylab.Tas
 		return nil, errors.Annotate(err, "fetch results for task %s", t).Err()
 	}
 
-	if !lifeCyclesWithResults[lc] {
+	if !skylab.LifeCyclesWithResults[lc] {
 		return &skylab.FetchResultsResponse{LifeCycle: lc}, nil
 	}
 
