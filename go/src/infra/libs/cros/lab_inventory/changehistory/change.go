@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
@@ -112,6 +113,9 @@ func LogDutStateChanges(hostname string, old *lab.DutState, newData *lab.DutStat
 
 // LogChromeOSDeviceChanges logs the change of the given ChromeOSDevice.
 func LogChromeOSDeviceChanges(old *lab.ChromeOSDevice, newData *lab.ChromeOSDevice) (changes Changes) {
+	changes.log("serial_number", old.GetSerialNumber(), newData.GetSerialNumber())
+	changes.log("manufacturing.config_id", old.GetManufacturingId().GetValue(), newData.GetManufacturingId().GetValue())
+	changes = append(changes, logDeviceConfigID(old.GetDeviceConfigId(), newData.GetDeviceConfigId())...)
 	changes = append(changes, logDutChange(old.GetDut(), newData.GetDut())...)
 	changes = append(changes, logLabstationChange(old.GetLabstation(), newData.GetLabstation())...)
 
@@ -179,6 +183,18 @@ func logServoChange(old *lab.Servo, newData *lab.Servo) (changes Changes) {
 		servo = newData
 	}
 	changes.log(fmt.Sprintf("servo.%v", servo.ServoSerial), old, newData)
+	return
+}
+
+func logDeviceConfigID(old *device.ConfigId, newData *device.ConfigId) (changes Changes) {
+	if old == nil || newData == nil {
+		changes.log("DeviceConfigID", old, newData)
+		return
+	}
+	changes.log("platform_id", old.GetPlatformId().GetValue(), newData.GetPlatformId().GetValue())
+	changes.log("model_id", old.GetModelId().GetValue(), newData.GetModelId().GetValue())
+	changes.log("variant_id", old.GetVariantId().GetValue(), newData.GetVariantId().GetValue())
+	changes.log("brand_id", old.GetBrandId().GetValue(), newData.GetBrandId().GetValue())
 	return
 }
 
