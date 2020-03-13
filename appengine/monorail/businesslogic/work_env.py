@@ -2622,19 +2622,46 @@ class WorkEnv(object):
         self.mc.cnxn, hotlist_id, [], remove_issue_ids, self.services.issue,
         self.services.chart)
 
-  # TODO(crbug/monorail/7104): Rename current RerankHotlistItems to
-  # UpdateHotlistItems. Create a new RerankHotlistItems to call
-  # UpdateHotlistItems, after checking the moved_issue_ids only includes issues
-  # that already exist in the Hotlist.
+  def AddHotlistItems(self, hotlist_id, new_issue_ids, target_position):
+    # type: (int, Sequence[int], int) -> None
+    """Add given issues to a hotlist.
 
-  # TODO(crbug/monorail/7104): Create an AddHotlistItems to call
-  # UpdateHotlistItems, after checking that new_issue_ids don't already exist
-  # in the Hotlist
+    Args:
+      hotlist_id: A hotlist ID of the hotlist to add issues to.
+      new_issue_ids: A list of issue IDs that should belong to new
+        HotlistItems added to the hotlist. HotlistItems will be added
+        in the same order the IDs are given in. If some HotlistItems already
+        exist in the Hotlist, they will not be moved.
+      target_position: The index, starting at 0, of the new position the
+        first issue in new_issue_ids should have. This value cannot be greater
+        than (# of current hotlist.items).
+
+    Raises:
+      PermissionException: If the user lacks permissions to edit the hotlist.
+      NoSuchHotlistException: If the hotlist is not found.
+      InputException: If the target_position or new_issue_ids are not valid.
+    """
+    hotlist = self.GetHotlist(hotlist_id)
+    self._AssertUserCanEditHotlist(hotlist)
+    if not new_issue_ids:
+      raise exceptions.InputException('no new issues given to add.')
+
+    item_issue_ids = {item.issue_id for item in hotlist.items}
+    confirmed_new_issue_ids = set(new_issue_ids).difference(item_issue_ids)
+
+    if confirmed_new_issue_ids:
+      self.RerankHotlistItems(
+          hotlist_id, list(confirmed_new_issue_ids), target_position)
+
+  # TODO(crbug/monorail/7104): Implement a RerankHotlistItems method that
+  # will check only existing HotlistItems are reranked, before calling
+  # _UpdateHotlistItems. See TODO below.
 
   # TODO(crbug/monorail/7104): This method will be called for v3's
   # RerankHotlistItems and AddHotlistItems paths. We decided to not merge
   # these two v3 methods together as this may confuse the user because these
   # are different concepts, even though the backend implementation is the same.
+  # Rename this to _UpdateHotlistItems and take in a full hotlist object.
   def RerankHotlistItems(self, hotlist_id, moved_issue_ids, target_position):
     # type: (int, list(int), int) -> Hotlist
     """Rerank HotlistItems to accommodate moving existing/new issues.
@@ -2662,11 +2689,14 @@ class WorkEnv(object):
       NoSuchHotlistException: If the hotlist is not found.
       InputException: If the target_position or moved_issue_ids are not valid.
     """
+    # TODO(crbug/monorail/7104): remove these checks when we pass in the full
+    # hotlist object instead of the hotlist_id.
     hotlist = self.GetHotlist(hotlist_id)
     self._AssertUserCanEditHotlist(hotlist)
     if not moved_issue_ids:
       raise exceptions.InputException('`moved_issue_ids` empty.')
 
+    # TODO(crbug/monorail/7104): Check that moved_issue_ids are valid Issue IDs
     # TODO(crbug/monorail/7318): Check user has permission to view every issue
 
     # List[Tuple[issue_id, new_rank]]

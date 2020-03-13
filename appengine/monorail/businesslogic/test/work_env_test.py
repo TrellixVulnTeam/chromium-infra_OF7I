@@ -4648,6 +4648,39 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.RemoveHotlistItems(hotlist.hotlist_id, [404])
 
+  def testAddHotlistItems_NoSuchHotlist(self):
+    """We raise an exception if the hotlist is not found."""
+    with self.assertRaises(features_svc.NoSuchHotlistException):
+      with self.work_env as we:
+        we.AddHotlistItems(self.dne_hotlist_id, [78901], 0)
+
+  def testAddHotlistItems_NoHotlistEditPermissions(self):
+    """We raise an exception if the user lacks edit permissions in hotlist."""
+    self.SignIn(self.user_3.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.AddHotlistItems(self.hotlist.hotlist_id, [78901], 0)
+
+  def testAddHotlistItems_NoItemsGiven(self):
+    """We raise an exception if the given list of issues is empty."""
+    hotlist = self.createHotlistWithItems()
+    self.SignIn(self.user_2.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.AddHotlistItems(hotlist.hotlist_id, [], 0)
+
+  def testAddHotlistItems(self):
+    """We add new items to the hotlist and don't touch existing items."""
+    hotlist = self.createHotlistWithItems()
+    self.SignIn(self.user_2.user_id)
+    with self.work_env as we:
+      we.AddHotlistItems(hotlist.hotlist_id, [78909, 78910, 78901], 2)
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+
+    expected_item_ids = [78901, 78902, 78909, 78910, 78903, 78904]
+    self.assertEqual(
+        expected_item_ids, [item.issue_id for item in updated_hotlist.items])
+
   @mock.patch('time.time')
   def testRerankHotlistItems(self, fake_time):
     """We can rerank new and existing hotlist issues."""
