@@ -108,15 +108,20 @@ class FieldCreate(servlet.Servlet):
     admin_ids, admin_str = tracker_helpers.ParsePostDataUsers(
         mr.cnxn, post_data['admin_names'], self.services.user)
     editor_ids, editor_str = tracker_helpers.ParsePostDataUsers(
-        mr.cnxn, '', self.services.user)
+        mr.cnxn, post_data['editor_names'], self.services.user)
 
     field_helpers.ParsedFieldDefAssertions(mr, parsed)
+
+    if not (parsed.is_restricted_field):
+      assert not editor_ids, 'Editors are only for restricted fields.'
 
     # TODO(crbug/monorail/7275): This condition could potentially be
     # included in the field_helpers.ParsedFieldDefAssertions method,
     # just remember that it should be compatible with its usage in
     # fielddetail.py where there is a very similar condition.
     if parsed.field_type_str == 'approval_type':
+      assert not (
+          parsed.is_restricted_field), 'Approval fields cannot be restricted.'
       if parsed.approvers_str:
         approver_ids_dict = self.services.user.LookupUserIDs(
             mr.cnxn, re.split('[,;\s]+', parsed.approvers_str),
@@ -177,7 +182,9 @@ class FieldCreate(servlet.Servlet):
         parsed.date_action_str,
         parsed.field_docstring,
         admin_ids,
-        editor_ids,
+        # TODO(juanescobar): Set to editor_ids when feature is launched.
+        # Also include tests.
+        [],
         approval_id,
         parsed.is_phase_field,
         is_restricted_field=False)

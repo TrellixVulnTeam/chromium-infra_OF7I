@@ -124,8 +124,50 @@ class FieldCreateTest(unittest.TestCase):
     self.assertEqual([], fd.editor_ids)
 
 
+  def testProcessFormData_RejectAssertions_1(self):
+    #This method tests that an exception is raised
+    #when trying to add editors to a non restricted field.
+    post_data = fake.PostData(
+        name=['somefield'],
+        field_type=['INT_TYPE'],
+        min_value=['1'],
+        max_value=['99'],
+        notify_on=['any_comment'],
+        importance=['required'],
+        is_multivalued=['Yes'],
+        docstring=['It is just some field'],
+        applicable_type=['Defect'],
+        date_action=['no_action'],
+        admin_names=['gatsby@example.com'],
+        editor_names=['sport@example.com'])
+
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, self.mr, post_data)
+
+  def testProcessFormData_RejectAssertions_2(self):
+    #This method tests that an exception is raised
+    #when trying to add editors to an approval field.
+    post_data = fake.PostData(
+        name=['approval_field'],
+        field_type=['approval_type'],
+        notify_on=['any_comment'],
+        importance=['required'],
+        is_multivalued=['Yes'],
+        docstring=['It is just some field'],
+        applicable_type=['Defect'],
+        date_action=['no_action'],
+        approver_names=['gatsby@example.com'],
+        is_restricted_field=['Yes'],
+        admin_names=['gatsby@example.com'],
+        editor_names=[''])
+
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, self.mr, post_data)
+
   @mock.patch('framework.servlet.Servlet.PleaseCorrect')
-  def testProcessFormData_RejectAssertions(self, fake_servlet_pc):
+  def testProcessFormData_RejectAssertions_3(self, fake_servlet_pc):
+    #This method tests when errors are found using when the
+    #field_helpers.ParsedFieldDefAssertions is triggered.
     post_data = fake.PostData(
         name=['somefield'],
         field_type=['INT_TYPE'],
@@ -173,6 +215,7 @@ class FieldCreateTest(unittest.TestCase):
         field_type=['approval_type'],
         approver_names=[''],
         admin_names=[''],
+        editor_names=[''],
         parent_approval_name=['UIApproval'],
         is_phase_field=['on'])
 
@@ -197,7 +240,7 @@ class FieldCreateTest(unittest.TestCase):
         initial_survey=post_data.get('survey', ''),
         initial_is_phase_field=False,
         initial_admins=post_data.get('admin_names'),
-        initial_editors='',
+        initial_editors=post_data.get('editor_names'),
         initial_is_restricted_field=False)
     self.mox.ReplayAll()
     url = self.servlet.ProcessFormData(self.mr, post_data)

@@ -175,11 +175,15 @@ class FieldDetail(servlet.Servlet):
     admin_ids, admin_str = tracker_helpers.ParsePostDataUsers(
         mr.cnxn, post_data['admin_names'], self.services.user)
     editor_ids, editor_str = tracker_helpers.ParsePostDataUsers(
-        mr.cnxn, '', self.services.user)
+        mr.cnxn, post_data['editor_names'], self.services.user)
 
     field_helpers.ParsedFieldDefAssertions(mr, parsed)
 
     if field_def.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
+      assert not (
+          parsed.is_restricted_field), 'Approval fields cannot be restricted.'
+      assert not editor_ids, 'Approval fields cannot have editors.'
+
       if parsed.approvers_str:
         approver_ids_dict = self.services.user.LookupUserIDs(
             mr.cnxn, re.split('[,;\s]+', parsed.approvers_str),
@@ -224,7 +228,9 @@ class FieldDetail(servlet.Servlet):
         date_action=parsed.date_action_str,
         docstring=parsed.field_docstring,
         admin_ids=admin_ids,
-        editor_ids=editor_ids,
+        # TODO(juanescobar): Set to editor_ids when feature is launched.
+        # Also include tests.
+        editor_ids=[],
         is_restricted_field=False)
 
     if field_def.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:

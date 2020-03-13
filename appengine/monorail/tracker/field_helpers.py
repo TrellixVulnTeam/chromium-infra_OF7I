@@ -360,8 +360,6 @@ def ParsedFieldDefAssertions(mr, parsed):
   # and assign all mr.errors values.
   if (parsed.is_required and parsed.is_niche):
     mr.errors.is_niche = 'A field cannot be both required and niche.'
-  if (parsed.is_restricted_field and parsed.field_type_str == 'approval_type'):
-    mr.errors.is_restricted_field = 'An approval field cannot be restricted.'
   if parsed.date_action_str is not None and (
       parsed.date_action_str not in config_svc.DATE_ACTION_ENUM):
     mr.errors.date_action = 'The date action should be either: ' + ', '.join(

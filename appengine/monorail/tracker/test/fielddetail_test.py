@@ -239,8 +239,12 @@ class FieldDetailTest(unittest.TestCase):
 
   def testProcessEditField_Reject(self):
     post_data = fake.PostData(
-        name=['CPU'], field_type=['INT_TYPE'], min_value=['4'],
-        max_value=['1'], admin_names=[''])
+        name=['CPU'],
+        field_type=['INT_TYPE'],
+        min_value=['4'],
+        max_value=['1'],
+        admin_names=[''],
+        editor_names=[''])
 
     self.mox.StubOutWithMock(self.servlet, 'PleaseCorrect')
     self.servlet.PleaseCorrect(
@@ -264,10 +268,39 @@ class FieldDetailTest(unittest.TestCase):
     self.assertIsNone(fd.min_value)
     self.assertIsNone(fd.max_value)
 
+  def testProcessEditField_RejectAssertions_1(self):
+    #This method tests that an exception is raised
+    #when trying to add editors to a non restricted field.
+    post_data = fake.PostData(
+        name=['CPU'],
+        approver_names=['gatsby@example.com'],
+        admin_names=[''],
+        editor_names=['gatsby@example.com'])
+
+    self.assertRaises(
+        AssertionError, self.servlet._ProcessEditField, self.mr, post_data,
+        self.config, self.approval_fd)
+
+  def testProcessEditField_RejectAssertions_2(self):
+    #This method tests that an exception is raised
+    #when trying to restrict an approval field.
+    post_data = fake.PostData(
+        name=['CPU'],
+        approver_names=['gatsby@example.com'],
+        is_restricted_field=['Yes'],
+        admin_names=[''],
+        editor_names=[''])
+
+    self.assertRaises(
+        AssertionError, self.servlet._ProcessEditField, self.mr, post_data,
+        self.config, self.approval_fd)
+
   def testProcessEditField_RejectApproval(self):
     self.mr.field_name = 'UIReview'
     post_data = fake.PostData(
-        name=['UIReview'], admin_names=[''],
+        name=['UIReview'],
+        admin_names=[''],
+        editor_names=[''],
         survey=['WIll there be UI changes?'],
         approver_names=[''])
 
@@ -292,7 +325,9 @@ class FieldDetailTest(unittest.TestCase):
   def testProcessEditField_Approval(self):
     self.mr.field_name = 'UIReview'
     post_data = fake.PostData(
-        name=['UIReview'], admin_names=[''],
+        name=['UIReview'],
+        admin_names=[''],
+        editor_names=[''],
         survey=['WIll there be UI changes?'],
         approver_names=['sport@example.com, gatsby@example.com'])
 
