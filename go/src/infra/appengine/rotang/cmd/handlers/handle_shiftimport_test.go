@@ -10,7 +10,6 @@ import (
 
 	"context"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
@@ -477,7 +476,7 @@ func TestHandleShiftImport(t *testing.T) {
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("%s: AllShifts(ctx, %q) failed: %v", tst.name, tst.rotaName, err)
 			}
-			if diff := pretty.Compare(tst.want, shifts); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, shifts); diff != "" {
 				t.Fatalf("%s: HandleShiftImport(ctx) differ -want +got, %s", tst.name, diff)
 			}
 		})

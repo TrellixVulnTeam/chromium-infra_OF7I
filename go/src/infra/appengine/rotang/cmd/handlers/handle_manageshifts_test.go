@@ -12,7 +12,6 @@ import (
 
 	"context"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
@@ -139,7 +138,7 @@ func TestHandleShifts(t *testing.T) {
 		h, c := handleShifts(tst.shifts, tst.members, tst.time)
 		arrangeShiftByStart(tst.cfg, h)
 		arrangeShiftByStart(tst.cfg, c)
-		if diff := pretty.Compare(tst.want, testStruct{h, c}); diff != "" {
+		if diff := prettyConfig.Compare(tst.want, testStruct{h, c}); diff != "" {
 			t.Errorf("%s: handleShifts(_, _, %v) differ -want +got, %s", tst.name, tst.time, diff)
 		}
 	}
@@ -321,7 +320,7 @@ func TestHandleGeneratedShifts(t *testing.T) {
 				t.Fatalf("%s: AllShifts(ctx, %q) failed: %v", tst.name, tst.cfg.Config.Name, err)
 			}
 
-			if diff := pretty.Compare(tst.want, shifts); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, shifts); diff != "" {
 				t.Fatalf("%s: handleGeneratedShifts(ctx, _) differ -want +got, %s", tst.name, diff)
 			}
 		})
@@ -534,7 +533,7 @@ func TestHandleUpdatedShifts(t *testing.T) {
 				t.Fatalf("%s: AllShifts(ctx, %q) failed: %v", tst.name, tst.cfg.Config.Name, err)
 			}
 
-			if diff := pretty.Compare(tst.want, shifts); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, shifts); diff != "" {
 				t.Fatalf("%s: handleUpdatedShifts(ctx, _) differ -want +got, %s", tst.name, diff)
 			}
 		})
@@ -759,7 +758,7 @@ func TestShiftSetup(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(tst.want, rs); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, rs); diff != "" {
 				t.Fatalf("%s; shiftSetup(ctx) differ -want +got, %s", tst.name, diff)
 			}
 		})
@@ -819,7 +818,7 @@ func TestArrangeShiftByStart(t *testing.T) {
 
 	for _, tst := range tests {
 		arrangeShiftByStart(tst.cfg, tst.in)
-		if diff := pretty.Compare(tst.want, tst.in); diff != "" {
+		if diff := prettyConfig.Compare(tst.want, tst.in); diff != "" {
 			t.Errorf("%s: arrangeShiftByStart(_, _) differ -want +got, %s", tst.name, diff)
 		}
 	}

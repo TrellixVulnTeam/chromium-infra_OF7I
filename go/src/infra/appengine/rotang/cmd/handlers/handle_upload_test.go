@@ -17,7 +17,6 @@ import (
 
 	"infra/appengine/rotang"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
 )
@@ -536,7 +535,7 @@ func TestHandleUpload(t *testing.T) {
 				})
 			}
 
-			if diff := pretty.Compare(tst.want, gotRotas); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, gotRotas); diff != "" {
 				t.Errorf("%s: HandleUpload(ctx) differs -want +got: %s", tst.name, diff)
 			}
 		})

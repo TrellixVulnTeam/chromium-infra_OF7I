@@ -10,7 +10,6 @@ import (
 
 	"context"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
@@ -189,7 +188,7 @@ func TestHandleDeleteRota(t *testing.T) {
 			}
 			sort.Strings(got)
 			sort.Strings(tst.want)
-			if diff := pretty.Compare(tst.want, got); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, got); diff != "" {
 				t.Errorf("%s: HandleDeleteRota(ctx) differ -want +got, %s", tst.name, diff)
 			}
 

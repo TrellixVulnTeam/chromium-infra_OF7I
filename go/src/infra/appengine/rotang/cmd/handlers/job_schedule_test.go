@@ -9,7 +9,6 @@ import (
 
 	"context"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/server/router"
 )
 
@@ -956,7 +955,7 @@ func TestScheduleShifts(t *testing.T) {
 				t.Fatalf("%s: AllShifts(ctx, %q) failed: %v", tst.name, tst.cfg.Config.Name, err)
 			}
 
-			if diff := pretty.Compare(append(tst.shifts, tst.want...), got); diff != "" {
+			if diff := prettyConfig.Compare(append(tst.shifts, tst.want...), got); diff != "" {
 				t.Fatalf("%s: scheduleShifts(ctx, _, %v) differ -want +got, %s", tst.name, midnight, diff)
 			}
 		})

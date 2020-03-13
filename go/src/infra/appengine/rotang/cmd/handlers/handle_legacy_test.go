@@ -10,7 +10,6 @@ import (
 	"context"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/server/router"
@@ -266,7 +265,7 @@ func TestLegacySheriff(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(tst.want, res); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, res); diff != "" {
 				t.Fatalf("%s: h.legacySheriff(ctx, %q) differ -want +got, \n%s", tst.name, tst.file, diff)
 			}
 		})
@@ -832,7 +831,7 @@ func TestLegacyTroopers(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(tst.want, resStr); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, resStr); diff != "" {
 				t.Errorf("%s: legacyTrooper(ctx) differ -want +got,\n%s", tst.name, diff)
 			}
 		})
@@ -946,7 +945,7 @@ func TestLegacyAllRotations(t *testing.T) {
 			if err != nil {
 				return
 			}
-			if diff := pretty.Compare(tst.want, res); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, res); diff != "" {
 				t.Fatalf("%s: legacyAllRotations(ctx, %q) differ -want +got, \n%s", tst.name, "", diff)
 			}
 
@@ -1028,7 +1027,7 @@ func TestBuildLegacyRotation(t *testing.T) {
 	for _, tst := range tests {
 		buildLegacyRotation(tst.dateMap, tst.rota, tst.shifts)
 
-		if diff := pretty.Compare(tst.want, tst.dateMap); diff != "" {
+		if diff := prettyConfig.Compare(tst.want, tst.dateMap); diff != "" {
 			t.Errorf("%s: buildLegacyRotation(_, %v, _) differ -want +got , %s", tst.name, tst.start, diff)
 		}
 	}

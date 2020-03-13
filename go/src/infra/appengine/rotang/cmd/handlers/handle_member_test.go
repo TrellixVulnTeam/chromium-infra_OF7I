@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
@@ -490,7 +489,7 @@ func TestMemberGET(t *testing.T) {
 			if err := json.NewDecoder(recorder.Body).Decode(&got); err != nil {
 				t.Fatalf("%s: Decode() failed: %v", tst.name, err)
 			}
-			if diff := pretty.Compare(tst.want, got); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, got); diff != "" {
 				t.Fatalf("%s: memberGet(ctx, _) differ -want +got, \n%s", tst.name, diff)
 			}
 		})
@@ -746,7 +745,7 @@ func TestMemberPOST(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Member(ctx, %q) failed: %v", tst.name, jsonMember.Email, err)
 			}
-			if diff := pretty.Compare(tst.want, member); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, member); diff != "" {
 				t.Fatalf("%s: h.memberPOST(ctx, _) differ -want +got, \n%s", tst.name, diff)
 			}
 		})

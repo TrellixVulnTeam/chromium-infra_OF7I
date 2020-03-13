@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
@@ -222,7 +221,7 @@ func TestRPCShifts(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfig.Compare(wantPB, res); diff != "" {
 				t.Fatalf("%s: h.Oncall(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})
@@ -593,7 +592,7 @@ func TestRPCMigrationInfo(t *testing.T) {
 			sort.Sort(tzByName(wantPB.Members))
 			sort.Sort(tzByName(res.Members))
 
-			if diff := pretty.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfig.Compare(wantPB, res); diff != "" {
 				t.Fatalf("%s: h.MigrateInfo(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 
@@ -851,7 +850,7 @@ func TestRPCOncall(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfig.Compare(wantPB, res); diff != "" {
 				t.Fatalf("%s: h.Oncall(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})
@@ -956,7 +955,7 @@ func TestRPCList(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfig.Compare(wantPB, res); diff != "" {
 				t.Fatalf("%s: h.Oncall(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})

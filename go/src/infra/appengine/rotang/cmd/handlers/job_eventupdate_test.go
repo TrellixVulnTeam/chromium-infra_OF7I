@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/gae/service/mail"
 	"go.chromium.org/luci/server/router"
 )
@@ -978,7 +977,7 @@ func TestEventUpdate(t *testing.T) {
 				t.Fatalf("%s: AllShifts(ctx, %q) failed: %v", tst.name, tst.cfg.Config.Name, err)
 			}
 
-			if diff := pretty.Compare(tst.want, got); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, got); diff != "" {
 				t.Fatalf("%s: scheduleShifts(ctx, _, %v) differ -want +got, %s", tst.name, midnight, diff)
 			}
 
@@ -987,7 +986,7 @@ func TestEventUpdate(t *testing.T) {
 				gotMsg = append(gotMsg, m.Message)
 			}
 
-			if diff := pretty.Compare(tst.email, gotMsg); diff != "" {
+			if diff := prettyConfig.Compare(tst.email, gotMsg); diff != "" {
 				t.Fatalf("%s: JobEventUpdate(ctx) differ -want =got, \n%s", tst.name, diff)
 			}
 		})

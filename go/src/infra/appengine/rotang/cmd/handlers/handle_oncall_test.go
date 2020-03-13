@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
@@ -255,7 +254,7 @@ func TestGenAllRotas(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(tst.want, ts); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, ts); diff != "" {
 				t.Fatalf("%s: allOncallJSON(ctx, %v) differ -want +got, \n%s", tst.name, tst.at, diff)
 			}
 		})
@@ -392,7 +391,7 @@ func TestGenSingleRota(t *testing.T) {
 				t.Fatalf("%s: Decode() failed: %v", tst.name, err)
 			}
 
-			if diff := pretty.Compare(tst.want, rs); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, rs); diff != "" {
 				t.Fatalf("%s: allOncallJSON(ctx, %v) differ -want +got, \n%s", tst.name, tst.at, diff)
 			}
 		})
@@ -592,7 +591,7 @@ func TestOncallJSON(t *testing.T) {
 				}
 			}
 
-			if diff := pretty.Compare(tst.want, got); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, got); diff != "" {
 				t.Fatalf("%s: allOncallJSON(ctx, %v) differ -want +got, \n%s", tst.name, tst.at, diff)
 			}
 		})
@@ -782,7 +781,7 @@ func TestAllOncallJSON(t *testing.T) {
 				}
 			}
 
-			if diff := pretty.Compare(tst.want, got); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, got); diff != "" {
 				t.Fatalf("%s: allOncallJSON(ctx, %v) differ -want +got, \n%s", tst.name, tst.at, diff)
 			}
 		})

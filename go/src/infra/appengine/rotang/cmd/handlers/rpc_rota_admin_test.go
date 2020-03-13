@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
@@ -162,7 +161,7 @@ func TestRPCCreateExternal(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfig.Compare(wantPB, res); diff != "" {
 				t.Fatalf("%s: h.DeleteExternal(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})
@@ -278,7 +277,7 @@ func TestRPCDeleteExternal(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfig.Compare(wantPB, res); diff != "" {
 				t.Fatalf("%s: h.DeleteExternal(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})

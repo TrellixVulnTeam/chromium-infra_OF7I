@@ -11,7 +11,6 @@ import (
 
 	"context"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
@@ -510,7 +509,7 @@ func TestHandleRotaCreatePOST(t *testing.T) {
 				t.Fatalf("%s: RotaConfig(ctx, %q) failed: %v", tst.name, tst.rota.Cfg.Config.Name, err)
 			}
 
-			if diff := pretty.Compare(tst.want, rota[0]); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, rota[0]); diff != "" {
 				t.Fatalf("%s: HandleUpdateRota(ctx) differ -want +got,\n %s", tst.name, diff)
 			}
 
@@ -1229,7 +1228,7 @@ func TestHandleRotaModify(t *testing.T) {
 				t.Fatalf("%s: RotaConfig(ctx, %q) failed: %v", tst.name, tst.rota.Cfg.Config.Name, err)
 			}
 
-			if diff := pretty.Compare(tst.want, rota[0]); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, rota[0]); diff != "" {
 				t.Fatalf("%s: HandleUpdateRota(ctx) differ -want +got,\n %s", tst.name, diff)
 			}
 

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
@@ -251,7 +250,7 @@ func TestRPCAllMembersOwners(t *testing.T) {
 			sort.Strings(cfg[0].Config.Owners)
 			sort.Strings(tst.want)
 
-			if diff := pretty.Compare(tst.want, cfg[0].Config.Owners); diff != "" {
+			if diff := prettyConfigIgnoreUnexported.Compare(tst.want, cfg[0].Config.Owners); diff != "" {
 				t.Fatalf("%s: MakeAllMembersOwners(ctx, %q) differ -want +got: %s", tst.name, tst.rota, diff)
 			}
 		})
@@ -515,7 +514,7 @@ func TestRPCRotationMembers(t *testing.T) {
 				return
 			}
 
-			if diff := pretty.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfigIgnoreUnexported.Compare(wantPB, res); diff != "" {
 				t.Fatalf("%s: h.RotationMembers(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})

@@ -9,7 +9,6 @@ import (
 
 	"context"
 
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/gae/service/mail"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
@@ -1164,7 +1163,7 @@ This is  a friendly reminder that you're oncall for {{.RotaName}} from {{.ShiftE
 				gotMsg = append(gotMsg, m.Message)
 			}
 
-			if diff := pretty.Compare(tst.want, gotMsg); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, gotMsg); diff != "" {
 				t.Fatalf("%s: JobEmail(ctx) differ -want +got, %s", tst.name, diff)
 			}
 		})

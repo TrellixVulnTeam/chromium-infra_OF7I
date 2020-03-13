@@ -9,8 +9,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
-
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
@@ -169,7 +167,7 @@ func TestHandleEmailTestJSON(t *testing.T) {
 				t.Fatalf("%s: Decode(_) failed: %v", tst.name, err)
 			}
 
-			if diff := pretty.Compare(tst.want, resEmail); diff != "" {
+			if diff := prettyConfig.Compare(tst.want, resEmail); diff != "" {
 				t.Fatalf("%s: HandleEmailTestJSON differ -want +got,\n%s", tst.name, diff)
 			}
 
