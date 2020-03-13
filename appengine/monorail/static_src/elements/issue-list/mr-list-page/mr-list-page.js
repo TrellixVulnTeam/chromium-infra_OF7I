@@ -195,9 +195,11 @@ export class MrListPage extends connectStore(LitElement) {
 
     return html`
       <div class="list-controls">
-        ${this.editingEnabled ? html`
-          <mr-button-bar .items=${this._actions}></mr-button-bar>
-        ` : ''}
+        <div>
+          ${this.editingEnabled ? html`
+            <mr-button-bar .items=${this._actions}></mr-button-bar>
+          ` : ''}
+        </div>
 
         <div class="right-controls">
           ${hasPrev ? html`

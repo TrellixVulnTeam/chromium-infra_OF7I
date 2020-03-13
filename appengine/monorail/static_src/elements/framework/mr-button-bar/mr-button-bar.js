@@ -17,6 +17,7 @@ export class MrButtonBar extends LitElement {
         display: flex;
       }
       button {
+        background: none;
         color: var(--chops-link-color);
         cursor: pointer;
         font-size: var(--chops-normal-font-size);
@@ -26,13 +27,9 @@ export class MrButtonBar extends LitElement {
         padding: 4px 16px;
 
         border: none;
-        border-right: var(--chops-normal-border);
 
         align-items: center;
         display: inline-flex;
-      }
-      button:last-child {
-        border-right: none;
       }
       button:hover {
         background: var(--chops-active-choice-bg);
@@ -41,6 +38,10 @@ export class MrButtonBar extends LitElement {
         font-size: 20px;
         margin-right: 4px;
         vertical-align: middle;
+      }
+      mr-dropdown {
+        --mr-dropdown-anchor-padding: 6px 4px;
+        --mr-dropdown-icon-color: var(--chops-link-color);
       }
     `;
   }
