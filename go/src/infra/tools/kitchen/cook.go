@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -423,6 +424,9 @@ func (c *cookRun) run(ctx context.Context, args []string, env environ.Env) (*bui
 	if c.buildSecrets, err = readBuildSecrets(ctx); err != nil {
 		return fail(errors.Annotate(err, "failed to read build secrets").Err())
 	}
+
+	// Get resultdb parameters from the buildbucket property and build secrets.
+	ctx = c.setResultDBContext(ctx)
 
 	// Create systemAuth and recipeAuth authentication contexts, since we are
 	// about to start making authenticated requests now.
@@ -955,6 +959,35 @@ func (c *cookRun) getLogDogStreamServer(ctx context.Context) (*streamserver.Stre
 		return streamserver.New(ctx, "kitchen")
 	}
 	return streamserver.New(ctx, filepath.Join(c.TempDir, "ld.sock"))
+}
+
+// setResultDBContext copies resultdb's parameters from the build proto and the
+// buils secrets onto the appropriate section of lucictx.
+func (c *cookRun) setResultDBContext(ctx context.Context) context.Context {
+	if bbProp, ok := c.engine.properties["$recipe_engine/buildbucket"]; ok {
+		// The "build" value of the property above was parsed from json encoded text.
+		// Marshal it to a byte array and then populate a proto from it with jsonpb.
+		if buildMap, ok := bbProp.(map[string]interface{})["build"]; ok {
+			buildJSON, err := json.Marshal(buildMap)
+			if err != nil {
+				panic("Impossible marshaling error")
+			}
+			buildProto := &buildbucketpb.Build{}
+			if err := jsonpb.Unmarshal(bytes.NewReader(buildJSON), buildProto); err != nil {
+				panic("Impossible unmarshaling error")
+			}
+
+			// Set resultdb parameters in the luci context.
+			return lucictx.SetResultDB(ctx, &lucictx.ResultDB{
+				Hostname: buildProto.GetInfra().GetResultdb().GetHostname(),
+				CurrentInvocation: lucictx.Invocation{
+					Name:        buildProto.GetInfra().GetResultdb().GetInvocation(),
+					UpdateToken: c.buildSecrets.ResultdbInvocationUpdateToken,
+				},
+			})
+		}
+	}
+	return ctx
 }
 
 func parseProperties(properties map[string]interface{}, propertiesFile string) (result map[string]interface{}, err error) {

@@ -7,9 +7,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -126,18 +128,27 @@ func TestCook(t *testing.T) {
 
 				// Prepare arguments
 				recipeInputPath := filepath.Join(tdir, "recipe_input.json")
-				propertiesJSON, err := json.Marshal(map[string]interface{}{
-					"recipe_mock_cfg": map[string]interface{}{
-						"input_path":         recipeInputPath,
-						"exitCode":           recipeExitCode,
-						"mocked_result_path": mockedRecipeResultPath,
+				propertiesJSON := fmt.Sprintf(`{
+					"recipe_mock_cfg": {
+						"input_path": %s,
+						"exitCode": %d,
+						"mocked_result_path": %s
 					},
-					"$kitchen": map[string]interface{}{
-						"git_auth":    true,
-						"emulate_gce": true,
+					"$recipe_engine/buildbucket": {
+						"build": {
+							"infra": {
+								"resultdb": {
+									"invocation": "invocations/build:1",
+									"hostname":   "test.results.cr.dev"
+								}
+							}
+						}
 					},
-				})
-				So(err, ShouldBeNil)
+					"$kitchen": {
+						"git_auth": true,
+						"emulate_gce": true
+					}
+				}`, strconv.Quote(recipeInputPath), recipeExitCode, strconv.Quote(mockedRecipeResultPath))
 				args := []string{
 					"-recipe", "kitchen_test",
 					"-properties", string(propertiesJSON),
@@ -183,6 +194,16 @@ func TestCook(t *testing.T) {
 					"$recipe_engine/path": map[string]interface{}{
 						"cache_dir": cacheDirPath,
 						"temp_dir":  filepath.Join(kitchenTempDir, "rt"),
+					},
+					"$recipe_engine/buildbucket": map[string]interface{}{
+						"build": map[string]interface{}{
+							"infra": map[string]interface{}{
+								"resultdb": map[string]interface{}{
+									"hostname":   "test.results.cr.dev",
+									"invocation": "invocations/build:1",
+								},
+							},
+						},
 					},
 				}
 				So(actualRecipeInput, ShouldResemble, recipeInput{
