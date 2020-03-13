@@ -20,7 +20,9 @@ import (
 func TestSwarmingCallWithRetries_TransientFailure(t *testing.T) {
 	ctx, testClock := testclock.UseTime(context.Background(), time.Now())
 	testClock.SetTimerCallback(func(time.Duration, clock.Timer) {
-		testClock.Add(1 * time.Second)
+		// Longer than any reasonable retry parameters so that the test always
+		// makes instantaneous progress.
+		testClock.Add(10 * time.Minute)
 	})
 	count := 0
 	f := func() error {
@@ -32,7 +34,7 @@ func TestSwarmingCallWithRetries_TransientFailure(t *testing.T) {
 		}
 		return nil
 	}
-	err := callWithRetries(ctx, f)
+	err := callWithRetries(ctx, "test transient failure", f)
 	if err != nil {
 		t.Fatalf("call error actual != expected, %v != %v", err, nil)
 	}
@@ -44,7 +46,9 @@ func TestSwarmingCallWithRetries_TransientFailure(t *testing.T) {
 func TestSwarmingCallWithRetries_ConnectionReset(t *testing.T) {
 	ctx, testClock := testclock.UseTime(context.Background(), time.Now())
 	testClock.SetTimerCallback(func(time.Duration, clock.Timer) {
-		testClock.Add(1 * time.Second)
+		// Longer than any reasonable retry parameters so that the test always
+		// makes instantaneous progress.
+		testClock.Add(10 * time.Minute)
 	})
 	count := 0
 	f := func() error {
@@ -54,7 +58,7 @@ func TestSwarmingCallWithRetries_ConnectionReset(t *testing.T) {
 		}
 		return nil
 	}
-	err := callWithRetries(ctx, f)
+	err := callWithRetries(ctx, "test connection reset", f)
 	if err != nil {
 		t.Fatalf("call error actual != expected, %v != %v", err, nil)
 	}
@@ -69,7 +73,7 @@ func TestSwarmingCallWithRetries_NontransientFailure(t *testing.T) {
 		count++
 		return errors.New("foo")
 	}
-	err := callWithRetries(context.Background(), f)
+	err := callWithRetries(context.Background(), "test non-transient failure", f)
 	if err == nil {
 		t.Fatalf("call error unexpectedly nil")
 	}

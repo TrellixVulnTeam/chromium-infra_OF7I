@@ -72,7 +72,7 @@ func (c *Client) CreateTask(ctx context.Context, req *swarming_api.SwarmingRpcsN
 		return err
 	}
 
-	if err := callWithRetries(ctx, createTask); err != nil {
+	if err := callWithRetries(ctx, "create task", createTask); err != nil {
 		return nil, err
 	}
 	return resp, nil
@@ -118,7 +118,7 @@ func (c *Client) GetActiveLeaseTasksForHost(ctx context.Context, hostname string
 		tr = append(tr, r...)
 		return nil
 	}
-	if err := callWithRetries(ctx, getResult); err != nil {
+	if err := callWithRetries(ctx, "get result", getResult); err != nil {
 		return nil, errors.Annotate(err, fmt.Sprintf("get active lease tasks for host %s", hostname)).Err()
 	}
 	return tr, nil
@@ -138,7 +138,7 @@ func (c *Client) CancelTask(ctx context.Context, taskID string) error {
 		tc, err = c.SwarmingService.Task.Cancel(taskID, req).Context(ctx).Do()
 		return err
 	}
-	if err := callWithRetries(ctx, getResult); err != nil {
+	if err := callWithRetries(ctx, "get result", getResult); err != nil {
 		return errors.Annotate(err, fmt.Sprintf("cancel task %s", taskID)).Err()
 	}
 	if !tc.Ok {
@@ -158,7 +158,7 @@ func (c *Client) GetResults(ctx context.Context, IDs []string) ([]*swarming_api.
 			r, err = c.SwarmingService.Task.Result(ID).Context(ctx).Do()
 			return err
 		}
-		if err := callWithRetries(ctx, getResult); err != nil {
+		if err := callWithRetries(ctx, "get result", getResult); err != nil {
 			return nil, errors.Annotate(err, fmt.Sprintf("get swarming result for task %s", ID)).Err()
 		}
 		results[i] = r
@@ -175,7 +175,7 @@ func (c *Client) GetResultsForTags(ctx context.Context, tags []string) ([]*swarm
 		results, err = c.SwarmingService.Tasks.List().Tags(tags...).Context(ctx).Do()
 		return err
 	}
-	if err := callWithRetries(ctx, getResults); err != nil {
+	if err := callWithRetries(ctx, "get result", getResults); err != nil {
 		return nil, errors.Annotate(err, fmt.Sprintf("get swarming result for tags %s", tags)).Err()
 	}
 
@@ -193,7 +193,7 @@ func (c *Client) GetRequests(ctx context.Context, IDs []string) ([]*swarming_api
 			request, err = c.SwarmingService.Task.Request(ID).Context(ctx).Do()
 			return err
 		}
-		if err := callWithRetries(ctx, getRequest); err != nil {
+		if err := callWithRetries(ctx, "get request", getRequest); err != nil {
 			return nil, errors.Annotate(err, fmt.Sprintf("rerun task %s", ID)).Err()
 		}
 		requests[i] = request
@@ -210,7 +210,7 @@ func (c *Client) GetTaskState(ctx context.Context, ID string) (*swarming_api.Swa
 		result, err = c.SwarmingService.Tasks.GetStates().TaskId(ID).Context(ctx).Do()
 		return err
 	}
-	if err := callWithRetries(ctx, getState); err != nil {
+	if err := callWithRetries(ctx, "get state", getState); err != nil {
 		return nil, errors.Annotate(err, fmt.Sprintf("get task state for task ID %s", ID)).Err()
 	}
 	return result, nil
@@ -227,7 +227,7 @@ func (c *Client) GetTaskOutputs(ctx context.Context, IDs []string) ([]*swarming_
 			result, err = c.SwarmingService.Task.Stdout(ID).Context(ctx).Do()
 			return err
 		}
-		if err := callWithRetries(ctx, getResult); err != nil {
+		if err := callWithRetries(ctx, "get result", getResult); err != nil {
 			return nil, errors.Annotate(err, fmt.Sprintf("get swarming stdout for task %s", ID)).Err()
 		}
 		results[i] = result
@@ -238,7 +238,7 @@ func (c *Client) GetTaskOutputs(ctx context.Context, IDs []string) ([]*swarming_
 // BotExists checks if an bot exists with the given dimensions.
 func (c *Client) BotExists(ctx context.Context, dims []*swarming_api.SwarmingRpcsStringPair) (bool, error) {
 	var resp *swarming_api.SwarmingRpcsBotList
-	err := callWithRetries(ctx, func() error {
+	err := callWithRetries(ctx, "check bot exists", func() error {
 		call := c.SwarmingService.Bots.List().Dimensions(flattenStringPairs(dims)...).IsDead("FALSE").Limit(1)
 		r, err := call.Context(ctx).Do()
 		if err != nil {
@@ -265,7 +265,7 @@ func getSwarmingRpcsBotList(ctx context.Context, c *Client, call *swarming_api.B
 		tl, err = call.Context(ctx).Do()
 		return err
 	}
-	err := callWithRetries(ctx, f)
+	err := callWithRetries(ctx, "get bot list", f)
 	if err != nil {
 		return nil, err
 	}
@@ -353,12 +353,15 @@ var retryableCodes = map[int]bool{
 }
 
 func retryParams() retry.Iterator {
+	// crbug.com/1061200: Swarming's response on internal error indicates that
+	// we should retry in 30 seconds. We try after (15 + 22.5 + 33.75) seconds
+	// to balance responsiveness against additional load due to retries.
 	return &retry.ExponentialBackoff{
 		Limited: retry.Limited{
-			Delay:   500 * time.Millisecond,
-			Retries: 5,
+			Delay:   15 * time.Second,
+			Retries: 3,
 		},
-		Multiplier: 2,
+		Multiplier: 1.5,
 	}
 }
 
@@ -390,11 +393,11 @@ func errIsTransient(err error) bool {
 
 // callWithRetries calls the given function, retrying transient swarming
 // errors, with swarming-appropriate backoff and delay.
-func callWithRetries(ctx context.Context, f func() error) error {
+func callWithRetries(ctx context.Context, opname string, f func() error) error {
 	taggedFunc := func() error {
 		return tagErrIfTransient(f())
 	}
-	return retry.Retry(ctx, transient.Only(retryParams), taggedFunc, nil)
+	return retry.Retry(ctx, transient.Only(retryParams), taggedFunc, retry.LogCallback(ctx, opname))
 }
 
 // TaskURL returns a URL to inspect a task with the given ID.
