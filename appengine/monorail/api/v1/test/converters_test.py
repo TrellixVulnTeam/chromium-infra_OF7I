@@ -22,6 +22,8 @@ from framework import exceptions
 from testing import fake
 from testing import testing_helpers
 from services import service_manager
+from proto import tracker_pb2
+
 
 class ConverterFunctionsTest(unittest.TestCase):
 
@@ -69,6 +71,11 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.cnxn, self.project_1.project_id, self.field_def_2_name, 'INT_TYPE',
         None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, [], [])
+    self.approval_def_1_name = 'approval_field_1'
+    self.approval_def_1_id = self.services.config.CreateFieldDef(
+        self.cnxn, self.project_1.project_id, self.approval_def_1_name,
+        'APPROVAL_TYPE', None, None, None, None, None, None, None, None, None,
+        None, None, None, None, None, [], [])
     self.dne_field_def_id = 999999
 
   def testConvertHotlist(self):
@@ -338,3 +345,100 @@ class ConverterFunctionsTest(unittest.TestCase):
         field_id=self.field_def_1, str_value='something', derived=False)
     output = converters._ComputeFieldValueDerivation(fv)
     self.assertEqual(expected, output)
+
+  def testConvertApprovalValues(self):
+    name = rnc.ConvertApprovalDefNames(
+        self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
+        self.services).get(self.approval_def_1_id)
+    approvers = [
+        rnc.ConvertUserNames([self.user_2.user_id]).get(self.user_2.user_id)
+    ]
+    status = issue_objects_pb2.Issue.ApprovalStatus.Value(
+        'APPROVAL_STATUS_UNSPECIFIED')
+    set_time = timestamp_pb2.Timestamp()
+    set_time.FromSeconds(self.PAST_TIME)
+    setter = rnc.ConvertUserNames([self.user_1.user_id]).get(
+        self.user_1.user_id)
+    phase_name = 'some phase name'
+    phase_id = 123123
+    phase = fake.MakePhase(phase_id, name=phase_name)
+    expected = issue_objects_pb2.Issue.ApprovalValue(
+        name=name,
+        approvers=approvers,
+        status=status,
+        set_time=set_time,
+        setter=setter,
+        phase=phase_name)
+
+    approval_value = fake.MakeApprovalValue(
+        self.approval_def_1_id,
+        setter_id=self.user_1.user_id,
+        set_on=self.PAST_TIME,
+        approver_ids=[self.user_2.user_id],
+        phase_id=phase_id)
+
+    output = converters.ConvertApprovalValues(
+        self.cnxn, [approval_value], self.project_1.project_id, [phase],
+        self.services)
+    self.assertEqual([expected], output)
+
+  def testConvertApprovalValues_Empty(self):
+    output = converters.ConvertApprovalValues(
+        self.cnxn, [], self.project_1.project_id, [], self.services)
+    self.assertEqual([], output)
+
+  def testConvertApprovalValues_IgnoresNullFieldDefs(self):
+    """It ignores approval values referencing a non-existent field"""
+    av = fake.MakeApprovalValue(self.dne_field_def_id)
+
+    output = converters.ConvertApprovalValues(
+        self.cnxn, [av], self.project_1.project_id, [], self.services)
+    self.assertEqual([], output)
+
+  def test_ComputeApprovalValueStatus_NOT_SET(self):
+    self.assertEqual(
+        converters._ComputeApprovalValueStatus(
+            tracker_pb2.ApprovalStatus.NOT_SET),
+        issue_objects_pb2.Issue.ApprovalStatus.Value(
+            'APPROVAL_STATUS_UNSPECIFIED'))
+
+  def test_ComputeApprovalValueStatus_NEEDS_REVIEW(self):
+    self.assertEqual(
+        converters._ComputeApprovalValueStatus(
+            tracker_pb2.ApprovalStatus.NEEDS_REVIEW),
+        issue_objects_pb2.Issue.ApprovalStatus.Value('NEEDS_REVIEW'))
+
+  def test_ComputeApprovalValueStatus_NA(self):
+    self.assertEqual(
+        converters._ComputeApprovalValueStatus(tracker_pb2.ApprovalStatus.NA),
+        issue_objects_pb2.Issue.ApprovalStatus.Value('NA'))
+
+  def test_ComputeApprovalValueStatus_REVIEW_REQUESTED(self):
+    self.assertEqual(
+        converters._ComputeApprovalValueStatus(
+            tracker_pb2.ApprovalStatus.REVIEW_REQUESTED),
+        issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_REQUESTED'))
+
+  def test_ComputeApprovalValueStatus_REVIEW_STARTED(self):
+    self.assertEqual(
+        converters._ComputeApprovalValueStatus(
+            tracker_pb2.ApprovalStatus.REVIEW_STARTED),
+        issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_STARTED'))
+
+  def test_ComputeApprovalValueStatus_NEED_INFO(self):
+    self.assertEqual(
+        converters._ComputeApprovalValueStatus(
+            tracker_pb2.ApprovalStatus.NEED_INFO),
+        issue_objects_pb2.Issue.ApprovalStatus.Value('NEED_INFO'))
+
+  def test_ComputeApprovalValueStatus_APPROVED(self):
+    self.assertEqual(
+        converters._ComputeApprovalValueStatus(
+            tracker_pb2.ApprovalStatus.APPROVED),
+        issue_objects_pb2.Issue.ApprovalStatus.Value('APPROVED'))
+
+  def test_ComputeApprovalValueStatus_NOT_APPROVED(self):
+    self.assertEqual(
+        converters._ComputeApprovalValueStatus(
+            tracker_pb2.ApprovalStatus.NOT_APPROVED),
+        issue_objects_pb2.Issue.ApprovalStatus.Value('NOT_APPROVED'))

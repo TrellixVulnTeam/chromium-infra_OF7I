@@ -53,6 +53,7 @@ STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
 LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
 COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
 FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_name}'
+APPROVAL_DEF_TMPL = 'projectConfigs/{project_name}/approvalDefs/{approval_name}'
 
 
 def _GetResourceNameMatch(name, regex):
@@ -476,5 +477,44 @@ def ConvertFieldDefNames(cnxn, field_ids, project_id, services):
 
     id_dict[field_id] = FIELD_DEF_TMPL.format(
         project_name=project.project_name, field_name=field_name)
+
+  return id_dict
+
+
+def ConvertApprovalDefNames(cnxn, approval_ids, project_id, services):
+  # type: (MonorailConnection, Collection[int], int, Services) ->
+  #     Mapping[int, str]
+  """Takes Approval IDs and returns ApprovalDef resource names
+
+  Args:
+    cnxn: MonorailConnection object.
+    component_ids: List of approval ids
+    project_id: project id of project this belongs to
+    services: Services object.
+
+  Returns:
+    Dict of approval ID to ApprovalDef resource name for approval defs
+    that are found.
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  project = services.project.GetProject(cnxn, project_id)
+  config = services.config.GetProjectConfig(cnxn, project_id)
+
+  fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+
+  id_dict = {}
+
+  for approval_id in approval_ids:
+    approval_def = fds_by_id.get(approval_id)
+    if not approval_def:
+      logging.info(
+          'Ignoring approval referencing a non-existent id: %s', approval_id)
+      continue
+    approval_name = approval_def.field_name
+
+    id_dict[approval_id] = APPROVAL_DEF_TMPL.format(
+        project_name=project.project_name, approval_name=approval_name)
 
   return id_dict

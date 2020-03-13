@@ -18,6 +18,7 @@ from api.v1.api_proto import user_objects_pb2
 from framework import exceptions
 from framework import framework_bizobj
 from framework import framework_helpers
+from proto import tracker_pb2
 
 
 def ConvertHotlist(cnxn, user_auth, hotlist, services):
@@ -174,8 +175,8 @@ def IngestIssuesListColumns(issues_list_columns):
 # CreateUserDisplayNames() can take in a list of projects.
 def ConvertUsers(cnxn, user_ids, user_auth, project, services):
   # type: (MonorailConnection, List(int), AuthData, protorpc.Project,
-  #   Services) -> Map(int, api_proto.user_objects_pb2.User)
-  """Convert list of protorpc Users into list of protoc Users.
+  #     Services) -> Map(int, api_proto.user_objects_pb2.User)
+  """Convert list of protorpc_users into list of protoc Users.
 
   Args:
     cnxn: MonorailConnection object.
@@ -232,17 +233,16 @@ def ConvertFieldValues(cnxn, field_values, project_id, phases, services):
     `field_values`. In the event any field_values in `field_values` are not
     found, they will be omitted from the result.
   """
-  config = services.config.GetProjectConfig(cnxn, project_id)
-
   phase_names_by_id = {phase.phase_id: phase.name for phase in phases}
-  fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+  field_ids = [fv.field_id for fv in field_values]
   resource_names_dict = rnc.ConvertFieldDefNames(
-      cnxn, fds_by_id.keys(), project_id, services)
+      cnxn, field_ids, project_id, services)
 
   api_fvs = []
   for fv in field_values:
-    field_def = fds_by_id.get(fv.field_id)
-    if not field_def:
+    # If the FieldDef with field_id was not found in ConvertFieldDefNames()
+    # we skip
+    if fv.field_id not in resource_names_dict:
       logging.info(
           'Ignoring field value referencing a non-existent field: %r', fv)
       continue
@@ -259,7 +259,7 @@ def ConvertFieldValues(cnxn, field_values, project_id, phases, services):
 
 
 def _ComputeFieldValueString(field_value):
-  # proto.tracker_pb2.FieldValue -> str
+  # type: (proto.tracker_pb2.FieldValue) -> str
   """Convert a FieldValue's value to a string
 
   Args:
@@ -285,7 +285,8 @@ def _ComputeFieldValueString(field_value):
 
 
 def _ComputeFieldValueDerivation(field_value):
-  # proto.tracker_pb2.FieldValue -> api_proto.issue_objects_pb2.Issue.Derivation
+  # type: (proto.tracker_pb2.FieldValue) ->
+  #     api_proto.issue_objects_pb2.Issue.Derivation
   """Convert a FieldValue's 'derived' to a protoc Issue.Derivation.
 
   Args:
@@ -298,3 +299,85 @@ def _ComputeFieldValueDerivation(field_value):
     return issue_objects_pb2.Issue.Derivation.Value('RULE')
   else:
     return issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
+
+
+def ConvertApprovalValues(cnxn, approval_values, project_id, phases, services):
+  # type: (MonorailConnection, Sequence[proto.tracker_pb2.ApprovalValue], int,
+  #     Sequence[proto.tracker_pb2.Phase], Services) ->
+  #     Sequence[api_proto.issue_objects_pb2.Issue.ApprovalValue]
+  """Convert sequence of approval_values to protoc ApprovalValues.
+
+  Args:
+    cnxn: MonorailConnection object.
+    approval_values: List of ApprovalValues
+    project_id: ID of the Project that all given `approval_values` belong to.
+    phases: List of Phases
+    services: Services object for connections to backend services.
+
+  Returns:
+    Sequence of protoc Issue.ApprovalValue in the same order they are given in
+    `approval_values`. In the event any approval_value in `approval_values` are
+    not found, they will be omitted from the result.
+  """
+  phase_names_by_id = {phase.phase_id: phase.name for phase in phases}
+  approval_ids = [av.approval_id for av in approval_values]
+  resource_names_dict = rnc.ConvertApprovalDefNames(
+      cnxn, approval_ids, project_id, services)
+
+  api_avs = []
+  for av in approval_values:
+    # If the FieldDef with approval_id was not found in
+    # ConvertApprovalDefNames(), we skip
+    if av.approval_id not in resource_names_dict:
+      logging.info(
+          'Ignoring approval value referencing a non-existent field: %r', av)
+      continue
+    name = resource_names_dict.get(av.approval_id)
+    approvers = rnc.ConvertUserNames(av.approver_ids).values()
+    status = _ComputeApprovalValueStatus(av.status)
+    set_time = timestamp_pb2.Timestamp()
+    set_time.FromSeconds(av.set_on)
+    setter = rnc.ConvertUserNames([av.setter_id]).get(av.setter_id)
+    phase = phase_names_by_id.get(av.phase_id)
+    api_item = issue_objects_pb2.Issue.ApprovalValue(
+        name=name,
+        approvers=approvers,
+        status=status,
+        set_time=set_time,
+        setter=setter,
+        phase=phase)
+    api_avs.append(api_item)
+
+  return api_avs
+
+
+def _ComputeApprovalValueStatus(status):
+  # type: (proto.tracker_pb2.ApprovalStatus) ->
+  #     api_proto.issue_objects_pb2.Issue.ApprovalStatus
+  """Convert a protorpc ApprovalStatus to a protoc Issue.ApprovalStatus
+
+  Args:
+    status: protorpc ApprovalStatus
+
+  Returns:
+    Issue.ApprovalStatus of given `status`
+  """
+  if status == tracker_pb2.ApprovalStatus.NOT_SET:
+    return issue_objects_pb2.Issue.ApprovalStatus.Value(
+        'APPROVAL_STATUS_UNSPECIFIED')
+  elif status == tracker_pb2.ApprovalStatus.NEEDS_REVIEW:
+    return issue_objects_pb2.Issue.ApprovalStatus.Value('NEEDS_REVIEW')
+  elif status == tracker_pb2.ApprovalStatus.NA:
+    return issue_objects_pb2.Issue.ApprovalStatus.Value('NA')
+  elif status == tracker_pb2.ApprovalStatus.REVIEW_REQUESTED:
+    return issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_REQUESTED')
+  elif status == tracker_pb2.ApprovalStatus.REVIEW_STARTED:
+    return issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_STARTED')
+  elif status == tracker_pb2.ApprovalStatus.NEED_INFO:
+    return issue_objects_pb2.Issue.ApprovalStatus.Value('NEED_INFO')
+  elif status == tracker_pb2.ApprovalStatus.APPROVED:
+    return issue_objects_pb2.Issue.ApprovalStatus.Value('APPROVED')
+  elif status == tracker_pb2.ApprovalStatus.NOT_APPROVED:
+    return issue_objects_pb2.Issue.ApprovalStatus.Value('NOT_APPROVED')
+  else:
+    raise ValueError('Unrecognized tracker_pb2.ApprovalStatus enum')

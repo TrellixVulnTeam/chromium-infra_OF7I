@@ -79,6 +79,28 @@ def Project(
       contributor_ids=contributor_ids)
 
 
+def MakePhase(phase_id, name='', rank=0):
+  return tracker_pb2.Phase(phase_id=phase_id, name=name, rank=rank)
+
+
+def MakeApprovalValue(
+    approval_id,
+    status=tracker_pb2.ApprovalStatus.NOT_SET,
+    setter_id=None,
+    set_on=None,
+    approver_ids=None,
+    phase_id=None):
+  if approver_ids is None:
+    approver_ids = []
+  return tracker_pb2.ApprovalValue(
+      approval_id=approval_id,
+      status=status,
+      setter_id=setter_id,
+      set_on=set_on,
+      approver_ids=approver_ids,
+      phase_id=phase_id)
+
+
 def MakeFieldValue(
     field_id,
     int_value=None,

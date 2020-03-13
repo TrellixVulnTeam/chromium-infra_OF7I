@@ -63,6 +63,11 @@ class ResourceNameConverterTest(unittest.TestCase):
         self.cnxn, self.project_1.project_id, self.field_def_1_name, 'STR_TYPE',
         None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, [], [])
+    self.approval_def_1_name = 'approval_field_1'
+    self.approval_def_1_id = self.services.config.CreateFieldDef(
+        self.cnxn, self.project_1.project_id, self.approval_def_1_name,
+        'APPROVAL_TYPE', None, None, None, None, None, None, None, None, None,
+        None, None, None, None, None, [], [])
     self.dne_field_def_id = 999999
 
   def testGetResourceNameMatch(self):
@@ -304,3 +309,19 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.ConvertFieldDefNames(
           self.cnxn, field_ids, self.dne_project_id, self.services)
+
+  def testConvertApprovalDefNames(self):
+    outcome = rnc.ConvertApprovalDefNames(
+        self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
+        self.services)
+
+    expected_key = self.approval_def_1_id
+    expected_value = 'projectConfigs/{}/approvalDefs/{}'.format(
+        self.project_1.project_name, self.approval_def_1_name)
+    self.assertEqual(outcome, {expected_key: expected_value})
+
+  def testConvertApprovalDefNames_NoSuchProjectException(self):
+    approval_ids = [self.approval_def_1_id]
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertApprovalDefNames(
+          self.cnxn, approval_ids, self.dne_project_id, self.services)
