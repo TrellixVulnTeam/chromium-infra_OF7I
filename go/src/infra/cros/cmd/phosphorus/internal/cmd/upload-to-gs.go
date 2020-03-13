@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/auth"
@@ -95,8 +96,10 @@ func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 
 // runGSUploadStep uploads all files in the specified directory to GS.
 func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest, errorFile io.Writer) (string, error) {
-	gsPath := gs.Concat(r.GetGsDirectory(), "synchronous_offloads", r.GetTaskId())
-	localPath := r.GetConfig().GetTask().GetSynchronousOffloadDir()
+	gsPath := gs.Concat(r.GetGsDirectory(), "synchronous_offloads", uuid.New().String())
+
+	testResultsDir := filepath.Join(r.Config.Task.ResultsDir, "autoserv_test")
+	localPath := filepath.Join(testResultsDir, r.GetConfig().GetTask().GetSynchronousOffloadDir())
 	defer func() {
 		err := os.RemoveAll(localPath)
 		if err != nil {
