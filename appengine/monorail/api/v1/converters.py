@@ -148,6 +148,19 @@ def ConvertIssues(cnxn, issues, services):
   return converted_issues
 
 
+def IngestIssuesListColumns(issues_list_columns):
+  # type: (Sequence[proto.issue_objects_pb2.IssuesListColumn] -> str
+  """Ingest a list of protoc IssueListColumns and returns a string.
+
+  Args:
+    issues_list_columns: a list of columns.
+
+  Returns:
+    a single string representation of all given columns.
+  """
+  return ' '.join([col.column for col in issues_list_columns])
+
+
 # Users
 
 
@@ -162,7 +175,7 @@ def ConvertIssues(cnxn, issues, services):
 def ConvertUsers(cnxn, user_ids, user_auth, project, services):
   # type: (MonorailConnection, List(int), AuthData, protorpc.Project,
   #   Services) -> Map(int, api_proto.user_objects_pb2.User)
-  """Convert list of protorpc_users into list of protoc Users.
+  """Convert list of protorpc Users into list of protoc Users.
 
   Args:
     cnxn: MonorailConnection object.
@@ -195,6 +208,8 @@ def ConvertUsers(cnxn, user_ids, user_auth, project, services):
         availability_message=availability_message)
 
   return user_ids_to_names
+
+# Field Values
 
 
 def ConvertFieldValues(cnxn, field_values, project_id, phases, services):

@@ -207,6 +207,17 @@ class ConverterFunctionsTest(unittest.TestCase):
             self.cnxn, user_ids, user_auth, project, self.services),
         expected_user_dict)
 
+  def testIngestIssuesListColumns(self):
+    columns = [
+        issue_objects_pb2.IssuesListColumn(column='chicken'),
+        issue_objects_pb2.IssuesListColumn(column='boiled-egg')
+    ]
+    self.assertEqual(
+        converters.IngestIssuesListColumns(columns), 'chicken boiled-egg')
+
+  def testIngestIssuesListColumns_Empty(self):
+    self.assertEqual(converters.IngestIssuesListColumns([]), '')
+
   def testConvertFieldValues(self):
     """It ignores field values referencing a non-existent field"""
     expected_str = 'some_string_field_value'
