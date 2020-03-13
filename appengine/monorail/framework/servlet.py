@@ -138,6 +138,11 @@ class Servlet(webapp2.RequestHandler):
   # subclass can override this to allow anonymous use.
   CHECK_SECURITY_TOKEN = True
 
+  # Some pages might be posted to by clients outside of Monorail.
+  # ie: The issue entry page, by the issue filing wizard. In these cases,
+  # we can allow an xhr-scoped XSRF token to be used to post to the page.
+  ALLOW_XHR = False
+
   # Most forms just ignore fields that have value "".  Subclasses can override
   # if needed.
   KEEP_BLANK_FORM_VALUES = False
@@ -467,8 +472,14 @@ class Servlet(webapp2.RequestHandler):
     self._DoCommonRequestProcessing(request, mr)
 
     if self.CHECK_SECURITY_TOKEN:
-      xsrf.ValidateToken(
-        request.POST.get('token'), mr.auth.user_id, request.path)
+      try:
+        xsrf.ValidateToken(
+            request.POST.get('token'), mr.auth.user_id, request.path)
+      except xsrf.TokenIncorrect as err:
+        if self.ALLOW_XHR:
+          xsrf.ValidateToken(request.POST.get('token'), mr.auth.user_id, 'xhr')
+        else:
+          raise err
 
     redirect_url = self.ProcessFormData(mr, request.POST)
 

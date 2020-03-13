@@ -46,6 +46,11 @@ class IssueEntry(servlet.Servlet):
   _PAGE_TEMPLATE = 'tracker/issue-entry-page.ezt'
   _MAIN_TAB_MODE = servlet.Servlet.MAIN_TAB_ISSUES
 
+  # The issue filing wizard is a separate app that posted back to Monorail's
+  # issue entry page. To make this possible for the wizard, we need to allow
+  # XHR-scoped XSRF tokens.
+  ALLOW_XHR = True
+
   def AssertBasePermission(self, mr):
     """Check whether the user has any permission to visit this page.
 

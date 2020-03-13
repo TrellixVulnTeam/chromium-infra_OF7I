@@ -102,33 +102,76 @@ class ServletTest(unittest.TestCase):
       '/something/detail_ezt.do',
       self.page_class._FormHandlerURL('/something/detail_ezt'))
 
-  def testProcessForm_NoToken(self):
+  def testProcessForm_BadToken(self):
     user_id = 111
+    token = 'no soup for you'
+
     request, mr = testing_helpers.GetRequestObjects(
         path='/we/we/we?so=excited',
-        params={'yesterday': 'thursday', 'today': 'friday'},
+        params={
+            'yesterday': 'thursday',
+            'today': 'friday',
+            'token': token
+        },
         user_info={'user_id': user_id},
         method='POST',
     )
-    # Normally, every form needs a security token.
     self.assertRaises(
         xsrf.TokenIncorrect, self.page_class._DoFormProcessing, request, mr)
     self.assertEqual(None, self.page_class.seen_post_data)
 
-    # We can make an explicit exception to that.
-    self.page_class.CHECK_SECURITY_TOKEN = False
-    with self.assertRaises(webapp2.HTTPException) as cm:
-      self.page_class._DoFormProcessing(request, mr)
-    self.assertEqual(302, cm.exception.code)  # forms redirect on succcess
-
-    self.assertDictEqual(
-        {'yesterday': 'thursday', 'today': 'friday'},
-        dict(self.page_class.seen_post_data))
-
-  def testProcessForm_BadToken(self):
-
+  def testProcessForm_XhrAllowed_BadToken(self):
     user_id = 111
     token = 'no soup for you'
+
+    self.page_class.ALLOW_XHR = True
+
+    request, mr = testing_helpers.GetRequestObjects(
+        path='/we/we/we?so=excited',
+        params={
+            'yesterday': 'thursday',
+            'today': 'friday',
+            'token': token
+        },
+        user_info={'user_id': user_id},
+        method='POST',
+    )
+    self.assertRaises(
+        xsrf.TokenIncorrect, self.page_class._DoFormProcessing, request, mr)
+    self.assertEqual(None, self.page_class.seen_post_data)
+
+  def testProcessForm_XhrAllowed_AcceptsPathToken(self):
+    user_id = 111
+    token = xsrf.GenerateToken(user_id, '/we/we/we')
+
+    self.page_class.ALLOW_XHR = True
+
+    request, mr = testing_helpers.GetRequestObjects(
+        path='/we/we/we?so=excited',
+        params={
+            'yesterday': 'thursday',
+            'today': 'friday',
+            'token': token
+        },
+        user_info={'user_id': user_id},
+        method='POST',
+    )
+    with self.assertRaises(webapp2.HTTPException) as cm:
+      self.page_class._DoFormProcessing(request, mr)
+    self.assertEqual(302, cm.exception.code)  # forms redirect on success
+
+    self.assertDictEqual(
+        {
+            'yesterday': 'thursday',
+            'today': 'friday',
+            'token': token
+        }, dict(self.page_class.seen_post_data))
+
+  def testProcessForm_XhrAllowed_AcceptsXhrToken(self):
+    user_id = 111
+    token = xsrf.GenerateToken(user_id, 'xhr')
+
+    self.page_class.ALLOW_XHR = True
 
     request, mr = testing_helpers.GetRequestObjects(
         path='/we/we/we?so=excited',
@@ -136,9 +179,16 @@ class ServletTest(unittest.TestCase):
         user_info={'user_id': user_id},
         method='POST',
     )
-    self.assertRaises(
-        xsrf.TokenIncorrect, self.page_class._DoFormProcessing, request, mr)
-    self.assertEqual(None, self.page_class.seen_post_data)
+    with self.assertRaises(webapp2.HTTPException) as cm:
+      self.page_class._DoFormProcessing(request, mr)
+    self.assertEqual(302, cm.exception.code)  # forms redirect on success
+
+    self.assertDictEqual(
+        {
+            'yesterday': 'thursday',
+            'today': 'friday',
+            'token': token
+        }, dict(self.page_class.seen_post_data))
 
   def testProcessForm_RawResponse(self):
     user_id = 111
@@ -168,7 +218,7 @@ class ServletTest(unittest.TestCase):
     )
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.page_class._DoFormProcessing(request, mr)
-    self.assertEqual(302, cm.exception.code)  # forms redirect on succcess
+    self.assertEqual(302, cm.exception.code)  # forms redirect on success
 
     self.assertDictEqual(
         {'yesterday': 'thursday', 'today': 'friday', 'token': token},
