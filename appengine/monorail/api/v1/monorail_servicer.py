@@ -111,7 +111,7 @@ class MonorailServicer(object):
       self.AssertBaseChecks(request, metadata)
       requester_auth = self.GetAndAssertRequesterAuth(
           cnxn, metadata, self.services)
-      logging.info('request proto is:\n%r\n', requester_auth.email)
+      logging.info('request proto is:\n%r\n', request)
       logging.info('requester is %r', requester_auth.email)
 
       if self.rate_limiter:
@@ -280,13 +280,14 @@ class MonorailServicer(object):
   def GetRequestProject(self, cnxn, request):
     """Return the Project business object that the user is viewing or None."""
     if hasattr(request, 'project_name'):
-        project = self.services.project.GetProjectByName(
-            cnxn, request.project_name)
-        if not project:
-          logging.info('Request has project_name: %r but it does not exist.',
-                       request.project_name)
-          return None
-        return project
+      project = self.services.project.GetProjectByName(
+          cnxn, request.project_name)
+      if not project:
+        logging.info(
+            'Request has project_name: %r but it does not exist.',
+            request.project_name)
+        return None
+      return project
     else:
       return None
 
