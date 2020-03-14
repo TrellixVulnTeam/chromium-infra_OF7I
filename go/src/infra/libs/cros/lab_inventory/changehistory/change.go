@@ -19,8 +19,22 @@ import (
 	"infra/libs/cros/lab_inventory/utils"
 )
 
-// DatastoreKind is the datastore kind.
-const DatastoreKind = "ChangeHistory"
+// LifeCycleEvent is the type for all life cycle events, e.g. deployment,
+// decommission, etc.
+type LifeCycleEvent string
+
+const (
+	// DatastoreKind is the datastore kind.
+	DatastoreKind = "ChangeHistory"
+
+	lifeCycleEventLabel = "LIFE_CYCLE_EVENT"
+
+	// LifeCycleDeployment indicates the deployment of a device.
+	LifeCycleDeployment LifeCycleEvent = "DEPLOYMENT"
+
+	// LifeCycleDecomm indicates the decommission of a device.
+	LifeCycleDecomm LifeCycleEvent = "DECOMMISSION"
+)
 
 // Change tracks the change of a ChromeOSDevice.
 type Change struct {
@@ -43,6 +57,34 @@ type Changes []Change
 type changeReasonKeyType struct{}
 
 var changeReasonKey changeReasonKeyType
+
+// LogDeployment logs the deployment of a ChromeOSDevice.
+func (c *Changes) LogDeployment(id, hostname string) {
+	deployment := Change{
+		DeviceID: id,
+		Hostname: hostname,
+		Label:    lifeCycleEventLabel,
+		// Set the event to both old and new value so queries might be more
+		// convenient.
+		OldValue: string(LifeCycleDeployment),
+		NewValue: string(LifeCycleDeployment),
+	}
+	*c = append(*c, deployment)
+}
+
+// LogDecommission logs the decommission of a ChromeOSDevice.
+func (c *Changes) LogDecommission(id, hostname string) {
+	decomm := Change{
+		DeviceID: id,
+		Hostname: hostname,
+		Label:    lifeCycleEventLabel,
+		// Set the event to both old and new value so queries might be more
+		// convenient.
+		OldValue: string(LifeCycleDecomm),
+		NewValue: string(LifeCycleDecomm),
+	}
+	*c = append(*c, decomm)
+}
 
 func (c *Changes) log(label string, oldValue interface{}, newValue interface{}) {
 	oldValueStr := fmt.Sprintf("%v", oldValue)
@@ -73,7 +115,9 @@ func (c Changes) SaveToDatastore(ctx context.Context) error {
 		c[i].ByWhomName = user.Name
 		c[i].ByWhomEmail = user.Email
 		c[i].Comment = reason
-		c[i].Updated = now
+		if c[i].Updated.IsZero() {
+			c[i].Updated = now
+		}
 	}
 	if err := datastore.Put(ctx, c); err != nil {
 		return errors.Annotate(err, "failed to save changes to datastore").Err()

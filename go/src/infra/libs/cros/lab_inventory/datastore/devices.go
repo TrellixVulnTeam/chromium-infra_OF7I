@@ -126,16 +126,16 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoP
 
 			entities = append(entities, devToAdd.Entity)
 			entityResults = append(entityResults, devToAdd)
-
 		}
 		if err := datastore.Put(ctx, entities); err != nil {
 			for i, e := range err.(errors.MultiError) {
 				entityResults[i].logError(e)
 			}
 		}
+		logLifeCycleEvent(ctx, changehistory.LifeCycleDeployment, addingResults)
 		return r.saveToDatastore(ctx)
 	}
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
 		return &addingResults, err
 	}
 	return &addingResults, nil
@@ -159,7 +159,27 @@ func DeleteDevicesByIds(ctx context.Context, ids []string) DeviceOpResults {
 			removingResults[i].logError(e)
 		}
 	}
+	logLifeCycleEvent(ctx, changehistory.LifeCycleDecomm, removingResults)
 	return removingResults
+}
+
+func logLifeCycleEvent(ctx context.Context, event changehistory.LifeCycleEvent, opResults DeviceOpResults) {
+	var changes changehistory.Changes
+	for _, r := range opResults.Passed() {
+		switch event {
+		case changehistory.LifeCycleDeployment:
+			changes.LogDeployment(string(r.Entity.ID), r.Entity.Hostname)
+		case changehistory.LifeCycleDecomm:
+			changes.LogDecommission(string(r.Entity.ID), r.Entity.Hostname)
+		}
+		logging.Infof(ctx, "LifeCycleEvent: %s %s", event, r.Entity)
+	}
+	if len(changes) == 0 {
+		return
+	}
+	if err := changes.SaveToDatastore(ctx); err != nil {
+		logging.Errorf(ctx, "%s: Failed to save change history to datastore: %s", event, err)
+	}
 }
 
 // DeleteDevicesByHostnames deletes entities by specified hostnames.
@@ -194,6 +214,7 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpR
 			entityResults[i].logError(e)
 		}
 	}
+	logLifeCycleEvent(ctx, changehistory.LifeCycleDecomm, removingResults)
 	return removingResults
 }
 
@@ -318,7 +339,7 @@ func updateEntities(ctx context.Context, opResults DeviceOpResults, additionalFi
 			entityIndexes = append(entityIndexes, i)
 		}
 		if err := changes.SaveToDatastore(ctx); err != nil {
-			logging.Errorf(ctx, "Failed to save change history to datastore: %s", err)
+			logging.Errorf(ctx, "UpdateEntities: Failed to save change history to datastore: %s", err)
 		}
 		if err := datastore.Put(ctx, entities); err != nil {
 			merr, ok := err.(errors.MultiError)
@@ -364,7 +385,7 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice, assig
 		return nil
 	}
 
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
 		return updatingResults, err
 	}
 	return updatingResults, nil
@@ -424,7 +445,7 @@ func UpdateDutMeta(ctx context.Context, meta map[string]DutMeta) (DeviceOpResult
 	}
 	f := updateEntities(ctx, updateResults, nil)
 
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
 		return updateResults, err
 	}
 	return append(updateResults, failedResults...), nil
@@ -462,7 +483,7 @@ func UpdateDutsStatus(ctx context.Context, states []*lab.DutState) (DeviceOpResu
 	// after on the entity retrieving.
 	f := updateEntities(ctx, updatingResults, filter)
 
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
 		return updatingResults, err
 	}
 	return updatingResults, nil
@@ -534,7 +555,7 @@ func BatchUpdateDevices(ctx context.Context, duts []*DeviceProperty) error {
 			entities = append(entities, r.Entity)
 		}
 		if err := changes.SaveToDatastore(ctx); err != nil {
-			logging.Errorf(ctx, "Failed to save change history to datastore: %s", err)
+			logging.Errorf(ctx, "BatchUpdateDevices: Failed to save change history to datastore: %s", err)
 		}
 		return datastore.Put(ctx, entities)
 	}

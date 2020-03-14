@@ -16,6 +16,8 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+
+	"infra/libs/cros/lab_inventory/changehistory"
 )
 
 const (
@@ -148,6 +150,8 @@ func (r servoHostRegistry) saveToDatastore(ctx context.Context) error {
 	// Only save the entities that changed.
 	now := time.Now().UTC()
 	var entities []*DeviceEntity
+	var changes changehistory.Changes
+
 	for _, v := range r {
 		// Sort servos by port number.
 		servos := v.message.GetLabstation().Servos
@@ -163,8 +167,14 @@ func (r servoHostRegistry) saveToDatastore(ctx context.Context) error {
 			v.entity.Updated = now
 
 			entities = append(entities, v.entity)
+			changes = append(changes, changehistory.LogChromeOSDeviceChanges(v.oldMessage, v.message)...)
 		}
 	}
+	logging.Infof(ctx, "save %d records of labstation changes", len(changes))
+	if err := changes.SaveToDatastore(ctx); err != nil {
+		logging.Errorf(ctx, "failed to save labstation changes: %s", err)
+	}
+	logging.Infof(ctx, "%d labstations changed because of DUT changes", len(entities))
 	if err := datastore.Put(ctx, entities); err != nil {
 		return errors.Annotate(err, "save labstations back to datastore").Err()
 	}
