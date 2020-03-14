@@ -38,6 +38,10 @@ export const FETCH_ITEMS_START = 'hotlist/FETCH_ITEMS_START';
 export const FETCH_ITEMS_SUCCESS = 'hotlist/FETCH_ITEMS_SUCCESS';
 export const FETCH_ITEMS_FAILURE = 'hotlist/FETCH_ITEMS_FAILURE';
 
+export const REMOVE_ITEMS_START = 'hotlist/REMOVE_ITEMS_START';
+export const REMOVE_ITEMS_SUCCESS = 'hotlist/REMOVE_ITEMS_SUCCESS';
+export const REMOVE_ITEMS_FAILURE = 'hotlist/REMOVE_ITEMS_FAILURE';
+
 export const RERANK_ITEMS_START = 'hotlist/RERANK_ITEMS_START';
 export const RERANK_ITEMS_SUCCESS = 'hotlist/RERANK_ITEMS_SUCCESS';
 export const RERANK_ITEMS_FAILURE = 'hotlist/RERANK_ITEMS_FAILURE';
@@ -229,9 +233,30 @@ export const fetchItems = (name) => async (dispatch) => {
 };
 
 /**
- * Action creator to fetch the items in a Hotlist.
- * @param {string} name The name of the Hotlist to fetch.
- * @param {Array<String>} items The names of the HotlistItems to move.
+ * Action creator to remove items from a Hotlist.
+ * @param {string} name The name of the Hotlist.
+ * @param {Array<string>} issues The names of the Issues to remove.
+ * @return {function(function): Promise<void>}
+ */
+export const removeItems = (name, issues) => async (dispatch) => {
+  dispatch({type: REMOVE_ITEMS_START});
+
+  try {
+    const args = {parent: name, issues};
+    await prpcClient.call('monorail.v1.Hotlists', 'RemoveHotlistItems', args);
+
+    dispatch({type: REMOVE_ITEMS_SUCCESS});
+
+    await dispatch(fetchItems(name));
+  } catch (error) {
+    dispatch({type: REMOVE_ITEMS_FAILURE, error});
+  };
+};
+
+/**
+ * Action creator to rerank the items in a Hotlist.
+ * @param {string} name The name of the Hotlist.
+ * @param {Array<string>} items The names of the HotlistItems to move.
  * @param {number} index The index to insert the moved items.
  * @return {function(function): Promise<void>}
  */

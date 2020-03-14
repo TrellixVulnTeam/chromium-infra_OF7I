@@ -696,6 +696,22 @@ describe('mr-issue-list', () => {
         {localId: 2, projectName: 'proj'},
       ]);
     });
+
+    it('fires selectionChange events', async () => {
+      const listener = sinon.stub();
+      element.addEventListener('selectionChange', listener);
+
+      // Changing the issue list clears the selection and fires an event.
+      element.issues = [{localId: 1, projectName: 'proj'}];
+      await element.updateComplete;
+      // Selecting all/deselecting all fires an event.
+      element.shadowRoot.querySelector('.select-all').click();
+      await element.updateComplete;
+      // Selecting an individual issue fires an event.
+      element.shadowRoot.querySelectorAll('.issue-checkbox')[0].click();
+
+      sinon.assert.calledThrice(listener);
+    });
   });
 
   describe('cursor', () => {

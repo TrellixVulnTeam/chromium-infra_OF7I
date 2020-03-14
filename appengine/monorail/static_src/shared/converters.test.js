@@ -14,7 +14,7 @@ import {displayNameToUserRef, userIdOrDisplayNameToUserRef,
   issueStringToRef, issueStringToBlockingRef, issueRefToString,
   issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefixes,
   labelNameToLabelValue, commentListToDescriptionList, valueToFieldValue,
-  issueToIssueRef, issueNameToRef, issueNameToRefString,
+  issueToIssueRef, issueNameToRef, issueNameToRefString, issueRefToName,
 } from './converters.js';
 
 describe('displayNameToUserRef', () => {
@@ -369,6 +369,11 @@ it('issueNameToRef', () => {
 it('issueNameToRefString', () => {
   const actual = issueNameToRefString('projects/project-name/issues/2');
   assert.equal(actual, 'project-name:2');
+});
+
+it('issueRefToName', () => {
+  const actual = issueRefToName({projectName: 'project-name', localId: 2});
+  assert.equal(actual, 'projects/project-name/issues/2');
 });
 
 describe('commentListToDescriptionList', () => {

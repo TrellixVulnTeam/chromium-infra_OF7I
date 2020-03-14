@@ -232,6 +232,36 @@ describe('hotlist', () => {
       });
     });
 
+    describe('removeItems', () => {
+      it('success', async () => {
+        prpcClient.call.returns(Promise.resolve({}));
+
+        const issues = [exampleIssue.NAME];
+        await hotlist.removeItems(example.NAME, issues)(dispatch);
+
+        sinon.assert.calledWith(dispatch, {type: hotlist.REMOVE_ITEMS_START});
+
+        const args = {parent: example.NAME, issues};
+        sinon.assert.calledWith(
+            prpcClient.call, 'monorail.v1.Hotlists',
+            'RemoveHotlistItems', args);
+
+        sinon.assert.calledWith(dispatch, {type: hotlist.REMOVE_ITEMS_SUCCESS});
+      });
+
+      it('failure', async () => {
+        prpcClient.call.throws();
+
+        await hotlist.removeItems(example.NAME, [])(dispatch);
+
+        const action = {
+          type: hotlist.REMOVE_ITEMS_FAILURE,
+          error: sinon.match.any,
+        };
+        sinon.assert.calledWith(dispatch, action);
+      });
+    });
+
     describe('rerankItems', () => {
       it('success', async () => {
         prpcClient.call.returns(Promise.resolve({}));

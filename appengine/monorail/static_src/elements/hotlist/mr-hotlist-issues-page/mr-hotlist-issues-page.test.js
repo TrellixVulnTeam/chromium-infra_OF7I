@@ -12,6 +12,7 @@ import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import * as example from 'shared/test/constants-hotlist.js';
+import * as exampleIssue from 'shared/test/constants-issue.js';
 import * as exampleUser from 'shared/test/constants-user.js';
 
 import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
@@ -118,6 +119,23 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     assert.isTrue(element._filter.Closed);
     assert.equal(issueList.issues.length, 1);
   });
+
+  it('updates button bar on list selection', async () => {
+    element._hotlist = example.HOTLIST;
+    element._items = [example.HOTLIST_ISSUE];
+    await element.updateComplete;
+
+    const buttonBar = element.shadowRoot.querySelector('mr-button-bar');
+    assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Remove');
+    assert.deepEqual(element._selected, []);
+
+    const issueList = element.shadowRoot.querySelector('mr-issue-list');
+    issueList.shadowRoot.querySelector('input').click();
+    await element.updateComplete;
+
+    assert.include(buttonBar.shadowRoot.innerHTML, 'Remove');
+    assert.deepEqual(element._selected, [exampleIssue.NAME]);
+  });
 });
 
 describe('mr-hotlist-issues-page (connected)', () => {
@@ -163,18 +181,37 @@ describe('mr-hotlist-issues-page (connected)', () => {
     assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
   });
 
-  it('reranks', () => {
+  it('removes items', () => {
+    element._hotlist = example.HOTLIST;
+    element._selected = [exampleIssue.NAME];
+
     sinon.stub(prpcClient, 'call');
 
     try {
-      element._hotlist = example.HOTLIST;
-      element._items = [
-        example.HOTLIST_ISSUE,
-        example.HOTLIST_ISSUE_CLOSED,
-        example.HOTLIST_ISSUE_OTHER_PROJECT,
-      ];
+      element._removeItems();
 
-      element._rerank([example.HOTLIST_ITEM_NAME], 1);
+      // We can't stub hotlist.removeItems(), so stub prpcClient.call() instead.
+      // https://github.com/sinonjs/sinon/issues/562
+      const args = {parent: example.NAME, issues: [exampleIssue.NAME]};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Hotlists', 'RemoveHotlistItems', args);
+    } finally {
+      prpcClient.call.restore();
+    }
+  });
+
+  it('reranks', () => {
+    element._hotlist = example.HOTLIST;
+    element._items = [
+      example.HOTLIST_ISSUE,
+      example.HOTLIST_ISSUE_CLOSED,
+      example.HOTLIST_ISSUE_OTHER_PROJECT,
+    ];
+
+    sinon.stub(prpcClient, 'call');
+
+    try {
+      element._rerankItems([example.HOTLIST_ITEM_NAME], 1);
 
       // We can't stub hotlist.rerankItems(), so stub prpcClient.call() instead.
       // https://github.com/sinonjs/sinon/issues/562

@@ -534,8 +534,8 @@ export function issueRefsToStrings(arr, projectName) {
 }
 
 /**
- * Converts an issue name in the v1 API to an IssueRef in the v0 API.
- * @param {string} name The v1 Issue name, e.g. 'projects/proj-name/issues/123'
+ * Converts an issue name in the v3 API to an IssueRef in the v0 API.
+ * @param {string} name The v3 Issue name, e.g. 'projects/proj-name/issues/123'
  * @return {IssueRef} An IssueRef.
  */
 export function issueNameToRef(name) {
@@ -547,14 +547,23 @@ export function issueNameToRef(name) {
 }
 
 /**
- * Converts an issue name in the v1 API to an IssueRefString in the v0 API.
- * @param {string} name The v1 Issue name, e.g. 'projects/proj-name/issues/123'
+ * Converts an issue name in the v3 API to an IssueRefString in the v0 API.
+ * @param {string} name The v3 Issue name, e.g. 'projects/proj-name/issues/123'
  * @return {IssueRefString} A String with all the data needed to
  *   construct an IssueRef.
  */
 export function issueNameToRefString(name) {
   const nameParts = name.split('/');
   return `${nameParts[1]}:${nameParts[3]}`;
+}
+
+/**
+ * Converts an issue name in the v3 API to an IssueRef in the v0 API.
+ * @param {IssueRef} ref An IssueRef.
+ * @return {string} The v3 Issue name, e.g. 'projects/proj-name/issues/123'
+ */
+export function issueRefToName(ref) {
+  return `projects/${ref.projectName}/issues/${ref.localId}`;
 }
 
 /**

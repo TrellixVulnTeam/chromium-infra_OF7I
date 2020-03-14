@@ -762,6 +762,7 @@ export class MrIssueList extends connectStore(LitElement) {
       // we may want to consider saving selections across issue reloads, though,
       // such as in the case or list refreshing.
       this._selectedIssues = new Set();
+      this.dispatchEvent(new CustomEvent('selectionChange'));
 
       // Clear group toggle state when the list of issues changes to prevent an
       // ever-growing Set size.

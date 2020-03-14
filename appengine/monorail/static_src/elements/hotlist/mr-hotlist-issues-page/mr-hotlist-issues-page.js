@@ -7,6 +7,7 @@ import {defaultMemoize} from 'reselect';
 
 import {relativeTime}
   from 'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
+import {issueRefToName} from 'shared/converters.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 import {store, connectStore} from 'reducers/base.js';
@@ -15,6 +16,7 @@ import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
+import 'elements/framework/mr-button-bar/mr-button-bar.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
@@ -37,11 +39,14 @@ export class _MrHotlistIssuesPage extends LitElement {
         margin: 16px 24px;
       }
       div {
-        display: flex;
         align-items: center;
+        display: flex;
       }
       chops-filter-chips {
         margin-left: 6px;
+      }
+      mr-button-bar {
+        margin: 16px 24px 8px 24px;
       }
     `;
   }
@@ -78,33 +83,63 @@ export class _MrHotlistIssuesPage extends LitElement {
         ></chops-filter-chips>
       </div>
 
+      <mr-button-bar .items=${this._buttonBarItems()}></mr-button-bar>
+
       <mr-issue-list
         .issues=${items}
         .projectName=${projectName}
         .columns=${this._columns}
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
-        .rerank=${this._rerank.bind(this)}
+        .rerank=${this._rerankItems.bind(this)}
         ?selectionEnabled=${true}
+        @selectionChange=${this._onSelectionChange}
       ></mr-issue-list>
     `;
+  }
+
+  /**
+   * @return {Array<MenuItem>}
+   */
+  _buttonBarItems() {
+    if (this._selected.length) {
+      return [
+        {icon: 'remove', text: 'Remove', handler: this._removeItems.bind(this)},
+        // TODO(dtu): Implement this action.
+        // {icon: 'forward', text: 'Add to another hotlist'},
+      ];
+    } else {
+      return [
+        // TODO(dtu): Implement this action.
+        // {icon: 'add', text: 'Add issues'},
+        // TODO(dtu): Implement this action.
+        // We need to include this button even though it's not implemented,
+        // so that the button bar doesn't move around.
+        {icon: 'table_chart', text: 'Change columns'},
+      ];
+    }
   }
 
   /** @override */
   static get properties() {
     return {
+      // Populated from Redux.
       _hotlist: {type: Object},
       _items: {type: Array},
       _columns: {type: Array},
       _issue: {type: Object},
       _extractFieldValuesFromIssue: {type: Object},
+
+      // Populated from events.
       _filter: {type: Object},
+      _selected: {type: Array},
     };
   };
 
   /** @override */
   constructor() {
     super();
+
     /** @type {?HotlistV3} */
     this._hotlist = null;
     /** @type {Array<HotlistIssue>} */
@@ -117,8 +152,11 @@ export class _MrHotlistIssuesPage extends LitElement {
      * @return {Array<string>}
      */
     this._extractFieldValuesFromIssue = (_issue, _fieldName) => [];
+
     /** @type {Object<string, boolean>} */
     this._filter = {Open: true};
+    /** @type {Array<string>} */
+    this._selected = [];
   }
 
   /**
@@ -147,12 +185,22 @@ export class _MrHotlistIssuesPage extends LitElement {
   }
 
   /**
+   * @param {CustomEvent} e A selectionChange event fired by <mr-issue-list>.
+   */
+  _onSelectionChange(e) {
+    this._selected = e.target.selectedIssues.map(issueRefToName);
+  }
+
+  /** Removes items from the Hotlist. */
+  async _removeItems() {}
+
+  /**
    * Reranks items in the hotlist, dispatching the action to the Redux store.
    * @param {Array<String>} items The names of the HotlistItems to move.
    * @param {number} index The index to insert the moved items.
    * @return {Promise<void>}
    */
-  async _rerank(items, index) {}
+  async _rerankItems(items, index) {}
 };
 
 /** Redux-connected version of _MrHotlistIssuesPage. */
@@ -181,7 +229,13 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
   }
 
   /** @override */
-  async _rerank(items, index) {
+  async _removeItems() {
+    const action = hotlist.removeItems(this._hotlist.name, this._selected);
+    await store.dispatch(action);
+  }
+
+  /** @override */
+  async _rerankItems(items, index) {
     // The index given from <mr-issue-list> includes only the items shown in
     // the list and excludes the items that are being moved. So, we need to
     // count the hidden items.
