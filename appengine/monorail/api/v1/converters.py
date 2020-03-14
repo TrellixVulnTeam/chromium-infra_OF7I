@@ -43,18 +43,22 @@ def ConvertHotlist(cnxn, user_auth, hotlist, services):
       cnxn, hotlist.owner_ids + hotlist.editor_ids, user_auth, None, services)
   default_columns  = [issue_objects_pb2.IssuesListColumn(column=col)
                       for col in hotlist.default_col_spec.split()]
+  if hotlist.is_private:
+    hotlist_privacy = feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
+        'PRIVATE')
+  else:
+    hotlist_privacy = feature_objects_pb2.Hotlist.HotlistPrivacy.Value('PUBLIC')
   api_hotlist = feature_objects_pb2.Hotlist(
       name=hotlist_resource_name,
       display_name=hotlist.name,
       owner=members_by_id.get(hotlist.owner_ids[0]),
-      editors=[members_by_id.get(editor_id) for editor_id in
-               hotlist.editor_ids],
+      editors=[
+          members_by_id.get(editor_id) for editor_id in hotlist.editor_ids
+      ],
       summary=hotlist.summary,
       description=hotlist.description,
-      default_columns=default_columns)
-  if not hotlist.is_private:
-    api_hotlist.hotlist_privacy = (
-        feature_objects_pb2.Hotlist.HotlistPrivacy.Value('PUBLIC'))
+      default_columns=default_columns,
+      hotlist_privacy=hotlist_privacy)
   return api_hotlist
 
 
@@ -175,8 +179,8 @@ def IngestIssuesListColumns(issues_list_columns):
 # CreateUserDisplayNames() can take in a list of projects.
 def ConvertUsers(cnxn, user_ids, user_auth, project, services):
   # type: (MonorailConnection, List(int), AuthData, protorpc.Project,
-  #     Services) -> Map(int, api_proto.user_objects_pb2.User)
-  """Convert list of protorpc_users into list of protoc Users.
+  #   Services) -> Map(int, api_proto.user_objects_pb2.User)
+  """Convert list of protorpc Users into list of protoc Users.
 
   Args:
     cnxn: MonorailConnection object.

@@ -123,10 +123,13 @@ class ConverterFunctionsTest(unittest.TestCase):
         name='hotlists/241',
         display_name=hotlist.name,
         owner=user_objects_pb2.User(
-            name='users/111', display_name=self.user_1.email,
+            name='users/111',
+            display_name=self.user_1.email,
             availability_message='User never visited'),
         summary=hotlist.summary,
-        description=hotlist.description)
+        description=hotlist.description,
+        hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
+            'PRIVATE'))
     user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
     self.assertEqual(
