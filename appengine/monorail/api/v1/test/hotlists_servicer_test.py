@@ -54,12 +54,22 @@ class HotlistsServicerTest(unittest.TestCase):
     self.issue_4 = fake.MakeTestIssue(
         self.project_1.project_id, 4, 'sum', 'New', 111,
         project_name=self.project_1.project_name)
+    self.issue_5 = fake.MakeTestIssue(
+        self.project_1.project_id, 5, 'sum', 'New', 111,
+        project_name=self.project_1.project_name)
+    self.issue_6 = fake.MakeTestIssue(
+        self.project_1.project_id, 6, 'sum', 'New', 111,
+        project_name=self.project_1.project_name)
     self.services.issue.TestAddIssue(self.issue_1)
     self.services.issue.TestAddIssue(self.issue_2)
     self.services.issue.TestAddIssue(self.issue_3)
     self.services.issue.TestAddIssue(self.issue_4)
-    issue_ids = [self.issue_1.issue_id, self.issue_2.issue_id,
-                 self.issue_3.issue_id, self.issue_4.issue_id]
+    self.services.issue.TestAddIssue(self.issue_5)
+    self.services.issue.TestAddIssue(self.issue_6)
+    issue_ids = [
+        self.issue_1.issue_id, self.issue_2.issue_id, self.issue_3.issue_id,
+        self.issue_4.issue_id, self.issue_5.issue_id, self.issue_6.issue_id
+    ]
     self.issue_ids_to_name = rnc.ConvertIssueNames(
         self.cnxn, issue_ids, self.services)
 
@@ -158,6 +168,22 @@ class HotlistsServicerTest(unittest.TestCase):
         self.cnxn, self.hotlist_1.hotlist_id)
     # The hotlist used to have 4 items and we've removed two.
     self.assertEqual(len(updated_hotlist.items), 2)
+
+  def testAddHotlistItems(self):
+    """We can add items to a Hotlist."""
+    issue_5_name = self.issue_ids_to_name[self.issue_5.issue_id]
+    issue_6_name = self.issue_ids_to_name[self.issue_6.issue_id]
+    request = hotlists_pb2.AddHotlistItemsRequest(
+        parent=self.hotlist_resource_name, issues=[issue_5_name, issue_6_name])
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    self.CallWrapped(self.hotlists_svcr.AddHotlistItems, mc, request)
+    updated_hotlist = self.services.features.GetHotlist(
+        self.cnxn, self.hotlist_1.hotlist_id)
+    # The hotlist used to have 4 items and we've added two.
+    self.assertEqual(len(updated_hotlist.items), 6)
 
   def testGetHotlist(self):
     """We can get a Hotlist."""

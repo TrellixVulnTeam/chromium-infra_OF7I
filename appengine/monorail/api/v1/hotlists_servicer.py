@@ -104,6 +104,26 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
 
   @monorail_servicer.PRPCMethod
+  def AddHotlistItems(self, mc, request):
+    # type: (MonorailConnection, AddHotlistItemsRequest) -> Empty
+    """pRPC API method that implements AddHotlistItems.
+
+    Raises:
+      NoSuchHotlistException if the hotlist is not found.
+      PermissionException if the user is not allowed to edit the hotlist.
+      InputException if the request.target_position is invalid or the given
+        list of issues to add is empty or invalid.
+    """
+    hotlist_id = rnc.IngestHotlistName(request.parent)
+    new_issue_ids = rnc.IngestIssueNames(mc.cnxn, request.issues, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.AddHotlistItems(hotlist_id, new_issue_ids, request.target_position)
+
+    return empty_pb2.Empty()
+
+
+  @monorail_servicer.PRPCMethod
   def GetHotlist(self, mc, request):
     # MonorailConnection, GetHotlistRequest -> Hotlist
     """pRPC API method that implements GetHotlist.
