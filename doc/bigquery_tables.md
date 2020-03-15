@@ -40,3 +40,25 @@ All isolate server instances have:
     table per isolate server instance.
     [Proto:
     StatsSnapshot](https://chromium.googlesource.com/infra/luci/luci-py.git/+/master/appengine/isolate/proto/isolated.proto)
+
+
+## tricium-prod
+
+All Tricium server instances have:
+
+*   [analyzer.results](https://bigquery.cloud.google.com/table/tricium-prod:analyzer.results):
+    contains results for each run (i.e. each AnalyzeRequest).
+    [Proto: AnalysisRun](https://chromium.googlesource.com/infra/infra/+/HEAD/go/src/infra/tricium/api/bigquery/analyzer_results.proto)
+*   [events.feedback](https://bigquery.cloud.google.com/table/tricium-prod:events.feedback):
+    contains rows for commenting and "not useful" reporting events.
+    [Proto:
+    FeedbackEvent](https://chromium.googlesource.com/infra/infra/+/HEAD/go/src/infra/tricium/api/bigquery/event.proto)
+
+
+## commit-queue
+
+The project "commit-queue" has these tables for CQ data:
+
+*   [raw.attempts](https://bigquery.cloud.google.com/table/commit-queue:raw.attempts):
+    contains results for CQ attempts.
+    [Proto: Attempt](https://source.chromium.org/chromium/infra/infra/+/master:go/src/go.chromium.org/luci/cq/api/bigquery/attempt.proto)
