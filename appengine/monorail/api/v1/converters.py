@@ -132,17 +132,49 @@ class Converter(object):
 
   # Issues
 
+  def _ConvertStatusValue(self, issue):
+    # proto.tracker_pb2.Issue -> api_proto.issue_objects_pb2.Issue.StatusValue
+    """Convert the status string on issue into a StatusValue."""
+    derivation = issue_objects_pb2.Issue.Derivation.Value(
+        'DERIVATION_UNSPECIFIED')
+    if not issue.status:
+      derivation = issue_objects_pb2.Issue.Derivation.Value('RULE')
+    else:
+      derivation = issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
+    return issue_objects_pb2.Issue.StatusValue(
+        status=issue.status or issue.derived_status, derivation=derivation)
+
+  def _ConvertLabelValues(self, issue):
+    # proto.tracker_pb2.Issue ->
+    #     Sequence[api_proto.issue_objects_pb2.Issue.LabelValue]
+    """Convert the label strings on issue into LabelValues."""
+    labels = []
+    for label in issue.labels:
+      labels.append(
+          issue_objects_pb2.Issue.LabelValue(
+              derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+              label=label))
+    for derived_label in issue.derived_labels:
+      labels.append(
+          issue_objects_pb2.Issue.LabelValue(
+              derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+              label=derived_label))
+    return labels
+
   def ConvertIssues(self, issues):
     # type: (Sequence[proto.tracker_pb2.Issue]) ->
     #     Sequence[api_proto.issue_objects_pb2.Issue]
+    """Convert protorpc Issues into protoc Issues."""
     issue_ids = [issue.issue_id for issue in issues]
     issue_names_dict = rnc.ConvertIssueNames(
         self.cnxn, issue_ids, self.services)
+    # TODO(jessan): Assert that all issues are for the same project (config).
     found_issues = [
         issue for issue in issues if issue.issue_id in issue_names_dict
     ]
     converted_issues = []
     for issue in found_issues:
+      status = self._ConvertStatusValue(issue)
       content_state = issue_objects_pb2.IssueContentState.Value(
           'STATE_UNSPECIFIED')
       if issue.is_spam:
@@ -151,11 +183,15 @@ class Converter(object):
         content_state = issue_objects_pb2.IssueContentState.Value('DELETED')
       else:
         content_state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+      labels = self._ConvertLabelValues(issue)
       converted_issues.append(
           issue_objects_pb2.Issue(
               name=issue_names_dict[issue.issue_id],
               summary=issue.summary,
               state=content_state,
+              status=status,
+              description='TODO(jessan): Pull description from comments',
+              labels=labels,
               star_count=issue.star_count,
           ))
     return converted_issues
@@ -263,8 +299,8 @@ class Converter(object):
     elif field_value.str_value is not None:
       return field_value.str_value
     elif field_value.user_id is not None:
-      return rnc.ConvertUserNames([field_value.user_id]).get(
-          field_value.user_id)
+      return rnc.ConvertUserNames([field_value.user_id
+                                  ]).get(field_value.user_id)
     elif field_value.date_value is not None:
       return str(field_value.date_value)
     elif field_value.url_value is not None:

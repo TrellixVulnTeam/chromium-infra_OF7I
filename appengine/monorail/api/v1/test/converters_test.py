@@ -1,7 +1,6 @@
 # Copyright 2020 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
-
 """Tests for converting internal protorpc to external protoc."""
 
 from __future__ import print_function
@@ -50,7 +49,9 @@ class ConverterFunctionsTest(unittest.TestCase):
         'New',
         111,
         project_name=self.project_1.project_name,
-        star_count=1)
+        star_count=1,
+        labels=['label-a', 'label-b'],
+        derived_labels=['label-derived', 'label-derived-2'])
     self.issue_2 = fake.MakeTestIssue(
         self.project_2.project_id,
         2,
@@ -84,9 +85,14 @@ class ConverterFunctionsTest(unittest.TestCase):
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
     hotlist = fake.Hotlist(
-        'Hotlist-Name', 240, default_col_spec='chicken goose',
-        is_private=False, owner_ids=[111], editor_ids=[222, 333],
-        summary='Hotlist summary', description='Hotlist Description')
+        'Hotlist-Name',
+        240,
+        default_col_spec='chicken goose',
+        is_private=False,
+        owner_ids=[111],
+        editor_ids=[222, 333],
+        summary='Hotlist summary',
+        description='Hotlist Description')
     expected_api_hotlist = feature_objects_pb2.Hotlist(
         name='hotlists/240',
         display_name=hotlist.name,
@@ -104,12 +110,14 @@ class ConverterFunctionsTest(unittest.TestCase):
             user_objects_pb2.User(
                 name='users/333',
                 display_name=testing_helpers.ObscuredEmail(self.user_3.email),
-                availability_message='User never visited')],
+                availability_message='User never visited')
+        ],
         hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
             'PUBLIC'),
         default_columns=[
             issue_objects_pb2.IssuesListColumn(column='chicken'),
-            issue_objects_pb2.IssuesListColumn(column='goose')])
+            issue_objects_pb2.IssuesListColumn(column='goose')
+        ])
     self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
     self.assertEqual(
@@ -118,8 +126,12 @@ class ConverterFunctionsTest(unittest.TestCase):
   def testConvertHotlist_DefaultValues(self):
     """We can convert a Hotlist with some empty or default values."""
     hotlist = fake.Hotlist(
-        'Hotlist-Name', 241, is_private=True, owner_ids=[111],
-        summary='Hotlist summary', description='Hotlist Description',
+        'Hotlist-Name',
+        241,
+        is_private=True,
+        owner_ids=[111],
+        summary='Hotlist summary',
+        description='Hotlist Description',
         default_col_spec='')
     expected_api_hotlist = feature_objects_pb2.Hotlist(
         name='hotlists/241',
@@ -158,7 +170,8 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue='projects/proj/issues/1',
             rank=1,
             adder=user_objects_pb2.User(
-                name='users/111', display_name=self.user_1.email,
+                name='users/111',
+                display_name=self.user_1.email,
                 availability_message='User never visited'),
             create_time=expected_create_time,
             note='note2'),
@@ -185,12 +198,33 @@ class ConverterFunctionsTest(unittest.TestCase):
   def testConvertIssues(self):
     """We can convert Issues."""
     # TODO(jessan): Add self.issue_2 once method fully implemented.
+    # - Derived status
     issues = [self.issue_1]
     expected_issues = [
         issue_objects_pb2.Issue(
             name='projects/proj/issues/1',
             summary='sum',
             state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+            status=issue_objects_pb2.Issue.StatusValue(
+                derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+                status='New'),
+            labels=[
+                issue_objects_pb2.Issue.LabelValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value(
+                        'EXPLICIT'),
+                    label='label-a'),
+                issue_objects_pb2.Issue.LabelValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value(
+                        'EXPLICIT'),
+                    label='label-b'),
+                issue_objects_pb2.Issue.LabelValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                    label='label-derived'),
+                issue_objects_pb2.Issue.LabelValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                    label='label-derived-2')
+            ],
+            description='TODO(jessan): Pull description from comments',
             star_count=1)
     ]
     self.assertEqual(self.converter.ConvertIssues(issues), expected_issues)
@@ -200,17 +234,19 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(self.converter.ConvertIssues([]), [])
 
   def testConvertUsers(self):
-    self.user_1.vacation_message='non-empty-string'
+    self.user_1.vacation_message = 'non-empty-string'
     user_ids = [self.user_1.user_id]
     self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
     project = None
 
     expected_user_dict = {
-        self.user_1.user_id: user_objects_pb2.User(
-            name='users/111',
-            display_name='one@example.com',
-            availability_message='non-empty-string')}
+        self.user_1.user_id:
+            user_objects_pb2.User(
+                name='users/111',
+                display_name='one@example.com',
+                availability_message='non-empty-string')
+    }
     self.assertEqual(
         self.converter.ConvertUsers(user_ids, project), expected_user_dict)
 
