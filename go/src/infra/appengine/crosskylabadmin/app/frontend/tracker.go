@@ -63,14 +63,20 @@ func (tsi *TrackerServerImpl) PushBotsForAdminTasks(ctx context.Context, req *fl
 		return nil, errors.Annotate(err, "failed to obtain Swarming client").Err()
 	}
 
+	dutState, ok := clients.DutStateRevMap[req.GetTargetDutState()]
+	if !ok {
+		return nil, fmt.Errorf("DutState=%#v does not map to swarming value", req.GetTargetDutState())
+	}
+
 	// Schedule admin tasks to idle DUTs.
 	dims := make(strpair.Map)
-	dims[clients.DutOSDimensionKey] = []string{"OS_TYPE_CROS"}
-	bots, err := sc.ListAliveIdleBotsInPool(ctx, cfg.Swarming.BotPool, strpair.Map{})
+	dims[clients.DutStateDimensionKey] = []string{dutState}
+	bots, err := sc.ListAliveIdleBotsInPool(ctx, cfg.Swarming.BotPool, dims)
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to list alive idle cros bots").Err()
+		reason := fmt.Sprintf("failed to list alive idle cros bots with dut_state %q", dutState)
+		return nil, errors.Annotate(err, reason).Err()
 	}
-	logging.Infof(ctx, "successfully get %d alive idle cros bots.", len(bots))
+	logging.Infof(ctx, "successfully get %d alive idle cros bots with dut_state %q.", len(bots), dutState)
 
 	// Parse DUT name to schedule tasks for readability.
 	repairDUTs, resetDUTs := identifyBots(ctx, bots)
@@ -221,19 +227,22 @@ func identifyBots(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (re
 	repairDUTs = make([]string, 0, len(bots))
 	resetDUTs = make([]string, 0, len(bots))
 	for _, b := range bots {
-		s := clients.GetStateDimension(b.Dimensions)
 		dims := swarming_utils.DimensionsMap(b.Dimensions)
 		os, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutOSDimensionKey)
 		n, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutNameDimensionKey)
 		if err != nil {
 			logging.Warningf(ctx, "failed to obtain DUT name for bot %q", b.BotId)
 			continue
+		} else if os == "OS_TYPE_LABSTATION" {
+			continue
 		}
-		if os != "OS_TYPE_LABSTATION" && (s == fleet.DutState_NeedsRepair || s == fleet.DutState_RepairFailed) {
+
+		s := clients.GetStateDimension(b.Dimensions)
+		if s == fleet.DutState_NeedsRepair || s == fleet.DutState_RepairFailed {
 			logging.Infof(ctx, "DUT: %s - Needs repair", n)
 			repairDUTs = append(repairDUTs, n)
-		}
-		if os != "OS_TYPE_LABSTATION" && s == fleet.DutState_NeedsReset {
+
+		} else if s == fleet.DutState_NeedsReset {
 			logging.Infof(ctx, "DUT: %s - Needs reset", n)
 			resetDUTs = append(resetDUTs, n)
 		}

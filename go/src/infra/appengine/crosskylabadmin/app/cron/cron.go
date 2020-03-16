@@ -23,7 +23,9 @@ package cron
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/common/errors"
@@ -49,7 +51,10 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/balance-pools", mwCron, logAndSetHTTPErr(balancePoolCronHandler))
 
 	// Generate repair or reset jobs for CrOS DUTs.
-	r.GET("/internal/cron/push-bots-for-admin-tasks", mwCron, logAndSetHTTPErr(pushBotsForAdminTasksCronHandler))
+	r.GET("/internal/cron/push-bots-for-admin-tasks", mwCron, logAndSetHTTPErr(pushBotsForAdminTasksHandler(fleet.DutState_NeedsRepair, fleet.DutState_NeedsReset)))
+
+	// Generate repair or reset jobs for repair_failed CrOS DUTs.
+	r.GET("/internal/cron/push-repair-failed-bots-for-admin-tasks", mwCron, logAndSetHTTPErr(pushBotsForAdminTasksHandler(fleet.DutState_RepairFailed)))
 
 	// for repair jobs of labstation.
 	r.GET("/internal/cron/push-repair-jobs-for-labstations", mwCron, logAndSetHTTPErr(pushRepairJobsForLabstationsCronHandler))
@@ -93,8 +98,15 @@ func updateManufacturingConfigCronHandler(c *router.Context) (err error) {
 	return nil
 }
 
+// pushBotsForAdminTasksHandler high-order for pushBotsForAdminTasksCronHandler.
+func pushBotsForAdminTasksHandler(dutStates ...fleet.DutState) (err func(c *router.Context) error) {
+	return func(c *router.Context) error {
+		return pushBotsForAdminTasksCronHandler(c, dutStates...)
+	}
+}
+
 // pushBotsForAdminTasksCronHandler pushes bots that require admin tasks to bot queue.
-func pushBotsForAdminTasksCronHandler(c *router.Context) (err error) {
+func pushBotsForAdminTasksCronHandler(c *router.Context, dutStates ...fleet.DutState) (err error) {
 	defer func() {
 		pushBotsForAdminTasksCronHandlerTick.Add(c.Context, 1, err == nil)
 	}()
@@ -104,10 +116,23 @@ func pushBotsForAdminTasksCronHandler(c *router.Context) (err error) {
 		logging.Infof(c.Context, "PushBotsForAdminTasks is disabled via config.")
 		return nil
 	}
+	dutStateNames := make([]string, len(dutStates))
+	for ind, dutState := range dutStates {
+		dutStateNames[ind] = dutState.String()
+	}
+	logging.Infof(c.Context, fmt.Sprintf("PushBotsForAdminTasks for states: %v", strings.Join(dutStateNames, ", ")))
 
 	tsi := frontend.TrackerServerImpl{}
-	if _, err := tsi.PushBotsForAdminTasks(c.Context, &fleet.PushBotsForAdminTasksRequest{}); err != nil {
-		return err
+
+	for _, dutState := range dutStates {
+		logging.Infof(c.Context, fmt.Sprintf("Started push AdminTasks for state %#v", dutState.String()))
+		request := fleet.PushBotsForAdminTasksRequest{
+			TargetDutState: dutState,
+		}
+		if _, err := tsi.PushBotsForAdminTasks(c.Context, &request); err != nil {
+			return err
+		}
+		logging.Infof(c.Context, fmt.Sprintf("Finished push AdminTasks for state %#v", dutState.String()))
 	}
 	logging.Infof(c.Context, "Successfully finished")
 	return nil
