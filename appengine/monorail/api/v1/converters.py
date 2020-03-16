@@ -37,6 +37,8 @@ class Converter(object):
     self.user_auth = mc.auth
     self.services = services
 
+  # Hotlists
+
   def ConvertHotlist(self, hotlist):
     # type: (proto.feature_objects_pb2.Hotlist)
     #    -> api_proto.feature_objects_pb2.Hotlist
@@ -56,7 +58,8 @@ class Converter(object):
     else:
       hotlist_privacy = feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
           'PUBLIC')
-    api_hotlist = feature_objects_pb2.Hotlist(
+
+    return feature_objects_pb2.Hotlist(
         name=hotlist_resource_name,
         display_name=hotlist.name,
         owner=members_by_id.get(hotlist.owner_ids[0]),
@@ -67,7 +70,6 @@ class Converter(object):
         description=hotlist.description,
         default_columns=default_columns,
         hotlist_privacy=hotlist_privacy)
-    return api_hotlist
 
   def ConvertHotlistItems(self, hotlist_id, items):
     # type: (int, Sequence[proto.features_pb2.HotlistItem]) ->

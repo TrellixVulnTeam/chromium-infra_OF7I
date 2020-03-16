@@ -10,10 +10,15 @@ from __future__ import absolute_import
 
 import unittest
 
+from google.protobuf import field_mask_pb2
+
 from api import resource_name_converters as rnc
 from api.v1 import hotlists_servicer
 from api.v1 import converters
 from api.v1.api_proto import hotlists_pb2
+from api.v1.api_proto import feature_objects_pb2
+from api.v1.api_proto import issue_objects_pb2
+from api.v1.api_proto import user_objects_pb2
 from framework import exceptions
 from framework import monorailcontext
 from framework import permissions
@@ -89,8 +94,14 @@ class HotlistsServicerTest(unittest.TestCase):
             'note4')
     ]
     self.hotlist_1 = self.services.features.TestAddHotlist(
-        'HotlistName', owner_ids=[self.user_1.user_id],
-        editor_ids=[self.user_2.user_id], hotlist_item_fields=hotlist_items)
+        'HotlistName',
+        summary='summary',
+        description='description',
+        owner_ids=[self.user_1.user_id],
+        editor_ids=[self.user_2.user_id],
+        hotlist_item_fields=hotlist_items,
+        default_col_spec='',
+        is_private=True)
     self.hotlist_resource_name = rnc.ConvertHotlistName(
         self.hotlist_1.hotlist_id)
 
@@ -196,3 +207,92 @@ class HotlistsServicerTest(unittest.TestCase):
     mc.LookupLoggedInUserPerms(None)
     api_hotlist = self.CallWrapped(self.hotlists_svcr.GetHotlist, mc, request)
     self.assertEqual(api_hotlist, self.converter.ConvertHotlist(self.hotlist_1))
+
+  def testUpdateHotlist_AllFields(self):
+    """We can update a Hotlist."""
+    request = hotlists_pb2.UpdateHotlistRequest(
+        update_mask=field_mask_pb2.FieldMask(
+            paths=[
+                'summary', 'description', 'default_columns', 'hotlist_privacy',
+                'display_name'
+            ]),
+        hotlist=feature_objects_pb2.Hotlist(
+            name=self.hotlist_resource_name,
+            display_name='newName',
+            summary='new summary',
+            description='new description',
+            default_columns=[
+                issue_objects_pb2.IssuesListColumn(column='new-chicken-egg')
+            ],
+            hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
+                'PUBLIC')))
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    api_hotlist = self.CallWrapped(
+        self.hotlists_svcr.UpdateHotlist, mc, request)
+    api_users_by_id = self.converter.ConvertUsers(
+        [self.user_2.user_id, self.user_1.user_id], None)
+    expected_hotlist = feature_objects_pb2.Hotlist(
+        name=self.hotlist_resource_name,
+        display_name='newName',
+        summary='new summary',
+        description='new description',
+        default_columns=[
+            issue_objects_pb2.IssuesListColumn(column='new-chicken-egg')
+        ],
+        hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
+            'PUBLIC'),
+        owner=api_users_by_id[self.user_1.user_id],
+        editors=[api_users_by_id[self.user_2.user_id]])
+    self.assertEqual(api_hotlist, expected_hotlist)
+
+  def testUpdateHotlist_OneField(self):
+    request = hotlists_pb2.UpdateHotlistRequest(
+        update_mask=field_mask_pb2.FieldMask(paths=['summary']),
+        hotlist=feature_objects_pb2.Hotlist(
+            name=self.hotlist_resource_name,
+            display_name='newName',
+            summary='new summary',
+            description='new description',
+            default_columns=[
+                issue_objects_pb2.IssuesListColumn(column='new-chicken-egg')
+            ],
+            hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
+                'PUBLIC')))
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    api_hotlist = self.CallWrapped(
+        self.hotlists_svcr.UpdateHotlist, mc, request)
+    api_users_by_id = self.converter.ConvertUsers(
+        [self.user_2.user_id, self.user_1.user_id], None)
+    expected_hotlist = feature_objects_pb2.Hotlist(
+        name=self.hotlist_resource_name,
+        display_name='HotlistName',
+        summary='new summary',
+        description='description',
+        default_columns=[],
+        hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
+            'PRIVATE'),
+        owner=api_users_by_id[self.user_1.user_id],
+        editors=[api_users_by_id[self.user_2.user_id]])
+    self.assertEqual(api_hotlist, expected_hotlist)
+
+  def testUpdateHotlist_EmptyFieldMask(self):
+    request = hotlists_pb2.UpdateHotlistRequest(
+        hotlist=feature_objects_pb2.Hotlist(summary='new'))
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.hotlists_svcr.UpdateHotlist, mc, request)
+
+  def testUpdateHotlist_EmptyHotlist(self):
+    request = hotlists_pb2.UpdateHotlistRequest(
+        update_mask=field_mask_pb2.FieldMask(paths=['summary']))
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.hotlists_svcr.UpdateHotlist, mc, request)

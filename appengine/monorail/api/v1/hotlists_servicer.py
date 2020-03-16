@@ -15,6 +15,7 @@ from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import hotlists_pb2
 from api.v1.api_proto import hotlists_prpc_pb2
 from businesslogic import work_env
+from framework import exceptions
 from tracker import tracker_constants
 
 
@@ -136,5 +137,51 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
     with work_env.WorkEnv(mc, self.services) as we:
       hotlist = we.GetHotlist(hotlist_id)
+
+    return self.converter.ConvertHotlist(hotlist)
+
+  @monorail_servicer.PRPCMethod
+  def UpdateHotlist(self, mc, request):
+    # type: (MonorailConnection, UpdateHotlistRequest) -> UpdateHotlistResponse
+    """pRPC API method that implements UpdateHotlist.
+
+    Raises:
+      NoSuchHotlistException if the hotlist is not found.
+      PermissionException if the user is not allowed to make this update.
+      InputException if some request parameters are required and missing or
+        invalid.
+    """
+    if not request.update_mask:
+      raise exceptions.InputException('No paths given in `update_mask`.')
+    if not request.hotlist:
+      raise exceptions.InputException('No `hotlist` param given.')
+
+    if not request.update_mask.IsValidForDescriptor(
+        feature_objects_pb2.Hotlist.DESCRIPTOR):
+      raise exceptions.InputException('Invalid `update_mask` for `hotlist`')
+
+    hotlist_id = rnc.IngestHotlistName(request.hotlist.name)
+
+    update_args = {}
+    hotlist = request.hotlist
+    for path in request.update_mask.paths:
+      if path == 'display_name':
+        update_args['hotlist_name'] = hotlist.display_name
+      elif path == 'summary':
+        update_args['summary'] = hotlist.summary
+      elif path == 'description':
+        update_args['description'] = hotlist.description
+      elif path == 'hotlist_privacy':
+        update_args['is_private'] = (
+            hotlist.hotlist_privacy == feature_objects_pb2.Hotlist
+            .HotlistPrivacy.Value('PRIVATE'))
+      elif path == 'default_columns':
+        update_args[
+            'default_col_spec'] = self.converter.IngestIssuesListColumns(
+                hotlist.default_columns)
+      # TODO(crbug/monorail/7104): Add hotlist owner and editors.
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.UpdateHotlist(hotlist_id, **update_args)
+      hotlist = we.GetHotlist(hotlist_id, use_cache=False)
 
     return self.converter.ConvertHotlist(hotlist)
