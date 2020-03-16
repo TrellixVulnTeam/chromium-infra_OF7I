@@ -126,6 +126,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     await element.updateComplete;
 
     const buttonBar = element.shadowRoot.querySelector('mr-button-bar');
+    assert.include(buttonBar.shadowRoot.innerHTML, 'Change columns');
     assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Remove');
     assert.deepEqual(element._selected, []);
 
@@ -133,8 +134,24 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     issueList.shadowRoot.querySelector('input').click();
     await element.updateComplete;
 
+    assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Change columns');
     assert.include(buttonBar.shadowRoot.innerHTML, 'Remove');
     assert.deepEqual(element._selected, [exampleIssue.NAME]);
+  });
+
+  it('opens change columns dialog', async () => {
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    const dialog = element.shadowRoot.querySelector('mr-change-columns');
+    sinon.stub(dialog, 'open');
+    try {
+      element._openColumnsDialog();
+
+      sinon.assert.calledOnce(dialog.open);
+    } finally {
+      dialog.open.restore();
+    }
   });
 });
 

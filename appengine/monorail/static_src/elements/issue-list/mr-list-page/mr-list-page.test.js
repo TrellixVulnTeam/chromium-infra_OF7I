@@ -553,7 +553,7 @@ describe('mr-list-page', () => {
       const dialog = element.shadowRoot.querySelector('mr-change-columns');
       sinon.stub(dialog, 'open');
 
-      element.changeColumns();
+      element.openColumnsDialog();
 
       sinon.assert.calledOnce(dialog.open);
     });

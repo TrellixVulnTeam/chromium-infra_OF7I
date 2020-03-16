@@ -288,7 +288,7 @@ export class MrListPage extends connectStore(LitElement) {
       },
       {
         icon: 'table_chart', text: 'Change columns',
-        handler: this.changeColumns.bind(this),
+        handler: this.openColumnsDialog.bind(this),
       },
       {icon: 'more_vert', text: 'More actions...', items: [
         {text: 'Flag as spam', handler: () => this._flagIssues(true)},
@@ -508,7 +508,7 @@ export class MrListPage extends connectStore(LitElement) {
   /**
    * Opens the the column selector.
    */
-  changeColumns() {
+  openColumnsDialog() {
     this.shadowRoot.querySelector('mr-change-columns').open();
   }
 

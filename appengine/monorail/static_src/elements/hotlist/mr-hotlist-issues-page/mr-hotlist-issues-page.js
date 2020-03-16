@@ -19,6 +19,7 @@ import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
 import 'elements/framework/mr-button-bar/mr-button-bar.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
+import 'elements/issue-list/dialogs/mr-change-columns/mr-change-columns.js';
 
 const DEFAULT_HOTLIST_FIELDS = Object.freeze([
   ...DEFAULT_ISSUE_FIELD_LIST,
@@ -95,6 +96,8 @@ export class _MrHotlistIssuesPage extends LitElement {
         ?selectionEnabled=${true}
         @selectionChange=${this._onSelectionChange}
       ></mr-issue-list>
+
+      <mr-change-columns .columns=${this._columns}></mr-change-columns>
     `;
   }
 
@@ -112,10 +115,11 @@ export class _MrHotlistIssuesPage extends LitElement {
       return [
         // TODO(dtu): Implement this action.
         // {icon: 'add', text: 'Add issues'},
-        // TODO(dtu): Implement this action.
-        // We need to include this button even though it's not implemented,
-        // so that the button bar doesn't move around.
-        {icon: 'table_chart', text: 'Change columns'},
+        {
+          icon: 'table_chart',
+          text: 'Change columns',
+          handler: this._openColumnsDialog.bind(this),
+        },
       ];
     }
   }
@@ -191,11 +195,16 @@ export class _MrHotlistIssuesPage extends LitElement {
     this._selected = e.target.selectedIssues.map(issueRefToName);
   }
 
-  /** Removes items from the Hotlist. */
+  /** Opens a dialog to change the columns shown in the issue list. */
+  _openColumnsDialog() {
+    this.shadowRoot.querySelector('mr-change-columns').open();
+  }
+
+  /** Removes items from the hotlist, dispatching an action to Redux. */
   async _removeItems() {}
 
   /**
-   * Reranks items in the hotlist, dispatching the action to the Redux store.
+   * Reranks items in the hotlist, dispatching an action to Redux.
    * @param {Array<String>} items The names of the HotlistItems to move.
    * @param {number} index The index to insert the moved items.
    * @return {Promise<void>}
