@@ -185,3 +185,20 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
       hotlist = we.GetHotlist(hotlist_id, use_cache=False)
 
     return self.converter.ConvertHotlist(hotlist)
+
+  @monorail_servicer.PRPCMethod
+  def DeleteHotlist(self, mc, request):
+    # MonorailConnection, GetHotlistRequest -> Empty
+    """pRPC API method that implements DeleteHotlist.
+
+    Raises:
+      NoSuchHotlistException if the hotlist is not found.
+      PermissionException if the user is not allowed to delete the hotlist.
+    """
+
+    hotlist_id = rnc.IngestHotlistName(request.name)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.DeleteHotlist(hotlist_id)
+
+    return empty_pb2.Empty()

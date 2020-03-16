@@ -2337,7 +2337,6 @@ class WorkEnv(object):
         self.mc.cnxn, [hotlist.hotlist_id], self.services.hotlist_star,
         self.services.user,  self.services.chart)
 
-
   def ListHotlistsByUser(self, user_id):
     """Return the hotlists for the given user.
 
@@ -2805,8 +2804,6 @@ class WorkEnv(object):
         self.mc.auth.effective_ids, self.mc.perms, hotlist):
       return permissions.STANDARD_HOTLIST_PERMISSIONS
     return []
-
-  # FUTURE: DeleteHotlist()
 
   def expungeUsersFromStars(self, user_ids):
     """Wipes any starred user or user's stars from all star services.

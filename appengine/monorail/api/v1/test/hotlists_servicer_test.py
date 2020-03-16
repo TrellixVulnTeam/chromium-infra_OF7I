@@ -10,6 +10,7 @@ from __future__ import absolute_import
 
 import unittest
 
+from google.protobuf import empty_pb2
 from google.protobuf import field_mask_pb2
 
 from api import resource_name_converters as rnc
@@ -23,6 +24,7 @@ from framework import exceptions
 from framework import monorailcontext
 from framework import permissions
 from testing import fake
+from services import features_svc
 from services import service_manager
 
 
@@ -296,3 +298,18 @@ class HotlistsServicerTest(unittest.TestCase):
     mc.LookupLoggedInUserPerms(None)
     with self.assertRaises(exceptions.InputException):
       self.CallWrapped(self.hotlists_svcr.UpdateHotlist, mc, request)
+
+  def testDeleteHotlist(self):
+    """We can delete a Hotlist."""
+    request = hotlists_pb2.GetHotlistRequest(name=self.hotlist_resource_name)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    api_response = self.CallWrapped(
+        self.hotlists_svcr.DeleteHotlist, mc, request)
+    self.assertEqual(api_response, empty_pb2.Empty())
+
+    with self.assertRaises(features_svc.NoSuchHotlistException):
+      self.services.features.GetHotlist(
+          self.cnxn, self.hotlist_1.hotlist_id)
