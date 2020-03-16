@@ -16,10 +16,10 @@ import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
+import 'elements/framework/dialogs/mr-change-columns/mr-change-columns.js';
 import 'elements/framework/mr-button-bar/mr-button-bar.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
-import 'elements/issue-list/dialogs/mr-change-columns/mr-change-columns.js';
 
 const DEFAULT_HOTLIST_FIELDS = Object.freeze([
   ...DEFAULT_ISSUE_FIELD_LIST,

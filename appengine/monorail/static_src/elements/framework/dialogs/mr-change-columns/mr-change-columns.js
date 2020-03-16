@@ -50,7 +50,7 @@ export class MrChangeColumns extends LitElement {
             <input
               id="columnsInput"
               placeholder="Edit columns..."
-              value=${this.columnString}
+              value=${this.columns.join(' ')}
             />
           </div>
           <div class="edit-actions">
@@ -98,10 +98,6 @@ export class MrChangeColumns extends LitElement {
     this._page = page;
   }
 
-  get columnString() {
-    return this.columns.join(' ');
-  }
-
   /**
    * Abstract out the computation of the current page. Useful for testing.
    */
@@ -109,6 +105,7 @@ export class MrChangeColumns extends LitElement {
     return window.location.pathname;
   }
 
+  /** Updates the URL query params with the new columns. */
   save() {
     const input = this.shadowRoot.querySelector('#columnsInput');
     const newColumns = parseColSpec(input.value);
@@ -123,22 +120,29 @@ export class MrChangeColumns extends LitElement {
     this.close();
   }
 
+  /**
+   * Handles form submit events.
+   * @param {Event} e A click or submit event.
+   */
   _save(e) {
     e.preventDefault();
     this.save();
   }
 
+  /** Opens and resets this dialog. */
   open() {
     this.reset();
     const dialog = this.shadowRoot.querySelector('chops-dialog');
     dialog.open();
   }
 
+  /** Closes this dialog. */
   close() {
     const dialog = this.shadowRoot.querySelector('chops-dialog');
     dialog.close();
   }
 
+  /** Resets the form in this dialog. */
   reset() {
     this.shadowRoot.querySelector('form').reset();
   }
