@@ -39,7 +39,6 @@ class RotaMember extends LitElement {
         throw res;
       }
       this.info = await res.json();
-      this.datesFixed = false;
     } catch (err) {
       console.error(err);
     }

@@ -12,20 +12,7 @@ class RotaShiftHistory extends LitElement {
 
   constructor() {
     super();
-    this.datesFixed = false;
     this.hide = true;
-  }
-
-
-  toDateTime(ss) {
-    for (let split of ss) {
-      for (let shift of split.Shifts) {
-        shift.StartTime = DateTime.fromISO(shift.StartTime.toString())
-          .setZone(constants.zone);
-        shift.EndTime = DateTime.fromISO(shift.EndTime.toString())
-          .setZone(constants.zone);
-      }
-    }
   }
 
   onCallers(shift) {
@@ -46,8 +33,8 @@ class RotaShiftHistory extends LitElement {
       </tbody>
       </table>
       </td>
-      <td>${i.StartTime.toFormat(constants.timeFormat)}</td>
-      <td>${i.EndTime.toFormat(constants.timeFormat)}</td>
+      <td>${DateTime.fromISO(i.StartTime, {zone: constants.zone}).toFormat(constants.timeFormat)}</td>
+      <td>${DateTime.fromISO(i.EndTime, {zone: constants.zone}).toFormat(constants.timeFormat)}</td>
       <td>${i.Comment}</td>
     </tr>`);
   }
@@ -83,13 +70,6 @@ class RotaShiftHistory extends LitElement {
   }
 
   render() {
-    if (!this.datesFixed) {
-      if (this.shifts && this.shifts.SplitShifts &&
-        this.shifts.SplitShifts.length > 0) {
-        this.toDateTime(this.shifts.SplitShifts);
-        this.datesFixed = true;
-      }
-    }
     return html`
       <style>
         #shifts {
