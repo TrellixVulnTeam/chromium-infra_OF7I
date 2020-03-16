@@ -260,17 +260,12 @@ func identifyLabstationsForRepair(ctx context.Context, bots []*swarming.Swarming
 			logging.Warningf(ctx, "failed to obtain os type for bot %q", b.BotId)
 			continue
 		}
-		pool, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutPoolDimensionKey)
-		if err != nil {
-			logging.Warningf(ctx, "failed to obtain pool label for bot %q", b.BotId)
-			continue
-		}
 		n, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutNameDimensionKey)
 		if err != nil {
 			logging.Warningf(ctx, "failed to obtain DUT name for bot %q", b.BotId)
 			continue
 		}
-		if os == "OS_TYPE_LABSTATION" && pool == "labstation_main" {
+		if os == "OS_TYPE_LABSTATION" {
 			dutNames = append(dutNames, n)
 		}
 	}
