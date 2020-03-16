@@ -470,8 +470,9 @@ func createCommentSelections(c context.Context, gerritAPI gerrit.API, request *t
 		if err = comment.UnpackComment(c, &data); err != nil {
 			return nil, err
 		}
-		// Allows lines +/-3 lines around the changed lines.
-		isChanged := gerrit.CommentIsInChangedLines(c, &data, changedLines, 3)
+		// Allows lines +/-1 lines around the changed lines. More than this and
+		// people complain.
+		isChanged := gerrit.CommentIsInChangedLines(c, &data, changedLines, 1)
 		isSuppressed := categories.Has(comment.Category)
 		selections[i].Included = (data.ShowOnUnchangedLines || isChanged) && !isSuppressed
 		logging.Fields{
