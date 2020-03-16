@@ -158,7 +158,7 @@ class RotaMember extends LitElement {
         <tbody>
           ${this.info.Shifts.map((s) => html`
             <tr>
-              <td><a href="/oncall/${s.Name}">${s.Name}</a></td>
+              <td><a href="/oncall?name=${s.Name}">${s.Name}</a></td>
               <td>
                 ${DateTime.fromISO(s.Entries[0].StartTime)
                   .setZone(constants.zone)
