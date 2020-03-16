@@ -1,0 +1,38 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file or at
+// https://developers.google.com/open-source/licenses/bsd
+
+// This file defines protobufs for features and related business
+// objects, e.g., hotlists.
+
+syntax = "proto3";
+
+package monorail.v1;
+
+import "google_proto/google/api/field_behavior.proto";
+
+
+// All possible permissions on the Monorail site.
+// Next available tag: 4
+enum Permission {
+  // Default value. This value is unused.
+  PERMISSION_UNSPECIFIED = 0;
+  // The permission needed to add and remove issues from a hotlist.
+  HOTLIST_EDIT = 1;
+  // The permission needed to delete a hotlist or change hotlist
+  // settings/members.
+  HOTLIST_ADMINISTER = 2;
+  // The permission needed to edit an issue.
+  ISSUE_EDIT = 3;
+}
+
+
+// The set of a user's permissions for a single resource.
+// Next available tag: 3
+message PermissionSet {
+  // The name of the resource `permissions` applies to.
+  string resource = 1;
+  // All the permissions a user has for `resource`.
+  repeated Permission permissions = 2;
+}
