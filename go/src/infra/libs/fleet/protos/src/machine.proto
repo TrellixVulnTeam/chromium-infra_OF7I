@@ -1,0 +1,33 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet;
+
+// Required by protoc-gen-go
+option go_package = ".;fleet";
+
+import "location.proto";
+import "machine_id.proto";
+
+// Next Tag: 5
+message Machine {
+  // A unique ID for the machine.
+  MachineID id = 1;
+  Location location = 2;
+
+  oneof device {
+    ChromeMachine dut = 3;
+    ChromeOSMachine labstation = 4;
+  };
+}
+
+message ChromeMachine {
+  // To be continued
+}
+
+message ChromeOSMachine {
+  // To be continued
+}
