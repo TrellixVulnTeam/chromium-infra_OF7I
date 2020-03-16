@@ -22,6 +22,7 @@ from components.prpc import server
 from infra_libs.ts_mon.common import http_metrics
 
 import settings
+from api.v1 import converters
 from framework import authdata
 from framework import exceptions
 from framework import framework_constants
@@ -73,6 +74,7 @@ class MonorailServicer(object):
     # RefreshToken method to check the token with a longer expiration and
     # generate a new one.
     self.xsrf_timeout = xsrf_timeout or xsrf.TOKEN_TIMEOUT_SEC
+    self.converter = None
 
   def Run(
       self, handler, request, prpc_context,
@@ -120,6 +122,8 @@ class MonorailServicer(object):
       mc.auth = requester_auth
       if not perms:
         mc.LookupLoggedInUserPerms(self.GetRequestProject(mc.cnxn, request))
+
+      self.converter = converters.Converter(mc, self.services)
       response = handler(self, mc, request)
 
     except Exception as e:

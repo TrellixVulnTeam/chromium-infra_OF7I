@@ -8,7 +8,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 from api import resource_name_converters as rnc
-from api.v1 import converters
 from api.v1 import monorail_servicer
 from api.v1.api_proto import projects_pb2
 from api.v1.api_proto import projects_prpc_pb2

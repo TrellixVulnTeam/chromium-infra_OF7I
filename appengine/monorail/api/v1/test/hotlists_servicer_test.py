@@ -34,6 +34,7 @@ class HotlistsServicerTest(unittest.TestCase):
         usergroup=fake.UserGroupService())
     self.hotlists_svcr = hotlists_servicer.HotlistsServicer(
         self.services, make_rate_limiter=False)
+    self.converter = None
     self.PAST_TIME = 12345
     self.user_1 = self.services.user.TestAddUser('user_111@example.com', 111)
     self.user_2 = self.services.user.TestAddUser('user_222@example.com', 222)
@@ -93,8 +94,10 @@ class HotlistsServicerTest(unittest.TestCase):
     self.hotlist_resource_name = rnc.ConvertHotlistName(
         self.hotlist_1.hotlist_id)
 
-  def CallWrapped(self, wrapped_handler, *args, **kwargs):
-    return wrapped_handler.wrapped(self.hotlists_svcr, *args, **kwargs)
+  def CallWrapped(self, wrapped_handler, mc, *args, **kwargs):
+    self.converter = converters.Converter(mc, self.services)
+    self.hotlists_svcr.converter = self.converter
+    return wrapped_handler.wrapped(self.hotlists_svcr, mc, *args, **kwargs)
 
   # TODO(crbug/monorail/7104): Add page_token tests when implemented.
   def testListHotlistItems(self):
@@ -106,10 +109,9 @@ class HotlistsServicerTest(unittest.TestCase):
     mc.LookupLoggedInUserPerms(None)
     response = self.CallWrapped(
         self.hotlists_svcr.ListHotlistItems, mc, request)
-    expected_items = converters.ConvertHotlistItems(
-        mc.cnxn, mc.auth, self.hotlist_1.hotlist_id,
-        [self.hotlist_1.items[1], self.hotlist_1.items[2]],
-        self.services)
+    expected_items = self.converter.ConvertHotlistItems(
+        self.hotlist_1.hotlist_id,
+        [self.hotlist_1.items[1], self.hotlist_1.items[2]])
     self.assertEqual(
         response, hotlists_pb2.ListHotlistItemsResponse(items=expected_items))
 
@@ -193,6 +195,4 @@ class HotlistsServicerTest(unittest.TestCase):
         self.services, cnxn=self.cnxn, requester=self.user_1.email)
     mc.LookupLoggedInUserPerms(None)
     api_hotlist = self.CallWrapped(self.hotlists_svcr.GetHotlist, mc, request)
-    self.assertEqual(api_hotlist,
-                     converters.ConvertHotlist(
-                         mc.cnxn, mc.auth, self.hotlist_1, self.services))
+    self.assertEqual(api_hotlist, self.converter.ConvertHotlist(self.hotlist_1))

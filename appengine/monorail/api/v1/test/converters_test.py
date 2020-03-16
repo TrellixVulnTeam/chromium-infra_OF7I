@@ -19,6 +19,7 @@ from api.v1.api_proto import issue_objects_pb2
 from api.v1.api_proto import user_objects_pb2
 from framework import authdata
 from framework import exceptions
+from framework import monorailcontext
 from testing import fake
 from testing import testing_helpers
 from services import service_manager
@@ -35,6 +36,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         user=fake.UserService(),
         config=fake.ConfigService())
     self.cnxn = fake.MonorailConnection()
+    self.mc = monorailcontext.MonorailContext(self.services, cnxn=self.cnxn)
+    self.converter = converters.Converter(self.mc, self.services)
     self.PAST_TIME = 12345
     self.project_1 = self.services.project.TestAddProject(
         'proj', project_id=789)
@@ -107,11 +110,10 @@ class ConverterFunctionsTest(unittest.TestCase):
         default_columns=[
             issue_objects_pb2.IssuesListColumn(column='chicken'),
             issue_objects_pb2.IssuesListColumn(column='goose')])
-    user_auth = authdata.AuthData.FromUser(
+    self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
     self.assertEqual(
-        expected_api_hotlist,
-        converters.ConvertHotlist(self.cnxn, user_auth, hotlist, self.services))
+        expected_api_hotlist, self.converter.ConvertHotlist(hotlist))
 
   def testConvertHotlist_DefaultValues(self):
     """We can convert a Hotlist with some empty or default values."""
@@ -130,11 +132,10 @@ class ConverterFunctionsTest(unittest.TestCase):
         description=hotlist.description,
         hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
             'PRIVATE'))
-    user_auth = authdata.AuthData.FromUser(
+    self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
     self.assertEqual(
-        expected_api_hotlist,
-        converters.ConvertHotlist(self.cnxn, user_auth, hotlist, self.services))
+        expected_api_hotlist, self.converter.ConvertHotlist(hotlist))
 
   def testConvertHotlistItems(self):
     """We can convert HotlistItems."""
@@ -145,10 +146,10 @@ class ConverterFunctionsTest(unittest.TestCase):
     ]
     hotlist = fake.Hotlist(
         'Hotlist-Name', 241, hotlist_item_fields=hotlist_item_fields)
-    user_auth = authdata.AuthData.FromUser(
+    self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
-    api_items = converters.ConvertHotlistItems(
-        self.cnxn, user_auth, hotlist.hotlist_id, hotlist.items, self.services)
+    api_items = self.converter.ConvertHotlistItems(
+        hotlist.hotlist_id, hotlist.items)
     expected_create_time = timestamp_pb2.Timestamp()
     expected_create_time.FromSeconds(self.PAST_TIME)
     expected_items = [
@@ -175,10 +176,10 @@ class ConverterFunctionsTest(unittest.TestCase):
 
   def testConvertHotlistItems_Empty(self):
     hotlist = fake.Hotlist('Hotlist-Name', 241)
-    user_auth = authdata.AuthData.FromUser(
+    self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
-    api_items = converters.ConvertHotlistItems(
-        self.cnxn, user_auth, hotlist.hotlist_id, hotlist.items, self.services)
+    api_items = self.converter.ConvertHotlistItems(
+        hotlist.hotlist_id, hotlist.items)
     self.assertEqual(api_items, [])
 
   def testConvertIssues(self):
@@ -192,18 +193,16 @@ class ConverterFunctionsTest(unittest.TestCase):
             state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
             star_count=1)
     ]
-    self.assertEqual(
-        converters.ConvertIssues(self.cnxn, issues, self.services),
-        expected_issues)
+    self.assertEqual(self.converter.ConvertIssues(issues), expected_issues)
 
   def testConvertIssues_Empty(self):
     """ConvertIssues works with no issues passed in."""
-    self.assertEqual(converters.ConvertIssues(self.cnxn, [], self.services), [])
+    self.assertEqual(self.converter.ConvertIssues([]), [])
 
   def testConvertUsers(self):
     self.user_1.vacation_message='non-empty-string'
     user_ids = [self.user_1.user_id]
-    user_auth = authdata.AuthData.FromUser(
+    self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
     project = None
 
@@ -213,9 +212,7 @@ class ConverterFunctionsTest(unittest.TestCase):
             display_name='one@example.com',
             availability_message='non-empty-string')}
     self.assertEqual(
-        converters.ConvertUsers(
-            self.cnxn, user_ids, user_auth, project, self.services),
-        expected_user_dict)
+        self.converter.ConvertUsers(user_ids, project), expected_user_dict)
 
   def testIngestIssuesListColumns(self):
     columns = [
@@ -223,10 +220,10 @@ class ConverterFunctionsTest(unittest.TestCase):
         issue_objects_pb2.IssuesListColumn(column='boiled-egg')
     ]
     self.assertEqual(
-        converters.IngestIssuesListColumns(columns), 'chicken boiled-egg')
+        self.converter.IngestIssuesListColumns(columns), 'chicken boiled-egg')
 
   def testIngestIssuesListColumns_Empty(self):
-    self.assertEqual(converters.IngestIssuesListColumns([]), '')
+    self.assertEqual(self.converter.IngestIssuesListColumns([]), '')
 
   def testConvertFieldValues(self):
     """It ignores field values referencing a non-existent field"""
@@ -241,13 +238,13 @@ class ConverterFunctionsTest(unittest.TestCase):
         value=expected_str,
         derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
         phase=None)
-    output = converters.ConvertFieldValues(
-        self.cnxn, [fv], self.project_1.project_id, [], self.services)
+    output = self.converter.ConvertFieldValues(
+        [fv], self.project_1.project_id, [])
     self.assertEqual([expected_value], output)
 
   def testConvertFieldValues_Empty(self):
-    output = converters.ConvertFieldValues(
-        self.cnxn, [], self.project_1.project_id, [], self.services)
+    output = self.converter.ConvertFieldValues(
+        [], self.project_1.project_id, [])
     self.assertEqual([], output)
 
   def testConvertFieldValues_PreservesOrder(self):
@@ -275,8 +272,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         value=str(expected_int),
         derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
         phase=None)
-    output = converters.ConvertFieldValues(
-        self.cnxn, [fv_1, fv_2], self.project_1.project_id, [], self.services)
+    output = self.converter.ConvertFieldValues(
+        [fv_1, fv_2], self.project_1.project_id, [])
     self.assertEqual([expected_1, expected_2], output)
 
   def testConvertFieldValues_IgnoresNullFieldDefs(self):
@@ -295,58 +292,58 @@ class ConverterFunctionsTest(unittest.TestCase):
 
     fv_2 = fake.MakeFieldValue(
         field_id=self.dne_field_def_id, int_value=111111, derived=True)
-    output = converters.ConvertFieldValues(
-        self.cnxn, [fv_1, fv_2], self.project_1.project_id, [], self.services)
+    output = self.converter.ConvertFieldValues(
+        [fv_1, fv_2], self.project_1.project_id, [])
     self.assertEqual([expected_1], output)
 
   def test_ComputeFieldValueString_None(self):
     with self.assertRaises(exceptions.InputException):
-      converters._ComputeFieldValueString(None)
+      self.converter._ComputeFieldValueString(None)
 
   def test_ComputeFieldValueString_INT_TYPE(self):
     expected = 123158
     fv = fake.MakeFieldValue(field_id=self.field_def_2, int_value=expected)
-    output = converters._ComputeFieldValueString(fv)
+    output = self.converter._ComputeFieldValueString(fv)
     self.assertEqual(str(expected), output)
 
   def test_ComputeFieldValueString_STR_TYPE(self):
     expected = 'some_string_field_value'
     fv = fake.MakeFieldValue(field_id=self.field_def_1, str_value=expected)
-    output = converters._ComputeFieldValueString(fv)
+    output = self.converter._ComputeFieldValueString(fv)
     self.assertEqual(expected, output)
 
   def test_ComputeFieldValueString_USER_TYPE(self):
     user_id = self.user_1.user_id
     expected = rnc.ConvertUserNames([user_id]).get(user_id)
     fv = fake.MakeFieldValue(field_id=self.dne_field_def_id, user_id=user_id)
-    output = converters._ComputeFieldValueString(fv)
+    output = self.converter._ComputeFieldValueString(fv)
     self.assertEqual(expected, output)
 
   def test_ComputeFieldValueString_DATE_TYPE(self):
     expected = 1234567890
     fv = fake.MakeFieldValue(
         field_id=self.dne_field_def_id, date_value=expected)
-    output = converters._ComputeFieldValueString(fv)
+    output = self.converter._ComputeFieldValueString(fv)
     self.assertEqual(str(expected), output)
 
   def test_ComputeFieldValueString_URL_TYPE(self):
     expected = 'some URL'
     fv = fake.MakeFieldValue(field_id=self.dne_field_def_id, url_value=expected)
-    output = converters._ComputeFieldValueString(fv)
+    output = self.converter._ComputeFieldValueString(fv)
     self.assertEqual(expected, output)
 
   def test_ComputeFieldValueDerivation_RULE(self):
     expected = issue_objects_pb2.Issue.Derivation.Value('RULE')
     fv = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value='something', derived=True)
-    output = converters._ComputeFieldValueDerivation(fv)
+    output = self.converter._ComputeFieldValueDerivation(fv)
     self.assertEqual(expected, output)
 
   def test_ComputeFieldValueDerivation_EXPLICIT(self):
     expected = issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
     fv = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value='something', derived=False)
-    output = converters._ComputeFieldValueDerivation(fv)
+    output = self.converter._ComputeFieldValueDerivation(fv)
     self.assertEqual(expected, output)
 
   def testConvertApprovalValues(self):
@@ -380,68 +377,68 @@ class ConverterFunctionsTest(unittest.TestCase):
         approver_ids=[self.user_2.user_id],
         phase_id=phase_id)
 
-    output = converters.ConvertApprovalValues(
-        self.cnxn, [approval_value], self.project_1.project_id, [phase],
-        self.services)
+    output = self.converter.ConvertApprovalValues(
+        [approval_value], self.project_1.project_id, [phase])
     self.assertEqual([expected], output)
 
   def testConvertApprovalValues_Empty(self):
-    output = converters.ConvertApprovalValues(
-        self.cnxn, [], self.project_1.project_id, [], self.services)
+    output = self.converter.ConvertApprovalValues(
+        [], self.project_1.project_id, [])
     self.assertEqual([], output)
 
   def testConvertApprovalValues_IgnoresNullFieldDefs(self):
     """It ignores approval values referencing a non-existent field"""
     av = fake.MakeApprovalValue(self.dne_field_def_id)
 
-    output = converters.ConvertApprovalValues(
-        self.cnxn, [av], self.project_1.project_id, [], self.services)
+    output = self.converter.ConvertApprovalValues(
+        [av], self.project_1.project_id, [])
     self.assertEqual([], output)
 
   def test_ComputeApprovalValueStatus_NOT_SET(self):
     self.assertEqual(
-        converters._ComputeApprovalValueStatus(
+        self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NOT_SET),
         issue_objects_pb2.Issue.ApprovalStatus.Value(
             'APPROVAL_STATUS_UNSPECIFIED'))
 
   def test_ComputeApprovalValueStatus_NEEDS_REVIEW(self):
     self.assertEqual(
-        converters._ComputeApprovalValueStatus(
+        self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NEEDS_REVIEW),
         issue_objects_pb2.Issue.ApprovalStatus.Value('NEEDS_REVIEW'))
 
   def test_ComputeApprovalValueStatus_NA(self):
     self.assertEqual(
-        converters._ComputeApprovalValueStatus(tracker_pb2.ApprovalStatus.NA),
+        self.converter._ComputeApprovalValueStatus(
+            tracker_pb2.ApprovalStatus.NA),
         issue_objects_pb2.Issue.ApprovalStatus.Value('NA'))
 
   def test_ComputeApprovalValueStatus_REVIEW_REQUESTED(self):
     self.assertEqual(
-        converters._ComputeApprovalValueStatus(
+        self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.REVIEW_REQUESTED),
         issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_REQUESTED'))
 
   def test_ComputeApprovalValueStatus_REVIEW_STARTED(self):
     self.assertEqual(
-        converters._ComputeApprovalValueStatus(
+        self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.REVIEW_STARTED),
         issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_STARTED'))
 
   def test_ComputeApprovalValueStatus_NEED_INFO(self):
     self.assertEqual(
-        converters._ComputeApprovalValueStatus(
+        self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NEED_INFO),
         issue_objects_pb2.Issue.ApprovalStatus.Value('NEED_INFO'))
 
   def test_ComputeApprovalValueStatus_APPROVED(self):
     self.assertEqual(
-        converters._ComputeApprovalValueStatus(
+        self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.APPROVED),
         issue_objects_pb2.Issue.ApprovalStatus.Value('APPROVED'))
 
   def test_ComputeApprovalValueStatus_NOT_APPROVED(self):
     self.assertEqual(
-        converters._ComputeApprovalValueStatus(
+        self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NOT_APPROVED),
         issue_objects_pb2.Issue.ApprovalStatus.Value('NOT_APPROVED'))

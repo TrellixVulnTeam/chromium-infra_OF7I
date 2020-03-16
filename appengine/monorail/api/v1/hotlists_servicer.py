@@ -10,7 +10,6 @@ from __future__ import absolute_import
 from google.protobuf import empty_pb2
 
 from api import resource_name_converters as rnc
-from api.v1 import converters
 from api.v1 import monorail_servicer
 from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import hotlists_pb2
@@ -54,8 +53,8 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     # implemented.
     next_page_token = ''
     return hotlists_pb2.ListHotlistItemsResponse(
-        items=converters.ConvertHotlistItems(
-            mc.cnxn, mc.auth, hotlist_id, visible_hotlist_items, self.services),
+        items=self.converter.ConvertHotlistItems(
+            hotlist_id, visible_hotlist_items),
         next_page_token=next_page_token)
 
 
@@ -138,4 +137,4 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     with work_env.WorkEnv(mc, self.services) as we:
       hotlist = we.GetHotlist(hotlist_id)
 
-    return converters.ConvertHotlist(mc.cnxn, mc.auth, hotlist, self.services)
+    return self.converter.ConvertHotlist(hotlist)
