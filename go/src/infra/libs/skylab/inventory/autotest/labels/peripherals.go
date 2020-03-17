@@ -76,7 +76,7 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 	}
 	if invSState := p.GetServoState(); invSState != inventory.PeripheralState_UNKNOWN {
 		if labSState, ok := lab.PeripheralState_name[int32(invSState)]; ok {
-			lv := "servo_state:" + strings.ToLower(labSState)
+			lv := "servo_state:" + labSState
 			labels = append(labels, lv)
 		}
 	}

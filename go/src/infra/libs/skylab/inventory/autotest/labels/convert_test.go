@@ -153,7 +153,7 @@ var fullLabels = []string{
 	"reference_design:reef",
 	"router_802_11ax",
 	"servo",
-	"servo_state:broken",
+	"servo_state:BROKEN",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
 	"storage:storageval",
 	"stylus",
@@ -202,10 +202,10 @@ var servoStateConvertStateCases = []struct {
 	expectLabels []string
 }{
 	{0, []string{}},
-	{1, []string{"servo_state:working"}},
-	{2, []string{"servo_state:not_connected"}},
-	{3, []string{"servo_state:broken"}},
-	{4, []string{"servo_state:wrong_config"}},
+	{1, []string{"servo_state:WORKING"}},
+	{2, []string{"servo_state:NOT_CONNECTED"}},
+	{3, []string{"servo_state:BROKEN"}},
+	{4, []string{"servo_state:WRONG_CONFIG"}},
 	{5, []string{}}, //wrong value
 }
 
