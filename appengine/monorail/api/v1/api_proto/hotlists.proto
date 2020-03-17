@@ -23,7 +23,7 @@ service Hotlists {
   //   NOT_FOUND if the requested hotlist is not found.
   //   PERMISSION_DENIED if the requester is now allowed to view the hotlist.
   //   INVALID_ARGUMENT if the given resource name is not valid.
-  rpc GetHotlist (GetHotlistRequest) returns (google.protobuf.Empty) {
+  rpc GetHotlist (GetHotlistRequest) returns (Hotlist) {
     option (google.api.http) = {
       post: "/prpc/monorail.v1.Hotlists/GetHotlist"
       body: "*"
@@ -40,7 +40,7 @@ service Hotlists {
   }
   // Deletes a hotlist.
   //
-  rpc DeleteHotlist (GetHotlistRequest) returns (Hotlist) {
+  rpc DeleteHotlist (GetHotlistRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/prpc/monorail.v1.Hotlists/DeleteHotlist"
       body: "*"
