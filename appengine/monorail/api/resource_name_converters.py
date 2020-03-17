@@ -359,11 +359,18 @@ def ConvertTemplateNames(cnxn, project_id, template_ids, services):
       cnxn, [project_id]).get(project_id)
   if project_name is None:
     raise exceptions.NoSuchProjectException(project_id)
-  templates = services.template.GetTemplatesById(cnxn, template_ids)
+  project_templates = services.template.GetProjectTemplates(cnxn, project_id)
+  tmpl_by_id = {tmpl.template_id: tmpl for tmpl in project_templates}
 
-  for template in templates:
-    id_to_resource_names[template.template_id] = ISSUE_TEMPLATE_TMPL.format(
-        project_name=project_name, template_name=template.name)
+  for template_id in template_ids:
+    if template_id not in tmpl_by_id:
+      logging.info(
+          'Ignoring template referencing a non-existent id: %s, ' \
+          'or not in project: %s', template_id, project_id)
+      continue
+    id_to_resource_names[template_id] = ISSUE_TEMPLATE_TMPL.format(
+        project_name=project_name,
+        template_name=tmpl_by_id.get(template_id).name)
 
   return id_to_resource_names
 

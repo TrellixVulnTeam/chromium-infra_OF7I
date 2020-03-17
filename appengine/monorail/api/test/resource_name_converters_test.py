@@ -56,7 +56,10 @@ class ResourceNameConverterTest(unittest.TestCase):
         hotlist_item_fields=hotlist_items)
 
     self.template_1 = self.services.template.TestAddIssueTemplateDef(
-        1, 789, 'template_1_name')
+        1, self.project_1.project_id, 'template_1_name')
+    self.template_2 = self.services.template.TestAddIssueTemplateDef(
+        2, self.project_2.project_id, 'template_2_name')
+    self.dne_template_id = 3
 
     self.field_def_1_name = 'test_field'
     self.field_def_1 = self.services.config.CreateFieldDef(
@@ -240,6 +243,25 @@ class ResourceNameConverterTest(unittest.TestCase):
       rnc.ConvertTemplateNames(
           self.cnxn, self.dne_project_id, [self.template_1.template_id],
           self.services)
+
+  def testConvertTemplateNames_NonExistentTemplate(self):
+    """We only return templates that exist."""
+    self.assertEqual(
+        rnc.ConvertTemplateNames(
+            self.cnxn, self.project_1.project_id, [self.dne_template_id],
+            self.services), {})
+
+  def testConvertTemplateNames_TemplateInProject(self):
+    """We only return templates in the project."""
+    expected_resource_name = 'projects/{}/templates/{}'.format(
+        self.project_2.project_name, self.template_2.name)
+    expected = {self.template_2.template_id: expected_resource_name}
+
+    self.assertEqual(
+        rnc.ConvertTemplateNames(
+            self.cnxn, self.project_2.project_id,
+            [self.template_1.template_id, self.template_2.template_id],
+            self.services), expected)
 
   def testConvertStatusDefName(self):
     """We can get Status resource name."""
