@@ -20,7 +20,6 @@ service Features {
   rpc GetHotlistStarCount (GetHotlistStarCountRequest) returns (GetHotlistStarCountResponse) {}
   rpc StarHotlist (StarHotlistRequest) returns (StarHotlistResponse) {}
   rpc GetHotlist (GetHotlistRequest) returns (GetHotlistResponse) {}
-  rpc GetHotlistID (GetHotlistIDRequest) returns (GetHotlistIDResponse) {}
   rpc ListHotlistItems (ListHotlistItemsRequest) returns (ListHotlistItemsResponse) {}
   rpc CreateHotlist (CreateHotlistRequest) returns (CreateHotlistResponse) {}
   rpc CheckHotlistName (CheckHotlistNameRequest) returns (CheckHotlistNameResponse) {}
@@ -31,7 +30,6 @@ service Features {
   rpc UpdateHotlistRoles (UpdateHotlistRolesRequest) returns (UpdateHotlistRolesResponse) {}
   rpc UpdateHotlistSettings (UpdateHotlistSettingsRequest) returns (UpdateHotlistSettingsResponse) {}
   rpc DeleteHotlist (DeleteHotlistRequest) returns (DeleteHotlistResponse) {}
-  rpc ListHotlistPermissions (ListHotlistPermissionsRequest) returns (ListHotlistPermissionsResponse) {}
   rpc PredictComponent (PredictComponentRequest) returns (PredictComponentResponse) {}
 }
 
@@ -116,15 +114,6 @@ message GetHotlistResponse {
   Hotlist hotlist = 1;
 }
 
-// Next available tag: 2
-message GetHotlistIDRequest {
-  HotlistRef hotlist_ref = 1;
-}
-
-// Next available tag: 2
-message GetHotlistIDResponse {
-  uint64 hotlist_id = 1;
-}
 
 // Next available tag: 7
 message ListHotlistItemsRequest {
@@ -255,19 +244,6 @@ message DeleteHotlistRequest {
 
 // Next available tag: 1
 message DeleteHotlistResponse {
-}
-
-
-// Fetches the permissions of the logged in or anon user.
-// Next available tag: 2
-message ListHotlistPermissionsRequest {
-  HotlistRef hotlist_ref = 1;
-}
-
-
-// Next available tag: 2
-message ListHotlistPermissionsResponse {
-  repeated string permissions = 1;
 }
 
 

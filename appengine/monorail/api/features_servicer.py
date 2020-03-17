@@ -181,21 +181,6 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return features_pb2.GetHotlistResponse(hotlist=converted_hotlist)
 
   @monorail_servicer.PRPCMethod
-  def GetHotlistID(self, mc, request):
-    """Get the Hotlist's id given the HotlistRef."""
-    hotlist_id = converters.IngestHotlistRef(
-        mc.cnxn, self.services.user, self.services.features,
-        request.hotlist_ref)
-
-    with work_env.WorkEnv(mc, self.services) as we:
-      mc.LookupLoggedInUserPerms(None)
-      hotlist_permissions = we.ListHotlistPermissions(hotlist_id)
-      if permissions.VIEW_HOTLIST not in hotlist_permissions:
-        raise permissions.PermissionException(
-            'User cannot access this hotlist.')
-      return features_pb2.GetHotlistIDResponse(hotlist_id=hotlist_id)
-
-  @monorail_servicer.PRPCMethod
   def ListHotlistItems(self, mc, request):
     """Get the issues on the specified hotlist."""
     hotlist_id = converters.IngestHotlistRef(
@@ -391,19 +376,6 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       we.DeleteHotlist(hotlist_id)
 
     return features_pb2.DeleteHotlistResponse()
-
-  @monorail_servicer.PRPCMethod
-  def ListHotlistPermissions(self, mc, request):
-    """Lists the hotlist permissions of the given or current user."""
-    hotlist_id = converters.IngestHotlistRef(
-        mc.cnxn, self.services.user, self.services.features,
-        request.hotlist_ref)
-
-    with work_env.WorkEnv(mc, self.services) as we:
-      hotlist_permissions = we.ListHotlistPermissions(hotlist_id)
-
-    return features_pb2.ListHotlistPermissionsResponse(
-        permissions=hotlist_permissions)
 
   @monorail_servicer.PRPCMethod
   def PredictComponent(self, mc, request):

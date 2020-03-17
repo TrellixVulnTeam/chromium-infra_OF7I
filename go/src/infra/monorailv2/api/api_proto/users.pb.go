@@ -1188,11 +1188,11 @@ var fileDescriptor_e517996dd141ad63 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // UsersClient is the client API for Users service.
 //
@@ -1349,10 +1349,10 @@ func (c *usersPRPCClient) ExpungeUser(ctx context.Context, in *ExpungeUserReques
 }
 
 type usersClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewUsersClient(cc *grpc.ClientConn) UsersClient {
+func NewUsersClient(cc grpc.ClientConnInterface) UsersClient {
 	return &usersClient{cc}
 }
 

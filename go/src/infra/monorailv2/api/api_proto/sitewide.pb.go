@@ -245,11 +245,11 @@ var fileDescriptor_03599899b30de215 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // SitewideClient is the client API for Sitewide service.
 //
@@ -285,10 +285,10 @@ func (c *sitewidePRPCClient) GetServerStatus(ctx context.Context, in *GetServerS
 }
 
 type sitewideClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewSitewideClient(cc *grpc.ClientConn) SitewideClient {
+func NewSitewideClient(cc grpc.ClientConnInterface) SitewideClient {
 	return &sitewideClient{cc}
 }
 

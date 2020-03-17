@@ -2713,11 +2713,11 @@ var fileDescriptor_e34c0f78b7e5f845 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // IssuesClient is the client API for Issues service.
 //
@@ -2996,10 +2996,10 @@ func (c *issuesPRPCClient) CopyIssue(ctx context.Context, in *CopyIssueRequest, 
 }
 
 type issuesClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewIssuesClient(cc *grpc.ClientConn) IssuesClient {
+func NewIssuesClient(cc grpc.ClientConnInterface) IssuesClient {
 	return &issuesClient{cc}
 }
 
