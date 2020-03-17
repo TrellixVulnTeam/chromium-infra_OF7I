@@ -193,8 +193,7 @@ class FieldDetailTest(unittest.TestCase):
         is_multivalued=[],
         docstring=['It is just some field'],
         applicable_type=['Defect'],
-        admin_names=['gatsby@example.com'],
-        editor_names=[''])
+        admin_names=['gatsby@example.com'])
     url = self.servlet.ProcessFormData(self.mr, post_data)
     self.assertTrue('/fields/detail?field=CPU&saved=1&' in url)
     config = self.services.config.GetProjectConfig(

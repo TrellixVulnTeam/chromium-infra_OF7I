@@ -108,7 +108,7 @@ class FieldCreate(servlet.Servlet):
     admin_ids, admin_str = tracker_helpers.ParsePostDataUsers(
         mr.cnxn, post_data['admin_names'], self.services.user)
     editor_ids, editor_str = tracker_helpers.ParsePostDataUsers(
-        mr.cnxn, post_data['editor_names'], self.services.user)
+        mr.cnxn, post_data.get('editor_names', ''), self.services.user)
 
     field_helpers.ParsedFieldDefAssertions(mr, parsed)
 

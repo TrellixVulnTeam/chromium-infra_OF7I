@@ -101,8 +101,7 @@ class FieldCreateTest(unittest.TestCase):
         docstring=['It is just some field'],
         applicable_type=['Defect'],
         date_action=['no_action'],
-        admin_names=['gatsby@example.com'],
-        editor_names=[''])
+        admin_names=['gatsby@example.com'])
     url = self.servlet.ProcessFormData(self.mr, post_data)
     self.assertTrue('/adminLabels?saved=1&' in url)
     config = self.services.config.GetProjectConfig(
@@ -124,9 +123,9 @@ class FieldCreateTest(unittest.TestCase):
     self.assertEqual([], fd.editor_ids)
 
 
-  def testProcessFormData_RejectAssertions_1(self):
-    #This method tests that an exception is raised
-    #when trying to add editors to a non restricted field.
+  def testProcessFormData_Reject_EditorsForNonRestrictedField(self):
+    # This method tests that an exception is raised
+    # when trying to add editors to a non restricted field.
     post_data = fake.PostData(
         name=['somefield'],
         field_type=['INT_TYPE'],
@@ -144,7 +143,7 @@ class FieldCreateTest(unittest.TestCase):
     self.assertRaises(
         AssertionError, self.servlet.ProcessFormData, self.mr, post_data)
 
-  def testProcessFormData_RejectAssertions_2(self):
+  def testProcessFormData_Reject_EditorsForApprovalField(self):
     #This method tests that an exception is raised
     #when trying to add editors to an approval field.
     post_data = fake.PostData(
