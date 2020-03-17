@@ -184,6 +184,10 @@ func (client *inventoryClientV2) deleteDUTs(ctx context.Context, hostnames []str
 	// RemovalReason is to be added into DeleteCrosDevicesRequest.
 	rsp, err := client.ic.DeleteCrosDevices(ctx, &invV2Api.DeleteCrosDevicesRequest{
 		Ids: devIds,
+		Reason: &invV2Api.DeleteCrosDevicesRequest_Reason{
+			Bug:     rr.Bug,
+			Comment: rr.Comment,
+		},
 	})
 	if err != nil {
 		return false, errors.Annotate(err, "[v2] remove devices for %s ...", hostnames[0]).Err()

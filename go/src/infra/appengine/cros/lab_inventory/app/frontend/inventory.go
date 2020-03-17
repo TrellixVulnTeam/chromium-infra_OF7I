@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"fmt"
 	"strings"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
@@ -435,6 +436,13 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 	return resp, nil
 }
 
+func getRemovalReason(req *api.DeleteCrosDevicesRequest) string {
+	if r := req.GetReason(); r.GetBug() != "" || r.GetComment() != "" {
+		return fmt.Sprintf("%s: %s", r.GetBug(), r.GetComment())
+	}
+	return ""
+}
+
 // DeleteCrosDevices delete the selelcted devices from the inventory.
 func (is *InventoryServerImpl) DeleteCrosDevices(ctx context.Context, req *api.DeleteCrosDevicesRequest) (resp *api.DeleteCrosDevicesResponse, err error) {
 	defer func() {
@@ -444,17 +452,18 @@ func (is *InventoryServerImpl) DeleteCrosDevices(ctx context.Context, req *api.D
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
-	hostnames, ids := extractHostnamesAndDeviceIDs(ctx, req)
-	deletingResults := datastore.DeleteDevicesByIds(ctx, ids)
-	deletingResultsByHostname := datastore.DeleteDevicesByHostnames(ctx, hostnames)
+	ctxWithRemovalReason := changehistory.Use(ctx, getRemovalReason(req))
+	hostnames, ids := extractHostnamesAndDeviceIDs(ctxWithRemovalReason, req)
+	deletingResults := datastore.DeleteDevicesByIds(ctxWithRemovalReason, ids)
+	deletingResultsByHostname := datastore.DeleteDevicesByHostnames(ctxWithRemovalReason, hostnames)
 	deletingResults = append(deletingResults, deletingResultsByHostname...)
 
-	removedDevices := getPassedResults(ctx, deletingResults)
-	if err := updateDroneCfg(ctx, removedDevices, false); err != nil {
+	removedDevices := getPassedResults(ctxWithRemovalReason, deletingResults)
+	if err := updateDroneCfg(ctxWithRemovalReason, removedDevices, false); err != nil {
 		return nil, errors.Annotate(err, "delete cros devices").Err()
 	}
 
-	failedDevices := getFailedResults(ctx, deletingResults, false)
+	failedDevices := getFailedResults(ctxWithRemovalReason, deletingResults, false)
 	resp = &api.DeleteCrosDevicesResponse{
 		RemovedDevices: removedDevices,
 		FailedDevices:  failedDevices,

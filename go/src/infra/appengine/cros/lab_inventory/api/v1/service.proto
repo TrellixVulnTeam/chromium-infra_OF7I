@@ -130,6 +130,11 @@ message UpdateCrosDevicesSetupResponse {
 
 message DeleteCrosDevicesRequest {
   repeated DeviceID ids = 1;
+  message Reason {
+    string bug = 1;
+    string comment = 2;
+  }
+  Reason reason = 2;
 }
 
 message DeleteCrosDevicesResponse {
