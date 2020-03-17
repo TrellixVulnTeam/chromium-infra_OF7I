@@ -112,8 +112,8 @@ func (client *duoClient) updateDUTSpecs(ctx context.Context, od, nd *inventory.C
 		logging.Infof(ctx, "[v1] update dut result: %s, %s", url, err)
 	}
 	if client.willWriteToV2() {
-		url2, err2 := client.ic.updateDUTSpecs(ctx, od, nd, pickServoPort)
-		logging.Infof(ctx, "[v2] update dut result: %s, %s", url2, err2)
+		url, err = client.ic.updateDUTSpecs(ctx, od, nd, pickServoPort)
+		logging.Infof(ctx, "[v2] update dut result: %s, %s", url, err)
 	}
 	return
 }
@@ -124,7 +124,7 @@ func (client *duoClient) deleteDUTsFromFleet(ctx context.Context, ids []string) 
 		logging.Infof(ctx, "[v1] delete dut result: %s, %s, %s", url, deletedIds, err)
 	}
 	if client.willWriteToV2() {
-		url, deletedIds, err := client.ic.deleteDUTsFromFleet(ctx, ids)
+		url, deletedIds, err = client.ic.deleteDUTsFromFleet(ctx, ids)
 		logging.Infof(ctx, "[v2] delete dut result: %s, %s, %s", url, deletedIds, err)
 	}
 	return
