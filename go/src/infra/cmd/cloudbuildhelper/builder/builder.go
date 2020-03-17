@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -108,4 +110,19 @@ type stepRunnerInv struct {
 	Output     *fileset.Set        // where to put output files
 	TempDir    string              // can be used to drop arbitrary files into
 	TempSuffix string              // unique per-step suffix, to name temp files
+}
+
+// addToOutput adds `src` (which is an existing file or directory on disk) to
+// the output set as filepath.Rel(contextDir, dst), failing if the result is
+// outside of the context dir.
+func (inv *stepRunnerInv) addToOutput(ctx context.Context, src, dst string) error {
+	rel, err := filepath.Rel(inv.Manifest.ContextDir, dst)
+	if err != nil {
+		return err
+	}
+	logging.Infof(ctx, "Copying %s => ${contextdir}/%s", filepath.Base(src), rel)
+	if strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return errors.Reason("the destination should be under the context directory, got %q", rel).Err()
+	}
+	return inv.Output.AddFromDisk(src, rel)
 }

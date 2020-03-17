@@ -348,16 +348,20 @@ infra:
 # context directory is constructed from the full recursive copy of `contextdir`
 # and files produced here. Use `cloudbuildhelper stage` subcommand to see what
 # ends up in the context directory after all build steps are finished.
+#
+# All paths should start with either "${manifestdir}/" (to indicate they are
+# relative to the manifest YAML) or "${contextdir}/" (to indicate they are
+# relative to `contextdir` directory).
 build:
   # Copy a file or directory into the context dir.
-  - copy: ../../../src/stuff
-    dest: stuff
+  - copy: "${manifestdir}/../../../src/stuff"
+    dest: "${contextdir}/stuff"
 
   # Build and install a go binary given by its path relative to GOPATH.
   # All builds happen with CGO_ENABLED=0 GOOS=linux GOARCH=amd64.
-  - go_binary: go.chromium.org/cmd/something
-    # Where to put it in the contextdir, defaults to go package name
-    dest: something
+  - go_binary: "go.chromium.org/cmd/something"
+    # Where to put it, defaults to go package name
+    dest: "${contextdir}/something"
 ```
 
 

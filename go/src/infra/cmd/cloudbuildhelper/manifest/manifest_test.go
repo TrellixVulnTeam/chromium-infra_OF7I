@@ -20,105 +20,105 @@ import (
 func TestManifest(t *testing.T) {
 	t.Parallel()
 
+	load := func(body, path string) (*Manifest, error) {
+		m, err := parse(strings.NewReader(body), filepath.FromSlash(path))
+		if err != nil {
+			return nil, err
+		}
+		return m, m.initSteps()
+	}
+
 	Convey("Minimal", t, func() {
-		m, err := Parse(strings.NewReader(`name: zzz`), "some/dir")
+		m, err := load("name: zzz\ncontextdir: ../../../blarg/", "root/1/2/3/4")
 		So(err, ShouldBeNil)
-		So(m, ShouldResemble, &Manifest{Name: "zzz"})
+		So(m, ShouldResemble, &Manifest{
+			Name:        "zzz",
+			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
+			ContextDir:  filepath.FromSlash("root/1/blarg"),
+		})
 	})
 
 	Convey("No name", t, func() {
-		_, err := Parse(strings.NewReader(``), "some/dir")
+		_, err := load("", "some/dir")
 		So(err, ShouldErrLike, `bad "name" field: can't be empty, it's required`)
 	})
 
 	Convey("Bad name", t, func() {
-		_, err := Parse(strings.NewReader(`name: cheat:tag`), "some/dir")
+		_, err := load(`name: cheat:tag`, "some/dir")
 		So(err, ShouldErrLike, `bad "name" field: "cheat:tag" contains forbidden symbols (any of "\\:@")`)
 	})
 
 	Convey("Not yaml", t, func() {
-		_, err := Parse(strings.NewReader(`im not a YAML`), "")
+		_, err := load(`im not a YAML`, "")
 		So(err, ShouldErrLike, "unmarshal errors")
 	})
 
-	Convey("Resolving contextdir", t, func() {
-		m, err := Parse(
-			strings.NewReader("name: zzz\ncontextdir: ../../../blarg/"),
-			filepath.FromSlash("root/1/2/3/4"))
-		So(err, ShouldBeNil)
-		So(m, ShouldResemble, &Manifest{
-			Name:       "zzz",
-			ContextDir: filepath.FromSlash("root/1/blarg"),
-		})
-	})
-
 	Convey("Deriving contextdir from dockerfile", t, func() {
-		m, err := Parse(
-			strings.NewReader("name: zzz\ndockerfile: ../../../blarg/Dockerfile"),
-			filepath.FromSlash("root/1/2/3/4"))
+		m, err := load("name: zzz\ndockerfile: ../../../blarg/Dockerfile", "root/1/2/3/4")
 		So(err, ShouldBeNil)
 		So(m, ShouldResemble, &Manifest{
-			Name:       "zzz",
-			Dockerfile: filepath.FromSlash("root/1/blarg/Dockerfile"),
-			ContextDir: filepath.FromSlash("root/1/blarg"),
+			Name:        "zzz",
+			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
+			Dockerfile:  filepath.FromSlash("root/1/blarg/Dockerfile"),
+			ContextDir:  filepath.FromSlash("root/1/blarg"),
 		})
 	})
 
 	Convey("Resolving imagepins", t, func() {
-		m, err := Parse(
-			strings.NewReader("name: zzz\nimagepins: ../../../blarg/pins.yaml"),
-			filepath.FromSlash("root/1/2/3/4"))
+		m, err := load("name: zzz\ncontextdir: .\nimagepins: ../../../blarg/pins.yaml", "root/1/2/3/4")
 		So(err, ShouldBeNil)
 		So(m, ShouldResemble, &Manifest{
-			Name:      "zzz",
-			ImagePins: filepath.FromSlash("root/1/blarg/pins.yaml"),
+			Name:        "zzz",
+			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
+			ContextDir:  filepath.FromSlash("root/1/2/3/4"),
+			ImagePins:   filepath.FromSlash("root/1/blarg/pins.yaml"),
 		})
 	})
 
 	Convey("Empty build step", t, func() {
-		_, err := Parse(strings.NewReader(`{"name": "zzz", "build": [
+		_, err := load(`{"name": "zzz", "contextdir": ".", "build": [
 			{"dest": "zzz"}
-		]}`), "")
+		]}`, "root/1/2/3/4")
 		So(err, ShouldErrLike, "bad build step #1: unrecognized or empty")
 	})
 
 	Convey("Ambiguous build step", t, func() {
-		_, err := Parse(strings.NewReader(`{"name": "zzz", "build": [
+		_, err := load(`{"name": "zzz", "contextdir": ".", "build": [
 			{"copy": "zzz", "go_binary": "zzz"}
-		]}`), "")
+		]}`, "root/1/2/3/4")
 		So(err, ShouldErrLike, "bad build step #1: ambiguous")
 	})
 
 	Convey("Defaults in CopyBuildStep", t, func() {
-		m, err := Parse(strings.NewReader(`{"name": "zzz", "build": [
-			{"copy": "../../../blarg/zzz"}
-		]}`), filepath.FromSlash("root/1/2/3/4"))
+		m, err := load(`{"name": "zzz", "contextdir": "ctx", "build": [
+				{"copy": "${manifestdir}/../../../blarg/zzz"}
+			]}`, "root/1/2/3/4")
 		So(err, ShouldBeNil)
 		So(m.Build, ShouldHaveLength, 1)
-		So(m.Build[0].Dest, ShouldEqual, "zzz")
+		So(m.Build[0].Dest, ShouldEqual, filepath.FromSlash("root/1/2/3/4/ctx/zzz"))
 		So(m.Build[0].Concrete(), ShouldResemble, &CopyBuildStep{
 			Copy: filepath.FromSlash("root/1/blarg/zzz"),
 		})
 	})
 
 	Convey("Defaults in GoBuildStep", t, func() {
-		m, err := Parse(strings.NewReader(`{"name": "zzz", "build": [
-			{"go_binary": "go.pkg/some/tool"}
-		]}`), filepath.FromSlash("root/1/2/3/4"))
+		m, err := load(`{"name": "zzz", "contextdir": "ctx", "build": [
+				{"go_binary": "go.pkg/some/tool"}
+			]}`, "root/1/2/3/4")
 		So(err, ShouldBeNil)
 		So(err, ShouldBeNil)
 		So(m.Build, ShouldHaveLength, 1)
-		So(m.Build[0].Dest, ShouldEqual, "tool")
+		So(m.Build[0].Dest, ShouldEqual, filepath.FromSlash("root/1/2/3/4/ctx/tool"))
 		So(m.Build[0].Concrete(), ShouldResemble, &GoBuildStep{
 			GoBinary: "go.pkg/some/tool",
 		})
 	})
 
 	Convey("Good infra", t, func() {
-		m, err := Parse(strings.NewReader(`{"name": "zzz", "infra": {
+		m, err := load(`{"name": "zzz", "contextdir": ".", "infra": {
 			"infra1": {"storage": "gs://bucket"},
 			"infra2": {"storage": "gs://bucket/path"}
-		}}`), "")
+		}}`, "root/1/2/3/4")
 		So(err, ShouldBeNil)
 		So(m.Infra, ShouldResemble, map[string]Infra{
 			"infra1": {Storage: "gs://bucket"},
@@ -127,16 +127,16 @@ func TestManifest(t *testing.T) {
 	})
 
 	Convey("Unsupported storage", t, func() {
-		_, err := Parse(strings.NewReader(`{"name": "zzz", "infra": {
+		_, err := load(`{"name": "zzz", "contextdir": ".", "infra": {
 			"infra1": {"storage": "ftp://bucket"}
-		}}`), "")
+		}}`, "root/1/2/3/4")
 		So(err, ShouldErrLike, `in infra section "infra1": bad storage "ftp://bucket", only gs:// is supported currently`)
 	})
 
 	Convey("No bucket in storage", t, func() {
-		_, err := Parse(strings.NewReader(`{"name": "zzz", "infra": {
+		_, err := load(`{"name": "zzz", "contextdir": ".", "infra": {
 			"infra1": {"storage": "gs:///zzz"}
-		}}`), "")
+		}}`, "root/1/2/3/4")
 		So(err, ShouldErrLike, `in infra section "infra1": bad storage "gs:///zzz", bucket name is missing`)
 	})
 }
@@ -176,7 +176,8 @@ func TestExtends(t *testing.T) {
 					},
 				},
 				Build: []*BuildStep{
-					{CopyBuildStep: CopyBuildStep{Copy: "base.copy"}},
+					{CopyBuildStep: CopyBuildStep{Copy: "${manifestdir}/manifest_base.copy"}},
+					{CopyBuildStep: CopyBuildStep{Copy: "${contextdir}/context_base.copy"}},
 				},
 			})
 
@@ -195,7 +196,8 @@ func TestExtends(t *testing.T) {
 					},
 				},
 				Build: []*BuildStep{
-					{CopyBuildStep: CopyBuildStep{Copy: "mid.copy"}},
+					{CopyBuildStep: CopyBuildStep{Copy: "${manifestdir}/manifest_mid.copy"}},
+					{CopyBuildStep: CopyBuildStep{Copy: "${contextdir}/context_mid.copy"}},
 				},
 			})
 
@@ -213,7 +215,8 @@ func TestExtends(t *testing.T) {
 					},
 				},
 				Build: []*BuildStep{
-					{CopyBuildStep: CopyBuildStep{Copy: "leaf.copy"}},
+					{CopyBuildStep: CopyBuildStep{Copy: "${manifestdir}/manifest_leaf.copy"}},
+					{CopyBuildStep: CopyBuildStep{Copy: "${contextdir}/context_leaf.copy"}},
 				},
 			})
 
@@ -226,6 +229,7 @@ func TestExtends(t *testing.T) {
 
 			So(m, ShouldResemble, &Manifest{
 				Name:          "leaf",
+				ManifestDir:   abs("deeper"),
 				Dockerfile:    abs("deeper/dockerfile"),
 				ContextDir:    abs("deeper/context-dir"),
 				ImagePins:     abs("pins.yaml"),
@@ -251,9 +255,12 @@ func TestExtends(t *testing.T) {
 				copySrc = append(copySrc, s.Copy)
 			}
 			So(copySrc, ShouldResemble, []string{
-				abs("base.copy"),
-				abs("deeper/mid.copy"),
-				abs("deeper/leaf.copy"),
+				abs("manifest_base.copy"),
+				abs("deeper/context-dir/context_base.copy"),
+				abs("deeper/manifest_mid.copy"),
+				abs("deeper/context-dir/context_mid.copy"),
+				abs("deeper/manifest_leaf.copy"),
+				abs("deeper/context-dir/context_leaf.copy"),
 			})
 		})
 
@@ -277,5 +284,35 @@ func TestExtends(t *testing.T) {
 			_, err := Load(filepath.Join(dir, "a.yaml"))
 			So(err, ShouldErrLike, `bad storage`)
 		})
+	})
+}
+
+func TestRenderPath(t *testing.T) {
+	t.Parallel()
+
+	Convey("Works", t, func() {
+		out, err := renderPath("${a}", map[string]string{"a": "zzz"})
+		So(err, ShouldBeNil)
+		So(out, ShouldEqual, "zzz")
+
+		out, err = renderPath("${a}/", map[string]string{"a": "zzz"})
+		So(err, ShouldBeNil)
+		So(out, ShouldEqual, "zzz")
+
+		out, err = renderPath("${a}/.", map[string]string{"a": "zzz"})
+		So(err, ShouldBeNil)
+		So(out, ShouldEqual, "zzz")
+
+		out, err = renderPath("${a}/b/c", map[string]string{"a": "zzz"})
+		So(err, ShouldBeNil)
+		So(out, ShouldEqual, filepath.FromSlash("zzz/b/c"))
+	})
+
+	Convey("Errors", t, func() {
+		_, err := renderPath(".", map[string]string{"a": "zzz", "b": "yyy"})
+		So(err, ShouldErrLike, "must start with ${a} or ${b}")
+
+		_, err = renderPath("${c}", map[string]string{"a": "zzz", "b": "yyy"})
+		So(err, ShouldErrLike, "unknown dir variable ${c}, expecting ${a} or ${b}")
 	})
 }

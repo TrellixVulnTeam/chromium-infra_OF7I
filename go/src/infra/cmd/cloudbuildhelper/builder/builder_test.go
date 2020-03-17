@@ -37,19 +37,22 @@ func TestBuilder(t *testing.T) {
 			So(ioutil.WriteFile(fp, []byte(body), 0666), ShouldBeNil)
 		}
 
-		build := func(m manifest.Manifest) (*fileset.Set, error) {
-			So(m.Initialize(""), ShouldBeNil)
-			return b.Build(ctx, &m)
+		build := func(manifestBody string) (*fileset.Set, error) {
+			manifestPath := filepath.Join(tmpDir, "manifest.yaml")
+			So(ioutil.WriteFile(manifestPath, []byte(manifestBody), 0600), ShouldBeNil)
+			loaded, err := manifest.Load(manifestPath)
+			So(err, ShouldBeNil)
+			return b.Build(ctx, loaded)
 		}
 
 		Convey("ContextDir only", func() {
-			put("f1", "file 1")
-			put("f2", "file 2")
+			put("ctx/f1", "file 1")
+			put("ctx/f2", "file 2")
 
-			out, err := build(manifest.Manifest{
-				Name:       "test",
-				ContextDir: tmpDir,
-			})
+			out, err := build(`{
+				"name": "test",
+				"contextdir": "ctx"
+			}`)
 			So(err, ShouldBeNil)
 			So(out.Files(), ShouldHaveLength, 2)
 
@@ -64,24 +67,20 @@ func TestBuilder(t *testing.T) {
 			put("copy/f1", "overridden")
 			put("copy/dir/f", "f")
 
-			out, err := build(manifest.Manifest{
-				Name:       "test",
-				ContextDir: filepath.Join(tmpDir, "ctx"),
-				Build: []*manifest.BuildStep{
+			out, err := build(`{
+				"name": "test",
+				"contextdir": "ctx",
+				"build": [
 					{
-						Dest: ".",
-						CopyBuildStep: manifest.CopyBuildStep{
-							Copy: filepath.Join(tmpDir, "copy"),
-						},
+						"copy": "${manifestdir}/copy",
+						"dest": "${contextdir}"
 					},
 					{
-						Dest: "gocmd",
-						GoBuildStep: manifest.GoBuildStep{
-							GoBinary: "infra/cmd/cloudbuildhelper/builder/testing/helloworld",
-						},
-					},
-				},
-			})
+						"go_binary": "infra/cmd/cloudbuildhelper/builder/testing/helloworld",
+						"dest": "${contextdir}/gocmd"
+					}
+				]
+			}`)
 			So(err, ShouldBeNil)
 
 			names := make([]string, out.Len())

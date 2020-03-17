@@ -50,8 +50,5 @@ func runGoBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 		return errors.Annotate(err, "go build invocation failed").Err()
 	}
 
-	logging.Infof(ctx, "Copying %q => %q", tmpName, inv.BuildStep.Dest)
-	return inv.Output.AddFromDisk(
-		filepath.Join(inv.TempDir, tmpName),
-		inv.BuildStep.Dest)
+	return inv.addToOutput(ctx, filepath.Join(inv.TempDir, tmpName), inv.BuildStep.Dest)
 }

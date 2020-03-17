@@ -6,14 +6,9 @@ package builder
 
 import (
 	"context"
-
-	"go.chromium.org/luci/common/logging"
 )
 
 // runCopyBuildStep executes manifest.CopyBuildStep.
 func runCopyBuildStep(ctx context.Context, inv *stepRunnerInv) error {
-	src := inv.BuildStep.CopyBuildStep.Copy
-	dst := inv.BuildStep.Dest
-	logging.Infof(ctx, "Copying %q => %q", src, dst)
-	return inv.Output.AddFromDisk(src, dst)
+	return inv.addToOutput(ctx, inv.BuildStep.CopyBuildStep.Copy, inv.BuildStep.Dest)
 }

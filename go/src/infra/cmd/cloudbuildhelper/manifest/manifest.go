@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -30,6 +31,11 @@ type Manifest struct {
 	// When building Docker images it is an image name (without registry or any
 	// tags).
 	Name string `yaml:"name"`
+
+	// ManifestDir is a directory that contains this manifest file.
+	//
+	// Populated when it is loaded.
+	ManifestDir string `yaml:"-"`
 
 	// Extends is a unix-style path (relative to this YAML file) to a manifest
 	// used as a base.
@@ -194,7 +200,10 @@ func (c *CloudBuildConfig) rebaseOnTop(b CloudBuildConfig) {
 type BuildStep struct {
 	// Fields common to all build kinds.
 
-	// Dest specifies a location within the context dir to put the result into.
+	// Dest specifies a location to put the result into.
+	//
+	// Usually prefixed with "${contextdir}/" to indicate it is relative to
+	// the context directory.
 	//
 	// Optional in the original YAML, always populated after Manifest is parsed.
 	// See individual *BuildStep structs for defaults.
@@ -204,7 +213,7 @@ type BuildStep struct {
 	//
 	// To add a new step kind:
 	//   1. Add a new embedded struct here with definition of the step.
-	//   2. Add String() and initStep(...) methods to implement ConcreteBuildStep.
+	//   2. Add methods to implement ConcreteBuildStep.
 	//   3. Add one more 'if' to initAndSetDefaults(...) below.
 	//   4. Add the actual step implementation to builder/step*.go.
 	//   5. Add one more type switch to Builder.Build() in builder/builder.go.
@@ -212,6 +221,8 @@ type BuildStep struct {
 	CopyBuildStep `yaml:",inline"` // copy a file or directory into the output
 	GoBuildStep   `yaml:",inline"` // build go binary using "go build"
 
+	manifest *Manifest         // the manifest that defined this step
+	index    int               // zero-based index of the step in its parent manifest
 	concrete ConcreteBuildStep // pointer to one of *BuildStep above
 }
 
@@ -219,32 +230,50 @@ type BuildStep struct {
 type ConcreteBuildStep interface {
 	String() string // used for human logs only, doesn't have to encode all details
 
-	initStep(bs *BuildStep, cwd string) // populates 'bs' and self
+	isEmpty() bool                                        // true if the struct is not populated
+	initStep(bs *BuildStep, dirs map[string]string) error // populates 'bs' and self
 }
 
 // Concrete returns a pointer to some concrete populated *BuildStep.
 func (bs *BuildStep) Concrete() ConcreteBuildStep { return bs.concrete }
 
 // CopyBuildStep indicates we want to copy a file or directory.
+//
+// Doesn't materialize copies on disk, just puts them directly into the output
+// file set.
 type CopyBuildStep struct {
-	// Copy is a path (relative to the manifest file) to copy files from.
+	// Copy is a path to copy files from.
+	//
+	// Should start with either "${contextdir}/" or "${manifestdir}/" to
+	// indicate the root path.
 	//
 	// Can either be a directory or a file. Whatever it is, it will be put into
-	// the output as Dest. By default Dest is a basename of Copy (i.e. we copy
-	// Copy into the root of the context dir).
+	// the output as Dest. By default Dest is "${contextdir}/<basename of Copy>"
+	// (i.e. we copy Copy into the root of the context dir).
 	Copy string `yaml:"copy,omitempty"`
 }
 
 func (s *CopyBuildStep) String() string { return fmt.Sprintf("copy %q", s.Copy) }
 
-func (s *CopyBuildStep) initStep(bs *BuildStep, cwd string) {
-	normPath(&s.Copy, cwd)
-	if bs.Dest == "" {
-		bs.Dest = filepath.Base(s.Copy)
+func (s *CopyBuildStep) isEmpty() bool { return s.Copy == "" }
+
+func (s *CopyBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error) {
+	if s.Copy, err = renderPath(s.Copy, dirs); err != nil {
+		return errors.Annotate(err, "bad `copy` value").Err()
 	}
+	if bs.Dest == "" {
+		bs.Dest = "${contextdir}/" + filepath.Base(s.Copy)
+	}
+	if bs.Dest, err = renderPath(bs.Dest, dirs); err != nil {
+		return errors.Annotate(err, "bad `dest` value").Err()
+	}
+	return
 }
 
 // GoBuildStep indicates we want to build a go command binary.
+//
+// Doesn't materialize the build output on disk, just puts it directly into the
+// output file set.
 type GoBuildStep struct {
 	// GoBinary specifies a go command binary to build.
 	//
@@ -253,25 +282,41 @@ type GoBuildStep struct {
 	//
 	//  $ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build <go_binary> -o <dest>
 	//
-	// Where <dest> (taken from Dest) is relative to the context directory and set
-	// to the go package name by default.
+	// Where <dest> is taken from Dest and it must be under the context directory.
+	// It is set to "${contextdir}/<go package name>" by default.
 	GoBinary string `yaml:"go_binary,omitempty"`
 }
 
 func (s *GoBuildStep) String() string { return fmt.Sprintf("go build %q", s.GoBinary) }
 
-func (s *GoBuildStep) initStep(bs *BuildStep, cwd string) {
+func (s *GoBuildStep) isEmpty() bool { return s.GoBinary == "" }
+
+func (s *GoBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error) {
 	if bs.Dest == "" {
-		bs.Dest = path.Base(s.GoBinary)
+		bs.Dest = "${contextdir}/" + path.Base(s.GoBinary)
 	}
+	bs.Dest, err = renderPath(bs.Dest, dirs)
+	return
 }
 
-// Parse reads and initializes the manifest by filling in all defaults.
+// Load loads the manifest from the given path, traversing all "extends" links.
+func Load(path string) (*Manifest, error) {
+	m, err := loadRecursive(path, 0)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.initSteps(); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// parse reads the manifest and populates paths there.
 //
 // If cwd is not empty, rebases all relative paths in it on top of it.
 //
 // Does not traverse "extends" links.
-func Parse(r io.Reader, cwd string) (*Manifest, error) {
+func parse(r io.Reader, cwd string) (*Manifest, error) {
 	body, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to read the manifest body").Err()
@@ -280,15 +325,10 @@ func Parse(r io.Reader, cwd string) (*Manifest, error) {
 	if err = yaml.Unmarshal(body, &out); err != nil {
 		return nil, errors.Annotate(err, "failed to parse the manifest").Err()
 	}
-	if err := out.Initialize(cwd); err != nil {
+	if err := out.initBase(cwd); err != nil {
 		return nil, err
 	}
 	return &out, nil
-}
-
-// Load loads the manifest from the given path, traversing all "extends" links.
-func Load(path string) (*Manifest, error) {
-	return loadRecursive(path, 0)
 }
 
 // loadRecursive implements Load by tracking how deep we go as a simple
@@ -300,7 +340,7 @@ func loadRecursive(path string, fileCount int) (*Manifest, error) {
 	}
 	defer r.Close()
 
-	m, err := Parse(r, filepath.Dir(path))
+	m, err := parse(r, filepath.Dir(path))
 	switch {
 	case err != nil:
 		return nil, errors.Annotate(err, "when parsing %q", path).Err()
@@ -318,16 +358,15 @@ func loadRecursive(path string, fileCount int) (*Manifest, error) {
 	return m, nil
 }
 
-// Initialize fills in the defaults.
+// init initializes pointers in steps and rebases paths.
 //
-// If cwd is not empty, rebases all relative paths in it on top of it.
-//
-// Must be called if Manifest{} was allocated in the code (e.g. in unit tests)
-// rather than was read via Parse(...).
-func (m *Manifest) Initialize(cwd string) error {
+// Doesn't yet touch actual bodies of steps, they will be initialized later
+// when the whole manifest tree is loaded, see initSteps.
+func (m *Manifest) initBase(cwd string) error {
 	if err := validateName(m.Name); err != nil {
 		return errors.Annotate(err, `bad "name" field`).Err()
 	}
+	m.ManifestDir = cwd
 	normPath(&m.Extends, cwd)
 	normPath(&m.Dockerfile, cwd)
 	normPath(&m.ContextDir, cwd)
@@ -340,9 +379,26 @@ func (m *Manifest) Initialize(cwd string) error {
 			return errors.Annotate(err, "in infra section %q", k).Err()
 		}
 	}
-	for i := range m.Build {
-		if err := initAndSetDefaults(m.Build[i], cwd); err != nil {
+	for i, b := range m.Build {
+		if err := wireStep(b, m, i); err != nil {
 			return errors.Annotate(err, "bad build step #%d", i+1).Err()
+		}
+	}
+	return nil
+}
+
+// initSteps initializes all paths in steps.
+func (m *Manifest) initSteps() error {
+	if m.ContextDir == "" {
+		return errors.Reason("either \"contextdir\" or \"dockerfile\" is required").Err()
+	}
+	for _, b := range m.Build {
+		dirs := map[string]string{
+			"contextdir":  m.ContextDir,
+			"manifestdir": b.manifest.ManifestDir,
+		}
+		if err := b.concrete.initStep(b, dirs); err != nil {
+			return errors.Annotate(err, "bad build step #%d in %q", b.index+1, b.manifest.ManifestDir).Err()
 		}
 	}
 	return nil
@@ -416,15 +472,16 @@ func validateInfra(i Infra) error {
 	return nil
 }
 
-func initAndSetDefaults(bs *BuildStep, cwd string) error {
+// wireStep initializes `concrete` and `manifest` pointers in the step.
+//
+// Doesn't touch any other fields.
+func wireStep(bs *BuildStep, m *Manifest, index int) error {
 	set := make([]ConcreteBuildStep, 0, 1)
-	if bs.CopyBuildStep != (CopyBuildStep{}) {
-		set = append(set, &bs.CopyBuildStep)
+	for _, s := range []ConcreteBuildStep{&bs.CopyBuildStep, &bs.GoBuildStep} {
+		if !s.isEmpty() {
+			set = append(set, s)
+		}
 	}
-	if bs.GoBuildStep != (GoBuildStep{}) {
-		set = append(set, &bs.GoBuildStep)
-	}
-
 	// One and only one substruct should be populated.
 	switch {
 	case len(set) == 0:
@@ -432,8 +489,9 @@ func initAndSetDefaults(bs *BuildStep, cwd string) error {
 	case len(set) > 1:
 		return errors.Reason("ambiguous").Err()
 	default:
+		bs.manifest = m
+		bs.index = index
 		bs.concrete = set[0]
-		bs.concrete.initStep(bs, cwd)
 		return nil
 	}
 }
@@ -445,4 +503,37 @@ func normPath(p *string, cwd string) {
 			*p = filepath.Join(cwd, *p)
 		}
 	}
+}
+
+// renderPath verifies `p` starts with "${<something>}[/]", replaces it with
+// dirs[<something>], and normalizes the result.
+func renderPath(p string, dirs map[string]string) (string, error) {
+	if p == "" {
+		return "", errors.Reason("must not be empty").Err()
+	}
+
+	// Helper for error messages.
+	keys := func() string {
+		ks := make([]string, 0, len(dirs))
+		for k := range dirs {
+			ks = append(ks, fmt.Sprintf("${%s}", k))
+		}
+		sort.Strings(ks)
+		return strings.Join(ks, " or ")
+	}
+
+	parts := strings.SplitN(p, "/", 2)
+	if !strings.HasPrefix(parts[0], "${") || !strings.HasSuffix(parts[0], "}") {
+		return "", errors.Reason("must start with %s", keys()).Err()
+	}
+
+	val := dirs[strings.TrimSuffix(strings.TrimPrefix(parts[0], "${"), "}")]
+	if val == "" {
+		return "", errors.Reason("unknown dir variable %s, expecting %s", parts[0], keys()).Err()
+	}
+
+	if len(parts) == 1 {
+		return val, nil
+	}
+	return filepath.Join(val, filepath.FromSlash(parts[1])), nil
 }
