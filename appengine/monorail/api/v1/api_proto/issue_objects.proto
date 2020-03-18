@@ -142,8 +142,7 @@ message Issue {
   // Next available tag: 3
   message LabelValue {
     // The label.
-    string label = 1
-        [(google.api.resource_reference) = { type: "api.crbug.com/LabelDef" }];
+    string label = 1;
     // How the label was derived.
     Derivation derivation = 2;
   }
@@ -151,9 +150,10 @@ message Issue {
   // A possibly rule-derived status for an issue.
   // Next available tag: 3
   message StatusValue {
-    // The status of the issue.
-    string status = 1
-        [(google.api.resource_reference) = { type: "api.crbug.com/StatusDef" }];
+    // The status of the issue. Note that in rare cases this can be a
+    // value not defined in the project's StatusDefs (e.g. if the issue
+    // was moved from another project)
+    string status = 1;
     // How the status was derived.
     Derivation derivation = 2;
   }
