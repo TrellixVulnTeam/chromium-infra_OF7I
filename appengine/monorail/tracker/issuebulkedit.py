@@ -227,6 +227,14 @@ class IssueBulkEdit(servlet.Servlet):
         parsed.fields.phase_vals_remove, config,
         phase_ids_by_name=phase_ids_by_name)
 
+    fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+    for fv in field_vals:
+      fd = fds_by_id.get(fv.field_id)
+      if fd:
+        assert permissions.CanEditValueForFieldDef(
+            mr.auth.effective_ids, mr.perms, mr.project,
+            fd), "No permission to edit certain fields."
+
     field_helpers.ValidateCustomFields(
         mr, self.services, field_vals, config, mr.errors)
 

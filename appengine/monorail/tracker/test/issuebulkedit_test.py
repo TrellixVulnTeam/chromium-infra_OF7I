@@ -350,13 +350,128 @@ class IssueBulkEditTest(unittest.TestCase):
     self.config.field_defs.append(fd)
 
     post_data = fake.PostData(
-        custom_12345=['111'], owner=['owner@example.com'], can=[1],
-        q=[''], colspec=[''], sort=[''], groupby=[''], start=[0], num=[100])
+        custom_12345=['10'],
+        owner=['owner@example.com'],
+        can=[1],
+        q=[''],
+        colspec=[''],
+        sort=[''],
+        groupby=[''],
+        start=[0],
+        num=[100])
     self._MockMethods()
     self.servlet.ProcessFormData(mr, post_data)
     self.assertEqual(
-        (tracker_pb2.FieldID.CUSTOM, '111'),
+        (tracker_pb2.FieldID.CUSTOM, '10'),
         self.GetFirstAmendment(789, local_id_1))
+
+  def testProcessFormData_RestrictedCustomFieldsAccept(self):
+    """We accept edits to restricted fields by editors (or admins)."""
+    local_id_1, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
+        [], 111, 'test issue')
+    mr = testing_helpers.MakeMonorailRequest(
+        project=self.project,
+        perms=permissions.PermissionSet(
+            [
+                permissions.EDIT_ISSUE, permissions.ADD_ISSUE_COMMENT,
+                permissions.VIEW
+            ]),
+        user_info={'user_id': 111})
+    mr.local_id_list = [local_id_1]
+
+    fd = tracker_bizobj.MakeFieldDef(
+        12345,
+        789,
+        'CPU',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd.editor_ids = [111]
+    self.config.field_defs.append(fd)
+
+    post_data = fake.PostData(
+        custom_12345=['10'],
+        owner=['owner@example.com'],
+        can=[1],
+        q=[''],
+        colspec=[''],
+        sort=[''],
+        groupby=[''],
+        start=[0],
+        num=[100])
+    self._MockMethods()
+    self.servlet.ProcessFormData(mr, post_data)
+    self.assertEqual(
+        (tracker_pb2.FieldID.CUSTOM, '10'),
+        self.GetFirstAmendment(789, local_id_1))
+
+  def testProcessFormData_RestrictedCustomFieldsReject(self):
+    """We reject edits to restricted fields by non-editors (and non-admins)."""
+    local_id_1, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
+        [], 111, 'test issue')
+    mr = testing_helpers.MakeMonorailRequest(
+        project=self.project,
+        perms=permissions.PermissionSet(
+            [
+                permissions.EDIT_ISSUE, permissions.ADD_ISSUE_COMMENT,
+                permissions.VIEW
+            ]),
+        user_info={'user_id': 111})
+    mr.local_id_list = [local_id_1]
+
+    fd = tracker_bizobj.MakeFieldDef(
+        12345,
+        789,
+        'CPU',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd.admin_ids = [222]
+    self.config.field_defs.append(fd)
+
+    post_data = fake.PostData(
+        custom_12345=['10'],
+        owner=['owner@example.com'],
+        can=[1],
+        q=[''],
+        colspec=[''],
+        sort=[''],
+        groupby=[''],
+        start=[0],
+        num=[100])
+    self._MockMethods()
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, mr, post_data)
 
   def testProcessFormData_DuplicateStatus_MergeSameIssue(self):
     """Test PFD processes null/cleared status values."""
