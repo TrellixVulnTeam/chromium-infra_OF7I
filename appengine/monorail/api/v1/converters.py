@@ -6,6 +6,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import itertools
 import logging
 
 from google.protobuf import timestamp_pb2
@@ -132,6 +133,32 @@ class Converter(object):
 
   # Issues
 
+  def _ConvertComponentValues(self, issue):
+    # proto.tracker_pb2.Issue ->
+    #     Sequence[api_proto.issue_objects_pb2.Issue.ComponentValue]
+    """Convert the status string on issue into a ComponentValue."""
+    component_values = []
+    component_ids = itertools.chain(
+        issue.component_ids, issue.derived_component_ids)
+    ids_to_names = rnc.ConvertComponentDefNames(
+        self.cnxn, component_ids, issue.project_id, self.services)
+
+    for component_id in issue.component_ids:
+      if component_id in ids_to_names:
+        component_values.append(
+            issue_objects_pb2.Issue.ComponentValue(
+                component=ids_to_names[component_id],
+                derivation=issue_objects_pb2.Issue.Derivation.Value(
+                    'EXPLICIT')))
+    for derived_component_id in issue.derived_component_ids:
+      if derived_component_id in ids_to_names:
+        component_values.append(
+            issue_objects_pb2.Issue.ComponentValue(
+                component=ids_to_names[derived_component_id],
+                derivation=issue_objects_pb2.Issue.Derivation.Value('RULE')))
+
+    return component_values
+
   def _ConvertStatusValue(self, issue):
     # proto.tracker_pb2.Issue -> api_proto.issue_objects_pb2.Issue.StatusValue
     """Convert the status string on issue into a StatusValue."""
@@ -184,16 +211,34 @@ class Converter(object):
       else:
         content_state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
       labels = self._ConvertLabelValues(issue)
-      converted_issues.append(
-          issue_objects_pb2.Issue(
-              name=issue_names_dict[issue.issue_id],
-              summary=issue.summary,
-              state=content_state,
-              status=status,
-              description='TODO(jessan): Pull description from comments',
-              labels=labels,
-              star_count=issue.star_count,
-          ))
+      components = self._ConvertComponentValues(issue)
+      # TODO(jessan): Handle enum fieldvalues, then include below.
+      # field_values = self.ConvertFieldValues(
+      #     issue.field_values, issue.project_id, issue.phases)
+      result = issue_objects_pb2.Issue(
+          name=issue_names_dict[issue.issue_id],
+          summary=issue.summary,
+          state=content_state,
+          status=status,
+          description='TODO(jessan): Pull description from comments',
+          # TODO(jessan): Add user fields.
+          reporter=None,
+          owner=None,
+          cc_users=[],
+          labels=labels,
+          components=components,
+          field_values=[],
+          # TODO(jessan): add issue refs.
+          merged_into_issue_ref=None,
+          blocked_on_issue_refs=[],
+          # TODO(jessan): add timestamps.
+          star_count=issue.star_count)
+      # TODO(crbug.com/monorail/5857): Set attachment_count unconditionally
+      # after the underlying source of negative attachment counts has been
+      # resolved and database has been repaired.
+      if issue.attachment_count >= 0:
+        result.attachment_count = issue.attachment_count
+      converted_issues.append(result)
     return converted_issues
 
   def IngestIssuesListColumns(self, issues_list_columns):

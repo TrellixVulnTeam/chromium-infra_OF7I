@@ -51,7 +51,10 @@ class ConverterFunctionsTest(unittest.TestCase):
         project_name=self.project_1.project_name,
         star_count=1,
         labels=['label-a', 'label-b'],
-        derived_labels=['label-derived', 'label-derived-2'])
+        derived_labels=['label-derived', 'label-derived-2'],
+        component_ids=[1, 2],
+        derived_component_ids=[3, 4],
+        attachment_count=5)
     self.issue_2 = fake.MakeTestIssue(
         self.project_2.project_id,
         2,
@@ -224,14 +227,53 @@ class ConverterFunctionsTest(unittest.TestCase):
                     derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
                     label='label-derived-2')
             ],
+            components=[
+                issue_objects_pb2.Issue.ComponentValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value(
+                        'EXPLICIT'),
+                    component='projects/proj/componentDefs/1'),
+                issue_objects_pb2.Issue.ComponentValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value(
+                        'EXPLICIT'),
+                    component='projects/proj/componentDefs/2'),
+                issue_objects_pb2.Issue.ComponentValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                    component='projects/proj/componentDefs/3'),
+                issue_objects_pb2.Issue.ComponentValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                    component='projects/proj/componentDefs/4'),
+            ],
             description='TODO(jessan): Pull description from comments',
-            star_count=1)
+            star_count=1,
+            attachment_count=5)
     ]
     self.assertEqual(self.converter.ConvertIssues(issues), expected_issues)
 
   def testConvertIssues_Empty(self):
     """ConvertIssues works with no issues passed in."""
     self.assertEqual(self.converter.ConvertIssues([]), [])
+
+  def testConvertIssues_NegativeAttachmentCount(self):
+    """Negative attachment counts are not set on issues."""
+    issue = fake.MakeTestIssue(
+        self.project_1.project_id,
+        3,
+        'sum',
+        'New',
+        111,
+        attachment_count=-10,
+        project_name=self.project_1.project_name)
+    self.services.issue.TestAddIssue(issue)
+    expected_issue = issue_objects_pb2.Issue(
+        name='projects/proj/issues/3',
+        state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+        summary='sum',
+        status=issue_objects_pb2.Issue.StatusValue(
+            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+            status='New'),
+        description='TODO(jessan): Pull description from comments',
+    )
+    self.assertEqual(self.converter.ConvertIssues([issue]), [expected_issue])
 
   def testConvertUsers(self):
     self.user_1.vacation_message = 'non-empty-string'
