@@ -34,4 +34,5 @@ cron:
 
 - description: Dump inventory snapshot
   url: /internal/cron/dump-inventory-snapshot
-  schedule: every 24 hours
+  schedule: every day 00:00
+  timezone: America/Los_Angeles
