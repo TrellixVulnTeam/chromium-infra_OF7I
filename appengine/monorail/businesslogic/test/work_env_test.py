@@ -4915,13 +4915,13 @@ class WorkEnvTest(unittest.TestCase):
     # Anon can view public hotlist.
     with self.work_env as we:
       anon_perms = we.ListHotlistPermissions(hotlist.hotlist_id)
-    self.assertEqual(anon_perms, permissions.STANDARD_HOTLIST_PERMISSIONS)
+    self.assertEqual(anon_perms, [])
 
     # Anon cannot view private hotlist.
     hotlist.is_private = True
-    with self.work_env as we:
-      anon_perms = we.ListHotlistPermissions(hotlist.hotlist_id)
-    self.assertEqual(anon_perms, [])
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.ListHotlistPermissions(hotlist.hotlist_id)
 
   def testListHotlistPermissions_Owner(self):
     hotlist = self.work_env.services.features.CreateHotlist(
@@ -4929,11 +4929,6 @@ class WorkEnvTest(unittest.TestCase):
         owner_ids=[self.user_1.user_id], editor_ids=[])
 
     self.SignIn(user_id=self.user_1.user_id)
-    with self.work_env as we:
-      owner_perms = we.ListHotlistPermissions(hotlist.hotlist_id)
-    self.assertEqual(owner_perms, permissions.HOTLIST_OWNER_PERMISSIONS)
-
-    hotlist.is_private = True
     with self.work_env as we:
       owner_perms = we.ListHotlistPermissions(hotlist.hotlist_id)
     self.assertEqual(owner_perms, permissions.HOTLIST_OWNER_PERMISSIONS)
@@ -4948,11 +4943,6 @@ class WorkEnvTest(unittest.TestCase):
       owner_perms = we.ListHotlistPermissions(hotlist.hotlist_id)
     self.assertEqual(owner_perms, permissions.HOTLIST_EDITOR_PERMISSIONS)
 
-    hotlist.is_private = True
-    with self.work_env as we:
-      owner_perms = we.ListHotlistPermissions(hotlist.hotlist_id)
-    self.assertEqual(owner_perms, permissions.HOTLIST_EDITOR_PERMISSIONS)
-
   def testListHotlistPermissions_NonMember(self):
     hotlist = self.work_env.services.features.CreateHotlist(
         self.cnxn, 'Fake-Hotlist', 'Summary', 'Description',
@@ -4960,13 +4950,13 @@ class WorkEnvTest(unittest.TestCase):
 
     self.SignIn(user_id=self.user_3.user_id)
     with self.work_env as we:
-      owner_perms = we.ListHotlistPermissions(hotlist.hotlist_id)
-    self.assertEqual(owner_perms, permissions.STANDARD_HOTLIST_PERMISSIONS)
+      perms = we.ListHotlistPermissions(hotlist.hotlist_id)
+    self.assertEqual(perms, [])
 
     hotlist.is_private = True
-    with self.work_env as we:
-      owner_perms = we.ListHotlistPermissions(hotlist.hotlist_id)
-    self.assertEqual(owner_perms, [])
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.ListHotlistPermissions(hotlist.hotlist_id)
 
 
   # FUTURE: UpdateHotlist()

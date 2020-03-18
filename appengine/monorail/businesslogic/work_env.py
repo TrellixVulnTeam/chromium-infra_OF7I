@@ -2785,26 +2785,6 @@ class WorkEnv(object):
       self.services.features.UpdateHotlistItemsFields(
           self.mc.cnxn, hotlist_id, new_notes=new_notes)
 
-  def ListHotlistPermissions(self, hotlist_id):
-    # type: (int) -> List(str)
-    """Return the list of permissions the current user has for the given
-       hotlist.
-
-    This method only allows for fetching the permisisons of the current anon
-    or logged-in user. Users will only be able to look up their own permissions.
-    """
-    hotlist = self.services.features.GetHotlist(self.mc.cnxn, hotlist_id)
-    if permissions.CanAdministerHotlist(
-        self.mc.auth.effective_ids, self.mc.perms, hotlist):
-      return permissions.HOTLIST_OWNER_PERMISSIONS
-    if permissions.CanEditHotlist(
-        self.mc.auth.effective_ids, self.mc.perms, hotlist):
-      return permissions.HOTLIST_EDITOR_PERMISSIONS
-    if permissions.CanViewHotlist(
-        self.mc.auth.effective_ids, self.mc.perms, hotlist):
-      return permissions.STANDARD_HOTLIST_PERMISSIONS
-    return []
-
   def expungeUsersFromStars(self, user_ids):
     """Wipes any starred user or user's stars from all star services.
 
@@ -2818,3 +2798,23 @@ class WorkEnv(object):
     self.services.user_star.ExpungeStarsByUsers(self.mc.cnxn, user_ids)
     for user_id in user_ids:
       self.services.user_star.ExpungeStars(self.mc.cnxn, user_id, commit=False)
+
+  # Permissions
+
+  # ListFooPermission methods will return the list of permissions in addition to
+  # the permission to "VIEW",
+  # that the logged in user has for a given resource_id's resource Foo.
+  # If the user cannot view Foo, PermissionException will be raised.
+
+  def ListHotlistPermissions(self, hotlist_id):
+    # type: (int) -> List(str)
+    """Return the list of permissions the current user has for the hotlist."""
+    # Permission to view checked in GetHotlist()
+    hotlist = self.GetHotlist(hotlist_id)
+    if permissions.CanAdministerHotlist(self.mc.auth.effective_ids,
+                                        self.mc.perms, hotlist):
+      return permissions.HOTLIST_OWNER_PERMISSIONS
+    if permissions.CanEditHotlist(self.mc.auth.effective_ids, self.mc.perms,
+                                  hotlist):
+      return permissions.HOTLIST_EDITOR_PERMISSIONS
+    return []
