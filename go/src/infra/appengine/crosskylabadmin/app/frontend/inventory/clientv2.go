@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/retry"
@@ -39,6 +40,9 @@ func newInvServiceClient(ctx context.Context, host string) (inventoryClient, err
 	ic := api.NewInventoryPRPCClient(&prpc.Client{
 		C:    &http.Client{Transport: t},
 		Host: host,
+		Options: &prpc.Options{
+			UserAgent: fmt.Sprintf("%s/%s", info.AppID(ctx), info.VersionID(ctx)),
+		},
 	})
 
 	return &invServiceClient{client: ic}, nil

@@ -18,16 +18,11 @@ import (
 
 // NewInventoryClient creates a new inventory RPC client.
 func NewInventoryClient(ctx context.Context, url string, o auth.Options) (fleet.InventoryClient, error) {
-	hc, err := httpClient(ctx, o)
+	pc, err := NewPrpcClient(ctx, url, o)
 	if err != nil {
-		return nil, errors.Annotate(err, "create inventory admin client").Err()
+		return nil, err
 	}
-	pc := prpc.Client{
-		C:    hc,
-		Host: url,
-	}
-	ic := fleet.NewInventoryPRPCClient(&pc)
-	return ic, nil
+	return fleet.NewInventoryPRPCClient(pc), nil
 }
 
 // NewPrpcClient creates a prpc client.
@@ -39,6 +34,9 @@ func NewPrpcClient(ctx context.Context, url string, o auth.Options) (*prpc.Clien
 	return &prpc.Client{
 		C:    hc,
 		Host: url,
+		Options: &prpc.Options{
+			UserAgent: "SkylabSwarmingWorker/1.0.0",
+		},
 	}, nil
 }
 
