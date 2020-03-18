@@ -95,7 +95,7 @@ class TemplateDetailTest(unittest.TestCase):
         tracker_pb2.NotifyTriggers.NEVER, 'no_action',
         'milestone target', False, is_phase_field=True)
     self.fd_7 = tracker_bizobj.MakeFieldDef(
-        5,
+        7,
         789,
         'RestrictedField',
         tracker_pb2.FieldTypes.INT_TYPE,
