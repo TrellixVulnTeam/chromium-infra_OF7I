@@ -53,15 +53,13 @@ type Args struct {
 	ParentTaskID      string
 	//Pubsub Topic for status updates on the tests run for the request
 	StatusTopic string
-	// BuilderID identifies the builder that will run the test task.
-	BuilderID *buildbucket_pb.BuilderID
 	// Test describes the test to be run.
 	TestRunnerRequest *skylab_test_runner.Request
 }
 
 // NewBBRequest returns the Buildbucket request to create the test_runner build
 // with these arguments.
-func (a *Args) NewBBRequest() (*buildbucket_pb.ScheduleBuildRequest, error) {
+func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.ScheduleBuildRequest, error) {
 	bbDims, err := a.getBBDimensions()
 	if err != nil {
 		return nil, errors.Annotate(err, "create bb request").Err()
@@ -85,7 +83,7 @@ func (a *Args) NewBBRequest() (*buildbucket_pb.ScheduleBuildRequest, error) {
 	}
 
 	return &buildbucket_pb.ScheduleBuildRequest{
-		Builder:    a.BuilderID,
+		Builder:    b,
 		Properties: props,
 		Tags:       tags,
 		Dimensions: bbDims,

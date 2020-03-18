@@ -33,11 +33,10 @@ func TestBuilderID(t *testing.T) {
 			Builder: "foo-builder",
 		}
 		args := request.Args{
-			BuilderID:         &id,
 			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
-			req, err := args.NewBBRequest()
+			req, err := args.NewBBRequest(&id)
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("then request should have a builder ID.", func() {
@@ -60,7 +59,7 @@ func TestDimensionsBB(t *testing.T) {
 			TestRunnerRequest:                &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
-			req, err := args.NewBBRequest()
+			req, err := args.NewBBRequest(nil)
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("then request should have correct dimensions.", func() {
@@ -128,7 +127,7 @@ func TestPropertiesBB(t *testing.T) {
 			TestRunnerRequest: &want,
 		}
 		Convey("when a BB request is formed", func() {
-			req, err := args.NewBBRequest()
+			req, err := args.NewBBRequest(nil)
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("it should contain the test runner request.", func() {
@@ -159,7 +158,7 @@ func TestTagsBB(t *testing.T) {
 			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
-			req, err := args.NewBBRequest()
+			req, err := args.NewBBRequest(nil)
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("then request should have correct tags.", func() {
@@ -190,7 +189,7 @@ func TestPriorityBB(t *testing.T) {
 			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
-			req, err := args.NewBBRequest()
+			req, err := args.NewBBRequest(nil)
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("then request should have correct priority.", func() {
@@ -207,7 +206,7 @@ func TestStatusTopicBB(t *testing.T) {
 			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
-			req, err := args.NewBBRequest()
+			req, err := args.NewBBRequest(nil)
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("then request should have the Pubsub topic assigned.", func() {
@@ -224,7 +223,7 @@ func TestNoStatusTopicBB(t *testing.T) {
 			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
-			req, err := args.NewBBRequest()
+			req, err := args.NewBBRequest(nil)
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("then request should have no notify field.", func() {

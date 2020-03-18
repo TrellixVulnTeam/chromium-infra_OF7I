@@ -36,6 +36,7 @@ type task struct {
 type bbSkylabClient struct {
 	swarmingClient swarming.Client
 	bbClient       buildbucket_pb.BuildsClient
+	builder        *buildbucket_pb.BuilderID
 	knownTasks     map[skylab.TaskReference]task
 }
 
@@ -52,7 +53,12 @@ func NewSkylabClient(ctx context.Context, cfg *config.Config) (skylab.Client, er
 	return &bbSkylabClient{
 		swarmingClient: sc,
 		bbClient:       bbc,
-		knownTasks:     make(map[skylab.TaskReference]task),
+		builder: &buildbucket_pb.BuilderID{
+			Project: cfg.TestRunner.Buildbucket.Project,
+			Bucket:  cfg.TestRunner.Buildbucket.Bucket,
+			Builder: cfg.TestRunner.Buildbucket.Builder,
+		},
+		knownTasks: make(map[skylab.TaskReference]task),
 	}, nil
 }
 
@@ -107,7 +113,7 @@ func (c *bbSkylabClient) ValidateArgs(ctx context.Context, args *request.Args) (
 
 // LaunchTask sends an RPC request to start the task.
 func (c *bbSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (skylab.TaskReference, error) {
-	req, err := args.NewBBRequest()
+	req, err := args.NewBBRequest(c.builder)
 	if err != nil {
 		return "", errors.Annotate(err, "launch task for %s", args.TestRunnerRequest.GetTest().GetAutotest().GetName()).Err()
 	}
