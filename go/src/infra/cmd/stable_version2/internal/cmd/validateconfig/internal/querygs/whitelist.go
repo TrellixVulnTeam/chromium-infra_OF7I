@@ -21,6 +21,7 @@ var missingBoardWhitelist map[string]bool = stringSliceToStringSet([]string{
 	"fizz_accelerator",
 	"fizz_cfm",
 	"fizz_moblab",
+	"grunt_kernelnext",
 	"guado_accelerator",
 	"guado_cfm",
 	"guado_kernelnext",
