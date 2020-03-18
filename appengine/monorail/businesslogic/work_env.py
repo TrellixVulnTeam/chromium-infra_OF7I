@@ -2805,6 +2805,10 @@ class WorkEnv(object):
   # the permission to "VIEW",
   # that the logged in user has for a given resource_id's resource Foo.
   # If the user cannot view Foo, PermissionException will be raised.
+  # Not all resources will have predefined lists of permissions
+  # (e.g permissions.HOTLIST_OWNER_PERMISSIONS)
+  # For most cases, the list of permissions will be created within the
+  # ListFooPermissions method.
 
   def ListHotlistPermissions(self, hotlist_id):
     # type: (int) -> List(str)
