@@ -253,7 +253,7 @@ def ParseFieldValues(cnxn, user_service, field_val_strs, phase_field_val_strs,
   return field_values
 
 
-def ValidateCustomField(mr, project, services, field_def, field_val):
+def ValidateCustomFieldValue(mr, project, services, field_def, field_val):
   """Validate one custom field value and return an error string or None."""
   if field_def.field_type == tracker_pb2.FieldTypes.INT_TYPE:
     if (field_def.min_value is not None and
@@ -313,10 +313,11 @@ def ValidateCustomField(mr, project, services, field_def, field_val):
 
 def ValidateCustomFields(mr, services, field_values, config, errors):
   """Validate each of the given fields and report problems in errors object."""
+  fds_by_id = {fd.field_id: fd for fd in config.field_defs}
   for fv in field_values:
-    fd = tracker_bizobj.FindFieldDefByID(fv.field_id, config)
+    fd = fds_by_id.get(fv.field_id)
     if fd:
-      err_msg = ValidateCustomField(mr, mr.project, services, fd, fv)
+      err_msg = ValidateCustomFieldValue(mr, mr.project, services, fd, fv)
       if err_msg:
         errors.SetCustomFieldError(fv.field_id, err_msg)
 
