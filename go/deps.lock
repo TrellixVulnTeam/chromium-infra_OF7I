@@ -1,5 +1,5 @@
-hash: 39dcb8c91e7557ef3baf5ca9af03f9793ba4f4a8ce13a4eb6c0858b06374d479
-updated: 2020-01-31T15:00:50.531797-08:00
+hash: a947bd4e6802d4c171ff99510472b3d051b421b6877bb0fbf2463ab436c2f348
+updated: 2020-03-11T19:35:50.091979771-07:00
 imports:
 - name: cloud.google.com/go
   version: ae96aa22230a1f429d6fa38edc1d4f2cfd35d5e9
@@ -503,6 +503,9 @@ imports:
   subpackages:
   - codes
   - metadata
+- name: google.golang.org/protobuf
+  version: f75a338d9c5bda7f2a17025c3485eb9b74fea5f5
+  repo: https://go.googlesource.com/protobuf.git
 - name: gopkg.in/fsnotify.v1
   version: 8611c35ab31c1c28aa903d33cf8b6e44a399b09e
   repo: https://chromium.googlesource.com/external/github.com/fsnotify/fsnotify.git

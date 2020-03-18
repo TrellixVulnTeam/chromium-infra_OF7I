@@ -15,6 +15,9 @@ import:
   - jsonpb
   - proto
   - protoc-gen-go
+- package: google.golang.org/protobuf
+  version: master
+  repo: https://go.googlesource.com/protobuf.git
 - package: github.com/gorhill/cronexpr
   version: master
   repo: https://chromium.googlesource.com/external/github.com/gorhill/cronexpr.git
