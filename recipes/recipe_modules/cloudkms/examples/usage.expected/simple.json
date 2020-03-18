@@ -50,6 +50,62 @@
     "name": "decrypt (2)"
   },
   {
+    "cmd": [
+      "[START_DIR]/cloudkms/cloudkms",
+      "sign",
+      "-input",
+      "[START_DIR]/chrome_build",
+      "-output",
+      "[START_DIR]/signed_bin",
+      "projects/PROJECT/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY"
+    ],
+    "name": "sign"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cloudkms/cloudkms",
+      "sign",
+      "-input",
+      "[START_DIR]/build",
+      "-output",
+      "[START_DIR]/bin",
+      "projects/PROJECT/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY",
+      "-service-account-json",
+      "service_acc"
+    ],
+    "name": "sign (2)"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cloudkms/cloudkms",
+      "verify",
+      "-input-sig",
+      "[START_DIR]/signature",
+      "-input",
+      "[START_DIR]/signed_chrome",
+      "-output",
+      "[CLEANUP]/result",
+      "projects/PROJECT/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY"
+    ],
+    "name": "verify"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cloudkms/cloudkms",
+      "verify",
+      "-input-sig",
+      "[START_DIR]/sign",
+      "-input",
+      "[START_DIR]/signed",
+      "-output",
+      "[CLEANUP]/status",
+      "projects/PROJECT/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY",
+      "-service-account-json",
+      "service_acc"
+    ],
+    "name": "verify (2)"
+  },
+  {
     "name": "$result"
   }
 ]

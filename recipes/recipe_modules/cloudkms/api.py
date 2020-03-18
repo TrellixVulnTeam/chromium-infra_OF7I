@@ -44,3 +44,74 @@ class CloudKMSApi(recipe_api.RecipeApi):
         '-output', output_file,
         kms_crypto_key,
     ])
+
+  def sign(self,
+           kms_crypto_key,
+           input_file,
+           output_file,
+           service_account_creds_file=None):
+    """Processes a plaintext and uploads the digest for signing by Cloud KMS.
+
+    Args:
+      * kms_crypto_key (str) - The name of the cryptographic key, e.g.
+        projects/[PROJECT]/locations/[LOC]/keyRings/[KEYRING]/cryptoKeys/[KEY]
+      * input_file (Path) - Path to file with data to operate on. Data for sign
+        and verify cannot be larger than 64KiB.
+      * output_file (Path) - Path to write output signature to a json file.
+      * service_account_creds_file (str) - Path to JSON file with service 
+        account credentials to use.
+    """
+    args = [
+        self.cloudkms_path,
+        'sign',
+        '-input',
+        input_file,
+        '-output',
+        output_file,
+        kms_crypto_key,
+    ]
+
+    if service_account_creds_file:
+      args.append('-service-account-json')
+      args.append(service_account_creds_file)
+    
+    self.m.step('sign', args)
+
+  def verify(self,
+             kms_crypto_key,
+             input_file,
+             signature_file,
+             output_file='-',
+             service_account_creds_file=None):
+    """Verify a signature that was previously created with a 
+       key stored in CloudKMS.
+
+    Args:
+      * kms_crypto_key (str) - The name of the cryptographic public key,
+        e.g.
+        projects/[PROJECT]/locations/[LOC]/keyRings/[KEYRING]/cryptoKeys/[KEY]
+      * input_file (Path) - Path to file with data to operate on. Data for sign
+        and verify cannot be larger than 64KiB.
+      * signature_file (Path) - Path to read signature from.
+      * output_file (Path) - Path to write operation results 
+        (successful verification or signature mismatch)to (use '-' for stdout).
+      * service_account_creds_file (str) - Path to JSON file with service 
+        account credentials to use.
+    """
+    args = [
+        self.cloudkms_path,
+        'verify',
+        '-input-sig',
+        signature_file,
+        '-input',
+        input_file,
+        '-output',
+        output_file,
+        kms_crypto_key,
+    ]
+
+    if service_account_creds_file:
+      args.append('-service-account-json')
+      args.append(service_account_creds_file)
+
+    self.m.step('verify', args)

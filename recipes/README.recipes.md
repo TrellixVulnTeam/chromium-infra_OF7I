@@ -142,6 +142,36 @@ Args:
   * output_file (Path) - The path to the output (plaintext) file. It is
     recommended that this is inside api.path['cleanup'] to ensure the
     plaintext file will be cleaned up by recipe.
+
+&mdash; **def [sign](/recipes/recipe_modules/cloudkms/api.py#48)(self, kms_crypto_key, input_file, output_file, service_account_creds_file=None):**
+
+Processes a plaintext and uploads the digest for signing by Cloud KMS.
+
+Args:
+  * kms_crypto_key (str) - The name of the cryptographic key, e.g.
+    projects/[PROJECT]/locations/[LOC]/keyRings/[KEYRING]/cryptoKeys/[KEY]
+  * input_file (Path) - Path to file with data to operate on. Data for sign
+    and verify cannot be larger than 64KiB.
+  * output_file (Path) - Path to write output signature to a json file.
+  * service_account_creds_file (str) - Path to JSON file with service 
+    account credentials to use.
+
+&mdash; **def [verify](/recipes/recipe_modules/cloudkms/api.py#80)(self, kms_crypto_key, input_file, signature_file, output_file='-', service_account_creds_file=None):**
+
+Verify a signature that was previously created with a 
+   key stored in CloudKMS.
+
+Args:
+  * kms_crypto_key (str) - The name of the cryptographic public key,
+    e.g.
+    projects/[PROJECT]/locations/[LOC]/keyRings/[KEYRING]/cryptoKeys/[KEY]
+  * input_file (Path) - Path to file with data to operate on. Data for sign
+    and verify cannot be larger than 64KiB.
+  * signature_file (Path) - Path to read signature from.
+  * output_file (Path) - Path to write operation results 
+    (successful verification or signature mismatch)to (use '-' for stdout).
+  * service_account_creds_file (str) - Path to JSON file with service 
+    account credentials to use.
 ### *recipe_modules* / [conda](/recipes/recipe_modules/conda)
 
 [DEPS](/recipes/recipe_modules/conda/__init__.py#1): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]

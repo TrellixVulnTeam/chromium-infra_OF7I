@@ -21,6 +21,34 @@ def RunSteps(api):
     api.path['cleanup'].join('decrypted'),
   )
 
+  api.cloudkms.sign(
+      'projects/PROJECT/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY',
+      api.path['start_dir'].join('chrome_build'),
+      api.path['start_dir'].join('signed_bin'),
+  )
+  #Sign another file; with service_account_json file not None
+  api.cloudkms.sign(
+      'projects/PROJECT/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY',
+      api.path['start_dir'].join('build'),
+      api.path['start_dir'].join('bin'),
+      'service_acc'
+  )
+
+  api.cloudkms.verify(
+      'projects/PROJECT/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY',
+      api.path['start_dir'].join('signed_chrome'),
+      api.path['start_dir'].join('signature'),
+      api.path['cleanup'].join('result'),
+  )
+  #Sign another file; with service_account_json file not None
+  api.cloudkms.verify(
+      'projects/PROJECT/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY',
+      api.path['start_dir'].join('signed'),
+      api.path['start_dir'].join('sign'),
+      api.path['cleanup'].join('status'),
+      'service_acc'
+  )
+
 
 def GenTests(api):
   yield api.test('simple')
