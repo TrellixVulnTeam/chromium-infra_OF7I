@@ -253,9 +253,11 @@ dockerfile: "../../../src/proj/image/Dockerfile"
 # Path to the directory to use as a basis for the build. The path is relative
 # to this YAML file.
 #
-# All files there end up available to the remote builder (e.g. a docker
-# daemon will see this directory as a context directory when building
-# the image).
+# Files there end up available to the remote builder (e.g. a docker daemon will
+# see this directory as a context directory when building the image).
+#
+# Repository's `.gitignore` files (but not global ones) are respected: if a file
+# is excluded by some `.gitignore`, it will not be sent to the docker.
 #
 # All symlinks there are resolved to their targets. Only +w and +x file mode
 # bits are preserved (all files have 0444 mode by default, +w adds additional

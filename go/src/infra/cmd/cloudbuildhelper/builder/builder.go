@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmd/cloudbuildhelper/fileset"
+	"infra/cmd/cloudbuildhelper/gitignore"
 	"infra/cmd/cloudbuildhelper/manifest"
 )
 
@@ -66,7 +67,11 @@ func (b *Builder) Build(ctx context.Context, m *manifest.Manifest) (*fileset.Set
 
 	if m.ContextDir != "" {
 		logging.Debugf(ctx, "Adding %q to the output set...", m.ContextDir)
-		if err := out.AddFromDisk(m.ContextDir, "."); err != nil {
+		excluder, err := gitignore.NewExcluder(m.ContextDir)
+		if err != nil {
+			return nil, errors.Annotate(err, "when loading .gitignore files").Err()
+		}
+		if err := out.AddFromDisk(m.ContextDir, ".", excluder); err != nil {
 			return nil, errors.Annotate(err, "failed to add contextdir %q to output set", m.ContextDir).Err()
 		}
 	}
@@ -124,5 +129,5 @@ func (inv *stepRunnerInv) addToOutput(ctx context.Context, src, dst string) erro
 	if strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return errors.Reason("the destination should be under the context directory, got %q", rel).Err()
 	}
-	return inv.Output.AddFromDisk(src, rel)
+	return inv.Output.AddFromDisk(src, rel, nil)
 }

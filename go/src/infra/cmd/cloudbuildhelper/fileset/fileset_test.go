@@ -40,9 +40,9 @@ func TestSet(t *testing.T) {
 		dir3.touch("f")
 
 		s := &Set{}
-		So(s.AddFromDisk(dir1.join(""), ""), ShouldBeNil)
-		So(s.AddFromDisk(dir2.join(""), ""), ShouldBeNil)
-		So(s.AddFromDisk(dir3.join(""), "dir/deep/"), ShouldBeNil)
+		So(s.AddFromDisk(dir1.join(""), "", nil), ShouldBeNil)
+		So(s.AddFromDisk(dir2.join(""), "", nil), ShouldBeNil)
+		So(s.AddFromDisk(dir3.join(""), "dir/deep/", nil), ShouldBeNil)
 		So(s.AddFromMemory("mem", nil, nil), ShouldBeNil)
 		So(s.Len(), ShouldEqual, 11)
 		So(collect(s), ShouldResemble, []string{
@@ -65,7 +65,7 @@ func TestSet(t *testing.T) {
 
 		dir1 := newTempDir(c)
 		dir1.put("f", "1", 0666)
-		So(s.AddFromDisk(dir1.join(""), ""), ShouldBeNil)
+		So(s.AddFromDisk(dir1.join(""), "", nil), ShouldBeNil)
 
 		files := s.Files()
 		So(files, ShouldHaveLength, 1)
@@ -73,7 +73,7 @@ func TestSet(t *testing.T) {
 
 		dir2 := newTempDir(c)
 		dir2.put("f", "2", 0666)
-		So(s.AddFromDisk(dir2.join(""), ""), ShouldBeNil)
+		So(s.AddFromDisk(dir2.join(""), "", nil), ShouldBeNil)
 
 		// Overwritten.
 		files = s.Files()
@@ -101,7 +101,7 @@ func TestSet(t *testing.T) {
 			dir := newTempDir(c)
 			dir.put("ro", "", 0444)
 			dir.put("rw", "", 0666)
-			So(s.AddFromDisk(dir.join(""), ""), ShouldBeNil)
+			So(s.AddFromDisk(dir.join(""), "", nil), ShouldBeNil)
 
 			files := s.Files()
 			So(files, ShouldHaveLength, 2)
@@ -115,7 +115,7 @@ func TestSet(t *testing.T) {
 			dir := newTempDir(c)
 			dir.put("n", "", 0666)
 			dir.put("y", "", 0777)
-			So(s.AddFromDisk(dir.join(""), ""), ShouldBeNil)
+			So(s.AddFromDisk(dir.join(""), "", nil), ShouldBeNil)
 
 			files := s.Files()
 			So(files, ShouldHaveLength, 2)
@@ -134,7 +134,7 @@ func TestSet(t *testing.T) {
 			dir.symlink("stage/broken", "broken") // skipped
 
 			s := &Set{}
-			So(s.AddFromDisk(dir.join("stage"), ""), ShouldBeNil)
+			So(s.AddFromDisk(dir.join("stage"), "", nil), ShouldBeNil)
 			So(collect(s), ShouldResemble, []string{
 				"D dirlink",
 				"F dirlink/a",

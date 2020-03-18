@@ -63,6 +63,9 @@ func (f *File) filePerm() os.FileMode {
 	return mode
 }
 
+// Excluder takes an absolute path to a file on disk and returns true or false.
+type Excluder func(absPath string, isDir bool) bool
+
 // Set represents a set of regular files and directories (no symlinks).
 //
 // Such set can be constructed from existing files on disk (perhaps scattered
@@ -110,13 +113,13 @@ func (s *Set) Add(f File) error {
 // A file or directory located at 'fsPath' on disk will become 'setPath' in
 // the set. Directories are added recursively. Symlinks are always expanded into
 // whatever they point to. Broken symlinks are silently skipped.
-func (s *Set) AddFromDisk(fsPath, setPath string) error {
+func (s *Set) AddFromDisk(fsPath, setPath string, exclude Excluder) error {
 	fsPath, err := filepath.Abs(fsPath)
 	if err != nil {
 		return err
 	}
 	setPath = path.Clean(filepath.ToSlash(setPath))
-	return s.addImpl(fsPath, setPath)
+	return s.addImpl(fsPath, setPath, exclude)
 }
 
 // AddFromMemory adds the given blob to the set as a file.
@@ -247,7 +250,7 @@ func (s *Set) ToTarGzFile(path string) (sha256hex string, err error) {
 ////////////////////////////////////////////////////////////////////////////////
 
 // addImpl implements AddFromDisk.
-func (s *Set) addImpl(fsPath, setPath string) error {
+func (s *Set) addImpl(fsPath, setPath string, exclude Excluder) error {
 	switch stat, err := os.Stat(fsPath); {
 	case os.IsNotExist(err):
 		if _, lerr := os.Lstat(fsPath); lerr == nil {
@@ -257,9 +260,15 @@ func (s *Set) addImpl(fsPath, setPath string) error {
 	case err != nil:
 		return err
 	case stat.Mode().IsRegular():
+		if exclude != nil && exclude(fsPath, false) {
+			return nil
+		}
 		return s.addReg(fsPath, setPath, stat)
 	case stat.Mode().IsDir():
-		return s.addDir(fsPath, setPath)
+		if exclude != nil && exclude(fsPath, true) {
+			return nil
+		}
+		return s.addDir(fsPath, setPath, exclude)
 	default:
 		return errors.Reason("file %q has unsupported type, its mode is %s", fsPath, stat.Mode()).Err()
 	}
@@ -277,7 +286,7 @@ func (s *Set) addReg(fsPath, setPath string, fi os.FileInfo) error {
 }
 
 // addDir recursively adds a directory to the set.
-func (s *Set) addDir(fsPath, setPath string) error {
+func (s *Set) addDir(fsPath, setPath string, exclude Excluder) error {
 	// Don't add the set root itself, it is always implied. Allowing it explicitly
 	// causes complication related to dealing with ".".
 	if setPath != "." {
@@ -297,7 +306,7 @@ func (s *Set) addDir(fsPath, setPath string) error {
 	f.Close()
 
 	for _, f := range files {
-		if err := s.addImpl(filepath.Join(fsPath, f), path.Join(setPath, f)); err != nil {
+		if err := s.addImpl(filepath.Join(fsPath, f), path.Join(setPath, f), exclude); err != nil {
 			return err
 		}
 	}
