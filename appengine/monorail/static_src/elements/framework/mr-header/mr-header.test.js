@@ -3,6 +3,9 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
+
+import {prpcClient} from 'prpc-client-instance.js';
 import {MrHeader} from './mr-header.js';
 
 
@@ -27,8 +30,6 @@ describe('mr-header', () => {
   });
 
   it('presentationConfig renders', async () => {
-    element.projectName = 'proj';
-    element.issueEntryUrl = 'https://google.com/test/';
     element.projectName = 'best-project';
     element.projectThumbnailUrl = 'http://images.google.com/';
     element.presentationConfig = {
@@ -40,12 +41,77 @@ describe('mr-header', () => {
     assert.equal(element.shadowRoot.querySelector('.project-logo').src,
         'http://images.google.com/');
 
-    assert.equal(element.shadowRoot.querySelector('.new-issue-link').href,
-        'https://google.com/test/');
+    assert.endsWith(element.shadowRoot.querySelector('.new-issue-link').href,
+        '/p/best-project/issues/entry');
 
     assert.equal(element.shadowRoot.querySelector('.project-selector').title,
         'The best project');
   });
+
+  describe('issueEntryUrl', () => {
+    let oldToken;
+
+    beforeEach(() => {
+      oldToken = prpcClient.token;
+      prpcClient.token = 'token1';
+
+      element.projectName = 'proj';
+
+      sinon.stub(element, '_origin').get(() => 'http://localhost');
+    });
+
+    afterEach(() => {
+      prpcClient.token = oldToken;
+    });
+
+    it('updates on project change', async () => {
+      await element.updateComplete;
+
+      assert.endsWith(element.shadowRoot.querySelector('.new-issue-link').href,
+          '/p/proj/issues/entry');
+
+      element.projectName = 'the-best-project';
+
+      await element.updateComplete;
+
+      assert.endsWith(element.shadowRoot.querySelector('.new-issue-link').href,
+          '/p/the-best-project/issues/entry');
+    });
+
+    it('generates wizard URL when customIssueEntryUrl defined', () => {
+      element.presentationConfig = {customIssueEntryUrl: 'https://issue.wizard'};
+      element.userProjects = {ownerOf: ['not-proj']};
+      element.userDisplayName = 'test@example.com';
+      assert.equal(element.issueEntryUrl,
+          'https://issue.wizard?token=token1&role=&' +
+          'continue=http://localhost/p/proj/issues/entry.do');
+    });
+
+    it('uses default issue filing URL when user is not logged in', () => {
+      element.presentationConfig = {customIssueEntryUrl: 'https://issue.wizard'};
+      element.userDisplayName = '';
+      assert.equal(element.issueEntryUrl, '/p/proj/issues/entry');
+    });
+
+    it('uses default issue filing URL when user is project owner', () => {
+      element.presentationConfig = {customIssueEntryUrl: 'https://issue.wizard'};
+      element.userProjects = {ownerOf: ['proj']};
+      assert.equal(element.issueEntryUrl, '/p/proj/issues/entry');
+    });
+
+    it('uses default issue filing URL when user is project member', () => {
+      element.presentationConfig = {customIssueEntryUrl: 'https://issue.wizard'};
+      element.userProjects = {memberOf: ['proj']};
+      assert.equal(element.issueEntryUrl, '/p/proj/issues/entry');
+    });
+
+    it('uses default issue filing URL when user is project contributor', () => {
+      element.presentationConfig = {customIssueEntryUrl: 'https://issue.wizard'};
+      element.userProjects = {contributorTo: ['proj']};
+      assert.equal(element.issueEntryUrl, '/p/proj/issues/entry');
+    });
+  });
+
 
   it('canAdministerProject is false when user is not logged in', () => {
     element.userDisplayName = '';

@@ -72,7 +72,6 @@ export class MrApp extends connectStore(LitElement) {
     return html`
       <mr-header
         .userDisplayName=${this.userDisplayName}
-        .issueEntryUrl=${this.issueEntryUrl}
         .loginUrl=${this.loginUrl}
         .logoutUrl=${this.logoutUrl}
       ></mr-header>
@@ -155,14 +154,6 @@ export class MrApp extends connectStore(LitElement) {
   /** @override */
   static get properties() {
     return {
-      /**
-       * Backend-generated URL for the page the user is redirected to
-       * for filing issues. This functionality is a bit complicated by the
-       * issue wizard which redirects non-project members to an
-       * authentiation flow for a separate App Engine app for the chromium
-       * project.
-       */
-      issueEntryUrl: {type: String},
       /**
        * Backend-generated URL for the page the user is directed to for login.
        */

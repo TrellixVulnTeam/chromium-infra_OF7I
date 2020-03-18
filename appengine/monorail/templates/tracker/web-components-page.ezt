@@ -11,7 +11,6 @@
 
 <mr-app [if-any logged_in_user]
   userDisplayName="[logged_in_user.email]"[end]
-  issueEntryUrl="[issue_entry_url]"
   loginUrl="[login_url]"
   logoutUrl="[logout_url]"
   versionBase="[version_base]"

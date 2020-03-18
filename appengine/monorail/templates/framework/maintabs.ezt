@@ -17,7 +17,6 @@
     projectName="[projectname]"
     loginUrl="[login_url]"
     logoutUrl="[logout_url]"
-    issueEntryUrl="[issue_entry_url]"
   ></mr-header>
 </div>
 [else]

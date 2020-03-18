@@ -9,6 +9,7 @@ import * as user from 'reducers/user.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 
+import {prpcClient} from 'prpc-client-instance.js';
 import 'elements/framework/mr-keystrokes/mr-keystrokes.js';
 import '../mr-dropdown/mr-dropdown.js';
 import '../mr-dropdown/mr-account-dropdown.js';
@@ -18,6 +19,12 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 import ClientLogger from 'monitoring/client-logger.js';
 
+const projectRoles = Object.freeze({
+  OWNER: 'Owner',
+  MEMBER: 'Member',
+  CONTRIBUTOR: 'Contributor',
+  NONE: '',
+});
 
 /**
  * `<mr-header>`
@@ -281,6 +288,63 @@ export class MrHeader extends connectStore(LitElement) {
     if (this.isSiteAdmin) return true;
     if (!this.userProjects || !this.userProjects.ownerOf) return false;
     return this.userProjects.ownerOf.includes(this.projectName);
+  }
+
+  /**
+   * @return {string} The name of the role the user has in the viewed project.
+   */
+  get roleInCurrentProject() {
+    if (!this.userProjects || !this.projectName) return projectRoles.NONE;
+    const {ownerOf = [], memberOf = [], contributorTo = []} = this.userProjects;
+
+    if (ownerOf.includes(this.projectName)) return projectRoles.OWNER;
+    if (memberOf.includes(this.projectName)) return projectRoles.MEMBER;
+    if (contributorTo.includes(this.projectName)) {
+      return projectRoles.CONTRIBUTOR;
+    }
+
+    return projectRoles.NONE;
+  }
+
+  // TODO(crbug.com/monorail/6891): Remove once we deprecate the old issue
+  // filing wizard.
+  /**
+   * @return {string} A URL for the page the issue filing wizard posts to.
+   */
+  get _wizardPostUrl() {
+    // The issue filing wizard posts to the legacy issue entry page's ".do"
+    // endpoint.
+    return `${this._origin}/p/${this.projectName}/issues/entry.do`;
+  }
+
+  /**
+   * @return {string} The domain name of the current page.
+   */
+  get _origin() {
+    return window.location.origin;
+  }
+
+  /**
+   * Computes the URL the user should see to a file an issue, accounting
+   * for the case where a project has a customIssueEntryUrl to navigate to
+   * the wizard as well.
+   * @return {string} The URL that "New issue" button goes to.
+   */
+  get issueEntryUrl() {
+    const config = this.presentationConfig;
+    const role = this.roleInCurrentProject;
+    const mayBeRedirectedToWizard = role === projectRoles.NONE;
+    if (!this.userDisplayName || !config || !config.customIssueEntryUrl ||
+        !mayBeRedirectedToWizard) {
+      return `/p/${this.projectName}/issues/entry`;
+    }
+
+    const token = prpcClient.token;
+
+    const customUrl = this.presentationConfig.customIssueEntryUrl;
+
+    return `${customUrl}?token=${token}&role=${
+      role}&continue=${this._wizardPostUrl}`;
   }
 
   /**

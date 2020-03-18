@@ -638,14 +638,12 @@ class Servlet(webapp2.RequestHandler):
     if mr.viewed_user_auth.user_view:
       viewed_username = mr.viewed_user_auth.user_view.username
 
-    issue_entry_url = 'entry'
     config = None
     if mr.project_id and self.services.config:
       with mr.profiler.Phase('getting config'):
         config = self.services.config.GetProjectConfig(mr.cnxn, mr.project_id)
       grid_x_attr = (mr.x or config.default_x_attr).lower()
       grid_y_attr = (mr.y or config.default_y_attr).lower()
-      issue_entry_url = _LoginOrIssueEntryURL(mr, config)
 
     viewing_self = mr.auth.user_id == mr.viewed_user_auth.user_id
     offer_saved_queries_subtab = (
@@ -772,8 +770,6 @@ class Servlet(webapp2.RequestHandler):
             None,
         'chart_mode':
             None,
-        'issue_entry_url':
-            issue_entry_url,
         'is_cross_project':
             ezt.boolean(False),
 
@@ -1001,17 +997,6 @@ def _ProjectIsRestricted(mr):
   """Return True if the mr has a 'private' project."""
   return (mr.project and
           mr.project.access != project_pb2.ProjectAccess.ANYONE)
-
-
-def _LoginOrIssueEntryURL(mr, config):
-  """Make a URL to sign in, if needed, on the way to entering an issue."""
-  issue_entry_url = servlet_helpers.ComputeIssueEntryURL(mr, config)
-  if mr.auth.user_id:
-    return issue_entry_url
-  else:
-    after_login_url = framework_helpers.FormatAbsoluteURL(
-        mr, urls.ISSUE_ENTRY_AFTER_LOGIN)
-    return _SafeCreateLoginURL(mr, after_login_url)
 
 
 def _SafeCreateLoginURL(mr, continue_url=None):

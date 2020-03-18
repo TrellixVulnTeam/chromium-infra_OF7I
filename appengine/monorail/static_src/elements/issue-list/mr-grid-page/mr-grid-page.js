@@ -59,7 +59,6 @@ export class MrGridPage extends connectStore(LitElement) {
   static get properties() {
     return {
       projectName: {type: String},
-      issueEntryUrl: {type: String},
       _queryParams: {type: Object},
       userDisplayName: {type: String},
       issues: {type: Array},
