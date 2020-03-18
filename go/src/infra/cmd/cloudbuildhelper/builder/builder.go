@@ -86,6 +86,8 @@ func (b *Builder) Build(ctx context.Context, m *manifest.Manifest) (*fileset.Set
 			runner = runCopyBuildStep
 		case *manifest.GoBuildStep:
 			runner = runGoBuildStep
+		case *manifest.RunBuildStep:
+			runner = runRunBuildStep
 		default:
 			panic("impossible, did you forget to implement a step?")
 		}

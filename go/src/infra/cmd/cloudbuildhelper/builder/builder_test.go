@@ -78,6 +78,15 @@ func TestBuilder(t *testing.T) {
 					{
 						"go_binary": "infra/cmd/cloudbuildhelper/builder/testing/helloworld",
 						"dest": "${contextdir}/gocmd"
+					},
+					{
+						"run": [
+							"go",
+							"run",
+							"infra/cmd/cloudbuildhelper/builder/testing/helloworld",
+							"${contextdir}/say_hi"
+						],
+						"outputs": ["${contextdir}/say_hi"]
 					}
 				]
 			}`)
@@ -90,7 +99,7 @@ func TestBuilder(t *testing.T) {
 				byName[f.Path] = f
 			}
 			So(names, ShouldResemble, []string{
-				"dir", "dir/f", "f1", "f2", "gocmd",
+				"dir", "dir/f", "f1", "f2", "gocmd", "say_hi",
 			})
 
 			r, err := byName["f1"].Body()

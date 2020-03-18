@@ -198,9 +198,11 @@ func (c *CloudBuildConfig) rebaseOnTop(b CloudBuildConfig) {
 // This struct is a "case class" with union of all supported build step kinds.
 // The chosen "case" is returned by Concrete() method.
 type BuildStep struct {
-	// Fields common to all build kinds.
+	// Fields common to two or more build step kinds.
 
 	// Dest specifies a location to put the result into.
+	//
+	// Applies to `copy` and `go_build` steps.
 	//
 	// Usually prefixed with "${contextdir}/" to indicate it is relative to
 	// the context directory.
@@ -220,6 +222,7 @@ type BuildStep struct {
 
 	CopyBuildStep `yaml:",inline"` // copy a file or directory into the output
 	GoBuildStep   `yaml:",inline"` // build go binary using "go build"
+	RunBuildStep  `yaml:",inline"` // run a command that modifies the checkout
 
 	manifest *Manifest         // the manifest that defined this step
 	index    int               // zero-based index of the step in its parent manifest
@@ -296,6 +299,75 @@ func (s *GoBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error
 		bs.Dest = "${contextdir}/" + path.Base(s.GoBinary)
 	}
 	bs.Dest, err = renderPath(bs.Dest, dirs)
+	return
+}
+
+// RunBuildStep indicates we want to run some arbitrary command.
+//
+// The command may modify the checkout or populate the context dir.
+type RunBuildStep struct {
+	// Run indicates a command to run along with all its arguments.
+	//
+	// Strings that start with "${contextdir}/" or "${manifestdir}/" will be
+	// rendered as absolute paths.
+	Run []string `yaml:"run,omitempty"`
+
+	// Cwd is a working directory to run the command in.
+	//
+	// Default is ${contextdir}.
+	Cwd string `yaml:"cwd,omitempty"`
+
+	// Outputs is a list of files or directories to put into the output.
+	//
+	// They are something that `run` should be generating.
+	//
+	// They are expected to be under "${contextdir}". A single output entry
+	// "${contextdir}/generated/file" is equivalent to a copy step that "picks up"
+	// the generated file:
+	//   - copy: ${contextdir}/generated/file
+	//     dest: ${contextdir}/generated/file
+	//
+	// If outputs are generated outside of the context directory, use `copy` steps
+	// explicitly.
+	Outputs []string
+}
+
+func (s *RunBuildStep) String() string { return fmt.Sprintf("run %q in %q", s.Run, s.Cwd) }
+
+func (s *RunBuildStep) isEmpty() bool { return len(s.Run) == 0 && s.Cwd == "" && len(s.Outputs) == 0 }
+
+func (s *RunBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error) {
+	if len(s.Run) == 0 {
+		return errors.Reason("bad `run` value: must not be empty").Err()
+	}
+
+	for i, val := range s.Run {
+		if isTemplatedPath(val) {
+			rel, err := renderPath(val, dirs)
+			if err != nil {
+				return errors.Annotate(err, "bad `run` argument #%d", i+1).Err()
+			}
+			// We are going to pass these arguments to a command with different cwd,
+			// need to make sure they are absolute.
+			if s.Run[i], err = filepath.Abs(rel); err != nil {
+				return errors.Annotate(err, "bad `run` argument #%d %q", i+1, rel).Err()
+			}
+		}
+	}
+
+	if s.Cwd == "" {
+		s.Cwd = "${contextdir}"
+	}
+	if s.Cwd, err = renderPath(s.Cwd, dirs); err != nil {
+		return errors.Annotate(err, "bad `cwd` value").Err()
+	}
+
+	for i, out := range s.Outputs {
+		if s.Outputs[i], err = renderPath(out, dirs); err != nil {
+			return errors.Annotate(err, "bad `output` value #%d", i+1).Err()
+		}
+	}
+
 	return
 }
 
@@ -477,7 +549,7 @@ func validateInfra(i Infra) error {
 // Doesn't touch any other fields.
 func wireStep(bs *BuildStep, m *Manifest, index int) error {
 	set := make([]ConcreteBuildStep, 0, 1)
-	for _, s := range []ConcreteBuildStep{&bs.CopyBuildStep, &bs.GoBuildStep} {
+	for _, s := range []ConcreteBuildStep{&bs.CopyBuildStep, &bs.GoBuildStep, &bs.RunBuildStep} {
 		if !s.isEmpty() {
 			set = append(set, s)
 		}
@@ -503,6 +575,12 @@ func normPath(p *string, cwd string) {
 			*p = filepath.Join(cwd, *p)
 		}
 	}
+}
+
+// isTemplatedPath is true if 'p' starts with "${<something>}[/]".
+func isTemplatedPath(p string) bool {
+	parts := strings.SplitN(p, "/", 2)
+	return strings.HasPrefix(parts[0], "${") && strings.HasSuffix(parts[0], "}")
 }
 
 // renderPath verifies `p` starts with "${<something>}[/]", replaces it with

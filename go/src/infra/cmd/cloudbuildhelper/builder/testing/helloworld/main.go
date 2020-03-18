@@ -4,8 +4,17 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 
 func main() {
-	fmt.Println("Hello, world")
+	fmt.Printf("Hello, world: %q\n", os.Args)
+	if len(os.Args) > 1 {
+		if err := ioutil.WriteFile(os.Args[1], []byte("Hello!"), 0600); err != nil {
+			panic(err)
+		}
+	}
 }

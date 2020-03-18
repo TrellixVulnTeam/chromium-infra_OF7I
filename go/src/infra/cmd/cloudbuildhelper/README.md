@@ -355,15 +355,21 @@ infra:
 # relative to the manifest YAML) or "${contextdir}/" (to indicate they are
 # relative to `contextdir` directory).
 build:
-  # Copy a file or directory into the context dir.
+  # Copy a file or directory into the output.
   - copy: "${manifestdir}/../../../src/stuff"
     dest: "${contextdir}/stuff"
 
   # Build and install a go binary given by its path relative to GOPATH.
   # All builds happen with CGO_ENABLED=0 GOOS=linux GOARCH=amd64.
   - go_binary: "go.chromium.org/cmd/something"
-    # Where to put it, defaults to go package name
+    # Where to put it in the output, defaults to go package name
     dest: "${contextdir}/something"
+
+  # Execute an arbitrary command and put new files it produces into the output.
+  - run: ["make", "something"]
+    cwd: "${contextdir}/somewhere"
+    outputs:
+      - "${contextdir}/somewhere/out"
 ```
 
 

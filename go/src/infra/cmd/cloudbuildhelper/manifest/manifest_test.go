@@ -114,6 +114,19 @@ func TestManifest(t *testing.T) {
 		})
 	})
 
+	Convey("Defaults in RunBuildStep", t, func() {
+		m, err := load(`{"name": "zzz", "contextdir": "ctx", "build": [
+				{"run": ["a", "b"]}
+			]}`, "root/1/2/3/4")
+		So(err, ShouldBeNil)
+		So(err, ShouldBeNil)
+		So(m.Build, ShouldHaveLength, 1)
+		So(m.Build[0].Concrete(), ShouldResemble, &RunBuildStep{
+			Run: []string{"a", "b"},
+			Cwd: filepath.FromSlash("root/1/2/3/4/ctx"),
+		})
+	})
+
 	Convey("Good infra", t, func() {
 		m, err := load(`{"name": "zzz", "contextdir": ".", "infra": {
 			"infra1": {"storage": "gs://bucket"},
