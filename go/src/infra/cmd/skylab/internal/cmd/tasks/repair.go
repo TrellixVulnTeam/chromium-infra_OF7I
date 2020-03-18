@@ -34,14 +34,16 @@ This command does not wait for the task to start running.`,
 		c := &repairRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.Flags.IntVar(&c.expirationMins, "expiration-mins", 10, "The expiration minutes of the repair request.")
 		return c
 	},
 }
 
 type repairRun struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  skycmdlib.EnvFlags
+	authFlags      authcli.Flags
+	envFlags       skycmdlib.EnvFlags
+	expirationMins int
 }
 
 func (c *repairRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -53,6 +55,10 @@ func (c *repairRun) Run(a subcommands.Application, args []string, env subcommand
 }
 
 func (c *repairRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	if c.expirationMins >= dayInMinutes {
+		return cmdlib.NewUsageError(c.Flags, "Expiration minutes (%d minutes) cannot exceed 1 day [%d minutes]", c.expirationMins, dayInMinutes)
+	}
+
 	ctx := cli.GetContext(a, c, env)
 	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
@@ -66,7 +72,7 @@ func (c *repairRun) innerRun(a subcommands.Application, args []string, env subco
 
 	repairAttemptID := uuid.New().String()
 	for _, host := range args {
-		id, err := createRepairTask(ctx, client, e, host, repairAttemptID)
+		id, err := createRepairTask(ctx, client, e, host, repairAttemptID, c.expirationMins)
 		if err != nil {
 			return err
 		}
@@ -76,11 +82,11 @@ func (c *repairRun) innerRun(a subcommands.Application, args []string, env subco
 	return nil
 }
 
-func createRepairTask(ctx context.Context, t *swarming.Client, e site.Environment, host, repairAttemptID string) (taskID string, err error) {
+func createRepairTask(ctx context.Context, t *swarming.Client, e site.Environment, host, repairAttemptID string, expirationMins int) (taskID string, err error) {
 	c := worker.Command{TaskName: "admin_repair"}
 	c.Config(e.Wrapped())
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
-		ExpirationSecs: 600,
+		ExpirationSecs: int64(expirationMins * 60),
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: c.Args(),
 			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
