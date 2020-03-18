@@ -51,6 +51,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 			Mimo:                   new(bool),
 			Servo:                  new(bool),
 			ServoState:             new(PeripheralState),
+			ServoType:              new(string),
 			Stylus:                 new(bool),
 			Wificell:               new(bool),
 			Router_802_11Ax:        new(bool),

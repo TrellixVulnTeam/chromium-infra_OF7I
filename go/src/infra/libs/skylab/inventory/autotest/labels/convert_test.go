@@ -41,6 +41,7 @@ peripherals: {
   stylus: true
   servo: true
   servo_state: 3
+  servo_type: "servo_v3"
   mimo: true
   huddly: true
   conductive: true
@@ -154,6 +155,7 @@ var fullLabels = []string{
 	"router_802_11ax",
 	"servo",
 	"servo_state:BROKEN",
+	"servo_type:servo_v3",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
 	"storage:storageval",
 	"stylus",
@@ -221,8 +223,38 @@ func TestConvertServoStateWorking(t *testing.T) {
 			got := Convert(&ls)
 			if diff := pretty.Compare(want, got); diff != "" {
 				t.Errorf(
-					"Convert servo_state %v got labels differ -want +got, %s",
+					"Convert servo_state %#v got labels differ -want +got, %s",
 					testCase.stateValue,
+					diff)
+			}
+		})
+	}
+}
+
+var servoTypeConvertStateCases = []struct {
+	val          string
+	expectLabels []string
+}{
+	{"", []string{}},
+	{"servo_v3", []string{"servo_type:servo_v3"}},
+	{"servo_V4", []string{"servo_type:servo_V4"}},
+	{"servo_micro", []string{"servo_type:servo_micro"}},
+}
+
+func TestConvertServoTypeWorking(t *testing.T) {
+	for _, testCase := range servoTypeConvertStateCases {
+		t.Run("ServoType value is "+string(testCase.val), func(t *testing.T) {
+			var ls inventory.SchedulableLabels
+			protoText := fmt.Sprintf(`peripherals: { servo_type: %#v}`, testCase.val)
+			if err := proto.UnmarshalText(protoText, &ls); err != nil {
+				t.Fatalf("Error unmarshalling example text: %s", err)
+			}
+			want := testCase.expectLabels
+			got := Convert(&ls)
+			if diff := pretty.Compare(want, got); diff != "" {
+				t.Errorf(
+					"Convert servo_type %#v got labels differ -want +got, %s",
+					testCase.val,
 					diff)
 			}
 		})
@@ -283,6 +315,39 @@ func TestRevertServoStateWithWrongValue(t *testing.T) {
 	}
 }
 
+var servoTypeRevertCaseTests = []struct {
+	labelValue  string
+	expectState string
+	isNil       bool
+}{
+	{"", "", true},
+	{"", "", false},
+	{"Servo_v", "Servo_v", false},
+	{"SerVO_v3", "SerVO_v3", false},
+}
+
+func TestRevertServoTypeValues(t *testing.T) {
+	for _, testCase := range servoTypeRevertCaseTests {
+		t.Run(testCase.labelValue, func(t *testing.T) {
+			want := inventory.NewSchedulableLabels()
+			*want.Peripherals.ServoType = testCase.expectState
+			var labels []string
+			if testCase.isNil {
+				labels = []string{}
+			} else {
+				labels = []string{fmt.Sprintf("servo_type:%s", testCase.labelValue)}
+			}
+			got := Revert(labels)
+			if diff := pretty.Compare(want, *got); diff != "" {
+				t.Errorf(
+					"Revert servo_type from %v made labels differ -want +got, %s",
+					testCase.labelValue,
+					diff)
+			}
+		})
+	}
+}
+
 func TestRevertFull(t *testing.T) {
 	t.Parallel()
 	var want inventory.SchedulableLabels
@@ -322,6 +387,7 @@ peripherals: {
   stylus: true
   servo: true
   servo_state: 3
+  servo_type: "servo_v4"
   mimo: true
   huddly: true
   conductive: true
@@ -435,6 +501,7 @@ var fullLabelsSpecial = []string{
 	"router_802_11ax",
 	"servo",
 	"servo_state:broken",
+	"servo_type:servo_v4",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
 	"storage:storageval",
 	"stylus",

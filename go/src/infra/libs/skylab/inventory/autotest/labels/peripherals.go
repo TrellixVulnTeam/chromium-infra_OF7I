@@ -81,6 +81,10 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 		}
 	}
 
+	if servoType := p.GetServoType(); servoType != "" {
+		labels = append(labels, fmt.Sprintf("servo_type:%s", servoType))
+	}
+
 	if n := p.GetWorkingBluetoothBtpeer(); n > 0 {
 		labels = append(labels, fmt.Sprintf("working_bluetooth_btpeer:%d", n))
 	}
@@ -153,6 +157,8 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 				servoState := inventory.PeripheralState(labSStateVal)
 				p.ServoState = &servoState
 			}
+		case "servo_type":
+			p.ServoType = &v
 		case "working_bluetooth_btpeer":
 			i, err := strconv.Atoi(v)
 			if err != nil {

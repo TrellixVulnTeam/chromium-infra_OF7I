@@ -346,7 +346,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 17
+// NEXT TAG: 18
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -378,6 +378,7 @@ message Peripherals {
   optional bool ptzpro2 = 12;
   optional bool servo = 2;
   optional PeripheralState servo_state = 15;
+  optional string servo_type = 17;
   optional bool stylus = 3;
   optional bool camerabox = 13;
   // Is this device inside a hermetic wifi cell.
