@@ -293,7 +293,8 @@ common {
 			ptzpro2: true
 			camerabox: true
 			servo: true
-   		servo_state: BROKEN
+			servo_state: BROKEN
+			servo_type: "v3"
 			wificell: true
 			router_802_11ax: true
 			working_bluetooth_btpeer: 3
@@ -597,8 +598,8 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 				Duts: []*inventory.DeviceUnderTest{d},
 			})
 			So(err, ShouldBeNil)
-			So(s1, ShouldEqual, s)
 			So(proto.Equal(&d1, d), ShouldBeTrue)
+			So(s1, ShouldEqual, s)
 		})
 	})
 

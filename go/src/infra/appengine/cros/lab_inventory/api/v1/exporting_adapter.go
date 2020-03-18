@@ -180,6 +180,11 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 			hint.TestHdmiaudio = &trueValue
 		}
 	}
+
+	if servo := d.GetServo(); servo != nil {
+		servoType := servo.GetServoType()
+		p.ServoType = &servoType
+	}
 }
 
 func setDutPools(labels *inventory.SchedulableLabels, inputPools []string) {

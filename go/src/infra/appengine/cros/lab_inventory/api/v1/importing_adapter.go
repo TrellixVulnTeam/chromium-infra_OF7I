@@ -267,10 +267,11 @@ func getPools(l *inventory.SchedulableLabels) []string {
 func createDut(devices *[]*lab.ChromeOSDevice, servoHostRegister servoHostRegister, olddata *inventory.CommonDeviceSpecs) error {
 	hwid, servo, rpm := importAttributes(olddata.GetAttributes())
 
-	peri := getPeripherals(olddata.Labels)
+	peri := getPeripherals(olddata.GetLabels())
 	if servo != nil {
-		servoHostRegister.addServo(servo)
+		servo.ServoType = olddata.GetLabels().GetPeripherals().GetServoType()
 		peri.Servo = servo
+		servoHostRegister.addServo(servo)
 	}
 	if rpm != nil {
 		peri.Rpm = rpm
