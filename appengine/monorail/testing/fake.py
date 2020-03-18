@@ -2134,12 +2134,21 @@ class TemplateService(object):
       labels=None, component_ids=None, admin_ids=None, field_values=None,
       phases=None, approval_values=None):
     template = tracker_bizobj.MakeIssueTemplate(
-        name, summary, status, owner_id, content, labels,
-        field_values or [], admin_ids or [],
-        component_ids, summary_must_be_edited=summary_must_be_edited,
+        name,
+        summary,
+        status,
+        owner_id,
+        content,
+        labels,
+        field_values or [],
+        admin_ids or [],
+        component_ids,
+        summary_must_be_edited=summary_must_be_edited,
         owner_defaults_to_member=owner_defaults_to_member,
         component_required=component_required,
-        members_only=members_only, phases=phases)
+        members_only=members_only,
+        phases=phases,
+        approval_values=approval_values)
     template.template_id = template_id
     self.templates_by_id[template_id] = template
     if project_id not in self.templates_by_project_id:

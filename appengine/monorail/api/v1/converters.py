@@ -14,6 +14,7 @@ from google.protobuf import timestamp_pb2
 from api import resource_name_converters as rnc
 from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import issue_objects_pb2
+from api.v1.api_proto import project_objects_pb2
 from api.v1.api_proto import user_objects_pb2
 
 from framework import exceptions
@@ -439,3 +440,149 @@ class Converter(object):
       return issue_objects_pb2.Issue.ApprovalStatus.Value('NOT_APPROVED')
     else:
       raise ValueError('Unrecognized tracker_pb2.ApprovalStatus enum')
+
+  # Projects
+
+  def ConvertIssueTemplates(self, project_id, templates):
+    # type: (int, Sequence[proto.tracker_pb2.TemplateDef]) ->
+    #     Sequence[api_proto.project_objects_pb2.IssueTemplate]
+    """Convert a Sequence of TemplateDefs to protoc IssueTemplates.
+
+    Args:
+      project_id: ID of the Project the templates belong to.
+      templates: Sequence of TemplateDef protorpc objects.
+
+    Returns:
+      Sequence of protoc IssueTemplate in the same order they are given in
+      `templates`. In the rare event that any templates are not found,
+      they will be omitted from the result.
+    """
+    api_templates = []
+
+    resource_names_dict = rnc.ConvertTemplateNames(
+        self.cnxn, project_id, [template.template_id for template in templates],
+        self.services)
+
+    project = self.services.project.GetProject(self.cnxn, project_id)
+
+    for template in templates:
+      if template.template_id not in resource_names_dict:
+        logging.info(
+            'Ignoring template referencing a non-existent template id: %s',
+            template.template_id)
+        continue
+      name = resource_names_dict.get(template.template_id)
+      summary_must_be_edited = template.summary_must_be_edited
+      template_privacy = self._ComputeTemplatePrivacy(template)
+      default_owner = self._ComputeTemplateDefaultOwner(template)
+      component_required = template.component_required
+      admins = self.ConvertUsers(template.admin_ids, project).values()
+      issue = self._FillIssueFromTemplate(template, project_id)
+      api_templates.append(
+          project_objects_pb2.IssueTemplate(
+              name=name,
+              issue=issue,
+              summary_must_be_edited=summary_must_be_edited,
+              template_privacy=template_privacy,
+              default_owner=default_owner,
+              component_required=component_required,
+              admins=admins))
+
+    return api_templates
+
+  def _FillIssueFromTemplate(self, template, project_id):
+    # type: (proto.tracker_pb2.TemplateDef, int) ->
+    #     api_proto.issue_objects_pb2.Issue
+    """Convert a TemplateDef to its embedded protoc Issue.
+
+    IssueTemplate does not set the following fields:
+      name
+      reporter
+      cc_users
+      blocked_on_issue_refs
+      blocking_issue_refs
+      create_time
+      close_time
+      modify_time
+      component_modify_time
+      status_modify_time
+      owner_modify_time
+      attachment_count
+      star_count
+
+    Args:
+      template: TemplateDef protorpc objects.
+      project_id: ID of the Project the template belongs to.
+
+    Returns:
+      protoc Issue filled with data from given `template`.
+    """
+    summary = template.summary
+    state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+    status = issue_objects_pb2.Issue.StatusValue(
+        status=template.status,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    description = template.content
+    owner = None
+    if template.owner_id is not None:
+      owner = issue_objects_pb2.Issue.UserValue(
+          user=rnc.ConvertUserNames([template.owner_id]).get(template.owner_id))
+    labels = []
+    for label in template.labels:
+      labels.append(
+          issue_objects_pb2.Issue.LabelValue(
+              label=label,
+              derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
+    components_dict = rnc.ConvertComponentDefNames(
+        self.cnxn, template.component_ids, project_id, self.services)
+    components = []
+    for component_resource_name in components_dict.values():
+      components.append(
+          issue_objects_pb2.Issue.ComponentValue(
+              component=component_resource_name,
+              derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
+    field_values = self.ConvertFieldValues(
+        template.field_values, project_id, template.phases)
+    approval_values = self.ConvertApprovalValues(
+        template.approval_values, project_id, template.phases)
+    phases = self._ComputeTemplatePhases(template)
+
+    filled_issue = issue_objects_pb2.Issue(
+        summary=summary,
+        state=state,
+        status=status,
+        description=description,
+        owner=owner,
+        labels=labels,
+        components=components,
+        field_values=field_values,
+        approval_values=approval_values,
+        phases=phases)
+    return filled_issue
+
+  def _ComputeTemplatePrivacy(self, template):
+    # type: (proto.tracker_pb2.TemplateDef) ->
+    #     api_proto.project_objects_pb2.IssueTemplate.TemplatePrivacy
+    """Convert a protorpc TemplateDef to its protoc TemplatePrivacy."""
+    if template.members_only:
+      return project_objects_pb2.IssueTemplate.TemplatePrivacy.Value(
+          'MEMBERS_ONLY')
+    else:
+      return project_objects_pb2.IssueTemplate.TemplatePrivacy.Value('PUBLIC')
+
+  def _ComputeTemplateDefaultOwner(self, template):
+    # type: (proto.tracker_pb2.TemplateDef) ->
+    #     api_proto.project_objects_pb2.IssueTemplate.DefaultOwner
+    """Convert a protorpc TemplateDef to its protoc DefaultOwner."""
+    if template.owner_defaults_to_member:
+      return project_objects_pb2.IssueTemplate.DefaultOwner.Value(
+          'PROJECT_MEMBER_REPORTER')
+    else:
+      return project_objects_pb2.IssueTemplate.DefaultOwner.Value(
+          'DEFAULT_OWNER_UNSPECIFIED')
+
+  def _ComputeTemplatePhases(self, template):
+    # type: (proto.tracker_pb2.TemplateDef) -> Sequence[str]
+    """Convert a protorpc TemplateDef to its sorted string phases."""
+    sorted_phases = sorted(template.phases, key=lambda phase: phase.rank)
+    return [phase.name for phase in sorted_phases]

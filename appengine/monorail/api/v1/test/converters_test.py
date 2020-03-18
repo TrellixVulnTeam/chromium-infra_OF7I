@@ -16,6 +16,7 @@ from api.v1 import converters
 from api.v1.api_proto import feature_objects_pb2
 from api.v1.api_proto import issue_objects_pb2
 from api.v1.api_proto import user_objects_pb2
+from api.v1.api_proto import project_objects_pb2
 from framework import authdata
 from framework import exceptions
 from framework import monorailcontext
@@ -33,7 +34,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         project=fake.ProjectService(),
         usergroup=fake.UserGroupService(),
         user=fake.UserService(),
-        config=fake.ConfigService())
+        config=fake.ConfigService(),
+        template=fake.TemplateService())
     self.cnxn = fake.MonorailConnection()
     self.mc = monorailcontext.MonorailContext(self.services, cnxn=self.cnxn)
     self.converter = converters.Converter(self.mc, self.services)
@@ -84,6 +86,52 @@ class ConverterFunctionsTest(unittest.TestCase):
         'APPROVAL_TYPE', None, None, None, None, None, None, None, None, None,
         None, None, None, None, None, [], [])
     self.dne_field_def_id = 999999
+    self.fv_1_value = 'some_string_field_value'
+    self.fv_1 = fake.MakeFieldValue(
+        field_id=self.field_def_1, str_value=self.fv_1_value, derived=False)
+    self.phase_1_id = 123123
+    self.phase_1 = fake.MakePhase(self.phase_1_id, name='some phase name')
+    self.av_1 = fake.MakeApprovalValue(
+        self.approval_def_1_id,
+        setter_id=self.user_1.user_id,
+        set_on=self.PAST_TIME,
+        approver_ids=[self.user_2.user_id],
+        phase_id=self.phase_1_id)
+    self.av_2 = fake.MakeApprovalValue(
+        self.approval_def_1_id,
+        setter_id=self.user_1.user_id,
+        set_on=self.PAST_TIME,
+        approver_ids=[self.user_2.user_id])
+    self.template_0 = self.services.template.TestAddIssueTemplateDef(
+        11110, self.project_1.project_id, 'template0')
+    self.template_1 = self.services.template.TestAddIssueTemplateDef(
+        11111,
+        self.project_1.project_id,
+        'template1',
+        content='foobar',
+        summary='foo',
+        admin_ids=[self.user_2.user_id],
+        owner_id=self.user_1.user_id,
+        labels=['pri-1'],
+        component_ids=[654],
+        field_values=[self.fv_1],
+        approval_values=[self.av_1],
+        phases=[self.phase_1])
+    self.template_2 = self.services.template.TestAddIssueTemplateDef(
+        11112,
+        self.project_1.project_id,
+        'template2',
+        members_only=True,
+        owner_defaults_to_member=True)
+    self.template_3 = self.services.template.TestAddIssueTemplateDef(
+        11113,
+        self.project_1.project_id,
+        'template3',
+        field_values=[self.fv_1],
+        approval_values=[self.av_2],
+    )
+    self.dne_template = tracker_pb2.TemplateDef(
+        name='dne_template_name', template_id=11114)
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -437,26 +485,55 @@ class ConverterFunctionsTest(unittest.TestCase):
     set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserNames([self.user_1.user_id]).get(
         self.user_1.user_id)
-    phase_name = 'some phase name'
-    phase_id = 123123
-    phase = fake.MakePhase(phase_id, name=phase_name)
+    phase = fake.MakePhase(self.phase_1_id, name=self.phase_1.name)
     expected = issue_objects_pb2.Issue.ApprovalValue(
         name=name,
         approvers=approvers,
         status=status,
         set_time=set_time,
         setter=setter,
-        phase=phase_name)
+        phase=self.phase_1.name)
 
     approval_value = fake.MakeApprovalValue(
         self.approval_def_1_id,
         setter_id=self.user_1.user_id,
         set_on=self.PAST_TIME,
         approver_ids=[self.user_2.user_id],
-        phase_id=phase_id)
+        phase_id=self.phase_1_id)
 
     output = self.converter.ConvertApprovalValues(
         [approval_value], self.project_1.project_id, [phase])
+    self.assertEqual([expected], output)
+
+  def testConvertApprovalValues_NoPhase(self):
+    name = rnc.ConvertApprovalDefNames(
+        self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
+        self.services).get(self.approval_def_1_id)
+    approvers = [
+        rnc.ConvertUserNames([self.user_2.user_id]).get(self.user_2.user_id)
+    ]
+    status = issue_objects_pb2.Issue.ApprovalStatus.Value(
+        'APPROVAL_STATUS_UNSPECIFIED')
+    set_time = timestamp_pb2.Timestamp()
+    set_time.FromSeconds(self.PAST_TIME)
+    setter = rnc.ConvertUserNames([self.user_1.user_id]).get(
+        self.user_1.user_id)
+    expected = issue_objects_pb2.Issue.ApprovalValue(
+        name=name,
+        approvers=approvers,
+        status=status,
+        set_time=set_time,
+        setter=setter)
+
+    approval_value = fake.MakeApprovalValue(
+        self.approval_def_1_id,
+        setter_id=self.user_1.user_id,
+        set_on=self.PAST_TIME,
+        approver_ids=[self.user_2.user_id],
+        phase_id=self.phase_1_id)
+
+    output = self.converter.ConvertApprovalValues(
+        [approval_value], self.project_1.project_id, [])
     self.assertEqual([expected], output)
 
   def testConvertApprovalValues_Empty(self):
@@ -520,3 +597,137 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NOT_APPROVED),
         issue_objects_pb2.Issue.ApprovalStatus.Value('NOT_APPROVED'))
+
+  def test_ComputeTemplatePrivacy_PUBLIC(self):
+    self.assertEqual(
+        self.converter._ComputeTemplatePrivacy(self.template_1),
+        project_objects_pb2.IssueTemplate.TemplatePrivacy.Value('PUBLIC'))
+
+  def test_ComputeTemplatePrivacy_MEMBERS_ONLY(self):
+    self.assertEqual(
+        self.converter._ComputeTemplatePrivacy(self.template_2),
+        project_objects_pb2.IssueTemplate.TemplatePrivacy.Value('MEMBERS_ONLY'))
+
+  def test_ComputeTemplateDefaultOwner_UNSPECIFIED(self):
+    self.assertEqual(
+        self.converter._ComputeTemplateDefaultOwner(self.template_1),
+        project_objects_pb2.IssueTemplate.DefaultOwner.Value(
+            'DEFAULT_OWNER_UNSPECIFIED'))
+
+  def test_ComputeTemplateDefaultOwner_REPORTER(self):
+    self.assertEqual(
+        self.converter._ComputeTemplateDefaultOwner(self.template_2),
+        project_objects_pb2.IssueTemplate.DefaultOwner.Value(
+            'PROJECT_MEMBER_REPORTER'))
+
+  def test_ComputeTemplatePhases(self):
+    """It sorts by rank"""
+    phase1 = fake.MakePhase(123111, name='phase1name', rank=3)
+    phase2 = fake.MakePhase(123112, name='phase2name', rank=2)
+    phase3 = fake.MakePhase(123113, name='phase3name', rank=1)
+    template_3 = self.services.template.TestAddIssueTemplateDef(
+        11115,
+        self.project_1.project_id,
+        'template5',
+        phases=[phase1, phase2, phase3])
+    expected = ['phase3name', 'phase2name', 'phase1name']
+    self.assertEqual(
+        self.converter._ComputeTemplatePhases(template_3), expected)
+
+  def test_ComputeTemplatePhases_EMPTY(self):
+    self.assertEqual(self.converter._ComputeTemplatePhases(self.template_0), [])
+
+  def test_FillIssueFromTemplate(self):
+    result = self.converter._FillIssueFromTemplate(
+        self.template_1, self.project_1.project_id)
+    self.assertFalse(result.name)
+    self.assertEqual(result.summary, self.template_1.summary)
+    self.assertEqual(
+        result.state, issue_objects_pb2.IssueContentState.Value('ACTIVE'))
+    self.assertEqual(result.status.status, 'New')
+    self.assertEqual(result.description, self.template_1.content)
+    self.assertFalse(result.reporter)
+    self.assertEqual(result.owner.user, 'users/{}'.format(self.user_1.user_id))
+    self.assertEqual(len(result.cc_users), 0)
+    self.assertFalse(result.cc_users)
+    self.assertEqual(len(result.labels), 1)
+    self.assertEqual(result.labels[0].label, self.template_1.labels[0])
+    self.assertEqual(
+        result.labels[0].derivation,
+        issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(len(result.components), 1)
+    self.assertEqual(
+        result.components[0].component, 'projects/{}/componentDefs/{}'.format(
+            self.project_1.project_name, self.template_1.component_ids[0]))
+    self.assertEqual(
+        result.components[0].derivation,
+        issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(len(result.field_values), 1)
+    self.assertEqual(
+        result.field_values[0].field, 'projects/{}/fieldDefs/{}'.format(
+            self.project_1.project_name, self.field_def_1_name))
+    self.assertEqual(result.field_values[0].value, self.fv_1_value)
+    self.assertEqual(
+        result.field_values[0].derivation,
+        issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertFalse(result.blocked_on_issue_refs)
+    self.assertFalse(result.blocking_issue_refs)
+    self.assertFalse(result.attachment_count)
+    self.assertFalse(result.star_count)
+    self.assertEqual(len(result.approval_values), 1)
+    self.assertEqual(len(result.approval_values[0].approvers), 1)
+    self.assertEqual(
+        result.approval_values[0].approvers[0], 'users/{}'.format(
+            self.user_2.user_id))
+    self.assertEqual(result.approval_values[0].phase, self.phase_1.name)
+    self.assertEqual(len(result.phases), 1)
+    self.assertEqual(result.phases[0], self.phase_1.name)
+
+  def test_FillIssueFromTemplate_NoPhase(self):
+    result = self.converter._FillIssueFromTemplate(
+        self.template_3, self.project_1.project_id)
+    self.assertEqual(len(result.field_values), 1)
+    self.assertEqual(
+        result.field_values[0].field, 'projects/{}/fieldDefs/{}'.format(
+            self.project_1.project_name, self.field_def_1_name))
+    self.assertEqual(result.field_values[0].value, self.fv_1_value)
+    self.assertEqual(
+        result.field_values[0].derivation,
+        issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(len(result.approval_values), 1)
+    self.assertEqual(len(result.approval_values[0].approvers), 1)
+    self.assertEqual(
+        result.approval_values[0].approvers[0], 'users/{}'.format(
+            self.user_2.user_id))
+    self.assertEqual(result.approval_values[0].phase, '')
+    self.assertEqual(len(result.phases), 0)
+
+  def testConvertIssueTemplates(self):
+    result = self.converter.ConvertIssueTemplates(
+        self.project_1.project_id, [self.template_1])
+    self.assertEqual(len(result), 1)
+    actual = result[0]
+    self.assertEqual(
+        actual.name, 'projects/{}/templates/{}'.format(
+            self.project_1.project_name, self.template_1.name))
+    self.assertEqual(actual.summary_must_be_edited, False)
+    self.assertEqual(
+        actual.template_privacy,
+        project_objects_pb2.IssueTemplate.TemplatePrivacy.Value('PUBLIC'))
+    self.assertEqual(
+        actual.default_owner,
+        project_objects_pb2.IssueTemplate.DefaultOwner.Value(
+            'DEFAULT_OWNER_UNSPECIFIED'))
+    self.assertEqual(actual.component_required, False)
+    self.assertEqual(len(actual.admins), 1)
+    self.assertEqual(
+        actual.admins[0].name, 'users/{}'.format(self.user_2.user_id))
+    self.assertEqual(
+        actual.issue,
+        self.converter._FillIssueFromTemplate(
+            self.template_1, self.project_1.project_id))
+
+  def testConvertIssueTemplates_IgnoresNonExistentTemplate(self):
+    result = self.converter.ConvertIssueTemplates(
+        self.project_1.project_id, [self.dne_template])
+    self.assertEqual(len(result), 0)

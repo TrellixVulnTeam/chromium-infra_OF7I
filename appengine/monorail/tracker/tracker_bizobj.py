@@ -528,9 +528,21 @@ def ConvertDictToTemplate(template_dict):
 
 
 def MakeIssueTemplate(
-    name, summary, status, owner_id, content, labels, field_values, admin_ids,
-    component_ids, summary_must_be_edited=None, owner_defaults_to_member=None,
-    component_required=None, members_only=None, phases=None):
+    name,
+    summary,
+    status,
+    owner_id,
+    content,
+    labels,
+    field_values,
+    admin_ids,
+    component_ids,
+    summary_must_be_edited=None,
+    owner_defaults_to_member=None,
+    component_required=None,
+    members_only=None,
+    phases=None,
+    approval_values=None):
   """Make an issue template PB."""
   template = tracker_pb2.TemplateDef()
   template.name = name
@@ -545,6 +557,7 @@ def MakeIssueTemplate(
   template.labels = labels or []
   template.admin_ids = admin_ids
   template.component_ids = component_ids or []
+  template.approval_values = approval_values or []
 
   if summary_must_be_edited is not None:
     template.summary_must_be_edited = summary_must_be_edited

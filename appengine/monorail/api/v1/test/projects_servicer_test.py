@@ -13,6 +13,8 @@ from api import resource_name_converters as rnc
 from api.v1 import projects_servicer
 from api.v1 import converters
 from api.v1.api_proto import projects_pb2
+from api.v1.api_proto import project_objects_pb2
+from api.v1.api_proto import issue_objects_pb2
 from framework import exceptions
 from framework import monorailcontext
 from framework import permissions
@@ -40,11 +42,14 @@ class ProjectsServicerTest(unittest.TestCase):
     self.project_1 = self.services.project.TestAddProject(
         'proj', project_id=789)
     self.template_1 = self.services.template.TestAddIssueTemplateDef(
-        123, 789, 'template_1_name')
+        123, 789, 'template_1_name', content='foo bar', summary='foo')
     self.project_1_resource_name = 'projects/proj'
+    self.converter = None
 
-  def CallWrapped(self, wrapped_handler, *args, **kwargs):
-    return wrapped_handler.wrapped(self.projects_svcr, *args, **kwargs)
+  def CallWrapped(self, wrapped_handler, mc, *args, **kwargs):
+    self.converter = converters.Converter(mc, self.services)
+    self.projects_svcr.converter = self.converter
+    return wrapped_handler.wrapped(self.projects_svcr, mc, *args, **kwargs)
 
   def testListIssueTemplates(self):
     """We can list a project's IssueTemplates."""
@@ -55,7 +60,25 @@ class ProjectsServicerTest(unittest.TestCase):
     response = self.CallWrapped(
         self.projects_svcr.ListIssueTemplates, mc, request)
 
-    # TODO(crbug.com/monorail/7216): Replace after implementation
-    expected = []
+    expected_issue = issue_objects_pb2.Issue(
+        summary=self.template_1.summary,
+        state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+        status=issue_objects_pb2.Issue.StatusValue(
+            status=self.template_1.status,
+            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')),
+        description=self.template_1.content)
+
+    expected_template = project_objects_pb2.IssueTemplate(
+        name='projects/{}/templates/{}'.format(
+            self.project_1.project_name, self.template_1.name),
+        issue=expected_issue,
+        summary_must_be_edited=False,
+        template_privacy=project_objects_pb2.IssueTemplate.TemplatePrivacy
+        .Value('PUBLIC'),
+        default_owner=project_objects_pb2.IssueTemplate.DefaultOwner.Value(
+            'DEFAULT_OWNER_UNSPECIFIED'),
+        component_required=False)
+
     self.assertEqual(
-        response, projects_pb2.ListIssueTemplatesResponse(templates=expected))
+        response,
+        projects_pb2.ListIssueTemplatesResponse(templates=[expected_template]))
