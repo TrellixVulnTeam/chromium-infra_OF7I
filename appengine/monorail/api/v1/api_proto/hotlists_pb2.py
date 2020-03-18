@@ -25,7 +25,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1f\x61pi/v1/api_proto/hotlists.proto\x12\x0bmonorail.v1\x1a&api/v1/api_proto/feature_objects.proto\x1a google/protobuf/field_mask.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a)google_proto/google/api/annotations.proto\"@\n\x11GetHotlistRequest\x12+\n\x04name\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\"\x92\x01\n\x14UpdateHotlistRequest\x12\x44\n\x07hotlist\x18\x01 \x01(\x0b\x32\x14.monorail.v1.HotlistB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\"\x85\x01\n\x17ListHotlistItemsRequest\x12\x31\n\x06parent\x18\x01 \x01(\tB!\xe0\x41\x02\xfa\x41\x1b\x12\x19\x61pi.crbug.com/HotlistItem\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x10\n\x08order_by\x18\x03 \x01(\t\x12\x12\n\npage_token\x18\x04 \x01(\t\"\\\n\x18ListHotlistItemsResponse\x12\'\n\x05items\x18\x01 \x03(\x0b\x32\x18.monorail.v1.HotlistItem\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xa0\x01\n\x19RerankHotlistItemsRequest\x12+\n\x04name\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\xe0\x41\x02\x12\x38\n\rhotlist_items\x18\x02 \x03(\tB!\xfa\x41\x1b\n\x19\x61pi.crbug.com/HotlistItem\xe0\x41\x02\x12\x1c\n\x0ftarget_position\x18\x03 \x01(\rB\x03\xe0\x41\x02\"\x8d\x01\n\x16\x41\x64\x64HotlistItemsRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\x12+\n\x06issues\x18\x02 \x03(\tB\x1b\xe0\x41\x02\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\x12\x17\n\x0ftarget_position\x18\x03 \x01(\r\"w\n\x19RemoveHotlistItemsRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\x12+\n\x06issues\x18\x02 \x03(\tB\x1b\xe0\x41\x02\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue2\xd2\x06\n\x08Hotlists\x12t\n\nGetHotlist\x12\x1e.monorail.v1.GetHotlistRequest\x1a\x14.monorail.v1.Hotlist\"0\x82\xd3\xe4\x93\x02*\"%/prpc/monorail.v1.Hotlists/GetHotlist:\x01*\x12}\n\rUpdateHotlist\x12!.monorail.v1.UpdateHotlistRequest\x1a\x14.monorail.v1.Hotlist\"3\x82\xd3\xe4\x93\x02-\"(/prpc/monorail.v1.Hotlists/UpdateHotlist:\x01*\x12|\n\rDeleteHotlist\x12\x1e.monorail.v1.GetHotlistRequest\x1a\x16.google.protobuf.Empty\"3\x82\xd3\xe4\x93\x02-\"(/prpc/monorail.v1.Hotlists/DeleteHotlist:\x01*\x12\x97\x01\n\x10ListHotlistItems\x12$.monorail.v1.ListHotlistItemsRequest\x1a%.monorail.v1.ListHotlistItemsResponse\"6\x82\xd3\xe4\x93\x02\x30\"+/prpc/monorail.v1.Hotlists/ListHotlistItems:\x01*\x12\x8e\x01\n\x12RerankHotlistItems\x12&.monorail.v1.RerankHotlistItemsRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x02\x32\"-/prpc/monorail.v1.Hotlists/RerankHotlistItems:\x01*\x12P\n\x0f\x41\x64\x64HotlistItems\x12#.monorail.v1.AddHotlistItemsRequest\x1a\x16.google.protobuf.Empty\"\x00\x12V\n\x12RemoveHotlistItems\x12&.monorail.v1.RemoveHotlistItemsRequest\x1a\x16.google.protobuf.Empty\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x1f\x61pi/v1/api_proto/hotlists.proto\x12\x0bmonorail.v1\x1a&api/v1/api_proto/feature_objects.proto\x1a google/protobuf/field_mask.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a)google_proto/google/api/annotations.proto\"@\n\x11GetHotlistRequest\x12+\n\x04name\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\"\x92\x01\n\x14UpdateHotlistRequest\x12\x44\n\x07hotlist\x18\x01 \x01(\x0b\x32\x14.monorail.v1.HotlistB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\"\x85\x01\n\x17ListHotlistItemsRequest\x12\x31\n\x06parent\x18\x01 \x01(\tB!\xe0\x41\x02\xfa\x41\x1b\x12\x19\x61pi.crbug.com/HotlistItem\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x10\n\x08order_by\x18\x03 \x01(\t\x12\x12\n\npage_token\x18\x04 \x01(\t\"\\\n\x18ListHotlistItemsResponse\x12\'\n\x05items\x18\x01 \x03(\x0b\x32\x18.monorail.v1.HotlistItem\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xa0\x01\n\x19RerankHotlistItemsRequest\x12+\n\x04name\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\xe0\x41\x02\x12\x38\n\rhotlist_items\x18\x02 \x03(\tB!\xfa\x41\x1b\n\x19\x61pi.crbug.com/HotlistItem\xe0\x41\x02\x12\x1c\n\x0ftarget_position\x18\x03 \x01(\rB\x03\xe0\x41\x02\"\x8d\x01\n\x16\x41\x64\x64HotlistItemsRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\x12+\n\x06issues\x18\x02 \x03(\tB\x1b\xe0\x41\x02\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\x12\x17\n\x0ftarget_position\x18\x03 \x01(\r\"w\n\x19RemoveHotlistItemsRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\x12+\n\x06issues\x18\x02 \x03(\tB\x1b\xe0\x41\x02\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\"w\n\x1bRemoveHotlistEditorsRequest\x12+\n\x04name\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Hotlist\x12+\n\x07\x65\x64itors\x18\x02 \x03(\tB\x1a\xe0\x41\x02\xfa\x41\x14\n\x12\x61pi.crbug.com/User2\xae\x07\n\x08Hotlists\x12t\n\nGetHotlist\x12\x1e.monorail.v1.GetHotlistRequest\x1a\x14.monorail.v1.Hotlist\"0\x82\xd3\xe4\x93\x02*\"%/prpc/monorail.v1.Hotlists/GetHotlist:\x01*\x12}\n\rUpdateHotlist\x12!.monorail.v1.UpdateHotlistRequest\x1a\x14.monorail.v1.Hotlist\"3\x82\xd3\xe4\x93\x02-\"(/prpc/monorail.v1.Hotlists/UpdateHotlist:\x01*\x12|\n\rDeleteHotlist\x12\x1e.monorail.v1.GetHotlistRequest\x1a\x16.google.protobuf.Empty\"3\x82\xd3\xe4\x93\x02-\"(/prpc/monorail.v1.Hotlists/DeleteHotlist:\x01*\x12\x97\x01\n\x10ListHotlistItems\x12$.monorail.v1.ListHotlistItemsRequest\x1a%.monorail.v1.ListHotlistItemsResponse\"6\x82\xd3\xe4\x93\x02\x30\"+/prpc/monorail.v1.Hotlists/ListHotlistItems:\x01*\x12\x8e\x01\n\x12RerankHotlistItems\x12&.monorail.v1.RerankHotlistItemsRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x02\x32\"-/prpc/monorail.v1.Hotlists/RerankHotlistItems:\x01*\x12P\n\x0f\x41\x64\x64HotlistItems\x12#.monorail.v1.AddHotlistItemsRequest\x1a\x16.google.protobuf.Empty\"\x00\x12V\n\x12RemoveHotlistItems\x12&.monorail.v1.RemoveHotlistItemsRequest\x1a\x16.google.protobuf.Empty\"\x00\x12Z\n\x14RemoveHotlistEditors\x12(.monorail.v1.RemoveHotlistEditorsRequest\x1a\x16.google.protobuf.Empty\"\x00\x62\x06proto3')
   ,
   dependencies=[api_dot_v1_dot_api__proto_dot_feature__objects__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,])
 
@@ -318,6 +318,44 @@ _REMOVEHOTLISTITEMSREQUEST = _descriptor.Descriptor(
   serialized_end=1151,
 )
 
+
+_REMOVEHOTLISTEDITORSREQUEST = _descriptor.Descriptor(
+  name='RemoveHotlistEditorsRequest',
+  full_name='monorail.v1.RemoveHotlistEditorsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='monorail.v1.RemoveHotlistEditorsRequest.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\340A\002\372A\027\n\025api.crbug.com/Hotlist'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='editors', full_name='monorail.v1.RemoveHotlistEditorsRequest.editors', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\340A\002\372A\024\n\022api.crbug.com/User'), file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1153,
+  serialized_end=1272,
+)
+
 _UPDATEHOTLISTREQUEST.fields_by_name['hotlist'].message_type = api_dot_v1_dot_api__proto_dot_feature__objects__pb2._HOTLIST
 _UPDATEHOTLISTREQUEST.fields_by_name['update_mask'].message_type = google_dot_protobuf_dot_field__mask__pb2._FIELDMASK
 _LISTHOTLISTITEMSRESPONSE.fields_by_name['items'].message_type = api_dot_v1_dot_api__proto_dot_feature__objects__pb2._HOTLISTITEM
@@ -328,6 +366,7 @@ DESCRIPTOR.message_types_by_name['ListHotlistItemsResponse'] = _LISTHOTLISTITEMS
 DESCRIPTOR.message_types_by_name['RerankHotlistItemsRequest'] = _RERANKHOTLISTITEMSREQUEST
 DESCRIPTOR.message_types_by_name['AddHotlistItemsRequest'] = _ADDHOTLISTITEMSREQUEST
 DESCRIPTOR.message_types_by_name['RemoveHotlistItemsRequest'] = _REMOVEHOTLISTITEMSREQUEST
+DESCRIPTOR.message_types_by_name['RemoveHotlistEditorsRequest'] = _REMOVEHOTLISTEDITORSREQUEST
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 GetHotlistRequest = _reflection.GeneratedProtocolMessageType('GetHotlistRequest', (_message.Message,), dict(
@@ -379,6 +418,13 @@ RemoveHotlistItemsRequest = _reflection.GeneratedProtocolMessageType('RemoveHotl
   ))
 _sym_db.RegisterMessage(RemoveHotlistItemsRequest)
 
+RemoveHotlistEditorsRequest = _reflection.GeneratedProtocolMessageType('RemoveHotlistEditorsRequest', (_message.Message,), dict(
+  DESCRIPTOR = _REMOVEHOTLISTEDITORSREQUEST,
+  __module__ = 'api.v1.api_proto.hotlists_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.RemoveHotlistEditorsRequest)
+  ))
+_sym_db.RegisterMessage(RemoveHotlistEditorsRequest)
+
 
 _GETHOTLISTREQUEST.fields_by_name['name']._options = None
 _UPDATEHOTLISTREQUEST.fields_by_name['hotlist']._options = None
@@ -391,6 +437,8 @@ _ADDHOTLISTITEMSREQUEST.fields_by_name['parent']._options = None
 _ADDHOTLISTITEMSREQUEST.fields_by_name['issues']._options = None
 _REMOVEHOTLISTITEMSREQUEST.fields_by_name['parent']._options = None
 _REMOVEHOTLISTITEMSREQUEST.fields_by_name['issues']._options = None
+_REMOVEHOTLISTEDITORSREQUEST.fields_by_name['name']._options = None
+_REMOVEHOTLISTEDITORSREQUEST.fields_by_name['editors']._options = None
 
 _HOTLISTS = _descriptor.ServiceDescriptor(
   name='Hotlists',
@@ -398,8 +446,8 @@ _HOTLISTS = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=1154,
-  serialized_end=2004,
+  serialized_start=1275,
+  serialized_end=2217,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetHotlist',
@@ -461,6 +509,15 @@ _HOTLISTS = _descriptor.ServiceDescriptor(
     index=6,
     containing_service=None,
     input_type=_REMOVEHOTLISTITEMSREQUEST,
+    output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='RemoveHotlistEditors',
+    full_name='monorail.v1.Hotlists.RemoveHotlistEditors',
+    index=7,
+    containing_service=None,
+    input_type=_REMOVEHOTLISTEDITORSREQUEST,
     output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
     serialized_options=None,
   ),

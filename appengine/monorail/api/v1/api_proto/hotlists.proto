@@ -80,6 +80,8 @@ service Hotlists {
   //
   // TODO(crbug/monorali:7104): Document possible errors when implemented.
   rpc RemoveHotlistItems (RemoveHotlistItemsRequest) returns (google.protobuf.Empty) {}
+  // Removes editors assigned to a hotlist.
+  rpc RemoveHotlistEditors (RemoveHotlistEditorsRequest) returns (google.protobuf.Empty) {}
 }
 
 
@@ -197,4 +199,18 @@ message RemoveHotlistItemsRequest {
   repeated string issues = 2 [
       (google.api.field_behavior) = REQUIRED,
       (google.api.resource_reference) = {type: "api.crbug.com/Issue"} ];
+}
+
+
+// Request message for a RemoveHotlistEditors call.
+// Next available tag: 3
+message RemoveHotlistEditorsRequest {
+  // Resource name of the Hotlist to remove editors from.
+  string name = 1 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"} ];
+  // Resource names of Users associated with the hotlist that should be removed.
+  repeated string editors = 2 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/User"} ];
 }
