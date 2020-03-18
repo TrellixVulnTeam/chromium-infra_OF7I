@@ -94,6 +94,27 @@ class TemplateDetailTest(unittest.TestCase):
         '', False, False, False, None, None, '', False, '', '',
         tracker_pb2.NotifyTriggers.NEVER, 'no_action',
         'milestone target', False, is_phase_field=True)
+    self.fd_7 = tracker_bizobj.MakeFieldDef(
+        5,
+        789,
+        'RestrictedField',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'RestrictedField',
+        False,
+        is_restricted_field=True)
 
     self.ad_3 = tracker_pb2.ApprovalDef(approval_id=3)
     self.ad_4 = tracker_pb2.ApprovalDef(approval_id=4)
@@ -123,7 +144,10 @@ class TemplateDetailTest(unittest.TestCase):
     self.services.template.FindTemplateByName = Mock(return_value=self.template)
     self.config.component_defs.append(self.cd_1)
     self.config.field_defs.extend(
-        [self.fd_1, self.fd_2, self.fd_3, self.fd_4, self.fd_5, self.fd_6])
+        [
+            self.fd_1, self.fd_2, self.fd_3, self.fd_4, self.fd_5, self.fd_6,
+            self.fd_7
+        ])
     self.config.approval_defs.extend([self.ad_3, self.ad_4])
     self.services.config.StoreConfig(None, self.config)
 
@@ -163,6 +187,8 @@ class TemplateDetailTest(unittest.TestCase):
         self.servlet.AssertBasePermission, self.mr)
 
   def testGatherPageData(self):
+    self.mr.perms = permissions.PermissionSet([])
+    self.mr.auth.effective_ids = {222}  #template admin
     page_data = self.servlet.GatherPageData(self.mr)
     self.assertEqual(self.servlet.PROCESS_TAB_TEMPLATES,
                      page_data['admin_tab_mode'])
@@ -189,6 +215,8 @@ class TemplateDetailTest(unittest.TestCase):
     self.assertEqual(len(page_data['approvals']), 2)
     self.assertItemsEqual(page_data['prechecked_approvals'],
                           ['3_phase_0', '4_phase_1'])
+    self.assertTrue(page_data['fields'][3].is_editable)  #nonRestrictedField
+    self.assertIsNone(page_data['fields'][4].is_editable)  #restrictedField
 
   def testProcessFormData_Reject(self):
     post_data = fake.PostData(

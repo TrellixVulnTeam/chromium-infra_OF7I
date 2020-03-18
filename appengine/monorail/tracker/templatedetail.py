@@ -85,6 +85,12 @@ class TemplateDetail(servlet.Servlet):
     field_views = tracker_views.MakeAllFieldValueViews(
         config, template.labels, [], template.field_values, users_by_id,
         phases=template.phases)
+    for fv in field_views:
+      if permissions.CanEditValueForFieldDef(
+          mr.auth.effective_ids, mr.perms, mr.project, fv.field_def.field_def):
+        fv.is_editable = ezt.boolean(True)
+      else:
+        fv.is_editable = ezt.boolean(False)
 
     (prechecked_approvals, required_approval_ids,
      initial_phases) = template_helpers.GatherApprovalsPageData(
