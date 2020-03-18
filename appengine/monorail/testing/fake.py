@@ -562,12 +562,12 @@ class UserService(object):
       return email_dict[email]
     raise exceptions.NoSuchUserException('%r not found' % email)
 
-  def GetUsersByIDs(self, cnxn, user_ids, use_cache=True):
+  def GetUsersByIDs(self, cnxn, user_ids, use_cache=True, skip_missed=False):
     user_dict = {}
     for user_id in user_ids:
       if user_id and self.test_users.get(user_id):
         user_dict[user_id] = self.test_users[user_id]
-      else:
+      elif not skip_missed:
         user_dict[user_id] = user_pb2.MakeUser(user_id)
     return user_dict
 

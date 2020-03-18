@@ -226,13 +226,47 @@ class UserServiceTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertEqual(222, user_id)
 
+  def SetUpGetUsersByIDs(self):
+    self.user_service.user_tbl.Select(
+        self.cnxn, cols=user_svc.USER_COLS, user_id=[333, 444]).AndReturn(
+            [
+                (
+                    333, 'c@example.com', False, False, False, False, True,
+                    False, 'Spammer', 'stay_same_issue', False, False, True, 0,
+                    0, None)
+            ])
+    self.user_service.linkedaccount_tbl.Select(
+        self.cnxn,
+        cols=user_svc.LINKEDACCOUNT_COLS,
+        parent_id=[333, 444],
+        child_id=[333, 444],
+        or_where_conds=True).AndReturn([])
+
+
   def testGetUsersByIDs(self):
-    SetUpGetUsers(self.user_service, self.cnxn)
+    self.SetUpGetUsersByIDs()
     user_a = user_pb2.User(email='a@example.com')
     self.user_service.user_2lc.CacheItem(111, user_a)
     self.mox.ReplayAll()
+    # 444 user does not exist.
+    user_dict = self.user_service.GetUsersByIDs(self.cnxn, [111, 333, 444])
+    self.mox.VerifyAll()
+    self.assertEqual(3, len(user_dict))
+    self.assertEqual('a@example.com', user_dict[111].email)
+    self.assertFalse(user_dict[111].is_site_admin)
+    self.assertFalse(user_dict[111].banned)
+    self.assertTrue(user_dict[111].notify_issue_change)
+    self.assertEqual('c@example.com', user_dict[333].email)
+    self.assertEqual(user_dict[444], user_pb2.MakeUser(444))
+
+  def testGetUsersByIDs_SkipMissed(self):
+    self.SetUpGetUsersByIDs()
+    user_a = user_pb2.User(email='a@example.com')
+    self.user_service.user_2lc.CacheItem(111, user_a)
+    self.mox.ReplayAll()
+    # 444 user does not exist
     user_dict = self.user_service.GetUsersByIDs(
-        self.cnxn, [111, 333])
+        self.cnxn, [111, 333, 444], skip_missed=True)
     self.mox.VerifyAll()
     self.assertEqual(2, len(user_dict))
     self.assertEqual('a@example.com', user_dict[111].email)

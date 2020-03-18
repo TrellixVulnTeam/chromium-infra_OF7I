@@ -380,13 +380,15 @@ class UserService(object):
 
   ### Retrieval of user objects: with preferences and cues
 
-  def GetUsersByIDs(self, cnxn, user_ids, use_cache=True):
+  def GetUsersByIDs(self, cnxn, user_ids, use_cache=True, skip_missed=False):
     """Return a dictionary of retrieved User PBs.
 
     Args:
       cnxn: connection to SQL database.
       user_ids: list of user IDs to fetch.
       use_cache: set to False to ignore cache and force DB lookup.
+      skip_missed: set to True if default User objects for missed_ids should
+          not be created.
 
     Returns:
       A dict {user_id: user_pb} for each specified user ID.  For any user ID
@@ -396,10 +398,14 @@ class UserService(object):
     result_dict, missed_ids = self.user_2lc.GetAll(
         cnxn, user_ids, use_cache=use_cache)
 
-    # Provide default values for any user ID that was not found.
-    result_dict.update(
-        (user_id, user_pb2.MakeUser(user_id))
-        for user_id in missed_ids)
+    # TODO(crbug/monorail/7367): Never create default values for missed_ids
+    # once we remove all code paths that hit this. See bug for more info.
+    # Any new code that calls this method, should not rely on this
+    # functionality.
+    if missed_ids and not skip_missed:
+      # Provide default values for any user ID that was not found.
+      result_dict.update(
+          (user_id, user_pb2.MakeUser(user_id)) for user_id in missed_ids)
 
     return result_dict
 
@@ -485,14 +491,18 @@ class UserService(object):
         having=[('COUNT(*) > %s', [10])], limit=1000)
 
     for user_id in [row[0] for row in user_id_rows]:
-       viewed_hotlist_rows = self.hotlistvisithistory_tbl.Select(
-          cnxn, cols=['viewed'], user_id=user_id,
+      viewed_hotlist_rows = self.hotlistvisithistory_tbl.Select(
+          cnxn,
+          cols=['viewed'],
+          user_id=user_id,
           order_by=[('viewed DESC', [])])
-       if len(viewed_hotlist_rows) > 10:
-         cut_off_date = viewed_hotlist_rows[9][0]
-         self.hotlistvisithistory_tbl.Delete(
-             cnxn, user_id=user_id, where=[('viewed < %s', [cut_off_date])],
-             commit=commit)
+      if len(viewed_hotlist_rows) > 10:
+        cut_off_date = viewed_hotlist_rows[9][0]
+        self.hotlistvisithistory_tbl.Delete(
+            cnxn,
+            user_id=user_id,
+            where=[('viewed < %s', [cut_off_date])],
+            commit=commit)
 
   ### Linked account invites
 
