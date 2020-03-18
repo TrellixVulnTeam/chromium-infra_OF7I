@@ -463,8 +463,6 @@ class Converter(object):
         self.cnxn, project_id, [template.template_id for template in templates],
         self.services)
 
-    project = self.services.project.GetProject(self.cnxn, project_id)
-
     for template in templates:
       if template.template_id not in resource_names_dict:
         logging.info(
@@ -476,7 +474,7 @@ class Converter(object):
       template_privacy = self._ComputeTemplatePrivacy(template)
       default_owner = self._ComputeTemplateDefaultOwner(template)
       component_required = template.component_required
-      admins = self.ConvertUsers(template.admin_ids, project).values()
+      admins = rnc.ConvertUserNames(template.admin_ids).values()
       issue = self._FillIssueFromTemplate(template, project_id)
       api_templates.append(
           project_objects_pb2.IssueTemplate(

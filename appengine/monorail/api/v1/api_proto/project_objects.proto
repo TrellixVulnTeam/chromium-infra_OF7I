@@ -12,7 +12,6 @@ package monorail.v1;
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "api/v1/api_proto/issue_objects.proto";
-import "api/v1/api_proto/user_objects.proto";
 
 // The top level organization of issues in Monorail.
 //
@@ -138,8 +137,9 @@ message IssueTemplate {
     PROJECT_MEMBER_REPORTER = 1;
   }
   DefaultOwner default_owner= 5;
-  // Boolean indicating whether issue must have a component
+  // Boolean indicating whether issue must have a component.
   bool component_required = 6;
-  // List of users who can administer this template
-  repeated User admins = 7;
+  // Names of Users who can administer this template.
+  repeated string admins = 7 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }];
 }

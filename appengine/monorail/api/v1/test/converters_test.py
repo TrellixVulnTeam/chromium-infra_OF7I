@@ -719,9 +719,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         project_objects_pb2.IssueTemplate.DefaultOwner.Value(
             'DEFAULT_OWNER_UNSPECIFIED'))
     self.assertEqual(actual.component_required, False)
-    self.assertEqual(len(actual.admins), 1)
-    self.assertEqual(
-        actual.admins[0].name, 'users/{}'.format(self.user_2.user_id))
+    self.assertEqual(actual.admins, ['users/{}'.format(self.user_2.user_id)])
     self.assertEqual(
         actual.issue,
         self.converter._FillIssueFromTemplate(
