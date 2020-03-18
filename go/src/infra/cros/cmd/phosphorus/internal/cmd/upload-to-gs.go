@@ -79,8 +79,13 @@ func (c *uploadToGSRun) innerRun(a subcommands.Application, args []string, env s
 
 func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 	missingArgs := make([]string, 0)
-	if r.GetConfig().GetTask().GetSynchronousOffloadDir() == "" {
-		missingArgs = append(missingArgs, "offload dir")
+	// Two sources for local directory are allowed; direct assignment or constructible from Config
+	if r.GetLocalDirectory() == "" {
+		// Both these fields must be present to assemble from Config
+		if r.GetConfig().GetTask().GetTestResultsDir() == "" ||
+			r.GetConfig().GetTask().GetSynchronousOffloadDir() == "" {
+			missingArgs = append(missingArgs, "dir to offload")
+		}
 	}
 
 	if r.GetGsDirectory() == "" {
@@ -98,8 +103,13 @@ func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest, errorFile io.Writer) (string, error) {
 	gsPath := gs.Concat(r.GetGsDirectory(), "synchronous_offloads", uuid.New().String())
 
-	testResultsDir := filepath.Join(r.Config.Task.ResultsDir, "autoserv_test")
-	localPath := filepath.Join(testResultsDir, r.GetConfig().GetTask().GetSynchronousOffloadDir())
+	localPath := r.GetLocalDirectory()
+	if localPath == "" {
+		localPath = filepath.Join(
+			r.GetConfig().GetTask().GetTestResultsDir(),
+			r.GetConfig().GetTask().GetSynchronousOffloadDir(),
+		)
+	}
 	defer func() {
 		err := os.RemoveAll(localPath)
 		if err != nil {
