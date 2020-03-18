@@ -1,0 +1,48 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package monorail.v1;
+
+import "google_proto/google/api/field_behavior.proto";
+import "google_proto/google/api/resource.proto";
+import "api/v1/api_proto/user_objects.proto";
+
+// Users service includes all methods needed for managing Users.
+service Users {
+  // Returns the requested User.
+  // TODO(crbug/monorail/7238): Document possible errors when implemented.
+  rpc GetUser (GetUserRequest) returns (User) {}
+  // Returns all of the requested Users.
+  // TODO(crbug/monorail/7238): Document possible errors when implemented.
+  rpc BatchGetUsers (BatchGetUsersRequest) returns (BatchGetUsersResponse) {}
+}
+
+
+// The request message for Users.GetUser.
+// Next available tag: 2
+message GetUserRequest {
+  // The name of the user to request.
+  string name = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/User"},
+      (google.api.field_behavior) = REQUIRED ];
+}
+
+
+// The request message for Users.BatchGetUsers.
+// Next available tag: 2
+message BatchGetUsersRequest {
+  // The name of the users to request.
+  repeated string name = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/User"},
+      (google.api.field_behavior) = REQUIRED ];
+}
+
+
+// The response message for Users.BatchGetUsers.
+// Next available tag: 2
+message BatchGetUsersResponse {
+  repeated User users = 1;
+}
