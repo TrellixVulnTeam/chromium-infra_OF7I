@@ -24,6 +24,7 @@ from __future__ import absolute_import
 from api.v1 import issues_servicer
 from api.v1 import hotlists_servicer
 from api.v1 import projects_servicer
+from api.v1 import permissions_servicer
 
 
 def RegisterApiHandlers(prpc_server, services):
@@ -34,3 +35,4 @@ def RegisterApiHandlers(prpc_server, services):
   prpc_server.add_service(issues_servicer.IssuesServicer(services))
   prpc_server.add_service(hotlists_servicer.HotlistsServicer(services))
   prpc_server.add_service(projects_servicer.ProjectsServicer(services))
+  prpc_server.add_service(permissions_servicer.PermissionsServicer(services))
