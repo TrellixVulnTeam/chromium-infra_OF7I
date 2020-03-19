@@ -1534,12 +1534,37 @@ class WorkEnv(object):
 
   ### User methods
 
+  # TODO(crbug/monorail/7238): rewrite this method to call BatchGetUsers.
   def GetUser(self, user_id):
     """Return the user with the given ID."""
     # Make sure the requested user exists.
     with self.mc.profiler.Phase('getting user %s' % user_id):
       self.services.user.LookupUserEmail(self.mc.cnxn, user_id)
       return self.services.user.GetUser(self.mc.cnxn, user_id)
+
+  def BatchGetUsers(self, user_ids):
+    # type: (Sequence[int]) -> Sequence[User]
+    """Return all Users for given User IDs.
+
+    Args:
+      user_ids: list of User IDs.
+
+    Returns:
+      A list of User objects in the same order as the given User IDs.
+
+    Raises:
+      NoSuchUserException if a User for a given User ID is not found.
+    """
+    users_by_id = self.services.user.GetUsersByIDs(
+        self.mc.cnxn, user_ids, skip_missed=True)
+    users = []
+    for user_id in user_ids:
+      user = users_by_id.get(user_id)
+      if not user:
+        raise exceptions.NoSuchUserException(
+            'No User with ID %s found' % user_id)
+      users.append(user)
+    return users
 
   def GetMemberships(self, user_id):
     """Return the user group ids for the given user visible to the requester."""

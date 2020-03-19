@@ -2629,6 +2629,18 @@ class WorkEnvTest(unittest.TestCase):
       actual = we.GetUser(555)
       self.assertEqual(expected, actual)
 
+  def testBatchGetUsers(self):
+    """We return the User PBs for all given user ids."""
+    actual = self.work_env.BatchGetUsers(
+        [self.user_1.user_id, self.user_2.user_id])
+    self.assertEqual(actual, [self.user_1, self.user_2])
+
+  def testBatchGetUsers_NoUserFound(self):
+    """We raise an exception if a User is not found."""
+    with self.assertRaises(exceptions.NoSuchUserException):
+      self.work_env.BatchGetUsers(
+          [self.user_1.user_id, self.user_2.user_id, 404])
+
   def testGetUser_DoesntExist(self):
     """We reject attempts to get an user that doesn't exist."""
     with self.assertRaises(exceptions.NoSuchUserException):
