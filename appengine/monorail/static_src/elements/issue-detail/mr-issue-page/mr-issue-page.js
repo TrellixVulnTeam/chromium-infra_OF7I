@@ -14,7 +14,7 @@ import '../mr-launch-overview/mr-launch-overview.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -323,7 +323,7 @@ export class MrIssuePage extends connectStore(LitElement) {
     this.fetchingProjectConfig = project.fetchingConfig(state);
     this.issueClosed = !issue.isOpen(state);
     this.issuePermissions = issue.permissions(state);
-    this.prefs = user.prefs(state);
+    this.prefs = userV0.prefs(state);
   }
 
   /** @override */

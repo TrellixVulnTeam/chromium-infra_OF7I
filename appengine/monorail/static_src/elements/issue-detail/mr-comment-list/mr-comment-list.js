@@ -9,7 +9,7 @@ import '../../chops/chops-button/chops-button.js';
 import './mr-comment.js';
 import {connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import {userIsMember} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -59,7 +59,7 @@ export class MrCommentList extends connectStore(LitElement) {
   stateChanged(state) {
     this.issuePermissions = issue.permissions(state);
     this.focusId = ui.focusId(state);
-    this.usersProjects = user.projectsPerUser(state);
+    this.usersProjects = userV0.projectsPerUser(state);
   }
 
   /** @override */

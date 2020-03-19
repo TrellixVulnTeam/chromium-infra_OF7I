@@ -4,7 +4,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {store, connectStore} from 'reducers/base.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -125,8 +125,8 @@ export class MrClickThroughs extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.prefs = user.prefs(state);
-    this.prefsLoaded = user.currentUser(state).prefsLoaded;
+    this.prefs = userV0.prefs(state);
+    this.prefsLoaded = userV0.currentUser(state).prefsLoaded;
   }
 
   get _showPrivacyDialog() {
@@ -158,7 +158,7 @@ export class MrClickThroughs extends connectStore(LitElement) {
 
   dismissCue(pref) {
     const newPrefs = [{name: pref, value: 'true'}];
-    store.dispatch(user.setPrefs(newPrefs, !!this.userDisplayName));
+    store.dispatch(userV0.setPrefs(newPrefs, !!this.userDisplayName));
   }
 }
 

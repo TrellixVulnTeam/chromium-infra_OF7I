@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 import qs from 'qs';
 import {store, connectStore} from 'reducers/base.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
 import 'elements/chops/chops-button/chops-button.js';
@@ -244,10 +244,10 @@ export class MrCue extends connectStore(LitElement) {
     this.projectName = project.viewedProjectName(state);
     this.issue = issue.viewedIssue(state);
     this.referencedUsers = issue.referencedUsers(state);
-    this.user = user.currentUser(state);
-    this.prefs = user.prefs(state);
+    this.user = userV0.currentUser(state);
+    this.prefs = userV0.prefs(state);
     this.signedIn = this.user && this.user.userId;
-    this.prefsLoaded = user.currentUser(state).prefsLoaded;
+    this.prefsLoaded = userV0.currentUser(state).prefsLoaded;
 
     const queryString = window.location.search.substring(1);
     const queryParams = qs.parse(queryString);
@@ -275,7 +275,7 @@ export class MrCue extends connectStore(LitElement) {
    */
   dismiss() {
     const newPrefs = [{name: this.cuePrefName, value: 'true'}];
-    store.dispatch(user.setPrefs(newPrefs, this.signedIn));
+    store.dispatch(userV0.setPrefs(newPrefs, this.signedIn));
   }
 }
 

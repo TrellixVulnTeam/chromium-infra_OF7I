@@ -7,7 +7,7 @@ import {LitElement, html, css} from 'lit-element';
 import {connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import 'elements/framework/mr-star-button/mr-star-button.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import 'elements/framework/links/mr-hotlist-link/mr-hotlist-link.js';
@@ -233,7 +233,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
   stateChanged(state) {
     this.issue = issue.viewedIssue(state);
     this.issueRef = issue.viewedIssueRef(state);
-    this.user = user.currentUser(state);
+    this.user = userV0.currentUser(state);
     this.projectConfig = project.viewedConfig(state);
     this.blocking = issue.blockingIssues(state);
     this.sortedBlockedOn = issue.sortedBlockedOn(state);

@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import {html, css} from 'lit-element';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as issue from 'reducers/issue.js';
 import {store} from 'reducers/base.js';
 import 'elements/chops/chops-button/chops-button.js';
@@ -49,14 +49,14 @@ export class MrFedRefCue extends MrCue {
         authLink = html`
           <br /><br />
           <a href="#"
-            @click=${() => store.dispatch(user.initGapiLogout())}
+            @click=${() => store.dispatch(userV0.initGapiLogout())}
           >Sign out</a>
           <br />
           (for references only)
         `;
       } else {
         const clickLoginHandler = async () => {
-          await store.dispatch(user.initGapiLogin(this.issue));
+          await store.dispatch(userV0.initGapiLogin(this.issue));
           // Re-fetch related issues.
           store.dispatch(issue.fetchRelatedIssues(this.issue));
         };

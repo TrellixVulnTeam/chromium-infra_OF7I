@@ -9,7 +9,7 @@ import 'elements/chops/chops-dialog/chops-dialog.js';
 import 'elements/chops/chops-timestamp/chops-timestamp.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as project from 'reducers/project.js';
 import {userIsMember} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -205,7 +205,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     this.issue = issue.viewedIssue(state);
     this.issuePermissions = issue.permissions(state);
     this.projectTemplates = project.viewedTemplates(state);
-    this.usersProjects = user.projectsPerUser(state);
+    this.usersProjects = userV0.projectsPerUser(state);
 
     const restrictions = issue.restrictions(state);
     this.isRestricted = restrictions && Object.keys(restrictions).length;

@@ -5,7 +5,7 @@
 import {LitElement, html} from 'lit-element';
 
 import {store, connectStore} from 'reducers/base.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import 'elements/chops/chops-toggle/chops-toggle.js';
 
 /**
@@ -40,9 +40,9 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.prefs = user.prefs(state);
-    this._prefsInFlight = user.requests(state).fetchPrefs.requesting ||
-      user.requests(state).setPrefs.requesting;
+    this.prefs = userV0.prefs(state);
+    this._prefsInFlight = userV0.requests(state).fetchPrefs.requesting ||
+      userV0.requests(state).setPrefs.requesting;
   }
 
   /** @override */
@@ -54,7 +54,7 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
 
   // Used by the legacy EZT page to interact with Redux.
   fetchPrefs() {
-    store.dispatch(user.fetchPrefs());
+    store.dispatch(userV0.fetchPrefs());
   }
 
   get _codeFont() {
@@ -68,7 +68,7 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
     this.dispatchEvent(new CustomEvent('font-toggle', {detail: {checked}}));
 
     const newPrefs = [{name: 'code_font', value: '' + checked}];
-    store.dispatch(user.setPrefs(newPrefs, !!this.userDisplayName));
+    store.dispatch(userV0.setPrefs(newPrefs, !!this.userDisplayName));
   }
 }
 customElements.define('mr-code-font-toggle', MrCodeFontToggle);

@@ -13,7 +13,7 @@ import {store, connectStore} from 'reducers/base.js';
 import * as project from 'reducers/project.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as issue from 'reducers/issue.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import * as sitewide from 'reducers/sitewide.js';
 import {arrayToEnglish} from 'shared/helpers.js';
@@ -221,7 +221,7 @@ export class MrApp extends connectStore(LitElement) {
   /** @override */
   updated(changedProperties) {
     if (changedProperties.has('userDisplayName')) {
-      store.dispatch(user.fetch(this.userDisplayName));
+      store.dispatch(userV0.fetch(this.userDisplayName));
     }
 
     if (changedProperties.has('pageTitle')) {

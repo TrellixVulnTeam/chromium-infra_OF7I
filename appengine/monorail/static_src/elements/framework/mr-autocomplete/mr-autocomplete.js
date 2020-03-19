@@ -5,7 +5,7 @@
 import {ChopsAutocomplete} from
   'elements/chops/chops-autocomplete/chops-autocomplete';
 import {connectStore} from 'reducers/base.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as project from 'reducers/project.js';
 import {arrayDifference} from 'shared/helpers.js';
 import {userRefsToDisplayNames} from 'shared/converters.js';
@@ -50,7 +50,7 @@ export class MrAutocomplete extends connectStore(ChopsAutocomplete) {
   /** @override */
   stateChanged(state) {
     const visibleMembers = project.viewedVisibleMembers(state);
-    const userProjects = user.projects(state);
+    const userProjects = userV0.projects(state);
     this.vocabularies = {
       'project': this._setupProjectVocabulary(userProjects),
       'member': this._setupMemberVocabulary(visibleMembers),

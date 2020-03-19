@@ -22,7 +22,7 @@ import {fromShortlink} from 'shared/federated.js';
 import {createReducer, createRequestReducer,
   createKeyedRequestReducer} from './redux-helpers.js';
 import * as project from './project.js';
-import * as user from './user.js';
+import * as userV0 from './userV0.js';
 import {fieldValueMapKey} from 'shared/metadata-helpers.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import loadGapi, {fetchGapiEmail} from 'shared/gapi-loader.js';
@@ -938,7 +938,7 @@ export const fetchFederatedReferences = (issue) => async (dispatch) => {
 
     // If already logged in, dispatch login success event.
     dispatch({
-      type: user.GAPI_LOGIN_SUCCESS,
+      type: userV0.GAPI_LOGIN_SUCCESS,
       email: email,
     });
 
@@ -1043,7 +1043,7 @@ export const fetch = (issueRef) => async (dispatch) => {
       dispatch(fetchRelatedIssues(issue));
       dispatch(fetchHotlists(issueRef));
       dispatch(fetchReferencedUsers(issue));
-      dispatch(user.fetchProjects([issue.reporterRef]));
+      dispatch(userV0.fetchProjects([issue.reporterRef]));
     }
   } catch (error) {
     dispatch({type: FETCH_FAILURE, error});
@@ -1244,7 +1244,7 @@ export const fetchComments = (issueRef) => async (dispatch) => {
 
     const commenterRefs = (resp.comments || []).map(
         (comment) => comment.commenter);
-    dispatch(user.fetchProjects(commenterRefs));
+    dispatch(userV0.fetchProjects(commenterRefs));
   } catch (error) {
     dispatch({type: FETCH_COMMENTS_FAILURE, error});
   };

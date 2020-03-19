@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 
 import {connectStore} from 'reducers/base.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 
@@ -260,9 +260,9 @@ export class MrHeader extends connectStore(LitElement) {
   stateChanged(state) {
     this.projectName = project.viewedProjectName(state);
 
-    this.userProjects = user.projects(state);
+    this.userProjects = userV0.projects(state);
 
-    const currentUser = user.currentUser(state);
+    const currentUser = userV0.currentUser(state);
     this.isSiteAdmin = currentUser ? currentUser.isSiteAdmin : false;
 
     const presentationConfig = project.viewedPresentationConfig(state);

@@ -4,7 +4,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {connectStore, store} from 'reducers/base.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as issue from 'reducers/issue.js';
 import {issueRefToString} from 'shared/converters';
 
@@ -114,7 +114,7 @@ export class MrStarButton extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this._isLoggedIn = user.isLoggedIn(state);
+    this._isLoggedIn = userV0.isLoggedIn(state);
     this._starringIssues = issue.starringIssues(state);
     this._starredIssues = issue.starredIssues(state);
     this._fetchingIsStarred = issue.requests(state).fetchIsStarred.requesting;

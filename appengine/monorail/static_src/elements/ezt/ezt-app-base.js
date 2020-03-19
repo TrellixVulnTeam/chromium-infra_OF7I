@@ -5,7 +5,7 @@
 import {LitElement} from 'lit-element';
 import qs from 'qs';
 import {store, connectStore} from 'reducers/base.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as project from 'reducers/project.js';
 import * as sitewide from 'reducers/sitewide.js';
 
@@ -45,7 +45,7 @@ export class EztAppBase extends connectStore(LitElement) {
   }
 
   fetchUserData(displayName) {
-    store.dispatch(user.fetch(displayName));
+    store.dispatch(userV0.fetch(displayName));
   }
 
   fetchProjectData(projectName) {

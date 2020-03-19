@@ -9,7 +9,7 @@ import 'elements/chops/chops-collapse/chops-collapse.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issue from 'reducers/issue.js';
 import * as project from 'reducers/project.js';
-import * as user from 'reducers/user.js';
+import * as userV0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 import 'elements/framework/mr-comment-content/mr-description.js';
@@ -271,7 +271,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
       this._allSurveys = commentListToDescriptionList(comments);
     }
     this.focusId = ui.focusId(state);
-    this.user = user.currentUser(state);
+    this.user = userV0.currentUser(state);
     this.issue = issue.viewedIssue(state);
     this.issueRef = issue.viewedIssueRef(state);
     this.projectConfig = project.viewedConfig(state);
