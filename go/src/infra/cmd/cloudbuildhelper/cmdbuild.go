@@ -366,7 +366,8 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 					imgRef.CanonicalTag, humanize.Time(imgRef.Timestamp))
 				res.Image = imgRef
 				// Let it be known that we reused the image produced from this tarball.
-				return res, updateMetadata(ctx, obj, p.Store, nil, buildRef)
+				_, err = updateMetadata(ctx, obj, p.Store, nil, buildRef)
+				return res, err
 			}
 			logging.Warningf(ctx,
 				"Using -force, ignoring existing image built from this tarball (%s => %s)",
@@ -407,7 +408,7 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 		// the image we've just built. We do it only when using canonical tags,
 		// since we want all such "reusable" images to have a readable tag that
 		// identifies them.
-		if err := updateMetadata(ctx, obj, p.Store, res.Image, buildRef); err != nil {
+		if _, err := updateMetadata(ctx, obj, p.Store, res.Image, buildRef); err != nil {
 			return res, err // already annotated
 		}
 	}

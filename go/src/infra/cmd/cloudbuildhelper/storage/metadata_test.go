@@ -135,7 +135,7 @@ func TestMetadata(t *testing.T) {
 		})
 	})
 
-	Convey("Trim", t, func() {
+	Convey("TrimUnimportant", t, func() {
 		md := Metadata{}
 
 		md.Add(Metadatum{Key: "k1", Timestamp: 1})
@@ -143,9 +143,11 @@ func TestMetadata(t *testing.T) {
 		md.Add(Metadatum{Key: "k1", Timestamp: 3})
 		md.Add(Metadatum{Key: "k2", Timestamp: 1})
 
-		md.Trim(1)
+		md.TrimUnimportant(2)
 		So(md.Assemble(), ShouldResemble, map[string]string{
-			"k1@3": "", "k2@1": "",
+			"k1@1": "", // oldest
+			"k1@3": "", // most recent
+			"k2@1": "",
 		})
 	})
 

@@ -98,14 +98,17 @@ func calcInputsHashCanonicalTag(digest string) string {
 // updateMetadata appends to the metadata of the tarball in the storage.
 //
 // Adds serialized 'img' and 'b' there (if they are non-nil).
-func updateMetadata(ctx context.Context, obj *storage.Object, s storageImpl, img *imageRef, b *buildRef) error {
+//
+// On success returns *oldest* buildRef entry (which may happen to be 'b' if
+// it's the first metadata update ever or even nil if 'b' is nil).
+func updateMetadata(ctx context.Context, obj *storage.Object, s storageImpl, img *imageRef, b *buildRef) (*buildRef, error) {
 	ts := storage.TimestampFromTime(clock.Now(ctx))
 
 	var imgRefJSON []byte
 	if img != nil {
 		var err error
 		if imgRefJSON, err = json.Marshal(img); err != nil {
-			return errors.Annotate(err, "marshalling imageRef %v", img).Err()
+			return nil, errors.Annotate(err, "marshalling imageRef %v", img).Err()
 		}
 	}
 
@@ -113,11 +116,14 @@ func updateMetadata(ctx context.Context, obj *storage.Object, s storageImpl, img
 	if b != nil {
 		var err error
 		if buildRefJSON, err = json.Marshal(b); err != nil {
-			return errors.Annotate(err, "marshalling buildRef %v", b).Err()
+			return nil, errors.Annotate(err, "marshalling buildRef %v", b).Err()
 		}
 	}
 
+	var oldest *buildRef
 	err := s.UpdateMetadata(ctx, obj, func(m *storage.Metadata) error {
+		oldest = nil // reset on retry
+
 		if imgRefJSON != nil {
 			m.Add(storage.Metadatum{
 				Key:       imageRefMetaKey,
@@ -132,11 +138,31 @@ func updateMetadata(ctx context.Context, obj *storage.Object, s storageImpl, img
 				Value:     string(buildRefJSON),
 			})
 		}
-		m.Trim(50) // to avoid growing metadata size indefinitely
+		m.TrimUnimportant(50) // to avoid growing metadata size indefinitely
+
+		// Find the oldest non-broken entry.
+		buildRefs := m.Values(buildRefMetaKey) // most recent first
+		for i := len(buildRefs) - 1; i >= 0; i-- {
+			md := buildRefs[i]
+
+			var ref buildRef
+			if err := json.Unmarshal([]byte(md.Value), &ref); err != nil {
+				logging.Warningf(ctx, "Skipping bad buildRef metadata value %q", md.Value)
+				continue
+			}
+
+			ref.Timestamp = md.Timestamp.Time()
+			oldest = &ref
+			break
+		}
+
 		return nil
 	})
 
-	return errors.Annotate(err, "failed to update tarball metadata").Err()
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to update tarball metadata").Err()
+	}
+	return oldest, nil
 }
 
 // imageRefsFromMetadata deserializes imageRefs stored in the object metadata.
@@ -146,7 +172,7 @@ func imageRefsFromMetadata(ctx context.Context, obj *storage.Object) (out []imag
 	for _, md := range obj.Metadata.Values(imageRefMetaKey) {
 		var ref imageRef
 		if err := json.Unmarshal([]byte(md.Value), &ref); err != nil {
-			logging.Warningf(ctx, "Skipping bad metadata value %q", md.Value)
+			logging.Warningf(ctx, "Skipping bad imageRef metadata value %q", md.Value)
 		} else {
 			ref.Timestamp = md.Timestamp.Time()
 			out = append(out, ref)

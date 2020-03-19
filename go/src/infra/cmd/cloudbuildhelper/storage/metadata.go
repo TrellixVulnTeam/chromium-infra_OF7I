@@ -137,14 +137,17 @@ func (m *Metadata) Add(md Metadatum) {
 	m.d[md.Key] = v
 }
 
-// Trim for each individual key removes oldest values until only 'keep' entries
-// remain.
+// TrimUnimportant for each individual key removes values until only 'keep'
+// entries remain.
 //
-// Helps to keep metadata small by "forgetting" old entries.
-func (m *Metadata) Trim(keep int) {
+// Always keeps the oldest entry and most recent ones, removing only ones in
+// the middle.
+//
+// Helps to keep metadata small by "forgetting" uninteresting entries.
+func (m *Metadata) TrimUnimportant(keep int) {
 	for k, v := range m.d {
 		if len(v) > keep {
-			m.d[k] = v[:keep]
+			m.d[k] = append(v[:keep-1], v[len(v)-1])
 		}
 	}
 }
