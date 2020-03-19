@@ -148,9 +148,12 @@ convert some parts of the text into HTML links. The following are supported:
 ## Commit-log message integration
 
 Most projects are configured to allow the bugdroid tool to post comments to
-issues. If you land a CL that fixes an issue, you can refer to the issue on a
-BUG= line in the CL description. When the CL lands, bugdroid will post a comment
-to that issue with information about the CL.
+issues. Including `Bug: <bug_id...>` in a commit message will cause bugdroid to
+post a comment mentioning the commit on the issue when the commit's CL is
+submitted. Including `Fixed: <bug_id...>` in a commit message will cause
+bugdroid to set the referenced bugs' status to "Fixed".
 
-As a further automation, you can use a "Fixes:" line with the project name and
-issue ID, and bugdroid will set the issue status to `Fixed` when the CL lands.
+Both the `Bug:` and the `Fixed:` automations accept bug IDs in multiple formats:
+*   `Fixed: n`
+*   `Fixed: project:n`
+*   `Fixed: <Issue Tracker URL>`
