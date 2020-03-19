@@ -121,6 +121,8 @@ func TestLaunchRequest(t *testing.T) {
 	Convey("When a task is launched", t, func() {
 		tf, cleanup := newTestFixture(t)
 		defer cleanup()
+
+		setBuilder(tf.skylab, "foo-project", "foo-bucket", "foo-builder-name")
 		args := newArgs()
 		addTestName(args, "foo-test")
 
@@ -134,9 +136,9 @@ func TestLaunchRequest(t *testing.T) {
 			},
 		).Return(&buildbucket_pb.Build{Id: 42}, nil)
 
-		_, err := tf.skylab.LaunchTask(tf.ctx, args)
+		t, err := tf.skylab.LaunchTask(tf.ctx, args)
 		So(err, ShouldBeNil)
-		Convey("the BB client is called with the correct args.", func() {
+		Convey("the BB client is called with the correct args", func() {
 			So(gotRequest, ShouldNotBeNil)
 			So(gotRequest.Properties, ShouldNotBeNil)
 			So(gotRequest.Properties.Fields, ShouldNotBeNil)
@@ -144,8 +146,20 @@ func TestLaunchRequest(t *testing.T) {
 			req, err := structPBToTestRunnerRequest(gotRequest.Properties.Fields["request"])
 			So(err, ShouldBeNil)
 			So(req.GetTest().GetAutotest().GetName(), ShouldEqual, "foo-test")
+			Convey("and the URL is formatted correctly.", func() {
+				So(tf.skylab.URL(t), ShouldEqual,
+					"https://ci.chromium.org/p/foo-project/builders/foo-bucket/foo-builder-name/b42")
+			})
 		})
 	})
+}
+
+func setBuilder(skylab *bbSkylabClient, project string, bucket string, builder string) {
+	skylab.builder = &buildbucket_pb.BuilderID{
+		Project: project,
+		Bucket:  bucket,
+		Builder: builder,
+	}
 }
 
 func addTestName(args *request.Args, name string) {
@@ -194,7 +208,7 @@ func TestFetchRequest(t *testing.T) {
 
 		task, err := tf.skylab.LaunchTask(tf.ctx, newArgs())
 		So(err, ShouldBeNil)
-		Convey("as the results are fetched the BB client is called with the correct args.", func() {
+		Convey("as the results are fetched", func() {
 			_, err := tf.skylab.FetchResults(tf.ctx, task)
 			So(err, ShouldBeNil)
 			Convey("the BB client is called with the correct args.", func() {

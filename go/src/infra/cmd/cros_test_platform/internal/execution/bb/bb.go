@@ -205,9 +205,10 @@ func structPBToResult(from *structpb.Value) (*skylab_test_runner.Result, error) 
 	return &r, nil
 }
 
-// URL stub.
+// URL is the Buildbucket URL of the task.
 func (c *bbSkylabClient) URL(t skylab.TaskReference) string {
-	panic("Not yet implemented.")
+	return fmt.Sprintf("https://ci.chromium.org/p/%s/builders/%s/%s/b%d",
+		c.builder.Project, c.builder.Bucket, c.builder.Builder, c.knownTasks[t].bbID)
 }
 
 // SwarmingTaskID stub.
