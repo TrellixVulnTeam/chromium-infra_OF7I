@@ -2411,6 +2411,15 @@ class FeaturesService(object):
     if add_editor_ids:
       hotlist.editor_ids.extend(add_editor_ids)
 
+  def RemoveHotlistEditors(self, cnxn, hotlist_id, remove_editor_ids):
+    hotlist = self.hotlists_by_id.get(hotlist_id)
+    if not hotlist:
+      raise features_svc.NoSuchHotlistException(
+          'Hotlist "%s" not found!' % hotlist_id)
+    for editor_id in remove_editor_ids:
+      hotlist.editor_ids.remove(editor_id)
+      self.hotlists_id_by_user[editor_id].remove(hotlist_id)
+
   def AddIssuesToHotlists(self, cnxn, hotlist_ids, added_tuples, issue_svc,
                           chart_svc, commit=True):
     for hotlist_id in hotlist_ids:

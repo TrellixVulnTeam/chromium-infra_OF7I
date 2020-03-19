@@ -47,6 +47,9 @@ class HotlistsServicerTest(unittest.TestCase):
     self.user_2 = self.services.user.TestAddUser('user_222@example.com', 222)
     self.user_3 = self.services.user.TestAddUser('user_333@example.com', 333)
 
+    user_ids = [self.user_1.user_id, self.user_2.user_id, self.user_3.user_id]
+    self.user_ids_to_name = rnc.ConvertUserNames(user_ids)
+
     self.project_1 = self.services.project.TestAddProject(
         'proj', project_id=789)
 
@@ -199,6 +202,21 @@ class HotlistsServicerTest(unittest.TestCase):
         self.cnxn, self.hotlist_1.hotlist_id)
     # The hotlist used to have 4 items and we've added two.
     self.assertEqual(len(updated_hotlist.items), 6)
+
+  def testRemoveHotlistEditors(self):
+    """We can remove editors from a Hotlist."""
+    user_2_name = self.user_ids_to_name[self.user_2.user_id]
+    request = hotlists_pb2.RemoveHotlistEditorsRequest(
+        name=self.hotlist_resource_name, editors=[user_2_name])
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    self.CallWrapped(self.hotlists_svcr.RemoveHotlistEditors, mc, request)
+    updated_hotlist = self.services.features.GetHotlist(
+        self.cnxn, self.hotlist_1.hotlist_id)
+    # User 2 was the only editor in the hotlist, and we removed them.
+    self.assertEqual(len(updated_hotlist.editor_ids), 0)
 
   def testGetHotlist(self):
     """We can get a Hotlist."""

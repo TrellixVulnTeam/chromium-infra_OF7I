@@ -3836,6 +3836,149 @@ class WorkEnvTest(unittest.TestCase):
         we.TransferHotlistOwnership(
             hotlist.hotlist_id, self.user_2.user_id, True)
 
+  def testRemoveHotlistEditors(self):
+    """Hotlist owner can remove editors as normal."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned',
+        summary='Summary',
+        description='description',
+        owner_ids=owner_ids,
+        editor_ids=editor_ids,
+        hotlist_id=1257)
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      remove_editor_ids = [self.user_2.user_id]
+      we.RemoveHotlistEditors(hotlist.hotlist_id, remove_editor_ids)
+
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(updated_hotlist.owner_ids, owner_ids)
+      self.assertEqual(updated_hotlist.editor_ids, [])
+
+  def testRemoveHotlistEditors_NoPermission(self):
+    """A user who is not in the hotlist cannot remove editors."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned',
+        summary='Summary',
+        description='description',
+        owner_ids=owner_ids,
+        editor_ids=editor_ids,
+        hotlist_id=1257)
+
+    self.SignIn(user_id=self.user_3.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        remove_editor_ids = [self.user_2.user_id]
+        we.RemoveHotlistEditors(hotlist.hotlist_id, remove_editor_ids)
+
+  def testRemoveHotlistEditors_CannotRemoveOtherEditors(self):
+    """A user who is not the hotlist owner cannot remove editors."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id, self.user_3.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned',
+        summary='Summary',
+        description='description',
+        owner_ids=owner_ids,
+        editor_ids=editor_ids,
+        hotlist_id=1257)
+
+    self.SignIn(user_id=self.user_3.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        remove_editor_ids = [self.user_2.user_id]
+        we.RemoveHotlistEditors(hotlist.hotlist_id, remove_editor_ids)
+
+  def testRemoveHotlistEditors_AllowRemoveSelf(self):
+    """A non-owner member of a hotlist can remove themselves."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned',
+        summary='Summary',
+        description='description',
+        owner_ids=owner_ids,
+        editor_ids=editor_ids,
+        hotlist_id=1257)
+
+    self.SignIn(user_id=self.user_2.user_id)
+
+    with self.work_env as we:
+      remove_editor_ids = [self.user_2.user_id]
+      we.RemoveHotlistEditors(hotlist.hotlist_id, remove_editor_ids)
+
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(updated_hotlist.owner_ids, owner_ids)
+      self.assertEqual(updated_hotlist.editor_ids, [])
+
+    # assert cannot remove someone else
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        new_owner_id = 0
+        add_editor_ids = []
+        add_follower_ids = []
+        remove_user_ids = [self.user_3.user_id]
+        we.DeltaUpdateHotlistRoles(
+            hotlist.hotlist_id,
+            new_owner_id=new_owner_id,
+            add_editor_ids=add_editor_ids,
+            add_follower_ids=add_follower_ids,
+            remove_user_ids=remove_user_ids)
+
+  def testRemoveHotlistEditors_AllowRemoveParentLinkedAccount(self):
+    """A non-owner member of a hotlist can remove their linked accounts."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_3.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned',
+        summary='Summary',
+        description='description',
+        owner_ids=owner_ids,
+        editor_ids=editor_ids,
+        hotlist_id=1257)
+    self.services.user.InviteLinkedParent(
+        self.cnxn, self.user_3.user_id, self.user_2.user_id)
+    self.services.user.AcceptLinkedChild(
+        self.cnxn, self.user_3.user_id, self.user_2.user_id)
+
+    self.SignIn(user_id=self.user_2.user_id)
+    with self.work_env as we:
+      remove_editor_ids = [self.user_3.user_id]
+      we.RemoveHotlistEditors(hotlist.hotlist_id, remove_editor_ids)
+
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(updated_hotlist.owner_ids, owner_ids)
+      self.assertEqual(updated_hotlist.editor_ids, [])
+
+  def testRemoveHotlistEditors_AllowRemoveChildLinkedAccount(self):
+    """A non-owner member of a hotlist can remove their linked accounts."""
+    owner_ids = [self.user_1.user_id]
+    editor_ids = [self.user_2.user_id]
+    hotlist = self.work_env.services.features.TestAddHotlist(
+        'RejectUnowned',
+        summary='Summary',
+        description='description',
+        owner_ids=owner_ids,
+        editor_ids=editor_ids,
+        hotlist_id=1257)
+    self.services.user.InviteLinkedParent(
+        self.cnxn, self.user_3.user_id, self.user_2.user_id)
+    self.services.user.AcceptLinkedChild(
+        self.cnxn, self.user_3.user_id, self.user_2.user_id)
+
+    self.SignIn(user_id=self.user_3.user_id)
+    with self.work_env as we:
+      remove_editor_ids = [self.user_2.user_id]
+      we.RemoveHotlistEditors(hotlist.hotlist_id, remove_editor_ids)
+
+      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+      self.assertEqual(updated_hotlist.owner_ids, owner_ids)
+      self.assertEqual(updated_hotlist.editor_ids, [])
+
   def testDeltaUpdateHotlistRoles(self):
     """Hotlist roles and memberships can be updated."""
     user_6 = self.services.user.TestAddUser('user_666@example.com', 666)

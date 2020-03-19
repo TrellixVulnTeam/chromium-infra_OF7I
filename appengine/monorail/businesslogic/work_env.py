@@ -2262,6 +2262,47 @@ class WorkEnv(object):
     self.services.features.TransferHotlistOwnership(
         self.mc.cnxn, hotlist, new_owner_id, remain_editor, commit=commit)
 
+  def RemoveHotlistEditors(self, hotlist_id, remove_editor_ids, use_cache=True):
+    """Removes editors in a hotlist.
+
+    Args:
+      hotlist_id: the id of the hotlist we want to update
+      remove_editor_ids: list of user_ids to remove from hotlist editors
+
+    Raises:
+      NoSuchHotlistException: There is not hotlist with the given ID.
+      PermissionException: The logged-in user is not allowed to administer the
+        hotlist.
+      InputException: The users being removed are not editors in the hotlist.
+    """
+    hotlist = self.services.features.GetHotlist(
+        self.mc.cnxn, hotlist_id, use_cache=use_cache)
+    edit_permitted = permissions.CanAdministerHotlist(
+        self.mc.auth.effective_ids, self.mc.perms, hotlist)
+
+    # check if user is only removing themselves from the hotlist.
+    # removing linked accounts is allowed but users cannot remove groups
+    # they are part of from hotlists.
+    user_or_linked_ids = (
+        self.mc.auth.user_pb.linked_child_ids + [self.mc.auth.user_id])
+    if self.mc.auth.user_pb.linked_parent_id:
+      user_or_linked_ids.append(self.mc.auth.user_pb.linked_parent_id)
+    removing_self_only = set(remove_editor_ids).issubset(
+        set(user_or_linked_ids))
+
+    if not removing_self_only and not edit_permitted:
+      raise permissions.PermissionException(
+          'User is not allowed to remove editors')
+
+    if not set(remove_editor_ids).issubset(set(hotlist.editor_ids)):
+      raise exceptions.InputException(
+          'Cannot remove users who are not hotlist editors.')
+
+    self.services.features.RemoveHotlistEditors(
+        self.mc.cnxn, hotlist_id, remove_editor_ids)
+
+  # TODO(crbug.com/monorail/7372): Remove DeltaUpdateHotlistRoles once
+  # old Hotlist API is deleted.
   def DeltaUpdateHotlistRoles(
       self, hotlist_id, new_owner_id=None, add_editor_ids=None,
       add_follower_ids=None, remove_user_ids=None, use_cache=True,
@@ -2304,10 +2345,12 @@ class WorkEnv(object):
     if not (removing_self_only or edit_permitted):
       raise permissions.PermissionException(
           'User is not allowed to make this hotlist members update.')
-    if (new_owner_id in (add_editor_ids + add_follower_ids) or
-        set(add_editor_ids) & set(add_follower_ids)):
-      raise exceptions.InputException(
-          'User cannot have multiple roles in hotlist.')
+
+    if add_editor_ids or add_follower_ids:
+      if (new_owner_id in (add_editor_ids + add_follower_ids) or
+          set(add_editor_ids) & set(add_follower_ids)):
+        raise exceptions.InputException(
+            'User cannot have multiple roles in hotlist.')
 
     new_owner_ids = set(hotlist.owner_ids)
     new_editor_ids = set(hotlist.editor_ids)
