@@ -26,6 +26,8 @@ from api.v1 import hotlists_servicer
 from api.v1 import projects_servicer
 from api.v1 import permissions_servicer
 
+from api.v1 import users_servicer
+
 
 def RegisterApiHandlers(prpc_server, services):
   """Registers pRPC API services. And makes their routes
@@ -36,3 +38,4 @@ def RegisterApiHandlers(prpc_server, services):
   prpc_server.add_service(hotlists_servicer.HotlistsServicer(services))
   prpc_server.add_service(projects_servicer.ProjectsServicer(services))
   prpc_server.add_service(permissions_servicer.PermissionsServicer(services))
+  prpc_server.add_service(users_servicer.UsersServicer(services))

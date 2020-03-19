@@ -22,7 +22,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1c\x61pi/v1/api_proto/users.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a#api/v1/api_proto/user_objects.proto\":\n\x0eGetUserRequest\x12(\n\x04name\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"@\n\x14\x42\x61tchGetUsersRequest\x12(\n\x04name\x18\x01 \x03(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"9\n\x15\x42\x61tchGetUsersResponse\x12 \n\x05users\x18\x01 \x03(\x0b\x32\x11.monorail.v1.User2\x9e\x01\n\x05Users\x12;\n\x07GetUser\x12\x1b.monorail.v1.GetUserRequest\x1a\x11.monorail.v1.User\"\x00\x12X\n\rBatchGetUsers\x12!.monorail.v1.BatchGetUsersRequest\x1a\".monorail.v1.BatchGetUsersResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x1c\x61pi/v1/api_proto/users.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a#api/v1/api_proto/user_objects.proto\":\n\x0eGetUserRequest\x12(\n\x04name\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"A\n\x14\x42\x61tchGetUsersRequest\x12)\n\x05names\x18\x01 \x03(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"9\n\x15\x42\x61tchGetUsersResponse\x12 \n\x05users\x18\x01 \x03(\x0b\x32\x11.monorail.v1.User2\x9e\x01\n\x05Users\x12;\n\x07GetUser\x12\x1b.monorail.v1.GetUserRequest\x1a\x11.monorail.v1.User\"\x00\x12X\n\rBatchGetUsers\x12!.monorail.v1.BatchGetUsersRequest\x1a\".monorail.v1.BatchGetUsersResponse\"\x00\x62\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_user__objects__pb2.DESCRIPTOR,])
 
@@ -68,7 +68,7 @@ _BATCHGETUSERSREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='monorail.v1.BatchGetUsersRequest.name', index=0,
+      name='names', full_name='monorail.v1.BatchGetUsersRequest.names', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -87,7 +87,7 @@ _BATCHGETUSERSREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=228,
-  serialized_end=292,
+  serialized_end=293,
 )
 
 
@@ -117,8 +117,8 @@ _BATCHGETUSERSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=294,
-  serialized_end=351,
+  serialized_start=295,
+  serialized_end=352,
 )
 
 _BATCHGETUSERSRESPONSE.fields_by_name['users'].message_type = api_dot_v1_dot_api__proto_dot_user__objects__pb2._USER
@@ -150,7 +150,7 @@ _sym_db.RegisterMessage(BatchGetUsersResponse)
 
 
 _GETUSERREQUEST.fields_by_name['name']._options = None
-_BATCHGETUSERSREQUEST.fields_by_name['name']._options = None
+_BATCHGETUSERSREQUEST.fields_by_name['names']._options = None
 
 _USERS = _descriptor.ServiceDescriptor(
   name='Users',
@@ -158,8 +158,8 @@ _USERS = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=354,
-  serialized_end=512,
+  serialized_start=355,
+  serialized_end=513,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetUser',

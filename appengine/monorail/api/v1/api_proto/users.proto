@@ -35,7 +35,7 @@ message GetUserRequest {
 // Next available tag: 2
 message BatchGetUsersRequest {
   // The name of the users to request.
-  repeated string name = 1 [
+  repeated string names = 1 [
       (google.api.resource_reference) = {type: "api.crbug.com/User"},
       (google.api.field_behavior) = REQUIRED ];
 }
