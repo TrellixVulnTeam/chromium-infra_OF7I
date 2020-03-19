@@ -71,7 +71,7 @@ var Prod = Environment{
 	LogDogHost:           "luci-logdog.appspot.com",
 	InventoryService:     "cros-lab-inventory.appspot.com",
 	DefaultInventory:     "v2",
-	DefaultInventoryOnly: false,
+	DefaultInventoryOnly: true,
 	AdminService:         "chromeos-skylab-bot-fleet.appspot.com",
 	QueenService:         "drone-queen-prod.appspot.com",
 	QueenDroneHostname:   "drone-queen-ENVIRONMENT_PROD",
@@ -123,7 +123,7 @@ var DefaultAuthOptions = auth.Options{
 // work easier.
 // We can also print out the build time (e.g. 20060102150405) as the METADATA
 // when show version to users.
-const VersionNumber = "2.0.0"
+const VersionNumber = "2.1.0"
 
 // DefaultPRPCOptions is used for PRPC clients.  If it is nil, the
 // default value is used.  See prpc.Options for details.
