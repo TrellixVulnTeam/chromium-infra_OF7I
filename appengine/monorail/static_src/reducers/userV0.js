@@ -246,7 +246,7 @@ export const fetchProjects = (userRefs) => async (dispatch) => {
 /**
  * Fetches all of a given user's hotlists.
  * @param {UserRef} userRef The user to fetch hotlists for.
- * @return {function(function): Promise<Array<Hotlist>>}
+ * @return {function(function): Promise<Array<HotlistV0>>}
  */
 export const fetchHotlists = (userRef) => async (dispatch) => {
   dispatch({type: FETCH_HOTLISTS_START});

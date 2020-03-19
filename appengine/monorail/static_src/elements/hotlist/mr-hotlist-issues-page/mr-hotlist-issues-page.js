@@ -144,7 +144,7 @@ export class _MrHotlistIssuesPage extends LitElement {
   constructor() {
     super();
 
-    /** @type {?HotlistV3} */
+    /** @type {?Hotlist} */
     this._hotlist = null;
     /** @type {Array<HotlistIssue>} */
     this._items = [];

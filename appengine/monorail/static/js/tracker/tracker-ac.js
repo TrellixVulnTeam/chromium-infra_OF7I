@@ -1194,7 +1194,7 @@ function TKR_convertFields(fieldsResponse) {
 /**
  * Convert the object resulting of a monorail.Features ListHotlistsByUser
  * call to the format expected by TKR_populateAutocomplete.
- * @param {Array<Hotlist>} hotlists A lists of hotlists
+ * @param {Array<HotlistV0>} hotlists A lists of hotlists
  * @return {Array<{ref_str: string, summary: string}>}
  */
 function TKR_convertHotlists(hotlists) {
@@ -1224,7 +1224,7 @@ function TKR_convertHotlists(hotlists) {
 
 /**
  * Initializes hotlists in autocomplete store.
- * @param {Array<Hotlist>} hotlists
+ * @param {Array<HotlistV0>} hotlists
  */
 function TKR_populateHotlistAutocomplete(hotlists) {
   TKR_setUpHotlistsStore(TKR_convertHotlists(hotlists));

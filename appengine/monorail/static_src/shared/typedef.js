@@ -19,7 +19,7 @@
  * A HotlistItem with the Issue flattened into the top-level,
  * containing the intersection of the fields of HotlistItem and Issue.
  *
- * @typedef {Issue & HotlistItemV3} HotlistIssue
+ * @typedef {Issue & HotlistItem} HotlistIssue
  */
 
 /**
@@ -292,7 +292,7 @@
  */
 
 /**
- * An Object returned by the pRPC v1 API from feature_objects.proto.
+ * An Object returned by the pRPC v3 API from feature_objects.proto.
  *
  * @typedef {Object} IssuesListColumn
  * @property {string} column
@@ -434,7 +434,7 @@
 /**
  * A Hotlist Object returned by the pRPC API features_objects.proto.
  *
- * @typedef {Object} Hotlist
+ * @typedef {Object} HotlistV0
  * @property {UserRef=} ownerRef
  * @property {string=} name
  * @property {string=} summary
@@ -444,9 +444,9 @@
  */
 
 /**
- * A Hotlist Object returned by the pRPC v1 API from feature_objects.proto.
+ * A Hotlist Object returned by the pRPC v3 API from feature_objects.proto.
  *
- * @typedef {Object} HotlistV3
+ * @typedef {Object} Hotlist
  * @property {string} name
  * @property {string=} displayName
  * @property {User=} owner
@@ -460,7 +460,7 @@
 /**
  * A HotlistItem Object returned by the pRPC API features_objects.proto.
  *
- * @typedef {Object} HotlistItem
+ * @typedef {Object} HotlistItemV0
  * @property {Issue=} issue
  * @property {number=} rank
  * @property {UserRef=} adderRef
@@ -469,9 +469,9 @@
  */
 
 /**
- * A HotlistItem Object returned by the pRPC v1 API from feature_objects.proto.
+ * A HotlistItem Object returned by the pRPC v3 API from feature_objects.proto.
  *
- * @typedef {Object} HotlistItemV3
+ * @typedef {Object} HotlistItem
  * @property {string=} name
  * @property {string=} issue
  * @property {number=} rank
@@ -497,7 +497,7 @@
  */
 
 /**
- * A User Object returned by the pRPC v1 API from user_objects.proto.
+ * A User Object returned by the pRPC v3 API from user_objects.proto.
  *
  * @typedef {Object} User
  * @property {string=} name

@@ -91,7 +91,7 @@ class _MrHotlistPeoplePage extends LitElement {
   constructor() {
     super();
 
-    /** @type {?HotlistV3} */
+    /** @type {?Hotlist} */
     this._hotlist = null;
   }
 };

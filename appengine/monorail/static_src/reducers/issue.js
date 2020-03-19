@@ -112,7 +112,7 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
 
   viewedIssueRef: IssueRefString,
 
-  hotlists: Array<Hotlist>,
+  hotlists: Array<HotlistV0>,
   issueList: {
     issueRefs: Array<IssueRefString>,
     progress: number,
@@ -263,10 +263,10 @@ const viewedIssueRefReducer = createReducer('', {
 
 /**
  * Reducer to manage updating the list of hotlists attached to an Issue.
- * @param {Array<Hotlist>} state List of issue hotlists.
+ * @param {Array<HotlistV0>} state List of issue hotlists.
  * @param {AnyAction} action
- * @param {Array<Hotlist>} action.hotlists New list of hotlists.
- * @return {Array<Hotlist>}
+ * @param {Array<HotlistV0>} action.hotlists New list of hotlists.
+ * @return {Array<HotlistV0>}
  */
 const hotlistsReducer = createReducer([], {
   [FETCH_HOTLISTS_SUCCESS]: (_, {hotlists}) => hotlists,

@@ -9,7 +9,7 @@ import 'shared/typedef.js';
 /** @type {string} */
 export const NAME = 'hotlists/1234';
 
-/** @type {HotlistV3} */
+/** @type {Hotlist} */
 export const HOTLIST = Object.freeze({
   name: NAME,
   displayName: 'Hotlist-Name',
@@ -23,7 +23,7 @@ export const HOTLIST = Object.freeze({
 
 export const HOTLIST_ITEM_NAME = NAME + '/items/56';
 
-/** @type {HotlistItemV3} */
+/** @type {HotlistItem} */
 export const HOTLIST_ITEM = Object.freeze({
   name: HOTLIST_ITEM_NAME,
   issue: issue.NAME,
@@ -35,7 +35,7 @@ export const HOTLIST_ITEM = Object.freeze({
 /** @type {HotlistIssue} */
 export const HOTLIST_ISSUE = Object.freeze({...issue.ISSUE, ...HOTLIST_ITEM});
 
-/** @type {HotlistItemV3} */
+/** @type {HotlistItem} */
 export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   name: NAME + '/items/78',
   issue: issue.NAME_OTHER_PROJECT,
@@ -49,7 +49,7 @@ export const HOTLIST_ISSUE_OTHER_PROJECT = Object.freeze({
   ...issue.ISSUE_OTHER_PROJECT, ...HOTLIST_ITEM_OTHER_PROJECT,
 });
 
-/** @type {HotlistItemV3} */
+/** @type {HotlistItem} */
 export const HOTLIST_ITEM_CLOSED = Object.freeze({
   name: NAME + '/items/90',
   issue: issue.NAME_CLOSED,
@@ -63,10 +63,10 @@ export const HOTLIST_ISSUE_CLOSED = Object.freeze({
   ...issue.ISSUE_CLOSED, ...HOTLIST_ITEM_CLOSED,
 });
 
-/** @type {Object.<string, HotlistV3>} */
+/** @type {Object.<string, Hotlist>} */
 export const HOTLISTS = Object.freeze({[NAME]: HOTLIST});
 
-/** @type {Object.<string, Array<HotlistItemV3>>} */
+/** @type {Object.<string, Array<HotlistItem>>} */
 export const HOTLIST_ITEMS = Object.freeze({
   [NAME]: [HOTLIST_ITEM],
 });
