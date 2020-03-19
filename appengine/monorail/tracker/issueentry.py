@@ -169,6 +169,12 @@ class IssueEntry(servlet.Servlet):
     # values are implemented.
     field_views = [view for view in field_views
                    if view.field_name.lower() not in RESTRICTED_FLT_FIELDS]
+    for fv in field_views:
+      if permissions.CanEditValueForFieldDef(
+          mr.auth.effective_ids, mr.perms, mr.project, fv.field_def.field_def):
+        fv.is_editable = ezt.boolean(True)
+      else:
+        fv.is_editable = ezt.boolean(False)
 
     # TODO(jrobbins): remove "or []" after next release.
     (prechecked_approvals, required_approval_ids,

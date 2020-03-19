@@ -118,6 +118,8 @@ class IssueEntryTest(unittest.TestCase):
     user = self.services.user.TestAddUser('user@invalid', 100)
     mr = testing_helpers.MakeMonorailRequest(
         path='/p/proj/issues/entry', services=self.services)
+    mr.perms = permissions.PermissionSet(
+        [permissions.CREATE_ISSUE, permissions.EDIT_ISSUE])
     mr.auth.user_view = framework_views.MakeUserView(
         'cnxn', self.services.user, 100)
     mr.template_name = 'rutabaga'
@@ -129,15 +131,35 @@ class IssueEntryTest(unittest.TestCase):
     config = self.services.config.GetProjectConfig(mr.cnxn, mr.project_id)
     config.field_defs = [
         tracker_bizobj.MakeFieldDef(
-            24, mr.project_id, 'NotEnum',
-            tracker_pb2.FieldTypes.STR_TYPE, None, '', False, False,
-            False, None, None, '', False, '', '',
+            22, mr.project_id, 'NotEnum', tracker_pb2.FieldTypes.STR_TYPE, None,
+            '', False, False, False, None, None, '', False, '', '',
             tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False),
         tracker_bizobj.MakeFieldDef(
-            24, mr.project_id, 'Choices',
-            tracker_pb2.FieldTypes.ENUM_TYPE, None, '', False, False,
-            False, None, None, '', False, '', '',
-            tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)]
+            23, mr.project_id, 'Choices', tracker_pb2.FieldTypes.ENUM_TYPE,
+            None, '', False, False, False, None, None, '', False, '', '',
+            tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False),
+        tracker_bizobj.MakeFieldDef(
+            24,
+            mr.project_id,
+            'RestrictedField',
+            tracker_pb2.FieldTypes.STR_TYPE,
+            None,
+            '',
+            False,
+            False,
+            False,
+            None,
+            None,
+            '',
+            False,
+            '',
+            '',
+            tracker_pb2.NotifyTriggers.NEVER,
+            'no_action',
+            'doc',
+            False,
+            is_restricted_field=True)
+    ]
     self.services.config.StoreConfig(mr.cnxn, config)
     template = tracker_pb2.TemplateDef(
         labels=['NotEnum-Not-Masked', 'Choices-Masked'])
@@ -151,6 +173,9 @@ class IssueEntryTest(unittest.TestCase):
     self.assertTrue(page_data['must_edit_summary'])
     self.assertEqual(page_data['labels'], ['NotEnum-Not-Masked'])
     self.assertEqual(page_data['offer_templates'], ezt.boolean(False))
+    self.assertEqual(page_data['fields'][0].is_editable, ezt.boolean(True))
+    self.assertEqual(page_data['fields'][1].is_editable, ezt.boolean(True))
+    self.assertEqual(page_data['fields'][2].is_editable, ezt.boolean(False))
 
   def testGatherPageData_Approvals(self):
     user = self.services.user.TestAddUser('user@invalid', 100)
