@@ -73,7 +73,7 @@ class _MrHotlistPeoplePage extends LitElement {
 
   /**
    *
-   * @param {UserV3} user
+   * @param {User} user
    * @return {TemplateResult}
    */
   _renderUserLink(user) {

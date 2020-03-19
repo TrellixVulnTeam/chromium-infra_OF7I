@@ -16,13 +16,13 @@ export const USER_REF = Object.freeze({
   displayName: DISPLAY_NAME,
 });
 
-/** @type {UserV3} */
+/** @type {User} */
 export const USER = Object.freeze({
   name: NAME,
   displayName: DISPLAY_NAME,
 });
 
-/** @type {UserV3} */
+/** @type {User} */
 export const USER_2 = Object.freeze({
   name: 'users/5678',
   displayName: 'other_user@example.com',

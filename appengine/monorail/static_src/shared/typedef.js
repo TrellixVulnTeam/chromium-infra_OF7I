@@ -449,8 +449,8 @@
  * @typedef {Object} HotlistV3
  * @property {string} name
  * @property {string=} displayName
- * @property {UserV3=} owner
- * @property {Array<UserV3>=} editors
+ * @property {User=} owner
+ * @property {Array<User>=} editors
  * @property {string=} summary
  * @property {string=} description
  * @property {Array<IssuesListColumn>=} defaultColumns
@@ -475,7 +475,7 @@
  * @property {string=} name
  * @property {string=} issue
  * @property {number=} rank
- * @property {UserV3=} adder
+ * @property {User=} adder
  * @property {string=} createTime
  * @property {string=} note
  */
@@ -487,7 +487,7 @@
 /**
  * A User Object returned by the pRPC API user_objects.proto.
  *
- * @typedef {Object} User
+ * @typedef {Object} UserV0
  * @property {string=} displayName
  * @property {number=} userId
  * @property {boolean=} isSiteAdmin
@@ -499,7 +499,7 @@
 /**
  * A User Object returned by the pRPC v1 API from user_objects.proto.
  *
- * @typedef {Object} UserV3
+ * @typedef {Object} User
  * @property {string=} name
  * @property {string=} displayName
  * @property {string=} availabilityMessage

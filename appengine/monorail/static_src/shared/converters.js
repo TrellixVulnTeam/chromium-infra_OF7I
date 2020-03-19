@@ -92,7 +92,7 @@ export function userIdOrDisplayNameToUserRef(user) {
  * identify a unique user, such as when requesting information related to a user
  * through the API.
  *
- * @param {User} user An Object representing a user, in the JSON format
+ * @param {UserV0} user An Object representing a user, in the JSON format
  *   returned by the pRPC API.
  * @return {UserRef} UserRef style Object.
  */
@@ -113,7 +113,7 @@ export function userNameToId(name) {
 
 /**
  * Converts a v3 API User object to a v0 API UserRef.
- * @param {UserV3} user
+ * @param {User} user
  * @return {UserRef}
  */
 export function userV3ToRef(user) {

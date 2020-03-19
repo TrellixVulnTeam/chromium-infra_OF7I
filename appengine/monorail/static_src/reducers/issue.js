@@ -121,7 +121,7 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
   comments: Array<IssueComment>,
   commentReferences: Object,
   relatedIssues: Object,
-  referencedUsers: Array<User>,
+  referencedUsers: Array<UserV0>,
   starredIssues: Object.<IssueRefString, Boolean>,
   permissions: Array<string>,
   presubmitResponse: Object,
@@ -362,10 +362,10 @@ export const relatedIssuesReducer = createReducer({}, {
 
 /**
  * Stores data for users referenced by issue. ie: Owner, CC, etc.
- * @param {Object.<string, User>} state
+ * @param {Object.<string, UserV0>} state
  * @param {AnyAction} action
- * @param {Object.<string, User>} action.referencedUsers
- * @return {Object.<string, User>}
+ * @param {Object.<string, UserV0>} action.referencedUsers
+ * @return {Object.<string, UserV0>}
  */
 const referencedUsersReducer = createReducer({}, {
   [FETCH_REFERENCED_USERS_SUCCESS]: (_state, {referencedUsers}) =>
