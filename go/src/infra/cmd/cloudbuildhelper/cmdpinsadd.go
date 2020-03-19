@@ -49,7 +49,7 @@ type cmdPinsAddRun struct {
 }
 
 func (c *cmdPinsAddRun) init() {
-	c.commandBase.init(c.exec, true, false, []*string{
+	c.commandBase.init(c.exec, extraFlags{auth: true}, []*string{
 		&c.pins,
 		&c.image,
 	})

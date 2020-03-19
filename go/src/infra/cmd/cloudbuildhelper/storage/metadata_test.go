@@ -94,7 +94,7 @@ func TestMetadata(t *testing.T) {
 	})
 
 	Convey("Equal", t, func() {
-		e := func(k string, ts int64) Metadatum {
+		e := func(k string, ts Timestamp) Metadatum {
 			return Metadatum{Key: k, Timestamp: ts}
 		}
 
@@ -160,7 +160,7 @@ func TestMetadata(t *testing.T) {
 			}
 			md.Add(Metadatum{
 				Key:       key,
-				Timestamp: ts.Add(-age).UnixNano() / 1000.0,
+				Timestamp: TimestampFromTime(ts.Add(-age)),
 				Value:     string(blob),
 			})
 		}

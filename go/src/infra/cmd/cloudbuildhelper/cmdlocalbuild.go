@@ -14,12 +14,10 @@ import (
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/flag/stringmapflag"
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmd/cloudbuildhelper/docker"
 	"infra/cmd/cloudbuildhelper/fileset"
-	"infra/cmd/cloudbuildhelper/manifest"
 )
 
 var cmdLocalBuild = &subcommands.Command{
@@ -44,20 +42,18 @@ type cmdLocalBuildRun struct {
 	commandBase
 
 	targetManifest string
-	labels         stringmapflag.Value
 }
 
 func (c *cmdLocalBuildRun) init() {
-	c.commandBase.init(c.exec, false, false, []*string{
+	c.commandBase.init(c.exec, extraFlags{labels: true}, []*string{
 		&c.targetManifest,
 	})
-	c.Flags.Var(&c.labels, "label", "Labels to attach to the docker image, in k=v form.")
 }
 
 func (c *cmdLocalBuildRun) exec(ctx context.Context) error {
-	m, err := manifest.Load(c.targetManifest)
+	m, _, err := c.loadManifest(c.targetManifest, false, false)
 	if err != nil {
-		return errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
+		return err
 	}
 
 	labels := docker.Labels{

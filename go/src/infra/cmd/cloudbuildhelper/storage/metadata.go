@@ -24,11 +24,24 @@ type Metadata struct {
 	d map[string][]Metadatum // key => values sorted by timestamp, most recent first
 }
 
+// Timestamp is a unix timestamp in microsecond precision.
+type Timestamp int64
+
+// TimestampFromTime converts `t` to Timestamp (trimming precision accordingly).
+func TimestampFromTime(t time.Time) Timestamp {
+	return Timestamp(t.UnixNano() / 1000)
+}
+
+// Time converts the timestamp to local time.Time.
+func (ts Timestamp) Time() time.Time {
+	return time.Unix(0, int64(ts)*1000)
+}
+
 // Metadatum is one parsed key-value metadata pair.
 type Metadatum struct {
-	Key       string // key with the timestamp stripped, if it had any
-	Timestamp int64  // timestamp extracted from the key or 0 if it had none
-	Value     string // value associated with the key
+	Key       string    // key with the timestamp stripped, if it had any
+	Timestamp Timestamp // timestamp extracted from the key or 0 if it had none
+	Value     string    // value associated with the key
 }
 
 // ParseMetadata convert key[@timestamp]=>value map into Metadata object.
@@ -40,7 +53,7 @@ func ParseMetadata(m map[string]string) *Metadata {
 		if chunks := strings.Split(k, "@"); len(chunks) == 2 {
 			if ts, err := strconv.ParseInt(chunks[1], 10, 64); err == nil {
 				md.Key = chunks[0]
-				md.Timestamp = ts
+				md.Timestamp = Timestamp(ts)
 			}
 		}
 		out.d[md.Key] = append(out.d[md.Key], md)
@@ -162,7 +175,7 @@ func (m *Metadata) ToPretty(now time.Time, limit int) string {
 				buf.WriteRune(':')
 			} else {
 				fmt.Fprintf(&buf, "%s (%s):", k,
-					humanize.RelTime(time.Unix(0, v.Timestamp*1000), now, "ago", "from now"))
+					humanize.RelTime(v.Timestamp.Time(), now, "ago", "from now"))
 			}
 			if len(v.Value) < limit {
 				// Inline short-ish values.

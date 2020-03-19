@@ -6,12 +6,7 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"time"
@@ -22,7 +17,6 @@ import (
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag/stringlistflag"
-	"go.chromium.org/luci/common/flag/stringmapflag"
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmd/cloudbuildhelper/cloudbuild"
@@ -32,9 +26,6 @@ import (
 	"infra/cmd/cloudbuildhelper/registry"
 	"infra/cmd/cloudbuildhelper/storage"
 )
-
-// See cmdBuild help string below.
-const inputsHashCanonicalTag = ":inputs-hash"
 
 var cmdBuild = &subcommands.Command{
 	UsageLine: "build <target-manifest-path> [...]",
@@ -91,52 +82,42 @@ type cmdBuildRun struct {
 	commandBase
 
 	targetManifest string
-	infra          string
-	canonicalTag   string
-	buildID        string
 	force          bool
-	labels         stringmapflag.Value
 	tags           stringlistflag.Flag
 }
 
 func (c *cmdBuildRun) init() {
-	c.commandBase.init(c.exec, true, true, []*string{
-		&c.targetManifest,
-	})
-	c.Flags.StringVar(&c.infra, "infra", "dev", "What section to pick from 'infra' field in the YAML.")
-	c.Flags.StringVar(&c.canonicalTag, "canonical-tag", "", "Tag to push the image to if we built a new image.")
-	c.Flags.StringVar(&c.buildID, "build-id", "", "Identifier of the CI build that calls this tool (used in various metadata).")
+	c.commandBase.init(c.exec,
+		extraFlags{
+			auth:         true,
+			infra:        true,
+			canonicalTag: true,
+			labels:       true,
+			buildID:      true,
+			jsonOutput:   true,
+		},
+		[]*string{
+			&c.targetManifest,
+		},
+	)
 	c.Flags.BoolVar(&c.force, "force", false, "Rebuild and reupload the image, ignoring existing artifacts.")
-	c.Flags.Var(&c.labels, "label", "Labels to attach to the docker image, in k=v form.")
 	c.Flags.Var(&c.tags, "tag", "Additional tag(s) to unconditionally push the image to (e.g. \"latest\").")
 }
 
 func (c *cmdBuildRun) exec(ctx context.Context) error {
-	m, err := manifest.Load(c.targetManifest)
+	m, infra, err := c.loadManifest(c.targetManifest, true, true)
 	if err != nil {
-		return errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
-	}
-
-	infra, ok := m.Infra[c.infra]
-	switch {
-	case !ok:
-		return errBadFlag("-infra", fmt.Sprintf("no %q infra specified in the manifest", c.infra))
-	case infra.Storage == "":
-		return errors.Reason("in %q: infra[...].storage is required when using remote build", c.targetManifest).Tag(isCLIError).Err()
-	case infra.CloudBuild.Project == "":
-		return errors.Reason("in %q: infra[...].cloudbuild.project is required when using remote build", c.targetManifest).Tag(isCLIError).Err()
+		return err
 	}
 
 	// Tags use allowed alphabet.
-	if c.canonicalTag != "" && c.canonicalTag != inputsHashCanonicalTag {
-		if err := registry.ValidateTag(c.canonicalTag); err != nil {
-			return errBadFlag("-canonical-tag", err.Error())
+	if c.canonicalTag != "" {
+		if err := validateCanonicalTag(c.canonicalTag); err != nil {
+			return err
 		}
 	}
-	for _, t := range c.tags {
-		if err := registry.ValidateTag(t); err != nil {
-			return errBadFlag("-tag", err.Error())
-		}
+	if err := validateTags(c.tags); err != nil {
+		return err
 	}
 
 	// If not pushing to a registry, just build and then discard the image. This
@@ -208,25 +189,6 @@ func (c *cmdBuildRun) reportResult(ctx context.Context, r buildResult, err error
 	return err
 }
 
-// storageImpl is implemented by *storage.Storage.
-type storageImpl interface {
-	Check(ctx context.Context, name string) (*storage.Object, error)
-	Upload(ctx context.Context, name, digest string, r io.Reader) (*storage.Object, error)
-	UpdateMetadata(ctx context.Context, obj *storage.Object, cb func(m *storage.Metadata) error) error
-}
-
-// builderImpl is implemented by *cloudbuild.Builder.
-type builderImpl interface {
-	Trigger(ctx context.Context, r cloudbuild.Request) (*cloudbuild.Build, error)
-	Check(ctx context.Context, bid string) (*cloudbuild.Build, error)
-}
-
-// registryImpl is implemented by *registry.Client.
-type registryImpl interface {
-	GetImage(ctx context.Context, image string) (*registry.Image, error)
-	TagImage(ctx context.Context, img *registry.Image, tag string) error
-}
-
 // stageCallback prepares local files and calls 'cb'.
 //
 // Nominally implemented by 'stage' function.
@@ -260,46 +222,6 @@ type buildResult struct {
 	Image        *imageRef `json:"image,omitempty"`          // built or reused image (if any)
 	ViewImageURL string    `json:"view_image_url,omitempty"` // URL for humans to look at the image (if any)
 	ViewBuildURL string    `json:"view_build_url,omitempty"` // URL for humans to look at the Cloud Build log
-}
-
-// imageRef is stored as metadata of context tarballs in Google Storage.
-//
-// It refers to some image built from the tarball.
-type imageRef struct {
-	Image        string `json:"image"`  // name of the uploaded image "<registry>/<name>"
-	Digest       string `json:"digest"` // docker digest of the uploaded image "sha256:..."
-	CanonicalTag string `json:"tag"`    // its canonical tag
-
-	BuildID string `json:"build_id,omitempty"` // parent CI build that produced this image (FYI)
-}
-
-// buildRef is stored as metadata of context tarballs in Google Storage.
-//
-// If refers to some CI build that reused the tarball or image built from it.
-// This information is retained for debugging.
-type buildRef struct {
-	BuildID      string `json:"build_id"`      // value of -build-id flag
-	CanonicalTag string `json:"tag,omitempty"` // value of -canonical-tag flag
-}
-
-// Log dumps information about the image to the log.
-func (r *imageRef) Log(ctx context.Context, preamble string) {
-	logging.Infof(ctx, "%s", preamble)
-	if r.CanonicalTag == "" {
-		logging.Infof(ctx, "    Name:   %s", r.Image)
-	} else {
-		logging.Infof(ctx, "    Name:   %s:%s", r.Image, r.CanonicalTag)
-	}
-	logging.Infof(ctx, "    Digest: %s", r.Digest)
-	logging.Infof(ctx, "    View:   %s", r.ViewURL())
-}
-
-// ViewURL returns an URL of the image, for humans.
-func (r *imageRef) ViewURL() string {
-	if r.CanonicalTag != "" {
-		return fmt.Sprintf("https://%s:%s", r.Image, r.CanonicalTag)
-	}
-	return fmt.Sprintf("https://%s@%s", r.Image, r.Digest)
 }
 
 // runBuild is top-level logic of "build" command.
@@ -401,7 +323,7 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 	// Now that we know the inputs, we can resolve "-canonical-tag :inputs-hash"
 	// and do maybeReuseExistingImage check we skipped in `runBuild`.
 	if p.CanonicalTag == inputsHashCanonicalTag {
-		p.CanonicalTag = "cbh-inputs-" + digest[:24]
+		p.CanonicalTag = calcInputsHashCanonicalTag(digest)
 		logging.Infof(ctx, "Canonical tag:  %s", p.CanonicalTag)
 		res.Image, err = maybeReuseExistingImage(ctx, p)
 		if err != nil || res.Image != nil {
@@ -418,8 +340,7 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 	}
 
 	// Metadata about *this* build to associate with the tarball in the storage,
-	// even if we reuse an existing tarball or image. This information is retained
-	// to simplify debugging.
+	// even if we reuse an existing tarball or image.
 	buildRef := &buildRef{
 		BuildID:      p.BuildID,
 		CanonicalTag: p.CanonicalTag,
@@ -435,14 +356,14 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 	determ := p.Manifest.Deterministic != nil && *p.Manifest.Deterministic
 	if determ && p.Image != "" && p.CanonicalTag != "" {
 		logging.Infof(ctx, "The target is marked as deterministic: looking for existing images built from this tarball...")
-		switch imgRef, ts, err := reuseExistingImage(ctx, obj, p.Image, p.Registry); {
+		switch imgRef, err := reuseExistingImage(ctx, obj, p.Image, p.Registry); {
 		case err != nil:
 			return res, err // annotated already
 		case imgRef != nil:
 			if !p.Force {
 				logging.Infof(ctx,
 					"Returning an image with canonical tag %q, it was built from this exact tarball %s",
-					imgRef.CanonicalTag, humanize.Time(ts))
+					imgRef.CanonicalTag, humanize.Time(imgRef.Timestamp))
 				res.Image = imgRef
 				// Let it be known that we reused the image produced from this tarball.
 				return res, updateMetadata(ctx, obj, p.Store, nil, buildRef)
@@ -538,49 +459,6 @@ func tagImage(ctx context.Context, r registryImpl, imgRef *imageRef, tags []stri
 	}
 
 	return nil
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Upload to the storage.
-
-// writeToTemp saves the fileset.Set as a temporary *.tar.gz file, returning it
-// and its SHA256 hex digest.
-//
-// The file is opened in read/write mode. The caller is responsible for closing
-// and deleting it when done.
-func writeToTemp(out *fileset.Set) (*os.File, string, error) {
-	f, err := ioutil.TempFile("", "cloudbuildhelper_*.tar.gz")
-	if err != nil {
-		return nil, "", err
-	}
-	h := sha256.New()
-	if err := out.ToTarGz(io.MultiWriter(f, h)); err != nil {
-		f.Close()
-		os.Remove(f.Name())
-		return nil, "", err
-	}
-	return f, hex.EncodeToString(h.Sum(nil)), nil
-}
-
-// uploadToStorage uploads the given file to the storage if it's not there yet.
-func uploadToStorage(ctx context.Context, s storageImpl, obj, digest string, f *os.File) (*storage.Object, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
-	defer cancel()
-
-	switch uploaded, err := s.Check(ctx, obj); {
-	case err != nil:
-		return nil, errors.Annotate(err, "failed to query the storage for presence of uploaded tarball").Err()
-	case uploaded != nil:
-		return uploaded, nil
-	}
-
-	// Rewind the temp file we have open in read/write mode.
-	if _, err := f.Seek(0, 0); err != nil {
-		return nil, errors.Annotate(err, "failed to seek inside the temp file").Err()
-	}
-
-	uploaded, err := s.Upload(ctx, obj, digest, f)
-	return uploaded, errors.Annotate(err, "failed to upload the tarball").Err()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -681,94 +559,37 @@ func waitBuild(ctx context.Context, bldr builderImpl, b *cloudbuild.Build) (*clo
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Dealing with Cloud Storage metadata.
-
-const (
-	imageRefMetaKey = "cbh-image-ref" // metadata key for imageRef{...} JSON blobs
-	buildRefMetaKey = "cbh-build-ref" // metadata key for buildRef{...} JSON blobs
-)
-
 // reuseExistingImage examines metadata of 'obj' to find references to an
 // already built image.
 //
 // Additionally verifies such image actually exists in the registry. On success
 // returns information about the image and an approximate timestamp when it was
-// built.
+// built (as imageRef.Timestamp).
 //
 // Returns:
-//   (ref, ts,   nil) if there's an existing image built from the tarball.
-//   (nil, zero, nil) if there's no such image.
-//   (nil, zero, err) on errors communicating with the registry.
-func reuseExistingImage(ctx context.Context, obj *storage.Object, image string, r registryImpl) (*imageRef, time.Time, error) {
-	for _, md := range obj.Metadata.Values(imageRefMetaKey) {
-		var ref imageRef
-		if err := json.Unmarshal([]byte(md.Value), &ref); err != nil {
-			logging.Warningf(ctx, "Skipping bad metadata value %q", md.Value)
-			continue
-		}
+//   (ref, nil) if there's an existing image built from the tarball.
+//   (nil, nil) if there's no such image.
+//   (nil, err) on errors communicating with the registry.
+func reuseExistingImage(ctx context.Context, obj *storage.Object, image string, r registryImpl) (*imageRef, error) {
+	for _, ref := range imageRefsFromMetadata(ctx, obj) {
 		if ref.Image != image || ref.Digest == "" || ref.CanonicalTag == "" {
-			logging.Warningf(ctx, "Skipping inappropriate metadata value %q", md.Value)
+			logging.Warningf(ctx, "Skipping inappropriate imageRef %v", ref)
 			continue
 		}
 
 		// Verify such image *actually* exists in the registry.
 		switch img, err := getImage(ctx, r, fmt.Sprintf("%s:%s", ref.Image, ref.CanonicalTag)); {
 		case err != nil:
-			return nil, time.Time{}, err // already annotated
+			return nil, err // already annotated
 		case img == nil:
 			logging.Warningf(ctx, "Metadata record refers to missing image")
 		case img.Digest != ref.Digest:
 			logging.Warningf(ctx, "Digest of %s:%s in metadata is stale (%q, but the tag points to %q)",
 				ref.Image, ref.CanonicalTag, ref.Digest, img.Digest)
 		default:
-			return &ref, time.Unix(0, md.Timestamp*1000), nil
+			return &ref, nil
 		}
 	}
 
-	return nil, time.Time{}, nil // no images we can reuse
-}
-
-// updateMetadata appends to the metadata of the tarball in the storage.
-//
-// Adds serialized 'img' and 'b' there (if they are non-nil).
-func updateMetadata(ctx context.Context, obj *storage.Object, s storageImpl, img *imageRef, b *buildRef) error {
-	ts := clock.Now(ctx).UnixNano() / 1000
-
-	var imgRefJSON []byte
-	if img != nil {
-		var err error
-		if imgRefJSON, err = json.Marshal(img); err != nil {
-			return errors.Annotate(err, "marshalling imageRef %v", img).Err()
-		}
-	}
-
-	var buildRefJSON []byte
-	if b != nil {
-		var err error
-		if buildRefJSON, err = json.Marshal(b); err != nil {
-			return errors.Annotate(err, "marshalling buildRef %v", b).Err()
-		}
-	}
-
-	err := s.UpdateMetadata(ctx, obj, func(m *storage.Metadata) error {
-		if imgRefJSON != nil {
-			m.Add(storage.Metadatum{
-				Key:       imageRefMetaKey,
-				Timestamp: ts,
-				Value:     string(imgRefJSON),
-			})
-		}
-		if buildRefJSON != nil {
-			m.Add(storage.Metadatum{
-				Key:       buildRefMetaKey,
-				Timestamp: ts,
-				Value:     string(buildRefJSON),
-			})
-		}
-		m.Trim(50) // to avoid growing metadata size indefinitely
-		return nil
-	})
-
-	return errors.Annotate(err, "failed to update tarball metadata").Err()
+	return nil, nil // no images we can reuse
 }

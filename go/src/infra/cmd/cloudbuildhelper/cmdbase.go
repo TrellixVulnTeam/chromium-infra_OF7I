@@ -22,8 +22,11 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag/stringmapflag"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/system/signals"
+
+	"infra/cmd/cloudbuildhelper/manifest"
 )
 
 // execCb a signature of a function that executes a subcommand.
@@ -33,21 +36,35 @@ type execCb func(ctx context.Context) error
 type commandBase struct {
 	subcommands.CommandRunBase
 
-	exec     execCb    // called to actually execute the command
-	needAuth bool      // set in init, true if we have auth flags registered
-	posArgs  []*string // will be filled in by positional arguments
+	exec       execCb     // called to actually execute the command
+	extraFlags extraFlags // set in init
+	posArgs    []*string  // will be filled in by positional arguments
 
-	minVersion     string         // -cloudbuildhelper-min-version
-	logConfig      logging.Config // -log-* flags
-	authFlags      authcli.Flags  // -auth-* flags
-	jsonOutput     string         // -json-output flag
-	renderToStdout string         // -render-to-stdout flag
+	minVersion     string              // -cloudbuildhelper-min-version
+	logConfig      logging.Config      // -log-* flags
+	authFlags      authcli.Flags       // -auth-* flags
+	infra          string              // -infra flag
+	canonicalTag   string              // -canonical-tag flag
+	labels         stringmapflag.Value // -label flags
+	buildID        string              // -build-id flag
+	jsonOutput     string              // -json-output flag
+	renderToStdout string              // -render-to-stdout flag
+}
+
+// extraFlags tells `commandBase.init` what additional CLI flags to register.
+type extraFlags struct {
+	auth         bool // -auth-* flags
+	infra        bool // -infra flag
+	canonicalTag bool // -canonical-tag flag
+	labels       bool // -label flags
+	buildID      bool // -build-id flag
+	jsonOutput   bool // -json-output and -render-to-stdout
 }
 
 // init register base flags. Must be called.
-func (c *commandBase) init(exec execCb, needAuth, needJSONOutput bool, posArgs []*string) {
+func (c *commandBase) init(exec execCb, extraFlags extraFlags, posArgs []*string) {
 	c.exec = exec
-	c.needAuth = needAuth
+	c.extraFlags = extraFlags
 	c.posArgs = posArgs
 
 	c.Flags.StringVar(
@@ -57,10 +74,22 @@ func (c *commandBase) init(exec execCb, needAuth, needJSONOutput bool, posArgs [
 	c.logConfig.Level = logging.Info // default logging level
 	c.logConfig.AddFlags(&c.Flags)
 
-	if c.needAuth {
+	if c.extraFlags.auth {
 		c.authFlags.Register(&c.Flags, authOptions()) // see main.go
 	}
-	if needJSONOutput {
+	if c.extraFlags.infra {
+		c.Flags.StringVar(&c.infra, "infra", "dev", "What section to pick from 'infra' field in the manifest YAML.")
+	}
+	if c.extraFlags.canonicalTag {
+		c.Flags.StringVar(&c.canonicalTag, "canonical-tag", "", "Tag to apply to an artifact if it's the first time we built it.")
+	}
+	if c.extraFlags.labels {
+		c.Flags.Var(&c.labels, "label", "Labels to attach to the docker image, in k=v form.")
+	}
+	if c.extraFlags.buildID {
+		c.Flags.StringVar(&c.buildID, "build-id", "", "Identifier of the CI build that calls this tool (used in various metadata).")
+	}
+	if c.extraFlags.jsonOutput {
 		c.Flags.StringVar(&c.jsonOutput, "json-output", "", "Where to write JSON file with the outcome (\"-\" for stdout).")
 		c.Flags.StringVar(&c.renderToStdout, "render-to-stdout", "", "Text template with fields to print to stdout. It takes -json-output JSON as an input.")
 	}
@@ -116,6 +145,36 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 	return 0
 }
 
+// loadManifest loads manifest from the given path, returning CLI errors.
+//
+// If the command requires `-infra` flag (as indicated by extraFlags in init),
+// checks it was passed and picks the corresponding infra section from the
+// manifest.
+func (c *commandBase) loadManifest(path string, needStorage, needCloudBuild bool) (m *manifest.Manifest, infra *manifest.Infra, err error) {
+	m, err = manifest.Load(path)
+	if err != nil {
+		return nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
+	}
+
+	if c.extraFlags.infra {
+		if c.infra == "" {
+			return nil, nil, errBadFlag("-infra", "a value is required")
+		}
+		section, ok := m.Infra[c.infra]
+		switch {
+		case !ok:
+			return nil, nil, errBadFlag("-infra", fmt.Sprintf("no %q infra specified in the manifest", c.infra))
+		case needStorage && infra.Storage == "":
+			return nil, nil, errors.Reason("in %q: infra[...].storage is required when using remote build", path).Tag(isCLIError).Err()
+		case needCloudBuild && infra.CloudBuild.Project == "":
+			return nil, nil, errors.Reason("in %q: infra[...].cloudbuild.project is required when using remote build", path).Tag(isCLIError).Err()
+		}
+		infra = &section
+	}
+
+	return
+}
+
 // tokenSource returns a source of OAuth2 tokens (based on CLI flags) or
 // auth.ErrLoginRequired if the user needs to login first.
 //
@@ -124,8 +183,8 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 //
 // Panics if the command was not configured to use auth in c.init(...).
 func (c *commandBase) tokenSource(ctx context.Context) (oauth2.TokenSource, error) {
-	if !c.needAuth {
-		panic("needAuth is false")
+	if !c.extraFlags.auth {
+		panic("auth flags weren't requested")
 	}
 	opts, err := c.authFlags.Options()
 	if err != nil {

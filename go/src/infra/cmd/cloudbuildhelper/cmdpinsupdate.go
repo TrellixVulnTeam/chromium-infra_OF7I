@@ -46,7 +46,7 @@ type cmdPinsUpdateRun struct {
 }
 
 func (c *cmdPinsUpdateRun) init() {
-	c.commandBase.init(c.exec, true, true, []*string{
+	c.commandBase.init(c.exec, extraFlags{auth: true, jsonOutput: true}, []*string{
 		&c.pins,
 	})
 }
