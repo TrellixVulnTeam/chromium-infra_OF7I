@@ -7,14 +7,19 @@
 package bb
 
 import (
+	"bytes"
+	"compress/zlib"
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
@@ -170,7 +175,7 @@ type Build struct {
 
 	// Responses may be nil if the output properties of the build do not contain
 	// a responses field.
-	Responses map[string]*steps.ExecuteResponse
+	Responses *steps.ExecuteResponses
 
 	// Request may be nil if the output properties of the build do not contain a
 	// request field.
@@ -305,22 +310,11 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 	}
 
 	if op := from.GetOutput().GetProperties().GetFields(); op != nil {
-		if rawResponse, ok := op["response"]; ok {
-			response, err := structPBToExecuteResponse(rawResponse)
-			if err != nil {
-				return nil, errors.Annotate(err, "extractBuildData").Err()
-			}
-			build.Response = response
+		var err error
+		build.Response, build.Responses, err = getBuildResponses(op)
+		if err != nil {
+			return nil, errors.Annotate(err, "extractBuildData").Err()
 		}
-
-		if raw, ok := op["responses"]; ok {
-			r, err := structPBToResponses(raw)
-			if err != nil {
-				return nil, errors.Annotate(err, "extractBuildData").Err()
-			}
-			build.Responses = r
-		}
-
 		if reqValue, ok := op["request"]; ok {
 			request, err := structPBToRequest(reqValue)
 			if err != nil {
@@ -348,6 +342,35 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 	return &build, nil
 }
 
+func getBuildResponses(op map[string]*structpb.Value) (*steps.ExecuteResponse, *steps.ExecuteResponses, error) {
+	var response *steps.ExecuteResponse
+	if raw, ok := op["response"]; ok {
+		resp, err := structPBToExecuteResponse(raw)
+		if err != nil {
+			return nil, nil, errors.Annotate(err, "extractBuildData").Err()
+		}
+		response = resp
+	}
+
+	if rs, ok := op["compressed_responses"]; ok {
+		if b64 := rs.GetStringValue(); b64 != "" {
+			responses, err := compressedPBToExecuteResponses(b64)
+			if err != nil {
+				return nil, nil, errors.Annotate(err, "extractBuildData").Err()
+			}
+			return response, responses, nil
+		}
+	}
+	if raw, ok := op["responses"]; ok {
+		responses, err := structPBToResponses(raw)
+		if err != nil {
+			return nil, nil, errors.Annotate(err, "extractBuildData").Err()
+		}
+		return response, responses, nil
+	}
+	return response, nil, nil
+}
+
 func extractBuildDataAll(from []*buildbucket_pb.Build) ([]*Build, error) {
 	builds := make([]*Build, len(from))
 	for i, rb := range from {
@@ -360,18 +383,15 @@ func extractBuildDataAll(from []*buildbucket_pb.Build) ([]*Build, error) {
 	return builds, nil
 }
 
-func structPBToResponses(from *structpb.Value) (map[string]*steps.ExecuteResponse, error) {
-	responses := make(map[string]*steps.ExecuteResponse)
-	m, err := structPBStructToMap(from)
+func structPBToResponses(from *structpb.Value) (*steps.ExecuteResponses, error) {
+	m := jsonpb.Marshaler{}
+	json, err := m.MarshalToString(from)
 	if err != nil {
-		return nil, errors.Annotate(err, "struct PB to responses").Err()
+		return nil, errors.Annotate(err, "structPBToResponses").Err()
 	}
-	for k, v := range m {
-		r, err := structPBToExecuteResponse(v)
-		if err != nil {
-			return nil, errors.Annotate(err, "struct PB to responses").Err()
-		}
-		responses[k] = r
+	responses := &steps.ExecuteResponses{}
+	if err := jsonpb.UnmarshalString(json, responses); err != nil {
+		return nil, errors.Annotate(err, "structPBToResponses").Err()
 	}
 	return responses, nil
 }
@@ -399,6 +419,45 @@ func structPBToExecuteResponse(from *structpb.Value) (*steps.ExecuteResponse, er
 		return nil, errors.Annotate(err, "structPBToExecuteResponse").Err()
 	}
 	return response, nil
+}
+
+func binPBToExecuteResponse(from []byte) (*steps.ExecuteResponse, error) {
+	response := &steps.ExecuteResponse{}
+	if err := proto.Unmarshal(from, response); err != nil {
+		return nil, errors.Annotate(err, "binPBToExecuteResponse").Err()
+	}
+	return response, nil
+}
+
+func binPBToExecuteResponses(from []byte) (*steps.ExecuteResponses, error) {
+	response := &steps.ExecuteResponses{}
+	if err := proto.Unmarshal(from, response); err != nil {
+		return nil, errors.Annotate(err, "binPBToExecuteResponses").Err()
+	}
+	return response, nil
+}
+
+func compressedPBToExecuteResponses(from string) (*steps.ExecuteResponses, error) {
+	if from == "" {
+		return nil, nil
+	}
+	bs, err := base64.StdEncoding.DecodeString(from)
+	if err != nil {
+		return nil, errors.Annotate(err, "compressedPBToExecuteResponses").Err()
+	}
+	reader, err := zlib.NewReader(bytes.NewReader(bs))
+	if err != nil {
+		return nil, errors.Annotate(err, "compressedPBToExecuteResponses").Err()
+	}
+	bs, err = ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, errors.Annotate(err, "compressedPBToExecuteResponses").Err()
+	}
+	resp, err := binPBToExecuteResponses(bs)
+	if err != nil {
+		return nil, errors.Annotate(err, "compressedPBToExecuteResponses").Err()
+	}
+	return resp, nil
 }
 
 func structPBToRequests(from *structpb.Value) (map[string]*test_platform.Request, error) {
