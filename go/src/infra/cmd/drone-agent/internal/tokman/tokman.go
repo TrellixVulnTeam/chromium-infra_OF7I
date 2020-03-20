@@ -43,11 +43,11 @@ func Make(a *auth.Authenticator, path string, lifetime time.Duration) (Renewer, 
 	return r, nil
 }
 
-// KeepNew keeps the access token valid until the context is canceled or drained.
-// This function blocks until canceled or drained.
+// KeepNew keeps the access token valid until the context is canceled.
+// This function blocks until canceled.
 func (r Renewer) KeepNew(ctx context.Context) {
 	d := newDelayer()
-	for ctx.Err() == nil && !draining.IsDraining(ctx) {
+	for ctx.Err() == nil {
 		tok, err := r.RenewOnce(defaultLifetime)
 		if err != nil {
 			log.Printf("Error: %s", err)
