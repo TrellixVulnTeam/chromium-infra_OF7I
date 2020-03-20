@@ -218,6 +218,7 @@ type buildParams struct {
 //
 // Some fields are populated in reportResult right prior writing to the output.
 type buildResult struct {
+	Name         string    `json:"name"`                     // artifacts name from the manifest YAML
 	Error        string    `json:"error,omitempty"`          // non-empty if the build failed
 	Image        *imageRef `json:"image,omitempty"`          // built or reused image (if any)
 	ViewImageURL string    `json:"view_image_url,omitempty"` // URL for humans to look at the image (if any)
@@ -228,6 +229,8 @@ type buildResult struct {
 //
 // On errors may return partially populated buildResult.
 func runBuild(ctx context.Context, p buildParams) (res buildResult, err error) {
+	res.Name = p.Manifest.Name
+
 	// Skip the build completely if there's already an image with the requested
 	// canonical tag. This check is delayed until later if ":inputs-hash" is used
 	// as a canonical tag, since we don't know it yet (need to build the tarball
@@ -296,8 +299,7 @@ func maybeReuseExistingImage(ctx context.Context, p buildParams) (*imageRef, err
 //
 // On errors may return partially populated buildResult.
 func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buildResult, err error) {
-	logging.Infof(ctx, "Writing tarball with %d files to a temp file to calculate its hash...", out.Len())
-	f, digest, err := writeToTemp(out)
+	f, digest, err := writeToTemp(ctx, out)
 	if err != nil {
 		err = errors.Annotate(err, "failed to write the tarball with context dir").Err()
 		return
@@ -310,15 +312,6 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 		f.Close()
 		os.Remove(f.Name())
 	}()
-
-	size, err := f.Seek(0, 1)
-	if err != nil {
-		err = errors.Annotate(err, "failed to query the size of the temp file").Err()
-		return
-	}
-
-	logging.Infof(ctx, "Tarball digest: %s", digest)
-	logging.Infof(ctx, "Tarball length: %s", humanize.Bytes(uint64(size)))
 
 	// Now that we know the inputs, we can resolve "-canonical-tag :inputs-hash"
 	// and do maybeReuseExistingImage check we skipped in `runBuild`.

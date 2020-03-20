@@ -237,6 +237,7 @@ func TestBuild(t *testing.T) {
 
 			// Reused the existing image.
 			So(res, ShouldResemble, buildResult{
+				Name: testTargetName,
 				Image: &imageRef{
 					Image:        testImageName,
 					Digest:       testDigest,

@@ -164,9 +164,9 @@ func (c *commandBase) loadManifest(path string, needStorage, needCloudBuild bool
 		switch {
 		case !ok:
 			return nil, nil, errBadFlag("-infra", fmt.Sprintf("no %q infra specified in the manifest", c.infra))
-		case needStorage && infra.Storage == "":
+		case needStorage && section.Storage == "":
 			return nil, nil, errors.Reason("in %q: infra[...].storage is required when using remote build", path).Tag(isCLIError).Err()
-		case needCloudBuild && infra.CloudBuild.Project == "":
+		case needCloudBuild && section.CloudBuild.Project == "":
 			return nil, nil, errors.Reason("in %q: infra[...].cloudbuild.project is required when using remote build", path).Tag(isCLIError).Err()
 		}
 		infra = &section
