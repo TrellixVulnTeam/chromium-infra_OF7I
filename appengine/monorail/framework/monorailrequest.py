@@ -621,7 +621,8 @@ def _ParsePathIdentifiers(path):
   split_path = path.lstrip('/').split('?')[0].split('/')
   if len(split_path) >= 2:
     if split_path[0] == 'hotlists':
-      hotlist_id = int(split_path[1])
+      if split_path[1].isdigit():
+        hotlist_id = int(split_path[1])
     if split_path[0] == 'p':
       project_name = split_path[1]
     if split_path[0] == 'u' or split_path[0] == 'users':
