@@ -17,6 +17,7 @@ from testing_utils import testing
 import mock
 
 from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from go.chromium.org.luci.resultdb.proto.rpc.v1 import invocation_pb2
 from go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder_pb2
 from test.test_util import build_bundle, future, future_exception
@@ -41,11 +42,11 @@ def _make_build(build_id, hostname='rdb.dev', invocation=None):
   return bundle.build
 
 
-def _mock_create_request_async(response, update_token):
+def _mock_create_request_async(response, update_tokens):
 
   def inner(*_, **kwargs):
     ret = future(response.SerializeToString())
-    kwargs['response_headers']['update-token'] = update_token
+    kwargs['response_headers']['update-token'] = ','.join(update_tokens)
     return ret
 
   return inner
@@ -56,20 +57,24 @@ class ResultDBTest(testing.AppengineTestCase):
   def setUp(self):
     super(ResultDBTest, self).setUp()
     self.patch('components.net.request_async')
-    self.build = None
+    self.settings = service_config_pb2.SettingsCfg(
+        resultdb=dict(hostname='rdb.example.com'),
+    )
+    self.patch(
+        'config.get_settings_async',
+        autospec=True,
+        return_value=future(self.settings),
+    )
+    self.builds = None
 
   def test_no_hostname(self):
-    self.build = _make_build(1, hostname=None)
-    self.assertFalse(resultdb.sync(self.build))
-    self.assertFalse(net.request_async.called)
-
-  def test_has_invocation(self):
-    self.build = _make_build(2, invocation='invocations/build:2')
-    self.assertFalse(resultdb.sync(self.build))
+    self.builds = [_make_build(1, hostname=None)]
+    self.settings.resultdb.hostname = ''
+    resultdb.create_invocations_async(self.builds).get_result()
     self.assertFalse(net.request_async.called)
 
   def test_cannot_create_invocation(self):
-    self.build = _make_build(3)
+    self.builds = [_make_build(3)]
     net.request_async.side_effect = [
         future_exception(
             net.Error(
@@ -81,18 +86,42 @@ class ResultDBTest(testing.AppengineTestCase):
         )
     ]
     with self.assertRaises(client.RpcError):
-      resultdb.sync(self.build)
+      resultdb.create_invocations_async(self.builds).get_result()
 
   def test_invocation_created(self):
-    self.build = _make_build(4)
-    response = invocation_pb2.Invocation()
-    response.name = 'invocations/build:4'
-    net.request_async.side_effect = _mock_create_request_async(
-        response, 'FakeUpdateToken'
+    self.builds = [_make_build(4)]
+    response = recorder_pb2.BatchCreateInvocationsResponse(
+        invocations=[invocation_pb2.Invocation(name='invocations/build:4')]
     )
-    self.assertTrue(resultdb.sync(self.build))
-    # if called a second time there should be no changes written to datastore.
-    self.assertFalse(resultdb.sync(self.build))
+    net.request_async.side_effect = _mock_create_request_async(
+        response, ['FakeUpdateToken']
+    )
+    resultdb.create_invocations_async(self.builds).get_result()
+    self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
+    self.assertEqual(
+        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:4'
+    )
+
+  def test_invocations_created(self):
+    self.builds = [_make_build(5), _make_build(6)]
+    response = recorder_pb2.BatchCreateInvocationsResponse(
+        invocations=[
+            invocation_pb2.Invocation(name='invocations/build:5'),
+            invocation_pb2.Invocation(name='invocations/build:6'),
+        ]
+    )
+    net.request_async.side_effect = _mock_create_request_async(
+        response, ['FakeUpdateToken', 'FakeUpdateToken2']
+    )
+    resultdb.create_invocations_async(self.builds).get_result()
+    self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
+    self.assertEqual(
+        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:5'
+    )
+    self.assertEqual(self.builds[1].resultdb_update_token, 'FakeUpdateToken2')
+    self.assertEqual(
+        self.builds[1].proto.infra.resultdb.invocation, 'invocations/build:6'
+    )
 
 
 class ResultDBEnqueueFinalizeTaskTest(testing.AppengineTestCase):

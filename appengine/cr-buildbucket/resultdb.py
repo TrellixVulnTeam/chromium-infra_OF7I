@@ -19,67 +19,58 @@ from go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder_pb2
 from go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder_prpc_pb2
 from go.chromium.org.luci.resultdb.proto.rpc.v1 import invocation_pb2
 
+import config
 import model
 import tq
 
 
-def sync(build):
-  """Syncs the build with resultdb.
-
-  Currently, only creates an invocation for the build if none exists yet.
-
-  Returns a boolean indicating whether datastore changes were made.
-  """
-  rdb = build.proto.infra.resultdb
-  if not rdb.hostname or rdb.invocation:
-    return False
-
-  new_invocation, update_token = _create_invocation(build)
-  assert new_invocation
-  assert new_invocation.name, 'Empty invocation name in %s' % (new_invocation)
-  assert update_token
-
-  @ndb.transactional
-  def txn():
-    bundle = model.BuildBundle.get(build, infra=True)
-    assert bundle and bundle.infra, bundle
-    with bundle.infra.mutate() as infra:
-      rdb = infra.resultdb
-      if rdb.invocation:
-        logging.warning('build already has an invocation %r', rdb.invocation)
-        assert bundle.build.resultdb_update_token
-        return False
-      rdb.invocation = new_invocation.name
-    assert not bundle.build.resultdb_update_token
-    bundle.build.resultdb_update_token = update_token
-    bundle.put()
-    return True
-
-  return txn()
+@ndb.tasklet
+def create_invocations_async(builds):
+  """Creates resultdb invocations for each build if globally enabled."""
+  settings = yield config.get_settings_async()
+  resultdb_host = settings.resultdb.hostname
+  if not resultdb_host:
+    # resultdb host needs to be enabled at service level, i.e. globally per
+    # buildbucket deployment.
+    return
+  resp, tokens = yield _create_invocations_async(builds, resultdb_host)
+  assert len(resp.invocations) == len(tokens) == len(builds)
+  for inv, tok, build in zip(resp.invocations, tokens, builds):
+    build.proto.infra.resultdb.invocation = inv.name
+    build.resultdb_update_token = tok
 
 
-def _create_invocation(build):
-  """Creates an invocation in resultdb for |build|."""
+@ndb.tasklet
+def _create_invocations_async(builds, hostname):
+  """Creates a batch of invocations in resultdb for the given builds."""
   # TODO(crbug.com/1056006): Populate bigquery_exports
   # TODO(crbug.com/1056007): Create an invocation like
   #     "build:<project>/<bucket>/<builder>/<number>" if number is available,
   #     and make it include the "build:<id>" inv.
-  invocation_id = 'build:%d' % build.proto.id
+
+  # build:<first build id>+<number of other builds in the batch>
+  request_id = 'build:%d+%d' % (builds[0].proto.id, len(builds) - 1)
+  req = recorder_pb2.BatchCreateInvocationsRequest(request_id=request_id)
+  for build in builds:
+    req.requests.add(invocation_id='build:%d' % build.proto.id)
   response_metadata = {}
   recorder = client.Client(
-      build.proto.infra.resultdb.hostname,
+      hostname,
       recorder_prpc_pb2.RecorderServiceDescription,
   )
-  ret = recorder.CreateInvocation(
-      recorder_pb2.CreateInvocationRequest(
-          invocation_id=invocation_id,
-          invocation=invocation_pb2.Invocation(),
-          request_id=invocation_id,
-      ),
+  ret = yield recorder.BatchCreateInvocationsAsync(
+      req,
       credentials=client.service_account_credentials(),
       response_metadata=response_metadata,
   )
-  return ret, response_metadata['update-token']
+  tokens = response_metadata['update-token']
+  # Multiple values for the same header can be joined by commas into a single
+  # string as per [1].
+  # [1]: https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+  if isinstance(tokens, basestring):  # pragma: no branch
+    tokens = tokens.split(',')
+  raise ndb.Return(ret, tokens)
+
 
 
 def enqueue_invocation_finalization_async(build):

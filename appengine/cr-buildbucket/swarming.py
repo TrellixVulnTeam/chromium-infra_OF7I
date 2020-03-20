@@ -498,7 +498,6 @@ def _sync_build(build_id, generation):
   )
   sw = build.proto.infra.swarming
 
-  resultdb.sync(build)
   if not sw.task_id:
     _create_swarming_task(build)
   else:
