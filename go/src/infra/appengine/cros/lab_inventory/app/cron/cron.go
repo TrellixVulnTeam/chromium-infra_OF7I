@@ -48,6 +48,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	r.GET("/internal/cron/dump-inventory-snapshot", mwCron, logAndSetHTTPErr(dumpInventorySnapshot))
 
+	r.GET("/internal/cron/dump-other-configs-snapshot", mwCron, logAndSetHTTPErr(dumpOtherConfigsCronHandler))
+
 	r.GET("/internal/cron/sync-dev-config", mwCron, logAndSetHTTPErr(syncDevConfigHandler))
 
 	r.GET("/internal/cron/sync-manufacturing-config", mwCron, logAndSetHTTPErr(syncManufacturingConfigHandler))
@@ -107,6 +109,35 @@ func dumpRegisteredAssetsCronHandler(c *router.Context) error {
 	if err := uploader.Put(ctx, msgs...); err != nil {
 		return err
 	}
+	logging.Debugf(ctx, "Dump is successfully finished")
+	return nil
+}
+
+func dumpOtherConfigsCronHandler(c *router.Context) error {
+	ctx := c.Context
+	logging.Infof(ctx, "Start to dump related configs in inventory to bigquery")
+
+	curTime := time.Now()
+	curTimeStr := bqlib.GetPSTTimeStamp(curTime)
+	client, err := bigquery.NewClient(ctx, info.AppID(ctx))
+	if err != nil {
+		return err
+	}
+
+	uploader := bqlib.InitBQUploaderWithClient(ctx, client, "inventory", fmt.Sprintf("deviceconfig%s", curTimeStr))
+	msgs := bqlib.GetDeviceConfigProtos(ctx)
+	logging.Debugf(ctx, "Dumping %d records of device configs to bigquery", len(msgs))
+	if err := uploader.Put(ctx, msgs...); err != nil {
+		return err
+	}
+
+	uploader = bqlib.InitBQUploaderWithClient(ctx, client, "inventory", fmt.Sprintf("manufacturing%s", curTimeStr))
+	msgs = bqlib.GetManufacturingConfigProtos(ctx)
+	logging.Debugf(ctx, "Dumping %d records of manufacturing configs to bigquery", len(msgs))
+	if err := uploader.Put(ctx, msgs...); err != nil {
+		return err
+	}
+
 	logging.Debugf(ctx, "Dump is successfully finished")
 	return nil
 }

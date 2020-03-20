@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
@@ -94,4 +95,19 @@ func GetCachedConfig(ctx context.Context, cfgIds []*device.ConfigId) ([]proto.Me
 		entities[i] = &e
 	}
 	return cfg2datastore.GetCachedCfgByIds(ctx, entities)
+}
+
+// GetAllCachedConfig gets all the device configs from datastore.
+func GetAllCachedConfig(ctx context.Context) (map[*device.Config]time.Time, error) {
+	var entities []*devcfgEntity
+	if err := datastore.GetAll(ctx, datastore.NewQuery(entityKind), &entities); err != nil {
+		return nil, err
+	}
+	configs := make(map[*device.Config]time.Time, 0)
+	for _, dc := range entities {
+		if a, err := dc.GetMessagePayload(); err == nil {
+			configs[a.(*device.Config)] = dc.Updated
+		}
+	}
+	return configs, nil
 }

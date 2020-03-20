@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gitiles"
 
@@ -76,4 +77,19 @@ func GetCachedConfig(ctx context.Context, cfgIds []*manufacturing.ConfigID) ([]p
 		logging.Debugf(ctx, "Getting manufacturing config for %#v", c.GetValue())
 	}
 	return cfg2datastore.GetCachedCfgByIds(ctx, entities)
+}
+
+// GetAllCachedConfig gets all the manufacturing configs from datastore.
+func GetAllCachedConfig(ctx context.Context) (map[*manufacturing.Config]time.Time, error) {
+	var entities []*manufacturingCfgEntity
+	if err := datastore.GetAll(ctx, datastore.NewQuery(entityKind), &entities); err != nil {
+		return nil, err
+	}
+	configs := make(map[*manufacturing.Config]time.Time, 0)
+	for _, dc := range entities {
+		if a, err := dc.GetMessagePayload(); err == nil {
+			configs[a.(*manufacturing.Config)] = dc.Updated
+		}
+	}
+	return configs, nil
 }

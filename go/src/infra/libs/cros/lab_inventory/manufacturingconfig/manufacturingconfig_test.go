@@ -103,3 +103,26 @@ func TestGetCachedManufacturingConfig(t *testing.T) {
 		})
 	})
 }
+
+func TestGetAllCachedConfig(t *testing.T) {
+	Convey("Test get all device config cache", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		err := datastore.Put(ctx, []manufacturingCfgEntity{
+			{ID: "FOO"},
+			{ID: "BAR"},
+			{
+				ID:     "BAZ",
+				Config: []byte("bad data"),
+			},
+		})
+		So(err, ShouldBeNil)
+
+		configs, err := GetAllCachedConfig(ctx)
+		So(err, ShouldBeNil)
+		So(configs, ShouldHaveLength, 2)
+		for dc := range configs {
+			So(dc.GetManufacturingId(), ShouldBeNil)
+		}
+	})
+}

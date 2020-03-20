@@ -168,3 +168,26 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 		})
 	})
 }
+
+func TestGetAllCachedConfig(t *testing.T) {
+	Convey("Test get all device config cache", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		err := datastore.Put(ctx, []devcfgEntity{
+			{ID: "platform.model.variant1"},
+			{ID: "platform.model.variant2"},
+			{
+				ID:        "platform.model.variant3",
+				DevConfig: []byte("bad data"),
+			},
+		})
+		So(err, ShouldBeNil)
+
+		devConfigs, err := GetAllCachedConfig(ctx)
+		So(err, ShouldBeNil)
+		So(devConfigs, ShouldHaveLength, 2)
+		for dc := range devConfigs {
+			So(dc.GetId(), ShouldBeNil)
+		}
+	})
+}
