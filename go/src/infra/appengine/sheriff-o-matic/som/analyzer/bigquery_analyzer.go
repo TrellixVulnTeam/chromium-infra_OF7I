@@ -139,7 +139,10 @@ const iosFailuresQuery = selectFromWhere + `
 
 const releaseBranchFailuresQuery = selectFromWhere + `
 	project = "chromium"
-	AND bucket in ("ci-beta", "ci-stable")
+	AND (
+		bucket IN ("ci-beta", "ci-stable")
+		OR bucket LIKE "ci-m%%"
+	)
 LIMIT
 	1000
 `
