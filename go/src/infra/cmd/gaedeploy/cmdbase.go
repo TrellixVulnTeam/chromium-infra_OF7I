@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/maruel/subcommands"
 
@@ -15,10 +16,19 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/system/signals"
+
+	"infra/cmd/gaedeploy/cache"
+	"infra/cmd/gaedeploy/source"
 )
 
 // execCb a signature of a function that executes a subcommand.
 type execCb func(ctx context.Context) error
+
+// Placeholders for some CLI flags that indicate they weren't set.
+const (
+	appIDPlaceholder         = "<app-id>"
+	tarballSourcePlaceholder = "<path>"
+)
 
 // commandBase defines flags common to all subcommands.
 type commandBase struct {
@@ -26,7 +36,14 @@ type commandBase struct {
 
 	exec execCb // called to actually execute the command
 
-	logConfig logging.Config // -log-* flags
+	logConfig     logging.Config // -log-* flags
+	appID         string         // -app-id flag (required)
+	tarballSource string         // -tarball-source flag (required)
+	tarballSHA256 string         // -tarball-sha256 flag (optional for local files)
+	cacheDir      string         // -cache-dir flag (optional, has default)
+
+	source source.Source // initialized in handleArgsAndFlags
+	cache  *cache.Cache  // initialized in handleArgsAndFlags
 }
 
 // init register base flags. Must be called.
@@ -35,6 +52,11 @@ func (c *commandBase) init(exec execCb) {
 
 	c.logConfig.Level = logging.Info // default logging level
 	c.logConfig.AddFlags(&c.Flags)
+
+	c.Flags.StringVar(&c.appID, "app-id", appIDPlaceholder, "GAE app ID to update.")
+	c.Flags.StringVar(&c.tarballSource, "tarball-source", tarballSourcePlaceholder, "Either gs:// or local path to a tarball with app source code.")
+	c.Flags.StringVar(&c.tarballSHA256, "tarball-sha256", "", "The expected tarball's SHA256 (optional for local files).")
+	c.Flags.StringVar(&c.cacheDir, "cache-dir", "", "Directory to keep unpacked tarballs in.")
 }
 
 // ModifyContext implements cli.ContextModificator.
@@ -50,8 +72,8 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 
 	logging.Infof(ctx, "Starting %s", UserAgent)
 
-	if len(args) != 0 {
-		return handleErr(ctx, errors.Reason("unexpected positional arguments %q", args).Tag(isCLIError).Err())
+	if err := c.handleArgsAndFlags(args); err != nil {
+		return handleErr(ctx, isCLIError.Apply(err))
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -61,6 +83,40 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 		return handleErr(ctx, err)
 	}
 	return 0
+}
+
+// handleArgsAndFlags validates flags and substitutes defaults.
+func (c *commandBase) handleArgsAndFlags(args []string) error {
+	switch {
+	case len(args) != 0:
+		return errors.Reason("unexpected positional arguments %q", args).Err()
+	case c.appID == appIDPlaceholder:
+		return errBadFlag("-app-id", "a value is required")
+	case c.tarballSource == tarballSourcePlaceholder:
+		return errBadFlag("-tarball-source", "a value is required")
+	}
+
+	// Where to grab the tarball from.
+	var err error
+	c.source, err = source.New(c.tarballSource, c.tarballSHA256)
+	if err != nil {
+		return err
+	}
+
+	// Where to store it.
+	if c.cacheDir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return errors.Annotate(err, "failed to determine the home dir, pass -cache-dir directly").Err()
+		}
+		c.cacheDir = filepath.Join(home, ".gaedeploy_cache")
+	}
+	if err := os.MkdirAll(c.cacheDir, 0700); err != nil {
+		return errors.Annotate(err, "failed to create the cache directory").Err()
+	}
+	c.cache = &cache.Cache{Root: c.cacheDir}
+
+	return nil
 }
 
 // isCLIError is tagged into errors caused by bad CLI flags.
