@@ -34,6 +34,7 @@ func (c *cmdModuleRun) init() {
 		appID:    true,
 		tarball:  true,
 		cacheDir: true,
+		dryRun:   true,
 	})
 }
 

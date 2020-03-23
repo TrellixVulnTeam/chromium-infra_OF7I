@@ -6,20 +6,29 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/maruel/subcommands"
 
+	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag/stringlistflag"
 	"go.chromium.org/luci/common/logging"
 )
 
-const deployableYamlPlaceholder = "<path>"
-
 var cmdYaml = &subcommands.Command{
 	UsageLine: "yaml [...]",
-	ShortDesc: "deploys a single deployable GAE YAML (e.g. dispatch.yaml)",
-	LongDesc: `Deploys a single deployable GAE YAML (e.g. dispatch.yaml).
+	ShortDesc: "deploys one or more deployable GAE YAML (e.g. dispatch.yaml)",
+	LongDesc: `Deploys one or more deployable GAE YAML (e.g. dispatch.yaml).
 
-TODO: write more.
+Fetches and unpacks the tarball, then simply calls:
+	gcloud app deploy --project <app-id> [list of deployable yamls]
+
+Where paths to deployable YAMLs are provided via repeated "-deployable-yaml"
+flag. Only specified YAMLs will be deployed.
 `,
 
 	CommandRun: func() subcommands.CommandRun {
@@ -32,7 +41,7 @@ TODO: write more.
 type cmdYamlRun struct {
 	commandBase
 
-	deployableYaml string // -deployable-yaml flag, required
+	deployableYaml stringlistflag.Flag // -deployable-yaml flag, required
 }
 
 func (c *cmdYamlRun) init() {
@@ -40,24 +49,65 @@ func (c *cmdYamlRun) init() {
 		appID:    true,
 		tarball:  true,
 		cacheDir: true,
+		dryRun:   true,
 	})
 
-	c.Flags.StringVar(&c.deployableYaml, "deployable-yaml", deployableYamlPlaceholder,
-		"Path within the tarball to a YAML to deploy.")
+	c.Flags.Var(&c.deployableYaml, "deployable-yaml", "Path within the tarball to a YAML to deploy (can be repeated multiple times).")
 }
 
 func (c *cmdYamlRun) exec(ctx context.Context) error {
-	if c.deployableYaml == deployableYamlPlaceholder {
+	if len(c.deployableYaml) == 0 {
 		return errBadFlag("-deployable-yaml", "a value is required")
+	}
+
+	// Scope this command only to non-module YAMLs. There's a separate command
+	// for modules. They are significantly different.
+	allowedYAMLs := stringset.NewFromSlice(
+		"cron.yaml",
+		"dispatch.yaml",
+		"dos.yaml",
+		"index.yaml",
+		"queue.yaml",
+	)
+	for _, p := range c.deployableYaml {
+		if !allowedYAMLs.Has(filepath.Base(p)) {
+			return errBadFlag("-deployable-yaml", fmt.Sprintf("%s is not a valid target", p))
+		}
 	}
 
 	logging.Infof(ctx, "App ID:  %s", c.appID)
 	logging.Infof(ctx, "Tarball: %s", c.tarballSource)
 	logging.Infof(ctx, "Cache:   %s", c.cacheDir)
-	logging.Infof(ctx, "YAML:    %s", c.deployableYaml)
+	logging.Infof(ctx, "YAML(s): %s", c.deployableYaml)
 
 	return c.cache.WithTarball(ctx, c.source, func(path string) error {
-		// TODO: implement.
+		for _, localPath := range c.deployableYaml {
+			if _, err := os.Stat(filepath.Join(path, localPath)); err != nil {
+				return errors.Annotate(err, "bad YAML file %q", localPath).Err()
+			}
+		}
+
+		cmdLine := append([]string{
+			"gcloud", "app", "deploy",
+			"--project", c.appID,
+			"--quiet", // disable interactive prompts
+		}, c.deployableYaml...)
+
+		logging.Infof(ctx, "Running: %v", cmdLine)
+		logging.Infof(ctx, "  in cwd %q", path)
+
+		if c.dryRun {
+			logging.Warningf(ctx, "In dry run mode! Not really running anything.")
+			return nil
+		}
+
+		cmd := exec.CommandContext(ctx, cmdLine[0], cmdLine[1:]...)
+		cmd.Dir = path
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return errors.Annotate(err, "gcloud call failed").Err()
+		}
 		return nil
 	})
 }

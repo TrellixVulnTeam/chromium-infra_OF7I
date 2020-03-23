@@ -42,6 +42,7 @@ type commandBase struct {
 	tarballSource string         // -tarball-source flag (required)
 	tarballSHA256 string         // -tarball-sha256 flag (optional for local files)
 	cacheDir      string         // -cache-dir flag (optional, has default)
+	dryRun        bool           // -dry-run flag
 
 	source source.Source // initialized in handleArgsAndFlags
 	cache  *cache.Cache  // initialized in handleArgsAndFlags
@@ -52,6 +53,7 @@ type extraFlags struct {
 	appID    bool // -app-id
 	tarball  bool // -tarball-*
 	cacheDir bool // -cache-dir
+	dryRun   bool // -dry-run
 }
 
 // init register base flags. Must be called.
@@ -71,6 +73,9 @@ func (c *commandBase) init(exec execCb, extraFlags extraFlags) {
 	}
 	if extraFlags.cacheDir {
 		c.Flags.StringVar(&c.cacheDir, "cache-dir", "", "Directory to keep unpacked tarballs in.")
+	}
+	if extraFlags.dryRun {
+		c.Flags.BoolVar(&c.dryRun, "dry-run", false, "Just print gcloud commands without executing them.")
 	}
 }
 
