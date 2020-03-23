@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/luci/common/proto/google"
 
 	"infra/cmd/cros_test_platform/internal/execution"
+	"infra/cmd/cros_test_platform/internal/execution/bb"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"infra/libs/skylab/common/errctx"
@@ -85,7 +86,7 @@ func (c *skylabExecuteRun) innerRun(ctx context.Context, args []string, env subc
 	}
 
 	cfg := extractOneConfig(request.TaggedRequests)
-	client, err := swarming.NewSkylabClient(ctx, cfg)
+	client, err := newSkylabClient(ctx, cfg, request.TaggedRequests)
 	if err != nil {
 		return err
 	}
@@ -118,6 +119,20 @@ func extractOneConfig(trs map[string]*steps.ExecuteRequest) *config.Config {
 		return r.Config
 	}
 	return nil
+}
+
+func newSkylabClient(ctx context.Context, cfg *config.Config, trs map[string]*steps.ExecuteRequest) (skylab.Client, error) {
+	if useTestRunner(trs) {
+		return bb.NewSkylabClient(ctx, cfg)
+	}
+	return swarming.NewSkylabClient(ctx, cfg)
+}
+
+func useTestRunner(trs map[string]*steps.ExecuteRequest) bool {
+	for _, r := range trs {
+		return r.GetRequestParams().GetMigrations().GetUseTestRunner()
+	}
+	return false
 }
 
 func inferDeadline(r *steps.ExecuteRequests) (time.Time, error) {
@@ -175,6 +190,14 @@ func (c *skylabExecuteRun) validateRequests(trs map[string]*steps.ExecuteRequest
 		o := r.RequestParams.Time.MaximumDuration
 		if !proto.Equal(sTimeout, o) {
 			return errors.Reason("validate request: per-request timeout support unimplemented: %s[%s] vs %s[%s]", sTag, sTimeout, t, o).Err()
+		}
+	}
+
+	sUseTestRunner := sReq.RequestParams.GetMigrations().GetUseTestRunner()
+	for t, r := range trs {
+		o := r.RequestParams.GetMigrations().GetUseTestRunner()
+		if sUseTestRunner != o {
+			return errors.Reason("validate request: mismatched use_test_runner: %s[%v] vs %s[%v]", sTag, sUseTestRunner, t, o).Err()
 		}
 	}
 	return nil
