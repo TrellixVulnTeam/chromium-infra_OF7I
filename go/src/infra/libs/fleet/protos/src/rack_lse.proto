@@ -1,0 +1,40 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet;
+
+// Required by protoc-gen-go
+option go_package = ".;fleet";
+
+import "peripherals.proto";
+import "lse_id.proto";
+import "lse_prototype.proto";
+
+message RackLSE {
+    LabSetupEnvID id = 1;
+    RackPrototypeID prototype_id = 2;
+
+    oneof lse {
+        ChromeRackLSE chrome_rack_lse = 3;
+        ChromeOSRackLSE chromeos_rack_lse = 4;
+    }
+}
+
+message ChromeRackLSE {
+    repeated PeripheralHost rpm_hostnames = 1;
+    repeated PeripheralHost kvm_hostnames = 2;
+}
+
+message ChromeOSRackLSE {
+    repeated RPM rpm = 1;
+    repeated Switch switches = 2;
+    repeated PeripheralHost rpm_hostnames = 3;
+}
+
+message PeripheralHost {
+    string hardware_id = 1;
+    string hostname = 2;
+}
