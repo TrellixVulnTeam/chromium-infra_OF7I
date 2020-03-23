@@ -20,6 +20,80 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type KVM struct {
+	// serial_number or asset tag
+	Id *KVMID `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Descriptive name if needed
+	Name                 string          `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	MacAddress           string          `protobuf:"bytes,3,opt,name=mac_address,json=macAddress,proto3" json:"mac_address,omitempty"`
+	Platform             *ChromePlatform `protobuf:"bytes,4,opt,name=platform,proto3" json:"platform,omitempty"`
+	AvailablePorts       int32           `protobuf:"varint,5,opt,name=available_ports,json=availablePorts,proto3" json:"available_ports,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *KVM) Reset()         { *m = KVM{} }
+func (m *KVM) String() string { return proto.CompactTextString(m) }
+func (*KVM) ProtoMessage()    {}
+func (*KVM) Descriptor() ([]byte, []int) {
+	return fileDescriptor_05b5e8be34da00cd, []int{0}
+}
+
+func (m *KVM) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_KVM.Unmarshal(m, b)
+}
+func (m *KVM) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_KVM.Marshal(b, m, deterministic)
+}
+func (m *KVM) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KVM.Merge(m, src)
+}
+func (m *KVM) XXX_Size() int {
+	return xxx_messageInfo_KVM.Size(m)
+}
+func (m *KVM) XXX_DiscardUnknown() {
+	xxx_messageInfo_KVM.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KVM proto.InternalMessageInfo
+
+func (m *KVM) GetId() *KVMID {
+	if m != nil {
+		return m.Id
+	}
+	return nil
+}
+
+func (m *KVM) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *KVM) GetMacAddress() string {
+	if m != nil {
+		return m.MacAddress
+	}
+	return ""
+}
+
+func (m *KVM) GetPlatform() *ChromePlatform {
+	if m != nil {
+		return m.Platform
+	}
+	return nil
+}
+
+func (m *KVM) GetAvailablePorts() int32 {
+	if m != nil {
+		return m.AvailablePorts
+	}
+	return 0
+}
+
+// Refer to one port of a given KVM
 type KVMInterface struct {
 	Id                   *KVMID   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Port                 string   `protobuf:"bytes,2,opt,name=port,proto3" json:"port,omitempty"`
@@ -32,7 +106,7 @@ func (m *KVMInterface) Reset()         { *m = KVMInterface{} }
 func (m *KVMInterface) String() string { return proto.CompactTextString(m) }
 func (*KVMInterface) ProtoMessage()    {}
 func (*KVMInterface) Descriptor() ([]byte, []int) {
-	return fileDescriptor_05b5e8be34da00cd, []int{0}
+	return fileDescriptor_05b5e8be34da00cd, []int{1}
 }
 
 func (m *KVMInterface) XXX_Unmarshal(b []byte) error {
@@ -67,6 +141,72 @@ func (m *KVMInterface) GetPort() string {
 	return ""
 }
 
+type RPM struct {
+	// serial_number or asset tag
+	Id *RPMID `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Descriptive name if needed
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	MacAddress           string   `protobuf:"bytes,3,opt,name=mac_address,json=macAddress,proto3" json:"mac_address,omitempty"`
+	AvailablePorts       int32    `protobuf:"varint,4,opt,name=available_ports,json=availablePorts,proto3" json:"available_ports,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *RPM) Reset()         { *m = RPM{} }
+func (m *RPM) String() string { return proto.CompactTextString(m) }
+func (*RPM) ProtoMessage()    {}
+func (*RPM) Descriptor() ([]byte, []int) {
+	return fileDescriptor_05b5e8be34da00cd, []int{2}
+}
+
+func (m *RPM) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RPM.Unmarshal(m, b)
+}
+func (m *RPM) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RPM.Marshal(b, m, deterministic)
+}
+func (m *RPM) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RPM.Merge(m, src)
+}
+func (m *RPM) XXX_Size() int {
+	return xxx_messageInfo_RPM.Size(m)
+}
+func (m *RPM) XXX_DiscardUnknown() {
+	xxx_messageInfo_RPM.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RPM proto.InternalMessageInfo
+
+func (m *RPM) GetId() *RPMID {
+	if m != nil {
+		return m.Id
+	}
+	return nil
+}
+
+func (m *RPM) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *RPM) GetMacAddress() string {
+	if m != nil {
+		return m.MacAddress
+	}
+	return ""
+}
+
+func (m *RPM) GetAvailablePorts() int32 {
+	if m != nil {
+		return m.AvailablePorts
+	}
+	return 0
+}
+
+// Refer to one port of a given RPM
 type RPMInterface struct {
 	Id                   *RPMID   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Port                 string   `protobuf:"bytes,2,opt,name=port,proto3" json:"port,omitempty"`
@@ -79,7 +219,7 @@ func (m *RPMInterface) Reset()         { *m = RPMInterface{} }
 func (m *RPMInterface) String() string { return proto.CompactTextString(m) }
 func (*RPMInterface) ProtoMessage()    {}
 func (*RPMInterface) Descriptor() ([]byte, []int) {
-	return fileDescriptor_05b5e8be34da00cd, []int{1}
+	return fileDescriptor_05b5e8be34da00cd, []int{3}
 }
 
 func (m *RPMInterface) XXX_Unmarshal(b []byte) error {
@@ -114,53 +254,64 @@ func (m *RPMInterface) GetPort() string {
 	return ""
 }
 
-type Drac struct {
-	SwitchInterface      *SwitchInterface `protobuf:"bytes,1,opt,name=switch_interface,json=switchInterface,proto3" json:"switch_interface,omitempty"`
-	Password             string           `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+type Switch struct {
+	// serial_number or asset tag
+	Id *SwitchID `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Descriptive name if needed
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	AvailablePorts       int32    `protobuf:"varint,3,opt,name=available_ports,json=availablePorts,proto3" json:"available_ports,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Drac) Reset()         { *m = Drac{} }
-func (m *Drac) String() string { return proto.CompactTextString(m) }
-func (*Drac) ProtoMessage()    {}
-func (*Drac) Descriptor() ([]byte, []int) {
-	return fileDescriptor_05b5e8be34da00cd, []int{2}
+func (m *Switch) Reset()         { *m = Switch{} }
+func (m *Switch) String() string { return proto.CompactTextString(m) }
+func (*Switch) ProtoMessage()    {}
+func (*Switch) Descriptor() ([]byte, []int) {
+	return fileDescriptor_05b5e8be34da00cd, []int{4}
 }
 
-func (m *Drac) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Drac.Unmarshal(m, b)
+func (m *Switch) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Switch.Unmarshal(m, b)
 }
-func (m *Drac) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Drac.Marshal(b, m, deterministic)
+func (m *Switch) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Switch.Marshal(b, m, deterministic)
 }
-func (m *Drac) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Drac.Merge(m, src)
+func (m *Switch) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Switch.Merge(m, src)
 }
-func (m *Drac) XXX_Size() int {
-	return xxx_messageInfo_Drac.Size(m)
+func (m *Switch) XXX_Size() int {
+	return xxx_messageInfo_Switch.Size(m)
 }
-func (m *Drac) XXX_DiscardUnknown() {
-	xxx_messageInfo_Drac.DiscardUnknown(m)
+func (m *Switch) XXX_DiscardUnknown() {
+	xxx_messageInfo_Switch.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Drac proto.InternalMessageInfo
+var xxx_messageInfo_Switch proto.InternalMessageInfo
 
-func (m *Drac) GetSwitchInterface() *SwitchInterface {
+func (m *Switch) GetId() *SwitchID {
 	if m != nil {
-		return m.SwitchInterface
+		return m.Id
 	}
 	return nil
 }
 
-func (m *Drac) GetPassword() string {
+func (m *Switch) GetName() string {
 	if m != nil {
-		return m.Password
+		return m.Name
 	}
 	return ""
 }
 
+func (m *Switch) GetAvailablePorts() int32 {
+	if m != nil {
+		return m.AvailablePorts
+	}
+	return 0
+}
+
+// Refer to one port of a given switch
 type SwitchInterface struct {
 	Id                   *SwitchID `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Port                 string    `protobuf:"bytes,2,opt,name=port,proto3" json:"port,omitempty"`
@@ -173,7 +324,7 @@ func (m *SwitchInterface) Reset()         { *m = SwitchInterface{} }
 func (m *SwitchInterface) String() string { return proto.CompactTextString(m) }
 func (*SwitchInterface) ProtoMessage()    {}
 func (*SwitchInterface) Descriptor() ([]byte, []int) {
-	return fileDescriptor_05b5e8be34da00cd, []int{3}
+	return fileDescriptor_05b5e8be34da00cd, []int{5}
 }
 
 func (m *SwitchInterface) XXX_Unmarshal(b []byte) error {
@@ -208,6 +359,53 @@ func (m *SwitchInterface) GetPort() string {
 	return ""
 }
 
+type Drac struct {
+	SwitchInterface      *SwitchInterface `protobuf:"bytes,1,opt,name=switch_interface,json=switchInterface,proto3" json:"switch_interface,omitempty"`
+	Password             string           `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *Drac) Reset()         { *m = Drac{} }
+func (m *Drac) String() string { return proto.CompactTextString(m) }
+func (*Drac) ProtoMessage()    {}
+func (*Drac) Descriptor() ([]byte, []int) {
+	return fileDescriptor_05b5e8be34da00cd, []int{6}
+}
+
+func (m *Drac) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Drac.Unmarshal(m, b)
+}
+func (m *Drac) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Drac.Marshal(b, m, deterministic)
+}
+func (m *Drac) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Drac.Merge(m, src)
+}
+func (m *Drac) XXX_Size() int {
+	return xxx_messageInfo_Drac.Size(m)
+}
+func (m *Drac) XXX_DiscardUnknown() {
+	xxx_messageInfo_Drac.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Drac proto.InternalMessageInfo
+
+func (m *Drac) GetSwitchInterface() *SwitchInterface {
+	if m != nil {
+		return m.SwitchInterface
+	}
+	return nil
+}
+
+func (m *Drac) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
 type KVMID struct {
 	Value                string   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -219,7 +417,7 @@ func (m *KVMID) Reset()         { *m = KVMID{} }
 func (m *KVMID) String() string { return proto.CompactTextString(m) }
 func (*KVMID) ProtoMessage()    {}
 func (*KVMID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_05b5e8be34da00cd, []int{4}
+	return fileDescriptor_05b5e8be34da00cd, []int{7}
 }
 
 func (m *KVMID) XXX_Unmarshal(b []byte) error {
@@ -258,7 +456,7 @@ func (m *RPMID) Reset()         { *m = RPMID{} }
 func (m *RPMID) String() string { return proto.CompactTextString(m) }
 func (*RPMID) ProtoMessage()    {}
 func (*RPMID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_05b5e8be34da00cd, []int{5}
+	return fileDescriptor_05b5e8be34da00cd, []int{8}
 }
 
 func (m *RPMID) XXX_Unmarshal(b []byte) error {
@@ -297,7 +495,7 @@ func (m *SwitchID) Reset()         { *m = SwitchID{} }
 func (m *SwitchID) String() string { return proto.CompactTextString(m) }
 func (*SwitchID) ProtoMessage()    {}
 func (*SwitchID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_05b5e8be34da00cd, []int{6}
+	return fileDescriptor_05b5e8be34da00cd, []int{9}
 }
 
 func (m *SwitchID) XXX_Unmarshal(b []byte) error {
@@ -326,10 +524,13 @@ func (m *SwitchID) GetValue() string {
 }
 
 func init() {
+	proto.RegisterType((*KVM)(nil), "fleet.KVM")
 	proto.RegisterType((*KVMInterface)(nil), "fleet.KVMInterface")
+	proto.RegisterType((*RPM)(nil), "fleet.RPM")
 	proto.RegisterType((*RPMInterface)(nil), "fleet.RPMInterface")
-	proto.RegisterType((*Drac)(nil), "fleet.Drac")
+	proto.RegisterType((*Switch)(nil), "fleet.Switch")
 	proto.RegisterType((*SwitchInterface)(nil), "fleet.SwitchInterface")
+	proto.RegisterType((*Drac)(nil), "fleet.Drac")
 	proto.RegisterType((*KVMID)(nil), "fleet.KVMID")
 	proto.RegisterType((*RPMID)(nil), "fleet.RPMID")
 	proto.RegisterType((*SwitchID)(nil), "fleet.SwitchID")
@@ -338,20 +539,29 @@ func init() {
 func init() { proto.RegisterFile("peripherals.proto", fileDescriptor_05b5e8be34da00cd) }
 
 var fileDescriptor_05b5e8be34da00cd = []byte{
-	// 234 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2c, 0x48, 0x2d, 0xca,
-	0x2c, 0xc8, 0x48, 0x2d, 0x4a, 0xcc, 0x29, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x4d,
-	0xcb, 0x49, 0x4d, 0x2d, 0x51, 0x72, 0xe0, 0xe2, 0xf1, 0x0e, 0xf3, 0xf5, 0xcc, 0x2b, 0x49, 0x2d,
-	0x4a, 0x4b, 0x4c, 0x4e, 0x15, 0x92, 0xe1, 0x62, 0xca, 0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0xe0,
-	0x36, 0xe2, 0xd1, 0x03, 0xab, 0xd1, 0x03, 0x29, 0x70, 0x09, 0x62, 0xca, 0x4c, 0x11, 0x12, 0xe2,
-	0x62, 0x29, 0xc8, 0x2f, 0x2a, 0x91, 0x60, 0x52, 0x60, 0xd4, 0xe0, 0x0c, 0x02, 0xb3, 0x41, 0x26,
-	0x04, 0x05, 0x10, 0x30, 0x01, 0xa4, 0x00, 0xb7, 0x09, 0xa9, 0x5c, 0x2c, 0x2e, 0x45, 0x89, 0xc9,
-	0x42, 0x8e, 0x5c, 0x02, 0xc5, 0xe5, 0x99, 0x25, 0xc9, 0x19, 0xf1, 0x99, 0x30, 0xd3, 0xa0, 0xe6,
-	0x88, 0x41, 0xcd, 0x09, 0x06, 0x4b, 0xc3, 0xed, 0x0a, 0xe2, 0x2f, 0x46, 0x15, 0x10, 0x92, 0xe2,
-	0xe2, 0x28, 0x48, 0x2c, 0x2e, 0x2e, 0xcf, 0x2f, 0x4a, 0x81, 0x5a, 0x01, 0xe7, 0x2b, 0xb9, 0x71,
-	0xf1, 0xa3, 0xe9, 0x17, 0x92, 0x47, 0x72, 0x2b, 0x3f, 0xaa, 0x1d, 0xb8, 0x9d, 0x2b, 0xcb, 0xc5,
-	0x0a, 0x0e, 0x11, 0x21, 0x11, 0x2e, 0xd6, 0xb2, 0xc4, 0x9c, 0x52, 0x88, 0x23, 0x39, 0x83, 0x20,
-	0x1c, 0x90, 0x34, 0xd8, 0xbb, 0x38, 0xa4, 0x15, 0xb8, 0x38, 0x60, 0x36, 0x60, 0x57, 0xe1, 0xc4,
-	0x19, 0xc5, 0xae, 0x67, 0x0d, 0x76, 0x4b, 0x12, 0x1b, 0x38, 0xae, 0x8c, 0x01, 0x01, 0x00, 0x00,
-	0xff, 0xff, 0x2f, 0xb2, 0xc5, 0x08, 0xc0, 0x01, 0x00, 0x00,
+	// 375 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x93, 0x4f, 0x4b, 0xeb, 0x40,
+	0x14, 0xc5, 0x49, 0x93, 0xf4, 0xb5, 0xb7, 0xe5, 0xe5, 0xbd, 0xf1, 0x0f, 0xa1, 0x28, 0x0d, 0xd9,
+	0xd8, 0x55, 0x40, 0x5d, 0xba, 0xb1, 0x5a, 0x04, 0x29, 0x85, 0x30, 0x42, 0x17, 0x6e, 0xc2, 0x34,
+	0x99, 0xd8, 0x40, 0xd2, 0x09, 0x33, 0xb1, 0x5d, 0xfb, 0x9d, 0xfc, 0x80, 0x92, 0xc9, 0x1f, 0xac,
+	0x4d, 0xab, 0xe0, 0x6e, 0xe6, 0x9e, 0x7b, 0xcf, 0xfd, 0x9d, 0x84, 0x81, 0xff, 0x29, 0xe5, 0x51,
+	0xba, 0xa4, 0x9c, 0xc4, 0xc2, 0x49, 0x39, 0xcb, 0x18, 0xd2, 0xc3, 0x98, 0xd2, 0x6c, 0x70, 0xe4,
+	0x2f, 0x39, 0x4b, 0xa8, 0xe7, 0xb3, 0x55, 0x18, 0xbd, 0x14, 0x9a, 0xfd, 0xae, 0x80, 0x3a, 0x9d,
+	0xcf, 0xd0, 0x19, 0xb4, 0xa2, 0xc0, 0x54, 0x2c, 0x65, 0xd4, 0xbb, 0xea, 0x3b, 0x72, 0xc0, 0x99,
+	0xce, 0x67, 0x8f, 0x13, 0xdc, 0x8a, 0x02, 0x84, 0x40, 0x5b, 0x91, 0x84, 0x9a, 0x2d, 0x4b, 0x19,
+	0x75, 0xb1, 0x3c, 0xa3, 0x21, 0xf4, 0x12, 0xe2, 0x7b, 0x24, 0x08, 0x38, 0x15, 0xc2, 0x54, 0xa5,
+	0x04, 0x09, 0xf1, 0xc7, 0x45, 0x05, 0x5d, 0x42, 0x27, 0x8d, 0x49, 0x16, 0x32, 0x9e, 0x98, 0x9a,
+	0x34, 0x3e, 0x29, 0x8d, 0xef, 0x25, 0x88, 0x5b, 0x8a, 0xb8, 0x6e, 0x43, 0x17, 0x60, 0x90, 0x35,
+	0x89, 0x62, 0xb2, 0x88, 0xa9, 0x97, 0x32, 0x9e, 0x09, 0x53, 0xb7, 0x94, 0x91, 0x8e, 0xff, 0xd6,
+	0x65, 0x37, 0xaf, 0xda, 0xb7, 0xd0, 0xcf, 0xe9, 0x56, 0x19, 0xe5, 0x21, 0xf1, 0xe9, 0xf7, 0xf8,
+	0xb9, 0x59, 0x85, 0x9f, 0x9f, 0xed, 0x37, 0x05, 0x54, 0xec, 0x36, 0x07, 0xc7, 0xee, 0xaf, 0x82,
+	0x37, 0xa4, 0xd0, 0xf6, 0xa5, 0xc8, 0x57, 0x1d, 0x4c, 0xb1, 0xc5, 0xb2, 0x93, 0x22, 0x84, 0xf6,
+	0xd3, 0x26, 0xca, 0xfc, 0x25, 0x1a, 0x7e, 0x9a, 0x35, 0xca, 0xd9, 0x42, 0x3a, 0x10, 0xa5, 0x81,
+	0x54, 0x6d, 0x24, 0x7d, 0x00, 0xa3, 0x34, 0xab, 0x61, 0x7f, 0xb2, 0x70, 0x87, 0x97, 0x82, 0x36,
+	0xe1, 0xc4, 0x47, 0x63, 0xf8, 0x27, 0x64, 0xaf, 0x17, 0x55, 0x86, 0xa5, 0xd5, 0xe9, 0xb6, 0x55,
+	0xa5, 0x62, 0x43, 0x7c, 0xd9, 0x3f, 0x80, 0x4e, 0x4a, 0x84, 0xd8, 0x30, 0x1e, 0x94, 0x2b, 0xea,
+	0xbb, 0x7d, 0x0e, 0xba, 0xfc, 0xfb, 0xe8, 0x18, 0xf4, 0x35, 0x89, 0x5f, 0x0b, 0xf3, 0x2e, 0x2e,
+	0x2e, 0xb9, 0x2c, 0x3f, 0xeb, 0x1e, 0xd9, 0x82, 0x4e, 0x15, 0xa4, 0xb9, 0xe3, 0xae, 0xfb, 0xfc,
+	0xc7, 0xb9, 0x91, 0x9c, 0x8b, 0xb6, 0x7c, 0x47, 0xd7, 0x1f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x36,
+	0x94, 0x0b, 0xb5, 0x78, 0x03, 0x00, 0x00,
 }

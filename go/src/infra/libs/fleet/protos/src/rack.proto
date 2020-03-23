@@ -1,0 +1,37 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet;
+
+// Required by protoc-gen-go
+option go_package = ".;fleet";
+
+import "location.proto";
+import "peripherals.proto";
+import "rack_id.proto";
+
+message Rack {
+    // Serial number or asset tag
+    RackID id = 1;
+    Location location = 2;
+    // Descriptive name
+    string name = 3;
+    int32 capacity = 4;
+
+    oneof rack {
+        ChromeRack chrome_rack = 5;
+        ChromeOSRack chromeos_rack = 6;
+    };
+}
+
+message ChromeRack {
+    repeated RPM rpm = 1;
+    repeated KVM kvm = 2;
+    repeated Switch switches = 3;
+}
+
+message ChromeOSRack {
+}

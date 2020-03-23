@@ -9,24 +9,60 @@ package fleet;
 // Required by protoc-gen-go
 option go_package = ".;fleet";
 
+import "chrome_config.proto";
+
+message KVM {
+    // serial_number or asset tag
+    KVMID id = 1;
+    // Descriptive name if needed
+    string name = 2;
+    string mac_address = 3;
+    ChromePlatform platform = 4;
+    int32 available_ports = 5;
+}
+
+// Refer to one port of a given KVM
 message KVMInterface {
     KVMID id = 1;
     string port = 2;
 }
 
+message RPM {
+    // serial_number or asset tag
+    RPMID id = 1;
+    // Descriptive name if needed
+    string name = 2;
+    string mac_address = 3;
+    int32 available_ports = 4;
+    // Just for record here, can be added later if needed
+    // To be recorded: model, manufacturer, amperage, voltage
+}
+
+// Refer to one port of a given RPM
 message RPMInterface {
     RPMID id = 1;
+    string port = 2;
+}
+
+message Switch {
+    // serial_number or asset tag
+    SwitchID id = 1;
+    // Descriptive name if needed
+    string name = 2;
+    int32 available_ports = 3;
+    // Just for record here, can be added later if needed
+    // To be recorded: model, manufacturer
+}
+
+// Refer to one port of a given switch
+message SwitchInterface {
+    SwitchID id = 1;
     string port = 2;
 }
 
 message Drac {
     SwitchInterface switch_interface = 1;
     string password = 2;
-}
-
-message SwitchInterface {
-    SwitchID id = 1;
-    string port = 2;
 }
 
 message KVMID {
