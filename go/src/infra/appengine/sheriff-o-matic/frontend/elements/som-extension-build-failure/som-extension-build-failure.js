@@ -98,6 +98,13 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
     return classes.join(' ');
   }
 
+  _displayName(builder) {
+    if (this.tree === 'chrome_browser_release') {
+      return builder.bucket + '.' + builder.name;
+    }
+    return builder.name;
+  }
+
   // This is necessary because FindIt sometimes returns duplicate results
   _computeSuspectedCls(extension) {
     if (!this._haveSuspectCLs(extension)) {

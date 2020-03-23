@@ -36,6 +36,24 @@
       });
     });
 
+    test('display name non release branch', function(done) {
+      element.tree = 'chromium';
+      const builder = {name: 'dummy builder 1', bucket:'my_bucket'};
+      flush(() => {
+        assert.equal(element._displayName(builder), 'dummy builder 1');
+        done();
+      });
+    });
+
+    test('display name release branch', function(done) {
+      element.tree = 'chrome_browser_release';
+      const builder = {name: 'dummy builder 1', bucket:'my_bucket'};
+      flush(() => {
+        assert.equal(element._displayName(builder), 'my_bucket.dummy builder 1');
+        done();
+      });
+    });
+
     test('failureCountText', function() {
       assert.equal(element._failureCountText({
         latest_failure_build_number:0, first_failure_build_number:0}), '');
