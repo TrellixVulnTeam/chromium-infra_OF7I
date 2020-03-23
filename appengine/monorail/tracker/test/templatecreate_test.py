@@ -63,13 +63,35 @@ class TemplateCreateTest(unittest.TestCase):
         tracker_pb2.FieldTypes.INT_TYPE, None, '', False, False, False, None,
         None, '', False, '', '', tracker_pb2.NotifyTriggers.NEVER, 'no_action',
         'milestone target', False, is_phase_field=True)
+    self.fd_5 = tracker_bizobj.MakeFieldDef(
+        5,
+        self.project.project_id,
+        'RestrictedField',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'RestrictedField',
+        False,
+        is_restricted_field=True)
     ad_2 = tracker_pb2.ApprovalDef(approval_id=2)
     ad_3 = tracker_pb2.ApprovalDef(approval_id=3)
 
     self.config = self.services.config.GetProjectConfig(
         'fake cnxn', self.project.project_id)
     self.config.approval_defs.extend([ad_2, ad_3])
-    self.config.field_defs.extend([self.fd_1, self.fd_2, self.fd_3, self.fd_4])
+    self.config.field_defs.extend(
+        [self.fd_1, self.fd_2, self.fd_3, self.fd_4, self.fd_5])
 
     first_tmpl = tracker_bizobj.MakeIssueTemplate(
         'sometemplate', 'summary', None, None, 'content', [], [], [],
@@ -130,7 +152,7 @@ class TemplateCreateTest(unittest.TestCase):
     self.assertFalse(page_data['initial_owner_defaults_to_member'])
     self.assertEqual(page_data['initial_components'], '')
     self.assertFalse(page_data['initial_component_required'])
-    self.assertEqual(page_data['fields'][0].field_name, fv.field_name)
+    self.assertEqual(page_data['fields'][1].field_name, fv.field_name)
     self.assertEqual(page_data['initial_admins'], '')
     self.assertEqual(page_data['approval_subfields_present'], ezt.boolean(True))
     self.assertEqual(page_data['phase_fields_present'], ezt.boolean(False))
@@ -195,28 +217,57 @@ class TemplateCreateTest(unittest.TestCase):
                      self.mr.errors.phase_approvals)
     self.assertIsNone(url)
 
+  def testProcessFormData_RejectRestrictedFields(self):
+    self.services.template.GetTemplateByName = Mock(return_value=None)
+    self.mr.perms = permissions.PermissionSet([])
+    post_data = fake.PostData(
+        name=['secondtemplate'],
+        members_only=['on'],
+        summary=['TLDR'],
+        summary_must_be_edited=['on'],
+        content=['HEY WHY'],
+        status=['Accepted'],
+        label=['label-One', 'label-Two'],
+        custom_1=['Hey'],
+        custom_5=['7'],
+        component_required=['on'],
+        owner_defaults_to_member=['no'],
+        add_approvals=['no'],
+        phase_0=[''],
+        phase_1=[''],
+        phase_2=[''],
+        phase_3=[''],
+        phase_4=[''],
+        phase_5=['OOPs'],
+        approval_2=['phase_0'],
+        approval_3=['phase_2'])
+
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, self.mr, post_data)
+
   def testProcessFormData_Accept(self):
     self.services.template.GetTemplateByName = Mock(return_value=None)
     post_data = fake.PostData(
-      name=['secondtemplate'],
-      members_only=['on'],
-      summary=['TLDR'],
-      summary_must_be_edited=['on'],
-      content=['HEY WHY'],
-      status=['Accepted'],
-      label=['label-One', 'label-Two'],
-      custom_1=['NO'],
-      component_required=['on'],
-      owner_defaults_to_member=['no'],
-      add_approvals = ['no'],
-      phase_0=[''],
-      phase_1=[''],
-      phase_2=[''],
-      phase_3=[''],
-      phase_4=[''],
-      phase_5=['OOPs'],
-      approval_2=['phase_0'],
-      approval_3=['phase_2'])
+        name=['secondtemplate'],
+        members_only=['on'],
+        summary=['TLDR'],
+        summary_must_be_edited=['on'],
+        content=['HEY WHY'],
+        status=['Accepted'],
+        label=['label-One', 'label-Two'],
+        custom_1=['NO'],
+        custom_5=['37'],
+        component_required=['on'],
+        owner_defaults_to_member=['no'],
+        add_approvals=['no'],
+        phase_0=[''],
+        phase_1=[''],
+        phase_2=[''],
+        phase_3=[''],
+        phase_4=[''],
+        phase_5=['OOPs'],
+        approval_2=['phase_0'],
+        approval_3=['phase_2'])
 
     url = self.servlet.ProcessFormData(self.mr, post_data)
 

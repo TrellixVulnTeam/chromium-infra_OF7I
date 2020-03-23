@@ -583,6 +583,112 @@ class IssueEntryTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertTrue('/p/proj/issues/detail?id=' in url)
 
+  def testProcessFormData_AcceptWithFields(self):
+    """We can create new issues with custom fields (restricted or not)."""
+    mr = testing_helpers.MakeMonorailRequest(
+        path='/p/proj/issues/entry', project=self.project)
+    mr.auth.user_view = framework_views.StuffUserView(100, 'admin@test', True)
+    mr.template_name = 'rutabaga'
+    mr.auth.effective_ids = set([100])
+    config = self.services.config.GetProjectConfig(
+        mr.cnxn, self.project.project_id)
+    config.field_defs = [
+        tracker_bizobj.MakeFieldDef(
+            1, 789, 'NonRestrictedField', tracker_pb2.FieldTypes.INT_TYPE, None,
+            '', False, False, False, None, None, '', False, '', '',
+            tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'NonRestrictedField',
+            False),
+        tracker_bizobj.MakeFieldDef(
+            2,
+            789,
+            'RestrictedField',
+            tracker_pb2.FieldTypes.INT_TYPE,
+            None,
+            '',
+            False,
+            False,
+            False,
+            None,
+            None,
+            '',
+            False,
+            '',
+            '',
+            tracker_pb2.NotifyTriggers.NEVER,
+            'no_action',
+            'RestrictedField',
+            False,
+            is_restricted_field=True)
+    ]
+    self.services.config.StoreConfig(mr.cnxn, config)
+    post_data = fake.PostData(
+        template_name=['rutabaga'],
+        summary=['fake summary'],
+        comment=['fake comment'],
+        custom_1=['3'],
+        custom_2=['7'],
+        status=['New'])
+
+    self.mox.ReplayAll()
+    url = self.servlet.ProcessFormData(mr, post_data)
+
+    self.mox.VerifyAll()
+    self.assertTrue('/p/proj/issues/detail?id=' in url)
+    field_values = self.services.issue.issues_by_project[987][1].field_values
+    self.assertEqual(field_values[0].int_value, 3)
+    self.assertEqual(field_values[1].int_value, 7)
+
+  def testProcessFormData_RejectRestrictedFields(self):
+    """We raise an AssertionError when restricted fields are set w/o perms."""
+    mr = testing_helpers.MakeMonorailRequest(
+        path='/p/proj/issues/entry', project=self.project)
+    mr.auth.user_view = framework_views.StuffUserView(
+        100, 'non-admin@test', True)
+    mr.template_name = 'rutabaga'
+    mr.auth.effective_ids = set([100])
+    mr.perms = permissions.PermissionSet([])
+    config = self.services.config.GetProjectConfig(
+        mr.cnxn, self.project.project_id)
+    config.field_defs = [
+        tracker_bizobj.MakeFieldDef(
+            1, 789, 'NonRestrictedField', tracker_pb2.FieldTypes.INT_TYPE, None,
+            '', False, False, False, None, None, '', False, '', '',
+            tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'NonRestrictedField',
+            False),
+        tracker_bizobj.MakeFieldDef(
+            2,
+            789,
+            'RestrictedField',
+            tracker_pb2.FieldTypes.INT_TYPE,
+            None,
+            '',
+            False,
+            False,
+            False,
+            None,
+            None,
+            '',
+            False,
+            '',
+            '',
+            tracker_pb2.NotifyTriggers.NEVER,
+            'no_action',
+            'RestrictedField',
+            False,
+            is_restricted_field=True)
+    ]
+    self.services.config.StoreConfig(mr.cnxn, config)
+    post_data = fake.PostData(
+        template_name=['rutabaga'],
+        summary=['fake summary'],
+        comment=['fake comment'],
+        custom_1=['3'],
+        custom_2=['7'],
+        status=['New'])
+
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, mr, post_data)
+
   def testProcessFormData_RejectPlacedholderSummary(self):
     mr = testing_helpers.MakeMonorailRequest(
         path='/p/proj/issues/entry')

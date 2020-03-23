@@ -188,7 +188,7 @@ class TemplateDetailTest(unittest.TestCase):
 
   def testGatherPageData(self):
     self.mr.perms = permissions.PermissionSet([])
-    self.mr.auth.effective_ids = {222}  #template admin
+    self.mr.auth.effective_ids = {222}  # template admin
     page_data = self.servlet.GatherPageData(self.mr)
     self.assertEqual(self.servlet.PROCESS_TAB_TEMPLATES,
                      page_data['admin_tab_mode'])
@@ -276,43 +276,89 @@ class TemplateDetailTest(unittest.TestCase):
     self.assertEqual('Defined gates must have assigned approvals.',
                      self.mr.errors.phase_approvals)
 
+  def testProcessFormData_RejectRestrictedFields(self):
+    """Template admins cannot set restricted fields by default."""
+    self.mr.perms = permissions.PermissionSet([])
+    self.mr.auth.effective_ids = {222}  # template admin
+    post_data = fake.PostData(
+        name=['TestTemplate'],
+        members_only=['on'],
+        summary=['TLDR'],
+        summary_must_be_edited=[''],
+        content=['HEY WHY'],
+        status=['Accepted'],
+        owner=['daisy@example.com'],
+        label=['label-One', 'label-Two'],
+        custom_1=['NO'],
+        custom_2=['MOOD'],
+        custom_7=['37'],
+        components=['BackEnd'],
+        component_required=['on'],
+        owner_defaults_to_member=['on'],
+        add_approvals=['no'],
+        phase_0=[''],
+        phase_1=[''],
+        phase_2=[''],
+        phase_3=[''],
+        phase_4=[''],
+        phase_5=['OOPs'],
+        approval_3=['phase_0'],
+        approval_4=['phase_2'])
+
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, self.mr, post_data)
+
   def testProcessFormData_Accept(self):
     post_data = fake.PostData(
-      name=['TestTemplate'],
-      members_only=['on'],
-      summary=['TLDR'],
-      summary_must_be_edited=[''],
-      content=['HEY WHY'],
-      status=['Accepted'],
-      owner=['daisy@example.com'],
-      label=['label-One', 'label-Two'],
-      custom_1=['NO'],
-      custom_2=['MOOD'],
-      components=['BackEnd'],
-      component_required=['on'],
-      owner_defaults_to_member=['on'],
-      add_approvals = ['no'],
-      phase_0=[''],
-      phase_1=[''],
-      phase_2=[''],
-      phase_3=[''],
-      phase_4=[''],
-      phase_5=['OOPs'],
-      approval_3=['phase_0'],
-      approval_4=['phase_2']
-    )
+        name=['TestTemplate'],
+        members_only=['on'],
+        summary=['TLDR'],
+        summary_must_be_edited=[''],
+        content=['HEY WHY'],
+        status=['Accepted'],
+        owner=['daisy@example.com'],
+        label=['label-One', 'label-Two'],
+        custom_1=['NO'],
+        custom_2=['MOOD'],
+        custom_7=['37'],
+        components=['BackEnd'],
+        component_required=['on'],
+        owner_defaults_to_member=['on'],
+        add_approvals=['no'],
+        phase_0=[''],
+        phase_1=[''],
+        phase_2=[''],
+        phase_3=[''],
+        phase_4=[''],
+        phase_5=['OOPs'],
+        approval_3=['phase_0'],
+        approval_4=['phase_2'])
     url = self.servlet.ProcessFormData(self.mr, post_data)
 
     self.assertTrue('/templates/detail?saved=1&template=TestTemplate&' in url)
 
     self.services.template.UpdateIssueTemplateDef.assert_called_once_with(
-        self.mr.cnxn, 47925, 12345, status='Accepted', component_required=True,
-        phases=[], approval_values=[], name='TestTemplate', field_values=[
-          tracker_pb2.FieldValue(field_id=1, str_value='NO', derived=False),
-          tracker_pb2.FieldValue(field_id=2, str_value='MOOD', derived=False)],
-        labels=['label-One', 'label-Two'], owner_defaults_to_member=True,
-        admin_ids=[], content='HEY WHY', component_ids=[1],
-        summary_must_be_edited=False, summary='TLDR', members_only=True,
+        self.mr.cnxn,
+        47925,
+        12345,
+        status='Accepted',
+        component_required=True,
+        phases=[],
+        approval_values=[],
+        name='TestTemplate',
+        field_values=[
+            tracker_pb2.FieldValue(field_id=1, str_value='NO', derived=False),
+            tracker_pb2.FieldValue(field_id=2, str_value='MOOD', derived=False),
+            tracker_pb2.FieldValue(field_id=7, int_value=37, derived=False)
+        ],
+        labels=['label-One', 'label-Two'],
+        owner_defaults_to_member=True,
+        admin_ids=[],
+        content='HEY WHY',
+        component_ids=[1],
+        summary_must_be_edited=False,
+        summary='TLDR',
+        members_only=True,
         owner_id=333)
 
   def testProcessFormData_AcceptPhases(self):

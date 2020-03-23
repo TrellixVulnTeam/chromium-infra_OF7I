@@ -331,6 +331,14 @@ class IssueEntry(servlet.Servlet):
     if None in parsed.users.cc_ids:
       mr.errors.cc = 'Invalid Cc username'
 
+    fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+    for fv in field_values:
+      fd = fds_by_id.get(fv.field_id)
+      if fd:
+        assert permissions.CanEditValueForFieldDef(
+            mr.auth.effective_ids, mr.perms, mr.project,
+            fd), "No permission to edit certain fields."
+
     field_helpers.ValidateCustomFields(
         mr, self.services, field_values, config, mr.errors)
 

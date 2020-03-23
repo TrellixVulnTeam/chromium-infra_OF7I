@@ -119,6 +119,14 @@ class TemplateCreate(servlet.Servlet):
      approvals) = template_helpers.GetTemplateInfoFromParsed(
          mr, self.services, parsed, config)
 
+    fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+    for fv in field_values:
+      fd = fds_by_id.get(fv.field_id)
+      if fd:
+        assert permissions.CanEditValueForFieldDef(
+            mr.auth.effective_ids, mr.perms, mr.project,
+            fd), "No permission to edit certain fields."
+
     if mr.errors.AnyErrors():
       field_views = tracker_views.MakeAllFieldValueViews(
           config, [], [], field_values, {})
