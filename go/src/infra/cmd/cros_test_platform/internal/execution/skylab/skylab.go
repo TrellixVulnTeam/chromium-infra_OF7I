@@ -49,7 +49,6 @@ func (t *Task) Launch(ctx context.Context, c Client) error {
 	}
 	t.taskReference = ref
 	t.lifeCycle = test_platform.TaskState_LIFE_CYCLE_PENDING
-	t.swarmingTaskID = c.SwarmingTaskID(ref)
 	t.url = c.URL(ref)
 	logging.Infof(ctx, "Launched attempt for %s as task %s", t.Name(), t.URL())
 	return nil
@@ -111,6 +110,7 @@ func (t *Task) Refresh(ctx context.Context, c Client) error {
 		return errors.Annotate(err, "refresh task").Err()
 	}
 
+	t.swarmingTaskID = c.SwarmingTaskID(t.taskReference)
 	t.lifeCycle = resp.LifeCycle
 
 	// The task is still running.
