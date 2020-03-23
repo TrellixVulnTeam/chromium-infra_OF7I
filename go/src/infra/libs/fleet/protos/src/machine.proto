@@ -10,6 +10,7 @@ package fleet;
 option go_package = ".;fleet";
 
 import "chrome_config.proto";
+import "chromeos_config.proto";
 import "location.proto";
 import "machine_id.proto";
 import "peripherals.proto";
@@ -45,5 +46,16 @@ message ChromeMachine {
 }
 
 message ChromeOSMachine {
-  // TODO: add chromeos machine protos here
+  // All infos come from HaRT system.
+  // used by referencing device config.
+  string reference_board = 1;
+  // used by ChromeOS build system.
+  string build_target = 2;
+  string model = 3;
+  // Chromebook, labstation, servo, …
+  ChromeOSDeviceType device_type = 4;
+  // Used internally, Different boards/models could share the same name.
+  string google_code_name = 5;
+  // HaRT doesn’t guarantee its existence.
+  string mac_address = 6;
 }
