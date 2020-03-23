@@ -190,7 +190,10 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ProjectsClient interface {
 	// Returns all templates for specified project.
-	// TODO(crbug/monorail/6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   NOT_FOUND if the requested parent project is not found.
+	//   INVALID_ARGUMENT if the given `parent` is not valid.
 	ListIssueTemplates(ctx context.Context, in *ListIssueTemplatesRequest, opts ...grpc.CallOption) (*ListIssueTemplatesResponse, error)
 }
 type projectsPRPCClient struct {
@@ -230,7 +233,10 @@ func (c *projectsClient) ListIssueTemplates(ctx context.Context, in *ListIssueTe
 // ProjectsServer is the server API for Projects service.
 type ProjectsServer interface {
 	// Returns all templates for specified project.
-	// TODO(crbug/monorail/6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   NOT_FOUND if the requested parent project is not found.
+	//   INVALID_ARGUMENT if the given `parent` is not valid.
 	ListIssueTemplates(context.Context, *ListIssueTemplatesRequest) (*ListIssueTemplatesResponse, error)
 }
 

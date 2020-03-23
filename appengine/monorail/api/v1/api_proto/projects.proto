@@ -16,7 +16,10 @@ import "api/v1/api_proto/project_objects.proto";
 // Projects service includes all methods needed for managing Projects.
 service Projects {
   // Returns all templates for specified project.
-  // TODO(crbug/monorail/6988): Document possible errors when implemented.
+  //
+  // Raises:
+  //   NOT_FOUND if the requested parent project is not found.
+  //   INVALID_ARGUMENT if the given `parent` is not valid.
   rpc ListIssueTemplates (ListIssueTemplatesRequest) returns (ListIssueTemplatesResponse) {
     option (google.api.http) = {
       post: "/prpc/monorail.v1.Projects/ListIssueTemplates"
