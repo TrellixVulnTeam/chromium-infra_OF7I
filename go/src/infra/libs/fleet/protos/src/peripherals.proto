@@ -1,0 +1,42 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet;
+
+// Required by protoc-gen-go
+option go_package = ".;fleet";
+
+message KVMInterface {
+    KVMID id = 1;
+    string port = 2;
+}
+
+message RPMInterface {
+    RPMID id = 1;
+    string port = 2;
+}
+
+message Drac {
+    SwitchInterface switch_interface = 1;
+    string password = 2;
+}
+
+message SwitchInterface {
+    SwitchID id = 1;
+    string port = 2;
+}
+
+message KVMID {
+    string value = 1;
+}
+
+message RPMID {
+    string value = 1;
+}
+
+message SwitchID {
+    string value = 1;
+}

@@ -9,8 +9,10 @@ package fleet;
 // Required by protoc-gen-go
 option go_package = ".;fleet";
 
+import "chrome_config.proto";
 import "location.proto";
 import "machine_id.proto";
+import "peripherals.proto";
 
 // Next Tag: 5
 message Machine {
@@ -19,15 +21,29 @@ message Machine {
   Location location = 2;
 
   oneof device {
-    ChromeMachine dut = 3;
-    ChromeOSMachine labstation = 4;
+    ChromeMachine chrome_machine = 3;
+    ChromeOSMachine chromeos_machine = 4;
   };
 }
 
 message ChromeMachine {
-  // To be continued
+  // Descriptive name of Chrome Machine
+  string name = 1;
+  ChromePlatform platform = 2;  // Should match one of the predefined Chrome Platforms.
+  string mac_address = 3;
+  string nic_name = 4;
+
+  // Interface of its connected devices.
+  KVMInterface kvm_interface = 5;
+  RPMInterface rpm_interface = 6;
+  SwitchInterface network_device_interface = 7;
+
+  Drac drac = 8;
+  // Usually it's a buganizer bug.
+  string deployment_ticket = 9;
+  string description = 10; // Can be covered by deployment_ticket
 }
 
 message ChromeOSMachine {
-  // To be continued
+  // TODO: add chromeos machine protos here
 }
