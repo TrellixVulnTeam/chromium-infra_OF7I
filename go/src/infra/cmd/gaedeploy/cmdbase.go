@@ -75,7 +75,7 @@ func (c *commandBase) init(exec execCb, extraFlags extraFlags) {
 		c.Flags.StringVar(&c.cacheDir, "cache-dir", "", "Directory to keep unpacked tarballs in.")
 	}
 	if extraFlags.dryRun {
-		c.Flags.BoolVar(&c.dryRun, "dry-run", false, "Just print gcloud commands without executing them.")
+		c.Flags.BoolVar(&c.dryRun, "dry-run", false, "Just print gcloud commands that modify state without executing them.")
 	}
 }
 

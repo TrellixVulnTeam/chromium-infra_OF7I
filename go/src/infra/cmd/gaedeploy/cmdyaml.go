@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/maruel/subcommands"
@@ -17,6 +16,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag/stringlistflag"
 	"go.chromium.org/luci/common/logging"
+
+	"infra/cmd/gaedeploy/gcloud"
 )
 
 var cmdYaml = &subcommands.Command{
@@ -86,28 +87,10 @@ func (c *cmdYamlRun) exec(ctx context.Context) error {
 				return errors.Annotate(err, "bad YAML file %q", localPath).Err()
 			}
 		}
-
-		cmdLine := append([]string{
-			"gcloud", "app", "deploy",
+		return gcloud.Run(ctx, append([]string{
+			"app", "deploy",
 			"--project", c.appID,
 			"--quiet", // disable interactive prompts
-		}, c.deployableYaml...)
-
-		logging.Infof(ctx, "Running: %v", cmdLine)
-		logging.Infof(ctx, "  in cwd %q", path)
-
-		if c.dryRun {
-			logging.Warningf(ctx, "In dry run mode! Not really running anything.")
-			return nil
-		}
-
-		cmd := exec.CommandContext(ctx, cmdLine[0], cmdLine[1:]...)
-		cmd.Dir = path
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			return errors.Annotate(err, "gcloud call failed").Err()
-		}
-		return nil
+		}, c.deployableYaml...), path, c.dryRun)
 	})
 }
