@@ -34,7 +34,8 @@ const (
 type commandBase struct {
 	subcommands.CommandRunBase
 
-	exec execCb // called to actually execute the command
+	extraFlags extraFlags // as passed to init(...)
+	exec       execCb     // called to actually execute the command
 
 	logConfig     logging.Config // -log-* flags
 	appID         string         // -app-id flag (required)
@@ -46,17 +47,31 @@ type commandBase struct {
 	cache  *cache.Cache  // initialized in handleArgsAndFlags
 }
 
+// extraFlags indicates what CLI flags to register.
+type extraFlags struct {
+	appID    bool // -app-id
+	tarball  bool // -tarball-*
+	cacheDir bool // -cache-dir
+}
+
 // init register base flags. Must be called.
-func (c *commandBase) init(exec execCb) {
+func (c *commandBase) init(exec execCb, extraFlags extraFlags) {
+	c.extraFlags = extraFlags
 	c.exec = exec
 
 	c.logConfig.Level = logging.Info // default logging level
 	c.logConfig.AddFlags(&c.Flags)
 
-	c.Flags.StringVar(&c.appID, "app-id", appIDPlaceholder, "GAE app ID to update.")
-	c.Flags.StringVar(&c.tarballSource, "tarball-source", tarballSourcePlaceholder, "Either gs:// or local path to a tarball with app source code.")
-	c.Flags.StringVar(&c.tarballSHA256, "tarball-sha256", "", "The expected tarball's SHA256 (optional for local files).")
-	c.Flags.StringVar(&c.cacheDir, "cache-dir", "", "Directory to keep unpacked tarballs in.")
+	if extraFlags.appID {
+		c.Flags.StringVar(&c.appID, "app-id", appIDPlaceholder, "GAE app ID to update.")
+	}
+	if extraFlags.tarball {
+		c.Flags.StringVar(&c.tarballSource, "tarball-source", tarballSourcePlaceholder, "Either gs:// or local path to a tarball with app source code.")
+		c.Flags.StringVar(&c.tarballSHA256, "tarball-sha256", "", "The expected tarball's SHA256 (optional for local files).")
+	}
+	if extraFlags.cacheDir {
+		c.Flags.StringVar(&c.cacheDir, "cache-dir", "", "Directory to keep unpacked tarballs in.")
+	}
 }
 
 // ModifyContext implements cli.ContextModificator.
@@ -90,31 +105,35 @@ func (c *commandBase) handleArgsAndFlags(args []string) error {
 	switch {
 	case len(args) != 0:
 		return errors.Reason("unexpected positional arguments %q", args).Err()
-	case c.appID == appIDPlaceholder:
+	case c.extraFlags.appID && c.appID == appIDPlaceholder:
 		return errBadFlag("-app-id", "a value is required")
-	case c.tarballSource == tarballSourcePlaceholder:
+	case c.extraFlags.tarball && c.tarballSource == tarballSourcePlaceholder:
 		return errBadFlag("-tarball-source", "a value is required")
 	}
 
 	// Where to grab the tarball from.
-	var err error
-	c.source, err = source.New(c.tarballSource, c.tarballSHA256)
-	if err != nil {
-		return err
+	if c.extraFlags.tarball {
+		var err error
+		c.source, err = source.New(c.tarballSource, c.tarballSHA256)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Where to store it.
-	if c.cacheDir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return errors.Annotate(err, "failed to determine the home dir, pass -cache-dir directly").Err()
+	if c.extraFlags.cacheDir {
+		if c.cacheDir == "" {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return errors.Annotate(err, "failed to determine the home dir, pass -cache-dir directly").Err()
+			}
+			c.cacheDir = filepath.Join(home, ".gaedeploy_cache")
 		}
-		c.cacheDir = filepath.Join(home, ".gaedeploy_cache")
+		if err := os.MkdirAll(c.cacheDir, 0700); err != nil {
+			return errors.Annotate(err, "failed to create the cache directory").Err()
+		}
+		c.cache = &cache.Cache{Root: c.cacheDir}
 	}
-	if err := os.MkdirAll(c.cacheDir, 0700); err != nil {
-		return errors.Annotate(err, "failed to create the cache directory").Err()
-	}
-	c.cache = &cache.Cache{Root: c.cacheDir}
 
 	return nil
 }

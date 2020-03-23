@@ -30,7 +30,11 @@ type cmdModuleRun struct {
 }
 
 func (c *cmdModuleRun) init() {
-	c.commandBase.init(c.exec)
+	c.commandBase.init(c.exec, extraFlags{
+		appID:    true,
+		tarball:  true,
+		cacheDir: true,
+	})
 }
 
 func (c *cmdModuleRun) exec(ctx context.Context) error {

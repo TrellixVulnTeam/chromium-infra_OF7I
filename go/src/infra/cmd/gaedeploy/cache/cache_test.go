@@ -11,6 +11,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -37,6 +38,16 @@ func TestCache(t *testing.T) {
 		ctx, tc := testclock.UseTime(context.Background(), testTime)
 
 		cache := Cache{Root: filepath.Join(tmp, "cache")}
+
+		scan := func() []string {
+			files, err := ioutil.ReadDir(cache.Root)
+			So(err, ShouldBeNil)
+			names := make([]string, len(files))
+			for i, f := range files {
+				names[i] = f.Name()
+			}
+			return names
+		}
 
 		Convey("WithTarball happy path", func() {
 			src := testSrc{
@@ -93,6 +104,27 @@ func TestCache(t *testing.T) {
 				panic("must not be called")
 			})
 			So(err, ShouldErrLike, "tarball hash mismatch")
+		})
+
+		Convey("Trim works", func() {
+			var created []string // oldest to newest
+			for i := 0; i < 3; i++ {
+				src := testSrc{
+					data: map[string]string{"file": fmt.Sprintf("file %d", i)},
+				}
+				created = append(created, hex.EncodeToString(src.SHA256()))
+				err := cache.WithTarball(ctx, &src, func(path string) error { return nil })
+				So(err, ShouldBeNil)
+				tc.Add(time.Minute)
+			}
+
+			So(scan(), ShouldHaveLength, len(created))
+
+			// Kick two oldest ones (keep only one newest).
+			So(cache.Trim(ctx, 1), ShouldBeNil)
+
+			// Worked!
+			So(scan(), ShouldResemble, []string{created[2]})
 		})
 	})
 }

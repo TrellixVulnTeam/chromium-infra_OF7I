@@ -6,11 +6,17 @@ package cache
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
+
+	"github.com/dustin/go-humanize"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
@@ -132,6 +138,84 @@ func (c *Cache) WithTarball(ctx context.Context, src source.Source, cb func(path
 
 // Trim removes old cache entries, keeping only most recently touched ones.
 func (c *Cache) Trim(ctx context.Context, keep int) error {
-	// TODO
+	logging.Infof(ctx, "Trimming the cache to keep only %d most recently touched entries...", keep)
+
+	files, err := ioutil.ReadDir(c.Root)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Annotate(err, "failed to scan the cache directory").Err()
+	}
+
+	type entry struct {
+		name string
+		meta cacheMetadata
+	}
+	var entries []entry
+
+	for _, file := range files {
+		if !file.IsDir() {
+			continue
+		}
+		switch meta, err := readMetadata(ctx, filepath.Join(c.Root, file.Name())); {
+		case err != nil:
+			logging.Warningf(ctx, "Skipping %q - %s", file.Name(), err)
+		case meta.Touched.IsZero():
+			logging.Warningf(ctx, "Skipping %q - empty or unrecognized", file.Name())
+		default:
+			entries = append(entries, entry{
+				name: file.Name(),
+				meta: meta,
+			})
+		}
+	}
+
+	if len(entries) <= keep {
+		logging.Infof(ctx, "Nothing to trim.")
+		return nil
+	}
+
+	// Oldest first.
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].meta.Touched.Before(entries[j].meta.Touched)
+	})
+
+	done := 0
+	for i := 0; i < len(entries)-keep; i++ {
+		e := entries[i]
+		logging.Infof(ctx, "Trimming entry %q (created %s, last touched %s)...",
+			e.name, humanize.Time(e.meta.Created), humanize.Time(e.meta.Touched))
+		// Steamroll over file system locks. There's a chance of a race condition,
+		// but it is very improbable, since its unlikely anyone uses old entries.
+		if err := removeDir(filepath.Join(c.Root, e.name)); err != nil {
+			logging.Errorf(ctx, "Failed to trim %q - %s", e.name, err)
+		} else {
+			done++
+		}
+	}
+
+	logging.Infof(ctx, "Trimmed %d entries.", done)
+	if done != len(entries)-keep {
+		return errors.Reason("failed to delete some cache entries, see logs").Err()
+	}
 	return nil
+}
+
+// removeDir renames `path` into "del_*" first (to make it "disappear"), and
+// then does os.RemoveAll.
+//
+// Skips the rename if `path` is already named `del_*`.
+func removeDir(path string) error {
+	newPath := path
+	dir, base := filepath.Dir(path), filepath.Base(path)
+	if !strings.HasPrefix(base, "del_") {
+		rnd := [8]byte{}
+		if _, err := rand.Read(rnd[:]); err != nil {
+			return errors.Annotate(err, "failed to generate random suffix").Err()
+		}
+		newPath = filepath.Join(dir,
+			fmt.Sprintf("del_%d_%s_%s", os.Getpid(), hex.EncodeToString(rnd[:]), base))
+		if err := os.Rename(path, newPath); err != nil {
+			return errors.Annotate(err, "failed to rename the directory before deleting it").Err()
+		}
+	}
+	return os.RemoveAll(newPath)
 }

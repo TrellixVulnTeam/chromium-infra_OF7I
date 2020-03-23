@@ -36,7 +36,11 @@ type cmdYamlRun struct {
 }
 
 func (c *cmdYamlRun) init() {
-	c.commandBase.init(c.exec)
+	c.commandBase.init(c.exec, extraFlags{
+		appID:    true,
+		tarball:  true,
+		cacheDir: true,
+	})
 
 	c.Flags.StringVar(&c.deployableYaml, "deployable-yaml", deployableYamlPlaceholder,
 		"Path within the tarball to a YAML to deploy.")
