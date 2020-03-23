@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/common/bq"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
@@ -194,7 +195,7 @@ func dumpInventorySnapshot(c *router.Context) error {
 	logging.Infof(c.Context, "Start dumping inventory snapshot")
 	project := info.AppID(ctx)
 	dataset := "inventory"
-	table := "lab"
+	curTimeStr := bqlib.GetPSTTimeStamp(time.Now())
 	client, err := bigquery.NewClient(ctx, project)
 	if err != nil {
 		return fmt.Errorf("bq client: %s", err)
@@ -206,25 +207,25 @@ func dumpInventorySnapshot(c *router.Context) error {
 	if err != nil {
 		return fmt.Errorf("gathering devices: %s", err)
 	}
-
-	labInventoryItems, err := converter.ToBQLabInventorySeq(allDevices)
-	if err != nil {
-		return fmt.Errorf("failed to convert devices: %s", err)
+	labconfigs, stateconfigs, err := converter.DeviceToBQMsgsSeq(allDevices)
+	if es := err.(errors.MultiError); len(es) > 0 {
+		for _, e := range es {
+			logging.Errorf(ctx, "failed to get devices: %s", e)
+		}
 	}
 
-	msgs := make([]proto.Message, len(labInventoryItems))
-
-	for i, li := range labInventoryItems {
-		msgs[i] = li
+	logging.Debugf(ctx, "uploading to bigquery dataset (%s) table (lab)", dataset)
+	uploader := bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("lab%s", curTimeStr))
+	if err := uploader.Put(ctx, labconfigs...); err != nil {
+		return fmt.Errorf("labconfig put: %s", err)
+	}
+	logging.Debugf(ctx, "uploading to bigquery dataset (%s) table (stateconfig)", dataset)
+	uploader = bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("stateconfig%s", curTimeStr))
+	if err := uploader.Put(ctx, stateconfigs...); err != nil {
+		return fmt.Errorf("stateconfig put: %s", err)
 	}
 
-	logging.Debugf(ctx, "uploading to bigquery dataset (%s) table (%s)", dataset, table)
-	tz, _ := time.LoadLocation("America/Los_Angeles")
-	up := bq.NewUploader(ctx, client, dataset, fmt.Sprintf("%s$%s", table, time.Now().In(tz).Format("20060102")))
-	if err := up.Put(ctx, msgs...); err != nil {
-		return fmt.Errorf("snapshot put: %s", err)
-	}
-	logging.Debugf(ctx, "successfully uploaded to bigquery")
+	logging.Debugf(ctx, "successfully uploaded lab inventory to bigquery")
 	return nil
 }
 

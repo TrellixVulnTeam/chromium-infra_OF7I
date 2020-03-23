@@ -143,3 +143,16 @@ if ! (bqschemaupdater -force \
   echo "and run this script again."
   exit 1
 fi
+
+if ! (bqschemaupdater -force \
+    -message apibq.StateConfigInventory \
+    -table "${APPID}".inventory.stateconfig); then
+  echo ""
+  echo ""
+  echo "Oh no! You may need to restart from scratch. You can do so with:"
+  echo ""
+  echo "  bq rm ${APPID}:inventory.stateconfig"
+  echo ""
+  echo "and run this script again."
+  exit 1
+fi

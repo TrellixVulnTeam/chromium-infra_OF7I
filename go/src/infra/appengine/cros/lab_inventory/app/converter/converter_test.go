@@ -15,34 +15,44 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	"go.chromium.org/luci/common/errors"
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/libs/cros/lab_inventory/datastore"
 )
 
-var testToBQLabInventoryData = []struct {
-	name   string
-	in     *datastore.DeviceOpResult
-	out    *apibq.LabInventory
-	isGood bool
+var testDeviceToBQMsgsData = []struct {
+	name     string
+	in       *datastore.DeviceOpResult
+	out      *apibq.LabInventory
+	stateOut *apibq.StateConfigInventory
+	isGood   bool
 }{
 	{
 		"empty",
 		nil,
 		nil,
+		nil,
 		false,
 	},
 	{
-		"just timestamp",
+		"just timestamp & ID",
 		&datastore.DeviceOpResult{
 			Entity: &datastore.DeviceEntity{
+				ID:        "476528fa-29f9-4bf8-8f39-92dc6c291ca1",
 				LabConfig: []byte{},
 				Updated:   time.Unix(42, 67),
 			},
 		},
 		&apibq.LabInventory{
+			Id:          "476528fa-29f9-4bf8-8f39-92dc6c291ca1",
 			UpdatedTime: timestampOrPanic(time.Unix(42, 67)),
 			Device:      &lab.ChromeOSDevice{},
+		},
+		&apibq.StateConfigInventory{
+			Id:          "476528fa-29f9-4bf8-8f39-92dc6c291ca1",
+			UpdatedTime: timestampOrPanic(time.Unix(42, 67)),
+			State:       &lab.DutState{},
 		},
 		true,
 	},
@@ -59,9 +69,12 @@ var testToBQLabInventoryData = []struct {
 					Id:           &lab.ChromeOSDeviceID{Value: "476528fa-29f9-4bf8-8f39-92dc6c291ca1"},
 					SerialNumber: "",
 				}),
-				DutState: nil,
-				Updated:  time.Unix(42, 67),
-				Parent:   nil,
+				DutState: marshalOrPanic(&lab.DutState{
+					Id:    &lab.ChromeOSDeviceID{Value: "476528fa-29f9-4bf8-8f39-92dc6c291ca1"},
+					Servo: lab.PeripheralState_BROKEN,
+				}),
+				Updated: time.Unix(42, 67),
+				Parent:  nil,
 			},
 		},
 		&apibq.LabInventory{
@@ -73,79 +86,102 @@ var testToBQLabInventoryData = []struct {
 			Id:       "476528fa-29f9-4bf8-8f39-92dc6c291ca1",
 			Hostname: "ac60fddf-0e51-45a0-a8ad-4c291270e649",
 		},
+		&apibq.StateConfigInventory{
+			UpdatedTime: timestampOrPanic(time.Unix(42, 67)),
+			State: &lab.DutState{
+				Id:    &lab.ChromeOSDeviceID{Value: "476528fa-29f9-4bf8-8f39-92dc6c291ca1"},
+				Servo: lab.PeripheralState_BROKEN,
+			},
+			Id: "476528fa-29f9-4bf8-8f39-92dc6c291ca1",
+		},
 		true,
 	},
 }
 
-func TestToBQLabInventory(t *testing.T) {
+func TestDeviceToBQMsgs(t *testing.T) {
 	t.Parallel()
-	for _, tt := range testToBQLabInventoryData {
+	for _, tt := range testDeviceToBQMsgsData {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := ToBQLabInventory(tt.in)
+			out, stateOut, err := DeviceToBQMsgs(tt.in)
 			isGood := err == nil
 			if isGood != tt.isGood {
 				t.Errorf("error mismatch: expected (%v) got (%v) err was (%#v)", tt.isGood, isGood, err)
 			}
-			diff := cmp.Diff(tt.out, out)
-			if diff != "" {
-				msg := fmt.Sprintf("unexpected diff (%s)", diff)
-				t.Errorf("%s", msg)
+			if diff := cmp.Diff(tt.out, out); diff != "" {
+				t.Errorf("unexpected diff (%s)", diff)
+			}
+			if stateDiff := cmp.Diff(tt.stateOut, stateOut); stateDiff != "" {
+				t.Errorf("unexpected diff (%s)", stateDiff)
 			}
 		})
 	}
 }
 
-var testToBQLabInventorySeqData = []struct {
-	name   string
-	in     datastore.DeviceOpResults
-	out    []*apibq.LabInventory
-	isGood bool
+var testDeviceToBQMsgsSeqData = []struct {
+	name     string
+	in       datastore.DeviceOpResults
+	out      []proto.Message
+	stateOut []proto.Message
+	isGood   bool
 }{
 	{
 		"nil is failure",
 		datastore.DeviceOpResults(nil),
+		nil,
 		nil,
 		false,
 	},
 	{
 		"empty successfully produces nothing",
 		datastore.DeviceOpResults([]datastore.DeviceOpResult{}),
-		[]*apibq.LabInventory{},
+		[]proto.Message{},
+		[]proto.Message{},
 		true,
 	},
 	{
-		"just timestamp",
+		"just timestamp, no lab config, no state config",
 		[]datastore.DeviceOpResult{
 			{
 				Entity: &datastore.DeviceEntity{
-					LabConfig: []byte{},
-					Updated:   time.Unix(42, 67),
+					ID:      "476528fa-29f9-4bf8-8f39-92dc6c291ca1",
+					Updated: time.Unix(42, 67),
 				},
 			},
 		},
-		[]*apibq.LabInventory{
-			{
+		[]proto.Message{
+			&apibq.LabInventory{
+				Id:          "476528fa-29f9-4bf8-8f39-92dc6c291ca1",
 				UpdatedTime: timestampOrPanic(time.Unix(42, 67)),
 				Device:      &lab.ChromeOSDevice{},
+			},
+		},
+		[]proto.Message{
+			&apibq.StateConfigInventory{
+				Id:          "476528fa-29f9-4bf8-8f39-92dc6c291ca1",
+				UpdatedTime: timestampOrPanic(time.Unix(42, 67)),
+				State:       &lab.DutState{},
 			},
 		},
 		true,
 	},
 }
 
-func TestToBQLabInventorySeq(t *testing.T) {
+func TestDeviceToBQMsgsSeq(t *testing.T) {
 	t.Parallel()
-	for _, tt := range testToBQLabInventorySeqData {
+	for i, tt := range testDeviceToBQMsgsSeqData {
+		fmt.Printf("test case %d\n", i)
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := ToBQLabInventorySeq(tt.in)
-			isGood := err == nil
+			out, stateOut, err := DeviceToBQMsgsSeq(tt.in)
+			isGood := len(err.(errors.MultiError)) == 0
+			fmt.Println(err)
 			if isGood != tt.isGood {
 				t.Errorf("error mismatch: expected (%v) got (%v) err was (%#v)", tt.isGood, isGood, err)
 			}
-			diff := cmp.Diff(tt.out, out)
-			if diff != "" {
-				msg := fmt.Sprintf("unexpected diff (%s)", diff)
-				t.Errorf("%s", msg)
+			if diff := cmp.Diff(tt.out, out); diff != "" {
+				t.Errorf("unexpected diff (%s)", diff)
+			}
+			if stateDiff := cmp.Diff(tt.stateOut, stateOut); stateDiff != "" {
+				t.Errorf("unexpected diff (%s)", stateDiff)
 			}
 		})
 	}
