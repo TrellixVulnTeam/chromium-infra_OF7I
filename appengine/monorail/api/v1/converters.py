@@ -21,6 +21,7 @@ from framework import exceptions
 from framework import framework_bizobj
 from framework import framework_helpers
 from proto import tracker_pb2
+from tracker import tracker_bizobj as tbo
 
 
 class Converter(object):
@@ -525,12 +526,7 @@ class Converter(object):
     if template.owner_id is not None:
       owner = issue_objects_pb2.Issue.UserValue(
           user=rnc.ConvertUserNames([template.owner_id]).get(template.owner_id))
-    labels = []
-    for label in template.labels:
-      labels.append(
-          issue_objects_pb2.Issue.LabelValue(
-              label=label,
-              derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
+    labels = self.ConvertLabels(template.labels, [], project_id)
     components_dict = rnc.ConvertComponentDefNames(
         self.cnxn, template.component_ids, project_id, self.services)
     components = []
@@ -539,8 +535,11 @@ class Converter(object):
           issue_objects_pb2.Issue.ComponentValue(
               component=component_resource_name,
               derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
-    field_values = self.ConvertFieldValues(
+    non_enum_field_values = self.ConvertFieldValues(
         template.field_values, project_id, template.phases)
+    enum_field_values = self.ConvertEnumFieldValues(
+        template.labels, [], project_id)
+    field_values = non_enum_field_values + enum_field_values
     approval_values = self.ConvertApprovalValues(
         template.approval_values, project_id, template.phases)
     phases = self._ComputeTemplatePhases(template)
@@ -584,3 +583,90 @@ class Converter(object):
     """Convert a protorpc TemplateDef to its sorted string phases."""
     sorted_phases = sorted(template.phases, key=lambda phase: phase.rank)
     return [phase.name for phase in sorted_phases]
+
+  def ConvertLabels(self, labels, derived_labels, project_id):
+    # type: (Sequence[str], Sequence[str], int) ->
+    #     Sequence[api_proto.issue_objects_pb2.Issue.LabelValue]
+    """Convert string labels to LabelValues for non-enum-field labels
+
+    Args:
+      labels: Sequence of string labels
+      project_id: ID of the Project these labels belong to.
+
+    Return:
+      Sequence of protoc IssueValues for given `labels` that
+      do not represent enum field values.
+    """
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    non_fd_labels, non_fd_der_labels = tbo.ExplicitAndDerivedNonMaskedLabels(
+        labels, derived_labels, config)
+    api_labels = []
+    for label in non_fd_labels:
+      api_labels.append(
+          issue_objects_pb2.Issue.LabelValue(
+              label=label,
+              derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
+    for label in non_fd_der_labels:
+      api_labels.append(
+          issue_objects_pb2.Issue.LabelValue(
+              label=label,
+              derivation=issue_objects_pb2.Issue.Derivation.Value('RULE')))
+    return api_labels
+
+  def ConvertEnumFieldValues(self, labels, derived_labels, project_id):
+    # type: (Sequence[str], Sequence[str], int) ->
+    #     Sequence[api_proto.issue_objects_pb2.Issue.FieldValue]
+    """Convert string labels to FieldValues for enum-field labels
+
+    Args:
+      labels: Sequence of string labels
+      project_id: ID of the Project these labels belong to.
+
+    Return:
+      Sequence of protoc FieldValues only for given `labels` that
+      represent enum field values.
+    """
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    enum_ids_by_name = {
+        fd.field_name.lower(): fd.field_id
+        for fd in config.field_defs
+        if fd.field_type is tracker_pb2.FieldTypes.ENUM_TYPE
+        and not fd.is_deleted
+    }
+    resource_names_dict = rnc.ConvertFieldDefNames(
+        self.cnxn, enum_ids_by_name.values(), project_id, self.services)
+
+    api_fvs = []
+
+    labels_by_prefix = tbo.LabelsByPrefix(labels, enum_ids_by_name.keys())
+    for lower_field_name, values in labels_by_prefix.items():
+      field_id = enum_ids_by_name.get(lower_field_name)
+      resource_name = resource_names_dict.get(field_id)
+      if not resource_name:
+        continue
+      api_fvs.extend(
+          [
+              issue_objects_pb2.Issue.FieldValue(
+                  field=resource_name,
+                  value=value,
+                  derivation=issue_objects_pb2.Issue.Derivation.Value(
+                      'EXPLICIT')) for value in values
+          ])
+
+    der_labels_by_prefix = tbo.LabelsByPrefix(
+        derived_labels, enum_ids_by_name.keys())
+    for lower_field_name, values in der_labels_by_prefix.items():
+      field_id = enum_ids_by_name.get(lower_field_name)
+      resource_name = resource_names_dict.get(field_id)
+      if not resource_name:
+        continue
+      api_fvs.extend(
+          [
+              issue_objects_pb2.Issue.FieldValue(
+                  field=resource_name,
+                  value=value,
+                  derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+              for value in values
+          ])
+
+    return api_fvs

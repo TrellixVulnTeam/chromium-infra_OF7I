@@ -80,6 +80,21 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.cnxn, self.project_1.project_id, self.field_def_2_name, 'INT_TYPE',
         None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, [], [])
+    self.field_def_3_name = 'days'
+    self.field_def_3 = self.services.config.CreateFieldDef(
+        self.cnxn, self.project_1.project_id, self.field_def_3_name,
+        'ENUM_TYPE', None, None, None, None, None, None, None, None, None, None,
+        None, None, None, None, [], [])
+    self.field_def_4_name = 'OS'
+    self.field_def_4 = self.services.config.CreateFieldDef(
+        self.cnxn, self.project_1.project_id, self.field_def_4_name,
+        'ENUM_TYPE', None, None, None, None, None, None, None, None, None, None,
+        None, None, None, None, [], [])
+    self.field_def_5_name = 'lorem'
+    self.field_def_5 = self.services.config.CreateFieldDef(
+        self.cnxn, self.project_2.project_id, self.field_def_5_name,
+        'ENUM_TYPE', None, None, None, None, None, None, None, None, None, None,
+        None, None, None, None, [], [])
     self.approval_def_1_name = 'approval_field_1'
     self.approval_def_1_id = self.services.config.CreateFieldDef(
         self.cnxn, self.project_1.project_id, self.approval_def_1_name,
@@ -104,6 +119,11 @@ class ConverterFunctionsTest(unittest.TestCase):
         approver_ids=[self.user_2.user_id])
     self.template_0 = self.services.template.TestAddIssueTemplateDef(
         11110, self.project_1.project_id, 'template0')
+    self.template_1_label1_value = '2'
+    self.template_1_labels = [
+        'pri-1', '{}-{}'.format(
+            self.field_def_3_name, self.template_1_label1_value)
+    ]
     self.template_1 = self.services.template.TestAddIssueTemplateDef(
         11111,
         self.project_1.project_id,
@@ -112,7 +132,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         summary='foo',
         admin_ids=[self.user_2.user_id],
         owner_id=self.user_1.user_id,
-        labels=['pri-1'],
+        labels=self.template_1_labels,
         component_ids=[654],
         field_values=[self.fv_1],
         approval_values=[self.av_1],
@@ -662,7 +682,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         result.components[0].derivation,
         issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
-    self.assertEqual(len(result.field_values), 1)
+    self.assertEqual(len(result.field_values), 2)
     self.assertEqual(
         result.field_values[0].field, 'projects/{}/fieldDefs/{}'.format(
             self.project_1.project_name, self.field_def_1_name))
@@ -670,6 +690,15 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         result.field_values[0].derivation,
         issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    expected_name = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_3], self.project_1.project_id,
+        self.services).get(self.field_def_3)
+    self.assertEqual(
+        result.field_values[1],
+        issue_objects_pb2.Issue.FieldValue(
+            field=expected_name,
+            value=self.template_1_label1_value,
+            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
     self.assertFalse(result.blocked_on_issue_refs)
     self.assertFalse(result.blocking_issue_refs)
     self.assertFalse(result.attachment_count)
@@ -729,3 +758,137 @@ class ConverterFunctionsTest(unittest.TestCase):
     result = self.converter.ConvertIssueTemplates(
         self.project_1.project_id, [self.dne_template])
     self.assertEqual(len(result), 0)
+
+  def testConvertLabels_OmitsFieldDefs(self):
+    """It omits field def labels"""
+    input_labels = ['pri-1', '{}-2'.format(self.field_def_3_name)]
+    result = self.converter.ConvertLabels(
+        input_labels, [], self.project_1.project_id)
+    self.assertEqual(len(result), 1)
+    expected = issue_objects_pb2.Issue.LabelValue(
+        label=input_labels[0],
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result[0], expected)
+
+  def testConvertLabels_DerivedLabels(self):
+    """It handles derived labels"""
+    input_labels = ['pri-1']
+    result = self.converter.ConvertLabels(
+        [], input_labels, self.project_1.project_id)
+    self.assertEqual(len(result), 1)
+    expected = issue_objects_pb2.Issue.LabelValue(
+        label=input_labels[0],
+        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+    self.assertEqual(result[0], expected)
+
+  def testConvertLabels(self):
+    """It includes both non-derived and derived labels"""
+    input_labels = ['pri-1', '{}-2'.format(self.field_def_3_name)]
+    input_der_labels = ['{}-3'.format(self.field_def_3_name), 'job-secret']
+    result = self.converter.ConvertLabels(
+        input_labels, input_der_labels, self.project_1.project_id)
+    self.assertEqual(len(result), 2)
+    expected_0 = issue_objects_pb2.Issue.LabelValue(
+        label=input_labels[0],
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result[0], expected_0)
+    expected_1 = issue_objects_pb2.Issue.LabelValue(
+        label=input_der_labels[1],
+        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+    self.assertEqual(result[1], expected_1)
+
+  def testConvertLabels_Empty(self):
+    result = self.converter.ConvertLabels([], [], self.project_1.project_id)
+    self.assertEqual(result, [])
+
+  def testConvertEnumFieldValues_OnlyFieldDefs(self):
+    """It only returns enum field values"""
+    expected_value = '2'
+    input_labels = [
+        'pri-1', '{}-{}'.format(self.field_def_3_name, expected_value)
+    ]
+    result = self.converter.ConvertEnumFieldValues(
+        input_labels, [], self.project_1.project_id)
+    self.assertEqual(len(result), 1)
+    expected_name = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_3], self.project_1.project_id,
+        self.services).get(self.field_def_3)
+    expected = issue_objects_pb2.Issue.FieldValue(
+        field=expected_name,
+        value=expected_value,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result[0], expected)
+
+  def testConvertEnumFieldValues_DerivedLabels(self):
+    """It handles derived enum field values"""
+    expected_value = '2'
+    input_der_labels = [
+        'pri-1', '{}-{}'.format(self.field_def_3_name, expected_value)
+    ]
+    result = self.converter.ConvertEnumFieldValues(
+        [], input_der_labels, self.project_1.project_id)
+    self.assertEqual(len(result), 1)
+    expected_name = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_3], self.project_1.project_id,
+        self.services).get(self.field_def_3)
+    expected = issue_objects_pb2.Issue.FieldValue(
+        field=expected_name,
+        value=expected_value,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+    self.assertEqual(result[0], expected)
+
+  def testConvertEnumFieldValues_Empty(self):
+    result = self.converter.ConvertEnumFieldValues(
+        [], [], self.project_1.project_id)
+    self.assertEqual(result, [])
+
+  def testConvertEnumFieldValues_ProjectSpecific(self):
+    """It only considers field defs from specified project"""
+    expected_value = '2'
+    # field_def_5 belongs to project_2
+    input_labels = [
+        '{}-{}'.format(self.field_def_3_name, expected_value),
+        '{}-ipsum'.format(self.field_def_5_name)
+    ]
+    result = self.converter.ConvertEnumFieldValues(
+        input_labels, [], self.project_1.project_id)
+    self.assertEqual(len(result), 1)
+    expected_name = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_3], self.project_1.project_id,
+        self.services).get(self.field_def_3)
+    expected = issue_objects_pb2.Issue.FieldValue(
+        field=expected_name,
+        value=expected_value,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result[0], expected)
+
+  def testConvertEnumFieldValues(self):
+    """It handles derived enum field values"""
+    expected_value_0 = '2'
+    expected_value_1 = 'macOS'
+    input_labels = [
+        'pri-1', '{}-{}'.format(self.field_def_3_name, expected_value_0),
+        '{}-ipsum'.format(self.field_def_5_name)
+    ]
+    input_der_labels = [
+        '{}-{}'.format(self.field_def_4_name, expected_value_1), 'foo-bar'
+    ]
+    result = self.converter.ConvertEnumFieldValues(
+        input_labels, input_der_labels, self.project_1.project_id)
+    self.assertEqual(len(result), 2)
+    expected_0_name = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_3], self.project_1.project_id,
+        self.services).get(self.field_def_3)
+    expected_0 = issue_objects_pb2.Issue.FieldValue(
+        field=expected_0_name,
+        value=expected_value_0,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result[0], expected_0)
+    expected_1_name = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_4], self.project_1.project_id,
+        self.services).get(self.field_def_4)
+    expected_1 = issue_objects_pb2.Issue.FieldValue(
+        field=expected_1_name,
+        value=expected_value_1,
+        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+    self.assertEqual(result[1], expected_1)
