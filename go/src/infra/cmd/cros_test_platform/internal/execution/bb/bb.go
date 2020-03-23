@@ -30,14 +30,15 @@ import (
 )
 
 type task struct {
-	bbID int64
+	bbID           int64
+	swarmingTaskID string
 }
 
 type bbSkylabClient struct {
 	swarmingClient swarming.Client
 	bbClient       buildbucket_pb.BuildsClient
 	builder        *buildbucket_pb.BuilderID
-	knownTasks     map[skylab.TaskReference]task
+	knownTasks     map[skylab.TaskReference]*task
 }
 
 // NewSkylabClient creates a new skylab.Client.
@@ -58,7 +59,7 @@ func NewSkylabClient(ctx context.Context, cfg *config.Config) (skylab.Client, er
 			Bucket:  cfg.TestRunner.Buildbucket.Bucket,
 			Builder: cfg.TestRunner.Buildbucket.Builder,
 		},
-		knownTasks: make(map[skylab.TaskReference]task),
+		knownTasks: make(map[skylab.TaskReference]*task),
 	}, nil
 }
 
@@ -122,7 +123,7 @@ func (c *bbSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (sk
 		return "", errors.Annotate(err, "launch task for %s", args.TestRunnerRequest.GetTest().GetAutotest().GetName()).Err()
 	}
 	tr := skylab.NewTaskReference()
-	c.knownTasks[tr] = task{
+	c.knownTasks[tr] = &task{
 		bbID: resp.Id,
 	}
 	return tr, nil
@@ -131,6 +132,7 @@ func (c *bbSkylabClient) LaunchTask(ctx context.Context, args *request.Args) (sk
 // getBuildFieldMask is the list of buildbucket fields that are needed.
 var getBuildFieldMask = []string{
 	"id",
+	"infra.swarming.task_id",
 	// Build details are parsed from the build's output properties.
 	"output.properties",
 	// Build status is used to determine whether the build is complete.
@@ -151,6 +153,8 @@ func (c *bbSkylabClient) FetchResults(ctx context.Context, t skylab.TaskReferenc
 	if err != nil {
 		return nil, errors.Annotate(err, "fetch results for build %d", task.bbID).Err()
 	}
+
+	task.swarmingTaskID = b.GetInfra().GetSwarming().GetTaskId()
 
 	lc := bbStatusToLifeCycle[b.Status]
 	if !skylab.LifeCyclesWithResults[lc] {
@@ -211,7 +215,7 @@ func (c *bbSkylabClient) URL(t skylab.TaskReference) string {
 		c.builder.Project, c.builder.Bucket, c.builder.Builder, c.knownTasks[t].bbID)
 }
 
-// SwarmingTaskID stub.
+// SwarmingTaskID is the Swarming ID of the underlying task.
 func (c *bbSkylabClient) SwarmingTaskID(t skylab.TaskReference) string {
-	panic("Not yet implemented.")
+	return c.knownTasks[t].swarmingTaskID
 }

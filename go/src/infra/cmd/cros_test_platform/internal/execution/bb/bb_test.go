@@ -215,6 +215,7 @@ func TestFetchRequest(t *testing.T) {
 				So(gotRequest.Id, ShouldEqual, 42)
 				So(gotRequest.Fields, ShouldNotBeNil)
 				So(gotRequest.Fields.Paths, ShouldContain, "id")
+				So(gotRequest.Fields.Paths, ShouldContain, "infra.swarming.task_id")
 				So(gotRequest.Fields.Paths, ShouldContain, "output.properties")
 				So(gotRequest.Fields.Paths, ShouldContain, "status")
 			})
@@ -236,7 +237,12 @@ func TestCompletedTask(t *testing.T) {
 			gomock.Any(),
 			gomock.Any(),
 		).Return(&buildbucket_pb.Build{
-			Id:     42,
+			Id: 42,
+			Infra: &buildbucket_pb.BuildInfra{
+				Swarming: &buildbucket_pb.BuildInfra_Swarming{
+					TaskId: "foo-swarming-task-id",
+				},
+			},
 			Status: buildbucket_pb.Status_SUCCESS,
 			Output: outputProperty("foo-test-case"),
 		}, nil)
@@ -251,6 +257,7 @@ func TestCompletedTask(t *testing.T) {
 			So(res.Result, ShouldNotBeNil)
 			So(res.Result.GetAutotestResult().GetTestCases(), ShouldHaveLength, 1)
 			So(res.Result.GetAutotestResult().GetTestCases()[0].GetName(), ShouldEqual, "foo-test-case")
+			So(tf.skylab.SwarmingTaskID(task), ShouldEqual, "foo-swarming-task-id")
 		})
 	})
 }
@@ -329,7 +336,7 @@ func newTestFixture(t *testing.T) (*testFixture, func()) {
 		bb:  bb,
 		skylab: &bbSkylabClient{
 			bbClient:   bb,
-			knownTasks: make(map[skylab.TaskReference]task),
+			knownTasks: make(map[skylab.TaskReference]*task),
 		},
 	}, ctrl.Finish
 }
