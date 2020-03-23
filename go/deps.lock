@@ -251,7 +251,7 @@ imports:
   version: 4a28c93cedfd643c29df9591ffc9b54761e23f6d
   repo: https://chromium.googlesource.com/external/github.com/mailru/easyjson.git
 - name: github.com/maruel/panicparse
-  version: 8ddb616c39825f450659dc00f97a600cbe303b68
+  version: aaab5f39e3035077b17cf8892d6e41d256d86fb2
   repo: https://chromium.googlesource.com/external/github.com/maruel/panicparse.git
   subpackages:
   - cmd/pp
