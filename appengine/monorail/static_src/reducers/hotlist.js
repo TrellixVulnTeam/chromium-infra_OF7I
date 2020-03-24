@@ -8,9 +8,9 @@
  * on the frontend.
  *
  * The Hotlist data is stored in a normalized format.
+ * `name` is a reference to the currently viewed Hotlist.
  * `hotlists` stores all Hotlist data indexed by Hotlist name.
  * `hotlistItems` stores all Hotlist items indexed by Hotlist name.
- * `name` is a reference to the currently viewed Hotlist.
  * `hotlist` is a selector that gets the currently viewed Hotlist data.
  *
  * Reference: https://github.com/erikras/ducks-modular-redux

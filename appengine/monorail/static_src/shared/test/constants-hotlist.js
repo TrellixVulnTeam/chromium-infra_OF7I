@@ -63,10 +63,10 @@ export const HOTLIST_ISSUE_CLOSED = Object.freeze({
   ...issue.ISSUE_CLOSED, ...HOTLIST_ITEM_CLOSED,
 });
 
-/** @type {Object.<string, Hotlist>} */
+/** @type {Object<string, Hotlist>} */
 export const HOTLISTS = Object.freeze({[NAME]: HOTLIST});
 
-/** @type {Object.<string, Array<HotlistItem>>} */
+/** @type {Object<string, Array<HotlistItem>>} */
 export const HOTLIST_ITEMS = Object.freeze({
   [NAME]: [HOTLIST_ITEM],
 });

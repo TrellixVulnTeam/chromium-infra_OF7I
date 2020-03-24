@@ -9,6 +9,7 @@ import * as hotlist from './hotlist.js';
 import * as issue from './issue.js';
 import * as project from './project.js';
 import * as sitewide from './sitewide.js';
+import * as user from './user.js';
 import * as userV0 from './userV0.js';
 import * as ui from './ui.js';
 
@@ -34,7 +35,8 @@ const reducer = combineReducers({
   hotlist: hotlist.reducer,
   issue: issue.reducer,
   project: project.reducer,
-  user: userV0.reducer,
+  user: user.reducer,
+  userV0: userV0.reducer,
   sitewide: sitewide.reducer,
 
   ui: ui.reducer,

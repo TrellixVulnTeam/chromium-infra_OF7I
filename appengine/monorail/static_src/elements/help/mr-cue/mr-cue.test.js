@@ -29,7 +29,7 @@ describe('mr-cue', () => {
 
   it('stateChanged', () => {
     const state = rootReducer({
-      user: {currentUser: {prefs: new Map(), prefsLoaded: false}},
+      userV0: {currentUser: {prefs: new Map(), prefsLoaded: false}},
     }, {});
     element.stateChanged(state);
     assert.deepEqual(element.prefs, new Map());

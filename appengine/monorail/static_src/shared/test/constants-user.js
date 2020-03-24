@@ -27,3 +27,6 @@ export const USER_2 = Object.freeze({
   name: 'users/5678',
   displayName: 'other_user@example.com',
 });
+
+/** @type {Object<string, User>} */
+export const USERS = Object.freeze({[NAME]: USER});

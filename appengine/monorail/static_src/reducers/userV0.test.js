@@ -10,7 +10,7 @@ import {prpcClient} from 'prpc-client-instance.js';
 
 let dispatch;
 
-describe('user', () => {
+describe('userV0', () => {
   describe('reducers', () => {
     it('SET_PREFS_SUCCESS updates existing prefs with new prefs', () => {
       const state = {prefs: {
@@ -346,5 +346,5 @@ describe('user', () => {
 });
 
 
-const wrapCurrentUser = (currentUser = {}) => ({user: {currentUser}});
-const wrapUser = (user) => ({user});
+const wrapCurrentUser = (currentUser = {}) => ({userV0: {currentUser}});
+const wrapUser = (user) => ({userV0: user});

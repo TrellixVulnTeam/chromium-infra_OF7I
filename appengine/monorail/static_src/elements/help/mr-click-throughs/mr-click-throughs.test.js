@@ -27,7 +27,7 @@ describe('mr-click-throughs', () => {
   });
 
   it('stateChanged', () => {
-    const state = {user: {currentUser:
+    const state = {userV0: {currentUser:
       {prefs: new Map(), prefsLoaded: false}}};
     element.stateChanged(state);
     assert.deepEqual(element.prefs, new Map());
