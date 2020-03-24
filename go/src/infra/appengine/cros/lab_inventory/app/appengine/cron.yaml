@@ -41,3 +41,7 @@ cron:
   url: /internal/cron/dump-other-configs-snapshot
   schedule: every day 00:01
   timezone: America/Los_Angeles
+
+- description: tsmon house keeping
+  url: /internal/cron/ts_mon/housekeeping
+  schedule: every 1 minutes
