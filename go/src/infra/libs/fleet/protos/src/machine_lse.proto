@@ -15,15 +15,18 @@ import "lse_id.proto";
 import "lse_prototype.proto";
 import "network_id.proto";
 import "peripherals.proto";
+import "machine_id.proto";
 
 message MachineLSE {
     LabSetupEnvID id = 1;
-    MachinePrototypeID prototype_id = 2;
+    MachineLSEPrototypeID prototype_id = 2;
 
     oneof lse {
         ChromeMachineLSE chrome_machine_lse = 3;
         ChromeOSMachineLSE chromeos_machine_lse = 4;
     }
+
+    repeated MachineID machines = 5;
 }
 
 message ChromeMachineLSE {

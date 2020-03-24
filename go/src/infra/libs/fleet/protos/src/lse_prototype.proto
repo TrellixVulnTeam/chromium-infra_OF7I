@@ -9,10 +9,10 @@ package fleet;
 // Required by protoc-gen-go
 option go_package = ".;fleet";
 
-message RackPrototypeID {
+message RackLSEPrototypeID {
     string value = 1;
 }
 
-message MachinePrototypeID {
+message MachineLSEPrototypeID {
     string value = 1;
 }

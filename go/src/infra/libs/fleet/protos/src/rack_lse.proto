@@ -12,15 +12,18 @@ option go_package = ".;fleet";
 import "peripherals.proto";
 import "lse_id.proto";
 import "lse_prototype.proto";
+import "rack_id.proto";
 
 message RackLSE {
     LabSetupEnvID id = 1;
-    RackPrototypeID prototype_id = 2;
+    RackLSEPrototypeID prototype_id = 2;
 
     oneof lse {
         ChromeRackLSE chrome_rack_lse = 3;
         ChromeOSRackLSE chromeos_rack_lse = 4;
     }
+
+    repeated RackID racks = 5;
 }
 
 message ChromeRackLSE {
