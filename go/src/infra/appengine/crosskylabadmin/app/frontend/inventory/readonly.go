@@ -131,7 +131,13 @@ func (is *ServerImpl) GetStableVersion(ctx context.Context, req *fleet.GetStable
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	return getStableVersionImpl(ctx, req.BuildTarget, req.Model, req.Hostname)
+	ic, err := is.newInventoryClient(ctx)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to create inventory client: %s", err.Error())
+		logging.Infof(ctx, "Fall back to legacy flow")
+		ic = nil
+	}
+	return getStableVersionImpl(ctx, ic, req.BuildTarget, req.Model, req.Hostname)
 }
 
 // ReportInventory reports metrics of duts in inventory.
@@ -302,7 +308,7 @@ func freeDUTInfo(d *inventory.DeviceUnderTest) freeduts.DUT {
 
 // getStableVersionImpl returns all the stable versions associated with a given buildTarget and model
 // NOTE: hostname is explicitly allowed to be "". If hostname is "", then no hostname was provided in the GetStableVersion RPC call
-func getStableVersionImpl(ctx context.Context, buildTarget string, model string, hostname string) (*fleet.GetStableVersionResponse, error) {
+func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget string, model string, hostname string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for buildTarget: %s and model: %s", buildTarget, model)
 
 	if hostname == "" {
@@ -311,7 +317,7 @@ func getStableVersionImpl(ctx context.Context, buildTarget string, model string,
 	}
 
 	logging.Infof(ctx, "hostname (%s) provided, ignoring user-provided buildTarget (%s) and model (%s)", hostname, buildTarget, model)
-	return getStableVersionImplWithHostname(ctx, hostname)
+	return getStableVersionImplWithHostname(ctx, ic, hostname)
 }
 
 // getStableVersionImplNoHostname returns stableversion information given a buildTarget and model
@@ -354,7 +360,7 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 // getStableVersionImplWithHostname return stable version information given just a hostname
 // TODO(gregorynisbet): Consider under what circumstances an error leaving this function
 // should be considered transient or non-transient.
-func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fleet.GetStableVersionResponse, error) {
+func getStableVersionImplWithHostname(ctx context.Context, ic inventoryClient, hostname string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for given hostname (%s)", hostname)
 	var err error
 
@@ -368,7 +374,7 @@ func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fl
 		logging.Infof(ctx, "concluded that hostname (%s) is a servo host", hostname)
 	}
 
-	dut, err := getDUT(ctx, hostname)
+	dut, err := getDUT(ctx, ic, hostname)
 	if err != nil {
 		logging.Infof(ctx, "failed to get DUT: (%#v)", err)
 		// TODO(gregorynisbet): Consider a different error handling strategy.
@@ -401,7 +407,7 @@ func getStableVersionImplWithHostname(ctx context.Context, hostname string) (*fl
 		logging.Infof(ctx, "concluded servo hostname is fake (%s)", servoHostHostname)
 		return out, nil
 	}
-	servoStableVersion, err := getCrosVersionFromServoHost(ctx, servoHostHostname)
+	servoStableVersion, err := getCrosVersionFromServoHost(ctx, ic, servoHostHostname)
 	if err != nil {
 		// TODO(gregorynisbet): Consider a different error handling strategy.
 		// Wrap the error so it's non-transient.
@@ -433,8 +439,8 @@ func getServoHostHostname(dut *inventory.DeviceUnderTest) (string, error) {
 	return "", fmt.Errorf("no \"servo_host\" attribute for hostname (%s)", dut.GetCommon().GetHostname())
 }
 
-// getDUT returns the DUT associated with a particular hostname from datastore
-func getDUT(ctx context.Context, hostname string) (*inventory.DeviceUnderTest, error) {
+// TODO(guocb) Remove this function after fully migration to inventory v2.
+func getDUTv1(ctx context.Context, hostname string) (*inventory.DeviceUnderTest, error) {
 	resp, err := dsinventory.GetSerializedDUTByHostname(ctx, hostname)
 	if err != nil {
 		msg := fmt.Sprintf("getting serialized DUT by hostname for (%s)", hostname)
@@ -444,6 +450,36 @@ func getDUT(ctx context.Context, hostname string) (*inventory.DeviceUnderTest, e
 	if err := proto.Unmarshal(resp.Data, dut); err != nil {
 		msg := fmt.Sprintf("unserializing DUT for hostname (%s)", hostname)
 		return nil, errors.Annotate(err, msg).Err()
+	}
+	return dut, nil
+}
+
+func getDUTv2(ctx context.Context, ic inventoryClient, hostname string) (*inventory.DeviceUnderTest, error) {
+	resp, _, err := ic.getDutInfo(ctx, &fleet.GetDutInfoRequest{
+		Hostname: hostname,
+	})
+	if err != nil {
+		msg := fmt.Sprintf("getting serialized DUT by hostname for (%s)", hostname)
+		return nil, errors.Annotate(err, msg).Err()
+	}
+	dut := &inventory.DeviceUnderTest{}
+	if err := proto.Unmarshal(resp, dut); err != nil {
+		msg := fmt.Sprintf("unserializing DUT for hostname (%s)", hostname)
+		return nil, errors.Annotate(err, msg).Err()
+	}
+	return dut, nil
+}
+
+// getDUT returns the DUT associated with a particular hostname from datastore
+func getDUT(ctx context.Context, ic inventoryClient, hostname string) (*inventory.DeviceUnderTest, error) {
+	if ic == nil {
+		return getDUTv1(ctx, hostname)
+	}
+	dut, err := getDUTv2(ctx, ic, hostname)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to get DUT from inventory v2: %s", err.Error())
+		logging.Infof(ctx, "Fall back to legacy flow")
+		return getDUTv1(ctx, hostname)
 	}
 	return dut, nil
 }
@@ -469,14 +505,14 @@ func looksLikeFakeServo(hostname string) bool {
 // hostname : hostname of the servo host (e.g. labstation)
 // NOTE: If hostname is "", this indicates the absence of a relevant servo host.
 // This can happen if the DUT in question is already a labstation, for instance.
-func getCrosVersionFromServoHost(ctx context.Context, hostname string) (string, error) {
+func getCrosVersionFromServoHost(ctx context.Context, ic inventoryClient, hostname string) (string, error) {
 	if hostname == "" {
 		logging.Infof(ctx, "getCrosVersionFromServoHost: skipping empty hostname \"\"")
 		return "", nil
 	}
 	if looksLikeLabstation(hostname) {
 		logging.Infof(ctx, "getCrosVersionFromServoHost: identified labstation servohost hostname (%s)", hostname)
-		dut, err := getDUT(ctx, hostname)
+		dut, err := getDUT(ctx, ic, hostname)
 		if err != nil {
 			return "", errors.Annotate(err, "get labstation dut info").Err()
 		}
