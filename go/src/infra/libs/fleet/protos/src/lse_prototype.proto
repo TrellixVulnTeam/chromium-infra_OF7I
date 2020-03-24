@@ -12,3 +12,7 @@ option go_package = ".;fleet";
 message RackPrototypeID {
     string value = 1;
 }
+
+message MachinePrototypeID {
+    string value = 1;
+}

@@ -59,18 +59,59 @@ func (m *RackPrototypeID) GetValue() string {
 	return ""
 }
 
+type MachinePrototypeID struct {
+	Value                string   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MachinePrototypeID) Reset()         { *m = MachinePrototypeID{} }
+func (m *MachinePrototypeID) String() string { return proto.CompactTextString(m) }
+func (*MachinePrototypeID) ProtoMessage()    {}
+func (*MachinePrototypeID) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4844cac9ae81b3e2, []int{1}
+}
+
+func (m *MachinePrototypeID) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MachinePrototypeID.Unmarshal(m, b)
+}
+func (m *MachinePrototypeID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MachinePrototypeID.Marshal(b, m, deterministic)
+}
+func (m *MachinePrototypeID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MachinePrototypeID.Merge(m, src)
+}
+func (m *MachinePrototypeID) XXX_Size() int {
+	return xxx_messageInfo_MachinePrototypeID.Size(m)
+}
+func (m *MachinePrototypeID) XXX_DiscardUnknown() {
+	xxx_messageInfo_MachinePrototypeID.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MachinePrototypeID proto.InternalMessageInfo
+
+func (m *MachinePrototypeID) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*RackPrototypeID)(nil), "fleet.RackPrototypeID")
+	proto.RegisterType((*MachinePrototypeID)(nil), "fleet.MachinePrototypeID")
 }
 
 func init() { proto.RegisterFile("lse_prototype.proto", fileDescriptor_4844cac9ae81b3e2) }
 
 var fileDescriptor_4844cac9ae81b3e2 = []byte{
-	// 93 bytes of a gzipped FileDescriptorProto
+	// 106 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0xce, 0x29, 0x4e, 0x8d,
 	0x2f, 0x28, 0xca, 0x2f, 0xc9, 0x2f, 0xa9, 0x2c, 0x48, 0xd5, 0x03, 0xb3, 0x84, 0x58, 0xd3, 0x72,
 	0x52, 0x53, 0x4b, 0x94, 0xd4, 0xb9, 0xf8, 0x83, 0x12, 0x93, 0xb3, 0x03, 0x60, 0xb2, 0x9e, 0x2e,
 	0x42, 0x22, 0x5c, 0xac, 0x65, 0x89, 0x39, 0xa5, 0xa9, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41,
-	0x10, 0x8e, 0x13, 0x67, 0x14, 0xbb, 0x9e, 0x35, 0x58, 0x4f, 0x12, 0x1b, 0xd8, 0x04, 0x63, 0x40,
-	0x00, 0x00, 0x00, 0xff, 0xff, 0xd1, 0x60, 0xfb, 0x21, 0x58, 0x00, 0x00, 0x00,
+	0x10, 0x8e, 0x92, 0x16, 0x97, 0x90, 0x6f, 0x62, 0x72, 0x46, 0x66, 0x5e, 0x2a, 0x41, 0xb5, 0x4e,
+	0x9c, 0x51, 0xec, 0x7a, 0xd6, 0x60, 0xf3, 0x93, 0xd8, 0xc0, 0xb6, 0x19, 0x03, 0x02, 0x00, 0x00,
+	0xff, 0xff, 0x52, 0x21, 0x12, 0xf0, 0x84, 0x00, 0x00, 0x00,
 }

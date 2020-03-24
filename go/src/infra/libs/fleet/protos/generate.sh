@@ -10,5 +10,6 @@
 # Clean up existing generated files in path go/.
 find go -name '*.pb.go' -exec rm '{}' \;
 
-# Generate go file for files in path src/.
-protoc -Isrc --go_out=paths=source_relative:go src/*.proto
+# Generate go file for files in path "src".
+# Other proto_path is used to search imported protos.
+protoc -Isrc --proto_path=../../../../go.chromium.org/chromiumos/infra/proto/src --proto_path=../../../../ --go_out=paths=source_relative:go src/*.proto

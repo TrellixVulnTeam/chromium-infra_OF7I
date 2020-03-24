@@ -14,6 +14,11 @@ message ChromePlatform {
     int32 vm_slots = 2;
 }
 
+message OSVersion {
+    string value = 1;
+    string description = 2;
+}
+
 message ChromePlatformID {
     string value = 1;
 }

@@ -1,0 +1,49 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet;
+
+// Required by protoc-gen-go
+option go_package = ".;fleet";
+
+import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
+import "chrome_config.proto";
+import "lse_id.proto";
+import "lse_prototype.proto";
+
+message MachineLSE {
+    LabSetupEnvID id = 1;
+    MachinePrototypeID prototype_id = 2;
+
+    oneof lse {
+        ChromeMachineLSE chrome_machine_lse = 3;
+        ChromeOSMachineLSE chromeos_machine_lse = 4;
+    }
+}
+
+message ChromeMachineLSE {
+    // The hostname is also recorded in DHCP configs
+    string hostname = 1;
+    // Indicate if VM is needed to set up
+    repeated VM vms = 2;
+}
+
+message VM {
+    // A unique vm name
+    VMID id = 1;
+    OSVersion os_version = 2;
+    string mac_address = 3;
+    string hostname = 4;
+}
+
+message VMID {
+    string value = 1;
+}
+
+message ChromeOSMachineLSE {
+    string hostname = 1;
+    lab.DeviceUnderTest config = 2;
+}
