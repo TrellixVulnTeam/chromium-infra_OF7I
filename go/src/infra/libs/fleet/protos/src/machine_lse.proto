@@ -14,6 +14,7 @@ import "chrome_config.proto";
 import "lse_id.proto";
 import "lse_prototype.proto";
 import "network_id.proto";
+import "peripherals.proto";
 
 message MachineLSE {
     LabSetupEnvID id = 1;
@@ -55,6 +56,8 @@ message ChromeOSMachineLSE {
 
 message ChromeOSDeviceLSE {
     lab.DeviceUnderTest config = 1;
+    RPMInterface rpm_interface = 2;
+    SwitchInterface network_device_interface = 3;
 }
 
 message ChromeOSServerLSE {

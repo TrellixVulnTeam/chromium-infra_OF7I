@@ -16,3 +16,9 @@ message Vlan {
     string vlan_address = 2;
     int32 capacity = 3;
 }
+
+message DHCPConfig {
+    string mac_address = 1;
+    string hostname = 2;
+    string ip = 3;
+}
