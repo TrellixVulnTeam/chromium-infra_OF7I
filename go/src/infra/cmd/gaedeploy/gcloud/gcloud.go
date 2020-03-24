@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -19,11 +20,13 @@ import (
 type Modules map[string]Versions
 
 // Versions is a map from version name to its attributes.
-type Versions map[string]VersionAttrs
+type Versions map[string]Version
 
-// VersionAttrs are attributes a version of some module.
-type VersionAttrs struct {
-	// Empty for now.
+// Version are attributes a version of some module.
+type Version struct {
+	Name             string    // version name (matches the key in Versions map)
+	LastDeployedTime time.Time // when it was deployed
+	TrafficSplit     float64   // 0.0 - 1.0
 }
 
 // List lists deployed versions of an app.
@@ -56,8 +59,12 @@ func List(ctx context.Context, appID, module string) (Modules, error) {
 
 	// Note: this is a subset of fields we care about.
 	var listing []struct {
-		ID      string `json:"id"`      // version name really
-		Service string `json:"service"` // module name
+		ID               string  `json:"id"`            // version name really
+		Service          string  `json:"service"`       // module name
+		TrafficSplit     float64 `json:"traffic_split"` // 0.0 - 1.0
+		LastDeployedTime struct {
+			Datetime string `json:"datetime"` // "2020-03-20 17:42:19-07:00"
+		} `json:"last_deployed_time"`
 	}
 	if err := json.NewDecoder(stdout).Decode(&listing); err != nil {
 		return nil, errors.Annotate(err, "bad JSON in gcloud output").Err()
@@ -74,8 +81,17 @@ func List(ctx context.Context, appID, module string) (Modules, error) {
 			vers = Versions{}
 			out[e.Service] = vers
 		}
-		vers[e.ID] = VersionAttrs{
-			// Empty for now.
+
+		depTime, err := time.Parse("2006-01-02 15:04:05-07:00", e.LastDeployedTime.Datetime)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to parse deployment time %q of %s/%s",
+				e.LastDeployedTime.Datetime, e.Service, e.ID).Err()
+		}
+
+		vers[e.ID] = Version{
+			Name:             e.ID,
+			TrafficSplit:     e.TrafficSplit,
+			LastDeployedTime: depTime,
 		}
 	}
 	return out, nil
@@ -86,7 +102,9 @@ func Run(ctx context.Context, cmd []string, cwd string, dryRun bool) error {
 	cmdLine := append([]string{"gcloud"}, cmd...)
 
 	logging.Infof(ctx, "Running: %v", cmdLine)
-	logging.Infof(ctx, "  in cwd %q", cwd)
+	if cwd != "" {
+		logging.Infof(ctx, "  in cwd %q", cwd)
+	}
 
 	if dryRun {
 		logging.Warningf(ctx, "In dry run mode! Not really running anything.")

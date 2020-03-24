@@ -39,6 +39,7 @@ func getApplication() *cli.Application {
 			versioncli.CmdVersion(UserAgent),
 			cmdModule,
 			cmdYaml,
+			cmdCleanup,
 
 			// Advanced.
 			cmdCacheTrim,
