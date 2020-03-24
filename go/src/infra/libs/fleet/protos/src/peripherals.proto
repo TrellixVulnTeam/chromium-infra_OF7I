@@ -61,8 +61,10 @@ message SwitchInterface {
 }
 
 message Drac {
-    SwitchInterface switch_interface = 1;
-    string password = 2;
+    DracID id = 1;
+    string mac_address = 2;
+    SwitchInterface switch_interface = 3;
+    string password = 4;
 }
 
 message KVMID {
@@ -74,5 +76,9 @@ message RPMID {
 }
 
 message SwitchID {
+    string value = 1;
+}
+
+message DracID {
     string value = 1;
 }
