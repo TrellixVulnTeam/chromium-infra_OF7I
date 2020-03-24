@@ -1,0 +1,24 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet;
+
+// Required by protoc-gen-go
+option go_package = ".;fleet";
+
+import "lse_id.proto";
+import "machine_id.proto";
+import "rack_id.proto";
+
+message RackHost {
+	RackID rack_id = 1;
+	LabSetupEnvID lse_id = 2;
+}
+
+message MachineHost {
+	MachineID machine_id = 1;
+	LabSetupEnvID lse_id = 2;
+}
