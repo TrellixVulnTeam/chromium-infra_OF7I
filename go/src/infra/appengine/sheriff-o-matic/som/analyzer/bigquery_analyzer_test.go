@@ -448,10 +448,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
 			WHERE
 				project = "chromium"
-				AND (
-					bucket IN ("ci-beta", "ci-stable")
-					OR bucket LIKE "ci-m%"
-				)
+				AND bucket LIKE "ci-m%"
 			LIMIT
 				1000
 		`
