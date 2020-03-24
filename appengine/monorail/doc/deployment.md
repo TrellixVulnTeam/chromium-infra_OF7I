@@ -130,8 +130,8 @@ This pipeline handles deleting the oldest version.
 For more details read [go/monorail-deployments](go/monorail-deployments) and
 [go/chrome-infra-appengine-deployments](go/chrome-infra-appengine-deployments]
 
-TODO(jojwang): Currently, notifications are not working. See
-[crbug/monorail/5964](https://bugs.chromium.org/p/monorail/issues/detail?id=5964).
+TODO(jojwang): Currently, notifications still need to be set up. See
+[b/138311682](https://b.corp.google.com/issues/138311682)
 
 ### Notifications
 
@@ -141,11 +141,6 @@ monorail-eng+spinnaker@google.com when:
 1.  Any Monorail pipeline fails
 1.  `Deploy Staging` requires manual judgement at the "Continue?" stage.
 1.  `Deploy Production` requires manual judgement at the "Continue?" stage.
-
-### Cron Jobs and Task
-
-The pipelines currently do not update cron jobs or task queues. See
-[crbug/monorail/5965](https://bugs.chromium.org/p/monorail/issues/detail?id=5965).
 
 ## Deploying a new version to an existing instance using Spinnaker
 
@@ -176,7 +171,7 @@ If any step below fails. Stop the deploy and ping
 1.  Update Dev and Staging Schema
     1.  Check for changes since last deploy: `tail -30
         schema/alter-table-log.txt`
-    1.  Also copy and paste updates to the
+    1.  Copy and paste updates to the
         [master DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-dev)
         in the `monorail-dev` project. Please be careful when pasting into SQL
         prompt.
@@ -191,17 +186,11 @@ If any step below fails. Stop the deploy and ping
         Execution". "BUILD_ID" should be empty. "ENV" should be set to "dev".
 1.  Confirm monorail-dev was successfully deployed (Pipeline: `Deploy Dev (in
     use)`, Stage: "Continue?")
-    1.  If there are
-        [any new tasks or cron jobs](https://chromium-review.googlesource.com/q/status:merged+%28file:cron.yaml+OR+file:queue.yaml%29+file:monorail),
-        run `gcloud app deploy queue.yaml cron.yaml --project monorail-dev`
-        1. Note: you should ideally be synced to the same CL as the release.
     1.  Find the new version using the [appengine version console](https://pantheon.corp.google.com/appengine/versions?organizationId=433637338589&project=monorail-dev).
     1.  Visit popular/essential pages and confirm they are all accessible.
     1.  If everything looks good, choose "Continue" for this stage.
     1.  If there is an issue, choose "Rollback" for this stage.
 1.  Test on Staging (Pipeline: `Deploy Staging`, Stage: "Continue?")
-    1.  If there are any new tasks or cron jobs, run
-        `gcloud app deploy queue.yaml cron.yaml --project monorail-staging`
     1.  For each commit since last deploy, verify affected functionality still
         works.
         1.  Test using a non-admin account, unless you're verifying
@@ -215,8 +204,6 @@ If any step below fails. Stop the deploy and ping
     1.  If there is an issue, choose "Rollback" for this stage.
 1.  Update Prod Schema
     1.  Repeat the same schema changes on the prod database.
-    1.  If there are any new tasks or cron jobs, run `gcloud app deploy
-        queue.yaml cron.yaml --project monorail-prod`
 1.  Test on Prod (Pipeline: `Deploy Production`, Stage: "Continue?")
     1.  For each commit since last deploy, verify affected functionality still
         works. Test using a non-admin account, unless you're verifying
