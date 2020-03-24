@@ -1,0 +1,18 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet;
+
+// Required by protoc-gen-go
+option go_package = ".;fleet";
+
+import "network_id.proto";
+
+message Vlan {
+    VlanID id = 1;
+    string vlan_address = 2;
+    int32 capacity = 3;
+}

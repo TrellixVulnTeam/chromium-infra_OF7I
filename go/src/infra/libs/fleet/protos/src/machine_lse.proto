@@ -13,6 +13,7 @@ import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
 import "chrome_config.proto";
 import "lse_id.proto";
 import "lse_prototype.proto";
+import "network_id.proto";
 
 message MachineLSE {
     LabSetupEnvID id = 1;
@@ -45,5 +46,18 @@ message VMID {
 
 message ChromeOSMachineLSE {
     string hostname = 1;
-    lab.DeviceUnderTest config = 2;
+
+    oneof chromeos_lse {
+        ChromeOSDeviceLSE dut = 2;
+        ChromeOSServerLSE server = 3;
+    }
+}
+
+message ChromeOSDeviceLSE {
+    lab.DeviceUnderTest config = 1;
+}
+
+message ChromeOSServerLSE {
+    // The vlan that this server is going to serve
+    VlanID served_network = 1;
 }
