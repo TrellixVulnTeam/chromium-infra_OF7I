@@ -19,6 +19,7 @@ import re
 import logging
 
 from framework import exceptions
+from framework import validate
 from project import project_constants
 
 # Constants that hold regex patterns for resource names.
@@ -37,7 +38,7 @@ ISSUE_PATTERN = (r'projects\/(?P<project>%s)\/issues\/(?P<local_id>\d+)' %
                  project_constants.PROJECT_NAME_PATTERN)
 ISSUE_NAME_RE = re.compile(r'%s$' % ISSUE_PATTERN)
 
-USER_NAME_RE = re.compile(r'users\/(?P<user_id>\d+)$')
+USER_NAME_RE = re.compile(r'users\/((?P<user_id>\d+)|(?P<potential_email>.+))$')
 
 # Constants that hold the template patterns for creating resource names.
 HOTLIST_NAME_TMPL = 'hotlists/{hotlist_id}'
@@ -231,13 +232,13 @@ def IngestIssueNames(cnxn, names, services):
 
 
 def ConvertIssueName(cnxn, issue_id, services):
-  # MonorailConnection, int, Service -> str
+  # MonorailConnection, int, Services -> str
   """Takes an Issue ID and returns the corresponding Issue resource name.
 
   Args:
     mc: MonorailConnection object.
     issue_id: The ID of the issue.
-    services: Service object.
+    services: Services object.
 
   Returns:
     The resource name of the Issue.
@@ -252,13 +253,13 @@ def ConvertIssueName(cnxn, issue_id, services):
 
 
 def ConvertIssueNames(cnxn, issue_ids, services):
-  # MonorailConnection, Collection[int], Service -> Mapping[int, str]
+  # MonorailConnection, Collection[int], Services -> Mapping[int, str]
   """Takes Issue IDs and returns the Issue resource names.
 
   Args:
     cnxn: MonorailConnection object.
     issue_ids: List of Issue IDs
-    services: Service object.
+    services: Services object.
 
   Returns:
     Dict of Issue IDs to Issue resource names for Issues that are found.
@@ -275,23 +276,41 @@ def ConvertIssueNames(cnxn, issue_ids, services):
 
 # Users
 
-def IngestUserNames(names):
-  # Sequence[str] -> Sequence[int]
+
+def IngestUserNames(cnxn, names, services, autocreate=False):
+  # MonorailConnection, Sequence[str], Services, Optional[Boolean] ->
+  #     Sequence[int]
   """Takes a User resource names and returns the User IDs.
 
   Args:
+    cnxn: MonorailConnection object.
     names: List of User resource names.
+    services: Service object.
+    autocreate: set to True if new Users should be created for
+        emails in resource names that do not belong to existing
+        Users.
 
   Returns:
     List of User IDs in the same order as names.
 
   Raises:
     InputException if an resource name does not have a valid format.
+    NoSuchUserException if autocreate is False and some users with given
+        emails were not found.
   """
   ids = []
   for name in names:
     match = _GetResourceNameMatch(name, USER_NAME_RE)
-    ids.append(int(match.group('user_id')))
+    user_id = match.group('user_id')
+    if user_id:
+      ids.append(int(user_id))
+    elif validate.IsValidEmail(match.group('potential_email')):
+      ids.append(
+          services.user.LookupUserID(
+              cnxn, match.group('potential_email'), autocreate=autocreate))
+    else:
+      raise exceptions.InputException(
+          'Invalid email format found in User resource name: %s' % name)
 
   return ids
 

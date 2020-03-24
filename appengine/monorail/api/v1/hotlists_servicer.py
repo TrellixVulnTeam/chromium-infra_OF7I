@@ -135,7 +135,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     """
 
     hotlist_id = rnc.IngestHotlistName(request.name)
-    remove_user_ids = rnc.IngestUserNames(request.editors)
+    remove_user_ids = rnc.IngestUserNames(mc, request.editors, self.services)
 
     with work_env.WorkEnv(mc, self.services) as we:
       we.RemoveHotlistEditors(hotlist_id, remove_user_ids)

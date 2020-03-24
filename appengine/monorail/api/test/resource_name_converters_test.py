@@ -201,9 +201,44 @@ class ResourceNameConverterTest(unittest.TestCase):
 
   def testIngestUserNames(self):
     """We can get User IDs from User resource names."""
-    names = ['users/111', 'users/222']
-    expected_ids = [111, 222]
-    self.assertEqual(rnc.IngestUserNames(names), expected_ids)
+    names = ['users/111', 'users/222', 'users/%s' % self.user_3.email]
+    expected_ids = [111, 222, 333]
+    self.assertEqual(
+        rnc.IngestUserNames(self.cnxn, names, self.services), expected_ids)
+
+  def testIngestUserNames_NoSuchUser(self):
+    """When autocreate=False, we raise an exception if a user is not found."""
+    names = [
+        'users/111', 'users/chicken@test.com',
+        'users/%s' % self.user_3.email
+    ]
+    with self.assertRaises(exceptions.NoSuchUserException):
+      rnc.IngestUserNames(self.cnxn, names, self.services)
+
+  def testIngestUserNames_InvalidEmail(self):
+    """We raise an exception if a given resource name's email is invalid."""
+    names = [
+        'users/111', 'users/chickentest.com',
+        'users/%s' % self.user_3.email
+    ]
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestUserNames(self.cnxn, names, self.services)
+
+  def testIngestUserNames_Autocreate(self):
+    """When autocreate=True we create new Users if they don't already exist."""
+    new_email = 'user_444@example.com'
+    names = [
+        'users/111',
+        'users/%s' % new_email,
+        'users/%s' % self.user_3.email
+    ]
+    ids = rnc.IngestUserNames(self.cnxn, names, self.services, autocreate=True)
+
+    new_id = self.services.user.LookupUserID(
+        self.cnxn, new_email, autocreate=False)
+    expected_ids = [111, new_id, 333]
+    self.assertEqual(expected_ids, ids)
+
 
   def testConvertUserNames(self):
     """We can get User resource names."""
