@@ -1,0 +1,11 @@
+package: infra/tools/gaedeploy/${platform}
+description: Helper for deploying GAE applications from tarballs
+platforms:
+  - linux-amd64
+  - mac-amd64
+go_packages:
+  - infra/cmd/gaedeploy
+root: ../../go/bin
+data:
+  - file: gaedeploy${exe_suffix}
+  - version_file: .versions/gaedeploy${exe_suffix}.cipd_version
