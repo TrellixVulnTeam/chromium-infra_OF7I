@@ -12,19 +12,24 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"github.com/maruel/subcommands"
+	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"infra/cmd/stable_version2/internal/cmd"
 	"infra/cmd/stable_version2/internal/site"
+	svlib "infra/libs/cros/stableversion"
+	filter "infra/libs/cros/stableversion/filter"
 	"infra/libs/cros/stableversion/git"
+	vc "infra/libs/cros/stableversion/validateconfig"
 )
 
 // Cmd is the top-level runnable for the dump subcommand of stable_version2
 var Cmd = &subcommands.Command{
-	UsageLine: `dump`,
+	UsageLine: `dump -model [MODEL]`,
 	ShortDesc: "show remote stable_versions.cfg file",
 	LongDesc:  `Show remote stable_versions.cfg file.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &command{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
+		c.Flags.StringVar(&c.model, "model", "", "restrict output to stable version records associated with `model`")
 		return c
 	},
 }
@@ -32,6 +37,8 @@ var Cmd = &subcommands.Command{
 type command struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
+
+	model string
 }
 
 func (c *command) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -48,12 +55,21 @@ func (c *command) innerRun(a subcommands.Application, args []string, env subcomm
 
 	var contents []byte
 	contents, err := fetchStableVersionFile(ctx, &c.authFlags)
-
 	if err != nil {
 		return fmt.Errorf("getting remote file contents: %s", err)
 	}
 
-	fmt.Fprintf(a.GetOut(), "%s\n", string(contents))
+	sv, err := filterByModel(contents, c.model)
+	if err != nil {
+		return fmt.Errorf("filtering out model (%s): %s", c.model, err)
+	}
+
+	jsonStr, err := svlib.WriteSVToString(sv)
+	if err != nil {
+		return fmt.Errorf("converting to JSON: %s", err)
+	}
+
+	fmt.Fprintf(a.GetOut(), "%s\n", jsonStr)
 	return nil
 }
 
@@ -71,4 +87,14 @@ func fetchStableVersionFile(ctx context.Context, f *authcli.Flags) ([]byte, erro
 		return nil, fmt.Errorf("getting file: %s", err.Error())
 	}
 	return []byte(res), nil
+}
+
+// filterByModel produces a parsed stableversion file with the entries restricted to those
+// from the specified model. If the model is "", then all entries are returned.
+func filterByModel(contents []byte, model string) (*labPlatform.StableVersions, error) {
+	parsed, err := vc.ParseStableVersions(contents)
+	if err != nil {
+		return nil, err
+	}
+	return filter.WithModel(parsed, model), nil
 }
