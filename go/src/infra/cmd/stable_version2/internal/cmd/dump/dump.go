@@ -11,14 +11,15 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 
-	"github.com/maruel/subcommands"
-	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"infra/cmd/stable_version2/internal/cmd"
 	"infra/cmd/stable_version2/internal/site"
+	"infra/libs/cros/git"
 	svlib "infra/libs/cros/stableversion"
 	filter "infra/libs/cros/stableversion/filter"
-	"infra/libs/cros/stableversion/git"
 	vc "infra/libs/cros/stableversion/validateconfig"
+
+	"github.com/maruel/subcommands"
+	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 )
 
 // Cmd is the top-level runnable for the dump subcommand of stable_version2

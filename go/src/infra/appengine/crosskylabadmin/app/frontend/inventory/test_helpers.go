@@ -36,7 +36,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
-	"infra/libs/cros/stableversion/git"
+	"infra/libs/cros/git"
 	"infra/libs/skylab/inventory"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"

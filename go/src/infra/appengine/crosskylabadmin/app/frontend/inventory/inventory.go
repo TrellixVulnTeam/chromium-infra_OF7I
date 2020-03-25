@@ -52,9 +52,9 @@ import (
 	dataSV "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/appengine/drone-queen/api"
+	"infra/libs/cros/git"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
 	sv "infra/libs/cros/stableversion"
-	"infra/libs/cros/stableversion/git"
 	"infra/libs/skylab/inventory"
 )
 

@@ -19,13 +19,14 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
-	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"infra/cmd/stable_version2/internal/cmd"
 	gslib "infra/cmd/stable_version2/internal/gs"
 	"infra/cmd/stable_version2/internal/site"
 	"infra/cmd/stable_version2/internal/utils"
+	gitlib "infra/libs/cros/git"
 	svlib "infra/libs/cros/stableversion"
-	gitlib "infra/libs/cros/stableversion/git"
+
+	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 )
 
 var veyronPattern = regexp.MustCompile(`\Aveyron.*\z`)

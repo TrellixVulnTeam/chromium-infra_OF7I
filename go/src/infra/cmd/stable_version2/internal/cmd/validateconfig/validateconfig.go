@@ -14,13 +14,14 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 
-	"github.com/maruel/subcommands"
 	"infra/cmd/stable_version2/internal/cmd"
 	"infra/cmd/stable_version2/internal/cmd/validateconfig/internal/querygs"
 	"infra/cmd/stable_version2/internal/site"
 	"infra/cmd/stable_version2/internal/utils"
-	gitlib "infra/libs/cros/stableversion/git"
+	gitlib "infra/libs/cros/git"
 	vc "infra/libs/cros/stableversion/validateconfig"
+
+	"github.com/maruel/subcommands"
 )
 
 // Cmd is the top-level runnable for the validate-config subcommand of stable_version2
