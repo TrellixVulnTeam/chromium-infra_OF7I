@@ -90,7 +90,6 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		os.RemoveAll(workspace)
 	}()
 
-	merr := errors.NewMultiError()
 	resps := make(map[string]*steps.EnumerationResponse)
 	for t, r := range taggedRequests {
 		m := r.GetMetadata().GetTestMetadataUrl()
@@ -115,7 +114,9 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 			return utils.AnnotateEach(errs, "compute metadata for %s", t)
 		}
 		dl.LogTestMetadata(ctx, t, tm)
-		merr = append(merr, utils.AnnotateEach(errs, "compute metadata for %s", t)...)
+		if errs.First() != nil {
+			dl.LogWarnings(ctx, utils.AnnotateEach(errs, "compute metadata for %s", t))
+		}
 
 		// TODO(pprabhu) Simplify error handling so we don't have to reset
 		// errors variable.
@@ -137,10 +138,6 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 			resps[t].ErrorSummary = errs.Error()
 			dl.LogErrors(ctx, utils.AnnotateEach(errs, "enumerate %s", t))
 		}
-	}
-
-	if merr.First() != nil {
-		dl.LogWarnings(ctx, merr)
 	}
 	dl.LogResponses(ctx, resps)
 
