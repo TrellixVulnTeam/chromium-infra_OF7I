@@ -1,3 +1,23 @@
+# Release Notes sheriff-o-matic 2020-03-25
+
+- 4 commits, 2 bugs affected since 6aeff43 ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [Remove ci-beta and ci-stable from branch release](https://chromium-review.googlesource.com/c/infra/infra/+/2117811) (nqmtuan@google.com)
+- [Add bucket info to release branch](https://chromium-review.googlesource.com/c/infra/infra/+/2114811) (nqmtuan@google.com)
+- [[SoM] Modify bigquery for branch bucket](https://chromium-review.googlesource.com/c/infra/infra/+/2114810) (nqmtuan@google.com)
+- [Relnotes 13 March](https://chromium-review.googlesource.com/c/infra/infra/+/2101768) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1062828](https://crbug.com/1062828)
+  -  [https://crbug.com/1062867](https://crbug.com/1062867)
+
+
 # Release Notes sheriff-o-matic 2020-03-13
 
 - 2 commits, 1 bugs affected since bbfd0ca ()
