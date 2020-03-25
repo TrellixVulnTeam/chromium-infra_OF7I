@@ -2,6 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// This proto definition describes the lab setup environment (LSE) for machine
+// in UFS.
+// See go/ufs-design for details of LSE.
+
 syntax = "proto3";
 
 package fleet;
@@ -19,6 +23,8 @@ import "machine_id.proto";
 
 message MachineLSE {
     LabSetupEnvID id = 1;
+    // The prototype that this machine LSE should follow. System will use this
+    // prototype to detect if the LSE is completed or valid.
     MachineLSEPrototypeID prototype_id = 2;
 
     oneof lse {
@@ -26,6 +32,7 @@ message MachineLSE {
         ChromeOSMachineLSE chromeos_machine_lse = 4;
     }
 
+    // The machines that this LSE is linked to. No machine is linked if it's NULL.
     repeated MachineID machines = 5;
 }
 

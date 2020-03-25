@@ -22,16 +22,19 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type MachineLSE struct {
-	Id          *LabSetupEnvID         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id *LabSetupEnvID `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The prototype that this machine LSE should follow. System will use this
+	// prototype to detect if the LSE is completed or valid.
 	PrototypeId *MachineLSEPrototypeID `protobuf:"bytes,2,opt,name=prototype_id,json=prototypeId,proto3" json:"prototype_id,omitempty"`
 	// Types that are valid to be assigned to Lse:
 	//	*MachineLSE_ChromeMachineLse
 	//	*MachineLSE_ChromeosMachineLse
-	Lse                  isMachineLSE_Lse `protobuf_oneof:"lse"`
-	Machines             []*MachineID     `protobuf:"bytes,5,rep,name=machines,proto3" json:"machines,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+	Lse isMachineLSE_Lse `protobuf_oneof:"lse"`
+	// The machines that this LSE is linked to. No machine is linked if it's NULL.
+	Machines             []*MachineID `protobuf:"bytes,5,rep,name=machines,proto3" json:"machines,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *MachineLSE) Reset()         { *m = MachineLSE{} }

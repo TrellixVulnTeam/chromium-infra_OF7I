@@ -21,16 +21,19 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type RackLSE struct {
-	Id          *LabSetupEnvID      `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id *LabSetupEnvID `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The prototype that this rack LSE should follow. System will use this
+	// prototype to detect if the LSE is completed or valid.
 	PrototypeId *RackLSEPrototypeID `protobuf:"bytes,2,opt,name=prototype_id,json=prototypeId,proto3" json:"prototype_id,omitempty"`
 	// Types that are valid to be assigned to Lse:
 	//	*RackLSE_ChromeRackLse
 	//	*RackLSE_ChromeosRackLse
-	Lse                  isRackLSE_Lse `protobuf_oneof:"lse"`
-	Racks                []*RackID     `protobuf:"bytes,5,rep,name=racks,proto3" json:"racks,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+	Lse isRackLSE_Lse `protobuf_oneof:"lse"`
+	// The racks that this LSE is linked to. No rack is linked if it's NULL.
+	Racks                []*RackID `protobuf:"bytes,5,rep,name=racks,proto3" json:"racks,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
 }
 
 func (m *RackLSE) Reset()         { *m = RackLSE{} }
