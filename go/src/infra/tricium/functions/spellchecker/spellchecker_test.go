@@ -195,6 +195,17 @@ func TestSpellCheckerAnalyzeFiles(t *testing.T) {
 		So(results.Comments, ShouldBeEmpty)
 	})
 
+	Convey("Words in the ignore list are ignored.", t, func() {
+		// thru is in the ignore list, crbug.com/1055620.
+		fileContent := ("A line abbout thru and through;\n" +
+			"And names like Donn Sargent and Wen Chang and Tim Bae.\n" +
+			"These names should be ignored because they're in the list.")
+		results := &tricium.Data_Results{}
+		analyzeFile(bufio.NewScanner(strings.NewReader(fileContent)), "test.txt", true, cp[".txt"], results)
+		So(len(results.Comments), ShouldEqual, 1)
+		So(results.Comments[0].Message, ShouldEqual, `"abbout" is a possible misspelling of "about".`)
+	})
+
 	Convey("Analyzing a .c file with several comments.", t, func() {
 		fileContent := "// The misspelling iminent is mapped to three possible fixes.\n" +
 			"This is not in a comment so aberation shouldn't be flagged.\n" +
