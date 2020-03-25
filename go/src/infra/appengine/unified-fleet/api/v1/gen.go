@@ -7,3 +7,4 @@ package api
 
 //go:generate cproto
 //go:generate svcdec -type FleetServer
+//go:generate svcdec -type ConfigurationServer

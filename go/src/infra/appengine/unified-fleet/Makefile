@@ -7,6 +7,11 @@ PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 APP_PATH := $(PROJECT_PATH)
 GCP_PROJECT_DEV = unified-fleet-system-dev
 
+# Generate bindings
+.PHONY: gen
+gen:
+	go generate ./...
+
 # Build and run service locally
 .PHONY: dev
 dev:

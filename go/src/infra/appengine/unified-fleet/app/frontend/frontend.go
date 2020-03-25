@@ -20,6 +20,10 @@ func InstallServices(apiServer *prpc.Server) {
 		Service: &FleetServerImpl{},
 		Prelude: checkAccess,
 	})
+	api.RegisterConfigurationServer(apiServer, &api.DecoratedConfiguration{
+		Service: &ConfigurationServerImpl{},
+		Prelude: checkAccess,
+	})
 }
 
 // checkAccess verifies that the request is from an authorized user.
