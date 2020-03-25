@@ -125,14 +125,14 @@ func dumpOtherConfigsCronHandler(c *router.Context) error {
 		return err
 	}
 
-	uploader := bqlib.InitBQUploaderWithClient(ctx, client, "inventory", fmt.Sprintf("deviceconfig%s", curTimeStr))
+	uploader := bqlib.InitBQUploaderWithClient(ctx, client, "inventory", fmt.Sprintf("deviceconfig$%s", curTimeStr))
 	msgs := bqlib.GetDeviceConfigProtos(ctx)
 	logging.Debugf(ctx, "Dumping %d records of device configs to bigquery", len(msgs))
 	if err := uploader.Put(ctx, msgs...); err != nil {
 		return err
 	}
 
-	uploader = bqlib.InitBQUploaderWithClient(ctx, client, "inventory", fmt.Sprintf("manufacturing%s", curTimeStr))
+	uploader = bqlib.InitBQUploaderWithClient(ctx, client, "inventory", fmt.Sprintf("manufacturing$%s", curTimeStr))
 	msgs = bqlib.GetManufacturingConfigProtos(ctx)
 	logging.Debugf(ctx, "Dumping %d records of manufacturing configs to bigquery", len(msgs))
 	if err := uploader.Put(ctx, msgs...); err != nil {
@@ -215,12 +215,12 @@ func dumpInventorySnapshot(c *router.Context) error {
 	}
 
 	logging.Debugf(ctx, "uploading to bigquery dataset (%s) table (lab)", dataset)
-	uploader := bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("lab%s", curTimeStr))
+	uploader := bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("lab$%s", curTimeStr))
 	if err := uploader.Put(ctx, labconfigs...); err != nil {
 		return fmt.Errorf("labconfig put: %s", err)
 	}
 	logging.Debugf(ctx, "uploading to bigquery dataset (%s) table (stateconfig)", dataset)
-	uploader = bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("stateconfig%s", curTimeStr))
+	uploader = bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("stateconfig$%s", curTimeStr))
 	if err := uploader.Put(ctx, stateconfigs...); err != nil {
 		return fmt.Errorf("stateconfig put: %s", err)
 	}
