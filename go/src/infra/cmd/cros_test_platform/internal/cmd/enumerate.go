@@ -90,7 +90,6 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		os.RemoveAll(workspace)
 	}()
 
-	tms := make(map[string]*api.TestMetadataResponse)
 	merr := errors.NewMultiError()
 	resps := make(map[string]*steps.EnumerationResponse)
 	for t, r := range taggedRequests {
@@ -115,13 +114,13 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 			// Catastrophic error. There is no reasonable response to write.
 			return utils.AnnotateEach(errs, "compute metadata for %s", t)
 		}
-		tms[t] = tm
+		dl.LogTestMetadata(ctx, t, tm)
 		merr = append(merr, utils.AnnotateEach(errs, "compute metadata for %s", t)...)
 
 		// TODO(pprabhu) Simplify error handling so we don't have to reset
 		// errors variable.
 		errs = errors.MultiError{}
-		ts, err := c.enumerate(tms[t], r)
+		ts, err := c.enumerate(tm, r)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -140,7 +139,6 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		}
 	}
 
-	dl.LogTestMetadata(ctx, tms)
 	if merr.First() != nil {
 		dl.LogWarnings(ctx, merr)
 	}
@@ -299,7 +297,7 @@ func (l *debugLogger) LogRequests(ctx context.Context, reqs map[string]*steps.En
 	}
 }
 
-func (l *debugLogger) LogTestMetadata(ctx context.Context, tms map[string]*api.TestMetadataResponse) {
+func (l *debugLogger) LogTestMetadata(ctx context.Context, tag string, tm *api.TestMetadataResponse) {
 	if !l.enabled {
 		return
 	}
@@ -307,14 +305,7 @@ func (l *debugLogger) LogTestMetadata(ctx context.Context, tms map[string]*api.T
 	defer l.m.Unlock()
 
 	defer l.debugBlock(ctx, "metadata")()
-	ts := stringset.New(len(tms))
-	for t := range tms {
-		ts.Add(t)
-		logging.Infof(ctx, "Test Metadata[%s]: %s", t, pretty.Sprint(tms[t]))
-	}
-	if ms := l.requestTags.Difference(ts); len(ms) > 0 {
-		logging.Warningf(ctx, "No metadata for requests %s", ms)
-	}
+	logging.Infof(ctx, "Test Metadata[%s]: %s", tag, pretty.Sprint(tm))
 }
 
 func (l *debugLogger) LogResponses(ctx context.Context, resps map[string]*steps.EnumerationResponse) {
