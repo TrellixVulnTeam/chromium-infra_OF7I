@@ -100,10 +100,6 @@ class SomDrawer extends Polymer.Element {
         type: Boolean,
         notify: true,
       },
-      linkStyle: {
-        type: String,
-        notify: true,
-      },
     };
   }
 

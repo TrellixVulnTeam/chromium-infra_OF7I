@@ -1,9 +1,7 @@
 'use strict';
 
 class SomAlertItem extends Polymer.mixinBehaviors(
-  [LinkifyBehavior, AlertTypeBehavior, TimeBehavior, BugManagerBehavior],
-  Polymer.Element) {
-
+    [AlertTypeBehavior, TimeBehavior, BugManagerBehavior], Polymer.Element) {
   static get is() {
     return 'som-alert-item';
   }

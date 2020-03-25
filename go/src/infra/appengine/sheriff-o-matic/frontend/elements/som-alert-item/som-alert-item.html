@@ -8,7 +8,6 @@
 
 <link rel="import" href="../../elements/som-extension-build-failure/som-extension-build-failure.html">
 <link rel="import" href="../../elements/som-alert-type-behavior.html">
-<link rel="import" href="../../elements/som-linkify-behavior.html">
 <link rel="import" href="../../elements/som-time-behavior.html">
 <link rel="import" href="../../elements/som-bug-manager-behavior.html">
 
@@ -329,18 +328,18 @@
           <div id="usefulLinks" hidden$="[[!_haveLinks(selectedAlert, alert)]]">
             Useful Links:
             <template is="dom-repeat" items="[[_getImportantLinks(selectedAlert, alert)]]" as="link">
-              <a class="alert-link" target="_blank" href$="[[_linkify(linkStyle, link.href)]]">[[link.title]]</a>
+              <a class="alert-link" target="_blank" href$="[[link.href]]">[[link.title]]</a>
             </template>
             <template is="dom-if" if="[[_haveOtherLinks(selectedAlert, alert)]]">
               <div id="allLinks">
                 All links:
                 <template is="dom-repeat" items="[[_getLinks(selectedAlert, alert)]]" as="link">
-                  <a class="alert-link" target="_blank" href$="[[_linkify(linkStyle, link.href)]]">[[link.title]]</a>
+                  <a class="alert-link" target="_blank" href$="[[link.href]]">[[link.title]]</a>
                 </template>
               </div>
             </template>
           </div>
-          <som-extension-build-failure tree="[[treeName]]" type="[[alert.type]]" extension="[[_getExtension(selectedAlert, alert)]]" link-style="[[linkStyle]]"></som-extension-build-failure>
+          <som-extension-build-failure tree="[[treeName]]" type="[[alert.type]]" extension="[[_getExtension(selectedAlert, alert)]]""></som-extension-build-failure>
         </div>
       </iron-collapse>
     </div>

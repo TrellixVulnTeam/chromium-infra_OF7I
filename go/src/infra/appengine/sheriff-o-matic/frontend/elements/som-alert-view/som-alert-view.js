@@ -142,7 +142,6 @@ class SomAlertView extends Polymer.mixinBehaviors(
         type: Boolean,
         value: false,
       },
-      linkStyle: String,
       _filterPattern: {
         type: String,
       },

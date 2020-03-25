@@ -16,15 +16,7 @@ class SomSettings extends Polymer.Element {
         type: String,
         notify: true,
       },
-      linkStyle: {
-        type: String,
-        notify: true,
-      },
     };
-  }
-
-  _initializeLinkStyle(evt) {
-    evt.target.value = 'milo';
   }
 }
 

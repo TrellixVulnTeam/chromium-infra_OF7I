@@ -1,8 +1,6 @@
 'use strict';
 
-class SomExamine extends Polymer.mixinBehaviors([LinkifyBehavior],
-    Polymer.Element) {
-
+class SomExamine extends Polymer.LegacyElementMixin(Polymer.Element) {
   static get is() {
     return 'som-examine';
   }

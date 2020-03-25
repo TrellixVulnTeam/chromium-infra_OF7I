@@ -19,9 +19,6 @@
       json: { 'Content-Type': 'application/json' },
   };
 
-  var chromiumUrl = 'https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Win7';
-  var uberUrl = 'https://uberchromegw.corp.google.com/i/chromium.webkit/builders/WebKit%20Win7';
-
   setup(function() {
     element = fixture('basic');
     clock = sinon.useFakeTimers();
@@ -178,9 +175,12 @@
     });
 
     test('render useful links', function(done) {
+      const chromiumUrl1 = 'https://ci.chromium.org/p/chromium/builders/ci/Linux%20TSan%20Tests';
+      const chromiumUrl2 = 'https://ci.chromium.org/p/chromium/builders/ci/linux-trusty-rel';
+
       element.alert = {links: [
-        {title: 'one', href: chromiumUrl},
-        {title: 'two', href: uberUrl}
+        {title: 'one', href: chromiumUrl1},
+        {title: 'two', href: chromiumUrl2}
       ]};
 
       assert.isTrue(element._haveLinks(null, element.alert));
@@ -189,26 +189,9 @@
         let links = element.$.usefulLinks.querySelectorAll(".alert-link");
         assert.equal(2, links.length);
         assert.equal('one', links[0].innerHTML);
-        done();
-      });
-    });
-
-    test('uberify useful links', function(done) {
-      element.alert = {links: [{title: '', href: chromiumUrl}]};
-      element.linkStyle = 'uber';
-      flush(function() {
-        assert.equal(uberUrl,
-          element.$.usefulLinks.querySelector(".alert-link").href);
-        done();
-      });
-    });
-
-    test('do not uberify useful links when uberify disabled', function(done) {
-      element.alert = {links: [{title: '', href: chromiumUrl}]};
-      element.linkStyle = 'buildbot';
-      flush(function() {
-        assert.equal(chromiumUrl,
-           element.$.usefulLinks.querySelector(".alert-link").href);
+        assert.equal(chromiumUrl1, links[0].href);
+        assert.equal('two', links[1].innerHTML);
+        assert.equal(chromiumUrl2, links[1].href);
         done();
       });
     });

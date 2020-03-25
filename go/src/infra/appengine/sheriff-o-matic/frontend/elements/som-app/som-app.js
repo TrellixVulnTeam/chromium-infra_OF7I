@@ -105,7 +105,6 @@ class SomApp extends Polymer.mixinBehaviors([TimeBehavior], Polymer.Element) {
       },
       user: String,
       collapseByDefault: Boolean,
-      linkStyle: String,
     };
   }
 

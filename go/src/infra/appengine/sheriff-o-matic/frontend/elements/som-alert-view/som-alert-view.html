@@ -146,7 +146,6 @@
                 collapse-by-default="[[collapseByDefault]]"
                 is-infra-failures-section="[[_isInfraFailuresSection(cat)]]"
                 is-resolved-section="[[_isResolvedSection(cat)]]"
-                link-style="[[linkStyle]]"
                 on-annotation-change="_handleAnnotation"
                 on-comment="_handleComment"
                 on-link-bug="_handleLinkBug"
@@ -173,7 +172,6 @@
             tree-name="[[tree.name]]"
             annotation="[[computeAnnotation(annotations, _examinedAlert)]]"
             collapse-by-default="[[collapseByDefault]]"
-            link-style="[[linkStyle]]"
             on-annotation-change="_handleAnnotation"
             on-comment="_handleComment"
             on-link-bug="_handleLinkBug"
@@ -183,7 +181,7 @@
             on-ungroup="_handleUngroup"
             examining
         ></som-alert-item>
-        <som-examine alert="[[_examinedAlert]]" link-style="[[linkStyle]]"></som-examine>
+        <som-examine alert="[[_examinedAlert]]"></som-examine>
       </div>
     </iron-pages>
   </template>
