@@ -7,7 +7,7 @@ import {defaultMemoize} from 'reselect';
 
 import {relativeTime}
   from 'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
-import {issueRefToName} from 'shared/converters.js';
+import {issueRefToName, userV3ToRef} from 'shared/converters.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 import {store, connectStore} from 'reducers/base.js';
@@ -17,6 +17,8 @@ import * as sitewide from 'reducers/sitewide.js';
 
 import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
 import 'elements/framework/dialogs/mr-change-columns/mr-change-columns.js';
+// eslint-disable-next-line max-len
+import 'elements/framework/dialogs/mr-update-issue-hotlists/mr-update-issue-hotlists.js';
 import 'elements/framework/mr-button-bar/mr-button-bar.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
@@ -72,6 +74,13 @@ export class _MrHotlistIssuesPage extends LitElement {
         (issue) => issue.projectName === items[0].projectName);
     const projectName = allProjectNamesEqual ? items[0].projectName : null;
 
+    /** @type {Hotlist} */
+    // Used to populate <mr-update-issue-hotlists>' issueHotlists property.
+    const hotlistV0 = {
+      ownerRef: userV3ToRef(this._hotlist.owner),
+      name: this._hotlist.displayName,
+    };
+
     return html`
       <p>${this._hotlist.summary}</p>
 
@@ -98,6 +107,10 @@ export class _MrHotlistIssuesPage extends LitElement {
       ></mr-issue-list>
 
       <mr-change-columns .columns=${this._columns}></mr-change-columns>
+      <mr-update-issue-hotlists
+        .issueRefs=${this._selected}
+        .issueHotlists=${[hotlistV0]}
+      ></mr-update-issue-hotlists>
     `;
   }
 
@@ -108,8 +121,11 @@ export class _MrHotlistIssuesPage extends LitElement {
     if (this._selected.length) {
       return [
         {icon: 'remove', text: 'Remove', handler: this._removeItems.bind(this)},
-        // TODO(dtu): Implement this action.
-        // {icon: 'forward', text: 'Add to another hotlist'},
+        {
+          icon: 'forward',
+          text: 'Add to another hotlist',
+          handler: this._openAddToAnotherHotlistDialog.bind(this),
+        },
       ];
     } else {
       return [
@@ -198,6 +214,11 @@ export class _MrHotlistIssuesPage extends LitElement {
   /** Opens a dialog to change the columns shown in the issue list. */
   _openColumnsDialog() {
     this.shadowRoot.querySelector('mr-change-columns').open();
+  }
+
+  /** Opens a dialog to change the columns shown in the issue list. */
+  _openAddToAnotherHotlistDialog() {
+    this.shadowRoot.querySelector('mr-update-issue-hotlists').open();
   }
 
   /** Removes items from the hotlist, dispatching an action to Redux. */

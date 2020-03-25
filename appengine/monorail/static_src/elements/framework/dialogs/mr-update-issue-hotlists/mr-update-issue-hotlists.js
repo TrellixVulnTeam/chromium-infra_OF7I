@@ -232,7 +232,8 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   _issueInHotlist(hotlist, issueHotlists) {
     return issueHotlists.some((issueHotlist) => {
-      return (hotlist.ownerRef.userId === issueHotlist.ownerRef.userId &&
+      // TODO(dtu): Use `===` when we can guarantee userId is always a number.
+      return (hotlist.ownerRef.userId == issueHotlist.ownerRef.userId &&
         hotlist.name === issueHotlist.name);
     });
   }

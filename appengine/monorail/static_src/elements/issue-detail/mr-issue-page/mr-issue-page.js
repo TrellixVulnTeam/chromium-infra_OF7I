@@ -20,11 +20,12 @@ import * as sitewide from 'reducers/sitewide.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {ISSUE_DELETE_PERMISSION} from 'shared/permissions.js';
 
+// eslint-disable-next-line max-len
+import 'elements/framework/dialogs/mr-update-issue-hotlists/mr-update-issue-hotlists.js';
 import '../dialogs/mr-edit-description/mr-edit-description.js';
 import '../dialogs/mr-move-copy-issue/mr-move-copy-issue.js';
 import '../dialogs/mr-convert-issue/mr-convert-issue.js';
 import '../dialogs/mr-related-issues/mr-related-issues.js';
-import '../dialogs/mr-update-issue-hotlists/mr-update-issue-hotlists.js';
 import '../../help/mr-click-throughs/mr-click-throughs.js';
 import {prpcClient} from 'prpc-client-instance.js';
 

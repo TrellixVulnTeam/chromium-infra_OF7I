@@ -128,6 +128,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     const buttonBar = element.shadowRoot.querySelector('mr-button-bar');
     assert.include(buttonBar.shadowRoot.innerHTML, 'Change columns');
     assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Remove');
+    assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Add to another hotlist');
     assert.deepEqual(element._selected, []);
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
@@ -136,10 +137,11 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 
     assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Change columns');
     assert.include(buttonBar.shadowRoot.innerHTML, 'Remove');
+    assert.include(buttonBar.shadowRoot.innerHTML, 'Add to another hotlist');
     assert.deepEqual(element._selected, [exampleIssue.NAME]);
   });
 
-  it('opens change columns dialog', async () => {
+  it('opens "Change columns" dialog', async () => {
     element._hotlist = example.HOTLIST;
     await element.updateComplete;
 
@@ -147,6 +149,21 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     sinon.stub(dialog, 'open');
     try {
       element._openColumnsDialog();
+
+      sinon.assert.calledOnce(dialog.open);
+    } finally {
+      dialog.open.restore();
+    }
+  });
+
+  it('opens "Add to another hotlist" dialog', async () => {
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    const dialog = element.shadowRoot.querySelector('mr-update-issue-hotlists');
+    sinon.stub(dialog, 'open');
+    try {
+      element._openAddToAnotherHotlistDialog();
 
       sinon.assert.calledOnce(dialog.open);
     } finally {

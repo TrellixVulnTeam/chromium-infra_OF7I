@@ -20,11 +20,11 @@ import {
 } from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/framework/dialogs/mr-change-columns/mr-change-columns.js';
+// eslint-disable-next-line max-len
+import 'elements/framework/dialogs/mr-update-issue-hotlists/mr-update-issue-hotlists.js';
 import 'elements/framework/mr-button-bar/mr-button-bar.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
-// eslint-disable-next-line max-len
-import 'elements/issue-detail/dialogs/mr-update-issue-hotlists/mr-update-issue-hotlists.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 
 export const DEFAULT_ISSUES_PER_PAGE = 100;
