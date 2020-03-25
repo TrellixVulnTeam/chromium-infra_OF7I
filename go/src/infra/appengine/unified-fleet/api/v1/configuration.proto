@@ -14,6 +14,8 @@ service Configuration {
 }
 
 message ImportChromePlatformsRequest {
+  // Support importing from local file.
+  string local_filepath = 1;
 }
 
 message ImportChromePlatformsResponse {
