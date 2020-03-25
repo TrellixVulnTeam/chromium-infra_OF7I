@@ -9,8 +9,7 @@ We also discuss development of Monorail at `infra-dev@chromium.org`.
 
 # Getting started with Monorail development
 
-Here's how to run Monorail locally for development on Debian stretch/buster.
-These instructions may work with other Debian derivatives:
+Here's how to run Monorail locally for development on MacOS and Debian stretch/buster or its derivatives.
 
 1.  You need to [get the Chrome Infra depot_tools commands](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up) to check out the source code and all its related dependencies and to be able to send changes for review.
 1.  Check out the Monorail source code
@@ -23,21 +22,45 @@ These instructions may work with other Debian derivatives:
 1.  Install MySQL v5.6.
     1. On a Debian derivative, use your package manager:
         1.  `sudo apt-get install default-mysql-server default-mysql-client`
-    1. On OS X, use Homebrew:
-        1.  `brew install mysql@5.6`
+    1. As of March 2020, MacOS MySQL setup will look something like this:
+        ```
+        1. Install docker
+        2. Run MySQL@5.6 in docker
+        3. Install MySQL locally (only needed for MySQL-python)
+        4. Set MySQL user passwords
+        5. Install MySQL-python
+        6. Initialize database with tables
+        7. Run the app locally
+        ```
+        1.  Install [docker for mac](https://docs.docker.com/docker-for-mac/install/).
+        1.  Start your docker container named mysql for MySQL v5.6.
+            1.  `docker run --name mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -p 3306:3306 -d mysql:5.6`
+        1. Use [homebrew](https://brew.sh/) to install MySQL v5.6 on your system for its configs to install MySQLdb later. We will be using the docker container's MySQL instance.
+            1.  `brew install mysql@5.6`
     1. Otherwise, download from the [official page](http://dev.mysql.com/downloads/mysql/5.6.html#downloads).
         1.  **Do not download v5.7 (as of April 2016)**
 1.  Get the database backend configured and running:
-    1.  Allow passwordless authentication from non-root users:
-        1.  `sudo mysql -uroot mysql -e "UPDATE user SET host='%', plugin='' WHERE user='root'; FLUSH PRIVILEGES;"`
-    1.  Disable `STRICT_TRANS_TABLES`
-        1.  `echo -e "[mysqld]\nsql_mode = ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" | sudo tee /etc/mysql/conf.d/99-sql-mode.cnf`
-    1.  `sudo /etc/init.d/mysql restart`
+    1. On Debian
+        1.  Allow passwordless authentication from non-root users:
+            1.  `sudo mysql -uroot mysql -e "UPDATE user SET host='%', plugin='' WHERE user='root'; FLUSH PRIVILEGES;"`
+        1.  Disable `STRICT_TRANS_TABLES`
+            1.  `echo -e "[mysqld]\nsql_mode = ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" | sudo tee /etc/mysql/conf.d/99-sql-mode.cnf`
+        1.  `sudo /etc/init.d/mysql restart`
+    1. On MacOS
+        1.  Enter the docker container and update its authentication.
+            1.  `docker exec -it mysql bash`
+            1.  `mysqladmin -u root -p'my-secret-pw' password ''`
+            1.  `mysql -uroot mysql -e "UPDATE user SET host='172.17.0.1', plugin='' WHERE user='root'; FLUSH PRIVILEGES; exit;"`
+                1.  We set the host to 172.17.0.1 to match the docker container. Your docker container may be at a different IP, you use `docker network inspect bridge` from another terminal to verify your container's IP.
+        1. Exit the docker container
+            1.  `exit`
 1.  Install Python MySQLdb.
     1.  On Debian, use apt-get:
         1. `sudo apt-get install python-mysqldb`
-    1.  On OS X, use pip:
+    1.  On MacOS, use pip
         1. `export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
+        1.  Check if you have pip, if you don't, install it first
+            1.  `sudo easy_install pip`
         1. `pip install MYSQL-python`
     1.  Otherwise, download from http://sourceforge.net/projects/mysql-python/
         1.  Follow instructions to install.
@@ -50,18 +73,33 @@ These instructions may work with other Debian derivatives:
   /usr/local/mysql/lib/libmysqlclient.18.dylib \
   /Library/Python/2.7/site-packages/_mysql.so`
 1.  Set up one master SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
-    1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
-    1.  `mysql --user=root monorail < schema/framework.sql`
-    1.  `mysql --user=root monorail < schema/project.sql`
-    1.  `mysql --user=root monorail < schema/tracker.sql`
+    1. On Debian
+        1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
+        1.  `mysql --user=root monorail < schema/framework.sql`
+        1.  `mysql --user=root monorail < schema/project.sql`
+        1.  `mysql --user=root monorail < schema/tracker.sql`
+    1. On MacOS
+        1. Install your schema into the docker container
+            1.  `docker cp schema/. mysql:/schema`
+            1.  `docker exec -it mysql bash`
+            1.  `mysql --user=root monorail < schema/framework.sql`
+            1.  `mysql --user=root monorail < schema/project.sql`
+            1.  `mysql --user=root monorail < schema/tracker.sql`
 1.  Configure the site defaults in settings.py.  You can leave it as-is for now.
 1.  Set up the front-end development environment:
-    1.  ``eval `../../go/env.py` `` -- you'll need to run this in any shell you
-        wish to use for developing Monorail. It will add some key directories to
-        your `$PATH`.
-    1.  `npm install`
-1.  Install build requirements:
-    1.  `sudo apt-get install build-essential automake`
+    1. On Debian
+        1.  ``eval `../../go/env.py` `` -- you'll need to run this in any shell you
+            wish to use for developing Monorail. It will add some key directories to
+            your `$PATH`.
+        1.  `npm install`
+        1.  Install build requirements:
+            1.  `sudo apt-get install build-essential automake`
+    1. On MacOS
+        1.  Install npm
+            1.  `brew install nvm`
+            1.   See the brew instructions on updating your shell's configuration
+            1.  `nvm install 12.13.0`
+            1.  `npm install`
 1.  Run the app:
     1.  `make serve`
 1.  Browse the app at localhost:8080 your browser.
@@ -136,6 +174,16 @@ dev_appserver wants to reload source files that you have changed in the editor, 
 *   `IntegrityError: (1364, "Field 'comment_id' doesn't have a default value")` happens when trying to file or update an issue
 
 In some versions of SQL, the `STRICT_TRANS_TABLES` option is set by default. You'll have to disable this option to stop this error.
+
+*   `ImportError: No module named six.moves`
+
+You may not have six.moves in your virtual environment and you may need to install it.
+
+1.  Determine that python and pip versions are possibly in vpython-root
+    1.  `which python`
+    1.  `which pip`
+1.  If your python and pip are in vpython-root
+    1.  ```sudo `which python` `which pip` install six```
 
 ## Supported browsers
 
