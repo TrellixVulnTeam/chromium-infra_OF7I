@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import time
 import unittest
 
+from framework import permissions
 from framework import template_helpers
 from proto import project_pb2
 from proto import tracker_pb2
@@ -586,6 +587,194 @@ class FieldHelpersTest(unittest.TestCase):
     custom_field_error = self.errors.custom_fields[0]
     self.assertEqual(123, custom_field_error.field_id)
     self.assertEqual('Value must be <= 999', custom_field_error.message)
+
+  def testAssertCustomFieldsEditPerms_Empty(self):
+    self.assertIsNone(
+        field_helpers.AssertCustomFieldsEditPerms(
+            self.mr, self.config, [], [], [], [], []))
+
+  def testAssertCustomFieldsEditPerms_Normal(self):
+    fd_int = tracker_bizobj.MakeFieldDef(
+        11111,
+        1,
+        'fdInt',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd_str = tracker_bizobj.MakeFieldDef(
+        22222,
+        1,
+        'fdStr',
+        tracker_pb2.FieldTypes.STR_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd_date = tracker_bizobj.MakeFieldDef(
+        33333,
+        1,
+        'fdDate',
+        tracker_pb2.FieldTypes.DATE_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd_enum1 = tracker_bizobj.MakeFieldDef(
+        44444,
+        1,
+        'fdEnum1',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd_enum2 = tracker_bizobj.MakeFieldDef(
+        55555,
+        1,
+        'fdEnum2',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    self.config.field_defs = [fd_int, fd_str, fd_date, fd_enum1, fd_enum2]
+    fv1 = tracker_bizobj.MakeFieldValue(
+        11111, 37, None, None, None, None, False)
+    fv2 = tracker_bizobj.MakeFieldValue(
+        22222, None, 'Chicken', None, None, None, False)
+    self.assertIsNone(
+        field_helpers.AssertCustomFieldsEditPerms(
+            self.mr, self.config, [fv1], [fv2], [33333], ['Dog', 'fdEnum1-a'],
+            ['Cat', 'fdEnum2-b']))
+
+  def testAssertCustomFieldsEditPerms_Reject(self):
+    self.mr.perms = permissions.PermissionSet([])
+    fd_int = tracker_bizobj.MakeFieldDef(
+        11111,
+        1,
+        'fdInt',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd_enum = tracker_bizobj.MakeFieldDef(
+        44444,
+        1,
+        'fdEnum',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    self.config.field_defs = [fd_int, fd_enum]
+    fv = tracker_bizobj.MakeFieldValue(11111, 37, None, None, None, None, False)
+
+    self.assertRaises(
+        AssertionError, field_helpers.AssertCustomFieldsEditPerms, self.mr,
+        self.config, [fv], [], [], [], [])
+
+    self.assertRaises(
+        AssertionError, field_helpers.AssertCustomFieldsEditPerms, self.mr,
+        self.config, [], [fv], [], [], [])
+
+    self.assertRaises(
+        AssertionError, field_helpers.AssertCustomFieldsEditPerms, self.mr,
+        self.config, [], [], [11111], [], [])
+
+    self.assertRaises(
+        AssertionError, field_helpers.AssertCustomFieldsEditPerms, self.mr,
+        self.config, [], [], [], ['Dog', 'fdEnum-a'], [])
+
+    self.assertRaises(
+        AssertionError, field_helpers.AssertCustomFieldsEditPerms, self.mr,
+        self.config, [], [], [], [], ['Cat', 'fdEnum-b'])
 
   def testFormatUrlFieldValue(self):
     self.assertEqual('http://www.google.com',

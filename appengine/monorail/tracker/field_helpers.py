@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import collections
+import itertools
 import logging
 import re
 
@@ -320,6 +321,40 @@ def ValidateCustomFields(mr, services, field_values, config, errors):
       err_msg = ValidateCustomFieldValue(mr, mr.project, services, fd, fv)
       if err_msg:
         errors.SetCustomFieldError(fv.field_id, err_msg)
+
+
+def AssertCustomFieldsEditPerms(
+    mr, config, field_vals, field_vals_remove, fields_clear, labels,
+    labels_remove):
+  """Check permissions for any kind of custom field edition attempt."""
+  # TODO: When clearing phase_fields is possible, include it in this method.
+  field_ids = set()
+
+  for fv in field_vals:
+    field_ids.add(fv.field_id)
+  for fvr in field_vals_remove:
+    field_ids.add(fvr.field_id)
+  for fd_id in fields_clear:
+    field_ids.add(fd_id)
+
+  enum_fds_by_name = {
+      fd.field_name.lower(): fd.field_id
+      for fd in config.field_defs
+      if fd.field_type is tracker_pb2.FieldTypes.ENUM_TYPE and not fd.is_deleted
+  }
+  for label in itertools.chain(labels, labels_remove):
+    enum_field_name = tracker_bizobj.LabelIsMaskedByField(
+        label, enum_fds_by_name.keys())
+    if enum_field_name:
+      field_ids.add(enum_fds_by_name.get(enum_field_name))
+
+  fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+  for field_id in field_ids:
+    fd = fds_by_id.get(field_id)
+    if fd:
+      assert permissions.CanEditValueForFieldDef(
+          mr.auth.effective_ids, mr.perms, mr.project,
+          fd), 'No permission to edit certain fields.'
 
 
 def FormatUrlFieldValue(url_str):
