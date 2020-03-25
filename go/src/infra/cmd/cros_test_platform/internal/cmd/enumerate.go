@@ -92,6 +92,7 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 
 	tms := make(map[string]*api.TestMetadataResponse)
 	merr := errors.NewMultiError()
+	resps := make(map[string]*steps.EnumerationResponse)
 	for t, r := range taggedRequests {
 		m := r.GetMetadata().GetTestMetadataUrl()
 		if m == "" {
@@ -116,15 +117,10 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		}
 		tms[t] = tm
 		merr = append(merr, utils.AnnotateEach(errs, "compute metadata for %s", t)...)
-	}
-	dl.LogTestMetadata(ctx, tms)
-	if merr.First() != nil {
-		dl.LogWarnings(ctx, merr)
-	}
 
-	resps := make(map[string]*steps.EnumerationResponse)
-	for t, r := range taggedRequests {
-		var errs errors.MultiError
+		// TODO(pprabhu) Simplify error handling so we don't have to reset
+		// errors variable.
+		errs = errors.MultiError{}
 		ts, err := c.enumerate(tms[t], r)
 		if err != nil {
 			errs = append(errs, err)
@@ -142,6 +138,11 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 			resps[t].ErrorSummary = errs.Error()
 			dl.LogErrors(ctx, utils.AnnotateEach(errs, "enumerate %s", t))
 		}
+	}
+
+	dl.LogTestMetadata(ctx, tms)
+	if merr.First() != nil {
+		dl.LogWarnings(ctx, merr)
 	}
 	dl.LogResponses(ctx, resps)
 
