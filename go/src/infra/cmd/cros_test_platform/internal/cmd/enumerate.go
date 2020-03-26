@@ -23,7 +23,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging"
@@ -71,8 +70,6 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		return err
 	}
 
-	dl := debugLogger{enabled: c.debug}
-
 	taggedRequests, err := c.readRequests()
 	if err != nil {
 		return err
@@ -80,7 +77,6 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 	if len(taggedRequests) == 0 {
 		return errors.Reason("zero requests").Err()
 	}
-	dl.LogRequests(ctx, taggedRequests)
 
 	workspace, err := ioutil.TempDir("", "enumerate")
 	if err != nil {
@@ -90,8 +86,10 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		os.RemoveAll(workspace)
 	}()
 
+	dl := debugLogger{enabled: c.debug}
 	resps := make(map[string]*steps.EnumerationResponse)
 	for t, r := range taggedRequests {
+		dl.LogRequest(ctx, t, r)
 		m := r.GetMetadata().GetTestMetadataUrl()
 		if m == "" {
 			return errors.Reason("empty request.metadata.test_metadata_url in %s", r).Err()
@@ -275,11 +273,9 @@ func computeMetadata(localPaths artifacts.LocalPaths, workspace string) (*api.Te
 type debugLogger struct {
 	enabled bool
 	m       sync.Mutex
-
-	requestTags stringset.Set
 }
 
-func (l *debugLogger) LogRequests(ctx context.Context, reqs map[string]*steps.EnumerationRequest) {
+func (l *debugLogger) LogRequest(ctx context.Context, tag string, req *steps.EnumerationRequest) {
 	if !l.enabled {
 		return
 	}
@@ -287,11 +283,7 @@ func (l *debugLogger) LogRequests(ctx context.Context, reqs map[string]*steps.En
 	defer l.m.Unlock()
 
 	defer l.debugBlock(ctx, "requests")()
-	l.requestTags = stringset.New(len(reqs))
-	for t := range reqs {
-		l.requestTags.Add(t)
-		logging.Infof(ctx, "Request[%s]: %s", t, pretty.Sprint(reqs[t]))
-	}
+	logging.Infof(ctx, "Request[%s]: %s", tag, pretty.Sprint(req))
 }
 
 func (l *debugLogger) LogTestMetadata(ctx context.Context, tag string, tm *api.TestMetadataResponse) {
