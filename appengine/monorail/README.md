@@ -20,8 +20,9 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
     1.  It should be fetched for you by step 1 above (during runhooks)
     1.  Otherwise, you can download it from https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python
 1.  Install MySQL v5.6.
-    1. On a Debian derivative, use your package manager:
-        1.  `sudo apt-get install default-mysql-server default-mysql-client`
+    1. On a Debian derivative, download and unpack [this bundle](https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar):
+        1.  `tar -xf mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar`
+    1. Install the packages in the order of `mysql-common`,`mysql-community-client`, `mysql-client`, then `mysql-community-server`.
     1. As of March 2020, MacOS MySQL setup will look something like this:
         ```
         1. Install docker
