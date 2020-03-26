@@ -628,7 +628,8 @@ def _StartBackendSearch(
     rpc = _StartBackendSearchCall(
         query_project_names, shard_key,
         services.cache_manager.processed_invalidations_up_to,
-        me_user_ids, logged_in_user_id, new_url_num, url_params)
+        me_user_ids, logged_in_user_id, new_url_num, url_params,
+        sort_spec=sort_spec, group_by_spec=group_by_spec)
     rpc_tuple = (time.time(), shard_key, rpc)
     rpc.callback = _MakeBackendCallback(
         _HandleBackendSearchResponse, query_project_names, rpc_tuple,
@@ -636,7 +637,7 @@ def _StartBackendSearch(
         search_limit_reached_dict,
         services.cache_manager.processed_invalidations_up_to,
         error_responses, me_user_ids, logged_in_user_id, new_url_num,
-        url_params)
+        url_params, sort_spec, group_by_spec)
     rpc_tuples.append(rpc_tuple)
 
   return rpc_tuples
@@ -896,10 +897,16 @@ def _MakeBackendRequestHeaders(failfast):
 def _StartBackendSearchCall(
     query_project_names, shard_key, invalidation_timestep,
     me_user_ids, logged_in_user_id, new_url_num, url_params,
-    deadline=None, failfast=True):
+    sort_spec=None, group_by_spec=None, deadline=None, failfast=True):
   """Ask a backend to query one shard of the database."""
   shard_id, subquery = shard_key
   backend_host = modules.get_hostname(module='besearch')
+  # We use `sort` and `groupby` in the URL param because in besearch's
+  # MonorailRequest populates sort_spec and group_by_spec from these params.
+  # We also insert them in front of url_params to give priority to sort and
+  # groupby if specified in url_params already.
+  url_params.insert(0, ('sort', sort_spec))
+  url_params.insert(0, ('groupby', group_by_spec))
   url = 'http://%s%s' % (backend_host, framework_helpers.FormatURL(
       url_params, urls.BACKEND_SEARCH,
       projects=','.join(query_project_names),
@@ -938,7 +945,8 @@ def _StartBackendNonviewableCall(
 def _HandleBackendSearchResponse(
     query_project_names, rpc_tuple, rpc_tuples, remaining_retries,
     unfiltered_iids, search_limit_reached, invalidation_timestep,
-    error_responses, me_user_ids, logged_in_user_id, new_url_num, url_params):
+    error_responses, me_user_ids, logged_in_user_id, new_url_num, url_params,
+    sort_spec, group_by_spec):
   """Process one backend response and retry if there was an error."""
   start_time, shard_key, rpc = rpc_tuple
   duration_sec = time.time() - start_time
@@ -980,13 +988,15 @@ def _HandleBackendSearchResponse(
     retry_rpc = _StartBackendSearchCall(
         query_project_names, shard_key, invalidation_timestep,
         me_user_ids, logged_in_user_id, new_url_num, url_params,
+        sort_spec=sort_spec, group_by_spec=group_by_spec,
         failfast=remaining_retries > 2)
     retry_rpc_tuple = (time.time(), shard_key, retry_rpc)
     retry_rpc.callback = _MakeBackendCallback(
         _HandleBackendSearchResponse, query_project_names,
         retry_rpc_tuple, rpc_tuples, remaining_retries - 1, unfiltered_iids,
         search_limit_reached, invalidation_timestep, error_responses,
-        me_user_ids, logged_in_user_id, new_url_num, url_params)
+        me_user_ids, logged_in_user_id, new_url_num, url_params,
+        sort_spec, group_by_spec)
     rpc_tuples.append(retry_rpc_tuple)
 
 

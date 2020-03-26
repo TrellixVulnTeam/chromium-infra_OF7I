@@ -800,6 +800,37 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
         me_user_ids, logged_in_user_id, new_url_num, url_params)
     self.mox.VerifyAll()
 
+  def testStartBackendSearchCall_SortAndGroup(self):
+    self.mox.StubOutWithMock(urlfetch, 'create_rpc')
+    self.mox.StubOutWithMock(urlfetch, 'make_fetch_call')
+    self.mox.StubOutWithMock(modules, 'get_hostname')
+    a_fake_rpc = testing_helpers.Blank(callback=None)
+    urlfetch.create_rpc(deadline=settings.backend_deadline).AndReturn(
+      a_fake_rpc)
+    modules.get_hostname(module='besearch')
+    urlfetch.make_fetch_call(
+      a_fake_rpc, mox.StrContains(
+          urls.BACKEND_SEARCH + '?groupby=bar&sort=foo&'
+          +'invalidation_timestep=12345&'
+          +'logged_in_user_id=777&me_user_ids=555&'
+          +'num=201&projects=proj&q=priority%3Dhigh&shard_id=2&start=0'),
+          follow_redirects=False,
+      headers=mox.IsA(dict))
+    self.mox.ReplayAll()
+
+    processed_invalidations_up_to = 12345
+    me_user_ids = [555]
+    logged_in_user_id = 777
+    new_url_num = 201
+    url_params = [('num', '300')]
+    sort_spec = 'foo'
+    group_by_spec = 'bar'
+    frontendsearchpipeline._StartBackendSearchCall(
+        ['proj'], (2, 'priority=high'), processed_invalidations_up_to,
+        me_user_ids, logged_in_user_id, new_url_num, url_params,
+        sort_spec=sort_spec, group_by_spec=group_by_spec)
+    self.mox.VerifyAll()
+
   def testStartBackendNonviewableCall(self):
     self.mox.StubOutWithMock(urlfetch, 'create_rpc')
     self.mox.StubOutWithMock(urlfetch, 'make_fetch_call')
@@ -839,7 +870,7 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     frontendsearchpipeline._HandleBackendSearchResponse(
         ['proj'], rpc_tuple, rpc_tuples, 0, filtered_iids,
         search_limit_reached, processed_invalidations_up_to, error_responses,
-        me_user_ids, logged_in_user_id, new_url_num, url_params)
+        me_user_ids, logged_in_user_id, new_url_num, url_params, None, None)
     self.assertEqual([], rpc_tuples)
     self.assertIn(2, error_responses)
 
@@ -869,7 +900,7 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     frontendsearchpipeline._HandleBackendSearchResponse(
       ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids,
       search_limit_reached, processed_invalidations_up_to, error_responses,
-      me_user_ids, logged_in_user_id, new_url_num, url_params)
+      me_user_ids, logged_in_user_id, new_url_num, url_params, None, None)
     self.assertEqual([], rpc_tuples)
     self.assertEqual({2: []}, filtered_iids)
     self.assertEqual({2: False}, search_limit_reached)
@@ -900,7 +931,7 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     frontendsearchpipeline._HandleBackendSearchResponse(
       ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids,
       search_limit_reached, processed_invalidations_up_to, error_responses,
-      me_user_ids, logged_in_user_id, new_url_num, url_params)
+      me_user_ids, logged_in_user_id, new_url_num, url_params, None, None)
     self.assertEqual([], rpc_tuples)
     self.assertEqual({2: [10002, 10042]}, filtered_iids)
     self.assertEqual({2: False}, search_limit_reached)
@@ -925,14 +956,15 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     a_fake_rpc = testing_helpers.Blank(callback=None)
     rpc = frontendsearchpipeline._StartBackendSearchCall(
         ['proj'], 2, processed_invalidations_up_to,
-        me_user_ids, logged_in_user_id, new_url_num, url_params, failfast=False
+        me_user_ids, logged_in_user_id, new_url_num, url_params,
+        group_by_spec=None, sort_spec=None, failfast=False
       ).AndReturn(a_fake_rpc)
     self.mox.ReplayAll()
 
     frontendsearchpipeline._HandleBackendSearchResponse(
         ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids,
         search_limit_reached, processed_invalidations_up_to, error_responses,
-        me_user_ids, logged_in_user_id, new_url_num, url_params)
+        me_user_ids, logged_in_user_id, new_url_num, url_params, None, None)
     self.mox.VerifyAll()
     _, retry_shard_id, retry_rpc = rpc_tuples[0]
     self.assertEqual(2, retry_shard_id)
