@@ -25,7 +25,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='luci.resultdb.rpc.v1',
   syntax='proto3',
   serialized_options=_b('Z0go.chromium.org/luci/resultdb/proto/rpc/v1;rpcpb'),
-  serialized_pb=_b('\n9go.chromium.org/luci/resultdb/proto/rpc/v1/recorder.proto\x12\x14luci.resultdb.rpc.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a;go.chromium.org/luci/resultdb/proto/rpc/v1/invocation.proto\x1a<go.chromium.org/luci/resultdb/proto/rpc/v1/test_result.proto\"\x7f\n\x17\x43reateInvocationRequest\x12\x1a\n\rinvocation_id\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x34\n\ninvocation\x18\x02 \x01(\x0b\x32 .luci.resultdb.rpc.v1.Invocation\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"t\n\x1d\x42\x61tchCreateInvocationsRequest\x12?\n\x08requests\x18\x01 \x03(\x0b\x32-.luci.resultdb.rpc.v1.CreateInvocationRequest\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"\x85\x01\n\x17UpdateInvocationRequest\x12\x39\n\ninvocation\x18\x01 \x01(\x0b\x32 .luci.resultdb.rpc.v1.InvocationB\x03\xe0\x41\x02\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\"C\n\x19\x46inalizeInvocationRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x13\n\x0binterrupted\x18\x02 \x01(\x08\"z\n UpdateIncludedInvocationsRequest\x12!\n\x14including_invocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x17\n\x0f\x61\x64\x64_invocations\x18\x02 \x03(\t\x12\x1a\n\x12remove_invocations\x18\x03 \x03(\t\"\x82\x01\n\x17\x43reateTestResultRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12:\n\x0btest_result\x18\x02 \x01(\x0b\x32 .luci.resultdb.rpc.v1.TestResultB\x03\xe0\x41\x02\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"\x8d\x01\n\x1d\x42\x61tchCreateTestResultsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12?\n\x08requests\x18\x02 \x03(\x0b\x32-.luci.resultdb.rpc.v1.CreateTestResultRequest\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"X\n\x1e\x42\x61tchCreateTestResultsResponse\x12\x36\n\x0ctest_results\x18\x01 \x03(\x0b\x32 .luci.resultdb.rpc.v1.TestResult\"\x91\x01\n\x1c\x43reateTestExonerationRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x44\n\x10test_exoneration\x18\x02 \x01(\x0b\x32%.luci.resultdb.rpc.v1.TestExonerationB\x03\xe0\x41\x02\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"\x97\x01\n\"BatchCreateTestExonerationsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x44\n\x08requests\x18\x02 \x03(\x0b\x32\x32.luci.resultdb.rpc.v1.CreateTestExonerationRequest\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"g\n#BatchCreateTestExonerationsResponse\x12@\n\x11test_exonerations\x18\x01 \x03(\x0b\x32%.luci.resultdb.rpc.v1.TestExoneration\"W\n\x1e\x42\x61tchCreateInvocationsResponse\x12\x35\n\x0binvocations\x18\x01 \x03(\x0b\x32 .luci.resultdb.rpc.v1.Invocation\"\xa9\x01\n\x17\x44\x65riveInvocationRequest\x12V\n\rswarming_task\x18\x01 \x01(\x0b\x32:.luci.resultdb.rpc.v1.DeriveInvocationRequest.SwarmingTaskB\x03\xe0\x41\x02\x1a\x36\n\x0cSwarmingTask\x12\x15\n\x08hostname\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x0f\n\x02id\x18\x02 \x01(\tB\x03\xe0\x41\x02*\x84\x01\n\'DeriveInvocationPreconditionFailureType\x12;\n7DERIVE_INVOCATION_PRECONDITION_FAILURE_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n\x18INCOMPLETE_SWARMING_TASK\x10\x01\x32\x9d\t\n\x08Recorder\x12\x65\n\x10\x43reateInvocation\x12-.luci.resultdb.rpc.v1.CreateInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x12\x85\x01\n\x16\x42\x61tchCreateInvocations\x12\x33.luci.resultdb.rpc.v1.BatchCreateInvocationsRequest\x1a\x34.luci.resultdb.rpc.v1.BatchCreateInvocationsResponse\"\x00\x12\x65\n\x10UpdateInvocation\x12-.luci.resultdb.rpc.v1.UpdateInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x12i\n\x12\x46inalizeInvocation\x12/.luci.resultdb.rpc.v1.FinalizeInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x12m\n\x19UpdateIncludedInvocations\x12\x36.luci.resultdb.rpc.v1.UpdateIncludedInvocationsRequest\x1a\x16.google.protobuf.Empty\"\x00\x12\x65\n\x10\x43reateTestResult\x12-.luci.resultdb.rpc.v1.CreateTestResultRequest\x1a .luci.resultdb.rpc.v1.TestResult\"\x00\x12\x85\x01\n\x16\x42\x61tchCreateTestResults\x12\x33.luci.resultdb.rpc.v1.BatchCreateTestResultsRequest\x1a\x34.luci.resultdb.rpc.v1.BatchCreateTestResultsResponse\"\x00\x12t\n\x15\x43reateTestExoneration\x12\x32.luci.resultdb.rpc.v1.CreateTestExonerationRequest\x1a%.luci.resultdb.rpc.v1.TestExoneration\"\x00\x12\x94\x01\n\x1b\x42\x61tchCreateTestExonerations\x12\x38.luci.resultdb.rpc.v1.BatchCreateTestExonerationsRequest\x1a\x39.luci.resultdb.rpc.v1.BatchCreateTestExonerationsResponse\"\x00\x12\x65\n\x10\x44\x65riveInvocation\x12-.luci.resultdb.rpc.v1.DeriveInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x42\x32Z0go.chromium.org/luci/resultdb/proto/rpc/v1;rpcpbb\x06proto3')
+  serialized_pb=_b('\n9go.chromium.org/luci/resultdb/proto/rpc/v1/recorder.proto\x12\x14luci.resultdb.rpc.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a;go.chromium.org/luci/resultdb/proto/rpc/v1/invocation.proto\x1a<go.chromium.org/luci/resultdb/proto/rpc/v1/test_result.proto\"\x7f\n\x17\x43reateInvocationRequest\x12\x1a\n\rinvocation_id\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x34\n\ninvocation\x18\x02 \x01(\x0b\x32 .luci.resultdb.rpc.v1.Invocation\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"t\n\x1d\x42\x61tchCreateInvocationsRequest\x12?\n\x08requests\x18\x01 \x03(\x0b\x32-.luci.resultdb.rpc.v1.CreateInvocationRequest\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"\x85\x01\n\x17UpdateInvocationRequest\x12\x39\n\ninvocation\x18\x01 \x01(\x0b\x32 .luci.resultdb.rpc.v1.InvocationB\x03\xe0\x41\x02\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\"C\n\x19\x46inalizeInvocationRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x13\n\x0binterrupted\x18\x02 \x01(\x08\"z\n UpdateIncludedInvocationsRequest\x12!\n\x14including_invocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x17\n\x0f\x61\x64\x64_invocations\x18\x02 \x03(\t\x12\x1a\n\x12remove_invocations\x18\x03 \x03(\t\"\x82\x01\n\x17\x43reateTestResultRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12:\n\x0btest_result\x18\x02 \x01(\x0b\x32 .luci.resultdb.rpc.v1.TestResultB\x03\xe0\x41\x02\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"\x8d\x01\n\x1d\x42\x61tchCreateTestResultsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12?\n\x08requests\x18\x02 \x03(\x0b\x32-.luci.resultdb.rpc.v1.CreateTestResultRequest\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"X\n\x1e\x42\x61tchCreateTestResultsResponse\x12\x36\n\x0ctest_results\x18\x01 \x03(\x0b\x32 .luci.resultdb.rpc.v1.TestResult\"\x91\x01\n\x1c\x43reateTestExonerationRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x44\n\x10test_exoneration\x18\x02 \x01(\x0b\x32%.luci.resultdb.rpc.v1.TestExonerationB\x03\xe0\x41\x02\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"\x97\x01\n\"BatchCreateTestExonerationsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x44\n\x08requests\x18\x02 \x03(\x0b\x32\x32.luci.resultdb.rpc.v1.CreateTestExonerationRequest\x12\x12\n\nrequest_id\x18\x03 \x01(\t\"g\n#BatchCreateTestExonerationsResponse\x12@\n\x11test_exonerations\x18\x01 \x03(\x0b\x32%.luci.resultdb.rpc.v1.TestExoneration\"n\n\x1e\x42\x61tchCreateInvocationsResponse\x12\x35\n\x0binvocations\x18\x01 \x03(\x0b\x32 .luci.resultdb.rpc.v1.Invocation\x12\x15\n\rupdate_tokens\x18\x02 \x03(\t\"\xa9\x01\n\x17\x44\x65riveInvocationRequest\x12V\n\rswarming_task\x18\x01 \x01(\x0b\x32:.luci.resultdb.rpc.v1.DeriveInvocationRequest.SwarmingTaskB\x03\xe0\x41\x02\x1a\x36\n\x0cSwarmingTask\x12\x15\n\x08hostname\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x0f\n\x02id\x18\x02 \x01(\tB\x03\xe0\x41\x02*\x84\x01\n\'DeriveInvocationPreconditionFailureType\x12;\n7DERIVE_INVOCATION_PRECONDITION_FAILURE_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n\x18INCOMPLETE_SWARMING_TASK\x10\x01\x32\x9d\t\n\x08Recorder\x12\x65\n\x10\x43reateInvocation\x12-.luci.resultdb.rpc.v1.CreateInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x12\x85\x01\n\x16\x42\x61tchCreateInvocations\x12\x33.luci.resultdb.rpc.v1.BatchCreateInvocationsRequest\x1a\x34.luci.resultdb.rpc.v1.BatchCreateInvocationsResponse\"\x00\x12\x65\n\x10UpdateInvocation\x12-.luci.resultdb.rpc.v1.UpdateInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x12i\n\x12\x46inalizeInvocation\x12/.luci.resultdb.rpc.v1.FinalizeInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x12m\n\x19UpdateIncludedInvocations\x12\x36.luci.resultdb.rpc.v1.UpdateIncludedInvocationsRequest\x1a\x16.google.protobuf.Empty\"\x00\x12\x65\n\x10\x43reateTestResult\x12-.luci.resultdb.rpc.v1.CreateTestResultRequest\x1a .luci.resultdb.rpc.v1.TestResult\"\x00\x12\x85\x01\n\x16\x42\x61tchCreateTestResults\x12\x33.luci.resultdb.rpc.v1.BatchCreateTestResultsRequest\x1a\x34.luci.resultdb.rpc.v1.BatchCreateTestResultsResponse\"\x00\x12t\n\x15\x43reateTestExoneration\x12\x32.luci.resultdb.rpc.v1.CreateTestExonerationRequest\x1a%.luci.resultdb.rpc.v1.TestExoneration\"\x00\x12\x94\x01\n\x1b\x42\x61tchCreateTestExonerations\x12\x38.luci.resultdb.rpc.v1.BatchCreateTestExonerationsRequest\x1a\x39.luci.resultdb.rpc.v1.BatchCreateTestExonerationsResponse\"\x00\x12\x65\n\x10\x44\x65riveInvocation\x12-.luci.resultdb.rpc.v1.DeriveInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x42\x32Z0go.chromium.org/luci/resultdb/proto/rpc/v1;rpcpbb\x06proto3')
   ,
   dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_rpc_dot_v1_dot_invocation__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_rpc_dot_v1_dot_test__result__pb2.DESCRIPTOR,])
 
@@ -46,8 +46,8 @@ _DERIVEINVOCATIONPRECONDITIONFAILURETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1914,
-  serialized_end=2046,
+  serialized_start=1937,
+  serialized_end=2069,
 )
 _sym_db.RegisterEnumDescriptor(_DERIVEINVOCATIONPRECONDITIONFAILURETYPE)
 
@@ -517,6 +517,13 @@ _BATCHCREATEINVOCATIONSRESPONSE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='update_tokens', full_name='luci.resultdb.rpc.v1.BatchCreateInvocationsResponse.update_tokens', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -530,7 +537,7 @@ _BATCHCREATEINVOCATIONSRESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1652,
-  serialized_end=1739,
+  serialized_end=1762,
 )
 
 
@@ -567,8 +574,8 @@ _DERIVEINVOCATIONREQUEST_SWARMINGTASK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1857,
-  serialized_end=1911,
+  serialized_start=1880,
+  serialized_end=1934,
 )
 
 _DERIVEINVOCATIONREQUEST = _descriptor.Descriptor(
@@ -597,8 +604,8 @@ _DERIVEINVOCATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1742,
-  serialized_end=1911,
+  serialized_start=1765,
+  serialized_end=1934,
 )
 
 _CREATEINVOCATIONREQUEST.fields_by_name['invocation'].message_type = go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_rpc_dot_v1_dot_invocation__pb2._INVOCATION
@@ -751,8 +758,8 @@ _RECORDER = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=2049,
-  serialized_end=3230,
+  serialized_start=2072,
+  serialized_end=3253,
   methods=[
   _descriptor.MethodDescriptor(
     name='CreateInvocation',
