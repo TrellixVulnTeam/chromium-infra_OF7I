@@ -2085,65 +2085,7 @@ class WorkEnv(object):
         default_col_spec=default_col_spec, owner_id=owner_id,
         add_editor_ids=add_editor_ids)
 
-  # TODO(crbug/monorail/7104): delete UpdateHotlistSettings and
-  # UpdateHotlistRoles
-  def UpdateHotlistSettings(
-      self, hotlist_id, name=None, summary=None,
-      description=None, is_private=None, default_col_spec=None):
-    # type: (int, str, str, str, bool, str) -> None
-    """Update the given hotlist's settings.
-
-    If a new value is None, the value in the hotlist does not get
-    changed to None, it just does not get updated.
-
-    Args:
-      hotlist_id: int hotlist_id of the hotlist to update.
-      name: str proposed new name for the hotlist.
-      summary: str new summary for the hotlist.
-      description: str new description for the hotlist.
-      is_private: bool true if hotlist should be updated to private.
-      default_col_spec: str new default columns for hotlist list view.
-
-    Raises:
-      InputException: The given hotlist_id is None or proposed new name is not
-        a valid hotlist name.
-      NoSuchHotlistException: There is no hotlist with the given ID.
-      PermissionException: The logged-in user is not allowed to update
-        this hotlist's settings.
-      HotlistAlreadyExists: The hotlist owner already owns a hotlist
-        with the proposed new name.
-    """
-    hotlist = self.GetHotlist(hotlist_id, use_cache=False)
-    update_permitted = permissions.CanAdministerHotlist(
-        self.mc.auth.effective_ids, self.mc.perms, hotlist)
-    if not update_permitted:
-      raise permissions.PermissionException(
-          'User is not allowed to update hotlist settings.')
-
-    if name is not None:
-      if hotlist.name == name:
-        name = None
-      else:
-        name = name.strip()
-        if not framework_bizobj.IsValidHotlistName(name):
-          raise exceptions.InputException(
-              '"%s" is not a valid hotlist name' % name)
-        if self.services.features.LookupHotlistIDs(
-            self.mc.cnxn, [name], hotlist.owner_ids):
-          raise features_svc.HotlistAlreadyExists(
-              'Hotlist already owns a hotlist with name %s' % name)
-
-    if ([name, summary, description, is_private, default_col_spec] ==
-        [None, None, None, None, None]):
-      logging.info('No updates given')
-      return
-
-    # TODO(jojwang): monorail:6564, should check description and summary are
-    # not empty strings before calling UpdateHotlist.
-    self.services.features.UpdateHotlist(
-        self.mc.cnxn, hotlist_id, name=name, summary=summary,
-        description=description, is_private=is_private,
-        default_col_spec=default_col_spec)
+  # TODO(crbug/monorail/7104): delete UpdateHotlistRoles.
 
   def GetHotlist(self, hotlist_id, use_cache=True):
     # int, Optional[bool] -> Hotlist

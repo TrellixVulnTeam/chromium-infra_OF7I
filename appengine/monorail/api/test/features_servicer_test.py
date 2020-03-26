@@ -1045,54 +1045,6 @@ class FeaturesServicerTest(unittest.TestCase):
     self.assertEqual(hotlist.editor_ids, [])
     self.assertEqual(hotlist.follower_ids, [self.user4.user_id])
 
-  def testUpdateHotlistSettings(self):
-    """Hotlist settings can be correctly updated with a FieldMask."""
-    name = 'Hotlist-1'
-    description = 'description'
-    summary = 'summary'
-    is_private = True
-    hotlist = self.services.features.TestAddHotlist(
-        name=name, summary=summary, description=description,
-        owner_ids=[self.user2.user_id], editor_ids=[], hotlist_id=1235,
-        is_private=is_private)
-
-    new_name = 'newName'
-    new_description = 'new description'
-    request = features_pb2.UpdateHotlistSettingsRequest(
-        hotlist_ref=common_pb2.HotlistRef(
-            name=hotlist.name,
-            owner=common_pb2.UserRef(user_id=self.user2.user_id)),
-        name=wrappers_pb2.StringValue(value=new_name),
-        description=wrappers_pb2.StringValue(value=new_description))
-
-    mc = monorailcontext.MonorailContext(
-        self.services, cnxn=self.cnxn, requester=self.user2.email)
-    mc.LookupLoggedInUserPerms(None)
-    self.CallWrapped(self.features_svcr.UpdateHotlistSettings, mc, request)
-
-    self.assertEqual(hotlist.description, new_description)
-    self.assertEqual(hotlist.name, new_name)
-    self.assertEqual(hotlist.summary, summary)
-
-  @mock.patch('businesslogic.work_env.WorkEnv.UpdateHotlistSettings')
-  def testUpdateHotlistSettings_NoChanges(self, mockUpdateHotlistSettings):
-    """All hotlist settings will be updated when no FieldMask is specified."""
-    hotlist = self.services.features.TestAddHotlist(
-        name='name', summary='summary', description='description',
-        owner_ids=[self.user2.user_id], editor_ids=[], hotlist_id=1235,
-        is_private=True)
-
-    request = features_pb2.UpdateHotlistSettingsRequest(
-        hotlist_ref=common_pb2.HotlistRef(
-            name=hotlist.name,
-            owner=common_pb2.UserRef(user_id=self.user2.user_id)))
-
-    mc = monorailcontext.MonorailContext(
-        self.services, cnxn=self.cnxn, requester=self.user2.email)
-    mc.LookupLoggedInUserPerms(None)
-    self.CallWrapped(self.features_svcr.UpdateHotlistSettings, mc, request)
-    mockUpdateHotlistSettings.assert_not_called()
-
   def testDeleteHotlist(self):
     """Test we can delete a hotlist via the API."""
     owner_ids = [self.user2.user_id]
