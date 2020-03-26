@@ -618,6 +618,27 @@ class IssueEntryTest(unittest.TestCase):
             'no_action',
             'RestrictedField',
             False,
+            is_restricted_field=True),
+        tracker_bizobj.MakeFieldDef(
+            3,
+            789,
+            'RestrictedEnumField',
+            tracker_pb2.FieldTypes.ENUM_TYPE,
+            None,
+            '',
+            False,
+            False,
+            False,
+            None,
+            None,
+            '',
+            False,
+            '',
+            '',
+            tracker_pb2.NotifyTriggers.NEVER,
+            'no_action',
+            'RestrictedEnumField',
+            False,
             is_restricted_field=True)
     ]
     self.services.config.StoreConfig(mr.cnxn, config)
@@ -627,6 +648,7 @@ class IssueEntryTest(unittest.TestCase):
         comment=['fake comment'],
         custom_1=['3'],
         custom_2=['7'],
+        label=['RestrictedEnumField-7'],
         status=['New'])
 
     self.mox.ReplayAll()
@@ -635,6 +657,9 @@ class IssueEntryTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertTrue('/p/proj/issues/detail?id=' in url)
     field_values = self.services.issue.issues_by_project[987][1].field_values
+    self.assertEqual(
+        self.services.issue.issues_by_project[987][1].labels,
+        ['RestrictedEnumField-7'])
     self.assertEqual(field_values[0].int_value, 3)
     self.assertEqual(field_values[1].int_value, 7)
 
@@ -675,19 +700,49 @@ class IssueEntryTest(unittest.TestCase):
             'no_action',
             'RestrictedField',
             False,
+            is_restricted_field=True),
+        tracker_bizobj.MakeFieldDef(
+            3,
+            789,
+            'RestrictedEnumField',
+            tracker_pb2.FieldTypes.ENUM_TYPE,
+            None,
+            '',
+            False,
+            False,
+            False,
+            None,
+            None,
+            '',
+            False,
+            '',
+            '',
+            tracker_pb2.NotifyTriggers.NEVER,
+            'no_action',
+            'RestrictedEnumField',
+            False,
             is_restricted_field=True)
     ]
     self.services.config.StoreConfig(mr.cnxn, config)
-    post_data = fake.PostData(
+    post_data_add_fv = fake.PostData(
         template_name=['rutabaga'],
         summary=['fake summary'],
         comment=['fake comment'],
         custom_1=['3'],
         custom_2=['7'],
         status=['New'])
+    post_data_label_edits_enum = fake.PostData(
+        template_name=['rutabaga'],
+        summary=['fake summary'],
+        comment=['fake comment'],
+        label=['RestrictedEnumField-7'],
+        status=['New'])
 
     self.assertRaises(
-        AssertionError, self.servlet.ProcessFormData, mr, post_data)
+        AssertionError, self.servlet.ProcessFormData, mr, post_data_add_fv)
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, mr,
+        post_data_label_edits_enum)
 
   def testProcessFormData_RejectPlacedholderSummary(self):
     mr = testing_helpers.MakeMonorailRequest(

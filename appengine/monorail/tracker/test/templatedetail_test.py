@@ -115,6 +115,27 @@ class TemplateDetailTest(unittest.TestCase):
         'RestrictedField',
         False,
         is_restricted_field=True)
+    self.fd_8 = tracker_bizobj.MakeFieldDef(
+        8,
+        789,
+        'RestrictedEnumField',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'RestrictedEnumField',
+        False,
+        is_restricted_field=True)
 
     self.ad_3 = tracker_pb2.ApprovalDef(approval_id=3)
     self.ad_4 = tracker_pb2.ApprovalDef(approval_id=4)
@@ -146,7 +167,7 @@ class TemplateDetailTest(unittest.TestCase):
     self.config.field_defs.extend(
         [
             self.fd_1, self.fd_2, self.fd_3, self.fd_4, self.fd_5, self.fd_6,
-            self.fd_7
+            self.fd_7, self.fd_8
         ])
     self.config.approval_defs.extend([self.ad_3, self.ad_4])
     self.services.config.StoreConfig(None, self.config)
@@ -280,7 +301,7 @@ class TemplateDetailTest(unittest.TestCase):
     """Template admins cannot set restricted fields by default."""
     self.mr.perms = permissions.PermissionSet([])
     self.mr.auth.effective_ids = {222}  # template admin
-    post_data = fake.PostData(
+    post_data_add_fv = fake.PostData(
         name=['TestTemplate'],
         members_only=['on'],
         summary=['TLDR'],
@@ -304,9 +325,33 @@ class TemplateDetailTest(unittest.TestCase):
         phase_5=['OOPs'],
         approval_3=['phase_0'],
         approval_4=['phase_2'])
+    post_data_label_edits_enum = fake.PostData(
+        name=['TestTemplate'],
+        members_only=['on'],
+        summary=['TLDR'],
+        summary_must_be_edited=[''],
+        content=['HEY WHY'],
+        status=['Accepted'],
+        owner=['daisy@example.com'],
+        label=['label-One', 'label-Two', 'RestrictedEnumField-7'],
+        components=['BackEnd'],
+        component_required=['on'],
+        owner_defaults_to_member=['on'],
+        add_approvals=['no'],
+        phase_0=[''],
+        phase_1=[''],
+        phase_2=[''],
+        phase_3=[''],
+        phase_4=[''],
+        phase_5=['OOPs'],
+        approval_3=['phase_0'],
+        approval_4=['phase_2'])
 
     self.assertRaises(
-        AssertionError, self.servlet.ProcessFormData, self.mr, post_data)
+        AssertionError, self.servlet.ProcessFormData, self.mr, post_data_add_fv)
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, self.mr,
+        post_data_label_edits_enum)
 
   def testProcessFormData_Accept(self):
     post_data = fake.PostData(
@@ -317,7 +362,7 @@ class TemplateDetailTest(unittest.TestCase):
         content=['HEY WHY'],
         status=['Accepted'],
         owner=['daisy@example.com'],
-        label=['label-One', 'label-Two'],
+        label=['label-One', 'label-Two', 'RestrictedEnumField-7'],
         custom_1=['NO'],
         custom_2=['MOOD'],
         custom_7=['37'],
@@ -351,7 +396,7 @@ class TemplateDetailTest(unittest.TestCase):
             tracker_pb2.FieldValue(field_id=2, str_value='MOOD', derived=False),
             tracker_pb2.FieldValue(field_id=7, int_value=37, derived=False)
         ],
-        labels=['label-One', 'label-Two'],
+        labels=['label-One', 'label-Two', 'RestrictedEnumField-7'],
         owner_defaults_to_member=True,
         admin_ids=[],
         content='HEY WHY',

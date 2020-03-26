@@ -435,10 +435,10 @@ class IssueBulkEditTest(unittest.TestCase):
         user_info={'user_id': 111})
     mr.local_id_list = [local_id_1]
 
-    fd = tracker_bizobj.MakeFieldDef(
-        12345,
+    fd_int = tracker_bizobj.MakeFieldDef(
+        11111,
         789,
-        'CPU',
+        'fd_int',
         tracker_pb2.FieldTypes.INT_TYPE,
         None,
         '',
@@ -456,11 +456,33 @@ class IssueBulkEditTest(unittest.TestCase):
         'doc',
         False,
         is_restricted_field=True)
-    fd.admin_ids = [222]
-    self.config.field_defs.append(fd)
+    fd_enum = tracker_bizobj.MakeFieldDef(
+        44444,
+        789,
+        'fdEnum',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd_int.admin_ids = [222]
+    fd_enum.editor_ids = [333]
+    self.config.field_defs = [fd_int, fd_enum]
 
-    post_data = fake.PostData(
-        custom_12345=['10'],
+    post_data_add_fv = fake.PostData(
+        custom_11111=['10'],
         owner=['owner@example.com'],
         can=[1],
         q=[''],
@@ -469,9 +491,61 @@ class IssueBulkEditTest(unittest.TestCase):
         groupby=[''],
         start=[0],
         num=[100])
+    post_data_rm_fv = fake.PostData(
+        op_custom_11111=['remove'],
+        custom_11111=['10'],
+        owner=['owner@example.com'],
+        can=[1],
+        q=[''],
+        colspec=[''],
+        sort=[''],
+        groupby=[''],
+        start=[0],
+        num=[100])
+    post_data_clear_fd = fake.PostData(
+        op_custom_11111=['clear'],
+        owner=['owner@example.com'],
+        can=[1],
+        q=[''],
+        colspec=[''],
+        sort=[''],
+        groupby=[''],
+        start=[0],
+        num=[100])
+    post_data_label_edits_enum = fake.PostData(
+        label=['fdEnum-a'],
+        owner=['owner@example.com'],
+        can=[1],
+        q=[''],
+        colspec=[''],
+        sort=[''],
+        groupby=[''],
+        start=[0],
+        num=[100])
+    post_data_label_rm_enum = fake.PostData(
+        label=['-fdEnum-b'],
+        owner=['owner@example.com'],
+        can=[1],
+        q=[''],
+        colspec=[''],
+        sort=[''],
+        groupby=[''],
+        start=[0],
+        num=[100])
+
     self._MockMethods()
     self.assertRaises(
-        AssertionError, self.servlet.ProcessFormData, mr, post_data)
+        AssertionError, self.servlet.ProcessFormData, mr, post_data_add_fv)
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, mr, post_data_rm_fv)
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, mr, post_data_clear_fd)
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, mr,
+        post_data_label_edits_enum)
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, mr,
+        post_data_label_rm_enum)
 
   def testProcessFormData_DuplicateStatus_MergeSameIssue(self):
     """Test PFD processes null/cleared status values."""

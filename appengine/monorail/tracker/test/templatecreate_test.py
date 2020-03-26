@@ -84,6 +84,27 @@ class TemplateCreateTest(unittest.TestCase):
         'RestrictedField',
         False,
         is_restricted_field=True)
+    self.fd_6 = tracker_bizobj.MakeFieldDef(
+        6,
+        self.project.project_id,
+        'RestrictedEnumField',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'RestrictedEnumField',
+        False,
+        is_restricted_field=True)
     ad_2 = tracker_pb2.ApprovalDef(approval_id=2)
     ad_3 = tracker_pb2.ApprovalDef(approval_id=3)
 
@@ -91,7 +112,7 @@ class TemplateCreateTest(unittest.TestCase):
         'fake cnxn', self.project.project_id)
     self.config.approval_defs.extend([ad_2, ad_3])
     self.config.field_defs.extend(
-        [self.fd_1, self.fd_2, self.fd_3, self.fd_4, self.fd_5])
+        [self.fd_1, self.fd_2, self.fd_3, self.fd_4, self.fd_5, self.fd_6])
 
     first_tmpl = tracker_bizobj.MakeIssueTemplate(
         'sometemplate', 'summary', None, None, 'content', [], [], [],
@@ -152,7 +173,7 @@ class TemplateCreateTest(unittest.TestCase):
     self.assertFalse(page_data['initial_owner_defaults_to_member'])
     self.assertEqual(page_data['initial_components'], '')
     self.assertFalse(page_data['initial_component_required'])
-    self.assertEqual(page_data['fields'][1].field_name, fv.field_name)
+    self.assertEqual(page_data['fields'][2].field_name, fv.field_name)
     self.assertEqual(page_data['initial_admins'], '')
     self.assertEqual(page_data['approval_subfields_present'], ezt.boolean(True))
     self.assertEqual(page_data['phase_fields_present'], ezt.boolean(False))
@@ -220,7 +241,7 @@ class TemplateCreateTest(unittest.TestCase):
   def testProcessFormData_RejectRestrictedFields(self):
     self.services.template.GetTemplateByName = Mock(return_value=None)
     self.mr.perms = permissions.PermissionSet([])
-    post_data = fake.PostData(
+    post_data_add_fv = fake.PostData(
         name=['secondtemplate'],
         members_only=['on'],
         summary=['TLDR'],
@@ -241,9 +262,31 @@ class TemplateCreateTest(unittest.TestCase):
         phase_5=['OOPs'],
         approval_2=['phase_0'],
         approval_3=['phase_2'])
+    post_data_label_edits_enum = fake.PostData(
+        name=['secondtemplate'],
+        members_only=['on'],
+        summary=['TLDR'],
+        summary_must_be_edited=['on'],
+        content=['HEY WHY'],
+        status=['Accepted'],
+        label=['label-One', 'label-Two', 'RestrictedEnumField-7'],
+        component_required=['on'],
+        owner_defaults_to_member=['no'],
+        add_approvals=['no'],
+        phase_0=[''],
+        phase_1=[''],
+        phase_2=[''],
+        phase_3=[''],
+        phase_4=[''],
+        phase_5=['OOPs'],
+        approval_2=['phase_0'],
+        approval_3=['phase_2'])
 
     self.assertRaises(
-        AssertionError, self.servlet.ProcessFormData, self.mr, post_data)
+        AssertionError, self.servlet.ProcessFormData, self.mr, post_data_add_fv)
+    self.assertRaises(
+        AssertionError, self.servlet.ProcessFormData, self.mr,
+        post_data_label_edits_enum)
 
   def testProcessFormData_Accept(self):
     self.services.template.GetTemplateByName = Mock(return_value=None)
@@ -254,7 +297,7 @@ class TemplateCreateTest(unittest.TestCase):
         summary_must_be_edited=['on'],
         content=['HEY WHY'],
         status=['Accepted'],
-        label=['label-One', 'label-Two'],
+        label=['label-One', 'label-Two', 'RestrictedEnumField-7'],
         custom_1=['NO'],
         custom_5=['37'],
         component_required=['on'],
