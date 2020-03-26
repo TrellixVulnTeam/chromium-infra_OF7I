@@ -7,8 +7,8 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from train_ml_helpers import COMPONENT_FEATURES
-from train_ml_helpers import SPAM_FEATURE_HASHES
+from trainer2.train_ml_helpers import COMPONENT_FEATURES
+from trainer2.train_ml_helpers import SPAM_FEATURE_HASHES
 
 # Important: we assume this list mirrors the output of GenerateFeaturesRaw.
 INPUT_COLUMNS = {'component': [

@@ -7,8 +7,9 @@ from __future__ import absolute_import
 
 import os
 
-import train_ml_helpers
-from stopwords import STOP_WORDS
+from trainer2 import train_ml_helpers
+from trainer2.stopwords import STOP_WORDS
+
 
 def GenerateTopWords(word_dict):
   """Requires ./stopwords.txt exist in folder for the function to run.

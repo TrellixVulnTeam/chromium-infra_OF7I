@@ -18,7 +18,7 @@ help:
 	@sed -n '/^[a-zA-Z0-9_.]*:/s/:.*//p' <Makefile
 
 train_local_spam:
-	gcloud ml-engine local train \
+	gcloud ai-platform local train \
 		--package-path trainer/ \
 		--module-name trainer.task \
 		--job-dir $(OUTPUT_DIR) \
@@ -28,14 +28,25 @@ train_local_spam:
 		--train-file $(TRAIN_FILE) \
 		--trainer-type spam
 
+train_local_spam_2:
+	gcloud ai-platform local train \
+		--package-path trainer2/ \
+		--module-name trainer2.task \
+		--job-dir $(OUTPUT_DIR) \
+		-- \
+		--train-steps 1000 \
+		--verbosity DEBUG \
+		--train-file $(TRAIN_FILE) \
+		--trainer-type spam
+
 predict_local_spam:
 	./spam.py local-predict
-	gcloud ml-engine local predict \
+	gcloud ai-platform local predict \
 		--model-dir $(MODEL_DIR) \
 		--json-instances /tmp/instances.json
 
 train_from_prod_data_spam:
-	gcloud ml-engine local train \
+	gcloud ai-platform local train \
 		--package-path trainer/ \
 		--module-name trainer.task \
 		--job-dir $(OUTPUT_DIR) \
@@ -46,12 +57,40 @@ train_from_prod_data_spam:
 		--gcs-prefix spam_training_data \
 		--trainer-type spam
 
+train_from_prod_data_spam_2:
+	gcloud ai-platform local train \
+		--package-path trainer2/ \
+		--module-name trainer2.task \
+		--job-dir $(OUTPUT_DIR) \
+		-- \
+		--train-steps 1000 \
+		--verbosity DEBUG \
+		--gcs-bucket monorail-prod.appspot.com \
+		--gcs-prefix spam_training_data \
+		--trainer-type spam
+
 submit_train_job_spam:
 	@echo ${TIMESTAMP}
-	gcloud ml-engine jobs submit training $(SPAM_JOB_NAME) \
+	gcloud ai-platform jobs submit training $(SPAM_JOB_NAME) \
 		--package-path trainer/ \
 		--module-name trainer.task \
 		--runtime-version 1.2 \
+		--job-dir gs://monorail-prod-mlengine/$(SPAM_JOB_NAME) \
+		--region us-central1 \
+		-- \
+		--train-steps 1000 \
+		--verbosity DEBUG \
+		--gcs-bucket monorail-prod.appspot.com \
+		--gcs-prefix spam_training_data \
+		--trainer-type spam
+
+submit_train_job_spam_2:
+	@echo ${TIMESTAMP}
+	gcloud ai-platform jobs submit training $(SPAM_JOB_NAME) \
+		--package-path trainer2/ \
+		--module-name trainer2.task \
+		--runtime-version 2.1 \
+		--python-version 3.7 \
 		--job-dir gs://monorail-prod-mlengine/$(SPAM_JOB_NAME) \
 		--region us-central1 \
 		-- \
@@ -70,11 +109,11 @@ ifndef VERSION
 	$(error VERSION not set)
 endif
 	gsutil ls -r gs://monorail-prod-mlengine/$(SPAM_JOB_NAME)
-	gcloud ml-engine versions create $(VERSION) \
+	gcloud ai-platform versions create $(VERSION) \
 		--model spam_only_words \
 		--origin $(MODEL_BINARIES) \
 		--runtime-version 1.2
-	gcloud ml-engine versions set-default $(VERSION) --model spam_only_words
+	gcloud ai-platform versions set-default $(VERSION) --model spam_only_words
 
 submit_pred_spam:
 ifndef SUMMARY_PATH
@@ -87,7 +126,7 @@ endif
 
 
 train_from_prod_data_component:
-	gcloud ml-engine local train \
+	gcloud ai-platform local train \
 		--package-path trainer/ \
 		--module-name trainer.task \
 		--job-dir $(OUTPUT_DIR) \
@@ -101,7 +140,7 @@ train_from_prod_data_component:
 
 submit_train_job_component:
 	gcloud init
-	gcloud ml-engine jobs submit training $(COMP_JOB_NAME) \
+	gcloud ai-platform jobs submit training $(COMP_JOB_NAME) \
 		--package-path trainer/ \
 		--module-name trainer.task \
 		--runtime-version 1.2 \
@@ -126,11 +165,11 @@ ifndef VERSION
 	$(error VERSION not set)
 endif
 	gsutil ls -r gs://monorail-prod-mlengine/$(COMP_JOB_NAME)
-	gcloud ml-engine versions create $(VERSION) \
+	gcloud ai-platform versions create $(VERSION) \
 		--model component_top_words \
 		--origin $(MODEL_BINARIES) \
 		--runtime-version 1.2
-	gcloud ml-engine versions set-default $(VERSION) --model component_top_words
+	gcloud ai-platform versions set-default $(VERSION) --model component_top_words
 
 submit_pred_component:
 ifndef CONTENT_PATH

@@ -7,18 +7,19 @@ from __future__ import absolute_import
 
 import argparse
 import json
+import logging
 import os
 
 import tensorflow as tf
 from tensorflow.estimator import RunConfig
 from sklearn.model_selection import train_test_split
 
-import model
-import top_words
-import logging
-import train_ml_helpers
-from train_ml_helpers import COMPONENT_FEATURES
-from train_ml_helpers import SPAM_FEATURE_HASHES
+from trainer2 import dataset
+from trainer2 import model
+from trainer2 import top_words
+from trainer2 import train_ml_helpers
+from trainer2.train_ml_helpers import COMPONENT_FEATURES
+from trainer2.train_ml_helpers import SPAM_FEATURE_HASHES
 
 INPUT_TYPE_MAP = {
   'component': {'key': 'word_features', 'shape': (COMPONENT_FEATURES,)},
@@ -46,14 +47,15 @@ def make_input_fn(trainer_type, features, targets,
       for feature, target in zip(features, targets):
         yield feature[INPUT_TYPE_MAP[trainer_type]['key']], target
 
-    dataset = tf.data.Dataset.from_generator(gen, (tf.float64, tf.int32),
-      output_shapes=(INPUT_TYPE_MAP[trainer_type]['shape'], ()))
-    dataset = dataset.map(lambda x, y:
-      ({INPUT_TYPE_MAP[trainer_type]['key']: x}, y))
+    data = tf.data.Dataset.from_generator(
+        gen, (tf.float64, tf.int32),
+        output_shapes=(INPUT_TYPE_MAP[trainer_type]['shape'], ()))
+    data = data.map(lambda x, y: ({INPUT_TYPE_MAP[trainer_type]['key']: x}, y))
     if shuffle:
-      dataset = dataset.shuffle(buffer_size=batch_size * 10)
-    dataset = dataset.repeat(num_epochs).batch(batch_size)
-    return dataset
+      data = data.shuffle(buffer_size=batch_size * 10)
+    data = data.repeat(num_epochs).batch(batch_size)
+    return data
+
   return _input_fn
 
 
@@ -83,11 +85,15 @@ def train_and_evaluate_model(config, hparams):
 
   """
 
-  with open(hparams['train_file']) as f:
-    if hparams['trainer_type'] == 'spam':
-      contents, labels, _ = train_ml_helpers.spam_from_file(f)
-    else:
-      contents, labels = train_ml_helpers.component_from_file(f)
+  if hparams['train_file']:
+    with open(hparams['train_file']) as f:
+      if hparams['trainer_type'] == 'spam':
+        contents, labels, _ = train_ml_helpers.spam_from_file(f)
+      else:
+        contents, labels = train_ml_helpers.component_from_file(f)
+  else:
+    contents, labels = dataset.fetch_training_data(
+        hparams['gcs_bucket'], hparams['gcs_prefix'], hparams['trainer_type'])
 
   logger.info('Training data received. Len: %d' % len(contents))
 
@@ -125,7 +131,7 @@ def train_and_evaluate_model(config, hparams):
     exporters=exporter, steps=hparams['eval_steps'])
 
   if hparams['trainer_type'] == 'component':
-      store_component_conversion(hparams['job_dir'], index_to_component)
+    store_component_conversion(hparams['job_dir'], index_to_component)
 
   result = tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
   logging.info(result)
@@ -148,9 +154,16 @@ if __name__ == '__main__':
 
   # Input Arguments
   parser.add_argument(
-    '--train-file',
-    help='GCS or local path to training data',
-    required=True
+      '--train-file',
+      help='GCS or local path to training data',
+  )
+  parser.add_argument(
+      '--gcs-bucket',
+      help='GCS bucket for training data.',
+  )
+  parser.add_argument(
+      '--gcs-prefix',
+      help='Training data path prefix inside GCS bucket.',
   )
   parser.add_argument(
     '--num-epochs',
