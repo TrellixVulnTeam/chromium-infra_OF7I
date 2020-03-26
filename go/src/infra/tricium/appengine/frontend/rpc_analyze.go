@@ -236,7 +236,5 @@ func analyze(c context.Context, req *tricium.AnalyzeRequest, cp config.ProviderA
 	if err != nil {
 		return "", errors.Annotate(err, "failed to track and launch request").Err()
 	}
-	// Monitor analyze requests per project.
-	analyzeRequestCount.Add(c, 1, request.Project)
 	return strconv.FormatInt(request.ID, 10), nil
 }

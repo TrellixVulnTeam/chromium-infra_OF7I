@@ -67,11 +67,5 @@ func results(c context.Context, runID int64) (*tricium.Data_Results, bool, error
 			isMerged = true
 		}
 	}
-	// Monitor results requests per project and run ID.
-	request := &track.AnalyzeRequest{ID: runID}
-	if err := ds.Get(c, request); err != nil {
-		return res, isMerged, errors.Annotate(err, "failed to get AnalyzeRequest").Err()
-	}
-	resultsRequestCount.Add(c, 1, request.Project, strconv.FormatInt(runID, 10))
 	return res, isMerged, nil
 }

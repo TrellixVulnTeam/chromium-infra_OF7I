@@ -158,12 +158,5 @@ func progress(c context.Context, runID int64) (tricium.State, []*tricium.Functio
 		}
 		res = append(res, p)
 	}
-	// Monitor progress requests per project and run ID.
-	request := &track.AnalyzeRequest{ID: runID}
-	if err := ds.Get(c, request); err != nil {
-		return requestRes.State, res, errors.Annotate(err, "failed to get AnalyzeRequest").
-			Tag(grpcutil.InternalTag).Err()
-	}
-	progressRequestCount.Add(c, 1, request.Project, strconv.FormatInt(runID, 10))
 	return requestRes.State, res, nil
 }
