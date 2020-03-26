@@ -6,4 +6,4 @@ deterministic: true
 
 build:
   - go_binary: go.chromium.org/luci/resultdb/cmd/backend
-    dest: bin/backend
+    dest: ${contextdir}/bin/backend

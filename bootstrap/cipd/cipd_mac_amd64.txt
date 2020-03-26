@@ -20,5 +20,5 @@ infra/tools/cloud_sql_proxy/mac-amd64  downloaded:2017_07_25
 # Crimson tool.
 infra/machine-db/crimson/mac-amd64 stable
 
-# Helper for building Docker images.
-infra/tools/cloudbuildhelper/mac-amd64 git_revision:1e8bb8349ada99a213c1d68cb30415453a9e0728
+# Helper for building Docker images and GAE tarballs.
+infra/tools/cloudbuildhelper/mac-amd64 git_revision:12458330745cb89dd5d03d69f79aa5ac57116762

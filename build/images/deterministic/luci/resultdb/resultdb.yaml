@@ -6,4 +6,4 @@ deterministic: true
 
 build:
   - go_binary: go.chromium.org/luci/resultdb/cmd/resultdb
-    dest: bin/resultdb
+    dest: ${contextdir}/bin/resultdb

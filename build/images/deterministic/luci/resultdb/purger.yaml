@@ -6,4 +6,4 @@ deterministic: true
 
 build:
   - go_binary: go.chromium.org/luci/resultdb/cmd/purger
-    dest: bin/purger
+    dest: ${contextdir}/bin/purger

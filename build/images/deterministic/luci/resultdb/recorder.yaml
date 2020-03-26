@@ -6,4 +6,4 @@ deterministic: true
 
 build:
   - go_binary: go.chromium.org/luci/resultdb/cmd/recorder
-    dest: bin/recorder
+    dest: ${contextdir}/bin/recorder

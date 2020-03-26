@@ -6,4 +6,4 @@ deterministic: true
 
 build:
   - go_binary: go.chromium.org/luci/resultdb/cmd/globalmetrics
-    dest: bin/globalmetrics
+    dest: ${contextdir}/bin/globalmetrics
