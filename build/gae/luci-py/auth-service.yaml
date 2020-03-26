@@ -1,0 +1,4 @@
+name: luci-py/auth-service
+extends: ../base.yaml
+
+contextdir: ../../../luci/appengine/auth_service
