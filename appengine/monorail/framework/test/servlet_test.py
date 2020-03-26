@@ -85,9 +85,8 @@ class ServletTest(unittest.TestCase):
     self.assertEqual(base_data['project'].cached_content_timestamp, 12345)
     self.assertEqual(base_data['project_alert'], None)
 
-    self.assert_(
-        base_data['currentPageURL'].endswith('/p/testproj/feeds'))
-    self.assert_(
+    self.assertTrue(base_data['currentPageURL'].endswith('/p/testproj/feeds'))
+    self.assertTrue(
         base_data['currentPageURLEncoded'].endswith('%2Fp%2Ftestproj%2Ffeeds'))
 
   def testFormHandlerURL(self):

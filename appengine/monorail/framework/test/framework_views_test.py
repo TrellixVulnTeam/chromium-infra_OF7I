@@ -28,36 +28,36 @@ class LabelViewTest(unittest.TestCase):
 
   def testLabelView(self):
     view = framework_views.LabelView('', None)
-    self.assertEquals('', view.name)
+    self.assertEqual('', view.name)
 
     view = framework_views.LabelView('Priority-High', None)
-    self.assertEquals('Priority-High', view.name)
+    self.assertEqual('Priority-High', view.name)
     self.assertIsNone(view.is_restrict)
-    self.assertEquals('', view.docstring)
-    self.assertEquals('Priority', view.prefix)
-    self.assertEquals('High', view.value)
+    self.assertEqual('', view.docstring)
+    self.assertEqual('Priority', view.prefix)
+    self.assertEqual('High', view.value)
 
     view = framework_views.LabelView('%s-%s' % (LONG_STR, LONG_STR), None)
-    self.assertEquals('%s-%s' % (LONG_STR, LONG_STR), view.name)
-    self.assertEquals('', view.docstring)
-    self.assertEquals(LONG_STR, view.prefix)
-    self.assertEquals(LONG_STR, view.value)
+    self.assertEqual('%s-%s' % (LONG_STR, LONG_STR), view.name)
+    self.assertEqual('', view.docstring)
+    self.assertEqual(LONG_STR, view.prefix)
+    self.assertEqual(LONG_STR, view.value)
 
     view = framework_views.LabelView(LONG_PART_STR, None)
-    self.assertEquals(LONG_PART_STR, view.name)
-    self.assertEquals('', view.docstring)
-    self.assertEquals('OnePartThatWillNotFit', view.prefix)
-    self.assertEquals('OneShort', view.value)
+    self.assertEqual(LONG_PART_STR, view.name)
+    self.assertEqual('', view.docstring)
+    self.assertEqual('OnePartThatWillNotFit', view.prefix)
+    self.assertEqual('OneShort', view.value)
 
     config = tracker_pb2.ProjectIssueConfig()
     config.well_known_labels.append(tracker_pb2.LabelDef(
         label='Priority-High', label_docstring='Must ship in this milestone'))
 
     view = framework_views.LabelView('Priority-High', config)
-    self.assertEquals('Must ship in this milestone', view.docstring)
+    self.assertEqual('Must ship in this milestone', view.docstring)
 
     view = framework_views.LabelView('Priority-Foo', config)
-    self.assertEquals('', view.docstring)
+    self.assertEqual('', view.docstring)
 
     view = framework_views.LabelView('Restrict-View-Commit', None)
     self.assertTrue(view.is_restrict)
@@ -67,17 +67,17 @@ class StatusViewTest(unittest.TestCase):
 
   def testStatusView(self):
     view = framework_views.StatusView('', None)
-    self.assertEquals('', view.name)
+    self.assertEqual('', view.name)
 
     view = framework_views.StatusView('Accepted', None)
-    self.assertEquals('Accepted', view.name)
-    self.assertEquals('', view.docstring)
-    self.assertEquals('yes', view.means_open)
+    self.assertEqual('Accepted', view.name)
+    self.assertEqual('', view.docstring)
+    self.assertEqual('yes', view.means_open)
 
     view = framework_views.StatusView(LONG_STR, None)
-    self.assertEquals(LONG_STR, view.name)
-    self.assertEquals('', view.docstring)
-    self.assertEquals('yes', view.means_open)
+    self.assertEqual(LONG_STR, view.name)
+    self.assertEqual('', view.docstring)
+    self.assertEqual('yes', view.means_open)
 
     config = tracker_pb2.ProjectIssueConfig()
     config.well_known_statuses.append(tracker_pb2.StatusDef(
@@ -85,11 +85,11 @@ class StatusViewTest(unittest.TestCase):
         means_open=False))
 
     view = framework_views.StatusView('SlamDunk', config)
-    self.assertEquals('Code fixed and taught a lesson', view.docstring)
+    self.assertEqual('Code fixed and taught a lesson', view.docstring)
     self.assertFalse(view.means_open)
 
     view = framework_views.StatusView('SlammedBack', config)
-    self.assertEquals('', view.docstring)
+    self.assertEqual('', view.docstring)
 
 
 class UserViewTest(unittest.TestCase):
@@ -100,20 +100,20 @@ class UserViewTest(unittest.TestCase):
   def testGetAvailablity_Anon(self):
     self.user.user_id = 0
     user_view = framework_views.UserView(self.user)
-    self.assertEquals(None, user_view.avail_message)
-    self.assertEquals(None, user_view.avail_state)
+    self.assertEqual(None, user_view.avail_message)
+    self.assertEqual(None, user_view.avail_state)
 
   def testGetAvailablity_Banned(self):
     self.user.banned = 'spamming'
     user_view = framework_views.UserView(self.user)
-    self.assertEquals('Banned', user_view.avail_message)
-    self.assertEquals('banned', user_view.avail_state)
+    self.assertEqual('Banned', user_view.avail_message)
+    self.assertEqual('banned', user_view.avail_state)
 
   def testGetAvailablity_Vacation(self):
     self.user.vacation_message = 'gone fishing'
     user_view = framework_views.UserView(self.user)
-    self.assertEquals('gone fishing', user_view.avail_message)
-    self.assertEquals('none', user_view.avail_state)
+    self.assertEqual('gone fishing', user_view.avail_message)
+    self.assertEqual('none', user_view.avail_state)
 
     self.user.vacation_message = (
       'Gone fishing as really long time with lots of friends and reading '
@@ -123,44 +123,44 @@ class UserViewTest(unittest.TestCase):
     user_view = framework_views.UserView(self.user)
     self.assertTrue(len(user_view.avail_message) >= 50)
     self.assertTrue(len(user_view.avail_message_short) < 50)
-    self.assertEquals('none', user_view.avail_state)
+    self.assertEqual('none', user_view.avail_state)
 
   def testGetAvailablity_Bouncing(self):
     self.user.email_bounce_timestamp = 1234567890
     user_view = framework_views.UserView(self.user)
-    self.assertEquals('Email to this user bounced', user_view.avail_message)
-    self.assertEquals(user_view.avail_message_short, user_view.avail_message)
-    self.assertEquals('none', user_view.avail_state)
+    self.assertEqual('Email to this user bounced', user_view.avail_message)
+    self.assertEqual(user_view.avail_message_short, user_view.avail_message)
+    self.assertEqual('none', user_view.avail_state)
 
   def testGetAvailablity_Groups(self):
     user_view = framework_views.UserView(self.user, is_group=True)
-    self.assertEquals(None, user_view.avail_message)
-    self.assertEquals(None, user_view.avail_state)
+    self.assertEqual(None, user_view.avail_message)
+    self.assertEqual(None, user_view.avail_state)
 
     self.user.email = 'likely-user-group@example.com'
     user_view = framework_views.UserView(self.user)
-    self.assertEquals(None, user_view.avail_message)
-    self.assertEquals(None, user_view.avail_state)
+    self.assertEqual(None, user_view.avail_message)
+    self.assertEqual(None, user_view.avail_state)
 
   def testGetAvailablity_NeverVisitied(self):
     self.user.last_visit_timestamp = 0
     user_view = framework_views.UserView(self.user)
-    self.assertEquals('User never visited', user_view.avail_message)
-    self.assertEquals('never', user_view.avail_state)
+    self.assertEqual('User never visited', user_view.avail_message)
+    self.assertEqual('never', user_view.avail_state)
 
   def testGetAvailablity_NotRecent(self):
     now = int(time.time())
     self.user.last_visit_timestamp = now - 20 * framework_constants.SECS_PER_DAY
     user_view = framework_views.UserView(self.user)
-    self.assertEquals('Last visit 20 days ago', user_view.avail_message)
-    self.assertEquals('unsure', user_view.avail_state)
+    self.assertEqual('Last visit 20 days ago', user_view.avail_message)
+    self.assertEqual('unsure', user_view.avail_state)
 
   def testGetAvailablity_ReallyLongTime(self):
     now = int(time.time())
     self.user.last_visit_timestamp = now - 99 * framework_constants.SECS_PER_DAY
     user_view = framework_views.UserView(self.user)
-    self.assertEquals('Last visit > 30 days ago', user_view.avail_message)
-    self.assertEquals('none', user_view.avail_state)
+    self.assertEqual('Last visit > 30 days ago', user_view.avail_message)
+    self.assertEqual('none', user_view.avail_state)
 
   def testDeletedUser(self):
     deleted_user = user_pb2.User(user_id=1)

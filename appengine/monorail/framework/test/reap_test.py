@@ -75,9 +75,9 @@ class ReapTest(unittest.TestCase):
     doomed_project_ids = reaper._MarkDoomedProjects(self.cnxn)
     self.mox.VerifyAll()
 
-    self.assertEquals([self.proj1_id], doomed_project_ids)
-    self.assertEquals(project_pb2.ProjectState.DELETABLE, self.proj1.state)
-    self.assertEquals('DELETABLE_%s' % self.proj1_id , self.proj1.project_name)
+    self.assertEqual([self.proj1_id], doomed_project_ids)
+    self.assertEqual(project_pb2.ProjectState.DELETABLE, self.proj1.state)
+    self.assertEqual('DELETABLE_%s' % self.proj1_id, self.proj1.project_name)
 
   def setUpExpungeParts(self):
     self.project_service.project_tbl.Select(
@@ -98,27 +98,34 @@ class ReapTest(unittest.TestCase):
     expunged_project_ids = reaper._ExpungeDeletableProjects(self.cnxn)
     self.mox.VerifyAll()
 
-    self.assertEquals([self.proj1_id, self.proj2_id], expunged_project_ids)
+    self.assertEqual([self.proj1_id, self.proj2_id], expunged_project_ids)
     # Verify all expected expunge methods were called.
-    self.assertEquals([self.proj1_issue_id, self.proj2_issue_id],
-                      self.services.issue_star.expunged_item_ids)
-    self.assertEquals([self.proj1_issue_id, self.proj2_issue_id],
-                      self.services.issue.expunged_issues)
-    self.assertEquals([self.proj1_id, self.proj2_id],
-                      self.services.config.expunged_configs)
-    self.assertEquals([self.proj1_id, self.proj2_id],
-                      self.services.features.expunged_saved_queries)
-    self.assertEquals([self.proj1_id, self.proj2_id],
-                      self.services.features.expunged_filter_rules)
-    self.assertEquals([self.proj1_id, self.proj2_id],
-                      self.services.issue.expunged_former_locations)
-    self.assertEquals([self.proj1_id, self.proj2_id],
-                      self.services.issue.expunged_local_ids)
-    self.assertEquals([self.proj1_id, self.proj2_id],
-                      self.services.features.expunged_quick_edit)
-    self.assertEquals([self.proj1_id, self.proj2_id],
-                      self.services.project_star.expunged_item_ids)
-    self.assertEquals(0, len(self.services.project.test_projects))
+    self.assertEqual(
+        [self.proj1_issue_id, self.proj2_issue_id],
+        self.services.issue_star.expunged_item_ids)
+    self.assertEqual(
+        [self.proj1_issue_id, self.proj2_issue_id],
+        self.services.issue.expunged_issues)
+    self.assertEqual(
+        [self.proj1_id, self.proj2_id], self.services.config.expunged_configs)
+    self.assertEqual(
+        [self.proj1_id, self.proj2_id],
+        self.services.features.expunged_saved_queries)
+    self.assertEqual(
+        [self.proj1_id, self.proj2_id],
+        self.services.features.expunged_filter_rules)
+    self.assertEqual(
+        [self.proj1_id, self.proj2_id],
+        self.services.issue.expunged_former_locations)
+    self.assertEqual(
+        [self.proj1_id, self.proj2_id], self.services.issue.expunged_local_ids)
+    self.assertEqual(
+        [self.proj1_id, self.proj2_id],
+        self.services.features.expunged_quick_edit)
+    self.assertEqual(
+        [self.proj1_id, self.proj2_id],
+        self.services.project_star.expunged_item_ids)
+    self.assertEqual(0, len(self.services.project.test_projects))
     self.services.template.ExpungeProjectTemplates.assert_has_calls([
         mock.call(self.cnxn, 1001),
         mock.call(self.cnxn, 1002)])

@@ -163,9 +163,9 @@ class UserProfileTest(unittest.TestCase):
     page_data = self.servlet.GatherPageData(mr)
 
     starred_users = page_data['starred_users']
-    self.assertEquals(1, len(starred_users))
-    self.assertEquals('333@gmail.com', starred_users[0].email)
-    self.assertEquals('["3...@gmail.com"]', page_data['starred_users_json'])
+    self.assertEqual(1, len(starred_users))
+    self.assertEqual('333@gmail.com', starred_users[0].email)
+    self.assertEqual('["3...@gmail.com"]', page_data['starred_users_json'])
     self.mock_guspd.assert_called_once_with(
         111, mr.viewed_user_auth.user_view, mr.viewed_user_auth.user_pb,
         None)
@@ -194,7 +194,7 @@ class UserProfileTest(unittest.TestCase):
 
     page_data = self.servlet.GatherPageData(mr)
 
-    self.assertEquals('other@xyz.com', page_data['viewed_user_display_name'])
+    self.assertEqual('other@xyz.com', page_data['viewed_user_display_name'])
     self.mock_guspd.assert_called_once_with(
         111, mr.viewed_user_auth.user_view, mr.viewed_user_auth.user_pb,
         None)
@@ -223,7 +223,7 @@ class UserProfileTest(unittest.TestCase):
     page_data = self.servlet.GatherPageData(mr)
 
     self.assertIsNone(page_data['linked_parent'])
-    self.assertEquals([], page_data['linked_children'])
+    self.assertEqual([], page_data['linked_children'])
 
   def testGatherPageData_ParentAccounts(self):
     """An account with a parent linked account should show it."""
@@ -234,8 +234,8 @@ class UserProfileTest(unittest.TestCase):
 
     page_data = self.servlet.GatherPageData(mr)
 
-    self.assertEquals('111@gmail.com', page_data['linked_parent'].email)
-    self.assertEquals([], page_data['linked_children'])
+    self.assertEqual('111@gmail.com', page_data['linked_parent'].email)
+    self.assertEqual([], page_data['linked_children'])
 
   def testGatherPageData_ChildAccounts(self):
     """An account with a child linked account should show them."""
@@ -246,7 +246,7 @@ class UserProfileTest(unittest.TestCase):
 
     page_data = self.servlet.GatherPageData(mr)
 
-    self.assertEquals(None, page_data['linked_parent'])
-    self.assertEquals(
+    self.assertEqual(None, page_data['linked_parent'])
+    self.assertEqual(
         ['111@gmail.com', '222@gmail.com'],
         [uv.email for uv in page_data['linked_children']])

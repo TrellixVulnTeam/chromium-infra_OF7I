@@ -311,7 +311,7 @@ class MakeEmailWorkItemTest(unittest.TestCase):
         notify_helpers.HTML_BODY_WITH_GMAIL_ACTION_TEMPLATE % {
             'url': self.detail_url,
             'body': 'body non-- <br/>%s' % self.expected_html_footer})
-    self.assertEquals(expected_html_body, email_task['html_body'])
+    self.assertEqual(expected_html_body, email_task['html_body'])
 
   def testHtmlBody_WithUnicodeChars(self):
     """"An html body is sent if a detail_url is specified."""
@@ -329,7 +329,7 @@ class MakeEmailWorkItemTest(unittest.TestCase):
             'url': self.detail_url,
             'body': '%s-- <br/>%s' % (unicode_content.decode('utf-8'),
                                       self.expected_html_footer)})
-    self.assertEquals(expected_html_body, email_task['html_body'])
+    self.assertEqual(expected_html_body, email_task['html_body'])
 
   def testHtmlBody_WithLinks(self):
     """"An html body is sent if a detail_url is specified."""
@@ -347,7 +347,7 @@ class MakeEmailWorkItemTest(unittest.TestCase):
             'body': (
             'test <a href="http://google.com">google.com</a> test-- <br/>%s' % (
                 self.expected_html_footer))})
-    self.assertEquals(expected_html_body, email_task['html_body'])
+    self.assertEqual(expected_html_body, email_task['html_body'])
 
   def testHtmlBody_LinkWithinTags(self):
     """"An html body is sent with correct <a href>s."""
@@ -366,7 +366,7 @@ class MakeEmailWorkItemTest(unittest.TestCase):
             'body': (
                 'a &lt;<a href="http://google.com">http://google.com</a>&gt; '
                 'z-- <br/>%s' % self.expected_html_footer)})
-    self.assertEquals(expected_html_body, email_task['html_body'])
+    self.assertEqual(expected_html_body, email_task['html_body'])
 
   def testHtmlBody_EmailWithinTags(self):
     """"An html body is sent with correct <a href>s."""
@@ -386,7 +386,7 @@ class MakeEmailWorkItemTest(unittest.TestCase):
                 'a &lt;<a href="mailto:tt@chromium.org">tt@chromium.org</a>&gt;'
                 ' &lt;<a href="mailto:aa@chromium.org">aa@chromium.org</a>&gt; '
                 'z-- <br/>%s' % self.expected_html_footer)})
-    self.assertEquals(expected_html_body, email_task['html_body'])
+    self.assertEqual(expected_html_body, email_task['html_body'])
 
   def testHtmlBody_WithEscapedHtml(self):
     """"An html body is sent with html content escaped."""
@@ -410,7 +410,7 @@ class MakeEmailWorkItemTest(unittest.TestCase):
             'url': self.detail_url,
             'body': '%s-- <br/>%s' % (escaped_body_with_html_content,
                                       self.expected_html_footer)})
-    self.assertEquals(expected_html_body, email_task['html_body'])
+    self.assertEqual(expected_html_body, email_task['html_body'])
 
   def doTestAddHTMLTags(self, body, expected):
     actual = notify_helpers._AddHTMLTags(body)

@@ -42,7 +42,7 @@ class MovedTest(unittest.TestCase):
 
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet.GatherPageData(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
   def testGatherPageData_NotMoved(self):
     # Project exists but has not been moved, so 400 BAD_REQUEST.
@@ -52,7 +52,7 @@ class MovedTest(unittest.TestCase):
 
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet.GatherPageData(mr)
-    self.assertEquals(400, cm.exception.code)
+    self.assertEqual(400, cm.exception.code)
 
   def testGatherPageData_URL(self):
     # Display the moved_to url if it is valid.

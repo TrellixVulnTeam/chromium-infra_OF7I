@@ -574,7 +574,7 @@ class IssueBulkEditTest(unittest.TestCase):
         num=[100])
     self._MockMethods()
     self.servlet.ProcessFormData(mr, post_data)
-    self.assertEquals('Cannot merge issue into itself', mr.errors.merge_into_id)
+    self.assertEqual('Cannot merge issue into itself', mr.errors.merge_into_id)
 
   def testProcessFormData_DuplicateStatus_MergeMissingIssue(self):
     """Test PFD processes null/cleared status values."""
@@ -597,8 +597,7 @@ class IssueBulkEditTest(unittest.TestCase):
         num=[100])
     self._MockMethods()
     self.servlet.ProcessFormData(mr, post_data)
-    self.assertEquals('Please enter an issue ID',
-                      mr.errors.merge_into_id)
+    self.assertEqual('Please enter an issue ID', mr.errors.merge_into_id)
 
   def testProcessFormData_DuplicateStatus_Success(self):
     """Test PFD processes null/cleared status values."""
@@ -694,9 +693,9 @@ class IssueBulkEditTest(unittest.TestCase):
         q=[''], colspec=[''], sort=[''], groupby=[''], start=[0], num=[100])
     self._MockMethods()
     self.servlet.ProcessFormData(mr, post_data)
-    self.assertEquals(
-        (tracker_pb2.FieldID.STATUS, ''),
-        self.GetFirstAmendment(789, local_id_1))
+    self.assertEqual(
+        (tracker_pb2.FieldID.STATUS, ''), self.GetFirstAmendment(
+            789, local_id_1))
 
   def testProcessFormData_InvalidOwner(self):
     """Test PFD rejects invalid owner emails."""

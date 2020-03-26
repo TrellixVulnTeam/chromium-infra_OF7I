@@ -42,26 +42,26 @@ class ProfilerTest(unittest.TestCase):
 
   def testTopLevelPhase(self):
     prof = profiler.Profiler()
-    self.assertEquals(prof.current_phase.name, 'overall profile')
-    self.assertEquals(prof.current_phase.parent, None)
-    self.assertEquals(prof.current_phase, prof.top_phase)
-    self.assertEquals(prof.next_color, 0)
+    self.assertEqual(prof.current_phase.name, 'overall profile')
+    self.assertEqual(prof.current_phase.parent, None)
+    self.assertEqual(prof.current_phase, prof.top_phase)
+    self.assertEqual(prof.next_color, 0)
 
   def testSinglePhase(self):
     prof = profiler.Profiler()
-    self.assertEquals(prof.current_phase.name, 'overall profile')
+    self.assertEqual(prof.current_phase.name, 'overall profile')
     with prof.Phase('test'):
-      self.assertEquals(prof.current_phase.name, 'test')
-      self.assertEquals(prof.current_phase.parent.name, 'overall profile')
-    self.assertEquals(prof.current_phase.name, 'overall profile')
-    self.assertEquals(prof.next_color, 1)
+      self.assertEqual(prof.current_phase.name, 'test')
+      self.assertEqual(prof.current_phase.parent.name, 'overall profile')
+    self.assertEqual(prof.current_phase.name, 'overall profile')
+    self.assertEqual(prof.next_color, 1)
 
   def testSinglePhase_SuperLongName(self):
     prof = profiler.Profiler()
-    self.assertEquals(prof.current_phase.name, 'overall profile')
+    self.assertEqual(prof.current_phase.name, 'overall profile')
     long_name = 'x' * 1000
     with prof.Phase(long_name):
-      self.assertEquals(
+      self.assertEqual(
           'x' * profiler.MAX_PHASE_NAME_LENGTH, prof.current_phase.name)
 
   def testSubphaseExecption(self):
@@ -73,11 +73,10 @@ class ProfilerTest(unittest.TestCase):
         with prof.Phase('baz'):
           raise Exception('whoops')
     except Exception as e:
-      self.assertEquals(e.message, 'whoops')
+      self.assertEqual(e.message, 'whoops')
     finally:
-      self.assertEquals(prof.current_phase.name, 'overall profile')
-      self.assertEquals(
-          prof.top_phase.subphases[0].subphases[1].name, 'baz')
+      self.assertEqual(prof.current_phase.name, 'overall profile')
+      self.assertEqual(prof.top_phase.subphases[0].subphases[1].name, 'baz')
 
   def testSpanJson(self):
     mock_trace_api = MockCloudTraceApi()
@@ -93,11 +92,10 @@ class ProfilerTest(unittest.TestCase):
     # Shouldn't this be automatic?
     prof.current_phase.End()
 
-    self.assertEquals(prof.current_phase.name, 'overall profile')
-    self.assertEquals(
-        prof.top_phase.subphases[0].subphases[1].name, 'baz')
+    self.assertEqual(prof.current_phase.name, 'overall profile')
+    self.assertEqual(prof.top_phase.subphases[0].subphases[1].name, 'baz')
     span_json = prof.top_phase.SpanJson()
-    self.assertEquals(len(span_json), 4)
+    self.assertEqual(len(span_json), 4)
 
     for span in span_json:
       self.assertTrue(span['endTime'] > span['startTime'])
@@ -105,10 +103,10 @@ class ProfilerTest(unittest.TestCase):
     # pylint: disable=unbalanced-tuple-unpacking
     span1, span2, span3, span4 = span_json
 
-    self.assertEquals(span1['name'], 'overall profile')
-    self.assertEquals(span2['name'], 'foo')
-    self.assertEquals(span3['name'], 'bar')
-    self.assertEquals(span4['name'], 'baz')
+    self.assertEqual(span1['name'], 'overall profile')
+    self.assertEqual(span2['name'], 'foo')
+    self.assertEqual(span3['name'], 'bar')
+    self.assertEqual(span4['name'], 'baz')
 
     self.assertTrue(span1['startTime'] < span2['startTime'])
     self.assertTrue(span1['startTime'] < span3['startTime'])
@@ -133,9 +131,8 @@ class ProfilerTest(unittest.TestCase):
     # Shouldn't this be automatic?
     prof.current_phase.End()
 
-    self.assertEquals(prof.current_phase.name, 'overall profile')
-    self.assertEquals(
-        prof.top_phase.subphases[0].subphases[1].name, 'baz')
+    self.assertEqual(prof.current_phase.name, 'overall profile')
+    self.assertEqual(prof.top_phase.subphases[0].subphases[1].name, 'baz')
 
     prof.ReportTrace()
-    self.assertEquals(mock_trace_api.mock_projects.project_id, 'testing-app')
+    self.assertEqual(mock_trace_api.mock_projects.project_id, 'testing-app')

@@ -412,13 +412,15 @@ class FLTConvertTask(unittest.TestCase):
   def testFetchAndAssertProjectInfo(self):
 
     # test no 'launch' in request
-    self.assertRaisesRegexp(AssertionError, r'bad launch type:',
-                      self.task.FetchAndAssertProjectInfo, self.mr)
+    self.assertRaisesRegexp(
+        AssertionError, r'bad launch type:',
+        self.task.FetchAndAssertProjectInfo, self.mr)
 
     # test bad 'launch' in request
     mr = testing_helpers.MakeMonorailRequest(path='url/url?launch=bad')
-    self.assertRaisesRegexp(AssertionError, r'bad launch type: bad',
-                            self.task.FetchAndAssertProjectInfo, mr)
+    self.assertRaisesRegexp(
+        AssertionError, r'bad launch type: bad',
+        self.task.FetchAndAssertProjectInfo, mr)
 
     self.task.services.project.GetProjectByName = mock.Mock()
     self.task.services.config.GetProjectConfig = mock.Mock(
@@ -428,8 +430,9 @@ class FLTConvertTask(unittest.TestCase):
     # test no template
     self.task.services.template.GetTemplateByName = mock.Mock(
         return_value=None)
-    self.assertRaisesRegexp(AssertionError, r'not found in chromium project',
-                            self.task.FetchAndAssertProjectInfo, mr)
+    self.assertRaisesRegexp(
+        AssertionError, r'not found in chromium project',
+        self.task.FetchAndAssertProjectInfo, mr)
 
     # test template has no phases/approvals
     template = tracker_bizobj.MakeIssueTemplate(

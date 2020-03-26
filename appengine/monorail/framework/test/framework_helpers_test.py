@@ -54,7 +54,7 @@ class HelperFunctionsTest(unittest.TestCase):
     with self.assertRaises(Exception):
       testFunc(tracker)
     self.mox.VerifyAll()
-    self.assertEquals(3, tracker.func_called)
+    self.assertEqual(3, tracker.func_called)
 
   def testRetryDecorator_EventuallySucceed(self):
     class Tracker(object):
@@ -72,7 +72,7 @@ class HelperFunctionsTest(unittest.TestCase):
     self.mox.ReplayAll()
     testFunc(tracker)
     self.mox.VerifyAll()
-    self.assertEquals(2, tracker.func_called)
+    self.assertEqual(2, tracker.func_called)
 
   def testGetRoleName(self):
     proj = project_pb2.Project()
@@ -80,24 +80,18 @@ class HelperFunctionsTest(unittest.TestCase):
     proj.committer_ids.append(222)
     proj.contributor_ids.append(333)
 
-    self.assertEquals(None, framework_helpers.GetRoleName(set(), proj))
+    self.assertEqual(None, framework_helpers.GetRoleName(set(), proj))
 
-    self.assertEquals(
-        'Owner', framework_helpers.GetRoleName({111}, proj))
-    self.assertEquals(
-        'Committer', framework_helpers.GetRoleName({222}, proj))
-    self.assertEquals(
-        'Contributor', framework_helpers.GetRoleName({333}, proj))
+    self.assertEqual('Owner', framework_helpers.GetRoleName({111}, proj))
+    self.assertEqual('Committer', framework_helpers.GetRoleName({222}, proj))
+    self.assertEqual('Contributor', framework_helpers.GetRoleName({333}, proj))
 
-    self.assertEquals(
-        'Owner',
-        framework_helpers.GetRoleName({111, 222, 999}, proj))
-    self.assertEquals(
-        'Committer',
-        framework_helpers.GetRoleName({222, 333, 999}, proj))
-    self.assertEquals(
-        'Contributor',
-        framework_helpers.GetRoleName({333, 999}, proj))
+    self.assertEqual(
+        'Owner', framework_helpers.GetRoleName({111, 222, 999}, proj))
+    self.assertEqual(
+        'Committer', framework_helpers.GetRoleName({222, 333, 999}, proj))
+    self.assertEqual(
+        'Contributor', framework_helpers.GetRoleName({333, 999}, proj))
 
   def testGetHotlistRoleName(self):
     hotlist = features_pb2.Hotlist()
@@ -105,25 +99,22 @@ class HelperFunctionsTest(unittest.TestCase):
     hotlist.editor_ids.append(222)
     hotlist.follower_ids.append(333)
 
-    self.assertEquals(None, framework_helpers.GetHotlistRoleName(
-        set(), hotlist))
+    self.assertEqual(None, framework_helpers.GetHotlistRoleName(set(), hotlist))
 
-    self.assertEquals(
+    self.assertEqual(
         'Owner', framework_helpers.GetHotlistRoleName({111}, hotlist))
-    self.assertEquals(
+    self.assertEqual(
         'Editor', framework_helpers.GetHotlistRoleName({222}, hotlist))
-    self.assertEquals(
+    self.assertEqual(
         'Follower', framework_helpers.GetHotlistRoleName({333}, hotlist))
 
-    self.assertEquals(
-        'Owner',
-        framework_helpers.GetHotlistRoleName({111, 222, 999}, hotlist))
-    self.assertEquals(
-        'Editor',
-        framework_helpers.GetHotlistRoleName({222, 333, 999}, hotlist))
-    self.assertEquals(
-        'Follower',
-        framework_helpers.GetHotlistRoleName({333, 999}, hotlist))
+    self.assertEqual(
+        'Owner', framework_helpers.GetHotlistRoleName({111, 222, 999}, hotlist))
+    self.assertEqual(
+        'Editor', framework_helpers.GetHotlistRoleName(
+            {222, 333, 999}, hotlist))
+    self.assertEqual(
+        'Follower', framework_helpers.GetHotlistRoleName({333, 999}, hotlist))
 
 
 class UrlFormattingTest(unittest.TestCase):

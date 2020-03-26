@@ -535,19 +535,19 @@ class TrackerAutolinkTest(unittest.TestCase):
       new_refs = autolink.ExtractProjectAndIssueIdsNormal(mr, match)
       ref_batches.append(new_refs)
 
-    self.assertEquals(
-      ref_batches,
-      [[(None, 1)],
-       [(None, 2)],
-       [(None, 3)],
-       [(None, 4)],
-       [(None, 5)],
-       [(None, 6)],
-       [('other-project', 12)],
-       [('other-project', 13)],
-       [(None, 21), (None, 22), (None, 23)],
-       [(None, 31), (None, 32), (None, 33)],
-       ])
+    self.assertEqual(
+        ref_batches, [
+            [(None, 1)],
+            [(None, 2)],
+            [(None, 3)],
+            [(None, 4)],
+            [(None, 5)],
+            [(None, 6)],
+            [('other-project', 12)],
+            [('other-project', 13)],
+            [(None, 21), (None, 22), (None, 23)],
+            [(None, 31), (None, 32), (None, 33)],
+        ])
 
 
   def testExtractProjectAndIssueIdCrbug(self):
@@ -558,11 +558,10 @@ class TrackerAutolinkTest(unittest.TestCase):
       new_refs = autolink.ExtractProjectAndIssueIdsCrBug(mr, match)
       ref_batches.append(new_refs)
 
-    self.assertEquals(
-      ref_batches,
-      [[('chromium', 123)],
-       [('monorail', 456)],
-      ])
+    self.assertEqual(ref_batches, [
+        [('chromium', 123)],
+        [('monorail', 456)],
+    ])
 
   def DoReplaceIssueRef(
       self, content, regex=autolink._ISSUE_REF_RE,
@@ -609,71 +608,71 @@ class TrackerAutolinkTest(unittest.TestCase):
   def testReplaceIssueRef_Normal(self):
     result = self.DoReplaceIssueRef(
         'This relates to issue 1', default_project_name='proj')
-    self.assertEquals('/p/proj/issues/detail?id=1', result[0].href)
-    self.assertEquals('issue 1', result[0].content)
-    self.assertEquals(None, result[0].css_class)
-    self.assertEquals('summary-PROJ-1', result[0].title)
-    self.assertEquals('a', result[0].tag)
+    self.assertEqual('/p/proj/issues/detail?id=1', result[0].href)
+    self.assertEqual('issue 1', result[0].content)
+    self.assertEqual(None, result[0].css_class)
+    self.assertEqual('summary-PROJ-1', result[0].title)
+    self.assertEqual('a', result[0].tag)
 
     result = self.DoReplaceIssueRef(
         ', issue #2', default_project_name='proj')
-    self.assertEquals('/p/proj/issues/detail?id=2', result[0].href)
-    self.assertEquals(' issue #2 ', result[0].content)
-    self.assertEquals('closed_ref', result[0].css_class)
-    self.assertEquals('summary-PROJ-2', result[0].title)
-    self.assertEquals('a', result[0].tag)
+    self.assertEqual('/p/proj/issues/detail?id=2', result[0].href)
+    self.assertEqual(' issue #2 ', result[0].content)
+    self.assertEqual('closed_ref', result[0].css_class)
+    self.assertEqual('summary-PROJ-2', result[0].title)
+    self.assertEqual('a', result[0].tag)
 
     result = self.DoReplaceIssueRef(
         ', and issue3 ', default_project_name='proj')
-    self.assertEquals(None, result[0].href)  # There is no issue 3
-    self.assertEquals('issue3', result[0].content)
+    self.assertEqual(None, result[0].href)  # There is no issue 3
+    self.assertEqual('issue3', result[0].content)
 
     result = self.DoReplaceIssueRef(
         'as well as bug 4', default_project_name='proj')
-    self.assertEquals('/p/proj/issues/detail?id=4', result[0].href)
-    self.assertEquals('bug 4', result[0].content)
+    self.assertEqual('/p/proj/issues/detail?id=4', result[0].href)
+    self.assertEqual('bug 4', result[0].content)
 
     result = self.DoReplaceIssueRef(
         ', bug #5, ', default_project_name='proj')
-    self.assertEquals('/p/proj/issues/detail?id=5', result[0].href)
-    self.assertEquals(' bug #5 ', result[0].content)
+    self.assertEqual('/p/proj/issues/detail?id=5', result[0].href)
+    self.assertEqual(' bug #5 ', result[0].content)
 
     result = self.DoReplaceIssueRef(
         'and bug6', default_project_name='proj')
-    self.assertEquals('/p/proj/issues/detail?id=6', result[0].href)
-    self.assertEquals('bug6', result[0].content)
+    self.assertEqual('/p/proj/issues/detail?id=6', result[0].href)
+    self.assertEqual('bug6', result[0].content)
 
     result = self.DoReplaceIssueRef(
         'with issue other-project:12', default_project_name='proj')
-    self.assertEquals('/p/other-project/issues/detail?id=12', result[0].href)
-    self.assertEquals('issue other-project:12', result[0].content)
+    self.assertEqual('/p/other-project/issues/detail?id=12', result[0].href)
+    self.assertEqual('issue other-project:12', result[0].content)
 
     result = self.DoReplaceIssueRef(
         'and issue other-project#13', default_project_name='proj')
-    self.assertEquals('/p/other-project/issues/detail?id=13', result[0].href)
-    self.assertEquals(' issue other-project#13 ', result[0].content)
+    self.assertEqual('/p/other-project/issues/detail?id=13', result[0].href)
+    self.assertEqual(' issue other-project#13 ', result[0].content)
 
   def testReplaceIssueRef_CrBug(self):
     result = self.DoReplaceIssueRef(
         'and crbug.com/other-project/13', regex=autolink._CRBUG_REF_RE,
         single_issue_regex=autolink._CRBUG_REF_RE,
         default_project_name='chromium')
-    self.assertEquals('/p/other-project/issues/detail?id=13', result[0].href)
-    self.assertEquals(' crbug.com/other-project/13 ', result[0].content)
+    self.assertEqual('/p/other-project/issues/detail?id=13', result[0].href)
+    self.assertEqual(' crbug.com/other-project/13 ', result[0].content)
 
     result = self.DoReplaceIssueRef(
         'and http://crbug.com/13', regex=autolink._CRBUG_REF_RE,
         single_issue_regex=autolink._CRBUG_REF_RE,
         default_project_name='chromium')
-    self.assertEquals('/p/chromium/issues/detail?id=13', result[0].href)
-    self.assertEquals(' http://crbug.com/13 ', result[0].content)
+    self.assertEqual('/p/chromium/issues/detail?id=13', result[0].href)
+    self.assertEqual(' http://crbug.com/13 ', result[0].content)
 
     result = self.DoReplaceIssueRef(
         'and http://crbug.com/13#c17', regex=autolink._CRBUG_REF_RE,
         single_issue_regex=autolink._CRBUG_REF_RE,
         default_project_name='chromium')
-    self.assertEquals('/p/chromium/issues/detail?id=13#c17', result[0].href)
-    self.assertEquals(' http://crbug.com/13#c17 ', result[0].content)
+    self.assertEqual('/p/chromium/issues/detail?id=13#c17', result[0].href)
+    self.assertEqual(' http://crbug.com/13#c17 ', result[0].content)
 
   def testParseProjectNameMatch(self):
     golden = 'project-name'
@@ -686,12 +685,12 @@ class TrackerAutolinkTest(unittest.TestCase):
 
     # First pass checks all valid project name results
     for pattern in variations:
-      self.assertEquals(
+      self.assertEqual(
           golden, autolink._ParseProjectNameMatch(pattern % golden))
 
     # Second pass tests all inputs that should result in None
     for pattern in variations:
-      self.assert_(
+      self.assertTrue(
           autolink._ParseProjectNameMatch(pattern % '') in [None, ''])
 
 
@@ -722,10 +721,13 @@ class VCAutolinkTest(unittest.TestCase):
       new_refs = autolink.ExtractRevNums(None, match)
       refs.extend(new_refs)
 
-    self.assertEquals(
-        refs, [self.GIT_HASH_1, self.GIT_HASH_2, self.GIT_HASH_3,
-               self.GIT_HASH_1.upper(), self.GIT_HASH_2.upper(),
-               self.GIT_HASH_3.upper()])
+    self.assertEqual(
+        refs, [
+            self.GIT_HASH_1, self.GIT_HASH_2, self.GIT_HASH_3,
+            self.GIT_HASH_1.upper(),
+            self.GIT_HASH_2.upper(),
+            self.GIT_HASH_3.upper()
+        ])
 
   def testExtractRevNums(self):
     refs = []
@@ -734,8 +736,7 @@ class VCAutolinkTest(unittest.TestCase):
       refs.extend(new_refs)
 
     # Note that we only autolink rNNNN with at least 4 digits.
-    self.assertEquals(
-        refs, ['3400', '1234567', '9025'])
+    self.assertEqual(refs, ['3400', '1234567', '9025'])
 
 
   def DoReplaceRevisionRef(self, content, project=None):
@@ -761,42 +762,40 @@ class VCAutolinkTest(unittest.TestCase):
   def testReplaceRevisionRef(self):
     result = self.DoReplaceRevisionRef(
         'This is a fix for r%s' % self.GIT_HASH_1)
-    self.assertEquals('https://crrev.com/%s' % self.GIT_HASH_1, result[0].href)
-    self.assertEquals('r%s' % self.GIT_HASH_1, result[0].content)
+    self.assertEqual('https://crrev.com/%s' % self.GIT_HASH_1, result[0].href)
+    self.assertEqual('r%s' % self.GIT_HASH_1, result[0].content)
 
     result = self.DoReplaceRevisionRef(
         'and R%s, by r2d2, who ' % self.GIT_HASH_2)
-    self.assertEquals('https://crrev.com/%s' % self.GIT_HASH_2, result[0].href)
-    self.assertEquals('R%s' % self.GIT_HASH_2, result[0].content)
+    self.assertEqual('https://crrev.com/%s' % self.GIT_HASH_2, result[0].href)
+    self.assertEqual('R%s' % self.GIT_HASH_2, result[0].content)
 
     result = self.DoReplaceRevisionRef('by r2d2, who ')
-    self.assertEquals(None, result)
+    self.assertEqual(None, result)
 
     result = self.DoReplaceRevisionRef(
         'also authored revision %s, ' % self.GIT_HASH_3)
-    self.assertEquals('https://crrev.com/%s' % self.GIT_HASH_3, result[0].href)
-    self.assertEquals('revision %s' % self.GIT_HASH_3, result[0].content)
+    self.assertEqual('https://crrev.com/%s' % self.GIT_HASH_3, result[0].href)
+    self.assertEqual('revision %s' % self.GIT_HASH_3, result[0].content)
 
     result = self.DoReplaceRevisionRef(
         'revision #%s, ' % self.GIT_HASH_1.upper())
-    self.assertEquals(
+    self.assertEqual(
         'https://crrev.com/%s' % self.GIT_HASH_1.upper(), result[0].href)
-    self.assertEquals(
+    self.assertEqual(
         'revision #%s' % self.GIT_HASH_1.upper(), result[0].content)
 
     result = self.DoReplaceRevisionRef(
         'revision %s, ' % self.GIT_HASH_2.upper())
-    self.assertEquals(
+    self.assertEqual(
         'https://crrev.com/%s' % self.GIT_HASH_2.upper(), result[0].href)
-    self.assertEquals(
-        'revision %s' % self.GIT_HASH_2.upper(), result[0].content)
+    self.assertEqual('revision %s' % self.GIT_HASH_2.upper(), result[0].content)
 
     result = self.DoReplaceRevisionRef(
         'and revision %s' % self.GIT_HASH_3.upper())
-    self.assertEquals(
+    self.assertEqual(
         'https://crrev.com/%s' % self.GIT_HASH_3.upper(), result[0].href)
-    self.assertEquals(
-        'revision %s' % self.GIT_HASH_3.upper(), result[0].content)
+    self.assertEqual('revision %s' % self.GIT_HASH_3.upper(), result[0].content)
 
   def testReplaceRevisionRef_CustomURL(self):
     """A project can override the URL used for revision links."""
@@ -804,6 +803,6 @@ class VCAutolinkTest(unittest.TestCase):
     project.revision_url_format = 'http://example.com/+/{revnum}'
     result = self.DoReplaceRevisionRef(
         'This is a fix for r%s' % self.GIT_HASH_1, project=project)
-    self.assertEquals(
+    self.assertEqual(
         'http://example.com/+/%s' % self.GIT_HASH_1, result[0].href)
-    self.assertEquals('r%s' % self.GIT_HASH_1, result[0].content)
+    self.assertEqual('r%s' % self.GIT_HASH_1, result[0].content)

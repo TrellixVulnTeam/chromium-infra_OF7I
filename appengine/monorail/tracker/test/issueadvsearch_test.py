@@ -60,20 +60,19 @@ class IssueAdvSearchTest(unittest.TestCase):
     return query
 
   def test_AccumulateANDTerm(self):
-    query = self._testAND('', 'foo', {'foo':'bar'}, [])
-    self.assertEquals(['bar'], query)
+    query = self._testAND('', 'foo', {'foo': 'bar'}, [])
+    self.assertEqual(['bar'], query)
 
-    query = self._testAND('', 'bar', {'bar':'baz=zippy'}, query)
-    self.assertEquals(['bar', 'baz', 'zippy'], query)
+    query = self._testAND('', 'bar', {'bar': 'baz=zippy'}, query)
+    self.assertEqual(['bar', 'baz', 'zippy'], query)
 
   def _testOR(self, operator, field, post_data, query):
     self.servlet._AccumulateORTerm(operator, field, post_data, query)
     return query
 
   def test_AccumulateORTerm(self):
-    query = self._testOR('', 'foo', {'foo':'bar'}, [])
-    self.assertEquals(['bar'], query)
+    query = self._testOR('', 'foo', {'foo': 'bar'}, [])
+    self.assertEqual(['bar'], query)
 
-    query = self._testOR('', 'bar', {'bar':'baz=zippy'}, query)
-    self.assertEquals(['bar', 'baz,zippy'], query)
-
+    query = self._testOR('', 'bar', {'bar': 'baz=zippy'}, query)
+    self.assertEqual(['bar', 'baz,zippy'], query)

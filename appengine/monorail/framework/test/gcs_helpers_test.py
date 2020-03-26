@@ -88,7 +88,7 @@ class GcsHelpersTest(unittest.TestCase):
         content, mime_type, project_id, gcs_helpers.DEFAULT_THUMB_WIDTH,
         gcs_helpers.DEFAULT_THUMB_HEIGHT)
     self.mox.VerifyAll()
-    self.assertEquals(object_id, ret_id)
+    self.assertEqual(object_id, ret_id)
 
   def testStoreObjectInGCS_NotResizableMimeType(self):
     guid = 'aaaaa'
@@ -117,7 +117,7 @@ class GcsHelpersTest(unittest.TestCase):
         content, mime_type, project_id, gcs_helpers.DEFAULT_THUMB_WIDTH,
         gcs_helpers.DEFAULT_THUMB_HEIGHT, filename='file.ext')
     self.mox.VerifyAll()
-    self.assertEquals(object_id, ret_id)
+    self.assertEqual(object_id, ret_id)
 
   def testCheckMemeTypeResizable(self):
     for resizable_mime_type in gcs_helpers.RESIZABLE_MIME_TYPES:
@@ -146,7 +146,7 @@ class GcsHelpersTest(unittest.TestCase):
 
     ret_id = gcs_helpers.StoreLogoInGCS(file_name, content, project_id)
     self.mox.VerifyAll()
-    self.assertEquals(object_id, ret_id)
+    self.assertEqual(object_id, ret_id)
 
   @mock.patch('google.appengine.api.urlfetch.fetch')
   def testFetchSignedURL_Success(self, mock_fetch):
@@ -154,7 +154,7 @@ class GcsHelpersTest(unittest.TestCase):
         headers={'Location': 'signed url'})
     actual = gcs_helpers._FetchSignedURL('signing req url')
     mock_fetch.assert_called_with('signing req url', follow_redirects=False)
-    self.assertEquals('signed url', actual)
+    self.assertEqual('signed url', actual)
 
   @mock.patch('google.appengine.api.urlfetch.fetch')
   def testFetchSignedURL_UnderpopulatedResult(self, mock_fetch):
@@ -176,11 +176,10 @@ class GcsHelpersTest(unittest.TestCase):
       gat.return_value = ['token']
       mock_FetchSignedURL.return_value = 'signed url'
       signed_url = gcs_helpers.SignUrl('bucket', '/object')
-      self.assertEquals('signed url', signed_url)
+      self.assertEqual('signed url', signed_url)
 
   @mock.patch('framework.gcs_helpers._FetchSignedURL')
   def testSignUrl_DownloadError(self, mock_FetchSignedURL):
     mock_FetchSignedURL.side_effect = urlfetch.DownloadError
-    self.assertEquals(
-        '/missing-gcs-url',
-        gcs_helpers.SignUrl('bucket', '/object'))
+    self.assertEqual(
+        '/missing-gcs-url', gcs_helpers.SignUrl('bucket', '/object'))

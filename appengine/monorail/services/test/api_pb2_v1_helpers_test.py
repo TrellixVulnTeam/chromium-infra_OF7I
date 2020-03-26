@@ -96,32 +96,30 @@ class ApiV1HelpersTest(unittest.TestCase):
     """Test convert_template."""
     template = MakeTemplate('test')
     prompt = api_pb2_v1_helpers.convert_template(template)
-    self.assertEquals(template.name, prompt.name)
-    self.assertEquals(template.summary, prompt.title)
-    self.assertEquals(template.content, prompt.description)
-    self.assertEquals(
-        template.summary_must_be_edited, prompt.titleMustBeEdited)
-    self.assertEquals(template.status, prompt.status)
-    self.assertEquals(template.labels, prompt.labels)
-    self.assertEquals(template.members_only, prompt.membersOnly)
-    self.assertEquals(
-        template.owner_defaults_to_member, prompt.defaultToMember)
-    self.assertEquals(template.component_required, prompt.componentRequired)
+    self.assertEqual(template.name, prompt.name)
+    self.assertEqual(template.summary, prompt.title)
+    self.assertEqual(template.content, prompt.description)
+    self.assertEqual(template.summary_must_be_edited, prompt.titleMustBeEdited)
+    self.assertEqual(template.status, prompt.status)
+    self.assertEqual(template.labels, prompt.labels)
+    self.assertEqual(template.members_only, prompt.membersOnly)
+    self.assertEqual(template.owner_defaults_to_member, prompt.defaultToMember)
+    self.assertEqual(template.component_required, prompt.componentRequired)
 
   def testConvertLabel(self):
     """Test convert_label."""
     labeldef = MakeLabel('test')
     label = api_pb2_v1_helpers.convert_label(labeldef)
-    self.assertEquals(labeldef.label, label.label)
-    self.assertEquals(labeldef.label_docstring, label.description)
+    self.assertEqual(labeldef.label, label.label)
+    self.assertEqual(labeldef.label_docstring, label.description)
 
   def testConvertStatus(self):
     """Test convert_status."""
     statusdef = MakeStatus('test')
     status = api_pb2_v1_helpers.convert_status(statusdef)
-    self.assertEquals(statusdef.status, status.status)
-    self.assertEquals(statusdef.means_open, status.meansOpen)
-    self.assertEquals(statusdef.status_docstring, status.description)
+    self.assertEqual(statusdef.status, status.status)
+    self.assertEqual(statusdef.means_open, status.meansOpen)
+    self.assertEqual(statusdef.status_docstring, status.description)
 
   def testConvertProjectIssueConfig(self):
     """Test convert_project_config."""
@@ -132,18 +130,17 @@ class ApiV1HelpersTest(unittest.TestCase):
         MakeTemplate('%s-template2' % prefix),
     ]
     config_api = api_pb2_v1_helpers.convert_project_config(config, templates)
-    self.assertEquals(config.restrict_to_known, config_api.restrictToKnown)
-    self.assertEquals(
-        config.default_col_spec.split(), config_api.defaultColumns)
-    self.assertEquals(
+    self.assertEqual(config.restrict_to_known, config_api.restrictToKnown)
+    self.assertEqual(config.default_col_spec.split(), config_api.defaultColumns)
+    self.assertEqual(
         config.default_sort_spec.split(), config_api.defaultSorting)
-    self.assertEquals(2, len(config_api.statuses))
-    self.assertEquals(2, len(config_api.labels))
-    self.assertEquals(2, len(config_api.prompts))
-    self.assertEquals(
+    self.assertEqual(2, len(config_api.statuses))
+    self.assertEqual(2, len(config_api.labels))
+    self.assertEqual(2, len(config_api.prompts))
+    self.assertEqual(
         config.default_template_for_developers,
         config_api.defaultPromptForMembers)
-    self.assertEquals(
+    self.assertEqual(
         config.default_template_for_users,
         config_api.defaultPromptForNonMembers)
 
@@ -159,12 +156,12 @@ class ApiV1HelpersTest(unittest.TestCase):
     ]
     project_api = api_pb2_v1_helpers.convert_project(project, config, role,
         templates)
-    self.assertEquals(project.project_name, project_api.name)
-    self.assertEquals(project.project_name, project_api.externalId)
-    self.assertEquals('/p/%s/' % project.project_name, project_api.htmlLink)
-    self.assertEquals(project.summary, project_api.summary)
-    self.assertEquals(project.description, project_api.description)
-    self.assertEquals(role, project_api.role)
+    self.assertEqual(project.project_name, project_api.name)
+    self.assertEqual(project.project_name, project_api.externalId)
+    self.assertEqual('/p/%s/' % project.project_name, project_api.htmlLink)
+    self.assertEqual(project.summary, project_api.summary)
+    self.assertEqual(project.description, project_api.description)
+    self.assertEqual(role, project_api.role)
     self.assertIsInstance(
         project_api.issuesConfig, api_pb2_v1.ProjectIssueConfig)
 
@@ -172,7 +169,7 @@ class ApiV1HelpersTest(unittest.TestCase):
     """Test convert_person."""
     result = api_pb2_v1_helpers.convert_person(111, None, self.services)
     self.assertIsInstance(result, api_pb2_v1.AtomPerson)
-    self.assertEquals('user@example.com', result.name)
+    self.assertEqual('user@example.com', result.name)
 
     none_user = api_pb2_v1_helpers.convert_person(None, '', self.services)
     self.assertIsNone(none_user)
@@ -194,8 +191,8 @@ class ApiV1HelpersTest(unittest.TestCase):
     mar.cnxn = None
     mar.project_name = 'test-project'
     result = api_pb2_v1_helpers.convert_issue_ids(issue_ids, mar, self.services)
-    self.assertEquals(1, len(result))
-    self.assertEquals(1, result[0].issueId)
+    self.assertEqual(1, len(result))
+    self.assertEqual(1, result[0].issueId)
 
   def testConvertIssueRef(self):
     """Test convert_issueref_pbs."""
@@ -213,8 +210,8 @@ class ApiV1HelpersTest(unittest.TestCase):
         projectId='test-project'
     )
     result = api_pb2_v1_helpers.convert_issueref_pbs([ir], mar, self.services)
-    self.assertEquals(1, len(result))
-    self.assertEquals(100001, result[0])
+    self.assertEqual(1, len(result))
+    self.assertEqual(100001, result[0])
 
   def testConvertIssue(self):
     """Convert an internal Issue PB to an IssueWrapper API PB."""
@@ -283,25 +280,30 @@ class ApiV1HelpersTest(unittest.TestCase):
 
     for cls in [api_pb2_v1.IssueWrapper, api_pb2_v1.IssuesGetInsertResponse]:
       result = api_pb2_v1_helpers.convert_issue(cls, issue, mar, self.services)
-      self.assertEquals(1, result.id)
-      self.assertEquals('one', result.title)
-      self.assertEquals('one', result.summary)
-      self.assertEquals(now_dt, result.published)
-      self.assertEquals(now_dt, result.owner_modified)
-      self.assertEquals(now_dt, result.status_modified)
-      self.assertEquals(now_dt, result.component_modified)
-      self.assertEquals(
-          result.fieldValues,
-          [api_pb2_v1.FieldValue(
-              fieldName='EstDays', fieldValue='4', approvalName='DesignReview',
-              derived=False),
-           api_pb2_v1.FieldValue(fieldName='StringField', fieldValue='string',
-                                 phaseName="NotAPhase", derived=False),
-           api_pb2_v1.FieldValue(fieldName='StringField',
-                                 fieldValue=u'\xe2\x9d\xa4\xef\xb8\x8f',
-                                 derived=False),
-          ]
-      )
+      self.assertEqual(1, result.id)
+      self.assertEqual('one', result.title)
+      self.assertEqual('one', result.summary)
+      self.assertEqual(now_dt, result.published)
+      self.assertEqual(now_dt, result.owner_modified)
+      self.assertEqual(now_dt, result.status_modified)
+      self.assertEqual(now_dt, result.component_modified)
+      self.assertEqual(
+          result.fieldValues, [
+              api_pb2_v1.FieldValue(
+                  fieldName='EstDays',
+                  fieldValue='4',
+                  approvalName='DesignReview',
+                  derived=False),
+              api_pb2_v1.FieldValue(
+                  fieldName='StringField',
+                  fieldValue='string',
+                  phaseName="NotAPhase",
+                  derived=False),
+              api_pb2_v1.FieldValue(
+                  fieldName='StringField',
+                  fieldValue=u'\xe2\x9d\xa4\xef\xb8\x8f',
+                  derived=False),
+          ])
       self.assertEqual(
           result.approvalValues,
           [api_pb2_v1.Approval(
@@ -335,11 +337,11 @@ class ApiV1HelpersTest(unittest.TestCase):
         deleted=False)
 
     result = api_pb2_v1_helpers.convert_attachment(attachment)
-    self.assertEquals(attachment.attachment_id, result.attachmentId)
-    self.assertEquals(attachment.filename, result.fileName)
-    self.assertEquals(attachment.filesize, result.fileSize)
-    self.assertEquals(attachment.mimetype, result.mimetype)
-    self.assertEquals(attachment.deleted, result.isDeleted)
+    self.assertEqual(attachment.attachment_id, result.attachmentId)
+    self.assertEqual(attachment.filename, result.fileName)
+    self.assertEqual(attachment.filesize, result.fileSize)
+    self.assertEqual(attachment.mimetype, result.mimetype)
+    self.assertEqual(attachment.deleted, result.isDeleted)
 
   def testConvertAmendments(self):
     """Test convert_amendments."""
@@ -383,14 +385,14 @@ class ApiV1HelpersTest(unittest.TestCase):
 
     result = api_pb2_v1_helpers.convert_amendments(
         issue, amendments, mar, self.services)
-    self.assertEquals(amendment_summary.newvalue, result.summary)
-    self.assertEquals(amendment_status.newvalue, result.status)
-    self.assertEquals('user@example.com', result.owner)
-    self.assertEquals(['label1', '-label2'], result.labels)
-    self.assertEquals(['user@example.com', '-user2@example.com'], result.cc)
-    self.assertEquals(['test-project:1'], result.blockedOn)
-    self.assertEquals(['other:2', '-test-project:3'], result.blocking)
-    self.assertEquals(amendment_mergedinto.newvalue, result.mergedInto)
+    self.assertEqual(amendment_summary.newvalue, result.summary)
+    self.assertEqual(amendment_status.newvalue, result.status)
+    self.assertEqual('user@example.com', result.owner)
+    self.assertEqual(['label1', '-label2'], result.labels)
+    self.assertEqual(['user@example.com', '-user2@example.com'], result.cc)
+    self.assertEqual(['test-project:1'], result.blockedOn)
+    self.assertEqual(['other:2', '-test-project:3'], result.blocking)
+    self.assertEqual(amendment_mergedinto.newvalue, result.mergedInto)
 
   def testConvertApprovalAmendments(self):
     """Test convert_approval_comment."""
@@ -406,10 +408,10 @@ class ApiV1HelpersTest(unittest.TestCase):
     amendments = [amendment_status, amendment_approvers]
     result = api_pb2_v1_helpers.convert_approval_amendments(
         amendments, mar, self.services)
-    self.assertEquals(amendment_status.newvalue, result.status)
-    self.assertEquals(['user1@example.com', 'user2@example.com',
-                       '-user3@example.com'],
-                      result.approvers)
+    self.assertEqual(amendment_status.newvalue, result.status)
+    self.assertEqual(
+        ['user1@example.com', 'user2@example.com', '-user3@example.com'],
+        result.approvers)
 
   def testConvertComment(self):
     """Test convert_comment."""
@@ -428,10 +430,10 @@ class ApiV1HelpersTest(unittest.TestCase):
     )
     result = api_pb2_v1_helpers.convert_comment(
         issue, comment, mar, self.services, None)
-    self.assertEquals('user@example.com', result.author.name)
-    self.assertEquals(comment.content, result.content)
-    self.assertEquals('user@example.com', result.deletedBy.name)
-    self.assertEquals(1, result.id)
+    self.assertEqual('user@example.com', result.author.name)
+    self.assertEqual(comment.content, result.content)
+    self.assertEqual('user@example.com', result.deletedBy.name)
+    self.assertEqual(1, result.id)
     # Ensure that the published timestamp falls in a timestamp range to account
     # for the test being run in different timezones.
     # Using "Fri, 23 Jul 2015 00:00:00" and "Fri, 25 Jul 2015 00:00:00".
@@ -456,10 +458,10 @@ class ApiV1HelpersTest(unittest.TestCase):
     )
     result = api_pb2_v1_helpers.convert_approval_comment(
         issue, comment, mar, self.services, None)
-    self.assertEquals('user@example.com', result.author.name)
-    self.assertEquals(comment.content, result.content)
-    self.assertEquals('user@example.com', result.deletedBy.name)
-    self.assertEquals(1, result.id)
+    self.assertEqual('user@example.com', result.author.name)
+    self.assertEqual(comment.content, result.content)
+    self.assertEqual('user@example.com', result.deletedBy.name)
+    self.assertEqual(1, result.id)
     # Ensure that the published timestamp falls in a timestamp range to account
     # for the test being run in different timezones.
     # Using "Fri, 23 Jul 2015 00:00:00" and "Fri, 25 Jul 2015 00:00:00".
@@ -471,7 +473,7 @@ class ApiV1HelpersTest(unittest.TestCase):
 
   def testGetUserEmail(self):
     email = api_pb2_v1_helpers._get_user_email(self.services.user, '', 111)
-    self.assertEquals('user@example.com', email)
+    self.assertEqual('user@example.com', email)
 
     no_user_found = api_pb2_v1_helpers._get_user_email(
         self.services.user, '', 222)
@@ -491,8 +493,8 @@ class ApiV1HelpersTest(unittest.TestCase):
     items = ['1', '-2', '-3', '4']
     list_to_add, list_to_remove = api_pb2_v1_helpers.split_remove_add(items)
 
-    self.assertEquals(['1', '4'], list_to_add)
-    self.assertEquals(['2', '3'], list_to_remove)
+    self.assertEqual(['1', '4'], list_to_add)
+    self.assertEqual(['2', '3'], list_to_remove)
 
   def testIssueGlobalIDs(self):
     """Test issue_global_ids."""
@@ -508,18 +510,17 @@ class ApiV1HelpersTest(unittest.TestCase):
     pairs = ['test-project:1']
     result = api_pb2_v1_helpers.issue_global_ids(
         pairs, 12345, mar, self.services)
-    self.assertEquals(100001, result[0])
+    self.assertEqual(100001, result[0])
 
   def testConvertGroupSettings(self):
     """Test convert_group_settings."""
 
     setting = usergroup_pb2.MakeSettings('owners', 'mdb', 0)
     result = api_pb2_v1_helpers.convert_group_settings('test-group', setting)
-    self.assertEquals('test-group', result.groupName)
-    self.assertEquals(
-        setting.who_can_view_members, result.who_can_view_members)
-    self.assertEquals(setting.ext_group_type, result.ext_group_type)
-    self.assertEquals(setting.last_sync_time, result.last_sync_time)
+    self.assertEqual('test-group', result.groupName)
+    self.assertEqual(setting.who_can_view_members, result.who_can_view_members)
+    self.assertEqual(setting.ext_group_type, result.ext_group_type)
+    self.assertEqual(setting.last_sync_time, result.last_sync_time)
 
   def testConvertComponentDef(self):
     pass  # TODO(jrobbins): Fill in this test.
@@ -537,11 +538,11 @@ class ApiV1HelpersTest(unittest.TestCase):
         field_values, mar, self.services)
     (fv_list_add, fv_list_remove, fv_list_clear,
      label_list_add, label_list_remove) = actual
-    self.assertEquals([], fv_list_add)
-    self.assertEquals([], fv_list_remove)
-    self.assertEquals([], fv_list_clear)
-    self.assertEquals([], label_list_add)
-    self.assertEquals([], label_list_remove)
+    self.assertEqual([], fv_list_add)
+    self.assertEqual([], fv_list_remove)
+    self.assertEqual([], fv_list_clear)
+    self.assertEqual([], label_list_add)
+    self.assertEqual([], label_list_remove)
 
   def testConvertFieldValues_Normal(self):
     """The client wants to edit a custom field."""
@@ -587,20 +588,22 @@ class ApiV1HelpersTest(unittest.TestCase):
         field_values, mar, self.services)
     (fv_list_add, fv_list_remove, fv_list_clear,
      label_list_add, label_list_remove) = actual
-    self.assertEquals(
-      [tracker_bizobj.MakeFieldValue(2, 4, None, None, None, None, False),
-       tracker_bizobj.MakeFieldValue(3, None, 'Scout', None, None, None, False),
-       tracker_bizobj.MakeFieldValue(4, None, None, 111, None, None, False),
-       tracker_bizobj.MakeFieldValue(
-           5, None, None, None, 1512518400, None, False),
-       tracker_bizobj.MakeFieldValue(
-           6, None, None, None, None, 'http://example.com', False),
-       ],
-      fv_list_add)
-    self.assertEquals([], fv_list_remove)
-    self.assertEquals([], fv_list_clear)
-    self.assertEquals(['Priority-High'], label_list_add)
-    self.assertEquals([], label_list_remove)
+    self.assertEqual(
+        [
+            tracker_bizobj.MakeFieldValue(2, 4, None, None, None, None, False),
+            tracker_bizobj.MakeFieldValue(
+                3, None, 'Scout', None, None, None, False),
+            tracker_bizobj.MakeFieldValue(
+                4, None, None, 111, None, None, False),
+            tracker_bizobj.MakeFieldValue(
+                5, None, None, None, 1512518400, None, False),
+            tracker_bizobj.MakeFieldValue(
+                6, None, None, None, None, 'http://example.com', False),
+        ], fv_list_add)
+    self.assertEqual([], fv_list_remove)
+    self.assertEqual([], fv_list_clear)
+    self.assertEqual(['Priority-High'], label_list_add)
+    self.assertEqual([], label_list_remove)
 
   def testConvertFieldValues_ClearAndRemove(self):
     """The client wants to clear and remove some custom fields."""
@@ -640,14 +643,15 @@ class ApiV1HelpersTest(unittest.TestCase):
         field_values, mar, self.services)
     (fv_list_add, fv_list_remove, fv_list_clear,
      label_list_add, label_list_remove) = actual
-    self.assertEquals([], fv_list_add)
-    self.assertEquals(
-        [tracker_bizobj.MakeFieldValue(
-            3, None, 'Scout', None, None, None, False)],
-        fv_list_remove)
-    self.assertEquals([11, 2], fv_list_clear)
-    self.assertEquals([], label_list_add)
-    self.assertEquals(['Priority-High'], label_list_remove)
+    self.assertEqual([], fv_list_add)
+    self.assertEqual(
+        [
+            tracker_bizobj.MakeFieldValue(
+                3, None, 'Scout', None, None, None, False)
+        ], fv_list_remove)
+    self.assertEqual([11, 2], fv_list_clear)
+    self.assertEqual([], label_list_add)
+    self.assertEqual(['Priority-High'], label_list_remove)
 
   def testConvertFieldValues_Errors(self):
     """We don't crash on bad requests."""
@@ -667,11 +671,11 @@ class ApiV1HelpersTest(unittest.TestCase):
         field_values, mar, self.services)
     (fv_list_add, fv_list_remove, fv_list_clear,
      label_list_add, label_list_remove) = actual
-    self.assertEquals([], fv_list_add)
-    self.assertEquals([], fv_list_remove)
-    self.assertEquals([], fv_list_clear)
-    self.assertEquals([], label_list_add)
-    self.assertEquals([], label_list_remove)
+    self.assertEqual([], fv_list_add)
+    self.assertEqual([], fv_list_remove)
+    self.assertEqual([], fv_list_clear)
+    self.assertEqual([], label_list_add)
+    self.assertEqual([], label_list_remove)
 
   def testConvertApprovals(self):
     """Test we can convert ApprovalValues."""

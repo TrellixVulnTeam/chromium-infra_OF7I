@@ -343,16 +343,18 @@ class SortingTest(unittest.TestCase):
 
   def testComputeSortDirectives(self):
     config = tracker_pb2.ProjectIssueConfig()
-    self.assertEquals(['project', 'id'],
-                      sorting.ComputeSortDirectives(config, '', ''))
+    self.assertEqual(
+        ['project', 'id'], sorting.ComputeSortDirectives(config, '', ''))
 
-    self.assertEquals(['a', 'b', 'c', 'project', 'id'],
-                      sorting.ComputeSortDirectives(config, '', 'a b C'))
+    self.assertEqual(
+        ['a', 'b', 'c', 'project', 'id'],
+        sorting.ComputeSortDirectives(config, '', 'a b C'))
 
     config.default_sort_spec = 'id -reporter Owner'
-    self.assertEquals(['id', '-reporter', 'owner', 'project'],
-                      sorting.ComputeSortDirectives(config, '', ''))
+    self.assertEqual(
+        ['id', '-reporter', 'owner', 'project'],
+        sorting.ComputeSortDirectives(config, '', ''))
 
-    self.assertEquals(
+    self.assertEqual(
         ['x', '-b', 'a', 'c', '-owner', 'id', '-reporter', 'project'],
         sorting.ComputeSortDirectives(config, 'x -b', 'A -b c -owner'))

@@ -159,82 +159,79 @@ class ArtifactTest(unittest.TestCase):
     # Empty case.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         [], [], [], self.config)
-    self.assertEquals(merged_labels, [])
-    self.assertEquals(update_add, [])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, [])
+    self.assertEqual(update_add, [])
+    self.assertEqual(update_remove, [])
 
     # No-op case.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['a', 'b'], [], [], self.config)
-    self.assertEquals(merged_labels, ['a', 'b'])
-    self.assertEquals(update_add, [])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['a', 'b'])
+    self.assertEqual(update_add, [])
+    self.assertEqual(update_remove, [])
 
     # Adding and removing at the same time.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['a', 'b', 'd'], ['c'], ['d'], self.config)
-    self.assertEquals(merged_labels, ['a', 'b', 'c'])
-    self.assertEquals(update_add, ['c'])
-    self.assertEquals(update_remove, ['d'])
+    self.assertEqual(merged_labels, ['a', 'b', 'c'])
+    self.assertEqual(update_add, ['c'])
+    self.assertEqual(update_remove, ['d'])
 
     # Removing a non-matching label has no effect.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['a', 'b', 'd'], ['d'], ['e'], self.config)
-    self.assertEquals(merged_labels, ['a', 'b', 'd'])
-    self.assertEquals(update_add, [])     # d was already there.
-    self.assertEquals(update_remove, [])  # there was no e.
+    self.assertEqual(merged_labels, ['a', 'b', 'd'])
+    self.assertEqual(update_add, [])  # d was already there.
+    self.assertEqual(update_remove, [])  # there was no e.
 
     # We can add and remove at the same time.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-OSX'], ['Hot'], ['OpSys-OSX'], self.config)
-    self.assertEquals(merged_labels, ['Priority-Medium', 'Hot'])
-    self.assertEquals(update_add, ['Hot'])
-    self.assertEquals(update_remove, ['OpSys-OSX'])
+    self.assertEqual(merged_labels, ['Priority-Medium', 'Hot'])
+    self.assertEqual(update_add, ['Hot'])
+    self.assertEqual(update_remove, ['OpSys-OSX'])
 
     # Adding Priority-High replaces Priority-Medium.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-OSX'], ['Priority-High', 'OpSys-Win'], [],
         self.config)
-    self.assertEquals(merged_labels,
-                      ['OpSys-OSX', 'Priority-High', 'OpSys-Win'])
-    self.assertEquals(update_add, ['Priority-High', 'OpSys-Win'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['OpSys-OSX', 'Priority-High', 'OpSys-Win'])
+    self.assertEqual(update_add, ['Priority-High', 'OpSys-Win'])
+    self.assertEqual(update_remove, [])
 
     # Adding Priority-High and Priority-Low replaces with High only.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-OSX'],
         ['Priority-High', 'Priority-Low'], [], self.config)
-    self.assertEquals(merged_labels,
-                      ['OpSys-OSX', 'Priority-High'])
-    self.assertEquals(update_add, ['Priority-High'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['OpSys-OSX', 'Priority-High'])
+    self.assertEqual(update_add, ['Priority-High'])
+    self.assertEqual(update_remove, [])
 
     # Removing a mix of matching and non-matching labels only does matching.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-OSX'], [], ['Priority-Medium', 'OpSys-Win'],
         self.config)
-    self.assertEquals(merged_labels, ['OpSys-OSX'])
-    self.assertEquals(update_add, [])
-    self.assertEquals(update_remove, ['Priority-Medium'])
+    self.assertEqual(merged_labels, ['OpSys-OSX'])
+    self.assertEqual(update_add, [])
+    self.assertEqual(update_remove, ['Priority-Medium'])
 
     # Multi-part labels work as expected.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-OSX-11'],
         ['Priority-Medium-Rare', 'OpSys-OSX-13'], [], self.config)
-    self.assertEquals(
+    self.assertEqual(
         merged_labels, ['OpSys-OSX-11', 'Priority-Medium-Rare', 'OpSys-OSX-13'])
-    self.assertEquals(update_add, ['Priority-Medium-Rare', 'OpSys-OSX-13'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(update_add, ['Priority-Medium-Rare', 'OpSys-OSX-13'])
+    self.assertEqual(update_remove, [])
 
     # Multi-part exclusive prefixes only filter labels that match whole prefix.
     self.config.exclusive_label_prefixes.append('Branch-Name')
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Branch-Name-Master'],
         ['Branch-Prediction', 'Branch-Name-Beta'], [], self.config)
-    self.assertEquals(
-        merged_labels, ['Branch-Prediction', 'Branch-Name-Beta'])
-    self.assertEquals(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Branch-Prediction', 'Branch-Name-Beta'])
+    self.assertEqual(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
+    self.assertEqual(update_remove, [])
 
   def testMergeLabels_SingleValuedEnums(self):
     self.config.field_defs.append(tracker_pb2.FieldDef(
@@ -249,49 +246,46 @@ class ArtifactTest(unittest.TestCase):
     # We can add a label for a single-valued enum.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-OSX'], ['Size-L'], [], self.config)
-    self.assertEquals(merged_labels, ['Priority-Medium', 'OpSys-OSX', 'Size-L'])
-    self.assertEquals(update_add, ['Size-L'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Priority-Medium', 'OpSys-OSX', 'Size-L'])
+    self.assertEqual(update_add, ['Size-L'])
+    self.assertEqual(update_remove, [])
 
     # Adding and removing the same label adds it.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium'], ['Size-M'], ['Size-M'], self.config)
-    self.assertEquals(merged_labels, ['Priority-Medium', 'Size-M'])
-    self.assertEquals(update_add, ['Size-M'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Priority-Medium', 'Size-M'])
+    self.assertEqual(update_add, ['Size-M'])
+    self.assertEqual(update_remove, [])
 
     # Adding Size-L replaces Size-M.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'Size-M'], ['Size-L', 'OpSys-Win'], [],
         self.config)
-    self.assertEquals(merged_labels,
-                      ['Priority-Medium', 'Size-L', 'OpSys-Win'])
-    self.assertEquals(update_add, ['Size-L', 'OpSys-Win'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Priority-Medium', 'Size-L', 'OpSys-Win'])
+    self.assertEqual(update_add, ['Size-L', 'OpSys-Win'])
+    self.assertEqual(update_remove, [])
 
     # Adding Size-L and Size-XL replaces with L only.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Size-M', 'OpSys-OSX'], ['Size-L', 'Size-XL'], [], self.config)
-    self.assertEquals(merged_labels, ['OpSys-OSX', 'Size-L'])
-    self.assertEquals(update_add, ['Size-L'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['OpSys-OSX', 'Size-L'])
+    self.assertEqual(update_add, ['Size-L'])
+    self.assertEqual(update_remove, [])
 
     # Multi-part labels work as expected.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Size-M', 'OpSys-OSX'], ['Size-M-USA'], [], self.config)
-    self.assertEquals(
-        merged_labels, ['OpSys-OSX', 'Size-M-USA'])
-    self.assertEquals(update_add, ['Size-M-USA'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['OpSys-OSX', 'Size-M-USA'])
+    self.assertEqual(update_add, ['Size-M-USA'])
+    self.assertEqual(update_remove, [])
 
     # Multi-part enum names only filter labels that match whole name.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Branch-Name-Master'],
         ['Branch-Prediction', 'Branch-Name-Beta'], [], self.config)
-    self.assertEquals(
-        merged_labels, ['Branch-Prediction', 'Branch-Name-Beta'])
-    self.assertEquals(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Branch-Prediction', 'Branch-Name-Beta'])
+    self.assertEqual(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
+    self.assertEqual(update_remove, [])
 
   def testMergeLabels_MultiValuedEnums(self):
     self.config.field_defs.append(tracker_pb2.FieldDef(
@@ -306,64 +300,63 @@ class ArtifactTest(unittest.TestCase):
     # We can add a label for a multi-valued enum.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium'], ['OpSys-Win'], [], self.config)
-    self.assertEquals(merged_labels, ['Priority-Medium', 'OpSys-Win'])
-    self.assertEquals(update_add, ['OpSys-Win'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Priority-Medium', 'OpSys-Win'])
+    self.assertEqual(update_add, ['OpSys-Win'])
+    self.assertEqual(update_remove, [])
 
     # We can remove a matching label for a multi-valued enum.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-Win'], [], ['OpSys-Win'], self.config)
-    self.assertEquals(merged_labels, ['Priority-Medium'])
-    self.assertEquals(update_add, [])
-    self.assertEquals(update_remove, ['OpSys-Win'])
+    self.assertEqual(merged_labels, ['Priority-Medium'])
+    self.assertEqual(update_add, [])
+    self.assertEqual(update_remove, ['OpSys-Win'])
 
     # We can remove a non-matching label and it is a no-op.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-OSX'], [], ['OpSys-Win'], self.config)
-    self.assertEquals(merged_labels, ['Priority-Medium', 'OpSys-OSX'])
-    self.assertEquals(update_add, [])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Priority-Medium', 'OpSys-OSX'])
+    self.assertEqual(update_add, [])
+    self.assertEqual(update_remove, [])
 
     # Adding and removing the same label adds it.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium'], ['OpSys-Win'], ['OpSys-Win'], self.config)
-    self.assertEquals(merged_labels, ['Priority-Medium', 'OpSys-Win'])
-    self.assertEquals(update_add, ['OpSys-Win'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Priority-Medium', 'OpSys-Win'])
+    self.assertEqual(update_add, ['OpSys-Win'])
+    self.assertEqual(update_remove, [])
 
     # We can add a label for a multi-valued enum, even if matching exists.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Priority-Medium', 'OpSys-OSX'], ['OpSys-Win'], [], self.config)
-    self.assertEquals(
+    self.assertEqual(
         merged_labels, ['Priority-Medium', 'OpSys-OSX', 'OpSys-Win'])
-    self.assertEquals(update_add, ['OpSys-Win'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(update_add, ['OpSys-Win'])
+    self.assertEqual(update_remove, [])
 
     # Adding two at the same time is fine.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Size-M', 'OpSys-OSX'], ['OpSys-Win', 'OpSys-Vax'], [], self.config)
-    self.assertEquals(
+    self.assertEqual(
         merged_labels, ['Size-M', 'OpSys-OSX', 'OpSys-Win', 'OpSys-Vax'])
-    self.assertEquals(update_add, ['OpSys-Win', 'OpSys-Vax'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(update_add, ['OpSys-Win', 'OpSys-Vax'])
+    self.assertEqual(update_remove, [])
 
     # Multi-part labels work as expected.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Size-M', 'OpSys-OSX'], ['OpSys-Win-10'], [], self.config)
-    self.assertEquals(
-        merged_labels, ['Size-M', 'OpSys-OSX', 'OpSys-Win-10'])
-    self.assertEquals(update_add, ['OpSys-Win-10'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(merged_labels, ['Size-M', 'OpSys-OSX', 'OpSys-Win-10'])
+    self.assertEqual(update_add, ['OpSys-Win-10'])
+    self.assertEqual(update_remove, [])
 
     # Multi-part enum names don't mess up anything.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
         ['Branch-Name-Master'],
         ['Branch-Prediction', 'Branch-Name-Beta'], [], self.config)
-    self.assertEquals(
+    self.assertEqual(
         merged_labels,
         ['Branch-Name-Master', 'Branch-Prediction', 'Branch-Name-Beta'])
-    self.assertEquals(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
-    self.assertEquals(update_remove, [])
+    self.assertEqual(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
+    self.assertEqual(update_remove, [])
 
 
 class CanonicalizeLabelTest(unittest.TestCase):

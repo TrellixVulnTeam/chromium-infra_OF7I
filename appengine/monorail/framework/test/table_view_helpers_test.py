@@ -169,11 +169,11 @@ class TableViewHelpersTest(unittest.TestCase):
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         EMPTY_SEARCH_RESULTS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, ['x', 'y', 'z'])
+    self.assertEqual(unshown, ['x', 'y', 'z'])
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         SEARCH_RESULTS_WITH_LABELS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(
+    self.assertEqual(
         unshown, ['Mstone', 'Priority', 'Visibility', 'x', 'y', 'z'])
 
   def testComputeUnshownColumns_MoreBuiltins(self):
@@ -184,11 +184,11 @@ class TableViewHelpersTest(unittest.TestCase):
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         EMPTY_SEARCH_RESULTS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, ['z'])
+    self.assertEqual(unshown, ['z'])
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         SEARCH_RESULTS_WITH_LABELS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, ['Mstone', 'Priority', 'Visibility', 'z'])
+    self.assertEqual(unshown, ['Mstone', 'Priority', 'Visibility', 'z'])
 
   def testComputeUnshownColumns_NotAllDefaults(self):
     shown_cols = ['a', 'b']
@@ -198,11 +198,11 @@ class TableViewHelpersTest(unittest.TestCase):
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         EMPTY_SEARCH_RESULTS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, ['c', 'x', 'y', 'z'])
+    self.assertEqual(unshown, ['c', 'x', 'y', 'z'])
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         SEARCH_RESULTS_WITH_LABELS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(
+    self.assertEqual(
         unshown, ['Mstone', 'Priority', 'Visibility', 'c', 'x', 'y', 'z'])
 
   def testComputeUnshownColumns_ExtraNonDefaults(self):
@@ -213,11 +213,11 @@ class TableViewHelpersTest(unittest.TestCase):
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         EMPTY_SEARCH_RESULTS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, ['x', 'y', 'z'])
+    self.assertEqual(unshown, ['x', 'y', 'z'])
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         SEARCH_RESULTS_WITH_LABELS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(
+    self.assertEqual(
         unshown, ['Mstone', 'Priority', 'Visibility', 'x', 'y', 'z'])
 
   def testComputeUnshownColumns_UserColumnsShown(self):
@@ -228,11 +228,11 @@ class TableViewHelpersTest(unittest.TestCase):
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         EMPTY_SEARCH_RESULTS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, ['x', 'y', 'z'])
+    self.assertEqual(unshown, ['x', 'y', 'z'])
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         SEARCH_RESULTS_WITH_LABELS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, ['Mstone', 'Visibility', 'x', 'y', 'z'])
+    self.assertEqual(unshown, ['Mstone', 'Visibility', 'x', 'y', 'z'])
 
   def testComputeUnshownColumns_EverythingShown(self):
     shown_cols = [
@@ -243,11 +243,11 @@ class TableViewHelpersTest(unittest.TestCase):
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         EMPTY_SEARCH_RESULTS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, [])
+    self.assertEqual(unshown, [])
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         SEARCH_RESULTS_WITH_LABELS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, [])
+    self.assertEqual(unshown, [])
 
   def testComputeUnshownColumns_NothingShown(self):
     shown_cols = []
@@ -257,11 +257,11 @@ class TableViewHelpersTest(unittest.TestCase):
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         EMPTY_SEARCH_RESULTS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(unshown, ['a', 'b', 'c', 'x', 'y', 'z'])
+    self.assertEqual(unshown, ['a', 'b', 'c', 'x', 'y', 'z'])
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         SEARCH_RESULTS_WITH_LABELS, shown_cols, config, self.builtin_cols)
-    self.assertEquals(
+    self.assertEqual(
         unshown,
         ['Mstone', 'Priority', 'Visibility', 'a', 'b', 'c', 'x', 'y', 'z'])
 
@@ -274,11 +274,11 @@ class TableViewHelpersTest(unittest.TestCase):
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         EMPTY_SEARCH_RESULTS, shown_cols, config, builtin_cols)
-    self.assertEquals(unshown, [])
+    self.assertEqual(unshown, [])
 
     unshown = table_view_helpers.ComputeUnshownColumns(
         SEARCH_RESULTS_WITH_LABELS, shown_cols, config, builtin_cols)
-    self.assertEquals(unshown, ['Mstone', 'Priority', 'Visibility'])
+    self.assertEqual(unshown, ['Mstone', 'Priority', 'Visibility'])
 
   def testComputeUnshownColumns_FieldDefs(self):
     search_results = [
@@ -345,17 +345,17 @@ class TableViewHelpersTest(unittest.TestCase):
   def testExtractUniqueValues_NoColumns(self):
     column_values = table_view_helpers.ExtractUniqueValues(
         [], SEARCH_RESULTS_WITH_LABELS, {}, self.config, {})
-    self.assertEquals([], column_values)
+    self.assertEqual([], column_values)
 
   def testExtractUniqueValues_NoResults(self):
     cols = ['type', 'priority', 'owner', 'status', 'stars', 'attachments']
     column_values = table_view_helpers.ExtractUniqueValues(
         cols, EMPTY_SEARCH_RESULTS, {}, self.config, {})
-    self.assertEquals(6, len(column_values))
+    self.assertEqual(6, len(column_values))
     for index, col in enumerate(cols):
-      self.assertEquals(index, column_values[index].col_index)
-      self.assertEquals(col, column_values[index].column_name)
-      self.assertEquals([], column_values[index].filter_values)
+      self.assertEqual(index, column_values[index].col_index)
+      self.assertEqual(col, column_values[index].column_name)
+      self.assertEqual([], column_values[index].filter_values)
 
   def testExtractUniqueValues_ExplicitResults(self):
     cols = ['priority', 'owner', 'status', 'stars', 'mstone', 'foo']
@@ -364,25 +364,25 @@ class TableViewHelpersTest(unittest.TestCase):
         }
     column_values = table_view_helpers.ExtractUniqueValues(
         cols, SEARCH_RESULTS_WITH_LABELS, users_by_id, self.config, {})
-    self.assertEquals(len(cols), len(column_values))
+    self.assertEqual(len(cols), len(column_values))
 
-    self.assertEquals('priority', column_values[0].column_name)
-    self.assertEquals(['High', 'Low'], column_values[0].filter_values)
+    self.assertEqual('priority', column_values[0].column_name)
+    self.assertEqual(['High', 'Low'], column_values[0].filter_values)
 
-    self.assertEquals('owner', column_values[1].column_name)
-    self.assertEquals(['f...@example.com'], column_values[1].filter_values)
+    self.assertEqual('owner', column_values[1].column_name)
+    self.assertEqual(['f...@example.com'], column_values[1].filter_values)
 
-    self.assertEquals('status', column_values[2].column_name)
-    self.assertEquals(['New'], column_values[2].filter_values)
+    self.assertEqual('status', column_values[2].column_name)
+    self.assertEqual(['New'], column_values[2].filter_values)
 
-    self.assertEquals('stars', column_values[3].column_name)
-    self.assertEquals([1], column_values[3].filter_values)
+    self.assertEqual('stars', column_values[3].column_name)
+    self.assertEqual([1], column_values[3].filter_values)
 
-    self.assertEquals('mstone', column_values[4].column_name)
-    self.assertEquals(['1', '1.1'], column_values[4].filter_values)
+    self.assertEqual('mstone', column_values[4].column_name)
+    self.assertEqual(['1', '1.1'], column_values[4].filter_values)
 
-    self.assertEquals('foo', column_values[5].column_name)
-    self.assertEquals([], column_values[5].filter_values)
+    self.assertEqual('foo', column_values[5].column_name)
+    self.assertEqual([], column_values[5].filter_values)
 
     # self.assertEquals('mergedinto', column_values[6].column_name)
     # self.assertEquals(
@@ -401,22 +401,22 @@ class TableViewHelpersTest(unittest.TestCase):
     column_values = table_view_helpers.ExtractUniqueValues(
         cols, SEARCH_RESULTS_WITH_LABELS + [issue], users_by_id,
         self.config, {})
-    self.assertEquals(5, len(column_values))
+    self.assertEqual(5, len(column_values))
 
-    self.assertEquals('priority/pri', column_values[0].column_name)
-    self.assertEquals(['0', 'High', 'Low'], column_values[0].filter_values)
+    self.assertEqual('priority/pri', column_values[0].column_name)
+    self.assertEqual(['0', 'High', 'Low'], column_values[0].filter_values)
 
-    self.assertEquals('owner', column_values[1].column_name)
-    self.assertEquals(['f...@example.com'], column_values[1].filter_values)
+    self.assertEqual('owner', column_values[1].column_name)
+    self.assertEqual(['f...@example.com'], column_values[1].filter_values)
 
-    self.assertEquals('status', column_values[2].column_name)
-    self.assertEquals(['New'], column_values[2].filter_values)
+    self.assertEqual('status', column_values[2].column_name)
+    self.assertEqual(['New'], column_values[2].filter_values)
 
-    self.assertEquals('stars', column_values[3].column_name)
-    self.assertEquals([1, 15], column_values[3].filter_values)
+    self.assertEqual('stars', column_values[3].column_name)
+    self.assertEqual([1, 15], column_values[3].filter_values)
 
-    self.assertEquals('mstone/milestone', column_values[4].column_name)
-    self.assertEquals(['1', '1.0', '1.1'], column_values[4].filter_values)
+    self.assertEqual('mstone/milestone', column_values[4].column_name)
+    self.assertEqual(['1', '1.0', '1.1'], column_values[4].filter_values)
 
   def testExtractUniqueValues_DerivedValues(self):
     cols = ['priority', 'milestone', 'owner', 'status']
@@ -439,21 +439,21 @@ class TableViewHelpersTest(unittest.TestCase):
 
     column_values = table_view_helpers.ExtractUniqueValues(
         cols, search_results, users_by_id, self.config, {})
-    self.assertEquals(4, len(column_values))
+    self.assertEqual(4, len(column_values))
 
-    self.assertEquals('priority', column_values[0].column_name)
-    self.assertEquals(['High', 'Low'], column_values[0].filter_values)
+    self.assertEqual('priority', column_values[0].column_name)
+    self.assertEqual(['High', 'Low'], column_values[0].filter_values)
 
-    self.assertEquals('milestone', column_values[1].column_name)
-    self.assertEquals(['1.0', '1.1', '2.0'],
-                      column_values[1].filter_values)
+    self.assertEqual('milestone', column_values[1].column_name)
+    self.assertEqual(['1.0', '1.1', '2.0'], column_values[1].filter_values)
 
-    self.assertEquals('owner', column_values[2].column_name)
-    self.assertEquals(['b...@example.com', 'f...@example.com'],
-                      column_values[2].filter_values)
+    self.assertEqual('owner', column_values[2].column_name)
+    self.assertEqual(
+        ['b...@example.com', 'f...@example.com'],
+        column_values[2].filter_values)
 
-    self.assertEquals('status', column_values[3].column_name)
-    self.assertEquals(['New', 'Started'], column_values[3].filter_values)
+    self.assertEqual('status', column_values[3].column_name)
+    self.assertEqual(['New', 'Started'], column_values[3].filter_values)
 
   def testExtractUniqueValues_ColumnsRobustness(self):
     cols = ['reporter', 'cc', 'owner', 'status', 'attachments']
@@ -463,12 +463,12 @@ class TableViewHelpersTest(unittest.TestCase):
     column_values = table_view_helpers.ExtractUniqueValues(
         cols, search_results, {}, self.config, {})
 
-    self.assertEquals(5, len(column_values))
+    self.assertEqual(5, len(column_values))
     for col_val in column_values:
       if col_val.column_name == 'attachments':
-        self.assertEquals([0], col_val.filter_values)
+        self.assertEqual([0], col_val.filter_values)
       else:
-        self.assertEquals([], col_val.filter_values)
+        self.assertEqual([], col_val.filter_values)
 
   def testMakeTableData_Empty(self):
     visible_results = []

@@ -153,7 +153,7 @@ class MonorailRequestUnitTest(unittest.TestCase):
         path='/foo?notice=%s' % notice_id)
 
     value = mr.GetIntParam('notice')
-    self.assert_(isinstance(value, int))
+    self.assertTrue(isinstance(value, int))
     self.assertEqual(notice_id, value)
 
   def testGetIntParam_ConvertsQueryParamToLong(self):

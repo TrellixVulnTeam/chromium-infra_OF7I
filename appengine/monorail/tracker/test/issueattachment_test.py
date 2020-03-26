@@ -87,7 +87,7 @@ class IssueattachmentTest(unittest.TestCase):
         perms=permissions.EMPTY_PERMISSIONSET)
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet.GatherPageData(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
   # TODO(jrobbins): test cases for missing comment and missing issue.
 

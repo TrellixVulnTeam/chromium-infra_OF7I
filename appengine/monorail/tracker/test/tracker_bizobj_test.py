@@ -40,34 +40,34 @@ class BizobjTest(unittest.TestCase):
 
   def testGetOwnerId(self):
     issue = tracker_pb2.Issue()
-    self.assertEquals(
+    self.assertEqual(
         tracker_bizobj.GetOwnerId(issue), framework_constants.NO_USER_SPECIFIED)
 
     issue.derived_owner_id = 123
-    self.assertEquals(tracker_bizobj.GetOwnerId(issue), 123)
+    self.assertEqual(tracker_bizobj.GetOwnerId(issue), 123)
 
     issue.owner_id = 456
-    self.assertEquals(tracker_bizobj.GetOwnerId(issue), 456)
+    self.assertEqual(tracker_bizobj.GetOwnerId(issue), 456)
 
   def testGetStatus(self):
     issue = tracker_pb2.Issue()
-    self.assertEquals(tracker_bizobj.GetStatus(issue), '')
+    self.assertEqual(tracker_bizobj.GetStatus(issue), '')
 
     issue.derived_status = 'InReview'
-    self.assertEquals(tracker_bizobj.GetStatus(issue), 'InReview')
+    self.assertEqual(tracker_bizobj.GetStatus(issue), 'InReview')
 
     issue.status = 'Forgotten'
-    self.assertEquals(tracker_bizobj.GetStatus(issue), 'Forgotten')
+    self.assertEqual(tracker_bizobj.GetStatus(issue), 'Forgotten')
 
   def testGetCcIds(self):
     issue = tracker_pb2.Issue()
-    self.assertEquals(tracker_bizobj.GetCcIds(issue), [])
+    self.assertEqual(tracker_bizobj.GetCcIds(issue), [])
 
     issue.derived_cc_ids.extend([1, 2, 3])
-    self.assertEquals(tracker_bizobj.GetCcIds(issue), [1, 2, 3])
+    self.assertEqual(tracker_bizobj.GetCcIds(issue), [1, 2, 3])
 
     issue.cc_ids.extend([4, 5, 6])
-    self.assertEquals(tracker_bizobj.GetCcIds(issue), [4, 5, 6, 1, 2, 3])
+    self.assertEqual(tracker_bizobj.GetCcIds(issue), [4, 5, 6, 1, 2, 3])
 
   def testGetApproverIds(self):
     issue = tracker_pb2.Issue()
@@ -82,14 +82,14 @@ class BizobjTest(unittest.TestCase):
 
   def testGetLabels(self):
     issue = tracker_pb2.Issue()
-    self.assertEquals(tracker_bizobj.GetLabels(issue), [])
+    self.assertEqual(tracker_bizobj.GetLabels(issue), [])
 
     issue.derived_labels.extend(['a', 'b', 'c'])
-    self.assertEquals(tracker_bizobj.GetLabels(issue), ['a', 'b', 'c'])
+    self.assertEqual(tracker_bizobj.GetLabels(issue), ['a', 'b', 'c'])
 
     issue.labels.extend(['d', 'e', 'f'])
-    self.assertEquals(tracker_bizobj.GetLabels(issue),
-                      ['d', 'e', 'f', 'a', 'b', 'c'])
+    self.assertEqual(
+        tracker_bizobj.GetLabels(issue), ['d', 'e', 'f', 'a', 'b', 'c'])
 
   def testFindFieldDef_None(self):
     config = tracker_pb2.ProjectIssueConfig()

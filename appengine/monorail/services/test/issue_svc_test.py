@@ -2629,25 +2629,25 @@ class IssueServiceFunctionsTest(unittest.TestCase):
     issue.status = 'New'
 
     # ensure the default value is undef
-    self.assert_(not issue.closed_timestamp)
+    self.assertTrue(not issue.closed_timestamp)
 
     # ensure transitioning to the same and other open states
     # doesn't set the timestamp
     issue.status = 'New'
     issue_svc._UpdateClosedTimestamp(config, issue, 'New')
-    self.assert_(not issue.closed_timestamp)
+    self.assertTrue(not issue.closed_timestamp)
 
     issue.status = 'Accepted'
     issue_svc._UpdateClosedTimestamp(config, issue, 'New')
-    self.assert_(not issue.closed_timestamp)
+    self.assertTrue(not issue.closed_timestamp)
 
     # ensure transitioning from open to closed sets the timestamp
     issue.status = 'Closed'
     issue_svc._UpdateClosedTimestamp(config, issue, 'Accepted')
-    self.assert_(issue.closed_timestamp)
+    self.assertTrue(issue.closed_timestamp)
 
     # ensure that the timestamp is cleared when transitioning from
     # closed to open
     issue.status = 'New'
     issue_svc._UpdateClosedTimestamp(config, issue, 'Closed')
-    self.assert_(not issue.closed_timestamp)
+    self.assertTrue(not issue.closed_timestamp)

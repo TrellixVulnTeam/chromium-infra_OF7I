@@ -51,18 +51,17 @@ class FakeMetaTest(unittest.TestCase):
         real_kw_len = len(real_spec[3]) if real_spec[3] else 0
         fake_kw_len = len(fake_spec[3]) if fake_spec[3] else 0
 
-        self.assertEquals(
+        self.assertEqual(
             len(real_spec[0]) - real_kw_len,
             len(fake_spec[0]) - fake_kw_len,
             'Unequal number of args on %s.%s' % (fake_cls.__name__, name))
-        self.assertEquals(
+        self.assertEqual(
             real_kw_len, fake_kw_len,
             'Unequal number of kwargs on %s.%s' % (fake_cls.__name__, name))
         if real_kw_len:
-          self.assertEquals(
-              real_spec[0][-real_kw_len:],
-              fake_spec[0][-fake_kw_len:],
+          self.assertEqual(
+              real_spec[0][-real_kw_len:], fake_spec[0][-fake_kw_len:],
               'Mismatched kwargs on %s.%s' % (fake_cls.__name__, name))
-        self.assertEquals(
+        self.assertEqual(
             real_spec[3], fake_spec[3],
             'Mismatched kwarg defaults on %s.%s' % (fake_cls.__name__, name))

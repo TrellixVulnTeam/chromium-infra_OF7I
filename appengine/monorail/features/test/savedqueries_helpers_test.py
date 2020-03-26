@@ -82,16 +82,16 @@ class SavedQueriesHelperTest(unittest.TestCase):
     saved_query = MockSavedQuery()
 
     cond_for_missing_query = savedqueries_helpers.SavedQueryToCond(None)
-    self.assertEquals('', cond_for_missing_query)
+    self.assertEqual('', cond_for_missing_query)
 
     cond_with_no_base = savedqueries_helpers.SavedQueryToCond(saved_query)
-    self.assertEquals('query', cond_with_no_base)
+    self.assertEqual('query', cond_with_no_base)
 
     self.mox.StubOutWithMock(tracker_bizobj, 'GetBuiltInQuery')
     tracker_bizobj.GetBuiltInQuery(1).AndReturn('base')
     self.mox.ReplayAll()
     cond_with_base = savedqueries_helpers.SavedQueryToCond(saved_query)
-    self.assertEquals('base query', cond_with_base)
+    self.assertEqual('base query', cond_with_base)
     self.mox.VerifyAll()
 
   def testSavedQueryIDToCond(self):
@@ -100,7 +100,7 @@ class SavedQueriesHelperTest(unittest.TestCase):
     self.mox.ReplayAll()
     query_cond = savedqueries_helpers.SavedQueryIDToCond(
         self.cnxn, self.features, 1)
-    self.assertEquals('ret', query_cond)
+    self.assertEqual('ret', query_cond)
     self.mox.VerifyAll()
 
     self.mox.StubOutWithMock(tracker_bizobj, 'GetBuiltInQuery')
@@ -108,5 +108,5 @@ class SavedQueriesHelperTest(unittest.TestCase):
     self.mox.ReplayAll()
     query_cond = savedqueries_helpers.SavedQueryIDToCond(
         self.cnxn, self.features, 1)
-    self.assertEquals('built_in_query', query_cond)
+    self.assertEqual('built_in_query', query_cond)
     self.mox.VerifyAll()

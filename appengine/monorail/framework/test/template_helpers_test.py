@@ -22,12 +22,12 @@ class HelpersUnitTest(unittest.TestCase):
     # basic in 'n out test
     item = template_helpers.EZTItem(label='foo', group_name='bar')
 
-    self.assertEquals('foo', item.label)
-    self.assertEquals('bar', item.group_name)
+    self.assertEqual('foo', item.label)
+    self.assertEqual('bar', item.group_name)
 
     # be sure the __str__ returns the fields
-    self.assertEquals("EZTItem({'group_name': 'bar', 'label': 'foo'})",
-                      str(item))
+    self.assertEqual(
+        "EZTItem({'group_name': 'bar', 'label': 'foo'})", str(item))
 
   def testPBProxy(self):
     """Checks that PBProxy wraps protobuf objects as expected."""
@@ -177,12 +177,12 @@ class HelpersUnitTest(unittest.TestCase):
 
     errors.error_a = 'A'
     self.assertTrue(errors.AnyErrors())
-    self.assertEquals('A', errors.error_a)
+    self.assertEqual('A', errors.error_a)
 
     errors.SetError('error_b', 'B')
     self.assertTrue(errors.AnyErrors())
-    self.assertEquals('A', errors.error_a)
-    self.assertEquals('B', errors.error_b)
+    self.assertEqual('A', errors.error_a)
+    self.assertEqual('B', errors.error_b)
 
   def testBytesKbOrMb(self):
     self.assertEqual('1023 bytes', template_helpers.BytesKbOrMb(1023))

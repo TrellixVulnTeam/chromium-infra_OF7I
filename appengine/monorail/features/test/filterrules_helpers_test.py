@@ -245,7 +245,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, default_owner_id=1, default_status='S')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (None, None, [], [], [], None, None),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, set(), config))
@@ -255,7 +255,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, default_owner_id=1, default_status='S')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (None, None, [], [], [], None, None),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, set(), config))
@@ -266,7 +266,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, default_owner_id=1, default_status='S')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (1, 'S', [], [], [], None, None),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, set(), config))
@@ -277,7 +277,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, default_owner_id=1, default_status='S')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (1, 'S', [], [], [], None, None),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, {'a', 'b'},
@@ -289,7 +289,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, default_owner_id=1, default_status='S')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (1, 'S', [], [], [], None, None),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, {u'a', u'b'},
@@ -301,7 +301,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, default_owner_id=1, default_status='S')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (1, 'S', [], [], [], None, None),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, {'a', 'b'},
@@ -313,7 +313,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, default_owner_id=1, default_status='S')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (None, None, [], [], [], None, None),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, {'a', 'b'},
@@ -325,7 +325,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, warning='Hey look out')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (None, None, [], [], [], 'Hey look out', None),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, {'a', 'b'},
@@ -337,7 +337,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         pred, error='We cannot allow that')
     predicate_ast = query2ast.ParseUserQuery(
         pred, '', query2ast.BUILTIN_ISSUE_FIELDS, config)
-    self.assertEquals(
+    self.assertEqual(
         (None, None, [], [], [], None, 'We cannot allow that'),
         filterrules_helpers._ApplyRule(
             cnxn, self.services, rule, predicate_ast, issue, {'a', 'b'},
@@ -375,7 +375,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
     # No components.
     issue = fake.MakeTestIssue(
         789, 1, ORIG_SUMMARY, 'New', 0, labels=ORIG_LABELS)
-    self.assertEquals(
+    self.assertEqual(
         (0, '', [], [], [], {}, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
@@ -384,7 +384,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
     issue.component_ids = [20]
     issue = fake.MakeTestIssue(
         789, 1, ORIG_SUMMARY, 'New', 0, labels=ORIG_LABELS)
-    self.assertEquals(
+    self.assertEqual(
         (0, '', [], [], [], {}, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
@@ -403,11 +403,11 @@ class FilterRulesHelpersTest(unittest.TestCase):
       (tracker_pb2.FieldID.LABELS, 'Priority-High'):
           'Added by component DB',
       }
-    self.assertEquals(
-        (0, '',
-         [TEST_ID_MAP['db@example.com'], TEST_ID_MAP['ui-db@example.com']],
-         ['i18n', 'Priority-High'], [],
-         traces, [], []),
+    self.assertEqual(
+        (
+            0, '', [
+                TEST_ID_MAP['db@example.com'], TEST_ID_MAP['ui-db@example.com']
+            ], ['i18n', 'Priority-High'], [], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -420,11 +420,8 @@ class FilterRulesHelpersTest(unittest.TestCase):
       (tracker_pb2.FieldID.CC, TEST_ID_MAP['ui-db@example.com']):
           'Added by component DB',
       }
-    self.assertEquals(
-        (0, '',
-         [TEST_ID_MAP['ui-db@example.com']],
-         [], [],
-         traces, [], []),
+    self.assertEqual(
+        (0, '', [TEST_ID_MAP['ui-db@example.com']], [], [], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -449,12 +446,12 @@ class FilterRulesHelpersTest(unittest.TestCase):
       (tracker_pb2.FieldID.LABELS, 'l10n'):
           'Added by component UI',
       }
-    self.assertEquals(
-        (0, '',
-         [TEST_ID_MAP['db@example.com'], TEST_ID_MAP['ui-db@example.com'],
-          TEST_ID_MAP['ui@example.com']],
-         ['i18n', 'l10n', 'Priority-Medium'], [],
-         traces, [], []),
+    self.assertEqual(
+        (
+            0, '', [
+                TEST_ID_MAP['db@example.com'], TEST_ID_MAP['ui-db@example.com'],
+                TEST_ID_MAP['ui@example.com']
+            ], ['i18n', 'l10n', 'Priority-Medium'], [], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -486,14 +483,14 @@ class FilterRulesHelpersTest(unittest.TestCase):
     # No rules fire.
     issue = fake.MakeTestIssue(
         789, 1, ORIG_SUMMARY, 'New', 0, labels=ORIG_LABELS)
-    self.assertEquals(
+    self.assertEqual(
         (0, '', [], [], [], {}, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
     issue = fake.MakeTestIssue(
         789, 1, ORIG_SUMMARY, 'New', 0, labels=['foo', 'bar'])
-    self.assertEquals(
+    self.assertEqual(
         (0, '', [], [], [], {}, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
@@ -505,7 +502,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         (tracker_pb2.FieldID.OWNER, 444):
             'Added by rule: IF Size=L THEN SET DEFAULT OWNER',
         }
-    self.assertEquals(
+    self.assertEqual(
         (444, '', [], [], [], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
@@ -515,7 +512,7 @@ class FilterRulesHelpersTest(unittest.TestCase):
         789, 1, ORIG_SUMMARY, 'New', 0,
         labels=['HasWorkaround', 'Priority-Critical'])
     traces = {}
-    self.assertEquals(
+    self.assertEqual(
         (0, '', [], [], [], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
@@ -528,9 +525,8 @@ class FilterRulesHelpersTest(unittest.TestCase):
         (tracker_pb2.FieldID.LABELS, 'Private'):
             'Added by rule: IF label:Security THEN ADD LABEL',
         }
-    self.assertEquals(
-        (0, '', [], ['Private'], ['jrobbins@chromium.org'],
-         traces, [], []),
+    self.assertEqual(
+        (0, '', [], ['Private'], ['jrobbins@chromium.org'], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -543,9 +539,8 @@ class FilterRulesHelpersTest(unittest.TestCase):
         (tracker_pb2.FieldID.OWNER, 444):
             'Added by rule: IF Size=L THEN SET DEFAULT OWNER',
         }
-    self.assertEquals(
-        (444, '', [], ['Priority-Low'], [],
-         traces, [], []),
+    self.assertEqual(
+        (444, '', [], ['Priority-Low'], [], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -558,9 +553,10 @@ class FilterRulesHelpersTest(unittest.TestCase):
         (tracker_pb2.FieldID.WARNING, 'It will cost too much'):
             'Added by rule: IF Size=XL THEN ADD WARNING',
         }
-    self.assertEquals(
-        (0, '', [], [], [], traces,
-         ['It will take too long', 'It will cost too much'], []),
+    self.assertEqual(
+        (
+            0, '', [], [], [], traces,
+            ['It will take too long', 'It will cost too much'], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -575,9 +571,10 @@ class FilterRulesHelpersTest(unittest.TestCase):
         (tracker_pb2.FieldID.LABELS, 'Private'):
             'Added by rule: IF label:Security THEN ADD LABEL',
         }
-    self.assertEquals(
-        (0, '', [], ['Private', 'Priority-High'], ['jrobbins@chromium.org'],
-         traces, [], []),
+    self.assertEqual(
+        (
+            0, '', [], ['Private', 'Priority-High'], ['jrobbins@chromium.org'],
+            traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -592,10 +589,10 @@ class FilterRulesHelpersTest(unittest.TestCase):
         (tracker_pb2.FieldID.LABELS, 'Private'):
             'Added by rule: IF label:Security THEN ADD LABEL',
         }
-    self.assertEquals(
-        (0, '', [], ['Private', 'Priority-High', 'Urgent'],
-         ['jrobbins@chromium.org'],
-         traces, [], []),
+    self.assertEqual(
+        (
+            0, '', [], ['Private', 'Priority-High', 'Urgent'],
+            ['jrobbins@chromium.org'], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -612,9 +609,8 @@ class FilterRulesHelpersTest(unittest.TestCase):
         }
     issue = fake.MakeTestIssue(
         789, 1, ORIG_SUMMARY, 'New', 111, labels=['Watch', 'Monitor'])
-    self.assertEquals(
-        (0, '', [111], [], [],
-         traces, [], []),
+    self.assertEqual(
+        (0, '', [111], [], [], traces, [], []),
         filterrules_helpers._ComputeDerivedFields(
             cnxn, self.services, issue, config, rules, predicate_asts))
 
@@ -768,16 +764,16 @@ class FilterRulesHelpersTest(unittest.TestCase):
     rule_pb = filterrules_helpers._ParseOneRule(
         cnxn, 'label:lab1 label:lab2', 'add_labels', 'hot cOld, ', None, 1,
         error_list)
-    self.assertEquals('label:lab1 label:lab2', rule_pb.predicate)
-    self.assertEquals(error_list, [])
-    self.assertEquals(len(rule_pb.add_labels), 2)
-    self.assertEquals(rule_pb.add_labels[0], 'hot')
-    self.assertEquals(rule_pb.add_labels[1], 'cOld')
+    self.assertEqual('label:lab1 label:lab2', rule_pb.predicate)
+    self.assertEqual(error_list, [])
+    self.assertEqual(len(rule_pb.add_labels), 2)
+    self.assertEqual(rule_pb.add_labels[0], 'hot')
+    self.assertEqual(rule_pb.add_labels[1], 'cOld')
 
     rule_pb = filterrules_helpers._ParseOneRule(
         cnxn, '', 'default_status', 'hot cold', None, 1, error_list)
-    self.assertEquals(len(rule_pb.predicate), 0)
-    self.assertEquals(error_list, [])
+    self.assertEqual(len(rule_pb.predicate), 0)
+    self.assertEqual(error_list, [])
 
   def testParseOneRuleDefaultOwner(self):
     cnxn = 'fake SQL connection'
@@ -785,8 +781,8 @@ class FilterRulesHelpersTest(unittest.TestCase):
     rule_pb = filterrules_helpers._ParseOneRule(
         cnxn, 'label:lab1, label:lab2 ', 'default_owner', 'jrobbins',
         self.services.user, 1, error_list)
-    self.assertEquals(error_list, [])
-    self.assertEquals(rule_pb.default_owner_id, TEST_ID_MAP['jrobbins'])
+    self.assertEqual(error_list, [])
+    self.assertEqual(rule_pb.default_owner_id, TEST_ID_MAP['jrobbins'])
 
   def testParseOneRuleDefaultStatus(self):
     cnxn = 'fake SQL connection'
@@ -794,8 +790,8 @@ class FilterRulesHelpersTest(unittest.TestCase):
     rule_pb = filterrules_helpers._ParseOneRule(
         cnxn, 'label:lab1', 'default_status', 'InReview',
         None, 1, error_list)
-    self.assertEquals(error_list, [])
-    self.assertEquals(rule_pb.default_status, 'InReview')
+    self.assertEqual(error_list, [])
+    self.assertEqual(rule_pb.default_status, 'InReview')
 
   def testParseOneRuleAddCcs(self):
     cnxn = 'fake SQL connection'
@@ -803,17 +799,17 @@ class FilterRulesHelpersTest(unittest.TestCase):
     rule_pb = filterrules_helpers._ParseOneRule(
         cnxn, 'label:lab1', 'add_ccs', 'jrobbins, mike.j.parent',
         self.services.user, 1, error_list)
-    self.assertEquals(error_list, [])
-    self.assertEquals(rule_pb.add_cc_ids[0], TEST_ID_MAP['jrobbins'])
-    self.assertEquals(rule_pb.add_cc_ids[1], TEST_ID_MAP['mike.j.parent'])
-    self.assertEquals(len(rule_pb.add_cc_ids), 2)
+    self.assertEqual(error_list, [])
+    self.assertEqual(rule_pb.add_cc_ids[0], TEST_ID_MAP['jrobbins'])
+    self.assertEqual(rule_pb.add_cc_ids[1], TEST_ID_MAP['mike.j.parent'])
+    self.assertEqual(len(rule_pb.add_cc_ids), 2)
 
   def testParseRulesNone(self):
     cnxn = 'fake SQL connection'
     post_data = {}
     rules = filterrules_helpers.ParseRules(
         cnxn, post_data, None, template_helpers.EZTError())
-    self.assertEquals(rules, [])
+    self.assertEqual(rules, [])
 
   def testParseRules(self):
     cnxn = 'fake SQL connection'
@@ -834,14 +830,14 @@ class FilterRulesHelpersTest(unittest.TestCase):
     errors = template_helpers.EZTError()
     rules = filterrules_helpers.ParseRules(
         cnxn, post_data, self.services.user, errors)
-    self.assertEquals(rules[0].predicate, 'a, b c')
-    self.assertEquals(rules[0].default_status, 'Reviewed')
-    self.assertEquals(rules[1].default_owner_id, TEST_ID_MAP['jrobbins'])
-    self.assertEquals(rules[2].add_cc_ids[0], TEST_ID_MAP['jrobbins'])
-    self.assertEquals(rules[2].add_cc_ids[1], TEST_ID_MAP['mike.j.parent'])
-    self.assertEquals(rules[3].add_labels[0], 'hot')
-    self.assertEquals(rules[3].add_labels[1], 'cold')
-    self.assertEquals(len(rules), 4)
+    self.assertEqual(rules[0].predicate, 'a, b c')
+    self.assertEqual(rules[0].default_status, 'Reviewed')
+    self.assertEqual(rules[1].default_owner_id, TEST_ID_MAP['jrobbins'])
+    self.assertEqual(rules[2].add_cc_ids[0], TEST_ID_MAP['jrobbins'])
+    self.assertEqual(rules[2].add_cc_ids[1], TEST_ID_MAP['mike.j.parent'])
+    self.assertEqual(rules[3].add_labels[0], 'hot')
+    self.assertEqual(rules[3].add_labels[1], 'cold')
+    self.assertEqual(len(rules), 4)
     self.assertFalse(errors.AnyErrors())
 
   def testOwnerCcsInvolvedInFilterRules(self):

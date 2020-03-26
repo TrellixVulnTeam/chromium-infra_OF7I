@@ -82,7 +82,7 @@ class ActivitiesTest(unittest.TestCase):
 
     after = 0
     if ascending:
-        after = self.mr_after
+      after = self.mr_after
     self.services.issue.GetIssueActivity(
         mox.IgnoreArg(), num=50, before=0, after=after, project_ids=project_ids,
         user_ids=user_ids, ascending=ascending).AndReturn([comment_1])
@@ -108,12 +108,14 @@ class ActivitiesTest(unittest.TestCase):
     if mr.after:
       pagination = updates_data['pagination']
       self.assertIsNone(pagination.last)
-      self.assertEquals('%s?before=%d' % (updates_page_url.split('/')[-1],
-                                          self.comment_timestamp),
-                        pagination.next_url)
-      self.assertEquals('%s?after=%d' % (updates_page_url.split('/')[-1],
-                                         self.comment_timestamp),
-                        pagination.prev_url)
+      self.assertEqual(
+          '%s?before=%d' %
+          (updates_page_url.split('/')[-1], self.comment_timestamp),
+          pagination.next_url)
+      self.assertEqual(
+          '%s?after=%d' %
+          (updates_page_url.split('/')[-1], self.comment_timestamp),
+          pagination.prev_url)
 
     activity_view = updates_data['updates_data'].older[0]
     self.assertEqual(

@@ -80,10 +80,10 @@ class InboundEmailTest(unittest.TestCase):
 
     email_tasks = self.inbound.ProcessMail(self.msg, self.project_addr)
     self.mox.VerifyAll()
-    self.assertEquals(1, len(email_tasks))
+    self.assertEqual(1, len(email_tasks))
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('Email body too long', email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual('Email body too long', email_task['subject'])
 
   def testProcessMail_NoProjectOnToLine(self):
     self.mox.StubOutWithMock(emailfmt, 'IsProjectAddressOnToLine')
@@ -114,17 +114,17 @@ class InboundEmailTest(unittest.TestCase):
     self.project.state = project_pb2.ProjectState.DELETABLE
     email_tasks = self.inbound.ProcessMail(self.msg, self.project_addr)
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('Project not found', email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual('Project not found', email_task['subject'])
 
   def testProcessMail_ProjectInboundEmailDisabled(self):
     self.services.user.TestAddUser('user@example.com', 111)
     self.project.process_inbound_email = False
     email_tasks = self.inbound.ProcessMail(self.msg, self.project_addr)
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('Email replies are not enabled in project proj',
-                      email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual(
+        'Email replies are not enabled in project proj', email_task['subject'])
 
   def testProcessMail_NoRefHeader(self):
     self.services.user.TestAddUser('user@example.com', 111)
@@ -139,21 +139,22 @@ class InboundEmailTest(unittest.TestCase):
 
     email_tasks = self.inbound.ProcessMail(self.msg, self.project_addr)
     self.mox.VerifyAll()
-    self.assertEquals(1, len(email_tasks))
+    self.assertEqual(1, len(email_tasks))
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('Your message is not a reply to a notification email',
-                      email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual(
+        'Your message is not a reply to a notification email',
+        email_task['subject'])
 
   def testProcessMail_NoAccount(self):
     # Note: not calling TestAddUser().
     email_tasks = self.inbound.ProcessMail(self.msg, self.project_addr)
     self.mox.VerifyAll()
-    self.assertEquals(1, len(email_tasks))
+    self.assertEqual(1, len(email_tasks))
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('Could not determine account of sender',
-                      email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual(
+        'Could not determine account of sender', email_task['subject'])
 
   def testProcessMail_BannedAccount(self):
     user_pb = self.services.user.TestAddUser('user@example.com', 111)
@@ -167,11 +168,11 @@ class InboundEmailTest(unittest.TestCase):
 
     email_tasks = self.inbound.ProcessMail(self.msg, self.project_addr)
     self.mox.VerifyAll()
-    self.assertEquals(1, len(email_tasks))
+    self.assertEqual(1, len(email_tasks))
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('You are banned from using this issue tracker',
-                      email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual(
+        'You are banned from using this issue tracker', email_task['subject'])
 
   def testProcessMail_Success(self):
     self.services.user.TestAddUser('user@example.com', 111)
@@ -241,12 +242,13 @@ class InboundEmailTest(unittest.TestCase):
     email_tasks = self.inbound.ProcessIssueReply(
         mc, self.project, nonexistant_local_id, self.project_addr,
         'awesome!')
-    self.assertEquals(1, len(email_tasks))
+    self.assertEqual(1, len(email_tasks))
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('Could not find issue %d in project %s' % (
-                          nonexistant_local_id, self.project.project_name),
-                      email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual(
+        'Could not find issue %d in project %s' %
+        (nonexistant_local_id, self.project.project_name),
+        email_task['subject'])
 
   def testProcessIssueReply_DeletedIssue(self):
     self.issue.deleted = True
@@ -257,12 +259,12 @@ class InboundEmailTest(unittest.TestCase):
     email_tasks = self.inbound.ProcessIssueReply(
         mc, self.project, self.issue.local_id, self.project_addr,
         'awesome!')
-    self.assertEquals(1, len(email_tasks))
+    self.assertEqual(1, len(email_tasks))
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('Could not find issue %d in project %s' % (
-                          self.issue.local_id, self.project.project_name),
-                      email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual(
+        'Could not find issue %d in project %s' %
+        (self.issue.local_id, self.project.project_name), email_task['subject'])
 
   def VerifyUserHasNoPerm(self, perms):
     mc = monorailcontext.MonorailContext(
@@ -272,11 +274,11 @@ class InboundEmailTest(unittest.TestCase):
     email_tasks = self.inbound.ProcessIssueReply(
         mc, self.project, self.issue.local_id, self.project_addr,
         'awesome!')
-    self.assertEquals(1, len(email_tasks))
+    self.assertEqual(1, len(email_tasks))
     email_task = email_tasks[0]
-    self.assertEquals('user@example.com', email_task['to'])
-    self.assertEquals('User does not have permission to add a comment',
-                      email_task['subject'])
+    self.assertEqual('user@example.com', email_task['to'])
+    self.assertEqual(
+        'User does not have permission to add a comment', email_task['subject'])
 
   def testProcessIssueReply_NoViewPerm(self):
     self.VerifyUserHasNoPerm(permissions.EMPTY_PERMISSIONSET)
@@ -380,12 +382,12 @@ class BouncedEmailTest(unittest.TestCase):
 
   def testReceive_Normal(self):
     """Find the user that bounced and set email_bounce_timestamp."""
-    self.assertEquals(0, self.user.email_bounce_timestamp)
+    self.assertEqual(0, self.user.email_bounce_timestamp)
 
     bounce_message = testing_helpers.Blank(original={'to': 'user@example.com'})
     self.servlet.receive(bounce_message)
 
-    self.assertNotEquals(0, self.user.email_bounce_timestamp)
+    self.assertNotEqual(0, self.user.email_bounce_timestamp)
 
   def testReceive_NoSuchUser(self):
     """When not found, log it and ignore without creating a user record."""
@@ -395,4 +397,4 @@ class BouncedEmailTest(unittest.TestCase):
         original={'to': 'nope@example.com'},
         notification='notification')
     self.servlet.receive(bounce_message)
-    self.assertEquals(1, len(self.services.user.users_by_id))
+    self.assertEqual(1, len(self.services.user.users_by_id))

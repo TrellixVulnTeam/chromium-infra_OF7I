@@ -51,25 +51,25 @@ class InboundEmailTest(unittest.TestCase):
     commands_found = self.uia.Parse(self.cnxn, self.project.project_name, 111,
                    ['line 1'], self.services,
                    hostport='testing-app.appspot.com', strip_quoted_lines=True)
-    self.assertEquals(False, commands_found)
-    self.assertEquals('line 1', self.uia.description)
-    self.assertEquals('line 1', self.uia.inbound_message)
+    self.assertEqual(False, commands_found)
+    self.assertEqual('line 1', self.uia.description)
+    self.assertEqual('line 1', self.uia.inbound_message)
 
   def testParse_StripQuotedLines(self):
     commands_found = self.uia.Parse(self.cnxn, self.project.project_name, 111,
                    ['summary:something', '> line 1', 'line 2'], self.services,
                    hostport='testing-app.appspot.com', strip_quoted_lines=True)
-    self.assertEquals(True, commands_found)
-    self.assertEquals('line 2', self.uia.description)
-    self.assertEquals('summary:something\n> line 1\nline 2',
-                      self.uia.inbound_message)
+    self.assertEqual(True, commands_found)
+    self.assertEqual('line 2', self.uia.description)
+    self.assertEqual(
+        'summary:something\n> line 1\nline 2', self.uia.inbound_message)
 
   def testParse_NoStripQuotedLines(self):
     commands_found = self.uia.Parse(self.cnxn, self.project.project_name, 111,
                    ['summary:something', '> line 1', 'line 2'], self.services,
                    hostport='testing-app.appspot.com')
-    self.assertEquals(True, commands_found)
-    self.assertEquals('> line 1\nline 2', self.uia.description)
+    self.assertEqual(True, commands_found)
+    self.assertEqual('> line 1\nline 2', self.uia.description)
     self.assertIsNone(self.uia.inbound_message)
 
   def setupAndCallRun(self, mc, commenter_id, mock_pasicn):
@@ -91,10 +91,10 @@ class InboundEmailTest(unittest.TestCase):
 
     self.setupAndCallRun(mc, 111, mock_pasicn)
 
-    self.assertEquals('> line 1\n> line 2', self.uia.description)
-    # Assert that ammendments were made to the issue.
-    self.assertEquals('something', self.issue.summary)
-    self.assertEquals('New', self.issue.status)
+    self.assertEqual('> line 1\n> line 2', self.uia.description)
+    # Assert that amendments were made to the issue.
+    self.assertEqual('something', self.issue.summary)
+    self.assertEqual('New', self.issue.status)
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
@@ -105,7 +105,7 @@ class InboundEmailTest(unittest.TestCase):
 
     self.setupAndCallRun(mc, 222, mock_pasicn)
 
-    self.assertEquals('> line 1\n> line 2', self.uia.description)
-    # Assert that ammendments were *not* made to the issue.
-    self.assertEquals('summary', self.issue.summary)
-    self.assertEquals('Assigned', self.issue.status)
+    self.assertEqual('> line 1\n> line 2', self.uia.description)
+    # Assert that amendments were *not* made to the issue.
+    self.assertEqual('summary', self.issue.summary)
+    self.assertEqual('Assigned', self.issue.status)

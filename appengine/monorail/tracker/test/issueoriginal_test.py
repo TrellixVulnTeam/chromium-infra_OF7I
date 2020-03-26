@@ -160,14 +160,14 @@ class IssueOriginalTest(unittest.TestCase):
         project=self.proj)
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet.GatherPageData(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
     _request, mr = testing_helpers.GetRequestObjects(
         path='/p/proj/issues/original?id=1&seq=999',
         project=self.proj)
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet.GatherPageData(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
     _request, mr = testing_helpers.GetRequestObjects(
         path='/p/proj/issues/original?id=999&seq=1',
@@ -189,7 +189,7 @@ class IssueOriginalTest(unittest.TestCase):
         project=self.proj)
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet._GetIssueAndComment(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
   def testGetIssueAndComment_Malformed(self):
     _request, mr = testing_helpers.GetRequestObjects(
@@ -197,14 +197,14 @@ class IssueOriginalTest(unittest.TestCase):
         project=self.proj)
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet._GetIssueAndComment(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
     _request, mr = testing_helpers.GetRequestObjects(
         path='/p/proj/issues/original?id=1',
         project=self.proj)
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet._GetIssueAndComment(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
     _request, mr = testing_helpers.GetRequestObjects(
         path='/p/proj/issues/original?seq=1',

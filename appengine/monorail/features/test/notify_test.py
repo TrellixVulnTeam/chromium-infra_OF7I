@@ -118,7 +118,7 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
         method='POST',
         services=self.services)
     result = task.HandleRequest(mr)
-    self.assertEquals(0, len(result['notified']))
+    self.assertEqual(0, len(result['notified']))
 
   def testNotifyBlockingChangeTask_Normal(self):
     issue2 = MakeTestIssue(
@@ -154,7 +154,7 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
         method='POST',
         services=self.services)
     result = task.HandleRequest(mr)
-    self.assertEquals(0, len(result['notified']))
+    self.assertEqual(0, len(result['notified']))
 
   def testNotifyBulkChangeTask_Normal(self):
     """We generate email tasks for each user involved in the issues."""
@@ -333,7 +333,7 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
         method='POST',
         services=self.services)
     result = task.HandleRequest(mr)
-    self.assertEquals(1, len(result['notified']))
+    self.assertEqual(1, len(result['notified']))
 
   def testFormatBulkIssues_Normal_Single(self):
     """A user may see full notification details for all changed issues."""

@@ -52,7 +52,9 @@ class ProjectUpdatesTest(unittest.TestCase):
 
     page_data = self.project_updates.GatherPageData(self.mr)
     self.mox.VerifyAll()
-    self.assertEquals(
-        {'subtab_mode': None, 'user_updates_tab_mode': None, 'test': 'testing'},
-        page_data)
-
+    self.assertEqual(
+        {
+            'subtab_mode': None,
+            'user_updates_tab_mode': None,
+            'test': 'testing'
+        }, page_data)

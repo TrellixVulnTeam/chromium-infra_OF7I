@@ -30,12 +30,12 @@ class BannedTest(unittest.TestCase):
     mr.auth.user_id = 0  # Anon user cannot see banned page.
     with self.assertRaises(webapp2.HTTPException) as cm:
       servlet.AssertBasePermission(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
     mr.auth.user_id = 111  # User who is not banned cannot view banned page.
     with self.assertRaises(webapp2.HTTPException) as cm:
       servlet.AssertBasePermission(mr)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
     # This should not throw exception.
     mr.auth.user_pb.banned = 'spammer'
@@ -43,16 +43,16 @@ class BannedTest(unittest.TestCase):
 
   def testGatherPageData(self):
     servlet = banned.Banned('request', 'response', services=self.services)
-    self.assertNotEquals(servlet.template, None)
+    self.assertNotEqual(servlet.template, None)
 
     _request, mr = testing_helpers.GetRequestObjects()
     page_data = servlet.GatherPageData(mr)
 
     self.assertFalse(page_data['is_plus_address'])
-    self.assertEquals(None, page_data['currentPageURLEncoded'])
+    self.assertEqual(None, page_data['currentPageURLEncoded'])
 
     mr.auth.user_pb.email = 'user+shadystuff@example.com'
     page_data = servlet.GatherPageData(mr)
 
     self.assertTrue(page_data['is_plus_address'])
-    self.assertEquals(None, page_data['currentPageURLEncoded'])
+    self.assertEqual(None, page_data['currentPageURLEncoded'])

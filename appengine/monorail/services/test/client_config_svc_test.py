@@ -82,19 +82,19 @@ class ClientConfigServiceTest(unittest.TestCase):
     # First time it will always read the config
     self.client_config_svc.load_time = NOW
     self.client_config_svc.GetConfigs(use_cache=True)
-    self.assertNotEquals(NOW, self.client_config_svc.load_time)
+    self.assertNotEqual(NOW, self.client_config_svc.load_time)
 
     # use_cache is false and it will read the config
     self.client_config_svc.load_time = NOW
     self.client_config_svc.GetConfigs(
         use_cache=False, cur_time=NOW + 1)
-    self.assertNotEquals(NOW, self.client_config_svc.load_time)
+    self.assertNotEqual(NOW, self.client_config_svc.load_time)
 
     # Cache expires after some time and it will read the config
     self.client_config_svc.load_time = NOW
     self.client_config_svc.GetConfigs(
         use_cache=True, cur_time=NOW + EXPIRES_IN + 1)
-    self.assertNotEquals(NOW, self.client_config_svc.load_time)
+    self.assertNotEqual(NOW, self.client_config_svc.load_time)
 
     # otherwise it should just use the cache
     self.client_config_svc.load_time = NOW

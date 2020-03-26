@@ -248,17 +248,18 @@ class LogoViewTest(unittest.TestCase):
 
     view = tracker_views.LogoView(project_pb)
     self.mox.VerifyAll()
-    self.assertEquals('logo.png', view.filename)
-    self.assertEquals('image/png', view.mimetype)
-    self.assertEquals('signed/url', view.thumbnail_url)
-    self.assertEquals('signed/url&response-content-displacement=attachment%3B'
-                      '+filename%3Dlogo.png', view.viewurl)
+    self.assertEqual('logo.png', view.filename)
+    self.assertEqual('image/png', view.mimetype)
+    self.assertEqual('signed/url', view.thumbnail_url)
+    self.assertEqual(
+        'signed/url&response-content-displacement=attachment%3B'
+        '+filename%3Dlogo.png', view.viewurl)
 
   def testProjectWithNoLogo(self):
     project_pb = project_pb2.MakeProject('testProject')
     view = tracker_views.LogoView(project_pb)
-    self.assertEquals('', view.thumbnail_url)
-    self.assertEquals('', view.viewurl)
+    self.assertEqual('', view.thumbnail_url)
+    self.assertEqual('', view.viewurl)
 
 
 class AmendmentViewTest(unittest.TestCase):
@@ -282,23 +283,23 @@ class ComponentDefViewTest(unittest.TestCase):
   def testRootComponent(self):
     view = tracker_views.ComponentDefView(
        'cnxn', self.services, self.cd, self.users_by_id)
-    self.assertEquals('', view.parent_path)
-    self.assertEquals('UI', view.leaf_name)
-    self.assertEquals('User interface', view.docstring_short)
-    self.assertEquals('admin@example.com', view.admins[0].email)
-    self.assertEquals(['Hot', 'Cold'], view.labels)
-    self.assertEquals('all toplevel active ', view.classes)
+    self.assertEqual('', view.parent_path)
+    self.assertEqual('UI', view.leaf_name)
+    self.assertEqual('User interface', view.docstring_short)
+    self.assertEqual('admin@example.com', view.admins[0].email)
+    self.assertEqual(['Hot', 'Cold'], view.labels)
+    self.assertEqual('all toplevel active ', view.classes)
 
   def testNestedComponent(self):
     self.cd.path = 'UI>Dialogs>Print'
     view = tracker_views.ComponentDefView(
        'cnxn', self.services, self.cd, self.users_by_id)
-    self.assertEquals('UI>Dialogs', view.parent_path)
-    self.assertEquals('Print', view.leaf_name)
-    self.assertEquals('User interface', view.docstring_short)
-    self.assertEquals('admin@example.com', view.admins[0].email)
-    self.assertEquals(['Hot', 'Cold'], view.labels)
-    self.assertEquals('all active ', view.classes)
+    self.assertEqual('UI>Dialogs', view.parent_path)
+    self.assertEqual('Print', view.leaf_name)
+    self.assertEqual('User interface', view.docstring_short)
+    self.assertEqual('admin@example.com', view.admins[0].email)
+    self.assertEqual(['Hot', 'Cold'], view.labels)
+    self.assertEqual('all active ', view.classes)
 
 
 class ComponentValueTest(unittest.TestCase):

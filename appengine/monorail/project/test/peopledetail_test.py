@@ -114,30 +114,27 @@ class PeopleDetailTest(unittest.TestCase):
     mr.auth = authdata.AuthData()
     page_data = self.servlet.GatherPageData(mr)
     self.assertFalse(page_data['warn_abandonment'])
-    self.assertEquals(2, page_data['total_num_owners'])
+    self.assertEqual(2, page_data['total_num_owners'])
     # TODO(jrobbins): fill in tests for all other aspects.
 
   def testValidateMemberID(self):
     # We can validate owners
-    self.assertEquals(
-        111,
-        self.servlet.ValidateMemberID('fake cnxn', 111, self.project))
+    self.assertEqual(
+        111, self.servlet.ValidateMemberID('fake cnxn', 111, self.project))
 
     # We can parse members
-    self.assertEquals(
-        333,
-        self.servlet.ValidateMemberID(
-            'fake cnxn', 333, self.project))
+    self.assertEqual(
+        333, self.servlet.ValidateMemberID('fake cnxn', 333, self.project))
 
     # 404 for user that does not exist
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet.ValidateMemberID('fake cnxn', 8933, self.project)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
     # 404 for valid user that is not in this project
     with self.assertRaises(webapp2.HTTPException) as cm:
       self.servlet.ValidateMemberID('fake cnxn', 999, self.project)
-    self.assertEquals(404, cm.exception.code)
+    self.assertEqual(404, cm.exception.code)
 
   def testParsePersonData_BadPost(self):
     mr = testing_helpers.MakeMonorailRequest(
@@ -153,17 +150,17 @@ class PeopleDetailTest(unittest.TestCase):
         project=self.project)
     post_data = fake.PostData(role=['owner'])
     u, r, ac, n, _, _ = self.servlet.ParsePersonData(mr, post_data)
-    self.assertEquals(111, u)
-    self.assertEquals('owner', r)
-    self.assertEquals([], ac)
-    self.assertEquals('', n)
+    self.assertEqual(111, u)
+    self.assertEqual('owner', r)
+    self.assertEqual([], ac)
+    self.assertEqual('', n)
 
     mr = testing_helpers.MakeMonorailRequest(
         path='/p/proj/people/detail?u=333',
         project=self.project)
     post_data = fake.PostData(role=['owner'])
     u, r, ac, n, _, _ = self.servlet.ParsePersonData(mr, post_data)
-    self.assertEquals(333, u)
+    self.assertEqual(333, u)
 
   def testParsePersonData(self):
     mr = testing_helpers.MakeMonorailRequest(
@@ -172,10 +169,10 @@ class PeopleDetailTest(unittest.TestCase):
     post_data = fake.PostData(
         role=['owner'], extra_perms=['ViewQuota', 'EditIssue'])
     u, r, ac, n, _, _ = self.servlet.ParsePersonData(mr, post_data)
-    self.assertEquals(111, u)
-    self.assertEquals('owner', r)
-    self.assertEquals(['ViewQuota', 'EditIssue'], ac)
-    self.assertEquals('', n)
+    self.assertEqual(111, u)
+    self.assertEqual('owner', r)
+    self.assertEqual(['ViewQuota', 'EditIssue'], ac)
+    self.assertEqual('', n)
 
     post_data = fake.PostData({
         'role': ['owner'],
@@ -186,10 +183,10 @@ class PeopleDetailTest(unittest.TestCase):
         })
     (u, r, ac, n, ac_exclusion, no_expand
      ) = self.servlet.ParsePersonData(mr, post_data)
-    self.assertEquals(111, u)
-    self.assertEquals('owner', r)
-    self.assertEquals([], ac)
-    self.assertEquals('', n)
+    self.assertEqual(111, u)
+    self.assertEqual('owner', r)
+    self.assertEqual([], ac)
+    self.assertEqual('', n)
     self.assertFalse(ac_exclusion)
     self.assertFalse(no_expand)
 
@@ -201,10 +198,10 @@ class PeopleDetailTest(unittest.TestCase):
         })
     (u, r, ac, n, ac_exclusion, no_expand
      )= self.servlet.ParsePersonData(mr, post_data)
-    self.assertEquals(111, u)
-    self.assertEquals('owner', r)
-    self.assertEquals(['ViewQuota', 'EditIssue'], ac)
-    self.assertEquals('Our local Python expert', n)
+    self.assertEqual(111, u)
+    self.assertEqual('owner', r)
+    self.assertEqual(['ViewQuota', 'EditIssue'], ac)
+    self.assertEqual('Our local Python expert', n)
     self.assertTrue(ac_exclusion)
     self.assertTrue(no_expand)
 
