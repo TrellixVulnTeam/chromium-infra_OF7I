@@ -138,8 +138,8 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 			resps[t].ErrorSummary = errs.Error()
 			dl.LogErrors(ctx, utils.AnnotateEach(errs, "enumerate %s", t))
 		}
+		dl.LogResponse(ctx, t, resps[t])
 	}
-	dl.LogResponses(ctx, resps)
 
 	return writeResponse(c.outputPath, &steps.EnumerationResponses{
 		TaggedResponses: resps,
@@ -305,7 +305,7 @@ func (l *debugLogger) LogTestMetadata(ctx context.Context, tag string, tm *api.T
 	logging.Infof(ctx, "Test Metadata[%s]: %s", tag, pretty.Sprint(tm))
 }
 
-func (l *debugLogger) LogResponses(ctx context.Context, resps map[string]*steps.EnumerationResponse) {
+func (l *debugLogger) LogResponse(ctx context.Context, tag string, resp *steps.EnumerationResponse) {
 	if !l.enabled {
 		return
 	}
@@ -313,14 +313,7 @@ func (l *debugLogger) LogResponses(ctx context.Context, resps map[string]*steps.
 	defer l.m.Unlock()
 
 	defer l.debugBlock(ctx, "responses")()
-	ts := stringset.New(len(resps))
-	for t := range resps {
-		ts.Add(t)
-		logging.Infof(ctx, "Response[%s]: %s", t, pretty.Sprint(resps[t]))
-	}
-	if ms := l.requestTags.Difference(ts); len(ms) > 0 {
-		logging.Warningf(ctx, "No response for requests %s", ms)
-	}
+	logging.Infof(ctx, "Response[%s]: %s", tag, pretty.Sprint(resp))
 }
 
 func (l *debugLogger) LogErrors(ctx context.Context, merr errors.MultiError) {
