@@ -78,7 +78,7 @@ func (c *cmdYamlRun) exec(ctx context.Context) error {
 
 	logging.Infof(ctx, "App ID:  %s", c.appID)
 	logging.Infof(ctx, "Tarball: %s", c.tarballSource)
-	logging.Infof(ctx, "Cache:   %s", c.cacheDir)
+	logging.Infof(ctx, "Cache:   %s", c.cache.Root)
 	logging.Infof(ctx, "YAML(s): %s", c.deployableYaml)
 
 	return c.cache.WithTarball(ctx, c.source, func(path string) error {

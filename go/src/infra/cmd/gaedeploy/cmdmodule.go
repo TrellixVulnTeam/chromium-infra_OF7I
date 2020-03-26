@@ -107,7 +107,7 @@ func (c *cmdModuleRun) exec(ctx context.Context) error {
 
 	logging.Infof(ctx, "App ID:  %s", c.appID)
 	logging.Infof(ctx, "Tarball: %s", c.tarballSource)
-	logging.Infof(ctx, "Cache:   %s", c.cacheDir)
+	logging.Infof(ctx, "Cache:   %s", c.cache.Root)
 	logging.Infof(ctx, "Module:  %s", c.moduleName)
 	logging.Infof(ctx, "YAML:    %s", c.moduleYAML)
 	logging.Infof(ctx, "Version: %s", c.moduleVersion)

@@ -92,7 +92,7 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 
 	logging.Infof(ctx, "Starting %s", UserAgent)
 
-	if err := c.handleArgsAndFlags(args); err != nil {
+	if err := c.handleArgsAndFlags(args, env); err != nil {
 		return handleErr(ctx, isCLIError.Apply(err))
 	}
 
@@ -106,7 +106,7 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 }
 
 // handleArgsAndFlags validates flags and substitutes defaults.
-func (c *commandBase) handleArgsAndFlags(args []string) error {
+func (c *commandBase) handleArgsAndFlags(args []string, env subcommands.Env) error {
 	switch {
 	case len(args) != 0:
 		return errors.Reason("unexpected positional arguments %q", args).Err()
@@ -127,17 +127,23 @@ func (c *commandBase) handleArgsAndFlags(args []string) error {
 
 	// Where to store it.
 	if c.extraFlags.cacheDir {
-		if c.cacheDir == "" {
+		cacheDir := ""
+		switch {
+		case c.cacheDir != "":
+			cacheDir = c.cacheDir
+		case env["LUCI_GAEDEPLOY_CACHE_DIR"].Value != "":
+			cacheDir = env["LUCI_GAEDEPLOY_CACHE_DIR"].Value
+		default:
 			home, err := os.UserHomeDir()
 			if err != nil {
 				return errors.Annotate(err, "failed to determine the home dir, pass -cache-dir directly").Err()
 			}
-			c.cacheDir = filepath.Join(home, ".gaedeploy_cache")
+			cacheDir = filepath.Join(home, ".gaedeploy_cache")
 		}
-		if err := os.MkdirAll(c.cacheDir, 0700); err != nil {
+		if err := os.MkdirAll(cacheDir, 0700); err != nil {
 			return errors.Annotate(err, "failed to create the cache directory").Err()
 		}
-		c.cache = &cache.Cache{Root: c.cacheDir}
+		c.cache = &cache.Cache{Root: cacheDir}
 	}
 
 	return nil

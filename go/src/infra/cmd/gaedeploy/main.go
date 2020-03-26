@@ -20,7 +20,7 @@ import (
 
 const (
 	// Version is the version of gaedeploy tool.
-	Version = "1.0.0"
+	Version = "1.0.1"
 	// UserAgent is used in HTTP headers of requests from cloudbuildhelper.
 	UserAgent = "gaedeploy v" + Version
 )
@@ -32,6 +32,12 @@ func getApplication() *cli.Application {
 
 		Context: func(ctx context.Context) context.Context {
 			return gologger.StdConfig.Use(ctx)
+		},
+
+		EnvVars: map[string]subcommands.EnvVarDefinition{
+			"LUCI_GAEDEPLOY_CACHE_DIR": {
+				ShortDesc: "Where to put unpacked tarballs (-cache-dir, if given, takes precedence).",
+			},
 		},
 
 		Commands: []*subcommands.Command{
