@@ -1,0 +1,70 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+
+syntax = "proto3";
+
+package rotation_proxy;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+service RotationProxyService {
+  rpc BatchUpdateRotations(BatchUpdateRotationsRequest)
+      returns (BatchUpdateRotationsResponse);
+  rpc BatchGetRotations(BatchGetRotationsRequest)
+      returns (BatchGetRotationsResponse);
+}
+
+// Request to update a list of rotations.
+message BatchUpdateRotationsRequest {
+  // The rotations to update.
+  repeated UpdateRotationRequest requests = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message UpdateRotationRequest {
+  // The rotation to update.
+  Rotation rotation = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message BatchUpdateRotationsResponse {
+  // Rotation updated.
+  repeated Rotation rotations = 1;
+}
+
+message BatchGetRotationsRequest {
+  // The names of the rotations to fetch.
+  repeated string names = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message BatchGetRotationsResponse {
+  // Details about the rotations requested.
+  repeated Rotation rotations = 1;
+}
+
+// Contains information about a rotation.
+message Rotation {
+  // The unique name of the rotation.
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Shifts in a rotation.
+  // Shifts will be sorted with the current shift as the first element.
+  repeated Shift shifts = 2;
+}
+
+message Shift {
+  // The list of oncall users for this shift.
+  repeated OncallPerson oncalls = 1;
+
+  // Unix timestamp of the start of the shift.
+  google.protobuf.Timestamp start_time = 2;
+
+  // Unix timestamp of the end of the shift.
+  google.protobuf.Timestamp end_time = 3;
+}
+
+message OncallPerson {
+  // Email of oncall person.
+  string email = 1 [(google.api.field_behavior) = REQUIRED];
+}
