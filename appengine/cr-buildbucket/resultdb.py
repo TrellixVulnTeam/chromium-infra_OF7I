@@ -33,6 +33,9 @@ def create_invocations_async(builds):
     # resultdb host needs to be enabled at service level, i.e. globally per
     # buildbucket deployment.
     return
+
+  # TODO(crbug.com/1064829): Accept only one value (ret) from this call.
+  # Expect resp.update_tokens to contain the tokens for the invocations.
   resp, tokens = yield _create_invocations_async(builds, resultdb_host)
   assert len(resp.invocations) == len(tokens) == len(builds)
   for inv, tok, build in zip(resp.invocations, tokens, builds):
@@ -63,6 +66,11 @@ def _create_invocations_async(builds, hostname):
       credentials=client.service_account_credentials(),
       response_metadata=response_metadata,
   )
+  if ret.update_tokens:
+    raise ndb.Return(ret, ret.update_tokens)
+
+  # TODO(crbug.com/1064829): Remove the code below when resultdb stops sending
+  # update tokens in metadata, and return only ret from this tasklet.
   tokens = response_metadata['update-token']
   # Multiple values for the same header can be joined by commas into a single
   # string as per [1].
@@ -70,7 +78,6 @@ def _create_invocations_async(builds, hostname):
   if isinstance(tokens, basestring):  # pragma: no branch
     tokens = tokens.split(',')
   raise ndb.Return(ret, tokens)
-
 
 
 def enqueue_invocation_finalization_async(build):

@@ -42,11 +42,18 @@ def _make_build(build_id, hostname='rdb.dev', invocation=None):
   return bundle.build
 
 
-def _mock_create_request_async(response, update_tokens):
+def _mock_create_request_async(
+    response, metadata_update_tokens=None, pb_update_tokens=None
+):
 
   def inner(*_, **kwargs):
+    if metadata_update_tokens:
+      kwargs['response_headers']['update-token'] = ','.join(
+          metadata_update_tokens
+      )
+    else:
+      response.update_tokens.extend(pb_update_tokens)
     ret = future(response.SerializeToString())
-    kwargs['response_headers']['update-token'] = ','.join(update_tokens)
     return ret
 
   return inner
@@ -102,7 +109,7 @@ class ResultDBTest(testing.AppengineTestCase):
         self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:4'
     )
 
-  def test_invocations_created(self):
+  def test_invocations_created_metadata_update_tokens(self):
     self.builds = [_make_build(5), _make_build(6)]
     response = recorder_pb2.BatchCreateInvocationsResponse(
         invocations=[
@@ -111,7 +118,8 @@ class ResultDBTest(testing.AppengineTestCase):
         ]
     )
     net.request_async.side_effect = _mock_create_request_async(
-        response, ['FakeUpdateToken', 'FakeUpdateToken2']
+        response,
+        metadata_update_tokens=['FakeUpdateToken', 'FakeUpdateToken2']
     )
     resultdb.create_invocations_async(self.builds).get_result()
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
@@ -121,6 +129,27 @@ class ResultDBTest(testing.AppengineTestCase):
     self.assertEqual(self.builds[1].resultdb_update_token, 'FakeUpdateToken2')
     self.assertEqual(
         self.builds[1].proto.infra.resultdb.invocation, 'invocations/build:6'
+    )
+
+  def test_invocations_created_protobuf_update_tokens(self):
+    self.builds = [_make_build(15), _make_build(16)]
+    response = recorder_pb2.BatchCreateInvocationsResponse(
+        invocations=[
+            invocation_pb2.Invocation(name='invocations/build:15'),
+            invocation_pb2.Invocation(name='invocations/build:16'),
+        ]
+    )
+    net.request_async.side_effect = _mock_create_request_async(
+        response, pb_update_tokens=['FakeUpdateToken', 'FakeUpdateToken2']
+    )
+    resultdb.create_invocations_async(self.builds).get_result()
+    self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
+    self.assertEqual(
+        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:15'
+    )
+    self.assertEqual(self.builds[1].resultdb_update_token, 'FakeUpdateToken2')
+    self.assertEqual(
+        self.builds[1].proto.infra.resultdb.invocation, 'invocations/build:16'
     )
 
 
