@@ -62,7 +62,13 @@ func (m *testMetadata) Validate() errors.MultiError {
 
 func (g *getter) Get(root string) (*api.TestMetadataResponse, errors.MultiError) {
 	if err := g.controlFileLoader.Discover(root); err != nil {
-		return nil, errors.NewMultiError(errors.Annotate(err, "get autotest metadata").Err())
+		tm := &api.TestMetadataResponse{
+			Autotest: &api.AutotestTestMetadata{
+				Suites: []*api.AutotestSuite{},
+				Tests:  []*api.AutotestTest{},
+			},
+		}
+		return tm, errors.NewMultiError(errors.Annotate(err, "get autotest metadata").Err())
 	}
 
 	var merr errors.MultiError

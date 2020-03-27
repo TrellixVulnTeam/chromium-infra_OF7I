@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -251,11 +252,8 @@ func (c *enumerateRun) computeMetadata(ctx context.Context, tag string, localPat
 	}
 
 	tm, warnings := testspec.Get(extracted)
-	if warnings != nil && tm == nil {
-		// Catastrophic error. There is no reasonable response to write.
-		// TODO(pprabhu) Instead return empty test metadata, and report error
-		// as inability to enumerate tests.
-		return nil, utils.AnnotateEach(warnings, "compute metadata for %s", tag)
+	if tm == nil {
+		panic(fmt.Sprintf("testspec.Get() should always return valid metadata. Got nil for %s", tag))
 	}
 	c.debugLogger.LogTestMetadata(ctx, tag, tm)
 	if warnings.First() != nil {
