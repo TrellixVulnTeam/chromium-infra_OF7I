@@ -2,6 +2,6 @@ name: base
 
 infra:
   dev:
-    storage: gs://chops-public-images-dev/gae
+    storage: gs://chops-public-tarballs-dev/gae
   prod:
-    storage: gs://chops-public-images-prod/gae
+    storage: gs://chops-public-tarballs-prod/gae
