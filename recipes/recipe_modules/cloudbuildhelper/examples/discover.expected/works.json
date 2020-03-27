@@ -1,0 +1,41 @@
+[
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "glob",
+      "[CACHE]/1",
+      "**/*.yaml"
+    ],
+    "infra_step": true,
+    "name": "list 1",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@glob@[CACHE]/1/target.yaml@@@",
+      "@@@STEP_LOG_END@glob@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "glob",
+      "[CACHE]/2",
+      "**/*.yaml"
+    ],
+    "infra_step": true,
+    "name": "list 2",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@glob@[CACHE]/2/target.yaml@@@",
+      "@@@STEP_LOG_END@glob@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

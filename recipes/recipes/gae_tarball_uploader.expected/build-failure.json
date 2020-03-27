@@ -101,13 +101,13 @@
       "--json-output",
       "/path/to/tmp/json",
       "glob",
-      "[CACHE]/infra_gclient_with_go/infra/build/images/daily",
+      "[CACHE]/infra_gclient_with_go/infra/build/images/deterministic",
       "**/*.yaml"
     ],
     "infra_step": true,
-    "name": "list infra/build/images/daily",
+    "name": "list infra/build/images/deterministic",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@glob@[CACHE]/infra_gclient_with_go/infra/build/images/daily/target.yaml@@@",
+      "@@@STEP_LOG_LINE@glob@[CACHE]/infra_gclient_with_go/infra/build/images/deterministic/target.yaml@@@",
       "@@@STEP_LOG_END@glob@@@"
     ]
   },
@@ -163,20 +163,14 @@
   {
     "cmd": [
       "cloudbuildhelper",
-      "build",
-      "[CACHE]/infra_gclient_with_go/infra/build/images/daily/target.yaml",
+      "upload",
+      "[CACHE]/infra_gclient_with_go/infra/build/images/deterministic/target.yaml",
       "-canonical-tag",
-      "ts-2012.05.14-0",
+      "197293-5e03a58",
       "-build-id",
       "https://cr-buildbucket.appspot.com/build/0",
       "-infra",
       "prod",
-      "-label",
-      "org.opencontainers.image.revision=5e03a58dc0850e5137a8ebbce29610670c756aed",
-      "-label",
-      "org.opencontainers.image.source=https://chromium.googlesource.com/infra/infra",
-      "-tag",
-      "latest",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -191,24 +185,21 @@
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
-    "name": "cloudbuildhelper build target",
+    "name": "cloudbuildhelper upload target",
     "~followup_annotations": [
-      "@@@STEP_TEXT@<br/>Image: example.com/fake-registry/target:ts-2012.05.14-0<br/>Digest: sha256:34a04005bcaf206e...<br/>Tag: ts-2012.05.14-0<br/>Tag: latest@@@",
+      "@@@STEP_TEXT@<br/>ERROR: Boom@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"image\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"digest\": \"sha256:34a04005bcaf206e...\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"image\": \"example.com/fake-registry/target\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"tag\": \"ts-2012.05.14-0\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }, @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"view_build_url\": \"https://example.com/build/target\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"view_image_url\": \"https://example.com/image/target\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"Boom\"@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@image@https://example.com/image/target@@@",
-      "@@@STEP_LINK@build@https://example.com/build/target@@@"
+      "@@@STEP_FAILURE@@@"
     ]
   },
   {
+    "failure": {
+      "failure": {},
+      "humanReason": "Failed to build: target.yaml"
+    },
     "name": "$result"
   }
 ]

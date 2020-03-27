@@ -101,13 +101,13 @@
       "--json-output",
       "/path/to/tmp/json",
       "glob",
-      "[CACHE]/infra_gclient_with_go/infra/build/images/deterministic",
+      "[CACHE]/infra_gclient_with_go/infra/build/gae",
       "**/*.yaml"
     ],
     "infra_step": true,
-    "name": "list infra/build/images/deterministic",
+    "name": "list infra/build/gae",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@glob@[CACHE]/infra_gclient_with_go/infra/build/images/deterministic/target.yaml@@@",
+      "@@@STEP_LOG_LINE@glob@[CACHE]/infra_gclient_with_go/infra/build/gae/target.yaml@@@",
       "@@@STEP_LOG_END@glob@@@"
     ]
   },
@@ -163,20 +163,14 @@
   {
     "cmd": [
       "cloudbuildhelper",
-      "build",
-      "[CACHE]/infra_gclient_with_go/infra/build/images/deterministic/target.yaml",
+      "upload",
+      "[CACHE]/infra_gclient_with_go/infra/build/gae/target.yaml",
       "-canonical-tag",
-      "ci-2012.05.14-197293-5e03a58",
+      "197293-5e03a58",
       "-build-id",
       "https://cr-buildbucket.appspot.com/build/0",
       "-infra",
       "prod",
-      "-label",
-      "org.opencontainers.image.revision=5e03a58dc0850e5137a8ebbce29610670c756aed",
-      "-label",
-      "org.opencontainers.image.source=https://chromium.googlesource.com/infra/infra",
-      "-tag",
-      "latest",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -191,21 +185,19 @@
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
-    "name": "cloudbuildhelper build target",
+    "name": "cloudbuildhelper upload target",
     "~followup_annotations": [
-      "@@@STEP_TEXT@<br/>Image: example.com/fake-registry/target:ci-2012.05.14-197293-5e03a58<br/>Digest: sha256:34a04005bcaf206e...<br/>Tag: ci-2012.05.14-197293-5e03a58<br/>Tag: latest@@@",
+      "@@@STEP_TEXT@<br/>Name: example/target<br/>Version: 197293-5e03a58<br/>SHA256: 82ac16b294bc0f98...@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"image\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"digest\": \"sha256:34a04005bcaf206e...\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"image\": \"example.com/fake-registry/target\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"tag\": \"ci-2012.05.14-197293-5e03a58\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"canonical_tag\": \"197293-5e03a58\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"gs\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bucket\": \"example\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"tarballs/example/target/82ac16b294bc0f98....tar.gz\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"view_build_url\": \"https://example.com/build/target\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"view_image_url\": \"https://example.com/image/target\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"name\": \"example/target\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sha256\": \"82ac16b294bc0f98...\"@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@image@https://example.com/image/target@@@",
-      "@@@STEP_LINK@build@https://example.com/build/target@@@"
+      "@@@STEP_LOG_END@json.output@@@"
     ]
   },
   {
@@ -223,7 +215,7 @@
       "--path",
       "[CACHE]/builder/roll",
       "--url",
-      "https://images.repo.example.com"
+      "https://tarballs.repo.example.com"
     ],
     "name": "upload roll CL.git setup",
     "~followup_annotations": [
@@ -323,11 +315,11 @@
   },
   {
     "cmd": [
-      "[CACHE]/builder/roll/scripts/roll_images.py"
+      "[CACHE]/builder/roll/scripts/roll_tarballs.py"
     ],
     "cwd": "[CACHE]/builder/roll",
-    "name": "upload roll CL.roll_images.py",
-    "stdin": "{\"tags\": [{\"image\": \"example.com/fake-registry/target\", \"tag\": {\"digest\": \"sha256:34a04005bcaf206e...\", \"metadata\": {\"date\": \"2012-05-14T12:53:23Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\", \"cloudbuild\": \"https://example.com/build/target\", \"gcr\": \"https://example.com/image/target\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}}, \"tag\": \"ci-2012.05.14-197293-5e03a58\"}}]}",
+    "name": "upload roll CL.roll_tarballs.py",
+    "stdin": "{\"tarballs\": [{\"name\": \"example/target\", \"version\": {\"location\": \"gs://example/tarballs/example/target/82ac16b294bc0f98....tar.gz\", \"metadata\": {\"date\": \"2012-05-14T12:53:21.500000Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}}, \"sha256\": \"82ac16b294bc0f98...\", \"version\": \"197293-5e03a58\"}}]}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -345,24 +337,23 @@
       "@@@STEP_LOG_LINE@json.output@      ]@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  ], @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"tags\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"tarballs\": [@@@",
       "@@@STEP_LOG_LINE@json.output@    {@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"image\": \"example.com/fake-registry/target\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"tag\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"digest\": \"sha256:34a04005bcaf206e...\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"name\": \"example/target\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"version\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"location\": \"gs://example/tarballs/example/target/82ac16b294bc0f98....tar.gz\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"metadata\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@          \"date\": \"2012-05-14T12:53:23Z\", @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"date\": \"2012-05-14T12:53:21.500000Z\", @@@",
       "@@@STEP_LOG_LINE@json.output@          \"links\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@            \"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\", @@@",
-      "@@@STEP_LOG_LINE@json.output@            \"cloudbuild\": \"https://example.com/build/target\", @@@",
-      "@@@STEP_LOG_LINE@json.output@            \"gcr\": \"https://example.com/image/target\"@@@",
+      "@@@STEP_LOG_LINE@json.output@            \"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\"@@@",
       "@@@STEP_LOG_LINE@json.output@          }, @@@",
       "@@@STEP_LOG_LINE@json.output@          \"source\": {@@@",
       "@@@STEP_LOG_LINE@json.output@            \"repo\": \"https://chromium.googlesource.com/infra/infra\", @@@",
       "@@@STEP_LOG_LINE@json.output@            \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"@@@",
       "@@@STEP_LOG_LINE@json.output@          }@@@",
       "@@@STEP_LOG_LINE@json.output@        }, @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"tag\": \"ci-2012.05.14-197293-5e03a58\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"sha256\": \"82ac16b294bc0f98...\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"version\": \"197293-5e03a58\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
@@ -372,11 +363,11 @@
   },
   {
     "cmd": [
-      "[CACHE]/builder/roll/scripts/prune_images.py",
+      "[CACHE]/builder/roll/scripts/prune_tarballs.py",
       "--verbose"
     ],
     "cwd": "[CACHE]/builder/roll",
-    "name": "upload roll CL.prune_images.py",
+    "name": "upload roll CL.prune_tarballs.py",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -413,7 +404,7 @@
       "git",
       "commit",
       "-m",
-      "[images] Rolling in new images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nAdded pins:\n  * example.com/fake-registry/target:ci-2012.05.14-197293-5e03a58"
+      "[images] Rolling in new tarballs.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nAdded pins:\n  * example/target:197293-5e03a58"
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
@@ -435,7 +426,7 @@
       "--cc=n3@example.com",
       "--use-commit-queue",
       "--message-file",
-      "[images] Rolling in new images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nAdded pins:\n  * example.com/fake-registry/target:ci-2012.05.14-197293-5e03a58"
+      "[images] Rolling in new tarballs.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nAdded pins:\n  * example/target:197293-5e03a58"
     ],
     "cwd": "[CACHE]/builder/roll",
     "name": "upload roll CL.git cl upload",

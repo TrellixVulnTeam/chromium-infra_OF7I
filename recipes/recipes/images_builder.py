@@ -10,8 +10,6 @@ from PB.recipes.infra import images_builder as images_builder_pb
 DEPS = [
     'recipe_engine/buildbucket',
     'recipe_engine/commit_position',
-    'recipe_engine/context',
-    'recipe_engine/file',
     'recipe_engine/futures',
     'recipe_engine/json',
     'recipe_engine/path',
@@ -20,8 +18,6 @@ DEPS = [
     'recipe_engine/time',
 
     'depot_tools/gerrit',
-    'depot_tools/git',
-    'depot_tools/git_cl',
 
     'cloudbuildhelper',
     'infra_checkout',
@@ -58,7 +54,8 @@ def RunSteps(api, properties):
   co.gclient_runhooks()
 
   # Discover what *.yaml manifests (full paths to them) we need to build.
-  manifests = _discover_manifests(api, co.path, properties.manifests)
+  manifests = api.cloudbuildhelper.discover_manifests(
+      co.path, properties.manifests)
   if not manifests:  # pragma: no cover
     raise recipe_api.InfraFailure('Found no manifests to build')
 
@@ -239,27 +236,6 @@ def _date(api):
   return api.time.utcnow().strftime('%Y.%m.%d')
 
 
-def _discover_manifests(api, root, dirs):
-  """Returns a list with paths to all manifests we need to build.
-
-  Args:
-    api: recipes API.
-    root: gclient solution root.
-    dirs: list of path relative to the solution root to scan.
-
-  Returns:
-    [Path].
-  """
-  paths = []
-  for d in dirs:
-    found = api.file.listdir(
-        'list %s' % d, root.join(d),
-        recursive=True,
-        test_data=['target.yaml', 'something_else.md'])
-    paths.extend(f for f in found if api.path.splitext(f)[1] == '.yaml')
-  return paths
-
-
 def _roll_built_images(api, spec, images, meta):
   """Uploads a CL with info about built images into a repo with pinned images.
 
@@ -275,11 +251,30 @@ def _roll_built_images(api, spec, images, meta):
     (None, None) if didn't create a CL (because nothing has changed).
     (Issue number, Issue URL) if created a CL.
   """
+  return api.cloudbuildhelper.do_roll(
+      repo_url=spec.repo_url,
+      root=api.path['cache'].join('builder', 'roll'),
+      callback=lambda root: _mutate_pins_repo(api, root, spec, images, meta))
+
+
+def _mutate_pins_repo(api, root, spec, images, meta):
+  """Modifies the checked out repo with image pins.
+
+  Args:
+    api: recipes API.
+    root: the directory where the repo is checked out.
+    spec: instance of images_builder.Inputs.RollInto proto with the config.
+    images: a list of CloudBuildHelperApi.Image with info about built images.
+    meta: Metadata struct, as returned by _checkout_committed.
+
+  Returns:
+    cloudbuildhelper.RollCL to proceed with the roll or None to skip it.
+  """
   # RFC3389 timstamp in UTC zone.
   date = api.time.utcnow().isoformat('T') + 'Z'
 
   # Prepare tag JSON specs for all images.
-  # See //starlark/lib/proto/proto.star in infradata/k8s repo.
+  # See //scripts/roll_images.py in infradata/k8s repo.
   tags = []
   for img in images:
     tags.append({
@@ -303,91 +298,52 @@ def _roll_built_images(api, spec, images, meta):
         },
     })
 
-  # A repo to roll into.
-  root = api.path['cache'].join('builder', 'roll')
-  api.git.checkout(spec.repo_url, dir_path=root, submodules=False)
+  # Add all new tags (if any).
+  res = api.step(
+      name='roll_images.py',
+      cmd=[root.join('scripts', 'roll_images.py')],
+      stdin=api.json.input({'tags': tags}),
+      stdout=api.json.output(),
+      step_test_data=lambda: api.json.test_api.output_stream({
+          'tags': tags,
+          'deployments': [
+              {'cc': ['n1@example.com', 'n2@example.com']},
+              {'cc': ['n3@example.com', 'n1@example.com']},
+          ],
+      }))
+  rolled = res.stdout['tags']
+  deployments = res.stdout.get('deployments') or []
 
-  with api.context(cwd=root):
-    api.git('branch', '-D', 'roll-images', ok_ret=(0, 1))
-    api.git('checkout', '-t', 'origin/master', '-b', 'roll-images')
+  # Bail early if there's no new images. In particular we don't want to call
+  # prune_images.py, since if it indeed prunes something we'll end up with
+  # a CL titled "Rolling in new images" that instead just deletes some stuff.
+  if not rolled:  # pragma: no cover
+    return None
 
-    # Add all new tags (if any).
-    res = api.step(
-        name='roll_images.py',
-        cmd=[root.join('scripts', 'roll_images.py')],
-        stdin=api.json.input({'tags': tags}),
-        stdout=api.json.output(),
-        step_test_data=lambda: api.json.test_api.output_stream({
-            'tags': tags,
-            'deployments': [
-                {'cc': ['n1@example.com', 'n2@example.com']},
-                {'cc': ['n3@example.com', 'n1@example.com']},
-            ],
-        }))
-    rolled = res.stdout['tags']
-    deployments = res.stdout.get('deployments') or []
+  # Delete old unused tags (if any).
+  api.step(
+      name='prune_images.py',
+      cmd=[root.join('scripts', 'prune_images.py'), '--verbose'])
 
-    # Bail early if there's no new images. In particular we don't want to call
-    # prune_images.py, since if it indeed prunes something we'll end up with
-    # a CL titled "Rolling in new images" that instead just deletes some stuff.
-    if not rolled:  # pragma: no cover
-      return None, None
+  # Generate the commit message.
+  message = str('\n'.join([
+      '[images] Rolling in new images.',
+      '',
+      'Produced by %s' % api.buildbucket.build_url(),
+      '',
+      'Added pins:',
+  ] + ['  * %s:%s' % (t['image'], t['tag']['tag']) for t in rolled]))
 
-    # Delete old unused tags (if any).
-    api.step(
-        name='prune_images.py',
-        cmd=[root.join('scripts', 'prune_images.py'), '--verbose'])
+  # List of people to CC based on what staging deployments were updated.
+  extra_cc = set()
+  for dep in deployments:
+    extra_cc.update(dep.get('cc') or [])
 
-    # Stage all added and deleted files to be able to `git diff` them.
-    api.git('add', '.')
-
-    # Check we actually updated something.
-    diff_check = api.git('diff', '--cached', '--exit-code', ok_ret='any')
-    if diff_check.retcode == 0:  # pragma: no cover
-      return None, None
-
-    # Generate the commit message.
-    desc = str('\n'.join([
-        '[images] Rolling in new images.',
-        '',
-        'Produced by %s' % api.buildbucket.build_url(),
-        '',
-        'Added pins:',
-    ] + ['  * %s:%s' % (t['image'], t['tag']['tag']) for t in rolled]))
-
-    # List of people to CC based on what staging deployments were updated.
-    extra_cc = set()
-    for dep in deployments:
-      extra_cc.update(dep.get('cc') or [])
-
-    # Upload a CL.
-    api.git('commit', '-m', desc)
-    api.git_cl.upload(desc, name='git cl upload', upload_args=[
-        '--force', # skip asking for description, we already set it
-    ] + [
-        '--tbrs=%s' % tbr for tbr in spec.tbr
-    ] + [
-        '--cc=%s' % cc for cc in sorted(extra_cc)
-    ] +(['--use-commit-queue'] if spec.commit else []))
-
-    # Put a link to the uploaded CL.
-    issue_step = api.git_cl(
-        'issue', ['--json', api.json.output()],
-        name='git cl issue',
-        step_test_data=lambda: api.json.test_api.output({
-            'issue': 123456789,
-            'issue_url': 'https://chromium-review.googlesource.com/c/123456789',
-        }),
-    )
-    out = issue_step.json.output
-    issue_step.presentation.links['Issue %s' % out['issue']] = out['issue_url']
-
-    # TODO(vadimsh): Babysit the CL until it lands or until timeout happens.
-    # Without this if images_builder runs again while the previous roll is still
-    # in-flight, it will produce a duplicate roll (which will eventually fail
-    # due to merge conflicts).
-
-    return out['issue'], out['issue_url']
+  return api.cloudbuildhelper.RollCL(
+      message=message,
+      cc=extra_cc,
+      tbr=spec.tbr,
+      commit=spec.commit)
 
 
 def GenTests(api):

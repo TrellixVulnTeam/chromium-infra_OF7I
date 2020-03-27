@@ -4,8 +4,13 @@
 
 DEPS = [
   'recipe_engine/cipd',
+  'recipe_engine/context',
+  'recipe_engine/file',
   'recipe_engine/json',
   'recipe_engine/path',
   'recipe_engine/raw_io',
   'recipe_engine/step',
+
+  'depot_tools/git',
+  'depot_tools/git_cl',
 ]

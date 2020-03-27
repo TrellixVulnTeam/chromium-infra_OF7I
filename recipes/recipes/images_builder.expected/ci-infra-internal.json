@@ -100,16 +100,15 @@
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
       "/path/to/tmp/json",
-      "listdir",
+      "glob",
       "[CACHE]/infra_internal_gclient_with_go/infra_internal/build/images/deterministic",
-      "--recursive"
+      "**/*.yaml"
     ],
     "infra_step": true,
     "name": "list infra_internal/build/images/deterministic",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@listdir@[CACHE]/infra_internal_gclient_with_go/infra_internal/build/images/deterministic/something_else.md@@@",
-      "@@@STEP_LOG_LINE@listdir@[CACHE]/infra_internal_gclient_with_go/infra_internal/build/images/deterministic/target.yaml@@@",
-      "@@@STEP_LOG_END@listdir@@@"
+      "@@@STEP_LOG_LINE@glob@[CACHE]/infra_internal_gclient_with_go/infra_internal/build/images/deterministic/target.yaml@@@",
+      "@@@STEP_LOG_END@glob@@@"
     ]
   },
   {

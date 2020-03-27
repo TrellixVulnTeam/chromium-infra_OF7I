@@ -20,12 +20,15 @@
   * [build_conda_cipd_pkg](#recipes-build_conda_cipd_pkg) &mdash; Recipe to build CIPD package with sealed Conda environment.
   * [build_from_tarball](#recipes-build_from_tarball)
   * [build_gsutil_cipd_pkg](#recipes-build_gsutil_cipd_pkg)
+  * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover)
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full)
+  * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll)
   * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage)
   * [cros_flash](#recipes-cros_flash) &mdash; This recipe is used to flash a CrOS DUT on a Chromium bot.
   * [cros_flash_scheduler](#recipes-cros_flash_scheduler) &mdash; This recipe is used to keep Chrome's pools of CrOS DUTs up to date.
   * [depot_tools_builder](#recipes-depot_tools_builder) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
   * [docker_image_builder](#recipes-docker_image_builder)
+  * [gae_tarball_uploader](#recipes-gae_tarball_uploader)
   * [gerrit_hello_world](#recipes-gerrit_hello_world) &mdash; Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
   * [git_cache_updater](#recipes-git_cache_updater) &mdash; Updates the Git Cache zip files.
   * [goma_hello_world](#recipes-goma_hello_world) &mdash; Compiles trivial C++ program using Goma.
@@ -64,7 +67,7 @@
 
 ### *recipe_modules* / [cloudbuildhelper](/recipes/recipe_modules/cloudbuildhelper)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#5): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 API for calling 'cloudbuildhelper' tool.
 
@@ -74,7 +77,7 @@ See https://chromium.googlesource.com/infra/infra/+/master/build/images/.
 
 API for calling 'cloudbuildhelper' tool.
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#87)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, step_test_image=None):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#95)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, step_test_image=None):**
 
 Calls `cloudbuildhelper build <manifest>` interpreting the result.
 
@@ -93,18 +96,46 @@ Returns:
 Raises:
   StepFailure on failures.
 
-&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#63)(self, val):**
+&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#71)(self, val):**
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#68)(self):**
+&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#316)(self, root, dirs, test_data=None):**
+
+Returns a list with paths to all manifests we need to build.
+
+Args:
+  * root (Path) - gclient solution root.
+  * dirs ([str]) - paths relative to the solution root to scan.
+  * test_data ([str]) - paths to put into each `dirs` in training mode.
+
+Returns:
+  [Path].
+
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#336)(self, repo_url, root, callback):**
+
+Checks out a repo, calls the callback to modify it, uploads the result.
+
+Args:
+  * repo_url (str) - repo to checkout.
+  * root (Path) - where to check it out too (can be a cache).
+  * callback (func(Path)) - will be called as `callback(root)` with cwd also
+      set to `root`. It can modify files there and either return None to
+      skip the roll or RollCL to attempt the roll. If no files are modified,
+      the roll will be skipped regardless of the return value.
+
+Returns:
+  * (None, None) if didn't create a CL (because nothing has changed).
+  * (Issue number, Issue URL) if created a CL.
+
+&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#76)(self):**
 
 Reports the version of cloudbuildhelper tool via the step text.
 
 Returns:
   None.
 
-&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#284)(self, path):**
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#292)(self, path):**
 
 Calls `cloudbuildhelper pins-update <path>`.
 
@@ -117,7 +148,7 @@ Args:
 Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#196)(self, manifest, canonical_tag, build_id=None, infra=None, step_test_tarball=None):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#204)(self, manifest, canonical_tag, build_id=None, infra=None, step_test_tarball=None):**
 
 Calls `cloudbuildhelper upload <manifest>` interpreting the result.
 
@@ -758,6 +789,11 @@ To build a new package for all platforms:
 [DEPS](/recipes/recipes/build_gsutil_cipd_pkg.py#5): [build/zip][build/recipe_modules/zip], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipes/build_gsutil_cipd_pkg.py#52)(api):**
+### *recipes* / [cloudbuildhelper:examples/discover](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py)
+
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#11)(api):**
 ### *recipes* / [cloudbuildhelper:examples/full](/recipes/recipe_modules/cloudbuildhelper/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -767,6 +803,11 @@ To build a new package for all platforms:
 &mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#26)(api):**
 
 &mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#73)(api):**
+### *recipes* / [cloudbuildhelper:examples/roll](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py)
+
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#11)(api):**
 ### *recipes* / [cloudkms:examples/usage](/recipes/recipe_modules/cloudkms/examples/usage.py)
 
 [DEPS](/recipes/recipe_modules/cloudkms/examples/usage.py#5): [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path]
@@ -848,6 +889,11 @@ Recipe to build windows depot_tools bootstrap zipfile.
 [DEPS](/recipes/recipes/docker_image_builder.py#8): [build/docker][build/recipe_modules/docker], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
 &mdash; **def [RunSteps](/recipes/recipes/docker_image_builder.py#37)(api, arch_type):**
+### *recipes* / [gae\_tarball\_uploader](/recipes/recipes/gae_tarball_uploader.py)
+
+[DEPS](/recipes/recipes/gae_tarball_uploader.py#10): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+
+&mdash; **def [RunSteps](/recipes/recipes/gae_tarball_uploader.py#36)(api, properties):**
 ### *recipes* / [gerrit\_hello\_world](/recipes/recipes/gerrit_hello_world.py)
 
 [DEPS](/recipes/recipes/gerrit_hello_world.py#8): [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
@@ -903,9 +949,9 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 &mdash; **def [RunSteps](/recipes/recipes/gsutil_hello_world.py#21)(api):**
 ### *recipes* / [images\_builder](/recipes/recipes/images_builder.py)
 
-[DEPS](/recipes/recipes/images_builder.py#10): [depot\_tools/gerrit][depot_tools/recipe_modules/gerrit], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/images_builder.py#10): [depot\_tools/gerrit][depot_tools/recipe_modules/gerrit], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
-&mdash; **def [RunSteps](/recipes/recipes/images_builder.py#42)(api, properties):**
+&mdash; **def [RunSteps](/recipes/recipes/images_builder.py#38)(api, properties):**
 ### *recipes* / [images\_pins\_roller](/recipes/recipes/images_pins_roller.py)
 
 [DEPS](/recipes/recipes/images_pins_roller.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]

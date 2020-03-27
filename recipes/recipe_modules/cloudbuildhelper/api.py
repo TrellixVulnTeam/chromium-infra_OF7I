@@ -33,6 +33,14 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       'version',   # canonical tag
   ])
 
+  # Returned by a callback passed to do_roll.
+  RollCL = namedtuple('RollCL', [
+      'message',  # commit message
+      'cc',       # a list of emails to CC on the CL
+      'tbr',      # a list of emails to put in TBR= line
+      'commit',   # if True, submit to CQ, if False, trigger CQ dry run only
+  ])
+
   # Used in place of Image to indicate that the image builds successfully, but
   # it wasn't uploaded anywhere.
   #
@@ -304,3 +312,86 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
         ),
     )
     return res.json.output.get('updated') or []
+
+  def discover_manifests(self, root, dirs, test_data=None):
+    """Returns a list with paths to all manifests we need to build.
+
+    Args:
+      * root (Path) - gclient solution root.
+      * dirs ([str]) - paths relative to the solution root to scan.
+      * test_data ([str]) - paths to put into each `dirs` in training mode.
+
+    Returns:
+      [Path].
+    """
+    paths = []
+    for d in dirs:
+      paths.extend(self.m.file.glob_paths(
+          'list %s' % d,
+          root.join(d),
+          '**/*.yaml',
+          test_data=test_data if test_data is not None else ['target.yaml']))
+    return paths
+
+  def do_roll(self, repo_url, root, callback):
+    """Checks out a repo, calls the callback to modify it, uploads the result.
+
+    Args:
+      * repo_url (str) - repo to checkout.
+      * root (Path) - where to check it out too (can be a cache).
+      * callback (func(Path)) - will be called as `callback(root)` with cwd also
+          set to `root`. It can modify files there and either return None to
+          skip the roll or RollCL to attempt the roll. If no files are modified,
+          the roll will be skipped regardless of the return value.
+
+    Returns:
+      * (None, None) if didn't create a CL (because nothing has changed).
+      * (Issue number, Issue URL) if created a CL.
+    """
+    self.m.git.checkout(repo_url, dir_path=root, submodules=False)
+
+    with self.m.context(cwd=root):
+      self.m.git('branch', '-D', 'roll-attempt', ok_ret=(0, 1))
+      self.m.git('checkout', '-t', 'origin/master', '-b', 'roll-attempt')
+
+      # Let the caller modify files in root.
+      verdict = callback(root)
+      if not verdict:  # pragma: no cover
+        return None, None
+
+      # Stage all added and deleted files to be able to `git diff` them.
+      self.m.git('add', '.')
+
+      # Check if we actually updated something.
+      diff_check = self.m.git('diff', '--cached', '--exit-code', ok_ret='any')
+      if diff_check.retcode == 0:  # pragma: no cover
+        return None, None
+
+      # Upload a CL.
+      self.m.git('commit', '-m', verdict.message)
+      self.m.git_cl.upload(verdict.message, name='git cl upload', upload_args=[
+          '--force', # skip asking for description, we already set it
+      ] + [
+          '--tbrs=%s' % tbr for tbr in sorted(set(verdict.tbr or []))
+      ] + [
+          '--cc=%s' % cc for cc in sorted(set(verdict.cc or []))
+      ] +(['--use-commit-queue' if verdict.commit else '--cq-dry-run']))
+
+      # Put a link to the uploaded CL.
+      step = self.m.git_cl(
+          'issue', ['--json', self.m.json.output()],
+          name='git cl issue',
+          step_test_data=lambda: self.m.json.test_api.output({
+              'issue': 123456789,
+              'issue_url': 'https://chromium-review.googlesource.com/c/1234567',
+          }),
+      )
+      out = step.json.output
+      step.presentation.links['Issue %s' % out['issue']] = out['issue_url']
+
+      # TODO(vadimsh): Babysit the CL until it lands or until timeout happens.
+      # Without this if images_builder runs again while the previous roll is
+      # still in-flight, it will produce a duplicate roll (which will eventually
+      # fail due to merge conflicts).
+
+      return out['issue'], out['issue_url']

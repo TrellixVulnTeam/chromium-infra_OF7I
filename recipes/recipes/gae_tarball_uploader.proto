@@ -1,0 +1,55 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.gae_tarball_uploader;
+
+// Input properties recognized by 'infra/gae_tarball_uploader' recipe.
+message Inputs {
+  // Project describes what gclient solution to checkout.
+  enum Project {
+    PROJECT_UNDEFINED = 0;
+
+    PROJECT_INFRA = 1;           // checkout infra solution
+    PROJECT_INFRA_INTERNAL = 2;  // checkout infra_internal solution
+  }
+
+  // Project with the source code. Required.
+  Project project = 1;
+
+  // What instance of infrastructure to use, e.g. dev or prod.
+  //
+  // Will be passed as '-infra' flag to 'cloudbuildhelper'. The service account
+  // running the build should be in the corresponding ACLs.
+  //
+  // Required.
+  string infra = 2;
+
+  // A path(s) within the gclient solution to a directory with *.yaml files to
+  // discover and build, e.g. 'infra/build/gae/luci-py'. Will be listed
+  // recursively.
+  //
+  // Required.
+  repeated string manifests = 3;
+
+  // If present, enables auto-rolling of built tarballs into a git repository
+  // with pinned tarballs.
+  //
+  // Each tarball in this repository is represented by a directory (matching its
+  // name in the manifest YAML) under 'tarballs' directory. Each version is
+  // represented by a file <version>.json inside the tarball directory.
+  //
+  // If at least one version file was added, runs `scripts/prune_tarballs.py`
+  // from this repo to delete older unused versions.
+  message RollInto {
+    // Repository to roll built tarballs into (usually infradata/gae).
+    string repo_url = 1;
+    // Emails of whom to put into TBR= line in the CL.
+    repeated string tbr = 2;
+    // True to actually commit via CQ, False just to upload a pending CL.
+    bool commit = 3;
+  }
+  RollInto roll_into = 4;
+}
