@@ -186,9 +186,35 @@ You may not have six.moves in your virtual environment and you may need to insta
 1.  If your python and pip are in vpython-root
     1.  ```sudo `which python` `which pip` install six```
 
+# Development resources
+
 ## Supported browsers
 
 Monorail supports all browsers defined in the [Chrome Ops guidelines](https://chromium.googlesource.com/infra/infra/+/master/doc/front_end.md).
 
 File a browser compatability bug
 [here](https://bugs.chromium.org/p/monorail/issues/entry?labels=Type-Defect,Priority-Medium,BrowserCompat).
+
+## Frontend code practices
+
+See: [Monorail Frontend Code Practices](doc/code-practices/frontend.md)
+
+## Monorail's design
+
+* [Monorail Data Storage](doc/design/data-storage.md)
+* [Monorail Email Design](doc/design/emails.md)
+* [How Search Works in Monorail](doc/design/how-search-works.md)
+* [Monorail Source Code Organization](doc/design/source-code-organization.md)
+* [Monorail Testing Strategy](doc/design/testing-strategy.md)
+
+## Triage process
+
+See: [Monorail Triage Guide](doc/triage.md)
+
+## Release process
+
+See: [Monorail Deployment](doc/deployment.md)
+
+# User guide
+
+For information on how to user Monorail, see the [Monorail User Guide](doc/userguide/README.md).
