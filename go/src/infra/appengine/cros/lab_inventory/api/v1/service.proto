@@ -104,12 +104,18 @@ message UpdateDutsStatusRequest {
   // in the request via DutMeta to backfill hwID and serial number.
   // TODO: find a better way for these infos.
   repeated DutMeta dut_metas = 3;
+  repeated LabMeta lab_metas = 4;
 }
 
 message DutMeta {
   string chromeos_device_id = 1;
   string serial_number = 2;
   string hwID = 3;
+}
+
+message LabMeta {
+  string chromeos_device_id = 1;
+  string servo_type = 2;
 }
 
 message UpdateDutsStatusResponse {
