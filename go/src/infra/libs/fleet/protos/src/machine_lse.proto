@@ -11,7 +11,7 @@ syntax = "proto3";
 package fleet;
 
 // Required by protoc-gen-go
-option go_package = ".;fleet";
+option go_package = "infra/libs/fleet/protos/go";
 
 import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
 import "chrome_config.proto";
