@@ -105,19 +105,12 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 			return err
 		}
 
-		tm, errs := computeMetadata(lp, w)
-		if errs != nil && tm == nil {
-			// Catastrophic error. There is no reasonable response to write.
-			return utils.AnnotateEach(errs, "compute metadata for %s", t)
-		}
-		c.debugLogger.LogTestMetadata(ctx, t, tm)
-		if errs.First() != nil {
-			c.debugLogger.LogWarnings(ctx, utils.AnnotateEach(errs, "compute metadata for %s", t))
+		tm, err := c.computeMetadata(ctx, t, lp, w)
+		if err != nil {
+			return err
 		}
 
-		// TODO(pprabhu) Simplify error handling so we don't have to reset
-		// errors variable.
-		errs = errors.MultiError{}
+		errs := errors.MultiError{}
 		ts, err := c.enumerate(tm, r)
 		if err != nil {
 			errs = append(errs, err)
@@ -254,15 +247,27 @@ func (c *enumerateRun) enumerate(tm *api.TestMetadataResponse, request *steps.En
 	return ts, nil
 }
 
-func computeMetadata(localPaths artifacts.LocalPaths, workspace string) (*api.TestMetadataResponse, errors.MultiError) {
+func (c *enumerateRun) computeMetadata(ctx context.Context, tag string, localPaths artifacts.LocalPaths, workspace string) (*api.TestMetadataResponse, errors.MultiError) {
 	extracted := filepath.Join(workspace, "extracted")
 	if err := os.Mkdir(extracted, 0750); err != nil {
-		return nil, errors.NewMultiError(errors.Annotate(err, "compute metadata").Err())
+		return nil, errors.NewMultiError(errors.Annotate(err, "compute metadata for %s", tag).Err())
 	}
 	if err := artifacts.ExtractControlFiles(localPaths, extracted); err != nil {
-		return nil, errors.NewMultiError(errors.Annotate(err, "compute metadata").Err())
+		return nil, errors.NewMultiError(errors.Annotate(err, "compute metadata for %s", tag).Err())
 	}
-	return testspec.Get(extracted)
+
+	tm, warnings := testspec.Get(extracted)
+	if warnings != nil && tm == nil {
+		// Catastrophic error. There is no reasonable response to write.
+		// TODO(pprabhu) Instead return empty test metadata, and report error
+		// as inability to enumerate tests.
+		return nil, utils.AnnotateEach(warnings, "compute metadata for %s", tag)
+	}
+	c.debugLogger.LogTestMetadata(ctx, tag, tm)
+	if warnings.First() != nil {
+		c.debugLogger.LogWarnings(ctx, utils.AnnotateEach(warnings, "compute metadata for %s", tag))
+	}
+	return tm, nil
 }
 
 // debugLogger logs various intermediate PODs, only when enabled.
