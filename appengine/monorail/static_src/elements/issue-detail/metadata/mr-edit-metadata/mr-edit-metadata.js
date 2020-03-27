@@ -176,7 +176,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet">
-      <form id="editForm" @submit=${this.save}>
+      <form id="editForm"
+        @submit=${this._save}
+        @keydown=${this._saveOnCtrlEnter}
+      >
         <mr-cue cuePrefName=${cueNames.CODE_OF_CONDUCT}></mr-cue>
         ${this._renderStarLine()}
         <textarea
@@ -196,9 +199,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
           <span></span>
           <div class="edit-actions">
             <chops-button
-              @click=${this.save}
+              @click=${this._save}
               class="save-changes emphasized"
               ?disabled=${this.disabled}
+              title="Save changes (Ctrl+Enter / \u2318+Enter)"
             >
               Save changes
             </chops-button>
@@ -223,6 +227,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderStarLine() {
     if (this._canEditIssue || this.isApproval) return '';
 
@@ -242,6 +250,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderPresubmitChanges() {
     const {derivedCcs, derivedLabels} = this.presubmitResponse || {};
     const hasCcs = derivedCcs && derivedCcs.length;
@@ -287,6 +299,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderErrorsAndWarnings() {
     const presubmitResponse = this.presubmitResponse || {};
     const presubmitWarnings = presubmitResponse.warnings || [];
@@ -309,6 +325,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
       ` : '';
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderEditFields() {
     if (this.isApproval) {
       return html`
@@ -337,6 +357,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderSummary() {
     return html`
       <label for="summaryInput">Summary:</label>
@@ -348,6 +372,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderOwner() {
     const ownerPresubmit = this._ownerPresubmit;
     return html`
@@ -372,6 +400,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderCC() {
     return html`
       <label for="ccInput" @click=${this._clickLabelForCustomInput}>CC:</label>
@@ -388,6 +420,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderComponents() {
     return html`
       <label
@@ -407,6 +443,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderPredictedComponent() {
     if (!this.predictedComponent) return '';
 
@@ -435,6 +475,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderApprovers() {
     return this.hasApproverPrivileges && this.isApproval ? html`
       <label for="approversInput" @click=${this._clickLabelForCustomInput}>Approvers:</label>
@@ -450,6 +494,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     ` : '';
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderStatus() {
     return this.statuses && this.statuses.length ? html`
       <label for="statusInput">Status:</label>
@@ -465,6 +513,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     ` : '';
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderFieldDefs() {
     return html`
       ${fieldDefsWithGroup(this.fieldDefs, this.fieldGroups, this.issueType).map((group) => html`
@@ -480,6 +532,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderRelatedIssues() {
     return html`
       <label for="blockedOnInput" @click=${this._clickLabelForCustomInput}>BlockedOn:</label>
@@ -502,6 +558,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderLabels() {
     return html`
       <label for="labelsInput" @click=${this._clickLabelForCustomInput}>Labels:</label>
@@ -517,6 +577,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @param {FieldDef} field The custom field beinf rendered.
+   * @private
+   */
   _renderCustomField(field) {
     if (!field || !field.fieldRef) return '';
     const {fieldRef, isNiche, docstring, isMultivalued} = field;
@@ -549,6 +614,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * @return {TemplateResult}
+   * @private
+   */
   _renderNicheFieldToggle() {
     return this._nicheFieldCount ? html`
       <span></span>
@@ -620,6 +689,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.isDirty = false;
   }
 
+  /** @override */
   firstUpdated() {
     this.hasRendered = true;
   }
@@ -727,6 +797,9 @@ export class MrEditMetadata extends connectStore(LitElement) {
     store.dispatch(ui.reportDirtyForm(this.formName, false));
   }
 
+  /**
+   * Resets the edit form values to their default values.
+   */
   reset() {
     const form = this.shadowRoot.querySelector('#editForm');
     if (!form) return;
@@ -762,11 +835,40 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this._processChanges();
   }
 
-  save(event) {
-    this.dispatchEvent(new CustomEvent('save'));
+  /**
+   * @param {MouseEvent|SubmitEvent} event
+   * @private
+   */
+  _save(event) {
     event.preventDefault();
+    this.save();
   }
 
+  /**
+   * Users may use either Ctrl+Enter or Command+Enter to save an issue edit
+   * while the issue edit form is focused.
+   * @param {KeyboardEvent} event
+   * @private
+   */
+  _saveOnCtrlEnter(event) {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      this.save();
+    }
+  }
+
+  /**
+   * Tells the parent to save the current edited values in the form.
+   */
+  save() {
+    this.dispatchEvent(new CustomEvent('save'));
+  }
+
+  /**
+   * Tells the parent component that the user is trying to discard the form,
+   * if they confirm that that's what they're doing. The parent decides what
+   * to do in order to quit the editing session.
+   */
   discard() {
     const isDirty = this.isDirty;
     if (!isDirty || confirm('Discard your changes?')) {
@@ -774,11 +876,18 @@ export class MrEditMetadata extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Focuses the comment form.
+   */
   async focus() {
     await this.updateComplete;
     this.shadowRoot.querySelector('#commentText').focus();
   }
 
+  /**
+   * Retrieves the value of the comment that the user added from the DOM.
+   * @return {string}
+   */
   getCommentContent() {
     return this.shadowRoot.querySelector('#commentText').value;
   }
@@ -791,6 +900,9 @@ export class MrEditMetadata extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Shows or hides custom fields with the "isNiche" attribute set to true.
+   */
   toggleNicheFields() {
     this.showNicheFields = !this.showNicheFields;
   }

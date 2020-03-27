@@ -51,6 +51,10 @@ const SHORTCUT_DOC_GROUPS = [
         keys: ['r'],
         tip: 'reply to current issue',
       },
+      {
+        keys: ['Ctrl+Enter', '\u2318+Enter'],
+        type: 'save issue reply',
+      },
     ],
   },
   {

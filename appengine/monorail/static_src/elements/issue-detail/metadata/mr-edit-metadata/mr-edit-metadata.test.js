@@ -37,16 +37,70 @@ describe('mr-edit-metadata', () => {
     assert.instanceOf(element, MrEditMetadata);
   });
 
-  it('saves on form submit', async () => {
-    const saveStub = sinon.stub();
-    element.addEventListener('save', saveStub);
+  describe('saves edit form', () => {
+    let saveStub;
 
-    await element.updateComplete;
+    beforeEach(() => {
+      saveStub = sinon.stub();
+      element.addEventListener('save', saveStub);
+    });
 
-    element.shadowRoot.querySelector('#editForm').dispatchEvent(
-        new Event('submit', {bubbles: true, cancellable: true}));
+    it('saves on form submit', async () => {
+      await element.updateComplete;
 
-    sinon.assert.calledOnce(saveStub);
+      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+          new Event('submit', {bubbles: true, cancelable: true}));
+
+      sinon.assert.calledOnce(saveStub);
+    });
+
+    it('saves when clicking the save button', async () => {
+      await element.updateComplete;
+
+      element.shadowRoot.querySelector('.save-changes').click();
+
+      sinon.assert.calledOnce(saveStub);
+    });
+
+    it('does not save on random keydowns', async () => {
+      await element.updateComplete;
+
+      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+          new KeyboardEvent('keydown', {key: 'a', ctrlKey: true}));
+      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+          new KeyboardEvent('keydown', {key: 'b', ctrlKey: false}));
+      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+          new KeyboardEvent('keydown', {key: 'c', metaKey: true}));
+
+      sinon.assert.notCalled(saveStub);
+    });
+
+    it('does not save on Enter without Ctrl', async () => {
+      await element.updateComplete;
+
+      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+          new KeyboardEvent('keydown', {key: 'Enter', ctrlKey: false}));
+
+      sinon.assert.notCalled(saveStub);
+    });
+
+    it('saves on Ctrl+Enter', async () => {
+      await element.updateComplete;
+
+      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+          new KeyboardEvent('keydown', {key: 'Enter', ctrlKey: true}));
+
+      sinon.assert.calledOnce(saveStub);
+    });
+
+    it('saves on Ctrl+Meta', async () => {
+      await element.updateComplete;
+
+      element.shadowRoot.querySelector('#editForm').dispatchEvent(
+          new KeyboardEvent('keydown', {key: 'Enter', metaKey: true}));
+
+      sinon.assert.calledOnce(saveStub);
+    });
   });
 
   it('disconnecting element reports form is not dirty', () => {
