@@ -41,7 +41,7 @@ https://chromium.googlesource.com/chromiumos/infra/proto/+/master/src/test_platf
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.steps.EnumerationRequests")
 		c.Flags.StringVar(&c.outputPath, "output_json", "", "Path where JSON encoded test_platform.steps.EnumerationResponses should be written.")
-		c.Flags.BoolVar(&c.debug, "debug", false, "Print debugging information to stderr.")
+		c.Flags.BoolVar(&c.debugLogger.enabled, "debug", false, "Print debugging information to stderr.")
 		return c
 	},
 }
@@ -50,9 +50,9 @@ type enumerateRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 
-	inputPath  string
-	outputPath string
-	debug      bool
+	inputPath   string
+	outputPath  string
+	debugLogger debugLogger
 }
 
 func (c *enumerateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -86,10 +86,9 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		os.RemoveAll(workspace)
 	}()
 
-	dl := debugLogger{enabled: c.debug}
 	resps := make(map[string]*steps.EnumerationResponse)
 	for t, r := range taggedRequests {
-		dl.LogRequest(ctx, t, r)
+		c.debugLogger.LogRequest(ctx, t, r)
 		m := r.GetMetadata().GetTestMetadataUrl()
 		if m == "" {
 			return errors.Reason("empty request.metadata.test_metadata_url in %s", r).Err()
@@ -111,9 +110,9 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 			// Catastrophic error. There is no reasonable response to write.
 			return utils.AnnotateEach(errs, "compute metadata for %s", t)
 		}
-		dl.LogTestMetadata(ctx, t, tm)
+		c.debugLogger.LogTestMetadata(ctx, t, tm)
 		if errs.First() != nil {
-			dl.LogWarnings(ctx, utils.AnnotateEach(errs, "compute metadata for %s", t))
+			c.debugLogger.LogWarnings(ctx, utils.AnnotateEach(errs, "compute metadata for %s", t))
 		}
 
 		// TODO(pprabhu) Simplify error handling so we don't have to reset
@@ -134,9 +133,9 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		}
 		if errs != nil {
 			resps[t].ErrorSummary = errs.Error()
-			dl.LogErrors(ctx, utils.AnnotateEach(errs, "enumerate %s", t))
+			c.debugLogger.LogErrors(ctx, utils.AnnotateEach(errs, "enumerate %s", t))
 		}
-		dl.LogResponse(ctx, t, resps[t])
+		c.debugLogger.LogResponse(ctx, t, resps[t])
 	}
 
 	return writeResponse(c.outputPath, &steps.EnumerationResponses{
