@@ -9,6 +9,7 @@ syntax = "proto3";
 
 package monorail.v1;
 
+import "google/protobuf/timestamp.proto";
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "api/v1/api_proto/issue_objects.proto";
@@ -34,29 +35,81 @@ message Project {
 // (-- aip.dev/not-precedent: "Status" should be reserved for HTTP/gRPC codes
 //     per aip.dev/216. Monorail's Status  preceded the AIP standards, and is
 //     used extensively throughout the system.)
-// Next available tag: 2
+// Next available tag: 7
 message StatusDef {
   option (google.api.resource) = {
     type: "api.crbug.com/StatusDef"
     pattern: "projects/{project}/statusDefs/{statusDef}"
   };
 
+  // Type of this status.
+  // Next available tag: 3
+  enum StatusDefType {
+    // Default enum value. This value is unused.
+    STATUS_DEF_TYPE_UNSPECIFIED = 0;
+    // This status means issue is open.
+    OPEN = 1;
+    // This status means issue is closed.
+    CLOSED = 2;
+  }
+
+  // State of this status.
+  // Next available tag: 3
+  enum StatusDefState {
+    // Default value. This value is unused.
+    STATUS_DEF_STATE_UNSPECIFIED = 0;
+    // This status is deprecated
+    DEPRECATED = 1;
+    // This status is not deprecated
+    ACTIVE = 2;
+  }
+
   // Resource name of the status.
   string name = 1;
+  // String value of the status.
+  string value = 2;
+  // Type of this status.
+  StatusDefType type = 3;
+  // Sorting rank of this status. If we sort issues by status
+  // this rank determines the sort order rather than status value.
+  uint32 rank = 4;
+  // Brief explanation of this status.
+  string docstring = 5;
+  // State of this status.
+  StatusDefState state = 6;
 }
 
 // Well-known labels that can be applied to issues within the project.
 //
 // See monorail/doc/userguide/concepts.md#issue-fields-and-labels.
-// Next available tag: 2
+// Next available tag: 5
+// Labels defined in this project.
 message LabelDef {
+
   option (google.api.resource) = {
     type: "api.crbug.com/LabelDef"
     pattern: "projects/{project}/labelDefs/{labelDef}"
   };
 
+  // State of this label.
+  // Next available tag: 3
+  enum LabelDefState {
+    // Default enum value. This value is unused.
+    LABEL_DEF_STATE_UNSPECIFIED = 0;
+    // This label is deprecated
+    DEPRECATED = 1;
+    // This label is not deprecated
+    ACTIVE = 2;
+  }
+
   // Resource name of the label.
   string name = 1;
+  // String value of the label.
+  string value = 2;
+  // Brief explanation of this label.
+  string docstring = 3;
+  // State of this label.
+  LabelDefState state = 4;
 }
 
 // Custom fields defined for the project.
@@ -76,15 +129,60 @@ message FieldDef {
 // A high level definition of the part of the software affected by an issue.
 //
 // See monorail/doc/userguide/project-owners.md#how-to-configure-components.
-// Next available tag: 2
+// Next available tag: 12
 message ComponentDef {
   option (google.api.resource) = {
     type: "api.crbug.com/ComponentDef"
     pattern: "projects/{project}/componentDefs/{componentDef}"
   };
 
-  // Resource name of the component.
+  // The current state of the component definition.
+  // Next available tag: 3
+  enum ComponentDefState {
+    // Default enum value. This value is unused.
+    COMPONENT_DEF_STATE_UNSPECIFIED = 0;
+    // This component is deprecated
+    DEPRECATED = 1;
+    // This component is not deprecated
+    ACTIVE = 2;
+  }
+
+  // Resource name of the component, aka identifier.
   string name = 1;
+  // String value of the component, ie 'Tools>Stability' or 'Blink'.
+  string value = 2;
+  // Brief explanation of this component.
+  string docstring = 3;
+  // Administrators of this component.
+  repeated string admins = 4 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }
+  ];
+  // Auto cc'ed users of this component.
+  repeated string ccs = 5 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }
+  ];
+  // State of this component.
+  ComponentDefState state = 6;
+  // The user that created this component.
+  string creator = 7 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" },
+      (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+  // The user that last modified this component.
+  string modifier = 8 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" },
+      (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+  // The time this component was created.
+  google.protobuf.Timestamp create_time = 9 [
+      (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+  // The time this component was last modified.
+  google.protobuf.Timestamp modify_time = 10 [
+      (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+  // Labels that auto-apply to issues in this component.
+  repeated string labels = 11;
 }
 
 // Defines approvals that issues within the project may need.
