@@ -42,7 +42,7 @@ We generally aim to write a modern codebase that makes use of recent JavaScript 
 *   When using features that are not yet supported in [all supported browsers](#heading=h.s0dpmzuabf7w), we **must** polyfill features to meet our browser support requirements.
 *   New JavaScript code **should not** inject values into the global scope. ES modules should be used for importing variables and functions across files instead.
 *   When writing asynchronous code, JavaScript code **should** favor async/await over Promises.
-    *   Exception: Promise.all() **may** be used to simultaneously run multiple await calls.
+    *   Exception: `Promise.all()` **may** be used to simultaneously run multiple await calls.
 *   JavaScript code **should** use the modularized forms of built-in functions rather than the global forms. For example, prefer [Number.parseInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/parseInt) over [parseInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt).
 *   String building code **should** prefer [ES template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) over string concatenation for strings built from multiple interpolated variables. Template literals usually produce more readable code than direct concatenation.
 *   JavaScript code **should** prefer using native browser functionality over importing external dependencies. If a native browser function does the same thing as an external library, prefer using the native functionality.
@@ -58,14 +58,14 @@ All code written **must** target the two latest stable versions of each of the f
 
 
 *   Functions **must not** directly mutate any Object or Arrays that are passed into them as parameters, unless the function explicitly documents that it mutates its parameters.
-*   Objects and Arrays declared as constants **should **have their values frozen with Object.freeze() to prevent accidental mutations.
+*   Objects and Arrays declared as constants **should** have their values frozen with `Object.freeze()` to prevent accidental mutations.
 
 
 ### Create readable function names
 
 
 
-*   Event handlers **should** be named after the actions they do, not the actions that trigger them. For example starIssue() is a better function header than onClick().
+*   Event handlers **should** be named after the actions they do, not the actions that trigger them. For example `starIssue()` is a better function header than `onClick()`.
     *   Exception: APIs that allow specifying custom handlers **may** accept event handling functions with generic names like clickHandler.
 
 
@@ -99,12 +99,12 @@ However, many of the recommendations from this guide are useful, even when using
 
 
 *   Elements **should not** break the hidden attribute when styling the :host element. For example, if you set a custom element to have the style of `:host { display: flex; }`, by default this causes the `:host[hidden]` state to also use `display: flex;`. To overcome this, you can use CSS to explicitly declare that the :host element should be hidden when the hidden attribute is set.
-*   Elements **should** enable Shadow DOM to encapsulate styles. LitElement enables Shadow DOM by default and offers options for disabling it. However, disabling ShadowDOM is discouraged because many Web Components features, such as <slot> elements, are built on top of Shadow DOM.
+*   Elements **should** enable Shadow DOM to encapsulate styles. LitElement enables Shadow DOM by default and offers options for disabling it. However, disabling ShadowDOM is discouraged because many Web Components features, such as `<slot>` elements, are built on top of Shadow DOM.
 *   Elements **should not** error when initialized without attributes. For example, adding attribute-less HTML such as `<my-custom-element></my-custom-element>` to the DOM should not cause code errors.
 *   Elements **should not** dispatch events in response to changes made by the parent. The parent already knows about its own activity, so dispatching events in these circumstances is not meaningful.
 *   Elements **should not** accept rich data (ie: Objects and Arrays) as attributes. LitElement provides APIs for setting Arrays and Objects through either attributes or properties, but it is more efficient to set them through properties. Setting these values through attributes requires extra serialization and deserialization.
     *   Exception: When LitElements are used outside of lit-html rendering, declared HTML **may** pass rich data in through attributes. Outside of lit-html, setting property values for DOM is often inconvenient.
-*   Elements **should not** self apply classes to their own :host element. The parent of an element is responsible for applying classes to an element, not the element itself.
+*   Elements **should not** self apply classes to their own `:host` element. The parent of an element is responsible for applying classes to an element, not the element itself.
 
 
 ### Organizing elements
@@ -116,7 +116,7 @@ When creating a single page app using LitElement, we render all components in th
 *   Elements **should** be grouped into folders with the same name as the element with tests and element code living together.
     *   Exception: Related sub-elements of a parent element **may** be grouped into the parent element’s folder if the element is not used outside the parent.
 *   Pages **should** lazily load dependent modules when the user first navigates to that page. To improve initial load time performance, we split element code into bundles divided across routes.
-*   Elements **should** use the mr- prefix if they are specific to Monorail and **may** use the chops- prefix if they implement functionality that is general enough to be shared with other apps. (ie: chops-button, chops-checkbox)
+*   Elements **should** use the mr- prefix if they are specific to Monorail and **may** use the chops- prefix if they implement functionality that is general enough to be shared with other apps. (ie: `<chops-button>`, `<chops-checkbox>`)
 *   Nested routes **may** be subdivided into separate sub-components with their own routing logic. This pattern promotes sharing code between related pages.
 
 
@@ -126,13 +126,13 @@ LitElement provides several lifecycle callbacks for elements. When writing code,
 
 
 
-*   Elements **must** remove any created external side effects before disconnectedCallback() finishes running.
+*   Elements **must** remove any created external side effects before `disconnectedCallback()` finishes running.
     *   Example: If an element attaches any global event handlers at any time in its lifecycle, those global event handlers **must not** continue to run when the element is removed from the DOM.
-*   Elements **should not** do work dependent on property values in connectedCallback() or constructor(). These functions will not re-run if property values change, so work done based on property values will become stale when properties change.
+*   Elements **should not** do work dependent on property values in `connectedCallback()` or `constructor()`. These functions will not re-run if property values change, so work done based on property values will become stale when properties change.
     *   Exception: An element **may** initialize values based on other property values as long as values continue to be updated beyond when the element initializes.
-    *   Use update() for functionality meant to run before the render() cycle and updated() for functionality that runs after.
-*   Elements **should** use the update() callback for work that happens _before render_ and the updated() callback for work that happens _after render_.
-    *   More strictly, code with significant side effects such as XHR requests **must not** run in the update() callback but **may** run in the updated() callback.
+    *   Use `update()` for functionality meant to run before the `render()` cycle and `updated()` for functionality that runs after.
+*   Elements **should** use the `update()` callback for work that happens _before render_ and the `updated()` callback for work that happens _after render_.
+    *   More strictly, code with significant side effects such as XHR requests **must not** run in the `update()` callback but **may** run in the `updated()` callback.
 
 
 ### Sharing functionality
@@ -140,7 +140,7 @@ LitElement provides several lifecycle callbacks for elements. When writing code,
 
 
 *   Elements **should not** use mixins for sharing behavior. See: [Mixins Considered Harmful](https://reactjs.org/blog/2016/07/13/mixins-considered-harmful.html)
-    *   Exception: Elements **may** use the connect() mixin for sharing Redux functionality.
+    *   Exception: Elements **may** use the `connect()` mixin for sharing Redux functionality.
 
 
 ### HTML/CSS
@@ -148,9 +148,9 @@ LitElement provides several lifecycle callbacks for elements. When writing code,
 
 
 *   HTML and CSS written in elements **should** follow the [Google HTML/CSS style guide](https://google.github.io/styleguide/htmlcssguide.html).
-*   An element **should** make its :host element the main container of the element. When a parent element styles a child element directly through CSS, the :host element is the HTMLElement that receives the styles.
+*   An element **should** make its `:host` element the main container of the element. When a parent element styles a child element directly through CSS, the `:host` element is the HTMLElement that receives the styles.
 *   Styles in CSS **should** aim to use the minimum specificity required to apply the declared style. This is important because increased specificity is used to overwrite existing styles. In particular:
-    *   CSS **should not** use the !important directive.
+    *   CSS **should not** use the `!important` directive.
     *   Elements **should** be styled with classes rather than with IDs because styles applied to ID selectors are harder to overwrite.
 *   CSS custom properties **should** be used to specify commonly used CSS values, such as shared color palette colors.
     *   In addition, CSS custom properties **may** be used by individual elements to expose an API for parents to style the element through.
@@ -161,9 +161,9 @@ LitElement provides several lifecycle callbacks for elements. When writing code,
 
 
 
-*   Code **must not** use LitElement’s unsafeHTML or unsafeCSS directives.
+*   Code **must not** use LitElement’s `unsafeHTML` or `unsafeCSS` directives.
 *   Code **must not** directly set anchor href values outside of LitElement’s data binding system. LitElement sanitizes variable values when data binding and manually binding data to the DOM outside of LitElement’s sanitization system is a security liability.
-*   Code **must not** directly set innerHTML on any elements to values including user-inputted data.
+*   Code **must not** directly set `innerHTML` on any elements to values including user-inputted data.
     *   Note: It is common for [Web Component example code](https://developers.google.com/web/fundamentals/web-components/customelements) to make use of directly setting innerHTML to set HTML templates. In these examples, setting innerHTML is often safe because the sample code does not add any variables into the rendered HTML. However, setting innerHTML directly is still risky and can be completely avoided as a pattern when writing LitElement elements.
 
 
@@ -183,7 +183,7 @@ We use [Redux](https://redux.js.org/) on our LitElement frontend to manage state
 *   Reducers, actions, and selectors **must** be organized into files according to the [“Ducks” pattern](https://github.com/erikras/ducks-modular-redux).
 *   Reducers **should** be separated into small functions that individually handle only a few action types.
 *   Redux state **should** be normalized to avoid storing duplicate copies of the same data in the state. See: [Normalizing Redux State Shape](https://redux.js.org/recipes/structuring-reducers/normalizing-state-shape/)
-*   JavaScript code **should not **directly pull data from the Redux state Object. Data inside the Redux store **should** be accessed through a layer of selector functions, using [Reselect](https://github.com/reduxjs/reselect).
+*   JavaScript code **should not** directly pull data from the Redux state Object. Data inside the Redux store **should** be accessed through a layer of selector functions, using [Reselect](https://github.com/reduxjs/reselect).
 *   Reducers, selectors, and action creators **should** be unit tested like functions. For example, a reducer is a function that takes in an initial state and an action then returns a new state.
 *   Reducers **may** destructure action arguments to make it easier to read which kinds of action attributes are used. In particular, this pattern is useful when reducers are composed into many small functions that each handle a small number of actions.
 *   Components connected to Redux **may** use the [Presentational/Container component pattern](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0) to separate “connected” versions of the component from “unconnected” versions. This pattern is useful for testing components outside of Redux and for separating concerns.
@@ -220,13 +220,13 @@ To keep our UI accessible to a variety of users, we aim to follow the [WAI-ARIA 
 
 
 
-*   UI designs **must **keep a 4.5:1 minimum contrast ratio for text and icons.
-*   CSS **must not **set “outline: none” without creating a new focus style for intractable elements. While removing native focus styles is a tempting way to make a design “feel more modern”, being able to see which elements are focused is an essential feature for keyboard interaction.
+*   UI designs **must** keep a 4.5:1 minimum contrast ratio for text and icons.
+*   CSS **must not** set “outline: none” without creating a new focus style for intractable elements. While removing native focus styles is a tempting way to make a design “feel more modern”, being able to see which elements are focused is an essential feature for keyboard interaction.
 *   UI changes **should** follow the [Material Design accessibility guidelines](https://material.io/design/usability/accessibility.html).
-*   HTML code **should** favor using existing semantic native elements over recreating native functionality where possible. For example, it is better to use a <button> element for a clickable button than to create a <div> with an onclick handler.
+*   HTML code **should** favor using existing semantic native elements over recreating native functionality where possible. For example, it is better to use a `<button>` element for a clickable button than to create a `<div>` with an onclick handler.
     *   Tip: In many cases, an underlying native element **may** be used as part of an implementation that otherwise seems to need completely custom code. One common example is when styling native checkboxes: while many CSS examples create new DOM elements to replace the look of a native checkbox, it is possible to use CSS pseudoelements to tie interaction with those new elements to an underlying native checkbox.
     *   Exception: Oftentimes, specific code requirements will make using native elements unfeasible. In these cases, the custom element implementation **must** follow any relevant WAI-ARIA for the type of element being implemented. For example, these are the [WAI-ARIA guidelines on implementing an accessible modal dialog](https://www.w3.org/TR/wai-aria-practices/examples/dialog-modal/dialog.html).
-*   Any element with an onclick handler **should** be a <button>. The <button> element handles mapping keyboard shortcuts to click handlers, which adds keyboard support for these intractable elements.
+*   Any element with an onclick handler **should** be a `<button>`. The `<button>` element handles mapping keyboard shortcuts to click handlers, which adds keyboard support for these intractable elements.
 *   Manual screenreader testing **should** be done when implementing heavily customized interactive elements. Autocomplete, chip inputs, and custom modal implementations are examples of elements that should be verified against screenreader testing.
 
 
