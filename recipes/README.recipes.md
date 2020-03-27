@@ -74,7 +74,7 @@ See https://chromium.googlesource.com/infra/infra/+/master/build/images/.
 
 API for calling 'cloudbuildhelper' tool.
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#78)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, step_test_image=None):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#87)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, step_test_image=None):**
 
 Calls `cloudbuildhelper build <manifest>` interpreting the result.
 
@@ -93,18 +93,18 @@ Returns:
 Raises:
   StepFailure on failures.
 
-&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#54)(self, val):**
+&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#63)(self, val):**
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#59)(self):**
+&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#68)(self):**
 
 Reports the version of cloudbuildhelper tool via the step text.
 
 Returns:
   None.
 
-&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#187)(self, path):**
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#284)(self, path):**
 
 Calls `cloudbuildhelper pins-update <path>`.
 
@@ -116,6 +116,23 @@ Args:
 
 Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
+
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#196)(self, manifest, canonical_tag, build_id=None, infra=None, step_test_tarball=None):**
+
+Calls `cloudbuildhelper upload <manifest>` interpreting the result.
+
+Args:
+  * manifest (Path) - path to YAML file with definition of what to build.
+  * canonical_tag (str) - tag to apply to a tarball if we built a new one.
+  * build_id (str) - identifier of the CI build to put into metadata.
+  * infra (str) - what section to pick from 'infra' field in the YAML.
+  * step_test_tarball (Tarball) - tarball to produce in training mode.
+
+Returns:
+  Tarball instance.
+
+Raises:
+  StepFailure on failures.
 ### *recipe_modules* / [cloudkms](/recipes/recipe_modules/cloudkms)
 
 [DEPS](/recipes/recipe_modules/cloudkms/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -743,9 +760,13 @@ To build a new package for all platforms:
 &mdash; **def [RunSteps](/recipes/recipes/build_gsutil_cipd_pkg.py#52)(api):**
 ### *recipes* / [cloudbuildhelper:examples/full](/recipes/recipe_modules/cloudbuildhelper/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/json][recipe_engine/recipe_modules/json]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#12)(api):**
+
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#26)(api):**
+
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#73)(api):**
 ### *recipes* / [cloudkms:examples/usage](/recipes/recipe_modules/cloudkms/examples/usage.py)
 
 [DEPS](/recipes/recipe_modules/cloudkms/examples/usage.py#5): [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path]

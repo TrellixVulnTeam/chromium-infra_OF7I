@@ -38,24 +38,6 @@
   {
     "cmd": [
       "[START_DIR]/cbh/cloudbuildhelper",
-      "pins-update",
-      "some/pins.yaml",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "name": "cloudbuildhelper pins-update",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"updated\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"some_image:tag\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  ]@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
       "build",
       "some/dir/target.yaml",
       "-canonical-tag",
@@ -173,7 +155,7 @@
   },
   {
     "cmd": [
-      "custom_cloudbuildhelper",
+      "[START_DIR]/cbh/cloudbuildhelper",
       "build",
       "third.yaml",
       "-json-output",
@@ -191,7 +173,7 @@
   },
   {
     "cmd": [
-      "custom_cloudbuildhelper",
+      "[START_DIR]/cbh/cloudbuildhelper",
       "build",
       "fail_maybe.yaml",
       "-json-output",
@@ -212,6 +194,103 @@
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@image@https://example.com/image/fail_maybe@@@",
       "@@@STEP_LINK@build@https://example.com/build/fail_maybe@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cbh/cloudbuildhelper",
+      "upload",
+      "some/dir/target.yaml",
+      "-canonical-tag",
+      "123_456",
+      "-build-id",
+      "bid",
+      "-infra",
+      "dev",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cloudbuildhelper upload target",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>Name: example/target<br/>Version: 123_456<br/>SHA256: 82ac16b294bc0f98...@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"canonical_tag\": \"123_456\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"gs\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bucket\": \"example\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"tarballs/example/target/82ac16b294bc0f98....tar.gz\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"name\": \"example/target\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sha256\": \"82ac16b294bc0f98...\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cbh/cloudbuildhelper",
+      "upload",
+      "another.yaml",
+      "-canonical-tag",
+      "ignored",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cloudbuildhelper upload another",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>Name: blah/target<br/>Version: 4567-789<br/>SHA256: 111111...@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"canonical_tag\": \"4567-789\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"gs\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bucket\": \"some-bucket\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"some/path/file.tar.gz\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"name\": \"blah/target\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sha256\": \"111111...\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cbh/cloudbuildhelper",
+      "upload",
+      "fail_maybe.yaml",
+      "-canonical-tag",
+      "tag",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cloudbuildhelper upload fail_maybe",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>Name: example/fail_maybe<br/>Version: tag<br/>SHA256: 38226e859c4c8302...@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"canonical_tag\": \"tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"gs\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bucket\": \"example\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"tarballs/example/fail_maybe/38226e859c4c8302....tar.gz\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"name\": \"example/fail_maybe\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sha256\": \"38226e859c4c8302...\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "custom_cloudbuildhelper",
+      "pins-update",
+      "some/pins.yaml",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cloudbuildhelper pins-update",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"updated\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"some_image:tag\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
     ]
   },
   {

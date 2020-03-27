@@ -24,6 +24,15 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       'view_build_url', # link to GCB page, for humans, optional
   ])
 
+  # Reference to a tarball in GS produced by `upload`.
+  Tarball = namedtuple('Tarball', [
+      'name',      # name from the manifest
+      'bucket',    # name of the GS bucket with the tarball
+      'path',      # path within the bucket
+      'sha256',    # hex digest
+      'version',   # canonical tag
+  ])
+
   # Used in place of Image to indicate that the image builds successfully, but
   # it wasn't uploaded anywhere.
   #
@@ -150,10 +159,10 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           view_build_url=out.get('view_build_url'),
       )
     finally:
-      self._make_step_pretty(self.m.step.active_result, tags)
+      self._make_build_step_pretty(self.m.step.active_result, tags)
 
   @staticmethod
-  def _make_step_pretty(r, tags):
+  def _make_build_step_pretty(r, tags):
     js = r.json.output
     if not js or not isinstance(js, dict):  # pragma: no cover
       return
@@ -183,6 +192,94 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       r.presentation.step_text += '\n'.join(lines)
     else:
       r.presentation.step_text += '\nImage builds successfully'
+
+  def upload(self,
+             manifest,
+             canonical_tag,
+             build_id=None,
+             infra=None,
+             step_test_tarball=None):
+    """Calls `cloudbuildhelper upload <manifest>` interpreting the result.
+
+    Args:
+      * manifest (Path) - path to YAML file with definition of what to build.
+      * canonical_tag (str) - tag to apply to a tarball if we built a new one.
+      * build_id (str) - identifier of the CI build to put into metadata.
+      * infra (str) - what section to pick from 'infra' field in the YAML.
+      * step_test_tarball (Tarball) - tarball to produce in training mode.
+
+    Returns:
+      Tarball instance.
+
+    Raises:
+      StepFailure on failures.
+    """
+    name, _ = self.m.path.splitext(self.m.path.basename(manifest))
+
+    cmd = [self.command, 'upload', manifest, '-canonical-tag', canonical_tag]
+    if build_id:
+      cmd += ['-build-id', build_id]
+    if infra:
+      cmd += ['-infra', infra]
+    cmd += ['-json-output', self.m.json.output()]
+
+    # Expected JSON output (may be produced even on failures).
+    #
+    # {
+    #   "name": "<name from the manifest>",
+    #   "error": "...",  # error message on errors
+    #   "gs": {
+    #     "bucket": "something",
+    #     "name": "a/b/c/abcdef...tar.gz",
+    #   },
+    #   "sha256": "abcdef...",
+    #   "canonical_tag": "<oldest tag>"
+    # }
+    try:
+      res = self.m.step(
+          name='cloudbuildhelper upload %s' % name,
+          cmd=cmd,
+          step_test_data=lambda: self.test_api.upload_success_output(
+              step_test_tarball, name, canonical_tag,
+          ),
+      )
+      if not res.json.output:  # pragma: no cover
+        res.presentation.status = self.m.step.FAILURE
+        raise recipe_api.InfraFailure(
+            'Call succeeded, but didn\'t produce -json-output')
+      out = res.json.output
+      if 'gs' not in out:  # pragma: no cover
+        res.presentation.status = self.m.step.FAILURE
+        raise recipe_api.InfraFailure('No "gs" section in -json-output')
+      return self.Tarball(
+          name=out['name'],
+          bucket=out['gs']['bucket'],
+          path=out['gs']['name'],
+          sha256=out['sha256'],
+          version=out['canonical_tag'],
+      )
+    finally:
+      self._make_upload_step_pretty(self.m.step.active_result)
+
+  @staticmethod
+  def _make_upload_step_pretty(r):
+    js = r.json.output
+    if not js or not isinstance(js, dict):  # pragma: no cover
+      return
+
+    if js.get('error'):
+      r.presentation.step_text += '\nERROR: %s' % js['error']
+      return
+
+    # Note: '???' should never appear during normal operation. They are used
+    # here defensively in case _make_upload_step_pretty is called due to
+    # malformed JSON output.
+    r.presentation.step_text += '\n'.join([
+        '',
+        'Name: %s' % js.get('name', '???'),
+        'Version: %s' % js.get('canonical_tag', '???'),
+        'SHA256: %s' % js.get('sha256', '???'),
+    ])
 
   def update_pins(self, path):
     """Calls `cloudbuildhelper pins-update <path>`.

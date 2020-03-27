@@ -33,5 +33,31 @@ class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
       'view_build_url': 'https://example.com/build/%s' % target,
     })
 
+  def upload_success_output(self, tarball, target='target', canonical_tag=None):
+    if not tarball:
+      name = 'example/%s' % target
+      digest = sha256(name).hexdigest()[:16]+'...'
+      bucket = 'example'
+      path = 'tarballs/example/%s/%s.tar.gz' % (target, digest)
+      tag = canonical_tag or '11111-deadbeef'
+    else:
+      name = tarball.name
+      digest = tarball.sha256
+      bucket = tarball.bucket
+      path = tarball.path
+      tag = tarball.version
+    return self.m.json.output({
+      'name': name,
+      'sha256': digest,
+      'gs': {
+        'bucket': bucket,
+        'name': path,
+      },
+      'canonical_tag': tag,
+    })
+
+  def upload_error_output(self, message):
+    return self.m.json.output({'error': message})
+
   def update_pins_output(self, updated):
     return self.m.json.output({'updated': updated or []})
