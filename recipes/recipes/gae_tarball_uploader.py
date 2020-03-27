@@ -178,7 +178,7 @@ def _mutate_pins_repo(api, root, spec, tarballs, meta):
   versions = []
   for tb in tarballs:
     versions.append({
-        'name': tb.name,
+        'tarball': tb.name,
         'version': {
             'version': tb.version,
             'location': 'gs://%s/%s' % (tb.bucket, tb.path),
@@ -230,7 +230,7 @@ def _mutate_pins_repo(api, root, spec, tarballs, meta):
       'Produced by %s' % api.buildbucket.build_url(),
       '',
       'Added pins:',
-  ] + ['  * %s:%s' % (t['name'], t['version']['version']) for t in rolled]))
+  ] + ['  * %s:%s' % (t['tarball'], t['version']['version']) for t in rolled]))
 
   # List of people to CC based on what staging deployments were updated.
   extra_cc = set()
