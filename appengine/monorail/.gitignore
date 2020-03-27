@@ -1,3 +1,4 @@
+# TODO: Add comments/docs for these.
 .*\.py[co]
 .*\.pyc-2.4
 .*~
@@ -30,3 +31,6 @@ latency-insensitive.yaml
 module-api.yaml
 templates/webpack-out
 full_results.json
+
+# Python 3 virtual environment. Created with `python3 -m venv venv`.
+venv/
