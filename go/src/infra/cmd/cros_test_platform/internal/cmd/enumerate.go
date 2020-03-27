@@ -110,23 +110,13 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 			return err
 		}
 
-		errs := errors.MultiError{}
-		ts, err := c.enumerate(tm, r)
-		if err != nil {
-			errs = append(errs, err)
-		}
-		ts, ierrs := validateEnumeration(ts)
-		if ierrs != nil {
-			errs = append(errs, ierrs...)
-		}
-
+		ts, errs := c.getEnumeration(ctx, t, tm, r)
 		resps[t] = &steps.EnumerationResponse{}
 		if len(ts) > 0 {
 			resps[t].AutotestInvocations = ts
 		}
 		if errs != nil {
 			resps[t].ErrorSummary = errs.Error()
-			c.debugLogger.LogErrors(ctx, utils.AnnotateEach(errs, "enumerate %s", t))
 		}
 		c.debugLogger.LogResponse(ctx, t, resps[t])
 	}
@@ -233,18 +223,22 @@ func (c *enumerateRun) newGSClient(ctx context.Context) (gs.Client, error) {
 	return gs.NewProdClient(ctx, t)
 }
 
-func (c *enumerateRun) enumerate(tm *api.TestMetadataResponse, request *steps.EnumerationRequest) ([]*steps.EnumerationResponse_AutotestInvocation, error) {
-	var ts []*steps.EnumerationResponse_AutotestInvocation
+func (c *enumerateRun) getEnumeration(ctx context.Context, tag string, tm *api.TestMetadataResponse, request *steps.EnumerationRequest) (ts []*steps.EnumerationResponse_AutotestInvocation, errs errors.MultiError) {
+	defer func() {
+		if errs.First() != nil {
+			c.debugLogger.LogErrors(ctx, utils.AnnotateEach(errs, "enumerate %s", tag))
+		}
+	}()
 
 	g, err := enumeration.GetForTests(tm.Autotest, request.TestPlan.Test)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewMultiError(err)
 	}
 	ts = append(ts, g...)
-
 	ts = append(ts, enumeration.GetForSuites(tm.Autotest, request.TestPlan.Suite)...)
 	ts = append(ts, enumeration.GetForEnumeration(request.TestPlan.GetEnumeration())...)
-	return ts, nil
+	ts, errs = validateEnumeration(ts)
+	return
 }
 
 func (c *enumerateRun) computeMetadata(ctx context.Context, tag string, localPaths artifacts.LocalPaths, workspace string) (*api.TestMetadataResponse, errors.MultiError) {
