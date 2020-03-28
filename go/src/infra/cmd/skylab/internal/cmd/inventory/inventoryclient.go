@@ -27,9 +27,6 @@ type Client interface {
 	batchUpdateDUTs(context.Context, *invV1Api.BatchUpdateDutsRequest, io.Writer) error
 }
 
-type inventoryClientV1 struct {
-	ic invV1Api.InventoryClient
-}
 type inventoryClientV2 struct {
 	ic invV2Api.InventoryClient
 }

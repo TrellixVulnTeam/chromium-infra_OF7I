@@ -19,7 +19,6 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/proto/gerrit"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
@@ -126,47 +125,6 @@ func protoTimestamp(t time.Time) *inventory.Timestamp {
 		Seconds: &s,
 		Nanos:   &ns,
 	}
-}
-
-func (client *inventoryClientV1) deleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, rr skycmdlib.RemovalReason, stdout io.Writer) (modified bool, err error) {
-	// RemovalReason is not used in V1 deletion.
-	hc, err := cmdlib.NewHTTPClient(ctx, authFlags)
-	if err != nil {
-		return false, err
-	}
-	ic, err := iv.CreateC(hc)
-	if err != nil {
-		return false, err
-	}
-
-	var changeInfo *gerrit.ChangeInfo
-	defer func() {
-		if changeInfo != nil {
-			err := ic.AbandonChange(ctx, changeInfo)
-			if err != nil {
-				b := bufio.NewWriter(stdout)
-				fmt.Fprintf(b, "Failed to abandon change %v on error", changeInfo)
-			}
-		}
-	}()
-	changeInfo, err = ic.CreateChange(ctx, fmt.Sprintf("delete %d duts", len(hostnames)))
-	if err != nil {
-		return false, err
-	}
-	for _, host := range hostnames {
-		if err := ic.MakeDeleteHostChange(ctx, changeInfo, host); err != nil {
-			return false, err
-		}
-	}
-	if err := ic.SubmitChange(ctx, changeInfo); err != nil {
-		return false, err
-	}
-	cn := int(changeInfo.Number)
-	// Successful: do not abandon change beyond this point.
-	changeInfo = nil
-
-	_ = printDeletions(stdout, cn, hostnames)
-	return true, nil
 }
 
 func (client *inventoryClientV2) deleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, rr skycmdlib.RemovalReason, stdout io.Writer) (modified bool, err error) {

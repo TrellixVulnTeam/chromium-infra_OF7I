@@ -118,17 +118,6 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	return ic.batchUpdateDUTs(ctx, req, a.GetOut())
 }
 
-func (client *inventoryClientV1) batchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {
-	ds, err := client.ic.BatchUpdateDuts(ctx, req)
-	if err != nil {
-		return errors.Annotate(err, "fail to update Duts").Err()
-	}
-	if err := printUpdates(writer, ds); err != nil {
-		return errors.Annotate(err, "fail to print updates").Err()
-	}
-	return nil
-}
-
 func getRequestForHostnames(hostnames []string, pool string) *fleet.BatchUpdateDutsRequest {
 	var duts []*fleet.DutProperty
 	for _, h := range hostnames {

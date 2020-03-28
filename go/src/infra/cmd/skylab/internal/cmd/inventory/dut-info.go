@@ -21,7 +21,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
@@ -102,22 +101,6 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 	default:
 		return printHumanizedInfoShort(bw, dut)
 	}
-}
-
-func (client *inventoryClientV1) GetDutInfo(ctx context.Context, id string, byHostname, mustFromV1 bool) (*inventory.DeviceUnderTest, error) {
-	req := &fleet.GetDutInfoRequest{Id: id, MustFromV1: mustFromV1}
-	if byHostname {
-		req = &fleet.GetDutInfoRequest{Hostname: id, MustFromV1: mustFromV1}
-	}
-	resp, err := client.ic.GetDutInfo(ctx, req)
-	if err != nil {
-		return nil, errors.Annotate(err, "get dutinfo for %s", id).Err()
-	}
-	var dut inventory.DeviceUnderTest
-	if err := proto.Unmarshal(resp.Spec, &dut); err != nil {
-		return nil, errors.Annotate(err, "get dutinfo for %s", id).Err()
-	}
-	return &dut, nil
 }
 
 // GetDutInfo gets the dut information from inventory v2 service.
