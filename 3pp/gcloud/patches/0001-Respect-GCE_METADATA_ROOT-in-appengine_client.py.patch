@@ -1,0 +1,35 @@
+From b56cea95f8f1e92983e9f4864d0aa51e25fae3b6 Mon Sep 17 00:00:00 2001
+From: Vadim Shtayura <vadimsh@chromium.org>
+Date: Fri, 27 Mar 2020 18:10:30 -0700
+Subject: [PATCH] Respect GCE_METADATA_ROOT in appengine_client.py.
+
+---
+ .../lib/googlecloudsdk/api_lib/app/appengine_client.py       | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/google-cloud-sdk/lib/googlecloudsdk/api_lib/app/appengine_client.py b/google-cloud-sdk/lib/googlecloudsdk/api_lib/app/appengine_client.py
+index 3244fa0..36424a2 100644
+--- a/google-cloud-sdk/lib/googlecloudsdk/api_lib/app/appengine_client.py
++++ b/google-cloud-sdk/lib/googlecloudsdk/api_lib/app/appengine_client.py
+@@ -22,6 +22,8 @@ from __future__ import unicode_literals
+ 
+ from __future__ import with_statement
+ 
++import os
++
+ from googlecloudsdk.api_lib.app import util
+ from googlecloudsdk.api_lib.app import yaml_parsing
+ from googlecloudsdk.core import exceptions
+@@ -44,7 +46,8 @@ import six.moves.urllib.request
+ APPCFG_SCOPES = ['https://www.googleapis.com/auth/cloud-platform']
+ 
+ # Parameters for reading from the GCE metadata service.
+-METADATA_BASE = 'http://metadata.google.internal'
++METADATA_BASE = 'http://{}'.format(
++    os.environ.get('GCE_METADATA_ROOT', 'metadata.google.internal'))
+ SERVICE_ACCOUNT_BASE = ('computeMetadata/v1/instance/service-accounts/default')
+ 
+ RpcServerClass = appengine_rpc_httplib2.HttpRpcServerOAuth2  # pylint: disable=invalid-name
+-- 
+2.24.0
+
