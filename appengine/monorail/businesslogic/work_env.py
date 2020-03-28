@@ -29,6 +29,7 @@ Responsibilities of WorkEnv:
 + Most monitoring, profiling, and logging
 + Apply business rules:
   - Check permissions
+    - Every GetFoo/GetFoosDict method will assert that the user can view Foo(s)
   - Detailed validation of request parameters
   - Raise exceptions to indicate problems
 + Make coordinated calls to the services layer to make DB changes
@@ -930,8 +931,11 @@ class WorkEnv(object):
       prev_iid, cur_index, next_iid = pipeline.DetermineIssuePosition(issue)
       return prev_iid, cur_index, next_iid, pipeline.total_count
 
+  # TODO(crbug/monorail/6988): add boolean to ignore_private_issues
   def GetIssuesDict(self, issue_ids, use_cache=True,
                     allow_viewing_deleted=False):
+    # type: (Collection[int], Optional[Boolean], Optaional[Boolean]) ->
+    #     Mapping[int, Issue]
     """Return a dict {iid: issue} with the specified issues, if allowed.
 
     Args:
@@ -942,19 +946,23 @@ class WorkEnv(object):
     Returns:
       A dict {issue_id: issue} for only those issues that the user is allowed
       to view.
+
+    Raises:
+      NoSuchIssueException if an issue is not found.
+      PermissionException if the user cannot view all issues.
     """
     with self.mc.profiler.Phase('getting issues %r' % issue_ids):
-      issues = self.services.issue.GetIssuesDict(
+      issues_by_id = self.services.issue.GetIssuesDict(
           self.mc.cnxn, issue_ids, use_cache=use_cache)
 
-    if len(issues) != len(set(issue_ids)):
+    if len(issues_by_id) != len(set(issue_ids)):
       raise exceptions.NoSuchIssueException()
 
-    issues = {
-        issue_id: issue
-        for issue_id, issue in issues.items()
-        if self._UserCanViewIssue(issue, allow_viewing_deleted)[-1]}
-    return issues
+    for issue in issues_by_id.values():
+      self._AssertUserCanViewIssue(
+          issue, allow_viewing_deleted=allow_viewing_deleted)
+
+    return issues_by_id
 
   def GetIssue(self, issue_id, use_cache=True, allow_viewing_deleted=False):
     """Return the specified issue.
@@ -1966,10 +1974,8 @@ class WorkEnv(object):
     if not self.mc.auth.user_id:
       raise exceptions.InputException('Anon cannot create hotlists.')
 
-    # Prevent users from adding issues they can't view to hotlists.
-    issues_dict = self.services.issue.GetIssuesDict(self.mc.cnxn, issue_ids)
-    for issue in issues_dict.values():
-      self._AssertUserCanViewIssue(issue)
+    # GetIssuesDict checks that the user can view all issues.
+    self.GetIssuesDict(issue_ids)
 
     with self.mc.profiler.Phase('creating hotlist %s' % name):
       hotlist = self.services.features.CreateHotlist(
@@ -2498,12 +2504,8 @@ class WorkEnv(object):
     for hotlist_id in hotlist_ids:
       self._AssertUserCanEditHotlist(self.GetHotlist(hotlist_id))
 
-    # Even though we check permissions when viewing the issues in a hotlist,
-    # we also check permissions when adding issues to a hotlist to prevent
-    # some clever ways that attackers could find some issue details.
-    issues_dict = self.services.issue.GetIssuesDict(self.mc.cnxn, issue_ids)
-    for issue in issues_dict.values():
-      self._AssertUserCanViewIssue(issue)
+    # GetIssuesDict checks that the user can view all issues
+    self.GetIssuesDict(issue_ids)
 
     added_tuples = [
         (issue_id, self.mc.auth.user_id, int(time.time()), note)

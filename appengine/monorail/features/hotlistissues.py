@@ -250,10 +250,10 @@ class HotlistIssues(servlet.Servlet):
 
     try:
       with work_env.WorkEnv(mr, self.services) as we:
-        selected_issues = we.GetIssuesDict(selected_iids)
+        we.GetIssuesDict(selected_iids)
     except exceptions.NoSuchIssueException:
       mr.errors.issues = _MSG_ISSUES_NOT_FOUND
-    if len(selected_issues) < len(selected_iids):
+    except permissions.PermissionException:
       mr.errors.issues = _MSG_ISSUES_NOT_VIEWABLE
 
     # TODO(jojwang): fix: when there are errors, hidden column come back on

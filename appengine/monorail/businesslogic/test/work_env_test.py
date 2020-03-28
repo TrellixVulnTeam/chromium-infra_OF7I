@@ -1043,23 +1043,29 @@ class WorkEnvTest(unittest.TestCase):
     issue_1 = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
     self.services.issue.TestAddIssue(issue_1)
     issue_2 = fake.MakeTestIssue(789, 2, 'sum', 'New', 111, issue_id=78902)
-    issue_2.labels = ['Restrict-View-CoreTeam']
     self.services.issue.TestAddIssue(issue_2)
-    issue_3 = fake.MakeTestIssue(789, 3, 'sum', 'New', 111, issue_id=78903)
-    self.services.issue.TestAddIssue(issue_3)
 
     with self.work_env as we:
-      actual = we.GetIssuesDict([78901, 78902, 78903])
+      actual = we.GetIssuesDict([78901, 78902])
 
-    # We don't have permission to view issue 2, so it should be filtered out.
-    self.assertEqual({78901: issue_1, 78903: issue_3}, actual)
+    self.assertEqual({78901: issue_1, 78902: issue_2}, actual)
+
+  def testGetIssuesDict_NoPermission(self):
+    """We reject attempts to get issues the user cannot view."""
+    issue_1 = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
+    issue_1.labels = ['Restrict-View-CoreTeam']
+    self.services.issue.TestAddIssue(issue_1)
+    issue_2 = fake.MakeTestIssue(789, 2, 'sum', 'New', 111, issue_id=78902)
+    self.services.issue.TestAddIssue(issue_2)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.GetIssuesDict([78901, 78902])
 
   def testGetIssuesDict_NoSuchIssue(self):
     """We reject attempts to get a non-existent issue."""
     with self.assertRaises(exceptions.NoSuchIssueException):
       with self.work_env as we:
         _actual = we.GetIssuesDict([78901])
-
 
   def testGetIssue_Normal(self):
     """We can get an existing issue by issue_id."""
