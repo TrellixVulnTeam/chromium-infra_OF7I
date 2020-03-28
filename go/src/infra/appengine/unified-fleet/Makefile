@@ -12,6 +12,11 @@ GCP_PROJECT_DEV = unified-fleet-system-dev
 gen:
 	go generate ./...
 
+# Run unittests
+.PHONY: test
+test:
+	go test ./...
+
 # Build and run service locally
 .PHONY: dev
 dev:
