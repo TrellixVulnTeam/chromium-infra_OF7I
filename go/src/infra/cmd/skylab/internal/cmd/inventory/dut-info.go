@@ -53,7 +53,6 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/
 
 		c.Flags.BoolVar(&c.asJSON, "json", false, "Print inventory as JSON-encoded protobuf. Implies -full.")
 		c.Flags.BoolVar(&c.full, "full", false, "Print full DUT information, including less frequently used fields.")
-		AddSwitchInventoryFlag(&c.useBackupInventory, c.Flags, c.envFlags)
 		return c
 	},
 }
@@ -63,9 +62,8 @@ type dutInfoRun struct {
 	authFlags authcli.Flags
 	envFlags  skycmdlib.EnvFlags
 
-	asJSON             bool
-	full               bool
-	useBackupInventory bool
+	asJSON bool
+	full   bool
 }
 
 func (c *dutInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -87,7 +85,7 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
-	ic := NewInventoryClient(hc, e, !c.useBackupInventory)
+	ic := NewInventoryClient(hc, e)
 	dut, err := ic.GetDutInfo(ctx, args[0], true, false)
 
 	if err != nil {

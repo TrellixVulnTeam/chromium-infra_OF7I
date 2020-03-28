@@ -32,7 +32,6 @@ For internal use only.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.byHostname, "by-hostname", false, "Lookup by hostname instead of ID.")
-		invcli.AddSwitchInventoryFlag(&c.useBackupInventory, c.Flags, c.envFlags)
 		return c
 	},
 }
@@ -42,8 +41,7 @@ type printBotInfoRun struct {
 	authFlags authcli.Flags
 	envFlags  skycmdlib.EnvFlags
 
-	useBackupInventory bool
-	byHostname         bool
+	byHostname bool
 }
 
 func (c *printBotInfoRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -65,7 +63,7 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 		return err
 	}
 	siteEnv := c.envFlags.Env()
-	ic := invcli.NewInventoryClient(hc, siteEnv, !c.useBackupInventory)
+	ic := invcli.NewInventoryClient(hc, siteEnv)
 	d, err := ic.GetDutInfo(ctx, dutID, c.byHostname, false)
 	if err != nil {
 		return err

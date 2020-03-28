@@ -114,8 +114,7 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	}
 	e := c.envFlags.Env()
 
-	// Use the default inventory configured in site.go.
-	ic := NewInventoryClient(hc, e, true)
+	ic := NewInventoryClient(hc, e)
 	return ic.batchUpdateDUTs(ctx, req, a.GetOut())
 }
 
