@@ -1,0 +1,10 @@
+name: luci-py/auth-service
+extends: ../base.yaml
+
+contextdir: ../../../luci/appengine/config_service
+
+build:
+  - run: ['make', 'release']
+    cwd: ${contextdir}/ui
+    outputs:
+      - ${contextdir}/ui/build/default
