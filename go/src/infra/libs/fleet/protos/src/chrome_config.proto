@@ -12,6 +12,8 @@ option go_package = "infra/libs/fleet/protos/go";
 message ChromePlatform {
     ChromePlatformID id = 1;
     int32 vm_slots = 2;
+    string manufacturer = 3;
+    string description = 4;
 }
 
 message OSVersion {
