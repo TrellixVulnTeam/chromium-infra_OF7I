@@ -11,11 +11,17 @@ import (
 
 	api "infra/appengine/unified-fleet/api/v1"
 	"infra/libs/fleet/configuration"
+	"infra/libs/fleet/datastore"
+	fleet "infra/libs/fleet/protos/go"
 )
 
 // ConfigurationServerImpl implements the configuration server interfaces.
 type ConfigurationServerImpl struct {
 }
+
+var (
+	parsePlatformsFunc = configuration.ParsePlatformsFromFile
+)
 
 // ImportChromePlatforms imports the Chrome Platform in batch.
 func (fs *ConfigurationServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *api.ImportChromePlatformsResponse, err error) {
@@ -23,13 +29,35 @@ func (fs *ConfigurationServerImpl) ImportChromePlatforms(ctx context.Context, re
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 	logging.Debugf(ctx, "Importing chrome platforms")
+	var platforms []*fleet.ChromePlatform
 	if req.LocalFilepath != "" {
-		platforms, err := configuration.ParsePlatformsFromFile(req.LocalFilepath)
+		oldP, err := parsePlatformsFunc(req.LocalFilepath)
 		if err != nil {
 			return nil, err
 		}
-		// TODO (xixuan): log first, save to datastore in next CL.
-		logging.Debugf(ctx, "%s", platforms)
+		platforms = configuration.ToChromePlatforms(oldP)
 	}
-	return &api.ImportChromePlatformsResponse{}, err
+	res, err := configuration.InsertChromePlatforms(ctx, platforms)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ImportChromePlatformsResponse{
+		Passed: toChromePlatformResult(res.Passed()),
+		Failed: toChromePlatformResult(res.Failed()),
+	}, err
+}
+
+func toChromePlatformResult(res datastore.OpResults) []*api.ChromePlatformResult {
+	cpRes := make([]*api.ChromePlatformResult, len(res))
+	for i, r := range res {
+		errMsg := ""
+		if r.Err != nil {
+			errMsg = r.Err.Error()
+		}
+		cpRes[i] = &api.ChromePlatformResult{
+			Platform: r.Data.(*fleet.ChromePlatform),
+			ErrorMsg: errMsg,
+		}
+	}
+	return cpRes
 }

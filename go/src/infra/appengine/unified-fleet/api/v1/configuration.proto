@@ -8,6 +8,8 @@ package fleet;
 
 option go_package = "api";
 
+import "infra/libs/fleet/protos/src/chrome_config.proto";
+
 service Configuration {
   // ImportChromePlatforms imports chrome platforms.
   rpc ImportChromePlatforms(ImportChromePlatformsRequest) returns (ImportChromePlatformsResponse);
@@ -19,4 +21,11 @@ message ImportChromePlatformsRequest {
 }
 
 message ImportChromePlatformsResponse {
+  repeated ChromePlatformResult passed = 1;
+  repeated ChromePlatformResult failed = 2;
+}
+
+message ChromePlatformResult {
+  fleet.ChromePlatform platform = 1;
+  string error_msg = 2;
 }

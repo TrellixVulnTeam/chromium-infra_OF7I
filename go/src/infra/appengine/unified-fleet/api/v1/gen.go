@@ -5,6 +5,6 @@
 // Package api contains the fleet service API.
 package api
 
-//go:generate cproto
+//go:generate cproto -proto-path ../../../../libs/fleet/protos/src
 //go:generate svcdec -type FleetServer
 //go:generate svcdec -type ConfigurationServer
