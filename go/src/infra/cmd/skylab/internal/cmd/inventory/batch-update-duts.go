@@ -115,15 +115,8 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	e := c.envFlags.Env()
 
 	// Use the default inventory configured in site.go.
-	icMain := NewInventoryClient(hc, e, true)
-	icBackup := NewInventoryClient(hc, e, false)
-
-	if e.DefaultInventoryOnly {
-		fmt.Fprintln(a.GetOut(), "= Skip the operation on backup inventory system. =")
-	} else {
-		icBackup.batchUpdateDUTs(ctx, req, a.GetOut())
-	}
-	return icMain.batchUpdateDUTs(ctx, req, a.GetOut())
+	ic := NewInventoryClient(hc, e, true)
+	return ic.batchUpdateDUTs(ctx, req, a.GetOut())
 }
 
 func (client *inventoryClientV1) batchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {

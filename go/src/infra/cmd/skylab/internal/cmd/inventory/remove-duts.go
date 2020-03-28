@@ -87,13 +87,9 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 	}
 
 	// Use the default inventory configured in site.go.
-	icMain := NewInventoryClient(hc, e, true)
-	icBackup := NewInventoryClient(hc, e, false)
+	ic := NewInventoryClient(hc, e, true)
 
-	if !e.DefaultInventoryOnly {
-		icBackup.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, c.removalReason, a.GetOut())
-	}
-	modified, err := icMain.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, c.removalReason, a.GetOut())
+	modified, err := ic.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, c.removalReason, a.GetOut())
 	if err != nil {
 		return err
 	}
