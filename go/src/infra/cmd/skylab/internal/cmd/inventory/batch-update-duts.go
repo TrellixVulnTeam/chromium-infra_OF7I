@@ -115,7 +115,6 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	e := c.envFlags.Env()
 
 	// Use the default inventory configured in site.go.
-	fmt.Fprintln(a.GetOut(), "= The default inventory system is", e.DefaultInventory, "=")
 	icMain := NewInventoryClient(hc, e, true)
 	icBackup := NewInventoryClient(hc, e, false)
 
@@ -177,10 +176,8 @@ func (client *inventoryClientV2) batchUpdateDUTs(ctx context.Context, req *fleet
 		DeviceProperties: properties,
 	})
 	if err != nil {
-		return errors.Annotate(err, "[v2] fail to update Duts").Err()
+		return errors.Annotate(err, "fail to update Duts").Err()
 	}
-	fmt.Fprintln(writer, "== Inventory v2: output begin ==")
-	fmt.Fprintln(writer, "[v2] Successfully batch updated.")
-	fmt.Fprintln(writer, "== Inventory v2: output end ==")
+	fmt.Fprintln(writer, "Successfully batch updated.")
 	return nil
 }

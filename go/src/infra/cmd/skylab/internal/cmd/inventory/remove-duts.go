@@ -87,7 +87,6 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 	}
 
 	// Use the default inventory configured in site.go.
-	fmt.Fprintln(a.GetOut(), "= The default inventory system is", e.DefaultInventory, "=")
 	icMain := NewInventoryClient(hc, e, true)
 	icBackup := NewInventoryClient(hc, e, false)
 
@@ -190,24 +189,22 @@ func (client *inventoryClientV2) deleteDUTs(ctx context.Context, hostnames []str
 		},
 	})
 	if err != nil {
-		return false, errors.Annotate(err, "[v2] remove devices for %s ...", hostnames[0]).Err()
+		return false, errors.Annotate(err, "remove devices for %s ...", hostnames[0]).Err()
 	}
 	if len(rsp.FailedDevices) > 0 {
 		var reasons []string
 		for _, d := range rsp.FailedDevices {
 			reasons = append(reasons, fmt.Sprintf("%s:%s", d.Hostname, d.ErrorMsg))
 		}
-		return false, errors.Reason("[v2] failed to remove device: %s", strings.Join(reasons, ", ")).Err()
+		return false, errors.Reason("failed to remove device: %s", strings.Join(reasons, ", ")).Err()
 	}
 	b := bufio.NewWriter(stdout)
-	fmt.Fprintln(b, "== Inventory v2: output begin ==")
 	fmt.Fprintln(b, "Deleted DUT hostnames")
 	for _, d := range rsp.RemovedDevices {
 		fmt.Fprintln(b, d.Hostname)
 	}
 	// TODO(eshwarn) : move this into DeleteCrosDevices in inventoryV2 layer
 	updateAssets(ctx, client, rsp.RemovedDevices, b)
-	fmt.Fprintln(b, "== Inventory v2: output end ==")
 	b.Flush()
 	return len(rsp.RemovedDevices) > 0, nil
 }

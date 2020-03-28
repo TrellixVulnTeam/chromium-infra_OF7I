@@ -115,7 +115,6 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 
-	fmt.Fprintln(a.GetOut(), "= The default inventory system is", e.DefaultInventory, "=")
 	prompt := userinput.CLIPrompt(a.GetOut(), os.Stdin, false)
 	if !prompt(fmt.Sprintf("Ready to update host: %s", hostname)) {
 		return nil
@@ -242,7 +241,6 @@ func printDeploymentStatus(w io.Writer, deploymentID string, ds *fleet.GetDeploy
 	tw := tabwriter.NewWriter(w, 0, 2, 2, ' ', 0)
 	fmt.Fprintf(tw, "Deployment ID:\t%s\n", deploymentID)
 	fmt.Fprintf(tw, "Status:\t%s\n", ds.GetStatus())
-	fmt.Fprintf(tw, "Inventory change URL:\t%s\n", ds.GetChangeUrl())
 	fmt.Fprintf(tw, "Deploy task URL:\t%s\n", ds.GetTaskUrl())
 	fmt.Fprintf(tw, "Message:\t%s\n", ds.GetMessage())
 	return tw.Flush()
