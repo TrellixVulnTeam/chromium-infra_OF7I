@@ -1,0 +1,28 @@
+// Copyright 2020 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package ufs.config;
+
+option go_package = "config";
+
+// Config is the configuration data served by luci-config for this app.
+message Config {
+  // The access groups.
+  map<string, LuciAuthGroups> access_groups = 1;
+
+  ChromeConfigRepo chrome_config_repo = 2;
+}
+
+message LuciAuthGroups {
+  repeated string group = 1;
+}
+
+message ChromeConfigRepo {
+  string host = 1;
+  string project = 2;
+  string branch = 3;
+  string platform_path = 4;
+}

@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
 
+	"infra/appengine/unified-fleet/app/config"
 	"infra/appengine/unified-fleet/app/frontend"
 )
 
@@ -17,6 +18,11 @@ func main() {
 		gaeemulation.NewModuleFromFlags(),
 	}
 	server.Main(nil, modules, func(srv *server.Server) error {
+		cfg, err := config.Load()
+		if err != nil {
+			return err
+		}
+		srv.Context = config.Use(srv.Context, cfg)
 		frontend.InstallServices(srv.PRPC)
 		return nil
 	})
