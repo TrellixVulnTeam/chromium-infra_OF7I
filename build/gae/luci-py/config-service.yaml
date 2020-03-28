@@ -1,4 +1,4 @@
-name: luci-py/auth-service
+name: luci-py/config-service
 extends: ../base.yaml
 
 contextdir: ../../../luci/appengine/config_service
