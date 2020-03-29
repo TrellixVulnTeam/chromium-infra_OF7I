@@ -85,7 +85,7 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 	}
 	e := c.envFlags.Env()
 	ic := NewInventoryClient(hc, e)
-	dut, err := ic.GetDutInfo(ctx, args[0], true, false)
+	dut, err := ic.GetDutInfo(ctx, args[0], true)
 
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 }
 
 // GetDutInfo gets the dut information from inventory v2 service.
-func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHostname, _ bool) (*inventory.DeviceUnderTest, error) {
+func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
 	devID := &invV2Api.DeviceID{Id: &invV2Api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: id}}
 	if byHostname {
 		devID = &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: id}}

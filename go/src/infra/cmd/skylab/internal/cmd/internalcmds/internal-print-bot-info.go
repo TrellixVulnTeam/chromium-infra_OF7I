@@ -64,7 +64,7 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 	}
 	siteEnv := c.envFlags.Env()
 	ic := invcli.NewInventoryClient(hc, siteEnv)
-	d, err := ic.GetDutInfo(ctx, dutID, c.byHostname, false)
+	d, err := ic.GetDutInfo(ctx, dutID, c.byHostname)
 	if err != nil {
 		return err
 	}
