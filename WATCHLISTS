@@ -3,8 +3,33 @@
     'chopsui': {
       'filepath': '\.(js|html|css|scss)$',
     },
+    'chromium_status': {
+      'filepath': 'appengine/chromium_status',
+    },
+    'findit': {
+      'filepath': 'appengine/findit',
+    },
+    'rotang': {
+      'filepath': 'go/src/infra/appengine/rotang',
+    },
+    'rotation_proxy': {
+      'filepath': 'go/src/infra/appengine/rotation-proxy',
+    },
+    'sheriff_o_matic': {
+      'filepath': 'go/src/infra/appengine/sheriff-o-matic',
+    },
+    'tree_status': {
+      'filepath': 'go/src/infra/appengine/tree-status',
+    },
   },
   'WATCHLISTS': {
     'chopsui': ['chops-ui-reviews@google.com'],
+
+    'chromium_status': ['chops-tfs-team+reviews@google.com'],
+    'findit': ['chops-tfs-team+reviews@google.com'],
+    'rotang': ['chops-tfs-team+reviews@google.com'],
+    'rotation_proxy': ['chops-tfs-team+reviews@google.com'],
+    'sheriff_o_matic': ['chops-tfs-team+reviews@google.com'],
+    'tree_status': ['chops-tfs-team+reviews@google.com'],
   },
 }
