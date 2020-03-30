@@ -27,6 +27,12 @@ type ChromePlatformEntity struct {
 	Platform []byte `gae:",noindex"`
 	// Should be in UTC timezone.
 	Updated time.Time
+	// Ensure all chrome platform entities share the same entity group.
+	Parent *datastore.Key `gae:"$parent"`
+}
+
+func fakeChromePlatformAncestorKey(ctx context.Context) *datastore.Key {
+	return datastore.MakeKey(ctx, ChromePlatformKind, "key")
 }
 
 // GetProto returns the unmarshaled Chrome platform.
@@ -43,7 +49,7 @@ func (e *ChromePlatformEntity) GetUpdated() time.Time {
 	return e.Updated
 }
 
-func newEntity(pm proto.Message, updateTime time.Time) (fleetds.FleetEntity, error) {
+func newEntity(ctx context.Context, pm proto.Message, updateTime time.Time) (fleetds.FleetEntity, error) {
 	p := pm.(*fleet.ChromePlatform)
 	if p.GetId().GetValue() == "" {
 		return nil, errors.Reason("Empty Chrome Platform ID").Err()
@@ -56,12 +62,14 @@ func newEntity(pm proto.Message, updateTime time.Time) (fleetds.FleetEntity, err
 		ID:       p.GetId().GetValue(),
 		Platform: platform,
 		Updated:  updateTime,
+		Parent:   fakeChromePlatformAncestorKey(ctx),
 	}, nil
 }
 
 func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	var entities []*ChromePlatformEntity
-	if err := datastore.GetAll(ctx, datastore.NewQuery(ChromePlatformKind), &entities); err != nil {
+	q := datastore.NewQuery(ChromePlatformKind).Ancestor(fakeChromePlatformAncestorKey(ctx))
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
 	fe := make([]fleetds.FleetEntity, len(entities))

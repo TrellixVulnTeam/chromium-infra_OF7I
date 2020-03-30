@@ -24,7 +24,7 @@ type FleetEntity interface {
 type ExistsFunc func(context.Context, []FleetEntity) ([]bool, error)
 
 // NewFunc creates a new fleet entity.
-type NewFunc func(proto.Message, time.Time) (FleetEntity, error)
+type NewFunc func(context.Context, proto.Message, time.Time) (FleetEntity, error)
 
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
@@ -40,7 +40,7 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc) 
 			Data:      e,
 			Timestamp: updated,
 		}
-		entity, err := nf(e, updated)
+		entity, err := nf(ctx, e, updated)
 		if err != nil {
 			allRes[i].LogError(err)
 			continue
@@ -75,7 +75,7 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc) 
 		}
 		return nil
 	}
-	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return &allRes, err
 	}
 	return &allRes, nil
