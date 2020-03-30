@@ -13,6 +13,8 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
+
+	"infra/appengine/unified-fleet/app/config"
 )
 
 type testFixture struct {
@@ -38,6 +40,13 @@ func testingContext() context.Context {
 	c := gaetesting.TestingContextWithAppID("dev~infra-unified-fleet-system")
 	c = gologger.StdConfig.Use(c)
 	c = logging.SetLevel(c, logging.Debug)
+	c = config.Use(c, &config.Config{
+		AccessGroups: map[string]*config.LuciAuthGroups{
+			"chrome.configuration.create": {
+				Group: []string{"fake_group"},
+			},
+		},
+	})
 	datastore.GetTestable(c).Consistent(true)
 	return c
 }

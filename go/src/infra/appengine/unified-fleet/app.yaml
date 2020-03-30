@@ -7,8 +7,13 @@ service: default
 luci_gae_vars:
   unified-fleet-system-dev:
     AUTH_SERVICE_HOST: chrome-infra-auth-dev.appspot.com
+  unified-fleet-system-staging:
+    AUTH_SERVICE_HOST: chrome-infra-auth-dev.appspot.com
   unified-fleet-system-prod:
     AUTH_SERVICE_HOST: chrome-infra-auth.appspot.com
 
+# Note: Not sure why that /usr/local/bin/start cannot be found in dev instance
+# now. So temporarily running self-built go binary "ufs-service" to test.
+#  /usr/local/bin/start -auth-service-host ${AUTH_SERVICE_HOST}
 entrypoint: >
-  /usr/local/bin/start -auth-service-host ${AUTH_SERVICE_HOST}
+    ./ufs-service -auth-service-host ${AUTH_SERVICE_HOST}

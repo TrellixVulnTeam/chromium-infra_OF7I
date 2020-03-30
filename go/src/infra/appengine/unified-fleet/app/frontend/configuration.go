@@ -5,11 +5,13 @@
 package frontend
 
 import (
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
 
 	api "infra/appengine/unified-fleet/api/v1"
+	"infra/appengine/unified-fleet/app/config"
 	"infra/libs/fleet/configuration"
 	"infra/libs/fleet/datastore"
 	fleet "infra/libs/fleet/protos/go"
@@ -28,10 +30,23 @@ func (fs *ConfigurationServerImpl) ImportChromePlatforms(ctx context.Context, re
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	logging.Debugf(ctx, "Importing chrome platforms")
+	cfg := config.Get(ctx)
 	var platforms []*fleet.ChromePlatform
 	if req.LocalFilepath != "" {
+		logging.Debugf(ctx, "Importing chrome platforms from local config file")
 		oldP, err := parsePlatformsFunc(req.LocalFilepath)
+		if err != nil {
+			return nil, err
+		}
+		platforms = configuration.ToChromePlatforms(oldP)
+	} else {
+		logging.Debugf(ctx, "Importing chrome platforms from git")
+		rp := cfg.GetChromeConfigRepo()
+		gitC, err := getGitClient(ctx, rp.GetHost(), rp.GetProject(), rp.GetBranch())
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to create git client").Err()
+		}
+		oldP, err := configuration.GetPlatformsFromGit(ctx, gitC, rp.GetPlatformPath())
 		if err != nil {
 			return nil, err
 		}

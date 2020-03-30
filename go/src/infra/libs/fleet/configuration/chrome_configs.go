@@ -5,13 +5,16 @@
 package configuration
 
 import (
+	"context"
 	"io/ioutil"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 
-	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
+	gitlib "infra/libs/cros/git"
 	fleet "infra/libs/fleet/protos/go"
+
+	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )
 
 // ParsePlatformsFromFile parse chrome platforms in crimson format from local file.
@@ -24,6 +27,20 @@ func ParsePlatformsFromFile(path string) (*crimsonconfig.Platforms, error) {
 	err = proto.UnmarshalText(string(b), &platforms)
 	if err != nil {
 		return nil, errors.Annotate(err, "fail to unmarshal %s", path).Err()
+	}
+	return &platforms, nil
+}
+
+// GetPlatformsFromGit gets chrome platforms from git.
+func GetPlatformsFromGit(ctx context.Context, gitC *gitlib.Client, fp string) (*crimsonconfig.Platforms, error) {
+	res, err := gitC.GetFile(ctx, fp)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to fetch file %s", fp).Err()
+	}
+	platforms := crimsonconfig.Platforms{}
+	err = proto.UnmarshalText(res, &platforms)
+	if err != nil {
+		return nil, errors.Annotate(err, "fail to unmarshal %s", fp).Err()
 	}
 	return &platforms, nil
 }
