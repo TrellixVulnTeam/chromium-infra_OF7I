@@ -160,7 +160,12 @@ def _export_builds(
     proto.infra.buildbucket.hostname = ''
     for s in proto.steps:
       s.summary_markdown = ''
-      s.ClearField('logs')
+
+      for log in s.logs:
+        # Clear everything but the name.
+        name = log.name
+        log.Clear()
+        log.name = name
 
   row_statuses = {}  # build_id -> status.
   # Ensure we are under request size limit.

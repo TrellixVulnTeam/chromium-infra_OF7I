@@ -93,7 +93,7 @@ class BigQueryExportTest(testing.AppengineTestCase):
                     name='bot_update',
                     status=common_pb2.SUCCESS,
                     summary_markdown='summary_markdown',
-                    logs=[dict(name='stdout')],
+                    logs=[dict(name='stdout', view_url='https://example.com')],
                 ),
             ],
         )
@@ -136,7 +136,8 @@ class BigQueryExportTest(testing.AppengineTestCase):
     step = actual_payload['rows'][0]['json']['steps'][0]
     self.assertEqual(step['name'], 'bot_update')
     self.assertEqual(step['summary_markdown'], '')
-    self.assertNotIn('logs', step)
+    self.assertEqual(step['logs'][0]['name'], 'stdout')
+    self.assertEqual(step['logs'][0]['view_url'], '')
 
   def test_cron_export_builds_to_bq_not_found(self):
     self.queue.add([
