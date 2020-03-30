@@ -100,6 +100,8 @@ const requestsReducer = combineReducers({
       FETCH_START, FETCH_SUCCESS, FETCH_FAILURE),
   fetchItems: createRequestReducer(
       FETCH_ITEMS_START, FETCH_ITEMS_SUCCESS, FETCH_ITEMS_FAILURE),
+  removeItems: createRequestReducer(
+      REMOVE_ITEMS_START, REMOVE_ITEMS_SUCCESS, REMOVE_ITEMS_FAILURE),
   rerankItems: createRequestReducer(
       RERANK_ITEMS_START, RERANK_ITEMS_SUCCESS, RERANK_ITEMS_FAILURE),
 });

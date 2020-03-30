@@ -29,6 +29,10 @@ describe('hotlist reducers', () => {
           error: null,
           requesting: false,
         },
+        removeItems: {
+          error: null,
+          requesting: false,
+        },
         rerankItems: {
           error: null,
           requesting: false,
