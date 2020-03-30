@@ -16,7 +16,8 @@ syntax = "proto3";
 
 package pinpoint;
 
-// TODO(dberris): Uncomment when we have an updated aip.dev copy in infra.git.
+// TODO(dberris): Uncomment when we have an updated https://aip.dev schema
+// definitions copy in infra.git.
 // import "google/api/annotations.proto";
 // import "google/api/http.proto";
 import "google/api/field_behavior.proto";
@@ -135,41 +136,42 @@ message GTestBenchmark {
   // Name of the measurement that shows up as a chart in the Dashboard.
   string measurement = 2;
 
-  // Name of the testcase in the benchmark.
+  // Name of the testcase in the benchmark, supplied as a filter to the GTest.
   string test = 3;
 }
 
 // A commit in a Gitiles repostory.
 message GitilesCommit {
   // The gitiles host to query for commits.
-  string host = 1;
+  string host = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The gitiles project to query for commits.
-  string project = 2;
+  string project = 2 [(google.api.field_behavior) = REQUIRED];
 
   // The hash for the specific Git commit.
-  string git_hash = 3;
+  string git_hash = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 // A Gerrit change review, to refer to patches to apply in builds.
 message GerritChange {
   // Gerrit hostname.
-  string host = 1;
+  string host = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Gerrit project in the host.
-  string project = 2;
+  string project = 2 [(google.api.field_behavior) = REQUIRED];
 
   // A change ID against the project in the host.
-  int64 change = 3;
+  int64 change = 3 [(google.api.field_behavior) = REQUIRED];
 
   // A reference to the patch set. If unspecified this will always be the
   // latest.
-  int64 patchset = 4;
+  int64 patchset = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 // A Bisection specifies a range through which Pinpoint will perform
 // builds/runs against to find potential culprits.
 message Bisection {
+  // TODO(dberris): Formalise a CommitRange proto and use that instead.
   GitilesCommit start_commit = 1;
   GitilesCommit end_commit = 2;
 
