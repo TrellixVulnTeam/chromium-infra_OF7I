@@ -105,6 +105,10 @@ var (
 		"seeked",      // JS event
 		"splitted",    // informal variant past tense of split
 		"subprocess'", // possessive of subprocess
+		"supercede",   // American spelling
+		"superceded",  // American spelling
+		"supercedes",  // American spelling
+		"superceding", // American spelling
 		"supportd",    // proper name of a thing in Chromium src
 		"synopsys",    // company name
 		"tast",        // name of a ChromeOS test
