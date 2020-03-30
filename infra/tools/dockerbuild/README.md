@@ -133,7 +133,7 @@ Wheels can be built and uploaded by using the `wheel-build` subcommand, and
 uploaded using the `--upload` flag.
 
 Support for additional Python wheels and/or wheel versions can be added by
-editing [wheel.py](wheel.py) and adding entries for the new wheels.
+editing [wheels.py](wheels.py) and adding entries for the new wheels.
 
 Adding support for universal wheels is easy. Adding support for **most**
 platform-specific binary wheels can range from easy to hacky-difficult depending

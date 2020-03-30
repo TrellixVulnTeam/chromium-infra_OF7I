@@ -9,7 +9,7 @@ import subprocess
 
 from . import util
 
-from .types import Wheel
+from .build_types import Wheel
 
 
 class PlatformNotSupported(Exception):

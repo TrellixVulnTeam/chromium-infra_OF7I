@@ -4,30 +4,28 @@
 
 import argparse
 import distutils.version
-import logging
 import os
 import re
-import shutil
-import subprocess
 import sys
 
-from . import cipd
 from . import dockcross
 from . import markdown
-from . import platform
 from . import runtime
 from . import source
 from . import util
-from . import wheel
+from . import build_platform
+from . import wheels
 
 from .builder import PlatformNotSupported
 
 
 def _filter_platform_specs(selected_platforms, selected_specs):
-  filtered_platforms = [platform.ALL[p] for p in (
-      platform.NAMES if not selected_platforms else selected_platforms)]
-  filtered_specs = (wheel.DEFAULT_SPEC_NAMES if not selected_specs
-                    else selected_specs)
+  filtered_platforms = [
+      build_platform.ALL[p] for p in
+      (build_platform.NAMES if not selected_platforms else selected_platforms)
+  ]
+  filtered_specs = (
+      wheels.DEFAULT_SPEC_NAMES if not selected_specs else selected_specs)
   return filtered_platforms, filtered_specs
 
 
@@ -43,7 +41,10 @@ def _main_sources(args, system):
 
 
 def _main_docker_mirror(args, system):
-  plats = [platform.ALL[name] for name in (args.platform or platform.NAMES)]
+  plats = [
+      build_platform.ALL[name]
+      for name in (args.platform or build_platform.NAMES)
+  ]
   builder = dockcross.Builder(system)
   for plat in plats:
     if not plat.dockcross_base:
@@ -56,11 +57,11 @@ def _main_docker_mirror(args, system):
 
 
 def _main_docker_generate(args, system):
-  names = args.platform or platform.NAMES
+  names = args.platform or build_platform.NAMES
   builder = dockcross.Builder(system)
 
   for name in names:
-    plat = platform.ALL[name]
+    plat = build_platform.ALL[name]
     if not plat.dockcross_base:
       util.LOGGER.info('Skipping [%s]: not configured for dockcross.', name)
       continue
@@ -75,12 +76,12 @@ def _main_docker_generate(args, system):
 
 
 def _main_wheel_build(args, system):
-  wheels = set(args.wheel or ())
+  to_build = set(args.wheel or ())
   if args.wheel_re:
     regex = r'^%s$' % '|'.join('(%s)' % r for r in args.wheel_re)
     wheel_re = re.compile(regex)
-    wheels.update(x for x in wheel.SPEC_NAMES if wheel_re.match(x))
-    if not wheels:
+    to_build.update(x for x in to_build.SPEC_NAMES if wheel_re.match(x))
+    if not to_build:
       util.LOGGER.error("--wheel_re didn't match any wheels: %s", regex)
       return
 
@@ -88,14 +89,14 @@ def _main_wheel_build(args, system):
   # need their refs updated.
   updated_packages = set()
 
-  platforms, specs = _filter_platform_specs(args.platform, wheels)
+  platforms, specs = _filter_platform_specs(args.platform, to_build)
 
   _, git_revision = system.check_run(
       ['git', 'rev-parse', 'HEAD'],
       cwd=system.root,
   )
   for spec_name in specs:
-    build = wheel.SPECS[spec_name]
+    build = wheels.SPECS[spec_name]
 
     seen = set()
     for plat in platforms:
@@ -143,7 +144,7 @@ def _main_wheel_build(args, system):
   platforms, specs = _filter_platform_specs(args.platform, set())
   package_map = {}
   for spec_name in specs:
-    build = wheel.SPECS[spec_name]
+    build = wheels.SPECS[spec_name]
     seen = set()
     for plat in platforms:
       w = build.wheel(system, plat)
@@ -207,8 +208,8 @@ def _main_wheel_build(args, system):
 def _main_wheel_dump(args, system):
   try:
     md = markdown.Generator()
-    for build in wheel.SPECS.itervalues():
-      for plat in platform.ALL.itervalues():
+    for build in wheels.SPECS.itervalues():
+      for plat in build_platform.ALL.itervalues():
         if not build.supported(plat):
           continue
         w = build.wheel(system, plat)
@@ -222,7 +223,7 @@ def _main_wheel_dump(args, system):
 
 
 def _main_run(args, system):
-  plat = platform.ALL[args.platform]
+  plat = build_platform.ALL[args.platform]
   builder = dockcross.Builder(system)
 
   util.LOGGER.info('Configuring Docker image for %r...', plat.name)
@@ -291,7 +292,10 @@ def add_argparse_options(parser):
       help='Mirror public Docker base images to our internal repository.')
   subparser.add_argument('--upload', action='store_true',
       help='Upload the tagged images to the internal repository.')
-  subparser.add_argument('--platform', action='append', choices=platform.NAMES,
+  subparser.add_argument(
+      '--platform',
+      action='append',
+      choices=build_platform.NAMES,
       help='If provided, only mirror images for the named platforms.')
   subparser.set_defaults(func=_main_docker_mirror)
 
@@ -300,7 +304,10 @@ def add_argparse_options(parser):
       help='Generate and install the base "dockcross" build environment.')
   subparser.add_argument('--rebuild', action='store_true',
       help='Force rebuild of the image, even if one already exists.')
-  subparser.add_argument('--platform', action='append', choices=platform.NAMES,
+  subparser.add_argument(
+      '--platform',
+      action='append',
+      choices=build_platform.NAMES,
       help='If provided, only generate the named environment.')
   subparser.add_argument('--upload', action='store_true',
       help='Upload any generated Docker images.')
@@ -309,11 +316,15 @@ def add_argparse_options(parser):
   # Subcommand: wheel-build
   subparser = subparsers.add_parser('wheel-build',
       help='Generate the named wheel.')
-  subparser.add_argument('--platform', action='append',
-      choices=platform.NAMES,
+  subparser.add_argument(
+      '--platform',
+      action='append',
+      choices=build_platform.NAMES,
       help='Only build packages for the specified platform.')
-  subparser.add_argument('--wheel', action='append',
-      choices=wheel.SPEC_NAMES,
+  subparser.add_argument(
+      '--wheel',
+      action='append',
+      choices=wheels.SPEC_NAMES,
       help='Only build packages for the specified wheel(s).')
   subparser.add_argument('--wheel_re', action='append', default=[],
       metavar='REGEX',
@@ -335,8 +346,10 @@ def add_argparse_options(parser):
   # Subcommand: run
   subparser = subparsers.add_parser('run',
       help='Run the supplied subcommand in a "dockcross" container.')
-  subparser.add_argument('--platform', required=True,
-      choices=platform.NAMES,
+  subparser.add_argument(
+      '--platform',
+      required=True,
+      choices=build_platform.NAMES,
       help='Run in the container for the specified platform.')
   subparser.add_argument('--workdir', default=cwd,
       help=('Mount this directory as "/work". Must be equal to, or a parent '

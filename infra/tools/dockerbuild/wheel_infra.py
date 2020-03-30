@@ -8,8 +8,8 @@ from . import source
 from . import builder
 from . import util
 
+from .build_types import Spec, UniversalSpec
 from .builder import Builder
-from .types import Spec, UniversalSpec
 
 
 class InfraPackage(Builder):

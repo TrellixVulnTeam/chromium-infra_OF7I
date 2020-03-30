@@ -2,18 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import os
-import glob
-import shutil
-
-from . import platform
+from . import build_platform
 from . import source
 from . import util
 
-from .builder import Builder, StageWheelForPackage, BuildPackageFromPyPiWheel
-from .builder import BuildPackageFromSource
+from .builder import Builder, BuildPackageFromPyPiWheel, BuildPackageFromSource
 
-from .types import Spec, UniversalSpec
+from .build_types import Spec, UniversalSpec
 
 
 class SourceOrPrebuilt(Builder):
@@ -37,7 +32,7 @@ class SourceOrPrebuilt(Builder):
     """
     self._pypi_src = source.pypi_sdist(name, version)
     self._packaged = set(
-      kwargs.pop('packaged', (p.name for p in platform.PACKAGED)))
+        kwargs.pop('packaged', (p.name for p in build_platform.PACKAGED)))
     self._env = kwargs.pop('env', None)
 
     super(SourceOrPrebuilt, self).__init__(

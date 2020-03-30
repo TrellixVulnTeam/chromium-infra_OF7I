@@ -15,9 +15,9 @@ from distutils.spawn import find_executable
 
 from . import cipd
 from . import dockcross
-from . import platform
 from . import source
 from . import util
+from . import build_platform
 
 
 class MissingToolsError(RuntimeError):
@@ -127,7 +127,7 @@ class System(object):
     else:
       # No "dockcross" image associated with this platform. We can return a
       # native image if the target platform is the current platform.
-      native_platform = platform.NativePlatform()
+      native_platform = build_platform.NativePlatform()
       if plat == native_platform:
         util.LOGGER.info('Using native platform for [%s].', plat.name)
         dx = dockcross.NativeImage(self, plat)

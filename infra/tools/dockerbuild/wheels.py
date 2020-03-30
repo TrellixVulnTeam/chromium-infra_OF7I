@@ -59,7 +59,7 @@ import difflib
 import sys
 from pkg_resources import parse_version
 
-from . import platform
+from . import build_platform
 
 # This is the NumPy-ecosystem list of platforms that their mac-x64 wheel
 # supports.
@@ -111,7 +111,7 @@ SPECS.update({
             'MarkupSafe',
             '1.0',
             packaged=(),
-            only_plat=platform.ALL_LINUX,
+            only_plat=build_platform.ALL_LINUX,
         ),
         SourceOrPrebuilt(
             'MarkupSafe',
@@ -270,7 +270,7 @@ SPECS.update({
             'psutil',
             '1.2.1',
             packaged=[],
-            only_plat=platform.ALL_LINUX + ['mac-x64'],
+            only_plat=build_platform.ALL_LINUX + ['mac-x64'],
         ),
         SourceOrPrebuilt(
             'psutil',
@@ -650,6 +650,7 @@ SPECS.update({
         Universal('selenium', '3.4.1'),
         Universal('selenium', '3.14.0'),
         Universal('setuptools', '34.3.2'),
+        Universal('setuptools', '44.1.0'),
         Universal('singledispatch', '3.4.0.3'),
         Universal('six', '1.10.0'),
         Universal('six', '1.11.0'),

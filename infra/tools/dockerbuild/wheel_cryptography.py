@@ -4,7 +4,7 @@
 
 import os
 
-from .types import Spec
+from .build_types import Spec
 from .builder import Builder, BuildPackageFromPyPiWheel, StageWheelForPackage
 
 from . import source
@@ -125,21 +125,22 @@ class CryptographyPyPI(Cryptography):
     Builds wheels for platforms not present in PyPI (e.g ARM) from source.
     Builds statically and links to OpenSSL of given version.
     """
-    super(CryptographyPyPI, self).__init__(name,
-      source.pypi_sdist('cryptography', ver),
-      source.remote_archive(
-          name='openssl',
-          version=openssl,
-          url='https://www.openssl.org/source/openssl-%s.tar.gz' % openssl,
-      ),
-      arch_map={
-        'mac-x64': ['macosx_10_6_intel'],
-      },
-      packaged=[
-        'manylinux-x86',
-        'manylinux-x64',
-        'mac-x64',
-        'windows-x86',
-        'windows-x64',
-      ],
-  )
+    super(CryptographyPyPI, self).__init__(
+        name,
+        source.pypi_sdist('cryptography', ver),
+        source.remote_archive(
+            name='openssl',
+            version=openssl,
+            url='https://www.openssl.org/source/openssl-%s.tar.gz' % openssl,
+        ),
+        arch_map={
+            'mac-x64': ['macosx_10_6_intel'],
+        },
+        packaged=[
+            'manylinux-x86',
+            'manylinux-x64',
+            'mac-x64',
+            'windows-x86',
+            'windows-x64',
+        ],
+    )

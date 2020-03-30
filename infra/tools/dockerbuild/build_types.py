@@ -16,16 +16,19 @@ from . import cipd
 # new suffix.
 BINARY_VERSION_SUFFIX = None
 
+UniversalSpec = collections.namedtuple('UniversalSpec', ('pyversions'))
 
-UniversalSpec = collections.namedtuple('UniversalSpec', (
-    'pyversions'))
+_Spec = collections.namedtuple(
+    '_Spec',
+    (
+        'name',
+        'version',
+        'universal',
+        # default is true if this Spec should be built by default (i.e., when a
+        # user doesn't manually specify Specs to build).
+        'default'))
 
 
-_Spec = collections.namedtuple('_Spec', (
-    'name', 'version', 'universal',
-    # default is true if this Spec should be built by default (i.e., when a
-    # user doesn't manually specify Specs to build).
-    'default'))
 class Spec(_Spec):
 
   @property
@@ -40,8 +43,10 @@ class Spec(_Spec):
     return self._replace(universal=UniversalSpec(pyversions=None))
 
 
-_Wheel = collections.namedtuple('_Wheel', (
-    'spec', 'plat', 'pyversion', 'filename', 'md_lines'))
+_Wheel = collections.namedtuple(
+    '_Wheel', ('spec', 'plat', 'pyversion', 'filename', 'md_lines'))
+
+
 class Wheel(_Wheel):
 
   def __new__(cls, *args, **kwargs):
@@ -110,7 +115,8 @@ class Wheel(_Wheel):
       base_path += [self.spec.name]
       if not templated:
         base_path += [
-          '%s_%s_%s' % (self.plat.cipd_platform, self.pyversion_str, self.abi)]
+            '%s_%s_%s' % (self.plat.cipd_platform, self.pyversion_str, self.abi)
+        ]
       else:
         base_path += ['${vpython_platform}']
 
@@ -121,10 +127,8 @@ class Wheel(_Wheel):
     if git_revision is not None:
       tags.append('git_revision:%s' % (git_revision,))
     return cipd.Package(
-      name=('/'.join(p.replace('.', '_') for p in base_path)).lower(),
-      tags=tuple(tags),
-      install_mode=cipd.INSTALL_SYMLINK,
-      compress_level=cipd.COMPRESS_NONE,
+        name=('/'.join(p.replace('.', '_') for p in base_path)).lower(),
+        tags=tuple(tags),
+        install_mode=cipd.INSTALL_SYMLINK,
+        compress_level=cipd.COMPRESS_NONE,
     )
-
-

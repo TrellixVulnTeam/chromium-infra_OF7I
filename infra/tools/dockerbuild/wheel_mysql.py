@@ -4,7 +4,7 @@
 
 import os
 
-from .types import Spec
+from .build_types import Spec
 from .builder import Builder
 
 from . import util

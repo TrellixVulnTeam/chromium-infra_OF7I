@@ -7,8 +7,8 @@ import os
 from . import util
 
 from . import wheel_wheel
+from .build_types import Spec
 from .builder import Builder, StageWheelForPackage, BuildPackageFromPyPiWheel
-from .types import Spec
 
 
 class OpenCV(Builder):

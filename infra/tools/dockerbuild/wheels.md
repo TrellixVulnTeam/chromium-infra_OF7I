@@ -3381,6 +3381,18 @@ wheel: <
 
 * *universal*
 
+### 44.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/setuptools-py2_py3"
+  version: "version:44.1.0"
+>
+```
+
+
+* *universal*
+
 ## **simplejson**
 
 ### 3.13.2
