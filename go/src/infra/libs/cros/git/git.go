@@ -13,6 +13,7 @@ import (
 	gerritapi "go.chromium.org/luci/common/api/gerrit"
 	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gerrit"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
@@ -54,11 +55,14 @@ func (c *Client) Init(ctx context.Context, hc *http.Client, gerritHost string, g
 	c.project = project
 	c.branch = branch
 	c.gerritHost = gerritHost
-	c.gerritC, err = gerritapi.NewRESTClient(hc, gerritHost, true)
-	if err != nil {
-		return errors.Annotate(err, "initialize gerrit").Err()
+	if gerritHost == "" {
+		logging.Debugf(ctx, "gerrit Host is not specified, gerrit-related function cannot be used")
+	} else {
+		c.gerritC, err = gerritapi.NewRESTClient(hc, gerritHost, true)
+		if err != nil {
+			return errors.Annotate(err, "initialize gerrit").Err()
+		}
 	}
-
 	c.gitilesC, err = gitilesapi.NewRESTClient(hc, gitilesHost, true)
 	if err != nil {
 		return errors.Annotate(err, "initialize gitiles").Err()
@@ -98,8 +102,11 @@ func (c *Client) GetFile(ctx context.Context, path string) (string, error) {
 // subject: the subject of the CL
 // contents: the mapping between file path and its new contents
 func (c *Client) UpdateFiles(ctx context.Context, subject string, contents map[string]string) (*gerritpb.ChangeInfo, error) {
+	if c.gerritC == nil {
+		return nil, fmt.Errorf("gerritC is not initialized as gerrit host is not passed in")
+	}
 	if c.latestSHA1 == "" {
-		return nil, fmt.Errorf("Client::PutFile: stableversion git client not initialized")
+		return nil, fmt.Errorf("stableversion git client not initialized")
 	}
 	changeInfo, err := c.gerritC.CreateChange(ctx, &gerritpb.CreateChangeRequest{
 		Project:    c.project,
@@ -126,6 +133,9 @@ func (c *Client) UpdateFiles(ctx context.Context, subject string, contents map[s
 
 // SubmitChange takes a change and submits it, returns a gerrit url upon success
 func (c *Client) SubmitChange(ctx context.Context, changeInfo *gerritpb.ChangeInfo) (string, error) {
+	if c.gerritC == nil {
+		return "", fmt.Errorf("gerritC is not initialized as gerrit host is not passed in")
+	}
 	if _, err := c.gerritC.ChangeEditPublish(ctx, &gerritpb.ChangeEditPublishRequest{
 		Number:  changeInfo.Number,
 		Project: changeInfo.Project,
@@ -181,10 +191,6 @@ func (c *Client) fetchLatestSHA1(ctx context.Context) (string, error) {
 }
 
 func validateNewClientParams(gerritHost string, gitilesHost string, project string, branch string) error {
-	if gerritHost == "" {
-		return fmt.Errorf("gerritHost cannot be empty")
-	}
-
 	if gitilesHost == "" {
 		return fmt.Errorf("gitilesHost cannot be empty")
 	}
