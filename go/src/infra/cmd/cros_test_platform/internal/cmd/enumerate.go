@@ -90,41 +90,54 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 	resps := make(map[string]*steps.EnumerationResponse)
 	for t, r := range taggedRequests {
 		c.debugLogger.LogRequest(ctx, t, r)
-		m := r.GetMetadata().GetTestMetadataUrl()
-		if m == "" {
-			return errors.Reason("empty request.metadata.test_metadata_url in %s", r).Err()
-		}
-		gsPath := gs.Path(m)
-
-		w, err := ioutil.TempDir(workspace, "request")
+		resp, err := c.enumerateOne(ctx, workspace, t, r)
 		if err != nil {
-			return err
+			return nil
 		}
-
-		lp, err := c.downloadArtifacts(ctx, gsPath, w)
-		if err != nil {
-			return err
-		}
-
-		tm, err := c.computeMetadata(ctx, t, lp, w)
-		if err != nil {
-			return err
-		}
-
-		ts, errs := c.getEnumeration(ctx, t, tm, r)
-		resps[t] = &steps.EnumerationResponse{}
-		if len(ts) > 0 {
-			resps[t].AutotestInvocations = ts
-		}
-		if errs != nil {
-			resps[t].ErrorSummary = errs.Error()
-		}
-		c.debugLogger.LogResponse(ctx, t, resps[t])
+		resps[t] = resp
+		c.debugLogger.LogResponse(ctx, t, resp)
 	}
 
 	return writeResponse(c.outputPath, &steps.EnumerationResponses{
 		TaggedResponses: resps,
 	})
+}
+
+// Enumerates one request.
+//
+// All errors from this function should be treated as infrastructure failure in
+// the enumerate step.
+func (c *enumerateRun) enumerateOne(ctx context.Context, workspace string, tag string, r *steps.EnumerationRequest) (*steps.EnumerationResponse, error) {
+	m := r.GetMetadata().GetTestMetadataUrl()
+	if m == "" {
+		return nil, errors.Reason("empty request.metadata.test_metadata_url in %s", r).Err()
+	}
+	gsPath := gs.Path(m)
+
+	w, err := ioutil.TempDir(workspace, "request")
+	if err != nil {
+		return nil, err
+	}
+
+	lp, err := c.downloadArtifacts(ctx, gsPath, w)
+	if err != nil {
+		return nil, err
+	}
+
+	tm, err := c.computeMetadata(ctx, tag, lp, w)
+	if err != nil {
+		return nil, err
+	}
+
+	ts, errs := c.getEnumeration(ctx, tag, tm, r)
+	resp := &steps.EnumerationResponse{}
+	if len(ts) > 0 {
+		resp.AutotestInvocations = ts
+	}
+	if errs != nil {
+		resp.ErrorSummary = errs.Error()
+	}
+	return resp, nil
 }
 
 func validateEnumeration(ts []*steps.EnumerationResponse_AutotestInvocation) ([]*steps.EnumerationResponse_AutotestInvocation, errors.MultiError) {
