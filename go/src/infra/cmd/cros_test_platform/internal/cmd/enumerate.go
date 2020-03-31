@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"infra/cmd/cros_test_platform/internal/autotest/artifacts"
@@ -107,10 +108,15 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 //
 // All errors from this function should be treated as infrastructure failure in
 // the enumerate step.
+// User/caller errors will receive an empty enumeration with errors described in
+// its body, rather than an infrastructure error.
 func (c *enumerateRun) enumerateOne(ctx context.Context, workspace string, tag string, r *steps.EnumerationRequest) (*steps.EnumerationResponse, error) {
 	m := r.GetMetadata().GetTestMetadataUrl()
 	if m == "" {
-		return nil, errors.Reason("empty request.metadata.test_metadata_url in %s", r).Err()
+		return &steps.EnumerationResponse{
+			AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{},
+			ErrorSummary:        fmt.Sprintf("empty request.metadata.test_metadata_url for %s", tag),
+		}, nil
 	}
 	gsPath := gs.Path(m)
 
@@ -121,6 +127,12 @@ func (c *enumerateRun) enumerateOne(ctx context.Context, workspace string, tag s
 
 	lp, err := c.downloadArtifacts(ctx, gsPath, w)
 	if err != nil {
+		if matchesUserErrorPatterns(err) {
+			return &steps.EnumerationResponse{
+				AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{},
+				ErrorSummary:        fmt.Sprintf("%s: %s", tag, err.Error()),
+			}, nil
+		}
 		return nil, err
 	}
 
@@ -138,6 +150,13 @@ func (c *enumerateRun) enumerateOne(ctx context.Context, workspace string, tag s
 		resp.ErrorSummary = errs.Error()
 	}
 	return resp, nil
+}
+
+func matchesUserErrorPatterns(err error) bool {
+	if strings.Contains(err.Error(), "object doesn't exist") {
+		return true
+	}
+	return false
 }
 
 func validateEnumeration(ts []*steps.EnumerationResponse_AutotestInvocation) ([]*steps.EnumerationResponse_AutotestInvocation, errors.MultiError) {
