@@ -58,7 +58,8 @@ def _CreateSampleManifest():
   ]
 
 
-def _CreateSamplePostsubmitReport(manifest=None):
+def _CreateSamplePostsubmitReport(manifest=None,
+                                  builder_name='linux-code-coverage'):
   """Returns a sample PostsubmitReport for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -70,7 +71,7 @@ def _CreateSamplePostsubmitReport(manifest=None):
       ref='refs/heads/master',
       revision='aaaaa',
       bucket='coverage',
-      builder='linux-code-coverage',
+      builder=builder_name,
       commit_timestamp=datetime.datetime(2018, 1, 1),
       manifest=manifest,
       summary_metrics=_CreateSampleCoverageSummaryMetric(),
@@ -78,7 +79,7 @@ def _CreateSamplePostsubmitReport(manifest=None):
       visible=True)
 
 
-def _CreateSampleDirectoryCoverageData():
+def _CreateSampleDirectoryCoverageData(builder_name='linux-code-coverage'):
   """Returns a sample directory SummaryCoverageData for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -91,7 +92,7 @@ def _CreateSampleDirectoryCoverageData():
       data_type='dirs',
       path='//dir/',
       bucket='coverage',
-      builder='linux-code-coverage',
+      builder=builder_name,
       data={
           'dirs': [],
           'path':
@@ -106,7 +107,7 @@ def _CreateSampleDirectoryCoverageData():
       })
 
 
-def _CreateSampleComponentCoverageData():
+def _CreateSampleComponentCoverageData(builder_name='linux-code-coverage'):
   """Returns a sample component SummaryCoverageData for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -119,7 +120,7 @@ def _CreateSampleComponentCoverageData():
       data_type='components',
       path='Component>Test',
       bucket='coverage',
-      builder='linux-code-coverage',
+      builder=builder_name,
       data={
           'dirs': [{
               'path': '//dir/',
@@ -133,7 +134,7 @@ def _CreateSampleComponentCoverageData():
       })
 
 
-def _CreateSampleRootComponentCoverageData():
+def _CreateSampleRootComponentCoverageData(builder_name='linux-code-coverage'):
   """Returns a sample component SummaryCoverageData for >> for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -146,7 +147,7 @@ def _CreateSampleRootComponentCoverageData():
       data_type='components',
       path='>>',
       bucket='coverage',
-      builder='linux-code-coverage',
+      builder=builder_name,
       data={
           'dirs': [{
               'path': 'Component>Test',
@@ -158,7 +159,7 @@ def _CreateSampleRootComponentCoverageData():
       })
 
 
-def _CreateSampleFileCoverageData():
+def _CreateSampleFileCoverageData(builder_name='linux-code-coverage'):
   """Returns a sample FileCoverageData for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -170,7 +171,7 @@ def _CreateSampleFileCoverageData():
       revision='aaaaa',
       path='//dir/test.cc',
       bucket='coverage',
-      builder='linux-code-coverage',
+      builder=builder_name,
       data={
           'path': '//dir/test.cc',
           'revision': 'bbbbb',
@@ -292,9 +293,10 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     build.output.properties.items.return_value = [
         ('coverage_is_presubmit', True),
         ('coverage_gs_bucket', 'code-coverage-data'),
-        ('coverage_metadata_gs_path',
-         ('presubmit/chromium-review.googlesource.com/138000/4/try/'
-          'linux-rel/123456789/metadata'))
+        ('coverage_metadata_gs_paths', [
+            'presubmit/chromium-review.googlesource.com/138000/4/try/'
+            'linux-rel/123456789/metadata'
+        ])
     ]
     build.input.gerrit_changes = [
         mock.Mock(
@@ -378,9 +380,10 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     build.output.properties.items.return_value = [
         ('coverage_is_presubmit', True),
         ('coverage_gs_bucket', 'code-coverage-data'),
-        ('coverage_metadata_gs_path',
-         ('presubmit/chromium-review.googlesource.com/138000/4/try/'
-          'linux-rel/123456789/metadata'))
+        ('coverage_metadata_gs_paths', [
+            'presubmit/chromium-review.googlesource.com/138000/4/try/'
+            'linux-rel/123456789/metadata'
+        ])
     ]
     build.input.gerrit_changes = [
         mock.Mock(
@@ -479,9 +482,12 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     build.output.properties.items.return_value = [
         ('coverage_is_presubmit', False),
         ('coverage_gs_bucket', 'code-coverage-data'),
-        ('coverage_metadata_gs_path',
-         ('postsubmit/chromium.googlesource.com/chromium/src/'
-          'aaaaa/coverage/linux-code-coverage/123456789/metadata'))
+        ('coverage_metadata_gs_paths', [
+            'postsubmit/chromium.googlesource.com/chromium/src/'
+            'aaaaa/coverage/linux-code-coverage/123456789/metadata',
+            'postsubmit/chromium.googlesource.com/chromium/src/'
+            'aaaaa/coverage/linux-code-coverage_unit/123456789/metadata'
+        ])
     ]
     build.input.gitiles_commit = mock.Mock(
         host='chromium.googlesource.com',
@@ -554,7 +560,8 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     }
 
     mocked_get_validated_data.side_effect = [
-        all_coverage_data, file_shard_coverage_data
+        all_coverage_data, file_shard_coverage_data, all_coverage_data,
+        file_shard_coverage_data
     ]
 
     request_url = '/coverage/task/process-data/build/123456789'
@@ -563,21 +570,34 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     mocked_is_request_from_appself.assert_called()
 
     fetched_reports = PostsubmitReport.query().fetch()
-    self.assertEqual(1, len(fetched_reports))
+    self.assertEqual(2, len(fetched_reports))
     self.assertEqual(_CreateSamplePostsubmitReport(), fetched_reports[0])
-    mocked_fetch_file.assert_called_with(_CreateSamplePostsubmitReport(),
-                                         '//dir/test.cc', 'bbbbb')
+    self.assertEqual(
+        _CreateSamplePostsubmitReport(builder_name='linux-code-coverage_unit'),
+        fetched_reports[1])
+    mocked_fetch_file.assert_called_with(
+        _CreateSamplePostsubmitReport(builder_name='linux-code-coverage_unit'),
+        '//dir/test.cc', 'bbbbb')
 
     fetched_file_coverage_data = FileCoverageData.query().fetch()
-    self.assertEqual(1, len(fetched_file_coverage_data))
+    self.assertEqual(2, len(fetched_file_coverage_data))
     self.assertEqual(_CreateSampleFileCoverageData(),
                      fetched_file_coverage_data[0])
+    self.assertEqual(
+        _CreateSampleFileCoverageData(builder_name='linux-code-coverage_unit'),
+        fetched_file_coverage_data[1])
 
     fetched_summary_coverage_data = SummaryCoverageData.query().fetch()
     self.assertListEqual([
         _CreateSampleRootComponentCoverageData(),
+        _CreateSampleRootComponentCoverageData(
+            builder_name='linux-code-coverage_unit'),
         _CreateSampleComponentCoverageData(),
-        _CreateSampleDirectoryCoverageData()
+        _CreateSampleComponentCoverageData(
+            builder_name='linux-code-coverage_unit'),
+        _CreateSampleDirectoryCoverageData(),
+        _CreateSampleDirectoryCoverageData(
+            builder_name='linux-code-coverage_unit')
     ], fetched_summary_coverage_data)
 
 
