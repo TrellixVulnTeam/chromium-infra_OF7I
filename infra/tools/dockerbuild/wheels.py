@@ -492,6 +492,8 @@ SPECS.update({
         UniversalSource('odictliteral', '1.0.0'),
         UniversalSource('pefile', '2018.8.8'),
         UniversalSource('perfect-hash', '0.2.1'),
+        UniversalSource('portpicker', '1.3.0'),
+        UniversalSource('portpicker', '1.3.1'),
         UniversalSource('protobuf-to-dict', '0.1.0'),
         UniversalSource('pycparser', '2.17'),
         UniversalSource('pycparser', '2.19'),

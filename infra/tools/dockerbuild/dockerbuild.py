@@ -80,7 +80,7 @@ def _main_wheel_build(args, system):
   if args.wheel_re:
     regex = r'^%s$' % '|'.join('(%s)' % r for r in args.wheel_re)
     wheel_re = re.compile(regex)
-    to_build.update(x for x in to_build.SPEC_NAMES if wheel_re.match(x))
+    to_build.update(x for x in wheels.SPEC_NAMES if wheel_re.match(x))
     if not to_build:
       util.LOGGER.error("--wheel_re didn't match any wheels: %s", regex)
       return
