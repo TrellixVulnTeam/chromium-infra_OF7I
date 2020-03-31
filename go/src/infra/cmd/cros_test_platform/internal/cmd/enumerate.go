@@ -255,13 +255,13 @@ func (c *enumerateRun) getEnumeration(ctx context.Context, tag string, tm *api.T
 	return
 }
 
-func (c *enumerateRun) computeMetadata(ctx context.Context, tag string, localPaths artifacts.LocalPaths, workspace string) (*api.TestMetadataResponse, errors.MultiError) {
+func (c *enumerateRun) computeMetadata(ctx context.Context, tag string, localPaths artifacts.LocalPaths, workspace string) (*api.TestMetadataResponse, error) {
 	extracted := filepath.Join(workspace, "extracted")
 	if err := os.Mkdir(extracted, 0750); err != nil {
-		return nil, errors.NewMultiError(errors.Annotate(err, "compute metadata for %s", tag).Err())
+		return nil, errors.Annotate(err, "compute metadata for %s", tag).Err()
 	}
 	if err := artifacts.ExtractControlFiles(localPaths, extracted); err != nil {
-		return nil, errors.NewMultiError(errors.Annotate(err, "compute metadata for %s", tag).Err())
+		return nil, errors.Annotate(err, "compute metadata for %s", tag).Err()
 	}
 
 	tm, warnings := testspec.Get(extracted)
