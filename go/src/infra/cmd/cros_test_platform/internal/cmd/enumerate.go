@@ -58,6 +58,12 @@ type enumerateRun struct {
 }
 
 func (c *enumerateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	if err := c.validateArgs(args); err != nil {
+		fmt.Fprintln(a.GetErr(), err.Error())
+		c.Flags.Usage()
+		return exitCode(err)
+	}
+
 	ctx := cli.GetContext(a, c, env)
 	ctx = setupLogging(ctx)
 	err := c.innerRun(ctx, args)
@@ -68,10 +74,6 @@ func (c *enumerateRun) Run(a subcommands.Application, args []string, env subcomm
 }
 
 func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
-	if err := c.processCLIArgs(args); err != nil {
-		return err
-	}
-
 	taggedRequests, err := c.readRequests()
 	if err != nil {
 		return err
@@ -193,7 +195,7 @@ func validateInvocation(t *steps.EnumerationResponse_AutotestInvocation) error {
 	return nil
 }
 
-func (c *enumerateRun) processCLIArgs(args []string) error {
+func (c *enumerateRun) validateArgs(args []string) error {
 	if len(args) > 0 {
 		return errors.Reason("have %d positional args, want 0", len(args)).Err()
 	}
