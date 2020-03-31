@@ -6,13 +6,16 @@
 package bb
 
 import (
+	"bytes"
+	"compress/zlib"
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
-	structpb "github.com/golang/protobuf/ptypes/struct"
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"google.golang.org/genproto/protobuf/field_mask"
 
@@ -186,27 +189,35 @@ func extractResult(from *buildbucket_pb.Build) (*skylab_test_runner.Result, erro
 	if op == nil {
 		return nil, fmt.Errorf("extract results from build %d: missing output properties", from.Id)
 	}
-	res := op["result"]
-	if res == nil {
+	cr := op["compressed_result"].GetStringValue()
+	if cr == "" {
 		return nil, fmt.Errorf("extract results from build %d: missing result output property", from.Id)
 	}
-	ret, err := structPBToResult(res)
+	pb, err := decompress(cr)
 	if err != nil {
 		return nil, errors.Annotate(err, "extract results from build %d", from.Id).Err()
 	}
-	return ret, nil
-}
-
-func structPBToResult(from *structpb.Value) (*skylab_test_runner.Result, error) {
-	json, err := (&jsonpb.Marshaler{}).MarshalToString(from)
-	if err != nil {
-		return nil, errors.Annotate(err, "convert struct.Value to skylab_test_runner.Result").Err()
-	}
 	var r skylab_test_runner.Result
-	if err := jsonpb.UnmarshalString(json, &r); err != nil {
-		return nil, errors.Annotate(err, "convert struct.Value to skylab_test_runner.Result").Err()
+	if err := proto.Unmarshal(pb, &r); err != nil {
+		return nil, errors.Annotate(err, "extract results from build %d", from.Id).Err()
 	}
 	return &r, nil
+}
+
+func decompress(from string) ([]byte, error) {
+	bs, err := base64.StdEncoding.DecodeString(from)
+	if err != nil {
+		return nil, errors.Annotate(err, "decompress").Err()
+	}
+	reader, err := zlib.NewReader(bytes.NewReader(bs))
+	if err != nil {
+		return nil, errors.Annotate(err, "decompress").Err()
+	}
+	bs, err = ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, errors.Annotate(err, "decompress").Err()
+	}
+	return bs, nil
 }
 
 // URL is the Buildbucket URL of the task.

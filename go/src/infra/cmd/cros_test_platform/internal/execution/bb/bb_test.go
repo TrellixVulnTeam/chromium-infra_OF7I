@@ -5,11 +5,15 @@
 package bb
 
 import (
+	"bytes"
+	"compress/zlib"
 	"context"
+	"encoding/base64"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
@@ -360,13 +364,19 @@ func outputProperty(testCase string) *buildbucket_pb.Build_Output {
 			},
 		},
 	}
-	json, _ := (&jsonpb.Marshaler{}).MarshalToString(res)
-	var ret structpb.Value
-	jsonpb.UnmarshalString(json, &ret)
+	m, _ := proto.Marshal(res)
+	var b bytes.Buffer
+	w := zlib.NewWriter(&b)
+	w.Write(m)
+	w.Close()
 	return &buildbucket_pb.Build_Output{
 		Properties: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"result": &ret,
+				"compressed_result": {
+					Kind: &structpb.Value_StringValue{
+						StringValue: base64.StdEncoding.EncodeToString(b.Bytes()),
+					},
+				},
 			},
 		},
 	}
