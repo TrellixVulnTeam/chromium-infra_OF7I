@@ -1,0 +1,9 @@
+name: chromeperf/pinpoint_server
+extends: ../../base.yaml
+
+contextdir: ../../../../go/src/infra/chromeperf/pinpoint_server/docker
+deterministic: true
+
+build:
+  - go_binary: infra/chromeperf/pinpoint_server
+    dest: ${contextdir}/bin/pinpoint_server
