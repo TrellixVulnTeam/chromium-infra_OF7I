@@ -199,6 +199,25 @@ message ApprovalDef {
   string name = 1;
 }
 
+
+// Defines saved queries that belong to a project
+//
+// Next available tag: 4
+message ProjectSavedQuery {
+  option (google.api.resource) = {
+    type: "api.crbug.com/ProjectSavedQuery"
+    pattern: "projects/{project}/savedQueries/{savedQuery}"
+  };
+
+  // Resource name of this saved query.
+  string name = 1;
+  // Display name of this saved query, ie 'open issues'.
+  string display_name = 2;
+  // Search term of this saved query.
+  string query = 3;
+}
+
+
 // Defines a template for filling issues.
 // Next available tag: 8
 message IssueTemplate {

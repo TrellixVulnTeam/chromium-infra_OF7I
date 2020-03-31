@@ -54,3 +54,31 @@ message UserSettings {
       (google.api.resource_reference) = {type: "api.crbug.com/User"},
       (google.api.field_behavior) = OUTPUT_ONLY ];
 }
+
+// Defines saved queries that belong to a user
+//
+// Next available tag: 5
+message UserSavedQuery {
+  option (google.api.resource) = {
+    type: "api.crbug.com/UserSavedQuery"
+    pattern: "users/{user_id}/savedQueries/{savedQuery}"
+  };
+
+  // Resource name of this saved query.
+  string name = 1;
+  // Display name of this saved query, ie 'open issues'.
+  string display_name = 2;
+  // Search term of this saved query.
+  string query = 3;
+  // Subscription mode of this saved query
+  // Next available tag: 3
+  enum SubscriptionMode {
+    // Default API value. This value is unused.
+    SUBSCRIPTION_MODE_UNSPECIFIED = 0;
+    // Do not subscribe to notifications.
+    NO_NOTIFICATION = 1;
+    // Subscribe to notifications.
+    IMMEDIATE_NOTIFICATION = 2;
+  }
+  SubscriptionMode subscription_mode = 4;
+}
