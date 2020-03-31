@@ -6,13 +6,14 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
 
-	"infra/libs/fleet/protos"
+	fleet "infra/libs/fleet/protos"
+	ufs "infra/libs/fleet/protos/go"
 )
 
 func mockAsset(id, lab string) *fleet.ChopsAsset {
 	return &fleet.ChopsAsset{
 		Id: id,
-		Location: &fleet.Location{
+		Location: &ufs.Location{
 			Lab:      lab,
 			Row:      "Phobos-3",
 			Rack:     "Deimos-0",
@@ -22,7 +23,7 @@ func mockAsset(id, lab string) *fleet.ChopsAsset {
 	}
 }
 
-func assertLocationEqual(a, b *fleet.Location) {
+func assertLocationEqual(a, b *ufs.Location) {
 	So(a.GetLab(), ShouldEqual, b.GetLab())
 	So(a.GetRow(), ShouldEqual, b.GetRow())
 	So(a.GetRack(), ShouldEqual, b.GetRack())

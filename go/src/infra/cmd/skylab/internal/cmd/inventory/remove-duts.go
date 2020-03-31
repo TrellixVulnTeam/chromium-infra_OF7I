@@ -28,6 +28,7 @@ import (
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
 	protos "infra/libs/fleet/protos"
+	ufs "infra/libs/fleet/protos/go"
 	"infra/libs/skylab/inventory"
 )
 
@@ -177,7 +178,7 @@ func updateAssets(ctx context.Context, client *inventoryClientV2, deletedDevices
 		existingAssets = append(existingAssets,
 			&protos.ChopsAsset{
 				Id:       deletedDevice.GetId(),
-				Location: &protos.Location{},
+				Location: &ufs.Location{},
 			})
 	}
 	assetResponse, _ := client.ic.GetAssets(ctx, &invV2Api.AssetIDList{Id: existingAssetsIDs})

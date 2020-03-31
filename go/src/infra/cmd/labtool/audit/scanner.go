@@ -27,6 +27,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	invUtils "infra/libs/cros/lab_inventory/utils"
 	fleet "infra/libs/fleet/protos"
+	ufs "infra/libs/fleet/protos/go"
 )
 
 // ScannerCmd runs with the scanner to scan lab assets.
@@ -171,7 +172,7 @@ func getGSClient(ctx context.Context, f *authcli.Flags) (gs.Client, error) {
 	return gs.NewProdClient(ctx, t)
 }
 
-var currLoc *fleet.Location
+var currLoc *ufs.Location
 
 //List to collect assets into
 var assetList []*fleet.ChopsAsset
@@ -243,8 +244,8 @@ func isBack(iput string) bool {
 	return iput == "%back"
 }
 
-func (c *bcScanner) defaultLocation() *fleet.Location {
-	return &fleet.Location{
+func (c *bcScanner) defaultLocation() *ufs.Location {
+	return &ufs.Location{
 		Lab:      c.lab,
 		Aisle:    c.aisle,
 		Row:      c.row,

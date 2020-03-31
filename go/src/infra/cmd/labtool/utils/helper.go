@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/libs/fleet/protos"
+	ufs "infra/libs/fleet/protos/go"
 )
 
 // TimeFormat for all timestamps handled by labtools
@@ -176,7 +177,7 @@ func assetToStringList(a *fleet.ChopsAsset) []string {
 	return append(res, locationToStringList(a.GetLocation())...)
 }
 
-func locationToStringList(location *fleet.Location) []string {
+func locationToStringList(location *ufs.Location) []string {
 	return []string{
 		location.GetLab(),
 		location.GetAisle(),
@@ -195,7 +196,7 @@ func stringListToAsset(csv []string) (a *fleet.ChopsAsset, err error) {
 	}
 	return &fleet.ChopsAsset{
 		Id: csv[0],
-		Location: &fleet.Location{
+		Location: &ufs.Location{
 			Lab:      csv[1],
 			Aisle:    csv[2],
 			Row:      csv[3],

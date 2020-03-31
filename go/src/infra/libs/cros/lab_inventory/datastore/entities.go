@@ -15,7 +15,8 @@ import (
 
 	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/utils"
-	"infra/libs/fleet/protos"
+	fleet "infra/libs/fleet/protos"
+	ufs "infra/libs/fleet/protos/go"
 )
 
 // DeviceEntityID represents the ID of a device. We prefer use asset id as the id.
@@ -171,7 +172,7 @@ func NewAssetStateEntity(a *fleet.ChopsAsset, state fleet.State, updated time.Ti
 
 // ToChopsAsset returns a ChopsAsset object
 func (e *AssetEntity) ToChopsAsset() (*fleet.ChopsAsset, error) {
-	var location fleet.Location
+	var location ufs.Location
 	err := proto.Unmarshal(e.Location, &location)
 	return &fleet.ChopsAsset{
 		Id:       e.ID,

@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
-	"infra/libs/fleet/protos"
+	fleet "infra/libs/fleet/protos"
 )
 
 // AssetOpResult is for use in Datastore to RPC conversions

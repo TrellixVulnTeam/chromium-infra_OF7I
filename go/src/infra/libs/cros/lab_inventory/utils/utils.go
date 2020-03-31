@@ -9,7 +9,7 @@ import (
 	"regexp"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
-	fleet "infra/libs/fleet/protos"
+	fleet "infra/libs/fleet/protos/go"
 )
 
 // GetHostname returns the hostname of input ChromeOSDevice.
