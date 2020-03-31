@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n#api/v1/api_proto/user_objects.proto\x12\x0bmonorail.v1\x1a&google_proto/google/api/resource.proto\x1a,google_proto/google/api/field_behavior.proto\"w\n\x04User\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x03\x12\x1c\n\x14\x61vailability_message\x18\x03 \x01(\t:(\xea\x41%\n\x12\x61pi.crbug.com/User\x12\x0fusers/{user_id}\"\xa4\x02\n\x0cUserSettings\x12-\n\x04name\x18\x01 \x01(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/UserSettings\x12\x35\n\tsite_role\x18\x02 \x01(\x0e\x32\".monorail.v1.UserSettings.SiteRole\x12\x37\n\x13linked_primary_user\x18\x03 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\"<\n\x08SiteRole\x12\x19\n\x15SITE_ROLE_UNSPECIFIED\x10\x00\x12\n\n\x06NORMAL\x10\x01\x12\t\n\x05\x41\x44MIN\x10\x02:7\xea\x41\x34\n\x1a\x61pi.crbug.com/UserSettings\x12\x16usersettings/{user_id}\"\xc2\x02\n\x0eUserSavedQuery\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12G\n\x11subscription_mode\x18\x04 \x01(\x0e\x32,.monorail.v1.UserSavedQuery.SubscriptionMode\"f\n\x10SubscriptionMode\x12!\n\x1dSUBSCRIPTION_MODE_UNSPECIFIED\x10\x00\x12\x13\n\x0fNO_NOTIFICATION\x10\x01\x12\x1a\n\x16IMMEDIATE_NOTIFICATION\x10\x02:L\xea\x41I\n\x1c\x61pi.crbug.com/UserSavedQuery\x12)users/{user_id}/savedQueries/{savedQuery}b\x06proto3')
+  serialized_pb=_b('\n#api/v1/api_proto/user_objects.proto\x12\x0bmonorail.v1\x1a&google_proto/google/api/resource.proto\x1a,google_proto/google/api/field_behavior.proto\"w\n\x04User\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x03\x12\x1c\n\x14\x61vailability_message\x18\x03 \x01(\t:(\xea\x41%\n\x12\x61pi.crbug.com/User\x12\x0fusers/{user_id}\"\xa4\x02\n\x0cUserSettings\x12-\n\x04name\x18\x01 \x01(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/UserSettings\x12\x35\n\tsite_role\x18\x02 \x01(\x0e\x32\".monorail.v1.UserSettings.SiteRole\x12\x37\n\x13linked_primary_user\x18\x03 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\"<\n\x08SiteRole\x12\x19\n\x15SITE_ROLE_UNSPECIFIED\x10\x00\x12\n\n\x06NORMAL\x10\x01\x12\t\n\x05\x41\x44MIN\x10\x02:7\xea\x41\x34\n\x1a\x61pi.crbug.com/UserSettings\x12\x16usersettings/{user_id}\"\xf0\x02\n\x0eUserSavedQuery\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12,\n\x08projects\x18\x04 \x03(\tB\x1a\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12G\n\x11subscription_mode\x18\x05 \x01(\x0e\x32,.monorail.v1.UserSavedQuery.SubscriptionMode\"f\n\x10SubscriptionMode\x12!\n\x1dSUBSCRIPTION_MODE_UNSPECIFIED\x10\x00\x12\x13\n\x0fNO_NOTIFICATION\x10\x01\x12\x1a\n\x16IMMEDIATE_NOTIFICATION\x10\x02:L\xea\x41I\n\x1c\x61pi.crbug.com/UserSavedQuery\x12)users/{user_id}/savedQueries/{savedQuery}b\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,])
 
@@ -74,8 +74,8 @@ _USERSAVEDQUERY_SUBSCRIPTIONMODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=697,
-  serialized_end=799,
+  serialized_start=743,
+  serialized_end=845,
 )
 _sym_db.RegisterEnumDescriptor(_USERSAVEDQUERY_SUBSCRIPTIONMODE)
 
@@ -200,8 +200,15 @@ _USERSAVEDQUERY = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='subscription_mode', full_name='monorail.v1.UserSavedQuery.subscription_mode', index=3,
-      number=4, type=14, cpp_type=8, label=1,
+      name='projects', full_name='monorail.v1.UserSavedQuery.projects', index=3,
+      number=4, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\027\n\025api.crbug.com/Project'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='subscription_mode', full_name='monorail.v1.UserSavedQuery.subscription_mode', index=4,
+      number=5, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -220,7 +227,7 @@ _USERSAVEDQUERY = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=555,
-  serialized_end=877,
+  serialized_end=923,
 )
 
 _USERSETTINGS.fields_by_name['site_role'].enum_type = _USERSETTINGS_SITEROLE
@@ -259,5 +266,6 @@ _USER._options = None
 _USERSETTINGS.fields_by_name['name']._options = None
 _USERSETTINGS.fields_by_name['linked_primary_user']._options = None
 _USERSETTINGS._options = None
+_USERSAVEDQUERY.fields_by_name['projects']._options = None
 _USERSAVEDQUERY._options = None
 # @@protoc_insertion_point(module_scope)

@@ -57,7 +57,7 @@ message UserSettings {
 
 // Defines saved queries that belong to a user
 //
-// Next available tag: 5
+// Next available tag: 6
 message UserSavedQuery {
   option (google.api.resource) = {
     type: "api.crbug.com/UserSavedQuery"
@@ -70,6 +70,10 @@ message UserSavedQuery {
   string display_name = 2;
   // Search term of this saved query.
   string query = 3;
+  // List of projects this query can be searched in.
+  repeated string projects = 4 [
+      (google.api.resource_reference) = { type: "api.crbug.com/Project" }
+  ];
   // Subscription mode of this saved query
   // Next available tag: 3
   enum SubscriptionMode {
@@ -80,5 +84,5 @@ message UserSavedQuery {
     // Subscribe to notifications.
     IMMEDIATE_NOTIFICATION = 2;
   }
-  SubscriptionMode subscription_mode = 4;
+  SubscriptionMode subscription_mode = 5;
 }
