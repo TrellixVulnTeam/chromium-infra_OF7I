@@ -44,31 +44,35 @@ class ConverterFunctionsTest(unittest.TestCase):
         'proj', project_id=789)
     self.project_2 = self.services.project.TestAddProject(
         'goose', project_id=788)
+    self.user_1 = self.services.user.TestAddUser('one@example.com', 111)
+    self.user_2 = self.services.user.TestAddUser('two@example.com', 222)
+    self.user_3 = self.services.user.TestAddUser('three@example.com', 333)
     self.issue_1 = fake.MakeTestIssue(
         self.project_1.project_id,
         1,
         'sum',
         'New',
-        111,
+        self.user_1.user_id,
         project_name=self.project_1.project_name,
         star_count=1,
         labels=['label-a', 'label-b'],
         derived_labels=['label-derived', 'label-derived-2'],
         component_ids=[1, 2],
+        merged_into_external='b/1',
         derived_component_ids=[3, 4],
-        attachment_count=5)
+        attachment_count=5,
+    )
+
+    # TODO(jessan): Test merged_into local issue.
     self.issue_2 = fake.MakeTestIssue(
         self.project_2.project_id,
         2,
         'sum2',
         'New',
-        111,
+        self.user_1.user_id,
         project_name=self.project_2.project_name)
     self.services.issue.TestAddIssue(self.issue_1)
     self.services.issue.TestAddIssue(self.issue_2)
-    self.user_1 = self.services.user.TestAddUser('one@example.com', 111)
-    self.user_2 = self.services.user.TestAddUser('two@example.com', 222)
-    self.user_3 = self.services.user.TestAddUser('three@example.com', 333)
 
     self.field_def_1_name = 'test_field_1'
     self.field_def_1 = self.services.config.CreateFieldDef(
@@ -270,6 +274,50 @@ class ConverterFunctionsTest(unittest.TestCase):
     """We can convert Issues."""
     # TODO(jessan): Add self.issue_2 once method fully implemented.
     # - Derived status
+    blocked_on_1 = fake.MakeTestIssue(
+        self.project_1.project_id,
+        3,
+        'sum3',
+        'New',
+        self.user_1.user_id,
+        issue_id=301,
+        project_name=self.project_1.project_name,
+    )
+    blocked_on_2 = fake.MakeTestIssue(
+        self.project_2.project_id,
+        4,
+        'sum4',
+        'New',
+        self.user_1.user_id,
+        issue_id=401,
+        project_name=self.project_2.project_name,
+    )
+    blocking = fake.MakeTestIssue(
+        self.project_2.project_id,
+        5,
+        'sum5',
+        'New',
+        self.user_1.user_id,
+        issue_id=501,
+        project_name=self.project_2.project_name,
+    )
+    self.services.issue.TestAddIssue(blocked_on_1)
+    self.services.issue.TestAddIssue(blocked_on_2)
+    self.services.issue.TestAddIssue(blocking)
+
+    # Reversing natural ordering to ensure order is respected.
+    self.issue_1.blocked_on_iids = [
+        blocked_on_2.issue_id, blocked_on_1.issue_id
+    ]
+    self.issue_1.dangling_blocked_on_refs = [
+        tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/555'),
+        tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/2')
+    ]
+    self.issue_1.blocking_iids = [blocking.issue_id]
+    self.issue_1.dangling_blocking_refs = [
+        tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/3')
+    ]
+
     issues = [self.issue_1]
     expected_issues = [
         issue_objects_pb2.Issue(
@@ -312,6 +360,18 @@ class ConverterFunctionsTest(unittest.TestCase):
                     component='projects/proj/componentDefs/4'),
             ],
             description='TODO(jessan): Pull description from comments',
+            merged_into_issue_ref=issue_objects_pb2.IssueRef(
+                ext_identifier='b/1'),
+            blocked_on_issue_refs=[
+                issue_objects_pb2.IssueRef(issue='projects/goose/issues/4'),
+                issue_objects_pb2.IssueRef(issue='projects/proj/issues/3'),
+                issue_objects_pb2.IssueRef(ext_identifier='b/555'),
+                issue_objects_pb2.IssueRef(ext_identifier='b/2')
+            ],
+            blocking_issue_refs=[
+                issue_objects_pb2.IssueRef(issue='projects/goose/issues/5'),
+                issue_objects_pb2.IssueRef(ext_identifier='b/3')
+            ],
             star_count=1,
             attachment_count=5)
     ]

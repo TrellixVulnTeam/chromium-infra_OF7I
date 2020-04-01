@@ -217,6 +217,38 @@ class Converter(object):
       # TODO(jessan): Handle enum fieldvalues, then include below.
       # field_values = self.ConvertFieldValues(
       #     issue.field_values, issue.project_id, issue.phases)
+      related_issue_ids = (
+          [issue.merged_into] + issue.blocked_on_iids + issue.blocking_iids)
+      issue_names_by_ids = rnc.ConvertIssueNames(
+          self.cnxn, related_issue_ids, self.services)
+      merged_into_issue_ref = None
+      if issue.merged_into and issue.merged_into in issue_names_by_ids:
+        merged_into_issue_ref = issue_objects_pb2.IssueRef(
+            issue=issue_names_by_ids[issue.merged_into])
+      if issue.merged_into_external:
+        merged_into_issue_ref = issue_objects_pb2.IssueRef(
+            ext_identifier=issue.merged_into_external)
+
+      blocked_on_issue_refs = [
+          issue_objects_pb2.IssueRef(issue=issue_names_by_ids[iid])
+          for iid in issue.blocked_on_iids
+          if iid in issue_names_by_ids
+      ]
+      blocked_on_issue_refs.extend(
+          issue_objects_pb2.IssueRef(
+              ext_identifier=blocked_on.ext_issue_identifier)
+          for blocked_on in issue.dangling_blocked_on_refs)
+
+      blocking_issue_refs = [
+          issue_objects_pb2.IssueRef(issue=issue_names_by_ids[iid])
+          for iid in issue.blocking_iids
+          if iid in issue_names_by_ids
+      ]
+      blocking_issue_refs.extend(
+          issue_objects_pb2.IssueRef(
+              ext_identifier=blocking.ext_issue_identifier)
+          for blocking in issue.dangling_blocking_refs)
+
       result = issue_objects_pb2.Issue(
           name=issue_names_dict[issue.issue_id],
           summary=issue.summary,
@@ -230,9 +262,9 @@ class Converter(object):
           labels=labels,
           components=components,
           field_values=[],
-          # TODO(jessan): add issue refs.
-          merged_into_issue_ref=None,
-          blocked_on_issue_refs=[],
+          merged_into_issue_ref=merged_into_issue_ref,
+          blocked_on_issue_refs=blocked_on_issue_refs,
+          blocking_issue_refs=blocking_issue_refs,
           # TODO(jessan): add timestamps.
           star_count=issue.star_count)
       # TODO(crbug.com/monorail/5857): Set attachment_count unconditionally
