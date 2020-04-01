@@ -3201,6 +3201,20 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **pywinauto**
+
+### 0.6.8
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pywinauto-py2_py3"
+  version: "version:0.6.8"
+>
+```
+
+
+* *universal*
+
 ## **requests**
 
 ### 2.13.0

@@ -644,6 +644,7 @@ SPECS.update({
         Universal('pytest-cov', '2.6.1'),
         Universal('python-dateutil', '2.7.3'),
         Universal('pytz', '2018.4'),
+        Universal('pywinauto', '0.6.8'),
         Universal('requests', '2.13.0'),
         Universal('requests', '2.21.0'),
         Universal('requests-oauthlib', '1.2.0'),
