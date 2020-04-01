@@ -17,7 +17,8 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
-	"infra/libs/skylab/dutstate"
+
+	"infra/cros/cmd/skylab_local_state/internal/location"
 )
 
 // Save subcommand: Update the bot state json file.
@@ -137,7 +138,7 @@ func validateSaveRequest(request *skylab_local_state.SaveRequest) error {
 
 // getHostInfo reads the host info from the store file.
 func getHostInfo(resultsDir string, dutName string) (*skylab_local_state.AutotestHostInfo, error) {
-	p := dutstate.HostInfoFilePath(resultsDir, dutName)
+	p := location.HostInfoFilePath(resultsDir, dutName)
 	i := skylab_local_state.AutotestHostInfo{}
 
 	if err := readJSONPb(p, &i); err != nil {
@@ -145,6 +146,19 @@ func getHostInfo(resultsDir string, dutName string) (*skylab_local_state.Autotes
 	}
 
 	return &i, nil
+}
+
+// LabelSet provides the whitelist of labels that may change during provision.
+// Only these labels can appear in the DUT state file.
+var provisionableLabels = map[string]bool{
+	"cros-version": true,
+	"fwro-version": true,
+	"fwrw-version": true,
+}
+
+var provisionableAttributes = map[string]bool{
+	"job_repo_url":   true,
+	"outlet_changed": true,
 }
 
 // updateDutStateFromHostInfo populates provisionable labels and provisionable
@@ -156,7 +170,6 @@ func updateDutStateFromHostInfo(s *lab_platform.DutState, i *skylab_local_state.
 		return
 	}
 
-	pl := dutstate.ProvisionableLabelSet()
 	s.ProvisionableLabels = map[string]string{}
 
 	for _, label := range i.GetLabels() {
@@ -164,16 +177,15 @@ func updateDutStateFromHostInfo(s *lab_platform.DutState, i *skylab_local_state.
 		if len(parts) != 2 {
 			continue
 		}
-		if pl.Has(parts[0]) {
+		if provisionableLabels[parts[0]] {
 			s.ProvisionableLabels[parts[0]] = parts[1]
 		}
 	}
 
-	pa := dutstate.ProvisionableAttributeSet()
 	s.ProvisionableAttributes = map[string]string{}
 
 	for attribute, value := range i.GetAttributes() {
-		if pa.Has(attribute) {
+		if provisionableAttributes[attribute] {
 			s.ProvisionableAttributes[attribute] = value
 		}
 	}
@@ -182,7 +194,7 @@ func updateDutStateFromHostInfo(s *lab_platform.DutState, i *skylab_local_state.
 // writeDutState writes a JSON-encoded DutState proto to the cache file inside
 // the autotest directory.
 func writeDutState(autotestDir string, dutID string, s *lab_platform.DutState) error {
-	p := dutstate.CacheFilePath(autotestDir, dutID)
+	p := location.CacheFilePath(autotestDir, dutID)
 
 	if err := writeJSONPb(p, s); err != nil {
 		return errors.Annotate(err, "write DUT state").Err()

@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"strings"
 
-	"infra/libs/skylab/dutstate"
-
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
+
+	"infra/cros/cmd/skylab_local_state/internal/location"
 )
 
 // Serialize subcommand: Gather host info file and wrap it with DUT name.
@@ -84,7 +84,7 @@ func (c *serializeRun) innerRun(a subcommands.Application, args []string, env su
 	if err := validateSerializeRequest(&request); err != nil {
 		return err
 	}
-	hostInfoFilePath := dutstate.HostInfoFilePath(request.ResultsDir, request.DutName)
+	hostInfoFilePath := location.HostInfoFilePath(request.ResultsDir, request.DutName)
 
 	var hostInfo skylab_local_state.AutotestHostInfo
 	if err := readJSONPb(hostInfoFilePath, &hostInfo); err != nil {

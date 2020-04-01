@@ -19,7 +19,7 @@ import (
 	"go.chromium.org/luci/lucictx"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/libs/skylab/dutstate"
+	"infra/cros/cmd/skylab_local_state/internal/location"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/autotest/labels"
 
@@ -126,7 +126,7 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 
 	hostInfo := getFullHostInfo(dut, dutState)
 
-	resultsDir := dutstate.ResultsDir(request.Config.AutotestDir, request.RunId)
+	resultsDir := location.ResultsDir(request.Config.AutotestDir, request.RunId)
 
 	if err := writeHostInfo(resultsDir, request.DutName, hostInfo); err != nil {
 		return err
@@ -230,7 +230,7 @@ func hostInfoFromDutInfo(dut *inventory.DeviceUnderTest) *skylab_local_state.Aut
 
 // getDutState reads the local bot state from the cache file.
 func getDutState(autotestDir string, dutID string) (*lab_platform.DutState, error) {
-	p := dutstate.CacheFilePath(autotestDir, dutID)
+	p := location.CacheFilePath(autotestDir, dutID)
 	s := lab_platform.DutState{}
 
 	if err := readJSONPb(p, &s); err != nil {
@@ -254,7 +254,7 @@ func addDutStateToHostInfo(hostInfo *skylab_local_state.AutotestHostInfo, dutSta
 // writeHostInfo writes a JSON-encoded AutotestHostInfo proto to the
 // DUT host info file inside the results directory.
 func writeHostInfo(resultsDir string, dutName string, i *skylab_local_state.AutotestHostInfo) error {
-	p := dutstate.HostInfoFilePath(resultsDir, dutName)
+	p := location.HostInfoFilePath(resultsDir, dutName)
 
 	if err := writeJSONPb(p, i); err != nil {
 		return errors.Annotate(err, "write host info").Err()
