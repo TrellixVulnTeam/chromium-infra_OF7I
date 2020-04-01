@@ -3269,6 +3269,20 @@ wheel: <
 
 * *universal*
 
+## **retrying**
+
+### 1.3.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/retrying-py2_py3"
+  version: "version:1.3.3"
+>
+```
+
+
+* *universal*
+
 ## **rsa**
 
 ### 3.4.2
