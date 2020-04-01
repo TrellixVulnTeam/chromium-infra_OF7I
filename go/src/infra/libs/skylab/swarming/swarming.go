@@ -365,11 +365,25 @@ func retryParams() retry.Iterator {
 	}
 }
 
-func tagErrIfTransient(err error) error {
-	if errIsTransient(err) {
-		return transient.Tag.Apply(err)
+func tagErrIfTransient(f func() error) func() error {
+	return func() error {
+		err := f()
+		tag := false
+		errors.Walk(
+			err,
+			func(ierr error) bool {
+				if errIsTransient(ierr) {
+					tag = true
+					return false
+				}
+				return true
+			},
+		)
+		if tag {
+			return transient.Tag.Apply(err)
+		}
+		return err
 	}
-	return err
 }
 
 func errIsTransient(err error) bool {
@@ -394,10 +408,7 @@ func errIsTransient(err error) bool {
 // callWithRetries calls the given function, retrying transient swarming
 // errors, with swarming-appropriate backoff and delay.
 func callWithRetries(ctx context.Context, opname string, f func() error) error {
-	taggedFunc := func() error {
-		return tagErrIfTransient(f())
-	}
-	return retry.Retry(ctx, transient.Only(retryParams), taggedFunc, retry.LogCallback(ctx, opname))
+	return retry.Retry(ctx, transient.Only(retryParams), tagErrIfTransient(f), retry.LogCallback(ctx, opname))
 }
 
 // TaskURL returns a URL to inspect a task with the given ID.

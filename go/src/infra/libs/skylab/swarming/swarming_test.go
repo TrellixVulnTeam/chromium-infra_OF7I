@@ -6,13 +6,13 @@ package swarming
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"testing"
 	"time"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
+	"go.chromium.org/luci/common/errors"
 
 	"google.golang.org/api/googleapi"
 )
@@ -36,10 +36,39 @@ func TestSwarmingCallWithRetries_TransientFailure(t *testing.T) {
 	}
 	err := callWithRetries(ctx, "test transient failure", f)
 	if err != nil {
-		t.Fatalf("call error actual != expected, %v != %v", err, nil)
+		t.Errorf("call error actual != expected, %v != %v", err, nil)
 	}
 	if count != 2 {
-		t.Fatalf("try count actual != expected, %d != %d", count, 1)
+		t.Errorf("try count actual != expected, %d != %d", count, 2)
+	}
+}
+
+func TestSwarmingCallWithRetries_AnnotatedTransientFailure(t *testing.T) {
+	ctx, testClock := testclock.UseTime(context.Background(), time.Now())
+	testClock.SetTimerCallback(func(time.Duration, clock.Timer) {
+		// Longer than any reasonable retry parameters so that the test always
+		// makes instantaneous progress.
+		testClock.Add(10 * time.Minute)
+	})
+	count := 0
+	f := func() error {
+		defer func() { count++ }()
+		if count == 0 {
+			return errors.Annotate(
+				&googleapi.Error{
+					Code: http.StatusInternalServerError, // 500
+				},
+				"some context",
+			).Err()
+		}
+		return nil
+	}
+	err := callWithRetries(ctx, "test transient failure", f)
+	if err != nil {
+		t.Errorf("call error actual != expected, %v != %v", err, nil)
+	}
+	if count != 2 {
+		t.Errorf("try count actual != expected, %d != %d", count, 2)
 	}
 }
 
@@ -60,10 +89,10 @@ func TestSwarmingCallWithRetries_ConnectionReset(t *testing.T) {
 	}
 	err := callWithRetries(ctx, "test connection reset", f)
 	if err != nil {
-		t.Fatalf("call error actual != expected, %v != %v", err, nil)
+		t.Errorf("call error actual != expected, %v != %v", err, nil)
 	}
 	if count != 2 {
-		t.Fatalf("try count actual != expected, %d != %d", count, 1)
+		t.Errorf("try count actual != expected, %d != %d", count, 2)
 	}
 }
 
@@ -75,10 +104,10 @@ func TestSwarmingCallWithRetries_NontransientFailure(t *testing.T) {
 	}
 	err := callWithRetries(context.Background(), "test non-transient failure", f)
 	if err == nil {
-		t.Fatalf("call error unexpectedly nil")
+		t.Errorf("call error unexpectedly nil")
 	}
 	if count != 1 {
-		t.Fatalf("try count actual != expected, %d != %d", count, 1)
+		t.Errorf("try count actual != expected, %d != %d", count, 1)
 	}
 }
 
