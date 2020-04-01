@@ -2533,7 +2533,10 @@ class WorkEnv(object):
 
     Raises:
       NoSuchHotlistException: If the hotlist is not found.
-      PermissionException: If the user lacks permissions to edit the hotlist.
+      NoSuchIssueException: if an Issue is not found for a given
+        remove_issue_id.
+      PermissionException: If the user lacks permissions to edit the hotlist or
+        view all the given issues.
       InputException: If there are ids in `remove_issue_ids` that do not exist
         in the hotlist.
     """
@@ -2546,7 +2549,8 @@ class WorkEnv(object):
     if not (set(remove_issue_ids).issubset(item_issue_ids)):
       raise exceptions.InputException('item(s) not found in hotlist.')
 
-    # TODO(crbug/monorail/7318): Check user has permission to view every issue
+    # Raise exception for un-viewable or not found item_issue_ids.
+    self.GetIssuesDict(item_issue_ids)
 
     self.services.features.UpdateHotlistIssues(
         self.mc.cnxn, hotlist_id, [], remove_issue_ids, self.services.issue,
@@ -2567,8 +2571,10 @@ class WorkEnv(object):
         than (# of current hotlist.items).
 
     Raises:
-      PermissionException: If the user lacks permissions to edit the hotlist.
+      PermissionException: If the user lacks permissions to edit the hotlist or
+        view all the given issues.
       NoSuchHotlistException: If the hotlist is not found.
+      NoSuchIssueException: If an Issue is not found for a given new_issue_id.
       InputException: If the target_position or new_issue_ids are not valid.
     """
     hotlist = self.GetHotlist(hotlist_id)
@@ -2579,7 +2585,8 @@ class WorkEnv(object):
     item_issue_ids = {item.issue_id for item in hotlist.items}
     confirmed_new_issue_ids = set(new_issue_ids).difference(item_issue_ids)
 
-    # TODO(crbug/monorail/7318): Check user has permission to view every issue
+    # Raise exception for un-viewable or not found item_issue_ids.
+    self.GetIssuesDict(item_issue_ids)
 
     if confirmed_new_issue_ids:
       changed_items = self._GetChangedHotlistItems(
@@ -2609,8 +2616,10 @@ class WorkEnv(object):
       The updated hotlist.
 
     Raises:
-      PermissionException: If the user lacks permissions to rerank the hotlist.
+      PermissionException: If the user lacks permissions to rerank the hotlist
+        or view all the given issues.
       NoSuchHotlistException: If the hotlist is not found.
+      NoSuchIssueException: If an Issue is not found for a given moved_issue_id.
       InputException: If the target_position or moved_issue_ids are not valid.
     """
     hotlist = self.GetHotlist(hotlist_id)
@@ -2622,7 +2631,8 @@ class WorkEnv(object):
     if not (set(moved_issue_ids).issubset(item_issue_ids)):
       raise exceptions.InputException('item(s) not found in hotlist.')
 
-    # TODO(crbug/monorail/7318): Check user has permission to view every issue
+    # Raise exception for un-viewable or not found item_issue_ids.
+    self.GetIssuesDict(item_issue_ids)
     changed_items = self._GetChangedHotlistItems(
         hotlist, moved_issue_ids, target_position)
 

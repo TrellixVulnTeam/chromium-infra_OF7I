@@ -4499,13 +4499,21 @@ class WorkEnvTest(unittest.TestCase):
         we.AddIssuesToHotlists([1, 2, 3], [4, 5, 6], None)
 
   def createHotlistWithItems(self):
+    issue_1 = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
+    self.services.issue.TestAddIssue(issue_1)
+    issue_2 = fake.MakeTestIssue(789, 2, 'sum', 'New', 111, issue_id=78902)
+    self.services.issue.TestAddIssue(issue_2)
+    issue_3 = fake.MakeTestIssue(789, 3, 'sum', 'New', 111, issue_id=78903)
+    self.services.issue.TestAddIssue(issue_3)
+    issue_4 = fake.MakeTestIssue(789, 4, 'sum', 'New', 111, issue_id=78904)
+    self.services.issue.TestAddIssue(issue_4)
     owner_ids = [self.user_1.user_id]
     editor_ids = [self.user_2.user_id]
     hotlist_items = [
-        (78904, 31, self.user_3.user_id, self.PAST_TIME, ''),
-        (78903, 21, self.user_1.user_id, self.PAST_TIME, ''),
-        (78902, 11, self.user_2.user_id, self.PAST_TIME, ''),
-        (78901, 1, self.user_1.user_id, self.PAST_TIME, '')
+        (issue_4.issue_id, 31, self.user_3.user_id, self.PAST_TIME, ''),
+        (issue_3.issue_id, 21, self.user_1.user_id, self.PAST_TIME, ''),
+        (issue_2.issue_id, 11, self.user_2.user_id, self.PAST_TIME, ''),
+        (issue_1.issue_id, 1, self.user_1.user_id, self.PAST_TIME, '')
     ]
     return self.work_env.services.features.TestAddHotlist(
         'HotlistName', owner_ids=owner_ids, editor_ids=editor_ids,
