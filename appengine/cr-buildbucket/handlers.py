@@ -71,11 +71,9 @@ class BuildRPCHandler(webapp2.RequestHandler):  # pragma: no cover
     return self.redirect(api_path)
 
 
-class ViewBuildHandler(auth.AuthenticatingHandler):  # pragma: no cover
-  """Redirects to API explorer to see the build."""
+class RedirectHandlerBase(auth.AuthenticatingHandler):  # pragma: no cover
 
-  @auth.public
-  def get(self, build_id):
+  def _get_build(self, build_id):
     try:
       build_id = int(build_id)
     except ValueError:
@@ -91,7 +89,44 @@ class ViewBuildHandler(auth.AuthenticatingHandler):  # pragma: no cover
       self.response.write('build %d not found' % build_id)
       self.abort(404)
 
+    return build
+
+
+class ViewBuildHandler(RedirectHandlerBase):  # pragma: no cover
+  """Redirects to Milo build page."""
+
+  @auth.public
+  def get(self, build_id):
+    build = self._get_build(build_id)
     return self.redirect(str(api_common.get_build_url(build)))
+
+
+class ViewLogHandler(RedirectHandlerBase):  # pragma: no cover
+  """Redirects to LogDog log content page."""
+
+  @staticmethod
+  def _find_log(build_proto, step_name, log_name):
+    for step in build_proto.steps:
+      if step.name == step_name:
+        for log in step.logs:
+          if log.name == log_name:
+            return log
+        break
+    return None
+
+  @auth.public
+  def get(self, build_id, step_name):
+    log_name = self.request.params.get('log') or 'stdout'
+    build = self._get_build(build_id)
+    bundle = model.BuildBundle.get(build, steps=True)
+    bundle.to_proto(build.proto, load_tags=False)
+    log = self._find_log(build.proto, step_name, log_name)
+    if not log or not log.view_url:
+      self.abort(
+          404, 'view url for log %r in step %r in build %d not found' %
+          (log_name, step_name, build_id)
+      )
+    return self.redirect(str(log.view_url))
 
 
 class TaskCancelSwarmingTask(webapp2.RequestHandler):  # pragma: no cover
@@ -138,6 +173,7 @@ def get_frontend_routes():  # pragma: no cover
       webapp2.Route(r'/', MainHandler),
       webapp2.Route(r'/b/<build_id:\d+>', BuildRPCHandler),
       webapp2.Route(r'/build/<build_id:\d+>', ViewBuildHandler),
+      webapp2.Route(r'/log/<build_id:\d+>/<step_name:.+>', ViewLogHandler),
   ]
   routes.extend(endpoints_webapp2.api_routes(endpoints_services))
   # /api routes should be removed once clients are hitting /_ah/api.
