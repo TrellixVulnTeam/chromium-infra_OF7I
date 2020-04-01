@@ -42,6 +42,7 @@ func TestBuilder(t *testing.T) {
 			So(ioutil.WriteFile(manifestPath, []byte(manifestBody), 0600), ShouldBeNil)
 			loaded, err := manifest.Load(manifestPath)
 			So(err, ShouldBeNil)
+			So(loaded.RenderSteps(), ShouldBeNil)
 			return b.Build(ctx, loaded)
 		}
 

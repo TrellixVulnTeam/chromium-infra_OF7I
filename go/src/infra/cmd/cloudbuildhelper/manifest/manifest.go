@@ -75,6 +75,13 @@ type Manifest struct {
 	// directory is assumed to be empty.
 	ContextDir string `yaml:"contextdir,omitempty"`
 
+	// InputsDir is an optional directory that can be used to reference files
+	// consumed by build steps (as "${inputsdir}/path").
+	//
+	// Unlike ContextDir, its full content does not automatically end up in the
+	// output.
+	InputsDir string `yaml:"inputsdir,omitempty"`
+
 	// ImagePins is a unix-style path to the YAML file with pre-resolved mapping
 	// from (docker image, tag) pair to the corresponding docker image digest.
 	//
@@ -247,8 +254,8 @@ func (bs *BuildStep) Concrete() ConcreteBuildStep { return bs.concrete }
 type CopyBuildStep struct {
 	// Copy is a path to copy files from.
 	//
-	// Should start with either "${contextdir}/" or "${manifestdir}/" to
-	// indicate the root path.
+	// Should start with either "${contextdir}/", "${inputsdir}/" or
+	// "${manifestdir}/" to indicate the root path.
 	//
 	// Can either be a directory or a file. Whatever it is, it will be put into
 	// the output as Dest. By default Dest is "${contextdir}/<basename of Copy>"
@@ -308,8 +315,8 @@ func (s *GoBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error
 type RunBuildStep struct {
 	// Run indicates a command to run along with all its arguments.
 	//
-	// Strings that start with "${contextdir}/" or "${manifestdir}/" will be
-	// rendered as absolute paths.
+	// Strings that start with "${contextdir}/", "${inputsdir}/" or
+	// "${manifestdir}/" will be rendered as absolute paths.
 	Run []string `yaml:"run,omitempty"`
 
 	// Cwd is a working directory to run the command in.
@@ -372,15 +379,12 @@ func (s *RunBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err erro
 }
 
 // Load loads the manifest from the given path, traversing all "extends" links.
+//
+// After the manifest is loaded, its fields (like ContextDir) can be manipulated
+// (e.g. to set defaults), after which all "${dir}/" references in build steps
+// must be resolved by a call to RenderSteps.
 func Load(path string) (*Manifest, error) {
-	m, err := loadRecursive(path, 0)
-	if err != nil {
-		return nil, err
-	}
-	if err := m.initSteps(); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return loadRecursive(path, 0)
 }
 
 // parse reads the manifest and populates paths there.
@@ -430,10 +434,10 @@ func loadRecursive(path string, fileCount int) (*Manifest, error) {
 	return m, nil
 }
 
-// init initializes pointers in steps and rebases paths.
+// initBase initializes pointers in steps and rebases paths.
 //
 // Doesn't yet touch actual bodies of steps, they will be initialized later
-// when the whole manifest tree is loaded, see initSteps.
+// when the whole manifest tree is loaded, see RenderSteps.
 func (m *Manifest) initBase(cwd string) error {
 	if err := validateName(m.Name); err != nil {
 		return errors.Annotate(err, `bad "name" field`).Err()
@@ -442,6 +446,7 @@ func (m *Manifest) initBase(cwd string) error {
 	normPath(&m.Extends, cwd)
 	normPath(&m.Dockerfile, cwd)
 	normPath(&m.ContextDir, cwd)
+	normPath(&m.InputsDir, cwd)
 	normPath(&m.ImagePins, cwd)
 	if m.ContextDir == "" && m.Dockerfile != "" {
 		m.ContextDir = filepath.Dir(m.Dockerfile)
@@ -459,14 +464,12 @@ func (m *Manifest) initBase(cwd string) error {
 	return nil
 }
 
-// initSteps initializes all paths in steps.
-func (m *Manifest) initSteps() error {
-	if m.ContextDir == "" {
-		return errors.Reason("either \"contextdir\" or \"dockerfile\" is required").Err()
-	}
+// RenderSteps replaces "${dir}/" in paths in steps with actual values.
+func (m *Manifest) RenderSteps() error {
 	for _, b := range m.Build {
 		dirs := map[string]string{
 			"contextdir":  m.ContextDir,
+			"inputsdir":   m.InputsDir,
 			"manifestdir": b.manifest.ManifestDir,
 		}
 		if err := b.concrete.initStep(b, dirs); err != nil {
@@ -482,6 +485,7 @@ func (m *Manifest) rebaseOnTop(b *Manifest) {
 
 	setIfEmpty(&m.Dockerfile, b.Dockerfile)
 	setIfEmpty(&m.ContextDir, b.ContextDir)
+	setIfEmpty(&m.InputsDir, b.InputsDir)
 	setIfEmpty(&m.ImagePins, b.ImagePins)
 	if m.Deterministic == nil && b.Deterministic != nil {
 		cpy := *b.Deterministic
@@ -605,13 +609,14 @@ func renderPath(p string, dirs map[string]string) (string, error) {
 		return "", errors.Reason("must start with %s", keys()).Err()
 	}
 
-	val := dirs[strings.TrimSuffix(strings.TrimPrefix(parts[0], "${"), "}")]
-	if val == "" {
+	switch val, ok := dirs[strings.TrimSuffix(strings.TrimPrefix(parts[0], "${"), "}")]; {
+	case !ok:
 		return "", errors.Reason("unknown dir variable %s, expecting %s", parts[0], keys()).Err()
-	}
-
-	if len(parts) == 1 {
+	case val == "":
+		return "", errors.Reason("dir variable %s it not set", parts[0]).Err()
+	case len(parts) == 1:
 		return val, nil
+	default:
+		return filepath.Join(val, filepath.FromSlash(parts[1])), nil
 	}
-	return filepath.Join(val, filepath.FromSlash(parts[1])), nil
 }

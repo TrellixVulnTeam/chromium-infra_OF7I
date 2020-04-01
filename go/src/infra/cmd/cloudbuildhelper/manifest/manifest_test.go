@@ -25,7 +25,7 @@ func TestManifest(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
-		return m, m.initSteps()
+		return m, m.RenderSteps()
 	}
 
 	Convey("Minimal", t, func() {
@@ -235,6 +235,7 @@ func TestExtends(t *testing.T) {
 
 			m, err := Load(filepath.Join(dir, "deeper", "leaf.yaml"))
 			So(err, ShouldBeNil)
+			So(m.RenderSteps(), ShouldBeNil)
 
 			// We'll deal with them separately below.
 			steps := m.Build

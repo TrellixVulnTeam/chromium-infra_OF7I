@@ -49,6 +49,8 @@ type commandBase struct {
 	buildID        string              // -build-id flag
 	jsonOutput     string              // -json-output flag
 	renderToStdout string              // -render-to-stdout flag
+
+	tempDirs []string // directories created via newTempDir
 }
 
 // extraFlags tells `commandBase.init` what additional CLI flags to register.
@@ -139,10 +141,32 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 	ctx, cancel := context.WithCancel(ctx)
 	signals.HandleInterrupt(cancel)
 
+	defer c.cleanup(ctx)
 	if err := c.exec(ctx); err != nil {
 		return handleErr(ctx, err)
 	}
 	return 0
+}
+
+// cleanup is called after the command execution.
+func (c *commandBase) cleanup(ctx context.Context) {
+	for _, p := range c.tempDirs {
+		if err := os.RemoveAll(p); err != nil {
+			logging.Warningf(ctx, "Leaking temp directory %s: %s", p, err)
+		}
+	}
+	c.tempDirs = nil
+}
+
+// newTempDir returns a path to a new empty temp directory.
+//
+// It will be removed at the end of the command execution.
+func (c *commandBase) newTempDir() (string, error) {
+	path, err := ioutil.TempDir("", "cbh_")
+	if err == nil {
+		c.tempDirs = append(c.tempDirs, path)
+	}
+	return path, err
 }
 
 // loadManifest loads manifest from the given path, returning CLI errors.
@@ -153,6 +177,19 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 func (c *commandBase) loadManifest(path string, needStorage, needCloudBuild bool) (m *manifest.Manifest, infra *manifest.Infra, err error) {
 	m, err = manifest.Load(path)
 	if err != nil {
+		return nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
+	}
+
+	// If contextdir isn't set, replace it with an empty temp directory.
+	if m.ContextDir == "" {
+		m.ContextDir, err = c.newTempDir()
+		if err != nil {
+			return nil, nil, errors.Annotate(err, "failed to create temp directory to act as a context dir").Err()
+		}
+	}
+
+	// Now that all paths are initialized, render "${dir}/..." strings.
+	if err = m.RenderSteps(); err != nil {
 		return nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
 	}
 
