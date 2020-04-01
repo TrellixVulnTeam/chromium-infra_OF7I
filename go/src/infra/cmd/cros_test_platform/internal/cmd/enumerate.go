@@ -113,27 +113,26 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 // User/caller errors will receive an empty enumeration with errors described in
 // its body, rather than an infrastructure error.
 func (c *enumerateRun) enumerateOne(ctx context.Context, workspace string, tag string, r *steps.EnumerationRequest) (*steps.EnumerationResponse, error) {
-	m := r.GetMetadata().GetTestMetadataUrl()
-	if m == "" {
-		return &steps.EnumerationResponse{
-			AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{},
-			ErrorSummary:        fmt.Sprintf("empty request.metadata.test_metadata_url for %s", tag),
-		}, nil
+	resp := &steps.EnumerationResponse{
+		AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{},
 	}
-	gsPath := gs.Path(m)
 
 	w, err := ioutil.TempDir(workspace, "request")
 	if err != nil {
 		return nil, err
 	}
 
-	lp, err := c.downloadArtifacts(ctx, gsPath, w)
+	m := r.GetMetadata().GetTestMetadataUrl()
+	if m == "" {
+		resp.ErrorSummary = fmt.Sprintf("empty request.metadata.test_metadata_url for %s", tag)
+		return resp, nil
+	}
+
+	lp, err := c.downloadArtifacts(ctx, gs.Path(m), w)
 	if err != nil {
 		if matchesUserErrorPatterns(err) {
-			return &steps.EnumerationResponse{
-				AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{},
-				ErrorSummary:        fmt.Sprintf("%s: %s", tag, err.Error()),
-			}, nil
+			resp.ErrorSummary = fmt.Sprintf("%s: %s", tag, err.Error())
+			return resp, nil
 		}
 		return nil, err
 	}
@@ -144,10 +143,7 @@ func (c *enumerateRun) enumerateOne(ctx context.Context, workspace string, tag s
 	}
 
 	ts, errs := c.getEnumeration(ctx, tag, tm, r)
-	resp := &steps.EnumerationResponse{}
-	if len(ts) > 0 {
-		resp.AutotestInvocations = ts
-	}
+	resp.AutotestInvocations = ts
 	if errs != nil {
 		resp.ErrorSummary = errs.Error()
 	}
