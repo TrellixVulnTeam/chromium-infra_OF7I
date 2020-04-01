@@ -144,12 +144,39 @@ monorail-eng+spinnaker@google.com when:
 
 ## Deploying a new version to an existing instance using Spinnaker
 
-Manual testing steps are added during Workflow's weekly meetings. Confirm that
-any changes that may have been merged between the meeting and deployment have
-been added to the meeting notes with testing steps. If there are missing
-changes, ping the CL owner to add testing instructions.
+For each release cycle, a new `refs/releases/monorail/[*deployment number*]`
+branch is created at the latest [*commit sha*] that we want to be part of the
+deployment. Spinnaker will take the [*deployment number*] and deploy from HEAD
+of the matching branch.
 
-### Deployment steps
+Manual testing steps are added during Workflow's weekly meetings for each 
+commit between the previous release and this release.
+
+## Update or create a monorail release branch
+
+Create a new local branch at the [*commit sha*] of the latest commit we want
+included in the deployment: 
+``` 
+git checkout -b release [*commit sha*]
+```
+
+[Optional] cherry pick another commit that is ahead of [*commit sha*]:
+```
+git cherry-pick -x [*cherry-picked commit sha*]
+```
+
+Create or update a monorail release branch:
+```
+git push origin release:refs/releases/monorail/[*deployment number*]
+``` 
+
+If the branch already exists, [*commit sha*] must be ahead of the current 
+commit that the branch points to.
+
+### Spinnaker Deployment steps
+
+TODO(crbug/monorail/6732): Update Spinnaker instructions once new pipeline is
+created.
 
 If any step below fails. Stop the deploy and ping
 [Monorail chat](http://chat/room/AAAACV9ZZ8k).
@@ -164,10 +191,19 @@ If any step below fails. Stop the deploy and ping
     1.  If there are any significant operational problems with Monorail or ChOps
         in general, halt deploy.
 1.  Understand what changes you are about to deploy
-    1.  Go to last deployment's build log via [Spinnaker](http://go/spinnaker-deploy-monorail). ![navgiation to build log](md_images/nav-to-build-log.png)
-    1.  Find the git sha of last deployment's build ![build log's git sha](md_images/build-log.png) In this example it's `bbaab65c91`
-    1. Make sure you're on latest master and in `infra/appengine/monorail/` and run `git log --oneline <git_sha>..HEAD .`. In the example above, that command would be `git log --oneline bbaab65c91..HEAD .`
-    1. Make sure list of commits matches the manually recorded list in the weekly meeting notes.
+    1.  Go to last deployment's build log via
+        [Spinnaker](http://go/spinnaker-deploy-monorail).
+        ![navigation to build log](md_images/nav-to-build-log.png)
+    1.  Find the git sha of last deployment's build
+        ![build log's git sha](md_images/build-log.png) In this example it's
+        `bbaab65c91`
+    1.  Make sure you're on latest master and in `infra/appengine/monorail/` and
+        run `git log --oneline <git_sha>..HEAD .`. In the example above, that
+        command would be `git log --oneline bbaab65c91..HEAD .`
+        TODO(crbug/monorail/6732): Update these instructions for new release branch
+        process and include them in go/monorail-meeting-notes.
+    1.  Make sure list of commits matches the manually recorded list in the
+        weekly meeting notes.
 1.  Update Dev and Staging Schema
     1.  Check for changes since last deploy: `tail -30
         schema/alter-table-log.txt`
@@ -186,7 +222,8 @@ If any step below fails. Stop the deploy and ping
         Execution". "BUILD_ID" should be empty. "ENV" should be set to "dev".
 1.  Confirm monorail-dev was successfully deployed (Pipeline: `Deploy Dev (in
     use)`, Stage: "Continue?")
-    1.  Find the new version using the [appengine version console](https://pantheon.corp.google.com/appengine/versions?organizationId=433637338589&project=monorail-dev).
+    1.  Find the new version using the
+        [appengine version console](https://pantheon.corp.google.com/appengine/versions?organizationId=433637338589&project=monorail-dev).
     1.  Visit popular/essential pages and confirm they are all accessible.
     1.  If everything looks good, choose "Continue" for this stage.
     1.  If there is an issue, choose "Rollback" for this stage.
@@ -223,12 +260,12 @@ If any step below fails. Stop the deploy and ping
         should work after deployment.
 1.  Announce the Deployment.
     1.  Include the
-        [build id](https://screenshot.googleplex.com/KvzoxHEs6Qy.png)
-        of the Cloud Build used for this deployment.
+        [build id](https://screenshot.googleplex.com/KvzoxHEs6Qy.png) of the
+        Cloud Build used for this deployment.
     1.  Include the version numbers of the new staging and prod deployments.
         (They may be different).
-    1.  Include list of changes that went out (obtained from section 2 above), or via `git log --oneline .` (use `--before`
-        and `--after` as needed).
+    1.  Include list of changes that went out (obtained from section 2 above),
+        or via `git log --oneline .` (use `--before` and `--after` as needed).
     1.  If there were schema changes, copy and paste the commands at the bottom
         of the email
     1.  Use the subject line "Deployed Monorail to staging and prod with build
