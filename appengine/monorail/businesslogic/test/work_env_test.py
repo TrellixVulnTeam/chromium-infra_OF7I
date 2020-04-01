@@ -4568,15 +4568,62 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(self.user_2.user_id)
     with self.work_env as we:
       we.AddHotlistItems(hotlist.hotlist_id, [78909, 78910, 78901], 2)
-      updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
 
     expected_item_ids = [78901, 78902, 78909, 78910, 78903, 78904]
+    updated_hotlist = we.GetHotlist(hotlist.hotlist_id)
+    self.assertEqual(
+        expected_item_ids, [item.issue_id for item in updated_hotlist.items])
+
+  def testRerankHotlistItems_NoPerms(self):
+    """We don't let non editors/owners rerank HotlistItems."""
+    hotlist = self.createHotlistWithItems()
+    moved_ids = [78901]
+    target_position = 0
+    self.SignIn(self.user_3.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.RerankHotlistItems(hotlist.hotlist_id, moved_ids, target_position)
+
+  def testRerankHotlistItems_HotlistItemsNotFound(self):
+    """We raise an exception if not all Issue IDs are in the hotlist."""
+    hotlist = self.createHotlistWithItems()
+    # 78909 is not an existing HotlistItem issue.
+    moved_ids = [78901, 78909]
+    target_position = 1
+    self.SignIn(self.user_2.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.RerankHotlistItems(hotlist.hotlist_id, moved_ids, target_position)
+
+  def testRerankHotlistItems_MovedIssuesEmpty(self):
+    """We raise an exception if the list of Issue IDs is empty."""
+    hotlist = self.createHotlistWithItems()
+    moved_ids = []
+    target_position = 1
+    self.SignIn(self.user_2.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.RerankHotlistItems(hotlist.hotlist_id, moved_ids, target_position)
+
+  @mock.patch('time.time')
+  def testRerankHotlistItems(self, fake_time):
+    """We can rerank HotlistItems."""
+    fake_time.return_value = self.PAST_TIME
+    hotlist = self.createHotlistWithItems()
+    moved_ids = [78901, 78903]
+    target_position = 1
+    self.SignIn(self.user_2.user_id)
+    with self.work_env as we:
+      updated_hotlist = we.RerankHotlistItems(
+          hotlist.hotlist_id, moved_ids, target_position)
+
+    expected_item_ids = [78902, 78901, 78903, 78904]
     self.assertEqual(
         expected_item_ids, [item.issue_id for item in updated_hotlist.items])
 
   @mock.patch('time.time')
-  def testRerankHotlistItems(self, fake_time):
-    """We can rerank new and existing hotlist issues."""
+  def testGetChangedHotlistItems(self, fake_time):
+    """We can get changed HotlistItems when moving existing and new issues."""
     fake_time.return_value = self.PAST_TIME
     hotlist = self.createHotlistWithItems()
     # moved_ids include new issues not in hotlist: [78907, 78909]
@@ -4584,16 +4631,10 @@ class WorkEnvTest(unittest.TestCase):
     target_position = 1
     self.SignIn(self.user_2.user_id)
     with self.work_env as we:
-      updated_hotlist = we.RerankHotlistItems(
-          hotlist.hotlist_id, moved_ids, target_position)
+      changed_items = we._GetChangedHotlistItems(
+          hotlist, moved_ids, target_position)
 
     expected_hotlist_items = [
-        features_pb2.Hotlist.HotlistItem(
-            issue_id=78902,
-            rank=11,
-            note='',
-            adder_id=self.user_2.user_id,
-            date_added=self.PAST_TIME),
         features_pb2.Hotlist.HotlistItem(
             issue_id=78901,
             rank=14,
@@ -4615,62 +4656,9 @@ class WorkEnvTest(unittest.TestCase):
             issue_id=78909,
             rank=29,
             adder_id=self.user_2.user_id,
-            date_added=self.PAST_TIME),
-        features_pb2.Hotlist.HotlistItem(
-            issue_id=78904,
-            rank=31,
-            note='',
-            adder_id=self.user_3.user_id,
-            date_added=self.PAST_TIME),
+            date_added=self.PAST_TIME)
     ]
-    self.assertEqual(updated_hotlist.items, expected_hotlist_items)
-
-  def testRerankHotlistItems_NoPerms(self):
-    """We don't let non editors/owners update issue ranks."""
-    hotlist = self.createHotlistWithItems()
-    moved_ids = [78901]
-    target_position = 0
-    self.SignIn(self.user_3.user_id)
-    with self.assertRaises(permissions.PermissionException):
-      with self.work_env as we:
-        we.RerankHotlistItems(
-            hotlist.hotlist_id, moved_ids, target_position)
-
-  def testRerankHotlistItemss_MoveEntireList(self):
-    hotlist = self.createHotlistWithItems()
-    moved_ids = [78902, 78901, 78904, 78903]
-    target_position = 0
-    self.SignIn(self.user_1.user_id)
-    with self.work_env as we:
-      updated_hotlist = we.RerankHotlistItems(
-          hotlist.hotlist_id, moved_ids, target_position)
-
-    self.assertEqual(
-        [item.issue_id for item in updated_hotlist.items],
-        [78902, 78901, 78904, 78903])
-
-  def testRerankHotlistItems_SamePosition(self):
-    hotlist = self.createHotlistWithItems()
-    moved_ids = [78902]
-    target_position = 1
-    self.SignIn(self.user_1.user_id)
-    with self.work_env as we:
-      updated_hotlist = we.RerankHotlistItems(
-          hotlist.hotlist_id, moved_ids, target_position)
-
-    self.assertEqual(
-        [item.issue_id for item in updated_hotlist.items],
-        [78901, 78902, 78903, 78904])
-
-  def testRerankHotlistItems_NoItemsGiven(self):
-    hotlist = self.createHotlistWithItems()
-    moved_ids = []
-    target_position = 1
-    self.SignIn(self.user_1.user_id)
-    with self.assertRaises(exceptions.InputException):
-      with self.work_env as we:
-        we.RerankHotlistItems(
-            hotlist.hotlist_id, moved_ids, target_position)
+    self.assertEqual(changed_items, expected_hotlist_items)
 
   # TODO(crbug/monorail/7104): Remove these tests once RerankHotlistIssues
   # is deleted.

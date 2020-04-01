@@ -2579,34 +2579,28 @@ class WorkEnv(object):
     item_issue_ids = {item.issue_id for item in hotlist.items}
     confirmed_new_issue_ids = set(new_issue_ids).difference(item_issue_ids)
 
+    # TODO(crbug/monorail/7318): Check user has permission to view every issue
+
     if confirmed_new_issue_ids:
-      self.RerankHotlistItems(
-          hotlist_id, list(confirmed_new_issue_ids), target_position)
+      changed_items = self._GetChangedHotlistItems(
+          hotlist, list(confirmed_new_issue_ids), target_position)
+      self.services.features.UpdateHotlistIssues(
+          self.mc.cnxn, hotlist_id, changed_items, [], self.services.issue,
+          self.services.chart)
 
-  # TODO(crbug/monorail/7104): Implement a RerankHotlistItems method that
-  # will check only existing HotlistItems are reranked, before calling
-  # _UpdateHotlistItems. See TODO below.
-
-  # TODO(crbug/monorail/7104): This method will be called for v3's
-  # RerankHotlistItems and AddHotlistItems paths. We decided to not merge
-  # these two v3 methods together as this may confuse the user because these
-  # are different concepts, even though the backend implementation is the same.
-  # Rename this to _UpdateHotlistItems and take in a full hotlist object.
   def RerankHotlistItems(self, hotlist_id, moved_issue_ids, target_position):
     # type: (int, list(int), int) -> Hotlist
-    """Rerank HotlistItems to accommodate moving existing/new issues.
+    """Rerank HotlistItems of a Hotlist.
 
-      This method can rerank existing hotlist items or add new hotlist items
-      to the given target_position.
+      This method reranks existing hotlist items to the given target_position.
         e.g. For a hotlist with items (a, b, c, d, e), if moved_issue_ids were
-        [e.issue_id, c.issue_id, new_issue_id] and target_position were 0,
-        the hotlist items would be reranked as (e, c, new_item, a, b, d).
+        [e.issue_id, c.issue_id] and target_position were 0,
+        the hotlist items would be reranked as (e, c, a, b, d).
 
     Args:
       hotlist_id: A hotlist ID of the hotlist to rerank.
-      moved_issue_ids: A list of issue IDs for new or existing items of the
-        Hotlist, to be moved together, in the order they should have after
-        the reranking.
+      moved_issue_ids: A list of issue IDs in the hotlist, to be moved
+        together, in the order they should have after the reranking.
       target_position: The index, starting at 0, of the new position the
         first issue in moved_issue_ids should have. This value cannot be greater
         than (# of current hotlist.items not being reranked).
@@ -2619,16 +2613,52 @@ class WorkEnv(object):
       NoSuchHotlistException: If the hotlist is not found.
       InputException: If the target_position or moved_issue_ids are not valid.
     """
-    # TODO(crbug/monorail/7104): remove these checks when we pass in the full
-    # hotlist object instead of the hotlist_id.
     hotlist = self.GetHotlist(hotlist_id)
     self._AssertUserCanEditHotlist(hotlist)
     if not moved_issue_ids:
       raise exceptions.InputException('`moved_issue_ids` empty.')
 
-    # TODO(crbug/monorail/7104): Check that moved_issue_ids are valid Issue IDs
-    # TODO(crbug/monorail/7318): Check user has permission to view every issue
+    item_issue_ids = {item.issue_id for item in hotlist.items}
+    if not (set(moved_issue_ids).issubset(item_issue_ids)):
+      raise exceptions.InputException('item(s) not found in hotlist.')
 
+    # TODO(crbug/monorail/7318): Check user has permission to view every issue
+    changed_items = self._GetChangedHotlistItems(
+        hotlist, moved_issue_ids, target_position)
+
+    if changed_items:
+      self.services.features.UpdateHotlistIssues(
+          self.mc.cnxn, hotlist_id, changed_items, [], self.services.issue,
+          self.services.chart)
+
+    return self.GetHotlist(hotlist.hotlist_id)
+
+  def _GetChangedHotlistItems(self, hotlist, moved_issue_ids, target_position):
+    # type: (Hotlist, Sequence(int), int) -> Hotlist
+    """Returns HotlistItems that are changed after moving existing/new issues.
+
+      This returns the list of new HotlistItems and existing HotlistItems
+      with updated ranks as a result of moving the given issues to the given
+      target_position. This list may include HotlistItems whose ranks' must be
+      changed as a result of the `moved_issue_ids`.
+
+    Args:
+      hotlist: The hotlist that owns the HotlistItems.
+      moved_issue_ids: A sequence of issue IDs for new or existing items of the
+        Hotlist, to be moved together, in the order they should have after
+        the change.
+      target_position: The index, starting at 0, of the new position the
+        first issue in moved_issue_ids should have. This value cannot be greater
+        than (# of current hotlist.items not being reranked).
+
+    Returns:
+      The updated hotlist.
+
+    Raises:
+      PermissionException: If the user lacks permissions to rerank the hotlist.
+      NoSuchHotlistException: If the hotlist is not found.
+      InputException: If the target_position or moved_issue_ids are not valid.
+    """
     # List[Tuple[issue_id, new_rank]]
     changed_item_ranks = rerank_helpers.GetHotlistRerankChanges(
         hotlist.items, moved_issue_ids, target_position)
@@ -2647,12 +2677,7 @@ class WorkEnv(object):
       item.rank = rank
       changed_items.append(item)
 
-    if changed_items:
-      self.services.features.UpdateHotlistIssues(
-          self.mc.cnxn, hotlist_id, changed_items, [], self.services.issue,
-          self.services.chart)
-
-    return self.GetHotlist(hotlist.hotlist_id)
+    return changed_items
 
   # TODO(crbug/monorail/7031): Remove this method
   # and corresponding v0 prpc method.
