@@ -239,6 +239,9 @@ class ResourceNameConverterTest(unittest.TestCase):
     expected_ids = [111, new_id, 333]
     self.assertEqual(expected_ids, ids)
 
+  def testConvertUserName(self):
+    """We can convert a single User ID to resource name."""
+    self.assertEqual(rnc.ConvertUserName(111), 'users/111')
 
   def testConvertUserNames(self):
     """We can get User resource names."""

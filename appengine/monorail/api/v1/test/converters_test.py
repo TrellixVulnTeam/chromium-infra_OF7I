@@ -53,6 +53,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         'sum',
         'New',
         self.user_1.user_id,
+        cc_ids=[self.user_2.user_id],
+        derived_cc_ids=[self.user_3.user_id],
         project_name=self.project_1.project_name,
         star_count=1,
         labels=['label-a', 'label-b'],
@@ -63,7 +65,6 @@ class ConverterFunctionsTest(unittest.TestCase):
         attachment_count=5,
     )
 
-    # TODO(jessan): Test merged_into local issue.
     self.issue_2 = fake.MakeTestIssue(
         self.project_2.project_id,
         2,
@@ -274,6 +275,8 @@ class ConverterFunctionsTest(unittest.TestCase):
     """We can convert Issues."""
     # TODO(jessan): Add self.issue_2 once method fully implemented.
     # - Derived status
+    # - Derived owner_id
+    # - Merged_into local issue.
     blocked_on_1 = fake.MakeTestIssue(
         self.project_1.project_id,
         3,
@@ -327,6 +330,19 @@ class ConverterFunctionsTest(unittest.TestCase):
             status=issue_objects_pb2.Issue.StatusValue(
                 derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
                 status='New'),
+            reporter='users/111',
+            owner=issue_objects_pb2.Issue.UserValue(
+                derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+                user='users/111'),
+            cc_users=[
+                issue_objects_pb2.Issue.UserValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value(
+                        'EXPLICIT'),
+                    user='users/222'),
+                issue_objects_pb2.Issue.UserValue(
+                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                    user='users/333')
+            ],
             labels=[
                 issue_objects_pb2.Issue.LabelValue(
                     derivation=issue_objects_pb2.Issue.Derivation.Value(
@@ -388,7 +404,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         3,
         'sum',
         'New',
-        111,
+        owner_id=None,
+        reporter_id=111,
         attachment_count=-10,
         project_name=self.project_1.project_name)
     self.services.issue.TestAddIssue(issue)
@@ -399,6 +416,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         status=issue_objects_pb2.Issue.StatusValue(
             derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
             status='New'),
+        reporter='users/111',
         description='TODO(jessan): Pull description from comments',
     )
     self.assertEqual(self.converter.ConvertIssues([issue]), [expected_issue])

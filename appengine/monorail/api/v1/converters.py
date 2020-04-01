@@ -212,6 +212,28 @@ class Converter(object):
         content_state = issue_objects_pb2.IssueContentState.Value('DELETED')
       else:
         content_state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+
+      owner = None
+      if issue.owner_id:
+        owner = issue_objects_pb2.Issue.UserValue(
+            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+            user=rnc.ConvertUserName(issue.owner_id))
+      if issue.derived_owner_id:
+        owner = issue_objects_pb2.Issue.UserValue(
+            derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+            user=rnc.ConvertUserName(issue.derived_owner_id))
+      cc_users = []
+      for cc_user_id in issue.cc_ids:
+        cc_users.append(
+            issue_objects_pb2.Issue.UserValue(
+                derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+                user=rnc.ConvertUserName(cc_user_id)))
+      for derived_cc_user_id in issue.derived_cc_ids:
+        cc_users.append(
+            issue_objects_pb2.Issue.UserValue(
+                derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                user=rnc.ConvertUserName(derived_cc_user_id)))
+
       labels = self._ConvertLabelValues(issue)
       components = self._ConvertComponentValues(issue)
       # TODO(jessan): Handle enum fieldvalues, then include below.
@@ -255,10 +277,9 @@ class Converter(object):
           state=content_state,
           status=status,
           description='TODO(jessan): Pull description from comments',
-          # TODO(jessan): Add user fields.
-          reporter=None,
-          owner=None,
-          cc_users=[],
+          reporter=rnc.ConvertUserName(issue.reporter_id),
+          owner=owner,
+          cc_users=cc_users,
           labels=labels,
           components=components,
           field_values=[],
@@ -300,7 +321,7 @@ class Converter(object):
     project: currently viewed project.
 
     Returns:
-      Dict of User IDs to User resource names for all given users.
+      Dict of User IDs to User protos for given user_ids that could be found.
     """
     user_ids_to_names = {}
 

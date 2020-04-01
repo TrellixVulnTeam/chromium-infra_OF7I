@@ -315,9 +315,15 @@ def IngestUserNames(cnxn, names, services, autocreate=False):
   return ids
 
 
+def ConvertUserName(user_id):
+  # int -> str
+  """Takes a User ID and returns the User's resource name."""
+  return ConvertUserNames([user_id])[user_id]
+
+
 def ConvertUserNames(user_ids):
   # Collection[int] -> Mapping[int, str]
-  """Takes a List of Users and returns the User's resource names.
+  """Takes User IDs and returns the Users' resource names.
 
   Args:
     user_ids: List of User IDs.
