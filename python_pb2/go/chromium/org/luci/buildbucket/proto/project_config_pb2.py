@@ -16,6 +16,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import wrappers_pb2 as google_dot_protobuf_dot_wrappers__pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2 as go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2
 from go.chromium.org.luci.common.proto import options_pb2 as go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_options__pb2
+from go.chromium.org.luci.resultdb.proto.rpc.v1 import invocation_pb2 as go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_rpc_dot_v1_dot_invocation__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -23,9 +24,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='buildbucket',
   syntax='proto3',
   serialized_options=_b('Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb\242\376#B\n@https://luci-config.appspot.com/schemas/projects:buildbucket.cfg'),
-  serialized_pb=_b('\n;go.chromium.org/luci/buildbucket/proto/project_config.proto\x12\x0b\x62uildbucket\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x33go.chromium.org/luci/buildbucket/proto/common.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"z\n\x03\x41\x63l\x12#\n\x04role\x18\x01 \x01(\x0e\x32\x15.buildbucket.Acl.Role\x12\r\n\x05group\x18\x02 \x01(\t\x12\x10\n\x08identity\x18\x03 \x01(\t\"-\n\x04Role\x12\n\n\x06READER\x10\x00\x12\r\n\tSCHEDULER\x10\x01\x12\n\n\x06WRITER\x10\x02\"6\n\x06\x41\x63lSet\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x1e\n\x04\x61\x63ls\x18\x02 \x03(\x0b\x32\x10.buildbucket.Acl\"\xfe\x06\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x15\n\rswarming_host\x18\x15 \x01(\t\x12\x0e\n\x06mixins\x18\n \x03(\t\x12\x10\n\x08\x63\x61tegory\x18\x06 \x01(\t\x12\x15\n\rswarming_tags\x18\x02 \x03(\t\x12\x12\n\ndimensions\x18\x03 \x03(\t\x12+\n\x06recipe\x18\x04 \x01(\x0b\x32\x1b.buildbucket.Builder.Recipe\x12\'\n\x03\x65xe\x18\x17 \x01(\x0b\x32\x1a.buildbucket.v2.Executable\x12\x12\n\nproperties\x18\x18 \x01(\t\x12\x10\n\x08priority\x18\x05 \x01(\r\x12\x1e\n\x16\x65xecution_timeout_secs\x18\x07 \x01(\r\x12\x17\n\x0f\x65xpiration_secs\x18\x14 \x01(\r\x12/\n\x06\x63\x61\x63hes\x18\t \x03(\x0b\x32\x1f.buildbucket.Builder.CacheEntry\x12*\n\rbuild_numbers\x18\x10 \x01(\x0e\x32\x13.buildbucket.Toggle\x12\x17\n\x0fservice_account\x18\x0c \x01(\t\x12\x33\n\x16\x61uto_builder_dimension\x18\x11 \x01(\x0e\x32\x13.buildbucket.Toggle\x12)\n\x0c\x65xperimental\x18\x12 \x01(\x0e\x32\x13.buildbucket.Toggle\x12\x1b\n\x13luci_migration_host\x18\x13 \x01(\t\x12\x45\n\x1ftask_template_canary_percentage\x18\x16 \x01(\x0b\x32\x1c.google.protobuf.UInt32Value\x12)\n\x08\x63ritical\x18\x19 \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x1a[\n\nCacheEntry\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\x12 \n\x18wait_for_warm_cache_secs\x18\x03 \x01(\x05\x12\x0f\n\x07\x65nv_var\x18\x04 \x01(\t\x1ar\n\x06Recipe\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x14\n\x0c\x63ipd_package\x18\x06 \x01(\t\x12\x14\n\x0c\x63ipd_version\x18\x05 \x01(\t\x12\x12\n\nproperties\x18\x03 \x03(\t\x12\x14\n\x0cproperties_j\x18\x04 \x03(\tJ\x04\x08\x01\x10\x02J\x04\x08\x08\x10\tJ\x04\x08\x0b\x10\x0cJ\x04\x08\r\x10\x0eJ\x04\x08\x0f\x10\x10\"\xcf\x01\n\x08Swarming\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x12\n\nurl_format\x18\x02 \x01(\t\x12.\n\x10\x62uilder_defaults\x18\x03 \x01(\x0b\x32\x14.buildbucket.Builder\x12&\n\x08\x62uilders\x18\x04 \x03(\x0b\x32\x14.buildbucket.Builder\x12\x45\n\x1ftask_template_canary_percentage\x18\x05 \x01(\x0b\x32\x1c.google.protobuf.UInt32Value\"q\n\x06\x42ucket\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x1e\n\x04\x61\x63ls\x18\x02 \x03(\x0b\x32\x10.buildbucket.Acl\x12\x10\n\x08\x61\x63l_sets\x18\x04 \x03(\t\x12\'\n\x08swarming\x18\x03 \x01(\x0b\x32\x15.buildbucket.Swarming\"\x8b\x01\n\x0e\x42uildbucketCfg\x12$\n\x07\x62uckets\x18\x01 \x03(\x0b\x32\x13.buildbucket.Bucket\x12%\n\x08\x61\x63l_sets\x18\x02 \x03(\x0b\x32\x13.buildbucket.AclSet\x12,\n\x0e\x62uilder_mixins\x18\x03 \x03(\x0b\x32\x14.buildbucket.Builder*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02\x42|Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb\xa2\xfe#B\n@https://luci-config.appspot.com/schemas/projects:buildbucket.cfgb\x06proto3')
+  serialized_pb=_b('\n;go.chromium.org/luci/buildbucket/proto/project_config.proto\x12\x0b\x62uildbucket\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x33go.chromium.org/luci/buildbucket/proto/common.proto\x1a/go.chromium.org/luci/common/proto/options.proto\x1a;go.chromium.org/luci/resultdb/proto/rpc/v1/invocation.proto\"z\n\x03\x41\x63l\x12#\n\x04role\x18\x01 \x01(\x0e\x32\x15.buildbucket.Acl.Role\x12\r\n\x05group\x18\x02 \x01(\t\x12\x10\n\x08identity\x18\x03 \x01(\t\"-\n\x04Role\x12\n\n\x06READER\x10\x00\x12\r\n\tSCHEDULER\x10\x01\x12\n\n\x06WRITER\x10\x02\"6\n\x06\x41\x63lSet\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x1e\n\x04\x61\x63ls\x18\x02 \x03(\x0b\x32\x10.buildbucket.Acl\"\x85\x08\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x15\n\rswarming_host\x18\x15 \x01(\t\x12\x0e\n\x06mixins\x18\n \x03(\t\x12\x10\n\x08\x63\x61tegory\x18\x06 \x01(\t\x12\x15\n\rswarming_tags\x18\x02 \x03(\t\x12\x12\n\ndimensions\x18\x03 \x03(\t\x12+\n\x06recipe\x18\x04 \x01(\x0b\x32\x1b.buildbucket.Builder.Recipe\x12\'\n\x03\x65xe\x18\x17 \x01(\x0b\x32\x1a.buildbucket.v2.Executable\x12\x12\n\nproperties\x18\x18 \x01(\t\x12\x10\n\x08priority\x18\x05 \x01(\r\x12\x1e\n\x16\x65xecution_timeout_secs\x18\x07 \x01(\r\x12\x17\n\x0f\x65xpiration_secs\x18\x14 \x01(\r\x12/\n\x06\x63\x61\x63hes\x18\t \x03(\x0b\x32\x1f.buildbucket.Builder.CacheEntry\x12*\n\rbuild_numbers\x18\x10 \x01(\x0e\x32\x13.buildbucket.Toggle\x12\x17\n\x0fservice_account\x18\x0c \x01(\t\x12\x33\n\x16\x61uto_builder_dimension\x18\x11 \x01(\x0e\x32\x13.buildbucket.Toggle\x12)\n\x0c\x65xperimental\x18\x12 \x01(\x0e\x32\x13.buildbucket.Toggle\x12\x1b\n\x13luci_migration_host\x18\x13 \x01(\t\x12\x45\n\x1ftask_template_canary_percentage\x18\x16 \x01(\x0b\x32\x1c.google.protobuf.UInt32Value\x12)\n\x08\x63ritical\x18\x19 \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12/\n\x08resultdb\x18\x1a \x01(\x0b\x32\x1d.buildbucket.Builder.ResultDB\x1a[\n\nCacheEntry\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\x12 \n\x18wait_for_warm_cache_secs\x18\x03 \x01(\x05\x12\x0f\n\x07\x65nv_var\x18\x04 \x01(\t\x1ar\n\x06Recipe\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x14\n\x0c\x63ipd_package\x18\x06 \x01(\t\x12\x14\n\x0c\x63ipd_version\x18\x05 \x01(\t\x12\x12\n\nproperties\x18\x03 \x03(\t\x12\x14\n\x0cproperties_j\x18\x04 \x03(\tJ\x04\x08\x01\x10\x02\x1aT\n\x08ResultDB\x12\x0e\n\x06\x65nable\x18\x01 \x01(\x08\x12\x38\n\nbq_exports\x18\x02 \x03(\x0b\x32$.luci.resultdb.rpc.v1.BigQueryExportJ\x04\x08\x08\x10\tJ\x04\x08\x0b\x10\x0cJ\x04\x08\r\x10\x0eJ\x04\x08\x0f\x10\x10\"\xcf\x01\n\x08Swarming\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x12\n\nurl_format\x18\x02 \x01(\t\x12.\n\x10\x62uilder_defaults\x18\x03 \x01(\x0b\x32\x14.buildbucket.Builder\x12&\n\x08\x62uilders\x18\x04 \x03(\x0b\x32\x14.buildbucket.Builder\x12\x45\n\x1ftask_template_canary_percentage\x18\x05 \x01(\x0b\x32\x1c.google.protobuf.UInt32Value\"q\n\x06\x42ucket\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x1e\n\x04\x61\x63ls\x18\x02 \x03(\x0b\x32\x10.buildbucket.Acl\x12\x10\n\x08\x61\x63l_sets\x18\x04 \x03(\t\x12\'\n\x08swarming\x18\x03 \x01(\x0b\x32\x15.buildbucket.Swarming\"\x8b\x01\n\x0e\x42uildbucketCfg\x12$\n\x07\x62uckets\x18\x01 \x03(\x0b\x32\x13.buildbucket.Bucket\x12%\n\x08\x61\x63l_sets\x18\x02 \x03(\x0b\x32\x13.buildbucket.AclSet\x12,\n\x0e\x62uilder_mixins\x18\x03 \x03(\x0b\x32\x14.buildbucket.Builder*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02\x42|Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb\xa2\xfe#B\n@https://luci-config.appspot.com/schemas/projects:buildbucket.cfgb\x06proto3')
   ,
-  dependencies=[google_dot_protobuf_dot_wrappers__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_options__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_protobuf_dot_wrappers__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_options__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_rpc_dot_v1_dot_invocation__pb2.DESCRIPTOR,])
 
 _TOGGLE = _descriptor.EnumDescriptor(
   name='Toggle',
@@ -48,8 +49,8 @@ _TOGGLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1754,
-  serialized_end=1790,
+  serialized_start=1950,
+  serialized_end=1986,
 )
 _sym_db.RegisterEnumDescriptor(_TOGGLE)
 
@@ -80,8 +81,8 @@ _ACL_ROLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=287,
-  serialized_end=332,
+  serialized_start=348,
+  serialized_end=393,
 )
 _sym_db.RegisterEnumDescriptor(_ACL_ROLE)
 
@@ -127,8 +128,8 @@ _ACL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=210,
-  serialized_end=332,
+  serialized_start=271,
+  serialized_end=393,
 )
 
 
@@ -165,8 +166,8 @@ _ACLSET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=334,
-  serialized_end=388,
+  serialized_start=395,
+  serialized_end=449,
 )
 
 
@@ -217,8 +218,8 @@ _BUILDER_CACHEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1054,
-  serialized_end=1145,
+  serialized_start=1164,
+  serialized_end=1255,
 )
 
 _BUILDER_RECIPE = _descriptor.Descriptor(
@@ -275,8 +276,45 @@ _BUILDER_RECIPE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1147,
-  serialized_end=1261,
+  serialized_start=1257,
+  serialized_end=1371,
+)
+
+_BUILDER_RESULTDB = _descriptor.Descriptor(
+  name='ResultDB',
+  full_name='buildbucket.Builder.ResultDB',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='enable', full_name='buildbucket.Builder.ResultDB.enable', index=0,
+      number=1, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='bq_exports', full_name='buildbucket.Builder.ResultDB.bq_exports', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1373,
+  serialized_end=1457,
 )
 
 _BUILDER = _descriptor.Descriptor(
@@ -426,10 +464,17 @@ _BUILDER = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='resultdb', full_name='buildbucket.Builder.resultdb', index=20,
+      number=26, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
-  nested_types=[_BUILDER_CACHEENTRY, _BUILDER_RECIPE, ],
+  nested_types=[_BUILDER_CACHEENTRY, _BUILDER_RECIPE, _BUILDER_RESULTDB, ],
   enum_types=[
   ],
   serialized_options=None,
@@ -438,8 +483,8 @@ _BUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=391,
-  serialized_end=1285,
+  serialized_start=452,
+  serialized_end=1481,
 )
 
 
@@ -497,8 +542,8 @@ _SWARMING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1288,
-  serialized_end=1495,
+  serialized_start=1484,
+  serialized_end=1691,
 )
 
 
@@ -549,8 +594,8 @@ _BUCKET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1497,
-  serialized_end=1610,
+  serialized_start=1693,
+  serialized_end=1806,
 )
 
 
@@ -594,8 +639,8 @@ _BUILDBUCKETCFG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1613,
-  serialized_end=1752,
+  serialized_start=1809,
+  serialized_end=1948,
 )
 
 _ACL.fields_by_name['role'].enum_type = _ACL_ROLE
@@ -603,6 +648,8 @@ _ACL_ROLE.containing_type = _ACL
 _ACLSET.fields_by_name['acls'].message_type = _ACL
 _BUILDER_CACHEENTRY.containing_type = _BUILDER
 _BUILDER_RECIPE.containing_type = _BUILDER
+_BUILDER_RESULTDB.fields_by_name['bq_exports'].message_type = go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_rpc_dot_v1_dot_invocation__pb2._BIGQUERYEXPORT
+_BUILDER_RESULTDB.containing_type = _BUILDER
 _BUILDER.fields_by_name['recipe'].message_type = _BUILDER_RECIPE
 _BUILDER.fields_by_name['exe'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2._EXECUTABLE
 _BUILDER.fields_by_name['caches'].message_type = _BUILDER_CACHEENTRY
@@ -611,6 +658,7 @@ _BUILDER.fields_by_name['auto_builder_dimension'].enum_type = _TOGGLE
 _BUILDER.fields_by_name['experimental'].enum_type = _TOGGLE
 _BUILDER.fields_by_name['task_template_canary_percentage'].message_type = google_dot_protobuf_dot_wrappers__pb2._UINT32VALUE
 _BUILDER.fields_by_name['critical'].enum_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2._TRINARY
+_BUILDER.fields_by_name['resultdb'].message_type = _BUILDER_RESULTDB
 _SWARMING.fields_by_name['builder_defaults'].message_type = _BUILDER
 _SWARMING.fields_by_name['builders'].message_type = _BUILDER
 _SWARMING.fields_by_name['task_template_canary_percentage'].message_type = google_dot_protobuf_dot_wrappers__pb2._UINT32VALUE
@@ -657,6 +705,13 @@ Builder = _reflection.GeneratedProtocolMessageType('Builder', (_message.Message,
     # @@protoc_insertion_point(class_scope:buildbucket.Builder.Recipe)
     ))
   ,
+
+  ResultDB = _reflection.GeneratedProtocolMessageType('ResultDB', (_message.Message,), dict(
+    DESCRIPTOR = _BUILDER_RESULTDB,
+    __module__ = 'go.chromium.org.luci.buildbucket.proto.project_config_pb2'
+    # @@protoc_insertion_point(class_scope:buildbucket.Builder.ResultDB)
+    ))
+  ,
   DESCRIPTOR = _BUILDER,
   __module__ = 'go.chromium.org.luci.buildbucket.proto.project_config_pb2'
   # @@protoc_insertion_point(class_scope:buildbucket.Builder)
@@ -664,6 +719,7 @@ Builder = _reflection.GeneratedProtocolMessageType('Builder', (_message.Message,
 _sym_db.RegisterMessage(Builder)
 _sym_db.RegisterMessage(Builder.CacheEntry)
 _sym_db.RegisterMessage(Builder.Recipe)
+_sym_db.RegisterMessage(Builder.ResultDB)
 
 Swarming = _reflection.GeneratedProtocolMessageType('Swarming', (_message.Message,), dict(
   DESCRIPTOR = _SWARMING,
