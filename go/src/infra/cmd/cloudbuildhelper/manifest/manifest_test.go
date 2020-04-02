@@ -89,7 +89,7 @@ func TestManifest(t *testing.T) {
 		So(err, ShouldErrLike, "bad build step #1: ambiguous")
 	})
 
-	Convey("Defaults in CopyBuildStep", t, func() {
+	Convey("CopyBuildStep", t, func() {
 		m, err := load(`{"name": "zzz", "contextdir": "ctx", "build": [
 				{"copy": "${manifestdir}/../../../blarg/zzz"}
 			]}`, "root/1/2/3/4")
@@ -101,11 +101,10 @@ func TestManifest(t *testing.T) {
 		})
 	})
 
-	Convey("Defaults in GoBuildStep", t, func() {
+	Convey("GoBuildStep", t, func() {
 		m, err := load(`{"name": "zzz", "contextdir": "ctx", "build": [
 				{"go_binary": "go.pkg/some/tool"}
 			]}`, "root/1/2/3/4")
-		So(err, ShouldBeNil)
 		So(err, ShouldBeNil)
 		So(m.Build, ShouldHaveLength, 1)
 		So(m.Build[0].Dest, ShouldEqual, filepath.FromSlash("root/1/2/3/4/ctx/tool"))
@@ -114,17 +113,28 @@ func TestManifest(t *testing.T) {
 		})
 	})
 
-	Convey("Defaults in RunBuildStep", t, func() {
+	Convey("RunBuildStep", t, func() {
 		m, err := load(`{"name": "zzz", "contextdir": "ctx", "build": [
 				{"run": ["a", "b"]}
 			]}`, "root/1/2/3/4")
-		So(err, ShouldBeNil)
 		So(err, ShouldBeNil)
 		So(m.Build, ShouldHaveLength, 1)
 		So(m.Build[0].Concrete(), ShouldResemble, &RunBuildStep{
 			Run: []string{"a", "b"},
 			Cwd: filepath.FromSlash("root/1/2/3/4/ctx"),
 		})
+	})
+
+	Convey("GoGAEBundleBuildStep", t, func() {
+		m, err := load(`{"name": "zzz", "contextdir": "ctx", "inputsdir": "in", "build": [
+				{"go_gae_bundle": "${inputsdir}/pkg", "dest": "${contextdir}/pkg"}
+			]}`, "root/1/2/3/4")
+		So(err, ShouldBeNil)
+		So(m.Build, ShouldHaveLength, 1)
+		So(m.Build[0].Concrete(), ShouldResemble, &GoGAEBundleBuildStep{
+			GoGAEBundle: filepath.FromSlash("root/1/2/3/4/in/pkg"),
+		})
+		So(m.Build[0].Dest, ShouldEqual, filepath.FromSlash("root/1/2/3/4/ctx/pkg"))
 	})
 
 	Convey("Good infra", t, func() {
@@ -219,6 +229,7 @@ func TestExtends(t *testing.T) {
 				Extends:    "mid.yaml",
 				Dockerfile: "dockerfile",
 				ContextDir: "context-dir",
+				InputsDir:  "inputs-dir",
 				Infra: map[string]Infra{
 					"mid": { // partial override
 						Registry: "leaf-registry",
@@ -246,6 +257,7 @@ func TestExtends(t *testing.T) {
 				ManifestDir:   abs("deeper"),
 				Dockerfile:    abs("deeper/dockerfile"),
 				ContextDir:    abs("deeper/context-dir"),
+				InputsDir:     abs("deeper/inputs-dir"),
 				ImagePins:     abs("pins.yaml"),
 				Deterministic: &falseVal,
 				Infra: map[string]Infra{
@@ -305,28 +317,28 @@ func TestRenderPath(t *testing.T) {
 	t.Parallel()
 
 	Convey("Works", t, func() {
-		out, err := renderPath("${a}", map[string]string{"a": "zzz"})
+		out, err := renderPath("var", "${a}", map[string]string{"a": "zzz"})
 		So(err, ShouldBeNil)
 		So(out, ShouldEqual, "zzz")
 
-		out, err = renderPath("${a}/", map[string]string{"a": "zzz"})
+		out, err = renderPath("var", "${a}/", map[string]string{"a": "zzz"})
 		So(err, ShouldBeNil)
 		So(out, ShouldEqual, "zzz")
 
-		out, err = renderPath("${a}/.", map[string]string{"a": "zzz"})
+		out, err = renderPath("var", "${a}/.", map[string]string{"a": "zzz"})
 		So(err, ShouldBeNil)
 		So(out, ShouldEqual, "zzz")
 
-		out, err = renderPath("${a}/b/c", map[string]string{"a": "zzz"})
+		out, err = renderPath("var", "${a}/b/c", map[string]string{"a": "zzz"})
 		So(err, ShouldBeNil)
 		So(out, ShouldEqual, filepath.FromSlash("zzz/b/c"))
 	})
 
 	Convey("Errors", t, func() {
-		_, err := renderPath(".", map[string]string{"a": "zzz", "b": "yyy"})
+		_, err := renderPath("var", ".", map[string]string{"a": "zzz", "b": "yyy"})
 		So(err, ShouldErrLike, "must start with ${a} or ${b}")
 
-		_, err = renderPath("${c}", map[string]string{"a": "zzz", "b": "yyy"})
+		_, err = renderPath("var", "${c}", map[string]string{"a": "zzz", "b": "yyy"})
 		So(err, ShouldErrLike, "unknown dir variable ${c}, expecting ${a} or ${b}")
 	})
 }

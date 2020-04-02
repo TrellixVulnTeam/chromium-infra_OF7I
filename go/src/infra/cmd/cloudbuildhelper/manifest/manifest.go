@@ -209,7 +209,7 @@ type BuildStep struct {
 
 	// Dest specifies a location to put the result into.
 	//
-	// Applies to `copy` and `go_build` steps.
+	// Applies to `copy`, `go_build` and `go_gae_bundle` steps.
 	//
 	// Usually prefixed with "${contextdir}/" to indicate it is relative to
 	// the context directory.
@@ -223,13 +223,14 @@ type BuildStep struct {
 	// To add a new step kind:
 	//   1. Add a new embedded struct here with definition of the step.
 	//   2. Add methods to implement ConcreteBuildStep.
-	//   3. Add one more 'if' to initAndSetDefaults(...) below.
+	//   3. Add one more entry to a slice in wireStep(...) below.
 	//   4. Add the actual step implementation to builder/step*.go.
 	//   5. Add one more type switch to Builder.Build() in builder/builder.go.
 
-	CopyBuildStep `yaml:",inline"` // copy a file or directory into the output
-	GoBuildStep   `yaml:",inline"` // build go binary using "go build"
-	RunBuildStep  `yaml:",inline"` // run a command that modifies the checkout
+	CopyBuildStep        `yaml:",inline"` // copy a file or directory into the output
+	GoBuildStep          `yaml:",inline"` // build go binary using "go build"
+	RunBuildStep         `yaml:",inline"` // run a command that modifies the checkout
+	GoGAEBundleBuildStep `yaml:",inline"` // bundle Go source code for GAE
 
 	manifest *Manifest         // the manifest that defined this step
 	index    int               // zero-based index of the step in its parent manifest
@@ -268,14 +269,14 @@ func (s *CopyBuildStep) String() string { return fmt.Sprintf("copy %q", s.Copy) 
 func (s *CopyBuildStep) isEmpty() bool { return s.Copy == "" }
 
 func (s *CopyBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error) {
-	if s.Copy, err = renderPath(s.Copy, dirs); err != nil {
-		return errors.Annotate(err, "bad `copy` value").Err()
+	if s.Copy, err = renderPath("copy", s.Copy, dirs); err != nil {
+		return err
 	}
 	if bs.Dest == "" {
 		bs.Dest = "${contextdir}/" + filepath.Base(s.Copy)
 	}
-	if bs.Dest, err = renderPath(bs.Dest, dirs); err != nil {
-		return errors.Annotate(err, "bad `dest` value").Err()
+	if bs.Dest, err = renderPath("dest", bs.Dest, dirs); err != nil {
+		return err
 	}
 	return
 }
@@ -305,7 +306,7 @@ func (s *GoBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error
 	if bs.Dest == "" {
 		bs.Dest = "${contextdir}/" + path.Base(s.GoBinary)
 	}
-	bs.Dest, err = renderPath(bs.Dest, dirs)
+	bs.Dest, err = renderPath("dest", bs.Dest, dirs)
 	return
 }
 
@@ -350,14 +351,14 @@ func (s *RunBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err erro
 
 	for i, val := range s.Run {
 		if isTemplatedPath(val) {
-			rel, err := renderPath(val, dirs)
+			rel, err := renderPath(fmt.Sprintf("run[%d]", i), val, dirs)
 			if err != nil {
-				return errors.Annotate(err, "bad `run` argument #%d", i+1).Err()
+				return err
 			}
 			// We are going to pass these arguments to a command with different cwd,
 			// need to make sure they are absolute.
 			if s.Run[i], err = filepath.Abs(rel); err != nil {
-				return errors.Annotate(err, "bad `run` argument #%d %q", i+1, rel).Err()
+				return errors.Annotate(err, "bad `run[%d]` %q", i, rel).Err()
 			}
 		}
 	}
@@ -365,16 +366,43 @@ func (s *RunBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err erro
 	if s.Cwd == "" {
 		s.Cwd = "${contextdir}"
 	}
-	if s.Cwd, err = renderPath(s.Cwd, dirs); err != nil {
-		return errors.Annotate(err, "bad `cwd` value").Err()
+	if s.Cwd, err = renderPath("cwd", s.Cwd, dirs); err != nil {
+		return err
 	}
 
 	for i, out := range s.Outputs {
-		if s.Outputs[i], err = renderPath(out, dirs); err != nil {
-			return errors.Annotate(err, "bad `output` value #%d", i+1).Err()
+		if s.Outputs[i], err = renderPath(fmt.Sprintf("output[%d]", i), out, dirs); err != nil {
+			return err
 		}
 	}
 
+	return
+}
+
+// GoGAEBundleBuildStep can be used to prepare a tarball with Go GAE app source.
+//
+// Given an input directory that points to some `main` go package, it:
+//   * Non-recursively copies *.go files there to `Dest`.
+//   * Recursively copies all other files there to `Dest`.
+//   * Copies all *.go code with transitive dependencies to `_gopath/src/`.
+//   * Puts the import path of the package into `Dest/.gaedeploy.json`.
+//
+// This ensures "gcloud app deploy" eventually can upload all *.go files needed
+// to deploy a module.
+type GoGAEBundleBuildStep struct {
+	// GoGAEBundle is path to some 'main' go package to bundle.
+	GoGAEBundle string `yaml:"go_gae_bundle,omitempty"`
+}
+
+func (s *GoGAEBundleBuildStep) String() string { return fmt.Sprintf("go gae bundle %q", s.GoGAEBundle) }
+
+func (s *GoGAEBundleBuildStep) isEmpty() bool { return s.GoGAEBundle == "" }
+
+func (s *GoGAEBundleBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error) {
+	if s.GoGAEBundle, err = renderPath("go_gae_bundle", s.GoGAEBundle, dirs); err != nil {
+		return
+	}
+	bs.Dest, err = renderPath("dest", bs.Dest, dirs)
 	return
 }
 
@@ -553,7 +581,12 @@ func validateInfra(i Infra) error {
 // Doesn't touch any other fields.
 func wireStep(bs *BuildStep, m *Manifest, index int) error {
 	set := make([]ConcreteBuildStep, 0, 1)
-	for _, s := range []ConcreteBuildStep{&bs.CopyBuildStep, &bs.GoBuildStep, &bs.RunBuildStep} {
+	for _, s := range []ConcreteBuildStep{
+		&bs.CopyBuildStep,
+		&bs.GoBuildStep,
+		&bs.RunBuildStep,
+		&bs.GoGAEBundleBuildStep,
+	} {
 		if !s.isEmpty() {
 			set = append(set, s)
 		}
@@ -589,9 +622,9 @@ func isTemplatedPath(p string) bool {
 
 // renderPath verifies `p` starts with "${<something>}[/]", replaces it with
 // dirs[<something>], and normalizes the result.
-func renderPath(p string, dirs map[string]string) (string, error) {
+func renderPath(title, p string, dirs map[string]string) (string, error) {
 	if p == "" {
-		return "", errors.Reason("must not be empty").Err()
+		return "", errors.Reason("bad `%s`: must not be empty", title).Err()
 	}
 
 	// Helper for error messages.
@@ -606,14 +639,14 @@ func renderPath(p string, dirs map[string]string) (string, error) {
 
 	parts := strings.SplitN(p, "/", 2)
 	if !strings.HasPrefix(parts[0], "${") || !strings.HasSuffix(parts[0], "}") {
-		return "", errors.Reason("must start with %s", keys()).Err()
+		return "", errors.Reason("bad `%s`: must start with %s", title, keys()).Err()
 	}
 
 	switch val, ok := dirs[strings.TrimSuffix(strings.TrimPrefix(parts[0], "${"), "}")]; {
 	case !ok:
-		return "", errors.Reason("unknown dir variable %s, expecting %s", parts[0], keys()).Err()
+		return "", errors.Reason("bad `%s`: unknown dir variable %s, expecting %s", title, parts[0], keys()).Err()
 	case val == "":
-		return "", errors.Reason("dir variable %s it not set", parts[0]).Err()
+		return "", errors.Reason("bad `%s`: dir variable %s it not set", title, parts[0]).Err()
 	case len(parts) == 1:
 		return val, nil
 	default:
