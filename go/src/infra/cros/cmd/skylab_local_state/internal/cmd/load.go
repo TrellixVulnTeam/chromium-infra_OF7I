@@ -25,6 +25,7 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 )
 
 // Load subcommand: Gather DUT labels and attributes into a host info file.
@@ -135,6 +136,10 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 	response := skylab_local_state.LoadResponse{
 		ProvisionableLabels: dutState.ProvisionableLabels,
 		ResultsDir:          resultsDir,
+		AsyncResults: &skylab_test_runner.AsyncResults{
+			GsUrl:   location.GSURL(request.RunId),
+			LogsUrl: location.LogsURL(request.RunId),
+		},
 	}
 
 	return writeJSONPb(c.outputPath, &response)
