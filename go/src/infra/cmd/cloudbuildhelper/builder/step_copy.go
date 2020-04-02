@@ -10,5 +10,5 @@ import (
 
 // runCopyBuildStep executes manifest.CopyBuildStep.
 func runCopyBuildStep(ctx context.Context, inv *stepRunnerInv) error {
-	return inv.addToOutput(ctx, inv.BuildStep.CopyBuildStep.Copy, inv.BuildStep.Dest)
+	return inv.addFilesToOutput(ctx, inv.BuildStep.CopyBuildStep.Copy, inv.BuildStep.Dest, nil)
 }

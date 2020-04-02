@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
@@ -76,6 +77,8 @@ func (b *Builder) Build(ctx context.Context, m *manifest.Manifest) (*fileset.Set
 		}
 	}
 
+	state := builderState{}
+
 	for idx, bs := range m.Build {
 		concrete := bs.Concrete()
 		logging.Debugf(ctx, "Executing local build step #%d - %s", idx+1, concrete)
@@ -88,11 +91,14 @@ func (b *Builder) Build(ctx context.Context, m *manifest.Manifest) (*fileset.Set
 			runner = runGoBuildStep
 		case *manifest.RunBuildStep:
 			runner = runRunBuildStep
+		case *manifest.GoGAEBundleBuildStep:
+			runner = runGoGAEBundleBuildStep
 		default:
 			panic("impossible, did you forget to implement a step?")
 		}
 
 		err := runner(ctx, &stepRunnerInv{
+			State:      &state,
 			Manifest:   m,
 			BuildStep:  bs,
 			Output:     out,
@@ -112,6 +118,7 @@ type stepRunner func(ctx context.Context, inv *stepRunnerInv) error
 
 // stepRunnerInv is a bundle of parameters for a stepRunner invocation.
 type stepRunnerInv struct {
+	State      *builderState       // a state is carried over between steps
 	Manifest   *manifest.Manifest  // fully populated target manifest
 	BuildStep  *manifest.BuildStep // build step we are executing
 	Output     *fileset.Set        // where to put output files
@@ -119,10 +126,18 @@ type stepRunnerInv struct {
 	TempSuffix string              // unique per-step suffix, to name temp files
 }
 
-// addToOutput adds `src` (which is an existing file or directory on disk) to
-// the output set as filepath.Rel(contextDir, dst), failing if the result is
+// builderState is carried over between steps.
+//
+// They can mutate it if they want.
+type builderState struct {
+	goStdlib stringset.Set // names of stdlib packaged discovered in GOROOT
+	goDeps   stringset.Set // import paths of packages copied to the _gopath already
+}
+
+// addFilesToOutput adds `src` (which is an existing file or directory on disk)
+// to the output set as filepath.Rel(contextDir, dst), failing if the result is
 // outside of the context dir.
-func (inv *stepRunnerInv) addToOutput(ctx context.Context, src, dst string) error {
+func (inv *stepRunnerInv) addFilesToOutput(ctx context.Context, src, dst string, exclude fileset.Excluder) error {
 	rel, err := filepath.Rel(inv.Manifest.ContextDir, dst)
 	if err != nil {
 		return err
@@ -131,5 +146,20 @@ func (inv *stepRunnerInv) addToOutput(ctx context.Context, src, dst string) erro
 	if strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return errors.Reason("the destination should be under the context directory, got %q", rel).Err()
 	}
-	return inv.Output.AddFromDisk(src, rel, nil)
+	return inv.Output.AddFromDisk(src, rel, exclude)
+}
+
+// addBlobToOutput adds a non-executable regular file to the output set as
+// filepath.Rel(contextDir, dst), failing if the result is outside of the
+// context dir.
+func (inv *stepRunnerInv) addBlobToOutput(ctx context.Context, dst string, blob []byte) error {
+	rel, err := filepath.Rel(inv.Manifest.ContextDir, dst)
+	if err != nil {
+		return err
+	}
+	logging.Infof(ctx, "Writing ${contextdir}/%s", rel)
+	if strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return errors.Reason("the destination should be under the context directory, got %q", rel).Err()
+	}
+	return inv.Output.AddFromMemory(rel, blob, nil)
 }

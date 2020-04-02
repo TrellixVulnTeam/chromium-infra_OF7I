@@ -1,0 +1,7 @@
+name: "testing"
+
+inputsdir: .
+
+build:
+  - go_gae_bundle: ${inputsdir}/helloworld
+    dest: ${contextdir}/helloworld

@@ -109,5 +109,49 @@ func TestBuilder(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(string(blob), ShouldEqual, "overridden")
 		})
+
+		Convey("Go GAE bundling", func() {
+			m, err := manifest.Load(filepath.FromSlash("testing/gaebundle.yaml"))
+			So(err, ShouldBeNil)
+			m.ContextDir = tmpDir
+			So(m.RenderSteps(), ShouldBeNil)
+
+			out, err := b.Build(ctx, m)
+			So(err, ShouldBeNil)
+
+			files := make([]string, 0, out.Len())
+			byName := make(map[string]fileset.File, out.Len())
+			for _, f := range out.Files() {
+				if !f.Directory {
+					files = append(files, f.Path)
+					byName[f.Path] = f
+				}
+			}
+			So(files, ShouldResemble, []string{
+				"_gopath/env",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/pkg1/pkg1.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/pkg2/pkg2.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/vendor/example.com/another/another.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/vendor/example.com/pkg/pkg.go",
+				"helloworld/.gaedeploy.json",
+				"helloworld/anotherpkg.go",
+				"helloworld/buildflags_amd64.go",
+				"helloworld/buildflags_linux.go",
+				"helloworld/main.go",
+				"helloworld/static.txt",
+				"helloworld/static/static.txt",
+				"helloworld/vendor.go",
+			})
+
+			r, err := byName["helloworld/.gaedeploy.json"].Body()
+			So(err, ShouldBeNil)
+			blob, err := ioutil.ReadAll(r)
+			So(err, ShouldBeNil)
+			So(string(blob), ShouldEqual, `{
+  "go": {
+    "import_path": "infra/cmd/cloudbuildhelper/builder/testing/helloworld"
+  }
+}`)
+		})
 	})
 }

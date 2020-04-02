@@ -26,7 +26,7 @@ func runRunBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 
 	// "Pick up" newly generated files in the context directory.
 	for _, out := range inv.BuildStep.Outputs {
-		if err := inv.addToOutput(ctx, out, out); err != nil {
+		if err := inv.addFilesToOutput(ctx, out, out, nil); err != nil {
 			return err
 		}
 	}
