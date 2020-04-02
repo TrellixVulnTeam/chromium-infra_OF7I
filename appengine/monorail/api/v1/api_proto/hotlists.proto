@@ -23,29 +23,20 @@ service Hotlists {
   //   NOT_FOUND if the requested hotlist is not found.
   //   PERMISSION_DENIED if the requester is now allowed to view the hotlist.
   //   INVALID_ARGUMENT if the given resource name is not valid.
-  rpc GetHotlist (GetHotlistRequest) returns (Hotlist) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Hotlists/GetHotlist"
-      body: "*"
-    };
-  }
+  rpc GetHotlist (GetHotlistRequest) returns (Hotlist) {}
   // Updates a hotlist.
   //
-  // TODO(crbug/monorail/6988): Document possible errors when implemented.
-  rpc UpdateHotlist (UpdateHotlistRequest) returns (Hotlist) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Hotlists/UpdateHotlist"
-      body: "*"
-    };
-  }
+  // Raises:
+  //   NOT_FOUND if the hotlist is not found.
+  //   PERMISSION_DENIED if the requester is not allowed to update the hotlist.
+  //   INVALID_ARGUMENT if required fields are missing.
+  rpc UpdateHotlist (UpdateHotlistRequest) returns (Hotlist) {}
   // Deletes a hotlist.
   //
-  rpc DeleteHotlist (GetHotlistRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Hotlists/DeleteHotlist"
-      body: "*"
-    };
-  }
+  // Raises:
+  //   NOT_FOUND if the hotlist is not found.
+  //   PERMISSION_DENIED if the requester is not allowed to delete the hotlist.
+  rpc DeleteHotlist (GetHotlistRequest) returns (google.protobuf.Empty) {}
   // Returns a list of all HotlistItems in the hotlist.
   //
   // Raises:
@@ -53,34 +44,41 @@ service Hotlists {
   //   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
   //   INVALID_ARGUMENT if the page_token or given hotlist resource name is not
   //   valid.
-  rpc ListHotlistItems (ListHotlistItemsRequest) returns (ListHotlistItemsResponse) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Hotlists/ListHotlistItems"
-      body: "*"
-    };
-  }
+  rpc ListHotlistItems (ListHotlistItemsRequest) returns (ListHotlistItemsResponse) {}
   // Reranks a hotlist's items.
   //
   // Raises:
-  //   NOT_FOUND if the hotlist to rerank is not found.
-  //   PERMISSION_DENIED if the requester is not allowed to rerank the hotlist.
+  //   NOT_FOUND if the hotlist or issues to rerank are not found.
+  //   PERMISSION_DENIED if the requester is not allowed to rerank the hotlist
+  //   or view issues they're trying to rerank.
   //   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
   //   is empty or contains items not in the Hotlist.
-  rpc RerankHotlistItems (RerankHotlistItemsRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Hotlists/RerankHotlistItems"
-      body: "*"
-    };
-  }
+  rpc RerankHotlistItems (RerankHotlistItemsRequest) returns (google.protobuf.Empty) {}
   // Adds new items associated with given issues to a hotlist.
   //
-  // TODO(crbug/monorail/7104): Document possible errors when implemented.
+  // Raises:
+  //   NOT_FOUND if the parent hotlist or issues are not found.
+  //   PERMISSION_DENIED if the requester is not allowed to edit the hotlist or
+  //   view issues they are trying to add.
+  //   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
+  //   is empty or contains items not in the Hotlist.
   rpc AddHotlistItems (AddHotlistItemsRequest) returns (google.protobuf.Empty) {}
   // Removes items associated with given issues from a hotlist.
   //
-  // TODO(crbug/monorali:7104): Document possible errors when implemented.
+  // Raises:
+  //   NOT_FOUND if the parent hotlist or issues are not found.
+  //   PERMISSION_DENIED if the requester is not allowed to edit the hotlist or
+  //   view issues they are trying to remove.
+  //   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
+  //   is empty or contains items not in the Hotlist.
   rpc RemoveHotlistItems (RemoveHotlistItemsRequest) returns (google.protobuf.Empty) {}
   // Removes editors assigned to a hotlist.
+  //
+  // Raises:
+  //   NOT_FOUND if the hotlist is not found.
+  //   PERMISSION_DENIED if the requester is not allowed to remove all specified
+  //   editors from the hotlist.
+  //   INVALID_ARGUMENT if any specified editors are not in the hotlist.
   rpc RemoveHotlistEditors (RemoveHotlistEditorsRequest) returns (google.protobuf.Empty) {}
 }
 
