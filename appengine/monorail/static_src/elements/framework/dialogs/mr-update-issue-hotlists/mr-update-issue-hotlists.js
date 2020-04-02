@@ -11,6 +11,12 @@ import * as userV0 from 'reducers/userV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
+/**
+ * `<mr-update-issue-hotlists>`
+ *
+ * Displays a dialog with the current hotlists's issues allowing the user to
+ * update which hotlists the issues are a member of.
+ */
 export class MrUpdateIssueHotlists extends connectStore(LitElement) {
   /** @override */
   static get styles() {
@@ -153,29 +159,46 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
   constructor() {
     super();
 
+    /** @type {Array<IssueRef>} */
     this.issueRefs = [];
     this.issueHotlists = [];
     this.userHotlists = [];
   }
 
+  /**
+   * Opens the dialog.
+   */
   open() {
     this.reset();
     this.shadowRoot.querySelector('chops-dialog').open();
   }
 
+  /**
+   * Resets any changes to the form and error.
+   */
   reset() {
     this.shadowRoot.querySelector('#issueHotlistsForm').reset();
     this.error = '';
   }
 
+  /**
+   * An alias to the close method.
+   */
   discard() {
     this.close();
   }
 
+  /**
+   * Closes the dialog.
+   */
   close() {
     this.shadowRoot.querySelector('chops-dialog').close();
   }
 
+  /**
+   * Saves all changes that were found in the dialog and issues async requests
+   * to update the issues.
+   */
   async save() {
     const changes = this.changes;
     const issueRefs = this.issueRefs;
@@ -230,6 +253,12 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Returns whether a given hotlist matches any of the given issue's hotlists.
+   * @param {Hotlist} hotlist Hotlist to look for.
+   * @param {Array<Hotlist>} issueHotlists Issue's hotlists to compare to.
+   * @return {boolean}
+   */
   _issueInHotlist(hotlist, issueHotlists) {
     return issueHotlists.some((issueHotlist) => {
       // TODO(dtu): Use `===` when we can guarantee userId is always a number.
@@ -238,18 +267,36 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
     });
   }
 
+  /**
+   * Gets the checkbox title, depending on the checked state.
+   * @param {boolean} isChecked Whether the input is checked.
+   * @return {string}
+   */
   _getCheckboxTitle(isChecked) {
     return (isChecked ? 'Remove issue from' : 'Add issue to') + ' this hotlist';
   }
 
+  /**
+   * The checkbox title for the issue, shown on hover and for a11y.
+   * @param {Hotlist} hotlist Hotlist to look for.
+   * @param {Array<Hotlist>} issueHotlists Issue's hotlists to compare to.
+   * @return {string}
+   */
   _checkboxTitle(hotlist, issueHotlists) {
     return this._getCheckboxTitle(this._issueInHotlist(hotlist, issueHotlists));
   }
 
+  /**
+   * Updates the checkbox title once the input has been checked.
+   * @param {Event} e
+   */
   _updateCheckboxTitle(e) {
     e.target.title = this._getCheckboxTitle(e.target.checked);
   }
 
+  /**
+   * Gets the changes between the added, removed, and created hotlists .
+   */
   get changes() {
     const changes = {
       added: [],

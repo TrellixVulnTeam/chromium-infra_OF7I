@@ -7,7 +7,7 @@ import {defaultMemoize} from 'reselect';
 
 import {relativeTime}
   from 'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
-import {issueRefToName, userV3ToRef} from 'shared/converters.js';
+import {issueNameToRef, issueToName, userV3ToRef} from 'shared/converters.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 import {store, connectStore} from 'reducers/base.js';
@@ -108,7 +108,7 @@ export class _MrHotlistIssuesPage extends LitElement {
 
       <mr-change-columns .columns=${this._columns}></mr-change-columns>
       <mr-update-issue-hotlists
-        .issueRefs=${this._selected}
+        .issueRefs=${this._selected.map(issueNameToRef)}
         .issueHotlists=${[hotlistV0]}
       ></mr-update-issue-hotlists>
     `;
@@ -175,7 +175,12 @@ export class _MrHotlistIssuesPage extends LitElement {
 
     /** @type {Object<string, boolean>} */
     this._filter = {Open: true};
-    /** @type {Array<string>} */
+
+    /**
+     * An array of selected Issue Names.
+     * TODO(https://crbug.com/monorail/7440): Update typedef.
+     * @type {Array<string>}
+     */
     this._selected = [];
   }
 
@@ -208,7 +213,7 @@ export class _MrHotlistIssuesPage extends LitElement {
    * @param {CustomEvent} e A selectionChange event fired by <mr-issue-list>.
    */
   _onSelectionChange(e) {
-    this._selected = e.target.selectedIssues.map(issueRefToName);
+    this._selected = e.target.selectedIssues.map(issueToName);
   }
 
   /** Opens a dialog to change the columns shown in the issue list. */

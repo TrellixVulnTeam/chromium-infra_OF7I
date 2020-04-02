@@ -558,12 +558,12 @@ export function issueNameToRefString(name) {
 }
 
 /**
- * Converts an issue name in the v3 API to an IssueRef in the v0 API.
- * @param {IssueRef} ref An IssueRef.
+ * Converts an Issue to an Issue name.
+ * @param {Issue} issue An Issue Object from the pRPC API issue_objects.proto.
  * @return {string} The v3 Issue name, e.g. 'projects/proj-name/issues/123'
  */
-export function issueRefToName(ref) {
-  return `projects/${ref.projectName}/issues/${ref.localId}`;
+export function issueToName(issue) {
+  return `projects/${issue.projectName}/issues/${issue.localId}`;
 }
 
 /**
