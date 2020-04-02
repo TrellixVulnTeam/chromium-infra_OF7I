@@ -464,6 +464,8 @@ func TestRequestArguments(t *testing.T) {
 			So(launchArgs.ProvisionableDimensions, ShouldContain, "provisionable-fwro-version:foo-ro-firmware")
 			So(launchArgs.ProvisionableDimensions, ShouldContain, "provisionable-fwrw-version:foo-rw-firmware")
 
+			So(launchArgs.ProvisionableDimensionExpiration, ShouldEqual, time.Minute)
+
 			So(launchArgs.SchedulableLabels.GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_PVT)
 			So(launchArgs.SchedulableLabels.GetModel(), ShouldEqual, "foo-model")
 			So(launchArgs.SchedulableLabels.GetBoard(), ShouldEqual, "foo-board")

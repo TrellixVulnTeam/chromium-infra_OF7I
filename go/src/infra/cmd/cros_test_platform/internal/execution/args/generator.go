@@ -106,6 +106,14 @@ func (g *Generator) getUnsupportedDependencies() []string {
 	return unsupported.ToSlice()
 }
 
+// The interval of time during which Swarming will attempt to find a
+// bot matching optional (i.e. provisionable) dimensions. After the
+// expiration time Swarming will only use required dimensions for
+// finding the bot.
+// Has to be a multiple of a minute as per buildbucket requirements,
+// see infra/appengine/cr-buildbucket/validation.py
+const provisionableDimensionExpiration = time.Minute
+
 // GenerateArgs generates request.Args, combining all the inputs to
 // argsGenerator.
 func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
@@ -147,16 +155,17 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 	}
 
 	return request.Args{
-		Cmd:                     *cmd,
-		SchedulableLabels:       *labels,
-		Dimensions:              g.params.GetFreeformAttributes().GetSwarmingDimensions(),
-		ParentTaskID:            g.parentTaskID,
-		Priority:                g.params.GetScheduling().GetPriority(),
-		ProvisionableDimensions: provisionableDimensions,
-		StatusTopic:             g.params.GetNotification().GetPubsubTopic(),
-		SwarmingTags:            g.swarmingTags(cmd),
-		TestRunnerRequest:       trr,
-		Timeout:                 timeout,
+		Cmd:                              *cmd,
+		SchedulableLabels:                *labels,
+		Dimensions:                       g.params.GetFreeformAttributes().GetSwarmingDimensions(),
+		ParentTaskID:                     g.parentTaskID,
+		Priority:                         g.params.GetScheduling().GetPriority(),
+		ProvisionableDimensions:          provisionableDimensions,
+		ProvisionableDimensionExpiration: provisionableDimensionExpiration,
+		StatusTopic:                      g.params.GetNotification().GetPubsubTopic(),
+		SwarmingTags:                     g.swarmingTags(cmd),
+		TestRunnerRequest:                trr,
+		Timeout:                          timeout,
 	}, nil
 
 }
