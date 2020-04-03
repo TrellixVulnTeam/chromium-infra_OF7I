@@ -18,7 +18,7 @@ import "api/v1/api_proto/issue_objects.proto";
 //
 // See monorail/doc/userguide/concepts.md#Projects-and-roles.
 // and monorail/doc/userguide/project-owners.md#why-does-monorail-have-projects
-// Next available tag: 2
+// Next available tag: 5
 message Project {
   option (google.api.resource) = {
     type: "api.crbug.com/Project"
@@ -27,6 +27,12 @@ message Project {
 
   // Resource name of the project.
   string name = 1;
+  // Display name of the project.
+  string display_name = 2;
+  // Summary of the project, ie describing what its use and purpose.
+  string summary = 3;
+  // URL pointing to this project's logo image.
+  string thumbnail_url = 4;
 }
 
 // Potential steps along the development process that an issue can be in.
@@ -259,4 +265,51 @@ message IssueTemplate {
   // Names of Users who can administer this template.
   repeated string admins = 7 [
       (google.api.resource_reference) = { type: "api.crbug.com/User" }];
+}
+
+
+// Defines configurations of a project
+//
+// Next available tag: 12
+message ProjectConfig {
+  option (google.api.resource) = {
+    type: "api.crbug.com/ProjectConfig"
+    pattern: "projects/{project}/config"
+  };
+
+  // Resource name of the project config.
+  string name = 1;
+  // An issue may only have one label that begins with these prefixes
+  // E.g. priority, since no issue can be both Priority-High and Priority-Low.
+  repeated string exclusive_label_prefixes = 2;
+  // Statuses used to indicate an issues has been merged into another issue.
+  // E.g Duplicate
+  repeated string merged_statuses = 3 [
+      (google.api.resource_reference) = { type: "api.crbug.com/StatusDef" }];
+  // Default search query for this project, only visible for project members.
+  string default_query = 4;
+  // Default sort specification for this project.
+  string default_sort = 5;
+  // Default list columns for this project.
+  string default_col_spec = 6;
+  // Grid view configurations.
+  // Next available tag: 3
+  message GridViewConfig {
+    // Default column dimension in grid view for this project.
+    string default_x_attr = 1;
+    // Default row dimension in grid view for this project.
+    string default_y_attr = 2;
+  }
+  GridViewConfig project_grid_config = 7;
+  // Default template used for issue entry for members of this project.
+  string member_default_template = 8 [
+      (google.api.resource_reference) = { type: "api.crbug.com/Template" }];
+  // Default template used for issue entry for non-members of this project.
+  string non_members_default_template = 9 [
+      (google.api.resource_reference) = { type: "api.crbug.com/Template" }];
+  // URL to browse project's source code revisions for any given revnum.
+  // E.g. https://crrev.com/{revnum}
+  string revision_url_format = 10;
+  // A project's custom URL for the "New issue" link, only if specified.
+  string custom_issue_entry_url = 11;
 }

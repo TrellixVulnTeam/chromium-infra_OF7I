@@ -1,0 +1,52 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file or at
+// https://developers.google.com/open-source/licenses/bsd
+
+syntax = "proto3";
+
+package monorail.v1;
+
+import "google_proto/google/api/field_behavior.proto";
+import "google_proto/google/api/resource.proto";
+import "google_proto/google/api/annotations.proto";
+import "api/v1/api_proto/project_objects.proto";
+
+
+service MonorailSPA {
+  // Returns all project specific configurations needed for the SPA client.
+  rpc GatherProjectEnvironment (GatherProjectEnvironmentRequest) returns (GatherProjectEnvironmentResponse) {};
+}
+
+
+// Request message for GatherProjectEnvironment
+// Next available tag: 2
+message GatherProjectEnvironmentRequest {
+  // The name of the project these config environments belong to.
+  string parent = 1 [
+    (google.api.resource_reference) = {type: "api.crbug.com/Project"},
+    (google.api.field_behavior) = REQUIRED ];
+}
+
+
+// Response message for GatherProjectEnvironment
+// Next available tag: 9
+message GatherProjectEnvironmentResponse {
+  // Project definitions such as display_name and summary.
+  Project project = 1;
+  // Configurations of this project such as default search term,
+  // default templates for members and non members.
+  ProjectConfig project_config = 2;
+  // List of statuses that belong to this project.
+  repeated StatusDef statuses = 3;
+  // List of well known labels that belong to this project.
+  repeated LabelDef well_known_labels = 4;
+  // List of components that belong to this project.
+  repeated ComponentDef components = 5;
+  // List of custom fields that belong to this project.
+  repeated FieldDef fields = 6;
+  // List of approval fields that belong to this project.
+  repeated ApprovalDef approval_fields = 7;
+  // Saved search queries that admins defined for this project.
+  repeated ProjectSavedQuery saved_queries = 8;
+}
