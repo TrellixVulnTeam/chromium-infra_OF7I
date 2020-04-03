@@ -331,7 +331,9 @@ func init() {
 	proto.RegisterType((*Attributes)(nil), "chrome.chromeos_infra.skylab.proto.inventory.Attributes")
 }
 
-func init() { proto.RegisterFile("server.proto", fileDescriptor_ad098daeda4239f7) }
+func init() {
+	proto.RegisterFile("server.proto", fileDescriptor_ad098daeda4239f7)
+}
 
 var fileDescriptor_ad098daeda4239f7 = []byte{
 	// 629 bytes of a gzipped FileDescriptorProto

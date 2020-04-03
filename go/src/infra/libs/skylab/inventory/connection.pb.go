@@ -145,7 +145,9 @@ func init() {
 	proto.RegisterType((*ChameleonConnection)(nil), "chrome.chromeos_infra.skylab.proto.inventory.ChameleonConnection")
 }
 
-func init() { proto.RegisterFile("connection.proto", fileDescriptor_51baa40a1cc6b48b) }
+func init() {
+	proto.RegisterFile("connection.proto", fileDescriptor_51baa40a1cc6b48b)
+}
 
 var fileDescriptor_51baa40a1cc6b48b = []byte{
 	// 278 bytes of a gzipped FileDescriptorProto

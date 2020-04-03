@@ -627,7 +627,9 @@ func init() {
 	proto.RegisterType((*SavedQuery)(nil), "monorail.SavedQuery")
 }
 
-func init() { proto.RegisterFile("api/api_proto/common.proto", fileDescriptor_d57a37ef5e3928fa) }
+func init() {
+	proto.RegisterFile("api/api_proto/common.proto", fileDescriptor_d57a37ef5e3928fa)
+}
 
 var fileDescriptor_d57a37ef5e3928fa = []byte{
 	// 613 bytes of a gzipped FileDescriptorProto

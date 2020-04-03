@@ -267,7 +267,9 @@ func init() {
 	proto.RegisterType((*Payload)(nil), "chrome.chromeos_infra.cros.stableversion.Payload")
 }
 
-func init() { proto.RegisterFile("omaha_status.proto", fileDescriptor_5ad07a6d77818617) }
+func init() {
+	proto.RegisterFile("omaha_status.proto", fileDescriptor_5ad07a6d77818617)
+}
 
 var fileDescriptor_5ad07a6d77818617 = []byte{
 	// 386 bytes of a gzipped FileDescriptorProto

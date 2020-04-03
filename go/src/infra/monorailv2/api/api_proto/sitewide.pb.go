@@ -217,7 +217,9 @@ func init() {
 	proto.RegisterType((*GetServerStatusResponse)(nil), "monorail.GetServerStatusResponse")
 }
 
-func init() { proto.RegisterFile("api/api_proto/sitewide.proto", fileDescriptor_03599899b30de215) }
+func init() {
+	proto.RegisterFile("api/api_proto/sitewide.proto", fileDescriptor_03599899b30de215)
+}
 
 var fileDescriptor_03599899b30de215 = []byte{
 	// 312 bytes of a gzipped FileDescriptorProto

@@ -712,11 +712,11 @@ var fileDescriptor_b300fc02d5a04059 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // DroneClient is the client API for Drone service.
 //
@@ -758,10 +758,10 @@ func (c *dronePRPCClient) ReleaseDuts(ctx context.Context, in *ReleaseDutsReques
 }
 
 type droneClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewDroneClient(cc *grpc.ClientConn) DroneClient {
+func NewDroneClient(cc grpc.ClientConnInterface) DroneClient {
 	return &droneClient{cc}
 }
 
@@ -889,10 +889,10 @@ func (c *inventoryProviderPRPCClient) DeclareDuts(ctx context.Context, in *Decla
 }
 
 type inventoryProviderClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewInventoryProviderClient(cc *grpc.ClientConn) InventoryProviderClient {
+func NewInventoryProviderClient(cc grpc.ClientConnInterface) InventoryProviderClient {
 	return &inventoryProviderClient{cc}
 }
 
@@ -989,10 +989,10 @@ func (c *inspectPRPCClient) ListDuts(ctx context.Context, in *ListDutsRequest, o
 }
 
 type inspectClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewInspectClient(cc *grpc.ClientConn) InspectClient {
+func NewInspectClient(cc grpc.ClientConnInterface) InspectClient {
 	return &inspectClient{cc}
 }
 

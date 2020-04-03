@@ -142,7 +142,9 @@ func init() {
 	proto.RegisterType((*StableVersion)(nil), "chrome.chromeos_infra.skylab.proto.inventory.StableVersion")
 }
 
-func init() { proto.RegisterFile("stable_versions.proto", fileDescriptor_c3aed830256165b3) }
+func init() {
+	proto.RegisterFile("stable_versions.proto", fileDescriptor_c3aed830256165b3)
+}
 
 var fileDescriptor_c3aed830256165b3 = []byte{
 	// 240 bytes of a gzipped FileDescriptorProto

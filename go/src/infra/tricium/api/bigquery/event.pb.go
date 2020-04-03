@@ -51,11 +51,12 @@ func (FeedbackEvent_Type) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_eae2733f3e10ceaa, []int{0, 0}
 }
 
-// Event represents one event such as sending comments or a "not useful" click.
+// FeedbackEvent represents one event such as sending comments or a "not
+// useful" click.
 //
 // The purpose of recording these events is to be able to track the feedback on
-// comments -- for example, what's the proportion not useful clicks to comments
-// produced?
+// comments -- for example, what's the proportion "not useful" clicks to
+// comments produced for each analyzer or category?
 type FeedbackEvent struct {
 	// Type of event.
 	Type FeedbackEvent_Type `protobuf:"varint,1,opt,name=type,proto3,enum=apibq.FeedbackEvent_Type" json:"type,omitempty"`

@@ -264,11 +264,11 @@ var fileDescriptor_8a75e6f65dde3c8e = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // DriverClient is the client API for Driver service.
 //
@@ -306,10 +306,10 @@ func (c *driverPRPCClient) Collect(ctx context.Context, in *CollectRequest, opts
 }
 
 type driverClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewDriverClient(cc *grpc.ClientConn) DriverClient {
+func NewDriverClient(cc grpc.ClientConnInterface) DriverClient {
 	return &driverClient{cc}
 }
 

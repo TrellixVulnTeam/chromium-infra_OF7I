@@ -172,7 +172,9 @@ func init() {
 	proto.RegisterType((*ModelMetadata)(nil), "chrome.chromeos_infra.cros.stableversion.ModelMetadata")
 }
 
-func init() { proto.RegisterFile("build_metadata.proto", fileDescriptor_e996a034f19559e4) }
+func init() {
+	proto.RegisterFile("build_metadata.proto", fileDescriptor_e996a034f19559e4)
+}
 
 var fileDescriptor_e996a034f19559e4 = []byte{
 	// 329 bytes of a gzipped FileDescriptorProto

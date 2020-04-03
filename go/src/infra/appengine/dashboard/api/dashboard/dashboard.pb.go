@@ -816,11 +816,11 @@ var fileDescriptor_839856feabe4c5a4 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // ChopsServiceStatusClient is the client API for ChopsServiceStatus service.
 //
@@ -856,10 +856,10 @@ func (c *chopsServiceStatusPRPCClient) GetAllServicesData(ctx context.Context, i
 }
 
 type chopsServiceStatusClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewChopsServiceStatusClient(cc *grpc.ClientConn) ChopsServiceStatusClient {
+func NewChopsServiceStatusClient(cc grpc.ClientConnInterface) ChopsServiceStatusClient {
 	return &chopsServiceStatusClient{cc}
 }
 
@@ -999,10 +999,10 @@ func (c *chopsAnnouncementsPRPCClient) SearchAnnouncements(ctx context.Context, 
 }
 
 type chopsAnnouncementsClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewChopsAnnouncementsClient(cc *grpc.ClientConn) ChopsAnnouncementsClient {
+func NewChopsAnnouncementsClient(cc grpc.ClientConnInterface) ChopsAnnouncementsClient {
 	return &chopsAnnouncementsClient{cc}
 }
 

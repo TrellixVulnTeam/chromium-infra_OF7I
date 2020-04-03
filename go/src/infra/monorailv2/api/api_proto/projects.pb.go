@@ -1281,7 +1281,9 @@ func init() {
 	proto.RegisterType((*CheckFieldNameResponse)(nil), "monorail.CheckFieldNameResponse")
 }
 
-func init() { proto.RegisterFile("api/api_proto/projects.proto", fileDescriptor_29378f667bed90dc) }
+func init() {
+	proto.RegisterFile("api/api_proto/projects.proto", fileDescriptor_29378f667bed90dc)
+}
 
 var fileDescriptor_29378f667bed90dc = []byte{
 	// 1151 bytes of a gzipped FileDescriptorProto

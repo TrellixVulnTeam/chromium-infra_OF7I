@@ -1125,7 +1125,9 @@ func init() {
 	proto.RegisterType((*ExpungeUserResponse)(nil), "monorail.ExpungeUserResponse")
 }
 
-func init() { proto.RegisterFile("api/api_proto/users.proto", fileDescriptor_e517996dd141ad63) }
+func init() {
+	proto.RegisterFile("api/api_proto/users.proto", fileDescriptor_e517996dd141ad63)
+}
 
 var fileDescriptor_e517996dd141ad63 = []byte{
 	// 878 bytes of a gzipped FileDescriptorProto

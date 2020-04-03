@@ -1173,7 +1173,9 @@ func init() {
 	proto.RegisterType((*ReportNotUsefulResponse)(nil), "tricium.ReportNotUsefulResponse")
 }
 
-func init() { proto.RegisterFile("infra/tricium/api/v1/tricium.proto", fileDescriptor_2738dd491b254f26) }
+func init() {
+	proto.RegisterFile("infra/tricium/api/v1/tricium.proto", fileDescriptor_2738dd491b254f26)
+}
 
 var fileDescriptor_2738dd491b254f26 = []byte{
 	// 1110 bytes of a gzipped FileDescriptorProto
@@ -1251,11 +1253,11 @@ var fileDescriptor_2738dd491b254f26 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // TriciumClient is the client API for Tricium service.
 //
@@ -1348,10 +1350,10 @@ func (c *triciumPRPCClient) ReportNotUseful(ctx context.Context, in *ReportNotUs
 }
 
 type triciumClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewTriciumClient(cc *grpc.ClientConn) TriciumClient {
+func NewTriciumClient(cc grpc.ClientConnInterface) TriciumClient {
 	return &triciumClient{cc}
 }
 

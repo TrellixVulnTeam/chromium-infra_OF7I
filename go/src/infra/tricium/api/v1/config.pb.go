@@ -695,7 +695,9 @@ func init() {
 	proto.RegisterType((*Config)(nil), "tricium.Config")
 }
 
-func init() { proto.RegisterFile("infra/tricium/api/v1/config.proto", fileDescriptor_9a660f81c8b61665) }
+func init() {
+	proto.RegisterFile("infra/tricium/api/v1/config.proto", fileDescriptor_9a660f81c8b61665)
+}
 
 var fileDescriptor_9a660f81c8b61665 = []byte{
 	// 777 bytes of a gzipped FileDescriptorProto

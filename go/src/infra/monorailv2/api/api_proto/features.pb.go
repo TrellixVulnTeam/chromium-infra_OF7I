@@ -1429,7 +1429,9 @@ func init() {
 	proto.RegisterType((*PredictComponentResponse)(nil), "monorail.PredictComponentResponse")
 }
 
-func init() { proto.RegisterFile("api/api_proto/features.proto", fileDescriptor_25454cf49fe83cc0) }
+func init() {
+	proto.RegisterFile("api/api_proto/features.proto", fileDescriptor_25454cf49fe83cc0)
+}
 
 var fileDescriptor_25454cf49fe83cc0 = []byte{
 	// 1174 bytes of a gzipped FileDescriptorProto

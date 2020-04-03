@@ -14,62 +14,62 @@ type DecoratedChopsAnnouncements struct {
 	// Prelude is called for each method before forwarding the call to Service.
 	// If Prelude returns an error, then the call is skipped and the error is
 	// processed via the Postlude (if one is defined), or it is returned directly.
-	Prelude func(c context.Context, methodName string, req proto.Message) (context.Context, error)
+	Prelude func(ctx context.Context, methodName string, req proto.Message) (context.Context, error)
 	// Postlude is called for each method after Service has processed the call, or
 	// after the Prelude has returned an error. This takes the the Service's
 	// response proto (which may be nil) and/or any error. The decorated
 	// service will return the response (possibly mutated) and error that Postlude
 	// returns.
-	Postlude func(c context.Context, methodName string, rsp proto.Message, err error) error
+	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedChopsAnnouncements) CreateLiveAnnouncement(c context.Context, req *CreateLiveAnnouncementRequest) (rsp *CreateLiveAnnouncementResponse, err error) {
+func (s *DecoratedChopsAnnouncements) CreateLiveAnnouncement(ctx context.Context, req *CreateLiveAnnouncementRequest) (rsp *CreateLiveAnnouncementResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "CreateLiveAnnouncement", req)
+		newCtx, err = s.Prelude(ctx, "CreateLiveAnnouncement", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.CreateLiveAnnouncement(c, req)
+		rsp, err = s.Service.CreateLiveAnnouncement(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "CreateLiveAnnouncement", rsp, err)
+		err = s.Postlude(ctx, "CreateLiveAnnouncement", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedChopsAnnouncements) RetireAnnouncement(c context.Context, req *RetireAnnouncementRequest) (rsp *Announcement, err error) {
+func (s *DecoratedChopsAnnouncements) RetireAnnouncement(ctx context.Context, req *RetireAnnouncementRequest) (rsp *Announcement, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "RetireAnnouncement", req)
+		newCtx, err = s.Prelude(ctx, "RetireAnnouncement", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.RetireAnnouncement(c, req)
+		rsp, err = s.Service.RetireAnnouncement(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "RetireAnnouncement", rsp, err)
+		err = s.Postlude(ctx, "RetireAnnouncement", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedChopsAnnouncements) SearchAnnouncements(c context.Context, req *SearchAnnouncementsRequest) (rsp *SearchAnnouncementsResponse, err error) {
+func (s *DecoratedChopsAnnouncements) SearchAnnouncements(ctx context.Context, req *SearchAnnouncementsRequest) (rsp *SearchAnnouncementsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(c, "SearchAnnouncements", req)
+		newCtx, err = s.Prelude(ctx, "SearchAnnouncements", req)
 		if err == nil {
-			c = newCtx
+			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.SearchAnnouncements(c, req)
+		rsp, err = s.Service.SearchAnnouncements(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(c, "SearchAnnouncements", rsp, err)
+		err = s.Postlude(ctx, "SearchAnnouncements", rsp, err)
 	}
 	return
 }

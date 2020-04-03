@@ -305,7 +305,9 @@ func init() {
 	proto.RegisterType((*NinjaTask_LogEntry)(nil), "ninjaproto.NinjaTask.LogEntry")
 }
 
-func init() { proto.RegisterFile("ninjalog.proto", fileDescriptor_11621a7b7e2b33ea) }
+func init() {
+	proto.RegisterFile("ninjalog.proto", fileDescriptor_11621a7b7e2b33ea)
+}
 
 var fileDescriptor_11621a7b7e2b33ea = []byte{
 	// 511 bytes of a gzipped FileDescriptorProto

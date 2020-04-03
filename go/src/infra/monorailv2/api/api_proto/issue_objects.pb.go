@@ -1273,7 +1273,9 @@ func init() {
 	proto.RegisterType((*PhaseRef)(nil), "monorail.PhaseRef")
 }
 
-func init() { proto.RegisterFile("api/api_proto/issue_objects.proto", fileDescriptor_8ab61f0576fd6c44) }
+func init() {
+	proto.RegisterFile("api/api_proto/issue_objects.proto", fileDescriptor_8ab61f0576fd6c44)
+}
 
 var fileDescriptor_8ab61f0576fd6c44 = []byte{
 	// 1768 bytes of a gzipped FileDescriptorProto
