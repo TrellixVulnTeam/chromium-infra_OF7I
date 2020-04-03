@@ -29,8 +29,15 @@ type NewFunc func(context.Context, proto.Message, time.Time) (FleetEntity, error
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
 
+// FakeAncestorKey returns a fake datastore key
+// A query in transaction requires to have Ancestor filter, see
+// https://cloud.google.com/appengine/docs/standard/python/datastore/query-restrictions#queries_inside_transactions_must_include_ancestor_filters
+func FakeAncestorKey(ctx context.Context, entityName string) *datastore.Key {
+	return datastore.MakeKey(ctx, entityName, "key")
+}
+
 // Insert inserts the fleet objects.
-func Insert(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc) (*OpResults, error) {
+func Insert(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc, update bool) (*OpResults, error) {
 	allRes := make(OpResults, len(es))
 	checkEntities := make([]FleetEntity, 0, len(es))
 	checkRes := make(OpResults, 0, len(es))
@@ -55,7 +62,11 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc) 
 		exists, err := ef(ctx, checkEntities)
 		if err == nil {
 			for i, e := range checkEntities {
-				if exists[i] {
+				if !exists[i] && update {
+					checkRes[i].LogError(errors.Reason("No such Object in the datastore").Err())
+					continue
+				}
+				if exists[i] && !update {
 					checkRes[i].LogError(errors.Reason("Object exists in the datastore").Err())
 					continue
 				}

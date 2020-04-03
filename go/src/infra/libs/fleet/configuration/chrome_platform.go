@@ -31,10 +31,6 @@ type ChromePlatformEntity struct {
 	Parent *datastore.Key `gae:"$parent"`
 }
 
-func fakeChromePlatformAncestorKey(ctx context.Context) *datastore.Key {
-	return datastore.MakeKey(ctx, ChromePlatformKind, "key")
-}
-
 // GetProto returns the unmarshaled Chrome platform.
 func (e *ChromePlatformEntity) GetProto() (proto.Message, error) {
 	var p fleet.ChromePlatform
@@ -62,13 +58,13 @@ func newEntity(ctx context.Context, pm proto.Message, updateTime time.Time) (fle
 		ID:       p.GetId().GetValue(),
 		Platform: platform,
 		Updated:  updateTime,
-		Parent:   fakeChromePlatformAncestorKey(ctx),
+		Parent:   fleetds.FakeAncestorKey(ctx, ChromePlatformKind),
 	}, nil
 }
 
 func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	var entities []*ChromePlatformEntity
-	q := datastore.NewQuery(ChromePlatformKind).Ancestor(fakeChromePlatformAncestorKey(ctx))
+	q := datastore.NewQuery(ChromePlatformKind).Ancestor(fleetds.FakeAncestorKey(ctx, ChromePlatformKind))
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
@@ -97,7 +93,7 @@ func InsertChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatfor
 	for i, p := range platforms {
 		protos[i] = p
 	}
-	return fleetds.Insert(ctx, protos, newEntity, exists)
+	return fleetds.Insert(ctx, protos, newEntity, exists, false)
 }
 
 // GetAllChromePlatforms returns all platforms in record.
