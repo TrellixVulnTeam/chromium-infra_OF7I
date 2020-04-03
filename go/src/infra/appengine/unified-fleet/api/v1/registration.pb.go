@@ -12,6 +12,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	_go "infra/libs/fleet/protos/go"
 	math "math"
 )
 
@@ -26,71 +27,312 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type RegisterMachinesRequest struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type MachineList struct {
+	Machine              []*_go.Machine `protobuf:"bytes,1,rep,name=machine,proto3" json:"machine,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
-func (m *RegisterMachinesRequest) Reset()         { *m = RegisterMachinesRequest{} }
-func (m *RegisterMachinesRequest) String() string { return proto.CompactTextString(m) }
-func (*RegisterMachinesRequest) ProtoMessage()    {}
-func (*RegisterMachinesRequest) Descriptor() ([]byte, []int) {
+func (m *MachineList) Reset()         { *m = MachineList{} }
+func (m *MachineList) String() string { return proto.CompactTextString(m) }
+func (*MachineList) ProtoMessage()    {}
+func (*MachineList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_03b63be86218c229, []int{0}
 }
 
-func (m *RegisterMachinesRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RegisterMachinesRequest.Unmarshal(m, b)
+func (m *MachineList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MachineList.Unmarshal(m, b)
 }
-func (m *RegisterMachinesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RegisterMachinesRequest.Marshal(b, m, deterministic)
+func (m *MachineList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MachineList.Marshal(b, m, deterministic)
 }
-func (m *RegisterMachinesRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RegisterMachinesRequest.Merge(m, src)
+func (m *MachineList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MachineList.Merge(m, src)
 }
-func (m *RegisterMachinesRequest) XXX_Size() int {
-	return xxx_messageInfo_RegisterMachinesRequest.Size(m)
+func (m *MachineList) XXX_Size() int {
+	return xxx_messageInfo_MachineList.Size(m)
 }
-func (m *RegisterMachinesRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RegisterMachinesRequest.DiscardUnknown(m)
+func (m *MachineList) XXX_DiscardUnknown() {
+	xxx_messageInfo_MachineList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RegisterMachinesRequest proto.InternalMessageInfo
+var xxx_messageInfo_MachineList proto.InternalMessageInfo
 
-type RegisterMachinesResponse struct {
+func (m *MachineList) GetMachine() []*_go.Machine {
+	if m != nil {
+		return m.Machine
+	}
+	return nil
+}
+
+type MachineResponse struct {
+	Passed               []*MachineResult `protobuf:"bytes,1,rep,name=passed,proto3" json:"passed,omitempty"`
+	Failed               []*MachineResult `protobuf:"bytes,2,rep,name=failed,proto3" json:"failed,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *MachineResponse) Reset()         { *m = MachineResponse{} }
+func (m *MachineResponse) String() string { return proto.CompactTextString(m) }
+func (*MachineResponse) ProtoMessage()    {}
+func (*MachineResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{1}
+}
+
+func (m *MachineResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MachineResponse.Unmarshal(m, b)
+}
+func (m *MachineResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MachineResponse.Marshal(b, m, deterministic)
+}
+func (m *MachineResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MachineResponse.Merge(m, src)
+}
+func (m *MachineResponse) XXX_Size() int {
+	return xxx_messageInfo_MachineResponse.Size(m)
+}
+func (m *MachineResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MachineResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MachineResponse proto.InternalMessageInfo
+
+func (m *MachineResponse) GetPassed() []*MachineResult {
+	if m != nil {
+		return m.Passed
+	}
+	return nil
+}
+
+func (m *MachineResponse) GetFailed() []*MachineResult {
+	if m != nil {
+		return m.Failed
+	}
+	return nil
+}
+
+type MachineResult struct {
+	Machine              *_go.Machine `protobuf:"bytes,1,opt,name=machine,proto3" json:"machine,omitempty"`
+	ErrorMsg             string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
+}
+
+func (m *MachineResult) Reset()         { *m = MachineResult{} }
+func (m *MachineResult) String() string { return proto.CompactTextString(m) }
+func (*MachineResult) ProtoMessage()    {}
+func (*MachineResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{2}
+}
+
+func (m *MachineResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MachineResult.Unmarshal(m, b)
+}
+func (m *MachineResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MachineResult.Marshal(b, m, deterministic)
+}
+func (m *MachineResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MachineResult.Merge(m, src)
+}
+func (m *MachineResult) XXX_Size() int {
+	return xxx_messageInfo_MachineResult.Size(m)
+}
+func (m *MachineResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_MachineResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MachineResult proto.InternalMessageInfo
+
+func (m *MachineResult) GetMachine() *_go.Machine {
+	if m != nil {
+		return m.Machine
+	}
+	return nil
+}
+
+func (m *MachineResult) GetErrorMsg() string {
+	if m != nil {
+		return m.ErrorMsg
+	}
+	return ""
+}
+
+type ListMachinesRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RegisterMachinesResponse) Reset()         { *m = RegisterMachinesResponse{} }
-func (m *RegisterMachinesResponse) String() string { return proto.CompactTextString(m) }
-func (*RegisterMachinesResponse) ProtoMessage()    {}
-func (*RegisterMachinesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_03b63be86218c229, []int{1}
+func (m *ListMachinesRequest) Reset()         { *m = ListMachinesRequest{} }
+func (m *ListMachinesRequest) String() string { return proto.CompactTextString(m) }
+func (*ListMachinesRequest) ProtoMessage()    {}
+func (*ListMachinesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{3}
 }
 
-func (m *RegisterMachinesResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RegisterMachinesResponse.Unmarshal(m, b)
+func (m *ListMachinesRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListMachinesRequest.Unmarshal(m, b)
 }
-func (m *RegisterMachinesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RegisterMachinesResponse.Marshal(b, m, deterministic)
+func (m *ListMachinesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListMachinesRequest.Marshal(b, m, deterministic)
 }
-func (m *RegisterMachinesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RegisterMachinesResponse.Merge(m, src)
+func (m *ListMachinesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListMachinesRequest.Merge(m, src)
 }
-func (m *RegisterMachinesResponse) XXX_Size() int {
-	return xxx_messageInfo_RegisterMachinesResponse.Size(m)
+func (m *ListMachinesRequest) XXX_Size() int {
+	return xxx_messageInfo_ListMachinesRequest.Size(m)
 }
-func (m *RegisterMachinesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RegisterMachinesResponse.DiscardUnknown(m)
+func (m *ListMachinesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListMachinesRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RegisterMachinesResponse proto.InternalMessageInfo
+var xxx_messageInfo_ListMachinesRequest proto.InternalMessageInfo
+
+type EntityIDList struct {
+	// TODO(eshwarn): change id to assetTag or some other name(chrome lab)
+	Id                   []string `protobuf:"bytes,1,rep,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EntityIDList) Reset()         { *m = EntityIDList{} }
+func (m *EntityIDList) String() string { return proto.CompactTextString(m) }
+func (*EntityIDList) ProtoMessage()    {}
+func (*EntityIDList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{4}
+}
+
+func (m *EntityIDList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EntityIDList.Unmarshal(m, b)
+}
+func (m *EntityIDList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EntityIDList.Marshal(b, m, deterministic)
+}
+func (m *EntityIDList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EntityIDList.Merge(m, src)
+}
+func (m *EntityIDList) XXX_Size() int {
+	return xxx_messageInfo_EntityIDList.Size(m)
+}
+func (m *EntityIDList) XXX_DiscardUnknown() {
+	xxx_messageInfo_EntityIDList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EntityIDList proto.InternalMessageInfo
+
+func (m *EntityIDList) GetId() []string {
+	if m != nil {
+		return m.Id
+	}
+	return nil
+}
+
+type EntityIDResult struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ErrorMsg             string   `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EntityIDResult) Reset()         { *m = EntityIDResult{} }
+func (m *EntityIDResult) String() string { return proto.CompactTextString(m) }
+func (*EntityIDResult) ProtoMessage()    {}
+func (*EntityIDResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{5}
+}
+
+func (m *EntityIDResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EntityIDResult.Unmarshal(m, b)
+}
+func (m *EntityIDResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EntityIDResult.Marshal(b, m, deterministic)
+}
+func (m *EntityIDResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EntityIDResult.Merge(m, src)
+}
+func (m *EntityIDResult) XXX_Size() int {
+	return xxx_messageInfo_EntityIDResult.Size(m)
+}
+func (m *EntityIDResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_EntityIDResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EntityIDResult proto.InternalMessageInfo
+
+func (m *EntityIDResult) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *EntityIDResult) GetErrorMsg() string {
+	if m != nil {
+		return m.ErrorMsg
+	}
+	return ""
+}
+
+type EntityIDResponse struct {
+	Passed               []*EntityIDResult `protobuf:"bytes,1,rep,name=passed,proto3" json:"passed,omitempty"`
+	Failed               []*EntityIDResult `protobuf:"bytes,2,rep,name=failed,proto3" json:"failed,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *EntityIDResponse) Reset()         { *m = EntityIDResponse{} }
+func (m *EntityIDResponse) String() string { return proto.CompactTextString(m) }
+func (*EntityIDResponse) ProtoMessage()    {}
+func (*EntityIDResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{6}
+}
+
+func (m *EntityIDResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EntityIDResponse.Unmarshal(m, b)
+}
+func (m *EntityIDResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EntityIDResponse.Marshal(b, m, deterministic)
+}
+func (m *EntityIDResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EntityIDResponse.Merge(m, src)
+}
+func (m *EntityIDResponse) XXX_Size() int {
+	return xxx_messageInfo_EntityIDResponse.Size(m)
+}
+func (m *EntityIDResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_EntityIDResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EntityIDResponse proto.InternalMessageInfo
+
+func (m *EntityIDResponse) GetPassed() []*EntityIDResult {
+	if m != nil {
+		return m.Passed
+	}
+	return nil
+}
+
+func (m *EntityIDResponse) GetFailed() []*EntityIDResult {
+	if m != nil {
+		return m.Failed
+	}
+	return nil
+}
 
 func init() {
-	proto.RegisterType((*RegisterMachinesRequest)(nil), "fleet.RegisterMachinesRequest")
-	proto.RegisterType((*RegisterMachinesResponse)(nil), "fleet.RegisterMachinesResponse")
+	proto.RegisterType((*MachineList)(nil), "fleet.MachineList")
+	proto.RegisterType((*MachineResponse)(nil), "fleet.MachineResponse")
+	proto.RegisterType((*MachineResult)(nil), "fleet.MachineResult")
+	proto.RegisterType((*ListMachinesRequest)(nil), "fleet.ListMachinesRequest")
+	proto.RegisterType((*EntityIDList)(nil), "fleet.EntityIDList")
+	proto.RegisterType((*EntityIDResult)(nil), "fleet.EntityIDResult")
+	proto.RegisterType((*EntityIDResponse)(nil), "fleet.EntityIDResponse")
 }
 
 func init() {
@@ -98,17 +340,31 @@ func init() {
 }
 
 var fileDescriptor_03b63be86218c229 = []byte{
-	// 159 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x8e, 0x21, 0x0f, 0xc2, 0x30,
-	0x10, 0x46, 0x05, 0x19, 0xa2, 0x41, 0x90, 0x1a, 0x60, 0x02, 0x92, 0x79, 0xda, 0x00, 0x02, 0x8f,
-	0xc7, 0x14, 0x87, 0x3b, 0xc6, 0x75, 0x5c, 0x42, 0xae, 0x47, 0xdb, 0xf1, 0xfb, 0x49, 0x8a, 0x21,
-	0x2c, 0xd3, 0xef, 0xcb, 0x7b, 0x9f, 0x3a, 0x12, 0xfb, 0x08, 0x16, 0x44, 0x90, 0x3b, 0x62, 0xb4,
-	0x3d, 0x93, 0x27, 0xbc, 0x6f, 0xfd, 0x13, 0x31, 0x5b, 0x10, 0xb2, 0xef, 0x9d, 0x8d, 0xd8, 0x51,
-	0xca, 0x11, 0x32, 0x05, 0x36, 0x12, 0x43, 0x0e, 0xba, 0x2a, 0x83, 0x66, 0xa5, 0x16, 0xae, 0x40,
-	0x8c, 0x67, 0x68, 0x1f, 0xc4, 0x98, 0x1c, 0xbe, 0x7a, 0x4c, 0xb9, 0xa9, 0xd5, 0x72, 0x88, 0x92,
-	0x04, 0x4e, 0xb8, 0x6f, 0xd5, 0xcc, 0xfd, 0x38, 0xf5, 0x45, 0xcd, 0xff, 0xb7, 0x7a, 0x6d, 0x4a,
-	0xc2, 0x8c, 0xf8, 0xeb, 0xcd, 0x28, 0xff, 0x46, 0x4e, 0xd5, 0x75, 0x02, 0x42, 0xb7, 0x69, 0x39,
-	0x7c, 0xf8, 0x04, 0x00, 0x00, 0xff, 0xff, 0x75, 0x50, 0x1d, 0xa2, 0xeb, 0x00, 0x00, 0x00,
+	// 383 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0xc1, 0x8f, 0xd2, 0x40,
+	0x14, 0xc6, 0xd3, 0x12, 0x50, 0x1e, 0x50, 0xcd, 0x20, 0x4a, 0x30, 0x31, 0xa4, 0x27, 0x0e, 0x42,
+	0x23, 0x1e, 0x48, 0x0c, 0x7a, 0x40, 0x8c, 0x31, 0x91, 0x4b, 0x13, 0x3d, 0x78, 0x31, 0xa3, 0x7d,
+	0xed, 0x4e, 0x52, 0xa6, 0xb3, 0x33, 0xc3, 0x26, 0xfb, 0x2f, 0xee, 0x5f, 0xb5, 0xa1, 0x33, 0x25,
+	0x6d, 0x81, 0x1e, 0xf6, 0xfa, 0xde, 0xef, 0xe3, 0x7d, 0xdf, 0x37, 0x14, 0x56, 0x8c, 0xc7, 0x92,
+	0x06, 0x54, 0x08, 0xe4, 0x09, 0xe3, 0x18, 0x1c, 0x38, 0x8b, 0x19, 0x46, 0xf3, 0x38, 0x45, 0xd4,
+	0x01, 0x15, 0x2c, 0xb8, 0xfb, 0x10, 0x48, 0x4c, 0x98, 0xd2, 0x92, 0x6a, 0x96, 0xf1, 0x85, 0x90,
+	0x99, 0xce, 0x48, 0x3b, 0x07, 0x26, 0x83, 0x3d, 0xfd, 0x7f, 0xc3, 0x38, 0x9a, 0xa9, 0xbf, 0x82,
+	0xde, 0xce, 0x0c, 0x7e, 0x32, 0xa5, 0xc9, 0x0c, 0x9e, 0xd9, 0xfd, 0xd8, 0x99, 0xb6, 0x66, 0xbd,
+	0xa5, 0xb7, 0xc8, 0x65, 0x0b, 0x0b, 0x85, 0xc5, 0xda, 0xdf, 0xc3, 0x8b, 0x62, 0x86, 0x4a, 0x64,
+	0x5c, 0x21, 0x79, 0x0f, 0x1d, 0x41, 0x95, 0xc2, 0xc8, 0x6a, 0x5f, 0xd5, 0xb4, 0xa8, 0x0e, 0xa9,
+	0x0e, 0x2d, 0x73, 0xa4, 0x63, 0xca, 0x52, 0x8c, 0xc6, 0x6e, 0x13, 0x6d, 0x18, 0xff, 0x37, 0x0c,
+	0x2a, 0x8b, 0xaa, 0x53, 0xa7, 0xc1, 0x29, 0x79, 0x0b, 0x5d, 0x94, 0x32, 0x93, 0x7f, 0xf7, 0x2a,
+	0x19, 0xbb, 0x53, 0x67, 0xd6, 0x0d, 0x9f, 0xe7, 0x83, 0x9d, 0x4a, 0xfc, 0x11, 0x0c, 0x8f, 0xc1,
+	0xad, 0x48, 0x85, 0x78, 0x7b, 0x40, 0xa5, 0xfd, 0x77, 0xd0, 0xff, 0xc6, 0x35, 0xd3, 0xf7, 0x3f,
+	0xb6, 0x79, 0x2f, 0x1e, 0xb8, 0xcc, 0xc4, 0xea, 0x86, 0x2e, 0x8b, 0xfc, 0xcf, 0xe0, 0x15, 0x7b,
+	0xeb, 0xa7, 0x20, 0x1c, 0x43, 0x34, 0x5f, 0x15, 0xf0, 0xb2, 0x24, 0x37, 0xed, 0xcd, 0x6b, 0xed,
+	0x8d, 0x6c, 0x9e, 0xea, 0x9d, 0x53, 0x7d, 0xf3, 0x5a, 0x7d, 0xd7, 0x70, 0x03, 0x2d, 0x1f, 0x5c,
+	0xe8, 0x87, 0xa5, 0x3f, 0x05, 0x59, 0x83, 0xf7, 0x55, 0x22, 0xd5, 0x58, 0x44, 0x27, 0xa4, 0x5a,
+	0xe0, 0x31, 0xf7, 0xe4, 0xf5, 0xd9, 0xa3, 0x18, 0xb3, 0x9f, 0xa0, 0xf7, 0x1d, 0x4f, 0xad, 0x91,
+	0x61, 0xed, 0x78, 0xa3, 0x76, 0x03, 0xfd, 0x72, 0xe5, 0x64, 0x62, 0xb9, 0x0b, 0xef, 0x70, 0xf5,
+	0x37, 0xd6, 0xe0, 0xfd, 0x12, 0xd1, 0x53, 0xdd, 0x7f, 0x01, 0x6f, 0x8b, 0x29, 0x96, 0xd4, 0x17,
+	0x03, 0xbc, 0x39, 0xaf, 0x34, 0xd7, 0x6f, 0xda, 0x7f, 0x5a, 0x54, 0xb0, 0x7f, 0x9d, 0xfc, 0x13,
+	0xfa, 0xf8, 0x18, 0x00, 0x00, 0xff, 0xff, 0xfe, 0x4a, 0x65, 0x74, 0x93, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -123,8 +379,16 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type RegistrationClient interface {
-	// RegisterMachines registers new Chrome/ChromeLab machines.
-	RegisterMachines(ctx context.Context, in *RegisterMachinesRequest, opts ...grpc.CallOption) (*RegisterMachinesResponse, error)
+	// CreateMachines registers new Chrome/ChromeLab machines.
+	CreateMachines(ctx context.Context, in *MachineList, opts ...grpc.CallOption) (*MachineResponse, error)
+	// Get Machine information
+	GetMachines(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*MachineResponse, error)
+	// List all the machines
+	ListMachines(ctx context.Context, in *ListMachinesRequest, opts ...grpc.CallOption) (*MachineResponse, error)
+	// Update the machines
+	UpdateMachines(ctx context.Context, in *MachineList, opts ...grpc.CallOption) (*MachineResponse, error)
+	// Delete the machines
+	DeleteMachines(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*EntityIDResponse, error)
 }
 type registrationPRPCClient struct {
 	client *prpc.Client
@@ -134,9 +398,45 @@ func NewRegistrationPRPCClient(client *prpc.Client) RegistrationClient {
 	return &registrationPRPCClient{client}
 }
 
-func (c *registrationPRPCClient) RegisterMachines(ctx context.Context, in *RegisterMachinesRequest, opts ...grpc.CallOption) (*RegisterMachinesResponse, error) {
-	out := new(RegisterMachinesResponse)
-	err := c.client.Call(ctx, "fleet.Registration", "RegisterMachines", in, out, opts...)
+func (c *registrationPRPCClient) CreateMachines(ctx context.Context, in *MachineList, opts ...grpc.CallOption) (*MachineResponse, error) {
+	out := new(MachineResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "CreateMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) GetMachines(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*MachineResponse, error) {
+	out := new(MachineResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "GetMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) ListMachines(ctx context.Context, in *ListMachinesRequest, opts ...grpc.CallOption) (*MachineResponse, error) {
+	out := new(MachineResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "ListMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) UpdateMachines(ctx context.Context, in *MachineList, opts ...grpc.CallOption) (*MachineResponse, error) {
+	out := new(MachineResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "UpdateMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) DeleteMachines(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*EntityIDResponse, error) {
+	out := new(EntityIDResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "DeleteMachines", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,9 +451,45 @@ func NewRegistrationClient(cc grpc.ClientConnInterface) RegistrationClient {
 	return &registrationClient{cc}
 }
 
-func (c *registrationClient) RegisterMachines(ctx context.Context, in *RegisterMachinesRequest, opts ...grpc.CallOption) (*RegisterMachinesResponse, error) {
-	out := new(RegisterMachinesResponse)
-	err := c.cc.Invoke(ctx, "/fleet.Registration/RegisterMachines", in, out, opts...)
+func (c *registrationClient) CreateMachines(ctx context.Context, in *MachineList, opts ...grpc.CallOption) (*MachineResponse, error) {
+	out := new(MachineResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/CreateMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationClient) GetMachines(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*MachineResponse, error) {
+	out := new(MachineResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/GetMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationClient) ListMachines(ctx context.Context, in *ListMachinesRequest, opts ...grpc.CallOption) (*MachineResponse, error) {
+	out := new(MachineResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/ListMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationClient) UpdateMachines(ctx context.Context, in *MachineList, opts ...grpc.CallOption) (*MachineResponse, error) {
+	out := new(MachineResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/UpdateMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationClient) DeleteMachines(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*EntityIDResponse, error) {
+	out := new(EntityIDResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/DeleteMachines", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -162,36 +498,128 @@ func (c *registrationClient) RegisterMachines(ctx context.Context, in *RegisterM
 
 // RegistrationServer is the server API for Registration service.
 type RegistrationServer interface {
-	// RegisterMachines registers new Chrome/ChromeLab machines.
-	RegisterMachines(context.Context, *RegisterMachinesRequest) (*RegisterMachinesResponse, error)
+	// CreateMachines registers new Chrome/ChromeLab machines.
+	CreateMachines(context.Context, *MachineList) (*MachineResponse, error)
+	// Get Machine information
+	GetMachines(context.Context, *EntityIDList) (*MachineResponse, error)
+	// List all the machines
+	ListMachines(context.Context, *ListMachinesRequest) (*MachineResponse, error)
+	// Update the machines
+	UpdateMachines(context.Context, *MachineList) (*MachineResponse, error)
+	// Delete the machines
+	DeleteMachines(context.Context, *EntityIDList) (*EntityIDResponse, error)
 }
 
 // UnimplementedRegistrationServer can be embedded to have forward compatible implementations.
 type UnimplementedRegistrationServer struct {
 }
 
-func (*UnimplementedRegistrationServer) RegisterMachines(ctx context.Context, req *RegisterMachinesRequest) (*RegisterMachinesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterMachines not implemented")
+func (*UnimplementedRegistrationServer) CreateMachines(ctx context.Context, req *MachineList) (*MachineResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateMachines not implemented")
+}
+func (*UnimplementedRegistrationServer) GetMachines(ctx context.Context, req *EntityIDList) (*MachineResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMachines not implemented")
+}
+func (*UnimplementedRegistrationServer) ListMachines(ctx context.Context, req *ListMachinesRequest) (*MachineResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMachines not implemented")
+}
+func (*UnimplementedRegistrationServer) UpdateMachines(ctx context.Context, req *MachineList) (*MachineResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMachines not implemented")
+}
+func (*UnimplementedRegistrationServer) DeleteMachines(ctx context.Context, req *EntityIDList) (*EntityIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteMachines not implemented")
 }
 
 func RegisterRegistrationServer(s prpc.Registrar, srv RegistrationServer) {
 	s.RegisterService(&_Registration_serviceDesc, srv)
 }
 
-func _Registration_RegisterMachines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterMachinesRequest)
+func _Registration_CreateMachines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MachineList)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RegistrationServer).RegisterMachines(ctx, in)
+		return srv.(RegistrationServer).CreateMachines(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/fleet.Registration/RegisterMachines",
+		FullMethod: "/fleet.Registration/CreateMachines",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistrationServer).RegisterMachines(ctx, req.(*RegisterMachinesRequest))
+		return srv.(RegistrationServer).CreateMachines(ctx, req.(*MachineList))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registration_GetMachines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EntityIDList)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).GetMachines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/GetMachines",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).GetMachines(ctx, req.(*EntityIDList))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registration_ListMachines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMachinesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).ListMachines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/ListMachines",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).ListMachines(ctx, req.(*ListMachinesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registration_UpdateMachines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MachineList)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).UpdateMachines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/UpdateMachines",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).UpdateMachines(ctx, req.(*MachineList))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registration_DeleteMachines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EntityIDList)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).DeleteMachines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/DeleteMachines",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).DeleteMachines(ctx, req.(*EntityIDList))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -201,8 +629,24 @@ var _Registration_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*RegistrationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "RegisterMachines",
-			Handler:    _Registration_RegisterMachines_Handler,
+			MethodName: "CreateMachines",
+			Handler:    _Registration_CreateMachines_Handler,
+		},
+		{
+			MethodName: "GetMachines",
+			Handler:    _Registration_GetMachines_Handler,
+		},
+		{
+			MethodName: "ListMachines",
+			Handler:    _Registration_ListMachines_Handler,
+		},
+		{
+			MethodName: "UpdateMachines",
+			Handler:    _Registration_UpdateMachines_Handler,
+		},
+		{
+			MethodName: "DeleteMachines",
+			Handler:    _Registration_DeleteMachines_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

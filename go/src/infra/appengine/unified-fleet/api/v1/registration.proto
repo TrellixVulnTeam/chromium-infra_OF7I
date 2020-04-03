@@ -8,13 +8,52 @@ package fleet;
 
 option go_package = "api";
 
+import "machine.proto";
+
 service Registration {
-  // RegisterMachines registers new Chrome/ChromeLab machines.
-  rpc RegisterMachines(RegisterMachinesRequest) returns (RegisterMachinesResponse);
+  // CreateMachines registers new Chrome/ChromeLab machines.
+  rpc CreateMachines(MachineList) returns (MachineResponse);
+
+  // Get Machine information
+  rpc GetMachines(EntityIDList) returns (MachineResponse);
+
+  // List all the machines
+  rpc ListMachines(ListMachinesRequest) returns (MachineResponse);
+
+  // Update the machines
+  rpc UpdateMachines(MachineList) returns (MachineResponse);
+
+  // Delete the machines
+  rpc DeleteMachines(EntityIDList) returns (EntityIDResponse);
 }
 
-message RegisterMachinesRequest {
+message MachineList {
+  repeated fleet.Machine machine = 1;
 }
 
-message RegisterMachinesResponse {
+message MachineResponse {
+  repeated MachineResult passed = 1;
+  repeated MachineResult failed = 2;
+}
+
+message MachineResult {
+  fleet.Machine machine = 1;
+  string error_msg = 2;
+}
+
+message ListMachinesRequest {}
+
+message EntityIDList {
+  // TODO(eshwarn): change id to assetTag or some other name(chrome lab)
+  repeated string id = 1;
+}
+
+message EntityIDResult {
+  string id = 1;
+  string error_msg = 2;
+}
+
+message EntityIDResponse {
+  repeated EntityIDResult passed = 1;
+  repeated EntityIDResult failed = 2;
 }
