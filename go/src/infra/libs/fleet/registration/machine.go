@@ -74,6 +74,19 @@ func exists(ctx context.Context, entities []fleetds.FleetEntity) ([]bool, error)
 	return res.List(0), nil
 }
 
+func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*MachineEntity
+	q := datastore.NewQuery(MachineKind).Ancestor(fleetds.FakeAncestorKey(ctx, MachineKind))
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
 func queryByID(ctx context.Context, ids []string) ([]fleetds.FleetEntity, error) {
 	entities := make([]*MachineEntity, len(ids))
 	parent := fleetds.FakeAncestorKey(ctx, MachineKind)
@@ -101,6 +114,11 @@ func CreateMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.Op
 // UpdateMachines updates machines to datastore.
 func UpdateMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.OpResults, error) {
 	return putMachines(ctx, machines, true)
+}
+
+// GetAllMachines returns all machines in datastore.
+func GetAllMachines(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAll)
 }
 
 // GetMachinesByID returns machines for the given ids from datastore.

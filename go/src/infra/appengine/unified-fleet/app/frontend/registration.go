@@ -56,7 +56,14 @@ func (fs *RegistrationServerImpl) ListMachines(ctx context.Context, req *api.Lis
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return &api.MachineResponse{}, err
+	res, err := registration.GetAllMachines(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &api.MachineResponse{
+		Passed: toMachineResult(res.Passed()),
+		Failed: toMachineResult(res.Failed()),
+	}, err
 }
 
 // UpdateMachines updates the machines information in datastore.

@@ -54,6 +54,14 @@ func assertMachineEqual(a, b *fleet.Machine) {
 		b.GetChromeosMachine().GetReferenceBoard())
 }
 
+func getMachineNames(machines []*fleet.Machine) []string {
+	names := make([]string, len(machines))
+	for i, p := range machines {
+		names[i] = p.GetId().GetValue()
+	}
+	return names
+}
+
 func TestCreateMachines(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -170,6 +178,46 @@ func TestGetMachines(t *testing.T) {
 			}
 			_, err := tf.Registration.GetMachines(tf.C, req)
 			So(err, ShouldNotBeNil)
+		})
+	})
+}
+
+func TestListMachines(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("ListMachines", t, func() {
+		Convey("List empty machines", func() {
+			req := &api.ListMachinesRequest{}
+			resp, err := tf.Registration.ListMachines(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.GetPassed(), ShouldHaveLength, 0)
+			So(resp.GetFailed(), ShouldHaveLength, 0)
+		})
+		Convey("List all the machines", func() {
+			chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
+			chromeMachine1 := mockChromeMachine("chrome-asset-1", "chromelab", "machine-1")
+			input := []*fleet.Machine{chromeMachine1, chromeOSMachine1}
+			req := &api.MachineList{
+				Machine: input,
+			}
+			resp, err := tf.Registration.CreateMachines(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.GetPassed(), ShouldHaveLength, 2)
+			So(resp.GetFailed(), ShouldHaveLength, 0)
+			assertMachineEqual(resp.GetPassed()[0].Machine, chromeMachine1)
+			assertMachineEqual(resp.GetPassed()[1].Machine, chromeOSMachine1)
+
+			listReq := &api.ListMachinesRequest{}
+			resp, err = tf.Registration.ListMachines(tf.C, listReq)
+			So(err, ShouldBeNil)
+			So(resp.GetPassed(), ShouldHaveLength, 2)
+			So(resp.GetFailed(), ShouldHaveLength, 0)
+			output := []*fleet.Machine{resp.GetPassed()[0].Machine, resp.GetPassed()[1].Machine}
+			wants := getMachineNames(input)
+			gets := getMachineNames(output)
+			So(wants, ShouldResemble, gets)
 		})
 	})
 }

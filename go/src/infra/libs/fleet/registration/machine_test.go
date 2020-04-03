@@ -54,6 +54,14 @@ func assertMachineEqual(a, b *fleet.Machine) {
 		b.GetChromeosMachine().GetReferenceBoard())
 }
 
+func getMachineNames(machines []*fleet.Machine) []string {
+	names := make([]string, len(machines))
+	for i, p := range machines {
+		names[i] = p.GetId().GetValue()
+	}
+	return names
+}
+
 func TestCreateMachines(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
@@ -150,6 +158,42 @@ func TestGetMachinesByID(t *testing.T) {
 			}
 			_, err := GetMachinesByID(ctx, ids)
 			So(err, ShouldNotBeNil)
+		})
+	})
+}
+
+func TestGetAllMachines(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	Convey("GetAllMachines", t, func() {
+		Convey("Get empty machines", func() {
+			resp, err := GetAllMachines(ctx)
+			So(err, ShouldBeNil)
+			So(resp.Passed(), ShouldHaveLength, 0)
+			So(resp.Failed(), ShouldHaveLength, 0)
+		})
+		Convey("Get all the machines", func() {
+			chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
+			chromeMachine1 := mockChromeMachine("chrome-asset-1", "chromelab", "machine-1")
+			input := []*fleet.Machine{chromeMachine1, chromeOSMachine1}
+			resp, err := CreateMachines(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp.Passed(), ShouldHaveLength, 2)
+			So(resp.Failed(), ShouldHaveLength, 0)
+			assertMachineEqual(resp.Passed()[0].Data.(*fleet.Machine), chromeMachine1)
+			assertMachineEqual(resp.Passed()[1].Data.(*fleet.Machine), chromeOSMachine1)
+
+			resp, err = GetAllMachines(ctx)
+			So(err, ShouldBeNil)
+			So(resp.Passed(), ShouldHaveLength, 2)
+			So(resp.Failed(), ShouldHaveLength, 0)
+			output := []*fleet.Machine{
+				resp.Passed()[0].Data.(*fleet.Machine),
+				resp.Passed()[1].Data.(*fleet.Machine),
+			}
+			wants := getMachineNames(input)
+			gets := getMachineNames(output)
+			So(wants, ShouldResemble, gets)
 		})
 	})
 }
