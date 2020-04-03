@@ -22,6 +22,7 @@ type testFixture struct {
 	C context.Context
 
 	Configuration *ConfigurationServerImpl
+	Registration  *RegistrationServerImpl
 }
 
 func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, func()) {
@@ -29,6 +30,7 @@ func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, 
 	mc := gomock.NewController(t)
 
 	tf.Configuration = &ConfigurationServerImpl{}
+	tf.Registration = &RegistrationServerImpl{}
 
 	validate := func() {
 		mc.Finish()

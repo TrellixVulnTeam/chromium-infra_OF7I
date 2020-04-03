@@ -9,6 +9,9 @@ import (
 	"golang.org/x/net/context"
 
 	api "infra/appengine/unified-fleet/api/v1"
+	"infra/libs/fleet/datastore"
+	fleet "infra/libs/fleet/protos/go"
+	"infra/libs/fleet/registration"
 )
 
 // RegistrationServerImpl implements fleet interfaces.
@@ -20,7 +23,17 @@ func (fs *RegistrationServerImpl) CreateMachines(ctx context.Context, req *api.M
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return &api.MachineResponse{}, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	res, err := registration.CreateMachines(ctx, req.Machine)
+	if err != nil {
+		return nil, err
+	}
+	return &api.MachineResponse{
+		Passed: toMachineResult(res.Passed()),
+		Failed: toMachineResult(res.Failed()),
+	}, err
 }
 
 // GetMachines gets the machines information from datastore.
@@ -44,7 +57,17 @@ func (fs *RegistrationServerImpl) UpdateMachines(ctx context.Context, req *api.M
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return &api.MachineResponse{}, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	res, err := registration.UpdateMachines(ctx, req.Machine)
+	if err != nil {
+		return nil, err
+	}
+	return &api.MachineResponse{
+		Passed: toMachineResult(res.Passed()),
+		Failed: toMachineResult(res.Failed()),
+	}, err
 }
 
 // DeleteMachines deletes the machines from datastore.
@@ -53,4 +76,19 @@ func (fs *RegistrationServerImpl) DeleteMachines(ctx context.Context, req *api.E
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 	return &api.EntityIDResponse{}, err
+}
+
+func toMachineResult(res datastore.OpResults) []*api.MachineResult {
+	cpRes := make([]*api.MachineResult, len(res))
+	for i, r := range res {
+		errMsg := ""
+		if r.Err != nil {
+			errMsg = r.Err.Error()
+		}
+		cpRes[i] = &api.MachineResult{
+			Machine:  r.Data.(*fleet.Machine),
+			ErrorMsg: errMsg,
+		}
+	}
+	return cpRes
 }
