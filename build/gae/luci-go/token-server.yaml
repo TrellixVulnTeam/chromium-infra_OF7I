@@ -1,0 +1,10 @@
+name: luci-go/token-server
+extends: ../base.yaml
+
+inputsdir: ../../../go/src/go.chromium.org/luci/tokenserver/appengine
+
+build:
+  - go_gae_bundle: ${inputsdir}/frontend/app.yaml
+    dest: ${contextdir}/frontend
+  - go_gae_bundle: ${inputsdir}/backend/service-backend.yaml
+    dest: ${contextdir}/backend
