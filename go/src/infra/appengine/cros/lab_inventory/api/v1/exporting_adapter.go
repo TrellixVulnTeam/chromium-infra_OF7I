@@ -212,25 +212,6 @@ func setManufacturingConfig(l *inventory.SchedulableLabels, m *manufacturing.Con
 	l.WifiChip = &wifiChip
 	hwidComponent := m.GetHwidComponent()
 	l.HwidComponent = hwidComponent
-
-	// Temporarily get manufacturing config from config file to unblock testing as
-	// push is delayed.
-	// See crbug.com/1057145 for the root cause.
-	// See crbug.com/1059086 for the following issues if we don't respect manufacturing
-	// config before autotest pushing.
-	l.Cr50Phase = (*inventory.SchedulableLabels_CR50_Phase)(&(m.Cr50Phase))
-	cr50Env := ""
-	switch m.Cr50KeyEnv {
-	case manufacturing.Config_CR50_KEYENV_PROD:
-		cr50Env = "prod"
-	case manufacturing.Config_CR50_KEYENV_DEV:
-		cr50Env = "dev"
-	}
-	if cr50Env != "" {
-		l.Cr50RoKeyid = &cr50Env
-	} else {
-		l.Cr50RoKeyid = &emptyString
-	}
 }
 
 func setDeviceConfig(labels *inventory.SchedulableLabels, d *device.Config) {
