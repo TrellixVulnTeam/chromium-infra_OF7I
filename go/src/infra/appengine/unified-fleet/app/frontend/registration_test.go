@@ -129,3 +129,47 @@ func TestUpdateMachines(t *testing.T) {
 		})
 	})
 }
+
+func TestGetMachines(t *testing.T) {
+	t.Parallel()
+	Convey("GetMachines", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
+		chromeMachine1 := mockChromeMachine("chrome-asset-1", "chromelab", "machine-1")
+		chromeMachine2 := mockChromeMachine("chrome-asset-2", "chromelab", "machine-2")
+		req := &api.MachineList{
+			Machine: []*fleet.Machine{chromeOSMachine1, chromeMachine1},
+		}
+		resp, err := tf.Registration.CreateMachines(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp.GetPassed(), ShouldHaveLength, 2)
+		So(resp.GetFailed(), ShouldHaveLength, 0)
+		assertMachineEqual(resp.GetPassed()[0].Machine, chromeOSMachine1)
+		assertMachineEqual(resp.GetPassed()[1].Machine, chromeMachine1)
+		Convey("Get machines by existing ID", func() {
+			req := &api.EntityIDList{
+				Id: []string{
+					chromeOSMachine1.GetId().GetValue(),
+					chromeMachine1.GetId().GetValue(),
+				},
+			}
+			resp, err := tf.Registration.GetMachines(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.GetPassed(), ShouldHaveLength, 2)
+			So(resp.GetFailed(), ShouldHaveLength, 0)
+			assertMachineEqual(resp.GetPassed()[0].Machine, chromeOSMachine1)
+			assertMachineEqual(resp.GetPassed()[1].Machine, chromeMachine1)
+		})
+		Convey("Get machines by non-existing ID", func() {
+			req := &api.EntityIDList{
+				Id: []string{
+					chromeMachine2.GetId().GetValue(),
+				},
+			}
+			_, err := tf.Registration.GetMachines(tf.C, req)
+			So(err, ShouldNotBeNil)
+		})
+	})
+}

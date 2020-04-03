@@ -41,7 +41,14 @@ func (fs *RegistrationServerImpl) GetMachines(ctx context.Context, req *api.Enti
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return &api.MachineResponse{}, err
+	res, err := registration.GetMachinesByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &api.MachineResponse{
+		Passed: toMachineResult(res.Passed()),
+		Failed: toMachineResult(res.Failed()),
+	}, err
 }
 
 // ListMachines gets all the machines information from datastore.
@@ -82,11 +89,15 @@ func toMachineResult(res datastore.OpResults) []*api.MachineResult {
 	cpRes := make([]*api.MachineResult, len(res))
 	for i, r := range res {
 		errMsg := ""
+		machine := &fleet.Machine{}
 		if r.Err != nil {
 			errMsg = r.Err.Error()
 		}
+		if r.Data != nil {
+			machine = r.Data.(*fleet.Machine)
+		}
 		cpRes[i] = &api.MachineResult{
-			Machine:  r.Data.(*fleet.Machine),
+			Machine:  machine,
 			ErrorMsg: errMsg,
 		}
 	}

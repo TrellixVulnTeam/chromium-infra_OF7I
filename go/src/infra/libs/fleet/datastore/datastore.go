@@ -29,6 +29,9 @@ type NewFunc func(context.Context, proto.Message, time.Time) (FleetEntity, error
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
 
+// QueryByIDFunc queries entities in a table for given Ids.
+type QueryByIDFunc func(context.Context, []string) ([]FleetEntity, error)
+
 // FakeAncestorKey returns a fake datastore key
 // A query in transaction requires to have Ancestor filter, see
 // https://cloud.google.com/appengine/docs/standard/python/datastore/query-restrictions#queries_inside_transactions_must_include_ancestor_filters
@@ -90,6 +93,26 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc, 
 		return &allRes, err
 	}
 	return &allRes, nil
+}
+
+// GetByID returns all entities in table for given IDs.
+func GetByID(ctx context.Context, ids []string, qf QueryByIDFunc) (*OpResults, error) {
+	entities, err := qf(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	res := make(OpResults, len(entities))
+	for i, e := range entities {
+		res[i] = &OpResult{
+			Timestamp: e.GetUpdated(),
+		}
+		pm, err := e.GetProto()
+		if err != nil {
+			res[i].LogError(err)
+		}
+		res[i].Data = pm
+	}
+	return &res, nil
 }
 
 // GetAll returns all entities in table.
