@@ -5,22 +5,19 @@
 package tasks
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmd/skylab/internal/cmd/utils"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/swarming"
-	"infra/libs/skylab/worker"
 )
 
 // Repair subcommand: Repair hosts.
@@ -70,58 +67,23 @@ func (c *repairRun) innerRun(a subcommands.Application, args []string, env subco
 		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
 
-	repairAttemptID := uuid.New().String()
+	attemptID := uuid.New().String()
+	creator := &utils.TaskCreator{
+		Client:      client,
+		Environment: e,
+	}
+	tags := []string{
+		fmt.Sprintf("repairAttemptID:%s", attemptID),
+	}
+
+	expirationSec := c.expirationMins * 60
 	for _, host := range args {
-		id, err := createRepairTask(ctx, client, e, host, repairAttemptID, c.expirationMins)
+		id, err := creator.RepairTask(ctx, host, tags, expirationSec)
 		if err != nil {
 			return err
 		}
 		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(e.SwarmingService, id), host)
 	}
-	fmt.Fprintf(a.GetOut(), "Batch repair task URL: %s\n", swarming.TaskListURLForTags(e.SwarmingService, repairTags(repairAttemptID)))
+	fmt.Fprintf(a.GetOut(), "Batch repair task URL: %s\n", swarming.TaskListURLForTags(e.SwarmingService, tags))
 	return nil
-}
-
-func createRepairTask(ctx context.Context, t *swarming.Client, e site.Environment, host, repairAttemptID string, expirationMins int) (taskID string, err error) {
-	c := worker.Command{TaskName: "admin_repair"}
-	c.Config(e.Wrapped())
-	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
-		ExpirationSecs: int64(expirationMins * 60),
-		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: c.Args(),
-			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: "ChromeOSSkylab"},
-				{Key: "dut_name", Value: host},
-			},
-			ExecutionTimeoutSecs: 5400,
-		},
-		WaitForCapacity: true,
-	}}
-	tags := []string{
-		fmt.Sprintf("log_location:%s", c.LogDogAnnotationURL),
-		fmt.Sprintf("luci_project:%s", e.LUCIProject),
-		"pool:ChromeOSSkylab",
-		"skylab-tool:repair",
-	}
-	tags = append(tags, repairTags(repairAttemptID)...)
-	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name:           "admin_repair",
-		Tags:           tags,
-		TaskSlices:     slices,
-		Priority:       25,
-		ServiceAccount: e.ServiceAccount,
-	}
-	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
-	defer cf()
-	resp, err := t.CreateTask(ctx, r)
-	if err != nil {
-		return "", errors.Annotate(err, "failed to create task").Err()
-	}
-	return resp.TaskId, nil
-}
-
-func repairTags(attemptID string) []string {
-	return []string{
-		fmt.Sprintf("repairAttemptID:%s", attemptID),
-	}
 }
