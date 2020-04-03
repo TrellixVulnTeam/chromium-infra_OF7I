@@ -17,6 +17,14 @@ import "google_proto/google/api/annotations.proto";
 
 // Hotlists service includes all methods needed for managing Hotlists.
 service Hotlists {
+  // Creates a new hotlist.
+  //
+  // Raises:
+  //   NOT_FOUND if some given hotlist editors do not exist.
+  //   ALREADY_EXISTS if a hotlist with the same name owned by the user
+  //   already exists.
+  //   INVALID_ARGUMENT if a `hotlist.owner` is given.
+  rpc CreateHotlist (CreateHotlistRequest) returns (Hotlist) {}
   // Returns the requested Hotlist.
   //
   // Raises:
@@ -80,6 +88,16 @@ service Hotlists {
   //   editors from the hotlist.
   //   INVALID_ARGUMENT if any specified editors are not in the hotlist.
   rpc RemoveHotlistEditors (RemoveHotlistEditorsRequest) returns (google.protobuf.Empty) {}
+}
+
+
+// Request message for CreateHotlist method.
+// Next available tag: 2
+message CreateHotlistRequest {
+  // The hotlist to create.
+  // `hotlist.owner` must be empty. The owner of the new hotlist will be
+  // set to the requester.
+  Hotlist hotlist = 1 [ (google.api.field_behavior) = REQUIRED ];
 }
 
 
