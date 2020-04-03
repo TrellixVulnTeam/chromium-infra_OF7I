@@ -63,3 +63,42 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, customTags [
 	}
 	return resp.TaskId, nil
 }
+
+// LeaseTask creates lease_task for particular DUT
+func (tc *TaskCreator) LeaseTask(ctx context.Context, host string, durationSec int, reason string) (taskID string, err error) {
+	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo Zzz...; done`}
+	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
+		ExpirationSecs: int64(10 * 60),
+		Properties: &swarming_api.SwarmingRpcsTaskProperties{
+			Command: c,
+			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
+				{Key: "pool", Value: "ChromeOSSkylab"},
+				{Key: "dut_name", Value: host},
+			},
+			ExecutionTimeoutSecs: int64(durationSec),
+		},
+	}}
+	r := &swarming_api.SwarmingRpcsNewTaskRequest{
+		Name: "lease task",
+		Tags: []string{
+			"pool:ChromeOSSkylab",
+			"skylab-tool:lease",
+			// This quota account specifier is only relevant for DUTs that are
+			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+			// harmless otherwise.
+			"qs_account:leases",
+			fmt.Sprintf("dut-name:%s", host),
+			fmt.Sprintf("lease-reason:%s", reason),
+		},
+		TaskSlices:     slices,
+		Priority:       15,
+		ServiceAccount: tc.Environment.ServiceAccount,
+	}
+	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
+	defer cf()
+	resp, err := tc.Client.CreateTask(ctx, r)
+	if err != nil {
+		return "", errors.Annotate(err, "failed to create task").Err()
+	}
+	return resp.TaskId, nil
+}

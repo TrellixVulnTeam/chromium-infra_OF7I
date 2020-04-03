@@ -5,13 +5,12 @@
 package tasks
 
 import (
-	"context"
 	"fmt"
+	"infra/cmd/skylab/internal/cmd/utils"
 	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
-	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
@@ -91,12 +90,13 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
 
-	lt := leaseTask{
-		host:     host,
-		duration: time.Duration(c.leaseMinutes) * time.Minute,
-		reason:   c.leaseReason,
+	leaseDuration := time.Duration(c.leaseMinutes) * time.Minute
+
+	creator := utils.TaskCreator{
+		Client:      client,
+		Environment: e,
 	}
-	id, err := createLeaseTask(ctx, client, e, lt)
+	id, err := creator.LeaseTask(ctx, host, int(leaseDuration.Seconds()), c.leaseReason)
 	if err != nil {
 		return err
 	}
@@ -121,51 +121,6 @@ poll:
 		}
 	}
 	// TODO(ayatane): The time printed here may be off by the poll interval above.
-	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(lt.duration).Format(time.RFC1123))
+	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
 	return nil
-}
-
-type leaseTask struct {
-	host     string
-	duration time.Duration
-	reason   string
-}
-
-func createLeaseTask(ctx context.Context, t *swarming.Client, e site.Environment, lt leaseTask) (taskID string, err error) {
-	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo Zzz...; done`}
-	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
-		ExpirationSecs: 600,
-		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: c,
-			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: "ChromeOSSkylab"},
-				{Key: "dut_name", Value: lt.host},
-			},
-			// lt.duration.Seconds() is guaranteed to be much less than -1 + 2^63
-			ExecutionTimeoutSecs: int64(lt.duration.Seconds()),
-		},
-	}}
-	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name: "lease task",
-		Tags: []string{
-			"pool:ChromeOSSkylab",
-			"skylab-tool:lease",
-			// This quota account specifier is only relevant for DUTs that are
-			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
-			// harmless otherwise.
-			"qs_account:leases",
-			fmt.Sprintf("dut-name:%s", lt.host),
-			fmt.Sprintf("lease-reason:%s", lt.reason),
-		},
-		TaskSlices:     slices,
-		Priority:       10,
-		ServiceAccount: e.ServiceAccount,
-	}
-	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
-	defer cf()
-	resp, err := t.CreateTask(ctx, r)
-	if err != nil {
-		return "", errors.Annotate(err, "failed to create task").Err()
-	}
-	return resp.TaskId, nil
 }
