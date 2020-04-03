@@ -30,6 +30,10 @@ import 'shared/typedef.js';
 // Actions
 export const SELECT = 'hotlist/SELECT';
 
+export const DELETE_START = 'hotlist/DELETE_START';
+export const DELETE_SUCCESS = 'hotlist/DELETE_SUCCESS';
+export const DELETE_FAILURE = 'hotlist/DELETE_FAILURE';
+
 export const FETCH_START = 'hotlist/FETCH_START';
 export const FETCH_SUCCESS = 'hotlist/FETCH_SUCCESS';
 export const FETCH_FAILURE = 'hotlist/FETCH_FAILURE';
@@ -96,6 +100,8 @@ export const hotlistItemsReducer = createReducer({}, {
 });
 
 const requestsReducer = combineReducers({
+  deleteHotlist: createRequestReducer(
+      DELETE_SUCCESS, DELETE_SUCCESS, DELETE_FAILURE),
   fetch: createRequestReducer(
       FETCH_START, FETCH_SUCCESS, FETCH_FAILURE),
   fetchItems: createRequestReducer(
@@ -208,6 +214,26 @@ export const fetch = (name) => async (dispatch) => {
     dispatch({type: FETCH_FAILURE, error});
   };
 };
+
+/**
+ * Action creator to delete the Hotlist. We would have liked to have named this
+ * `delete` but it's a reserved word in JS.
+ * @param {string} name The name of the Hotlist to delete.
+ * @return {function(function): Promise<void>}
+ */
+export const deleteHotlist = (name) => async (dispatch) => {
+  dispatch({type: DELETE_START});
+
+  try {
+    const args = {name};
+    await prpcClient.call('monorail.v1.Hotlists', 'DeleteHotlist', args);
+
+    dispatch({type: DELETE_SUCCESS});
+  } catch (error) {
+    dispatch({type: DELETE_FAILURE, error});
+  };
+};
+
 
 /**
  * Action creator to fetch the items in a Hotlist.

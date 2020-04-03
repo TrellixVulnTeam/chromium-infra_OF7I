@@ -4,10 +4,13 @@
 
 import {LitElement, html, css} from 'lit-element';
 
+import page from 'page';
 import {store, connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as sitewide from 'reducers/sitewide.js';
+import * as userV0 from 'reducers/userV0.js';
 
+import 'elements/chops/chops-button/chops-button.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
 /** Hotlist Settings page */
@@ -29,6 +32,9 @@ class _MrHotlistSettingsPage extends LitElement {
       }
       dd {
         margin: 0;
+      }
+      div {
+        margin: 16px 24px;
       }
     `;
   }
@@ -82,12 +88,19 @@ class _MrHotlistSettingsPage extends LitElement {
           normally see them. The privacy status of an issue is considered
           when it is being displayed (or not displayed) in a hotlist.
       </section>
+
+      <div>
+        <chops-button @click=${this._delete} id="delete-hotlist">
+          Delete hotlist
+        </chops-button>
+      </div>
     `;
   }
 
   /** @override */
   static get properties() {
     return {
+      _currentUser: {type: Object},
       _hotlist: {type: Object},
     };
   }
@@ -97,7 +110,13 @@ class _MrHotlistSettingsPage extends LitElement {
     super();
     /** @type {?HotlistV1} */
     this._hotlist = null;
+
+    // Expose page.js for test stubbing.
+    this.page = page;
   }
+
+  /** Deletes the hotlist, dispatching an action to Redux. */
+  async _delete() {}
 };
 
 /** Redux-connected version of _MrHotlistSettingsPage. */
@@ -106,6 +125,7 @@ export class MrHotlistSettingsPage
   /** @override */
   stateChanged(state) {
     this._hotlist = hotlist.viewedHotlist(state);
+    this._currentUser = userV0.currentUser(state);
   }
 
   /** @override */
@@ -117,6 +137,20 @@ export class MrHotlistSettingsPage
       store.dispatch(sitewide.setPageTitle(pageTitle));
       const headerTitle = 'Hotlist ' + this._hotlist.displayName;
       store.dispatch(sitewide.setHeaderTitle(headerTitle));
+    }
+  }
+
+  /** @override */
+  async _delete() {
+    if (confirm(
+        'Are you sure you want to delete this hotlist? This cannot be undone.')
+    ) {
+      const action = hotlist.deleteHotlist(this._hotlist.name);
+      await store.dispatch(action);
+
+      // TODO(crbug/monorail/7430): Handle an error and add <chops-snackbar>.
+      // Note that this will redirect regardless of an error.
+      this.page(`/u/${this._currentUser.displayName}/hotlists`);
     }
   }
 }

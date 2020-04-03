@@ -21,6 +21,10 @@ describe('hotlist reducers', () => {
       hotlists: {},
       hotlistItems: {},
       requests: {
+        deleteHotlist: {
+          error: null,
+          requesting: false,
+        },
         fetch: {
           error: null,
           requesting: false,
@@ -173,6 +177,34 @@ describe('hotlist action creators', () => {
     const actual = hotlist.select(example.NAME);
     const expected = {type: hotlist.SELECT, name: example.NAME};
     assert.deepEqual(actual, expected);
+  });
+
+  describe('deleteHotlist', () => {
+    it('success', async () => {
+      prpcClient.call.returns(Promise.resolve({}));
+
+      await hotlist.deleteHotlist(example.NAME)(dispatch);
+
+      sinon.assert.calledWith(dispatch, {type: hotlist.DELETE_START});
+
+      const args = {name: example.NAME};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
+
+      sinon.assert.calledWith(dispatch, {type: hotlist.DELETE_SUCCESS});
+    });
+
+    it('failure', async () => {
+      prpcClient.call.throws();
+
+      await hotlist.deleteHotlist(example.NAME)(dispatch);
+
+      const action = {
+        type: hotlist.DELETE_FAILURE,
+        error: sinon.match.any,
+      };
+      sinon.assert.calledWith(dispatch, action);
+    });
   });
 
   describe('fetch', () => {

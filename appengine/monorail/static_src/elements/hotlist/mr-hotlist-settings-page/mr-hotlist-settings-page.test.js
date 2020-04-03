@@ -3,7 +3,9 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 
+import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as sitewide from 'reducers/sitewide.js';
@@ -68,5 +70,40 @@ describe('mr-hotlist-settings-page (connected)', () => {
     const state = store.getState();
     assert.deepEqual(sitewide.pageTitle(state), 'Settings - Hotlist-Name');
     assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
+  });
+
+  it('deletes hotlist', async () => {
+    const stateChangedStub = sinon.stub(element, 'stateChanged');
+    element._currentUser = example.HOTLIST.owner;
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    const deleteButton = element.shadowRoot.getElementById('delete-hotlist');
+    assert.isNotNull(deleteButton);
+
+    // Auto confirm deletion of hotlist.
+    const confirmStub = sinon.stub(window, 'confirm');
+    confirmStub.returns(true);
+    const callStub = sinon.stub(prpcClient, 'call');
+    const pageStub = sinon.stub(element, 'page');
+    // Stop Redux from overriding values being tested.
+
+    try {
+      const args = {name: example.NAME};
+
+      await element._delete();
+
+      // We can't stub hotlist.deleteHotlist(), so stub prpcClient.call()
+      // instead. https://github.com/sinonjs/sinon/issues/562
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
+      sinon.assert.calledWith(
+          element.page, `/u/${example.HOTLIST.owner.displayName}/hotlists`);
+    } finally {
+      pageStub.restore();
+      callStub.restore();
+      confirmStub.restore();
+      stateChangedStub.restore();
+    }
   });
 });
