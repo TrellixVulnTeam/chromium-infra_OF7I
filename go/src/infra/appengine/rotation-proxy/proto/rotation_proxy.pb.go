@@ -234,7 +234,7 @@ type Rotation struct {
 	// The unique name of the rotation.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Shifts in a rotation.
-	// Shifts will be sorted with the current shift as the first element.
+	// Shifts will be sorted by start time with the current shift as the first element.
 	Shifts               []*Shift `protobuf:"bytes,2,rep,name=shifts,proto3" json:"shifts,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -283,9 +283,9 @@ func (m *Rotation) GetShifts() []*Shift {
 type Shift struct {
 	// The list of oncall users for this shift.
 	Oncalls []*OncallPerson `protobuf:"bytes,1,rep,name=oncalls,proto3" json:"oncalls,omitempty"`
-	// Unix timestamp of the start of the shift.
+	// Timestamp of the start of the shift.
 	StartTime *timestamp.Timestamp `protobuf:"bytes,2,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	// Unix timestamp of the end of the shift.
+	// Timestamp of the end of the shift.
 	EndTime              *timestamp.Timestamp `protobuf:"bytes,3,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`

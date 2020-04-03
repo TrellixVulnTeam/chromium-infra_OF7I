@@ -7,4 +7,4 @@ format:
 
 # TODO (nqmtuan): Change project to chops-rotation-proxy after resolving permission problem.
 deploy:
-	gcloud app deploy --no-promote --no-stop-previous-version app.yaml --project chops-rotation-proxy-test
+	gae.py upload -A chops-rotation-proxy-test

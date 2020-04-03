@@ -49,7 +49,7 @@ message Rotation {
   string name = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Shifts in a rotation.
-  // Shifts will be sorted with the current shift as the first element.
+  // Shifts will be sorted by start time with the current shift as the first element.
   repeated Shift shifts = 2;
 }
 
@@ -57,10 +57,10 @@ message Shift {
   // The list of oncall users for this shift.
   repeated OncallPerson oncalls = 1;
 
-  // Unix timestamp of the start of the shift.
+  // Timestamp of the start of the shift.
   google.protobuf.Timestamp start_time = 2;
 
-  // Unix timestamp of the end of the shift.
+  // Timestamp of the end of the shift.
   google.protobuf.Timestamp end_time = 3;
 }
 
