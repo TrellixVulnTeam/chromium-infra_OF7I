@@ -20,7 +20,8 @@ import (
 
 // Module is a loaded mutable module's YAML.
 type Module struct {
-	Name string // e.g. "default"
+	Name    string // e.g. "default"
+	Runtime string // e.g. "go113"
 
 	conf map[string]interface{} // deserialized YAML config
 }
@@ -52,6 +53,15 @@ func parseYAML(blob []byte) (*Module, error) {
 		m.Name = nm
 	} else {
 		return nil, errors.Reason("bad service name %v, not a string", name).Err()
+	}
+
+	// Same for "runtime", if present.
+	if runtime := m.conf["runtime"]; runtime != nil {
+		if asStr, ok := runtime.(string); ok {
+			m.Runtime = asStr
+		} else {
+			return nil, errors.Reason("bad runtime %v, not a string", runtime).Err()
+		}
 	}
 
 	return m, nil

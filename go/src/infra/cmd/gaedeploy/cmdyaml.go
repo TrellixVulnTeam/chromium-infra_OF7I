@@ -91,6 +91,6 @@ func (c *cmdYamlRun) exec(ctx context.Context) error {
 			"app", "deploy",
 			"--project", c.appID,
 			"--quiet", // disable interactive prompts
-		}, c.deployableYaml...), path, c.dryRun)
+		}, c.deployableYaml...), path, nil, c.dryRun)
 	})
 }

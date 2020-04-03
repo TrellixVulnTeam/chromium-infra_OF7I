@@ -84,7 +84,7 @@ func fetchAndUntar(ctx context.Context, src source.Source, tmpName, destDir stri
 //
 // All attributes other than +x owner bit are silently discarded.
 func extractOneFromTar(ctx context.Context, h *tar.Header, r io.Reader, destDir string) error {
-	if h.Typeflag != tar.TypeDir && h.Typeflag != tar.TypeReg {
+	if h.Typeflag != tar.TypeDir && h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeSymlink {
 		return errors.Reason("unsupported type %d", h.Typeflag).Err()
 	}
 
@@ -95,6 +95,15 @@ func extractOneFromTar(ctx context.Context, h *tar.Header, r io.Reader, destDir 
 
 	if h.Typeflag == tar.TypeDir {
 		return os.MkdirAll(filepath.Join(destDir, name), 0700)
+	}
+
+	if h.Typeflag == tar.TypeSymlink {
+		target := filepath.FromSlash(h.Linkname)
+		destRel := filepath.Clean(filepath.Join(filepath.Dir(name), target))
+		if strings.HasPrefix(destRel, ".."+string(filepath.Separator)) {
+			return errors.Reason("fishy link target %q", h.Linkname).Err()
+		}
+		return os.Symlink(target, filepath.Join(destDir, name))
 	}
 
 	perms := os.FileMode(0600)

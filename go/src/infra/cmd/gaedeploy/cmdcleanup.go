@@ -129,5 +129,5 @@ func cleanupVersions(ctx context.Context, appID, module string, vers gcloud.Vers
 		"--quiet", // disable interactive prompts
 		"--project", appID,
 		"--service", module,
-	}, versionsToDelete...), "", dryRun)
+	}, versionsToDelete...), "", nil, dryRun)
 }

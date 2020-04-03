@@ -14,6 +14,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/system/environ"
 )
 
 // Modules is a map "module name -> its versions".
@@ -98,7 +99,7 @@ func List(ctx context.Context, appID, module string) (Modules, error) {
 }
 
 // Run executes arbitrary `gcloud [cmd]`.
-func Run(ctx context.Context, cmd []string, cwd string, dryRun bool) error {
+func Run(ctx context.Context, cmd []string, cwd string, env environ.Env, dryRun bool) error {
 	cmdLine := append([]string{"gcloud"}, cmd...)
 
 	logging.Infof(ctx, "Running: %v", cmdLine)
@@ -115,6 +116,9 @@ func Run(ctx context.Context, cmd []string, cwd string, dryRun bool) error {
 	cmdObj.Dir = cwd
 	cmdObj.Stdout = os.Stdout
 	cmdObj.Stderr = os.Stderr
+	if env != nil {
+		cmdObj.Env = env.Sorted()
+	}
 	if err := cmdObj.Run(); err != nil {
 		return errors.Annotate(err, "gcloud call failed").Err()
 	}

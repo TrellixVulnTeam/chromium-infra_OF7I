@@ -7,14 +7,17 @@ package main
 import (
 	"context"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/maruel/subcommands"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag/stringmapflag"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/system/environ"
 
 	"infra/cmd/gaedeploy/gcloud"
 	"infra/cmd/gaedeploy/module"
@@ -125,10 +128,10 @@ func (c *cmdModuleRun) exec(ctx context.Context) error {
 		logging.Infof(ctx, "No such version, will deploy it.")
 	}
 
-	return c.cache.WithTarball(ctx, c.source, func(path string) error {
+	return c.cache.WithTarball(ctx, c.source, func(root string) error {
 		// Read the original YAML to inject site-specific configuration into it.
-		logging.Infof(ctx, "Loading %s...", filepath.Join(path, c.moduleYAML))
-		mod, err := module.ReadYAML(filepath.Join(path, c.moduleYAML))
+		logging.Infof(ctx, "Loading %s...", filepath.Join(root, c.moduleYAML))
+		mod, err := module.ReadYAML(filepath.Join(root, c.moduleYAML))
 		if err != nil {
 			return errors.Annotate(err, "failed to read module YAML").Err()
 		}
@@ -164,10 +167,20 @@ func (c *cmdModuleRun) exec(ctx context.Context) error {
 		// Need to save the YAML on disk in the same directory as the original one,
 		// so that gcloud resolves all paths in it correctly. Keep it hanging there
 		// afterwards to aid in debugging, it is harmless.
-		dir, base := filepath.Dir(c.moduleYAML), filepath.Base(c.moduleYAML)
-		modPath := filepath.Join(dir, ".gaedeploy_"+base)
-		if err := ioutil.WriteFile(filepath.Join(path, modPath), blob, 0600); err != nil {
+		modDir, yamlBaseName := filepath.Dir(c.moduleYAML), filepath.Base(c.moduleYAML)
+		yamlName := ".gaedeploy_" + yamlBaseName
+		if err := ioutil.WriteFile(filepath.Join(root, filepath.Join(modDir, yamlName)), blob, 0600); err != nil {
 			return errors.Annotate(err, "failed to save processed module config").Err()
+		}
+
+		// If this is a tarball with Go code, need to setup GOPATH and deploy
+		// from within it to make sure *.go paths in GAE app's stack traces are
+		// correct.
+		var env environ.Env
+		if strings.HasPrefix(mod.Runtime, "go") {
+			if modDir, env, err = prepareForGoDeploy(ctx, root, modDir); err != nil {
+				return errors.Annotate(err, "failed to prepare for Go deployment").Err()
+			}
 		}
 
 		// Perform the actual deployment.
@@ -178,7 +191,65 @@ func (c *cmdModuleRun) exec(ctx context.Context) error {
 			"--no-promote",
 			"--no-stop-previous-version",
 			"--version", c.moduleVersion,
-			modPath,
-		}, path, c.dryRun)
+			yamlName,
+		}, filepath.Join(root, modDir), env, c.dryRun)
 	})
+}
+
+// prepareForGoDeploy prepares Go environment variables and finds the module
+// in GOPATH.
+//
+// `root` is a path to where the tarball is checked out.
+// `modDir` is a path within the tarball to the directory with module's YAML.
+//
+// Uses the presence of "<root>/_gopath" as indicator that the tarball was
+// built by cloudbuildhelper (using "go_gae_bundle" build step). If it's
+// absent, assumes the tarball uses Go modules and lets "gcloud app deploy"
+// deal with it.
+//
+// Returns:
+//   `newModDir`: a path within the tarball to use as new "directory with
+//       module's YAML" (may be same as `modDir` if no changes are needed).
+//   `env`: a environ to pass to "gcloud app deploy".
+//   `err`: if something is not right.
+func prepareForGoDeploy(ctx context.Context, root, modDir string) (newModDir string, env environ.Env, err error) {
+	// Scrub the existing Go environ. This scrubs a bit more, but gcloud should
+	// not depend on env vars that start with GO or CGO anyway.
+	env = environ.System()
+	env.RemoveMatch(func(k, v string) bool {
+		return strings.HasPrefix(k, "GO") || strings.HasPrefix(k, "CGO")
+	})
+
+	// Setup GOPATH if the tarball has "_gopath" directory.
+	goPathAbs, err := filepath.Abs(filepath.Join(root, "_gopath"))
+	if err != nil {
+		return "", nil, err
+	}
+	if _, err := os.Stat(goPathAbs); err == nil {
+		logging.Infof(ctx, "Found _gopath, using it as GOPATH")
+		env.Set("GOPATH", goPathAbs)
+		env.Set("GO111MODULE", "off")
+	}
+
+	// Detect when `modDir` is a symlink to a _gopath/... and follow it. This is
+	// how tarballs built by cloudbuildhelper look like. By following the symlink
+	// we make the deployed *.go files have paths matching their absolute import
+	// paths. They eventually surface in stack traces in error messages, etc.
+	dest, err := filepath.EvalSymlinks(filepath.Join(root, modDir))
+	if err != nil {
+		return "", nil, errors.Annotate(err, "failed to evaluate %q as a symlink", modDir).Err()
+	}
+	rel, err := filepath.Rel(root, dest)
+	if err != nil {
+		return "", nil, errors.Annotate(err, "failed to calculate rel(%q, %q)", root, dest).Err()
+	}
+	if strings.HasPrefix(rel, filepath.Join("_gopath", "src")+string(filepath.Separator)) {
+		logging.Infof(ctx, "Following symlink %q to its destination in _gopath %q", modDir, rel)
+		return rel, env, nil
+	}
+
+	// Not a cloudbuildhelper tarball, feed the module directory to
+	// "gcloud app deploy" as is. This can potentially work with apps that use
+	// go.mod but it hasn't been tested.
+	return modDir, env, nil
 }
