@@ -129,29 +129,24 @@ func TestBuilder(t *testing.T) {
 			}
 			So(files, ShouldResemble, []string{
 				"_gopath/env",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/anotherpkg.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/buildflags_amd64.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/buildflags_linux.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/main.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/static.txt",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/static/static.txt",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/vendor.go",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/pkg1/pkg1.go",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/pkg2/pkg2.go",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/vendor/example.com/another/another.go",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/vendor/example.com/pkg/pkg.go",
-				"helloworld/.gaedeploy.json",
-				"helloworld/anotherpkg.go",
-				"helloworld/buildflags_amd64.go",
-				"helloworld/buildflags_linux.go",
-				"helloworld/main.go",
-				"helloworld/static.txt",
-				"helloworld/static/static.txt",
-				"helloworld/vendor.go",
+				"helloworld",
 			})
 
-			r, err := byName["helloworld/.gaedeploy.json"].Body()
-			So(err, ShouldBeNil)
-			blob, err := ioutil.ReadAll(r)
-			So(err, ShouldBeNil)
-			So(string(blob), ShouldEqual, `{
-  "go": {
-    "import_path": "infra/cmd/cloudbuildhelper/builder/testing/helloworld"
-  }
-}`)
+			So(byName["helloworld"], ShouldResemble, fileset.File{
+				Path:          "helloworld",
+				SymlinkTarget: "_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld",
+			})
 		})
 	})
 }

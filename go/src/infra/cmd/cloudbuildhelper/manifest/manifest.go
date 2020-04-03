@@ -382,10 +382,9 @@ func (s *RunBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err erro
 // GoGAEBundleBuildStep can be used to prepare a tarball with Go GAE app source.
 //
 // Given an input directory that points to some `main` go package, it:
-//   * Non-recursively copies *.go files there to `Dest`.
-//   * Recursively copies all other files there to `Dest`.
+//   * Copies it (including all non-go files) to `_gopath/src/<its import path>`
 //   * Copies all *.go code with transitive dependencies to `_gopath/src/`.
-//   * Puts the import path of the package into `Dest/.gaedeploy.json`.
+//   * Makes `Dest` a symlink pointing to `_gopath/src/<import path>`.
 //
 // This ensures "gcloud app deploy" eventually can upload all *.go files needed
 // to deploy a module.

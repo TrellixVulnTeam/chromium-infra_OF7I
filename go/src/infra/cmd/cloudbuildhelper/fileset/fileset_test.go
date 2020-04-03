@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestSet(t *testing.T) {
@@ -58,6 +59,52 @@ func TestSet(t *testing.T) {
 			"F f2",
 			"F mem",
 		})
+	})
+
+	Convey("Symlinks", t, func() {
+		addOne := func(path, target string) (*File, error) {
+			s := Set{}
+			if err := s.AddSymlink(path, target); err != nil {
+				return nil, err
+			}
+			for _, f := range s.Files() {
+				if !f.Directory {
+					return &f, nil
+				}
+			}
+			panic("impossible")
+		}
+
+		f, err := addOne("path", "target")
+		So(err, ShouldBeNil)
+		So(f, ShouldResemble, &File{
+			Path:          "path",
+			SymlinkTarget: "target",
+		})
+
+		f, err = addOne("a/b/c/path", "target")
+		So(err, ShouldBeNil)
+		So(f, ShouldResemble, &File{
+			Path:          "a/b/c/path",
+			SymlinkTarget: "target",
+		})
+
+		f, err = addOne("a/b/c/path", ".././.")
+		So(err, ShouldBeNil)
+		So(f, ShouldResemble, &File{
+			Path:          "a/b/c/path",
+			SymlinkTarget: "..",
+		})
+
+		f, err = addOne("a/b/c/path", "../..")
+		So(err, ShouldBeNil)
+		So(f, ShouldResemble, &File{
+			Path:          "a/b/c/path",
+			SymlinkTarget: "../..",
+		})
+
+		_, err = addOne("a/b/c/path", "../../..")
+		So(err, ShouldErrLike, "is not in the set")
 	})
 
 	Convey("Reading body", t, func(c C) {
@@ -168,6 +215,11 @@ func TestSet(t *testing.T) {
 				continue
 			}
 
+			if hdr.Typeflag == tar.TypeSymlink {
+				scan.AddSymlink(hdr.Name, hdr.Linkname)
+				continue
+			}
+
 			body := bytes.Buffer{}
 			_, err = io.Copy(&body, tr)
 			So(err, ShouldBeNil)
@@ -210,7 +262,7 @@ func collect(s *Set) []string {
 }
 
 func read(f File) string {
-	if f.Directory {
+	if f.Directory || f.SymlinkTarget != "" {
 		return ""
 	}
 	r, err := f.Body()
@@ -226,6 +278,7 @@ func prepSet() *Set {
 	s.Add(memFile("f", "hello"))
 	s.Add(File{Path: "dir", Directory: true})
 	s.Add(memFile("dir/f", "another"))
+	s.AddSymlink("dir/link", "f")
 
 	rw := memFile("rw", "read-write")
 	rw.Writable = true

@@ -24,8 +24,9 @@ import (
 
 // File is a file inside a file set.
 type File struct {
-	Path      string // file path using "/" separator
-	Directory bool   // true if this is a directory
+	Path          string // file path using "/" separator
+	Directory     bool   // true if this is a directory
+	SymlinkTarget string // non-empty if this is a symlink
 
 	Size       int64 // size of the file, only for regular files
 	Writable   bool  // true if the file is writable, only for regular files
@@ -42,7 +43,19 @@ func (f *File) normalize() error {
 	if f.Path == "." || strings.HasPrefix(f.Path, "../") {
 		return errors.Reason("bad file path %q, not in the set", f.Path).Err()
 	}
-	if f.Directory {
+	switch {
+	case f.Directory:
+		f.SymlinkTarget = ""
+		f.Size = 0
+		f.Writable = false
+		f.Executable = false
+		f.Body = nil
+	case f.SymlinkTarget != "":
+		f.SymlinkTarget = path.Clean(filepath.ToSlash(f.SymlinkTarget))
+		targetAbs := path.Clean(path.Join(path.Dir(f.Path), f.SymlinkTarget))
+		if targetAbs == "." || strings.HasPrefix(targetAbs, "../") {
+			return errors.Reason("bad symlink %q, its target %q is not in the set", f.Path, f.SymlinkTarget).Err()
+		}
 		f.Size = 0
 		f.Writable = false
 		f.Executable = false
@@ -66,7 +79,7 @@ func (f *File) filePerm() os.FileMode {
 // Excluder takes an absolute path to a file on disk and returns true or false.
 type Excluder func(absPath string, isDir bool) bool
 
-// Set represents a set of regular files and directories (no symlinks).
+// Set represents a set of regular files, directories and symlinks.
 //
 // Such set can be constructed from existing files on disk (perhaps scattered
 // across many directories), and it then can be written into a tarball.
@@ -112,7 +125,8 @@ func (s *Set) Add(f File) error {
 //
 // A file or directory located at 'fsPath' on disk will become 'setPath' in
 // the set. Directories are added recursively. Symlinks are always expanded into
-// whatever they point to. Broken symlinks are silently skipped.
+// whatever they point to. Broken symlinks are silently skipped. To add a
+// symlink explicitly use AddSymlink.
 func (s *Set) AddFromDisk(fsPath, setPath string, exclude Excluder) error {
 	fsPath, err := filepath.Abs(fsPath)
 	if err != nil {
@@ -140,6 +154,19 @@ func (s *Set) AddFromMemory(setPath string, blob []byte, f *File) error {
 		return ioutil.NopCloser(bytes.NewReader(blob)), nil
 	}
 	return s.Add(nf)
+}
+
+// AddSymlink adds a relative symlink to the set.
+//
+// Doesn't verify that the target exists in the set.
+func (s *Set) AddSymlink(setPath, target string) error {
+	if target == "" {
+		return errors.Reason("symlink target can't be empty").Err()
+	}
+	return s.Add(File{
+		Path:          setPath,
+		SymlinkTarget: target,
+	})
 }
 
 // Len returns number of files in the set.
@@ -178,11 +205,19 @@ func (s *Set) Files() []File {
 func (s *Set) ToTar(w *tar.Writer) error {
 	buf := make([]byte, 64*1024)
 	return s.Enumerate(func(f File) error {
-		if f.Directory {
+		switch {
+		case f.Directory:
 			return w.WriteHeader(&tar.Header{
 				Typeflag: tar.TypeDir,
 				Name:     f.Path + "/",
 				Mode:     0755,
+			})
+		case f.SymlinkTarget != "":
+			return w.WriteHeader(&tar.Header{
+				Typeflag: tar.TypeSymlink,
+				Name:     f.Path,
+				Linkname: f.SymlinkTarget,
+				Mode:     0444,
 			})
 		}
 

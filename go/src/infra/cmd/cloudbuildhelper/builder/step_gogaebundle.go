@@ -6,7 +6,6 @@ package builder
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"go/build"
 	"os"
@@ -40,36 +39,38 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	if err != nil {
 		return errors.Annotate(err, "failed to locate the go code").Err()
 	}
+	if mainPkg.ImportPath == "" {
+		return errors.Reason("could not figure out import path of the main package").Err()
+	}
 	logging.Infof(ctx, "Import path is %q", mainPkg.ImportPath)
 	if mainPkg.Name != "main" {
 		return errors.Annotate(err, "only \"main\" package can be bundled, got %q", mainPkg.Name).Err()
 	}
 
-	// Drop a hint to gaedeploy that helps it to reconstruct the GOPATH.
-	var info struct {
-		Go struct {
-			ImportPath string `json:"import_path"`
-		} `json:"go"`
-	}
-	info.Go.ImportPath = mainPkg.ImportPath
-	blob, err := json.MarshalIndent(&info, "", "  ")
-	if err != nil {
-		panic(fmt.Sprintf("impossible: %s", err))
-	}
-	err = inv.addBlobToOutput(ctx, filepath.Join(inv.BuildStep.Dest, ".gaedeploy.json"), blob)
+	// We'll copy `mainPkg` directly into its final location in _gopath, but make
+	// the original intended destination point to it as a symlink.
+	goPathDest := filepath.Join(inv.Manifest.ContextDir, "_gopath", "src", mainPkg.ImportPath)
+	linkName, err := relPath(inv.Manifest.ContextDir, inv.BuildStep.Dest)
 	if err != nil {
 		return err
+	}
+	linkTarget, err := relPath(filepath.Dir(inv.BuildStep.Dest), goPathDest)
+	if err != nil {
+		return err
+	}
+	if err := inv.Output.AddSymlink(linkName, linkTarget); err != nil {
+		return errors.Annotate(err, "failed to setup a symlink to location in _gopath").Err()
 	}
 
 	// Copy all files that make up "main" package (they can be only at the root
 	// of `mainDir`), and copy all non-go files recursively (they can potentially
 	// be referenced by static_files in app.yaml). We'll deal with Go dependencies
 	// separately.
-	err = inv.addFilesToOutput(ctx, mainDir, inv.BuildStep.Dest, func(absPath string, isDir bool) bool {
+	err = inv.addFilesToOutput(ctx, mainDir, goPathDest, func(absPath string, isDir bool) bool {
 		if isDir {
 			return false // do not exclude directories, may have contain static files
 		}
-		rel, err := filepath.Rel(mainDir, absPath)
+		rel, err := relPath(mainDir, absPath)
 		if err != nil {
 			panic(fmt.Sprintf("impossible: %s", err))
 		}
@@ -151,6 +152,15 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	})
 }
 
+// relPath calls filepath.Rel and annotates the error.
+func relPath(base, path string) (string, error) {
+	rel, err := filepath.Rel(base, path)
+	if err != nil {
+		return "", errors.Annotate(err, "failed to calculate rel(%q, %q)", base, path).Err()
+	}
+	return rel, nil
+}
+
 // isGoSourceFile returns true if rel may be read by Go compiler.
 //
 // See https://golang.org/src/go/build/build.go.
@@ -174,7 +184,7 @@ func findStdlib(goRoot string) (s stringset.Set, err error) {
 		}
 
 		// Convert to an import path.
-		rel, err := filepath.Rel(dir, path)
+		rel, err := relPath(dir, path)
 		if err != nil {
 			return err
 		}
