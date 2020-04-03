@@ -19,13 +19,14 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+
 	"go.chromium.org/luci/appengine/gaetesting"
+	swarming "go.chromium.org/luci/swarming/proto/api"
 
 	"infra/qscheduler/qslib/tutils"
 	qscheduler "infra/qscheduler/service/api/qscheduler/v1"
 	"infra/qscheduler/service/app/eventlog"
 	"infra/qscheduler/service/app/frontend"
-	"infra/swarming"
 )
 
 func TestAssignTasks(t *testing.T) {

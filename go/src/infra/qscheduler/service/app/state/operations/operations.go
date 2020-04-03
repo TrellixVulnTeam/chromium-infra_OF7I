@@ -23,12 +23,12 @@ import (
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/data/strpair"
 	"go.chromium.org/luci/common/logging"
+	swarming "go.chromium.org/luci/swarming/proto/api"
 
 	"infra/qscheduler/qslib/reconciler"
 	"infra/qscheduler/qslib/scheduler"
 	"infra/qscheduler/qslib/tutils"
 	"infra/qscheduler/service/app/state/types"
-	"infra/swarming"
 )
 
 // AccountIDTagKey is the key used in Task tags to specify which quotascheduler

@@ -22,6 +22,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
+	swarming "go.chromium.org/luci/swarming/proto/api"
 
 	"infra/qscheduler/qslib/scheduler"
 	"infra/qscheduler/service/app/config"
@@ -29,7 +30,6 @@ import (
 	"infra/qscheduler/service/app/state/nodestore"
 	"infra/qscheduler/service/app/state/operations"
 	"infra/qscheduler/service/app/state/types"
-	"infra/swarming"
 )
 
 // BatchRunner runs operations in batches.

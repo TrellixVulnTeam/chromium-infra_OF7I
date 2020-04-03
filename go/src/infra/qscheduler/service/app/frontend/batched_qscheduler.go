@@ -19,13 +19,14 @@ import (
 	"math/rand"
 	"sync"
 
-	"infra/qscheduler/service/app/state"
-	"infra/qscheduler/service/app/state/nodestore"
-	"infra/swarming"
-
-	"go.chromium.org/luci/grpc/grpcutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"go.chromium.org/luci/grpc/grpcutil"
+	swarming "go.chromium.org/luci/swarming/proto/api"
+
+	"infra/qscheduler/service/app/state"
+	"infra/qscheduler/service/app/state/nodestore"
 )
 
 // BatchedQSchedulerServer implements the QSchedulerServer interface.

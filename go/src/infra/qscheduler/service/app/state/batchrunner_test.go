@@ -22,15 +22,17 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	. "github.com/smartystreets/goconvey/convey"
+
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/clock/testclock"
+	swarming "go.chromium.org/luci/swarming/proto/api"
 
 	"infra/qscheduler/qslib/tutils"
 	"infra/qscheduler/service/app/eventlog"
 	"infra/qscheduler/service/app/state"
 	"infra/qscheduler/service/app/state/nodestore"
-	"infra/swarming"
 )
 
 func TestBatcherCancellations(t *testing.T) {

@@ -16,16 +16,18 @@
 package frontend
 
 import (
-	qscheduler "infra/qscheduler/service/api/qscheduler/v1"
-	"infra/qscheduler/service/app/config"
-	"infra/swarming"
-
-	"github.com/golang/protobuf/proto"
-	"go.chromium.org/luci/grpc/prpc"
-	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/golang/protobuf/proto"
+
+	"go.chromium.org/luci/grpc/prpc"
+	"go.chromium.org/luci/server/auth"
+	swarming "go.chromium.org/luci/swarming/proto/api"
+
+	qscheduler "infra/qscheduler/service/api/qscheduler/v1"
+	"infra/qscheduler/service/app/config"
 )
 
 // SkipAuthorization is set to true when running in dev server locally.

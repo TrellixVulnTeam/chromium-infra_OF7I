@@ -19,7 +19,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"infra/swarming"
+	swarming "go.chromium.org/luci/swarming/proto/api"
 )
 
 func taskWithSliceDimensions(sliceDimensions ...[]string) *swarming.TaskSpec {
