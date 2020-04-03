@@ -221,3 +221,56 @@ func TestListMachines(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteMachines(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteMachines", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
+		chromeMachine1 := mockChromeMachine("chrome-asset-1", "chromelab", "machine-1")
+		chromeMachine2 := mockChromeMachine("chrome-asset-2", "chromelab", "machine-2")
+		req := &api.MachineList{
+			Machine: []*fleet.Machine{chromeOSMachine1, chromeMachine1},
+		}
+		resp, err := tf.Registration.CreateMachines(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp.GetPassed(), ShouldHaveLength, 2)
+		So(resp.GetFailed(), ShouldHaveLength, 0)
+		assertMachineEqual(resp.GetPassed()[0].Machine, chromeOSMachine1)
+		assertMachineEqual(resp.GetPassed()[1].Machine, chromeMachine1)
+		Convey("Delete machines by existing ID", func() {
+			req := &api.EntityIDList{
+				Id: []string{
+					chromeOSMachine1.GetId().GetValue(),
+					chromeMachine1.GetId().GetValue(),
+				},
+			}
+			resp, err := tf.Registration.DeleteMachines(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.GetPassed(), ShouldHaveLength, 2)
+			So(resp.GetFailed(), ShouldHaveLength, 0)
+			So(resp.GetPassed()[0].Id, ShouldEqual, "chromeos-asset-1")
+			So(resp.GetPassed()[1].Id, ShouldEqual, "chrome-asset-1")
+
+			listReq := &api.ListMachinesRequest{}
+			res, err := tf.Registration.ListMachines(tf.C, listReq)
+			So(err, ShouldBeNil)
+			So(res.GetPassed(), ShouldHaveLength, 0)
+			So(res.GetFailed(), ShouldHaveLength, 0)
+		})
+		Convey("Delete machines by non-existing ID", func() {
+			req := &api.EntityIDList{
+				Id: []string{
+					chromeMachine2.GetId().GetValue(),
+				},
+			}
+			res, err := tf.Registration.DeleteMachines(tf.C, req)
+			So(err, ShouldBeNil)
+			So(res.GetPassed(), ShouldHaveLength, 0)
+			So(res.GetFailed(), ShouldHaveLength, 1)
+			So(res.GetFailed()[0].ErrorMsg, ShouldContainSubstring, "Entity not found")
+		})
+	})
+}

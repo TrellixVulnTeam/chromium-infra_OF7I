@@ -197,3 +197,46 @@ func TestGetAllMachines(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteMachines(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	Convey("DeleteMachines", t, func() {
+		chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
+		chromeMachine1 := mockChromeMachine("chrome-asset-1", "chromelab", "machine-1")
+		chromeMachine2 := mockChromeMachine("chrome-asset-2", "chromelab", "machine-2")
+		req := []*fleet.Machine{chromeOSMachine1, chromeMachine1}
+		resp, err := CreateMachines(ctx, req)
+		So(err, ShouldBeNil)
+		So(resp.Passed(), ShouldHaveLength, 2)
+		So(resp.Failed(), ShouldHaveLength, 0)
+		assertMachineEqual(resp.Passed()[0].Data.(*fleet.Machine), chromeOSMachine1)
+		assertMachineEqual(resp.Passed()[1].Data.(*fleet.Machine), chromeMachine1)
+
+		Convey("Delete machines by existing ID", func() {
+			req := []string{
+				chromeOSMachine1.GetId().GetValue(),
+				chromeMachine1.GetId().GetValue(),
+			}
+			resp := DeleteMachines(ctx, req)
+			So(resp.Passed(), ShouldHaveLength, 2)
+			So(resp.Failed(), ShouldHaveLength, 0)
+			So(resp.Passed()[0].Data.(*fleet.Machine).Id.GetValue(), ShouldEqual, "chromeos-asset-1")
+			So(resp.Passed()[1].Data.(*fleet.Machine).Id.GetValue(), ShouldEqual, "chrome-asset-1")
+
+			res, err := GetAllMachines(ctx)
+			So(err, ShouldBeNil)
+			So(res.Passed(), ShouldHaveLength, 0)
+			So(res.Failed(), ShouldHaveLength, 0)
+		})
+		Convey("Delete machines by non-existing ID", func() {
+			req := []string{
+				chromeMachine2.GetId().GetValue(),
+			}
+			res := DeleteMachines(ctx, req)
+			So(res.Passed(), ShouldHaveLength, 0)
+			So(res.Failed(), ShouldHaveLength, 1)
+			So(res.Failed()[0].Err.Error(), ShouldContainSubstring, "Entity not found")
+		})
+	})
+}

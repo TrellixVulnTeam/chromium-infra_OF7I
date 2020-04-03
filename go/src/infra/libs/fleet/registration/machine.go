@@ -126,6 +126,19 @@ func GetMachinesByID(ctx context.Context, ids []string) (*fleetds.OpResults, err
 	return fleetds.GetByID(ctx, ids, queryByID)
 }
 
+// DeleteMachines returns the deleted machines
+func DeleteMachines(ctx context.Context, ids []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &fleet.Machine{
+			Id: &fleet.MachineID{
+				Value: id,
+			},
+		}
+	}
+	return fleetds.Delete(ctx, protos, newEntity, exists)
+}
+
 func putMachines(ctx context.Context, machines []*fleet.Machine, update bool) (*fleetds.OpResults, error) {
 	protos := make([]proto.Message, len(machines))
 	for i, p := range machines {

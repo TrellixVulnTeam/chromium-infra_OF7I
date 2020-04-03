@@ -89,7 +89,11 @@ func (fs *RegistrationServerImpl) DeleteMachines(ctx context.Context, req *api.E
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return &api.EntityIDResponse{}, err
+	res := registration.DeleteMachines(ctx, req.Id)
+	return &api.EntityIDResponse{
+		Passed: toEntityIDResult(res.Passed()),
+		Failed: toEntityIDResult(res.Failed()),
+	}, err
 }
 
 func toMachineResult(res datastore.OpResults) []*api.MachineResult {
@@ -105,6 +109,25 @@ func toMachineResult(res datastore.OpResults) []*api.MachineResult {
 		}
 		cpRes[i] = &api.MachineResult{
 			Machine:  machine,
+			ErrorMsg: errMsg,
+		}
+	}
+	return cpRes
+}
+
+func toEntityIDResult(res datastore.OpResults) []*api.EntityIDResult {
+	cpRes := make([]*api.EntityIDResult, len(res))
+	for i, r := range res {
+		errMsg := ""
+		machine := &fleet.Machine{}
+		if r.Err != nil {
+			errMsg = r.Err.Error()
+		}
+		if r.Data != nil {
+			machine = r.Data.(*fleet.Machine)
+		}
+		cpRes[i] = &api.EntityIDResult{
+			Id:       machine.Id.GetValue(),
 			ErrorMsg: errMsg,
 		}
 	}

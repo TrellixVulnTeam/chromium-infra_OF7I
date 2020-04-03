@@ -135,6 +135,45 @@ func GetAll(ctx context.Context, qf QueryAllFunc) (*OpResults, error) {
 	return &res, nil
 }
 
+// Delete removes the entities from the datastore
+func Delete(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc) *OpResults {
+	allRes := make(OpResults, len(es))
+	checkRes := make(OpResults, 0, len(es))
+	checkEntities := make([]FleetEntity, 0, len(es))
+	updated := time.Now().UTC()
+	for i, e := range es {
+		allRes[i] = &OpResult{
+			Timestamp: updated,
+			Data:      e,
+		}
+		entity, err := nf(ctx, e, updated)
+		if err != nil {
+			allRes[i].LogError(err)
+			continue
+		}
+		checkEntities = append(checkEntities, entity)
+		checkRes = append(checkRes, allRes[i])
+	}
+	// Datastore doesn't throw an error if the record doesn't exist.
+	// Check and return err if there is no such entity in the datastore.
+	exists, err := ef(ctx, checkEntities)
+	if err == nil {
+		for i := range checkEntities {
+			if !exists[i] {
+				checkRes[i].LogError(errors.Reason("Entity not found").Err())
+			}
+		}
+	}
+	if err := datastore.Delete(ctx, checkEntities); err != nil {
+		for i, e := range err.(errors.MultiError) {
+			if e != nil {
+				checkRes[i].LogError(e)
+			}
+		}
+	}
+	return &allRes
+}
+
 // OpResult records the result of datastore operations
 type OpResult struct {
 	// Operations:
