@@ -11,12 +11,12 @@ import (
 	api "infra/appengine/unified-fleet/api/v1"
 )
 
-// FleetServerImpl implements fleet interfaces.
-type FleetServerImpl struct {
+// RegistrationServerImpl implements fleet interfaces.
+type RegistrationServerImpl struct {
 }
 
 // RegisterMachines registers...
-func (fs *FleetServerImpl) RegisterMachines(ctx context.Context, req *api.RegisterMachinesRequest) (response *api.RegisterMachinesResponse, err error) {
+func (fs *RegistrationServerImpl) RegisterMachines(ctx context.Context, req *api.RegisterMachinesRequest) (response *api.RegisterMachinesResponse, err error) {
 	logging.Debugf(ctx, "enter RegisterMachines")
 	return &api.RegisterMachinesResponse{}, err
 }

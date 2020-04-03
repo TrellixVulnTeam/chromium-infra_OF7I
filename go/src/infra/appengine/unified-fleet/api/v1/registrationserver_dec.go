@@ -8,9 +8,9 @@ import (
 	proto "github.com/golang/protobuf/proto"
 )
 
-type DecoratedFleet struct {
+type DecoratedRegistration struct {
 	// Service is the service to decorate.
-	Service FleetServer
+	Service RegistrationServer
 	// Prelude is called for each method before forwarding the call to Service.
 	// If Prelude returns an error, then the call is skipped and the error is
 	// processed via the Postlude (if one is defined), or it is returned directly.
@@ -23,7 +23,7 @@ type DecoratedFleet struct {
 	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedFleet) RegisterMachines(ctx context.Context, req *RegisterMachinesRequest) (rsp *RegisterMachinesResponse, err error) {
+func (s *DecoratedRegistration) RegisterMachines(ctx context.Context, req *RegisterMachinesRequest) (rsp *RegisterMachinesResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "RegisterMachines", req)

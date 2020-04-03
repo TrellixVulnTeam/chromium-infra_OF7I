@@ -16,8 +16,8 @@ import (
 
 // InstallServices installs ...
 func InstallServices(apiServer *prpc.Server) {
-	api.RegisterFleetServer(apiServer, &api.DecoratedFleet{
-		Service: &FleetServerImpl{},
+	api.RegisterRegistrationServer(apiServer, &api.DecoratedRegistration{
+		Service: &RegistrationServerImpl{},
 		Prelude: checkAccess,
 	})
 	api.RegisterConfigurationServer(apiServer, &api.DecoratedConfiguration{
