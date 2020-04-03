@@ -19,10 +19,6 @@ cron:
   url: /internal/cron/sync-device-list-to-drone-config
   schedule: every 24 hours
 
-- description: Compare inventory from V1 and V2
-  url: /internal/cron/compare-inventory
-  schedule: every 24 hours
-
 - description: report metrics of Duts in inventory.
   url: /internal/cron/report-inventory
   schedule: every 5 minutes

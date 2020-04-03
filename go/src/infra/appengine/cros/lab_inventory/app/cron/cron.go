@@ -26,7 +26,6 @@ import (
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/converter"
-	"infra/appengine/cros/lab_inventory/app/migration"
 	dronequeenapi "infra/appengine/drone-queen/api"
 	bqlib "infra/libs/cros/lab_inventory/bq"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
@@ -62,8 +61,6 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/report-inventory", mwCron, logAndSetHTTPErr(reportInventoryCronHandler))
 
 	r.GET("/internal/cron/sync-device-list-to-drone-config", mwCron, logAndSetHTTPErr(syncDeviceListToDroneConfigHandler))
-
-	r.GET("/internal/cron/compare-inventory", mwCron, logAndSetHTTPErr(compareInventoryCronHandler))
 }
 
 func dumpToBQCronHandler(c *router.Context) (err error) {
@@ -271,11 +268,6 @@ func reportInventoryCronHandler(c *router.Context) error {
 	}
 	logging.Infof(c.Context, "not enabled yet")
 	return nil
-}
-
-func compareInventoryCronHandler(c *router.Context) error {
-	logging.Infof(c.Context, "start to comparing inventory from v1 and v2")
-	return migration.CompareInventory(c.Context)
 }
 
 func syncDeviceListToDroneConfigHandler(c *router.Context) error {
