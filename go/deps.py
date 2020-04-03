@@ -434,6 +434,10 @@ def write_file(path, blob):
 
 def remove_directory(p):
   """Recursively removes a directory if it exists (works on Windows!)."""
+  # On python2, we must convert the string to unicode if we want it to be able
+  # to delete non-ascii files and directories.
+  if not isinstance(p, unicode):
+    p = p.decode('utf-8')
   if not os.path.exists(p):
     return
   # One does not simply remove a directory on Windows... Read-only files
