@@ -8,9 +8,13 @@ import (
 	"context"
 	"fmt"
 	"go/build"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
@@ -23,16 +27,39 @@ import (
 func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	logging.Infof(ctx, "Bundling %q", inv.BuildStep.GoGAEBundle)
 
-	mainDir, err := filepath.Abs(inv.BuildStep.GoGAEBundle)
+	yamlPath, err := filepath.Abs(inv.BuildStep.GoGAEBundle)
 	if err != nil {
 		return errors.Annotate(err, "failed to convert the path %q to absolute", inv.BuildStep.GoGAEBundle).Err()
 	}
+
+	// Read go runtime version from the YAML to know what Go build flags to use.
+	runtime, err := readRuntime(yamlPath)
+	if err != nil {
+		return err
+	}
+	logging.Infof(ctx, "Runtime is %q", runtime)
+	if !strings.HasPrefix(runtime, "go1") {
+		return errors.Annotate(err, "%q is not a supported go runtime", runtime).Err()
+	}
+	goMinorVer, err := strconv.ParseInt(runtime[3:], 10, 32)
+	if err != nil {
+		return errors.Annotate(err, "can't parse %q", runtime).Err()
+	}
+
+	// The directory with `main` package.
+	mainDir := filepath.Dir(yamlPath)
 
 	// Get a build.Context as if we are building for linux amd64.
 	bc := build.Default
 	bc.GOARCH = "amd64"
 	bc.GOOS = "linux"
 	bc.Dir = mainDir
+
+	// Enable all Go versions up to the one in the app.yaml.
+	bc.ReleaseTags = nil
+	for i := 1; i <= int(goMinorVer); i++ {
+		bc.ReleaseTags = append(bc.ReleaseTags, fmt.Sprintf("go1.%d", i))
+	}
 
 	// Find where main package is actually located.
 	mainPkg, err := bc.ImportDir(mainDir, 0)
@@ -150,6 +177,23 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	return inv.Output.AddFromMemory(envPath, []byte(envScript), &fileset.File{
 		Executable: true,
 	})
+}
+
+// readRuntime reads `runtime` field in the YAML file.
+func readRuntime(path string) (string, error) {
+	blob, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", errors.Annotate(err, "failed to read %q", path).Err()
+	}
+
+	var appYaml struct {
+		Runtime string `yaml:"runtime"`
+	}
+	if err := yaml.Unmarshal(blob, &appYaml); err != nil {
+		return "", errors.Annotate(err, "file %q is not a valid YAML", path).Err()
+	}
+
+	return appYaml.Runtime, nil
 }
 
 // relPath calls filepath.Rel and annotates the error.

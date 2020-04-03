@@ -3,5 +3,5 @@ name: "testing"
 inputsdir: .
 
 build:
-  - go_gae_bundle: ${inputsdir}/helloworld
+  - go_gae_bundle: ${inputsdir}/helloworld/fake-app.yaml
     dest: ${contextdir}/helloworld

@@ -132,6 +132,8 @@ func TestBuilder(t *testing.T) {
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/anotherpkg.go",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/buildflags_amd64.go",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/buildflags_linux.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/curgo.go",
+				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/fake-app.yaml",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/main.go",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/static.txt",
 				"_gopath/src/infra/cmd/cloudbuildhelper/builder/testing/helloworld/static/static.txt",
