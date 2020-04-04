@@ -436,6 +436,19 @@ def remove_directory(p):
   """Recursively removes a directory if it exists (works on Windows!)."""
   if not os.path.exists(p):
     return
+
+  # Some Go packages can have unicode paths. This causes everything to explode
+  # on windows, unless rmtree is passed a unicode object.
+  #
+  # However, shutil.rmtree is not unicode-safe on posix.
+  #
+  # Python 2 sucks. https://bugs.python.org/issue24672
+  #
+  # Probably we should rewrite this bootstrap to be the smallest possible amount
+  # of python3, and any yaml parsing stuff is in Go.
+  if sys.platform == 'win32' and not isinstance(p, unicode):
+    p = p.decode('utf-8')
+
   # One does not simply remove a directory on Windows... Read-only files
   # (.git/* in particular) need special treatment.
   def onerror(func, path, _exc_info):
