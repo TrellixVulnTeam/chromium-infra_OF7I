@@ -25,8 +25,16 @@ import tq
 
 
 @ndb.tasklet
-def create_invocations_async(builds):
-  """Creates resultdb invocations for each build if globally enabled."""
+def create_invocations_async(builds_and_configs):
+  """Creates resultdb invocations for each build.
+
+  Only create invocations if ResultDB hostname is globally set.
+
+  Args:
+    builds_and_configs: a list of (build, builder_cfg) tuples.
+  """
+  if not builds_and_configs:  # pragma: no cover
+    return
   settings = yield config.get_settings_async()
   resultdb_host = settings.resultdb.hostname
   if not resultdb_host:
@@ -34,28 +42,36 @@ def create_invocations_async(builds):
     # buildbucket deployment.
     return
 
-  # TODO(crbug.com/1064829): Accept only one value (ret) from this call.
-  # Expect resp.update_tokens to contain the tokens for the invocations.
-  resp, tokens = yield _create_invocations_async(builds, resultdb_host)
-  assert len(resp.invocations) == len(tokens) == len(builds)
-  for inv, tok, build in zip(resp.invocations, tokens, builds):
+  resp = yield _create_invocations_async(builds_and_configs, resultdb_host)
+  assert (
+      len(resp.invocations) == len(resp.update_tokens) ==
+      len(builds_and_configs)
+  )
+  for inv, tok, (build, _) in zip(resp.invocations, resp.update_tokens,
+                                  builds_and_configs):
     build.proto.infra.resultdb.invocation = inv.name
     build.resultdb_update_token = tok
 
 
 @ndb.tasklet
-def _create_invocations_async(builds, hostname):
-  """Creates a batch of invocations in resultdb for the given builds."""
-  # TODO(crbug.com/1056006): Populate bigquery_exports
+def _create_invocations_async(builds_and_configs, hostname):
+  """Creates a batch of invocations in resultdb for the given NewBuilds."""
   # TODO(crbug.com/1056007): Create an invocation like
   #     "build:<project>/<bucket>/<builder>/<number>" if number is available,
   #     and make it include the "build:<id>" inv.
 
   # build:<first build id>+<number of other builds in the batch>
-  request_id = 'build:%d+%d' % (builds[0].proto.id, len(builds) - 1)
+  request_id = 'build:%d+%d' % (
+      builds_and_configs[0][0].proto.id, len(builds_and_configs) - 1
+  )
   req = recorder_pb2.BatchCreateInvocationsRequest(request_id=request_id)
-  for build in builds:
-    req.requests.add(invocation_id='build:%d' % build.proto.id)
+  for build, cfg in builds_and_configs:
+    req.requests.add(
+        invocation_id='build:%d' % build.proto.id,
+        invocation=invocation_pb2.Invocation(
+            bigquery_exports=cfg.resultdb.bq_exports,
+        ),
+    )
   response_metadata = {}
   recorder = client.Client(
       hostname,
@@ -66,18 +82,8 @@ def _create_invocations_async(builds, hostname):
       credentials=client.service_account_credentials(),
       response_metadata=response_metadata,
   )
-  if ret.update_tokens:
-    raise ndb.Return(ret, ret.update_tokens)
-
-  # TODO(crbug.com/1064829): Remove the code below when resultdb stops sending
-  # update tokens in metadata, and return only ret from this tasklet.
-  tokens = response_metadata['update-token']
-  # Multiple values for the same header can be joined by commas into a single
-  # string as per [1].
-  # [1]: https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-  if isinstance(tokens, basestring):  # pragma: no branch
-    tokens = tokens.split(',')
-  raise ndb.Return(ret, tokens)
+  assert ret.update_tokens
+  raise ndb.Return(ret)
 
 
 def enqueue_invocation_finalization_async(build):

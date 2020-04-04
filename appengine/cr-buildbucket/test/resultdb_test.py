@@ -17,6 +17,8 @@ from testing_utils import testing
 import mock
 
 from go.chromium.org.luci.buildbucket.proto import common_pb2
+from go.chromium.org.luci.buildbucket.proto import project_config_pb2
+from go.chromium.org.luci.buildbucket.proto import rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from go.chromium.org.luci.resultdb.proto.rpc.v1 import invocation_pb2
 from go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder_pb2
@@ -27,7 +29,23 @@ import resultdb
 import tq
 
 
-def _make_build(build_id, hostname='rdb.dev', invocation=None):
+def _make_builder_cfg():
+  return project_config_pb2.Builder(
+      resultdb=project_config_pb2.Builder.ResultDB(
+          bq_exports=[
+              invocation_pb2.BigQueryExport(
+                  project='luci-resultdb',
+                  dataset='chromium',
+                  table='all_test_results',
+              )
+          ]
+      )
+  )
+
+
+def _make_build_and_config(
+    build_id, hostname='rdb.dev', invocation=None, builder_cfg=None
+):
   bundle = build_bundle(
       id=build_id,
       for_creation=True,
@@ -39,20 +57,13 @@ def _make_build(build_id, hostname='rdb.dev', invocation=None):
       )
   )
   bundle.put()
-  return bundle.build
+  return bundle.build, builder_cfg or _make_builder_cfg()
 
 
-def _mock_create_request_async(
-    response, metadata_update_tokens=None, pb_update_tokens=None
-):
+def _mock_create_request_async(response, pb_update_tokens):
 
-  def inner(*_, **kwargs):
-    if metadata_update_tokens:
-      kwargs['response_headers']['update-token'] = ','.join(
-          metadata_update_tokens
-      )
-    else:
-      response.update_tokens.extend(pb_update_tokens)
+  def inner(*_, **__):
+    response.update_tokens.extend(pb_update_tokens)
     ret = future(response.SerializeToString())
     return ret
 
@@ -72,16 +83,21 @@ class ResultDBTest(testing.AppengineTestCase):
         autospec=True,
         return_value=future(self.settings),
     )
-    self.builds = None
+    self.builds_and_configs = None
+
+  @property
+  def builds(self):
+    # The first item of each build_and_config tuple.
+    return zip(*self.builds_and_configs)[0]
 
   def test_no_hostname(self):
-    self.builds = [_make_build(1, hostname=None)]
+    self.builds_and_configs = [_make_build_and_config(1, hostname=None)]
     self.settings.resultdb.hostname = ''
-    resultdb.create_invocations_async(self.builds).get_result()
+    resultdb.create_invocations_async(self.builds_and_configs).get_result()
     self.assertFalse(net.request_async.called)
 
   def test_cannot_create_invocation(self):
-    self.builds = [_make_build(3)]
+    self.builds_and_configs = [_make_build_and_config(3)]
     net.request_async.side_effect = [
         future_exception(
             net.Error(
@@ -93,46 +109,27 @@ class ResultDBTest(testing.AppengineTestCase):
         )
     ]
     with self.assertRaises(client.RpcError):
-      resultdb.create_invocations_async(self.builds).get_result()
+      resultdb.create_invocations_async(self.builds_and_configs).get_result()
 
   def test_invocation_created(self):
-    self.builds = [_make_build(4)]
+    self.builds_and_configs = [_make_build_and_config(4)]
     response = recorder_pb2.BatchCreateInvocationsResponse(
         invocations=[invocation_pb2.Invocation(name='invocations/build:4')]
     )
     net.request_async.side_effect = _mock_create_request_async(
         response, ['FakeUpdateToken']
     )
-    resultdb.create_invocations_async(self.builds).get_result()
+    resultdb.create_invocations_async(self.builds_and_configs).get_result()
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
     self.assertEqual(
         self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:4'
     )
 
-  def test_invocations_created_metadata_update_tokens(self):
-    self.builds = [_make_build(5), _make_build(6)]
-    response = recorder_pb2.BatchCreateInvocationsResponse(
-        invocations=[
-            invocation_pb2.Invocation(name='invocations/build:5'),
-            invocation_pb2.Invocation(name='invocations/build:6'),
-        ]
-    )
-    net.request_async.side_effect = _mock_create_request_async(
-        response,
-        metadata_update_tokens=['FakeUpdateToken', 'FakeUpdateToken2']
-    )
-    resultdb.create_invocations_async(self.builds).get_result()
-    self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
-    self.assertEqual(
-        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:5'
-    )
-    self.assertEqual(self.builds[1].resultdb_update_token, 'FakeUpdateToken2')
-    self.assertEqual(
-        self.builds[1].proto.infra.resultdb.invocation, 'invocations/build:6'
-    )
-
   def test_invocations_created_protobuf_update_tokens(self):
-    self.builds = [_make_build(15), _make_build(16)]
+    self.builds_and_configs = [
+        _make_build_and_config(15),
+        _make_build_and_config(16)
+    ]
     response = recorder_pb2.BatchCreateInvocationsResponse(
         invocations=[
             invocation_pb2.Invocation(name='invocations/build:15'),
@@ -140,9 +137,9 @@ class ResultDBTest(testing.AppengineTestCase):
         ]
     )
     net.request_async.side_effect = _mock_create_request_async(
-        response, pb_update_tokens=['FakeUpdateToken', 'FakeUpdateToken2']
+        response, ['FakeUpdateToken', 'FakeUpdateToken2']
     )
-    resultdb.create_invocations_async(self.builds).get_result()
+    resultdb.create_invocations_async(self.builds_and_configs).get_result()
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
     self.assertEqual(
         self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:15'
@@ -158,7 +155,7 @@ class ResultDBEnqueueFinalizeTaskTest(testing.AppengineTestCase):
   def setUp(self):
     super(ResultDBEnqueueFinalizeTaskTest, self).setUp()
     self.patch('tq.enqueue_async', autospec=True, return_value=future(None))
-    self.build = _make_build(1)
+    self.build = _make_build_and_config(1)[0]
 
   @ndb.transactional
   def txn(self):

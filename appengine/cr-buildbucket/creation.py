@@ -472,7 +472,11 @@ def add_many_async(build_requests):
     yield _update_builders_async(to_create, now)
     yield (
         _generate_build_numbers_async(to_create),
-        resultdb.create_invocations_async([nb.build for nb in to_create]),
+        resultdb.create_invocations_async([
+            (nb.build, nb.builder_cfg)
+            for nb in to_create
+            if nb.builder_cfg and nb.builder_cfg.resultdb.enable
+        ]),
     )
     yield search.update_tag_indexes_async([nb.build for nb in to_create])
     yield [nb.put_and_cache_async() for nb in to_create]
