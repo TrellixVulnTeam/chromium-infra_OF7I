@@ -361,7 +361,7 @@ func logDeviceOpResults(ctx context.Context, res datastore.DeviceOpResults) {
 	}
 }
 
-// UpdateDutsStatus updates selected Duts' status labels related to testing.
+// UpdateDutsStatus updates selected Duts' status labels, metas related to testing.
 func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.UpdateDutsStatusRequest) (resp *api.UpdateDutsStatusResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
@@ -383,6 +383,20 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 	logDeviceOpResults(ctx, metaUpdateResults)
 	if err != nil {
 		logging.Errorf(ctx, "fail to update dut meta: %s", err.Error())
+		return nil, err
+	}
+
+	labMeta := make(map[string]datastore.LabMeta, len(req.GetLabMetas()))
+	for _, d := range req.GetLabMetas() {
+		labMeta[d.GetChromeosDeviceId()] = datastore.LabMeta{
+			ServoType: d.GetServoType(),
+		}
+	}
+	metaUpdateResults, err = datastore.UpdateLabMeta(ctx, labMeta)
+	logging.Debugf(ctx, "Lab meta update results")
+	logDeviceOpResults(ctx, metaUpdateResults)
+	if err != nil {
+		logging.Errorf(ctx, "fail to update lab meta: %s", err.Error())
 		return nil, err
 	}
 

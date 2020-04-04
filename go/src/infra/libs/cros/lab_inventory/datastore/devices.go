@@ -451,6 +451,58 @@ func UpdateDutMeta(ctx context.Context, meta map[string]DutMeta) (DeviceOpResult
 	return append(updateResults, failedResults...), nil
 }
 
+// LabMeta refers to the metadata to be stored for a DUT.
+type LabMeta struct {
+	ServoType string
+}
+
+// UpdateLabMeta updates servo_type for a given host.
+func UpdateLabMeta(ctx context.Context, meta map[string]LabMeta) (DeviceOpResults, error) {
+	ids := make([]string, 0, len(meta))
+	for i := range meta {
+		ids = append(ids, i)
+	}
+	results := GetDevicesByIds(ctx, ids)
+
+	var updateResults DeviceOpResults
+	var failedResults DeviceOpResults
+	for _, r := range results {
+		if r.Err != nil {
+			failedResults = append(failedResults, r)
+			continue
+		}
+		var labData lab.ChromeOSDevice
+		if err := r.Entity.GetCrosDeviceProto(&labData); err != nil {
+			r.logError(err)
+			logging.Debugf(ctx, "fail to parse proto for entity: %#v", r.Entity)
+			failedResults = append(failedResults, r)
+			continue
+		}
+
+		hid := string(r.Entity.ID)
+		if dut := labData.GetDut(); dut != nil {
+			if servo := dut.GetPeripherals().GetServo(); servo != nil {
+				servo.ServoType = meta[hid].ServoType
+			}
+		}
+
+		r := DeviceOpResult{
+			Entity: &DeviceEntity{
+				ID:     r.Entity.ID,
+				Parent: fakeAcestorKey(ctx),
+			},
+			Data: &labData,
+		}
+		updateResults = append(updateResults, r)
+	}
+	f := updateEntities(ctx, updateResults, nil)
+
+	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
+		return updateResults, err
+	}
+	return append(updateResults, failedResults...), nil
+}
+
 // UpdateDutsStatus updates dut status of testing related.
 func UpdateDutsStatus(ctx context.Context, states []*lab.DutState) (DeviceOpResults, error) {
 	maxLen := len(states)

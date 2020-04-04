@@ -504,8 +504,12 @@ func TestUpdateDutsStatus(t *testing.T) {
 		Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
 		Device: &lab.ChromeOSDevice_Dut{
 			Dut: &lab.DeviceUnderTest{
-				Hostname:    "dut1",
-				Peripherals: &lab.Peripherals{},
+				Hostname: "dut1",
+				Peripherals: &lab.Peripherals{
+					Servo: &lab.Servo{
+						ServoType: "v3",
+					},
+				},
 			},
 		},
 	}
@@ -528,35 +532,29 @@ func TestUpdateDutsStatus(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.PassedDevices, ShouldHaveLength, 1)
 		}
+		dutStateGood := &lab.DutState{
+			Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
+		}
+		dutMetaGood := &api.DutMeta{
+			ChromeosDeviceId: "UUID:01",
+			SerialNumber:     "serial2",
+			HwID:             "hwid2",
+		}
+		labMetaGood := &api.LabMeta{
+			ChromeosDeviceId: "UUID:01",
+			ServoType:        "servo_v4_with_ccd_cr50",
+		}
+		getUpdatedDevice := func(ctx context.Context) lab.ChromeOSDevice {
+			r := datastore.GetDevicesByIds(ctx, []string{"UUID:01"})
+			So(r, ShouldHaveLength, 1)
+			var p lab.ChromeOSDevice
+			r[0].Entity.GetCrosDeviceProto(&p)
+			return p
+		}
 
 		Convey("Happy path", func() {
 			req := &api.UpdateDutsStatusRequest{
-				States: []*lab.DutState{
-					{
-						Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
-					},
-				}}
-			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldNotBeNil)
-			So(resp.UpdatedDevices, ShouldHaveLength, 1)
-			So(resp.UpdatedDevices[0].Id, ShouldEqual, "UUID:01")
-		})
-
-		Convey("Happy path with dut meta", func() {
-			req := &api.UpdateDutsStatusRequest{
-				States: []*lab.DutState{
-					{
-						Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
-					},
-				},
-				DutMetas: []*api.DutMeta{
-					{
-						ChromeosDeviceId: "UUID:01",
-						SerialNumber:     "serial2",
-						HwID:             "hwid2",
-					},
-				},
+				States: []*lab.DutState{dutStateGood},
 			}
 			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
 			So(err, ShouldBeNil)
@@ -564,12 +562,62 @@ func TestUpdateDutsStatus(t *testing.T) {
 			So(resp.UpdatedDevices, ShouldHaveLength, 1)
 			So(resp.UpdatedDevices[0].Id, ShouldEqual, "UUID:01")
 
-			r := datastore.GetDevicesByIds(ctx, []string{"UUID:01"})
-			So(r, ShouldHaveLength, 1)
-			var p lab.ChromeOSDevice
-			r[0].Entity.GetCrosDeviceProto(&p)
+			p := getUpdatedDevice(ctx)
+			So(p.GetSerialNumber(), ShouldEqual, "")
+			So(p.GetManufacturingId().GetValue(), ShouldEqual, "")
+			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "v3")
+		})
+
+		Convey("Happy path with dut meta", func() {
+			req := &api.UpdateDutsStatusRequest{
+				States:   []*lab.DutState{dutStateGood},
+				DutMetas: []*api.DutMeta{dutMetaGood},
+			}
+			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.UpdatedDevices, ShouldHaveLength, 1)
+			So(resp.UpdatedDevices[0].Id, ShouldEqual, "UUID:01")
+
+			p := getUpdatedDevice(ctx)
 			So(p.GetSerialNumber(), ShouldEqual, "serial2")
 			So(p.GetManufacturingId().GetValue(), ShouldEqual, "hwid2")
+			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "v3")
+		})
+
+		Convey("Happy path with lab meta", func() {
+			req := &api.UpdateDutsStatusRequest{
+				States:   []*lab.DutState{dutStateGood},
+				LabMetas: []*api.LabMeta{labMetaGood},
+			}
+			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.UpdatedDevices, ShouldHaveLength, 1)
+			So(resp.UpdatedDevices[0].Id, ShouldEqual, "UUID:01")
+
+			p := getUpdatedDevice(ctx)
+			So(p.GetSerialNumber(), ShouldEqual, "")
+			So(p.GetManufacturingId().GetValue(), ShouldEqual, "")
+			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "servo_v4_with_ccd_cr50")
+		})
+
+		Convey("Happy path with dut and lab meta", func() {
+			req := &api.UpdateDutsStatusRequest{
+				States:   []*lab.DutState{dutStateGood},
+				DutMetas: []*api.DutMeta{dutMetaGood},
+				LabMetas: []*api.LabMeta{labMetaGood},
+			}
+			resp, err := tf.Inventory.UpdateDutsStatus(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.UpdatedDevices, ShouldHaveLength, 1)
+			So(resp.UpdatedDevices[0].Id, ShouldEqual, "UUID:01")
+
+			p := getUpdatedDevice(ctx)
+			So(p.GetSerialNumber(), ShouldEqual, "serial2")
+			So(p.GetManufacturingId().GetValue(), ShouldEqual, "hwid2")
+			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "servo_v4_with_ccd_cr50")
 		})
 
 		Convey("Cannot update a labstation", func() {
