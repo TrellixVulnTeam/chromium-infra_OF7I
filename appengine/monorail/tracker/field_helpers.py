@@ -357,6 +357,52 @@ def AssertCustomFieldsEditPerms(
           fd), 'No permission to edit certain fields.'
 
 
+def ApplyRestrictedDefaultValues(
+    mr, config, field_vals, labels, template_field_vals, template_labels):
+  """Add default values of template fields that the user cannot edit.
+
+     This method can be called by servlets where restricted field values that
+     a user cannot edit are displayed but do not get returned when the user
+     submits the form (and also assumes that previous assertions ensure these
+     conditions). These missing default values still need to be passed to the
+     services layer when a 'write' is done so that these default values do
+     not get removed.
+
+     Args:
+       mr: MonorailRequest Object to hold info about the request and the user.
+       config: ProjectIssueConfig Object for the project.
+       field_vals: list of FieldValues that the user wants to save.
+       labels: list of labels that the user wants to save.
+       template_field_vals: list of FieldValues belonging to the template.
+       template_labels: list of labels belonging to the template.
+
+     Side Effect:
+       The default values of a template that the user cannot edit are added
+       to 'field_vals' and 'labels'.
+  """
+
+  fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+  for fv in template_field_vals:
+    fd = fds_by_id.get(fv.field_id)
+    if fd and not permissions.CanEditValueForFieldDef(mr.auth.effective_ids,
+                                                      mr.perms, mr.project, fd):
+      field_vals.append(fv)
+
+  fds_by_name = {
+      fd.field_name.lower(): fd
+      for fd in config.field_defs
+      if fd.field_type is tracker_pb2.FieldTypes.ENUM_TYPE and not fd.is_deleted
+  }
+  for label in template_labels:
+    enum_field_name = tracker_bizobj.LabelIsMaskedByField(
+        label, fds_by_name.keys())
+    if enum_field_name:
+      fd = fds_by_name.get(enum_field_name)
+      if fd and not permissions.CanEditValueForFieldDef(
+          mr.auth.effective_ids, mr.perms, mr.project, fd):
+        labels.append(label)
+
+
 def FormatUrlFieldValue(url_str):
   """Check for and add 'https://' to a url string"""
   if not url_str.startswith('http'):

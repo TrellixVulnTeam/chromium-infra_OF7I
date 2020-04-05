@@ -163,6 +163,9 @@ class TemplateDetail(servlet.Servlet):
     labels = [label for label in parsed.labels if label]
     field_helpers.AssertCustomFieldsEditPerms(
         mr, config, field_values, [], [], labels, [])
+    field_helpers.ApplyRestrictedDefaultValues(
+        mr, config, field_values, labels, template.field_values,
+        template.labels)
 
     if mr.errors.AnyErrors():
       field_views = tracker_views.MakeAllFieldValueViews(

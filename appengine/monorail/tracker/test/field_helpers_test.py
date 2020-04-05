@@ -776,6 +776,131 @@ class FieldHelpersTest(unittest.TestCase):
         AssertionError, field_helpers.AssertCustomFieldsEditPerms, self.mr,
         self.config, [], [], [], [], ['Cat', 'fdEnum-b'])
 
+  def testApplyRestrictedDefaultValues(self):
+    self.mr.perms = permissions.PermissionSet([])
+    fd_int = tracker_bizobj.MakeFieldDef(
+        11111,
+        1,
+        'fdInt',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=False)
+    fd_str = tracker_bizobj.MakeFieldDef(
+        22222,
+        1,
+        'fdStr',
+        tracker_pb2.FieldTypes.STR_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    fd_str_2 = tracker_bizobj.MakeFieldDef(
+        33333,
+        1,
+        'fdStr_2',
+        tracker_pb2.FieldTypes.STR_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=False)
+    fd_enum = tracker_bizobj.MakeFieldDef(
+        44444,
+        1,
+        'fdEnum',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=False)
+    fd_restricted_enum = tracker_bizobj.MakeFieldDef(
+        55555,
+        1,
+        'fdRestrictedEnum',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'doc',
+        False,
+        is_restricted_field=True)
+    self.config.field_defs = [
+        fd_int, fd_str, fd_str_2, fd_enum, fd_restricted_enum
+    ]
+    fv = tracker_bizobj.MakeFieldValue(
+        33333, None, 'Happy', None, None, None, False)
+    temp_fv = tracker_bizobj.MakeFieldValue(
+        11111, 37, None, None, None, None, False)
+    temp_restricted_fv = tracker_bizobj.MakeFieldValue(
+        22222, None, 'Chicken', None, None, None, False)
+    field_vals = [fv]
+    labels = ['Car', 'Bus']
+    temp_field_vals = [temp_fv, temp_restricted_fv]
+    temp_labels = ['Bike', 'fdEnum-a', 'fdRestrictedEnum-b']
+    field_helpers.ApplyRestrictedDefaultValues(
+        self.mr, self.config, field_vals, labels, temp_field_vals, temp_labels)
+    self.assertEqual(labels, ['Car', 'Bus', 'fdRestrictedEnum-b'])
+    self.assertEqual(field_vals, [fv, temp_restricted_fv])
+
   def testFormatUrlFieldValue(self):
     self.assertEqual('http://www.google.com',
                      field_helpers.FormatUrlFieldValue('www.google.com'))

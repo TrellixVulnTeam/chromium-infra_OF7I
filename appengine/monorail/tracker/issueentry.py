@@ -333,6 +333,9 @@ class IssueEntry(servlet.Servlet):
 
     field_helpers.AssertCustomFieldsEditPerms(
         mr, config, field_values, [], [], labels, [])
+    field_helpers.ApplyRestrictedDefaultValues(
+        mr, config, field_values, labels, template.field_values,
+        template.labels)
 
     field_helpers.ValidateCustomFields(
         mr, self.services, field_values, config, mr.errors)

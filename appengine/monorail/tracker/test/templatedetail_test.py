@@ -136,6 +136,48 @@ class TemplateDetailTest(unittest.TestCase):
         'RestrictedEnumField',
         False,
         is_restricted_field=True)
+    self.fd_9 = tracker_bizobj.MakeFieldDef(
+        9,
+        789,
+        'RestrictedField_2',
+        tracker_pb2.FieldTypes.INT_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'RestrictedField_2',
+        False,
+        is_restricted_field=True)
+    self.fd_10 = tracker_bizobj.MakeFieldDef(
+        10,
+        789,
+        'RestrictedEnumField_2',
+        tracker_pb2.FieldTypes.ENUM_TYPE,
+        None,
+        '',
+        False,
+        False,
+        False,
+        None,
+        None,
+        '',
+        False,
+        '',
+        '',
+        tracker_pb2.NotifyTriggers.NEVER,
+        'no_action',
+        'RestrictedEnumField_2',
+        False,
+        is_restricted_field=True)
 
     self.ad_3 = tracker_pb2.ApprovalDef(approval_id=3)
     self.ad_4 = tracker_pb2.ApprovalDef(approval_id=4)
@@ -167,7 +209,7 @@ class TemplateDetailTest(unittest.TestCase):
     self.config.field_defs.extend(
         [
             self.fd_1, self.fd_2, self.fd_3, self.fd_4, self.fd_5, self.fd_6,
-            self.fd_7, self.fd_8
+            self.fd_7, self.fd_8, self.fd_9, self.fd_10
         ])
     self.config.approval_defs.extend([self.ad_3, self.ad_4])
     self.services.config.StoreConfig(None, self.config)
@@ -354,6 +396,14 @@ class TemplateDetailTest(unittest.TestCase):
         post_data_label_edits_enum)
 
   def testProcessFormData_Accept(self):
+    self.fd_7.editor_ids = [222]
+    self.fd_8.editor_ids = [222]
+    self.mr.perms = permissions.PermissionSet([])
+    self.mr.auth.effective_ids = {222}  # template admin
+    temp_restricted_fv = tracker_bizobj.MakeFieldValue(
+        9, 3737, None, None, None, None, False)
+    self.template.field_values.append(temp_restricted_fv)
+    self.template.labels.append('RestrictedEnumField_2-b')
     post_data = fake.PostData(
         name=['TestTemplate'],
         members_only=['on'],
@@ -394,9 +444,13 @@ class TemplateDetailTest(unittest.TestCase):
         field_values=[
             tracker_pb2.FieldValue(field_id=1, str_value='NO', derived=False),
             tracker_pb2.FieldValue(field_id=2, str_value='MOOD', derived=False),
-            tracker_pb2.FieldValue(field_id=7, int_value=37, derived=False)
+            tracker_pb2.FieldValue(field_id=7, int_value=37, derived=False),
+            tracker_pb2.FieldValue(field_id=9, int_value=3737, derived=False)
         ],
-        labels=['label-One', 'label-Two', 'RestrictedEnumField-7'],
+        labels=[
+            'label-One', 'label-Two', 'RestrictedEnumField-7',
+            'RestrictedEnumField_2-b'
+        ],
         owner_defaults_to_member=True,
         admin_ids=[],
         content='HEY WHY',
