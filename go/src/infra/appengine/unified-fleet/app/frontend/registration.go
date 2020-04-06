@@ -93,6 +93,46 @@ func (fs *RegistrationServerImpl) DeleteMachines(ctx context.Context, req *api.E
 	}, err
 }
 
+// CreateRacks creates Racks in datastore
+func (fs *RegistrationServerImpl) CreateRacks(ctx context.Context, req *api.RackList) (response *api.RackResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return &api.RackResponse{}, err
+}
+
+// GetRacks gets the Racks information from datastore.
+func (fs *RegistrationServerImpl) GetRacks(ctx context.Context, req *api.EntityIDList) (response *api.RackResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return &api.RackResponse{}, err
+}
+
+// ListRacks gets all the Racks information from datastore.
+func (fs *RegistrationServerImpl) ListRacks(ctx context.Context, req *api.ListRacksRequest) (response *api.RackResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return &api.RackResponse{}, err
+}
+
+// UpdateRacks updates the Racks information in datastore.
+func (fs *RegistrationServerImpl) UpdateRacks(ctx context.Context, req *api.RackList) (response *api.RackResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return &api.RackResponse{}, err
+}
+
+// DeleteRacks deletes the Racks from datastore.
+func (fs *RegistrationServerImpl) DeleteRacks(ctx context.Context, req *api.EntityIDList) (response *api.EntityIDResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return &api.EntityIDResponse{}, err
+}
+
 func toMachineResult(res datastore.OpResults) []*api.MachineResult {
 	cpRes := make([]*api.MachineResult, len(res))
 	for i, r := range res {

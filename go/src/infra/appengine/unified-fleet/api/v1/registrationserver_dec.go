@@ -107,3 +107,88 @@ func (s *DecoratedRegistration) DeleteMachines(ctx context.Context, req *EntityI
 	}
 	return
 }
+
+func (s *DecoratedRegistration) CreateRacks(ctx context.Context, req *RackList) (rsp *RackResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateRacks", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateRacks(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateRacks", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedRegistration) GetRacks(ctx context.Context, req *EntityIDList) (rsp *RackResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetRacks", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetRacks(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetRacks", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedRegistration) ListRacks(ctx context.Context, req *ListRacksRequest) (rsp *RackResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListRacks", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListRacks(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListRacks", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedRegistration) UpdateRacks(ctx context.Context, req *RackList) (rsp *RackResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateRacks", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateRacks(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateRacks", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedRegistration) DeleteRacks(ctx context.Context, req *EntityIDList) (rsp *EntityIDResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteRacks", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteRacks(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteRacks", rsp, err)
+	}
+	return
+}

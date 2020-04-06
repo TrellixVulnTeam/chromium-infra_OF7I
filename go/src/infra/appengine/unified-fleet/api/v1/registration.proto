@@ -9,6 +9,7 @@ package fleet;
 option go_package = "api";
 
 import "machine.proto";
+import "rack.proto";
 
 service Registration {
   // CreateMachines registers new Chrome/ChromeLab machines.
@@ -25,6 +26,21 @@ service Registration {
 
   // Delete the machines
   rpc DeleteMachines(EntityIDList) returns (EntityIDResponse);
+
+  // CreateRacks registers new Chrome/ChromeLab Racks.
+  rpc CreateRacks(RackList) returns (RackResponse);
+
+  // Get Racks information
+  rpc GetRacks(EntityIDList) returns (RackResponse);
+
+  // List all the Racks
+  rpc ListRacks(ListRacksRequest) returns (RackResponse);
+
+  // Update the Racks
+  rpc UpdateRacks(RackList) returns (RackResponse);
+
+  // Delete the Racks
+  rpc DeleteRacks(EntityIDList) returns (EntityIDResponse);
 }
 
 message MachineList {
@@ -42,6 +58,22 @@ message MachineResult {
 }
 
 message ListMachinesRequest {}
+
+message RackList {
+  repeated fleet.Rack Rack = 1;
+}
+
+message RackResponse {
+  repeated RackResult passed = 1;
+  repeated RackResult failed = 2;
+}
+
+message RackResult {
+  fleet.Rack Rack = 1;
+  string error_msg = 2;
+}
+
+message ListRacksRequest {}
 
 message EntityIDList {
   // TODO(eshwarn): change id to assetTag or some other name(chrome lab)

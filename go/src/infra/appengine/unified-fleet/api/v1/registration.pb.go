@@ -191,6 +191,170 @@ func (m *ListMachinesRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ListMachinesRequest proto.InternalMessageInfo
 
+type RackList struct {
+	Rack                 []*_go.Rack `protobuf:"bytes,1,rep,name=Rack,proto3" json:"Rack,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *RackList) Reset()         { *m = RackList{} }
+func (m *RackList) String() string { return proto.CompactTextString(m) }
+func (*RackList) ProtoMessage()    {}
+func (*RackList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{4}
+}
+
+func (m *RackList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RackList.Unmarshal(m, b)
+}
+func (m *RackList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RackList.Marshal(b, m, deterministic)
+}
+func (m *RackList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RackList.Merge(m, src)
+}
+func (m *RackList) XXX_Size() int {
+	return xxx_messageInfo_RackList.Size(m)
+}
+func (m *RackList) XXX_DiscardUnknown() {
+	xxx_messageInfo_RackList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RackList proto.InternalMessageInfo
+
+func (m *RackList) GetRack() []*_go.Rack {
+	if m != nil {
+		return m.Rack
+	}
+	return nil
+}
+
+type RackResponse struct {
+	Passed               []*RackResult `protobuf:"bytes,1,rep,name=passed,proto3" json:"passed,omitempty"`
+	Failed               []*RackResult `protobuf:"bytes,2,rep,name=failed,proto3" json:"failed,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *RackResponse) Reset()         { *m = RackResponse{} }
+func (m *RackResponse) String() string { return proto.CompactTextString(m) }
+func (*RackResponse) ProtoMessage()    {}
+func (*RackResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{5}
+}
+
+func (m *RackResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RackResponse.Unmarshal(m, b)
+}
+func (m *RackResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RackResponse.Marshal(b, m, deterministic)
+}
+func (m *RackResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RackResponse.Merge(m, src)
+}
+func (m *RackResponse) XXX_Size() int {
+	return xxx_messageInfo_RackResponse.Size(m)
+}
+func (m *RackResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_RackResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RackResponse proto.InternalMessageInfo
+
+func (m *RackResponse) GetPassed() []*RackResult {
+	if m != nil {
+		return m.Passed
+	}
+	return nil
+}
+
+func (m *RackResponse) GetFailed() []*RackResult {
+	if m != nil {
+		return m.Failed
+	}
+	return nil
+}
+
+type RackResult struct {
+	Rack                 *_go.Rack `protobuf:"bytes,1,opt,name=Rack,proto3" json:"Rack,omitempty"`
+	ErrorMsg             string    `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
+}
+
+func (m *RackResult) Reset()         { *m = RackResult{} }
+func (m *RackResult) String() string { return proto.CompactTextString(m) }
+func (*RackResult) ProtoMessage()    {}
+func (*RackResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{6}
+}
+
+func (m *RackResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RackResult.Unmarshal(m, b)
+}
+func (m *RackResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RackResult.Marshal(b, m, deterministic)
+}
+func (m *RackResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RackResult.Merge(m, src)
+}
+func (m *RackResult) XXX_Size() int {
+	return xxx_messageInfo_RackResult.Size(m)
+}
+func (m *RackResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_RackResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RackResult proto.InternalMessageInfo
+
+func (m *RackResult) GetRack() *_go.Rack {
+	if m != nil {
+		return m.Rack
+	}
+	return nil
+}
+
+func (m *RackResult) GetErrorMsg() string {
+	if m != nil {
+		return m.ErrorMsg
+	}
+	return ""
+}
+
+type ListRacksRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListRacksRequest) Reset()         { *m = ListRacksRequest{} }
+func (m *ListRacksRequest) String() string { return proto.CompactTextString(m) }
+func (*ListRacksRequest) ProtoMessage()    {}
+func (*ListRacksRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03b63be86218c229, []int{7}
+}
+
+func (m *ListRacksRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListRacksRequest.Unmarshal(m, b)
+}
+func (m *ListRacksRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListRacksRequest.Marshal(b, m, deterministic)
+}
+func (m *ListRacksRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListRacksRequest.Merge(m, src)
+}
+func (m *ListRacksRequest) XXX_Size() int {
+	return xxx_messageInfo_ListRacksRequest.Size(m)
+}
+func (m *ListRacksRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListRacksRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListRacksRequest proto.InternalMessageInfo
+
 type EntityIDList struct {
 	// TODO(eshwarn): change id to assetTag or some other name(chrome lab)
 	Id                   []string `protobuf:"bytes,1,rep,name=id,proto3" json:"id,omitempty"`
@@ -203,7 +367,7 @@ func (m *EntityIDList) Reset()         { *m = EntityIDList{} }
 func (m *EntityIDList) String() string { return proto.CompactTextString(m) }
 func (*EntityIDList) ProtoMessage()    {}
 func (*EntityIDList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_03b63be86218c229, []int{4}
+	return fileDescriptor_03b63be86218c229, []int{8}
 }
 
 func (m *EntityIDList) XXX_Unmarshal(b []byte) error {
@@ -243,7 +407,7 @@ func (m *EntityIDResult) Reset()         { *m = EntityIDResult{} }
 func (m *EntityIDResult) String() string { return proto.CompactTextString(m) }
 func (*EntityIDResult) ProtoMessage()    {}
 func (*EntityIDResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_03b63be86218c229, []int{5}
+	return fileDescriptor_03b63be86218c229, []int{9}
 }
 
 func (m *EntityIDResult) XXX_Unmarshal(b []byte) error {
@@ -290,7 +454,7 @@ func (m *EntityIDResponse) Reset()         { *m = EntityIDResponse{} }
 func (m *EntityIDResponse) String() string { return proto.CompactTextString(m) }
 func (*EntityIDResponse) ProtoMessage()    {}
 func (*EntityIDResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_03b63be86218c229, []int{6}
+	return fileDescriptor_03b63be86218c229, []int{10}
 }
 
 func (m *EntityIDResponse) XXX_Unmarshal(b []byte) error {
@@ -330,6 +494,10 @@ func init() {
 	proto.RegisterType((*MachineResponse)(nil), "fleet.MachineResponse")
 	proto.RegisterType((*MachineResult)(nil), "fleet.MachineResult")
 	proto.RegisterType((*ListMachinesRequest)(nil), "fleet.ListMachinesRequest")
+	proto.RegisterType((*RackList)(nil), "fleet.RackList")
+	proto.RegisterType((*RackResponse)(nil), "fleet.RackResponse")
+	proto.RegisterType((*RackResult)(nil), "fleet.RackResult")
+	proto.RegisterType((*ListRacksRequest)(nil), "fleet.ListRacksRequest")
 	proto.RegisterType((*EntityIDList)(nil), "fleet.EntityIDList")
 	proto.RegisterType((*EntityIDResult)(nil), "fleet.EntityIDResult")
 	proto.RegisterType((*EntityIDResponse)(nil), "fleet.EntityIDResponse")
@@ -340,31 +508,39 @@ func init() {
 }
 
 var fileDescriptor_03b63be86218c229 = []byte{
-	// 383 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0xc1, 0x8f, 0xd2, 0x40,
-	0x14, 0xc6, 0xd3, 0x12, 0x50, 0x1e, 0x50, 0xcd, 0x20, 0x4a, 0x30, 0x31, 0xa4, 0x27, 0x0e, 0x42,
-	0x23, 0x1e, 0x48, 0x0c, 0x7a, 0x40, 0x8c, 0x31, 0x91, 0x4b, 0x13, 0x3d, 0x78, 0x31, 0xa3, 0x7d,
-	0xed, 0x4e, 0x52, 0xa6, 0xb3, 0x33, 0xc3, 0x26, 0xfb, 0x2f, 0xee, 0x5f, 0xb5, 0xa1, 0x33, 0x25,
-	0x6d, 0x81, 0x1e, 0xf6, 0xfa, 0xde, 0xef, 0xe3, 0x7d, 0xdf, 0x37, 0x14, 0x56, 0x8c, 0xc7, 0x92,
-	0x06, 0x54, 0x08, 0xe4, 0x09, 0xe3, 0x18, 0x1c, 0x38, 0x8b, 0x19, 0x46, 0xf3, 0x38, 0x45, 0xd4,
-	0x01, 0x15, 0x2c, 0xb8, 0xfb, 0x10, 0x48, 0x4c, 0x98, 0xd2, 0x92, 0x6a, 0x96, 0xf1, 0x85, 0x90,
-	0x99, 0xce, 0x48, 0x3b, 0x07, 0x26, 0x83, 0x3d, 0xfd, 0x7f, 0xc3, 0x38, 0x9a, 0xa9, 0xbf, 0x82,
-	0xde, 0xce, 0x0c, 0x7e, 0x32, 0xa5, 0xc9, 0x0c, 0x9e, 0xd9, 0xfd, 0xd8, 0x99, 0xb6, 0x66, 0xbd,
-	0xa5, 0xb7, 0xc8, 0x65, 0x0b, 0x0b, 0x85, 0xc5, 0xda, 0xdf, 0xc3, 0x8b, 0x62, 0x86, 0x4a, 0x64,
-	0x5c, 0x21, 0x79, 0x0f, 0x1d, 0x41, 0x95, 0xc2, 0xc8, 0x6a, 0x5f, 0xd5, 0xb4, 0xa8, 0x0e, 0xa9,
-	0x0e, 0x2d, 0x73, 0xa4, 0x63, 0xca, 0x52, 0x8c, 0xc6, 0x6e, 0x13, 0x6d, 0x18, 0xff, 0x37, 0x0c,
-	0x2a, 0x8b, 0xaa, 0x53, 0xa7, 0xc1, 0x29, 0x79, 0x0b, 0x5d, 0x94, 0x32, 0x93, 0x7f, 0xf7, 0x2a,
-	0x19, 0xbb, 0x53, 0x67, 0xd6, 0x0d, 0x9f, 0xe7, 0x83, 0x9d, 0x4a, 0xfc, 0x11, 0x0c, 0x8f, 0xc1,
-	0xad, 0x48, 0x85, 0x78, 0x7b, 0x40, 0xa5, 0xfd, 0x77, 0xd0, 0xff, 0xc6, 0x35, 0xd3, 0xf7, 0x3f,
-	0xb6, 0x79, 0x2f, 0x1e, 0xb8, 0xcc, 0xc4, 0xea, 0x86, 0x2e, 0x8b, 0xfc, 0xcf, 0xe0, 0x15, 0x7b,
-	0xeb, 0xa7, 0x20, 0x1c, 0x43, 0x34, 0x5f, 0x15, 0xf0, 0xb2, 0x24, 0x37, 0xed, 0xcd, 0x6b, 0xed,
-	0x8d, 0x6c, 0x9e, 0xea, 0x9d, 0x53, 0x7d, 0xf3, 0x5a, 0x7d, 0xd7, 0x70, 0x03, 0x2d, 0x1f, 0x5c,
-	0xe8, 0x87, 0xa5, 0x3f, 0x05, 0x59, 0x83, 0xf7, 0x55, 0x22, 0xd5, 0x58, 0x44, 0x27, 0xa4, 0x5a,
-	0xe0, 0x31, 0xf7, 0xe4, 0xf5, 0xd9, 0xa3, 0x18, 0xb3, 0x9f, 0xa0, 0xf7, 0x1d, 0x4f, 0xad, 0x91,
-	0x61, 0xed, 0x78, 0xa3, 0x76, 0x03, 0xfd, 0x72, 0xe5, 0x64, 0x62, 0xb9, 0x0b, 0xef, 0x70, 0xf5,
-	0x37, 0xd6, 0xe0, 0xfd, 0x12, 0xd1, 0x53, 0xdd, 0x7f, 0x01, 0x6f, 0x8b, 0x29, 0x96, 0xd4, 0x17,
-	0x03, 0xbc, 0x39, 0xaf, 0x34, 0xd7, 0x6f, 0xda, 0x7f, 0x5a, 0x54, 0xb0, 0x7f, 0x9d, 0xfc, 0x13,
-	0xfa, 0xf8, 0x18, 0x00, 0x00, 0xff, 0xff, 0xfe, 0x4a, 0x65, 0x74, 0x93, 0x03, 0x00, 0x00,
+	// 511 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0x4d, 0x6f, 0xd3, 0x40,
+	0x14, 0x94, 0xd3, 0x0f, 0x92, 0xe7, 0xd4, 0x2d, 0x1b, 0x4a, 0xa3, 0x20, 0x41, 0xe5, 0x53, 0x2a,
+	0x48, 0x2c, 0x1a, 0xa4, 0x0a, 0x28, 0x1c, 0x4a, 0x51, 0x05, 0xa2, 0x17, 0x4b, 0x70, 0xe0, 0x82,
+	0x96, 0xf8, 0x25, 0xac, 0x9a, 0xd8, 0xcb, 0xee, 0x06, 0x89, 0xbf, 0xcb, 0x2f, 0x41, 0xde, 0x5d,
+	0x87, 0xb5, 0xeb, 0x58, 0xa2, 0x37, 0xe7, 0xbd, 0x19, 0xbf, 0x99, 0xc9, 0x24, 0x70, 0xc6, 0xd2,
+	0x99, 0xa0, 0x11, 0xe5, 0x1c, 0xd3, 0x39, 0x4b, 0x31, 0x5a, 0xa5, 0x6c, 0xc6, 0x30, 0x19, 0xcd,
+	0x16, 0x88, 0x2a, 0xa2, 0x9c, 0x45, 0xbf, 0x9e, 0x47, 0x02, 0xe7, 0x4c, 0x2a, 0x41, 0x15, 0xcb,
+	0xd2, 0x31, 0x17, 0x99, 0xca, 0xc8, 0x8e, 0x06, 0x0c, 0xf6, 0x96, 0x74, 0xfa, 0x83, 0xa5, 0x68,
+	0xa6, 0x03, 0x10, 0x74, 0x7a, 0x63, 0x9e, 0xc3, 0x33, 0xf0, 0xaf, 0xcd, 0xf2, 0x13, 0x93, 0x8a,
+	0x0c, 0xe1, 0x9e, 0xc5, 0xf6, 0xbd, 0xe3, 0xad, 0xa1, 0x7f, 0x1a, 0x8c, 0xf5, 0x2b, 0xc6, 0x16,
+	0x14, 0x17, 0xeb, 0x70, 0x09, 0xfb, 0xc5, 0x0c, 0x25, 0xcf, 0x52, 0x89, 0xe4, 0x19, 0xec, 0x72,
+	0x2a, 0x25, 0x26, 0x96, 0xfb, 0xa0, 0xc2, 0x45, 0xb9, 0x5a, 0xa8, 0xd8, 0x62, 0x72, 0xf4, 0x8c,
+	0xb2, 0x05, 0x26, 0xfd, 0x56, 0x13, 0xda, 0x60, 0xc2, 0x2f, 0xb0, 0x57, 0x5a, 0x94, 0x95, 0x7a,
+	0x0d, 0x4a, 0xc9, 0x23, 0xe8, 0xa0, 0x10, 0x99, 0xf8, 0xb6, 0x94, 0xf3, 0x7e, 0xeb, 0xd8, 0x1b,
+	0x76, 0xe2, 0xb6, 0x1e, 0x5c, 0xcb, 0x79, 0x78, 0x08, 0xbd, 0xdc, 0xb8, 0x25, 0xc9, 0x18, 0x7f,
+	0xae, 0x50, 0xaa, 0xf0, 0x29, 0xb4, 0x63, 0x3a, 0xbd, 0xd1, 0x99, 0x3c, 0x81, 0xed, 0xfc, 0xd9,
+	0x9a, 0xf2, 0xed, 0x99, 0x7c, 0x14, 0xeb, 0x45, 0x98, 0x40, 0x57, 0x7f, 0x2a, 0x72, 0x38, 0xa9,
+	0xe4, 0x70, 0xdf, 0xa5, 0x94, 0x43, 0x38, 0xa9, 0x84, 0x50, 0x07, 0xb5, 0x09, 0x7c, 0x04, 0xf8,
+	0x37, 0x75, 0x44, 0x79, 0xb5, 0xa2, 0x9a, 0x5d, 0x13, 0x38, 0xc8, 0xad, 0xe5, 0xc0, 0xb5, 0xe5,
+	0xc7, 0xd0, 0x7d, 0x9f, 0x2a, 0xa6, 0x7e, 0x7f, 0xb8, 0xd4, 0xb6, 0x03, 0x68, 0x31, 0xe3, 0xa0,
+	0x13, 0xb7, 0x58, 0x12, 0xbe, 0x81, 0xa0, 0xd8, 0x5b, 0x0d, 0x05, 0xc2, 0x33, 0x88, 0xe6, 0x93,
+	0x1c, 0x0e, 0x1c, 0xba, 0x09, 0x6a, 0x54, 0x09, 0xea, 0xd0, 0xda, 0x28, 0xdf, 0x59, 0x87, 0x35,
+	0xaa, 0x84, 0xb5, 0x09, 0x6e, 0x40, 0xa7, 0x7f, 0xb6, 0xa1, 0x1b, 0x3b, 0xbf, 0x09, 0x72, 0x0e,
+	0xc1, 0x3b, 0x81, 0x54, 0x61, 0xf1, 0x6d, 0x13, 0x52, 0xee, 0x4c, 0xee, 0x7b, 0xf0, 0xf0, 0x56,
+	0x0f, 0x8d, 0xd8, 0x57, 0xe0, 0x5f, 0xe1, 0xba, 0x28, 0xa4, 0x57, 0x39, 0xde, 0xc8, 0xbd, 0x80,
+	0xae, 0xdb, 0x32, 0x32, 0xb0, 0xb8, 0x9a, 0xea, 0x6d, 0x7c, 0xc7, 0x39, 0x04, 0x9f, 0x79, 0x72,
+	0x57, 0xf5, 0x6f, 0x21, 0xb8, 0xc4, 0x05, 0x3a, 0xec, 0x5a, 0x03, 0x47, 0xb7, 0x23, 0x35, 0xfc,
+	0x09, 0xf8, 0x26, 0x3b, 0xdd, 0x19, 0xb2, 0xef, 0x14, 0x4e, 0x13, 0x7b, 0xe5, 0xe2, 0x1a, 0xd2,
+	0x0b, 0x68, 0x5f, 0xa1, 0x69, 0x59, 0xfd, 0xb9, 0x5a, 0xd6, 0x4b, 0xe8, 0xac, 0xcb, 0x49, 0x8e,
+	0x9c, 0xa4, 0xdc, 0xba, 0xd6, 0x53, 0x27, 0xe0, 0x9b, 0x8c, 0xfe, 0x47, 0xe5, 0x6b, 0xf0, 0x4d,
+	0x34, 0x0d, 0x42, 0x37, 0xe5, 0x72, 0xb1, 0xf3, 0x75, 0x8b, 0x72, 0xf6, 0x7d, 0x57, 0xff, 0x9b,
+	0x4e, 0xfe, 0x06, 0x00, 0x00, 0xff, 0xff, 0xbb, 0xb4, 0x23, 0x17, 0xaa, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -389,6 +565,16 @@ type RegistrationClient interface {
 	UpdateMachines(ctx context.Context, in *MachineList, opts ...grpc.CallOption) (*MachineResponse, error)
 	// Delete the machines
 	DeleteMachines(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*EntityIDResponse, error)
+	// CreateRacks registers new Chrome/ChromeLab Racks.
+	CreateRacks(ctx context.Context, in *RackList, opts ...grpc.CallOption) (*RackResponse, error)
+	// Get Racks information
+	GetRacks(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*RackResponse, error)
+	// List all the Racks
+	ListRacks(ctx context.Context, in *ListRacksRequest, opts ...grpc.CallOption) (*RackResponse, error)
+	// Update the Racks
+	UpdateRacks(ctx context.Context, in *RackList, opts ...grpc.CallOption) (*RackResponse, error)
+	// Delete the Racks
+	DeleteRacks(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*EntityIDResponse, error)
 }
 type registrationPRPCClient struct {
 	client *prpc.Client
@@ -437,6 +623,51 @@ func (c *registrationPRPCClient) UpdateMachines(ctx context.Context, in *Machine
 func (c *registrationPRPCClient) DeleteMachines(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*EntityIDResponse, error) {
 	out := new(EntityIDResponse)
 	err := c.client.Call(ctx, "fleet.Registration", "DeleteMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) CreateRacks(ctx context.Context, in *RackList, opts ...grpc.CallOption) (*RackResponse, error) {
+	out := new(RackResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "CreateRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) GetRacks(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*RackResponse, error) {
+	out := new(RackResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "GetRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) ListRacks(ctx context.Context, in *ListRacksRequest, opts ...grpc.CallOption) (*RackResponse, error) {
+	out := new(RackResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "ListRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) UpdateRacks(ctx context.Context, in *RackList, opts ...grpc.CallOption) (*RackResponse, error) {
+	out := new(RackResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "UpdateRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationPRPCClient) DeleteRacks(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*EntityIDResponse, error) {
+	out := new(EntityIDResponse)
+	err := c.client.Call(ctx, "fleet.Registration", "DeleteRacks", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -496,6 +727,51 @@ func (c *registrationClient) DeleteMachines(ctx context.Context, in *EntityIDLis
 	return out, nil
 }
 
+func (c *registrationClient) CreateRacks(ctx context.Context, in *RackList, opts ...grpc.CallOption) (*RackResponse, error) {
+	out := new(RackResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/CreateRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationClient) GetRacks(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*RackResponse, error) {
+	out := new(RackResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/GetRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationClient) ListRacks(ctx context.Context, in *ListRacksRequest, opts ...grpc.CallOption) (*RackResponse, error) {
+	out := new(RackResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/ListRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationClient) UpdateRacks(ctx context.Context, in *RackList, opts ...grpc.CallOption) (*RackResponse, error) {
+	out := new(RackResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/UpdateRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registrationClient) DeleteRacks(ctx context.Context, in *EntityIDList, opts ...grpc.CallOption) (*EntityIDResponse, error) {
+	out := new(EntityIDResponse)
+	err := c.cc.Invoke(ctx, "/fleet.Registration/DeleteRacks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegistrationServer is the server API for Registration service.
 type RegistrationServer interface {
 	// CreateMachines registers new Chrome/ChromeLab machines.
@@ -508,6 +784,16 @@ type RegistrationServer interface {
 	UpdateMachines(context.Context, *MachineList) (*MachineResponse, error)
 	// Delete the machines
 	DeleteMachines(context.Context, *EntityIDList) (*EntityIDResponse, error)
+	// CreateRacks registers new Chrome/ChromeLab Racks.
+	CreateRacks(context.Context, *RackList) (*RackResponse, error)
+	// Get Racks information
+	GetRacks(context.Context, *EntityIDList) (*RackResponse, error)
+	// List all the Racks
+	ListRacks(context.Context, *ListRacksRequest) (*RackResponse, error)
+	// Update the Racks
+	UpdateRacks(context.Context, *RackList) (*RackResponse, error)
+	// Delete the Racks
+	DeleteRacks(context.Context, *EntityIDList) (*EntityIDResponse, error)
 }
 
 // UnimplementedRegistrationServer can be embedded to have forward compatible implementations.
@@ -528,6 +814,21 @@ func (*UnimplementedRegistrationServer) UpdateMachines(ctx context.Context, req 
 }
 func (*UnimplementedRegistrationServer) DeleteMachines(ctx context.Context, req *EntityIDList) (*EntityIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteMachines not implemented")
+}
+func (*UnimplementedRegistrationServer) CreateRacks(ctx context.Context, req *RackList) (*RackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRacks not implemented")
+}
+func (*UnimplementedRegistrationServer) GetRacks(ctx context.Context, req *EntityIDList) (*RackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRacks not implemented")
+}
+func (*UnimplementedRegistrationServer) ListRacks(ctx context.Context, req *ListRacksRequest) (*RackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRacks not implemented")
+}
+func (*UnimplementedRegistrationServer) UpdateRacks(ctx context.Context, req *RackList) (*RackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRacks not implemented")
+}
+func (*UnimplementedRegistrationServer) DeleteRacks(ctx context.Context, req *EntityIDList) (*EntityIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRacks not implemented")
 }
 
 func RegisterRegistrationServer(s prpc.Registrar, srv RegistrationServer) {
@@ -624,6 +925,96 @@ func _Registration_DeleteMachines_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Registration_CreateRacks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RackList)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).CreateRacks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/CreateRacks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).CreateRacks(ctx, req.(*RackList))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registration_GetRacks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EntityIDList)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).GetRacks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/GetRacks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).GetRacks(ctx, req.(*EntityIDList))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registration_ListRacks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRacksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).ListRacks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/ListRacks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).ListRacks(ctx, req.(*ListRacksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registration_UpdateRacks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RackList)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).UpdateRacks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/UpdateRacks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).UpdateRacks(ctx, req.(*RackList))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registration_DeleteRacks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EntityIDList)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistrationServer).DeleteRacks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/fleet.Registration/DeleteRacks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistrationServer).DeleteRacks(ctx, req.(*EntityIDList))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Registration_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "fleet.Registration",
 	HandlerType: (*RegistrationServer)(nil),
@@ -647,6 +1038,26 @@ var _Registration_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteMachines",
 			Handler:    _Registration_DeleteMachines_Handler,
+		},
+		{
+			MethodName: "CreateRacks",
+			Handler:    _Registration_CreateRacks_Handler,
+		},
+		{
+			MethodName: "GetRacks",
+			Handler:    _Registration_GetRacks_Handler,
+		},
+		{
+			MethodName: "ListRacks",
+			Handler:    _Registration_ListRacks_Handler,
+		},
+		{
+			MethodName: "UpdateRacks",
+			Handler:    _Registration_UpdateRacks_Handler,
+		},
+		{
+			MethodName: "DeleteRacks",
+			Handler:    _Registration_DeleteRacks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
