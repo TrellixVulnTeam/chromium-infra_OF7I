@@ -106,14 +106,15 @@ func GetAll(ctx context.Context, qf QueryAllFunc) (*OpResults, error) {
 	}
 	res := make(OpResults, len(entities))
 	for i, e := range entities {
+		res[i] = &OpResult{
+			Timestamp: e.GetUpdated(),
+		}
 		pm, err := e.GetProto()
 		if err != nil {
 			res[i].LogError(err)
+			continue
 		}
-		res[i] = &OpResult{
-			Data:      pm,
-			Timestamp: e.GetUpdated(),
-		}
+		res[i].Data = pm
 	}
 	return &res, nil
 }
