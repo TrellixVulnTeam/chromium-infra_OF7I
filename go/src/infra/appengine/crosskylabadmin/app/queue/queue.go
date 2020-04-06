@@ -53,14 +53,14 @@ func runRepairQueueHandler(c *router.Context) (err error) {
 		runRepairTick.Add(c.Context, 1, err == nil)
 	}()
 
-	dutName := c.Request.FormValue("dutName")
-	taskURL, err := frontend.CreateRepairTask(c.Context, dutName)
+	botID := c.Request.FormValue("botID")
+	taskURL, err := frontend.CreateRepairTask(c.Context, botID)
 	if err != nil {
-		logging.Infof(c.Context, "fail to run repair job in queue for %s: %s", dutName, err.Error())
+		logging.Infof(c.Context, "fail to run repair job in queue for %s: %s", botID, err.Error())
 		return err
 	}
 
-	logging.Infof(c.Context, "Successfully run repair job for %s: %s", dutName, taskURL)
+	logging.Infof(c.Context, "Successfully run repair job for %s: %s", botID, taskURL)
 	return nil
 }
 
@@ -69,12 +69,12 @@ func runResetQueueHandler(c *router.Context) (err error) {
 		runResetTick.Add(c.Context, 1, err == nil)
 	}()
 
-	dutName := c.Request.FormValue("dutName")
-	taskURL, err := frontend.CreateResetTask(c.Context, dutName)
+	botID := c.Request.FormValue("botID")
+	taskURL, err := frontend.CreateResetTask(c.Context, botID)
 	if err != nil {
 		return err
 	}
-	logging.Infof(c.Context, "Successfully run reset job for %s: %s", dutName, taskURL)
+	logging.Infof(c.Context, "Successfully run reset job for %s: %s", botID, taskURL)
 	return nil
 }
 

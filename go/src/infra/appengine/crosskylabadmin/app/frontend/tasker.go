@@ -29,44 +29,44 @@ import (
 )
 
 // CreateRepairTask kicks off a repair job.
-func CreateRepairTask(ctx context.Context, dutName string) (string, error) {
+func CreateRepairTask(ctx context.Context, botID string) (string, error) {
 	at := worker.AdminTaskForType(ctx, fleet.TaskType_Repair)
 	sc, err := clients.NewSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
 	}
-	taskURL, err := runTaskByDUTName(ctx, at, sc, dutName)
+	taskURL, err := runTaskByDUTName(ctx, at, sc, botID)
 	if err != nil {
-		return "", errors.Annotate(err, "fail to create repair task for %s", dutName).Err()
+		return "", errors.Annotate(err, "fail to create repair task for %s", botID).Err()
 	}
 	return taskURL, nil
 }
 
 // CreateResetTask kicks off a reset job.
-func CreateResetTask(ctx context.Context, dutName string) (string, error) {
+func CreateResetTask(ctx context.Context, botID string) (string, error) {
 	at := worker.AdminTaskForType(ctx, fleet.TaskType_Reset)
 	sc, err := clients.NewSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
 	}
-	taskURL, err := runTaskByDUTName(ctx, at, sc, dutName)
+	taskURL, err := runTaskByDUTName(ctx, at, sc, botID)
 	if err != nil {
-		return "", errors.Annotate(err, "fail to create reset task for %s", dutName).Err()
+		return "", errors.Annotate(err, "fail to create reset task for %s", botID).Err()
 	}
 	return taskURL, nil
 }
 
-func runTaskByDUTName(ctx context.Context, at worker.Task, sc clients.SwarmingClient, dutName string) (string, error) {
+func runTaskByDUTName(ctx context.Context, at worker.Task, sc clients.SwarmingClient, botID string) (string, error) {
 	cfg := config.Get(ctx)
 	tags := swarming.AddCommonTags(
 		ctx,
-		fmt.Sprintf("%s:%s", at.Name, dutName),
+		fmt.Sprintf("%s:%s", at.Name, botID),
 		fmt.Sprintf("task:%s", at.Name),
 	)
 	tags = append(tags, at.Tags...)
 	a := swarming.SetCommonTaskArgs(ctx, &clients.SwarmingCreateTaskArgs{
 		Cmd:                  at.Cmd,
-		DutName:              dutName,
+		BotID:                botID,
 		ExecutionTimeoutSecs: cfg.Tasker.BackgroundTaskExecutionTimeoutSecs,
 		ExpirationSecs:       cfg.Tasker.BackgroundTaskExpirationSecs,
 		Priority:             cfg.Cron.FleetAdminTaskPriority,
@@ -74,9 +74,9 @@ func runTaskByDUTName(ctx context.Context, at worker.Task, sc clients.SwarmingCl
 	})
 	tid, err := sc.CreateTask(ctx, at.Name, a)
 	if err != nil {
-		return "", errors.Annotate(err, "failed to create task for dut %s", dutName).Err()
+		return "", errors.Annotate(err, "failed to create task for bot %s", botID).Err()
 	}
-	logging.Infof(ctx, "successfully kick off task %s for dut %s", tid, dutName)
+	logging.Infof(ctx, "successfully kick off task %s for bot %s", tid, botID)
 	return swarming.URLForTask(ctx, tid), nil
 }
 

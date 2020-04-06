@@ -25,21 +25,21 @@ import (
 )
 
 func TestRunTaskByDUTName(t *testing.T) {
-	Convey("with run repair job with DUT name", t, func() {
+	Convey("with run repair job with BOT id", t, func() {
 		tf, validate := newTestFixture(t)
 		defer validate()
-		expectTaskCreationForDUT(tf, "task1", "host1")
+		expectTaskCreationForDUT(tf, "task1", "bot_id")
 		at := worker.AdminTaskForType(tf.C, fleet.TaskType_Repair)
-		taskURL, err := runTaskByDUTName(tf.C, at, tf.MockSwarming, "host1")
+		taskURL, err := runTaskByDUTName(tf.C, at, tf.MockSwarming, "bot_id")
 		So(err, ShouldBeNil)
 		So(taskURL, ShouldContainSubstring, "task1")
 	})
 }
 
 // expectTaskCreationByDUTName sets up the expectations for a single task creation based on DUT name.
-func expectTaskCreationForDUT(tf testFixture, taskID string, hostname string) *gomock.Call {
+func expectTaskCreationForDUT(tf testFixture, taskID, botID string) *gomock.Call {
 	m := &createTaskArgsMatcher{
-		DutName: hostname,
+		BotID: botID,
 	}
 	return tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), m).Return(taskID, nil)
 }

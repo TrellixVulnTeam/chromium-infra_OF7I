@@ -139,6 +139,7 @@ func timeOffsetFromNowInSwarmingFormat(offset time.Duration) string {
 // createTaskArgsMatcher is a gomock matcher to validate a subset of the fields
 // of clients.SwarmingCreateTaskArgs argument.
 type createTaskArgsMatcher struct {
+	BotID        string
 	DutID        string
 	DutName      string
 	DutState     string
@@ -157,7 +158,8 @@ func (m *createTaskArgsMatcher) Matches(x interface{}) bool {
 		return false
 	}
 
-	if (m.DutID != "" && args.DutID != m.DutID) ||
+	if (m.BotID != "" && args.BotID != m.BotID) ||
+		(m.DutID != "" && args.DutID != m.DutID) ||
 		(m.DutName != "" && args.DutName != m.DutName) ||
 		(m.DutState != "" && args.DutState != m.DutState) ||
 		(m.Priority != 0 && args.Priority != m.Priority) {
@@ -174,6 +176,9 @@ func (m *createTaskArgsMatcher) Matches(x interface{}) bool {
 
 func (m *createTaskArgsMatcher) String() string {
 	s := "is clients.SwarmingCreateTaskArgs with fields like"
+	if m.BotID != "" {
+		s = fmt.Sprintf("%s BotID: %s", s, m.BotID)
+	}
 	if m.DutID != "" {
 		s = fmt.Sprintf("%s DutID: %s", s, m.DutID)
 	}
