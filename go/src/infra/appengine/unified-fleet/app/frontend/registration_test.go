@@ -176,8 +176,11 @@ func TestGetMachines(t *testing.T) {
 					chromeMachine2.GetId().GetValue(),
 				},
 			}
-			_, err := tf.Registration.GetMachines(tf.C, req)
-			So(err, ShouldNotBeNil)
+			resp, err := tf.Registration.GetMachines(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.GetPassed(), ShouldHaveLength, 0)
+			So(resp.GetFailed(), ShouldHaveLength, 1)
+			So(resp.GetFailed()[0].ErrorMsg, ShouldContainSubstring, "datastore: no such entity")
 		})
 	})
 }

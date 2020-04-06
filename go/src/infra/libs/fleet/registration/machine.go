@@ -87,25 +87,6 @@ func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	return fe, nil
 }
 
-func queryByID(ctx context.Context, ids []string) ([]fleetds.FleetEntity, error) {
-	entities := make([]*MachineEntity, len(ids))
-	parent := fleetds.FakeAncestorKey(ctx, MachineKind)
-	for i, entityID := range ids {
-		entities[i] = &MachineEntity{
-			ID:     entityID,
-			Parent: parent,
-		}
-	}
-	if err := datastore.Get(ctx, entities); err != nil {
-		return nil, err
-	}
-	fe := make([]fleetds.FleetEntity, len(entities))
-	for i, e := range entities {
-		fe[i] = e
-	}
-	return fe, nil
-}
-
 // CreateMachines inserts machines to datastore.
 func CreateMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.OpResults, error) {
 	return putMachines(ctx, machines, false)
@@ -122,8 +103,16 @@ func GetAllMachines(ctx context.Context) (*fleetds.OpResults, error) {
 }
 
 // GetMachinesByID returns machines for the given ids from datastore.
-func GetMachinesByID(ctx context.Context, ids []string) (*fleetds.OpResults, error) {
-	return fleetds.GetByID(ctx, ids, queryByID)
+func GetMachinesByID(ctx context.Context, ids []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &fleet.Machine{
+			Id: &fleet.MachineID{
+				Value: id,
+			},
+		}
+	}
+	return fleetds.GetByID(ctx, protos, newEntity)
 }
 
 // DeleteMachines returns the deleted machines

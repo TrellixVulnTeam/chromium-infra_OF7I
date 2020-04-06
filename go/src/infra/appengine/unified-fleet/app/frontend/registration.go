@@ -41,10 +41,7 @@ func (fs *RegistrationServerImpl) GetMachines(ctx context.Context, req *api.Enti
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	res, err := registration.GetMachinesByID(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
+	res := registration.GetMachinesByID(ctx, req.Id)
 	return &api.MachineResponse{
 		Passed: toMachineResult(res.Passed()),
 		Failed: toMachineResult(res.Failed()),

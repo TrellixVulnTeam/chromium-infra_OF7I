@@ -145,7 +145,7 @@ func TestGetMachinesByID(t *testing.T) {
 				chromeOSMachine1.GetId().GetValue(),
 				chromeMachine1.GetId().GetValue(),
 			}
-			resp, err = GetMachinesByID(ctx, ids)
+			resp = GetMachinesByID(ctx, ids)
 			So(err, ShouldBeNil)
 			So(resp.Passed(), ShouldHaveLength, 2)
 			So(resp.Failed(), ShouldHaveLength, 0)
@@ -156,8 +156,10 @@ func TestGetMachinesByID(t *testing.T) {
 			ids := []string{
 				chromeMachine2.GetId().GetValue(),
 			}
-			_, err := GetMachinesByID(ctx, ids)
-			So(err, ShouldNotBeNil)
+			resp := GetMachinesByID(ctx, ids)
+			So(resp.Passed(), ShouldHaveLength, 0)
+			So(resp.Failed(), ShouldHaveLength, 1)
+			So(resp.Failed()[0].Err.Error(), ShouldContainSubstring, "datastore: no such entity")
 		})
 	})
 }
