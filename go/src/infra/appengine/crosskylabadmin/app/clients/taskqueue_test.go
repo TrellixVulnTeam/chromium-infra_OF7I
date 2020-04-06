@@ -35,14 +35,17 @@ func TestSuccessfulPushDuts(t *testing.T) {
 		tasks := tqt.GetScheduledTasks()
 		t, ok := tasks[qn]
 		So(ok, ShouldBeTrue)
-		var taskPaths []string
+		var taskPaths, taskParams []string
 		for _, v := range t {
 			taskPaths = append(taskPaths, v.Path)
+			taskParams = append(taskParams, string(v.Payload))
 		}
 		sort.Strings(taskPaths)
+		sort.Strings(taskParams)
 		expectedPaths := []string{"/internal/task/cros_repair/host1", "/internal/task/cros_repair/host2"}
-		sort.Strings(expectedPaths)
+		expectedParams := []string{"botID=host1", "botID=host2"}
 		So(taskPaths, ShouldResemble, expectedPaths)
+		So(taskParams, ShouldResemble, expectedParams)
 	})
 }
 
@@ -58,14 +61,17 @@ func TestSuccessfulPushLabstations(t *testing.T) {
 		tasks := tqt.GetScheduledTasks()
 		t, ok := tasks[qn]
 		So(ok, ShouldBeTrue)
-		var taskPaths []string
+		var taskPaths, taskParams []string
 		for _, v := range t {
 			taskPaths = append(taskPaths, v.Path)
+			taskParams = append(taskParams, string(v.Payload))
 		}
 		sort.Strings(taskPaths)
+		sort.Strings(taskParams)
 		expectedPaths := []string{"/internal/task/labstation_repair/host1", "/internal/task/labstation_repair/host2"}
-		sort.Strings(expectedPaths)
+		expectedParams := []string{"botID=host1", "botID=host2"}
 		So(taskPaths, ShouldResemble, expectedPaths)
+		So(taskParams, ShouldResemble, expectedParams)
 	})
 }
 

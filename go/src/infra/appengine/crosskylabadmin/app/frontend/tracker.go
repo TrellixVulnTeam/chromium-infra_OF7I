@@ -78,13 +78,13 @@ func (tsi *TrackerServerImpl) PushBotsForAdminTasks(ctx context.Context, req *fl
 	}
 	logging.Infof(ctx, "successfully get %d alive idle cros bots with dut_state %q.", len(bots), dutState)
 
-	// Parse DUT name to schedule tasks for readability.
-	repairDUTs, resetDUTs := identifyBots(ctx, bots)
-	err1 := clients.PushRepairDUTs(ctx, repairDUTs)
-	err2 := clients.PushResetDUTs(ctx, resetDUTs)
+	// Parse BOT id to schedule tasks for readability.
+	repairBOTs, resetBOTs := identifyBots(ctx, bots)
+	err1 := clients.PushRepairDUTs(ctx, repairBOTs)
+	err2 := clients.PushResetDUTs(ctx, resetBOTs)
 	if err1 != nil || err2 != nil {
-		logging.Infof(ctx, "push repair duts: %v", err1)
-		logging.Infof(ctx, "push reset duts: %v", err2)
+		logging.Infof(ctx, "push repair bots: %v", err1)
+		logging.Infof(ctx, "push reset bots: %v", err2)
 		return nil, errors.New("failed to push repair or reset duts")
 	}
 	return &fleet.PushBotsForAdminTasksResponse{}, nil
@@ -112,10 +112,10 @@ func (tsi *TrackerServerImpl) PushRepairJobsForLabstations(ctx context.Context, 
 	}
 	logging.Infof(ctx, "successfully get %d alive idle labstation bots.", len(bots))
 
-	// Parse DUT name to schedule tasks for readability.
-	repairLabstations := identifyLabstationsForRepair(ctx, bots)
+	// Parse BOT id to schedule tasks for readability.
+	botIDs := identifyLabstationsForRepair(ctx, bots)
 
-	err = clients.PushRepairLabstations(ctx, repairLabstations)
+	err = clients.PushRepairLabstations(ctx, botIDs)
 	if err != nil {
 		logging.Infof(ctx, "push repair labstations: %v", err)
 		return nil, errors.New("failed to push repair labstations")
@@ -222,52 +222,55 @@ var healthyDutStates = map[fleet.DutState]bool{
 	fleet.DutState_NeedsReset:   true,
 }
 
-// identifyBots identifies bots that need reset and need repair.
-func identifyBots(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (repairDUTs []string, resetDUTs []string) {
-	repairDUTs = make([]string, 0, len(bots))
-	resetDUTs = make([]string, 0, len(bots))
+// identifyBots identifies duts that need reset and need repair.
+func identifyBots(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (repairBOTs []string, resetBOTs []string) {
+	repairBOTs = make([]string, 0, len(bots))
+	resetBOTs = make([]string, 0, len(bots))
 	for _, b := range bots {
 		dims := swarming_utils.DimensionsMap(b.Dimensions)
 		os, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutOSDimensionKey)
-		n, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutNameDimensionKey)
-		if err != nil {
-			logging.Warningf(ctx, "failed to obtain DUT name for bot %q", b.BotId)
+		if err != nil || os == "OS_TYPE_LABSTATION" {
 			continue
-		} else if os == "OS_TYPE_LABSTATION" {
+		}
+		id, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.BotIDDimensionKey)
+		if err != nil {
+			logging.Warningf(ctx, "failed to obtain BOT id for bot %q", b.BotId)
 			continue
 		}
 
 		s := clients.GetStateDimension(b.Dimensions)
 		if s == fleet.DutState_NeedsRepair || s == fleet.DutState_RepairFailed {
-			logging.Infof(ctx, "DUT: %s - Needs repair", n)
-			repairDUTs = append(repairDUTs, n)
+			logging.Infof(ctx, "BOT: %s - Needs repair", id)
+			repairBOTs = append(repairBOTs, id)
 
 		} else if s == fleet.DutState_NeedsReset {
-			logging.Infof(ctx, "DUT: %s - Needs reset", n)
-			resetDUTs = append(resetDUTs, n)
+			logging.Infof(ctx, "BOT: %s - Needs reset", id)
+			resetBOTs = append(resetBOTs, id)
 		}
 	}
-	return repairDUTs, resetDUTs
+	return repairBOTs, resetBOTs
 }
 
 // identifyLabstationsForRepair identifies labstations that need repair.
-func identifyLabstationsForRepair(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (repairLabstations []string) {
-	dutNames := make([]string, 0, len(bots))
+func identifyLabstationsForRepair(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) []string {
+	botIDs := make([]string, 0, len(bots))
 	for _, b := range bots {
 		dims := swarming_utils.DimensionsMap(b.Dimensions)
 		os, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutOSDimensionKey)
 		if err != nil {
 			logging.Warningf(ctx, "failed to obtain os type for bot %q", b.BotId)
 			continue
-		}
-		n, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutNameDimensionKey)
-		if err != nil {
-			logging.Warningf(ctx, "failed to obtain DUT name for bot %q", b.BotId)
+		} else if os != "OS_TYPE_LABSTATION" {
 			continue
 		}
-		if os == "OS_TYPE_LABSTATION" {
-			dutNames = append(dutNames, n)
+
+		id, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.BotIDDimensionKey)
+		if err != nil {
+			logging.Warningf(ctx, "failed to obtain BOT id for bot %q", b.BotId)
+			continue
 		}
+
+		botIDs = append(botIDs, id)
 	}
-	return dutNames
+	return botIDs
 }
