@@ -20,9 +20,6 @@ type FleetEntity interface {
 	GetUpdated() time.Time
 }
 
-// ExistsFunc checks if a list of fleet entities exist in datastore.
-type ExistsFunc func(context.Context, []FleetEntity) ([]bool, error)
-
 // NewFunc creates a new fleet entity.
 type NewFunc func(context.Context, proto.Message, time.Time) (FleetEntity, error)
 
@@ -36,8 +33,17 @@ func FakeAncestorKey(ctx context.Context, entityName string) *datastore.Key {
 	return datastore.MakeKey(ctx, entityName, "key")
 }
 
+// exists checks if a list of fleet entities exist in datastore.
+func exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
+	res, err := datastore.Exists(ctx, entities)
+	if err != nil {
+		return nil, err
+	}
+	return res.List(0), nil
+}
+
 // Insert inserts the fleet objects.
-func Insert(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc, update bool) (*OpResults, error) {
+func Insert(ctx context.Context, es []proto.Message, nf NewFunc, update bool) (*OpResults, error) {
 	allRes := make(OpResults, len(es))
 	checkEntities := make([]FleetEntity, 0, len(es))
 	checkRes := make(OpResults, 0, len(es))
@@ -59,7 +65,7 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc, 
 	f := func(ctx context.Context) error {
 		toAddEntities := make([]FleetEntity, 0, len(checkEntities))
 		toAddRes := make(OpResults, 0, len(checkEntities))
-		exists, err := ef(ctx, checkEntities)
+		exists, err := exists(ctx, checkEntities)
 		if err == nil {
 			for i, e := range checkEntities {
 				if !exists[i] && update {
@@ -149,7 +155,7 @@ func GetByID(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 }
 
 // Delete removes the entities from the datastore
-func Delete(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc) *OpResults {
+func Delete(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 	allRes := make(OpResults, len(es))
 	checkRes := make(OpResults, 0, len(es))
 	checkEntities := make([]FleetEntity, 0, len(es))
@@ -169,7 +175,7 @@ func Delete(ctx context.Context, es []proto.Message, nf NewFunc, ef ExistsFunc) 
 	}
 	// Datastore doesn't throw an error if the record doesn't exist.
 	// Check and return err if there is no such entity in the datastore.
-	exists, err := ef(ctx, checkEntities)
+	exists, err := exists(ctx, checkEntities)
 	if err == nil {
 		for i := range checkEntities {
 			if !exists[i] {

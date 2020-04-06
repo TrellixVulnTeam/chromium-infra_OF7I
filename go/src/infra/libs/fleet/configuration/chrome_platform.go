@@ -75,25 +75,13 @@ func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	return fe, nil
 }
 
-func exists(ctx context.Context, entities []fleetds.FleetEntity) ([]bool, error) {
-	cpEntities := make([]*ChromePlatformEntity, len(entities))
-	for i, e := range entities {
-		cpEntities[i] = e.(*ChromePlatformEntity)
-	}
-	res, err := datastore.Exists(ctx, entities)
-	if err != nil {
-		return nil, err
-	}
-	return res.List(0), nil
-}
-
 // InsertChromePlatforms inserts chrome platforms to datastore.
 func InsertChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform) (*fleetds.OpResults, error) {
 	protos := make([]proto.Message, len(platforms))
 	for i, p := range platforms {
 		protos[i] = p
 	}
-	return fleetds.Insert(ctx, protos, newEntity, exists, false)
+	return fleetds.Insert(ctx, protos, newEntity, false)
 }
 
 // GetAllChromePlatforms returns all platforms in record.

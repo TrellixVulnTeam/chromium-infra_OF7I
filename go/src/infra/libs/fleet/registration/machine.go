@@ -62,18 +62,6 @@ func newEntity(ctx context.Context, pm proto.Message, updateTime time.Time) (fle
 	}, nil
 }
 
-func exists(ctx context.Context, entities []fleetds.FleetEntity) ([]bool, error) {
-	cpEntities := make([]*MachineEntity, len(entities))
-	for i, e := range entities {
-		cpEntities[i] = e.(*MachineEntity)
-	}
-	res, err := datastore.Exists(ctx, cpEntities)
-	if err != nil {
-		return nil, err
-	}
-	return res.List(0), nil
-}
-
 func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	var entities []*MachineEntity
 	q := datastore.NewQuery(MachineKind).Ancestor(fleetds.FakeAncestorKey(ctx, MachineKind))
@@ -125,7 +113,7 @@ func DeleteMachines(ctx context.Context, ids []string) *fleetds.OpResults {
 			},
 		}
 	}
-	return fleetds.Delete(ctx, protos, newEntity, exists)
+	return fleetds.Delete(ctx, protos, newEntity)
 }
 
 func putMachines(ctx context.Context, machines []*fleet.Machine, update bool) (*fleetds.OpResults, error) {
@@ -133,5 +121,5 @@ func putMachines(ctx context.Context, machines []*fleet.Machine, update bool) (*
 	for i, p := range machines {
 		protos[i] = p
 	}
-	return fleetds.Insert(ctx, protos, newEntity, exists, update)
+	return fleetds.Insert(ctx, protos, newEntity, update)
 }
