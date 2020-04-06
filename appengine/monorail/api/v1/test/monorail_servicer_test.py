@@ -20,7 +20,7 @@ from google.appengine.ext import testbed
 from google.protobuf import json_format
 
 import settings
-from api import monorail_servicer
+from api.v1 import monorail_servicer
 from framework import authdata
 from framework import exceptions
 from framework import framework_constants
