@@ -202,35 +202,32 @@ def _mutate_pins_repo(api, root, spec, tarballs, meta):
       cmd=[root.join('scripts', 'roll_tarballs.py')],
       stdin=api.json.input({'tarballs': versions}),
       stdout=api.json.output(),
-      step_test_data=lambda: api.json.test_api.output_stream({
-          'tarballs': versions,
-          'deployments': [
-              {'cc': ['n1@example.com', 'n2@example.com']},
-              {'cc': ['n3@example.com', 'n1@example.com']},
-          ],
-      }))
+      step_test_data=lambda: api.json.test_api.output_stream(
+          _roll_tarballs_test_data(versions)))
   rolled = res.stdout['tarballs']
   deployments = res.stdout.get('deployments') or []
 
-  # Bail early if there's no new pins. In particular we don't want to call
-  # prune_tarballs.py, since if it indeed prunes something we'll end up with
-  # a CL titled "Rolling in new tarballs" that instead just deletes some stuff.
-  if not rolled:  # pragma: no cover
-    return None
-
-  # Delete old unused pins (if any).
-  api.step(
-      name='prune_tarballs.py',
-      cmd=[root.join('scripts', 'prune_tarballs.py'), '--verbose'])
+  # If added new pins, delete old unused pins (if any). Note that if we are
+  # building a rollback CL, we often do not add new pins (since we actually
+  # rebuild a previously built tarball). We still need to land a CL to do the
+  # rollback. If it turns out nothing has changed, api.cloudbuildhelper.do_roll
+  # will just skip uploading the change.
+  if rolled:
+    api.step(
+        name='prune_tarballs.py',
+        cmd=[root.join('scripts', 'prune_tarballs.py'), '--verbose'])
 
   # Generate the commit message.
   message = str('\n'.join([
-      '[images] Rolling in new tarballs.',
+      '[images] Rolling in tarballs.',
       '',
       'Produced by %s' % api.buildbucket.build_url(),
       '',
-      'Added pins:',
-  ] + ['  * %s:%s' % (t['tarball'], t['version']['version']) for t in rolled]))
+      'Changes:',
+  ] + [
+      '  * %s: %s -> %s' % (d['tarball'], d['from'], d['to'])
+      for d in deployments
+  ]))
 
   # List of people to CC based on what staging deployments were updated.
   extra_cc = set()
@@ -242,6 +239,23 @@ def _mutate_pins_repo(api, root, spec, tarballs, meta):
       cc=extra_cc,
       tbr=spec.tbr,
       commit=spec.commit)
+
+
+def _roll_tarballs_test_data(versions):
+  return {
+      'tarballs': versions,
+      'deployments': [
+          {
+              'cc': ['n1@example.com', 'n2@example.com'],
+              'channel': 'staging',
+              'from': 'prev-version',
+              'spec': 'apps/something/channels.json',
+              'tarball': v['tarball'],
+              'to': v['version']['version'],
+          }
+          for v in versions
+      ],
+  }
 
 
 def GenTests(api):

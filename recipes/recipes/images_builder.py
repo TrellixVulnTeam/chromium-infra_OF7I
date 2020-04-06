@@ -304,35 +304,32 @@ def _mutate_pins_repo(api, root, spec, images, meta):
       cmd=[root.join('scripts', 'roll_images.py')],
       stdin=api.json.input({'tags': tags}),
       stdout=api.json.output(),
-      step_test_data=lambda: api.json.test_api.output_stream({
-          'tags': tags,
-          'deployments': [
-              {'cc': ['n1@example.com', 'n2@example.com']},
-              {'cc': ['n3@example.com', 'n1@example.com']},
-          ],
-      }))
+      step_test_data=lambda: api.json.test_api.output_stream(
+          _roll_images_test_data(tags)))
   rolled = res.stdout['tags']
   deployments = res.stdout.get('deployments') or []
 
-  # Bail early if there's no new images. In particular we don't want to call
-  # prune_images.py, since if it indeed prunes something we'll end up with
-  # a CL titled "Rolling in new images" that instead just deletes some stuff.
-  if not rolled:  # pragma: no cover
-    return None
-
-  # Delete old unused tags (if any).
-  api.step(
-      name='prune_images.py',
-      cmd=[root.join('scripts', 'prune_images.py'), '--verbose'])
+  # If added new pins, delete old unused ones (if any). Note that if we are
+  # building a rollback CL, we often do not add new pins (since we actually
+  # rebuild a previously built image). We still need to land a CL to do the
+  # rollback. If it turns out nothing has changed, api.cloudbuildhelper.do_roll
+  # will just skip uploading the change.
+  if rolled:
+    api.step(
+        name='prune_images.py',
+        cmd=[root.join('scripts', 'prune_images.py'), '--verbose'])
 
   # Generate the commit message.
   message = str('\n'.join([
-      '[images] Rolling in new images.',
+      '[images] Rolling in images.',
       '',
       'Produced by %s' % api.buildbucket.build_url(),
       '',
-      'Added pins:',
-  ] + ['  * %s:%s' % (t['image'], t['tag']['tag']) for t in rolled]))
+      'Changes:',
+  ] + [
+      '  * %s: %s -> %s' % (d['image'], d['from'], d['to'])
+      for d in deployments
+  ]))
 
   # List of people to CC based on what staging deployments were updated.
   extra_cc = set()
@@ -344,6 +341,23 @@ def _mutate_pins_repo(api, root, spec, images, meta):
       cc=extra_cc,
       tbr=spec.tbr,
       commit=spec.commit)
+
+
+def _roll_images_test_data(tags):
+  return {
+      'tags': tags,
+      'deployments': [
+          {
+              'cc': ['n1@example.com', 'n2@example.com'],
+              'channel': 'staging',
+              'from': 'prev-version',
+              'spec': 'projects/something/channels.json',
+              'image': t['image'],
+              'to': t['tag']['tag'],
+          }
+          for t in tags
+      ],
+  }
 
 
 def GenTests(api):
