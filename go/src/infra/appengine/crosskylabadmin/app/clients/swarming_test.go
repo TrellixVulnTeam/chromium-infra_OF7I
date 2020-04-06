@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/google/go-cmp/cmp"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
@@ -181,6 +182,136 @@ func TestTaskDoneTime(t *testing.T) {
 			if !got.Equal(c.want) {
 				t.Errorf("TaskDoneTime(%#v) = %s; want %s", c.input, got.Format(time.RFC3339Nano),
 					c.want.Format(time.RFC3339Nano))
+			}
+		})
+	}
+}
+
+func TestConvertToDimensions(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc string
+		in   *SwarmingCreateTaskArgs
+		want []*swarming.SwarmingRpcsStringPair
+	}{
+		{
+			desc: "empty collection",
+			in:   &SwarmingCreateTaskArgs{},
+			want: nil,
+		},
+		{
+			desc: "with DutName",
+			in: &SwarmingCreateTaskArgs{
+				Pool:    "pool1",
+				DutName: "dut1",
+			},
+			want: []*swarming.SwarmingRpcsStringPair{
+				{
+					Key:   "pool",
+					Value: "pool1",
+				},
+				{
+					Key:   "dut_name",
+					Value: "dut1",
+				},
+			},
+		},
+		{
+			desc: "with BotId",
+			in: &SwarmingCreateTaskArgs{
+				Pool:  "pool1",
+				BotID: "bot1",
+			},
+			want: []*swarming.SwarmingRpcsStringPair{
+				{
+					Key:   "pool",
+					Value: "pool1",
+				},
+				{
+					Key:   "id",
+					Value: "bot1",
+				},
+			},
+		},
+		{
+			desc: "with dut_id",
+			in: &SwarmingCreateTaskArgs{
+				Pool:  "pool1",
+				DutID: "dut_id1",
+			},
+			want: []*swarming.SwarmingRpcsStringPair{
+				{
+					Key:   "pool",
+					Value: "pool1",
+				},
+				{
+					Key:   "dut_id",
+					Value: "dut_id1",
+				},
+			},
+		},
+		{
+			desc: "priority to bot id",
+			in: &SwarmingCreateTaskArgs{
+				Pool:     "pool1",
+				BotID:    "bot1",
+				DutName:  "dut1",
+				DutID:    "dut_id1",
+				DutState: "some_state",
+			},
+			want: []*swarming.SwarmingRpcsStringPair{
+				{
+					Key:   "pool",
+					Value: "pool1",
+				},
+				{
+					Key:   "id",
+					Value: "bot1",
+				},
+				{
+					Key:   "dut_state",
+					Value: "some_state",
+				},
+			},
+		},
+		{
+			desc: "priority to dut id",
+			in: &SwarmingCreateTaskArgs{
+				Pool:     "pool1",
+				DutName:  "dut1",
+				DutID:    "dut_id1",
+				DutState: "some_state",
+			},
+			want: []*swarming.SwarmingRpcsStringPair{
+				{
+					Key:   "pool",
+					Value: "pool1",
+				},
+				{
+					Key:   "dut_id",
+					Value: "dut_id1",
+				},
+				{
+					Key:   "dut_state",
+					Value: "some_state",
+				},
+			},
+		},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.desc, func(t *testing.T) {
+			t.Parallel()
+			got, err := convertToDimensions(c.in)
+			if err != nil {
+				if c.want != nil {
+					t.Fatalf("TaskDoneTime returned unexpected error: %s", err)
+				}
+			}
+			diff := cmp.Diff(got, c.want)
+			if diff != "" {
+				t.Errorf("Test faild for %#v = %s", c.desc, diff)
 			}
 		})
 	}

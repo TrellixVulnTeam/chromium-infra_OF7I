@@ -45,6 +45,9 @@ const (
 	// There is no per-instance limit (yet).
 	MaxConcurrentSwarmingCalls = 20
 
+	// BotIDDimensionKey identifies the swarming dimension containing
+	// the ID of BOT
+	BotIDDimensionKey = "id"
 	// DutIDDimensionKey identifies the swarming dimension containing the ID for
 	// the DUT corresponding to a bot.
 	DutIDDimensionKey = "dut_id"
@@ -94,6 +97,8 @@ type SwarmingClient interface {
 // is needed by this app.
 type SwarmingCreateTaskArgs struct {
 	Cmd []string
+	// The task targets a dut with the given bot id.
+	BotID string
 	// The task targets a dut with the given dut id.
 	DutID string
 	// If non-empty, the task targets a dut in the given state.
@@ -175,32 +180,10 @@ func (sc *swarmingClientImpl) ListAliveBotsInPool(c context.Context, pool string
 //
 // On success, CreateTask returns the opaque task ID returned by Swarming.
 func (sc *swarmingClientImpl) CreateTask(c context.Context, name string, args *SwarmingCreateTaskArgs) (string, error) {
-	if args.DutID == "" && args.DutName == "" {
-		return "", errors.Reason("invalid argument: one of (DutID, DutName) need to be specified").Err()
-	}
-	dims := []*swarming.SwarmingRpcsStringPair{
-		{
-			Key:   PoolDimensionKey,
-			Value: args.Pool,
-		},
-	}
-	if args.DutID != "" {
-		dims = append(dims, &swarming.SwarmingRpcsStringPair{
-			Key:   DutIDDimensionKey,
-			Value: args.DutID,
-		})
-	}
-	if args.DutName != "" {
-		dims = append(dims, &swarming.SwarmingRpcsStringPair{
-			Key:   DutNameDimensionKey,
-			Value: args.DutName,
-		})
-	}
-	if args.DutState != "" {
-		dims = append(dims, &swarming.SwarmingRpcsStringPair{
-			Key:   DutStateDimensionKey,
-			Value: args.DutState,
-		})
+
+	dims, err := convertToDimensions(args)
+	if err != nil {
+		return "", errors.Reason("Failed to create dimentions").InternalReason(err.Error()).Err()
 	}
 
 	ntr := &swarming.SwarmingRpcsNewTaskRequest{
@@ -232,6 +215,44 @@ func (sc *swarmingClientImpl) CreateTask(c context.Context, name string, args *S
 		return "", errors.Reason("Failed to create task").InternalReason(err.Error()).Err()
 	}
 	return resp.TaskId, nil
+}
+
+// Converts task args to the key-value dimension set.
+//
+// Minimum required one of BotID, DutID or DutName
+func convertToDimensions(args *SwarmingCreateTaskArgs) ([]*swarming.SwarmingRpcsStringPair, error) {
+	if args.DutID == "" && args.DutName == "" && args.BotID == "" {
+		return nil, errors.Reason("invalid argument: one of (DutID, DutName, BotID) need to be specified").Err()
+	}
+	dims := []*swarming.SwarmingRpcsStringPair{
+		{
+			Key:   PoolDimensionKey,
+			Value: args.Pool,
+		},
+	}
+	if args.BotID != "" {
+		dims = append(dims, &swarming.SwarmingRpcsStringPair{
+			Key:   BotIDDimensionKey,
+			Value: args.BotID,
+		})
+	} else if args.DutID != "" {
+		dims = append(dims, &swarming.SwarmingRpcsStringPair{
+			Key:   DutIDDimensionKey,
+			Value: args.DutID,
+		})
+	} else if args.DutName != "" {
+		dims = append(dims, &swarming.SwarmingRpcsStringPair{
+			Key:   DutNameDimensionKey,
+			Value: args.DutName,
+		})
+	}
+	if args.DutState != "" {
+		dims = append(dims, &swarming.SwarmingRpcsStringPair{
+			Key:   DutStateDimensionKey,
+			Value: args.DutState,
+		})
+	}
+	return dims, nil
 }
 
 // GetTaskResult gets the task result for a given task ID.
