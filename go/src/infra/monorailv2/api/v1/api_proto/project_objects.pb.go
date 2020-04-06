@@ -839,7 +839,7 @@ func (m *IssueTemplate) GetAdmins() []string {
 type ProjectConfig struct {
 	// Resource name of the project config.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// An issue may only have one label that begins with these prefixes
+	// Set of label prefixes that only apply once per issue.
 	// E.g. priority, since no issue can be both Priority-High and Priority-Low.
 	ExclusiveLabelPrefixes []string `protobuf:"bytes,2,rep,name=exclusive_label_prefixes,json=exclusiveLabelPrefixes,proto3" json:"exclusive_label_prefixes,omitempty"`
 	// Statuses used to indicate an issues has been merged into another issue.

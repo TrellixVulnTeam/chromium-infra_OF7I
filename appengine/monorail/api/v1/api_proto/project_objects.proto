@@ -279,7 +279,7 @@ message ProjectConfig {
 
   // Resource name of the project config.
   string name = 1;
-  // An issue may only have one label that begins with these prefixes
+  // Set of label prefixes that only apply once per issue.
   // E.g. priority, since no issue can be both Priority-High and Priority-Low.
   repeated string exclusive_label_prefixes = 2;
   // Statuses used to indicate an issues has been merged into another issue.
