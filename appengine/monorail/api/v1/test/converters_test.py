@@ -25,6 +25,9 @@ from testing import testing_helpers
 from services import service_manager
 from proto import tracker_pb2
 
+EXPLICIT_DERIVATION = issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
+RULE_DERIVATION = issue_objects_pb2.Issue.Derivation.Value('RULE')
+
 
 class ConverterFunctionsTest(unittest.TestCase):
 
@@ -47,68 +50,31 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.user_1 = self.services.user.TestAddUser('one@example.com', 111)
     self.user_2 = self.services.user.TestAddUser('two@example.com', 222)
     self.user_3 = self.services.user.TestAddUser('three@example.com', 333)
-    self.issue_1 = fake.MakeTestIssue(
-        self.project_1.project_id,
-        1,
-        'sum',
-        'New',
-        self.user_1.user_id,
-        cc_ids=[self.user_2.user_id],
-        derived_cc_ids=[self.user_3.user_id],
-        project_name=self.project_1.project_name,
-        star_count=1,
-        labels=['label-a', 'label-b'],
-        derived_labels=['label-derived', 'label-derived-2'],
-        component_ids=[1, 2],
-        merged_into_external='b/1',
-        derived_component_ids=[3, 4],
-        attachment_count=5,
-    )
-
-    self.issue_2 = fake.MakeTestIssue(
-        self.project_2.project_id,
-        2,
-        'sum2',
-        'New',
-        self.user_1.user_id,
-        project_name=self.project_2.project_name)
-    self.services.issue.TestAddIssue(self.issue_1)
-    self.services.issue.TestAddIssue(self.issue_2)
 
     self.field_def_1_name = 'test_field_1'
-    self.field_def_1 = self.services.config.CreateFieldDef(
-        self.cnxn, self.project_1.project_id, self.field_def_1_name, 'STR_TYPE',
-        None, None, None, None, None, None, None, None, None, None, None, None,
-        None, None, [], [])
+    self.field_def_1 = self._CreateFieldDef(
+        self.project_1.project_id, self.field_def_1_name, 'STR_TYPE')
     self.field_def_2_name = 'test_field_2'
-    self.field_def_2 = self.services.config.CreateFieldDef(
-        self.cnxn, self.project_1.project_id, self.field_def_2_name, 'INT_TYPE',
-        None, None, None, None, None, None, None, None, None, None, None, None,
-        None, None, [], [])
+    self.field_def_2 = self._CreateFieldDef(
+        self.project_1.project_id, self.field_def_2_name, 'INT_TYPE')
     self.field_def_3_name = 'days'
-    self.field_def_3 = self.services.config.CreateFieldDef(
-        self.cnxn, self.project_1.project_id, self.field_def_3_name,
-        'ENUM_TYPE', None, None, None, None, None, None, None, None, None, None,
-        None, None, None, None, [], [])
+    self.field_def_3 = self._CreateFieldDef(
+        self.project_1.project_id, self.field_def_3_name, 'ENUM_TYPE')
     self.field_def_4_name = 'OS'
-    self.field_def_4 = self.services.config.CreateFieldDef(
-        self.cnxn, self.project_1.project_id, self.field_def_4_name,
-        'ENUM_TYPE', None, None, None, None, None, None, None, None, None, None,
-        None, None, None, None, [], [])
-    self.field_def_5_name = 'lorem'
-    self.field_def_5 = self.services.config.CreateFieldDef(
-        self.cnxn, self.project_2.project_id, self.field_def_5_name,
-        'ENUM_TYPE', None, None, None, None, None, None, None, None, None, None,
-        None, None, None, None, [], [])
+    self.field_def_4 = self._CreateFieldDef(
+        self.project_1.project_id, self.field_def_4_name, 'ENUM_TYPE')
+    self.field_def_project2_name = 'lorem'
+    self.field_def_project2 = self._CreateFieldDef(
+        self.project_2.project_id, self.field_def_project2_name, 'ENUM_TYPE')
     self.approval_def_1_name = 'approval_field_1'
-    self.approval_def_1_id = self.services.config.CreateFieldDef(
-        self.cnxn, self.project_1.project_id, self.approval_def_1_name,
-        'APPROVAL_TYPE', None, None, None, None, None, None, None, None, None,
-        None, None, None, None, None, [], [])
+    self.approval_def_1_id = self._CreateFieldDef(
+        self.project_1.project_id, self.approval_def_1_name, 'APPROVAL_TYPE')
     self.dne_field_def_id = 999999
     self.fv_1_value = 'some_string_field_value'
     self.fv_1 = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value=self.fv_1_value, derived=False)
+    self.fv_1_derived = fake.MakeFieldValue(
+        field_id=self.field_def_1, str_value=self.fv_1_value, derived=True)
     self.phase_1_id = 123123
     self.phase_1 = fake.MakePhase(self.phase_1_id, name='some phase name')
     self.av_1 = fake.MakeApprovalValue(
@@ -122,6 +88,35 @@ class ConverterFunctionsTest(unittest.TestCase):
         setter_id=self.user_1.user_id,
         set_on=self.PAST_TIME,
         approver_ids=[self.user_2.user_id])
+
+    self.issue_1 = fake.MakeTestIssue(
+        self.project_1.project_id,
+        1,
+        'sum',
+        'New',
+        self.user_1.user_id,
+        cc_ids=[self.user_2.user_id],
+        derived_cc_ids=[self.user_3.user_id],
+        project_name=self.project_1.project_name,
+        star_count=1,
+        labels=['label-a', 'label-b', 'days-1'],
+        derived_labels=['label-derived', 'OS-mac', 'label-derived-2'],
+        component_ids=[1, 2],
+        merged_into_external='b/1',
+        derived_component_ids=[3, 4],
+        attachment_count=5,
+        field_values=[self.fv_1, self.fv_1_derived])
+
+    self.issue_2 = fake.MakeTestIssue(
+        self.project_2.project_id,
+        2,
+        'sum2',
+        'New',
+        self.user_1.user_id,
+        project_name=self.project_2.project_name)
+    self.services.issue.TestAddIssue(self.issue_1)
+    self.services.issue.TestAddIssue(self.issue_2)
+
     self.template_0 = self.services.template.TestAddIssueTemplateDef(
         11110, self.project_1.project_id, 'template0')
     self.template_1_label1_value = '2'
@@ -157,6 +152,13 @@ class ConverterFunctionsTest(unittest.TestCase):
     )
     self.dne_template = tracker_pb2.TemplateDef(
         name='dne_template_name', template_id=11114)
+
+  def _CreateFieldDef(self, project_id, field_name, field_type_str):
+    """Convenience function for default CreateFieldDef args."""
+    return self.services.config.CreateFieldDef(
+        self.cnxn, project_id, field_name, field_type_str, None, None, None,
+        None, None, None, None, None, None, None, None, None, None, None, [],
+        [])
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -328,52 +330,61 @@ class ConverterFunctionsTest(unittest.TestCase):
             summary='sum',
             state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
             status=issue_objects_pb2.Issue.StatusValue(
-                derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
-                status='New'),
+                derivation=EXPLICIT_DERIVATION, status='New'),
             reporter='users/111',
             owner=issue_objects_pb2.Issue.UserValue(
-                derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
-                user='users/111'),
+                derivation=EXPLICIT_DERIVATION, user='users/111'),
             cc_users=[
                 issue_objects_pb2.Issue.UserValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value(
-                        'EXPLICIT'),
-                    user='users/222'),
+                    derivation=EXPLICIT_DERIVATION, user='users/222'),
                 issue_objects_pb2.Issue.UserValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
-                    user='users/333')
+                    derivation=RULE_DERIVATION, user='users/333')
             ],
             labels=[
                 issue_objects_pb2.Issue.LabelValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value(
-                        'EXPLICIT'),
-                    label='label-a'),
+                    derivation=EXPLICIT_DERIVATION, label='label-a'),
                 issue_objects_pb2.Issue.LabelValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value(
-                        'EXPLICIT'),
-                    label='label-b'),
+                    derivation=EXPLICIT_DERIVATION, label='label-b'),
                 issue_objects_pb2.Issue.LabelValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
-                    label='label-derived'),
+                    derivation=RULE_DERIVATION, label='label-derived'),
                 issue_objects_pb2.Issue.LabelValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
-                    label='label-derived-2')
+                    derivation=RULE_DERIVATION, label='label-derived-2')
             ],
             components=[
                 issue_objects_pb2.Issue.ComponentValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value(
-                        'EXPLICIT'),
+                    derivation=EXPLICIT_DERIVATION,
                     component='projects/proj/componentDefs/1'),
                 issue_objects_pb2.Issue.ComponentValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value(
-                        'EXPLICIT'),
+                    derivation=EXPLICIT_DERIVATION,
                     component='projects/proj/componentDefs/2'),
                 issue_objects_pb2.Issue.ComponentValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                    derivation=RULE_DERIVATION,
                     component='projects/proj/componentDefs/3'),
                 issue_objects_pb2.Issue.ComponentValue(
-                    derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                    derivation=RULE_DERIVATION,
                     component='projects/proj/componentDefs/4'),
+            ],
+            field_values=[
+                issue_objects_pb2.Issue.FieldValue(
+                    derivation=EXPLICIT_DERIVATION,
+                    field='projects/proj/fieldDefs/test_field_1',
+                    value=self.fv_1_value,
+                ),
+                issue_objects_pb2.Issue.FieldValue(
+                    derivation=RULE_DERIVATION,
+                    field='projects/proj/fieldDefs/test_field_1',
+                    value=self.fv_1_value,
+                ),
+                issue_objects_pb2.Issue.FieldValue(
+                    derivation=EXPLICIT_DERIVATION,
+                    field='projects/proj/fieldDefs/days',
+                    value='1',
+                ),
+                issue_objects_pb2.Issue.FieldValue(
+                    derivation=RULE_DERIVATION,
+                    field='projects/proj/fieldDefs/OS',
+                    value='mac',
+                )
             ],
             description='TODO(jessan): Pull description from comments',
             merged_into_issue_ref=issue_objects_pb2.IssueRef(
@@ -414,8 +425,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
         summary='sum',
         status=issue_objects_pb2.Issue.StatusValue(
-            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
-            status='New'),
+            derivation=EXPLICIT_DERIVATION, status='New'),
         reporter='users/111',
         description='TODO(jessan): Pull description from comments',
     )
@@ -460,7 +470,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_value = issue_objects_pb2.Issue.FieldValue(
         field=expected_name,
         value=expected_str,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+        derivation=EXPLICIT_DERIVATION,
         phase=None)
     output = self.converter.ConvertFieldValues(
         [fv], self.project_1.project_id, [])
@@ -482,7 +492,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_1 = issue_objects_pb2.Issue.FieldValue(
         field=name_1,
         value=expected_str,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+        derivation=EXPLICIT_DERIVATION,
         phase=None)
 
     expected_int = 111111
@@ -494,7 +504,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_2 = issue_objects_pb2.Issue.FieldValue(
         field=name_2,
         value=str(expected_int),
-        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+        derivation=RULE_DERIVATION,
         phase=None)
     output = self.converter.ConvertFieldValues(
         [fv_1, fv_2], self.project_1.project_id, [])
@@ -511,7 +521,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_1 = issue_objects_pb2.Issue.FieldValue(
         field=name_1,
         value=expected_str,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+        derivation=EXPLICIT_DERIVATION,
         phase=None)
 
     fv_2 = fake.MakeFieldValue(
@@ -557,14 +567,14 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(expected, output)
 
   def test_ComputeFieldValueDerivation_RULE(self):
-    expected = issue_objects_pb2.Issue.Derivation.Value('RULE')
+    expected = RULE_DERIVATION
     fv = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value='something', derived=True)
     output = self.converter._ComputeFieldValueDerivation(fv)
     self.assertEqual(expected, output)
 
   def test_ComputeFieldValueDerivation_EXPLICIT(self):
-    expected = issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
+    expected = EXPLICIT_DERIVATION
     fv = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value='something', derived=False)
     output = self.converter._ComputeFieldValueDerivation(fv)
@@ -750,24 +760,18 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertFalse(result.cc_users)
     self.assertEqual(len(result.labels), 1)
     self.assertEqual(result.labels[0].label, self.template_1.labels[0])
-    self.assertEqual(
-        result.labels[0].derivation,
-        issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result.labels[0].derivation, EXPLICIT_DERIVATION)
     self.assertEqual(len(result.components), 1)
     self.assertEqual(
         result.components[0].component, 'projects/{}/componentDefs/{}'.format(
             self.project_1.project_name, self.template_1.component_ids[0]))
-    self.assertEqual(
-        result.components[0].derivation,
-        issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result.components[0].derivation, EXPLICIT_DERIVATION)
     self.assertEqual(len(result.field_values), 2)
     self.assertEqual(
         result.field_values[0].field, 'projects/{}/fieldDefs/{}'.format(
             self.project_1.project_name, self.field_def_1_name))
     self.assertEqual(result.field_values[0].value, self.fv_1_value)
-    self.assertEqual(
-        result.field_values[0].derivation,
-        issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result.field_values[0].derivation, EXPLICIT_DERIVATION)
     expected_name = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_3], self.project_1.project_id,
         self.services).get(self.field_def_3)
@@ -776,7 +780,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         issue_objects_pb2.Issue.FieldValue(
             field=expected_name,
             value=self.template_1_label1_value,
-            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
+            derivation=EXPLICIT_DERIVATION))
     self.assertFalse(result.blocked_on_issue_refs)
     self.assertFalse(result.blocking_issue_refs)
     self.assertFalse(result.attachment_count)
@@ -798,9 +802,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         result.field_values[0].field, 'projects/{}/fieldDefs/{}'.format(
             self.project_1.project_name, self.field_def_1_name))
     self.assertEqual(result.field_values[0].value, self.fv_1_value)
-    self.assertEqual(
-        result.field_values[0].derivation,
-        issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+    self.assertEqual(result.field_values[0].derivation, EXPLICIT_DERIVATION)
     self.assertEqual(len(result.approval_values), 1)
     self.assertEqual(len(result.approval_values[0].approvers), 1)
     self.assertEqual(
@@ -844,8 +846,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         input_labels, [], self.project_1.project_id)
     self.assertEqual(len(result), 1)
     expected = issue_objects_pb2.Issue.LabelValue(
-        label=input_labels[0],
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+        label=input_labels[0], derivation=EXPLICIT_DERIVATION)
     self.assertEqual(result[0], expected)
 
   def testConvertLabels_DerivedLabels(self):
@@ -855,8 +856,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         [], input_labels, self.project_1.project_id)
     self.assertEqual(len(result), 1)
     expected = issue_objects_pb2.Issue.LabelValue(
-        label=input_labels[0],
-        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+        label=input_labels[0], derivation=RULE_DERIVATION)
     self.assertEqual(result[0], expected)
 
   def testConvertLabels(self):
@@ -867,12 +867,10 @@ class ConverterFunctionsTest(unittest.TestCase):
         input_labels, input_der_labels, self.project_1.project_id)
     self.assertEqual(len(result), 2)
     expected_0 = issue_objects_pb2.Issue.LabelValue(
-        label=input_labels[0],
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+        label=input_labels[0], derivation=EXPLICIT_DERIVATION)
     self.assertEqual(result[0], expected_0)
     expected_1 = issue_objects_pb2.Issue.LabelValue(
-        label=input_der_labels[1],
-        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+        label=input_der_labels[1], derivation=RULE_DERIVATION)
     self.assertEqual(result[1], expected_1)
 
   def testConvertLabels_Empty(self):
@@ -894,7 +892,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected = issue_objects_pb2.Issue.FieldValue(
         field=expected_name,
         value=expected_value,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+        derivation=EXPLICIT_DERIVATION)
     self.assertEqual(result[0], expected)
 
   def testConvertEnumFieldValues_DerivedLabels(self):
@@ -910,9 +908,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.cnxn, [self.field_def_3], self.project_1.project_id,
         self.services).get(self.field_def_3)
     expected = issue_objects_pb2.Issue.FieldValue(
-        field=expected_name,
-        value=expected_value,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+        field=expected_name, value=expected_value, derivation=RULE_DERIVATION)
     self.assertEqual(result[0], expected)
 
   def testConvertEnumFieldValues_Empty(self):
@@ -923,10 +919,9 @@ class ConverterFunctionsTest(unittest.TestCase):
   def testConvertEnumFieldValues_ProjectSpecific(self):
     """It only considers field defs from specified project"""
     expected_value = '2'
-    # field_def_5 belongs to project_2
     input_labels = [
         '{}-{}'.format(self.field_def_3_name, expected_value),
-        '{}-ipsum'.format(self.field_def_5_name)
+        '{}-ipsum'.format(self.field_def_project2_name)
     ]
     result = self.converter.ConvertEnumFieldValues(
         input_labels, [], self.project_1.project_id)
@@ -937,7 +932,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected = issue_objects_pb2.Issue.FieldValue(
         field=expected_name,
         value=expected_value,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+        derivation=EXPLICIT_DERIVATION)
     self.assertEqual(result[0], expected)
 
   def testConvertEnumFieldValues(self):
@@ -946,7 +941,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_value_1 = 'macOS'
     input_labels = [
         'pri-1', '{}-{}'.format(self.field_def_3_name, expected_value_0),
-        '{}-ipsum'.format(self.field_def_5_name)
+        '{}-ipsum'.format(self.field_def_project2_name)
     ]
     input_der_labels = [
         '{}-{}'.format(self.field_def_4_name, expected_value_1), 'foo-bar'
@@ -960,7 +955,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_0 = issue_objects_pb2.Issue.FieldValue(
         field=expected_0_name,
         value=expected_value_0,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+        derivation=EXPLICIT_DERIVATION)
     self.assertEqual(result[0], expected_0)
     expected_1_name = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_4], self.project_1.project_id,
@@ -968,5 +963,5 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_1 = issue_objects_pb2.Issue.FieldValue(
         field=expected_1_name,
         value=expected_value_1,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+        derivation=RULE_DERIVATION)
     self.assertEqual(result[1], expected_1)

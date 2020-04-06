@@ -173,23 +173,6 @@ class Converter(object):
     return issue_objects_pb2.Issue.StatusValue(
         status=issue.status or issue.derived_status, derivation=derivation)
 
-  def _ConvertLabelValues(self, issue):
-    # proto.tracker_pb2.Issue ->
-    #     Sequence[api_proto.issue_objects_pb2.Issue.LabelValue]
-    """Convert the label strings on issue into LabelValues."""
-    labels = []
-    for label in issue.labels:
-      labels.append(
-          issue_objects_pb2.Issue.LabelValue(
-              derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
-              label=label))
-    for derived_label in issue.derived_labels:
-      labels.append(
-          issue_objects_pb2.Issue.LabelValue(
-              derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
-              label=derived_label))
-    return labels
-
   def ConvertIssues(self, issues):
     # type: (Sequence[proto.tracker_pb2.Issue]) ->
     #     Sequence[api_proto.issue_objects_pb2.Issue]
@@ -234,11 +217,14 @@ class Converter(object):
                 derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
                 user=rnc.ConvertUserName(derived_cc_user_id)))
 
-      labels = self._ConvertLabelValues(issue)
+      labels = self.ConvertLabels(
+          issue.labels, issue.derived_labels, issue.project_id)
       components = self._ConvertComponentValues(issue)
-      # TODO(jessan): Handle enum fieldvalues, then include below.
-      # field_values = self.ConvertFieldValues(
-      #     issue.field_values, issue.project_id, issue.phases)
+      field_values = self.ConvertFieldValues(
+          issue.field_values, issue.project_id, issue.phases)
+      field_values.extend(
+          self.ConvertEnumFieldValues(
+              issue.labels, issue.derived_labels, issue.project_id))
       related_issue_ids = (
           [issue.merged_into] + issue.blocked_on_iids + issue.blocking_iids)
       issue_names_by_ids = rnc.ConvertIssueNames(
@@ -282,7 +268,7 @@ class Converter(object):
           cc_users=cc_users,
           labels=labels,
           components=components,
-          field_values=[],
+          field_values=field_values,
           merged_into_issue_ref=merged_into_issue_ref,
           blocked_on_issue_refs=blocked_on_issue_refs,
           blocking_issue_refs=blocking_issue_refs,
@@ -588,11 +574,10 @@ class Converter(object):
           issue_objects_pb2.Issue.ComponentValue(
               component=component_resource_name,
               derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
-    non_enum_field_values = self.ConvertFieldValues(
+    field_values = self.ConvertFieldValues(
         template.field_values, project_id, template.phases)
-    enum_field_values = self.ConvertEnumFieldValues(
-        template.labels, [], project_id)
-    field_values = non_enum_field_values + enum_field_values
+    field_values.extend(
+        self.ConvertEnumFieldValues(template.labels, [], project_id))
     approval_values = self.ConvertApprovalValues(
         template.approval_values, project_id, template.phases)
     phases = self._ComputeTemplatePhases(template)
