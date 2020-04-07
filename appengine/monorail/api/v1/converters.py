@@ -256,6 +256,10 @@ class Converter(object):
           issue_objects_pb2.IssueRef(
               ext_identifier=blocking.ext_issue_identifier)
           for blocking in issue.dangling_blocking_refs)
+      # All other timestamps were set when the issue was created.
+      close_time = None
+      if issue.closed_timestamp:
+        close_time = timestamp_pb2.Timestamp(seconds=issue.closed_timestamp)
 
       approval_values = self.ConvertApprovalValues(
           issue.approval_values, issue.project_id, issue.phases)
@@ -276,7 +280,15 @@ class Converter(object):
           merged_into_issue_ref=merged_into_issue_ref,
           blocked_on_issue_refs=blocked_on_issue_refs,
           blocking_issue_refs=blocking_issue_refs,
-          # TODO(jessan): add timestamps.
+          create_time=timestamp_pb2.Timestamp(seconds=issue.opened_timestamp),
+          close_time=close_time,
+          modify_time=timestamp_pb2.Timestamp(seconds=issue.modified_timestamp),
+          component_modify_time=timestamp_pb2.Timestamp(
+              seconds=issue.component_modified_timestamp),
+          status_modify_time=timestamp_pb2.Timestamp(
+              seconds=issue.status_modified_timestamp),
+          owner_modify_time=timestamp_pb2.Timestamp(
+              seconds=issue.owner_modified_timestamp),
           star_count=issue.star_count,
           approval_values=approval_values,
           phases=phases)

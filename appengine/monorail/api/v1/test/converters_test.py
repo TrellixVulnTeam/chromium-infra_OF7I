@@ -106,9 +106,10 @@ class ConverterFunctionsTest(unittest.TestCase):
         derived_component_ids=[3, 4],
         attachment_count=5,
         field_values=[self.fv_1, self.fv_1_derived],
+        opened_timestamp=self.PAST_TIME,
+        modified_timestamp=self.PAST_TIME,
         approval_values=[self.av_1],
         phases=[self.phase_1])
-
     self.issue_2 = fake.MakeTestIssue(
         self.project_2.project_id,
         2,
@@ -281,6 +282,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     # - Derived status
     # - Derived owner_id
     # - Merged_into local issue.
+    # - Closed timestamp.
     blocked_on_1 = fake.MakeTestIssue(
         self.project_1.project_id,
         3,
@@ -401,6 +403,12 @@ class ConverterFunctionsTest(unittest.TestCase):
                 issue_objects_pb2.IssueRef(issue='projects/goose/issues/5'),
                 issue_objects_pb2.IssueRef(ext_identifier='b/3')
             ],
+            create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+            modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+            component_modify_time=timestamp_pb2.Timestamp(
+                seconds=self.PAST_TIME),
+            status_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+            owner_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
             star_count=1,
             attachment_count=5,
             approval_values=[
@@ -431,7 +439,9 @@ class ConverterFunctionsTest(unittest.TestCase):
         owner_id=None,
         reporter_id=111,
         attachment_count=-10,
-        project_name=self.project_1.project_name)
+        project_name=self.project_1.project_name,
+        opened_timestamp=self.PAST_TIME,
+        modified_timestamp=self.PAST_TIME)
     self.services.issue.TestAddIssue(issue)
     expected_issue = issue_objects_pb2.Issue(
         name='projects/proj/issues/3',
@@ -441,6 +451,11 @@ class ConverterFunctionsTest(unittest.TestCase):
             derivation=EXPLICIT_DERIVATION, status='New'),
         reporter='users/111',
         description='TODO(jessan): Pull description from comments',
+        create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        component_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        status_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        owner_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
     )
     self.assertEqual(self.converter.ConvertIssues([issue]), [expected_issue])
 
