@@ -54,7 +54,7 @@ STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
 LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
 COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
 FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_name}'
-APPROVAL_DEF_TMPL = 'projectConfigs/{project_name}/approvalDefs/{approval_name}'
+APPROVAL_DEF_TMPL = 'projects/{project_name}/approvalDefs/{approval_name}'
 
 
 def _GetResourceNameMatch(name, regex):

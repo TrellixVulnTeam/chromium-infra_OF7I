@@ -105,7 +105,9 @@ class ConverterFunctionsTest(unittest.TestCase):
         merged_into_external='b/1',
         derived_component_ids=[3, 4],
         attachment_count=5,
-        field_values=[self.fv_1, self.fv_1_derived])
+        field_values=[self.fv_1, self.fv_1_derived],
+        approval_values=[self.av_1],
+        phases=[self.phase_1])
 
     self.issue_2 = fake.MakeTestIssue(
         self.project_2.project_id,
@@ -154,7 +156,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         name='dne_template_name', template_id=11114)
 
   def _CreateFieldDef(self, project_id, field_name, field_type_str):
-    """Convenience function for default CreateFieldDef args."""
+    """Calls CreateFieldDef with reasonable defaults, returns the ID."""
     return self.services.config.CreateFieldDef(
         self.cnxn, project_id, field_name, field_type_str, None, None, None,
         None, None, None, None, None, None, None, None, None, None, None, [],
@@ -400,7 +402,18 @@ class ConverterFunctionsTest(unittest.TestCase):
                 issue_objects_pb2.IssueRef(ext_identifier='b/3')
             ],
             star_count=1,
-            attachment_count=5)
+            attachment_count=5,
+            approval_values=[
+                issue_objects_pb2.Issue.ApprovalValue(
+                    approvers=['users/222'],
+                    name='projects/proj/approvalDefs/approval_field_1',
+                    phase=self.phase_1.name,
+                    set_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+                    setter='users/111',
+                    status=issue_objects_pb2.Issue.ApprovalStatus.Value(
+                        'APPROVAL_STATUS_UNSPECIFIED'))
+            ],
+            phases=[self.phase_1.name])
     ]
     self.assertEqual(self.converter.ConvertIssues(issues), expected_issues)
 
@@ -728,22 +741,17 @@ class ConverterFunctionsTest(unittest.TestCase):
         project_objects_pb2.IssueTemplate.DefaultOwner.Value(
             'PROJECT_MEMBER_REPORTER'))
 
-  def test_ComputeTemplatePhases(self):
+  def test_ComputePhases(self):
     """It sorts by rank"""
     phase1 = fake.MakePhase(123111, name='phase1name', rank=3)
     phase2 = fake.MakePhase(123112, name='phase2name', rank=2)
     phase3 = fake.MakePhase(123113, name='phase3name', rank=1)
-    template_3 = self.services.template.TestAddIssueTemplateDef(
-        11115,
-        self.project_1.project_id,
-        'template5',
-        phases=[phase1, phase2, phase3])
     expected = ['phase3name', 'phase2name', 'phase1name']
     self.assertEqual(
-        self.converter._ComputeTemplatePhases(template_3), expected)
+        self.converter._ComputePhases([phase1, phase2, phase3]), expected)
 
-  def test_ComputeTemplatePhases_EMPTY(self):
-    self.assertEqual(self.converter._ComputeTemplatePhases(self.template_0), [])
+  def test_ComputePhases_EMPTY(self):
+    self.assertEqual(self.converter._ComputePhases([]), [])
 
   def test_FillIssueFromTemplate(self):
     result = self.converter._FillIssueFromTemplate(

@@ -376,7 +376,7 @@ class ResourceNameConverterTest(unittest.TestCase):
         self.services)
 
     expected_key = self.approval_def_1_id
-    expected_value = 'projectConfigs/{}/approvalDefs/{}'.format(
+    expected_value = 'projects/{}/approvalDefs/{}'.format(
         self.project_1.project_name, self.approval_def_1_name)
     self.assertEqual(outcome, {expected_key: expected_value})
 

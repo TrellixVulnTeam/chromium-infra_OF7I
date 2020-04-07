@@ -257,6 +257,10 @@ class Converter(object):
               ext_identifier=blocking.ext_issue_identifier)
           for blocking in issue.dangling_blocking_refs)
 
+      approval_values = self.ConvertApprovalValues(
+          issue.approval_values, issue.project_id, issue.phases)
+      phases = self._ComputePhases(issue.phases)
+
       result = issue_objects_pb2.Issue(
           name=issue_names_dict[issue.issue_id],
           summary=issue.summary,
@@ -273,7 +277,9 @@ class Converter(object):
           blocked_on_issue_refs=blocked_on_issue_refs,
           blocking_issue_refs=blocking_issue_refs,
           # TODO(jessan): add timestamps.
-          star_count=issue.star_count)
+          star_count=issue.star_count,
+          approval_values=approval_values,
+          phases=phases)
       # TODO(crbug.com/monorail/5857): Set attachment_count unconditionally
       # after the underlying source of negative attachment counts has been
       # resolved and database has been repaired.
@@ -580,7 +586,7 @@ class Converter(object):
         self.ConvertEnumFieldValues(template.labels, [], project_id))
     approval_values = self.ConvertApprovalValues(
         template.approval_values, project_id, template.phases)
-    phases = self._ComputeTemplatePhases(template)
+    phases = self._ComputePhases(template.phases)
 
     filled_issue = issue_objects_pb2.Issue(
         summary=summary,
@@ -616,10 +622,10 @@ class Converter(object):
       return project_objects_pb2.IssueTemplate.DefaultOwner.Value(
           'DEFAULT_OWNER_UNSPECIFIED')
 
-  def _ComputeTemplatePhases(self, template):
+  def _ComputePhases(self, phases):
     # type: (proto.tracker_pb2.TemplateDef) -> Sequence[str]
     """Convert a protorpc TemplateDef to its sorted string phases."""
-    sorted_phases = sorted(template.phases, key=lambda phase: phase.rank)
+    sorted_phases = sorted(phases, key=lambda phase: phase.rank)
     return [phase.name for phase in sorted_phases]
 
   def ConvertLabels(self, labels, derived_labels, project_id):
