@@ -412,7 +412,7 @@
       "git",
       "commit",
       "-m",
-      "[images] Rolling in images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nChanges:\n  * example.com/fake-registry/target: prev-version -> ci-2012.05.14-197293-5e03a58"
+      "[images] Rolling in images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nUpdated staging deployments:\n  * example.com/fake-registry/target: prev-version -> ci-2012.05.14-197293-5e03a58\n"
     ],
     "cwd": "[CACHE]/builder/roll",
     "infra_step": true,
@@ -433,7 +433,7 @@
       "--cc=n2@example.com",
       "--use-commit-queue",
       "--message-file",
-      "[images] Rolling in images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nChanges:\n  * example.com/fake-registry/target: prev-version -> ci-2012.05.14-197293-5e03a58"
+      "[images] Rolling in images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nUpdated staging deployments:\n  * example.com/fake-registry/target: prev-version -> ci-2012.05.14-197293-5e03a58\n"
     ],
     "cwd": "[CACHE]/builder/roll",
     "name": "upload roll CL.git cl upload",

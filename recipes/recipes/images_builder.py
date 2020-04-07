@@ -325,11 +325,11 @@ def _mutate_pins_repo(api, root, spec, images, meta):
       '',
       'Produced by %s' % api.buildbucket.build_url(),
       '',
-      'Changes:',
+      'Updated staging deployments:',
   ] + [
       '  * %s: %s -> %s' % (d['image'], d['from'], d['to'])
       for d in deployments
-  ]))
+  ] + ['']))
 
   # List of people to CC based on what staging deployments were updated.
   extra_cc = set()
