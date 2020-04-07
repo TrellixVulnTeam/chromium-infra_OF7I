@@ -102,7 +102,8 @@ def train_and_evaluate_model(config, hparams):
     features, targets = train_ml_helpers \
       .transform_spam_csv_to_features(contents, labels)
   else:
-    top_list = top_words.make_top_words_list(contents, hparams['job_dir'])
+    #top_list = top_words.make_top_words_list(contents, hparams['job_dir'])
+    top_list = top_words.parse_words_from_content(contents)
     features, targets, index_to_component = train_ml_helpers \
       .transform_component_csv_to_features(contents, labels, top_list)
 
@@ -135,6 +136,12 @@ def train_and_evaluate_model(config, hparams):
 
   result = tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
   logging.info(result)
+
+  parsing_spec = tf.feature_column.make_parse_example_spec(
+      model.INPUT_COLUMNS[hparams['trainer_type']])
+  serving_input_fn = (
+      tf.estimator.export.build_parsing_serving_input_receiver_fn(parsing_spec))
+  estimator.export_saved_model(hparams['job_dir'], serving_input_fn)
 
 
 def store_component_conversion(job_dir, data):

@@ -36,6 +36,8 @@ def fetch_training_data(bucket, prefix, trainer_type):
 
 def fetch_spam(csv_filepaths, bucket, objects):
 
+  all_contents = []
+  all_labels = []
   # Add code
   csv_filepaths = [
       'spam-training-data/full-android.csv',
@@ -47,24 +49,36 @@ def fetch_spam(csv_filepaths, bucket, objects):
     contents, labels, skipped_rows = train_ml_helpers.spam_from_file(
         io.StringIO(media))
 
+    # Sanity check: the contents and labels should be matched pairs.
+    if len(contents) == len(labels) != 0:
+      all_contents.extend(contents)
+      all_labels.extend(labels)
+
     tf.get_logger().info(
         '{:<40}{:<20}{:<20}'.format(
             filepath, 'added %d rows' % len(contents),
             'skipped %d rows' % skipped_rows))
 
-  return contents, labels
+  return all_contents, all_labels
 
 
 def fetch_component(csv_filepaths, bucket, objects):
 
+  all_contents = []
+  all_labels = []
   for filepath in csv_filepaths:
     media = fetch_training_csv(filepath, objects, bucket)
     contents, labels = train_ml_helpers.component_from_file(io.StringIO(media))
 
+    # Sanity check: the contents and labels should be matched pairs.
+    if len(contents) == len(labels) != 0:
+      all_contents.extend(contents)
+      all_labels.extend(labels)
+
     tf.get_logger().info(
         '{:<40}{:<20}'.format(filepath, 'added %d rows' % len(contents)))
 
-  return contents, labels
+  return all_contents, all_labels
 
 
 def fetch_training_csv(filepath, objects, bucket):

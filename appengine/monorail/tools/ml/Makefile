@@ -156,6 +156,24 @@ submit_train_job_component:
 		--gcs-prefix component_training_data \
 		--trainer-type component
 
+submit_train_job_component_2:
+	gcloud ai-platform jobs submit training $(COMP_JOB_NAME) \
+		--package-path trainer2/ \
+		--module-name trainer2.task \
+		--runtime-version 2.1 \
+		--python-version 3.7 \
+		--job-dir gs://monorail-prod-mlengine/$(COMP_JOB_NAME) \
+		--region us-central1 \
+		--scale-tier custom \
+		--master-machine-type n1-highmem-8 \
+		-- \
+		--train-steps 10000 \
+		--eval-steps 1000 \
+		--verbosity DEBUG \
+		--gcs-bucket monorail-prod.appspot.com \
+		--gcs-prefix component_training_data \
+		--trainer-type component
+
 # VERSION of format 'v_TIMESTAMP' should match TIMESTAMP in COMP_JOB_NAME and MODEL_BINARIES.
 upload_model_prod_component:
 ifndef MODEL_BINARIES
