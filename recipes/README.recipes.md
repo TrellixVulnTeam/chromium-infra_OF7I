@@ -54,7 +54,6 @@
   * [recipe_roll_tryjob](#recipes-recipe_roll_tryjob)
   * [recipe_simulation](#recipes-recipe_simulation) &mdash; A continuous builder which runs recipe tests.
   * [recipes_py_continuous](#recipes-recipes_py_continuous)
-  * [remote_execute_dataflow_workflow](#recipes-remote_execute_dataflow_workflow) &mdash; This recipe is used to execute Dataflow workflows.
   * [snapshots/builder](#recipes-snapshots_builder)
   * [snapshots/snapshot](#recipes-snapshots_snapshot)
   * [support_3pp:tests/full](#recipes-support_3pp_tests_full)
@@ -1080,26 +1079,6 @@ A continuous builder which runs recipe tests.
 [DEPS](/recipes/recipes/recipes_py_continuous.py#7): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 &mdash; **def [RunSteps](/recipes/recipes/recipes_py_continuous.py#17)(api):**
-### *recipes* / [remote\_execute\_dataflow\_workflow](/recipes/recipes/remote_execute_dataflow_workflow.py)
-
-[DEPS](/recipes/recipes/remote_execute_dataflow_workflow.py#25): [build/puppet\_service\_account][build/recipe_modules/puppet_service_account], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
-
-This recipe is used to execute Dataflow workflows.
-
-If you want a workflow to run at regular intervals, you can configure a builder
-to run this recipe. Dataflow workflows run on an internal builder, so this step
-must be completed by a Google employee. Steps:
-  1. Register builder in cr-buildbucket.cfg:  https://crrev.com/i/913671
-  2. Set it to be triggered on some schedule: https://crrev.com/i/913672
-
-Builders configured with the name matching "dataflow-workflow-.*" will be
-automatically monitored for failures.
-
-This recipe uses dataflow-launcher service account
-`dataflow-launcher@chrome-infra-events.iam.gserviceaccount.com`.
-It must have the permission to schedule a Dataflow job for your project.
-
-&mdash; **def [RunSteps](/recipes/recipes/remote_execute_dataflow_workflow.py#106)(api, workflow, job_name, gcp_project_id, num_workers, timeout):**
 ### *recipes* / [snapshots/builder](/recipes/recipes/snapshots/builder.py)
 
 [DEPS](/recipes/recipes/snapshots/builder.py#5): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1193,7 +1172,6 @@ Runs a step which adds a link to the current CL if there is one.
 [build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/1a90e57e36a769210dceb461aaa7ab9bf3532f04/scripts/slave/README.recipes.md#recipe_modules-chromium_checkout
 [build/recipe_modules/docker]: https://chromium.googlesource.com/chromium/tools/build.git/+/1a90e57e36a769210dceb461aaa7ab9bf3532f04/scripts/slave/README.recipes.md#recipe_modules-docker
 [build/recipe_modules/goma]: https://chromium.googlesource.com/chromium/tools/build.git/+/1a90e57e36a769210dceb461aaa7ab9bf3532f04/scripts/slave/README.recipes.md#recipe_modules-goma
-[build/recipe_modules/puppet_service_account]: https://chromium.googlesource.com/chromium/tools/build.git/+/1a90e57e36a769210dceb461aaa7ab9bf3532f04/scripts/slave/README.recipes.md#recipe_modules-puppet_service_account
 [build/recipe_modules/repo]: https://chromium.googlesource.com/chromium/tools/build.git/+/1a90e57e36a769210dceb461aaa7ab9bf3532f04/scripts/slave/README.recipes.md#recipe_modules-repo
 [build/recipe_modules/swarming_client]: https://chromium.googlesource.com/chromium/tools/build.git/+/1a90e57e36a769210dceb461aaa7ab9bf3532f04/scripts/slave/README.recipes.md#recipe_modules-swarming_client
 [build/recipe_modules/zip]: https://chromium.googlesource.com/chromium/tools/build.git/+/1a90e57e36a769210dceb461aaa7ab9bf3532f04/scripts/slave/README.recipes.md#recipe_modules-zip
