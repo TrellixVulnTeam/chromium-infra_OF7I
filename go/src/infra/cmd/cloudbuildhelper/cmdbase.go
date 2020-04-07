@@ -288,7 +288,10 @@ func checkVersion(minVer string) error {
 		panic("impossible")
 	}
 	for i := range min {
-		if cur[i] < min[i] {
+		switch {
+		case cur[i] > min[i]:
+			return nil
+		case cur[i] < min[i]:
 			return errors.Reason("the caller wants cloudbuildhelper >=v%s but the running executable is v%s", minVer, Version).Tag(isCLIError).Err()
 		}
 	}
