@@ -296,17 +296,30 @@ func getMetaFromAttributes(dutID string, attr []*inventory.KeyValue) *invV2.DutM
 	return &dutMeta
 }
 
-func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inventory.DeviceUnderTest) error {
-	oldState := getStatesFromLabel(dutID, old.GetCommon().GetLabels())
-	newState := getStatesFromLabel(dutID, new.GetCommon().GetLabels())
-	oldMeta := getMetaFromAttributes(dutID, old.GetCommon().GetAttributes())
-	newMeta := getMetaFromAttributes(dutID, new.GetCommon().GetAttributes())
+func getLabMetaFromLabel(dutID string, l *inventory.SchedulableLabels) (labconfig *invV2.LabMeta) {
+	labMeta := invV2.LabMeta{
+		ChromeosDeviceId: dutID,
+	}
+	p := l.GetPeripherals()
+	if p != nil {
+		labMeta.ServoType = p.GetServoType()
+	}
 
+	return &labMeta
+}
+
+func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inventory.DeviceUnderTest) error {
 	if u.botInfo.InventoryService == "" {
 		log.Printf("Skipping label update since no inventory service was provided")
 		return nil
 	}
-	if proto.Equal(newState, oldState) && proto.Equal(oldMeta, newMeta) {
+	oldState := getStatesFromLabel(dutID, old.GetCommon().GetLabels())
+	newState := getStatesFromLabel(dutID, new.GetCommon().GetLabels())
+	oldMeta := getMetaFromAttributes(dutID, old.GetCommon().GetAttributes())
+	newMeta := getMetaFromAttributes(dutID, new.GetCommon().GetAttributes())
+	oldLabMeta := getLabMetaFromLabel(dutID, old.GetCommon().GetLabels())
+	newLabMeta := getLabMetaFromLabel(dutID, old.GetCommon().GetLabels())
+	if proto.Equal(newState, oldState) && proto.Equal(oldMeta, newMeta) && proto.Equal(oldLabMeta, newLabMeta) {
 		log.Printf("Skipping dut state update since there are no changes")
 		return nil
 	}
@@ -315,6 +328,7 @@ func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inve
 		States:   []*lab.DutState{newState},
 		Reason:   "state update from ssw",
 		DutMetas: []*invV2.DutMeta{newMeta},
+		LabMetas: []*invV2.LabMeta{newLabMeta},
 	}
 	client, err := swmbot.InventoryV2Client(ctx, u.botInfo)
 	if err != nil {
