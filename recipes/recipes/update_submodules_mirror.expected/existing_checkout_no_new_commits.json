@@ -43,14 +43,20 @@
     "name": "git fetch"
   },
   {
-    "cmd": [],
-    "name": "Process refs/heads/master"
+    "cmd": [
+      "git",
+      "reset",
+      "--hard",
+      "origin/master"
+    ],
+    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
+    "infra_step": true,
+    "name": "git reset"
   },
   {
     "cmd": [],
-    "name": "Process refs/heads/master.Check for new commits",
+    "name": "Check for new commits",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@no new commits, exiting@@@"
     ]
   },
@@ -62,15 +68,15 @@
       "--json-file",
       "/path/to/tmp/json",
       "--url",
-      "https://chromium.googlesource.com/codesearch/src_mirror/+log/refs/heads/master",
+      "https://chromium.googlesource.com/codesearch/src_mirror/+log/master",
       "--format",
       "json",
       "--log-limit",
       "2"
     ],
-    "name": "Process refs/heads/master.Check for new commits.Find latest commit to target repo",
+    "name": "Check for new commits.Find latest commit to target repo",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_TEXT@<br />2 commits fetched@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"log\": [@@@",
@@ -95,36 +101,14 @@
     "cmd": [
       "git",
       "rev-parse",
-      "refs/remotes/origin/master"
+      "master"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "Process refs/heads/master.Check for new commits.Get latest commit hash in source repo",
+    "name": "Check for new commits.Get latest commit hash in source repo",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
-  },
-  {
-    "cmd": [
-      "git",
-      "push",
-      "https://chromium.googlesource.com/codesearch/src_mirror",
-      "refs/remotes/origin/master:refs/heads/master-original"
-    ],
-    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
-    "infra_step": true,
-    "name": "git push"
-  },
-  {
-    "cmd": [
-      "git",
-      "push",
-      "--tags",
-      "https://chromium.googlesource.com/codesearch/src_mirror"
-    ],
-    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
-    "infra_step": true,
-    "name": "git push --tags"
   },
   {
     "name": "$result"
