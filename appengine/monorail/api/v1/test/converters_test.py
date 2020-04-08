@@ -276,6 +276,11 @@ class ConverterFunctionsTest(unittest.TestCase):
         hotlist.hotlist_id, hotlist.items)
     self.assertEqual(api_items, [])
 
+  def testConvertIssue(self):
+    """We can convert a single issue."""
+    self.assertEqual(self.converter.ConvertIssue(self.issue_1),
+        self.converter.ConvertIssues([self.issue_1])[0])
+
   def testConvertIssues(self):
     """We can convert Issues."""
     # TODO(jessan): Add self.issue_2 once method fully implemented.

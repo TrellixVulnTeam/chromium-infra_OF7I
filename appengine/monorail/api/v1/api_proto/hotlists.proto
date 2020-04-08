@@ -29,7 +29,7 @@ service Hotlists {
   //
   // Raises:
   //   NOT_FOUND if the requested hotlist is not found.
-  //   PERMISSION_DENIED if the requester is now allowed to view the hotlist.
+  //   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
   //   INVALID_ARGUMENT if the given resource name is not valid.
   rpc GetHotlist (GetHotlistRequest) returns (Hotlist) {}
   // Updates a hotlist.

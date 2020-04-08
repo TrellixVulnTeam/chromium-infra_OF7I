@@ -30,7 +30,8 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ListHotlistItems(self, mc, request):
-    # MonorailConnection, ListHotlistItemsRequest -> ListHotlistItemsResponse
+    # type: (MonorailConnection, ListHotlistItemsRequest) ->
+    #     ListHotlistItemsResponse
     """pRPC API method that implements ListHotlistItems.
 
       Raises:
@@ -61,7 +62,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def RerankHotlistItems(self, mc, request):
-    # MonorailConnection, RerankHotlistItemsRequest -> Empty
+    # type: (MonorailConnection, RerankHotlistItemsRequest) -> Empty
     """pRPC API method that implements RerankHotlistItems.
 
     Raises:
@@ -145,10 +146,11 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def GetHotlist(self, mc, request):
-    # MonorailConnection, GetHotlistRequest -> Hotlist
+    # type: (MonorailConnection, GetHotlistRequest) -> Hotlist
     """pRPC API method that implements GetHotlist.
 
     Raises:
+      InputException if the given name does not have a valid format.
       NoSuchHotlistException if the hotlist is not found.
       PermissionException if the user is not allowed to view the hotlist.
     """
@@ -208,10 +210,11 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def DeleteHotlist(self, mc, request):
-    # MonorailConnection, GetHotlistRequest -> Empty
+    # type: (MonorailConnection, GetHotlistRequest) -> Empty
     """pRPC API method that implements DeleteHotlist.
 
     Raises:
+      InputException if the given name does not have a valid format.
       NoSuchHotlistException if the hotlist is not found.
       PermissionException if the user is not allowed to delete the hotlist.
     """

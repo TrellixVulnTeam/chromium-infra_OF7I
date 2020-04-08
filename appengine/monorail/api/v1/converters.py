@@ -173,6 +173,16 @@ class Converter(object):
     return issue_objects_pb2.Issue.StatusValue(
         status=issue.status or issue.derived_status, derivation=derivation)
 
+  def ConvertIssue(self, issue):
+    # type: (proto.tracker_pb2.Issue) -> api_proto.issue_objects_pb2.Issue
+    """Convert a protorpc Issue into a protoc Issue."""
+    issues = self.ConvertIssues([issue])
+    if len(issues) < 1:
+      raise exceptions.NoSuchIssueException()
+    if len(issues) > 1:
+      logging.warning('More than one converted issue returned: %s', issues)
+    return issues[0]
+
   def ConvertIssues(self, issues):
     # type: (Sequence[proto.tracker_pb2.Issue]) ->
     #     Sequence[api_proto.issue_objects_pb2.Issue]

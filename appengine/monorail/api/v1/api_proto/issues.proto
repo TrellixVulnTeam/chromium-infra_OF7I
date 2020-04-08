@@ -15,29 +15,18 @@ import "api/v1/api_proto/issue_objects.proto";
 // Issues service includes all methods needed for managing Issues.
 service Issues {
   // Returns the requested Issue.
-  // TODO(monorail:6988): Document possible errors when implemented.
-  rpc GetIssue (GetIssueRequest) returns (Issue) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Issues/GetIssue"
-      body: "*"
-    };
-  }
+  //
+  // Raises:
+  //   INVALID_ARGUMENT if `name` is formatted incorrectly.
+  //   NOT_FOUND if the issue does not exist.
+  //   PERMISSION_DENIED if the requester is not allowed to view the issue.
+  rpc GetIssue (GetIssueRequest) returns (Issue) {}
   // Searches over issues within the specified project.
   // TODO(monorail:6988): Document possible errors when implemented.
-  rpc SearchIssues (SearchIssuesRequest) returns (SearchIssuesResponse) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Issues/SearchIssues"
-      body: "*"
-    };
-  }
+  rpc SearchIssues (SearchIssuesRequest) returns (SearchIssuesResponse) {}
   // Lists comments for an issue.
   // TODO(monorail:6988): Document possible errors when implemented.
-  rpc ListComments (ListCommentsRequest) returns (ListCommentsResponse) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Issues/ListComments"
-      body: "*"
-    };
-  }
+  rpc ListComments (ListCommentsRequest) returns (ListCommentsResponse) {}
 }
 
 
