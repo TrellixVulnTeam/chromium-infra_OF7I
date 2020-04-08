@@ -69,6 +69,7 @@ type Args struct {
 	ProvisionLabels            []string
 	LegacySuite                string
 	PubsubTopic                string
+	UseTestRunner              bool
 }
 
 // TestPlatformRequest constructs a cros_test_platform.Request from Args.
@@ -143,6 +144,12 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 	if a.PubsubTopic != "" {
 		params.Notification = &test_platform.Request_Params_Notification{
 			PubsubTopic: a.PubsubTopic,
+		}
+	}
+
+	if a.UseTestRunner {
+		params.Migrations = &test_platform.Request_Params_Migrations{
+			UseTestRunner: true,
 		}
 	}
 

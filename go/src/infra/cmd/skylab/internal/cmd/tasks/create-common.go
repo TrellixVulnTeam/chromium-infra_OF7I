@@ -36,6 +36,7 @@ type createRunCommon struct {
 	qsAccount       string
 	buildBucket     bool
 	statusTopic     string
+	useTestRunner   bool
 }
 
 func (c *createRunCommon) Register(fl *flag.FlagSet) {
@@ -64,6 +65,10 @@ specified multiple times.`)
 	fl.Var(flagx.StringSlice(&c.tags), "tag", "Swarming tag for test; may be specified multiple times.")
 	fl.BoolVar(&c.buildBucket, "bb", true, "Deprecated, do not use.")
 	fl.StringVar(&c.statusTopic, "status-topic", "", "Pubsub `topic` on which to send test-status update notifications.")
+	fl.BoolVar(&c.useTestRunner, "use-test-runner", false,
+		`If true, schedule individual tests via buildbucket and run them via
+the test_runner recipe. If false, schedule tests via raw Swarmng calls and run
+them via skylab_swarming_worker binary.`)
 }
 
 func (c *createRunCommon) ValidateArgs(fl flag.FlagSet) error {
@@ -105,6 +110,7 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		PubsubTopic:                c.statusTopic,
 		Priority:                   int64(c.priority),
 		Tags:                       tags,
+		UseTestRunner:              c.useTestRunner,
 	}, nil
 }
 
