@@ -435,7 +435,8 @@ def _GetFileContentFromGitiles(report, file_path,
   return repo.GetSource(relative_file_path, revision)
 
 
-def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries):
+def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries,
+                       mimic_builder_name):
   """Create a bigquery row containing coverage data.
 
   Returns a dict whose keys are column names and values are column values
@@ -444,7 +445,7 @@ def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries):
   """
   row = {
       'project': commit.project,
-      'builder': builder.builder,
+      'builder': mimic_builder_name,
       'bucket': builder.bucket,
       'host': commit.host,
       'ref': commit.ref,
@@ -545,7 +546,7 @@ class ProcessCodeCoverageData(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def _ProcessFullRepositoryData(self, commit, data, full_gs_metadata_dir,
-                                 builder, build_id):
+                                 builder, build_id, mimic_builder_name):
 
     # Load the commit log first so that we could fail fast before redo all.
     repo_url = 'https://%s/%s.git' % (commit.host, commit.project)
@@ -563,7 +564,7 @@ class ProcessCodeCoverageData(BaseHandler):
         ref=commit.ref,
         revision=commit.id,
         bucket=builder.bucket,
-        builder=builder.builder,
+        builder=mimic_builder_name,
         commit_timestamp=change_log.committer.time,
         manifest=manifest,
         summary_metrics=data.get('summaries'),
@@ -633,7 +634,7 @@ class ProcessCodeCoverageData(BaseHandler):
                 revision=commit.id,
                 path=group_data['path'],
                 bucket=builder.bucket,
-                builder=builder.builder,
+                builder=mimic_builder_name,
                 data=group_data)
           else:
             coverage_data = SummaryCoverageData.Create(
@@ -644,12 +645,12 @@ class ProcessCodeCoverageData(BaseHandler):
                 data_type=actual_data_type,
                 path=group_data['path'],
                 bucket=builder.bucket,
-                builder=builder.builder,
+                builder=mimic_builder_name,
                 data=group_data)
 
-            bq_row = _CreateBigqueryRow(commit, change_log.committer.time,
-                                        builder, group_data['path'],
-                                        group_data['summaries'])
+            bq_row = _CreateBigqueryRow(
+                commit, change_log.committer.time, builder, group_data['path'],
+                group_data['summaries'], mimic_builder_name)
             if actual_data_type == 'dirs':
               directory_bq_rows.append(bq_row)
             else:
@@ -677,7 +678,7 @@ class ProcessCodeCoverageData(BaseHandler):
             data_type='components',
             path='>>',
             bucket=builder.bucket,
-            builder=builder.builder,
+            builder=mimic_builder_name,
             data={
                 'dirs': component_summaries,
                 'path': '>>'
@@ -697,7 +698,8 @@ class ProcessCodeCoverageData(BaseHandler):
           'ref':
               commit.ref or 'refs/heads/master',
           'builder':
-              '%s/%s/%s' % (builder.project, builder.bucket, builder.builder),
+              '%s/%s/%s' % (builder.project, builder.bucket,
+                            mimic_builder_name),
       })
 
     monitoring.code_coverage_report_timestamp.set(
@@ -710,7 +712,8 @@ class ProcessCodeCoverageData(BaseHandler):
             'ref':
                 commit.ref or 'refs/heads/master',
             'builder':
-                '%s/%s/%s' % (builder.project, builder.bucket, builder.builder),
+                '%s/%s/%s' % (builder.project, builder.bucket,
+                              mimic_builder_name),
             'is_success':
                 report.visible,
         })
@@ -841,7 +844,13 @@ class ProcessCodeCoverageData(BaseHandler):
     # Convert the Struct to standard dict, to use .get, .iteritems etc.
     properties = dict(build.output.properties.items())
     gs_bucket = properties.get('coverage_gs_bucket')
+
+    # TODO(crbug/1064785): Use only coverage_metadata_gs_paths property and
+    # requires mimic_builder_names property when recipe module api is changed
+    # for multiple test types.
     gs_metadata_dir = properties.get('coverage_metadata_gs_path')
+    gs_metadata_dirs = properties.get('coverage_metadata_gs_paths')
+
     if properties.get('process_coverage_data_failure'):
       monitoring.code_coverage_cq_errors.increment({
           'project': build.builder.project,
@@ -850,22 +859,38 @@ class ProcessCodeCoverageData(BaseHandler):
       })
 
     # Ensure that the coverage data is ready.
-    if not gs_bucket or not gs_metadata_dir:
+    if not gs_bucket or (not gs_metadata_dir and not gs_metadata_dirs):
       logging.warn('coverage GS bucket info not available in %r', build.id)
       return
-
-    full_gs_metadata_dir = '/%s/%s' % (gs_bucket, gs_metadata_dir)
-    all_json_gs_path = '%s/all.json.gz' % full_gs_metadata_dir
-    data = _GetValidatedData(all_json_gs_path)
 
     if 'coverage_is_presubmit' not in properties:
       logging.error('Expecting "coverage_is_presubmit" in output properties')
       return
 
+    if not gs_metadata_dirs:
+      gs_metadata_dirs = [gs_metadata_dir]
+
+    # Get mimic builder names from builder output properties. Multiple test
+    # types' coverage data will be uploaded to separated folders, mimicking
+    # these come from different builders.
+    mimic_builder_names = properties.get('mimic_builder_names')
+    if not mimic_builder_names:
+      mimic_builder_names = [build.builder.builder]
+
+    assert (len(mimic_builder_names) == len(gs_metadata_dirs)
+           ), 'mimic builder names and gs paths should be of the same length'
+
     if properties['coverage_is_presubmit']:
       # For presubmit coverage, save the whole data in json.
       # Assume there is only 1 patch which is true in CQ.
       assert len(build.input.gerrit_changes) == 1, 'Expect only one patchset'
+      # For presubmit coverage, only one type of coverage is expected from
+      # the builder.
+      assert len(gs_metadata_dirs
+                ) == 1, 'Expect only one test type coverage for presubmit'
+      full_gs_metadata_dir = '/%s/%s' % (gs_bucket, gs_metadata_dirs[0])
+      all_json_gs_path = '%s/all.json.gz' % full_gs_metadata_dir
+      data = _GetValidatedData(all_json_gs_path)
       patch = build.input.gerrit_changes[0]
       self._ProcessCLPatchData(patch, data['files'])
     else:
@@ -876,9 +901,15 @@ class ProcessCodeCoverageData(BaseHandler):
       assert self._IsGitilesCommitAvailable(build.input.gitiles_commit), (
           'gitiles commit information is expected to be available either in '
           'input properties or output properties')
-      self._ProcessFullRepositoryData(build.input.gitiles_commit, data,
-                                      full_gs_metadata_dir, build.builder,
-                                      build_id)
+
+      for gs_metadata_dir, mimic_builder_name in zip(gs_metadata_dirs,
+                                                     mimic_builder_names):
+        full_gs_metadata_dir = '/%s/%s' % (gs_bucket, gs_metadata_dir)
+        all_json_gs_path = '%s/all.json.gz' % full_gs_metadata_dir
+        data = _GetValidatedData(all_json_gs_path)
+        self._ProcessFullRepositoryData(build.input.gitiles_commit, data,
+                                        full_gs_metadata_dir, build.builder,
+                                        build_id, mimic_builder_name)
 
   def _IsGitilesCommitAvailable(self, gitiles_commit):
     """Returns True if gitiles_commit is available in the input property."""
