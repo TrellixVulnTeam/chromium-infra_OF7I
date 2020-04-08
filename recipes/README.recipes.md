@@ -1121,7 +1121,7 @@ Normalizes a string for use in a resource label.
 
 &mdash; **def [RunSteps](/recipes/recipes/update_submodules_mirror.py#41)(api, source_repo, target_repo, extra_submodules):**
 
-&mdash; **def [ShouldGenerateNewCommit](/recipes/recipes/update_submodules_mirror.py#176)(api, target_repo):**
+&mdash; **def [ShouldGenerateNewCommit](/recipes/recipes/update_submodules_mirror.py#177)(api, target_repo):**
 
 See if we can avoid running the rest of the recipe, if there's no new
 commits to incorporate into the mirror. We should be conservative in the

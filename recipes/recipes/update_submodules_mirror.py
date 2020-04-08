@@ -72,6 +72,7 @@ def RunSteps(api, source_repo, target_repo, extra_submodules):
   # This is implicitly used as the cwd by all the git steps below.
   api.m.path['checkout'] = source_checkout_dir
 
+  api.git('checkout', 'master')
   api.git('fetch', '-t')
 
   # Discard any commits from previous runs.
