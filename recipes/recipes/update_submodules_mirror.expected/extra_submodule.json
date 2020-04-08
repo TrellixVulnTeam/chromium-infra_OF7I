@@ -43,19 +43,15 @@
     "name": "git fetch"
   },
   {
-    "cmd": [
-      "git",
-      "reset",
-      "--hard",
-      "origin/master"
-    ],
-    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
-    "infra_step": true,
-    "name": "git reset"
+    "cmd": [],
+    "name": "Process refs/heads/master"
   },
   {
     "cmd": [],
-    "name": "Check for new commits"
+    "name": "Process refs/heads/master.Check for new commits",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -65,15 +61,15 @@
       "--json-file",
       "/path/to/tmp/json",
       "--url",
-      "https://chromium.googlesource.com/codesearch/src_mirror/+log/master",
+      "https://chromium.googlesource.com/codesearch/src_mirror/+log/refs/heads/master",
       "--format",
       "json",
       "--log-limit",
       "2"
     ],
-    "name": "Check for new commits.Find latest commit to target repo",
+    "name": "Process refs/heads/master.Check for new commits.Find latest commit to target repo",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_TEXT@<br />1 commits fetched@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"log\": [@@@",
@@ -86,6 +82,19 @@
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "refs/remotes/origin/master"
+    ],
+    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
+    "infra_step": true,
+    "name": "Process refs/heads/master.git checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
@@ -108,7 +117,10 @@
       ]
     },
     "infra_step": true,
-    "name": "gclient evaluate DEPS"
+    "name": "Process refs/heads/master.gclient evaluate DEPS",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -119,7 +131,10 @@
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "git ls-remote"
+    "name": "Process refs/heads/master.git ls-remote",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -135,7 +150,10 @@
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "Add gitlinks"
+    "name": "Process refs/heads/master.Add gitlinks",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -149,8 +167,9 @@
       "[CACHE]/codesearch_update_submodules_mirror/src/.gitmodules"
     ],
     "infra_step": true,
-    "name": "Write .gitmodules file",
+    "name": "Process refs/heads/master.Write .gitmodules file",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@.gitmodules@[submodule \"v8\"]@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\tpath = v8@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chromium.googlesource.com/v8/v8.git@@@",
@@ -171,7 +190,10 @@
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "git add"
+    "name": "Process refs/heads/master.git add",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -186,32 +208,37 @@
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "git commit"
-  },
-  {
-    "cmd": [
-      "git",
-      "branch",
-      "-f",
-      "master-original",
-      "HEAD~"
-    ],
-    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
-    "infra_step": true,
-    "name": "git branch"
+    "name": "Process refs/heads/master.git commit",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
       "git",
       "push",
+      "https://chromium.googlesource.com/codesearch/src_mirror",
+      "HEAD:refs/heads/master",
       "--push-option=skip-validation",
-      "--force",
-      "--all",
-      "https://chromium.googlesource.com/codesearch/src_mirror"
+      "--force"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
     "infra_step": true,
-    "name": "git push --all"
+    "name": "Process refs/heads/master.git push refs/heads/master",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "push",
+      "https://chromium.googlesource.com/codesearch/src_mirror",
+      "refs/remotes/origin/master:refs/heads/master-original"
+    ],
+    "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
+    "infra_step": true,
+    "name": "git push"
   },
   {
     "cmd": [

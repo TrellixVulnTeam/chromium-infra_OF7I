@@ -8,17 +8,17 @@ import re
 from recipe_engine.recipe_api import Property
 
 DEPS = [
-  'recipe_engine/buildbucket',
-  'recipe_engine/context',
-  'recipe_engine/file',
-  'recipe_engine/json',
-  'recipe_engine/path',
-  'recipe_engine/properties',
-  'recipe_engine/raw_io',
-  'recipe_engine/step',
-  'depot_tools/gclient',
-  'depot_tools/git',
-  'depot_tools/gitiles',
+    'recipe_engine/buildbucket',
+    'recipe_engine/context',
+    'recipe_engine/file',
+    'recipe_engine/json',
+    'recipe_engine/path',
+    'recipe_engine/properties',
+    'recipe_engine/raw_io',
+    'recipe_engine/step',
+    'depot_tools/gclient',
+    'depot_tools/git',
+    'depot_tools/gitiles',
 ]
 
 PROPERTIES = {
@@ -30,6 +30,9 @@ PROPERTIES = {
         default=[],
         help='A list of <path>=<url> strings, indicating extra submodules to '
              'add to the mirror repo.'),
+    'refs': Property(
+        default=['refs/heads/master'],
+        help='A list of refs for which submodules should be added.'),
 }
 
 COMMIT_USERNAME = 'Submodules bot'
@@ -38,7 +41,8 @@ COMMIT_EMAIL_ADDRESS = \
 
 SHA1_RE = re.compile(r'[0-9a-fA-F]{40}')
 
-def RunSteps(api, source_repo, target_repo, extra_submodules):
+
+def RunSteps(api, source_repo, target_repo, extra_submodules, refs):
   _, source_project = api.gitiles.parse_repo_url(source_repo)
 
   # NOTE: This name must match the definition in cr-buildbucket.cfg. Do not
@@ -73,30 +77,84 @@ def RunSteps(api, source_repo, target_repo, extra_submodules):
   api.m.path['checkout'] = source_checkout_dir
 
   api.git('fetch', '-t')
+  for ref in refs:
+    if not ref.startswith('refs/heads'):
+      api.git('fetch', 'origin', ref + ':' + RefToRemoteRef(ref))
 
-  # Discard any commits from previous runs.
-  api.git('reset', '--hard', 'origin/master')
 
-  if not ShouldGenerateNewCommit(api, target_repo):
-    return
+  for ref in refs:
+    with api.step.nest('Process ' + ref):
+      if not ShouldGenerateNewCommit(api, target_repo, ref):
+        continue
 
-  gclient_spec = ("solutions=[{"
-                  "'managed':False,"
-                  "'name':'%s',"
-                  "'url':'%s',"
-                  "'deps_file':'DEPS'}]"
-                  % (source_checkout_name, source_repo))
-  with api.context(cwd=checkout_dir):
-    deps = json.loads(api.gclient('evaluate DEPS',
-                                  ['revinfo', '--deps', 'all',
-                                   '--ignore-dep-type=cipd',
-                                   '--spec', gclient_spec, '--output-json=-'],
-                                  stdout=api.raw_io.output_text()).stdout)
+      api.git('checkout', RefToRemoteRef(ref))
 
-  for item in extra_submodules:
-    path, url = item.split('=')
-    deps[path] = {'url': url, 'rev': 'master'}
+      gclient_spec = ("solutions=[{"
+                      "'managed':False,"
+                      "'name':'%s',"
+                      "'url':'%s',"
+                      "'deps_file':'DEPS'}]"
+                      % (source_checkout_name, source_repo))
+      with api.context(cwd=checkout_dir):
+        deps = json.loads(
+            api.gclient(
+                'evaluate DEPS',
+                ['revinfo', '--deps', 'all', '--ignore-dep-type=cipd',
+                 '--spec', gclient_spec, '--output-json=-'],
+                stdout=api.raw_io.output_text()).stdout)
 
+      for item in extra_submodules:
+        path, url = item.split('=')
+        deps[path] = {'url': url, 'rev': 'master'}
+
+      update_index_entries, gitmodules_entries = GetSubmodules(
+          api, deps, source_checkout_name)
+
+      # This adds submodule entries to the index without cloning the underlying
+      # repository.
+      api.git(
+          'update-index', '--add', *update_index_entries, name='Add gitlinks')
+
+      api.file.write_text(
+          'Write .gitmodules file', source_checkout_dir.join('.gitmodules'),
+          '\n'.join(gitmodules_entries))
+      api.git('add', '.gitmodules')
+
+      api.git(
+          '-c', 'user.name=%s' % COMMIT_USERNAME,
+          '-c', 'user.email=%s' % COMMIT_EMAIL_ADDRESS,
+          'commit', '-m', 'Synthetic commit for submodules',
+          name='git commit')
+      api.git(
+          'push',
+          target_repo,
+          'HEAD:' + ref,
+          # skip-validation is necessary as without it we cannot push >=10k
+          # commits at once.
+          '--push-option=skip-validation',
+          # We've effectively deleted the commit that was at HEAD before. This
+          # means that we've diverged from the remote repo, and hence must do a
+          # force push.
+          '--force',
+          name='git push ' + ref)
+
+  api.git(
+      'push',
+      target_repo,
+      'refs/remotes/origin/master:refs/heads/master-original')
+
+  # You can't use --all and --tags at the same time for some reason.
+  # --mirror pushes both, but it also pushes remotes, which we don't want.
+  api.git('push', '--tags', target_repo, name='git push --tags')
+
+
+def RefToRemoteRef(ref):
+  ref = ref.replace('refs/heads', 'refs/remotes/origin')
+  ref = ref.replace('refs/branch-heads', 'refs/remotes/branch-heads')
+  return ref
+
+
+def GetSubmodules(api, deps, source_checkout_name):
   gitmodules_entries = []
   update_index_entries = []
   for path, entry in deps.iteritems():
@@ -139,41 +197,10 @@ def RunSteps(api, source_repo, target_repo, extra_submodules):
     gitmodules_entries.append('[submodule "%s"]\n\tpath = %s\n\turl = %s'
                               % (path, path, str(url)))
 
-  # This adds submodule entries to the index without cloning the underlying
-  # repository.
-  api.git('update-index', '--add', *update_index_entries, name='Add gitlinks')
+  return update_index_entries, gitmodules_entries
 
-  api.file.write_text('Write .gitmodules file',
-                      source_checkout_dir.join('.gitmodules'),
-                      '\n'.join(gitmodules_entries))
-  api.git('add', '.gitmodules')
 
-  api.git('-c', 'user.name=%s' % COMMIT_USERNAME,
-          '-c', 'user.email=%s' % COMMIT_EMAIL_ADDRESS,
-          'commit', '-m', 'Synthetic commit for submodules',
-          name='git commit')
-
-  # This branch is used by the log cache job to ensure that the cache point
-  # remains reachable even after this recipe runs again - if we put the cache
-  # point at HEAD it wouldn't be.
-  api.git('branch', '-f', 'master-original', 'HEAD~')
-
-  api.git('push',
-          # skip-validation is necessary as without it we cannot push >=10k
-          # commits at once.
-          '--push-option=skip-validation',
-          # We've effectively deleted the commit that was at HEAD before. This
-          # means that we've diverged from the remote repo, and hence must do a
-          # force push.
-          '--force',
-          '--all',
-          target_repo,
-          name='git push --all')
-  # You can't use --all and --tags at the same time for some reason.
-  # --mirror pushes both, but it also pushes remotes, which we don't want.
-  api.git('push', '--tags', target_repo, name='git push --tags')
-
-def ShouldGenerateNewCommit(api, target_repo):
+def ShouldGenerateNewCommit(api, target_repo, ref):
   """
    See if we can avoid running the rest of the recipe, if there's no new
    commits to incorporate into the mirror. We should be conservative in the
@@ -186,7 +213,7 @@ def ShouldGenerateNewCommit(api, target_repo):
     try:
       commits, _ = api.gitiles.log(
           target_repo,
-          'master',
+          ref,
           limit=2,
           step_name='Find latest commit to target repo')
     except api.step.StepFailure:
@@ -199,7 +226,7 @@ def ShouldGenerateNewCommit(api, target_repo):
     if commits and commits[0]['author']['name'] == COMMIT_USERNAME:
       latest_real_commit_in_target = commits[1]['commit']
       latest_commit_in_source = api.git(
-          'rev-parse', 'master',
+          'rev-parse', RefToRemoteRef(ref),
           stdout=api.raw_io.output(),
           name='Get latest commit hash in source repo').stdout.strip()
       if latest_real_commit_in_target == latest_commit_in_source:
@@ -276,14 +303,18 @@ def GenTests(api):
           source_repo='https://chromium.googlesource.com/chromium/src',
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    # Checkout doesn't exist.
-                    api.raw_io.stream_output('', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    # No commits in the target repo.
-                    api.json.output({'log': []})) +
-      api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+      api.step_data(
+          'Check for existing source checkout dir',
+          # Checkout doesn't exist.
+          api.raw_io.stream_output('', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          # No commits in the target repo.
+          api.json.output({'log': []})) +
+      api.step_data(
+          'Process refs/heads/master.gclient evaluate DEPS',
+          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
   )
 
   yield (
@@ -292,20 +323,24 @@ def GenTests(api):
           source_repo='https://chromium.googlesource.com/chromium/src',
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    api.json.output({'log': [
-                        {
-                            'commit': 'b' * 40,
-                            'author': {'name': COMMIT_USERNAME},
-                        },
-                        {
-                            'commit': 'a' * 40,
-                            'author': {'name': 'Someone else'},
-                        },
-                    ]})) +
       api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          api.json.output({'log': [
+            {
+            'commit': 'b' * 40,
+            'author': {'name': COMMIT_USERNAME},
+            },
+            {
+            'commit': 'a' * 40,
+            'author': {'name': 'Someone else'},
+            },
+          ]})) +
+      api.step_data(
+          'Process refs/heads/master.'
           'Check for new commits.Get latest commit hash in source repo',
           api.raw_io.stream_output('a' * 40))
   )
@@ -316,24 +351,30 @@ def GenTests(api):
           source_repo='https://chromium.googlesource.com/chromium/src',
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    api.json.output({'log': [
-                        {
-                            'commit': 'b' * 40,
-                            'author': {'name': COMMIT_USERNAME},
-                        },
-                        {
-                            'commit': 'a' * 40,
-                            'author': {'name': 'Someone else'},
-                        },
-                    ]})) +
       api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          api.json.output({'log': [
+            {
+            'commit': 'b' * 40,
+            'author': {'name': COMMIT_USERNAME},
+            },
+            {
+            'commit': 'a' * 40,
+            'author': {'name': 'Someone else'},
+            },
+          ]})) +
+      api.step_data(
+          'Process refs/heads/master.'
           'Check for new commits.Get latest commit hash in source repo',
           api.raw_io.stream_output('c' * 40)) +
-      api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+      api.step_data(
+          'Process refs/heads/master.'
+          'gclient evaluate DEPS',
+          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
   )
 
   yield (
@@ -342,17 +383,21 @@ def GenTests(api):
           source_repo='https://chromium.googlesource.com/chromium/src',
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    api.json.output({'log': [
-                        {
-                            'commit': 'a' * 40,
-                            'author': {'name': 'Someone else'},
-                        },
-                    ]})) +
-      api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+      api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          api.json.output({'log': [
+            {
+            'commit': 'a' * 40,
+            'author': {'name': 'Someone else'},
+            },
+          ]})) +
+      api.step_data(
+          'Process refs/heads/master.gclient evaluate DEPS',
+          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
   )
 
   yield (
@@ -361,12 +406,16 @@ def GenTests(api):
           source_repo='https://chromium.googlesource.com/chromium/src',
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    retcode=1) +
-      api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout'))
+      api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          retcode=1) +
+      api.step_data(
+          'Process refs/heads/master.gclient evaluate DEPS',
+          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
   )
 
   yield (
@@ -375,23 +424,27 @@ def GenTests(api):
           source_repo='https://chromium.googlesource.com/chromium/src',
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    api.json.output({'log': [
-                        {
-                            'commit': 'a' * 40,
-                            'author': {'name': 'Someone else'},
-                        },
-                    ]})) +
-      api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_deps_with_symbolic_ref,
-                                             stream='stdout')) +
-      api.step_data('git ls-remote',
-                    api.raw_io.stream_output(
-                        '91c13923c1d136dc688527fa39583ef61a3277f7\t' +
-                        'refs/heads/master',
-                        stream='stdout'))
+      api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          api.json.output({'log': [
+            {
+            'commit': 'a' * 40,
+            'author': {'name': 'Someone else'},
+            },
+          ]})) +
+      api.step_data(
+          'Process refs/heads/master.gclient evaluate DEPS',
+          api.raw_io.stream_output(
+              fake_deps_with_symbolic_ref, stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.git ls-remote',
+          api.raw_io.stream_output(
+              '91c13923c1d136dc688527fa39583ef61a3277f7\trefs/heads/master',
+              stream='stdout'))
   )
 
   yield (
@@ -400,18 +453,22 @@ def GenTests(api):
           source_repo='https://chromium.googlesource.com/chromium/src',
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    api.json.output({'log': [
-                        {
-                            'commit': 'a' * 40,
-                            'author': {'name': 'Someone else'},
-                        },
-                    ]})) +
-      api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_deps_with_nested_dep,
-                                             stream='stdout'))
+      api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          api.json.output({'log': [
+            {
+            'commit': 'a' * 40,
+            'author': {'name': 'Someone else'},
+            },
+          ]})) +
+      api.step_data(
+          'Process refs/heads/master.gclient evaluate DEPS',
+          api.raw_io.stream_output(
+              fake_deps_with_nested_dep, stream='stdout'))
   )
 
   yield (
@@ -420,18 +477,22 @@ def GenTests(api):
           source_repo='https://chromium.googlesource.com/chromium/src',
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror'
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    api.json.output({'log': [
-                        {
-                            'commit': 'a' * 40,
-                            'author': {'name': 'Someone else'},
-                        },
-                    ]})) +
-      api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_deps_with_trailing_slash,
-                                             stream='stdout'))
+      api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          api.json.output({'log': [
+            {
+            'commit': 'a' * 40,
+            'author': {'name': 'Someone else'},
+            },
+          ]})) +
+      api.step_data(
+          'Process refs/heads/master.gclient evaluate DEPS',
+          api.raw_io.stream_output(
+              fake_deps_with_trailing_slash, stream='stdout'))
   )
 
   yield (
@@ -441,20 +502,53 @@ def GenTests(api):
           target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
           extra_submodules=['src/extra=https://extra.googlesource.com/extra']
       ) +
-      api.step_data('Check for existing source checkout dir',
-                    api.raw_io.stream_output('src', stream='stdout')) +
-      api.step_data('Check for new commits.Find latest commit to target repo',
-                    api.json.output({'log': [
-                        {
-                            'commit': 'a' * 40,
-                            'author': {'name': 'Someone else'},
-                        },
-                    ]})) +
-      api.step_data('gclient evaluate DEPS',
-                    api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
-      api.step_data('git ls-remote',
-                    api.raw_io.stream_output(
-                        'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\t' +
-                        'refs/heads/master',
-                        stream='stdout'))
+      api.step_data(
+          'Check for existing source checkout dir',
+          api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          api.json.output({'log': [
+            {
+            'commit': 'a' * 40,
+            'author': {'name': 'Someone else'},
+            },
+          ]})) +
+      api.step_data(
+          'Process refs/heads/master.gclient evaluate DEPS',
+          api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.git ls-remote',
+          api.raw_io.stream_output(
+              'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\trefs/heads/master',
+              stream='stdout'))
+  )
+
+  yield (
+      api.test('extra_branches') +
+      api.properties(
+          source_repo='https://chromium.googlesource.com/chromium/src',
+          target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
+          refs=['refs/heads/master', 'refs/branch-heads/4044'],
+      ) +
+      api.step_data(
+          'Check for existing source checkout dir',
+          # Checkout doesn't exist.
+          api.raw_io.stream_output('', stream='stdout')) +
+      api.step_data(
+          'Process refs/heads/master.'
+          'Check for new commits.Find latest commit to target repo',
+          # No commits in the target repo.
+          api.json.output({'log': []})) +
+      api.step_data(
+          'Process refs/heads/master.gclient evaluate DEPS',
+          api.raw_io.stream_output(fake_src_deps, stream='stdout')) +
+      api.step_data(
+          'Process refs/branch-heads/4044.'
+          'Check for new commits.Find latest commit to target repo',
+          # No commits in the target repo.
+          api.json.output({'log': []})) +
+      api.step_data(
+          'Process refs/branch-heads/4044.gclient evaluate DEPS',
+          api.raw_io.stream_output(fake_src_deps, stream='stdout'))
   )
