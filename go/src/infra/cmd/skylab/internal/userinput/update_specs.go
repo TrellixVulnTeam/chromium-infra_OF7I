@@ -44,7 +44,7 @@ func GetRequestFromFiles(fp string) (*fleet.BatchUpdateDutsRequest, error) {
 func parseRow(row string) (*fleet.DutProperty, error) {
 	cols := strings.Split(row, ",")
 	if len(cols) < 2 {
-		return nil, fmt.Errorf("Wrong format (%s): each row of input file should contain at least 2 columns separated by colon", row)
+		return nil, fmt.Errorf("Wrong format (%s): each row of input file should contain at least 2 columns separated by ','", row)
 	}
 	var d fleet.DutProperty
 	hostname := cols[0]
