@@ -180,7 +180,9 @@ func init() {
 	proto.RegisterType((*GatherProjectEnvironmentResponse)(nil), "monorail.v1.GatherProjectEnvironmentResponse")
 }
 
-func init() { proto.RegisterFile("api/v1/api_proto/spa.proto", fileDescriptor_daa1373b0854b187) }
+func init() {
+	proto.RegisterFile("api/v1/api_proto/spa.proto", fileDescriptor_daa1373b0854b187)
+}
 
 var fileDescriptor_daa1373b0854b187 = []byte{
 	// 462 bytes of a gzipped FileDescriptorProto

@@ -270,7 +270,6 @@ class Converter(object):
           summary=issue.summary,
           state=content_state,
           status=status,
-          description='TODO(jessan): Pull description from comments',
           reporter=rnc.ConvertUserName(issue.reporter_id),
           owner=owner,
           cc_users=cc_users,
@@ -578,7 +577,6 @@ class Converter(object):
     status = issue_objects_pb2.Issue.StatusValue(
         status=template.status,
         derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
-    description = template.content
     owner = None
     if template.owner_id is not None:
       owner = issue_objects_pb2.Issue.UserValue(
@@ -604,7 +602,6 @@ class Converter(object):
         summary=summary,
         state=state,
         status=status,
-        description=description,
         owner=owner,
         labels=labels,
         components=components,

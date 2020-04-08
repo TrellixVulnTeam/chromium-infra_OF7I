@@ -65,9 +65,7 @@ class ProjectsServicerTest(unittest.TestCase):
         state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
         status=issue_objects_pb2.Issue.StatusValue(
             status=self.template_1.status,
-            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')),
-        description=self.template_1.content)
-
+            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
     expected_template = project_objects_pb2.IssueTemplate(
         name='projects/{}/templates/{}'.format(
             self.project_1.project_name, self.template_1.name),

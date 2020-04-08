@@ -339,7 +339,9 @@ func init() {
 	proto.RegisterType((*ListCommentsResponse)(nil), "monorail.v1.ListCommentsResponse")
 }
 
-func init() { proto.RegisterFile("api/v1/api_proto/issues.proto", fileDescriptor_da7675e39ac6c753) }
+func init() {
+	proto.RegisterFile("api/v1/api_proto/issues.proto", fileDescriptor_da7675e39ac6c753)
+}
 
 var fileDescriptor_da7675e39ac6c753 = []byte{
 	// 523 bytes of a gzipped FileDescriptorProto

@@ -543,7 +543,9 @@ func init() {
 	proto.RegisterType((*RemoveHotlistEditorsRequest)(nil), "monorail.v1.RemoveHotlistEditorsRequest")
 }
 
-func init() { proto.RegisterFile("api/v1/api_proto/hotlists.proto", fileDescriptor_56a2c4cb0040a55a) }
+func init() {
+	proto.RegisterFile("api/v1/api_proto/hotlists.proto", fileDescriptor_56a2c4cb0040a55a)
+}
 
 var fileDescriptor_56a2c4cb0040a55a = []byte{
 	// 762 bytes of a gzipped FileDescriptorProto

@@ -49,7 +49,7 @@ message Comment {
 }
 
 // Documents and tracks a bug, task, or feature request within a Project.
-// Next available tag: 25
+// Next available tag: 24
 message Issue {
   option (google.api.resource) = {
     type: "api.crbug.com/Issue"
@@ -178,60 +178,56 @@ message Issue {
   IssueContentState state = 3;
   // The current status of the issue.
   StatusValue status = 4;
-  // Longer text describing the issue.
-  string description = 5;
   // The user who created the issue.
-  string reporter = 6 [
+  string reporter = 5 [
     (google.api.resource_reference) = { type: "api.crbug.com/User" },
     (google.api.field_behavior) = OUTPUT_ONLY
   ];
   // The user currently responsible for the issue.
-  UserValue owner = 7;
+  UserValue owner = 6;
   // Additional users receiving notifications on the issue.
-  repeated UserValue cc_users = 8;
+  repeated UserValue cc_users = 7;
   // Labels applied to the issue
-  repeated LabelValue labels = 9;
+  repeated LabelValue labels = 8;
   // Components the issue is associated with.
-  repeated ComponentValue components = 10;
+  repeated ComponentValue components = 9;
   // Values for custom fields on the issue.
-  repeated FieldValue field_values = 11;
+  repeated FieldValue field_values = 10;
   // An issue can be merged into another. If this value is set, the issue
   // to referred should be considered the primary source for further updates.
-  IssueRef merged_into_issue_ref = 12;
+  IssueRef merged_into_issue_ref = 11;
   // Issues preventing the completion of this issue.
-  repeated IssueRef blocked_on_issue_refs = 13;
+  repeated IssueRef blocked_on_issue_refs = 12;
   // Issues for which this issue is blocking completion.
-  repeated IssueRef blocking_issue_refs = 14;
+  repeated IssueRef blocking_issue_refs = 13;
   // The time the issue was reported.
-  google.protobuf.Timestamp create_time = 15
+  google.protobuf.Timestamp create_time = 14
       [(google.api.field_behavior) = OUTPUT_ONLY];
   // The most recent time the issue was closed.
-  google.protobuf.Timestamp close_time = 16
+  google.protobuf.Timestamp close_time = 15
       [(google.api.field_behavior) = OUTPUT_ONLY];
   // The most recent time the issue was modified.
-  google.protobuf.Timestamp modify_time = 17
+  google.protobuf.Timestamp modify_time = 16
       [(google.api.field_behavior) = OUTPUT_ONLY];
   // The most recent time a component value was modified.
-  google.protobuf.Timestamp component_modify_time = 18
+  google.protobuf.Timestamp component_modify_time = 17
       [(google.api.field_behavior) = OUTPUT_ONLY];
   // The most recent time the status value was modified.
-  google.protobuf.Timestamp status_modify_time = 19
+  google.protobuf.Timestamp status_modify_time = 18
       [(google.api.field_behavior) = OUTPUT_ONLY];
   // The most recent time the owner made a modification to the issue.
-  google.protobuf.Timestamp owner_modify_time = 20
+  google.protobuf.Timestamp owner_modify_time = 19
       [(google.api.field_behavior) = OUTPUT_ONLY];
   // The number of attachments associated with the issue.
-  uint32 attachment_count = 21 [(google.api.field_behavior) = OUTPUT_ONLY];
+  uint32 attachment_count = 20 [(google.api.field_behavior) = OUTPUT_ONLY];
   // The number of users who have starred the issue.
-  uint32 star_count = 22 [(google.api.field_behavior) = OUTPUT_ONLY];
-
+  uint32 star_count = 21 [(google.api.field_behavior) = OUTPUT_ONLY];
   // Values set on approvals associated with the issue (if applicable).
-  repeated ApprovalValue approval_values = 23;
-
+  repeated ApprovalValue approval_values = 22;
   // Phases the issue's approval can go through (if applicable).
   // Once created, these cannot be changed.
   // TODO(monorail:7193): add user guide for phases/approvals.
-  repeated string phases = 24;
+  repeated string phases = 23;
 }
 
 // States that an issue or its comments can be in (aip.dev/216).

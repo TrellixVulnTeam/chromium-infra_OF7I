@@ -147,7 +147,9 @@ func init() {
 	proto.RegisterType((*ListIssueTemplatesResponse)(nil), "monorail.v1.ListIssueTemplatesResponse")
 }
 
-func init() { proto.RegisterFile("api/v1/api_proto/projects.proto", fileDescriptor_c420c733c90f8ec5) }
+func init() {
+	proto.RegisterFile("api/v1/api_proto/projects.proto", fileDescriptor_c420c733c90f8ec5)
+}
 
 var fileDescriptor_c420c733c90f8ec5 = []byte{
 	// 372 bytes of a gzipped FileDescriptorProto

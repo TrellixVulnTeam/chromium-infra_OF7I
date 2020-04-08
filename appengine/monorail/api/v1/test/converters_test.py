@@ -390,7 +390,6 @@ class ConverterFunctionsTest(unittest.TestCase):
                     value='mac',
                 )
             ],
-            description='TODO(jessan): Pull description from comments',
             merged_into_issue_ref=issue_objects_pb2.IssueRef(
                 ext_identifier='b/1'),
             blocked_on_issue_refs=[
@@ -450,7 +449,6 @@ class ConverterFunctionsTest(unittest.TestCase):
         status=issue_objects_pb2.Issue.StatusValue(
             derivation=EXPLICIT_DERIVATION, status='New'),
         reporter='users/111',
-        description='TODO(jessan): Pull description from comments',
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
         modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
         component_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
@@ -776,7 +774,6 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         result.state, issue_objects_pb2.IssueContentState.Value('ACTIVE'))
     self.assertEqual(result.status.status, 'New')
-    self.assertEqual(result.description, self.template_1.content)
     self.assertFalse(result.reporter)
     self.assertEqual(result.owner.user, 'users/{}'.format(self.user_1.user_id))
     self.assertEqual(len(result.cc_users), 0)

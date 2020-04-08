@@ -158,7 +158,9 @@ func init() {
 	proto.RegisterType((*BatchGetUsersResponse)(nil), "monorail.v1.BatchGetUsersResponse")
 }
 
-func init() { proto.RegisterFile("api/v1/api_proto/users.proto", fileDescriptor_2c2dd4221542a287) }
+func init() {
+	proto.RegisterFile("api/v1/api_proto/users.proto", fileDescriptor_2c2dd4221542a287)
+}
 
 var fileDescriptor_2c2dd4221542a287 = []byte{
 	// 287 bytes of a gzipped FileDescriptorProto
