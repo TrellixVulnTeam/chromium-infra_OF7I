@@ -13,7 +13,7 @@ import "google_proto/google/api/annotations.proto";
 import "api/v1/api_proto/project_objects.proto";
 
 
-service MonorailSPA {
+service Frontend {
   // Returns all project specific configurations needed for the SPA client.
   rpc GatherProjectEnvironment (GatherProjectEnvironmentRequest) returns (GatherProjectEnvironmentResponse) {};
 }
