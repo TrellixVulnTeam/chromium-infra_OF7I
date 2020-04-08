@@ -145,6 +145,9 @@ func LogDutStateChanges(hostname string, old *lab.DutState, newData *lab.DutStat
 	changes.log("DutState.Servo", old.GetServo(), newData.GetServo())
 	changes.log("DutState.Chameleon", old.GetChameleon(), newData.GetChameleon())
 	changes.log("DutState.AudioLoopbackDongle", old.GetAudioLoopbackDongle(), newData.GetAudioLoopbackDongle())
+	changes.log("DutState.WorkingBluetoothBtpeer", old.GetWorkingBluetoothBtpeer(), newData.GetWorkingBluetoothBtpeer())
+	changes.log("DutState.Cr50Phase", old.GetCr50Phase(), newData.GetCr50Phase())
+	changes.log("DutState.Cr50KeyEnv", old.GetCr50KeyEnv(), newData.GetCr50KeyEnv())
 
 	// Set id and hostname for all changes.
 	id := old.GetId().GetValue()

@@ -6,6 +6,7 @@ package changehistory
 import (
 	"testing"
 
+	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 )
@@ -289,6 +290,88 @@ func TestUpdateDut(t *testing.T) {
 			So(changes[0].Label, ShouldEqual, "camerabox")
 			So(changes[0].OldValue, ShouldContainSubstring, "true")
 			So(changes[0].NewValue, ShouldContainSubstring, "false")
+		})
+	})
+}
+
+func TestUpdateDutState(t *testing.T) {
+	t.Parallel()
+	Convey("Log the change of dut state", t, func() {
+		oldState := &lab.DutState{
+			Id: &lab.ChromeOSDeviceID{
+				Value: "test_dut",
+			},
+			Servo:                  lab.PeripheralState_BROKEN,
+			Chameleon:              lab.PeripheralState_WORKING,
+			AudioLoopbackDongle:    lab.PeripheralState_WORKING,
+			WorkingBluetoothBtpeer: 1,
+			Cr50Phase:              lab.DutState_CR50_PHASE_PVT,
+			Cr50KeyEnv:             lab.DutState_CR50_KEYENV_PROD,
+		}
+		newState := proto.Clone(oldState).(*lab.DutState)
+		Convey("no change", func() {
+			changes := LogDutStateChanges("test_dut_hostname", oldState, newState)
+			So(changes, ShouldBeEmpty)
+		})
+
+		Convey("change servo", func() {
+			newState.Servo = lab.PeripheralState_WORKING
+			changes := LogDutStateChanges("test_dut_hostname", oldState, newState)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].Label, ShouldEqual, "DutState.Servo")
+			So(changes[0].OldValue, ShouldEqual, "BROKEN")
+			So(changes[0].NewValue, ShouldEqual, "WORKING")
+			newState.Servo = oldState.Servo
+		})
+
+		Convey("change chameleon", func() {
+			newState.Chameleon = lab.PeripheralState_BROKEN
+			changes := LogDutStateChanges("test_dut_hostname", oldState, newState)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].Label, ShouldEqual, "DutState.Chameleon")
+			So(changes[0].OldValue, ShouldEqual, "WORKING")
+			So(changes[0].NewValue, ShouldEqual, "BROKEN")
+			newState.Chameleon = oldState.Chameleon
+		})
+
+		Convey("change AudioLoopbackDongle", func() {
+			newState.AudioLoopbackDongle = lab.PeripheralState_BROKEN
+			changes := LogDutStateChanges("test_dut_hostname", oldState, newState)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].Label, ShouldEqual, "DutState.AudioLoopbackDongle")
+			So(changes[0].OldValue, ShouldEqual, "WORKING")
+			So(changes[0].NewValue, ShouldEqual, "BROKEN")
+			newState.AudioLoopbackDongle = oldState.AudioLoopbackDongle
+		})
+
+		Convey("change WorkingBluetoothBtpeer", func() {
+			newState.WorkingBluetoothBtpeer = 3
+			changes := LogDutStateChanges("test_dut_hostname", oldState, newState)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].Label, ShouldEqual, "DutState.WorkingBluetoothBtpeer")
+			So(changes[0].OldValue, ShouldEqual, "1")
+			So(changes[0].NewValue, ShouldEqual, "3")
+			newState.WorkingBluetoothBtpeer = oldState.WorkingBluetoothBtpeer
+		})
+
+		Convey("change Cr50Phase", func() {
+			newState.Cr50Phase = lab.DutState_CR50_PHASE_PREPVT
+			changes := LogDutStateChanges("test_dut_hostname", oldState, newState)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].Label, ShouldEqual, "DutState.Cr50Phase")
+			So(changes[0].OldValue, ShouldEqual, "CR50_PHASE_PVT")
+			So(changes[0].NewValue, ShouldEqual, "CR50_PHASE_PREPVT")
+			newState.Cr50Phase = oldState.Cr50Phase
+		})
+
+		Convey("change Cr50KeyEnv", func() {
+			newState.Cr50KeyEnv = lab.DutState_CR50_KEYENV_DEV
+			changes := LogDutStateChanges("test_dut_hostname", oldState, newState)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].Label, ShouldEqual, "DutState.Cr50KeyEnv")
+			So(changes[0].OldValue, ShouldEqual, "CR50_KEYENV_PROD")
+			So(changes[0].NewValue, ShouldEqual, "CR50_KEYENV_DEV")
+			newState.Cr50KeyEnv = oldState.Cr50KeyEnv
 		})
 	})
 }
