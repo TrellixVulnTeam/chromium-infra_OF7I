@@ -26,7 +26,7 @@ const dayInMinutes = 24 * 60
 
 // LeaseDut subcommand: Lease a DUT for debugging.
 var LeaseDut = &subcommands.Command{
-	UsageLine: "lease-dut HOST",
+	UsageLine: "lease-dut HOST\n\tskylab lease-dut -model MODEL",
 	ShortDesc: "lease DUT for debugging",
 	LongDesc: `Lease DUT for debugging.
 
@@ -39,6 +39,10 @@ Do not build automation around this subcommand.`,
 		// use a float so that large values passed on the command line are NOT wrapped.
 		c.Flags.Float64Var(&c.leaseMinutes, "minutes", 60, "Duration of lease.")
 		c.Flags.StringVar(&c.leaseReason, "reason", "", "The reason to perform this lease, it must match crbug.com/NNNN or b/NNNN.")
+		// TODO(gregorynisbet):
+		// if a model is provided, then we necessarily target DUT_POOL_QUOTA and only repair-failed DUTs until
+		// a better policy can be implemented.
+		c.Flags.StringVar(&c.model, "model", "", "Leases may optionally target a model instead of a hostname")
 		return c
 	},
 }
@@ -49,6 +53,7 @@ type leaseDutRun struct {
 	envFlags     skycmdlib.EnvFlags
 	leaseMinutes float64
 	leaseReason  string
+	model        string
 }
 
 func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -60,8 +65,10 @@ func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcomma
 }
 
 func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if len(args) != 1 {
-		return cmdlib.NewUsageError(c.Flags, "exactly one host required")
+	hasOneHostname := len(args) == 1
+	hasModel := c.model != ""
+	if !hasOneHostname && !hasModel {
+		return cmdlib.NewUsageError(c.Flags, "exactly one host or one model required")
 	}
 	if c.leaseMinutes < 0 {
 		return cmdlib.NewUsageError(c.Flags, fmt.Sprintf("minutes to lease (%d) cannot be negative", int64(c.leaseMinutes)))
