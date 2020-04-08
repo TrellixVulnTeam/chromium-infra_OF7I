@@ -39,21 +39,33 @@ deployment process in Spinnaker.
 
 This is the starting point of the Monorail deployment process and should be
 manually triggered by the Release Engineer.
-![start monorail deployment](md_images/start-deploy-monorail.png) With the
-default parameters, an empty "BUILD_ID" and "ENV" set to "dev", `Deploy
-Monorail` triggers a Cloud Build of Monorail from HEAD. And when this pipeline
-finishes, the `Deploy Dev (in use)` pipeline automatically begins.
+![start monorail deployment](md_images/start-deploy-monorail.png)
+This pipeline handles creating a Cloud Build of Monorail. The build can be created from
+HEAD of a given branch or it can re-build a previous Cloud Build given a "BUILD_ID".
+Once the build is complete, a `Deploy {Dev|Staging|Prod}` pipeline can be automatically
+triggered to deploy the build to an environment. On a regular weekly release, we should
+use the default "ENV" = dev, provide the release branch, and leave "BUILD_ID" empty.
 
 ##### Parameter Options
 
+*   The "BRANCH" parameter takes the name of the release branch that holds
+    the commits we want to deploy.
+    The input should be in the form of `refs/releases/monorail/[*deployment number*]`.
+    e.g. "refs/releases/monorail/1" builds from HEAD of
+    [infra/infra/+/refs/releases/monorail/1](https://chromium.googlesource.com/infra/infra/+/refs/releases/monorail/1).
+    It will also accept "master" to build from HEAD of the infra
+    [master branch](https://chromium.googlesource.com/infra/infra/+/refs/heads/master).
+*   The "ENV" parameter can be set to "dev", "staging", or "prod" to
+    automatically trigger `Deploy Dev`, `Deploy Staging`, or `Deploy
+    Production` (respectively) with a successful finish of `Deploy Monorail`.
+    The "nodeploy" option means no new monorail version will get deployed
+    to any environment.
 *   The "BUILD_ID" parameter can take the id of a previous Cloud Build found
     [here](https://pantheon.corp.google.com/cloud-build/builds?organizationId=433637338589&src=ac&project=chrome-infra-spinnaker).
-    We can use this to rebuild older Monorail versions.
-*   The "ENV" parameter can be set to "dev", "staging", or "prod" to
-    automatically trigger `Deploy Dev (in use)`, `Deploy Staging`, or `Deploy
-    Production` (respectively) with a successful finish of `Deploy Monorail`.
+    We can use this to rebuild older Monorail versions. When the "BUILD_ID"
+    is given "BRANCH" is ignored.
 
-#### Deploy Dev (in use)
+#### Deploy Dev
 
 This pipeline handles deploying a new monorail-dev version and migrating traffic
 to the newest version.
@@ -71,9 +83,9 @@ traffic to to the newest version.
 The successful finish of this pipeline triggers two pipelines: `Cleanup` and
 `Deploy Staging`.
 
-#### Deploy Development
+#### Deploy Development - EXPERIMENTAL
 
-Note that this pipeline is similar to the above `Deploy Dev (in use)` pipeline.
+Note that this pipeline is similar to the above `Deploy Dev` pipeline.
 This is for Prod Tech's experimental purposes. Please ignore this pipeline. This
 cannot be triggered by `Deploy Monorail`.
 
@@ -82,13 +94,13 @@ cannot be triggered by `Deploy Monorail`.
 This pipeline handles deploying a new monorail-staging version and migrating
 traffic to the newest version.
 
-Like `Deploy Dev (in use)` after a new version is created, there is a
+Like `Deploy Dev` after a new version is created, there is a
 "Continue?" stage that waits on manual judgement. The release engineer should
 test the new version before letting the pipeline proceed to traffic migration.
 If any issues are spotted, the release engineer should select "Rollback", to
 trigger the `Rollback` pipeline.
 
-Unlike `Deploy Dev (in use)`, after "Continue" is selected, spinnaker will
+Unlike `Deploy Dev`, after "Continue" is selected, spinnaker will
 proceed with three separate stages of traffic splitting with a waiting period
 between each traffic split.
 
@@ -149,14 +161,14 @@ branch is created at the latest [*commit sha*] that we want to be part of the
 deployment. Spinnaker will take the [*deployment number*] and deploy from HEAD
 of the matching branch.
 
-Manual testing steps are added during Workflow's weekly meetings for each 
+Manual testing steps are added during Workflow's weekly meetings for each
 commit between the previous release and this release.
 
 ## Update or create a monorail release branch
 
 Create a new local branch at the [*commit sha*] of the latest commit we want
-included in the deployment: 
-``` 
+included in the deployment:
+```
 git checkout -b release [*commit sha*]
 ```
 
@@ -168,15 +180,18 @@ git cherry-pick -x [*cherry-picked commit sha*]
 Create or update a monorail release branch:
 ```
 git push origin release:refs/releases/monorail/[*deployment number*]
-``` 
+```
 
-If the branch already exists, [*commit sha*] must be ahead of the current 
+If the branch already exists, [*commit sha*] must be ahead of the current
 commit that the branch points to.
 
-### Spinnaker Deployment steps
+To figure out what the [*deployment number*] should be,
+view the existing release branches with
+```
+git ls-remote origin refs/releases/monorail/*
+```
 
-TODO(crbug/monorail/6732): Update Spinnaker instructions once new pipeline is
-created.
+### Spinnaker Deployment steps
 
 If any step below fails. Stop the deploy and ping
 [Monorail chat](http://chat/room/AAAACV9ZZ8k).
@@ -197,13 +212,9 @@ If any step below fails. Stop the deploy and ping
     1.  Find the git sha of last deployment's build
         ![build log's git sha](md_images/build-log.png) In this example it's
         `bbaab65c91`
-    1.  Make sure you're on latest master and in `infra/appengine/monorail/` and
-        run `git log --oneline <git_sha>..HEAD .`. In the example above, that
-        command would be `git log --oneline bbaab65c91..HEAD .`
-        TODO(crbug/monorail/6732): Update these instructions for new release branch
-        process and include them in go/monorail-meeting-notes.
-    1.  Make sure list of commits matches the manually recorded list in the
-        weekly meeting notes.
+    1.  Run `git log --oneline [*last deployment commit sha*]..[*commit sha*] .`.
+        In the example above, that command would be `git log --oneline bbaab65c91..[*commit sha*] .`
+        Include the output in go/monorail-meeting-notes.
 1.  Update Dev and Staging Schema
     1.  Check for changes since last deploy: `tail -30
         schema/alter-table-log.txt`
@@ -220,8 +231,8 @@ If any step below fails. Stop the deploy and ping
         in Spinnaker.
     1.  Identify the `Deploy Monorail` Pipeline and click "Start Manual
         Execution". "BUILD_ID" should be empty. "ENV" should be set to "dev".
-1.  Confirm monorail-dev was successfully deployed (Pipeline: `Deploy Dev (in
-    use)`, Stage: "Continue?")
+        "BRANCH" should be set to "refs/releases/monorail/[*deployment number*]".
+1.  Confirm monorail-dev was successfully deployed (Pipeline: `Deploy Dev`, Stage: "Continue?")
     1.  Find the new version using the
         [appengine version console](https://pantheon.corp.google.com/appengine/versions?organizationId=433637338589&project=monorail-dev).
     1.  Visit popular/essential pages and confirm they are all accessible.
@@ -259,17 +270,15 @@ If any step below fails. Stop the deploy and ping
     1.  [Chromiumdash](https://chromiumdash.appspot.com/release-manager?platform=Android),
         should work after deployment.
 1.  Announce the Deployment.
-    1.  Include the
-        [build id](https://screenshot.googleplex.com/KvzoxHEs6Qy.png) of the
+    1.  Include the [build id](https://screenshot.googleplex.com/KvzoxHEs6Qy.png) of the
         Cloud Build used for this deployment.
-    1.  Include the version numbers of the new staging and prod deployments.
-        (They may be different).
+    1.  Include a link and name of the release branch used for the deployment.
     1.  Include list of changes that went out (obtained from section 2 above),
         or via `git log --oneline .` (use `--before` and `--after` as needed).
     1.  If there were schema changes, copy and paste the commands at the bottom
         of the email
-    1.  Use the subject line "Deployed Monorail to staging and prod with build
-        id: <build id>"
+    1.  Use the subject line:
+        "Deployed Monorail to staging and prod with release branch [*deployment number*]"
     1.  Send the email to "monorail-eng@google.com" and
         "chrome-infra+monorail@google.com"
 1.  Add a new row to the
