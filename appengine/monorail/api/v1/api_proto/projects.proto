@@ -9,7 +9,6 @@ package monorail.v1;
 
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
-import "google_proto/google/api/annotations.proto";
 import "api/v1/api_proto/project_objects.proto";
 
 
@@ -20,12 +19,9 @@ service Projects {
   // Raises:
   //   NOT_FOUND if the requested parent project is not found.
   //   INVALID_ARGUMENT if the given `parent` is not valid.
-  rpc ListIssueTemplates (ListIssueTemplatesRequest) returns (ListIssueTemplatesResponse) {
-    option (google.api.http) = {
-      post: "/prpc/monorail.v1.Projects/ListIssueTemplates"
-      body: "*"
-    };
-  }
+  rpc ListIssueTemplates (ListIssueTemplatesRequest) returns (ListIssueTemplatesResponse) {}
+  // Returns all projects hosted on Monorail.
+  rpc ListProjects (ListProjectsRequest) returns (ListProjectsResponse) {}
 }
 
 // Request message for ListIssueTemplates
@@ -38,7 +34,7 @@ message ListIssueTemplatesRequest {
   // The maximum number of items to return. The service may return fewer than
   // this value.
   int32 page_size = 2;
-  // A page token, received from a previous `ListIssueTemplatesRequest` call.
+  // A page token, received from a previous `ListIssueTemplates` call.
   // Provide this to retrieve the subsequent page.
   // When paginating, all other parameters provided to
   // `ListIssueTemplatesRequest` must match the call that provided the token.
@@ -48,7 +44,29 @@ message ListIssueTemplatesRequest {
 // Response message for ListIssueTemplates
 // Next available tag: 3
 message ListIssueTemplatesResponse {
+  // Templates matching the given request.
   repeated IssueTemplate templates = 1;
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for ListProjects
+// Next available tag: 3
+message ListProjectsRequest {
+  // The maximum number of items to return. The service may return fewer than
+  // this value.
+  int32 page_size = 1;
+  // A page token, received from a previous `ListProjects` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 2;
+}
+
+// Response message for ListProjects
+// Next available tag: 3
+message ListProjectsResponse {
+  // Projects matching the given request.
+  repeated Project projects = 1;
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
   string next_page_token = 2;
