@@ -26,11 +26,11 @@ import (
 
 // BatchUpdateDuts subcommand: batch update duts with some common labels.
 var BatchUpdateDuts = &subcommands.Command{
-	UsageLine: "batch-update-duts -pool POOL -f FILE [FLAGS...] HOSTNAMES...",
+	UsageLine: "batch-update-duts -pool POOL -input_file FILE [FLAGS...] HOSTNAMES...",
 	ShortDesc: "update a fixed set of common labels for a batch of existing DUTs",
 	LongDesc: fmt.Sprintf(`Update some common labels of existing DUTs' in inventory.
 
-Currently common labels only include pool and rpm info. RPM info are only supported by passing an input file via -f.
+Currently common labels only include pool and rpm info. RPM info are only supported by passing an input file via -input_file.
 
 The format of the input file is guided by:
 * each row is separated by "\n"
@@ -44,7 +44,7 @@ Some example usages of this tool:
 
 * skylab batch-update-duts -pool DUT_POOL_QUOTA host1 host2 host3
 
-* skylab batch-update-duts -f input_file
+* skylab batch-update-duts -input_file input_file
 
 the content of the input file could be:
 hostname1,pool=fake_pool1
@@ -85,7 +85,7 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 		return cmdlib.NewUsageError(c.Flags, "inputFile or HOSTNAMES are mutually exclusive, can only specify one of them")
 	}
 	if len(hostnames) == 0 && c.inputFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "must specify at least one hostname or pass in a file via -f")
+		return cmdlib.NewUsageError(c.Flags, "must specify at least one hostname or pass in a file via -input_file")
 	}
 	if len(hostnames) > 0 && c.pool == "" {
 		return cmdlib.NewUsageError(c.Flags, "must specify non-empty pool to update")
