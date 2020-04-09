@@ -118,19 +118,10 @@ def _is_interrupted(build):
 def _finalize_invocation(build_id):
   bundle = model.BuildBundle.get(build_id, infra=True)
   rdb = bundle.infra.parse().resultdb
-  if not rdb.hostname:
-    # If there's no hostname, it means resultdb integration is not enabled
-    # for this build.
+  if not rdb.hostname or not rdb.invocation:
+    # If there's no hostname or no invocation, it means resultdb integration
+    # is not enabled for this build.
     return
-
-  if not rdb.invocation:
-    # This is a problem, swarming._sync_build() should have created an
-    # invocation and saved the name to this field.
-    logging.error(
-        'Cannot finalize invocation for build %s without an invocation name',
-        build_id
-    )
-    return  # Avoid retry.
 
   try:
     _ = _call_finalize_rpc(

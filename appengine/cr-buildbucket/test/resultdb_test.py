@@ -214,7 +214,7 @@ class ResultDBFinalizeInvocationTest(testing.AppengineTestCase):
   @mock.patch.object(logging, 'error')
   def test_no_invocation(self, mock_err):
     self._create_and_finalize(2, 'rdb.com')
-    self.assertTrue(mock_err.called)
+    self.assertFalse(mock_err.called)
     self.assertFalse(resultdb._call_finalize_rpc.called)
 
   @mock.patch.object(logging, 'error')
