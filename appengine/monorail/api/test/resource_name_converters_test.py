@@ -385,3 +385,13 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.ConvertApprovalDefNames(
           self.cnxn, approval_ids, self.dne_project_id, self.services)
+
+  def testConvertProjectName(self):
+    self.assertEqual(
+        rnc.ConvertProjectName(
+            self.cnxn, self.project_1.project_id, self.services),
+        'projects/{}'.format(self.project_1.project_name))
+
+  def testConvertProjectName_NoSuchProjectException(self):
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertProjectName(self.cnxn, self.dne_project_id, self.services)
