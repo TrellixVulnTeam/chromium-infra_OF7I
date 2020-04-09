@@ -1,6 +1,5 @@
 runtime: go113
 
-
 # Note: this is interpreted by gae.py, it maps the app ID being deployed to
 # values of ${...} vars.
 # Reference: https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/master/examples/appengine/helloworld_v2/app.yaml
@@ -9,5 +8,4 @@ luci_gae_vars:
     AUTH_SERVICE_HOST: chrome-infra-auth-dev.appspot.com
 
 entrypoint: >
-  /usr/local/bin/start
-  -auth-service-host ${AUTH_SERVICE_HOST}
+  main -auth-service-host ${AUTH_SERVICE_HOST}
