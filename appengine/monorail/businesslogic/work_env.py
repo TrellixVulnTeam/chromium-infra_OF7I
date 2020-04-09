@@ -667,7 +667,7 @@ class WorkEnv(object):
     """Return the specifed config.
 
     Args:
-      project_name: string name of the project to retrieve.
+      project_id: int ID of the project to retrieve.
       use_cache: set to false when doing read-modify-write.
 
     Returns:

@@ -9,6 +9,7 @@ from __future__ import absolute_import
 
 import unittest
 
+from mock import patch
 from google.protobuf import timestamp_pb2
 
 from api import resource_name_converters as rnc
@@ -990,3 +991,15 @@ class ConverterFunctionsTest(unittest.TestCase):
         value=expected_value_1,
         derivation=RULE_DERIVATION)
     self.assertEqual(result[1], expected_1)
+
+  @patch('project.project_helpers.GetThumbnailUrl')
+  def testConvertProject(self, mock_GetThumbnailUrl):
+    """We can convert a Project."""
+    mock_GetThumbnailUrl.return_value = 'xyz'
+    expected_api_project = project_objects_pb2.Project(
+        name='projects/{}'.format(self.project_1.project_name),
+        display_name=self.project_1.project_name,
+        summary=self.project_1.summary,
+        thumbnail_url='xyz')
+    self.assertEqual(
+        expected_api_project, self.converter.ConvertProject(self.project_1))

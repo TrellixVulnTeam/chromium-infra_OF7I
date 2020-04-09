@@ -12,8 +12,11 @@ import logging
 import re
 
 import settings
+
+from google.appengine.api import app_identity
 from framework import framework_bizobj
 from framework import framework_views
+from framework import gcs_helpers
 from framework import permissions
 from project import project_views
 from proto import project_pb2
@@ -209,3 +212,10 @@ def UsersWithPermsInProject(project, perms_needed, users_by_id,
     users.update(indirect_users_for_perm[perm])
 
   return direct_users_for_perm
+
+
+def GetThumbnailUrl(gcs_id):
+  # type: (str) -> str
+  """Derive the thumbnail url for a given GCS object ID."""
+  bucket_name = app_identity.get_default_gcs_bucket_name()
+  return gcs_helpers.SignUrl(bucket_name, gcs_id + '-thumbnail')

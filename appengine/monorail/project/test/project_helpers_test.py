@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 import unittest
 
+from mock import patch
+
 from framework import framework_views
 from framework import permissions
 from project import project_helpers
@@ -119,3 +121,16 @@ class HelpersUnitTest(unittest.TestCase):
         {'FooPerm': {111},
          'BarPerm': {111, 222}},
         actual)
+
+  @patch('google.appengine.api.app_identity.get_default_gcs_bucket_name')
+  @patch('framework.gcs_helpers.SignUrl')
+  def testGetThumbnailUrl(self, mock_SignUrl, mock_get_default_gcs_bucket_name):
+    bucket_name = 'testbucket'
+    expected_url = 'signed/url'
+
+    mock_get_default_gcs_bucket_name.return_value = bucket_name
+    mock_SignUrl.return_value = expected_url
+
+    self.assertEqual(expected_url, project_helpers.GetThumbnailUrl('xyz'))
+    mock_get_default_gcs_bucket_name.assert_called_once()
+    mock_SignUrl.assert_called_once_with(bucket_name, 'xyz' + '-thumbnail')
