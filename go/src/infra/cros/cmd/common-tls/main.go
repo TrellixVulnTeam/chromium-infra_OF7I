@@ -33,7 +33,7 @@ func main() {
 func innerMain() error {
 	flag.Parse()
 	sshConfig := &ssh.ClientConfig{
-		User: "chromeos-test",
+		User: "root",
 		// We don't care about the host key for DUTs.
 		// Attackers intercepting our connections to DUTs is not part
 		// of our attack profile.
