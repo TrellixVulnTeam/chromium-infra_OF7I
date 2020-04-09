@@ -42,6 +42,7 @@ USER_NAME_RE = re.compile(r'users\/((?P<user_id>\d+)|(?P<potential_email>.+))$')
 
 # Constants that hold the template patterns for creating resource names.
 PROJECT_NAME_TMPL = 'projects/{project_name}'
+PROJECT_CONFIG_TMPL = 'projects/{project_name}/config'
 HOTLIST_NAME_TMPL = 'hotlists/{hotlist_id}'
 HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
     HOTLIST_NAME_TMPL)
@@ -573,3 +574,25 @@ def ConvertProjectName(cnxn, project_id, services):
   if project_name is None:
     raise exceptions.NoSuchProjectException(project_id)
   return PROJECT_NAME_TMPL.format(project_name=project_name)
+
+
+def ConvertProjectConfig(cnxn, project_id, services):
+  # type: (MonorailConnection, int, Services) -> str
+  """Takes a Project ID and returns that project's config resource name.
+
+  Args:
+    cnxn: MonorailConnection object.
+    project_id: ID of the Project.
+    services: Services object.
+
+  Returns:
+    The resource name of the ProjectConfig.
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  project_name = services.project.LookupProjectNames(
+      cnxn, [project_id]).get(project_id)
+  if project_name is None:
+    raise exceptions.NoSuchProjectException(project_id)
+  return PROJECT_CONFIG_TMPL.format(project_name=project_name)
