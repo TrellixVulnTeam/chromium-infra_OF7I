@@ -612,6 +612,7 @@ SPECS.update({
         Universal('oauth2client', '4.1.3'),
         Universal('oauthlib', '3.0.1'),
         Universal('packaging', '16.8'),
+        Universal('parameterized', '0.7.0'),
         Universal('parameterized', '0.7.1'),
         Universal('paramiko', '2.4.1'),
         Universal('pathlib2', '2.3.3'),

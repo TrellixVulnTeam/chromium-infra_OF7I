@@ -84,6 +84,13 @@ section:
 This says the wheel `scandir-1.9.0` is either built from source (.tar.gz) or is
 prebuilt (for the following `packaged` platforms).
 
+*** note
+When adding a new version of an existing wheel, please only ADD it
+(don't replace an existing version). This is because existing .vpython specs
+will likely still reference the old version, and it's good to keep wheels.md
+as a full registry of available versions.
+***
+
 [Authenticated to GCloud Container
 Registry](https://cloud.google.com/container-registry/docs/advanced-authentication)
 with
