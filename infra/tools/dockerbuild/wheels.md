@@ -2329,12 +2329,12 @@ wheel: <
 
 ## **parameterized**
 
-### 0.7.0
+### 0.7.1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/parameterized-py2_py3"
-  version: "version:0.7.0"
+  version: "version:0.7.1"
 >
 ```
 
