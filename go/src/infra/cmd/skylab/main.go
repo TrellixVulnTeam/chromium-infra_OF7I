@@ -74,7 +74,6 @@ func getApplication() *cli.Application {
 			internalcmds.PrintBotInfo,
 			internalcmds.VerifyInventory,
 			internalcmds.WaitTask,
-			internalcmds.WaitTasks,
 		},
 	}
 }

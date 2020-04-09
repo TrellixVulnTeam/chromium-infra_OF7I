@@ -30,7 +30,7 @@ import (
 var WaitTask = &subcommands.Command{
 	UsageLine: "wait-task [FLAGS...] TASK_ID",
 	ShortDesc: "wait for a task to complete",
-	LongDesc:  `Wait for the task with the given swarming task id to complete, and summarize its results.`,
+	LongDesc:  `Wait for the task with the given Buildbucket task id to complete, and summarize its results.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &waitTaskRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
