@@ -75,21 +75,21 @@ func (rule ChangeReviewed) shouldSkip(rc *RelevantCommit) bool {
 }
 
 // Run executes the rule.
-func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	result.RuleName = rule.GetName()
 	prevResult := PreviousResult(ctx, rc, result.RuleName)
 	if prevResult != nil && (prevResult.RuleResultStatus != rulePending ||
 		// If we checked gerrit recently, wait before checking again, leave the rule as pending.
 		rc.LastExternalPoll.After(time.Now().Add(-pollInterval))) {
-		return prevResult
+		return prevResult, nil
 	} else if prevResult != nil {
 		// Preserve any metadata from the previous execution of the rule.
 		result.MetaData = prevResult.MetaData
 	}
 	if rule.shouldSkip(rc) {
 		result.RuleResultStatus = ruleSkipped
-		return result
+		return result, nil
 	}
 	rc.LastExternalPoll = time.Now()
 	change := getChangeWithLabelDetails(ctx, ap, rc, cs)
@@ -107,7 +107,7 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 		if int(vote.Value) == maxValue && vote.AccountID != owner {
 			// Valid approver found.
 			result.RuleResultStatus = rulePassed
-			return result
+			return result, nil
 		}
 	}
 	deadline := rc.CommitTime.Add(gracePeriod)
@@ -133,7 +133,7 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 			"The commit was not approved by a reviewer other than the owner within %d days of landing.",
 			int64(gracePeriod.Hours()/24))
 	}
-	return result
+	return result, nil
 }
 
 func getChangeWithLabelDetails(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *gerrit.Change {

@@ -110,6 +110,6 @@ func (rule DummyRule) GetName() string {
 }
 
 // Run returns the result struct field.
-func (rule DummyRule) Run(c context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
-	return rule.result
+func (rule DummyRule) Run(c context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
+	return rule.result, nil
 }

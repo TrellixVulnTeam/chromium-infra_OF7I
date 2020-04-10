@@ -366,7 +366,7 @@ type Rule interface {
 	// TODO(crbug.com/978167): Stop using panics for this.
 	//
 	// Run methods should return a reference to a RuleResult
-	Run(context.Context, *AuditParams, *RelevantCommit, *Clients) *RuleResult
+	Run(context.Context, *AuditParams, *RelevantCommit, *Clients) (*RuleResult, error)
 }
 
 // PreviousResult returns the result for a previous application of the rule on the given commit

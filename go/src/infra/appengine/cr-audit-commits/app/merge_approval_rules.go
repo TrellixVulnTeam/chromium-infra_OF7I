@@ -48,21 +48,21 @@ func (rule OnlyMergeApprovedChange) GetName() string {
 }
 
 // Run executes the rule.
-func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	result.RuleResultStatus = ruleFailed
 
 	// Exclude Chrome release bot changes
 	if rc.AuthorAccount == chromeReleaseBotAcc || rc.AuthorAccount == chromeReleaseAutoRollerAcc {
 		result.RuleResultStatus = rulePassed
-		return result
+		return result, nil
 	}
 
 	// Exclude Chrome TPM changes
 	for _, tpm := range chromeTPMs {
 		if (rc.AuthorAccount == tpm) || (rc.CommitterAccount == tpm) {
 			result.RuleResultStatus = rulePassed
-			return result
+			return result, nil
 		}
 	}
 	bugID, err := bugIDFromCommitMessage(rc.CommitMessage)
@@ -70,7 +70,7 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 	if err != nil {
 		result.Message = fmt.Sprintf("Revision %s was merged to %s release branch with no bug attached!"+
 			"\nPlease explain why this change was merged to the branch!", rc.CommitHash, ap.RepoCfg.BranchName)
-		return result
+		return result, nil
 	}
 	bugList := strings.Split(bugID, ",")
 	milestone := ""
@@ -91,7 +91,7 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 			logging.WithError(err).Errorf(ctx, "Found an invalid Monorail bug %s on relevant commit %s", bugNumber, rc.CommitHash)
 			result.Message = fmt.Sprintf("Revision %s was merged to %s branch and there was an error "+
 				"accessing the associated bug (%d):\n\n%s", rc.CommitHash, ap.RepoCfg.BranchName, bugNumber, err.Error())
-			return result
+			return result, nil
 		}
 		result.MetaData, _ = SetToken(ctx, "BugNumber", strconv.Itoa(int(vIssue.Id)), result.MetaData)
 		// Check if the issue has a merge approval label in the comment history
@@ -106,7 +106,7 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 					for _, tpm := range chromeTPMs {
 						if author == tpm {
 							result.RuleResultStatus = rulePassed
-							return result
+							return result, nil
 						}
 					}
 					logging.WithError(err).Errorf(ctx, "Found merge approval label %s from a non TPM %s", label, author)
@@ -118,5 +118,5 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 	}
 	result.Message = fmt.Sprintf("Revision %s was merged to %s branch with no merge approval from "+
 		"a TPM! \nPlease explain why this change was merged to the branch!", rc.CommitHash, ap.RepoCfg.BranchName)
-	return result
+	return result, nil
 }

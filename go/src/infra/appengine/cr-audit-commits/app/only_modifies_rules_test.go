@@ -74,7 +74,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr := OnlyModifiesFilesAndDirsRule{
+			rr, _ := OnlyModifiesFilesAndDirsRule{
 				name:  "ruleName",
 				files: []string{"somefile"},
 			}.Run(ctx, ap, rc, testClients)
@@ -109,7 +109,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr := OnlyModifiesFilesAndDirsRule{
+			rr, _ := OnlyModifiesFilesAndDirsRule{
 				name: "ruleName",
 				dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
@@ -149,7 +149,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr := OnlyModifiesFilesAndDirsRule{
+			rr, _ := OnlyModifiesFilesAndDirsRule{
 				name:  "ruleName",
 				dirs:  []string{"mydir"},
 				files: []string{"a.txt"},
@@ -190,7 +190,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr := OnlyModifiesFilesAndDirsRule{
+			rr, _ := OnlyModifiesFilesAndDirsRule{
 				name:  "ruleName",
 				dirs:  []string{"mydir"},
 				files: []string{"a.txt"},
@@ -229,7 +229,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr := OnlyModifiesFilesAndDirsRule{
+			rr, _ := OnlyModifiesFilesAndDirsRule{
 				name:  "ruleName",
 				dirs:  []string{"mydir"},
 				files: []string{"a.txt"},
@@ -263,7 +263,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr := OnlyModifiesFilesAndDirsRule{
+			rr, _ := OnlyModifiesFilesAndDirsRule{
 				name: "ruleName",
 				dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
@@ -297,7 +297,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr := OnlyModifiesFilesAndDirsRule{
+			rr, _ := OnlyModifiesFilesAndDirsRule{
 				name: "ruleName",
 				dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
@@ -363,7 +363,7 @@ func TestReleaseBotRules(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr := OnlyModifiesFilesAndDirsRule{
+			rr, _ := OnlyModifiesFilesAndDirsRule{
 				name: "OnlyModifiesReleaseFiles",
 				files: []string{
 					"chrome/MAJOR_BRANCH_DATE",
@@ -406,7 +406,7 @@ func TestReleaseBotRules(t *testing.T) {
 					},
 				}, nil)
 				// Run rule
-				rr := OnlyModifiesFilesAndDirsRule{
+				rr, _ := OnlyModifiesFilesAndDirsRule{
 					name: "OnlyModifiesReleaseFiles",
 					files: []string{
 						"chrome/MAJOR_BRANCH_DATE",
@@ -441,7 +441,7 @@ func TestReleaseBotRules(t *testing.T) {
 					},
 				}, nil)
 				// Run rule
-				rr := OnlyModifiesFilesAndDirsRule{
+				rr, _ := OnlyModifiesFilesAndDirsRule{
 					name: "OnlyModifiesReleaseFiles",
 					files: []string{
 						"chrome/MAJOR_BRANCH_DATE",

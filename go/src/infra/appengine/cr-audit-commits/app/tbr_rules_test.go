@@ -136,7 +136,7 @@ func TestTBRRules(t *testing.T) {
 					},
 				},
 			}, nil)
-			rr := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
+			rr, _ := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
 			// Check result code.
 			So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
 
@@ -182,7 +182,7 @@ func TestTBRRules(t *testing.T) {
 					},
 				},
 			}, nil)
-			rr := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
+			rr, _ := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
 			So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
 			So(testClients.gerrit.(*mockGerritClient).calls, ShouldResemble, gerritCalls)
 		})
@@ -208,7 +208,7 @@ func TestTBRRules(t *testing.T) {
 					},
 				},
 			}, nil)
-			rr := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
+			rr, _ := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
 			// Check result code.
 			So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
 

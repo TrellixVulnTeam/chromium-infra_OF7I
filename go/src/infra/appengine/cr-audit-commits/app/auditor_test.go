@@ -33,11 +33,11 @@ func (rule panicRule) GetName() string {
 }
 
 // Run panics if the commit hasn't been audited.
-func (rule panicRule) Run(c context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule panicRule) Run(c context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	if rc.Status == auditScheduled {
 		panic("This always panics")
 	}
-	return &RuleResult{"Dummy rule", ruleFailed, "", ""}
+	return &RuleResult{"Dummy rule", ruleFailed, "", ""}, fmt.Errorf("panic rule error")
 }
 
 func mustGitilesTime(v string) *google_protobuf.Timestamp {

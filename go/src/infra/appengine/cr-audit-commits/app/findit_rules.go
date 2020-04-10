@@ -116,7 +116,7 @@ func (rule AutoCommitsPerDay) GetName() string {
 }
 
 // Run executes the rule.
-func (rule AutoCommitsPerDay) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule AutoCommitsPerDay) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	cutoff := rc.CommitTime.Add(time.Duration(-24) * time.Hour)
 	autoCommits := countCommittedBy(ctx, rc, cutoff, ap.TriggeringAccount)
@@ -128,7 +128,7 @@ func (rule AutoCommitsPerDay) Run(ctx context.Context, ap *AuditParams, rc *Rele
 	} else {
 		result.RuleResultStatus = rulePassed
 	}
-	return result
+	return result, nil
 }
 
 // AutoRevertsPerDay is a Rule that verifies that at most
@@ -142,7 +142,7 @@ func (rule AutoRevertsPerDay) GetName() string {
 }
 
 // Run executes the rule.
-func (rule AutoRevertsPerDay) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule AutoRevertsPerDay) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	cutoff := rc.CommitTime.Add(time.Duration(-24) * time.Hour)
 	autoReverts := countAuthoredBy(ctx, rc, cutoff, ap.TriggeringAccount)
@@ -154,7 +154,7 @@ func (rule AutoRevertsPerDay) Run(ctx context.Context, ap *AuditParams, rc *Rele
 	} else {
 		result.RuleResultStatus = rulePassed
 	}
-	return result
+	return result, nil
 }
 
 // CulpritAge is a Rule that verifies that the culprit being reverted is
@@ -167,7 +167,7 @@ func (rule CulpritAge) GetName() string {
 }
 
 // Run executes the rule.
-func (rule CulpritAge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule CulpritAge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 
 	_, culprit := getRevertAndCulpritChanges(ctx, ap, rc, cs)
@@ -208,7 +208,7 @@ func (rule CulpritAge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCom
 	} else {
 		result.RuleResultStatus = rulePassed
 	}
-	return result
+	return result, nil
 }
 
 // CulpritInBuild is a Rule that verifies that the culprit is included in
@@ -221,13 +221,13 @@ func (rule CulpritInBuild) GetName() string {
 }
 
 // Run executes the rule.
-func (rule CulpritInBuild) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule CulpritInBuild) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 
 	if isFlakeRevert(rc.CommitMessage) {
 		// Bypass this rule for reverts of culprits of flake failures.
 		result.RuleResultStatus = ruleSkipped
-		return result
+		return result, nil
 	}
 
 	_, culprit := getRevertAndCulpritChanges(ctx, ap, rc, cs)
@@ -263,7 +263,7 @@ func (rule CulpritInBuild) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 				failedBuildPrefix)
 		}
 	}
-	return result
+	return result, nil
 }
 
 // getRevertAndCulpritChanges gets (through Gerrit) the details of the revert
@@ -310,7 +310,7 @@ func (rule FailedBuildIsAppropriateFailure) GetName() string {
 }
 
 // Run executes the rule.
-func (rule FailedBuildIsAppropriateFailure) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule FailedBuildIsAppropriateFailure) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	failableStepName := getFailedSteps(rc.CommitMessage)
 	buildURL, err := failedBuildFromCommitMessage(rc.CommitMessage)
@@ -318,7 +318,7 @@ func (rule FailedBuildIsAppropriateFailure) Run(ctx context.Context, ap *AuditPa
 		result.RuleResultStatus = ruleFailed
 		result.Message = fmt.Sprintf(
 			"The revert does not point to a failed build, expected link prefixed with \"%s\"", failedBuildPrefix)
-		return result
+		return result, nil
 	}
 
 	build, err := getBuildByURL(ctx, buildURL, cs, &stepsFieldMask)
@@ -333,7 +333,7 @@ func (rule FailedBuildIsAppropriateFailure) Run(ctx context.Context, ap *AuditPa
 		if lastPart == failableStepName || s.Name == failableStepName {
 			if s.Status == buildbucketpb.Status_FAILURE {
 				result.RuleResultStatus = rulePassed
-				return result
+				return result, nil
 			}
 		}
 	}
@@ -341,7 +341,7 @@ func (rule FailedBuildIsAppropriateFailure) Run(ctx context.Context, ap *AuditPa
 	result.RuleResultStatus = ruleFailed
 	result.Message = fmt.Sprintf("Referred build %q does not have an expected failure in the following step: %s",
 		buildURL, failableStepName)
-	return result
+	return result, nil
 }
 
 // RevertOfCulprit is a Rule that verifies that the reverting commit is a
@@ -354,7 +354,7 @@ func (rule RevertOfCulprit) GetName() string {
 }
 
 // Run executes the rule.
-func (rule RevertOfCulprit) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule RevertOfCulprit) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	result.RuleResultStatus = ruleFailed
 
@@ -362,7 +362,7 @@ func (rule RevertOfCulprit) Run(ctx context.Context, ap *AuditParams, rc *Releva
 	if culprit == nil {
 		result.Message = fmt.Sprintf("Commit %q does not appear to be a revert, according to gerrit",
 			rc.CommitHash)
-		return result
+		return result, nil
 	}
 
 	pr, err := cs.gerrit.IsChangePureRevert(ctx, revert.ChangeID)
@@ -372,17 +372,17 @@ func (rule RevertOfCulprit) Run(ctx context.Context, ap *AuditParams, rc *Releva
 	if !pr {
 		result.Message = fmt.Sprintf("Commit %q is a revert but not a *pure* revert, according to gerrit",
 			rc.CommitHash)
-		return result
+		return result, nil
 	}
 
 	// The CommitMessage of the revert must contain the culprit' hash.
 	if !strings.Contains(rc.CommitMessage, culprit.CurrentRevision) {
 		result.Message = fmt.Sprintf("Commit %q does not include the revision it reverts in its commit message",
 			rc.CommitHash)
-		return result
+		return result, nil
 	}
 	result.RuleResultStatus = rulePassed
-	return result
+	return result, nil
 }
 
 // OnlyCommitsOwnChange is a Rule that verifies that commits landed by the
@@ -395,7 +395,7 @@ func (rule OnlyCommitsOwnChange) GetName() string {
 }
 
 // Run executes the rule.
-func (rule OnlyCommitsOwnChange) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule OnlyCommitsOwnChange) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	result.RuleResultStatus = ruleFailed
 	if rc.CommitterAccount == ap.TriggeringAccount {
@@ -403,11 +403,11 @@ func (rule OnlyCommitsOwnChange) Run(ctx context.Context, ap *AuditParams, rc *R
 			result.RuleResultStatus = ruleFailed
 			result.Message = fmt.Sprintf("Service account %s committed a commit by someone else: %s",
 				rc.CommitterAccount, rc.AuthorAccount)
-			return result
+			return result, nil
 		}
 	}
 	result.RuleResultStatus = rulePassed
-	return result
+	return result, nil
 }
 
 func getFailedSteps(commitMessage string) string {

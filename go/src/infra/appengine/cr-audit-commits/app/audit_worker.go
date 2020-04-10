@@ -156,6 +156,7 @@ func audit(ctx context.Context, n int, ap AuditParams, wp *workerParams, repo st
 // It swallows any panic, only logging an error in order to move to the next
 // commit.
 func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *workerParams) {
+	// TODO: remove later after fixing all the panics
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -173,31 +174,24 @@ func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *worke
 	}()
 
 	for _, rs := range wp.rules {
-		if rs.MatchesRelevantCommit(rc) {
-			ap.TriggeringAccount = rc.AuthorAccount
-			if rs.Account != "*" {
-				ap.TriggeringAccount = rs.Account
+		hasExpired, err := runAccountRules(ctx, rs, rc, ap, wp)
+		if hasExpired {
+			return
+		}
+		if err != nil {
+			rc.Retries++
+			logging.Errorf(ctx, "Some rule panicked while auditing %s with message: %s", rc.CommitHash, err)
+			logging.Warningf(ctx, "Discarding incomplete results: %s", rc.Result)
+			rc.Result = []RuleResult{}
+			if rc.Retries > MaxRetriesPerCommit {
+				rc.Status = auditFailed
 			}
-			for _, r := range rs.Rules {
-				select {
-				case <-ctx.Done():
-					rc.Retries++
-					wp.audited <- rc
-					return
-				default:
-					previousResult := PreviousResult(ctx, rc, r.GetName())
-					if previousResult == nil || previousResult.RuleResultStatus == rulePending {
-						currentRuleResult := *r.Run(ctx, &ap, rc, wp.clients)
-						currentRuleResult.RuleName = r.GetName()
-						updated := rc.SetResult(currentRuleResult)
-						if updated && (currentRuleResult.RuleResultStatus == ruleFailed || currentRuleResult.RuleResultStatus == notificationRequired) {
-							rc.Status = auditCompletedWithActionRequired
-						}
-					}
-				}
-			}
+			// Send through the channel anyway to persist the retry
+			// counter, and possibly change of status.
+			wp.audited <- rc
 		}
 	}
+
 	if rc.Status == auditScheduled || rc.Status == auditPending { // No rules failed.
 		rc.Status = auditCompleted
 		// If any rules are pending to be decided, leave the commit as pending.
@@ -209,4 +203,41 @@ func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *worke
 		}
 	}
 	wp.audited <- rc
+}
+
+// Run each rules in an AccountRules on a commit.
+//
+// It returns a boolean indicating if the context expired, and an error if any
+// of the rules' result cannot be decided.
+func runAccountRules(ctx context.Context, rs AccountRules, rc *RelevantCommit, ap AuditParams, wp *workerParams) (bool, error) {
+	if rs.MatchesRelevantCommit(rc) {
+		ap.TriggeringAccount = rc.AuthorAccount
+		if rs.Account != "*" {
+			ap.TriggeringAccount = rs.Account
+		}
+		for _, r := range rs.Rules {
+			select {
+			case <-ctx.Done():
+				rc.Retries++
+				wp.audited <- rc
+				return true, nil
+			default:
+				previousResult := PreviousResult(ctx, rc, r.GetName())
+				if previousResult == nil || previousResult.RuleResultStatus == rulePending {
+					pCurrentRuleResult, err := r.Run(ctx, &ap, rc, wp.clients)
+					if err != nil {
+						return false, err
+					}
+
+					currentRuleResult := *pCurrentRuleResult
+					currentRuleResult.RuleName = r.GetName()
+					updated := rc.SetResult(currentRuleResult)
+					if updated && (currentRuleResult.RuleResultStatus == ruleFailed || currentRuleResult.RuleResultStatus == notificationRequired) {
+						rc.Status = auditCompletedWithActionRequired
+					}
+				}
+			}
+		}
+	}
+	return false, nil
 }

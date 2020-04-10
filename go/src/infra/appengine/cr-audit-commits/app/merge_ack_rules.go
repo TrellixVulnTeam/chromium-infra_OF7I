@@ -18,15 +18,15 @@ func (rule AcknowledgeMerge) GetName() string {
 }
 
 // Run executes the rule.
-func (rule AcknowledgeMerge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule AcknowledgeMerge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	result.RuleResultStatus = ruleSkipped
 	bugID, err := bugIDFromCommitMessage(rc.CommitMessage)
 	if err != nil {
 		logging.WithError(err).Errorf(ctx, "Found no bug on relevant commit %s", rc.CommitHash)
-		return result
+		return result, nil
 	}
 	result.RuleResultStatus = notificationRequired
 	result.MetaData, _ = SetToken(ctx, "BugNumbers", bugID, result.MetaData)
-	return result
+	return result, nil
 }

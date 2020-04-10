@@ -35,7 +35,7 @@ func (rule OnlyModifiesFilesAndDirsRule) GetName() string {
 }
 
 // Run executes the rule as configured by the struct fields 'files' and 'dirs'.
-func (rule OnlyModifiesFilesAndDirsRule) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *RuleResult {
+func (rule OnlyModifiesFilesAndDirsRule) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	paths := make([]*Path, 0, len(rule.files)+len(rule.dirs))
 	for _, f := range rule.files {
 		paths = append(paths, &Path{
@@ -49,7 +49,7 @@ func (rule OnlyModifiesFilesAndDirsRule) Run(ctx context.Context, ap *AuditParam
 			Type: typeDir,
 		})
 	}
-	return OnlyModifiesPathsRuleImpl(ctx, ap, rc, cs, paths)
+	return OnlyModifiesPathsRuleImpl(ctx, ap, rc, cs, paths), nil
 }
 
 // Path is a struct describing a file or directory within the git repo.
