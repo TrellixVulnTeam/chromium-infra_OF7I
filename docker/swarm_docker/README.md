@@ -6,7 +6,7 @@ The docker image
 --------------------------
 The `build.sh` script will create a local image named `swarm_docker` tagged
 with the date and time of creation. The image itself is simply an Ubuntu
-flavor (xenial as of writing this) with a number of packages and utilities
+flavor (bionic as of writing this) with a number of packages and utilities
 installed. When launched as a container, this image is configured to run the
 [start_swarm_bot.sh](https://chromium.googlesource.com/infra/infra/+/master/docker/swarm_docker/start_swarm_bot.sh)
 script here which fetches and runs the bot code of the swarming server pointed
