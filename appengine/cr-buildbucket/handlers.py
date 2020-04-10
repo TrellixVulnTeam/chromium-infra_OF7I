@@ -85,7 +85,7 @@ class RedirectHandlerBase(auth.AuthenticatingHandler):  # pragma: no cover
 
     if not can_view:
       if auth.get_current_identity().is_anonymous:
-        return self.redirect(self.create_login_url(self.request.url))
+        self.redirect(self.create_login_url(self.request.url), abort=True)
       self.response.write('build %d not found' % build_id)
       self.abort(404)
 
