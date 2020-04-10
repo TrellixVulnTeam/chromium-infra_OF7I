@@ -5,10 +5,14 @@
 import {LitElement, html, css} from 'lit-element';
 
 import page from 'page';
+import {userNameToId} from 'shared/converters.js';
+import 'shared/typedef.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as sitewide from 'reducers/sitewide.js';
+import * as ui from 'reducers/ui.js';
 import * as userV0 from 'reducers/userV0.js';
+import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
@@ -17,26 +21,54 @@ import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 class _MrHotlistSettingsPage extends LitElement {
   /** @override */
   static get styles() {
-    return css`
-      :host {
-        display: block;
-      }
-      section {
-        margin: 16px 24px;
-      }
-      h2 {
-        font-weight: normal;
-      }
-      dt {
-        font-weight: bold;
-      }
-      dd {
-        margin: 0;
-      }
-      div {
-        margin: 16px 24px;
-      }
-    `;
+    return [
+      SHARED_STYLES,
+      css`
+        :host {
+          display: block;
+        }
+        section {
+          margin: 16px 24px;
+        }
+        h2 {
+          font-weight: normal;
+        }
+        dl,
+        form {
+          margin: 16px 24px;
+        }
+        dt {
+          font-weight: bold;
+          text-align: right;
+          word-wrap: break-word;
+        }
+        dd {
+          margin-left: 0;
+        }
+        label {
+          display: flex;
+          flex-direction: column;
+        }
+        form input,
+        form select {
+          /* Match minimum size of header. */
+          min-width: 250px;
+        }
+        /* https://material.io/design/layout/responsive-layout-grid.html#breakpoints */
+        @media (min-width: 1024px) {
+          input,
+          select,
+          p,
+          dd {
+            max-width: 750px;
+          }
+        }
+        #save-hotlist {
+          background: var(--chops-primary-button-bg);
+          color: var(--chops-primary-button-color);
+        }
+     `,
+    ];
   }
 
   /** @override */
@@ -53,47 +85,113 @@ class _MrHotlistSettingsPage extends LitElement {
   _renderPage() {
     const defaultColumns = this._hotlist.defaultColumns
         .map((col) => col.column).join(' ');
+    if (this._userMayEdit()) return this._renderEditableForm(defaultColumns);
+    return this._renderViewOnly(defaultColumns);
+  }
+
+  /**
+   * Returns whether the user may edit the hotlist.
+   * @return {boolean}
+   */
+  _userMayEdit() {
+    if (!this._currentUser) return false;
+
+    // TODO(https://crbug.com/monorail/7451): use `===`, maybe Permissions API.
+    if (userNameToId(this._hotlist.owner.name) == this._currentUser.userId) {
+      return true;
+    }
+
+    // TODO(https://crbug.com/monorail/7451): use `===`, maybe Permissions API.
+    return this._hotlist.editors.some((editor) => {
+      userNameToId(editor.name) == this._currentUser.userId;
+    });
+  }
+
+  /**
+   * Handles changes to the editable form.
+   * @param {Event} e
+   */
+  _handleFormChange() {
+    const saveButton = this.shadowRoot.getElementById('save-hotlist');
+    if (saveButton.disabled) {
+      saveButton.disabled = false;
+    }
+  }
+
+  /**
+   * Render the editable form Settings page.
+   * @param {Array<string>} defaultColumns The default columns to be shown.
+   * @return {TemplateResult}
+   */
+  _renderEditableForm(defaultColumns) {
     return html`
-      <section>
-        <h2>Hotlist Settings</h2>
-        <dl>
-          <dt>Name</dt>
-          <dd>${this._hotlist.displayName}</dd>
-          <dt>Summary</dt>
-          <dd>${this._hotlist.summary}</dd>
-          <dt>Description</dt>
-          <dd>${this._hotlist.description}</dd>
-        </dl>
-      </section>
-
-      <section>
-        <h2>Hotlist Defaults</h2>
-        <dl>
-          <dt>Default columns shown in list view</dt>
-          <dd>${defaultColumns}</dd>
-        </dl>
-      </section>
-
-      <section>
-        <h2>Hotlist Access</h2>
-        <dl>
-          <dt>Who can view this hotlist</dt>
-          <dd>
-            ${this._hotlist.hotlistPrivacy ?
-              'Anyone on the internet' : 'Members only'}
-          </dd>
-        </dl>
+      <form id="settingsForm" class="input-grid"
+        @change=${this._handleFormChange}>
+        <label>Name</label>
+        <input id="displayName" class="path"
+            value="${this._hotlist.displayName}">
+        <label>Summary</label>
+        <input id="summary" class="path" value="${this._hotlist.summary}">
+        <label>Default Issues columns</label>
+        <input id="defaultColumns" class="path" value="${defaultColumns}">
+        <label>Who can view this hotlist</label>
+        <select id="hotlistPrivacy" class="path">
+          <option
+            value="PUBLIC"
+            ?selected="${this._hotlist.hotlistPrivacy}">
+            Anyone on the Internet
+          </option>
+          <option
+            value="PRIVATE"
+            ?selected="${!this._hotlist.hotlistPrivacy}">
+            Members only
+          </option>
+        </select>
+        <span><!-- grid spacer --></span>
         <p>
           Individual issues in the list can only be seen by users who can
           normally see them. The privacy status of an issue is considered
           when it is being displayed (or not displayed) in a hotlist.
-      </section>
+        </p>
+        <span><!-- grid spacer --></span>
+        <div>
+          <chops-button @click=${this._save} id="save-hotlist" disabled>
+            Save hotlist
+          </chops-button>
+          <chops-button @click=${this._delete} id="delete-hotlist">
+            Delete hotlist
+          </chops-button>
+        </div>
+      </form>
+    `;
+  }
 
-      <div>
-        <chops-button @click=${this._delete} id="delete-hotlist">
-          Delete hotlist
-        </chops-button>
-      </div>
+  /**
+   * Render the view-only Settings page.
+   * @param {Array<string>} defaultColumns The default columns to be shown.
+   * @return {TemplateResult}
+   */
+  _renderViewOnly(defaultColumns) {
+    return html`
+      <dl class="input-grid">
+        <dt>Name</dt>
+        <dd>${this._hotlist.displayName}</dd>
+        <dt>Summary</dt>
+        <dd>${this._hotlist.summary}</dd>
+        <dt>Default Issues columns</dt>
+        <dd>${defaultColumns}</dd>
+        <dt>Who can view this hotlist</dt>
+        <dd>
+          ${this._hotlist.hotlistPrivacy ?
+            'Anyone on the Internet' : 'Members only'}
+        </dd>
+        <dt></dt>
+        <dd>
+          Individual issues in the list can only be seen by users who can
+          normally see them. The privacy status of an issue is considered
+          when it is being displayed (or not displayed) in a hotlist.
+        </dd>
+      </dl>
     `;
   }
 
@@ -113,7 +211,13 @@ class _MrHotlistSettingsPage extends LitElement {
 
     // Expose page.js for test stubbing.
     this.page = page;
+
+    /** @type {UserRef} */
+    this._currentUser = null;
   }
+
+  /** Saves the hotlist, dispatching an action to Redux. */
+  async _save() {}
 
   /** Deletes the hotlist, dispatching an action to Redux. */
   async _delete() {}
@@ -138,6 +242,48 @@ export class MrHotlistSettingsPage
       const headerTitle = 'Hotlist ' + this._hotlist.displayName;
       store.dispatch(sitewide.setHeaderTitle(headerTitle));
     }
+  }
+
+  /** @override */
+  async _save() {
+    const form = this.shadowRoot.getElementById('settingsForm');
+    if (!form) return;
+
+    // TODO(https://crbug.com/monorail/7475): Consider generalizing this logic.
+    const updatedHotlist = /** @type {Hotlist} */({});
+    // These are is an input or select elements.
+    const pathInputs = form.querySelectorAll('.path');
+    pathInputs.forEach((input) => {
+      const path = input.id;
+      const value = /** @type {HTMLInputElement} */(input).value;
+      switch (path) {
+        case 'defaultColumns':
+          const columnsValue = [];
+          value.trim().split(' ').forEach((column) => {
+            if (column) columnsValue.push({column});
+          });
+          if (JSON.stringify(columnsValue) !==
+              JSON.stringify(this._hotlist.defaultColumns)) {
+            updatedHotlist.defaultColumns = columnsValue;
+          }
+          break;
+        default:
+          if (value !== this._hotlist[path]) updatedHotlist[path] = value;
+          break;
+      };
+    });
+
+    const action = hotlist.update(this._hotlist.name, updatedHotlist);
+    await store.dispatch(action);
+    this._showHotlistSavedSnackbar();
+  }
+
+  /**
+   * Shows a snackbar informing the user about their save request.
+   */
+  async _showHotlistSavedSnackbar() {
+    await store.dispatch(ui.showSnackbar(
+        'SNACKBAR_ID_HOTLIST_SETTINGS_UPDATED', 'Hotlist Updated.'));
   }
 
   /** @override */

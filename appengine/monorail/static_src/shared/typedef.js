@@ -454,7 +454,7 @@
  * @property {string=} summary
  * @property {string=} description
  * @property {Array<IssuesListColumn>=} defaultColumns
- * @property {number=} hotlistPrivacy
+ * @property {string=} hotlistPrivacy
  */
 
 /**

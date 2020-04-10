@@ -18,7 +18,7 @@
 
 import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
-import {userIdOrDisplayNameToUserRef, issueNameToRef}
+import {userIdOrDisplayNameToUserRef, issueNameToRef, pathsToFieldMask}
   from 'shared/converters.js';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 import * as issue from './issue.js';
@@ -50,6 +50,10 @@ export const RERANK_ITEMS_START = 'hotlist/RERANK_ITEMS_START';
 export const RERANK_ITEMS_SUCCESS = 'hotlist/RERANK_ITEMS_SUCCESS';
 export const RERANK_ITEMS_FAILURE = 'hotlist/RERANK_ITEMS_FAILURE';
 
+export const UPDATE_START = 'hotlist/UPDATE_START';
+export const UPDATE_SUCCESS = 'hotlist/UPDATE_SUCCESS';
+export const UPDATE_FAILURE = 'hotlist/UPDATE_FAILURE';
+
 /* State Shape
 {
   name: string,
@@ -60,6 +64,7 @@ export const RERANK_ITEMS_FAILURE = 'hotlist/RERANK_ITEMS_FAILURE';
   requests: {
     fetch: ReduxRequestState,
     fetchItems: ReduxRequestState,
+    update: ReduxRequestState,
   },
 }
 */
@@ -80,11 +85,12 @@ export const nameReducer = createReducer(null, {
  * All Hotlist data indexed by Hotlist name.
  * @param {Object<string, Hotlist>} state The existing Hotlist data.
  * @param {AnyAction} action
- * @param {Hotlist} action.hotlist The hotlist that was fetched.
+ * @param {Hotlist} action.hotlist The Hotlist that was fetched.
  * @return {Object<string, Hotlist>}
  */
 export const hotlistsReducer = createReducer({}, {
   [FETCH_SUCCESS]: (state, {hotlist}) => ({...state, [hotlist.name]: hotlist}),
+  [UPDATE_SUCCESS]: (state, {hotlist}) => ({...state, [hotlist.name]: hotlist}),
 });
 
 /**
@@ -101,7 +107,7 @@ export const hotlistItemsReducer = createReducer({}, {
 
 const requestsReducer = combineReducers({
   deleteHotlist: createRequestReducer(
-      DELETE_SUCCESS, DELETE_SUCCESS, DELETE_FAILURE),
+      DELETE_START, DELETE_SUCCESS, DELETE_FAILURE),
   fetch: createRequestReducer(
       FETCH_START, FETCH_SUCCESS, FETCH_FAILURE),
   fetchItems: createRequestReducer(
@@ -110,6 +116,8 @@ const requestsReducer = combineReducers({
       REMOVE_ITEMS_START, REMOVE_ITEMS_SUCCESS, REMOVE_ITEMS_FAILURE),
   rerankItems: createRequestReducer(
       RERANK_ITEMS_START, RERANK_ITEMS_SUCCESS, RERANK_ITEMS_FAILURE),
+  update: createRequestReducer(
+      UPDATE_START, UPDATE_SUCCESS, UPDATE_FAILURE),
 });
 
 export const reducer = combineReducers({
@@ -184,14 +192,33 @@ export const viewedHotlistIssues = createSelector(
       }));
     });
 
+/**
+ * Returns the Hotlist requests.
+ * @param {any} state
+ * @return {Object.<string, ReduxRequestState>}
+ */
+export const requests = (state) => state.hotlist.requests;
+
 // Action Creators
 
 /**
- * Action creator to set the currently viewed Hotlist.
- * @param {string} name The name of the Hotlist to select.
- * @return {AnyAction}
+ * Action creator to delete the Hotlist. We would have liked to have named this
+ * `delete` but it's a reserved word in JS.
+ * @param {string} name The name of the Hotlist to delete.
+ * @return {function(function): Promise<void>}
  */
-export const select = (name) => ({type: SELECT, name});
+export const deleteHotlist = (name) => async (dispatch) => {
+  dispatch({type: DELETE_START});
+
+  try {
+    const args = {name};
+    await prpcClient.call('monorail.v1.Hotlists', 'DeleteHotlist', args);
+
+    dispatch({type: DELETE_SUCCESS});
+  } catch (error) {
+    dispatch({type: DELETE_FAILURE, error});
+  };
+};
 
 /**
  * Action creator to fetch a Hotlist object.
@@ -214,26 +241,6 @@ export const fetch = (name) => async (dispatch) => {
     dispatch({type: FETCH_FAILURE, error});
   };
 };
-
-/**
- * Action creator to delete the Hotlist. We would have liked to have named this
- * `delete` but it's a reserved word in JS.
- * @param {string} name The name of the Hotlist to delete.
- * @return {function(function): Promise<void>}
- */
-export const deleteHotlist = (name) => async (dispatch) => {
-  dispatch({type: DELETE_START});
-
-  try {
-    const args = {name};
-    await prpcClient.call('monorail.v1.Hotlists', 'DeleteHotlist', args);
-
-    dispatch({type: DELETE_SUCCESS});
-  } catch (error) {
-    dispatch({type: DELETE_FAILURE, error});
-  };
-};
-
 
 /**
  * Action creator to fetch the items in a Hotlist.
@@ -301,6 +308,37 @@ export const rerankItems = (name, items, index) => async (dispatch) => {
   } catch (error) {
     dispatch({type: RERANK_ITEMS_FAILURE, error});
   };
+};
+
+/**
+ * Action creator to set the currently viewed Hotlist.
+ * @param {string} name The name of the Hotlist to select.
+ * @return {AnyAction}
+ */
+export const select = (name) => ({type: SELECT, name});
+
+/**
+ * Action creator to update the Hotlist metadata.
+ * @param {string} name The name of the Hotlist to delete.
+ * @param {Hotlist} hotlist This represents the updated version of the Hotlist
+ *    with only the fields that need to be updated.
+ * @return {function(function): Promise<void>}
+ */
+export const update = (name, hotlist) => async (dispatch) => {
+  dispatch({type: UPDATE_START});
+  try {
+    const paths = pathsToFieldMask(Object.keys(hotlist));
+    const hotlistArg = {...hotlist, name};
+    const args = {hotlist: hotlistArg, updateMask: paths};
+
+    /** @type {Hotlist} */
+    const updatedHotlist = await prpcClient.call(
+        'monorail.v1.Hotlists', 'UpdateHotlist', args);
+
+    dispatch({type: UPDATE_SUCCESS, hotlist: updatedHotlist});
+  } catch (error) {
+    dispatch({type: UPDATE_FAILURE, error});
+  }
 };
 
 // Helpers

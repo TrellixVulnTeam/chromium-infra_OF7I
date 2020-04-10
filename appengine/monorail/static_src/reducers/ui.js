@@ -13,6 +13,7 @@ const DEFAULT_SNACKBAR_TIMEOUT_MS = 10 * 1000;
 /**
  * Object of various constant strings used to uniquely identify
  * snackbar instances used in the app.
+ * TODO(https://crbug.com/monorail/7491): Avoid using this Object.
  * @type {Object.<string, string>}
  */
 export const snackbarNames = Object.freeze({
@@ -30,7 +31,7 @@ const INCREMENT_NAVIGATION_COUNT = 'INCREMENT_NAVIGATION_COUNT';
 const REPORT_DIRTY_FORM = 'REPORT_DIRTY_FORM';
 const CLEAR_DIRTY_FORMS = 'CLEAR_DIRTY_FORMS';
 const SET_FOCUS_ID = 'SET_FOCUS_ID';
-const SHOW_SNACKBAR = 'SHOW_SNACKBAR';
+export const SHOW_SNACKBAR = 'SHOW_SNACKBAR';
 const HIDE_SNACKBAR = 'HIDE_SNACKBAR';
 
 /**

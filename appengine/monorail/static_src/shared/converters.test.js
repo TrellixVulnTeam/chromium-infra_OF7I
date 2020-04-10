@@ -15,6 +15,7 @@ import {displayNameToUserRef, userIdOrDisplayNameToUserRef,
   issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefixes,
   labelNameToLabelValue, commentListToDescriptionList, valueToFieldValue,
   issueToIssueRef, issueNameToRef, issueNameToRefString, issueToName,
+  pathsToFieldMask,
 } from './converters.js';
 
 describe('displayNameToUserRef', () => {
@@ -415,5 +416,11 @@ describe('valueToFieldValue', () => {
       fieldRef: {fieldName: 'name', fieldId: 'id'},
       value: 'value',
     });
+  });
+});
+
+describe('pathsToFieldMask', () => {
+  it('converts an array of strings to a FieldMask', () => {
+    assert.equal(pathsToFieldMask(['foo', 'barQux', 'qaz']), 'foo,barQux,qaz');
   });
 });

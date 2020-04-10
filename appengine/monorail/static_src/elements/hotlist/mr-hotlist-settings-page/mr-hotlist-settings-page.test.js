@@ -11,6 +11,7 @@ import * as hotlist from 'reducers/hotlist.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import * as example from 'shared/test/constants-hotlist.js';
+import * as exampleUser from 'shared/test/constants-user.js';
 
 import {MrHotlistSettingsPage} from './mr-hotlist-settings-page.js';
 
@@ -36,6 +37,12 @@ describe('mr-hotlist-settings-page (unconnected)', () => {
   it('renders hotlist', async () => {
     element._hotlist = example.HOTLIST;
     await element.updateComplete;
+  });
+
+  it('renders a view only hotlist', async () => {
+    element._hotlist = {...example.HOTLIST};
+    await element.updateComplete;
+    assert.notInclude(element.shadowRoot.innerHTML, 'form');
   });
 
   it('renders private hotlist', async () => {
@@ -72,38 +79,92 @@ describe('mr-hotlist-settings-page (connected)', () => {
     assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
   });
 
-  it('deletes hotlist', async () => {
-    const stateChangedStub = sinon.stub(element, 'stateChanged');
-    element._currentUser = example.HOTLIST.owner;
-    element._hotlist = example.HOTLIST;
-    await element.updateComplete;
+  describe('hotlist owner logged in', () => {
+    let stateChangedStub;
+    beforeEach(async () => {
+      // Stop Redux from overriding values being tested.
+      stateChangedStub = sinon.stub(element, 'stateChanged');
 
-    const deleteButton = element.shadowRoot.getElementById('delete-hotlist');
-    assert.isNotNull(deleteButton);
+      element._currentUser = exampleUser.USER_REF;
+      element._hotlist = {...example.HOTLIST};
+      await element.updateComplete;
+    });
 
-    // Auto confirm deletion of hotlist.
-    const confirmStub = sinon.stub(window, 'confirm');
-    confirmStub.returns(true);
-    const callStub = sinon.stub(prpcClient, 'call');
-    const pageStub = sinon.stub(element, 'page');
-    // Stop Redux from overriding values being tested.
-
-    try {
-      const args = {name: example.NAME};
-
-      await element._delete();
-
-      // We can't stub hotlist.deleteHotlist(), so stub prpcClient.call()
-      // instead. https://github.com/sinonjs/sinon/issues/562
-      sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
-      sinon.assert.calledWith(
-          element.page, `/u/${example.HOTLIST.owner.displayName}/hotlists`);
-    } finally {
-      pageStub.restore();
-      callStub.restore();
-      confirmStub.restore();
+    afterEach(() => {
       stateChangedStub.restore();
-    }
+    });
+
+    it('renders a hotlist with an editable form', () => {
+      assert.include(element.shadowRoot.innerHTML, 'form');
+    });
+
+    describe('it makes a reducer call', () => {
+      let callStub;
+      beforeEach(() => {
+        // We can't stub reducers/hotlist methods so stub prpcClient.call()
+        // instead. https://github.com/sinonjs/sinon/issues/562
+        callStub = sinon.stub(prpcClient, 'call');
+      });
+
+      afterEach(() => {
+        callStub.restore();
+      });
+
+      it('deletes hotlist', async () => {
+        const deleteButton = element.shadowRoot.getElementById(
+            'delete-hotlist');
+        assert.isNotNull(deleteButton);
+
+        // Auto confirm deletion of hotlist.
+        const confirmStub = sinon.stub(window, 'confirm');
+        confirmStub.returns(true);
+
+        const pageStub = sinon.stub(element, 'page');
+
+        try {
+          const args = {name: example.NAME};
+
+          await element._delete();
+
+          sinon.assert.calledWith(
+              prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
+          sinon.assert.calledWith(
+              element.page, `/u/${example.HOTLIST.owner.displayName}/hotlists`);
+        } finally {
+          pageStub.restore();
+          confirmStub.restore();
+        }
+      });
+
+      it('updates hotlist when there are changes', async () => {
+        sinon.stub(element, '_showHotlistSavedSnackbar');
+        const saveButton = element.shadowRoot.getElementById('save-hotlist');
+        assert.isNotNull(saveButton);
+        assert.isTrue(saveButton.hasAttribute('disabled'));
+
+        const hotlist = {
+          name: example.HOTLIST.name,
+          displayName: element._hotlist.displayName + 'foo',
+          summary: element._hotlist.summary + 'abc',
+        };
+        const args = {hotlist, updateMask: 'displayName,summary'};
+
+        const summaryInput = element.shadowRoot.getElementById('summary');
+        /** @type {HTMLInputElement} */ (summaryInput).value += 'abc';
+        const nameInput =
+            element.shadowRoot.getElementById('displayName');
+        /** @type {HTMLInputElement} */ (nameInput).value += 'foo';
+
+        await element.shadowRoot.getElementById('settingsForm').dispatchEvent(
+            new Event('change'));
+        assert.isFalse(saveButton.hasAttribute('disabled'));
+
+        await element._save();
+
+        sinon.assert.calledWith(
+            prpcClient.call, 'monorail.v1.Hotlists', 'UpdateHotlist', args);
+        sinon.assert.calledOnce(element._showHotlistSavedSnackbar);
+      });
+    });
   });
 });

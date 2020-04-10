@@ -595,3 +595,15 @@ export function commentListToDescriptionList(comments) {
 export function valueToFieldValue(fieldRef, value) {
   return {fieldRef, value};
 }
+
+/**
+ * Returns a FieldMask given an array of string paths.
+ * https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/field-mask#paths
+ * https://source.chromium.org/chromium/chromium/src/+/master:third_party/protobuf/python/google/protobuf/internal/well_known_types.py;l=425;drc=e10d98917fee771b0947a57468d1cadac446bc42
+ * @param {Array<string>} paths The given paths to turn into a field mask.
+ *   These should be a comma separated list of camel case strings.
+ * @return {string}
+ */
+export function pathsToFieldMask(paths) {
+  return paths.join(',');
+}

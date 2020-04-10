@@ -18,7 +18,7 @@ export const HOTLIST = Object.freeze({
   summary: 'Summary',
   description: 'Description',
   defaultColumns: [{column: 'Rank'}, {column: 'ID'}, {column: 'Summary'}],
-  hotlistPrivacy: 1,
+  hotlistPrivacy: 'PUBLIC',
 });
 
 export const HOTLIST_ITEM_NAME = NAME + '/items/56';

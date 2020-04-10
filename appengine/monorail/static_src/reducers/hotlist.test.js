@@ -41,6 +41,10 @@ describe('hotlist reducers', () => {
           error: null,
           requesting: false,
         },
+        update: {
+          error: null,
+          requesting: false,
+        },
       },
     };
     assert.deepEqual(actual, expected);
@@ -325,6 +329,53 @@ describe('hotlist action creators', () => {
 
       const action = {
         type: hotlist.RERANK_ITEMS_FAILURE,
+        error: sinon.match.any,
+      };
+      sinon.assert.calledWith(dispatch, action);
+    });
+  });
+
+  describe('update', () => {
+    it('success', async () => {
+      const hotlistOnlyWithUpdates = {
+        displayName: example.HOTLIST.displayName + 'foo',
+        summary: example.HOTLIST.summary + 'abc',
+      };
+      const updatedHotlist = {...example.HOTLIST, ...hotlistOnlyWithUpdates};
+      prpcClient.call.returns(Promise.resolve(updatedHotlist));
+
+      await hotlist.update(
+          example.HOTLIST.name, hotlistOnlyWithUpdates)(dispatch);
+
+      sinon.assert.calledWith(dispatch, {type: hotlist.UPDATE_START});
+
+      const hotlistArg = {
+        ...hotlistOnlyWithUpdates,
+        name: example.HOTLIST.name,
+      };
+      const fieldMask = 'displayName,summary';
+      const args = {hotlist: hotlistArg, updateMask: fieldMask};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Hotlists', 'UpdateHotlist', args);
+
+      const successAction = {
+        type: hotlist.UPDATE_SUCCESS,
+        hotlist: updatedHotlist,
+      };
+      sinon.assert.calledWith(dispatch, successAction);
+    });
+
+    it('failure', async () => {
+      prpcClient.call.throws();
+      const hotlistOnlyWithUpdates = {
+        displayName: example.HOTLIST.displayName + 'foo',
+        summary: example.HOTLIST.summary + 'abc',
+      };
+      await hotlist.update(
+          example.HOTLIST.name, hotlistOnlyWithUpdates)(dispatch);
+
+      const action = {
+        type: hotlist.UPDATE_FAILURE,
         error: sinon.match.any,
       };
       sinon.assert.calledWith(dispatch, action);
