@@ -128,6 +128,7 @@ def update_submodules_mirror(
       target_repo,
       extra_submodules=None,
       triggered_by=None,
+      refs=None,
   ):
   properties = {
       'source_repo': source_repo,
@@ -135,6 +136,8 @@ def update_submodules_mirror(
   }
   if extra_submodules:
     properties['extra_submodules'] = extra_submodules
+  if refs:
+    properties['refs'] = refs
   builder(
       name = name,
       execution_timeout = time.hour,
@@ -191,6 +194,11 @@ update_submodules_mirror(
     source_repo = 'https://chromium.googlesource.com/chromium/src',
     target_repo = 'https://chromium.googlesource.com/codesearch/chromium/src',
     extra_submodules = ['src/out=https://chromium.googlesource.com/chromium/src/out'],
+    refs = [
+        'refs/heads/master',
+        'refs/branch-heads/4044', # M81
+        'refs/branch-heads/4103', # M83
+    ],
     triggered_by = chromium_src_poller(),
 )
 update_submodules_mirror(
