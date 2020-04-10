@@ -318,7 +318,7 @@ func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inve
 	oldMeta := getMetaFromAttributes(dutID, old.GetCommon().GetAttributes())
 	newMeta := getMetaFromAttributes(dutID, new.GetCommon().GetAttributes())
 	oldLabMeta := getLabMetaFromLabel(dutID, old.GetCommon().GetLabels())
-	newLabMeta := getLabMetaFromLabel(dutID, old.GetCommon().GetLabels())
+	newLabMeta := getLabMetaFromLabel(dutID, new.GetCommon().GetLabels())
 	if proto.Equal(newState, oldState) && proto.Equal(oldMeta, newMeta) && proto.Equal(oldLabMeta, newLabMeta) {
 		log.Printf("Skipping dut state update since there are no changes")
 		return nil
