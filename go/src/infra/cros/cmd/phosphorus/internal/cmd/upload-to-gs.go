@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/auth"
@@ -101,8 +100,6 @@ func validateUploadToGSRequest(r phosphorus.UploadToGSRequest) error {
 
 // runGSUploadStep uploads all files in the specified directory to GS.
 func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.UploadToGSRequest, errorFile io.Writer) (string, error) {
-	gsPath := gs.Concat(r.GetGsDirectory(), "synchronous_offloads", uuid.New().String())
-
 	localPath := r.GetLocalDirectory()
 	if localPath == "" {
 		localPath = filepath.Join(
@@ -119,14 +116,15 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 			)
 		}
 	}()
-	w, err := createDirWriter(ctx, localPath, gsPath, &authFlags)
+	path := gs.Path(r.GetGsDirectory())
+	w, err := createDirWriter(ctx, localPath, path, &authFlags)
 	if err != nil {
 		return "", err
 	}
 	if err = w.WriteDir(); err != nil {
 		return "", err
 	}
-	return string(gsPath), nil
+	return r.GetGsDirectory(), nil
 }
 
 // createDirWriter creates a DirWriter for the given paths, first producing an authed client with the given context and flags
