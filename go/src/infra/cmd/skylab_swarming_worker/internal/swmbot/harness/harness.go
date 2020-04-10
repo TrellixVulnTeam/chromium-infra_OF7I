@@ -133,7 +133,6 @@ func (i *Info) loadDUTInfo(ctx context.Context, b *swmbot.Info) (*inventory.Devi
 		return nil, nil
 	}
 	i.closers = append(i.closers, s)
-	log.Printf("loadDUTInfo: stable versions map (%#v)", s)
 	return s.DUT, s.StableVersions
 }
 
@@ -142,7 +141,6 @@ func (i *Info) makeHostInfo(d *inventory.DeviceUnderTest, stableVersion map[stri
 		return nil
 	}
 	hip := h_hostinfo.FromDUT(d, stableVersion)
-	log.Printf("makeHostInfo: stable_versions (%#v)", stableVersion)
 	i.closers = append(i.closers, hip)
 	return hip.HostInfo
 }
@@ -152,7 +150,6 @@ func (i *Info) addBotInfoToHostInfo(hi *hostinfo.HostInfo, bi *swmbot.LocalState
 		return
 	}
 	hib := h_hostinfo.BorrowBotInfo(hi, bi)
-	log.Printf("addBotInfoToHostInfo: combined host info object (%#v)", hib)
 	i.closers = append(i.closers, hib)
 }
 
@@ -172,7 +169,6 @@ func (i *Info) makeResultsDir(b *swmbot.Info) string {
 }
 
 func (i *Info) exposeHostInfo(hi *hostinfo.HostInfo, resultsDir string, dutName string) {
-	log.Printf("exposeHostInfo: exposing host info (%#v)", hi)
 	if i.err != nil {
 		return
 	}
