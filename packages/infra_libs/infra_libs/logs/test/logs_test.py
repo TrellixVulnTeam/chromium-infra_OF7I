@@ -61,3 +61,17 @@ class DefaultProgramNameTest(unittest.TestCase):
     sys.argv = ['/foo/bar/__main__.py', '--args']
     sys.modules['__main__'].__package__ = None
     self.assertEquals('__main__.py', logs.default_program_name())
+
+
+class LogsMaxLengthTest(unittest.TestCase):
+
+  def test_small(self):
+    self.assertEqual(logs._truncate_if_long('small', 300), 'small')
+
+  def test_limit_too_low(self):
+    self.assertEqual(logs._truncate_if_long('limit too low', 5), 'limit')
+
+  def test_truncate(self):
+    r = logs._truncate_if_long('huge ' * 1000, 300)
+    self.assertIn('... [TRUNCATED TOO LONG LOG ENTRY: 5000 B]', r)
+    self.assertEqual(len(r), 300)
