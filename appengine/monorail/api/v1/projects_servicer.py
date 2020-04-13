@@ -25,8 +25,8 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ListIssueTemplates(self, mc, request):
-    # MonorailConnection, ListIssueTemplatesRequest ->
-    # ListIssueTemplatesResponse
+    # type: (MonorailConnection, ListIssueTemplatesRequest) ->
+    #   ListIssueTemplatesResponse
     """pRPC API method that implements ListIssueTemplates.
 
       Raises:
@@ -39,3 +39,21 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
     return projects_pb2.ListIssueTemplatesResponse(
         templates=self.converter.ConvertIssueTemplates(project_id, templates))
+
+  @monorail_servicer.PRPCMethod
+  def ListProjects(self, mc, _):
+    # type: (MonorailConnection, ListProjectsRequest) -> ListProjectsResponse
+    """pRPC API method that implements ListProjects.
+
+      Raises:
+        InputException if the request.page_token is invalid or the request does
+          not match the previous request that provided the given page_token.
+    """
+    with work_env.WorkEnv(mc, self.services) as we:
+      allowed_project_ids = we.ListProjects()
+      projects_dict = we.GetProjects(allowed_project_ids)
+      projects = [projects_dict[proj_id] for proj_id in allowed_project_ids]
+
+    # TODO(crbug.com/monorail/7505): Add pagination logic.
+    return projects_pb2.ListProjectsResponse(
+        projects=self.converter.ConvertProjects(projects))

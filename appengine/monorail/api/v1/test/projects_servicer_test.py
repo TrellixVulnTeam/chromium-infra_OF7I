@@ -9,6 +9,8 @@ from __future__ import absolute_import
 
 import unittest
 
+from mock import patch
+
 from api import resource_name_converters as rnc
 from api.v1 import projects_servicer
 from api.v1 import converters
@@ -80,3 +82,24 @@ class ProjectsServicerTest(unittest.TestCase):
     self.assertEqual(
         response,
         projects_pb2.ListIssueTemplatesResponse(templates=[expected_template]))
+
+  @patch('project.project_helpers.GetThumbnailUrl')
+  def testListProjects(self, mock_GetThumbnailUrl):
+    """We can list Projects."""
+    mock_GetThumbnailUrl.return_value = 'xyz'
+
+    request = projects_pb2.ListProjectsRequest()
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    response = self.CallWrapped(self.projects_svcr.ListProjects, mc, request)
+
+    expected_project = project_objects_pb2.Project(
+        name=self.project_1_resource_name,
+        display_name=self.project_1.project_name,
+        summary=self.project_1.summary,
+        thumbnail_url='xyz')
+
+    self.assertEqual(
+        response,
+        projects_pb2.ListProjectsResponse(projects=[expected_project]))

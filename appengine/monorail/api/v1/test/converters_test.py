@@ -1022,3 +1022,23 @@ class ConverterFunctionsTest(unittest.TestCase):
         thumbnail_url='xyz')
     self.assertEqual(
         expected_api_project, self.converter.ConvertProject(self.project_1))
+
+  @patch('project.project_helpers.GetThumbnailUrl')
+  def testConvertProjects(self, mock_GetThumbnailUrl):
+    """We can convert a Sequence of Projects."""
+    mock_GetThumbnailUrl.return_value = 'xyz'
+    expected_api_projects = [
+        project_objects_pb2.Project(
+            name='projects/{}'.format(self.project_1.project_name),
+            display_name=self.project_1.project_name,
+            summary=self.project_1.summary,
+            thumbnail_url='xyz'),
+        project_objects_pb2.Project(
+            name='projects/{}'.format(self.project_2.project_name),
+            display_name=self.project_2.project_name,
+            summary=self.project_2.summary,
+            thumbnail_url='xyz')
+    ]
+    self.assertEqual(
+        expected_api_projects,
+        self.converter.ConvertProjects([self.project_1, self.project_2]))

@@ -740,9 +740,16 @@ class Converter(object):
     # type: (proto.project_object.Project) ->
     #     api_proto.project_objects_pb2.Project
     """Convert a protorpc Project to its protoc Project."""
+
     return project_objects_pb2.Project(
         name=rnc.ConvertProjectName(
             self.cnxn, project.project_id, self.services),
         display_name=project.project_name,
         summary=project.summary,
         thumbnail_url=project_helpers.GetThumbnailUrl(project.logo_gcs_id))
+
+  def ConvertProjects(self, projects):
+    # type: (Sequence[proto.project_object.Project]) ->
+    #     Sequence[api_proto.project_objects_pb2.Project]
+    """Convert a Sequence of protorpc Projects to protoc Projects."""
+    return [self.ConvertProject(proj) for proj in projects]

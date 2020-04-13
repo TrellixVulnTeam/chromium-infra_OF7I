@@ -241,6 +241,7 @@ class WorkEnv(object):
 
   def ListProjects(self, domain=None, use_cache=True):
     """Return a list of project IDs that the current user may view."""
+    # TODO(crbug.com/monorail/7508): Add permission checking in ListProjects.
     # Note: No permission checks because anyone can list projects, but
     # the results are filtered by permission to view each project.
 
