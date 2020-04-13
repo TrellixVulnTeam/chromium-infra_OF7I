@@ -167,10 +167,10 @@ class Converter(object):
     """Convert the status string on issue into a StatusValue."""
     derivation = issue_objects_pb2.Issue.Derivation.Value(
         'DERIVATION_UNSPECIFIED')
-    if not issue.status:
-      derivation = issue_objects_pb2.Issue.Derivation.Value('RULE')
-    else:
+    if issue.status:
       derivation = issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
+    else:
+      derivation = issue_objects_pb2.Issue.Derivation.Value('RULE')
     return issue_objects_pb2.Issue.StatusValue(
         status=issue.status or issue.derived_status, derivation=derivation)
 
@@ -191,7 +191,6 @@ class Converter(object):
     issue_ids = [issue.issue_id for issue in issues]
     issue_names_dict = rnc.ConvertIssueNames(
         self.cnxn, issue_ids, self.services)
-    # TODO(jessan): Assert that all issues are for the same project (config).
     found_issues = [
         issue for issue in issues if issue.issue_id in issue_names_dict
     ]
@@ -208,14 +207,16 @@ class Converter(object):
         content_state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
 
       owner = None
+      # Explicit values override values derived from rules.
       if issue.owner_id:
         owner = issue_objects_pb2.Issue.UserValue(
             derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
             user=rnc.ConvertUserName(issue.owner_id))
-      if issue.derived_owner_id:
+      elif issue.derived_owner_id:
         owner = issue_objects_pb2.Issue.UserValue(
             derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
             user=rnc.ConvertUserName(issue.derived_owner_id))
+
       cc_users = []
       for cc_user_id in issue.cc_ids:
         cc_users.append(

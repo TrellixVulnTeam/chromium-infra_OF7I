@@ -101,6 +101,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         project_name=self.project_1.project_name,
         star_count=1,
         labels=['label-a', 'label-b', 'days-1'],
+        derived_owner_id=self.user_2.user_id,
+        derived_status='Fixed',
         derived_labels=['label-derived', 'OS-mac', 'label-derived-2'],
         component_ids=[1, 2],
         merged_into_external='b/1',
@@ -115,9 +117,17 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.project_2.project_id,
         2,
         'sum2',
-        'New',
-        self.user_1.user_id,
-        project_name=self.project_2.project_name)
+        None,
+        None,
+        reporter_id=self.user_1.user_id,
+        project_name=self.project_2.project_name,
+        merged_into=self.issue_1.issue_id,
+        opened_timestamp=self.PAST_TIME,
+        modified_timestamp=self.PAST_TIME,
+        closed_timestamp=self.PAST_TIME,
+        derived_status='Fixed',
+        derived_owner_id=self.user_2.user_id,
+        is_spam=True)
     self.services.issue.TestAddIssue(self.issue_1)
     self.services.issue.TestAddIssue(self.issue_2)
 
@@ -284,11 +294,6 @@ class ConverterFunctionsTest(unittest.TestCase):
 
   def testConvertIssues(self):
     """We can convert Issues."""
-    # TODO(jessan): Add self.issue_2 once method fully implemented.
-    # - Derived status
-    # - Derived owner_id
-    # - Merged_into local issue.
-    # - Closed timestamp.
     blocked_on_1 = fake.MakeTestIssue(
         self.project_1.project_id,
         3,
@@ -333,102 +338,116 @@ class ConverterFunctionsTest(unittest.TestCase):
         tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/3')
     ]
 
-    issues = [self.issue_1]
-    expected_issues = [
-        issue_objects_pb2.Issue(
-            name='projects/proj/issues/1',
-            summary='sum',
-            state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
-            status=issue_objects_pb2.Issue.StatusValue(
-                derivation=EXPLICIT_DERIVATION, status='New'),
-            reporter='users/111',
-            owner=issue_objects_pb2.Issue.UserValue(
-                derivation=EXPLICIT_DERIVATION, user='users/111'),
-            cc_users=[
-                issue_objects_pb2.Issue.UserValue(
-                    derivation=EXPLICIT_DERIVATION, user='users/222'),
-                issue_objects_pb2.Issue.UserValue(
-                    derivation=RULE_DERIVATION, user='users/333')
-            ],
-            labels=[
-                issue_objects_pb2.Issue.LabelValue(
-                    derivation=EXPLICIT_DERIVATION, label='label-a'),
-                issue_objects_pb2.Issue.LabelValue(
-                    derivation=EXPLICIT_DERIVATION, label='label-b'),
-                issue_objects_pb2.Issue.LabelValue(
-                    derivation=RULE_DERIVATION, label='label-derived'),
-                issue_objects_pb2.Issue.LabelValue(
-                    derivation=RULE_DERIVATION, label='label-derived-2')
-            ],
-            components=[
-                issue_objects_pb2.Issue.ComponentValue(
-                    derivation=EXPLICIT_DERIVATION,
-                    component='projects/proj/componentDefs/1'),
-                issue_objects_pb2.Issue.ComponentValue(
-                    derivation=EXPLICIT_DERIVATION,
-                    component='projects/proj/componentDefs/2'),
-                issue_objects_pb2.Issue.ComponentValue(
-                    derivation=RULE_DERIVATION,
-                    component='projects/proj/componentDefs/3'),
-                issue_objects_pb2.Issue.ComponentValue(
-                    derivation=RULE_DERIVATION,
-                    component='projects/proj/componentDefs/4'),
-            ],
-            field_values=[
-                issue_objects_pb2.Issue.FieldValue(
-                    derivation=EXPLICIT_DERIVATION,
-                    field='projects/proj/fieldDefs/test_field_1',
-                    value=self.fv_1_value,
-                ),
-                issue_objects_pb2.Issue.FieldValue(
-                    derivation=RULE_DERIVATION,
-                    field='projects/proj/fieldDefs/test_field_1',
-                    value=self.fv_1_value,
-                ),
-                issue_objects_pb2.Issue.FieldValue(
-                    derivation=EXPLICIT_DERIVATION,
-                    field='projects/proj/fieldDefs/days',
-                    value='1',
-                ),
-                issue_objects_pb2.Issue.FieldValue(
-                    derivation=RULE_DERIVATION,
-                    field='projects/proj/fieldDefs/OS',
-                    value='mac',
-                )
-            ],
-            merged_into_issue_ref=issue_objects_pb2.IssueRef(
-                ext_identifier='b/1'),
-            blocked_on_issue_refs=[
-                issue_objects_pb2.IssueRef(issue='projects/goose/issues/4'),
-                issue_objects_pb2.IssueRef(issue='projects/proj/issues/3'),
-                issue_objects_pb2.IssueRef(ext_identifier='b/555'),
-                issue_objects_pb2.IssueRef(ext_identifier='b/2')
-            ],
-            blocking_issue_refs=[
-                issue_objects_pb2.IssueRef(issue='projects/goose/issues/5'),
-                issue_objects_pb2.IssueRef(ext_identifier='b/3')
-            ],
-            create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
-            modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
-            component_modify_time=timestamp_pb2.Timestamp(
-                seconds=self.PAST_TIME),
-            status_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
-            owner_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
-            star_count=1,
-            attachment_count=5,
-            approval_values=[
-                issue_objects_pb2.Issue.ApprovalValue(
-                    approvers=['users/222'],
-                    name='projects/proj/approvalDefs/approval_field_1',
-                    phase=self.phase_1.name,
-                    set_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
-                    setter='users/111',
-                    status=issue_objects_pb2.Issue.ApprovalStatus.Value(
-                        'APPROVAL_STATUS_UNSPECIFIED'))
-            ],
-            phases=[self.phase_1.name])
-    ]
-    self.assertEqual(self.converter.ConvertIssues(issues), expected_issues)
+    issues = [self.issue_1, self.issue_2]
+    expected_1 = issue_objects_pb2.Issue(
+        name='projects/proj/issues/1',
+        summary='sum',
+        state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+        status=issue_objects_pb2.Issue.StatusValue(
+            derivation=EXPLICIT_DERIVATION, status='New'),
+        reporter='users/111',
+        owner=issue_objects_pb2.Issue.UserValue(
+            derivation=EXPLICIT_DERIVATION, user='users/111'),
+        cc_users=[
+            issue_objects_pb2.Issue.UserValue(
+                derivation=EXPLICIT_DERIVATION, user='users/222'),
+            issue_objects_pb2.Issue.UserValue(
+                derivation=RULE_DERIVATION, user='users/333')
+        ],
+        labels=[
+            issue_objects_pb2.Issue.LabelValue(
+                derivation=EXPLICIT_DERIVATION, label='label-a'),
+            issue_objects_pb2.Issue.LabelValue(
+                derivation=EXPLICIT_DERIVATION, label='label-b'),
+            issue_objects_pb2.Issue.LabelValue(
+                derivation=RULE_DERIVATION, label='label-derived'),
+            issue_objects_pb2.Issue.LabelValue(
+                derivation=RULE_DERIVATION, label='label-derived-2')
+        ],
+        components=[
+            issue_objects_pb2.Issue.ComponentValue(
+                derivation=EXPLICIT_DERIVATION,
+                component='projects/proj/componentDefs/1'),
+            issue_objects_pb2.Issue.ComponentValue(
+                derivation=EXPLICIT_DERIVATION,
+                component='projects/proj/componentDefs/2'),
+            issue_objects_pb2.Issue.ComponentValue(
+                derivation=RULE_DERIVATION,
+                component='projects/proj/componentDefs/3'),
+            issue_objects_pb2.Issue.ComponentValue(
+                derivation=RULE_DERIVATION,
+                component='projects/proj/componentDefs/4'),
+        ],
+        field_values=[
+            issue_objects_pb2.Issue.FieldValue(
+                derivation=EXPLICIT_DERIVATION,
+                field='projects/proj/fieldDefs/test_field_1',
+                value=self.fv_1_value,
+            ),
+            issue_objects_pb2.Issue.FieldValue(
+                derivation=RULE_DERIVATION,
+                field='projects/proj/fieldDefs/test_field_1',
+                value=self.fv_1_value,
+            ),
+            issue_objects_pb2.Issue.FieldValue(
+                derivation=EXPLICIT_DERIVATION,
+                field='projects/proj/fieldDefs/days',
+                value='1',
+            ),
+            issue_objects_pb2.Issue.FieldValue(
+                derivation=RULE_DERIVATION,
+                field='projects/proj/fieldDefs/OS',
+                value='mac',
+            )
+        ],
+        merged_into_issue_ref=issue_objects_pb2.IssueRef(ext_identifier='b/1'),
+        blocked_on_issue_refs=[
+            issue_objects_pb2.IssueRef(issue='projects/goose/issues/4'),
+            issue_objects_pb2.IssueRef(issue='projects/proj/issues/3'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/555'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/2')
+        ],
+        blocking_issue_refs=[
+            issue_objects_pb2.IssueRef(issue='projects/goose/issues/5'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/3')
+        ],
+        create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        component_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        status_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        owner_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        star_count=1,
+        attachment_count=5,
+        approval_values=[
+            issue_objects_pb2.Issue.ApprovalValue(
+                approvers=['users/222'],
+                name='projects/proj/approvalDefs/approval_field_1',
+                phase=self.phase_1.name,
+                set_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+                setter='users/111',
+                status=issue_objects_pb2.Issue.ApprovalStatus.Value(
+                    'APPROVAL_STATUS_UNSPECIFIED'))
+        ],
+        phases=[self.phase_1.name])
+    expected_2 = issue_objects_pb2.Issue(
+        name='projects/goose/issues/2',
+        summary='sum2',
+        state=issue_objects_pb2.IssueContentState.Value('SPAM'),
+        status=issue_objects_pb2.Issue.StatusValue(
+            derivation=RULE_DERIVATION, status='Fixed'),
+        reporter='users/111',
+        owner=issue_objects_pb2.Issue.UserValue(
+            derivation=RULE_DERIVATION, user='users/222'),
+        merged_into_issue_ref=issue_objects_pb2.IssueRef(
+            issue='projects/proj/issues/1'),
+        create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        close_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        component_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        status_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        owner_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME))
+    self.assertEqual(
+        self.converter.ConvertIssues(issues), [expected_1, expected_2])
 
   def testConvertIssues_Empty(self):
     """ConvertIssues works with no issues passed in."""
