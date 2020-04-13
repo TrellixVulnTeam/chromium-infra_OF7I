@@ -1,4 +1,7 @@
 1nd->1st
+2st->2nd
+3nd->3rd
+3st->3rd
 a-diaerers->a-diaereses
 aaccessibility->accessibility
 aaccession->accession
@@ -387,8 +390,12 @@ accuraccy->accuracy
 accurancy->accuracy
 accurarcy->accuracy
 accurary->accuracy, actuary,
+accuratelly->accurately
+accuratley->accurately
 accuratly->accurately
 accuray->accuracy, actuary,
+accurences->occurrences
+accurracy->accuracy
 accurring->occurring
 accurs->accurse, occurs,
 accussed->accused
@@ -1434,7 +1441,6 @@ amerliorate->ameliorate
 amgle->angle
 amgles->angles
 amiguous->ambiguous
-amin->main, disabled because amin might be a var name
 amke->make
 amking->making
 ammend->amend
@@ -1529,7 +1535,6 @@ androind->Android
 andthe->and the
 ane->and
 anevironment->environment
-ang->and
 anhoter->another
 anid->and
 anihilation->annihilation
@@ -1591,7 +1596,6 @@ announements->announcements
 annoymous->anonymous
 annualy->annually
 annuled->annulled
-anny->any
 annyoingly->annoyingly
 anohter->another
 anologon->analogon
@@ -1617,7 +1621,6 @@ anount->amount
 anoying->annoying
 anoymous->anonymous
 anroid->android
-ans->and
 ansalisation->nasalisation
 ansalization->nasalization
 ansestors->ancestors
@@ -1641,6 +1644,7 @@ antialising->antialiasing
 antiapartheid->anti-apartheid
 anticpate->anticipate
 antry->entry
+antyhing->anything
 anual->annual
 anually->annually
 anulled->annulled
@@ -1908,6 +1912,12 @@ apprpriate->appropriate
 apprpriately->appropriately
 appy->apply
 appying->applying
+apreciate->appreciate
+apreciated->appreciated
+apreciates->appreciates
+apreciating->appreciating
+apreciation->appreciation
+apreciative->appreciative
 aprehensive->apprehensive
 apreteate->appreciate
 apreteated->appreciated
@@ -2077,7 +2087,6 @@ arithmatic->arithmetic
 arithmentic->arithmetic
 arithmetc->arithmetic
 arithmethic->arithmetic
-arithmetics->arithmetic, arithmetics,
 arithmitic->arithmetic
 aritmetic->arithmetic
 aritrary->arbitrary
@@ -2193,6 +2202,7 @@ assciated->associated
 asscociated->associated
 asscoitaed->associated
 assebly->assembly
+assebmly->assembly
 assember->assembler
 assemblys->assemblies
 assemby->assembly
@@ -2439,7 +2449,6 @@ atrributes->attributes
 atrtribute->attribute
 atrtributes->attributes
 attachd->attached
-attache->attaché, attached, attach,
 attachement->attachment
 attachements->attachments
 attachen->attach
@@ -2683,9 +2692,6 @@ automaticalyl->automatically
 automaticalyy->automatically
 automaticlly->automatically
 automaticly->automatically
-automatize->automate
-automatized->automated
-automatizes->automates
 autometic->automatic
 autometically->automatically
 automibile->automobile
@@ -2748,6 +2754,7 @@ autorisation->authorization
 autoritative->authoritative
 autority->authority
 autorization->authorization
+autoropeat->autorepeat
 autors->authors
 autosae->autosave
 autosavegs->autosaves
@@ -2882,6 +2889,7 @@ awnser->answer
 awoid->avoid
 awya->away
 axises->axes
+axix->axis
 axpressed->expressed
 aysnc->async
 ayway->anyway, away,
@@ -2918,12 +2926,9 @@ backwad->backwards
 backwardss->backwards
 backware->backward
 backwark->backward
-backword->backward, backword,
-backwords->backwards, backwords,
 backwrad->backward
 bactracking->backtracking
 bacup->backup
-bae->base
 bage->bag
 bahaving->behaving
 bahavior->behavior
@@ -3239,12 +3244,10 @@ blindy->blindly
 Blitzkreig->Blitzkrieg
 bload->bloat
 bloaded->bloated
-bloc->block, bloc,
 blocack->blockack
 bloccks->blocks
 blocekd->blocked
 blockin->blocking
-blocs->blocks, blocs,
 bloddy->bloody
 blodk->block
 blohted->bloated
@@ -3262,7 +3265,6 @@ boaut->bout, boat, about,
 bobard->board, bombard,
 bocome->become
 boddy->body
-bodgy->body, disabled because one might want to allow informal spelling
 bodydbuilder->bodybuilder
 boffer->buffer
 bofore->before
@@ -3317,6 +3319,8 @@ borgwasy->bourgeoisie
 borke->broke
 borken->broken
 borow->borrow
+borwser->browsers
+borwsers->browsers
 bostom->boston, bottom,
 bothe->both
 boths->both
@@ -3436,6 +3440,7 @@ brokem->broken
 brokend->broken
 brokened->broken
 brokeness->brokenness
+bronken->broken
 broser->browser
 brouter->router
 brower->browser
@@ -3519,8 +3524,6 @@ burtst->burst
 busines->business
 busineses->business, businesses,
 busness->business
-buss->bus
-busses->buses
 bussiness->business
 bussy->busy
 buton->button
@@ -3598,7 +3601,6 @@ cahdidate->candidate
 cahdidates->candidates
 cahe->cache
 cahes->caches
-cahgne->change
 cahgned->changed
 cahgnes->changes
 cahgning->changing
@@ -3641,7 +3643,6 @@ calcualtor->calculator
 calcuate->calculate
 calcuations->calculations
 calculaion->calculation
-calculatable->calculatable, calculable,
 calculatble->calculatable, calculable,
 calculater->calculator
 calculatted->calculated
@@ -3766,7 +3767,6 @@ canonicalizations->canonicalization
 canonival->canonical
 canot->cannot
 cant'->can't
-cant->can't, cant,
 cant;->can't
 canvase->canvas
 caost->coast
@@ -3854,7 +3854,6 @@ cartilege->cartilage
 cartilidge->cartilage
 cartrige->cartridge
 caryy->carry
-cas->case, disabled because of common abbreviations
 cascace->cascade
 case-insensitivy->case-insensitivity
 case-insenstive->case-insensitive
@@ -3936,6 +3935,9 @@ cavaets->caveats
 ccahe->cache
 ccale->scale
 ccertificate->certificate
+ccertificated->certificated
+ccertificates->certificates
+ccertification->certification
 ccessible->accessible
 cche->cache
 cconfiguration->configuration
@@ -4006,20 +4008,44 @@ certaint->certain
 certaion->certain
 certan->certain
 certficate->certificate
+certficated->certificated
 certficates->certificates
+certfication->certification
 certian->certain
 certianly->certainly
 certicate->certificate
+certicated->certificated
 certicates->certificates
+certication->certification
 certifacte->certificate
+certifacted->certificated
 certifactes->certificates
+certifaction->certification
 certifcate->certificate
+certifcated->certificated
 certifcates->certificates
 certifcation->certification
+certifciate->certificate
+certifciated->certificated
+certifciates->certificates
+certifciation->certification
 certificat->certificate
+certificatd->certificated
+certificatin->certificating, certification,
+certificaton->certification
+certificats->certificates
 certifice->certificate
+certificed->certificated
+certifices->certificates
+certificion->certification
+certifificate->certificate
+certifificated->certificated
 certifificates->certificates
+certifification->certification
 certiticate->certificate
+certiticated->certificated
+certiticates->certificates
+certitication->certification
 cervial->cervical, servile, serval,
 cetrainly->certainly
 cetting->setting
@@ -4050,10 +4076,8 @@ challanged->challenged
 challanges->challenges
 challege->challenge
 Champange->Champagne
-chancel->cancel
 chanceled->canceled
 chanceling->canceling
-chancels->cancels
 chanched->changed
 chancnel->channel, cancel,
 chane->change, chain,
@@ -4062,7 +4086,6 @@ chaneged->changed
 chanel->channel
 chanell->channel
 chanels->channels
-chang->change
 changable->changeable
 changeing->changing
 changged->changed
@@ -4135,6 +4158,7 @@ charactristics->characteristics
 charactrs->characters
 characts->characters
 characture->character
+charakter->character
 chararacter->character
 chararcter->character
 charas->chars
@@ -4314,7 +4338,6 @@ circomvented->circumvented
 circomvents->circumvents
 circual->circular
 circuitery->circuitry
-circularly->circular, circularly,
 circulaton->circulation
 circumferance->circumference
 circumferencial->circumferential
@@ -4376,7 +4399,6 @@ claread->cleared
 clared->cleared
 clarety->clarity
 claring->clearing
-clas->class, disabled because of name clash in c++
 clasic->classic
 clasical->classical
 clasically->classically
@@ -4482,7 +4504,6 @@ clusetr->cluster
 clustred->clustered
 cmak->cmake
 cmmands->commands
-cmo->com, disabled due to lots of false positives
 cmobination->combination
 cmoputer->computer
 cmoputers->computers
@@ -4602,10 +4623,22 @@ coelesce->coalesce
 coercable->coercible
 coerceion->coercion
 coersion->coercion
-coexinst->coexist
-coexinstence->coexistence
-coexistance->coexistence
-coexsiting->coexisting
+coexhist->coexist, co-exist,
+coexhistance->coexistence, co-existence,
+coexhisted->coexisted, co-existed,
+coexhistence->coexistence, co-existence,
+coexhisting->coexisting, co-existing,
+coexhists->coexists, co-exists,
+coexinst->coexist, co-existence,
+coexinstence->coexistence, co-existence,
+coexinsts->coexists, co-existence,
+coexistance->coexistence, co-existence,
+coexsit->coexist, co-exist,
+coexsitance->coexistence, co-existence,
+coexsited->coexisted, co-existed,
+coexsitence->coexistence, co-existence,
+coexsiting->coexisting, co-existing,
+coexsits->coexists, co-exists,
 cofeee->coffee
 cofidence->confidence
 cofiguration->configuration
@@ -4817,8 +4850,6 @@ commemerative->commemorative
 commemmorate->commemorate
 commemmorating->commemorating
 commen->commend, comment, common,
-commend->commend, comment, command,
-commends->commends, comments, commands,
 commenet->comment
 commenetd->commented
 commeneted->commented
@@ -5129,6 +5160,7 @@ compitable->compatible
 compitent->competent
 compitible->compatible
 complaing->complaining
+complanied->complained
 complate->complete
 complated->completed
 complates->completes
@@ -5533,6 +5565,14 @@ configutations->configurations
 configutration->configuration
 confimred->confirmed
 confiramtion->confirmation
+confirmacion->confirmation
+confirmaed->confirmed
+confirmas->confirms
+confirmatino->confirmation
+confirmatinon->confirmation
+confirmd->confirmed
+confirmedd->confirmed
+confirmeed->confirmed
 confirmming->confirming
 confiug->config
 confiugure->configure
@@ -5733,7 +5773,6 @@ consentrates->concentrates
 consept->concept
 consepts->concepts
 consequentely->consequently
-consequentially->consequently
 consequentually->consequently
 consequeseces->consequences
 consequetive->consecutive
@@ -6002,6 +6041,7 @@ contentss->contents
 contermporaneous->contemporaneous
 contet->contest, content, context,
 contets->contents, contexts,
+contex->context
 contexta->context
 contexual->contextual
 contiains->contains
@@ -6073,6 +6113,7 @@ contraining->constraining
 contraint->constraint
 contraints->constraints
 contraitns->constraints
+contraveining->contravening
 contravercial->controversial
 contraversy->controversy
 contributer->contributor
@@ -6224,13 +6265,13 @@ convovled->convolved
 convovling->convolving
 convserion->conversion
 conyak->cognac
-coo->coup, coo,
 coodinate->coordinate
 coodinates->coordinates
 coodrinate->coordinate
 coodrinates->coordinates
 cooger->cougar
 cookoo->cuckoo
+coolent->coolant
 coolot->culotte
 coolots->culottes
 coomand->command
@@ -6320,7 +6361,6 @@ copurighted->copyrighted
 copurights->copyrights
 coputer->computer
 copver->cover
-copyable->copyable, copiable, disabled because of name clash in C++
 copyed->copied
 copyeight->copyright
 copyeighted->copyrighted
@@ -6603,11 +6643,8 @@ crahses->crashes
 crashaes->crashes
 crasheed->crashed
 crashees->crashes
-crasher->crash, disabled because it denotes something that crashes
-crashers->crashes, disabled because it denotes things that crash
 crashess->crashes
 crashs->crashes
-crated->created, crated,
 creaate->create
 creaed->created
 creaeted->created
@@ -6626,7 +6663,6 @@ creatning->creating
 creatre->create
 creatred->created
 creats->creates
-creche->crèche
 credate->created
 credintial->credential
 credintials->credentials
@@ -6645,7 +6681,6 @@ creted->created
 crewsant->croissant
 cricital->critical
 crirical->critical
-cristal->crystal, cristal,
 critcial->critical
 criteak->critique
 critera->criteria
@@ -6701,7 +6736,6 @@ crtical->critical
 crticised->criticised
 crucialy->crucially
 crucifiction->crucifixion
-crufts->cruft
 cruncing->crunching
 crurrent->current
 crusies->cruises
@@ -6715,7 +6749,10 @@ cryptograpic->cryptographic
 crystalisation->crystallisation
 cryto->crypto
 crytpo->crypto
+ctificate->certificate
+ctificated->certificated
 ctificates->certificates
+ctification->certification
 cuasality->causality
 cuasation->causation
 cuase->cause
@@ -6801,6 +6838,8 @@ custumised->customised
 custumized->customized
 cutom->custom
 cuurently->currently
+cuve->curve, cube, cave,
+cuves->curves, cubes, caves,
 cvignore->cvsignore
 cxan->cyan
 cycic->cyclic
@@ -6815,6 +6854,7 @@ cymk->CMYK
 Cyrllic->Cyrillic
 cyrpto->crypto
 cyrrent->current
+cyrrilic->Cyrillic
 cyrto->crypto
 cywgin->Cygwin
 daa->data
@@ -6935,13 +6975,37 @@ deailing->dealing
 deaktivate->deactivate
 deaktivated->deactivated
 dealed->dealt
-dealign->dealing, dealign,
 dealilng->dealing
 dealloacte->deallocate
 deallocaed->deallocated
 dealocate->deallocate
 dealte->delete
+deamand->demand
+deamanding->demanding
+deamands->demands
+deambigate->disambiguate
+deambigates->disambiguates
+deambigation->disambiguation
+deambiguage->disambiguate
+deambiguages->disambiguates
+deambiguate->disambiguate
+deambiguates->disambiguates
+deambiguation->disambiguation
+deamiguate->disambiguate
+deamiguates->disambiguates
+deamiguation->disambiguation
 deamon->daemon
+deamonified->daemonified
+deamonisation->daemonisation
+deamonise->daemonise
+deamonised->daemonised
+deamonises->daemonises
+deamonising->daemonising
+deamonization->daemonization
+deamonize->daemonize
+deamonized->daemonized
+deamonizes->daemonizes
+deamonizing->daemonizing
 deamons->daemons
 deassering->deasserting
 deatch->detach
@@ -6969,6 +7033,7 @@ debugee->debuggee
 debuger->debugger
 debugg->debug
 debugginf->debugging
+debuggs->debugs
 debuging->debugging
 decaffinated->decaffeinated
 decalare->declare
@@ -6998,9 +7063,20 @@ decidated->dedicated
 decidates->dedicates
 decideable->decidable
 decidely->decidedly
+decie->decide
+decied->decide, decided,
+deciedd->decided
+deciede->decide
+decieded->decided
+deciedes->decides
+decieding->deciding
+decieds->decides
+deciemal->decimal
 decies->decides
 decieve->deceive
 decieved->deceived
+decieves->deceives
+decieving->deceiving
 decimials->decimals
 decison->decision
 decission->decision
@@ -7221,7 +7297,6 @@ deferentiating->differentiating
 defering->deferring
 deferreal->deferral
 deffensively->defensively
-deffer->differ, defer,
 deffered->differed, deferred,
 defference->difference, deference,
 defferent->different, deferent,
@@ -7250,7 +7325,6 @@ definations->definitions
 definatly->definitely
 defind->defined, defund,
 definded->defined, defunded,
-define'd->defined, disabled due to #define
 defineas->defines
 defineed->defined
 definend->defined
@@ -7275,9 +7349,9 @@ definiton->definition
 definitons->definitions
 definned->defined
 definnition->definition
-defins->defines
-defint->definite
-definte->definite
+defins->defines, define,
+defint->definite, define,
+definte->definite, define,
 defintian->definition
 defintion->definition
 defintions->definitions
@@ -7312,8 +7386,6 @@ degnerate->degenerate
 degnerated->degenerated
 degnerates->degenerates
 degrads->degrades
-degrate->degrate, degrade,
-degrates->degrates, degrades,
 degreee->degree
 degreeee->degree
 degreeees->degrees
@@ -7484,7 +7556,6 @@ dependancies->dependencies
 dependancy->dependency
 dependancys->dependencies
 dependand->dependent
-dependant->dependent
 dependcies->dependencies
 dependcy->dependency
 dependecies->dependencies
@@ -7507,11 +7578,15 @@ dependicy->dependency
 dependig->depending
 dependncies->dependencies
 dependncy->dependency
+depenedecies->dependencies
+depenedecy->dependency
 depenedent->dependent
 depenencies->dependencies
 depenencis->dependencies
 depenency->dependency
 depenencys->dependencies
+depenendecies->dependencies
+depenendecy->dependency
 depenendence->dependence
 depenendencies->dependencies
 depenendency->dependency
@@ -7736,6 +7811,7 @@ desicions->decisions
 deside->decide
 desided->decided
 desides->decides
+desig->design
 desigining->designing
 designd->designed
 desination->destination
@@ -7877,7 +7953,7 @@ determind->determined
 determinded->determined
 determinee->determine
 determineing->determining
-determing->determining
+determing->determining, determine,
 determinining->determining
 deterministinc->deterministic
 determinne->determine
@@ -8045,6 +8121,8 @@ diaresis->diaeresis
 diarhea->diarrhoea, diarrhea,
 diaspra->diaspora
 diaster->disaster
+diatance->distance
+diatancing->distancing
 dicard->discard
 dicarded->discarded
 dicarding->discarding
@@ -8121,6 +8199,7 @@ differenciate->differentiate
 differenciated->differentiated
 differenciates->differentiates
 differenciating->differentiating
+differenciation->differentiation
 differenct->different
 differend->different
 differene->difference
@@ -8168,6 +8247,7 @@ difficault->difficult
 difficaulties->difficulties
 difficaulty->difficulty
 difficulity->difficulty
+difficults->difficult, difficulties,
 difficutl->difficult
 difficutly->difficulty
 diffreences->differences
@@ -8461,7 +8541,6 @@ disconneted->disconnected
 disconneting->disconnecting
 disconnets->disconnects
 disconnnect->disconnect
-discontentment->discontent
 discontigious->discontiguous
 discontigous->discontiguous
 discontiguities->discontinuities
@@ -8583,32 +8662,65 @@ disricts->districts
 disrm->disarm
 dissable->disable
 dissabled->disabled
+dissables->disables
+dissabling->disabling
 dissadvantage->disadvantage
+dissadvantages->disadvantages
 dissagreement->disagreement
+dissagregation->dissaggregation
 dissallow->disallow
 dissallowed->disallowed
+dissallowing->disallowing
+dissallows->disallows
 dissalow->disallow
 dissalowed->disallowed
+dissalowing->disallowing
+dissalows->disallows
+dissambiguate->disambiguate
+dissamble->disassemble
+dissambled->disassembled
+dissambler->disassembler
+dissambles->disassembles
+dissamblies->disassemblies
+dissambling->disassembling
+dissambly->disassembly
+dissapate->dissipate
+dissapates->dissipates
 dissapear->disappear
 dissapearance->disappearance
 dissapeard->disappeared
 dissapeared->disappeared
 dissapearing->disappearing
 dissapears->disappears
+dissaper->disappear
+dissaperd->disappeared
 dissapered->disappeared
+dissapering->disappearing
+dissapers->disappears
 dissapoint->disappoint
 dissapointed->disappointed
+dissapointing->disappointing
+dissapoints->disappoints
 dissappear->disappear
+dissappeard->disappeared
 dissappeared->disappeared
 dissappearing->disappearing
 dissappears->disappears
+dissapper->disappear
+dissapperd->disappeared
+dissappered->disappeared
+dissappering->disappearing
+dissappers->disappears
 dissappointed->disappointed
+dissapprove->disapprove
+dissapproves->disapproves
 dissarray->disarray
 dissasemble->disassemble
 dissasembled->disassembled
 dissasembler->disassembler
 dissasembles->disassembles
 dissasemblies->disassemblies
+dissasembling->disassembling
 dissasembly->disassembly
 dissasociate->disassociate
 dissasociated->disassociated
@@ -8617,6 +8729,8 @@ dissasociation->disassociation
 dissassemble->disassemble
 dissassembled->disassembled
 dissassembler->disassembler
+dissassembles->disassembles
+dissassemblies->disassemblies
 dissassembling->disassembling
 dissassembly->disassembly
 dissassociate->disassociate
@@ -8624,15 +8738,71 @@ dissassociated->disassociated
 dissassociates->disassociates
 dissassociating->disassociating
 dissaster->disaster
+dissasters->disasters
 dissble->disable
+dissbled->disabled
+dissbles->disables
+dissbling->disabling
 dissconect->disconnect
+dissconnect->disconnect
+dissconnected->disconnected
+dissconnects->disconnects
+disscover->discover
+disscovered->discovered
+disscovering->discovering
+disscovers->discovers
+disscovery->discovery
+dissct->dissect
+disscted->dissected
+disscting->dissecting
+dissctor->dissector
+dissctors->dissectors
+disscts->dissects
+disscus->discuss
+disscused->discussed
+disscuses->discusses
+disscusing->discussing
+disscusion->discussion
+disscuss->discuss
+disscussed->discussed
+disscusses->discusses
+disscussing->discussing
 disscussion->discussion
 disscussions->discussions
+disshearteningly->dishearteningly
 dissimiliarity->dissimilarity
+dissmantle->dismantle
+dissmantled->dismantled
+dissmantles->dismantles
+dissmantling->dismantling
+dissmis->dismiss
+dissmised->dismissed
+dissmises->dismisses
+dissmising->dismissing
+dissmiss->dismiss
+dissmissed->dismissed
+dissmisses->dismisses
+dissmissing->dismissing
 dissobediance->disobedience
 dissobediant->disobedient
 dissobedience->disobedience
 dissobedient->disobedient
+dissplay->display
+dissrupt->disrupt
+dissrupted->disrupted
+dissrupting->disrupting
+dissrupts->disrupts
+disssemble->disassemble
+disssembled->disassembled
+disssembler->disassembler
+disssembles->disassembles
+disssemblies->disassemblies
+disssembling->disassembling
+disssembly->disassembly
+disssociate->dissociate
+disssociated->dissociated
+disssociates->dissociates
+disssociating->dissociating
 distantce->distance
 distarct->distract
 distater->disaster
@@ -8704,6 +8874,8 @@ distruction->destruction
 distructive->destructive
 distuingish->distinguish
 disuade->dissuade
+disussion->discussion
+disussions->discussions
 disutils->distutils
 ditance->distance
 ditinguishes->distinguishes
@@ -8811,7 +8983,6 @@ doesnt->doesn't, does not,
 doesnt;->doesn't
 doess->does
 doestn't->doesn't
-dof->of, doff, disabled because it's a common abbreviation
 doign->doing
 doiing->doing
 doiuble->double
@@ -8837,7 +9008,6 @@ donn->done, don,
 donnot->do not
 dont'->don't
 dont't->don't
-dont->don't, disabled because of var names
 donwload->download
 donwloaded->downloaded
 donwloading->downloading
@@ -9297,6 +9467,7 @@ embeded->embedded
 embeed->embed
 embezelled->embezzled
 emblamatic->emblematic
+embold->embolden
 emedded->embedded
 emegrency->emergency
 emenet->element
@@ -9459,6 +9630,7 @@ engieneer->engineer
 engieneers->engineers
 enginge->engine
 enginin->engine
+engoug->enough
 enhabce->enhance
 enhabced->enhanced
 enhabces->enhances
@@ -9817,6 +9989,14 @@ etablishd->established
 etablished->established
 etablishing->establishing
 etcp->etc
+etend->extend, attend,
+etended->extended, attended,
+etender->extender, attender,
+etenders->extenders, attenders,
+etends->extends, attends,
+etensible->extensible
+etension->extension
+etensions->extensions
 ethe->the
 etherenet->Ethernet
 ethnocentricm->ethnocentrism
@@ -10274,20 +10454,101 @@ expectes->expects
 expection->exception
 expections->exceptions
 expeditonary->expeditionary
+expeect->expect
+expeected->expected
+expeectedly->expectedly
+expeecting->expecting
+expeects->expects
+expeiment->experiment
+expeimental->experimental
+expeimentally->experimentally
+expeimentation->experimentation
+expeimentations->experimentations
+expeimented->experimented
+expeimentel->experimental
+expeimentelly->experimentally
+expeimenter->experimenter
+expeimenters->experimenters
+expeimenting->experimenting
 expeiments->experiments
+expeiriment->experiment
+expeirimental->experimental
+expeirimentally->experimentally
+expeirimentation->experimentation
+expeirimentations->experimentations
+expeirimented->experimented
+expeirimentel->experimental
+expeirimentelly->experimentally
+expeirimenter->experimenter
+expeirimenters->experimenters
+expeirimenting->experimenting
+expeiriments->experiments
 expell->expel
 expells->expels
+expement->experiment
+expemental->experimental
+expementally->experimentally
+expementation->experimentation
+expementations->experimentations
+expemented->experimented
+expementel->experimental
+expementelly->experimentally
+expementer->experimenter
+expementers->experimenters
+expementing->experimenting
+expements->experiments
+expemplars->exemplars
+expemplary->exemplary
+expempt->exempt
+expempted->exempted
 expendeble->expendable
+expepect->expect
 expepected->expected
 expepectedly->expectedly
+expepecting->expecting
+expepects->expects
+expept->expect, except,
+expepted->expected
+expeptedly->expectedly
+expepting->expecting
 expeption->exception
+expepts->expects
+experament->experiment
+experamental->experimental
+experamentally->experimentally
+experamentation->experimentation
+experamentations->experimentations
+experamented->experimented
+experamentel->experimental
+experamentelly->experimentally
+experamenter->experimenter
+experamenters->experimenters
+experamenting->experimenting
+experaments->experiments
+experct->expect, excerpt,
+expercted->expected, excerpted,
 expereince->experience
 expereinced->experienced
+experement->experiment
 experemental->experimental
 experementally->experimentally
+experementation->experimentation
+experementations->experimentations
+experemented->experimented
+experementel->experimental
+experementelly->experimentally
+experementer->experimenter
+experementers->experimenters
+experementing->experimenting
+experements->experiments
+experence->experience
+experenced->experienced
 experencing->experiencing
+experes->express
+experesed->expressed
 experesion->expression
 experesions->expressions
+experess->express
 experessed->expressed
 experession's->expression's
 experession->expression
@@ -10299,33 +10560,363 @@ experiancial->experiential
 experiancing->experiencing
 experiansial->experiential
 experiantial->experiential
+experiation->expiration
+experice->experience
+expericed->experienced
 experiement->experiment
 experienshial->experiential
 experiensial->experiential
 experies->expires
+experim->experiment
+experimal->experimental
+experimally->experimentally
+experimanent->experiment
+experimanental->experimental
+experimanentally->experimentally
+experimanentation->experimentation
+experimanentations->experimentations
+experimanented->experimented
+experimanentel->experimental
+experimanentelly->experimentally
+experimanenter->experimenter
+experimanenters->experimenters
+experimanenting->experimenting
+experimanents->experiments
+experimanet->experiment
+experimanetal->experimental
+experimanetally->experimentally
+experimanetation->experimentation
+experimanetations->experimentations
+experimaneted->experimented
+experimanetel->experimental
+experimanetelly->experimentally
+experimaneter->experimenter
+experimaneters->experimenters
+experimaneting->experimenting
+experimanets->experiments
 experimant->experiment
 experimantal->experimental
 experimantally->experimentally
 experimantation->experimentation
+experimantations->experimentations
+experimanted->experimented
+experimantel->experimental
+experimantelly->experimentally
+experimanter->experimenter
+experimanters->experimenters
+experimanting->experimenting
+experimants->experiments
+experimation->experimentation
+experimations->experimentations
+experimdnt->experiment
+experimdntal->experimental
+experimdntally->experimentally
+experimdntation->experimentation
+experimdntations->experimentations
+experimdnted->experimented
+experimdntel->experimental
+experimdntelly->experimentally
+experimdnter->experimenter
+experimdnters->experimenters
+experimdnting->experimenting
+experimdnts->experiments
+experimed->experimented
+experimel->experimental
+experimelly->experimentally
+experimen->experiment
+experimenal->experimental
+experimenally->experimentally
+experimenat->experiment
+experimenatal->experimental
+experimenatally->experimentally
+experimenatation->experimentation
+experimenatations->experimentations
+experimenated->experimented
+experimenatel->experimental
+experimenatelly->experimentally
+experimenater->experimenter
+experimenaters->experimenters
+experimenating->experimenting
+experimenation->experimentation
+experimenations->experimentations
+experimenats->experiments
+experimened->experimented
+experimenel->experimental
+experimenelly->experimentally
+experimener->experimenter
+experimeners->experimenters
+experimening->experimenting
+experimens->experiments
+experimentaal->experimental
+experimentaally->experimentally
+experimentaat->experiment
+experimentaatl->experimental
+experimentaatlly->experimentally
+experimentaats->experiments
+experimentaed->experimented
+experimentaer->experimenter
+experimentaing->experimenting
+experimentaion->experimentation
+experimentaions->experimentations
+experimentait->experiment
+experimentaital->experimental
+experimentaitally->experimentally
+experimentaited->experimented
+experimentaiter->experimenter
+experimentaiters->experimenters
+experimentaitng->experimenting
+experimentaiton->experimentation
+experimentaitons->experimentations
+experimentat->experimental
+experimentatal->experimental
+experimentatally->experimentally
+experimentatation->experimentation
+experimentatations->experimentations
+experimentated->experimented
+experimentater->experimenter
 experimentatin->experimentation, experimenting,
+experimentating->experimentation, experimenting,
+experimentatl->experimental
+experimentatlly->experimentally
+experimentatly->experimentally
+experimentel->experimental
+experimentelly->experimentally
+experimentt->experiment
+experimentted->experimented
+experimentter->experimenter
+experimentters->experimenters
+experimentts->experiments
+experimer->experimenter
+experimers->experimenters
 experimet->experiment
 experimetal->experimental
+experimetally->experimentally
+experimetation->experimentation
+experimetations->experimentations
 experimeted->experimented
+experimetel->experimental
+experimetelly->experimentally
+experimetent->experiment
 experimetental->experimental
+experimetentally->experimentally
+experimetentation->experimentation
+experimetentations->experimentations
+experimetented->experimented
+experimetentel->experimental
+experimetentelly->experimentally
+experimetenter->experimenter
+experimetenters->experimenters
+experimetenting->experimenting
+experimetents->experiments
 experimeter->experimenter
+experimeters->experimenters
 experimeting->experimenting
+experimetn->experiment
 experimetnal->experimental
+experimetnally->experimentally
+experimetnation->experimentation
+experimetnations->experimentations
+experimetned->experimented
+experimetnel->experimental
+experimetnelly->experimentally
+experimetner->experimenter
+experimetners->experimenters
+experimetning->experimenting
 experimetns->experiments
+experimets->experiments
+experiming->experimenting
+experimint->experiment
+experimintal->experimental
+experimintally->experimentally
+experimintation->experimentation
+experimintations->experimentations
+experiminted->experimented
+experimintel->experimental
+experimintelly->experimentally
+experiminter->experimenter
+experiminters->experimenters
+experiminting->experimenting
+experimints->experiments
+experimment->experiment
+experimmental->experimental
+experimmentally->experimentally
+experimmentation->experimentation
+experimmentations->experimentations
+experimmented->experimented
+experimmentel->experimental
+experimmentelly->experimentally
+experimmenter->experimenter
+experimmenters->experimenters
+experimmenting->experimenting
+experimments->experiments
+experimnet->experiment
+experimnetal->experimental
+experimnetally->experimentally
+experimnetation->experimentation
+experimnetations->experimentations
+experimneted->experimented
+experimnetel->experimental
+experimnetelly->experimentally
+experimneter->experimenter
+experimneters->experimenters
+experimneting->experimenting
+experimnets->experiments
+experimnt->experiment
+experimntal->experimental
+experimntally->experimentally
+experimntation->experimentation
+experimntations->experimentations
+experimnted->experimented
+experimntel->experimental
+experimntelly->experimentally
+experimnter->experimenter
+experimnters->experimenters
+experimnting->experimenting
+experimnts->experiments
+experims->experiments
+experimten->experiment
+experimtenal->experimental
+experimtenally->experimentally
+experimtenation->experimentation
+experimtenations->experimentations
+experimtened->experimented
+experimtenel->experimental
+experimtenelly->experimentally
+experimtener->experimenter
+experimteners->experimenters
+experimtening->experimenting
+experimtens->experiments
+experinece->experience
+experineced->experienced
+experinement->experiment
+experinemental->experimental
+experinementally->experimentally
+experinementation->experimentation
+experinementations->experimentations
+experinemented->experimented
+experinementel->experimental
+experinementelly->experimentally
+experinementer->experimenter
+experinementers->experimenters
+experinementing->experimenting
+experinements->experiments
+experiration->expiration
+expermenet->experiment
+expermenetal->experimental
+expermenetally->experimentally
+expermenetation->experimentation
+expermenetations->experimentations
+expermeneted->experimented
+expermenetel->experimental
+expermenetelly->experimentally
+expermeneter->experimenter
+expermeneters->experimenters
+expermeneting->experimenting
+expermenets->experiments
+experment->experiment
 expermental->experimental
+expermentally->experimentally
+expermentation->experimentation
+expermentations->experimentations
+expermented->experimented
+expermentel->experimental
+expermentelly->experimentally
+expermenter->experimenter
+expermenters->experimenters
+expermenting->experimenting
+experments->experiments
+expermient->experiment
 expermiental->experimental
+expermientally->experimentally
+expermientation->experimentation
+expermientations->experimentations
+expermiented->experimented
+expermientel->experimental
+expermientelly->experimentally
+expermienter->experimenter
+expermienters->experimenters
+expermienting->experimenting
+expermients->experiments
+expermiment->experiment
+expermimental->experimental
+expermimentally->experimentally
+expermimentation->experimentation
+expermimentations->experimentations
+expermimented->experimented
+expermimentel->experimental
+expermimentelly->experimentally
+expermimenter->experimenter
+expermimenters->experimenters
+expermimenting->experimenting
+expermiments->experiments
+expernal->external
+experss->express
+experssed->expressed
 experssion->expression
 experssions->expressions
+expesive->expensive
+expesnce->expense
+expess->express
+expessed->expressed
 expession->expression
+expessions->expressions
 expet->expect, expat,
 expetancy->expectancy
 expetation->expectation
+expetc->expect
+expetced->expected
+expetcedly->expectedly
+expetcing->expecting
+expetcs->expects
+expetct->expect
+expetcted->expected
+expetctedly->expectedly
+expetcting->expecting
+expetcts->expects
+expetect->expect
+expetected->expected
+expetecting->expecting
+expetectly->expectedly
+expetects->expects
 expeted->expected
+expetedly->expectedly
+expetiment->experiment
+expetimental->experimental
+expetimentally->experimentally
+expetimentation->experimentation
+expetimentations->experimentations
+expetimented->experimented
+expetimentel->experimental
+expetimentelly->experimentally
+expetimenter->experimenter
+expetimenters->experimenters
+expetimenting->experimenting
+expetiments->experiments
+expeting->expecting
 expets->expects
+expewriment->experiment
+expewrimental->experimental
+expewrimentally->experimentally
+expewrimentation->experimentation
+expewrimentations->experimentations
+expewrimented->experimented
+expewrimentel->experimental
+expewrimentelly->experimentally
+expewrimenter->experimenter
+expewrimenters->experimenters
+expewrimenting->experimenting
+expewriments->experiments
+expexct->expect
+expexcted->expected
+expexctedly->expectedly
+expexcting->expecting
+expexcts->expects
+expexnasion->expansion
+expext->expect
+expexted->expected
+expextedly->expectedly
+expexting->expecting
+expexts->expects
 expicit->explicit
 expicitly->explicitly
 expidition->expedition
@@ -10485,6 +11076,9 @@ extration->extraction
 extrator->extractor
 extrators->extractors
 extravagent->extravagant
+extraversion->extroversion
+extravert->extrovert
+extraverts->extroverts
 extraxt->extract
 extraxted->extracted
 extraxting->extracting
@@ -10551,6 +11145,8 @@ factization->factorization
 factorizaiton->factorization
 factorys->factories
 fadind->fading
+faeture->feature
+faetures->features
 Fahrenheight->Fahrenheit
 faied->failed, fade,
 faield->failed
@@ -10586,9 +11182,6 @@ faliures->failures
 fallabck->fallback
 fallbck->fallback
 fallhrough->fallthrough
-fallowed->followed, fallowed,
-fallowing->following, fallowing,
-fallows->follows, fallows,
 fallthruogh->fallthrough
 falltrough->fallthrough
 falt->fault
@@ -10599,6 +11192,8 @@ familiies->families
 familiy->family
 familliar->familiar
 familly->family
+famlilies->families
+famlily->family
 famoust->famous
 fanatism->fanaticism
 fancyness->fanciness
@@ -10615,6 +11210,8 @@ fasing->fazing, phasing,
 fasion->fashion
 fassade->facade
 fassinate->fascinate
+fasterner->fastener
+fasterners->fasteners
 fastr->faster
 fatc->fact
 fater->faster
@@ -10624,7 +11221,6 @@ fature->feature
 faught->fought
 fauilures->failures
 faund->found
-fave->save
 favoutrable->favourable
 faymus->famous
 fcound->found
@@ -10758,6 +11354,11 @@ finailse->finalise
 finailze->finalize
 finalle->finale, finally,
 finaly->finally, finale,
+finanace->finance
+finanaced->financed
+finanaces->finances
+finanacially->financially
+finanacier->financier
 financialy->financially
 finanize->finalize
 finanlize->finalize
@@ -10846,11 +11447,11 @@ flexibilty->flexibility
 flie->file
 floading->floating, flooding,
 floading-add->floating-add
-florescent->fluorescent
-floresent->fluorescent
+floatation->flotation
+floresent->fluorescent, florescent,
 floride->fluoride
 floting->floating
-flourescent->fluorescent
+flourescent->fluorescent, florescent,
 flouride->fluoride
 flourine->fluorine
 flourishment->flourishing
@@ -10889,7 +11490,6 @@ followig->following
 followign->following
 followin->following
 followind->following
-followings->followings, following,
 followng->following
 follwing->following
 follwo->follow
@@ -10939,7 +11539,6 @@ forcably->forcibly
 foreing->foreign
 forementionned->aforementioned
 foreward->foreword, forward,
-forewarded->forewarded, forwarded,
 forfiet->forfeit
 forgeround->foreground
 forgoten->forgotten
@@ -10970,8 +11569,6 @@ formmatted->formatted
 formost->foremost
 formt->format
 formua->formula
-formule->formula, formulas, formule,
-formules->formulas
 forr->for
 forsaw->foresaw
 forse->force
@@ -11022,7 +11619,6 @@ foults->faults
 foundaries->foundries
 foundary->foundry
 Foundland->Newfoundland
-fount->fount, found,
 fourties->forties
 fourty->forty
 fouth->fourth
@@ -11086,7 +11682,6 @@ fricton->friction
 frist->first
 frmat->format
 frmo->from
-fro->for, from, fro,
 froce->force
 frok->from
 fromal->formal
@@ -11102,8 +11697,6 @@ frontents->frontends
 frop->drop
 fropm->from
 frops->drops
-froward->forward
-frowarded->forwarded
 frozee->frozen
 fschk->fsck
 ftrunacate->ftruncate
@@ -11119,7 +11712,6 @@ fufill->fulfill
 fufilled->fulfilled
 fule->file
 fulfiled->fulfilled
-fulfilment->fulfillment
 fullfiled->fulfilled
 fullfiling->fulfilling
 fullfill->fulfill
@@ -11135,6 +11727,11 @@ funchtion->function
 funchtional->functional
 funchtioned->functioned
 funchtioning->functioning
+funchtionn->function
+funchtionnal->functional
+funchtionned->functioned
+funchtionning->functioning
+funchtionns->functions
 funchtions->functions
 funcion->function
 funcions->functions
@@ -11436,8 +12033,6 @@ ginee->guinea
 gingam->gingham
 gioen->given
 gir->git
-gird->grid, gird,
-girds->grids, girds,
 giser->geyser
 gisers->geysers
 gitar->guitar
@@ -11480,7 +12075,6 @@ golbal->global
 golbally->globally
 golbaly->globally
 gonig->going
-gonna->going to, disabled because one might want to allow informal spelling
 gool->ghoul
 gord->gourd
 gormay->gourmet
@@ -11565,7 +12159,6 @@ guaranted->guaranteed
 guaranteey->guaranty
 guarantes->guarantees
 guarantie->guarantee
-guarantied->guaranteed
 guarbage->garbage
 guared->guard, guarded,
 guareded->guarded
@@ -11699,8 +12292,6 @@ Guatamala->Guatemala
 Guatamalan->Guatemalan
 gud->good
 gude->guide, good,
-guerilla->guerrilla
-guerillas->guerrillas
 guerrila->guerrilla
 guerrilas->guerrillas
 gueswork->guesswork
@@ -11719,6 +12310,7 @@ gurantees->guarantees
 gurrantee->guarantee
 guttaral->guttural
 gutteral->guttural
+gylph->glyph
 gziniflate->gzinflate
 gziped->gzipped
 haa->has
@@ -11831,7 +12423,6 @@ harrasses->harassed
 harrassing->harassing
 harrassment->harassment
 harrassments->harassments
-hart->heart, harm,
 harth->hearth
 harware->hardware
 has'nt->hasn't
@@ -11933,7 +12524,6 @@ hiddden->hidden
 hidded->hidden
 hiddin->hidden, hiding,
 hidding->hiding, hidden,
-hided->hidden, hid,
 hiden->hidden
 hiearchies->hierarchies
 hiearchy->hierarchy
@@ -11995,6 +12585,7 @@ hinderence->hindrance
 hindrence->hindrance
 hipopotamus->hippopotamus
 hipotetical->hypothetical
+hirachy->hierarchy
 hirarchies->hierarchies
 hirarchy->hierarchy
 hirarcies->hierarchies
@@ -12002,7 +12593,6 @@ hirearchy->hierarchy
 hirearcy->hierarchy
 hismelf->himself
 hisory->history
-hist->heist, his,
 histgram->histogram
 histocompatability->histocompatibility
 histori->history, historic,
@@ -12086,7 +12676,6 @@ houres->hours
 housand->thousand
 houskeeping->housekeeping
 housr->hours, house,
-hove->hove, have, hover, love,
 hovever->however
 hovewer->however
 howerver->however
@@ -12126,6 +12715,7 @@ huminoid->humanoid
 humoural->humoral
 humurous->humorous
 hunderd->hundred
+hundret->hundred, hundreds,
 hundreths->hundredths
 hundrets->hundreds
 hunrgy->hungry
@@ -12181,6 +12771,8 @@ hyptothetical->hypothetical
 hyptothetically->hypothetically
 hypvervisor->hypervisor
 hypvervisors->hypervisors
+hypvisor->hypervisor
+hypvisors->hypervisors
 i;ll->I'll
 iam->I am, aim,
 iamge->image
@@ -12235,7 +12827,6 @@ idividual->individual
 idividually->individually
 idividuals->individuals
 iechart->piechart
-iff->if, disabled due to valid mathematical concept
 ifself->itself
 ifset->if set
 ignoded->ignored
@@ -12543,7 +13134,6 @@ impletment->implement
 implicite->implicit, implicitly,
 implicitely->implicitly
 implicitley->implicitly
-implicity->implicitly
 implict->implicit
 implictly->implicitly
 impliment->implement
@@ -12584,6 +13174,9 @@ imporvement->improvement
 imporving->improving
 imporvment->improvement
 imposible->impossible
+impot->import
+impotr->import, importer,
+impotrt->import, imported, importer,
 impove->improve
 impoved->improved
 impovements->improvements
@@ -12637,7 +13230,6 @@ inaccesible->inaccessible
 inaccessable->inaccessible
 inaccuraccies->inaccuracies
 inaccuraccy->inaccuracy
-inactivate->inactivate, deactivate,
 inacurate->inaccurate
 inacurracies->inaccuracies
 inacurrate->inaccurate
@@ -12692,7 +13284,6 @@ inclues->includes
 incluging->including
 incluide->include
 incluing->including
-incluse->include, incluse,
 inclused->included
 inclusinve->inclusive
 incmrement->increment
@@ -12701,6 +13292,8 @@ incomapatible->incompatible
 incomaptible->incompatible
 incombatibilities->incompatibilities
 incombatibility->incompatibility
+incomfort->discomfort, uncomfortable, in comfort,
+incomfortable->uncomfortable
 incomming->incoming
 incommplete->incomplete
 incompatabable->incompatible
@@ -12744,6 +13337,8 @@ inconcistency->inconsistency
 inconcistent->inconsistent
 inconditional->unconditional
 inconditionally->unconditionally
+inconfort->discomfort, uncomfortable, in comfort,
+inconfortable->uncomfortable
 inconisistent->inconsistent
 inconsisent->inconsistent
 inconsisently->inconsistently
@@ -12841,6 +13436,7 @@ indciate->indicate
 inddex->index
 indecate->indicate
 indeces->indices
+indecies->indices
 indefinate->indefinite
 indefinately->indefinitely
 indefineable->undefinable
@@ -12861,7 +13457,6 @@ indentifier->identifier
 indentifies->identifies
 indentify->identify
 indentifying->identifying
-indention->indentation
 indentit->identity
 indentity->identity
 indenx->index
@@ -12927,7 +13522,6 @@ indispensible->indispensable
 indisputible->indisputable
 indisputibly->indisputably
 indistiguishable->indistinguishable
-indite->indict
 indivdual->individual
 indivdually->individually
 indivdualy->individually
@@ -13233,12 +13827,12 @@ inluding->including
 inludung->including
 inluence->influence
 inlusive->inclusive
-inly->only, inly,
 inmediate->immediate
 inmediatelly->immediately
 inmediately->immediately
 inmediatily->immediately
 inmediatly->immediately
+inmense->immense
 inmigrant->immigrant
 inmigrants->immigrants
 inmmediately->immediately
@@ -13348,6 +13942,7 @@ instaces->instances
 instaciate->instantiate
 instad->instead
 instade->instead
+instaead->instead
 instaed->instead
 instal->install
 instalation->installation
@@ -13768,6 +14363,9 @@ intquired->inquired, enquired,
 intquires->inquires, enquires,
 intquiries->inquiries, enquiries,
 intquiry->inquiry, enquiry,
+intraversion->introversion
+intravert->introvert
+intraverts->introverts
 intrduced->introduced
 intreeg->intrigue
 intreeged->intrigued
@@ -13857,6 +14455,7 @@ invisiable->invisible
 invisibile->invisible
 invisivble->invisible
 invlaid->invalid
+invlid->invalid
 invlisible->invisible
 invlove->involve
 invloved->involved
@@ -13888,7 +14487,6 @@ iresistibly->irresistibly
 iritable->irritable
 iritated->irritated
 ironicly->ironically
-irregardless->regardless
 irrelavent->irrelevant
 irrelevent->irrelevant
 irrelvant->irrelevant
@@ -13945,7 +14543,6 @@ iterrupt->interrupt
 itertation->iteration
 iteself->itself
 itesm->items
-ith->with, disabled because of ordinal form of i like nth
 itialise->initialise
 itialised->initialised
 itialises->initialises
@@ -14075,8 +14672,8 @@ klenex->kleenex
 klick->click
 klicked->clicked
 klicks->clicks
-knifes->knives
 knive->knife
+kno->know
 knowlage->knowledge
 knowlageable->knowledgeable
 knowlegde->knowledge
@@ -14203,7 +14800,6 @@ lcuase->clause
 leaast->least
 leace->leave
 leack->leak
-leaded->led, lead, leaded,
 leagacy->legacy
 leagal->legal
 leagalise->legalise
@@ -14224,7 +14820,6 @@ leanr->lean, learn, leaner,
 leapyear->leap year
 leapyears->leap years
 leary->leery
-leas->least, lease,
 leaset->least
 leat->lead, leak, least, leaf,
 leathal->lethal
@@ -14362,8 +14957,6 @@ liftime->lifetime
 ligh->light, lie, lye,
 ligher->lighter, liar, liger,
 lighers->lighters, liars, ligers,
-lightening->lightening, lightning, lighting,
-lightsensor->light sensor
 lightweigh->lightweight
 lightwight->lightweight
 lightyear->light year
@@ -14433,7 +15026,6 @@ listenters->listeners
 listernes->listeners
 listner->listener
 listners->listeners
-liszt->list, liszt,
 litature->literature
 liteautrue->literature
 literaly->literally
@@ -14468,7 +15060,6 @@ loactions->locations
 loadig->loading
 loadin->loading
 loadning->loading
-loafing->loading, loafing,
 locahost->localhost
 localation->location
 localed->located
@@ -14517,8 +15108,6 @@ lookes->looks
 looknig->looking
 looop->loop
 loopup->lookup
-loos->loose, lose,
-loosing->losing
 loosley->loosely
 loosly->loosely
 loosy->lossy
@@ -14528,7 +15117,6 @@ losened->loosened
 losted->lost
 lotation->rotation
 lotharingen->lothringen
-lousily->lousily, loosely,
 lowd->load
 lpatform->platform
 lsat->last
@@ -14651,7 +15239,6 @@ maneouvring->manoeuvring
 mangager->manager
 mangement->management
 mangementt->management
-manger->manager
 manifacture->manufacture
 manifacturer->manufacturer
 manifacturers->manufacturers
@@ -14722,7 +15309,6 @@ mapp->map
 mappeds->mapped
 mappping->mapping
 mapppings->mappings
-marge->merge
 marger->merger, marker,
 margers->mergers, markers,
 marging->margin, merging,
@@ -14730,7 +15316,7 @@ margings->margins
 mariabd->MariaDB
 mariage->marriage
 marjority->majority
-markes->marks, marked,
+markes->marks, marked, markers,
 marketting->marketing
 marmelade->marmalade
 marrage->marriage
@@ -14779,7 +15365,6 @@ mateials->materials, metals,
 mateiral->material
 mateirals->materials
 matemathical->mathematical
-mater->matter, master, mother, mater,
 materaial->material
 materaials->materials
 materail->material
@@ -14890,7 +15475,6 @@ medeival->medieval
 medevial->medieval
 medhod->method
 medhods->methods
-medias->media, mediums,
 mediciney->mediciny
 medievel->medieval
 mediterainnean->mediterranean
@@ -15058,7 +15642,6 @@ Microsofot->Microsoft
 Micrsft->Microsoft
 Micrsoft->Microsoft
 midified->modified
-midwifes->midwives
 migrateable->migratable
 migt->might, midget,
 migth->might
@@ -15148,6 +15731,7 @@ mintoring->mentoring, monitoring,
 mintors->mentors, monitors,
 minum->minimum
 minumum->minimum
+minuscle->minuscule
 minuts->minutes
 miplementation->implementation
 mirconesia->micronesia
@@ -15155,6 +15739,7 @@ mircosoft->Microsoft
 mirgate->migrate
 mirgated->migrated
 mirgates->migrates
+mirorr->mirror
 mirro->mirror
 mirroed->mirrored
 mirrorn->mirror
@@ -15236,7 +15821,6 @@ misterious->mysterious
 mistery->mystery
 misteryous->mysterious
 mistmatches->mismatches
-mitre->miter
 mittigate->mitigate
 miximum->maximum
 mixure->mixture
@@ -15254,6 +15838,7 @@ mnay->many
 mobify->modify
 mocule->module
 mocules->modules
+moddels->models
 modell->model
 moderm->modem
 modernination->modernization
@@ -15331,7 +15916,6 @@ mofified->modified
 mofifies->modifies
 mofify->modify
 mohammedans->muslims
-moil->soil, mohel,
 moint->mount
 moleclues->molecules
 momement->moment
@@ -15401,7 +15985,6 @@ moslty->mostly
 mostlky->mostly
 mosture->moisture
 mosty->mostly
-mot->not
 motation->notation, rotation, motivation,
 mothing->nothing
 motiviated->motivated
@@ -15410,7 +15993,6 @@ motononic->monotonic
 motoroloa->motorola
 moudle->module
 moudule->module
-moue->mouse
 mounth->month, mouth,
 mountian->mountain
 mountpiont->mountpoint
@@ -15424,7 +16006,6 @@ moutnpoints->mountpoints
 moutns->mounts
 movebackwrd->movebackward
 moveble->movable
-movei->movie, disabled due to assembly code
 movemement->movement
 movemements->movements
 movememnt->movement
@@ -15519,7 +16100,6 @@ muscicians->musicians
 musn't->mustn't
 mustator->mutator
 muste->must
-mut->must, mutt, moot, disabled because of Rust keyword
 mutablity->mutability
 mutbale->mutable
 mutch->much
@@ -15576,6 +16156,7 @@ namnes->names
 namnespace->namespace
 namnespaces->namespaces
 nams->names
+nane->name
 nanosencond->nanosecond
 nanosenconds->nanoseconds
 Naploeon->Napoleon
@@ -15615,6 +16196,7 @@ neccessarily->necessarily
 neccessarry->necessary
 neccessary->necessary
 neccessities->necessities
+neccisary->necessary
 neccsessary->necessary
 necesarily->necessarily
 necesarrily->necessarily
@@ -15875,12 +16457,195 @@ neigbour->neighbour, neighbor,
 neigbourhood->neighbourhood
 neigbouring->neighbouring, neighboring,
 neigbours->neighbours, neighbors,
+neighbar->neighbor
+neighbarhood->neighborhood
+neighbarhoods->neighborhoods
+neighbaring->neighboring
+neighbars->neighbors
+neighbbor->neighbor
+neighbborhood->neighborhood
+neighbborhoods->neighborhoods
+neighbboring->neighboring
+neighbbors->neighbors
+neighbeard->neighborhood
+neighbeards->neighborhoods
+neighbehood->neighborhood
+neighbehoods->neighborhoods
+neighbeing->neighboring
+neighbeod->neighborhood
+neighbeods->neighborhoods
+neighbeor->neighbor
+neighbeordhood->neighborhood
+neighbeordhoods->neighborhoods
+neighbeorhod->neighborhood
+neighbeorhods->neighborhoods
+neighbeorhood->neighborhood
+neighbeorhoods->neighborhoods
+neighbeors->neighbors
+neighber->neighbor
+neighbergh->neighbor
+neighberghs->neighbors
+neighberhhod->neighborhood
+neighberhhods->neighborhoods
+neighberhhood->neighborhood
+neighberhhoods->neighborhoods
+neighberhing->neighboring
+neighberhod->neighborhood
+neighberhodd->neighborhood
+neighberhodds->neighborhoods
+neighberhods->neighborhoods
+neighberhood->neighborhood
+neighberhooding->neighboring
+neighberhoods->neighborhoods
+neighberhoof->neighborhood
+neighberhoofs->neighborhoods
+neighberhoood->neighborhood
+neighberhooods->neighborhoods
+neighberhoor->neighbor
+neighberhoors->neighbors
+neighberhoud->neighborhood
+neighberhouds->neighborhoods
+neighbering->neighboring
+neighbers->neighbors
+neighbes->neighbors
+neighbet->neighbor
+neighbethood->neighborhood
+neighbethoods->neighborhoods
+neighbets->neighbors
+neighbeuing->neighbouring
+neighbeurgh->neighbour
+neighbeurghs->neighbours
+neighbeurhing->neighbouring
+neighbeurhooding->neighbouring
+neighbeurhoor->neighbour
+neighbeurhoors->neighbours
+neighbeus->neighbours
+neighbeut->neighbour
+neighbeuthood->neighbourhood
+neighbeuthoods->neighbourhoods
+neighbeuts->neighbours
+neighbhor->neighbor
+neighbhorhood->neighborhood
+neighbhorhoods->neighborhoods
+neighbhoring->neighboring
+neighbhors->neighbors
+neighboard->neighborhood
+neighboards->neighborhoods
+neighbohood->neighborhood
+neighbohoods->neighborhoods
+neighboing->neighboring
+neighbood->neighborhood
+neighboods->neighborhoods
 neighboor->neighbor, neighbour,
+neighboordhood->neighborhood
+neighboordhoods->neighborhoods
+neighboorhod->neighborhood
+neighboorhods->neighborhoods
+neighboorhood->neighborhood
+neighboorhoods->neighborhoods
+neighbooring->neighboring
 neighboors->neighbors, neighbours,
-neighbout->neighbor
+neighborgh->neighbor
+neighborghs->neighbors
+neighborhhod->neighborhood
+neighborhhods->neighborhoods
+neighborhhood->neighborhood
+neighborhhoods->neighborhoods
+neighborhing->neighboring
+neighborhod->neighborhood
+neighborhodd->neighborhood
+neighborhodds->neighborhoods
+neighborhods->neighborhoods
+neighborhooding->neighboring
+neighborhoof->neighborhood
+neighborhoofs->neighborhoods
+neighborhoood->neighborhood
+neighborhooods->neighborhoods
+neighborhoor->neighbor
+neighborhoors->neighbors
+neighborhoud->neighborhood
+neighborhouds->neighborhoods
+neighbos->neighbors
+neighbot->neighbor
+neighbothood->neighborhood
+neighbothoods->neighborhoods
+neighbots->neighbors
+neighbouing->neighbouring
+neighbourgh->neighbour
+neighbourghs->neighbours
+neighbourhhod->neighbourhood
+neighbourhhods->neighbourhoods
+neighbourhhood->neighbourhood
+neighbourhhoods->neighbourhoods
+neighbourhing->neighbouring
+neighbourhod->neighbourhood
+neighbourhodd->neighbourhood
+neighbourhodds->neighbourhoods
+neighbourhods->neighbourhoods
+neighbourhooding->neighbouring
+neighbourhoof->neighbourhood
+neighbourhoofs->neighbourhoods
+neighbourhoood->neighbourhood
+neighbourhooods->neighbourhoods
+neighbourhoor->neighbour
+neighbourhoors->neighbours
+neighbourhoud->neighbourhood
+neighbourhouds->neighbourhoods
+neighbous->neighbours
+neighbout->neighbour
+neighbouthood->neighbourhood
+neighbouthoods->neighbourhoods
+neighbouts->neighbours
+neighbr->neighbor
+neighbrs->neighbors
+neighbur->neighbor
+neighburhood->neighborhood
+neighburhoods->neighborhoods
+neighburing->neighboring
+neighburs->neighbors
+neigher->neither
+neighobr->neighbor
+neighobrhood->neighborhood
+neighobrhoods->neighborhoods
+neighobring->neighboring
+neighobrs->neighbors
+neighor->neighbor
+neighorhood->neighborhood
+neighorhoods->neighborhoods
+neighoring->neighboring
+neighors->neighbors
+neighour->neighbour
+neighourhood->neighbourhood
+neighourhoods->neighbourhoods
+neighouring->neighbouring
+neighours->neighbours
+neighror->neighbour
+neighrorhood->neighbourhood
+neighrorhoods->neighbourhoods
+neighroring->neighbouring
+neighrors->neighbours
+neighrour->neighbour
+neighrourhood->neighbourhood
+neighrourhoods->neighbourhoods
+neighrouring->neighbouring
+neighrours->neighbours
+neight->neither
+neightbor->neighbor
+neightborhood->neighborhood
+neightborhoods->neighborhoods
+neightboring->neighboring
+neightbors->neighbors
 neightbour->neighbour
+neightbourhood->neighbourhood
+neightbourhoods->neighbourhoods
+neightbouring->neighbouring
 neightbours->neighbours
 neighter->neither
+neightobr->neighbor
+neightobrhood->neighborhood
+neightobrhoods->neighborhoods
+neightobring->neighboring
+neightobrs->neighbors
 neiter->neither
 nelink->netlink
 nenviroment->environment
@@ -15918,6 +16683,7 @@ netwroks->networks
 netwrork->network
 neumeric->numeric
 nevere->never
+neveretheless->nevertheless
 nevers->never
 neverthless->nevertheless
 newletters->newsletters
@@ -15926,7 +16692,6 @@ neworks->networks
 newslines->newlines
 newtork->network
 Newyorker->New Yorker
-nickle->nickel
 nighbor->neighbor
 nighborhood->neighborhood
 nighboring->neighboring
@@ -16112,7 +16877,6 @@ nowadys->nowadays
 nowdays->nowadays
 nowe->now
 ntification->notification
-nto->not, disabled due to \n
 nuber->number
 nubering->numbering
 nubmer->number
@@ -16555,6 +17319,7 @@ optionalliy->optionally
 optionallly->optionally
 optionaly->optionally
 optionel->optional
+optiones->options
 optionial->optional
 optionn->option
 optionnal->optional
@@ -16705,13 +17470,26 @@ othere->other
 otherewise->otherwise
 otherise->otherwise
 otheriwse->otherwise
+otherwaise->otherwise
+otherways->otherwise
+otherweis->otherwise
+otherweise->otherwise
+otherwhere->elsewhere
+otherwhile->otherwise
 otherwhise->otherwise
 otherwice->otherwise
 otherwis->otherwise
 otherwize->otherwise
 otherwordly->otherworldly
+otherwose->otherwise
+otherwrite->overwrite
+otherws->otherwise
 otherwse->otherwise
 otherwsie->otherwise
+otherwsise->otherwise
+otherwuise->otherwise
+otherwwise->otherwise
+otherwyse->otherwise
 othewice->otherwise
 othewise->otherwise
 othewize->otherwise
@@ -16926,6 +17704,8 @@ paermissions->permissions
 paeth->path
 pagagraph->paragraph
 pahses->phases
+paht->path, pat, part,
+pahts->paths, pats, parts,
 paide->paid
 paied->paid, paired,
 painiting->painting
@@ -16961,7 +17741,6 @@ paniced->panicked
 panicing->panicking
 pannel->panel
 pannels->panels
-panting->panting, painting,
 pantomine->pantomime
 paoition->position
 paor->pair
@@ -17184,7 +17963,6 @@ pattersn->patterns
 pattren->pattern, patron,
 pattrens->patterns, patrons,
 pavillion->pavilion
-payed->paid
 paínt->paint
 pblisher->publisher
 pbulisher->publisher
@@ -17492,7 +18270,6 @@ plaftorms->platforms
 plagarism->plagiarism
 plalform->platform
 planation->plantation
-planed->planned
 plantext->plaintext
 plantiff->plaintiff
 plase->please
@@ -17529,11 +18306,11 @@ playgerize->plagiarize
 playright->playwright
 playwrite->playwright
 playwrites->playwrights
+pleaase->please
 pleacing->placing
 pleae->please
 pleaee->please
 pleaes->please
-pleas->please
 pleasd->pleased
 pleasent->pleasant
 pleasently->pleasantly
@@ -17569,6 +18346,8 @@ poeple->people
 poer->power
 poety->poetry
 pogress->progress
+poind->point
+poindcloud->pointcloud
 poiner->pointer
 poing->point
 poinits->points
@@ -17996,10 +18775,7 @@ prefferable->preferable
 prefferably->preferably
 preffered->preferred
 prefices->prefixes
-preform->perform
 preformance->performance
-preformed->performed
-preforms->performs
 pregancies->pregnancies
 prehaps->perhaps
 preiod->period
@@ -18018,6 +18794,7 @@ Premonasterians->Premonstratensians
 premption->preemption
 premptive->preemptive
 premptively->preemptively
+preocess->process
 preocupation->preoccupation
 preoperty->property
 prepair->prepare
@@ -18055,7 +18832,6 @@ prerequsites->prerequisites
 preriod->period
 preriodic->periodic
 prersistent->persistent
-pres->press
 presance->presence
 prescrition->prescription
 prescritions->prescriptions
@@ -18529,7 +19305,6 @@ prority->priority
 proseletyzing->proselytizing
 prosess->process
 prosessor->processor
-prosses->process, processes, possess, prosses,
 prosseses->processes, possesses,
 protable->portable
 protaganist->protagonist
@@ -18692,7 +19467,6 @@ purcahed->purchased
 purcahse->purchase
 purgest->purges
 puritannical->puritanical
-purportive->supportive, purportive,
 purposedly->purposely
 purpotedly->purportedly
 purpse->purpose
@@ -18744,7 +19518,6 @@ quatation->quotation
 quater->quarter
 quckstarter->quickstarter
 qudrangles->quadrangles
-que->queue
 quee->queue
 Queenland->Queensland
 queing->queueing
@@ -19082,8 +19855,6 @@ readabilty->readability
 readapted->re-adapted
 readble->readable
 readby->read, read by,
-readd->readd, re-add, read,
-readded->readded, read,
 readeable->readable
 readed->read, readd, readded,
 reademe->README
@@ -19118,7 +19889,6 @@ realtions->relations, reactions,
 realtive->relative, reactive,
 realy->really
 realyl->really
-ream->ream, stream,
 reamde->README
 reamins->remains
 reampping->remapping, revamping,
@@ -19272,6 +20042,8 @@ recivership->receivership
 recives->receives
 reciving->receiving
 reclaimation->reclamation
+recnt->recent, recant, rent,
+recntly->recently
 recod->record
 recofig->reconfig
 recoginizing-->recognizing
@@ -19519,7 +20291,6 @@ referensed->referenced
 referenses->references
 referenz->reference
 referenzes->references
-referer->referrer, disabled as in http 1.0 spec
 refererd->referred
 refererence->reference
 referers->referrer, referrers,
@@ -19706,7 +20477,6 @@ reknowned->renowned
 rekursed->recursed
 rekursion->recursion
 rekursive->recursive
-rela->real, disabled due to lots of false positives
 relaative->relative
 relaease->release
 relaese->release
@@ -19720,7 +20490,10 @@ relaive->relative
 relaly->really
 relase->release
 relased->released
+relaser->releaser
 relases->releases
+relashionship->relationship
+relashionships->relationships
 relasing->releasing
 relatated->related
 relatd->related
@@ -19825,6 +20598,10 @@ rememembers->remembers
 rememer->remember
 rememered->remembered
 rememers->remembers
+rememor->remember
+rememored->remembered
+rememoring->remembering
+rememors->remembers
 rememver->remember
 remenant->remnant
 remenber->remember
@@ -20231,6 +21008,13 @@ reprocuce->reproduce, reprocure,
 reprocuced->reproduced, reprocured,
 reprocuces->reproduces, reprocures,
 reprocucing->reproducing, reprocuring,
+reprodice->reproduce
+reprodiced->reproduced
+reprodicibility->reproducibility
+reprodicible->reproducible
+reprodicibly->reproducibly
+reprodicing->reproducing
+reprodiction->reproduction
 reproducabely->reproducibly
 reproducability->reproducibility
 reproducable->reproducible
@@ -20593,7 +21377,6 @@ retruns->returns
 retsart->restart
 retsarts->restarts
 retun->return
-retuned->retuned, returned,
 retunr->return, retune,
 retunrned->returned
 retunrs->returns
@@ -20615,7 +21398,6 @@ returnning->returning
 returs->returns
 retursn->returns
 retutning->returning
-retying->retrying
 reudce->reduce
 reudced->reduced
 reudces->reduces
@@ -20669,7 +21451,6 @@ reverce->reverse
 reverced->reversed
 reverece->reference, reverence,
 revereces->references
-revered->revered, reversed,
 reverese->reverse
 reveresed->reversed
 reveret->revert
@@ -20693,8 +21474,12 @@ rewirtable->rewritable
 rewirte->rewrite
 rewirtten->rewritten
 rewitable->rewritable
+rewite->rewrite
 rewitten->rewritten
+reworkd->reworked
+rewriable->rewritable, reliable,
 rewriet->rewrite
+rewriite->rewrite
 rewrited->rewrote, rewritten,
 rewriten->rewritten
 rewritting->rewriting
@@ -20715,7 +21500,6 @@ rigt->right
 rigth->right
 rigths->rights
 rigurous->rigorous
-rime->rhyme, rime,
 riminder->reminder
 riminders->reminders
 riminding->reminding
@@ -20749,6 +21533,7 @@ rocord->record
 roduce->reduce, produce,
 roduceer->producer
 roomate->roommate
+ropeat->repeat
 rorated->rotated
 rotaion->rotation
 rotaions->rotations
@@ -20762,7 +21547,6 @@ rotatio->rotation
 rotatios->rotations
 rotats->rotates
 rouding->rounding
-rouge->rogue, rouge,
 roughtly->roughly
 rougly->roughly
 rouine->routine
@@ -20889,13 +21673,11 @@ saphire->sapphire
 saphires->sapphires
 sargant->sergeant
 sargeant->sergeant
-sargent->sergeant, argent,
 sarting->starting, sorting,
 sastisfies->satisfies
 sasy->says, sassy,
 satandard->standard
 satandards->standards
-sate->state, sate,
 satelite->satellite
 satelites->satellites
 satelitte->satellite
@@ -20924,7 +21706,6 @@ satuaday->Saturday
 satuadays->Saturdays
 saught->sought
 sav->save
-savable->saveable
 savees->saves
 saveing->saving
 savelt->svelte, save it,
@@ -20972,6 +21753,10 @@ scenegraaph->scenegraph
 scenegraaphs->scenegraphs
 sceond->second
 sceonds->seconds
+scetch->sketch
+scetched->sketched
+scetches->sketches
+scetching->sketching
 schdule->schedule
 schduled->scheduled
 schduleing->scheduling
@@ -21012,6 +21797,10 @@ scipting->scripting
 scipts->scripts, skips,
 scirpt->script
 scirpts->scripts
+scketch->sketch
+scketched->sketched
+scketches->sketches
+scketching->sketching
 sclar->scalar
 scneario->scenario
 scnearios->scenarios
@@ -21051,6 +21840,11 @@ scrollin->scrolling
 scroolbar->scrollbar
 scrren->screen
 scrutinity->scrutiny
+sction->section, suction,
+sctional->sectional, suctional,
+sctioned->sectioned, suctioned,
+sctioning->sectioning, suctioning,
+sctions->sections, suctions,
 scuccessully->successfully
 scuptures->sculptures
 seach->search
@@ -21065,8 +21859,6 @@ searcheable->searchable
 searchin->searching
 searchs->searches
 seatch->search
-secant->second, disabled due to valid mathematical concept
-secants->seconds, disabled due to valid mathematical concept
 secceeded->seceded, succeeded,
 seccond->second
 secconds->seconds
@@ -21116,7 +21908,6 @@ securuity->security
 sedereal->sidereal
 seeem->seem
 seeen->seen
-seeked->sought, disabled because of JS event name
 seelect->select
 seemes->seems
 seemless->seamless
@@ -21414,7 +22205,9 @@ serivce->service
 serivces->services
 sersies->series
 sertificate->certificate
+sertificated->certificated
 sertificates->certificates
+sertification->certification
 servce->service
 servces->services
 serveice->service
@@ -21451,7 +22244,6 @@ settingss->settings
 settins->settings
 settlment->settlement
 settng->setting
-setts->sets
 settter->setter
 settters->setters
 settting->setting
@@ -21467,6 +22259,7 @@ severirities->severities
 severite->severity
 severites->severities
 severitie->severity, severities,
+severl->several
 severley->severely
 severly->severely
 sevice->service
@@ -21619,7 +22412,6 @@ sigals->signals, sigils,
 siganture->signature
 sigantures->signatures
 sigen->sign
-sightly->slightly
 sigificance->significance
 siginificant->significant
 siginificantly->significantly
@@ -21713,15 +22505,11 @@ simultanous->simultaneous
 simultanously->simultaneously
 simutaneously->simultaneously
 sinature->signature
-sinc->sinc, synch, sync, sink, since, disabled due to valid mathematical concept
 sincerley->sincerely
 sincerly->sincerely
-sincs->sincs, syncs, sinks, since,
 singal->signal, single,
 singaled->signaled
 singals->signals
-singe->singe, single,
-singed->signed, singled, singed,
 singel->single, signal,
 singelar->singular
 singelarity->singularity
@@ -21826,6 +22614,7 @@ slient->silent
 sliently->silently
 slighlty->slightly
 slighly->slightly
+slightl->slightly
 slighty->slightly
 slignt->slight
 sligntly->slightly
@@ -21833,11 +22622,11 @@ sligth->slight
 sligthly->slightly
 sligtly->slightly
 sliped->slipped
-slippy->slippery
 sliseshow->slideshow
 slowy->slowly
 sluggify->slugify
 smae->same
+smal->small
 smaler->smaller
 smallar->smaller
 smalles->smallest
@@ -21935,6 +22724,7 @@ sometinhg->something
 somewere->somewhere
 somewher->somewhere
 somewho->somehow
+somme->some
 somthign->something
 somthing->something
 somtimes->sometimes
@@ -22050,14 +22840,12 @@ speciafied->specified
 specialiced->specialised, specialized,
 specialitzed->specialised, specialized,
 speciallized->specialised, specialized,
-specialties->specialities
 specialy->specially
 specic->specific
 specication->specification
 specidic->specific
 specied->specified
 speciefied->specified
-specif->specific, specify,
 specifactions->specifications
 specifc->specific
 specifcation->specification
@@ -22354,7 +23142,6 @@ stocahstic->stochastic
 stocastic->stochastic
 stoer->store
 stoers->stores
-stoll->still, disabled because of name clash in C++
 stomache->stomach
 stompted->stomped
 stong->strong
@@ -22380,7 +23167,6 @@ stragedy->strategy
 stragegy->strategy
 straigh-forward->straightforward
 straighforward->straightforward
-straightaway->straight away
 straightfoward->straightforward
 straigt->straight
 straigth->straight
@@ -22476,6 +23262,9 @@ strucutred->structured
 strucutres->structures
 strucuture->structure
 struggel->struggle
+struggeled->struggled
+struggeling->struggling
+struggels->struggles
 struttural->structural
 strutture->structure
 struture->structure
@@ -22523,8 +23312,14 @@ subdivisio->subdivision
 subdivisiond->subdivisioned
 subelemet->subelement
 subelemets->subelements
+subexperesion->subexpression
+subexperesions->subexpressions
 subexperession->subexpression
 subexperessions->subexpressions
+subexperssion->subexpression
+subexperssions->subexpressions
+subexpession->subexpression
+subexpessions->subexpressions
 subexpresssion->subexpression
 subexpresssions->subexpressions
 subfroms->subforms
@@ -22754,6 +23549,7 @@ suceeded->succeeded
 suceeding->succeeding
 suceeds->succeeds
 suces->success
+suceses->successes
 sucesful->successful
 sucesfull->successful
 sucesfully->successfully
@@ -22779,10 +23575,14 @@ sucessiv->successive
 sucessive->successive
 sucessively->successively
 sucessor->successor
+sucessors->successors
 sucessot->successor
 sucesss->success
 sucessses->successes
+sucesssful->successful
+sucesssfull->successful
 sucesssfully->successfully
+sucesssfuly->successfully
 sucessufll->successful
 sucessuflly->successfully
 sucessully->successfully
@@ -22864,6 +23664,7 @@ superfluious->superfluous
 superfluos->superfluous
 superfulous->superfluous
 superintendant->superintendent
+superopeator->superoperator
 supersed->superseded
 superseedd->superseded
 superseede->supersede
@@ -22923,7 +23724,6 @@ suppported->supported
 suppporting->supporting
 suppports->supports
 suppres->suppress
-suppressable->suppressable, suppressible,
 suppressingd->suppressing
 supprt->support
 supprted->supported
@@ -23430,11 +24230,37 @@ temporarilu->temporary
 temporarirly->temporarily
 temporarly->temporarily, temporary,
 temporay->temporary
+tempories->temporaries
 temporily->temporarily
+tempororaries->temporaries
+tempororarily->temporarily
+tempororary->temporary
+temporories->temporaries
+tempororily->temporarily
+temporory->temporary
+temporraies->temporaries
+temporraily->temporarily
+temporraries->temporaries
+temporrarily->temporarily
+temporrary->temporary
+temporray->temporary
+temporries->temporaries
+temporrily->temporarily
+temporry->temporary
+temportal->temporal
+temportaries->temporaries
+temportarily->temporarily
+temportary->temporary
 tempory->temporary
+temporyries->temporaries
+temporyrily->temporarily
+temporyry->temporary
 temprarily->temporarily
 temprary->temporary, temporarily,
 temprature->temperature
+tempratures->temperatures
+tempreature->temperature
+tempreatures->temperatures
 temproarily->temporarily
 temproary->temporary
 temproraily->temporarily
@@ -23545,7 +24371,6 @@ thats->that's
 thats;->that's
 thay->they
 thck->thick
-thead->thread, disabled due to the HTML tag
 theard->thread
 thearding->threading
 theards->threads
@@ -23556,6 +24381,7 @@ theer->there
 theery->theory
 theese->these
 thefore->therefore
+thei->their, they,
 theif->thief
 theifs->thieves
 theire->their, they're,
@@ -23578,8 +24404,6 @@ therafter->thereafter
 therapudic->therapeutic
 therby->thereby
 thereads->threads
-therefor->therefore, therefor,
-therefrom->there from
 therem->there, theorem,
 thereom->theorem
 thererin->therein
@@ -23590,7 +24414,6 @@ thermostast->thermostat
 therough->through, thorough,
 therstat->thermostat
 thes->this, these,
-theses->these, thesis, theses,
 theshold->threshold
 thesholds->thresholds
 thess->this, these,
@@ -23644,8 +24467,6 @@ thnaks->thanks
 thne->then
 thnig->thing
 thnigs->things
-tho->though, to, thou, tho,
-thoe->those, though,
 thonic->chthonic
 thorugh->through, thorough,
 thoruoghly->thoroughly
@@ -23706,7 +24527,6 @@ throuh->through
 throuth->through
 throwed->threw, thrown,
 throwgh->through
-thru->through, thru,
 thrue->through
 thruogh->through
 thruoghout->throughout
@@ -23731,6 +24551,9 @@ thurrow->thorough
 thurver->further
 thw->the, thaw,
 thyat->that
+tich->thick, tick, titch, stitch,
+tichened->thickened
+tichness->thickness
 tieing->tying
 tiem->time, item,
 tiemout->timeout
@@ -23750,7 +24573,6 @@ tigthens->tightens
 tigthly->tightly
 tihkn->think
 tihs->this
-tim->time, Tim, disabled due to being a person's name
 timedlta->timedelta
 timeing->timing
 timeot->timeout
@@ -23793,7 +24615,6 @@ tobbaco->tobacco
 tobot->robot
 toches->touches
 tocksen->toxin
-todays->today's, disabled because of var names
 todya->today
 toekn->token
 togehter->together
@@ -23805,7 +24626,6 @@ toglle->toggle
 toglled->toggled
 togther->together
 toi->to, toy,
-toke->took
 tolarable->tolerable
 tolelerance->tolerance
 tolen->token
@@ -24122,8 +24942,33 @@ traspose->transpose
 trasposed->transposed
 trasposition->transposition
 traspositions->transpositions
+traved->traversed
+traveersal->traversal
+traveerse->traverse
+traveersed->traversed
+traveerses->traverses
+traveersing->traversing
 traveral->traversal
+travercal->traversal
+traverce->traverse
+traverced->traversed
+traverces->traverses
+travercing->traversing
+travere->traverse
+travered->traversed
+traveres->traverse
+traveresal->traversal
+traverese->traverse, traverses,
+traveresed->traversed
+travereses->traverses
+traveresing->traversing
+travering->traversing
+traverls->travels, traversals,
+travesal->traversal
 travese->traverse
+travesed->traversed
+traveses->traverses
+travesing->traversing
 tre->tree
 treadet->treated
 treak->treat, tweak,
@@ -24294,7 +25139,6 @@ uesd->used
 uggly->ugly
 ugglyness->ugliness
 uglyness->ugliness
-uint->unit, disabled due to being a data type
 uique->unique
 uise->use
 uite->suite
@@ -24527,9 +25371,24 @@ unexpectd->unexpected
 unexpectdly->unexpectedly
 unexpecte->unexpected
 unexpectend->unexpected
+unexpeected->unexpected
+unexpeectedly->unexpectedly
+unexpepected->unexpected
+unexpepectedly->unexpectedly
+unexpepted->unexpected
+unexpeptedly->unexpectedly
+unexpetced->unexpected
+unexpetcedly->unexpectedly
+unexpetcted->unexpected
+unexpetctedly->unexpectedly
+unexpetect->unexpected
+unexpetectly->unexpectedly
 unexpeted->unexpected
 unexpetedly->unexpectedly
+unexpexcted->unexpected
+unexpexctedly->unexpectedly
 unexpexted->unexpected
+unexpextedly->unexpectedly
 unexspected->unexpected
 unflaged->unflagged
 unflexible->inflexible
@@ -24654,8 +25513,6 @@ unknon->unknown
 unknonw->unknown
 unknonwn->unknown
 unknonws->unknowns
-unknow->unknown, unknow,
-unknows->unknowns, unknows,
 unknwoing->unknowing
 unknwoingly->unknowingly
 unknwon->unknown
@@ -24868,6 +25725,8 @@ unsuccesfully->unsuccessfully
 unsuccessfull->unsuccessful
 unsuccessfullly->unsuccessfully
 unsucesful->unsuccessful
+unsucesfull->unsuccessful
+unsucesfully->unsuccessfully
 unsucesfuly->unsuccessfully
 unsucessefully->unsuccessfully
 unsucessflly->unsuccessfully
@@ -24876,7 +25735,11 @@ unsucessful->unsuccessful
 unsucessfull->unsuccessful
 unsucessfully->unsuccessfully
 unsucessfuly->unsuccessfully
+unsucesssful->unsuccessful
+unsucesssfull->unsuccessful
 unsucesssfully->unsuccessfully
+unsucesssfuly->unsuccessfully
+unsucessufll->unsuccessful
 unsucessuflly->unsuccessfully
 unsucessully->unsuccessfully
 unsued->unused
@@ -24903,6 +25766,7 @@ unsychronised->unsynchronised
 untargetted->untargeted
 unter->under
 untill->until
+untils->until, utils,
 untintuitive->unintuitive
 untoched->untouched
 untqueue->unqueue
@@ -24910,7 +25774,6 @@ untrached->untracked
 untranslateable->untranslatable
 untrasposed->untransposed
 untrustworty->untrustworthy
-untypically->atypically
 unued->unused
 ununsed->unused
 ununsual->unusual
@@ -25307,7 +26170,6 @@ versoin->version
 verson->version
 versoned->versioned
 versons->versions
-vertexes->vertices
 vertextes->vertices
 vertexts->vertices
 vertial->vertical
@@ -25343,7 +26205,6 @@ vhild->child
 viatnamese->vietnamese
 vicefersa->vice-versa
 videostreamming->videostreaming
-vie->via
 vieport->viewport
 vieports->viewports
 vietnamesea->Vietnamese
@@ -25394,7 +26255,6 @@ visably->visibly
 visble->visible
 visblie->visible
 visbly->visibly
-vise->vice, vise,
 visiable->visible
 visiably->visibly
 visibale->visible
@@ -25538,10 +26398,7 @@ wakeus->wakeups
 wakup->wakeup
 wallthickness->wall thickness
 wan't->want, wasn't,
-wan->want
 wan;t->want, wasn't,
-wanna->want to, disabled because one might want to allow informal spelling
-want's->wants
 want;s->wants
 wantto->want to
 wappers->wrappers
@@ -25600,7 +26457,6 @@ weired->weird
 weitght->weight
 well-reknown->well-renowned, well renown,
 well-reknowned->well-renowned, well renowned,
-wen->we, when,
 wendesday->Wednesday
 wendsay->Wednesday
 wensday->Wednesday
@@ -25621,7 +26477,6 @@ whataver->whatever
 whatepsace->whitespace
 whatepsaces->whitespaces
 whather->whether, weather,
-whats->what's
 whch->which
 whcih->which
 whe->when, we,
@@ -25637,7 +26492,6 @@ wherease->whereas
 whereever->wherever
 wherether->whether
 whery->where
-whet->when, what, wet, whet,
 wheteher->whether
 whetehr->whether
 wheter->whether
@@ -25652,7 +26506,6 @@ whicht->which
 whihc->which
 whihch->which
 whilest->whilst
-whiling->while
 whilw->while
 whioch->which
 whiped->wiped
@@ -25706,9 +26559,7 @@ wiew->view
 wigdet->widget
 wigdets->widgets
 wighed->weighed, wicked,
-wight->weight, white, right, wight,
 wighted->weighted, weighed,
-wights->weights, whites, rights, wights,
 wih->with
 wihch->which
 wihich->which
@@ -25746,28 +26597,36 @@ wirth->with, worth,
 wirting->writing
 wirtten->written
 wirtual->virtual
-wit->wit, with,
 witable->writeable
 witdh->width
 wite->write, white,
 witha->with a, with,
 withdrawl->withdrawal, withdraw,
-withe->with
 witheld->withheld
 withh->with
 withih->within
-withing->within
 withinn->within
 withion->within
 witho->with
+withoit->without
 withold->withhold
+witholding->withholding
+withon->within
+withoout->without
+withot->without
+withotu->without
 withou->without
 withoud->without
 withoug->without
 withough->without
 withought->without
+withouht->without
+withount->without
 withour->without, with our,
+withourt->without
+withous->without
 withouth->without
+withouyt->without
 withs->with, widths,
 witht->with
 withthe->with the
@@ -25806,7 +26665,6 @@ won;t->won't
 wonderfull->wonderful
 wonderig->wondering
 wont't->won't
-wont->won't, wont,
 woraround->workaround
 worarounds->workarounds
 worbench->workbench
@@ -25866,7 +26724,6 @@ wouldn;t->wouldn't
 wouldnt'->wouldn't
 wouldnt->wouldn't
 wouldnt;->wouldn't
-wounder->wonder, wounder,
 wounderful->wonderful
 wouold->would
 wouuld->would
@@ -25971,7 +26828,6 @@ ziping->zipping
 zlot->slot
 zombe->zombie
 zomebie->zombie
-zoon->zoom, zoon,
 zuser->user
 __cpluspus->__cplusplus
 __cpusplus->__cplusplus
