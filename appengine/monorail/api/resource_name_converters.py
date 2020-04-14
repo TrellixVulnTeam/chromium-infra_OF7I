@@ -48,7 +48,7 @@ HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
     HOTLIST_NAME_TMPL)
 
 ISSUE_NAME_TMPL = 'projects/{project}/issues/{local_id}'
-
+COMMENT_NAME_TMPL = '%s/comments/{comment_id}' % ISSUE_NAME_TMPL
 USER_NAME_TMPL = 'users/{user_id}'
 
 ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_name}'
@@ -186,6 +186,28 @@ def ConvertHotlistItemNames(cnxn, hotlist_id, issue_ids, services):
 # Issues
 
 
+def ConvertCommentNames(issue_local_id, issue_project, comment_sequence_ids):
+  # type: (int, str, Sequence[int]) -> Mapping[int, str]
+  """Returns the resource names for the given comments.
+
+  Args:
+    issue_local_id: local id of the issue for which we're converting comments.
+    issue_project: the project of the issue for which we're converting comments.
+    comment_sequence_ids: sequence ids of comments on the given issue.
+        TODO(crbug.com/monorail/7507): Resolve permanence of resource name.
+
+  Returns:
+    A mapping from comment IDs to comment resource names.
+  """
+  comment_id_to_names = {}
+  for comment_sequence_id in comment_sequence_ids:
+    comment_id_to_names[comment_sequence_id] = COMMENT_NAME_TMPL.format(
+        project=issue_project,
+        local_id=issue_local_id,
+        comment_id=comment_sequence_id)
+  return comment_id_to_names
+
+
 def IngestIssueName(cnxn, name, services):
   # MonorailConnection, str, Services -> int
   """Takes an Issue resource name and returns its global ID.
@@ -230,7 +252,6 @@ def IngestIssueNames(cnxn, names, services):
     project_local_id_pairs.append(
         (match.group('project'), int(match.group('local_id'))))
   return _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services)
-
 
 
 def ConvertIssueName(cnxn, issue_id, services):

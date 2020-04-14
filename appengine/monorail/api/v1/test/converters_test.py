@@ -287,6 +287,37 @@ class ConverterFunctionsTest(unittest.TestCase):
         hotlist.hotlist_id, hotlist.items)
     self.assertEqual(api_items, [])
 
+  def testConvertComments(self):
+    """We can convert comments."""
+    # TODO(jessan): test convert second comment.
+    # non-description (and 2nd description?)
+    # deleted_by
+    # appproval
+    # amendments
+    # attachments
+    # inbound_message (is ignored)
+    # spam
+    # importer_id (is ignored)
+
+    comment_0 = tracker_pb2.IssueComment(
+        project_id=self.issue_1.project_id,
+        issue_id=self.issue_1.issue_id,
+        user_id=self.user_1.user_id,
+        timestamp=self.PAST_TIME,
+        content='x',
+        sequence=0,
+        is_description=True,
+        description_num='1')
+    self.services.issue.TestAddComment(comment_0, self.issue_1.local_id)
+    expected_0 = issue_objects_pb2.Comment(
+        name='projects/proj/issues/1/comments/0')
+    self.assertEqual(
+        self.converter.ConvertComments(self.issue_1, [comment_0]), [expected_0])
+
+  def testConvertComments_Empty(self):
+    """We can convert an empty list of comments."""
+    self.assertEqual(self.converter.ConvertComments(self.issue_1, []), [])
+
   def testConvertIssue(self):
     """We can convert a single issue."""
     self.assertEqual(self.converter.ConvertIssue(self.issue_1),

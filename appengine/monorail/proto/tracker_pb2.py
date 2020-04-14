@@ -306,6 +306,7 @@ class IssueComment(messages.Message):
   # Sequence number of the comment
   # The field is optional for compatibility with code existing before
   # this field was added.
+  # In practice, issue_svc sets this for all comments in GetCommentsForIssue.
   sequence = messages.IntegerField(26)
 
   # The body text of the inbound email that caused this issue comment

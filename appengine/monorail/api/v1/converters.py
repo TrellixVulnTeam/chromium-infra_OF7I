@@ -174,6 +174,21 @@ class Converter(object):
     return issue_objects_pb2.Issue.StatusValue(
         status=issue.status or issue.derived_status, derivation=derivation)
 
+  def ConvertComments(self, issue, comments):
+    # type: (proto.tracker_pb2.Issue, Sequence[proto.tracker_pb2.IssueComment])
+    #     -> Sequence[api_proto.issue_objects_pb2.Comment]
+    """Convert protorpc IssueComments from issue into protoc Comments."""
+    comment_names_dict = rnc.ConvertCommentNames(
+        issue.local_id, issue.project_name,
+        [comment.sequence for comment in comments])
+    converted_comments = []
+    # TODO(crbug.com/monorail/7143): Convert remaining fields.
+    for comment in comments:
+      converted_comment = issue_objects_pb2.Comment(
+          name=comment_names_dict[comment.sequence])
+      converted_comments.append(converted_comment)
+    return converted_comments
+
   def ConvertIssue(self, issue):
     # type: (proto.tracker_pb2.Issue) -> api_proto.issue_objects_pb2.Issue
     """Convert a protorpc Issue into a protoc Issue."""

@@ -181,6 +181,18 @@ class ResourceNameConverterTest(unittest.TestCase):
           self.cnxn, ['projects/proj/issues/1', 'projects/proj/issues/2'],
           self.services)
 
+  def testConvertCommentNames(self):
+    """We can convert comment names."""
+    expected = {
+        0: 'projects/proj/issues/1/comments/0',
+        1: 'projects/proj/issues/1/comments/1'
+    }
+    self.assertEqual(rnc.ConvertCommentNames(1, 'proj', [0, 1]), expected)
+
+  def testConvertCommentNames_Empty(self):
+    """Converting an empty list of comments returns an empty dict."""
+    self.assertEqual(rnc.ConvertCommentNames(1, 'proj', []), {})
+
   def testConvertIssueName(self):
     """We can create an Issue resource name from an issue_id."""
     self.assertEqual(
