@@ -46,7 +46,8 @@ func (s WiringFake) Serve(l net.Listener) error {
 // OpenDutPort implements the respective gRPC.
 func (s WiringFake) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest) (*tls.OpenDutPortResponse, error) {
 	return &tls.OpenDutPortResponse{
-		Status:  tls.OpenDutPortResponse_STATUS_OK,
+		// TODO(ayatane): Temporarily commenting due to proto change.
+		// Status:  tls.OpenDutPortResponse_STATUS_OK,
 		Address: s.DUTAddress,
 	}, nil
 }
