@@ -78,6 +78,7 @@ else
       # Cross compiling; git wants to run little programs to detect these, but
       # we actually know them in advance.
       export ac_cv_fread_reads_directories=y
+      export ac_cv_iconv_omits_bom=no
       export ac_cv_snprintf_returns_bogus=no
   esac
 
@@ -101,6 +102,9 @@ export EXPATDIR
 export LDFLAGS
 export LIBS
 
+# TODO: Stop calling configure as it is merely a source of unnecessary pain.
+#
+# Look to Debian packaging definitions and git's INSTALL file for examples/info.
 make configure
 ./configure --host="$CROSS_TRIPLE" --prefix="$PREFIX" --with-libpcre2
 make install "-j$(nproc)"
