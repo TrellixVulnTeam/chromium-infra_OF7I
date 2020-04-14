@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
+	serverauth "go.chromium.org/luci/server/auth"
 
 	"infra/cros/cmd/skylab_local_state/internal/cmd"
 )
@@ -44,9 +45,9 @@ func getApplication(authOpts auth.Options) *cli.Application {
 
 func main() {
 	authOpts := chromeinfra.DefaultAuthOptions()
-	authOpts.Scopes = append(authOpts.Scopes,
-		"https://www.googleapis.com/auth/cloud-platform",
-		auth.OAuthScopeEmail)
+	authOpts.Scopes = append(
+		authOpts.Scopes,
+		serverauth.CloudOAuthScopes...)
 	authOpts.Method = auth.UserCredentialsMethod
 	os.Exit(subcommands.Run(getApplication(authOpts), nil))
 }
