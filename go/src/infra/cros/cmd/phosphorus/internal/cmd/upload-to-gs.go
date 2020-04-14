@@ -131,9 +131,13 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 func createDirWriter(ctx context.Context, localPath string, gsPath gs.Path, authFlags *authcli.Flags) (gs.DirWriter, error) {
 	cli, err := gs.NewAuthedClient(ctx, authFlags)
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "creating dir writer").Err()
 	}
-	return gs.NewDirWriter(localPath, gsPath, cli)
+	dw, err := gs.NewDirWriter(localPath, gsPath, cli)
+	if err != nil {
+		return nil, errors.Annotate(err, "creating dir writer").Err()
+	}
+	return dw, nil
 }
 
 // Gives a list of files and directories under the given path. Intended for

@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
+	serverauth "go.chromium.org/luci/server/auth"
 
 	"infra/cros/cmd/phosphorus/internal/cmd"
 )
@@ -47,6 +48,7 @@ func getApplication(authOpts auth.Options) *cli.Application {
 
 func main() {
 	auth := chromeinfra.DefaultAuthOptions()
+	auth.Scopes = append(auth.Scopes, serverauth.CloudOAuthScopes...)
 	auth.Scopes = append(auth.Scopes, gs.ReadWriteScopes...)
 	os.Exit(subcommands.Run(getApplication(auth), nil))
 }

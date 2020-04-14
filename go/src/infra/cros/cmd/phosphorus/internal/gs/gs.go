@@ -116,32 +116,25 @@ func (w *prodDirWriter) WriteDir() error {
 func newAuthenticatedTransport(ctx context.Context, f *authcli.Flags) (http.RoundTripper, error) {
 	o, err := f.Options()
 	if err != nil {
-		return nil, errors.Annotate(err, "create authenticated transport").Err()
+		return nil, errors.Annotate(err, "creating authenticated transport").Err()
 	}
 	a := auth.NewAuthenticator(ctx, auth.SilentLogin, o)
-	return a.Transport()
+	rt, err := a.Transport()
+	if err != nil {
+		return nil, errors.Annotate(err, "creating authenticated transport").Err()
+	}
+	return rt, nil
 }
 
 // NewAuthedClient Create a client with the given auth flags
 func NewAuthedClient(ctx context.Context, f *authcli.Flags) (AuthedClient, error) {
 	t, err := newAuthenticatedTransport(ctx, f)
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "creating authenticated GS client").Err()
 	}
 	cli, err := gcgs.NewProdClient(ctx, t)
 	if err != nil {
 		return nil, errors.Annotate(err, "creating authenticated GS client").Err()
 	}
 	return &realAuthedClient{client: cli}, nil
-}
-
-// Concat Extend a GS path with the provided file names
-func Concat(prefix string, parts ...string) Path {
-	if len(parts) == 0 {
-		return Path(prefix)
-	}
-	return Path(
-		gcgs.Path(prefix).Concat(parts[0], (parts[1:])...),
-	)
-	// TODO: switch to gcgs.MakeConcatPath when crrev/2008476 is in the deps
 }
