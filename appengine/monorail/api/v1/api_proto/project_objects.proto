@@ -13,6 +13,7 @@ import "google/protobuf/timestamp.proto";
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "api/v1/api_proto/issue_objects.proto";
+import "api/v1/api_proto/permission_objects.proto";
 
 // The top level organization of issues in Monorail.
 //
@@ -312,4 +313,45 @@ message ProjectConfig {
   string revision_url_format = 10;
   // A project's custom URL for the "New issue" link, only if specified.
   string custom_issue_entry_url = 11;
+}
+
+// Specifies info for a member of a project.
+//
+// Next available tag: 7
+message ProjectMember {
+  // Resource name of the Project Member.
+  // project/{project}/members/{user_id}
+  string name = 1;
+  // The role the user has in the project.
+  // Next available tag: 4
+  enum ProjectRole {
+    // The user has no role in the project.
+    PROJECT_ROLE_UNSPECIFIED = 0;
+    // The user can make any changes to the project.
+    OWNER = 1;
+    // The user may participate in the project but may not edit the project.
+    COMMITER = 2;
+    // The user starts with the same permissions as a non-member.
+    CONTRIBUTOR = 3;
+  }
+  ProjectRole role = 2;
+  // Which built-in/standard permissions the user has set.
+  repeated Permission standard_perms = 3;
+  // Custom permissions defined for the user.
+  // eg. "Google" in "Restrict-View-Google" is an example custom permission.
+  repeated string custom_perms = 4;
+  // Annotations about a user configured by project owners.
+  // Visible to anyone who can see the project's settings.
+  string notes = 5;
+  // Whether the user should show up in autocomplete.
+  // Next available tag: 3
+  enum AutocompleteVisibility {
+    // No autocomplete visibility value specified.
+    AUTOCOMPLETE_VISIBILITY_UNSPECIFIED = 0;
+    // The user should not show up in autocomplete.
+    HIDDEN = 1;
+    // The user may show up in autocomplete.
+    SHOWN = 2;
+  }
+  AutocompleteVisibility include_in_autocomplete = 6;
 }

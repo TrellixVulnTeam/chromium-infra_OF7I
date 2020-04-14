@@ -16,6 +16,9 @@ import "api/v1/api_proto/project_objects.proto";
 service Frontend {
   // Returns all project specific configurations needed for the SPA client.
   rpc GatherProjectEnvironment (GatherProjectEnvironmentRequest) returns (GatherProjectEnvironmentResponse) {};
+  // Returns all of a given user's project memberships.
+  rpc GatherProjectMembersForUser (GatherProjectMembersForUserRequest)
+    returns (GatherProjectMembersForUserResponse) {}
 }
 
 
@@ -49,4 +52,19 @@ message GatherProjectEnvironmentResponse {
   repeated ApprovalDef approval_fields = 7;
   // Saved search queries that admins defined for this project.
   repeated ProjectSavedQuery saved_queries = 8;
+}
+
+// The request message for Frontend.GatherProjectMembersForUser.
+// Next available tag: 2
+message GatherProjectMembersForUserRequest {
+  // The name of the user to request.
+  string user = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/User"}];
+}
+
+// The response message for Frontend.GatherProjectMembersForUser.
+// Next available tag: 2
+message GatherProjectMembersForUserResponse {
+  // The projects that the user is a member of.
+  repeated ProjectMember project_memberships = 1;
 }

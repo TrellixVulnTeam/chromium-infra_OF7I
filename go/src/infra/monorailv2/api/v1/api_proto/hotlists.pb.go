@@ -623,7 +623,7 @@ type HotlistsClient interface {
 	//
 	// Raises:
 	//   NOT_FOUND if the requested hotlist is not found.
-	//   PERMISSION_DENIED if the requester is now allowed to view the hotlist.
+	//   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
 	//   INVALID_ARGUMENT if the given resource name is not valid.
 	GetHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*Hotlist, error)
 	// Updates a hotlist.
@@ -875,7 +875,7 @@ type HotlistsServer interface {
 	//
 	// Raises:
 	//   NOT_FOUND if the requested hotlist is not found.
-	//   PERMISSION_DENIED if the requester is now allowed to view the hotlist.
+	//   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
 	//   INVALID_ARGUMENT if the given resource name is not valid.
 	GetHotlist(context.Context, *GetHotlistRequest) (*Hotlist, error)
 	// Updates a hotlist.

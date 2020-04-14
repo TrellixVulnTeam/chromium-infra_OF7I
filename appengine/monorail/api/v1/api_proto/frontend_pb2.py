@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1f\x61pi/v1/api_proto/frontend.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a)google_proto/google/api/annotations.proto\x1a&api/v1/api_proto/project_objects.proto\"P\n\x1fGatherProjectEnvironmentRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"\x99\x03\n GatherProjectEnvironmentResponse\x12%\n\x07project\x18\x01 \x01(\x0b\x32\x14.monorail.v1.Project\x12\x32\n\x0eproject_config\x18\x02 \x01(\x0b\x32\x1a.monorail.v1.ProjectConfig\x12(\n\x08statuses\x18\x03 \x03(\x0b\x32\x16.monorail.v1.StatusDef\x12\x30\n\x11well_known_labels\x18\x04 \x03(\x0b\x32\x15.monorail.v1.LabelDef\x12-\n\ncomponents\x18\x05 \x03(\x0b\x32\x19.monorail.v1.ComponentDef\x12%\n\x06\x66ields\x18\x06 \x03(\x0b\x32\x15.monorail.v1.FieldDef\x12\x31\n\x0f\x61pproval_fields\x18\x07 \x03(\x0b\x32\x18.monorail.v1.ApprovalDef\x12\x35\n\rsaved_queries\x18\x08 \x03(\x0b\x32\x1e.monorail.v1.ProjectSavedQuery2\x85\x01\n\x08\x46rontend\x12y\n\x18GatherProjectEnvironment\x12,.monorail.v1.GatherProjectEnvironmentRequest\x1a-.monorail.v1.GatherProjectEnvironmentResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x1f\x61pi/v1/api_proto/frontend.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a)google_proto/google/api/annotations.proto\x1a&api/v1/api_proto/project_objects.proto\"P\n\x1fGatherProjectEnvironmentRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"\x99\x03\n GatherProjectEnvironmentResponse\x12%\n\x07project\x18\x01 \x01(\x0b\x32\x14.monorail.v1.Project\x12\x32\n\x0eproject_config\x18\x02 \x01(\x0b\x32\x1a.monorail.v1.ProjectConfig\x12(\n\x08statuses\x18\x03 \x03(\x0b\x32\x16.monorail.v1.StatusDef\x12\x30\n\x11well_known_labels\x18\x04 \x03(\x0b\x32\x15.monorail.v1.LabelDef\x12-\n\ncomponents\x18\x05 \x03(\x0b\x32\x19.monorail.v1.ComponentDef\x12%\n\x06\x66ields\x18\x06 \x03(\x0b\x32\x15.monorail.v1.FieldDef\x12\x31\n\x0f\x61pproval_fields\x18\x07 \x03(\x0b\x32\x18.monorail.v1.ApprovalDef\x12\x35\n\rsaved_queries\x18\x08 \x03(\x0b\x32\x1e.monorail.v1.ProjectSavedQuery\"K\n\"GatherProjectMembersForUserRequest\x12%\n\x04user\x18\x01 \x01(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\"^\n#GatherProjectMembersForUserResponse\x12\x37\n\x13project_memberships\x18\x01 \x03(\x0b\x32\x1a.monorail.v1.ProjectMember2\x8a\x02\n\x08\x46rontend\x12y\n\x18GatherProjectEnvironment\x12,.monorail.v1.GatherProjectEnvironmentRequest\x1a-.monorail.v1.GatherProjectEnvironmentResponse\"\x00\x12\x82\x01\n\x1bGatherProjectMembersForUser\x12/.monorail.v1.GatherProjectMembersForUserRequest\x1a\x30.monorail.v1.GatherProjectMembersForUserResponse\"\x00\x62\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_project__objects__pb2.DESCRIPTOR,])
 
@@ -140,6 +140,68 @@ _GATHERPROJECTENVIRONMENTRESPONSE = _descriptor.Descriptor(
   serialized_end=709,
 )
 
+
+_GATHERPROJECTMEMBERSFORUSERREQUEST = _descriptor.Descriptor(
+  name='GatherProjectMembersForUserRequest',
+  full_name='monorail.v1.GatherProjectMembersForUserRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='user', full_name='monorail.v1.GatherProjectMembersForUserRequest.user', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\024\n\022api.crbug.com/User'), file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=711,
+  serialized_end=786,
+)
+
+
+_GATHERPROJECTMEMBERSFORUSERRESPONSE = _descriptor.Descriptor(
+  name='GatherProjectMembersForUserResponse',
+  full_name='monorail.v1.GatherProjectMembersForUserResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='project_memberships', full_name='monorail.v1.GatherProjectMembersForUserResponse.project_memberships', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=788,
+  serialized_end=882,
+)
+
 _GATHERPROJECTENVIRONMENTRESPONSE.fields_by_name['project'].message_type = api_dot_v1_dot_api__proto_dot_project__objects__pb2._PROJECT
 _GATHERPROJECTENVIRONMENTRESPONSE.fields_by_name['project_config'].message_type = api_dot_v1_dot_api__proto_dot_project__objects__pb2._PROJECTCONFIG
 _GATHERPROJECTENVIRONMENTRESPONSE.fields_by_name['statuses'].message_type = api_dot_v1_dot_api__proto_dot_project__objects__pb2._STATUSDEF
@@ -148,8 +210,11 @@ _GATHERPROJECTENVIRONMENTRESPONSE.fields_by_name['components'].message_type = ap
 _GATHERPROJECTENVIRONMENTRESPONSE.fields_by_name['fields'].message_type = api_dot_v1_dot_api__proto_dot_project__objects__pb2._FIELDDEF
 _GATHERPROJECTENVIRONMENTRESPONSE.fields_by_name['approval_fields'].message_type = api_dot_v1_dot_api__proto_dot_project__objects__pb2._APPROVALDEF
 _GATHERPROJECTENVIRONMENTRESPONSE.fields_by_name['saved_queries'].message_type = api_dot_v1_dot_api__proto_dot_project__objects__pb2._PROJECTSAVEDQUERY
+_GATHERPROJECTMEMBERSFORUSERRESPONSE.fields_by_name['project_memberships'].message_type = api_dot_v1_dot_api__proto_dot_project__objects__pb2._PROJECTMEMBER
 DESCRIPTOR.message_types_by_name['GatherProjectEnvironmentRequest'] = _GATHERPROJECTENVIRONMENTREQUEST
 DESCRIPTOR.message_types_by_name['GatherProjectEnvironmentResponse'] = _GATHERPROJECTENVIRONMENTRESPONSE
+DESCRIPTOR.message_types_by_name['GatherProjectMembersForUserRequest'] = _GATHERPROJECTMEMBERSFORUSERREQUEST
+DESCRIPTOR.message_types_by_name['GatherProjectMembersForUserResponse'] = _GATHERPROJECTMEMBERSFORUSERRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 GatherProjectEnvironmentRequest = _reflection.GeneratedProtocolMessageType('GatherProjectEnvironmentRequest', (_message.Message,), dict(
@@ -166,8 +231,23 @@ GatherProjectEnvironmentResponse = _reflection.GeneratedProtocolMessageType('Gat
   ))
 _sym_db.RegisterMessage(GatherProjectEnvironmentResponse)
 
+GatherProjectMembersForUserRequest = _reflection.GeneratedProtocolMessageType('GatherProjectMembersForUserRequest', (_message.Message,), dict(
+  DESCRIPTOR = _GATHERPROJECTMEMBERSFORUSERREQUEST,
+  __module__ = 'api.v1.api_proto.frontend_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.GatherProjectMembersForUserRequest)
+  ))
+_sym_db.RegisterMessage(GatherProjectMembersForUserRequest)
+
+GatherProjectMembersForUserResponse = _reflection.GeneratedProtocolMessageType('GatherProjectMembersForUserResponse', (_message.Message,), dict(
+  DESCRIPTOR = _GATHERPROJECTMEMBERSFORUSERRESPONSE,
+  __module__ = 'api.v1.api_proto.frontend_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.GatherProjectMembersForUserResponse)
+  ))
+_sym_db.RegisterMessage(GatherProjectMembersForUserResponse)
+
 
 _GATHERPROJECTENVIRONMENTREQUEST.fields_by_name['parent']._options = None
+_GATHERPROJECTMEMBERSFORUSERREQUEST.fields_by_name['user']._options = None
 
 _FRONTEND = _descriptor.ServiceDescriptor(
   name='Frontend',
@@ -175,8 +255,8 @@ _FRONTEND = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=712,
-  serialized_end=845,
+  serialized_start=885,
+  serialized_end=1151,
   methods=[
   _descriptor.MethodDescriptor(
     name='GatherProjectEnvironment',
@@ -185,6 +265,15 @@ _FRONTEND = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_GATHERPROJECTENVIRONMENTREQUEST,
     output_type=_GATHERPROJECTENVIRONMENTRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='GatherProjectMembersForUser',
+    full_name='monorail.v1.Frontend.GatherProjectMembersForUser',
+    index=1,
+    containing_service=None,
+    input_type=_GATHERPROJECTMEMBERSFORUSERREQUEST,
+    output_type=_GATHERPROJECTMEMBERSFORUSERRESPONSE,
     serialized_options=None,
   ),
 ])
