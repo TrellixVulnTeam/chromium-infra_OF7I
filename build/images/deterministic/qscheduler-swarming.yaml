@@ -1,8 +1,9 @@
 name: qscheduler-swarming
 extends: ../base.yaml
 
-dockerfile: ../../../go/src/infra/qscheduler/service/cmd/qscheduler-swarming/Dockerfile
+contextdir: ../../../go/src/infra/qscheduler/service/docker
 deterministic: true
 
 build:
   - go_binary: infra/qscheduler/service/cmd/qscheduler-swarming
+    dest: ${contextdir}/qscheduler-swarming

@@ -4,26 +4,13 @@
 
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 projdir := $(patsubst %/,%,$(dir $(mkfile_path)))
-bindir := $(projdir)/bin
-servercmd := $(bindir)/qscheduler-swarming
-
-# Cloud Project to build and store the docker images in.
-#
-# We use qscheduler-swarming to store images for both dev and prod deployments
-# (since we want to test *exact same* image we deploy to prod).
-#
-# TODO(vadimsh): Revisit this decision. For example, we can have a dedicated
-# Cloud Project to store Chops-owned images. A single project makes automation
-# simpler.
-CLOUD_BUILD_PROJECT = qscheduler-swarming
+infradir := $(projdir)/../../../../..
 
 test:
 	go test ./...
 
 gen:
 	go generate ./...
-
-# GKE specific commands.
 
 run-local:
 	go run $(projdir)/cmd/qscheduler-swarming/main.go \
@@ -32,18 +19,9 @@ run-local:
 		-http-addr "0.0.0.0:8082" \
 		-admin-addr "0.0.0.0:8900"
 
-.setup-bindir:
-	rm -rf $(bindir)
-	mkdir -p $(bindir)
-
-build-server-binary: .setup-bindir
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v \
-		-o $(servercmd) \
-		$(projdir)/cmd/qscheduler-swarming \
-
-build-docker-image: build-server-binary
-	cp $(projdir)/cmd/qscheduler-swarming/Dockerfile $(bindir)/
-	gcloud builds submit \
-		--tag gcr.io/$(CLOUD_BUILD_PROJECT)/qscheduler-swarming \
-		--project $(CLOUD_BUILD_PROJECT) \
-		$(bindir)
+# This builds "gcr.io/chops-public-images-dev/qscheduler-swarming" from local
+# code in the same way the production builders build production images. Can
+# be used to verify changes to Dockefile or qscheduler-swarming.yaml.
+build-docker-image:
+	cloudbuildhelper build \
+		$(infradir)/build/images/deterministic/qscheduler-swarming.yaml
