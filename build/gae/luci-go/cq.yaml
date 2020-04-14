@@ -1,0 +1,8 @@
+name: luci-go/cq
+extends: ../base.yaml
+
+inputsdir: ../../../go/src/go.chromium.org/luci/cq/appengine
+
+build:
+  - go_gae_bundle: ${inputsdir}/frontend/app.yaml
+    dest: ${contextdir}/frontend
