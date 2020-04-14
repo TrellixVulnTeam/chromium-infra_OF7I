@@ -186,26 +186,28 @@ def ConvertHotlistItemNames(cnxn, hotlist_id, issue_ids, services):
 # Issues
 
 
-def ConvertCommentNames(issue_local_id, issue_project, comment_sequence_ids):
+def CreateCommentNames(issue_local_id, issue_project, comment_sequence_nums):
   # type: (int, str, Sequence[int]) -> Mapping[int, str]
   """Returns the resource names for the given comments.
+
+  Note: crbug.com/monorail/7507 has important context about guarantees required
+  for comment resource names to be permanent references.
 
   Args:
     issue_local_id: local id of the issue for which we're converting comments.
     issue_project: the project of the issue for which we're converting comments.
-    comment_sequence_ids: sequence ids of comments on the given issue.
-        TODO(crbug.com/monorail/7507): Resolve permanence of resource name.
+    comment_sequence_nums: sequence numbers of comments on the given issue.
 
   Returns:
-    A mapping from comment IDs to comment resource names.
+    A mapping from comment sequence number to comment resource names.
   """
-  comment_id_to_names = {}
-  for comment_sequence_id in comment_sequence_ids:
-    comment_id_to_names[comment_sequence_id] = COMMENT_NAME_TMPL.format(
+  sequence_nums_to_names = {}
+  for comment_sequence_num in comment_sequence_nums:
+    sequence_nums_to_names[comment_sequence_num] = COMMENT_NAME_TMPL.format(
         project=issue_project,
         local_id=issue_local_id,
-        comment_id=comment_sequence_id)
-  return comment_id_to_names
+        comment_id=comment_sequence_num)
+  return sequence_nums_to_names
 
 
 def IngestIssueName(cnxn, name, services):

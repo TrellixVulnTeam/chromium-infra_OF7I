@@ -178,7 +178,7 @@ class Converter(object):
     # type: (proto.tracker_pb2.Issue, Sequence[proto.tracker_pb2.IssueComment])
     #     -> Sequence[api_proto.issue_objects_pb2.Comment]
     """Convert protorpc IssueComments from issue into protoc Comments."""
-    comment_names_dict = rnc.ConvertCommentNames(
+    comment_names_dict = rnc.CreateCommentNames(
         issue.local_id, issue.project_name,
         [comment.sequence for comment in comments])
     converted_comments = []
