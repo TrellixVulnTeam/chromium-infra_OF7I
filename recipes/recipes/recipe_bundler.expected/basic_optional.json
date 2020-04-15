@@ -7,6 +7,8 @@
       "[CACHE]/builder/bundler",
       "-ensure-file",
       "infra/tools/luci/recipe_bundler/${platform} latest",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

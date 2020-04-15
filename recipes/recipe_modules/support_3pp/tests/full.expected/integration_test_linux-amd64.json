@@ -585,6 +585,8 @@
       "[START_DIR]/3pp/wd/bottom_dep/linux-amd64/1.0/checkout",
       "-ensure-file",
       "source/bottom_dep version:1.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1000,6 +1002,8 @@
       "[START_DIR]/3pp/wd/deep_dep/linux-amd64/1.0.0/checkout",
       "-ensure-file",
       "source/deep_dep version:1.0.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1585,6 +1589,8 @@
       "[START_DIR]/3pp/wd/posix_tool/linux-amd64/1.2.0/checkout",
       "-ensure-file",
       "source/posix_tool version:1.2.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3143,6 +3149,8 @@
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/bin_tools",
       "-ensure-file",
       "infra/tools/cipd/linux-amd64 latest\ninfra/tools/luci/vpython/linux-amd64 latest",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3520,6 +3528,8 @@
       "[START_DIR]/3pp/wd/dep/linux-amd64/1.0.0/checkout",
       "-ensure-file",
       "source/dep version:1.0.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

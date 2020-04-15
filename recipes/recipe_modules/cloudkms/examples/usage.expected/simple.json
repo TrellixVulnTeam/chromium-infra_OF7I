@@ -7,6 +7,8 @@
       "[START_DIR]/cloudkms",
       "-ensure-file",
       "infra/tools/luci/cloudkms/${platform} latest",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

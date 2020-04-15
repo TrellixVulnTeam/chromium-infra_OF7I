@@ -61,6 +61,10 @@
       "--revision",
       "infra_internal@HEAD"
     ],
+    "env": {
+      "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
+      "GIT_HTTP_LOW_SPEED_TIME": "300"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -129,6 +133,8 @@
       "[START_DIR]/packages",
       "-ensure-file",
       "infra/nodejs/nodejs/${platform} node_version:10.15.3",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

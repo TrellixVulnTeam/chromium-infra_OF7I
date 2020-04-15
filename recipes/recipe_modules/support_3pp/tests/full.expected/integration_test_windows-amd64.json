@@ -585,6 +585,8 @@
       "[START_DIR]\\3pp\\wd\\bottom_dep\\windows-amd64\\1.0\\checkout",
       "-ensure-file",
       "source/bottom_dep version:1.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -681,6 +683,8 @@
       "[CACHE]\\windows_sdk",
       "-ensure-file",
       "chrome_internal/third_party/sdk/windows uploaded:2018-06-13",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1088,6 +1092,8 @@
       "[START_DIR]\\3pp\\wd\\deep_dep\\windows-amd64\\1.0.0\\checkout",
       "-ensure-file",
       "source/deep_dep version:1.0.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1776,6 +1782,8 @@
       "[CACHE]\\windows_sdk",
       "-ensure-file",
       "chrome_internal/third_party/sdk/windows uploaded:2018-06-13",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2640,6 +2648,8 @@
       "[CACHE]\\windows_sdk",
       "-ensure-file",
       "chrome_internal/third_party/sdk/windows uploaded:2018-06-13",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2951,6 +2961,8 @@
       "[CACHE]\\windows_sdk",
       "-ensure-file",
       "chrome_internal/third_party/sdk/windows uploaded:2018-06-13",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3358,6 +3370,8 @@
       "[START_DIR]\\3pp\\wd\\dep\\windows-amd64\\1.0.0\\checkout",
       "-ensure-file",
       "source/dep version:1.0.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3454,6 +3468,8 @@
       "[CACHE]\\windows_sdk",
       "-ensure-file",
       "chrome_internal/third_party/sdk/windows uploaded:2018-06-13",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4071,6 +4087,8 @@
       "[CACHE]\\windows_sdk",
       "-ensure-file",
       "chrome_internal/third_party/sdk/windows uploaded:2018-06-13",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

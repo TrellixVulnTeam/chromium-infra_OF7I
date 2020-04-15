@@ -7,6 +7,8 @@
       "[START_DIR]/cbh",
       "-ensure-file",
       "infra/tools/cloudbuildhelper/${platform} latest",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

@@ -589,6 +589,8 @@
       "[START_DIR]/3pp/wd/bottom_dep/mac-amd64/1.0/checkout",
       "-ensure-file",
       "source/bottom_dep version:1.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -688,6 +690,8 @@
       "[CACHE]/osx_sdk",
       "-ensure-file",
       "infra/tools/mac_toolchain/${platform} git_revision:9a1adc55bf4a1173784da3ba2f8cb06421606748",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1117,6 +1121,8 @@
       "[START_DIR]/3pp/wd/deep_dep/mac-amd64/1.0.0/checkout",
       "-ensure-file",
       "source/deep_dep version:1.0.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1711,6 +1717,8 @@
       "[START_DIR]/3pp/wd/posix_tool/mac-amd64/1.2.0/checkout",
       "-ensure-file",
       "source/posix_tool version:1.2.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -1959,6 +1967,8 @@
       "[CACHE]/osx_sdk",
       "-ensure-file",
       "infra/tools/mac_toolchain/${platform} git_revision:9a1adc55bf4a1173784da3ba2f8cb06421606748",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -2495,6 +2505,8 @@
       "[CACHE]/osx_sdk",
       "-ensure-file",
       "infra/tools/mac_toolchain/${platform} git_revision:9a1adc55bf4a1173784da3ba2f8cb06421606748",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3396,6 +3408,8 @@
       "[CACHE]/osx_sdk",
       "-ensure-file",
       "infra/tools/mac_toolchain/${platform} git_revision:9a1adc55bf4a1173784da3ba2f8cb06421606748",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -3726,6 +3740,8 @@
       "[CACHE]/osx_sdk",
       "-ensure-file",
       "infra/tools/mac_toolchain/${platform} git_revision:9a1adc55bf4a1173784da3ba2f8cb06421606748",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4147,6 +4163,8 @@
       "[START_DIR]/3pp/wd/dep/mac-amd64/1.0.0/checkout",
       "-ensure-file",
       "source/dep version:1.0.0",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4246,6 +4264,8 @@
       "[CACHE]/osx_sdk",
       "-ensure-file",
       "infra/tools/mac_toolchain/${platform} git_revision:9a1adc55bf4a1173784da3ba2f8cb06421606748",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -4892,6 +4912,8 @@
       "[CACHE]/osx_sdk",
       "-ensure-file",
       "infra/tools/mac_toolchain/${platform} git_revision:9a1adc55bf4a1173784da3ba2f8cb06421606748",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
