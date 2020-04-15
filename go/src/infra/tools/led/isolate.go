@@ -72,10 +72,10 @@ func isolateDirectory(ctx context.Context, isoClient *isolatedclient.Client, dir
 }
 
 func newIsolatedClient(ctx context.Context, isolatedFlags isolatedclient.Flags, authClient *http.Client) (*isolatedclient.Client, error) {
-	return isolatedclient.New(
-		nil, authClient,
-		isolatedFlags.ServerURL, isolatedFlags.Namespace,
-		retry.Default,
-		nil,
+	return isolatedclient.NewClient(
+		isolatedFlags.ServerURL,
+		isolatedclient.WithAuthClient(authClient),
+		isolatedclient.WithNamespace(isolatedFlags.Namespace),
+		isolatedclient.WithRetryFactory(retry.Default),
 	), nil
 }

@@ -64,7 +64,7 @@ func getterFactory(conf *config.Config_Isolate) isolate.GetterFactory {
 			return nil, err
 		}
 
-		isolateClient := isolatedclient.New(nil, hClient, server, isolatedclient.DefaultNamespace, nil, nil)
+		isolateClient := isolatedclient.NewClient(server, isolatedclient.WithAuthClient(hClient))
 
 		return getter.New(isolateClient), nil
 	}

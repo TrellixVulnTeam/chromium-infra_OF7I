@@ -277,8 +277,11 @@ func (s isolateServer) createIsolateClient(c context.Context, serverURL, namespa
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to setup anonymous transport for isolate client").Err()
 	}
-	return isolatedclient.New(&http.Client{Transport: anonTransport}, &http.Client{Transport: authTransport},
-		serverURL, namespace, nil, nil), nil
+	return isolatedclient.NewClient(
+		serverURL,
+		isolatedclient.WithAnonymousClient(&http.Client{Transport: anonTransport}),
+		isolatedclient.WithAuthClient(&http.Client{Transport: authTransport}),
+		isolatedclient.WithNamespace(namespace)), nil
 }
 
 type isoChunk struct {
