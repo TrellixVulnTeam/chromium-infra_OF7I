@@ -17,6 +17,14 @@ check: test
 clean:
 	$(RM) ./skylab
 
+.PHONY: vet
+vet:
+	go vet ./...
+
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 .PHONY: check-environment
 check-environment:
 	@if ! (env | grep -q '^GOPATH.*infra/go/[.]vendor'); then \
