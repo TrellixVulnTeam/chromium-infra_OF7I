@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/lucictx"
 )
 
 // UploadToGS subcommand: Upload selected directory to Google Storage.
@@ -60,6 +61,11 @@ func (c *uploadToGSRun) innerRun(a subcommands.Application, args []string, env s
 	}
 
 	ctx := cli.GetContext(a, c, env)
+
+	ctx, err := useSystemAuth(ctx, &c.authFlags, a.GetErr())
+	if err != nil {
+		return err
+	}
 
 	path, err := runGSUploadStep(ctx, c.authFlags, r, a.GetErr())
 	if err != nil {
@@ -125,6 +131,23 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 		return "", err
 	}
 	return r.GetGsDirectory(), nil
+}
+
+func useSystemAuth(ctx context.Context, authFlags *authcli.Flags, errorFile io.Writer) (context.Context, error) {
+	authOpts, err := authFlags.Options()
+	if err != nil {
+		return nil, errors.Annotate(err, "switching to system auth").Err()
+	}
+
+	authCtx, err := lucictx.SwitchLocalAccount(ctx, "system")
+	if err == nil {
+		// If there's a system account use it (the case of running on Swarming).
+		// Otherwise default to user credentials (the local development case).
+		authOpts.Method = auth.LUCIContextMethod
+		return authCtx, nil
+	}
+	fmt.Fprintf(errorFile, "System account not found, err %s.\nFalling back to user credentials for auth.\n", err)
+	return ctx, nil
 }
 
 // createDirWriter creates a DirWriter for the given paths, first producing an authed client with the given context and flags
