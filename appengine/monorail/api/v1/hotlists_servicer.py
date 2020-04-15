@@ -16,6 +16,7 @@ from api.v1.api_proto import hotlists_pb2
 from api.v1.api_proto import hotlists_prpc_pb2
 from businesslogic import work_env
 from framework import exceptions
+from features import features_constants
 from tracker import tracker_constants
 
 
@@ -37,10 +38,17 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
       Raises:
         NoSuchHotlistException if the hotlist is not found.
         PermissionException if the user is not allowed to view the hotlist.
-        InputException if the request.page_token is invalid or the request does
-          not match the previous request that provided the given page_token.
+        InputException if the request.page_token is invalid, the request does
+          not match the previous request that provided the given page_token, or
+          the page_size is a negative value.
     """
     hotlist_id = rnc.IngestHotlistName(request.parent)
+    if request.page_size < 0:
+      raise exceptions.InputException('`page_size` cannot be negative.')
+    page_size = request.page_size
+    if (not request.page_size or
+        request.page_size > features_constants.DEFAULT_RESULTS_PER_PAGE):
+      page_size = features_constants.DEFAULT_RESULTS_PER_PAGE
 
     # TODO(crbug/monorail/7104): take start from request.page_token
     start = 0
@@ -48,7 +56,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
     with work_env.WorkEnv(mc, self.services) as we:
       visible_hotlist_items, _harmonized_config = we.ListHotlistItems(
-          hotlist_id, request.page_size, start,
+          hotlist_id, page_size, start,
           tracker_constants.ALL_ISSUES_CAN, sort_spec, '')
 
     # TODO(crbug/monorail/7104): plug in next_page_token when it's been

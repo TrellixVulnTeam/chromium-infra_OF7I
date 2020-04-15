@@ -23,6 +23,7 @@ from api.v1.api_proto import user_objects_pb2
 from framework import exceptions
 from framework import monorailcontext
 from framework import permissions
+from features import features_constants
 from testing import fake
 from services import features_svc
 from services import service_manager
@@ -146,6 +147,30 @@ class HotlistsServicerTest(unittest.TestCase):
     response = self.CallWrapped(
         self.hotlists_svcr.ListHotlistItems, mc, request)
     self.assertEqual(response, hotlists_pb2.ListHotlistItemsResponse(items=[]))
+
+  def testListHotlistItems_InvalidPageSize(self):
+    """We raise an exception if `page_size` is negative."""
+    request = hotlists_pb2.ListHotlistItemsRequest(
+        parent=self.hotlist_resource_name, page_size=-1)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.hotlists_svcr.ListHotlistItems, mc, request)
+
+  def testListHotlistItems_DefaultPageSize(self):
+    """We use our default page size when no `page_size` is given."""
+    request = hotlists_pb2.ListHotlistItemsRequest(
+        parent=self.hotlist_resource_name)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(
+        self.hotlists_svcr.ListHotlistItems, mc, request)
+    self.assertEqual(
+        len(response.items),
+        min(
+            features_constants.DEFAULT_RESULTS_PER_PAGE,
+            len(self.hotlist_1.items)))
 
   def testRerankHotlistItems(self):
     """We can rerank a Hotlist."""
