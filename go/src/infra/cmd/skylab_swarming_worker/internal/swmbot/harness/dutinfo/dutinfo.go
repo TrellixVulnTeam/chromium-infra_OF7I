@@ -98,8 +98,8 @@ func getStableVersion(ctx context.Context, client fleet.InventoryClient, hostnam
 	req := &fleet.GetStableVersionRequest{
 		Hostname: hostname,
 	}
-	log.Printf("getStableVersion: client request (%v)", req)
-	res, err := client.GetStableVersion(ctx, req)
+	log.Printf("getStableVersion: client request (%v) with retries", req)
+	res, err := retryGetStableVersion(ctx, client, req)
 	log.Printf("getStableVersion: client response (%v)", res)
 	if err != nil {
 		return nil, err
@@ -261,4 +261,20 @@ func ensureResponseUpdatedSince(r *fleet.GetDutInfoResponse, t time.Time) error 
 		return errors.Reason("ensure uncached response: last update %s before start", t.Sub(u).String()).Err()
 	}
 	return nil
+}
+
+func retryGetStableVersion(ctx context.Context, client fleet.InventoryClient, req *fleet.GetStableVersionRequest) (*fleet.GetStableVersionResponse, error) {
+	var resp *fleet.GetStableVersionResponse
+	var err error
+	f := func() error {
+		resp, err = client.GetStableVersion(ctx, req)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := retry.Retry(ctx, retry.Default, f, retry.LogCallback(ctx, "dutinfo.retryGetStableVersion")); err != nil {
+		return nil, errors.Annotate(err, "retry getStableVersion").Err()
+	}
+	return resp, nil
 }
