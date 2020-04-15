@@ -25,8 +25,8 @@ func getFs(ctx context.Context, path string) (fs uint64, err error) {
 		pathp,
 		windows.GENERIC_READ,    // dwDesiredAccess
 		windows.FILE_SHARE_READ, // dwShareMode
-		nil, // lpSecurityAttributes
-		windows.OPEN_EXISTING,                                            // dwCreationDisposition
+		nil,                     // lpSecurityAttributes
+		windows.OPEN_EXISTING,   // dwCreationDisposition
 		windows.FILE_ATTRIBUTE_NORMAL|windows.FILE_FLAG_BACKUP_SEMANTICS, // dwFlagsAndAttributes
 		0, // hTemplateFile
 	)
