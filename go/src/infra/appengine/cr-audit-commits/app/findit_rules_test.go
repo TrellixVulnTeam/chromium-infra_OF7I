@@ -171,11 +171,10 @@ func TestFinditRules(t *testing.T) {
 			}).Return(nil, errors.New("Some error"))
 
 			// Run rule.
-			rr := func() {
-				CulpritAge{}.Run(ctx, ap, rc, testClients)
-			}
+			rr, err := CulpritAge{}.Run(ctx, ap, rc, testClients)
 			// Check result code.
-			So(rr, ShouldPanic)
+			So(rr, ShouldBeNil)
+			So(err, ShouldNotBeNil)
 		})
 		Convey("Auto-reverts per day Pass", func() {
 			k := datastore.KeyForObj(ctx, rs)

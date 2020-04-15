@@ -83,7 +83,7 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 		}
 		milestone, success = GetToken(ctx, "MilestoneNumber", ap.RepoCfg.Metadata)
 		if !success {
-			panic("MilestoneNumber not specified in repository configuration")
+			return nil, fmt.Errorf("MilestoneNumber not specified in repository configuration")
 		}
 		mergeLabel := fmt.Sprintf(mergeApprovedLabel, milestone)
 		vIssue, err := issueFromID(ctx, ap.RepoCfg, int32(bugNumber), cs)

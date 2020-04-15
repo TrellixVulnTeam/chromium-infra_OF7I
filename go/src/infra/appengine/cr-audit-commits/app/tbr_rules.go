@@ -92,16 +92,18 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 		return result, nil
 	}
 	rc.LastExternalPoll = time.Now()
-	change := getChangeWithLabelDetails(ctx, ap, rc, cs)
+	change, err := getChangeWithLabelDetails(ctx, ap, rc, cs)
+	if err != nil {
+		return nil, err
+	}
 	owner := change.Owner.AccountID
 	crLabelInfo, exists := change.Labels["Code-Review"]
 	if !exists {
-		panic(fmt.Sprintf("The gerrit change for Commit %v does not have the 'Code-Review' label.", rc.CommitHash))
+		return nil, fmt.Errorf("The gerrit change for Commit %v does not have the 'Code-Review' label", rc.CommitHash)
 	}
 	maxValue, err := getMaxLabelValue(crLabelInfo.Values)
 	if err != nil {
-		// TODO(crbug.com/978167): Stop using panics for this sort of errors.
-		panic(err)
+		return nil, err
 	}
 	for _, vote := range crLabelInfo.All {
 		if int(vote.Value) == maxValue && vote.AccountID != owner {
@@ -136,7 +138,7 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 	return result, nil
 }
 
-func getChangeWithLabelDetails(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) *gerrit.Change {
+func getChangeWithLabelDetails(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*gerrit.Change, error) {
 	cls, _, err := cs.gerrit.ChangeQuery(ctx, gerrit.ChangeQueryParams{
 		Query: fmt.Sprintf("commit:%s", rc.CommitHash),
 		Options: []string{
@@ -144,12 +146,12 @@ func getChangeWithLabelDetails(ctx context.Context, ap *AuditParams, rc *Relevan
 		},
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if len(cls) == 0 {
-		panic(fmt.Sprintf("no CL found for commit %q", rc.CommitHash))
+		return nil, fmt.Errorf("no CL found for commit %q", rc.CommitHash)
 	}
-	return cls[0]
+	return cls[0], nil
 }
 
 func postReminder(ctx context.Context, change *gerrit.Change, deadline time.Time, cs *Clients) error {

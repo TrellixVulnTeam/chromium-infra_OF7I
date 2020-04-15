@@ -329,7 +329,8 @@ func notifyAboutViolations(ctx context.Context, cfg *RepoConfig, repoState *Repo
 }
 
 // reportAuditFailure is meant to file a bug about a revision that has
-// repeatedly failed to be audited. i.e. one or more rules panic on each run.
+// repeatedly failed to be audited. i.e. one or more rules return errors on
+// each run.
 //
 // This does not necessarily mean that a policy has been violated, but only
 // that the audit app has not been able to determine whether one exists. One

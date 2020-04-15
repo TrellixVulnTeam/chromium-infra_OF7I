@@ -361,9 +361,8 @@ type Rule interface {
 	// non-final state. Rules should self-limit the frequency with which they poll
 	// external systems for a given commit.
 	//
-	// Rules are expected to panic if they cannot determine whether a policy has
-	// been broken or not. Note, this is expected to change soon as per bug below
-	// TODO(crbug.com/978167): Stop using panics for this.
+	// Rules are expected to return an error if they cannot determine whether a policy
+	// has been broken or not.
 	//
 	// Run methods should return a reference to a RuleResult
 	Run(context.Context, *AuditParams, *RelevantCommit, *Clients) (*RuleResult, error)

@@ -48,7 +48,7 @@ const (
 	MaxCulpritAge = 24 * time.Hour
 
 	// MaxRetriesPerCommit indicates how many times the auditor can retry
-	// audting a commit if some rules are panicking. This retry is meant to
+	// audting a commit if some rules return errors. This retry is meant to
 	// handle transient errors on the underlying services.
 	MaxRetriesPerCommit = 6 // Thirty minutes if checking every 5 minutes.
 )
@@ -63,14 +63,14 @@ var (
 // commit older than the cutoff time is found, and counts those that match the
 // account and action given as parameters.
 //
-// Panics upon datastore error.
-func countRelevantCommits(ctx context.Context, rc *RelevantCommit, cutoff time.Time, account string, role Role) int {
+// Return an error when there is a datastore error.
+func countRelevantCommits(ctx context.Context, rc *RelevantCommit, cutoff time.Time, account string, role Role) (int, error) {
 	counter := 0
 	current := rc
 	for {
 		switch {
 		case current.CommitTime.Before(cutoff):
-			return counter
+			return counter, nil
 		case role == Committer:
 			if current.CommitterAccount == account {
 				counter++
@@ -82,7 +82,7 @@ func countRelevantCommits(ctx context.Context, rc *RelevantCommit, cutoff time.T
 		}
 
 		if current.PreviousRelevantCommit == "" {
-			return counter
+			return counter, nil
 		}
 
 		current = &RelevantCommit{
@@ -91,17 +91,18 @@ func countRelevantCommits(ctx context.Context, rc *RelevantCommit, cutoff time.T
 		}
 		err := ds.Get(ctx, current)
 		if err != nil {
-			panic(fmt.Sprintf("Could not retrieve relevant commit with hash %s", current.CommitHash))
+			return 0, fmt.Errorf("Could not retrieve relevant commit with hash %s",
+				current.CommitHash)
 		}
 
 	}
 }
 
-func countCommittedBy(ctx context.Context, rc *RelevantCommit, cutoff time.Time, account string) int {
+func countCommittedBy(ctx context.Context, rc *RelevantCommit, cutoff time.Time, account string) (int, error) {
 	return countRelevantCommits(ctx, rc, cutoff, account, Committer)
 }
 
-func countAuthoredBy(ctx context.Context, rc *RelevantCommit, cutoff time.Time, account string) int {
+func countAuthoredBy(ctx context.Context, rc *RelevantCommit, cutoff time.Time, account string) (int, error) {
 	return countRelevantCommits(ctx, rc, cutoff, account, Author)
 }
 
@@ -119,7 +120,10 @@ func (rule AutoCommitsPerDay) GetName() string {
 func (rule AutoCommitsPerDay) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	cutoff := rc.CommitTime.Add(time.Duration(-24) * time.Hour)
-	autoCommits := countCommittedBy(ctx, rc, cutoff, ap.TriggeringAccount)
+	autoCommits, err := countCommittedBy(ctx, rc, cutoff, ap.TriggeringAccount)
+	if err != nil {
+		return nil, err
+	}
 	if autoCommits > MaxAutoCommitsPerDay {
 		result.RuleResultStatus = ruleFailed
 		result.Message = fmt.Sprintf(
@@ -145,7 +149,10 @@ func (rule AutoRevertsPerDay) GetName() string {
 func (rule AutoRevertsPerDay) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 	cutoff := rc.CommitTime.Add(time.Duration(-24) * time.Hour)
-	autoReverts := countAuthoredBy(ctx, rc, cutoff, ap.TriggeringAccount)
+	autoReverts, err := countAuthoredBy(ctx, rc, cutoff, ap.TriggeringAccount)
+	if err != nil {
+		return nil, err
+	}
 	if autoReverts > MaxAutoRevertsPerDay {
 		result.RuleResultStatus = ruleFailed
 		result.Message = fmt.Sprintf(
@@ -170,19 +177,23 @@ func (rule CulpritAge) GetName() string {
 func (rule CulpritAge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
 
-	_, culprit := getRevertAndCulpritChanges(ctx, ap, rc, cs)
+	_, culprit, err := getRevertAndCulpritChanges(ctx, ap, rc, cs)
+	if err != nil {
+		return nil, err
+	}
 	if culprit == nil {
-		panic(fmt.Errorf("Commit %q does not appear to be a revert according to gerrit", rc.CommitHash))
+		return nil, fmt.Errorf("Commit %q does not appear to be a revert according to gerrit",
+			rc.CommitHash)
 	}
 
 	host, project, err := gitiles.ParseRepoURL(ap.RepoCfg.BaseRepoURL)
 	if err != nil {
-		panic(fmt.Sprintf("The repo url %s somehow became invalid.", ap.RepoCfg.BaseRepoURL))
+		return nil, fmt.Errorf("The repo url %s somehow became invalid", ap.RepoCfg.BaseRepoURL)
 	}
 
 	gc, err := cs.NewGitilesClient(host)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	resp, err := gc.Log(ctx, &gitilespb.LogRequest{
 		Project:    project,
@@ -190,15 +201,15 @@ func (rule CulpritAge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCom
 		PageSize:   1,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	c := resp.Log
 	if len(c) == 0 {
-		panic(fmt.Sprintf("commit %s not found in repo.", culprit.CurrentRevision))
+		return nil, fmt.Errorf("commit %s not found in repo", culprit.CurrentRevision)
 	}
 	commitTime, err := ptypes.Timestamp(c[0].Committer.Time)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if rc.CommitTime.Sub(commitTime) > MaxCulpritAge {
 		result.RuleResultStatus = ruleFailed
@@ -230,17 +241,19 @@ func (rule CulpritInBuild) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 		return result, nil
 	}
 
-	_, culprit := getRevertAndCulpritChanges(ctx, ap, rc, cs)
+	_, culprit, err := getRevertAndCulpritChanges(ctx, ap, rc, cs)
+	if err != nil {
+		return nil, err
+	}
 	if culprit == nil {
-		panic(fmt.Errorf("Commit %q does not appear to be a revert according to gerrit",
-			rc.CommitHash))
+		return nil, fmt.Errorf("Commit %q does not appear to be a revert according to gerrit",
+			rc.CommitHash)
 	}
 
 	buildURL, err := failedBuildFromCommitMessage(rc.CommitMessage)
 	changes, err := getBlamelist(ctx, buildURL, cs)
-	//TODO(crbug.com/978167): Stop using panics in rules.
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	changeFound := false
@@ -272,32 +285,33 @@ func (rule CulpritInBuild) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 // Note: The RevertOf property of a Change does not guarantee that the cl is a
 // pure revert of another; instead, the get-pure-revert api of Gerrit needs to
 // be checked, like RevertOfCulprit below does.
-func getRevertAndCulpritChanges(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*gerrit.Change, *gerrit.Change) {
+func getRevertAndCulpritChanges(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*gerrit.Change, *gerrit.Change, error) {
 	cls, _, err := cs.gerrit.ChangeQuery(ctx, gerrit.ChangeQueryParams{Query: fmt.Sprintf("commit:%s", rc.CommitHash)})
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 	if len(cls) == 0 {
-		panic(fmt.Sprintf("no CL found for commit %q", rc.CommitHash))
+		return nil, nil, fmt.Errorf("no CL found for commit %q", rc.CommitHash)
 	}
 	revert, err := cs.gerrit.ChangeDetails(ctx, cls[0].ChangeID, gerrit.ChangeDetailsParams{})
 
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 	if revert.RevertOf == 0 {
-		return revert, nil
+		return revert, nil, nil
 	}
 
 	culprit, err := cs.gerrit.ChangeDetails(ctx, strconv.Itoa(revert.RevertOf),
 		gerrit.ChangeDetailsParams{Options: []string{"CURRENT_REVISION"}})
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 	if culprit.CurrentRevision == "" {
-		panic(fmt.Sprintf("Could not get current_revision property for cl %q", culprit.ChangeNumber))
+		return nil, nil, fmt.Errorf("Could not get current_revision property for cl %q",
+			culprit.ChangeNumber)
 	}
-	return revert, culprit
+	return revert, culprit, nil
 }
 
 // FailedBuildIsAppropriateFailure is a Rule that verifies that the referred
@@ -323,7 +337,7 @@ func (rule FailedBuildIsAppropriateFailure) Run(ctx context.Context, ap *AuditPa
 
 	build, err := getBuildByURL(ctx, buildURL, cs, &stepsFieldMask)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	for _, s := range build.Steps {
@@ -358,7 +372,10 @@ func (rule RevertOfCulprit) Run(ctx context.Context, ap *AuditParams, rc *Releva
 	result := &RuleResult{}
 	result.RuleResultStatus = ruleFailed
 
-	revert, culprit := getRevertAndCulpritChanges(ctx, ap, rc, cs)
+	revert, culprit, err := getRevertAndCulpritChanges(ctx, ap, rc, cs)
+	if err != nil {
+		return nil, err
+	}
 	if culprit == nil {
 		result.Message = fmt.Sprintf("Commit %q does not appear to be a revert, according to gerrit",
 			rc.CommitHash)
@@ -367,7 +384,7 @@ func (rule RevertOfCulprit) Run(ctx context.Context, ap *AuditParams, rc *Releva
 
 	pr, err := cs.gerrit.IsChangePureRevert(ctx, revert.ChangeID)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if !pr {
 		result.Message = fmt.Sprintf("Commit %q is a revert but not a *pure* revert, according to gerrit",

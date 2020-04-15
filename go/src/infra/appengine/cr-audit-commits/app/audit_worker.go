@@ -153,26 +153,8 @@ func audit(ctx context.Context, n int, ap AuditParams, wp *workerParams, repo st
 // datastore entity and finally write it to the audited channel for a
 // transaction to persist it when all workers are done.
 //
-// It swallows any panic, only logging an error in order to move to the next
-// commit.
+// It swallows any error, only logging it in order to move to the next commit.
 func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *workerParams) {
-	// TODO: remove later after fixing all the panics
-	defer func() {
-		r := recover()
-		if r != nil {
-			rc.Retries++
-			logging.Errorf(ctx, "Some rule panicked while auditing %s with message: %s", rc.CommitHash, r)
-			logging.Warningf(ctx, "Discarding incomplete results: %s", rc.Result)
-			rc.Result = []RuleResult{}
-			if rc.Retries > MaxRetriesPerCommit {
-				rc.Status = auditFailed
-			}
-			// Send through the channel anyway to persist the retry
-			// counter, and possibly change of status.
-			wp.audited <- rc
-		}
-	}()
-
 	for _, rs := range wp.rules {
 		hasExpired, err := runAccountRules(ctx, rs, rc, ap, wp)
 		if hasExpired {
@@ -180,7 +162,8 @@ func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *worke
 		}
 		if err != nil {
 			rc.Retries++
-			logging.Errorf(ctx, "Some rule panicked while auditing %s with message: %s", rc.CommitHash, err)
+			logging.Errorf(ctx,
+				"Some rule had an error while auditing %s with message: %s", rc.CommitHash, err)
 			logging.Warningf(ctx, "Discarding incomplete results: %s", rc.Result)
 			rc.Result = []RuleResult{}
 			if rc.Retries > MaxRetriesPerCommit {
@@ -189,6 +172,7 @@ func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *worke
 			// Send through the channel anyway to persist the retry
 			// counter, and possibly change of status.
 			wp.audited <- rc
+			return
 		}
 	}
 

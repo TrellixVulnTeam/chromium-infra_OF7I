@@ -25,19 +25,19 @@ import (
 	"go.chromium.org/luci/server/router"
 )
 
-type panicRule struct{}
+type errorRule struct{}
 
 // GetName returns the name of the rule.
-func (rule panicRule) GetName() string {
+func (rule errorRule) GetName() string {
 	return "Dummy Rule"
 }
 
-// Run panics if the commit hasn't been audited.
-func (rule panicRule) Run(c context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
+// Run return errors if the commit hasn't been audited.
+func (rule errorRule) Run(c context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	if rc.Status == auditScheduled {
-		panic("This always panics")
+		return nil, fmt.Errorf("error rule")
 	}
-	return &RuleResult{"Dummy rule", ruleFailed, "", ""}, fmt.Errorf("panic rule error")
+	return &RuleResult{"Dummy rule", ruleFailed, "", ""}, fmt.Errorf("error rule")
 }
 
 func mustGitilesTime(v string) *google_protobuf.Timestamp {
@@ -257,8 +257,8 @@ func TestAuditor(t *testing.T) {
 							So(rc.Status, ShouldEqual, auditCompletedWithActionRequired)
 						}
 					})
-					Convey("Some panic", func() {
-						RuleMap["dummy-repo"].Rules["rules"].Rules[0] = panicRule{}
+					Convey("Some error", func() {
+						RuleMap["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
 						So(resp.StatusCode, ShouldEqual, 200)

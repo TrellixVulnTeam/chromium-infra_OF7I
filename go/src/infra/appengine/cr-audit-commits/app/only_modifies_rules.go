@@ -49,7 +49,7 @@ func (rule OnlyModifiesFilesAndDirsRule) Run(ctx context.Context, ap *AuditParam
 			Type: typeDir,
 		})
 	}
-	return OnlyModifiesPathsRuleImpl(ctx, ap, rc, cs, paths), nil
+	return OnlyModifiesPathsRuleImpl(ctx, ap, rc, cs, paths)
 }
 
 // Path is a struct describing a file or directory within the git repo.
@@ -60,15 +60,15 @@ type Path struct {
 
 // OnlyModifiesPathsRuleImpl is a shared implementation for Rules which verify
 // that only the given path(s) are modified by the audited CL.
-func OnlyModifiesPathsRuleImpl(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients, paths []*Path) *RuleResult {
+func OnlyModifiesPathsRuleImpl(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients, paths []*Path) (*RuleResult, error) {
 	// Find the diff.
 	host, project, err := gitiles.ParseRepoURL(ap.RepoCfg.BaseRepoURL)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	gc, err := cs.NewGitilesClient(host)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	resp, err := gc.Log(ctx, &gitilespb.LogRequest{
 		Project:    project,
@@ -77,10 +77,10 @@ func OnlyModifiesPathsRuleImpl(ctx context.Context, ap *AuditParams, rc *Relevan
 		TreeDiff:   true,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if len(resp.Log) != 1 {
-		panic(fmt.Sprintf("Could not find commit %s through gitiles", rc.CommitHash))
+		return nil, fmt.Errorf("Could not find commit %s through gitiles", rc.CommitHash)
 	}
 	td := resp.Log[0].TreeDiff
 
@@ -138,5 +138,5 @@ func OnlyModifiesPathsRuleImpl(ctx context.Context, ap *AuditParams, rc *Relevan
 		result.Message = fmt.Sprintf("The automated account %s was expected to only modify one of [%s] on the automated commit %s"+
 			" but it seems to have modified other files.", ap.TriggeringAccount, allowedPathsStr, rc.CommitHash)
 	}
-	return result
+	return result, nil
 }
