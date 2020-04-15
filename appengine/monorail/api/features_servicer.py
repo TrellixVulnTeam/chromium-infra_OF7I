@@ -181,43 +181,6 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     return features_pb2.GetHotlistResponse(hotlist=converted_hotlist)
 
   @monorail_servicer.PRPCMethod
-  def ListHotlistItems(self, mc, request):
-    """Get the issues on the specified hotlist."""
-    hotlist_id = converters.IngestHotlistRef(
-        mc.cnxn, self.services.user, self.services.features,
-        request.hotlist_ref)
-
-    start, max_items = converters.IngestPagination(request.pagination)
-    with work_env.WorkEnv(mc, self.services) as we:
-      visible_hotlist_items, harmonized_config = we.ListHotlistItems(
-          hotlist_id, max_items, start, request.can, request.sort_spec,
-          request.group_by_spec)
-
-      issue_ids = [item.issue_id for item in visible_hotlist_items]
-      issues_by_id = we.GetIssuesDict(issue_ids)
-      related_refs_by_id = we.GetRelatedIssueRefs(issues_by_id.values())
-      all_project_names = [project_name for (project_name, _local_id)
-                           in related_refs_by_id.values()]
-      projects_by_name = we.GetProjectsByName(all_project_names)
-
-      with mc.profiler.Phase('making user views'):
-        users_involved = set(item.adder_id for item in visible_hotlist_items)
-        users_involved.update(
-            tracker_bizobj.UsersInvolvedInIssues(issues_by_id.values()))
-        users_by_id = framework_views.MakeAllUserViews(
-            mc.cnxn, self.services.user, users_involved)
-        # Reveal emails for all projects current user is a member of.
-        for project in projects_by_name.values():
-          framework_views.RevealAllEmailsToMembers(
-              mc.auth, project, users_by_id)
-
-      result = features_pb2.ListHotlistItemsResponse(
-          items=converters.ConvertHotlistItems(
-              visible_hotlist_items, issues_by_id, users_by_id,
-              related_refs_by_id, harmonized_config))
-      return result
-
-  @monorail_servicer.PRPCMethod
   def CreateHotlist(self, mc, request):
     """Create a new hotlist."""
     editor_ids = converters.IngestUserRefs(
