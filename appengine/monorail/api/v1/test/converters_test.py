@@ -51,6 +51,8 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.user_1 = self.services.user.TestAddUser('one@example.com', 111)
     self.user_2 = self.services.user.TestAddUser('two@example.com', 222)
     self.user_3 = self.services.user.TestAddUser('three@example.com', 333)
+    self.services.project.TestAddProjectMembers(
+        [self.user_1.user_id], self.project_1, 'CONTRIBUTOR_ROLE')
 
     self.field_def_1_name = 'test_field_1'
     self.field_def_1 = self._CreateFieldDef(
@@ -166,6 +168,14 @@ class ConverterFunctionsTest(unittest.TestCase):
     )
     self.dne_template = tracker_pb2.TemplateDef(
         name='dne_template_name', template_id=11114)
+    self.services.config.UpdateConfig(
+        self.cnxn,
+        self.project_1,
+        statuses_offer_merge=['Duplicate'],
+        excl_label_prefixes=['type', 'priority'],
+        default_template_for_developers=self.template_2.template_id,
+        default_template_for_users=self.template_1.template_id,
+        list_prefs=('ID Summary', 'ID', 'status', 'owner', 'owner:me'))
 
   def _CreateFieldDef(self, project_id, field_name, field_type_str):
     """Calls CreateFieldDef with reasonable defaults, returns the ID."""
@@ -1073,3 +1083,61 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         expected_api_projects,
         self.converter.ConvertProjects([self.project_1, self.project_2]))
+
+  def testConvertProjectConfig(self):
+    """We can convert a project_config"""
+    project_config = self.services.config.GetProjectConfig(
+        self.cnxn, self.project_1.project_id)
+    expected_grid_config = project_objects_pb2.ProjectConfig.GridViewConfig(
+        default_x_attr=project_config.default_x_attr,
+        default_y_attr=project_config.default_y_attr)
+    template_names = rnc.ConvertTemplateNames(
+        self.cnxn, project_config.project_id, [
+            project_config.default_template_for_developers,
+            project_config.default_template_for_users
+        ], self.services)
+    expected_api_config = project_objects_pb2.ProjectConfig(
+        name=rnc.ConvertProjectConfigName(
+            self.cnxn, self.project_1.project_id, self.services),
+        # TODO(crbug.com/monorail/7517): refactor into LabelDefType
+        exclusive_label_prefixes=project_config.exclusive_label_prefixes,
+        # TODO(crbug.com/monorail/7517): refactor into StatusDefType
+        merged_statuses=[
+            rnc.ConvertStatusDefName(
+                self.cnxn, status, project_config.project_id, self.services)
+            for status in project_config.statuses_offer_merge
+        ],
+        # TODO(crbug.com/monorail/7517): rename to default_member_query
+        default_query=project_config.member_default_query,
+        default_sort=project_config.default_sort_spec,
+        # TODO(crbug.com/monorail/7517): refactor to use IssueListColumn
+        default_col_spec=project_config.default_col_spec,
+        project_grid_config=expected_grid_config,
+        member_default_template=template_names.get(
+            project_config.default_template_for_developers),
+        non_members_default_template=template_names.get(
+            project_config.default_template_for_users),
+        revision_url_format=self.project_1.revision_url_format,
+        custom_issue_entry_url=project_config.custom_issue_entry_url)
+    self.converter.user_auth = authdata.AuthData.FromUser(
+        self.cnxn, self.user_1, self.services)
+    self.assertEqual(
+        expected_api_config,
+        self.converter.ConvertProjectConfig(project_config))
+
+  def testConvertProjectConfig_NonMembers(self):
+    self.converter.user_auth = authdata.AuthData.FromUser(
+        self.cnxn, self.user_2, self.services)
+    project_config = self.services.config.GetProjectConfig(
+        self.cnxn, self.project_1.project_id)
+    api_config = self.converter.ConvertProjectConfig(project_config)
+
+    expected_default_query = project_config.member_default_query
+    self.assertEqual(expected_default_query, api_config.default_query)
+
+    expected_member_default_template = rnc.ConvertTemplateNames(
+        self.cnxn, project_config.project_id,
+        [project_config.default_template_for_developers], self.services).get(
+            project_config.default_template_for_developers)
+    self.assertEqual(
+        expected_member_default_template, api_config.member_default_template)

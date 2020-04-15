@@ -408,12 +408,13 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.ConvertProjectName(self.cnxn, self.dne_project_id, self.services)
 
-  def testConvertProjectConfig(self):
+  def testConvertProjectConfigName(self):
     self.assertEqual(
-        rnc.ConvertProjectConfig(
+        rnc.ConvertProjectConfigName(
             self.cnxn, self.project_1.project_id, self.services),
         'projects/{}/config'.format(self.project_1.project_name))
 
-  def testConvertProjectConfig_NoSuchProjectException(self):
+  def testConvertProjectConfigName_NoSuchProjectException(self):
     with self.assertRaises(exceptions.NoSuchProjectException):
-      rnc.ConvertProjectConfig(self.cnxn, self.dne_project_id, self.services)
+      rnc.ConvertProjectConfigName(
+          self.cnxn, self.dne_project_id, self.services)

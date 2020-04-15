@@ -599,7 +599,7 @@ def ConvertProjectName(cnxn, project_id, services):
   return PROJECT_NAME_TMPL.format(project_name=project_name)
 
 
-def ConvertProjectConfig(cnxn, project_id, services):
+def ConvertProjectConfigName(cnxn, project_id, services):
   # type: (MonorailConnection, int, Services) -> str
   """Takes a Project ID and returns that project's config resource name.
 
