@@ -48,6 +48,7 @@ peripherals: {
   chameleon_type: 5
   chameleon: true
   camerabox: true
+  camerabox_facing: 1
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
@@ -106,6 +107,7 @@ var fullDimensions = Dimensions{
 	"label-bluetooth":             {"True"},
 	"label-board":                 {"boardval"},
 	"label-camerabox":             {"True"},
+	"label-camerabox_facing":      {"CAMERABOX_FACING_BACK"},
 	"label-carrier":               {"CARRIER_TMOBILE"},
 	"label-chameleon":             {"True"},
 	"label-chameleon_type": {

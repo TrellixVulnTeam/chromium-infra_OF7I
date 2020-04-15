@@ -103,6 +103,10 @@ func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 	if len(btpeers) > 0 {
 		dims["label-working_bluetooth_btpeer"] = btpeers
 	}
+
+	if facing := p.GetCameraboxFacing(); facing != inventory.Peripherals_CAMERABOX_FACING_UNKNOWN {
+		dims["label-camerabox_facing"] = []string{facing.String()}
+	}
 }
 
 func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -136,6 +140,14 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 	}
 	*p.WorkingBluetoothBtpeer = int32(max)
 	delete(d, "label-working_bluetooth_btpeer")
+
+	if facingName, ok := getLastStringValue(d, "label-camerabox_facing"); ok {
+		if index, ok := inventory.Peripherals_CameraboxFacing_value[strings.ToUpper(facingName)]; ok {
+			facing := inventory.Peripherals_CameraboxFacing(index)
+			p.CameraboxFacing = &facing
+		}
+		delete(d, "label-camerabox_facing")
+	}
 
 	return d
 }

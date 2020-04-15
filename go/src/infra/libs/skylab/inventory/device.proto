@@ -346,7 +346,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 18
+// NEXT TAG: 19
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -390,6 +390,16 @@ message Peripherals {
 
   // Indicate how many working btpeers for this device: crbug.com/1052511
   optional int32 working_bluetooth_btpeer = 16;
+
+  // Facing of DUT's camera to be tested whose FOV should cover chart tablet's
+  // screen in camerabox setup.
+  // NEXT TAG: 3
+  enum CameraboxFacing {
+    CAMERABOX_FACING_UNKNOWN = 0;
+    CAMERABOX_FACING_BACK = 1;
+    CAMERABOX_FACING_FRONT = 2;
+  }
+  optional CameraboxFacing camerabox_facing = 18;
 }
 
 // copy of enum from dut_state.proto
