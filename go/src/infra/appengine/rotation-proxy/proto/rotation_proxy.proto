@@ -5,7 +5,7 @@
 
 syntax = "proto3";
 
-package rotation_proxy;
+package rotationproxy;
 
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
