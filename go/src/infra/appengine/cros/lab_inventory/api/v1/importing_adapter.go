@@ -219,7 +219,10 @@ func getPeripherals(l *inventory.SchedulableLabels) *lab.Peripherals {
 		},
 		Carrier:   parseCarrier(capabilities.GetCarrier()),
 		Camerabox: peripherals.GetCamerabox(),
-		Chaos:     testHints.GetChaosDut(),
+		CameraboxInfo: &lab.Camerabox{
+			Facing: lab.Camerabox_Facing(peripherals.GetCameraboxFacing()),
+		},
+		Chaos: testHints.GetChaosDut(),
 	}
 	getCables(&p, testHints)
 	getConnectedCamera(&p, peripherals)

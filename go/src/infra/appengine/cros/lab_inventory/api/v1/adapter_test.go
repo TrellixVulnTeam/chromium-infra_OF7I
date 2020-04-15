@@ -81,7 +81,10 @@ var devInV2 = lab.ChromeOSDevice{
 				},
 				Carrier:   "att",
 				Camerabox: true,
-				Chaos:     true,
+				CameraboxInfo: &lab.Camerabox{
+					Facing: lab.Camerabox_FACING_BACK,
+				},
+				Chaos: true,
 				Cable: []*lab.Cable{
 					{
 						Type: lab.CableType_CABLE_AUDIOJACK,
@@ -289,6 +292,7 @@ common {
 			mimo: true
 			ptzpro2: true
 			camerabox: true
+			camerabox_facing: CAMERABOX_FACING_BACK
 			servo: true
 			servo_state: BROKEN
 			servo_type: "v3"

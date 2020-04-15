@@ -185,6 +185,11 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 		servoType := servo.GetServoType()
 		p.ServoType = &servoType
 	}
+
+	if facing := d.GetCameraboxInfo().GetFacing(); facing != lab.Camerabox_FACING_UNKNOWN {
+		v1Facing := inventory.Peripherals_CameraboxFacing(facing)
+		p.CameraboxFacing = &v1Facing
+	}
 }
 
 func setDutPools(labels *inventory.SchedulableLabels, inputPools []string) {
