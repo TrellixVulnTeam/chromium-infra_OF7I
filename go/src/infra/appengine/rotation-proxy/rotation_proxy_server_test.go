@@ -6,11 +6,13 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
+	"go.chromium.org/luci/common/clock/testclock"
 	rpb "infra/appengine/rotation-proxy/proto"
 )
 
@@ -23,11 +25,11 @@ var oncallsShift1 = []*rpb.OncallPerson{person1, person2}
 var startTimeShift1 = &timestamp.Timestamp{Seconds: 111, Nanos: 0}
 var endTimeShift1 = &timestamp.Timestamp{Seconds: 222, Nanos: 0}
 var oncallsShift2 = []*rpb.OncallPerson{person3, person4}
-var startTimeShift2 = &timestamp.Timestamp{Seconds: 333, Nanos: 4444}
-var endTimeShift2 = &timestamp.Timestamp{Seconds: 555, Nanos: 6666}
+var startTimeShift2 = &timestamp.Timestamp{Seconds: 333, Nanos: 0}
+var endTimeShift2 = &timestamp.Timestamp{Seconds: 555, Nanos: 0}
 var oncallsShift3 = []*rpb.OncallPerson{person5}
-var startTimeShift3 = &timestamp.Timestamp{Seconds: 777, Nanos: 8888}
-var endTimeShift3 = &timestamp.Timestamp{Seconds: 777, Nanos: 9999}
+var startTimeShift3 = &timestamp.Timestamp{Seconds: 777, Nanos: 0}
+var endTimeShift3 = &timestamp.Timestamp{Seconds: 777, Nanos: 0}
 
 var rotation1 = &rpb.Rotation{
 	Name: "rotation1",
@@ -104,6 +106,68 @@ func TestBatchUpdateRotations(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(len(dsRotations), ShouldEqual, 1)
 		assertRotationsEquals(&dsRotations[0].Proto, rotation1Updated)
+	})
+}
+
+func TestBatchGetRotations(t *testing.T) {
+	ctx := gaetesting.TestingContext()
+	server := &RotationProxyServer{}
+	Convey("batch get rotations", t, func() {
+		var rotation = &rpb.Rotation{
+			Name: "rotation",
+			Shifts: []*rpb.Shift{
+				{
+					Oncalls:   oncallsShift3,
+					StartTime: startTimeShift3,
+					EndTime:   endTimeShift3,
+				},
+				{
+					Oncalls:   oncallsShift2,
+					StartTime: startTimeShift2,
+					EndTime:   endTimeShift2,
+				},
+				{
+					Oncalls:   oncallsShift1,
+					StartTime: startTimeShift1,
+					EndTime:   endTimeShift1,
+				},
+			},
+		}
+		updateRequest := &rpb.BatchUpdateRotationsRequest{
+			Requests: []*rpb.UpdateRotationRequest{
+				{Rotation: rotation},
+			},
+		}
+		_, err := server.BatchUpdateRotations(ctx, updateRequest)
+		datastore.GetTestable(ctx).CatchupIndexes()
+		So(err, ShouldBeNil)
+
+		getRequest := &rpb.BatchGetRotationsRequest{
+			Names: []string{"rotation"},
+		}
+
+		// Mock clock
+		ctx, _ = testclock.UseTime(ctx, time.Unix(444, 0))
+
+		response, err := server.BatchGetRotations(ctx, getRequest)
+		So(err, ShouldBeNil)
+		So(len(response.Rotations), ShouldEqual, 1)
+		expected := &rpb.Rotation{
+			Name: "rotation",
+			Shifts: []*rpb.Shift{
+				{
+					Oncalls:   oncallsShift2,
+					StartTime: startTimeShift2,
+					EndTime:   endTimeShift2,
+				},
+				{
+					Oncalls:   oncallsShift3,
+					StartTime: startTimeShift3,
+					EndTime:   endTimeShift3,
+				},
+			},
+		}
+		assertRotationsEquals(response.Rotations[0], expected)
 	})
 }
 

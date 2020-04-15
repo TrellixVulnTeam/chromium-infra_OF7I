@@ -6,8 +6,14 @@ package main
 
 import (
 	"context"
+	"sort"
+
+	ptypes "github.com/golang/protobuf/ptypes"
 	"go.chromium.org/gae/service/datastore"
-	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	rpb "infra/appengine/rotation-proxy/proto"
 )
 
@@ -22,8 +28,37 @@ type RotationProxyServer struct{}
 
 // BatchGetRotations returns rotation information for a request.
 func (rps *RotationProxyServer) BatchGetRotations(ctx context.Context, request *rpb.BatchGetRotationsRequest) (*rpb.BatchGetRotationsResponse, error) {
-	logging.Infof(ctx, "Batch Get Rotations")
-	return &rpb.BatchGetRotationsResponse{}, nil
+	rotations := make([]*Rotation, len(request.Names))
+	for i, rotationName := range request.Names {
+		rotations[i] = &Rotation{
+			Name: rotationName,
+		}
+	}
+	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+		return datastore.Get(ctx, rotations)
+	}, nil)
+	if err != nil {
+		// err should be MultiError, according to https://godoc.org/go.chromium.org/gae/service/datastore#Get
+		if firstErr := err.(errors.MultiError).First(); firstErr == datastore.ErrNoSuchEntity {
+			return nil, status.Errorf(codes.NotFound, "Rotation not found %v", firstErr)
+		}
+		return nil, err
+	}
+
+	for _, rotation := range rotations {
+		if err := processShiftsForRotation(ctx, &rotation.Proto); err != nil {
+			return nil, err
+		}
+	}
+
+	// Compose the response
+	rots := make([]*rpb.Rotation, len(rotations))
+	for i, rotation := range rotations {
+		rots[i] = &rotation.Proto
+	}
+	return &rpb.BatchGetRotationsResponse{
+		Rotations: rots,
+	}, nil
 }
 
 // BatchUpdateRotations updates rotation information in Rotation Proxy.
@@ -50,4 +85,26 @@ func (rps *RotationProxyServer) BatchUpdateRotations(ctx context.Context, reques
 	return &rpb.BatchUpdateRotationsResponse{
 		Rotations: rotations,
 	}, nil
+}
+
+// processShiftsForRotation filters out past shifts and sort shifts based on start time.
+func processShiftsForRotation(ctx context.Context, rotation *rpb.Rotation) error {
+	now := clock.Now(ctx)
+	n := 0
+	for _, shift := range rotation.Shifts {
+		shiftEndTime, err := ptypes.Timestamp(shift.EndTime)
+		if err != nil {
+			return err
+		}
+		if shiftEndTime.After(now) {
+			rotation.Shifts[n] = shift
+			n++
+		}
+	}
+	rotation.Shifts = rotation.Shifts[:n]
+
+	sort.Slice(rotation.Shifts, func(i, j int) bool {
+		return rotation.Shifts[i].StartTime.Seconds < rotation.Shifts[j].StartTime.Seconds
+	})
+	return nil
 }
