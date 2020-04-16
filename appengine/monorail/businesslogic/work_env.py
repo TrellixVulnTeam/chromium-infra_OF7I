@@ -83,6 +83,12 @@ from proto import user_pb2
 # TODO(jrobbins): break this file into one facade plus ~5
 # implementation parts that roughly correspond to services files.
 
+# ListResult is returned in List/Search methods to bundle the requested
+# items and the next start index for a subsequent request. If there are
+# no more items to be fetched, `next_start` should be None.
+ListResult = collections.namedtuple('ListResult', ['items', 'next_start'])
+# type: (Sequence[Object], Optional[int]) -> None
+
 
 class WorkEnv(object):
 
@@ -2122,8 +2128,7 @@ class WorkEnv(object):
   # values to sort_spec.
   def ListHotlistItems(self, hotlist_id, max_items, start, can, sort_spec,
                        group_by_spec, use_cache=True):
-    # (int, int, int, int, str, str, bool) -> (
-    #     List(HotlistItem), ProjectIssueConfig, Dict{user_id: UserView, ...})
+    # type: (int, int, int, int, str, str, bool) -> ListResult
     """Return a list of HotlistItems for the given hotlist that
        are visible by the user.
 
@@ -2137,18 +2142,19 @@ class WorkEnv(object):
       use_cache: set to false when doing read-modify-write.
 
     Returns:
-      A tuple of (visible_hotlist_items, harmonized_config) where:
-
-      visible_hotlist_items: a list of sorted HotlistItems with
-        issues filtered out based on start, max_items, can, and the users's
-        permisisons.
-      harmonized_config: ProjectIssueConfig for all projects involved in
-        with the hotlist.
+      A work_env.ListResult namedtuple.
 
     Raises:
       NoSuchHotlistException: There is no hotlist with that ID.
+      InputException: `max_items` or `start` are negative values.
+      PermissionException: The user is not allowed to view the hotlist.
     """
     hotlist = self.GetHotlist(hotlist_id, use_cache=use_cache)
+    if start < 0:
+      raise exceptions.InputException('Invalid `start`: %d' % start)
+    if max_items < 0:
+      raise exceptions.InputException('Invalid `max_items`: %d' % max_items)
+
     hotlist_issues = self.services.issue.GetIssues(
         self.mc.cnxn, [item.issue_id for item in hotlist.items])
     project_ids = hotlist_helpers.GetAllProjectsOfIssues(hotlist_issues)
@@ -2162,19 +2168,17 @@ class WorkEnv(object):
         sort_spec, group_by_spec, harmonized_config, self.services,
         self.mc.profiler)
 
-    # TODO(crbug/monorail/7104): Coerce max_items if max_items too high.
-    if not start or start < 1:
-      range_start = 0
-    else:
-      range_start = start - 1
-    if not max_items or max_items < 1:
-      max_items = features_constants.DEFAULT_RESULTS_PER_PAGE
-    range_end = range_start + max_items
-    visible_issues = sorted_issues[range_start: range_end]
+
+    end = start + max_items
+    visible_issues = sorted_issues[start:end]
     hotlist_items_dict = {item.issue_id: item for item in hotlist.items}
     visible_hotlist_items = [hotlist_items_dict.get(issue.issue_id) for
                             issue in visible_issues]
-    return (visible_hotlist_items, harmonized_config)
+
+    next_start = None
+    if end < len(sorted_issues):
+      next_start = end
+    return ListResult(visible_hotlist_items, next_start)
 
   def TransferHotlistOwnership(self, hotlist_id, new_owner_id, remain_editor,
                                use_cache=True, commit=True):

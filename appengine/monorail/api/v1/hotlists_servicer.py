@@ -55,7 +55,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     sort_spec = request.order_by.replace(',', ' ')
 
     with work_env.WorkEnv(mc, self.services) as we:
-      visible_hotlist_items, _harmonized_config = we.ListHotlistItems(
+      list_result = we.ListHotlistItems(
           hotlist_id, page_size, start,
           tracker_constants.ALL_ISSUES_CAN, sort_spec, '')
 
@@ -63,8 +63,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     # implemented.
     next_page_token = ''
     return hotlists_pb2.ListHotlistItemsResponse(
-        items=self.converter.ConvertHotlistItems(
-            hotlist_id, visible_hotlist_items),
+        items=self.converter.ConvertHotlistItems(hotlist_id, list_result.items),
         next_page_token=next_page_token)
 
 
