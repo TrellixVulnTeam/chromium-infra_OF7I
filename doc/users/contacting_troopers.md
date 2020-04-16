@@ -8,8 +8,9 @@ Our troopers are here to help.
 Oncall hours: we cover working hours in the Pacific timezone:
 + 1600 - 0000 UTC (900 - 1700 MTV)
 
-Issues in EMEA are handled on a best-effort basis by volunteers. See
-[here](http://shortn/_TqFYfP9nk6) (internal link) for contact information.
+There is no designated oncall coverage for EMEA or APAC hours. Volunteers in
+those regions may provide assistance on mailing lists for urgent issues, but
+there's no guarantee.
 
 If you are contacting a trooper to see if there is an issue with a service,
 visit the [ChOps Status Dashboard](https://chopsdash.appspot.com) first.
@@ -23,9 +24,12 @@ trooper, check [build.chromium.org](https://build.chromium.org), or
 and you are unable to file a bug, please contact the team on
 [infra-dev@chromium.org](mailto:infra-dev@chromium.org).
 
+Small or non-urgent questions can also be posted in the [#ops] Chromium slack
+channel or the [chops-hangout channel] (internal).
+
 If you know your issue is with the physical hardware, or otherwise should be
 handled by the Systems team, please follow their
-[Rules of Engagement](https://docs.google.com/document/d/1Lhki-HAANF8NQzChDKA-ip_GE4D6c9WU1uBXB76XhnU/edit#).
+[Rules of Engagement](http://shortn/_x6Y10rxpKG) (internal).
 
 ## Bug Templates
 
@@ -36,10 +40,9 @@ For fastest response, please use the provided templates:
     know that it's managed by the Labs team.
 *   [Mobile device restart requests]: if a mobile device appears to be offline
     and you know that it's managed by the Labs team.
-*   [ChromeOS Waterfall Pin Bumps / Restarts (Internal)](http://goto.google.com/cros-restart)
 
 Also make sure to include the machine name (e.g. build11-m1)
-as well as the waterfall name (Builder: Win).
+as well as the builder name (Builder: win-archive-rel) when applicable.
 
 ## Priority Levels
 
@@ -101,6 +104,8 @@ Common Non-Trooper Requests:
 *   [File Chrome OS infra bug](https://bugs.chromium.org/p/chromium/issues/entry?template=Defect%20report%20from%20developer&components=Infra>ChromeOS&labels=Restrict-View-Google&summary=%5BBrief%20description%20of%20problem%5D)
 *   [Check the Chrome OS on-call channel](http://go/crosoncall) (internal)
 
+[#ops]: https://chromium.slack.com/messages/CGM8DQ3ST/
+[chops-hangout channel]: http://go/chops-hangout
 [Machine restart requests]: http://go/chrome-labs-fixit-bug
 [Mobile device restart requests]: http://go/chrome-labs-fixit-bug
 [General requests]: https://bugs.chromium.org/p/chromium/issues/entry?template=Build%20Infrastructure&labels=Restrict-View-Google,Infra-Troopers&summary=%5BBrief%20description%20of%20problem%5D&comment=Please%20provide%20the%20details%20for%20your%20request%20here.%0A%0ASet%20Pri-0%20iff%20it%20requires%20immediate%20attention,%20Pri-1%20if%20resolution%20within%20a%20few%20hours%20is%20acceptable,%20and%20Pri-2%20if%20it%20just%20needs%20to%20be%20handled%20today.
