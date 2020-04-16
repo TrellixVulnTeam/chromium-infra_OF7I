@@ -96,15 +96,16 @@ func getFullTaskList(ctx context.Context, call *swarming_api.TasksListCall) ([]*
 	return tr, nil
 }
 
-// GetActiveLeaseTasksForHost returns a list of RUNNING or PENDING lease tasks,
-// retrying transient errors.
-func (c *Client) GetActiveLeaseTasksForHost(ctx context.Context, hostname string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
+// getActiveLeaseTasksForDimensions gets active leases for any combination of dimensions and
+// does no sanity checking on the dimensions provided.
+func (c *Client) getActiveLeaseTasksForDimensions(ctx context.Context, dims map[string]string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
 	var tr []*swarming_api.SwarmingRpcsTaskResult
 	getResult := func() error {
 		tr = nil
 		var err error
-		tags := []string{fmt.Sprintf("dut_name:%s", hostname), "skylab-tool:lease"}
-		call := c.SwarmingService.Tasks.List().Tags(tags...).State("RUNNING")
+		var call *swarming_api.TasksListCall
+		tags := dimsToTags(dims)
+		call = c.SwarmingService.Tasks.List().Tags(tags...).State("RUNNING")
 		r, err := getFullTaskList(ctx, call)
 		if err != nil {
 			return err
@@ -119,9 +120,20 @@ func (c *Client) GetActiveLeaseTasksForHost(ctx context.Context, hostname string
 		return nil
 	}
 	if err := callWithRetries(ctx, "get result", getResult); err != nil {
-		return nil, errors.Annotate(err, fmt.Sprintf("get active lease tasks for host %s", hostname)).Err()
+		return nil, errors.Annotate(err, fmt.Sprintf("get active leases tasks for dims (%s)", formatDims(dims))).Err()
 	}
 	return tr, nil
+}
+
+// GetActiveLeaseTasksForHost returns a list of RUNNING or PENDING lease tasks,
+// retrying transient errors.
+// hostname cannot be empty.
+func (c *Client) GetActiveLeaseTasksForHost(ctx context.Context, hostname string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
+	var dims = map[string]string{
+		"dut_name":    hostname,
+		"skylab-tool": "lease",
+	}
+	return c.getActiveLeaseTasksForDimensions(ctx, dims)
 }
 
 // CancelTask cancels a swarming task by taskID,
@@ -339,6 +351,16 @@ func flattenStringPairs(pairs []*swarming_api.SwarmingRpcsStringPair) []string {
 	return ss
 }
 
+// dimsToTags takes swarming dimensions specified as a map
+// and returns them as a list of Key:Value pairs.
+func dimsToTags(m map[string]string) []string {
+	var out []string
+	for k, v := range m {
+		out = append(out, fmt.Sprintf("%s:%s", k, v))
+	}
+	return out
+}
+
 // GetTaskURL gets a URL for the task with the given ID.
 func (c *Client) GetTaskURL(taskID string) string {
 	return TaskURL(c.server, taskID)
@@ -439,4 +461,13 @@ func parseSwarmingHost(s string) string {
 		return s
 	}
 	return u.Host
+}
+
+// formatDims converts dimensions stored in a map into a human-readable format.
+func formatDims(m map[string]string) string {
+	var out []string
+	for k, v := range m {
+		out = append(out, fmt.Sprintf("%s:%s", k, v))
+	}
+	return strings.Join(out, ", ")
 }
