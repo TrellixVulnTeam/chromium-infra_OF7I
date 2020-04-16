@@ -7,7 +7,7 @@ import {LitElement, html, css} from 'lit-element';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/chops/chops-button/chops-button.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 /**
@@ -155,7 +155,7 @@ export class MrAttachment extends connectStore(LitElement) {
         });
 
     promise.then(() => {
-      store.dispatch(issue.fetchComments(issueRef));
+      store.dispatch(issueV0.fetchComments(issueRef));
     }, (error) => {
       console.log('Failed to (un)delete attachment', error);
     });

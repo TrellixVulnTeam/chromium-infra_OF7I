@@ -9,7 +9,7 @@ import 'elements/chops/chops-timestamp/chops-timestamp.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import './mr-field-values.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {HARDCODED_FIELD_GROUPS, valuesForField, fieldDefsWithGroup,
@@ -327,10 +327,10 @@ export class MrMetadata extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.fieldValueMap = issue.fieldValueMap(state);
-    this.issueType = issue.type(state);
-    this.issueRef = issue.viewedIssueRef(state);
-    this.relatedIssues = issue.relatedIssues(state);
+    this.fieldValueMap = issueV0.fieldValueMap(state);
+    this.issueType = issueV0.type(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
+    this.relatedIssues = issueV0.relatedIssues(state);
   }
 }
 

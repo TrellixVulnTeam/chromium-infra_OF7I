@@ -6,8 +6,8 @@ import {LitElement, html, css} from 'lit-element';
 import qs from 'qs';
 import {store, connectStore} from 'reducers/base.js';
 import * as userV0 from 'reducers/userV0.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -241,9 +241,9 @@ export class MrCue extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.projectName = project.viewedProjectName(state);
-    this.issue = issue.viewedIssue(state);
-    this.referencedUsers = issue.referencedUsers(state);
+    this.projectName = projectV0.viewedProjectName(state);
+    this.issue = issueV0.viewedIssue(state);
+    this.referencedUsers = issueV0.referencedUsers(state);
     this.user = userV0.currentUser(state);
     this.prefs = userV0.prefs(state);
     this.signedIn = this.user && this.user.userId;

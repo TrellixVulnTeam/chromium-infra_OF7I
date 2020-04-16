@@ -26,8 +26,8 @@ import {displayNameToUserRef, labelStringToRef, componentStringToRef,
 import {isEmptyObject, equalsIgnoreCase} from 'shared/helpers.js';
 import {NON_EDITING_KEY_EVENTS} from 'shared/dom-helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as ui from 'reducers/ui.js';
 import '../mr-edit-field/mr-edit-field.js';
 import '../mr-edit-field/mr-edit-status.js';
@@ -772,17 +772,17 @@ export class MrEditMetadata extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.fieldValueMap = issue.fieldValueMap(state);
-    this.issueType = issue.type(state);
-    this.issueRef = issue.viewedIssueRef(state);
-    this.presubmitResponse = issue.presubmitResponse(state);
-    this.predictedComponent = issue.predictedComponent(state);
-    this.projectConfig = project.viewedConfig(state);
-    this.projectName = issue.viewedIssueRef(state).projectName;
-    this.issuePermissions = issue.permissions(state);
-    this.optionsPerEnumField = project.optionsPerEnumField(state);
+    this.fieldValueMap = issueV0.fieldValueMap(state);
+    this.issueType = issueV0.type(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
+    this.presubmitResponse = issueV0.presubmitResponse(state);
+    this.predictedComponent = issueV0.predictedComponent(state);
+    this.projectConfig = projectV0.viewedConfig(state);
+    this.projectName = issueV0.viewedIssueRef(state).projectName;
+    this.issuePermissions = issueV0.permissions(state);
+    this.optionsPerEnumField = projectV0.optionsPerEnumField(state);
     // Access boolean value from allStarredIssues
-    const starredIssues = issue.starredIssues(state);
+    const starredIssues = issueV0.starredIssues(state);
     this.isStarred = starredIssues.has(issueRefToString(this.issueRef));
   }
 

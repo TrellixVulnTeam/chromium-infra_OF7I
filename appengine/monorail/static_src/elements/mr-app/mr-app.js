@@ -10,9 +10,9 @@ import qs from 'qs';
 import {getServerStatusCron} from 'shared/cron.js';
 import 'elements/framework/mr-site-banner/mr-site-banner.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as hotlist from 'reducers/hotlist.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import * as sitewide from 'reducers/sitewide.js';
@@ -389,9 +389,9 @@ export class MrApp extends connectStore(LitElement) {
    * @param {function} next Passes execution on to the next registered callback.
    */
   _selectProject(ctx, next) {
-    if (project.viewedProjectName(store.getState()) !== ctx.params.project) {
-      store.dispatch(project.select(ctx.params.project));
-      store.dispatch(project.fetch(ctx.params.project));
+    if (projectV0.viewedProjectName(store.getState()) !== ctx.params.project) {
+      store.dispatch(projectV0.select(ctx.params.project));
+      store.dispatch(projectV0.fetch(ctx.params.project));
     }
 
     next();
@@ -425,8 +425,8 @@ export class MrApp extends connectStore(LitElement) {
       localId: Number.parseInt(ctx.queryParams.id),
       projectName: ctx.params.project,
     };
-    store.dispatch(issue.viewIssue(issueRef));
-    store.dispatch(issue.fetchIssuePageData(issueRef));
+    store.dispatch(issueV0.viewIssue(issueRef));
+    store.dispatch(issueV0.fetchIssuePageData(issueRef));
     this.page = 'detail';
     next();
   }

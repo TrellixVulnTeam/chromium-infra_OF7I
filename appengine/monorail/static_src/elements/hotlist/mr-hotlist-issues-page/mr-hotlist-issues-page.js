@@ -12,7 +12,7 @@ import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 import {store, connectStore} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
@@ -250,7 +250,7 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
     this._columns = sitewide.currentColumns(state) || hotlistColumns;
 
     this._extractFieldValuesFromIssue =
-      project.extractFieldValuesFromIssue(state);
+      projectV0.extractFieldValuesFromIssue(state);
   }
 
   /** @override */

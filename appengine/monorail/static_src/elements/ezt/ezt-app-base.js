@@ -6,7 +6,7 @@ import {LitElement} from 'lit-element';
 import qs from 'qs';
 import {store, connectStore} from 'reducers/base.js';
 import * as userV0 from 'reducers/userV0.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 /**
@@ -49,8 +49,8 @@ export class EztAppBase extends connectStore(LitElement) {
   }
 
   fetchProjectData(projectName) {
-    store.dispatch(project.select(projectName));
-    store.dispatch(project.fetch(projectName));
+    store.dispatch(projectV0.select(projectName));
+    store.dispatch(projectV0.fetch(projectName));
   }
 
   mapUrlToQueryParams() {

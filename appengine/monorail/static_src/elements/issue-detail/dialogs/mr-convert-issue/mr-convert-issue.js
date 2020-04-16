@@ -5,8 +5,8 @@
 import {LitElement, html, css} from 'lit-element';
 
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import 'elements/framework/mr-error/mr-error.js';
@@ -120,11 +120,11 @@ export class MrConvertIssue extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.convertingIssue = issue.requests(state).convert.requesting;
-    this.convertIssueError = issue.requests(state).convert.error;
-    this.issueRef = issue.viewedIssueRef(state);
-    this.issuePermissions = issue.permissions(state);
-    this.projectTemplates = project.viewedTemplates(state);
+    this.convertingIssue = issueV0.requests(state).convert.requesting;
+    this.convertIssueError = issueV0.requests(state).convert.error;
+    this.issueRef = issueV0.viewedIssueRef(state);
+    this.issuePermissions = issueV0.permissions(state);
+    this.projectTemplates = projectV0.viewedTemplates(state);
   }
 
   /** @override */
@@ -166,7 +166,7 @@ export class MrConvertIssue extends connectStore(LitElement) {
    */
   save() {
     const commentContent = this.shadowRoot.querySelector('#commentContent');
-    store.dispatch(issue.convert(this.issueRef, {
+    store.dispatch(issueV0.convert(this.issueRef, {
       templateName: this.selectedTemplate,
       commentContent: commentContent.value,
       sendEmail: this.sendEmail,

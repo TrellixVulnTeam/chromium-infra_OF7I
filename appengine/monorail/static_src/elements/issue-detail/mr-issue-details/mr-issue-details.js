@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import * as ui from 'reducers/ui.js';
 import 'elements/framework/mr-comment-content/mr-description.js';
 import '../mr-comment-list/mr-comment-list.js';
@@ -83,7 +83,7 @@ export class MrIssueDetails extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.commentsByApproval = issue.commentsByApprovalName(state);
+    this.commentsByApproval = issueV0.commentsByApprovalName(state);
   }
 
   /** @override */

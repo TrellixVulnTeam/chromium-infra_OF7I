@@ -6,8 +6,8 @@ import {LitElement, html, css} from 'lit-element';
 import page from 'page';
 import qs from 'qs';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 import * as ui from 'reducers/ui.js';
@@ -344,7 +344,7 @@ export class MrListPage extends connectStore(LitElement) {
     }
 
     if (changedProperties.has('userDisplayName')) {
-      store.dispatch(issue.fetchStarredIssues());
+      store.dispatch(issueV0.fetchStarredIssues());
     }
 
     if (changedProperties.has('_fetchIssueListError') &&
@@ -410,7 +410,7 @@ export class MrListPage extends connectStore(LitElement) {
    * Refreshes the list of issues show.
    */
   refresh() {
-    store.dispatch(issue.fetchIssueList(this.projectName, {
+    store.dispatch(issueV0.fetchIssueList(this.projectName, {
       ...this._queryParams,
       q: this.currentQuery,
       can: this.currentCan,
@@ -421,29 +421,29 @@ export class MrListPage extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.projectName = project.viewedProjectName(state);
+    this.projectName = projectV0.viewedProjectName(state);
     this._isLoggedIn = userV0.isLoggedIn(state);
     this._currentUser = userV0.currentUser(state);
     this._usersProjects = userV0.projectsPerUser(state);
 
-    this.issues = issue.issueList(state) || [];
-    this.totalIssues = issue.totalIssues(state) || 0;
-    this._fetchingIssueList = issue.requests(state).fetchIssueList.requesting;
-    this._issueListLoaded = issue.issueListLoaded(state);
+    this.issues = issueV0.issueList(state) || [];
+    this.totalIssues = issueV0.totalIssues(state) || 0;
+    this._fetchingIssueList = issueV0.requests(state).fetchIssueList.requesting;
+    this._issueListLoaded = issueV0.issueListLoaded(state);
 
-    const error = issue.requests(state).fetchIssueList.error;
+    const error = issueV0.requests(state).fetchIssueList.error;
     this._fetchIssueListError = error ? error.message : '';
 
     this.currentQuery = sitewide.currentQuery(state);
     this.currentCan = sitewide.currentCan(state);
     this.columns =
-        sitewide.currentColumns(state) || project.defaultColumns(state);
+        sitewide.currentColumns(state) || projectV0.defaultColumns(state);
 
     this._queryParams = sitewide.queryParams(state);
 
-    this._extractFieldValues = project.extractFieldValuesFromIssue(state);
+    this._extractFieldValues = projectV0.extractFieldValuesFromIssue(state);
     this._presentationConfigLoaded =
-      project.viewedPresentationConfigLoaded(state);
+      projectV0.viewedPresentationConfigLoaded(state);
   }
 
   /**

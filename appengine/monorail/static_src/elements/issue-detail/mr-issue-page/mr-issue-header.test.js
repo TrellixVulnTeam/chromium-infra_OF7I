@@ -5,7 +5,7 @@
 import {assert} from 'chai';
 import {MrIssueHeader} from './mr-issue-header.js';
 import {store, resetState} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import {ISSUE_EDIT_PERMISSION, ISSUE_DELETE_PERMISSION,
   ISSUE_FLAGSPAM_PERMISSION} from 'shared/permissions.js';
 
@@ -27,9 +27,9 @@ describe('mr-issue-header', () => {
   });
 
   it('updating issue id changes header', () => {
-    store.dispatch({type: issue.VIEW_ISSUE,
+    store.dispatch({type: issueV0.VIEW_ISSUE,
       issueRef: {localId: 1, projectName: 'test'}});
-    store.dispatch({type: issue.FETCH_SUCCESS,
+    store.dispatch({type: issueV0.FETCH_SUCCESS,
       issue: {localId: 1, projectName: 'test', summary: 'test'}});
 
     assert.deepEqual(element.issue, {localId: 1, projectName: 'test',

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import {combineReducers} from 'redux';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 import {createSelector} from 'reselect';
@@ -91,7 +91,7 @@ export const bannerTime =
 export const queryParams =
     createSelector(sitewide, (sitewide) => sitewide.queryParams || {});
 export const pageTitle = createSelector(
-    sitewide, project.viewedConfig,
+    sitewide, projectV0.viewedConfig,
     (sitewide, projectConfig) => {
       const titlePieces = [];
 
@@ -134,7 +134,7 @@ export const currentCan = createSelector(queryParams,
  * project search.
  */
 export const currentQuery = createSelector(
-    project.defaultQuery,
+    projectV0.defaultQuery,
     queryParams,
     (defaultQuery, params = {}) => {
       // Make sure entering an empty search still works.

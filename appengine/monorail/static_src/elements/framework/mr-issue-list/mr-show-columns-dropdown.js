@@ -6,7 +6,7 @@ import {MrDropdown} from 'elements/framework/mr-dropdown/mr-dropdown.js';
 import page from 'page';
 import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 import {fieldTypes, fieldsForIssue} from 'shared/issue-fields.js';
 
@@ -100,8 +100,8 @@ export class MrShowColumnsDropdown extends connectStore(MrDropdown) {
 
   /** @override */
   stateChanged(state) {
-    this._fieldDefs = project.fieldDefs(state) || [];
-    this._labelPrefixFields = project.labelPrefixFields(state) || [];
+    this._fieldDefs = projectV0.fieldDefs(state) || [];
+    this._labelPrefixFields = projectV0.labelPrefixFields(state) || [];
     this._queryParams = sitewide.queryParams(state);
   }
 

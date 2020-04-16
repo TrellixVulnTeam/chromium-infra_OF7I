@@ -6,8 +6,8 @@ import {LitElement, html, css} from 'lit-element';
 
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import '../mr-approval-card/mr-approval-card.js';
 import {valuesForField} from 'shared/metadata-helpers.js';
 import 'elements/issue-detail/metadata/mr-edit-metadata/mr-edit-metadata.js';
@@ -90,7 +90,8 @@ export class MrPhase extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    const isPhaseWithMilestone = PHASES_WITH_MILESTONES.includes(this.phaseName);
+    const isPhaseWithMilestone = PHASES_WITH_MILESTONES.includes(
+        this.phaseName);
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <h2>
@@ -183,12 +184,12 @@ export class MrPhase extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.fieldValueMap = issue.fieldValueMap(state);
-    this.issue = issue.viewedIssue(state);
-    this.issueRef = issue.viewedIssueRef(state);
-    this.updatingIssue = issue.requests(state).update.requesting;
-    this.updateIssueError = issue.requests(state).update.error;
-    this.fieldDefs = project.fieldDefsForPhases(state);
+    this.fieldValueMap = issueV0.fieldValueMap(state);
+    this.issue = issueV0.viewedIssue(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
+    this.updatingIssue = issueV0.requests(state).update.requesting;
+    this.updateIssueError = issueV0.requests(state).update.error;
+    this.fieldDefs = projectV0.fieldDefsForPhases(state);
   }
 
   /** @override */
@@ -259,7 +260,7 @@ export class MrPhase extends connectStore(LitElement) {
     };
 
     if (message.commentContent || message.delta) {
-      store.dispatch(issue.update(message));
+      store.dispatch(issueV0.update(message));
     }
   }
 

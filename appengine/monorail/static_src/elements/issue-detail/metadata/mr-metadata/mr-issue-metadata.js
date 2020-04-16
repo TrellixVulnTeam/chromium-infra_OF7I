@@ -5,8 +5,8 @@
 import {LitElement, html, css} from 'lit-element';
 
 import {connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import 'elements/framework/mr-star-button/mr-star-button.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
@@ -231,19 +231,19 @@ export class MrIssueMetadata extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issue = issue.viewedIssue(state);
-    this.issueRef = issue.viewedIssueRef(state);
+    this.issue = issueV0.viewedIssue(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
     this.user = userV0.currentUser(state);
-    this.projectConfig = project.viewedConfig(state);
-    this.blocking = issue.blockingIssues(state);
-    this.sortedBlockedOn = issue.sortedBlockedOn(state);
-    this.mergedInto = issue.mergedInto(state);
-    this.relatedIssues = issue.relatedIssues(state);
-    this.issueHotlists = issue.hotlists(state);
-    this.labelDefMap = project.labelDefMap(state);
-    this._components = issue.components(state);
-    this._fieldDefs = issue.fieldDefs(state);
-    this._type = issue.type(state);
+    this.projectConfig = projectV0.viewedConfig(state);
+    this.blocking = issueV0.blockingIssues(state);
+    this.sortedBlockedOn = issueV0.sortedBlockedOn(state);
+    this.mergedInto = issueV0.mergedInto(state);
+    this.relatedIssues = issueV0.relatedIssues(state);
+    this.issueHotlists = issueV0.hotlists(state);
+    this.labelDefMap = projectV0.labelDefMap(state);
+    this._components = issueV0.components(state);
+    this._fieldDefs = issueV0.fieldDefs(state);
+    this._type = issueV0.type(state);
   }
 
   get _userId() {

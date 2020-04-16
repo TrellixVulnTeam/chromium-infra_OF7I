@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 import {assert} from 'chai';
 import sinon from 'sinon';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import {stringValuesForIssueField} from 'shared/issue-fields.js';
 import {MrIssueList} from './mr-issue-list.js';
 
@@ -18,7 +18,7 @@ const listRowIsFocused = (element, i) => {
 describe('mr-issue-list', () => {
   beforeEach(() => {
     element = document.createElement('mr-issue-list');
-    element.extractFieldValues = project.extractFieldValuesFromIssue({});
+    element.extractFieldValues = projectV0.extractFieldValuesFromIssue({});
     document.body.appendChild(element);
 
     sinon.stub(element, '_baseUrl').returns('/p/chromium/issues/list');

@@ -7,8 +7,8 @@ import {LitElement, html, css} from 'lit-element';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import 'elements/chops/chops-collapse/chops-collapse.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import {fieldTypes} from 'shared/issue-fields.js';
@@ -258,12 +258,12 @@ export class MrApprovalCard extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    const fieldDefsByApproval = project.fieldDefsByApprovalName(state);
+    const fieldDefsByApproval = projectV0.fieldDefsByApprovalName(state);
     if (fieldDefsByApproval && this.fieldName &&
         fieldDefsByApproval.has(this.fieldName)) {
       this.fieldDefs = fieldDefsByApproval.get(this.fieldName);
     }
-    const commentsByApproval = issue.commentsByApprovalName(state);
+    const commentsByApproval = issueV0.commentsByApprovalName(state);
     if (commentsByApproval && this.fieldName &&
         commentsByApproval.has(this.fieldName)) {
       const comments = commentsByApproval.get(this.fieldName);
@@ -272,11 +272,11 @@ export class MrApprovalCard extends connectStore(LitElement) {
     }
     this.focusId = ui.focusId(state);
     this.user = userV0.currentUser(state);
-    this.issue = issue.viewedIssue(state);
-    this.issueRef = issue.viewedIssueRef(state);
-    this.projectConfig = project.viewedConfig(state);
-    this.updatingApproval = issue.requests(state).updateApproval.requesting;
-    this.updateError = issue.requests(state).updateApproval.error;
+    this.issue = issueV0.viewedIssue(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
+    this.projectConfig = projectV0.viewedConfig(state);
+    this.updatingApproval = issueV0.requests(state).updateApproval.requesting;
+    this.updateError = issueV0.requests(state).updateApproval.error;
   }
 
   /** @override */
@@ -345,7 +345,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
     }
 
     if (message.commentContent || message.approvalDelta || message.uploads) {
-      store.dispatch(issue.updateApproval(message));
+      store.dispatch(issueV0.updateApproval(message));
     }
   }
 

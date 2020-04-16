@@ -4,7 +4,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {connectStore} from 'reducers/base.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 import '../mr-chart/mr-chart.js';
@@ -92,7 +92,7 @@ export class MrChartPage extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this._projectName = project.viewedProjectName(state);
+    this._projectName = projectV0.viewedProjectName(state);
     this._queryParams = sitewide.queryParams(state);
   }
 };

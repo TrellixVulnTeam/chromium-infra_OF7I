@@ -7,7 +7,7 @@ import './mr-grid-tile.js';
 import {css, html, LitElement} from 'lit-element';
 import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import {issueRefToUrl} from 'shared/converters.js';
 import {setHasAny} from 'shared/helpers.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
@@ -258,10 +258,10 @@ export class MrGrid extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this._extractFieldValuesFromIssue =
-      project.extractFieldValuesFromIssue(state);
-    this._extractTypeForFieldName = project.extractTypeForFieldName(state);
-    this._statusDefs = project.viewedConfig(state).statusDefs;
-    this._labelPrefixValueMap = project.labelPrefixValueMap(state);
+      projectV0.extractFieldValuesFromIssue(state);
+    this._extractTypeForFieldName = projectV0.extractTypeForFieldName(state);
+    this._statusDefs = projectV0.viewedConfig(state).statusDefs;
+    this._labelPrefixValueMap = projectV0.labelPrefixValueMap(state);
   }
 
   /** @override */

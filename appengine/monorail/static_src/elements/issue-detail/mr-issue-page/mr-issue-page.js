@@ -12,8 +12,8 @@ import '../mr-issue-details/mr-issue-details.js';
 import '../metadata/mr-metadata/mr-issue-metadata.js';
 import '../mr-launch-overview/mr-launch-overview.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
@@ -315,15 +315,15 @@ export class MrIssuePage extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.projectName = project.viewedProjectName(state);
-    this.issue = issue.viewedIssue(state);
-    this.issueHotlists = issue.hotlists(state);
-    this.issueRef = issue.viewedIssueRef(state);
-    this.fetchIssueError = issue.requests(state).fetch.error;
-    this.fetchingIssue = issue.requests(state).fetch.requesting;
-    this.fetchingProjectConfig = project.fetchingConfig(state);
-    this.issueClosed = !issue.isOpen(state);
-    this.issuePermissions = issue.permissions(state);
+    this.projectName = projectV0.viewedProjectName(state);
+    this.issue = issueV0.viewedIssue(state);
+    this.issueHotlists = issueV0.hotlists(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
+    this.fetchIssueError = issueV0.requests(state).fetch.error;
+    this.fetchingIssue = issueV0.requests(state).fetch.requesting;
+    this.fetchingProjectConfig = projectV0.fetchingConfig(state);
+    this.issueClosed = !issueV0.isOpen(state);
+    this.issuePermissions = issueV0.permissions(state);
     this.prefs = userV0.prefs(state);
   }
 
@@ -388,7 +388,7 @@ export class MrIssuePage extends connectStore(LitElement) {
       issueRef: this.issueRef,
       delete: false,
     }).then(() => {
-      store.dispatch(issue.fetchIssuePageData(this.issueRef));
+      store.dispatch(issueV0.fetchIssuePageData(this.issueRef));
     });
   }
 }

@@ -5,8 +5,8 @@
 import {LitElement, html} from 'lit-element';
 
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as ui from 'reducers/ui.js';
 import {arrayToEnglish} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -131,16 +131,16 @@ export class MrEditIssue extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issue = issue.viewedIssue(state);
-    this.issueRef = issue.viewedIssueRef(state);
-    this.comments = issue.comments(state);
-    this.projectConfig = project.viewedConfig(state);
-    this.updatingIssue = issue.requests(state).update.requesting;
+    this.issue = issueV0.viewedIssue(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
+    this.comments = issueV0.comments(state);
+    this.projectConfig = projectV0.viewedConfig(state);
+    this.updatingIssue = issueV0.requests(state).update.requesting;
 
-    const error = issue.requests(state).update.error;
+    const error = issueV0.requests(state).update.error;
     this.updateError = error && (error.description || error.message);
     this.focusId = ui.focusId(state);
-    this._fieldDefs = issue.fieldDefs(state);
+    this._fieldDefs = issueV0.fieldDefs(state);
   }
 
   /** @override */
@@ -221,7 +221,7 @@ export class MrEditIssue extends connectStore(LitElement) {
     if (message.commentContent || message.delta || message.uploads) {
       this.clientLogger.logStart('issue-update', 'computer-time');
 
-      store.dispatch(issue.update(message));
+      store.dispatch(issueV0.update(message));
     }
   }
 
@@ -286,7 +286,7 @@ export class MrEditIssue extends connectStore(LitElement) {
    */
   _presubmitIssue(issueDelta) {
     if (Object.keys(issueDelta).length) {
-      store.dispatch(issue.presubmit(this.issueRef, issueDelta));
+      store.dispatch(issueV0.presubmit(this.issueRef, issueDelta));
     }
   }
 
@@ -310,7 +310,7 @@ export class MrEditIssue extends connectStore(LitElement) {
       text += '\n' + newCommentContent.trim();
     }
 
-    store.dispatch(issue.predictComponent(this.issueRef.projectName, text));
+    store.dispatch(issueV0.predictComponent(this.issueRef.projectName, text));
   }
 
   /**

@@ -8,7 +8,7 @@ import sinon from 'sinon';
 import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
 import * as hotlist from 'reducers/hotlist.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import * as example from 'shared/test/constants-hotlist.js';
@@ -25,7 +25,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     // @ts-ignore
     element = document.createElement('mr-hotlist-issues-page-base');
     element._extractFieldValuesFromIssue =
-      project.extractFieldValuesFromIssue({});
+      projectV0.extractFieldValuesFromIssue({});
     document.body.appendChild(element);
   });
 
@@ -178,7 +178,7 @@ describe('mr-hotlist-issues-page (connected)', () => {
     // @ts-ignore
     element = document.createElement('mr-hotlist-issues-page');
     element._extractFieldValuesFromIssue =
-      project.extractFieldValuesFromIssue({});
+      projectV0.extractFieldValuesFromIssue({});
     document.body.appendChild(element);
   });
 

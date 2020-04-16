@@ -8,7 +8,7 @@ import 'elements/framework/mr-upload/mr-upload.js';
 import 'elements/framework/mr-error/mr-error.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import 'elements/chops/chops-checkbox/chops-checkbox.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -132,8 +132,8 @@ export class MrEditDescription extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.commentsByApproval = issue.commentsByApprovalName(state);
-    this.issueRef = issue.viewedIssueRef(state);
+    this.commentsByApproval = issueV0.commentsByApprovalName(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
   }
 
   async open(e) {
@@ -191,14 +191,14 @@ export class MrEditDescription extends connectStore(LitElement) {
       }
 
       if (!this.fieldName) {
-        store.dispatch(issue.update(message));
+        store.dispatch(issueV0.update(message));
       } else {
         // This is editing an approval if there is no field name.
         message.fieldRef = {
           type: fieldTypes.APPROVAL_TYPE,
           fieldName: this.fieldName,
         };
-        store.dispatch(issue.updateApproval(message));
+        store.dispatch(issueV0.updateApproval(message));
       }
       this.shadowRoot.querySelector('chops-dialog').close();
     } catch (e) {

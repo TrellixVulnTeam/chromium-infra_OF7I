@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 import page from 'page';
 import {connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import 'elements/chops/chops-choice-buttons/chops-choice-buttons.js';
 import '../mr-mode-selector/mr-mode-selector.js';
 import './mr-grid-dropdown.js';
@@ -136,8 +136,8 @@ export class MrGridControls extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.totalIssues = issue.totalIssues(state) || 0;
-    this._issues = issue.issueList(state) || [];
+    this.totalIssues = issueV0.totalIssues(state) || 0;
+    this._issues = issueV0.issueList(state) || [];
   }
 
   /** @override */

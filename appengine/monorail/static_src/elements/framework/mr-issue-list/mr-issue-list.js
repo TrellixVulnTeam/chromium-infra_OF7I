@@ -6,7 +6,7 @@ import {LitElement, html, css} from 'lit-element';
 
 import page from 'page';
 import {connectStore, store} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-crbug-link/mr-crbug-link.js';
@@ -730,15 +730,15 @@ export class MrIssueList extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this._starredIssues = issue.starredIssues(state);
+    this._starredIssues = issueV0.starredIssues(state);
     this._fetchingStarredIssues =
-        issue.requests(state).fetchStarredIssues.requesting;
-    this._starringIssues = issue.starringIssues(state);
+        issueV0.requests(state).fetchStarredIssues.requesting;
+    this._starringIssues = issueV0.starringIssues(state);
 
-    this._phaseNames = (issue.issueListPhaseNames(state) || []);
+    this._phaseNames = (issueV0.issueListPhaseNames(state) || []);
     this._queryParams = sitewide.queryParams(state);
 
-    this._issueForRefString = issue.issueForRefString(state);
+    this._issueForRefString = issueV0.issueForRefString(state);
   }
 
   /** @override */
@@ -1161,7 +1161,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * @param {boolean} newIsStarred whether to star or unstar the issue.
    */
   _starIssueInternal(issueRef, newIsStarred) {
-    store.dispatch(issue.star(issueRef, newIsStarred));
+    store.dispatch(issueV0.star(issueRef, newIsStarred));
   }
   /**
    * @param {Event} e

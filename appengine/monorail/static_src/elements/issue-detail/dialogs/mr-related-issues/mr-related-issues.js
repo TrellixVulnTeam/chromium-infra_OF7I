@@ -7,7 +7,7 @@ import {LitElement, html, css} from 'lit-element';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {ISSUE_EDIT_PERMISSION} from 'shared/permissions';
 import {prpcClient} from 'prpc-client-instance.js';
@@ -162,9 +162,9 @@ export class MrRelatedIssues extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issueRef = issue.viewedIssueRef(state);
-    this.issuePermissions = issue.permissions(state);
-    this.sortedBlockedOn = issue.sortedBlockedOn(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
+    this.issuePermissions = issueV0.permissions(state);
+    this.sortedBlockedOn = issueV0.sortedBlockedOn(state);
   }
 
   /** @override */
@@ -291,7 +291,7 @@ export class MrRelatedIssues extends connectStore(LitElement) {
         });
 
     reorderRequest.then((response) => {
-      store.dispatch(issue.fetch(this.issueRef));
+      store.dispatch(issueV0.fetch(this.issueRef));
     }, (error) => {
       this.reset();
       this.error = error.description;

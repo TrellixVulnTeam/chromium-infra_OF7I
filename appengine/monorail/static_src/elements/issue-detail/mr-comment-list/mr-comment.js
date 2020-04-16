@@ -4,7 +4,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {store} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/chops/chops-timestamp/chops-timestamp.js';
@@ -350,7 +350,7 @@ async function _deleteComment(comment) {
     sequenceNum: comment.sequenceNum,
     delete: comment.isDeleted === undefined,
   });
-  store.dispatch(issue.fetchComments(issueRef));
+  store.dispatch(issueV0.fetchComments(issueRef));
 }
 
 /**
@@ -368,7 +368,7 @@ async function _flagComment(comment) {
     sequenceNum: comment.sequenceNum,
     flag: comment.isSpam === undefined,
   });
-  store.dispatch(issue.fetchComments(issueRef));
+  store.dispatch(issueV0.fetchComments(issueRef));
 }
 
 /**

@@ -6,7 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import {MrIssuePage} from './mr-issue-page.js';
 import {store, resetState} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 let element;
@@ -194,8 +194,8 @@ describe('mr-issue-page', () => {
     prpcClient.call.withArgs('monorail.Issues', 'DeleteIssue',
         {delete: false, issueRef}).returns(deletePromise);
 
-    store.dispatch(issue.viewIssue(issueRef));
-    store.dispatch(issue.fetchIssuePageData(issueRef));
+    store.dispatch(issueV0.viewIssue(issueRef));
+    store.dispatch(issueV0.fetchIssuePageData(issueRef));
 
     await deletedIssuePromise;
     await element.updateComplete;

@@ -21,7 +21,7 @@ import {issueRefToString, issueToIssueRefString,
 import {fromShortlink} from 'shared/federated.js';
 import {createReducer, createRequestReducer,
   createKeyedRequestReducer} from './redux-helpers.js';
-import * as project from './project.js';
+import * as projectV0 from './projectV0.js';
 import * as userV0 from './userV0.js';
 import {fieldValueMapKey} from 'shared/metadata-helpers.js';
 import {prpcClient} from 'prpc-client-instance.js';
@@ -810,7 +810,7 @@ export const fieldValueMap = createSelector(
 // Get the list of full componentDefs for the viewed issue.
 export const components = createSelector(
     viewedIssue,
-    project.componentsMap,
+    projectV0.componentsMap,
     (issue, components) => {
       if (!issue || !issue.componentRefs) return [];
       return issue.componentRefs.map(
@@ -820,7 +820,7 @@ export const components = createSelector(
 
 // Get custom fields that apply to a specific issue.
 export const fieldDefs = createSelector(
-    project.fieldDefs,
+    projectV0.fieldDefs,
     type,
     fieldValueMap,
     (fieldDefs, type, fieldValues) => {

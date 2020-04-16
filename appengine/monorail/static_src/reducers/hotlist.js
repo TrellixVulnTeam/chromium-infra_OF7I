@@ -21,7 +21,7 @@ import {createSelector} from 'reselect';
 import {userIdOrDisplayNameToUserRef, issueNameToRef, pathsToFieldMask}
   from 'shared/converters.js';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
-import * as issue from './issue.js';
+import * as issueV0 from './issueV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 
@@ -180,7 +180,7 @@ export const viewedHotlistItems = createSelector(
  * @return {Array<HotlistIssue>}
  */
 export const viewedHotlistIssues = createSelector(
-    [viewedHotlistItems, issue.issue],
+    [viewedHotlistItems, issueV0.issue],
     (items, getIssue) => {
       // Filter out issues that haven't been fetched yet or failed to fetch.
       // Example: if the user doesn't have permissions to view the issue.
@@ -259,7 +259,7 @@ export const fetchItems = (name) => async (dispatch) => {
         items.map((item) => item.rank ? item : {...item, rank: 0});
 
     const issueRefs = items.map((item) => issueNameToRef(item.issue));
-    dispatch(issue.fetchIssues(issueRefs));
+    dispatch(issueV0.fetchIssues(issueRefs));
 
     dispatch({type: FETCH_ITEMS_SUCCESS, name, items: itemsWithRank});
   } catch (error) {

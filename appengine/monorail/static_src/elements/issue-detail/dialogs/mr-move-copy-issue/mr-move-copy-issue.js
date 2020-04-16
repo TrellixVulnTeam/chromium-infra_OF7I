@@ -6,7 +6,7 @@ import page from 'page';
 import {LitElement, html, css} from 'lit-element';
 
 import {connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import 'elements/framework/mr-autocomplete/mr-autocomplete.js';
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
@@ -91,7 +91,7 @@ export class MrMoveCopyIssue extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issueRef = issue.viewedIssueRef(state);
+    this.issueRef = issueV0.viewedIssueRef(state);
   }
 
   open(e) {

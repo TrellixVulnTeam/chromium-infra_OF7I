@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 
 import {connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import './mr-phase.js';
 
 /**
@@ -73,10 +73,10 @@ export class MrLaunchOverview extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    if (!issue.viewedIssue(state)) return;
+    if (!issueV0.viewedIssue(state)) return;
 
-    this.approvals = issue.viewedIssue(state).approvalValues || [];
-    this.phases = issue.viewedIssue(state).phases || [];
+    this.approvals = issueV0.viewedIssue(state).approvalValues || [];
+    this.phases = issueV0.viewedIssue(state).phases || [];
   }
 
   /** @override */

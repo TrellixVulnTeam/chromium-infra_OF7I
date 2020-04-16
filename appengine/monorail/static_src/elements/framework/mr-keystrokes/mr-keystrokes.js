@@ -8,8 +8,8 @@ import qs from 'qs';
 import Mousetrap from 'mousetrap';
 
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {issueRefToString} from 'shared/converters.js';
 
@@ -210,13 +210,13 @@ export class MrKeystrokes extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this._projectName = project.viewedProjectName(state);
-    this._issuePermissions = issue.permissions(state);
+    this._projectName = projectV0.viewedProjectName(state);
+    this._issuePermissions = issueV0.permissions(state);
 
-    const starredIssues = issue.starredIssues(state);
+    const starredIssues = issueV0.starredIssues(state);
     this._isStarred = starredIssues.has(issueRefToString(this._issueRef));
-    this._fetchingIsStarred = issue.requests(state).fetchIsStarred.requesting;
-    this._starringIssues = issue.starringIssues(state);
+    this._fetchingIsStarred = issueV0.requests(state).fetchIsStarred.requesting;
+    this._starringIssues = issueV0.starringIssues(state);
   }
 
   /** @override */
@@ -402,7 +402,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
     if (!this._fetchingIsStarred && !this._isStarring) {
       const newIsStarred = !this._isStarred;
 
-      store.dispatch(issue.star(this._issueRef, newIsStarred));
+      store.dispatch(issueV0.star(this._issueRef, newIsStarred));
     }
   }
 

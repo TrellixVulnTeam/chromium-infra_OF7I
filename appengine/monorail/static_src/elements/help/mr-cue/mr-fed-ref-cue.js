@@ -4,7 +4,7 @@
 
 import {html, css} from 'lit-element';
 import * as userV0 from 'reducers/userV0.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import {store} from 'reducers/base.js';
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
@@ -58,7 +58,7 @@ export class MrFedRefCue extends MrCue {
         const clickLoginHandler = async () => {
           await store.dispatch(userV0.initGapiLogin(this.issue));
           // Re-fetch related issues.
-          store.dispatch(issue.fetchRelatedIssues(this.issue));
+          store.dispatch(issueV0.fetchRelatedIssues(this.issue));
         };
         authLink = html`
           <br /><br />

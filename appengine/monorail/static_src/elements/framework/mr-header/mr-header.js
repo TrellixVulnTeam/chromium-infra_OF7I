@@ -6,7 +6,7 @@ import {LitElement, html, css} from 'lit-element';
 
 import {connectStore} from 'reducers/base.js';
 import * as userV0 from 'reducers/userV0.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import {prpcClient} from 'prpc-client-instance.js';
@@ -258,14 +258,14 @@ export class MrHeader extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.projectName = project.viewedProjectName(state);
+    this.projectName = projectV0.viewedProjectName(state);
 
     this.userProjects = userV0.projects(state);
 
     const currentUser = userV0.currentUser(state);
     this.isSiteAdmin = currentUser ? currentUser.isSiteAdmin : false;
 
-    const presentationConfig = project.viewedPresentationConfig(state);
+    const presentationConfig = projectV0.viewedPresentationConfig(state);
     this.presentationConfig = presentationConfig;
     // Set separately in order allow EZT pages to load project logo before
     // the GetPresentationConfig pRPC request.

@@ -6,7 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import {MrApp} from './mr-app.js';
 import {store, resetState} from 'reducers/base.js';
-import {select} from 'reducers/project.js';
+import {select} from 'reducers/projectV0.js';
 
 let element;
 let next;

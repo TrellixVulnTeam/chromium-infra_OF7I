@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 
 import {connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 
@@ -75,7 +75,7 @@ export class MrUserLink extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.referencedUsers = issue.referencedUsers(state);
+    this.referencedUsers = issueV0.referencedUsers(state);
   }
 
   /** @override */

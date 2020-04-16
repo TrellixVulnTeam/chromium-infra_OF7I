@@ -6,8 +6,8 @@ import {connect} from 'pwa-helpers/connect-mixin.js';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 import thunk from 'redux-thunk';
 import * as hotlist from './hotlist.js';
-import * as issue from './issue.js';
-import * as project from './project.js';
+import * as issueV0 from './issueV0.js';
+import * as projectV0 from './projectV0.js';
 import * as sitewide from './sitewide.js';
 import * as user from './user.js';
 import * as userV0 from './userV0.js';
@@ -33,8 +33,8 @@ const RESET_STATE = 'RESET_STATE';
 // Reducers
 const reducer = combineReducers({
   hotlist: hotlist.reducer,
-  issue: issue.reducer,
-  project: project.reducer,
+  issue: issueV0.reducer,
+  project: projectV0.reducer,
   user: user.reducer,
   userV0: userV0.reducer,
   sitewide: sitewide.reducer,

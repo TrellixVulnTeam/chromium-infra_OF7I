@@ -5,7 +5,7 @@
 import {assert} from 'chai';
 import {extractGridData} from './extract-grid-data.js';
 import {extractFieldValuesFromIssue as fieldExtractor,
-  extractTypeForFieldName as typeExtractor} from 'reducers/project.js';
+  extractTypeForFieldName as typeExtractor} from 'reducers/projectV0.js';
 
 const extractFieldValuesFromIssue = fieldExtractor({});
 const extractTypeForFieldName = typeExtractor({});

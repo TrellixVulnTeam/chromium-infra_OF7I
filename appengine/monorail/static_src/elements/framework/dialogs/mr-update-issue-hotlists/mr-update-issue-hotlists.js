@@ -6,7 +6,7 @@ import {LitElement, html, css} from 'lit-element';
 
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {prpcClient} from 'prpc-client-instance.js';
@@ -150,7 +150,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.viewedIssueRef = issue.viewedIssueRef(state);
+    this.viewedIssueRef = issueV0.viewedIssueRef(state);
     this.user = userV0.currentUser(state);
     this.userHotlists = userV0.currentUser(state).hotlists;
   }
@@ -242,7 +242,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
           ref.projectName === viewedRef.projectName &&
           ref.localId === viewedRef.localId);
         if (viewedIssueWasUpdated) {
-          store.dispatch(issue.fetchHotlists(viewedRef));
+          store.dispatch(issueV0.fetchHotlists(viewedRef));
         }
       }
       store.dispatch(userV0.fetchHotlists({userId: this.user.userId}));

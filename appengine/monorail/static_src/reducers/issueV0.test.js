@@ -6,7 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import {createSelector} from 'reselect';
 import {store, resetState} from './base.js';
-import * as issue from './issue.js';
+import * as issueV0 from './issueV0.js';
 import * as example from 'shared/test/constants-issue.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 import {issueToIssueRef, issueRefToString} from 'shared/converters.js';
@@ -28,15 +28,16 @@ describe('issue', () => {
           type: 'FAKE_ACTION',
           issues: [example.ISSUE_OTHER_PROJECT],
         };
-        assert.deepEqual(issue.issuesByRefStringReducer({}, action), {});
+        assert.deepEqual(issueV0.issuesByRefStringReducer({}, action), {});
 
         const state = {[example.ISSUE_REF_STRING]: example.ISSUE};
-        assert.deepEqual(issue.issuesByRefStringReducer(state, action), state);
+        assert.deepEqual(issueV0.issuesByRefStringReducer(state, action),
+            state);
       });
 
       it('handles FETCH_ISSUE_LIST_UPDATE', () => {
-        const newState = issue.issuesByRefStringReducer({}, {
-          type: issue.FETCH_ISSUE_LIST_UPDATE,
+        const newState = issueV0.issuesByRefStringReducer({}, {
+          type: issueV0.FETCH_ISSUE_LIST_UPDATE,
           issues: [example.ISSUE, example.ISSUE_OTHER_PROJECT],
           totalResults: 2,
           progress: 1,
@@ -48,8 +49,8 @@ describe('issue', () => {
       });
 
       it('handles FETCH_ISSUES_SUCCESS', () => {
-        const newState = issue.issuesByRefStringReducer({}, {
-          type: issue.FETCH_ISSUES_SUCCESS,
+        const newState = issueV0.issuesByRefStringReducer({}, {
+          type: issueV0.FETCH_ISSUES_SUCCESS,
           issues: [example.ISSUE, example.ISSUE_OTHER_PROJECT],
         });
         assert.deepEqual(newState, {
@@ -67,9 +68,9 @@ describe('issue', () => {
             {localId: 1, projectName: 'chromium', summary: 'hello-world'},
           ],
         };
-        assert.deepEqual(issue.issueListReducer({}, action), {});
+        assert.deepEqual(issueV0.issueListReducer({}, action), {});
 
-        assert.deepEqual(issue.issueListReducer({
+        assert.deepEqual(issueV0.issueListReducer({
           issueRefs: ['chromium:1'],
           totalResults: 1,
           progress: 1,
@@ -81,7 +82,7 @@ describe('issue', () => {
       });
 
       it('handles FETCH_ISSUE_LIST_UPDATE', () => {
-        const newState = issue.issueListReducer({}, {
+        const newState = issueV0.issueListReducer({}, {
           type: 'FETCH_ISSUE_LIST_UPDATE',
           issues: [
             {localId: 1, projectName: 'chromium', summary: 'hello-world'},
@@ -100,7 +101,7 @@ describe('issue', () => {
 
     describe('relatedIssuesReducer', () => {
       it('handles FETCH_RELATED_ISSUES_SUCCESS', () => {
-        const newState = issue.relatedIssuesReducer({}, {
+        const newState = issueV0.relatedIssuesReducer({}, {
           type: 'FETCH_RELATED_ISSUES_SUCCESS',
           relatedIssues: {'rutabaga:1234': {}},
         });
@@ -109,14 +110,14 @@ describe('issue', () => {
 
       describe('FETCH_FEDERATED_REFERENCES_SUCCESS', () => {
         it('returns early if data is missing', () => {
-          const newState = issue.relatedIssuesReducer({'b/123': {}}, {
+          const newState = issueV0.relatedIssuesReducer({'b/123': {}}, {
             type: 'FETCH_FEDERATED_REFERENCES_SUCCESS',
           });
           assert.deepEqual(newState, {'b/123': {}});
         });
 
         it('returns early if data is empty', () => {
-          const newState = issue.relatedIssuesReducer({'b/123': {}}, {
+          const newState = issueV0.relatedIssuesReducer({'b/123': {}}, {
             type: 'FETCH_FEDERATED_REFERENCES_SUCCESS',
             fedRefIssueRefs: [],
           });
@@ -128,7 +129,7 @@ describe('issue', () => {
             'rutabaga:123': {},
             'rutabaga:345': {},
           };
-          const newState = issue.relatedIssuesReducer(state, {
+          const newState = issueV0.relatedIssuesReducer(state, {
             type: 'FETCH_FEDERATED_REFERENCES_SUCCESS',
             fedRefIssueRefs: [
               {
@@ -163,9 +164,9 @@ describe('issue', () => {
   });
 
   it('viewedIssue', () => {
-    assert.deepEqual(issue.viewedIssue(wrapIssue()), {});
+    assert.deepEqual(issueV0.viewedIssue(wrapIssue()), {});
     assert.deepEqual(
-        issue.viewedIssue(wrapIssue({projectName: 'proj', localId: 100})),
+        issueV0.viewedIssue(wrapIssue({projectName: 'proj', localId: 100})),
         {projectName: 'proj', localId: 100},
     );
   });
@@ -175,7 +176,7 @@ describe('issue', () => {
       const stateWithEmptyIssueList = {issue: {
         issueList: {},
       }};
-      assert.deepEqual(issue.issueList(stateWithEmptyIssueList), []);
+      assert.deepEqual(issueV0.issueList(stateWithEmptyIssueList), []);
 
       const stateWithIssueList = {issue: {
         issuesByRefString: {
@@ -186,7 +187,7 @@ describe('issue', () => {
         issueList: {
           issueRefs: ['chromium:1', 'monorail:2'],
         }}};
-      assert.deepEqual(issue.issueList(stateWithIssueList),
+      assert.deepEqual(issueV0.issueList(stateWithIssueList),
           [
             {localId: 1, projectName: 'chromium', summary: 'test'},
             {localId: 2, projectName: 'monorail', summary: 'hello world'},
@@ -194,7 +195,7 @@ describe('issue', () => {
     });
 
     it('is a selector', () => {
-      issue.issueList.constructor === createSelector;
+      issueV0.issueList.constructor === createSelector;
     });
 
     it('memoizes results: returns same reference', () => {
@@ -207,8 +208,8 @@ describe('issue', () => {
         issueList: {
           issueRefs: ['chromium:1', 'monorail:2'],
         }}};
-      const reference1 = issue.issueList(stateWithIssueList);
-      const reference2 = issue.issueList(stateWithIssueList);
+      const reference1 = issueV0.issueList(stateWithIssueList);
+      const reference2 = issueV0.issueList(stateWithIssueList);
 
       assert.equal(typeof reference1, 'object');
       assert.equal(typeof reference2, 'object');
@@ -222,33 +223,33 @@ describe('issue', () => {
     }};
 
     it('false when no issue list', () => {
-      assert.isFalse(issue.issueListLoaded(stateWithEmptyIssueList));
+      assert.isFalse(issueV0.issueListLoaded(stateWithEmptyIssueList));
     });
 
     it('true after issues loaded, even when empty', () => {
-      const issueList = issue.issueListReducer({}, {
-        type: issue.FETCH_ISSUE_LIST_UPDATE,
+      const issueList = issueV0.issueListReducer({}, {
+        type: issueV0.FETCH_ISSUE_LIST_UPDATE,
         issues: [],
         progress: 1,
         totalResults: 0,
       });
-      assert.isTrue(issue.issueListLoaded({issue: {issueList}}));
+      assert.isTrue(issueV0.issueListLoaded({issue: {issueList}}));
     });
   });
 
   it('fieldValues', () => {
-    assert.isUndefined(issue.fieldValues(wrapIssue()));
-    assert.deepEqual(issue.fieldValues(wrapIssue({
+    assert.isUndefined(issueV0.fieldValues(wrapIssue()));
+    assert.deepEqual(issueV0.fieldValues(wrapIssue({
       fieldValues: [{value: 'v'}],
     })), [{value: 'v'}]);
   });
 
   it('type computes type from custom field', () => {
-    assert.isUndefined(issue.type(wrapIssue()));
-    assert.isUndefined(issue.type(wrapIssue({
+    assert.isUndefined(issueV0.type(wrapIssue()));
+    assert.isUndefined(issueV0.type(wrapIssue({
       fieldValues: [{value: 'v'}],
     })));
-    assert.deepEqual(issue.type(wrapIssue({
+    assert.deepEqual(issueV0.type(wrapIssue({
       fieldValues: [
         {fieldRef: {fieldName: 'IgnoreMe'}, value: 'v'},
         {fieldRef: {fieldName: 'Type'}, value: 'Defect'},
@@ -257,14 +258,14 @@ describe('issue', () => {
   });
 
   it('type computes type from label', () => {
-    assert.deepEqual(issue.type(wrapIssue({
+    assert.deepEqual(issueV0.type(wrapIssue({
       labelRefs: [
         {label: 'Test'},
         {label: 'tYpE-FeatureRequest'},
       ],
     })), 'FeatureRequest');
 
-    assert.deepEqual(issue.type(wrapIssue({
+    assert.deepEqual(issueV0.type(wrapIssue({
       fieldValues: [
         {fieldRef: {fieldName: 'IgnoreMe'}, value: 'v'},
       ],
@@ -276,15 +277,15 @@ describe('issue', () => {
   });
 
   it('restrictions', () => {
-    assert.deepEqual(issue.restrictions(wrapIssue()), {});
-    assert.deepEqual(issue.restrictions(wrapIssue({labelRefs: []})), {});
+    assert.deepEqual(issueV0.restrictions(wrapIssue()), {});
+    assert.deepEqual(issueV0.restrictions(wrapIssue({labelRefs: []})), {});
 
-    assert.deepEqual(issue.restrictions(wrapIssue({labelRefs: [
+    assert.deepEqual(issueV0.restrictions(wrapIssue({labelRefs: [
       {label: 'IgnoreThis'},
       {label: 'IgnoreThis2'},
     ]})), {});
 
-    assert.deepEqual(issue.restrictions(wrapIssue({labelRefs: [
+    assert.deepEqual(issueV0.restrictions(wrapIssue({labelRefs: [
       {label: 'IgnoreThis'},
       {label: 'IgnoreThis2'},
       {label: 'Restrict-View-Google'},
@@ -299,16 +300,16 @@ describe('issue', () => {
   });
 
   it('isOpen', () => {
-    assert.isFalse(issue.isOpen(wrapIssue()));
-    assert.isTrue(issue.isOpen(wrapIssue({statusRef: {meansOpen: true}})));
-    assert.isFalse(issue.isOpen(wrapIssue({statusRef: {meansOpen: false}})));
+    assert.isFalse(issueV0.isOpen(wrapIssue()));
+    assert.isTrue(issueV0.isOpen(wrapIssue({statusRef: {meansOpen: true}})));
+    assert.isFalse(issueV0.isOpen(wrapIssue({statusRef: {meansOpen: false}})));
   });
 
   it('issueListPhaseNames', () => {
     const stateWithEmptyIssueList = {issue: {
       issueList: [],
     }};
-    assert.deepEqual(issue.issueListPhaseNames(stateWithEmptyIssueList), []);
+    assert.deepEqual(issueV0.issueListPhaseNames(stateWithEmptyIssueList), []);
     const stateWithIssueList = {issue: {
       issuesByRefString: {
         '1': {localId: 1, phases: [{phaseRef: {phaseName: 'chicken-phase'}}]},
@@ -327,7 +328,7 @@ describe('issue', () => {
       issueList: {
         issueRefs: ['1', '2', '3', '4'],
       }}};
-    assert.deepEqual(issue.issueListPhaseNames(stateWithIssueList),
+    assert.deepEqual(issueV0.issueListPhaseNames(stateWithIssueList),
         ['chicken-phase', 'cow-phase', 'dog-phase']);
   });
 
@@ -359,7 +360,7 @@ describe('issue', () => {
           },
           {relatedIssues: {}},
       );
-      assert.deepEqual(issue.blockingIssues(stateNoReferences),
+      assert.deepEqual(issueV0.blockingIssues(stateNoReferences),
           [{localId: 1, projectName: 'proj'}],
       );
     });
@@ -373,7 +374,7 @@ describe('issue', () => {
           },
           {relatedIssues},
       );
-      assert.deepEqual(issue.blockingIssues(stateNoIssues), []);
+      assert.deepEqual(issueV0.blockingIssues(stateNoIssues), []);
     });
 
     it('returns full issues when deferenced data present', () => {
@@ -388,7 +389,7 @@ describe('issue', () => {
           },
           {relatedIssues},
       );
-      assert.deepEqual(issue.blockingIssues(stateIssuesWithReferences),
+      assert.deepEqual(issueV0.blockingIssues(stateIssuesWithReferences),
           [
             {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
             {localId: 332, projectName: 'chromium', labelRefs: []},
@@ -407,8 +408,8 @@ describe('issue', () => {
           },
           {relatedIssues},
       );
-      assert.deepEqual(issue.blockingIssues(stateIssuesWithFederatedReferences),
-          [
+      assert.deepEqual(
+          issueV0.blockingIssues(stateIssuesWithFederatedReferences), [
             {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
             {extIdentifier: 'b/1234'},
           ]);
@@ -443,7 +444,7 @@ describe('issue', () => {
           },
           {relatedIssues: {}},
       );
-      assert.deepEqual(issue.blockedOnIssues(stateNoReferences),
+      assert.deepEqual(issueV0.blockedOnIssues(stateNoReferences),
           [{localId: 1, projectName: 'proj'}],
       );
     });
@@ -457,7 +458,7 @@ describe('issue', () => {
           },
           {relatedIssues},
       );
-      assert.deepEqual(issue.blockedOnIssues(stateNoIssues), []);
+      assert.deepEqual(issueV0.blockedOnIssues(stateNoIssues), []);
     });
 
     it('returns full issues when deferenced data present', () => {
@@ -472,7 +473,7 @@ describe('issue', () => {
           },
           {relatedIssues},
       );
-      assert.deepEqual(issue.blockedOnIssues(stateIssuesWithReferences),
+      assert.deepEqual(issueV0.blockedOnIssues(stateIssuesWithReferences),
           [
             {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
             {localId: 332, projectName: 'chromium', labelRefs: []},
@@ -492,7 +493,7 @@ describe('issue', () => {
           {relatedIssues},
       );
       assert.deepEqual(
-          issue.blockedOnIssues(stateIssuesWithFederatedReferences),
+          issueV0.blockedOnIssues(stateIssuesWithFederatedReferences),
           [
             {localId: 1, projectName: 'proj', labelRefs: [{label: 'label'}]},
             {extIdentifier: 'b/1234'},
@@ -541,7 +542,7 @@ describe('issue', () => {
           },
           {relatedIssues: {}},
       );
-      assert.deepEqual(issue.sortedBlockedOn(stateNoReferences), [
+      assert.deepEqual(issueV0.sortedBlockedOn(stateNoReferences), [
         {localId: 3, projectName: 'proj'},
         {localId: 1, projectName: 'proj'},
       ]);
@@ -559,7 +560,7 @@ describe('issue', () => {
           },
           {relatedIssues},
       );
-      assert.deepEqual(issue.sortedBlockedOn(stateReferences), [
+      assert.deepEqual(issueV0.sortedBlockedOn(stateReferences), [
         {localId: 1, projectName: 'proj', statusRef: {meansOpen: true}},
         {localId: 3, projectName: 'proj', statusRef: {meansOpen: false}},
       ]);
@@ -580,7 +581,7 @@ describe('issue', () => {
           },
           {relatedIssues},
       );
-      assert.deepEqual(issue.sortedBlockedOn(statePreservesArrayOrder),
+      assert.deepEqual(issueV0.sortedBlockedOn(statePreservesArrayOrder),
           [
             {localId: 1, projectName: 'proj', statusRef: {meansOpen: true}},
             {localId: 332, projectName: 'chromium',
@@ -595,11 +596,11 @@ describe('issue', () => {
 
   describe('mergedInto', () => {
     it('empty', () => {
-      assert.deepEqual(issue.mergedInto(wrapIssue()), {});
+      assert.deepEqual(issueV0.mergedInto(wrapIssue()), {});
     });
 
     it('gets mergedInto ref for viewed issue', () => {
-      const state = issue.mergedInto(wrapIssue({
+      const state = issueV0.mergedInto(wrapIssue({
         projectName: 'project',
         localId: 123,
         mergedIntoIssueRef: {localId: 22, projectName: 'proj'},
@@ -621,7 +622,7 @@ describe('issue', () => {
               ['proj:22']: {localId: 22, projectName: 'proj', summary: 'test'},
             },
           });
-      assert.deepEqual(issue.mergedInto(state), {
+      assert.deepEqual(issueV0.mergedInto(state), {
         localId: 22,
         projectName: 'proj',
         summary: 'test',
@@ -630,11 +631,11 @@ describe('issue', () => {
   });
 
   it('fieldValueMap', () => {
-    assert.deepEqual(issue.fieldValueMap(wrapIssue()), new Map());
-    assert.deepEqual(issue.fieldValueMap(wrapIssue({
+    assert.deepEqual(issueV0.fieldValueMap(wrapIssue()), new Map());
+    assert.deepEqual(issueV0.fieldValueMap(wrapIssue({
       fieldValues: [],
     })), new Map());
-    assert.deepEqual(issue.fieldValueMap(wrapIssue({
+    assert.deepEqual(issueV0.fieldValueMap(wrapIssue({
       fieldValues: [
         {fieldRef: {fieldName: 'hello'}, value: 'v1'},
         {fieldRef: {fieldName: 'hello'}, value: 'v2'},
@@ -647,12 +648,12 @@ describe('issue', () => {
   });
 
   it('fieldDefs filters fields by applicable type', () => {
-    assert.deepEqual(issue.fieldDefs({
+    assert.deepEqual(issueV0.fieldDefs({
       project: {},
       ...wrapIssue(),
     }), []);
 
-    assert.deepEqual(issue.fieldDefs({
+    assert.deepEqual(issueV0.fieldDefs({
       project: {
         name: 'chromium',
         configs: {
@@ -685,7 +686,7 @@ describe('issue', () => {
   });
 
   it('fieldDefs skips approval fields for all issues', () => {
-    assert.deepEqual(issue.fieldDefs({
+    assert.deepEqual(issueV0.fieldDefs({
       project: {
         name: 'chromium',
         configs: {
@@ -708,7 +709,7 @@ describe('issue', () => {
   });
 
   it('fieldDefs includes non applicable fields when values defined', () => {
-    assert.deepEqual(issue.fieldDefs({
+    assert.deepEqual(issueV0.fieldDefs({
       project: {
         name: 'chromium',
         configs: {
@@ -745,9 +746,9 @@ describe('issue', () => {
 
     it('viewIssue creates action with issueRef', () => {
       assert.deepEqual(
-          issue.viewIssue({projectName: 'proj', localId: 123}),
+          issueV0.viewIssue({projectName: 'proj', localId: 123}),
           {
-            type: issue.VIEW_ISSUE,
+            type: issueV0.VIEW_ISSUE,
             issueRef: {projectName: 'proj', localId: 123},
           },
       );
@@ -760,7 +761,7 @@ describe('issue', () => {
 
       const dispatch = sinon.stub();
 
-      const action = issue.predictComponent('chromium',
+      const action = issueV0.predictComponent('chromium',
           'test comments\nsummary');
 
       await action(dispatch);
@@ -789,16 +790,16 @@ describe('issue', () => {
         prpcClient.call.returns(Promise.resolve(response));
         const dispatch = sinon.stub();
 
-        await issue.fetchIssues([example.ISSUE_REF])(dispatch);
+        await issueV0.fetchIssues([example.ISSUE_REF])(dispatch);
 
-        sinon.assert.calledWith(dispatch, {type: issue.FETCH_ISSUES_START});
+        sinon.assert.calledWith(dispatch, {type: issueV0.FETCH_ISSUES_START});
 
         const args = {issueRefs: [example.ISSUE_REF]};
         sinon.assert.calledWith(
             prpcClient.call, 'monorail.Issues', 'ListReferencedIssues', args);
 
         const action = {
-          type: issue.FETCH_ISSUES_SUCCESS,
+          type: issueV0.FETCH_ISSUES_SUCCESS,
           issues: [example.ISSUE, example.ISSUE_OTHER_PROJECT],
         };
         sinon.assert.calledWith(dispatch, action);
@@ -808,10 +809,10 @@ describe('issue', () => {
         prpcClient.call.throws();
         const dispatch = sinon.stub();
 
-        await issue.fetchIssues([example.ISSUE_REF])(dispatch);
+        await issueV0.fetchIssues([example.ISSUE_REF])(dispatch);
 
         const action = {
-          type: issue.FETCH_ISSUES_FAILURE,
+          type: issueV0.FETCH_ISSUES_FAILURE,
           error: sinon.match.any,
         };
         sinon.assert.calledWith(dispatch, action);
@@ -826,7 +827,7 @@ describe('issue', () => {
         };
       });
 
-      store.dispatch(issue.fetchIssueList('chromium',
+      store.dispatch(issueV0.fetchIssueList('chromium',
           {q: 'owner:me', can: '4'}));
 
       sinon.assert.calledWith(prpcCall, 'monorail.Issues', 'ListIssues', {
@@ -842,7 +843,7 @@ describe('issue', () => {
     it('fetchIssueList does not set can when can is NaN', async () => {
       prpcCall.callsFake(() => ({}));
 
-      store.dispatch(issue.fetchIssueList('chromium', {q: 'owner:me',
+      store.dispatch(issueV0.fetchIssueList('chromium', {q: 'owner:me',
         can: 'four-leaf-clover'}));
 
       sinon.assert.calledWith(prpcCall, 'monorail.Issues', 'ListIssues', {
@@ -864,7 +865,7 @@ describe('issue', () => {
       });
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList('chromium',
+      const action = issueV0.fetchIssueList('chromium',
           {maxItems: 3, maxCalls: 2});
       await action(dispatch);
 
@@ -888,7 +889,7 @@ describe('issue', () => {
       prpcCall.onThirdCall().returns({issues: [{localId: 3}], totalResults: 6});
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList('chromium',
+      const action = issueV0.fetchIssueList('chromium',
           {maxItems: 1, maxCalls: 3});
       await action(dispatch);
 
@@ -905,7 +906,7 @@ describe('issue', () => {
       prpcCall.onFirstCall().returns({issues: [], totalResults: 0});
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList('chromium',
+      const action = issueV0.fetchIssueList('chromium',
           {maxItems: 1, maxCalls: 1});
       await action(dispatch);
 
@@ -922,7 +923,7 @@ describe('issue', () => {
       prpcCall.onFirstCall().returns({issues: []});
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList('chromium',
+      const action = issueV0.fetchIssueList('chromium',
           {maxItems: 1, maxCalls: 1});
       await action(dispatch);
 
@@ -939,7 +940,7 @@ describe('issue', () => {
       prpcCall.onFirstCall().returns({});
 
       const dispatch = sinon.stub();
-      const action = issue.fetchIssueList('chromium',
+      const action = issueV0.fetchIssueList('chromium',
           {maxItems: 1, maxCalls: 1});
       await action(dispatch);
 
@@ -992,7 +993,7 @@ describe('issue', () => {
         it('returns an empty map if no fedrefs found', async () => {
           const dispatch = sinon.stub();
           const testIssue = {};
-          const action = issue.fetchFederatedReferences(testIssue);
+          const action = issueV0.fetchFederatedReferences(testIssue);
           const result = await action(dispatch);
 
           assert.equal(dispatch.getCalls().length, 1);
@@ -1015,7 +1016,7 @@ describe('issue', () => {
               extIdentifier: 'b/987654',
             },
           };
-          const action = issue.fetchFederatedReferences(testIssue);
+          const action = issueV0.fetchFederatedReferences(testIssue);
           await action(dispatch);
 
           sinon.assert.calledWith(dispatch, {
@@ -1057,7 +1058,7 @@ describe('issue', () => {
               extIdentifier: 'b/987654',
             },
           };
-          const action = issue.fetchRelatedIssues(testIssue);
+          const action = issueV0.fetchRelatedIssues(testIssue);
           await action(dispatch);
 
           // Important: mergedinto fedref is not passed to ListReferencedIssues.
@@ -1083,9 +1084,9 @@ describe('issue', () => {
     describe('reducers', () => {
       it('FETCH_IS_STARRED_SUCCESS updates the starredIssues object', () => {
         const state = {};
-        const newState = issue.starredIssuesReducer(state,
+        const newState = issueV0.starredIssuesReducer(state,
             {
-              type: issue.FETCH_IS_STARRED_SUCCESS,
+              type: issueV0.FETCH_IS_STARRED_SUCCESS,
               starred: false,
               issueRef: {
                 projectName: 'proj',
@@ -1101,8 +1102,8 @@ describe('issue', () => {
             const state = {};
             const starredIssueRefs = [{projectName: 'proj', localId: 1},
               {projectName: 'proj', localId: 2}];
-            const newState = issue.starredIssuesReducer(state,
-                {type: issue.FETCH_ISSUES_STARRED_SUCCESS, starredIssueRefs},
+            const newState = issueV0.starredIssuesReducer(state,
+                {type: issueV0.FETCH_ISSUES_STARRED_SUCCESS, starredIssueRefs},
             );
             assert.deepEqual(newState, {'proj:1': true, 'proj:2': true});
           });
@@ -1116,17 +1117,17 @@ describe('issue', () => {
               starredIssueRefs.push({projectName: 'proj', localId: i});
               expected[`proj:${i}`] = true;
             }
-            const newState = issue.starredIssuesReducer(state,
-                {type: issue.FETCH_ISSUES_STARRED_SUCCESS, starredIssueRefs},
+            const newState = issueV0.starredIssuesReducer(state,
+                {type: issueV0.FETCH_ISSUES_STARRED_SUCCESS, starredIssueRefs},
             );
             assert.deepEqual(newState, expected);
           });
 
       it('STAR_SUCCESS updates the starredIssues object', () => {
         const state = {'proj:1': true, 'proj:2': false};
-        const newState = issue.starredIssuesReducer(state,
+        const newState = issueV0.starredIssuesReducer(state,
             {
-              type: issue.STAR_SUCCESS,
+              type: issueV0.STAR_SUCCESS,
               starred: true,
               issueRef: {projectName: 'proj', localId: 2},
             });
@@ -1136,13 +1137,13 @@ describe('issue', () => {
 
     describe('selectors', () => {
       describe('issue', () => {
-        const selector = issue.issue(wrapIssue(example.ISSUE));
+        const selector = issueV0.issue(wrapIssue(example.ISSUE));
         assert.deepEqual(selector(example.NAME), example.ISSUE);
       });
 
       describe('issueForRefString', () => {
-        const noIssues = issue.issueForRefString(wrapIssue({}));
-        const withIssue = issue.issueForRefString(wrapIssue({
+        const noIssues = issueV0.issueForRefString(wrapIssue({}));
+        const withIssue = issueV0.issueForRefString(wrapIssue({
           projectName: 'test',
           localId: 1,
           summary: 'hello world',
@@ -1194,7 +1195,7 @@ describe('issue', () => {
       it('starredIssues', () => {
         const state = {issue:
           {starredIssues: {'proj:1': true, 'proj:2': false}}};
-        assert.deepEqual(issue.starredIssues(state), new Set(['proj:1']));
+        assert.deepEqual(issueV0.starredIssues(state), new Set(['proj:1']));
       });
 
       it('starringIssues', () => {
@@ -1206,7 +1207,7 @@ describe('issue', () => {
             },
           },
         }};
-        assert.deepEqual(issue.starringIssues(state), new Map([
+        assert.deepEqual(issueV0.starringIssues(state), new Map([
           ['proj:1', {requesting: true}],
           ['proj:2', {requestin: false, error: 'unknown error'}],
         ]));
@@ -1226,13 +1227,14 @@ describe('issue', () => {
 
       it('fetching if an issue is starred', async () => {
         const issueRef = {projectName: 'proj', localId: 1};
-        const action = issue.fetchIsStarred(issueRef);
+        const action = issueV0.fetchIsStarred(issueRef);
 
         prpcCall.returns(Promise.resolve({isStarred: true}));
 
         await action(dispatch);
 
-        sinon.assert.calledWith(dispatch, {type: issue.FETCH_IS_STARRED_START});
+        sinon.assert.calledWith(dispatch,
+            {type: issueV0.FETCH_IS_STARRED_START});
 
         sinon.assert.calledWith(
             prpcClient.call, 'monorail.Issues',
@@ -1240,7 +1242,7 @@ describe('issue', () => {
         );
 
         sinon.assert.calledWith(dispatch, {
-          type: issue.FETCH_IS_STARRED_SUCCESS,
+          type: issueV0.FETCH_IS_STARRED_SUCCESS,
           starred: true,
           issueRef,
         });
@@ -1249,7 +1251,7 @@ describe('issue', () => {
       it('fetching starred issues', async () => {
         const returnedIssueRef = {projectName: 'proj', localId: 1};
         const starredIssueRefs = [returnedIssueRef];
-        const action = issue.fetchStarredIssues();
+        const action = issueV0.fetchStarredIssues();
 
         prpcCall.returns(Promise.resolve({starredIssueRefs}));
 
@@ -1263,7 +1265,7 @@ describe('issue', () => {
         );
 
         sinon.assert.calledWith(dispatch, {
-          type: issue.FETCH_ISSUES_STARRED_SUCCESS,
+          type: issueV0.FETCH_ISSUES_STARRED_SUCCESS,
           starredIssueRefs,
         });
       });
@@ -1271,14 +1273,14 @@ describe('issue', () => {
       it('star', async () => {
         const testIssue = {projectName: 'proj', localId: 1, starCount: 1};
         const issueRef = issueToIssueRef(testIssue);
-        const action = issue.star(issueRef, false);
+        const action = issueV0.star(issueRef, false);
 
         prpcCall.returns(Promise.resolve(testIssue));
 
         await action(dispatch);
 
         sinon.assert.calledWith(dispatch, {
-          type: issue.STAR_START,
+          type: issueV0.STAR_START,
           requestKey: 'proj:1',
         });
 
@@ -1289,7 +1291,7 @@ describe('issue', () => {
         );
 
         sinon.assert.calledWith(dispatch, {
-          type: issue.STAR_SUCCESS,
+          type: issueV0.STAR_SUCCESS,
           starCount: 1,
           issueRef,
           starred: false,
@@ -1301,7 +1303,7 @@ describe('issue', () => {
 });
 
 /**
- * Return an initial Redux state with a given viewed issue.
+ * Return an initial Redux state with a given viewed
  * @param {Issue=} viewedIssue The viewed issue.
  * @param {Object=} otherValues Any other state values that need
  *   to be initialized.

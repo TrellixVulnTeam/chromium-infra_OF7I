@@ -6,8 +6,8 @@ import {LitElement, html, css} from 'lit-element';
 import {ifDefined} from 'lit-html/directives/if-defined';
 import {autolink} from 'autolink.js';
 import {connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 /**
@@ -94,10 +94,10 @@ export class MrCommentContent extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.commentReferences = issue.commentReferences(state);
-    this.projectName = issue.viewedIssueRef(state).projectName;
+    this.commentReferences = issueV0.commentReferences(state);
+    this.projectName = issueV0.viewedIssueRef(state).projectName;
     this.revisionUrlFormat =
-      project.viewedPresentationConfig(state).revisionUrlFormat;
+      projectV0.viewedPresentationConfig(state).revisionUrlFormat;
   }
 }
 customElements.define('mr-comment-content', MrCommentContent);

@@ -7,8 +7,8 @@
 import {LitElement, html, css} from 'lit-element';
 import {store, connectStore} from 'reducers/base.js';
 import {shouldWaitForDefaultQuery} from 'shared/helpers.js';
-import * as issue from 'reducers/issue.js';
-import * as project from 'reducers/project.js';
+import * as issueV0 from 'reducers/issueV0.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import './mr-grid-controls.js';
@@ -93,7 +93,7 @@ export class MrGridPage extends connectStore(LitElement) {
   /** @override */
   updated(changedProperties) {
     if (changedProperties.has('userDisplayName')) {
-      store.dispatch(issue.fetchStarredIssues());
+      store.dispatch(issueV0.fetchStarredIssues());
     }
     // TODO(zosha): Abort sets of calls to ListIssues when
     // queryParams.q is changed.
@@ -124,7 +124,7 @@ export class MrGridPage extends connectStore(LitElement) {
 
   /** @private */
   _fetchMatchingIssues() {
-    store.dispatch(issue.fetchIssueList(this.projectName, {
+    store.dispatch(issueV0.fetchIssueList(this.projectName, {
       ...this._queryParams,
       q: this._currentQuery,
       can: this._currentCan,
@@ -135,15 +135,15 @@ export class MrGridPage extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.projectName = project.viewedProjectName(state);
-    this.issues = (issue.issueList(state) || []);
-    this.progress = (issue.issueListProgress(state) || 0);
-    this.totalIssues = (issue.totalIssues(state) || 0);
+    this.projectName = projectV0.viewedProjectName(state);
+    this.issues = (issueV0.issueList(state) || []);
+    this.progress = (issueV0.issueListProgress(state) || 0);
+    this.totalIssues = (issueV0.totalIssues(state) || 0);
     this._queryParams = sitewide.queryParams(state);
     this._currentQuery = sitewide.currentQuery(state);
     this._currentCan = sitewide.currentCan(state);
     this._presentationConfigLoaded =
-      project.viewedPresentationConfigLoaded(state);
+      projectV0.viewedPresentationConfigLoaded(state);
   }
 
   /** @override */

@@ -8,9 +8,9 @@ import 'elements/issue-detail/mr-flipper/mr-flipper.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import 'elements/chops/chops-timestamp/chops-timestamp.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import * as userV0 from 'reducers/userV0.js';
-import * as project from 'reducers/project.js';
+import * as projectV0 from 'reducers/projectV0.js';
 import {userIsMember} from 'shared/helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
@@ -202,12 +202,12 @@ export class MrIssueHeader extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.issue = issue.viewedIssue(state);
-    this.issuePermissions = issue.permissions(state);
-    this.projectTemplates = project.viewedTemplates(state);
+    this.issue = issueV0.viewedIssue(state);
+    this.issuePermissions = issueV0.permissions(state);
+    this.projectTemplates = projectV0.viewedTemplates(state);
     this.usersProjects = userV0.projectsPerUser(state);
 
-    const restrictions = issue.restrictions(state);
+    const restrictions = issueV0.restrictions(state);
     this.isRestricted = restrictions && Object.keys(restrictions).length;
   }
 
@@ -279,7 +279,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
       }],
       flag: !this.issue.isSpam,
     }).then(() => {
-      store.dispatch(issue.fetch({
+      store.dispatch(issueV0.fetch({
         projectName: this.issue.projectName,
         localId: this.issue.localId,
       }));
@@ -297,7 +297,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
         issueRef,
         delete: true,
       }).then(() => {
-        store.dispatch(issue.fetch(issueRef));
+        store.dispatch(issueV0.fetch(issueRef));
       });
     }
   }

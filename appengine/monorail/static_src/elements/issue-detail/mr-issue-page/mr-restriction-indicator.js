@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 
 import {connectStore} from 'reducers/base.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import {arrayToEnglish} from 'shared/helpers.js';
 
@@ -112,7 +112,7 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
-    this.restrictions = issue.restrictions(state);
+    this.restrictions = issueV0.restrictions(state);
     this.prefs = userV0.prefs(state);
   }
 

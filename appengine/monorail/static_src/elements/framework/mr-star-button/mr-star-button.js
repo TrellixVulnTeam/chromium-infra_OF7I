@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 import {connectStore, store} from 'reducers/base.js';
 import * as userV0 from 'reducers/userV0.js';
-import * as issue from 'reducers/issue.js';
+import * as issueV0 from 'reducers/issueV0.js';
 import {issueRefToString} from 'shared/converters';
 
 /**
@@ -115,9 +115,9 @@ export class MrStarButton extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this._isLoggedIn = userV0.isLoggedIn(state);
-    this._starringIssues = issue.starringIssues(state);
-    this._starredIssues = issue.starredIssues(state);
-    this._fetchingIsStarred = issue.requests(state).fetchIsStarred.requesting;
+    this._starringIssues = issueV0.starringIssues(state);
+    this._starredIssues = issueV0.starredIssues(state);
+    this._fetchingIsStarred = issueV0.requests(state).fetchIsStarred.requesting;
   }
 
   get _isStarring() {
@@ -138,7 +138,7 @@ export class MrStarButton extends connectStore(LitElement) {
         issueRefToString(this.issueRef));
     // This component assumes that the user of this component is connected to
     // Redux and will update their star state based on this.
-    store.dispatch(issue.star(this.issueRef, newIsStarred));
+    store.dispatch(issueV0.star(this.issueRef, newIsStarred));
   }
 }
 
