@@ -45,7 +45,7 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 	switch rpcName {
 	case "AddCrosDevices", "UpdateCrosDevicesSetup", "BatchUpdateDevices":
 		accessGroup = cfg.GetSetupWriters()
-	case "GetCrosDevices":
+	case "GetCrosDevices", "DeviceConfigsExists":
 		accessGroup = cfg.GetReaders()
 	case "UpdateDutsStatus":
 		accessGroup = cfg.GetStatusWriters()

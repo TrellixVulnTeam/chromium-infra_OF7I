@@ -609,3 +609,23 @@ func seperateAssetResults(results []*datastore.AssetOpResult) (success, failure 
 	}
 	return successResults, failureResults
 }
+
+// DeviceConfigsExists checks if the device_configs for the given configIds exists in the datastore
+func (is *InventoryServerImpl) DeviceConfigsExists(ctx context.Context, req *api.DeviceConfigsExistsRequest) (rsp *api.DeviceConfigsExistsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	devCfgIds := make([]*device.ConfigId, 0, len(req.ConfigIds))
+	for _, d := range req.ConfigIds {
+		convertedID := deviceconfig.ConvertValidDeviceConfigID(d)
+		devCfgIds = append(devCfgIds, convertedID)
+	}
+	res, err := deviceconfig.DeviceConfigsExists(ctx, devCfgIds)
+	if err != nil {
+		return nil, err
+	}
+	response := &api.DeviceConfigsExistsResponse{
+		Exists: res,
+	}
+	return response, err
+}

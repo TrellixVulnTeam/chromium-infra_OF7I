@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -15,6 +16,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
+	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/auth"
@@ -857,6 +859,86 @@ func TestDeleteAsset(t *testing.T) {
 			So(resp2.Passed, ShouldHaveLength, 1)
 			So(resp2.Failed[0].Id, ShouldEqual, asset2.GetId())
 			So(resp2.Passed[0].Id, ShouldEqual, asset1.GetId())
+		})
+	})
+}
+
+type devcfgEntity struct {
+	_kind     string `gae:"$kind,DevConfig"`
+	ID        string `gae:"$id"`
+	DevConfig []byte `gae:",noindex"`
+	Updated   time.Time
+}
+
+func TestDeviceConfigsExists(t *testing.T) {
+	t.Parallel()
+
+	Convey("Test exists device config in datastore", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		err := ds.Put(ctx, []devcfgEntity{
+			{ID: "kunimitsu.lars.variant1"},
+			{ID: "sarien.arcada.variant2"},
+			{
+				ID:        "platform.model.variant3",
+				DevConfig: []byte("bad data"),
+			},
+		})
+		So(err, ShouldBeNil)
+
+		Convey("Happy path", func() {
+			resp, err := tf.Inventory.DeviceConfigsExists(ctx, &api.DeviceConfigsExistsRequest{
+				ConfigIds: []*device.ConfigId{
+					{
+						PlatformId: &device.PlatformId{Value: "lars"},
+						ModelId:    &device.ModelId{Value: "lars"},
+						VariantId:  &device.VariantId{Value: "variant1"},
+					},
+					{
+						PlatformId: &device.PlatformId{Value: "arcada"},
+						ModelId:    &device.ModelId{Value: "arcada"},
+						VariantId:  &device.VariantId{Value: "variant2"},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(resp.Exists[0], ShouldBeTrue)
+			So(resp.Exists[1], ShouldBeTrue)
+		})
+
+		Convey("check for nonexisting data", func() {
+			resp, err := tf.Inventory.DeviceConfigsExists(ctx, &api.DeviceConfigsExistsRequest{
+				ConfigIds: []*device.ConfigId{
+					{
+						PlatformId: &device.PlatformId{Value: "platform"},
+						ModelId:    &device.ModelId{Value: "model"},
+						VariantId:  &device.VariantId{Value: "variant-nonexisting"},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(resp.Exists[0], ShouldBeFalse)
+		})
+
+		Convey("check for existing and nonexisting data", func() {
+			resp, err := tf.Inventory.DeviceConfigsExists(ctx, &api.DeviceConfigsExistsRequest{
+				ConfigIds: []*device.ConfigId{
+					{
+						PlatformId: &device.PlatformId{Value: "platform"},
+						ModelId:    &device.ModelId{Value: "model"},
+						VariantId:  &device.VariantId{Value: "variant-nonexisting"},
+					},
+					{
+						PlatformId: &device.PlatformId{Value: "arcada"},
+						ModelId:    &device.ModelId{Value: "arcada"},
+						VariantId:  &device.VariantId{Value: "variant2"},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(resp.Exists[0], ShouldBeFalse)
+			So(resp.Exists[1], ShouldBeTrue)
 		})
 	})
 }

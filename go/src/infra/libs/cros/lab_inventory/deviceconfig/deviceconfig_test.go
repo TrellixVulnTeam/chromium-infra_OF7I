@@ -191,3 +191,68 @@ func TestGetAllCachedConfig(t *testing.T) {
 		}
 	})
 }
+
+func TestDeviceConfigsExists(t *testing.T) {
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+
+	Convey("Test exists device config in datastore", t, func() {
+		err := datastore.Put(ctx, []devcfgEntity{
+			{ID: "kunimitsu.lars.variant1"},
+			{ID: "arcada.arcada.variant2"},
+			{
+				ID:        "platform.model.variant3",
+				DevConfig: []byte("bad data"),
+			},
+		})
+		So(err, ShouldBeNil)
+
+		Convey("Happy path", func() {
+			exists, err := DeviceConfigsExists(ctx, []*device.ConfigId{
+				{
+					PlatformId: &device.PlatformId{Value: "kunimitsu"},
+					ModelId:    &device.ModelId{Value: "lars"},
+					VariantId:  &device.VariantId{Value: "variant1"},
+				},
+				{
+					PlatformId: &device.PlatformId{Value: "arcada"},
+					ModelId:    &device.ModelId{Value: "arcada"},
+					VariantId:  &device.VariantId{Value: "variant2"},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(exists[0], ShouldBeTrue)
+			So(exists[1], ShouldBeTrue)
+		})
+
+		Convey("check for nonexisting data", func() {
+			exists, err := DeviceConfigsExists(ctx, []*device.ConfigId{
+				{
+					PlatformId: &device.PlatformId{Value: "platform"},
+					ModelId:    &device.ModelId{Value: "model"},
+					VariantId:  &device.VariantId{Value: "variant-nonexisting"},
+					BrandId:    &device.BrandId{Value: "nonexisting"},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(exists[0], ShouldBeFalse)
+		})
+
+		Convey("check for existing and nonexisting data", func() {
+			exists, err := DeviceConfigsExists(ctx, []*device.ConfigId{
+				{
+					PlatformId: &device.PlatformId{Value: "platform"},
+					ModelId:    &device.ModelId{Value: "model"},
+					VariantId:  &device.VariantId{Value: "variant-nonexisting"},
+				},
+				{
+					PlatformId: &device.PlatformId{Value: "arcada"},
+					ModelId:    &device.ModelId{Value: "arcada"},
+					VariantId:  &device.VariantId{Value: "variant2"},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(exists[0], ShouldBeFalse)
+			So(exists[1], ShouldBeTrue)
+		})
+	})
+}

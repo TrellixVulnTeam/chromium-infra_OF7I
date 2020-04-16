@@ -111,3 +111,26 @@ func GetAllCachedConfig(ctx context.Context) (map[*device.Config]time.Time, erro
 	}
 	return configs, nil
 }
+
+// DeviceConfigsExists Checks if the device configs exist in the datastore
+func DeviceConfigsExists(ctx context.Context, cfgIds []*device.ConfigId) (map[int32]bool, error) {
+	entities := make([]cfg2datastore.EntityInterface, len(cfgIds))
+	for i, c := range cfgIds {
+		e := devcfgEntity{
+			ID: GetDeviceConfigIDStr(c),
+		}
+		logging.Debugf(ctx, "Check devconfig for ID: '%s'", e.ID)
+		entities[i] = &e
+	}
+	res, err := datastore.Exists(ctx, entities)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[int32]bool, 0)
+	for i, r := range res.List(0) {
+		if r {
+			m[int32(i)] = true
+		}
+	}
+	return m, err
+}

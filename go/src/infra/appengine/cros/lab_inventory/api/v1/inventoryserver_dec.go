@@ -192,3 +192,20 @@ func (s *DecoratedInventory) UpdateAssets(ctx context.Context, req *AssetList) (
 	}
 	return
 }
+
+func (s *DecoratedInventory) DeviceConfigsExists(ctx context.Context, req *DeviceConfigsExistsRequest) (rsp *DeviceConfigsExistsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeviceConfigsExists", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeviceConfigsExists(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeviceConfigsExists", rsp, err)
+	}
+	return
+}

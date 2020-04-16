@@ -12,6 +12,7 @@ import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/lab/dut_state.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/device/config.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/manufacturing/config.proto";
+import "device/config_id.proto";
 import "infra/libs/fleet/protos/asset.proto";
 
 // The RPCs below to get/add/update/delete devices support batch operation, and
@@ -49,6 +50,23 @@ service Inventory {
 
   // Update asset information
   rpc UpdateAssets(AssetList) returns (AssetResponse);
+
+  // DeviceConfigsExists checks if the device_configs exists in the datastore
+  rpc DeviceConfigsExists(DeviceConfigsExistsRequest) returns (DeviceConfigsExistsResponse);
+}
+
+message DeviceConfigsExistsRequest {
+  // device_configs to check
+  repeated device.ConfigId configIds = 1;
+}
+
+message DeviceConfigsExistsResponse {
+  // Exists Map with true/false for the requested configIds
+  // https://developers.google.com/protocol-buffers/docs/proto3#scalar
+  // There is no int(Only int32 and others) scalar type for proto.
+  // int32 maps to int32 in golang.
+  // To iterate over map exists with int values(int i) - use exists[int32(i)]
+  map<int32, bool> exists = 1;
 }
 
 message DeviceOpResult{
