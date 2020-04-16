@@ -64,8 +64,8 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, customTags [
 	return resp.TaskId, nil
 }
 
-// LeaseTask creates lease_task for particular DUT
-func (tc *TaskCreator) LeaseTask(ctx context.Context, host string, durationSec int, reason string) (taskID string, err error) {
+// LeaseByHostnameTask creates lease_task for particular DUT
+func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, durationSec int, reason string) (taskID string, err error) {
 	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo Zzz...; done`}
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 10 * 60,
@@ -87,6 +87,7 @@ func (tc *TaskCreator) LeaseTask(ctx context.Context, host string, durationSec i
 			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
 			// harmless otherwise.
 			"qs_account:leases",
+			"lease-by:hostname",
 			fmt.Sprintf("dut-name:%s", host),
 			fmt.Sprintf("lease-reason:%s", reason),
 		},

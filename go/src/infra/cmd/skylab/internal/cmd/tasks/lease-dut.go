@@ -113,7 +113,7 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 		Client:      client,
 		Environment: e,
 	}
-	id, err := creator.LeaseTask(ctx, host, int(leaseDuration.Seconds()), c.leaseReason)
+	id, err := creator.LeaseByHostnameTask(ctx, host, int(leaseDuration.Seconds()), c.leaseReason)
 	if err != nil {
 		return err
 	}
