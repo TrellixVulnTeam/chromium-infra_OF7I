@@ -68,7 +68,7 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, customTags [
 func (tc *TaskCreator) LeaseTask(ctx context.Context, host string, durationSec int, reason string) (taskID string, err error) {
 	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo Zzz...; done`}
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
-		ExpirationSecs: int64(10 * 60),
+		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: c,
 			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
