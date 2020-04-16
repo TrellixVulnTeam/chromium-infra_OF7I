@@ -108,7 +108,10 @@ ci_builder(
     infra_triggered = False,  # No need to build at every commit.
     recipe = 'docker_image_builder',
     console_category = 'misc',
-    properties = {'container_name': 'swarm_docker_arm64'},
+    properties = {
+        'container_name': 'swarm_docker_arm64',
+        'dir_name': 'swarm_docker',
+    }
 )
 
 
