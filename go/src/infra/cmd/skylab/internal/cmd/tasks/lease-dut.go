@@ -88,6 +88,17 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	}
 
 	ctx := cli.GetContext(a, c, env)
+
+	leaseDuration := time.Duration(c.leaseMinutes) * time.Minute
+
+	if hasOneHostname {
+		return c.leaseDutByHostname(ctx, a, leaseDuration, host)
+	}
+	panic("lease by model not yet implemented")
+}
+
+// leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
+func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, leaseDuration time.Duration, host string) error {
 	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return errors.Annotate(err, "failed to create http client").Err()
@@ -98,8 +109,6 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
 
-	leaseDuration := time.Duration(c.leaseMinutes) * time.Minute
-
 	creator := utils.TaskCreator{
 		Client:      client,
 		Environment: e,
@@ -109,7 +118,6 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 		return err
 	}
 	fmt.Fprintf(a.GetOut(), "Created lease task for host %s: %s\n", host, swarming.TaskURL(e.SwarmingService, id))
-
 	scheduleRepairTaskForLater(ctx, &creator, a, leaseDuration, host)
 	fmt.Fprintf(a.GetOut(), "Waiting for task to start; lease isn't active yet\n")
 poll:
