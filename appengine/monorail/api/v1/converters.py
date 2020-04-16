@@ -182,10 +182,33 @@ class Converter(object):
         issue.local_id, issue.project_name,
         [comment.sequence for comment in comments])
     converted_comments = []
+    approval_ids = [
+        comment.approval_id
+        for comment in comments
+        if comment.approval_id is not None  # In case of a 0 approval_id.
+    ]
+    approval_ids_to_names = rnc.ConvertApprovalDefNames(
+        self.cnxn, approval_ids, issue.project_id, self.services)
     # TODO(crbug.com/monorail/7143): Convert remaining fields.
     for comment in comments:
+      if comment.is_spam:
+        state = issue_objects_pb2.IssueContentState.Value('SPAM')
+      elif comment.deleted_by:
+        state = issue_objects_pb2.IssueContentState.Value('DELETED')
+      else:
+        state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
       converted_comment = issue_objects_pb2.Comment(
-          name=comment_names_dict[comment.sequence])
+          name=comment_names_dict[comment.sequence],
+          state=state,
+          create_time=timestamp_pb2.Timestamp(seconds=comment.timestamp))
+      if comment.content:
+        converted_comment.content = comment.content
+      if comment.user_id:
+        converted_comment.commenter = rnc.ConvertUserName(comment.user_id)
+      if comment.inbound_message:
+        converted_comment.inbound_message = comment.inbound_message
+      if comment.approval_id and comment.approval_id in approval_ids_to_names:
+        converted_comment.approval = approval_ids_to_names[comment.approval_id]
       converted_comments.append(converted_comment)
     return converted_comments
 

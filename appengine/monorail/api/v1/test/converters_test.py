@@ -305,22 +305,26 @@ class ConverterFunctionsTest(unittest.TestCase):
     # appproval
     # amendments
     # attachments
-    # inbound_message (is ignored)
+    # inbound_message
     # spam
     # importer_id (is ignored)
+    # TODO(jessan): test convert filtered comment.
 
     comment_0 = tracker_pb2.IssueComment(
         project_id=self.issue_1.project_id,
         issue_id=self.issue_1.issue_id,
-        user_id=self.user_1.user_id,
+        user_id=self.issue_1.reporter_id,
         timestamp=self.PAST_TIME,
-        content='x',
+        content='initial description',
         sequence=0,
         is_description=True,
         description_num='1')
-    self.services.issue.TestAddComment(comment_0, self.issue_1.local_id)
     expected_0 = issue_objects_pb2.Comment(
-        name='projects/proj/issues/1/comments/0')
+        name='projects/proj/issues/1/comments/0',
+        state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+        content='initial description',
+        commenter='users/111',
+        create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME))
     self.assertEqual(
         self.converter.ConvertComments(self.issue_1, [comment_0]), [expected_0])
 
