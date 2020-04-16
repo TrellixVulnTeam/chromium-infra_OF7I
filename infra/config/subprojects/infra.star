@@ -20,6 +20,8 @@ def ci_builder(
       recipe=None,
       console_category=None,
       properties=None,
+      extra_dimensions=None,
+      infra_triggered=True,
       experimental=False,
   ):
   infra.builder(
@@ -28,9 +30,10 @@ def ci_builder(
       executable = infra.recipe(recipe or 'infra_continuous'),
       os = os,
       cpu = cpu,
-      triggered_by = [infra.poller()],
+      triggered_by = [infra.poller()] if infra_triggered else None,
       properties = properties,
       gatekeeper_group = '' if experimental else 'chromium.infra',
+      extra_dimensions=extra_dimensions,
   )
   luci.console_view_entry(
       builder = name,
@@ -94,6 +97,20 @@ ci_builder(
         'manifests': ['infra/build/images/deterministic'],
     },
 )
+
+# Builds arm64-flavored docker images for swarm_docker.
+ci_builder(
+    name = 'swarm-docker-arm64-image-builder',
+    os = 'Ubuntu-16.04',
+    cpu = 'arm64',
+    # Make sure we're not building Docker images inside another container.
+    extra_dimensions = {'inside_docker': '0'},
+    infra_triggered = False,  # No need to build at every commit.
+    recipe = 'docker_image_builder',
+    console_category = 'misc',
+    properties = {'container_name': 'swarm_docker_arm64'},
+)
+
 
 # All trybots.
 try_builder(name = 'infra-try-xenial-64', os = 'Ubuntu-16.04')

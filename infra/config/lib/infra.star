@@ -66,6 +66,7 @@ def builder(
       properties=None,
       gatekeeper_group=None,
       schedule=None,
+      extra_dimensions=None,
 
       # Triggering relations.
       triggered_by=None
@@ -96,11 +97,18 @@ def builder(
     properties = properties or {}
     properties['$gatekeeper'] = {'group': gatekeeper_group}
 
+  dimensions = {'os': os, 'cpu': cpu or 'x86-64', 'pool': pool}
+  if extra_dimensions:
+    if ('cpu' in extra_dimensions or 'os' in extra_dimensions or
+        'pool' in extra_dimensions):
+      fail("specify 'cpu', 'os', or 'pool' directly")
+    dimensions.update(extra_dimensions)
+
   luci.builder(
       name = name,
       bucket = bucket,
       executable = executable,
-      dimensions = {'os': os, 'cpu': cpu or 'x86-64', 'pool': pool},
+      dimensions = dimensions,
       service_account = service_account,
       properties = properties,
       caches = caches,
