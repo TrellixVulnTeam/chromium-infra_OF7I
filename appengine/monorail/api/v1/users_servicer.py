@@ -33,7 +33,7 @@ class UsersServicer(monorail_servicer.MonorailServicer):
         InputException: if a name in request.names is invalid.
         NoSuchUserException: if a User is not found.
     """
-    user_ids = rnc.IngestUserNames(mc, request.names, self.services)
+    user_ids = rnc.IngestUserNames(mc.cnxn, request.names, self.services)
 
     with work_env.WorkEnv(mc, self.services) as we:
       users = we.BatchGetUsers(user_ids)
