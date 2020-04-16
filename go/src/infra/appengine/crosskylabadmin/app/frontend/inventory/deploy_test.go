@@ -32,7 +32,12 @@ import (
 	"go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
+	"golang.org/x/net/context"
 )
+
+func mockValidateDeviceconfig(ctx context.Context, ic inventoryClient, nds []*inventory.CommonDeviceSpecs) error {
+	return nil
+}
 
 func TestDeleteDutsWithSplitInventory(t *testing.T) {
 	Convey("With 3 DUTs in the split inventory", t, func() {
@@ -122,6 +127,7 @@ func TestDeployDutWithSplitInventory(t *testing.T) {
 			// from ../test_common.go are refactored into a package.
 			deployTaskID := "swarming-task"
 			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).Return(deployTaskID, nil)
+			validateDeviceConfigsFunc = mockValidateDeviceconfig
 			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
 				NewSpecs: marshalOrPanicMany(specs),
 			})
@@ -462,6 +468,7 @@ func TestDeployDut(t *testing.T) {
 			// TODO(pprabhu) Check arguments of this call after testing utilities
 			// from ../test_common.go are refactored into a package.
 			deployTaskID := "swarming-task"
+			validateDeviceConfigsFunc = mockValidateDeviceconfig
 			tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), gomock.Any()).Return(deployTaskID, nil)
 			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
 				NewSpecs: marshalOrPanicMany(specs),
@@ -677,6 +684,7 @@ func TestDeployMultipleDuts(t *testing.T) {
 					{Key: stringPtr("servo_port"), Value: stringPtr("8888")},
 				},
 			}
+			validateDeviceConfigsFunc = mockValidateDeviceconfig
 			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
 				NewSpecs: marshalOrPanicMany(specs),
 			})
@@ -709,6 +717,7 @@ func TestDeployMultipleDuts(t *testing.T) {
 				},
 			}, nil)
 
+			validateDeviceConfigsFunc = mockValidateDeviceconfig
 			resp, err := tf.Inventory.DeployDut(tf.C, &fleet.DeployDutRequest{
 				NewSpecs: marshalOrPanicMany(&inventory.CommonDeviceSpecs{
 					Id:       stringPtr("This ID is ignored"),

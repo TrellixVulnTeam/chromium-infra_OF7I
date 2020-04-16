@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -33,6 +34,7 @@ type inventoryClient interface {
 	selectDutsFromInventory(context.Context, *fleet.DutSelector) ([]*inventory.DeviceUnderTest, error)
 	commitBalancePoolChanges(context.Context, []*fleet.PoolChange) (string, error)
 	getDutInfo(context.Context, *fleet.GetDutInfoRequest) ([]byte, time.Time, error)
+	deviceConfigsExists(context.Context, []*device.ConfigId) (map[int32]bool, error)
 }
 
 type gitStoreClient struct {
@@ -73,6 +75,11 @@ func (client *gitStoreClient) selectDutsFromInventory(ctx context.Context, sel *
 
 func (client *gitStoreClient) commitBalancePoolChanges(ctx context.Context, changes []*fleet.PoolChange) (string, error) {
 	return commitBalancePoolChanges(ctx, client.store, changes)
+}
+
+func (client *gitStoreClient) deviceConfigsExists(ctx context.Context, configIds []*device.ConfigId) (map[int32]bool, error) {
+	// Nothing to check for device configs in gitStore
+	return nil, errors.New("gitStoreClient - nothing to check for device configs in gitStore")
 }
 
 func (client *gitStoreClient) getDutInfo(ctx context.Context, req *fleet.GetDutInfoRequest) ([]byte, time.Time, error) {

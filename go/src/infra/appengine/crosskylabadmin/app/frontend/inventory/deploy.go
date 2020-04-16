@@ -21,6 +21,7 @@ import (
 	"sort"
 	"strconv"
 
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
@@ -42,6 +43,10 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+var (
+	validateDeviceConfigsFunc = validateDeviceconfig
 )
 
 // DeployDut implements the method from fleet.InventoryServer interface.
@@ -67,6 +72,11 @@ func (is *ServerImpl) DeployDut(ctx context.Context, req *fleet.DeployDutRequest
 	if err != nil {
 		return nil, err
 	}
+
+	if err = validateDeviceConfigsFunc(ctx, ic, allSpecs); err != nil {
+		return nil, err
+	}
+
 	sc, err := is.newSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
 	if err != nil {
 		return nil, err
@@ -83,6 +93,32 @@ func (is *ServerImpl) DeployDut(ctx context.Context, req *fleet.DeployDutRequest
 	ds := deployManyDUTs(ctx, ic, sc, attemptID, allSpecs, actions, options)
 	updateDeployStatusIgnoringErrors(ctx, attemptID, ds)
 	return &fleet.DeployDutResponse{DeploymentId: attemptID}, nil
+}
+
+// validateDeviceconfig validates if the device config is available in the inventoryV2
+func validateDeviceconfig(ctx context.Context, ic inventoryClient, nds []*inventory.CommonDeviceSpecs) error {
+	devCfgIds := make([]*device.ConfigId, 0, len(nds))
+	for _, d := range nds {
+		devConfigID := &device.ConfigId{
+			PlatformId: &device.PlatformId{
+				Value: d.GetLabels().GetBoard(),
+			},
+			ModelId: &device.ModelId{
+				Value: d.GetLabels().GetModel(),
+			},
+		}
+		devCfgIds = append(devCfgIds, devConfigID)
+	}
+	exists, err := ic.deviceConfigsExists(ctx, devCfgIds)
+	if err != nil {
+		return err
+	}
+	for i := range devCfgIds {
+		if !exists[int32(i)] {
+			return status.Errorf(codes.NotFound, "Device Config Not found for %s", devCfgIds[i].String())
+		}
+	}
+	return nil
 }
 
 // RedeployDut implements the method from fleet.InventoryServer interface.

@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"time"
 
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -164,4 +165,8 @@ func (client *duoClient) getDutInfo(ctx context.Context, req *fleet.GetDutInfoRe
 		return dut, now, err
 	}
 	return client.gc.getDutInfo(ctx, req)
+}
+
+func (client *duoClient) deviceConfigsExists(ctx context.Context, configIds []*device.ConfigId) (map[int32]bool, error) {
+	return client.ic.deviceConfigsExists(ctx, configIds)
 }

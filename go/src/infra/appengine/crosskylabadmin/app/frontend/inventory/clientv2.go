@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -341,4 +342,21 @@ func (c *invServiceClient) getDutInfo(ctx context.Context, req *invV1Api.GetDutI
 		return nil, now, errors.Reason(devices[0].ErrorMsg).Err()
 	}
 	return nil, now, errors.Reason("GetDutInfo %#v failed. No data responsed in either passed or failed list!", req).Err()
+}
+
+func (c *invServiceClient) deviceConfigsExists(ctx context.Context, configIds []*device.ConfigId) (map[int32]bool, error) {
+	// In case there's any panic happens in the new code.
+	defer func() {
+		if r := recover(); r != nil {
+			logging.Errorf(ctx, "Recovered in deviceConfigsExists(%s)", r)
+			debug.PrintStack()
+		}
+	}()
+	// checking if device configs exists in Inventory V2
+	resp, err := c.client.DeviceConfigsExists(ctx, &api.DeviceConfigsExistsRequest{ConfigIds: configIds})
+	if err != nil {
+		c.logInfo(ctx, "Unable to check if device configs exists", err)
+		return nil, err
+	}
+	return resp.GetExists(), err
 }
