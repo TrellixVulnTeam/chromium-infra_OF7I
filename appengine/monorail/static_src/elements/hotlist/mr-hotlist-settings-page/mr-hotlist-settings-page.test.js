@@ -46,7 +46,7 @@ describe('mr-hotlist-settings-page (unconnected)', () => {
   });
 
   it('renders private hotlist', async () => {
-    element._hotlist = {...example.HOTLIST, hotlistPrivacy: 0};
+    element._hotlist = {...example.HOTLIST, hotlistPrivacy: 'PRIVATE'};
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'Members only');
   });

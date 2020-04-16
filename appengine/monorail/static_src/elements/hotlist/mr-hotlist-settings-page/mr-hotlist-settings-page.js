@@ -17,6 +17,15 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
 
+/**
+ * Supported Hotlist privacy options from feature_objects.proto.
+ * @enum {string}
+ */
+const HotlistPrivacy = {
+  PRIVATE: 'PRIVATE',
+  PUBLIC: 'PUBLIC',
+};
+
 /** Hotlist Settings page */
 class _MrHotlistSettingsPage extends LitElement {
   /** @override */
@@ -137,13 +146,15 @@ class _MrHotlistSettingsPage extends LitElement {
         <label>Who can view this hotlist</label>
         <select id="hotlistPrivacy" class="path">
           <option
-            value="PUBLIC"
-            ?selected="${this._hotlist.hotlistPrivacy}">
+            value="${HotlistPrivacy.PUBLIC}"
+            ?selected="${this._hotlist.hotlistPrivacy ===
+                        HotlistPrivacy.PUBLIC}">
             Anyone on the Internet
           </option>
           <option
-            value="PRIVATE"
-            ?selected="${!this._hotlist.hotlistPrivacy}">
+            value="${HotlistPrivacy.PRIVATE}"
+            ?selected="${this._hotlist.hotlistPrivacy ===
+                        HotlistPrivacy.PRIVATE}">
             Members only
           </option>
         </select>
@@ -182,7 +193,8 @@ class _MrHotlistSettingsPage extends LitElement {
         <dd>${defaultColumns}</dd>
         <dt>Who can view this hotlist</dt>
         <dd>
-          ${this._hotlist.hotlistPrivacy ?
+          ${this._hotlist.hotlistPrivacy &&
+            this._hotlist.hotlistPrivacy === HotlistPrivacy.PUBLIC ?
             'Anyone on the Internet' : 'Members only'}
         </dd>
         <dt></dt>
