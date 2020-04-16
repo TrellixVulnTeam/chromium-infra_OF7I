@@ -5,6 +5,8 @@
 package main
 
 import (
+	"flag"
+
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
@@ -17,12 +19,19 @@ func main() {
 	modules := []module.Module{
 		gaeemulation.NewModuleFromFlags(),
 	}
+
+	cfgLoader := config.Loader{}
+	cfgLoader.RegisterFlags(flag.CommandLine)
+
 	server.Main(nil, modules, func(srv *server.Server) error {
-		cfg, err := config.Load()
-		if err != nil {
+		// Load service config form a local file (deployed via GKE),
+		// periodically reread it to pick up changes without full restart.
+		if _, err := cfgLoader.Load(); err != nil {
 			return err
 		}
-		srv.Context = config.Use(srv.Context, cfg)
+		srv.RunInBackground("ufs.config", cfgLoader.ReloadLoop)
+
+		srv.Context = config.Use(srv.Context, cfgLoader.Config())
 		frontend.InstallServices(srv.PRPC)
 		return nil
 	})
