@@ -85,12 +85,14 @@ class TemplateDetail(servlet.Servlet):
     field_views = tracker_views.MakeAllFieldValueViews(
         config, template.labels, [], template.field_values, users_by_id,
         phases=template.phases)
+    uneditable_fields = ezt.boolean(False)
     for fv in field_views:
       if permissions.CanEditValueForFieldDef(
           mr.auth.effective_ids, mr.perms, mr.project, fv.field_def.field_def):
         fv.is_editable = ezt.boolean(True)
       else:
         fv.is_editable = ezt.boolean(False)
+        uneditable_fields = ezt.boolean(True)
 
     (prechecked_approvals, required_approval_ids,
      initial_phases) = template_helpers.GatherApprovalsPageData(
@@ -100,31 +102,57 @@ class TemplateDetail(servlet.Servlet):
         mr.auth.effective_ids, mr.perms, mr.project, template)
 
     return {
-        'admin_tab_mode': self._PROCESS_SUBTAB,
-        'allow_edit': ezt.boolean(allow_edit),
-        'new_template_form': ezt.boolean(False),
-        'initial_members_only': template_view.members_only,
-        'template_name': template_view.name,
-        'initial_summary': template_view.summary,
-        'initial_must_edit_summary': template_view.summary_must_be_edited,
-        'initial_content': template_view.content,
-        'initial_status': template_view.status,
-        'initial_owner': template_view.ownername,
+        'admin_tab_mode':
+            self._PROCESS_SUBTAB,
+        'allow_edit':
+            ezt.boolean(allow_edit),
+        'uneditable_fields':
+            uneditable_fields,
+        'new_template_form':
+            ezt.boolean(False),
+        'initial_members_only':
+            template_view.members_only,
+        'template_name':
+            template_view.name,
+        'initial_summary':
+            template_view.summary,
+        'initial_must_edit_summary':
+            template_view.summary_must_be_edited,
+        'initial_content':
+            template_view.content,
+        'initial_status':
+            template_view.status,
+        'initial_owner':
+            template_view.ownername,
         'initial_owner_defaults_to_member':
-        template_view.owner_defaults_to_member,
-        'initial_components': template_view.components,
-        'initial_component_required': template_view.component_required,
-        'fields': [view for view in field_views
-                   if view.field_def.type_name is not 'APPROVAL_TYPE'],
-        'initial_add_approvals': ezt.boolean(prechecked_approvals),
-        'initial_phases': initial_phases,
-        'approvals': [view for view in field_views
-                      if view.field_def.type_name is 'APPROVAL_TYPE'],
-        'prechecked_approvals': prechecked_approvals,
-        'required_approval_ids': required_approval_ids,
-        'labels': non_masked_labels,
-        'initial_admins': template_view.admin_names,
-        }
+            template_view.owner_defaults_to_member,
+        'initial_components':
+            template_view.components,
+        'initial_component_required':
+            template_view.component_required,
+        'fields':
+            [
+                view for view in field_views
+                if view.field_def.type_name is not 'APPROVAL_TYPE'
+            ],
+        'initial_add_approvals':
+            ezt.boolean(prechecked_approvals),
+        'initial_phases':
+            initial_phases,
+        'approvals':
+            [
+                view for view in field_views
+                if view.field_def.type_name is 'APPROVAL_TYPE'
+            ],
+        'prechecked_approvals':
+            prechecked_approvals,
+        'required_approval_ids':
+            required_approval_ids,
+        'labels':
+            non_masked_labels,
+        'initial_admins':
+            template_view.admin_names,
+    }
 
   def ProcessFormData(self, mr, post_data):
     """Validate and store the contents of the issues tracker admin page.

@@ -130,6 +130,20 @@
        </td>
       </tr>
 
+      [if-any uneditable_fields]
+      <tr id="res_fd_banner"><th></th>
+        <td colspan="2" class="inplace" style="text-align:left; border-radius:25px">
+          <span style="background:var(--chops-orange-50); padding:5px; margin-top:10px; padding-left:10px; padding-right:10px; border-radius:25px">
+            <span style="padding-right:7px">
+              Info: Disabled inputs occur when you are not allowed to edit that restricted field.
+            </span>
+            <i id="res_fd_message" class="material-icons inline-icon" style="font-weight:bold; font-size:14px; vertical-align: text-bottom; cursor: pointer">
+            close</i>
+          </span>
+        </td>
+      </tr>
+      [end]
+
       <tbody [if-any page_perms.EditIssue][else]style="display:none;"[end] class="collapse">
        [define any_fields_to_reveal]No[end]
        [for fields]
@@ -138,8 +152,16 @@
          <tr [if-any fields.display][else]class="ifExpand"[define any_fields_to_reveal]Yes[end][end]>
           <th id="[fields.field_id]_label">[fields.field_name]:</th>
           <td colspan="2">
-            [include "field-value-widgets.ezt" fields.field_def.is_multivalued_bool "" fields.field_def.is_required_bool ""]
-            <div class="fielderror" style="display:none" id="error_custom_[fields.field_id]"></div>
+            [if-any fields.is_editable]
+              [include "field-value-widgets.ezt" fields.field_def.is_multivalued_bool "" fields.field_def.is_required_bool ""]
+              <div class="fielderror" style="display:none" id="error_custom_[fields.field_id]"></div>
+            [else]
+              <input disabled value = "
+              [for fields.values]
+                [fields.values.val]
+              [end]
+              " style="text-align:right; width:12em" class="multivalued customfield" aria-labelledby="[fields.field_id]_label">
+            [end]
           </td>
          <tr>
         [end][end][end]
@@ -204,9 +226,16 @@
      <tr is="subfield-row">
        <th>[fields.field_def.parent_approval_name] [fields.field_name]:</th>
        <td colspan="2">
-         [include "field-value-widgets.ezt" False "tmpl" False ""]
-         <div class="fielderror" style="display:none" id="error_custom_[fields.field_id]"></div\
->
+         [if-any fields.is_editable]
+           [include "field-value-widgets.ezt" False "tmpl" False ""]
+           <div class="fielderror" style="display:none" id="error_custom_[fields.field_id]"></div>
+         [else]
+           <input disabled value = "
+           [for fields.values]
+             [fields.values.val]
+           [end]
+           " style="text-align:right; width:12em" class="multivalued customfield" aria-labelledby="[fields.field_id]_label">
+         [end]
        </td>
      </tr>
     [end][end][end]
@@ -217,8 +246,16 @@
         <tr>
           <th>[issue_phase_names].[fields.field_name]:</th>
             <td colspan="2">
-              [include "field-value-widgets.ezt" False "tmpl" False issue_phase_names]
-              <div class="fielderror" style="display:none" id="error_custom_[issue_phase_names]_[fields.field_id]"></div>
+              [if-any fields.is_editable]
+                [include "field-value-widgets.ezt" False "tmpl" False issue_phase_names]
+                <div class="fielderror" style="display:none" id="error_custom_[issue_phase_names]_[fields.field_id]"></div>
+              [else]
+                <input disabled value = "
+                [for fields.values]
+                  [fields.values.val]
+                [end]
+                " style="text-align:right; width:12em" class="multivalued customfield" aria-labelledby="[fields.field_id]_label">
+              [end]
             </td>
           </th>
         </tr>
@@ -291,6 +328,11 @@ runOnLoad(function() {
       _acrob(null);
     });
   }
+  if($("res_fd_message")) {
+    $("res_fd_message").onclick = function(){
+      $("res_fd_banner").classList.add("hidden");
+    };
+  };
 
   if ($("submit_btn")) {
     $("submit_btn").addEventListener("focus", function(event) {

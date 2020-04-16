@@ -169,12 +169,14 @@ class IssueEntry(servlet.Servlet):
     # values are implemented.
     field_views = [view for view in field_views
                    if view.field_name.lower() not in RESTRICTED_FLT_FIELDS]
+    uneditable_fields = ezt.boolean(False)
     for fv in field_views:
       if permissions.CanEditValueForFieldDef(
           mr.auth.effective_ids, mr.perms, mr.project, fv.field_def.field_def):
         fv.is_editable = ezt.boolean(True)
       else:
         fv.is_editable = ezt.boolean(False)
+        uneditable_fields = ezt.boolean(True)
 
     # TODO(jrobbins): remove "or []" after next release.
     (prechecked_approvals, required_approval_ids,
@@ -184,54 +186,89 @@ class IssueEntry(servlet.Servlet):
                  approval_ids]
 
     page_data = {
-        'issue_tab_mode': 'issueEntry',
-        'initial_summary': initial_summary,
-        'template_summary': initial_summary,
-        'clear_summary_on_click': ezt.boolean(
-            initial_summary_must_be_edited and
-            'initial_summary' not in mr.form_overrides),
-        'must_edit_summary': ezt.boolean(initial_summary_must_be_edited),
-
-        'initial_description': template.content,
-        'template_name': template.name,
-        'component_required': ezt.boolean(template.component_required),
-        'initial_status': initial_status,
-        'initial_owner': initial_owner_name,
-        'owner_avail_state': owner_avail_state,
-        'owner_avail_message_short': owner_avail_message_short,
-        'initial_components': initial_components,
-        'initial_cc': '',
-        'initial_blocked_on': '',
-        'initial_blocking': '',
-        'initial_hotlists': '',
-        'labels': labels,
-        'fields': field_views,
-
-        'any_errors': ezt.boolean(mr.errors.AnyErrors()),
-        'page_perms': page_perms,
-        'allow_attachments': ezt.boolean(allow_attachments),
-        'max_attach_size': template_helpers.BytesKbOrMb(
-            framework_constants.MAX_POST_BODY_SIZE),
-
-        'offer_templates': ezt.boolean(offer_templates),
-        'config': config_view,
-
-        'restrict_to_known': ezt.boolean(restrict_to_known),
-        'is_member': ezt.boolean(is_member),
-        'code_font': ezt.boolean(code_font),
+        'issue_tab_mode':
+            'issueEntry',
+        'initial_summary':
+            initial_summary,
+        'template_summary':
+            initial_summary,
+        'clear_summary_on_click':
+            ezt.boolean(
+                initial_summary_must_be_edited and
+                'initial_summary' not in mr.form_overrides),
+        'must_edit_summary':
+            ezt.boolean(initial_summary_must_be_edited),
+        'initial_description':
+            template.content,
+        'template_name':
+            template.name,
+        'component_required':
+            ezt.boolean(template.component_required),
+        'initial_status':
+            initial_status,
+        'initial_owner':
+            initial_owner_name,
+        'owner_avail_state':
+            owner_avail_state,
+        'owner_avail_message_short':
+            owner_avail_message_short,
+        'initial_components':
+            initial_components,
+        'initial_cc':
+            '',
+        'initial_blocked_on':
+            '',
+        'initial_blocking':
+            '',
+        'initial_hotlists':
+            '',
+        'labels':
+            labels,
+        'fields':
+            field_views,
+        'any_errors':
+            ezt.boolean(mr.errors.AnyErrors()),
+        'page_perms':
+            page_perms,
+        'allow_attachments':
+            ezt.boolean(allow_attachments),
+        'max_attach_size':
+            template_helpers.BytesKbOrMb(
+                framework_constants.MAX_POST_BODY_SIZE),
+        'offer_templates':
+            ezt.boolean(offer_templates),
+        'config':
+            config_view,
+        'restrict_to_known':
+            ezt.boolean(restrict_to_known),
+        'is_member':
+            ezt.boolean(is_member),
+        'code_font':
+            ezt.boolean(code_font),
         # The following are necessary for displaying phases that come with
         # this template. These are read-only.
-        'allow_edit': ezt.boolean(False),
-        'initial_phases': phases,
-        'approvals': approvals,
-        'prechecked_approvals': prechecked_approvals,
-        'required_approval_ids': required_approval_ids,
+        'allow_edit':
+            ezt.boolean(False),
+        'uneditable_fields':
+            uneditable_fields,
+        'initial_phases':
+            phases,
+        'approvals':
+            approvals,
+        'prechecked_approvals':
+            prechecked_approvals,
+        'required_approval_ids':
+            required_approval_ids,
         # See monorail:4692 and the use of PHASES_WITH_MILESTONES
         # in elements/flt/mr-launch-overview/mr-phase.js
-        'issue_phase_names': list(
-            {phase.name.lower() for phase in phases if phase.name
-             in PHASES_WITH_MILESTONES}),
-        }
+        'issue_phase_names':
+            list(
+                {
+                    phase.name.lower()
+                    for phase in phases
+                    if phase.name in PHASES_WITH_MILESTONES
+                }),
+    }
 
     return page_data
 

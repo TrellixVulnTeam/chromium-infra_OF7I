@@ -119,6 +119,20 @@
     </td>
   </tr>
 
+  [if-any allow_edit][if-any uneditable_fields]
+  <tr id="res_fd_banner"><th></th>
+    <td style="text-align:left; border-radius:25px">
+      <span style="background:var(--chops-orange-50); padding:5px; margin-top:10px;padding-left:10px; padding-right:10px; border-radius:25px">
+        <span style="padding-right:7px">
+        Info: Disabled inputs occur when you are not allowed to edit that restricted field.
+        </span>
+        <i id="res_fd_message" class="material-icons inline-icon" style="font-weight:bold; font-size:14px; vertical-align: text-bottom; cursor: pointer">
+        close</i>
+      </span>
+    </td>
+  </tr>
+  [end][end]
+
   [for fields]
     [# TODO(jrobbins): determine applicability dynamically and update fields in JS]
     [# approval subfields are shown below, not here]
@@ -127,7 +141,15 @@
         <th>[fields.field_name]:</th>
         <td colspan="2">
           [if-any allow_edit]
-             [include "field-value-widgets.ezt" False "tmpl" False ""]
+            [if-any fields.is_editable]
+              [include "field-value-widgets.ezt" False "tmpl" False ""]
+            [else]
+              <input disabled value = "
+              [for fields.values]
+                [fields.values.val]
+              [end]
+              " style="text-align:right; width:12em" class="multivalued customfield" aria-labelledby="[fields.field_id]_label">
+            [end]
           [else]
             [for fields.values]
               [fields.values.val]
@@ -173,11 +195,19 @@
 
   [for fields]
     [if-any fields.field_def.is_approval_subfield]
-      <tr id="subfield-row">
+      <tr id="subfield-row" class="subfield-row-class">
         <th>[fields.field_def.parent_approval_name] [fields.field_name]:</th>
         <td colspan="2">
           [if-any allow_edit]
-            [include "field-value-widgets.ezt" False "tmpl" False ""]
+            [if-any fields.is_editable]
+              [include "field-value-widgets.ezt" False "tmpl" False ""]
+            [else]
+              <input disabled value = "
+              [for fields.values]
+                [fields.values.val]
+              [end]
+              " style="text-align:right; width:12em" class="multivalued customfield" aria-labelledby="[fields.field_id]_label">
+            [end]
           [else]
             [for fields.values][fields.values.val][end]
           [end]
@@ -227,6 +257,12 @@ runOnLoad(function() {
       });
     }
 
+    if($("res_fd_message")) {
+      $("res_fd_message").onclick = function(){
+        $("res_fd_banner").classList.add("hidden");
+      };
+    };
+
   [else]
 
     let labelInputs = document.getElementsByClassName("labelinput");
@@ -240,16 +276,24 @@ runOnLoad(function() {
     let addPhasesCheckbox = document.getElementById('cb_add_approvals');
     if (addPhasesCheckbox === null) return;
     let addPhases = addPhasesCheckbox.checked;
-    let subfieldRow = $('subfield-row');
-    let phasefieldRow = $('phasefield-row');
+    let subfieldRows = document.getElementsByClassName('subfield-row-class');
+    let phasefieldRows = document.getElementsByClassName('phasefield-row-class');
     if (addPhases) {
       $('launch-gates-table').classList.remove('hidden');
-      subfieldRow && subfieldRow.classList.remove('hidden');
-      phasefieldRow && phasefieldRow.classList.remove('hidden');
+      for (let i=0; i<subfieldRows.length; i++){
+        subfieldRows[[]i].classList.remove('hidden');
+      }
+      for (let i=0; i<phasefieldRows.length; i++){
+        phasefieldRows[[]i].classList.remove('hidden');
+      }
     } else{
       $('launch-gates-table').classList.add('hidden');
-      subfieldRow && subfieldRow.classList.add('hidden');
-      phasefieldRow && phasefieldRow.classList.add('hidden');
+      for (let i=0; i<subfieldRows.length; i++){
+        subfieldRows[[]i].classList.add('hidden');
+      }
+      for (let i=0; i<phasefieldRows.length; i++){
+        phasefieldRows[[]i].classList.add('hidden');
+      }
     }
   }
 

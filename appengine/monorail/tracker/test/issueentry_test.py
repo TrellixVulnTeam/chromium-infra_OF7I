@@ -176,6 +176,7 @@ class IssueEntryTest(unittest.TestCase):
     self.assertEqual(page_data['fields'][0].is_editable, ezt.boolean(True))
     self.assertEqual(page_data['fields'][1].is_editable, ezt.boolean(True))
     self.assertEqual(page_data['fields'][2].is_editable, ezt.boolean(False))
+    self.assertEqual(page_data['uneditable_fields'], ezt.boolean(True))
 
   def testGatherPageData_Approvals(self):
     user = self.services.user.TestAddUser('user@invalid', 100)

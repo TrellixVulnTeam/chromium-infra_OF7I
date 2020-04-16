@@ -256,6 +256,7 @@ class TemplateDetailTest(unittest.TestCase):
     self.assertEqual(self.servlet.PROCESS_TAB_TEMPLATES,
                      page_data['admin_tab_mode'])
     self.assertTrue(page_data['allow_edit'])
+    self.assertEqual(page_data['uneditable_fields'], ezt.boolean(True))
     self.assertFalse(page_data['new_template_form'])
     self.assertFalse(page_data['initial_members_only'])
     self.assertEqual(page_data['template_name'], 'TestTemplate')

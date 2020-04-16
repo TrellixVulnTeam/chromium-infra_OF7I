@@ -65,32 +65,58 @@ class TemplateCreate(servlet.Servlet):
 
     initial_phases = [tracker_pb2.Phase()] * template_helpers.MAX_NUM_PHASES
     return {
-        'admin_tab_mode': self._PROCESS_SUBTAB,
-        'allow_edit': ezt.boolean(True),
-        'new_template_form': ezt.boolean(True),
-        'initial_members_only': ezt.boolean(False),
-        'template_name': '',
-        'initial_content': '',
-        'initial_must_edit_summary': ezt.boolean(False),
-        'initial_summary': '',
-        'initial_status': '',
-        'initial_owner': '',
-        'initial_owner_defaults_to_member': ezt.boolean(False),
-        'initial_components': '',
-        'initial_component_required': ezt.boolean(False),
-        'initial_admins': '',
-        'fields': [view for view in field_views
-                   if view.field_def.type_name is not "APPROVAL_TYPE"],
-        'initial_add_approvals': ezt.boolean(False),
-        'initial_phases': initial_phases,
-        'approvals': [view for view in field_views
-                   if view.field_def.type_name is "APPROVAL_TYPE"],
+        'admin_tab_mode':
+            self._PROCESS_SUBTAB,
+        'allow_edit':
+            ezt.boolean(True),
+        'uneditable_fields':
+            ezt.boolean(False),
+        'new_template_form':
+            ezt.boolean(True),
+        'initial_members_only':
+            ezt.boolean(False),
+        'template_name':
+            '',
+        'initial_content':
+            '',
+        'initial_must_edit_summary':
+            ezt.boolean(False),
+        'initial_summary':
+            '',
+        'initial_status':
+            '',
+        'initial_owner':
+            '',
+        'initial_owner_defaults_to_member':
+            ezt.boolean(False),
+        'initial_components':
+            '',
+        'initial_component_required':
+            ezt.boolean(False),
+        'initial_admins':
+            '',
+        'fields':
+            [
+                view for view in field_views
+                if view.field_def.type_name is not "APPROVAL_TYPE"
+            ],
+        'initial_add_approvals':
+            ezt.boolean(False),
+        'initial_phases':
+            initial_phases,
+        'approvals':
+            [
+                view for view in field_views
+                if view.field_def.type_name is "APPROVAL_TYPE"
+            ],
         'prechecked_approvals': [],
         'required_approval_ids': [],
-        'approval_subfields_present': ezt.boolean(approval_subfields_present),
+        'approval_subfields_present':
+            ezt.boolean(approval_subfields_present),
         # We do not support setting phase field values during template creation.
-        'phase_fields_present': ezt.boolean(False),
-        }
+        'phase_fields_present':
+            ezt.boolean(False),
+    }
 
   def ProcessFormData(self, mr, post_data):
     """Validate and store the contents of the issues tracker admin page.
