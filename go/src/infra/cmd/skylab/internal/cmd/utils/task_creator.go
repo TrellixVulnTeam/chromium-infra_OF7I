@@ -103,3 +103,49 @@ func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, dur
 	}
 	return resp.TaskId, nil
 }
+
+// LeaseByModelTask creates a lease_task targeted at a particular model
+func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, durationSec int, reason string) (taskID string, err error) {
+	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo "(model): Zzz..."; done`}
+	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
+		ExpirationSecs: 10 * 60,
+		Properties: &swarming_api.SwarmingRpcsTaskProperties{
+			Command: c,
+			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
+				{Key: "pool", Value: "ChromeOSSkylab"},
+				{Key: "label-model", Value: model},
+				// We need to make sure we don't disturb DUT_POOL_CTS, so for now by-model leases
+				// can only target DUT_POOL_QUOTA.
+				{Key: "label-pool", Value: "DUT_POOL_QUOTA"},
+				// Getting an unhealthy DUT is a horrible user experience, so we make sure
+				// that only ready DUTs are leasable by model.
+				{Key: "dut_state", Value: "ready"},
+			},
+			ExecutionTimeoutSecs: int64(durationSec),
+		},
+	}}
+	r := &swarming_api.SwarmingRpcsNewTaskRequest{
+		Name: "lease task",
+		Tags: []string{
+			"pool:ChromeOSSkylab",
+			"skylab-tool:lease",
+			// This quota account specifier is only relevant for DUTs that are
+			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+			// harmless otherwise.
+			"qs_account:leases",
+			"lease-by:model",
+			fmt.Sprintf("model:%s", model),
+			fmt.Sprintf("lease-reason:%s", reason),
+		},
+		TaskSlices:     slices,
+		Priority:       15,
+		ServiceAccount: tc.Environment.ServiceAccount,
+	}
+	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
+	defer cf()
+	resp, err := tc.Client.CreateTask(ctx, r)
+	if err != nil {
+		return "", errors.Annotate(err, "lease by model task").Err()
+	}
+	return resp.TaskId, nil
+}
