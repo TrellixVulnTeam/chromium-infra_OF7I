@@ -21,6 +21,7 @@ def ci_builder(
       console_category=None,
       properties=None,
       extra_dimensions=None,
+      schedule=None,
       infra_triggered=True,
       experimental=False,
   ):
@@ -31,6 +32,7 @@ def ci_builder(
       os = os,
       cpu = cpu,
       triggered_by = [infra.poller()] if infra_triggered else None,
+      schedule = schedule,
       properties = properties,
       gatekeeper_group = '' if experimental else 'chromium.infra',
       extra_dimensions=extra_dimensions,
@@ -106,6 +108,7 @@ ci_builder(
     # Make sure we're not building Docker images inside another container.
     extra_dimensions = {'inside_docker': '0'},
     infra_triggered = False,  # No need to build at every commit.
+    schedule = 'triggered',
     recipe = 'docker_image_builder',
     console_category = 'misc',
     properties = {
