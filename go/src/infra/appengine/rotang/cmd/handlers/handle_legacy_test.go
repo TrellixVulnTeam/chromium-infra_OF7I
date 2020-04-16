@@ -845,7 +845,7 @@ func TestLegacyAllRotations(t *testing.T) {
 		name      string
 		fail      bool
 		calFail   bool
-		rotaMap   map[string][2]string
+		rotaMap   map[string]string
 		calShifts []rotang.ShiftEntry
 		cfgs      []*rotang.Configuration
 		ctx       *router.Context
@@ -865,8 +865,8 @@ func TestLegacyAllRotations(t *testing.T) {
 				},
 			},
 		},
-		rotaMap: map[string][2]string{
-			"testrota": {"Test rota", ""},
+		rotaMap: map[string]string{
+			"testrota": "Test rota",
 		},
 		calShifts: []rotang.ShiftEntry{
 			{
@@ -904,8 +904,8 @@ func TestLegacyAllRotations(t *testing.T) {
 			Writer:  httptest.NewRecorder(),
 		},
 		time: midnight,
-		rotaMap: map[string][2]string{
-			"testrota": {"Test rota", ""},
+		rotaMap: map[string]string{
+			"testrota": "Test rota",
 		},
 		want: `{"rotations":["troopers"],"calendar":null}` + "\n",
 	}, {
@@ -916,8 +916,8 @@ func TestLegacyAllRotations(t *testing.T) {
 			Writer:  httptest.NewRecorder(),
 		},
 		time: midnight,
-		rotaMap: map[string][2]string{
-			"testrota": {"Test rota", ""},
+		rotaMap: map[string]string{
+			"testrota": "Test rota",
 		},
 		want: `{"rotations":["troopers"],"calendar":null}` + "\n",
 	},

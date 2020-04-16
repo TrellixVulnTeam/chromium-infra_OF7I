@@ -180,40 +180,19 @@ func (h *State) legacyTrooper(ctx *router.Context, file string) (string, error) 
 	}
 }
 
-var fileToRota = map[string][2]string{
-	"sheriff.js": {"Build Sheriff", ""},
-	// "sheriff_webkit.js":              "",
-	// "sheriff_memory.js":              "",
-	"sheriff_cros_mtv.js":          {"Chrome OS Build Sheriff", ""},
-	"sheriff_cros_nonmtv.js":       {"Chrome OS Build Sheriff - Other", "Chrome OS Build Sheriff"},
-	"sheriff_perf.js":              {"Chromium Perf Regression Sheriff Rotation", ""},
-	"sheriff_cr_cros_gardeners.js": {"Chrome on ChromeOS Gardening", ""},
-	"sheriff_gpu.js":               {"Chrome GPU Pixel Wrangling", ""},
-	"sheriff_angle.js":             {"The ANGLE Wrangle", ""},
-	"sheriff_android.js":           {"Chrome on Android Build Sheriff", ""},
-	"sheriff_ios.js":               {"Chrome iOS Build Sheriff", ""},
-	"sheriff_v8.js":                {"V8 Sheriff", ""},
-	"sheriff_perfbot.js":           {"Chromium Perf Bot Sheriff Rotation", ""},
-	"sheriff_webgl_bug_triage.js":  {"WebGL Bug Triage", ""},
-	"sheriff_flutter_engine.js":    {"Flutter Engine Rotation", ""},
+var fileToRota = map[string]string{
+	"sheriff.js":         "Build Sheriff",
+	"sheriff_gpu.js":     "Chrome GPU Pixel Wrangling",
+	"sheriff_android.js": "Chrome on Android Build Sheriff",
 
-	"sheriff.json": {"Build Sheriff", ""},
-	// "sheriff_webkit.json":            "", // In the cron file but does not have a configuration.
-	// "sheriff_memory.json":            "", // In the cron file but does not have a configuration.
-	"sheriff_cros_mtv.json":          {"Chrome OS Build Sheriff", ""},
-	"sheriff_cros_nonmtv.json":       {"Chrome OS Build Sheriff - Other", "Chrome OS Build Sheriff"},
-	"sheriff_perf.json":              {"Chromium Perf Regression Sheriff Rotation", ""},
-	"sheriff_cr_cros_gardeners.json": {"Chrome on ChromeOS Gardening", ""},
-	"sheriff_gpu.json":               {"Chrome GPU Pixel Wrangling", ""},
-	"sheriff_angle.json":             {"The ANGLE Wrangle", ""},
-	"sheriff_android.json":           {"Chrome on Android Build Sheriff", ""},
-	"sheriff_ios.json":               {"Chrome iOS Build Sheriff", ""},
-	"sheriff_v8.json":                {"V8 Sheriff", ""},
-	"sheriff_perfbot.json":           {"Chromium Perf Bot Sheriff Rotation", ""},
-	"sheriff_webgl_bug_triage.json":  {"WebGL Bug Triage", ""},
-	"sheriff_flutter_engine.json":    {"Flutter Engine Rotation", ""},
-	//"all_rotations.js":               "",
-	//"all_rotations.js":               "",
+	"sheriff.json":                "Build Sheriff",
+	"sheriff_perf.json":           "Chromium Perf Regression Sheriff Rotation",
+	"sheriff_gpu.json":            "Chrome GPU Pixel Wrangling",
+	"sheriff_angle.json":          "The ANGLE Wrangle",
+	"sheriff_android.json":        "Chrome on Android Build Sheriff",
+	"sheriff_ios.json":            "Chrome iOS Build Sheriff",
+	"sheriff_perfbot.json":        "Chromium Perf Bot Sheriff Rotation",
+	"sheriff_flutter_engine.json": "Flutter Engine Rotation",
 }
 
 const week = 7 * 24 * time.Hour
@@ -229,7 +208,7 @@ func (h *State) legacySheriff(ctx *router.Context, file string) (string, error) 
 	if !ok {
 		return "", status.Errorf(codes.InvalidArgument, "file: %q not handled by legacySheriff", file)
 	}
-	r, err := h.configStore(ctx.Context).RotaConfig(ctx.Context, rota[0])
+	r, err := h.configStore(ctx.Context).RotaConfig(ctx.Context, rota)
 	if err != nil {
 		return "", err
 	}
@@ -237,11 +216,6 @@ func (h *State) legacySheriff(ctx *router.Context, file string) (string, error) 
 		return "", status.Errorf(codes.Internal, "RotaConfig did not return 1 configuration")
 	}
 	cfg := r[0]
-	// As a workaround to handle split shifts some users create multiple configurations with different
-	// calendars but the same Event Name. The new service use the rota name as a key in the datastore.
-	if rota[1] != "" {
-		cfg.Config.Name = rota[1]
-	}
 
 	cal := h.legacyCalendar
 	if cfg.Config.Enabled {
@@ -300,40 +274,29 @@ func (h *State) legacySheriff(ctx *router.Context, file string) (string, error) 
 	}
 }
 
-var rotaToName = map[string][2]string{
-	"angle":                   {"The ANGLE Wrangle", ""},
-	"ios_internal_roll":       {"Bling Piper Roll", ""},
-	"bling":                   {"Chrome iOS Build Sheriff", ""},
-	"blink_bug_triage":        {"Blink Bug Triage", ""},
-	"blink_media_triage":      {"Blink Media Bug Triage Rotation", ""},
-	"chromeosgardener":        {"Chrome on ChromeOS Gardening", ""},
-	"chromeosgardener.shadow": {"Chrome on ChromeOS Gardening Shadow", ""},
-	"chromeos.other":          {"Chrome OS Build Sheriff - Other", "Chrome OS Build Sheriff"},
-	"chromeos":                {"Chrome OS Build Sheriff", ""},
-	"chrome":                  {"Build Sheriff", ""},
-	"android":                 {"Chrome on Android Build Sheriff", ""},
-	"android_stability":       {"Chrome on Android Stability Sheriff", "Clank Stability Sheriff (go/clankss)"},
-	"codesearch":              {"ChOps DevX Codesearch Triage Rotation", ""},
-	"ecosystem_infra":         {"Ecosystem Infra rotation", ""},
-	"fizzlon_bugcop":          {"Fizz London Bug Cop", ""},
-	"gitadmin":                {"Chrome Infra Git Admin Rotation", ""},
-	"gpu":                     {"Chrome GPU Pixel Wrangling", ""},
-	"headless_roll":           {"Headless Chrome roll sheriff", ""},
-	"infra_platform":          {"Chops Foundation Triage", ""},
-	"infra_triage":            {"Chrome Infra Bug Triage Rotation", ""},
-	"monorail":                {"Chrome Infra Monorail Triage Rotation", ""},
-	"network":                 {"Chrome Network Bug Triage", ""},
-	"perfbot":                 {"Chromium Perf Bot Sheriff Rotation", ""},
-	"ios":                     {"Chrome iOS Build Sheriff", ""},
-	"perf":                    {"Chromium Perf Regression Sheriff Rotation", ""},
-	"sdk":                     {"ChOps DevX SDK Triage Rotation", ""},
-	"stability":               {"Chromium Stability Sheriff", ""},
-	"v8_infra_triage":         {"V8 Infra Bug Triage Rotation", ""},
-	// "v8":                      {"V8 Sheriff", ""}, // Nothing in their calendar.
-	"webview_bugcop": {"WebView Bug Cop", ""},
-	"flutter_engine": {"Flutter Engine Rotation", ""},
-	//"troopers":              {"", ""} // Handled in it's own way.
-	"webgl_bug_triage": {"WebGL Bug Triage", ""},
+var rotaToName = map[string]string{
+	"angle":             "The ANGLE Wrangle",
+	"ios_internal_roll": "Bling Piper Roll",
+	"blink_bug_triage":  "Blink Bug Triage",
+	"chrome":            "Build Sheriff",
+	"android":           "Chrome on Android Build Sheriff",
+	"android_stability": "Clank Stability Sheriff (go/clankss)",
+	"ecosystem_infra":   "Ecosystem Infra rotation",
+	"gitadmin":          "Chrome Infra Git Admin Rotation",
+	"gpu":               "Chrome GPU Pixel Wrangling",
+	"headless_roll":     "Headless Chrome roll sheriff",
+	"infra_platform":    "Chops Foundation Triage",
+	"infra_triage":      "Chrome Infra Bug Triage Rotation",
+	"monorail":          "Chrome Infra Monorail Triage Rotation",
+	"network":           "Chrome Network Bug Triage",
+	"perfbot":           "Chromium Perf Bot Sheriff Rotation",
+	"ios":               "Chrome iOS Build Sheriff",
+	"perf":              "Chromium Perf Regression Sheriff Rotation",
+	"stability":         "Chromium Stability Sheriff",
+	"v8_infra_triage":   "V8 Infra Bug Triage Rotation",
+	"webview_bugcop":    "WebView Bug Cop",
+	"flutter_engine":    "Flutter Engine Rotation",
+	"webgl_bug_triage":  "WebGL Bug Triage",
 }
 
 const (
@@ -361,7 +324,7 @@ func (h *State) legacyAllRotations(ctx *router.Context, _ string) (string, error
 
 	// The Sheriff rotations.
 	for k, v := range rotaToName {
-		rs, err := cs.RotaConfig(ctx.Context, v[0])
+		rs, err := cs.RotaConfig(ctx.Context, v)
 		if err != nil {
 			logging.Errorf(ctx.Context, "Getting configuration for: %q failed: %v", v, err)
 			continue
@@ -370,9 +333,6 @@ func (h *State) legacyAllRotations(ctx *router.Context, _ string) (string, error
 			return "", status.Errorf(codes.Internal, "RotaConfig did not return 1 configuration")
 		}
 		cfg := rs[0]
-		if v[1] != "" {
-			cfg.Config.Name = v[1]
-		}
 		cal := h.legacyCalendar
 		if cfg.Config.Enabled {
 			cal = h.calendar
