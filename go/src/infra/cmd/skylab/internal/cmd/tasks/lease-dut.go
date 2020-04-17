@@ -24,6 +24,10 @@ import (
 
 const dayInMinutes = 24 * 60
 
+// maxTasksPerModel is the maximum number of tasks that are allowed to be executing
+// at the same time for a given model.
+const maxTasksPerModel = 2
+
 // LeaseDut subcommand: Lease a DUT for debugging.
 var LeaseDut = &subcommands.Command{
 	UsageLine: "lease-dut HOST\n\tskylab lease-dut -model MODEL",
@@ -156,12 +160,11 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 	}
 
 	tasks, err := client.GetActiveLeaseTasksForModel(ctx, model)
-	// TODO(gregorynisbet): Consider making this error fatal.
 	if err != nil {
-		fmt.Fprintf(a.GetErr(), "failed to compute total number of existing leases (%s)\n", err.Error())
-	} else {
-		// TODO(gregorynisbet): Enforce per-model cap instead of just printing stuff.
-		fmt.Fprintf(a.GetErr(), "%d active leases for model (%s)\n", len(tasks), model)
+		return errors.Annotate(err, "computing existing leases").Err()
+	}
+	if len(tasks) > maxTasksPerModel {
+		return fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), model, maxTasksPerModel)
 	}
 
 	creator := utils.TaskCreator{
