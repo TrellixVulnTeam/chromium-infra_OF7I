@@ -78,11 +78,15 @@ func (c *repairRun) innerRun(a subcommands.Application, args []string, env subco
 
 	expirationSec := c.expirationMins * 60
 	for _, host := range args {
-		id, err := creator.RepairTask(ctx, host, tags, expirationSec)
+		dutName := skycmdlib.FixSuspiciousHostname(host)
+		if dutName != host {
+			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", host, dutName)
+		}
+		id, err := creator.RepairTask(ctx, dutName, tags, expirationSec)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(e.SwarmingService, id), host)
+		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(e.SwarmingService, id), dutName)
 	}
 	fmt.Fprintf(a.GetOut(), "Batch repair task URL: %s\n", swarming.TaskListURLForTags(e.SwarmingService, tags))
 	return nil
