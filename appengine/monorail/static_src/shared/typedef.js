@@ -300,6 +300,25 @@
 
 
 /**
+ * Types defined in permission_objects.proto.
+ */
+
+/**
+ * A Permission string returned by the pRPC API permission_objects.proto.
+ *
+ * @typedef {string} Permission
+ */
+
+/**
+ * A PermissionSet Object returned by the pRPC API permission_objects.proto.
+ *
+ * @typedef {Object} PermissionSet
+ * @property {string} resource
+ * @property {Array<Permission>} permissions
+ */
+
+
+/**
  * Types defined in project_objects.proto.
  */
 
