@@ -104,16 +104,12 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
 func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, leaseDuration time.Duration, host string) error {
-	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
-	if err != nil {
-		return errors.Annotate(err, "failed to create http client").Err()
-	}
-	e := c.envFlags.Env()
-	client, err := swarming.New(ctx, h, e.SwarmingService)
+	client, err := c.newSwarmingClient(ctx)
 	if err != nil {
 		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
 
+	e := c.envFlags.Env()
 	creator := utils.TaskCreator{
 		Client:      client,
 		Environment: e,
@@ -125,23 +121,9 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 	fmt.Fprintf(a.GetOut(), "Created lease task for host %s: %s\n", host, swarming.TaskURL(e.SwarmingService, id))
 	scheduleRepairTaskForLater(ctx, &creator, a, leaseDuration, host)
 	fmt.Fprintf(a.GetOut(), "Waiting for task to start; lease isn't active yet\n")
-poll:
-	for {
-		result, err := client.GetTaskState(ctx, id)
-		if err != nil {
-			return err
-		}
-		if len(result.States) != 1 {
-			return errors.Reason("Got unexpected task states: %#v; expected one state", result.States).Err()
-		}
-		switch s := result.States[0]; s {
-		case "PENDING":
-			time.Sleep(time.Duration(10) * time.Second)
-		case "RUNNING":
-			break poll
-		default:
-			return errors.Reason("Got unexpected task state %#v", s).Err()
-		}
+
+	if err := c.waitForTaskStart(ctx, client, id); err != nil {
+		return err
 	}
 	// TODO(ayatane): The time printed here may be off by the poll interval above.
 	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
@@ -149,14 +131,9 @@ poll:
 }
 
 func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, leaseDuration time.Duration, model string) error {
-	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
+	client, err := c.newSwarmingClient(ctx)
 	if err != nil {
-		return errors.Annotate(err, "failed to create http client").Err()
-	}
-	e := c.envFlags.Env()
-	client, err := swarming.New(ctx, h, e.SwarmingService)
-	if err != nil {
-		return errors.Annotate(err, "failed to creat Swarming client").Err()
+		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
 
 	tasks, err := client.GetActiveLeaseTasksForModel(ctx, model)
@@ -167,6 +144,7 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 		return fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), model, maxTasksPerModel)
 	}
 
+	e := c.envFlags.Env()
 	creator := utils.TaskCreator{
 		Client:      client,
 		Environment: e,
@@ -176,23 +154,9 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 		return err
 	}
 	fmt.Fprintf(a.GetOut(), "Created lease task for model %s: %s\n", model, swarming.TaskURL(e.SwarmingService, id))
-poll:
-	for {
-		result, err := client.GetTaskState(ctx, id)
-		if err != nil {
-			return err
-		}
-		if len(result.States) != 1 {
-			return errors.Reason("Got unexpected task states: %#v; expected one state", result.States).Err()
-		}
-		switch s := result.States[0]; s {
-		case "PENDING":
-			time.Sleep(time.Duration(10) * time.Second)
-		case "RUNNING":
-			break poll
-		default:
-			return errors.Reason("Got unexpected task state %#v", s).Err()
-		}
+
+	if err := c.waitForTaskStart(ctx, client, id); err != nil {
+		return err
 	}
 	// TODO(ayatane): The time printed here may be off by the poll interval above.
 	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
@@ -207,5 +171,40 @@ func scheduleRepairTaskForLater(ctx context.Context, creator *utils.TaskCreator,
 		fmt.Fprintf(a.GetOut(), "Created repair task %s\n", swarming.TaskURL(creator.Environment.SwarmingService, id))
 	} else {
 		fmt.Fprint(a.GetOut(), "Error: Repair task was not created\n")
+	}
+}
+
+// newSwarmingClient creates a new swarming client.
+func (c *leaseDutRun) newSwarmingClient(ctx context.Context) (*swarming.Client, error) {
+	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
+	if err != nil {
+		return nil, err
+	}
+	e := c.envFlags.Env()
+	client, err := swarming.New(ctx, h, e.SwarmingService)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+// waitForTaskStart waits for the task with the given id to start.
+func (c *leaseDutRun) waitForTaskStart(ctx context.Context, client *swarming.Client, id string) error {
+	for {
+		result, err := client.GetTaskState(ctx, id)
+		if err != nil {
+			return err
+		}
+		if len(result.States) != 1 {
+			return errors.Reason("Got unexpected task states: %#v; expected one state", result.States).Err()
+		}
+		switch s := result.States[0]; s {
+		case "PENDING":
+			time.Sleep(10 * time.Second)
+		case "RUNNING":
+			return nil
+		default:
+			return errors.Reason("Got unexpected task state %#v", s).Err()
+		}
 	}
 }
