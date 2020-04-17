@@ -41,7 +41,7 @@ func (l *Loader) Load() (*Config, error) {
 		return nil, errors.Reason("-config-path is required").Err()
 	}
 
-	b, err := ioutil.ReadFile(configPath)
+	b, err := ioutil.ReadFile(l.ConfigPath)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to open the config file").Err()
 	}
