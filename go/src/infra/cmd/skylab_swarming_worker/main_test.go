@@ -11,6 +11,7 @@ import (
 const deploy = "deploy"
 const adminRepair = "admin_repair"
 const adminReset = "admin_reset"
+const adminSetStateNeedsRepair = "set_needs_repair"
 
 func TestUpdatesInventory(t *testing.T) {
 	t.Parallel()
@@ -22,6 +23,7 @@ func TestUpdatesInventory(t *testing.T) {
 		{deploy, true},
 		{adminRepair, true},
 		{adminReset, false},
+		{adminSetStateNeedsRepair, false},
 	}
 
 	for _, tc := range testCases {
@@ -48,6 +50,7 @@ func TestGetTaskName(t *testing.T) {
 		{adminRepair, repairTaskName},
 		{deploy, deployTaskName},
 		{adminReset, ""},
+		{adminSetStateNeedsRepair, ""},
 	}
 
 	for _, tc := range testCases {
@@ -74,6 +77,7 @@ func TestIsDeployTask(t *testing.T) {
 		{deploy, true},
 		{adminRepair, false},
 		{adminReset, false},
+		{adminSetStateNeedsRepair, false},
 	}
 
 	for _, tc := range testCases {
@@ -100,6 +104,7 @@ func TestIsRepairTask(t *testing.T) {
 		{deploy, false},
 		{adminRepair, true},
 		{adminReset, false},
+		{adminSetStateNeedsRepair, false},
 	}
 
 	for _, tc := range testCases {
@@ -109,6 +114,61 @@ func TestIsRepairTask(t *testing.T) {
 			a := &args{}
 			a.taskName = tc.task
 			output := isRepairTask(a)
+			if output != tc.expected {
+				t.Errorf("Input task was %s - check was incorrect, got: %t, expected: %t", tc.task, output, tc.expected)
+			}
+		})
+	}
+}
+
+func TestIsSetStateNeedsRepairTask(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		task     string
+		expected bool
+	}{
+		{deploy, false},
+		{adminRepair, false},
+		{adminReset, false},
+		{adminSetStateNeedsRepair, true},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.task, func(t *testing.T) {
+			t.Parallel()
+			a := &args{}
+			a.taskName = tc.task
+			output := isSetStateNeedsRepairTask(a)
+			if output != tc.expected {
+				t.Errorf("Input task was %s - check was incorrect, got: %t, expected: %t", tc.task, output, tc.expected)
+			}
+		})
+	}
+}
+
+func TestNeedLucifer(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		task     string
+		expected bool
+	}{
+		{deploy, true},
+		{adminRepair, true},
+		{adminReset, true},
+		{adminSetStateNeedsRepair, false},
+		{"something-else", true},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.task, func(t *testing.T) {
+			t.Parallel()
+			a := &args{}
+			a.taskName = tc.task
+			output := needLucifer(a)
 			if output != tc.expected {
 				t.Errorf("Input task was %s - check was incorrect, got: %t, expected: %t", tc.task, output, tc.expected)
 			}

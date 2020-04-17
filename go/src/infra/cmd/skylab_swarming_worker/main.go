@@ -53,6 +53,7 @@ import (
 
 const repairTaskName = "repair"
 const deployTaskName = "deploy"
+const setStateNeedsRepairTaskName = "set_needs_repair"
 
 const gcpProject = "chromeos-skylab"
 
@@ -131,7 +132,15 @@ func mainInner(a *args) error {
 	}
 	defer i.Close()
 
-	luciferErr := luciferFlow(ctx, a, i, annotWriter)
+	var luciferErr error
+
+	switch {
+	case needLucifer(a):
+		luciferErr = luciferFlow(ctx, a, i, annotWriter)
+
+	case isSetStateNeedsRepairTask(a):
+		i.BotInfo.HostState = swmbot.HostNeedsRepair
+	}
 
 	if err := i.Close(); err != nil {
 		return err
@@ -273,6 +282,11 @@ func getAdminTask(name string) (task string, ok bool) {
 	return "", false
 }
 
+// needLucifer determine when task will use lucifer to execute the task
+func needLucifer(a *args) bool {
+	return !isSetStateNeedsRepairTask(a)
+}
+
 // isAdminTask determines whether the args specify an admin task
 func isAdminTask(a *args) bool {
 	_, isAdmin := getAdminTask(a.taskName)
@@ -288,6 +302,10 @@ func isDeployTask(a *args) bool {
 func isRepairTask(a *args) bool {
 	task, _ := getAdminTask(a.taskName)
 	return task == repairTaskName
+}
+
+func isSetStateNeedsRepairTask(a *args) bool {
+	return a.taskName == setStateNeedsRepairTaskName
 }
 
 // runTest runs a test.
