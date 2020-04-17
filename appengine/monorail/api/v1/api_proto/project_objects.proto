@@ -319,7 +319,7 @@ message ProjectConfig {
 // Next available tag: 7
 message ProjectMember {
   // Resource name of the Project Member.
-  // project/{project}/members/{user_id}
+  // projects/{project}/members/{user_id}
   string name = 1;
   // The role the user has in the project.
   // Next available tag: 4
@@ -329,7 +329,7 @@ message ProjectMember {
     // The user can make any changes to the project.
     OWNER = 1;
     // The user may participate in the project but may not edit the project.
-    COMMITER = 2;
+    COMMITTER = 2;
     // The user starts with the same permissions as a non-member.
     CONTRIBUTOR = 3;
   }

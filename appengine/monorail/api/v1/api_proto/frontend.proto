@@ -9,7 +9,6 @@ package monorail.v1;
 
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
-import "google_proto/google/api/annotations.proto";
 import "api/v1/api_proto/project_objects.proto";
 
 
@@ -17,6 +16,9 @@ service Frontend {
   // Returns all project specific configurations needed for the SPA client.
   rpc GatherProjectEnvironment (GatherProjectEnvironmentRequest) returns (GatherProjectEnvironmentResponse) {};
   // Returns all of a given user's project memberships.
+  // Raises:
+  //   NOT_FOUND if the user is not found.
+  //   INVALID_ARGUMENT if the user resource name provided is invalid.
   rpc GatherProjectMembersForUser (GatherProjectMembersForUserRequest)
     returns (GatherProjectMembersForUserResponse) {}
 }
