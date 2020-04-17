@@ -65,7 +65,7 @@ func (e *DeviceEntity) updateLabConfig(p *lab.ChromeOSDevice) (changehistory.Cha
 	if err != nil {
 		return nil, err
 	}
-	changes := changehistory.LogChromeOSDeviceChanges(p, &oldMsg)
+	changes := changehistory.LogChromeOSDeviceChanges(&oldMsg, p)
 
 	e.LabConfig = data
 	e.Hostname = utils.GetHostname(p)
@@ -86,7 +86,7 @@ func (e *DeviceEntity) updateDutState(p *lab.DutState) (changehistory.Changes, e
 	if err != nil {
 		return nil, err
 	}
-	changes := changehistory.LogDutStateChanges(e.Hostname, p, &oldMsg)
+	changes := changehistory.LogDutStateChanges(e.Hostname, &oldMsg, p)
 
 	e.DutState = data
 	return changes, nil
