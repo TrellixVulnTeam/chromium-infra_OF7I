@@ -37,7 +37,7 @@ handlers:
 # adds complexity in code: dynamic imports or splitting the frontend app.
 libraries:
 - name: endpoints
-  version: 1.0
+  version: "1.0"
 - name: webapp2
   version: "2.5.2"
 - name: webob

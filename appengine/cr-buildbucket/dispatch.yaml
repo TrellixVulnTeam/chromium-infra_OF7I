@@ -10,7 +10,7 @@ dispatch:
     service: backend
 
   # Serve rpcexplorer from go service. Actual prpc calls are still served from
-  # still served from python. default-go service lives here:
+  # python. default-go service lives here:
   # https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/appengine/frontend
   - url: "*/rpcexplorer/*"
     service: default-go
