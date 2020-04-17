@@ -174,13 +174,14 @@ func mainInner(a *args) error {
 			"Error: %s", luciferErr)
 	}
 
-	if isAdminTask(a) || isDeployTask(a) {
+	switch {
+	case isAdminTask(a) || isDeployTask(a):
 		// Show Stainless links here for admin tasks.
 		// For test tasks they are bundled with results.json.
 		annotations.BuildStep(annotWriter, "Epilog")
 		annotations.StepLink(annotWriter, "Task results (Stainless)", i.Info.Task.StainlessURL())
 		annotations.StepClosed(annotWriter)
-	} else {
+	default:
 		pa := i.ParserArgs()
 		pa.Failed = luciferErr != nil
 
@@ -199,6 +200,7 @@ func mainInner(a *args) error {
 			return errors.Wrap(err, "writing results to isolated output file")
 		}
 	}
+
 	if err := i.Close(); err != nil {
 		return err
 	}
@@ -228,13 +230,14 @@ func updatesInventory(a *args) bool {
 
 // getTaskName returns the task name(repair/deploy) for the task.
 func getTaskName(a *args) string {
-	if isRepairTask(a) {
+	switch {
+	case isRepairTask(a):
 		return repairTaskName
-	}
-	if isDeployTask(a) {
+	case isDeployTask(a):
 		return deployTaskName
+	default:
+		return ""
 	}
-	return ""
 }
 
 func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.TaskArgs) error {
@@ -243,22 +246,15 @@ func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.Ta
 		ctx, c = context.WithDeadline(ctx, a.deadline)
 		defer c()
 	}
-
-	if n, ok := getAdminTask(a.taskName); ok {
-		if err := runAdminTask(ctx, i, n, ta); err != nil {
-			return errors.Wrap(err, "run admin task")
-		}
-	} else if isDeployTask(a) {
-		if err := runDeployTask(ctx, i, a.deployActions, ta); err != nil {
-			return errors.Wrap(err, "run deploy task")
-		}
-	} else {
-		if err := runTest(ctx, i, a, ta); err != nil {
-
-			return errors.Wrap(err, "run test")
-		}
+	switch {
+	case isAdminTask(a):
+		n, _ := getAdminTask(a.taskName)
+		return runAdminTask(ctx, i, n, ta)
+	case isDeployTask(a):
+		return runDeployTask(ctx, i, a.deployActions, ta)
+	default:
+		return runTest(ctx, i, a, ta)
 	}
-	return nil
 }
 
 // getAdminTask returns the admin task name if the given task is an
@@ -311,13 +307,14 @@ func runTest(ctx context.Context, i *harness.Info, a *args, ta lucifer.TaskArgs)
 
 	cmd := lucifer.TestCommand(i.LuciferConfig(), r)
 	lr, err := runLuciferCommand(ctx, cmd, i, r.AbortSock)
-	if err != nil {
+	switch {
+	case err != nil:
 		return errors.Wrap(err, "run lucifer failed")
-	}
-	if lr.TestsFailed > 0 {
+	case lr.TestsFailed > 0:
 		return errors.Errorf("%d tests failed", lr.TestsFailed)
+	default:
+		return nil
 	}
-	return nil
 }
 
 type rebootBefore int
@@ -376,7 +373,7 @@ func runAdminTask(ctx context.Context, i *harness.Info, name string, ta lucifer.
 
 	cmd := lucifer.AdminTaskCommand(i.LuciferConfig(), r)
 	if _, err := runLuciferCommand(ctx, cmd, i, r.AbortSock); err != nil {
-		return errors.Wrap(err, "run lucifer failed")
+		return errors.Wrap(err, "run admin task")
 	}
 	return nil
 }
