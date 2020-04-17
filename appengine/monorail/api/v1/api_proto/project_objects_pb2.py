@@ -24,7 +24,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n&api/v1/api_proto/project_objects.proto\x12\x0bmonorail.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\x1a)api/v1/api_proto/permission_objects.proto\"\x85\x01\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\x0f\n\x07summary\x18\x03 \x01(\t\x12\x15\n\rthumbnail_url\x18\x04 \x01(\t:.\xea\x41+\n\x15\x61pi.crbug.com/Project\x12\x12projects/{project}\"\x94\x03\n\tStatusDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x32\n\x04type\x18\x03 \x01(\x0e\x32$.monorail.v1.StatusDef.StatusDefType\x12\x0c\n\x04rank\x18\x04 \x01(\r\x12\x11\n\tdocstring\x18\x05 \x01(\t\x12\x34\n\x05state\x18\x06 \x01(\x0e\x32%.monorail.v1.StatusDef.StatusDefState\"F\n\rStatusDefType\x12\x1f\n\x1bSTATUS_DEF_TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04OPEN\x10\x01\x12\n\n\x06\x43LOSED\x10\x02\"N\n\x0eStatusDefState\x12 \n\x1cSTATUS_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:G\xea\x41\x44\n\x17\x61pi.crbug.com/StatusDef\x12)projects/{project}/statusDefs/{statusDef}\"\x82\x02\n\x08LabelDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\x32\n\x05state\x18\x04 \x01(\x0e\x32#.monorail.v1.LabelDef.LabelDefState\"L\n\rLabelDefState\x12\x1f\n\x1bLABEL_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:D\xea\x41\x41\n\x16\x61pi.crbug.com/LabelDef\x12\'projects/{project}/labelDefs/{labelDef}\"^\n\x08\x46ieldDef\x12\x0c\n\x04name\x18\x01 \x01(\t:D\xea\x41\x41\n\x16\x61pi.crbug.com/FieldDef\x12\'projects/{project}/fieldDefs/{fieldDef}\"\xc8\x04\n\x0c\x43omponentDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\'\n\x06\x61\x64mins\x18\x04 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12$\n\x03\x63\x63s\x18\x05 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12:\n\x05state\x18\x06 \x01(\x0e\x32+.monorail.v1.ComponentDef.ComponentDefState\x12+\n\x07\x63reator\x18\x07 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12,\n\x08modifier\x18\x08 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\t \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x34\n\x0bmodify_time\x18\n \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x0e\n\x06labels\x18\x0b \x03(\t\"T\n\x11\x43omponentDefState\x12#\n\x1f\x43OMPONENT_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:P\xea\x41M\n\x1a\x61pi.crbug.com/ComponentDef\x12/projects/{project}/componentDefs/{componentDef}\"j\n\x0b\x41pprovalDef\x12\x0c\n\x04name\x18\x01 \x01(\t:M\xea\x41J\n\x19\x61pi.crbug.com/ApprovalDef\x12-projects/{project}/approvalDefs/{approvalDef}\"\x9a\x01\n\x11ProjectSavedQuery\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t:R\xea\x41O\n\x1f\x61pi.crbug.com/ProjectSavedQuery\x12,projects/{project}/savedQueries/{savedQuery}\"\x95\x04\n\rIssueTemplate\x12\x0c\n\x04name\x18\x01 \x01(\t\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.v1.Issue\x12\x1e\n\x16summary_must_be_edited\x18\x03 \x01(\x08\x12\x44\n\x10template_privacy\x18\x04 \x01(\x0e\x32*.monorail.v1.IssueTemplate.TemplatePrivacy\x12>\n\rdefault_owner\x18\x05 \x01(\x0e\x32\'.monorail.v1.IssueTemplate.DefaultOwner\x12\x1a\n\x12\x63omponent_required\x18\x06 \x01(\x08\x12\'\n\x06\x61\x64mins\x18\x07 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\"Q\n\x0fTemplatePrivacy\x12 \n\x1cTEMPLATE_PRIVACY_UNSPECIFIED\x10\x00\x12\x10\n\x0cMEMBERS_ONLY\x10\x01\x12\n\n\x06PUBLIC\x10\x02\"J\n\x0c\x44\x65\x66\x61ultOwner\x12\x1d\n\x19\x44\x45\x46\x41ULT_OWNER_UNSPECIFIED\x10\x00\x12\x1b\n\x17PROJECT_MEMBER_REPORTER\x10\x01:I\xea\x41\x46\n\x16\x61pi.crbug.com/Template\x12,projects/{project}/templates/{template_name}\"\xc2\x04\n\rProjectConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12 \n\x18\x65xclusive_label_prefixes\x18\x02 \x03(\t\x12\x35\n\x0fmerged_statuses\x18\x03 \x03(\tB\x1c\xfa\x41\x19\n\x17\x61pi.crbug.com/StatusDef\x12\x15\n\rdefault_query\x18\x04 \x01(\t\x12\x14\n\x0c\x64\x65\x66\x61ult_sort\x18\x05 \x01(\t\x12\x18\n\x10\x64\x65\x66\x61ult_col_spec\x18\x06 \x01(\t\x12\x46\n\x13project_grid_config\x18\x07 \x01(\x0b\x32).monorail.v1.ProjectConfig.GridViewConfig\x12<\n\x17member_default_template\x18\x08 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x41\n\x1cnon_members_default_template\x18\t \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x1b\n\x13revision_url_format\x18\n \x01(\t\x12\x1e\n\x16\x63ustom_issue_entry_url\x18\x0b \x01(\t\x1a@\n\x0eGridViewConfig\x12\x16\n\x0e\x64\x65\x66\x61ult_x_attr\x18\x01 \x01(\t\x12\x16\n\x0e\x64\x65\x66\x61ult_y_attr\x18\x02 \x01(\t:;\xea\x41\x38\n\x1b\x61pi.crbug.com/ProjectConfig\x12\x19projects/{project}/config\"\xae\x03\n\rProjectMember\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x34\n\x04role\x18\x02 \x01(\x0e\x32&.monorail.v1.ProjectMember.ProjectRole\x12/\n\x0estandard_perms\x18\x03 \x03(\x0e\x32\x17.monorail.v1.Permission\x12\x14\n\x0c\x63ustom_perms\x18\x04 \x03(\t\x12\r\n\x05notes\x18\x05 \x01(\t\x12R\n\x17include_in_autocomplete\x18\x06 \x01(\x0e\x32\x31.monorail.v1.ProjectMember.AutocompleteVisibility\"U\n\x0bProjectRole\x12\x1c\n\x18PROJECT_ROLE_UNSPECIFIED\x10\x00\x12\t\n\x05OWNER\x10\x01\x12\x0c\n\x08\x43OMMITER\x10\x02\x12\x0f\n\x0b\x43ONTRIBUTOR\x10\x03\"X\n\x16\x41utocompleteVisibility\x12\'\n#AUTOCOMPLETE_VISIBILITY_UNSPECIFIED\x10\x00\x12\n\n\x06HIDDEN\x10\x01\x12\t\n\x05SHOWN\x10\x02\x62\x06proto3')
+  serialized_pb=_b('\n&api/v1/api_proto/project_objects.proto\x12\x0bmonorail.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\x1a)api/v1/api_proto/permission_objects.proto\"\x85\x01\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\x0f\n\x07summary\x18\x03 \x01(\t\x12\x15\n\rthumbnail_url\x18\x04 \x01(\t:.\xea\x41+\n\x15\x61pi.crbug.com/Project\x12\x12projects/{project}\"\xa0\x03\n\tStatusDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x32\n\x04type\x18\x03 \x01(\x0e\x32$.monorail.v1.StatusDef.StatusDefType\x12\x0c\n\x04rank\x18\x04 \x01(\r\x12\x11\n\tdocstring\x18\x05 \x01(\t\x12\x34\n\x05state\x18\x06 \x01(\x0e\x32%.monorail.v1.StatusDef.StatusDefState\"R\n\rStatusDefType\x12\x1f\n\x1bSTATUS_DEF_TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04OPEN\x10\x01\x12\n\n\x06\x43LOSED\x10\x02\x12\n\n\x06MERGED\x10\x03\"N\n\x0eStatusDefState\x12 \n\x1cSTATUS_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:G\xea\x41\x44\n\x17\x61pi.crbug.com/StatusDef\x12)projects/{project}/statusDefs/{statusDef}\"\x82\x02\n\x08LabelDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\x32\n\x05state\x18\x04 \x01(\x0e\x32#.monorail.v1.LabelDef.LabelDefState\"L\n\rLabelDefState\x12\x1f\n\x1bLABEL_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:D\xea\x41\x41\n\x16\x61pi.crbug.com/LabelDef\x12\'projects/{project}/labelDefs/{labelDef}\"^\n\x08\x46ieldDef\x12\x0c\n\x04name\x18\x01 \x01(\t:D\xea\x41\x41\n\x16\x61pi.crbug.com/FieldDef\x12\'projects/{project}/fieldDefs/{fieldDef}\"\xc8\x04\n\x0c\x43omponentDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\'\n\x06\x61\x64mins\x18\x04 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12$\n\x03\x63\x63s\x18\x05 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12:\n\x05state\x18\x06 \x01(\x0e\x32+.monorail.v1.ComponentDef.ComponentDefState\x12+\n\x07\x63reator\x18\x07 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12,\n\x08modifier\x18\x08 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\t \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x34\n\x0bmodify_time\x18\n \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x0e\n\x06labels\x18\x0b \x03(\t\"T\n\x11\x43omponentDefState\x12#\n\x1f\x43OMPONENT_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:P\xea\x41M\n\x1a\x61pi.crbug.com/ComponentDef\x12/projects/{project}/componentDefs/{componentDef}\"j\n\x0b\x41pprovalDef\x12\x0c\n\x04name\x18\x01 \x01(\t:M\xea\x41J\n\x19\x61pi.crbug.com/ApprovalDef\x12-projects/{project}/approvalDefs/{approvalDef}\"\x9a\x01\n\x11ProjectSavedQuery\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t:R\xea\x41O\n\x1f\x61pi.crbug.com/ProjectSavedQuery\x12,projects/{project}/savedQueries/{savedQuery}\"\x95\x04\n\rIssueTemplate\x12\x0c\n\x04name\x18\x01 \x01(\t\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.v1.Issue\x12\x1e\n\x16summary_must_be_edited\x18\x03 \x01(\x08\x12\x44\n\x10template_privacy\x18\x04 \x01(\x0e\x32*.monorail.v1.IssueTemplate.TemplatePrivacy\x12>\n\rdefault_owner\x18\x05 \x01(\x0e\x32\'.monorail.v1.IssueTemplate.DefaultOwner\x12\x1a\n\x12\x63omponent_required\x18\x06 \x01(\x08\x12\'\n\x06\x61\x64mins\x18\x07 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\"Q\n\x0fTemplatePrivacy\x12 \n\x1cTEMPLATE_PRIVACY_UNSPECIFIED\x10\x00\x12\x10\n\x0cMEMBERS_ONLY\x10\x01\x12\n\n\x06PUBLIC\x10\x02\"J\n\x0c\x44\x65\x66\x61ultOwner\x12\x1d\n\x19\x44\x45\x46\x41ULT_OWNER_UNSPECIFIED\x10\x00\x12\x1b\n\x17PROJECT_MEMBER_REPORTER\x10\x01:I\xea\x41\x46\n\x16\x61pi.crbug.com/Template\x12,projects/{project}/templates/{template_name}\"\xb0\x04\n\rProjectConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12 \n\x18\x65xclusive_label_prefixes\x18\x02 \x03(\t\x12\x1c\n\x14member_default_query\x18\x03 \x01(\t\x12\x14\n\x0c\x64\x65\x66\x61ult_sort\x18\x04 \x01(\t\x12\x36\n\x0f\x64\x65\x66\x61ult_columns\x18\x05 \x03(\x0b\x32\x1d.monorail.v1.IssuesListColumn\x12\x46\n\x13project_grid_config\x18\x06 \x01(\x0b\x32).monorail.v1.ProjectConfig.GridViewConfig\x12<\n\x17member_default_template\x18\x07 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x41\n\x1cnon_members_default_template\x18\x08 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x1b\n\x13revision_url_format\x18\t \x01(\t\x12\x1e\n\x16\x63ustom_issue_entry_url\x18\n \x01(\t\x1a@\n\x0eGridViewConfig\x12\x16\n\x0e\x64\x65\x66\x61ult_x_attr\x18\x01 \x01(\t\x12\x16\n\x0e\x64\x65\x66\x61ult_y_attr\x18\x02 \x01(\t:;\xea\x41\x38\n\x1b\x61pi.crbug.com/ProjectConfig\x12\x19projects/{project}/config\"\xae\x03\n\rProjectMember\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x34\n\x04role\x18\x02 \x01(\x0e\x32&.monorail.v1.ProjectMember.ProjectRole\x12/\n\x0estandard_perms\x18\x03 \x03(\x0e\x32\x17.monorail.v1.Permission\x12\x14\n\x0c\x63ustom_perms\x18\x04 \x03(\t\x12\r\n\x05notes\x18\x05 \x01(\t\x12R\n\x17include_in_autocomplete\x18\x06 \x01(\x0e\x32\x31.monorail.v1.ProjectMember.AutocompleteVisibility\"U\n\x0bProjectRole\x12\x1c\n\x18PROJECT_ROLE_UNSPECIFIED\x10\x00\x12\t\n\x05OWNER\x10\x01\x12\x0c\n\x08\x43OMMITER\x10\x02\x12\x0f\n\x0b\x43ONTRIBUTOR\x10\x03\"X\n\x16\x41utocompleteVisibility\x12\'\n#AUTOCOMPLETE_VISIBILITY_UNSPECIFIED\x10\x00\x12\n\n\x06HIDDEN\x10\x01\x12\t\n\x05SHOWN\x10\x02\x62\x06proto3')
   ,
   dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_permission__objects__pb2.DESCRIPTOR,])
 
@@ -48,11 +48,15 @@ _STATUSDEF_STATUSDEFTYPE = _descriptor.EnumDescriptor(
       name='CLOSED', index=2, number=2,
       serialized_options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='MERGED', index=3, number=3,
+      serialized_options=None,
+      type=None),
   ],
   containing_type=None,
   serialized_options=None,
   serialized_start=573,
-  serialized_end=643,
+  serialized_end=655,
 )
 _sym_db.RegisterEnumDescriptor(_STATUSDEF_STATUSDEFTYPE)
 
@@ -77,8 +81,8 @@ _STATUSDEF_STATUSDEFSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=645,
-  serialized_end=723,
+  serialized_start=657,
+  serialized_end=735,
 )
 _sym_db.RegisterEnumDescriptor(_STATUSDEF_STATUSDEFSTATE)
 
@@ -103,8 +107,8 @@ _LABELDEF_LABELDEFSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=911,
-  serialized_end=987,
+  serialized_start=923,
+  serialized_end=999,
 )
 _sym_db.RegisterEnumDescriptor(_LABELDEF_LABELDEFSTATE)
 
@@ -129,8 +133,8 @@ _COMPONENTDEF_COMPONENTDEFSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1574,
-  serialized_end=1658,
+  serialized_start=1586,
+  serialized_end=1670,
 )
 _sym_db.RegisterEnumDescriptor(_COMPONENTDEF_COMPONENTDEFSTATE)
 
@@ -155,8 +159,8 @@ _ISSUETEMPLATE_TEMPLATEPRIVACY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2309,
-  serialized_end=2390,
+  serialized_start=2321,
+  serialized_end=2402,
 )
 _sym_db.RegisterEnumDescriptor(_ISSUETEMPLATE_TEMPLATEPRIVACY)
 
@@ -177,8 +181,8 @@ _ISSUETEMPLATE_DEFAULTOWNER = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2392,
-  serialized_end=2466,
+  serialized_start=2404,
+  serialized_end=2478,
 )
 _sym_db.RegisterEnumDescriptor(_ISSUETEMPLATE_DEFAULTOWNER)
 
@@ -207,8 +211,8 @@ _PROJECTMEMBER_PROJECTROLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3380,
-  serialized_end=3465,
+  serialized_start=3374,
+  serialized_end=3459,
 )
 _sym_db.RegisterEnumDescriptor(_PROJECTMEMBER_PROJECTROLE)
 
@@ -233,8 +237,8 @@ _PROJECTMEMBER_AUTOCOMPLETEVISIBILITY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3467,
-  serialized_end=3555,
+  serialized_start=3461,
+  serialized_end=3549,
 )
 _sym_db.RegisterEnumDescriptor(_PROJECTMEMBER_AUTOCOMPLETEVISIBILITY)
 
@@ -355,7 +359,7 @@ _STATUSDEF = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=392,
-  serialized_end=796,
+  serialized_end=808,
 )
 
 
@@ -407,8 +411,8 @@ _LABELDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=799,
-  serialized_end=1057,
+  serialized_start=811,
+  serialized_end=1069,
 )
 
 
@@ -438,8 +442,8 @@ _FIELDDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1059,
-  serialized_end=1153,
+  serialized_start=1071,
+  serialized_end=1165,
 )
 
 
@@ -540,8 +544,8 @@ _COMPONENTDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1156,
-  serialized_end=1740,
+  serialized_start=1168,
+  serialized_end=1752,
 )
 
 
@@ -571,8 +575,8 @@ _APPROVALDEF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1742,
-  serialized_end=1848,
+  serialized_start=1754,
+  serialized_end=1860,
 )
 
 
@@ -616,8 +620,8 @@ _PROJECTSAVEDQUERY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1851,
-  serialized_end=2005,
+  serialized_start=1863,
+  serialized_end=2017,
 )
 
 
@@ -691,8 +695,8 @@ _ISSUETEMPLATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2008,
-  serialized_end=2541,
+  serialized_start=2020,
+  serialized_end=2553,
 )
 
 
@@ -729,8 +733,8 @@ _PROJECTCONFIG_GRIDVIEWCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2997,
-  serialized_end=3061,
+  serialized_start=2991,
+  serialized_end=3055,
 )
 
 _PROJECTCONFIG = _descriptor.Descriptor(
@@ -755,64 +759,57 @@ _PROJECTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='merged_statuses', full_name='monorail.v1.ProjectConfig.merged_statuses', index=2,
-      number=3, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
+      name='member_default_query', full_name='monorail.v1.ProjectConfig.member_default_query', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=_b('\372A\031\n\027api.crbug.com/StatusDef'), file=DESCRIPTOR),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='default_query', full_name='monorail.v1.ProjectConfig.default_query', index=3,
+      name='default_sort', full_name='monorail.v1.ProjectConfig.default_sort', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='default_sort', full_name='monorail.v1.ProjectConfig.default_sort', index=4,
-      number=5, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='default_columns', full_name='monorail.v1.ProjectConfig.default_columns', index=4,
+      number=5, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='default_col_spec', full_name='monorail.v1.ProjectConfig.default_col_spec', index=5,
-      number=6, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='project_grid_config', full_name='monorail.v1.ProjectConfig.project_grid_config', index=6,
-      number=7, type=11, cpp_type=10, label=1,
+      name='project_grid_config', full_name='monorail.v1.ProjectConfig.project_grid_config', index=5,
+      number=6, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='member_default_template', full_name='monorail.v1.ProjectConfig.member_default_template', index=7,
+      name='member_default_template', full_name='monorail.v1.ProjectConfig.member_default_template', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\030\n\026api.crbug.com/Template'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='non_members_default_template', full_name='monorail.v1.ProjectConfig.non_members_default_template', index=7,
       number=8, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=_b('\372A\030\n\026api.crbug.com/Template'), file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='non_members_default_template', full_name='monorail.v1.ProjectConfig.non_members_default_template', index=8,
+      name='revision_url_format', full_name='monorail.v1.ProjectConfig.revision_url_format', index=8,
       number=9, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=_b('\372A\030\n\026api.crbug.com/Template'), file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='revision_url_format', full_name='monorail.v1.ProjectConfig.revision_url_format', index=9,
-      number=10, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='custom_issue_entry_url', full_name='monorail.v1.ProjectConfig.custom_issue_entry_url', index=10,
-      number=11, type=9, cpp_type=9, label=1,
+      name='custom_issue_entry_url', full_name='monorail.v1.ProjectConfig.custom_issue_entry_url', index=9,
+      number=10, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -829,8 +826,8 @@ _PROJECTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2544,
-  serialized_end=3122,
+  serialized_start=2556,
+  serialized_end=3116,
 )
 
 
@@ -897,8 +894,8 @@ _PROJECTMEMBER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3125,
-  serialized_end=3555,
+  serialized_start=3119,
+  serialized_end=3549,
 )
 
 _STATUSDEF.fields_by_name['type'].enum_type = _STATUSDEF_STATUSDEFTYPE
@@ -917,6 +914,7 @@ _ISSUETEMPLATE.fields_by_name['default_owner'].enum_type = _ISSUETEMPLATE_DEFAUL
 _ISSUETEMPLATE_TEMPLATEPRIVACY.containing_type = _ISSUETEMPLATE
 _ISSUETEMPLATE_DEFAULTOWNER.containing_type = _ISSUETEMPLATE
 _PROJECTCONFIG_GRIDVIEWCONFIG.containing_type = _PROJECTCONFIG
+_PROJECTCONFIG.fields_by_name['default_columns'].message_type = api_dot_v1_dot_api__proto_dot_issue__objects__pb2._ISSUESLISTCOLUMN
 _PROJECTCONFIG.fields_by_name['project_grid_config'].message_type = _PROJECTCONFIG_GRIDVIEWCONFIG
 _PROJECTMEMBER.fields_by_name['role'].enum_type = _PROJECTMEMBER_PROJECTROLE
 _PROJECTMEMBER.fields_by_name['standard_perms'].enum_type = api_dot_v1_dot_api__proto_dot_permission__objects__pb2._PERMISSION
@@ -1029,7 +1027,6 @@ _APPROVALDEF._options = None
 _PROJECTSAVEDQUERY._options = None
 _ISSUETEMPLATE.fields_by_name['admins']._options = None
 _ISSUETEMPLATE._options = None
-_PROJECTCONFIG.fields_by_name['merged_statuses']._options = None
 _PROJECTCONFIG.fields_by_name['member_default_template']._options = None
 _PROJECTCONFIG.fields_by_name['non_members_default_template']._options = None
 _PROJECTCONFIG._options = None

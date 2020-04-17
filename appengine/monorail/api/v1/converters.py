@@ -52,10 +52,7 @@ class Converter(object):
     # in hotlist.
     members_by_id = self.ConvertUsers(
         hotlist.owner_ids + hotlist.editor_ids, None)
-    default_columns = [
-        issue_objects_pb2.IssuesListColumn(column=col)
-        for col in hotlist.default_col_spec.split()
-    ]
+    default_columns = self._ComputeIssuesListColumns(hotlist.default_col_spec)
     if hotlist.is_private:
       hotlist_privacy = feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
           'PRIVATE')
@@ -353,6 +350,14 @@ class Converter(object):
     # type: (Sequence[proto.issue_objects_pb2.IssuesListColumn] -> str
     """Ingest a list of protoc IssueListColumns and returns a string."""
     return ' '.join([col.column for col in issues_list_columns])
+
+  def _ComputeIssuesListColumns(self, columns):
+    # type: (string) -> Sequence[api_proto.issue_objects_pb2.IssuesListColumn]
+    """Convert string representation of columns to protoc IssuesListColumns"""
+    return [
+        issue_objects_pb2.IssuesListColumn(column=col)
+        for col in columns.split()
+    ]
 
   # Users
 
@@ -809,19 +814,11 @@ class Converter(object):
     return project_objects_pb2.ProjectConfig(
         name=rnc.ConvertProjectConfigName(
             self.cnxn, project_config.project_id, self.services),
-        # TODO(crbug.com/monorail/7517): refactor into LabelDefType
         exclusive_label_prefixes=project_config.exclusive_label_prefixes,
-        # TODO(crbug.com/monorail/7517): refactor into StatusDefType
-        merged_statuses=[
-            rnc.ConvertStatusDefName(
-                self.cnxn, status, project_config.project_id, self.services)
-            for status in project_config.statuses_offer_merge
-        ],
-        # TODO(crbug.com/monorail/7517): rename to default_member_query
-        default_query=project_config.member_default_query,
+        member_default_query=project_config.member_default_query,
         default_sort=project_config.default_sort_spec,
-        # TODO(crbug.com/monorail/7517): refactor to use IssueListColumn
-        default_col_spec=project_config.default_col_spec,
+        default_columns=self._ComputeIssuesListColumns(
+            project_config.default_col_spec),
         project_grid_config=project_grid_config,
         member_default_template=template_names.get(
             project_config.default_template_for_developers),

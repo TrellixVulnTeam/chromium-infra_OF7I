@@ -555,6 +555,40 @@ class ConverterFunctionsTest(unittest.TestCase):
   def testIngestIssuesListColumns_Empty(self):
     self.assertEqual(self.converter.IngestIssuesListColumns([]), '')
 
+  def test_ComputeIssuesListColumns(self):
+    """Can convert string to sequence of IssuesListColumns"""
+    expected_columns = [
+        issue_objects_pb2.IssuesListColumn(column='chicken'),
+        issue_objects_pb2.IssuesListColumn(column='boiled-egg')
+    ]
+    self.assertEqual(
+        expected_columns,
+        self.converter._ComputeIssuesListColumns('chicken boiled-egg'))
+
+  def test_ComputeIssuesListColumns_Empty(self):
+    """Can handle empty strings"""
+    self.assertEqual([], self.converter._ComputeIssuesListColumns(''))
+
+  def test_Conversion_IssuesListColumns(self):
+    """_Ingest and _Compute converts to and from each other"""
+    expected_columns = 'foo bar fizz buzz'
+    converted_columns = self.converter._ComputeIssuesListColumns(
+        expected_columns)
+    self.assertEqual(
+        expected_columns,
+        self.converter.IngestIssuesListColumns(converted_columns))
+
+    expected_columns = [
+        issue_objects_pb2.IssuesListColumn(column='foo'),
+        issue_objects_pb2.IssuesListColumn(column='bar'),
+        issue_objects_pb2.IssuesListColumn(column='fizz'),
+        issue_objects_pb2.IssuesListColumn(column='buzz')
+    ]
+    converted_columns = self.converter.IngestIssuesListColumns(expected_columns)
+    self.assertEqual(
+        expected_columns,
+        self.converter._ComputeIssuesListColumns(converted_columns))
+
   def testConvertFieldValues(self):
     """It ignores field values referencing a non-existent field"""
     expected_str = 'some_string_field_value'
@@ -1103,19 +1137,13 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_api_config = project_objects_pb2.ProjectConfig(
         name=rnc.ConvertProjectConfigName(
             self.cnxn, self.project_1.project_id, self.services),
-        # TODO(crbug.com/monorail/7517): refactor into LabelDefType
         exclusive_label_prefixes=project_config.exclusive_label_prefixes,
-        # TODO(crbug.com/monorail/7517): refactor into StatusDefType
-        merged_statuses=[
-            rnc.ConvertStatusDefName(
-                self.cnxn, status, project_config.project_id, self.services)
-            for status in project_config.statuses_offer_merge
-        ],
-        # TODO(crbug.com/monorail/7517): rename to default_member_query
-        default_query=project_config.member_default_query,
+        member_default_query=project_config.member_default_query,
         default_sort=project_config.default_sort_spec,
-        # TODO(crbug.com/monorail/7517): refactor to use IssueListColumn
-        default_col_spec=project_config.default_col_spec,
+        default_columns=[
+            issue_objects_pb2.IssuesListColumn(column=col)
+            for col in project_config.default_col_spec.split()
+        ],
         project_grid_config=expected_grid_config,
         member_default_template=template_names.get(
             project_config.default_template_for_developers),
@@ -1130,6 +1158,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.converter.ConvertProjectConfig(project_config))
 
   def testConvertProjectConfig_NonMembers(self):
+    """We can convert a project_config for non project members"""
     self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_2, self.services)
     project_config = self.services.config.GetProjectConfig(
@@ -1137,7 +1166,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_config = self.converter.ConvertProjectConfig(project_config)
 
     expected_default_query = project_config.member_default_query
-    self.assertEqual(expected_default_query, api_config.default_query)
+    self.assertEqual(expected_default_query, api_config.member_default_query)
 
     expected_member_default_template = rnc.ConvertTemplateNames(
         self.cnxn, project_config.project_id,

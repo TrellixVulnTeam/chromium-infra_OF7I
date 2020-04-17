@@ -50,7 +50,7 @@ message StatusDef {
   };
 
   // Type of this status.
-  // Next available tag: 3
+  // Next available tag: 4
   enum StatusDefType {
     // Default enum value. This value is unused.
     STATUS_DEF_TYPE_UNSPECIFIED = 0;
@@ -58,6 +58,8 @@ message StatusDef {
     OPEN = 1;
     // This status means issue is closed.
     CLOSED = 2;
+    // This status means issue is merged into another.
+    MERGED = 3;
   }
 
   // State of this status.
@@ -271,7 +273,7 @@ message IssueTemplate {
 
 // Defines configurations of a project
 //
-// Next available tag: 12
+// Next available tag: 11
 message ProjectConfig {
   option (google.api.resource) = {
     type: "api.crbug.com/ProjectConfig"
@@ -283,16 +285,13 @@ message ProjectConfig {
   // Set of label prefixes that only apply once per issue.
   // E.g. priority, since no issue can be both Priority-High and Priority-Low.
   repeated string exclusive_label_prefixes = 2;
-  // Statuses used to indicate an issues has been merged into another issue.
-  // E.g Duplicate
-  repeated string merged_statuses = 3 [
-      (google.api.resource_reference) = { type: "api.crbug.com/StatusDef" }];
-  // Default search query for this project, only visible for project members.
-  string default_query = 4;
+  // Default search query for this project's members.
+  string member_default_query = 3;
+  // TODO(crbug.com/monorail/7517): consider using IssuesListColumn
   // Default sort specification for this project.
-  string default_sort = 5;
-  // Default list columns for this project.
-  string default_col_spec = 6;
+  string default_sort = 4;
+  // Default columns for displaying issue list for this project.
+  repeated IssuesListColumn default_columns = 5;
   // Grid view configurations.
   // Next available tag: 3
   message GridViewConfig {
@@ -301,18 +300,18 @@ message ProjectConfig {
     // Default row dimension in grid view for this project.
     string default_y_attr = 2;
   }
-  GridViewConfig project_grid_config = 7;
+  GridViewConfig project_grid_config = 6;
   // Default template used for issue entry for members of this project.
-  string member_default_template = 8 [
+  string member_default_template = 7 [
       (google.api.resource_reference) = { type: "api.crbug.com/Template" }];
   // Default template used for issue entry for non-members of this project.
-  string non_members_default_template = 9 [
+  string non_members_default_template = 8 [
       (google.api.resource_reference) = { type: "api.crbug.com/Template" }];
   // URL to browse project's source code revisions for any given revnum.
   // E.g. https://crrev.com/{revnum}
-  string revision_url_format = 10;
+  string revision_url_format = 9;
   // A project's custom URL for the "New issue" link, only if specified.
-  string custom_issue_entry_url = 11;
+  string custom_issue_entry_url = 10;
 }
 
 // Specifies info for a member of a project.
