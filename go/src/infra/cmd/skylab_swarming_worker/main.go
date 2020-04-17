@@ -54,6 +54,8 @@ import (
 const repairTaskName = "repair"
 const deployTaskName = "deploy"
 
+const gcpProject = "chromeos-skylab"
+
 func main() {
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Starting with args: %s", os.Args)
@@ -111,8 +113,6 @@ func parseArgs() *args {
 	return a
 }
 
-const gcpProject = "chromeos-skylab"
-
 func mainInner(a *args) error {
 	ctx := context.Background()
 	// Set up Go logger for LUCI libraries.
@@ -130,6 +130,17 @@ func mainInner(a *args) error {
 		return err
 	}
 	defer i.Close()
+
+	luciferErr := luciferFlow(ctx, a, i, annotWriter)
+
+	if err := i.Close(); err != nil {
+		return err
+	}
+
+	return luciferErr
+}
+
+func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writeCloser) error {
 	ta := lucifer.TaskArgs{
 		AbortSock:  filepath.Join(i.ResultsDir, "abort_sock"),
 		GCPProject: gcpProject,
@@ -200,11 +211,6 @@ func mainInner(a *args) error {
 			return errors.Wrap(err, "writing results to isolated output file")
 		}
 	}
-
-	if err := i.Close(); err != nil {
-		return err
-	}
-
 	return luciferErr
 }
 
