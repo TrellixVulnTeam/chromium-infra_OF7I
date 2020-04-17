@@ -155,6 +155,15 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 		return errors.Annotate(err, "failed to creat Swarming client").Err()
 	}
 
+	tasks, err := client.GetActiveLeaseTasksForModel(ctx, model)
+	// TODO(gregorynisbet): Consider making this error fatal.
+	if err != nil {
+		fmt.Fprintf(a.GetErr(), "failed to compute total number of existing leases (%s)\n", err.Error())
+	} else {
+		// TODO(gregorynisbet): Enforce per-model cap instead of just printing stuff.
+		fmt.Fprintf(a.GetErr(), "%d active leases for model (%s)\n", len(tasks), model)
+	}
+
 	creator := utils.TaskCreator{
 		Client:      client,
 		Environment: e,
