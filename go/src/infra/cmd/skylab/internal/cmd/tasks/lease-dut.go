@@ -82,19 +82,20 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	if userinput.ValidBug(c.leaseReason) {
 		return cmdlib.NewUsageError(c.Flags, "the lease reason must match crbug.com/NNNN or b/NNNN")
 	}
-	host := skycmdlib.FixSuspiciousHostname(args[0])
-	if host != args[0] {
-		fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", args[0], host)
-	}
 
 	ctx := cli.GetContext(a, c, env)
 
 	leaseDuration := time.Duration(c.leaseMinutes) * time.Minute
 
 	if hasOneHostname {
+		oldhost := args[0]
+		host := skycmdlib.FixSuspiciousHostname(oldhost)
+		if host != oldhost {
+			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", oldhost, host)
+		}
 		return c.leaseDutByHostname(ctx, a, leaseDuration, host)
 	}
-	panic("lease by model not yet implemented")
+	return c.leaseDUTByModel(ctx, a, leaseDuration, c.model)
 }
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
@@ -120,6 +121,49 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 	fmt.Fprintf(a.GetOut(), "Created lease task for host %s: %s\n", host, swarming.TaskURL(e.SwarmingService, id))
 	scheduleRepairTaskForLater(ctx, &creator, a, leaseDuration, host)
 	fmt.Fprintf(a.GetOut(), "Waiting for task to start; lease isn't active yet\n")
+poll:
+	for {
+		result, err := client.GetTaskState(ctx, id)
+		if err != nil {
+			return err
+		}
+		if len(result.States) != 1 {
+			return errors.Reason("Got unexpected task states: %#v; expected one state", result.States).Err()
+		}
+		switch s := result.States[0]; s {
+		case "PENDING":
+			time.Sleep(time.Duration(10) * time.Second)
+		case "RUNNING":
+			break poll
+		default:
+			return errors.Reason("Got unexpected task state %#v", s).Err()
+		}
+	}
+	// TODO(ayatane): The time printed here may be off by the poll interval above.
+	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
+	return nil
+}
+
+func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, leaseDuration time.Duration, model string) error {
+	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
+	if err != nil {
+		return errors.Annotate(err, "failed to create http client").Err()
+	}
+	e := c.envFlags.Env()
+	client, err := swarming.New(ctx, h, e.SwarmingService)
+	if err != nil {
+		return errors.Annotate(err, "failed to creat Swarming client").Err()
+	}
+
+	creator := utils.TaskCreator{
+		Client:      client,
+		Environment: e,
+	}
+	id, err := creator.LeaseByModelTask(ctx, model, int(leaseDuration.Seconds()), c.leaseReason)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(a.GetOut(), "Created lease task for model %s: %s\n", model, swarming.TaskURL(e.SwarmingService, id))
 poll:
 	for {
 		result, err := client.GetTaskState(ctx, id)
