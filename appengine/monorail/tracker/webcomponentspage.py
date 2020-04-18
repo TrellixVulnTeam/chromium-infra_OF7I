@@ -57,21 +57,3 @@ class WebComponentsPage(servlet.Servlet):
        'local_id': mr.local_id,
        'old_ui_url': old_ui_url,
       }
-
-
-class IssueDetailRedirect(servlet.Servlet):
-  def GatherPageData(self, mr):
-    logging.info(
-        'Redirecting from approval page to the new issue detail page.')
-    url = framework_helpers.FormatAbsoluteURL(
-        mr, urls.ISSUE_DETAIL, id=mr.local_id)
-    return self.redirect(url, abort=True, permanent=True)
-
-
-class IssueListRedirect(servlet.Servlet):
-
-  def GatherPageData(self, mr):
-    logging.info('Redirecting from list_new to list.')
-
-    url = self.request.url.replace(urls.ISSUE_NEW_GRID, urls.ISSUE_LIST)
-    return self.redirect(url, abort=True, permanent=True)

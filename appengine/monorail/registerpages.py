@@ -238,13 +238,15 @@ class ServletRegistry(object):
     self._SetupProjectServlets(
         {
             urls.ISSUE_APPROVAL:
-                webcomponentspage.IssueDetailRedirect,
+                registerpages_helpers.MakeRedirectInScope(
+                    urls.ISSUE_DETAIL, 'p', keep_qs=True),
             urls.ISSUE_LIST:
                 webcomponentspage.WebComponentsPage,
             urls.ISSUE_LIST_OLD:
                 issuelist.IssueList,
-            urls.ISSUE_NEW_GRID:
-                webcomponentspage.IssueListRedirect,
+            urls.ISSUE_LIST_NEW_TEMP:
+                registerpages_helpers.MakeRedirectInScope(
+                    urls.ISSUE_LIST, 'p', keep_qs=True),
             urls.ISSUE_LIST_CSV:
                 issuelistcsv.IssueListCsv,
             urls.ISSUE_REINDEX:
