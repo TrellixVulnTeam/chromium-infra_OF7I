@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/lucictx"
 )
 
@@ -60,7 +61,7 @@ func (c *uploadToGSRun) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 
-	ctx := cli.GetContext(a, c, env)
+	ctx := logging.SetLevel(cli.GetContext(a, c, env), logging.Debug)
 
 	ctx, err := useSystemAuth(ctx, &c.authFlags, a.GetErr())
 	if err != nil {
@@ -127,9 +128,12 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 	if err != nil {
 		return "", err
 	}
-	if err = w.WriteDir(); err != nil {
+	logging.Debugf(ctx, "writing %s", localPath)
+	if err = w.WriteDir(ctx); err != nil {
+		logging.Debugf(ctx, dirList(localPath))
 		return "", err
 	}
+	logging.Debugf(ctx, dirList(localPath))
 	return r.GetGsDirectory(), nil
 }
 
