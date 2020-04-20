@@ -87,7 +87,19 @@ class Builder(object):
   def wheel(self, system, plat):
     # If the wheel is only for python3, make sure to use newer version.
     if self._spec.universal and self._spec.universal.pyversions == ['py3']:
-      pyversion = '3'
+      # "3.8.0" is the oldest version of python supported by chromium.
+      #
+      # The value here a filter for pip; it will only find wheels which support
+      # python of at least this version, as reported by the `python_requires`
+      # line in the wheels' setup.py. Technically the python_requires line
+      # could exclude any combination of versions that it wants, but typically
+      # the lines for multi-version wheels will be something like:
+      #
+      #    ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4"
+      #
+      # Setting this to 3 will fail on a lot of wheels which only support e.g.
+      # >=3.5.
+      pyversion = '38'
     else:
       pyversion = '27'
 
