@@ -1441,6 +1441,8 @@ class WorkEnv(object):
 
   # FUTURE: CreateComment()
 
+
+  # TODO(crbug.com/monorail/7520): Delete when usages removed.
   def ListIssueComments(self, issue):
     """Return comments on the specified viewable issue."""
     self._AssertUserCanViewIssue(issue)
@@ -1450,6 +1452,90 @@ class WorkEnv(object):
           self.mc.cnxn, issue.issue_id)
 
     return comments
+
+
+  def SafeListIssueComments(self, issue_id, max_items, start):
+    # type: (tracker_pb2.Issue, int, int) -> Sequence[tracker_pb2.IssueComment]
+    """Return comments on the issue, filtering non-viewable content.
+
+    TODO(crbug.com/monorail/7520): Rename to ListIssueComments.
+
+    Note: This returns `deleted_by`, but it should only be used for the purposes
+    of determining whether the comment is deleted. The viewer may not have
+    access to view who deleted the comment.
+
+    Args:
+      issue_id: The issue for which we're listing comments.
+      max_items: The maximum number of comments to return.
+      start: The index of the start position in the list of comments.
+    Raises:
+      PermissionException: The logged-in user is not allowed to view the issue.
+    """
+    # TODO(crbug.com/monorail/7525): Remaining tests for SafeListIssueComments.
+    # Amendments and attachments are filtered
+    # I flagged
+    # someone else flagged
+    # i'm an admin, i can see unfiltered content
+    # start/max_items related tests
+    # inbound message can be viewed with permissions
+    issue = self.GetIssue(issue_id)
+
+    with self.mc.profiler.Phase('getting comments for %r' % issue_id):
+      comments = self.services.issue.GetCommentsForIssue(self.mc.cnxn, issue_id)
+      _, comment_reporters = self.LookupIssueFlaggers(issue)
+      users_involved_in_comments = tracker_bizobj.UsersInvolvedInCommentList(
+          comments)
+      users_by_id = framework_views.MakeAllUserViews(
+          self.mc.cnxn, self.services.user, users_involved_in_comments)
+
+    with self.mc.profiler.Phase('getting perms for comments'):
+      project = self.GetProjectByName(issue.project_name)
+      self.mc.LookupLoggedInUserPerms(project)
+      config = self.GetProjectConfig(project.project_id)
+      perms = permissions.UpdateIssuePermissions(
+          self.mc.perms,
+          project,
+          issue,
+          self.mc.auth.effective_ids,
+          config=config)
+
+    # TODO(crbug.com/monorail/7525): Check values, and return next_start.
+    end = start + max_items
+    filtered_comments = []
+    with self.mc.profiler.Phase('converting comments'):
+      for comment in comments[start:end]:
+        commenter = users_by_id[comment.user_id]
+
+        _can_flag, is_flagged = permissions.CanFlagComment(
+            comment, commenter, comment_reporters, self.mc.auth.user_id, perms)
+        can_view = permissions.CanViewComment(
+            comment, commenter, self.mc.auth.user_id, perms)
+        can_view_inbound_message = permissions.CanViewInboundMessage(
+            comment, self.mc.auth.user_id, perms)
+
+        # By default, all fields should get filtered out.
+        # i.e. this is a whitelist rather than blacklist to reduce leaking info.
+        filtered_comment = tracker_pb2.IssueComment(
+            id=comment.id,
+            issue_id=comment.issue_id,
+            project_id=comment.project_id,
+            approval_id=comment.approval_id,
+            timestamp=comment.timestamp,
+            deleted_by=comment.deleted_by,
+            sequence=comment.sequence,
+            is_spam=is_flagged,
+            is_description=comment.is_description,
+            description_num=comment.description_num)
+        if can_view:
+          filtered_comment.content = comment.content
+          filtered_comment.user_id = comment.user_id
+          filtered_comment.amendments.extend(comment.amendments)
+          filtered_comment.attachments.extend(comment.attachments)
+          filtered_comment.importer_id = comment.importer_id
+          if can_view_inbound_message:
+            filtered_comment.inbound_message = comment.inbound_message
+        filtered_comments.append(filtered_comment)
+    return filtered_comments
 
   # FUTURE: UpdateComment()
 

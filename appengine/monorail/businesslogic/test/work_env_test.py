@@ -2385,8 +2385,8 @@ class WorkEnvTest(unittest.TestCase):
 
   # FUTURE: CreateComment()
 
-  def testGetIssueComments_Normal(self):
-    """We can get an existing issue by project_id and local_id."""
+  def testListIssueComments_Normal(self):
+    """We can list comments for an issue."""
     issue = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
     self.services.issue.TestAddIssue(issue)
     comment = tracker_pb2.IssueComment(
@@ -2400,6 +2400,123 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual(2, len(actual_comments))
     self.assertEqual('sum', actual_comments[0].content)
     self.assertEqual('more info', actual_comments[1].content)
+
+  def testSafeListIssueComments_Normal(self):
+    initial_description = 'sum'
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        initial_description,
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    self.services.issue.TestAddIssue(issue)
+    comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='more info',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id)
+    self.services.issue.TestAddComment(comment, 1)
+
+    with self.work_env as we:
+      actual_comments = we.SafeListIssueComments(issue.issue_id, 1000, 0)
+
+    self.assertEqual(2, len(actual_comments))
+    self.assertEqual(initial_description, actual_comments[0].content)
+    self.assertEqual('more info', actual_comments[1].content)
+
+  def testSafeListIssueComments_NotAllowed(self):
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        'sum',
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name,
+        labels=['Restrict-View-CoreTeam'])
+    self.services.issue.TestAddIssue(issue)
+
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.SafeListIssueComments(issue.issue_id, 1000, 0)
+
+  def testSafeListIssueComments_FilteredContent(self):
+
+    def AssertFiltered(comment, filtered_comment):
+      # Unfiltered
+      self.assertEqual(comment.id, filtered_comment.id)
+      self.assertEqual(comment.issue_id, filtered_comment.issue_id)
+      self.assertEqual(comment.project_id, filtered_comment.project_id)
+      self.assertEqual(comment.approval_id, filtered_comment.approval_id)
+      self.assertEqual(comment.timestamp, filtered_comment.timestamp)
+      self.assertEqual(comment.deleted_by, filtered_comment.deleted_by)
+      self.assertEqual(comment.sequence, filtered_comment.sequence)
+      self.assertEqual(comment.is_spam, filtered_comment.is_spam)
+      self.assertEqual(comment.is_description, filtered_comment.is_description)
+      self.assertEqual(
+          comment.description_num, filtered_comment.description_num)
+      # Filtered.
+      self.assertEqual(None, filtered_comment.content)
+      self.assertEqual(0, filtered_comment.user_id)
+      self.assertEqual([], filtered_comment.amendments)
+      self.assertEqual([], filtered_comment.attachments)
+      self.assertEqual(None, filtered_comment.inbound_message)
+      self.assertEqual(0, filtered_comment.importer_id)
+
+    initial_description = 'sum'
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        initial_description,
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    self.services.issue.TestAddIssue(issue)
+    spam_comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='spam',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id,
+        is_spam=True,
+        inbound_message='Some message',
+        importer_id=self.user_1.user_id)
+    deleted_comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='deleted',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id,
+        deleted_by=self.user_1.user_id)
+    # TODO(crbug.com/monorail/7526): Update this test when issue resolved.
+    # banned_user = self.services.user.TestAddUser(
+    #     'banned@banned.com', 444, add_user=True, banned=True)
+
+    # banned_comment = tracker_pb2.IssueComment(
+    #     project_id=self.project.project_id,
+    #     content='banned',
+    #     user_id=banned_user.user_id,
+    #     issue_id=issue.issue_id)
+    inbound_comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='from an inbound message',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id,
+        inbound_message='the full inbound message')
+    self.services.issue.TestAddComment(spam_comment, 1)
+    self.services.issue.TestAddComment(deleted_comment, 2)
+    # self.services.issue.TestAddComment(banned_comment, 3)
+    self.services.issue.TestAddComment(inbound_comment, 3)
+
+    with self.work_env as we:
+      actual_comments = we.SafeListIssueComments(issue.issue_id, 1000, 0)
+    self.assertEqual(4, len(actual_comments))
+    self.assertEqual(initial_description, actual_comments[0].content)
+    AssertFiltered(spam_comment, actual_comments[1])
+    AssertFiltered(deleted_comment, actual_comments[2])
+    self.assertEqual('from an inbound message', actual_comments[3].content)
+    self.assertEqual(None, actual_comments[3].inbound_message)
 
   # FUTURE: UpdateComment()
 
