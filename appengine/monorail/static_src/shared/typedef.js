@@ -59,6 +59,23 @@
 
 
 /**
+ * Resource names used in our resource-oriented API.
+ * @see https://aip.dev/122
+ */
+
+
+/**
+ * Resource name of a Project.
+ *
+ * Examples of valid project resource names:
+ * - projects/monorail
+ * - projects/test-project-1
+ *
+ * @typedef {string} ProjectName
+ */
+
+
+/**
  * Types defined in common.proto.
  */
 

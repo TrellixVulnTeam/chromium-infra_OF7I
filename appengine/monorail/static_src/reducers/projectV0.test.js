@@ -6,7 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import {prpcClient} from 'prpc-client-instance.js';
 import * as projectV0 from './projectV0.js';
-import * as example from 'shared/test/constants-project.js';
+import * as example from 'shared/test/constants-projectV0.js';
 import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
 
 describe('project reducers', () => {
