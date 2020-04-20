@@ -85,11 +85,16 @@ class Builder(object):
     return self._spec
 
   def wheel(self, system, plat):
+    # If the wheel is only for python3, make sure to use newer version.
+    if self._spec.universal and self._spec.universal.pyversions == ['py3']:
+      pyversion = '3'
+    else:
+      pyversion = '27'
+
     wheel = Wheel(
         spec=self._spec._replace(version=self.version_fn(system)),
         plat=plat,
-        # Only support Python 2.7 for now, can augment later.
-        pyversion='27',
+        pyversion=pyversion,
         filename=None,
         md_lines=self.md_data_fn())
 
@@ -173,13 +178,19 @@ def StageWheelForPackage(system, wheel_dir, wheel):
 
 def BuildPackageFromPyPiWheel(system, wheel):
   """Builds a wheel by obtaining a matching wheel from PyPi."""
+  # Figure out which version of python to use.
+  if wheel.spec.universal.pyversions == ['py3']:
+    interp = 'python3'
+  else:
+    interp = 'python'
+
   with system.temp_subdir('%s_%s' % wheel.spec.tuple) as tdir:
     util.check_run(
         system,
         None,
         tdir,
         [
-          'python', '-m', 'pip', 'download',
+          interp, '-m', 'pip', 'download',
           '--no-deps',
           '--only-binary=:all:',
           '--abi=%s' % (wheel.abi,),

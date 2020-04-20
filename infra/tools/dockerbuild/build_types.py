@@ -56,11 +56,15 @@ class Wheel(_Wheel):
   @property
   def pyversion_str(self):
     if self.spec.universal:
-      pyv = self.spec.universal.pyversions
-      if pyv is None:
+      # We support py2-only, py3-only, or py2+py3.  Wait for other requests
+      # to show up before adding more.
+      pyv = sorted(self.spec.universal.pyversions or ['py2', 'py3'])
+      if pyv == ['py2', 'py3']:
         return 'py2.py3'
-      assert 'py2' in pyv
-      return 'py2'
+      elif pyv == ['py2'] or pyv == ['py3']:
+        return pyv[0]
+      else:
+        raise ValueError('Unsupported versions: %r' % (pyv,))
 
     # We only generate wheels for "cpython" at the moment.
     return 'cp%s' % (self.pyversion,)
