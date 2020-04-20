@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// TODO(zhangtiff): Remove this hardcoded data once backend custom
-// field grouping is implemented. http://crbug.com/monorail/4549
+// TODO(crbug.com/monorail/4549): Remove this hardcoded data once backend custom
+// field grouping is implemented.
 export const HARDCODED_FIELD_GROUPS = [
   {
     groupName: 'Feature Team',
@@ -30,12 +30,42 @@ export const fieldGroupMap = (fieldGroupsArg, issueType) => {
   }, {});
 };
 
+/**
+ * Get all values for a field, given an issue's fieldValueMap.
+ * @param {Map.<string, Array<string>>} fieldValueMap Map where keys are
+ *   lowercase fieldNames and values are fieldValue strings.
+ * @param {string} fieldName The name of the field to look up.
+ * @param {string=} phaseName Name of the phase the field is attached to,
+ *   if applicable.
+ * @return {Array<string>} The values of the field.
+ */
 export const valuesForField = (fieldValueMap, fieldName, phaseName) => {
   if (!fieldValueMap) return [];
   return fieldValueMap.get(
       fieldValueMapKey(fieldName, phaseName)) || [];
 };
 
+/**
+ * Get just one value for a field. Convenient in some cases for
+ * fields that are not multi-valued.
+ * @param {Map.<string, Array<string>>} fieldValueMap Map where keys are
+ *   lowercase fieldNames and values are fieldValue strings.
+ * @param {string} fieldName The name of the field to look up.
+ * @param {string=} phaseName Name of the phase the field is attached to,
+ *   if applicable.
+ * @return {string} The value of the field.
+ */
+export function valueForField(fieldValueMap, fieldName, phaseName) {
+  const values = valuesForField(fieldValueMap, fieldName, phaseName);
+  return values.length ? values[0] : undefined;
+}
+
+/**
+ * Helper to generate Map keys for FieldValueMaps in a standard format.
+ * @param {string} fieldName Name of the field the value is tied to.
+ * @param {string=} phaseName Name of the phase the value is tied to.
+ * @return {string}
+ */
 export const fieldValueMapKey = (fieldName, phaseName) => {
   const key = [fieldName];
   if (phaseName) {

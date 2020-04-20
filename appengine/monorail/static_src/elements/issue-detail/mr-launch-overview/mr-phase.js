@@ -9,7 +9,7 @@ import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import '../mr-approval-card/mr-approval-card.js';
-import {valuesForField} from 'shared/metadata-helpers.js';
+import {valueForField, valuesForField} from 'shared/metadata-helpers.js';
 import 'elements/issue-detail/metadata/mr-edit-metadata/mr-edit-metadata.js';
 import 'elements/issue-detail/metadata/mr-metadata/mr-field-values.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -92,6 +92,7 @@ export class MrPhase extends connectStore(LitElement) {
   render() {
     const isPhaseWithMilestone = PHASES_WITH_MILESTONES.includes(
         this.phaseName);
+    const noApprovals = !this.approvals || !this.approvals.length;
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <h2>
@@ -100,17 +101,7 @@ export class MrPhase extends connectStore(LitElement) {
             ${this.phaseName}
           </span>
           ${isPhaseWithMilestone ? html`${this.fieldDefs &&
-            this.fieldDefs.map((field) => html`
-              <div class="chip">
-                ${field.fieldRef.fieldName}:
-                <mr-field-values
-                  .name=${field.fieldRef.fieldName}
-                  .type=${field.fieldRef.type}
-                  .values=${valuesForField(this.fieldValueMap, field.fieldRef.fieldName, this.phaseName)}
-                  .projectName=${this.issueRef.projectName}
-                ></mr-field-values>
-              </div>
-            `)}
+              this.fieldDefs.map((field) => this._renderPhaseField(field))}
             <em ?hidden=${!this._nextDate}>
               ${this._dateDescriptor}
               <chops-timestamp .timestamp=${this._nextDate}></chops-timestamp>
@@ -143,7 +134,7 @@ export class MrPhase extends connectStore(LitElement) {
           .users=${approval.users}
         ></mr-approval-card>
       `)}
-      ${!this.approvals || !this.approvals.length ? html`No tasks for this phase.` : ''}
+      ${noApprovals ? html`No tasks for this phase.` : ''}
       <!-- TODO(ehmaldonado): Move to /issue-detail/dialogs -->
       <chops-dialog id="editPhase" aria-labelledby="phaseDialogTitle">
         <h3 id="phaseDialogTitle" class="medium-heading">
@@ -154,10 +145,9 @@ export class MrPhase extends connectStore(LitElement) {
           class="edit-actions-right"
           .formName=${this.phaseName}
           .fieldDefs=${this.fieldDefs}
-          .fieldValues=${this.fieldValues}
           .phaseName=${this.phaseName}
-          ?disabled=${this.updatingIssue}
-          .error=${this.updateIssueError && this.updateIssueError.description}
+          ?disabled=${this._updatingIssue}
+          .error=${this._updateIssueError && this._updateIssueError.description}
           @save=${this.save}
           @discard=${this.cancel}
           isApproval
@@ -167,29 +157,72 @@ export class MrPhase extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   *
+   * @param {FieldDef} field The field to be rendered.
+   * @return {TemplateResult}
+   * @private
+   */
+  _renderPhaseField(field) {
+    const values = valuesForField(this._fieldValueMap, field.fieldRef.fieldName,
+        this.phaseName);
+    return html`
+      <div class="chip">
+        ${field.fieldRef.fieldName}:
+        <mr-field-values
+          .name=${field.fieldRef.fieldName}
+          .type=${field.fieldRef.type}
+          .values=${values}
+          .projectName=${this.issueRef.projectName}
+        ></mr-field-values>
+      </div>
+    `;
+  }
+
   /** @override */
   static get properties() {
     return {
       issue: {type: Object},
       issueRef: {type: Object},
       phaseName: {type: String},
-      updatingIssue: {type: Boolean},
-      updateIssueError: {type: Object},
       approvals: {type: Array},
       fieldDefs: {type: Array},
-      fieldValueMap: {type: Object},
+
+      _updatingIssue: {type: Boolean},
+      _updateIssueError: {type: Object},
+      _fieldValueMap: {type: Object},
       _milestoneData: {type: Object},
+      _isFetchingMilestone: {type: Boolean},
     };
   }
 
   /** @override */
+  constructor() {
+    super();
+
+    this.issue = {};
+    this.issueRef = {};
+    this.phaseName = '';
+    this.approvals = [];
+    this.fieldDefs = [];
+
+    this._updatingIssue = false;
+    this._updateIssueError = undefined;
+
+    // A response Object from
+    // https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=xx
+    this._milestoneData = {};
+    this._isFetchingMilestone = false;
+  }
+
+  /** @override */
   stateChanged(state) {
-    this.fieldValueMap = issueV0.fieldValueMap(state);
     this.issue = issueV0.viewedIssue(state);
     this.issueRef = issueV0.viewedIssueRef(state);
-    this.updatingIssue = issueV0.requests(state).update.requesting;
-    this.updateIssueError = issueV0.requests(state).update.error;
     this.fieldDefs = projectV0.fieldDefsForPhases(state);
+    this._updatingIssue = issueV0.requests(state).update.requesting;
+    this._updateIssueError = issueV0.requests(state).update.error;
+    this._fieldValueMap = issueV0.fieldValueMap(state);
   }
 
   /** @override */
@@ -197,48 +230,66 @@ export class MrPhase extends connectStore(LitElement) {
     if (changedProperties.has('issue')) {
       this.reset();
     }
-    if (changedProperties.has('updatingIssue')) {
-      if (!this.updatingIssue && !this.updateIssueError) {
+    if (changedProperties.has('_updatingIssue')) {
+      if (!this._updatingIssue && !this._updateIssueError) {
         // Close phase edit modal only after a request finishes without errors.
         this.cancel();
       }
     }
 
-    if (changedProperties.has('fieldValueMap') || changedProperties.has('phaseName')) {
-      const oldFieldValueMap = changedProperties.has('fieldValueMap') ?
-        changedProperties.get('fieldValueMap') :
-        this.fieldValueMap;
-      const oldPhaseName = changedProperties.has('phaseName') ?
-        changedProperties.get('phaseName') :
-        this.phaseName;
-      const oldMilestone = _fetchedMilestone(oldFieldValueMap, oldPhaseName);
-      const milestone = _fetchedMilestone(this.fieldValueMap, this.phaseName);
-
-      if (milestone && milestone !== oldMilestone) {
-        window.fetch(
-            `https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=${milestone}`,
-        ).then((resp) => resp.json()).then((resp) => {
-          this._milestoneData = resp;
-        });
+    if (!this._isFetchingMilestone) {
+      const milestoneToFetch = this._milestoneToFetch;
+      if (milestoneToFetch && this._fetchedMilestone !== milestoneToFetch) {
+        this.fetchMilestoneData(milestoneToFetch);
       }
     }
   }
 
+  /**
+   * Makes an XHR request to Chromium Dash to find Chrome-specific launch data.
+   * eg. when certain Chrome milestones are planned for release.
+   * @param {string} milestone A string containing a Chrome milestone number.
+   */
+  fetchMilestoneData(milestone) {
+    this._isFetchingMilestone = true;
+
+    window.fetch(
+        `https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=${
+          milestone}`,
+    ).then((resp) => resp.json()).then((resp) => {
+      this._milestoneData = resp;
+
+      this._isFetchingMilestone = false;
+    });
+  }
+
+  /**
+   * Opens the phase editing dialog when the user clicks the edit button.
+   */
   edit() {
     this.reset();
     this.shadowRoot.querySelector('#editPhase').open();
   }
 
+  /**
+   * Stops editing the phase.
+   */
   cancel() {
     this.shadowRoot.querySelector('#editPhase').close();
     this.reset();
   }
 
+  /**
+   * Resets the edit form to its default values.
+   */
   reset() {
     const form = this.shadowRoot.querySelector('#metadataForm');
     form.reset();
   }
 
+  /**
+   * Saves the changes the user has made.
+   */
   save() {
     const form = this.shadowRoot.querySelector('#metadataForm');
     const delta = form.delta;
@@ -264,17 +315,24 @@ export class MrPhase extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Shows the next relevant Chrome Milestone date for this phase. Depending
+   * on the M-Target, M-Approved, or M-Launched values, this date means
+   * different things.
+   * @return {number} Unix timestamp in seconds.
+   * @private
+   */
   get _nextDate() {
     const phaseName = this.phaseName;
     const status = this._status;
     let data = this._milestoneData && this._milestoneData.mstones;
-    // Data pull from https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=xx
+    // Data pulled from https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=xx
     if (!phaseName || !status || !data || !data.length) return 0;
     data = data[0];
 
     let key = TARGET_PHASE_MILESTONE_MAP[phaseName];
     if (['Approved', 'Launched'].includes(status)) {
-      const osValues = this.fieldValueMap.get('OS');
+      const osValues = this._fieldValueMap.get('OS');
       // If iOS is the only OS and the phase is one where iOS has unique
       // milestones, the only date we show should be this._nextUniqueiOSDate.
       if (osValues && osValues.every((os) => {
@@ -288,6 +346,12 @@ export class MrPhase extends connectStore(LitElement) {
     return Math.floor((new Date(data[key])).getTime() / 1000);
   }
 
+  /**
+   * For issues where iOS is the OS, this function finds the relevant iOS
+   * launch date.
+   * @return {number} Unix timestamp in seconds.
+   * @private
+   */
   get _nextUniqueiOSDate() {
     const phaseName = this.phaseName;
     const status = this._status;
@@ -296,7 +360,7 @@ export class MrPhase extends connectStore(LitElement) {
     if (!phaseName || !status || !data || !data.length) return 0;
     data = data[0];
 
-    const osValues = this.fieldValueMap.get('OS');
+    const osValues = this._fieldValueMap.get('OS');
     if (['Approved', 'Launched'].includes(status) &&
         osValues && osValues.includes('iOS')) {
       const key = IOS_APPROVED_PHASE_MILESTONE_MAP[phaseName];
@@ -307,6 +371,12 @@ export class MrPhase extends connectStore(LitElement) {
     return 0;
   }
 
+  /**
+   * Depending on what kind of date we're showing, we want to include
+   * different text to describe the date.
+   * @return {string}
+   * @private
+   */
   get _dateDescriptor() {
     const status = this._status;
     if (status === 'Approved') {
@@ -317,10 +387,16 @@ export class MrPhase extends connectStore(LitElement) {
     return 'Due by ';
   }
 
+  /**
+   * The Chrome-specific status of a gate, computed from M-Approved,
+   * M-Launched, and M-Target fields.
+   * @return {string}
+   * @private
+   */
   get _status() {
-    const target = _targetMilestone(this.fieldValueMap, this.phaseName);
-    const approved = _approvedMilestone(this.fieldValueMap, this.phaseName);
-    const launched = _launchedMilestone(this.fieldValueMap, this.phaseName);
+    const target = this._targetMilestone;
+    const approved = this._approvedMilestone;
+    const launched = this._launchedMilestone;
     if (approved >= target) {
       if (launched >= approved) {
         return 'Launched';
@@ -329,33 +405,59 @@ export class MrPhase extends connectStore(LitElement) {
     }
     return 'Target';
   }
+
+  /**
+   * The Chrome Milestone that this phase was approved for.
+   * @return {string}
+   * @private
+   */
+  get _approvedMilestone() {
+    return valueForField(this._fieldValueMap, 'M-Approved', this.phaseName);
+  }
+
+  /**
+   * The Chrome Milestone that this phase was launched on.
+   * @return {string}
+   * @private
+   */
+  get _launchedMilestone() {
+    return valueForField(this._fieldValueMap, 'M-Launched', this.phaseName);
+  }
+
+  /**
+   * The Chrome Milestone that this phase is targeting.
+   * @return {string}
+   * @private
+   */
+  get _targetMilestone() {
+    console.log(this._fieldValueMap);
+    return valueForField(this._fieldValueMap, 'M-Target', this.phaseName);
+  }
+
+  /**
+   * The Chrome Milestone that's used to decide what date to show the user.
+   * @return {string}
+   * @private
+   */
+  get _milestoneToFetch() {
+    const target = Number.parseInt(this._targetMilestone) || 0;
+    const approved = Number.parseInt(this._approvedMilestone) || 0;
+    const launched = Number.parseInt(this._launchedMilestone) || 0;
+
+    const latestMilestone = Math.max(target, approved, launched);
+    return latestMilestone > 0 ? `${latestMilestone}` : '';
+  }
+
+  /**
+   * The Chrome Milestone returned by Chromium Dash.
+   * @return {string}
+   * @private
+   */
+  get _fetchedMilestone() {
+    if (!this._milestoneData) return '';
+    return `${this._milestoneData.mstone}`;
+  }
 }
 
-function _milestoneFieldValue(fieldValueMap, phaseName, fieldName) {
-  const values = valuesForField(fieldValueMap, fieldName, phaseName);
-  return values.length ? values[0] : undefined;
-}
-
-function _approvedMilestone(fieldValueMap, phaseName) {
-  return _milestoneFieldValue(fieldValueMap, phaseName,
-      'M-Approved');
-}
-
-function _launchedMilestone(fieldValueMap, phaseName) {
-  return _milestoneFieldValue(fieldValueMap, phaseName,
-      'M-Launched');
-}
-
-function _targetMilestone(fieldValueMap, phaseName) {
-  return _milestoneFieldValue(fieldValueMap, phaseName,
-      'M-Target');
-}
-
-function _fetchedMilestone(fieldValueMap, phaseName) {
-  const target = _targetMilestone(fieldValueMap, phaseName);
-  const approved = _approvedMilestone(fieldValueMap, phaseName);
-  const launched = _launchedMilestone(fieldValueMap, phaseName);
-  return Math.max(target || 0, approved || 0, launched || 0);
-}
 
 customElements.define('mr-phase', MrPhase);

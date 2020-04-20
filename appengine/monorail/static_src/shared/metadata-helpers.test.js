@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {fieldDefsWithGroup, fieldValueMapKey,
+import {valuesForField, valueForField, fieldDefsWithGroup, fieldValueMapKey,
   fieldDefsWithoutGroup, HARDCODED_FIELD_GROUPS} from './metadata-helpers.js';
 
 const fieldDefs = [
@@ -22,7 +22,29 @@ const fieldDefs = [
 ];
 const fieldGroups = HARDCODED_FIELD_GROUPS;
 
+const fieldValueMap = new Map([
+  ['field', ['one', 'two', 'three']],
+  ['field-two phase', ['four']],
+  ['field-three', ['five']],
+]);
+
 describe('metadata-helpers', () => {
+  it('valuesForField', () => {
+    assert.deepEqual(valuesForField(fieldValueMap, 'Field-None'), []);
+    assert.deepEqual(valuesForField(fieldValueMap, 'Field'),
+        ['one', 'two', 'three']);
+    assert.deepEqual(valuesForField(fieldValueMap, 'Field-Two', 'Phase'),
+        ['four']);
+    assert.deepEqual(valuesForField(fieldValueMap, 'Field-Three'), ['five']);
+  });
+
+  it('valueForField', () => {
+    assert.equal(valueForField(fieldValueMap, 'Field-None'),
+        undefined);
+    assert.equal(valueForField(fieldValueMap, 'Field-Two', 'Phase'), 'four');
+    assert.equal(valueForField(fieldValueMap, 'Field-Three'), 'five');
+  });
+
   it('fieldValueMapKey', () => {
     assert.equal(fieldValueMapKey('test', 'two'), 'test two');
 

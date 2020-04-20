@@ -163,6 +163,10 @@ export class ChopsDialog extends LitElement {
     }
   }
 
+  /**
+   * Closes the dialog.
+   * May have its logic overridden by a custom onOpenChanged function.
+   */
   close() {
     if (this.onOpenedChange) {
       this.onOpenedChange(false);
@@ -171,6 +175,10 @@ export class ChopsDialog extends LitElement {
     }
   }
 
+  /**
+   * Opens the dialog.
+   * May have its logic overridden by a custom onOpenChanged function.
+   */
   open() {
     if (this.onOpenedChange) {
       this.onOpenedChange(true);
@@ -179,6 +187,9 @@ export class ChopsDialog extends LitElement {
     }
   }
 
+  /**
+   * Switches the dialog from open to closed or vice versa.
+   */
   toggle() {
     this.opened = !this.opened;
   }
