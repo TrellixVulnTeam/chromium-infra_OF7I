@@ -343,10 +343,8 @@ func reportAuditFailure(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit
 		"identified and resolved.", cfg.LinkToCommit(rc.CommitHash))
 
 	var err error
-	// Route any failure to audit to Findit's team as they own this tool.
-	// TODO(crbug.com/798842): Use a custom component for this.
 	issueID := int32(0)
-	issueID, err = postIssue(ctx, cfg, summary, description, cs, []string{"Tools>Test>Findit>Autorevert"}, []string{"AuditFailure"})
+	issueID, err = postIssue(ctx, cfg, summary, description, cs, []string{"Infra>Audit"}, []string{"AuditFailure"})
 	if err == nil {
 		rc.SetNotificationState("AuditFailure", fmt.Sprintf("BUG=%d", issueID))
 		// Do not sent further notifications for this commit. This needs
