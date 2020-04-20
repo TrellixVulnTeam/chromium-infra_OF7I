@@ -115,7 +115,7 @@ func commentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RepoConfig, rc *Re
 					}
 					vIssue, err := issueFromID(ctx, cfg, int32(bugNumber), cs)
 					if err != nil {
-						logging.WithError(err).Errorf(ctx, "Found an invalid Monorail bug %s on relevant commit %s", bugNumber, rc.CommitHash)
+						logging.WithError(err).Errorf(ctx, "Found an invalid Monorail bug %d on relevant commit %s", bugNumber, rc.CommitHash)
 						continue
 					}
 					mergeAckComment := "The following revision refers to this bug: \n%s\n\nCommit: %s\nAuthor: %s\nCommiter: %s\nDate: %s\n\n%s"

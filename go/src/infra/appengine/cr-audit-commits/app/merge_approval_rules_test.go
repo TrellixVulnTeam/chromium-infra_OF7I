@@ -68,7 +68,7 @@ func TestMergeApprovalRules(t *testing.T) {
 					},
 				},
 			}
-			rc.CommitMessage = "This change has a valid bug ID with merge approval label in comment history \nBUG:123456"
+			rc.CommitMessage = "This change has a valid bug ID with merge approval label in comment history \nBug:123456"
 			// Run rule
 			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
 			// Check result code
@@ -122,7 +122,7 @@ func TestMergeApprovalRules(t *testing.T) {
 					},
 				},
 			}
-			rc.CommitMessage = "This change to commit has multiple bugs including an invalid one \nBUG:123456, 654321"
+			rc.CommitMessage = "This change to commit has multiple bugs including an invalid one \nBug:123456, 654321"
 			// Run rule
 			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
 			// Check result code

@@ -53,7 +53,7 @@ func TestMergeAckRules(t *testing.T) {
 					Id: 123456,
 				},
 			}
-			rc.CommitMessage = "This change has a valid bug ID \nBUG:123456"
+			rc.CommitMessage = "This change has a valid bug ID \nBug:123456"
 			// Run rule
 			rr, _ := AcknowledgeMerge{}.Run(ctx, ap, rc, testClients)
 			So(rr.RuleResultStatus, ShouldEqual, notificationRequired)

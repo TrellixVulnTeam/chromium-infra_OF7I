@@ -88,7 +88,7 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 		mergeLabel := fmt.Sprintf(mergeApprovedLabel, milestone)
 		vIssue, err := issueFromID(ctx, ap.RepoCfg, int32(bugNumber), cs)
 		if err != nil {
-			logging.WithError(err).Errorf(ctx, "Found an invalid Monorail bug %s on relevant commit %s", bugNumber, rc.CommitHash)
+			logging.WithError(err).Errorf(ctx, "Found an invalid Monorail bug %d on relevant commit %s", bugNumber, rc.CommitHash)
 			result.Message = fmt.Sprintf("Revision %s was merged to %s branch and there was an error "+
 				"accessing the associated bug (%d):\n\n%s", rc.CommitHash, ap.RepoCfg.BranchName, bugNumber, err.Error())
 			return result, nil

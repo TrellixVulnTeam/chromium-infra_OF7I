@@ -38,7 +38,8 @@ const (
 	failedBuildPrefix   = "Sample Failed Build:"
 	failedStepPrefix    = "Sample Failed Step:"
 	flakyTestPrefix     = "Sample Flaky Test:"
-	bugIDRegex          = "^(?i) *(?:bug|fixed|closed)[:= ]*(chromium[:= ]*)?(.*) *"
+	bugIDRegex          = "^(?:Bug:|BUG=|Fixed:)(((\\s*)(chromium:|b:)?(\\s*)(\\d+),)*(\\s*)(chromium:|b:)?(\\s*)(\\d+))$"
+	buganizerBugRegex   = "b([/:])(\\s*)([\\d]+)"
 	prodBuildbucketHost = "cr-buildbucket.appspot.com"
 )
 
@@ -100,8 +101,26 @@ func bugIDFromCommitMessage(m string) (string, error) {
 		re := regexp.MustCompile(bugIDRegex)
 		matches := re.FindAllStringSubmatch(line, -1)
 		if len(matches) != 0 {
-			for _, m := range matches {
-				return strings.Replace(string(m[2]), " ", "", -1), nil
+			rawBugList := strings.Split(string(matches[0][1]), ",")
+			bugList := []string{}
+			buganizerRe := regexp.MustCompile(buganizerBugRegex)
+
+			for _, bugID := range rawBugList {
+				// Remove buganizer bugs
+				if buganizerRe.MatchString(bugID) {
+					continue
+				}
+
+				// Remove space and "chromium:" prefix
+				bugID = strings.Replace(bugID, " ", "", -1)
+				bugID = strings.Replace(bugID, "chromium:", "", -1)
+
+				// Add into bugList
+				bugList = append(bugList, bugID)
+			}
+
+			if len(bugList) != 0 {
+				return strings.Join(bugList, ","), nil
 			}
 		}
 	}
@@ -426,7 +445,7 @@ func GetToken(ctx context.Context, tokenName, packedTokens string) (string, bool
 	for _, v := range pairs {
 		parts := strings.SplitN(v, ":", 2)
 		if len(parts) != 2 {
-			logging.Warningf(ctx, "Missing ':' separator in key:value token %s in RuleResult.MetaData", v)
+			logging.Debugf(ctx, "Missing ':' separator in key:value token %s in RuleResult.MetaData", v)
 			continue
 		}
 		if parts[0] != tokenName {
