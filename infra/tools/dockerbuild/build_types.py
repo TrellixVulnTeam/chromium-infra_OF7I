@@ -37,7 +37,13 @@ class Spec(_Spec):
 
   @property
   def tag(self):
-    return '%s-%s' % (self.name, self.version) if self.version else self.name
+    if self.version:
+      ret = '%s-%s' % (self.name, self.version)
+    else:
+      ret = self.name
+    if self.universal:
+      ret += '-%s' % ('.'.join(sorted(self.universal.pyversions or ())))
+    return ret
 
   def to_universal(self):
     return self._replace(universal=UniversalSpec(pyversions=None))

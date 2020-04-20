@@ -36,8 +36,13 @@ This list represents the current set of configured `dockerbuild` wheels in
 
 """
 
-  _WHEEL_NAME_TEMPLATE = """\
+  _WHEEL_NAME_TEMPLATE_23 = """\
 ## **%(name)s**
+
+"""
+
+  _WHEEL_NAME_TEMPLATE = """\
+## **%(name)s-%(pyversion)s**
 
 """
 
@@ -70,7 +75,12 @@ contact Chrome Operations:
     self._packages = {}
 
   def add_package(self, whl, plat):
-    key = (whl.spec.name, whl.spec.version)
+    pyversions = tuple(
+      whl.spec.universal.pyversions or ()
+      if whl.spec.universal else
+      ()
+    )
+    key = (whl.spec.name, whl.spec.version, pyversions)
     _, v = self._packages.setdefault(key, (whl, set()))
     if plat:
       v.add(plat)
@@ -79,12 +89,18 @@ contact Chrome Operations:
     fd.write(self._HEADER)
 
     categorized_packages = {}
-    for (name, version), (whl, plats) in self._packages.iteritems():
-      categorized_packages.setdefault(name, {})[version] = (whl, plats)
+    for (name, version, pyversions), (whl, plats) in self._packages.iteritems():
+      for pyversion in (pyversions or (None,)):
+        key = (name, pyversion)
+        categorized_packages.setdefault(key, {})[version] = (whl, plats)
 
-    for name, versions in sorted(categorized_packages.items()):
-      fd.write(self._WHEEL_NAME_TEMPLATE % dict(
+    for (name, pyversion), versions in sorted(categorized_packages.items()):
+      wheel_name_template = self._WHEEL_NAME_TEMPLATE_23
+      if pyversion is not None:
+        wheel_name_template = self._WHEEL_NAME_TEMPLATE
+      fd.write(wheel_name_template % dict(
           name=name,
+          pyversion=pyversion,
       ))
 
       for version, (whl, plats) in sorted(versions.items()):
