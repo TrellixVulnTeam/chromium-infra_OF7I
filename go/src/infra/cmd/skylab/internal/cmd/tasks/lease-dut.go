@@ -47,7 +47,7 @@ Do not build automation around this subcommand.`,
 		// TODO(gregorynisbet):
 		// if a model is provided, then we necessarily target DUT_POOL_QUOTA and only repair-failed DUTs until
 		// a better policy can be implemented.
-		c.Flags.StringVar(&c.model, "model", "", "Leases may optionally target a model instead of a hostname")
+		c.Flags.StringVar(&c.model, "model", "", "Leases may optionally target a model instead of a hostname.")
 		// We allow arbitrary dimensions to be passed in via the -dims flag.
 		// e.g. -dims a=4,b=7
 		c.Flags.Var(dimsVar{data: c}, "dims", "List of additional dimensions in format key1=value1,key2=value2,... .")
