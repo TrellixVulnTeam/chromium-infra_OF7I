@@ -211,6 +211,39 @@ class ResourceNameConverterTest(unittest.TestCase):
             self.cnxn, [self.issue_1.issue_id, 3279], self.services),
         {self.issue_1.issue_id: 'projects/proj/issues/1'})
 
+  def testIngestUserName(self):
+    """We can get a User ID from User resource name."""
+    name = 'users/111'
+    self.assertEqual(rnc.IngestUserName(self.cnxn, name, self.services), 111)
+
+  def testIngestUserName_DisplayName(self):
+    """We can get a User ID from User resource name with a display name set."""
+    name = 'users/%s' % self.user_3.email
+    self.assertEqual(rnc.IngestUserName(self.cnxn, name, self.services), 333)
+
+  def testIngestUserName_NoSuchUser(self):
+    """When autocreate=False, we raise an exception if a user is not found."""
+    name = 'users/chicken@test.com'
+    with self.assertRaises(exceptions.NoSuchUserException):
+      rnc.IngestUserName(self.cnxn, name, self.services)
+
+  def testIngestUserName_InvalidEmail(self):
+    """We raise an exception if a given resource name's email is invalid."""
+    name = 'users/chickentest.com'
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestUserName(self.cnxn, name, self.services)
+
+  def testIngestUserName_Autocreate(self):
+    """When autocreate=True create a new User if they don't already exist."""
+    new_email = 'chicken@test.com'
+    name = 'users/%s' % new_email
+    user_id = rnc.IngestUserName(
+        self.cnxn, name, self.services, autocreate=True)
+
+    new_id = self.services.user.LookupUserID(
+        self.cnxn, new_email, autocreate=False)
+    self.assertEqual(new_id, user_id)
+
   def testIngestUserNames(self):
     """We can get User IDs from User resource names."""
     names = ['users/111', 'users/222', 'users/%s' % self.user_3.email]
@@ -418,3 +451,14 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.ConvertProjectConfigName(
           self.cnxn, self.dne_project_id, self.services)
+
+  def testConvertProjectMemberName(self):
+    self.assertEqual(
+        rnc.ConvertProjectMemberName(
+            self.cnxn, self.project_1.project_id, 111, self.services),
+        'projects/{}/members/{}'.format(self.project_1.project_name, 111))
+
+  def testConvertProjectMemberName_NoSuchProjectException(self):
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertProjectMemberName(
+          self.cnxn, self.dne_project_id, 111, self.services)

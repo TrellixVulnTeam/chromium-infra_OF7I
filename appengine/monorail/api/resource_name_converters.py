@@ -43,6 +43,7 @@ USER_NAME_RE = re.compile(r'users\/((?P<user_id>\d+)|(?P<potential_email>.+))$')
 # Constants that hold the template patterns for creating resource names.
 PROJECT_NAME_TMPL = 'projects/{project_name}'
 PROJECT_CONFIG_TMPL = 'projects/{project_name}/config'
+PROJECT_MEMBER_NAME_TMPL = 'projects/{project_name}/members/{user_id}'
 HOTLIST_NAME_TMPL = 'hotlists/{hotlist_id}'
 HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
     HOTLIST_NAME_TMPL)
@@ -302,10 +303,42 @@ def ConvertIssueNames(cnxn, issue_ids, services):
 # Users
 
 
+def IngestUserName(cnxn, name, services, autocreate=False):
+  # type: (MonorailConnection, str, Services) -> int
+  """Takes a User resource name and returns a User ID.
+
+  Args:
+    cnxn: MonorailConnection object.
+    name: The User resource name.
+    services: Services object.
+    autocreate: set to True if new Users should be created for
+        emails in resource names that do not belong to existing
+        Users.
+
+  Returns:
+    The ID of the User.
+
+  Raises:
+    InputException if the resource name does not have a valid format.
+    NoSuchUserException if autocreate is False and the given email
+        was not found.
+  """
+  match = _GetResourceNameMatch(name, USER_NAME_RE)
+  user_id = match.group('user_id')
+  if user_id:
+    return int(user_id)
+  elif validate.IsValidEmail(match.group('potential_email')):
+    return services.user.LookupUserID(
+        cnxn, match.group('potential_email'), autocreate=autocreate)
+  else:
+    raise exceptions.InputException(
+        'Invalid email format found in User resource name: %s' % name)
+
+
 def IngestUserNames(cnxn, names, services, autocreate=False):
   # MonorailConnection, Sequence[str], Services, Optional[Boolean] ->
   #     Sequence[int]
-  """Takes a User resource names and returns the User IDs.
+  """Takes User resource names and returns the User IDs.
 
   Args:
     cnxn: MonorailConnection object.
@@ -325,17 +358,7 @@ def IngestUserNames(cnxn, names, services, autocreate=False):
   """
   ids = []
   for name in names:
-    match = _GetResourceNameMatch(name, USER_NAME_RE)
-    user_id = match.group('user_id')
-    if user_id:
-      ids.append(int(user_id))
-    elif validate.IsValidEmail(match.group('potential_email')):
-      ids.append(
-          services.user.LookupUserID(
-              cnxn, match.group('potential_email'), autocreate=autocreate))
-    else:
-      raise exceptions.InputException(
-          'Invalid email format found in User resource name: %s' % name)
+    ids.append(IngestUserName(cnxn, name, services, autocreate))
 
   return ids
 
@@ -619,3 +642,28 @@ def ConvertProjectConfigName(cnxn, project_id, services):
   if project_name is None:
     raise exceptions.NoSuchProjectException(project_id)
   return PROJECT_CONFIG_TMPL.format(project_name=project_name)
+
+
+def ConvertProjectMemberName(cnxn, project_id, user_id, services):
+  # type: (MonorailConnection, int, int, Services) -> str
+  """Takes Project and User ID then returns the ProjectMember resource name.
+
+  Args:
+    cnxn: MonorailConnection object.
+    project_id: ID of the Project.
+    user_id: ID of the User.
+    services: Services object.
+
+  Returns:
+    The resource name of the ProjectMember.
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  project_name = services.project.LookupProjectNames(
+      cnxn, [project_id]).get(project_id)
+  if project_name is None:
+    raise exceptions.NoSuchProjectException(project_id)
+
+  return PROJECT_MEMBER_NAME_TMPL.format(
+      project_name=project_name, user_id=user_id)

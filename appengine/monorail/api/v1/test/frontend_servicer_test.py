@@ -10,7 +10,9 @@ from __future__ import absolute_import
 import unittest
 
 from api.v1 import frontend_servicer
+from api.v1 import converters
 from api.v1.api_proto import frontend_pb2
+from api.v1.api_proto import project_objects_pb2
 from framework import exceptions
 from framework import monorailcontext
 from testing import fake
@@ -33,11 +35,13 @@ class FrontendServicerTest(unittest.TestCase):
         self.services, make_rate_limiter=False)
 
     self.user_1 = self.services.user.TestAddUser('user_111@example.com', 111)
+    self.user_1_resource_name = 'users/111'
     self.project_1_resource_name = 'projects/proj'
     self.project_1 = self.services.project.TestAddProject(
         'proj', project_id=789)
 
   def CallWrapped(self, wrapped_handler, mc, *args, **kwargs):
+    self.frontend_svcr.converter = converters.Converter(mc, self.services)
     return wrapped_handler.wrapped(self.frontend_svcr, mc, *args, **kwargs)
 
   def testGatherProjectEnvironment(self):
@@ -50,3 +54,36 @@ class FrontendServicerTest(unittest.TestCase):
         self.frontend_svcr.GatherProjectEnvironment, mc, request)
 
     self.assertEqual(response, frontend_pb2.GatherProjectEnvironmentResponse())
+
+  def testGatherProjectMembersForUser(self):
+    """We can list a user's project memberships."""
+    self.services.project.TestAddProject(
+        'owner_proj', project_id=777, owner_ids=[111])
+    self.services.project.TestAddProject(
+        'committer_proj', project_id=888, committer_ids=[111])
+    contributor_proj = self.services.project.TestAddProject(
+        'contributor_proj', project_id=999)
+    contributor_proj.contributor_ids = [111]
+
+    request = frontend_pb2.GatherProjectMembersForUserRequest(
+        user=self.user_1_resource_name)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    response = self.CallWrapped(
+        self.frontend_svcr.GatherProjectMembersForUser, mc, request)
+
+    owner_membership = project_objects_pb2.ProjectMember(
+        name='projects/{}/members/{}'.format('owner_proj', '111'),
+        role=project_objects_pb2.ProjectMember.ProjectRole.Value('OWNER'))
+    committer_membership = project_objects_pb2.ProjectMember(
+        name='projects/{}/members/{}'.format('committer_proj', '111'),
+        role=project_objects_pb2.ProjectMember.ProjectRole.Value('COMMITTER'))
+    contributor_membership = project_objects_pb2.ProjectMember(
+        name='projects/{}/members/{}'.format('contributor_proj', '111'),
+        role=project_objects_pb2.ProjectMember.ProjectRole.Value('CONTRIBUTOR'))
+    self.assertEqual(
+        response,
+        frontend_pb2.GatherProjectMembersForUserResponse(
+            project_memberships=[
+                owner_membership, committer_membership, contributor_membership
+            ]))

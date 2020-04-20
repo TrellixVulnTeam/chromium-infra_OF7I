@@ -60,6 +60,7 @@ from features import filterrules_helpers
 from features import send_notifications
 from features import features_bizobj
 from features import hotlist_helpers
+from framework import authdata
 from framework import exceptions
 from framework import framework_bizobj
 from framework import framework_constants
@@ -431,6 +432,27 @@ class WorkEnv(object):
 
     return projects[project_name]
 
+  def GatherProjectMembersForUser(self, user_id):
+    """Return the projects where the user has a role.
+
+    Args:
+      user_id: ID of the user we are requesting project memberships for.
+
+    Returns:
+      A triple with project IDs where the user is an owner, a committer, or a
+      contributor.
+    """
+    viewed_user_effective_ids = authdata.AuthData.FromUserID(
+        self.mc.cnxn, user_id, self.services).effective_ids
+
+    owner_projects, _archived, committer_projects, contrib_projects = (
+        self.GetUserProjects(viewed_user_effective_ids))
+
+    owner_proj_ids = [proj.project_id for proj in owner_projects]
+    committer_proj_ids = [proj.project_id for proj in committer_projects]
+    contrib_proj_ids = [proj.project_id for proj in contrib_projects]
+    return owner_proj_ids, committer_proj_ids, contrib_proj_ids
+
   def GetUserRolesInAllProjects(self, viewed_user_effective_ids):
     """Return the projects where the user has a role.
 
@@ -454,6 +476,9 @@ class WorkEnv(object):
     return owner_projects, member_projects, contrib_projects
 
   def GetUserProjects(self, viewed_user_effective_ids):
+    # TODO(crbug.com/monorail/7398): Combine this function with
+    # GatherProjectMembersForUser after removing the legacy
+    # project list page and the v0 GetUsersProjects RPC.
     """Get the projects to display in the user's profile.
 
     Args:

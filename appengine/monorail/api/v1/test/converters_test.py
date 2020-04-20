@@ -1174,3 +1174,12 @@ class ConverterFunctionsTest(unittest.TestCase):
             project_config.default_template_for_developers)
     self.assertEqual(
         expected_member_default_template, api_config.member_default_template)
+
+  def testCreateProjectMember(self):
+    """We can create a ProjectMember."""
+    expected_project_member = project_objects_pb2.ProjectMember(
+        name='projects/proj/members/111',
+        role=project_objects_pb2.ProjectMember.ProjectRole.Value('OWNER'))
+    self.assertEqual(
+        expected_project_member,
+        self.converter.CreateProjectMember(self.cnxn, 789, 111, 'OWNER'))

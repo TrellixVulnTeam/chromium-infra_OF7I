@@ -826,3 +826,23 @@ class Converter(object):
             project_config.default_template_for_users),
         revision_url_format=project.revision_url_format,
         custom_issue_entry_url=project_config.custom_issue_entry_url)
+
+  def CreateProjectMember(self, cnxn, project_id, user_id, role):
+    # type: (MonorailConnection, int, int, str) ->
+    #     api_proto.project_objects_pb2.ProjectMember
+    """Creates a ProjectMember object from specified parameters.
+
+    Args:
+      cnxn: MonorailConnection object.
+      project_id: ID of the Project the User is a member of.
+      user_id: ID of the user who is a member.
+      role: str specifying the user's role based on a ProjectRole value.
+
+    Return:
+      A protoc ProjectMember object.
+    """
+    name = rnc.ConvertProjectMemberName(
+        cnxn, project_id, user_id, self.services)
+    return project_objects_pb2.ProjectMember(
+        name=name,
+        role=project_objects_pb2.ProjectMember.ProjectRole.Value(role))

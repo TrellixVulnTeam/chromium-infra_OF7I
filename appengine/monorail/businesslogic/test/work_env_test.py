@@ -370,6 +370,50 @@ class WorkEnvTest(unittest.TestCase):
 
     return projects
 
+  def testGatherProjectMembersForUser_OtherUser(self):
+    """We can get the projects in which a user has a role.
+      Member only projects are hidden."""
+    projects = self.AddUserProjects()
+
+    with self.work_env as we:
+      owner, committer, contrib = we.GatherProjectMembersForUser(222)
+
+    self.assertEqual([projects['owner-live'].project_id], owner)
+    self.assertEqual([projects['committer-live'].project_id], committer)
+    self.assertEqual([projects['contributor-live'].project_id], contrib)
+
+  def testGatherProjectMembersForUser_OwnUser(self):
+    """We can get the projects in which the logged in user has a role. """
+    projects = self.AddUserProjects()
+
+    self.SignIn(user_id=222)
+    with self.work_env as we:
+      owner, committer, contrib = we.GatherProjectMembersForUser(222)
+
+    self.assertEqual(
+        [
+            projects['members-only'].project_id,
+            projects['owner-live'].project_id
+        ], owner)
+    self.assertEqual([projects['committer-live'].project_id], committer)
+    self.assertEqual([projects['contributor-live'].project_id], contrib)
+
+  def testGatherProjectMembersForUser_Admin(self):
+    """Admins can see all project roles another user has. """
+    projects = self.AddUserProjects()
+
+    self.SignIn(user_id=444)
+    with self.work_env as we:
+      owner, committer, contrib = we.GatherProjectMembersForUser(222)
+
+    self.assertEqual(
+        [
+            projects['members-only'].project_id,
+            projects['owner-live'].project_id
+        ], owner)
+    self.assertEqual([projects['committer-live'].project_id], committer)
+    self.assertEqual([projects['contributor-live'].project_id], contrib)
+
   def testGetUserRolesInAllProjects_OtherUsers(self):
     """We can get the projects in which the user has a role."""
     projects = self.AddUserProjects()
