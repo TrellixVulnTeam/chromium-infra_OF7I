@@ -21,11 +21,11 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_perms = pc.ConvertHotlistPermissions(
         [permissions.ADMINISTER_HOTLIST, permissions.EDIT_HOTLIST])
     expected_perms = [
-        permission_objects_pb2.Permission.Value('ADMINISTER_EDIT'),
-        permissions_objects_pb2.Permission.Value('HOTLIST_EDIT')
+        permission_objects_pb2.Permission.Value('HOTLIST_ADMINISTER'),
+        permission_objects_pb2.Permission.Value('HOTLIST_EDIT')
     ]
     self.assertEqual(api_perms, expected_perms)
 
-  def testConvertHotlistPermissions(self):
+  def testConvertHotlistPermissions_InvalidPermission(self):
     with self.assertRaises(exceptions.InputException):
       pc.ConvertHotlistPermissions(['EatHotlist'])
