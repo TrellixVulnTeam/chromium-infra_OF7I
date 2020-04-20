@@ -17,14 +17,17 @@ gen:
 test:
 	go test ./...
 
-# Build and run service locally
-.PHONY: dev
-dev:
-	go build -o ufs-service && ./ufs-service
+.PHONY: build
+build:
+	go build -o ufs-service
 
+# Run service locally
+.PHONY: dev
+dev: build
+	./ufs-service
 
 # Uploading & Switching
 .PHONY: up-dev
-up-dev:
+up-dev: build
 	gae.py upload -A $(GCP_PROJECT_DEV) --app-dir $(APP_PATH) -f
 	gae.py switch -A $(GCP_PROJECT_DEV) --app-dir $(APP_PATH) -f
