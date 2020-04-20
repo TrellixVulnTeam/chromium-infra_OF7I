@@ -19,8 +19,58 @@ import "google/protobuf/timestamp.proto";
 // Comments cannot be Created or Updated through standard methods. The
 // OUTPUT_ONLY annotations here indicate fields that would never be provided
 // by the user even if these methods were made available.
-// Next available tag: 8.
+// Next available tag: 11.
 message Comment {
+
+  // The type of comment.
+  // Next available tag: 9
+  enum Type {
+    // The default comment type. Used if type is omitted.
+    UNSPECIFIED = 0;
+    // A standard comment on an issue.
+    COMMENT = 1;
+    // A comment representing a new description for the issue.
+    DESCRIPTION = 2;
+  }
+
+  // A file attached to a comment.
+  // Next available tag: 8
+  message Attachment {
+    // The name of the attached file.
+    string filename = 1;
+    // It is possible for attachments to be deleted (and undeleted) by the
+    // uploader. The name of deleted attachments are still shown, but the
+    // content is not available.
+    IssueContentState state = 2;
+    // Size of the attached file in bytes.
+    uint64 size = 3;
+    // The type of content contained in the file, using the IANA's media type
+    // https://www.iana.org/assignments/media-types/media-types.xhtml.
+    string media_type = 4;
+    // The URI used for a preview of the attachment (when relelvant).
+    string thumbnail_uri = 5;
+    // The URI used to view the content of the attachment.
+    string view_uri = 6;
+    // The URI used to download the content of the attachment.
+    string download_uri = 7;
+  }
+
+  // This message is only suitable for displaying the amendment to users.
+  // We don't currently offer structured amendments that client code can
+  // reason about, field names can be ambiguous, and we don't have
+  // old_value for most changes.
+  // Next available tag: 4
+  message Amendment {
+    // This may be the name of a built-in or custom field, or relative to
+    // an approval field name.
+    string field_name = 1;
+    // This may be a new value that overwrote the old value, e.g., "Assigned",
+    // or it may be a space-separated list of changes, e.g., "Size-L -Size-S".
+    string new_or_delta_value = 2;
+    // old_value is only used when the user changes the summary.
+    string old_value = 3;
+  }
+
   option (google.api.resource) = {
     type: "api.crbug.com/IssueComment"
     pattern: "projects/{project}/issues/{issue}/comments/{comment}"
@@ -30,22 +80,28 @@ message Comment {
   string name = 1;
   // The state of the comment.
   IssueContentState state = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The type of comment.
+  Type type = 3;
   // The text of the comment.
-  string content = 3;
+  string content = 4;
   // Resource name of the author of the comment.
-  string commenter = 4 [
+  string commenter = 5 [
     (google.api.resource_reference) = { type: "api.crbug.com/User" },
     (google.api.field_behavior) = OUTPUT_ONLY
   ];
   // The time this comment was added to the Issue.
-  google.protobuf.Timestamp create_time = 5
+  google.protobuf.Timestamp create_time = 6
       [(google.api.field_behavior) = OUTPUT_ONLY];
   // Optional string full text of an email that caused this comment to be added.
-  string inbound_message = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string inbound_message = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
   // The approval this comment is associated with, if applicable.
-  string approval = 7
+  string approval = 8
       [(google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" }];
-  // TODO(monorail:7186): add remaining fields for comment.
+  // Any changes made to the issue in association with this comment.
+  repeated Amendment amendments = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Any attachments uploaded in association with this comment.
+  repeated Attachment attachments = 10
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Documents and tracks a bug, task, or feature request within a Project.
