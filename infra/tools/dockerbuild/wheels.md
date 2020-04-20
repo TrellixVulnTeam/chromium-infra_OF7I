@@ -446,6 +446,56 @@ wheel: <
 
 * *universal*
 
+## **astroid-py3**
+
+### 2.0.4
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/astroid-py3"
+  version: "version:2.0.4"
+>
+```
+
+
+* *universal*
+
+### 2.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/astroid-py3"
+  version: "version:2.1.0"
+>
+```
+
+
+* *universal*
+
+### 2.2.5
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/astroid-py3"
+  version: "version:2.2.5"
+>
+```
+
+
+* *universal*
+
+### 2.3.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/astroid-py3"
+  version: "version:2.3.3"
+>
+```
+
+
+* *universal*
+
 ## **astunparse**
 
 ### 1.5.0
@@ -2959,6 +3009,68 @@ wheel: <
 * *universal*
 * custom patches: disable-log-spam
 
+## **pylint-py3**
+
+### 2.0.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-py3"
+  version: "version:2.0.1"
+>
+```
+
+
+* *universal*
+
+### 2.1.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-py3"
+  version: "version:2.1.1"
+>
+```
+
+
+* *universal*
+
+### 2.2.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-py3"
+  version: "version:2.2.3"
+>
+```
+
+
+* *universal*
+
+### 2.3.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-py3"
+  version: "version:2.3.1"
+>
+```
+
+
+* *universal*
+
+### 2.4.4
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-py3"
+  version: "version:2.4.4"
+>
+```
+
+
+* *universal*
+
 ## **pylint-quotes**
 
 ### 0.1.8
@@ -2967,6 +3079,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/pylint-quotes-py2_py3"
   version: "version:0.1.8"
+>
+```
+
+
+* *universal*
+
+## **pylint-quotes-py3**
+
+### 0.2.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylint-quotes-py3"
+  version: "version:0.2.1"
 >
 ```
 
