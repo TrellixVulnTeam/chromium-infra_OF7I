@@ -192,10 +192,8 @@ func (h *State) rota(ctx *router.Context) (*rotang.Configuration, error) {
 func buildLegacyMap(h *State) map[string]func(ctx *router.Context, file string) (string, error) {
 	return map[string]func(ctx *router.Context, file string) (string, error){
 		// Trooper files.
-		"trooper.js":           h.legacyTrooper,
-		"trooper.json":         h.legacyTrooper,
-		"current_trooper.json": h.legacyTrooper,
-		"current_trooper.txt":  h.legacyTrooper,
+		"trooper.json":        h.legacyTrooper,
+		"current_trooper.txt": h.legacyTrooper,
 
 		// Trooper files by rotations.
 		"chrome-ops-devx.json":         h.legacyTrooperByRotation,

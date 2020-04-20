@@ -44,12 +44,12 @@ func TestHandleLegacy(t *testing.T) {
 			Params: httprouter.Params{
 				{
 					Key:   "name",
-					Value: "trooper.js",
+					Value: "trooper.json",
 				},
 			},
 		},
 		lm: map[string]func(*router.Context, string) (string, error){
-			"trooper.js": f.troopers,
+			"trooper.json": f.troopers,
 		},
 	}, {
 		name: "Name not in the map",
@@ -60,12 +60,12 @@ func TestHandleLegacy(t *testing.T) {
 			Params: httprouter.Params{
 				{
 					Key:   "name",
-					Value: "trooper.js",
+					Value: "trooper.json",
 				},
 			},
 		},
 		lm: map[string]func(*router.Context, string) (string, error){
-			"not_trooper.js": f.troopers,
+			"not_trooper.json": f.troopers,
 		},
 	}, {
 		name:     "Func fail",
@@ -77,12 +77,12 @@ func TestHandleLegacy(t *testing.T) {
 			Params: httprouter.Params{
 				{
 					Key:   "name",
-					Value: "trooper.js",
+					Value: "trooper.json",
 				},
 			},
 		},
 		lm: map[string]func(*router.Context, string) (string, error){
-			"trooper.js": f.troopers,
+			"trooper.json": f.troopers,
 		},
 	},
 	}
@@ -289,112 +289,6 @@ func TestLegacyTroopers(t *testing.T) {
 		time       time.Time
 		want       string
 	}{{
-		name: "Success JS",
-		ctx: &router.Context{
-			Context: ctx,
-		},
-		time: midnight,
-		cfg: rotang.Configuration{
-			Config: rotang.Config{
-				Name: cciRota,
-			},
-			Members: []rotang.ShiftMember{
-				{
-					Email:     "primary1@google.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary1@google.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary2@google.com",
-					ShiftName: "external",
-				},
-			},
-		},
-		legacyFunc: h.legacyTrooper,
-		members: []rotang.Member{
-			{
-				Email: "primary1@google.com",
-			}, {
-				Email: "secondary1@google.com",
-			}, {
-				Email: "secondary2@google.com",
-			},
-		},
-		shifts: []rotang.ShiftEntry{
-			{
-				StartTime: midnight.Add(-1 * fullDay),
-				EndTime:   midnight.Add(fullDay),
-				OnCall: []rotang.ShiftMember{
-					{
-						Email:     "primary1@google.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary1@google.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary2@google.com",
-						ShiftName: "external",
-					},
-				},
-			},
-		},
-		file: "trooper.js",
-		want: "document.write('primary1, secondary: secondary1, secondary2');",
-	}, {
-		name: "Success JSON",
-		ctx: &router.Context{
-			Context: ctx,
-		},
-		time:       midnight,
-		legacyFunc: h.legacyTrooper,
-		cfg: rotang.Configuration{
-			Config: rotang.Config{
-				Name: cciRota,
-			},
-			Members: []rotang.ShiftMember{
-				{
-					Email:     "primary1@google.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary1@google.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary2@google.com",
-					ShiftName: "external",
-				},
-			},
-		},
-		members: []rotang.Member{
-			{
-				Email: "primary1@google.com",
-			}, {
-				Email: "secondary1@google.com",
-			}, {
-				Email: "secondary2@google.com",
-			},
-		},
-		shifts: []rotang.ShiftEntry{
-			{
-				StartTime: midnight.Add(-1 * fullDay),
-				EndTime:   midnight.Add(fullDay),
-				OnCall: []rotang.ShiftMember{
-					{
-						Email:     "primary1@google.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary1@google.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary2@google.com",
-						ShiftName: "external",
-					},
-				},
-			},
-		},
-		file: "current_trooper.json",
-		want: `{"primary":"primary1","secondaries":["secondary1","secondary2"],"updated_unix_timestamp":1143936000}` + "\n",
-	}, {
 		name: "Success trooper.json",
 		ctx: &router.Context{
 			Context: ctx,

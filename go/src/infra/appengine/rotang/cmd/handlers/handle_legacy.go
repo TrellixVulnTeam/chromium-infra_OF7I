@@ -142,16 +142,7 @@ func (h *State) legacyTrooper(ctx *router.Context, file string) (string, error) 
 	}
 
 	switch file {
-	case "trooper.js":
-		str := "None"
-		if len(oncallers) > 0 {
-			str = oncallers[0]
-			if len(oncallers) > 1 {
-				str += ", secondary: " + strings.Join(oncallers[1:], ", ")
-			}
-		}
-		return "document.write('" + str + "');", nil
-	case "current_trooper.json", "trooper.json":
+	case "trooper.json":
 		primary := "None"
 		secondary := make([]string, 0)
 		if len(oncallers) > 0 {
@@ -176,7 +167,7 @@ func (h *State) legacyTrooper(ctx *router.Context, file string) (string, error) 
 		}
 		return strings.Join(oncallers, ","), nil
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "legacyTrooper only handles `trooper.js` and `current_trooper.txt`")
+		return "", status.Errorf(codes.InvalidArgument, "legacyTrooper only handles `trooper.json` and `current_trooper.txt`")
 	}
 }
 
