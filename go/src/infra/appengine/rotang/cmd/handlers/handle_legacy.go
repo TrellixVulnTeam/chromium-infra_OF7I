@@ -193,7 +193,7 @@ type sheriffJSON struct {
 	Emails []string `json:"emails"`
 }
 
-// legacySheriff produces the legacy cron created sherriff oncall files.
+// legacySheriff produces the legacy cron created sheriff oncall files.
 func (h *State) legacySheriff(ctx *router.Context, file string) (string, error) {
 	rota, ok := fileToRota[file]
 	if !ok {
@@ -256,6 +256,84 @@ func (h *State) legacySheriff(ctx *router.Context, file string) (string, error) 
 			UnixTS: updated.Unix(),
 			Emails: oc,
 		}); err != nil {
+			return "", err
+		}
+		return buf.String(), nil
+
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "filename in wrong format")
+	}
+}
+
+// getCurrentOncall returns the email address of the oncaller for the given rotation name
+// at the given time, or "" if no-one is oncall.
+func (h *State) getCurrentOncall(ctx *router.Context, name string, at time.Time) (string, error) {
+	ss := h.shiftStore(ctx.Context)
+	s, err := ss.Oncall(ctx.Context, at, name)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return "", nil
+		}
+		return "", err
+	}
+	if len(s.OnCall) == 0 {
+		return "", nil
+	}
+	return s.OnCall[0].Email, nil
+}
+
+var chromeBuildSheriffRotations = []string{
+	"Chrome Build Sheriff AMER-EAST",
+	"Chrome Build Sheriff AMER-WEST",
+	"Chrome Build Sheriff APAC",
+	"Chrome Build Sheriff EMEA",
+}
+
+func (h *State) getBuildSheriffs(ctx *router.Context) (*sheriffJSON, error) {
+	now := clock.Now(ctx.Context)
+	emails := make([]string, 0, len(chromeBuildSheriffRotations))
+	for _, name := range chromeBuildSheriffRotations {
+		email, err := h.getCurrentOncall(ctx, name, now)
+		if err != nil {
+			return nil, err
+		}
+		if email != "" {
+			emails = append(emails, email)
+		}
+	}
+	return &sheriffJSON{
+		UnixTS: now.Unix(),
+		Emails: emails,
+	}, nil
+}
+
+// buildSheriff produces a sheriff.json file containing sheriffs sourced from external calendar events.
+func (h *State) buildSheriff(ctx *router.Context, file string) (string, error) {
+	sp := strings.Split(file, ".")
+	if len(sp) != 2 {
+		return "", status.Errorf(codes.InvalidArgument, "filename in wrong format")
+	}
+
+	sheriffs, err := h.getBuildSheriffs(ctx)
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "Unable to fetch sheriffs list")
+	}
+
+	switch sp[1] {
+	case "js":
+		var usernames []string
+		for _, email := range sheriffs.Emails {
+			usernames = append(usernames, strings.Split(email, "@")[0])
+		}
+		str := "None"
+		if len(usernames) > 0 {
+			str = strings.Join(usernames, ", ")
+		}
+		return "document.write('" + str + "');", nil
+	case "json":
+		var buf bytes.Buffer
+		enc := json.NewEncoder(&buf)
+		if err := enc.Encode(sheriffs); err != nil {
 			return "", err
 		}
 		return buf.String(), nil
