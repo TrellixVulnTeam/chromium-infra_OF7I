@@ -58,7 +58,7 @@ export const UPDATE_FAILURE = 'hotlist/UPDATE_FAILURE';
 {
   name: string,
 
-  hotlists: Object<string, Hotlist>,
+  byName: Object<string, Hotlist>,
   hotlistItems: Object<string, Array<HotlistItem>>,
 
   requests: {
@@ -88,7 +88,7 @@ export const nameReducer = createReducer(null, {
  * @param {Hotlist} action.hotlist The Hotlist that was fetched.
  * @return {Object<string, Hotlist>}
  */
-export const hotlistsReducer = createReducer({}, {
+export const byNameReducer = createReducer({}, {
   [FETCH_SUCCESS]: (state, {hotlist}) => ({...state, [hotlist.name]: hotlist}),
   [UPDATE_SUCCESS]: (state, {hotlist}) => ({...state, [hotlist.name]: hotlist}),
 });
@@ -123,7 +123,7 @@ const requestsReducer = combineReducers({
 export const reducer = combineReducers({
   name: nameReducer,
 
-  hotlists: hotlistsReducer,
+  byName: byNameReducer,
   hotlistItems: hotlistItemsReducer,
 
   requests: requestsReducer,
@@ -143,7 +143,7 @@ export const name = (state) => state.hotlist.name;
  * @param {any} state
  * @return {Object<string, Hotlist>}
  */
-export const hotlists = (state) => state.hotlist.hotlists;
+export const byName = (state) => state.hotlist.byName;
 
 /**
  * Returns all the Hotlist items in the store as a mapping
@@ -159,8 +159,8 @@ export const hotlistItems = (state) => state.hotlist.hotlistItems;
  * @return {?Hotlist}
  */
 export const viewedHotlist = createSelector(
-    [hotlists, name],
-    (hotlists, name) => name && hotlists[name] || null);
+    [byName, name],
+    (byName, name) => name && byName[name] || null);
 
 /**
  * Returns an Array containing the items in the currently viewed Hotlist,

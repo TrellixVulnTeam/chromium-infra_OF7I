@@ -64,7 +64,7 @@ export const HOTLIST_ISSUE_CLOSED = Object.freeze({
 });
 
 /** @type {Object<string, Hotlist>} */
-export const HOTLISTS = Object.freeze({[NAME]: HOTLIST});
+export const BY_NAME = Object.freeze({[NAME]: HOTLIST});
 
 /** @type {Object<string, Array<HotlistItem>>} */
 export const HOTLIST_ITEMS = Object.freeze({

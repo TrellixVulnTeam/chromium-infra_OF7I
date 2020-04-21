@@ -28,7 +28,7 @@ export const BATCH_GET_FAILURE = 'user/BATCH_GET_FAILURE';
 
 /* State Shape
 {
-  users: Object<string, User>,
+  byName: Object<string, User>,
 
   requests: {
     batchGet: ReduxRequestState,
@@ -45,7 +45,7 @@ export const BATCH_GET_FAILURE = 'user/BATCH_GET_FAILURE';
  * @param {User} action.user The user that was fetched.
  * @return {Object<string, User>}
  */
-export const usersReducer = createReducer({}, {
+export const byNameReducer = createReducer({}, {
   [BATCH_GET_SUCCESS]: (state, {users}) => {
     const newState = {...state};
     for (const user of users) {
@@ -61,7 +61,7 @@ const requestsReducer = combineReducers({
 });
 
 export const reducer = combineReducers({
-  users: usersReducer,
+  byName: byNameReducer,
 
   requests: requestsReducer,
 });
@@ -73,7 +73,7 @@ export const reducer = combineReducers({
  * @param {any} state
  * @return {Object<string, User>}
  */
-export const users = (state) => state.user.users;
+export const byName = (state) => state.user.byName;
 
 // Action Creators
 

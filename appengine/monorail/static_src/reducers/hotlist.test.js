@@ -18,7 +18,7 @@ describe('hotlist reducers', () => {
     const actual = hotlist.reducer(undefined, {type: null});
     const expected = {
       name: null,
-      hotlists: {},
+      byName: {},
       hotlistItems: {},
       requests: {
         deleteHotlist: {
@@ -56,10 +56,10 @@ describe('hotlist reducers', () => {
     assert.deepEqual(actual, example.NAME);
   });
 
-  it('hotlists updates on FETCH_SUCCESS', () => {
+  it('byName updates on FETCH_SUCCESS', () => {
     const action = {type: hotlist.FETCH_SUCCESS, hotlist: example.HOTLIST};
-    const actual = hotlist.hotlistsReducer({}, action);
-    assert.deepEqual(actual, example.HOTLISTS);
+    const actual = hotlist.byNameReducer({}, action);
+    assert.deepEqual(actual, example.BY_NAME);
   });
 
   it('hotlistItems updates on FETCH_ITEMS_SUCCESS', () => {
@@ -79,9 +79,9 @@ describe('hotlist selectors', () => {
     assert.deepEqual(hotlist.name(state), example.NAME);
   });
 
-  it('hotlists', () => {
-    const state = {hotlist: {hotlists: example.HOTLISTS}};
-    assert.deepEqual(hotlist.hotlists(state), example.HOTLISTS);
+  it('byName', () => {
+    const state = {hotlist: {byName: example.BY_NAME}};
+    assert.deepEqual(hotlist.byName(state), example.BY_NAME);
   });
 
   it('hotlistItems', () => {
@@ -93,18 +93,18 @@ describe('hotlist selectors', () => {
     it('normal case', () => {
       const state = {hotlist: {
         name: example.NAME,
-        hotlists: example.HOTLISTS,
+        byName: example.BY_NAME,
       }};
       assert.deepEqual(hotlist.viewedHotlist(state), example.HOTLIST);
     });
 
     it('no name', () => {
-      const state = {hotlist: {name: null, hotlists: example.HOTLISTS}};
+      const state = {hotlist: {name: null, byName: example.BY_NAME}};
       assert.deepEqual(hotlist.viewedHotlist(state), null);
     });
 
     it('hotlist not found', () => {
-      const state = {hotlist: {name: example.NAME, hotlists: {}}};
+      const state = {hotlist: {name: example.NAME, byName: {}}};
       assert.deepEqual(hotlist.viewedHotlist(state), null);
     });
   });

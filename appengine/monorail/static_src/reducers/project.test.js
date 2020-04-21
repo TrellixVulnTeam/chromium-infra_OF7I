@@ -17,7 +17,7 @@ describe('project reducers', () => {
   it('root reducer initial state', () => {
     const actual = project.reducer(undefined, {type: null});
     const expected = {
-      projects: {},
+      byName: {},
       allNames: [],
       requests: {
         list: {
@@ -29,11 +29,11 @@ describe('project reducers', () => {
     assert.deepEqual(actual, expected);
   });
 
-  describe('projectsReducer', () => {
+  describe('byNameReducer', () => {
     it('populated on LIST_SUCCESS', () => {
       const action = {type: project.LIST_SUCCESS, projects:
           [example.PROJECT, example.PROJECT_2]};
-      const actual = project.projectsReducer({}, action);
+      const actual = project.byNameReducer({}, action);
 
       assert.deepEqual(actual, {
         [example.NAME]: example.PROJECT,
@@ -47,7 +47,7 @@ describe('project reducers', () => {
         [example.NAME_2]: example.PROJECT_2,
       };
       const action = {type: project.LIST_SUCCESS, projects: []};
-      const actual = project.projectsReducer(originalState, action);
+      const actual = project.byNameReducer(originalState, action);
 
       assert.deepEqual(actual, originalState);
     });
@@ -58,7 +58,7 @@ describe('project reducers', () => {
       };
       const action = {type: project.LIST_SUCCESS,
         projects: [example.PROJECT_2]};
-      const actual = project.projectsReducer(originalState, action);
+      const actual = project.byNameReducer(originalState, action);
 
       const expected = {
         [example.NAME]: example.PROJECT,
@@ -79,7 +79,7 @@ describe('project reducers', () => {
       };
       const action = {type: project.LIST_SUCCESS,
         projects: [newProject2]};
-      const actual = project.projectsReducer(originalState, action);
+      const actual = project.byNameReducer(originalState, action);
       const expected = {
         [example.NAME]: example.PROJECT,
         [example.NAME_2]: newProject2,
@@ -98,19 +98,19 @@ describe('project reducers', () => {
 });
 
 describe('project selectors', () => {
-  it('projects', () => {
+  it('byName', () => {
     const normalizedProjects = {
       [example.NAME]: example.PROJECT,
     };
     const state = {project: {
-      projects: normalizedProjects,
+      byName: normalizedProjects,
     }};
-    assert.deepEqual(project.projects(state), normalizedProjects);
+    assert.deepEqual(project.byName(state), normalizedProjects);
   });
 
   it('all', () => {
     const state = {project: {
-      projects: {
+      byName: {
         [example.NAME]: example.PROJECT,
       },
       allNames: [example.NAME],

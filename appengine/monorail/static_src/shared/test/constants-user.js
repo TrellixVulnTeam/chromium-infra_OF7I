@@ -29,4 +29,4 @@ export const USER_2 = Object.freeze({
 });
 
 /** @type {Object<string, User>} */
-export const USERS = Object.freeze({[NAME]: USER});
+export const BY_NAME = Object.freeze({[NAME]: USER});

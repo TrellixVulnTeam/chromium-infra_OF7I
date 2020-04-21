@@ -29,7 +29,7 @@ export const BATCH_GET_FAILURE = 'permissions/BATCH_GET_FAILURE';
 
 /* State Shape
 {
-  permissionSets: Object<string, PermissionSet>,
+  byName: Object<string, PermissionSet>,
 
   requests: {
     batchGet: ReduxRequestState,
@@ -46,7 +46,7 @@ export const BATCH_GET_FAILURE = 'permissions/BATCH_GET_FAILURE';
  * @param {Array<PermissionSet>} action.permissionSets
  * @return {Object<string, PermissionSet>}
  */
-export const permissionSetsReducer = createReducer({}, {
+export const byNameReducer = createReducer({}, {
   [BATCH_GET_SUCCESS]: (state, {permissionSets}) => {
     const newState = {...state};
     for (const permissionSet of permissionSets) {
@@ -62,7 +62,7 @@ const requestsReducer = combineReducers({
 });
 
 export const reducer = combineReducers({
-  permissionSets: permissionSetsReducer,
+  byName: byNameReducer,
 
   requests: requestsReducer,
 });
@@ -74,7 +74,7 @@ export const reducer = combineReducers({
  * @param {any} state
  * @return {Object<string, PermissionSet>}
  */
-export const permissionSets = (state) => state.permissions.permissionSets;
+export const byName = (state) => state.permissions.byName;
 
 /**
  * Returns the Permissions requests.

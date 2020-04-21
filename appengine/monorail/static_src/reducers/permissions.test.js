@@ -17,7 +17,7 @@ describe('permissions reducers', () => {
   it('root reducer initial state', () => {
     const actual = permissions.reducer(undefined, {type: null});
     const expected = {
-      permissionSets: {},
+      byName: {},
       requests: {
         batchGet: {error: null, requesting: false},
       },
@@ -25,12 +25,12 @@ describe('permissions reducers', () => {
     assert.deepEqual(actual, expected);
   });
 
-  it('permissionSets updates on BATCH_GET_SUCCESS', () => {
+  it('byName updates on BATCH_GET_SUCCESS', () => {
     const action = {
       type: permissions.BATCH_GET_SUCCESS,
       permissionSets: [example.PERMISSION_SET_ISSUE],
     };
-    const actual = permissions.permissionSetsReducer({}, action);
+    const actual = permissions.byNameReducer({}, action);
     const expected = {
       [example.PERMISSION_SET_ISSUE.resource]: example.PERMISSION_SET_ISSUE,
     };
@@ -39,10 +39,10 @@ describe('permissions reducers', () => {
 });
 
 describe('permissions selectors', () => {
-  it('permissionSets', () => {
-    const state = {permissions: {permissionSets: example.PERMISSION_SETS}};
-    const actual = permissions.permissionSets(state);
-    assert.deepEqual(actual, example.PERMISSION_SETS);
+  it('byName', () => {
+    const state = {permissions: {byName: example.BY_NAME}};
+    const actual = permissions.byName(state);
+    assert.deepEqual(actual, example.BY_NAME);
   });
 });
 

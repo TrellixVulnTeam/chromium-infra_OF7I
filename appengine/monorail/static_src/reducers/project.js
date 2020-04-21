@@ -26,7 +26,7 @@ export const LIST_FAILURE = 'projects/LIST_FAILURE';
 {
   name: string,
 
-  projects: Object<ProjectName, Project>,
+  byName: Object<ProjectName, Project>,
   allNames: Array<ProjectName>,
 
   requests: {
@@ -42,7 +42,7 @@ export const LIST_FAILURE = 'projects/LIST_FAILURE';
  * @param {Array<Project>} action.projects The Projects that were fetched.
  * @return {Object<ProjectName, Project>}
  */
-export const projectsReducer = createReducer({}, {
+export const byNameReducer = createReducer({}, {
   [LIST_SUCCESS]: (state, {projects}) => {
     const newProjects = {};
     projects.forEach((proj) => {
@@ -71,7 +71,7 @@ const requestsReducer = combineReducers({
 });
 
 export const reducer = combineReducers({
-  projects: projectsReducer,
+  byName: byNameReducer,
   allNames: allNamesReducer,
 
   requests: requestsReducer,
@@ -84,7 +84,7 @@ export const reducer = combineReducers({
  * @return {Object<ProjectName, Project>}
  * @private
  */
-export const projects = (state) => state.project.projects;
+export const byName = (state) => state.project.byName;
 
 /**
  * Base selector for wrapping the allNames state key.
@@ -100,8 +100,8 @@ export const _allNames = (state) => state.project.allNames;
  * @param {any} state
  * @return {Array<Project>}
  */
-export const all = createSelector([projects, _allNames],
-    (projects, allNames) => allNames.map((name) => projects[name]));
+export const all = createSelector([byName, _allNames],
+    (byName, allNames) => allNames.map((name) => byName[name]));
 
 
 /**

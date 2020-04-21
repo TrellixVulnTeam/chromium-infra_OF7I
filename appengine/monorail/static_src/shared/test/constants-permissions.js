@@ -15,6 +15,6 @@ export const PERMISSION_SET_ISSUE = {
 };
 
 /** @type {Object<string, PermissionSet>} */
-export const PERMISSION_SETS = {
+export const BY_NAME = {
   [issue.NAME]: PERMISSION_SET_ISSUE,
 };

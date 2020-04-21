@@ -16,7 +16,7 @@ describe('user reducers', () => {
   it('root reducer initial state', () => {
     const actual = user.reducer(undefined, {type: null});
     const expected = {
-      users: {},
+      byName: {},
       requests: {
         batchGet: {},
       },
@@ -24,17 +24,17 @@ describe('user reducers', () => {
     assert.deepEqual(actual, expected);
   });
 
-  it('users updates on BATCH_GET_SUCCESS', () => {
+  it('byName updates on BATCH_GET_SUCCESS', () => {
     const action = {type: user.BATCH_GET_SUCCESS, users: [example.USER]};
-    const actual = user.usersReducer({}, action);
-    assert.deepEqual(actual, example.USERS);
+    const actual = user.byNameReducer({}, action);
+    assert.deepEqual(actual, example.BY_NAME);
   });
 });
 
 describe('user selectors', () => {
-  it('users', () => {
-    const state = {user: {users: example.USERS}};
-    assert.deepEqual(user.users(state), example.USERS);
+  it('byName', () => {
+    const state = {user: {byName: example.BY_NAME}};
+    assert.deepEqual(user.byName(state), example.BY_NAME);
   });
 });
 
