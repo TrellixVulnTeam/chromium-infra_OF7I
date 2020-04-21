@@ -114,11 +114,10 @@ func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, dur
 
 // LeaseByModelTask creates a lease_task targeted at a particular model and dimensions
 func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims map[string]string, durationSec int, reason string) (taskID string, err error) {
-	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo "(model): Zzz..."; done`}
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: c,
+			Command: getLeaseCommand(),
 			Dimensions: append([]*swarming_api.SwarmingRpcsStringPair{
 				{Key: "pool", Value: "ChromeOSSkylab"},
 				{Key: "label-model", Value: model},
@@ -192,4 +191,11 @@ func (tc *TaskCreator) dutNameToBotID(ctx context.Context, host string) (string,
 		return "", errors.Reason("more that one bot with dut_name: %v", host).Err()
 	}
 	return ids[0], nil
+}
+
+// getLeaseCommand provides bash command to set dut state and run loop to keep DUT busy
+//
+// DUT state will be set as 'needs_repair'
+func getLeaseCommand() []string {
+	return []string{"/bin/sh", "-c", `/opt/infra-tools/skylab_swarming_worker -task-name set_needs_repair; while true; do sleep 60; echo Zzz...; done`}
 }
