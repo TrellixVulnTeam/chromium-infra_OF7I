@@ -13,8 +13,8 @@ from google.appengine.ext import testbed
 
 from api.v1 import paginator
 from api.v1.api_proto import hotlists_pb2
+from framework import exceptions
 from framework import paginate
-
 
 class PaginatorTest(unittest.TestCase):
 
@@ -46,3 +46,28 @@ class PaginatorTest(unittest.TestCase):
         self.paginator.request_contents, next_start)
     self.assertEqual(
         self.paginator.GenerateNextPageToken(next_start), expected_page_token)
+
+  def testCoercePageSize(self):
+    """A valid page_size is used when provided."""
+    self.assertEqual(1, paginator.CoercePageSize(1, 5))
+
+  def testCoercePageSize_Negative(self):
+    """An exception is raised for a negative page_size."""
+    with self.assertRaises(exceptions.InputException):
+      paginator.CoercePageSize(-1, 5)
+
+  def testCoercePageSize_TooBig(self):
+    """A page_size above the max is coerced to the max."""
+    self.assertEqual(5, paginator.CoercePageSize(6, 5, 2))
+
+  def testCoercePageSize_Default(self):
+    """A default page_size different from max_size is used when provided."""
+    self.assertEqual(2, paginator.CoercePageSize(None, 5, 2))
+
+  def testCoercePageSize_NotProvided(self):
+    """max_size is used if no page_size or default_size provided."""
+    self.assertEqual(5, paginator.CoercePageSize(None, 5))
+
+  def testCoercePageSize_Zero(self):
+    """Handles zero equivalently to None."""
+    self.assertEqual(5, paginator.CoercePageSize(0, 5))

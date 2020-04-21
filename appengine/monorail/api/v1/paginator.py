@@ -6,8 +6,45 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+from framework import exceptions
 from framework import paginate
 from proto import secrets_pb2
+
+
+def CoercePageSize(page_size, max_size, default_size=None):
+  # type: (int, int, Optional[int]) -> int
+  """Validates page_size and coerces it to max_size if needed.
+
+  Args:
+    page_size: The page_size requested by the user.
+    max_size: the maximum page size allowed. Must be > 0.
+        Also used as default if default_size not provided
+    default_size: default size to use if page_size not provided. Must be > 0.
+
+  Returns:
+    The appropriate page size to use for the request, based on the parameters.
+    Specifically this means
+      - page_size if not greater than max_size
+      - max_size if page_size > max_size
+      - max_size if page_size is not provided and default_size is not provided
+      - default_size if page_size is not provided
+
+  Raises:
+    InputException: if page_size is negative.
+  """
+  # These are programming errors. They are not user input.
+  assert max_size > 0
+  assert default_size is None or default_size > 0
+
+  # Check for invalid user provided page_size.
+  if page_size and page_size < 0:
+    raise exceptions.InputException('`page_size` cannot be negative.')
+
+  if not page_size:
+    return default_size or max_size
+  if page_size > max_size:
+    return max_size
+  return page_size
 
 
 class Paginator(object):

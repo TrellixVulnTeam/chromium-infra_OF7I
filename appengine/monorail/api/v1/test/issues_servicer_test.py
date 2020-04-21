@@ -27,6 +27,7 @@ class IssuesServicerTest(unittest.TestCase):
         config=fake.ConfigService(),
         issue=fake.IssueService(),
         project=fake.ProjectService(),
+        spam=fake.SpamService(),
         user=fake.UserService(),
         usergroup=fake.UserGroupService())
     self.issues_svcr = issues_servicer.IssuesServicer(
@@ -35,6 +36,15 @@ class IssuesServicerTest(unittest.TestCase):
     self.owner = self.services.user.TestAddUser('owner@example.com', 111)
     self.project_1 = self.services.project.TestAddProject(
         'chicken', project_id=789)
+    self.issue_resource_name = 'projects/chicken/issues/1234'
+    self.issue = fake.MakeTestIssue(
+        self.project_1.project_id,
+        1234,
+        'sum',
+        'New',
+        self.owner.user_id,
+        project_name=self.project_1.project_name)
+    self.services.issue.TestAddIssue(self.issue)
 
   def CallWrapped(self, wrapped_handler, mc, *args, **kwargs):
     self.issues_svcr.converter = converters.Converter(mc, self.services)
@@ -42,18 +52,20 @@ class IssuesServicerTest(unittest.TestCase):
 
   def testGetIssue(self):
     """We can get an issue."""
-    issue = fake.MakeTestIssue(
-        self.project_1.project_id,
-        1234,
-        'sum',
-        'New',
-        self.owner.user_id,
-        project_name=self.project_1.project_name)
-    self.services.issue.TestAddIssue(issue)
-    request = issues_pb2.GetIssueRequest()
-    request.name = "projects/chicken/issues/1234"
+    request = issues_pb2.GetIssueRequest(name=self.issue_resource_name)
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.owner.email)
     actual_response = self.CallWrapped(self.issues_svcr.GetIssue, mc, request)
     self.assertEqual(
-        actual_response, self.issues_svcr.converter.ConvertIssue(issue))
+        actual_response, self.issues_svcr.converter.ConvertIssue(self.issue))
+
+  # Note the 'empty' case doesn't make sense for ListComments, as one is created
+  # for every issue.
+  def testListComments(self):
+    """We can list comments."""
+    request = issues_pb2.ListCommentsRequest(parent=self.issue_resource_name)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    actual_response = self.CallWrapped(
+        self.issues_svcr.ListComments, mc, request)
+    self.assertEqual(1, len(actual_response.comments))

@@ -25,7 +25,11 @@ service Issues {
   // TODO(monorail:6988): Document possible errors when implemented.
   rpc SearchIssues (SearchIssuesRequest) returns (SearchIssuesResponse) {}
   // Lists comments for an issue.
-  // TODO(monorail:6988): Document possible errors when implemented.
+  //
+  // Raises:
+  //   INVALID_ARGUMENT if `parent` is formatted incorrectly or `page_size` < 0.
+  //   NOT_FOUND if `parent` does not exist.
+  //   PERMISSION_DENIED if the requester is not allowed to view `parent`.
   rpc ListComments (ListCommentsRequest) returns (ListCommentsResponse) {}
 }
 
