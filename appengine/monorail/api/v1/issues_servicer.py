@@ -60,12 +60,10 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     pager = paginator.Paginator(parent=request.parent, page_size=page_size)
 
     with work_env.WorkEnv(mc, self.services) as we:
-      comments = we.SafeListIssueComments(
+      list_result = we.SafeListIssueComments(
           issue_id, page_size, pager.GetStart(request.page_token))
       # TODO(crbug.com/monorail/7143): Rewrite ConvertComments to take issue_id.
       issue = we.GetIssue(issue_id, allow_viewing_deleted=True)
-    # TODO(crbug.com/monorail/7143): Return next_start from work_env.
-    next_page_token = ''
     return issues_pb2.ListCommentsResponse(
-        comments=self.converter.ConvertComments(issue, comments),
-        next_page_token=next_page_token)
+        comments=self.converter.ConvertComments(issue, list_result.items),
+        next_page_token=pager.GenerateNextPageToken(list_result.next_start))

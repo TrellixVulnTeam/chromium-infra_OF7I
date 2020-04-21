@@ -47,6 +47,11 @@ class PaginatorTest(unittest.TestCase):
     self.assertEqual(
         self.paginator.GenerateNextPageToken(next_start), expected_page_token)
 
+  def testGenerateNextPageToken_NoStart(self):
+    """We return None if start is not provided."""
+    next_start = None
+    self.assertEqual(self.paginator.GenerateNextPageToken(next_start), None)
+
   def testCoercePageSize(self):
     """A valid page_size is used when provided."""
     self.assertEqual(1, paginator.CoercePageSize(1, 5))

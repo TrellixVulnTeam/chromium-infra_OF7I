@@ -1517,7 +1517,7 @@ class WorkEnv(object):
 
 
   def SafeListIssueComments(self, issue_id, max_items, start):
-    # type: (tracker_pb2.Issue, int, int) -> Sequence[tracker_pb2.IssueComment]
+    # type: (tracker_pb2.Issue, int, int) -> ListResult
     """Return comments on the issue, filtering non-viewable content.
 
     TODO(crbug.com/monorail/7520): Rename to ListIssueComments.
@@ -1530,6 +1530,10 @@ class WorkEnv(object):
       issue_id: The issue for which we're listing comments.
       max_items: The maximum number of comments to return.
       start: The index of the start position in the list of comments.
+
+    Returns:
+      A work_env.ListResult namedtuple with the comments for the issue.
+
     Raises:
       PermissionException: The logged-in user is not allowed to view the issue.
     """
@@ -1540,9 +1544,13 @@ class WorkEnv(object):
     # i'm an admin, i can see unfiltered content
     # start/max_items related tests
     # inbound message can be viewed with permissions
-    issue = self.GetIssue(issue_id)
+    if start < 0:
+      raise exceptions.InputException('Invalid `start`: %d' % start)
+    if max_items < 0:
+      raise exceptions.InputException('Invalid `max_items`: %d' % max_items)
 
     with self.mc.profiler.Phase('getting comments for %r' % issue_id):
+      issue = self.GetIssue(issue_id)
       comments = self.services.issue.GetCommentsForIssue(self.mc.cnxn, issue_id)
       _, comment_reporters = self.LookupIssueFlaggers(issue)
       users_involved_in_comments = tracker_bizobj.UsersInvolvedInCommentList(
@@ -1597,7 +1605,10 @@ class WorkEnv(object):
           if can_view_inbound_message:
             filtered_comment.inbound_message = comment.inbound_message
         filtered_comments.append(filtered_comment)
-    return filtered_comments
+    next_start = None
+    if end < len(comments):
+      next_start = end
+    return ListResult(filtered_comments, next_start)
 
   # FUTURE: UpdateComment()
 

@@ -2538,8 +2538,10 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.TestAddComment(comment, 1)
 
     with self.work_env as we:
-      actual_comments = we.SafeListIssueComments(issue.issue_id, 1000, 0)
+      list_result = we.SafeListIssueComments(issue.issue_id, 1000, 0)
 
+    self.assertEqual(None, list_result.next_start)
+    actual_comments = list_result.items
     self.assertEqual(2, len(actual_comments))
     self.assertEqual(initial_description, actual_comments[0].content)
     self.assertEqual('more info', actual_comments[1].content)
@@ -2607,15 +2609,6 @@ class WorkEnvTest(unittest.TestCase):
         user_id=self.user_1.user_id,
         issue_id=issue.issue_id,
         deleted_by=self.user_1.user_id)
-    # TODO(crbug.com/monorail/7526): Update this test when issue resolved.
-    # banned_user = self.services.user.TestAddUser(
-    #     'banned@banned.com', 444, add_user=True, banned=True)
-
-    # banned_comment = tracker_pb2.IssueComment(
-    #     project_id=self.project.project_id,
-    #     content='banned',
-    #     user_id=banned_user.user_id,
-    #     issue_id=issue.issue_id)
     inbound_comment = tracker_pb2.IssueComment(
         project_id=self.project.project_id,
         content='from an inbound message',
@@ -2624,17 +2617,70 @@ class WorkEnvTest(unittest.TestCase):
         inbound_message='the full inbound message')
     self.services.issue.TestAddComment(spam_comment, 1)
     self.services.issue.TestAddComment(deleted_comment, 2)
-    # self.services.issue.TestAddComment(banned_comment, 3)
     self.services.issue.TestAddComment(inbound_comment, 3)
 
     with self.work_env as we:
-      actual_comments = we.SafeListIssueComments(issue.issue_id, 1000, 0)
+      list_result = we.SafeListIssueComments(issue.issue_id, 1000, 0)
+
+    self.assertEqual(None, list_result.next_start)
+    actual_comments = list_result.items
     self.assertEqual(4, len(actual_comments))
     self.assertEqual(initial_description, actual_comments[0].content)
     AssertFiltered(spam_comment, actual_comments[1])
     AssertFiltered(deleted_comment, actual_comments[2])
     self.assertEqual('from an inbound message', actual_comments[3].content)
     self.assertEqual(None, actual_comments[3].inbound_message)
+
+  def testSafeListIssueComments_MoreItems(self):
+    initial_description = 'sum'
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        initial_description,
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    self.services.issue.TestAddIssue(issue)
+    comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='more info',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id)
+    self.services.issue.TestAddComment(comment, 1)
+
+    with self.work_env as we:
+      list_result = we.SafeListIssueComments(issue.issue_id, 1, 0)
+
+    self.assertEqual(1, list_result.next_start)
+    actual_comments = list_result.items
+    self.assertEqual(1, len(actual_comments))
+    self.assertEqual(initial_description, actual_comments[0].content)
+
+  def testSafeListIssueComments_Start(self):
+    initial_description = 'sum'
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        initial_description,
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    self.services.issue.TestAddIssue(issue)
+    comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='more info',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id)
+    self.services.issue.TestAddComment(comment, 1)
+
+    with self.work_env as we:
+      list_result = we.SafeListIssueComments(issue.issue_id, 1000, 1)
+    self.assertEqual(None, list_result.next_start)
+    actual_comments = list_result.items
+    self.assertEqual(1, len(actual_comments))
+    self.assertEqual('more info', actual_comments[0].content)
 
   # FUTURE: UpdateComment()
 

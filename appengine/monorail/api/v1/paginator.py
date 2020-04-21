@@ -60,7 +60,7 @@ class Paginator(object):
         parent=parent, page_size=page_size, order_by=order_by, query=query)
 
   def GetStart(self, page_token):
-    # type: (str) -> int
+    # type: (Optional[str]) -> int
     """Validates a request.page_token and returns the start index for it."""
     if page_token:
       return paginate.ValidateAndParsePageToken(
@@ -68,6 +68,16 @@ class Paginator(object):
     return 0
 
   def GenerateNextPageToken(self, next_start):
-    # type: (int) -> str
-    """Generates the `next_page_token` for the API response."""
+    # type: (Optional[int]) -> str
+    """Generates the `next_page_token` for the API response.
+
+    Args:
+      next_start: The start index of the next page, or None if no more results.
+
+    Returns:
+      A string clients can use to request the next page. Returns None if
+      next_start was None
+    """
+    if next_start is None:
+      return None
     return paginate.GeneratePageToken(self.request_contents, next_start)
