@@ -129,24 +129,25 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 
 	leaseDuration := time.Duration(c.leaseMinutes) * time.Minute
 
+	sc, err := c.newSwarmingClient(ctx)
+	if err != nil {
+		return err
+	}
+
 	if hasOneHostname {
 		oldhost := args[0]
 		host := skycmdlib.FixSuspiciousHostname(oldhost)
 		if host != oldhost {
 			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", oldhost, host)
 		}
-		return c.leaseDutByHostname(ctx, a, leaseDuration, host)
+		return c.leaseDutByHostname(ctx, a, sc, leaseDuration, host)
 	}
-	return c.leaseDUTByModel(ctx, a, leaseDuration, c.model)
+
+	return c.leaseDUTByModel(ctx, a, sc, leaseDuration)
 }
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
-func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, leaseDuration time.Duration, host string) error {
-	sc, err := c.newSwarmingClient(ctx)
-	if err != nil {
-		return errors.Annotate(err, "failed to create Swarming client").Err()
-	}
-
+func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration, host string) error {
 	ic, err := c.getInventoryClient(ctx)
 	if err != nil {
 		return err
@@ -183,32 +184,27 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 	return nil
 }
 
-func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, leaseDuration time.Duration, model string) error {
-	client, err := c.newSwarmingClient(ctx)
-	if err != nil {
-		return errors.Annotate(err, "failed to create Swarming client").Err()
-	}
-
-	tasks, err := client.GetActiveLeaseTasksForModel(ctx, model)
+func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) error {
+	tasks, err := sc.GetActiveLeaseTasksForModel(ctx, c.model)
 	if err != nil {
 		return errors.Annotate(err, "computing existing leases").Err()
 	}
 	if len(tasks) > maxTasksPerModel {
-		return fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), model, maxTasksPerModel)
+		return fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), c.model, maxTasksPerModel)
 	}
 
 	e := c.envFlags.Env()
 	creator := utils.TaskCreator{
-		Client:      client,
+		Client:      sc,
 		Environment: e,
 	}
-	id, err := creator.LeaseByModelTask(ctx, model, c.dims, int(leaseDuration.Seconds()), c.leaseReason)
+	id, err := creator.LeaseByModelTask(ctx, c.model, c.dims, int(leaseDuration.Seconds()), c.leaseReason)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(a.GetOut(), "Created lease task for model %s: %s\n", model, swarming.TaskURL(e.SwarmingService, id))
+	fmt.Fprintf(a.GetOut(), "Created lease task for model %s: %s\n", c.model, swarming.TaskURL(e.SwarmingService, id))
 
-	if err := c.waitForTaskStart(ctx, client, id); err != nil {
+	if err := c.waitForTaskStart(ctx, sc, id); err != nil {
 		return err
 	}
 	// TODO(ayatane): The time printed here may be off by the poll interval above.
