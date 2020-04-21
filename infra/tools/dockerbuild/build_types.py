@@ -41,8 +41,8 @@ class Spec(_Spec):
       ret = '%s-%s' % (self.name, self.version)
     else:
       ret = self.name
-    if self.universal:
-      ret += '-%s' % ('.'.join(sorted(self.universal.pyversions or ())))
+    if self.universal and self.universal.pyversions:
+      ret += '-%s' % '.'.join(sorted(self.universal.pyversions))
     return ret
 
   def to_universal(self):
