@@ -499,7 +499,7 @@ func updateIncremental(c context.Context, incr *model.AggregateResult) error {
 			}
 		}
 		return e
-	}, &datastore.TransactionOptions{XG: true})
+	}, nil)
 }
 
 // getTestFileAlt returns the the first TestFile in the datastore for

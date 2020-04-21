@@ -135,7 +135,7 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoP
 		logLifeCycleEvent(ctx, changehistory.LifeCycleDeployment, addingResults)
 		return r.saveToDatastore(ctx)
 	}
-	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return &addingResults, err
 	}
 	return &addingResults, nil
@@ -385,7 +385,7 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice, assig
 		return nil
 	}
 
-	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return updatingResults, err
 	}
 	return updatingResults, nil
@@ -445,7 +445,7 @@ func UpdateDutMeta(ctx context.Context, meta map[string]DutMeta) (DeviceOpResult
 	}
 	f := updateEntities(ctx, updateResults, nil)
 
-	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return updateResults, err
 	}
 	return append(updateResults, failedResults...), nil
@@ -497,7 +497,7 @@ func UpdateLabMeta(ctx context.Context, meta map[string]LabMeta) (DeviceOpResult
 	}
 	f := updateEntities(ctx, updateResults, nil)
 
-	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return updateResults, err
 	}
 	return append(updateResults, failedResults...), nil
@@ -535,7 +535,7 @@ func UpdateDutsStatus(ctx context.Context, states []*lab.DutState) (DeviceOpResu
 	// after on the entity retrieving.
 	f := updateEntities(ctx, updatingResults, filter)
 
-	if err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true}); err != nil {
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return updatingResults, err
 	}
 	return updatingResults, nil
@@ -611,7 +611,7 @@ func BatchUpdateDevices(ctx context.Context, duts []*DeviceProperty) error {
 		}
 		return datastore.Put(ctx, entities)
 	}
-	return datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{XG: true})
+	return datastore.RunInTransaction(ctx, f, nil)
 }
 
 // ReportInventory reports the inventory metrics.

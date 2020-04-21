@@ -259,7 +259,7 @@ func pollGerritProject(c context.Context, luciProject string, repo *tricium.Repo
 				return nil
 			}
 		})
-	}, &ds.TransactionOptions{XG: true}); err != nil {
+	}, nil); err != nil {
 		return err
 	}
 	logging.Infof(c, "Poll done for %q. Processed %d change(s).", luciProject, len(changes))

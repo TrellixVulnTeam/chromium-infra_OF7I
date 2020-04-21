@@ -232,7 +232,7 @@ func analyze(c context.Context, req *tricium.AnalyzeRequest, cp config.ProviderA
 				return nil
 			}
 		})
-	}, &ds.TransactionOptions{XG: true})
+	}, nil)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to track and launch request").Err()
 	}
