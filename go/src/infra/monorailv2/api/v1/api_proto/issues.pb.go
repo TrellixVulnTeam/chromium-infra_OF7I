@@ -400,7 +400,11 @@ type IssuesClient interface {
 	// TODO(monorail:6988): Document possible errors when implemented.
 	SearchIssues(ctx context.Context, in *SearchIssuesRequest, opts ...grpc.CallOption) (*SearchIssuesResponse, error)
 	// Lists comments for an issue.
-	// TODO(monorail:6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   INVALID_ARGUMENT if `parent` is formatted incorrectly or `page_size` < 0.
+	//   NOT_FOUND if `parent` does not exist.
+	//   PERMISSION_DENIED if the requester is not allowed to view `parent`.
 	ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error)
 }
 type issuesPRPCClient struct {
@@ -486,7 +490,11 @@ type IssuesServer interface {
 	// TODO(monorail:6988): Document possible errors when implemented.
 	SearchIssues(context.Context, *SearchIssuesRequest) (*SearchIssuesResponse, error)
 	// Lists comments for an issue.
-	// TODO(monorail:6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   INVALID_ARGUMENT if `parent` is formatted incorrectly or `page_size` < 0.
+	//   NOT_FOUND if `parent` does not exist.
+	//   PERMISSION_DENIED if the requester is not allowed to view `parent`.
 	ListComments(context.Context, *ListCommentsRequest) (*ListCommentsResponse, error)
 }
 

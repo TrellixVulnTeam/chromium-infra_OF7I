@@ -32,10 +32,10 @@ class FrontendServicer(monorail_servicer.MonorailServicer):
     return frontend_pb2.GatherProjectEnvironmentResponse()
 
   @monorail_servicer.PRPCMethod
-  def GatherProjectMembersForUser(self, mc, request):
-    # type: (MonorailConnection, GatherProjectMembersForUserRequest) ->
-    #     GatherProjectMembersForUserResponse
-    """pRPC API method that implements GatherProjectMembersForUser.
+  def GatherProjectMembershipsForUser(self, mc, request):
+    # type: (MonorailConnection, GatherProjectMembershipsForUserRequest) ->
+    #     GatherProjectMembershipsForUserResponse
+    """pRPC API method that implements GatherProjectMembershipsForUser.
 
     Raises:
       NoSuchUserException if the user is not found.
@@ -47,7 +47,8 @@ class FrontendServicer(monorail_servicer.MonorailServicer):
     project_memberships = []
 
     with work_env.WorkEnv(mc, self.services) as we:
-      owner, committer, contributor = we.GatherProjectMembersForUser(user_id)
+      owner, committer, contributor = we.GatherProjectMembershipsForUser(
+          user_id)
 
     for project_id in owner:
       project_member = self.converter.CreateProjectMember(
@@ -64,5 +65,5 @@ class FrontendServicer(monorail_servicer.MonorailServicer):
           mc.cnxn, project_id, user_id, 'CONTRIBUTOR')
       project_memberships.append(project_member)
 
-    return frontend_pb2.GatherProjectMembersForUserResponse(
+    return frontend_pb2.GatherProjectMembershipsForUserResponse(
         project_memberships=project_memberships)

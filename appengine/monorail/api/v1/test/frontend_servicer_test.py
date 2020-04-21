@@ -55,7 +55,7 @@ class FrontendServicerTest(unittest.TestCase):
 
     self.assertEqual(response, frontend_pb2.GatherProjectEnvironmentResponse())
 
-  def testGatherProjectMembersForUser(self):
+  def testGatherProjectMembershipsForUser(self):
     """We can list a user's project memberships."""
     self.services.project.TestAddProject(
         'owner_proj', project_id=777, owner_ids=[111])
@@ -65,12 +65,12 @@ class FrontendServicerTest(unittest.TestCase):
         'contributor_proj', project_id=999)
     contributor_proj.contributor_ids = [111]
 
-    request = frontend_pb2.GatherProjectMembersForUserRequest(
+    request = frontend_pb2.GatherProjectMembershipsForUserRequest(
         user=self.user_1_resource_name)
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.user_1.email)
     response = self.CallWrapped(
-        self.frontend_svcr.GatherProjectMembersForUser, mc, request)
+        self.frontend_svcr.GatherProjectMembershipsForUser, mc, request)
 
     owner_membership = project_objects_pb2.ProjectMember(
         name='projects/{}/members/{}'.format('owner_proj', '111'),
@@ -83,7 +83,7 @@ class FrontendServicerTest(unittest.TestCase):
         role=project_objects_pb2.ProjectMember.ProjectRole.Value('CONTRIBUTOR'))
     self.assertEqual(
         response,
-        frontend_pb2.GatherProjectMembersForUserResponse(
+        frontend_pb2.GatherProjectMembershipsForUserResponse(
             project_memberships=[
                 owner_membership, committer_membership, contributor_membership
             ]))

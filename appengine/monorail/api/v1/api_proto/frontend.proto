@@ -19,8 +19,8 @@ service Frontend {
   // Raises:
   //   NOT_FOUND if the user is not found.
   //   INVALID_ARGUMENT if the user resource name provided is invalid.
-  rpc GatherProjectMembersForUser (GatherProjectMembersForUserRequest)
-    returns (GatherProjectMembersForUserResponse) {}
+  rpc GatherProjectMembershipsForUser (GatherProjectMembershipsForUserRequest)
+    returns (GatherProjectMembershipsForUserResponse) {}
 }
 
 
@@ -56,17 +56,17 @@ message GatherProjectEnvironmentResponse {
   repeated ProjectSavedQuery saved_queries = 8;
 }
 
-// The request message for Frontend.GatherProjectMembersForUser.
+// The request message for Frontend.GatherProjectMembershipsForUser.
 // Next available tag: 2
-message GatherProjectMembersForUserRequest {
+message GatherProjectMembershipsForUserRequest {
   // The name of the user to request.
   string user = 1 [
       (google.api.resource_reference) = {type: "api.crbug.com/User"}];
 }
 
-// The response message for Frontend.GatherProjectMembersForUser.
+// The response message for Frontend.GatherProjectMembershipsForUser.
 // Next available tag: 2
-message GatherProjectMembersForUserResponse {
+message GatherProjectMembershipsForUserResponse {
   // The projects that the user is a member of.
   repeated ProjectMember project_memberships = 1;
 }

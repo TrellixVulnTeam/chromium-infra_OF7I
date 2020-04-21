@@ -460,7 +460,7 @@ class WorkEnv(object):
 
     return projects[project_name]
 
-  def GatherProjectMembersForUser(self, user_id):
+  def GatherProjectMembershipsForUser(self, user_id):
     """Return the projects where the user has a role.
 
     Args:
@@ -505,7 +505,7 @@ class WorkEnv(object):
 
   def GetUserProjects(self, viewed_user_effective_ids):
     # TODO(crbug.com/monorail/7398): Combine this function with
-    # GatherProjectMembersForUser after removing the legacy
+    # GatherProjectMembershipsForUser after removing the legacy
     # project list page and the v0 GetUsersProjects RPC.
     """Get the projects to display in the user's profile.
 
