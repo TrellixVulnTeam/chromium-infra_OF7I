@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
@@ -141,14 +142,29 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
 func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, leaseDuration time.Duration, host string) error {
-	client, err := c.newSwarmingClient(ctx)
+	sc, err := c.newSwarmingClient(ctx)
 	if err != nil {
 		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
 
+	ic, err := c.getInventoryClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	// TODO(gregorynisbet): Check if model is empty and make sure not to pass
+	// pass it to swarming if it is empty.
+	model, err := getModelForHost(ctx, ic, host)
+	if err != nil {
+		return err
+	}
+	// TODO(gregorynisbet): instead of just logging the model, actually pass it
+	// to LeaseByHostnameTask and use it to annotate the lease task.
+	fmt.Fprintf(a.GetErr(), "inferred model (%s)\n", model)
+
 	e := c.envFlags.Env()
 	creator := utils.TaskCreator{
-		Client:      client,
+		Client:      sc,
 		Environment: e,
 	}
 	id, err := creator.LeaseByHostnameTask(ctx, host, int(leaseDuration.Seconds()), c.leaseReason)
@@ -159,7 +175,7 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 	scheduleRepairTaskForLater(ctx, &creator, a, leaseDuration, host)
 	fmt.Fprintf(a.GetOut(), "Waiting for task to start; lease isn't active yet\n")
 
-	if err := c.waitForTaskStart(ctx, client, id); err != nil {
+	if err := c.waitForTaskStart(ctx, sc, id); err != nil {
 		return err
 	}
 	// TODO(ayatane): The time printed here may be off by the poll interval above.
@@ -258,4 +274,24 @@ func splitKeyVal(s string) (string, string, error) {
 		return res[0], res[1], nil
 	}
 	return "", "", fmt.Errorf(`string (%s) contains more than too many %d "=" chars`, s, len(res))
+}
+
+// getInventoryClient produces an inventory client.
+func (c *leaseDutRun) getInventoryClient(ctx context.Context) (inv.Client, error) {
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
+	if err != nil {
+		return nil, err
+	}
+	e := c.envFlags.Env()
+	return inv.NewInventoryClient(hc, e), nil
+}
+
+// getModelForHost contacts the inventory v2 service and gets the model associated with
+// a given hostname.
+func getModelForHost(ctx context.Context, ic inv.Client, host string) (string, error) {
+	dut, err := ic.GetDutInfo(ctx, host, true)
+	if err != nil {
+		return "", err
+	}
+	return dut.GetCommon().GetLabels().GetModel(), nil
 }
