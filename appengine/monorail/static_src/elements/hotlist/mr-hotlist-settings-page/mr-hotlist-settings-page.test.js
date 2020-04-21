@@ -45,6 +45,10 @@ describe('mr-hotlist-settings-page (unconnected)', () => {
     assert.notInclude(element.shadowRoot.innerHTML, 'form');
   });
 
+  it('an anonymous viewer may not edit the Hotlist', () => {
+    assert.isFalse(element._userMayEdit());
+  });
+
   it('renders private hotlist', async () => {
     element._hotlist = {...example.HOTLIST, hotlistPrivacy: 'PRIVATE'};
     await element.updateComplete;
@@ -165,6 +169,27 @@ describe('mr-hotlist-settings-page (connected)', () => {
             prpcClient.call, 'monorail.v1.Hotlists', 'UpdateHotlist', args);
         sinon.assert.calledOnce(element._showHotlistSavedSnackbar);
       });
+    });
+  });
+
+  describe('hotlist editor logged in', () => {
+    let stateChangedStub;
+    beforeEach(async () => {
+      // Stop Redux from overriding values being tested.
+      stateChangedStub = sinon.stub(element, 'stateChanged');
+
+      // exampleUser.USER_2 is an editor of the example Hotlist.
+      element._currentUser = exampleUser.USER_2;
+      element._hotlist = {...example.HOTLIST};
+      await element.updateComplete;
+    });
+
+    it('an Editor may edit the Hotlist', () => {
+      assert.isTrue(element._userMayEdit());
+    });
+
+    afterEach(() => {
+      stateChangedStub.restore();
     });
   });
 });

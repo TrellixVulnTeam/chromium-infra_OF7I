@@ -111,8 +111,10 @@ class _MrHotlistSettingsPage extends LitElement {
     }
 
     // TODO(https://crbug.com/monorail/7451): use `===`, maybe Permissions API.
+    // Currently, this will allow Editors to see the Delete button. Update this
+    // logic to match the Permissions API.
     return this._hotlist.editors.some((editor) => {
-      userNameToId(editor.name) == this._currentUser.userId;
+      return userNameToId(editor.name) == this._currentUser.userId;
     });
   }
 

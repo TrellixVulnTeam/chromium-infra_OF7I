@@ -24,6 +24,7 @@ export const USER = Object.freeze({
 
 /** @type {User} */
 export const USER_2 = Object.freeze({
+  userId: 5678,
   name: 'users/5678',
   displayName: 'other_user@example.com',
 });
