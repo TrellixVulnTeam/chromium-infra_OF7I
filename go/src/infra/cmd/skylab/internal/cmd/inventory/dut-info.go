@@ -6,7 +6,6 @@ package inventory
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -20,8 +19,8 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
-	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
@@ -84,7 +83,7 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
-	ic := NewInventoryClient(hc, e)
+	ic := inv.NewInventoryClient(hc, e)
 	dut, err := ic.GetDutInfo(ctx, args[0], true)
 
 	if err != nil {
@@ -101,28 +100,6 @@ func (c *dutInfoRun) innerRun(a subcommands.Application, args []string, env subc
 	default:
 		return printHumanizedInfoShort(bw, dut)
 	}
-}
-
-// GetDutInfo gets the dut information from inventory v2 service.
-func (client *inventoryClientV2) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
-	devID := &invV2Api.DeviceID{Id: &invV2Api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: id}}
-	if byHostname {
-		devID = &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: id}}
-	}
-	rsp, err := client.ic.GetCrosDevices(ctx, &invV2Api.GetCrosDevicesRequest{
-		Ids: []*invV2Api.DeviceID{devID},
-	})
-	if err != nil {
-		return nil, errors.Annotate(err, "get dutinfo for %s", id).Err()
-	}
-	if len(rsp.FailedDevices) > 0 {
-		result := rsp.FailedDevices[0]
-		return nil, errors.Reason("failed to get device %s: %s", result.Hostname, result.ErrorMsg).Err()
-	}
-	if len(rsp.Data) != 1 {
-		return nil, errors.Reason("no info returned for %s", id).Err()
-	}
-	return invV2Api.AdaptToV1DutSpec(rsp.Data[0])
 }
 
 // printHumanizedInfoShort prints the most commonly used dut information in a

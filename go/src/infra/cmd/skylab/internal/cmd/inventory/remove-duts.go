@@ -6,11 +6,9 @@ package inventory
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"os"
-	"runtime/debug"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -18,17 +16,13 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/errors"
 
-	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	iv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
-	protos "infra/libs/fleet/protos"
-	ufs "infra/libs/fleet/protos/go"
 	"infra/libs/skylab/inventory"
 )
 
@@ -86,8 +80,8 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		return nil
 	}
 
-	ic := NewInventoryClient(hc, e)
-	modified, err := ic.deleteDUTs(ctx, c.Flags.Args(), &c.authFlags, c.removalReason, a.GetOut())
+	ic := iv.NewInventoryClient(hc, e)
+	modified, err := ic.DeleteDUTs(ctx, c.Flags.Args(), &c.authFlags, c.removalReason, a.GetOut())
 	if err != nil {
 		return err
 	}
@@ -125,77 +119,6 @@ func protoTimestamp(t time.Time) *inventory.Timestamp {
 	return &inventory.Timestamp{
 		Seconds: &s,
 		Nanos:   &ns,
-	}
-}
-
-func (client *inventoryClientV2) deleteDUTs(ctx context.Context, hostnames []string, authFlags *authcli.Flags, rr skycmdlib.RemovalReason, stdout io.Writer) (modified bool, err error) {
-	var devIds []*invV2Api.DeviceID
-	for _, h := range hostnames {
-		devIds = append(devIds, &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: h}})
-	}
-	// RemovalReason is to be added into DeleteCrosDevicesRequest.
-	rsp, err := client.ic.DeleteCrosDevices(ctx, &invV2Api.DeleteCrosDevicesRequest{
-		Ids: devIds,
-		Reason: &invV2Api.DeleteCrosDevicesRequest_Reason{
-			Bug:     rr.Bug,
-			Comment: rr.Comment,
-		},
-	})
-	if err != nil {
-		return false, errors.Annotate(err, "remove devices for %s ...", hostnames[0]).Err()
-	}
-	if len(rsp.FailedDevices) > 0 {
-		var reasons []string
-		for _, d := range rsp.FailedDevices {
-			reasons = append(reasons, fmt.Sprintf("%s:%s", d.Hostname, d.ErrorMsg))
-		}
-		return false, errors.Reason("failed to remove device: %s", strings.Join(reasons, ", ")).Err()
-	}
-	b := bufio.NewWriter(stdout)
-	fmt.Fprintln(b, "Deleted DUT hostnames")
-	for _, d := range rsp.RemovedDevices {
-		fmt.Fprintln(b, d.Hostname)
-	}
-	// TODO(eshwarn) : move this into DeleteCrosDevices in inventoryV2 layer
-	updateAssets(ctx, client, rsp.RemovedDevices, b)
-	b.Flush()
-	return len(rsp.RemovedDevices) > 0, nil
-}
-
-func updateAssets(ctx context.Context, client *inventoryClientV2, deletedDevices []*invV2Api.DeviceOpResult, b io.Writer) {
-	defer func() {
-		if r := recover(); r != nil {
-			debug.PrintStack()
-		}
-	}()
-	if len(deletedDevices) < 0 {
-		return
-	}
-	var existingAssetsIDs = make([]string, 0, len(deletedDevices))
-	var existingAssets = make([]*protos.ChopsAsset, 0, len(deletedDevices))
-	for _, deletedDevice := range deletedDevices {
-		existingAssetsIDs = append(existingAssetsIDs, deletedDevice.GetId())
-		existingAssets = append(existingAssets,
-			&protos.ChopsAsset{
-				Id:       deletedDevice.GetId(),
-				Location: &ufs.Location{},
-			})
-	}
-	assetResponse, _ := client.ic.GetAssets(ctx, &invV2Api.AssetIDList{Id: existingAssetsIDs})
-	if assetResponse != nil {
-		for _, assetResult := range assetResponse.Passed {
-			fmt.Fprintf(b, "AssetId: %s , Old Location: %s\n", assetResult.GetAsset().GetId(), assetResult.GetAsset().GetLocation().String())
-		}
-		for _, assetResult := range assetResponse.Failed {
-			fmt.Fprintf(b, "failed to get asset from registration for %s : %s\n", assetResult.Asset.GetId(), assetResult.GetErrorMsg())
-		}
-	}
-	// Update existing assets in registration system
-	assetResponse, _ = client.ic.UpdateAssets(ctx, &invV2Api.AssetList{Asset: existingAssets})
-	if assetResponse != nil {
-		for _, assetResult := range assetResponse.Passed {
-			fmt.Fprintf(b, "AssetId: %s , New Location: %s\n", assetResult.GetAsset().GetId(), assetResult.GetAsset().GetLocation().String())
-		}
 	}
 }
 

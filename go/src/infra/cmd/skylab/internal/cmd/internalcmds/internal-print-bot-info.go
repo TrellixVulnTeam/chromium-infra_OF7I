@@ -13,7 +13,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
-	invcli "infra/cmd/skylab/internal/cmd/inventory"
+	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
@@ -63,7 +63,7 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 		return err
 	}
 	siteEnv := c.envFlags.Env()
-	ic := invcli.NewInventoryClient(hc, siteEnv)
+	ic := inv.NewInventoryClient(hc, siteEnv)
 	d, err := ic.GetDutInfo(ctx, dutID, c.byHostname)
 	if err != nil {
 		return err

@@ -5,7 +5,6 @@
 package inventory
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -16,9 +15,9 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
-	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
@@ -114,8 +113,8 @@ func (c *batchUpdateDutsRun) innerRun(a subcommands.Application, args []string, 
 	}
 	e := c.envFlags.Env()
 
-	ic := NewInventoryClient(hc, e)
-	return ic.batchUpdateDUTs(ctx, req, a.GetOut())
+	ic := inv.NewInventoryClient(hc, e)
+	return ic.BatchUpdateDUTs(ctx, req, a.GetOut())
 }
 
 func getRequestForHostnames(hostnames []string, pool string) *fleet.BatchUpdateDutsRequest {
@@ -139,26 +138,4 @@ func printUpdates(w io.Writer, ds *fleet.BatchUpdateDutsResponse) (err error) {
 		fmt.Fprintf(tw, "Inventory change URL:\t%s\n", ds.GetUrl())
 	}
 	return tw.Flush()
-}
-
-func (client *inventoryClientV2) batchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {
-	properties := make([]*invV2Api.DeviceProperty, len(req.GetDutProperties()))
-	for i, r := range req.GetDutProperties() {
-		properties[i] = &invV2Api.DeviceProperty{
-			Hostname: r.GetHostname(),
-			Pool:     r.GetPool(),
-			Rpm: &invV2Api.DeviceProperty_Rpm{
-				PowerunitName:   r.GetRpm().GetPowerunitHostname(),
-				PowerunitOutlet: r.GetRpm().GetPowerunitOutlet(),
-			},
-		}
-	}
-	_, err := client.ic.BatchUpdateDevices(ctx, &invV2Api.BatchUpdateDevicesRequest{
-		DeviceProperties: properties,
-	})
-	if err != nil {
-		return errors.Annotate(err, "fail to update Duts").Err()
-	}
-	fmt.Fprintln(writer, "Successfully batch updated.")
-	return nil
 }
