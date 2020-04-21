@@ -414,16 +414,6 @@ describe('mr-issue-list', () => {
         '/p/chromium/issues/list?q=owner%3Ame%20priority%3DHigh');
   });
 
-  it('addGroupBy updates groupby URL param', async () => {
-    element.columns = ['Owner', 'Priority'];
-    element.groups = ['Status'];
-
-    element.addGroupBy(0);
-
-    sinon.assert.calledWith(element._page,
-        '/p/chromium/issues/list?groupby=Owner%20Status&colspec=Priority');
-  });
-
   it('addColumn adds a column', () => {
     element.columns = ['ID', 'Summary'];
 
@@ -445,34 +435,6 @@ describe('mr-issue-list', () => {
     sinon.assert.calledWith(element.reloadColspec, ['Summary']);
   });
 
-  it('clicking sort up column header sets sort spec', async () => {
-    element.columns = ['ID', 'Summary'];
-
-    sinon.stub(element, 'updateSortSpec');
-
-    await element.updateComplete;
-
-    const dropdown = element.shadowRoot.querySelector('.dropdown-summary');
-
-    dropdown.clickItem(0); // Sort up.
-
-    sinon.assert.calledWith(element.updateSortSpec, 'Summary');
-  });
-
-  it('clicking sort down column header sets sort spec', async () => {
-    element.columns = ['ID', 'Summary'];
-
-    sinon.stub(element, 'updateSortSpec');
-
-    await element.updateComplete;
-
-    const dropdown = element.shadowRoot.querySelector('.dropdown-summary');
-
-    dropdown.clickItem(1); // Sort down.
-
-    sinon.assert.calledWith(element.updateSortSpec, 'Summary', true);
-  });
-
   it('clicking hide column in column header removes column', async () => {
     element.columns = ['ID', 'Summary'];
 
@@ -482,7 +444,7 @@ describe('mr-issue-list', () => {
 
     const dropdown = element.shadowRoot.querySelector('.dropdown-summary');
 
-    dropdown.clickItem(2); // Hide column.
+    dropdown.clickItem(0); // Hide column.
 
     sinon.assert.calledWith(element.removeColumn, 1);
   });
@@ -504,6 +466,57 @@ describe('mr-issue-list', () => {
 
     stars = element.shadowRoot.querySelectorAll('mr-star-button');
     assert.equal(stars.length, 2);
+  });
+
+  describe('issue sorting and grouping enabled', () => {
+    beforeEach(() => {
+      element.sortingAndGroupingEnabled = true;
+    });
+
+    it('clicking sort up column header sets sort spec', async () => {
+      element.columns = ['ID', 'Summary'];
+
+      sinon.stub(element, 'updateSortSpec');
+
+      await element.updateComplete;
+
+      const dropdown = element.shadowRoot.querySelector('.dropdown-summary');
+
+      dropdown.clickItem(0); // Sort up.
+
+      sinon.assert.calledWith(element.updateSortSpec, 'Summary');
+    });
+
+    it('clicking sort down column header sets sort spec', async () => {
+      element.columns = ['ID', 'Summary'];
+
+      sinon.stub(element, 'updateSortSpec');
+
+      await element.updateComplete;
+
+      const dropdown = element.shadowRoot.querySelector('.dropdown-summary');
+
+      dropdown.clickItem(1); // Sort down.
+
+      sinon.assert.calledWith(element.updateSortSpec, 'Summary', true);
+    });
+
+    it('clicking group rows column header groups rows', async () => {
+      element.columns = ['Owner', 'Priority'];
+      element.groups = ['Status'];
+
+      sinon.spy(element, 'addGroupBy');
+
+      await element.updateComplete;
+
+      const dropdown = element.shadowRoot.querySelector('.dropdown-owner');
+      dropdown.clickItem(3); // Group rows.
+
+      sinon.assert.calledWith(element.addGroupBy, 0);
+
+      sinon.assert.calledWith(element._page,
+          '/p/chromium/issues/list?groupby=Owner%20Status&colspec=Priority');
+    });
   });
 
   describe('issue selection', () => {

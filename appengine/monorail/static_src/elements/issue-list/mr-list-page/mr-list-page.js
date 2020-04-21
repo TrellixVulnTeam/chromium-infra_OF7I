@@ -177,6 +177,7 @@ export class MrListPage extends connectStore(LitElement) {
         .groups=${this.groups}
         .userDisplayName=${this.userDisplayName}
         ?selectionEnabled=${this.editingEnabled}
+        ?sortingAndGroupingEnabled=${true}
         ?starringEnabled=${this.starringEnabled}
         @selectionChange=${this._setSelectedIssues}
       ></mr-issue-list>

@@ -312,7 +312,8 @@ export class MrIssueList extends connectStore(LitElement) {
   _headerActions(column, i) {
     const columnKey = column.toLowerCase();
 
-    const isGroupable = !UNGROUPABLE_COLUMNS.has(columnKey);
+    const isGroupable = this.sortingAndGroupingEnabled &&
+        !UNGROUPABLE_COLUMNS.has(columnKey);
 
     let showOnly = [];
     if (isGroupable) {
@@ -327,7 +328,7 @@ export class MrIssueList extends connectStore(LitElement) {
         }];
       }
     }
-    const actions = [
+    const sortingActions = this.sortingAndGroupingEnabled ? [
       {
         text: 'Sort up',
         handler: () => this.updateSortSpec(column),
@@ -336,6 +337,9 @@ export class MrIssueList extends connectStore(LitElement) {
         text: 'Sort down',
         handler: () => this.updateSortSpec(column, true),
       },
+    ] : [];
+    const actions = [
+      ...sortingActions,
       ...showOnly,
       {
         text: 'Hide column',
@@ -573,6 +577,12 @@ export class MrIssueList extends connectStore(LitElement) {
        */
       selectionEnabled: {type: Boolean},
       /**
+       * Whether issues should be sortable and groupable or not. This will
+       * change how column headers will be displayed. The ability to sort and
+       * group are currently coupled.
+       */
+      sortingAndGroupingEnabled: {type: Boolean},
+      /**
        * Whether to show issue starring or not.
        */
       starringEnabled: {type: Boolean},
@@ -670,6 +680,8 @@ export class MrIssueList extends connectStore(LitElement) {
     this.rerank = null;
     /** @type {boolean} */
     this.selectionEnabled = false;
+    /** @type {boolean} */
+    this.sortingAndGroupingEnabled = false;
     /** @type {boolean} */
     this.starringEnabled = false;
     /** @type {Array} */
