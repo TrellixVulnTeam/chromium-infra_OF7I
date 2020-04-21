@@ -51,6 +51,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import collections
+import itertools
 import logging
 import time
 
@@ -190,6 +191,33 @@ class WorkEnv(object):
         self.mc.auth.effective_ids, self.mc.perms, hotlist):
       raise permissions.PermissionException(
           'User is not allowed to edit this hotlist')
+
+  def _AssertUserCanEditValueForFieldDef(self, project, fielddef):
+    if not permissions.CanEditValueForFieldDef(
+        self.mc.auth.effective_ids, self.mc.perms, project, fielddef):
+      raise permissions.PermissionException(
+          'User is not allowed to edit this custom field')
+
+  def _AssertUserCanEditFieldsAndEnumMaskedLabels(
+      self, project, config, field_ids, labels):
+    field_ids = set(field_ids)
+
+    enum_fds_by_name = {
+        f.field_name.lower(): f.field_id
+        for f in config.field_defs
+        if f.field_type is tracker_pb2.FieldTypes.ENUM_TYPE and not f.is_deleted
+    }
+    for label in labels:
+      enum_field_name = tracker_bizobj.LabelIsMaskedByField(
+          label, enum_fds_by_name.keys())
+      if enum_field_name:
+        field_ids.add(enum_fds_by_name.get(enum_field_name))
+
+    fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+    for field_id in field_ids:
+      fd = fds_by_id.get(field_id)
+      if fd:
+        self._AssertUserCanEditValueForFieldDef(project, fd)
 
   ### Site methods
 
@@ -1272,6 +1300,15 @@ class WorkEnv(object):
 
     project = self.GetProject(issue.project_id)
     config = self.GetProjectConfig(issue.project_id)
+
+    # Reject attempts to edit restricted fields that the user cannot change.
+    field_ids = [fv.field_id for fv in delta.field_vals_add]
+    field_ids.extend([fvr.field_id for fvr in delta.field_vals_remove])
+    field_ids.extend(delta.fields_clear)
+    labels = itertools.chain(delta.labels_add, delta.labels_remove)
+    self._AssertUserCanEditFieldsAndEnumMaskedLabels(
+        project, config, field_ids, labels)
+
     old_owner_id = tracker_bizobj.GetOwnerId(issue)
 
     if attachments:

@@ -1647,8 +1647,35 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn()
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 0)
     self.services.issue.TestAddIssue(issue)
+
+    fd = tracker_pb2.FieldDef(
+        field_name='CustomField',
+        field_id=1,
+        field_type=tracker_pb2.FieldTypes.STR_TYPE)
+    res_fd = tracker_pb2.FieldDef(
+        field_name='ResField',
+        field_id=2,
+        field_type=tracker_pb2.FieldTypes.STR_TYPE,
+        is_restricted_field=True,
+        admin_ids=[111])
+    res_fd2 = tracker_pb2.FieldDef(
+        field_name='ResEnumField',
+        field_id=3,
+        field_type=tracker_pb2.FieldTypes.ENUM_TYPE,
+        is_restricted_field=True,
+        editor_ids=[111])
+    config = self.services.config.GetProjectConfig(self.cnxn, 789)
+    config.field_defs = [fd, res_fd, res_fd2]
+    self.services.config.StoreConfig(None, config)
+
+    fv = tracker_pb2.FieldValue(field_id=1, str_value='Chicken')
+    res_fv = tracker_pb2.FieldValue(field_id=2, str_value='Dog')
     delta = tracker_pb2.IssueDelta(
-        owner_id=111, summary='New summary', cc_ids_add=[333])
+        owner_id=111,
+        summary='New summary',
+        cc_ids_add=[333],
+        field_vals_add=[fv, res_fv],
+        labels_add=['resenumfield-b'])
 
     with self.work_env as we:
       we.UpdateIssue(issue, delta, 'Getting started')
@@ -1656,6 +1683,8 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual(111, issue.owner_id)
     self.assertEqual('New summary', issue.summary)
     self.assertEqual([333], issue.cc_ids)
+    self.assertEqual([fv, res_fv], issue.field_values)
+    self.assertEqual(['resenumfield-b'], issue.labels)
     self.assertEqual([issue.issue_id], self.services.issue.enqueued_issues)
     comments = self.services.issue.GetCommentsForIssue('cnxn', issue.issue_id)
     comment_pb = comments[-1]
@@ -1665,6 +1694,51 @@ class WorkEnvTest(unittest.TestCase):
         old_owner_id=0, comment_id=comment_pb.id)
     fake_pasibn.assert_called_with(
         issue.issue_id, 'testing-app.appspot.com', [], 111, send_email=True)
+
+  def testUpdateIssue_RejectEditRestrictedField(self):
+    """We can update an issue."""
+    self.SignIn()
+    issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 0)
+    self.services.issue.TestAddIssue(issue)
+
+    fd = tracker_pb2.FieldDef(
+        field_name='CustomField',
+        field_id=1,
+        field_type=tracker_pb2.FieldTypes.STR_TYPE)
+    res_fd = tracker_pb2.FieldDef(
+        field_name='ResField',
+        field_id=2,
+        field_type=tracker_pb2.FieldTypes.STR_TYPE,
+        is_restricted_field=True)
+    res_fd2 = tracker_pb2.FieldDef(
+        field_name='ResEnumField',
+        field_id=3,
+        field_type=tracker_pb2.FieldTypes.ENUM_TYPE,
+        is_restricted_field=True)
+    config = self.services.config.GetProjectConfig(self.cnxn, 789)
+    config.field_defs = [fd, res_fd, res_fd2]
+    self.services.config.StoreConfig(None, config)
+
+    fv = tracker_pb2.FieldValue(field_id=1, str_value='Chicken')
+    res_fv = tracker_pb2.FieldValue(field_id=2, str_value='Dog')
+    delta_res_field_val = tracker_pb2.IssueDelta(
+        owner_id=111,
+        summary='New summary',
+        cc_ids_add=[333],
+        field_vals_add=[fv, res_fv])
+    delta_res_enum = tracker_pb2.IssueDelta(
+        owner_id=111,
+        summary='New summary',
+        cc_ids_add=[333],
+        field_vals_add=[fv],
+        labels_add=['resenumfield-b'])
+
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.UpdateIssue(issue, delta_res_field_val, 'Getting Started')
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.UpdateIssue(issue, delta_res_enum, 'Getting Started')
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueBlockingNotification')
