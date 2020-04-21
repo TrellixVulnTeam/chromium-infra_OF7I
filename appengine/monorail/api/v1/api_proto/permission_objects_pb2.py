@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n)api/v1/api_proto/permission_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\"O\n\rPermissionSet\x12\x10\n\x08resource\x18\x01 \x01(\t\x12,\n\x0bpermissions\x18\x02 \x03(\x0e\x32\x17.monorail.v1.Permission*b\n\nPermission\x12\x1a\n\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x10\n\x0cHOTLIST_EDIT\x10\x01\x12\x16\n\x12HOTLIST_ADMINISTER\x10\x02\x12\x0e\n\nISSUE_EDIT\x10\x03\x62\x06proto3')
+  serialized_pb=_b('\n)api/v1/api_proto/permission_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\"O\n\rPermissionSet\x12\x10\n\x08resource\x18\x01 \x01(\t\x12,\n\x0bpermissions\x18\x02 \x03(\x0e\x32\x17.monorail.v1.Permission*\x90\x01\n\nPermission\x12\x1a\n\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x10\n\x0cHOTLIST_EDIT\x10\x01\x12\x16\n\x12HOTLIST_ADMINISTER\x10\x02\x12\x0e\n\nISSUE_EDIT\x10\x03\x12\x12\n\x0e\x46IELD_DEF_EDIT\x10\x04\x12\x18\n\x14\x46IELD_DEF_VALUE_EDIT\x10\x05\x62\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,])
 
@@ -47,11 +47,19 @@ _PERMISSION = _descriptor.EnumDescriptor(
       name='ISSUE_EDIT', index=3, number=3,
       serialized_options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FIELD_DEF_EDIT', index=4, number=4,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FIELD_DEF_VALUE_EDIT', index=5, number=5,
+      serialized_options=None,
+      type=None),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=185,
-  serialized_end=283,
+  serialized_start=186,
+  serialized_end=330,
 )
 _sym_db.RegisterEnumDescriptor(_PERMISSION)
 
@@ -60,6 +68,8 @@ PERMISSION_UNSPECIFIED = 0
 HOTLIST_EDIT = 1
 HOTLIST_ADMINISTER = 2
 ISSUE_EDIT = 3
+FIELD_DEF_EDIT = 4
+FIELD_DEF_VALUE_EDIT = 5
 
 
 

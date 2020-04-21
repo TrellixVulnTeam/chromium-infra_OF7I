@@ -14,7 +14,7 @@ import "google_proto/google/api/field_behavior.proto";
 
 
 // All possible permissions on the Monorail site.
-// Next available tag: 4
+// Next available tag: 6
 enum Permission {
   // Default value. This value is unused.
   PERMISSION_UNSPECIFIED = 0;
@@ -25,6 +25,12 @@ enum Permission {
   HOTLIST_ADMINISTER = 2;
   // The permission needed to edit an issue.
   ISSUE_EDIT = 3;
+  // The permission needed to edit a custom field definition.
+  FIELD_DEF_EDIT = 4;
+  // The permission needed to edit the value of a custom field.
+  // More permissions will be required in the specific issue
+  // where the user plans to edit that value, e.g. ISSUE_EDIT.
+  FIELD_DEF_VALUE_EDIT = 5;
 }
 
 
