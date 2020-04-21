@@ -25,18 +25,9 @@ type TaskCreator struct {
 
 // RepairTask creates admin_repair task for particular DUT
 func (tc *TaskCreator) RepairTask(ctx context.Context, host string, customTags []string, expirationSec int) (taskID string, err error) {
-	dims := []*swarming_api.SwarmingRpcsStringPair{
-		{Key: "pool", Value: "ChromeOSSkylab"},
-		{Key: "dut_name", Value: host},
-	}
-	ids, err := tc.Client.GetBotIDs(ctx, dims)
-	switch {
-	case err != nil:
-		return "", errors.Annotate(err, "failed to find bot").Err()
-	case len(ids) == 0:
-		return "", errors.Reason("not found any bot with dut_name: %v", host).Err()
-	case len(ids) > 1:
-		return "", errors.Reason("more that one bot with dut_name: %v", host).Err()
+	id, err := tc.dutNameToBotID(ctx, host)
+	if err != nil {
+		return "", err
 	}
 	c := worker.Command{
 		TaskName: "admin_repair",
@@ -48,7 +39,7 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, customTags [
 			Command: c.Args(),
 			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
 				{Key: "pool", Value: "ChromeOSSkylab"},
-				{Key: "id", Value: ids[0]},
+				{Key: "id", Value: id},
 			},
 			ExecutionTimeoutSecs: 5400,
 		},
@@ -80,13 +71,17 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, customTags [
 // LeaseByHostnameTask creates lease_task for particular DUT
 func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, durationSec int, reason string) (taskID string, err error) {
 	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo Zzz...; done`}
+	id, err := tc.dutNameToBotID(ctx, host)
+	if err != nil {
+		return "", err
+	}
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: c,
 			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
 				{Key: "pool", Value: "ChromeOSSkylab"},
-				{Key: "dut_name", Value: host},
+				{Key: "id", Value: id},
 			},
 			ExecutionTimeoutSecs: int64(durationSec),
 		},
@@ -180,4 +175,21 @@ func convertTags(m map[string]string) []string {
 		out = append(out, fmt.Sprintf("%s:%s", k, v))
 	}
 	return out
+}
+
+func (tc *TaskCreator) dutNameToBotID(ctx context.Context, host string) (string, error) {
+	dims := []*swarming_api.SwarmingRpcsStringPair{
+		{Key: "pool", Value: "ChromeOSSkylab"},
+		{Key: "dut_name", Value: host},
+	}
+	ids, err := tc.Client.GetBotIDs(ctx, dims)
+	switch {
+	case err != nil:
+		return "", errors.Annotate(err, "failed to find bot").Err()
+	case len(ids) == 0:
+		return "", errors.Reason("not found any bot with dut_name: %v", host).Err()
+	case len(ids) > 1:
+		return "", errors.Reason("more that one bot with dut_name: %v", host).Err()
+	}
+	return ids[0], nil
 }
