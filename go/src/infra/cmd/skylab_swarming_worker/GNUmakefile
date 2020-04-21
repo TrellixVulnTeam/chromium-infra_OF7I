@@ -1,6 +1,7 @@
-skylab_swarming_worker: ssw
-
 .PHONY: ssw
+ssw: skylab_swarming_worker
+
+.PHONY: skylab_swarming_worker
 ssw: check-environment
 	go build -o skylab_swarming_worker -- .
 
