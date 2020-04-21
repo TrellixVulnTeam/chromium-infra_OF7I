@@ -297,20 +297,28 @@ class ConverterFunctionsTest(unittest.TestCase):
         hotlist.hotlist_id, hotlist.items)
     self.assertEqual(api_items, [])
 
-  def testConvertComments(self):
+  @patch('tracker.attachment_helpers.SignAttachmentID')
+  def testConvertComments(self, mock_SignAttachmentID):
     """We can convert comments."""
     # TODO(jessan): test convert second comment.
-    # non-description (and 2nd description?)
-    # deleted_by
+    # 2nd description?
     # appproval
-    # amendments
-    # attachments
     # inbound_message
     # spam
     # importer_id (is ignored)
-    # TODO(jessan): test convert filtered comment.
-
-    comment_0 = tracker_pb2.IssueComment(
+    mock_SignAttachmentID.return_value = 2
+    attach = tracker_pb2.Attachment(
+        attachment_id=1,
+        mimetype='image/png',
+        filename='example.png',
+        filesize=12345)
+    deleted_attach = tracker_pb2.Attachment(
+        attachment_id=2,
+        mimetype='image/png',
+        filename='deleted_example.png',
+        filesize=67890,
+        deleted=True)
+    initial_comment = tracker_pb2.IssueComment(
         project_id=self.issue_1.project_id,
         issue_id=self.issue_1.issue_id,
         user_id=self.issue_1.reporter_id,
@@ -318,15 +326,76 @@ class ConverterFunctionsTest(unittest.TestCase):
         content='initial description',
         sequence=0,
         is_description=True,
-        description_num='1')
+        description_num='1',
+        attachments=[attach, deleted_attach])
+    deleted_comment = tracker_pb2.IssueComment(
+        project_id=self.issue_1.project_id,
+        issue_id=self.issue_1.issue_id,
+        timestamp=self.PAST_TIME,
+        deleted_by=self.issue_1.reporter_id,
+        sequence=1)
+    amendments = [
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID.SUMMARY, newvalue='new', oldvalue='old'),
+        # TODO(crbug.com/monorail/7143): Add tests w/ new AmendmentString.
+        # tracker_pb2.Amendment(
+        #     field=tracker_pb2.FieldID.OWNER, added_user_ids=[111]),
+        # tracker_pb2.Amendment(
+        #     field=tracker_pb2.FieldID.CC,
+        #     added_user_ids=[111],
+        #     removed_user_ids=[222]),
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID.CUSTOM,
+            custom_field_name='EstDays',
+            newvalue='12')
+    ]
+    amendments_comment = tracker_pb2.IssueComment(
+        project_id=self.issue_1.project_id,
+        issue_id=self.issue_1.issue_id,
+        user_id=self.issue_1.reporter_id,
+        timestamp=self.PAST_TIME,
+        content='some amendments',
+        sequence=2,
+        amendments=amendments)
     expected_0 = issue_objects_pb2.Comment(
         name='projects/proj/issues/1/comments/0',
         state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
         content='initial description',
         commenter='users/111',
+        create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        attachments=[
+            issue_objects_pb2.Comment.Attachment(
+                filename='example.png',
+                state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+                size=12345,
+                media_type='image/png',
+                thumbnail_uri='attachment?aid=1&signed_aid=2&inline=1&thumb=1',
+                view_uri='attachment?aid=1&signed_aid=2&inline=1',
+                download_uri='attachment?aid=1&signed_aid=2'),
+            issue_objects_pb2.Comment.Attachment(
+                filename='deleted_example.png',
+                state=issue_objects_pb2.IssueContentState.Value('DELETED'),
+                media_type='image/png')
+        ])
+    expected_1 = issue_objects_pb2.Comment(
+        name='projects/proj/issues/1/comments/1',
+        state=issue_objects_pb2.IssueContentState.Value('DELETED'),
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME))
-    self.assertEqual(
-        self.converter.ConvertComments(self.issue_1, [comment_0]), [expected_0])
+    expected_2 = issue_objects_pb2.Comment(
+        name='projects/proj/issues/1/comments/2',
+        state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+        content='some amendments',
+        commenter='users/111',
+        create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        amendments=[
+            issue_objects_pb2.Comment.Amendment(
+                field_name='Summary',
+                old_value='old'),
+            issue_objects_pb2.Comment.Amendment(
+                field_name='EstDays')])
+    actual = self.converter.ConvertComments(
+        self.issue_1, [initial_comment, deleted_comment, amendments_comment])
+    self.assertEqual(actual, [expected_0, expected_1, expected_2])
 
   def testConvertComments_Empty(self):
     """We can convert an empty list of comments."""

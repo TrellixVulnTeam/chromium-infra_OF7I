@@ -21,8 +21,9 @@ from framework import exceptions
 from framework import framework_bizobj
 from framework import framework_helpers
 from proto import tracker_pb2
-from tracker import tracker_bizobj as tbo
 from project import project_helpers
+from tracker import attachment_helpers
+from tracker import tracker_bizobj as tbo
 
 
 class Converter(object):
@@ -171,6 +172,44 @@ class Converter(object):
     return issue_objects_pb2.Issue.StatusValue(
         status=issue.status or issue.derived_status, derivation=derivation)
 
+  def _ConvertAmendments(self, amendments):
+    """Convert protorpc Amendments to protoc Amendments."""
+    results = []
+    for amendment in amendments:
+      field_name = tbo.GetAmendmentFieldName(amendment)
+      results.append(
+          issue_objects_pb2.Comment.Amendment(
+              field_name=field_name,
+              # TODO(crbug.com/monorail/7143): Handle AmendmentString.
+              # new_or_delta_value=new_value,
+              old_value=amendment.oldvalue))
+    return results
+
+  def _ConvertAttachments(self, attachments, project_name):
+    """Convert protorpc Attachments to protoc Attachments."""
+    results = []
+    for attach in attachments:
+      if attach.deleted:
+        state = issue_objects_pb2.IssueContentState.Value('DELETED')
+        size, thumbnail_uri, view_uri, download_uri = None, None, None, None
+      else:
+        state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+        size = attach.filesize
+        download_uri = attachment_helpers.GetDownloadURL(attach.attachment_id)
+        view_uri = attachment_helpers.GetViewURL(
+            attach, download_uri, project_name)
+        thumbnail_uri = attachment_helpers.GetThumbnailURL(attach, download_uri)
+      results.append(
+          issue_objects_pb2.Comment.Attachment(
+              filename=attach.filename,
+              state=state,
+              size=size,
+              media_type=attach.mimetype,
+              thumbnail_uri=thumbnail_uri,
+              view_uri=view_uri,
+              download_uri=download_uri))
+    return results
+
   def ConvertComments(self, issue, comments):
     # type: (proto.tracker_pb2.Issue, Sequence[proto.tracker_pb2.IssueComment])
     #     -> Sequence[api_proto.issue_objects_pb2.Comment]
@@ -186,7 +225,6 @@ class Converter(object):
     ]
     approval_ids_to_names = rnc.ConvertApprovalDefNames(
         self.cnxn, approval_ids, issue.project_id, self.services)
-    # TODO(crbug.com/monorail/7143): Convert remaining fields.
     for comment in comments:
       if comment.is_spam:
         state = issue_objects_pb2.IssueContentState.Value('SPAM')
@@ -194,10 +232,15 @@ class Converter(object):
         state = issue_objects_pb2.IssueContentState.Value('DELETED')
       else:
         state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+      converted_attachments = self._ConvertAttachments(
+          comment.attachments, issue.project_name)
+      converted_amendments = self._ConvertAmendments(comment.amendments)
       converted_comment = issue_objects_pb2.Comment(
           name=comment_names_dict[comment.sequence],
           state=state,
-          create_time=timestamp_pb2.Timestamp(seconds=comment.timestamp))
+          create_time=timestamp_pb2.Timestamp(seconds=comment.timestamp),
+          attachments=converted_attachments,
+          amendments=converted_amendments)
       if comment.content:
         converted_comment.content = comment.content
       if comment.user_id:
