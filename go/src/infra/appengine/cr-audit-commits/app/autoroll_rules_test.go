@@ -22,12 +22,12 @@ import (
 func TestAutoRollRules(t *testing.T) {
 	Convey("AutoRoll rules work", t, func() {
 		ctx := memory.Use(context.Background())
-		rs := &RepoState{
+		rs := &RefState{
 			RepoURL: "https://a.googlesource.com/a.git/+/master",
 		}
 		datastore.Put(ctx, rs)
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
+			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
 			Status:           auditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
@@ -35,7 +35,7 @@ func TestAutoRollRules(t *testing.T) {
 			AuthorAccount:    "autoroller@sample.com",
 			CommitMessage:    "Roll dep ABC..XYZ",
 		}
-		cfg := &RepoConfig{
+		cfg := &RefConfig{
 			BaseRepoURL: "https://a.googlesource.com/a.git",
 			GerritURL:   "https://a-review.googlesource.com/",
 			BranchName:  "master",

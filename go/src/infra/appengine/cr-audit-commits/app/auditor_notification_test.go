@@ -22,7 +22,7 @@ import (
 // sendEmailForFinditViolation is not actually used by any AccountRules its purpose
 // is to illustrate how one would use sendEmailForViolation to notify about
 // violations via email.
-func sendEmailForFinditViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+func sendEmailForFinditViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	recipients := []string{"eng-team@dummy.com"}
 	subject := "A policy violation was detected on commit %s"
 	return sendEmailForViolation(ctx, cfg, rc, cs, state, recipients, subject)
@@ -37,7 +37,7 @@ func TestNotifier(t *testing.T) {
 
 		testClients := &Clients{}
 		Convey("Existing Repo", func() {
-			cfg := &RepoConfig{
+			cfg := &RefConfig{
 				BaseRepoURL:     "https://old.googlesource.com/old.git",
 				GerritURL:       "https://old-review.googlesource.com",
 				BranchName:      "master",
@@ -57,27 +57,27 @@ func TestNotifier(t *testing.T) {
 				}},
 			}
 			RuleMap["old-repo"] = cfg
-			repoState := &RepoState{
+			refState := &RefState{
 				RepoURL:            "https://old.googlesource.com/old.git/+/master",
 				LastKnownCommit:    "123456",
 				LastRelevantCommit: "999999",
 			}
-			ds.Put(ctx, repoState)
+			ds.Put(ctx, refState)
 
 			Convey("No audits", func() {
 				testClients.monorail = mockMonorailClient{
 					e: fmt.Errorf("Monorail was called even though there were no failed audits"),
 				}
-				err := notifyAboutViolations(ctx, cfg, repoState, testClients)
+				err := notifyAboutViolations(ctx, cfg, refState, testClients)
 				So(err, ShouldBeNil)
 			})
 			Convey("No failed audits", func() {
-				rsk := ds.KeyForObj(ctx, repoState)
+				rsk := ds.KeyForObj(ctx, refState)
 				testClients.monorail = mockMonorailClient{
 					e: fmt.Errorf("Monorail was called even though there were no failed audits"),
 				}
 				rc := &RelevantCommit{
-					RepoStateKey:     rsk,
+					RefStateKey:      rsk,
 					CommitHash:       "600dc0de",
 					Status:           auditCompleted,
 					Result:           []RuleResult{{"DummyRule", rulePassed, "", ""}},
@@ -88,11 +88,11 @@ func TestNotifier(t *testing.T) {
 				err := ds.Put(ctx, rc)
 				So(err, ShouldBeNil)
 
-				err = notifyAboutViolations(ctx, cfg, repoState, testClients)
+				err = notifyAboutViolations(ctx, cfg, refState, testClients)
 				So(err, ShouldBeNil)
 				rc = &RelevantCommit{
-					RepoStateKey: rsk,
-					CommitHash:   "600dc0de",
+					RefStateKey: rsk,
+					CommitHash:  "600dc0de",
 				}
 				err = ds.Get(ctx, rc)
 				So(err, ShouldBeNil)
@@ -100,7 +100,7 @@ func TestNotifier(t *testing.T) {
 				So(rc.NotifiedAll, ShouldBeFalse)
 			})
 			Convey("Failed audits - bug only", func() {
-				rsk := ds.KeyForObj(ctx, repoState)
+				rsk := ds.KeyForObj(ctx, refState)
 				testClients.monorail = mockMonorailClient{
 					il: &monorail.IssuesListResponse{},
 					ii: &monorail.InsertIssueResponse{
@@ -110,7 +110,7 @@ func TestNotifier(t *testing.T) {
 					},
 				}
 				rc := &RelevantCommit{
-					RepoStateKey:     rsk,
+					RefStateKey:      rsk,
 					CommitHash:       "badc0de",
 					Status:           auditCompletedWithActionRequired,
 					Result:           []RuleResult{{"DummyRule", ruleFailed, "This commit is bad", ""}},
@@ -121,11 +121,11 @@ func TestNotifier(t *testing.T) {
 				err := ds.Put(ctx, rc)
 				So(err, ShouldBeNil)
 
-				err = notifyAboutViolations(ctx, cfg, repoState, testClients)
+				err = notifyAboutViolations(ctx, cfg, refState, testClients)
 				So(err, ShouldBeNil)
 				rc = &RelevantCommit{
-					RepoStateKey: rsk,
-					CommitHash:   "badc0de",
+					RefStateKey: rsk,
+					CommitHash:  "badc0de",
 				}
 				err = ds.Get(ctx, rc)
 				So(err, ShouldBeNil)
@@ -136,7 +136,7 @@ func TestNotifier(t *testing.T) {
 
 			})
 			Convey("Exceeded retries", func() {
-				rsk := ds.KeyForObj(ctx, repoState)
+				rsk := ds.KeyForObj(ctx, refState)
 				testClients.monorail = mockMonorailClient{
 					ii: &monorail.InsertIssueResponse{
 						Issue: &monorail.Issue{
@@ -145,7 +145,7 @@ func TestNotifier(t *testing.T) {
 					},
 				}
 				rc := &RelevantCommit{
-					RepoStateKey:     rsk,
+					RefStateKey:      rsk,
 					CommitHash:       "b00b00",
 					Status:           auditFailed,
 					Result:           []RuleResult{},
@@ -157,11 +157,11 @@ func TestNotifier(t *testing.T) {
 				err := ds.Put(ctx, rc)
 				So(err, ShouldBeNil)
 
-				err = notifyAboutViolations(ctx, cfg, repoState, testClients)
+				err = notifyAboutViolations(ctx, cfg, refState, testClients)
 				So(err, ShouldBeNil)
 				rc = &RelevantCommit{
-					RepoStateKey: rsk,
-					CommitHash:   "b00b00",
+					RefStateKey: rsk,
+					CommitHash:  "b00b00",
 				}
 				err = ds.Get(ctx, rc)
 				So(err, ShouldBeNil)
@@ -175,7 +175,7 @@ func TestNotifier(t *testing.T) {
 					Id: 8675389,
 				},
 			}
-			cfg := &RepoConfig{
+			cfg := &RefConfig{
 				BaseRepoURL:     "https://old.googlesource.com/old-ack.git",
 				GerritURL:       "https://old-review.googlesource.com",
 				BranchName:      "master",
@@ -196,15 +196,15 @@ func TestNotifier(t *testing.T) {
 				Metadata: "MilestoneNumber:70",
 			}
 			RuleMap["old-repo-ack"] = cfg
-			repoState := &RepoState{
+			refState := &RefState{
 				RepoURL:            "https://old.googlesource.com/old-ack.git/+/master",
 				LastKnownCommit:    "123456",
 				LastRelevantCommit: "999999",
 			}
-			ds.Put(ctx, repoState)
-			rsk := ds.KeyForObj(ctx, repoState)
+			ds.Put(ctx, refState)
+			rsk := ds.KeyForObj(ctx, refState)
 			rc := &RelevantCommit{
-				RepoStateKey:     rsk,
+				RefStateKey:      rsk,
 				CommitHash:       "badc0de",
 				Status:           auditCompletedWithActionRequired,
 				Result:           []RuleResult{{"DummyRule", notificationRequired, "This commit requires a notification", "BugNumbers:8675389"}},
@@ -215,12 +215,12 @@ func TestNotifier(t *testing.T) {
 			err := ds.Put(ctx, rc)
 			So(err, ShouldBeNil)
 
-			err = notifyAboutViolations(ctx, cfg, repoState, testClients)
+			err = notifyAboutViolations(ctx, cfg, refState, testClients)
 			So(err, ShouldBeNil)
 
 			rc = &RelevantCommit{
-				RepoStateKey: rsk,
-				CommitHash:   "badc0de",
+				RefStateKey: rsk,
+				CommitHash:  "badc0de",
 			}
 			err = ds.Get(ctx, rc)
 			So(rc.GetNotificationState("rulesAck"), ShouldEqual, "Comment posted on BUG(S)=8675389")
@@ -229,7 +229,7 @@ func TestNotifier(t *testing.T) {
 			So(m.SentMessages(), ShouldBeEmpty)
 		})
 		Convey("Failed audits - email only", func() {
-			cfg := &RepoConfig{
+			cfg := &RefConfig{
 				BaseRepoURL:     "https://old.googlesource.com/old-email.git",
 				GerritURL:       "https://old-review.googlesource.com",
 				BranchName:      "master",
@@ -249,15 +249,15 @@ func TestNotifier(t *testing.T) {
 				}},
 			}
 			RuleMap["old-repo-email"] = cfg
-			repoState := &RepoState{
+			refState := &RefState{
 				RepoURL:            "https://old.googlesource.com/old-email.git/+/master",
 				LastKnownCommit:    "123456",
 				LastRelevantCommit: "999999",
 			}
-			ds.Put(ctx, repoState)
-			rsk := ds.KeyForObj(ctx, repoState)
+			ds.Put(ctx, refState)
+			rsk := ds.KeyForObj(ctx, refState)
 			rc := &RelevantCommit{
-				RepoStateKey:     rsk,
+				RefStateKey:      rsk,
 				CommitHash:       "badc0de",
 				Status:           auditCompletedWithActionRequired,
 				Result:           []RuleResult{{"DummyRule", ruleFailed, "This commit is bad", ""}},
@@ -268,11 +268,11 @@ func TestNotifier(t *testing.T) {
 			err := ds.Put(ctx, rc)
 			So(err, ShouldBeNil)
 
-			err = notifyAboutViolations(ctx, cfg, repoState, testClients)
+			err = notifyAboutViolations(ctx, cfg, refState, testClients)
 			So(err, ShouldBeNil)
 			rc = &RelevantCommit{
-				RepoStateKey: rsk,
-				CommitHash:   "badc0de",
+				RefStateKey: rsk,
+				CommitHash:  "badc0de",
 			}
 			err = ds.Get(ctx, rc)
 			So(err, ShouldBeNil)

@@ -127,7 +127,7 @@ func bugIDFromCommitMessage(m string) (string, error) {
 	return "", fmt.Errorf("commit message does not contain any bug id")
 }
 
-func getIssueBySummaryAndAccount(ctx context.Context, cfg *RepoConfig, s, a string, cs *Clients) (*monorail.Issue, error) {
+func getIssueBySummaryAndAccount(ctx context.Context, cfg *RefConfig, s, a string, cs *Clients) (*monorail.Issue, error) {
 	q := fmt.Sprintf("summary:\"%s\" reporter:\"%s\"", s, a)
 	req := &monorail.IssuesListRequest{
 		ProjectId: cfg.MonorailProject,
@@ -146,7 +146,7 @@ func getIssueBySummaryAndAccount(ctx context.Context, cfg *RepoConfig, s, a stri
 	return nil, nil
 }
 
-func postComment(ctx context.Context, cfg *RepoConfig, iID int32, c string, cs *Clients, labels []string) error {
+func postComment(ctx context.Context, cfg *RefConfig, iID int32, c string, cs *Clients, labels []string) error {
 	req := &monorail.InsertCommentRequest{
 		Comment: &monorail.InsertCommentRequest_Comment{
 			Content: c,
@@ -163,7 +163,7 @@ func postComment(ctx context.Context, cfg *RepoConfig, iID int32, c string, cs *
 	return err
 }
 
-func postIssue(ctx context.Context, cfg *RepoConfig, s, d string, cs *Clients, components, labels []string) (int32, error) {
+func postIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, components, labels []string) (int32, error) {
 	// The components for the issue will be the additional components
 	// depending on which rules were violated, and the component defined
 	// for the repo(if any).
@@ -188,7 +188,7 @@ func postIssue(ctx context.Context, cfg *RepoConfig, s, d string, cs *Clients, c
 	return resp.Issue.Id, nil
 }
 
-func issueFromID(ctx context.Context, cfg *RepoConfig, ID int32, cs *Clients) (*monorail.Issue, error) {
+func issueFromID(ctx context.Context, cfg *RefConfig, ID int32, cs *Clients) (*monorail.Issue, error) {
 	req := &monorail.GetIssueRequest{
 		Issue: &monorail.IssueRef{
 			IssueId:   ID,
@@ -198,7 +198,7 @@ func issueFromID(ctx context.Context, cfg *RepoConfig, ID int32, cs *Clients) (*
 	return cs.monorail.GetIssue(ctx, req)
 }
 
-func listCommentsFromIssueID(ctx context.Context, cfg *RepoConfig, ID int32, cs *Clients) ([]*monorail.Comment, error) {
+func listCommentsFromIssueID(ctx context.Context, cfg *RefConfig, ID int32, cs *Clients) ([]*monorail.Comment, error) {
 	req := &monorail.ListCommentsRequest{
 		Issue: &monorail.IssueRef{
 			IssueId:   ID,
@@ -212,7 +212,7 @@ func listCommentsFromIssueID(ctx context.Context, cfg *RepoConfig, ID int32, cs 
 	return resp.Items, nil
 }
 
-func resultText(cfg *RepoConfig, rc *RelevantCommit, issueExists bool) string {
+func resultText(cfg *RefConfig, rc *RelevantCommit, issueExists bool) string {
 	sort.Slice(rc.Result, func(i, j int) bool {
 		if rc.Result[i].RuleResultStatus == rc.Result[j].RuleResultStatus {
 			return rc.Result[i].RuleName < rc.Result[j].RuleName
@@ -350,7 +350,7 @@ func (c *Clients) NewGitilesClient(host string) (gitilespb.GitilesClient, error)
 
 // ConnectAll creates the clients so the rules can use them, also sets
 // necessary values in the context for the clients to talk to production.
-func (c *Clients) ConnectAll(ctx context.Context, cfg *RepoConfig, client *http.Client) error {
+func (c *Clients) ConnectAll(ctx context.Context, cfg *RefConfig, client *http.Client) error {
 	var err error
 	c.httpClient = client
 
@@ -371,14 +371,14 @@ func (c *Clients) ConnectAll(ctx context.Context, cfg *RepoConfig, client *http.
 // If the given ref matches a configuration set to dynamic refs, this function
 // calls the config's method to populate the concrete ref parameters and returns
 // the result of that method.
-func loadConfigFromContext(rc *router.Context) (*RepoConfig, *RepoState, error) {
+func loadConfigFromContext(rc *router.Context) (*RefConfig, *RefState, error) {
 	ctx, req := rc.Context, rc.Request
 	refURL := req.FormValue("refUrl")
 	return loadConfig(ctx, refURL)
 }
 
-func loadConfig(ctx context.Context, refURL string) (*RepoConfig, *RepoState, error) {
-	rs := &RepoState{RepoURL: refURL}
+func loadConfig(ctx context.Context, refURL string) (*RefConfig, *RefState, error) {
+	rs := &RefState{RepoURL: refURL}
 	err := ds.Get(ctx, rs)
 	if err != nil {
 		return nil, nil, err
@@ -391,7 +391,7 @@ func loadConfig(ctx context.Context, refURL string) (*RepoConfig, *RepoState, er
 	return cfg.SetConcreteRef(ctx, rs), rs, nil
 }
 
-func initializeClients(ctx context.Context, cfg *RepoConfig, client *http.Client) (*Clients, error) {
+func initializeClients(ctx context.Context, cfg *RefConfig, client *http.Client) (*Clients, error) {
 	cs := &Clients{}
 	err := cs.ConnectAll(ctx, cfg, client)
 	if err != nil {

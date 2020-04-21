@@ -34,33 +34,33 @@ import (
 // notification, as that would indicate that a previous call already took care
 // of that. The state string is a short freeform string that only needs to be
 // understood by the NotificationFunc itself, and should exclude colons (`:`).
-type NotificationFunc func(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error)
+type NotificationFunc func(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error)
 
-func fileBugForTBRViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+func fileBugForTBRViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Infra>Audit"}
 	labels := []string{"CommitLog-Audit-Violation", "TBR-Violation"}
 	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
 }
 
-func fileBugForAutoRollViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+func fileBugForAutoRollViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Infra>Audit>AutoRoller"}
 	labels := []string{"CommitLog-Audit-Violation"}
 	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
 }
 
-func fileBugForFinditViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+func fileBugForFinditViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Tools>Test>Findit>Autorevert"}
 	labels := []string{"CommitLog-Audit-Violation"}
 	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
 }
 
-func fileBugForReleaseBotViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+func fileBugForReleaseBotViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Infra>Client>Chrome>Release"}
 	labels := []string{"CommitLog-Audit-Violation"}
 	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
 }
 
-func fileBugForMergeApprovalViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+func fileBugForMergeApprovalViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Programs>PMO>Browser>Release"}
 	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
 	if !ok {
@@ -88,7 +88,7 @@ func fileBugForMergeApprovalViolation(ctx context.Context, cfg *RepoConfig, rc *
 	return "No violation found", nil
 }
 
-func commentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+func commentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
 	if !ok {
 		return "", fmt.Errorf("MilestoneNumber not specified in repository configuration")
@@ -145,7 +145,7 @@ func commentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RepoConfig, rc *Re
 // email messages. It is expected that the subject and recipients are set by
 // the calling notification function, and the body of the email is composed
 // from the ruleResults' messages.
-func sendEmailForViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string, recipients []string, subject string) (string, error) {
+func sendEmailForViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string, recipients []string, subject string) (string, error) {
 	if state == "emailSent" {
 		return state, nil
 	}
@@ -176,7 +176,7 @@ func sendEmailForViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCom
 // fileBugForViolation checks if the failure has already been reported to
 // monorail and files a new bug if it hasn't. If a bug already exists this
 // function will try to add a comment and associate it to the bug.
-func fileBugForViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommit, cs *Clients, state string, components, labels []string) (string, error) {
+func fileBugForViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string, components, labels []string) (string, error) {
 	summary := fmt.Sprintf("Audit violation detected on %q", rc.CommitHash)
 	// Make sure that at least one of the rules that were violated had
 	// .FileBug set to true.
@@ -219,7 +219,7 @@ func fileBugForViolation(ctx context.Context, cfg *RepoConfig, rc *RelevantCommi
 // isValidIssue checks that the monorail issue was created by the app and
 // has the correct summary. This is to avoid someone
 // suppressing an audit alert by creating a spurious bug.
-func isValidIssue(iss *monorail.Issue, sa string, cfg *RepoConfig) bool {
+func isValidIssue(iss *monorail.Issue, sa string, cfg *RefConfig) bool {
 	for _, st := range []string{
 		monorail.StatusFixed,
 		monorail.StatusVerified,

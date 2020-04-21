@@ -23,12 +23,12 @@ func TestTBRRules(t *testing.T) {
 	Convey("TBR Rules", t, func() {
 		ctx := memory.Use(context.Background())
 		datastore.GetTestable(ctx).CatchupIndexes()
-		rs := &RepoState{
+		rs := &RefState{
 			RepoURL: "https://a.googlesource.com/a.git/+/master",
 		}
 		datastore.Put(ctx, rs)
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
+			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "7b12c0de1",
 			Status:           auditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
@@ -36,7 +36,7 @@ func TestTBRRules(t *testing.T) {
 			AuthorAccount:    "jdoe@sample.com",
 			CommitMessage:    "Revert security fix, TBR=someone",
 		}
-		cfg := &RepoConfig{
+		cfg := &RefConfig{
 			BaseRepoURL: "https://a.googlesource.com/a.git",
 			GerritURL:   "https://a-review.googlesource.com/",
 			BranchName:  "master",

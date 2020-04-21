@@ -17,12 +17,12 @@ import (
 
 // Scheduler is the periodic task that
 //   - Determines the concrete ref for every audit configuration in RuleMap
-//   - Creates a new RepoState entry for any new refs
+//   - Creates a new RefState entry for any new refs
 //   - Schedules an audit task for each active ref in the appropriate queue
 func Scheduler(rc *router.Context) {
 	ctx, resp := rc.Context, rc.Writer
 	for configName, config := range RuleMap {
-		var refConfigs []*RepoConfig
+		var refConfigs []*RefConfig
 		var err error
 		if config.DynamicRefFunction != nil {
 			refConfigs, err = config.DynamicRefFunction(ctx, *config)
@@ -32,10 +32,10 @@ func Scheduler(rc *router.Context) {
 				continue
 			}
 		} else {
-			refConfigs = []*RepoConfig{config}
+			refConfigs = []*RefConfig{config}
 		}
 		for _, refConfig := range refConfigs {
-			state := &RepoState{RepoURL: refConfig.RepoURL()}
+			state := &RefState{RepoURL: refConfig.RepoURL()}
 			err = ds.Get(ctx, state)
 			switch err {
 			case ds.ErrNoSuchEntity:

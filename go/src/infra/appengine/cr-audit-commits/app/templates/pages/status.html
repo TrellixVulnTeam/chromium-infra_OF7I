@@ -68,7 +68,7 @@
         <th> Repository </th>
         <th> Link to Audit Status </th>
       </tr>
-      {{range $rs := .RepoStates}}
+      {{range $rs := .RefStates}}
         <tr>
           <td><a href="{{$rs.RepoURL}}">{{$rs.RepoURL}}</a></td>
           <td><a href="/view/status?refUrl={{$rs.RepoURL}}"> Audit Status </a></td>
@@ -86,7 +86,7 @@
 
             {{if .LastRelevant}}
               <td> Last Relevant Commit
-                <a href="{{.RepoConfig.BaseRepoURL}}/+/{{.LastRelevant}}">{{printf "%.8s" .LastRelevant}}</a>
+                <a href="{{.RefConfig.BaseRepoURL}}/+/{{.LastRelevant}}">{{printf "%.8s" .LastRelevant}}</a>
                 {{if not .LastRelevantTime.IsZero}}
                   ({{timeAgo .LastRelevantTime}})
                 {{end}}
@@ -96,7 +96,7 @@
             {{if .LastScanned}}
               <td>
                 Last Scanned Commit
-                <a href="{{.RepoConfig.BaseRepoURL}}/+/{{.LastScanned}}">{{printf "%.8s" .LastScanned}}</a>
+                <a href="{{.RefConfig.BaseRepoURL}}/+/{{.LastScanned}}">{{printf "%.8s" .LastScanned}}</a>
                 {{if not .LastScannedTime.IsZero}}
                   ({{timeAgo .LastScannedTime}})
                 {{end}}
@@ -104,7 +104,7 @@
             {{end}}
             <td>
               Previous alerts:
-              <a href="https://bugs.chromium.org/p/{{.RepoConfig.MonorailProject}}/issues/list?can=1&q=reporter%3Acr-audit-commits%40appspot.gserviceaccount.com">
+              <a href="https://bugs.chromium.org/p/{{.RefConfig.MonorailProject}}/issues/list?can=1&q=reporter%3Acr-audit-commits%40appspot.gserviceaccount.com">
                 Monorail link
               </a>
             </td>
@@ -122,8 +122,8 @@
             <th>Status</th>
             <th>Alert</th>
           </tr>
-          {{$repo := .RepoConfig.BaseRepoURL}}
-          {{$rc := .RepoConfig}}
+          {{$repo := .RefConfig.BaseRepoURL}}
+          {{$rc := .RefConfig}}
           {{range .Commits}}
             <tr>
               <td width="350">

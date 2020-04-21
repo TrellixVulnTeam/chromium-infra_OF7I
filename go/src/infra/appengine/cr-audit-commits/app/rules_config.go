@@ -17,25 +17,25 @@ import (
 	"go.chromium.org/luci/common/proto/git"
 )
 
-// DynamicRefFunc is a functype for functions that match a RepoConfig with a
+// DynamicRefFunc is a functype for functions that match a RefConfig with a
 // dynamically determined ref.
 //
-// It is expected to receive the generic RepoConfig as hardcoded in RulesMap,
+// It is expected to receive the generic RefConfig as hardcoded in RulesMap,
 // passed by value to prevent the implementation from modifying it.
-// It is expected to return a slice of references to RepoConfigs, where each
+// It is expected to return a slice of references to RefConfigs, where each
 // matches a ref to audit, and its values BranchName and Metadata have been
 // modified accordingly.
 //
-// Note that for changes to any other field of RepoConfig made by functions
+// Note that for changes to any other field of RefConfig made by functions
 // implementing this interface to persist and apply to audits, the Scheduler
-// needs to be modified to save them to the RepoState, and the SetConcreteRef
-// function below needs to be modified to set them in the copy of RepoConfig to
+// needs to be modified to save them to the RefState, and the SetConcreteRef
+// function below needs to be modified to set them in the copy of RefConfig to
 // be passed to the scan/audit/notify functions.
-type DynamicRefFunc func(context.Context, RepoConfig) ([]*RepoConfig, error)
+type DynamicRefFunc func(context.Context, RefConfig) ([]*RefConfig, error)
 
-// RepoConfig represents the hard-coded config for a monitored repo and a
+// RefConfig represents the hard-coded config for a monitored repo and a
 // pointer to the entity representing its datastore-persisted state.
-type RepoConfig struct { // These are expected to be hard-coded.
+type RefConfig struct { // These are expected to be hard-coded.
 	BaseRepoURL     string
 	GerritURL       string
 	BranchName      string
@@ -61,18 +61,18 @@ type BranchInfo struct {
 }
 
 // RepoURL composes the url of the repository by appending the branch.
-func (rc *RepoConfig) RepoURL() string {
+func (rc *RefConfig) RepoURL() string {
 	return rc.BaseRepoURL + "/+/" + rc.BranchName
 }
 
 // LinkToCommit composes a url to a specific commit
-func (rc *RepoConfig) LinkToCommit(commit string) string {
+func (rc *RefConfig) LinkToCommit(commit string) string {
 	return rc.BaseRepoURL + "/+/" + commit
 }
 
 // SetConcreteRef returns a copy of the repoconfig modified to account for
 // dynamic refs.
-func (rc *RepoConfig) SetConcreteRef(ctx context.Context, rs *RepoState) *RepoConfig {
+func (rc *RefConfig) SetConcreteRef(ctx context.Context, rs *RefState) *RefConfig {
 	// Make a copy.
 	result := *rc
 	if rs.BranchName != "" {
@@ -85,7 +85,7 @@ func (rc *RepoConfig) SetConcreteRef(ctx context.Context, rs *RepoState) *RepoCo
 }
 
 // RuleMap maps each monitored repository to a list of account/rules structs.
-var RuleMap = map[string]*RepoConfig{
+var RuleMap = map[string]*RefConfig{
 	"chromium-src-master": {
 		BaseRepoURL: "https://chromium.googlesource.com/chromium/src.git",
 		GerritURL:   "https://chromium-review.googlesource.com",
@@ -343,8 +343,8 @@ func (ar AccountRules) MatchesRelevantCommit(c *RelevantCommit) bool {
 // they are run on).
 type AuditParams struct {
 	TriggeringAccount string
-	RepoCfg           *RepoConfig
-	RepoState         *RepoState
+	RepoCfg           *RefConfig
+	RefState          *RefState
 }
 
 // Rule is an audit rule.
@@ -381,7 +381,7 @@ func PreviousResult(ctx context.Context, rc *RelevantCommit, ruleName string) *R
 
 // ReleaseConfig is the skeleton of a function to get the ref and milestone
 // dynamically.
-func ReleaseConfig(ctx context.Context, cfg RepoConfig) ([]*RepoConfig, error) {
+func ReleaseConfig(ctx context.Context, cfg RefConfig) ([]*RefConfig, error) {
 
 	var branchRefsURLContents []string
 	// ------------------
@@ -415,8 +415,8 @@ func ReleaseConfig(ctx context.Context, cfg RepoConfig) ([]*RepoConfig, error) {
 }
 
 // GetReleaseConfig is a helper function to get the ref and milestone dynamically.
-func GetReleaseConfig(ctx context.Context, cfg RepoConfig, branchRefsURLContents []string, branchInfos []BranchInfo) ([]*RepoConfig, error) {
-	concreteConfigs := []*RepoConfig{}
+func GetReleaseConfig(ctx context.Context, cfg RefConfig, branchRefsURLContents []string, branchInfos []BranchInfo) ([]*RefConfig, error) {
+	concreteConfigs := []*RefConfig{}
 	var err error
 	r := regexp.MustCompile(`"commit": "(.+)?"`)
 	for i := range branchRefsURLContents {

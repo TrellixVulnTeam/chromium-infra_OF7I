@@ -24,12 +24,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 
 	Convey("OnlyModifiesPaths rules work", t, func() {
 		ctx := memory.Use(context.Background())
-		rs := &RepoState{
+		rs := &RefState{
 			RepoURL: "https://a.googlesource.com/a.git/+/master",
 		}
 		datastore.Put(ctx, rs)
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
+			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
 			Status:           auditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
@@ -37,7 +37,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			AuthorAccount:    "releasebot@sample.com",
 			CommitMessage:    "Bumping version to Foo",
 		}
-		cfg := &RepoConfig{
+		cfg := &RefConfig{
 			BaseRepoURL: "https://a.googlesource.com/a.git",
 			GerritURL:   "https://a-review.googlesource.com/",
 			BranchName:  "master",
@@ -313,12 +313,12 @@ func TestReleaseBotRules(t *testing.T) {
 
 	Convey("ReleaseBot rules work", t, func() {
 		ctx := memory.Use(context.Background())
-		rs := &RepoState{
+		rs := &RefState{
 			RepoURL: "https://a.googlesource.com/a.git/+/master",
 		}
 		datastore.Put(ctx, rs)
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
+			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
 			Status:           auditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
@@ -326,7 +326,7 @@ func TestReleaseBotRules(t *testing.T) {
 			AuthorAccount:    "releasebot@sample.com",
 			CommitMessage:    "Bumping version to Foo",
 		}
-		cfg := &RepoConfig{
+		cfg := &RefConfig{
 			BaseRepoURL: "https://a.googlesource.com/a.git",
 			GerritURL:   "https://a-review.googlesource.com/",
 			BranchName:  "master",

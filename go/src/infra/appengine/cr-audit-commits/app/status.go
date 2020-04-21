@@ -25,7 +25,7 @@ func Status(rctx *router.Context) {
 	if refURL == "" {
 		refURL = "https://chromium.googlesource.com/chromium/src.git/+/master"
 	}
-	cfg, repoState, err := loadConfig(ctx, refURL)
+	cfg, refState, err := loadConfig(ctx, refURL)
 	if err != nil {
 		args := templates.Args{
 			"RuleMap": RuleMap,
@@ -45,46 +45,46 @@ func Status(rctx *router.Context) {
 		}
 	}
 	commits := []*RelevantCommit{}
-	if repoState.LastRelevantCommit != "" {
+	if refState.LastRelevantCommit != "" {
 		rc := &RelevantCommit{
-			CommitHash:   repoState.LastRelevantCommit,
-			RepoStateKey: ds.KeyForObj(ctx, repoState),
+			CommitHash:  refState.LastRelevantCommit,
+			RefStateKey: ds.KeyForObj(ctx, refState),
 		}
 
 		err = ds.Get(ctx, rc)
 		if err != nil {
-			handleError(ctx, err, refURL, repoState, resp)
+			handleError(ctx, err, refURL, refState, resp)
 			return
 		}
 
 		commits, err = lastXRelevantCommits(ctx, rc, nCommits)
 		if err != nil {
-			handleError(ctx, err, refURL, repoState, resp)
+			handleError(ctx, err, refURL, refState, resp)
 			return
 		}
 	}
 
-	allRepoStates := &[]*RepoState{}
-	err = ds.GetAll(ctx, ds.NewQuery("RepoState").Order("-LastRelevantCommitTime").Limit(5), allRepoStates)
+	allRefStates := &[]*RefState{}
+	err = ds.GetAll(ctx, ds.NewQuery("RefState").Order("-LastRelevantCommitTime").Limit(5), allRefStates)
 	if err != nil {
-		handleError(ctx, err, refURL, repoState, resp)
+		handleError(ctx, err, refURL, refState, resp)
 		return
 	}
 	args := templates.Args{
 		"Commits":          commits,
-		"LastRelevant":     repoState.LastRelevantCommit,
-		"LastRelevantTime": repoState.LastRelevantCommitTime,
-		"LastScanned":      repoState.LastKnownCommit,
-		"LastScannedTime":  repoState.LastKnownCommitTime,
+		"LastRelevant":     refState.LastRelevantCommit,
+		"LastRelevantTime": refState.LastRelevantCommitTime,
+		"LastScanned":      refState.LastKnownCommit,
+		"LastScannedTime":  refState.LastKnownCommitTime,
 		"RefUrl":           refURL,
-		"RepoConfig":       cfg,
-		"RepoStates":       allRepoStates,
+		"RefConfig":        cfg,
+		"RefStates":        allRefStates,
 	}
 	templates.MustRender(ctx, resp, "pages/status.html", args)
 }
 
-func handleError(ctx context.Context, err error, refURL string, repoState *RepoState, resp http.ResponseWriter) {
-	logging.WithError(err).Errorf(ctx, "Getting status of repo %s, for revision %s", refURL, repoState.LastRelevantCommit)
+func handleError(ctx context.Context, err error, refURL string, refState *RefState, resp http.ResponseWriter) {
+	logging.WithError(err).Errorf(ctx, "Getting status of repo %s, for revision %s", refURL, refState.LastRelevantCommit)
 	http.Error(resp, "Getting status failed. See log for details.", 500)
 }
 
@@ -97,8 +97,8 @@ func lastXRelevantCommits(ctx context.Context, rc *RelevantCommit, x int) ([]*Re
 		}
 
 		current = &RelevantCommit{
-			CommitHash:   current.PreviousRelevantCommit,
-			RepoStateKey: rc.RepoStateKey,
+			CommitHash:  current.PreviousRelevantCommit,
+			RefStateKey: rc.RefStateKey,
 		}
 		err := ds.Get(ctx, current)
 		if err != nil {

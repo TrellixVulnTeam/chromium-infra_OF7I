@@ -32,12 +32,12 @@ func TestFinditRules(t *testing.T) {
 	Convey("Findit rules work", t, func() {
 		ctx := memory.Use(context.Background())
 		datastore.GetTestable(ctx).CatchupIndexes()
-		rs := &RepoState{
+		rs := &RefState{
 			RepoURL: "https://a.googlesource.com/a.git/+/master",
 		}
 		datastore.Put(ctx, rs)
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
+			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "12ebe127",
 			Status:           auditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
@@ -45,7 +45,7 @@ func TestFinditRules(t *testing.T) {
 			AuthorAccount:    "findit@sample.com",
 			CommitMessage:    "Sample Failed Build: https://ci/b/42",
 		}
-		cfg := &RepoConfig{
+		cfg := &RefConfig{
 			BaseRepoURL: "https://a.googlesource.com/a.git",
 			GerritURL:   "https://a-review.googlesource.com/",
 			BranchName:  "master",

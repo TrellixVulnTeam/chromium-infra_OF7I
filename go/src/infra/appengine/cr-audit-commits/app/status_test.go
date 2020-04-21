@@ -53,7 +53,7 @@ func TestStatusPage(t *testing.T) {
 			So(resp.StatusCode, ShouldEqual, 200)
 		})
 		Convey("Valid Repo", func() {
-			RuleMap["new-repo"] = &RepoConfig{
+			RuleMap["new-repo"] = &RefConfig{
 				BaseRepoURL:    "https://new.googlesource.com/new.git",
 				GerritURL:      "https://new-review.googlesource.com",
 				BranchName:     "master",
@@ -69,7 +69,7 @@ func TestStatusPage(t *testing.T) {
 				}},
 			}
 			Convey("No interesting revisions", func() {
-				rs := &RepoState{
+				rs := &RefState{
 					RepoURL:            "https://new.googlesource.com/new.git/+/master",
 					LastRelevantCommit: "",
 					LastKnownCommit:    "000000",
@@ -88,7 +88,7 @@ func TestStatusPage(t *testing.T) {
 				So(string(b), ShouldContainSubstring, linkText)
 			})
 			Convey("Some interesting revisions", func() {
-				rs := &RepoState{
+				rs := &RefState{
 					RepoURL:            "https://new.googlesource.com/new.git/+/master",
 					LastRelevantCommit: "111111",
 					LastKnownCommit:    "121212",
@@ -101,9 +101,9 @@ func TestStatusPage(t *testing.T) {
 				for i := 0; i < 12; i++ {
 					cTime, _ := time.Parse("2006-01-02T15:04", fmt.Sprintf("2017-09-01T09:%02d", i+1))
 					relevantCommit := &RelevantCommit{
-						RepoStateKey: rsk,
-						CommitHash:   fmt.Sprintf("%02d%02d%02d", i, i, i),
-						Status:       AuditStatus(i % 3), // Alternate all statuses.
+						RefStateKey: rsk,
+						CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
+						Status:      AuditStatus(i % 3), // Alternate all statuses.
 						Result: []RuleResult{
 							{"First Rule", rulePassed, "", ""},
 							{"Second Rule", ruleFailed, "Some rules fail", ""},

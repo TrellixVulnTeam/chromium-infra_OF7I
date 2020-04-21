@@ -86,8 +86,8 @@ func countRelevantCommits(ctx context.Context, rc *RelevantCommit, cutoff time.T
 		}
 
 		current = &RelevantCommit{
-			CommitHash:   current.PreviousRelevantCommit,
-			RepoStateKey: rc.RepoStateKey,
+			CommitHash:  current.PreviousRelevantCommit,
+			RefStateKey: rc.RefStateKey,
 		}
 		err := ds.Get(ctx, current)
 		if err != nil {

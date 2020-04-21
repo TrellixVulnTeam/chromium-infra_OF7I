@@ -38,7 +38,7 @@ func TestRulesConfig(t *testing.T) {
 	})
 	Convey("Ensure starting commit, branch name, and milestone number are valid", t, func() {
 		ctx := memory.Use(context.Background())
-		cfg := RepoConfig{}
+		cfg := RefConfig{}
 		milestoneNumber := ""
 		success := false
 		branchRefsURLContents := []string{"\"commit\": \"e8b8df68cc0a4623567482825115b8a321d01eb9\""}

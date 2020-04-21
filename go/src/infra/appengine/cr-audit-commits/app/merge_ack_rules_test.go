@@ -20,17 +20,17 @@ func TestMergeAckRules(t *testing.T) {
 
 	Convey("Merge Acknowledgement rules work", t, func() {
 		ctx := memory.Use(context.Background())
-		rs := &RepoState{
+		rs := &RefState{
 			RepoURL: "https://a.googlesource.com/a.git/+/master",
 		}
 		datastore.Put(ctx, rs)
 		rc := &RelevantCommit{
-			RepoStateKey:  datastore.KeyForObj(ctx, rs),
+			RefStateKey:   datastore.KeyForObj(ctx, rs),
 			CommitHash:    "b07c0de",
 			Status:        auditScheduled,
 			CommitMessage: "Acknowledging merges into a release branch",
 		}
-		cfg := &RepoConfig{
+		cfg := &RefConfig{
 			BaseRepoURL: "https://a.googlesource.com/a.git",
 			GerritURL:   "https://a-review.googlesource.com/",
 			BranchName:  "3325",
