@@ -117,14 +117,14 @@ func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, dur
 	return resp.TaskId, nil
 }
 
-// LeaseByModelTask creates a lease_task targeted at a particular model
-func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, durationSec int, reason string) (taskID string, err error) {
+// LeaseByModelTask creates a lease_task targeted at a particular model and dimensions
+func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims map[string]string, durationSec int, reason string) (taskID string, err error) {
 	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo "(model): Zzz..."; done`}
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: c,
-			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
+			Dimensions: append([]*swarming_api.SwarmingRpcsStringPair{
 				{Key: "pool", Value: "ChromeOSSkylab"},
 				{Key: "label-model", Value: model},
 				// We need to make sure we don't disturb DUT_POOL_CTS, so for now by-model leases
@@ -133,13 +133,13 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, durat
 				// Getting an unhealthy DUT is a horrible user experience, so we make sure
 				// that only ready DUTs are leasable by model.
 				{Key: "dut_state", Value: "ready"},
-			},
+			}, convertDimensions(dims)...),
 			ExecutionTimeoutSecs: int64(durationSec),
 		},
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name: "lease task",
-		Tags: []string{
+		Tags: append([]string{
 			"pool:ChromeOSSkylab",
 			"skylab-tool:lease",
 			// This quota account specifier is only relevant for DUTs that are
@@ -149,7 +149,7 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, durat
 			"lease-by:model",
 			fmt.Sprintf("model:%s", model),
 			fmt.Sprintf("lease-reason:%s", reason),
-		},
+		}, convertTags(dims)...),
 		TaskSlices:     slices,
 		Priority:       15,
 		ServiceAccount: tc.Environment.ServiceAccount,
@@ -161,4 +161,23 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, durat
 		return "", errors.Annotate(err, "lease by model task").Err()
 	}
 	return resp.TaskId, nil
+}
+
+// convertDimensions takes a map and converts it into a string pair.
+func convertDimensions(m map[string]string) []*swarming_api.SwarmingRpcsStringPair {
+	var out []*swarming_api.SwarmingRpcsStringPair
+	for k, v := range m {
+		out = append(out, &swarming_api.SwarmingRpcsStringPair{Key: k, Value: v})
+	}
+	return out
+}
+
+// convertTags takes a map and converts it to a slice of strings in
+// swarming dimension format.
+func convertTags(m map[string]string) []string {
+	var out []string
+	for k, v := range m {
+		out = append(out, fmt.Sprintf("%s:%s", k, v))
+	}
+	return out
 }

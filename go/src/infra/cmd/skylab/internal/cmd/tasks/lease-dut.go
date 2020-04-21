@@ -186,7 +186,7 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 		Client:      client,
 		Environment: e,
 	}
-	id, err := creator.LeaseByModelTask(ctx, model, int(leaseDuration.Seconds()), c.leaseReason)
+	id, err := creator.LeaseByModelTask(ctx, model, c.dims, int(leaseDuration.Seconds()), c.leaseReason)
 	if err != nil {
 		return err
 	}
