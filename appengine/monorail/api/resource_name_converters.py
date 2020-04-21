@@ -18,6 +18,7 @@ and return resource names.
 import re
 import logging
 
+from features import features_constants
 from framework import exceptions
 from framework import validate
 from project import project_constants
@@ -26,6 +27,10 @@ from project import project_constants
 PROJECT_NAME_PATTERN = (
     r'projects\/(?P<project_name>%s)' % project_constants.PROJECT_NAME_PATTERN)
 PROJECT_NAME_RE = re.compile(r'%s$' % PROJECT_NAME_PATTERN)
+
+FIELD_DEF_NAME_RE = re.compile(
+    r'%s\/fieldDefs\/(?P<field_def>%s)$' %
+    (PROJECT_NAME_PATTERN, features_constants.FIELD_DEF_NAME_PATTERN))
 
 HOTLIST_PATTERN = r'hotlists\/(?P<hotlist_id>\d+)'
 HOTLIST_NAME_RE = re.compile(r'%s$' % HOTLIST_PATTERN)
@@ -99,6 +104,42 @@ def _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services):
   if misses:
     raise exceptions.NoSuchIssueException('Issue(s) %r not found' % misses)
   return issue_ids
+
+# FieldDefs
+
+
+def IngestFieldDefName(cnxn, name, services):
+  # type: (MonorailConnection, str, Services) -> (int, int)
+  """Takes a FieldDef's resource name and returns the FieldDef's ID
+     and the Project's ID that it belongs.
+
+  Args:
+    cnxn: MonorailConnection to the database.
+    name: Resource name of a FieldDef.
+    services: Services object for connections to backend services.
+
+  Returns:
+    The FieldDef's ID, and the Project's ID.
+
+  Raises:
+    InputException if the given name does not have a valid format.
+    NoSuchProjectException if the given project name does not exists.
+    NoSuchFieldDefException if the given field name does not exists.
+  """
+  match = _GetResourceNameMatch(name, FIELD_DEF_NAME_RE)
+  field_name = match.group('field_def')
+  project_name = match.group('project_name')
+  id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
+  project_id = id_dict.get(project_name)
+  if project_id is None:
+    raise exceptions.NoSuchProjectException(
+        'Project not found: %s.' % project_name)
+  field_id = services.config.LookupFieldID(cnxn, project_id, field_name)
+  if field_id is None:
+    raise exceptions.NoSuchFieldDefException(
+        'Field not found: %s.' % field_name)
+
+  return project_id, field_id
 
 # Hotlists
 
@@ -262,7 +303,7 @@ def ConvertIssueName(cnxn, issue_id, services):
   """Takes an Issue ID and returns the corresponding Issue resource name.
 
   Args:
-    mc: MonorailConnection object.
+    cnxn: MonorailConnection object.
     issue_id: The ID of the issue.
     services: Services object.
 

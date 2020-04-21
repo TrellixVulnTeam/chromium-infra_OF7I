@@ -1304,6 +1304,14 @@ class ConfigService(object):
     self.StoreConfig(cnxn, config)
     return field_id
 
+  def LookupFieldID(self, cnxn, project_id, field):
+    config = self.GetProjectConfig(cnxn, project_id)
+    for fd in config.field_defs:
+      if fd.field_name == field:
+        return fd.field_id
+
+    return None
+
   def SoftDeleteFieldDefs(self, cnxn, project_id, field_ids):
     config = self.GetProjectConfig(cnxn, project_id)
     for fd in config.field_defs:

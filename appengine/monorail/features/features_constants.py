@@ -19,6 +19,7 @@ OTHER_BUILT_IN_COLS = (
 ISSUE_INPUT_REGEX = '%s:\d+(([,]|\s)+%s:\d+)*' % (
     project_constants.PROJECT_NAME_PATTERN,
     project_constants.PROJECT_NAME_PATTERN)
+FIELD_DEF_NAME_PATTERN = '[a-zA-Z]([_-]?[a-zA-Z0-9])*'
 
 QUEUE_NOTIFICATIONS = 'notifications'
 QUEUE_OUTBOUND_EMAIL = 'outboundemail'
