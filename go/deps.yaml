@@ -12,7 +12,6 @@ import:
   version: master
   repo: https://chromium.googlesource.com/external/github.com/dustin/go-humanize.git
 - package: github.com/golang/protobuf
-  version: 84668698ea25b64748563aa20726db66a6b8d299
   repo: https://chromium.googlesource.com/external/github.com/golang/protobuf.git
   subpackages:
   - jsonpb
@@ -546,6 +545,3 @@ import:
 - package: golang.org/x/xerrors
   repo: https://go.googlesource.com/xerrors.git
   version: master
-- package: github.com/bazelbuild/remote-apis
-  version: upstream/master
-  repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
