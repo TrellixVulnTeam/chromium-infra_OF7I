@@ -430,7 +430,6 @@ export class MrPhase extends connectStore(LitElement) {
    * @private
    */
   get _targetMilestone() {
-    console.log(this._fieldValueMap);
     return valueForField(this._fieldValueMap, 'M-Target', this.phaseName);
   }
 
