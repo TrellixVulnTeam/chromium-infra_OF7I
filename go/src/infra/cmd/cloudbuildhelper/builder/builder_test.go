@@ -111,6 +111,11 @@ func TestBuilder(t *testing.T) {
 		})
 
 		Convey("Go GAE bundling", func() {
+			// To test .gitignore handling, create a gitignored file manually, since
+			// we can't check it in.
+			err := ioutil.WriteFile(filepath.FromSlash("testing/helloworld/static/ignored"), nil, 0600)
+			So(err, ShouldBeNil)
+
 			m, err := manifest.Load(filepath.FromSlash("testing/gaebundle.yaml"))
 			So(err, ShouldBeNil)
 			m.ContextDir = tmpDir

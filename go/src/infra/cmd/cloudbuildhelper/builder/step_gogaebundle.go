@@ -21,6 +21,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmd/cloudbuildhelper/fileset"
+	"infra/cmd/cloudbuildhelper/gitignore"
 )
 
 // runRunBuildStep executes manifest.RunBuildStep.
@@ -89,12 +90,21 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 		return errors.Annotate(err, "failed to setup a symlink to location in _gopath").Err()
 	}
 
+	// Respect .gitignore files.
+	excludedByGitIgnore, err := gitignore.NewExcluder(mainDir)
+	if err != nil {
+		return errors.Annotate(err, "when loading .gitignore files").Err()
+	}
+
 	// Copy all files that make up "main" package (they can be only at the root
 	// of `mainDir`), and copy all non-go files recursively (they can potentially
 	// be referenced by static_files in app.yaml). We'll deal with Go dependencies
 	// separately.
 	err = inv.addFilesToOutput(ctx, mainDir, goPathDest, func(absPath string, isDir bool) bool {
-		if isDir {
+		switch {
+		case excludedByGitIgnore(absPath, isDir):
+			return true // respect .gitignore exclusions
+		case isDir:
 			return false // do not exclude directories, may have contain static files
 		}
 		rel, err := relPath(mainDir, absPath)
