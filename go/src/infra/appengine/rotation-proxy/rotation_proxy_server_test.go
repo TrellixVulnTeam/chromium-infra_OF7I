@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
@@ -78,7 +80,8 @@ func TestBatchUpdateRotations(t *testing.T) {
 		err = datastore.GetAll(ctx, q, &dsRotations)
 		So(err, ShouldBeNil)
 		So(len(dsRotations), ShouldEqual, 1)
-		assertRotationsEquals(&dsRotations[0].Proto, rotation1)
+		diff := cmp.Diff(rotation1, &dsRotations[0].Proto, cmp.Comparer(proto.Equal))
+		So(diff, ShouldEqual, "")
 	})
 
 	Convey("batch update rotations should delete previous shifts", t, func() {
@@ -105,7 +108,8 @@ func TestBatchUpdateRotations(t *testing.T) {
 		err = datastore.GetAll(ctx, q, &dsRotations)
 		So(err, ShouldBeNil)
 		So(len(dsRotations), ShouldEqual, 1)
-		assertRotationsEquals(&dsRotations[0].Proto, rotation1Updated)
+		diff := cmp.Diff(rotation1Updated, &dsRotations[0].Proto, cmp.Comparer(proto.Equal))
+		So(diff, ShouldEqual, "")
 	})
 }
 
@@ -119,7 +123,6 @@ func TestBatchGetRotations(t *testing.T) {
 				{
 					Oncalls:   oncallsShift3,
 					StartTime: startTimeShift3,
-					EndTime:   endTimeShift3,
 				},
 				{
 					Oncalls:   oncallsShift2,
@@ -163,32 +166,10 @@ func TestBatchGetRotations(t *testing.T) {
 				{
 					Oncalls:   oncallsShift3,
 					StartTime: startTimeShift3,
-					EndTime:   endTimeShift3,
 				},
 			},
 		}
-		assertRotationsEquals(response.Rotations[0], expected)
+		diff := cmp.Diff(expected, response.Rotations[0], cmp.Comparer(proto.Equal))
+		So(diff, ShouldEqual, "")
 	})
-}
-
-func assertRotationsEquals(rotation1 *rpb.Rotation, rotation2 *rpb.Rotation) {
-	So(rotation1.Name, ShouldEqual, rotation2.Name)
-	So(len(rotation1.Shifts), ShouldEqual, len(rotation2.Shifts))
-	for i := 0; i < len(rotation1.Shifts); i++ {
-		assertShiftsEqual(rotation1.Shifts[i], rotation2.Shifts[i])
-	}
-}
-
-func assertShiftsEqual(shift1 *rpb.Shift, shift2 *rpb.Shift) {
-	assertTimeEquals(shift1.StartTime, shift2.StartTime)
-	assertTimeEquals(shift1.EndTime, shift2.EndTime)
-	So(len(shift1.Oncalls), ShouldEqual, len(shift2.Oncalls))
-	for i := 0; i < len(shift1.Oncalls); i++ {
-		So(shift1.Oncalls[i].Email, ShouldResemble, shift2.Oncalls[i].Email)
-	}
-}
-
-func assertTimeEquals(time1 *timestamp.Timestamp, time2 *timestamp.Timestamp) {
-	So(time1.Seconds, ShouldEqual, time2.Seconds)
-	So(time1.Nanos, ShouldEqual, time2.Nanos)
 }

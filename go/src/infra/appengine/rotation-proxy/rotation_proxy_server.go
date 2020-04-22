@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"sort"
+	"time"
 
 	ptypes "github.com/golang/protobuf/ptypes"
 	"go.chromium.org/gae/service/datastore"
@@ -92,17 +93,20 @@ func processShiftsForRotation(ctx context.Context, rotation *rpb.Rotation) error
 	now := clock.Now(ctx)
 	n := 0
 	for _, shift := range rotation.Shifts {
-		shiftEndTime, err := ptypes.Timestamp(shift.EndTime)
-		if err != nil {
-			return err
+		var shiftEndTime time.Time
+		var err error
+		if shift.EndTime != nil {
+			shiftEndTime, err = ptypes.Timestamp(shift.EndTime)
+			if err != nil {
+				return err
+			}
 		}
-		if shiftEndTime.After(now) {
+		if shift.EndTime == nil || shiftEndTime.After(now) {
 			rotation.Shifts[n] = shift
 			n++
 		}
 	}
 	rotation.Shifts = rotation.Shifts[:n]
-
 	sort.Slice(rotation.Shifts, func(i, j int) bool {
 		return rotation.Shifts[i].StartTime.Seconds < rotation.Shifts[j].StartTime.Seconds
 	})
