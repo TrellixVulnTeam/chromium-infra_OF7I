@@ -1477,13 +1477,14 @@ def MakeProjectAmendment(new_project_name):
       tracker_pb2.FieldID.PROJECT, new_project_name, [], [])
 
 
-def AmendmentString(amendment, users_by_id):
+def AmendmentString_New(amendment, user_display_names):
+  # type: (tracker_pb2.Amendment, Mapping[int, str]) -> str
   """Produce a displayable string for an Amendment PB.
 
   Args:
     amendment: Amendment PB to display.
-    users_by_id: dict {user_id: user_view, ...} including all users
-      mentioned in amendment.
+    user_display_names: dict {user_id: display_name, ...} including all users
+        mentioned in amendment.
 
   Returns:
     A string that could be displayed on a web page or sent in email.
@@ -1495,15 +1496,54 @@ def AmendmentString(amendment, users_by_id):
   if amendment.field == tracker_pb2.FieldID.OWNER:
     if amendment.added_user_ids and amendment.added_user_ids[0]:
       uid = amendment.added_user_ids[0]
-      result = users_by_id[uid].display_name
+      result = user_display_names[uid]
+    else:
+      result = framework_constants.NO_USER_NAME
+  else:
+    added = [
+        user_display_names[uid]
+        for uid in amendment.added_user_ids
+        if uid in user_display_names
+    ]
+    removed = [
+        user_display_names[uid]
+        for uid in amendment.removed_user_ids
+        if uid in user_display_names
+    ]
+    result = _PlusMinusString(added, removed)
+
+  return result
+
+
+def AmendmentString(amendment, user_views_by_id):
+  """Produce a displayable string for an Amendment PB.
+
+  TODO(crbug.com/monorail/7571): Delete this function in favor of _New.
+
+  Args:
+    amendment: Amendment PB to display.
+    user_views_by_id: dict {user_id: user_view, ...} including all users
+        mentioned in amendment.
+
+  Returns:
+    A string that could be displayed on a web page or sent in email.
+  """
+  if amendment.newvalue:
+    return amendment.newvalue
+
+  # Display new owner only
+  if amendment.field == tracker_pb2.FieldID.OWNER:
+    if amendment.added_user_ids and amendment.added_user_ids[0]:
+      uid = amendment.added_user_ids[0]
+      result = user_views_by_id[uid].display_name
     else:
       result = framework_constants.NO_USER_NAME
   else:
     result = _PlusMinusString(
-        [users_by_id[uid].display_name for uid in amendment.added_user_ids
-         if uid in users_by_id],
-        [users_by_id[uid].display_name for uid in amendment.removed_user_ids
-         if uid in users_by_id])
+        [user_views_by_id[uid].display_name for uid in amendment.added_user_ids
+         if uid in user_views_by_id],
+        [user_views_by_id[uid].display_name
+         for uid in amendment.removed_user_ids if uid in user_views_by_id])
 
   return result
 

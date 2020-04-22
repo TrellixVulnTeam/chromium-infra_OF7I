@@ -337,13 +337,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     amendments = [
         tracker_pb2.Amendment(
             field=tracker_pb2.FieldID.SUMMARY, newvalue='new', oldvalue='old'),
-        # TODO(crbug.com/monorail/7143): Add tests w/ new AmendmentString.
-        # tracker_pb2.Amendment(
-        #     field=tracker_pb2.FieldID.OWNER, added_user_ids=[111]),
-        # tracker_pb2.Amendment(
-        #     field=tracker_pb2.FieldID.CC,
-        #     added_user_ids=[111],
-        #     removed_user_ids=[222]),
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID.OWNER, added_user_ids=[111]),
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID.CC,
+            added_user_ids=[111],
+            removed_user_ids=[222]),
         tracker_pb2.Amendment(
             field=tracker_pb2.FieldID.CUSTOM,
             custom_field_name='EstDays',
@@ -389,17 +388,25 @@ class ConverterFunctionsTest(unittest.TestCase):
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
         amendments=[
             issue_objects_pb2.Comment.Amendment(
-                field_name='Summary',
+                field_name='Summary', new_or_delta_value='new',
                 old_value='old'),
             issue_objects_pb2.Comment.Amendment(
-                field_name='EstDays')])
+                field_name='Owner', new_or_delta_value='o...@example.com'),
+            issue_objects_pb2.Comment.Amendment(
+                field_name='Cc',
+                new_or_delta_value='-t...@example.com o...@example.com'),
+            issue_objects_pb2.Comment.Amendment(
+                field_name='EstDays', new_or_delta_value='12')
+        ])
     actual = self.converter.ConvertComments(
-        self.issue_1, [initial_comment, deleted_comment, amendments_comment])
+        self.issue_1.issue_id,
+        [initial_comment, deleted_comment, amendments_comment])
     self.assertEqual(actual, [expected_0, expected_1, expected_2])
 
   def testConvertComments_Empty(self):
     """We can convert an empty list of comments."""
-    self.assertEqual(self.converter.ConvertComments(self.issue_1, []), [])
+    self.assertEqual(
+        self.converter.ConvertComments(self.issue_1.issue_id, []), [])
 
   def testConvertIssue(self):
     """We can convert a single issue."""

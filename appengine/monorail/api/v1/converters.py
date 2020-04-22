@@ -172,20 +172,33 @@ class Converter(object):
     return issue_objects_pb2.Issue.StatusValue(
         status=issue.status or issue.derived_status, derivation=derivation)
 
-  def _ConvertAmendments(self, amendments):
-    """Convert protorpc Amendments to protoc Amendments."""
+  def _ConvertAmendments(self, amendments, user_display_names):
+    # type: (Sequence[proto.tracker_pb2.Amendment], Mapping[int, str]) ->
+    #     Sequence[api_proto.issue_objects_pb2.Comment.Amendment]
+    """Convert protorpc Amendments to protoc Amendments.
+
+    Args:
+      amendments: the amendments to convert
+      user_display_names: map from user_id to display name for all users
+          involved in the amendments.
+
+    Returns:
+      The converted amendments.
+    """
     results = []
     for amendment in amendments:
       field_name = tbo.GetAmendmentFieldName(amendment)
+      new_value = tbo.AmendmentString_New(amendment, user_display_names)
       results.append(
           issue_objects_pb2.Comment.Amendment(
               field_name=field_name,
-              # TODO(crbug.com/monorail/7143): Handle AmendmentString.
-              # new_or_delta_value=new_value,
+              new_or_delta_value=new_value,
               old_value=amendment.oldvalue))
     return results
 
   def _ConvertAttachments(self, attachments, project_name):
+    # type: (Sequence[proto.tracker_pb2.Attachment], str) ->
+    #     Sequence[api_proto.issue_objects_pb2.Comment.Attachment]
     """Convert protorpc Attachments to protoc Attachments."""
     results = []
     for attach in attachments:
@@ -210,14 +223,19 @@ class Converter(object):
               download_uri=download_uri))
     return results
 
-  def ConvertComments(self, issue, comments):
-    # type: (proto.tracker_pb2.Issue, Sequence[proto.tracker_pb2.IssueComment])
+  def ConvertComments(self, issue_id, comments):
+    # type: (int, Sequence[proto.tracker_pb2.IssueComment])
     #     -> Sequence[api_proto.issue_objects_pb2.Comment]
     """Convert protorpc IssueComments from issue into protoc Comments."""
+    issue = self.services.issue.GetIssue(self.cnxn, issue_id)
+    project = self.services.project.GetProject(self.cnxn, issue.project_id)
+    users_by_id = self.services.user.GetUsersByIDs(
+        self.cnxn, tbo.UsersInvolvedInCommentList(comments))
+    user_display_names = framework_bizobj.CreateUserDisplayNames(
+        self.user_auth, users_by_id.values(), project)
     comment_names_dict = rnc.CreateCommentNames(
         issue.local_id, issue.project_name,
         [comment.sequence for comment in comments])
-    converted_comments = []
     approval_ids = [
         comment.approval_id
         for comment in comments
@@ -225,6 +243,8 @@ class Converter(object):
     ]
     approval_ids_to_names = rnc.ConvertApprovalDefNames(
         self.cnxn, approval_ids, issue.project_id, self.services)
+
+    converted_comments = []
     for comment in comments:
       if comment.is_spam:
         state = issue_objects_pb2.IssueContentState.Value('SPAM')
@@ -234,7 +254,8 @@ class Converter(object):
         state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
       converted_attachments = self._ConvertAttachments(
           comment.attachments, issue.project_name)
-      converted_amendments = self._ConvertAmendments(comment.amendments)
+      converted_amendments = self._ConvertAmendments(
+          comment.amendments, user_display_names)
       converted_comment = issue_objects_pb2.Comment(
           name=comment_names_dict[comment.sequence],
           state=state,

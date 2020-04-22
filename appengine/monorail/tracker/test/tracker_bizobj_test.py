@@ -1894,6 +1894,66 @@ class BizobjTest(unittest.TestCase):
         framework_constants.DELETED_USER_NAME,
         tracker_bizobj.AmendmentString(owner_amendment_deleted, users_by_id))
 
+  def testAmendmentString_New(self):
+    """AmendmentString_New behaves equivalently to the old version."""
+    # TODO(crbug.com/monorail/7571): Delete this test.
+    users_by_id = {
+        111:
+            framework_views.StuffUserView(111, 'username@gmail.com', True),
+        framework_constants.DELETED_USER_ID:
+            framework_views.StuffUserView(
+                framework_constants.DELETED_USER_ID, '', True),
+    }
+    user_display_names = {
+        111:
+            'usern...@gmail.com',
+        framework_constants.DELETED_USER_ID:
+            framework_constants.DELETED_USER_NAME
+    }
+
+    summary_amendment = tracker_bizobj.MakeSummaryAmendment('new summary', None)
+    new_str_summary = tracker_bizobj.AmendmentString_New(
+        summary_amendment, user_display_names)
+    self.assertEqual(
+        tracker_bizobj.AmendmentString(summary_amendment, users_by_id),
+        new_str_summary)
+
+    status_amendment = tracker_bizobj.MakeStatusAmendment('', None)
+    new_str_status = tracker_bizobj.AmendmentString_New(
+        status_amendment, user_display_names)
+    self.assertEqual(
+        tracker_bizobj.AmendmentString(status_amendment, users_by_id),
+        new_str_status)
+
+    status_amendment_2 = tracker_bizobj.MakeStatusAmendment('Assigned', 'New')
+    new_str_status_2 = tracker_bizobj.AmendmentString_New(
+        status_amendment_2, user_display_names)
+    self.assertEqual(
+        tracker_bizobj.AmendmentString(status_amendment_2, users_by_id),
+        new_str_status_2)
+
+    owner_amendment = tracker_bizobj.MakeOwnerAmendment(0, 0)
+    new_str_owner = tracker_bizobj.AmendmentString_New(
+        owner_amendment, user_display_names)
+    self.assertEqual(
+        tracker_bizobj.AmendmentString(owner_amendment, users_by_id),
+        new_str_owner)
+
+    owner_amendment_2 = tracker_bizobj.MakeOwnerAmendment(111, 0)
+    new_str_owner_2 = tracker_bizobj.AmendmentString_New(
+        owner_amendment_2, user_display_names)
+    self.assertEqual(
+        tracker_bizobj.AmendmentString(owner_amendment_2, users_by_id),
+        new_str_owner_2)
+
+    owner_amendment_deleted = tracker_bizobj.MakeOwnerAmendment(1, 0)
+    new_str_owner_deleted = tracker_bizobj.AmendmentString_New(
+        owner_amendment_deleted, user_display_names)
+    self.assertEqual(
+        tracker_bizobj.AmendmentString(owner_amendment_deleted, users_by_id),
+        new_str_owner_deleted)
+
+
   def testAmendmentLinks(self):
     users_by_id = {
         111: framework_views.StuffUserView(111, 'foo@gmail.com', False),

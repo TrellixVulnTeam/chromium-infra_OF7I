@@ -62,8 +62,6 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     with work_env.WorkEnv(mc, self.services) as we:
       list_result = we.SafeListIssueComments(
           issue_id, page_size, pager.GetStart(request.page_token))
-      # TODO(crbug.com/monorail/7143): Rewrite ConvertComments to take issue_id.
-      issue = we.GetIssue(issue_id, allow_viewing_deleted=True)
     return issues_pb2.ListCommentsResponse(
-        comments=self.converter.ConvertComments(issue, list_result.items),
+        comments=self.converter.ConvertComments(issue_id, list_result.items),
         next_page_token=pager.GenerateNextPageToken(list_result.next_start))
