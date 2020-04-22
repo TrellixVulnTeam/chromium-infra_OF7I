@@ -1,0 +1,44 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// Copied from https://source.corp.google.com/piper///depot/google3/java/com/google/chrome/crosbuilds/backend/hartapi/proto/pubsub/assetinfo/assetinfo.proto
+syntax = "proto3";
+
+package fleet;
+
+// See https://github.com/golang/protobuf#packages-and-input-paths
+option go_package = "infra/libs/fleet/protos/go";
+
+message AssetInfo {
+  string asset_tag = 1;
+  string serial_number = 2;
+  string cost_center = 3;
+  string google_code_name = 4;
+  string model = 5;
+  string build_target = 6;
+  string reference_board = 7;
+  string ethernet_mac_address = 8;
+  string sku = 9;
+}
+
+message AssetInfoRequest {
+  // Required. Asset tag(s) to lookup.
+  repeated string asset_tags = 1;
+}
+
+message AssetInfoResponse {
+  // Indicator of whether the request call succeed or not.
+  RequestStatus request_status = 1;
+  // A list of asset info retrieved from Hart.
+  repeated AssetInfo assets = 2;
+  // A list of asset tags not found in Corporate Asset Management platform.
+  repeated string missing_asset_tags = 3;
+  // A list of asset tags whose part number not found in Hart.
+  repeated string failed_asset_tags = 4;
+}
+
+enum RequestStatus {
+  SUCCESS = 0;
+  FAILURE = 1;
+}
