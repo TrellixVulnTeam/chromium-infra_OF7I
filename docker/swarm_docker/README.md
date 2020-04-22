@@ -21,6 +21,16 @@ essentially runs `./build.sh` and uploads the resultant image to a docker
 by gcloud, is located at
 [chromium-container-registry](https://console.cloud.google.com/gcr/images/chromium-container-registry/GLOBAL/swarm_docker).
 
+***note
+For **arm64** images, the process is a little different. Its
+[builder](https://ci.chromium.org/p/infra/builders/ci/swarm-docker-arm64-image-builder)
+doesn't run on a schedule. Instead, when you need it to create a new image,
+simply trigger it via the
+[luci-scheduler UI](https://luci-scheduler.appspot.com/jobs/infra/swarm-docker-arm64-image-builder).
+If you don't have the permissions to trigger a build, please file a Trooper bug
+and someone can trigger it on your behalf.
+***
+
 ### Shutting container down from within
 Because a swarming bot may trigger a reboot of the bot at any time (see
 [docs](https://cs.chromium.org/chromium/infra/luci/appengine/swarming/doc/Magic-Values.md?rcl=8b90cdd97f8f088bcba2fa376ce49d9863b48902&l=65)),
