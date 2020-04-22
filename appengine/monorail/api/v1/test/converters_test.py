@@ -300,12 +300,6 @@ class ConverterFunctionsTest(unittest.TestCase):
   @patch('tracker.attachment_helpers.SignAttachmentID')
   def testConvertComments(self, mock_SignAttachmentID):
     """We can convert comments."""
-    # TODO(jessan): test convert second comment.
-    # 2nd description?
-    # appproval
-    # inbound_message
-    # spam
-    # importer_id (is ignored)
     mock_SignAttachmentID.return_value = 2
     attach = tracker_pb2.Attachment(
         attachment_id=1,
@@ -355,7 +349,18 @@ class ConverterFunctionsTest(unittest.TestCase):
         timestamp=self.PAST_TIME,
         content='some amendments',
         sequence=2,
-        amendments=amendments)
+        amendments=amendments,
+        importer_id=1,  # Not used in conversion, so nothing to verify.
+        approval_id=self.approval_def_1_id)
+    inbound_spam_comment = tracker_pb2.IssueComment(
+        project_id=self.issue_1.project_id,
+        issue_id=self.issue_1.issue_id,
+        user_id=self.issue_1.reporter_id,
+        timestamp=self.PAST_TIME,
+        content='content',
+        sequence=3,
+        inbound_message='inbound message',
+        is_spam=True)
     expected_0 = issue_objects_pb2.Comment(
         name='projects/proj/issues/1/comments/0',
         state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
@@ -386,6 +391,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         content='some amendments',
         commenter='users/111',
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        approval='projects/proj/approvalDefs/approval_field_1',
         amendments=[
             issue_objects_pb2.Comment.Amendment(
                 field_name='Summary', new_or_delta_value='new',
@@ -398,10 +404,20 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue_objects_pb2.Comment.Amendment(
                 field_name='EstDays', new_or_delta_value='12')
         ])
-    actual = self.converter.ConvertComments(
-        self.issue_1.issue_id,
-        [initial_comment, deleted_comment, amendments_comment])
-    self.assertEqual(actual, [expected_0, expected_1, expected_2])
+    expected_3 = issue_objects_pb2.Comment(
+        name='projects/proj/issues/1/comments/3',
+        state=issue_objects_pb2.IssueContentState.Value('SPAM'),
+        content='content',
+        commenter='users/111',
+        create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        inbound_message='inbound message')
+
+    comments = [
+        initial_comment, deleted_comment, amendments_comment,
+        inbound_spam_comment
+    ]
+    actual = self.converter.ConvertComments(self.issue_1.issue_id, comments)
+    self.assertEqual(actual, [expected_0, expected_1, expected_2, expected_3])
 
   def testConvertComments_Empty(self):
     """We can convert an empty list of comments."""
