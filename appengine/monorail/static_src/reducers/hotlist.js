@@ -22,6 +22,7 @@ import {userIdOrDisplayNameToUserRef, issueNameToRef, pathsToFieldMask}
   from 'shared/converters.js';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 import * as issueV0 from './issueV0.js';
+import * as user from './user.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 
@@ -73,7 +74,7 @@ export const UPDATE_FAILURE = 'hotlist/UPDATE_FAILURE';
 
 /**
  * A reference to the currently viewed Hotlist.
- * @param {?string} state The existing Hotlist name.
+ * @param {?string} state The existing Hotlist resource name.
  * @param {AnyAction} action
  * @return {?string}
  */
@@ -82,7 +83,7 @@ export const nameReducer = createReducer(null, {
 });
 
 /**
- * All Hotlist data indexed by Hotlist name.
+ * All Hotlist data indexed by Hotlist resource name.
  * @param {Object<string, Hotlist>} state The existing Hotlist data.
  * @param {AnyAction} action
  * @param {Hotlist} action.hotlist The Hotlist that was fetched.
@@ -94,10 +95,10 @@ export const byNameReducer = createReducer({}, {
 });
 
 /**
- * All Hotlist items indexed by Hotlist name.
+ * All Hotlist items indexed by Hotlist resource name.
  * @param {Object<string, Array<HotlistItem>>} state The existing items.
  * @param {AnyAction} action
- * @param {name} action.name A reference to the Hotlist.
+ * @param {name} action.name The Hotlist resource name.
  * @param {Array<HotlistItem>} action.items The Hotlist items fetched.
  * @return {Object<string, Array<HotlistItem>>}
  */
@@ -132,7 +133,7 @@ export const reducer = combineReducers({
 // Selectors
 
 /**
- * Returns the currently viewed Hotlist name, or null if there is none.
+ * Returns the currently viewed Hotlist resource name, or null if there is none.
  * @param {any} state
  * @return {?string}
  */
@@ -146,8 +147,8 @@ export const name = (state) => state.hotlist.name;
 export const byName = (state) => state.hotlist.byName;
 
 /**
- * Returns all the Hotlist items in the store as a mapping
- * from a Hotlist name to its respective array of HotlistItems.
+ * Returns all the Hotlist items in the store as a mapping from a
+ * Hotlist resource name to its respective array of HotlistItems.
  * @param {any} state
  * @return {Object<string, Array<HotlistItem>>}
  */
@@ -180,8 +181,8 @@ export const viewedHotlistItems = createSelector(
  * @return {Array<HotlistIssue>}
  */
 export const viewedHotlistIssues = createSelector(
-    [viewedHotlistItems, issueV0.issue],
-    (items, getIssue) => {
+    [viewedHotlistItems, issueV0.issue, user.byName],
+    (items, getIssue, usersByName) => {
       // Filter out issues that haven't been fetched yet or failed to fetch.
       // Example: if the user doesn't have permissions to view the issue.
       // <mr-issue-list> assumes that every Issue is populated.
@@ -189,6 +190,7 @@ export const viewedHotlistIssues = createSelector(
       return itemsWithData.map((item) => ({
         ...getIssue(item.issue),
         ...item,
+        adder: usersByName[item.adder.name],
       }));
     });
 
@@ -204,7 +206,7 @@ export const requests = (state) => state.hotlist.requests;
 /**
  * Action creator to delete the Hotlist. We would have liked to have named this
  * `delete` but it's a reserved word in JS.
- * @param {string} name The name of the Hotlist to delete.
+ * @param {string} name The resource name of the Hotlist to delete.
  * @return {function(function): Promise<void>}
  */
 export const deleteHotlist = (name) => async (dispatch) => {
@@ -222,7 +224,7 @@ export const deleteHotlist = (name) => async (dispatch) => {
 
 /**
  * Action creator to fetch a Hotlist object.
- * @param {string} name The name of the Hotlist to fetch.
+ * @param {string} name The resource name of the Hotlist to fetch.
  * @return {function(function): Promise<void>}
  */
 export const fetch = (name) => async (dispatch) => {
@@ -244,8 +246,8 @@ export const fetch = (name) => async (dispatch) => {
 
 /**
  * Action creator to fetch the items in a Hotlist.
- * @param {string} name The name of the Hotlist to fetch.
- * @return {function(function): Promise<void>}
+ * @param {string} name The resource name of the Hotlist to fetch.
+ * @return {function(function): Promise<Array<HotlistItem>>}
  */
 export const fetchItems = (name) => async (dispatch) => {
   dispatch({type: FETCH_ITEMS_START});
@@ -259,9 +261,13 @@ export const fetchItems = (name) => async (dispatch) => {
         items.map((item) => item.rank ? item : {...item, rank: 0});
 
     const issueRefs = items.map((item) => issueNameToRef(item.issue));
-    dispatch(issueV0.fetchIssues(issueRefs));
+    await dispatch(issueV0.fetchIssues(issueRefs));
+
+    const adderNames = [...new Set(items.map((item) => item.adder.name))];
+    await dispatch(user.batchGet(adderNames));
 
     dispatch({type: FETCH_ITEMS_SUCCESS, name, items: itemsWithRank});
+    return itemsWithRank;
   } catch (error) {
     dispatch({type: FETCH_ITEMS_FAILURE, error});
   };
@@ -269,8 +275,8 @@ export const fetchItems = (name) => async (dispatch) => {
 
 /**
  * Action creator to remove items from a Hotlist.
- * @param {string} name The name of the Hotlist.
- * @param {Array<string>} issues The names of the Issues to remove.
+ * @param {string} name The resource name of the Hotlist.
+ * @param {Array<string>} issues The resource names of the Issues to remove.
  * @return {function(function): Promise<void>}
  */
 export const removeItems = (name, issues) => async (dispatch) => {
@@ -290,8 +296,8 @@ export const removeItems = (name, issues) => async (dispatch) => {
 
 /**
  * Action creator to rerank the items in a Hotlist.
- * @param {string} name The name of the Hotlist.
- * @param {Array<string>} items The names of the HotlistItems to move.
+ * @param {string} name The resource name of the Hotlist.
+ * @param {Array<string>} items The resource names of the HotlistItems to move.
  * @param {number} index The index to insert the moved items.
  * @return {function(function): Promise<void>}
  */
@@ -312,14 +318,14 @@ export const rerankItems = (name, items, index) => async (dispatch) => {
 
 /**
  * Action creator to set the currently viewed Hotlist.
- * @param {string} name The name of the Hotlist to select.
+ * @param {string} name The resource name of the Hotlist to select.
  * @return {AnyAction}
  */
 export const select = (name) => ({type: SELECT, name});
 
 /**
  * Action creator to update the Hotlist metadata.
- * @param {string} name The name of the Hotlist to delete.
+ * @param {string} name The resource name of the Hotlist to delete.
  * @param {Hotlist} hotlist This represents the updated version of the Hotlist
  *    with only the fields that need to be updated.
  * @return {function(function): Promise<void>}
@@ -344,7 +350,7 @@ export const update = (name, hotlist) => async (dispatch) => {
 // Helpers
 
 /**
- * Helper to fetch a Hotlist ID given its owner and name.
+ * Helper to fetch a Hotlist ID given its owner and display name.
  * @param {string} owner The Hotlist owner's user id or display name.
  * @param {string} hotlist The Hotlist's id or display name.
  * @return {Promise<?string>}

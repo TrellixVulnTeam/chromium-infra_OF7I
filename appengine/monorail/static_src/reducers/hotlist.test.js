@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import * as hotlist from './hotlist.js';
 import * as example from 'shared/test/constants-hotlist.js';
 import * as exampleIssue from 'shared/test/constants-issue.js';
+import * as exampleUser from 'shared/test/constants-user.js';
 
 import {prpcClient} from 'prpc-client-instance.js';
 
@@ -145,6 +146,7 @@ describe('hotlist selectors', () => {
             [exampleIssue.ISSUE_REF_STRING]: exampleIssue.ISSUE,
           },
         },
+        user: {byName: {[exampleUser.NAME]: exampleUser.USER}},
       };
       const actual = hotlist.viewedHotlistIssues(state);
       assert.deepEqual(actual, [example.HOTLIST_ISSUE]);
@@ -161,6 +163,7 @@ describe('hotlist selectors', () => {
             [exampleIssue.ISSUE_OTHER_PROJECT_REF_STRING]: exampleIssue.ISSUE,
           },
         },
+        user: {byName: {}},
       };
       assert.deepEqual(hotlist.viewedHotlistIssues(state), []);
     });
@@ -242,7 +245,8 @@ describe('hotlist action creators', () => {
       const response = {items: [example.HOTLIST_ITEM]};
       prpcClient.call.returns(Promise.resolve(response));
 
-      await hotlist.fetchItems(example.NAME)(dispatch);
+      const returnValue = await hotlist.fetchItems(example.NAME)(dispatch);
+      assert.deepEqual(returnValue, [{...example.HOTLIST_ITEM, rank: 0}]);
 
       sinon.assert.calledWith(dispatch, {type: hotlist.FETCH_ITEMS_START});
 
