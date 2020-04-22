@@ -184,6 +184,7 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 	return nil
 }
 
+// leaseDutByModel leases a DUT by model. Any healthy DUT in the given model may be chosen by the task.
 func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) error {
 	tasks, err := sc.GetActiveLeaseTasksForModel(ctx, c.model)
 	if err != nil {
