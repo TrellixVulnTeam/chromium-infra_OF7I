@@ -9,6 +9,7 @@ package monorail.v1;
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "api/v1/api_proto/user_objects.proto";
+import "google/protobuf/empty.proto";
 
 // Users service includes all methods needed for managing Users.
 service Users {
@@ -18,6 +19,15 @@ service Users {
   // Returns all of the requested Users.
   // TODO(crbug/monorail/7238): Document possible errors when implemented.
   rpc BatchGetUsers (BatchGetUsersRequest) returns (BatchGetUsersResponse) {}
+  // Stars a given project for the requestor.
+  // TODO(crbug/monorail/7238): Document possible errors when implemented.
+  rpc StarProject (StarProjectRequest) returns (ProjectStar) {}
+  // Unstars a given project for the requestor.
+  // TODO(crbug/monorail/7238): Document possible errors when implemented.
+  rpc UnStarProject (UnStarProjectRequest) returns (google.protobuf.Empty) {}
+  // Lists all of a user's starred projects.
+  // TODO(crbug/monorail/7238): Document possible errors when implemented.
+  rpc ListProjectStars (ListProjectStarsRequest) returns (ListProjectStarsResponse) {}
 }
 
 
@@ -45,4 +55,54 @@ message BatchGetUsersRequest {
 // Next available tag: 2
 message BatchGetUsersResponse {
   repeated User users = 1;
+}
+
+// The request message for Users.StarProject.
+// Next available tag: 2
+message StarProjectRequest {
+  // The resource name for the Project to star.
+  string project = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/Project"},
+      (google.api.field_behavior) = REQUIRED ];
+}
+
+
+// The request message for Users.UnStarProject.
+// Next available tag: 2
+message UnStarProjectRequest {
+  // The resource name for the Project to unstar.
+  string project = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/Project"},
+      (google.api.field_behavior) = REQUIRED ];
+}
+
+
+// The request message for Users.ListProjectStars.
+// Next available tag: 4
+message ListProjectStarsRequest {
+  // The resource name for the user having stars listed.
+  string parent = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/User"},
+      (google.api.field_behavior) = REQUIRED ];
+  // The maximum number of items to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 1000 items will be returned.
+  int32 page_size = 2;
+  // A page token, received from a previous `ListProjectStars` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListProjectStars` must
+  // match the call that provided the page token.
+  string page_token = 3;
+}
+
+
+// The response message for Users.ListProjectStars.
+// Next available tag: 3
+message ListProjectStarsResponse {
+  // Data for each starred project.
+  repeated ProjectStar project_stars = 1;
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
 }

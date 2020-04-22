@@ -15,6 +15,7 @@ _sym_db = _symbol_database.Default()
 from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
 from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
 from api.v1.api_proto import user_objects_pb2 as api_dot_v1_dot_api__proto_dot_user__objects__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -22,9 +23,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1c\x61pi/v1/api_proto/users.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a#api/v1/api_proto/user_objects.proto\":\n\x0eGetUserRequest\x12(\n\x04name\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"A\n\x14\x42\x61tchGetUsersRequest\x12)\n\x05names\x18\x01 \x03(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"9\n\x15\x42\x61tchGetUsersResponse\x12 \n\x05users\x18\x01 \x03(\x0b\x32\x11.monorail.v1.User2\x9e\x01\n\x05Users\x12;\n\x07GetUser\x12\x1b.monorail.v1.GetUserRequest\x1a\x11.monorail.v1.User\"\x00\x12X\n\rBatchGetUsers\x12!.monorail.v1.BatchGetUsersRequest\x1a\".monorail.v1.BatchGetUsersResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x1c\x61pi/v1/api_proto/users.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a#api/v1/api_proto/user_objects.proto\x1a\x1bgoogle/protobuf/empty.proto\":\n\x0eGetUserRequest\x12(\n\x04name\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"A\n\x14\x42\x61tchGetUsersRequest\x12)\n\x05names\x18\x01 \x03(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"9\n\x15\x42\x61tchGetUsersResponse\x12 \n\x05users\x18\x01 \x03(\x0b\x32\x11.monorail.v1.User\"D\n\x12StarProjectRequest\x12.\n\x07project\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"F\n\x14UnStarProjectRequest\x12.\n\x07project\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"l\n\x17ListProjectStarsRequest\x12*\n\x06parent\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"d\n\x18ListProjectStarsResponse\x12/\n\rproject_stars\x18\x01 \x03(\x0b\x32\x18.monorail.v1.ProjectStar\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\x9b\x03\n\x05Users\x12;\n\x07GetUser\x12\x1b.monorail.v1.GetUserRequest\x1a\x11.monorail.v1.User\"\x00\x12X\n\rBatchGetUsers\x12!.monorail.v1.BatchGetUsersRequest\x1a\".monorail.v1.BatchGetUsersResponse\"\x00\x12J\n\x0bStarProject\x12\x1f.monorail.v1.StarProjectRequest\x1a\x18.monorail.v1.ProjectStar\"\x00\x12L\n\rUnStarProject\x12!.monorail.v1.UnStarProjectRequest\x1a\x16.google.protobuf.Empty\"\x00\x12\x61\n\x10ListProjectStars\x12$.monorail.v1.ListProjectStarsRequest\x1a%.monorail.v1.ListProjectStarsResponse\"\x00\x62\x06proto3')
   ,
-  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_user__objects__pb2.DESCRIPTOR,])
+  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_user__objects__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,])
 
 
 
@@ -55,8 +56,8 @@ _GETUSERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=168,
-  serialized_end=226,
+  serialized_start=197,
+  serialized_end=255,
 )
 
 
@@ -86,8 +87,8 @@ _BATCHGETUSERSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=228,
-  serialized_end=293,
+  serialized_start=257,
+  serialized_end=322,
 )
 
 
@@ -117,14 +118,164 @@ _BATCHGETUSERSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=295,
-  serialized_end=352,
+  serialized_start=324,
+  serialized_end=381,
+)
+
+
+_STARPROJECTREQUEST = _descriptor.Descriptor(
+  name='StarProjectRequest',
+  full_name='monorail.v1.StarProjectRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='project', full_name='monorail.v1.StarProjectRequest.project', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\027\n\025api.crbug.com/Project\340A\002'), file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=383,
+  serialized_end=451,
+)
+
+
+_UNSTARPROJECTREQUEST = _descriptor.Descriptor(
+  name='UnStarProjectRequest',
+  full_name='monorail.v1.UnStarProjectRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='project', full_name='monorail.v1.UnStarProjectRequest.project', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\027\n\025api.crbug.com/Project\340A\002'), file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=453,
+  serialized_end=523,
+)
+
+
+_LISTPROJECTSTARSREQUEST = _descriptor.Descriptor(
+  name='ListProjectStarsRequest',
+  full_name='monorail.v1.ListProjectStarsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='parent', full_name='monorail.v1.ListProjectStarsRequest.parent', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\024\n\022api.crbug.com/User\340A\002'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='page_size', full_name='monorail.v1.ListProjectStarsRequest.page_size', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='page_token', full_name='monorail.v1.ListProjectStarsRequest.page_token', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=525,
+  serialized_end=633,
+)
+
+
+_LISTPROJECTSTARSRESPONSE = _descriptor.Descriptor(
+  name='ListProjectStarsResponse',
+  full_name='monorail.v1.ListProjectStarsResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='project_stars', full_name='monorail.v1.ListProjectStarsResponse.project_stars', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='next_page_token', full_name='monorail.v1.ListProjectStarsResponse.next_page_token', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=635,
+  serialized_end=735,
 )
 
 _BATCHGETUSERSRESPONSE.fields_by_name['users'].message_type = api_dot_v1_dot_api__proto_dot_user__objects__pb2._USER
+_LISTPROJECTSTARSRESPONSE.fields_by_name['project_stars'].message_type = api_dot_v1_dot_api__proto_dot_user__objects__pb2._PROJECTSTAR
 DESCRIPTOR.message_types_by_name['GetUserRequest'] = _GETUSERREQUEST
 DESCRIPTOR.message_types_by_name['BatchGetUsersRequest'] = _BATCHGETUSERSREQUEST
 DESCRIPTOR.message_types_by_name['BatchGetUsersResponse'] = _BATCHGETUSERSRESPONSE
+DESCRIPTOR.message_types_by_name['StarProjectRequest'] = _STARPROJECTREQUEST
+DESCRIPTOR.message_types_by_name['UnStarProjectRequest'] = _UNSTARPROJECTREQUEST
+DESCRIPTOR.message_types_by_name['ListProjectStarsRequest'] = _LISTPROJECTSTARSREQUEST
+DESCRIPTOR.message_types_by_name['ListProjectStarsResponse'] = _LISTPROJECTSTARSRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 GetUserRequest = _reflection.GeneratedProtocolMessageType('GetUserRequest', (_message.Message,), dict(
@@ -148,9 +299,40 @@ BatchGetUsersResponse = _reflection.GeneratedProtocolMessageType('BatchGetUsersR
   ))
 _sym_db.RegisterMessage(BatchGetUsersResponse)
 
+StarProjectRequest = _reflection.GeneratedProtocolMessageType('StarProjectRequest', (_message.Message,), dict(
+  DESCRIPTOR = _STARPROJECTREQUEST,
+  __module__ = 'api.v1.api_proto.users_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.StarProjectRequest)
+  ))
+_sym_db.RegisterMessage(StarProjectRequest)
+
+UnStarProjectRequest = _reflection.GeneratedProtocolMessageType('UnStarProjectRequest', (_message.Message,), dict(
+  DESCRIPTOR = _UNSTARPROJECTREQUEST,
+  __module__ = 'api.v1.api_proto.users_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.UnStarProjectRequest)
+  ))
+_sym_db.RegisterMessage(UnStarProjectRequest)
+
+ListProjectStarsRequest = _reflection.GeneratedProtocolMessageType('ListProjectStarsRequest', (_message.Message,), dict(
+  DESCRIPTOR = _LISTPROJECTSTARSREQUEST,
+  __module__ = 'api.v1.api_proto.users_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.ListProjectStarsRequest)
+  ))
+_sym_db.RegisterMessage(ListProjectStarsRequest)
+
+ListProjectStarsResponse = _reflection.GeneratedProtocolMessageType('ListProjectStarsResponse', (_message.Message,), dict(
+  DESCRIPTOR = _LISTPROJECTSTARSRESPONSE,
+  __module__ = 'api.v1.api_proto.users_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.ListProjectStarsResponse)
+  ))
+_sym_db.RegisterMessage(ListProjectStarsResponse)
+
 
 _GETUSERREQUEST.fields_by_name['name']._options = None
 _BATCHGETUSERSREQUEST.fields_by_name['names']._options = None
+_STARPROJECTREQUEST.fields_by_name['project']._options = None
+_UNSTARPROJECTREQUEST.fields_by_name['project']._options = None
+_LISTPROJECTSTARSREQUEST.fields_by_name['parent']._options = None
 
 _USERS = _descriptor.ServiceDescriptor(
   name='Users',
@@ -158,8 +340,8 @@ _USERS = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=355,
-  serialized_end=513,
+  serialized_start=738,
+  serialized_end=1149,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetUser',
@@ -177,6 +359,33 @@ _USERS = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_BATCHGETUSERSREQUEST,
     output_type=_BATCHGETUSERSRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='StarProject',
+    full_name='monorail.v1.Users.StarProject',
+    index=2,
+    containing_service=None,
+    input_type=_STARPROJECTREQUEST,
+    output_type=api_dot_v1_dot_api__proto_dot_user__objects__pb2._PROJECTSTAR,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='UnStarProject',
+    full_name='monorail.v1.Users.UnStarProject',
+    index=3,
+    containing_service=None,
+    input_type=_UNSTARPROJECTREQUEST,
+    output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='ListProjectStars',
+    full_name='monorail.v1.Users.ListProjectStars',
+    index=4,
+    containing_service=None,
+    input_type=_LISTPROJECTSTARSREQUEST,
+    output_type=_LISTPROJECTSTARSRESPONSE,
     serialized_options=None,
   ),
 ])

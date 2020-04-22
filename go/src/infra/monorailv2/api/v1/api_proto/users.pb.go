@@ -9,6 +9,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -152,10 +153,216 @@ func (m *BatchGetUsersResponse) GetUsers() []*User {
 	return nil
 }
 
+// The request message for Users.StarProject.
+// Next available tag: 2
+type StarProjectRequest struct {
+	// The resource name for the Project to star.
+	Project              string   `protobuf:"bytes,1,opt,name=project,proto3" json:"project,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StarProjectRequest) Reset()         { *m = StarProjectRequest{} }
+func (m *StarProjectRequest) String() string { return proto.CompactTextString(m) }
+func (*StarProjectRequest) ProtoMessage()    {}
+func (*StarProjectRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2c2dd4221542a287, []int{3}
+}
+
+func (m *StarProjectRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StarProjectRequest.Unmarshal(m, b)
+}
+func (m *StarProjectRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StarProjectRequest.Marshal(b, m, deterministic)
+}
+func (m *StarProjectRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StarProjectRequest.Merge(m, src)
+}
+func (m *StarProjectRequest) XXX_Size() int {
+	return xxx_messageInfo_StarProjectRequest.Size(m)
+}
+func (m *StarProjectRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_StarProjectRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StarProjectRequest proto.InternalMessageInfo
+
+func (m *StarProjectRequest) GetProject() string {
+	if m != nil {
+		return m.Project
+	}
+	return ""
+}
+
+// The request message for Users.UnStarProject.
+// Next available tag: 2
+type UnStarProjectRequest struct {
+	// The resource name for the Project to unstar.
+	Project              string   `protobuf:"bytes,1,opt,name=project,proto3" json:"project,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UnStarProjectRequest) Reset()         { *m = UnStarProjectRequest{} }
+func (m *UnStarProjectRequest) String() string { return proto.CompactTextString(m) }
+func (*UnStarProjectRequest) ProtoMessage()    {}
+func (*UnStarProjectRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2c2dd4221542a287, []int{4}
+}
+
+func (m *UnStarProjectRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnStarProjectRequest.Unmarshal(m, b)
+}
+func (m *UnStarProjectRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnStarProjectRequest.Marshal(b, m, deterministic)
+}
+func (m *UnStarProjectRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnStarProjectRequest.Merge(m, src)
+}
+func (m *UnStarProjectRequest) XXX_Size() int {
+	return xxx_messageInfo_UnStarProjectRequest.Size(m)
+}
+func (m *UnStarProjectRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnStarProjectRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UnStarProjectRequest proto.InternalMessageInfo
+
+func (m *UnStarProjectRequest) GetProject() string {
+	if m != nil {
+		return m.Project
+	}
+	return ""
+}
+
+// The request message for Users.ListProjectStars.
+// Next available tag: 4
+type ListProjectStarsRequest struct {
+	// The resource name for the user having stars listed.
+	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
+	// The maximum number of items to return. The service may return fewer than
+	// this value.
+	// If unspecified, at most 1000 items will be returned.
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `ListProjectStars` call.
+	// Provide this to retrieve the subsequent page.
+	//
+	// When paginating, all other parameters provided to `ListProjectStars` must
+	// match the call that provided the page token.
+	PageToken            string   `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListProjectStarsRequest) Reset()         { *m = ListProjectStarsRequest{} }
+func (m *ListProjectStarsRequest) String() string { return proto.CompactTextString(m) }
+func (*ListProjectStarsRequest) ProtoMessage()    {}
+func (*ListProjectStarsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2c2dd4221542a287, []int{5}
+}
+
+func (m *ListProjectStarsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListProjectStarsRequest.Unmarshal(m, b)
+}
+func (m *ListProjectStarsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListProjectStarsRequest.Marshal(b, m, deterministic)
+}
+func (m *ListProjectStarsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListProjectStarsRequest.Merge(m, src)
+}
+func (m *ListProjectStarsRequest) XXX_Size() int {
+	return xxx_messageInfo_ListProjectStarsRequest.Size(m)
+}
+func (m *ListProjectStarsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListProjectStarsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListProjectStarsRequest proto.InternalMessageInfo
+
+func (m *ListProjectStarsRequest) GetParent() string {
+	if m != nil {
+		return m.Parent
+	}
+	return ""
+}
+
+func (m *ListProjectStarsRequest) GetPageSize() int32 {
+	if m != nil {
+		return m.PageSize
+	}
+	return 0
+}
+
+func (m *ListProjectStarsRequest) GetPageToken() string {
+	if m != nil {
+		return m.PageToken
+	}
+	return ""
+}
+
+// The response message for Users.ListProjectStars.
+// Next available tag: 3
+type ListProjectStarsResponse struct {
+	// Data for each starred project.
+	ProjectStars []*ProjectStar `protobuf:"bytes,1,rep,name=project_stars,json=projectStars,proto3" json:"project_stars,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken        string   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListProjectStarsResponse) Reset()         { *m = ListProjectStarsResponse{} }
+func (m *ListProjectStarsResponse) String() string { return proto.CompactTextString(m) }
+func (*ListProjectStarsResponse) ProtoMessage()    {}
+func (*ListProjectStarsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2c2dd4221542a287, []int{6}
+}
+
+func (m *ListProjectStarsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListProjectStarsResponse.Unmarshal(m, b)
+}
+func (m *ListProjectStarsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListProjectStarsResponse.Marshal(b, m, deterministic)
+}
+func (m *ListProjectStarsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListProjectStarsResponse.Merge(m, src)
+}
+func (m *ListProjectStarsResponse) XXX_Size() int {
+	return xxx_messageInfo_ListProjectStarsResponse.Size(m)
+}
+func (m *ListProjectStarsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListProjectStarsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListProjectStarsResponse proto.InternalMessageInfo
+
+func (m *ListProjectStarsResponse) GetProjectStars() []*ProjectStar {
+	if m != nil {
+		return m.ProjectStars
+	}
+	return nil
+}
+
+func (m *ListProjectStarsResponse) GetNextPageToken() string {
+	if m != nil {
+		return m.NextPageToken
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*GetUserRequest)(nil), "monorail.v1.GetUserRequest")
 	proto.RegisterType((*BatchGetUsersRequest)(nil), "monorail.v1.BatchGetUsersRequest")
 	proto.RegisterType((*BatchGetUsersResponse)(nil), "monorail.v1.BatchGetUsersResponse")
+	proto.RegisterType((*StarProjectRequest)(nil), "monorail.v1.StarProjectRequest")
+	proto.RegisterType((*UnStarProjectRequest)(nil), "monorail.v1.UnStarProjectRequest")
+	proto.RegisterType((*ListProjectStarsRequest)(nil), "monorail.v1.ListProjectStarsRequest")
+	proto.RegisterType((*ListProjectStarsResponse)(nil), "monorail.v1.ListProjectStarsResponse")
 }
 
 func init() {
@@ -163,25 +370,40 @@ func init() {
 }
 
 var fileDescriptor_2c2dd4221542a287 = []byte{
-	// 287 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x90, 0xc1, 0x4a, 0xc3, 0x40,
-	0x10, 0x86, 0x1b, 0x35, 0x8a, 0x53, 0x14, 0x5c, 0x2a, 0x94, 0xe8, 0xa1, 0xae, 0xa0, 0x1e, 0x64,
-	0x63, 0xeb, 0xd1, 0x4b, 0xdb, 0x8b, 0x9e, 0x05, 0xc1, 0x5b, 0xd8, 0xc4, 0x31, 0x5d, 0x49, 0x32,
-	0x71, 0x37, 0xc9, 0xe3, 0xf8, 0x6c, 0x3e, 0x87, 0x27, 0xe9, 0x66, 0x05, 0xa3, 0xd5, 0xde, 0x76,
-	0x99, 0xef, 0xff, 0x98, 0xf9, 0xe1, 0x58, 0x96, 0x2a, 0x6c, 0xc6, 0xa1, 0x2c, 0x55, 0x54, 0x6a,
-	0xaa, 0x28, 0xac, 0x0d, 0x6a, 0x23, 0xec, 0x9b, 0xf5, 0x73, 0x2a, 0x48, 0x4b, 0x95, 0x89, 0x66,
-	0x1c, 0x5c, 0xa6, 0x44, 0x69, 0x86, 0x0e, 0x6b, 0x3f, 0xcb, 0x5c, 0xf8, 0xac, 0x30, 0x7b, 0x8a,
-	0x62, 0x5c, 0xc8, 0x46, 0x91, 0x6e, 0xa3, 0xc1, 0xd9, 0x5f, 0xb4, 0x46, 0x43, 0xb5, 0x4e, 0xd0,
-	0x71, 0xa7, 0x2b, 0x17, 0x88, 0x28, 0x7e, 0xc1, 0xa4, 0x72, 0x7b, 0xf0, 0x29, 0xec, 0xdf, 0x62,
-	0xf5, 0x60, 0x50, 0xdf, 0xe3, 0x6b, 0x8d, 0xa6, 0x62, 0x02, 0xb6, 0x0a, 0x99, 0xe3, 0xd0, 0x1b,
-	0x79, 0x17, 0xbb, 0xf3, 0xe0, 0x7d, 0xb6, 0xf1, 0x31, 0x1b, 0x00, 0x93, 0xa5, 0x12, 0x89, 0x8e,
-	0xeb, 0x54, 0x24, 0x94, 0x87, 0x36, 0x60, 0x39, 0x7e, 0x07, 0x83, 0xb9, 0xac, 0x92, 0x85, 0xd3,
-	0x98, 0x2f, 0xcf, 0x15, 0xf8, 0xcb, 0xb9, 0x19, 0x7a, 0xa3, 0xcd, 0x35, 0xa2, 0x16, 0xe4, 0x53,
-	0x38, 0xfc, 0x61, 0x32, 0x25, 0x15, 0x06, 0xd9, 0x39, 0xf8, 0xb6, 0x3b, 0xab, 0xea, 0x4f, 0x0e,
-	0xc4, 0xb7, 0xf2, 0x44, 0x6b, 0xb0, 0xf3, 0xc9, 0x9b, 0x07, 0xbe, 0x8d, 0xb2, 0x1b, 0xd8, 0x71,
-	0x1a, 0x76, 0xd4, 0xc1, 0xbb, 0xd7, 0x06, 0xbf, 0x5d, 0xbc, 0xc7, 0x1e, 0x61, 0xaf, 0xb3, 0x08,
-	0x3b, 0xe9, 0x50, 0xab, 0xce, 0x0d, 0xf8, 0x7f, 0x48, 0x7b, 0x07, 0xef, 0xc5, 0xdb, 0xb6, 0xf5,
-	0xeb, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x78, 0x58, 0xf1, 0x57, 0x1d, 0x02, 0x00, 0x00,
+	// 523 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x53, 0xcd, 0x6e, 0x13, 0x3d,
+	0x14, 0xcd, 0x24, 0x5f, 0xda, 0xaf, 0x37, 0x84, 0x1f, 0x2b, 0xa5, 0xa3, 0x09, 0x15, 0xc1, 0x40,
+	0xe9, 0x02, 0x79, 0x68, 0x58, 0xb0, 0x40, 0x48, 0x6d, 0x25, 0x04, 0x42, 0x45, 0x54, 0x29, 0x95,
+	0xd8, 0x8d, 0x9c, 0x70, 0x9b, 0x0e, 0x24, 0x63, 0x63, 0x3b, 0x11, 0x74, 0xc7, 0x92, 0x67, 0xe0,
+	0xe5, 0x78, 0x0e, 0x56, 0xc8, 0x1e, 0x0f, 0xca, 0xe4, 0x87, 0xb2, 0x60, 0x37, 0xe3, 0x7b, 0xee,
+	0xb9, 0xc7, 0xe7, 0x1e, 0xc3, 0x2d, 0x2e, 0xd3, 0x78, 0xba, 0x17, 0x73, 0x99, 0x26, 0x52, 0x09,
+	0x23, 0xe2, 0x89, 0x46, 0xa5, 0x99, 0xfb, 0x26, 0x8d, 0xb1, 0xc8, 0x84, 0xe2, 0xe9, 0x88, 0x4d,
+	0xf7, 0xa2, 0x87, 0x43, 0x21, 0x86, 0x23, 0xf4, 0xb0, 0xfc, 0xc7, 0xf6, 0xc5, 0x67, 0x29, 0x8e,
+	0xde, 0x27, 0x7d, 0x3c, 0xe7, 0xd3, 0x54, 0xa8, 0xbc, 0x35, 0xda, 0x59, 0x85, 0x56, 0xa8, 0xc5,
+	0x44, 0x0d, 0xd0, 0xe3, 0xee, 0x2e, 0x15, 0x90, 0x88, 0xfe, 0x07, 0x1c, 0x18, 0xaf, 0x23, 0x6a,
+	0xfb, 0x7e, 0xf7, 0xd7, 0x9f, 0x9c, 0xc5, 0x38, 0x96, 0xe6, 0x4b, 0x5e, 0xa4, 0xfb, 0x70, 0xf5,
+	0x05, 0x9a, 0x53, 0x8d, 0xaa, 0x87, 0x9f, 0x26, 0xa8, 0x0d, 0x61, 0xf0, 0x5f, 0xc6, 0xc7, 0x18,
+	0x06, 0x9d, 0x60, 0x77, 0xe3, 0x30, 0xfa, 0x71, 0x50, 0xfd, 0x79, 0xd0, 0x02, 0xc2, 0x65, 0xca,
+	0x06, 0xaa, 0x3f, 0x19, 0xb2, 0x81, 0x18, 0xc7, 0xae, 0xc1, 0xe1, 0xe8, 0x4b, 0x68, 0x1d, 0x72,
+	0x33, 0x38, 0xf7, 0x34, 0xba, 0xe0, 0x79, 0x04, 0x75, 0x5b, 0xd7, 0x61, 0xd0, 0xa9, 0x5d, 0x42,
+	0x94, 0x03, 0xe9, 0x3e, 0x6c, 0xce, 0x31, 0x69, 0x29, 0x32, 0x8d, 0xe4, 0x01, 0xd4, 0x9d, 0xb1,
+	0x8e, 0xaa, 0xd1, 0xbd, 0xc1, 0x66, 0x9c, 0x65, 0x39, 0x83, 0xab, 0xd3, 0xd7, 0x40, 0x4e, 0x0c,
+	0x57, 0xc7, 0x4a, 0x58, 0x03, 0x0a, 0x25, 0x4f, 0x60, 0x5d, 0xe6, 0x27, 0xfe, 0x52, 0xdb, 0x4e,
+	0xcb, 0x16, 0x6c, 0x96, 0xb5, 0x14, 0x6d, 0x05, 0x9a, 0xbe, 0x81, 0xd6, 0x69, 0xf6, 0x2f, 0x09,
+	0xbf, 0x05, 0xb0, 0x75, 0x94, 0x6a, 0xe3, 0x0b, 0x96, 0xfa, 0xb7, 0x5f, 0x5d, 0x58, 0x93, 0x5c,
+	0x61, 0x66, 0xfe, 0xc2, 0x79, 0x8f, 0x24, 0x6d, 0xd8, 0x90, 0x7c, 0x88, 0x89, 0x4e, 0x2f, 0x30,
+	0xac, 0x76, 0x82, 0xdd, 0x7a, 0xef, 0x7f, 0x7b, 0x70, 0x92, 0x5e, 0x20, 0xd9, 0x06, 0x70, 0x45,
+	0x23, 0x3e, 0x62, 0x16, 0xd6, 0x2c, 0x69, 0xcf, 0xc1, 0xdf, 0xda, 0x03, 0xfa, 0x35, 0x80, 0x70,
+	0x51, 0x8b, 0x77, 0xfc, 0x19, 0x34, 0xbd, 0xe6, 0x44, 0xdb, 0x82, 0x77, 0x3e, 0x2c, 0x39, 0x3f,
+	0xd3, 0xd9, 0xbb, 0x22, 0x67, 0x68, 0xc8, 0x0e, 0x5c, 0xcb, 0xf0, 0xb3, 0x49, 0x66, 0xe6, 0x57,
+	0xdd, 0xfc, 0xa6, 0x3d, 0x3e, 0x2e, 0x34, 0x74, 0xbf, 0xd7, 0xa0, 0xee, 0x56, 0x4d, 0x9e, 0xc2,
+	0xba, 0x5f, 0x3b, 0x69, 0x97, 0x86, 0x94, 0xd3, 0x19, 0x2d, 0xee, 0x9e, 0x56, 0xc8, 0x3b, 0x68,
+	0x96, 0x82, 0x43, 0xee, 0x94, 0x50, 0xcb, 0xe2, 0x19, 0xd1, 0x3f, 0x41, 0x72, 0x17, 0x68, 0x85,
+	0xbc, 0x82, 0xc6, 0xcc, 0xfe, 0xc9, 0xed, 0x52, 0xd3, 0x62, 0x32, 0xa2, 0x95, 0x06, 0xd1, 0x0a,
+	0x39, 0x82, 0x66, 0x29, 0x4d, 0x73, 0x2a, 0x97, 0x25, 0x2d, 0xba, 0xc9, 0xf2, 0xc7, 0xcb, 0x8a,
+	0xc7, 0xcb, 0x9e, 0xdb, 0xc7, 0x4b, 0x2b, 0x84, 0xc3, 0xf5, 0xf9, 0xed, 0x91, 0x7b, 0x25, 0xc2,
+	0x15, 0x41, 0x8b, 0xee, 0x5f, 0x82, 0x2a, 0x2e, 0xdf, 0x5f, 0x73, 0x43, 0x1f, 0xff, 0x0a, 0x00,
+	0x00, 0xff, 0xff, 0xd8, 0x84, 0x3a, 0x48, 0xe7, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -202,6 +424,15 @@ type UsersClient interface {
 	// Returns all of the requested Users.
 	// TODO(crbug/monorail/7238): Document possible errors when implemented.
 	BatchGetUsers(ctx context.Context, in *BatchGetUsersRequest, opts ...grpc.CallOption) (*BatchGetUsersResponse, error)
+	// Stars a given project for the requestor.
+	// TODO(crbug/monorail/7238): Document possible errors when implemented.
+	StarProject(ctx context.Context, in *StarProjectRequest, opts ...grpc.CallOption) (*ProjectStar, error)
+	// Unstars a given project for the requestor.
+	// TODO(crbug/monorail/7238): Document possible errors when implemented.
+	UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// Lists all of a user's starred projects.
+	// TODO(crbug/monorail/7238): Document possible errors when implemented.
+	ListProjectStars(ctx context.Context, in *ListProjectStarsRequest, opts ...grpc.CallOption) (*ListProjectStarsResponse, error)
 }
 type usersPRPCClient struct {
 	client *prpc.Client
@@ -223,6 +454,33 @@ func (c *usersPRPCClient) GetUser(ctx context.Context, in *GetUserRequest, opts 
 func (c *usersPRPCClient) BatchGetUsers(ctx context.Context, in *BatchGetUsersRequest, opts ...grpc.CallOption) (*BatchGetUsersResponse, error) {
 	out := new(BatchGetUsersResponse)
 	err := c.client.Call(ctx, "monorail.v1.Users", "BatchGetUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersPRPCClient) StarProject(ctx context.Context, in *StarProjectRequest, opts ...grpc.CallOption) (*ProjectStar, error) {
+	out := new(ProjectStar)
+	err := c.client.Call(ctx, "monorail.v1.Users", "StarProject", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersPRPCClient) UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.client.Call(ctx, "monorail.v1.Users", "UnStarProject", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersPRPCClient) ListProjectStars(ctx context.Context, in *ListProjectStarsRequest, opts ...grpc.CallOption) (*ListProjectStarsResponse, error) {
+	out := new(ListProjectStarsResponse)
+	err := c.client.Call(ctx, "monorail.v1.Users", "ListProjectStars", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -255,6 +513,33 @@ func (c *usersClient) BatchGetUsers(ctx context.Context, in *BatchGetUsersReques
 	return out, nil
 }
 
+func (c *usersClient) StarProject(ctx context.Context, in *StarProjectRequest, opts ...grpc.CallOption) (*ProjectStar, error) {
+	out := new(ProjectStar)
+	err := c.cc.Invoke(ctx, "/monorail.v1.Users/StarProject", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersClient) UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/monorail.v1.Users/UnStarProject", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usersClient) ListProjectStars(ctx context.Context, in *ListProjectStarsRequest, opts ...grpc.CallOption) (*ListProjectStarsResponse, error) {
+	out := new(ListProjectStarsResponse)
+	err := c.cc.Invoke(ctx, "/monorail.v1.Users/ListProjectStars", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsersServer is the server API for Users service.
 type UsersServer interface {
 	// Returns the requested User.
@@ -263,6 +548,15 @@ type UsersServer interface {
 	// Returns all of the requested Users.
 	// TODO(crbug/monorail/7238): Document possible errors when implemented.
 	BatchGetUsers(context.Context, *BatchGetUsersRequest) (*BatchGetUsersResponse, error)
+	// Stars a given project for the requestor.
+	// TODO(crbug/monorail/7238): Document possible errors when implemented.
+	StarProject(context.Context, *StarProjectRequest) (*ProjectStar, error)
+	// Unstars a given project for the requestor.
+	// TODO(crbug/monorail/7238): Document possible errors when implemented.
+	UnStarProject(context.Context, *UnStarProjectRequest) (*empty.Empty, error)
+	// Lists all of a user's starred projects.
+	// TODO(crbug/monorail/7238): Document possible errors when implemented.
+	ListProjectStars(context.Context, *ListProjectStarsRequest) (*ListProjectStarsResponse, error)
 }
 
 // UnimplementedUsersServer can be embedded to have forward compatible implementations.
@@ -274,6 +568,15 @@ func (*UnimplementedUsersServer) GetUser(ctx context.Context, req *GetUserReques
 }
 func (*UnimplementedUsersServer) BatchGetUsers(ctx context.Context, req *BatchGetUsersRequest) (*BatchGetUsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchGetUsers not implemented")
+}
+func (*UnimplementedUsersServer) StarProject(ctx context.Context, req *StarProjectRequest) (*ProjectStar, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StarProject not implemented")
+}
+func (*UnimplementedUsersServer) UnStarProject(ctx context.Context, req *UnStarProjectRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnStarProject not implemented")
+}
+func (*UnimplementedUsersServer) ListProjectStars(ctx context.Context, req *ListProjectStarsRequest) (*ListProjectStarsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListProjectStars not implemented")
 }
 
 func RegisterUsersServer(s prpc.Registrar, srv UsersServer) {
@@ -316,6 +619,60 @@ func _Users_BatchGetUsers_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Users_StarProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StarProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersServer).StarProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/monorail.v1.Users/StarProject",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersServer).StarProject(ctx, req.(*StarProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Users_UnStarProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnStarProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersServer).UnStarProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/monorail.v1.Users/UnStarProject",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersServer).UnStarProject(ctx, req.(*UnStarProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Users_ListProjectStars_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProjectStarsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersServer).ListProjectStars(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/monorail.v1.Users/ListProjectStars",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersServer).ListProjectStars(ctx, req.(*ListProjectStarsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Users_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "monorail.v1.Users",
 	HandlerType: (*UsersServer)(nil),
@@ -327,6 +684,18 @@ var _Users_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchGetUsers",
 			Handler:    _Users_BatchGetUsers_Handler,
+		},
+		{
+			MethodName: "StarProject",
+			Handler:    _Users_StarProject_Handler,
+		},
+		{
+			MethodName: "UnStarProject",
+			Handler:    _Users_UnStarProject_Handler,
+		},
+		{
+			MethodName: "ListProjectStars",
+			Handler:    _Users_ListProjectStars_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

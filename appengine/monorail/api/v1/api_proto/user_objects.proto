@@ -55,7 +55,7 @@ message UserSettings {
       (google.api.field_behavior) = OUTPUT_ONLY ];
 }
 
-// Defines saved queries that belong to a user
+// Defines saved queries that belong to a user.
 //
 // Next available tag: 6
 message UserSavedQuery {
@@ -85,4 +85,16 @@ message UserSavedQuery {
     IMMEDIATE_NOTIFICATION = 2;
   }
   SubscriptionMode subscription_mode = 5;
+}
+
+// A project starred by a user.
+//
+// Next available tag: 2
+message ProjectStar {
+  option (google.api.resource) = {
+    type: "api.crbug.com/ProjectStar"
+    pattern: "users/{user_id}/projectStars/{project_name}"
+  };
+  // Resource name of the ProjectStar.
+  string name = 1;
 }
