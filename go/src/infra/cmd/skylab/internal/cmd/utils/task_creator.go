@@ -113,7 +113,6 @@ func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSe
 
 // LeaseByHostnameTask creates lease_task for particular DUT
 func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, durationSec int, reason string) (taskID string, err error) {
-	c := []string{"/bin/sh", "-c", `while true; do sleep 60; echo Zzz...; done`}
 	id, err := tc.dutNameToBotID(ctx, host)
 	if err != nil {
 		return "", err
@@ -121,7 +120,7 @@ func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, dur
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: c,
+			Command: getLeaseCommand(),
 			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
 				{Key: "pool", Value: "ChromeOSSkylab"},
 				{Key: "id", Value: id},
