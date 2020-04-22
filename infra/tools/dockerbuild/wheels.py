@@ -442,6 +442,11 @@ SPECS.update({
             ['windows-x86', 'windows-x64'],
         ),
         Prebuilt(
+            'pywin32',
+            '227',
+            ['windows-x86', 'windows-x64'],
+        ),
+        Prebuilt(
             'scipy',
             '0.19.0',
             ['mac-x64', 'manylinux-x86', 'manylinux-x64'],

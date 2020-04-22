@@ -191,7 +191,7 @@ def StageWheelForPackage(system, wheel_dir, wheel):
 def BuildPackageFromPyPiWheel(system, wheel):
   """Builds a wheel by obtaining a matching wheel from PyPi."""
   # Figure out which version of python to use.
-  if wheel.spec.universal.pyversions == ['py3']:
+  if wheel.spec.universal and wheel.spec.universal.pyversions == ['py3']:
     interp = 'python3'
   else:
     interp = 'python'
