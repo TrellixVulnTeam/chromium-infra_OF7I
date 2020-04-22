@@ -727,6 +727,8 @@ def CanFlagComment(comment, commenter, comment_reporters, user_id, perms):
   Args:
     comment: An IssueComment PB object.
     commenter: An User PB object with the user who created the comment.
+    comment_reporters: A collection of user IDs who flagged the comment as spam.
+    user_id: The ID of the user for whom we're checking permissions.
     perms: The PermissionSet with the issue permissions.
 
   Returns:

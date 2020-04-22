@@ -1572,13 +1572,6 @@ class WorkEnv(object):
     Raises:
       PermissionException: The logged-in user is not allowed to view the issue.
     """
-    # TODO(crbug.com/monorail/7525): Remaining tests for SafeListIssueComments.
-    # Amendments and attachments are filtered
-    # I flagged
-    # someone else flagged
-    # i'm an admin, i can see unfiltered content
-    # start/max_items related tests
-    # inbound message can be viewed with permissions
     if start < 0:
       raise exceptions.InputException('Invalid `start`: %d' % start)
     if max_items < 0:
@@ -1612,7 +1605,8 @@ class WorkEnv(object):
         commenter = users_by_id[comment.user_id]
 
         _can_flag, is_flagged = permissions.CanFlagComment(
-            comment, commenter, comment_reporters, self.mc.auth.user_id, perms)
+            comment, commenter, comment_reporters.get(comment.id, []),
+            self.mc.auth.user_id, perms)
         can_view = permissions.CanViewComment(
             comment, commenter, self.mc.auth.user_id, perms)
         can_view_inbound_message = permissions.CanViewInboundMessage(

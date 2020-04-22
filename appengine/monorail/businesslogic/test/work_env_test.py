@@ -2572,6 +2572,22 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual(initial_description, actual_comments[0].content)
     self.assertEqual('more info', actual_comments[1].content)
 
+  def testSafeListIssueComments_DeletedIssue(self):
+    """Users without permissions cannot view comments on deleted issues."""
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        'sum',
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    issue.deleted = True
+    self.services.issue.TestAddIssue(issue)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.SafeListIssueComments(issue.issue_id, 1000, 0)
+
   def testSafeListIssueComments_NotAllowed(self):
     issue = fake.MakeTestIssue(
         self.project.project_id,
@@ -2587,6 +2603,41 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       with self.work_env as we:
         we.SafeListIssueComments(issue.issue_id, 1000, 0)
+
+  def testSafeListIssueComments_UserFlagged(self):
+    """Users see comments they flagged as spam."""
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        'sum',
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    self.services.issue.TestAddIssue(issue)
+    flagged_comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='flagged content',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id,
+        inbound_message='Some message',
+        importer_id=self.user_1.user_id)
+    self.services.issue.TestAddComment(flagged_comment, 1)
+
+    self.services.spam.FlagComment(
+        self.cnxn, issue.issue_id, flagged_comment.id, flagged_comment.user_id,
+        self.user_2.user_id, True)
+
+    # One user flagging a comment doesn't cause other users to see it as spam.
+    with self.work_env as we:
+      list_result = we.SafeListIssueComments(issue.issue_id, 1000, 0)
+    self.assertFalse(list_result.items[1].is_spam)
+
+    self.SignIn(self.user_2.user_id)
+    with self.work_env as we:
+      list_result = we.SafeListIssueComments(issue.issue_id, 1000, 0)
+    self.assertTrue(list_result.items[1].is_spam)
+    self.assertEqual('flagged content', list_result.items[1].content)
 
   def testSafeListIssueComments_FilteredContent(self):
 
@@ -2634,7 +2685,18 @@ class WorkEnvTest(unittest.TestCase):
         content='deleted',
         user_id=self.user_1.user_id,
         issue_id=issue.issue_id,
-        deleted_by=self.user_1.user_id)
+        deleted_by=self.user_1.user_id,
+        amendments=[
+            tracker_pb2.Amendment(
+                field=tracker_pb2.FieldID.SUMMARY, newvalue='new')
+        ],
+        attachments=[
+            tracker_pb2.Attachment(
+                attachment_id=1,
+                mimetype='image/png',
+                filename='example.png',
+                filesize=12345)
+        ])
     inbound_comment = tracker_pb2.IssueComment(
         project_id=self.project.project_id,
         content='from an inbound message',
@@ -2644,7 +2706,6 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.TestAddComment(spam_comment, 1)
     self.services.issue.TestAddComment(deleted_comment, 2)
     self.services.issue.TestAddComment(inbound_comment, 3)
-
     with self.work_env as we:
       list_result = we.SafeListIssueComments(issue.issue_id, 1000, 0)
 
@@ -2656,6 +2717,63 @@ class WorkEnvTest(unittest.TestCase):
     AssertFiltered(deleted_comment, actual_comments[2])
     self.assertEqual('from an inbound message', actual_comments[3].content)
     self.assertEqual(None, actual_comments[3].inbound_message)
+
+  def testSafeListIssueComments_AdminsViewUnfiltered(self):
+    """Admins can appropriately view comment content that would be filtered."""
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        'sum',
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    self.services.issue.TestAddIssue(issue)
+    spam_comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='spam',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id,
+        is_spam=True,
+        inbound_message='Some message',
+        importer_id=self.user_1.user_id)
+    deleted_comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='deleted',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id,
+        deleted_by=self.user_1.user_id,
+        amendments=[
+            tracker_pb2.Amendment(
+                field=tracker_pb2.FieldID.SUMMARY, newvalue='new')
+        ],
+        attachments=[
+            tracker_pb2.Attachment(
+                attachment_id=1,
+                mimetype='image/png',
+                filename='example.png',
+                filesize=12345)
+        ])
+    inbound_comment = tracker_pb2.IssueComment(
+        project_id=self.project.project_id,
+        content='from an inbound message',
+        user_id=self.user_1.user_id,
+        issue_id=issue.issue_id,
+        inbound_message='the full inbound message')
+    self.services.issue.TestAddComment(spam_comment, 1)
+    self.services.issue.TestAddComment(deleted_comment, 2)
+    self.services.issue.TestAddComment(inbound_comment, 3)
+
+    self.SignIn(self.admin_user.user_id)
+    with self.work_env as we:
+      list_result = we.SafeListIssueComments(issue.issue_id, 1000, 0)
+
+    # Admins can view the fields of comments that would be filtered.
+    actual_comments = list_result.items
+    self.assertEqual(spam_comment.content, actual_comments[1].content)
+    self.assertEqual(deleted_comment.content, actual_comments[2].content)
+    self.assertEqual(
+        'the full inbound message', actual_comments[3].inbound_message)
 
   def testSafeListIssueComments_MoreItems(self):
     initial_description = 'sum'
