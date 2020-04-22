@@ -20,9 +20,19 @@ HOTLIST_PERMISSIONS_MAP = {
         permission_objects_pb2.Permission.Value('HOTLIST_ADMINISTER')
 }
 
+FIELDDEF_PERMISSIONS_MAP = {
+    permissions.EDIT_FIELD_DEF:
+        permission_objects_pb2.Permission.Value('FIELD_DEF_EDIT'),
+    permissions.EDIT_FIELD_DEF_VALUE:
+        permission_objects_pb2.Permission.Value('FIELD_DEF_VALUE_EDIT')
+}
+
+# TODO(crbug/monorail/7339): Create a common _ConvertPermissions(permissions,
+# permissions_map)
+
 
 def ConvertHotlistPermissions(hotlist_permissions):
-  # type: (Sequence[str]) -> Sequence[permission_objects_pb2.Permission
+  # type: (Sequence[str]) -> Sequence[permission_objects_pb2.Permission]
   """Converts hotlist permission strings into protoc Permission enum values."""
   api_permissions = []
   for permission in hotlist_permissions:
@@ -30,6 +40,20 @@ def ConvertHotlistPermissions(hotlist_permissions):
     if not api_permission:
       raise exceptions.InputException(
           'Unrecognized hotlist permission: %s' % permission)
+    api_permissions.append(api_permission)
+
+  return api_permissions
+
+
+def ConvertFieldDefPermissions(field_permissions):
+  # type: (Sequence[str]) -> Sequence[permission_objects_pb2.Permission]
+  """Converts field permission strings into protoc Permission enum values."""
+  api_permissions = []
+  for permission in field_permissions:
+    api_permission = FIELDDEF_PERMISSIONS_MAP.get(permission)
+    if not api_permission:
+      raise exceptions.InputException(
+          'Unrecognized field permission: %s' % permission)
     api_permissions.append(api_permission)
 
   return api_permissions

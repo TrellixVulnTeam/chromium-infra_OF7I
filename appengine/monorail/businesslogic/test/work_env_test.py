@@ -687,9 +687,35 @@ class WorkEnvTest(unittest.TestCase):
     self.services.template.GetProjectTemplates.assert_called_once_with(
         self.mr.cnxn, self.project.project_id)
 
-  # FUTURE: labels, statuses, fields, components, rules, templates, and views.
+  # FUTURE: labels, statuses, components, rules, templates, and views.
   # FUTURE: project saved queries.
   # FUTURE: GetProjectPermissionsForUser()
+
+  ### Field methods
+
+  # FUTURE: All other field methods.
+
+  def testGetFieldDef_Normal(self):
+    """We can get an existing fielddef by field_id."""
+    field_id = self.services.config.CreateFieldDef(
+        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        [], [])
+    config = self.services.config.GetProjectConfig(self.cnxn, 789)
+    with self.work_env as we:
+      actual = we.GetFieldDef(field_id, self.project)
+
+    self.assertEqual(config.field_defs[0], actual)
+
+  def testGetFieldDef_NoSuchFieldDef(self):
+    """We reject attempts to get a non-existent field."""
+    _field_id = self.services.config.CreateFieldDef(
+        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        [], [])
+    with self.assertRaises(exceptions.NoSuchFieldDefException):
+      with self.work_env as we:
+        _actual = we.GetFieldDef(999, self.project)
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueBlockingNotification')
@@ -5136,6 +5162,88 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       with self.work_env as we:
         we.ListHotlistPermissions(hotlist.hotlist_id)
+
+  def testListFieldDefPermissions_SiteAdminAndProjectOwners(self):
+    """SiteAdmins/ProjectOwners can always edit a field and its value."""
+    field_id = self.services.config.CreateFieldDef(
+        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        [], [])
+    restricted_field_id = self.services.config.CreateFieldDef(
+        self.cnxn,
+        self.project.project_id,
+        'ResField',
+        'STR_TYPE',
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None, [], [],
+        is_restricted_field=True)
+
+    self.SignIn(user_id=self.admin_user.user_id)
+
+    with self.work_env as we:
+      site_admin_perms_1 = we.ListFieldDefPermissions(
+          field_id, self.project.project_id)
+    self.assertEqual(
+        site_admin_perms_1,
+        [permissions.EDIT_FIELD_DEF, permissions.EDIT_FIELD_DEF_VALUE])
+
+    with self.work_env as we:
+      site_admin_perms_2 = we.ListFieldDefPermissions(
+          restricted_field_id, self.project.project_id)
+    self.assertEqual(
+        site_admin_perms_2,
+        [permissions.EDIT_FIELD_DEF, permissions.EDIT_FIELD_DEF_VALUE])
+
+  def testListFieldDefPermissions_FieldEditor(self):
+    """Field Editors can edit the value of a field."""
+    field_id = self.services.config.CreateFieldDef(
+        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        [], [111])
+    restricted_field_id = self.services.config.CreateFieldDef(
+        self.cnxn,
+        self.project.project_id,
+        'ResField',
+        'STR_TYPE',
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None, [], [111],
+        is_restricted_field=True)
+
+    self.SignIn(user_id=self.user_1.user_id)
+
+    with self.work_env as we:
+      field_editor_perms = we.ListFieldDefPermissions(
+          field_id, self.project.project_id)
+    self.assertEqual(field_editor_perms, [permissions.EDIT_FIELD_DEF_VALUE])
+
+    with self.work_env as we:
+      field_editor_perms = we.ListFieldDefPermissions(
+          restricted_field_id, self.project.project_id)
+    self.assertEqual(field_editor_perms, [permissions.EDIT_FIELD_DEF_VALUE])
 
 
   # FUTURE: UpdateHotlist()

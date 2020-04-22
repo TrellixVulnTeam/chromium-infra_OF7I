@@ -42,17 +42,18 @@ class PermissionsServicer(monorail_servicer.MonorailServicer):
     api_permission_sets = []
     with work_env.WorkEnv(mc, self.services) as we:
       for name in request.names:
-        api_permission_sets.append(self._GetPermissionSet(we, name))
+        api_permission_sets.append(self._GetPermissionSet(mc.cnxn, we, name))
 
     return permissions_pb2.BatchGetPermissionSetsResponse(
         permission_sets=api_permission_sets)
 
-  def _GetPermissionSet(self, we, name):
-    # type: (businesslogic.WorkEnv, str) ->
+  def _GetPermissionSet(self, cnxn, we, name):
+    # type: (sql.MonorailConnection, businesslogic.WorkEnv, str) ->
     # permission_objects_pb2.PermissionSet
     """Takes a resource name and returns the PermissionSet for the resource.
 
       Args:
+        cnxn: MonorailConnection object to the database.
         we: WorkEnv object to get the permission strings.
         name: resource name of a resource we want a PermissionSet for.
 
@@ -69,6 +70,14 @@ class PermissionsServicer(monorail_servicer.MonorailServicer):
       hotlist_id = rnc.IngestHotlistName(name)
       permissions = we.ListHotlistPermissions(hotlist_id)
       api_permissions = pc.ConvertHotlistPermissions(permissions)
+      return permission_objects_pb2.PermissionSet(
+          resource=name, permissions=api_permissions)
+    except exceptions.InputException:
+      pass
+    try:
+      project_id, field_id = rnc.IngestFieldDefName(cnxn, name, self.services)
+      permissions = we.ListFieldDefPermissions(field_id, project_id)
+      api_permissions = pc.ConvertFieldDefPermissions(permissions)
       return permission_objects_pb2.PermissionSet(
           resource=name, permissions=api_permissions)
     except exceptions.InputException:

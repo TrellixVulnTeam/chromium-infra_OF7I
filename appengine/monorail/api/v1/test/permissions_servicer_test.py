@@ -31,17 +31,25 @@ class PermissionsServicerTest(unittest.TestCase):
         config=fake.ConfigService(),
         user=fake.UserService(),
         usergroup=fake.UserGroupService())
+    self.project = self.services.project.TestAddProject(
+        'proj', project_id=789, committer_ids=[111])
     self.permissions_svcr = permissions_servicer.PermissionsServicer(
         self.services, make_rate_limiter=False)
     self.user_1 = self.services.user.TestAddUser('goose_1@example.com', 111)
     self.hotlist_1 = self.services.features.TestAddHotlist(
         'ThingsToBreak', owner_ids=[self.user_1.user_id])
+    self.services.config.CreateFieldDef(
+        self.cnxn, self.project.project_id, 'Field_1', 'STR_TYPE', None, None,
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        [], [])
+    self.config = self.services.config.GetProjectConfig(
+        self.cnxn, self.project.project_id)
 
   def CallWrapped(self, wrapped_handler, *args, **kwargs):
     return wrapped_handler.wrapped(self.permissions_svcr, *args, **kwargs)
 
-  def testBatchGetPermissionSets(self):
-    """We can batch get PermissionSets."""
+  def testBatchGetPermissionSets_Hotlist(self):
+    """We can batch get PermissionSets for hotlists."""
     hotlist_1_name = 'hotlists/%s' % self.hotlist_1.hotlist_id
     request = permissions_pb2.BatchGetPermissionSetsRequest(
         names=[hotlist_1_name])
@@ -64,9 +72,34 @@ class PermissionsServicerTest(unittest.TestCase):
         permissions_pb2.BatchGetPermissionSetsResponse(
             permission_sets=expected_permission_sets))
 
+  def testBatchGetPermissionSets_FieldDef(self):
+    """We can batch get PermissionSets for fields."""
+    field = self.config.field_defs[0]
+    field_1_name = 'projects/%s/fieldDefs/%s' % (
+        self.project.project_name, field.field_name)
+    request = permissions_pb2.BatchGetPermissionSetsRequest(
+        names=[field_1_name])
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(self.project)
+    response = self.CallWrapped(
+        self.permissions_svcr.BatchGetPermissionSets, mc, request)
+
+    expected_permission_sets = [
+        permission_objects_pb2.PermissionSet(
+            resource=field_1_name,
+            permissions=[
+                permission_objects_pb2.Permission.Value('FIELD_DEF_VALUE_EDIT'),
+            ])
+    ]
+    self.assertEqual(
+        response,
+        permissions_pb2.BatchGetPermissionSetsResponse(
+            permission_sets=expected_permission_sets))
+
   # Each case of recognized resource name is tested in testBatchGetPermissions.
   def testGetPermissionSet_InvalidName(self):
     """We raise exception when the resource name is unrecognized."""
     we = None
     with self.assertRaises(exceptions.InputException):
-      self.permissions_svcr._GetPermissionSet(we, 'goose/honk')
+      self.permissions_svcr._GetPermissionSet(self.cnxn, we, 'goose/honk')

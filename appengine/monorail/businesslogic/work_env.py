@@ -219,6 +219,13 @@ class WorkEnv(object):
       if fd:
         self._AssertUserCanEditValueForFieldDef(project, fd)
 
+  def _AssertUserCanViewFieldDef(self, project, field):
+    """Make sure the user may view the field."""
+    if not permissions.CanViewFieldDef(self.mc.auth.effective_ids,
+                                       self.mc.perms, project, field):
+      raise permissions.PermissionException(
+          'User is not allowed to view this field')
+
   ### Site methods
 
   # FUTURE: GetSiteReadOnlyState()
@@ -750,9 +757,37 @@ class WorkEnv(object):
       return templates
     return [template for template in templates if not template.members_only]
 
-  # FUTURE: labels, statuses, fields, components, rules, templates, and views.
+  # FUTURE: labels, statuses, components, rules, templates, and views.
   # FUTURE: project saved queries.
   # FUTURE: GetProjectPermissionsForUser()
+
+  ### Field methods
+
+  # FUTURE: All other field methods.
+
+  def GetFieldDef(self, field_id, project):
+    # type (int, Project) -> FieldDef
+    """Return the specified hotlist.
+
+    Args:
+      field_id: int field_id of the field to retrieve.
+      project: Project object that the field belongs to.
+
+    Returns:
+      The specified field.
+
+    Raises:
+      InputException: No field was specified.
+      NoSuchFieldDefException: There is no field with that ID.
+      PermissionException: The user is not allowed to view the field.
+    """
+    with self.mc.profiler.Phase('getting fielddef %r' % field_id):
+      config = self.GetProjectConfig(project.project_id)
+      field = tracker_bizobj.FindFieldDefByID(field_id, config)
+      if field is None:
+        raise exceptions.NoSuchFieldDefException('Field not found.')
+    self._AssertUserCanViewFieldDef(project, field)
+    return field
 
   ### Issue methods
 
@@ -2951,4 +2986,19 @@ class WorkEnv(object):
     if permissions.CanEditHotlist(self.mc.auth.effective_ids, self.mc.perms,
                                   hotlist):
       return permissions.HOTLIST_EDITOR_PERMISSIONS
+    return []
+
+  def ListFieldDefPermissions(self, field_id, project_id):
+    # type:(int, int) -> List[str]
+    """Return the list of permissions the current user has for the fieldDef."""
+    # TODO(crbug/monorail/4993): Make sure anon users can at most view the
+    # field.
+    project = self.GetProject(project_id)
+    field = self.GetFieldDef(field_id, project)
+    if permissions.CanEditFieldDef(self.mc.auth.effective_ids, self.mc.perms,
+                                   project, field):
+      return [permissions.EDIT_FIELD_DEF, permissions.EDIT_FIELD_DEF_VALUE]
+    if permissions.CanEditValueForFieldDef(self.mc.auth.effective_ids,
+                                           self.mc.perms, project, field):
+      return [permissions.EDIT_FIELD_DEF_VALUE]
     return []

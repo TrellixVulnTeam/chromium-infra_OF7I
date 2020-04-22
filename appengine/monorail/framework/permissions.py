@@ -106,6 +106,10 @@ FLAG_SPAM = 'FlagSpam'
 VERDICT_SPAM = 'VerdictSpam'
 MODERATE_SPAM = 'ModerateSpam'
 
+# Permissions for custom fields.
+EDIT_FIELD_DEF = 'EditFieldDef'
+EDIT_FIELD_DEF_VALUE = 'EditFieldDefValue'
+
 # Permissions for user hotlists.
 ADMINISTER_HOTLIST = 'AdministerHotlist'
 EDIT_HOTLIST = 'EditHotlist'

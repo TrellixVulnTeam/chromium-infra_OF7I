@@ -29,3 +29,16 @@ class ConverterFunctionsTest(unittest.TestCase):
   def testConvertHotlistPermissions_InvalidPermission(self):
     with self.assertRaises(exceptions.InputException):
       pc.ConvertHotlistPermissions(['EatHotlist'])
+
+  def testConvertFieldDefPermissions(self):
+    api_perms = pc.ConvertFieldDefPermissions(
+        [permissions.EDIT_FIELD_DEF_VALUE, permissions.EDIT_FIELD_DEF])
+    expected_perms = [
+        permission_objects_pb2.Permission.Value('FIELD_DEF_VALUE_EDIT'),
+        permission_objects_pb2.Permission.Value('FIELD_DEF_EDIT')
+    ]
+    self.assertEqual(api_perms, expected_perms)
+
+  def testConvertFieldDefPermissions_InvalidPermission(self):
+    with self.assertRaises(exceptions.InputException):
+      pc.ConvertFieldDefPermissions(['EatFieldDef'])
