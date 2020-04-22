@@ -9,10 +9,13 @@ import (
 	"fmt"
 	"time"
 
+	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
+	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/swarming"
 	"infra/libs/skylab/worker"
 
+	"go.chromium.org/luci/auth/client/authcli"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
 )
@@ -21,6 +24,25 @@ import (
 type TaskCreator struct {
 	Client      *swarming.Client
 	Environment site.Environment
+}
+
+// NewTaskCreator creates and initialize the TaskCreator.
+func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skycmdlib.EnvFlags) (*TaskCreator, error) {
+	h, err := cmdlib.NewHTTPClient(ctx, authFlags)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to create TaskCreator").Err()
+	}
+	env := envFlags.Env()
+	client, err := swarming.New(ctx, h, env.SwarmingService)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to create TaskCreator").Err()
+	}
+
+	tc := &TaskCreator{
+		Client:      client,
+		Environment: env,
+	}
+	return tc, nil
 }
 
 // RepairTask creates admin_repair task for particular DUT
