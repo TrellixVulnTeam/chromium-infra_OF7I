@@ -181,3 +181,25 @@ func (e *AssetEntity) ToChopsAsset() (*fleet.ChopsAsset, error) {
 }
 
 /* Asset Entity and helper functions end */
+
+/* Asset Info and helper funtions */
+
+// AssetInfoEntity is a datastore entity that tracks the asset info from HaRT.
+type AssetInfoEntity struct {
+	_kind    string        `gae:"$kind,AssetInfo"`
+	AssetTag string        `gae:"$id"`
+	Info     ufs.AssetInfo `gae:",noindex"`
+}
+
+// NewAssetInfo creates an AssetInfoEntity object from AssetInfo object
+func NewAssetInfo(a *ufs.AssetInfo) (*AssetInfoEntity, error) {
+	if a.GetAssetTag() == "" {
+		return nil, errors.Reason("Missing asset tag").Err()
+	}
+	return &AssetInfoEntity{
+		AssetTag: a.GetAssetTag(),
+		Info:     *a,
+	}, nil
+}
+
+/* Asset Info and helper functions end */
