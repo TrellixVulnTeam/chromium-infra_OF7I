@@ -65,6 +65,7 @@ func getApplication() *cli.Application {
 			tasks.ReleaseDuts,
 			tasks.Repair,
 			tasks.Verify,
+			tasks.Audit,
 			tasks.RerunTasks,
 			subcommands.Section("Drone Queen Inspection"),
 			queen.InspectDuts,
