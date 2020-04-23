@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"regexp"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"infra/tools/git/state"
 
 	"go.chromium.org/luci/cipd/version"
+	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
@@ -76,6 +78,7 @@ func probeVersionString() string {
 }
 
 func mainImpl(c context.Context, argv []string, env environ.Env, stdin io.Reader, stdout, stderr io.Writer) int {
+	mathrand.SeedRandomly()
 	// Set up our logging parameters. If we're not tracing, we will only show
 	// Info and higher level logs.
 	const loggingFormat = `[%{level:.1s} %{shortfile}] %{message}`
@@ -167,9 +170,10 @@ func mainImpl(c context.Context, argv []string, env environ.Env, stdin io.Reader
 // exacerbates the remote problem. Google Git engineers have requested a
 // longer initial backoff (rather than a few milliseconds).
 func gitTransientRetry() retry.Iterator {
+	delay := time.Duration(rand.Float64() + 2.5)
 	return &retry.ExponentialBackoff{
 		Limited: retry.Limited{
-			Delay:   3 * time.Second,
+			Delay:   delay * time.Second,
 			Retries: 12,
 		},
 		Multiplier: 1.5,
