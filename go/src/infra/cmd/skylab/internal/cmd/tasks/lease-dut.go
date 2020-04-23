@@ -30,6 +30,11 @@ const dayInMinutes = 24 * 60
 // at the same time for a given model.
 const maxTasksPerModel = 2
 
+// maxTasksPerBoard is the maximum number of tasks that are allowed to be executing
+// at the same time for a given board. It is a completely independent cap from
+// maxTasksPerModel. A board lease does not count towards the model cap and vice versa.
+const maxTasksPerBoard = 2
+
 // LeaseDut subcommand: Lease a DUT for debugging.
 var LeaseDut = &subcommands.Command{
 	UsageLine: "lease-dut HOST\n\tskylab lease-dut -model MODEL",
@@ -147,10 +152,10 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 		}
 		return c.leaseDutByHostname(ctx, a, sc, leaseDuration, host)
 	case hasBoard:
-		return c.leaseDUTByBoard(ctx, a)
+		return c.leaseDUTByBoard(ctx, a, sc, leaseDuration)
+	default:
+		return c.leaseDUTByModel(ctx, a, sc, leaseDuration)
 	}
-
-	return c.leaseDUTByModel(ctx, a, sc, leaseDuration)
 }
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
@@ -221,8 +226,33 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 }
 
 // leaseDUTbyBoard leases a DUT by board.
-func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Application) error {
-	return fmt.Errorf("leaseDUTByBoard is not yet implemented")
+func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) error {
+	tasks, err := sc.GetActiveLeaseTasksForBoard(ctx, c.board)
+	if err != nil {
+		return errors.Annotate(err, "computing existing lease for board").Err()
+	}
+
+	if len(tasks) > maxTasksPerBoard {
+		return errors.Reason("number of active tasks %d for board (%s) exceeds cap %d", len(tasks), c.board, maxTasksPerBoard).Err()
+	}
+
+	e := c.envFlags.Env()
+	creator := utils.TaskCreator{
+		Client:      sc,
+		Environment: e,
+	}
+	id, err := creator.LeaseByBoardTask(ctx, c.board, c.dims, int(leaseDuration.Seconds()), c.leaseReason)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(a.GetOut(), "Created lease task for board %s: %s\n", c.board, swarming.TaskURL(e.SwarmingService, id))
+
+	if err := c.waitForTaskStart(ctx, sc, id); err != nil {
+		return err
+	}
+	// TODO(ayatane): The time printed here may be off by the poll interval above.
+	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
+	return nil
 }
 
 func scheduleRepairTaskForLater(ctx context.Context, creator *utils.TaskCreator, a subcommands.Application, leaseDuration time.Duration, host string) {

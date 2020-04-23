@@ -137,6 +137,15 @@ func (c *Client) GetActiveLeaseTasksForModel(ctx context.Context, model string) 
 	return c.getActiveLeaseTasksForDimensions(ctx, dims)
 }
 
+// GetActiveLeaseTasksForBoard gets active leases *specifically* targeted to a board.
+func (c *Client) GetActiveLeaseTasksForBoard(ctx context.Context, board string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
+	var dims = map[string]string{
+		"label-board": board,
+		"skylab-tool": "lease",
+	}
+	return c.getActiveLeaseTasksForDimensions(ctx, dims)
+}
+
 // GetActiveLeaseTasksForHost returns a list of RUNNING or PENDING lease tasks,
 // retrying transient errors.
 // hostname cannot be empty.

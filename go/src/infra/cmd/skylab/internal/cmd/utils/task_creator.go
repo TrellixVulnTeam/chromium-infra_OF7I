@@ -222,6 +222,51 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims 
 	return resp.TaskId, nil
 }
 
+// LeaseByBoardTask creates a lease_task targeted at a particular board and dimensions.
+func (tc *TaskCreator) LeaseByBoardTask(ctx context.Context, board string, dims map[string]string, durationSec int, reason string) (taskID string, err error) {
+	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
+		ExpirationSecs: 600,
+		Properties: &swarming_api.SwarmingRpcsTaskProperties{
+			Command: getLeaseCommand(),
+			Dimensions: appendUniqueDimensions([]*swarming_api.SwarmingRpcsStringPair{
+				{Key: "pool", Value: "ChromeOSSkylab"},
+				{Key: "label-board", Value: board},
+				// We need to make sure we don't disturb DUT_POOL_CTS, so for now by-model leases
+				// can only target DUT_POOL_QUOTA.
+				{Key: "label-pool", Value: "DUT_POOL_QUOTA"},
+				// Getting an unhealthy DUT is a horrible user experience, so we make sure
+				// that only ready DUTs are leasable by model.
+				{Key: "dut_state", Value: "ready"},
+			}, convertDimensions(dims)...),
+			ExecutionTimeoutSecs: int64(durationSec),
+		},
+	}}
+	r := &swarming_api.SwarmingRpcsNewTaskRequest{
+		Name: "lease task",
+		Tags: appendUniqueTags([]string{
+			"pool:ChromeOSSkylab",
+			"skylab-tool:lease",
+			// This quota account specifier is only relevant for DUTs that are
+			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+			// harmless otherwise.
+			"qs_account:leases",
+			"lease-by:model",
+			"board:" + board,
+			"lease-reason:" + reason,
+		}, convertTags(dims)...),
+		TaskSlices:     slices,
+		Priority:       15,
+		ServiceAccount: tc.Environment.ServiceAccount,
+	}
+	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
+	defer cf()
+	resp, err := tc.Client.CreateTask(ctx, r)
+	if err != nil {
+		return "", errors.Annotate(err, "lease by board task").Err()
+	}
+	return resp.TaskId, nil
+}
+
 // convertDimensions takes a map and converts it into a string pair.
 func convertDimensions(m map[string]string) []*swarming_api.SwarmingRpcsStringPair {
 	var out []*swarming_api.SwarmingRpcsStringPair
