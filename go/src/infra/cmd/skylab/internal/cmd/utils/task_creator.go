@@ -7,6 +7,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
@@ -182,7 +183,7 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims 
 		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: getLeaseCommand(),
-			Dimensions: append([]*swarming_api.SwarmingRpcsStringPair{
+			Dimensions: appendUniqueDimensions([]*swarming_api.SwarmingRpcsStringPair{
 				{Key: "pool", Value: "ChromeOSSkylab"},
 				{Key: "label-model", Value: model},
 				// We need to make sure we don't disturb DUT_POOL_CTS, so for now by-model leases
@@ -197,7 +198,7 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims 
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name: "lease task",
-		Tags: append([]string{
+		Tags: appendUniqueTags([]string{
 			"pool:ChromeOSSkylab",
 			"skylab-tool:lease",
 			// This quota account specifier is only relevant for DUTs that are
@@ -228,6 +229,24 @@ func convertDimensions(m map[string]string) []*swarming_api.SwarmingRpcsStringPa
 		out = append(out, &swarming_api.SwarmingRpcsStringPair{Key: k, Value: v})
 	}
 	return out
+}
+
+// appendUniqueDimensions takes a base []*swarming_api.SwarmingRpcsStringPair and an arbitrary
+// number of key-value pairs and appends them onto the first slice.
+func appendUniqueDimensions(first []*swarming_api.SwarmingRpcsStringPair, rest ...*swarming_api.SwarmingRpcsStringPair) []*swarming_api.SwarmingRpcsStringPair {
+	seen := make(map[string]bool)
+	for _, item := range first {
+		seen[item.Key] = true
+	}
+
+	for _, item := range rest {
+		if seen[item.Key] {
+			continue
+		}
+		first = append(first, item)
+		seen[item.Key] = true
+	}
+	return first
 }
 
 // convertTags takes a map and converts it to a slice of strings in
@@ -262,4 +281,31 @@ func (tc *TaskCreator) dutNameToBotID(ctx context.Context, host string) (string,
 // DUT state will be set as 'needs_repair'
 func getLeaseCommand() []string {
 	return []string{"/bin/sh", "-c", `/opt/infra-tools/skylab_swarming_worker -task-name set_needs_repair; while true; do sleep 60; echo Zzz...; done`}
+}
+
+// appendUniqueTags takes a []string and adds items to it if they're unique
+func appendUniqueTags(first []string, rest ...string) []string {
+	seen := make(map[string]bool)
+	for _, item := range first {
+		key := getTagPrefix(item)
+		seen[key] = true
+	}
+	for _, item := range rest {
+		key := getTagPrefix(item)
+		if seen[key] {
+			continue
+		}
+		first = append(first, item)
+		seen[key] = true
+	}
+	return first
+}
+
+// getTagPrefix gets the key in a string of the form key:value.
+func getTagPrefix(s string) string {
+	delimIdx := strings.Index(s, ":")
+	if delimIdx == -1 {
+		return ""
+	}
+	return s[0:delimIdx]
 }
