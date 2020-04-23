@@ -42,4 +42,20 @@ describe('chops-checkbox', () => {
     window.CustomEvent.restore();
     element.dispatchEvent.restore();
   });
+
+  it('checking checkbox checks underlying native <input>', async () => {
+    element.checked = false;
+
+    await element.updateComplete;
+
+    assert.isFalse(element.checked);
+    assert.isFalse(element.shadowRoot.querySelector('input').checked);
+
+    element.checked = true;
+
+    await element.updateComplete;
+
+    assert.isTrue(element.checked);
+    assert.isTrue(element.shadowRoot.querySelector('input').checked);
+  });
 });
