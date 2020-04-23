@@ -49,6 +49,7 @@ Do not build automation around this subcommand.`,
 		// if a model is provided, then we necessarily target DUT_POOL_QUOTA and only repair-failed DUTs until
 		// a better policy can be implemented.
 		c.Flags.StringVar(&c.model, "model", "", "Leases may optionally target a model instead of a hostname.")
+		c.Flags.StringVar(&c.board, "board", "", "Leases may optionally target a board instead of a hostname.")
 		// We allow arbitrary dimensions to be passed in via the -dims flag.
 		// e.g. -dims a=4,b=7
 		c.Flags.Var(dimsVar{data: c}, "dims", "List of additional dimensions in format key1=value1,key2=value2,... .")
@@ -63,6 +64,7 @@ type leaseDutRun struct {
 	leaseMinutes float64
 	leaseReason  string
 	model        string
+	board        string
 	dims         map[string]string
 }
 
@@ -109,8 +111,10 @@ func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcomma
 func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	hasOneHostname := len(args) == 1
 	hasModel := c.model != ""
-	if !hasOneHostname && !hasModel {
-		return cmdlib.NewUsageError(c.Flags, "exactly one host or one model required")
+	hasBoard := c.board != ""
+
+	if exactlyOne(hasOneHostname, hasModel, hasBoard) {
+		return cmdlib.NewUsageError(c.Flags, "exactly one hostname or model or board required.")
 	}
 	if c.leaseMinutes < 0 {
 		return cmdlib.NewUsageError(c.Flags, fmt.Sprintf("minutes to lease (%d) cannot be negative", int64(c.leaseMinutes)))
@@ -134,13 +138,16 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 		return err
 	}
 
-	if hasOneHostname {
+	switch {
+	case hasOneHostname:
 		oldhost := args[0]
 		host := skycmdlib.FixSuspiciousHostname(oldhost)
 		if host != oldhost {
 			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", oldhost, host)
 		}
 		return c.leaseDutByHostname(ctx, a, sc, leaseDuration, host)
+	case hasBoard:
+		return c.leaseDUTByBoard(ctx, a)
 	}
 
 	return c.leaseDUTByModel(ctx, a, sc, leaseDuration)
@@ -211,6 +218,11 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 	// TODO(ayatane): The time printed here may be off by the poll interval above.
 	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
 	return nil
+}
+
+// leaseDUTbyBoard leases a DUT by board.
+func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Application) error {
+	return fmt.Errorf("leaseDUTByBoard is not yet implemented")
 }
 
 func scheduleRepairTaskForLater(ctx context.Context, creator *utils.TaskCreator, a subcommands.Application, leaseDuration time.Duration, host string) {
@@ -291,4 +303,18 @@ func getModelForHost(ctx context.Context, ic inv.Client, host string) (string, e
 		return "", err
 	}
 	return dut.GetCommon().GetLabels().GetModel(), nil
+}
+
+// exactlyOne counts the number of true booleans and returns whether it is exactly one
+func exactlyOne(bools ...bool) bool {
+	count := 0
+	for _, b := range bools {
+		if b {
+			count++
+		}
+		if count > 1 {
+			return false
+		}
+	}
+	return count == 1
 }
