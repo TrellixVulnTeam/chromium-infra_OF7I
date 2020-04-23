@@ -476,12 +476,14 @@ def temp_file(body=None, root=None):
 
 
 def purify_directory(root, path):
-  """Removes all non-important files from a directory.
-
-  Also drops +x bit on remaining regular files.
+  """Removes all non-important files from a directory, fixes file mode.
 
   Works recursively. For each file calls 'is_source_or_license(rel_path)'
   to detect whether it is important or not, and deletes the file if not.
+
+  Drops +w bit to make the output look similar to what we get after installing
+  the CIPD bundle. Drops +x bit on regular files (some *.go files inexplicably
+  have it set).
 
   Returns True if 'path' still has direct children.
   """
@@ -496,14 +498,14 @@ def purify_directory(root, path):
       if not purify_directory(root, rel_path):
         # The child directory is empty now, can be removed.
         os.rmdir(full_path)
-        continue
+      else:
+        # The child directory is not empty.
+        has_files = True
     elif not is_source_or_license(rel_path):
       os.remove(full_path)
-      continue
-    elif mode & stat.S_IXUSR:
-      # Some *.go files inexplicably have +x bit. Drop it.
-      os.chmod(full_path, 0644)
-    has_files = True
+    else:
+      os.chmod(full_path, 0444)
+      has_files = True
   return has_files
 
 
