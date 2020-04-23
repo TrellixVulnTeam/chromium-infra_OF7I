@@ -92,6 +92,7 @@ class ChromeCrashDataTest(AnalysisTestCase):
         crash_data.identifiers,
         {'signature': crash_data.signature,
          'platform': crash_data.platform,
+         'version': crash_data.crashed_version,
          'channel': crash_data.channel,
          'regression_range': crash_data.regression_range})
 

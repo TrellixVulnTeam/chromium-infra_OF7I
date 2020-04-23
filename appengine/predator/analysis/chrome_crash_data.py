@@ -152,6 +152,7 @@ class ChromeCrashData(CrashData):
   def identifiers(self):
     return {'signature': self.signature,
             'platform': self.platform,
+            'version': self.crashed_version,
             'regression_range': self.regression_range,
             'channel': self.channel}
 
