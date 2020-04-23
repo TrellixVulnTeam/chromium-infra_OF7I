@@ -8,6 +8,8 @@ format:
 test:
 	go test
 
-# TODO (nqmtuan): Change project to chops-rotation-proxy after resolving permission problem.
 deploy:
 	gae.py upload -A chops-rotation-proxy-test
+
+deploy-prod:
+	gae.py upload -A chrome-ops-rotation-proxy

@@ -6,6 +6,7 @@ runtime: go113
 luci_gae_vars:
   chops-rotation-proxy-test:
     AUTH_SERVICE_HOST: chrome-infra-auth-dev.appspot.com
-
+  chrome-ops-rotation-proxy:
+    AUTH_SERVICE_HOST: chrome-infra-auth.appspot.com
 entrypoint: >
   main -auth-service-host ${AUTH_SERVICE_HOST}
