@@ -118,7 +118,7 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	hasModel := c.model != ""
 	hasBoard := c.board != ""
 
-	if exactlyOne(hasOneHostname, hasModel, hasBoard) {
+	if !exactlyOne(hasOneHostname, hasModel, hasBoard) {
 		return cmdlib.NewUsageError(c.Flags, "exactly one hostname or model or board required.")
 	}
 	if c.leaseMinutes < 0 {
