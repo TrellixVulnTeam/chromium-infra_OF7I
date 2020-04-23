@@ -5,6 +5,11 @@
 import {LitElement, html, css} from 'lit-element';
 import {equalsIgnoreCase} from 'shared/helpers.js';
 
+/**
+ * `<mr-grid-dropdown>`
+ *
+ * Component used by the user to select what grid options to use.
+ */
 export class MrGridDropdown extends LitElement {
   /** @override */
   render() {
@@ -51,6 +56,12 @@ export class MrGridDropdown extends LitElement {
     `;
   };
 
+  /**
+   * Syncs values when the user updates their selection.
+   * @param {Event} e
+   * @fires CustomEvent#change
+   * @private
+   */
   _optionChanged(e) {
     this.selection = e.target.value;
     this.dispatchEvent(new CustomEvent('change'));

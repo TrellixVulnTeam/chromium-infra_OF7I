@@ -60,6 +60,7 @@ export class ChopsFilterChips extends LitElement {
   /**
    * Selects or unselects an option.
    * @param {string} option The option to select or unselect.
+   * @fires Event#change
    */
   select(option) {
     this.selected = {...this.selected, [option]: !this.selected[option]};

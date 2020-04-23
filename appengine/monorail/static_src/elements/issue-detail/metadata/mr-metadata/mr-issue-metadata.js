@@ -205,6 +205,12 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * Helper to render hotlists.
+   * @param {Array<Hotlist>} hotlists
+   * @return {Array<TemplateResult>}
+   * @private
+   */
   _renderHotlists(hotlists) {
     return hotlists.map((hotlist) => html`
       <mr-hotlist-link .hotlist=${hotlist}></mr-hotlist-link>
@@ -246,10 +252,18 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     this._type = issueV0.type(state);
   }
 
+  /**
+   * @return {string|number} The current user's userId.
+   * @private
+   */
   get _userId() {
     return this.user && this.user.userId;
   }
 
+  /**
+   * @return {Object.<string, Array<Hotlist>>}
+   * @private
+   */
   get _hotlistsByRole() {
     const issueHotlists = this.issueHotlists;
     const owner = this.issue && this.issue.ownerRef;
@@ -272,6 +286,10 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     return hotlists;
   }
 
+  /**
+   * Opens dialog for updating ths issue's hotlists.
+   * @fires CustomEvent#open-dialog
+   */
   openUpdateHotlists() {
     this.dispatchEvent(new CustomEvent('open-dialog', {
       bubbles: true,
@@ -282,8 +300,12 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     }));
   }
 
-  openViewBlockedOn(e) {
-    this.dispatchEvent(new CustomEvent('open-dialog', {
+  /**
+   * Opens dialog with detailed view of blocked on issues.
+   * @fires CustomEvent#open-dialog
+   */
+  openViewBlockedOn() {
+    (new CustomEvent('open-dialog', {
       bubbles: true,
       composed: true,
       detail: {
@@ -293,13 +315,29 @@ export class MrIssueMetadata extends connectStore(LitElement) {
   }
 }
 
+/**
+ * @param {UserRef} user
+ * @param {UserRef} owner
+ * @param {Array<UserRef>} cc
+ * @return {boolean} Whether a given user is a participant of
+ *   a given hotlist attached to an issue. Used to sort hotlists into
+ *   "My hotlists" and "Other hotlists".
+ * @private
+ */
 function _userIsParticipant(user, owner, cc) {
   if (owner && owner.userId === user.userId) {
     return true;
   }
-  return cc && cc.some((ccUser) => ccUser && ccUser.UserId === user.userId);
+  return cc && cc.some((ccUser) => ccUser && ccUser.userId === user.userId);
 }
 
+/**
+ * @param {Map.<string, LabelDef>} labelDefMap
+ * @param {LabelDef} label
+ * @return {string} Tooltip shown to the user when hovering over a
+ *   given label.
+ * @private
+ */
 function _labelTitle(labelDefMap, label) {
   if (!label) return '';
   let docstring = '';

@@ -275,6 +275,11 @@ export class MrUpload extends LitElement {
     });
   }
 
+  /**
+   * @param {Event} e
+   * @fires CustomEvent#change
+   * @private
+   */
   _filesChanged(e) {
     const input = e.currentTarget;
     if (!input.files) return;

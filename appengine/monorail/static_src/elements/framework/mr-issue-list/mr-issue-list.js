@@ -767,7 +767,10 @@ export class MrIssueList extends connectStore(LitElement) {
     window.removeEventListener('keydown', this._boundRunListHotKeys);
   }
 
-  /** @override */
+  /**
+   * @override
+   * @fires CustomEvent#selectionChange
+   */
   update(changedProperties) {
     if (changedProperties.has('issues')) {
       // Clear selected issues to avoid an ever-growing Set size. In the future,
@@ -1171,12 +1174,15 @@ export class MrIssueList extends connectStore(LitElement) {
    *
    * @param {IssueRef} issueRef the issue being starred.
    * @param {boolean} newIsStarred whether to star or unstar the issue.
+   * @private
    */
   _starIssueInternal(issueRef, newIsStarred) {
     store.dispatch(issueV0.star(issueRef, newIsStarred));
   }
   /**
    * @param {Event} e
+   * @fires CustomEvent#open-dialog
+   * @private
    */
   _selectAll(e) {
     const checkbox = /** @type {HTMLInputElement} */ (e.target);
@@ -1193,6 +1199,7 @@ export class MrIssueList extends connectStore(LitElement) {
   // for the 'x' hot key.
   /**
    * @param {MouseEvent} e
+   * @private
    */
   _selectIssueRange(e) {
     if (!this.selectionEnabled) return;
@@ -1222,6 +1229,7 @@ export class MrIssueList extends connectStore(LitElement) {
 
   /**
    * @param {Event} e
+   * @private
    */
   _selectIssue(e) {
     if (!this.selectionEnabled) return;
@@ -1235,6 +1243,8 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * @param {Array<IssueRefString>} issueKeys Stringified issue refs.
    * @param {boolean} selected
+   * @fires CustomEvent#selectionChange
+   * @private
    */
   _updateSelectedIssues(issueKeys, selected) {
     let hasChanges = false;
@@ -1266,6 +1276,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * 'Enter' behaves as expected when the focus is on other elements.
    *
    * @param {KeyboardEvent} e
+   * @private
    */
   _keydownIssueRow(e) {
     if (e.key === 'Enter') {
@@ -1276,6 +1287,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Handles mouseDown to start drag events.
    * @param {MouseEvent} event
+   * @private
    */
   _onMouseDown(event) {
     event.cancelable && event.preventDefault();
@@ -1296,6 +1308,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Handles mouseMove to continue drag events.
    * @param {MouseEvent} event
+   * @private
    */
   _onMouseMove(event) {
     event.cancelable && event.preventDefault();
@@ -1308,6 +1321,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Handles mouseUp to end drag events.
    * @param {MouseEvent} event
+   * @private
    */
   _onMouseUp(event) {
     event.cancelable && event.preventDefault();
@@ -1320,6 +1334,7 @@ export class MrIssueList extends connectStore(LitElement) {
 
   /**
    * Gives a visual indicator that we've started dragging an issue row.
+   * @private
    */
   _startDrag() {
     this._dragging = true;
@@ -1334,6 +1349,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * @param {number} x The x-distance the cursor has moved since mouseDown.
    * @param {number} y The y-distance the cursor has moved since mouseDown.
+   * @private
    */
   _continueDrag(x, y) {
     // Unselected rows: Transition them to their new positions.
@@ -1348,6 +1364,7 @@ export class MrIssueList extends connectStore(LitElement) {
 
   /**
    * @param {number} y The y-distance the cursor has moved since mouseDown.
+   * @private
    */
   async _endDrag(y) {
     this._dragging = false;
@@ -1392,6 +1409,7 @@ export class MrIssueList extends connectStore(LitElement) {
    *     An Array of table rows with the cursor row removed.
    *     The initial index of the cursor row.
    *     The final index of the cursor row.
+   * @private
    */
   _computeRerank(y) {
     const row = this._getCursorElement();
@@ -1430,6 +1448,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * @param {number} initialIndex The initial index of the cursor row.
    * @param {number} finalIndex The final index of the cursor row.
    * @return {number} The number of pixels the cursor row moved.
+   * @private
    */
   _translateRows(rows, initialIndex, finalIndex) {
     const firstIndex = Math.min(initialIndex, finalIndex);
@@ -1455,6 +1474,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * Handle click and auxclick on issue row.
    * @param {MouseEvent} event
+   * @private
    */
   _clickIssueRow(event) {
     if (event.button === PRIMARY_BUTTON || event.button === MIDDLE_BUTTON) {
@@ -1469,6 +1489,7 @@ export class MrIssueList extends connectStore(LitElement) {
    *
    * @param {MouseEvent|KeyboardEvent} rowEvent A click or 'enter' on a row.
    * @param {boolean=} openNewTab Forces opening in a new tab
+   * @private
    */
   _maybeOpenIssueRow(rowEvent, openNewTab = false) {
     const path = rowEvent.composedPath();
@@ -1490,6 +1511,7 @@ export class MrIssueList extends connectStore(LitElement) {
   /**
    * @param {Issue} issue
    * @param {boolean} newTab
+   * @private
    */
   _navigateToIssue(issue, newTab) {
     const link = issueRefToUrl(issueToIssueRef(issue),
@@ -1509,6 +1531,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * match this.columns. Extracting data like _renderCell.
    * @param {Issue} issue
    * @return {Array<string>}
+   * @private
    */
   _convertIssueToPlaintextArray(issue) {
     return this.columns.map((column) => {
@@ -1520,6 +1543,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * Convert each Issue into array of strings, where the columns
    * match this.columns.
    * @return {Array<Array<string>>}
+   * @private
    */
   _convertIssuesToPlaintextArrays() {
     return this.issues.map(this._convertIssueToPlaintextArray.bind(this));
@@ -1529,6 +1553,7 @@ export class MrIssueList extends connectStore(LitElement) {
    * Download content as csv. Conversion to CSV only on button click
    * instead of on data change because CSV download is not often used.
    * @param {MouseEvent} event
+   * @private
    */
   async _downloadCsv(event) {
     event.preventDefault();

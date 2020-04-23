@@ -131,6 +131,11 @@ export class MrCommentList extends connectStore(LitElement) {
     `;
   }
 
+  /**
+   * Helper to render a single comment.
+   * @param {Comment} comment
+   * @return {TemplateResult}
+   */
   renderComment(comment) {
     const commenterIsMember = userIsMember(
         comment.commenter, comment.projectName, this.usersProjects);
@@ -143,15 +148,33 @@ export class MrCommentList extends connectStore(LitElement) {
       ></mr-comment>`;
   }
 
+  /**
+   * Hides or unhides comments that are hidden by default. For example,
+   * if an issue has 200 comments, the first 100 comments are shown initially,
+   * then the last 100 can be toggled to be shown.
+   * @private
+   */
   _toggleHide() {
     this._hideComments = !this._hideComments;
   }
 }
 
+/**
+ * Computes how many comments the user is able to expand.
+ * @param {number} commentCount Total comments.
+ * @param {number} commentsShownCount The number of comments shown.
+ * @return {number} The number of hidden comments.
+ * @private
+ */
 function _hiddenCount(commentCount, commentsShownCount) {
   return Math.max(commentCount - commentsShownCount, 0);
 }
 
+/**
+ * @param {Array<string>} issuePermissions
+ * @return {boolean} Whether the user has permission to add a comment or not.
+ * @private
+ */
 function _canAddComment(issuePermissions) {
   return (issuePermissions || []).includes(ADD_ISSUE_COMMENT_PERMISSION);
 }

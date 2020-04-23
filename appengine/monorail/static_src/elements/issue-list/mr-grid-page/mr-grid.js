@@ -219,7 +219,7 @@ export class MrGrid extends connectStore(LitElement) {
 
     /**
      * Grid cell key mapped to issues associated with that cell.
-     * @type {Map<string, Array<Issue>>}
+     * @type {Map.<string, Array<Issue>>}
      */
     this._groupedIssues = new Map();
 

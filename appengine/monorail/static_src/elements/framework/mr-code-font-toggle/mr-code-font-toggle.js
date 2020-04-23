@@ -63,6 +63,12 @@ export class MrCodeFontToggle extends connectStore(LitElement) {
     return prefs.get('code_font') === 'true';
   }
 
+  /**
+   * Toggles the code font in response to the user activating the button.
+   * @param {Event} e
+   * @fires CustomEvent#font-toggle
+   * @private
+   */
   _toggleFont(e) {
     const checked = e.detail.checked;
     this.dispatchEvent(new CustomEvent('font-toggle', {detail: {checked}}));

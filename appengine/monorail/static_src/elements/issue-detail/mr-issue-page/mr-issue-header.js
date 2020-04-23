@@ -211,6 +211,10 @@ export class MrIssueHeader extends connectStore(LitElement) {
     this.isRestricted = restrictions && Object.keys(restrictions).length;
   }
 
+  /**
+   * @return {Array<MenuItem>} Actions the user can take on the issue.
+   * @private
+   */
   get _issueOptions() {
     // We create two edit Arrays for the top and bottom half of the menu,
     // to be separated by a separator in the UI.
@@ -293,6 +297,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     const ok = confirm(DELETE_ISSUE_CONFIRMATION_NOTICE);
     if (ok) {
       const issueRef = issueToIssueRef(this.issue);
+      // TODO(crbug.com/monorail/7374): Delete for the v0 -> v3 migration.
       prpcClient.call('monorail.Issues', 'DeleteIssue', {
         issueRef,
         delete: true,
@@ -304,6 +309,8 @@ export class MrIssueHeader extends connectStore(LitElement) {
 
   /**
    * Launches the dialog to edit an issue's description.
+   * @fires CustomEvent#open-dialog
+   * @private
    */
   _openEditDescription() {
     this.dispatchEvent(new CustomEvent('open-dialog', {
@@ -316,6 +323,12 @@ export class MrIssueHeader extends connectStore(LitElement) {
     }));
   }
 
+  /**
+   * Opens dialog to either move or copy an issue.
+   * @param {"move"|"copy"} action
+   * @fires CustomEvent#open-dialog
+   * @private
+   */
   _openMoveCopyIssue(action) {
     this.dispatchEvent(new CustomEvent('open-dialog', {
       bubbles: true,
@@ -327,6 +340,11 @@ export class MrIssueHeader extends connectStore(LitElement) {
     }));
   }
 
+  /**
+   * Opens dialog for converting an issue.
+   * @fires CustomEvent#open-dialog
+   * @private
+   */
   _openConvertIssue() {
     this.dispatchEvent(new CustomEvent('open-dialog', {
       bubbles: true,

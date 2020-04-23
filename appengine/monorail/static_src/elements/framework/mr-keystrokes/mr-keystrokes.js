@@ -276,6 +276,7 @@ export class MrKeystrokes extends connectStore(LitElement) {
   /**
    * @param {string} projectName
    * @param {string} issueEntryUrl
+   * @fires CustomEvent#focus-search
    * @private
    */
   _bindProjectKeys(projectName, issueEntryUrl) {

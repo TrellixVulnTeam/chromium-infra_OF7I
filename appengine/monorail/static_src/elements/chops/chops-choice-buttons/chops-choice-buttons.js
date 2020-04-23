@@ -110,6 +110,7 @@ export class ChopsChoiceButtons extends LitElement {
   /**
    * Public method for allowing parents to change the value of this component.
    * @param {string} newValue
+   * @fires CustomEvent#change
    */
   setValue(newValue) {
     if (newValue !== this.value) {
@@ -122,6 +123,7 @@ export class ChopsChoiceButtons extends LitElement {
    * Private setter for updating the value of the component based on an internal
    * click event.
    * @param {MouseEvent} e
+   * @private
    */
   _setValue(e) {
     this.setValue(e.target.getAttribute('value'));

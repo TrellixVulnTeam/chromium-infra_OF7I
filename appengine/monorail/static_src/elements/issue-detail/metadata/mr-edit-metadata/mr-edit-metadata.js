@@ -859,6 +859,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
 
   /**
    * Tells the parent to save the current edited values in the form.
+   * @fires CustomEvent#save
    */
   save() {
     this.dispatchEvent(new CustomEvent('save'));
@@ -868,6 +869,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    * Tells the parent component that the user is trying to discard the form,
    * if they confirm that that's what they're doing. The parent decides what
    * to do in order to quit the editing session.
+   * @fires CustomEvent#discard
    */
   discard() {
     const isDirty = this.isDirty;
@@ -1050,7 +1052,11 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this._debouncedProcessChanges();
   }
 
-  // Non-debounced version of _processChanges
+  /**
+   * Non-debounced version of _processChanges
+   * @fires CustomEvent#change
+   * @private
+   */
   _runProcessChanges() {
     // Don't run this functionality if the element has disconnected.
     if (!this.isConnected) return;

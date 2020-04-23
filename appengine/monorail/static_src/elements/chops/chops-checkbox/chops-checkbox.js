@@ -96,15 +96,29 @@ export class ChopsCheckbox extends LitElement {
     };
   }
 
+  /**
+   * Clicks the checkbox. Helpful for automated testing.
+   */
   click() {
     super.click();
     this.shadowRoot.querySelector('#checkbox').click();
   }
 
+  /**
+   * Listens to the native checkbox's change event and runs internal
+   * logic based on changes.
+   * @param {Event} evt
+   * @private
+   */
   _checkedChangeHandler(evt) {
     this._checkedChange(evt.target.checked);
   }
 
+  /**
+   * @param {boolean} checked Whether the box was checked or unchecked.
+   * @fires CustomEvent#checked-change
+   * @private
+   */
   _checkedChange(checked) {
     if (checked === this.checked) return;
     const customEvent = new CustomEvent('checked-change', {

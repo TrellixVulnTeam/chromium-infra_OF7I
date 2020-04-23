@@ -167,6 +167,11 @@ export class MrEditStatus extends LitElement {
     this._changeHandler(e);
   }
 
+  /**
+   * @param {Event} e
+   * @fires CustomEvent#change
+   * @private
+   */
   _changeHandler(e) {
     this.dispatchEvent(new CustomEvent('change'));
   }

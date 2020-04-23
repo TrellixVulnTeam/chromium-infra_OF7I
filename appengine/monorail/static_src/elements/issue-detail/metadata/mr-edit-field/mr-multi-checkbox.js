@@ -84,6 +84,10 @@ export class MrMultiCheckbox extends LitElement {
     );
   }
 
+  /**
+   * @fires CustomEvent#change
+   * @private
+   */
   _changeHandler() {
     this.dispatchEvent(new CustomEvent('change'));
   }

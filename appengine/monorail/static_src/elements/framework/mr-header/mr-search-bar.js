@@ -429,6 +429,8 @@ export class MrSearchBar extends LitElement {
    * Navigate to list view, currently splits on old and new view
    * @param {Object} params URL navigation parameters
    * @param {boolean} newTab
+   * @fires Event#refreshList
+   * @private
    */
   _navigateToList(params, newTab = false) {
     const isOldPage = window.location.pathname.endsWith('list_old');

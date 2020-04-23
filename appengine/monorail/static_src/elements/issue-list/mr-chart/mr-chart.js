@@ -440,6 +440,7 @@ export default class MrChart extends LitElement {
 
   /**
    * Fetch data required to render chart
+   * @fires Event#allDataLoaded
    */
   async _fetchData() {
     this.dateRange = Math.ceil(

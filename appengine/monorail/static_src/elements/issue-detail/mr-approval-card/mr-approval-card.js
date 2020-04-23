@@ -309,12 +309,18 @@ export class MrApprovalCard extends connectStore(LitElement) {
     }
   }
 
+  /**
+   * Resets the approval edit form.
+   */
   reset() {
     const form = this.shadowRoot.querySelector('mr-edit-metadata');
     if (!form) return;
     form.reset();
   }
 
+  /**
+   * Saves the user's changes in the approval update form.
+   */
   async save() {
     const form = this.shadowRoot.querySelector('mr-edit-metadata');
     const delta = form.delta;
@@ -349,26 +355,34 @@ export class MrApprovalCard extends connectStore(LitElement) {
     }
   }
 
-  toggleCard(evt) {
+  /**
+   * Opens and closes the approval card.
+   */
+  toggleCard() {
     this.opened = !this.opened;
   }
 
-  openCard(evt) {
-    this.opened = true;
-
-    if (evt && evt.detail && evt.detail.callback) {
-      evt.detail.callback();
-    }
-  }
-
+  /**
+   * @return {string} The CSS class used to style the approval card,
+   *   given its status.
+   * @private
+   */
   get _statusClass() {
     return STATUS_CLASS_MAP[this._status];
   }
 
+  /**
+   * @return {string} The human readable value of an approval status.
+   * @private
+   */
   get _status() {
     return STATUS_ENUM_TO_TEXT[this.statusEnum || ''];
   }
 
+  /**
+   * @return {boolean} Whether the user is an approver or not.
+   * @private
+   */
   get _isApprover() {
     // Assumption: Since a user who is an approver should always be a project
     // member, displayNames should be visible to them if they are an approver.
@@ -381,10 +395,20 @@ export class MrApprovalCard extends connectStore(LitElement) {
     });
   }
 
+  /**
+   * @return {boolean} Whether the user can approver the approval or not.
+   *   Not the same as _isApprover because site admins can approve approvals
+   *   even if they are not approvers.
+   * @private
+   */
   get _hasApproverPrivileges() {
     return (this.user && this.user.isSiteAdmin) || this._isApprover;
   }
 
+  /**
+   * @return {Array<StatusDef>}
+   * @private
+   */
   get _availableStatuses() {
     return APPROVAL_STATUSES.filter((s) => {
       if (s.status === this._status) {
@@ -404,6 +428,11 @@ export class MrApprovalCard extends connectStore(LitElement) {
     });
   }
 
+  /**
+   * Launches the description editing dialog for the survey.
+   * @fires CustomEvent#open-dialog
+   * @private
+   */
   _openSurveyEditor() {
     this.dispatchEvent(new CustomEvent('open-dialog', {
       bubbles: true,

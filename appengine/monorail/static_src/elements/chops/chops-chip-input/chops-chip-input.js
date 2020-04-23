@@ -176,6 +176,7 @@ export class ChopsChipInput extends LitElement {
     window.removeEventListener('keydown', this._boundKeyDown);
   }
 
+  /** @override */
   firstUpdated() {
     this._addValueInput = this.shadowRoot.querySelector('.add-value');
   }
@@ -189,22 +190,34 @@ export class ChopsChipInput extends LitElement {
     super.update(changedProperties);
   }
 
-  /** @override */
+  /**
+   * @override
+   * @fires Event#change
+   */
   updated(changedProperties) {
     if (changedProperties.has('values')) {
       this.dispatchEvent(new Event('change'));
     }
   }
 
+  /**
+   * Resets chips to default input values.
+   */
   reset() {
     this.setValues(this.initialValues);
     this.undoStack = [];
   }
 
+  /**
+   * Focuses the chip input.
+   */
   focus() {
     this._addValueInput.focus();
   }
 
+  /**
+   * Undos the last edit the user made.
+   */
   undo() {
     if (!this.undoStack.length) return;
 
@@ -215,6 +228,11 @@ export class ChopsChipInput extends LitElement {
     this.values = prevValues;
   }
 
+  /**
+   * Handles hot keys for chip inputs.
+   * @param {KeyboardEvent} e
+   * @private
+   */
   _onKeyDown(e) {
     if (!this.focused) return;
     if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
@@ -223,12 +241,20 @@ export class ChopsChipInput extends LitElement {
     }
   }
 
+  /**
+   * @return {Array<string>} All values in the chip input, including chips
+   *   and non-chips.
+   */
   getValues() {
     // Make sure to include any values that haven't yet been chipified as well.
     const newValues = this._readCollapsedValues(this._addValueInput);
     return this.values.concat(newValues);
   }
 
+  /**
+   * Updates the chip input with specified values.
+   * @param {Array<string>} values
+   */
   setValues(values) {
     this._saveValues(values);
 
@@ -237,6 +263,11 @@ export class ChopsChipInput extends LitElement {
     }
   }
 
+  /**
+   * Helper function to handle updating the chip input's internal value store.
+   * @param {Array<string>} values Values to save.
+   * @private
+   */
   _saveValues(values) {
     this.undoStack.push(this.values);
 
@@ -247,6 +278,11 @@ export class ChopsChipInput extends LitElement {
     this.values = [...values];
   }
 
+  /**
+   * Event handler that fires when the user edits chips.
+   * @param {Event} e
+   * @private
+   */
   async _editChip(e) {
     const target = e.target;
     const index = this._indexFromTarget(target);
@@ -267,6 +303,12 @@ export class ChopsChipInput extends LitElement {
     this._triggerLegacyAutocomplete({target: input});
   }
 
+  /**
+   * Removes a chip, such as when the user clicks the "x" button
+   * or types "Backspace".
+   * @param {Event} e
+   * @private
+   */
   _removeValue(e) {
     const target = e.target;
     const index = Number.parseInt(target.dataset.index);
@@ -275,6 +317,11 @@ export class ChopsChipInput extends LitElement {
     this._saveValues(immutableSplice(this.values, index, 1));
   }
 
+  /**
+   * Converts collapsed values back into chips once the user finishes editing.
+   * @param {Event} e
+   * @private
+   */
   _stopEditingChip(e) {
     if (this.collapsedChipIndex < 0) return;
     const input = e.target;
@@ -284,11 +331,24 @@ export class ChopsChipInput extends LitElement {
     this._changeFocus();
   }
 
+  /**
+   * When the user leaves the chip input, update virtual focus and convert
+   * collapsed values into chips.
+   * @param {Event} e
+   * @private
+   */
   _onBlur(e) {
     this._convertNewValuesToChips(e.target);
-    this._changeFocus(e);
+    this._changeFocus();
   }
 
+  /**
+   * Turn collapsed values into chips as the user types given delimiters.
+   * For example, if the user types a space, then a chip should be created
+   * with any values from before that space.
+   * @param {Event} e
+   * @private
+   */
   async _createChipsWhileTyping(e) {
     const input = e.target;
     if (input.value.match(this.delimiterRegex)) {
@@ -301,6 +361,11 @@ export class ChopsChipInput extends LitElement {
     }
   }
 
+  /**
+   * Helper to turn collapsed input values into chips.
+   * @param {HTMLInputElement} input
+   * @private
+   */
   async _convertNewValuesToChips(input) {
     const index = this._indexFromTarget(input);
     const values = this._readCollapsedValues(input);
@@ -324,6 +389,17 @@ export class ChopsChipInput extends LitElement {
     }
   }
 
+  /**
+   * Handles keeping virtual chip focus in sync as individual elements get
+   * focused and unfocused. <chops-chip-input> maintains its own abstracted
+   * out focus layer on top of native browser focus because we want to treat
+   * the entire chip input as focused if any one input inside of
+   * <chops-chip-input> is focused.
+   * @fires CustomEvent#focus Event for when the user focuses the chip input.
+   * @fires CustomEvent#blur Event for when the user stops focusing the
+   *   chip inputs.
+   * @private
+   */
   _changeFocus() {
     // Check if any element in this shadowRoot is focused.
     const active = this.shadowRoot.activeElement;
@@ -336,6 +412,11 @@ export class ChopsChipInput extends LitElement {
     }
   }
 
+  /**
+   * Handles various keyboard shortcuts for chips.
+   * @param {KeyboardEvent} e
+   * @private
+   */
   _interactWithChips(e) {
     const chip = e.target;
     const index = Number.parseInt(chip.dataset.index);
@@ -370,6 +451,13 @@ export class ChopsChipInput extends LitElement {
     }
   }
 
+  /**
+   * Changes the user's location within the chip input based on keyboard
+   * input. For example, the user can use the left and right arrow keys to
+   * navigate between chips.
+   * @param {KeyboardEvent} e
+   * @private
+   */
   _navigateByKeyboard(e) {
     // TODO(zhangtiff): Make keyboard navigation work for collapsed chips.
     const input = e.target;
@@ -398,11 +486,24 @@ export class ChopsChipInput extends LitElement {
     }
   }
 
+  /**
+   * Helper to get the chip index of the element an event fired from.
+   * @param {HTMLElement} target
+   * @return {number}
+   * @private
+   */
   _indexFromTarget(target) {
     const index = Number.parseInt(target.dataset.index);
     return Number.isNaN(index) ? this.values.length : index;
   }
 
+  /**
+   * Gets the values a user has typed into an input,
+   * delimited into chip values.
+   * @param {HTMLInputElement} input
+   * @return {Array<string>}
+   * @private
+   */
   _readCollapsedValues(input) {
     const values = input.value.split(this.delimiterRegex);
 
@@ -411,10 +512,21 @@ export class ChopsChipInput extends LitElement {
     return pieces;
   }
 
+  /**
+   * Gets the HTML chip present at a given index.
+   * @param {number} index
+   * @return {HTMLElement}
+   * @private
+   */
   _getChipElement(index) {
     return this.shadowRoot.querySelector(`.chip-${index}`);
   }
 
+  /**
+   * Event handler for when the user focuses on the "add value" form.
+   * @param {Event} e
+   * @private
+   */
   _focusAddValue(e) {
     this._triggerLegacyAutocomplete(e);
     this._changeFocus();
@@ -422,6 +534,10 @@ export class ChopsChipInput extends LitElement {
 
   // TODO(zhangtiff): Delete this code once deprecating legacy autocomplete.
   // See: http://crbug.com/monorail/5301
+  /**
+   * Glue code for working with legacy autocomplete.
+   * @param {Event} e
+   */
   _triggerLegacyAutocomplete(e) {
     e.avoidValues = this.values.filter((val, i) =>
       i !== this.collapsedChipIndex);

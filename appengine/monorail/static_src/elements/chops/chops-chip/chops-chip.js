@@ -113,6 +113,7 @@ export class ChopsChip extends LitElement {
 
   /**
    * @param {MouseEvent} e A click event.
+   * @fires CustomEvent#click-button
    */
   clickButton(e) {
     this.dispatchEvent(new CustomEvent('click-button'));

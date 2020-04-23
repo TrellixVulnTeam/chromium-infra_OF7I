@@ -138,7 +138,7 @@ describe('mr-edit-metadata', () => {
     // Check that save button is initially disabled.
     await element.updateComplete;
 
-    // Wait for chops-chip-input to finish its update cycle.
+    // Wait for <chops-chip-input> to finish its update cycle.
     await element.updateComplete;
 
     const button = element.shadowRoot.querySelector('.save-changes');

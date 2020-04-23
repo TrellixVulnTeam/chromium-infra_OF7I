@@ -198,6 +198,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
   /**
    * Saves all changes that were found in the dialog and issues async requests
    * to update the issues.
+   * @fires Event#saveSuccess
    */
   async save() {
     const changes = this.changes;

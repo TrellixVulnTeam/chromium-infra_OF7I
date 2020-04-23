@@ -53,6 +53,7 @@ export class ChopsSnackbar extends LitElement {
 
   /**
    * Closes the snackbar.
+   * @fires CustomEvent#close
    */
   close() {
     this.dispatchEvent(new CustomEvent('close'));

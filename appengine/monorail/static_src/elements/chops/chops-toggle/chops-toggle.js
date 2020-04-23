@@ -106,6 +106,11 @@ export class ChopsToggle extends LitElement {
     this._checkedChange(evt.target.checked);
   }
 
+  /**
+   * @param {boolean} checked
+   * @fires CustomEvent#checked-change
+   * @private
+   */
   _checkedChange(checked) {
     if (checked === this.checked) return;
     const customEvent = new CustomEvent('checked-change', {

@@ -303,6 +303,12 @@ export class MrEditField extends LitElement {
         this.initialValues, this.values, equalsIgnoreCase);
   }
 
+  /**
+   * Syncs form values and fires a change event as the user edits the form.
+   * @param {Event} e
+   * @fires Event#change
+   * @private
+   */
   _changeHandler(e) {
     if (e instanceof KeyboardEvent) {
       if (NON_EDITING_KEY_EVENTS.has(e.key)) return;
