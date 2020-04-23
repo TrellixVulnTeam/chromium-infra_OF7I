@@ -1374,16 +1374,24 @@ export const predictComponent = (projectName, text) => async (dispatch) => {
  * @param {ApprovalDelta=} params.approvalDelta
  * @param {string=} params.commentContent
  * @param {boolean=} params.sendEmail
+ * @param {boolean=} params.isDescription
+ * @param {AttachmentUpload=} params.uploads
  * @return {function(function): Promise<void>}
  */
 export const updateApproval = ({issueRef, fieldRef, approvalDelta,
-  commentContent, sendEmail}) => async (dispatch) => {
+  commentContent, sendEmail, isDescription, uploads}) => async (dispatch) => {
   dispatch({type: UPDATE_APPROVAL_START});
-
   try {
     const {approval} = await prpcClient.call(
-        'monorail.Issues', 'UpdateApproval', {issueRef, fieldRef, approvalDelta,
-          commentContent, sendEmail});
+        'monorail.Issues', 'UpdateApproval', {
+          ...(issueRef && {issueRef}),
+          ...(fieldRef && {fieldRef}),
+          ...(approvalDelta && {approvalDelta}),
+          ...(commentContent && {commentContent}),
+          ...(sendEmail && {sendEmail}),
+          ...(isDescription && {isDescription}),
+          ...(uploads && {uploads}),
+        });
 
     dispatch({type: UPDATE_APPROVAL_SUCCESS, approval, issueRef});
     dispatch(fetch(issueRef));
@@ -1402,7 +1410,7 @@ export const updateApproval = ({issueRef, fieldRef, approvalDelta,
  * @param {string=} params.commentContent
  * @param {boolean=} params.sendEmail
  * @param {boolean=} params.isDescription
- * @param {AttachmentUpload} params.uploads
+ * @param {AttachmentUpload=} params.uploads
  * @param {Array<number>=} params.keptAttachments
  * @return {function(function): Promise<void>}
  */

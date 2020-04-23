@@ -781,6 +781,109 @@ describe('issue', () => {
       });
     });
 
+    describe('updateApproval', async () => {
+      const APPROVAL = {
+        fieldRef: {fieldName: 'Privacy', type: 'APPROVAL_TYPE'},
+        approverRefs: [{userId: 1234, displayName: 'test@example.com'}],
+        status: 'APPROVED',
+      };
+
+      it('approval update success', async () => {
+        const dispatch = sinon.stub();
+
+        prpcCall.returns({approval: APPROVAL});
+
+        const action = issueV0.updateApproval({
+          issueRef: {projectName: 'chromium', localId: 1234},
+          fieldRef: {fieldName: 'Privacy', type: 'APPROVAL_TYPE'},
+          approvalDelta: {status: 'APPROVED'},
+          sendEmail: true,
+        });
+
+        await action(dispatch);
+
+        sinon.assert.calledOnce(prpcCall);
+
+        sinon.assert.calledWith(prpcCall, 'monorail.Issues',
+            'UpdateApproval', {
+              issueRef: {projectName: 'chromium', localId: 1234},
+              fieldRef: {fieldName: 'Privacy', type: 'APPROVAL_TYPE'},
+              approvalDelta: {status: 'APPROVED'},
+              sendEmail: true,
+            });
+
+        sinon.assert.calledWith(dispatch, {type: 'UPDATE_APPROVAL_START'});
+        sinon.assert.calledWith(dispatch, {
+          type: 'UPDATE_APPROVAL_SUCCESS',
+          approval: APPROVAL,
+          issueRef: {projectName: 'chromium', localId: 1234},
+        });
+      });
+
+      it('approval survey update success', async () => {
+        const dispatch = sinon.stub();
+
+        prpcCall.returns({approval: APPROVAL});
+
+        const action = issueV0.updateApproval({
+          issueRef: {projectName: 'chromium', localId: 1234},
+          fieldRef: {fieldName: 'Privacy', type: 'APPROVAL_TYPE'},
+          commentContent: 'new survey',
+          sendEmail: false,
+          isDescription: true,
+        });
+
+        await action(dispatch);
+
+        sinon.assert.calledOnce(prpcCall);
+
+        sinon.assert.calledWith(prpcCall, 'monorail.Issues',
+            'UpdateApproval', {
+              issueRef: {projectName: 'chromium', localId: 1234},
+              fieldRef: {fieldName: 'Privacy', type: 'APPROVAL_TYPE'},
+              commentContent: 'new survey',
+              isDescription: true,
+            });
+
+        sinon.assert.calledWith(dispatch, {type: 'UPDATE_APPROVAL_START'});
+        sinon.assert.calledWith(dispatch, {
+          type: 'UPDATE_APPROVAL_SUCCESS',
+          approval: APPROVAL,
+          issueRef: {projectName: 'chromium', localId: 1234},
+        });
+      });
+
+      it('attachment upload success', async () => {
+        const dispatch = sinon.stub();
+
+        prpcCall.returns({approval: APPROVAL});
+
+        const action = issueV0.updateApproval({
+          issueRef: {projectName: 'chromium', localId: 1234},
+          fieldRef: {fieldName: 'Privacy', type: 'APPROVAL_TYPE'},
+          uploads: '78f17a020cbf39e90e344a842cd19911',
+        });
+
+        await action(dispatch);
+
+        sinon.assert.calledOnce(prpcCall);
+
+        sinon.assert.calledWith(prpcCall, 'monorail.Issues',
+            'UpdateApproval', {
+              issueRef: {projectName: 'chromium', localId: 1234},
+              fieldRef: {fieldName: 'Privacy', type: 'APPROVAL_TYPE'},
+              uploads: '78f17a020cbf39e90e344a842cd19911',
+            });
+
+        sinon.assert.calledWith(dispatch, {type: 'UPDATE_APPROVAL_START'});
+        sinon.assert.calledWith(dispatch, {
+          type: 'UPDATE_APPROVAL_SUCCESS',
+          approval: APPROVAL,
+          issueRef: {projectName: 'chromium', localId: 1234},
+        });
+      });
+    });
+
     describe('fetchIssues', () => {
       it('success', async () => {
         const response = {
