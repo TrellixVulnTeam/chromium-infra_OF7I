@@ -45,6 +45,7 @@ func TestDefaultGitRetryRegexps(t *testing.T) {
 			`Couldn't connect to server`,
 			`transfer closed with outstanding read data remaining`,
 			`fatal: remote error: Access denied to $TRAILING_CONTENT`,
+			`The requested URL returned error: 429`,
 		} {
 			Convey(fmt.Sprintf(`Matches line: %q`, line), func() {
 				So(DefaultGitRetryRegexp.MatchString(line), ShouldBeTrue)

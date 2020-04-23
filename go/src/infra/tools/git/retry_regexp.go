@@ -78,6 +78,9 @@ var defaultGitRetryRegexpSource = []string{
 	`Couldn't connect to server`,
 	`transfer closed with outstanding read data remaining`,
 	`Access denied to`,
+
+	// crbug.com/1061473
+	`The requested URL returned error: 429`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
