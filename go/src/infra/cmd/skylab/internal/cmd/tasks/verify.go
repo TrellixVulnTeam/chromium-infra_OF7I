@@ -9,11 +9,14 @@ import (
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmd/skylab/internal/cmd/utils"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/skylab/swarming"
 )
 
 // Verify subcommand: Verify hosts.
@@ -51,6 +54,26 @@ func (c *verifyRun) innerRun(a subcommands.Application, args []string, env subco
 	if c.expirationMins >= dayInMinutes {
 		return cmdlib.NewUsageError(c.Flags, "Expiration minutes (%d minutes) cannot exceed 1 day [%d minutes]", c.expirationMins, dayInMinutes)
 	}
+	if len(args) == 0 {
+		return errors.Reason("at least one host has to provided").Err()
+	}
 
-	return errors.Reason("not implemeneted yet").Err()
+	ctx := cli.GetContext(a, c, env)
+	creator, err := utils.NewTaskCreator(ctx, &c.authFlags, c.envFlags)
+	if err != nil {
+		return err
+	}
+
+	for _, host := range args {
+		dutName := skycmdlib.FixSuspiciousHostname(host)
+		if dutName != host {
+			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", host, dutName)
+		}
+		id, err := creator.VerifyTask(ctx, dutName, c.expirationMins*60)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(creator.Environment.SwarmingService, id), dutName)
+	}
+	return nil
 }
