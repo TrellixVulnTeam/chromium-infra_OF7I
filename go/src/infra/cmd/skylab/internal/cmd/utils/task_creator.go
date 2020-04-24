@@ -16,6 +16,7 @@ import (
 	"infra/libs/skylab/swarming"
 	"infra/libs/skylab/worker"
 
+	"github.com/google/uuid"
 	"go.chromium.org/luci/auth/client/authcli"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
@@ -25,6 +26,8 @@ import (
 type TaskCreator struct {
 	Client      *swarming.Client
 	Environment site.Environment
+	// Session is an ID that is used to mark tasks and for tracking all of the tasks created in a logical session.
+	session string
 }
 
 // NewTaskCreator creates and initialize the TaskCreator.
@@ -42,6 +45,7 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skyc
 	tc := &TaskCreator{
 		Client:      client,
 		Environment: env,
+		session:     uuid.New().String(),
 	}
 	return tc, nil
 }
@@ -120,6 +124,7 @@ func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSe
 			fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
 			"pool:ChromeOSSkylab",
 			"skylab-tool:verify",
+			tc.getSessionTag(),
 		},
 		TaskSlices:     slices,
 		Priority:       25,
@@ -353,4 +358,17 @@ func getTagPrefix(s string) string {
 		return ""
 	}
 	return s[0:delimIdx]
+}
+
+// getSessionTag return admin session tag for swarming.
+func (tc *TaskCreator) getSessionTag() string {
+	return fmt.Sprintf("admin_session:%s", tc.session)
+}
+
+// GetSessionTasksURL get URL to see all created tasks belong to the session
+func (tc *TaskCreator) GetSessionTasksURL() string {
+	tags := []string{
+		tc.getSessionTag(),
+	}
+	return swarming.TaskListURLForTags(tc.Environment.SwarmingService, tags)
 }
