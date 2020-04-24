@@ -1,0 +1,97 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet.v1;
+
+option go_package = "infra/libs/fleet/protos/v1;ufspb";
+
+import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+import "infra/libs/fleet/protos/v1/chrome_platform.proto";
+
+message KVM {
+    option (google.api.resource) = {
+        type: "unified-fleet-system.appspot.com/KVM"
+        pattern: "racks/{rack}/kvms/{kvm}"
+    };
+    // Unique serial_number or asset tag
+    // The format will be racks/{rack}/kvms/{kvm}
+    string name = 1;
+    string mac_address = 2;
+    ChromePlatform platform = 3;
+    int32 capacity_port = 4;
+}
+
+// Refer to one port of a given KVM
+message KVMInterface {
+    // Refers to KVM name
+    string kvm = 1 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/KVM"
+    }];
+    int32 port = 2;
+}
+
+message RPM {
+    option (google.api.resource) = {
+        type: "unified-fleet-system.appspot.com/RPM"
+        pattern: "racks/{rack}/rpms/{rpm}"
+    };
+    // Unique serial_number or asset tag
+    // The format will be racks/{rack}/rpms/{rpm}
+    string name = 1;
+    string mac_address = 2;
+    int32 capacity_port = 3;
+    // Just for record here, can be added later if needed
+    // To be recorded: model, manufacturer, amperage, voltage
+}
+
+// Refer to one port of a given RPM
+message RPMInterface {
+    // Refers to RPM name
+    string rpm = 1 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/RPM"
+    }];
+    int32 port = 2;
+}
+
+message Switch {
+    option (google.api.resource) = {
+        type: "unified-fleet-system.appspot.com/Switch"
+        pattern: "racks/{rack}/switches/{switch}"
+    };
+    // Unique serial_number or asset tag
+    // The format will be racks/{rack}/switches/{switch}
+    string name = 1;
+    int32 capacity_port = 2;
+    // Switch can have a mac address and remotely controlled, but it’s hard to
+    // get the mac_address for it and we don’t use it for now.
+    // Commenting here as we don’t forget this if we’re able/want to track
+    // its mac_address.
+    // More info can be recorded for switch if available, e.g.
+    // model, manufacturer
+}
+
+// Refer to one port of a given switch
+message SwitchInterface {
+    // Refers to Switch name
+    string switch = 1 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/Switch"
+    }];
+    int32 port = 2;
+}
+
+message Drac {
+    option (google.api.resource) = {
+        type: "unified-fleet-system.appspot.com/Drac"
+        pattern: "machines/{machine}/dracs/{drac}"
+    };
+    // Unique serial_number or asset tag
+    // The format will be machines/{machine}/dracs/{drac}
+    string name = 1;
+    string display_name = 2;
+    string mac_address = 3;
+    SwitchInterface switch_interface = 4;
+    string password = 5;
+}

@@ -1,0 +1,51 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet.v1;
+
+option go_package = "infra/libs/fleet/protos/v1;ufspb";
+
+import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+
+// Location of the asset(Rack/Machine) in the lab
+// For Browser machine, lab and rack are the only field to fill in.
+// The fine-grained location is mainly for OS machine as we care about rack, row, shelf.
+message Location {
+    // Different labs in the chrome org. Required.
+    Lab lab = 1;
+    // Each lab has many aisles.
+    // This field refers to the aisle number/name in the lab.
+    string aisle = 2;
+    // Each aisle has many rows.
+    // This field refers to the row number/name in the aisle.
+    string row = 3;
+    // Each row has many racks.
+    // This field refers to the rack number/name in the row.
+    string rack = 4 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/Rack"
+    }];
+    // The position of the rack in the row.
+    string rack_number = 5;
+    // Each rack has many shelfs.
+    // This field refers to the shelf number/name in the rack.
+    string shelf = 6;
+    // Each shelf has many positions where assets can be placed.
+    // This field refers to the position number/name in the shelf
+    string position = 7;
+}
+
+// Lab refers to the different Labs under chrome org
+// More labs to be added later if needed
+enum Lab {
+    LAB_UNSPECIFIED = 0;
+    LAB_CHROME_ATLANTA = 1;
+    LAB_CHROMEOS_SANTIEM = 2;
+    LAB_CHROMEOS_DESTINY = 3;
+    LAB_CHROMEOS_PROMETHEUS = 4;
+    LAB_CHROMEOS_ATLANTIS = 5;
+    LAB_CHROMEOS_LINDAVISTA = 6;
+}
+

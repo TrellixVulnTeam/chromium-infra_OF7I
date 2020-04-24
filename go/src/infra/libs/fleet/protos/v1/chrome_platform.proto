@@ -1,0 +1,26 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package fleet.v1;
+
+option go_package = "infra/libs/fleet/protos/v1;ufspb";
+
+import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+
+// ChromePlatform refers to static configs defined by Chrome Browser lab
+// for their machines
+message ChromePlatform {
+    option (google.api.resource) = {
+        type: "unified-fleet-system.appspot.com/ChromePlatform"
+        pattern: "chromePlatforms/{chromePlatform}"
+    };
+    // The format will be chromePlatforms/XXX
+    string name = 1;
+    string manufacturer = 2;
+    string description = 3;
+    // Hold for the next version of UFS proto as it needs more manual input to bootstrap
+    // int32 vm_slots = 4;
+}
