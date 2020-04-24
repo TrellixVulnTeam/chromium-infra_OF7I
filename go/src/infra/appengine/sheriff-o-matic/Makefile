@@ -66,3 +66,8 @@ devserver:
 # accessible by hostname:port, rather than just localhost:port.
 devserver_remote:
 	$(DEVSERVER_PY) --host $$HOSTNAME frontend/app.yaml backend/app.yaml
+
+deploy_cron_prod:
+	cp cron_prod.yaml cron.yaml
+	gcloud app deploy --no-promote --no-stop-previous-version cron.yaml --project sheriff-o-matic
+	cp cron_default.yaml cron.yaml

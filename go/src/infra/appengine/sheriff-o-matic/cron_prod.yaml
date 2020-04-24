@@ -19,6 +19,10 @@ cron:
   url: /_cron/refresh/bugqueue/infra-troopers
   schedule: every 1 minutes
 
+- description: Update chrome browser release bug queue
+  url: /_cron/refresh/bugqueue/sheriff-chrome-release
+  schedule: every 1 minutes
+
 - description: Update cached annotation metadata
   url: /_cron/annotations/refresh/
   schedule: every 15 minutes
