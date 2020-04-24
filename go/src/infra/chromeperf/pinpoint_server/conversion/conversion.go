@@ -47,8 +47,8 @@ func ConvertToValues(job *pinpoint.JobSpec, userEmail string) (url.Values, error
 		}
 
 		// We ignore the repository here, because legacy Pinpoint's API didn't support those.
-		v.Set("start_git_hash", jk.Bisection.StartCommit.GitHash)
-		v.Set("end_git_hash", jk.Bisection.EndCommit.GitHash)
+		v.Set("start_git_hash", jk.Bisection.CommitRange.StartGitHash)
+		v.Set("end_git_hash", jk.Bisection.CommitRange.EndGitHash)
 
 		if jk.Bisection.Patch != nil {
 			p := jk.Bisection.Patch

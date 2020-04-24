@@ -16,10 +16,7 @@ syntax = "proto3";
 
 package pinpoint;
 
-// TODO(dberris): Uncomment when we have an updated https://aip.dev schema
-// definitions copy in infra.git.
-// import "google/api/annotations.proto";
-// import "google/api/http.proto";
+import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
@@ -28,34 +25,36 @@ import "google/protobuf/timestamp.proto";
 service Pinpoint {
   // Schedules a Pinpoint Job for execution.
   rpc ScheduleJob(ScheduleJobRequest) returns (Job) {
-    // option (google.api.http) = {
-    //  post: "/v1/jobs"
-    //  body: "job"
-    // };
+    option (google.api.http) = {
+      post: "/v1/jobs"
+      body: "job"
+    };
+    // TODO(dberris): Determine if we need the client API convenience.
     // option (google.api.method_signature) = "job";
   }
 
   // Retrieves details about a Pinpoint Job.
   rpc GetJob(GetJobRequest) returns (Job) {
-    // option (google.api.http) = {
-    //  get: "/v1/jobs/*"
-    // };
+    option (google.api.http) = {
+      get: "/v1/jobs/*"
+    };
+    // TODO(dberris): Determine if we need the client API convenience.
     // option (google.api.method_signature) = "id";
   }
 
   // Lists jobs with filters.
   rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {
-    // option (google.api.http) = {
-    //  get: "/v1/jobs"
-    // };
+    option (google.api.http) = {
+     get: "/v1/jobs"
+    };
   }
 
   // Cancels an ongoing job.
   rpc CancelJob(CancelJobRequest) returns (Job) {
-    // option (google.api.http) = {
-    //  post: "/v1/job/*:cancel"
-    //  body: "*"
-    // };
+    option (google.api.http) = {
+     post: "/v1/job/*:cancel"
+     body: "*"
+    };
   }
 }
 
@@ -168,12 +167,27 @@ message GerritChange {
   int64 patchset = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
+// A CommitRange consists of two git commit hashes from the same project that
+// the end commit must be reachable from the start commit.
+message GitilesCommitRange {
+  // The gitiles host to query for commits.
+  string host = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The gitiles project to query for commits.
+  string project = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The start of the commit range.
+  string start_git_hash = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // The end of the commit range.
+  string end_git_hash = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
 // A Bisection specifies a range through which Pinpoint will perform
 // builds/runs against to find potential culprits.
 message Bisection {
-  // TODO(dberris): Formalise a CommitRange proto and use that instead.
-  GitilesCommit start_commit = 1;
-  GitilesCommit end_commit = 2;
+  // A commit range through which the bisection will be performed.
+  GitilesCommitRange commit_range = 1 [(google.api.field_behavior) = REQUIRED];
 
   // A patch to apply to all commits in the range before building. This is
   // useful if you want to apply a patch that fixes the build in a range where

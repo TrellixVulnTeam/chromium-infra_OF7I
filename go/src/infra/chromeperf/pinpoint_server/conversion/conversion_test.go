@@ -49,15 +49,11 @@ func TestSimpleConversions(t *testing.T) {
 	Convey("We support Bisections without a Patch", t, func() {
 		job.JobKind = &pinpoint.JobSpec_Bisection{
 			Bisection: &pinpoint.Bisection{
-				StartCommit: &pinpoint.GitilesCommit{
-					Host:    "gitiles-host",
-					Project: "gitiles-project",
-					GitHash: "c0dec0de",
-				},
-				EndCommit: &pinpoint.GitilesCommit{
-					Host:    "gitiles-host",
-					Project: "gitiles-project",
-					GitHash: "f00dc0de",
+				CommitRange: &pinpoint.GitilesCommitRange{
+					Host:         "gitiles-host",
+					Project:      "gitiles-project",
+					StartGitHash: "c0dec0de",
+					EndGitHash:   "f00dc0de",
 				}}}
 
 		Convey("Creating a Performance mode job", func() {
@@ -288,15 +284,11 @@ func TestSimpleConversions(t *testing.T) {
 	Convey("We support Bisections with a Patch", t, func() {
 		job.JobKind = &pinpoint.JobSpec_Bisection{
 			Bisection: &pinpoint.Bisection{
-				StartCommit: &pinpoint.GitilesCommit{
-					Host:    "gitiles-host",
-					Project: "gitiles-project",
-					GitHash: "c0dec0de",
-				},
-				EndCommit: &pinpoint.GitilesCommit{
-					Host:    "gitiles-host",
-					Project: "gitiles-project",
-					GitHash: "f00dc0de",
+				CommitRange: &pinpoint.GitilesCommitRange{
+					Host:         "gitiles-host",
+					Project:      "gitiles-project",
+					StartGitHash: "c0dec0de",
+					EndGitHash:   "f00dc0de",
 				},
 				Patch: &pinpoint.GerritChange{
 					Host:     "some-gerrit-host",
