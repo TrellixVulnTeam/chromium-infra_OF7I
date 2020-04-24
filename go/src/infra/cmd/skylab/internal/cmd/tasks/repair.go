@@ -55,39 +55,32 @@ func (c *repairRun) innerRun(a subcommands.Application, args []string, env subco
 	if c.expirationMins >= dayInMinutes {
 		return cmdlib.NewUsageError(c.Flags, "Expiration minutes (%d minutes) cannot exceed 1 day [%d minutes]", c.expirationMins, dayInMinutes)
 	}
+	if len(args) == 0 {
+		return errors.Reason("at least one host has to provided").Err()
+	}
 
 	ctx := cli.GetContext(a, c, env)
-	h, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
+	creator, err := utils.NewTaskCreator(ctx, &c.authFlags, c.envFlags)
 	if err != nil {
-		return errors.Annotate(err, "failed to create http client").Err()
-	}
-	e := c.envFlags.Env()
-	client, err := swarming.New(ctx, h, e.SwarmingService)
-	if err != nil {
-		return errors.Annotate(err, "failed to create Swarming client").Err()
+		return err
 	}
 
 	attemptID := uuid.New().String()
-	creator := &utils.TaskCreator{
-		Client:      client,
-		Environment: e,
-	}
 	tags := []string{
 		fmt.Sprintf("repairAttemptID:%s", attemptID),
 	}
 
-	expirationSec := c.expirationMins * 60
 	for _, host := range args {
 		dutName := skycmdlib.FixSuspiciousHostname(host)
 		if dutName != host {
 			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", host, dutName)
 		}
-		id, err := creator.RepairTask(ctx, dutName, tags, expirationSec)
+		id, err := creator.RepairTask(ctx, dutName, tags, c.expirationMins*60)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(e.SwarmingService, id), dutName)
+		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(creator.Environment.SwarmingService, id), dutName)
 	}
-	fmt.Fprintf(a.GetOut(), "Batch repair task URL: %s\n", swarming.TaskListURLForTags(e.SwarmingService, tags))
+	fmt.Fprintf(a.GetOut(), "Batch repair task URL: %s\n", swarming.TaskListURLForTags(creator.Environment.SwarmingService, tags))
 	return nil
 }
