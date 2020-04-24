@@ -87,17 +87,16 @@ export const requests = (state) => state.permissions.requests;
 
 /**
  * Action creator to fetch PermissionSets.
- * @param {Array<string>} resourceNames The resource names to get.
+ * @param {Array<string>} names The resource names to get.
  * @return {function(function): Promise<Array<PermissionSet>>}
  */
-export const batchGet = (resourceNames) => async (dispatch) => {
+export const batchGet = (names) => async (dispatch) => {
   dispatch({type: BATCH_GET_START});
 
   try {
-    const args = {names: resourceNames};
     /** @type {{permissionSets: Array<PermissionSet>}} */
     const {permissionSets} = await prpcClient.call(
-        'monorail.v1.Permissions', 'BatchGetPermissionSets', args);
+        'monorail.v1.Permissions', 'BatchGetPermissionSets', {names});
 
     dispatch({type: BATCH_GET_SUCCESS, permissionSets});
 

@@ -43,6 +43,10 @@ export const FETCH_ITEMS_START = 'hotlist/FETCH_ITEMS_START';
 export const FETCH_ITEMS_SUCCESS = 'hotlist/FETCH_ITEMS_SUCCESS';
 export const FETCH_ITEMS_FAILURE = 'hotlist/FETCH_ITEMS_FAILURE';
 
+export const REMOVE_EDITORS_START = 'hotlist/REMOVE_EDITORS_START';
+export const REMOVE_EDITORS_SUCCESS = 'hotlist/REMOVE_EDITORS_SUCCESS';
+export const REMOVE_EDITORS_FAILURE = 'hotlist/REMOVE_EDITORS_FAILURE';
+
 export const REMOVE_ITEMS_START = 'hotlist/REMOVE_ITEMS_START';
 export const REMOVE_ITEMS_SUCCESS = 'hotlist/REMOVE_ITEMS_SUCCESS';
 export const REMOVE_ITEMS_FAILURE = 'hotlist/REMOVE_ITEMS_FAILURE';
@@ -113,6 +117,8 @@ const requestsReducer = combineReducers({
       FETCH_START, FETCH_SUCCESS, FETCH_FAILURE),
   fetchItems: createRequestReducer(
       FETCH_ITEMS_START, FETCH_ITEMS_SUCCESS, FETCH_ITEMS_FAILURE),
+  removeEditors: createRequestReducer(
+      REMOVE_EDITORS_START, REMOVE_EDITORS_SUCCESS, REMOVE_EDITORS_FAILURE),
   removeItems: createRequestReducer(
       REMOVE_ITEMS_START, REMOVE_ITEMS_SUCCESS, REMOVE_ITEMS_FAILURE),
   rerankItems: createRequestReducer(
@@ -225,7 +231,7 @@ export const deleteHotlist = (name) => async (dispatch) => {
 /**
  * Action creator to fetch a Hotlist object.
  * @param {string} name The resource name of the Hotlist to fetch.
- * @return {function(function): Promise<void>}
+ * @return {function(function): Promise<Hotlist>}
  */
 export const fetch = (name) => async (dispatch) => {
   dispatch({type: FETCH_START});
@@ -239,6 +245,7 @@ export const fetch = (name) => async (dispatch) => {
     }
 
     dispatch({type: FETCH_SUCCESS, hotlist});
+    return hotlist;
   } catch (error) {
     dispatch({type: FETCH_FAILURE, error});
   };
@@ -270,6 +277,27 @@ export const fetchItems = (name) => async (dispatch) => {
     return itemsWithRank;
   } catch (error) {
     dispatch({type: FETCH_ITEMS_FAILURE, error});
+  };
+};
+
+/**
+ * Action creator to remove editors from a Hotlist.
+ * @param {string} name The resource name of the Hotlist.
+ * @param {Array<string>} editors The resource names of the Users to remove.
+ * @return {function(function): Promise<void>}
+ */
+export const removeEditors = (name, editors) => async (dispatch) => {
+  dispatch({type: REMOVE_EDITORS_START});
+
+  try {
+    const args = {name, editors};
+    await prpcClient.call('monorail.v1.Hotlists', 'RemoveHotlistEditors', args);
+
+    dispatch({type: REMOVE_EDITORS_SUCCESS});
+
+    await dispatch(fetch(name));
+  } catch (error) {
+    dispatch({type: REMOVE_EDITORS_FAILURE, error});
   };
 };
 

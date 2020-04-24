@@ -22,30 +22,13 @@ describe('hotlist reducers', () => {
       byName: {},
       hotlistItems: {},
       requests: {
-        deleteHotlist: {
-          error: null,
-          requesting: false,
-        },
-        fetch: {
-          error: null,
-          requesting: false,
-        },
-        fetchItems: {
-          error: null,
-          requesting: false,
-        },
-        removeItems: {
-          error: null,
-          requesting: false,
-        },
-        rerankItems: {
-          error: null,
-          requesting: false,
-        },
-        update: {
-          error: null,
-          requesting: false,
-        },
+        deleteHotlist: {error: null, requesting: false},
+        fetch: {error: null, requesting: false},
+        fetchItems: {error: null, requesting: false},
+        removeEditors: {error: null, requesting: false},
+        removeItems: {error: null, requesting: false},
+        rerankItems: {error: null, requesting: false},
+        update: {error: null, requesting: false},
       },
     };
     assert.deepEqual(actual, expected);
@@ -218,7 +201,8 @@ describe('hotlist action creators', () => {
     it('success', async () => {
       prpcClient.call.returns(Promise.resolve(example.HOTLIST));
 
-      await hotlist.fetch(example.NAME)(dispatch);
+      const returnValue = await hotlist.fetch(example.NAME)(dispatch);
+      assert.equal(returnValue, example.HOTLIST);
 
       sinon.assert.calledWith(dispatch, {type: hotlist.FETCH_START});
 
@@ -269,6 +253,36 @@ describe('hotlist action creators', () => {
 
       const action = {
         type: hotlist.FETCH_ITEMS_FAILURE,
+        error: sinon.match.any,
+      };
+      sinon.assert.calledWith(dispatch, action);
+    });
+  });
+
+  describe('removeEditors', () => {
+    it('success', async () => {
+      prpcClient.call.returns(Promise.resolve({}));
+
+      const editors = [exampleUser.NAME];
+      await hotlist.removeEditors(example.NAME, editors)(dispatch);
+
+      sinon.assert.calledWith(dispatch, {type: hotlist.REMOVE_EDITORS_START});
+
+      const args = {name: example.NAME, editors};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Hotlists',
+          'RemoveHotlistEditors', args);
+
+      sinon.assert.calledWith(dispatch, {type: hotlist.REMOVE_EDITORS_SUCCESS});
+    });
+
+    it('failure', async () => {
+      prpcClient.call.throws();
+
+      await hotlist.removeEditors(example.NAME, [])(dispatch);
+
+      const action = {
+        type: hotlist.REMOVE_EDITORS_FAILURE,
         error: sinon.match.any,
       };
       sinon.assert.calledWith(dispatch, action);
