@@ -115,7 +115,7 @@ describe('mr-phase', () => {
     });
 
     it('does not fetch when milestone to fetch is unchanged', async () => {
-      element._milestoneData = {mstone: 86};
+      element._fetchedMilestone = '86';
       element._fieldValueMap = new Map([['m-target beta', ['86']]]);
       element.phaseName = 'Beta';
 
@@ -125,7 +125,7 @@ describe('mr-phase', () => {
     });
 
     it('fetches when milestone found', async () => {
-      element._milestoneData = {};
+      element._fetchedMilestone = undefined;
       element._fieldValueMap = new Map([['m-target beta', ['86']]]);
       element.phaseName = 'Beta';
 
@@ -135,7 +135,7 @@ describe('mr-phase', () => {
     });
 
     it('re-fetches when new milestone found', async () => {
-      element._milestoneData = {mstone: 86};
+      element._fetchedMilestone = '86';
       element._fieldValueMap = new Map([
         ['m-target beta', ['86']],
         ['m-launched beta', ['87']]]);
@@ -147,7 +147,7 @@ describe('mr-phase', () => {
     });
 
     it('re-fetches only after last stale fetch finishes', async () => {
-      element._milestoneData = {mstone: 84};
+      element._fetchedMilestone = '84';
       element._fieldValueMap = new Map([['m-target beta', ['86']]]);
       element.phaseName = 'Beta';
       element._isFetchingMilestone = true;
@@ -157,12 +157,53 @@ describe('mr-phase', () => {
       sinon.assert.notCalled(element.fetchMilestoneData);
 
       // Previous in flight fetch finishes.
-      element._milestoneData = {mstone: 85};
+      element._fetchedMilestone = '85';
       element._isFetchingMilestone = false;
 
       await element.updateComplete;
 
       sinon.assert.calledWith(element.fetchMilestoneData, '86');
+    });
+  });
+
+  describe('milestone fetching with fake server responses', () => {
+    beforeEach(() => {
+      sinon.stub(window, 'fetch');
+      sinon.spy(element, 'fetchMilestoneData');
+    });
+
+    afterEach(() => {
+      window.fetch.restore();
+    });
+
+    it('does not refetch when server response finishes', async () => {
+      const response = new window.Response('{"mstones": [{"mstone": 86}]}', {
+        status: 200,
+        headers: {
+          'Content-type': 'application/json',
+        },
+      });
+
+      window.fetch.returns(Promise.resolve(response));
+
+      element._fieldValueMap = new Map([['m-target beta', ['86']]]);
+      element.phaseName = 'Beta';
+
+      await element.updateComplete;
+
+      sinon.assert.calledWith(element.fetchMilestoneData, '86');
+
+      assert.isTrue(element._isFetchingMilestone);
+
+      await element._fetchMilestoneComplete;
+
+      assert.deepEqual(element._milestoneData, {'mstones': [{'mstone': 86}]});
+      assert.equal(element._fetchedMilestone, '86');
+      assert.isFalse(element._isFetchingMilestone);
+
+      await element.updateComplete;
+
+      sinon.assert.calledOnce(element.fetchMilestoneData);
     });
   });
 });

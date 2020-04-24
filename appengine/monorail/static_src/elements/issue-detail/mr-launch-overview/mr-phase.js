@@ -193,6 +193,7 @@ export class MrPhase extends connectStore(LitElement) {
       _fieldValueMap: {type: Object},
       _milestoneData: {type: Object},
       _isFetchingMilestone: {type: Boolean},
+      _fetchedMilestone: {type: String},
     };
   }
 
@@ -213,6 +214,12 @@ export class MrPhase extends connectStore(LitElement) {
     // https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=xx
     this._milestoneData = {};
     this._isFetchingMilestone = false;
+    this._fetchedMilestone = undefined;
+    /**
+     * @type {Promise} Used for testing to allow waiting for milestone
+     *   fetch operations to finish.
+     */
+    this._fetchMilestoneComplete = undefined;
   }
 
   /** @override */
@@ -240,7 +247,8 @@ export class MrPhase extends connectStore(LitElement) {
     if (!this._isFetchingMilestone) {
       const milestoneToFetch = this._milestoneToFetch;
       if (milestoneToFetch && this._fetchedMilestone !== milestoneToFetch) {
-        this.fetchMilestoneData(milestoneToFetch);
+        this._fetchMilestoneComplete = this.fetchMilestoneData(
+            milestoneToFetch);
       }
     }
   }
@@ -249,18 +257,21 @@ export class MrPhase extends connectStore(LitElement) {
    * Makes an XHR request to Chromium Dash to find Chrome-specific launch data.
    * eg. when certain Chrome milestones are planned for release.
    * @param {string} milestone A string containing a Chrome milestone number.
+   * @return {Promise<void>}
    */
-  fetchMilestoneData(milestone) {
+  async fetchMilestoneData(milestone) {
     this._isFetchingMilestone = true;
 
-    window.fetch(
-        `https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=${
-          milestone}`,
-    ).then((resp) => resp.json()).then((resp) => {
-      this._milestoneData = resp;
-
-      this._isFetchingMilestone = false;
-    });
+    try {
+      const resp = await window.fetch(
+          `https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone=${
+            milestone}`);
+      this._milestoneData = await resp.json();
+    } catch (error) {
+      console.error(`Error when fetching milestone data: ${error}`);
+    }
+    this._fetchedMilestone = milestone;
+    this._isFetchingMilestone = false;
   }
 
   /**
@@ -445,16 +456,6 @@ export class MrPhase extends connectStore(LitElement) {
 
     const latestMilestone = Math.max(target, approved, launched);
     return latestMilestone > 0 ? `${latestMilestone}` : '';
-  }
-
-  /**
-   * The Chrome Milestone returned by Chromium Dash.
-   * @return {string}
-   * @private
-   */
-  get _fetchedMilestone() {
-    if (!this._milestoneData) return '';
-    return `${this._milestoneData.mstone}`;
   }
 }
 
