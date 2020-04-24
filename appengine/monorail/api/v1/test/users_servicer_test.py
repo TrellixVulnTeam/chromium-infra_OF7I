@@ -8,6 +8,8 @@ from __future__ import absolute_import
 
 import unittest
 
+from google.protobuf import empty_pb2
+
 from api import resource_name_converters as rnc
 from api.v1 import users_servicer
 from api.v1 import converters
@@ -29,13 +31,19 @@ class UsersServicerTest(unittest.TestCase):
     self.cnxn = fake.MonorailConnection()
     self.services = service_manager.Services(
         user=fake.UserService(),
-        usergroup=fake.UserGroupService())
+        usergroup=fake.UserGroupService(),
+        project=fake.ProjectService(),
+        project_star=fake.ProjectStarService())
     self.users_svcr = users_servicer.UsersServicer(
         self.services, make_rate_limiter=False)
 
     self.user_1 = self.services.user.TestAddUser('user_111@example.com', 111)
     self.user_2 = self.services.user.TestAddUser('user_222@example.com', 222)
     self.user_3 = self.services.user.TestAddUser('user_333@example.com', 333)
+
+    self.project_1 = self.services.project.TestAddProject(
+        'proj', project_id=789)
+
     self.converter = None
 
   def CallWrapped(self, wrapped_handler, mc, *args, **kwargs):
@@ -62,3 +70,25 @@ class UsersServicerTest(unittest.TestCase):
     ]
     self.assertEqual(
         response, users_pb2.BatchGetUsersResponse(users=expected_users))
+
+  def testStarProject(self):
+    request = users_pb2.StarProjectRequest(project='projects/proj')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(self.users_svcr.StarProject, mc, request)
+    expected_name = 'users/111/projectStars/proj'
+
+    self.assertEqual(response, user_objects_pb2.ProjectStar(name=expected_name))
+
+  def testUnStarProject(self):
+    request = users_pb2.UnStarProjectRequest(project='projects/proj')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(self.users_svcr.UnStarProject, mc, request)
+
+    self.assertEqual(response, empty_pb2.Empty())
+
+    is_starred = self.services.project_star.IsItemStarredBy(self.cnxn, 789, 111)
+    self.assertFalse(is_starred)

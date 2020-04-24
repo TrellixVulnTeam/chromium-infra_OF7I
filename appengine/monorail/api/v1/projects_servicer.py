@@ -31,6 +31,7 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
       Raises:
         InputException if the request.parent is invalid.
+        NoSuchProjectException if no project exists with the given name.
     """
     project_id = rnc.IngestProjectName(mc.cnxn, request.parent, self.services)
 

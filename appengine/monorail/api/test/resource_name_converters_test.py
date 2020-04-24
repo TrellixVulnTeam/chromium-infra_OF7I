@@ -322,6 +322,18 @@ class ResourceNameConverterTest(unittest.TestCase):
     """We can process an empty Users list."""
     self.assertEqual(rnc.ConvertUserNames([]), {})
 
+  def testConvertProjectStarName(self):
+    """We can convert a User ID and Project ID to resource name."""
+    name = rnc.ConvertProjectStarName(
+        self.cnxn, 111, self.project_1.project_id, self.services)
+    expected = 'users/111/projectStars/{}'.format(self.project_1.project_name)
+    self.assertEqual(name, expected)
+
+  def testConvertProjectStarName_NoSuchProjectException(self):
+    """Throws an exception when Project ID is invalid."""
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertProjectStarName(self.cnxn, 111, 123455, self.services)
+
   def testIngestProjectName(self):
     """We can get project name from Project resource names."""
     name = 'projects/{}'.format(self.project_1.project_name)

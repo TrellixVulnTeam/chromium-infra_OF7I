@@ -6,6 +6,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+from google.protobuf import empty_pb2
+
 from api import resource_name_converters as rnc
 from api.v1 import monorail_servicer
 from api.v1.api_proto import users_pb2
@@ -30,8 +32,8 @@ class UsersServicer(monorail_servicer.MonorailServicer):
     """pRPC API method that implements BatchGetUsers.
 
       Raises:
-        InputException: if a name in request.names is invalid.
-        NoSuchUserException: if a User is not found.
+        InputException if a name in request.names is invalid.
+        NoSuchUserException if a User is not found.
     """
     user_ids = rnc.IngestUserNames(mc.cnxn, request.names, self.services)
 
@@ -43,3 +45,41 @@ class UsersServicer(monorail_servicer.MonorailServicer):
     api_users = [api_users_by_id[user_id] for user_id in user_ids]
 
     return users_pb2.BatchGetUsersResponse(users=api_users)
+
+  @monorail_servicer.PRPCMethod
+  def StarProject(self, mc, request):
+    # type: (MonorailConnection, StarProjectRequest) ->
+    # ProjectStar
+    """pRPC API method that implements StarProject.
+
+      Raises:
+        InputException if the project name in request.project is invalid.
+        NoSuchProjectException if no project exists with the given name.
+    """
+    project_id = rnc.IngestProjectName(mc.cnxn, request.project, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.StarProject(project_id, True)
+
+    user_id = mc.auth.user_id
+    star_name = rnc.ConvertProjectStarName(
+        mc.cnxn, user_id, project_id, self.services)
+
+    return user_objects_pb2.ProjectStar(name=star_name)
+
+  @monorail_servicer.PRPCMethod
+  def UnStarProject(self, mc, request):
+    # type: (MonorailConnection, UnStarProjectRequest) ->
+    # Empty
+    """pRPC API method that implements UnStarProject.
+
+      Raises:
+        InputException if the project name in request.project is invalid.
+        NoSuchProjectException if no project exists with the given name.
+    """
+    project_id = rnc.IngestProjectName(mc.cnxn, request.project, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.StarProject(project_id, False)
+
+    return empty_pb2.Empty()

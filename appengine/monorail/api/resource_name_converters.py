@@ -56,6 +56,7 @@ HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
 ISSUE_NAME_TMPL = 'projects/{project}/issues/{local_id}'
 COMMENT_NAME_TMPL = '%s/comments/{comment_id}' % ISSUE_NAME_TMPL
 USER_NAME_TMPL = 'users/{user_id}'
+PROJECT_STAR_NAME_TMPL = 'users/{user_id}/projectStars/{project_name}'
 
 ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_name}'
 STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
@@ -427,6 +428,28 @@ def ConvertUserNames(user_ids):
   return user_ids_to_names
 
 
+def ConvertProjectStarName(cnxn, user_id, project_id, services):
+  # type: (MonorailConnection, int, int, Services) -> str
+  """Takes User ID and Project ID and returns the ProjectStar resource name.
+
+  Args:
+    user_id: User ID associated with the star.
+    project_id: ID of the starred project.
+
+  Returns:
+    The ProjectStar's name.
+
+  Raises:
+    NoSuchProjectException if the project_id is not found.
+  """
+  project_name = services.project.LookupProjectNames(
+      cnxn, [project_id]).get(project_id)
+  if project_name is None:
+    raise exceptions.NoSuchProjectException(project_id)
+
+  return PROJECT_STAR_NAME_TMPL.format(
+      user_id=user_id, project_name=project_name)
+
 # Projects
 
 
@@ -442,6 +465,7 @@ def IngestProjectName(cnxn, name, services):
 
   Raises:
     InputException if the given name does not have a valid format.
+    NoSuchProjectException if no project exists with the given name.
   """
   match = _GetResourceNameMatch(name, PROJECT_NAME_RE)
   project_name = match.group('project_name')
@@ -449,7 +473,6 @@ def IngestProjectName(cnxn, name, services):
   id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
 
   return id_dict.get(project_name)
-
 
 def ConvertTemplateNames(cnxn, project_id, template_ids, services):
   # MonorailConnection, int, Collection[int] Service -> Mapping[int, str]
