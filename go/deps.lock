@@ -1,8 +1,8 @@
 hash: a14cfba30fc2b9c05cac3ba4aadb05a10a82742ee7ada389d69da8346af3910b
-updated: 2020-04-23T14:43:47.002702814-04:00
+updated: 2020-04-23T18:18:28.325759-07:00
 imports:
 - name: cloud.google.com/go
-  version: d858d9cd2acb5e96f532ba78d9719d234f7ddafa
+  version: 715ffd582b3d47aafe3358859f84071823b42420
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -408,7 +408,7 @@ imports:
   subpackages:
   - gerrit
 - name: golang.org/x/crypto
-  version: 44a6062868251b249d52ec1c39797568f724bdca
+  version: 4bdfaf469ed5a1194e0ec57ec7b1af73991a7ee3
   repo: https://go.googlesource.com/crypto.git
   subpackages:
   - ssh/terminal
@@ -459,7 +459,7 @@ imports:
   version: 89c76fbcd5d1cd4969e5d2fe19d48b19d5ad94a0
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: a466788a31bba36a089a089300e6e07d6aac7a68
+  version: 59e73619c74251278048eec8e54d81f25025e79d
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -510,7 +510,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 6a3c03883db90c9bc0b9bd477f26ca93d8841e55
+  version: 7d6aa9ed5e020314d49a1331f21e62207b3845fd
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
