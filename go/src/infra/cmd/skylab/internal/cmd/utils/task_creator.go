@@ -51,7 +51,7 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skyc
 }
 
 // RepairTask creates admin_repair task for particular DUT
-func (tc *TaskCreator) RepairTask(ctx context.Context, host string, customTags []string, expirationSec int) (taskID string, err error) {
+func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSec int) (taskID string, err error) {
 	id, err := tc.dutNameToBotID(ctx, host)
 	if err != nil {
 		return "", errors.Annotate(err, "fail to get bot ID for %s", host).Err()
@@ -72,16 +72,15 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, customTags [
 		},
 		WaitForCapacity: true,
 	}}
-	tags := []string{
-		fmt.Sprintf("log_location:%s", c.LogDogAnnotationURL),
-		fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
-		"pool:ChromeOSSkylab",
-		"skylab-tool:repair",
-	}
-	tags = append(tags, customTags...)
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name:           "admin_repair",
-		Tags:           tags,
+		Name: "admin_repair",
+		Tags: []string{
+			fmt.Sprintf("log_location:%s", c.LogDogAnnotationURL),
+			fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
+			"pool:ChromeOSSkylab",
+			"skylab-tool:repair",
+			tc.getSessionTag(),
+		},
 		TaskSlices:     slices,
 		Priority:       25,
 		ServiceAccount: tc.Environment.ServiceAccount,

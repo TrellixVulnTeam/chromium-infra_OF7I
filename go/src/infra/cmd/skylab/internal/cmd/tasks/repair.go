@@ -7,7 +7,6 @@ package tasks
 import (
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -65,22 +64,19 @@ func (c *repairRun) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 
-	attemptID := uuid.New().String()
-	tags := []string{
-		fmt.Sprintf("repairAttemptID:%s", attemptID),
-	}
-
 	for _, host := range args {
 		dutName := skycmdlib.FixSuspiciousHostname(host)
 		if dutName != host {
 			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", host, dutName)
 		}
-		id, err := creator.RepairTask(ctx, dutName, tags, c.expirationMins*60)
+		id, err := creator.RepairTask(ctx, dutName, c.expirationMins*60)
 		if err != nil {
 			return err
 		}
 		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(creator.Environment.SwarmingService, id), dutName)
 	}
-	fmt.Fprintf(a.GetOut(), "Batch repair task URL: %s\n", swarming.TaskListURLForTags(creator.Environment.SwarmingService, tags))
+	if len(args) > 1 {
+		fmt.Fprintf(a.GetOut(), "\nBatch tasks URL: %s\n\n", creator.GetSessionTasksURL())
+	}
 	return nil
 }

@@ -258,7 +258,7 @@ func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Applica
 func scheduleRepairTaskForLater(ctx context.Context, creator *utils.TaskCreator, a subcommands.Application, leaseDuration time.Duration, host string) {
 	// expirde time is time for lease + expiration time of lease_task + additional time for any delays
 	expirationSec := int(leaseDuration.Seconds()) + 900
-	id, err := creator.RepairTask(ctx, host, nil, expirationSec)
+	id, err := creator.RepairTask(ctx, host, expirationSec)
 	if err == nil {
 		fmt.Fprintf(a.GetOut(), "Created repair task %s\n", swarming.TaskURL(creator.Environment.SwarmingService, id))
 	} else {
