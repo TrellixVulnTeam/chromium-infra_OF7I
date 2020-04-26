@@ -185,7 +185,6 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 		return err
 	}
 	fmt.Fprintf(a.GetOut(), "Created lease task for host %s: %s\n", host, swarming.TaskURL(e.SwarmingService, id))
-	scheduleRepairTaskForLater(ctx, &creator, a, leaseDuration, host)
 	fmt.Fprintf(a.GetOut(), "Waiting for task to start; lease isn't active yet\n")
 
 	if err := c.waitForTaskStart(ctx, sc, id); err != nil {
@@ -253,17 +252,6 @@ func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Applica
 	// TODO(ayatane): The time printed here may be off by the poll interval above.
 	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
 	return nil
-}
-
-func scheduleRepairTaskForLater(ctx context.Context, creator *utils.TaskCreator, a subcommands.Application, leaseDuration time.Duration, host string) {
-	// expirde time is time for lease + expiration time of lease_task + additional time for any delays
-	expirationSec := int(leaseDuration.Seconds()) + 900
-	id, err := creator.RepairTask(ctx, host, expirationSec)
-	if err == nil {
-		fmt.Fprintf(a.GetOut(), "Created repair task %s\n", swarming.TaskURL(creator.Environment.SwarmingService, id))
-	} else {
-		fmt.Fprint(a.GetOut(), "Error: Repair task was not created\n")
-	}
 }
 
 // newSwarmingClient creates a new swarming client.
