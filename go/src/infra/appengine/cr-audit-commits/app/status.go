@@ -85,7 +85,7 @@ func Status(rctx *router.Context) {
 
 func handleError(ctx context.Context, err error, refURL string, refState *RefState, resp http.ResponseWriter) {
 	logging.WithError(err).Errorf(ctx, "Getting status of repo %s, for revision %s", refURL, refState.LastRelevantCommit)
-	http.Error(resp, "Getting status failed. See log for details.", 500)
+	http.Error(resp, "Getting status failed. See log for details.", 502)
 }
 
 func lastXRelevantCommits(ctx context.Context, rc *RelevantCommit, x int) ([]*RelevantCommit, error) {

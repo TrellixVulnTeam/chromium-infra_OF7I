@@ -67,7 +67,7 @@ func Auditor(rc *router.Context) {
 
 	fl, err := getCommitLog(ctx, cfg, refState, cs)
 	if err != nil {
-		http.Error(resp, err.Error(), 500)
+		http.Error(resp, err.Error(), 502)
 		return
 	}
 
@@ -77,13 +77,13 @@ func Auditor(rc *router.Context) {
 	err = scanCommits(ctx, fl, cfg, refState)
 	if err != nil && err != context.DeadlineExceeded {
 		logging.WithError(err).Errorf(ctx, "Could not save new relevant commit")
-		http.Error(resp, err.Error(), 500)
+		http.Error(resp, err.Error(), 503)
 		return
 	}
 	// Save progress with an unexpired context.
 	if putErr := ds.Put(outerCtx, refState); putErr != nil {
 		logging.WithError(putErr).Errorf(outerCtx, "Could not save last known/interesting commits")
-		http.Error(resp, putErr.Error(), 500)
+		http.Error(resp, putErr.Error(), 503)
 		return
 	}
 	if err == context.DeadlineExceeded {
@@ -105,7 +105,7 @@ func Auditor(rc *router.Context) {
 		return
 	}
 	if putErr := saveAuditedCommits(outerCtx, auditedCommits, cfg, refState); putErr != nil {
-		http.Error(resp, err.Error(), 500)
+		http.Error(resp, err.Error(), 503)
 		return
 	}
 	if err == context.DeadlineExceeded {
@@ -115,7 +115,7 @@ func Auditor(rc *router.Context) {
 
 	err = notifyAboutViolations(ctx, cfg, refState, cs)
 	if err != nil {
-		http.Error(resp, err.Error(), 500)
+		http.Error(resp, err.Error(), 502)
 		return
 	}
 
