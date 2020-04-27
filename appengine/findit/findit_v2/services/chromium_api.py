@@ -327,4 +327,4 @@ class ChromiumProjectAPI(ProjectAPI):
     return result
 
   def GetAutoRevertReviewers(self):
-    return current_sheriffs('chrome')
+    return current_sheriffs()

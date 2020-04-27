@@ -320,7 +320,6 @@ _CONFIG_SPEC = {  # yapf: disable
         'cr_notification_latency_limit_minutes': int,
         'cr_notification_should_notify_flake_culprit': bool,
         'culprit_commit_limit_hours': int,
-        'rotations_url': str,
         'max_flake_detection_bug_updates_per_day': int,
         'max_flake_analysis_bug_updates_per_day': int,
         'minimum_confidence_to_update_endpoints': float,

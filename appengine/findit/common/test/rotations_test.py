@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import datetime
 import json
 import mock
 
@@ -45,82 +44,29 @@ class RotationsTest(testing.AppengineTestCase):
     self.http_client = DummyHttpClient()
     self.http_patcher = mock.patch('common.rotations._HTTP_CLIENT',
                                    self.http_client)
-    self.date_patcher = mock.patch('libs.time_util.GetPSTNow',
-                                   lambda: datetime.datetime(2017, 1, 1))
     self.http_patcher.start()
-    self.date_patcher.start()
 
   def tearDown(self):
     self.http_patcher.stop()
-    self.date_patcher.stop()
 
   def testCurrentSheriffs(self):
     response = json.dumps({
-        'calendar': [
-            {
-                'date': '2016-12-31',
-                'participants': [[], ['foo', 'bar']]
-            },
-            {
-                'date': '2017-01-01',
-                'participants': [['ham', 'eggs', 'beef@chromium.org'], []]
-            },
-        ],
-        'rotations': ['dummy1', 'dummy2']
+        'updated_unix_timestamp': 1587957062,
+        'emails': ['ham@google.com', 'beef@google.com'],
     })
     self.http_client.SetResponse(rotations._ROTATIONS_URL, (200, response))
-    self.assertIn('ham@google.com', rotations.current_sheriffs('dummy1'))
-    self.assertIn('beef@google.com', rotations.current_sheriffs('dummy1'))
+    self.assertIn('ham@google.com', rotations.current_sheriffs())
+    self.assertIn('beef@google.com', rotations.current_sheriffs())
 
-  def testCurrentSheriffsMissingSheriff(self):
+  def testCurrentSheriffsMalformedResponse(self):
     response = json.dumps({
-        'calendar': [
-            {
-                'date': '2016-12-31',
-                'participants': [[], ['foo', 'bar']]
-            },
-            {
-                'date': '2017-01-01',
-                'participants': [['ham', 'eggs'], []]
-            },
-        ],
-        'rotations': ['dummy1', 'dummy2']
-    })
-    self.http_client.SetResponse(rotations._ROTATIONS_URL, (200, response))
-    self.assertFalse(rotations.current_sheriffs('dummy2'))
-
-  def testCurrentSheriffsBadRotationName(self):
-    response = json.dumps({
-        'calendar': [
-            {
-                'date': '2016-12-31',
-                'participants': [[], ['foo', 'bar']]
-            },
-            {
-                'date': '2017-01-01',
-                'participants': [['ham', 'eggs'], []]
-            },
-        ],
-        'rotations': ['dummy1', 'dummy2']
-    })
-    self.http_client.SetResponse(rotations._ROTATIONS_URL, (200, response))
-    self.assertFalse(rotations.current_sheriffs('memegen-rotation'))
-
-  def testCurrentSheriffsMissingDate(self):
-    response = json.dumps({
-        'calendar': [
-            {
-                'date': '2016-12-31',
-                'participants': [[], ['foo', 'bar']]
-            },
-        ],
-        'rotations': ['dummy1', 'dummy2']
+        'foo': 'bar',
     })
     self.http_client.SetResponse(rotations._ROTATIONS_URL, (200, response))
     with self.assertRaises(Exception):
-      rotations.current_sheriffs('dummy2')
+      rotations.current_sheriffs()
 
   def testCurrentSheriffsBadHttp(self):
     self.http_client.SetResponse(rotations._ROTATIONS_URL, (403, 'forbidden'))
     with self.assertRaises(Exception):
-      rotations.current_sheriffs('dummy2')
+      rotations.current_sheriffs()
