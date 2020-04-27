@@ -22,6 +22,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
+const skylabPool = "ChromeOSSkylab"
+const defaultTaskPriority = 25
+
 // TaskCreator creates Swarming tasks
 type TaskCreator struct {
 	Client      *swarming.Client
@@ -62,7 +65,7 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skyc
 func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSec int) (taskID string, err error) {
 	id, err := tc.dutNameToBotID(ctx, host)
 	if err != nil {
-		return "", errors.Annotate(err, "fail to get bot ID for %s", host).Err()
+		return "", errors.Annotate(err, "failed to get bot ID for %s", host).Err()
 	}
 	c := worker.Command{
 		TaskName: "admin_repair",
@@ -106,7 +109,7 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSe
 func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSec int) (TaskInfo, error) {
 	id, err := tc.dutNameToBotID(ctx, host)
 	if err != nil {
-		return TaskInfo{}, errors.Annotate(err, "fail to get bot ID for %s", host).Err()
+		return TaskInfo{}, errors.Annotate(err, "failed to get bot ID for %s", host).Err()
 	}
 	c := worker.Command{
 		TaskName: "admin_verify",
@@ -135,6 +138,46 @@ func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSe
 		},
 		TaskSlices:     slices,
 		Priority:       25,
+		ServiceAccount: tc.Environment.ServiceAccount,
+	}
+	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
+	defer cf()
+	resp, err := tc.Client.CreateTask(ctx, r)
+	if err != nil {
+		return TaskInfo{}, errors.Annotate(err, "failed to create task").Err()
+	}
+	task := TaskInfo{
+		ID:      resp.TaskId,
+		TaskURL: tc.taskURL(resp.TaskId),
+	}
+	return task, nil
+}
+
+// AuditTask creates admin_audit task for particular DUT.
+func (tc *TaskCreator) AuditTask(ctx context.Context, host, actions string, expirationSec int) (TaskInfo, error) {
+	dims, err := tc.dimsWithBotID(ctx, host)
+	if err != nil {
+		return TaskInfo{}, errors.Annotate(err, "failed to get dimensions for %s", host).Err()
+	}
+	c := worker.Command{
+		TaskName: "admin_audit",
+		Actions:  actions,
+	}
+	c.Config(tc.Environment.Wrapped())
+	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
+		ExpirationSecs: int64(expirationSec),
+		Properties: &swarming_api.SwarmingRpcsTaskProperties{
+			Command:              c.Args(),
+			Dimensions:           dims,
+			ExecutionTimeoutSecs: 5400,
+		},
+		WaitForCapacity: true,
+	}}
+	r := &swarming_api.SwarmingRpcsNewTaskRequest{
+		Name:           "admin_audit",
+		Tags:           tc.combineTags("audit"),
+		TaskSlices:     slices,
+		Priority:       defaultTaskPriority,
 		ServiceAccount: tc.Environment.ServiceAccount,
 	}
 	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
@@ -387,4 +430,26 @@ func (tc *TaskCreator) GetSessionTasksURL() string {
 // taskURL generates URL to the task in swarming.
 func (tc *TaskCreator) taskURL(id string) string {
 	return swarming.TaskURL(tc.Environment.SwarmingService, id)
+}
+
+func (tc *TaskCreator) dimsWithBotID(ctx context.Context, host string) ([]*swarming_api.SwarmingRpcsStringPair, error) {
+	id, err := tc.dutNameToBotID(ctx, host)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to get bot ID for %s", host).Err()
+	}
+	dims := []*swarming_api.SwarmingRpcsStringPair{
+		{Key: "pool", Value: skylabPool},
+		{Key: "id", Value: id},
+	}
+	return dims, nil
+}
+
+func (tc *TaskCreator) combineTags(toolName string, customTags ...string) []string {
+	tags := []string{
+		fmt.Sprintf("skylab-tool:%s", toolName),
+		fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
+		fmt.Sprintf("pool:%s", skylabPool),
+		tc.getSessionTag(),
+	}
+	return append(tags, customTags...)
 }

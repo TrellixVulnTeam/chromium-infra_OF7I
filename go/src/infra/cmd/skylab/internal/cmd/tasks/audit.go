@@ -6,12 +6,15 @@ package tasks
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmd/skylab/internal/cmd/utils"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 )
@@ -42,6 +45,8 @@ type auditRun struct {
 	expirationMins       int
 	skipVerifyServoUSB   bool
 	skipVerifyDUTStorage bool
+
+	actions string
 }
 
 func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -53,12 +58,70 @@ func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands
 }
 
 func (c *auditRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	if err := c.validateArgs(args); err != nil {
+		return err
+	}
+
+	ctx := cli.GetContext(a, c, env)
+	creator, err := utils.NewTaskCreator(ctx, &c.authFlags, c.envFlags)
+	if err != nil {
+		return err
+	}
+
+	successMap := make(map[string]utils.TaskInfo)
+	errorMap := make(map[string]error)
+	for _, host := range args {
+		dutName := skycmdlib.FixSuspiciousHostname(host)
+		if dutName != host {
+			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", host, dutName)
+		}
+		task, err := creator.AuditTask(ctx, dutName, c.actions, c.expirationMins*60)
+		if err != nil {
+			errorMap[dutName] = err
+		} else {
+			successMap[dutName] = task
+		}
+	}
+	if len(errorMap) > 0 {
+		fmt.Fprintln(a.GetOut(), "\n### Failed to create ###")
+		for host, err := range errorMap {
+			fmt.Fprintf(a.GetOut(), "%s: %s\n", host, err.Error())
+		}
+	}
+	if len(successMap) > 0 {
+		fmt.Fprintf(a.GetOut(), "\n### Successful created - %d ###\n", len(successMap))
+		for host, task := range successMap {
+			fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", task.TaskURL, host)
+		}
+		if len(successMap) > 1 {
+			fmt.Fprintln(a.GetOut(), "\n### Batch tasks URL ###")
+			fmt.Fprintln(a.GetOut(), creator.GetSessionTasksURL())
+		}
+	}
+	return nil
+}
+
+func (c *auditRun) validateArgs(args []string) error {
 	if c.expirationMins >= dayInMinutes {
 		return cmdlib.NewUsageError(c.Flags, "Expiration minutes (%d minutes) cannot exceed 1 day [%d minutes]", c.expirationMins, dayInMinutes)
 	}
 	if len(args) == 0 {
 		return errors.Reason("at least one host has to provided").Err()
 	}
+	return c.validateActions()
+}
 
-	return errors.Reason("not implemented yet").Err()
+func (c *auditRun) validateActions() error {
+	var a []string
+	if !c.skipVerifyDUTStorage {
+		a = append(a, "verify-dut-storage")
+	}
+	if !c.skipVerifyServoUSB {
+		a = append(a, "verify-servo-usb-drive")
+	}
+	if len(a) == 0 {
+		return errors.Reason("All actions were skiped! At least one action has to be allowed to run").Err()
+	}
+	c.actions = strings.Join(a, ",")
+	return nil
 }
