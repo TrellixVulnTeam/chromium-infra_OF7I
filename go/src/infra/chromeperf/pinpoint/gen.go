@@ -18,4 +18,4 @@ package pinpoint
 
 // --- This file is mainly a `go generate` driver.
 //
-//go:generate cproto
+//go:generate cproto -desc api_descriptor.pb
