@@ -18,13 +18,16 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"time"
 
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/jwt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -46,6 +49,12 @@ const (
 	port                  = ":60800"
 	legacyPinpointService = "https://pinpoint-dot-chromeperf.appspot.com"
 )
+
+// Scopes to use for OAuth2.0 credentials.
+var scopesForLegacy = []string{
+	// Provide access to the email address of the user.
+	"https://www.googleapis.com/auth/userinfo.email",
+}
 
 func getRequestingUserEmail(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -144,6 +153,12 @@ func (s *pinpointServer) CancelJob(ctx context.Context, r *pinpoint.CancelJobReq
 	return nil, nil
 }
 
+// Email address for the service account to use.
+var serviceAccountEmail = flag.String("service_account", "", "service account email")
+
+// Contents of the service account credentials PEM file.
+var privateKey = flag.String("private_key", "", "service account PEM file contents")
+
 func main() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
@@ -152,13 +167,25 @@ func main() {
 	s := grpc.NewServer()
 	h := health.NewServer()
 
-	pinpoint.RegisterPinpointServer(s, &pinpointServer{
-		// Set up a client to be used by the Pinpoint server.
-		// TODO(dberris): Integrate oauth2 credentials for the service account in requests made buy the service.
-		LegacyClient: &http.Client{Transport: &http.Transport{
-			MaxIdleConns:        0, // Unlimited
-			MaxIdleConnsPerHost: 0, // Unlimited
-			IdleConnTimeout:     5 * time.Minute}}})
+	// Set up a client to be used by the Pinpoint server with OAuth credentials for the service account.
+	var client *http.Client
+
+	// Check if we've been provided explicit credentials.
+	if serviceAccountEmail != nil && *serviceAccountEmail != "" {
+		conf := &jwt.Config{
+			Email:      *serviceAccountEmail,
+			PrivateKey: []byte(*privateKey),
+			TokenURL:   google.JWTTokenURL,
+		}
+		client = conf.Client(oauth2.NoContext)
+	} else {
+		client, err = google.DefaultClient(oauth2.NoContext, scopesForLegacy...)
+		if err != nil {
+			log.Fatalf("Failed to get default credentials: %v", err)
+		}
+	}
+
+	pinpoint.RegisterPinpointServer(s, &pinpointServer{LegacyClient: client})
 	h.SetServingStatus("pinpoint", grpc_health_v1.HealthCheckResponse_SERVING)
 	h.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s, h)
