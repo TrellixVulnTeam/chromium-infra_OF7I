@@ -124,7 +124,7 @@ message LabelDef {
 // Custom fields defined for the project.
 //
 // See monorail/doc/userguide/concepts.md#issue-fields-and-labels.
-// Next available tag: 2
+// Next available tag: 10
 message FieldDef {
   option (google.api.resource) = {
     type: "api.crbug.com/FieldDef"
@@ -133,6 +133,80 @@ message FieldDef {
 
   // Resource name of the field.
   string name = 1;
+  // Display name of the field.
+  string display_name = 2 [(google.api.field_behavior) = IMMUTABLE];
+  // Brief explanation of this field.
+  string docstring = 3;
+  // Type of this field.
+  // Next available tag: 7
+  enum Type {
+    // Default enum value. This value is unused.
+    FIELD_DEF_TYPE_UNSPECIFIED = 0;
+    // This field can be filled only with enumerated option(s).
+    ENUM = 1;
+    // This field can be filled with integer(s).
+    INT = 2;
+    // This field can be filled with string(s).
+    STR = 3;
+    // This field can be filled with users(s).
+    USER = 4;
+    // This field can be filled with date(s).
+    DATE = 5;
+    // This field can be filled with URL(s).
+    URL = 6;
+  }
+  Type type = 4 [(google.api.field_behavior) = IMMUTABLE];
+
+  // Type of issue this field applies: ie Bug or Enhancement.
+  // Note: type is indicated by any "Type-foo" label or "Type" custom field.
+  string applicable_issue_type = 5;
+  // Administrators of this field.
+  repeated string admins = 6 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }
+  ];
+
+  // Traits of this field, ie is required or can support multiple values.
+  // Next available tag: 5
+  enum Traits {
+    // Default enum value. This value is unused.
+    TRAIT_UNSPECIFIED = 0;
+    // This field must be filled out.
+    REQUIRED = 1;
+    // This field defaults to hidden.
+    DEFAULT_HIDDEN = 2;
+    // This field can have multiple values.
+    MULTIVALUED = 3;
+    // This is a phase field meaning it can only belong to gates.
+    PHASE = 4;
+  }
+  repeated Traits traits = 7;
+
+  // ApprovalDef that this field belongs to, if applicable.
+  string approval_parent = 8 [
+      (google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" },
+      (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // Settings specific to enum type fields.
+  // Next available tag: 2
+  message EnumTypeSettings {
+    // One available choice for an enum field.
+    // Next available tag: 3
+    message Choice {
+      // Value of this choice.
+      string value = 1;
+      // Brief explanation of this choice.
+      string docstring = 2;
+    }
+    repeated Choice choices = 1;
+  }
+  EnumTypeSettings enum_settings = 9;
+
+  // TODO(monorail:7594): Implement int min/max settings.
+  // TODO(monorail:7595): Implement str regex settings.
+  // TODO(monorail:7596): Implement user settings.
+  // TODO(monorail:7597): Implement date settings.
+  // TODO(monorail:4993): Implement is_restricted_field.
 }
 
 // A high level definition of the part of the software affected by an issue.
