@@ -72,7 +72,8 @@ export class ChopsCheckbox extends LitElement {
     return html`
       <!-- Note: Avoiding 2-way data binding to futureproof this code
         for LitElement. -->
-      <input id="checkbox" type="checkbox" ?checked=${this.checked} @change=${this._checkedChangeHandler}>
+      <input id="checkbox" type="checkbox"
+        .checked=${this.checked} @change=${this._checkedChangeHandler}>
       <label for="checkbox">
         <slot></slot>
       </label>
@@ -83,6 +84,7 @@ export class ChopsCheckbox extends LitElement {
   static get properties() {
     return {
       label: {type: String},
+
       /**
        * Note: At the moment, this component does not manage its own
        * internal checked state. It expects its checked state to come
@@ -101,7 +103,8 @@ export class ChopsCheckbox extends LitElement {
    */
   click() {
     super.click();
-    this.shadowRoot.querySelector('#checkbox').click();
+    /** @type {HTMLInputElement} */ (
+      this.shadowRoot.querySelector('#checkbox')).click();
   }
 
   /**

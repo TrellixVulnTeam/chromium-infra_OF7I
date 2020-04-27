@@ -43,7 +43,7 @@ describe('chops-checkbox', () => {
     element.dispatchEvent.restore();
   });
 
-  it('checking checkbox checks underlying native <input>', async () => {
+  it('updating checked property updates native <input>', async () => {
     element.checked = false;
 
     await element.updateComplete;
@@ -57,5 +57,30 @@ describe('chops-checkbox', () => {
 
     assert.isTrue(element.checked);
     assert.isTrue(element.shadowRoot.querySelector('input').checked);
+  });
+
+  it('updating checked attribute updates native <input>', async () => {
+    element.setAttribute('checked', true);
+    await element.updateComplete;
+
+    assert.equal(element.getAttribute('checked'), 'true');
+    assert.isTrue(element.shadowRoot.querySelector('input').checked);
+
+    element.click();
+    await element.updateComplete;
+
+    // We expect the 'checked' attribute to remain the same even as the
+    // corresponding property changes when the user clicks the checkbox.
+    assert.equal(element.getAttribute('checked'), 'true');
+    assert.isFalse(element.shadowRoot.querySelector('input').checked);
+
+    element.click();
+    await element.updateComplete;
+    assert.isTrue(element.shadowRoot.querySelector('input').checked);
+
+    element.removeAttribute('checked');
+    await element.updateComplete;
+    assert.isNotTrue(element.getAttribute('checked'));
+    assert.isFalse(element.shadowRoot.querySelector('input').checked);
   });
 });

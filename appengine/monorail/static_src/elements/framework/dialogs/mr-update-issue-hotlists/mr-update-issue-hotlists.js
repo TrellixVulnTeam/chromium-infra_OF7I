@@ -3,7 +3,9 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
+import deepEqual from 'deep-equal';
 
+import 'elements/chops/chops-checkbox/chops-checkbox.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
@@ -50,7 +52,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
           cursor: pointer;
           text-decoration: underline;
         }
-        label {
+        label, chops-checkbox {
           display: flex;
           line-height: 200%;
           align-items: center;
@@ -95,16 +97,13 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
         <h3 class="medium-heading">Add issue to hotlists</h3>
         <form id="issueHotlistsForm">
           ${this.userHotlists.length ? this.userHotlists.map((hotlist) => html`
-            <label title="${hotlist.name}: ${hotlist.summary}">
-              <input
-                title=${this._checkboxTitle(hotlist, this.issueHotlists)}
-                type="checkbox"
-                id=${hotlist.name}
-                ?checked=${this._issueInHotlist(hotlist, this.issueHotlists)}
-                @click=${this._updateCheckboxTitle}
-              >
+            <chops-checkbox
+              title=${this._checkboxTitle(hotlist, this.issueHotlists)}
+              data-hotlist-name="${hotlist.name}"
+              ?checked=${this.hotlistsToAdd.has(hotlist.name)}
+              @checked-change=${this._targetHotlistChecked}>
               ${hotlist.name}
-            </label>
+            </chops-checkbox>
           `) : ''}
           <h3 class="medium-heading">Create new hotlist</h3>
           <div class="input-grid">
@@ -145,6 +144,12 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
       userHotlists: {type: Array},
       user: {type: Object},
       error: {type: String},
+      hotlistsToAdd: {
+        type: Object,
+        hasChanged(newVal, oldVal) {
+          return !deepEqual(newVal, oldVal);
+        },
+      },
     };
   }
 
@@ -161,8 +166,13 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
     /** @type {Array<IssueRef>} */
     this.issueRefs = [];
+
+    /** The list of Hotlists attached to the issueRefs. */
     this.issueHotlists = [];
     this.userHotlists = [];
+
+    /** The Set of Hotlist names that the Issues will be added to. */
+    this.hotlistsToAdd = this._initializeHotlistsToAdd();
   }
 
   /**
@@ -177,7 +187,11 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
    * Resets any changes to the form and error.
    */
   reset() {
-    this.shadowRoot.querySelector('#issueHotlistsForm').reset();
+    const form = this.shadowRoot.querySelector('#issueHotlistsForm');
+    form.reset();
+    // LitElement's hasChanged needs an assignment to verify Set objects.
+    // https://lit-element.polymer-project.org/guide/properties#haschanged
+    this.hotlistsToAdd = this._initializeHotlistsToAdd();
     this.error = '';
   }
 
@@ -269,6 +283,23 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
   }
 
   /**
+   * Get a Set of Hotlists to add the Issues to based on the
+   * Get the initial Set of Hotlists that Issues will be added to. Calculated
+   * using userHotlists and issueHotlists.
+   * @return {!Set<string>}
+   */
+  _initializeHotlistsToAdd() {
+    const userHotlistsInIssueHotlists = this.userHotlists.reduce(
+        (acc, hotlist) => {
+          if (this._issueInHotlist(hotlist, this.issueHotlists)) {
+            acc.push(hotlist.name);
+          }
+          return acc;
+        }, []);
+    return new Set(userHotlistsInIssueHotlists);
+  }
+
+  /**
    * Gets the checkbox title, depending on the checked state.
    * @param {boolean} isChecked Whether the input is checked.
    * @return {string}
@@ -288,10 +319,20 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
   }
 
   /**
-   * Updates the checkbox title once the input has been checked.
+   * Handles when the target Hotlist chops-checkbox has been checked.
    * @param {Event} e
    */
-  _updateCheckboxTitle(e) {
+  _targetHotlistChecked(e) {
+    const hotlistName = e.target.dataset.hotlistName;
+    const currentHotlistsToAdd = new Set(this.hotlistsToAdd);
+    if (hotlistName && e.detail.checked) {
+      currentHotlistsToAdd.add(hotlistName);
+    } else {
+      currentHotlistsToAdd.delete(hotlistName);
+    }
+    // LitElement's hasChanged needs an assignment to verify Set objects.
+    // https://lit-element.polymer-project.org/guide/properties#haschanged
+    this.hotlistsToAdd = currentHotlistsToAdd;
     e.target.title = this._getCheckboxTitle(e.target.checked);
   }
 
@@ -306,13 +347,12 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
     const form = this.shadowRoot.querySelector('#issueHotlistsForm');
     this.userHotlists.forEach((hotlist) => {
       const issueInHotlist = this._issueInHotlist(hotlist, this.issueHotlists);
-      const hotlistIsChecked = form[hotlist.name].checked;
-      if (issueInHotlist && !hotlistIsChecked) {
+      if (issueInHotlist && !this.hotlistsToAdd.has(hotlist.name)) {
         changes.removed.push({
           name: hotlist.name,
           owner: hotlist.ownerRef,
         });
-      } else if (!issueInHotlist && hotlistIsChecked) {
+      } else if (!issueInHotlist && this.hotlistsToAdd.has(hotlist.name)) {
         changes.added.push({
           name: hotlist.name,
           owner: hotlist.ownerRef,

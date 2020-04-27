@@ -34,7 +34,7 @@ describe('mr-update-issue-hotlists', () => {
     assert.deepEqual(element.changes, {added: [], removed: []});
   });
 
-  it('selecting new issues produces changes', async () => {
+  it('clicking on issues produces changes', async () => {
     element.issueHotlists = [
       {name: 'Hotlist-1', ownerRef: {userId: 12345}},
       {name: 'Hotlist-2', ownerRef: {userId: 12345}},
@@ -46,10 +46,12 @@ describe('mr-update-issue-hotlists', () => {
     ];
     element.user = {userId: 67890};
 
+    element.open();
     await element.updateComplete;
 
-    form['Hotlist-1'].checked = false;
-    form['Hotlist-2'].checked = true;
+    const chopsCheckboxes = form.querySelectorAll('chops-checkbox');
+    chopsCheckboxes[0].click();
+    chopsCheckboxes[1].click();
     assert.deepEqual(element.changes, {
       added: [{name: 'Hotlist-2', owner: {userId: 67890}}],
       removed: [{name: 'Hotlist-1', owner: {userId: 67890}}],
@@ -81,14 +83,18 @@ describe('mr-update-issue-hotlists', () => {
     ];
     element.user = {userId: 67890};
 
+    element.open();
     await element.updateComplete;
 
-    form['Hotlist-1'].checked = false;
-    form['Hotlist-2'].checked = true;
+    const chopsCheckboxes = form.querySelectorAll('chops-checkbox');
+    const checkbox1 = chopsCheckboxes[0];
+    const checkbox2 = chopsCheckboxes[1];
+    checkbox1.click();
+    checkbox2.click();
     form.newHotlisName = 'New-Hotlist';
-    element.reset();
-    assert.isTrue(form['Hotlist-1'].checked);
-    assert.isFalse(form['Hotlist-2'].checked);
+    await element.reset();
+    assert.isTrue(checkbox1.checked);
+    assert.isNotTrue(checkbox2.checked); // Falsey property.
     assert.equal(form.newHotlistName.value, '');
   });
 
