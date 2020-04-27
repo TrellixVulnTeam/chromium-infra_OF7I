@@ -16,7 +16,6 @@ import (
 	"infra/cmd/skylab/internal/cmd/utils"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
-	"infra/libs/skylab/swarming"
 )
 
 // Verify subcommand: Verify hosts.
@@ -69,11 +68,11 @@ func (c *verifyRun) innerRun(a subcommands.Application, args []string, env subco
 		if dutName != host {
 			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", host, dutName)
 		}
-		id, err := creator.VerifyTask(ctx, dutName, c.expirationMins*60)
+		task, err := creator.VerifyTask(ctx, dutName, c.expirationMins*60)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", swarming.TaskURL(creator.Environment.SwarmingService, id), dutName)
+		fmt.Fprintf(a.GetOut(), "Created Swarming task %s for host %s\n", task.TaskURL, dutName)
 	}
 	if len(args) > 1 {
 		fmt.Fprintf(a.GetOut(), "\nBatch tasks URL: %s\n\n", creator.GetSessionTasksURL())

@@ -30,6 +30,14 @@ type TaskCreator struct {
 	session string
 }
 
+// TaskInfo contains information of the created task.
+type TaskInfo struct {
+	// ID of the created task in the Swarming.
+	ID string
+	// TaskURL provides the URL to the created task in Swarming.
+	TaskURL string
+}
+
 // NewTaskCreator creates and initialize the TaskCreator.
 func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skycmdlib.EnvFlags) (*TaskCreator, error) {
 	h, err := cmdlib.NewHTTPClient(ctx, authFlags)
@@ -95,10 +103,10 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSe
 }
 
 // VerifyTask creates admin_verify task for particular DUT.
-func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSec int) (taskID string, err error) {
+func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSec int) (TaskInfo, error) {
 	id, err := tc.dutNameToBotID(ctx, host)
 	if err != nil {
-		return "", errors.Annotate(err, "fail to get bot ID for %s", host).Err()
+		return TaskInfo{}, errors.Annotate(err, "fail to get bot ID for %s", host).Err()
 	}
 	c := worker.Command{
 		TaskName: "admin_verify",
@@ -133,9 +141,13 @@ func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSe
 	defer cf()
 	resp, err := tc.Client.CreateTask(ctx, r)
 	if err != nil {
-		return "", errors.Annotate(err, "failed to create task").Err()
+		return TaskInfo{}, errors.Annotate(err, "failed to create task").Err()
 	}
-	return resp.TaskId, nil
+	task := TaskInfo{
+		ID:      resp.TaskId,
+		TaskURL: tc.taskURL(resp.TaskId),
+	}
+	return task, nil
 }
 
 // LeaseByHostnameTask creates lease_task for particular DUT
@@ -364,10 +376,15 @@ func (tc *TaskCreator) getSessionTag() string {
 	return fmt.Sprintf("admin_session:%s", tc.session)
 }
 
-// GetSessionTasksURL get URL to see all created tasks belong to the session
+// GetSessionTasksURL gets URL to see all created tasks belong to the session.
 func (tc *TaskCreator) GetSessionTasksURL() string {
 	tags := []string{
 		tc.getSessionTag(),
 	}
 	return swarming.TaskListURLForTags(tc.Environment.SwarmingService, tags)
+}
+
+// taskURL generates URL to the task in swarming.
+func (tc *TaskCreator) taskURL(id string) string {
+	return swarming.TaskURL(tc.Environment.SwarmingService, id)
 }
