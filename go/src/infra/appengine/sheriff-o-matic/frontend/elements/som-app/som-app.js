@@ -87,7 +87,7 @@ class SomApp extends Polymer.mixinBehaviors([TimeBehavior], Polymer.Element) {
         value: {
           'help-som': {
             pageId: 'helpSOM',
-            displayText: 'How to Use',
+            displayText: 'Help',
           },
           'calendar': {
             pageId: 'rotationCalendar',

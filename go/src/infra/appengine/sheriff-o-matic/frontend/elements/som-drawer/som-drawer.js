@@ -196,7 +196,7 @@ class SomDrawer extends Polymer.Element {
 
   _computeStaticPageList(staticPages) {
     const pageList = [];
-    for (let key = 0; key < staticPages; key++) {
+    for (const key in staticPages) {
       const page = staticPages[key];
       page.name = key;
       pageList.push(page);

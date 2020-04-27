@@ -66,7 +66,7 @@
         background-color: #eee;
       }
 
-      a.menu-item {
+      .menu-item-link {
         text-decoration: none;
         color: inherit;
       }
@@ -104,7 +104,7 @@
     </iron-collapse>
 
     <h2 on-tap="toggleMenu" data-toggle-target="helpMenu">
-      <iron-icon icon="help"></iron-icon>Help
+      <iron-icon icon="help"></iron-icon>Useful Links
       <iron-icon icon="remove" class="toggle-icon"></iron-icon>
     </h2>
     <iron-collapse id="helpMenu" opened no-animation>
@@ -113,8 +113,8 @@
           [[page.displayText]]
         </div>
       </template>
-      <a class="menu-item" href="https://goto.google.com/flake-portal" target="_blank">
-        Flake Portal
+      <a class="menu-item-link" href="https://goto.google.com/flake-portal" target="_blank">
+        <div class="menu-item">Flake Portal</div>
       </a>
     </iron-collapse>
 
