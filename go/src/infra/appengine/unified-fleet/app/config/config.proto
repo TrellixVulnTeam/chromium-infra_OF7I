@@ -10,19 +10,5 @@ option go_package = "config";
 
 // Config is the configuration data served by luci-config for this app.
 message Config {
-  // The access groups.
-  map<string, LuciAuthGroups> access_groups = 1;
-
-  ChromeConfigRepo chrome_config_repo = 2;
-}
-
-message LuciAuthGroups {
-  repeated string group = 1;
-}
-
-message ChromeConfigRepo {
-  string host = 1;
-  string project = 2;
-  string branch = 3;
-  string platform_path = 4;
+  string luci_config_service = 1;
 }
