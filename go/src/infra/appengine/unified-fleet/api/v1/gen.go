@@ -6,5 +6,4 @@
 package api
 
 //go:generate cproto -proto-path ../../../../libs/fleet/protos/src
-//go:generate svcdec -type RegistrationServer
 //go:generate svcdec -type ConfigurationServer
