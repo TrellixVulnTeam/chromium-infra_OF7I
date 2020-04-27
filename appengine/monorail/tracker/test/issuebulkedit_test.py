@@ -103,6 +103,7 @@ class IssueBulkEditTest(unittest.TestCase):
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project, perms=permissions.PermissionSet([]))
     mr.local_id_list = [local_id_1]
+    mr.auth.effective_ids = {222}
 
     fd_not_restricted = tracker_bizobj.MakeFieldDef(
         123,

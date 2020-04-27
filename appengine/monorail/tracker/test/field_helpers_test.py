@@ -594,6 +594,8 @@ class FieldHelpersTest(unittest.TestCase):
             self.mr, self.config, [], [], [], [], []))
 
   def testAssertCustomFieldsEditPerms_Normal(self):
+    self.services.user.TestAddUser('user@example.com', 222)
+    self.mr.auth.effective_ids = {222}
     fd_int = tracker_bizobj.MakeFieldDef(
         11111,
         1,
@@ -778,6 +780,8 @@ class FieldHelpersTest(unittest.TestCase):
 
   def testApplyRestrictedDefaultValues(self):
     self.mr.perms = permissions.PermissionSet([])
+    self.services.user.TestAddUser('user@example.com', 222)
+    self.mr.auth.effective_ids = {222}
     fd_int = tracker_bizobj.MakeFieldDef(
         11111,
         1,

@@ -122,6 +122,7 @@ class IssueEntryTest(unittest.TestCase):
         [permissions.CREATE_ISSUE, permissions.EDIT_ISSUE])
     mr.auth.user_view = framework_views.MakeUserView(
         'cnxn', self.services.user, 100)
+    mr.auth.effective_ids = {100}
     mr.template_name = 'rutabaga'
 
     self.mox.StubOutWithMock(self.services.user, 'GetUser')

@@ -283,6 +283,7 @@ class TemplateDetailTest(unittest.TestCase):
     self.assertIsNone(page_data['fields'][4].is_editable)  #restrictedField
 
   def testProcessFormData_Reject(self):
+    self.mr.auth.effective_ids = {222}
     post_data = fake.PostData(
       name=['TestTemplate'],
       members_only=['on'],
@@ -462,6 +463,7 @@ class TemplateDetailTest(unittest.TestCase):
         owner_id=333)
 
   def testProcessFormData_AcceptPhases(self):
+    self.mr.auth.effective_ids = {222}
     post_data = fake.PostData(
       name=['TestTemplate'],
       members_only=['on'],

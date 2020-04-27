@@ -5281,6 +5281,52 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.ListHotlistPermissions(hotlist.hotlist_id)
 
+  def testListFieldDefPermissions_Anon(self):
+    field_id = self.services.config.CreateFieldDef(
+        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
+        None, None, None, None, None, None, None, None, None, None, None, None,
+        [], [])
+    restricted_field_id = self.services.config.CreateFieldDef(
+        self.cnxn,
+        self.project.project_id,
+        'ResField',
+        'STR_TYPE',
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None, [], [],
+        is_restricted_field=True)
+
+    # Anon can only view fields in a public project.
+    with self.work_env as we:
+      anon_perms = we.ListFieldDefPermissions(field_id, self.project.project_id)
+    self.assertEqual(anon_perms, [])
+    with self.work_env as we:
+      anon_perms = we.ListFieldDefPermissions(
+          restricted_field_id, self.project.project_id)
+    self.assertEqual(anon_perms, [])
+
+    # Anon cannot view fields in a private project.
+    self.project.access = project_pb2.ProjectAccess.MEMBERS_ONLY
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        anon_perms = we.ListFieldDefPermissions(
+            field_id, self.project.project_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        anon_perms = we.ListFieldDefPermissions(
+            restricted_field_id, self.project.project_id)
+
   def testListFieldDefPermissions_SiteAdminAndProjectOwners(self):
     """SiteAdmins/ProjectOwners can always edit a field and its value."""
     field_id = self.services.config.CreateFieldDef(

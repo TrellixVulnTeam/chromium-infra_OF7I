@@ -180,6 +180,8 @@ class TemplateCreateTest(unittest.TestCase):
     self.assertEqual(page_data['phase_fields_present'], ezt.boolean(False))
 
   def testProcessFormData_Reject(self):
+    self.services.user.TestAddUser('user@example.com', 222)
+    self.mr.auth.effective_ids = {222}
     post_data = fake.PostData(
       name=['sometemplate'],
       members_only=['on'],
@@ -290,6 +292,8 @@ class TemplateCreateTest(unittest.TestCase):
         post_data_label_edits_enum)
 
   def testProcessFormData_Accept(self):
+    self.services.user.TestAddUser('user@example.com', 222)
+    self.mr.auth.effective_ids = {222}
     self.services.template.GetTemplateByName = Mock(return_value=None)
     post_data = fake.PostData(
         name=['secondtemplate'],
@@ -324,6 +328,8 @@ class TemplateCreateTest(unittest.TestCase):
     self.assertIsNone(self.mr.errors.phase_approvals)
 
   def testProcessFormData_AcceptPhases(self):
+    self.services.user.TestAddUser('user@example.com', 222)
+    self.mr.auth.effective_ids = {222}
     self.services.template.GetTemplateByName = Mock(return_value=None)
     post_data = fake.PostData(
       name=['secondtemplate'],

@@ -1160,6 +1160,8 @@ def CanEditFieldDef(effective_ids, perms, project, field_def):
 def CanEditValueForFieldDef(effective_ids, perms, project, field_def):
   """Return True if a user can edit the given field definition value.
      This method does not check that a user can edit the project issues."""
+  if not effective_ids:
+    return False
   if not field_def.is_restricted_field:
     return True
   if not effective_ids.isdisjoint(field_def.editor_ids):
