@@ -1,3 +1,26 @@
+# Release Notes sheriff-o-matic 2020-04-27
+
+- 4 commits, 2 bugs affected since 121a46e ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - jsca@google.com
+
+## Changes in this release
+
+- [[som] Fix sidebar so that the links actually show up.](https://chromium-review.googlesource.com/c/infra/infra/+/2167646) (jsca@google.com)
+- [Add cron for release branch bug queue](https://chromium-review.googlesource.com/c/infra/infra/+/2162524) (nqmtuan@google.com)
+- [[som] Remove link style setting and linkify behavior.](https://chromium-review.googlesource.com/c/infra/infra/+/2119492) (jsca@google.com)
+- [Release note 25 March](https://chromium-review.googlesource.com/c/infra/infra/+/2119490) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1075426](https://crbug.com/1075426)
+
+- nqmtuan@google.com:
+  -  [https://crbug.com/1074139](https://crbug.com/1074139)
+
+
 # Release Notes sheriff-o-matic 2020-03-25
 
 - 4 commits, 2 bugs affected since 6aeff43 ()
