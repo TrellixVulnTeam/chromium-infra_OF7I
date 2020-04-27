@@ -5,39 +5,85 @@
 package frontend
 
 import (
+	"net/http"
+
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
+	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
 
+	luciconfig "go.chromium.org/luci/config"
+	"go.chromium.org/luci/config/impl/remote"
+	"go.chromium.org/luci/config/server/cfgclient/textproto"
+	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
+
 	api "infra/appengine/unified-fleet/api/v1"
+	"infra/appengine/unified-fleet/app/config"
 	"infra/libs/fleet/configuration"
 	"infra/libs/fleet/datastore"
 	fleet "infra/libs/fleet/protos/go"
 )
 
+const defaultCfgService = "luci-config.appspot.com"
+
+// CfgInterfaceFactory is a contsructor for a luciconfig.Interface
+// For potential unittest usage
+type CfgInterfaceFactory func(ctx context.Context) luciconfig.Interface
+
 // ConfigurationServerImpl implements the configuration server interfaces.
 type ConfigurationServerImpl struct {
+	cfgInterfaceFactory CfgInterfaceFactory
 }
 
 var (
 	parsePlatformsFunc = configuration.ParsePlatformsFromFile
 )
 
-// ImportChromePlatforms imports the Chrome Platform in batch.
-func (fs *ConfigurationServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *api.ImportChromePlatformsResponse, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-	var platforms []*fleet.ChromePlatform
-	if req.LocalFilepath != "" {
-		logging.Debugf(ctx, "Importing chrome platforms from local config file")
-		oldP, err := parsePlatformsFunc(req.LocalFilepath)
+func (cs *ConfigurationServerImpl) newCfgInterface(ctx context.Context) luciconfig.Interface {
+	if cs.cfgInterfaceFactory != nil {
+		return cs.cfgInterfaceFactory(ctx)
+	}
+	cfgService := config.Get(ctx).LuciConfigService
+	if cfgService == "" {
+		cfgService = defaultCfgService
+	}
+	return remote.New(cfgService, false, func(ctx context.Context) (*http.Client, error) {
+		t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
 		if err != nil {
 			return nil, err
 		}
-		platforms = configuration.ToChromePlatforms(oldP)
-	} else {
+		return &http.Client{Transport: t}, nil
+	})
+}
+
+// ImportChromePlatforms imports the Chrome Platform in batch.
+func (cs *ConfigurationServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *api.ImportChromePlatformsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	var platforms []*fleet.ChromePlatform
+	oldP := &crimsonconfig.Platforms{}
+	switch req.LocalFilepath {
+	case "":
+		logging.Debugf(ctx, "Importing chrome platforms from luci-config")
+		cfgInterface := cs.newCfgInterface(ctx)
+		fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet("machine-db-dev"), "platforms.cfg", false)
+		if err != nil {
+			return nil, err
+		}
+		logging.Debugf(ctx, "fetched configs: %#v", fetchedConfigs)
+		resolver := textproto.Message(oldP)
+		resolver.Resolve(fetchedConfigs)
+	default:
+		logging.Debugf(ctx, "Importing chrome platforms from local config file")
+		oldP, err = parsePlatformsFunc(req.LocalFilepath)
+		if err != nil {
+			return nil, err
+		}
 	}
+	platforms = configuration.ToChromePlatforms(oldP)
+	logging.Debugf(ctx, "%d platforms in total", len(platforms))
 	res, err := configuration.InsertChromePlatforms(ctx, platforms)
 	if err != nil {
 		return nil, err
