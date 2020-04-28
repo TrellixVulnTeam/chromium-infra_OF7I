@@ -393,8 +393,8 @@ func (tc *TaskCreator) sessionTag() string {
 	return fmt.Sprintf("admin_session:%s", tc.session)
 }
 
-// GetSessionTasksURL gets URL to see all created tasks belong to the session.
-func (tc *TaskCreator) GetSessionTasksURL() string {
+// SessionTasksURL gets URL to see all created tasks belong to the session.
+func (tc *TaskCreator) SessionTasksURL() string {
 	tags := []string{
 		tc.sessionTag(),
 	}

@@ -95,7 +95,7 @@ func (c *auditRun) innerRun(a subcommands.Application, args []string, env subcom
 		}
 		if len(successMap) > 1 {
 			fmt.Fprintln(a.GetOut(), "\n### Batch tasks URL ###")
-			fmt.Fprintln(a.GetOut(), creator.GetSessionTasksURL())
+			fmt.Fprintln(a.GetOut(), creator.SessionTasksURL())
 		}
 	}
 	return nil
