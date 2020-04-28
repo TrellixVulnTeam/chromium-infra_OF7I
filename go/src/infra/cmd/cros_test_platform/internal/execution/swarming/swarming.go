@@ -91,7 +91,7 @@ func NewClient(ctx context.Context, c *config.Config_Swarming) (*swarming.Client
 		return nil, err
 	}
 
-	client, err := swarming.New(ctx, hClient, c.Server)
+	client, err := swarming.NewClient(hClient, c.Server)
 	if err != nil {
 		return nil, err
 	}
