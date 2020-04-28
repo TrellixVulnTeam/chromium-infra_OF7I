@@ -70,7 +70,7 @@ func main() {
 type args struct {
 	adminService        string
 	deadline            time.Time
-	deployActions       string
+	actions             string
 	forceFreshInventory bool
 	isolatedOutdir      string
 	logdogAnnotationURL string
@@ -101,7 +101,7 @@ func parseArgs() *args {
 		"JSON string of job keyvals")
 	flag.StringVar(&a.xTestArgs, "test-args", "",
 		"Test args (meaning depends on test)")
-	flag.StringVar(&a.deployActions, "actions", "",
+	flag.StringVar(&a.actions, "actions", "",
 		"Actions to execute for a deploytask")
 	flag.StringVar(&a.isolatedOutdir, "isolated-outdir", "",
 		"Directory to place isolated output into. Generate no isolated output if not set.")
@@ -266,7 +266,7 @@ func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.Ta
 		n, _ := getAdminTask(a.taskName)
 		return runAdminTask(ctx, i, n, ta)
 	case isDeployTask(a):
-		return runDeployTask(ctx, i, a.deployActions, ta)
+		return runDeployTask(ctx, i, a.actions, ta)
 	default:
 		return runTest(ctx, i, a, ta)
 	}
