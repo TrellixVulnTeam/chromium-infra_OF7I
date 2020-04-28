@@ -40,6 +40,7 @@ lucicfg.config(
         'luci-logdog.cfg',
         'luci-milo.cfg',
         'luci-notify.cfg',
+        'luci-notify/email-templates/*.template',
         'luci-scheduler.cfg',
         'project.cfg',
     ],
