@@ -37,9 +37,16 @@ func (l *ListedHost) String() string {
 	return l.Hostname
 }
 
-// New creates a new Client.
+// New creates a new Client (scheduled to be removed)
 func New(ctx context.Context, h *http.Client, server string) (*Client, error) {
-	service, err := newSwarmingService(ctx, h, server)
+	//will be removed
+	c, err := NewClient(h, server)
+	return c, err
+}
+
+// NewClient creates a new Client.
+func NewClient(h *http.Client, server string) (*Client, error) {
+	service, err := newSwarmingService(h, server)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +59,7 @@ func New(ctx context.Context, h *http.Client, server string) (*Client, error) {
 
 const swarmingAPISuffix = "_ah/api/swarming/v1/"
 
-func newSwarmingService(ctx context.Context, h *http.Client, server string) (*swarming_api.Service, error) {
+func newSwarmingService(h *http.Client, server string) (*swarming_api.Service, error) {
 	s, err := swarming_api.New(h)
 	if err != nil {
 		return nil, errors.Annotate(err, "create swarming client").Err()

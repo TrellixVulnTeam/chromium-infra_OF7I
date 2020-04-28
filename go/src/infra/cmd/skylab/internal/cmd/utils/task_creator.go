@@ -48,7 +48,7 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skyc
 		return nil, errors.Annotate(err, "failed to create TaskCreator").Err()
 	}
 	env := envFlags.Env()
-	client, err := swarming.New(ctx, h, env.SwarmingService)
+	client, err := swarming.NewClient(h, env.SwarmingService)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to create TaskCreator").Err()
 	}

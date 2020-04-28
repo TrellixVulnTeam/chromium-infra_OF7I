@@ -261,7 +261,7 @@ func (c *leaseDutRun) newSwarmingClient(ctx context.Context) (*swarming.Client, 
 		return nil, err
 	}
 	e := c.envFlags.Env()
-	client, err := swarming.New(ctx, h, e.SwarmingService)
+	client, err := swarming.NewClient(h, e.SwarmingService)
 	if err != nil {
 		return nil, err
 	}

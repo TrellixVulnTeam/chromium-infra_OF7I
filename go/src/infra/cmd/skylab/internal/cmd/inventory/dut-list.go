@@ -92,7 +92,7 @@ func (c *dutListRun) innerRun(a subcommands.Application, args []string, env subc
 		// TODO(gregorynisbet): remove this
 		panic("QUERYING INVENTORY DIRECTLY NOT YET SUPPORTED")
 	} else {
-		sc, err := swarming.New(ctx, hc, c.envFlags.Env().SwarmingService)
+		sc, err := swarming.NewClient(hc, c.envFlags.Env().SwarmingService)
 		if err != nil {
 			return err
 		}

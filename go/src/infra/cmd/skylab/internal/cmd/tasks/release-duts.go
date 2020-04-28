@@ -62,7 +62,7 @@ func (c *releaseDutsRun) innerRun(a subcommands.Application, args []string, env 
 		return errors.Annotate(err, "failed to create http client").Err()
 	}
 	e := c.envFlags.Env()
-	client, err := swarming.New(ctx, h, e.SwarmingService)
+	client, err := swarming.NewClient(h, e.SwarmingService)
 	if err != nil {
 		return errors.Annotate(err, "failed to create Swarming client").Err()
 	}
