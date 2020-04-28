@@ -6,7 +6,7 @@ import {LitElement, html, css} from 'lit-element';
 
 
 /**
- * `<mr-warnings>`
+ * `<mr-warning>`
  *
  * A container for showing warnings.
  *
