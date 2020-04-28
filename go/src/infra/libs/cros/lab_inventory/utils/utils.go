@@ -5,12 +5,25 @@
 package utils
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"regexp"
+	"strings"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	authclient "go.chromium.org/luci/auth"
+	gitilesapi "go.chromium.org/luci/common/api/gitiles"
+	"go.chromium.org/luci/server/auth"
+	"infra/libs/cros/git"
 	fleet "infra/libs/fleet/protos/go"
 )
+
+// Host, project and branch to get dhcpd.conf file
+var host string = "chrome-internal.googlesource.com"
+var project string = "chromeos/chromeos-admin"
+var branch string = "master"
+var path string = "puppet/modules/lab/files/dhcp-server/dhcpd.conf"
 
 // GetHostname returns the hostname of input ChromeOSDevice.
 func GetHostname(d *lab.ChromeOSDevice) string {
@@ -62,6 +75,57 @@ func GetLocation(input string) (loc *fleet.Location) {
 		}
 	}
 	return loc
+}
+
+// GetMacHostMappingFromDHCPConf downloads the dhcp conf from chromeos-admin
+// repo. Parses the file and returns Mac:Hostname mapping
+func GetMacHostMappingFromDHCPConf(ctx context.Context) (map[string]string, error) {
+	t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, gitilesapi.OAuthScope))
+	if err != nil {
+		return nil, err
+	}
+	client, err := git.NewClient(ctx, &http.Client{Transport: t}, "", host, project, branch)
+	if err != nil {
+		return nil, err
+	}
+	res, err := client.GetFile(ctx, path)
+
+	return getMacHostMapping(res), nil
+}
+
+// Extract macaddress:hostname mapping from dhcp conf file
+func getMacHostMapping(conf string) map[string]string {
+	/* Rough parser designed to only extract mac:host mappings
+	 * using regex. There are 3 expressions to extract the info
+	 * required. First expression re extracts a host configuration
+	 * with mac address. Second one is to extract only hostname
+	 * and the third extracts hardware ethernet mac address
+	 */
+	// (?s) include newline and white spaces
+	// [^\#],[^\{] negated character class for # and {
+	var re = regexp.MustCompile(`(?m)^[^\#\r\n]*host[^\{]*\{[^\}]*hardware` +
+		` ethernet[^\}]*\}`)
+	var hn = regexp.MustCompile(`host .*{`)
+	var ma = regexp.MustCompile(`(?m)^[^\#\r\n]*hardware ethernet` +
+		` ([a-fA-F0-9]{2}\:){5}[a-fA-F0-9]{2}[ \t]*;`)
+	c := re.FindAllString(conf, -1)
+	res := make(map[string]string)
+	for _, ent := range c {
+		hostname := hn.FindString(ent)
+		hostname = strings.TrimSpace(hostname)
+		hostname = strings.TrimLeft(hostname, "host ")
+		hostname = strings.TrimRight(hostname, " {")
+		hostname = strings.TrimSpace(hostname)
+		mac := ma.FindString(ent)
+		mac = strings.TrimSpace(mac)
+		mac = strings.TrimLeft(mac, "hardware ethernet ")
+		mac = strings.TrimRight(mac, ";")
+		mac = strings.TrimSpace(mac)
+		if hostname != "" && mac != "" {
+			res[mac] = hostname
+		}
+	}
+	return res
 }
 
 /* Regular expressions to match various parts of the input string - START */
