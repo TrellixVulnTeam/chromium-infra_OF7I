@@ -23,6 +23,20 @@ func mockAsset(id, lab string) *fleet.ChopsAsset {
 	}
 }
 
+func mockAssetInfo(id string) *ufs.AssetInfo {
+	return &ufs.AssetInfo{
+		AssetTag:           id,
+		SerialNumber:       "1998A%26AT...15..249U",
+		CostCenter:         "Mimas",
+		GoogleCodeName:     "Lapetus",
+		Model:              "Titan",
+		BuildTarget:        "Rhea",
+		ReferenceBoard:     "Enceladus",
+		EthernetMacAddress: "DE:AD:BE:EF:00:FF",
+		Sku:                "OrionArm",
+	}
+}
+
 func assertLocationEqual(a, b *ufs.Location) {
 	So(a.GetLab(), ShouldEqual, b.GetLab())
 	So(a.GetRow(), ShouldEqual, b.GetRow())
@@ -100,6 +114,60 @@ func TestAddAsset(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(res, ShouldHaveLength, 1)
 			So(res[0].Err, ShouldNotBeNil)
+		})
+	})
+}
+
+func TestAddAssetInfo(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	assetInfo1 := mockAssetInfo("45673456237895")
+	assetInfo2 := mockAssetInfo("45673456237896")
+	assetInfo3 := mockAssetInfo("45673456237896")
+	assetInfo3.CostCenter = "Huygens Gap"
+	assetInfo4 := mockAssetInfo("")
+	Convey("Add AssetInfo to datastore", t, func() {
+		Convey("Add AssetInfo to datastore", func() {
+			req := []*ufs.AssetInfo{assetInfo1, assetInfo2}
+			res := AddAssetInfo(ctx, req)
+			So(res, ShouldHaveLength, 2)
+			So(res[0].Err, ShouldBeNil)
+			So(res[1].Err, ShouldBeNil)
+			So(res[0].Entity, ShouldNotBeNil)
+			So(res[1].Entity, ShouldNotBeNil)
+			So(res[0].Entity.AssetTag, ShouldEqual, assetInfo1.GetAssetTag())
+			So(res[1].Entity.AssetTag, ShouldEqual, assetInfo2.GetAssetTag())
+		})
+		Convey("Add AssetInfo to datastore with duplicates", func() {
+			req := []*ufs.AssetInfo{assetInfo1, assetInfo2, assetInfo3}
+			res := AddAssetInfo(ctx, req)
+			So(res, ShouldHaveLength, 3)
+			So(res[0].Err, ShouldBeNil)
+			So(res[1].Err, ShouldBeNil)
+			So(res[2].Err, ShouldBeNil)
+			So(res[0].Entity, ShouldNotBeNil)
+			So(res[1].Entity, ShouldNotBeNil)
+			So(res[2].Entity, ShouldNotBeNil)
+			So(res[0].Entity.AssetTag, ShouldEqual, assetInfo1.GetAssetTag())
+			So(res[1].Entity.AssetTag, ShouldEqual, assetInfo2.GetAssetTag())
+			So(res[2].Entity.AssetTag, ShouldEqual, assetInfo3.GetAssetTag())
+			// Return contains same entity on both as only one was insterted
+			So(res[2].Entity, ShouldEqual, res[1].Entity)
+		})
+		Convey("Add AssetInfo without ID to datastore", func() {
+			req := []*ufs.AssetInfo{assetInfo1, assetInfo2, assetInfo4, assetInfo4}
+			res := AddAssetInfo(ctx, req)
+			So(res, ShouldHaveLength, 4)
+			So(res[0].Err, ShouldBeNil)
+			So(res[1].Err, ShouldBeNil)
+			So(res[2].Err, ShouldNotBeNil)
+			So(res[3].Err, ShouldNotBeNil)
+			So(res[0].Entity, ShouldNotBeNil)
+			So(res[1].Entity, ShouldNotBeNil)
+			So(res[2].Entity, ShouldBeNil)
+			So(res[3].Entity, ShouldBeNil)
+			So(res[0].Entity.AssetTag, ShouldEqual, assetInfo1.GetAssetTag())
+			So(res[1].Entity.AssetTag, ShouldEqual, assetInfo2.GetAssetTag())
 		})
 	})
 }

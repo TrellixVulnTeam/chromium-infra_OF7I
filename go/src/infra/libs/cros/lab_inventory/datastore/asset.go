@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	fleet "infra/libs/fleet/protos"
+	ufs "infra/libs/fleet/protos/go"
 )
 
 // AssetOpResult is for use in Datastore to RPC conversions
@@ -53,6 +54,13 @@ func (device *AssetOpResult) ToAsset() *fleet.ChopsAsset {
 		return a
 	}
 	return nil
+}
+
+// AssetInfoOpRes is return type for AssetInfo related operations
+type AssetInfoOpRes struct {
+	AssetInfo *ufs.AssetInfo
+	Entity    *AssetInfoEntity
+	Err       error
 }
 
 // AddAssets creates a new Asset datastore entity
@@ -280,4 +288,52 @@ func assetRecordsExists(ctx context.Context, entities []*AssetEntity) (map[int]b
 		}
 	}
 	return m, err
+}
+
+// AddAssetInfo adds the AssetInfo from HaRT to datastore.
+//
+// All inputs [assetInfo] will get a corresponding response in the order of
+// inputs on return, if res.Err != nil then that insert operation failed. Does
+// not return an error if the AssetInfo entity already exists in the datastore.
+// If assetInfo contains more than one instance with same asset tag, Only one
+// of them is inserted into the database and the returned AssetInfoOpRes
+// corresponds to the same inserted data for both.
+func AddAssetInfo(ctx context.Context, assetInfo []*ufs.AssetInfo) []*AssetInfoOpRes {
+	aiEntities := make([]*AssetInfoEntity, 0, len(assetInfo))
+	res := make([]*AssetInfoOpRes, 0, len(assetInfo))
+	r := make(map[string]*AssetInfoOpRes, len(assetInfo))
+	for _, a := range assetInfo {
+		assetInfoOpRes := &AssetInfoOpRes{
+			AssetInfo: a,
+		}
+		ent, err := NewAssetInfo(a)
+		if err != nil {
+			assetInfoOpRes.Err = err
+		}
+		assetInfoOpRes.Entity = ent
+		r[a.GetAssetTag()] = assetInfoOpRes
+	}
+	for _, a := range r {
+		if a.Err == nil {
+			aiEntities = append(aiEntities, a.Entity)
+		}
+	}
+	if len(aiEntities) > 0 {
+		err := datastore.Put(ctx, aiEntities)
+		if err != nil {
+			if len(aiEntities) > 1 {
+				for i, e := range err.(errors.MultiError) {
+					r[aiEntities[i].AssetTag].Err = e
+				}
+			} else {
+				for _, a := range aiEntities {
+					r[a.AssetTag].Err = err
+				}
+			}
+		}
+	}
+	for _, a := range assetInfo {
+		res = append(res, r[a.GetAssetTag()])
+	}
+	return res
 }
