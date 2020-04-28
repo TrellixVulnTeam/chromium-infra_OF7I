@@ -105,19 +105,24 @@ export const all = createSelector([byName, _allNames],
 
 
 /**
+ * Returns the Project requests.
+ * @param {any} state
+ * @return {Object.<string, ReduxRequestState>}
+ */
+export const requests = (state) => state.project.requests;
+
+/**
  * Gets all projects hosted on Monorail.
- * @return {function(function): Promise<Array<Project>>}
+ * @return {function(function): Promise<void>}
  */
 export const list = () => async (dispatch) => {
   dispatch({type: LIST_START});
   try {
-    /** @type {Array<Project>} */
-    const projects = await prpcClient.call(
+    /** @type {{projects: Array<Project>}} */
+    const {projects} = await prpcClient.call(
         'monorail.v1.Projects', 'ListProjects', {});
 
     dispatch({type: LIST_SUCCESS, projects});
-
-    return projects;
   } catch (error) {
     dispatch({type: LIST_FAILURE, error});
   }

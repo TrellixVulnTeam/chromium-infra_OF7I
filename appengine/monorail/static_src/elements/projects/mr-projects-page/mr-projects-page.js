@@ -3,11 +3,13 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
-import {connectStore} from 'reducers/base.js';
+import {store, connectStore} from 'reducers/base.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/framework/mr-star-button/mr-star-button.js';
 import 'shared/typedef.js';
 import 'elements/chops/chops-chip/chops-chip.js';
+
+import * as project from 'reducers/project.js';
 
 
 /**
@@ -139,30 +141,86 @@ export class MrProjectsPage extends connectStore(LitElement) {
 
   /** @override */
   render() {
+    const myProjects = this.myProjects;
+    const otherProjects = this.otherProjects;
+    const noProjects = !myProjects.length && !otherProjects.length;
+
+    if (this._isFetchingProjects && noProjects) {
+      return html`Loading...`;
+    }
+
+    if (noProjects) {
+      return html`No projects found.`;
+    }
+
+    if (!myProjects.length) {
+      // Skip sorting projects into different sections if the user
+      // has no projects.
+      return html`
+        <h2>All projects</h2>
+        <div class="project-container all-projects">
+          ${otherProjects.map((project) => this._renderProject(project))}
+        </div>
+      `;
+    }
+
     return html`
       <h2>My projects</h2>
       <div class="project-container my-projects">
-        ${this.myProjects.map((project) => this._renderProject(project, 'Owner'))}
+        ${myProjects.map((project) => this._renderProject(project, 'Owner'))}
       </div>
 
       <h2>Browse other projects</h2>
       <div class="project-container other-projects">
-        ${this.otherProjects.map((project) => this._renderProject(project))}
+        ${otherProjects.map((project) => this._renderProject(project))}
       </div>
     `;
   }
 
+  /** @override */
+  static get properties() {
+    return {
+      _projects: {type: Array},
+      _isFetchingProjects: {type: Boolean},
+    };
+  }
+
+  /** @override */
+  constructor() {
+    super();
+    /**
+     * @type {Array<Project>}
+     */
+    this._projects = [];
+    /**
+     * @type {boolean}
+     */
+    this._isFetchingProjects = false;
+  }
+
+  /** @override */
+  connectedCallback() {
+    super.connectedCallback();
+    store.dispatch(project.list());
+  }
+
+  /** @override */
+  stateChanged(state) {
+    this._projects = project.all(state);
+    this._isFetchingProjects = project.requests(state).list.requesting;
+  }
+
   /**
    * @param {Project} project
-   * @param {string} role
+   * @param {string=} role
    * @return {TemplateResult}
    */
   _renderProject(project, role) {
     return html`
-      <a href="/p/${project.name}/" class="project">
+      <a href="/p/${project.displayName}/" class="project">
         <div class="project-header">
           <span class="project-title">
-            <h3>${project.name}</h3>
+            <h3>${project.displayName}</h3>
             <span class="subtitle" ?hidden=${!role} title="My role: ${role}">
               ${role}
             </span>
@@ -185,21 +243,8 @@ export class MrProjectsPage extends connectStore(LitElement) {
    * @return {Array<Project>}
    */
   get myProjects() {
-    return [
-      {
-        name: 'chromium',
-        summary: `The best project ever. This project chooses to have
-          a very long description to make designers' lives harder`,
-      },
-      {
-        name: 'monorail',
-        summary: 'Lead the train station. The train will leave at noon.',
-      },
-      {
-        name: 'chrome-infra',
-        summary: 'Build it and ship it.',
-      },
-    ];
+    // TODO(crbug.com/monorail/6966): Implement this.
+    return [];
   }
 
   /**
@@ -207,28 +252,7 @@ export class MrProjectsPage extends connectStore(LitElement) {
    * @return {Array<Project>}
    */
   get otherProjects() {
-    return [
-      {
-        name: 'git',
-        summary: 'You can commit things here.',
-      },
-      {
-        name: 'hello',
-        summary: 'This is the place to be.',
-      },
-      {
-        name: 'hello',
-        summary: 'This is the place to be.',
-      },
-      {
-        name: 'hello',
-        summary: 'This is the place to be.',
-      },
-      {
-        name: 'hello',
-        summary: 'This is the place to be.',
-      },
-    ];
+    return this._projects;
   }
 }
 customElements.define('mr-projects-page', MrProjectsPage);

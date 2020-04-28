@@ -117,6 +117,17 @@ describe('project selectors', () => {
     }};
     assert.deepEqual(project.all(state), [example.PROJECT]);
   });
+
+  it('requests', () => {
+    const state = {project: {
+      requests: {
+        list: {error: null, requesting: false},
+      },
+    }};
+    assert.deepEqual(project.requests(state), {
+      list: {error: null, requesting: false},
+    });
+  });
 });
 
 describe('project action creators', () => {
@@ -132,11 +143,9 @@ describe('project action creators', () => {
   describe('list', () => {
     it('success', async () => {
       const projects = [example.PROJECT, example.PROJECT_2];
-      prpcClient.call.returns(Promise.resolve(projects));
+      prpcClient.call.returns(Promise.resolve({projects}));
 
-      const response = await project.list()(dispatch);
-
-      assert.deepEqual(response, projects);
+      await project.list()(dispatch);
 
       sinon.assert.calledWith(dispatch, {type: project.LIST_START});
 
