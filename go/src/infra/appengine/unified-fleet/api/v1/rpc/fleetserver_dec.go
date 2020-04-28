@@ -6,6 +6,9 @@ import (
 	"context"
 
 	proto "github.com/golang/protobuf/proto"
+
+	empty "github.com/golang/protobuf/ptypes/empty"
+	proto1 "infra/appengine/unified-fleet/api/v1/proto"
 )
 
 type DecoratedFleet struct {
@@ -36,6 +39,91 @@ func (s *DecoratedFleet) ImportChromePlatforms(ctx context.Context, req *ImportC
 	}
 	if s.Postlude != nil {
 		err = s.Postlude(ctx, "ImportChromePlatforms", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) CreateMachine(ctx context.Context, req *CreateMachineRequest) (rsp *proto1.Machine, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateMachine", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateMachine(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateMachine", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateMachine(ctx context.Context, req *UpdateMachineRequest) (rsp *proto1.Machine, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateMachine", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateMachine(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateMachine", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetMachine(ctx context.Context, req *GetMachineRequest) (rsp *proto1.Machine, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetMachine", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetMachine(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetMachine", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListMachines(ctx context.Context, req *ListMachinesRequest) (rsp *ListMachinesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListMachines", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListMachines(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListMachines", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteMachine(ctx context.Context, req *DeleteMachineRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteMachine", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteMachine(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteMachine", rsp, err)
 	}
 	return
 }

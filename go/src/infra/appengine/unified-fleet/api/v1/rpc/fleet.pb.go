@@ -9,6 +9,9 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	empty "github.com/golang/protobuf/ptypes/empty"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
+	field_mask "google.golang.org/genproto/protobuf/field_mask"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -161,10 +164,306 @@ func (m *ChromePlatformResult) GetErrorMsg() string {
 	return ""
 }
 
+// Contains the required information for creating a Machine represented in
+// the database.
+type CreateMachineRequest struct {
+	// The machine to create.
+	Machine *proto1.Machine `protobuf:"bytes,1,opt,name=machine,proto3" json:"machine,omitempty"`
+	// The ID to use for the Machine, which will become the final component of
+	// the Machine's resource name.
+	//
+	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// contains only ASCII letters, numbers, dash and underscore.
+	MachineId            string   `protobuf:"bytes,2,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CreateMachineRequest) Reset()         { *m = CreateMachineRequest{} }
+func (m *CreateMachineRequest) String() string { return proto.CompactTextString(m) }
+func (*CreateMachineRequest) ProtoMessage()    {}
+func (*CreateMachineRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dfc4a0424ec556ed, []int{3}
+}
+
+func (m *CreateMachineRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreateMachineRequest.Unmarshal(m, b)
+}
+func (m *CreateMachineRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreateMachineRequest.Marshal(b, m, deterministic)
+}
+func (m *CreateMachineRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateMachineRequest.Merge(m, src)
+}
+func (m *CreateMachineRequest) XXX_Size() int {
+	return xxx_messageInfo_CreateMachineRequest.Size(m)
+}
+func (m *CreateMachineRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreateMachineRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CreateMachineRequest proto.InternalMessageInfo
+
+func (m *CreateMachineRequest) GetMachine() *proto1.Machine {
+	if m != nil {
+		return m.Machine
+	}
+	return nil
+}
+
+func (m *CreateMachineRequest) GetMachineId() string {
+	if m != nil {
+		return m.MachineId
+	}
+	return ""
+}
+
+type UpdateMachineRequest struct {
+	// The machine to update.
+	Machine *proto1.Machine `protobuf:"bytes,1,opt,name=machine,proto3" json:"machine,omitempty"`
+	// The list of fields to be updated.
+	UpdateMask           *field_mask.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
+}
+
+func (m *UpdateMachineRequest) Reset()         { *m = UpdateMachineRequest{} }
+func (m *UpdateMachineRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdateMachineRequest) ProtoMessage()    {}
+func (*UpdateMachineRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dfc4a0424ec556ed, []int{4}
+}
+
+func (m *UpdateMachineRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateMachineRequest.Unmarshal(m, b)
+}
+func (m *UpdateMachineRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateMachineRequest.Marshal(b, m, deterministic)
+}
+func (m *UpdateMachineRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateMachineRequest.Merge(m, src)
+}
+func (m *UpdateMachineRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdateMachineRequest.Size(m)
+}
+func (m *UpdateMachineRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateMachineRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdateMachineRequest proto.InternalMessageInfo
+
+func (m *UpdateMachineRequest) GetMachine() *proto1.Machine {
+	if m != nil {
+		return m.Machine
+	}
+	return nil
+}
+
+func (m *UpdateMachineRequest) GetUpdateMask() *field_mask.FieldMask {
+	if m != nil {
+		return m.UpdateMask
+	}
+	return nil
+}
+
+type GetMachineRequest struct {
+	// The name of the machine to retrieve.
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetMachineRequest) Reset()         { *m = GetMachineRequest{} }
+func (m *GetMachineRequest) String() string { return proto.CompactTextString(m) }
+func (*GetMachineRequest) ProtoMessage()    {}
+func (*GetMachineRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dfc4a0424ec556ed, []int{5}
+}
+
+func (m *GetMachineRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetMachineRequest.Unmarshal(m, b)
+}
+func (m *GetMachineRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetMachineRequest.Marshal(b, m, deterministic)
+}
+func (m *GetMachineRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetMachineRequest.Merge(m, src)
+}
+func (m *GetMachineRequest) XXX_Size() int {
+	return xxx_messageInfo_GetMachineRequest.Size(m)
+}
+func (m *GetMachineRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetMachineRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetMachineRequest proto.InternalMessageInfo
+
+func (m *GetMachineRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type ListMachinesRequest struct {
+	// The maximum number of machines to return. The service may return fewer than
+	// this value.
+	// If unspecified, at most 100 machines will be returned.
+	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `ListMachines` call.
+	// Provide this to retrieve the subsequent page.
+	//
+	// When paginating, all other parameters provided to `ListMachines` must match
+	// the call that provided the page token.
+	PageToken            string   `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListMachinesRequest) Reset()         { *m = ListMachinesRequest{} }
+func (m *ListMachinesRequest) String() string { return proto.CompactTextString(m) }
+func (*ListMachinesRequest) ProtoMessage()    {}
+func (*ListMachinesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dfc4a0424ec556ed, []int{6}
+}
+
+func (m *ListMachinesRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListMachinesRequest.Unmarshal(m, b)
+}
+func (m *ListMachinesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListMachinesRequest.Marshal(b, m, deterministic)
+}
+func (m *ListMachinesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListMachinesRequest.Merge(m, src)
+}
+func (m *ListMachinesRequest) XXX_Size() int {
+	return xxx_messageInfo_ListMachinesRequest.Size(m)
+}
+func (m *ListMachinesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListMachinesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListMachinesRequest proto.InternalMessageInfo
+
+func (m *ListMachinesRequest) GetPageSize() int32 {
+	if m != nil {
+		return m.PageSize
+	}
+	return 0
+}
+
+func (m *ListMachinesRequest) GetPageToken() string {
+	if m != nil {
+		return m.PageToken
+	}
+	return ""
+}
+
+type ListMachinesResponse struct {
+	// The machines from datastore.
+	Machine []*proto1.Machine `protobuf:"bytes,1,rep,name=machine,proto3" json:"machine,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken        string   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListMachinesResponse) Reset()         { *m = ListMachinesResponse{} }
+func (m *ListMachinesResponse) String() string { return proto.CompactTextString(m) }
+func (*ListMachinesResponse) ProtoMessage()    {}
+func (*ListMachinesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dfc4a0424ec556ed, []int{7}
+}
+
+func (m *ListMachinesResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListMachinesResponse.Unmarshal(m, b)
+}
+func (m *ListMachinesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListMachinesResponse.Marshal(b, m, deterministic)
+}
+func (m *ListMachinesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListMachinesResponse.Merge(m, src)
+}
+func (m *ListMachinesResponse) XXX_Size() int {
+	return xxx_messageInfo_ListMachinesResponse.Size(m)
+}
+func (m *ListMachinesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListMachinesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListMachinesResponse proto.InternalMessageInfo
+
+func (m *ListMachinesResponse) GetMachine() []*proto1.Machine {
+	if m != nil {
+		return m.Machine
+	}
+	return nil
+}
+
+func (m *ListMachinesResponse) GetNextPageToken() string {
+	if m != nil {
+		return m.NextPageToken
+	}
+	return ""
+}
+
+type DeleteMachineRequest struct {
+	// The name of the Machine to delete
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeleteMachineRequest) Reset()         { *m = DeleteMachineRequest{} }
+func (m *DeleteMachineRequest) String() string { return proto.CompactTextString(m) }
+func (*DeleteMachineRequest) ProtoMessage()    {}
+func (*DeleteMachineRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dfc4a0424ec556ed, []int{8}
+}
+
+func (m *DeleteMachineRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteMachineRequest.Unmarshal(m, b)
+}
+func (m *DeleteMachineRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteMachineRequest.Marshal(b, m, deterministic)
+}
+func (m *DeleteMachineRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteMachineRequest.Merge(m, src)
+}
+func (m *DeleteMachineRequest) XXX_Size() int {
+	return xxx_messageInfo_DeleteMachineRequest.Size(m)
+}
+func (m *DeleteMachineRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteMachineRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteMachineRequest proto.InternalMessageInfo
+
+func (m *DeleteMachineRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*ImportChromePlatformsRequest)(nil), "unifiedfleet.api.v1.rpc.ImportChromePlatformsRequest")
 	proto.RegisterType((*ImportChromePlatformsResponse)(nil), "unifiedfleet.api.v1.rpc.ImportChromePlatformsResponse")
 	proto.RegisterType((*ChromePlatformResult)(nil), "unifiedfleet.api.v1.rpc.ChromePlatformResult")
+	proto.RegisterType((*CreateMachineRequest)(nil), "unifiedfleet.api.v1.rpc.CreateMachineRequest")
+	proto.RegisterType((*UpdateMachineRequest)(nil), "unifiedfleet.api.v1.rpc.UpdateMachineRequest")
+	proto.RegisterType((*GetMachineRequest)(nil), "unifiedfleet.api.v1.rpc.GetMachineRequest")
+	proto.RegisterType((*ListMachinesRequest)(nil), "unifiedfleet.api.v1.rpc.ListMachinesRequest")
+	proto.RegisterType((*ListMachinesResponse)(nil), "unifiedfleet.api.v1.rpc.ListMachinesResponse")
+	proto.RegisterType((*DeleteMachineRequest)(nil), "unifiedfleet.api.v1.rpc.DeleteMachineRequest")
 }
 
 func init() {
@@ -172,28 +471,52 @@ func init() {
 }
 
 var fileDescriptor_dfc4a0424ec556ed = []byte{
-	// 321 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x92, 0x4f, 0x4b, 0x03, 0x31,
-	0x10, 0xc5, 0xd9, 0x8a, 0xa5, 0x4d, 0xd1, 0x43, 0x50, 0x5c, 0xaa, 0x42, 0x29, 0x08, 0xf5, 0xd0,
-	0x8d, 0xad, 0x7f, 0x2e, 0x5e, 0x44, 0x69, 0xc1, 0x83, 0x20, 0x7b, 0xf4, 0x52, 0xd2, 0xed, 0xa4,
-	0x0d, 0x64, 0x37, 0x63, 0x92, 0xed, 0xc1, 0x0f, 0xe0, 0xd9, 0x2f, 0xe2, 0x77, 0x94, 0x66, 0x57,
-	0x41, 0xe9, 0x4a, 0xf5, 0xfa, 0x26, 0xef, 0x37, 0xbc, 0x37, 0x21, 0x17, 0x32, 0x13, 0x86, 0x33,
-	0x8e, 0x08, 0xd9, 0x5c, 0x66, 0xc0, 0xf2, 0x4c, 0x0a, 0x09, 0xb3, 0xbe, 0x50, 0x00, 0x8e, 0x71,
-	0x94, 0x6c, 0x39, 0x60, 0x06, 0x13, 0xe6, 0x85, 0x08, 0x8d, 0x76, 0x9a, 0x1e, 0x94, 0xaf, 0x0a,
-	0x8d, 0xa3, 0x8c, 0x96, 0x83, 0xc8, 0x60, 0xd2, 0xbe, 0xd9, 0x08, 0xe7, 0x21, 0x2c, 0x59, 0x18,
-	0x9d, 0xc2, 0x04, 0x15, 0x77, 0x42, 0x9b, 0xb4, 0x40, 0x77, 0x47, 0xe4, 0xe8, 0x3e, 0x45, 0x6d,
-	0xdc, 0x9d, 0x1f, 0x3f, 0x96, 0x53, 0x1b, 0xc3, 0x73, 0x0e, 0xd6, 0xd1, 0x13, 0xb2, 0xab, 0x74,
-	0xc2, 0xd5, 0x44, 0x48, 0x05, 0xc8, 0xdd, 0x22, 0x0c, 0x3a, 0x41, 0xaf, 0x19, 0xef, 0x78, 0x75,
-	0x5c, 0x8a, 0xdd, 0xf7, 0x80, 0x1c, 0x57, 0x70, 0x2c, 0xea, 0xcc, 0x02, 0x1d, 0x91, 0x3a, 0x72,
-	0x6b, 0x61, 0x16, 0x06, 0x9d, 0xad, 0x5e, 0x6b, 0xd8, 0x8f, 0x2a, 0x42, 0x45, 0xdf, 0x09, 0x31,
-	0xd8, 0x5c, 0xb9, 0xb8, 0x34, 0xaf, 0x30, 0x82, 0x4b, 0x05, 0xb3, 0xb0, 0xf6, 0x2f, 0x4c, 0x61,
-	0xee, 0xbe, 0x90, 0xbd, 0x75, 0x73, 0x3a, 0x22, 0x8d, 0xcf, 0x82, 0x7c, 0xd0, 0xd6, 0xf0, 0x74,
-	0xed, 0x02, 0x5f, 0xde, 0xcf, 0x15, 0x5f, 0x56, 0x7a, 0x48, 0x9a, 0x60, 0x8c, 0x36, 0x93, 0xd4,
-	0xce, 0xc3, 0x9a, 0x2f, 0xac, 0xe1, 0x85, 0x07, 0x3b, 0x1f, 0xbe, 0x05, 0x64, 0x7b, 0xbc, 0x82,
-	0xd1, 0xd7, 0x80, 0xec, 0xaf, 0x6d, 0x8d, 0x5e, 0x56, 0xc6, 0xfa, 0xed, 0x5a, 0xed, 0xab, 0xbf,
-	0xda, 0x8a, 0xe3, 0xdc, 0x9e, 0x3d, 0x45, 0x9b, 0x7e, 0xcc, 0xeb, 0x5c, 0x58, 0x9c, 0x4e, 0xeb,
-	0xbe, 0x81, 0xf3, 0x8f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x1f, 0x62, 0x55, 0xf5, 0xd1, 0x02, 0x00,
-	0x00,
+	// 710 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0x6d, 0x6b, 0x13, 0x4d,
+	0x14, 0x25, 0xe9, 0xcb, 0xd3, 0xdc, 0x3c, 0x51, 0x5c, 0xa3, 0x86, 0xd4, 0x42, 0x59, 0x50, 0x6a,
+	0x31, 0xbb, 0x6d, 0x7c, 0x41, 0xa9, 0xa0, 0x69, 0x9b, 0x4a, 0xc1, 0x42, 0x8d, 0x2f, 0xa0, 0x14,
+	0xc2, 0x64, 0x73, 0x77, 0x33, 0x64, 0x77, 0x67, 0x9c, 0xd9, 0x2d, 0x6d, 0xf1, 0xb3, 0x3f, 0xc1,
+	0x7f, 0xe1, 0x7f, 0xea, 0xef, 0xd0, 0x2f, 0xb2, 0xb3, 0xb3, 0x6d, 0xd3, 0xbc, 0x90, 0x8a, 0x7e,
+	0x0b, 0x77, 0xee, 0x39, 0x67, 0x72, 0xee, 0x3d, 0x93, 0xc0, 0x63, 0x1a, 0xba, 0x82, 0xd8, 0x84,
+	0x73, 0x0c, 0x3d, 0x1a, 0xa2, 0x1d, 0x87, 0xd4, 0xa5, 0xd8, 0xad, 0xb9, 0x3e, 0x62, 0x64, 0x13,
+	0x4e, 0xed, 0xc3, 0x75, 0x5b, 0x70, 0xc7, 0x56, 0x05, 0x8b, 0x0b, 0x16, 0x31, 0xe3, 0x8e, 0xee,
+	0x4a, 0x6b, 0x84, 0x53, 0xeb, 0x70, 0xdd, 0x12, 0xdc, 0xa9, 0x2e, 0x7a, 0x8c, 0x79, 0x3e, 0xda,
+	0xaa, 0xad, 0x13, 0xbb, 0x36, 0x06, 0x3c, 0x3a, 0x4e, 0x51, 0xd5, 0xe5, 0xcb, 0x87, 0x2e, 0x45,
+	0xbf, 0xdb, 0x0e, 0x88, 0xec, 0xeb, 0x8e, 0x97, 0x1e, 0xb3, 0x9c, 0x9e, 0x60, 0x01, 0x8d, 0x03,
+	0x8b, 0x09, 0xcf, 0xf6, 0x63, 0x87, 0xda, 0x5e, 0x22, 0xaf, 0x1a, 0x6c, 0xcd, 0x90, 0x5c, 0x2b,
+	0x05, 0x77, 0xb0, 0x47, 0x0e, 0x29, 0x13, 0x9a, 0xe0, 0xf9, 0x15, 0x08, 0x04, 0x4a, 0x16, 0x0b,
+	0x07, 0x35, 0xf4, 0xd9, 0x54, 0x4e, 0xa4, 0x2c, 0x01, 0x71, 0x7a, 0x34, 0xcc, 0x90, 0xaf, 0xae,
+	0x80, 0x54, 0x97, 0xc3, 0x36, 0xf7, 0x49, 0xe4, 0x32, 0x11, 0xa4, 0x0c, 0x66, 0x13, 0xee, 0xee,
+	0x06, 0x9c, 0x89, 0x68, 0x4b, 0x1d, 0xef, 0xeb, 0x53, 0xd9, 0xc2, 0x2f, 0x31, 0xca, 0xc8, 0xb8,
+	0x07, 0xd7, 0x7c, 0xe6, 0x10, 0xbf, 0xed, 0x52, 0x1f, 0x39, 0x89, 0x7a, 0x95, 0xdc, 0x72, 0x6e,
+	0xa5, 0xd0, 0x2a, 0xa9, 0xea, 0x8e, 0x2e, 0x9a, 0x3f, 0x72, 0xb0, 0x34, 0x86, 0x47, 0x72, 0x16,
+	0x4a, 0x34, 0x9a, 0x30, 0xcf, 0x89, 0x94, 0xd8, 0xad, 0xe4, 0x96, 0x67, 0x56, 0x8a, 0xf5, 0x9a,
+	0x35, 0x66, 0x92, 0xd6, 0x20, 0x43, 0x0b, 0x65, 0xec, 0x47, 0x2d, 0x0d, 0x4e, 0x68, 0x5c, 0x42,
+	0x7d, 0xec, 0x56, 0xf2, 0x7f, 0x44, 0x93, 0x82, 0xcd, 0x13, 0x28, 0x8f, 0x3a, 0x37, 0x9a, 0xb0,
+	0x90, 0x19, 0xa4, 0xbe, 0x68, 0xb1, 0xfe, 0x60, 0xa4, 0x80, 0x32, 0xef, 0xb2, 0xc4, 0x19, 0xd4,
+	0x58, 0x84, 0x02, 0x0a, 0xc1, 0x44, 0x3b, 0x90, 0x5e, 0x25, 0xaf, 0x0c, 0x5b, 0x50, 0x85, 0x3d,
+	0xe9, 0x99, 0x47, 0x50, 0xde, 0x12, 0x48, 0x22, 0xdc, 0x4b, 0x67, 0x99, 0x59, 0xdd, 0x80, 0xff,
+	0xf4, 0x74, 0xb5, 0xb4, 0x39, 0x41, 0x5a, 0x63, 0x37, 0x67, 0x4e, 0x1b, 0xf9, 0x56, 0x86, 0x33,
+	0x96, 0x00, 0xf4, 0xc7, 0x36, 0xed, 0x6a, 0xe1, 0x82, 0xae, 0xec, 0x76, 0xcd, 0xef, 0x39, 0x28,
+	0x7f, 0xe0, 0xdd, 0x7f, 0x22, 0xbd, 0x01, 0xc5, 0x58, 0x51, 0xab, 0x54, 0x29, 0xed, 0x62, 0xbd,
+	0x6a, 0xa5, 0x5b, 0x6f, 0x65, 0xc1, 0xb3, 0x76, 0x92, 0xec, 0xec, 0x11, 0xd9, 0x6f, 0x41, 0xac,
+	0x6f, 0x22, 0xfb, 0xe6, 0x27, 0xb8, 0xf1, 0x1a, 0xa3, 0x4b, 0x97, 0xda, 0x86, 0xd9, 0x90, 0x04,
+	0xe9, 0x8d, 0x0a, 0x9b, 0x6b, 0xa7, 0x8d, 0xfc, 0xcf, 0xc6, 0x2a, 0xac, 0x0c, 0xac, 0x78, 0x4d,
+	0x1e, 0xcb, 0x08, 0x03, 0x8b, 0x70, 0x2e, 0x39, 0x8b, 0x2c, 0x87, 0x05, 0x76, 0x46, 0xa3, 0xd0,
+	0xe6, 0x5b, 0xb8, 0xf9, 0x86, 0xca, 0x8c, 0xfb, 0x6c, 0xaf, 0x17, 0xa1, 0xc0, 0x89, 0x87, 0x6d,
+	0x49, 0x4f, 0x52, 0x85, 0xb9, 0xd6, 0x42, 0x52, 0x78, 0x47, 0x4f, 0x94, 0x8d, 0xea, 0x30, 0x62,
+	0x7d, 0x0c, 0x33, 0x1b, 0x93, 0xca, 0xfb, 0xa4, 0x60, 0x7e, 0x85, 0xf2, 0x20, 0xa5, 0x5e, 0xf1,
+	0x17, 0x17, 0x5d, 0x9c, 0x99, 0xce, 0xc5, 0x73, 0x03, 0xef, 0xc3, 0xf5, 0x10, 0x8f, 0xa2, 0xf6,
+	0x90, 0x72, 0x29, 0x29, 0xef, 0x9f, 0xa9, 0x1f, 0x40, 0x79, 0x1b, 0x7d, 0x1c, 0x9a, 0xe1, 0x5f,
+	0xb1, 0xab, 0xfe, 0x6b, 0x16, 0xe6, 0x76, 0x92, 0x56, 0xe3, 0x5b, 0x0e, 0x6e, 0x8d, 0x8c, 0xb4,
+	0xf1, 0x64, 0x6c, 0xe6, 0x26, 0x3d, 0x25, 0xd5, 0xa7, 0x57, 0x85, 0x69, 0x5b, 0x3b, 0x50, 0x1a,
+	0xc8, 0x8b, 0x31, 0x21, 0xf3, 0x23, 0x72, 0x55, 0x9d, 0x62, 0x0a, 0x89, 0xc6, 0x40, 0x30, 0x26,
+	0x68, 0x8c, 0x0a, 0xd0, 0x54, 0x1a, 0x07, 0x00, 0xe7, 0x4b, 0x6e, 0xac, 0x8e, 0x15, 0x18, 0x4a,
+	0xc2, 0x54, 0xec, 0x7d, 0xf8, 0xff, 0xe2, 0x52, 0x1a, 0x0f, 0xc7, 0xf2, 0x8f, 0x88, 0x43, 0xb5,
+	0x36, 0x65, 0xb7, 0x1e, 0xc9, 0x47, 0x28, 0x0d, 0xec, 0xe0, 0x04, 0xbb, 0x46, 0xed, 0x6a, 0xf5,
+	0xf6, 0xd0, 0xbb, 0xd0, 0x4c, 0x7e, 0xad, 0x37, 0xd7, 0x3e, 0x5b, 0xd3, 0xfe, 0x2b, 0xd8, 0x88,
+	0x5d, 0xc9, 0x3b, 0x9d, 0x79, 0xc5, 0xf0, 0xe8, 0x77, 0x00, 0x00, 0x00, 0xff, 0xff, 0x0e, 0x55,
+	0xcc, 0xfc, 0x4e, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -210,6 +533,16 @@ const _ = grpc.SupportPackageIsVersion6
 type FleetClient interface {
 	// ImportChromePlatforms imports chrome platforms.
 	ImportChromePlatforms(ctx context.Context, in *ImportChromePlatformsRequest, opts ...grpc.CallOption) (*ImportChromePlatformsResponse, error)
+	// CreateMachine creates a new machine.
+	CreateMachine(ctx context.Context, in *CreateMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error)
+	// Update updates the machine
+	UpdateMachine(ctx context.Context, in *UpdateMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error)
+	// Get retrieves the details of the machine
+	GetMachine(ctx context.Context, in *GetMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error)
+	// List gets all the machines
+	ListMachines(ctx context.Context, in *ListMachinesRequest, opts ...grpc.CallOption) (*ListMachinesResponse, error)
+	// Delete delete the machine
+	DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 type fleetPRPCClient struct {
 	client *prpc.Client
@@ -222,6 +555,51 @@ func NewFleetPRPCClient(client *prpc.Client) FleetClient {
 func (c *fleetPRPCClient) ImportChromePlatforms(ctx context.Context, in *ImportChromePlatformsRequest, opts ...grpc.CallOption) (*ImportChromePlatformsResponse, error) {
 	out := new(ImportChromePlatformsResponse)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "ImportChromePlatforms", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) CreateMachine(ctx context.Context, in *CreateMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error) {
+	out := new(proto1.Machine)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "CreateMachine", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) UpdateMachine(ctx context.Context, in *UpdateMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error) {
+	out := new(proto1.Machine)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "UpdateMachine", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) GetMachine(ctx context.Context, in *GetMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error) {
+	out := new(proto1.Machine)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "GetMachine", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) ListMachines(ctx context.Context, in *ListMachinesRequest, opts ...grpc.CallOption) (*ListMachinesResponse, error) {
+	out := new(ListMachinesResponse)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "ListMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteMachine", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -245,10 +623,65 @@ func (c *fleetClient) ImportChromePlatforms(ctx context.Context, in *ImportChrom
 	return out, nil
 }
 
+func (c *fleetClient) CreateMachine(ctx context.Context, in *CreateMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error) {
+	out := new(proto1.Machine)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/CreateMachine", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) UpdateMachine(ctx context.Context, in *UpdateMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error) {
+	out := new(proto1.Machine)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/UpdateMachine", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) GetMachine(ctx context.Context, in *GetMachineRequest, opts ...grpc.CallOption) (*proto1.Machine, error) {
+	out := new(proto1.Machine)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/GetMachine", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) ListMachines(ctx context.Context, in *ListMachinesRequest, opts ...grpc.CallOption) (*ListMachinesResponse, error) {
+	out := new(ListMachinesResponse)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/ListMachines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) DeleteMachine(ctx context.Context, in *DeleteMachineRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteMachine", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FleetServer is the server API for Fleet service.
 type FleetServer interface {
 	// ImportChromePlatforms imports chrome platforms.
 	ImportChromePlatforms(context.Context, *ImportChromePlatformsRequest) (*ImportChromePlatformsResponse, error)
+	// CreateMachine creates a new machine.
+	CreateMachine(context.Context, *CreateMachineRequest) (*proto1.Machine, error)
+	// Update updates the machine
+	UpdateMachine(context.Context, *UpdateMachineRequest) (*proto1.Machine, error)
+	// Get retrieves the details of the machine
+	GetMachine(context.Context, *GetMachineRequest) (*proto1.Machine, error)
+	// List gets all the machines
+	ListMachines(context.Context, *ListMachinesRequest) (*ListMachinesResponse, error)
+	// Delete delete the machine
+	DeleteMachine(context.Context, *DeleteMachineRequest) (*empty.Empty, error)
 }
 
 // UnimplementedFleetServer can be embedded to have forward compatible implementations.
@@ -257,6 +690,21 @@ type UnimplementedFleetServer struct {
 
 func (*UnimplementedFleetServer) ImportChromePlatforms(ctx context.Context, req *ImportChromePlatformsRequest) (*ImportChromePlatformsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ImportChromePlatforms not implemented")
+}
+func (*UnimplementedFleetServer) CreateMachine(ctx context.Context, req *CreateMachineRequest) (*proto1.Machine, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateMachine not implemented")
+}
+func (*UnimplementedFleetServer) UpdateMachine(ctx context.Context, req *UpdateMachineRequest) (*proto1.Machine, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMachine not implemented")
+}
+func (*UnimplementedFleetServer) GetMachine(ctx context.Context, req *GetMachineRequest) (*proto1.Machine, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMachine not implemented")
+}
+func (*UnimplementedFleetServer) ListMachines(ctx context.Context, req *ListMachinesRequest) (*ListMachinesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMachines not implemented")
+}
+func (*UnimplementedFleetServer) DeleteMachine(ctx context.Context, req *DeleteMachineRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteMachine not implemented")
 }
 
 func RegisterFleetServer(s prpc.Registrar, srv FleetServer) {
@@ -281,6 +729,96 @@ func _Fleet_ImportChromePlatforms_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Fleet_CreateMachine_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateMachineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).CreateMachine(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/CreateMachine",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).CreateMachine(ctx, req.(*CreateMachineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_UpdateMachine_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMachineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).UpdateMachine(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/UpdateMachine",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).UpdateMachine(ctx, req.(*UpdateMachineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_GetMachine_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMachineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).GetMachine(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/GetMachine",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).GetMachine(ctx, req.(*GetMachineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_ListMachines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMachinesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).ListMachines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/ListMachines",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).ListMachines(ctx, req.(*ListMachinesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_DeleteMachine_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteMachineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).DeleteMachine(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/DeleteMachine",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).DeleteMachine(ctx, req.(*DeleteMachineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Fleet_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "unifiedfleet.api.v1.rpc.Fleet",
 	HandlerType: (*FleetServer)(nil),
@@ -288,6 +826,26 @@ var _Fleet_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ImportChromePlatforms",
 			Handler:    _Fleet_ImportChromePlatforms_Handler,
+		},
+		{
+			MethodName: "CreateMachine",
+			Handler:    _Fleet_CreateMachine_Handler,
+		},
+		{
+			MethodName: "UpdateMachine",
+			Handler:    _Fleet_UpdateMachine_Handler,
+		},
+		{
+			MethodName: "GetMachine",
+			Handler:    _Fleet_GetMachine_Handler,
+		},
+		{
+			MethodName: "ListMachines",
+			Handler:    _Fleet_ListMachines_Handler,
+		},
+		{
+			MethodName: "DeleteMachine",
+			Handler:    _Fleet_DeleteMachine_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
