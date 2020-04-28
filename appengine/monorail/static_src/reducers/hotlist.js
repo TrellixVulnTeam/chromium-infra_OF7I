@@ -22,11 +22,16 @@ import {userIdOrDisplayNameToUserRef, issueNameToRef, pathsToFieldMask}
   from 'shared/converters.js';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 import * as issueV0 from './issueV0.js';
+import * as permissions from './permissions.js';
 import * as user from './user.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 
 /** @typedef {import('redux').AnyAction} AnyAction */
+
+// Permissions
+export const EDIT = 'HOTLIST_EDIT';
+export const ADMINISTER = 'HOTLIST_ADMINISTER';
 
 // Actions
 export const SELECT = 'hotlist/SELECT';
@@ -198,6 +203,20 @@ export const viewedHotlistIssues = createSelector(
         ...item,
         adder: usersByName[item.adder.name],
       }));
+    });
+
+/**
+ * Returns the currently viewed Hotlist permissions, or [] if there is none.
+ * @param {any} state
+ * @return {Array<Permission>}
+ */
+export const viewedHotlistPermissions = createSelector(
+    [viewedHotlist, permissions.byName],
+    (hotlist, permissionsByName) => {
+      if (!hotlist) return [];
+      const permissionSet = permissionsByName[hotlist.name];
+      if (!permissionSet) return [];
+      return permissionSet.permissions;
     });
 
 /**

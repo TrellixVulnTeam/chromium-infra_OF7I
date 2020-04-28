@@ -75,10 +75,7 @@ describe('hotlist selectors', () => {
 
   describe('viewedHotlist', () => {
     it('normal case', () => {
-      const state = {hotlist: {
-        name: example.NAME,
-        byName: example.BY_NAME,
-      }};
+      const state = {hotlist: {name: example.NAME, byName: example.BY_NAME}};
       assert.deepEqual(hotlist.viewedHotlist(state), example.HOTLIST);
     });
 
@@ -149,6 +146,22 @@ describe('hotlist selectors', () => {
         user: {byName: {}},
       };
       assert.deepEqual(hotlist.viewedHotlistIssues(state), []);
+    });
+  });
+
+  describe('viewedHotlistPermissions', () => {
+    it('normal case', () => {
+      const permissions = [hotlist.ADMINISTER, hotlist.EDIT];
+      const state = {
+        hotlist: {name: example.NAME, byName: example.BY_NAME},
+        permissions: {byName: {[example.NAME]: {permissions}}},
+      };
+      assert.deepEqual(hotlist.viewedHotlistPermissions(state), permissions);
+    });
+
+    it('no issue', () => {
+      const state = {hotlist: {}, permissions: {}};
+      assert.deepEqual(hotlist.viewedHotlistPermissions(state), []);
     });
   });
 });

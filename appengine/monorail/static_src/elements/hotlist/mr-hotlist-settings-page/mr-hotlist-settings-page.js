@@ -94,44 +94,15 @@ class _MrHotlistSettingsPage extends LitElement {
   _renderPage() {
     const defaultColumns = this._hotlist.defaultColumns
         .map((col) => col.column).join(' ');
-    if (this._userMayEdit()) return this._renderEditableForm(defaultColumns);
+    if (this._permissions.includes(hotlist.ADMINISTER)) {
+      return this._renderEditableForm(defaultColumns);
+    }
     return this._renderViewOnly(defaultColumns);
   }
 
   /**
-   * Returns whether the user may edit the hotlist.
-   * @return {boolean}
-   */
-  _userMayEdit() {
-    if (!this._currentUser) return false;
-
-    // TODO(https://crbug.com/monorail/7451): use `===`, maybe Permissions API.
-    if (userNameToId(this._hotlist.owner.name) == this._currentUser.userId) {
-      return true;
-    }
-
-    // TODO(https://crbug.com/monorail/7451): use `===`, maybe Permissions API.
-    // Currently, this will allow Editors to see the Delete button. Update this
-    // logic to match the Permissions API.
-    return this._hotlist.editors.some((editor) => {
-      return userNameToId(editor.name) == this._currentUser.userId;
-    });
-  }
-
-  /**
-   * Handles changes to the editable form.
-   * @param {Event} e
-   */
-  _handleFormChange() {
-    const saveButton = this.shadowRoot.getElementById('save-hotlist');
-    if (saveButton.disabled) {
-      saveButton.disabled = false;
-    }
-  }
-
-  /**
    * Render the editable form Settings page.
-   * @param {Array<string>} defaultColumns The default columns to be shown.
+   * @param {string} defaultColumns The default columns to be shown.
    * @return {TemplateResult}
    */
   _renderEditableForm(defaultColumns) {
@@ -181,7 +152,7 @@ class _MrHotlistSettingsPage extends LitElement {
 
   /**
    * Render the view-only Settings page.
-   * @param {Array<string>} defaultColumns The default columns to be shown.
+   * @param {string} defaultColumns The default columns to be shown.
    * @return {TemplateResult}
    */
   _renderViewOnly(defaultColumns) {
@@ -212,22 +183,37 @@ class _MrHotlistSettingsPage extends LitElement {
   /** @override */
   static get properties() {
     return {
-      _currentUser: {type: Object},
       _hotlist: {type: Object},
+      _permissions: {type: Array},
+      _currentUser: {type: Object},
     };
   }
 
   /** @override */
   constructor() {
     super();
-    /** @type {?HotlistV1} */
+    /** @type {?Hotlist} */
     this._hotlist = null;
 
-    // Expose page.js for test stubbing.
-    this.page = page;
+    /** @type {Array<Permission>} */
+    this._permissions = [];
 
     /** @type {UserRef} */
     this._currentUser = null;
+
+    // Expose page.js for test stubbing.
+    this.page = page;
+  }
+
+  /**
+   * Handles changes to the editable form.
+   * @param {Event} e
+   */
+  _handleFormChange() {
+    const saveButton = this.shadowRoot.getElementById('save-hotlist');
+    if (saveButton.disabled) {
+      saveButton.disabled = false;
+    }
   }
 
   /** Saves the hotlist, dispatching an action to Redux. */
@@ -243,6 +229,7 @@ export class MrHotlistSettingsPage
   /** @override */
   stateChanged(state) {
     this._hotlist = hotlist.viewedHotlist(state);
+    this._permissions = hotlist.viewedHotlistPermissions(state);
     this._currentUser = userV0.currentUser(state);
   }
 

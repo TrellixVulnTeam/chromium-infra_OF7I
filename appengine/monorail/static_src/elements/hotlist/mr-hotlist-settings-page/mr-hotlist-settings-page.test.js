@@ -39,14 +39,17 @@ describe('mr-hotlist-settings-page (unconnected)', () => {
     await element.updateComplete;
   });
 
-  it('renders a view only hotlist', async () => {
+  it('renders a view only hotlist if no permissions', async () => {
     element._hotlist = {...example.HOTLIST};
     await element.updateComplete;
     assert.notInclude(element.shadowRoot.innerHTML, 'form');
   });
 
-  it('an anonymous viewer may not edit the Hotlist', () => {
-    assert.isFalse(element._userMayEdit());
+  it('renders an editable hotlist if permission to administer', async () => {
+    element._hotlist = {...example.HOTLIST};
+    element._permissions = [hotlist.ADMINISTER];
+    await element.updateComplete;
+    assert.include(element.shadowRoot.innerHTML, 'form');
   });
 
   it('renders private hotlist', async () => {
@@ -59,23 +62,27 @@ describe('mr-hotlist-settings-page (unconnected)', () => {
 describe('mr-hotlist-settings-page (connected)', () => {
   beforeEach(() => {
     store.dispatch(resetState());
+
+    // We can't stub reducers/hotlist methods so stub prpcClient.call()
+    // instead. https://github.com/sinonjs/sinon/issues/562
+    sinon.stub(prpcClient, 'call');
+
     // @ts-ignore
     element = document.createElement('mr-hotlist-settings-page');
     document.body.appendChild(element);
+
+    // Stop Redux from overriding values being tested.
+    sinon.stub(element, 'stateChanged');
   });
 
   afterEach(() => {
+    element.stateChanged.restore();
     document.body.removeChild(element);
-  });
-
-  it('initializes', async () => {
-    assert.instanceOf(element, MrHotlistSettingsPage);
+    prpcClient.call.restore();
   });
 
   it('updates page title and header', async () => {
-    const hotlistWithName = {...example.HOTLIST, displayName: 'Hotlist-Name'};
-    store.dispatch(hotlist.select(example.NAME));
-    store.dispatch({type: hotlist.FETCH_SUCCESS, hotlist: hotlistWithName});
+    element._hotlist = {...example.HOTLIST, displayName: 'Hotlist-Name'};
     await element.updateComplete;
 
     const state = store.getState();
@@ -83,113 +90,74 @@ describe('mr-hotlist-settings-page (connected)', () => {
     assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
   });
 
-  describe('hotlist owner logged in', () => {
-    let stateChangedStub;
-    beforeEach(async () => {
-      // Stop Redux from overriding values being tested.
-      stateChangedStub = sinon.stub(element, 'stateChanged');
+  it('deletes hotlist', async () => {
+    element._hotlist = example.HOTLIST;
+    element._permissions = [hotlist.ADMINISTER];
+    element._currentUser = exampleUser.USER;
+    await element.updateComplete;
 
-      element._currentUser = exampleUser.USER_REF;
-      element._hotlist = {...example.HOTLIST};
-      await element.updateComplete;
-    });
+    const deleteButton = element.shadowRoot.getElementById('delete-hotlist');
+    assert.isNotNull(deleteButton);
 
-    afterEach(() => {
-      stateChangedStub.restore();
-    });
+    // Auto confirm deletion of hotlist.
+    const confirmStub = sinon.stub(window, 'confirm');
+    confirmStub.returns(true);
 
-    it('renders a hotlist with an editable form', () => {
-      assert.include(element.shadowRoot.innerHTML, 'form');
-    });
+    const pageStub = sinon.stub(element, 'page');
 
-    describe('it makes a reducer call', () => {
-      let callStub;
-      beforeEach(() => {
-        // We can't stub reducers/hotlist methods so stub prpcClient.call()
-        // instead. https://github.com/sinonjs/sinon/issues/562
-        callStub = sinon.stub(prpcClient, 'call');
-      });
+    try {
+      await element._delete();
 
-      afterEach(() => {
-        callStub.restore();
-      });
-
-      it('deletes hotlist', async () => {
-        const deleteButton = element.shadowRoot.getElementById(
-            'delete-hotlist');
-        assert.isNotNull(deleteButton);
-
-        // Auto confirm deletion of hotlist.
-        const confirmStub = sinon.stub(window, 'confirm');
-        confirmStub.returns(true);
-
-        const pageStub = sinon.stub(element, 'page');
-
-        try {
-          const args = {name: example.NAME};
-
-          await element._delete();
-
-          sinon.assert.calledWith(
-              prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
-          sinon.assert.calledWith(
-              element.page, `/u/${example.HOTLIST.owner.displayName}/hotlists`);
-        } finally {
-          pageStub.restore();
-          confirmStub.restore();
-        }
-      });
-
-      it('updates hotlist when there are changes', async () => {
-        sinon.stub(element, '_showHotlistSavedSnackbar');
-        const saveButton = element.shadowRoot.getElementById('save-hotlist');
-        assert.isNotNull(saveButton);
-        assert.isTrue(saveButton.hasAttribute('disabled'));
-
-        const hotlist = {
-          name: example.HOTLIST.name,
-          displayName: element._hotlist.displayName + 'foo',
-          summary: element._hotlist.summary + 'abc',
-        };
-        const args = {hotlist, updateMask: 'displayName,summary'};
-
-        const summaryInput = element.shadowRoot.getElementById('summary');
-        /** @type {HTMLInputElement} */ (summaryInput).value += 'abc';
-        const nameInput =
-            element.shadowRoot.getElementById('displayName');
-        /** @type {HTMLInputElement} */ (nameInput).value += 'foo';
-
-        await element.shadowRoot.getElementById('settingsForm').dispatchEvent(
-            new Event('change'));
-        assert.isFalse(saveButton.hasAttribute('disabled'));
-
-        await element._save();
-
-        sinon.assert.calledWith(
-            prpcClient.call, 'monorail.v1.Hotlists', 'UpdateHotlist', args);
-        sinon.assert.calledOnce(element._showHotlistSavedSnackbar);
-      });
-    });
+      const args = {name: example.NAME};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
+      sinon.assert.calledWith(
+          element.page, `/u/${exampleUser.DISPLAY_NAME}/hotlists`);
+    } finally {
+      pageStub.restore();
+      confirmStub.restore();
+    }
   });
 
-  describe('hotlist editor logged in', () => {
-    let stateChangedStub;
-    beforeEach(async () => {
-      // Stop Redux from overriding values being tested.
-      stateChangedStub = sinon.stub(element, 'stateChanged');
+  it('updates hotlist when there are changes', async () => {
+    element._hotlist = {...example.HOTLIST};
+    element._permissions = [hotlist.ADMINISTER];
+    await element.updateComplete;
 
-      // exampleUser.USER_2 is an editor of the example Hotlist.
-      element._currentUser = exampleUser.USER_2;
-      element._hotlist = {...example.HOTLIST};
-      await element.updateComplete;
-    });
+    sinon.stub(element, '_showHotlistSavedSnackbar');
+    const saveButton = element.shadowRoot.getElementById('save-hotlist');
+    assert.isNotNull(saveButton);
+    assert.isTrue(saveButton.hasAttribute('disabled'));
 
-    it('an Editor may edit the Hotlist', () => {
-      assert.isTrue(element._userMayEdit());
-    });
+    const hlist = {
+      name: example.HOTLIST.name,
+      displayName: element._hotlist.displayName + 'foo',
+      summary: element._hotlist.summary + 'abc',
+    };
+    const args = {hotlist: hlist, updateMask: 'displayName,summary'};
 
-    afterEach(() => {
-      stateChangedStub.restore();
-    });
+    const summaryInput = element.shadowRoot.getElementById('summary');
+    /** @type {HTMLInputElement} */ (summaryInput).value += 'abc';
+    const nameInput =
+        element.shadowRoot.getElementById('displayName');
+    /** @type {HTMLInputElement} */ (nameInput).value += 'foo';
+
+    await element.shadowRoot.getElementById('settingsForm').dispatchEvent(
+        new Event('change'));
+    assert.isFalse(saveButton.hasAttribute('disabled'));
+
+    await element._save();
+
+    sinon.assert.calledWith(
+        prpcClient.call, 'monorail.v1.Hotlists', 'UpdateHotlist', args);
+    sinon.assert.calledOnce(element._showHotlistSavedSnackbar);
   });
+});
+
+it('mr-hotlist-settings-page (stateChanged)', () => {
+  // @ts-ignore
+  element = document.createElement('mr-hotlist-settings-page');
+  document.body.appendChild(element);
+  assert.instanceOf(element, MrHotlistSettingsPage);
+  document.body.removeChild(element);
 });

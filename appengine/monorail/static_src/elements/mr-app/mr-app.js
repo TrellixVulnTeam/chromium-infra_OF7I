@@ -13,6 +13,7 @@ import {store, connectStore} from 'reducers/base.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as hotlist from 'reducers/hotlist.js';
 import * as issueV0 from 'reducers/issueV0.js';
+import * as permissions from 'reducers/permissions.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import * as sitewide from 'reducers/sitewide.js';
@@ -478,6 +479,7 @@ export class MrApp extends connectStore(LitElement) {
     store.dispatch(hotlist.select(name));
     store.dispatch(hotlist.fetch(name));
     store.dispatch(hotlist.fetchItems(name));
+    store.dispatch(permissions.batchGet([name]));
     next();
   }
 
