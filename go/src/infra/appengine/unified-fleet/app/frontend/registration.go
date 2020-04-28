@@ -48,7 +48,10 @@ func (fs *FleetServerImpl) GetMachine(ctx context.Context, req *api.GetMachineRe
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return registration.GetMachine(ctx, strings.TrimSpace(req.Name))
 }
 
 // ListMachines list all the machines information from database.
@@ -64,5 +67,9 @@ func (fs *FleetServerImpl) DeleteMachine(ctx context.Context, req *api.DeleteMac
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	err = registration.DeleteMachine(ctx, strings.TrimSpace(req.Name))
 	return &empty.Empty{}, err
 }

@@ -14,37 +14,49 @@ import (
 
 var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9-_]{4,63}$`)
 
+const (
+	nilEntity         string = "Invalid input - no Entity to add/update"
+	emptyID           string = "Invalid input - Entity ID/Name is empty"
+	invalidCharacters string = "Invalid input - Entity ID/Name must contain only 4-63 characters, ASCII letters, numbers, dash and underscore."
+)
+
 // Validate validates input requests of CreateMachine.
 func (r *CreateMachineRequest) Validate() error {
 	if r.Machine == nil {
-		return status.Errorf(codes.InvalidArgument, "Invalid input - no Machine to add/update")
+		return status.Errorf(codes.InvalidArgument, nilEntity)
 	}
 	name := strings.TrimSpace(r.Machine.GetName())
 	if name == "" {
-		name = strings.TrimSpace(r.MachineId)
-		if name == "" {
-			return status.Errorf(codes.InvalidArgument, "Invalid input - Machine ID is empty")
-		}
+		name = r.MachineId
 	}
-	if !nameRegex.MatchString(name) {
-		return status.Errorf(codes.InvalidArgument,
-			"Invalid input - Machine ID must contain only 4-63 characters, ASCII letters, numbers, dash and underscore.")
-	}
-	return nil
+	return validateResourceName(name)
 }
 
 // Validate validates input requests of UpdateMachine.
 func (r *UpdateMachineRequest) Validate() error {
 	if r.Machine == nil {
-		return status.Errorf(codes.InvalidArgument, "Invalid input - no Machine to add/update")
+		return status.Errorf(codes.InvalidArgument, nilEntity)
 	}
-	name := strings.TrimSpace(r.Machine.GetName())
+	return validateResourceName(r.Machine.GetName())
+}
+
+// Validate validates input requests of GetMachine.
+func (r *GetMachineRequest) Validate() error {
+	return validateResourceName(r.Name)
+}
+
+// Validate validates input requests of DeleteMachine.
+func (r *DeleteMachineRequest) Validate() error {
+	return validateResourceName(r.Name)
+}
+
+func validateResourceName(name string) error {
+	name = strings.TrimSpace(name)
 	if name == "" {
-		return status.Errorf(codes.InvalidArgument, "Invalid input - Machine ID is empty")
+		return status.Errorf(codes.InvalidArgument, emptyID)
 	}
 	if !nameRegex.MatchString(name) {
-		return status.Errorf(codes.InvalidArgument,
-			"Invalid input - Machine ID must contain only 4-63 characters, ASCII letters, numbers, dash and underscore.")
+		return status.Errorf(codes.InvalidArgument, invalidCharacters)
 	}
 	return nil
 }

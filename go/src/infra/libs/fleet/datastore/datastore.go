@@ -39,7 +39,8 @@ func exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
 func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.Message, error) {
 	entity, err := nf(ctx, pm)
 	if err != nil {
-		return nil, err
+		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
+		return nil, status.Errorf(codes.Internal, "Internal Server error.")
 	}
 	f := func(ctx context.Context) error {
 		existsResults, err := datastore.Exists(ctx, entity)
@@ -54,7 +55,7 @@ func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.
 			logging.Debugf(ctx, "Failed to check existence: %s", err)
 		}
 		if err := datastore.Put(ctx, entity); err != nil {
-			logging.Debugf(ctx, "Failed to put in datastore: %s", err)
+			logging.Errorf(ctx, "Failed to put in datastore: %s", err)
 			return status.Errorf(codes.Internal, "Internal Server error.")
 		}
 		return nil
@@ -64,6 +65,52 @@ func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.
 		return nil, err
 	}
 	return pm, nil
+}
+
+// Get retrieves entity from the datastore.
+func Get(ctx context.Context, pm proto.Message, nf NewFunc) (proto.Message, error) {
+	entity, err := nf(ctx, pm)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
+		return nil, status.Errorf(codes.Internal, "Internal Server error.")
+	}
+	if err = datastore.Get(ctx, entity); err != nil {
+		if datastore.IsErrNoSuchEntity(err) {
+			return nil, status.Errorf(codes.NotFound, "Entity Not found.")
+		}
+		logging.Errorf(ctx, "Failed to get entity from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, "Internal Server error.")
+	}
+	pm, perr := entity.GetProto()
+	if perr != nil {
+		logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+		return nil, status.Errorf(codes.Internal, "Internal Server error.")
+	}
+	return pm, nil
+}
+
+// Delete deletes the entity from the datastore.
+func Delete(ctx context.Context, pm proto.Message, nf NewFunc) error {
+	entity, err := nf(ctx, pm)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
+		return status.Errorf(codes.Internal, "Internal Server error.")
+	}
+	// Datastore doesn't throw an error if the record doesn't exist.
+	// Check and return err if there is no such entity in the datastore.
+	existsResults, err := datastore.Exists(ctx, entity)
+	if err == nil {
+		if !existsResults.All() {
+			return status.Errorf(codes.NotFound, "Entity Not found.")
+		}
+	} else {
+		logging.Debugf(ctx, "Failed to check existence: %s", err)
+	}
+	if err = datastore.Delete(ctx, entity); err != nil {
+		logging.Errorf(ctx, "Failed to delete entity from datastore: %s", err)
+		return status.Errorf(codes.Internal, "Internal Server error.")
+	}
+	return nil
 }
 
 // Insert inserts the fleet objects.
@@ -139,8 +186,9 @@ func GetAll(ctx context.Context, qf QueryAllFunc) (*OpResults, error) {
 	return &res, nil
 }
 
-// GetByID returns all entities in table for given IDs.
-func GetByID(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
+// BatchGet returns all entities in table for given IDs.
+func BatchGet(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
+	// TODO: (eshwarn) Make it atomic and return array of Machines
 	allRes := make(OpResults, len(es))
 	checkRes := make(OpResults, 0, len(es))
 	entities := make([]FleetEntity, 0, len(es))
@@ -173,8 +221,9 @@ func GetByID(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 	return &allRes
 }
 
-// Delete removes the entities from the datastore
-func Delete(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
+// BatchDelete removes the entities from the datastore
+func BatchDelete(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
+	// TODO: (eshwarn) Make it atomic and return empty
 	allRes := make(OpResults, len(es))
 	checkRes := make(OpResults, 0, len(es))
 	checkEntities := make([]FleetEntity, 0, len(es))

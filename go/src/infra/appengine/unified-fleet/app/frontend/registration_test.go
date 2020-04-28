@@ -43,7 +43,7 @@ func assertMachineEqual(a *proto.Machine, b *proto.Machine) {
 		b.GetChromeosMachine().GetReferenceBoard())
 }
 
-func TestCreateMachines(t *testing.T) {
+func TestCreateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
@@ -77,7 +77,7 @@ func TestCreateMachines(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "already exists")
+			So(err.Error(), ShouldContainSubstring, alreadyExists)
 		})
 		Convey("Create new machine - Invalid input nil", func() {
 			req := &api.CreateMachineRequest{
@@ -86,7 +86,7 @@ func TestCreateMachines(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Invalid input - no Machine to add/update")
+			So(err.Error(), ShouldContainSubstring, nilEntity)
 		})
 		Convey("Create new machine - Invalid input empty name", func() {
 			req := &api.CreateMachineRequest{
@@ -95,7 +95,7 @@ func TestCreateMachines(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Invalid input - Machine ID is empty")
+			So(err.Error(), ShouldContainSubstring, emptyID)
 		})
 		Convey("Create new machine - Invalid input invalid characters", func() {
 			req := &api.CreateMachineRequest{
@@ -104,12 +104,12 @@ func TestCreateMachines(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Invalid input - Machine ID must contain only 4-63 characters")
+			So(err.Error(), ShouldContainSubstring, invalidCharacters)
 		})
 	})
 }
 
-func TestUpdateMachines(t *testing.T) {
+func TestUpdateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
@@ -142,7 +142,7 @@ func TestUpdateMachines(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachine(tf.C, ureq)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Not found")
+			So(err.Error(), ShouldContainSubstring, notFound)
 		})
 		Convey("Update machine - Invalid input nil", func() {
 			req := &api.UpdateMachineRequest{
@@ -151,7 +151,7 @@ func TestUpdateMachines(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Invalid input - no Machine to add/update")
+			So(err.Error(), ShouldContainSubstring, nilEntity)
 		})
 		Convey("Update machine - Invalid input empty name", func() {
 			req := &api.UpdateMachineRequest{
@@ -160,7 +160,7 @@ func TestUpdateMachines(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Invalid input - Machine ID is empty")
+			So(err.Error(), ShouldContainSubstring, emptyID)
 		})
 		Convey("Update machine - Invalid input invalid characters", func() {
 			req := &api.UpdateMachineRequest{
@@ -169,7 +169,114 @@ func TestUpdateMachines(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Invalid input - Machine ID must contain only 4-63 characters")
+			So(err.Error(), ShouldContainSubstring, invalidCharacters)
+		})
+	})
+}
+
+func TestGetMachine(t *testing.T) {
+	t.Parallel()
+	Convey("GetMachine", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
+		req := &api.CreateMachineRequest{
+			Machine: chromeOSMachine1,
+		}
+		resp, err := tf.Fleet.CreateMachine(tf.C, req)
+		So(err, ShouldBeNil)
+		assertMachineEqual(resp, chromeOSMachine1)
+		Convey("Get machine by existing ID", func() {
+			req := &api.GetMachineRequest{
+				Name: "chromeos-asset-1",
+			}
+			resp, err := tf.Fleet.GetMachine(tf.C, req)
+			So(err, ShouldBeNil)
+			assertMachineEqual(resp, chromeOSMachine1)
+		})
+		Convey("Get machine by non-existing ID", func() {
+			req := &api.GetMachineRequest{
+				Name: "chrome-asset-1",
+			}
+			resp, err := tf.Fleet.GetMachine(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, notFound)
+		})
+		Convey("Get machine - Invalid input empty name", func() {
+			req := &api.GetMachineRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetMachine(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, emptyID)
+		})
+		Convey("Get machine - Invalid input invalid characters", func() {
+			req := &api.GetMachineRequest{
+				Name: "a.b)7&",
+			}
+			resp, err := tf.Fleet.GetMachine(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, invalidCharacters)
+		})
+	})
+}
+
+func TestDeleteMachine(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteMachine", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
+		req := &api.CreateMachineRequest{
+			Machine: chromeOSMachine1,
+		}
+		resp, err := tf.Fleet.CreateMachine(tf.C, req)
+		So(err, ShouldBeNil)
+		assertMachineEqual(resp, chromeOSMachine1)
+		Convey("Delete machine by existing ID", func() {
+			req := &api.DeleteMachineRequest{
+				Name: "chromeos-asset-1",
+			}
+			_, err := tf.Fleet.DeleteMachine(tf.C, req)
+			So(err, ShouldBeNil)
+			greq := &api.GetMachineRequest{
+				Name: "chromeos-asset-1",
+			}
+			res, err := tf.Fleet.GetMachine(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, notFound)
+		})
+		Convey("Delete machine by non-existing ID", func() {
+			req := &api.DeleteMachineRequest{
+				Name: "chrome-asset-1",
+			}
+			_, err := tf.Fleet.DeleteMachine(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, notFound)
+		})
+		Convey("Delete machine - Invalid input empty name", func() {
+			req := &api.DeleteMachineRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteMachine(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, emptyID)
+		})
+		Convey("Delete machine - Invalid input invalid characters", func() {
+			req := &api.DeleteMachineRequest{
+				Name: "a.b)7&",
+			}
+			resp, err := tf.Fleet.DeleteMachine(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, invalidCharacters)
 		})
 	})
 }

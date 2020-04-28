@@ -74,31 +74,23 @@ func UpdateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine,
 	return putMachine(ctx, machine, true)
 }
 
+// GetMachine returns machine for the given id from datastore.
+func GetMachine(ctx context.Context, id string) (*fleet.Machine, error) {
+	pm, err := fleetds.Get(ctx, &fleet.Machine{Name: id}, newEntity)
+	if err == nil {
+		return pm.(*fleet.Machine), err
+	}
+	return nil, err
+}
+
 // GetAllMachines returns all machines in datastore.
 func GetAllMachines(ctx context.Context) (*fleetds.OpResults, error) {
 	return fleetds.GetAll(ctx, queryAll)
 }
 
-// GetMachinesByID returns machines for the given ids from datastore.
-func GetMachinesByID(ctx context.Context, ids []string) *fleetds.OpResults {
-	protos := make([]proto.Message, len(ids))
-	for i, id := range ids {
-		protos[i] = &fleet.Machine{
-			Name: id,
-		}
-	}
-	return fleetds.GetByID(ctx, protos, newEntity)
-}
-
-// DeleteMachines returns the deleted machines
-func DeleteMachines(ctx context.Context, ids []string) *fleetds.OpResults {
-	protos := make([]proto.Message, len(ids))
-	for i, id := range ids {
-		protos[i] = &fleet.Machine{
-			Name: id,
-		}
-	}
-	return fleetds.Delete(ctx, protos, newEntity)
+// DeleteMachine deletes the machine in datastore
+func DeleteMachine(ctx context.Context, id string) error {
+	return fleetds.Delete(ctx, &fleet.Machine{Name: id}, newEntity)
 }
 
 func putMachine(ctx context.Context, machine *fleet.Machine, update bool) (*fleet.Machine, error) {
