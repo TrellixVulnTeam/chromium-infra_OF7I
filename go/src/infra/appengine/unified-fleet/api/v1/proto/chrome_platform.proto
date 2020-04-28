@@ -8,7 +8,9 @@ package unifiedfleet.api.v1.proto;
 
 option go_package = "infra/appengine/unified-fleet/api/v1/proto;ufspb";
 
+import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 
 // ChromePlatform refers to static configs defined by Chrome Browser lab
 // for their machines
@@ -21,6 +23,9 @@ message ChromePlatform {
     string name = 1;
     string manufacturer = 2;
     string description = 3;
+    // Record the last update timestamp of this machine (In UTC timezone)
+    google.protobuf.Timestamp update_time = 4 [
+            (google.api.field_behavior) = OUTPUT_ONLY];
     // Hold for the next version of UFS proto as it needs more manual input to bootstrap
-    // int32 vm_slots = 4;
+    // int32 vm_slots = 5;
 }

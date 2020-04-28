@@ -34,15 +34,16 @@ message Machine {
     // Location details of where the machine is placed
     Location location = 3;
     oneof device {
-    // Chrome Browser Machine
-    ChromeBrowserMachine chrome_browser_machine = 4;
-    // Chrome OS Machine. The registration system will subscribe to the HaRT system,
-    // and automatically get it using Machine name once a machine gets recorded.
-    ChromeOSMachine chromeos_machine = 5 [
-            (google.api.field_behavior) = OUTPUT_ONLY];
+        // Chrome Browser Machine
+        ChromeBrowserMachine chrome_browser_machine = 4;
+        // Chrome OS Machine. The registration system will subscribe to the HaRT system,
+        // and automatically get it using Machine name once a machine gets recorded.
+        ChromeOSMachine chromeos_machine = 5 [
+                (google.api.field_behavior) = OUTPUT_ONLY];
     };
     // Record the last update timestamp of this machine (In UTC timezone)
-    google.protobuf.Timestamp update_time = 6;
+    google.protobuf.Timestamp update_time = 6 [
+            (google.api.field_behavior) = OUTPUT_ONLY];
     // Record the ACL info of the machine
     string realm = 7;
 }

@@ -6,7 +6,6 @@ package registration
 
 import (
 	"context"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
@@ -24,9 +23,7 @@ type MachineEntity struct {
 	_kind string `gae:"$kind,Machine"`
 	ID    string `gae:"$id"`
 	// fleet.Machine cannot be directly used as it contains pointer.
-	Machine []byte `gae:",noindex"`
-	// Should be in UTC timezone.
-	Updated time.Time
+	Machine []byte         `gae:",noindex"`
 	Parent  *datastore.Key `gae:"$parent"`
 }
 
@@ -39,12 +36,7 @@ func (e *MachineEntity) GetProto() (proto.Message, error) {
 	return &p, nil
 }
 
-// GetUpdated returns the updated time of the entity.
-func (e *MachineEntity) GetUpdated() time.Time {
-	return e.Updated
-}
-
-func newEntity(ctx context.Context, pm proto.Message, updateTime time.Time) (fleetds.FleetEntity, error) {
+func newEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
 	p := pm.(*fleet.Machine)
 	if p.GetId().GetValue() == "" {
 		return nil, errors.Reason("Empty Machine ID").Err()
@@ -57,7 +49,6 @@ func newEntity(ctx context.Context, pm proto.Message, updateTime time.Time) (fle
 	return &MachineEntity{
 		ID:      p.GetId().GetValue(),
 		Machine: machine,
-		Updated: updateTime,
 		Parent:  parent,
 	}, nil
 }

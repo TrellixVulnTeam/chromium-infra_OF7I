@@ -6,7 +6,6 @@ package datastore
 
 import (
 	"context"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
@@ -17,11 +16,10 @@ import (
 // FleetEntity represents the interface of entity in datastore.
 type FleetEntity interface {
 	GetProto() (proto.Message, error)
-	GetUpdated() time.Time
 }
 
 // NewFunc creates a new fleet entity.
-type NewFunc func(context.Context, proto.Message, time.Time) (FleetEntity, error)
+type NewFunc func(context.Context, proto.Message) (FleetEntity, error)
 
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
@@ -47,13 +45,11 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, update bool) (*
 	allRes := make(OpResults, len(es))
 	checkEntities := make([]FleetEntity, 0, len(es))
 	checkRes := make(OpResults, 0, len(es))
-	updated := time.Now().UTC()
 	for i, e := range es {
 		allRes[i] = &OpResult{
-			Data:      e,
-			Timestamp: updated,
+			Data: e,
 		}
-		entity, err := nf(ctx, e, updated)
+		entity, err := nf(ctx, e)
 		if err != nil {
 			allRes[i].LogError(err)
 			continue
@@ -106,9 +102,7 @@ func GetAll(ctx context.Context, qf QueryAllFunc) (*OpResults, error) {
 	}
 	res := make(OpResults, len(entities))
 	for i, e := range entities {
-		res[i] = &OpResult{
-			Timestamp: e.GetUpdated(),
-		}
+		res[i] = &OpResult{}
 		pm, err := e.GetProto()
 		if err != nil {
 			res[i].LogError(err)
@@ -124,10 +118,9 @@ func GetByID(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 	allRes := make(OpResults, len(es))
 	checkRes := make(OpResults, 0, len(es))
 	entities := make([]FleetEntity, 0, len(es))
-	updated := time.Now().UTC()
 	for i, e := range es {
 		allRes[i] = &OpResult{}
-		entity, err := nf(ctx, e, updated)
+		entity, err := nf(ctx, e)
 		if err != nil {
 			allRes[i].LogError(err)
 			continue
@@ -145,7 +138,6 @@ func GetByID(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 	}
 
 	for i, e := range entities {
-		checkRes[i].Timestamp = e.GetUpdated()
 		pm, err := e.GetProto()
 		if err != nil {
 			checkRes[i].LogError(err)
@@ -160,13 +152,11 @@ func Delete(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 	allRes := make(OpResults, len(es))
 	checkRes := make(OpResults, 0, len(es))
 	checkEntities := make([]FleetEntity, 0, len(es))
-	updated := time.Now().UTC()
 	for i, e := range es {
 		allRes[i] = &OpResult{
-			Timestamp: updated,
-			Data:      e,
+			Data: e,
 		}
-		entity, err := nf(ctx, e, updated)
+		entity, err := nf(ctx, e)
 		if err != nil {
 			allRes[i].LogError(err)
 			continue
@@ -203,12 +193,6 @@ type OpResult struct {
 	// Update: record the proto object to be updated.
 	Data proto.Message
 	Err  error
-	// Operations:
-	// Get: record when the proto object is last updated to datastore.
-	// Add: record when the proto object is added to datastore.
-	// Delete: record when the proto object is removed from datastore.
-	// Update: record when the proto object is just updated.
-	Timestamp time.Time
 }
 
 // LogError logs the error for an operation.

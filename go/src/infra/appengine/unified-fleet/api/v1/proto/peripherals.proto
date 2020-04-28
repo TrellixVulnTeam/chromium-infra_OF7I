@@ -8,7 +8,9 @@ package unifiedfleet.api.v1.proto;
 
 option go_package = "infra/appengine/unified-fleet/api/v1/proto;ufspb";
 
+import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "infra/appengine/unified-fleet/api/v1/proto/chrome_platform.proto";
 
 message KVM {
@@ -22,6 +24,9 @@ message KVM {
     string mac_address = 2;
     ChromePlatform platform = 3;
     int32 capacity_port = 4;
+    // Record the last update timestamp of this machine (In UTC timezone)
+    google.protobuf.Timestamp update_time = 5 [
+            (google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Refer to one port of a given KVM
@@ -45,6 +50,9 @@ message RPM {
     int32 capacity_port = 3;
     // Just for record here, can be added later if needed
     // To be recorded: model, manufacturer, amperage, voltage
+        // Record the last update timestamp of this machine (In UTC timezone)
+    google.protobuf.Timestamp update_time = 4 [
+            (google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Refer to one port of a given RPM
@@ -71,6 +79,10 @@ message Switch {
     // its mac_address.
     // More info can be recorded for switch if available, e.g.
     // model, manufacturer
+
+    // Record the last update timestamp of this machine (In UTC timezone)
+    google.protobuf.Timestamp update_time = 3 [
+            (google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Refer to one port of a given switch
@@ -94,4 +106,8 @@ message Drac {
     string mac_address = 3;
     SwitchInterface switch_interface = 4;
     string password = 5;
+
+    // Record the last update timestamp of this machine (In UTC timezone)
+    google.protobuf.Timestamp update_time = 6 [
+            (google.api.field_behavior) = OUTPUT_ONLY];
 }
