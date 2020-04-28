@@ -12,8 +12,8 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 
+	fleet "infra/appengine/unified-fleet/api/v1/proto"
 	fleetds "infra/libs/fleet/datastore"
-	fleet "infra/libs/fleet/protos/go"
 )
 
 // ChromePlatformKind is the datastore entity kind for chrome platforms.
@@ -45,7 +45,7 @@ func (e *ChromePlatformEntity) GetUpdated() time.Time {
 
 func newEntity(ctx context.Context, pm proto.Message, updateTime time.Time) (fleetds.FleetEntity, error) {
 	p := pm.(*fleet.ChromePlatform)
-	if p.GetId().GetValue() == "" {
+	if p.GetName() == "" {
 		return nil, errors.Reason("Empty Chrome Platform ID").Err()
 	}
 	platform, err := proto.Marshal(p)
@@ -53,7 +53,7 @@ func newEntity(ctx context.Context, pm proto.Message, updateTime time.Time) (fle
 		return nil, errors.Annotate(err, "fail to marshal ChromePlatform %s", p).Err()
 	}
 	return &ChromePlatformEntity{
-		ID:       p.GetId().GetValue(),
+		ID:       p.GetName(),
 		Platform: platform,
 		Updated:  updateTime,
 	}, nil

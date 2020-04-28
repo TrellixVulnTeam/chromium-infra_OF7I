@@ -9,10 +9,10 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"infra/appengine/unified-fleet/api/v1"
+	proto "infra/appengine/unified-fleet/api/v1/proto"
+	api "infra/appengine/unified-fleet/api/v1/rpc"
 	"infra/libs/fleet/configuration"
 	"infra/libs/fleet/datastore"
-	fleet "infra/libs/fleet/protos/go"
 
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )
@@ -40,7 +40,7 @@ func TestImportChromePlatforms(t *testing.T) {
 				LocalFilepath: "test.config",
 			}
 			parsePlatformsFunc = mockParsePlatformsFunc
-			res, err := tf.Configuration.ImportChromePlatforms(ctx, req)
+			res, err := tf.Fleet.ImportChromePlatforms(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.GetPassed(), ShouldHaveLength, len(localPlatforms))
 			So(res.GetFailed(), ShouldHaveLength, 0)
@@ -63,12 +63,12 @@ func TestImportChromePlatforms(t *testing.T) {
 					},
 				}, nil
 			}
-			res, err := tf.Configuration.ImportChromePlatforms(ctx, req)
+			res, err := tf.Fleet.ImportChromePlatforms(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.GetPassed(), ShouldHaveLength, 1)
 			So(res.GetFailed(), ShouldHaveLength, 1)
-			So(res.GetPassed()[0].GetPlatform().GetId().GetValue(), ShouldEqual, "platform4")
-			So(res.GetFailed()[0].GetPlatform().GetId().GetValue(), ShouldEqual, "platform1")
+			So(res.GetPassed()[0].GetPlatform().GetName(), ShouldEqual, "platform4")
+			So(res.GetFailed()[0].GetPlatform().GetName(), ShouldEqual, "platform1")
 
 			getRes, err := configuration.GetAllChromePlatforms(ctx)
 			So(err, ShouldBeNil)
@@ -91,7 +91,7 @@ func getLocalPlatformNames() []string {
 func getReturnedPlatformNames(res datastore.OpResults) []string {
 	gets := make([]string, len(res))
 	for i, r := range res {
-		gets[i] = r.Data.(*fleet.ChromePlatform).GetId().GetValue()
+		gets[i] = r.Data.(*proto.ChromePlatform).GetName()
 	}
 	return gets
 }

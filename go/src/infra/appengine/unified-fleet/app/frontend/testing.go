@@ -21,14 +21,14 @@ type testFixture struct {
 	T *testing.T
 	C context.Context
 
-	Configuration *ConfigurationServerImpl
+	Fleet *FleetServerImpl
 }
 
 func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, func()) {
 	tf := testFixture{T: t, C: ctx}
 	mc := gomock.NewController(t)
 
-	tf.Configuration = &ConfigurationServerImpl{}
+	tf.Fleet = &FleetServerImpl{}
 
 	validate := func() {
 		mc.Finish()

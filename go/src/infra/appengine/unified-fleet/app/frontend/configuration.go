@@ -17,29 +17,20 @@ import (
 	"go.chromium.org/luci/config/server/cfgclient/textproto"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 
-	api "infra/appengine/unified-fleet/api/v1"
+	proto "infra/appengine/unified-fleet/api/v1/proto"
+	api "infra/appengine/unified-fleet/api/v1/rpc"
 	"infra/appengine/unified-fleet/app/config"
 	"infra/libs/fleet/configuration"
 	"infra/libs/fleet/datastore"
-	fleet "infra/libs/fleet/protos/go"
 )
 
 const defaultCfgService = "luci-config.appspot.com"
-
-// CfgInterfaceFactory is a contsructor for a luciconfig.Interface
-// For potential unittest usage
-type CfgInterfaceFactory func(ctx context.Context) luciconfig.Interface
-
-// ConfigurationServerImpl implements the configuration server interfaces.
-type ConfigurationServerImpl struct {
-	cfgInterfaceFactory CfgInterfaceFactory
-}
 
 var (
 	parsePlatformsFunc = configuration.ParsePlatformsFromFile
 )
 
-func (cs *ConfigurationServerImpl) newCfgInterface(ctx context.Context) luciconfig.Interface {
+func (cs *FleetServerImpl) newCfgInterface(ctx context.Context) luciconfig.Interface {
 	if cs.cfgInterfaceFactory != nil {
 		return cs.cfgInterfaceFactory(ctx)
 	}
@@ -57,12 +48,12 @@ func (cs *ConfigurationServerImpl) newCfgInterface(ctx context.Context) luciconf
 }
 
 // ImportChromePlatforms imports the Chrome Platform in batch.
-func (cs *ConfigurationServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *api.ImportChromePlatformsResponse, err error) {
+func (cs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *api.ImportChromePlatformsResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	var platforms []*fleet.ChromePlatform
+	var platforms []*proto.ChromePlatform
 	oldP := &crimsonconfig.Platforms{}
 	switch req.LocalFilepath {
 	case "":
@@ -102,7 +93,7 @@ func toChromePlatformResult(res datastore.OpResults) []*api.ChromePlatformResult
 			errMsg = r.Err.Error()
 		}
 		cpRes[i] = &api.ChromePlatformResult{
-			Platform: r.Data.(*fleet.ChromePlatform),
+			Platform: r.Data.(*proto.ChromePlatform),
 			ErrorMsg: errMsg,
 		}
 	}

@@ -4,13 +4,13 @@
 
 syntax = "proto3";
 
-package fleet;
+package unifiedfleet.api.v1.rpc;
 
-option go_package = "api";
+option go_package = "infra/appengine/unified-fleet/api/v1/rpc;ufspb";
 
-import "chrome_config.proto";
+import "infra/appengine/unified-fleet/api/v1/proto/chrome_platform.proto";
 
-service Configuration {
+service Fleet {
   // ImportChromePlatforms imports chrome platforms.
   rpc ImportChromePlatforms(ImportChromePlatformsRequest) returns (ImportChromePlatformsResponse);
 }
@@ -26,6 +26,6 @@ message ImportChromePlatformsResponse {
 }
 
 message ChromePlatformResult {
-  fleet.ChromePlatform platform = 1;
+  proto.ChromePlatform platform = 1;
   string error_msg = 2;
 }

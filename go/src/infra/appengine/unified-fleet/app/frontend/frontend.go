@@ -10,14 +10,13 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
-
-	api "infra/appengine/unified-fleet/api/v1"
+	api "infra/appengine/unified-fleet/api/v1/rpc"
 )
 
 // InstallServices installs ...
 func InstallServices(apiServer *prpc.Server) {
-	api.RegisterConfigurationServer(apiServer, &api.DecoratedConfiguration{
-		Service: &ConfigurationServerImpl{},
+	api.RegisterFleetServer(apiServer, &api.DecoratedFleet{
+		Service: &FleetServerImpl{},
 		Prelude: checkAccess,
 	})
 }

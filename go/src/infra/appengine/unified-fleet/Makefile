@@ -24,7 +24,7 @@ build:
 # Run service locally
 .PHONY: dev
 dev: build
-	./ufs-service
+	./ufs-service --cloud-project="unified-fleet-system-dev"
 
 # Uploading & Switching
 .PHONY: up-dev

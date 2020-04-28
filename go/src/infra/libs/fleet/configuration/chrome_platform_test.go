@@ -5,7 +5,7 @@
 package configuration
 
 import (
-	fleet "infra/libs/fleet/protos/go"
+	fleet "infra/appengine/unified-fleet/api/v1/proto"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -15,10 +15,7 @@ import (
 
 func mockChromePlatform(id string) *fleet.ChromePlatform {
 	return &fleet.ChromePlatform{
-		Id: &fleet.ChromePlatformID{
-			Value: id,
-		},
-		VmSlots: 0,
+		Name: id,
 	}
 }
 func TestInsertChromePlatforms(t *testing.T) {
@@ -37,16 +34,16 @@ func TestInsertChromePlatforms(t *testing.T) {
 			So(dsResp.Passed(), ShouldHaveLength, len(toAdd))
 			So(dsResp.Failed(), ShouldHaveLength, 0)
 			want := []string{
-				toAdd[0].GetId().GetValue(),
-				toAdd[1].GetId().GetValue(),
+				toAdd[0].GetName(),
+				toAdd[1].GetName(),
 			}
 			gets, err := GetAllChromePlatforms(ctx)
 			So(err, ShouldBeNil)
 			So(gets, ShouldHaveLength, 2)
 			passed := gets.Passed()
 			got := []string{
-				passed[0].Data.(*fleet.ChromePlatform).Id.GetValue(),
-				passed[1].Data.(*fleet.ChromePlatform).Id.GetValue(),
+				passed[0].Data.(*fleet.ChromePlatform).Name,
+				passed[1].Data.(*fleet.ChromePlatform).Name,
 			}
 			So(got, ShouldResemble, want)
 		})
@@ -67,8 +64,8 @@ func TestInsertChromePlatforms(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(dsResp.Passed(), ShouldHaveLength, 1)
 			So(dsResp.Failed(), ShouldHaveLength, 1)
-			So(dsResp.Passed()[0].Data.(*fleet.ChromePlatform).Id.GetValue(), ShouldEqual, "platform3")
-			So(dsResp.Failed()[0].Data.(*fleet.ChromePlatform).Id.GetValue(), ShouldEqual, "platform1")
+			So(dsResp.Passed()[0].Data.(*fleet.ChromePlatform).Name, ShouldEqual, "platform3")
+			So(dsResp.Failed()[0].Data.(*fleet.ChromePlatform).Name, ShouldEqual, "platform1")
 
 			want := []string{"platform1", "platform2", "platform3"}
 			gets, err := GetAllChromePlatforms(ctx)
@@ -76,9 +73,9 @@ func TestInsertChromePlatforms(t *testing.T) {
 			So(gets, ShouldHaveLength, 3)
 			passed := gets.Passed()
 			got := []string{
-				passed[0].Data.(*fleet.ChromePlatform).Id.GetValue(),
-				passed[1].Data.(*fleet.ChromePlatform).Id.GetValue(),
-				passed[2].Data.(*fleet.ChromePlatform).Id.GetValue(),
+				passed[0].Data.(*fleet.ChromePlatform).Name,
+				passed[1].Data.(*fleet.ChromePlatform).Name,
+				passed[2].Data.(*fleet.ChromePlatform).Name,
 			}
 			So(got, ShouldResemble, want)
 		})

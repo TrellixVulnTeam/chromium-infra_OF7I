@@ -11,8 +11,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 
+	fleet "infra/appengine/unified-fleet/api/v1/proto"
 	gitlib "infra/libs/cros/git"
-	fleet "infra/libs/fleet/protos/go"
 
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )
@@ -51,9 +51,7 @@ func ToChromePlatforms(oldP *crimsonconfig.Platforms) []*fleet.ChromePlatform {
 	newP := make([]*fleet.ChromePlatform, len(ps))
 	for i, p := range ps {
 		newP[i] = &fleet.ChromePlatform{
-			Id: &fleet.ChromePlatformID{
-				Value: p.GetName(),
-			},
+			Name:         p.GetName(),
 			Manufacturer: p.GetManufacturer(),
 			Description:  p.GetDescription(),
 		}
