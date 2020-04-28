@@ -1739,11 +1739,10 @@ class WorkEnv(object):
 
   # TODO(crbug/monorail/7238): rewrite this method to call BatchGetUsers.
   def GetUser(self, user_id):
+    # type: (int) -> User
     """Return the user with the given ID."""
-    # Make sure the requested user exists.
-    with self.mc.profiler.Phase('getting user %s' % user_id):
-      self.services.user.LookupUserEmail(self.mc.cnxn, user_id)
-      return self.services.user.GetUser(self.mc.cnxn, user_id)
+
+    return self.BatchGetUsers([user_id])[0]
 
   def BatchGetUsers(self, user_ids):
     # type: (Sequence[int]) -> Sequence[User]
