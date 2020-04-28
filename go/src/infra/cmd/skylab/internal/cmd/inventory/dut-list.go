@@ -59,16 +59,6 @@ type dutListRun struct {
 	dims map[string]string
 }
 
-type dutListParams struct {
-	board     string
-	model     string
-	pool      string
-	servoType string
-	// dims is the additional dimensions used to filter DUTs.
-	// nil is a valid value for dims.
-	dims map[string]string
-}
-
 func (c *dutListRun) getUseInventory() bool {
 	return c.useInventory
 }
@@ -92,7 +82,13 @@ func (c *dutListRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 
-	params := dutListParams{c.board, c.model, c.pool, c.servoType, c.dims}
+	params := dutListParams{
+		board:     c.board,
+		model:     c.model,
+		pool:      c.pool,
+		servoType: c.servoType,
+		dims:      c.dims,
+	}
 	var listed []*swarming.ListedHost
 
 	if c.getUseInventory() {
@@ -115,9 +111,19 @@ func (c *dutListRun) innerRun(a subcommands.Application, args []string, env subc
 	return nil
 }
 
-func dimsOfDutListParams(params dutListParams) ([]*swarming_api.SwarmingRpcsStringPair, error) {
+type dutListParams struct {
+	board     string
+	model     string
+	pool      string
+	servoType string
+	// dims is the additional dimensions used to filter DUTs.
+	// nil is a valid value for dims.
+	dims map[string]string
+}
+
+func (p dutListParams) swarmingDims() ([]*swarming_api.SwarmingRpcsStringPair, error) {
 	// TODO(gregorynisbet): support servoType
-	if params.servoType != "" {
+	if p.servoType != "" {
 		return nil, errors.New("servoType not yet supported")
 	}
 	makePair := func(key string, value string) *swarming_api.SwarmingRpcsStringPair {
@@ -127,23 +133,23 @@ func dimsOfDutListParams(params dutListParams) ([]*swarming_api.SwarmingRpcsStri
 		return out
 	}
 	out := []*swarming_api.SwarmingRpcsStringPair{makePair("pool", "ChromeOSSkylab")}
-	if params.model != "" {
-		out = append(out, makePair("label-model", params.model))
+	if p.model != "" {
+		out = append(out, makePair("label-model", p.model))
 	}
-	if params.board != "" {
-		out = append(out, makePair("label-board", params.board))
+	if p.board != "" {
+		out = append(out, makePair("label-board", p.board))
 	}
-	if params.pool != "" {
-		out = append(out, makePair("label-pool", params.pool))
+	if p.pool != "" {
+		out = append(out, makePair("label-pool", p.pool))
 	}
-	for k, v := range params.dims {
+	for k, v := range p.dims {
 		out = append(out, makePair(k, v))
 	}
 	return out, nil
 }
 
 func listDutsSwarming(ctx context.Context, sc *swarming.Client, params dutListParams) ([]*swarming.ListedHost, error) {
-	dims, err := dimsOfDutListParams(params)
+	dims, err := params.swarmingDims()
 	if err != nil {
 		return nil, err
 	}

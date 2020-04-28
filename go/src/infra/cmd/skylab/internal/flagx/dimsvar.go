@@ -37,7 +37,7 @@ func (d dimsVar) Set(newval string) error {
 	if d.handle == nil {
 		panic("DimsVar handle must be pointing at a map[string]string!")
 	}
-	if *d.handle != nil {
+	if *d.handle == nil {
 		*d.handle = make(map[string]string)
 	}
 	// strings.Split, if given an empty string, will produce a
