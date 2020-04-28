@@ -278,7 +278,7 @@ describe('mr-app', () => {
       store.dispatch(select(projectName));
       sinon.spy(store, 'dispatch');
 
-      assert.equal(store.getState().project.name, projectName);
+      assert.equal(store.getState().projectV0.name, projectName);
 
       element._selectProject(
           {params: {project: projectName}},

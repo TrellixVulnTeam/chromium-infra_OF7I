@@ -8,6 +8,7 @@ import thunk from 'redux-thunk';
 import * as hotlist from './hotlist.js';
 import * as issueV0 from './issueV0.js';
 import * as permissions from './permissions.js';
+import * as project from './project.js';
 import * as projectV0 from './projectV0.js';
 import * as sitewide from './sitewide.js';
 import * as user from './user.js';
@@ -37,7 +38,8 @@ const reducer = combineReducers({
   hotlist: hotlist.reducer,
   issue: issueV0.reducer,
   permissions: permissions.reducer,
-  project: projectV0.reducer,
+  project: project.reducer,
+  projectV0: projectV0.reducer,
   user: user.reducer,
   userV0: userV0.reducer,
   sitewide: sitewide.reducer,

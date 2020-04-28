@@ -70,7 +70,7 @@ export const TEMPLATE_DEF = Object.freeze({
   templateName: 'Template Name',
 });
 
-export const STATE = Object.freeze({project: {
+export const STATE = Object.freeze({projectV0: {
   name: PROJECT_NAME,
   configs: {[PROJECT_NAME]: CONFIG},
   presentationConfigs: {[PROJECT_NAME]: PRESENTATION_CONFIG},

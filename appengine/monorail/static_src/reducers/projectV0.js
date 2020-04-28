@@ -149,7 +149,7 @@ export const reducer = combineReducers({
 });
 
 // Selectors
-export const project = (state) => state.project || {};
+export const project = (state) => state.projectV0 || {};
 
 export const viewedProjectName =
   createSelector(project, (project) => project.name || null);
@@ -405,7 +405,7 @@ export const fieldDefsByApprovalName = createSelector(
 );
 
 export const fetchingConfig = (state) => {
-  return state.project.requests.fetchConfig.requesting;
+  return state.projectV0.requests.fetchConfig.requesting;
 };
 
 /**
@@ -415,7 +415,7 @@ export const fetchingConfig = (state) => {
  * @return {boolean}
  */
 export const fetchingPresentationConfig = (state) => {
-  return state.project.requests.fetchPresentationConfig.requesting;
+  return state.projectV0.requests.fetchPresentationConfig.requesting;
 };
 
 // Action Creators

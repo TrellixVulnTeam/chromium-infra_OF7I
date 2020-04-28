@@ -649,12 +649,12 @@ describe('issue', () => {
 
   it('fieldDefs filters fields by applicable type', () => {
     assert.deepEqual(issueV0.fieldDefs({
-      project: {},
+      projectV0: {},
       ...wrapIssue(),
     }), []);
 
     assert.deepEqual(issueV0.fieldDefs({
-      project: {
+      projectV0: {
         name: 'chromium',
         configs: {
           chromium: {
@@ -687,7 +687,7 @@ describe('issue', () => {
 
   it('fieldDefs skips approval fields for all issues', () => {
     assert.deepEqual(issueV0.fieldDefs({
-      project: {
+      projectV0: {
         name: 'chromium',
         configs: {
           chromium: {
@@ -710,7 +710,7 @@ describe('issue', () => {
 
   it('fieldDefs includes non applicable fields when values defined', () => {
     assert.deepEqual(issueV0.fieldDefs({
-      project: {
+      projectV0: {
         name: 'chromium',
         configs: {
           chromium: {
