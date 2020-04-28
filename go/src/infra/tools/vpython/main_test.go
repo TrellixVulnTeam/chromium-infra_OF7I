@@ -48,14 +48,14 @@ func init() {
 	}
 }
 
-func TestMain(t *testing.T) {
+func TestMainFunc(t *testing.T) {
 	self, err := os.Executable()
 	if err != nil {
 		t.Fatalf("could not get executable path: %s", err)
 	}
 	os.Setenv(vpythonTestBinaryEnv, self)
 
-	// Are we a spawned subprocess of TestMain?
+	// Are we a spawned subprocess of TestMainFunc?
 	env := environ.System()
 	if v := env.GetEmpty(testMainRunScriptENV); v != "" {
 		os.Exit(testMainRunDelegate(self, v))
@@ -188,7 +188,7 @@ func (tc *testCase) getDelegateCommand(c context.Context, root string, env envir
 		env: env,
 	}
 
-	tdc.Cmd = exec.CommandContext(c, tdc.tc.self, "-test.run", "^TestMain$")
+	tdc.Cmd = exec.CommandContext(c, tdc.tc.self, "-test.run", "^TestMainFunc$")
 	tdc.Stdout = &tdc.output
 	tdc.Stderr = os.Stderr
 
