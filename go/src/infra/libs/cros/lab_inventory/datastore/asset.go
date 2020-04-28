@@ -337,3 +337,34 @@ func AddAssetInfo(ctx context.Context, assetInfo []*ufs.AssetInfo) []*AssetInfoO
 	}
 	return res
 }
+
+// GetAssetInfo returns the AssetInfo matching the AssetID
+func GetAssetInfo(ctx context.Context, ids []string) []*AssetInfoOpRes {
+	queryResults := make([]*AssetInfoOpRes, len(ids))
+	qrMap := make(map[string]*AssetInfoOpRes)
+	entities := make([]*AssetInfoEntity, 0, len(ids))
+	for _, assetID := range ids {
+		res := &AssetInfoOpRes{
+			Entity: &AssetInfoEntity{
+				AssetTag: assetID,
+			},
+		}
+		qrMap[assetID] = res
+		// TODO(crbug.com/1074114): Check for "" may not be required
+		// depending on how the bug is addressed..
+		if assetID != "" {
+			entities = append(entities, res.Entity)
+		} else {
+			res.Err = errors.Reason("Not a valid asset tag").Err()
+		}
+	}
+	if err := datastore.Get(ctx, entities); err != nil {
+		for i, e := range err.(errors.MultiError) {
+			qrMap[entities[i].AssetTag].Err = e
+		}
+	}
+	for i, assetID := range ids {
+		queryResults[i] = qrMap[assetID]
+	}
+	return queryResults
+}

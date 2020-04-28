@@ -172,6 +172,46 @@ func TestAddAssetInfo(t *testing.T) {
 	})
 }
 
+func TestGetAssetInfo(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	ids1 := []string{"45673456237895", "45673456237896",
+		"45673456237897", "45673456237898"}
+	req1 := []*ufs.AssetInfo{mockAssetInfo(ids1[0]),
+		mockAssetInfo(ids1[1]),
+		mockAssetInfo(ids1[2]),
+		mockAssetInfo(ids1[3])}
+	ids2 := []string{"45673456237899", ""}
+	Convey("Get AssetInfo from datastore", t, func() {
+		Convey("Get existing and non-exiting AssetInfo from datastore", func() {
+			res := AddAssetInfo(ctx, req1)
+			So(res, ShouldHaveLength, 4)
+			So(res[0].Err, ShouldBeNil)
+			So(res[1].Err, ShouldBeNil)
+			So(res[2].Err, ShouldBeNil)
+			So(res[3].Err, ShouldBeNil)
+			ids1 = append(ids1, "45673456237899")
+			ai := GetAssetInfo(ctx, ids1)
+			So(ai, ShouldHaveLength, 5)
+			So(ai[4].Err, ShouldNotBeNil)
+			So(ai[0].Entity.AssetTag, ShouldEqual, ids1[0])
+			So(ai[1].Entity.AssetTag, ShouldEqual, ids1[1])
+			So(ai[2].Entity.AssetTag, ShouldEqual, ids1[2])
+			So(ai[3].Entity.AssetTag, ShouldEqual, ids1[3])
+			So(&ai[0].Entity.Info, ShouldResemble, req1[0])
+			So(&ai[1].Entity.Info, ShouldResemble, req1[1])
+			So(&ai[2].Entity.Info, ShouldResemble, req1[2])
+			So(&ai[3].Entity.Info, ShouldResemble, req1[3])
+		})
+		Convey("Get AssetInfo from datastore with invalid keys", func() {
+			ai := GetAssetInfo(ctx, ids2)
+			So(ai, ShouldHaveLength, 2)
+			So(ai[0].Err, ShouldNotBeNil)
+			So(ai[1].Err, ShouldNotBeNil)
+		})
+	})
+}
+
 func TestUpdateAsset(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
@@ -261,10 +301,10 @@ func TestGetAssetsByID(t *testing.T) {
 			assertLocationEqual(ast2.GetLocation(), asset2.GetLocation())
 		})
 		Convey("Get non-existent asset", func() {
-			req1 := []string{"45673456237897"}
+			req1 := []string{"45673456237897", ""}
 			res1 := GetAssetsByID(ctx, req1)
-			So(res1, ShouldHaveLength, 1)
-			So(res1[0].Err, ShouldNotBeNil)
+			So(res1, ShouldHaveLength, 2)
+			So(res1[1].Err, ShouldNotBeNil)
 		})
 	})
 }
