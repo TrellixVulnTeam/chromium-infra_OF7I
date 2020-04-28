@@ -1,0 +1,16 @@
+{
+    "remoteTestDrivers": [
+        {
+            "name": "remoteTestDrivers/tast"
+        },
+        {
+            "name": "remoteTestDrivers/tast"
+        },
+        {
+            "name": "remoteTestDrivers/tauto"
+        },
+        {
+            "name": "remoteTestDrivers/tauto"
+        }
+    ]
+}

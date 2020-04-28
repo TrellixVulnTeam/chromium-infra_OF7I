@@ -1,0 +1,4 @@
+[
+"## Errors ##",
+"RemoteTestDriver 'remoteTestDrivers/tauto': Test names must be unique, found repeated name(s): 'remoteTestDrivers/tauto/tests/foo'"
+]

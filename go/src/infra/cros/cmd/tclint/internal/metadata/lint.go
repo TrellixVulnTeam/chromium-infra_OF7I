@@ -14,6 +14,7 @@ import (
 	"unicode"
 
 	"go.chromium.org/chromiumos/config/go/api/test/metadata/v1"
+	"go.chromium.org/luci/common/data/stringset"
 )
 
 // Lint checks a given metadata specification for violations of requirements
@@ -27,13 +28,51 @@ func Lint(spec *metadata.Specification) Result {
 	for _, rtd := range spec.RemoteTestDrivers {
 		result.Merge(lintRTD(rtd))
 	}
+	result.Merge(verifyUniqueRemoteTestDriverNames(spec.RemoteTestDrivers))
 	return result
+}
+
+func verifyUniqueRemoteTestDriverNames(rtds []*metadata.RemoteTestDriver) Result {
+	result := Result{}
+	ns := make([]string, len(rtds))
+	for i, rtd := range rtds {
+		ns[i] = rtd.GetName()
+	}
+	if repeated := formatRepeated(ns); repeated != "" {
+		result.AppendError("RemoteTestDriver names must be unique, found repeated name(s): %s", repeated)
+	}
+	return result
+}
+
+func formatRepeated(ss []string) string {
+	seen := stringset.New(len(ss))
+	repeated := stringset.New(len(ss))
+	for _, s := range ss {
+		if seen.Has(s) {
+			repeated.Add(fmt.Sprintf("'%s'", s))
+		}
+		seen.Add(s)
+	}
+	return strings.Join(repeated.ToSortedSlice(), ",")
 }
 
 func lintRTD(rtd *metadata.RemoteTestDriver) Result {
 	result := lintRTDName(rtd.GetName())
 	for _, t := range rtd.Tests {
 		result.Merge(lintTest(t, rtd.GetName()))
+	}
+	result.MergeWithContext(verifyUniqueTestNames(rtd.Tests), "RemoteTestDriver '%s'", rtd.GetName())
+	return result
+}
+
+func verifyUniqueTestNames(tests []*metadata.Test) Result {
+	result := Result{}
+	ns := make([]string, len(tests))
+	for i, test := range tests {
+		ns[i] = test.GetName()
+	}
+	if repeated := formatRepeated(ns); repeated != "" {
+		result.AppendError("Test names must be unique, found repeated name(s): %s", repeated)
 	}
 	return result
 }
