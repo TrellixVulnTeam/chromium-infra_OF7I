@@ -22,12 +22,15 @@ export const USER = Object.freeze({
   displayName: DISPLAY_NAME,
 });
 
+export const NAME_2 = 'users/5678';
+
+export const DISPLAY_NAME_2 = 'other_user@example.com';
+
 /** @type {User} */
 export const USER_2 = Object.freeze({
-  userId: 5678,
-  name: 'users/5678',
-  displayName: 'other_user@example.com',
+  name: NAME_2,
+  displayName: DISPLAY_NAME_2,
 });
 
 /** @type {Object<string, User>} */
-export const BY_NAME = Object.freeze({[NAME]: USER});
+export const BY_NAME = Object.freeze({[NAME]: USER, [NAME_2]: USER_2});

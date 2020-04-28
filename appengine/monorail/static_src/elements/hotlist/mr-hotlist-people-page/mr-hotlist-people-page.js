@@ -33,6 +33,18 @@ class _MrHotlistPeoplePage extends LitElement {
       li {
         list-style-type: none;
       }
+      .placeholder {
+        animation: pulse 1s infinite ease-in-out;
+        background-clip: content-box;
+        height: .8em;
+        padding: .3em 0;
+        width: 160px;
+      }
+      @keyframes pulse {
+        0% {background-color: var(--chops-blue-50);}
+        50% {background-color: var(--chops-blue-75);}
+        100% {background-color: var(--chops-blue-50);}
+      }
     `;
   }
 
@@ -52,15 +64,15 @@ class _MrHotlistPeoplePage extends LitElement {
       <section>
         <h2>Owner</h2>
         <p>
-          ${this._renderUserLink(this._hotlist.owner)}
+          ${this._renderUserLink(this._owner)}
         </p>
       </section>
 
       <section>
         <h2>Editors</h2>
-        ${this._hotlist.editors.length ? html`
+        ${this._editors.length ? html`
           <ul>
-            ${this._hotlist.editors.map((user) => html`
+            ${this._editors.map((user) => html`
               <li>${this._renderUserLink(user)}</li>
             `)}
           </ul>
@@ -77,6 +89,7 @@ class _MrHotlistPeoplePage extends LitElement {
    * @return {TemplateResult}
    */
   _renderUserLink(user) {
+    if (!user) return html`<div class="placeholder"></div>`;
     return html`<mr-user-link .userRef=${userV3ToRef(user)}></mr-user-link>`;
   }
 
@@ -84,6 +97,8 @@ class _MrHotlistPeoplePage extends LitElement {
   static get properties() {
     return {
       _hotlist: {type: Object},
+      _owner: {type: Object},
+      _editors: {type: Array},
     };
   }
 
@@ -93,6 +108,10 @@ class _MrHotlistPeoplePage extends LitElement {
 
     /** @type {?Hotlist} */
     this._hotlist = null;
+    /** @type {?User} */
+    this._owner = null;
+    /** @type {Array<User>} */
+    this._editors = [];
   }
 };
 
@@ -101,6 +120,8 @@ export class MrHotlistPeoplePage extends connectStore(_MrHotlistPeoplePage) {
   /** @override */
   stateChanged(state) {
     this._hotlist = hotlist.viewedHotlist(state);
+    this._owner = hotlist.viewedHotlistOwner(state);
+    this._editors = hotlist.viewedHotlistEditors(state);
   }
 
   /** @override */

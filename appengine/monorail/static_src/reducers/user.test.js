@@ -27,7 +27,7 @@ describe('user reducers', () => {
   it('byName updates on BATCH_GET_SUCCESS', () => {
     const action = {type: user.BATCH_GET_SUCCESS, users: [example.USER]};
     const actual = user.byNameReducer({}, action);
-    assert.deepEqual(actual, example.BY_NAME);
+    assert.deepEqual(actual, {[example.NAME]: example.USER});
   });
 });
 

@@ -90,6 +90,52 @@ describe('hotlist selectors', () => {
     });
   });
 
+  describe('viewedHotlistOwner', () => {
+    it('normal case', () => {
+      const state = {
+        hotlist: {name: example.NAME, byName: example.BY_NAME},
+        user: {byName: exampleUser.BY_NAME},
+      };
+      assert.deepEqual(hotlist.viewedHotlistOwner(state), exampleUser.USER);
+    });
+
+    it('no hotlist', () => {
+      const state = {hotlist: {}, user: {}};
+      assert.deepEqual(hotlist.viewedHotlistOwner(state), null);
+    });
+  });
+
+  describe('viewedHotlistEditors', () => {
+    it('normal case', () => {
+      const editors = [exampleUser.USER, exampleUser.USER_2];
+      const state = {
+        hotlist: {
+          name: example.NAME,
+          byName: {[example.NAME]: {...example.HOTLIST, editors}},
+        },
+        user: {byName: exampleUser.BY_NAME},
+      };
+      assert.deepEqual(hotlist.viewedHotlistEditors(state), editors);
+    });
+
+    it('no user data', () => {
+      const editors = [exampleUser.USER, exampleUser.USER_2];
+      const state = {
+        hotlist: {
+          name: example.NAME,
+          byName: {[example.NAME]: {...example.HOTLIST, editors}},
+        },
+        user: {byName: {}},
+      };
+      assert.deepEqual(hotlist.viewedHotlistEditors(state), [null, null]);
+    });
+
+    it('no hotlist', () => {
+      const state = {hotlist: {}, user: {}};
+      assert.deepEqual(hotlist.viewedHotlistEditors(state), []);
+    });
+  });
+
   describe('viewedHotlistItems', () => {
     it('normal case', () => {
       const state = {hotlist: {

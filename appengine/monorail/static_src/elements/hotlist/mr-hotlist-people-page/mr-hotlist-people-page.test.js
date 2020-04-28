@@ -9,6 +9,7 @@ import * as hotlist from 'reducers/hotlist.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import * as example from 'shared/test/constants-hotlist.js';
+import * as exampleUser from 'shared/test/constants-user.js';
 
 import {MrHotlistPeoplePage} from './mr-hotlist-people-page.js';
 
@@ -31,8 +32,17 @@ describe('mr-hotlist-people-page (unconnected)', () => {
     assert.include(element.shadowRoot.innerHTML, 'Loading');
   });
 
+  it('renders with no user data', async () => {
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    assert.isNotNull(element.shadowRoot.querySelector('.placeholder'));
+  });
+
   it('renders hotlist', async () => {
     element._hotlist = example.HOTLIST;
+    element._owner = exampleUser.USER;
+    element._editors = [exampleUser.USER_2];
     await element.updateComplete;
   });
 });

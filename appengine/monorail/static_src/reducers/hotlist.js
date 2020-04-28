@@ -18,15 +18,17 @@
 
 import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
+import {createReducer, createRequestReducer} from './redux-helpers.js';
+
+import {prpcClient} from 'prpc-client-instance.js';
 import {userIdOrDisplayNameToUserRef, issueNameToRef, pathsToFieldMask}
   from 'shared/converters.js';
-import {createReducer, createRequestReducer} from './redux-helpers.js';
+
 import * as issueV0 from './issueV0.js';
 import * as permissions from './permissions.js';
 import * as user from './user.js';
-import {prpcClient} from 'prpc-client-instance.js';
-import 'shared/typedef.js';
 
+import 'shared/typedef.js';
 /** @typedef {import('redux').AnyAction} AnyAction */
 
 // Permissions
@@ -175,6 +177,31 @@ export const viewedHotlist = createSelector(
     (byName, name) => name && byName[name] || null);
 
 /**
+ * Returns the owner of the currently viewed Hotlist, or null if there is none.
+ * @param {any} state
+ * @return {?User}
+ */
+export const viewedHotlistOwner = createSelector(
+    [viewedHotlist, user.byName],
+    (hotlist, usersByName) => {
+      return hotlist && usersByName[hotlist.owner.name] || null;
+    });
+
+/**
+ * Returns the editors of the currently viewed Hotlist. Returns [] if there is
+ * no hotlist data. Includes a null in the array for each editor whose User
+ * data is not in the store.
+ * @param {any} state
+ * @return {Array<User>}
+ */
+export const viewedHotlistEditors = createSelector(
+    [viewedHotlist, user.byName],
+    (hotlist, usersByName) => {
+      if (!hotlist) return [];
+      return hotlist.editors.map((editor) => usersByName[editor.name] || null);
+    });
+
+/**
  * Returns an Array containing the items in the currently viewed Hotlist,
  * or [] if there is no current Hotlist or no Hotlist data.
  * @param {any} state
@@ -259,9 +286,11 @@ export const fetch = (name) => async (dispatch) => {
     /** @type {Hotlist} */
     const hotlist = await prpcClient.call(
         'monorail.v1.Hotlists', 'GetHotlist', {name});
-    if (!hotlist.editors) {
-      hotlist.editors = [];
-    }
+    if (!hotlist.editors) hotlist.editors = [];
+
+    const users = hotlist.editors.map((editor) => editor.name);
+    users.push(hotlist.owner.name);
+    await dispatch(user.batchGet(users));
 
     dispatch({type: FETCH_SUCCESS, hotlist});
     return hotlist;
