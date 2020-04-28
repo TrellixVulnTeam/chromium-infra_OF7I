@@ -172,44 +172,6 @@ can also be helpful.
    to insert rows.
 3. Don't forget to include insert ids in the request!
 
-# (Optional Step) Writing a Dataflow workflow
-
-## Recommended Reading
-
-The [beam documentation](https://beam.apache.org/documentation/) is a great
-place to get started.
-
-## Specifics for Chrome Infrastructure Workflows
-
-Workflows are in the `packages/dataflow` directory. `packages/dataflow/common`
-contains abstractions that you will likely want to use. Take a look at what is
-available there before beginning your workflow.
-
-## Development
-
-See the [dataflow package
-README](https://chromium.googlesource.com/infra/infra/+/master/packages/dataflow/)
-for more information.
-
-## Testing
-
-You should write tests for your pipeline. Tests can be run using test.py, e.g.
-`./test.py test packages/dataflow`.
-
-# Scheduling a Dataflow workflow
-
-We want Dataflow workflows like the ones that populate our aggregate tables
-(e.g. cq_attempts) to run at regular intervals. You can accomplish this by
-configuring a builder to run the
-[remote_execute_dataflow_workflow recipe](https://chromium.googlesource.com/infra/infra/+/master/recipes/recipes/remote_execute_dataflow_workflow.py)
-with the proper properties. See [this
-change](https://chrome-internal-review.googlesource.com/c/412934/) for an
-example.
-
-The builder name should be `dataflow-workflow-[job name]` where job name is
-the name of the remotely executed job. This naming scheme sets up automated
-alerting for builder failures.
-
 # Step 3: Analyze/Track/Graph Events
 
 Generally you will use the [bigquery console](https://bigquery.cloud.google.com)
