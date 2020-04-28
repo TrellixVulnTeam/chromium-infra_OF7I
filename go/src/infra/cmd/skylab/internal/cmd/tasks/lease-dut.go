@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"infra/cmd/skylab/internal/cmd/utils"
-	"strings"
 	"time"
 
 	"github.com/maruel/subcommands"
@@ -17,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmd/skylab/internal/flagx"
 	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
@@ -57,7 +57,7 @@ Do not build automation around this subcommand.`,
 		c.Flags.StringVar(&c.board, "board", "", "Leases may optionally target a board instead of a hostname.")
 		// We allow arbitrary dimensions to be passed in via the -dims flag.
 		// e.g. -dims a=4,b=7
-		c.Flags.Var(dimsVar{data: c}, "dims", "List of additional dimensions in format key1=value1,key2=value2,... .")
+		c.Flags.Var(flagx.Dims(&c.dims), "dims", "List of additional dimensions in format key1=value1,key2=value2,... .")
 		return c
 	},
 }
@@ -71,38 +71,6 @@ type leaseDutRun struct {
 	model        string
 	board        string
 	dims         map[string]string
-}
-
-// dimsVar is a handle to leaseDutRun that implements the Value interface
-// and allows the dims map to be modified.
-type dimsVar struct {
-	data *leaseDutRun
-}
-
-// String returns the default value for dimensions represented as a string.
-// The default value is an empty map, which stringifies to an empty string.
-func (d dimsVar) String() string {
-	return ""
-}
-
-// Set populates the dims map with comma-delimited key-value pairs.
-// Setting the dims map always succeeds, regardless of what string is given.
-func (d dimsVar) Set(newval string) error {
-	if len(d.data.dims) == 0 {
-		d.data.dims = make(map[string]string)
-	}
-	// strings.Split, if given an empty string, will produce a
-	// slice containing a single string.
-	if len(newval) > 0 {
-		for _, entry := range strings.Split(newval, ",") {
-			key, val, err := splitKeyVal(entry)
-			if err != nil {
-				return err
-			}
-			d.data.dims[key] = val
-		}
-	}
-	return nil
 }
 
 func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -287,20 +255,6 @@ func (c *leaseDutRun) waitForTaskStart(ctx context.Context, client *swarming.Cli
 			return errors.Reason("Got unexpected task state %#v", s).Err()
 		}
 	}
-}
-
-// splitKeyVal splits a string with "=" into two key-value pairs,
-// and returns an error if this is impossible.
-// Strings with multiple "=" values are considered malformed.
-func splitKeyVal(s string) (string, string, error) {
-	res := strings.Split(s, "=")
-	switch len(res) {
-	case 0, 1:
-		return "", "", fmt.Errorf(`string (%s) does not contain a key and value`, s)
-	case 2:
-		return res[0], res[1], nil
-	}
-	return "", "", fmt.Errorf(`string (%s) contains more than too many %d "=" chars`, s, len(res))
 }
 
 // getInventoryClient produces an inventory client.
