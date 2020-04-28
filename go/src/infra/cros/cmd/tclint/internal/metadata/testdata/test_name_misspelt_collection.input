@@ -1,0 +1,12 @@
+{
+    "remoteTestDrivers": [
+        {
+            "name": "remoteTestDrivers/tauto",
+            "tests": [
+                {
+                    "name": "remoteTestDrivers/tauto/test/foo"
+                }
+            ]
+        }
+    ]
+}

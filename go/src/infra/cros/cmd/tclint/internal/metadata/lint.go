@@ -31,11 +31,16 @@ func Lint(spec *metadata.Specification) Result {
 }
 
 func lintRTD(rtd *metadata.RemoteTestDriver) Result {
-	return lintRTDName(rtd.GetName())
+	result := lintRTDName(rtd.GetName())
+	for _, t := range rtd.Tests {
+		result.Merge(lintTest(t, rtd.GetName()))
+	}
+	return result
 }
 
 const (
-	rtdCollection = "remoteTestDrivers"
+	rtdCollection  = "remoteTestDrivers"
+	testCollection = "tests"
 )
 
 func lintRTDName(name string) Result {
@@ -62,6 +67,42 @@ func lintRTDName(name string) Result {
 		result.AppendError("%s: name must be of the form '%s/{remoteTestDriver}', found trailing suffix '%s'", tag, rtdCollection, parts[2])
 	}
 
+	return result
+}
+
+func lintTest(test *metadata.Test, rtdName string) Result {
+	return lintTestName(test.GetName(), rtdName)
+}
+
+func lintTestName(name string, rtdName string) Result {
+	result := Result{}
+	tag := fmt.Sprintf("Test '%s'", name)
+	if result.MergeWithContext(lintResourceName(name), tag); result.Errors != nil {
+		return result
+	}
+	prefix := fmt.Sprintf("%s/", rtdName)
+	if !strings.HasPrefix(name, prefix) {
+		result.AppendError("%s: name must be prefixed with RemoteTestDriver name '%s'", tag, rtdName)
+		return result
+	}
+	name = strings.TrimPrefix(name, prefix)
+	parts := strings.Split(name, "/")
+	switch len(parts) {
+	case 0:
+		result.AppendError("%s: name must be of the form '%s/{test}', found empty string", tag, testCollection)
+	case 1:
+		if parts[0] == testCollection {
+			result.AppendError("%s: name must be of the form '%s/{test}', missing name after '%s'", tag, testCollection, testCollection)
+		} else {
+			result.AppendError("%s: name must be of the form '%s/{test}', missing prefix '%s'", tag, testCollection, testCollection)
+		}
+	case 2:
+		if parts[0] != testCollection {
+			result.AppendError("%s: name must be of the form '%s/{test}', missing prefix '%s'", tag, testCollection, testCollection)
+		}
+	default:
+		result.AppendError("%s: name must be of the form '%s/{test}', found trailing suffix '%s'", tag, testCollection, parts[2])
+	}
 	return result
 }
 

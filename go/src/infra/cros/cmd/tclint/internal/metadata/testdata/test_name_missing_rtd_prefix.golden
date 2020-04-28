@@ -1,0 +1,4 @@
+[
+"## Errors ##",
+"Test 'remoteTestDrivers/tast/tests/foo': name must be prefixed with RemoteTestDriver name 'remoteTestDrivers/tauto'"
+]

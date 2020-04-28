@@ -1,0 +1,4 @@
+[
+"## Errors ##",
+"Test 'remoteTestDrivers/tauto/test/foo': name must be of the form 'tests/{test}', missing prefix 'tests'"
+]
