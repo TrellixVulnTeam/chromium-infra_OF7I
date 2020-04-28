@@ -11,6 +11,8 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // FleetEntity represents the interface of entity in datastore.
@@ -24,13 +26,6 @@ type NewFunc func(context.Context, proto.Message) (FleetEntity, error)
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
 
-// FakeAncestorKey returns a fake datastore key
-// A query in transaction requires to have Ancestor filter, see
-// https://cloud.google.com/appengine/docs/standard/python/datastore/query-restrictions#queries_inside_transactions_must_include_ancestor_filters
-func FakeAncestorKey(ctx context.Context, entityName string) *datastore.Key {
-	return datastore.MakeKey(ctx, entityName, "key")
-}
-
 // exists checks if a list of fleet entities exist in datastore.
 func exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
 	res, err := datastore.Exists(ctx, entities)
@@ -38,6 +33,37 @@ func exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
 		return nil, err
 	}
 	return res.List(0), nil
+}
+
+// Put Creates or Updates an entity in the datastore
+func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.Message, error) {
+	entity, err := nf(ctx, pm)
+	if err != nil {
+		return nil, err
+	}
+	f := func(ctx context.Context) error {
+		existsResults, err := datastore.Exists(ctx, entity)
+		if err == nil {
+			if !existsResults.All() && update {
+				return status.Errorf(codes.NotFound, "Entity Not found.")
+			}
+			if existsResults.All() && !update {
+				return status.Errorf(codes.AlreadyExists, "Entity already exists.")
+			}
+		} else {
+			logging.Debugf(ctx, "Failed to check existence: %s", err)
+		}
+		if err := datastore.Put(ctx, entity); err != nil {
+			logging.Debugf(ctx, "Failed to put in datastore: %s", err)
+			return status.Errorf(codes.Internal, "Internal Server error.")
+		}
+		return nil
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, err
+	}
+	return pm, nil
 }
 
 // Insert inserts the fleet objects.

@@ -5,12 +5,15 @@
 package frontend
 
 import (
+	"strings"
+
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
 
 	proto "infra/appengine/unified-fleet/api/v1/proto"
 	api "infra/appengine/unified-fleet/api/v1/rpc"
+	"infra/libs/fleet/registration"
 )
 
 // CreateMachine creates machine entry in database.
@@ -18,7 +21,14 @@ func (fs *FleetServerImpl) CreateMachine(ctx context.Context, req *api.CreateMac
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Machine.Name = strings.TrimSpace(req.Machine.GetName())
+	if req.Machine.GetName() == "" {
+		req.Machine.Name = strings.TrimSpace(req.MachineId)
+	}
+	return registration.CreateMachine(ctx, req.Machine)
 }
 
 // UpdateMachine updates the machine information in database.
@@ -26,7 +36,11 @@ func (fs *FleetServerImpl) UpdateMachine(ctx context.Context, req *api.UpdateMac
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Machine.Name = strings.TrimSpace(req.Machine.GetName())
+	return registration.UpdateMachine(ctx, req.Machine)
 }
 
 // GetMachine gets the machine information from database.

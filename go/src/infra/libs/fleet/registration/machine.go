@@ -8,11 +8,12 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 
+	fleet "infra/appengine/unified-fleet/api/v1/proto"
 	fleetds "infra/libs/fleet/datastore"
-	fleet "infra/libs/fleet/protos/go"
 )
 
 // MachineKind is the datastore entity kind Machine.
@@ -23,8 +24,7 @@ type MachineEntity struct {
 	_kind string `gae:"$kind,Machine"`
 	ID    string `gae:"$id"`
 	// fleet.Machine cannot be directly used as it contains pointer.
-	Machine []byte         `gae:",noindex"`
-	Parent  *datastore.Key `gae:"$parent"`
+	Machine []byte `gae:",noindex"`
 }
 
 // GetProto returns the unmarshaled Machine.
@@ -38,24 +38,22 @@ func (e *MachineEntity) GetProto() (proto.Message, error) {
 
 func newEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
 	p := pm.(*fleet.Machine)
-	if p.GetId().GetValue() == "" {
+	if p.GetName() == "" {
 		return nil, errors.Reason("Empty Machine ID").Err()
 	}
 	machine, err := proto.Marshal(p)
 	if err != nil {
 		return nil, errors.Annotate(err, "fail to marshal Machine %s", p).Err()
 	}
-	parent := fleetds.FakeAncestorKey(ctx, MachineKind)
 	return &MachineEntity{
-		ID:      p.GetId().GetValue(),
+		ID:      p.GetName(),
 		Machine: machine,
-		Parent:  parent,
 	}, nil
 }
 
 func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	var entities []*MachineEntity
-	q := datastore.NewQuery(MachineKind).Ancestor(fleetds.FakeAncestorKey(ctx, MachineKind))
+	q := datastore.NewQuery(MachineKind)
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
@@ -66,14 +64,14 @@ func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	return fe, nil
 }
 
-// CreateMachines inserts machines to datastore.
-func CreateMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.OpResults, error) {
-	return putMachines(ctx, machines, false)
+// CreateMachine creates a new machine in datastore.
+func CreateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine, error) {
+	return putMachine(ctx, machine, false)
 }
 
-// UpdateMachines updates machines to datastore.
-func UpdateMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.OpResults, error) {
-	return putMachines(ctx, machines, true)
+// UpdateMachine updates machine in datastore.
+func UpdateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine, error) {
+	return putMachine(ctx, machine, true)
 }
 
 // GetAllMachines returns all machines in datastore.
@@ -86,9 +84,7 @@ func GetMachinesByID(ctx context.Context, ids []string) *fleetds.OpResults {
 	protos := make([]proto.Message, len(ids))
 	for i, id := range ids {
 		protos[i] = &fleet.Machine{
-			Id: &fleet.MachineID{
-				Value: id,
-			},
+			Name: id,
 		}
 	}
 	return fleetds.GetByID(ctx, protos, newEntity)
@@ -99,18 +95,17 @@ func DeleteMachines(ctx context.Context, ids []string) *fleetds.OpResults {
 	protos := make([]proto.Message, len(ids))
 	for i, id := range ids {
 		protos[i] = &fleet.Machine{
-			Id: &fleet.MachineID{
-				Value: id,
-			},
+			Name: id,
 		}
 	}
 	return fleetds.Delete(ctx, protos, newEntity)
 }
 
-func putMachines(ctx context.Context, machines []*fleet.Machine, update bool) (*fleetds.OpResults, error) {
-	protos := make([]proto.Message, len(machines))
-	for i, p := range machines {
-		protos[i] = p
+func putMachine(ctx context.Context, machine *fleet.Machine, update bool) (*fleet.Machine, error) {
+	machine.UpdateTime = ptypes.TimestampNow()
+	pm, err := fleetds.Put(ctx, machine, newEntity, update)
+	if err == nil {
+		return pm.(*fleet.Machine), err
 	}
-	return fleetds.Insert(ctx, protos, newEntity, update)
+	return nil, err
 }
