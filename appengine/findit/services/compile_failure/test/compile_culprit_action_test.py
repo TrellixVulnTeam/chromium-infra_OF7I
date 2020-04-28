@@ -63,7 +63,7 @@ class CompileCulpritActionTest(wf_testcase.WaterfallTestCase):
     self.assertTrue(compile_culprit_action.CanAutoCommitRevertByFindit())
 
   @mock.patch.object(
-      ci_failure, 'GetLaterBuildsWithAnySameStepFailure', return_value={})
+      ci_failure, 'GetSameOrLaterBuildsWithAnySameStepFailure', return_value={})
   def testShouldNotTakeActionsOnCulpritIfBuildGreen(self, _):
     master_name = 'm'
     builder_name = 'b'
@@ -82,9 +82,32 @@ class CompileCulpritActionTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(
       ci_failure,
-      'GetLaterBuildsWithAnySameStepFailure',
-      return_value={125: ['compile']})
+      'GetSameOrLaterBuildsWithAnySameStepFailure',
+      return_value={
+          125: ['compile'],
+          124: ['compile']
+      })
   def testShouldTakeActionsOnCulprit(self, _):
+    master_name = 'm'
+    builder_name = 'b'
+    build_number = 124
+    culprits = DictOfBasestring()
+    culprits['r1'] = 'mockurlsafekey'
+    parameters = CulpritActionParameters(
+        build_key=BuildKey(
+            master_name=master_name,
+            builder_name=builder_name,
+            build_number=build_number),
+        culprits=culprits,
+        heuristic_cls=ListOfBasestring())
+    self.assertTrue(
+        compile_culprit_action.ShouldTakeActionsOnCulprit(parameters))
+
+  @mock.patch.object(
+      ci_failure,
+      'GetSameOrLaterBuildsWithAnySameStepFailure',
+      return_value={124: ['compile']})
+  def testShouldTakeActionsOnCulpritIfReferredBuildIsLatest(self, _):
     master_name = 'm'
     builder_name = 'b'
     build_number = 124

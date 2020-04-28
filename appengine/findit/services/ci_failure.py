@@ -226,11 +226,13 @@ def GetBuildFailureInfo(master_name, builder_name, build_number):
   return failure_info, True
 
 
-def GetLaterBuildsWithAnySameStepFailure(master_name,
-                                         builder_name,
-                                         build_number,
-                                         failed_steps=None):
+def GetSameOrLaterBuildsWithAnySameStepFailure(master_name,
+                                               builder_name,
+                                               build_number,
+                                               failed_steps=None):
   """Gets successive failed builds with the same failure as the referred build.
+
+    The results will include the original failed build.
 
     The function will stop looking further and abandon all its findings if:
       - find a non-failed build (build ends in success or warning) or
@@ -250,7 +252,7 @@ def GetLaterBuildsWithAnySameStepFailure(master_name,
     return {}
 
   for newer_build_number in latest_build_numbers:
-    if newer_build_number <= build_number:
+    if newer_build_number < build_number:
       break
 
     # Checks all builds after current build.

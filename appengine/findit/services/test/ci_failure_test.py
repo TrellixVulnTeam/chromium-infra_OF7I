@@ -456,45 +456,85 @@ class CIFailureServicesTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(
       buildbot, 'GetRecentCompletedBuilds', return_value=[125, 124])
   @mock.patch.object(build_util, 'GetBuildInfo')
-  def testGetLaterBuildsWithAnySameStepFailurePassedThenFailed(
+  def testGetSameOrLaterBuildsWithAnySameStepFailurePassedThenFailed(
       self, mock_build_info, _):
     mock_build_info.side_effect = [
         MockBuildInfo(result=common_pb2.FAILURE, failed_steps=['a']),
         MockBuildInfo(result=common_pb2.SUCCESS, failed_steps=None)
     ]
     self.assertEquals({},
-                      ci_failure.GetLaterBuildsWithAnySameStepFailure(
+                      ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
                           'm', 'b', 123, failed_steps=['a']))
 
   @mock.patch.object(
       buildbot, 'GetRecentCompletedBuilds', return_value=[125, 124])
   @mock.patch.object(build_util, 'GetBuildInfo')
-  def testGetLaterBuildsWithAnySameStepFailureNotStepLevel(self, mock_fn, *_):
+  def testGetSameOrLaterBuildsWithAnySameStepFailureNotStepLevel(
+      self, mock_fn, *_):
     build_info_1 = MockBuildInfo(result=common_pb2.FAILURE, failed_steps=['b'])
     mock_fn.side_effect = [build_info_1, build_info_1]
     self.assertEqual({},
-                     ci_failure.GetLaterBuildsWithAnySameStepFailure(
+                     ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
+                         'm', 'b', 123, failed_steps=['a']))
+
+  @mock.patch.object(
+      buildbot, 'GetRecentCompletedBuilds', return_value=[125, 124, 123])
+  @mock.patch.object(build_util, 'GetBuildInfo')
+  def testGetSameOrLaterBuildsWithAnySameStepFailureNotStepLevel1(
+      self, mock_fn, *_):
+    build_info_1 = MockBuildInfo(result=common_pb2.FAILURE, failed_steps=['b'])
+    build_info_2 = MockBuildInfo(result=common_pb2.FAILURE, failed_steps=['a'])
+    mock_fn.side_effect = [build_info_1, build_info_1, build_info_2]
+    self.assertEqual({},
+                     ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
                          'm', 'b', 123, failed_steps=['a']))
 
   @mock.patch.object(
       buildbot, 'GetRecentCompletedBuilds', return_value=[125, 124])
   @mock.patch.object(build_util, 'GetBuildInfo')
-  def testGetLaterBuildsWithAnySameStepFailure(self, mock_fn, *_):
+  def testGetSameOrLaterBuildsWithAnySameStepFailure(self, mock_fn, *_):
     build_info_1 = MockBuildInfo(result=common_pb2.FAILURE, failed_steps=['a'])
     mock_fn.side_effect = [build_info_1, build_info_1]
     self.assertEqual({
         124: ['a'],
         125: ['a']
     },
-                     ci_failure.GetLaterBuildsWithAnySameStepFailure(
+                     ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
+                         'm', 'b', 123, failed_steps=['a']))
+
+  @mock.patch.object(
+      buildbot, 'GetRecentCompletedBuilds', return_value=[125, 124, 123])
+  @mock.patch.object(build_util, 'GetBuildInfo')
+  def testGetSameOrLaterBuildsWithAnySameStepFailureWithReferredBuild(
+      self, mock_fn, *_):
+    build_info_1 = MockBuildInfo(result=common_pb2.FAILURE, failed_steps=['a'])
+    mock_fn.side_effect = [build_info_1, build_info_1, build_info_1]
+    self.assertEqual({
+        123: ['a'],
+        124: ['a'],
+        125: ['a'],
+    },
+                     ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
+                         'm', 'b', 123, failed_steps=['a']))
+
+  @mock.patch.object(buildbot, 'GetRecentCompletedBuilds', return_value=[123])
+  @mock.patch.object(build_util, 'GetBuildInfo')
+  def testGetSameOrLaterBuildsWithAnySameStepFailureReferredBuildIsLatestBuild(
+      self, mock_fn, *_):
+    build_info_1 = MockBuildInfo(result=common_pb2.FAILURE, failed_steps=['a'])
+    mock_fn.side_effect = [build_info_1, build_info_1]
+    self.assertEqual({
+        123: ['a']
+    },
+                     ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
                          'm', 'b', 123, failed_steps=['a']))
 
   @mock.patch.object(buildbot, 'GetRecentCompletedBuilds', return_value=[])
   @mock.patch.object(logging, 'error')
-  def testGetLaterBuildsWithAnySameStepFailureNoNewerBuild(
+  def testGetSameOrLaterBuildsWithAnySameStepFailureNoNewerBuild(
       self, mock_logging, _):
     self.assertEqual({},
-                     ci_failure.GetLaterBuildsWithAnySameStepFailure(
+                     ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
                          'm', 'b', 123))
     mock_logging.assert_called_once_with(
         'Failed to get latest build numbers for builder %s/%s since %d.', 'm',

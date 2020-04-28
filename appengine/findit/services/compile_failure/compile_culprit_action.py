@@ -103,7 +103,7 @@ def ShouldTakeActionsOnCulprit(parameters):
 
   assert parameters.culprits
 
-  if not ci_failure.GetLaterBuildsWithAnySameStepFailure(
+  if not ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
       master_name, builder_name, build_number, ['compile']):
     # The compile failure stops, don't need to revert or send notification.
     logging.info(

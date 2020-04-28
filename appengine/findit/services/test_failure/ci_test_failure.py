@@ -313,6 +313,9 @@ def GetContinuouslyFailedTestsInLaterBuilds(
   Compares originally failed tests to failed tests in each following builds
   and only returns the tests are continuously failing in all later builds.
 
+  If build_number is already the latest build, then all failed tests are
+  returned.
+
   Args:
     master_name(str): name of the master.
     builder_name(str): name of the builder.
@@ -337,7 +340,7 @@ def GetContinuouslyFailedTestsInLaterBuilds(
   """
 
   builds_with_same_failed_steps = (
-      ci_failure.GetLaterBuildsWithAnySameStepFailure(
+      ci_failure.GetSameOrLaterBuildsWithAnySameStepFailure(
           master_name, builder_name, build_number,
           failure_to_culprit_map.failed_steps))
 

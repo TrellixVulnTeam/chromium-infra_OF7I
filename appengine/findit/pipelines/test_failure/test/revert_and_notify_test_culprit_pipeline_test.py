@@ -37,7 +37,7 @@ class RevertAndNotifyTestCulpritPipelineTest(wf_testcase.WaterfallTestCase):
       test_culprit_action, 'CanAutoCommitRevertByFindit', return_value=False)
   @mock.patch.object(
       ci_failure,
-      'GetLaterBuildsWithAnySameStepFailure',
+      'GetSameOrLaterBuildsWithAnySameStepFailure',
       return_value={125: ['a']})
   def testSendNotificationForTestCulpritNoRevert(self, *_):
     master_name = 'm'
@@ -77,7 +77,7 @@ class RevertAndNotifyTestCulpritPipelineTest(wf_testcase.WaterfallTestCase):
     self.execute_queued_tasks()
 
   @mock.patch.object(
-      ci_failure, 'GetLaterBuildsWithAnySameStepFailure', return_value=[])
+      ci_failure, 'GetSameOrLaterBuildsWithAnySameStepFailure', return_value=[])
   @mock.patch.object(revert_and_notify_test_culprit_pipeline,
                      'SendNotificationForCulpritPipeline')
   def testSendNotificationLatestBuildPassed(self, mocked_pipeline, _):
