@@ -63,9 +63,9 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skyc
 
 // RepairTask creates admin_repair task for particular DUT
 func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSec int) (taskID string, err error) {
-	id, err := tc.dutNameToBotID(ctx, host)
+	dims, err := tc.dimsWithBotID(ctx, host)
 	if err != nil {
-		return "", errors.Annotate(err, "failed to get bot ID for %s", host).Err()
+		return "", errors.Annotate(err, "failed to get dimensions for %s", host).Err()
 	}
 	c := worker.Command{
 		TaskName: "admin_repair",
@@ -74,26 +74,17 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSe
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: int64(expirationSec),
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: c.Args(),
-			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: "ChromeOSSkylab"},
-				{Key: "id", Value: id},
-			},
+			Command:              c.Args(),
+			Dimensions:           dims,
 			ExecutionTimeoutSecs: 5400,
 		},
 		WaitForCapacity: true,
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name: "admin_repair",
-		Tags: []string{
-			fmt.Sprintf("log_location:%s", c.LogDogAnnotationURL),
-			fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
-			"pool:ChromeOSSkylab",
-			"skylab-tool:repair",
-			tc.getSessionTag(),
-		},
+		Name:           "admin_repair",
+		Tags:           tc.combineTags("repair"),
 		TaskSlices:     slices,
-		Priority:       25,
+		Priority:       defaultTaskPriority,
 		ServiceAccount: tc.Environment.ServiceAccount,
 	}
 	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
@@ -107,9 +98,9 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSe
 
 // VerifyTask creates admin_verify task for particular DUT.
 func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSec int) (TaskInfo, error) {
-	id, err := tc.dutNameToBotID(ctx, host)
+	dims, err := tc.dimsWithBotID(ctx, host)
 	if err != nil {
-		return TaskInfo{}, errors.Annotate(err, "failed to get bot ID for %s", host).Err()
+		return TaskInfo{}, errors.Annotate(err, "failed to get dimensions for %s", host).Err()
 	}
 	c := worker.Command{
 		TaskName: "admin_verify",
@@ -118,26 +109,17 @@ func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSe
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: int64(expirationSec),
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: c.Args(),
-			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: "ChromeOSSkylab"},
-				{Key: "id", Value: id},
-			},
+			Command:              c.Args(),
+			Dimensions:           dims,
 			ExecutionTimeoutSecs: 5400,
 		},
 		WaitForCapacity: true,
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
-		Name: "admin_verify",
-		Tags: []string{
-			fmt.Sprintf("log_location:%s", c.LogDogAnnotationURL),
-			fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
-			"pool:ChromeOSSkylab",
-			"skylab-tool:verify",
-			tc.getSessionTag(),
-		},
+		Name:           "admin_verify",
+		Tags:           tc.combineTags("verify"),
 		TaskSlices:     slices,
-		Priority:       25,
+		Priority:       defaultTaskPriority,
 		ServiceAccount: tc.Environment.ServiceAccount,
 	}
 	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
@@ -195,34 +177,28 @@ func (tc *TaskCreator) AuditTask(ctx context.Context, host, actions string, expi
 
 // LeaseByHostnameTask creates lease_task for particular DUT
 func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, durationSec int, reason string) (taskID string, err error) {
-	id, err := tc.dutNameToBotID(ctx, host)
+	dims, err := tc.dimsWithBotID(ctx, host)
 	if err != nil {
-		return "", err
+		return "", errors.Annotate(err, "failed to get dimensions for %s", host).Err()
 	}
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: getLeaseCommand(),
-			Dimensions: []*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: "ChromeOSSkylab"},
-				{Key: "id", Value: id},
-			},
+			Command:              getLeaseCommand(),
+			Dimensions:           dims,
 			ExecutionTimeoutSecs: int64(durationSec),
 		},
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name: "lease task",
-		Tags: []string{
-			"pool:ChromeOSSkylab",
-			"skylab-tool:lease",
+		Tags: tc.combineTags("lease",
 			// This quota account specifier is only relevant for DUTs that are
 			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
 			// harmless otherwise.
 			"qs_account:leases",
 			"lease-by:hostname",
 			fmt.Sprintf("dut-name:%s", host),
-			fmt.Sprintf("lease-reason:%s", reason),
-		},
+			fmt.Sprintf("lease-reason:%s", reason)),
 		TaskSlices:     slices,
 		Priority:       15,
 		ServiceAccount: tc.Environment.ServiceAccount,
@@ -243,7 +219,7 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims 
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: getLeaseCommand(),
 			Dimensions: appendUniqueDimensions([]*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: "ChromeOSSkylab"},
+				{Key: "pool", Value: skylabPool},
 				{Key: "label-model", Value: model},
 				// We need to make sure we don't disturb DUT_POOL_CTS, so for now by-model leases
 				// can only target DUT_POOL_QUOTA.
@@ -257,17 +233,16 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims 
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name: "lease task",
-		Tags: appendUniqueTags([]string{
-			"pool:ChromeOSSkylab",
-			"skylab-tool:lease",
-			// This quota account specifier is only relevant for DUTs that are
-			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
-			// harmless otherwise.
-			"qs_account:leases",
-			"lease-by:model",
-			fmt.Sprintf("model:%s", model),
-			fmt.Sprintf("lease-reason:%s", reason),
-		}, convertTags(dims)...),
+		Tags: appendUniqueTags(
+			tc.combineTags("lease",
+				// This quota account specifier is only relevant for DUTs that are
+				// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+				// harmless otherwise.
+				"qs_account:leases",
+				"lease-by:model",
+				fmt.Sprintf("model:%s", model),
+				fmt.Sprintf("lease-reason:%s", reason)),
+			convertTags(dims)...),
 		TaskSlices:     slices,
 		Priority:       15,
 		ServiceAccount: tc.Environment.ServiceAccount,
@@ -288,7 +263,7 @@ func (tc *TaskCreator) LeaseByBoardTask(ctx context.Context, board string, dims 
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: getLeaseCommand(),
 			Dimensions: appendUniqueDimensions([]*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: "ChromeOSSkylab"},
+				{Key: "pool", Value: skylabPool},
 				{Key: "label-board", Value: board},
 				// We need to make sure we don't disturb DUT_POOL_CTS, so for now by-model leases
 				// can only target DUT_POOL_QUOTA.
@@ -302,17 +277,16 @@ func (tc *TaskCreator) LeaseByBoardTask(ctx context.Context, board string, dims 
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name: "lease task",
-		Tags: appendUniqueTags([]string{
-			"pool:ChromeOSSkylab",
-			"skylab-tool:lease",
-			// This quota account specifier is only relevant for DUTs that are
-			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
-			// harmless otherwise.
-			"qs_account:leases",
-			"lease-by:model",
-			"board:" + board,
-			"lease-reason:" + reason,
-		}, convertTags(dims)...),
+		Tags: appendUniqueTags(
+			tc.combineTags("lease",
+				// This quota account specifier is only relevant for DUTs that are
+				// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+				// harmless otherwise.
+				"qs_account:leases",
+				"lease-by:model",
+				"board:"+board,
+				"lease-reason:"+reason),
+			convertTags(dims)...),
 		TaskSlices:     slices,
 		Priority:       15,
 		ServiceAccount: tc.Environment.ServiceAccount,
@@ -365,7 +339,7 @@ func convertTags(m map[string]string) []string {
 
 func (tc *TaskCreator) dutNameToBotID(ctx context.Context, host string) (string, error) {
 	dims := []*swarming_api.SwarmingRpcsStringPair{
-		{Key: "pool", Value: "ChromeOSSkylab"},
+		{Key: "pool", Value: skylabPool},
 		{Key: "dut_name", Value: host},
 	}
 	ids, err := tc.Client.GetBotIDs(ctx, dims)
@@ -414,15 +388,15 @@ func getTagPrefix(s string) string {
 	return s[0:delimIdx]
 }
 
-// getSessionTag return admin session tag for swarming.
-func (tc *TaskCreator) getSessionTag() string {
+// sessionTag return admin session tag for swarming.
+func (tc *TaskCreator) sessionTag() string {
 	return fmt.Sprintf("admin_session:%s", tc.session)
 }
 
 // GetSessionTasksURL gets URL to see all created tasks belong to the session.
 func (tc *TaskCreator) GetSessionTasksURL() string {
 	tags := []string{
-		tc.getSessionTag(),
+		tc.sessionTag(),
 	}
 	return swarming.TaskListURLForTags(tc.Environment.SwarmingService, tags)
 }
@@ -449,7 +423,7 @@ func (tc *TaskCreator) combineTags(toolName string, customTags ...string) []stri
 		fmt.Sprintf("skylab-tool:%s", toolName),
 		fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
 		fmt.Sprintf("pool:%s", skylabPool),
-		tc.getSessionTag(),
+		tc.sessionTag(),
 	}
 	return append(tags, customTags...)
 }
