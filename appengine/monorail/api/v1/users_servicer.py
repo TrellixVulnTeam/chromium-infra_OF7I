@@ -100,3 +100,22 @@ class UsersServicer(monorail_servicer.MonorailServicer):
       we.StarProject(project_id, False)
 
     return empty_pb2.Empty()
+
+  @monorail_servicer.PRPCMethod
+  def ListProjectStars(self, mc, request):
+    # type: (MonorailConnection, ListProjectStarsRequest) ->
+    #   ListProjectStarsResponse
+    """pRPC API method that implements ListProjectStars.
+
+      Raises:
+        InputException: if the `page_token` or `parent` is invalid.
+        NoSuchUserException: if the User is not found.
+    """
+    user_id = rnc.IngestUserName(mc.cnxn, request.parent, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      projects = we.ListStarredProjects(user_id)
+
+    # TODO(crbug.com/monorail/7175): Add pagination logic.
+    return users_pb2.ListProjectStarsResponse(
+        project_stars=self.converter.ConvertProjectStars(user_id, projects))

@@ -651,6 +651,16 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         self.converter.ConvertUsers(user_ids, project), expected_user_dict)
 
+  def testConvertProjectStars(self):
+    expected_stars = [
+        user_objects_pb2.ProjectStar(name='users/111/projectStars/proj'),
+        user_objects_pb2.ProjectStar(name='users/111/projectStars/goose')
+    ]
+    self.assertEqual(
+        self.converter.ConvertProjectStars(
+            self.user_1.user_id, [self.project_1, self.project_2]),
+        expected_stars)
+
   def testIngestIssuesListColumns(self):
     columns = [
         issue_objects_pb2.IssuesListColumn(column='chicken'),

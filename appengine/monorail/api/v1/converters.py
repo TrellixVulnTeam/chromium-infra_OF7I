@@ -444,7 +444,7 @@ class Converter(object):
   # TODO(crbug/monorail/7238): take a list of projects when
   # CreateUserDisplayNames() can take in a list of projects.
   def ConvertUsers(self, user_ids, project):
-    # type: (List(int), protorpc.Project) ->
+    # type: (Sequence[int], protorpc.Project) ->
     #   Map(int, api_proto.user_objects_pb2.User)
     """Convert list of protorpc Users into list of protoc Users.
 
@@ -475,6 +475,26 @@ class Converter(object):
           availability_message=availability_message)
 
     return user_ids_to_names
+
+  def ConvertProjectStars(self, user_id, projects):
+    # type: (int, Collection[protorpc.Project]) ->
+    #     Collection[api_proto.user_objects_pb2.ProjectStar]
+    """Convert list of protorpc Projects into protoc ProjectStars.
+
+    Args:
+      user_id: The user the ProjectStar is associated with.
+      projects: All starred projects.
+
+    Returns:
+      List of ProjectStar messages.
+    """
+    api_project_stars = []
+    for proj in projects:
+      name = rnc.ConvertProjectStarName(
+          self.cnxn, user_id, proj.project_id, self.services)
+      star = user_objects_pb2.ProjectStar(name=name)
+      api_project_stars.append(star)
+    return api_project_stars
 
   # Field Values
 

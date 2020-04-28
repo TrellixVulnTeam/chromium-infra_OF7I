@@ -104,3 +104,20 @@ class UsersServicerTest(unittest.TestCase):
 
     is_starred = self.services.project_star.IsItemStarredBy(self.cnxn, 789, 111)
     self.assertFalse(is_starred)
+
+  def testListProjectStars(self):
+    request = users_pb2.ListProjectStarsRequest(parent='users/111')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+
+    self.services.project_star.SetStar(
+        self.cnxn, self.project_1.project_id, self.user_1.user_id, True)
+
+    response = self.CallWrapped(self.users_svcr.ListProjectStars, mc, request)
+
+    expected_response = users_pb2.ListProjectStarsResponse(
+        project_stars=[
+            user_objects_pb2.ProjectStar(name='users/111/projectStars/proj')
+        ])
+    self.assertEqual(response, expected_response)
