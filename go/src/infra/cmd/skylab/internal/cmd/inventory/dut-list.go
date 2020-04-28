@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	flagx "infra/cmd/skylab/internal/flagx"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/swarming"
@@ -39,6 +40,7 @@ var DutList = &subcommands.Command{
 		c.Flags.StringVar(&c.pool, "pool", "", "pool name")
 		c.Flags.StringVar(&c.servoType, "servo-type", "", "the type of servo")
 		c.Flags.BoolVar(&c.useInventory, "use-inventory", false, "use the inventory service if set, use swarming if unset")
+		c.Flags.Var(flagx.Dims(&c.dims), "dims", "List of additional dimensions in format key1=value1,key2=value2,... .")
 		return c
 	},
 }
@@ -53,6 +55,8 @@ type dutListRun struct {
 	pool         string
 	servoType    string
 	useInventory bool
+	// nil is a valid value for dims.
+	dims map[string]string
 }
 
 type dutListParams struct {
@@ -60,6 +64,9 @@ type dutListParams struct {
 	model     string
 	pool      string
 	servoType string
+	// dims is the additional dimensions used to filter DUTs.
+	// nil is a valid value for dims.
+	dims map[string]string
 }
 
 func (c *dutListRun) getUseInventory() bool {
@@ -85,7 +92,7 @@ func (c *dutListRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 
-	params := dutListParams{c.board, c.model, c.pool, c.servoType}
+	params := dutListParams{c.board, c.model, c.pool, c.servoType, c.dims}
 	var listed []*swarming.ListedHost
 
 	if c.getUseInventory() {
@@ -128,6 +135,9 @@ func dimsOfDutListParams(params dutListParams) ([]*swarming_api.SwarmingRpcsStri
 	}
 	if params.pool != "" {
 		out = append(out, makePair("label-pool", params.pool))
+	}
+	for k, v := range params.dims {
+		out = append(out, makePair(k, v))
 	}
 	return out, nil
 }
