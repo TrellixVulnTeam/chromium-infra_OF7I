@@ -51,6 +51,18 @@ class UsersServicerTest(unittest.TestCase):
     self.users_svcr.converter = self.converter
     return wrapped_handler.wrapped(self.users_svcr, mc, *args, **kwargs)
 
+  def testGetUser(self):
+    request = users_pb2.GetUserRequest(name='users/222')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(self.users_svcr.GetUser, mc, request)
+    expected_response = user_objects_pb2.User(
+        name='users/222',
+        display_name=testing_helpers.ObscuredEmail(self.user_2.email),
+        availability_message='User never visited')
+    self.assertEqual(response, expected_response)
+
   def testBatchGetUsers(self):
     request = users_pb2.BatchGetUsersRequest(
         names=['users/222', 'users/333'])

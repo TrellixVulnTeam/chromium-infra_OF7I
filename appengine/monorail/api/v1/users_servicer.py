@@ -26,6 +26,23 @@ class UsersServicer(monorail_servicer.MonorailServicer):
   DESCRIPTION = users_prpc_pb2.UsersServiceDescription
 
   @monorail_servicer.PRPCMethod
+  def GetUser(self, mc, request):
+    # type: (MonorailConnection, GetUserRequest) ->
+    # GetUserResponse
+    """pRPC API method that implements GetUser.
+
+      Raises:
+        InputException if a name in request.name is invalid.
+        NoSuchUserException if a User is not found.
+    """
+    user_id = rnc.IngestUserName(mc.cnxn, request.name, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      user = we.GetUser(user_id)
+
+    return self.converter.ConvertUser(user, None)
+
+  @monorail_servicer.PRPCMethod
   def BatchGetUsers(self, mc, request):
     # type: (MonorailConnection, BatchGetUsersRequest) ->
     # BatchGetUsersResponse

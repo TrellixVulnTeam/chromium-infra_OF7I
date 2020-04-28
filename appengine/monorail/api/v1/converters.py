@@ -425,12 +425,22 @@ class Converter(object):
 
   # Users
 
-  # Because Monorail obscures emails of Users on the site, wherever
-  # in the API we would normally use User resource names, we use
-  # full User objects instead. For this reason, ConvertUsers is called
-  # where we would normally call some ConvertUserResourceNames function.
-  # So ConvertUsers follows the patterns in resource_name_converters.py
-  # by taking in User IDs and and returning a dict rather than a list.
+  def ConvertUser(self, user, project):
+    # type: (protorpc.User, protorpc.Project) -> api_proto.user_objects_pb2.User
+    """Convert a protorpc User into a protoc User.
+
+    Args:
+      user: protorpc User object.
+      project: currently viewed project.
+
+    Returns:
+      The protoc User object.
+    """
+    return self.ConvertUsers([user.user_id], project)[user.user_id]
+
+
+  # TODO(crbug/monorail/7238): Make this take in a full User object and
+  # return a Sequence, rather than a map, after hotlist users are converted.
   # TODO(crbug/monorail/7238): take a list of projects when
   # CreateUserDisplayNames() can take in a list of projects.
   def ConvertUsers(self, user_ids, project):
@@ -439,8 +449,8 @@ class Converter(object):
     """Convert list of protorpc Users into list of protoc Users.
 
     Args:
-    user_ids: List of User IDs.
-    project: currently viewed project.
+      user_ids: List of User IDs.
+      project: currently viewed project.
 
     Returns:
       Dict of User IDs to User protos for given user_ids that could be found.
