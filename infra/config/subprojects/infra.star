@@ -24,6 +24,7 @@ def ci_builder(
       schedule=None,
       infra_triggered=True,
       experimental=False,
+      tree_closing=False,
   ):
   infra.builder(
       name = name,
@@ -36,6 +37,10 @@ def ci_builder(
       properties = properties,
       gatekeeper_group = '' if experimental else 'chromium.infra',
       extra_dimensions=extra_dimensions,
+      # Tree closing is currently dry run only in LUCI-Notify, so this won't
+      # cause it to actually close the tree. Just to monitor these builders and
+      # log when it would have taken action.
+      notifies = [infra.tree_closer()] if tree_closing else None,
   )
   luci.console_view_entry(
       builder = name,
@@ -70,15 +75,14 @@ def try_builder(
 # CI Linux.
 ci_builder(name = 'infra-continuous-zesty-64', os = 'Ubuntu-17.04')
 ci_builder(name = 'infra-continuous-yakkety-64', os = 'Ubuntu-16.10')
-ci_builder(name = 'infra-continuous-xenial-64', os = 'Ubuntu-16.04')
-ci_builder(name = 'infra-continuous-xenial-arm64', os = 'Ubuntu-16.04',
-           cpu = 'arm64', experimental = True)
-ci_builder(name = 'infra-continuous-trusty-64', os = 'Ubuntu-14.04')
+ci_builder(name = 'infra-continuous-xenial-64', os = 'Ubuntu-16.04', tree_closing = True)
+ci_builder(name = 'infra-continuous-xenial-arm64', os = 'Ubuntu-16.04', cpu = 'arm64', experimental = True)
+ci_builder(name = 'infra-continuous-trusty-64', os = 'Ubuntu-14.04', tree_closing = True)
 
 # CI OSX.
 ci_builder(name = 'infra-continuous-mac-10.11-64', os = 'Mac-10.11')
 ci_builder(name = 'infra-continuous-mac-10.12-64', os = 'Mac-10.12')
-ci_builder(name = 'infra-continuous-mac-10.13-64', os = 'Mac-10.13')
+ci_builder(name = 'infra-continuous-mac-10.13-64', os = 'Mac-10.13', tree_closing = True)
 ci_builder(name = 'infra-continuous-mac-10.14-64', os = 'Mac-10.14')
 ci_builder(name = 'infra-continuous-mac-10.15-64', os = 'Mac-10.15')
 

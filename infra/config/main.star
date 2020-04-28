@@ -28,6 +28,8 @@ Includes CI configs for the following subprojects:
 
 lucicfg.check_version('1.7.8', 'Please update depot_tools')
 
+# Enable luci.tree_closer.
+lucicfg.enable_experiment("crbug.com/1054172")
 
 # Tell lucicfg what files it is allowed to touch.
 lucicfg.config(
@@ -133,6 +135,12 @@ luci.bucket(
         ),
     ],
 )
+
+luci.notifier_template(
+    name = 'default',
+    body = '{{ stepNames .MatchingFailedSteps }} on {{ buildUrl . }} {{ .Build.Builder.Builder }} from {{ .Build.Output.GitilesCommit.Id }}',
+)
+
 
 luci.list_view(name = 'cron')
 

@@ -69,7 +69,10 @@ def builder(
       extra_dimensions=None,
 
       # Triggering relations.
-      triggered_by=None
+      triggered_by=None,
+
+      # LUCI-Notify config.
+      notifies=None
   ):
   """Defines a basic infra builder (CI or Try).
 
@@ -116,6 +119,15 @@ def builder(
       schedule = schedule,
       task_template_canary_percentage = 30,
       triggered_by = triggered_by,
+      notifies = notifies,
+  )
+
+
+def _tree_closer():
+  return luci.tree_closer(
+      name = 'infra tree closer',
+      tree_status_host = 'infra-status.appspot.com',
+      template = 'default',
   )
 
 
@@ -153,6 +165,7 @@ infra = struct(
     console_view = console_view,
     cq_group = cq_group,
     builder = builder,
+    tree_closer = _tree_closer,
 
     category_from_os = category_from_os,
 )

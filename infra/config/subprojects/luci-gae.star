@@ -32,6 +32,7 @@ def ci_builder(name, os):
           ),
       ],
       gatekeeper_group = 'chromium.infra',
+      notifies = [infra.tree_closer()],
   )
   luci.console_view_entry(
       builder = name,

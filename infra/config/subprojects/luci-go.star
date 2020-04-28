@@ -18,7 +18,7 @@ infra.console_view(
 infra.cq_group(name = 'luci-go cq', repo = REPO_URL)
 
 
-def ci_builder(name, os):
+def ci_builder(name, os, tree_closing=False):
   infra.builder(
       name = name,
       bucket = 'ci',
@@ -32,6 +32,7 @@ def ci_builder(name, os):
           ),
       ],
       gatekeeper_group = 'chromium.infra',
+      notifies = [infra.tree_closer()] if tree_closing else None,
   )
   luci.console_view_entry(
       builder = name,
@@ -62,15 +63,15 @@ def try_builder(
   )
 
 
-ci_builder(name = 'luci-go-continuous-xenial-64', os = 'Ubuntu-16.04')
-ci_builder(name = 'luci-go-continuous-trusty-64', os = 'Ubuntu-14.04')
+ci_builder(name = 'luci-go-continuous-xenial-64', os = 'Ubuntu-16.04', tree_closing = True)
+ci_builder(name = 'luci-go-continuous-trusty-64', os = 'Ubuntu-14.04', tree_closing = True)
 ci_builder(name = 'luci-go-continuous-mac-10.11-64', os = 'Mac-10.11')
 ci_builder(name = 'luci-go-continuous-mac-10.12-64', os = 'Mac-10.12')
-ci_builder(name = 'luci-go-continuous-mac-10.13-64', os = 'Mac-10.13')
+ci_builder(name = 'luci-go-continuous-mac-10.13-64', os = 'Mac-10.13', tree_closing = True)
 ci_builder(name = 'luci-go-continuous-mac-10.14-64', os = 'Mac-10.14')
 ci_builder(name = 'luci-go-continuous-mac-10.15-64', os = 'Mac-10.15')
-ci_builder(name = 'luci-go-continuous-win7-64', os = 'Windows')
-ci_builder(name = 'luci-go-continuous-win10-64', os = 'Windows-10')
+ci_builder(name = 'luci-go-continuous-win7-64', os = 'Windows', tree_closing = True)
+ci_builder(name = 'luci-go-continuous-win10-64', os = 'Windows-10', tree_closing = True)
 
 try_builder(name = 'luci-go-try-trusty-64', os = 'Ubuntu-14.04')
 try_builder(name = 'luci-go-try-xenial-64', os = 'Ubuntu-16.04', properties = {
