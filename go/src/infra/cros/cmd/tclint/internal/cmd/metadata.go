@@ -5,7 +5,9 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
@@ -13,8 +15,9 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmdsupport/cmdlib"
+	"infra/cros/cmd/tclint/internal/metadata"
 
-	metadata "go.chromium.org/chromiumos/config/go/api/test/metadata/v1"
+	metadataPB "go.chromium.org/chromiumos/config/go/api/test/metadata/v1"
 )
 
 // Metadata subcommand: Lint test metadata.
@@ -54,7 +57,7 @@ type metadataRun struct {
 func (c *metadataRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
 	ctx = logging.SetLevel(ctx, logging.Info)
-	if err := c.innerRun(ctx, args); err != nil {
+	if err := c.innerRun(ctx, a, args); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
 	}
@@ -63,18 +66,40 @@ func (c *metadataRun) Run(a subcommands.Application, args []string, env subcomma
 
 type metadataFile struct {
 	path    string
-	payload *metadata.Specification
+	payload *metadataPB.Specification
 	errs    errors.MultiError
 }
 
-func (c *metadataRun) innerRun(ctx context.Context, args []string) error {
+func (c *metadataRun) innerRun(ctx context.Context, a subcommands.Application, args []string) error {
 	if len(args) == 0 {
 		return errors.Reason("no input files").Err()
 	}
-	if _, err := c.load(args); err != nil {
+	ms, err := c.load(args)
+	if err != nil {
 		return err
 	}
-	return errors.Reason("not implemented").Err()
+
+	w := bufio.NewWriter(a.GetOut())
+	defer w.Flush()
+
+	for _, m := range ms {
+		fmt.Fprintf(w, "### Linting file %s...\n", m.path)
+		if m.errs != nil {
+			fmt.Fprintf(w, "Failed to load file: %s\n", m.errs)
+			continue
+		}
+
+		r := metadata.Lint(m.payload)
+		for l := range r.Display() {
+			fmt.Fprintln(w, l)
+		}
+
+		if r.Errors == nil {
+			fmt.Fprintf(w, "All clean!\n")
+		}
+		fmt.Fprintf(w, "\n")
+	}
+	return nil
 }
 
 func (c *metadataRun) load(globs []string) ([]*metadataFile, error) {
@@ -99,8 +124,8 @@ func (c *metadataRun) load(globs []string) ([]*metadataFile, error) {
 	return resp, nil
 }
 
-func (c *metadataRun) loadOne(path string) (*metadata.Specification, error) {
-	var p metadata.Specification
+func (c *metadataRun) loadOne(path string) (*metadataPB.Specification, error) {
+	var p metadataPB.Specification
 	var err error
 	if c.binaryFormat {
 		err = loadFromBinary(path, &p)

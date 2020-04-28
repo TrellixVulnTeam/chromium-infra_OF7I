@@ -1,0 +1,4 @@
+[
+"## Errors ##",
+"RemoteTestDriver 'remoteTestDrivers/tauto_is_🔥': name must only use ASCII characters, found non-ASCII chracters in '\"remoteTestDrivers/tauto_is_\\U0001f525\"'"
+]

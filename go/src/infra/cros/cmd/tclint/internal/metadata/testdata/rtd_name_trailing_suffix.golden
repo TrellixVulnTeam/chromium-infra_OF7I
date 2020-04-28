@@ -1,0 +1,4 @@
+[
+"## Errors ##",
+"RemoteTestDriver 'remoteTestDrivers/foo/baz': name must be of the form 'remoteTestDrivers/{remoteTestDriver}', found trailing suffix 'baz'"
+]

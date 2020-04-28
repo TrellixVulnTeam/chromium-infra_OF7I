@@ -1,0 +1,7 @@
+[
+"## Errors ##",
+"RemoteTestDriver 'https://user@host.org/remoteTestDriver/tauto': name must be a URL path component (https://aip.dev/122), found non-empty host 'host.org'",
+"RemoteTestDriver 'https://user@host.org/remoteTestDriver/tauto': name must be a URL path component (https://aip.dev/122), found non-empty scheme 'https'",
+"RemoteTestDriver 'https://user@host.org/remoteTestDriver/tauto': name must be a URL path component (https://aip.dev/122), found non-empty user information 'user'",
+"RemoteTestDriver 'https://user@host.org/remoteTestDriver/tauto': name must be a URL relative path component (https://aip.dev/122), found absolute path '/remoteTestDriver/tauto'"
+]
