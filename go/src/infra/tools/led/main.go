@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"strings"
 
 	"infra/tools/kitchen/cookflags"
 
@@ -62,8 +63,14 @@ func (kitchenSupport) GenerateCommand(ctx context.Context, bb *job.Buildbucket) 
 			Path: (logdog_types.StreamName(bb.BbagentArgs.Build.Infra.Logdog.Prefix).
 				AsPathPrefix("annotations")),
 		},
+	}
 
-		OutputResultJSONPath: "${ISOLATED_OUTDIR}/build.proto.json",
+	if bb.FinalBuildProtoPath != "" {
+		if !strings.HasSuffix(bb.FinalBuildProtoPath, ".json") {
+			return nil, errors.New("FinalBuildProtoPath for kitchen must end with .json")
+		}
+		kitchenArgs.OutputResultJSONPath = path.Join(
+			"${ISOLATED_OUTDIR}", bb.FinalBuildProtoPath)
 	}
 
 	buildCopy := proto.Clone(bb.BbagentArgs.Build).(*bbpb.Build)
