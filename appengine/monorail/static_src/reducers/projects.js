@@ -84,7 +84,7 @@ export const reducer = combineReducers({
  * @return {Object<ProjectName, Project>}
  * @private
  */
-export const byName = (state) => state.project.byName;
+export const byName = (state) => state.projects.byName;
 
 /**
  * Base selector for wrapping the allNames state key.
@@ -92,7 +92,7 @@ export const byName = (state) => state.project.byName;
  * @return {Array<ProjectName>}
  * @private
  */
-export const _allNames = (state) => state.project.allNames;
+export const _allNames = (state) => state.projects.allNames;
 
 /**
  * Returns all Projects on Monorail, in denormalized form, in
@@ -109,7 +109,7 @@ export const all = createSelector([byName, _allNames],
  * @param {any} state
  * @return {Object.<string, ReduxRequestState>}
  */
-export const requests = (state) => state.project.requests;
+export const requests = (state) => state.projects.requests;
 
 /**
  * Gets all projects hosted on Monorail.

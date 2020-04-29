@@ -11,7 +11,7 @@ import {issueNameToRef, issueToName, userV3ToRef} from 'shared/converters.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 import {store, connectStore} from 'reducers/base.js';
-import * as hotlist from 'reducers/hotlist.js';
+import * as hotlists from 'reducers/hotlists.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
@@ -242,8 +242,8 @@ export class _MrHotlistIssuesPage extends LitElement {
 export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
   /** @override */
   stateChanged(state) {
-    this._hotlist = hotlist.viewedHotlist(state);
-    this._items = hotlist.viewedHotlistIssues(state);
+    this._hotlist = hotlists.viewedHotlist(state);
+    this._items = hotlists.viewedHotlistIssues(state);
 
     const hotlistColumns =
         this._hotlist && this._hotlist.defaultColumns.map((col) => col.column);
@@ -265,7 +265,7 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
 
   /** @override */
   async _removeItems() {
-    const action = hotlist.removeItems(this._hotlist.name, this._selected);
+    const action = hotlists.removeItems(this._hotlist.name, this._selected);
     await store.dispatch(action);
   }
 
@@ -283,7 +283,7 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
       if (isShown && !items.includes(item.name)) ++shownItems;
     }
 
-    await store.dispatch(hotlist.rerankItems(
+    await store.dispatch(hotlists.rerankItems(
         this._hotlist.name, items, index + hiddenItems));
   }
 };

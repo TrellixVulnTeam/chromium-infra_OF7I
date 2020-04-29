@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as issue from './constants-issue.js';
-import * as user from './constants-user.js';
+import * as issueV0 from './constants-issueV0.js';
+import * as users from './constants-users.js';
 import 'shared/typedef.js';
 
 /** @type {string} */
@@ -13,8 +13,8 @@ export const NAME = 'hotlists/1234';
 export const HOTLIST = Object.freeze({
   name: NAME,
   displayName: 'Hotlist-Name',
-  owner: user.USER,
-  editors: [user.USER_2],
+  owner: users.USER,
+  editors: [users.USER_2],
   summary: 'Summary',
   description: 'Description',
   defaultColumns: [{column: 'Rank'}, {column: 'ID'}, {column: 'Summary'}],
@@ -26,41 +26,41 @@ export const HOTLIST_ITEM_NAME = NAME + '/items/56';
 /** @type {HotlistItem} */
 export const HOTLIST_ITEM = Object.freeze({
   name: HOTLIST_ITEM_NAME,
-  issue: issue.NAME,
+  issue: issueV0.NAME,
   // rank: The API excludes the rank field if it's 0.
-  adder: user.USER,
+  adder: users.USER,
   createTime: '2020-01-01T12:00:00Z',
 });
 
 /** @type {HotlistIssue} */
-export const HOTLIST_ISSUE = Object.freeze({...issue.ISSUE, ...HOTLIST_ITEM});
+export const HOTLIST_ISSUE = Object.freeze({...issueV0.ISSUE, ...HOTLIST_ITEM});
 
 /** @type {HotlistItem} */
 export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   name: NAME + '/items/78',
-  issue: issue.NAME_OTHER_PROJECT,
+  issue: issueV0.NAME_OTHER_PROJECT,
   rank: 1,
-  adder: user.USER,
+  adder: users.USER,
   createTime: '2020-01-01T12:00:00Z',
 });
 
 /** @type {HotlistIssue} */
 export const HOTLIST_ISSUE_OTHER_PROJECT = Object.freeze({
-  ...issue.ISSUE_OTHER_PROJECT, ...HOTLIST_ITEM_OTHER_PROJECT,
+  ...issueV0.ISSUE_OTHER_PROJECT, ...HOTLIST_ITEM_OTHER_PROJECT,
 });
 
 /** @type {HotlistItem} */
 export const HOTLIST_ITEM_CLOSED = Object.freeze({
   name: NAME + '/items/90',
-  issue: issue.NAME_CLOSED,
+  issue: issueV0.NAME_CLOSED,
   rank: 2,
-  adder: user.USER,
+  adder: users.USER,
   createTime: '2020-01-01T12:00:00Z',
 });
 
 /** @type {HotlistIssue} */
 export const HOTLIST_ISSUE_CLOSED = Object.freeze({
-  ...issue.ISSUE_CLOSED, ...HOTLIST_ITEM_CLOSED,
+  ...issueV0.ISSUE_CLOSED, ...HOTLIST_ITEM_CLOSED,
 });
 
 /** @type {Object<string, Hotlist>} */

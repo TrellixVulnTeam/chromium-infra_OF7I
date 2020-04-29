@@ -7,11 +7,11 @@ import sinon from 'sinon';
 
 import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
-import * as hotlist from 'reducers/hotlist.js';
+import * as hotlists from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
 
-import * as example from 'shared/test/constants-hotlist.js';
-import * as exampleUser from 'shared/test/constants-user.js';
+import * as example from 'shared/test/constants-hotlists.js';
+import * as exampleUsers from 'shared/test/constants-users.js';
 
 import {MrHotlistSettingsPage} from './mr-hotlist-settings-page.js';
 
@@ -47,7 +47,7 @@ describe('mr-hotlist-settings-page (unconnected)', () => {
 
   it('renders an editable hotlist if permission to administer', async () => {
     element._hotlist = {...example.HOTLIST};
-    element._permissions = [hotlist.ADMINISTER];
+    element._permissions = [hotlists.ADMINISTER];
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'form');
   });
@@ -92,8 +92,8 @@ describe('mr-hotlist-settings-page (connected)', () => {
 
   it('deletes hotlist', async () => {
     element._hotlist = example.HOTLIST;
-    element._permissions = [hotlist.ADMINISTER];
-    element._currentUser = exampleUser.USER;
+    element._permissions = [hotlists.ADMINISTER];
+    element._currentUser = exampleUsers.USER;
     await element.updateComplete;
 
     const deleteButton = element.shadowRoot.getElementById('delete-hotlist');
@@ -112,7 +112,7 @@ describe('mr-hotlist-settings-page (connected)', () => {
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
       sinon.assert.calledWith(
-          element.page, `/u/${exampleUser.DISPLAY_NAME}/hotlists`);
+          element.page, `/u/${exampleUsers.DISPLAY_NAME}/hotlists`);
     } finally {
       pageStub.restore();
       confirmStub.restore();
@@ -121,7 +121,7 @@ describe('mr-hotlist-settings-page (connected)', () => {
 
   it('updates hotlist when there are changes', async () => {
     element._hotlist = {...example.HOTLIST};
-    element._permissions = [hotlist.ADMINISTER];
+    element._permissions = [hotlists.ADMINISTER];
     await element.updateComplete;
 
     sinon.stub(element, '_showHotlistSavedSnackbar');

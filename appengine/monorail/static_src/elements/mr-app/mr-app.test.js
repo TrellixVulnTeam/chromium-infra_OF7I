@@ -262,7 +262,7 @@ describe('mr-app', () => {
 
     it('selects and fetches project', () => {
       const projectName = 'chromium';
-      assert.notEqual(store.getState().project.name, projectName);
+      assert.notEqual(store.getState().projectV0.name, projectName);
 
       element._selectProject(
           {params: {project: projectName}},

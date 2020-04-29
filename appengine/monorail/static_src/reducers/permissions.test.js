@@ -7,7 +7,7 @@ import sinon from 'sinon';
 
 import * as permissions from './permissions.js';
 import * as example from 'shared/test/constants-permissions.js';
-import * as exampleIssue from 'shared/test/constants-issue.js';
+import * as exampleIssues from 'shared/test/constants-issueV0.js';
 
 import {prpcClient} from 'prpc-client-instance.js';
 
@@ -61,11 +61,11 @@ describe('permissions action creators', () => {
       const response = {permissionSets: [example.PERMISSION_SET_ISSUE]};
       prpcClient.call.returns(Promise.resolve(response));
 
-      await permissions.batchGet([exampleIssue.NAME])(dispatch);
+      await permissions.batchGet([exampleIssues.NAME])(dispatch);
 
       sinon.assert.calledWith(dispatch, {type: permissions.BATCH_GET_START});
 
-      const args = {names: [exampleIssue.NAME]};
+      const args = {names: [exampleIssues.NAME]};
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v1.Permissions',
           'BatchGetPermissionSets', args);
@@ -80,7 +80,7 @@ describe('permissions action creators', () => {
     it('failure', async () => {
       prpcClient.call.throws();
 
-      await permissions.batchGet(exampleIssue.NAME)(dispatch);
+      await permissions.batchGet(exampleIssues.NAME)(dispatch);
 
       const action = {
         type: permissions.BATCH_GET_FAILURE,

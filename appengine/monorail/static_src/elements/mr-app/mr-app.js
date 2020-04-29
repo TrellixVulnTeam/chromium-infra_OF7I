@@ -11,7 +11,7 @@ import {getServerStatusCron} from 'shared/cron.js';
 import 'elements/framework/mr-site-banner/mr-site-banner.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as projectV0 from 'reducers/projectV0.js';
-import * as hotlist from 'reducers/hotlist.js';
+import * as hotlists from 'reducers/hotlists.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as permissions from 'reducers/permissions.js';
 import * as userV0 from 'reducers/userV0.js';
@@ -277,7 +277,7 @@ export class MrApp extends connectStore(LitElement) {
     // Redirects from old hotlist pages to SPA hotlist pages.
     const hotlistRedirect = (pageName) => async (ctx) => {
       const name =
-          await hotlist.getHotlistName(ctx.params.user, ctx.params.hotlist);
+          await hotlists.getHotlistName(ctx.params.user, ctx.params.hotlist);
       page.redirect(`/${name}/${pageName}`);
     };
     page('/users/:user/hotlists/:hotlist', hotlistRedirect('issues'));
@@ -476,9 +476,9 @@ export class MrApp extends connectStore(LitElement) {
    */
   _selectHotlist(ctx, next) {
     const name = 'hotlists/' + ctx.params.hotlist;
-    store.dispatch(hotlist.select(name));
-    store.dispatch(hotlist.fetch(name));
-    store.dispatch(hotlist.fetchItems(name));
+    store.dispatch(hotlists.select(name));
+    store.dispatch(hotlists.fetch(name));
+    store.dispatch(hotlists.fetchItems(name));
     store.dispatch(permissions.batchGet([name]));
     next();
   }

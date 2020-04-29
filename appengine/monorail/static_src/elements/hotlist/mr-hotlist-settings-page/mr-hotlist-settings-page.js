@@ -8,7 +8,7 @@ import page from 'page';
 import {userNameToId} from 'shared/converters.js';
 import 'shared/typedef.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as hotlist from 'reducers/hotlist.js';
+import * as hotlists from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
 import * as ui from 'reducers/ui.js';
 import * as userV0 from 'reducers/userV0.js';
@@ -94,7 +94,7 @@ class _MrHotlistSettingsPage extends LitElement {
   _renderPage() {
     const defaultColumns = this._hotlist.defaultColumns
         .map((col) => col.column).join(' ');
-    if (this._permissions.includes(hotlist.ADMINISTER)) {
+    if (this._permissions.includes(hotlists.ADMINISTER)) {
       return this._renderEditableForm(defaultColumns);
     }
     return this._renderViewOnly(defaultColumns);
@@ -228,8 +228,8 @@ export class MrHotlistSettingsPage
   extends connectStore(_MrHotlistSettingsPage) {
   /** @override */
   stateChanged(state) {
-    this._hotlist = hotlist.viewedHotlist(state);
-    this._permissions = hotlist.viewedHotlistPermissions(state);
+    this._hotlist = hotlists.viewedHotlist(state);
+    this._permissions = hotlists.viewedHotlistPermissions(state);
     this._currentUser = userV0.currentUser(state);
   }
 
@@ -274,7 +274,7 @@ export class MrHotlistSettingsPage
       };
     });
 
-    const action = hotlist.update(this._hotlist.name, updatedHotlist);
+    const action = hotlists.update(this._hotlist.name, updatedHotlist);
     await store.dispatch(action);
     this._showHotlistSavedSnackbar();
   }
@@ -292,7 +292,7 @@ export class MrHotlistSettingsPage
     if (confirm(
         'Are you sure you want to delete this hotlist? This cannot be undone.')
     ) {
-      const action = hotlist.deleteHotlist(this._hotlist.name);
+      const action = hotlists.deleteHotlist(this._hotlist.name);
       await store.dispatch(action);
 
       // TODO(crbug/monorail/7430): Handle an error and add <chops-snackbar>.

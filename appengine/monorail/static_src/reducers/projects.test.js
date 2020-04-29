@@ -5,8 +5,8 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import * as project from './project.js';
-import * as example from 'shared/test/constants-project.js';
+import * as projects from './projects.js';
+import * as example from 'shared/test/constants-projects.js';
 
 import {prpcClient} from 'prpc-client-instance.js';
 
@@ -15,7 +15,7 @@ let dispatch;
 
 describe('project reducers', () => {
   it('root reducer initial state', () => {
-    const actual = project.reducer(undefined, {type: null});
+    const actual = projects.reducer(undefined, {type: null});
     const expected = {
       byName: {},
       allNames: [],
@@ -31,9 +31,9 @@ describe('project reducers', () => {
 
   describe('byNameReducer', () => {
     it('populated on LIST_SUCCESS', () => {
-      const action = {type: project.LIST_SUCCESS, projects:
+      const action = {type: projects.LIST_SUCCESS, projects:
           [example.PROJECT, example.PROJECT_2]};
-      const actual = project.byNameReducer({}, action);
+      const actual = projects.byNameReducer({}, action);
 
       assert.deepEqual(actual, {
         [example.NAME]: example.PROJECT,
@@ -46,8 +46,8 @@ describe('project reducers', () => {
         [example.NAME]: example.PROJECT,
         [example.NAME_2]: example.PROJECT_2,
       };
-      const action = {type: project.LIST_SUCCESS, projects: []};
-      const actual = project.byNameReducer(originalState, action);
+      const action = {type: projects.LIST_SUCCESS, projects: []};
+      const actual = projects.byNameReducer(originalState, action);
 
       assert.deepEqual(actual, originalState);
     });
@@ -56,9 +56,9 @@ describe('project reducers', () => {
       const originalState = {
         [example.NAME]: example.PROJECT,
       };
-      const action = {type: project.LIST_SUCCESS,
+      const action = {type: projects.LIST_SUCCESS,
         projects: [example.PROJECT_2]};
-      const actual = project.byNameReducer(originalState, action);
+      const actual = projects.byNameReducer(originalState, action);
 
       const expected = {
         [example.NAME]: example.PROJECT,
@@ -77,9 +77,9 @@ describe('project reducers', () => {
         name: example.NAME_2,
         summary: 'I hacked your project!',
       };
-      const action = {type: project.LIST_SUCCESS,
+      const action = {type: projects.LIST_SUCCESS,
         projects: [newProject2]};
-      const actual = project.byNameReducer(originalState, action);
+      const actual = projects.byNameReducer(originalState, action);
       const expected = {
         [example.NAME]: example.PROJECT,
         [example.NAME_2]: newProject2,
@@ -89,9 +89,9 @@ describe('project reducers', () => {
   });
 
   it('allNames populated on LIST_SUCCESS', () => {
-    const action = {type: project.LIST_SUCCESS, projects:
+    const action = {type: projects.LIST_SUCCESS, projects:
         [example.PROJECT, example.PROJECT_2]};
-    const actual = project.allNamesReducer([], action);
+    const actual = projects.allNamesReducer([], action);
 
     assert.deepEqual(actual, [example.NAME, example.NAME_2]);
   });
@@ -102,29 +102,29 @@ describe('project selectors', () => {
     const normalizedProjects = {
       [example.NAME]: example.PROJECT,
     };
-    const state = {project: {
+    const state = {projects: {
       byName: normalizedProjects,
     }};
-    assert.deepEqual(project.byName(state), normalizedProjects);
+    assert.deepEqual(projects.byName(state), normalizedProjects);
   });
 
   it('all', () => {
-    const state = {project: {
+    const state = {projects: {
       byName: {
         [example.NAME]: example.PROJECT,
       },
       allNames: [example.NAME],
     }};
-    assert.deepEqual(project.all(state), [example.PROJECT]);
+    assert.deepEqual(projects.all(state), [example.PROJECT]);
   });
 
   it('requests', () => {
-    const state = {project: {
+    const state = {projects: {
       requests: {
         list: {error: null, requesting: false},
       },
     }};
-    assert.deepEqual(project.requests(state), {
+    assert.deepEqual(projects.requests(state), {
       list: {error: null, requesting: false},
     });
   });
@@ -142,19 +142,19 @@ describe('project action creators', () => {
 
   describe('list', () => {
     it('success', async () => {
-      const projects = [example.PROJECT, example.PROJECT_2];
-      prpcClient.call.returns(Promise.resolve({projects}));
+      const projectsResponse = {projects: [example.PROJECT, example.PROJECT_2]};
+      prpcClient.call.returns(Promise.resolve(projectsResponse));
 
-      await project.list()(dispatch);
+      await projects.list()(dispatch);
 
-      sinon.assert.calledWith(dispatch, {type: project.LIST_START});
+      sinon.assert.calledWith(dispatch, {type: projects.LIST_START});
 
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v1.Projects', 'ListProjects', {});
 
       const successAction = {
-        type: project.LIST_SUCCESS,
-        projects,
+        type: projects.LIST_SUCCESS,
+        projects: projectsResponse.projects,
       };
       sinon.assert.calledWith(dispatch, successAction);
     });
@@ -162,10 +162,10 @@ describe('project action creators', () => {
     it('failure', async () => {
       prpcClient.call.throws();
 
-      await project.list()(dispatch);
+      await projects.list()(dispatch);
 
       const action = {
-        type: project.LIST_FAILURE,
+        type: projects.LIST_FAILURE,
         error: sinon.match.any,
       };
       sinon.assert.calledWith(dispatch, action);

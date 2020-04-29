@@ -73,7 +73,7 @@ export const reducer = combineReducers({
  * @param {any} state
  * @return {Object<string, User>}
  */
-export const byName = (state) => state.user.byName;
+export const byName = (state) => state.users.byName;
 
 // Action Creators
 

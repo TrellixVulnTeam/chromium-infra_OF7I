@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import {fieldTypes} from 'shared/issue-fields.js';
-import {USER_REF} from './constants-user.js';
+import {USER_REF} from './constants-users.js';
 import 'shared/typedef.js';
 
 /** @type {string} */

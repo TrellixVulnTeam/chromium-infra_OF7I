@@ -4,7 +4,7 @@
 
 import {assert} from 'chai';
 import {UserInputError} from 'shared/errors.js';
-import * as exampleUser from 'shared/test/constants-user.js';
+import * as exampleUsers from 'shared/test/constants-users.js';
 import {displayNameToUserRef, userIdOrDisplayNameToUserRef,
   userNameToId, userV3ToRef, labelStringToRef,
   labelRefToString, labelRefsToStrings, labelRefsToOneWordLabels,
@@ -50,11 +50,11 @@ describe('userIdOrDisplayNameToUserRef', () => {
 });
 
 it('userNameToId', () => {
-  assert.deepEqual(userNameToId(exampleUser.NAME), exampleUser.ID);
+  assert.deepEqual(userNameToId(exampleUsers.NAME), exampleUsers.ID);
 });
 
 it('userV3ToRef', () => {
-  assert.deepEqual(userV3ToRef(exampleUser.USER), exampleUser.USER_REF);
+  assert.deepEqual(userV3ToRef(exampleUsers.USER), exampleUsers.USER_REF);
 });
 
 describe('labelStringToRef', () => {

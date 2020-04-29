@@ -7,13 +7,13 @@ import sinon from 'sinon';
 
 import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
-import * as hotlist from 'reducers/hotlist.js';
+import * as hotlists from 'reducers/hotlists.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
-import * as example from 'shared/test/constants-hotlist.js';
-import * as exampleIssue from 'shared/test/constants-issue.js';
-import * as exampleUser from 'shared/test/constants-user.js';
+import * as example from 'shared/test/constants-hotlists.js';
+import * as exampleIssues from 'shared/test/constants-issueV0.js';
+import * as exampleUsers from 'shared/test/constants-users.js';
 
 import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
 
@@ -89,7 +89,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
         ...example.HOTLIST_ISSUE,
         summary: 'Summary',
         rank: 52,
-        adder: exampleUser.USER,
+        adder: exampleUsers.USER,
         createTime: new Date(0).toISOString(),
       }];
       element._columns = ['Summary', 'Rank', 'Added', 'Adder'];
@@ -99,7 +99,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
       assert.include(issueList.shadowRoot.innerHTML, 'Summary');
       assert.include(issueList.shadowRoot.innerHTML, '53');
       assert.include(issueList.shadowRoot.innerHTML, 'a day ago');
-      assert.include(issueList.shadowRoot.innerHTML, exampleUser.DISPLAY_NAME);
+      assert.include(issueList.shadowRoot.innerHTML, exampleUsers.DISPLAY_NAME);
     } finally {
       clock.restore();
     }
@@ -138,7 +138,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Change columns');
     assert.include(buttonBar.shadowRoot.innerHTML, 'Remove');
     assert.include(buttonBar.shadowRoot.innerHTML, 'Add to another hotlist');
-    assert.deepEqual(element._selected, [exampleIssue.NAME]);
+    assert.deepEqual(element._selected, [exampleIssues.NAME]);
   });
 
   it('opens "Change columns" dialog', async () => {
@@ -193,8 +193,8 @@ describe('mr-hotlist-issues-page (connected)', () => {
   it('query string overrides hotlist default columns', () => {
     const defaultColumns = [{column: 'Rank'}, {column: 'Summary'}];
     const hotlistWithColumns = {...example.HOTLIST, defaultColumns};
-    store.dispatch(hotlist.select(example.NAME));
-    store.dispatch({type: hotlist.FETCH_SUCCESS, hotlist: hotlistWithColumns});
+    store.dispatch(hotlists.select(example.NAME));
+    store.dispatch({type: hotlists.FETCH_SUCCESS, hotlist: hotlistWithColumns});
 
     assert.deepEqual(element._columns, ['Rank', 'Summary']);
 
@@ -206,8 +206,8 @@ describe('mr-hotlist-issues-page (connected)', () => {
 
   it('updates page title and header', async () => {
     const hotlistWithName = {...example.HOTLIST, displayName: 'Hotlist-Name'};
-    store.dispatch(hotlist.select(example.NAME));
-    store.dispatch({type: hotlist.FETCH_SUCCESS, hotlist: hotlistWithName});
+    store.dispatch(hotlists.select(example.NAME));
+    store.dispatch({type: hotlists.FETCH_SUCCESS, hotlist: hotlistWithName});
     await element.updateComplete;
 
     const state = store.getState();
@@ -217,16 +217,17 @@ describe('mr-hotlist-issues-page (connected)', () => {
 
   it('removes items', () => {
     element._hotlist = example.HOTLIST;
-    element._selected = [exampleIssue.NAME];
+    element._selected = [exampleIssues.NAME];
 
     sinon.stub(prpcClient, 'call');
 
     try {
       element._removeItems();
 
-      // We can't stub hotlist.removeItems(), so stub prpcClient.call() instead.
+      // We can't stub hotlists.removeItems(), so stub prpcClient.call()
+      // instead.
       // https://github.com/sinonjs/sinon/issues/562
-      const args = {parent: example.NAME, issues: [exampleIssue.NAME]};
+      const args = {parent: example.NAME, issues: [exampleIssues.NAME]};
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v1.Hotlists', 'RemoveHotlistItems', args);
     } finally {
@@ -247,7 +248,8 @@ describe('mr-hotlist-issues-page (connected)', () => {
     try {
       element._rerankItems([example.HOTLIST_ITEM_NAME], 1);
 
-      // We can't stub hotlist.rerankItems(), so stub prpcClient.call() instead.
+      // We can't stub hotlists.rerankItems(), so stub prpcClient.call()
+      // instead.
       // https://github.com/sinonjs/sinon/issues/562
       const args = {
         name: example.NAME,

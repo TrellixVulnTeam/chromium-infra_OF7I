@@ -7,7 +7,7 @@ import {LitElement, html, css} from 'lit-element';
 import {userV3ToRef} from 'shared/converters.js';
 
 import {store, connectStore} from 'reducers/base.js';
-import * as hotlist from 'reducers/hotlist.js';
+import * as hotlists from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
@@ -119,9 +119,9 @@ class _MrHotlistPeoplePage extends LitElement {
 export class MrHotlistPeoplePage extends connectStore(_MrHotlistPeoplePage) {
   /** @override */
   stateChanged(state) {
-    this._hotlist = hotlist.viewedHotlist(state);
-    this._owner = hotlist.viewedHotlistOwner(state);
-    this._editors = hotlist.viewedHotlistEditors(state);
+    this._hotlist = hotlists.viewedHotlist(state);
+    this._owner = hotlists.viewedHotlistOwner(state);
+    this._editors = hotlists.viewedHotlistEditors(state);
   }
 
   /** @override */

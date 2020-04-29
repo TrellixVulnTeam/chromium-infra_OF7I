@@ -9,7 +9,7 @@ import 'elements/framework/mr-star-button/mr-star-button.js';
 import 'shared/typedef.js';
 import 'elements/chops/chops-chip/chops-chip.js';
 
-import * as project from 'reducers/project.js';
+import * as projects from 'reducers/projects.js';
 
 
 /**
@@ -201,13 +201,13 @@ export class MrProjectsPage extends connectStore(LitElement) {
   /** @override */
   connectedCallback() {
     super.connectedCallback();
-    store.dispatch(project.list());
+    store.dispatch(projects.list());
   }
 
   /** @override */
   stateChanged(state) {
-    this._projects = project.all(state);
-    this._isFetchingProjects = project.requests(state).list.requesting;
+    this._projects = projects.all(state);
+    this._isFetchingProjects = projects.requests(state).list.requesting;
   }
 
   /**

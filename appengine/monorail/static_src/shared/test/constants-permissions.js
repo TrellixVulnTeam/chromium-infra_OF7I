@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as issue from './constants-issue.js';
+import * as issue from './constants-issueV0.js';
 import 'shared/typedef.js';
 
 /** @type {Permission} */

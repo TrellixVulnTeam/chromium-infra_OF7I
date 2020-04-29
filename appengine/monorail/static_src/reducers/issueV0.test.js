@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import {createSelector} from 'reselect';
 import {store, resetState} from './base.js';
 import * as issueV0 from './issueV0.js';
-import * as example from 'shared/test/constants-issue.js';
+import * as example from 'shared/test/constants-issueV0.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 import {issueToIssueRef, issueRefToString} from 'shared/converters.js';
 import {prpcClient} from 'prpc-client-instance.js';

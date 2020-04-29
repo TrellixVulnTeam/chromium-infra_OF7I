@@ -5,11 +5,11 @@
 import {assert} from 'chai';
 
 import {store, resetState} from 'reducers/base.js';
-import * as hotlist from 'reducers/hotlist.js';
+import * as hotlists from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
 
-import * as example from 'shared/test/constants-hotlist.js';
-import * as exampleUser from 'shared/test/constants-user.js';
+import * as example from 'shared/test/constants-hotlists.js';
+import * as exampleUsers from 'shared/test/constants-users.js';
 
 import {MrHotlistPeoplePage} from './mr-hotlist-people-page.js';
 
@@ -41,8 +41,8 @@ describe('mr-hotlist-people-page (unconnected)', () => {
 
   it('renders hotlist', async () => {
     element._hotlist = example.HOTLIST;
-    element._owner = exampleUser.USER;
-    element._editors = [exampleUser.USER_2];
+    element._owner = exampleUsers.USER;
+    element._editors = [exampleUsers.USER_2];
     await element.updateComplete;
   });
 });
@@ -65,8 +65,8 @@ describe('mr-hotlist-people-page (connected)', () => {
 
   it('updates page title and header', async () => {
     const hotlistWithName = {...example.HOTLIST, displayName: 'Hotlist-Name'};
-    store.dispatch(hotlist.select(example.NAME));
-    store.dispatch({type: hotlist.FETCH_SUCCESS, hotlist: hotlistWithName});
+    store.dispatch(hotlists.select(example.NAME));
+    store.dispatch({type: hotlists.FETCH_SUCCESS, hotlist: hotlistWithName});
     await element.updateComplete;
 
     const state = store.getState();

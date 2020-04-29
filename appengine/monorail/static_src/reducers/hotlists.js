@@ -26,7 +26,7 @@ import {userIdOrDisplayNameToUserRef, issueNameToRef, pathsToFieldMask}
 
 import * as issueV0 from './issueV0.js';
 import * as permissions from './permissions.js';
-import * as user from './user.js';
+import * as users from './users.js';
 
 import 'shared/typedef.js';
 /** @typedef {import('redux').AnyAction} AnyAction */
@@ -150,14 +150,14 @@ export const reducer = combineReducers({
  * @param {any} state
  * @return {?string}
  */
-export const name = (state) => state.hotlist.name;
+export const name = (state) => state.hotlists.name;
 
 /**
  * Returns all the Hotlist data in the store as a mapping from name to Hotlist.
  * @param {any} state
  * @return {Object<string, Hotlist>}
  */
-export const byName = (state) => state.hotlist.byName;
+export const byName = (state) => state.hotlists.byName;
 
 /**
  * Returns all the Hotlist items in the store as a mapping from a
@@ -165,7 +165,7 @@ export const byName = (state) => state.hotlist.byName;
  * @param {any} state
  * @return {Object<string, Array<HotlistItem>>}
  */
-export const hotlistItems = (state) => state.hotlist.hotlistItems;
+export const hotlistItems = (state) => state.hotlists.hotlistItems;
 
 /**
  * Returns the currently viewed Hotlist, or null if there is none.
@@ -182,7 +182,7 @@ export const viewedHotlist = createSelector(
  * @return {?User}
  */
 export const viewedHotlistOwner = createSelector(
-    [viewedHotlist, user.byName],
+    [viewedHotlist, users.byName],
     (hotlist, usersByName) => {
       return hotlist && usersByName[hotlist.owner.name] || null;
     });
@@ -195,7 +195,7 @@ export const viewedHotlistOwner = createSelector(
  * @return {Array<User>}
  */
 export const viewedHotlistEditors = createSelector(
-    [viewedHotlist, user.byName],
+    [viewedHotlist, users.byName],
     (hotlist, usersByName) => {
       if (!hotlist) return [];
       return hotlist.editors.map((editor) => usersByName[editor.name] || null);
@@ -219,7 +219,7 @@ export const viewedHotlistItems = createSelector(
  * @return {Array<HotlistIssue>}
  */
 export const viewedHotlistIssues = createSelector(
-    [viewedHotlistItems, issueV0.issue, user.byName],
+    [viewedHotlistItems, issueV0.issue, users.byName],
     (items, getIssue, usersByName) => {
       // Filter out issues that haven't been fetched yet or failed to fetch.
       // Example: if the user doesn't have permissions to view the issue.
@@ -251,7 +251,7 @@ export const viewedHotlistPermissions = createSelector(
  * @param {any} state
  * @return {Object.<string, ReduxRequestState>}
  */
-export const requests = (state) => state.hotlist.requests;
+export const requests = (state) => state.hotlists.requests;
 
 // Action Creators
 
@@ -288,12 +288,11 @@ export const fetch = (name) => async (dispatch) => {
         'monorail.v1.Hotlists', 'GetHotlist', {name});
     if (!hotlist.editors) hotlist.editors = [];
 
-    const users = hotlist.editors.map((editor) => editor.name);
-    users.push(hotlist.owner.name);
-    await dispatch(user.batchGet(users));
+    const editors = hotlist.editors.map((editor) => editor.name);
+    editors.push(hotlist.owner.name);
+    await dispatch(users.batchGet(editors));
 
     dispatch({type: FETCH_SUCCESS, hotlist});
-    return hotlist;
   } catch (error) {
     dispatch({type: FETCH_FAILURE, error});
   };
@@ -319,7 +318,7 @@ export const fetchItems = (name) => async (dispatch) => {
     await dispatch(issueV0.fetchIssues(issueRefs));
 
     const adderNames = [...new Set(items.map((item) => item.adder.name))];
-    await dispatch(user.batchGet(adderNames));
+    await dispatch(users.batchGet(adderNames));
 
     dispatch({type: FETCH_ITEMS_SUCCESS, name, items: itemsWithRank});
     return itemsWithRank;
