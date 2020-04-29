@@ -18,12 +18,20 @@ from recipe_engine.post_process import MustRun
 
 
 PROPERTIES = {
-  'projects': recipe_api.Property(),
+    'projects':
+        recipe_api.Property(),
+    'db_gcs_bucket':
+        recipe_api.Property(
+            kind=str,
+            help=('GCS bucket in which to store metadata for historical roll '
+                  'attempts'),
+            default='recipe-mega-roller-crappy-db'),
 }
 
 
-def RunSteps(api, projects):
-  api.recipe_autoroller.roll_projects(projects)
+def RunSteps(api, projects, db_gcs_bucket):
+  api.recipe_autoroller.roll_projects(projects, db_gcs_bucket)
+  return
 
 
 def GenTests(api):
@@ -39,10 +47,8 @@ def GenTests(api):
         ])
     )
 
-  yield (
-      test('basic') +
-      api.recipe_autoroller.roll_data('build')
-  )
+  yield (test('basic') + api.properties(db_gcs_bucket='somebucket') +
+         api.recipe_autoroller.roll_data('build'))
 
   yield (
       test('nontrivial') +

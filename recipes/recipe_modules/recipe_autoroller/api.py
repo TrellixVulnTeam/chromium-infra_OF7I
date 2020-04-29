@@ -77,9 +77,6 @@ ROLL_SUCCESS, ROLL_EMPTY, ROLL_FAILURE, ROLL_SKIP = range(4)
 _ROLL_STALE_THRESHOLD = datetime.timedelta(hours=2)
 
 
-_GS_BUCKET = 'recipe-mega-roller-crappy-db'
-
-
 def _gs_path(project_url):
   return 'repo_metadata/%s' % base64.urlsafe_b64encode(project_url)
 
@@ -120,7 +117,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(RecipeAutorollerApi, self).__init__(**kwargs)
 
-  def roll_projects(self, projects):
+  def roll_projects(self, projects, db_gcs_bucket):
     """Attempts to roll each project from the provided list.
 
     If rolling any of the projects leads to failures, other
@@ -130,6 +127,8 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       projects: list of tuples of
         project_id (string): id as found in recipes.cfg.
         project_url (string): Git repository URL of the project.
+        db_gcs_bucket (string): The GCS bucket used as a database for previous
+          roll attempts.
     """
     recipes_dir = self.m.path['cache'].join('builder', 'recipe_engine')
     self.m.file.rmtree('ensure recipe_dir gone', recipes_dir)
@@ -148,7 +147,8 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       for project_id, project_url in projects:
         with self.m.step.nest(str(project_id)):
           results.append(
-              self._roll_project(project_id, project_url, recipes_dir))
+              self._roll_project(project_id, project_url, recipes_dir,
+                                 db_gcs_bucket))
 
     # We need to unwrap |DeferredResult|s.
     results = [r.get_result() for r in results]
@@ -187,10 +187,11 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
     return workdir
 
-  def _check_previous_roll(self, project_url, workdir):
+  def _check_previous_roll(self, project_url, workdir, db_gcs_bucket):
     # Check status of last known CL for this repo. Ensure there's always
     # at most one roll CL in flight.
-    repo_data, cl_status = self._get_pending_cl_status(project_url, workdir)
+    repo_data, cl_status = self._get_pending_cl_status(project_url, workdir,
+                                                       db_gcs_bucket)
     if repo_data:
       last_roll_elapsed = self.m.time.utcnow() - repo_data.last_roll_ts_utc
 
@@ -234,7 +235,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
         'autoroll_recipe_options', {}
     ).get('disable_reason')
 
-  def _roll_project(self, project_id, project_url, recipes_dir):
+  def _roll_project(self, project_id, project_url, recipes_dir, db_gcs_bucket):
     # Keep persistent checkout. Speeds up the roller for large repos
     # like chromium/src.
     workdir = self._prepare_checkout(project_id, project_url)
@@ -247,7 +248,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       rslt.presentation.status = self.m.step.WARNING
       return ROLL_SKIP
 
-    status = self._check_previous_roll(project_url, workdir)
+    status = self._check_previous_roll(project_url, workdir, db_gcs_bucket)
     if status is not None:
       # This means that the previous roll is still going, or similar. In this
       # situation we're done with this repo, for now.
@@ -263,7 +264,8 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     roll_result = roll_step.json.output
 
     if roll_result['success'] and roll_result['picked_roll_details']:
-      self._process_successful_roll(project_url, roll_step, workdir)
+      self._process_successful_roll(project_url, roll_step, workdir,
+                                    db_gcs_bucket)
       return ROLL_SUCCESS
 
     num_rejected = roll_result['rejected_candidates_count']
@@ -277,7 +279,8 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
     return ROLL_FAILURE
 
-  def _process_successful_roll(self, project_url, roll_step, workdir):
+  def _process_successful_roll(self, project_url, roll_step, workdir,
+                               db_gcs_bucket):
     """
     Args:
       roll_step - The StepResult of the actual roll command. This is used to
@@ -352,17 +355,17 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
         repo_data.issue_url)
 
     self.m.gsutil.upload(
-        self.m.json.input(repo_data.to_json()),
-        _GS_BUCKET, _gs_path(project_url))
+        self.m.json.input(repo_data.to_json()), db_gcs_bucket,
+        _gs_path(project_url))
 
-  def _get_pending_cl_status(self, project_url, workdir):
+  def _get_pending_cl_status(self, project_url, workdir, db_gcs_bucket):
     """Returns (current_repo_data, git_cl_status_string) of the last known
     roll CL for given repo.
 
     If no such CL has been recorded, returns (None, None).
     """
     cat_result = self.m.gsutil.cat(
-        'gs://%s/%s' % (_GS_BUCKET, _gs_path(project_url)),
+        'gs://%s/%s' % (db_gcs_bucket, _gs_path(project_url)),
         stdout=self.m.raw_io.output(),
         stderr=self.m.raw_io.output(),
         ok_ret=(0,1),
