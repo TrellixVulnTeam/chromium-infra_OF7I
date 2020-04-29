@@ -103,6 +103,8 @@ var (
 		"minimise",      // valid UK spelling
 		"mut",           // Rust keyword
 		"optin",         // alternative of opt-in
+		"parameterize",  // valid spelling
+		"parameterizes", // valid spelling
 		"process'",      // possessive of process
 		"que",           // person name
 		"reenable",      // alternative of re-enable
