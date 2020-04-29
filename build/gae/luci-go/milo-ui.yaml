@@ -5,7 +5,7 @@ inputsdir: ../../../go/src/go.chromium.org/luci/milo
 
 build:
   # This builds the frontend code updating ${inputsdir}/frontend/resultui/out.
-  - run: ['make', 'build']
+  - run: ['make', 'release']
     cwd: ${inputsdir}/frontend/resultui
 
   # This packages all Go code with its dependencies into _gopath/src/....
