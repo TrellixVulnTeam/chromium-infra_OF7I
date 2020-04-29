@@ -71,6 +71,7 @@ class ProjectsServicerTest(unittest.TestCase):
     expected_template = project_objects_pb2.IssueTemplate(
         name='projects/{}/templates/{}'.format(
             self.project_1.project_name, self.template_1.name),
+        display_name=self.template_1.name,
         issue=expected_issue,
         summary_must_be_edited=False,
         template_privacy=project_objects_pb2.IssueTemplate.TemplatePrivacy

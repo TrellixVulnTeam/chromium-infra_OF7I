@@ -1060,6 +1060,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         actual.name, 'projects/{}/templates/{}'.format(
             self.project_1.project_name, self.template_1.name))
+    self.assertEqual(actual.display_name, self.template_1.name)
     self.assertEqual(actual.summary_must_be_edited, False)
     self.assertEqual(
         actual.template_privacy,

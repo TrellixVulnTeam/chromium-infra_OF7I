@@ -685,6 +685,7 @@ class Converter(object):
       api_templates.append(
           project_objects_pb2.IssueTemplate(
               name=name,
+              display_name=template.name,
               issue=issue,
               summary_must_be_edited=summary_must_be_edited,
               template_privacy=template_privacy,

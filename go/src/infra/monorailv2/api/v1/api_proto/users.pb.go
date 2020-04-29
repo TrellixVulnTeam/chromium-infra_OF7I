@@ -427,17 +427,20 @@ type UsersClient interface {
 	// Stars a given project for the requestor.
 	//
 	// Raises:
-	//   NOT_FOUND if the requested roject is not found.
+	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
 	StarProject(ctx context.Context, in *StarProjectRequest, opts ...grpc.CallOption) (*ProjectStar, error)
 	// Unstars a given project for the requestor.
 	//
 	// Raises:
-	//   NOT_FOUND if the requested roject is not found.
+	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
 	UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	// Lists all of a user's starred projects.
-	// TODO(crbug/monorail/7238): Document possible errors when implemented.
+	//
+	// Raises:
+	//   NOT_FOUND if the requested user is not found.
+	//   INVALID_ARGUMENT if the given `parent` is not valid.
 	ListProjectStars(ctx context.Context, in *ListProjectStarsRequest, opts ...grpc.CallOption) (*ListProjectStarsResponse, error)
 }
 type usersPRPCClient struct {
@@ -557,17 +560,20 @@ type UsersServer interface {
 	// Stars a given project for the requestor.
 	//
 	// Raises:
-	//   NOT_FOUND if the requested roject is not found.
+	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
 	StarProject(context.Context, *StarProjectRequest) (*ProjectStar, error)
 	// Unstars a given project for the requestor.
 	//
 	// Raises:
-	//   NOT_FOUND if the requested roject is not found.
+	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
 	UnStarProject(context.Context, *UnStarProjectRequest) (*empty.Empty, error)
 	// Lists all of a user's starred projects.
-	// TODO(crbug/monorail/7238): Document possible errors when implemented.
+	//
+	// Raises:
+	//   NOT_FOUND if the requested user is not found.
+	//   INVALID_ARGUMENT if the given `parent` is not valid.
 	ListProjectStars(context.Context, *ListProjectStarsRequest) (*ListProjectStarsResponse, error)
 }
 

@@ -302,7 +302,7 @@ message ProjectSavedQuery {
 
 
 // Defines a template for filling issues.
-// Next available tag: 8
+// Next available tag: 9
 message IssueTemplate {
   option (google.api.resource) = {
     type: "api.crbug.com/Template"
@@ -310,10 +310,12 @@ message IssueTemplate {
   };
   // Resource name of the template.
   string name = 1;
+  // Display name of this template.
+  string display_name = 2 [(google.api.field_behavior) = IMMUTABLE];
   // Canonical Issue for this template
-  Issue issue = 2;
+  Issue issue = 3;
   // Boolean indicating subsequent issue creation must have delta in summary
-  bool summary_must_be_edited = 3;
+  bool summary_must_be_edited = 4;
   // Visibility permission of template
   // Next available tag: 3
   enum TemplatePrivacy {
@@ -324,7 +326,7 @@ message IssueTemplate {
     // Anyone on the web can view this template.
     PUBLIC = 2;
   }
-  TemplatePrivacy template_privacy = 4;
+  TemplatePrivacy template_privacy = 5;
   // Indicator of who if anyone should be the default owner of the issue
   // created with this template.
   // Next available tag: 2
@@ -336,11 +338,11 @@ message IssueTemplate {
     // member of the project.
     PROJECT_MEMBER_REPORTER = 1;
   }
-  DefaultOwner default_owner= 5;
+  DefaultOwner default_owner = 6;
   // Boolean indicating whether issue must have a component.
-  bool component_required = 6;
+  bool component_required = 7;
   // Names of Users who can administer this template.
-  repeated string admins = 7 [
+  repeated string admins = 8 [
       (google.api.resource_reference) = { type: "api.crbug.com/User" }];
 }
 
