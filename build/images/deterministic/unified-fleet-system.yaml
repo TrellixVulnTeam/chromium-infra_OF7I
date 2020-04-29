@@ -1,10 +1,10 @@
 name: unified-fleet-system
 extends: ../base.yaml
 
-dockerfile: ../../../go/src/infra/appengine/unified-fleet/docker/Dockerfile
+dockerfile: ../../../go/src/infra/unifiedfleet/docker/Dockerfile
 deterministic: true
 
 build:
-  - go_binary: infra/appengine/unified-fleet
+  - go_binary: infra/unifiedfleet
     # ContextDir defaults to the directory with Dockerfile
     dest: ${contextdir}/ufs-service
