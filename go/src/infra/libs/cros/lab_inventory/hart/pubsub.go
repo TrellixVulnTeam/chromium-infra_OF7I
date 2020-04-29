@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"sync"
 
-	fleet "infra/libs/fleet/protos/go"
-
 	"cloud.google.com/go/pubsub"
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/luci/common/logging"
+	fleet "infra/libs/fleet/protos/go"
+
+	"infra/libs/cros/lab_inventory/datastore"
 )
 
 var instance *Hart // Instance of HaRT
@@ -43,12 +45,39 @@ func GetInstance(ctx context.Context) (*Hart, error) {
 	}
 	once.Do(func() {
 		instance = hart
+		go hart.subscribeRoutine(ctx)
 	})
 	return instance, nil
 }
 
-// Publish a message to the topic in Hart, Blocks until ack.
-func (h *Hart) publish(ctx context.Context, ids []string) (string, error) {
+// subscribeRoutine runs a routine that receives any AssetInfo sent by HaRT.
+func (h *Hart) subscribeRoutine(ctx context.Context) {
+	sub := h.client.Subscription(subID)
+	cctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		// Restart the go routine if there is an unexpected crash
+		cancel()
+		if err := recover(); err != nil {
+			logging.Errorf(ctx, " PubSub subscribe %s, restarting", err)
+		}
+		go h.subscribeRoutine(ctx)
+	}()
+	sub.Receive(cctx, func(ctx context.Context, m *pubsub.Message) {
+		defer m.Ack()
+		var response fleet.AssetInfoResponse
+		perr := proto.Unmarshal(m.Data, &response)
+		if perr == nil {
+			if response.GetRequestStatus() == fleet.RequestStatus_SUCCESS {
+				datastore.AddAssetInfo(ctx, response.GetAssets())
+			}
+		} else {
+			logging.Warningf(ctx, "Unable to decode message %v", m.Attributes)
+		}
+	})
+}
+
+// publish a message to the topic in Hart, Blocks until ack.
+func (h *Hart) publish(ctx context.Context, ids []string) (serverID string, err error) {
 	msg := &fleet.AssetInfoRequest{
 		AssetTags: ids,
 	}
