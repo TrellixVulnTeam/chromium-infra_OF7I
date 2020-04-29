@@ -90,7 +90,7 @@ func (c *metadataRun) innerRun(ctx context.Context, a subcommands.Application, a
 		}
 
 		r := metadata.Lint(m.payload)
-		for l := range r.Display() {
+		for _, l := range r.Display() {
 			fmt.Fprintln(w, l)
 		}
 
