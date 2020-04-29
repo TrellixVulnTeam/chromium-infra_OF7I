@@ -8,7 +8,7 @@ import (
 	"context"
 	"net"
 
-	"go.chromium.org/chromiumos/infra/proto/go/tls"
+	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"google.golang.org/grpc"
 )
 
