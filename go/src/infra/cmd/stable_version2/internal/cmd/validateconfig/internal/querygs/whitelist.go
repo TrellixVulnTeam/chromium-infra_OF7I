@@ -9,12 +9,14 @@
 package querygs
 
 var missingBoardWhitelist map[string]bool = stringSliceToStringSet([]string{
+	"atlas_kvm",
 	"buddy_cfm",
 	"caroline_arcnext",
 	"caroline_kernelnext",
 	"caroline_ndktranslation",
 	"cid",
 	"cyan_kernelnext",
+	"elm_kernelnext",
 	"eve_arcnext",
 	"eve_campfire",
 	"eve_kvm",
@@ -25,8 +27,10 @@ var missingBoardWhitelist map[string]bool = stringSliceToStringSet([]string{
 	"guado_accelerator",
 	"guado_cfm",
 	"guado_kernelnext",
+	"hana_kernelnext",
 	"kalista_cfm",
 	"kefka_kernelnext",
+	"nami_kvm",
 	"nyan",
 	"oak",
 	"rambi",
