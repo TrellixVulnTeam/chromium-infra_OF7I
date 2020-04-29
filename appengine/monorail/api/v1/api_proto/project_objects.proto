@@ -271,7 +271,7 @@ message ComponentDef {
 // Defines approvals that issues within the project may need.
 //
 // TODO(monorail:7193): Add documentation for approvals.
-// Next available tag: 2
+// Next available tag: 7
 message ApprovalDef {
   option (google.api.resource) = {
     type: "api.crbug.com/ApprovalDef"
@@ -280,6 +280,22 @@ message ApprovalDef {
 
   // Resource name of the approval.
   string name = 1;
+  // Display name of the field.
+  string display_name = 2 [(google.api.field_behavior) = IMMUTABLE];
+  // Brief explanation of this field.
+  string docstring = 3;
+  // Information approvers need from requester.
+  // May be adjusted on the issue after creation.
+  string survey = 4;
+  // Default list of users who can approve this field.
+  // May be adjusted on the issue after creation.
+  repeated string approvers = 5 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }
+  ];
+  // Administrators of this field.
+  repeated string admins = 6 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }
+  ];
 }
 
 
