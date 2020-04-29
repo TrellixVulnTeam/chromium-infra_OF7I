@@ -30,15 +30,14 @@ message User {
 
 
 // UserSettings represents preferences and account settings of a User.
-// Next available tag: 4
+// Next available tag: 8
 message UserSettings {
   option (google.api.resource) = {
     type: "api.crbug.com/UserSettings"
     pattern: "usersettings/{user_id}"
   };
-  // Resource name of the user that has these settings.
-  string name = 1 [ (google.api.resource_reference) = {type: "api.crbug.com/UserSettings"} ];
-  // The global site role for a User.
+
+  // Potential roles of a user.
   // Next available tag: 3
   enum SiteRole {
     // Default value. This value is unused.
@@ -48,11 +47,84 @@ message UserSettings {
     // Site-wide admin role.
     ADMIN = 2;
   }
-  SiteRole site_role = 2;
-  // Resource name of a linked primary User.
-  string linked_primary_user = 3 [
+
+  // The access the user has to the site.
+  // Next available tag: 3
+  message SiteAccess {
+    // Potential status of a user's access to the site.
+    // Next available tag: 3
+    enum Status {
+      // Default value. This value is unused.
+      STATUS_UNSPECIFIED = 0;
+      // The user has access to the site.
+      FULL_ACCESS = 1;
+      // The user is banned from the site.
+      BANNED = 2;
+    }
+
+    // The status of the user's access to the site.
+    Status status = 1;
+    // An explanation for the value of `status`.
+    string reason = 2;
+  }
+
+  // Trait options for notifications the user receives.
+  // Next available tag: 6;
+  enum NotificationTraits {
+    // Default value. This value is unused.
+    NOTIFICATION_TRAITS_UNSPECIFIED = 0;
+    // Send change notifications for issues where user is owner or cc.
+    NOTIFY_ON_OWNED_OR_CC_ISSUE_CHANGES = 1;
+    // Send change notifications for issues the user has starred.
+    NOTIFY_ON_STARRED_ISSUE_CHANGES = 2;
+    // Send date-type field notifications for issues the user has starred.
+    // See monorail/doc/userguide/email.md#why-did-i-get-a-follow_up-email-notification.
+    NOTIFY_ON_STARRED_NOTIFY_DATES = 3;
+    // Email subject lines should be compact.
+    COMPACT_SUBJECT_LINE = 4;
+    // Include a button link to the issue, in Gmail.
+    GMAIL_INCLUDE_ISSUE_LINK_BUTTON = 5;
+  }
+
+  // Privacy trait options for the user.
+  // Next available tag: 2
+  enum PrivacyTraits {
+    // Default value. This value is unused.
+    PRIVACY_TRAITS_UNSPECIFIED = 0;
+    // Obscure the user's email from non-project members throughout the site.
+    OBSCURE_EMAIL = 1;
+  }
+
+  // Site interaction trait options for the user.
+  // Next available tag: 3
+  enum SiteInteractionTraits {
+    // Default value. This value is unused.
+    SITE_INTERACTION_TRAITS_UNSPECIFIED = 0;
+    // Add 'Restrict-View-Google' labels to new issues the user reports.
+    // Issues will only be visible to the user (issue reporter)
+    // and users with the `Google` permission.
+    REPORT_RESTRICT_VIEW_GOOGLE_ISSUES = 1;
+    // When viewing public issues, show a banner to remind the user not
+    // to post sensitive information.
+    PUBLIC_ISSUE_BANNER = 2;
+  }
+
+  // Resource name of the user that has these settings.
+  string name = 1 [ (google.api.resource_reference) = {type: "api.crbug.com/UserSettings"} ];
+  // The global site role for the user.
+  SiteRole site_role = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  // Resource name of linked secondary users.
+  repeated string linked_secondary_users = 3 [
       (google.api.resource_reference) = {type: "api.crbug.com/User"},
       (google.api.field_behavior) = OUTPUT_ONLY ];
+  // The user's access to the site.
+  SiteAccess site_access = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  // Notification trait preferences of the user.
+  repeated NotificationTraits notification_traits = 5;
+  // Privacy trait preferences of the user.
+  repeated PrivacyTraits privacy_traits = 6;
+  // Site interaction trait preferences of the user.
+  repeated SiteInteractionTraits site_interaction_traits = 7;
 }
 
 // Defines saved queries that belong to a user.
