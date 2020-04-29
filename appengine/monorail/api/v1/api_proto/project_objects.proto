@@ -29,7 +29,7 @@ message Project {
   // Resource name of the project.
   string name = 1;
   // Display name of the project.
-  string display_name = 2;
+  string display_name = 2 [(google.api.field_behavior) = IMMUTABLE];
   // Summary of the project, ie describing what its use and purpose.
   string summary = 3;
   // URL pointing to this project's logo image.
