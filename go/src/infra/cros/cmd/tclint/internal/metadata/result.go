@@ -7,7 +7,9 @@
 package metadata
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 )
@@ -54,11 +56,24 @@ func (r *Result) Display() []string {
 		}
 	}
 	sort.Strings(ss)
-	return ss
+	return breakAndIndentMultiLine(ss)
 }
 
 func errorResult(fmt string, args ...interface{}) Result {
 	return Result{
 		Errors: errors.NewMultiError(errors.Reason(fmt, args...).Err()),
 	}
+}
+
+func breakAndIndentMultiLine(ss []string) []string {
+	ret := make([]string, 0, len(ss))
+	for _, s := range ss {
+		ps := strings.Split(s, "\n")
+		// strings.Split() returns at least one element, even for empty input.
+		ret = append(ret, ps[0])
+		for _, p := range ps[1:] {
+			ret = append(ret, fmt.Sprintf("  %s", p))
+		}
+	}
+	return ret
 }
