@@ -41,3 +41,7 @@ cron:
 - description: tsmon house keeping
   url: /internal/cron/ts_mon/housekeeping
   schedule: every 1 minutes
+
+- description: sync asset info from hart
+  url: /internal/cron/sync-asset-info-from-hart
+  schedule: every 1 hours

@@ -13,6 +13,7 @@ import (
 	"cloud.google.com/go/bigquery"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
+	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/common/bq"
@@ -33,6 +34,7 @@ import (
 	"infra/libs/cros/lab_inventory/datastore"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/cros/lab_inventory/dronecfg"
+	"infra/libs/cros/lab_inventory/hart"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
 )
 
@@ -61,6 +63,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/report-inventory", mwCron, logAndSetHTTPErr(reportInventoryCronHandler))
 
 	r.GET("/internal/cron/sync-device-list-to-drone-config", mwCron, logAndSetHTTPErr(syncDeviceListToDroneConfigHandler))
+
+	r.GET("/internal/cron/sync-asset-info-from-hart", mwCron, logAndSetHTTPErr(syncAssetInfoFromHaRT))
 }
 
 func dumpToBQCronHandler(c *router.Context) (err error) {
@@ -274,6 +278,41 @@ func syncDeviceListToDroneConfigHandler(c *router.Context) error {
 	ctx := c.Context
 	logging.Infof(c.Context, "start to sync device list to drone config")
 	return dronecfg.SyncDeviceList(ctx, dronecfg.QueenDroneName(config.Get(ctx).Environment))
+}
+
+func syncAssetInfoFromHaRT(c *router.Context) error {
+	logging.Infof(c.Context, "Sync AssetInfo from HaRT")
+	//TODO(anushruth): Change to get all asset keys instead of assets
+	assets, err := datastore.GetAllAssets(c.Context)
+	if err != nil {
+		logging.Errorf(c.Context, err.Error())
+		return err
+	}
+
+	ids := make([]string, 0, len(assets))
+	for _, a := range assets {
+		ids = append(ids, a.Id)
+	}
+
+	// Filter assets not yet in datastore
+	res := datastore.GetAssetInfo(c.Context, ids)
+	req := make([]string, 0, len(assets))
+	for _, a := range res {
+		if a.Err != nil && ds.IsErrNoSuchEntity(a.Err) {
+			req = append(req, a.Entity.AssetTag)
+		}
+	}
+
+	logging.Infof(c.Context, "Syncing %v AssetInfo entit(y|ies) from HaRT", len(req))
+
+	h, err := hart.GetInstance(c.Context)
+	if err == nil {
+		h.SyncAssetInfoFromHaRT(c.Context, req)
+	} else {
+		logging.Warningf(c.Context, "Unable to sync AssetInfo from HaRT")
+	}
+
+	return err
 }
 
 func logAndSetHTTPErr(f func(c *router.Context) error) func(*router.Context) {
