@@ -1,0 +1,9 @@
+{
+	"files": [
+		{ "path": "src/g_links.md" },
+		{ "path": "src/go_links.md" },
+		{ "path": "src/https_urls.md" },
+		{ "path": "src/http_single_url.md" },
+		{ "path": "src/http_multiple_urls.md" }
+  ]
+}
