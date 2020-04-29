@@ -17,11 +17,11 @@ import (
 	"go.chromium.org/luci/config/server/cfgclient/textproto"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 
-	proto "infra/appengine/unified-fleet/api/v1/proto"
-	api "infra/appengine/unified-fleet/api/v1/rpc"
-	"infra/appengine/unified-fleet/app/config"
 	"infra/libs/fleet/configuration"
 	"infra/libs/fleet/datastore"
+	proto "infra/unifiedfleet/api/v1/proto"
+	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/config"
 )
 
 const defaultCfgService = "luci-config.appspot.com"

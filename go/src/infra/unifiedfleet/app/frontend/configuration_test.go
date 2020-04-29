@@ -9,10 +9,10 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	proto "infra/appengine/unified-fleet/api/v1/proto"
-	api "infra/appengine/unified-fleet/api/v1/rpc"
 	"infra/libs/fleet/configuration"
 	"infra/libs/fleet/datastore"
+	proto "infra/unifiedfleet/api/v1/proto"
+	api "infra/unifiedfleet/api/v1/rpc"
 
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )

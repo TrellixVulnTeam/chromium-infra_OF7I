@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 
-	"infra/appengine/unified-fleet/app/config"
+	"infra/unifiedfleet/app/config"
 )
 
 const (

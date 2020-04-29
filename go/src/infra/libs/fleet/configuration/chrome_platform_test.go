@@ -5,7 +5,7 @@
 package configuration
 
 import (
-	fleet "infra/appengine/unified-fleet/api/v1/proto"
+	fleet "infra/unifiedfleet/api/v1/proto"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"

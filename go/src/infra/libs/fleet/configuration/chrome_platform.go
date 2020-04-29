@@ -12,8 +12,8 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 
-	fleet "infra/appengine/unified-fleet/api/v1/proto"
 	fleetds "infra/libs/fleet/datastore"
+	fleet "infra/unifiedfleet/api/v1/proto"
 )
 
 // ChromePlatformKind is the datastore entity kind for chrome platforms.

@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
-	api "infra/appengine/unified-fleet/api/v1/rpc"
+	api "infra/unifiedfleet/api/v1/rpc"
 )
 
 // InstallServices installs ...

@@ -11,8 +11,8 @@ import (
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
 
-	"infra/appengine/unified-fleet/app/config"
-	"infra/appengine/unified-fleet/app/frontend"
+	"infra/unifiedfleet/app/config"
+	"infra/unifiedfleet/app/frontend"
 )
 
 func main() {

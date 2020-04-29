@@ -11,8 +11,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 
-	fleet "infra/appengine/unified-fleet/api/v1/proto"
 	gitlib "infra/libs/cros/git"
+	fleet "infra/unifiedfleet/api/v1/proto"
 
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )

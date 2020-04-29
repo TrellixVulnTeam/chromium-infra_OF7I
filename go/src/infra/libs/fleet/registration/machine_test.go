@@ -10,7 +10,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
-	proto "infra/appengine/unified-fleet/api/v1/proto"
+	proto "infra/unifiedfleet/api/v1/proto"
 )
 
 func mockChromeOSMachine(id, lab, board string) *proto.Machine {

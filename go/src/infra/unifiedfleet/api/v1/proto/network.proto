@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package unifiedfleet.api.v1.proto;
 
-option go_package = "infra/appengine/unified-fleet/api/v1/proto;ufspb";
+option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";

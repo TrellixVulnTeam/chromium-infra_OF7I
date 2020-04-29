@@ -8,7 +8,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
-	proto1 "infra/appengine/unified-fleet/api/v1/proto"
+	proto1 "infra/unifiedfleet/api/v1/proto"
 )
 
 type DecoratedFleet struct {
