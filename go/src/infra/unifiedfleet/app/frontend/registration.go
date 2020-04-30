@@ -11,9 +11,9 @@ import (
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
 
-	"infra/libs/fleet/registration"
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/model/registration"
 )
 
 // CreateMachine creates machine entry in database.

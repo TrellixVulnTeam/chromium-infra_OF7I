@@ -12,8 +12,8 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 
-	fleetds "infra/libs/fleet/datastore"
 	fleet "infra/unifiedfleet/api/v1/proto"
+	fleetds "infra/unifiedfleet/app/model/datastore"
 )
 
 // MachineKind is the datastore entity kind Machine.
