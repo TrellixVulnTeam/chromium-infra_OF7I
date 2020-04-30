@@ -258,6 +258,8 @@ func TestGetAllAssets(t *testing.T) {
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	asset1 := mockAsset("45673456237895", "lab1")
 	asset2 := mockAsset("45673456237896", "lab2")
+	asset3 := mockAsset("45673456237897", "lab1")
+	asset4 := mockAsset("45673456237898", "lab2")
 	Convey("Get all assets from datastore", t, func() {
 		req := []*fleet.ChopsAsset{asset1, asset2}
 		res, err := AddAssets(ctx, req)
@@ -266,12 +268,31 @@ func TestGetAllAssets(t *testing.T) {
 		So(res[0].Err, ShouldBeNil)
 		So(res[1].Err, ShouldBeNil)
 		// Verify
-		assets, err := GetAllAssets(ctx)
+		assets, err := GetAllAssets(ctx, false)
 		So(err, ShouldBeNil)
 		So(assets, ShouldHaveLength, 2)
 		want := []string{"45673456237895", "45673456237896"}
 		get := []string{assets[0].GetId(), assets[1].GetId()}
 		So(get, ShouldResemble, want)
+	})
+	Convey("Get all asset tags [keys only] from datastore", t, func() {
+		req := []*fleet.ChopsAsset{asset4, asset3}
+		res, err := AddAssets(ctx, req)
+		So(err, ShouldBeNil)
+		So(res, ShouldHaveLength, 2)
+		So(res[0].Err, ShouldBeNil)
+		So(res[1].Err, ShouldBeNil)
+		// Verify
+		// Query the assets added above
+		assets, err := GetAllAssets(ctx, true)
+		So(err, ShouldBeNil)
+		// Depending on the order of execution, we might get more than
+		// 2 assets. Verify that location is empty for both
+		So(len(assets), ShouldBeGreaterThanOrEqualTo, 2)
+		emptyLocation := &ufs.Location{}
+		for _, a := range assets {
+			So(a.GetLocation(), ShouldResemble, emptyLocation)
+		}
 	})
 }
 

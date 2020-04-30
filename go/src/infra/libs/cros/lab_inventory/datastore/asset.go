@@ -74,8 +74,11 @@ func UpdateAssets(ctx context.Context, assets []*fleet.ChopsAsset) ([]*AssetOpRe
 }
 
 // GetAllAssets returns all assets from datastore.
-func GetAllAssets(ctx context.Context) ([]*fleet.ChopsAsset, error) {
+//
+// If keysOnly is true, then only key field is populated in returned assets
+func GetAllAssets(ctx context.Context, keysOnly bool) ([]*fleet.ChopsAsset, error) {
 	q := datastore.NewQuery(AssetEntityName).Ancestor(fakeAncestorKey(ctx))
+	q = q.KeysOnly(keysOnly)
 	var assetEntities []*AssetEntity
 	if err := datastore.GetAll(ctx, q, &assetEntities); err != nil {
 		return nil, err

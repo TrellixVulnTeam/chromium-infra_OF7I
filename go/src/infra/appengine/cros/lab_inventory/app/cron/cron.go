@@ -282,8 +282,7 @@ func syncDeviceListToDroneConfigHandler(c *router.Context) error {
 
 func syncAssetInfoFromHaRT(c *router.Context) error {
 	logging.Infof(c.Context, "Sync AssetInfo from HaRT")
-	//TODO(anushruth): Change to get all asset keys instead of assets
-	assets, err := datastore.GetAllAssets(c.Context)
+	assets, err := datastore.GetAllAssets(c.Context, true)
 	if err != nil {
 		logging.Errorf(c.Context, err.Error())
 		return err

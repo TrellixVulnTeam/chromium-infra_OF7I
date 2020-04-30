@@ -45,7 +45,7 @@ func InitBQUploader(ctx context.Context, project, dataset, table string) (*bq.Up
 
 // GetRegisteredAssetsProtos prepares the proto messages for registered assets to upload to bq.
 func GetRegisteredAssetsProtos(ctx context.Context) []proto.Message {
-	assets, err := datastore.GetAllAssets(ctx)
+	assets, err := datastore.GetAllAssets(ctx, false)
 	if err != nil {
 		return nil
 	}
