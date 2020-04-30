@@ -22,6 +22,9 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
+// SkylabPool is the swarming pool for all skylab bots.
+const SkylabPool = "ChromeOSSkylab"
+
 // Client is a swarming client for creating tasks and waiting for their results.
 type Client struct {
 	SwarmingService *swarming_api.Service
@@ -157,8 +160,12 @@ func (c *Client) GetActiveLeaseTasksForBoard(ctx context.Context, board string) 
 // retrying transient errors.
 // hostname cannot be empty.
 func (c *Client) GetActiveLeaseTasksForHost(ctx context.Context, hostname string) ([]*swarming_api.SwarmingRpcsTaskResult, error) {
+	id, err := c.DutNameToBotID(ctx, hostname)
+	if err != nil {
+		return nil, err
+	}
 	var dims = map[string]string{
-		"dut_name":    hostname,
+		"id":          id,
 		"skylab-tool": "lease",
 	}
 	return c.getActiveLeaseTasksForDimensions(ctx, dims)
@@ -369,6 +376,24 @@ func (c *Client) GetListedBots(ctx context.Context, dims []*swarming_api.Swarmin
 	}
 
 	return out, nil
+}
+
+// DutNameToBotID gets the bot id associated with a particular dut by its hostname.
+func (c *Client) DutNameToBotID(ctx context.Context, host string) (string, error) {
+	dims := []*swarming_api.SwarmingRpcsStringPair{
+		{Key: "pool", Value: SkylabPool},
+		{Key: "dut_name", Value: host},
+	}
+	ids, err := c.GetBotIDs(ctx, dims)
+	switch {
+	case err != nil:
+		return "", errors.Annotate(err, "failed to find bot").Err()
+	case len(ids) == 0:
+		return "", errors.Reason("did not find any bot with dut_name %q", host).Err()
+	case len(ids) > 1:
+		return "", errors.Reason("more than one bot with dut_name %q", host).Err()
+	}
+	return ids[0], nil
 }
 
 // LookupDimension gets a single string value associated with a dimension

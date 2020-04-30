@@ -22,7 +22,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-const skylabPool = "ChromeOSSkylab"
 const defaultTaskPriority = 25
 
 // TaskCreator creates Swarming tasks
@@ -219,7 +218,7 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims 
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: getLeaseCommand(),
 			Dimensions: appendUniqueDimensions([]*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: skylabPool},
+				{Key: "pool", Value: swarming.SkylabPool},
 				{Key: "label-model", Value: model},
 				// We need to make sure we don't disturb DUT_POOL_CTS, so for now by-model leases
 				// can only target DUT_POOL_QUOTA.
@@ -263,7 +262,7 @@ func (tc *TaskCreator) LeaseByBoardTask(ctx context.Context, board string, dims 
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command: getLeaseCommand(),
 			Dimensions: appendUniqueDimensions([]*swarming_api.SwarmingRpcsStringPair{
-				{Key: "pool", Value: skylabPool},
+				{Key: "pool", Value: swarming.SkylabPool},
 				{Key: "label-board", Value: board},
 				// We need to make sure we don't disturb DUT_POOL_CTS, so for now by-model leases
 				// can only target DUT_POOL_QUOTA.
@@ -338,20 +337,7 @@ func convertTags(m map[string]string) []string {
 }
 
 func (tc *TaskCreator) dutNameToBotID(ctx context.Context, host string) (string, error) {
-	dims := []*swarming_api.SwarmingRpcsStringPair{
-		{Key: "pool", Value: skylabPool},
-		{Key: "dut_name", Value: host},
-	}
-	ids, err := tc.Client.GetBotIDs(ctx, dims)
-	switch {
-	case err != nil:
-		return "", errors.Annotate(err, "failed to find bot").Err()
-	case len(ids) == 0:
-		return "", errors.Reason("not found any bot with dut_name: %v", host).Err()
-	case len(ids) > 1:
-		return "", errors.Reason("more that one bot with dut_name: %v", host).Err()
-	}
-	return ids[0], nil
+	return tc.Client.DutNameToBotID(ctx, host)
 }
 
 // getLeaseCommand provides bash command to set dut state and run loop to keep DUT busy
@@ -412,7 +398,7 @@ func (tc *TaskCreator) dimsWithBotID(ctx context.Context, host string) ([]*swarm
 		return nil, errors.Annotate(err, "failed to get bot ID for %s", host).Err()
 	}
 	dims := []*swarming_api.SwarmingRpcsStringPair{
-		{Key: "pool", Value: skylabPool},
+		{Key: "pool", Value: swarming.SkylabPool},
 		{Key: "id", Value: id},
 	}
 	return dims, nil
@@ -422,7 +408,7 @@ func (tc *TaskCreator) combineTags(toolName string, customTags ...string) []stri
 	tags := []string{
 		fmt.Sprintf("skylab-tool:%s", toolName),
 		fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
-		fmt.Sprintf("pool:%s", skylabPool),
+		fmt.Sprintf("pool:%s", swarming.SkylabPool),
 		tc.sessionTag(),
 	}
 	return append(tags, customTags...)
