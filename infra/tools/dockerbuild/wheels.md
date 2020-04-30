@@ -1869,6 +1869,20 @@ wheel: <
 
 * *universal*
 
+## **keyring**
+
+### 18.0.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/keyring-py2_py3"
+  version: "version:18.0.1"
+>
+```
+
+
+* *universal*
+
 ## **lazy-object-proxy**
 
 ### 1.3.1

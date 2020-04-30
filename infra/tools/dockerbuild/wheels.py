@@ -602,6 +602,7 @@ SPECS.update({
         Universal('isort', '4.3.4'),
         Universal('json5', '0.6.0'),
         Universal('jsonlines', '1.2.0'),
+        Universal('keyring', '18.0.1'),
         Universal('macholib', '1.11'),
         Universal('mccabe', '0.6.1'),
         Universal('mock', '2.0.0'),
