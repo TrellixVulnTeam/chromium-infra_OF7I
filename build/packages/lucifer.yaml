@@ -1,0 +1,10 @@
+package: chromiumos/infra/lucifer/${platform}
+description: Lucifer runner for Skylab.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/lucifer
+root: ../../go/bin
+data:
+  - file: lucifer${exe_suffix}
+  - version_file: .versions/lucifer${exe_suffix}.cipd_version
