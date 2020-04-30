@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"infra/cmd/skylab/internal/site"
 
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
 )
@@ -158,6 +159,89 @@ func TestAppendUniqueTags(t *testing.T) {
 			got := appendUniqueTags(tt.first, tt.rest...)
 			if diff := cmp.Diff(tt.out, got); diff != "" {
 				t.Errorf("output mismatch (-want +got): %s\n", diff)
+			}
+		})
+	}
+}
+
+var combineTagsCases = []struct {
+	name       string
+	toolName   string
+	logDogURL  string
+	customTags []string
+	out        []string
+}{
+	{
+		"test1",
+		"tool1",
+		"",
+		nil,
+		[]string{
+			"skylab-tool:tool1",
+			"luci_project:Env1",
+			"pool:ChromeOSSkylab",
+			"admin_session:session1",
+		},
+	},
+	{
+		"test2",
+		"tool2",
+		"log2",
+		[]string{},
+		[]string{
+			"skylab-tool:tool2",
+			"luci_project:Env1",
+			"pool:ChromeOSSkylab",
+			"admin_session:session1",
+			"log_location:log2",
+		},
+	},
+	{
+		"test3",
+		"tool3",
+		"",
+		[]string{
+			"mytag:val3",
+		},
+		[]string{
+			"skylab-tool:tool3",
+			"luci_project:Env1",
+			"pool:ChromeOSSkylab",
+			"admin_session:session1",
+			"mytag:val3",
+		},
+	},
+	{
+		"test4",
+		"tool4",
+		"log4",
+		[]string{
+			"mytag:val4",
+		},
+		[]string{
+			"skylab-tool:tool4",
+			"luci_project:Env1",
+			"pool:ChromeOSSkylab",
+			"admin_session:session1",
+			"log_location:log4",
+			"mytag:val4",
+		},
+	},
+}
+
+func TestCombineTags(t *testing.T) {
+	t.Parallel()
+	for _, tt := range combineTagsCases {
+		t.Run(tt.name, func(t *testing.T) {
+			tc := &TaskCreator{
+				Environment: site.Environment{
+					LUCIProject: "Env1",
+				},
+				session: "session1",
+			}
+			got := tc.combineTags(tt.toolName, tt.logDogURL, tt.customTags)
+			if diff := cmp.Diff(tt.out, got); diff != "" {
+				t.Errorf("%s output mismatch (-want +got): %s\n", tt.name, diff)
 			}
 		})
 	}

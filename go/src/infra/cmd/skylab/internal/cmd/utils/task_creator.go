@@ -81,7 +81,7 @@ func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSe
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name:           "admin_repair",
-		Tags:           tc.combineTags("repair"),
+		Tags:           tc.combineTags("repair", c.LogDogAnnotationURL, nil),
 		TaskSlices:     slices,
 		Priority:       defaultTaskPriority,
 		ServiceAccount: tc.Environment.ServiceAccount,
@@ -116,7 +116,7 @@ func (tc *TaskCreator) VerifyTask(ctx context.Context, host string, expirationSe
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name:           "admin_verify",
-		Tags:           tc.combineTags("verify"),
+		Tags:           tc.combineTags("verify", c.LogDogAnnotationURL, nil),
 		TaskSlices:     slices,
 		Priority:       defaultTaskPriority,
 		ServiceAccount: tc.Environment.ServiceAccount,
@@ -156,7 +156,7 @@ func (tc *TaskCreator) AuditTask(ctx context.Context, host, actions string, expi
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name:           "admin_audit",
-		Tags:           tc.combineTags("audit"),
+		Tags:           tc.combineTags("audit", c.LogDogAnnotationURL, nil),
 		TaskSlices:     slices,
 		Priority:       defaultTaskPriority,
 		ServiceAccount: tc.Environment.ServiceAccount,
@@ -190,14 +190,16 @@ func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, dur
 	}}
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name: "lease task",
-		Tags: tc.combineTags("lease",
-			// This quota account specifier is only relevant for DUTs that are
-			// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
-			// harmless otherwise.
-			"qs_account:leases",
-			"lease-by:hostname",
-			fmt.Sprintf("dut-name:%s", host),
-			fmt.Sprintf("lease-reason:%s", reason)),
+		Tags: tc.combineTags("lease", "",
+			[]string{
+				// This quota account specifier is only relevant for DUTs that are
+				// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+				// harmless otherwise.
+				"qs_account:leases",
+				"lease-by:hostname",
+				fmt.Sprintf("dut-name:%s", host),
+				fmt.Sprintf("lease-reason:%s", reason),
+			}),
 		TaskSlices:     slices,
 		Priority:       15,
 		ServiceAccount: tc.Environment.ServiceAccount,
@@ -233,14 +235,16 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims 
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name: "lease task",
 		Tags: appendUniqueTags(
-			tc.combineTags("lease",
-				// This quota account specifier is only relevant for DUTs that are
-				// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
-				// harmless otherwise.
-				"qs_account:leases",
-				"lease-by:model",
-				fmt.Sprintf("model:%s", model),
-				fmt.Sprintf("lease-reason:%s", reason)),
+			tc.combineTags("lease", "",
+				[]string{
+					// This quota account specifier is only relevant for DUTs that are
+					// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+					// harmless otherwise.
+					"qs_account:leases",
+					"lease-by:model",
+					fmt.Sprintf("model:%s", model),
+					fmt.Sprintf("lease-reason:%s", reason),
+				}),
 			convertTags(dims)...),
 		TaskSlices:     slices,
 		Priority:       15,
@@ -277,14 +281,16 @@ func (tc *TaskCreator) LeaseByBoardTask(ctx context.Context, board string, dims 
 	r := &swarming_api.SwarmingRpcsNewTaskRequest{
 		Name: "lease task",
 		Tags: appendUniqueTags(
-			tc.combineTags("lease",
-				// This quota account specifier is only relevant for DUTs that are
-				// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
-				// harmless otherwise.
-				"qs_account:leases",
-				"lease-by:model",
-				"board:"+board,
-				"lease-reason:"+reason),
+			tc.combineTags("lease", "",
+				[]string{
+					// This quota account specifier is only relevant for DUTs that are
+					// in the prod skylab DUT_POOL_QUOTA pool; it is irrelevant and
+					// harmless otherwise.
+					"qs_account:leases",
+					"lease-by:model",
+					"board:" + board,
+					"lease-reason:" + reason,
+				}),
 			convertTags(dims)...),
 		TaskSlices:     slices,
 		Priority:       15,
@@ -404,12 +410,16 @@ func (tc *TaskCreator) dimsWithBotID(ctx context.Context, host string) ([]*swarm
 	return dims, nil
 }
 
-func (tc *TaskCreator) combineTags(toolName string, customTags ...string) []string {
+func (tc *TaskCreator) combineTags(toolName, logDogURL string, customTags []string) []string {
 	tags := []string{
 		fmt.Sprintf("skylab-tool:%s", toolName),
 		fmt.Sprintf("luci_project:%s", tc.Environment.LUCIProject),
 		fmt.Sprintf("pool:%s", swarming.SkylabPool),
 		tc.sessionTag(),
+	}
+	if logDogURL != "" {
+		// log_location is required to see the logs in the swarming
+		tags = append(tags, fmt.Sprintf("log_location:%s", logDogURL))
 	}
 	return append(tags, customTags...)
 }
