@@ -284,6 +284,20 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x86*
 
+## **SecretStorage-py3**
+
+### 3.1.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/secretstorage-py3"
+  version: "version:3.1.2"
+>
+```
+
+
+* *universal*
+
 ## **Werkzeug**
 
 ### 0.15.2

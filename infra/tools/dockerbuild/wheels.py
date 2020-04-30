@@ -529,6 +529,7 @@ SPECS.update({
         Universal('Jinja2', '2.10'),
         Universal('Jinja2', '2.10.1'),
         Universal('Markdown', '3.0.1'),
+        Universal('SecretStorage', '3.1.2', pyversions=['py3']),
         Universal('Werkzeug', '0.15.2'),
         Universal('aenum', '2.1.2'),
         Universal('altgraph', '0.16.1'),
