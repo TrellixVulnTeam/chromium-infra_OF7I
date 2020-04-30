@@ -39,7 +39,7 @@ For this example, we'll be adding 'scandir' at version 1.7.
       1. We always prepare our wheels and their C extensions to be as static as
          possible. Generally this means building the additional C libraries as
          static ('.a') files, and adjusting the python setup.py to find this.
-      1. See the various implementations referenced by wheel.py to get a feel
+      1. See the various implementations referenced by wheels.py to get a feel
          for these.
       1. These are (fortunately) pretty rare (but they do come up occasionally).
    1. The "infra_libs" wheel
@@ -48,9 +48,9 @@ For this example, we'll be adding 'scandir' at version 1.7.
          wheel_infra.py.
 
 
-Once you've identified the wheel type, open [wheel.py](./wheel.py) and find the
-relevant section. Each section is ordered by wheel name and then by symver. If
-you put the wheel definition in the wrong place, dockerbuild will tell you :)
+Once you've identified the wheel type, open [wheels.py](./wheels.py) and find
+the relevant section. Each section is ordered by wheel name and then by symver.
+If you put the wheel definition in the wrong place, dockerbuild will tell you :)
 
 So for `scandir`, we see that there are prebuilts for windows, but for
 everything else we have to build it ourself.
