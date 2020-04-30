@@ -28,12 +28,12 @@ const dayInMinutes = 24 * 60
 
 // maxTasksPerModel is the maximum number of tasks that are allowed to be executing
 // at the same time for a given model.
-const maxTasksPerModel = 2
+const maxTasksPerModel = 1
 
 // maxTasksPerBoard is the maximum number of tasks that are allowed to be executing
 // at the same time for a given board. It is a completely independent cap from
 // maxTasksPerModel. A board lease does not count towards the model cap and vice versa.
-const maxTasksPerBoard = 2
+const maxTasksPerBoard = 1
 
 // LeaseDut subcommand: Lease a DUT for debugging.
 var LeaseDut = &subcommands.Command{
