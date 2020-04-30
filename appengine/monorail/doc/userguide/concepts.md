@@ -176,6 +176,58 @@ Attachments:
 *   Well-known labels are offered in the autocomplete menus. However, users are
     still free to type out other label strings that make sense to their team.
 
+## Issue approvals and gates
+
+Issues in Monorail can be used to track complex and multi-phased review
+processes for new features or projects using approvals and gates.
+
+Project owners can define project-wide approvals that represent the
+review process of different stakeholders and review teams. For each process,
+project owners can create issue templates that include the set of approvals
+that should be part of the process.
+E.g. A template representing a Launch process that requires approval from
+UX, Security, and A11y teams would include UX, Security, and A11y approvals.
+
+Project owners can also create gates within a template and group approvals
+under those gates to represent the review process phases.
+E.g. A process may have "Proposal", "Design", and "Launch"
+phases where some set of review teams need to review during the
+"Proposal" phase before the feature owner can move on to the "Design"
+phase and request reviews from another set of teams.
+
+When a team wants to go through a review process, they can use the template
+to create an issue that inherits the approvals and gates structure.
+
+Issue gates and approvals cannot be changed after the issue has been created.
+Approvals show up in their own section of the issue details page, separate
+from the issue's fields and comments sections.
+
+*  Approvals can be grouped under ordered gates or they can be gate-less.
+*  Approvals have their own comments separate from issue comments.
+*  Approval statuses are used to indicate the status of the review:
+
+   *  `NeedsReview`: the review has not started yet, but is required.
+   *  `NA`: a review is not required.
+   *  `ReviewRequested`: the issue owner and team have answered any survey
+      and follow-up questions and are ready for the approvers to begin
+      or continue review.
+   *  `ReviewStarted`: approvers have started review.
+   *  `NeedInfo`: approvers have more questions before they can proceed.
+   *  `Approved`: approvers have reviewed and approved the plan.
+   *  `NotApproved`: approvers have reviewed and do not approve of the plan.
+*  Only approvers of an approval are allowed to set statuses to
+   `Approved`, `Not Approved`, and `NA` and can remove and add other
+   users as approvers.
+*  Approval surveys hold context and questions that the approvers want
+   answered before a team requests review.
+*  Approvals may have custom fields associated with them. Those custom
+   fields will show up with their approvals, separate from the other
+   fields of the issue.
+*  Issue gates also hold gate fields configured by project owners. These
+   gate fields show up right next to the gate names, separate from other
+   issue fields. If an issue does not have any gates, gate fields do not
+   show up.
+
 ## Labels for flexibility and process evolution
 
 Monorail normally treats key-value labels and custom fields and labels in the

@@ -159,6 +159,18 @@ optional or required on issues where it is applicable.  For example, a
 DesignDoc custom field with a link to a design document might be a
 required field for any issue that has the Type-Design-Review label.
 
+A custom field can have a `Parent Approval`, which means they will
+appear under the parent approval's section in an issue, separate from
+where other fields are shown.
+A custom field can also be an `Issue Gate field`, which means they will
+appear under each issue's gate, separate from where other fields are shown.
+For example, if an Issue has gates `Design`, `Test`, and `Launch`, a gate
+field called `Milestone` would appear under each gate section. If
+`Milestone` is a multi-valued field, each gate's "Milestone" can have
+multiple values.
+A custom field cannot be a gate field and have a parent approval at the
+same time.
+
 Some fields are more commonly used than others.  In large projects,
 there may be variations of the software development process that are
 only used with a few issues.  Over time, more and more such process
@@ -180,8 +192,35 @@ those processes.
 1.  Sign in as a project owner and visit any page in your project.
 1.  Open the gear menu and select `Development process`.
 1.  Click the `Labels and fields` tab at the top of the page.
+1.  To edit an existing approval definition, click on the row for that
+    approval field in the field definition table.
+1.  Or, to create a new approval definition, click `Add field`.
 
-TODO: Write more detail here.
+Approvals are used to track the review and approval of some feature,
+project, or proposal.
+An approval definition has a default set of `Approvers`,
+a `Survey` field, plus a `Description` and `Admins` like custom fields.
+
+Approval definitions are used to create Approval Values in issues.
+`Approvers` are allowed to set an Approval Value status to
+`Approved` or `Not Approved`. and `NA`. When an issue is first created
+with approvals, the approval definition's `Approvers` are used as the
+initial default set of the Approval Value's `Approvers`. From there,
+the approvers can add or remove other users as approverss for that
+particular issue.
+
+An approval definition's `Survey` will also be copied over to an issue's
+approval value during issue creation and can be modified within the issue
+later on.
+
+Changing an Approval definition's `Approvers` or `Survey` does not
+retroactively change the `Approvers` or `Survey` of approval values
+in existing issues.
+
+Approval values in issues can only be created using issue templates.
+
+See the section on [configuring templates](#How-to-configure-issue-templates)
+for more information.
 
 ## How to configure filter rules
 
@@ -236,6 +275,29 @@ issue entry page to keep the bracketed text when the user initially
 types the summary line.  Also, any labels that end with a question
 mark, like `Key-?`, will cause the issue entry page to require the
 user to edit that label before submitting the form.
+
+A template can have some set of approvals that may belong to some
+set of gates defined in the template. A template may have approvals
+that do not belong to any gate, but a gate must have at least one
+approval associated with it. Approvals and gates are for project owners
+to communicate some process of reviewing and approving. A project may
+have a process where new features must be reviewed by some group of
+UX, Privacy, Security, A11y teams. These are represented by approvals.
+The process may also require some phases like `Proposal`, `Design`,
+and `Launch` where the approvals of one phase must be completed before
+a team can move on to the next phase. This process can be represented
+by approvals within gates.
+When an issue is created using the template, it inherits the set of
+approvals and gates. The approvals and gates that exist within an
+issue cannot be changed after issue creation. Issues cannot be
+created with approvals and gates that are not copied over from a
+template.
+Project owners can create issue templates for a process. Whenever
+a team wants to begin such a process, they would create a new issue
+using the appropriate template.
+Changing the approvals and gates structure of a template will not
+retroactively change the approvals and gates of issues that have
+already been created.
 
 Each template can have a comma-separated list of template
 administrators who are allowed to edit that template.  This allows

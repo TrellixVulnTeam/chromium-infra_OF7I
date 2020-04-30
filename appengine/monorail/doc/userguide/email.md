@@ -71,6 +71,36 @@ However, some accounts have email addresses that post to mailing lists
 the mailing list software takes over to distribute the message to
 members of that mailing list and add it to the mailing list archive.
 
+## Who is notified when an issue's approval changes?
+
+Some issues own approvals which have their own thread of comments and
+fields. Notifications for approval changes and comments behave
+differently from issue notifications.
+
+Below, "feature team" will be used to mean users named in user-type
+custom fields that are configured to trigger notifications AND
+the issue owner.
+CC'd users are not notified for any approval changes.
+
+The following are all possible changes someone could make to an approval
+and the users that would be added to the set of notification recipients
+as a result.
+
+A new approval comment or approval field change  will trigger
+notifications to:
+  *  The feature team
+  *  Approvers of the approval
+
+An approval status change to:
+  *  `ReviewRequested` notifies approvers.
+  *  `NeedInfo`, `NeedsReview`, `ReviewStarted`, `Approved`,
+     `NotApproved`, and `NA` notifies the feature team.
+
+A change of approvers notifies all approvers including the ones being
+added and removed.
+
+Like issues, the user who made the approval changes will not
+receive the resulting email.
 
 ## Why did I get an email notification?
 
