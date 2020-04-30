@@ -1,0 +1,40 @@
+From cf0994115a3012cecb796adcd91b1ae88f0d0da7 Mon Sep 17 00:00:00 2001
+From: Vadim Shtayura <vadimsh@chromium.org>
+Date: Thu, 30 Apr 2020 14:43:00 -0700
+Subject: [PATCH] Fix edge case related to git submodules on Windows.
+
+Submodules with names like 'A/B' can't be checked out
+because 'checkout-index' for some reason doesn't realize 'A/B'
+is a path and doesn't create directory 'B' (only 'A').
+
+Do it explicitly.
+---
+ vendor/github.com/Masterminds/vcs/git.go | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/vendor/github.com/Masterminds/vcs/git.go b/vendor/github.com/Masterminds/vcs/git.go
+index 8248350..d896a3b 100644
+--- a/vendor/github.com/Masterminds/vcs/git.go
++++ b/vendor/github.com/Masterminds/vcs/git.go
+@@ -413,6 +413,18 @@ func (s *GitRepo) ExportDir(dir string) error {
+
+ 	// and now, the horror of submodules
+ 	path = EscapePathSeparator(dir + "$path" + string(os.PathSeparator))
++
++	// Help git to create directories for submodules with path like "A/B".
++	// 'checkout-indexs' doesn't realize it needs to create B before trying to
++	// populate it (probably due to Unix-style path separator).
++	if runtime.GOOS == "windows" {
++		out, err = s.RunFromDir("git", "submodule", "foreach", "--recursive", "mkdir -p '"+path+"'")
++		s.log(out)
++		if err != nil {
++			return NewLocalError("Error when creating submodule directories", err, string(out))
++		}
++	}
++
+ 	out, err = s.RunFromDir("git", "submodule", "foreach", "--recursive", "git checkout-index -f -a --prefix="+path)
+ 	s.log(out)
+ 	if err != nil {
+--
+2.24.1.windows.2
+

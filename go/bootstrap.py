@@ -58,6 +58,9 @@ GLIDE_SOURCE = {
         'https://chromium.googlesource.com/external/github.com/'
         'Masterminds/glide.git'),
     'rev': 'refs/tags/v0.13.3',
+    'patches': [
+        '0001-Fix-edge-case-related-to-git-submodules-on-Windows.patch',
+    ],
   },
 }
 
@@ -320,6 +323,9 @@ def fetch_glide_code(workspace, spec):
     os.makedirs(path)
     git(['clone', repo['url'], '.'], cwd=path)
     git(['checkout', repo['rev']], cwd=path)
+    for patch in repo.get('patches', []):
+      LOGGER.info('Applying %s', patch)
+      git(['apply', os.path.join(WORKSPACE, 'patches', patch)], cwd=path)
 
 
 def get_git_repository_head(path):
