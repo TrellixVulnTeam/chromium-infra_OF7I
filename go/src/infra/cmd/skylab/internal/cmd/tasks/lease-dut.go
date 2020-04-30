@@ -169,6 +169,9 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 	if err != nil {
 		return errors.Annotate(err, "computing existing leases").Err()
 	}
+	if maxTasksPerModel <= 0 {
+		return errors.Reason("Leases by model are disabled").Err()
+	}
 	if len(tasks) > maxTasksPerModel {
 		return fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), c.model, maxTasksPerModel)
 	}
@@ -199,6 +202,9 @@ func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Applica
 		return errors.Annotate(err, "computing existing lease for board").Err()
 	}
 
+	if maxTasksPerBoard <= 0 {
+		return errors.Reason("Leases by board are disabled").Err()
+	}
 	if len(tasks) > maxTasksPerBoard {
 		return errors.Reason("number of active tasks %d for board (%s) exceeds cap %d", len(tasks), c.board, maxTasksPerBoard).Err()
 	}
