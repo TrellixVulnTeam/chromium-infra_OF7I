@@ -10,15 +10,29 @@ import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "api/v1/api_proto/user_objects.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 // Users service includes all methods needed for managing Users.
 service Users {
   // Returns the requested User.
-  // TODO(crbug/monorail/7238): Document possible errors when implemented.
+  //
+  // Raises:
+  //   NOT_FOUND is the user is not found.
+  //   INVALID_ARGUMENT if the `name` is invalid.
   rpc GetUser (GetUserRequest) returns (User) {}
   // Returns all of the requested Users.
-  // TODO(crbug/monorail/7238): Document possible errors when implemented.
+  //
+  // Raises:
+  //   NOT_FOUND if any users are not found.
+  //   INVALID_ARGUMENT if any `names` are invalid.
   rpc BatchGetUsers (BatchGetUsersRequest) returns (BatchGetUsersResponse) {}
+  // Updates a User.
+  //
+  // Raises:
+  //   NOT_FOUND if the user is not found.
+  //   PERMISSION_DENIED if the requester is not allowed to update the user.
+  //   INVALID_ARGUMENT if required fields are missing or fields are invalid.
+  rpc UpdateUser (UpdateUserRequest) returns (User) {}
   // Stars a given project for the requestor.
   //
   // Raises:
@@ -65,6 +79,19 @@ message BatchGetUsersRequest {
 message BatchGetUsersResponse {
   repeated User users = 1;
 }
+
+
+// The request message for Users.UpdateUser.
+// Next available tag: 3
+message UpdateUserRequest {
+  // The user's `name` field is used to identify the user to be updated.
+  User user = 1 [
+      (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/User"} ];
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [ (google.api.field_behavior) = REQUIRED ];
+}
+
 
 // The request message for Users.StarProject.
 // Next available tag: 2
