@@ -21,10 +21,18 @@ test:
 build:
 	go build -o ufs-service
 
+.PHONY: build-dumper
+build-dumper:
+	go build -o dumper $(PROJECT_PATH)/cmd/dumper
+
 # Run service locally
 .PHONY: dev
 dev: build
 	./ufs-service --cloud-project="unified-fleet-system-dev"
+
+.PHONY: dev-dumper
+dev-dumper: build-dumper
+	./dumper --cloud-project="unified-fleet-system-dev"
 
 # Uploading & Switching
 .PHONY: up-dev
