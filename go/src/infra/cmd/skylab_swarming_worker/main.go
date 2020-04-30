@@ -53,6 +53,7 @@ import (
 
 const repairTaskName = "repair"
 const deployTaskName = "deploy"
+const auditTaskName = "audit"
 const setStateNeedsRepairTaskName = "set_needs_repair"
 
 const gcpProject = "chromeos-skylab"
@@ -195,7 +196,7 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 	}
 
 	switch {
-	case isAdminTask(a) || isDeployTask(a):
+	case isAdminTask(a) || isDeployTask(a) || isAuditTask(a):
 		// Show Stainless links here for admin tasks.
 		// For test tasks they are bundled with results.json.
 		annotations.BuildStep(annotWriter, "Epilog")
@@ -237,19 +238,21 @@ func harnessOptions(a *args) []harness.Option {
 // updatesInventory returns true if the task(repair/deploy)
 // should update the inventory else false.
 func updatesInventory(a *args) bool {
-	if isRepairTask(a) || isDeployTask(a) {
+	if isRepairTask(a) || isDeployTask(a) || isAuditTask(a) {
 		return true
 	}
 	return false
 }
 
-// getTaskName returns the task name(repair/deploy) for the task.
+// getTaskName returns the task name(repair/deploy/audit) for the task.
 func getTaskName(a *args) string {
 	switch {
 	case isRepairTask(a):
 		return repairTaskName
 	case isDeployTask(a):
 		return deployTaskName
+	case isAuditTask(a):
+		return auditTaskName
 	default:
 		return ""
 	}
@@ -262,6 +265,8 @@ func runLuciferTask(ctx context.Context, i *harness.Info, a *args, ta lucifer.Ta
 		defer c()
 	}
 	switch {
+	case isAuditTask(a):
+		return runAuditTask(ctx, i, a.actions, ta)
 	case isAdminTask(a):
 		n, _ := getAdminTask(a.taskName)
 		return runAdminTask(ctx, i, n, ta)
@@ -296,6 +301,12 @@ func isAdminTask(a *args) bool {
 // isDeployTask determines if the given task name corresponds to a deploy task.
 func isDeployTask(a *args) bool {
 	return a.taskName == deployTaskName
+}
+
+// isAuditTask determines if the given task name corresponds to a audit task.
+func isAuditTask(a *args) bool {
+	task, _ := getAdminTask(a.taskName)
+	return task == auditTaskName
 }
 
 // isRepairTask determines if the given task name corresponds to a repair task.
@@ -415,6 +426,23 @@ func runDeployTask(ctx context.Context, i *harness.Info, actions string, ta luci
 	cmd := lucifer.DeployTaskCommand(i.LuciferConfig(), r)
 	if _, err := runLuciferCommand(ctx, cmd, i, r.AbortSock); err != nil {
 		return errors.Wrap(err, "run deploy task")
+	}
+	return nil
+}
+
+// runAuditTask runs an audit task using lucifer.
+//
+// actions is a possibly empty comma separated list of deploy actions to run
+func runAuditTask(ctx context.Context, i *harness.Info, actions string, ta lucifer.TaskArgs) error {
+	r := lucifer.AuditTaskArgs{
+		TaskArgs: ta,
+		Host:     i.DUTName,
+		Actions:  actions,
+	}
+
+	cmd := lucifer.AuditTaskCommand(i.LuciferConfig(), r)
+	if _, err := runLuciferCommand(ctx, cmd, i, r.AbortSock); err != nil {
+		return errors.Wrap(err, "run audit task")
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 const deploy = "deploy"
 const adminRepair = "admin_repair"
 const adminReset = "admin_reset"
+const adminAudit = "admin_audit"
 const adminSetStateNeedsRepair = "set_needs_repair"
 
 func TestUpdatesInventory(t *testing.T) {
@@ -23,6 +24,7 @@ func TestUpdatesInventory(t *testing.T) {
 		{deploy, true},
 		{adminRepair, true},
 		{adminReset, false},
+		{adminAudit, true},
 		{adminSetStateNeedsRepair, false},
 	}
 
@@ -50,6 +52,7 @@ func TestGetTaskName(t *testing.T) {
 		{adminRepair, repairTaskName},
 		{deploy, deployTaskName},
 		{adminReset, ""},
+		{adminAudit, auditTaskName},
 		{adminSetStateNeedsRepair, ""},
 	}
 
@@ -77,6 +80,7 @@ func TestIsDeployTask(t *testing.T) {
 		{deploy, true},
 		{adminRepair, false},
 		{adminReset, false},
+		{adminAudit, false},
 		{adminSetStateNeedsRepair, false},
 	}
 
@@ -104,6 +108,7 @@ func TestIsRepairTask(t *testing.T) {
 		{deploy, false},
 		{adminRepair, true},
 		{adminReset, false},
+		{adminAudit, false},
 		{adminSetStateNeedsRepair, false},
 	}
 
@@ -114,6 +119,34 @@ func TestIsRepairTask(t *testing.T) {
 			a := &args{}
 			a.taskName = tc.task
 			output := isRepairTask(a)
+			if output != tc.expected {
+				t.Errorf("Input task was %s - check was incorrect, got: %t, expected: %t", tc.task, output, tc.expected)
+			}
+		})
+	}
+}
+
+func TestIsAuditTask(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		task     string
+		expected bool
+	}{
+		{deploy, false},
+		{adminRepair, false},
+		{adminReset, false},
+		{adminAudit, true},
+		{adminSetStateNeedsRepair, false},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.task, func(t *testing.T) {
+			t.Parallel()
+			a := &args{}
+			a.taskName = tc.task
+			output := isAuditTask(a)
 			if output != tc.expected {
 				t.Errorf("Input task was %s - check was incorrect, got: %t, expected: %t", tc.task, output, tc.expected)
 			}
