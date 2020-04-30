@@ -88,6 +88,12 @@ service Hotlists {
   //   editors from the hotlist.
   //   INVALID_ARGUMENT if any specified editors are not in the hotlist.
   rpc RemoveHotlistEditors (RemoveHotlistEditorsRequest) returns (google.protobuf.Empty) {}
+  // Gathers all viewable hotlists that a user is a member of.
+  //
+  // Raises:
+  //   NOT_FOUND if the user is not found.
+  //   INVALID_ARGUMENT if the `user` is invalid.
+  rpc GatherHotlistsForUser (GatherHotlistsForUserRequest) returns (GatherHotlistsForUserResponse) {}
 }
 
 
@@ -229,4 +235,20 @@ message RemoveHotlistEditorsRequest {
   repeated string editors = 2 [
       (google.api.field_behavior) = REQUIRED,
       (google.api.resource_reference) = {type: "api.crbug.com/User"} ];
+}
+
+
+// Request message for a GatherHotlistsForUser call.
+// Next available tag: 2
+message GatherHotlistsForUserRequest {
+  // Resource name of the user whose hotlists we want to fetch.
+  string user = 1 [ (google.api.field_behavior) = REQUIRED,
+      (google.api.resource_reference) = {type: "api.crbug.com/User"} ];
+}
+
+
+// Response message for a GatherHotlistsForUser call.
+// Next available tag: 2
+message GatherHotlistsForUserResponse {
+  repeated Hotlist hotlists = 1;
 }
