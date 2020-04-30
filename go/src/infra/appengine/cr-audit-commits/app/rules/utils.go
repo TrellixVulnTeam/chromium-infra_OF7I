@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"bufio"
@@ -33,11 +33,20 @@ import (
 
 const (
 	// TODO(robertocn): Move this to the gitiles library.
-	gerritScope         = "https://www.googleapis.com/auth/gerritcodereview"
-	emailScope          = "https://www.googleapis.com/auth/userinfo.email"
-	failedBuildPrefix   = "Sample Failed Build:"
-	failedStepPrefix    = "Sample Failed Step:"
-	flakyTestPrefix     = "Sample Flaky Test:"
+
+	// GerritScope is a link of Gerrit authorization.
+	GerritScope = "https://www.googleapis.com/auth/gerritcodereview"
+	// EmailScope is a link of Google email authorization.
+	EmailScope = "https://www.googleapis.com/auth/userinfo.email"
+	// FailedBuildPrefix is a prefix that is followed by some failed builds in
+	// commit messages.
+	FailedBuildPrefix = "Sample Failed Build:"
+	// FailedStepPrefix is a prefix that is followed by some failed steps in
+	// commit messages.
+	FailedStepPrefix = "Sample Failed Step:"
+	// FlakyTestPrefix is a prefix that is followed by some flaky tests in
+	// commit messages.
+	FlakyTestPrefix     = "Sample Flaky Test:"
 	bugIDRegex          = "^(?:Bug:|BUG=|Fixed:)(((\\s*)(chromium:|b:)?(\\s*)(\\d+),)*(\\s*)(chromium:|b:)?(\\s*)(\\d+))$"
 	buganizerBugRegex   = "b([/:])(\\s*)([\\d]+)"
 	prodBuildbucketHost = "cr-buildbucket.appspot.com"
@@ -53,7 +62,9 @@ type gerritClientInterface interface {
 // TODO(robertocn): move this into a dedicated file for authentication, and
 // accept a list of scopes to make this function usable for communicating for
 // different systems.
-func getAuthenticatedHTTPClient(ctx context.Context, scopes ...string) (*http.Client, error) {
+
+// GetAuthenticatedHTTPClient gets http clients from given scopes.
+func GetAuthenticatedHTTPClient(ctx context.Context, scopes ...string) (*http.Client, error) {
 	var t http.RoundTripper
 	var err error
 	if len(scopes) > 0 {
@@ -80,17 +91,17 @@ func findPrefixLine(m string, prefix string) (string, error) {
 	return "", fmt.Errorf("commit message does not contain line prefixed with %q", prefix)
 }
 func failedBuildFromCommitMessage(m string) (string, error) {
-	return findPrefixLine(m, failedBuildPrefix)
+	return findPrefixLine(m, FailedBuildPrefix)
 }
 
 func failedStepFromCommitMessage(m string) (string, error) {
-	return findPrefixLine(m, failedStepPrefix)
+	return findPrefixLine(m, FailedStepPrefix)
 }
 
 // isFlakeRevert determines if a commit is a revert due to flake by the contents
 // of the given commit message.
 func isFlakeRevert(m string) bool {
-	_, err := findPrefixLine(m, flakyTestPrefix)
+	_, err := findPrefixLine(m, FlakyTestPrefix)
 	return err == nil
 }
 
@@ -134,7 +145,7 @@ func getIssueBySummaryAndAccount(ctx context.Context, cfg *RefConfig, s, a strin
 		Can:       monorail.IssuesListRequest_ALL,
 		Q:         q,
 	}
-	resp, err := cs.monorail.IssuesList(ctx, req)
+	resp, err := cs.Monorail.IssuesList(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -159,11 +170,12 @@ func postComment(ctx context.Context, cfg *RefConfig, iID int32, c string, cs *C
 			ProjectId: cfg.MonorailProject,
 		},
 	}
-	_, err := cs.monorail.InsertComment(ctx, req)
+	_, err := cs.Monorail.InsertComment(ctx, req)
 	return err
 }
 
-func postIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, components, labels []string) (int32, error) {
+// PostIssue will create an issue based on the given parameters.
+func PostIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, components, labels []string) (int32, error) {
 	// The components for the issue will be the additional components
 	// depending on which rules were violated, and the component defined
 	// for the repo(if any).
@@ -181,7 +193,7 @@ func postIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, co
 		SendEmail: true,
 	}
 
-	resp, err := cs.monorail.InsertIssue(ctx, req)
+	resp, err := cs.Monorail.InsertIssue(ctx, req)
 	if err != nil {
 		return 0, err
 	}
@@ -195,7 +207,7 @@ func issueFromID(ctx context.Context, cfg *RefConfig, ID int32, cs *Clients) (*m
 			ProjectId: cfg.MonorailProject,
 		},
 	}
-	return cs.monorail.GetIssue(ctx, req)
+	return cs.Monorail.GetIssue(ctx, req)
 }
 
 func listCommentsFromIssueID(ctx context.Context, cfg *RefConfig, ID int32, cs *Clients) ([]*monorail.Comment, error) {
@@ -205,7 +217,7 @@ func listCommentsFromIssueID(ctx context.Context, cfg *RefConfig, ID int32, cs *
 			ProjectId: cfg.MonorailProject,
 		},
 	}
-	resp, err := cs.monorail.ListComments(ctx, req)
+	resp, err := cs.Monorail.ListComments(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -298,8 +310,8 @@ type Clients struct {
 	httpClient *http.Client
 
 	// This is already an interface so we use it as exported.
-	monorail           monorail.MonorailClient
-	gitilesFactory     GitilesClientFactory
+	Monorail           monorail.MonorailClient
+	GitilesFactory     GitilesClientFactory
 	buildbucketFactory BuildbucketClientFactory
 }
 
@@ -341,7 +353,7 @@ func ProdGitilesClientFactory(host string, httpClient *http.Client) (gitilespb.G
 // NewGitilesClient uses a factory set in the Clients object and its httpClient
 // to create a new gitiles client.
 func (c *Clients) NewGitilesClient(host string) (gitilespb.GitilesClient, error) {
-	gc, err := c.gitilesFactory(host, c.httpClient)
+	gc, err := c.GitilesFactory(host, c.httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -359,25 +371,27 @@ func (c *Clients) ConnectAll(ctx context.Context, cfg *RefConfig, client *http.C
 		return err
 	}
 
-	c.monorail = monorail.NewEndpointsClient(c.httpClient, cfg.MonorailAPIURL)
-	c.gitilesFactory = ProdGitilesClientFactory
+	c.Monorail = monorail.NewEndpointsClient(c.httpClient, cfg.MonorailAPIURL)
+	c.GitilesFactory = ProdGitilesClientFactory
 	c.buildbucketFactory = ProdBuildbucketClientFactory
 	return nil
 }
 
-// loadConfigFromContext finds the repo config and repo state matching the git ref given
-// as the "refUrl" parameter in the http request bound to the router context.
+// LoadConfigFromContext finds the repo config and repo state matching the git
+// ref given as the "refUrl" parameter in the http request bound to the router
+// context.
 //
 // If the given ref matches a configuration set to dynamic refs, this function
 // calls the config's method to populate the concrete ref parameters and returns
 // the result of that method.
-func loadConfigFromContext(rc *router.Context) (*RefConfig, *RefState, error) {
+func LoadConfigFromContext(rc *router.Context) (*RefConfig, *RefState, error) {
 	ctx, req := rc.Context, rc.Request
 	refURL := req.FormValue("refUrl")
-	return loadConfig(ctx, refURL)
+	return LoadConfig(ctx, refURL)
 }
 
-func loadConfig(ctx context.Context, refURL string) (*RefConfig, *RefState, error) {
+// LoadConfig returns both repository status and config based on given refURL.
+func LoadConfig(ctx context.Context, refURL string) (*RefConfig, *RefState, error) {
 	rs := &RefState{RepoURL: refURL}
 	err := ds.Get(ctx, rs)
 	if err != nil {
@@ -391,7 +405,8 @@ func loadConfig(ctx context.Context, refURL string) (*RefConfig, *RefState, erro
 	return cfg.SetConcreteRef(ctx, rs), rs, nil
 }
 
-func initializeClients(ctx context.Context, cfg *RefConfig, client *http.Client) (*Clients, error) {
+// InitializeClients returns clients that connects to given repositories.
+func InitializeClients(ctx context.Context, cfg *RefConfig, client *http.Client) (*Clients, error) {
 	cs := &Clients{}
 	err := cs.ConnectAll(ctx, cfg, client)
 	if err != nil {
@@ -496,7 +511,7 @@ func (rr *RuleResult) SetToken(ctx context.Context, tokenName, tokenValue string
 }
 
 func getURLAsString(ctx context.Context, url string) (string, error) {
-	httpClient, err := getAuthenticatedHTTPClient(ctx, gerritScope, emailScope)
+	httpClient, err := GetAuthenticatedHTTPClient(ctx, GerritScope, EmailScope)
 	response, err := httpClient.Get(url)
 	if err != nil {
 		return "", err
@@ -521,7 +536,7 @@ func getBlamelist(ctx context.Context, buildURL string, cs *Clients) ([]string, 
 		return nil, err
 	}
 
-	gc, err := cs.gitilesFactory(currBuild.Input.GitilesCommit.Host, cs.httpClient)
+	gc, err := cs.GitilesFactory(currBuild.Input.GitilesCommit.Host, cs.httpClient)
 	if err != nil {
 		return nil, err
 	}

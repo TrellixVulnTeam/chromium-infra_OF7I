@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"fmt"
@@ -10,6 +10,9 @@ import (
 	"time"
 
 	"context"
+
+	"github.com/golang/protobuf/ptypes"
+	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 
 	"google.golang.org/grpc"
 
@@ -69,47 +72,72 @@ func fakeRelevantCommits(n int, k *ds.Key, bh string, s AuditStatus, t time.Time
 	return result
 }
 
-type mockMonorailClient struct {
-	il *mr.IssuesListResponse
-	cl *mr.ListCommentsResponse
-	ic *mr.InsertCommentResponse
-	ii *mr.InsertIssueResponse
-	gi *mr.Issue
-	e  error
+// MockMonorailClient is a mock monorail client that used for testing.
+type MockMonorailClient struct {
+	Il *mr.IssuesListResponse
+	Cl *mr.ListCommentsResponse
+	Ic *mr.InsertCommentResponse
+	Ii *mr.InsertIssueResponse
+	Gi *mr.Issue
+	E  error
 }
 
-func (c mockMonorailClient) InsertIssue(ctx context.Context, in *mr.InsertIssueRequest, opts ...grpc.CallOption) (*mr.InsertIssueResponse, error) {
-	return c.ii, c.e
+// InsertIssue pretends to create an issue.
+func (c MockMonorailClient) InsertIssue(ctx context.Context, in *mr.InsertIssueRequest, opts ...grpc.CallOption) (*mr.InsertIssueResponse, error) {
+	return c.Ii, c.E
 }
 
-func (c mockMonorailClient) InsertComment(ctx context.Context, in *mr.InsertCommentRequest, opts ...grpc.CallOption) (*mr.InsertCommentResponse, error) {
-	return c.ic, c.e
+// InsertComment pretends to post comments to an issue.
+func (c MockMonorailClient) InsertComment(ctx context.Context, in *mr.InsertCommentRequest, opts ...grpc.CallOption) (*mr.InsertCommentResponse, error) {
+	return c.Ic, c.E
 }
 
-func (c mockMonorailClient) IssuesList(ctx context.Context, in *mr.IssuesListRequest, opts ...grpc.CallOption) (*mr.IssuesListResponse, error) {
-	return c.il, c.e
+// IssuesList pretends to list issues from a project.
+func (c MockMonorailClient) IssuesList(ctx context.Context, in *mr.IssuesListRequest, opts ...grpc.CallOption) (*mr.IssuesListResponse, error) {
+	return c.Il, c.E
 }
 
-func (c mockMonorailClient) GetIssue(ctx context.Context, in *mr.GetIssueRequest, opts ...grpc.CallOption) (*mr.Issue, error) {
-	return c.gi, c.e
+// GetIssue pretends to get an issue by id.
+func (c MockMonorailClient) GetIssue(ctx context.Context, in *mr.GetIssueRequest, opts ...grpc.CallOption) (*mr.Issue, error) {
+	return c.Gi, c.E
 }
 
-func (c mockMonorailClient) ListComments(ctx context.Context, in *mr.ListCommentsRequest, opts ...grpc.CallOption) (*mr.ListCommentsResponse, error) {
-	return c.cl, c.e
+// ListComments pretends to return comments of an issue.
+func (c MockMonorailClient) ListComments(ctx context.Context, in *mr.ListCommentsRequest, opts ...grpc.CallOption) (*mr.ListCommentsResponse, error) {
+	return c.Cl, c.E
 }
 
 // DummyRule is a rule that always returns the value of the result field when run.
 type DummyRule struct {
-	name   string
-	result *RuleResult
+	Name   string
+	Result *RuleResult
 }
 
 // GetName returns the name of the rule.
 func (rule DummyRule) GetName() string {
-	return rule.name
+	return rule.Name
 }
 
 // Run returns the result struct field.
 func (rule DummyRule) Run(c context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
-	return rule.result, nil
+	return rule.Result, nil
+}
+
+// MustGitilesTime convert time string into golang protobuf timestamp.
+func MustGitilesTime(v string) *google_protobuf.Timestamp {
+	var t time.Time
+	t, err := time.Parse(time.ANSIC, v)
+	if err != nil {
+		t, err = time.Parse(time.ANSIC+" -0700", v)
+	}
+	if err != nil {
+		panic(fmt.Errorf("could not parse time %q: %v", v, err))
+
+	}
+	r, err := ptypes.TimestampProto(t)
+	if err != nil {
+		panic(fmt.Errorf("could not convert time %s to google_protobuf.Timestamp: %v", t, err))
+
+	}
+	return r
 }

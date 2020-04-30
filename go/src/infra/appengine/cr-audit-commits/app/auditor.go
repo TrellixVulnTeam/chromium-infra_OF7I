@@ -18,10 +18,12 @@ import (
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/server/router"
+
+	"infra/appengine/cr-audit-commits/app/rules"
 )
 
 // Tests can put mock clients here, prod code will ignore this global.
-var auditorTestClients *Clients
+var auditorTestClients *rules.Clients
 
 // Auditor is the main entry point for scanning the commits on a given ref and
 // auditing those that are relevant to the configuration.
@@ -42,23 +44,23 @@ func Auditor(rc *router.Context) {
 	ctx, cancelInnerCtx := context.WithTimeout(outerCtx, time.Second*time.Duration(4*60+30))
 	defer cancelInnerCtx()
 
-	cfg, refState, err := loadConfigFromContext(rc)
+	cfg, refState, err := rules.LoadConfigFromContext(rc)
 	if err != nil {
 		http.Error(resp, err.Error(), 400)
 		return
 	}
 
-	var cs *Clients
+	var cs *rules.Clients
 	if auditorTestClients != nil {
 		cs = auditorTestClients
 	} else {
-		httpClient, err := getAuthenticatedHTTPClient(ctx, gerritScope, emailScope)
+		httpClient, err := rules.GetAuthenticatedHTTPClient(ctx, rules.GerritScope, rules.EmailScope)
 		if err != nil {
 			http.Error(resp, err.Error(), 500)
 			return
 		}
 
-		cs, err = initializeClients(ctx, cfg, httpClient)
+		cs, err = rules.InitializeClients(ctx, cfg, httpClient)
 		if err != nil {
 			http.Error(resp, err.Error(), 500)
 			return
@@ -123,7 +125,7 @@ func Auditor(rc *router.Context) {
 
 // getCommitLog gets from gitiles a list from the last known commit to the tip
 // of the ref in chronological (as per git parentage) order.
-func getCommitLog(ctx context.Context, cfg *RefConfig, refState *RefState, cs *Clients) ([]*git.Commit, error) {
+func getCommitLog(ctx context.Context, cfg *rules.RefConfig, refState *rules.RefState, cs *rules.Clients) ([]*git.Commit, error) {
 
 	host, project, err := gitiles.ParseRepoURL(cfg.BaseRepoURL)
 	if err != nil {
@@ -163,7 +165,7 @@ func getCommitLog(ctx context.Context, cfg *RefConfig, refState *RefState, cs *C
 // this is instead done by Auditor after this function is executed. This is left
 // to the handler in case the context given to this function expires before
 // reaching the end of the log.
-func scanCommits(ctx context.Context, fl []*git.Commit, cfg *RefConfig, refState *RefState) error {
+func scanCommits(ctx context.Context, fl []*git.Commit, cfg *rules.RefConfig, refState *rules.RefState) error {
 	for _, commit := range fl {
 		relevant := false
 		for _, ruleSet := range cfg.Rules {
@@ -192,7 +194,7 @@ func scanCommits(ctx context.Context, fl []*git.Commit, cfg *RefConfig, refState
 	return nil
 }
 
-func saveNewRelevantCommit(ctx context.Context, state *RefState, commit *git.Commit) (*RelevantCommit, error) {
+func saveNewRelevantCommit(ctx context.Context, state *rules.RefState, commit *git.Commit) (*rules.RelevantCommit, error) {
 	rk := ds.KeyForObj(ctx, state)
 
 	commitTime, err := ptypes.Timestamp(commit.GetCommitter().GetTime())
@@ -200,11 +202,11 @@ func saveNewRelevantCommit(ctx context.Context, state *RefState, commit *git.Com
 		logging.WithError(err).Errorf(ctx, "Invalid commit time: %s", commitTime)
 		return nil, err
 	}
-	rc := &RelevantCommit{
+	rc := &rules.RelevantCommit{
 		RefStateKey:            rk,
 		CommitHash:             commit.Id,
 		PreviousRelevantCommit: state.LastRelevantCommit,
-		Status:                 auditScheduled,
+		Status:                 rules.AuditScheduled,
 		CommitTime:             commitTime,
 		CommitterAccount:       commit.Committer.Email,
 		AuthorAccount:          commit.Author.Email,
@@ -222,15 +224,15 @@ func saveNewRelevantCommit(ctx context.Context, state *RefState, commit *git.Com
 
 // saveAuditedCommits transactionally saves the records for the commits that
 // were audited.
-func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*RelevantCommit, cfg *RefConfig, refState *RefState) error {
+func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*rules.RelevantCommit, cfg *rules.RefConfig, refState *rules.RefState) error {
 	// We will read the relevant commits into this slice before modifying
 	// them, to ensure that we don't overwrite changes that may have been
 	// saved to the datastore between the time the query in performScheduled
 	// audits ran and the beginning of the transaction below; as may have
 	// happened if two runs of the Audit handler ran in parallel.
-	originalCommits := []*RelevantCommit{}
+	originalCommits := []*rules.RelevantCommit{}
 	for _, auditedCommit := range auditedCommits {
-		originalCommits = append(originalCommits, &RelevantCommit{
+		originalCommits = append(originalCommits, &rules.RelevantCommit{
 			CommitHash:  auditedCommit.CommitHash,
 			RefStateKey: auditedCommit.RefStateKey,
 		})
@@ -241,7 +243,7 @@ func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*Relevant
 	// in a single entity group. (All relevant commits for a single repo
 	// are contained in a single entity group)
 	return ds.RunInTransaction(ctx, func(ctx context.Context) error {
-		commitsToPut := make([]*RelevantCommit, 0, len(auditedCommits))
+		commitsToPut := make([]*rules.RelevantCommit, 0, len(auditedCommits))
 		if err := ds.Get(ctx, originalCommits); err != nil {
 			return err
 		}
@@ -250,7 +252,7 @@ func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*Relevant
 				// Only save those that are still not in a decided
 				// state in the datastore to avoid racing a possible
 				// parallel run of this handler.
-				if currentCommit.Status == auditScheduled || currentCommit.Status == auditPending {
+				if currentCommit.Status == rules.AuditScheduled || currentCommit.Status == rules.AuditPending {
 					commitsToPut = append(commitsToPut, auditedCommit)
 				}
 			}
@@ -259,7 +261,7 @@ func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*Relevant
 			return err
 		}
 		for _, c := range commitsToPut {
-			if c.Status != auditScheduled {
+			if c.Status != rules.AuditScheduled {
 				AuditedCommits.Add(ctx, 1, c.Status.ToShortString(), refState.ConfigName)
 			}
 		}
@@ -269,19 +271,19 @@ func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*Relevant
 
 // notifyAboutViolations is meant to notify about violations to audit
 // policies by calling the notification functions registered for each ruleSet
-// that matches a commit in the auditCompletedWithActionRequired status.
-func notifyAboutViolations(ctx context.Context, cfg *RefConfig, refState *RefState, cs *Clients) error {
+// that matches a commit in the AuditCompletedWithActionRequired status.
+func notifyAboutViolations(ctx context.Context, cfg *rules.RefConfig, refState *rules.RefState, cs *rules.Clients) error {
 
 	cfgk := ds.KeyForObj(ctx, refState)
 
-	cq := ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", auditCompletedWithActionRequired).Eq("NotifiedAll", false)
-	err := ds.Run(ctx, cq, func(rc *RelevantCommit) error {
+	cq := ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", rules.AuditCompletedWithActionRequired).Eq("NotifiedAll", false)
+	err := ds.Run(ctx, cq, func(rc *rules.RelevantCommit) error {
 		errors := []error{}
 		var err error
 		for ruleSetName, ruleSet := range cfg.Rules {
 			if ruleSet.MatchesRelevantCommit(rc) {
 				state := rc.GetNotificationState(ruleSetName)
-				state, err = ruleSet.NotificationFunction()(ctx, cfg, rc, cs, state)
+				state, err = ruleSet.NotificationFunction(ctx, cfg, rc, cs, state)
 				if err == context.DeadlineExceeded {
 					return err
 				} else if err != nil {
@@ -308,8 +310,8 @@ func notifyAboutViolations(ctx context.Context, cfg *RefConfig, refState *RefSta
 		return err
 	}
 
-	cq = ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", auditFailed).Eq("NotifiedAll", false)
-	return ds.Run(ctx, cq, func(rc *RelevantCommit) error {
+	cq = ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", rules.AuditFailed).Eq("NotifiedAll", false)
+	return ds.Run(ctx, cq, func(rc *rules.RelevantCommit) error {
 		err := reportAuditFailure(ctx, cfg, rc, cs)
 
 		if err == nil {
@@ -336,7 +338,7 @@ func notifyAboutViolations(ctx context.Context, cfg *RefConfig, refState *RefSta
 // that the audit app has not been able to determine whether one exists. One
 // such failure could be due to a bug in one of the rules or an error in one of
 // the services we depend on (monorail, gitiles, gerrit).
-func reportAuditFailure(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients) error {
+func reportAuditFailure(ctx context.Context, cfg *rules.RefConfig, rc *rules.RelevantCommit, cs *rules.Clients) error {
 	summary := fmt.Sprintf("Audit on %q failed over %d times", rc.CommitHash, rc.Retries)
 	description := fmt.Sprintf("commit %s has caused the audit process to fail repeatedly, "+
 		"please audit by hand and don't close this bug until the root cause of the failure has been "+
@@ -344,7 +346,7 @@ func reportAuditFailure(ctx context.Context, cfg *RefConfig, rc *RelevantCommit,
 
 	var err error
 	issueID := int32(0)
-	issueID, err = postIssue(ctx, cfg, summary, description, cs, []string{"Infra>Audit"}, []string{"AuditFailure"})
+	issueID, err = rules.PostIssue(ctx, cfg, summary, description, cs, []string{"Infra>Audit"}, []string{"AuditFailure"})
 	if err == nil {
 		rc.SetNotificationState("AuditFailure", fmt.Sprintf("BUG=%d", issueID))
 		// Do not sent further notifications for this commit. This needs

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"fmt"
@@ -16,39 +16,44 @@ import (
 type AuditStatus int
 
 const (
-	auditScheduled AuditStatus = iota
-	auditCompleted
-	auditCompletedWithActionRequired
-	auditFailed
-	// Some rules may not be decidable yet.
-	auditPending
+	// AuditScheduled is the status when an audit is scheduled.
+	AuditScheduled AuditStatus = iota
+	// AuditCompleted is the status when an audit has been completed.
+	AuditCompleted
+	// AuditCompletedWithActionRequired is the status when an audit has
+	// completed but requires some actions. e.g. notifications.
+	AuditCompletedWithActionRequired
+	// AuditFailed is the status when an audit has failed.
+	AuditFailed
+	// AuditPending is the status when some rules may not be decidable yet.
+	AuditPending
 )
 
 // ToString returns a human-readable version of this status.
 func (as AuditStatus) ToString() string {
 	switch as {
-	case auditScheduled:
+	case AuditScheduled:
 		return "Audit Scheduled"
-	case auditCompleted:
+	case AuditCompleted:
 		return "Audited OK"
-	case auditCompletedWithActionRequired:
+	case AuditCompletedWithActionRequired:
 		return "Action Required"
-	case auditFailed:
+	case AuditFailed:
 		return "Audit Failed"
 	default:
 		return fmt.Sprintf("Unknown status: %d", int(as))
 	}
 }
 
-// ColorCode returns a stirng used to color code the string, as a css class for
+// ColorCode returns a string used to color code the string, as a css class for
 // example.
 func (as AuditStatus) ColorCode() string {
 	switch as {
-	case auditCompleted:
+	case AuditCompleted:
 		return "green-status"
-	case auditCompletedWithActionRequired:
+	case AuditCompletedWithActionRequired:
 		return "red-status"
-	case auditFailed:
+	case AuditFailed:
 		return "red-status"
 	default:
 		return "normal-status"
@@ -59,15 +64,15 @@ func (as AuditStatus) ColorCode() string {
 // as datapoint labels for metrics.
 func (as AuditStatus) ToShortString() string {
 	switch as {
-	case auditCompleted:
+	case AuditCompleted:
 		return "passed"
-	case auditCompletedWithActionRequired:
+	case AuditCompletedWithActionRequired:
 		return "action required"
-	case auditFailed:
+	case AuditFailed:
 		return "failed"
-	case auditScheduled:
+	case AuditScheduled:
 		return "scheduled"
-	case auditPending:
+	case AuditPending:
 		return "pending recheck"
 	default:
 		return fmt.Sprintf("unknown:%d", int(as))
@@ -78,25 +83,30 @@ func (as AuditStatus) ToShortString() string {
 type RuleStatus int
 
 const (
-	ruleFailed RuleStatus = iota
-	rulePassed
-	ruleSkipped
-	notificationRequired
-	rulePending
+	// RuleFailed is the status when a rule has failed.
+	RuleFailed RuleStatus = iota
+	// RulePassed is the status when a rule has passed.
+	RulePassed
+	// RuleSkipped is the status when a rule has been skipped.
+	RuleSkipped
+	// NotificationRequired is the status when a rule requires notifications.
+	NotificationRequired
+	// RulePending is the status when a rule's result cannot be decided.
+	RulePending
 )
 
 // ToString returns a human-readable version of this status.
 func (rs RuleStatus) ToString() string {
 	switch rs {
-	case ruleFailed:
+	case RuleFailed:
 		return "Rule Failed"
-	case rulePassed:
+	case RulePassed:
 		return "Rule Passed"
-	case ruleSkipped:
+	case RuleSkipped:
 		return "Rule Skipped"
-	case notificationRequired:
+	case NotificationRequired:
 		return "Notification Required"
-	case rulePending:
+	case RulePending:
 		return "Rule Pending"
 	default:
 		return fmt.Sprintf("Unknown status: %d", int(rs))
@@ -107,9 +117,9 @@ func (rs RuleStatus) ToString() string {
 // example.
 func (rs RuleStatus) ColorCode() string {
 	switch rs {
-	case ruleFailed:
+	case RuleFailed:
 		return "red-status"
-	case rulePassed:
+	case RulePassed:
 		return "green-status"
 	default:
 		return "normal-status"
@@ -207,7 +217,7 @@ type RuleResult struct {
 func (rc *RelevantCommit) GetViolations() []RuleResult {
 	violations := []RuleResult{}
 	for _, rr := range rc.Result {
-		if rr.RuleResultStatus == ruleFailed {
+		if rr.RuleResultStatus == RuleFailed {
 			violations = append(violations, rr)
 		}
 	}

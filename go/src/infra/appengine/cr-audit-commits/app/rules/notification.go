@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"fmt"
@@ -36,31 +36,39 @@ import (
 // understood by the NotificationFunc itself, and should exclude colons (`:`).
 type NotificationFunc func(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error)
 
-func fileBugForTBRViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+// FileBugForTBRViolation is the notification function for manual-changes
+// rules.
+func FileBugForTBRViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Infra>Audit"}
 	labels := []string{"CommitLog-Audit-Violation", "TBR-Violation"}
 	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
 }
 
-func fileBugForAutoRollViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+// FileBugForAutoRollViolation is the notification function for AutoRoll rules.
+func FileBugForAutoRollViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Infra>Audit>AutoRoller"}
 	labels := []string{"CommitLog-Audit-Violation"}
 	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
 }
 
-func fileBugForFinditViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+// FileBugForFinditViolation is the notification function for Findit rules.
+func FileBugForFinditViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Tools>Test>Findit>Autorevert"}
 	labels := []string{"CommitLog-Audit-Violation"}
 	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
 }
 
-func fileBugForReleaseBotViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+// FileBugForReleaseBotViolation is the notification function for
+// release-bot-rules.
+func FileBugForReleaseBotViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Infra>Client>Chrome>Release"}
 	labels := []string{"CommitLog-Audit-Violation"}
 	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
 }
 
-func fileBugForMergeApprovalViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+// FileBugForMergeApprovalViolation is the notification function for
+// merge-approval-rules.
+func FileBugForMergeApprovalViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	components := []string{"Programs>PMO>Browser>Release"}
 	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
 	if !ok {
@@ -68,7 +76,7 @@ func fileBugForMergeApprovalViolation(ctx context.Context, cfg *RefConfig, rc *R
 	}
 	labels := []string{"CommitLog-Audit-Violation", "Merge-Without-Approval", fmt.Sprintf("M-%s", milestone)}
 	for _, result := range rc.Result {
-		if result.RuleResultStatus != ruleFailed {
+		if result.RuleResultStatus != RuleFailed {
 			continue
 		}
 		bug, success := GetToken(ctx, "BugNumber", result.MetaData)
@@ -88,7 +96,9 @@ func fileBugForMergeApprovalViolation(ctx context.Context, cfg *RefConfig, rc *R
 	return "No violation found", nil
 }
 
-func commentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+// CommentOnBugToAcknowledgeMerge is used as the notification function of
+// merge-ack-rule.
+func CommentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
 	if !ok {
 		return "", fmt.Errorf("MilestoneNumber not specified in repository configuration")
@@ -98,7 +108,7 @@ func commentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RefConfig, rc *Rel
 	mergeLabel := fmt.Sprintf("-Merge-Approved-%s", milestone)
 	labels := []string{mergeLabel, mergeAckLabel}
 	for _, result := range rc.Result {
-		if result.RuleResultStatus != notificationRequired {
+		if result.RuleResultStatus != NotificationRequired {
 			continue
 		}
 		bugID, success := GetToken(ctx, "BugNumbers", result.MetaData)
@@ -141,11 +151,11 @@ func commentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RefConfig, rc *Rel
 	return "No notification required", nil
 }
 
-// sendEmailForViolation should be called by notification functions to send
+// SendEmailForViolation should be called by notification functions to send
 // email messages. It is expected that the subject and recipients are set by
 // the calling notification function, and the body of the email is composed
 // from the ruleResults' messages.
-func sendEmailForViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string, recipients []string, subject string) (string, error) {
+func SendEmailForViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string, recipients []string, subject string) (string, error) {
 	if state == "emailSent" {
 		return state, nil
 	}
@@ -196,7 +206,7 @@ func fileBugForViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit
 		}
 
 		if existingIssue == nil || !isValidIssue(existingIssue, sa, cfg) {
-			issueID, err = postIssue(ctx, cfg, summary, resultText(cfg, rc, false), cs, components, labels)
+			issueID, err = PostIssue(ctx, cfg, summary, resultText(cfg, rc, false), cs, components, labels)
 			if err != nil {
 				return "", err
 			}

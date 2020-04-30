@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"testing"
@@ -27,7 +27,7 @@ func TestMergeAckRules(t *testing.T) {
 		rc := &RelevantCommit{
 			RefStateKey:   datastore.KeyForObj(ctx, rs),
 			CommitHash:    "b07c0de",
-			Status:        auditScheduled,
+			Status:        AuditScheduled,
 			CommitMessage: "Acknowledging merges into a release branch",
 		}
 		cfg := &RefConfig{
@@ -41,33 +41,33 @@ func TestMergeAckRules(t *testing.T) {
 			RepoCfg:           cfg,
 		}
 		testClients := &Clients{}
-		testClients.monorail = mockMonorailClient{
-			gi: &monorail.Issue{},
-			ii: &monorail.InsertIssueResponse{
+		testClients.Monorail = MockMonorailClient{
+			Gi: &monorail.Issue{},
+			Ii: &monorail.InsertIssueResponse{
 				Issue: &monorail.Issue{},
 			},
 		}
 		Convey("Change to commit has a valid bug", func() {
-			testClients.monorail = mockMonorailClient{
-				gi: &monorail.Issue{
+			testClients.Monorail = MockMonorailClient{
+				Gi: &monorail.Issue{
 					Id: 123456,
 				},
 			}
 			rc.CommitMessage = "This change has a valid bug ID \nBug:123456"
 			// Run rule
 			rr, _ := AcknowledgeMerge{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, notificationRequired)
+			So(rr.RuleResultStatus, ShouldEqual, NotificationRequired)
 		})
 		Convey("Change to commit has no bug", func() {
-			testClients.monorail = mockMonorailClient{
-				gi: &monorail.Issue{
+			testClients.Monorail = MockMonorailClient{
+				Gi: &monorail.Issue{
 					Id: 123456,
 				},
 			}
 			rc.CommitMessage = "This change has no bug attached"
 			// Run rule
 			rr, _ := AcknowledgeMerge{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleSkipped)
+			So(rr.RuleResultStatus, ShouldEqual, RuleSkipped)
 		})
 	})
 }

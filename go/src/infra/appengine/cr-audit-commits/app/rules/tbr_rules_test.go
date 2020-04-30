@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"testing"
@@ -30,7 +30,7 @@ func TestTBRRules(t *testing.T) {
 		rc := &RelevantCommit{
 			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "7b12c0de1",
-			Status:           auditScheduled,
+			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
 			CommitterAccount: "jdoe@sample.com",
 			AuthorAccount:    "jdoe@sample.com",
@@ -109,7 +109,7 @@ func TestTBRRules(t *testing.T) {
 		testClients := &Clients{}
 		testClients.gerrit = &mockGerritClient{q: q}
 
-		expectedStatus := rulePassed
+		expectedStatus := RulePassed
 		var gerritCalls []string
 
 		Convey("Pass", func() {
@@ -121,13 +121,13 @@ func TestTBRRules(t *testing.T) {
 		Convey("Non-Pass", func() {
 			Convey("Fail", func() {
 				rc.CommitHash = "7b12c0de2"
-				expectedStatus = ruleFailed
+				expectedStatus = RuleFailed
 			})
 
 			Convey("Pending - no notification", func() {
 				rc.CommitHash = "7b12c0de2"
 				rc.CommitTime = time.Now().Add(-23 * time.Hour)
-				expectedStatus = rulePending
+				expectedStatus = RulePending
 
 			})
 			Convey("Pending - send notification", func() {
@@ -135,9 +135,9 @@ func TestTBRRules(t *testing.T) {
 				rc.CommitTime = time.Now().Add(-25 * time.Hour)
 				rc.Result = append(rc.Result, RuleResult{
 					RuleName:         "ChangeReviewed",
-					RuleResultStatus: rulePending,
+					RuleResultStatus: RulePending,
 				})
-				expectedStatus = rulePending
+				expectedStatus = RulePending
 				gerritCalls = []string{"SetReview"}
 
 			})
@@ -146,7 +146,7 @@ func TestTBRRules(t *testing.T) {
 			So(testClients.gerrit.(*mockGerritClient).calls, ShouldResemble, gerritCalls)
 		})
 		Convey("Skip", func() {
-			expectedStatus = ruleSkipped
+			expectedStatus = RuleSkipped
 			rc.AuthorAccount = "recipe-mega-autoroller@chops-service-accounts.iam.gserviceaccount.com"
 			rr, _ := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
 			// Check result code.

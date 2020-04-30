@@ -15,6 +15,7 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/server/router"
 
+	"infra/appengine/cr-audit-commits/app/rules"
 	"infra/monorail"
 )
 
@@ -63,7 +64,7 @@ var (
 	gitilesCheck = SmokeTestCheck{
 		Name: "Check gitiles connectivity",
 		Check: func(ctx context.Context) error {
-			httpClient, err := getAuthenticatedHTTPClient(ctx, gerritScope, emailScope)
+			httpClient, err := rules.GetAuthenticatedHTTPClient(ctx, rules.GerritScope, rules.EmailScope)
 			if err != nil {
 				return err
 			}
@@ -87,7 +88,7 @@ var (
 		Name: "Check gerrit connectivity",
 		Check: func(ctx context.Context) error {
 
-			httpClient, err := getAuthenticatedHTTPClient(ctx, gerritScope)
+			httpClient, err := rules.GetAuthenticatedHTTPClient(ctx, rules.GerritScope)
 			if err != nil {
 				return err
 			}
@@ -106,7 +107,7 @@ var (
 	monorailCheck = SmokeTestCheck{
 		Name: "Check monorail connectivity",
 		Check: func(ctx context.Context) error {
-			httpClient, err := getAuthenticatedHTTPClient(ctx, emailScope)
+			httpClient, err := rules.GetAuthenticatedHTTPClient(ctx, rules.EmailScope)
 			if err != nil {
 				return err
 			}

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"net/http"
@@ -31,7 +31,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 		rc := &RelevantCommit{
 			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
-			Status:           auditScheduled,
+			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
 			CommitterAccount: "releasebot@sample.com",
 			AuthorAccount:    "releasebot@sample.com",
@@ -51,7 +51,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 		Convey("Only modifies file", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -79,14 +79,14 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				files: []string{"somefile"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
 
 		})
 		Convey("Only modifies dir", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -114,14 +114,14 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
 
 		})
 		Convey("Only modifies files+dirs", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -155,14 +155,14 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				files: []string{"a.txt"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
 
 		})
 		Convey("Modifies unexpected file", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -196,12 +196,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				files: []string{"a.txt"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 		})
 		Convey("Confuse dir check", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -235,12 +235,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				files: []string{"a.txt"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 		})
 		Convey("Adds a file in whitelisted dir", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -268,13 +268,13 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
 		})
 		Convey("Deletes a file in whitelisted dir", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -302,7 +302,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 				dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
 		})
 	})
@@ -320,7 +320,7 @@ func TestReleaseBotRules(t *testing.T) {
 		rc := &RelevantCommit{
 			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
-			Status:           auditScheduled,
+			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
 			CommitterAccount: "releasebot@sample.com",
 			AuthorAccount:    "releasebot@sample.com",
@@ -340,7 +340,7 @@ func TestReleaseBotRules(t *testing.T) {
 		Convey("Only modifies version", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -371,7 +371,7 @@ func TestReleaseBotRules(t *testing.T) {
 				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
 
 		})
@@ -379,7 +379,7 @@ func TestReleaseBotRules(t *testing.T) {
 			Convey("Modifies other file", func() {
 				// Inject gitiles log response
 				gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-				testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
 				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -414,11 +414,11 @@ func TestReleaseBotRules(t *testing.T) {
 					},
 				}.Run(ctx, ap, rc, testClients)
 				// Check result code
-				So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
 			Convey("Renames VERSION", func() {
 				gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-				testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
 				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -449,7 +449,7 @@ func TestReleaseBotRules(t *testing.T) {
 					},
 				}.Run(ctx, ap, rc, testClients)
 				// Check result code
-				So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
 
 		})

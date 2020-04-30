@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"fmt"
@@ -50,18 +50,18 @@ func (rule OnlyMergeApprovedChange) GetName() string {
 // Run executes the rule.
 func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
-	result.RuleResultStatus = ruleFailed
+	result.RuleResultStatus = RuleFailed
 
 	// Exclude Chrome release bot changes
 	if rc.AuthorAccount == chromeReleaseBotAcc || rc.AuthorAccount == chromeReleaseAutoRollerAcc {
-		result.RuleResultStatus = rulePassed
+		result.RuleResultStatus = RulePassed
 		return result, nil
 	}
 
 	// Exclude Chrome TPM changes
 	for _, tpm := range chromeTPMs {
 		if (rc.AuthorAccount == tpm) || (rc.CommitterAccount == tpm) {
-			result.RuleResultStatus = rulePassed
+			result.RuleResultStatus = RulePassed
 			return result, nil
 		}
 	}
@@ -105,7 +105,7 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 					// Check if the author of the merge approval is a TPM
 					for _, tpm := range chromeTPMs {
 						if author == tpm {
-							result.RuleResultStatus = rulePassed
+							result.RuleResultStatus = RulePassed
 							return result, nil
 						}
 					}

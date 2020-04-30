@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"fmt"
@@ -79,7 +79,7 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 	result := &RuleResult{}
 	result.RuleName = rule.GetName()
 	prevResult := PreviousResult(ctx, rc, result.RuleName)
-	if prevResult != nil && (prevResult.RuleResultStatus != rulePending ||
+	if prevResult != nil && (prevResult.RuleResultStatus != RulePending ||
 		// If we checked gerrit recently, wait before checking again, leave the rule as pending.
 		rc.LastExternalPoll.After(time.Now().Add(-pollInterval))) {
 		return prevResult, nil
@@ -88,7 +88,7 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 		result.MetaData = prevResult.MetaData
 	}
 	if rule.shouldSkip(rc) {
-		result.RuleResultStatus = ruleSkipped
+		result.RuleResultStatus = RuleSkipped
 		return result, nil
 	}
 	rc.LastExternalPoll = time.Now()
@@ -108,13 +108,13 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 	for _, vote := range crLabelInfo.All {
 		if int(vote.Value) == maxValue && vote.AccountID != owner {
 			// Valid approver found.
-			result.RuleResultStatus = rulePassed
+			result.RuleResultStatus = RulePassed
 			return result, nil
 		}
 	}
 	deadline := rc.CommitTime.Add(gracePeriod)
 	if deadline.After(time.Now()) {
-		result.RuleResultStatus = rulePending
+		result.RuleResultStatus = RulePending
 		// Only post a reminder if `reminderDelay` has elapsed since the commit time.
 		if prevResult != nil && time.Now().After(rc.CommitTime.Add(reminderDelay)) {
 			// Only post a reminder if it hasn't been done already.
@@ -130,7 +130,7 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 		}
 	} else {
 
-		result.RuleResultStatus = ruleFailed
+		result.RuleResultStatus = RuleFailed
 		result.Message = fmt.Sprintf(
 			"The commit was not approved by a reviewer other than the owner within %d days of landing.",
 			int64(gracePeriod.Hours()/24))

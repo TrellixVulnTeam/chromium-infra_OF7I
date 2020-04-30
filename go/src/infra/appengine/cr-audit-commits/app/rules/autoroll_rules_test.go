@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"net/http"
@@ -29,7 +29,7 @@ func TestAutoRollRules(t *testing.T) {
 		rc := &RelevantCommit{
 			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
-			Status:           auditScheduled,
+			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
 			CommitterAccount: "autoroller@sample.com",
 			AuthorAccount:    "autoroller@sample.com",
@@ -49,7 +49,7 @@ func TestAutoRollRules(t *testing.T) {
 		Convey("Only modifies DEPS", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -74,14 +74,14 @@ func TestAutoRollRules(t *testing.T) {
 			// Run rule
 			rr, _ := AutoRollRulesDEPS(rc.CommitterAccount).Rules[0].Run(ctx, ap, rc, testClients)
 			// Check result code
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
 		})
 		Convey("Introduces unexpected changes", func() {
 			Convey("Modifies other file", func() {
 				// Inject gitiles log response
 				gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-				testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
 				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -110,11 +110,11 @@ func TestAutoRollRules(t *testing.T) {
 				// Run rule
 				rr, _ := AutoRollRulesDEPS(rc.CommitterAccount).Rules[0].Run(ctx, ap, rc, testClients)
 				// Check result code
-				So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
 			Convey("Renames DEPS", func() {
 				gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-				testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
 				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -139,7 +139,7 @@ func TestAutoRollRules(t *testing.T) {
 				// Run rule
 				rr, _ := AutoRollRulesDEPS(rc.CommitterAccount).Rules[0].Run(ctx, ap, rc, testClients)
 				// Check result code
-				So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
 
 		})

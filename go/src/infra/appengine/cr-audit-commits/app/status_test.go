@@ -20,6 +20,8 @@ import (
 	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
+
+	"infra/appengine/cr-audit-commits/app/rules"
 )
 
 func TestStatusPage(t *testing.T) {
@@ -53,23 +55,28 @@ func TestStatusPage(t *testing.T) {
 			So(resp.StatusCode, ShouldEqual, 200)
 		})
 		Convey("Valid Repo", func() {
-			RuleMap["new-repo"] = &RefConfig{
+			rules.RuleMap["new-repo"] = &rules.RefConfig{
 				BaseRepoURL:    "https://new.googlesource.com/new.git",
 				GerritURL:      "https://new-review.googlesource.com",
 				BranchName:     "master",
 				StartingCommit: "000000",
-				Rules: map[string]AccountRules{"rules": {
+				Rules: map[string]rules.AccountRules{"rules": {
 					Account: "new@test.com",
-					Rules: []Rule{
-						DummyRule{
-							name:   "DummyRule",
-							result: &RuleResult{"Dummy rule", rulePassed, "", ""},
+					Rules: []rules.Rule{
+						rules.DummyRule{
+							Name: "DummyRule",
+							Result: &rules.RuleResult{
+								RuleName:         "Dummy rule",
+								RuleResultStatus: rules.RulePassed,
+								Message:          "",
+								MetaData:         "",
+							},
 						},
 					},
 				}},
 			}
 			Convey("No interesting revisions", func() {
-				rs := &RefState{
+				rs := &rules.RefState{
 					RepoURL:            "https://new.googlesource.com/new.git/+/master",
 					LastRelevantCommit: "",
 					LastKnownCommit:    "000000",
@@ -84,11 +91,11 @@ func TestStatusPage(t *testing.T) {
 				// There is a link to the last scanned rev
 				b, err := ioutil.ReadAll(resp.Body)
 				resp.Body.Close()
-				linkText := fmt.Sprintf("%s/+/000000", RuleMap["new-repo"].BaseRepoURL)
+				linkText := fmt.Sprintf("%s/+/000000", rules.RuleMap["new-repo"].BaseRepoURL)
 				So(string(b), ShouldContainSubstring, linkText)
 			})
 			Convey("Some interesting revisions", func() {
-				rs := &RefState{
+				rs := &rules.RefState{
 					RepoURL:            "https://new.googlesource.com/new.git/+/master",
 					LastRelevantCommit: "111111",
 					LastKnownCommit:    "121212",
@@ -100,14 +107,29 @@ func TestStatusPage(t *testing.T) {
 
 				for i := 0; i < 12; i++ {
 					cTime, _ := time.Parse("2006-01-02T15:04", fmt.Sprintf("2017-09-01T09:%02d", i+1))
-					relevantCommit := &RelevantCommit{
+					relevantCommit := &rules.RelevantCommit{
 						RefStateKey: rsk,
 						CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
-						Status:      AuditStatus(i % 3), // Alternate all statuses.
-						Result: []RuleResult{
-							{"First Rule", rulePassed, "", ""},
-							{"Second Rule", ruleFailed, "Some rules fail", ""},
-							{"Third Rule", ruleSkipped, "Some rules are skipped", ""},
+						Status:      rules.AuditStatus(i % 3), // Alternate all statuses.
+						Result: []rules.RuleResult{
+							{
+								RuleName:         "First Rule",
+								RuleResultStatus: rules.RulePassed,
+								Message:          "",
+								MetaData:         "",
+							},
+							{
+								RuleName:         "Second Rule",
+								RuleResultStatus: rules.RuleFailed,
+								Message:          "Some rules fail",
+								MetaData:         "",
+							},
+							{
+								RuleName:         "Third Rule",
+								RuleResultStatus: rules.RuleSkipped,
+								Message:          "Some rules are skipped",
+								MetaData:         "",
+							},
 						},
 						CommitTime: cTime,
 					}
@@ -123,7 +145,7 @@ func TestStatusPage(t *testing.T) {
 				b, err := ioutil.ReadAll(resp.Body)
 				So(resp.StatusCode, ShouldEqual, 200)
 				for i := 1; i < 12; i++ {
-					linkText := fmt.Sprintf("%s/+/%02d%02d%02d", RuleMap["new-repo"].BaseRepoURL, i, i, i)
+					linkText := fmt.Sprintf("%s/+/%02d%02d%02d", rules.RuleMap["new-repo"].BaseRepoURL, i, i, i)
 					So(string(b), ShouldContainSubstring, linkText)
 				}
 			})

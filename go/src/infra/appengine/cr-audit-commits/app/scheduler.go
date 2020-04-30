@@ -13,6 +13,8 @@ import (
 	"go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
+
+	"infra/appengine/cr-audit-commits/app/rules"
 )
 
 // Scheduler is the periodic task that
@@ -21,8 +23,8 @@ import (
 //   - Schedules an audit task for each active ref in the appropriate queue
 func Scheduler(rc *router.Context) {
 	ctx, resp := rc.Context, rc.Writer
-	for configName, config := range RuleMap {
-		var refConfigs []*RefConfig
+	for configName, config := range rules.RuleMap {
+		var refConfigs []*rules.RefConfig
 		var err error
 		if config.DynamicRefFunction != nil {
 			refConfigs, err = config.DynamicRefFunction(ctx, *config)
@@ -32,10 +34,10 @@ func Scheduler(rc *router.Context) {
 				continue
 			}
 		} else {
-			refConfigs = []*RefConfig{config}
+			refConfigs = []*rules.RefConfig{config}
 		}
 		for _, refConfig := range refConfigs {
-			state := &RefState{RepoURL: refConfig.RepoURL()}
+			state := &rules.RefState{RepoURL: refConfig.RepoURL()}
 			err = ds.Get(ctx, state)
 			switch err {
 			case ds.ErrNoSuchEntity:

@@ -11,6 +11,8 @@ import (
 
 	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
+
+	"infra/appengine/cr-audit-commits/app/rules"
 )
 
 const (
@@ -27,10 +29,10 @@ const (
 // workerParams are passed on to the workers for communication.
 type workerParams struct {
 	// To send tasks to the worker goroutines.
-	jobs chan *RelevantCommit
+	jobs chan *rules.RelevantCommit
 
 	// To receive results from the worker goroutines.
-	audited chan *RelevantCommit
+	audited chan *rules.RelevantCommit
 
 	// Every worker is guaranteed to signal this channel.
 	workerFinished chan bool
@@ -39,9 +41,9 @@ type workerParams struct {
 	finishedCleanly chan bool
 
 	// These read-only globals are meant to be read by the goroutines.
-	rules map[string]AccountRules
+	rules map[string]rules.AccountRules
 
-	clients *Clients
+	clients *rules.Clients
 }
 
 // performScheduledAudits queries the datastore for commits that need to be
@@ -52,17 +54,17 @@ type workerParams struct {
 // if the context expires while auditing, this function will return the partial
 // results along with the appropriate error for the caller to handle persisting
 // the partial results and thus avoid duplicating work.
-func performScheduledAudits(ctx context.Context, cfg *RefConfig, refState *RefState, cs *Clients) (map[string]*RelevantCommit, error) {
-	auditedCommits := make(map[string]*RelevantCommit)
+func performScheduledAudits(ctx context.Context, cfg *rules.RefConfig, refState *rules.RefState, cs *rules.Clients) (map[string]*rules.RelevantCommit, error) {
+	auditedCommits := make(map[string]*rules.RelevantCommit)
 	cfgk := ds.KeyForObj(ctx, refState)
 
-	ap := AuditParams{
+	ap := rules.AuditParams{
 		RepoCfg:  cfg,
 		RefState: refState,
 	}
 
-	pcq := ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", auditPending).Limit(MaxWorkers * CommitsPerWorker)
-	ncq := ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", auditScheduled).Limit(MaxWorkers * CommitsPerWorker)
+	pcq := ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", rules.AuditPending).Limit(MaxWorkers * CommitsPerWorker)
+	ncq := ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", rules.AuditScheduled).Limit(MaxWorkers * CommitsPerWorker)
 
 	wp := &workerParams{rules: cfg.Rules, clients: cs}
 
@@ -89,8 +91,8 @@ func performScheduledAudits(ctx context.Context, cfg *RefConfig, refState *RefSt
 	}
 
 	logging.Infof(ctx, "Starting %d workers", nWorkers)
-	wp.jobs = make(chan *RelevantCommit, nWorkers*CommitsPerWorker)
-	wp.audited = make(chan *RelevantCommit, nWorkers*CommitsPerWorker)
+	wp.jobs = make(chan *rules.RelevantCommit, nWorkers*CommitsPerWorker)
+	wp.audited = make(chan *rules.RelevantCommit, nWorkers*CommitsPerWorker)
 	wp.workerFinished = make(chan bool, nWorkers)
 	wp.finishedCleanly = make(chan bool, nWorkers)
 	for i := 0; i < nWorkers; i++ {
@@ -99,12 +101,12 @@ func performScheduledAudits(ctx context.Context, cfg *RefConfig, refState *RefSt
 	}
 
 	// Send pending audit jobs to workers.
-	ds.Run(ctx, pcq, func(rc *RelevantCommit) {
+	ds.Run(ctx, pcq, func(rc *rules.RelevantCommit) {
 		logging.Infof(ctx, "Sending %s to worker pool", rc.CommitHash)
 		wp.jobs <- rc
 	})
 	// Send scheduled audit jobs to workers.
-	ds.Run(ctx, ncq, func(rc *RelevantCommit) {
+	ds.Run(ctx, ncq, func(rc *rules.RelevantCommit) {
 		logging.Infof(ctx, "Sending %s to worker pool", rc.CommitHash)
 		wp.jobs <- rc
 	})
@@ -130,7 +132,7 @@ func performScheduledAudits(ctx context.Context, cfg *RefConfig, refState *RefSt
 }
 
 // This is the main goroutine for each worker.
-func audit(ctx context.Context, n int, ap AuditParams, wp *workerParams, repo string) {
+func audit(ctx context.Context, n int, ap rules.AuditParams, wp *workerParams, repo string) {
 	defer func() { wp.workerFinished <- true }()
 	for job := range wp.jobs {
 		select {
@@ -154,7 +156,7 @@ func audit(ctx context.Context, n int, ap AuditParams, wp *workerParams, repo st
 // transaction to persist it when all workers are done.
 //
 // It swallows any error, only logging it in order to move to the next commit.
-func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *workerParams) {
+func runRules(ctx context.Context, rc *rules.RelevantCommit, ap rules.AuditParams, wp *workerParams) {
 	for _, rs := range wp.rules {
 		hasExpired, err := runAccountRules(ctx, rs, rc, ap, wp)
 		if hasExpired {
@@ -165,9 +167,9 @@ func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *worke
 			logging.Errorf(ctx,
 				"Some rule had an error while auditing %s with message: %s", rc.CommitHash, err)
 			logging.Warningf(ctx, "Discarding incomplete results: %s", rc.Result)
-			rc.Result = []RuleResult{}
-			if rc.Retries > MaxRetriesPerCommit {
-				rc.Status = auditFailed
+			rc.Result = []rules.RuleResult{}
+			if rc.Retries > rules.MaxRetriesPerCommit {
+				rc.Status = rules.AuditFailed
 			}
 			// Send through the channel anyway to persist the retry
 			// counter, and possibly change of status.
@@ -176,12 +178,12 @@ func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *worke
 		}
 	}
 
-	if rc.Status == auditScheduled || rc.Status == auditPending { // No rules failed.
-		rc.Status = auditCompleted
+	if rc.Status == rules.AuditScheduled || rc.Status == rules.AuditPending { // No rules failed.
+		rc.Status = rules.AuditCompleted
 		// If any rules are pending to be decided, leave the commit as pending.
 		for _, rr := range rc.Result {
-			if rr.RuleResultStatus == rulePending {
-				rc.Status = auditPending
+			if rr.RuleResultStatus == rules.RulePending {
+				rc.Status = rules.AuditPending
 				break
 			}
 		}
@@ -193,7 +195,7 @@ func runRules(ctx context.Context, rc *RelevantCommit, ap AuditParams, wp *worke
 //
 // It returns a boolean indicating if the context expired, and an error if any
 // of the rules' result cannot be decided.
-func runAccountRules(ctx context.Context, rs AccountRules, rc *RelevantCommit, ap AuditParams, wp *workerParams) (bool, error) {
+func runAccountRules(ctx context.Context, rs rules.AccountRules, rc *rules.RelevantCommit, ap rules.AuditParams, wp *workerParams) (bool, error) {
 	if rs.MatchesRelevantCommit(rc) {
 		ap.TriggeringAccount = rc.AuthorAccount
 		if rs.Account != "*" {
@@ -206,8 +208,8 @@ func runAccountRules(ctx context.Context, rs AccountRules, rc *RelevantCommit, a
 				wp.audited <- rc
 				return true, nil
 			default:
-				previousResult := PreviousResult(ctx, rc, r.GetName())
-				if previousResult == nil || previousResult.RuleResultStatus == rulePending {
+				previousResult := rules.PreviousResult(ctx, rc, r.GetName())
+				if previousResult == nil || previousResult.RuleResultStatus == rules.RulePending {
 					pCurrentRuleResult, err := r.Run(ctx, &ap, rc, wp.clients)
 					if err != nil {
 						return false, err
@@ -216,8 +218,8 @@ func runAccountRules(ctx context.Context, rs AccountRules, rc *RelevantCommit, a
 					currentRuleResult := *pCurrentRuleResult
 					currentRuleResult.RuleName = r.GetName()
 					updated := rc.SetResult(currentRuleResult)
-					if updated && (currentRuleResult.RuleResultStatus == ruleFailed || currentRuleResult.RuleResultStatus == notificationRequired) {
-						rc.Status = auditCompletedWithActionRequired
+					if updated && (currentRuleResult.RuleResultStatus == rules.RuleFailed || currentRuleResult.RuleResultStatus == rules.NotificationRequired) {
+						rc.Status = rules.AuditCompletedWithActionRequired
 					}
 				}
 			}

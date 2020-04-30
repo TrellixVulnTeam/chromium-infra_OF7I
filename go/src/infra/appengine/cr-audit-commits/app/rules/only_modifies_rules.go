@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"fmt"
@@ -123,10 +123,10 @@ func OnlyModifiesPathsRuleImpl(ctx context.Context, ap *AuditParams, rc *Relevan
 
 	// Report results.
 	result := &RuleResult{
-		RuleResultStatus: ruleFailed,
+		RuleResultStatus: RuleFailed,
 	}
 	if ok {
-		result.RuleResultStatus = rulePassed
+		result.RuleResultStatus = RulePassed
 	} else {
 		allowedPathsStr := ""
 		if len(paths) > 0 {

@@ -15,6 +15,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
+
+	"infra/appengine/cr-audit-commits/app/rules"
 )
 
 // Status displays recent information regarding the audit app's activity on
@@ -25,10 +27,10 @@ func Status(rctx *router.Context) {
 	if refURL == "" {
 		refURL = "https://chromium.googlesource.com/chromium/src.git/+/master"
 	}
-	cfg, refState, err := loadConfig(ctx, refURL)
+	cfg, refState, err := rules.LoadConfig(ctx, refURL)
 	if err != nil {
 		args := templates.Args{
-			"RuleMap": RuleMap,
+			"RuleMap": rules.RuleMap,
 			"Error":   fmt.Sprintf("Unknown repository %s", refURL),
 		}
 		templates.MustRender(ctx, resp, "pages/status.html", args)
@@ -44,9 +46,9 @@ func Status(rctx *router.Context) {
 			nCommits = 10
 		}
 	}
-	commits := []*RelevantCommit{}
+	commits := []*rules.RelevantCommit{}
 	if refState.LastRelevantCommit != "" {
-		rc := &RelevantCommit{
+		rc := &rules.RelevantCommit{
 			CommitHash:  refState.LastRelevantCommit,
 			RefStateKey: ds.KeyForObj(ctx, refState),
 		}
@@ -64,7 +66,7 @@ func Status(rctx *router.Context) {
 		}
 	}
 
-	allRefStates := &[]*RefState{}
+	allRefStates := &[]*rules.RefState{}
 	err = ds.GetAll(ctx, ds.NewQuery("RefState").Order("-LastRelevantCommitTime").Limit(5), allRefStates)
 	if err != nil {
 		handleError(ctx, err, refURL, refState, resp)
@@ -83,20 +85,20 @@ func Status(rctx *router.Context) {
 	templates.MustRender(ctx, resp, "pages/status.html", args)
 }
 
-func handleError(ctx context.Context, err error, refURL string, refState *RefState, resp http.ResponseWriter) {
+func handleError(ctx context.Context, err error, refURL string, refState *rules.RefState, resp http.ResponseWriter) {
 	logging.WithError(err).Errorf(ctx, "Getting status of repo %s, for revision %s", refURL, refState.LastRelevantCommit)
 	http.Error(resp, "Getting status failed. See log for details.", 502)
 }
 
-func lastXRelevantCommits(ctx context.Context, rc *RelevantCommit, x int) ([]*RelevantCommit, error) {
+func lastXRelevantCommits(ctx context.Context, rc *rules.RelevantCommit, x int) ([]*rules.RelevantCommit, error) {
 	current := rc
-	result := []*RelevantCommit{rc}
+	result := []*rules.RelevantCommit{rc}
 	for counter := 1; counter < x; counter++ {
 		if current.PreviousRelevantCommit == "" {
 			break
 		}
 
-		current = &RelevantCommit{
+		current = &rules.RelevantCommit{
 			CommitHash:  current.PreviousRelevantCommit,
 			RefStateKey: rc.RefStateKey,
 		}

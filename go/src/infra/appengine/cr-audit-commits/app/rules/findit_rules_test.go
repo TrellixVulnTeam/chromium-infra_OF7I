@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package rules
 
 import (
 	"errors"
@@ -39,7 +39,7 @@ func TestFinditRules(t *testing.T) {
 		rc := &RelevantCommit{
 			RefStateKey:      datastore.KeyForObj(ctx, rs),
 			CommitHash:       "12ebe127",
-			Status:           auditScheduled,
+			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
 			CommitterAccount: "findit@sample.com",
 			AuthorAccount:    "findit@sample.com",
@@ -87,7 +87,7 @@ func TestFinditRules(t *testing.T) {
 		Convey("Culprit age Pass", func() {
 			// Inject gitiles response.
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -99,20 +99,20 @@ func TestFinditRules(t *testing.T) {
 					{
 						Id: "badc0de",
 						Committer: &git.Commit_User{
-							Time: mustGitilesTime("Fri Aug 25 07:00:00 2017"),
+							Time: MustGitilesTime("Fri Aug 25 07:00:00 2017"),
 						},
 					},
 				},
 			}, nil)
 			rr, _ := CulpritAge{}.Run(ctx, ap, rc, testClients)
 			// Check result code.
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
 		})
 		Convey("Culprit age Fail", func() {
 			// Inject gitiles response.
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -124,7 +124,7 @@ func TestFinditRules(t *testing.T) {
 					{
 						Id: "badc0de",
 						Committer: &git.Commit_User{
-							Time: mustGitilesTime("Fri Aug 18 07:00:00 2017"),
+							Time: MustGitilesTime("Fri Aug 18 07:00:00 2017"),
 						},
 					},
 				},
@@ -132,14 +132,14 @@ func TestFinditRules(t *testing.T) {
 			// Run rule.
 			rr, _ := CulpritAge{}.Run(ctx, ap, rc, testClients)
 			// Check result code.
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 
 		})
 		Convey("Only commits own change Pass", func() {
 			// Run rule.
 			rr, _ := OnlyCommitsOwnChange{}.Run(ctx, ap, rc, testClients)
 			// Check result code.
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
 		})
 		Convey("Only commits own change Pass (someone else commits)", func() {
@@ -147,7 +147,7 @@ func TestFinditRules(t *testing.T) {
 			// Run rule.
 			rr, _ := OnlyCommitsOwnChange{}.Run(ctx, ap, rc, testClients)
 			// Check result code.
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
 		})
 		Convey("Only commits own change Fail", func() {
@@ -155,13 +155,13 @@ func TestFinditRules(t *testing.T) {
 			// Run rule.
 			rr, _ := OnlyCommitsOwnChange{}.Run(ctx, ap, rc, testClients)
 			// Check result code.
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 
 		})
 		Convey("Culprit age Error", func() {
 			// Inject gitiles error.
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -180,42 +180,42 @@ func TestFinditRules(t *testing.T) {
 			k := datastore.KeyForObj(ctx, rs)
 			d := time.Duration(-1) * time.Hour
 			t := time.Now().UTC()
-			rcs := fakeRelevantCommits(MaxAutoRevertsPerDay, k, "7e57c100", auditCompleted, t, d, "findit@sample.com", "cq@other.com")
+			rcs := fakeRelevantCommits(MaxAutoRevertsPerDay, k, "7e57c100", AuditCompleted, t, d, "findit@sample.com", "cq@other.com")
 			err := datastore.Put(ctx, rcs)
 			So(err, ShouldBeNil)
 			rr, _ := AutoRevertsPerDay{}.Run(ctx, ap, rcs[0], testClients)
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Auto-reverts per day Failed", func() {
 			k := datastore.KeyForObj(ctx, rs)
 			d := time.Duration(-1) * time.Hour
 			t := time.Now().UTC()
-			rcs := fakeRelevantCommits(MaxAutoRevertsPerDay+1, k, "7e57c100", auditCompleted, t, d, "findit@sample.com", "cq@other.com")
+			rcs := fakeRelevantCommits(MaxAutoRevertsPerDay+1, k, "7e57c100", AuditCompleted, t, d, "findit@sample.com", "cq@other.com")
 			err := datastore.Put(ctx, rcs)
 			So(err, ShouldBeNil)
 			rr, _ := AutoRevertsPerDay{}.Run(ctx, ap, rcs[0], testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, fmt.Sprintf("%d commits were created", MaxAutoRevertsPerDay+1))
 		})
 		Convey("Auto-commits per day Pass", func() {
 			k := datastore.KeyForObj(ctx, rs)
 			d := time.Duration(-1) * time.Hour
 			t := time.Now().UTC()
-			rcs := fakeRelevantCommits(MaxAutoCommitsPerDay, k, "7e57c100", auditCompleted, t, d, "findit@sample.com", "findit@sample.com")
+			rcs := fakeRelevantCommits(MaxAutoCommitsPerDay, k, "7e57c100", AuditCompleted, t, d, "findit@sample.com", "findit@sample.com")
 			err := datastore.Put(ctx, rcs)
 			So(err, ShouldBeNil)
 			rr, _ := AutoCommitsPerDay{}.Run(ctx, ap, rcs[0], testClients)
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Auto-commits per day Failed", func() {
 			k := datastore.KeyForObj(ctx, rs)
 			d := time.Duration(-1) * time.Hour
 			t := time.Now().UTC()
-			rcs := fakeRelevantCommits(MaxAutoCommitsPerDay+1, k, "7e57c100", auditCompleted, t, d, "findit@sample.com", "findit@sample.com")
+			rcs := fakeRelevantCommits(MaxAutoCommitsPerDay+1, k, "7e57c100", AuditCompleted, t, d, "findit@sample.com", "findit@sample.com")
 			err := datastore.Put(ctx, rcs)
 			So(err, ShouldBeNil)
 			rr, _ := AutoCommitsPerDay{}.Run(ctx, ap, rcs[0], testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, fmt.Sprintf("%d commits were committed", MaxAutoCommitsPerDay+1))
 		})
 
@@ -271,7 +271,7 @@ func TestFinditRules(t *testing.T) {
 			}, nil)
 
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -283,19 +283,19 @@ func TestFinditRules(t *testing.T) {
 					{
 						Id: "c001c0de",
 						Committer: &git.Commit_User{
-							Time: mustGitilesTime("Fri Aug 25 07:00:00 2017"),
+							Time: MustGitilesTime("Fri Aug 25 07:00:00 2017"),
 						},
 					},
 					{
 						Id: "badc0de",
 						Committer: &git.Commit_User{
-							Time: mustGitilesTime("Fri Aug 25 06:00:00 2017"),
+							Time: MustGitilesTime("Fri Aug 25 06:00:00 2017"),
 						},
 					},
 				},
 			}, nil)
 			rr, _ := CulpritInBuild{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
 		})
 		Convey("Culprit not in build", func() {
@@ -350,7 +350,7 @@ func TestFinditRules(t *testing.T) {
 			}, nil)
 
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			testClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -362,21 +362,21 @@ func TestFinditRules(t *testing.T) {
 					{
 						Id: "c001c0de",
 						Committer: &git.Commit_User{
-							Time: mustGitilesTime("Fri Aug 25 07:00:00 2017"),
+							Time: MustGitilesTime("Fri Aug 25 07:00:00 2017"),
 						},
 					},
 					// Culprit absent.
 				},
 			}, nil)
 			rr, _ := CulpritInBuild{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, "not found in changes for build")
 
 		})
 		Convey("Culprit not in build - flake", func() {
 			rc.CommitMessage = rc.CommitMessage + "\nSample Flaky Test: dummy_test"
 			rr, _ := CulpritInBuild{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleSkipped)
+			So(rr.RuleResultStatus, ShouldEqual, RuleSkipped)
 
 		})
 		Convey("Failed build is compile failure Pass", func() {
@@ -392,7 +392,7 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 			rr, _ := FailedBuildIsAppropriateFailure{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Failed build is compile failure Pass - Nested", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
@@ -407,7 +407,7 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 			rr, _ := FailedBuildIsAppropriateFailure{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Failed build is compile failure Fail", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
@@ -422,7 +422,7 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 			rr, _ := FailedBuildIsAppropriateFailure{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, "does not have an expected failure")
 			So(rr.Message, ShouldContainSubstring, "compile")
 		})
@@ -439,7 +439,7 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 			rr, _ := FailedBuildIsAppropriateFailure{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, "does not have an expected failure")
 			So(rr.Message, ShouldContainSubstring, "compile")
 		})
@@ -457,7 +457,7 @@ func TestFinditRules(t *testing.T) {
 			}, nil)
 			rc.CommitMessage = rc.CommitMessage + "\nSample Failed Step: dummy_step\nSample Flaky Test: dummy_test"
 			rr, _ := FailedBuildIsAppropriateFailure{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Failed build is flaky failure Fail", func() {
 			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
@@ -473,31 +473,31 @@ func TestFinditRules(t *testing.T) {
 			}, nil)
 			rc.CommitMessage = rc.CommitMessage + "\nSample Failed Step: dummy_step\nSample Flaky Test: dummy_test"
 			rr, _ := FailedBuildIsAppropriateFailure{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, "does not have an expected failure")
 			So(rr.Message, ShouldContainSubstring, "dummy_step")
 		})
 		Convey("RevertOfCulprit Pass", func() {
 			rc.CommitMessage = "This reverts commit badc0de\n" + rc.CommitMessage
 			rr, _ := RevertOfCulprit{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, rulePassed)
+			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("RevertOfCulprit Fail - revert, but not pure", func() {
 			rc.CommitMessage = "This reverts commit badc0de\n" + rc.CommitMessage
 			rc.CommitHash = "badbadbad"
 			rr, _ := RevertOfCulprit{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, "*pure* revert")
 		})
 		Convey("RevertOfCulprit Fail - not revert", func() {
 			testClients.gerrit.(*mockGerritClient).q["commit:12ebe127"][0].RevertOf = 0
 			rr, _ := RevertOfCulprit{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, "does not appear to be a revert")
 		})
 		Convey("RevertOfCulprit Fail - culprit not in revert commit message", func() {
 			rr, _ := RevertOfCulprit{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, ruleFailed)
+			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			So(rr.Message, ShouldContainSubstring, "does not include the revision it reverts")
 		})
 	})

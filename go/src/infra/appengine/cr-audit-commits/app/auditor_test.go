@@ -10,19 +10,18 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
-	"time"
 
 	"context"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/ptypes"
-	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/impl/memory"
 	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/server/router"
+
+	"infra/appengine/cr-audit-commits/app/rules"
 )
 
 type errorRule struct{}
@@ -33,32 +32,19 @@ func (rule errorRule) GetName() string {
 }
 
 // Run return errors if the commit hasn't been audited.
-func (rule errorRule) Run(c context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
-	if rc.Status == auditScheduled {
+func (rule errorRule) Run(c context.Context, ap *rules.AuditParams, rc *rules.RelevantCommit, cs *rules.Clients) (*rules.RuleResult, error) {
+	if rc.Status == rules.AuditScheduled {
 		return nil, fmt.Errorf("error rule")
 	}
-	return &RuleResult{"Dummy rule", ruleFailed, "", ""}, fmt.Errorf("error rule")
+	return &rules.RuleResult{
+		RuleName:         "Dummy rule",
+		RuleResultStatus: rules.RuleFailed,
+		Message:          "",
+		MetaData:         "",
+	}, fmt.Errorf("error rule")
 }
 
-func mustGitilesTime(v string) *google_protobuf.Timestamp {
-	var t time.Time
-	t, err := time.Parse(time.ANSIC, v)
-	if err != nil {
-		t, err = time.Parse(time.ANSIC+" -0700", v)
-	}
-	if err != nil {
-		panic(fmt.Errorf("could not parse time %q: %v", v, err))
-
-	}
-	r, err := ptypes.TimestampProto(t)
-	if err != nil {
-		panic(fmt.Errorf("could not convert time %s to google_protobuf.Timestamp: %v", t, err))
-
-	}
-	return r
-}
-
-func dummyNotifier(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+func dummyNotifier(ctx context.Context, cfg *rules.RefConfig, rc *rules.RelevantCommit, cs *rules.Clients, state string) (string, error) {
 	return "NotificationSent", nil
 }
 
@@ -79,7 +65,7 @@ func TestAuditor(t *testing.T) {
 		r.GET(auditorPath, router.NewMiddlewareChain(withTestingContext), Auditor)
 		srv := httptest.NewServer(r)
 		client := &http.Client{}
-		auditorTestClients = &Clients{}
+		auditorTestClients = &rules.Clients{}
 		Convey("Unknown Ref", func() {
 			resp, err := client.Get(srv.URL + auditorPath + "?refUrl=unknown")
 			So(err, ShouldBeNil)
@@ -87,29 +73,34 @@ func TestAuditor(t *testing.T) {
 
 		})
 		Convey("Dummy Repo", func() {
-			RuleMap["dummy-repo"] = &RefConfig{
+			rules.RuleMap["dummy-repo"] = &rules.RefConfig{
 				BaseRepoURL:    "https://dummy.googlesource.com/dummy.git",
 				GerritURL:      "https://dummy-review.googlesource.com",
 				BranchName:     "refs/heads/master",
 				StartingCommit: "000000",
-				Rules: map[string]AccountRules{"rules": {
+				Rules: map[string]rules.AccountRules{"rules": {
 					Account: "dummy@test.com",
-					Rules: []Rule{
-						DummyRule{
-							name:   "Dummy rule",
-							result: &RuleResult{"Dummy rule", rulePassed, "", ""},
+					Rules: []rules.Rule{
+						rules.DummyRule{
+							Name: "Dummy rule",
+							Result: &rules.RuleResult{
+								RuleName:         "Dummy rule",
+								RuleResultStatus: rules.RulePassed,
+								Message:          "",
+								MetaData:         "",
+							},
 						},
 					},
-					notificationFunction: dummyNotifier,
+					NotificationFunction: dummyNotifier,
 				}},
 			}
 			escapedRepoURL := url.QueryEscape("https://dummy.googlesource.com/dummy.git/+/refs/heads/master")
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
-			auditorTestClients.gitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
+			auditorTestClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
 			Convey("Test scanning", func() {
-				ds.Put(ctx, &RefState{
+				ds.Put(ctx, &rules.RefState{
 					RepoURL:            "https://dummy.googlesource.com/dummy.git/+/refs/heads/master",
 					ConfigName:         "dummy-repo",
 					LastKnownCommit:    "123456",
@@ -128,7 +119,7 @@ func TestAuditor(t *testing.T) {
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 200)
-					rs := &RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					rs := &rules.RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
 					err = ds.Get(ctx, rs)
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "123456")
@@ -146,7 +137,7 @@ func TestAuditor(t *testing.T) {
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 200)
-					rs := &RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					rs := &rules.RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
 					err = ds.Get(ctx, rs)
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "abcdef000123123")
@@ -165,11 +156,11 @@ func TestAuditor(t *testing.T) {
 								Id: "c001c0de",
 								Author: &git.Commit_User{
 									Email: "dummy@test.com",
-									Time:  mustGitilesTime("Sun Sep 03 00:56:34 2017"),
+									Time:  rules.MustGitilesTime("Sun Sep 03 00:56:34 2017"),
 								},
 								Committer: &git.Commit_User{
 									Email: "dummy@test.com",
-									Time:  mustGitilesTime("Sun Sep 03 00:56:34 2017"),
+									Time:  rules.MustGitilesTime("Sun Sep 03 00:56:34 2017"),
 								},
 							},
 						},
@@ -177,12 +168,12 @@ func TestAuditor(t *testing.T) {
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 200)
-					rs := &RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					rs := &rules.RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
 					err = ds.Get(ctx, rs)
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "deadbeef")
 					So(rs.LastRelevantCommit, ShouldEqual, "c001c0de")
-					rc := &RelevantCommit{
+					rc := &rules.RelevantCommit{
 						RefStateKey: ds.KeyForObj(ctx, rs),
 						CommitHash:  "c001c0de",
 					}
@@ -192,7 +183,7 @@ func TestAuditor(t *testing.T) {
 				})
 			})
 			Convey("Test auditing", func() {
-				refState := &RefState{
+				refState := &rules.RefState{
 					ConfigName:         "dummy-repo",
 					RepoURL:            "https://dummy.googlesource.com/dummy.git/+/refs/heads/master",
 					LastKnownCommit:    "222222",
@@ -218,10 +209,10 @@ func TestAuditor(t *testing.T) {
 				})
 				Convey("With commits", func() {
 					for i := 0; i < 10; i++ {
-						rc := &RelevantCommit{
+						rc := &rules.RelevantCommit{
 							RefStateKey:   rsk,
 							CommitHash:    fmt.Sprintf("%02d%02d%02d", i, i, i),
-							Status:        auditScheduled,
+							Status:        rules.AuditScheduled,
 							AuthorAccount: "dummy@test.com",
 						}
 						err := ds.Put(ctx, rc)
@@ -232,44 +223,44 @@ func TestAuditor(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(resp.StatusCode, ShouldEqual, 200)
 						for i := 0; i < 10; i++ {
-							rc := &RelevantCommit{
+							rc := &rules.RelevantCommit{
 								RefStateKey: rsk,
 								CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
 							}
 							err := ds.Get(ctx, rc)
 							So(err, ShouldBeNil)
-							So(rc.Status, ShouldEqual, auditCompleted)
+							So(rc.Status, ShouldEqual, rules.AuditCompleted)
 						}
 					})
 					Convey("Some fail", func() {
-						dummyRuleTmp := RuleMap["dummy-repo"].Rules["rules"].Rules[0].(DummyRule)
-						dummyRuleTmp.result.RuleResultStatus = ruleFailed
+						dummyRuleTmp := rules.RuleMap["dummy-repo"].Rules["rules"].Rules[0].(rules.DummyRule)
+						dummyRuleTmp.Result.RuleResultStatus = rules.RuleFailed
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
 						So(resp.StatusCode, ShouldEqual, 200)
 						for i := 0; i < 10; i++ {
-							rc := &RelevantCommit{
+							rc := &rules.RelevantCommit{
 								RefStateKey: rsk,
 								CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
 							}
 							err := ds.Get(ctx, rc)
 							So(err, ShouldBeNil)
-							So(rc.Status, ShouldEqual, auditCompletedWithActionRequired)
+							So(rc.Status, ShouldEqual, rules.AuditCompletedWithActionRequired)
 						}
 					})
 					Convey("Some error", func() {
-						RuleMap["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
+						rules.RuleMap["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
 						So(resp.StatusCode, ShouldEqual, 200)
 						for i := 0; i < 10; i++ {
-							rc := &RelevantCommit{
+							rc := &rules.RelevantCommit{
 								RefStateKey: rsk,
 								CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
 							}
 							err := ds.Get(ctx, rc)
 							So(err, ShouldBeNil)
-							So(rc.Status, ShouldEqual, auditScheduled)
+							So(rc.Status, ShouldEqual, rules.AuditScheduled)
 							So(rc.Retries, ShouldEqual, 1)
 						}
 					})
