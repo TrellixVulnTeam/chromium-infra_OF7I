@@ -4,7 +4,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 
-import {userV3ToRef} from 'shared/converters.js';
+import {userV3ToRef} from 'shared/convertersV0.js';
 
 import {store, connectStore} from 'reducers/base.js';
 import * as hotlists from 'reducers/hotlists.js';

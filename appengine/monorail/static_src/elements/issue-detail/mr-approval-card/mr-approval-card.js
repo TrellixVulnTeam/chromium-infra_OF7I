@@ -20,7 +20,7 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {APPROVER_RESTRICTED_STATUSES, STATUS_ENUM_TO_TEXT, TEXT_TO_STATUS_ENUM,
   STATUS_CLASS_MAP, CLASS_ICON_MAP, APPROVAL_STATUSES,
 } from 'shared/approval-consts.js';
-import {commentListToDescriptionList} from 'shared/converters.js';
+import {commentListToDescriptionList} from 'shared/convertersV0.js';
 import {cueNames, cueNameToSpec} from 'elements/help/mr-cue/cue-helpers.js';
 
 

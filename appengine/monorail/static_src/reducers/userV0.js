@@ -7,7 +7,7 @@ import {createSelector} from 'reselect';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import {objectToMap} from 'shared/helpers.js';
-import {userRefToId, userToUserRef} from 'shared/converters.js';
+import {userRefToId, userToUserRef} from 'shared/convertersV0.js';
 import loadGapi, {fetchGapiEmail} from 'shared/gapi-loader.js';
 
 // Actions

@@ -22,7 +22,7 @@ import {displayNameToUserRef, labelStringToRef, componentStringToRef,
   componentRefsToStrings, issueStringToRef, issueStringToBlockingRef,
   issueRefToString, issueRefsToStrings, filteredUserDisplayNames,
   valueToFieldValue,
-} from 'shared/converters.js';
+} from 'shared/convertersV0.js';
 import {isEmptyObject, equalsIgnoreCase} from 'shared/helpers.js';
 import {NON_EDITING_KEY_EVENTS} from 'shared/dom-helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';

@@ -6,7 +6,7 @@ import {LitElement, html} from 'lit-element';
 
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import {fieldTypes, EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
-import {displayNameToUserRef} from 'shared/converters.js';
+import {displayNameToUserRef} from 'shared/convertersV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 /**

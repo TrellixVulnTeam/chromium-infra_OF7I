@@ -7,7 +7,7 @@ import sinon from 'sinon';
 
 import {MrSearchBar} from './mr-search-bar.js';
 import {prpcClient} from 'prpc-client-instance.js';
-import {issueRefToUrl} from 'shared/converters.js';
+import {issueRefToUrl} from 'shared/convertersV0.js';
 import {clientLoggerFake} from 'shared/test-fakes.js';
 
 

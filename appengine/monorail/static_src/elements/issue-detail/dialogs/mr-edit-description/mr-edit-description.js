@@ -12,7 +12,7 @@ import * as issueV0 from 'reducers/issueV0.js';
 import 'elements/chops/chops-checkbox/chops-checkbox.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import {commentListToDescriptionList} from 'shared/converters.js';
+import {commentListToDescriptionList} from 'shared/convertersV0.js';
 
 
 /**

@@ -11,7 +11,7 @@ import {store, connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
-import {issueRefToString} from 'shared/converters.js';
+import {issueRefToString} from 'shared/convertersV0.js';
 
 
 const SHORTCUT_DOC_GROUPS = [

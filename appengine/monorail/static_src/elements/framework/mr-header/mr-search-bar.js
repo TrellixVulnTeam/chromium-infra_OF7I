@@ -9,7 +9,7 @@ import qs from 'qs';
 import '../mr-dropdown/mr-dropdown.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import ClientLogger from 'monitoring/client-logger';
-import {issueRefToUrl} from 'shared/converters.js';
+import {issueRefToUrl} from 'shared/convertersV0.js';
 
 // Search field input regex testing for all digits
 // indicating that the user wants to jump to the specified issue.

@@ -7,7 +7,7 @@ import {defaultMemoize} from 'reselect';
 
 import {relativeTime}
   from 'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
-import {issueNameToRef, issueToName, userV3ToRef} from 'shared/converters.js';
+import {issueNameToRef, issueToName, userV3ToRef} from 'shared/convertersV0.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 import {store, connectStore} from 'reducers/base.js';

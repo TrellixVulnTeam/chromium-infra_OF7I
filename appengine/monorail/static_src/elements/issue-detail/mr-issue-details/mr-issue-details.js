@@ -10,7 +10,7 @@ import * as ui from 'reducers/ui.js';
 import 'elements/framework/mr-comment-content/mr-description.js';
 import '../mr-comment-list/mr-comment-list.js';
 import '../metadata/mr-edit-metadata/mr-edit-issue.js';
-import {commentListToDescriptionList} from 'shared/converters.js';
+import {commentListToDescriptionList} from 'shared/convertersV0.js';
 
 /**
  * `<mr-issue-details>`

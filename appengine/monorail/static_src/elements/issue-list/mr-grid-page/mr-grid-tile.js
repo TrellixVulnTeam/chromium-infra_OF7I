@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
-import {issueRefToUrl, issueToIssueRef} from 'shared/converters.js';
+import {issueRefToUrl, issueToIssueRef} from 'shared/convertersV0.js';
 import '../../framework/mr-star-button/mr-star-button.js';
 
 export class MrGridTile extends LitElement {

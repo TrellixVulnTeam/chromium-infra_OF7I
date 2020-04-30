@@ -21,8 +21,9 @@ import {createSelector} from 'reselect';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
 
 import {prpcClient} from 'prpc-client-instance.js';
-import {userIdOrDisplayNameToUserRef, issueNameToRef, pathsToFieldMask}
-  from 'shared/converters.js';
+import {userIdOrDisplayNameToUserRef, issueNameToRef}
+  from 'shared/convertersV0.js';
+import {pathsToFieldMask} from 'shared/converters.js';
 
 import * as issueV0 from './issueV0.js';
 import * as permissions from './permissions.js';

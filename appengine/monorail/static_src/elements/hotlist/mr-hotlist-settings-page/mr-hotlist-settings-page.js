@@ -5,7 +5,6 @@
 import {LitElement, html, css} from 'lit-element';
 
 import page from 'page';
-import {userNameToId} from 'shared/converters.js';
 import 'shared/typedef.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as hotlists from 'reducers/hotlists.js';

@@ -14,7 +14,7 @@ import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import {issueStringToRef} from 'shared/converters.js';
+import {issueStringToRef} from 'shared/convertersV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 

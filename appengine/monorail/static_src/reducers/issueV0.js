@@ -17,7 +17,7 @@ import {fieldTypes, extractTypeForIssue,
   fieldValuesToMap} from 'shared/issue-fields.js';
 import {removePrefix, objectToMap} from 'shared/helpers.js';
 import {issueRefToString, issueToIssueRefString,
-  issueStringToRef, issueNameToRefString} from 'shared/converters.js';
+  issueStringToRef, issueNameToRefString} from 'shared/convertersV0.js';
 import {fromShortlink} from 'shared/federated.js';
 import {createReducer, createRequestReducer,
   createKeyedRequestReducer} from './redux-helpers.js';

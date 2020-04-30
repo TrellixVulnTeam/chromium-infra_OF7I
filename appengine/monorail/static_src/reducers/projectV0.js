@@ -10,7 +10,7 @@ import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS, defaultIssueFieldMap,
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
   labelNameToLabelPrefixes, labelNameToLabelValue,
-  restrictionLabelsForPermissions} from 'shared/converters.js';
+  restrictionLabelsForPermissions} from 'shared/convertersV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
 

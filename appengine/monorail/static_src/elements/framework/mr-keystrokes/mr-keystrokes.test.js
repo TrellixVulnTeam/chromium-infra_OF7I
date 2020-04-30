@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import {MrKeystrokes} from './mr-keystrokes.js';
 import Mousetrap from 'mousetrap';
 
-import {issueRefToString} from 'shared/converters.js';
+import {issueRefToString} from 'shared/convertersV0.js';
 
 /** @type {MrKeystrokes} */
 let element;

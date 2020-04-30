@@ -6,7 +6,7 @@ import {LitElement, html, css} from 'lit-element';
 import {connectStore, store} from 'reducers/base.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as issueV0 from 'reducers/issueV0.js';
-import {issueRefToString} from 'shared/converters';
+import {issueRefToString} from 'shared/convertersV0.js';
 
 /**
  * `<mr-star-button>`

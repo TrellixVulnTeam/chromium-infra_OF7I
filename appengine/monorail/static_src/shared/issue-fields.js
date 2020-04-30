@@ -6,7 +6,7 @@ import {relativeTime} from
   'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
 import {labelRefsToStrings, issueRefsToStrings, componentRefsToStrings,
   userRefsToDisplayNames, statusRefsToStrings, labelNameToLabelPrefixes,
-} from './converters.js';
+} from './convertersV0.js';
 import {removePrefix} from './helpers.js';
 import {STATUS_ENUM_TO_TEXT} from 'shared/approval-consts.js';
 import {fieldValueMapKey} from 'shared/metadata-helpers.js';

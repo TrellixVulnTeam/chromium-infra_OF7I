@@ -4,7 +4,7 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {ifDefined} from 'lit-html/directives/if-defined';
-import {issueRefToString, issueRefToUrl} from 'shared/converters.js';
+import {issueRefToString, issueRefToUrl} from 'shared/convertersV0.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import '../../mr-dropdown/mr-dropdown.js';
 import '../../../help/mr-cue/mr-fed-ref-cue.js';

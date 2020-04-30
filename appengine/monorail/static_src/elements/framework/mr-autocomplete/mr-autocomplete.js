@@ -8,7 +8,7 @@ import {connectStore} from 'reducers/base.js';
 import * as userV0 from 'reducers/userV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import {arrayDifference} from 'shared/helpers.js';
-import {userRefsToDisplayNames} from 'shared/converters.js';
+import {userRefsToDisplayNames} from 'shared/convertersV0.js';
 
 
 /**

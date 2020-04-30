@@ -8,7 +8,7 @@ import {css, html, LitElement} from 'lit-element';
 import qs from 'qs';
 import {connectStore} from 'reducers/base.js';
 import * as projectV0 from 'reducers/projectV0.js';
-import {issueRefToUrl} from 'shared/converters.js';
+import {issueRefToUrl} from 'shared/convertersV0.js';
 import {setHasAny} from 'shared/helpers.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';

@@ -20,7 +20,7 @@ import {
   issueToIssueRef,
   issueToIssueRefString,
   labelRefsToOneWordLabels,
-} from 'shared/converters.js';
+} from 'shared/convertersV0.js';
 import {isTextInput, findDeepEventTarget} from 'shared/dom-helpers.js';
 import {
   urlWithNewParams,
