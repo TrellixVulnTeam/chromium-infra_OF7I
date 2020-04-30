@@ -14,6 +14,7 @@ import {store, connectStore} from 'reducers/base.js';
 import * as hotlists from 'reducers/hotlists.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
+import * as ui from 'reducers/ui.js';
 
 import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
 import 'elements/framework/dialogs/mr-change-columns/mr-change-columns.js';
@@ -110,6 +111,7 @@ export class _MrHotlistIssuesPage extends LitElement {
       <mr-update-issue-hotlists
         .issueRefs=${this._selected.map(issueNameToRef)}
         .issueHotlists=${[hotlistV0]}
+        @saveSuccess=${this._handleHotlistSaveSuccess}
       ></mr-update-issue-hotlists>
     `;
   }
@@ -226,6 +228,9 @@ export class _MrHotlistIssuesPage extends LitElement {
     this.shadowRoot.querySelector('mr-update-issue-hotlists').open();
   }
 
+  /** Handles successfully saved Hotlist changes. */
+  async _handleHotlistSaveSuccess() {}
+
   /** Removes items from the hotlist, dispatching an action to Redux. */
   async _removeItems() {}
 
@@ -261,6 +266,14 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
       const headerTitle = `Hotlist ${this._hotlist.displayName}`;
       store.dispatch(sitewide.setHeaderTitle(headerTitle));
     }
+  }
+
+  /** @override */
+  async _handleHotlistSaveSuccess() {
+    const action = hotlists.fetchItems(this._hotlist.name);
+    await store.dispatch(action);
+    store.dispatch(ui.showSnackbar(ui.snackbarNames.UPDATE_HOTLISTS_SUCCESS,
+        'Hotlists updated.'));
   }
 
   /** @override */

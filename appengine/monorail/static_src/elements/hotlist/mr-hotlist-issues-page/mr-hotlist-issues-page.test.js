@@ -170,6 +170,21 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
       dialog.open.restore();
     }
   });
+
+  it('handles successful save from its update dialog', async () => {
+    sinon.stub(element, '_handleHotlistSaveSuccess');
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    try {
+      const dialog =
+          element.shadowRoot.querySelector('mr-update-issue-hotlists');
+      dialog.dispatchEvent(new Event('saveSuccess'));
+      sinon.assert.calledOnce(element._handleHotlistSaveSuccess);
+    } finally {
+      element._handleHotlistSaveSuccess.restore();
+    }
+  });
 });
 
 describe('mr-hotlist-issues-page (connected)', () => {
@@ -230,6 +245,23 @@ describe('mr-hotlist-issues-page (connected)', () => {
       const args = {parent: example.NAME, issues: [exampleIssues.NAME]};
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v1.Hotlists', 'RemoveHotlistItems', args);
+    } finally {
+      prpcClient.call.restore();
+    }
+  });
+
+  it('fetches a hotlist when handling a successful save', () => {
+    element._hotlist = example.HOTLIST;
+    sinon.stub(prpcClient, 'call');
+
+    try {
+      element._handleHotlistSaveSuccess();
+      // We can't stub hotlists.fetchItems(), so stub prpcClient.call()
+      // instead.
+      // https://github.com/sinonjs/sinon/issues/562
+      const args = {parent: example.NAME, orderBy: 'rank'};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Hotlists', 'ListHotlistItems', args);
     } finally {
       prpcClient.call.restore();
     }
