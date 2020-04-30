@@ -20,7 +20,7 @@ class QuietRequest(messages.Message):
   whispered = messages.StringField(1)
 
 
-class LoudReponse(messages.Message):
+class LoudResponse(messages.Message):
   yelled = messages.StringField(1)
 
 
@@ -79,7 +79,7 @@ class GoodRequest(messages.Message):
   data = messages.IntegerField(1)
 
 
-class GreatReponse(messages.Message):
+class GreatResponse(messages.Message):
   data = messages.IntegerField(1)
 
 

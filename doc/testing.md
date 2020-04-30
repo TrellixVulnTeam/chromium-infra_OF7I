@@ -88,7 +88,7 @@ class GoodRequest(messages.Message):
   data = messages.IntegerField(1)
 
 
-class GreatReponse(messages.Message):
+class GreatResponse(messages.Message):
   data = messages.IntegerField(1)
 
 

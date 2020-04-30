@@ -7,7 +7,7 @@ Below is a summary of what the alerts monitor and the possible causes for a serv
 | **Service name**  | **Slow/experiencing disruptions** | **Service outage**
 |:-----------------:|:---------------------------------:|:-------------------:
 | Code Search | • search index pipeline features high<br>• Xrefs pipeline failures<br>• GoB quota issue<br>• Search index is getting old<br>• Xrefs are getting old | • the site is inaccessible |
-| Commit-Queue | • CQ has generated too many errors<br>• chromium buidlers are failing<br>• commit failure rate is high<br>• taking too long to process commits or respond to a commit requesr  | • commit failure rate is so high the team considers the service unusable |
+| Commit-Queue | • CQ has generated too many errors<br>• chromium buidlers are failing<br>• commit failure rate is high<br>• taking too long to process commits or respond to a commit request  | • commit failure rate is so high the team considers the service unusable |
 | Gerrit | • user request failure rate is high |  |
 | Goma | • high qps, active jobs, access rejections, client retries<br>• high requests on unknown compilers/subprograms | • serving too many 500s<br>• necessary packages unavailable |
 | Monorail | • serving a lot of 400s or 500s<br>• latency is high | • the site is inaccessible |
