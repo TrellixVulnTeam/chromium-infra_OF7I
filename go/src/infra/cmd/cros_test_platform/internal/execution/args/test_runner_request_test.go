@@ -303,6 +303,50 @@ func TestNoDeadline(t *testing.T) {
 	})
 }
 
+func TestEnableSynchronousOffload(t *testing.T) {
+	Convey("Given a request that", t, func() {
+		ctx := context.Background()
+
+		cases := []struct {
+			description string
+			// Use a setter instead of a bool to test that a nil Migration does not
+			// cause a crash.
+			setter   func(p *test_platform.Request_Params)
+			expected bool
+		}{
+			{
+				description: "enables synnchronous offload",
+				setter:      setEnableSynchronousOffload,
+				expected:    true,
+			},
+			{
+				description: "explicitly disables synchronous offload",
+				setter:      unsetEnableSynchronousOffload,
+				expected:    false,
+			},
+			{
+				description: "implicitly disables synchronous offload",
+				setter:      unsetMigrationsConfig,
+				expected:    false,
+			},
+		}
+
+		for _, c := range cases {
+			Convey(c.description, func() {
+				var params test_platform.Request_Params
+				c.setter(&params)
+				Convey("the generated test runner request matches", func() {
+					g := NewGenerator(basicInvocation(), &params, nil, "", noDeadline)
+					got, err := g.testRunnerRequest(ctx)
+					So(err, ShouldBeNil)
+					So(got, ShouldNotBeNil)
+					So(got.GetTest().GetOffload().GetSynchronousGsEnable(), ShouldEqual, c.expected)
+				})
+			})
+		}
+	})
+}
+
 func basicInvocation() *steps.EnumerationResponse_AutotestInvocation {
 	return &steps.EnumerationResponse_AutotestInvocation{
 		Test: &build_api.AutotestTest{
@@ -375,4 +419,22 @@ func setRequestKeyval(p *test_platform.Request_Params, key string, value string)
 		p.Decorations.AutotestKeyvals = make(map[string]string)
 	}
 	p.Decorations.AutotestKeyvals[key] = value
+}
+
+func setEnableSynchronousOffload(p *test_platform.Request_Params) {
+	if p.Migrations == nil {
+		p.Migrations = &test_platform.Request_Params_Migrations{}
+	}
+	p.Migrations.EnableSynchronousOffload = true
+}
+
+func unsetEnableSynchronousOffload(p *test_platform.Request_Params) {
+	if p.Migrations == nil {
+		p.Migrations = &test_platform.Request_Params_Migrations{}
+	}
+	p.Migrations.EnableSynchronousOffload = false
+}
+
+func unsetMigrationsConfig(p *test_platform.Request_Params) {
+	p.Migrations = nil
 }

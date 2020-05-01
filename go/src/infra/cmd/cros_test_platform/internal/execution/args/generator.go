@@ -474,6 +474,16 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 					TestArgs:     g.invocation.TestArgs,
 				},
 			},
+			Offload: g.offloadOptions(),
 		},
 	}, nil
+}
+
+func (g *Generator) offloadOptions() *skylab_test_runner.Request_Test_OffloadOptions {
+	if g.params.GetMigrations().GetEnableSynchronousOffload() {
+		return &skylab_test_runner.Request_Test_OffloadOptions{
+			SynchronousGsEnable: true,
+		}
+	}
+	return nil
 }
