@@ -20,6 +20,7 @@
  * containing the intersection of the fields of HotlistItem and Issue.
  *
  * @typedef {Issue & HotlistItem} HotlistIssue
+ * @property {User=} adder
  */
 
 /**
@@ -485,8 +486,8 @@
  * @typedef {Object} Hotlist
  * @property {string} name
  * @property {string=} displayName
- * @property {User=} owner
- * @property {Array<User>=} editors
+ * @property {string=} owner
+ * @property {Array<string>=} editors
  * @property {string=} summary
  * @property {string=} description
  * @property {Array<IssuesListColumn>=} defaultColumns
@@ -511,7 +512,7 @@
  * @property {string=} name
  * @property {string=} issue
  * @property {number=} rank
- * @property {User=} adder
+ * @property {string=} adder
  * @property {string=} createTime
  * @property {string=} note
  */

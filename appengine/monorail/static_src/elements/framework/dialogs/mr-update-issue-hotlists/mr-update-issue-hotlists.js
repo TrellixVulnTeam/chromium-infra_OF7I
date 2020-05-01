@@ -270,8 +270,8 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   /**
    * Returns whether a given hotlist matches any of the given issue's hotlists.
-   * @param {Hotlist} hotlist Hotlist to look for.
-   * @param {Array<Hotlist>} issueHotlists Issue's hotlists to compare to.
+   * @param {HotlistV0} hotlist Hotlist to look for.
+   * @param {Array<HotlistV0>} issueHotlists Issue's hotlists to compare to.
    * @return {boolean}
    */
   _issueInHotlist(hotlist, issueHotlists) {
@@ -310,8 +310,8 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   /**
    * The checkbox title for the issue, shown on hover and for a11y.
-   * @param {Hotlist} hotlist Hotlist to look for.
-   * @param {Array<Hotlist>} issueHotlists Issue's hotlists to compare to.
+   * @param {HotlistV0} hotlist Hotlist to look for.
+   * @param {Array<HotlistV0>} issueHotlists Issue's hotlists to compare to.
    * @return {string}
    */
   _checkboxTitle(hotlist, issueHotlists) {

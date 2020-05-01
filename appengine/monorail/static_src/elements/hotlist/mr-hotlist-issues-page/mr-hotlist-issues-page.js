@@ -7,7 +7,8 @@ import {defaultMemoize} from 'reselect';
 
 import {relativeTime}
   from 'elements/chops/chops-timestamp/chops-timestamp-helpers.js';
-import {issueNameToRef, issueToName, userV3ToRef} from 'shared/convertersV0.js';
+import {issueNameToRef, issueToName, userNameToId}
+  from 'shared/convertersV0.js';
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 import {store, connectStore} from 'reducers/base.js';
@@ -75,10 +76,10 @@ export class _MrHotlistIssuesPage extends LitElement {
         (issue) => issue.projectName === items[0].projectName);
     const projectName = allProjectNamesEqual ? items[0].projectName : null;
 
-    /** @type {Hotlist} */
+    /** @type {HotlistV0} */
     // Used to populate <mr-update-issue-hotlists>' issueHotlists property.
     const hotlistV0 = {
-      ownerRef: userV3ToRef(this._hotlist.owner),
+      ownerRef: {userId: userNameToId(this._hotlist.owner)},
       name: this._hotlist.displayName,
     };
 

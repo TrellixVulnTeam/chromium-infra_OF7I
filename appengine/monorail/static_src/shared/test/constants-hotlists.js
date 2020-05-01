@@ -13,8 +13,8 @@ export const NAME = 'hotlists/1234';
 export const HOTLIST = Object.freeze({
   name: NAME,
   displayName: 'Hotlist-Name',
-  owner: users.USER,
-  editors: [users.USER_2],
+  owner: users.NAME,
+  editors: [users.NAME_2],
   summary: 'Summary',
   description: 'Description',
   defaultColumns: [{column: 'Rank'}, {column: 'ID'}, {column: 'Summary'}],
@@ -28,25 +28,29 @@ export const HOTLIST_ITEM = Object.freeze({
   name: HOTLIST_ITEM_NAME,
   issue: issueV0.NAME,
   // rank: The API excludes the rank field if it's 0.
-  adder: users.USER,
+  adder: users.NAME,
   createTime: '2020-01-01T12:00:00Z',
 });
 
 /** @type {HotlistIssue} */
-export const HOTLIST_ISSUE = Object.freeze({...issueV0.ISSUE, ...HOTLIST_ITEM});
+export const HOTLIST_ISSUE = Object.freeze({
+  ...issueV0.ISSUE, ...HOTLIST_ITEM, adder: users.USER,
+});
 
 /** @type {HotlistItem} */
 export const HOTLIST_ITEM_OTHER_PROJECT = Object.freeze({
   name: NAME + '/items/78',
   issue: issueV0.NAME_OTHER_PROJECT,
   rank: 1,
-  adder: users.USER,
+  adder: users.NAME,
   createTime: '2020-01-01T12:00:00Z',
 });
 
 /** @type {HotlistIssue} */
 export const HOTLIST_ISSUE_OTHER_PROJECT = Object.freeze({
-  ...issueV0.ISSUE_OTHER_PROJECT, ...HOTLIST_ITEM_OTHER_PROJECT,
+  ...issueV0.ISSUE_OTHER_PROJECT,
+  ...HOTLIST_ITEM_OTHER_PROJECT,
+  adder: users.USER,
 });
 
 /** @type {HotlistItem} */
@@ -54,13 +58,13 @@ export const HOTLIST_ITEM_CLOSED = Object.freeze({
   name: NAME + '/items/90',
   issue: issueV0.NAME_CLOSED,
   rank: 2,
-  adder: users.USER,
+  adder: users.NAME,
   createTime: '2020-01-01T12:00:00Z',
 });
 
 /** @type {HotlistIssue} */
 export const HOTLIST_ISSUE_CLOSED = Object.freeze({
-  ...issueV0.ISSUE_CLOSED, ...HOTLIST_ITEM_CLOSED,
+  ...issueV0.ISSUE_CLOSED, ...HOTLIST_ITEM_CLOSED, adder: users.USER,
 });
 
 /** @type {Object<string, Hotlist>} */

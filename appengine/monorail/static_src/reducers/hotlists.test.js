@@ -107,19 +107,23 @@ describe('hotlist selectors', () => {
 
   describe('viewedHotlistEditors', () => {
     it('normal case', () => {
-      const editors = [exampleUsers.USER, exampleUsers.USER_2];
       const state = {
         hotlists: {
           name: example.NAME,
-          byName: {[example.NAME]: {...example.HOTLIST, editors}},
+          byName: {[example.NAME]: {
+            ...example.HOTLIST,
+            editors: [exampleUsers.NAME, exampleUsers.NAME_2],
+          }},
         },
         users: {byName: exampleUsers.BY_NAME},
       };
+
+      const editors = [exampleUsers.USER, exampleUsers.USER_2];
       assert.deepEqual(hotlists.viewedHotlistEditors(state), editors);
     });
 
     it('no user data', () => {
-      const editors = [exampleUsers.USER, exampleUsers.USER_2];
+      const editors = [exampleUsers.NAME, exampleUsers.NAME_2];
       const state = {
         hotlists: {
           name: example.NAME,

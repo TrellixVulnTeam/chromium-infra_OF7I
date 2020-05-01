@@ -185,7 +185,7 @@ export const viewedHotlist = createSelector(
 export const viewedHotlistOwner = createSelector(
     [viewedHotlist, users.byName],
     (hotlist, usersByName) => {
-      return hotlist && usersByName[hotlist.owner.name] || null;
+      return hotlist && usersByName[hotlist.owner] || null;
     });
 
 /**
@@ -199,7 +199,7 @@ export const viewedHotlistEditors = createSelector(
     [viewedHotlist, users.byName],
     (hotlist, usersByName) => {
       if (!hotlist) return [];
-      return hotlist.editors.map((editor) => usersByName[editor.name] || null);
+      return hotlist.editors.map((editor) => usersByName[editor] || null);
     });
 
 /**
@@ -229,7 +229,7 @@ export const viewedHotlistIssues = createSelector(
       return itemsWithData.map((item) => ({
         ...getIssue(item.issue),
         ...item,
-        adder: usersByName[item.adder.name],
+        adder: usersByName[item.adder],
       }));
     });
 
@@ -289,8 +289,8 @@ export const fetch = (name) => async (dispatch) => {
         'monorail.v1.Hotlists', 'GetHotlist', {name});
     if (!hotlist.editors) hotlist.editors = [];
 
-    const editors = hotlist.editors.map((editor) => editor.name);
-    editors.push(hotlist.owner.name);
+    const editors = hotlist.editors.map((editor) => editor);
+    editors.push(hotlist.owner);
     await dispatch(users.batchGet(editors));
 
     dispatch({type: FETCH_SUCCESS, hotlist});
@@ -318,7 +318,7 @@ export const fetchItems = (name) => async (dispatch) => {
     const issueRefs = items.map((item) => issueNameToRef(item.issue));
     await dispatch(issueV0.fetchIssues(issueRefs));
 
-    const adderNames = [...new Set(items.map((item) => item.adder.name))];
+    const adderNames = [...new Set(items.map((item) => item.adder))];
     await dispatch(users.batchGet(adderNames));
 
     dispatch({type: FETCH_ITEMS_SUCCESS, name, items: itemsWithRank});
