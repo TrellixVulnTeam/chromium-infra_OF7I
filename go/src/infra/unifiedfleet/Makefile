@@ -19,7 +19,7 @@ test:
 
 .PHONY: build
 build:
-	go build -o ufs-service
+	go build -o ufs-service $(PROJECT_PATH)/cmd/ufs-service
 
 .PHONY: build-dumper
 build-dumper:
