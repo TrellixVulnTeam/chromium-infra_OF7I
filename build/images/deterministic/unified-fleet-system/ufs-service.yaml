@@ -1,0 +1,10 @@
+name: unified-fleet-system/ufs-service
+extends: ../../base.yaml
+
+dockerfile: ../../../../go/src/infra/unifiedfleet/cmd/ufs-service/docker/Dockerfile
+deterministic: true
+
+build:
+  - go_binary: infra/unifiedfleet/cmd/ufs-service
+    # ContextDir defaults to the directory with Dockerfile
+    dest: ${contextdir}/ufs-service

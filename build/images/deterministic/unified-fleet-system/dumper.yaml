@@ -1,0 +1,10 @@
+name: unified-fleet-system/dumper
+extends: ../../base.yaml
+
+dockerfile: ../../../../go/src/infra/unifiedfleet/cmd/dumper/docker/Dockerfile
+deterministic: true
+
+build:
+  - go_binary: infra/unifiedfleet/cmd/dumper
+    # ContextDir defaults to the directory with Dockerfile
+    dest: ${contextdir}/dumper
