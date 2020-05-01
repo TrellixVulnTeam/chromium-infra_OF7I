@@ -305,7 +305,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
    * @fires CustomEvent#open-dialog
    */
   openViewBlockedOn() {
-    (new CustomEvent('open-dialog', {
+    this.dispatchEvent(new CustomEvent('open-dialog', {
       bubbles: true,
       composed: true,
       detail: {
