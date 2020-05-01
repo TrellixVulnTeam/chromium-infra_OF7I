@@ -48,11 +48,10 @@ class Converter(object):
     # type: (proto.feature_objects_pb2.Hotlist)
     #    -> api_proto.feature_objects_pb2.Hotlist
     """Convert a protorpc Hotlist into a protoc Hotlist."""
+
     hotlist_resource_name = rnc.ConvertHotlistName(hotlist.hotlist_id)
-    # TODO(crbug/monorail/7238): Get the list of projects that have issues
-    # in hotlist.
-    members_by_id = self.ConvertUsers(
-        hotlist.owner_ids + hotlist.editor_ids, None)
+    members_by_id = rnc.ConvertUserNames(
+        hotlist.owner_ids + hotlist.editor_ids)
     default_columns = self._ComputeIssuesListColumns(hotlist.default_col_spec)
     if hotlist.is_private:
       hotlist_privacy = feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
@@ -97,9 +96,7 @@ class Converter(object):
         self.cnxn, hotlist_id, issue_ids, self.services)
     issue_names_dict = rnc.ConvertIssueNames(
         self.cnxn, issue_ids, self.services)
-    # TODO(crbug/monorail/7238): Get the list of projects that have issues
-    # in hotlist.
-    adders_by_id = self.ConvertUsers([item.adder_id for item in items], None)
+    adders_by_id = rnc.ConvertUserNames([item.adder_id for item in items])
 
     # Filter out items whose issues were not found.
     found_items = [

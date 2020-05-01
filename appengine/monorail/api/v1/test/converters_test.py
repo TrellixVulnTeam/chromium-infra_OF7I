@@ -198,22 +198,10 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_api_hotlist = feature_objects_pb2.Hotlist(
         name='hotlists/240',
         display_name=hotlist.name,
-        owner=user_objects_pb2.User(
-            name='users/111',
-            display_name=self.user_1.email,
-            availability_message='User never visited'),
+        owner= 'users/111',
         summary=hotlist.summary,
         description=hotlist.description,
-        editors=[
-            user_objects_pb2.User(
-                name='users/222',
-                display_name=testing_helpers.ObscuredEmail(self.user_2.email),
-                availability_message='User never visited'),
-            user_objects_pb2.User(
-                name='users/333',
-                display_name=testing_helpers.ObscuredEmail(self.user_3.email),
-                availability_message='User never visited')
-        ],
+        editors=['users/222', 'users/333'],
         hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
             'PUBLIC'),
         default_columns=[
@@ -238,10 +226,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_api_hotlist = feature_objects_pb2.Hotlist(
         name='hotlists/241',
         display_name=hotlist.name,
-        owner=user_objects_pb2.User(
-            name='users/111',
-            display_name=self.user_1.email,
-            availability_message='User never visited'),
+        owner='users/111',
         summary=hotlist.summary,
         description=hotlist.description,
         hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
@@ -271,20 +256,14 @@ class ConverterFunctionsTest(unittest.TestCase):
             name='hotlists/241/items/proj.1',
             issue='projects/proj/issues/1',
             rank=1,
-            adder=user_objects_pb2.User(
-                name='users/111',
-                display_name=self.user_1.email,
-                availability_message='User never visited'),
+            adder= 'users/111',
             create_time=expected_create_time,
             note='note2'),
         feature_objects_pb2.HotlistItem(
             name='hotlists/241/items/goose.2',
             issue='projects/goose/issues/2',
             rank=0,
-            adder=user_objects_pb2.User(
-                name='users/222',
-                display_name=testing_helpers.ObscuredEmail(self.user_2.email),
-                availability_message='User never visited'),
+            adder='users/222',
             note='note1')
     ]
     self.assertEqual(api_items, expected_items)

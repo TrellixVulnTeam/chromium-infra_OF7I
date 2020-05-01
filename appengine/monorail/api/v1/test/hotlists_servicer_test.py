@@ -276,8 +276,8 @@ class HotlistsServicerTest(unittest.TestCase):
     mc.LookupLoggedInUserPerms(None)
     api_hotlist = self.CallWrapped(
         self.hotlists_svcr.UpdateHotlist, mc, request)
-    api_users_by_id = self.converter.ConvertUsers(
-        [self.user_2.user_id, self.user_1.user_id], None)
+    user_names_by_id = rnc.ConvertUserNames(
+        [self.user_2.user_id, self.user_1.user_id])
     expected_hotlist = feature_objects_pb2.Hotlist(
         name=self.hotlist_resource_name,
         display_name='newName',
@@ -288,8 +288,8 @@ class HotlistsServicerTest(unittest.TestCase):
         ],
         hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
             'PUBLIC'),
-        owner=api_users_by_id[self.user_1.user_id],
-        editors=[api_users_by_id[self.user_2.user_id]])
+        owner=user_names_by_id[self.user_1.user_id],
+        editors=[user_names_by_id[self.user_2.user_id]])
     self.assertEqual(api_hotlist, expected_hotlist)
 
   def testUpdateHotlist_OneField(self):
@@ -310,8 +310,8 @@ class HotlistsServicerTest(unittest.TestCase):
     mc.LookupLoggedInUserPerms(None)
     api_hotlist = self.CallWrapped(
         self.hotlists_svcr.UpdateHotlist, mc, request)
-    api_users_by_id = self.converter.ConvertUsers(
-        [self.user_2.user_id, self.user_1.user_id], None)
+    user_names_by_id = rnc.ConvertUserNames(
+        [self.user_2.user_id, self.user_1.user_id])
     expected_hotlist = feature_objects_pb2.Hotlist(
         name=self.hotlist_resource_name,
         display_name='HotlistName',
@@ -320,8 +320,8 @@ class HotlistsServicerTest(unittest.TestCase):
         default_columns=[],
         hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
             'PRIVATE'),
-        owner=api_users_by_id[self.user_1.user_id],
-        editors=[api_users_by_id[self.user_2.user_id]])
+        owner=user_names_by_id[self.user_1.user_id],
+        editors=[user_names_by_id[self.user_2.user_id]])
     self.assertEqual(api_hotlist, expected_hotlist)
 
   def testUpdateHotlist_EmptyFieldMask(self):
