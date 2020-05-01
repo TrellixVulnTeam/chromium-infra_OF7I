@@ -188,6 +188,7 @@ def get_frontend_routes():  # pragma: no cover
   prpc_server.add_service(access.AccessServicer())
   prpc_server.add_service(api.BuildsApi())
   routes += prpc_server.get_routes()
+  routes += prpc_server.get_routes(prefix='/python')
 
   return routes
 
@@ -217,4 +218,5 @@ def get_backend_routes():  # pragma: no cover
       webapp2.Route(
           r'/internal/task/buildbucket/cancel_swarming_task/<host>/<task_id>',
           TaskCancelSwarmingTask),
-  ] + bulkproc.get_routes() + prpc_server.get_routes()
+  ] + (bulkproc.get_routes() + prpc_server.get_routes()
+       + prpc_server.get_routes(prefix='/python'))
