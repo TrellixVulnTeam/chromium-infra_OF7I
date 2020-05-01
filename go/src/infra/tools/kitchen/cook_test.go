@@ -94,6 +94,14 @@ func TestCook(t *testing.T) {
 			So(err, ShouldBeNil)
 			defer os.RemoveAll(tdir)
 
+			// Setup secrets.
+			secretBytes, err := proto.Marshal(&buildbucketpb.BuildSecrets{
+				BuildToken:                    "build-token",
+				ResultdbInvocationUpdateToken: "resultdb-token",
+			})
+			So(err, ShouldBeNil)
+			c = lucictx.SetSwarming(c, &lucictx.Swarming{SecretBytes: secretBytes})
+
 			// OS X has symlinks in its TempDir return values by default.
 			tdir, err = filepath.EvalSymlinks(tdir)
 			So(err, ShouldBeNil)
@@ -270,6 +278,25 @@ func TestCook(t *testing.T) {
 				So(result.Status, ShouldEqual, buildbucketpb.Status_FAILURE)
 				expectedSummary := recipeResult.GetFailure().HumanReason[:maxSummaryLength-3] + "..."
 				So(result.SummaryMarkdown, ShouldEqual, expectedSummary)
+			})
+			Convey(`parseResulDBInvocationFromProperties`, func() {
+				dict := map[string]interface{}{}
+				err := json.Unmarshal([]byte(`{
+					"$recipe_engine/buildbucket": {
+						"build": {
+							"infra": {
+								"resultdb": {
+									"hostname": "results.example.com",
+									"invocation": "invocations/build:123"
+								}
+							}
+						}
+					}
+				}`), &dict)
+				So(err, ShouldBeNil)
+				hostname, inv := extractResultDBInvocation(dict)
+				So(hostname, ShouldEqual, "results.example.com")
+				So(inv, ShouldEqual, "invocations/build:123")
 			})
 		})
 	})
