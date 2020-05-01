@@ -549,3 +549,12 @@ import:
 - package: github.com/bazelbuild/remote-apis
   version: upstream/master
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
+- package: github.com/antlr/antlr4
+  version: ^4.8.0
+  repo: https://chromium.googlesource.com/external/github.com/antlr/antlr4.git
+  subpackages:
+  - runtime/Go/antlr
+- package: github.com/google/cel-go
+  version: ^0.4.2
+  repo: https://chromium.googlesource.com/external/github.com/google/cel-go.git
+
