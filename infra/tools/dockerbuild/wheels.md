@@ -2565,6 +2565,34 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **pipenv-py2**
+
+### 2018.11.26
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pipenv-py2"
+  version: "version:2018.11.26"
+>
+```
+
+
+* *universal*
+
+## **pipenv-py3**
+
+### 2018.11.26
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pipenv-py3"
+  version: "version:2018.11.26"
+>
+```
+
+
+* *universal*
+
 ## **pluggy**
 
 ### 0.6.0
