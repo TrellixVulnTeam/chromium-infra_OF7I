@@ -39,7 +39,7 @@ def main(argv):
 
   for bucket_name in args.bucket:
     public = bucket.bucket_is_public(bucket_name)
-    bucket.run(bucket_name, args.ccompute, public)
+    bucket.run(bucket_name, args.reader, args.writer, public)
 
 
 if __name__ == '__main__':

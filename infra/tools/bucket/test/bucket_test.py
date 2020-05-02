@@ -23,7 +23,8 @@ class FakeGsutil():
         raise subprocess.CalledProcessError('Failed', 1)
 
 
-class MyTest(unittest.TestCase):
+class BucketTest(unittest.TestCase):
+
   def setUp(self):
     self.gsutil = FakeGsutil()
     self.old_gsutil = getattr(bucket, 'gsutil')
@@ -44,19 +45,16 @@ class MyTest(unittest.TestCase):
     self.assertRaises(
         bucket.InvalidBucketName, bucket.bucket_is_public, 'foobar-meow')
 
-  def test_run_with_ccompute(self):
-    bucket.run('chromium-public', True, True)
+  def test_run_with_reader(self):
+    bucket.run('chromium-public', ['reader@gserviceaccount.com'], [], True)
+    return self.gsutil.calls
+
+  def test_run_with_writer(self):
+    bucket.run('chrome-private', [], ['writer@gserviceaccount.com'], False)
     return self.gsutil.calls
 
   def test_run_bucket_exists(self):
     self.gsutil.bucket_exists = True
-    self.assertRaises(
-        bucket.BucketExists, bucket.run, 'chromium-public', True, True)
+    self.assertRaises(bucket.BucketExists, bucket.run, 'chromium-public', [],
+                      [], True)
     return self.gsutil.calls
-
-  def test_run_without_ccompute(self):
-    bucket.run('chrome-private', False, False)
-    return self.gsutil.calls
-
-
-

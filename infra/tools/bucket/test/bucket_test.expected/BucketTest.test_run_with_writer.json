@@ -7,7 +7,14 @@
   [
     "mb",
     "-p",
-    "824709284458",
+    "chromium-archive",
+    "gs://chrome-private"
+  ],
+  [
+    "acl",
+    "ch",
+    "-u",
+    "writer@gserviceaccount.com:w",
     "gs://chrome-private"
   ],
   [
