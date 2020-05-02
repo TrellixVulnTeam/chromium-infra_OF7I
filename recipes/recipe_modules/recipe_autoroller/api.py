@@ -295,7 +295,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     if roll_result['trivial']:
       s = spec.autoroll_recipe_options.trivial
       if s.tbr_emails:
-        upload_args.append('--tbrs=%s' % (','.join(s.tbr_emails)))
+        upload_args.append('--tbrs=%s' % self.m.random.choice(s.tbr_emails))
       upload_args.append('--tbr-owners')
 
       if s.automatic_commit:

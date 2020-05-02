@@ -366,7 +366,7 @@
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "upload",
       "--send-mail",
-      "--tbrs=foo@bar.example.com,meep@example.com",
+      "--tbrs=meep@example.com",
       "--tbr-owners",
       "--cq-dry-run",
       "--cc=foo@chromium.org",
