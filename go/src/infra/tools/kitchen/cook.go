@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -46,8 +47,6 @@ import (
 	"go.chromium.org/luci/logdog/client/butlerlib/streamclient"
 	"go.chromium.org/luci/logdog/common/types"
 	"go.chromium.org/luci/lucictx"
-	resultpb "go.chromium.org/luci/resultdb/proto/rpc/v1"
-	"go.chromium.org/luci/resultdb/sink"
 
 	"infra/libs/infraenv"
 	"infra/tools/kitchen/build"
@@ -362,7 +361,7 @@ func (c *cookRun) Run(a subcommands.Application, args []string, env subcommands.
 // run runs the cook subcommmand and returns Build result and recipe exit code.
 // If the returned Build.Status == INFRA_FAILURE, then the recipe may not have run
 // and the exit code is bogus.
-func (c *cookRun) run(ctx context.Context, args []string, env environ.Env) (build *buildbucketpb.Build, exitCode int) {
+func (c *cookRun) run(ctx context.Context, args []string, env environ.Env) (*buildbucketpb.Build, int) {
 	fail := func(err error) (*buildbucketpb.Build, int) {
 		return &buildbucketpb.Build{
 			Status:          buildbucketpb.Status_INFRA_FAILURE,
@@ -426,6 +425,9 @@ func (c *cookRun) run(ctx context.Context, args []string, env environ.Env) (buil
 		return fail(errors.Annotate(err, "failed to read build secrets").Err())
 	}
 
+	// Get resultdb parameters from the buildbucket property and build secrets.
+	ctx = c.setResultDBContext(ctx)
+
 	// Create systemAuth and recipeAuth authentication contexts, since we are
 	// about to start making authenticated requests now.
 	if err := c.setupAuth(ctx); err != nil {
@@ -433,22 +435,6 @@ func (c *cookRun) run(ctx context.Context, args []string, env environ.Env) (buil
 	}
 	defer c.recipeAuth.Close(ctx)
 	defer c.systemAuth.Close(ctx)
-
-	// Initialize ResultDB integration. Must be done after auth setup.
-	ctx, closeResultDB, err := c.setupResultDB(ctx)
-	if err != nil {
-		return fail(errors.Annotate(err, "failed initialize ResultDB integration").Err())
-	}
-	defer func() {
-		if err := closeResultDB(ctx); err != nil {
-			err = errors.Annotate(err, "failed to close ResultDB").Err()
-			if build.Status != buildbucketpb.Status_INFRA_FAILURE {
-				build, exitCode = fail(err)
-			} else {
-				log.Errorf(ctx, "%s", err)
-			}
-		}
-	}()
 
 	// Must happen after c.systemAuth is initialized.
 	// We create a build updater even if c.CallUpdateBuild is false because we use it to
@@ -975,61 +961,33 @@ func (c *cookRun) getLogDogStreamServer(ctx context.Context) (*streamserver.Stre
 	return streamserver.New(ctx, filepath.Join(c.TempDir, "ld.sock"))
 }
 
-// setupResultDB initializes "resultdb" and "result_sink" sections of
-// LUCI_CONTEXT.
-// c.systemAuth and c.buildSecrets must be initialized before calling
-// setupResultDB.
-// close must be called to finish uploading results.
-func (c *cookRun) setupResultDB(ctx context.Context) (newCtx context.Context, close func(ctx context.Context) error, err error) {
-	// Treat newCtx as just an alias for ctx, so that we can use `return`.
-	defer func() { newCtx = ctx }()
+// setResultDBContext copies resultdb's parameters from the build proto and the
+// buils secrets onto the appropriate section of lucictx.
+func (c *cookRun) setResultDBContext(ctx context.Context) context.Context {
+	if bbProp, ok := c.engine.properties["$recipe_engine/buildbucket"]; ok {
+		// The "build" value of the property above was parsed from json encoded text.
+		// Marshal it to a byte array and then populate a proto from it with jsonpb.
+		if buildMap, ok := bbProp.(map[string]interface{})["build"]; ok {
+			buildJSON, err := json.Marshal(buildMap)
+			if err != nil {
+				panic("Impossible marshaling error")
+			}
+			buildProto := &buildbucketpb.Build{}
+			if err := jsonpb.Unmarshal(bytes.NewReader(buildJSON), buildProto); err != nil {
+				panic("Impossible unmarshaling error")
+			}
 
-	close = func(context.Context) error { return nil }
-
-	hostname, inv := extractResultDBInvocation(c.engine.properties)
-	if hostname == "" || inv == "" {
-		// ResultDB integration was not enabled for this build.
-		return
+			// Set resultdb parameters in the luci context.
+			return lucictx.SetResultDB(ctx, &lucictx.ResultDB{
+				Hostname: buildProto.GetInfra().GetResultdb().GetHostname(),
+				CurrentInvocation: lucictx.Invocation{
+					Name:        buildProto.GetInfra().GetResultdb().GetInvocation(),
+					UpdateToken: c.buildSecrets.ResultdbInvocationUpdateToken,
+				},
+			})
+		}
 	}
-
-	// Initialize "resultdb" section of LUCI_CONTEXT.
-	rdb := &lucictx.ResultDB{
-		Hostname: hostname,
-		CurrentInvocation: lucictx.Invocation{
-			Name:        inv,
-			UpdateToken: c.buildSecrets.ResultdbInvocationUpdateToken,
-		},
-	}
-	ctx = lucictx.SetResultDB(ctx, rdb)
-
-	// Initialize "result_sink" section of LUCI_CONTEXT.
-	http, err := c.systemAuth.Authenticator().Client()
-	if err != nil {
-		return
-	}
-	opts := prpc.DefaultOptions()
-	opts.UserAgent = "kitchen"
-	rs, err := sink.NewServer(ctx, sink.ServerConfig{
-		Recorder: resultpb.NewRecorderPRPCClient(&prpc.Client{
-			C:       http,
-			Host:    rdb.Hostname,
-			Options: opts,
-		}),
-		Invocation:  rdb.CurrentInvocation.Name,
-		UpdateToken: rdb.CurrentInvocation.UpdateToken,
-	})
-	if err != nil {
-		err = errors.Annotate(err, "failed to create ResultSink").Err()
-		return
-	}
-	if err = rs.Start(ctx); err != nil {
-		err = errors.Annotate(err, "failed to start ResultSink").Err()
-		return
-	}
-	close = rs.Shutdown
-
-	ctx = rs.Export(ctx)
-	return
+	return ctx
 }
 
 func parseProperties(properties map[string]interface{}, propertiesFile string) (result map[string]interface{}, err error) {
@@ -1060,17 +1018,4 @@ func setAnnotationText(s *milo.Step) {
 			s.Text = append(s.Text, fmt.Sprintf("Failure %s", ss.Name))
 		}
 	}
-}
-
-// parseResultDBInvocationFromProperties parses resultdb hostname and invocation
-// name from the input properties.
-func extractResultDBInvocation(props map[string]interface{}) (hostname, invocation string) {
-	// This is not very type-safe, but also this code is legacy.
-	bb, _ := props["$recipe_engine/buildbucket"].(map[string]interface{})
-	build, _ := bb["build"].(map[string]interface{})
-	infra, _ := build["infra"].(map[string]interface{})
-	rdb, _ := infra["resultdb"].(map[string]interface{})
-	hostname, _ = rdb["hostname"].(string)
-	invocation, _ = rdb["invocation"].(string)
-	return
 }
