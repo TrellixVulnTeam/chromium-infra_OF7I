@@ -29,7 +29,6 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
 	log "go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/milo"
 	"go.chromium.org/luci/common/system/environ"
@@ -1027,7 +1026,6 @@ func (c *cookRun) setupResultDB(ctx context.Context) (newCtx context.Context, cl
 		err = errors.Annotate(err, "failed to start ResultSink").Err()
 		return
 	}
-	logging.Infof(ctx, "started ResultSink at %s", rs.Config().Address)
 	close = rs.Shutdown
 
 	ctx = rs.Export(ctx)
