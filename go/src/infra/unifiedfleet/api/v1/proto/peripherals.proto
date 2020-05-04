@@ -16,13 +16,17 @@ import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
 message KVM {
     option (google.api.resource) = {
         type: "unified-fleet-system.appspot.com/KVM"
-        pattern: "racks/{rack}/kvms/{kvm}"
+        pattern: "kvms/{kvm}"
     };
     // Unique serial_number or asset tag
-    // The format will be racks/{rack}/kvms/{kvm}
+    // The format will be kvms/{kvm}
     string name = 1;
     string mac_address = 2;
-    ChromePlatform platform = 3;
+    // Should match one of the predefined Chrome Platforms.
+    // Refers to ChromePlatform name
+    string chrome_platform = 3 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/ChromePlatform"
+    }];
     int32 capacity_port = 4;
     // Record the last update timestamp of this machine (In UTC timezone)
     google.protobuf.Timestamp update_time = 5 [
@@ -41,10 +45,10 @@ message KVMInterface {
 message RPM {
     option (google.api.resource) = {
         type: "unified-fleet-system.appspot.com/RPM"
-        pattern: "racks/{rack}/rpms/{rpm}"
+        pattern: "rpms/{rpm}"
     };
     // Unique serial_number or asset tag
-    // The format will be racks/{rack}/rpms/{rpm}
+    // The format will be rpms/{rpm}
     string name = 1;
     string mac_address = 2;
     int32 capacity_port = 3;
@@ -67,10 +71,10 @@ message RPMInterface {
 message Switch {
     option (google.api.resource) = {
         type: "unified-fleet-system.appspot.com/Switch"
-        pattern: "racks/{rack}/switches/{switch}"
+        pattern: "switches/{switch}"
     };
     // Unique serial_number or asset tag
-    // The format will be racks/{rack}/switches/{switch}
+    // The format will be switches/{switch}
     string name = 1;
     int32 capacity_port = 2;
     // Switch can have a mac address and remotely controlled, but it’s hard to
@@ -100,7 +104,7 @@ message Drac {
         pattern: "machines/{machine}/dracs/{drac}"
     };
     // Unique serial_number or asset tag
-    // The format will be machines/{machine}/dracs/{drac}
+    // The format will be dracs/{drac}
     string name = 1;
     string display_name = 2;
     string mac_address = 3;

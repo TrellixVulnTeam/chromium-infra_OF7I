@@ -11,10 +11,8 @@ option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
-import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
 import "infra/unifiedfleet/api/v1/proto/location.proto";
 import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
-import "infra/unifiedfleet/api/v1/proto/network.proto";
 
 // Machine refers to the devices or bare metal servers
 // which serves the tests directly.
@@ -53,16 +51,22 @@ message ChromeBrowserMachine {
     // Descriptive name of Chrome Machine
     string display_name = 1;
     // Should match one of the predefined Chrome Platforms.
-    ChromePlatform platform = 2;
+    // Refers to ChromePlatform name
+    string chrome_platform = 2 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/ChromePlatform"
+    }];
     // Refers to Nic name
-    Nic nic = 3;
-
+    string nic = 3 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/Nic"
+    }];
     // Interface of its connected devices.
     KVMInterface kvm_interface = 4;
     RPMInterface rpm_interface = 5;
     SwitchInterface network_device_interface = 6;
-
-    Drac drac = 7;
+    // Refers to Drac name
+    string drac = 7 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/Drac"
+    }];
     // Usually it's a buganizer bug.
     string deployment_ticket = 8;
     // Can be covered by deployment_ticket
