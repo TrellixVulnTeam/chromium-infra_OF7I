@@ -1,0 +1,10 @@
+package: chromiumos/infra/tclint/${platform}
+description: Linter for Chrome OS integration test configuration payload
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/tclint
+root: ../../go/bin
+data:
+  - file: tclint${exe_suffix}
+  - version_file: .versions/tclint${exe_suffix}.cipd_version
