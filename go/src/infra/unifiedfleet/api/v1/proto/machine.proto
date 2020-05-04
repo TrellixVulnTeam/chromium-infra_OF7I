@@ -41,7 +41,7 @@ message Machine {
     };
     // Record the last update timestamp of this machine (In UTC timezone)
     google.protobuf.Timestamp update_time = 6 [
-            (google.api.field_behavior) = OUTPUT_ONLY];
+        (google.api.field_behavior) = OUTPUT_ONLY];
     // Record the ACL info of the machine
     string realm = 7;
 }

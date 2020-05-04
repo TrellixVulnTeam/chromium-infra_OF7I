@@ -25,3 +25,32 @@ message Nic {
     google.protobuf.Timestamp update_time = 3 [
             (google.api.field_behavior) = OUTPUT_ONLY];
 }
+
+message Vlan {
+    option (google.api.resource) = {
+        type: "unified-fleet-system.appspot.com/Vlan"
+        pattern: "vlans/{vlan}"
+    };
+    // Unique name for the Vlan
+    // The format will be vlans/XXX
+    string name = 1;
+    // The format will be subnet/CIDR.
+    string vlan_address = 2;
+    // The number of IPs that in this vlan
+    int32 capacity_ip = 3;
+    // Record the last update timestamp of this Vlan (In UTC timezone)
+    google.protobuf.Timestamp update_time = 4 [
+        (google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message DHCPConfig {
+    string mac_address = 1;
+    string hostname = 2;
+    string ip = 3;
+}
+
+// Message contains all dhcp configs.
+message AllDHCPConfigs {
+    repeated DHCPConfig configs = 1;
+}
+

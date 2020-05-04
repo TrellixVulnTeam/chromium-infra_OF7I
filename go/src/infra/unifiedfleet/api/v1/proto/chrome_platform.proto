@@ -23,9 +23,9 @@ message ChromePlatform {
     string name = 1;
     string manufacturer = 2;
     string description = 3;
-    // Record the last update timestamp of this machine (In UTC timezone)
+    // Record the last update timestamp of this ChromePlatform (In UTC timezone)
     google.protobuf.Timestamp update_time = 4 [
-            (google.api.field_behavior) = OUTPUT_ONLY];
+        (google.api.field_behavior) = OUTPUT_ONLY];
     // Hold for the next version of UFS proto as it needs more manual input to bootstrap
     // int32 vm_slots = 5;
 }

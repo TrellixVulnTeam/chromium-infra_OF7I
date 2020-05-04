@@ -28,7 +28,7 @@ message KVM {
         type: "unified-fleet-system.appspot.com/ChromePlatform"
     }];
     int32 capacity_port = 4;
-    // Record the last update timestamp of this machine (In UTC timezone)
+    // Record the last update timestamp of this KVM (In UTC timezone)
     google.protobuf.Timestamp update_time = 5 [
             (google.api.field_behavior) = OUTPUT_ONLY];
 }
@@ -54,7 +54,7 @@ message RPM {
     int32 capacity_port = 3;
     // Just for record here, can be added later if needed
     // To be recorded: model, manufacturer, amperage, voltage
-        // Record the last update timestamp of this machine (In UTC timezone)
+        // Record the last update timestamp of this RPM (In UTC timezone)
     google.protobuf.Timestamp update_time = 4 [
             (google.api.field_behavior) = OUTPUT_ONLY];
 }
@@ -84,7 +84,7 @@ message Switch {
     // More info can be recorded for switch if available, e.g.
     // model, manufacturer
 
-    // Record the last update timestamp of this machine (In UTC timezone)
+    // Record the last update timestamp of this Switch (In UTC timezone)
     google.protobuf.Timestamp update_time = 3 [
             (google.api.field_behavior) = OUTPUT_ONLY];
 }
@@ -111,7 +111,13 @@ message Drac {
     SwitchInterface switch_interface = 4;
     string password = 5;
 
-    // Record the last update timestamp of this machine (In UTC timezone)
+    // Record the last update timestamp of this Drac (In UTC timezone)
     google.protobuf.Timestamp update_time = 6 [
             (google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Other types of peripherals required to setup LSEs
+message PeripheralHost {
+    string hardware_id = 1;
+    string hostname = 2;
 }

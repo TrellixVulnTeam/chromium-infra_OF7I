@@ -29,7 +29,7 @@ type ChromePlatform struct {
 	Name         string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Manufacturer string `protobuf:"bytes,2,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
 	Description  string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	// Record the last update timestamp of this machine (In UTC timezone)
+	// Record the last update timestamp of this ChromePlatform (In UTC timezone)
 	UpdateTime           *timestamp.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
