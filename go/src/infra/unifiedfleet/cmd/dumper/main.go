@@ -7,6 +7,7 @@ package main
 import (
 	"flag"
 
+	"cloud.google.com/go/bigquery"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/limiter"
@@ -32,8 +33,14 @@ func main() {
 			return err
 		}
 		srv.RunInBackground("ufs.config", cfgLoader.ReloadLoop)
-
 		srv.Context = config.Use(srv.Context, cfgLoader.Config())
+
+		// TODO(xixuan): use flag srv.Options.CloudProject instead of hardcoding
+		client, err := bigquery.NewClient(srv.Context, "unified-fleet-system-dev")
+		if err != nil {
+			return err
+		}
+		srv.Context = dumper.Use(srv.Context, client)
 		dumper.InitServer(srv, dumper.Options{})
 		return nil
 	})
