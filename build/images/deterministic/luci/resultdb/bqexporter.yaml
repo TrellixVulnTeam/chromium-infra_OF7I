@@ -1,0 +1,9 @@
+name: luci/resultdb/bqexporter
+extends: ../../../base.yaml
+
+contextdir: ../../../../../go/src/go.chromium.org/luci/resultdb/cmd/bqexporter/docker
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/resultdb/cmd/bqexporter
+    dest: ${contextdir}/bin/bqexporter
