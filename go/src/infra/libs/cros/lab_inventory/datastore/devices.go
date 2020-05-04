@@ -306,6 +306,63 @@ func GetDevicesByModels(ctx context.Context, models []string) (DeviceOpResults, 
 	return DeviceOpResults(result), nil
 }
 
+// UpdateDeviceID of the old device to the new device
+//
+// Changes the timestamp to reflect this change.
+func UpdateDeviceID(ctx context.Context, oldDev, newDev string) error {
+	if oldDev == "" || newDev == "" {
+		return errors.Reason("UpdateDeviceID, Invalid input").Err()
+	}
+	updatedTime := time.Now().UTC()
+
+	oldEntity := &DeviceEntity{
+		ID:     DeviceEntityID(oldDev),
+		Parent: fakeAcestorKey(ctx),
+	}
+
+	newEntity := &DeviceEntity{
+		ID:      DeviceEntityID(newDev),
+		Parent:  fakeAcestorKey(ctx),
+		Updated: updatedTime,
+	}
+
+	f := func(ctx context.Context) error {
+		if err := datastore.Get(ctx, oldEntity); err != nil {
+			return err
+		}
+		// Generate lab config
+		var labConfig lab.ChromeOSDevice
+		err := proto.Unmarshal(oldEntity.LabConfig, &labConfig)
+		if err != nil {
+			return err
+		}
+		labConfig.Id = &lab.ChromeOSDeviceID{Value: newDev}
+		l, err := proto.Marshal(&labConfig)
+		newEntity.LabConfig = l
+
+		// Update Dut State
+		var state lab.DutState
+		if err := oldEntity.GetDutStateProto(&state); err != nil {
+			return err
+		}
+		state.Id = &lab.ChromeOSDeviceID{Value: newDev}
+		mState, err := proto.Marshal(&state)
+		if err != nil {
+			return err
+		}
+		newEntity.DutState = mState
+
+		if err := datastore.Delete(ctx, oldEntity); err != nil {
+			return err
+		}
+		if err := datastore.Put(ctx, newEntity); err != nil {
+			return err
+		}
+		return nil
+	}
+	return datastore.RunInTransaction(ctx, f, nil)
+}
+
 func updateEntities(ctx context.Context, opResults DeviceOpResults, additionalFilter func()) func(context.Context) error {
 	maxLen := len(opResults)
 	entities := make([]*DeviceEntity, maxLen)

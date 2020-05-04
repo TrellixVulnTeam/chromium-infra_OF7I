@@ -315,6 +315,71 @@ func TestGetDevices(t *testing.T) {
 	})
 }
 
+func TestUpdateDeviceID(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+
+	Convey("Update devices in datastore", t, func() {
+		datastore.GetTestable(ctx).Consistent(true)
+		dev1 := mockDut("erty1", "UUID:00000", "lbstat1")
+		dev2 := mockDut("erty1", "Asset:00000", "lbstat1")
+		dev3 := mockLabstation("asdf1", "UUID:02")
+		dev4 := mockLabstation("asdf1", "Asset:02")
+		dev5 := mockDut("dut2", "", "labstation2")
+		dev6 := mockDut("dut3", "Asset:000000", "labstation2")
+		Convey("Update existing devices", func() {
+			var devProto lab.ChromeOSDevice
+			ret, err := AddDevices(ctx, []*lab.ChromeOSDevice{dev1, dev3}, false)
+			So(err, ShouldBeNil)
+			So(ret.Passed(), ShouldHaveLength, 2)
+			So(ret.Failed(), ShouldHaveLength, 0)
+			err = UpdateDeviceID(ctx, dev1.Id.Value, dev2.Id.Value)
+			So(err, ShouldBeNil)
+			res := GetDevicesByIds(ctx, []string{dev1.Id.Value, dev2.Id.Value})
+			So(res, ShouldHaveLength, 2)
+			So(res[0].Err, ShouldNotBeNil)
+			So(res[1].Err, ShouldBeNil)
+			err = res[1].Entity.GetCrosDeviceProto(&devProto)
+			So(err, ShouldBeNil)
+			// Compare devProto to dev2 to determine that only ID
+			// was updated. Note that dev2 is dev1 with ID updated
+			So(&devProto, ShouldResemble, dev2)
+			err = UpdateDeviceID(ctx, dev3.Id.Value, dev4.Id.Value)
+			So(err, ShouldBeNil)
+			res = GetDevicesByIds(ctx, []string{dev3.Id.Value, dev4.Id.Value})
+			So(res, ShouldHaveLength, 2)
+			So(res[0].Err, ShouldNotBeNil)
+			So(res[1].Err, ShouldBeNil)
+			err = res[1].Entity.GetCrosDeviceProto(&devProto)
+			So(err, ShouldBeNil)
+			// Compare devProto to dev4 to determine that only ID
+			// was updated. Note that dev4 is dev3 with ID updated
+			So(&devProto, ShouldResemble, dev4)
+		})
+		Convey("Update Invalid devices", func() {
+			ret, err := AddDevices(ctx, []*lab.ChromeOSDevice{dev3}, false)
+			So(err, ShouldBeNil)
+			So(ret.Passed(), ShouldHaveLength, 1)
+			So(ret.Failed(), ShouldHaveLength, 0)
+			err = UpdateDeviceID(ctx, dev3.Id.Value, dev5.Id.Value)
+			So(err, ShouldNotBeNil)
+			// Verify that dev3 wasn't deleted
+			res := GetDevicesByIds(ctx, []string{dev3.Id.Value, dev5.Id.Value})
+			So(res, ShouldHaveLength, 2)
+			So(res[1].Err, ShouldNotBeNil)
+			So(res[0].Err, ShouldBeNil)
+		})
+		Convey("Update non-existent devices", func() {
+			err := UpdateDeviceID(ctx, "slartibartfast", dev6.Id.Value)
+			So(err, ShouldNotBeNil)
+			// Verify that dev6 wasn't created
+			res := GetDevicesByIds(ctx, []string{dev6.Id.Value})
+			So(res, ShouldHaveLength, 1)
+			So(res[0].Err, ShouldNotBeNil)
+		})
+	})
+}
+
 func TestUpdateDeviceSetup(t *testing.T) {
 	t.Parallel()
 
