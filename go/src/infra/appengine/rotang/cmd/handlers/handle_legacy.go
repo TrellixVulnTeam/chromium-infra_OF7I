@@ -347,7 +347,6 @@ var rotaToName = map[string]string{
 	"angle":             "The ANGLE Wrangle",
 	"ios_internal_roll": "Bling Piper Roll",
 	"blink_bug_triage":  "Blink Bug Triage",
-	"chrome":            "Build Sheriff",
 	"android":           "Chrome on Android Build Sheriff",
 	"android_stability": "Clank Stability Sheriff (go/clankss)",
 	"ecosystem_infra":   "Ecosystem Infra rotation",
@@ -412,7 +411,6 @@ func (h *State) legacyAllRotations(ctx *router.Context, _ string) (string, error
 			continue
 		}
 		res.Rotations = append(res.Rotations, k)
-		//buildSheriffRotation(ctx.Context, dateMap, k, start, shifts)
 		buildLegacyRotation(dateMap, k, shifts)
 	}
 	// Troopers rotation.

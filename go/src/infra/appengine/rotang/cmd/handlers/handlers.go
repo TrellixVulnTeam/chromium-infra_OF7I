@@ -202,10 +202,10 @@ func buildLegacyMap(h *State) map[string]func(ctx *router.Context, file string) 
 		"chrome-ops-sre.json":          h.legacyTrooperByRotation,
 
 		// Sheriff files.
-		"sheriff.js":                  h.legacySheriff,
+		"sheriff.js":                  h.buildSheriff,
 		"sheriff_gpu.js":              h.legacySheriff,
 		"sheriff_android.js":          h.legacySheriff,
-		"sheriff.json":                h.legacySheriff,
+		"sheriff.json":                h.buildSheriff,
 		"sheriff_perf.json":           h.legacySheriff,
 		"sheriff_gpu.json":            h.legacySheriff,
 		"sheriff_angle.json":          h.legacySheriff,
