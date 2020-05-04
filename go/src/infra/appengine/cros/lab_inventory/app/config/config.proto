@@ -45,6 +45,9 @@ message Config {
 
   // Report the DUT utilization or not.
   bool enable_inventory_reporting = 13;
+
+  // HaRT PubSub Configs
+  HaRT hart = 14;
 }
 
 message AdminService {
@@ -70,4 +73,10 @@ message InventoryV1Repo{
   string lab_data_path = 4;
   string infrastructure_data_path = 5;
   bool multifile = 6;
+}
+
+message HaRT {
+  string project = 1;
+  string topic = 2;
+  string subscription = 3;
 }
