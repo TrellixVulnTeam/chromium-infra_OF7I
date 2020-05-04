@@ -13,7 +13,7 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 	proto "infra/unifiedfleet/api/v1/proto"
-	. "infra/unifiedfleet/app/constants"
+	. "infra/unifiedfleet/app/model/datastore"
 )
 
 func mockChromeOSMachine(id, lab, board string) *proto.Machine {
@@ -70,13 +70,13 @@ func TestCreateMachine(t *testing.T) {
 			resp, err := CreateMachine(ctx, chromeOSMachine1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "already exists")
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
 		})
 		Convey("Create machine - invalid ID", func() {
 			resp, err := CreateMachine(ctx, chromeOSMachine2)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Internal Server error")
+			So(err.Error(), ShouldContainSubstring, InternalError)
 		})
 	})
 }
@@ -102,13 +102,13 @@ func TestUpdateMachine(t *testing.T) {
 			resp, err := UpdateMachine(ctx, chromeBrowserMachine1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Not found")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Update machine - invalid ID", func() {
 			resp, err := UpdateMachine(ctx, chromeOSMachine3)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Internal Server error")
+			So(err.Error(), ShouldContainSubstring, InternalError)
 		})
 	})
 }
@@ -130,13 +130,13 @@ func TestGetMachine(t *testing.T) {
 			resp, err := GetMachine(ctx, "chrome-asset-1")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Not found")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Get machine - invalid ID", func() {
 			resp, err := GetMachine(ctx, "")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Internal Server error")
+			So(err.Error(), ShouldContainSubstring, InternalError)
 		})
 	})
 }
@@ -199,17 +199,17 @@ func TestDeleteMachine(t *testing.T) {
 			res, err := GetMachine(ctx, "chromeos-asset-2")
 			So(res, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Not found")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete machine by non-existing ID", func() {
 			err := DeleteMachine(ctx, "chrome-asset-1")
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Not found")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete machine - invalid ID", func() {
 			err := DeleteMachine(ctx, "")
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Internal Server error")
+			So(err.Error(), ShouldContainSubstring, InternalError)
 		})
 	})
 }

@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	fleet "infra/unifiedfleet/api/v1/proto"
-	"infra/unifiedfleet/app/constants"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 )
 
@@ -113,7 +112,7 @@ func ListMachines(ctx context.Context, pageSize int32, pageToken string) (res []
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List Machines %s", err)
-		return nil, "", status.Errorf(codes.Internal, constants.InternalError)
+		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()

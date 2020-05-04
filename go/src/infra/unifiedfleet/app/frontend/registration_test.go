@@ -12,7 +12,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
-	. "infra/unifiedfleet/app/constants"
+	. "infra/unifiedfleet/app/model/datastore"
 )
 
 func mockChromeOSMachine(id, lab, board string) *proto.Machine {
@@ -79,7 +79,7 @@ func TestCreateMachine(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, alreadyExists)
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
 		})
 		Convey("Create new machine - Invalid input nil", func() {
 			req := &api.CreateMachineRequest{
@@ -88,7 +88,7 @@ func TestCreateMachine(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, nilEntity)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
 		})
 		Convey("Create new machine - Invalid input empty name", func() {
 			req := &api.CreateMachineRequest{
@@ -97,7 +97,7 @@ func TestCreateMachine(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, emptyID)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
 		})
 		Convey("Create new machine - Invalid input invalid characters", func() {
 			req := &api.CreateMachineRequest{
@@ -106,7 +106,7 @@ func TestCreateMachine(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, invalidCharacters)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
 		})
 	})
 }
@@ -144,7 +144,7 @@ func TestUpdateMachine(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachine(tf.C, ureq)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, notFound)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Update machine - Invalid input nil", func() {
 			req := &api.UpdateMachineRequest{
@@ -153,7 +153,7 @@ func TestUpdateMachine(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, nilEntity)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
 		})
 		Convey("Update machine - Invalid input empty name", func() {
 			req := &api.UpdateMachineRequest{
@@ -162,7 +162,7 @@ func TestUpdateMachine(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, emptyID)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
 		})
 		Convey("Update machine - Invalid input invalid characters", func() {
 			req := &api.UpdateMachineRequest{
@@ -171,7 +171,7 @@ func TestUpdateMachine(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, invalidCharacters)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
 		})
 	})
 }
@@ -204,7 +204,7 @@ func TestGetMachine(t *testing.T) {
 			resp, err := tf.Fleet.GetMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, notFound)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Get machine - Invalid input empty name", func() {
 			req := &api.GetMachineRequest{
@@ -213,7 +213,7 @@ func TestGetMachine(t *testing.T) {
 			resp, err := tf.Fleet.GetMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, emptyID)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
 		})
 		Convey("Get machine - Invalid input invalid characters", func() {
 			req := &api.GetMachineRequest{
@@ -222,7 +222,7 @@ func TestGetMachine(t *testing.T) {
 			resp, err := tf.Fleet.GetMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, invalidCharacters)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
 		})
 	})
 }
@@ -253,7 +253,7 @@ func TestListMachines(t *testing.T) {
 			resp, err := tf.Fleet.ListMachines(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, InvalidPageSize)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
 		})
 
 		Convey("ListMachines - page_token invalid", func() {
@@ -333,7 +333,7 @@ func TestDeleteMachine(t *testing.T) {
 			res, err := tf.Fleet.GetMachine(tf.C, greq)
 			So(res, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, notFound)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete machine by non-existing ID", func() {
 			req := &api.DeleteMachineRequest{
@@ -341,7 +341,7 @@ func TestDeleteMachine(t *testing.T) {
 			}
 			_, err := tf.Fleet.DeleteMachine(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, notFound)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete machine - Invalid input empty name", func() {
 			req := &api.DeleteMachineRequest{
@@ -350,7 +350,7 @@ func TestDeleteMachine(t *testing.T) {
 			resp, err := tf.Fleet.DeleteMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, emptyID)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
 		})
 		Convey("Delete machine - Invalid input invalid characters", func() {
 			req := &api.DeleteMachineRequest{
@@ -359,7 +359,7 @@ func TestDeleteMachine(t *testing.T) {
 			resp, err := tf.Fleet.DeleteMachine(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, invalidCharacters)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
 		})
 	})
 }

@@ -4,17 +4,18 @@
 
 package util
 
-import (
-	"infra/unifiedfleet/app/constants"
+const (
+	defaultPageSize int32 = 100
+	maxPageSize     int32 = 1000
 )
 
 // GetPageSize gets the correct page size for List pagination
 func GetPageSize(pageSize int32) int32 {
 	switch {
 	case pageSize == 0:
-		return constants.DefaultPageSize
-	case pageSize > constants.MaxPageSize:
-		return constants.MaxPageSize
+		return defaultPageSize
+	case pageSize > maxPageSize:
+		return maxPageSize
 	default:
 		return pageSize
 	}

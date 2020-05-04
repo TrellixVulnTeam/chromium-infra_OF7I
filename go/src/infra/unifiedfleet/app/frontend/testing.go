@@ -17,14 +17,6 @@ import (
 	"infra/unifiedfleet/app/config"
 )
 
-const (
-	nilEntity         string = "Invalid input - no Entity to add/update"
-	emptyID           string = "Invalid input - Entity ID/Name is empty"
-	invalidCharacters string = "Invalid input - Entity ID/Name must contain only 4-63 characters, ASCII letters, numbers, dash and underscore."
-	alreadyExists     string = "already exists"
-	notFound          string = "Not found"
-)
-
 type testFixture struct {
 	T *testing.T
 	C context.Context

@@ -13,7 +13,14 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"infra/unifiedfleet/app/constants"
+)
+
+// Error messages for datastore operations
+const (
+	InvalidPageToken string = "Invalid Page Token."
+	AlreadyExists    string = "Entity already exists."
+	NotFound         string = "Entity not found."
+	InternalError    string = "Internal Server Error."
 )
 
 // FleetEntity represents the interface of entity in datastore.
@@ -41,23 +48,23 @@ func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.
 	entity, err := nf(ctx, pm)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
-		return nil, status.Errorf(codes.Internal, "Internal Server error.")
+		return nil, status.Errorf(codes.Internal, InternalError)
 	}
 	f := func(ctx context.Context) error {
 		existsResults, err := datastore.Exists(ctx, entity)
 		if err == nil {
 			if !existsResults.All() && update {
-				return status.Errorf(codes.NotFound, "Entity Not found.")
+				return status.Errorf(codes.NotFound, NotFound)
 			}
 			if existsResults.All() && !update {
-				return status.Errorf(codes.AlreadyExists, "Entity already exists.")
+				return status.Errorf(codes.AlreadyExists, AlreadyExists)
 			}
 		} else {
 			logging.Debugf(ctx, "Failed to check existence: %s", err)
 		}
 		if err := datastore.Put(ctx, entity); err != nil {
 			logging.Errorf(ctx, "Failed to put in datastore: %s", err)
-			return status.Errorf(codes.Internal, "Internal Server error.")
+			return status.Errorf(codes.Internal, InternalError)
 		}
 		return nil
 	}
@@ -73,19 +80,19 @@ func Get(ctx context.Context, pm proto.Message, nf NewFunc) (proto.Message, erro
 	entity, err := nf(ctx, pm)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
-		return nil, status.Errorf(codes.Internal, "Internal Server error.")
+		return nil, status.Errorf(codes.Internal, InternalError)
 	}
 	if err = datastore.Get(ctx, entity); err != nil {
 		if datastore.IsErrNoSuchEntity(err) {
-			return nil, status.Errorf(codes.NotFound, "Entity Not found.")
+			return nil, status.Errorf(codes.NotFound, NotFound)
 		}
 		logging.Errorf(ctx, "Failed to get entity from datastore: %s", err)
-		return nil, status.Errorf(codes.Internal, "Internal Server error.")
+		return nil, status.Errorf(codes.Internal, InternalError)
 	}
 	pm, perr := entity.GetProto()
 	if perr != nil {
 		logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
-		return nil, status.Errorf(codes.Internal, "Internal Server error.")
+		return nil, status.Errorf(codes.Internal, InternalError)
 	}
 	return pm, nil
 }
@@ -97,7 +104,7 @@ func ListQuery(ctx context.Context, entityKind string, pageSize int32, pageToken
 		cursor, err = datastore.DecodeCursor(ctx, pageToken)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to DecodeCursor from pageToken: %s", err)
-			return nil, status.Errorf(codes.InvalidArgument, constants.InvalidPageToken)
+			return nil, status.Errorf(codes.InvalidArgument, InvalidPageToken)
 		}
 	}
 	q = datastore.NewQuery(entityKind).Limit(pageSize)
@@ -112,21 +119,21 @@ func Delete(ctx context.Context, pm proto.Message, nf NewFunc) error {
 	entity, err := nf(ctx, pm)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
-		return status.Errorf(codes.Internal, "Internal Server error.")
+		return status.Errorf(codes.Internal, InternalError)
 	}
 	// Datastore doesn't throw an error if the record doesn't exist.
 	// Check and return err if there is no such entity in the datastore.
 	existsResults, err := datastore.Exists(ctx, entity)
 	if err == nil {
 		if !existsResults.All() {
-			return status.Errorf(codes.NotFound, "Entity Not found.")
+			return status.Errorf(codes.NotFound, NotFound)
 		}
 	} else {
 		logging.Debugf(ctx, "Failed to check existence: %s", err)
 	}
 	if err = datastore.Delete(ctx, entity); err != nil {
 		logging.Errorf(ctx, "Failed to delete entity from datastore: %s", err)
-		return status.Errorf(codes.Internal, "Internal Server error.")
+		return status.Errorf(codes.Internal, InternalError)
 	}
 	return nil
 }

@@ -12,19 +12,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9-_]{4,63}$`)
-
+// Error messages for input validation
 const (
-	nilEntity         string = "Invalid input - no Entity to add/update"
-	emptyID           string = "Invalid input - Entity ID/Name is empty"
-	invalidCharacters string = "Invalid input - Entity ID/Name must contain only 4-63 characters, ASCII letters, numbers, dash and underscore."
-	invalidPageSize   string = "Invalid input - page_size should be non-negative"
+	NilEntity         string = "Invalid input - No Entity to add/update."
+	EmptyID           string = "Invalid input - Entity ID is empty."
+	InvalidCharacters string = "Invalid input - Entity ID must contain only 4-63 characters, ASCII letters, numbers, dash and underscore."
+	InvalidPageSize   string = "Invalid input - PageSize should be non-negative."
 )
+
+var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9-_]{4,63}$`)
 
 // Validate validates input requests of CreateMachine.
 func (r *CreateMachineRequest) Validate() error {
 	if r.Machine == nil {
-		return status.Errorf(codes.InvalidArgument, nilEntity)
+		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
 	name := strings.TrimSpace(r.Machine.GetName())
 	if name == "" {
@@ -36,7 +37,7 @@ func (r *CreateMachineRequest) Validate() error {
 // Validate validates input requests of UpdateMachine.
 func (r *UpdateMachineRequest) Validate() error {
 	if r.Machine == nil {
-		return status.Errorf(codes.InvalidArgument, nilEntity)
+		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
 	return validateResourceName(r.Machine.GetName())
 }
@@ -59,17 +60,17 @@ func (r *DeleteMachineRequest) Validate() error {
 func validateResourceName(name string) error {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return status.Errorf(codes.InvalidArgument, emptyID)
+		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
 	if !nameRegex.MatchString(name) {
-		return status.Errorf(codes.InvalidArgument, invalidCharacters)
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
 }
 
 func validatePageSize(pageSize int32) error {
 	if pageSize < 0 {
-		return status.Errorf(codes.InvalidArgument, invalidPageSize)
+		return status.Errorf(codes.InvalidArgument, InvalidPageSize)
 	}
 	return nil
 }
