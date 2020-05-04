@@ -96,7 +96,7 @@ message Comment {
   string inbound_message = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
   // The approval this comment is associated with, if applicable.
   string approval = 8
-      [(google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" }];
+      [(google.api.resource_reference) = { type: "api.crbug.com/ApprovalValue" }];
   // Any changes made to the issue in association with this comment.
   repeated Amendment amendments = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
   // Any attachments uploaded in association with this comment.
@@ -104,62 +104,48 @@ message Comment {
       [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
+
+// Many values on an issue can be set either explicitly or by a rule.
+// Next available tag: 3
+enum Derivation {
+  // The default derivation. This value is used if the derivation is omitted.
+  DERIVATION_UNSPECIFIED = 0;
+  // The value was explicitly set on the issue.
+  EXPLICIT = 1;
+  // Value was auto-applied to the issue based on a project's rule. See
+  // monorail/doc/userguide/project-owners.md#how-to-configure-filter-rules
+  RULE = 2;
+}
+
+
+// A value of a custom field for an issue.
+// Next available tag: 5
+message FieldValue {
+  // The project-defined field associated with this value
+  string field = 1 [
+      (google.api.resource_reference) = { type: "api.crbug.com/FieldDef" }];
+  // The value associated with the field.
+  // Mapping of field types to string value:
+  // ENUM_TYPE(int) => str(value)
+  // INT_TYPE(int) => str(value)
+  // STR_TYPE(str) => value
+  // USER_TYPE(int) => the user's resource name
+  // DATE_TYPE(int) => str(int) representing time in seconds since epoch
+  // URL_TYPE(str) => value
+  string value = 2;
+  // How the value was derived.
+  Derivation derivation = 3;
+  // Issues with phase-specific fields can have values for each phase.
+  string phase = 4;
+}
+
 // Documents and tracks a bug, task, or feature request within a Project.
-// Next available tag: 24
+// Next available tag: 23
 message Issue {
   option (google.api.resource) = {
     type: "api.crbug.com/Issue"
     pattern: "project/{project}/issues/{issue}"
   };
-
-  // Potential states for an approval.
-  // TODO(monorail:7193): comments below along with user guide for approvals.
-  // Next available tag: 8
-  enum ApprovalStatus {
-    // The default approval status. This value is used if the status is omitted.
-    APPROVAL_STATUS_UNSPECIFIED = 0;
-    NEEDS_REVIEW = 1;
-    NA = 2;
-    REVIEW_REQUESTED = 3;
-    REVIEW_STARTED = 4;
-    NEED_INFO = 5;
-    APPROVED = 6;
-    NOT_APPROVED = 7;
-  }
-
-  // Many values on an issue can be set either explicitly or by a rule.
-  // Next available tag: 3
-  enum Derivation {
-    // The default derivation. This value is used if the derivation is omitted.
-    DERIVATION_UNSPECIFIED = 0;
-    // The value was explicitly set on the issue.
-    EXPLICIT = 1;
-    // Value was auto-applied to the issue based on a project's rule. See
-    // monorail/doc/userguide/project-owners.md#how-to-configure-filter-rules
-    RULE = 2;
-  }
-
-  // The value of an approval for an issue.
-  // Next available tag: 7
-  message ApprovalValue {
-    // The resource name of the approval.
-    string name = 1 [
-      (google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" }
-    ];
-    // The users able to approve the issue.
-    repeated string approvers = 2
-        [(google.api.resource_reference) = { type: "api.crbug.com/User" }];
-    // The current status of the approval.
-    ApprovalStatus status = 3;
-    // The time the approval value was last set.
-    google.protobuf.Timestamp set_time = 4
-        [(google.api.field_behavior) = OUTPUT_ONLY];
-    // The user who most recently set the issue
-    string setter = 5
-        [(google.api.resource_reference) = { type: "api.crbug.com/User" }];
-    // The phase the approval is associated with (if applicable).
-    string phase = 6;
-  }
 
   // A possibly rule-derived component for the issue.
   // Next available tag: 3
@@ -170,28 +156,6 @@ message Issue {
     ];
     // How the component was derived.
     Derivation derivation = 2;
-  }
-
-  // A value of a custom field for an issue.
-  // Next available tag: 5
-  message FieldValue {
-    // The project-defined field associated with this value
-    string field = 1
-        [(google.api.resource_reference) = { type: "api.crbug.com/FieldDef" }];
-    // The value associated with the field.
-    // Mapping of field types to string value:
-    // ENUM_TYPE(int) => str(value)
-    // INT_TYPE(int) => str(value)
-    // STR_TYPE(str) => value
-    // USER_TYPE(int) => the user's resource name
-    // DATE_TYPE(int) => str(int) representing time in seconds since epoch
-    // URL_TYPE(str) => value
-    // APPROVAL_TYPE => Expressed in ApprovalValue messages
-    string value = 2;
-    // How the value was derived.
-    Derivation derivation = 3;
-    // Issues with phase-specific fields can have values for each phase.
-    string phase = 4;
   }
 
   // A possibly rule-derived label for an issue.
@@ -278,12 +242,10 @@ message Issue {
   uint32 attachment_count = 20 [(google.api.field_behavior) = OUTPUT_ONLY];
   // The number of users who have starred the issue.
   uint32 star_count = 21 [(google.api.field_behavior) = OUTPUT_ONLY];
-  // Values set on approvals associated with the issue (if applicable).
-  repeated ApprovalValue approval_values = 22;
-  // Phases the issue's approval can go through (if applicable).
-  // Once created, these cannot be changed.
-  // TODO(monorail:7193): add user guide for phases/approvals.
-  repeated string phases = 23;
+  // Phases of a process the issue is tracking (if applicable).
+  // See monorail/doc/userguide/concepts.md#issue-approvals-and-gates
+  repeated string phases = 22 [
+      (google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // States that an issue or its comments can be in (aip.dev/216).
@@ -318,4 +280,50 @@ message IssueRef {
   // to an old 'codesite' issue.
   // TODO(monorail:7208): add more documentation on dangling references.
   string ext_identifier = 2;
+}
+
+// Documents and tracks an approval process.
+// See monorail/doc/userguide/concepts.md#issue-approvals-and-gates
+// Next available tag: 9
+message ApprovalValue {
+  option (google.api.resource) = {
+     type: "api.crbug.com/ApprovalValue"
+     pattern: "project/{project}/issues/{issue}/approvalValue/{approval}"
+   };
+
+  // Potential states for an approval.
+  // Next available tag: 8
+  enum ApprovalStatus {
+    // The default approval status. This value is used if the status is omitted.
+    APPROVAL_STATUS_UNSPECIFIED = 0;
+    NEEDS_REVIEW = 1;
+    NA = 2;
+    REVIEW_REQUESTED = 3;
+    REVIEW_STARTED = 4;
+    NEED_INFO = 5;
+    APPROVED = 6;
+    NOT_APPROVED = 7;
+  }
+
+  // The resource name.
+  string name = 1;
+  // The resource name of the approvalDef.
+  string approval_def = 2 [
+      (google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" },
+      (google.api.field_behavior) = OUTPUT_ONLY];
+  // The users able to approve the issue.
+  repeated string approvers = 3 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }];
+  // The current status of the approval.
+  ApprovalStatus status = 4;
+  // The time the approval value was last set.
+  google.protobuf.Timestamp set_time = 5 [
+      (google.api.field_behavior) = OUTPUT_ONLY];
+  // The user who most recently set the issue
+  string setter = 6 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }];
+  // The phase the approval is associated with (if applicable).
+  string phase = 7 [
+      (google.api.field_behavior) = OUTPUT_ONLY];
+  repeated FieldValue field_values = 8;
 }

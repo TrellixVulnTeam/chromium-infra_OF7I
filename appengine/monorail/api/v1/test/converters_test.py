@@ -26,8 +26,8 @@ from testing import testing_helpers
 from services import service_manager
 from proto import tracker_pb2
 
-EXPLICIT_DERIVATION = issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
-RULE_DERIVATION = issue_objects_pb2.Issue.Derivation.Value('RULE')
+EXPLICIT_DERIVATION = issue_objects_pb2.Derivation.Value('EXPLICIT')
+RULE_DERIVATION = issue_objects_pb2.Derivation.Value('RULE')
 
 
 class ConverterFunctionsTest(unittest.TestCase):
@@ -495,22 +495,22 @@ class ConverterFunctionsTest(unittest.TestCase):
                 component='projects/proj/componentDefs/4'),
         ],
         field_values=[
-            issue_objects_pb2.Issue.FieldValue(
+            issue_objects_pb2.FieldValue(
                 derivation=EXPLICIT_DERIVATION,
                 field='projects/proj/fieldDefs/test_field_1',
                 value=self.fv_1_value,
             ),
-            issue_objects_pb2.Issue.FieldValue(
+            issue_objects_pb2.FieldValue(
                 derivation=RULE_DERIVATION,
                 field='projects/proj/fieldDefs/test_field_1',
                 value=self.fv_1_value,
             ),
-            issue_objects_pb2.Issue.FieldValue(
+            issue_objects_pb2.FieldValue(
                 derivation=EXPLICIT_DERIVATION,
                 field='projects/proj/fieldDefs/days',
                 value='1',
             ),
-            issue_objects_pb2.Issue.FieldValue(
+            issue_objects_pb2.FieldValue(
                 derivation=RULE_DERIVATION,
                 field='projects/proj/fieldDefs/OS',
                 value='mac',
@@ -534,16 +534,6 @@ class ConverterFunctionsTest(unittest.TestCase):
         owner_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
         star_count=1,
         attachment_count=5,
-        approval_values=[
-            issue_objects_pb2.Issue.ApprovalValue(
-                approvers=['users/222'],
-                name='projects/proj/approvalDefs/approval_field_1',
-                phase=self.phase_1.name,
-                set_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
-                setter='users/111',
-                status=issue_objects_pb2.Issue.ApprovalStatus.Value(
-                    'APPROVAL_STATUS_UNSPECIFIED'))
-        ],
         phases=[self.phase_1.name])
     expected_2 = issue_objects_pb2.Issue(
         name='projects/goose/issues/2',
@@ -693,7 +683,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_name = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_1], self.project_1.project_id,
         self.services)[self.field_def_1]
-    expected_value = issue_objects_pb2.Issue.FieldValue(
+    expected_value = issue_objects_pb2.FieldValue(
         field=expected_name,
         value=expected_str,
         derivation=EXPLICIT_DERIVATION,
@@ -715,7 +705,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     name_1 = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_1], self.project_1.project_id,
         self.services)[self.field_def_1]
-    expected_1 = issue_objects_pb2.Issue.FieldValue(
+    expected_1 = issue_objects_pb2.FieldValue(
         field=name_1,
         value=expected_str,
         derivation=EXPLICIT_DERIVATION,
@@ -727,7 +717,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     name_2 = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_2], self.project_1.project_id,
         self.services).get(self.field_def_2)
-    expected_2 = issue_objects_pb2.Issue.FieldValue(
+    expected_2 = issue_objects_pb2.FieldValue(
         field=name_2,
         value=str(expected_int),
         derivation=RULE_DERIVATION,
@@ -744,7 +734,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     name_1 = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_1], self.project_1.project_id,
         self.services)[self.field_def_1]
-    expected_1 = issue_objects_pb2.Issue.FieldValue(
+    expected_1 = issue_objects_pb2.FieldValue(
         field=name_1,
         value=expected_str,
         derivation=EXPLICIT_DERIVATION,
@@ -813,14 +803,14 @@ class ConverterFunctionsTest(unittest.TestCase):
     approvers = [
         rnc.ConvertUserNames([self.user_2.user_id]).get(self.user_2.user_id)
     ]
-    status = issue_objects_pb2.Issue.ApprovalStatus.Value(
+    status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
         'APPROVAL_STATUS_UNSPECIFIED')
     set_time = timestamp_pb2.Timestamp()
     set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserNames([self.user_1.user_id]).get(
         self.user_1.user_id)
     phase = fake.MakePhase(self.phase_1_id, name=self.phase_1.name)
-    expected = issue_objects_pb2.Issue.ApprovalValue(
+    expected = issue_objects_pb2.ApprovalValue(
         name=name,
         approvers=approvers,
         status=status,
@@ -846,13 +836,13 @@ class ConverterFunctionsTest(unittest.TestCase):
     approvers = [
         rnc.ConvertUserNames([self.user_2.user_id]).get(self.user_2.user_id)
     ]
-    status = issue_objects_pb2.Issue.ApprovalStatus.Value(
+    status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
         'APPROVAL_STATUS_UNSPECIFIED')
     set_time = timestamp_pb2.Timestamp()
     set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserNames([self.user_1.user_id]).get(
         self.user_1.user_id)
-    expected = issue_objects_pb2.Issue.ApprovalValue(
+    expected = issue_objects_pb2.ApprovalValue(
         name=name,
         approvers=approvers,
         status=status,
@@ -887,50 +877,51 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NOT_SET),
-        issue_objects_pb2.Issue.ApprovalStatus.Value(
+        issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
             'APPROVAL_STATUS_UNSPECIFIED'))
 
   def test_ComputeApprovalValueStatus_NEEDS_REVIEW(self):
     self.assertEqual(
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NEEDS_REVIEW),
-        issue_objects_pb2.Issue.ApprovalStatus.Value('NEEDS_REVIEW'))
+        issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NEEDS_REVIEW'))
 
   def test_ComputeApprovalValueStatus_NA(self):
     self.assertEqual(
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NA),
-        issue_objects_pb2.Issue.ApprovalStatus.Value('NA'))
+        issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA'))
 
   def test_ComputeApprovalValueStatus_REVIEW_REQUESTED(self):
     self.assertEqual(
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.REVIEW_REQUESTED),
-        issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_REQUESTED'))
+        issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
+            'REVIEW_REQUESTED'))
 
   def test_ComputeApprovalValueStatus_REVIEW_STARTED(self):
     self.assertEqual(
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.REVIEW_STARTED),
-        issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_STARTED'))
+        issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('REVIEW_STARTED'))
 
   def test_ComputeApprovalValueStatus_NEED_INFO(self):
     self.assertEqual(
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NEED_INFO),
-        issue_objects_pb2.Issue.ApprovalStatus.Value('NEED_INFO'))
+        issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NEED_INFO'))
 
   def test_ComputeApprovalValueStatus_APPROVED(self):
     self.assertEqual(
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.APPROVED),
-        issue_objects_pb2.Issue.ApprovalStatus.Value('APPROVED'))
+        issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('APPROVED'))
 
   def test_ComputeApprovalValueStatus_NOT_APPROVED(self):
     self.assertEqual(
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NOT_APPROVED),
-        issue_objects_pb2.Issue.ApprovalStatus.Value('NOT_APPROVED'))
+        issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NOT_APPROVED'))
 
   def test_ComputeTemplatePrivacy_PUBLIC(self):
     self.assertEqual(
@@ -997,7 +988,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.services).get(self.field_def_3)
     self.assertEqual(
         result.field_values[1],
-        issue_objects_pb2.Issue.FieldValue(
+        issue_objects_pb2.FieldValue(
             field=expected_name,
             value=self.template_1_label1_value,
             derivation=EXPLICIT_DERIVATION))
@@ -1005,12 +996,6 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertFalse(result.blocking_issue_refs)
     self.assertFalse(result.attachment_count)
     self.assertFalse(result.star_count)
-    self.assertEqual(len(result.approval_values), 1)
-    self.assertEqual(len(result.approval_values[0].approvers), 1)
-    self.assertEqual(
-        result.approval_values[0].approvers[0], 'users/{}'.format(
-            self.user_2.user_id))
-    self.assertEqual(result.approval_values[0].phase, self.phase_1.name)
     self.assertEqual(len(result.phases), 1)
     self.assertEqual(result.phases[0], self.phase_1.name)
 
@@ -1023,12 +1008,6 @@ class ConverterFunctionsTest(unittest.TestCase):
             self.project_1.project_name, self.field_def_1_name))
     self.assertEqual(result.field_values[0].value, self.fv_1_value)
     self.assertEqual(result.field_values[0].derivation, EXPLICIT_DERIVATION)
-    self.assertEqual(len(result.approval_values), 1)
-    self.assertEqual(len(result.approval_values[0].approvers), 1)
-    self.assertEqual(
-        result.approval_values[0].approvers[0], 'users/{}'.format(
-            self.user_2.user_id))
-    self.assertEqual(result.approval_values[0].phase, '')
     self.assertEqual(len(result.phases), 0)
 
   def testConvertIssueTemplates(self):
@@ -1110,7 +1089,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_name = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_3], self.project_1.project_id,
         self.services).get(self.field_def_3)
-    expected = issue_objects_pb2.Issue.FieldValue(
+    expected = issue_objects_pb2.FieldValue(
         field=expected_name,
         value=expected_value,
         derivation=EXPLICIT_DERIVATION)
@@ -1128,7 +1107,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_name = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_3], self.project_1.project_id,
         self.services).get(self.field_def_3)
-    expected = issue_objects_pb2.Issue.FieldValue(
+    expected = issue_objects_pb2.FieldValue(
         field=expected_name, value=expected_value, derivation=RULE_DERIVATION)
     self.assertEqual(result[0], expected)
 
@@ -1150,7 +1129,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_name = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_3], self.project_1.project_id,
         self.services).get(self.field_def_3)
-    expected = issue_objects_pb2.Issue.FieldValue(
+    expected = issue_objects_pb2.FieldValue(
         field=expected_name,
         value=expected_value,
         derivation=EXPLICIT_DERIVATION)
@@ -1173,7 +1152,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_0_name = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_3], self.project_1.project_id,
         self.services).get(self.field_def_3)
-    expected_0 = issue_objects_pb2.Issue.FieldValue(
+    expected_0 = issue_objects_pb2.FieldValue(
         field=expected_0_name,
         value=expected_value_0,
         derivation=EXPLICIT_DERIVATION)
@@ -1181,7 +1160,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_1_name = rnc.ConvertFieldDefNames(
         self.cnxn, [self.field_def_4], self.project_1.project_id,
         self.services).get(self.field_def_4)
-    expected_1 = issue_objects_pb2.Issue.FieldValue(
+    expected_1 = issue_objects_pb2.FieldValue(
         field=expected_1_name,
         value=expected_value_1,
         derivation=RULE_DERIVATION)

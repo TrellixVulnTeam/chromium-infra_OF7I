@@ -146,26 +146,26 @@ class Converter(object):
         component_values.append(
             issue_objects_pb2.Issue.ComponentValue(
                 component=ids_to_names[component_id],
-                derivation=issue_objects_pb2.Issue.Derivation.Value(
+                derivation=issue_objects_pb2.Derivation.Value(
                     'EXPLICIT')))
     for derived_component_id in issue.derived_component_ids:
       if derived_component_id in ids_to_names:
         component_values.append(
             issue_objects_pb2.Issue.ComponentValue(
                 component=ids_to_names[derived_component_id],
-                derivation=issue_objects_pb2.Issue.Derivation.Value('RULE')))
+                derivation=issue_objects_pb2.Derivation.Value('RULE')))
 
     return component_values
 
   def _ConvertStatusValue(self, issue):
     # proto.tracker_pb2.Issue -> api_proto.issue_objects_pb2.Issue.StatusValue
     """Convert the status string on issue into a StatusValue."""
-    derivation = issue_objects_pb2.Issue.Derivation.Value(
+    derivation = issue_objects_pb2.Derivation.Value(
         'DERIVATION_UNSPECIFIED')
     if issue.status:
-      derivation = issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
+      derivation = issue_objects_pb2.Derivation.Value('EXPLICIT')
     else:
-      derivation = issue_objects_pb2.Issue.Derivation.Value('RULE')
+      derivation = issue_objects_pb2.Derivation.Value('RULE')
     return issue_objects_pb2.Issue.StatusValue(
         status=issue.status or issue.derived_status, derivation=derivation)
 
@@ -306,28 +306,29 @@ class Converter(object):
       # Explicit values override values derived from rules.
       if issue.owner_id:
         owner = issue_objects_pb2.Issue.UserValue(
-            derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+            derivation=issue_objects_pb2.Derivation.Value('EXPLICIT'),
             user=rnc.ConvertUserName(issue.owner_id))
       elif issue.derived_owner_id:
         owner = issue_objects_pb2.Issue.UserValue(
-            derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+            derivation=issue_objects_pb2.Derivation.Value('RULE'),
             user=rnc.ConvertUserName(issue.derived_owner_id))
 
       cc_users = []
       for cc_user_id in issue.cc_ids:
         cc_users.append(
             issue_objects_pb2.Issue.UserValue(
-                derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'),
+                derivation=issue_objects_pb2.Derivation.Value('EXPLICIT'),
                 user=rnc.ConvertUserName(cc_user_id)))
       for derived_cc_user_id in issue.derived_cc_ids:
         cc_users.append(
             issue_objects_pb2.Issue.UserValue(
-                derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'),
+                derivation=issue_objects_pb2.Derivation.Value('RULE'),
                 user=rnc.ConvertUserName(derived_cc_user_id)))
 
       labels = self.ConvertLabels(
           issue.labels, issue.derived_labels, issue.project_id)
       components = self._ConvertComponentValues(issue)
+      # TODO(crbug/monorail/7634): filter out approval fields
       field_values = self.ConvertFieldValues(
           issue.field_values, issue.project_id, issue.phases)
       field_values.extend(
@@ -369,8 +370,6 @@ class Converter(object):
       if issue.closed_timestamp:
         close_time = timestamp_pb2.Timestamp(seconds=issue.closed_timestamp)
 
-      approval_values = self.ConvertApprovalValues(
-          issue.approval_values, issue.project_id, issue.phases)
       phases = self._ComputePhases(issue.phases)
 
       result = issue_objects_pb2.Issue(
@@ -397,7 +396,6 @@ class Converter(object):
           owner_modify_time=timestamp_pb2.Timestamp(
               seconds=issue.owner_modified_timestamp),
           star_count=issue.star_count,
-          approval_values=approval_values,
           phases=phases)
       # TODO(crbug.com/monorail/5857): Set attachment_count unconditionally
       # after the underlying source of negative attachment counts has been
@@ -498,7 +496,7 @@ class Converter(object):
   def ConvertFieldValues(self, field_values, project_id, phases):
     # type: (Sequence[proto.tracker_pb2.FieldValue], int,
     #     Sequence[proto.tracker_pb2.Phase]) ->
-    #     Sequence[api_proto.issue_objects_pb2.Issue.FieldValue]
+    #     Sequence[api_proto.issue_objects_pb2.FieldValue]
     """Convert sequence of field_values to protoc FieldValues.
 
     This method does not handle enum_type fields
@@ -510,7 +508,7 @@ class Converter(object):
       phases: List of Phases
 
     Returns:
-      Sequence of protoc Issue.FieldValue in the same order they are given in
+      Sequence of protoc FieldValues in the same order they are given in
       `field_values`. In the event any field_values in `field_values` are not
       found, they will be omitted from the result.
     """
@@ -532,7 +530,7 @@ class Converter(object):
       value = self._ComputeFieldValueString(fv)
       derivation = self._ComputeFieldValueDerivation(fv)
       phase = phase_names_by_id.get(fv.phase_id)
-      api_item = issue_objects_pb2.Issue.FieldValue(
+      api_item = issue_objects_pb2.FieldValue(
           field=name, value=value, derivation=derivation, phase=phase)
       api_fvs.append(api_item)
 
@@ -569,14 +567,14 @@ class Converter(object):
       Issue.Derivation of given `field_value`
     """
     if field_value.derived:
-      return issue_objects_pb2.Issue.Derivation.Value('RULE')
+      return issue_objects_pb2.Derivation.Value('RULE')
     else:
-      return issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')
+      return issue_objects_pb2.Derivation.Value('EXPLICIT')
 
   def ConvertApprovalValues(self, approval_values, project_id, phases):
     # type: (Sequence[proto.tracker_pb2.ApprovalValue], int,
     #     Sequence[proto.tracker_pb2.Phase]) ->
-    #     Sequence[api_proto.issue_objects_pb2.Issue.ApprovalValue]
+    #     Sequence[api_proto.issue_objects_pb2.ApprovalValue]
     """Convert sequence of approval_values to protoc ApprovalValues.
 
     Args:
@@ -585,7 +583,7 @@ class Converter(object):
       phases: List of Phases
 
     Returns:
-      Sequence of protoc Issue.ApprovalValue in the same order they are given in
+      Sequence of protoc ApprovalValues in the same order they are given in
       in `approval_values`. In the event any approval_value in `approval_values`
       are not found, they will be omitted from the result.
     """
@@ -609,7 +607,7 @@ class Converter(object):
       set_time.FromSeconds(av.set_on)
       setter = rnc.ConvertUserNames([av.setter_id]).get(av.setter_id)
       phase = phase_names_by_id.get(av.phase_id)
-      api_item = issue_objects_pb2.Issue.ApprovalValue(
+      api_item = issue_objects_pb2.ApprovalValue(
           name=name,
           approvers=approvers,
           status=status,
@@ -625,22 +623,26 @@ class Converter(object):
     #     api_proto.issue_objects_pb2.Issue.ApprovalStatus
     """Convert a protorpc ApprovalStatus to a protoc Issue.ApprovalStatus."""
     if status == tracker_pb2.ApprovalStatus.NOT_SET:
-      return issue_objects_pb2.Issue.ApprovalStatus.Value(
+      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
           'APPROVAL_STATUS_UNSPECIFIED')
     elif status == tracker_pb2.ApprovalStatus.NEEDS_REVIEW:
-      return issue_objects_pb2.Issue.ApprovalStatus.Value('NEEDS_REVIEW')
+      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
+          'NEEDS_REVIEW')
     elif status == tracker_pb2.ApprovalStatus.NA:
-      return issue_objects_pb2.Issue.ApprovalStatus.Value('NA')
+      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA')
     elif status == tracker_pb2.ApprovalStatus.REVIEW_REQUESTED:
-      return issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_REQUESTED')
+      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
+          'REVIEW_REQUESTED')
     elif status == tracker_pb2.ApprovalStatus.REVIEW_STARTED:
-      return issue_objects_pb2.Issue.ApprovalStatus.Value('REVIEW_STARTED')
+      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
+          'REVIEW_STARTED')
     elif status == tracker_pb2.ApprovalStatus.NEED_INFO:
-      return issue_objects_pb2.Issue.ApprovalStatus.Value('NEED_INFO')
+      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NEED_INFO')
     elif status == tracker_pb2.ApprovalStatus.APPROVED:
-      return issue_objects_pb2.Issue.ApprovalStatus.Value('APPROVED')
+      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('APPROVED')
     elif status == tracker_pb2.ApprovalStatus.NOT_APPROVED:
-      return issue_objects_pb2.Issue.ApprovalStatus.Value('NOT_APPROVED')
+      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
+          'NOT_APPROVED')
     else:
       raise ValueError('Unrecognized tracker_pb2.ApprovalStatus enum')
 
@@ -723,7 +725,7 @@ class Converter(object):
     state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
     status = issue_objects_pb2.Issue.StatusValue(
         status=template.status,
-        derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT'))
+        derivation=issue_objects_pb2.Derivation.Value('EXPLICIT'))
     owner = None
     if template.owner_id is not None:
       owner = issue_objects_pb2.Issue.UserValue(
@@ -736,13 +738,12 @@ class Converter(object):
       components.append(
           issue_objects_pb2.Issue.ComponentValue(
               component=component_resource_name,
-              derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
+              derivation=issue_objects_pb2.Derivation.Value('EXPLICIT')))
+    # TODO(crbug/monorail/7634): filter out approval fields.
     field_values = self.ConvertFieldValues(
         template.field_values, project_id, template.phases)
     field_values.extend(
         self.ConvertEnumFieldValues(template.labels, [], project_id))
-    approval_values = self.ConvertApprovalValues(
-        template.approval_values, project_id, template.phases)
     phases = self._ComputePhases(template.phases)
 
     filled_issue = issue_objects_pb2.Issue(
@@ -753,7 +754,6 @@ class Converter(object):
         labels=labels,
         components=components,
         field_values=field_values,
-        approval_values=approval_values,
         phases=phases)
     return filled_issue
 
@@ -805,17 +805,17 @@ class Converter(object):
       api_labels.append(
           issue_objects_pb2.Issue.LabelValue(
               label=label,
-              derivation=issue_objects_pb2.Issue.Derivation.Value('EXPLICIT')))
+              derivation=issue_objects_pb2.Derivation.Value('EXPLICIT')))
     for label in non_fd_der_labels:
       api_labels.append(
           issue_objects_pb2.Issue.LabelValue(
               label=label,
-              derivation=issue_objects_pb2.Issue.Derivation.Value('RULE')))
+              derivation=issue_objects_pb2.Derivation.Value('RULE')))
     return api_labels
 
   def ConvertEnumFieldValues(self, labels, derived_labels, project_id):
     # type: (Sequence[str], Sequence[str], int) ->
-    #     Sequence[api_proto.issue_objects_pb2.Issue.FieldValue]
+    #     Sequence[api_proto.issue_objects_pb2.FieldValue]
     """Convert string labels to FieldValues for enum-field labels
 
     Args:
@@ -846,10 +846,10 @@ class Converter(object):
         continue
       api_fvs.extend(
           [
-              issue_objects_pb2.Issue.FieldValue(
+              issue_objects_pb2.FieldValue(
                   field=resource_name,
                   value=value,
-                  derivation=issue_objects_pb2.Issue.Derivation.Value(
+                  derivation=issue_objects_pb2.Derivation.Value(
                       'EXPLICIT')) for value in values
           ])
 
@@ -862,10 +862,10 @@ class Converter(object):
         continue
       api_fvs.extend(
           [
-              issue_objects_pb2.Issue.FieldValue(
+              issue_objects_pb2.FieldValue(
                   field=resource_name,
                   value=value,
-                  derivation=issue_objects_pb2.Issue.Derivation.Value('RULE'))
+                  derivation=issue_objects_pb2.Derivation.Value('RULE'))
               for value in values
           ])
 

@@ -23,10 +23,37 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$api/v1/api_proto/issue_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbd\x06\n\x07\x43omment\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x32\n\x05state\x18\x02 \x01(\x0e\x32\x1e.monorail.v1.IssueContentStateB\x03\xe0\x41\x03\x12\'\n\x04type\x18\x03 \x01(\x0e\x32\x19.monorail.v1.Comment.Type\x12\x0f\n\x07\x63ontent\x18\x04 \x01(\t\x12-\n\tcommenter\x18\x05 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x1c\n\x0finbound_message\x18\x07 \x01(\tB\x03\xe0\x41\x03\x12\x30\n\x08\x61pproval\x18\x08 \x01(\tB\x1e\xfa\x41\x1b\n\x19\x61pi.crbug.com/ApprovalDef\x12\x37\n\namendments\x18\t \x03(\x0b\x32\x1e.monorail.v1.Comment.AmendmentB\x03\xe0\x41\x03\x12\x39\n\x0b\x61ttachments\x18\n \x03(\x0b\x32\x1f.monorail.v1.Comment.AttachmentB\x03\xe0\x41\x03\x1a\xae\x01\n\nAttachment\x12\x10\n\x08\x66ilename\x18\x01 \x01(\t\x12-\n\x05state\x18\x02 \x01(\x0e\x32\x1e.monorail.v1.IssueContentState\x12\x0c\n\x04size\x18\x03 \x01(\x04\x12\x12\n\nmedia_type\x18\x04 \x01(\t\x12\x15\n\rthumbnail_uri\x18\x05 \x01(\t\x12\x10\n\x08view_uri\x18\x06 \x01(\t\x12\x14\n\x0c\x64ownload_uri\x18\x07 \x01(\t\x1aN\n\tAmendment\x12\x12\n\nfield_name\x18\x01 \x01(\t\x12\x1a\n\x12new_or_delta_value\x18\x02 \x01(\t\x12\x11\n\told_value\x18\x03 \x01(\t\"5\n\x04Type\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\x0b\n\x07\x43OMMENT\x10\x01\x12\x0f\n\x0b\x44\x45SCRIPTION\x10\x02:U\xea\x41R\n\x1a\x61pi.crbug.com/IssueComment\x12\x34projects/{project}/issues/{issue}/comments/{comment}\"\xe5\x10\n\x05Issue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t\x12-\n\x05state\x18\x03 \x01(\x0e\x32\x1e.monorail.v1.IssueContentState\x12.\n\x06status\x18\x04 \x01(\x0b\x32\x1e.monorail.v1.Issue.StatusValue\x12,\n\x08reporter\x18\x05 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12+\n\x05owner\x18\x06 \x01(\x0b\x32\x1c.monorail.v1.Issue.UserValue\x12.\n\x08\x63\x63_users\x18\x07 \x03(\x0b\x32\x1c.monorail.v1.Issue.UserValue\x12-\n\x06labels\x18\x08 \x03(\x0b\x32\x1d.monorail.v1.Issue.LabelValue\x12\x35\n\ncomponents\x18\t \x03(\x0b\x32!.monorail.v1.Issue.ComponentValue\x12\x33\n\x0c\x66ield_values\x18\n \x03(\x0b\x32\x1d.monorail.v1.Issue.FieldValue\x12\x34\n\x15merged_into_issue_ref\x18\x0b \x01(\x0b\x32\x15.monorail.v1.IssueRef\x12\x34\n\x15\x62locked_on_issue_refs\x18\x0c \x03(\x0b\x32\x15.monorail.v1.IssueRef\x12\x32\n\x13\x62locking_issue_refs\x18\r \x03(\x0b\x32\x15.monorail.v1.IssueRef\x12\x34\n\x0b\x63reate_time\x18\x0e \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x33\n\nclose_time\x18\x0f \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x34\n\x0bmodify_time\x18\x10 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12>\n\x15\x63omponent_modify_time\x18\x11 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12;\n\x12status_modify_time\x18\x12 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12:\n\x11owner_modify_time\x18\x13 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x1d\n\x10\x61ttachment_count\x18\x14 \x01(\rB\x03\xe0\x41\x03\x12\x17\n\nstar_count\x18\x15 \x01(\rB\x03\xe0\x41\x03\x12\x39\n\x0f\x61pproval_values\x18\x16 \x03(\x0b\x32 .monorail.v1.Issue.ApprovalValue\x12\x0e\n\x06phases\x18\x17 \x03(\t\x1a\x87\x02\n\rApprovalValue\x12,\n\x04name\x18\x01 \x01(\tB\x1e\xfa\x41\x1b\n\x19\x61pi.crbug.com/ApprovalDef\x12*\n\tapprovers\x18\x02 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x31\n\x06status\x18\x03 \x01(\x0e\x32!.monorail.v1.Issue.ApprovalStatus\x12\x31\n\x08set_time\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\'\n\x06setter\x18\x05 \x01(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\r\n\x05phase\x18\x06 \x01(\t\x1aw\n\x0e\x43omponentValue\x12\x32\n\tcomponent\x18\x01 \x01(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/ComponentDef\x12\x31\n\nderivation\x18\x02 \x01(\x0e\x32\x1d.monorail.v1.Issue.Derivation\x1a\x89\x01\n\nFieldValue\x12*\n\x05\x66ield\x18\x01 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/FieldDef\x12\r\n\x05value\x18\x02 \x01(\t\x12\x31\n\nderivation\x18\x03 \x01(\x0e\x32\x1d.monorail.v1.Issue.Derivation\x12\r\n\x05phase\x18\x04 \x01(\t\x1aN\n\nLabelValue\x12\r\n\x05label\x18\x01 \x01(\t\x12\x31\n\nderivation\x18\x02 \x01(\x0e\x32\x1d.monorail.v1.Issue.Derivation\x1aP\n\x0bStatusValue\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x31\n\nderivation\x18\x02 \x01(\x0e\x32\x1d.monorail.v1.Issue.Derivation\x1a\x65\n\tUserValue\x12%\n\x04user\x18\x01 \x01(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x31\n\nderivation\x18\x02 \x01(\x0e\x32\x1d.monorail.v1.Issue.Derivation\"\xa4\x01\n\x0e\x41pprovalStatus\x12\x1f\n\x1b\x41PPROVAL_STATUS_UNSPECIFIED\x10\x00\x12\x10\n\x0cNEEDS_REVIEW\x10\x01\x12\x06\n\x02NA\x10\x02\x12\x14\n\x10REVIEW_REQUESTED\x10\x03\x12\x12\n\x0eREVIEW_STARTED\x10\x04\x12\r\n\tNEED_INFO\x10\x05\x12\x0c\n\x08\x41PPROVED\x10\x06\x12\x10\n\x0cNOT_APPROVED\x10\x07\"@\n\nDerivation\x12\x1a\n\x16\x44\x45RIVATION_UNSPECIFIED\x10\x00\x12\x0c\n\x08\x45XPLICIT\x10\x01\x12\x08\n\x04RULE\x10\x02::\xea\x41\x37\n\x13\x61pi.crbug.com/Issue\x12 project/{project}/issues/{issue}\"\"\n\x10IssuesListColumn\x12\x0e\n\x06\x63olumn\x18\x01 \x01(\t\"K\n\x08IssueRef\x12\'\n\x05issue\x18\x01 \x01(\tB\x18\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\x12\x16\n\x0e\x65xt_identifier\x18\x02 \x01(\t*M\n\x11IssueContentState\x12\x15\n\x11STATE_UNSPECIFIED\x10\x00\x12\n\n\x06\x41\x43TIVE\x10\x01\x12\x0b\n\x07\x44\x45LETED\x10\x02\x12\x08\n\x04SPAM\x10\x03\x62\x06proto3')
+  serialized_pb=_b('\n$api/v1/api_proto/issue_objects.proto\x12\x0bmonorail.v1\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbf\x06\n\x07\x43omment\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x32\n\x05state\x18\x02 \x01(\x0e\x32\x1e.monorail.v1.IssueContentStateB\x03\xe0\x41\x03\x12\'\n\x04type\x18\x03 \x01(\x0e\x32\x19.monorail.v1.Comment.Type\x12\x0f\n\x07\x63ontent\x18\x04 \x01(\t\x12-\n\tcommenter\x18\x05 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x1c\n\x0finbound_message\x18\x07 \x01(\tB\x03\xe0\x41\x03\x12\x32\n\x08\x61pproval\x18\x08 \x01(\tB \xfa\x41\x1d\n\x1b\x61pi.crbug.com/ApprovalValue\x12\x37\n\namendments\x18\t \x03(\x0b\x32\x1e.monorail.v1.Comment.AmendmentB\x03\xe0\x41\x03\x12\x39\n\x0b\x61ttachments\x18\n \x03(\x0b\x32\x1f.monorail.v1.Comment.AttachmentB\x03\xe0\x41\x03\x1a\xae\x01\n\nAttachment\x12\x10\n\x08\x66ilename\x18\x01 \x01(\t\x12-\n\x05state\x18\x02 \x01(\x0e\x32\x1e.monorail.v1.IssueContentState\x12\x0c\n\x04size\x18\x03 \x01(\x04\x12\x12\n\nmedia_type\x18\x04 \x01(\t\x12\x15\n\rthumbnail_uri\x18\x05 \x01(\t\x12\x10\n\x08view_uri\x18\x06 \x01(\t\x12\x14\n\x0c\x64ownload_uri\x18\x07 \x01(\t\x1aN\n\tAmendment\x12\x12\n\nfield_name\x18\x01 \x01(\t\x12\x1a\n\x12new_or_delta_value\x18\x02 \x01(\t\x12\x11\n\told_value\x18\x03 \x01(\t\"5\n\x04Type\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\x0b\n\x07\x43OMMENT\x10\x01\x12\x0f\n\x0b\x44\x45SCRIPTION\x10\x02:U\xea\x41R\n\x1a\x61pi.crbug.com/IssueComment\x12\x34projects/{project}/issues/{issue}/comments/{comment}\"\x83\x01\n\nFieldValue\x12*\n\x05\x66ield\x18\x01 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/FieldDef\x12\r\n\x05value\x18\x02 \x01(\t\x12+\n\nderivation\x18\x03 \x01(\x0e\x32\x17.monorail.v1.Derivation\x12\r\n\x05phase\x18\x04 \x01(\t\"\x92\x0b\n\x05Issue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t\x12-\n\x05state\x18\x03 \x01(\x0e\x32\x1e.monorail.v1.IssueContentState\x12.\n\x06status\x18\x04 \x01(\x0b\x32\x1e.monorail.v1.Issue.StatusValue\x12,\n\x08reporter\x18\x05 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12+\n\x05owner\x18\x06 \x01(\x0b\x32\x1c.monorail.v1.Issue.UserValue\x12.\n\x08\x63\x63_users\x18\x07 \x03(\x0b\x32\x1c.monorail.v1.Issue.UserValue\x12-\n\x06labels\x18\x08 \x03(\x0b\x32\x1d.monorail.v1.Issue.LabelValue\x12\x35\n\ncomponents\x18\t \x03(\x0b\x32!.monorail.v1.Issue.ComponentValue\x12-\n\x0c\x66ield_values\x18\n \x03(\x0b\x32\x17.monorail.v1.FieldValue\x12\x34\n\x15merged_into_issue_ref\x18\x0b \x01(\x0b\x32\x15.monorail.v1.IssueRef\x12\x34\n\x15\x62locked_on_issue_refs\x18\x0c \x03(\x0b\x32\x15.monorail.v1.IssueRef\x12\x32\n\x13\x62locking_issue_refs\x18\r \x03(\x0b\x32\x15.monorail.v1.IssueRef\x12\x34\n\x0b\x63reate_time\x18\x0e \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x33\n\nclose_time\x18\x0f \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x34\n\x0bmodify_time\x18\x10 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12>\n\x15\x63omponent_modify_time\x18\x11 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12;\n\x12status_modify_time\x18\x12 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12:\n\x11owner_modify_time\x18\x13 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x1d\n\x10\x61ttachment_count\x18\x14 \x01(\rB\x03\xe0\x41\x03\x12\x17\n\nstar_count\x18\x15 \x01(\rB\x03\xe0\x41\x03\x12\x13\n\x06phases\x18\x16 \x03(\tB\x03\xe0\x41\x03\x1aq\n\x0e\x43omponentValue\x12\x32\n\tcomponent\x18\x01 \x01(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/ComponentDef\x12+\n\nderivation\x18\x02 \x01(\x0e\x32\x17.monorail.v1.Derivation\x1aH\n\nLabelValue\x12\r\n\x05label\x18\x01 \x01(\t\x12+\n\nderivation\x18\x02 \x01(\x0e\x32\x17.monorail.v1.Derivation\x1aJ\n\x0bStatusValue\x12\x0e\n\x06status\x18\x01 \x01(\t\x12+\n\nderivation\x18\x02 \x01(\x0e\x32\x17.monorail.v1.Derivation\x1a_\n\tUserValue\x12%\n\x04user\x18\x01 \x01(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12+\n\nderivation\x18\x02 \x01(\x0e\x32\x17.monorail.v1.Derivation::\xea\x41\x37\n\x13\x61pi.crbug.com/Issue\x12 project/{project}/issues/{issue}\"\"\n\x10IssuesListColumn\x12\x0e\n\x06\x63olumn\x18\x01 \x01(\t\"K\n\x08IssueRef\x12\'\n\x05issue\x18\x01 \x01(\tB\x18\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\x12\x16\n\x0e\x65xt_identifier\x18\x02 \x01(\t\"\xe0\x04\n\rApprovalValue\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x37\n\x0c\x61pproval_def\x18\x02 \x01(\tB!\xfa\x41\x1b\n\x19\x61pi.crbug.com/ApprovalDef\xe0\x41\x03\x12*\n\tapprovers\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x39\n\x06status\x18\x04 \x01(\x0e\x32).monorail.v1.ApprovalValue.ApprovalStatus\x12\x31\n\x08set_time\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\'\n\x06setter\x18\x06 \x01(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x12\n\x05phase\x18\x07 \x01(\tB\x03\xe0\x41\x03\x12-\n\x0c\x66ield_values\x18\x08 \x03(\x0b\x32\x17.monorail.v1.FieldValue\"\xa4\x01\n\x0e\x41pprovalStatus\x12\x1f\n\x1b\x41PPROVAL_STATUS_UNSPECIFIED\x10\x00\x12\x10\n\x0cNEEDS_REVIEW\x10\x01\x12\x06\n\x02NA\x10\x02\x12\x14\n\x10REVIEW_REQUESTED\x10\x03\x12\x12\n\x0eREVIEW_STARTED\x10\x04\x12\r\n\tNEED_INFO\x10\x05\x12\x0c\n\x08\x41PPROVED\x10\x06\x12\x10\n\x0cNOT_APPROVED\x10\x07:[\xea\x41X\n\x1b\x61pi.crbug.com/ApprovalValue\x12\x39project/{project}/issues/{issue}/approvalValue/{approval}*@\n\nDerivation\x12\x1a\n\x16\x44\x45RIVATION_UNSPECIFIED\x10\x00\x12\x0c\n\x08\x45XPLICIT\x10\x01\x12\x08\n\x04RULE\x10\x02*M\n\x11IssueContentState\x12\x15\n\x11STATE_UNSPECIFIED\x10\x00\x12\n\n\x06\x41\x43TIVE\x10\x01\x12\x0b\n\x07\x44\x45LETED\x10\x02\x12\x08\n\x04SPAM\x10\x03\x62\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 
+_DERIVATION = _descriptor.EnumDescriptor(
+  name='Derivation',
+  full_name='monorail.v1.Derivation',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='DERIVATION_UNSPECIFIED', index=0, number=0,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='EXPLICIT', index=1, number=1,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='RULE', index=2, number=2,
+      serialized_options=None,
+      type=None),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=3293,
+  serialized_end=3357,
+)
+_sym_db.RegisterEnumDescriptor(_DERIVATION)
+
+Derivation = enum_type_wrapper.EnumTypeWrapper(_DERIVATION)
 _ISSUECONTENTSTATE = _descriptor.EnumDescriptor(
   name='IssueContentState',
   full_name='monorail.v1.IssueContentState',
@@ -52,12 +79,15 @@ _ISSUECONTENTSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3269,
-  serialized_end=3346,
+  serialized_start=3359,
+  serialized_end=3436,
 )
 _sym_db.RegisterEnumDescriptor(_ISSUECONTENTSTATE)
 
 IssueContentState = enum_type_wrapper.EnumTypeWrapper(_ISSUECONTENTSTATE)
+DERIVATION_UNSPECIFIED = 0
+EXPLICIT = 1
+RULE = 2
 STATE_UNSPECIFIED = 0
 ACTIVE = 1
 DELETED = 2
@@ -85,14 +115,14 @@ _COMMENT_TYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=862,
-  serialized_end=915,
+  serialized_start=864,
+  serialized_end=917,
 )
 _sym_db.RegisterEnumDescriptor(_COMMENT_TYPE)
 
-_ISSUE_APPROVALSTATUS = _descriptor.EnumDescriptor(
+_APPROVALVALUE_APPROVALSTATUS = _descriptor.EnumDescriptor(
   name='ApprovalStatus',
-  full_name='monorail.v1.Issue.ApprovalStatus',
+  full_name='monorail.v1.ApprovalValue.ApprovalStatus',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -131,36 +161,10 @@ _ISSUE_APPROVALSTATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2864,
-  serialized_end=3028,
+  serialized_start=3034,
+  serialized_end=3198,
 )
-_sym_db.RegisterEnumDescriptor(_ISSUE_APPROVALSTATUS)
-
-_ISSUE_DERIVATION = _descriptor.EnumDescriptor(
-  name='Derivation',
-  full_name='monorail.v1.Issue.Derivation',
-  filename=None,
-  file=DESCRIPTOR,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='DERIVATION_UNSPECIFIED', index=0, number=0,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='EXPLICIT', index=1, number=1,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='RULE', index=2, number=2,
-      serialized_options=None,
-      type=None),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=3030,
-  serialized_end=3094,
-)
-_sym_db.RegisterEnumDescriptor(_ISSUE_DERIVATION)
+_sym_db.RegisterEnumDescriptor(_APPROVALVALUE_APPROVALSTATUS)
 
 
 _COMMENT_ATTACHMENT = _descriptor.Descriptor(
@@ -231,8 +235,8 @@ _COMMENT_ATTACHMENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=606,
-  serialized_end=780,
+  serialized_start=608,
+  serialized_end=782,
 )
 
 _COMMENT_AMENDMENT = _descriptor.Descriptor(
@@ -275,8 +279,8 @@ _COMMENT_AMENDMENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=782,
-  serialized_end=860,
+  serialized_start=784,
+  serialized_end=862,
 )
 
 _COMMENT = _descriptor.Descriptor(
@@ -341,7 +345,7 @@ _COMMENT = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=_b('\372A\033\n\031api.crbug.com/ApprovalDef'), file=DESCRIPTOR),
+      serialized_options=_b('\372A\035\n\033api.crbug.com/ApprovalValue'), file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='amendments', full_name='monorail.v1.Comment.amendments', index=8,
       number=9, type=11, cpp_type=10, label=3,
@@ -370,55 +374,41 @@ _COMMENT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=173,
-  serialized_end=1002,
+  serialized_end=1004,
 )
 
 
-_ISSUE_APPROVALVALUE = _descriptor.Descriptor(
-  name='ApprovalValue',
-  full_name='monorail.v1.Issue.ApprovalValue',
+_FIELDVALUE = _descriptor.Descriptor(
+  name='FieldValue',
+  full_name='monorail.v1.FieldValue',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='monorail.v1.Issue.ApprovalValue.name', index=0,
+      name='field', full_name='monorail.v1.FieldValue.field', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=_b('\372A\033\n\031api.crbug.com/ApprovalDef'), file=DESCRIPTOR),
+      serialized_options=_b('\372A\030\n\026api.crbug.com/FieldDef'), file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='approvers', full_name='monorail.v1.Issue.ApprovalValue.approvers', index=1,
-      number=2, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
+      name='value', full_name='monorail.v1.FieldValue.value', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=_b('\372A\024\n\022api.crbug.com/User'), file=DESCRIPTOR),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='status', full_name='monorail.v1.Issue.ApprovalValue.status', index=2,
+      name='derivation', full_name='monorail.v1.FieldValue.derivation', index=2,
       number=3, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='set_time', full_name='monorail.v1.Issue.ApprovalValue.set_time', index=3,
-      number=4, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=_b('\340A\003'), file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='setter', full_name='monorail.v1.Issue.ApprovalValue.setter', index=4,
-      number=5, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=_b('\372A\024\n\022api.crbug.com/User'), file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='phase', full_name='monorail.v1.Issue.ApprovalValue.phase', index=5,
-      number=6, type=9, cpp_type=9, label=1,
+      name='phase', full_name='monorail.v1.FieldValue.phase', index=3,
+      number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -435,9 +425,10 @@ _ISSUE_APPROVALVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2072,
-  serialized_end=2335,
+  serialized_start=1007,
+  serialized_end=1138,
 )
+
 
 _ISSUE_COMPONENTVALUE = _descriptor.Descriptor(
   name='ComponentValue',
@@ -472,59 +463,8 @@ _ISSUE_COMPONENTVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2337,
-  serialized_end=2456,
-)
-
-_ISSUE_FIELDVALUE = _descriptor.Descriptor(
-  name='FieldValue',
-  full_name='monorail.v1.Issue.FieldValue',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='field', full_name='monorail.v1.Issue.FieldValue.field', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=_b('\372A\030\n\026api.crbug.com/FieldDef'), file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='value', full_name='monorail.v1.Issue.FieldValue.value', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='derivation', full_name='monorail.v1.Issue.FieldValue.derivation', index=2,
-      number=3, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='phase', full_name='monorail.v1.Issue.FieldValue.phase', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2459,
-  serialized_end=2596,
+  serialized_start=2147,
+  serialized_end=2260,
 )
 
 _ISSUE_LABELVALUE = _descriptor.Descriptor(
@@ -560,8 +500,8 @@ _ISSUE_LABELVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2598,
-  serialized_end=2676,
+  serialized_start=2262,
+  serialized_end=2334,
 )
 
 _ISSUE_STATUSVALUE = _descriptor.Descriptor(
@@ -597,8 +537,8 @@ _ISSUE_STATUSVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2678,
-  serialized_end=2758,
+  serialized_start=2336,
+  serialized_end=2410,
 )
 
 _ISSUE_USERVALUE = _descriptor.Descriptor(
@@ -634,8 +574,8 @@ _ISSUE_USERVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2760,
-  serialized_end=2861,
+  serialized_start=2412,
+  serialized_end=2507,
 )
 
 _ISSUE = _descriptor.Descriptor(
@@ -793,26 +733,17 @@ _ISSUE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=_b('\340A\003'), file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='approval_values', full_name='monorail.v1.Issue.approval_values', index=21,
-      number=22, type=11, cpp_type=10, label=3,
+      name='phases', full_name='monorail.v1.Issue.phases', index=21,
+      number=22, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='phases', full_name='monorail.v1.Issue.phases', index=22,
-      number=23, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      serialized_options=_b('\340A\003'), file=DESCRIPTOR),
   ],
   extensions=[
   ],
-  nested_types=[_ISSUE_APPROVALVALUE, _ISSUE_COMPONENTVALUE, _ISSUE_FIELDVALUE, _ISSUE_LABELVALUE, _ISSUE_STATUSVALUE, _ISSUE_USERVALUE, ],
+  nested_types=[_ISSUE_COMPONENTVALUE, _ISSUE_LABELVALUE, _ISSUE_STATUSVALUE, _ISSUE_USERVALUE, ],
   enum_types=[
-    _ISSUE_APPROVALSTATUS,
-    _ISSUE_DERIVATION,
   ],
   serialized_options=_b('\352A7\n\023api.crbug.com/Issue\022 project/{project}/issues/{issue}'),
   is_extendable=False,
@@ -820,8 +751,8 @@ _ISSUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1005,
-  serialized_end=3154,
+  serialized_start=1141,
+  serialized_end=2567,
 )
 
 
@@ -851,8 +782,8 @@ _ISSUESLISTCOLUMN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3156,
-  serialized_end=3190,
+  serialized_start=2569,
+  serialized_end=2603,
 )
 
 
@@ -889,8 +820,89 @@ _ISSUEREF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3192,
-  serialized_end=3267,
+  serialized_start=2605,
+  serialized_end=2680,
+)
+
+
+_APPROVALVALUE = _descriptor.Descriptor(
+  name='ApprovalValue',
+  full_name='monorail.v1.ApprovalValue',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='monorail.v1.ApprovalValue.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='approval_def', full_name='monorail.v1.ApprovalValue.approval_def', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\033\n\031api.crbug.com/ApprovalDef\340A\003'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='approvers', full_name='monorail.v1.ApprovalValue.approvers', index=2,
+      number=3, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\024\n\022api.crbug.com/User'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='status', full_name='monorail.v1.ApprovalValue.status', index=3,
+      number=4, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='set_time', full_name='monorail.v1.ApprovalValue.set_time', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\340A\003'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='setter', full_name='monorail.v1.ApprovalValue.setter', index=5,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\372A\024\n\022api.crbug.com/User'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='phase', full_name='monorail.v1.ApprovalValue.phase', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=_b('\340A\003'), file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='field_values', full_name='monorail.v1.ApprovalValue.field_values', index=7,
+      number=8, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+    _APPROVALVALUE_APPROVALSTATUS,
+  ],
+  serialized_options=_b('\352AX\n\033api.crbug.com/ApprovalValue\0229project/{project}/issues/{issue}/approvalValue/{approval}'),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2683,
+  serialized_end=3291,
 )
 
 _COMMENT_ATTACHMENT.fields_by_name['state'].enum_type = _ISSUECONTENTSTATE
@@ -902,18 +914,14 @@ _COMMENT.fields_by_name['create_time'].message_type = google_dot_protobuf_dot_ti
 _COMMENT.fields_by_name['amendments'].message_type = _COMMENT_AMENDMENT
 _COMMENT.fields_by_name['attachments'].message_type = _COMMENT_ATTACHMENT
 _COMMENT_TYPE.containing_type = _COMMENT
-_ISSUE_APPROVALVALUE.fields_by_name['status'].enum_type = _ISSUE_APPROVALSTATUS
-_ISSUE_APPROVALVALUE.fields_by_name['set_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
-_ISSUE_APPROVALVALUE.containing_type = _ISSUE
-_ISSUE_COMPONENTVALUE.fields_by_name['derivation'].enum_type = _ISSUE_DERIVATION
+_FIELDVALUE.fields_by_name['derivation'].enum_type = _DERIVATION
+_ISSUE_COMPONENTVALUE.fields_by_name['derivation'].enum_type = _DERIVATION
 _ISSUE_COMPONENTVALUE.containing_type = _ISSUE
-_ISSUE_FIELDVALUE.fields_by_name['derivation'].enum_type = _ISSUE_DERIVATION
-_ISSUE_FIELDVALUE.containing_type = _ISSUE
-_ISSUE_LABELVALUE.fields_by_name['derivation'].enum_type = _ISSUE_DERIVATION
+_ISSUE_LABELVALUE.fields_by_name['derivation'].enum_type = _DERIVATION
 _ISSUE_LABELVALUE.containing_type = _ISSUE
-_ISSUE_STATUSVALUE.fields_by_name['derivation'].enum_type = _ISSUE_DERIVATION
+_ISSUE_STATUSVALUE.fields_by_name['derivation'].enum_type = _DERIVATION
 _ISSUE_STATUSVALUE.containing_type = _ISSUE
-_ISSUE_USERVALUE.fields_by_name['derivation'].enum_type = _ISSUE_DERIVATION
+_ISSUE_USERVALUE.fields_by_name['derivation'].enum_type = _DERIVATION
 _ISSUE_USERVALUE.containing_type = _ISSUE
 _ISSUE.fields_by_name['state'].enum_type = _ISSUECONTENTSTATE
 _ISSUE.fields_by_name['status'].message_type = _ISSUE_STATUSVALUE
@@ -921,7 +929,7 @@ _ISSUE.fields_by_name['owner'].message_type = _ISSUE_USERVALUE
 _ISSUE.fields_by_name['cc_users'].message_type = _ISSUE_USERVALUE
 _ISSUE.fields_by_name['labels'].message_type = _ISSUE_LABELVALUE
 _ISSUE.fields_by_name['components'].message_type = _ISSUE_COMPONENTVALUE
-_ISSUE.fields_by_name['field_values'].message_type = _ISSUE_FIELDVALUE
+_ISSUE.fields_by_name['field_values'].message_type = _FIELDVALUE
 _ISSUE.fields_by_name['merged_into_issue_ref'].message_type = _ISSUEREF
 _ISSUE.fields_by_name['blocked_on_issue_refs'].message_type = _ISSUEREF
 _ISSUE.fields_by_name['blocking_issue_refs'].message_type = _ISSUEREF
@@ -931,13 +939,17 @@ _ISSUE.fields_by_name['modify_time'].message_type = google_dot_protobuf_dot_time
 _ISSUE.fields_by_name['component_modify_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _ISSUE.fields_by_name['status_modify_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _ISSUE.fields_by_name['owner_modify_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
-_ISSUE.fields_by_name['approval_values'].message_type = _ISSUE_APPROVALVALUE
-_ISSUE_APPROVALSTATUS.containing_type = _ISSUE
-_ISSUE_DERIVATION.containing_type = _ISSUE
+_APPROVALVALUE.fields_by_name['status'].enum_type = _APPROVALVALUE_APPROVALSTATUS
+_APPROVALVALUE.fields_by_name['set_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
+_APPROVALVALUE.fields_by_name['field_values'].message_type = _FIELDVALUE
+_APPROVALVALUE_APPROVALSTATUS.containing_type = _APPROVALVALUE
 DESCRIPTOR.message_types_by_name['Comment'] = _COMMENT
+DESCRIPTOR.message_types_by_name['FieldValue'] = _FIELDVALUE
 DESCRIPTOR.message_types_by_name['Issue'] = _ISSUE
 DESCRIPTOR.message_types_by_name['IssuesListColumn'] = _ISSUESLISTCOLUMN
 DESCRIPTOR.message_types_by_name['IssueRef'] = _ISSUEREF
+DESCRIPTOR.message_types_by_name['ApprovalValue'] = _APPROVALVALUE
+DESCRIPTOR.enum_types_by_name['Derivation'] = _DERIVATION
 DESCRIPTOR.enum_types_by_name['IssueContentState'] = _ISSUECONTENTSTATE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -964,26 +976,19 @@ _sym_db.RegisterMessage(Comment)
 _sym_db.RegisterMessage(Comment.Attachment)
 _sym_db.RegisterMessage(Comment.Amendment)
 
-Issue = _reflection.GeneratedProtocolMessageType('Issue', (_message.Message,), dict(
+FieldValue = _reflection.GeneratedProtocolMessageType('FieldValue', (_message.Message,), dict(
+  DESCRIPTOR = _FIELDVALUE,
+  __module__ = 'api.v1.api_proto.issue_objects_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.FieldValue)
+  ))
+_sym_db.RegisterMessage(FieldValue)
 
-  ApprovalValue = _reflection.GeneratedProtocolMessageType('ApprovalValue', (_message.Message,), dict(
-    DESCRIPTOR = _ISSUE_APPROVALVALUE,
-    __module__ = 'api.v1.api_proto.issue_objects_pb2'
-    # @@protoc_insertion_point(class_scope:monorail.v1.Issue.ApprovalValue)
-    ))
-  ,
+Issue = _reflection.GeneratedProtocolMessageType('Issue', (_message.Message,), dict(
 
   ComponentValue = _reflection.GeneratedProtocolMessageType('ComponentValue', (_message.Message,), dict(
     DESCRIPTOR = _ISSUE_COMPONENTVALUE,
     __module__ = 'api.v1.api_proto.issue_objects_pb2'
     # @@protoc_insertion_point(class_scope:monorail.v1.Issue.ComponentValue)
-    ))
-  ,
-
-  FieldValue = _reflection.GeneratedProtocolMessageType('FieldValue', (_message.Message,), dict(
-    DESCRIPTOR = _ISSUE_FIELDVALUE,
-    __module__ = 'api.v1.api_proto.issue_objects_pb2'
-    # @@protoc_insertion_point(class_scope:monorail.v1.Issue.FieldValue)
     ))
   ,
 
@@ -1012,9 +1017,7 @@ Issue = _reflection.GeneratedProtocolMessageType('Issue', (_message.Message,), d
   # @@protoc_insertion_point(class_scope:monorail.v1.Issue)
   ))
 _sym_db.RegisterMessage(Issue)
-_sym_db.RegisterMessage(Issue.ApprovalValue)
 _sym_db.RegisterMessage(Issue.ComponentValue)
-_sym_db.RegisterMessage(Issue.FieldValue)
 _sym_db.RegisterMessage(Issue.LabelValue)
 _sym_db.RegisterMessage(Issue.StatusValue)
 _sym_db.RegisterMessage(Issue.UserValue)
@@ -1033,6 +1036,13 @@ IssueRef = _reflection.GeneratedProtocolMessageType('IssueRef', (_message.Messag
   ))
 _sym_db.RegisterMessage(IssueRef)
 
+ApprovalValue = _reflection.GeneratedProtocolMessageType('ApprovalValue', (_message.Message,), dict(
+  DESCRIPTOR = _APPROVALVALUE,
+  __module__ = 'api.v1.api_proto.issue_objects_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v1.ApprovalValue)
+  ))
+_sym_db.RegisterMessage(ApprovalValue)
+
 
 _COMMENT.fields_by_name['state']._options = None
 _COMMENT.fields_by_name['commenter']._options = None
@@ -1042,12 +1052,8 @@ _COMMENT.fields_by_name['approval']._options = None
 _COMMENT.fields_by_name['amendments']._options = None
 _COMMENT.fields_by_name['attachments']._options = None
 _COMMENT._options = None
-_ISSUE_APPROVALVALUE.fields_by_name['name']._options = None
-_ISSUE_APPROVALVALUE.fields_by_name['approvers']._options = None
-_ISSUE_APPROVALVALUE.fields_by_name['set_time']._options = None
-_ISSUE_APPROVALVALUE.fields_by_name['setter']._options = None
+_FIELDVALUE.fields_by_name['field']._options = None
 _ISSUE_COMPONENTVALUE.fields_by_name['component']._options = None
-_ISSUE_FIELDVALUE.fields_by_name['field']._options = None
 _ISSUE_USERVALUE.fields_by_name['user']._options = None
 _ISSUE.fields_by_name['reporter']._options = None
 _ISSUE.fields_by_name['create_time']._options = None
@@ -1058,6 +1064,13 @@ _ISSUE.fields_by_name['status_modify_time']._options = None
 _ISSUE.fields_by_name['owner_modify_time']._options = None
 _ISSUE.fields_by_name['attachment_count']._options = None
 _ISSUE.fields_by_name['star_count']._options = None
+_ISSUE.fields_by_name['phases']._options = None
 _ISSUE._options = None
 _ISSUEREF.fields_by_name['issue']._options = None
+_APPROVALVALUE.fields_by_name['approval_def']._options = None
+_APPROVALVALUE.fields_by_name['approvers']._options = None
+_APPROVALVALUE.fields_by_name['set_time']._options = None
+_APPROVALVALUE.fields_by_name['setter']._options = None
+_APPROVALVALUE.fields_by_name['phase']._options = None
+_APPROVALVALUE._options = None
 # @@protoc_insertion_point(module_scope)
