@@ -1,0 +1,15 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package unifiedfleet.api.v1.proto.bigquery;
+
+option go_package = "infra/unifiedfleet/api/v1/proto/bigquery;apibq";
+
+import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
+
+message ChromePlatformRow {
+    proto.ChromePlatform platform = 1;
+}
