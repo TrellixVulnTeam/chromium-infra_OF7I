@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"infra/unifiedfleet/app/constants"
 )
 
 // FleetEntity represents the interface of entity in datastore.
@@ -87,6 +88,23 @@ func Get(ctx context.Context, pm proto.Message, nf NewFunc) (proto.Message, erro
 		return nil, status.Errorf(codes.Internal, "Internal Server error.")
 	}
 	return pm, nil
+}
+
+// ListQuery constructs a query to list entities with pagination
+func ListQuery(ctx context.Context, entityKind string, pageSize int32, pageToken string) (q *datastore.Query, err error) {
+	var cursor datastore.Cursor
+	if pageToken != "" {
+		cursor, err = datastore.DecodeCursor(ctx, pageToken)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to DecodeCursor from pageToken: %s", err)
+			return nil, status.Errorf(codes.InvalidArgument, constants.InvalidPageToken)
+		}
+	}
+	q = datastore.NewQuery(entityKind).Limit(pageSize)
+	if cursor != nil {
+		q = q.Start(cursor)
+	}
+	return q, nil
 }
 
 // Delete deletes the entity from the datastore.

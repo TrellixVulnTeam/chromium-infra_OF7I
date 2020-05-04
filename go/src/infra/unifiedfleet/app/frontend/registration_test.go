@@ -5,12 +5,14 @@
 package frontend
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-
+	. "go.chromium.org/luci/common/testing/assertions"
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	. "infra/unifiedfleet/app/constants"
 )
 
 func mockChromeOSMachine(id, lab, board string) *proto.Machine {
@@ -221,6 +223,87 @@ func TestGetMachine(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, invalidCharacters)
+		})
+	})
+}
+
+func TestListMachines(t *testing.T) {
+	t.Parallel()
+	Convey("ListMachines", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		machines := make([]*proto.Machine, 0, 4)
+		for i := 0; i < 4; i++ {
+			chromeOSMachine1 := mockChromeOSMachine("", "chromeoslab", "samus")
+			req := &api.CreateMachineRequest{
+				Machine:   chromeOSMachine1,
+				MachineId: fmt.Sprintf("chromeos-asset-%d", i),
+			}
+			resp, err := tf.Fleet.CreateMachine(tf.C, req)
+			So(err, ShouldBeNil)
+			assertMachineEqual(resp, chromeOSMachine1)
+			machines = append(machines, resp)
+		}
+
+		Convey("ListMachines - page_size negative", func() {
+			req := &api.ListMachinesRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListMachines(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageSize)
+		})
+
+		Convey("ListMachines - page_token invalid", func() {
+			req := &api.ListMachinesRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListMachines(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("ListMachines - Full listing Max PageSize", func() {
+			req := &api.ListMachinesRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListMachines(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Machines, ShouldResembleProto, machines)
+		})
+
+		Convey("ListMachines - Full listing with no pagination", func() {
+			req := &api.ListMachinesRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListMachines(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Machines, ShouldResembleProto, machines)
+		})
+
+		Convey("ListMachines - listing with pagination", func() {
+			req := &api.ListMachinesRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListMachines(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Machines, ShouldResembleProto, machines[:3])
+
+			req = &api.ListMachinesRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListMachines(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Machines, ShouldResembleProto, machines[3:])
 		})
 	})
 }

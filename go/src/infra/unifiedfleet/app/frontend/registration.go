@@ -14,6 +14,7 @@ import (
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 // CreateMachine creates machine entry in database.
@@ -54,12 +55,23 @@ func (fs *FleetServerImpl) GetMachine(ctx context.Context, req *api.GetMachineRe
 	return registration.GetMachine(ctx, strings.TrimSpace(req.Name))
 }
 
-// ListMachines list all the machines information from database.
+// ListMachines list the machines information from database.
 func (fs *FleetServerImpl) ListMachines(ctx context.Context, req *api.ListMachinesRequest) (rsp *api.ListMachinesResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := registration.ListMachines(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ListMachinesResponse{
+		Machines:      result,
+		NextPageToken: nextPageToken,
+	}, nil
 }
 
 // DeleteMachine deletes the machine from database.

@@ -11,8 +11,12 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	fleet "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/constants"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 )
 
@@ -81,6 +85,40 @@ func GetMachine(ctx context.Context, id string) (*fleet.Machine, error) {
 		return pm.(*fleet.Machine), err
 	}
 	return nil, err
+}
+
+// ListMachines lists the machines
+// Does a query over Machine entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListMachines(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.Machine, nextPageToken string, err error) {
+	q, err := fleetds.ListQuery(ctx, MachineKind, pageSize, pageToken)
+	if err != nil {
+		return nil, "", err
+	}
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *MachineEntity, cb datastore.CursorCB) error {
+		pm, err := ent.GetProto()
+		if err != nil {
+			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+			return nil
+		}
+		res = append(res, pm.(*fleet.Machine))
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to List Machines %s", err)
+		return nil, "", status.Errorf(codes.Internal, constants.InternalError)
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
 }
 
 // GetAllMachines returns all machines in datastore.

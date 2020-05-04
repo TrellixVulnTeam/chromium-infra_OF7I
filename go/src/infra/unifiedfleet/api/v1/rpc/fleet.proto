@@ -97,7 +97,7 @@ message ListMachinesRequest {
 
 message ListMachinesResponse {
   // The machines from datastore.
-  repeated proto.Machine machine = 1;
+  repeated proto.Machine machines = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.

@@ -5,12 +5,15 @@
 package registration
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
+	. "go.chromium.org/luci/common/testing/assertions"
 	proto "infra/unifiedfleet/api/v1/proto"
+	. "infra/unifiedfleet/app/constants"
 )
 
 func mockChromeOSMachine(id, lab, board string) *proto.Machine {
@@ -134,6 +137,50 @@ func TestGetMachine(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Internal Server error")
+		})
+	})
+}
+
+func TestListMachines(t *testing.T) {
+	t.Parallel()
+	Convey("ListMachines", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		machines := make([]*proto.Machine, 0, 4)
+		for i := 0; i < 4; i++ {
+			chromeOSMachine1 := mockChromeOSMachine(fmt.Sprintf("chromeos-%d", i), "chromeoslab", "samus")
+			resp, err := CreateMachine(ctx, chromeOSMachine1)
+			So(err, ShouldBeNil)
+			assertMachineEqual(resp, chromeOSMachine1)
+			machines = append(machines, resp)
+		}
+		Convey("List machines - page_token invalid", func() {
+			resp, nextPageToken, err := ListMachines(ctx, 5, "abc")
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List machines - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListMachines(ctx, 4, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines)
+		})
+
+		Convey("List machines - listing with pagination", func() {
+			resp, nextPageToken, err := ListMachines(ctx, 3, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines[:3])
+
+			resp, _, err = ListMachines(ctx, 2, nextPageToken)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines[3:])
 		})
 	})
 }
