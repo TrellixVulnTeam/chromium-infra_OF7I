@@ -5,8 +5,6 @@
 package frontend
 
 import (
-	"strings"
-
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
@@ -25,11 +23,14 @@ func (fs *FleetServerImpl) CreateMachine(ctx context.Context, req *api.CreateMac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.Machine.Name = strings.TrimSpace(req.Machine.GetName())
-	if req.Machine.GetName() == "" {
-		req.Machine.Name = strings.TrimSpace(req.MachineId)
+	req.Machine.Name = req.MachineId
+	machine, err := registration.CreateMachine(ctx, req.Machine)
+	if err != nil {
+		return nil, err
 	}
-	return registration.CreateMachine(ctx, req.Machine)
+	// https://aip.dev/122 - as per AIP guideline
+	machine.Name = util.AddPrefix(machineCollection, machine.Name)
+	return machine, err
 }
 
 // UpdateMachine updates the machine information in database.
@@ -40,8 +41,14 @@ func (fs *FleetServerImpl) UpdateMachine(ctx context.Context, req *api.UpdateMac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.Machine.Name = strings.TrimSpace(req.Machine.GetName())
-	return registration.UpdateMachine(ctx, req.Machine)
+	req.Machine.Name = util.RemovePrefix(req.Machine.Name)
+	machine, err := registration.UpdateMachine(ctx, req.Machine)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machine.Name = util.AddPrefix(machineCollection, machine.Name)
+	return machine, err
 }
 
 // GetMachine gets the machine information from database.
@@ -52,7 +59,14 @@ func (fs *FleetServerImpl) GetMachine(ctx context.Context, req *api.GetMachineRe
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return registration.GetMachine(ctx, strings.TrimSpace(req.Name))
+	name := util.RemovePrefix(req.Name)
+	machine, err := registration.GetMachine(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machine.Name = util.AddPrefix(machineCollection, machine.Name)
+	return machine, err
 }
 
 // ListMachines list the machines information from database.
@@ -68,6 +82,10 @@ func (fs *FleetServerImpl) ListMachines(ctx context.Context, req *api.ListMachin
 	if err != nil {
 		return nil, err
 	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, machine := range result {
+		machine.Name = util.AddPrefix(machineCollection, machine.Name)
+	}
 	return &api.ListMachinesResponse{
 		Machines:      result,
 		NextPageToken: nextPageToken,
@@ -82,6 +100,7 @@ func (fs *FleetServerImpl) DeleteMachine(ctx context.Context, req *api.DeleteMac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	err = registration.DeleteMachine(ctx, strings.TrimSpace(req.Name))
+	name := util.RemovePrefix(req.Name)
+	err = registration.DeleteMachine(ctx, name)
 	return &empty.Empty{}, err
 }

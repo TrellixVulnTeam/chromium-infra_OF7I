@@ -9,6 +9,10 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	machineCollection string = "machines"
+)
+
 // CfgInterfaceFactory is a contsructor for a luciconfig.Interface
 // For potential unittest usage
 type CfgInterfaceFactory func(ctx context.Context) luciconfig.Interface
