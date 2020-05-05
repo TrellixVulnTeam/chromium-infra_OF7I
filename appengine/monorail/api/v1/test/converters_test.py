@@ -236,6 +236,24 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         expected_api_hotlist, self.converter.ConvertHotlist(hotlist))
 
+  def testConvertHotlists(self):
+    """We can convert several Hotlists."""
+    hotlists = [
+        fake.Hotlist(
+            'Hotlist-Name',
+            241,
+            owner_ids=[111],
+            summary='Hotlist summary',
+            description='Hotlist Description'),
+        fake.Hotlist(
+            'Hotlist-Name',
+            241,
+            owner_ids=[111],
+            summary='Hotlist summary',
+            description='Hotlist Description')
+    ]
+    self.assertEqual(2, len(self.converter.ConvertHotlists(hotlists)))
+
   def testConvertHotlistItems(self):
     """We can convert HotlistItems."""
     hotlist_item_fields = [

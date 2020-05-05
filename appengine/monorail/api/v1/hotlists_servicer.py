@@ -170,6 +170,25 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     return self.converter.ConvertHotlist(hotlist)
 
   @monorail_servicer.PRPCMethod
+  def GatherHotlistsForUser(self, mc, request):
+    # type: (MonorailConnection, GatherHotlistsForUserRequest)
+    #   -> GatherHotlistsForUserResponse
+    """pRPC API method that implements GatherHotlistsForUser.
+
+    Raises:
+      NoSuchUserException if the user is not found.
+      InputException if some request parameters are invalid.
+    """
+
+    user_id = rnc.IngestUserName(mc.cnxn, request.user, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      hotlists = we.ListHotlistsByUser(user_id)
+
+    return hotlists_pb2.GatherHotlistsForUserResponse(
+        hotlists=self.converter.ConvertHotlists(hotlists))
+
+  @monorail_servicer.PRPCMethod
   def UpdateHotlist(self, mc, request):
     # type: (MonorailConnection, UpdateHotlistRequest) -> UpdateHotlistResponse
     """pRPC API method that implements UpdateHotlist.

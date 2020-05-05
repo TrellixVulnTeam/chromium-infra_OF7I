@@ -72,6 +72,12 @@ class Converter(object):
         default_columns=default_columns,
         hotlist_privacy=hotlist_privacy)
 
+  def ConvertHotlists(self, hotlists):
+    # type: (Sequence[proto.feature_objects_pb2.Hotlist])
+    #    -> Sequence[api_proto.feature_objects_pb2.Hotlist]
+    """Convert protorpc Hotlists into protoc Hotlists."""
+    return [self.ConvertHotlist(hotlist) for hotlist in hotlists]
+
   def ConvertHotlistItems(self, hotlist_id, items):
     # type: (int, Sequence[proto.features_pb2.HotlistItem]) ->
     #     Sequence[api_proto.feature_objects_pb2.Hotlist]

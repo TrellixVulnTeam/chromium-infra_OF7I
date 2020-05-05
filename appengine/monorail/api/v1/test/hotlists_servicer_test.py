@@ -253,6 +253,35 @@ class HotlistsServicerTest(unittest.TestCase):
     api_hotlist = self.CallWrapped(self.hotlists_svcr.GetHotlist, mc, request)
     self.assertEqual(api_hotlist, self.converter.ConvertHotlist(self.hotlist_1))
 
+  def testGatherHotlistsForUser(self):
+    """We can get all visible hotlists of a user."""
+    request = hotlists_pb2.GatherHotlistsForUserRequest(
+        user=self.user_ids_to_name[self.user_2.user_id])
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    mc.LookupLoggedInUserPerms(None)
+    response = self.CallWrapped(
+        self.hotlists_svcr.GatherHotlistsForUser, mc, request)
+
+    user_names_by_id = rnc.ConvertUserNames(
+        [self.user_2.user_id, self.user_1.user_id])
+    expected_api_hotlists = [
+        feature_objects_pb2.Hotlist(
+            name=self.hotlist_resource_name,
+            display_name='HotlistName',
+            summary='summary',
+            description='description',
+            hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
+                'PRIVATE'),
+            owner=user_names_by_id[self.user_1.user_id],
+            editors=[user_names_by_id[self.user_2.user_id]])
+    ]
+    self.assertEqual(
+        response,
+        hotlists_pb2.GatherHotlistsForUserResponse(
+            hotlists=expected_api_hotlists))
+
   def testUpdateHotlist_AllFields(self):
     """We can update a Hotlist."""
     request = hotlists_pb2.UpdateHotlistRequest(
