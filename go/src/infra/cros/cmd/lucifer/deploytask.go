@@ -116,26 +116,6 @@ func (c *deployTaskCmd) runDeployAction(ctx context.Context, ac *api.Client, a d
 	return nil
 }
 
-func wrapRunError(r osutil.RunResult, err error) error {
-	var reason error
-	switch {
-	case !r.Started:
-		reason = fmt.Errorf("process failed to start")
-	case r.Aborted:
-		reason = fmt.Errorf("process aborted")
-	case r.ExitStatus != 0:
-		reason = fmt.Errorf("process fail with exit code %d", r.ExitStatus)
-	}
-	switch {
-	case reason == nil:
-		return err
-	case err == nil:
-		return reason
-	default:
-		return fmt.Errorf("%s: %s", reason, err)
-	}
-}
-
 func (c *deployTaskCmd) runRepair(ctx context.Context, ac *api.Client) error {
 	t := c.repairTask()
 	s := ac.Logger().Step(t.Type.String())

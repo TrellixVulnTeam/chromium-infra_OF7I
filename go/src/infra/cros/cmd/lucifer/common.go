@@ -20,6 +20,7 @@ import (
 	"infra/cros/cmd/lucifer/internal/api"
 	"infra/cros/cmd/lucifer/internal/logdog"
 	"infra/cros/cmd/lucifer/internal/metrics"
+	"infra/cros/cmd/lucifer/internal/osutil"
 )
 
 // exitError interface is for errors that can be returned from
@@ -161,4 +162,24 @@ func verifySkylabFlags(t testCmd) error {
 		return errors.New("this command only accepts Skylab tests")
 	}
 	return nil
+}
+
+func wrapRunError(r osutil.RunResult, err error) error {
+	var reason error
+	switch {
+	case !r.Started:
+		reason = fmt.Errorf("process failed to start")
+	case r.Aborted:
+		reason = fmt.Errorf("process aborted")
+	case r.ExitStatus != 0:
+		reason = fmt.Errorf("process fail with exit code %d", r.ExitStatus)
+	}
+	switch {
+	case reason == nil:
+		return err
+	case err == nil:
+		return reason
+	default:
+		return fmt.Errorf("%s: %s", reason, err)
+	}
 }
