@@ -35,6 +35,7 @@ export class MrChartPage extends connectStore(LitElement) {
         justify-content: flex-end;
         width: 100%;
         padding: 0.5em 0;
+        height: 32px;
       }
       .help {
         padding: 1em;

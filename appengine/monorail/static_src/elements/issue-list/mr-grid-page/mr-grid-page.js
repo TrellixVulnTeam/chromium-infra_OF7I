@@ -149,6 +149,12 @@ export class MrGridPage extends connectStore(LitElement) {
   /** @override */
   static get styles() {
     return css `
+      :host {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 0.5em 8px;
+      }
       progress {
         background-color: white;
         border: 1px solid var(--chops-gray-500);

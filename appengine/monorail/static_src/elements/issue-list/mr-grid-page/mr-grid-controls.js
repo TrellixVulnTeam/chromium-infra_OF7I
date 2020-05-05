@@ -41,9 +41,10 @@ export class MrGridControls extends connectStore(LitElement) {
       :host {
         display: flex;
         justify-content: space-between;
-        margin-top: 20px;
+        align-items: center;
         box-sizing: border-box;
-        padding: 0 20px;
+        margin: 0.5em 0;
+        height: 32px;
       }
       mr-grid-dropdown {
         padding-right: 20px;
