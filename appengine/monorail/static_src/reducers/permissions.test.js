@@ -80,11 +80,24 @@ describe('permissions action creators', () => {
     it('failure', async () => {
       prpcClient.call.throws();
 
-      await permissions.batchGet(exampleIssues.NAME)(dispatch);
+      await permissions.batchGet([exampleIssues.NAME])(dispatch);
 
       const action = {
         type: permissions.BATCH_GET_FAILURE,
         error: sinon.match.any,
+      };
+      sinon.assert.calledWith(dispatch, action);
+    });
+
+    it('fills in permissions field', async () => {
+      const response = {permissionSets: [{resource: exampleIssues.NAME}]};
+      prpcClient.call.returns(Promise.resolve(response));
+
+      await permissions.batchGet([exampleIssues.NAME])(dispatch);
+
+      const action = {
+        type: permissions.BATCH_GET_SUCCESS,
+        permissionSets: [{resource: exampleIssues.NAME, permissions: []}],
       };
       sinon.assert.calledWith(dispatch, action);
     });
