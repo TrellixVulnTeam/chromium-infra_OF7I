@@ -7,9 +7,11 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/google/subcommands"
 	"github.com/pkg/errors"
@@ -56,6 +58,12 @@ func (c *commonOpts) Register(f *flag.FlagSet) {
 		"File for LogDog output")
 	f.StringVar(&c.resultsDir, "resultsdir", "",
 		"Results directory")
+}
+
+const hostInfoSubDir = "host_info_store"
+
+func (c *commonOpts) hostInfoStorePath(host string) string {
+	return filepath.Join(c.resultsDir, hostInfoSubDir, fmt.Sprintf("%s.store", host))
 }
 
 // Setup sets up common resources for Lucifer commands.  If the

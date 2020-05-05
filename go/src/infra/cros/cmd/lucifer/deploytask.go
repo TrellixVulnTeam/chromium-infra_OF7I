@@ -101,7 +101,7 @@ func (c *deployTaskCmd) runDeployAction(ctx context.Context, ac *api.Client, a d
 	args := autotest.DutPreparationArgs{
 		Hostname:     c.host,
 		ResultsDir:   resultsDir,
-		HostInfoFile: c.hostInfoStorePath(),
+		HostInfoFile: c.hostInfoStorePath(c.host),
 		Actions:      []string{a.Arg()},
 	}
 	cmd := autotest.DutPreparationCommand(c.autotestConfig(), &args)
@@ -185,10 +185,4 @@ func (c *deployTaskCmd) repairTask() *atutil.AdminTask {
 		Host:       c.host,
 		ResultsDir: filepath.Join(c.resultsDir, "repair"),
 	}
-}
-
-const hostInfoSubDir = "host_info_store"
-
-func (c *deployTaskCmd) hostInfoStorePath() string {
-	return filepath.Join(c.resultsDir, hostInfoSubDir, fmt.Sprintf("%s.store", c.host))
 }
