@@ -145,12 +145,6 @@ func (c *deployTaskCmd) validateFlags() error {
 	return nil
 }
 
-func (c *deployTaskCmd) autotestConfig() autotest.Config {
-	return autotest.Config{
-		AutotestDir: c.autotestDir,
-	}
-}
-
 func (c *deployTaskCmd) mainJob() *atutil.MainJob {
 	return &atutil.MainJob{
 		AutotestConfig:   c.autotestConfig(),

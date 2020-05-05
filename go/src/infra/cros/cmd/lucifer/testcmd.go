@@ -14,7 +14,6 @@ import (
 	"github.com/google/subcommands"
 
 	"infra/cros/cmd/lucifer/internal/api"
-	"infra/cros/cmd/lucifer/internal/autotest"
 	"infra/cros/cmd/lucifer/internal/autotest/atutil"
 	"infra/cros/cmd/lucifer/internal/event"
 	"infra/cros/cmd/lucifer/internal/flagx"
@@ -149,12 +148,6 @@ func (c *testCmd) mainJob() *atutil.MainJob {
 		AutotestConfig:   c.autotestConfig(),
 		ResultsDir:       c.resultsDir,
 		UseLocalHostInfo: c.localOnlyHostInfo,
-	}
-}
-
-func (c *testCmd) autotestConfig() autotest.Config {
-	return autotest.Config{
-		AutotestDir: c.autotestDir,
 	}
 }
 

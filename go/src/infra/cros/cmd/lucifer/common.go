@@ -18,6 +18,7 @@ import (
 
 	"infra/cros/cmd/lucifer/internal/abortsock"
 	"infra/cros/cmd/lucifer/internal/api"
+	"infra/cros/cmd/lucifer/internal/autotest"
 	"infra/cros/cmd/lucifer/internal/logdog"
 	"infra/cros/cmd/lucifer/internal/metrics"
 	"infra/cros/cmd/lucifer/internal/osutil"
@@ -65,6 +66,12 @@ const hostInfoSubDir = "host_info_store"
 
 func (c *commonOpts) hostInfoStorePath(host string) string {
 	return filepath.Join(c.resultsDir, hostInfoSubDir, fmt.Sprintf("%s.store", host))
+}
+
+func (c *commonOpts) autotestConfig() autotest.Config {
+	return autotest.Config{
+		AutotestDir: c.autotestDir,
+	}
 }
 
 // Setup sets up common resources for Lucifer commands.  If the

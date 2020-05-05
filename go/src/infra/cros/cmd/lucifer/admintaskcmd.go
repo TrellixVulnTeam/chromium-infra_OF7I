@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 
 	"infra/cros/cmd/lucifer/internal/api"
-	"infra/cros/cmd/lucifer/internal/autotest"
 	"infra/cros/cmd/lucifer/internal/autotest/atutil"
 	"infra/cros/cmd/lucifer/internal/event"
 	"infra/cros/cmd/lucifer/internal/flagx"
@@ -102,12 +101,6 @@ func (c *adminTaskCmd) validateFlags() error {
 		return usageError{fmt.Errorf("Errors occurred during argument parsing: %s", errs)}
 	}
 	return nil
-}
-
-func (c *adminTaskCmd) autotestConfig() autotest.Config {
-	return autotest.Config{
-		AutotestDir: c.autotestDir,
-	}
 }
 
 func (c *adminTaskCmd) mainJob() *atutil.MainJob {
