@@ -692,6 +692,7 @@ SPECS.update({
         Universal('yapf', '0.22.0'),
         Universal('yapf', '0.24.0'),
         Universal('yapf', '0.27.0'),
+        Universal('yapf', '0.30.0'),
     )
 })
 

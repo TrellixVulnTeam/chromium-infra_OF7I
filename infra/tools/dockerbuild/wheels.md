@@ -3971,6 +3971,18 @@ wheel: <
 
 * *universal*
 
+### 0.30.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/yapf-py2_py3"
+  version: "version:0.30.0"
+>
+```
+
+
+* *universal*
+
 
 # Contact
 
