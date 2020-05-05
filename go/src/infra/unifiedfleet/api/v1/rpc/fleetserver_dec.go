@@ -128,3 +128,20 @@ func (s *DecoratedFleet) DeleteMachine(ctx context.Context, req *DeleteMachineRe
 	}
 	return
 }
+
+func (s *DecoratedFleet) ImportMachines(ctx context.Context, req *ImportMachinesRequest) (rsp *status.Status, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ImportMachines", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ImportMachines(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ImportMachines", rsp, err)
+	}
+	return
+}

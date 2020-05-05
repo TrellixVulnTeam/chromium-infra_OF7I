@@ -5,8 +5,9 @@
 package frontend
 
 import (
-	luciconfig "go.chromium.org/luci/config"
 	"golang.org/x/net/context"
+
+	luciconfig "go.chromium.org/luci/config"
 )
 
 const (

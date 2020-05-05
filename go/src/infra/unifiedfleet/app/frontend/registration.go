@@ -8,6 +8,7 @@ import (
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
+	status "google.golang.org/genproto/googleapis/rpc/status"
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
@@ -103,4 +104,12 @@ func (fs *FleetServerImpl) DeleteMachine(ctx context.Context, req *api.DeleteMac
 	name := util.RemovePrefix(req.Name)
 	err = registration.DeleteMachine(ctx, name)
 	return &empty.Empty{}, err
+}
+
+// ImportMachines imports the machines from parent sources.
+func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMachinesRequest) (rsp *status.Status, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return successStatus, err
 }
