@@ -7,6 +7,21 @@ PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 APP_PATH := $(PROJECT_PATH)
 GCP_PROJECT_DEV = unified-fleet-system-dev
 
+define help_message
+Helpers for managing ufs project in $(PROJECT_PATH):
+  gen: regenerate all go bindings
+  test: run all unittests
+  build: build the main ufs service
+  build-dumper: build the dumper service
+  dev: run the main ufs service locally
+  dev-dumper: run the dumper service locally
+  up-dev: upload the ufs service to dev appengine service
+endef
+
+.PHONY: help
+help:
+	$(info $(help_message))
+
 # Generate bindings
 .PHONY: gen
 gen:
