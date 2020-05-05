@@ -346,7 +346,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 19
+// NEXT TAG: 21
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -400,6 +400,9 @@ message Peripherals {
     CAMERABOX_FACING_FRONT = 2;
   }
   optional CameraboxFacing camerabox_facing = 18;
+
+  optional HardwareState storage_state = 19;
+  optional HardwareState servo_usb_state = 20;
 }
 
 // copy of enum from dut_state.proto
@@ -409,6 +412,14 @@ enum PeripheralState {
   NOT_CONNECTED = 2;
   BROKEN = 3;
   WRONG_CONFIG = 4;
+}
+
+// copy of enum from dut_state.proto
+enum HardwareState {
+  HARDWARE_UNKNOWN = 0;
+  HARDWARE_NORMAL = 1;
+  HARDWARE_ACCEPTABLE = 2;
+  HARDWARE_NEED_REPLACEMENT = 3;
 }
 
 // These labels are used by the CI system to provide test coverage hints to
