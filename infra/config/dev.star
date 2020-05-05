@@ -95,8 +95,7 @@ def ci_builder(
 
 luci.tree_closer(
     name = 'dev tree closer',
-    # Doesn't actually exist, as this tree closer shouldn't close any real tree.
-    tree_status_host = 'fake-infra-status.appspot.com',
+    tree_status_host = 'infra-status.appspot.com',
     template = 'default',
 )
 
