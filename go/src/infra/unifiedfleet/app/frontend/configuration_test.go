@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"google.golang.org/genproto/googleapis/rpc/code"
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
@@ -37,13 +38,17 @@ func TestImportChromePlatforms(t *testing.T) {
 	Convey("Import chrome platforms", t, func() {
 		Convey("happy path", func() {
 			req := &api.ImportChromePlatformsRequest{
-				LocalFilepath: "test.config",
+				Source: &api.ImportChromePlatformsRequest_ConfigSource{
+					ConfigSource: &api.ConfigSource{
+						ConfigServiceName: "",
+						FileName:          "test.config",
+					},
+				},
 			}
 			parsePlatformsFunc = mockParsePlatformsFunc
 			res, err := tf.Fleet.ImportChromePlatforms(ctx, req)
 			So(err, ShouldBeNil)
-			So(res.GetPassed(), ShouldHaveLength, len(localPlatforms))
-			So(res.GetFailed(), ShouldHaveLength, 0)
+			So(res.Code, ShouldEqual, code.Code_OK)
 			getRes, err := configuration.GetAllChromePlatforms(ctx)
 			So(err, ShouldBeNil)
 			So(getRes, ShouldHaveLength, len(localPlatforms))
@@ -51,31 +56,13 @@ func TestImportChromePlatforms(t *testing.T) {
 			gets := getReturnedPlatformNames(*getRes)
 			So(gets, ShouldResemble, wants)
 		})
-		Convey("import duplicated platforms", func() {
+		Convey("import platforms with invalid argument", func() {
 			req := &api.ImportChromePlatformsRequest{
-				LocalFilepath: "test.config",
-			}
-			parsePlatformsFunc = func(_ string) (*crimsonconfig.Platforms, error) {
-				return &crimsonconfig.Platforms{
-					Platform: []*crimsonconfig.Platform{
-						{Name: "platform1"},
-						{Name: "platform4"},
-					},
-				}, nil
+				Source: &api.ImportChromePlatformsRequest_ConfigSource{},
 			}
 			res, err := tf.Fleet.ImportChromePlatforms(ctx, req)
-			So(err, ShouldBeNil)
-			So(res.GetPassed(), ShouldHaveLength, 1)
-			So(res.GetFailed(), ShouldHaveLength, 1)
-			So(res.GetPassed()[0].GetPlatform().GetName(), ShouldEqual, "platform4")
-			So(res.GetFailed()[0].GetPlatform().GetName(), ShouldEqual, "platform1")
-
-			getRes, err := configuration.GetAllChromePlatforms(ctx)
-			So(err, ShouldBeNil)
-			So(getRes, ShouldHaveLength, len(localPlatforms)+1)
-			wants := append(getLocalPlatformNames(), "platform4")
-			gets := getReturnedPlatformNames(*getRes)
-			So(gets, ShouldResemble, wants)
+			So(err, ShouldNotBeNil)
+			So(res.Code, ShouldEqual, code.Code_INVALID_ARGUMENT)
 		})
 	})
 }

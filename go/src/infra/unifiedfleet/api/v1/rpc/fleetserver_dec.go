@@ -8,6 +8,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
+	status "google.golang.org/genproto/googleapis/rpc/status"
 	proto1 "infra/unifiedfleet/api/v1/proto"
 )
 
@@ -26,7 +27,7 @@ type DecoratedFleet struct {
 	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedFleet) ImportChromePlatforms(ctx context.Context, req *ImportChromePlatformsRequest) (rsp *ImportChromePlatformsResponse, err error) {
+func (s *DecoratedFleet) ImportChromePlatforms(ctx context.Context, req *ImportChromePlatformsRequest) (rsp *status.Status, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
 		newCtx, err = s.Prelude(ctx, "ImportChromePlatforms", req)
