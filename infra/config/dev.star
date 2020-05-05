@@ -12,6 +12,9 @@ This is also enforced by PRESUBMIT.py script.
 load('//lib/build.star', 'build')
 load('//lib/infra.star', 'infra')
 
+# Enable luci.tree_closer.
+lucicfg.enable_experiment("crbug.com/1054172")
+
 
 lucicfg.config(
     config_dir = 'generated',
@@ -76,6 +79,7 @@ def ci_builder(
       name,
       os,
       recipe='infra_continuous',
+      tree_closing=False,
   ):
   infra.builder(
       name = name,
@@ -86,10 +90,22 @@ def ci_builder(
       pool = 'chromium.tests',  # no point in creating a dedicated pool on -dev
       service_account = 'adhoc-testing@luci-token-server-dev.iam.gserviceaccount.com',
       triggered_by = [infra.poller()],
+      notifies = ['dev tree closer'] if tree_closing else None,
   )
 
+luci.tree_closer(
+    name = 'dev tree closer',
+    # Doesn't actually exist, as this tree closer shouldn't close any real tree.
+    tree_status_host = 'fake-infra-status.appspot.com',
+    template = 'default',
+)
 
-ci_builder(name = 'infra-continuous-xenial-64', os = 'Ubuntu-16.04')
+luci.notifier_template(
+    name = 'default',
+    body = '{{ stepNames .MatchingFailedSteps }} on {{ buildUrl . }} {{ .Build.Builder.Builder }} from {{ .Build.Output.GitilesCommit.Id }}',
+)
+
+ci_builder(name = 'infra-continuous-xenial-64', os = 'Ubuntu-16.04', tree_closing = True)
 ci_builder(name = 'infra-continuous-win-64', os = 'Windows-7-SP1')
 ci_builder(name = 'infra-continuous-win10-64', os = 'Windows-10')
 
