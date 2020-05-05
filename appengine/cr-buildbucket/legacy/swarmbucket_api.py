@@ -207,6 +207,10 @@ class SwarmbucketApi(remote.Service):
       build = build_request.create_build_async(
           1, settings, builder.config, identity, utils.utcnow()
       ).get_result()
+      if builder.config.resultdb.enable:  # pragma: no branch
+        build.proto.infra.resultdb.invocation = (
+            'invocations/build:%s' % build.key.id()
+        )
       assert build.proto.HasField('infra')
       build.proto.number = 1
       settings = config.get_settings_async().get_result()

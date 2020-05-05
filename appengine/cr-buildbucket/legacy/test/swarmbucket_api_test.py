@@ -76,6 +76,9 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
                 path: "builder"
                 name: "builder_cache_name"
               }
+              resultdb {
+                  enable: True
+              }
             }
             builders {
               name: "windows"
