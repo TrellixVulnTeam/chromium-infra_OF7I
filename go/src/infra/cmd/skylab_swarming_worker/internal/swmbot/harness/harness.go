@@ -273,6 +273,9 @@ func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutSt
 		case "dev":
 			state.Cr50KeyEnv = lab.DutState_CR50_KEYENV_DEV
 		}
+
+		state.StorageState = lab.HardwareState(int32(p.GetStorageState()))
+		state.ServoUsbState = lab.HardwareState(int32(p.GetServoUsbState()))
 	}
 	return &state
 }
