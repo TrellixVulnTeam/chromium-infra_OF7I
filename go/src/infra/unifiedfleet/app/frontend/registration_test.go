@@ -48,6 +48,13 @@ func assertMachineEqual(a *proto.Machine, b *proto.Machine) {
 		b.GetChromeosMachine().GetReferenceBoard())
 }
 
+func mockRack(id string, rackCapactiy int32) *proto.Rack {
+	return &proto.Rack{
+		Name:       util.AddPrefix(rackCollection, id),
+		CapacityRu: rackCapactiy,
+	}
+}
+
 func TestCreateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -410,6 +417,139 @@ func TestImportMachines(t *testing.T) {
 			res, err := tf.Fleet.ImportMachines(ctx, req)
 			So(err, ShouldNotBeNil)
 			So(res.Code, ShouldEqual, code.Code_INVALID_ARGUMENT)
+		})
+	})
+}
+
+func TestCreateRack(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	rack1 := mockRack("", 5)
+	rack2 := mockRack("", 4)
+	rack3 := mockRack("", 2)
+	Convey("CreateRack", t, func() {
+		Convey("Create new rack with rack_id", func() {
+			req := &api.CreateRackRequest{
+				Rack:   rack1,
+				RackId: "Rack-1",
+			}
+			resp, err := tf.Fleet.CreateRack(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack1)
+		})
+
+		Convey("Create existing rack", func() {
+			req := &api.CreateRackRequest{
+				Rack:   rack3,
+				RackId: "Rack-1",
+			}
+			resp, err := tf.Fleet.CreateRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
+		})
+
+		Convey("Create new rack - Invalid input nil", func() {
+			req := &api.CreateRackRequest{
+				Rack: nil,
+			}
+			resp, err := tf.Fleet.CreateRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new rack - Invalid input empty ID", func() {
+			req := &api.CreateRackRequest{
+				Rack:   rack2,
+				RackId: "",
+			}
+			resp, err := tf.Fleet.CreateRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new rack - Invalid input invalid characters", func() {
+			req := &api.CreateRackRequest{
+				Rack:   rack2,
+				RackId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateRack(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	rack1 := mockRack("", 5)
+	rack2 := mockRack("rack-1", 10)
+	rack3 := mockRack("rack-3", 6)
+	rack4 := mockRack("a.b)7&", 6)
+	Convey("UpdateRack", t, func() {
+		Convey("Update existing rack", func() {
+			req := &api.CreateRackRequest{
+				Rack:   rack1,
+				RackId: "rack-1",
+			}
+			resp, err := tf.Fleet.CreateRack(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack1)
+			ureq := &api.UpdateRackRequest{
+				Rack: rack2,
+			}
+			resp, err = tf.Fleet.UpdateRack(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack2)
+		})
+
+		Convey("Update non-existing rack", func() {
+			ureq := &api.UpdateRackRequest{
+				Rack: rack3,
+			}
+			resp, err := tf.Fleet.UpdateRack(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Update rack - Invalid input nil", func() {
+			req := &api.UpdateRackRequest{
+				Rack: nil,
+			}
+			resp, err := tf.Fleet.UpdateRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update rack - Invalid input empty name", func() {
+			rack3.Name = ""
+			req := &api.UpdateRackRequest{
+				Rack: rack3,
+			}
+			resp, err := tf.Fleet.UpdateRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update rack - Invalid input invalid characters", func() {
+			req := &api.UpdateRackRequest{
+				Rack: rack4,
+			}
+			resp, err := tf.Fleet.UpdateRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
 		})
 	})
 }

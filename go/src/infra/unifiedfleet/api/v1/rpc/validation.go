@@ -21,10 +21,12 @@ const (
 	InvalidCharacters string = "Invalid input - Entity ID must contain only 4-63 characters, ASCII letters, numbers, dash and underscore."
 	InvalidPageSize   string = "Invalid input - PageSize should be non-negative."
 	MachineNameFormat string = "Invalid input - Entity Name pattern should be machines/{machine}."
+	RackNameFormat    string = "Invalid input - Entity Name pattern should be racks/{rack}."
 )
 
 var idRegex = regexp.MustCompile(`^[a-zA-Z0-9-_]{4,63}$`)
 var machineRegex = regexp.MustCompile(`machines\.*`)
+var rackRegex = regexp.MustCompile(`racks\.*`)
 
 // Validate validates input requests of CreateMachine.
 func (r *CreateMachineRequest) Validate() error {
@@ -62,6 +64,29 @@ func (r *ListMachinesRequest) Validate() error {
 // Validate validates input requests of DeleteMachine.
 func (r *DeleteMachineRequest) Validate() error {
 	return validateResourceName(machineRegex, MachineNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateRack.
+func (r *CreateRackRequest) Validate() error {
+	if r.Rack == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.RackId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateRack.
+func (r *UpdateRackRequest) Validate() error {
+	if r.Rack == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(rackRegex, RackNameFormat, r.Rack.GetName())
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

@@ -20,6 +20,7 @@ import (
 
 const (
 	machineCollection string = "machines"
+	rackCollection    string = "racks"
 )
 
 // CfgInterfaceFactory is a contsructor for a luciconfig.Interface

@@ -142,7 +142,17 @@ func (fs *FleetServerImpl) CreateRack(ctx context.Context, req *api.CreateRackRe
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Rack.Name = req.RackId
+	rack, err := registration.CreateRack(ctx, req.Rack)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rack.Name = util.AddPrefix(rackCollection, rack.Name)
+	return rack, err
 }
 
 // UpdateRack updates the rack information in database.
@@ -150,7 +160,17 @@ func (fs *FleetServerImpl) UpdateRack(ctx context.Context, req *api.UpdateRackRe
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Rack.Name = util.RemovePrefix(req.Rack.Name)
+	rack, err := registration.UpdateRack(ctx, req.Rack)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rack.Name = util.AddPrefix(rackCollection, rack.Name)
+	return rack, err
 }
 
 // GetRack gets the rack information from database.

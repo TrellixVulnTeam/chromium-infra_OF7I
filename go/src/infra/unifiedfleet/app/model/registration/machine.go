@@ -44,7 +44,7 @@ func (e *MachineEntity) GetProto() (proto.Message, error) {
 	return &p, nil
 }
 
-func newEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
+func newMachineEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
 	p := pm.(*fleet.Machine)
 	if p.GetName() == "" {
 		return nil, errors.Reason("Empty Machine ID").Err()
@@ -89,7 +89,7 @@ func UpdateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine,
 
 // GetMachine returns machine for the given id from datastore.
 func GetMachine(ctx context.Context, id string) (*fleet.Machine, error) {
-	pm, err := fleetds.Get(ctx, &fleet.Machine{Name: id}, newEntity)
+	pm, err := fleetds.Get(ctx, &fleet.Machine{Name: id}, newMachineEntity)
 	if err == nil {
 		return pm.(*fleet.Machine), err
 	}
@@ -137,12 +137,12 @@ func GetAllMachines(ctx context.Context) (*fleetds.OpResults, error) {
 
 // DeleteMachine deletes the machine in datastore
 func DeleteMachine(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.Machine{Name: id}, newEntity)
+	return fleetds.Delete(ctx, &fleet.Machine{Name: id}, newMachineEntity)
 }
 
 func putMachine(ctx context.Context, machine *fleet.Machine, update bool) (*fleet.Machine, error) {
 	machine.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, machine, newEntity, update)
+	pm, err := fleetds.Put(ctx, machine, newMachineEntity, update)
 	if err == nil {
 		return pm.(*fleet.Machine), err
 	}
