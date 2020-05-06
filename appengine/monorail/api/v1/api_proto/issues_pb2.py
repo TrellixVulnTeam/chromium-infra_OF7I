@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.v1',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1d\x61pi/v1/api_proto/issues.proto\x12\x0bmonorail.v1\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"\x8c\x01\n\x13SearchIssuesRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v1.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n\x13ListCommentsRequest\x12+\n\x06parent\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"W\n\x14ListCommentsResponse\x12&\n\x08\x63omments\x18\x01 \x03(\x0b\x32\x14.monorail.v1.Comment\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xf6\x01\n\x06Issues\x12>\n\x08GetIssue\x12\x1c.monorail.v1.GetIssueRequest\x1a\x12.monorail.v1.Issue\"\x00\x12U\n\x0cSearchIssues\x12 .monorail.v1.SearchIssuesRequest\x1a!.monorail.v1.SearchIssuesResponse\"\x00\x12U\n\x0cListComments\x12 .monorail.v1.ListCommentsRequest\x1a!.monorail.v1.ListCommentsResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x1d\x61pi/v1/api_proto/issues.proto\x12\x0bmonorail.v1\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v1/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"\x8e\x01\n\x13SearchIssuesRequest\x12/\n\x08projects\x18\x01 \x03(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v1.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n\x13ListCommentsRequest\x12+\n\x06parent\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"W\n\x14ListCommentsResponse\x12&\n\x08\x63omments\x18\x01 \x03(\x0b\x32\x14.monorail.v1.Comment\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xf6\x01\n\x06Issues\x12>\n\x08GetIssue\x12\x1c.monorail.v1.GetIssueRequest\x1a\x12.monorail.v1.Issue\"\x00\x12U\n\x0cSearchIssues\x12 .monorail.v1.SearchIssuesRequest\x1a!.monorail.v1.SearchIssuesResponse\"\x00\x12U\n\x0cListComments\x12 .monorail.v1.ListCommentsRequest\x1a!.monorail.v1.ListCommentsResponse\"\x00\x62\x06proto3')
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v1_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,])
 
@@ -69,9 +69,9 @@ _SEARCHISSUESREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='parent', full_name='monorail.v1.SearchIssuesRequest.parent', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='projects', full_name='monorail.v1.SearchIssuesRequest.projects', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=_b('\372A\027\n\025api.crbug.com/Project\340A\002'), file=DESCRIPTOR),
@@ -116,7 +116,7 @@ _SEARCHISSUESREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=276,
-  serialized_end=416,
+  serialized_end=418,
 )
 
 
@@ -153,8 +153,8 @@ _SEARCHISSUESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=418,
-  serialized_end=501,
+  serialized_start=420,
+  serialized_end=503,
 )
 
 
@@ -198,8 +198,8 @@ _LISTCOMMENTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=503,
-  serialized_end=608,
+  serialized_start=505,
+  serialized_end=610,
 )
 
 
@@ -236,8 +236,8 @@ _LISTCOMMENTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=610,
-  serialized_end=697,
+  serialized_start=612,
+  serialized_end=699,
 )
 
 _SEARCHISSUESRESPONSE.fields_by_name['issues'].message_type = api_dot_v1_dot_api__proto_dot_issue__objects__pb2._ISSUE
@@ -286,7 +286,7 @@ _sym_db.RegisterMessage(ListCommentsResponse)
 
 
 _GETISSUEREQUEST.fields_by_name['name']._options = None
-_SEARCHISSUESREQUEST.fields_by_name['parent']._options = None
+_SEARCHISSUESREQUEST.fields_by_name['projects']._options = None
 _LISTCOMMENTSREQUEST.fields_by_name['parent']._options = None
 
 _ISSUES = _descriptor.ServiceDescriptor(
@@ -295,8 +295,8 @@ _ISSUES = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=700,
-  serialized_end=946,
+  serialized_start=702,
+  serialized_end=948,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetIssue',

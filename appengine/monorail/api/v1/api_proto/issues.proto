@@ -21,7 +21,7 @@ service Issues {
   //   NOT_FOUND if the issue does not exist.
   //   PERMISSION_DENIED if the requester is not allowed to view the issue.
   rpc GetIssue (GetIssueRequest) returns (Issue) {}
-  // Searches over issues within the specified project.
+  // Searches over issues within the specified projects.
   // TODO(monorail:6988): Document possible errors when implemented.
   rpc SearchIssues (SearchIssuesRequest) returns (SearchIssuesResponse) {}
   // Lists comments for an issue.
@@ -46,8 +46,10 @@ message GetIssueRequest {
 // The request message for Issues.SearchIssues.
 // Next available tag: 6
 message SearchIssuesRequest {
-  // The name of the Project in which to search issues.
-  string parent = 1 [
+  // The names of Projects in which to search issues.
+  // TODO(crbug/monorail/7143): `projects` must hold exactly one project
+  // for now. We will add cross-project search later.
+  repeated string projects = 1 [
     (google.api.resource_reference) = {type: "api.crbug.com/Project"},
     (google.api.field_behavior) = REQUIRED ];
   // The query string can contain any number of free text and
