@@ -13,7 +13,7 @@ import (
 	"go.chromium.org/luci/grpc/grpcutil"
 	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
-	code "google.golang.org/genproto/googleapis/rpc/code"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
@@ -52,33 +52,6 @@ func (cs *FleetServerImpl) newCfgInterface(ctx context.Context) luciconfig.Inter
 		return &http.Client{Transport: t}, nil
 	})
 }
-
-// Error messages for configuration import
-var (
-	successStatus = &status.Status{
-		Code: int32(code.Code_OK),
-	}
-	emptyConfigSource       = "Invalid argument - Config source is empty"
-	emptyConfigSourceStatus = &status.Status{
-		Code:    int32(code.Code_INVALID_ARGUMENT),
-		Message: emptyConfigSource,
-	}
-	invalidConfigFileContent       = "The config file format is invalid"
-	invalidConfigFileContentStatus = &status.Status{
-		Code:    int32(code.Code_FAILED_PRECONDITION),
-		Message: invalidConfigFileContent,
-	}
-	configServiceFailure       = "Fail to get configs from luci config service"
-	configServiceFailureStatus = &status.Status{
-		Code:    int32(code.Code_INTERNAL),
-		Message: configServiceFailure,
-	}
-	insertDatastoreFailure       = "Fail to insert chrome platforms into datastore in importing"
-	insertDatastoreFailureStatus = &status.Status{
-		Code:    int32(code.Code_INTERNAL),
-		Message: insertDatastoreFailure,
-	}
-)
 
 // ImportChromePlatforms imports the Chrome Platform in batch.
 func (cs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *status.Status, err error) {

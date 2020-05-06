@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/util"
+
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
+	code "google.golang.org/genproto/googleapis/rpc/code"
 )
 
 func mockChromeOSMachine(id, lab, board string) *proto.Machine {
@@ -367,6 +369,47 @@ func TestDeleteMachine(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestImportMachines(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import browser machines", t, func() {
+		Convey("happy path", func() {
+			req := &api.ImportMachinesRequest{
+				Source: &api.ImportMachinesRequest_MachineDbSource{
+					MachineDbSource: &api.MachineDBSource{
+						Host: "fake_host",
+					},
+				},
+			}
+			res, err := tf.Fleet.ImportMachines(ctx, req)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
+		})
+		Convey("import browser machines with empty machineDB host", func() {
+			req := &api.ImportMachinesRequest{
+				Source: &api.ImportMachinesRequest_MachineDbSource{
+					MachineDbSource: &api.MachineDBSource{
+						Host: "",
+					},
+				},
+			}
+			res, err := tf.Fleet.ImportMachines(ctx, req)
+			So(err, ShouldNotBeNil)
+			So(res.Code, ShouldEqual, code.Code_INVALID_ARGUMENT)
+		})
+		Convey("import browser machines with empty machineDB source", func() {
+			req := &api.ImportMachinesRequest{
+				Source: &api.ImportMachinesRequest_MachineDbSource{},
+			}
+			res, err := tf.Fleet.ImportMachines(ctx, req)
+			So(err, ShouldNotBeNil)
+			So(res.Code, ShouldEqual, code.Code_INVALID_ARGUMENT)
 		})
 	})
 }

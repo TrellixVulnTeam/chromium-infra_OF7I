@@ -5,7 +5,11 @@
 package frontend
 
 import (
+	"errors"
+	"fmt"
+
 	empty "github.com/golang/protobuf/ptypes/empty"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
@@ -14,6 +18,8 @@ import (
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
+
+	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 )
 
 // CreateMachine creates machine entry in database.
@@ -111,5 +117,22 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
+	source := req.GetMachineDbSource()
+	if source == nil {
+		return emptyMachineDBSourceStatus, errors.New(emptyMachineDBSource)
+	}
+	if source.GetHost() == "" {
+		return invalidHostInMachineDBSourceStatus, errors.New(invalidHostInMachineDBSource)
+	}
+	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	if err != nil {
+		return machineDBConnectionFailureStatus, errors.New(machineDBConnectionFailure)
+	}
+	logging.Debugf(ctx, "Querying machine-db to get the list of machines")
+	resp, err := mdbClient.ListMachines(ctx, &crimson.ListMachinesRequest{})
+	if err != nil {
+		return machineDBServiceFailureStatus("ListMachines"), fmt.Errorf(machineDBServiceFailure, "ListMachines")
+	}
+	logging.Debugf(ctx, "Processing %d machines", len(resp.Machines))
 	return successStatus, err
 }

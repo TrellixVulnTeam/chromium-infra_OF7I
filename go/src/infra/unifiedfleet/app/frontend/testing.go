@@ -15,6 +15,9 @@ import (
 	"go.chromium.org/luci/common/logging/gologger"
 
 	"infra/unifiedfleet/app/config"
+	"infra/unifiedfleet/app/frontend/fake"
+
+	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 )
 
 type testFixture struct {
@@ -28,7 +31,9 @@ func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, 
 	tf := testFixture{T: t, C: ctx}
 	mc := gomock.NewController(t)
 
-	tf.Fleet = &FleetServerImpl{}
+	tf.Fleet = &FleetServerImpl{
+		machineDBInterfaceFactory: fakeMachineDBInterface,
+	}
 
 	validate := func() {
 		mc.Finish()
@@ -43,4 +48,10 @@ func testingContext() context.Context {
 	c = config.Use(c, &config.Config{})
 	datastore.GetTestable(c).Consistent(true)
 	return c
+}
+
+func fakeMachineDBInterface(ctx context.Context, host string) (crimson.CrimsonClient, error) {
+	return &fake.CrimsonClient{
+		MachineNames: []string{"machine1", "machine2", "machine3"},
+	}, nil
 }
