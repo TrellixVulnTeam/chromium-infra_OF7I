@@ -203,7 +203,7 @@ class ResultDBFinalizeInvocationTest(testing.AppengineTestCase):
 
   @staticmethod
   def _req(name):
-    return recorder_pb2.FinalizeInvocationRequest(name=name, interrupted=False)
+    return recorder_pb2.FinalizeInvocationRequest(name=name)
 
   @mock.patch.object(logging, 'error')
   def test_no_resultdb(self, mock_err):

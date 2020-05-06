@@ -110,11 +110,6 @@ class FinalizeInvocation(webapp2.RequestHandler):  # pragma: no cover
     _finalize_invocation(build_id)
 
 
-def _is_interrupted(build):
-  # Treat canceled builds and infra failures as interrupted builds.
-  return build.status in (common_pb2.CANCELED, common_pb2.INFRA_FAILURE)
-
-
 def _finalize_invocation(build_id):
   bundle = model.BuildBundle.get(build_id, infra=True)
   rdb = bundle.infra.parse().resultdb
@@ -126,9 +121,7 @@ def _finalize_invocation(build_id):
   try:
     _ = _call_finalize_rpc(
         rdb.hostname,
-        recorder_pb2.FinalizeInvocationRequest(
-            name=rdb.invocation, interrupted=_is_interrupted(bundle.build)
-        ),
+        recorder_pb2.FinalizeInvocationRequest(name=rdb.invocation),
         {'update-token': bundle.build.resultdb_update_token},
     )
   except client.RpcError as rpce:
