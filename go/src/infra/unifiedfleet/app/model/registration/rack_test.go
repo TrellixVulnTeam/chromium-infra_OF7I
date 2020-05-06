@@ -80,3 +80,60 @@ func TestUpdateRack(t *testing.T) {
 		})
 	})
 }
+
+func TestGetRack(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	rack1 := mockRack("Rack-1", 5)
+	Convey("GetRack", t, func() {
+		Convey("Get rack by existing ID", func() {
+			resp, err := CreateRack(ctx, rack1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack1)
+			resp, err = GetRack(ctx, "Rack-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack1)
+		})
+		Convey("Get rack by non-existing ID", func() {
+			resp, err := GetRack(ctx, "rack-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get rack - invalid ID", func() {
+			resp, err := GetRack(ctx, "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestDeleteRack(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	rack1 := mockRack("rack-1", 5)
+	Convey("DeleteRack", t, func() {
+		Convey("Delete rack by existing ID", func() {
+			resp, cerr := CreateRack(ctx, rack1)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack1)
+			err := DeleteRack(ctx, "rack-1")
+			So(err, ShouldBeNil)
+			res, err := GetRack(ctx, "rack-1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete rack by non-existing ID", func() {
+			err := DeleteRack(ctx, "rack-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete rack - invalid ID", func() {
+			err := DeleteRack(ctx, "")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}

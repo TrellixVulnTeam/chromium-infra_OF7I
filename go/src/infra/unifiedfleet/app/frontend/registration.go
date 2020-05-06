@@ -178,7 +178,17 @@ func (fs *FleetServerImpl) GetRack(ctx context.Context, req *api.GetRackRequest)
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	rack, err := registration.GetRack(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rack.Name = util.AddPrefix(rackCollection, rack.Name)
+	return rack, err
 }
 
 // ListRacks list the racks information from database.
@@ -194,5 +204,10 @@ func (fs *FleetServerImpl) DeleteRack(ctx context.Context, req *api.DeleteRackRe
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = registration.DeleteRack(ctx, name)
 	return &empty.Empty{}, err
 }

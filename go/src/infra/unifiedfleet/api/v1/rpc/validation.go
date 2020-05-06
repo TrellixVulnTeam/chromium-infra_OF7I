@@ -89,6 +89,16 @@ func (r *UpdateRackRequest) Validate() error {
 	return validateResourceName(rackRegex, RackNameFormat, r.Rack.GetName())
 }
 
+// Validate validates input requests of GetRack.
+func (r *GetRackRequest) Validate() error {
+	return validateResourceName(rackRegex, RackNameFormat, r.Name)
+}
+
+// Validate validates input requests of DeleteRack.
+func (r *DeleteRackRequest) Validate() error {
+	return validateResourceName(rackRegex, RackNameFormat, r.Name)
+}
+
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {
 	name = strings.TrimSpace(name)
 	if name == "" {

@@ -553,3 +553,112 @@ func TestUpdateRack(t *testing.T) {
 		})
 	})
 }
+
+func TestGetRack(t *testing.T) {
+	t.Parallel()
+	Convey("GetRack", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		rack1 := mockRack("rack-1", 10)
+		req := &api.CreateRackRequest{
+			Rack:   rack1,
+			RackId: "rack-1",
+		}
+		resp, err := tf.Fleet.CreateRack(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, rack1)
+		Convey("Get rack by existing ID", func() {
+			req := &api.GetRackRequest{
+				Name: util.AddPrefix(rackCollection, "rack-1"),
+			}
+			resp, err := tf.Fleet.GetRack(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack1)
+		})
+		Convey("Get rack by non-existing ID", func() {
+			req := &api.GetRackRequest{
+				Name: util.AddPrefix(rackCollection, "rack-2"),
+			}
+			resp, err := tf.Fleet.GetRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get rack - Invalid input empty name", func() {
+			req := &api.GetRackRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get rack - Invalid input invalid characters", func() {
+			req := &api.GetRackRequest{
+				Name: util.AddPrefix(rackCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestDeleteRack(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteRack", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		rack1 := mockRack("", 10)
+		req := &api.CreateRackRequest{
+			Rack:   rack1,
+			RackId: "rack-1",
+		}
+		resp, err := tf.Fleet.CreateRack(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, rack1)
+		Convey("Delete rack by existing ID", func() {
+			req := &api.DeleteRackRequest{
+				Name: util.AddPrefix(rackCollection, "rack-1"),
+			}
+			_, err := tf.Fleet.DeleteRack(tf.C, req)
+			So(err, ShouldBeNil)
+			greq := &api.GetRackRequest{
+				Name: util.AddPrefix(rackCollection, "rack-1"),
+			}
+			res, err := tf.Fleet.GetRack(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete rack by non-existing ID", func() {
+			req := &api.DeleteRackRequest{
+				Name: util.AddPrefix(rackCollection, "rack-2"),
+			}
+			_, err := tf.Fleet.DeleteRack(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete rack - Invalid input empty name", func() {
+			req := &api.DeleteRackRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Delete rack - Invalid input invalid characters", func() {
+			req := &api.DeleteRackRequest{
+				Name: util.AddPrefix(rackCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}

@@ -66,6 +66,20 @@ func UpdateRack(ctx context.Context, rack *fleet.Rack) (*fleet.Rack, error) {
 	return putRack(ctx, rack, true)
 }
 
+// GetRack returns rack for the given id from datastore.
+func GetRack(ctx context.Context, id string) (*fleet.Rack, error) {
+	pm, err := fleetds.Get(ctx, &fleet.Rack{Name: id}, newRackEntity)
+	if err == nil {
+		return pm.(*fleet.Rack), err
+	}
+	return nil, err
+}
+
+// DeleteRack deletes the rack in datastore
+func DeleteRack(ctx context.Context, id string) error {
+	return fleetds.Delete(ctx, &fleet.Rack{Name: id}, newRackEntity)
+}
+
 func putRack(ctx context.Context, rack *fleet.Rack, update bool) (*fleet.Rack, error) {
 	rack.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, rack, newRackEntity, update)
