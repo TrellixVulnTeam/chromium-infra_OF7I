@@ -11,6 +11,7 @@ define help_message
 Helpers for managing ufs project in $(PROJECT_PATH):
   gen: regenerate all go bindings
   test: run all unittests
+  cover: generate code coverage report
   build: build the main ufs service
   build-dumper: build the dumper service
   dev: run the main ufs service locally
@@ -30,7 +31,12 @@ gen:
 # Run unittests
 .PHONY: test
 test:
-	go test ./...
+	go test ./... -coverprofile=coverage.out
+
+# Check Code coverage
+.PHONY: cover
+cover:
+	go tool cover -func=coverage.out
 
 .PHONY: build
 build:
