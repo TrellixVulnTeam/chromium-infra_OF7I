@@ -17,6 +17,7 @@ import (
 	"github.com/google/cel-go/checker/decls"
 	"go.chromium.org/chromiumos/config/go/api/test/metadata/v1"
 	"go.chromium.org/luci/common/data/stringset"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 // Lint checks a given metadata specification for violations of requirements
@@ -256,11 +257,15 @@ func parseAndCheckExpression(env *cel.Env, expr string) Result {
 		result.AppendError("expression must be non-empty")
 		return result
 	}
-	if _, iss := env.Compile(expr); iss.Err() != nil {
+	ast, iss := env.Compile(expr)
+	if iss.Err() != nil {
 		// Reported issues are frequently displayed on multiple lines.
 		// Adding a leading newline makes the multi-line display easier to read.
 		result.AppendError("compile expression: \n%s", iss.String())
 		return result
+	}
+	if ast.ResultType().GetPrimitive() != exprpb.Type_BOOL {
+		result.AppendError("expression must evaluate to a boolean, found %s", ast.ResultType().String())
 	}
 	return result
 }

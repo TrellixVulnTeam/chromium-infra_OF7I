@@ -1,0 +1,4 @@
+[
+"## Errors ##",
+"Test 'remoteTestDrivers/tauto/tests/foo': dut_constraint: config: expression must evaluate to a boolean, found primitive:INT64 "
+]

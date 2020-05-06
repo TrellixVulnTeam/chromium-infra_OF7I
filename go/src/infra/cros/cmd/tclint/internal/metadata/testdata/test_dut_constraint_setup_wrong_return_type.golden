@@ -1,0 +1,4 @@
+[
+"## Errors ##",
+"Test 'remoteTestDrivers/tauto/tests/foo': dut_constraint: setup: expression must evaluate to a boolean, found message_type:\"chromiumos.config.api.test.dut.v1.Peripheral\" "
+]
