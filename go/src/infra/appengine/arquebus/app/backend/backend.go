@@ -33,6 +33,7 @@ import (
 	"infra/appengine/arquebus/app/config"
 	"infra/appengine/arquebus/app/util"
 	"infra/appengine/rotang/proto/rotangapi"
+	"infra/appengine/rotation-proxy/proto"
 	"infra/monorailv2/api/api_proto"
 )
 
@@ -54,6 +55,7 @@ var (
 
 var ctxKeyMonorailClient = "monorail client"
 var ctxKeyRotaNGClient = "rotang client"
+var ctxKeyRotationProxyClient = "rotation-proxy client"
 
 func setMonorailClient(c context.Context, mc monorail.IssuesClient) context.Context {
 	return context.WithValue(c, &ctxKeyMonorailClient, mc)
@@ -63,12 +65,20 @@ func setRotaNGClient(c context.Context, rc rotangapi.OncallInfoClient) context.C
 	return context.WithValue(c, &ctxKeyRotaNGClient, rc)
 }
 
+func setRotationProxyClient(c context.Context, rc rotationproxy.RotationProxyServiceClient) context.Context {
+	return context.WithValue(c, &ctxKeyRotationProxyClient, rc)
+}
+
 func getMonorailClient(c context.Context) monorail.IssuesClient {
 	return c.Value(&ctxKeyMonorailClient).(monorail.IssuesClient)
 }
 
 func getRotaNGClient(c context.Context) rotangapi.OncallInfoClient {
 	return c.Value(&ctxKeyRotaNGClient).(rotangapi.OncallInfoClient)
+}
+
+func getRotationProxyClient(c context.Context) rotationproxy.RotationProxyServiceClient {
+	return c.Value(&ctxKeyRotationProxyClient).(rotationproxy.RotationProxyServiceClient)
 }
 
 func createMonorailClient(c context.Context) (monorail.IssuesClient, error) {
@@ -93,6 +103,19 @@ func createRotaNGClient(c context.Context) (rotangapi.OncallInfoClient, error) {
 		&prpc.Client{
 			C:    &http.Client{Transport: transport},
 			Host: config.Get(c).RotangHostname,
+		},
+	), nil
+}
+
+func createRotationProxyClient(c context.Context) (rotationproxy.RotationProxyServiceClient, error) {
+	transport, err := auth.GetRPCTransport(c, auth.AsSelf)
+	if err != nil {
+		return nil, err
+	}
+	return rotationproxy.NewRotationProxyServicePRPCClient(
+		&prpc.Client{
+			C:    &http.Client{Transport: transport},
+			Host: config.Get(c).RotationProxyHostname,
 		},
 	), nil
 }
@@ -125,6 +148,16 @@ func InstallHandlers(r *router.Router, dispatcher *tq.Dispatcher, m router.Middl
 			return
 		}
 		rc.Context = setRotaNGClient(rc.Context, rotaNGClient)
+
+		rotationProxyClient, err := createRotationProxyClient(rc.Context)
+		if err != nil {
+			util.ErrStatus(
+				rc, http.StatusInternalServerError,
+				"failed to create an RPC channel for Rotation Proxy: %s", err,
+			)
+			return
+		}
+		rc.Context = setRotationProxyClient(rc.Context, rotationProxyClient)
 		next(rc)
 	})
 	dispatcher.InstallRoutes(r, m)

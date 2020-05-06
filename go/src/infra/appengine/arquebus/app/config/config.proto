@@ -24,6 +24,9 @@ message Config {
 
     // The endpoint for RotaNG APIs.
     string rotang_hostname = 4;
+
+    // The endpoint for Rotation Proxy APIs.
+    string rotation_proxy_hostname = 5;
 }
 
 // IssueQuery describes the issue query to be used for searching unassigned
