@@ -40,13 +40,6 @@ func (l *ListedHost) String() string {
 	return l.Hostname
 }
 
-// New creates a new Client (scheduled to be removed)
-func New(ctx context.Context, h *http.Client, server string) (*Client, error) {
-	//will be removed
-	c, err := NewClient(h, server)
-	return c, err
-}
-
 // NewClient creates a new Client.
 func NewClient(h *http.Client, server string) (*Client, error) {
 	service, err := newSwarmingService(h, server)
