@@ -72,7 +72,7 @@ func InsertChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatfor
 		p.UpdateTime = utime
 		protos[i] = p
 	}
-	return fleetds.Insert(ctx, protos, newEntity, false)
+	return fleetds.Insert(ctx, protos, newEntity, false, false)
 }
 
 // GetAllChromePlatforms returns all platforms in record.

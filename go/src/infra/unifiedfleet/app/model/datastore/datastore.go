@@ -139,7 +139,7 @@ func Delete(ctx context.Context, pm proto.Message, nf NewFunc) error {
 }
 
 // Insert inserts the fleet objects.
-func Insert(ctx context.Context, es []proto.Message, nf NewFunc, update bool) (*OpResults, error) {
+func Insert(ctx context.Context, es []proto.Message, nf NewFunc, update, upsert bool) (*OpResults, error) {
 	allRes := make(OpResults, len(es))
 	checkEntities := make([]FleetEntity, 0, len(es))
 	checkRes := make(OpResults, 0, len(es))
@@ -159,24 +159,30 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, update bool) (*
 	f := func(ctx context.Context) error {
 		toAddEntities := make([]FleetEntity, 0, len(checkEntities))
 		toAddRes := make(OpResults, 0, len(checkEntities))
-		exists, err := exists(ctx, checkEntities)
-		if err == nil {
-			for i, e := range checkEntities {
-				if !exists[i] && update {
-					checkRes[i].LogError(errors.Reason("No such Object in the datastore").Err())
-					continue
-				}
-				if exists[i] && !update {
-					checkRes[i].LogError(errors.Reason("Object exists in the datastore").Err())
-					continue
-				}
-				toAddEntities = append(toAddEntities, e)
-				toAddRes = append(toAddRes, checkRes[i])
-			}
-		} else {
-			logging.Debugf(ctx, "Failed to check existence: %s", err)
+		if upsert {
+			logging.Debugf(ctx, "Upserting all objects")
 			toAddEntities = checkEntities
 			toAddRes = checkRes
+		} else {
+			exists, err := exists(ctx, checkEntities)
+			if err == nil {
+				for i, e := range checkEntities {
+					if !exists[i] && update {
+						checkRes[i].LogError(errors.Reason("No such Object in the datastore").Err())
+						continue
+					}
+					if exists[i] && !update {
+						checkRes[i].LogError(errors.Reason("Object exists in the datastore").Err())
+						continue
+					}
+					toAddEntities = append(toAddEntities, e)
+					toAddRes = append(toAddRes, checkRes[i])
+				}
+			} else {
+				logging.Debugf(ctx, "Failed to check existence: %s", err)
+				toAddEntities = checkEntities
+				toAddRes = checkRes
+			}
 		}
 		if err := datastore.Put(ctx, toAddEntities); err != nil {
 			for i, e := range err.(errors.MultiError) {
