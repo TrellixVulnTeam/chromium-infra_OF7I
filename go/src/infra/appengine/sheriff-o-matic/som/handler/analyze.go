@@ -11,6 +11,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 
+	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/analyzer"
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model/gen"
@@ -150,6 +151,10 @@ func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string
 	alerts := []*messages.Alert{}
 	for _, ba := range filteredBuilderAlerts {
 		title := fmt.Sprintf("Step %q failing on %d builder(s)", ba.StepAtFault.Step.Name, len(ba.Builders))
+		// TODO(crbug.com/1043371): Remove the if condition after we disable automatic grouping.
+		if len(ba.Builders) == 1 {
+			title = fmt.Sprintf("Step %q failing on builder %q", ba.StepAtFault.Step.Name, ba.Builders[0].Name)
+		}
 		startTime := messages.TimeToEpochTime(time.Now())
 		severity := messages.NewFailure
 		for _, b := range ba.Builders {
@@ -162,7 +167,7 @@ func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string
 		}
 
 		alert := &messages.Alert{
-			Key:       fmt.Sprintf("%s.%v", tree, ba.Reason.Signature()),
+			Key:       getKeyForAlert(c, ba, tree),
 			Title:     title,
 			Extension: ba,
 			StartTime: startTime,
@@ -193,6 +198,18 @@ func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string
 	}
 
 	return alertsSummary, nil
+}
+
+func getKeyForAlert(ctx context.Context, bf *messages.BuildFailure, tree string) string {
+	if config.EnableAutoGrouping {
+		return fmt.Sprintf("%s.%v", tree, bf.Reason.Signature())
+	}
+	step := bf.StepAtFault.Step.Name
+	project := bf.Builders[0].Project
+	bucket := bf.Builders[0].Bucket
+	builder := bf.Builders[0].Name
+	firstFailure := bf.Builders[0].FirstFailure
+	return fmt.Sprintf("%s:%s:%s:%s:%s:%d", tree, project, bucket, builder, step, firstFailure)
 }
 
 func attachFindItResults(ctx context.Context, failures []*messages.BuildFailure, finditClient client.FindIt) {

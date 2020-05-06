@@ -675,7 +675,7 @@ func TestProcessBQResults(t *testing.T) {
 		}
 		got, err := processBQResults(ctx, mr)
 		So(err, ShouldEqual, nil)
-		So(len(got), ShouldEqual, 1)
+		So(len(got), ShouldEqual, 2)
 		reason := got[0].Reason
 		So(reason, ShouldNotBeNil)
 		So(reason.Raw, ShouldResemble, &bqFailure{
@@ -687,7 +687,8 @@ func TestProcessBQResults(t *testing.T) {
 				TestName: "some/test/name",
 			}},
 		})
-		So(len(got[0].Builders), ShouldEqual, 2)
+		So(len(got[0].Builders), ShouldEqual, 1)
+		So(len(got[1].Builders), ShouldEqual, 1)
 	})
 
 	Convey("multiple results, start/end build numbers, different steps, different sets of test names", t, func() {
@@ -1197,6 +1198,748 @@ func TestProcessBQResults(t *testing.T) {
 			},
 		}
 		got, err := processBQResults(ctx, mr)
+		sort.Sort(byStepName(got))
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 2)
+		reason := got[0].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "some step 1",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 2,
+			Tests: []step.TestWithResult{{
+				TestName: "some/test/name/1",
+			},
+				{
+					TestName: "some/test/name/2",
+				}},
+		})
+		So(len(got[0].Builders), ShouldEqual, 1)
+
+		reason = got[1].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "some step 2",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 2,
+			Tests: []step.TestWithResult{{
+				TestName: "some/test/name/1",
+			},
+				{
+					TestName: "some/test/name/2",
+				}},
+		})
+		So(len(got[1].Builders), ShouldEqual, 1)
+	})
+}
+
+// TODO(crbug.com/1043371s): Remove this when we disable automatic grouping.
+func TestProcessBQResultsWithAutomaticGrouping(t *testing.T) {
+	ctx := context.Background()
+	ctx = gologger.StdConfig.Use(ctx)
+
+	Convey("smoke", t, func() {
+		mr := &mockResults{}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		So(err, ShouldEqual, nil)
+		So(got, ShouldBeEmpty)
+	})
+
+	Convey("single result, only start/end build numbers", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "some step",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "some builder",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 1)
+	})
+
+	Convey("single result, only end build number", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "some step",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "some builder",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 1)
+	})
+
+	Convey("single result, start/end build numbers, single test name", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "some step",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "some builder",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 1)
+		reason := got[0].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "some step",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 1,
+			Tests: []step.TestWithResult{{
+				TestName: "some/test/name",
+			}},
+		})
+		So(len(got[0].Builders), ShouldEqual, 1)
+	})
+
+	Convey("multiple results, start/end build numbers, same step, same test name", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "some step",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "builder 1",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+				},
+				{
+					StepName: "some step",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "builder 2",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 1)
+		reason := got[0].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "some step",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 1,
+			Tests: []step.TestWithResult{{
+				TestName: "some/test/name",
+			}},
+		})
+		So(len(got[0].Builders), ShouldEqual, 2)
+	})
+
+	Convey("multiple results, start/end build numbers, different steps, different sets of test names", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "some step 1",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "builder 1",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name/1\nsome/test/name/2",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 2,
+						Valid: true,
+					},
+				},
+				{
+					StepName: "some step 2",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "builder 2",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 2,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name/3",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		sort.Sort(byStepName(got))
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 2)
+
+		reason := got[0].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "some step 1",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 2,
+			Tests: []step.TestWithResult{{
+				TestName: "some/test/name/1",
+			},
+				{
+					TestName: "some/test/name/2",
+				}},
+		})
+		So(len(got[0].Builders), ShouldEqual, 1)
+
+		reason = got[1].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "some step 2",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 1,
+			Tests: []step.TestWithResult{{
+				TestName: "some/test/name/3",
+			}},
+		})
+		So(len(got[0].Builders), ShouldEqual, 1)
+	})
+
+	Convey("multiple results, start/end build numbers, same step, different sets of test names", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "some step 1",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "builder 1",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name/1\nsome/test/name/2",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 2,
+						Valid: true,
+					},
+				},
+				{
+					StepName: "some step 1",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "builder 2",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 2,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name/3",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		sort.Sort(byTests(got))
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 2)
+
+		reason := got[0].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "some step 1",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 2,
+			Tests: []step.TestWithResult{{
+				TestName: "some/test/name/1",
+			},
+				{
+					TestName: "some/test/name/2",
+				}},
+		})
+		So(len(got[0].Builders), ShouldEqual, 1)
+		So(got[0].Builders[0].Name, ShouldEqual, "builder 1")
+
+		reason = got[1].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "some step 1",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 1,
+			Tests: []step.TestWithResult{{
+				TestName: "some/test/name/3",
+			}},
+		})
+		So(len(got[1].Builders), ShouldEqual, 1)
+		So(got[1].Builders[0].Name, ShouldEqual, "builder 2")
+	})
+
+	Convey("chromium.perf case: multiple results, different start build numbers, same end build number, same step, different sets of test names", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "performance_test_suite",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "win-10-perf",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 100,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 110,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "A1\nA2\nA3",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 3,
+						Valid: true,
+					},
+				},
+				{
+					StepName: "performance_test_suite",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "win-10-perf",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 102,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 110,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 2,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "B1\nB2\nB3",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 3,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		sort.Sort(byTests(got))
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 2)
+
+		reason := got[0].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "performance_test_suite",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 3,
+			Tests: []step.TestWithResult{
+				{
+					TestName: "A1",
+				},
+				{
+					TestName: "A2",
+				},
+				{
+					TestName: "A3",
+				},
+			},
+		})
+		So(len(got[0].Builders), ShouldEqual, 1)
+		So(got[0].Builders[0].Name, ShouldEqual, "win-10-perf")
+		So(got[0].Builders[0].FirstFailure, ShouldEqual, 100)
+		So(got[0].Builders[0].LatestFailure, ShouldEqual, 110)
+
+		reason = got[1].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "performance_test_suite",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 3,
+			Tests: []step.TestWithResult{
+				{
+					TestName: "B1",
+				},
+				{
+					TestName: "B2",
+				},
+				{
+					TestName: "B3",
+				},
+			},
+		})
+		So(len(got[1].Builders), ShouldEqual, 1)
+		So(got[1].Builders[0].Name, ShouldEqual, "win-10-perf")
+		So(got[1].Builders[0].FirstFailure, ShouldEqual, 102)
+		So(got[1].Builders[0].LatestFailure, ShouldEqual, 110)
+	})
+
+	Convey("chromium.perf case: multiple results, same step, same truncated list of test names, different test name fingerprints", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "performance_test_suite",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "win-10-perf",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 100,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 110,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "A1\nA2\nA3",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 3,
+						Valid: true,
+					},
+				},
+				{
+					StepName: "performance_test_suite",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "win-10-perf",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 102,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 110,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 2,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "A1\nA2\nA3",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 3,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
+		sort.Sort(byFirstFailure(got))
+		So(err, ShouldEqual, nil)
+		So(len(got), ShouldEqual, 2)
+
+		reason := got[0].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "performance_test_suite",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 3,
+			Tests: []step.TestWithResult{
+				{
+					TestName: "A1",
+				},
+				{
+					TestName: "A2",
+				},
+				{
+					TestName: "A3",
+				},
+			},
+		})
+		So(len(got[0].Builders), ShouldEqual, 1)
+
+		So(got[0].Builders[0].Name, ShouldEqual, "win-10-perf")
+		So(got[0].Builders[0].FirstFailure, ShouldEqual, 100)
+		So(got[0].Builders[0].LatestFailure, ShouldEqual, 110)
+
+		reason = got[1].Reason
+		So(reason, ShouldNotBeNil)
+		So(reason.Raw, ShouldResemble, &bqFailure{
+			Name:            "performance_test_suite",
+			kind:            "test",
+			severity:        messages.ReliableFailure,
+			NumFailingTests: 3,
+			Tests: []step.TestWithResult{
+				{
+					TestName: "A1",
+				},
+				{
+					TestName: "A2",
+				},
+				{
+					TestName: "A3",
+				},
+			},
+		})
+		So(len(got[1].Builders), ShouldEqual, 1)
+		So(got[1].Builders[0].Name, ShouldEqual, "win-10-perf")
+		So(got[1].Builders[0].FirstFailure, ShouldEqual, 102)
+		So(got[1].Builders[0].LatestFailure, ShouldEqual, 110)
+	})
+
+	Convey("multiple results, start/end build numbers, different steps, same set of test names", t, func() {
+		mr := &mockResults{
+			failures: []failureRow{
+				{
+					StepName: "some step 1",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "builder 1",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name/1\nsome/test/name/2",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 2,
+						Valid: true,
+					},
+				},
+				{
+					StepName: "some step 2",
+					MasterName: bigquery.NullString{
+						StringVal: "some master",
+						Valid:     true,
+					},
+					Builder: "builder 2",
+					Project: "some project",
+					Bucket:  "some bucket",
+					BuildIDBegin: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					BuildIDEnd: bigquery.NullInt64{
+						Int64: 10,
+						Valid: true,
+					},
+					TestNamesFingerprint: bigquery.NullInt64{
+						Int64: 1,
+						Valid: true,
+					},
+					TestNamesTrunc: bigquery.NullString{
+						StringVal: "some/test/name/1\nsome/test/name/2",
+						Valid:     true,
+					},
+					NumTests: bigquery.NullInt64{
+						Int64: 2,
+						Valid: true,
+					},
+				},
+			},
+		}
+		got, err := processBQResultsWithAutomaticGrouping(ctx, mr)
 		sort.Sort(byStepName(got))
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 2)

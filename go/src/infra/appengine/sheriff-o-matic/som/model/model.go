@@ -59,7 +59,19 @@ type TreeBuilder struct {
 }
 
 // AlertJSON is the JSON blob of an alert for a tree.
+// TODO(crbug.com/1043371): Remove this when we disable automatic grouping.
 type AlertJSON struct {
+	ID           string         `gae:"$id" json:"-"`
+	Tree         *datastore.Key `gae:"$parent"`
+	Date         time.Time
+	Contents     []byte `gae:",noindex"`
+	Resolved     bool
+	AutoResolved bool
+	ResolvedDate time.Time
+}
+
+// AlertJSONNonGrouping is the JSON blob of an alert for a tree.
+type AlertJSONNonGrouping struct {
 	ID           string         `gae:"$id" json:"-"`
 	Tree         *datastore.Key `gae:"$parent"`
 	Date         time.Time

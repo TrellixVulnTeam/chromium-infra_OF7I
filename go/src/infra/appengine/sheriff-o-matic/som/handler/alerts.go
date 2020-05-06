@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/net/context"
 
+	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 
@@ -158,6 +159,62 @@ func GetResolvedAlertsHandler(ctx *router.Context) {
 	getAlerts(ctx, false, true)
 }
 
+func convertAlertJSONsToAlertJSONsNonGrouping(alertJSONs []*model.AlertJSON, alertJSONsNonGrouping *[]*model.AlertJSONNonGrouping) {
+	*alertJSONsNonGrouping = make([]*model.AlertJSONNonGrouping, len(alertJSONs))
+	for i, alertJSON := range alertJSONs {
+		tmp := model.AlertJSONNonGrouping(*alertJSON)
+		(*alertJSONsNonGrouping)[i] = &tmp
+	}
+}
+
+func convertAlertJSONsNonGroupingToAlertJSONs(alertJSONsNonGrouping []*model.AlertJSONNonGrouping, alertJSONs *[]*model.AlertJSON) {
+	*alertJSONs = make([]*model.AlertJSON, len(alertJSONsNonGrouping))
+	for i, alertJSONNonGrouping := range alertJSONsNonGrouping {
+		tmp := model.AlertJSON(*alertJSONNonGrouping)
+		(*alertJSONs)[i] = &tmp
+	}
+}
+
+func datastorePutAlertJSONs(c context.Context, alertJSONs []*model.AlertJSON) error {
+	if config.EnableAutoGrouping {
+		return datastore.Put(c, alertJSONs)
+	}
+	alertJSONsNonGrouping := []*model.AlertJSONNonGrouping{}
+	convertAlertJSONsToAlertJSONsNonGrouping(alertJSONs, &alertJSONsNonGrouping)
+	return datastore.Put(c, alertJSONsNonGrouping)
+}
+
+func datastoreGetAlertJSONs(c context.Context, alertJSONs []*model.AlertJSON) {
+	if config.EnableAutoGrouping {
+		datastore.Get(c, alertJSONs)
+		return
+	}
+	alertJSONsNonGrouping := []*model.AlertJSONNonGrouping{}
+	convertAlertJSONsToAlertJSONsNonGrouping(alertJSONs, &alertJSONsNonGrouping)
+	datastore.Get(c, alertJSONsNonGrouping)
+	convertAlertJSONsNonGroupingToAlertJSONs(alertJSONsNonGrouping, &alertJSONs)
+}
+
+func datastoreCreateAlertQuery() *datastore.Query {
+	if config.EnableAutoGrouping {
+		return datastore.NewQuery("AlertJSON")
+	}
+	return datastore.NewQuery("AlertJSONNonGrouping")
+}
+
+func datastoreGetAlertsByQuery(c context.Context, alertJSONs *[]*model.AlertJSON, q *datastore.Query) error {
+	if config.EnableAutoGrouping {
+		return datastore.GetAll(c, q, alertJSONs)
+	}
+	alertJSONsNonGrouping := []*model.AlertJSONNonGrouping{}
+	err := datastore.GetAll(c, q, &alertJSONsNonGrouping)
+	if err != nil {
+		return err
+	}
+	convertAlertJSONsNonGroupingToAlertJSONs(alertJSONsNonGrouping, alertJSONs)
+	return nil
+}
+
 func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.AlertsSummary, autoResolve bool) error {
 	treeKey := datastore.MakeKey(c, "Tree", tree)
 	now := clock.Now(c).UTC()
@@ -176,23 +233,24 @@ func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.
 	}
 
 	// Add/modify alerts.
-	var err error
-	err = datastore.RunInTransaction(c, func(c context.Context) error {
+	err := datastore.RunInTransaction(c, func(c context.Context) error {
 		// Get any existing keys to preserve resolved status, assign updated content.
-		datastore.Get(c, alertJSONs)
+		datastoreGetAlertJSONs(c, alertJSONs)
 		for i, alert := range alertsSummary.Alerts {
 			alertJSONs[i].Date = now
+			var err error
 			alertJSONs[i].Contents, err = json.Marshal(alert)
 			if err != nil {
 				return err
 			}
 			// Unresolve autoresolved alerts.
+			// TODO (nqmtuan): Check if we can simplify the condition.
 			if alertJSONs[i].Resolved && alertJSONs[i].AutoResolved {
 				alertJSONs[i].Resolved = false
 				alertJSONs[i].AutoResolved = false
 			}
 		}
-		return datastore.Put(c, alertJSONs)
+		return datastorePutAlertJSONs(c, alertJSONs)
 	}, nil)
 	if err != nil {
 		return err
@@ -201,11 +259,9 @@ func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.
 	if autoResolve {
 		// Ideally this request would be performed in a transaction, but it can exceed the datastore API request size limit.
 		alertJSONs = []*model.AlertJSON{}
-		q := datastore.NewQuery("AlertJSON")
-		q = q.Ancestor(treeKey)
-		q = q.Eq("Resolved", false)
+		q := datastoreCreateAlertQuery().Ancestor(treeKey).Eq("Resolved", false)
 		openAlerts := []*model.AlertJSON{}
-		err = datastore.GetAll(c, q, &openAlerts)
+		err = datastoreGetAlertsByQuery(c, &openAlerts, q)
 		if err != nil {
 			return err
 		}
@@ -216,7 +272,7 @@ func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.
 				alert.ResolvedDate = now
 				alertJSONs = append(alertJSONs, alert)
 
-				// Avoid really large datastore transactions.
+				// Avoid really large datastore Put.
 				if len(alertJSONs) > maxAlertsAutoResolveCount {
 					err = datastore.Put(c, alertJSONs)
 					if err != nil {
@@ -226,11 +282,9 @@ func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.
 				}
 			}
 		}
-		if len(alertJSONs) >= 1 {
-			err = datastore.Put(c, alertJSONs)
-			if err != nil {
-				return err
-			}
+		err = datastore.Put(c, alertJSONs)
+		if err != nil {
+			return err
 		}
 	}
 

@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/analyzer/step"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
@@ -269,6 +270,9 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 	if err != nil {
 		return nil, err
 	}
+	if config.EnableAutoGrouping {
+		return processBQResultsWithAutomaticGrouping(ctx, it)
+	}
 	return processBQResults(ctx, it)
 }
 
@@ -303,6 +307,127 @@ func generateBuildURL(project string, bucket string, builderName string, buildID
 }
 
 func processBQResults(ctx context.Context, it nexter) ([]*messages.BuildFailure, error) {
+	ret := []*messages.BuildFailure{}
+	for {
+		var r failureRow
+		err := it.Next(&r)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		ab := generateAlertedBuilder(ctx, r)
+		regressionRanges := getRegressionRanges(ab.LatestPassingRev, ab.FirstFailingRev)
+
+		// Process tests.
+		reason := &bqFailure{
+			Name:     r.StepName,
+			kind:     "basic",
+			severity: messages.ReliableFailure,
+		}
+		if r.TestNamesFingerprint.Valid {
+			reason.kind = "test"
+			testNames := strings.Split(r.TestNamesTrunc.StringVal, "\n")
+			sort.Strings(testNames)
+			for _, testName := range testNames {
+				reason.Tests = append(reason.Tests, step.TestWithResult{
+					TestName: testName,
+				})
+			}
+			reason.NumFailingTests = r.NumTests.Int64
+		}
+
+		bf := &messages.BuildFailure{
+			StepAtFault: &messages.BuildStep{
+				Step: &messages.Step{
+					Name: r.StepName,
+				},
+			},
+			Builders: []*messages.AlertedBuilder{ab},
+			Reason: &messages.Reason{
+				Raw: reason,
+			},
+			RegressionRanges: regressionRanges,
+		}
+		ret = append(ret, bf)
+	}
+
+	ret = filterHierarchicalSteps(ret)
+	return ret, nil
+}
+
+func generateAlertedBuilder(ctx context.Context, r failureRow) *messages.AlertedBuilder {
+	gitBegin := r.CPRangeOutputBegin
+	if gitBegin == nil {
+		gitBegin = r.CPRangeInputBegin
+	}
+	gitEnd := r.CPRangeOutputEnd
+	if gitEnd == nil {
+		gitEnd = r.CPRangeInputEnd
+	}
+	var latestPassingRev, firstFailingRev *messages.RevisionSummary
+	if gitBegin != nil {
+		latestPassingRev = &messages.RevisionSummary{
+			Position: int(gitBegin.Position.Int64),
+			Branch:   gitBegin.Ref.StringVal,
+			Host:     gitBegin.Host.StringVal,
+			Repo:     gitBegin.Project.StringVal,
+			GitHash:  gitBegin.ID.StringVal,
+		}
+	}
+	if gitEnd != nil {
+		firstFailingRev = &messages.RevisionSummary{
+			Position: int(gitEnd.Position.Int64),
+			Branch:   gitEnd.Ref.StringVal,
+			Host:     gitEnd.Host.StringVal,
+			Repo:     gitEnd.Project.StringVal,
+			GitHash:  gitEnd.ID.StringVal,
+		}
+	}
+	return &messages.AlertedBuilder{
+		Project:                  r.Project,
+		Bucket:                   r.Bucket,
+		Name:                     r.Builder,
+		Master:                   r.MasterName.StringVal,
+		FirstFailure:             r.BuildIDBegin.Int64,
+		LatestFailure:            r.BuildIDEnd.Int64,
+		FirstFailureBuildNumber:  r.BuildNumberBegin.Int64,
+		LatestFailureBuildNumber: r.BuildNumberEnd.Int64,
+		URL:                      generateBuilderURL(r.Project, r.Bucket, r.Builder),
+		FirstFailureURL:          generateBuildURL(r.Project, r.Bucket, r.Builder, r.BuildIDBegin),
+		LatestFailureURL:         generateBuildURL(r.Project, r.Bucket, r.Builder, r.BuildIDEnd),
+		LatestPassingRev:         latestPassingRev,
+		FirstFailingRev:          firstFailingRev,
+		NumFailingTests:          r.NumTests.Int64,
+		BuildStatus:              r.BuildStatus,
+	}
+}
+
+func getRegressionRanges(earliestRev, latestRev *messages.RevisionSummary) []*messages.RegressionRange {
+	regressionRanges := []*messages.RegressionRange{}
+	if latestRev != nil && earliestRev != nil {
+		regRange := &messages.RegressionRange{
+			Repo: earliestRev.Repo,
+			Host: earliestRev.Host,
+		}
+		if earliestRev.GitHash != "" && latestRev.GitHash != "" {
+			regRange.Revisions = []string{earliestRev.GitHash, latestRev.GitHash}
+		}
+		if earliestRev.Position != 0 && latestRev.Position != 0 {
+			regRange.Positions = []string{
+				fmt.Sprintf("%s@{#%d}", earliestRev.Branch, earliestRev.Position),
+				fmt.Sprintf("%s@{#%d}", latestRev.Branch, latestRev.Position),
+			}
+		}
+		regressionRanges = append(regressionRanges, regRange)
+	}
+	return regressionRanges
+}
+
+// TODO(crbug.com/1043371): Remove this when we disable automatic grouping.
+func processBQResultsWithAutomaticGrouping(ctx context.Context, it nexter) ([]*messages.BuildFailure, error) {
 	alertedBuildersByStep := map[string][]*messages.AlertedBuilder{}
 	alertedBuildersByStepAndTests := map[string]map[int64][]*messages.AlertedBuilder{}
 	testNamesTruncForFingerprint := map[int64]string{}
@@ -317,50 +442,7 @@ func processBQResults(ctx context.Context, it nexter) ([]*messages.BuildFailure,
 			return nil, err
 		}
 
-		gitBegin := r.CPRangeOutputBegin
-		if gitBegin == nil {
-			gitBegin = r.CPRangeInputBegin
-		}
-		gitEnd := r.CPRangeOutputEnd
-		if gitEnd == nil {
-			gitEnd = r.CPRangeInputEnd
-		}
-		var latestPassingRev, firstFailingRev *messages.RevisionSummary
-		if gitBegin != nil {
-			latestPassingRev = &messages.RevisionSummary{
-				Position: int(gitBegin.Position.Int64),
-				Branch:   gitBegin.Ref.StringVal,
-				Host:     gitBegin.Host.StringVal,
-				Repo:     gitBegin.Project.StringVal,
-				GitHash:  gitBegin.ID.StringVal,
-			}
-		}
-		if gitEnd != nil {
-			firstFailingRev = &messages.RevisionSummary{
-				Position: int(gitEnd.Position.Int64),
-				Branch:   gitEnd.Ref.StringVal,
-				Host:     gitEnd.Host.StringVal,
-				Repo:     gitEnd.Project.StringVal,
-				GitHash:  gitEnd.ID.StringVal,
-			}
-		}
-		ab := &messages.AlertedBuilder{
-			Project:                  r.Project,
-			Bucket:                   r.Bucket,
-			Name:                     r.Builder,
-			Master:                   r.MasterName.StringVal,
-			FirstFailure:             r.BuildIDBegin.Int64,
-			LatestFailure:            r.BuildIDEnd.Int64,
-			FirstFailureBuildNumber:  r.BuildNumberBegin.Int64,
-			LatestFailureBuildNumber: r.BuildNumberEnd.Int64,
-			URL:                      generateBuilderURL(r.Project, r.Bucket, r.Builder),
-			FirstFailureURL:          generateBuildURL(r.Project, r.Bucket, r.Builder, r.BuildIDBegin),
-			LatestFailureURL:         generateBuildURL(r.Project, r.Bucket, r.Builder, r.BuildIDEnd),
-			LatestPassingRev:         latestPassingRev,
-			FirstFailingRev:          firstFailingRev,
-			NumFailingTests:          r.NumTests.Int64,
-			BuildStatus:              r.BuildStatus,
-		}
+		ab := generateAlertedBuilder(ctx, r)
 
 		forStep, ok := alertedBuildersByStep[r.StepName]
 		if !ok {
@@ -402,23 +484,7 @@ func processBQResults(ctx context.Context, it nexter) ([]*messages.BuildFailure,
 		// chromium. There is some uncertainty that build.Output.Properties will have this
 		// information in all cases for all trees, since its contents is determined by
 		// whatever is in the recipes.
-		regressionRanges := []*messages.RegressionRange{}
-		if latestRev != nil && earliestRev != nil {
-			regRange := &messages.RegressionRange{
-				Repo: earliestRev.Repo,
-				Host: earliestRev.Host,
-			}
-			if earliestRev.GitHash != "" && latestRev.GitHash != "" {
-				regRange.Revisions = []string{earliestRev.GitHash, latestRev.GitHash}
-			}
-			if earliestRev.Position != 0 && latestRev.Position != 0 {
-				regRange.Positions = []string{
-					fmt.Sprintf("%s@{#%d}", earliestRev.Branch, earliestRev.Position),
-					fmt.Sprintf("%s@{#%d}", latestRev.Branch, latestRev.Position),
-				}
-			}
-			regressionRanges = append(regressionRanges, regRange)
-		}
+		regressionRanges := getRegressionRanges(earliestRev, latestRev)
 
 		forTest, ok := alertedBuildersByStepAndTests[stepName]
 		if ok && len(forTest) > 0 {

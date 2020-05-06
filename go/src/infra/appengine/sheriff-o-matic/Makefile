@@ -21,9 +21,11 @@ format:
 	gofmt -s -w .
 	cd frontend && make format
 
-test: build
-	cd som && go test infra/appengine/sheriff-o-matic/som/... -count 10 -failfast -cover -race
+test: test-backend
 	cd frontend && make wct
+
+test-backend: build
+	cd som && go test infra/appengine/sheriff-o-matic/som/... -count 10 -failfast -cover -race
 
 relnotes:
 	go run ../../tools/relnotes/relnotes.go -app sheriff-o-matic -extra-paths .,../../monitoring/analyzer,../../monitoring/client,../../monitoring/messages
