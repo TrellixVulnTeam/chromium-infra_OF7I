@@ -6,12 +6,14 @@ package registration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/machine-db/api/crimson/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -140,6 +142,17 @@ func DeleteMachine(ctx context.Context, id string) error {
 	return fleetds.Delete(ctx, &fleet.Machine{Name: id}, newMachineEntity)
 }
 
+// ImportMachines creates or updates a batch of machines in datastore
+func ImportMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(machines))
+	utime := ptypes.TimestampNow()
+	for i, m := range machines {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newMachineEntity, true, true)
+}
+
 func putMachine(ctx context.Context, machine *fleet.Machine, update bool) (*fleet.Machine, error) {
 	machine.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, machine, newMachineEntity, update)
@@ -147,4 +160,46 @@ func putMachine(ctx context.Context, machine *fleet.Machine, update bool) (*flee
 		return pm.(*fleet.Machine), err
 	}
 	return nil, err
+}
+
+// ToChromeMachines converts crimson machines to UFS format.
+func ToChromeMachines(old []*crimson.Machine) []*fleet.Machine {
+	newObjects := make([]*fleet.Machine, len(old))
+	for i, o := range old {
+		newObjects[i] = &fleet.Machine{
+			// Temporarily use existing display name as browser machine's name instead of serial number/assettag
+			Name:     o.Name,
+			Location: toLocation(o.Rack, o.Datacenter),
+			Device: &fleet.Machine_ChromeBrowserMachine{
+				ChromeBrowserMachine: &fleet.ChromeBrowserMachine{
+					DisplayName:    o.Name,
+					ChromePlatform: o.Platform,
+					// TODO(xixuan): add Nic, KvmInterface, RpmInterface, NetworkDeviceInterface, Drac later
+					DeploymentTicket: o.DeploymentTicket,
+				},
+			},
+		}
+	}
+	return newObjects
+}
+
+func toLocation(rack, datacenter string) *fleet.Location {
+	l := &fleet.Location{
+		Rack: rack,
+	}
+	switch strings.ToLower(datacenter) {
+	case "atl97":
+		l.Lab = fleet.Lab_LAB_DATACENTER_ATL97
+	case "iad97":
+		l.Lab = fleet.Lab_LAB_DATACENTER_IAD97
+	case "mtv96":
+		l.Lab = fleet.Lab_LAB_DATACENTER_MTV96
+	case "mtv97":
+		l.Lab = fleet.Lab_LAB_DATACENTER_MTV97
+	case "lab01":
+		l.Lab = fleet.Lab_LAB_DATACENTER_FUCHSIA
+	default:
+		l.Lab = fleet.Lab_LAB_UNSPECIFIED
+	}
+	return l
 }

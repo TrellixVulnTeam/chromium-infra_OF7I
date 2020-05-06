@@ -11,6 +11,7 @@ import (
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
 	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -398,6 +399,11 @@ func TestImportMachines(t *testing.T) {
 			res, err := tf.Fleet.ImportMachines(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
+			getRes, err := registration.GetAllMachines(ctx)
+			So(err, ShouldBeNil)
+			So(getRes, ShouldHaveLength, len(testMachines))
+			gets := getMachineNames(*getRes)
+			So(gets, ShouldResemble, testMachines)
 		})
 		Convey("import browser machines with empty machineDB host", func() {
 			req := &api.ImportMachinesRequest{
@@ -747,4 +753,12 @@ func TestDeleteRack(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
 		})
 	})
+}
+
+func getMachineNames(res OpResults) []string {
+	names := make([]string, 0)
+	for _, r := range res {
+		names = append(names, r.Data.(*proto.Machine).GetName())
+	}
+	return names
 }

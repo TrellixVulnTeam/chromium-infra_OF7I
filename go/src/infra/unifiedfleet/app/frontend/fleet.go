@@ -24,6 +24,8 @@ import (
 const (
 	machineCollection string = "machines"
 	rackCollection    string = "racks"
+	// https://cloud.google.com/datastore/docs/concepts/limits
+	importPageSize int = 500
 )
 
 // CfgInterfaceFactory is a contsructor for a luciconfig.Interface
@@ -38,6 +40,7 @@ type MachineDBInterfaceFactory func(ctx context.Context, host string) (crimson.C
 type FleetServerImpl struct {
 	cfgInterfaceFactory       CfgInterfaceFactory
 	machineDBInterfaceFactory MachineDBInterfaceFactory
+	importPageSize            int
 }
 
 func (cs *FleetServerImpl) newMachineDBInterfaceFactory(ctx context.Context, host string) (crimson.CrimsonClient, error) {
@@ -53,6 +56,13 @@ func (cs *FleetServerImpl) newMachineDBInterfaceFactory(ctx context.Context, hos
 		Host: host,
 	}
 	return crimson.NewCrimsonPRPCClient(pclient), nil
+}
+
+func (cs *FleetServerImpl) getImportPageSize() int {
+	if cs.importPageSize == 0 {
+		return importPageSize
+	}
+	return cs.importPageSize
 }
 
 // Error messages for data import
@@ -102,4 +112,11 @@ func errorToDetails(res []*datastore.OpResult) []proto.Message {
 		anys = append(anys, e)
 	}
 	return anys
+}
+
+func min(a, b int) int {
+	if a <= b {
+		return a
+	}
+	return b
 }

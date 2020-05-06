@@ -132,6 +132,20 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	}
 
 	logging.Debugf(ctx, "Importing %d machines", len(resp.Machines))
+	pageSize := fs.getImportPageSize()
+	machines := registration.ToChromeMachines(resp.GetMachines())
+	for i := 0; ; i += pageSize {
+		end := min(i+pageSize, len(machines))
+		logging.Debugf(ctx, "importing %dth - %dth", i, end-1)
+		res, err := registration.ImportMachines(ctx, machines[i:end])
+		s := processImportDatastoreRes(res, err)
+		if s.Err() != nil {
+			return s.Proto(), s.Err()
+		}
+		if i+pageSize >= len(machines) {
+			break
+		}
+	}
 	return successStatus.Proto(), nil
 }
 

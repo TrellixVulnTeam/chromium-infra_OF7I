@@ -33,6 +33,7 @@ func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, 
 
 	tf.Fleet = &FleetServerImpl{
 		machineDBInterfaceFactory: fakeMachineDBInterface,
+		importPageSize:            testImportPageSize,
 	}
 
 	validate := func() {
@@ -50,8 +51,11 @@ func testingContext() context.Context {
 	return c
 }
 
+var testImportPageSize = 2
+var testMachines = []string{"machine1", "machine2", "machine3"}
+
 func fakeMachineDBInterface(ctx context.Context, host string) (crimson.CrimsonClient, error) {
 	return &fake.CrimsonClient{
-		MachineNames: []string{"machine1", "machine2", "machine3"},
+		MachineNames: testMachines,
 	}, nil
 }
