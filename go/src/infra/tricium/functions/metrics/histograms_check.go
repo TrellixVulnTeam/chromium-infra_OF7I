@@ -457,7 +457,14 @@ func milestoneRequest(url string) (milestones, error) {
 		return newMilestones, err
 	}
 	err = json.Unmarshal(body, &newMilestones)
-	return newMilestones, err
+	if err != nil {
+		return newMilestones, err
+	}
+	if len(newMilestones.Milestones) == 0 {
+		err = fmt.Errorf("No milestone data returned for query; response: %s", body)
+		return newMilestones, err
+	}
+	return newMilestones, nil
 }
 
 func createExpiryComment(message, expiry, path string, meta *metadata) *tricium.Data_Comment {
