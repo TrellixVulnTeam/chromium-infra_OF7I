@@ -520,6 +520,11 @@ class Converter(object):
     field_ids = [fd.field_id for fd in field_defs]
     resource_names_dict = rnc.ConvertFieldDefNames(
         self.cnxn, field_ids, project_id, self.services)
+    parent_approval_ids = [
+        fd.approval_id for fd in field_defs if fd.approval_id is not None
+    ]
+    approval_names_dict = rnc.ConvertApprovalDefNames(
+        self.cnxn, parent_approval_ids, project_id, self.services)
 
     api_fds = []
     for fd in field_defs:
@@ -529,9 +534,6 @@ class Converter(object):
       # If the FieldDef with field_id was not found in ConvertFieldDefNames()
       # we skip.
       if fd.field_id not in resource_names_dict:
-        logging.info(
-            'Ignoring field def referencing a non-existent field id: %r',
-            fd.field_id)
         continue
 
       name = resource_names_dict.get(fd.field_id)
@@ -540,12 +542,12 @@ class Converter(object):
       field_type = self._ConvertFieldDefType(fd.field_type)
       applicable_issue_type = fd.applicable_type
       admins = rnc.ConvertUserNames(fd.admin_ids).values()
-      # TODO(monorail:7565): Implement getting field def traits
-      # TODO(monorail:7565): Implement getting approval parent
-      # TODO(monorail:7565): Implement getting enum field choices.
-      traits = []
-      approval_parent = None
+      traits = self._ComputeFieldDefTraits(fd)
+      approval_parent = approval_names_dict.get(fd.approval_id)
       enum_settings = None
+      if field_type == project_objects_pb2.FieldDef.Type.Value('ENUM'):
+        enum_settings = project_objects_pb2.FieldDef.EnumTypeSettings(
+            choices=self._GetEnumFieldChoices(fd))
 
       api_fd = project_objects_pb2.FieldDef(
           name=name,

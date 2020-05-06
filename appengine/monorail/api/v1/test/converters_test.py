@@ -85,6 +85,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.approval_def_1_name = 'approval_field_1'
     self.approval_def_1_id = self._CreateFieldDef(
         self.project_1.project_id, self.approval_def_1_name, 'APPROVAL_TYPE')
+    self.field_def_6_name = 'simonsays'
+    self.field_def_6 = self._CreateFieldDef(
+        self.project_1.project_id,
+        self.field_def_6_name,
+        'STR_TYPE',
+        approval_id=self.approval_def_1_id)
     self.dne_field_def_id = 999999
     self.fv_1_value = 'some_string_field_value'
     self.fv_1 = fake.MakeFieldValue(
@@ -218,7 +224,8 @@ class ConverterFunctionsTest(unittest.TestCase):
       is_required=False,
       is_niche=False,
       is_multivalued=False,
-      is_phase_field=False):
+      is_phase_field=False,
+      approval_id=None):
     """Calls CreateFieldDef with reasonable defaults, returns the ID."""
     if admin_ids is None:
       admin_ids = []
@@ -242,7 +249,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         None,
         None,
         admin_ids, [],
-        is_phase_field=is_phase_field)
+        is_phase_field=is_phase_field,
+        approval_id=approval_id)
 
   def _GetFieldDefById(self, project_id, fd_id):
     config = self.services.config.GetProjectConfig(self.cnxn, project_id)
@@ -1412,21 +1420,74 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         project_objects_pb2.FieldDef.Type.Value('INT'), output[1].type)
     self.assertEqual('', output[1].applicable_issue_type)
-
     fd1_admins = rnc.ConvertUserNames([self.user_1.user_id]).values()
     self.assertEqual(fd1_admins, output[0].admins)
+
+  def testConvertFieldDefs_Traits(self):
+    """We can convert FieldDefs with traits"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_1)
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(1, len(output))
+    expected_traits = [
+        project_objects_pb2.FieldDef.Traits.Value('REQUIRED'),
+        project_objects_pb2.FieldDef.Traits.Value('MULTIVALUED'),
+        project_objects_pb2.FieldDef.Traits.Value('PHASE')
+    ]
+    self.assertEqual(expected_traits, output[0].traits)
+
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_2)
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(1, len(output))
+    expected_traits = [
+        project_objects_pb2.FieldDef.Traits.Value('DEFAULT_HIDDEN')
+    ]
+    self.assertEqual(expected_traits, output[0].traits)
+
+  def testConvertFieldDefs_ApprovalParent(self):
+    """We can convert FieldDef with approval parents"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_6)
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(1, len(output))
+
+    approval_names_dict = rnc.ConvertApprovalDefNames(
+        self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
+        self.services)
+    expected_approval_parent = approval_names_dict.get(input_fd.approval_id)
+    self.assertEqual(expected_approval_parent, output[0].approval_parent)
+
+  def testConvertFieldDefs_EnumTypeSettings(self):
+    """We can convert enum FieldDef and its settings"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_5)
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(1, len(output))
+
+    expected_settings = project_objects_pb2.FieldDef.EnumTypeSettings(
+        choices=[
+            Choice(
+                value='submarine', docstring=self.labeldef_2.label_docstring),
+            Choice(value='basket', docstring=self.labeldef_3.label_docstring)
+        ])
+    self.assertEqual(expected_settings, output[0].enum_settings)
 
   def testConvertFieldDefs_SkipsApprovals(self):
     """We skip over approval defs"""
     project_config = self.services.config.GetProjectConfig(
         self.cnxn, self.project_1.project_id)
     input_fds = project_config.field_defs
-    self.assertEqual(6, len(input_fds))
-    # project_1 is set up to have 5 non-approval fields and 1 approval field
+    self.assertEqual(7, len(input_fds))
+    # project_1 is set up to have 6 non-approval fields and 1 approval field
     # assert we skip approval fields
     output = self.converter.ConvertFieldDefs(
         input_fds, self.project_1.project_id)
-    self.assertEqual(5, len(output))
+    self.assertEqual(6, len(output))
 
   def testConvertFieldDefs_NonexistentID(self):
     """We skip over any field defs whose ID does not exist."""
