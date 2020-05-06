@@ -25,7 +25,7 @@ and do the following:
   the necessary changes.
 * If the bug is caused by someone else's changes or if the bug is part of the feature clearly owned by one person, assign
   the issue to that person.
-* If the issue is valid and requires action, set status to Accepted and the Queue to one described below.
+* If the issue is valid, requires action, and will be acted upon within the week,set status to Accepted and the Queue to one described below.
 * It if is not clear that this request should be acted on, leave the status as New and use Queue-Later.
   We will look at it again if multiple users star the issue.
 
