@@ -7,7 +7,7 @@
                     "name": "remoteTestDrivers/tauto/tests/foo",
                     "dut_constraint": {
                         "setup": {
-                            "expression": "chromiumos.config.api.test.dut.v1.Wifi.Environment.STANDARD"
+                            "expression": "chromiumos.config.api.test.dut.v1.Wifi.Environment.STANDARD != chromiumos.config.api.test.dut.v1.Wifi.Environment.WIFI_CELL"
                         }
                     }
                 }

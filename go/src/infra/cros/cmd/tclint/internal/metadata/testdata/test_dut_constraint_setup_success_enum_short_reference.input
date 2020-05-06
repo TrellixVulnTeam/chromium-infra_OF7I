@@ -7,7 +7,7 @@
                     "name": "remoteTestDrivers/tauto/tests/foo",
                     "dut_constraint": {
                         "setup": {
-                            "expression": "Wifi.Environment.STANDARD"
+                            "expression": "Wifi.Environment.STANDARD == Wifi.Environment.WIFI_CELL"
                         }
                     }
                 }

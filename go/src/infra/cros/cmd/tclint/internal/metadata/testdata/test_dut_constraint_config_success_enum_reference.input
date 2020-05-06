@@ -7,7 +7,7 @@
                     "name": "remoteTestDrivers/tauto/tests/foo",
                     "dut_constraint": {
                         "config": {
-                            "expression": "chromiumos.config.api.HardwareFeatures.Present.PRESENT"
+                            "expression": "chromiumos.config.api.HardwareFeatures.Present.PRESENT == chromiumos.config.api.HardwareFeatures.Present.PRESENT"
                         }
                     }
                 }

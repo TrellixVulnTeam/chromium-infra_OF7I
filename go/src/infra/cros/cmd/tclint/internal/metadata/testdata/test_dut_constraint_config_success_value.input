@@ -7,7 +7,7 @@
                     "name": "remoteTestDrivers/tauto/tests/foo",
                     "dut_constraint": {
                         "config": {
-                            "expression": "dut.hardware_features.screen.milliinch.value"
+                            "expression": "dut.hardware_features.screen.milliinch.value > 0u"
                         }
                     }
                 }

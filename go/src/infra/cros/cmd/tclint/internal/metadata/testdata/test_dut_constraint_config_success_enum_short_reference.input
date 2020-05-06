@@ -7,7 +7,7 @@
                     "name": "remoteTestDrivers/tauto/tests/foo",
                     "dut_constraint": {
                         "config": {
-                            "expression": "HardwareFeatures.Present.PRESENT"
+                            "expression": "HardwareFeatures.Present.PRESENT != HardwareFeatures.Present.PRESENT"
                         }
                     }
                 }
