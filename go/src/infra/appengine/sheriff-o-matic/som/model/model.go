@@ -104,7 +104,21 @@ type ResolveResponse struct {
 
 // Annotation is any information sheriffs want to annotate an alert with. For
 // example, a bug where the cause of the alert is being solved.
+// TODO(crbug.com/1043371): Remove this when we disable automatic grouping.
 type Annotation struct {
+	Tree             *datastore.Key `gae:"$parent"`
+	KeyDigest        string         `gae:"$id"`
+	Key              string         `gae:",noindex" json:"key"`
+	Bugs             []MonorailBug  `gae:",noindex" json:"bugs"`
+	Comments         []Comment      `gae:",noindex" json:"comments"`
+	SnoozeTime       int            `json:"snoozeTime"`
+	GroupID          string         `gae:",noindex" json:"group_id"`
+	ModificationTime time.Time
+}
+
+// AnnotationNonGrouping is any information sheriffs want to annotate an alert with. For
+// example, a bug where the cause of the alert is being solved.
+type AnnotationNonGrouping struct {
 	Tree             *datastore.Key `gae:"$parent"`
 	KeyDigest        string         `gae:"$id"`
 	Key              string         `gae:",noindex" json:"key"`

@@ -14,6 +14,7 @@ import (
 
 	"google.golang.org/appengine"
 
+	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
@@ -45,6 +46,27 @@ type AnnotationHandler struct {
 type AnnotationResponse struct {
 	model.Annotation
 	BugData map[string]monorail.Issue `json:"bug_data"`
+}
+
+func datastoreGetAnnotation(c context.Context, annotation *model.Annotation) error {
+	if config.EnableAutoGrouping {
+		return datastore.Get(c, annotation)
+	}
+	annotationNonGrouping := model.AnnotationNonGrouping(*annotation)
+	err := datastore.Get(c, &annotationNonGrouping)
+	if err != nil {
+		return err
+	}
+	*annotation = model.Annotation(annotationNonGrouping)
+	return nil
+}
+
+func datastorePutAnnotation(c context.Context, annotation *model.Annotation) error {
+	if config.EnableAutoGrouping {
+		return datastore.Put(c, annotation)
+	}
+	annotationNonGrouping := model.AnnotationNonGrouping(*annotation)
+	return datastore.Put(c, &annotationNonGrouping)
 }
 
 // Convert data from model.Annotation type to AnnotationResponse type by populating monorail data.
@@ -281,7 +303,7 @@ func (ah *AnnotationHandler) PostAnnotationsHandler(ctx *router.Context) {
 		Key:       key,
 	}
 
-	err = datastore.Get(c, annotation)
+	err = datastoreGetAnnotation(c, annotation)
 	if action == "remove" && err != nil {
 		logging.Errorf(c, "while getting %s: %s", key, err)
 		errStatus(c, w, http.StatusNotFound, fmt.Sprintf("Annotation %s not found", key))
@@ -311,7 +333,7 @@ func (ah *AnnotationHandler) PostAnnotationsHandler(ctx *router.Context) {
 		return
 	}
 
-	err = datastore.Put(c, annotation)
+	err = datastorePutAnnotation(c, annotation)
 	if err != nil {
 		errStatus(c, w, http.StatusInternalServerError, err.Error())
 		return
