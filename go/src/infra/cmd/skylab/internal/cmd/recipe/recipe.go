@@ -70,6 +70,7 @@ type Args struct {
 	LegacySuite                string
 	PubsubTopic                string
 	UseTestRunner              bool
+	EnableSynchronousOffload   bool
 }
 
 // TestPlatformRequest constructs a cros_test_platform.Request from Args.
@@ -147,8 +148,10 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 		}
 	}
 
-	if a.UseTestRunner {
+	if a.EnableSynchronousOffload || a.UseTestRunner {
 		params.Migrations = &test_platform.Request_Params_Migrations{
+			EnableSynchronousOffload: a.EnableSynchronousOffload,
+			// Synchronous offload is only possible via test_runner.
 			UseTestRunner: true,
 		}
 	}

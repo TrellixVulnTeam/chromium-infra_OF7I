@@ -22,21 +22,22 @@ import (
 // createRunCommon encapsulates parameters that are common to
 // all of the create-* subcommands.
 type createRunCommon struct {
-	board           string
-	model           string
-	pool            string
-	image           string
-	dimensions      []string
-	provisionLabels []string
-	priority        int
-	timeoutMins     int
-	maxRetries      int
-	tags            []string
-	keyvals         []string
-	qsAccount       string
-	buildBucket     bool
-	statusTopic     string
-	useTestRunner   bool
+	board                    string
+	model                    string
+	pool                     string
+	image                    string
+	dimensions               []string
+	provisionLabels          []string
+	priority                 int
+	timeoutMins              int
+	maxRetries               int
+	tags                     []string
+	keyvals                  []string
+	qsAccount                string
+	buildBucket              bool
+	statusTopic              string
+	useTestRunner            bool
+	enableSynchronousOffload bool
 }
 
 func (c *createRunCommon) Register(fl *flag.FlagSet) {
@@ -68,7 +69,12 @@ specified multiple times.`)
 	fl.BoolVar(&c.useTestRunner, "use-test-runner", false,
 		`If true, schedule individual tests via buildbucket and run them via
 the test_runner recipe. If false, schedule tests via raw Swarmng calls and run
-them via skylab_swarming_worker binary.`)
+them via skylab_swarming_worker binary. The flag is ignored completely if
+enableSynchronousOffload is true.`)
+	fl.BoolVar(&c.enableSynchronousOffload, "enable-synchronous-offload", false,
+		`If true, test tasks will perform synchronous offload of the contents
+of $SYNCHRONOUS_OFFLOAD_DIR to a GS bucket. This involves using the test runner
+recipe (equivalent to setting -use-test-runner).`)
 }
 
 func (c *createRunCommon) ValidateArgs(fl flag.FlagSet) error {
@@ -111,6 +117,7 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 		Priority:                   int64(c.priority),
 		Tags:                       tags,
 		UseTestRunner:              c.useTestRunner,
+		EnableSynchronousOffload:   c.enableSynchronousOffload,
 	}, nil
 }
 
