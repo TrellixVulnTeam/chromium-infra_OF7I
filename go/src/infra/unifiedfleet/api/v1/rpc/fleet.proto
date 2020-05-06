@@ -14,6 +14,7 @@ import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/rpc/status.proto";
 import "infra/unifiedfleet/api/v1/proto/machine.proto";
+import "infra/unifiedfleet/api/v1/proto/rack.proto";
 import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
 
 service Fleet {
@@ -40,6 +41,21 @@ service Fleet {
   // This doesn't return google.longrunning.Operation as the corresponding
   // package is not imported into chops go package.
   rpc ImportMachines(ImportMachinesRequest) returns (google.rpc.Status);
+
+  // CreateRack creates a new rack
+  rpc CreateRack(CreateRackRequest) returns (proto.Rack);
+
+  // Update updates the rack
+  rpc UpdateRack(UpdateRackRequest) returns (proto.Rack);
+
+  // Get retrieves the details of the rack
+  rpc GetRack(GetRackRequest) returns (proto.Rack);
+
+  // List gets all the racks
+  rpc ListRacks(ListRacksRequest) returns (ListRacksResponse);
+
+  // Delete delete the rack
+  rpc DeleteRack(DeleteRackRequest) returns (google.protobuf.Empty);
 }
 
 message ImportChromePlatformsRequest {
@@ -136,4 +152,66 @@ message ConfigSource {
   // Empty config_service means it's local file.
   string config_service_name = 1;
   string file_name = 2;
+}
+
+// Contains the required information for creating a Rack represented in
+// the database.
+message CreateRackRequest {
+  // The rack to create.
+  proto.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the Rack, which will become the final component of
+  // the Rack's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string rack_id = 2;
+}
+
+message UpdateRackRequest {
+  // The rack to update.
+  proto.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetRackRequest {
+  // The name of the rack to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Rack" }
+  ];
+}
+
+message ListRacksRequest {
+  // The maximum number of racks to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 racks will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListRacks` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListRacks` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListRacksResponse {
+  // The racks from datastore.
+  repeated proto.Rack racks = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteRackRequest {
+  // The name of the Rack to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Rack" }
+  ];
 }

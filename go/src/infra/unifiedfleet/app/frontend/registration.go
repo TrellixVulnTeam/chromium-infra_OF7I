@@ -136,3 +136,43 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	logging.Debugf(ctx, "Processing %d machines", len(resp.Machines))
 	return successStatus, err
 }
+
+// CreateRack creates rack entry in database.
+func (fs *FleetServerImpl) CreateRack(ctx context.Context, req *api.CreateRackRequest) (rsp *proto.Rack, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return nil, err
+}
+
+// UpdateRack updates the rack information in database.
+func (fs *FleetServerImpl) UpdateRack(ctx context.Context, req *api.UpdateRackRequest) (rsp *proto.Rack, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return nil, err
+}
+
+// GetRack gets the rack information from database.
+func (fs *FleetServerImpl) GetRack(ctx context.Context, req *api.GetRackRequest) (rsp *proto.Rack, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return nil, err
+}
+
+// ListRacks list the racks information from database.
+func (fs *FleetServerImpl) ListRacks(ctx context.Context, req *api.ListRacksRequest) (rsp *api.ListRacksResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return nil, err
+}
+
+// DeleteRack deletes the rack from database.
+func (fs *FleetServerImpl) DeleteRack(ctx context.Context, req *api.DeleteRackRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return &empty.Empty{}, err
+}
