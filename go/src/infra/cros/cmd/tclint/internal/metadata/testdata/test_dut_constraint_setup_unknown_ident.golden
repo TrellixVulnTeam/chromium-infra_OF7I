@@ -1,0 +1,7 @@
+[
+"## Errors ##",
+"Test 'remoteTestDrivers/tauto/tests/foo': dut_constraint: setup: compile expression: ",
+"  ERROR: \u003cinput\u003e:1:1: undeclared reference to 'duts' (in container 'chromiumos.config.api.test.dut.v1')",
+"   | duts.setup.peripheral.servo.present",
+"   | ^"
+]

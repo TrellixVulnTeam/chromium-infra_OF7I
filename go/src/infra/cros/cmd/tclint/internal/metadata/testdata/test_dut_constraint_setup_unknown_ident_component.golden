@@ -1,0 +1,7 @@
+[
+"## Errors ##",
+"Test 'remoteTestDrivers/tauto/tests/foo': dut_constraint: setup: compile expression: ",
+"  ERROR: \u003cinput\u003e:1:4: undefined field 'setups'",
+"   | dut.setups.peripheral.servo.present",
+"   | ...^"
+]

@@ -1,0 +1,4 @@
+[
+"## Errors ##",
+"Test 'remoteTestDrivers/tauto/tests/foo': dut_constraint: config: expression must be non-empty"
+]

@@ -13,6 +13,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
 	"go.chromium.org/chromiumos/config/go/api/test/metadata/v1"
 	"go.chromium.org/luci/common/data/stringset"
 )
@@ -110,7 +112,12 @@ func lintRTDName(name string) Result {
 }
 
 func lintTest(test *metadata.Test, rtdName string) Result {
-	return lintTestName(test.GetName(), rtdName)
+	result := lintTestName(test.GetName(), rtdName)
+	tag := fmt.Sprintf("Test '%s'", test.GetName())
+	if test.DutConstraint != nil {
+		result.MergeWithContext(lintDutConstraint(test.DutConstraint), tag)
+	}
+	return result
 }
 
 func lintTestName(name string, rtdName string) Result {
@@ -205,4 +212,77 @@ func isASCII(s string) bool {
 		}
 	}
 	return true
+}
+
+func lintDutConstraint(cond *metadata.DUTConstraint) Result {
+	result := Result{}
+	if cond.Setup == nil && cond.Config == nil {
+		result.AppendError("dut_constraint: some constraint must be set")
+	}
+	if cond.Setup != nil {
+		result.MergeWithContext(lintDUTSetupConstraint(cond.Setup), "dut_constraint")
+	}
+	if cond.Config != nil {
+		result.MergeWithContext(lintDUTConfigConstraint(cond.Config), "dut_constraint")
+	}
+	return result
+}
+
+func lintDUTSetupConstraint(cond *metadata.DUTSetupConstraint) Result {
+	dutType := decls.NewObjectType("chromiumos.config.api.test.metadata.v1.DUTSetupConstraint.DUT")
+	dutValue := &metadata.DUTSetupConstraint_DUT{}
+	env, err := cel.NewEnv(
+		cel.Container("chromiumos.config.api.test.dut.v1"),
+		// Adding the type to environment allows the expression to use fully
+		// qualified type names like `chromiumos.config.api.test.dut.v1.Wifi`.
+		cel.Types(dutValue),
+		cel.Declarations(
+			decls.NewIdent("dut", dutType, nil),
+		),
+	)
+	if err != nil {
+		// Failure to setup the environment is a programming error that we never
+		// expect to recover from.
+		panic(err)
+	}
+	result := Result{}
+	result.MergeWithContext(parseAndCheckExpression(env, cond.Expression), "setup")
+	return result
+}
+
+func parseAndCheckExpression(env *cel.Env, expr string) Result {
+	result := Result{}
+	if expr == "" {
+		result.AppendError("expression must be non-empty")
+		return result
+	}
+	if _, iss := env.Compile(expr); iss.Err() != nil {
+		// Reported issues are frequently displayed on multiple lines.
+		// Adding a leading newline makes the multi-line display easier to read.
+		result.AppendError("compile expression: \n%s", iss.String())
+		return result
+	}
+	return result
+}
+
+func lintDUTConfigConstraint(cond *metadata.DUTConfigConstraint) Result {
+	dutType := decls.NewObjectType("chromiumos.config.api.test.metadata.v1.DUTConfigConstraint.DUT")
+	dutValue := &metadata.DUTConfigConstraint_DUT{}
+	env, err := cel.NewEnv(
+		cel.Container("chromiumos.config.api"),
+		// Adding the type to environment allows the expression to use fully
+		// qualified type names like `chromiumos.config.api.HardwareFeatures`.
+		cel.Types(dutValue),
+		cel.Declarations(
+			decls.NewIdent("dut", dutType, nil),
+		),
+	)
+	if err != nil {
+		// Failure to setup the environment is a programming error that we never
+		// expect to recover from.
+		panic(err)
+	}
+	result := Result{}
+	result.MergeWithContext(parseAndCheckExpression(env, cond.Expression), "config")
+	return result
 }

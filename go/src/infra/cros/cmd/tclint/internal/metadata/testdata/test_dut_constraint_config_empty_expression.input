@@ -1,0 +1,15 @@
+{
+    "remoteTestDrivers": [
+        {
+            "name": "remoteTestDrivers/tauto",
+            "tests": [
+                {
+                    "name": "remoteTestDrivers/tauto/tests/foo",
+                    "dut_constraint": {
+                        "config": {}
+                    }
+                }
+            ]
+        }
+    ]
+}
