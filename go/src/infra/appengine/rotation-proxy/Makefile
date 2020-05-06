@@ -1,3 +1,7 @@
+GAE_PY = ../../../../../luci/appengine/components/tools/gae.py
+
+default: help
+
 help:
 	@echo "Available commands:"
 	@sed -n '/^[a-zA-Z0-9_]*:/s/:.*//p' <Makefile
@@ -9,10 +13,10 @@ test:
 	go test
 
 deploy:
-	gae.py upload -A chops-rotation-proxy-test
+	$(GAE_PY) upload -A chops-rotation-proxy-test
 
 deploy-prod:
-	gae.py upload -A chrome-ops-rotation-proxy
+	$(GAE_PY) upload -A chrome-ops-rotation-proxy
 
 gen:
 	cproto proto
