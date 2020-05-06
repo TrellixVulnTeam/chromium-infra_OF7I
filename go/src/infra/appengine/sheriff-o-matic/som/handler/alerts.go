@@ -48,11 +48,8 @@ func GetAlerts(ctx *router.Context, unresolved bool, resolved bool) *messages.Al
 	alertResults := []*model.AlertJSON{}
 	revisionSummaryResults := []*model.RevisionSummaryJSON{}
 	if unresolved {
-		q = datastore.NewQuery("AlertJSON")
-		q = q.Ancestor(datastore.MakeKey(c, "Tree", tree))
-		q = q.Eq("Resolved", false)
-
-		err := datastore.GetAll(c, q, &alertResults)
+		q = datastoreCreateAlertQuery().Ancestor(datastore.MakeKey(c, "Tree", tree)).Eq("Resolved", false)
+		err := datastoreGetAlertsByQuery(c, &alertResults, q)
 		if err != nil {
 			errStatus(c, w, http.StatusInternalServerError, err.Error())
 			return nil
@@ -71,12 +68,10 @@ func GetAlerts(ctx *router.Context, unresolved bool, resolved bool) *messages.Al
 
 	resolvedResults := []*model.AlertJSON{}
 	if resolved {
-		q = datastore.NewQuery("AlertJSON")
-		q = q.Ancestor(datastore.MakeKey(c, "Tree", tree))
-		q = q.Eq("Resolved", true)
+		q = datastoreCreateAlertQuery().Ancestor(datastore.MakeKey(c, "Tree", tree)).Eq("Resolved", true)
 		q = q.Gt("Date", clock.Get(c).Now().Add(-recentResolved))
 
-		err := datastore.GetAll(c, q, &resolvedResults)
+		err := datastoreGetAlertsByQuery(c, &resolvedResults, q)
 		if err != nil {
 			errStatus(c, w, http.StatusInternalServerError, err.Error())
 			return nil
