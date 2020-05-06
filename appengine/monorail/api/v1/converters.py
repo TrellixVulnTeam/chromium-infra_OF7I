@@ -23,6 +23,7 @@ from framework import framework_helpers
 from proto import tracker_pb2
 from project import project_helpers
 from tracker import attachment_helpers
+from tracker import tracker_helpers
 from tracker import tracker_bizobj as tbo
 
 Choice = project_objects_pb2.FieldDef.EnumTypeSettings.Choice
@@ -593,7 +594,7 @@ class Converter(object):
 
   def _ComputeFieldDefTraits(self, field_def):
     # type: (proto.tracker_pb2.FieldDef) ->
-    #     api_proto.project_objects_pb2.FieldDef.Traits
+    #     Sequence[api_proto.project_objects_pb2.FieldDef.Traits]
     """Compute sequence of FieldDef.Traits for a given protorpc FieldDef."""
     trait_protos = []
     if field_def.is_required:
@@ -607,6 +608,33 @@ class Converter(object):
     if field_def.is_phase_field:
       trait_protos.append(project_objects_pb2.FieldDef.Traits.Value('PHASE'))
     return trait_protos
+
+  def _GetEnumFieldChoices(self, field_def):
+    # type: (proto.tracker_pb2.FieldDef) ->
+    #     Sequence[Choice]
+    """Get sequence of choices for an enum field
+
+    Args:
+      field_def: protorpc FieldDef
+
+    Returns:
+      Sequence of valid Choices for enum field `field_def`.
+
+    Raises:
+      ValueError if input `field_def` is not an enum type field.
+    """
+    if field_def.field_type != tracker_pb2.FieldTypes.ENUM_TYPE:
+      raise ValueError('Cannot get value from label for non-enum-type field')
+
+    config = self.services.config.GetProjectConfig(
+        self.cnxn, field_def.project_id)
+    value_docstr_tuples = tracker_helpers._GetEnumFieldValuesAndDocstrings(
+        field_def, config)
+
+    return [
+        Choice(value=value, docstring=docstring)
+        for value, docstring in value_docstr_tuples
+    ]
 
   # Field Values
 

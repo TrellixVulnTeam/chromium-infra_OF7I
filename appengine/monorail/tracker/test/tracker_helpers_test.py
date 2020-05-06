@@ -1471,3 +1471,40 @@ class FilterKeptAttachmentsTest(unittest.TestCase):
     filtered = tracker_helpers.FilterKeptAttachments(
         True, [1, 2, 3, 4], [], None)
     self.assertEqual([], filtered)
+
+
+class EnumFieldHelpersTest(unittest.TestCase):
+
+  def test_GetEnumFieldValuesAndDocstrings(self):
+    """We can get all choices for an enum field"""
+    fd = tracker_pb2.FieldDef(
+        field_id=123,
+        project_id=1,
+        field_name='yellow',
+        field_type=tracker_pb2.FieldTypes.ENUM_TYPE)
+    ld_1 = tracker_pb2.LabelDef(
+        label='yellow-submarine', label_docstring='ld_1_docstring')
+    ld_2 = tracker_pb2.LabelDef(
+        label='yellow-tisket', label_docstring='ld_2_docstring')
+    ld_3 = tracker_pb2.LabelDef(
+        label='yellow-basket', label_docstring='ld_3_docstring')
+    ld_4 = tracker_pb2.LabelDef(
+        label='yellow', label_docstring='ld_4_docstring')
+    ld_5 = tracker_pb2.LabelDef(
+        label='not-yellow', label_docstring='ld_5_docstring')
+    ld_6 = tracker_pb2.LabelDef(
+        label='yellow-tasket',
+        label_docstring='ld_6_docstring',
+        deprecated=True)
+    config = tracker_pb2.ProjectIssueConfig(
+        default_template_for_developers=1,
+        default_template_for_users=2,
+        well_known_labels=[ld_1, ld_2, ld_3, ld_4, ld_5, ld_6])
+    actual = tracker_helpers._GetEnumFieldValuesAndDocstrings(fd, config)
+    # Expect to omit labels `yellow` and `not-yellow` due to prefix mismatch
+    # Also expect to omit label `yellow-tasket` because it's deprecated
+    expected = [
+        ('submarine', 'ld_1_docstring'), ('tisket', 'ld_2_docstring'),
+        ('basket', 'ld_3_docstring')
+    ]
+    self.assertEqual(expected, actual)

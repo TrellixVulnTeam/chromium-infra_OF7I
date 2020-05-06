@@ -28,6 +28,7 @@ from proto import tracker_pb2
 
 EXPLICIT_DERIVATION = issue_objects_pb2.Derivation.Value('EXPLICIT')
 RULE_DERIVATION = issue_objects_pb2.Derivation.Value('RULE')
+Choice = project_objects_pb2.FieldDef.EnumTypeSettings.Choice
 
 
 class ConverterFunctionsTest(unittest.TestCase):
@@ -75,6 +76,9 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.field_def_4_name = 'OS'
     self.field_def_4 = self._CreateFieldDef(
         self.project_1.project_id, self.field_def_4_name, 'ENUM_TYPE')
+    self.field_def_5_name = 'yellow'
+    self.field_def_5 = self._CreateFieldDef(
+        self.project_1.project_id, self.field_def_5_name, 'ENUM_TYPE')
     self.field_def_project2_name = 'lorem'
     self.field_def_project2 = self._CreateFieldDef(
         self.project_2.project_id, self.field_def_project2_name, 'ENUM_TYPE')
@@ -177,6 +181,20 @@ class ConverterFunctionsTest(unittest.TestCase):
     )
     self.dne_template = tracker_pb2.TemplateDef(
         name='dne_template_name', template_id=11114)
+    self.labeldef_1 = tracker_pb2.LabelDef(
+        label='white-mountain',
+        label_docstring='test label doc string for white-mountain')
+    self.labeldef_2 = tracker_pb2.LabelDef(
+        label='yellow-submarine',
+        label_docstring='Submarine choice for yellow enum field')
+    self.labeldef_3 = tracker_pb2.LabelDef(
+        label='yellow-basket',
+        label_docstring='Basket choice for yellow enum field')
+    self.labeldef_4 = tracker_pb2.LabelDef(
+        label='yellow-tasket',
+        label_docstring='Deprecated tasket choice for yellow enum field',
+        deprecated=True)
+    predefined_labels = [self.labeldef_1, self.labeldef_2, self.labeldef_3]
     self.services.config.UpdateConfig(
         self.cnxn,
         self.project_1,
@@ -184,7 +202,12 @@ class ConverterFunctionsTest(unittest.TestCase):
         excl_label_prefixes=['type', 'priority'],
         default_template_for_developers=self.template_2.template_id,
         default_template_for_users=self.template_1.template_id,
-        list_prefs=('ID Summary', 'ID', 'status', 'owner', 'owner:me'))
+        list_prefs=('ID Summary', 'ID', 'status', 'owner', 'owner:me'),
+        # UpdateConfig accepts labels as tuples rather than protorpc LabelDefs
+        well_known_labels=[
+            (ld.label, ld.label_docstring, ld.deprecated)
+            for ld in predefined_labels
+        ])
 
   def _CreateFieldDef(
       self,
@@ -1398,12 +1421,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     project_config = self.services.config.GetProjectConfig(
         self.cnxn, self.project_1.project_id)
     input_fds = project_config.field_defs
-    self.assertEqual(5, len(input_fds))
-    # project_1 is set up to have 4 non-approval fields and 1 approval field
+    self.assertEqual(6, len(input_fds))
+    # project_1 is set up to have 5 non-approval fields and 1 approval field
     # assert we skip approval fields
     output = self.converter.ConvertFieldDefs(
         input_fds, self.project_1.project_id)
-    self.assertEqual(4, len(output))
+    self.assertEqual(5, len(output))
 
   def testConvertFieldDefs_NonexistentID(self):
     """We skip over any field defs whose ID does not exist."""
@@ -1446,3 +1469,28 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.project_1.project_id, self.field_def_3)
     actual = self.converter._ComputeFieldDefTraits(input_fd)
     self.assertEqual([], actual)
+
+  def test_GetEnumFieldChoices(self):
+    """We can get all choices for an enum field"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_5)
+    actual = self.converter._GetEnumFieldChoices(input_fd)
+    expected = [
+        Choice(
+            value=self.labeldef_2.label.split('-')[1],
+            docstring=self.labeldef_2.label_docstring),
+        Choice(
+            value=self.labeldef_3.label.split('-')[1],
+            docstring=self.labeldef_3.label_docstring),
+    ]
+    self.assertEqual(expected, actual)
+
+  def test_GetEnumFieldChoices_NotEnumField(self):
+    """We raise exception for non-enum-field"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_1)
+    with self.assertRaises(ValueError) as cm:
+      self.converter._GetEnumFieldChoices(input_fd)
+    self.assertEqual(
+        'Cannot get value from label for non-enum-type field', str(
+            cm.exception))

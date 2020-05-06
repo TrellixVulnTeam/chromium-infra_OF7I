@@ -1234,6 +1234,23 @@ def FilterKeptAttachments(
   return kept_attachments
 
 
+def _GetEnumFieldValuesAndDocstrings(field_def, config):
+  # type: (proto.tracker_pb2.LabelDef, proto.tracker_pb2.ProjectIssueConfig) ->
+  #     Sequence[tuple(string, string)]
+  """Get sequence of value, docstring tuples for an enum field"""
+  label_defs = config.well_known_labels
+  lower_field_name = field_def.field_name.lower()
+  tuples = []
+  for ld in label_defs:
+    if (ld.label.lower().startswith(lower_field_name + '-') and
+        not ld.deprecated):
+      label_value = ld.label[len(lower_field_name) + 1:]
+      tuples.append((label_value, ld.label_docstring))
+    else:
+      continue
+  return tuples
+
+
 class Error(Exception):
   """Base class for errors from this module."""
 
