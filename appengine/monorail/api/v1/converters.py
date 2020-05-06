@@ -591,6 +591,23 @@ class Converter(object):
           'Unsupported tracker_pb2.FieldType enum. Boolean types '
           'are unsupported and approval types are found in ApprovalDefs')
 
+  def _ComputeFieldDefTraits(self, field_def):
+    # type: (proto.tracker_pb2.FieldDef) ->
+    #     api_proto.project_objects_pb2.FieldDef.Traits
+    """Compute sequence of FieldDef.Traits for a given protorpc FieldDef."""
+    trait_protos = []
+    if field_def.is_required:
+      trait_protos.append(project_objects_pb2.FieldDef.Traits.Value('REQUIRED'))
+    if field_def.is_niche:
+      trait_protos.append(
+          project_objects_pb2.FieldDef.Traits.Value('DEFAULT_HIDDEN'))
+    if field_def.is_multivalued:
+      trait_protos.append(
+          project_objects_pb2.FieldDef.Traits.Value('MULTIVALUED'))
+    if field_def.is_phase_field:
+      trait_protos.append(project_objects_pb2.FieldDef.Traits.Value('PHASE'))
+    return trait_protos
+
   # Field Values
 
   def ConvertFieldValues(self, field_values, project_id, phases):

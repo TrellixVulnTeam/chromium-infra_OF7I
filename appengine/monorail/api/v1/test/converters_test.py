@@ -56,11 +56,19 @@ class ConverterFunctionsTest(unittest.TestCase):
 
     self.field_def_1_name = 'test_field_1'
     self.field_def_1 = self._CreateFieldDef(
-        self.project_1.project_id, self.field_def_1_name, 'STR_TYPE',
-        [self.user_1.user_id])
+        self.project_1.project_id,
+        self.field_def_1_name,
+        'STR_TYPE',
+        admin_ids=[self.user_1.user_id],
+        is_required=True,
+        is_multivalued=True,
+        is_phase_field=True)
     self.field_def_2_name = 'test_field_2'
     self.field_def_2 = self._CreateFieldDef(
-        self.project_1.project_id, self.field_def_2_name, 'INT_TYPE')
+        self.project_1.project_id,
+        self.field_def_2_name,
+        'INT_TYPE',
+        is_niche=True)
     self.field_def_3_name = 'days'
     self.field_def_3 = self._CreateFieldDef(
         self.project_1.project_id, self.field_def_3_name, 'ENUM_TYPE')
@@ -179,14 +187,43 @@ class ConverterFunctionsTest(unittest.TestCase):
         list_prefs=('ID Summary', 'ID', 'status', 'owner', 'owner:me'))
 
   def _CreateFieldDef(
-      self, project_id, field_name, field_type_str, admin_ids=None):
+      self,
+      project_id,
+      field_name,
+      field_type_str,
+      admin_ids=None,
+      is_required=False,
+      is_niche=False,
+      is_multivalued=False,
+      is_phase_field=False):
     """Calls CreateFieldDef with reasonable defaults, returns the ID."""
     if admin_ids is None:
       admin_ids = []
     return self.services.config.CreateFieldDef(
-        self.cnxn, project_id, field_name, field_type_str, None, None, None,
-        None, None, None, None, None, None, None, None, None, None, None,
-        admin_ids, [])
+        self.cnxn,
+        project_id,
+        field_name,
+        field_type_str,
+        None,
+        None,
+        is_required,
+        is_niche,
+        is_multivalued,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        admin_ids, [],
+        is_phase_field=is_phase_field)
+
+  def _GetFieldDefById(self, project_id, fd_id):
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    return [fd for fd in config.field_defs if fd.field_id == fd_id][0]
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -1384,3 +1421,28 @@ class ConverterFunctionsTest(unittest.TestCase):
     """We can handle empty list input"""
     self.assertEqual(
         [], self.converter.ConvertFieldDefs([], self.project_1.project_id))
+
+  def test_ComputeFieldDefTraits(self):
+    """We can get Sequence of Traits for a FieldDef"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_1)
+    actual = self.converter._ComputeFieldDefTraits(input_fd)
+    expected = [
+        project_objects_pb2.FieldDef.Traits.Value('REQUIRED'),
+        project_objects_pb2.FieldDef.Traits.Value('MULTIVALUED'),
+        project_objects_pb2.FieldDef.Traits.Value('PHASE')
+    ]
+    self.assertEqual(expected, actual)
+
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_2)
+    actual = self.converter._ComputeFieldDefTraits(input_fd)
+    expected = [project_objects_pb2.FieldDef.Traits.Value('DEFAULT_HIDDEN')]
+    self.assertEqual(expected, actual)
+
+  def test_ComputeFieldDefTraits_Empty(self):
+    """We return an empty Sequence of Traits for plain FieldDef"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_3)
+    actual = self.converter._ComputeFieldDefTraits(input_fd)
+    self.assertEqual([], actual)
