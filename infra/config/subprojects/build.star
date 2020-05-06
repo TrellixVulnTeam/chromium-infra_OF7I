@@ -22,7 +22,6 @@ luci.cq_group(
     name = 'build cq',
     watch = cq.refset(repo = REPO_URL, refs = [r'refs/heads/master']),
     retry_config = cq.RETRY_TRANSIENT_FAILURES,
-    cancel_stale_tryjobs = True,
 )
 
 
