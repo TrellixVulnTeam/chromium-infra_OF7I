@@ -25,6 +25,8 @@ from project import project_helpers
 from tracker import attachment_helpers
 from tracker import tracker_bizobj as tbo
 
+Choice = project_objects_pb2.FieldDef.EnumTypeSettings.Choice
+
 
 class Converter(object):
   """Class to manage converting objects between the API and backend layer."""
@@ -496,6 +498,98 @@ class Converter(object):
       star = user_objects_pb2.ProjectStar(name=name)
       api_project_stars.append(star)
     return api_project_stars
+
+  # Field Defs
+
+  def ConvertFieldDefs(self, field_defs, project_id):
+    # type: (Sequence[proto.tracker_pb2.FieldDef], int) ->
+    #     Sequence[api_proto.project_objects_pb2.FieldDef]
+    """Convert sequence of protorpc FieldDefs to protoc FieldDefs.
+
+    Args:
+      field_defs: List of protorpc FieldDefs
+      project_id: ID of the Project that is ancestor to all given
+        `field_defs`.
+
+    Returns:
+      Sequence of protoc FieldDef in the same order they are given in
+      `field_defs`. In the event any field_def or the referenced approval_id
+      in `field_defs` is not found, they will be omitted from the result.
+    """
+    field_ids = [fd.field_id for fd in field_defs]
+    resource_names_dict = rnc.ConvertFieldDefNames(
+        self.cnxn, field_ids, project_id, self.services)
+
+    api_fds = []
+    for fd in field_defs:
+      # Skip over approval fields, they have their separate ApprovalDef
+      if fd.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
+        continue
+      # If the FieldDef with field_id was not found in ConvertFieldDefNames()
+      # we skip.
+      if fd.field_id not in resource_names_dict:
+        logging.info(
+            'Ignoring field def referencing a non-existent field id: %r',
+            fd.field_id)
+        continue
+
+      name = resource_names_dict.get(fd.field_id)
+      display_name = fd.field_name
+      docstring = fd.docstring
+      field_type = self._ConvertFieldDefType(fd.field_type)
+      applicable_issue_type = fd.applicable_type
+      admins = rnc.ConvertUserNames(fd.admin_ids).values()
+      # TODO(monorail:7565): Implement getting field def traits
+      # TODO(monorail:7565): Implement getting approval parent
+      # TODO(monorail:7565): Implement getting enum field choices.
+      traits = []
+      approval_parent = None
+      enum_settings = None
+
+      api_fd = project_objects_pb2.FieldDef(
+          name=name,
+          display_name=display_name,
+          docstring=docstring,
+          type=field_type,
+          applicable_issue_type=applicable_issue_type,
+          admins=admins,
+          traits=traits,
+          approval_parent=approval_parent,
+          enum_settings=enum_settings)
+      api_fds.append(api_fd)
+    return api_fds
+
+  def _ConvertFieldDefType(self, field_type):
+    # type: (proto.tracker_pb2.FieldTypes) ->
+    #     api_proto.project_objects_pb2.FieldDef.Type
+    """Convert protorpc FieldType to protoc FieldDef.Type
+
+    Args:
+      field_type: protorpc FieldType
+
+    Returns:
+      Corresponding protoc FieldDef.Type
+
+    Raises:
+      ValueError if input `field_type` has no suitable supported FieldDef.Type,
+      or input `field_type` is not a recognized enum option.
+    """
+    if field_type == tracker_pb2.FieldTypes.ENUM_TYPE:
+      return project_objects_pb2.FieldDef.Type.Value('ENUM')
+    elif field_type == tracker_pb2.FieldTypes.INT_TYPE:
+      return project_objects_pb2.FieldDef.Type.Value('INT')
+    elif field_type == tracker_pb2.FieldTypes.STR_TYPE:
+      return project_objects_pb2.FieldDef.Type.Value('STR')
+    elif field_type == tracker_pb2.FieldTypes.USER_TYPE:
+      return project_objects_pb2.FieldDef.Type.Value('USER')
+    elif field_type == tracker_pb2.FieldTypes.DATE_TYPE:
+      return project_objects_pb2.FieldDef.Type.Value('DATE')
+    elif field_type == tracker_pb2.FieldTypes.URL_TYPE:
+      return project_objects_pb2.FieldDef.Type.Value('URL')
+    else:
+      raise ValueError(
+          'Unsupported tracker_pb2.FieldType enum. Boolean types '
+          'are unsupported and approval types are found in ApprovalDefs')
 
   # Field Values
 

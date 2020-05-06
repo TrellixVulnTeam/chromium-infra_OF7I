@@ -56,7 +56,8 @@ class ConverterFunctionsTest(unittest.TestCase):
 
     self.field_def_1_name = 'test_field_1'
     self.field_def_1 = self._CreateFieldDef(
-        self.project_1.project_id, self.field_def_1_name, 'STR_TYPE')
+        self.project_1.project_id, self.field_def_1_name, 'STR_TYPE',
+        [self.user_1.user_id])
     self.field_def_2_name = 'test_field_2'
     self.field_def_2 = self._CreateFieldDef(
         self.project_1.project_id, self.field_def_2_name, 'INT_TYPE')
@@ -177,12 +178,15 @@ class ConverterFunctionsTest(unittest.TestCase):
         default_template_for_users=self.template_1.template_id,
         list_prefs=('ID Summary', 'ID', 'status', 'owner', 'owner:me'))
 
-  def _CreateFieldDef(self, project_id, field_name, field_type_str):
+  def _CreateFieldDef(
+      self, project_id, field_name, field_type_str, admin_ids=None):
     """Calls CreateFieldDef with reasonable defaults, returns the ID."""
+    if admin_ids is None:
+      admin_ids = []
     return self.services.config.CreateFieldDef(
         self.cnxn, project_id, field_name, field_type_str, None, None, None,
-        None, None, None, None, None, None, None, None, None, None, None, [],
-        [])
+        None, None, None, None, None, None, None, None, None, None, None,
+        admin_ids, [])
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -1277,3 +1281,106 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         expected_project_member,
         self.converter.CreateProjectMember(self.cnxn, 789, 111, 'OWNER'))
+
+  def test_ConvertFieldDefType(self):
+    """We can convert from protorpc FieldType to protoc FieldDef.Type"""
+    input_type = tracker_pb2.FieldTypes.ENUM_TYPE
+    actual = self.converter._ConvertFieldDefType(input_type)
+    expected = project_objects_pb2.FieldDef.Type.Value('ENUM')
+    self.assertEqual(expected, actual)
+
+    input_type = tracker_pb2.FieldTypes.INT_TYPE
+    actual = self.converter._ConvertFieldDefType(input_type)
+    expected = project_objects_pb2.FieldDef.Type.Value('INT')
+    self.assertEqual(expected, actual)
+
+    input_type = tracker_pb2.FieldTypes.STR_TYPE
+    actual = self.converter._ConvertFieldDefType(input_type)
+    expected = project_objects_pb2.FieldDef.Type.Value('STR')
+    self.assertEqual(expected, actual)
+
+    input_type = tracker_pb2.FieldTypes.USER_TYPE
+    actual = self.converter._ConvertFieldDefType(input_type)
+    expected = project_objects_pb2.FieldDef.Type.Value('USER')
+    self.assertEqual(expected, actual)
+
+    input_type = tracker_pb2.FieldTypes.DATE_TYPE
+    actual = self.converter._ConvertFieldDefType(input_type)
+    expected = project_objects_pb2.FieldDef.Type.Value('DATE')
+    self.assertEqual(expected, actual)
+
+    input_type = tracker_pb2.FieldTypes.URL_TYPE
+    actual = self.converter._ConvertFieldDefType(input_type)
+    expected = project_objects_pb2.FieldDef.Type.Value('URL')
+    self.assertEqual(expected, actual)
+
+  def test_ConvertFieldDefType_BOOL(self):
+    """We raise exception for unsupported input type BOOL"""
+    input_type = tracker_pb2.FieldTypes.BOOL_TYPE
+    with self.assertRaises(ValueError) as cm:
+      self.converter._ConvertFieldDefType(input_type)
+    self.assertEqual(
+        'Unsupported tracker_pb2.FieldType enum. Boolean types '
+        'are unsupported and approval types are found in ApprovalDefs',
+        str(cm.exception))
+
+  def test_ConvertFieldDefType_APPROVAL(self):
+    """We raise exception for input type APPROVAL"""
+    input_type = tracker_pb2.FieldTypes.APPROVAL_TYPE
+    with self.assertRaises(ValueError) as cm:
+      self.converter._ConvertFieldDefType(input_type)
+    self.assertEqual(
+        'Unsupported tracker_pb2.FieldType enum. Boolean types '
+        'are unsupported and approval types are found in ApprovalDefs',
+        str(cm.exception))
+
+  def testConvertFieldDefs(self):
+    """We can convert field defs"""
+    project_config = self.services.config.GetProjectConfig(
+        self.cnxn, self.project_1.project_id)
+    input_fds = project_config.field_defs
+    output = self.converter.ConvertFieldDefs(
+        input_fds, self.project_1.project_id)
+    fd1_rn = rnc.ConvertFieldDefNames(
+        self.cnxn, [self.field_def_1], self.project_1.project_id,
+        self.services).get(self.field_def_1)
+    self.assertEqual(fd1_rn, output[0].name)
+    self.assertEqual(self.field_def_1_name, output[0].display_name)
+    self.assertEqual('', output[0].docstring)
+    self.assertEqual(
+        project_objects_pb2.FieldDef.Type.Value('STR'), output[0].type)
+    self.assertEqual(
+        project_objects_pb2.FieldDef.Type.Value('INT'), output[1].type)
+    self.assertEqual('', output[1].applicable_issue_type)
+
+    fd1_admins = rnc.ConvertUserNames([self.user_1.user_id]).values()
+    self.assertEqual(fd1_admins, output[0].admins)
+
+  def testConvertFieldDefs_SkipsApprovals(self):
+    """We skip over approval defs"""
+    project_config = self.services.config.GetProjectConfig(
+        self.cnxn, self.project_1.project_id)
+    input_fds = project_config.field_defs
+    self.assertEqual(5, len(input_fds))
+    # project_1 is set up to have 4 non-approval fields and 1 approval field
+    # assert we skip approval fields
+    output = self.converter.ConvertFieldDefs(
+        input_fds, self.project_1.project_id)
+    self.assertEqual(4, len(output))
+
+  def testConvertFieldDefs_NonexistentID(self):
+    """We skip over any field defs whose ID does not exist."""
+    input_fd = tracker_pb2.FieldDef(
+        field_id=self.dne_field_def_id,
+        project_id=self.project_1.project_id,
+        field_name='foobar',
+        field_type=tracker_pb2.FieldTypes('STR_TYPE'))
+
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(0, len(output))
+
+  def testConvertFieldDefs_Empty(self):
+    """We can handle empty list input"""
+    self.assertEqual(
+        [], self.converter.ConvertFieldDefs([], self.project_1.project_id))
