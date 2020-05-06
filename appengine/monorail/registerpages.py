@@ -427,6 +427,7 @@ class ServletRegistry(object):
 
   def _RegisterWebComponentsHanders(self):
     """Register page handlers that are handled by WebComponentsPage."""
+    self._AddRoute('/projects/', webcomponentspage.ProjectListPage, 'GET')
     self._AddRoute(
         '/hotlists<unused:.*>', webcomponentspage.WebComponentsPage, 'GET')
     self._AddRoute('/projects<unused:.*>', webcomponentspage.WebComponentsPage,
@@ -436,6 +437,11 @@ class ServletRegistry(object):
 
   def _RegisterRedirects(self):
     """Register redirects among pages inside monorail."""
+    redirect = registerpages_helpers.MakeRedirect('/projects/')
+    self._SetupServlets({
+        '/projects': redirect,
+    })
+
     redirect = registerpages_helpers.MakeRedirect('/hosting/')
     self._SetupServlets({
         '/hosting': redirect,
