@@ -27,6 +27,7 @@ import (
 	"infra/appengine/arquebus/app/backend/model"
 	"infra/appengine/arquebus/app/config"
 	"infra/appengine/rotang/proto/rotangapi"
+	"infra/appengine/rotation-proxy/proto"
 	"infra/monorailv2/api/api_proto"
 )
 
@@ -71,8 +72,14 @@ func findAssigneeAndCCs(c context.Context, assigner *model.Assigner, task *model
 
 func resolveUserSources(c context.Context, task *model.Task, sources []config.UserSource) (users []*monorail.UserRef, err error) {
 	for _, source := range sources {
-		if oncall := source.GetOncall(); oncall != nil {
-			userRefs, err := findOncallers(c, task, oncall)
+		if rotation := source.GetRotation(); rotation != nil {
+			userRefs, err := findOncallers(c, task, rotation, true)
+			if err != nil {
+				return nil, err
+			}
+			users = append(users, userRefs...)
+		} else if oncall := source.GetOncall(); oncall != nil {
+			userRefs, err := findOncallers(c, task, oncall, false)
 			if err != nil {
 				return nil, err
 			}
@@ -130,7 +137,35 @@ func fetchOncallFromRotaNg(c context.Context, rotation string, oc *oncallShift) 
 	return nil
 }
 
-func findShift(c context.Context, task *model.Task, rotation string) (*oncallShift, error) {
+func fetchOncallFromRotationProxy(c context.Context, rotation string, oc *oncallShift) error {
+	rotationProxy := getRotationProxyClient(c)
+	resp, err := rotationProxy.GetRotation(c, &rotationproxy.GetRotationRequest{Name: rotation})
+	if err != nil {
+		return err
+	}
+
+	if shifts := resp.GetShifts(); len(shifts) > 0 {
+		// The first shift should contain either the current or next oncall.
+		// TODO(crbug.com/1078261): This should return nil if no-one is currently oncall,
+		// so that we can fall through to the next rotation in the list.
+		shift := shifts[0]
+		nOncallers := len(shift.Oncalls)
+		if nOncallers > 0 {
+			oc.Primary = shift.Oncalls[0].Email
+		}
+		if nOncallers > 1 {
+			for _, oncaller := range shift.Oncalls[1:] {
+				oc.Secondaries = append(oc.Secondaries, oncaller.Email)
+			}
+		}
+		started, _ := ptypes.Timestamp(shift.StartTime)
+		oc.Started = started.Unix()
+	}
+
+	return nil
+}
+
+func findShift(c context.Context, task *model.Task, rotation string, useRotationProxy bool) (*oncallShift, error) {
 	var oc oncallShift
 	if err := getCachedShift(c, rotation, &oc); err == nil {
 		return &oc, nil
@@ -138,8 +173,14 @@ func findShift(c context.Context, task *model.Task, rotation string) (*oncallShi
 		task.WriteLog(c, "Shift cache lookup failed: %s", err.Error())
 	}
 
-	if err := fetchOncallFromRotaNg(c, rotation, &oc); err != nil {
-		return nil, err
+	if useRotationProxy {
+		if err := fetchOncallFromRotationProxy(c, rotation, &oc); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := fetchOncallFromRotaNg(c, rotation, &oc); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := setShiftCache(c, rotation, &oc); err != nil {
@@ -152,8 +193,8 @@ func findShift(c context.Context, task *model.Task, rotation string) (*oncallShi
 	return &oc, nil
 }
 
-func findOncallers(c context.Context, task *model.Task, oncall *config.Oncall) ([]*monorail.UserRef, error) {
-	shift, err := findShift(c, task, oncall.Rotation)
+func findOncallers(c context.Context, task *model.Task, oncall *config.Oncall, useRotationProxy bool) ([]*monorail.UserRef, error) {
+	shift, err := findShift(c, task, oncall.Rotation, useRotationProxy)
 	if err != nil {
 		return nil, err
 	}

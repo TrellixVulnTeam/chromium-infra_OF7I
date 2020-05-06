@@ -26,6 +26,7 @@ import (
 	"infra/appengine/arquebus/app/config"
 	"infra/appengine/arquebus/app/util"
 	"infra/appengine/rotang/proto/rotangapi"
+	"infra/appengine/rotation-proxy/proto"
 	"infra/monorailv2/api/api_proto"
 )
 
@@ -33,7 +34,7 @@ var (
 	testStart, _ = ptypes.TimestampProto(testclock.TestRecentTimeUTC)
 	testEnd, _   = ptypes.TimestampProto(testclock.TestRecentTimeUTC)
 
-	// sample rotation shifts.
+	// sample output from RotaNG.
 	sampleOncallShifts = map[string]*rotangapi.ShiftEntry{
 		"Rotation 1": {
 			Start: testStart,
@@ -63,6 +64,52 @@ var (
 			},
 		},
 	}
+
+	// sample output from rotation-proxy.
+	sampleRotationProxyRotations = map[string]*rotationproxy.Rotation{
+		"Rotation 1": {
+			Name: "Rotation 1",
+			Shifts: []*rotationproxy.Shift{
+				{
+					Oncalls: []*rotationproxy.OncallPerson{
+						{Email: "r1pri@example.com"},
+						{Email: "r1sec1@example.com"},
+						{Email: "r1sec2@example.com"},
+					},
+					StartTime: testStart,
+					EndTime:   testEnd,
+				},
+			},
+		},
+		"Rotation 2": {
+			Name: "Rotation 2",
+			Shifts: []*rotationproxy.Shift{
+				{
+					Oncalls: []*rotationproxy.OncallPerson{
+						{Email: "r2pri@example.com"},
+						{Email: "r2sec1@example.com"},
+						{Email: "r2sec2@example.com"},
+					},
+					StartTime: testStart,
+					EndTime:   testEnd,
+				},
+			},
+		},
+		"Rotation 3": {
+			Name: "Rotation 3",
+			Shifts: []*rotationproxy.Shift{
+				{
+					Oncalls: []*rotationproxy.OncallPerson{
+						{Email: "r3pri@example.com"},
+						{Email: "r3sec1@example.com"},
+						{Email: "r3sec2@example.com"},
+					},
+					StartTime: testStart,
+					EndTime:   testEnd,
+				},
+			},
+		},
+	}
 )
 
 // createTestContextWithTQ creates a test context with testable a TaskQueue.
@@ -87,10 +134,16 @@ func createTestContextWithTQ() context.Context {
 	// install mocked pRPC clients.
 	c = setMonorailClient(c, newTestIssueClient())
 	c = setRotaNGClient(c, newTestOncallInfoClient())
+	c = setRotationProxyClient(c, newTestRotationProxyServiceClient())
 
-	// set sample rotation shifts for the legacy JSON interface
+	// set sample rotation shifts for Rota-NG
 	for rotation, shift := range sampleOncallShifts {
 		mockOncall(c, rotation, shift)
+	}
+
+	// set sample rotation shifts for rotation-proxy
+	for name, rotation := range sampleRotationProxyRotations {
+		mockRotation(c, name, rotation)
 	}
 	return c
 }
@@ -148,6 +201,14 @@ func emailUserSource(email string) *config.UserSource {
 func oncallUserSource(rotation string, position config.Oncall_Position) *config.UserSource {
 	return &config.UserSource{
 		From: &config.UserSource_Oncall{Oncall: &config.Oncall{
+			Rotation: rotation, Position: position,
+		}},
+	}
+}
+
+func rotationUserSource(rotation string, position config.Oncall_Position) *config.UserSource {
+	return &config.UserSource{
+		From: &config.UserSource_Rotation{Rotation: &config.Oncall{
 			Rotation: rotation, Position: position,
 		}},
 	}
@@ -282,4 +343,36 @@ func (client testOncallInfoClient) Oncall(c context.Context, in *rotangapi.Oncal
 
 func mockOncall(c context.Context, rotation string, shift *rotangapi.ShiftEntry) {
 	getRotaNGClient(c).(testOncallInfoClient).storage.shiftsByRotation[rotation] = shift
+}
+
+// ----------------------------------
+// test rotation-proxy RotationProxyService Client
+
+type testRotationProxyServiceClientStorage struct {
+	rotationsByName map[string]*rotationproxy.Rotation
+}
+
+type testRotationProxyServiceClient struct {
+	rotationproxy.RotationProxyServiceClient
+	storage *testRotationProxyServiceClientStorage
+}
+
+func newTestRotationProxyServiceClient() testRotationProxyServiceClient {
+	return testRotationProxyServiceClient{
+		storage: &testRotationProxyServiceClientStorage{
+			rotationsByName: map[string]*rotationproxy.Rotation{},
+		},
+	}
+}
+
+func (client testRotationProxyServiceClient) GetRotation(c context.Context, req *rotationproxy.GetRotationRequest, opts ...grpc.CallOption) (*rotationproxy.Rotation, error) {
+	rotation, exist := client.storage.rotationsByName[req.Name]
+	if !exist {
+		return nil, status.Errorf(codes.NotFound, `"%s" not found`, req.Name)
+	}
+	return rotation, nil
+}
+
+func mockRotation(c context.Context, name string, rotation *rotationproxy.Rotation) {
+	getRotationProxyClient(c).(testRotationProxyServiceClient).storage.rotationsByName[name] = rotation
 }

@@ -56,10 +56,14 @@ message Oncall {
 // Arquebus will assign or cc issues found.
 message UserSource {
   oneof from {
+    // Represents a rotation shift modelled in RotaNG.
     Oncall oncall = 1;
 
     // user refers to the email address of a Monorail user account.
     string email = 2; // e.g., user@chromium.org
+
+    // Represents a rotation shift modelled in rotation-proxy.
+    Oncall rotation = 3;
   }
 }
 
