@@ -27,7 +27,28 @@ type Rotation struct {
 // RotationProxyServer implements the proto service RotationProxyService.
 type RotationProxyServer struct{}
 
-// BatchGetRotations returns rotation information for a request.
+// GetRotation returns shift information for a single rotation.
+func (rps *RotationProxyServer) GetRotation(ctx context.Context, request *rpb.GetRotationRequest) (*rpb.Rotation, error) {
+	rotation := &Rotation{Name: request.Name}
+
+	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+		return datastore.Get(ctx, rotation)
+	}, nil)
+	if err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return nil, status.Errorf(codes.NotFound, "rotation %q not found: %v", request.Name, err)
+		}
+		return nil, err
+	}
+
+	if err := processShiftsForRotation(ctx, &rotation.Proto); err != nil {
+		return nil, err
+	}
+
+	return &rotation.Proto, nil
+}
+
+// BatchGetRotations returns shift information for multiple rotations.
 func (rps *RotationProxyServer) BatchGetRotations(ctx context.Context, request *rpb.BatchGetRotationsRequest) (*rpb.BatchGetRotationsResponse, error) {
 	rotations := make([]*Rotation, len(request.Names))
 	for i, rotationName := range request.Names {
@@ -41,7 +62,7 @@ func (rps *RotationProxyServer) BatchGetRotations(ctx context.Context, request *
 	if err != nil {
 		// err should be MultiError, according to https://godoc.org/go.chromium.org/gae/service/datastore#Get
 		if firstErr := err.(errors.MultiError).First(); firstErr == datastore.ErrNoSuchEntity {
-			return nil, status.Errorf(codes.NotFound, "Rotation not found %v", firstErr)
+			return nil, status.Errorf(codes.NotFound, "rotation not found: %v", firstErr)
 		}
 		return nil, err
 	}

@@ -13,3 +13,6 @@ deploy:
 
 deploy-prod:
 	gae.py upload -A chrome-ops-rotation-proxy
+
+gen:
+	cproto proto

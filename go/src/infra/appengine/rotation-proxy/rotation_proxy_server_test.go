@@ -113,6 +113,66 @@ func TestBatchUpdateRotations(t *testing.T) {
 	})
 }
 
+func TestGetRotation(t *testing.T) {
+	ctx := gaetesting.TestingContext()
+	server := &RotationProxyServer{}
+	Convey("get rotation", t, func() {
+		var rotation = &rpb.Rotation{
+			Name: "rotation",
+			Shifts: []*rpb.Shift{
+				{
+					Oncalls:   oncallsShift3,
+					StartTime: startTimeShift3,
+				},
+				{
+					Oncalls:   oncallsShift2,
+					StartTime: startTimeShift2,
+					EndTime:   endTimeShift2,
+				},
+				{
+					Oncalls:   oncallsShift1,
+					StartTime: startTimeShift1,
+					EndTime:   endTimeShift1,
+				},
+			},
+		}
+		updateRequest := &rpb.BatchUpdateRotationsRequest{
+			Requests: []*rpb.UpdateRotationRequest{
+				{Rotation: rotation},
+			},
+		}
+		_, err := server.BatchUpdateRotations(ctx, updateRequest)
+		datastore.GetTestable(ctx).CatchupIndexes()
+		So(err, ShouldBeNil)
+
+		getRequest := &rpb.GetRotationRequest{
+			Name: "rotation",
+		}
+
+		// Mock clock
+		ctx, _ = testclock.UseTime(ctx, time.Unix(444, 0))
+
+		response, err := server.GetRotation(ctx, getRequest)
+		So(err, ShouldBeNil)
+		expected := &rpb.Rotation{
+			Name: "rotation",
+			Shifts: []*rpb.Shift{
+				{
+					Oncalls:   oncallsShift2,
+					StartTime: startTimeShift2,
+					EndTime:   endTimeShift2,
+				},
+				{
+					Oncalls:   oncallsShift3,
+					StartTime: startTimeShift3,
+				},
+			},
+		}
+		diff := cmp.Diff(expected, response, cmp.Comparer(proto.Equal))
+		So(diff, ShouldEqual, "")
+	})
+}
+
 func TestBatchGetRotations(t *testing.T) {
 	ctx := gaetesting.TestingContext()
 	server := &RotationProxyServer{}

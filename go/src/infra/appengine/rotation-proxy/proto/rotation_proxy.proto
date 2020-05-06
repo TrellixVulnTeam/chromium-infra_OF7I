@@ -13,6 +13,8 @@ import "google/protobuf/timestamp.proto";
 service RotationProxyService {
   rpc BatchUpdateRotations(BatchUpdateRotationsRequest)
       returns (BatchUpdateRotationsResponse);
+  rpc GetRotation(GetRotationRequest)
+      returns (Rotation);
   rpc BatchGetRotations(BatchGetRotationsRequest)
       returns (BatchGetRotationsResponse);
 }
@@ -31,6 +33,11 @@ message UpdateRotationRequest {
 message BatchUpdateRotationsResponse {
   // Rotation updated.
   repeated Rotation rotations = 1;
+}
+
+message GetRotationRequest {
+  // The name of the rotation to fetch.
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 message BatchGetRotationsRequest {
