@@ -5,6 +5,7 @@
 package registration
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -105,6 +106,50 @@ func TestGetRack(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestListRacks(t *testing.T) {
+	t.Parallel()
+	Convey("ListRacks", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		racks := make([]*proto.Rack, 0, 4)
+		for i := 0; i < 4; i++ {
+			rack1 := mockRack(fmt.Sprintf("rack-%d", i), 5)
+			resp, err := CreateRack(ctx, rack1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack1)
+			racks = append(racks, resp)
+		}
+		Convey("List racks - page_token invalid", func() {
+			resp, nextPageToken, err := ListRacks(ctx, 5, "abc")
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List racks - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListRacks(ctx, 4, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, racks)
+		})
+
+		Convey("List racks - listing with pagination", func() {
+			resp, nextPageToken, err := ListRacks(ctx, 3, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, racks[:3])
+
+			resp, _, err = ListRacks(ctx, 2, nextPageToken)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, racks[3:])
 		})
 	})
 }

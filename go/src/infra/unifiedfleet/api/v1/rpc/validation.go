@@ -94,6 +94,11 @@ func (r *GetRackRequest) Validate() error {
 	return validateResourceName(rackRegex, RackNameFormat, r.Name)
 }
 
+// Validate validates input requests of ListRacks.
+func (r *ListRacksRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
 // Validate validates input requests of DeleteRack.
 func (r *DeleteRackRequest) Validate() error {
 	return validateResourceName(rackRegex, RackNameFormat, r.Name)

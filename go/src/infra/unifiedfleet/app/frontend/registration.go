@@ -196,7 +196,22 @@ func (fs *FleetServerImpl) ListRacks(ctx context.Context, req *api.ListRacksRequ
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, err
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := registration.ListRacks(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, rack := range result {
+		rack.Name = util.AddPrefix(rackCollection, rack.Name)
+	}
+	return &api.ListRacksResponse{
+		Racks:         result,
+		NextPageToken: nextPageToken,
+	}, nil
 }
 
 // DeleteRack deletes the rack from database.

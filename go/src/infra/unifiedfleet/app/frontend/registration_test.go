@@ -606,6 +606,87 @@ func TestGetRack(t *testing.T) {
 	})
 }
 
+func TestListRacks(t *testing.T) {
+	t.Parallel()
+	Convey("ListRacks", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		racks := make([]*proto.Rack, 0, 4)
+		for i := 0; i < 4; i++ {
+			rack1 := mockRack("", 10)
+			req := &api.CreateRackRequest{
+				Rack:   rack1,
+				RackId: fmt.Sprintf("rack-%d", i),
+			}
+			resp, err := tf.Fleet.CreateRack(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rack1)
+			racks = append(racks, resp)
+		}
+
+		Convey("ListRacks - page_size negative", func() {
+			req := &api.ListRacksRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListRacks(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListRacks - page_token invalid", func() {
+			req := &api.ListRacksRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListRacks(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("ListRacks - Full listing Max PageSize", func() {
+			req := &api.ListRacksRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListRacks(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Racks, ShouldResembleProto, racks)
+		})
+
+		Convey("ListRacks - Full listing with no pagination", func() {
+			req := &api.ListRacksRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListRacks(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Racks, ShouldResembleProto, racks)
+		})
+
+		Convey("ListRacks - listing with pagination", func() {
+			req := &api.ListRacksRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListRacks(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Racks, ShouldResembleProto, racks[:3])
+
+			req = &api.ListRacksRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListRacks(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Racks, ShouldResembleProto, racks[3:])
+		})
+	})
+}
+
 func TestDeleteRack(t *testing.T) {
 	t.Parallel()
 	Convey("DeleteRack", t, func() {
