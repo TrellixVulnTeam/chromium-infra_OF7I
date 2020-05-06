@@ -76,7 +76,7 @@ func TestStatusPage(t *testing.T) {
 				}},
 			}
 			Convey("No interesting revisions", func() {
-				rs := &rules.RefState{
+				rs := &rules.RepoState{
 					RepoURL:            "https://new.googlesource.com/new.git/+/master",
 					LastRelevantCommit: "",
 					LastKnownCommit:    "000000",
@@ -95,7 +95,7 @@ func TestStatusPage(t *testing.T) {
 				So(string(b), ShouldContainSubstring, linkText)
 			})
 			Convey("Some interesting revisions", func() {
-				rs := &rules.RefState{
+				rs := &rules.RepoState{
 					RepoURL:            "https://new.googlesource.com/new.git/+/master",
 					LastRelevantCommit: "111111",
 					LastKnownCommit:    "121212",
@@ -108,9 +108,9 @@ func TestStatusPage(t *testing.T) {
 				for i := 0; i < 12; i++ {
 					cTime, _ := time.Parse("2006-01-02T15:04", fmt.Sprintf("2017-09-01T09:%02d", i+1))
 					relevantCommit := &rules.RelevantCommit{
-						RefStateKey: rsk,
-						CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
-						Status:      rules.AuditStatus(i % 3), // Alternate all statuses.
+						RepoStateKey: rsk,
+						CommitHash:   fmt.Sprintf("%02d%02d%02d", i, i, i),
+						Status:       rules.AuditStatus(i % 3), // Alternate all statuses.
 						Result: []rules.RuleResult{
 							{
 								RuleName:         "First Rule",

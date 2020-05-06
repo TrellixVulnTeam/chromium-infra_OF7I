@@ -54,13 +54,13 @@ type workerParams struct {
 // if the context expires while auditing, this function will return the partial
 // results along with the appropriate error for the caller to handle persisting
 // the partial results and thus avoid duplicating work.
-func performScheduledAudits(ctx context.Context, cfg *rules.RefConfig, refState *rules.RefState, cs *rules.Clients) (map[string]*rules.RelevantCommit, error) {
+func performScheduledAudits(ctx context.Context, cfg *rules.RefConfig, repoState *rules.RepoState, cs *rules.Clients) (map[string]*rules.RelevantCommit, error) {
 	auditedCommits := make(map[string]*rules.RelevantCommit)
-	cfgk := ds.KeyForObj(ctx, refState)
+	cfgk := ds.KeyForObj(ctx, repoState)
 
 	ap := rules.AuditParams{
-		RepoCfg:  cfg,
-		RefState: refState,
+		RepoCfg:   cfg,
+		RepoState: repoState,
 	}
 
 	pcq := ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", rules.AuditPending).Limit(MaxWorkers * CommitsPerWorker)
@@ -97,7 +97,7 @@ func performScheduledAudits(ctx context.Context, cfg *rules.RefConfig, refState 
 	wp.finishedCleanly = make(chan bool, nWorkers)
 	for i := 0; i < nWorkers; i++ {
 		i := i
-		go audit(ctx, i, ap, wp, refState.ConfigName)
+		go audit(ctx, i, ap, wp, repoState.ConfigName)
 	}
 
 	// Send pending audit jobs to workers.

@@ -100,7 +100,7 @@ func TestAuditor(t *testing.T) {
 				return gitilesMockClient, nil
 			}
 			Convey("Test scanning", func() {
-				ds.Put(ctx, &rules.RefState{
+				ds.Put(ctx, &rules.RepoState{
 					RepoURL:            "https://dummy.googlesource.com/dummy.git/+/refs/heads/master",
 					ConfigName:         "dummy-repo",
 					LastKnownCommit:    "123456",
@@ -119,7 +119,7 @@ func TestAuditor(t *testing.T) {
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 200)
-					rs := &rules.RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
 					err = ds.Get(ctx, rs)
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "123456")
@@ -137,7 +137,7 @@ func TestAuditor(t *testing.T) {
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 200)
-					rs := &rules.RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
 					err = ds.Get(ctx, rs)
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "abcdef000123123")
@@ -168,14 +168,14 @@ func TestAuditor(t *testing.T) {
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 200)
-					rs := &rules.RefState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
 					err = ds.Get(ctx, rs)
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "deadbeef")
 					So(rs.LastRelevantCommit, ShouldEqual, "c001c0de")
 					rc := &rules.RelevantCommit{
-						RefStateKey: ds.KeyForObj(ctx, rs),
-						CommitHash:  "c001c0de",
+						RepoStateKey: ds.KeyForObj(ctx, rs),
+						CommitHash:   "c001c0de",
 					}
 					err = ds.Get(ctx, rc)
 					So(err, ShouldBeNil)
@@ -183,14 +183,14 @@ func TestAuditor(t *testing.T) {
 				})
 			})
 			Convey("Test auditing", func() {
-				refState := &rules.RefState{
+				repoState := &rules.RepoState{
 					ConfigName:         "dummy-repo",
 					RepoURL:            "https://dummy.googlesource.com/dummy.git/+/refs/heads/master",
 					LastKnownCommit:    "222222",
 					LastRelevantCommit: "222222",
 				}
-				err := ds.Put(ctx, refState)
-				rsk := ds.KeyForObj(ctx, refState)
+				err := ds.Put(ctx, repoState)
+				rsk := ds.KeyForObj(ctx, repoState)
 
 				So(err, ShouldBeNil)
 				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
@@ -210,7 +210,7 @@ func TestAuditor(t *testing.T) {
 				Convey("With commits", func() {
 					for i := 0; i < 10; i++ {
 						rc := &rules.RelevantCommit{
-							RefStateKey:   rsk,
+							RepoStateKey:  rsk,
 							CommitHash:    fmt.Sprintf("%02d%02d%02d", i, i, i),
 							Status:        rules.AuditScheduled,
 							AuthorAccount: "dummy@test.com",
@@ -224,8 +224,8 @@ func TestAuditor(t *testing.T) {
 						So(resp.StatusCode, ShouldEqual, 200)
 						for i := 0; i < 10; i++ {
 							rc := &rules.RelevantCommit{
-								RefStateKey: rsk,
-								CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
+								RepoStateKey: rsk,
+								CommitHash:   fmt.Sprintf("%02d%02d%02d", i, i, i),
 							}
 							err := ds.Get(ctx, rc)
 							So(err, ShouldBeNil)
@@ -240,8 +240,8 @@ func TestAuditor(t *testing.T) {
 						So(resp.StatusCode, ShouldEqual, 200)
 						for i := 0; i < 10; i++ {
 							rc := &rules.RelevantCommit{
-								RefStateKey: rsk,
-								CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
+								RepoStateKey: rsk,
+								CommitHash:   fmt.Sprintf("%02d%02d%02d", i, i, i),
 							}
 							err := ds.Get(ctx, rc)
 							So(err, ShouldBeNil)
@@ -255,8 +255,8 @@ func TestAuditor(t *testing.T) {
 						So(resp.StatusCode, ShouldEqual, 200)
 						for i := 0; i < 10; i++ {
 							rc := &rules.RelevantCommit{
-								RefStateKey: rsk,
-								CommitHash:  fmt.Sprintf("%02d%02d%02d", i, i, i),
+								RepoStateKey: rsk,
+								CommitHash:   fmt.Sprintf("%02d%02d%02d", i, i, i),
 							}
 							err := ds.Get(ctx, rc)
 							So(err, ShouldBeNil)

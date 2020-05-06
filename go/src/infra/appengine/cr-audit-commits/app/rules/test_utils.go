@@ -58,7 +58,7 @@ func fakeRelevantCommits(n int, k *ds.Key, bh string, s AuditStatus, t time.Time
 			prevHash = ""
 		}
 		result = append(result, &RelevantCommit{
-			RefStateKey:            k,
+			RepoStateKey:           k,
 			CommitHash:             bh + strconv.Itoa(i),
 			Status:                 s,
 			CommitTime:             t,

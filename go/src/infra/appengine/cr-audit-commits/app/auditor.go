@@ -44,7 +44,7 @@ func Auditor(rc *router.Context) {
 	ctx, cancelInnerCtx := context.WithTimeout(outerCtx, time.Second*time.Duration(4*60+30))
 	defer cancelInnerCtx()
 
-	cfg, refState, err := rules.LoadConfigFromContext(rc)
+	cfg, repoState, err := rules.LoadConfigFromContext(rc)
 	if err != nil {
 		http.Error(resp, err.Error(), 400)
 		return
@@ -67,23 +67,23 @@ func Auditor(rc *router.Context) {
 		}
 	}
 
-	fl, err := getCommitLog(ctx, cfg, refState, cs)
+	fl, err := getCommitLog(ctx, cfg, repoState, cs)
 	if err != nil {
 		http.Error(resp, err.Error(), 502)
 		return
 	}
 
 	// Iterate over the log, creating relevantCommit entries as appropriate
-	// and updating refState. If the context expires during this process,
-	// save the refState and bail.
-	err = scanCommits(ctx, fl, cfg, refState)
+	// and updating repoState. If the context expires during this process,
+	// save the repoState and bail.
+	err = scanCommits(ctx, fl, cfg, repoState)
 	if err != nil && err != context.DeadlineExceeded {
 		logging.WithError(err).Errorf(ctx, "Could not save new relevant commit")
 		http.Error(resp, err.Error(), 503)
 		return
 	}
 	// Save progress with an unexpired context.
-	if putErr := ds.Put(outerCtx, refState); putErr != nil {
+	if putErr := ds.Put(outerCtx, repoState); putErr != nil {
 		logging.WithError(putErr).Errorf(outerCtx, "Could not save last known/interesting commits")
 		http.Error(resp, putErr.Error(), 503)
 		return
@@ -101,12 +101,12 @@ func Auditor(rc *router.Context) {
 	//
 	// If the context expires while performing the audits, save the commits
 	// that were audited and bail.
-	auditedCommits, err := performScheduledAudits(ctx, cfg, refState, cs)
+	auditedCommits, err := performScheduledAudits(ctx, cfg, repoState, cs)
 	if err != nil && err != context.DeadlineExceeded {
 		http.Error(resp, err.Error(), 500)
 		return
 	}
-	if putErr := saveAuditedCommits(outerCtx, auditedCommits, cfg, refState); putErr != nil {
+	if putErr := saveAuditedCommits(outerCtx, auditedCommits, cfg, repoState); putErr != nil {
 		http.Error(resp, err.Error(), 503)
 		return
 	}
@@ -115,7 +115,7 @@ func Auditor(rc *router.Context) {
 		return
 	}
 
-	err = notifyAboutViolations(ctx, cfg, refState, cs)
+	err = notifyAboutViolations(ctx, cfg, repoState, cs)
 	if err != nil {
 		http.Error(resp, err.Error(), 502)
 		return
@@ -125,7 +125,7 @@ func Auditor(rc *router.Context) {
 
 // getCommitLog gets from gitiles a list from the last known commit to the tip
 // of the ref in chronological (as per git parentage) order.
-func getCommitLog(ctx context.Context, cfg *rules.RefConfig, refState *rules.RefState, cs *rules.Clients) ([]*git.Commit, error) {
+func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.RepoState, cs *rules.Clients) ([]*git.Commit, error) {
 
 	host, project, err := gitiles.ParseRepoURL(cfg.BaseRepoURL)
 	if err != nil {
@@ -133,7 +133,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, refState *rules.Ref
 	}
 	logReq := gitilespb.LogRequest{
 		Project:            project,
-		ExcludeAncestorsOf: refState.LastKnownCommit,
+		ExcludeAncestorsOf: repoState.LastKnownCommit,
 		Committish:         cfg.BranchName,
 	}
 
@@ -144,7 +144,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, refState *rules.Ref
 	}
 	fl, err := gitiles.PagingLog(ctx, gc, logReq, 6000)
 	if err != nil {
-		logging.WithError(err).Errorf(ctx, "Could not get gitiles log from revision %s", refState.LastKnownCommit)
+		logging.WithError(err).Errorf(ctx, "Could not get gitiles log from revision %s", repoState.LastKnownCommit)
 		return []*git.Commit{}, err
 	}
 	// Reverse the log to get revisions after `rev` time-ascending order.
@@ -153,7 +153,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, refState *rules.Ref
 	}
 
 	// Make sure the log reaches the last known commit.
-	if len(fl) > 0 && refState.LastKnownCommit != "" && len(fl[0].Parents) > 0 && fl[0].Parents[0] != refState.LastKnownCommit {
+	if len(fl) > 0 && repoState.LastKnownCommit != "" && len(fl[0].Parents) > 0 && fl[0].Parents[0] != repoState.LastKnownCommit {
 		panic("There is a gap between the last known commit and the beginning of the forward log")
 	}
 	return fl, nil
@@ -165,36 +165,36 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, refState *rules.Ref
 // this is instead done by Auditor after this function is executed. This is left
 // to the handler in case the context given to this function expires before
 // reaching the end of the log.
-func scanCommits(ctx context.Context, fl []*git.Commit, cfg *rules.RefConfig, refState *rules.RefState) error {
+func scanCommits(ctx context.Context, fl []*git.Commit, cfg *rules.RefConfig, repoState *rules.RepoState) error {
 	for _, commit := range fl {
 		relevant := false
 		for _, ruleSet := range cfg.Rules {
 			if ruleSet.MatchesCommit(commit) {
-				n, err := saveNewRelevantCommit(ctx, refState, commit)
+				n, err := saveNewRelevantCommit(ctx, repoState, commit)
 				if err != nil {
 					return err
 				}
-				refState.LastRelevantCommit = n.CommitHash
-				refState.LastRelevantCommitTime = n.CommitTime
+				repoState.LastRelevantCommit = n.CommitHash
+				repoState.LastRelevantCommitTime = n.CommitTime
 				// If the commit matches one ruleSet that's
 				// enough. Break to move on to the next commit.
 				relevant = true
 				break
 			}
 		}
-		ScannedCommits.Add(ctx, 1, relevant, refState.ConfigName)
-		refState.LastKnownCommit = commit.Id
+		ScannedCommits.Add(ctx, 1, relevant, repoState.ConfigName)
+		repoState.LastKnownCommit = commit.Id
 		// Ignore possible error, this time is used for display purposes only.
 		if commit.Committer != nil {
 			ct, _ := ptypes.Timestamp(commit.Committer.Time)
-			refState.LastKnownCommitTime = ct
+			repoState.LastKnownCommitTime = ct
 		}
 
 	}
 	return nil
 }
 
-func saveNewRelevantCommit(ctx context.Context, state *rules.RefState, commit *git.Commit) (*rules.RelevantCommit, error) {
+func saveNewRelevantCommit(ctx context.Context, state *rules.RepoState, commit *git.Commit) (*rules.RelevantCommit, error) {
 	rk := ds.KeyForObj(ctx, state)
 
 	commitTime, err := ptypes.Timestamp(commit.GetCommitter().GetTime())
@@ -203,7 +203,7 @@ func saveNewRelevantCommit(ctx context.Context, state *rules.RefState, commit *g
 		return nil, err
 	}
 	rc := &rules.RelevantCommit{
-		RefStateKey:            rk,
+		RepoStateKey:           rk,
 		CommitHash:             commit.Id,
 		PreviousRelevantCommit: state.LastRelevantCommit,
 		Status:                 rules.AuditScheduled,
@@ -224,7 +224,7 @@ func saveNewRelevantCommit(ctx context.Context, state *rules.RefState, commit *g
 
 // saveAuditedCommits transactionally saves the records for the commits that
 // were audited.
-func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*rules.RelevantCommit, cfg *rules.RefConfig, refState *rules.RefState) error {
+func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*rules.RelevantCommit, cfg *rules.RefConfig, repoState *rules.RepoState) error {
 	// We will read the relevant commits into this slice before modifying
 	// them, to ensure that we don't overwrite changes that may have been
 	// saved to the datastore between the time the query in performScheduled
@@ -233,8 +233,8 @@ func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*rules.Re
 	originalCommits := []*rules.RelevantCommit{}
 	for _, auditedCommit := range auditedCommits {
 		originalCommits = append(originalCommits, &rules.RelevantCommit{
-			CommitHash:  auditedCommit.CommitHash,
-			RefStateKey: auditedCommit.RefStateKey,
+			CommitHash:   auditedCommit.CommitHash,
+			RepoStateKey: auditedCommit.RepoStateKey,
 		})
 	}
 
@@ -262,7 +262,7 @@ func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*rules.Re
 		}
 		for _, c := range commitsToPut {
 			if c.Status != rules.AuditScheduled {
-				AuditedCommits.Add(ctx, 1, c.Status.ToShortString(), refState.ConfigName)
+				AuditedCommits.Add(ctx, 1, c.Status.ToShortString(), repoState.ConfigName)
 			}
 		}
 		return nil
@@ -272,9 +272,9 @@ func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*rules.Re
 // notifyAboutViolations is meant to notify about violations to audit
 // policies by calling the notification functions registered for each ruleSet
 // that matches a commit in the AuditCompletedWithActionRequired status.
-func notifyAboutViolations(ctx context.Context, cfg *rules.RefConfig, refState *rules.RefState, cs *rules.Clients) error {
+func notifyAboutViolations(ctx context.Context, cfg *rules.RefConfig, repoState *rules.RepoState, cs *rules.Clients) error {
 
-	cfgk := ds.KeyForObj(ctx, refState)
+	cfgk := ds.KeyForObj(ctx, repoState)
 
 	cq := ds.NewQuery("RelevantCommit").Ancestor(cfgk).Eq("Status", rules.AuditCompletedWithActionRequired).Eq("NotifiedAll", false)
 	err := ds.Run(ctx, cq, func(rc *rules.RelevantCommit) error {
@@ -298,7 +298,7 @@ func notifyAboutViolations(ctx context.Context, cfg *rules.RefConfig, refState *
 		for _, e := range errors {
 			logging.WithError(e).Errorf(ctx, "Failed notification for detected violation on %s.",
 				cfg.LinkToCommit(rc.CommitHash))
-			NotificationFailures.Add(ctx, 1, "Violation", refState.ConfigName)
+			NotificationFailures.Add(ctx, 1, "Violation", repoState.ConfigName)
 		}
 		err = ds.Put(ctx, rc)
 		if err != nil {
@@ -320,11 +320,11 @@ func notifyAboutViolations(ctx context.Context, cfg *rules.RefConfig, refState *
 			if err != nil {
 				logging.WithError(err).Errorf(ctx, "Failed to save notification state for failed audit on %s.",
 					cfg.LinkToCommit(rc.CommitHash))
-				NotificationFailures.Add(ctx, 1, "AuditFailure", refState.ConfigName)
+				NotificationFailures.Add(ctx, 1, "AuditFailure", repoState.ConfigName)
 			}
 		} else {
 			logging.WithError(err).Errorf(ctx, "Failed to file bug for audit failure on %s.", cfg.LinkToCommit(rc.CommitHash))
-			NotificationFailures.Add(ctx, 1, "AuditFailure", refState.ConfigName)
+			NotificationFailures.Add(ctx, 1, "AuditFailure", repoState.ConfigName)
 		}
 		return nil
 	})

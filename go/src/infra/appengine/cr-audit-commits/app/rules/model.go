@@ -126,9 +126,9 @@ func (rs RuleStatus) ColorCode() string {
 	}
 }
 
-// RefState contains the state for each ref we audit. Including
+// RepoState contains the state for each ref we audit. Including
 // parameters applicable to dynamically configured refs.
-type RefState struct {
+type RepoState struct {
 	// RepoURL is expected to point to a branch e.g.
 	// https://chromium.googlesource.com/chromium/src.git/+/master
 	RepoURL string `gae:"$id"`
@@ -150,8 +150,8 @@ type RefState struct {
 // RelevantCommit points to a node in a linked list of commits that have
 // been considered relevant by CommitScanner.
 type RelevantCommit struct {
-	RefStateKey *ds.Key `gae:"$parent"`
-	CommitHash  string  `gae:"$id"`
+	RepoStateKey *ds.Key `gae:"$parent"`
+	CommitHash   string  `gae:"$id"`
 
 	PreviousRelevantCommit string
 	Status                 AuditStatus

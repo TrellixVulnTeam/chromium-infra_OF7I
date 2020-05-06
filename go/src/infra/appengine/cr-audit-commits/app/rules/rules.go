@@ -24,7 +24,7 @@ import (
 //
 // Note that for changes to any other field of RefConfig made by functions
 // implementing this interface to persist and apply to audits, the Scheduler
-// needs to be modified to save them to the RefState, and the SetConcreteRef
+// needs to be modified to save them to the RepoState, and the SetConcreteRef
 // function below needs to be modified to set them in the copy of RefConfig to
 // be passed to the scan/audit/notify functions.
 type DynamicRefFunc func(context.Context, RefConfig) ([]*RefConfig, error)
@@ -68,7 +68,7 @@ func (rc *RefConfig) LinkToCommit(commit string) string {
 
 // SetConcreteRef returns a copy of the repoconfig modified to account for
 // dynamic refs.
-func (rc *RefConfig) SetConcreteRef(ctx context.Context, rs *RefState) *RefConfig {
+func (rc *RefConfig) SetConcreteRef(ctx context.Context, rs *RepoState) *RefConfig {
 	// Make a copy.
 	result := *rc
 	if rs.BranchName != "" {
@@ -106,7 +106,7 @@ func (ar AccountRules) MatchesRelevantCommit(c *RelevantCommit) bool {
 type AuditParams struct {
 	TriggeringAccount string
 	RepoCfg           *RefConfig
-	RefState          *RefState
+	RepoState         *RepoState
 }
 
 // Rule is an audit rule.

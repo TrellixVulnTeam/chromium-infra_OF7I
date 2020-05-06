@@ -384,15 +384,15 @@ func (c *Clients) ConnectAll(ctx context.Context, cfg *RefConfig, client *http.C
 // If the given ref matches a configuration set to dynamic refs, this function
 // calls the config's method to populate the concrete ref parameters and returns
 // the result of that method.
-func LoadConfigFromContext(rc *router.Context) (*RefConfig, *RefState, error) {
+func LoadConfigFromContext(rc *router.Context) (*RefConfig, *RepoState, error) {
 	ctx, req := rc.Context, rc.Request
 	refURL := req.FormValue("refUrl")
 	return LoadConfig(ctx, refURL)
 }
 
 // LoadConfig returns both repository status and config based on given refURL.
-func LoadConfig(ctx context.Context, refURL string) (*RefConfig, *RefState, error) {
-	rs := &RefState{RepoURL: refURL}
+func LoadConfig(ctx context.Context, refURL string) (*RefConfig, *RepoState, error) {
+	rs := &RepoState{RepoURL: refURL}
 	err := ds.Get(ctx, rs)
 	if err != nil {
 		return nil, nil, err
