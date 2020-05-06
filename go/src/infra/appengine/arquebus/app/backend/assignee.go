@@ -106,21 +106,11 @@ func setShiftCache(c context.Context, key string, shift *oncallShift) error {
 	return memcache.Set(c, item)
 }
 
-func findShift(c context.Context, task *model.Task, rotation string) (*oncallShift, error) {
-	var oc oncallShift
-	switch err := getCachedShift(c, rotation, &oc); {
-	case err != nil:
-		if err != memcache.ErrCacheMiss {
-			task.WriteLog(c, "Shift cache lookup failed: %s", err.Error())
-		}
-	default:
-		return &oc, nil
-	}
-
+func fetchOncallFromRotaNg(c context.Context, rotation string, oc *oncallShift) error {
 	rota := getRotaNGClient(c)
 	resp, err := rota.Oncall(c, &rotangapi.OncallRequest{Name: rotation})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if shift := resp.GetShift(); shift != nil {
@@ -135,6 +125,21 @@ func findShift(c context.Context, task *model.Task, rotation string) (*oncallShi
 		}
 		started, _ := ptypes.Timestamp(shift.Start)
 		oc.Started = started.Unix()
+	}
+
+	return nil
+}
+
+func findShift(c context.Context, task *model.Task, rotation string) (*oncallShift, error) {
+	var oc oncallShift
+	if err := getCachedShift(c, rotation, &oc); err == nil {
+		return &oc, nil
+	} else if err != memcache.ErrCacheMiss {
+		task.WriteLog(c, "Shift cache lookup failed: %s", err.Error())
+	}
+
+	if err := fetchOncallFromRotaNg(c, rotation, &oc); err != nil {
+		return nil, err
 	}
 
 	if err := setShiftCache(c, rotation, &oc); err != nil {
