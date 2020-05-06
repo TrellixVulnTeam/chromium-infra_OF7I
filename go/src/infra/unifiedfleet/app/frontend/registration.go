@@ -5,9 +5,6 @@
 package frontend
 
 import (
-	"errors"
-	"fmt"
-
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
@@ -119,22 +116,23 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	}()
 	source := req.GetMachineDbSource()
 	if source == nil {
-		return emptyMachineDBSourceStatus, errors.New(emptyMachineDBSource)
+		return nil, emptyMachineDBSourceStatus.Err()
 	}
 	if source.GetHost() == "" {
-		return invalidHostInMachineDBSourceStatus, errors.New(invalidHostInMachineDBSource)
+		return nil, invalidHostInMachineDBSourceStatus.Err()
 	}
 	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
-		return machineDBConnectionFailureStatus, errors.New(machineDBConnectionFailure)
+		return nil, machineDBConnectionFailureStatus.Err()
 	}
 	logging.Debugf(ctx, "Querying machine-db to get the list of machines")
 	resp, err := mdbClient.ListMachines(ctx, &crimson.ListMachinesRequest{})
 	if err != nil {
-		return machineDBServiceFailureStatus("ListMachines"), fmt.Errorf(machineDBServiceFailure, "ListMachines")
+		return nil, machineDBServiceFailureStatus("ListMachines").Err()
 	}
-	logging.Debugf(ctx, "Processing %d machines", len(resp.Machines))
-	return successStatus, err
+
+	logging.Debugf(ctx, "Importing %d machines", len(resp.Machines))
+	return successStatus.Proto(), nil
 }
 
 // CreateRack creates rack entry in database.

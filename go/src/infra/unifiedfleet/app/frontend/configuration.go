@@ -7,17 +7,13 @@ package frontend
 import (
 	"net/http"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/any"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
 
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
-	"go.chromium.org/luci/common/errors"
 	luciconfig "go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/impl/remote"
 	"go.chromium.org/luci/config/server/cfgclient/textproto"
@@ -27,7 +23,6 @@ import (
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
-	"infra/unifiedfleet/app/model/datastore"
 )
 
 const defaultCfgService = "luci-config.appspot.com"
@@ -63,7 +58,7 @@ func (cs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 	oldP := &crimsonconfig.Platforms{}
 	configSource := req.GetConfigSource()
 	if configSource == nil {
-		return emptyConfigSourceStatus, errors.New(emptyConfigSource)
+		return nil, emptyConfigSourceStatus.Err()
 	}
 
 	switch configSource.ConfigServiceName {
@@ -71,14 +66,14 @@ func (cs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 		logging.Debugf(ctx, "Importing chrome platforms from local config file")
 		oldP, err = parsePlatformsFunc(configSource.FileName)
 		if err != nil {
-			return invalidConfigFileContentStatus, errors.Annotate(err, invalidConfigFileContent).Err()
+			return nil, invalidConfigFileContentStatus.Err()
 		}
 	default:
 		logging.Debugf(ctx, "Importing chrome platforms from luci-config")
 		cfgInterface := cs.newCfgInterface(ctx)
 		fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
 		if err != nil {
-			return configServiceFailureStatus, errors.Annotate(err, configServiceFailure).Err()
+			return nil, configServiceFailureStatus.Err()
 		}
 		logging.Debugf(ctx, "fetched configs: %#v", fetchedConfigs)
 		resolver := textproto.Message(oldP)
@@ -88,24 +83,6 @@ func (cs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 
 	logging.Debugf(ctx, "Importing %d platforms", len(platforms))
 	res, err := configuration.InsertChromePlatforms(ctx, platforms)
-	if fails := res.Failed(); len(fails) > 0 {
-		insertDatastoreFailureStatus.Details = errorToAny(fails)
-		return insertDatastoreFailureStatus, err
-	}
-	return successStatus, nil
-}
-
-func errorToAny(res []*datastore.OpResult) []*any.Any {
-	anys := make([]*any.Any, 0)
-	for _, r := range res {
-		e := &errdetails.ErrorInfo{
-			Reason: r.Err.Error(),
-		}
-		any, err := ptypes.MarshalAny(e)
-		if err != nil {
-			continue
-		}
-		anys = append(anys, any)
-	}
-	return anys
+	s := processImportDatastoreRes(res, err)
+	return s.Proto(), s.Err()
 }

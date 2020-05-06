@@ -16,6 +16,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 	code "google.golang.org/genproto/googleapis/rpc/code"
+	"google.golang.org/grpc/status"
 )
 
 func mockChromeOSMachine(id, lab, board string) *proto.Machine {
@@ -406,17 +407,21 @@ func TestImportMachines(t *testing.T) {
 					},
 				},
 			}
-			res, err := tf.Fleet.ImportMachines(ctx, req)
+			_, err := tf.Fleet.ImportMachines(ctx, req)
 			So(err, ShouldNotBeNil)
-			So(res.Code, ShouldEqual, code.Code_INVALID_ARGUMENT)
+			s, ok := status.FromError(err)
+			So(ok, ShouldBeTrue)
+			So(s.Code(), ShouldEqual, code.Code_INVALID_ARGUMENT)
 		})
 		Convey("import browser machines with empty machineDB source", func() {
 			req := &api.ImportMachinesRequest{
 				Source: &api.ImportMachinesRequest_MachineDbSource{},
 			}
-			res, err := tf.Fleet.ImportMachines(ctx, req)
+			_, err := tf.Fleet.ImportMachines(ctx, req)
 			So(err, ShouldNotBeNil)
-			So(res.Code, ShouldEqual, code.Code_INVALID_ARGUMENT)
+			s, ok := status.FromError(err)
+			So(ok, ShouldBeTrue)
+			So(s.Code(), ShouldEqual, code.Code_INVALID_ARGUMENT)
 		})
 	})
 }

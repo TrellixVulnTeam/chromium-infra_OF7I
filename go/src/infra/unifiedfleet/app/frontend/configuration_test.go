@@ -9,6 +9,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/genproto/googleapis/rpc/code"
+	"google.golang.org/grpc/status"
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
@@ -60,9 +61,11 @@ func TestImportChromePlatforms(t *testing.T) {
 			req := &api.ImportChromePlatformsRequest{
 				Source: &api.ImportChromePlatformsRequest_ConfigSource{},
 			}
-			res, err := tf.Fleet.ImportChromePlatforms(ctx, req)
+			_, err := tf.Fleet.ImportChromePlatforms(ctx, req)
 			So(err, ShouldNotBeNil)
-			So(res.Code, ShouldEqual, code.Code_INVALID_ARGUMENT)
+			s, ok := status.FromError(err)
+			So(ok, ShouldBeTrue)
+			So(s.Code(), ShouldEqual, code.Code_INVALID_ARGUMENT)
 		})
 	})
 }
