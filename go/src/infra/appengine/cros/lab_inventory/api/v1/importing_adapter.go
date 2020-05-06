@@ -380,5 +380,7 @@ func createDutState(states *[]*lab.DutState, olddata *inventory.CommonDeviceSpec
 		WorkingBluetoothBtpeer: peri.GetWorkingBluetoothBtpeer(),
 		Cr50Phase:              getCr50Phase(labels),
 		Cr50KeyEnv:             getCr50Env(labels),
+		StorageState:           lab.HardwareState(int32(peri.GetStorageState())),
+		ServoUsbState:          lab.HardwareState(int32(peri.GetServoUsbState())),
 	})
 }

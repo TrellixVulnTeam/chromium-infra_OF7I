@@ -349,12 +349,22 @@ func setCr50Configs(l *inventory.SchedulableLabels, s *lab.DutState) {
 	l.Cr50RoKeyid = &cr50Env
 }
 
+func setHardwareState(s lab.HardwareState) *inventory.HardwareState {
+	target := inventory.HardwareState_HARDWARE_UNKNOWN
+	if s != lab.HardwareState_HARDWARE_UNKNOWN {
+		target = inventory.HardwareState(s)
+	}
+	return &target
+}
+
 func setDutState(l *inventory.SchedulableLabels, s *lab.DutState) {
 	p := l.Peripherals
 	p.ServoState = setServoState(s.GetServo())
 	p.Servo = setDutStateHelper(s.GetServo())
 	p.Chameleon = setDutStateHelper(s.GetChameleon())
 	p.AudioLoopbackDongle = setDutStateHelper(s.GetAudioLoopbackDongle())
+	p.ServoUsbState = setHardwareState(s.GetServoUsbState())
+	p.StorageState = setHardwareState(s.GetStorageState())
 
 	if n := s.GetWorkingBluetoothBtpeer(); n > 0 {
 		p.WorkingBluetoothBtpeer = &n

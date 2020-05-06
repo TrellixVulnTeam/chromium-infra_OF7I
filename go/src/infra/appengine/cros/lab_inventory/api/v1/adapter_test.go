@@ -136,6 +136,8 @@ var devInV2State = lab.DutState{
 	WorkingBluetoothBtpeer: 3,
 	Cr50Phase:              lab.DutState_CR50_PHASE_PVT,
 	Cr50KeyEnv:             lab.DutState_CR50_KEYENV_PROD,
+	StorageState:           lab.HardwareState_HARDWARE_NORMAL,
+	ServoUsbState:          lab.HardwareState_HARDWARE_NEED_REPLACEMENT,
 }
 
 var labstationInV2 = lab.ChromeOSDevice{
@@ -296,6 +298,8 @@ common {
 			servo: true
 			servo_state: BROKEN
 			servo_type: "v3"
+			storage_state: HARDWARE_NORMAL,
+			servo_usb_state: HARDWARE_NEED_REPLACEMENT,
 			wificell: true
 			router_802_11ax: true
 			working_bluetooth_btpeer: 3
