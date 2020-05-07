@@ -64,6 +64,7 @@ func init() {
 
 	r.GET("/_cron/analyze/:tree", basemw, handler.GetAnalyzeHandler)
 	r.GET("/_ah/queue/addannotationtrees", basemw, handler.AnnotationTreeWorker)
+	r.GET("/_ah/queue/migrate_to_ungrouped_alerts", basemw, handler.MigrateToUngroupedAlerts)
 
 	http.DefaultServeMux.Handle("/", r)
 }
