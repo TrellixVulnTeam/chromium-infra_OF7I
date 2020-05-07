@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -31,8 +32,11 @@ import (
 )
 
 var (
-	testStart, _ = ptypes.TimestampProto(testclock.TestRecentTimeUTC)
-	testEnd, _   = ptypes.TimestampProto(testclock.TestRecentTimeUTC)
+	testStart, _    = ptypes.TimestampProto(testclock.TestRecentTimeUTC)
+	testEnd, _      = ptypes.TimestampProto(testclock.TestRecentTimeUTC)
+	yesterday, _    = ptypes.TimestampProto(time.Now().AddDate(0, 0, -1))
+	tomorrow, _     = ptypes.TimestampProto(time.Now().AddDate(0, 0, 1))
+	dayAfterNext, _ = ptypes.TimestampProto(time.Now().AddDate(0, 0, 2))
 
 	// sample output from RotaNG.
 	sampleOncallShifts = map[string]*rotangapi.ShiftEntry{
@@ -76,8 +80,8 @@ var (
 						{Email: "r1sec1@example.com"},
 						{Email: "r1sec2@example.com"},
 					},
-					StartTime: testStart,
-					EndTime:   testEnd,
+					StartTime: yesterday,
+					EndTime:   tomorrow,
 				},
 			},
 		},
@@ -90,8 +94,7 @@ var (
 						{Email: "r2sec1@example.com"},
 						{Email: "r2sec2@example.com"},
 					},
-					StartTime: testStart,
-					EndTime:   testEnd,
+					StartTime: yesterday,
 				},
 			},
 		},
@@ -104,8 +107,8 @@ var (
 						{Email: "r3sec1@example.com"},
 						{Email: "r3sec2@example.com"},
 					},
-					StartTime: testStart,
-					EndTime:   testEnd,
+					StartTime: tomorrow,
+					EndTime:   dayAfterNext,
 				},
 			},
 		},

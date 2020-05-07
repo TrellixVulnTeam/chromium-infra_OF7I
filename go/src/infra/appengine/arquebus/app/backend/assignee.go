@@ -137,6 +137,19 @@ func fetchOncallFromRotaNg(c context.Context, rotation string, oc *oncallShift) 
 	return nil
 }
 
+func shiftIsCurrent(shift *rotationproxy.Shift) bool {
+	now := time.Now()
+	if startTime, err := ptypes.Timestamp(shift.StartTime); err != nil || startTime.After(now) {
+		return false
+	}
+	// There might be no end time, in which case this shift extends to
+	// infinity (so it should be treated as current).
+	if endTime, err := ptypes.Timestamp(shift.EndTime); err == nil && endTime.Before(now) {
+		return false
+	}
+	return true
+}
+
 func fetchOncallFromRotationProxy(c context.Context, rotation string, oc *oncallShift) error {
 	rotationProxy := getRotationProxyClient(c)
 	resp, err := rotationProxy.GetRotation(c, &rotationproxy.GetRotationRequest{Name: rotation})
@@ -145,10 +158,12 @@ func fetchOncallFromRotationProxy(c context.Context, rotation string, oc *oncall
 	}
 
 	if shifts := resp.GetShifts(); len(shifts) > 0 {
-		// The first shift should contain either the current or next oncall.
-		// TODO(crbug.com/1078261): This should return nil if no-one is currently oncall,
-		// so that we can fall through to the next rotation in the list.
+		// The first shift will contain either the current or next oncall.
+		// We only want to use it if the shift is actually current.
 		shift := shifts[0]
+		if !shiftIsCurrent(shift) {
+			return nil
+		}
 		nOncallers := len(shift.Oncalls)
 		if nOncallers > 0 {
 			oc.Primary = shift.Oncalls[0].Email

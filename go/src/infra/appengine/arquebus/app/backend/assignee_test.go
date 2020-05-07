@@ -107,6 +107,7 @@ func TestAssignee(t *testing.T) {
 				assignee, ccs, err := findAssigneeAndCCs(c, assigner, task)
 				So(err, ShouldBeNil)
 				So(assignee, ShouldBeNil)
+				So(ccs, ShouldHaveLength, 2)
 				So(ccs[0], ShouldResemble, monorailUser("r1sec1@example.com"))
 				So(ccs[1], ShouldResemble, monorailUser("r1sec2@example.com"))
 			})
@@ -159,7 +160,7 @@ func TestAssignee(t *testing.T) {
 				So(ccs, ShouldBeNil)
 			})
 
-			Convey("with a mix of available and unavailable shifts", func() {
+			Convey("with a mix of available and unavailable UserSource_Oncalls", func() {
 				mockOncall(c, "Rotation 1", &rotangapi.ShiftEntry{})
 				assigner.AssigneesRaw = createRawUserSources(
 					oncallUserSource("Rotation 1", config.Oncall_PRIMARY),
@@ -175,6 +176,22 @@ func TestAssignee(t *testing.T) {
 					assignee, ShouldResemble,
 					monorailUser(sampleOncallShifts["Rotation 2"].Oncallers[0].Email),
 				)
+				So(ccs, ShouldBeNil)
+			})
+
+			Convey("with a mix of available and unavailable UserSource_Rotations", func() {
+				assigner.AssigneesRaw = createRawUserSources(
+					// Rotation 3 is unavailable.
+					rotationUserSource("Rotation 3", config.Oncall_PRIMARY),
+					rotationUserSource("Rotation 2", config.Oncall_PRIMARY),
+					rotationUserSource("Rotation 1", config.Oncall_PRIMARY),
+				)
+				assigner.CCsRaw = createRawUserSources()
+				assignee, ccs, err := findAssigneeAndCCs(c, assigner, task)
+				So(err, ShouldBeNil)
+				// it should be the primary of Rotation 2, as Rotation 3 is
+				// not available.
+				So(assignee, ShouldResemble, monorailUser("r2pri@example.com"))
 				So(ccs, ShouldBeNil)
 			})
 		})
