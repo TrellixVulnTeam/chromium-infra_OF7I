@@ -41,6 +41,7 @@ peripherals: {
   servo: true
   servo_state: 1
   servo_type: "servo_v3"
+  smart_usbhub: false
   mimo: true
   huddly: true
   conductive: true

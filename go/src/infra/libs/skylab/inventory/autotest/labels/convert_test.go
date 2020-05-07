@@ -42,6 +42,7 @@ peripherals: {
   servo: true
   servo_state: 3
   servo_type: "servo_v3"
+  smart_usbhub: true
   storage_state: 1
   servo_usb_state: 3
   mimo: true
@@ -162,6 +163,7 @@ var fullLabels = []string{
 	"servo_type:servo_v3",
 	"servo_usb_state:NEED_REPLACEMENT",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
+	"smart_usbhub",
 	"storage:storageval",
 	"storage_state:NORMAL",
 	"stylus",
@@ -456,6 +458,7 @@ peripherals: {
   servo: true
   servo_state: 3
   servo_type: "servo_v4"
+  smart_usbhub: true
   storage_state: 2
   servo_usb_state: 3
   mimo: true
@@ -576,6 +579,7 @@ var fullLabelsSpecial = []string{
 	"servo_type:servo_v4",
 	"servo_usb_state:NEED_REPLACEMENT",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
+	"smart_usbhub",
 	"storage:storageval",
 	"storage_state:ACCEPTABLE",
 	"stylus",
