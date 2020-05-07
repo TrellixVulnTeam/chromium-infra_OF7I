@@ -46,7 +46,7 @@ class CloudtailFactory(object):
     args = [
         self._path, 'pipe',
         '--log-id', log_name,
-        '--local-log-level', 'info',
+        '--local-log-level', 'debug',
         '--local-log-file', self._get_log_file(),
     ]
 

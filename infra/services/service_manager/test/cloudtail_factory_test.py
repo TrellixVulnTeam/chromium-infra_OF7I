@@ -41,7 +41,7 @@ class CloudtailFactoryTest(unittest.TestCase):
 
     self.assertEqual(1, self.mock_popen.call_count)
     self.assertEqual(
-        ['/foo', 'pipe', '--log-id', 'log', '--local-log-level', 'info',
+        ['/foo', 'pipe', '--log-id', 'log', '--local-log-level', 'debug',
          '--local-log-file', self._get_expected_local_log_file()],
         self.mock_popen.call_args[0][0])
 
@@ -68,7 +68,7 @@ class CloudtailFactoryTest(unittest.TestCase):
 
     self.assertEqual(1, self.mock_popen.call_count)
     self.assertEqual(
-        ['/foo', 'pipe', '--log-id', 'log', '--local-log-level', 'info',
+        ['/foo', 'pipe', '--log-id', 'log', '--local-log-level', 'debug',
          '--local-log-file', self._get_expected_local_log_file(),
          '--ts-mon-credentials', '/bar'],
         self.mock_popen.call_args[0][0])
