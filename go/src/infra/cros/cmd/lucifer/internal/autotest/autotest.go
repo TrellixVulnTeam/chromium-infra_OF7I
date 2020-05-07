@@ -227,6 +227,32 @@ func DutPreparationCommand(c Config, cmd *DutPreparationArgs) *exec.Cmd {
 	return command(c, dutPreparationRelPath, args...)
 }
 
+const auditTaskRelPath = "site_utils/admin_audit/main.py"
+
+// AuditTaskArgs contains arguments for AdminAudit task.
+type AuditTaskArgs struct {
+	Hostname     string
+	ResultsDir   string
+	HostInfoFile string
+	Actions      []string
+}
+
+// AuditTaskCommand returns the Cmd struct to execute DUT audit script with the given arguments.
+func AuditTaskCommand(c Config, cmd *AuditTaskArgs) *exec.Cmd {
+	args := make([]string, 0, 10)
+	if cmd.Hostname != "" {
+		args = append(args, "--hostname", cmd.Hostname)
+	}
+	if cmd.ResultsDir != "" {
+		args = append(args, "--results-dir", cmd.ResultsDir)
+	}
+	if cmd.HostInfoFile != "" {
+		args = append(args, "--host-info-file", cmd.HostInfoFile)
+	}
+	args = append(args, cmd.Actions...)
+	return command(c, auditTaskRelPath, args...)
+}
+
 // Config describes where the Autotest directory is.
 type Config struct {
 	AutotestDir string

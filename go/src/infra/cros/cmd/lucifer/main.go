@@ -33,6 +33,7 @@ func main() {
 	subcommands.Register(subcommands.CommandsCommand(), "")
 	subcommands.Register(&adminTaskCmd{}, "")
 	subcommands.Register(&deployTaskCmd{}, "")
+	subcommands.Register(&auditTaskCmd{}, "")
 	subcommands.Register(&testCmd{}, "")
 	subcommands.Register(&prejobCmd{}, "")
 	subcommands.Register(&runTestCmd{}, "")
