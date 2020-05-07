@@ -42,6 +42,8 @@ peripherals: {
   servo: true
   servo_state: 3
   servo_type: "servo_v3"
+  storage_state: 1
+  servo_usb_state: 3
   mimo: true
   huddly: true
   conductive: true
@@ -158,8 +160,10 @@ var fullLabels = []string{
 	"servo",
 	"servo_state:BROKEN",
 	"servo_type:servo_v3",
+	"servo_usb_state:NEED_REPLACEMENT",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
 	"storage:storageval",
+	"storage_state:NORMAL",
 	"stylus",
 	"telephony:telephonyval",
 	"test_audiojack",
@@ -226,6 +230,68 @@ func TestConvertServoStateWorking(t *testing.T) {
 			if diff := pretty.Compare(want, got); diff != "" {
 				t.Errorf(
 					"Convert servo_state %#v got labels differ -want +got, %s",
+					testCase.stateValue,
+					diff)
+			}
+		})
+	}
+}
+
+var storageStateConvertStateCases = []struct {
+	stateValue   int32
+	expectLabels []string
+}{
+	{0, []string{}},
+	{1, []string{"storage_state:NORMAL"}},
+	{2, []string{"storage_state:ACCEPTABLE"}},
+	{3, []string{"storage_state:NEED_REPLACEMENT"}},
+	{5, []string{}}, //wrong value
+}
+
+func TestConvertStorageState(t *testing.T) {
+	for _, testCase := range storageStateConvertStateCases {
+		t.Run("State value is "+string(testCase.stateValue), func(t *testing.T) {
+			var ls inventory.SchedulableLabels
+			protoText := fmt.Sprintf(`peripherals: { storage_state: %v}`, testCase.stateValue)
+			if err := proto.UnmarshalText(protoText, &ls); err != nil {
+				t.Fatalf("Error unmarshalling example text: %s", err)
+			}
+			want := testCase.expectLabels
+			got := Convert(&ls)
+			if diff := pretty.Compare(want, got); diff != "" {
+				t.Errorf(
+					"Convert storage_state %#v got labels differ -want +got, %s",
+					testCase.stateValue,
+					diff)
+			}
+		})
+	}
+}
+
+var servoUSBStateConvertStateCases = []struct {
+	stateValue   int32
+	expectLabels []string
+}{
+	{0, []string{}},
+	{1, []string{"servo_usb_state:NORMAL"}},
+	{2, []string{"servo_usb_state:ACCEPTABLE"}},
+	{3, []string{"servo_usb_state:NEED_REPLACEMENT"}},
+	{5, []string{}}, //wrong value
+}
+
+func TestConvertServoUSBState(t *testing.T) {
+	for _, testCase := range servoUSBStateConvertStateCases {
+		t.Run("State value is "+string(testCase.stateValue), func(t *testing.T) {
+			var ls inventory.SchedulableLabels
+			protoText := fmt.Sprintf(`peripherals: { servo_usb_state: %v}`, testCase.stateValue)
+			if err := proto.UnmarshalText(protoText, &ls); err != nil {
+				t.Fatalf("Error unmarshalling example text: %s", err)
+			}
+			want := testCase.expectLabels
+			got := Convert(&ls)
+			if diff := pretty.Compare(want, got); diff != "" {
+				t.Errorf(
+					"Convert servo_usb_state %#v got labels differ -want +got, %s",
 					testCase.stateValue,
 					diff)
 			}
@@ -390,6 +456,8 @@ peripherals: {
   servo: true
   servo_state: 3
   servo_type: "servo_v4"
+  storage_state: 2
+  servo_usb_state: 3
   mimo: true
   huddly: true
   conductive: true
@@ -506,8 +574,10 @@ var fullLabelsSpecial = []string{
 	"servo",
 	"servo_state:broken",
 	"servo_type:servo_v4",
+	"servo_usb_state:NEED_REPLACEMENT",
 	"sku:eve_IntelR_CoreTM_i7_7Y75_CPU_1_30GHz_16GB",
 	"storage:storageval",
+	"storage_state:ACCEPTABLE",
 	"stylus",
 	"telephony:telephonyval",
 	"test_audiojack",
