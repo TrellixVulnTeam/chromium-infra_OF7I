@@ -48,6 +48,14 @@ type AnnotationResponse struct {
 	BugData map[string]monorail.Issue `json:"bug_data"`
 }
 
+func convertAnnotationsNonGroupingToAnnotations(annotationsNonGrouping []*model.AnnotationNonGrouping, annotations *[]*model.Annotation) {
+	*annotations = make([]*model.Annotation, len(annotationsNonGrouping))
+	for i, annotationNonGrouping := range annotationsNonGrouping {
+		tmp := model.Annotation(*annotationNonGrouping)
+		(*annotations)[i] = &tmp
+	}
+}
+
 func datastoreGetAnnotation(c context.Context, annotation *model.Annotation) error {
 	if config.EnableAutoGrouping {
 		return datastore.Get(c, annotation)
@@ -67,6 +75,26 @@ func datastorePutAnnotation(c context.Context, annotation *model.Annotation) err
 	}
 	annotationNonGrouping := model.AnnotationNonGrouping(*annotation)
 	return datastore.Put(c, &annotationNonGrouping)
+}
+
+func datastoreCreateAnnotationQuery() *datastore.Query {
+	if config.EnableAutoGrouping {
+		return datastore.NewQuery("Annotation")
+	}
+	return datastore.NewQuery("AnnotationNonGrouping")
+}
+
+func datastoreGetAnnotationsByQuery(c context.Context, annotations *[]*model.Annotation, q *datastore.Query) error {
+	if config.EnableAutoGrouping {
+		return datastore.GetAll(c, q, annotations)
+	}
+	annotationsNonGrouping := []*model.AnnotationNonGrouping{}
+	err := datastore.GetAll(c, q, &annotationsNonGrouping)
+	if err != nil {
+		return err
+	}
+	convertAnnotationsNonGroupingToAnnotations(annotationsNonGrouping, annotations)
+	return nil
 }
 
 // Convert data from model.Annotation type to AnnotationResponse type by populating monorail data.
@@ -109,14 +137,14 @@ func (ah *AnnotationHandler) GetAnnotationsHandler(ctx *router.Context, activeKe
 
 	tree := p.ByName("tree")
 
-	q := datastore.NewQuery("Annotation")
+	q := datastoreCreateAnnotationQuery()
 
 	if tree != "" {
 		q = q.Ancestor(datastore.MakeKey(c, "Tree", tree))
 	}
 
 	annotations := []*model.Annotation{}
-	datastore.GetAll(c, q, &annotations)
+	datastoreGetAnnotationsByQuery(c, &annotations, q)
 
 	annotations = filterAnnotations(annotations, activeKeys)
 
@@ -212,17 +240,16 @@ func filterDuplicateBugs(bugs []model.MonorailBug) []model.MonorailBug {
 // Update the cache for annotation bug data.
 func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.Annotation) (map[string]monorail.Issue, error) {
 	c := ctx.Context
-
-	q := datastore.NewQuery("Annotation")
+	q := datastoreCreateAnnotationQuery()
 	results := []*model.Annotation{}
-	allBugs := []model.MonorailBug{}
-	datastore.GetAll(c, q, &results)
+	datastoreGetAnnotationsByQuery(c, &results, q)
 
 	// Monorail takes queries of the format id:1,2,3 (gets bugs with those ids).
 	if a != nil {
 		results = append(results, a)
 	}
 
+	allBugs := []model.MonorailBug{}
 	for _, annotation := range results {
 		for _, b := range annotation.Bugs {
 			allBugs = append(allBugs, b)
