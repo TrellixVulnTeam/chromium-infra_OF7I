@@ -28,11 +28,14 @@ import (
 	"go.chromium.org/luci/config/validation"
 )
 
-const (
-	// The regex rule that all assigner IDs must conform to.
-	assignerIDRegex   = `^([a-z0-9]+-?)*[a-z0-9]$`
-	rotationNameRegex = `^([[:alnum:]][[:word:]- ]?)*[[:alnum:]]$`
-)
+// The regex rule that all assigner IDs must conform to.
+var assignerIDRegex = regexp.MustCompile(`^([a-z0-9]+-?)*[a-z0-9]$`)
+
+// The regex rule for RotaNG rotation names.
+var rotationNameRegex = regexp.MustCompile(`^([[:alnum:]][[:word:]- ]?)*[[:alnum:]]$`)
+
+// The regex rule for rotation-proxy rotation names.
+var rotationProxyNameRegex = regexp.MustCompile(`^(oncallator|grotation):[a-z0-9\-]+$`)
 
 func validateConfig(c *validation.Context, configSet, path string, content []byte) error {
 	cfg := &Config{}
@@ -91,8 +94,7 @@ func validateAssigners(c *validation.Context, assigners []*Assigner) {
 
 func validateAssigner(c *validation.Context, assigner *Assigner) {
 	// to make URLs short and simple when they are made with assigner ids.
-	re := regexp.MustCompile(assignerIDRegex)
-	if !re.MatchString(assigner.Id) {
+	if !assignerIDRegex.MatchString(assigner.Id) {
 		c.Errorf(
 			"invalid id; only lowercase alphabet letters and numbers are " +
 				"allowed. A hyphen may be placed between letters and numbers",
@@ -151,16 +153,17 @@ func validateAssigner(c *validation.Context, assigner *Assigner) {
 func validateUserSource(c *validation.Context, source *UserSource) {
 	if oncall := source.GetOncall(); oncall != nil {
 		validateOncall(c, oncall)
+	} else if rotation := source.GetRotation(); rotation != nil {
+		validateRotation(c, rotation)
 	} else if email := source.GetEmail(); email != "" {
 		validateEmail(c, email)
 	} else {
-		c.Errorf("missing value")
+		c.Errorf("missing or unknown user source")
 	}
 }
 
 func validateOncall(c *validation.Context, oncall *Oncall) {
-	re := regexp.MustCompile(rotationNameRegex)
-	if !re.MatchString(oncall.Rotation) {
+	if !rotationNameRegex.MatchString(oncall.Rotation) {
 		c.Errorf(
 			"invalid id; only alphabet and numeric characters are allowed, " +
 				"but a space, hyphen, or underscore may be put between " +
@@ -169,6 +172,19 @@ func validateOncall(c *validation.Context, oncall *Oncall) {
 	}
 	if oncall.Position == Oncall_UNSET {
 		c.Errorf("missing oncall position")
+	}
+}
+
+func validateRotation(c *validation.Context, rotation *Oncall) {
+	if !rotationProxyNameRegex.MatchString(rotation.Rotation) {
+		c.Errorf(
+			"invalid id; prefix must be 'oncallator:' or 'grotation:' " +
+				"followed by a name containing only alphanumeric " +
+				"characters and dashes.",
+		)
+	}
+	if rotation.Position == Oncall_UNSET {
+		c.Errorf("missing rotation position")
 	}
 }
 

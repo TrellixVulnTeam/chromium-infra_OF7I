@@ -38,6 +38,12 @@ func createOncallSource(rotation string) *UserSource_Oncall {
 	}
 }
 
+func createRotationSource(rotation string) *UserSource_Rotation {
+	return &UserSource_Rotation{
+		Rotation: &Oncall{Rotation: rotation, Position: Oncall_PRIMARY},
+	}
+}
+
 func TestConfigValidator(t *testing.T) {
 	t.Parallel()
 
@@ -170,6 +176,10 @@ func TestConfigValidator(t *testing.T) {
 				So(validate(cfg), ShouldBeNil)
 				source.From = createOncallSource("My Oncall Rotation-2")
 				So(validate(cfg), ShouldBeNil)
+				source.From = createRotationSource("oncallator:foo-bar")
+				So(validate(cfg), ShouldBeNil)
+				source.From = createRotationSource("grotation:foo-bar")
+				So(validate(cfg), ShouldBeNil)
 			})
 		})
 
@@ -181,7 +191,7 @@ func TestConfigValidator(t *testing.T) {
 
 			Convey("with missing value", func() {
 				source.Reset()
-				So(validate(cfg), ShouldErrLike, "missing value")
+				So(validate(cfg), ShouldErrLike, "missing or unknown user source")
 			})
 
 			Convey("with invalid rotation names", func() {
@@ -197,6 +207,16 @@ func TestConfigValidator(t *testing.T) {
 				source.From = createOncallSource(" ")
 				So(validate(cfg), ShouldErrLike, invalidID)
 				source.From = createOncallSource("")
+				So(validate(cfg), ShouldErrLike, invalidID)
+				source.From = createRotationSource("")
+				So(validate(cfg), ShouldErrLike, invalidID)
+				source.From = createRotationSource("foo-bar")
+				So(validate(cfg), ShouldErrLike, invalidID)
+				source.From = createRotationSource("oncallator: foo-bar")
+				So(validate(cfg), ShouldErrLike, invalidID)
+				source.From = createRotationSource("oncallator:foo:bar")
+				So(validate(cfg), ShouldErrLike, invalidID)
+				source.From = createRotationSource("oncallator:[foo-bar]")
 				So(validate(cfg), ShouldErrLike, invalidID)
 			})
 
