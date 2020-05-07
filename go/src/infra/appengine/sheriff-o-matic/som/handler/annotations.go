@@ -56,6 +56,15 @@ func convertAnnotationsNonGroupingToAnnotations(annotationsNonGrouping []*model.
 	}
 }
 
+func convertAnnotationsToAnnotationsNonGrouping(annotations []*model.Annotation) []*model.AnnotationNonGrouping {
+	annotationsNonGrouping := make([]*model.AnnotationNonGrouping, len(annotations))
+	for i, annotation := range annotations {
+		tmp := model.AnnotationNonGrouping(*annotation)
+		annotationsNonGrouping[i] = &tmp
+	}
+	return annotationsNonGrouping
+}
+
 func datastoreGetAnnotation(c context.Context, annotation *model.Annotation) error {
 	if config.EnableAutoGrouping {
 		return datastore.Get(c, annotation)
@@ -95,6 +104,14 @@ func datastoreGetAnnotationsByQuery(c context.Context, annotations *[]*model.Ann
 	}
 	convertAnnotationsNonGroupingToAnnotations(annotationsNonGrouping, annotations)
 	return nil
+}
+
+func datastoreDeleteAnnotations(c context.Context, annotations []*model.Annotation) error {
+	if config.EnableAutoGrouping {
+		return datastore.Delete(c, annotations)
+	}
+	annotationsNonGrouping := convertAnnotationsToAnnotationsNonGrouping(annotations)
+	return datastore.Delete(c, annotationsNonGrouping)
 }
 
 // Convert data from model.Annotation type to AnnotationResponse type by populating monorail data.
@@ -393,7 +410,8 @@ func (ah *AnnotationHandler) PostAnnotationsHandler(ctx *router.Context) {
 	w.Write(resp)
 }
 
-// FlushOldAnnotationsHandler culls obsolute annotations from the datastore.
+// FlushOldAnnotationsHandler culls obsolete annotations from the datastore.
+// TODO (crbug.com/1079068): Perhaps we want to revisit flush annotation logic.
 func FlushOldAnnotationsHandler(ctx *router.Context) {
 	c, w := ctx.Context, ctx.Writer
 
@@ -410,12 +428,12 @@ func FlushOldAnnotationsHandler(ctx *router.Context) {
 }
 
 func flushOldAnnotations(c context.Context) (int, error) {
-	q := datastore.NewQuery("Annotation")
+	q := datastoreCreateAnnotationQuery()
 	q = q.Lt("ModificationTime", clock.Get(c).Now().Add(-annotationExpiration))
 	q = q.KeysOnly(true)
 
 	results := []*model.Annotation{}
-	err := datastore.GetAll(c, q, &results)
+	err := datastoreGetAnnotationsByQuery(c, &results, q)
 	if err != nil {
 		return 0, fmt.Errorf("while fetching annotations to delete: %s", err)
 	}
@@ -424,7 +442,7 @@ func flushOldAnnotations(c context.Context) (int, error) {
 		logging.Debugf(c, "Deleting %#v\n", ann)
 	}
 
-	err = datastore.Delete(c, results)
+	err = datastoreDeleteAnnotations(c, results)
 	if err != nil {
 		return 0, fmt.Errorf("while deleting annotations: %s", err)
 	}
