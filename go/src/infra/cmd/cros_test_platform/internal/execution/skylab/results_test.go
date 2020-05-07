@@ -59,6 +59,15 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 				},
 				expectVerdict: test_platform.TaskState_VERDICT_NO_VERDICT,
 			},
+			{
+				description: "with 1 not-available-verdict test case",
+				result: &skylab_test_runner.Result_Autotest{
+					TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+						{Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_NO_VERDICT},
+					},
+				},
+				expectVerdict: test_platform.TaskState_VERDICT_NO_VERDICT,
+			},
 
 			// multiple autotest test cases.
 			{
@@ -67,6 +76,16 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 					TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
 						{Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS},
 						{Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS},
+					},
+				},
+				expectVerdict: test_platform.TaskState_VERDICT_PASSED,
+			},
+			{
+				description: "with 1 passing and 1 not-applicable test case",
+				result: &skylab_test_runner.Result_Autotest{
+					TestCases: []*skylab_test_runner.Result_Autotest_TestCase{
+						{Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS},
+						{Verdict: skylab_test_runner.Result_Autotest_TestCase_VERDICT_NO_VERDICT},
 					},
 				},
 				expectVerdict: test_platform.TaskState_VERDICT_PASSED,

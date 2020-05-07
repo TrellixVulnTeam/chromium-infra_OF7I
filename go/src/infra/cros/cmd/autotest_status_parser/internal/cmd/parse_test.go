@@ -19,6 +19,10 @@ var verdict = map[bool]skylab_test_runner.Result_Autotest_TestCase_Verdict{
 	false: skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL,
 }
 
+const verdictPass = skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS
+const verdictFail = skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL
+const verdictNoVerdict = skylab_test_runner.Result_Autotest_TestCase_VERDICT_NO_VERDICT
+
 // parseResultsFile tests
 
 func TestEmptyResultFile(t *testing.T) {
@@ -45,7 +49,7 @@ END GOOD	----	----
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("Pass", true, ""),
+			testCase("Pass", verdictPass, ""),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -61,7 +65,7 @@ END WARN	----	----
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("Warn", true, "This is a warning.\n"),
+			testCase("Warn", verdictPass, "This is a warning.\n"),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -77,7 +81,7 @@ END FAIL	----	----
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("Fail", false, "Something failed.\n"),
+			testCase("Fail", verdictFail, "Something failed.\n"),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -93,7 +97,7 @@ END ERROR	----	----
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("Error", false, "An error occured.\n"),
+			testCase("Error", verdictFail, "An error occured.\n"),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -109,7 +113,7 @@ END TEST_NA	----	----
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("TestNA", false, "The DUT is missing a necessary gadget.\n"),
+			testCase("TestNA", verdictNoVerdict, "The DUT is missing a necessary gadget.\n"),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -125,7 +129,7 @@ END WEIRD	----	----
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("WeirdStatus", false, ""),
+			testCase("WeirdStatus", verdictFail, ""),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -142,7 +146,7 @@ END GOOD	Ignored	Ignored
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("NamelessDir", true, ""),
+			testCase("NamelessDir", verdictPass, ""),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -168,8 +172,8 @@ More logging that is ignored.
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("WithoutComments", true, ""),
-			testCase("WithComments", true, "This is a warning.\nThere's more to say about the warning.\n"),
+			testCase("WithoutComments", verdictPass, ""),
+			testCase("WithComments", verdictPass, "This is a warning.\nThere's more to say about the warning.\n"),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -187,7 +191,7 @@ END FAIL	Ignored	Ignored
 		got := parseResultsFile(input)
 
 		want := []*skylab_test_runner.Result_Autotest_TestCase{
-			testCase("Test-Name", false, "Not ignored.\n"),
+			testCase("Test-Name", verdictFail, "Not ignored.\n"),
 		}
 		So(got, ShouldResemble, want)
 	})
@@ -231,10 +235,10 @@ END FAIL	----	----
 			got := parseResultsFile(input)
 
 			want := []*skylab_test_runner.Result_Autotest_TestCase{
-				testCase("SubTest1", true, "A subtest warning.\n"),
-				testCase("SubSubTest", false, "The outer tests don't care about this error.\n"),
-				testCase("SubTest2", true, ""),
-				testCase("NestedTest", false, "A failure of the outer test.\n"),
+				testCase("SubTest1", verdictPass, "A subtest warning.\n"),
+				testCase("SubSubTest", verdictFail, "The outer tests don't care about this error.\n"),
+				testCase("SubTest2", verdictPass, ""),
+				testCase("NestedTest", verdictFail, "A failure of the outer test.\n"),
 			}
 			So(got, ShouldResemble, want)
 		})
@@ -254,9 +258,9 @@ START	----	CrashedOuter
 			got := parseResultsFile(input)
 
 			want := []*skylab_test_runner.Result_Autotest_TestCase{
-				testCase("CrashedInner", false, "Something bad is happening.\n"),
-				testCase("CrashedMiddle", false, ""),
-				testCase("CrashedOuter", false, ""),
+				testCase("CrashedInner", verdictFail, "Something bad is happening.\n"),
+				testCase("CrashedMiddle", verdictFail, ""),
+				testCase("CrashedOuter", verdictFail, ""),
 			}
 			So(got, ShouldResemble, want)
 		})
@@ -277,8 +281,8 @@ END ERROR	----	----
 			got := parseResultsFile(input)
 
 			want := []*skylab_test_runner.Result_Autotest_TestCase{
-				testCase("ActuallyPasses", true, "This test actually succeeds.\n"),
-				testCase("ActuallyFails", false, ""),
+				testCase("ActuallyPasses", verdictPass, "This test actually succeeds.\n"),
+				testCase("ActuallyFails", verdictFail, ""),
 			}
 			So(got, ShouldResemble, want)
 		})
@@ -344,10 +348,10 @@ func TestEmptyExitStatusFile(t *testing.T) {
 		})
 }
 
-func testCase(name string, passed bool, summary string) *skylab_test_runner.Result_Autotest_TestCase {
+func testCase(name string, verdict skylab_test_runner.Result_Autotest_TestCase_Verdict, summary string) *skylab_test_runner.Result_Autotest_TestCase {
 	output := skylab_test_runner.Result_Autotest_TestCase{
 		Name:                 name,
-		Verdict:              verdict[passed],
+		Verdict:              verdict,
 		HumanReadableSummary: summary,
 	}
 	return &output

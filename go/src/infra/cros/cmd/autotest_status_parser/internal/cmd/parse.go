@@ -366,8 +366,9 @@ func parseVerdict(verdict string) skylab_test_runner.Result_Autotest_TestCase_Ve
 	switch verdict[len(verdictStringPrefix):] {
 	case "GOOD", "WARN":
 		return skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS
+	case "TEST_NA":
+		return skylab_test_runner.Result_Autotest_TestCase_VERDICT_NO_VERDICT
 	}
-	// TODO(crbug.com/846770): deal with TEST_NA separately.
 	return skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL
 }
 

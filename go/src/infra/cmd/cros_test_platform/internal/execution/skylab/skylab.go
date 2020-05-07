@@ -94,8 +94,8 @@ func (t *Task) Verdict() test_platform.TaskState_Verdict {
 		case skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS:
 			// Otherwise, at least 1 passing verdict means a pass.
 			verdict = test_platform.TaskState_VERDICT_PASSED
-		case skylab_test_runner.Result_Autotest_TestCase_VERDICT_UNDEFINED:
-			// Undefined verdicts do not affect flat verdict.
+		default: // VERDICT_UNDEFINED and VERDICT_NO_VERDICT
+			// Treat as no-op and do not affect flat verdict.
 		}
 	}
 	return verdict
