@@ -209,6 +209,15 @@ luci.notifier(
     notified_by = ['infra-continuous-xenial-64']
 )
 
+luci.notifier(
+    name = 'luci-notify-test-archive',
+    on_success = True,
+    on_failure = True,
+    notify_emails = ['luci-notify-test-archive@chromium.org'],
+    template = 'test',
+    notified_by = ['infra-continuous-xenial-64']
+)
+
 luci.notifier_template(
     name = 'test',
     body = """{{.Build.Builder.IDString}} notification
