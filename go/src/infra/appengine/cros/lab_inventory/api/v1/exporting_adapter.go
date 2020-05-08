@@ -190,6 +190,8 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 		v1Facing := inventory.Peripherals_CameraboxFacing(facing)
 		p.CameraboxFacing = &v1Facing
 	}
+
+	p.SmartUsbhub = &(d.SmartUsbhub)
 }
 
 func setDutPools(labels *inventory.SchedulableLabels, inputPools []string) {
@@ -530,6 +532,7 @@ func adaptV2LabstationToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUn
 		Mimo:                &falseValue,
 		Servo:               &falseValue,
 		ServoState:          &invServoStateUnknown,
+		SmartUsbhub:         &falseValue,
 		Stylus:              &falseValue,
 		Camerabox:           &falseValue,
 		Wificell:            &falseValue,
