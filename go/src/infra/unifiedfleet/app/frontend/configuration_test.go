@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/grpc/status"
 
@@ -15,6 +16,7 @@ import (
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )
@@ -29,6 +31,146 @@ func mockParsePlatformsFunc(path string) (*crimsonconfig.Platforms, error) {
 	return &crimsonconfig.Platforms{
 		Platform: localPlatforms,
 	}, nil
+}
+
+func mockChromePlatform(id, desc string) *proto.ChromePlatform {
+	return &proto.ChromePlatform{
+		Name:        util.AddPrefix(chromePlatformCollection, id),
+		Description: desc,
+	}
+}
+
+func TestCreateChromePlatform(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	chromePlatform1 := mockChromePlatform("", "Phone")
+	chromePlatform2 := mockChromePlatform("", "Camera")
+	chromePlatform3 := mockChromePlatform("", "Sensor")
+	Convey("CreateChromePlatform", t, func() {
+		Convey("Create new chromePlatform with chromePlatform_id", func() {
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform:   chromePlatform1,
+				ChromePlatformId: "ChromePlatform-1",
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform1)
+		})
+
+		Convey("Create existing chromePlatform", func() {
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform:   chromePlatform3,
+				ChromePlatformId: "ChromePlatform-1",
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.AlreadyExists)
+		})
+
+		Convey("Create new chromePlatform - Invalid input nil", func() {
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform: nil,
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new chromePlatform - Invalid input empty ID", func() {
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform:   chromePlatform2,
+				ChromePlatformId: "",
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new chromePlatform - Invalid input invalid characters", func() {
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform:   chromePlatform2,
+				ChromePlatformId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateChromePlatform(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	chromePlatform1 := mockChromePlatform("", "Camera")
+	chromePlatform2 := mockChromePlatform("chromePlatform-1", "Phone")
+	chromePlatform3 := mockChromePlatform("chromePlatform-3", "Sensor")
+	chromePlatform4 := mockChromePlatform("a.b)7&", "Printer")
+	Convey("UpdateChromePlatform", t, func() {
+		Convey("Update existing chromePlatform", func() {
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform:   chromePlatform1,
+				ChromePlatformId: "chromePlatform-1",
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform1)
+			ureq := &api.UpdateChromePlatformRequest{
+				ChromePlatform: chromePlatform2,
+			}
+			resp, err = tf.Fleet.UpdateChromePlatform(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform2)
+		})
+
+		Convey("Update non-existing chromePlatform", func() {
+			ureq := &api.UpdateChromePlatformRequest{
+				ChromePlatform: chromePlatform3,
+			}
+			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Update chromePlatform - Invalid input nil", func() {
+			req := &api.UpdateChromePlatformRequest{
+				ChromePlatform: nil,
+			}
+			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update chromePlatform - Invalid input empty name", func() {
+			chromePlatform3.Name = ""
+			req := &api.UpdateChromePlatformRequest{
+				ChromePlatform: chromePlatform3,
+			}
+			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update chromePlatform - Invalid input invalid characters", func() {
+			req := &api.UpdateChromePlatformRequest{
+				ChromePlatform: chromePlatform4,
+			}
+			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
 }
 
 func TestImportChromePlatforms(t *testing.T) {

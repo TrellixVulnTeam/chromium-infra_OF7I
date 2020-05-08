@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	machineCollection string = "machines"
-	rackCollection    string = "racks"
+	machineCollection        string = "machines"
+	rackCollection           string = "racks"
+	chromePlatformCollection string = "chromeplatforms"
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	importPageSize int = 500
 )

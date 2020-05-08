@@ -24,6 +24,7 @@ import (
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
+	"infra/unifiedfleet/app/util"
 )
 
 const defaultCfgService = "luci-config.appspot.com"
@@ -57,7 +58,14 @@ func (fs *FleetServerImpl) CreateChromePlatform(ctx context.Context, req *api.Cr
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.ChromePlatform.Name = req.ChromePlatformId
+	chromeplatform, err := configuration.CreateChromePlatform(ctx, req.ChromePlatform)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	chromeplatform.Name = util.AddPrefix(chromePlatformCollection, chromeplatform.Name)
+	return chromeplatform, err
 }
 
 // UpdateChromePlatform updates the chromeplatform information in database.
@@ -68,7 +76,14 @@ func (fs *FleetServerImpl) UpdateChromePlatform(ctx context.Context, req *api.Up
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.ChromePlatform.Name = util.RemovePrefix(req.ChromePlatform.Name)
+	chromeplatform, err := configuration.UpdateChromePlatform(ctx, req.ChromePlatform)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	chromeplatform.Name = util.AddPrefix(chromePlatformCollection, chromeplatform.Name)
+	return chromeplatform, err
 }
 
 // GetChromePlatform gets the chromeplatform information from database.

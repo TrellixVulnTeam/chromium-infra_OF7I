@@ -36,7 +36,7 @@ func (e *ChromePlatformEntity) GetProto() (proto.Message, error) {
 	return &p, nil
 }
 
-func newEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
+func newChromePlatformEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
 	p := pm.(*fleet.ChromePlatform)
 	if p.GetName() == "" {
 		return nil, errors.Reason("Empty Chrome Platform ID").Err()
@@ -64,6 +64,16 @@ func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	return fe, nil
 }
 
+// CreateChromePlatform creates a new chromePlatform in datastore.
+func CreateChromePlatform(ctx context.Context, chromePlatform *fleet.ChromePlatform) (*fleet.ChromePlatform, error) {
+	return putChromePlatform(ctx, chromePlatform, false)
+}
+
+// UpdateChromePlatform updates chromePlatform in datastore.
+func UpdateChromePlatform(ctx context.Context, chromePlatform *fleet.ChromePlatform) (*fleet.ChromePlatform, error) {
+	return putChromePlatform(ctx, chromePlatform, true)
+}
+
 // InsertChromePlatforms inserts chrome platforms to datastore.
 func InsertChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform) (*fleetds.OpResults, error) {
 	protos := make([]proto.Message, len(platforms))
@@ -72,10 +82,19 @@ func InsertChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatfor
 		p.UpdateTime = utime
 		protos[i] = p
 	}
-	return fleetds.Insert(ctx, protos, newEntity, false, false)
+	return fleetds.Insert(ctx, protos, newChromePlatformEntity, false, false)
 }
 
 // GetAllChromePlatforms returns all platforms in record.
 func GetAllChromePlatforms(ctx context.Context) (*fleetds.OpResults, error) {
 	return fleetds.GetAll(ctx, queryAll)
+}
+
+func putChromePlatform(ctx context.Context, chromePlatform *fleet.ChromePlatform, update bool) (*fleet.ChromePlatform, error) {
+	chromePlatform.UpdateTime = ptypes.TimestampNow()
+	pm, err := fleetds.Put(ctx, chromePlatform, newChromePlatformEntity, update)
+	if err == nil {
+		return pm.(*fleet.ChromePlatform), err
+	}
+	return nil, err
 }
