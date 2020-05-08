@@ -22,6 +22,7 @@ var crosEcTypeBoards = []string{
 	"glados",
 	"grunt",
 	"hatch",
+	"jacuzzi",
 	"kalista",
 	"kunimitsu",
 	"kukui",
