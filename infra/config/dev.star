@@ -210,10 +210,10 @@ luci.notifier(
 )
 
 luci.notifier(
-    name = 'luci-notify-test-archive',
+    name = 'luci-notify-test-alerts',
     on_success = True,
     on_failure = True,
-    notify_emails = ['luci-notify-test-archive@chromium.org'],
+    notify_emails = ['luci-notify-test-alerts@chromium.org'],
     template = 'test',
     notified_by = ['infra-continuous-xenial-64']
 )
