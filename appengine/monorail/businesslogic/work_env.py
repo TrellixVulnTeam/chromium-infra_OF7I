@@ -2147,7 +2147,10 @@ class WorkEnv(object):
   ### Hotlist methods
 
   def CreateHotlist(
-      self, name, summary, description, editor_ids, issue_ids, is_private):
+      self, name, summary, description, editor_ids, issue_ids, is_private,
+      default_col_spec):
+    # type: (string, string, string, Collection[int], Collection[int], Boolean,
+    #     string)
     """Create a hotlist.
 
     Args:
@@ -2157,6 +2160,8 @@ class WorkEnv(object):
       editor_ids: a list of user IDs for the hotlist editors.
       issue_ids: a list of issue IDs for the hotlist issues.
       is_private: True if the hotlist can only be viewed by owners and editors.
+      default_col_spec: default columns for the hotlist's list view.
+
 
     Returns:
       The newly created hotlist.
@@ -2164,6 +2169,7 @@ class WorkEnv(object):
     Raises:
       HotlistAlreadyExists: A hotlist with the given name already exists.
       InputException: No user is signed in or the proposed name is invalid.
+      PermissionException: If the user cannot view all of the issues.
     """
     if not self.mc.auth.user_id:
       raise exceptions.InputException('Anon cannot create hotlists.')
@@ -2171,10 +2177,18 @@ class WorkEnv(object):
     # GetIssuesDict checks that the user can view all issues.
     self.GetIssuesDict(issue_ids)
 
+    if not framework_bizobj.IsValidHotlistName(name):
+      raise exceptions.InputException(
+          '%s is not a valid name for a Hotlist' % name)
+    if self.services.features.LookupHotlistIDs(
+        self.mc.cnxn, [name], [self.mc.auth.user_id]):
+      raise features_svc.HotlistAlreadyExists()
+
     with self.mc.profiler.Phase('creating hotlist %s' % name):
       hotlist = self.services.features.CreateHotlist(
           self.mc.cnxn, name, summary, description, [self.mc.auth.user_id],
-          editor_ids, issue_ids, is_private, ts=int(time.time()))
+          editor_ids, issue_ids=issue_ids, is_private=is_private,
+          default_col_spec=default_col_spec, ts=int(time.time()))
 
     return hotlist
 

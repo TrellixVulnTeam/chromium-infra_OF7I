@@ -699,6 +699,9 @@ class FeaturesService(object):
   def CreateHotlist(
       self, cnxn, name, summary, description, owner_ids, editor_ids,
       issue_ids=None, is_private=None, default_col_spec=None, ts=None):
+    # type: (MonorailConnection, string, string, string, Collection[int],
+    #     Optional[Collection[int]], Optional[Boolean], Optional[string],
+    #     Optional[int] -> int
     """Create and store a Hotlist with the given attributes.
 
     Args:
@@ -722,6 +725,9 @@ class FeaturesService(object):
         the same name.
       UnownedHotlistException: if owner_ids is empty.
     """
+    # TODO(crbug.com/monorail/7677): These checks should be done in the
+    # the business layer.
+    # Remove when calls from non-business layer code are removed.
     if not owner_ids:  # Should never happen.
       logging.error('Attempt to create unowned Hotlist: name:%r', name)
       raise UnownedHotlistException()
@@ -730,11 +736,14 @@ class FeaturesService(object):
           '%s is not a valid name for a Hotlist' % name)
     if self.LookupHotlistIDs(cnxn, [name], owner_ids):
       raise HotlistAlreadyExists()
+    # TODO(crbug.com/monorail/7677): We are not setting a
+    # default default_col_spec in v3.
+    if default_col_spec is None:
+      default_col_spec = features_constants.DEFAULT_COL_SPEC
+
     hotlist_item_fields = [
         (issue_id, rank*100, owner_ids[0], ts, '') for
         rank, issue_id in enumerate(issue_ids or [])]
-    if default_col_spec is None:
-      default_col_spec = features_constants.DEFAULT_COL_SPEC
     hotlist = features_pb2.MakeHotlist(
         name, hotlist_item_fields=hotlist_item_fields, summary=summary,
         description=description, is_private=is_private, owner_ids=owner_ids,

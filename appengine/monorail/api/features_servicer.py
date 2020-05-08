@@ -191,7 +191,7 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     with work_env.WorkEnv(mc, self.services) as we:
       we.CreateHotlist(
           request.name, request.summary, request.description, editor_ids,
-          issue_ids, request.is_private)
+          issue_ids, request.is_private, '')
 
     result = features_pb2.CreateHotlistResponse()
     return result

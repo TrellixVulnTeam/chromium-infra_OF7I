@@ -3783,7 +3783,8 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn()
     with self.work_env as we:
       hotlist = we.CreateHotlist(
-          'name', 'summary', 'description', [222], [78901], False)
+          'name', 'summary', 'description', [222], [78901], False,
+          'priority owner')
 
     self.assertEqual('name', hotlist.name)
     self.assertEqual('summary', hotlist.summary)
@@ -3792,6 +3793,7 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual([222], hotlist.editor_ids)
     self.assertEqual([78901], [item.issue_id for item in hotlist.items])
     self.assertEqual(False, hotlist.is_private)
+    self.assertEqual('priority owner', hotlist.default_col_spec)
 
   def testCreateHotlist_NotViewable(self):
     """We cannot add issues we cannot see to a hotlist."""
@@ -3805,13 +3807,13 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       with self.work_env as we:
         we.CreateHotlist(
-            'Cow-Hotlist', 'Moo', 'MooMoo', [], [issue1.issue_id], False)
+            'Cow-Hotlist', 'Moo', 'MooMoo', [], [issue1.issue_id], False, '')
 
   def testCreateHotlist_AnonCantCreateHotlist(self):
     """We must be signed in to create a hotlist."""
     with self.assertRaises(exceptions.InputException):
       with self.work_env as we:
-        we.CreateHotlist('name', 'summary', 'description', [], [222], False)
+        we.CreateHotlist('name', 'summary', 'description', [], [222], False, '')
 
   def testCreateHotlist_InvalidName(self):
     """We can't create a hotlist with an invalid name."""
@@ -3819,17 +3821,17 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(exceptions.InputException):
       with self.work_env as we:
         we.CreateHotlist(
-            '***Invalid***', 'summary', 'description', [], [], False)
+            '***Invalid***', 'summary', 'description', [], [], False, '')
 
   def testCreateHotlist_HotlistAlreadyExists(self):
     """We can't create a hotlist with a name that already exists."""
     self.SignIn()
     with self.work_env as we:
-      we.CreateHotlist('name', 'summary', 'description', [], [], False)
+      we.CreateHotlist('name', 'summary', 'description', [], [], False, '')
 
     with self.assertRaises(features_svc.HotlistAlreadyExists):
       with self.work_env as we:
-        we.CreateHotlist('name', 'foo', 'bar', [], [], True)
+        we.CreateHotlist('name', 'foo', 'bar', [], [], True, '')
 
   def testUpdateHotlist(self):
     """We can update a hotlist."""
