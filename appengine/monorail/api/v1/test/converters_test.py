@@ -84,7 +84,16 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.project_2.project_id, self.field_def_project2_name, 'ENUM_TYPE')
     self.approval_def_1_name = 'approval_field_1'
     self.approval_def_1_id = self._CreateFieldDef(
-        self.project_1.project_id, self.approval_def_1_name, 'APPROVAL_TYPE')
+        self.project_1.project_id,
+        self.approval_def_1_name,
+        'APPROVAL_TYPE',
+        docstring='ad_1_docstring',
+        admin_ids=[self.user_1.user_id])
+    self.approval_def_1 = tracker_pb2.ApprovalDef(
+        approval_id=self.approval_def_1_id,
+        approver_ids=[self.user_2.user_id],
+        survey='approval_def_1 survey')
+    approval_defs = [self.approval_def_1]
     self.field_def_6_name = 'simonsays'
     self.field_def_6 = self._CreateFieldDef(
         self.project_1.project_id,
@@ -213,6 +222,9 @@ class ConverterFunctionsTest(unittest.TestCase):
         well_known_labels=[
             (ld.label, ld.label_docstring, ld.deprecated)
             for ld in predefined_labels
+        ],
+        approval_defs=[
+            (ad.approval_id, ad.approver_ids, ad.survey) for ad in approval_defs
         ])
 
   def _CreateFieldDef(
@@ -220,6 +232,7 @@ class ConverterFunctionsTest(unittest.TestCase):
       project_id,
       field_name,
       field_type_str,
+      docstring=None,
       admin_ids=None,
       is_required=False,
       is_niche=False,
@@ -247,7 +260,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         None,
         None,
         None,
-        None,
+        docstring,
         admin_ids, [],
         is_phase_field=is_phase_field,
         approval_id=approval_id)
@@ -255,6 +268,10 @@ class ConverterFunctionsTest(unittest.TestCase):
   def _GetFieldDefById(self, project_id, fd_id):
     config = self.services.config.GetProjectConfig(self.cnxn, project_id)
     return [fd for fd in config.field_defs if fd.field_id == fd_id][0]
+
+  def _GetApprovalDefById(self, project_id, ad_id):
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    return [ad for ad in config.approval_defs if ad.approval_id == ad_id][0]
 
   def testConvertHotlist(self):
     """We can convert a Hotlist."""
@@ -1555,3 +1572,45 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         'Cannot get value from label for non-enum-type field', str(
             cm.exception))
+
+  def testConvertApprovalDefs(self):
+    """We can convert ApprovalDefs"""
+    input_ad = self._GetApprovalDefById(
+        self.project_1.project_id, self.approval_def_1_id)
+    actual = self.converter.ConvertApprovalDefs(
+        [input_ad], self.project_1.project_id)
+
+    resource_names_dict = rnc.ConvertApprovalDefNames(
+        self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
+        self.services)
+    expected_name = resource_names_dict.get(self.approval_def_1_id)
+    self.assertEqual(actual[0].name, expected_name)
+    self.assertEqual(actual[0].display_name, self.approval_def_1_name)
+    matching_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.approval_def_1_id)
+    expected_docstring = matching_fd.docstring
+    self.assertEqual(actual[0].docstring, expected_docstring)
+    self.assertEqual(actual[0].survey, self.approval_def_1.survey)
+    expected_approvers = [
+        rnc.ConvertUserNames([self.user_2.user_id]).get(self.user_2.user_id)
+    ]
+    self.assertEqual(actual[0].approvers, expected_approvers)
+    expected_admins = [
+        rnc.ConvertUserNames([self.user_1.user_id]).get(self.user_1.user_id)
+    ]
+    self.assertEqual(actual[0].admins, expected_admins)
+
+  def testConvertApprovalDefs_Empty(self):
+    """We can handle empty case"""
+    actual = self.converter.ConvertApprovalDefs([], self.project_1.project_id)
+    self.assertEqual(actual, [])
+
+  def testConvertApprovalDefs_SkipsNonApprovalDefs(self):
+    """We skip if no matching field def exists"""
+    input_ad = tracker_pb2.ApprovalDef(
+        approval_id=self.dne_field_def_id,
+        approver_ids=[self.user_2.user_id],
+        survey='anything goes')
+    actual = self.converter.ConvertApprovalDefs(
+        [input_ad], self.project_1.project_id)
+    self.assertEqual(actual, [])

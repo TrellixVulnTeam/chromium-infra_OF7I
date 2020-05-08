@@ -1054,6 +1054,21 @@ class BizobjTest(unittest.TestCase):
         {111, 333, 444, 222, 555, 666, 888, 999},
         tracker_bizobj.UsersInvolvedInTemplates([template1, template2]))
 
+  def testUsersInvolvedInApprovalDefs_Empty(self):
+    """There are no user IDs given empty inputs"""
+    actual = tracker_bizobj.UsersInvolvedInApprovalDefs([], [])
+    self.assertEqual(set(), actual)
+
+  def testsersInvolvedInApprovalDefs_Normal(self):
+    """We find user IDs mentioned in approval approvers and field admins"""
+    self.config.field_defs[0].admin_ids = [111, 222]
+    approval_def = tracker_pb2.ApprovalDef(
+        approval_id=1, approver_ids=[111, 333], survey='')
+    self.config.approval_defs = [approval_def]
+    actual = tracker_bizobj.UsersInvolvedInApprovalDefs(
+        [approval_def], [self.config.field_defs[0]])
+    self.assertEqual({111, 222, 333}, actual)
+
   def testUsersInvolvedInConfig_Empty(self):
     """There are no user IDs mentioned in a default config."""
     actual = tracker_bizobj.UsersInvolvedInConfig(self.config)

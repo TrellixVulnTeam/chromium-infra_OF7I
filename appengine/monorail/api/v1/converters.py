@@ -712,6 +712,67 @@ class Converter(object):
     else:
       return issue_objects_pb2.Derivation.Value('EXPLICIT')
 
+  # Approval Def
+
+  def ConvertApprovalDefs(self, approval_defs, project_id):
+    # type: (Sequence[proto.tracker_pb2.ApprovalDef], int) ->
+    #     Sequence[api_proto.project_objects_pb2.ApprovalDef]
+    """Convert sequence of protorpc ApprovalDefs to protoc ApprovalDefs.
+
+    Args:
+      approval_defs: List of protorpc ApprovalDefs
+      project_id: ID of the Project the approval_defs belong to.
+
+    Returns:
+      Sequence of protoc ApprovalDefs in the same order they are given in
+      in `approval_defs`. In the event any approval_def in `approval_defs`
+      are not found, they will be omitted from the result.
+    """
+    approval_ids = set([ad.approval_id for ad in approval_defs])
+    resource_names_dict = rnc.ConvertApprovalDefNames(
+        self.cnxn, approval_ids, project_id, self.services)
+
+    # Get matching field defs, needed to fill out protoc ApprovalDefs
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    fd_by_id = {}
+    for fd in config.field_defs:
+      if (fd.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE and
+          fd.field_id in approval_ids):
+        fd_by_id[fd.field_id] = fd
+
+    all_users = tbo.UsersInvolvedInApprovalDefs(
+        approval_defs, fd_by_id.values())
+    user_resource_names_dict = rnc.ConvertUserNames(all_users)
+
+    api_ads = []
+    for ad in approval_defs:
+      if (ad.approval_id not in resource_names_dict or
+          ad.approval_id not in fd_by_id):
+        continue
+      matching_fd = fd_by_id.get(ad.approval_id)
+      name = resource_names_dict.get(ad.approval_id)
+      display_name = matching_fd.field_name
+      docstring = matching_fd.docstring
+      survey = ad.survey
+      approvers = [
+          user_resource_names_dict.get(approver_id)
+          for approver_id in ad.approver_ids
+      ]
+      admins = [
+          user_resource_names_dict.get(admin_id)
+          for admin_id in matching_fd.admin_ids
+      ]
+
+      api_ad = project_objects_pb2.ApprovalDef(
+          name=name,
+          display_name=display_name,
+          docstring=docstring,
+          survey=survey,
+          approvers=approvers,
+          admins=admins)
+      api_ads.append(api_ad)
+    return api_ads
+
   def ConvertApprovalValues(self, approval_values, project_id, phases):
     # type: (Sequence[proto.tracker_pb2.ApprovalValue], int,
     #     Sequence[proto.tracker_pb2.Phase]) ->

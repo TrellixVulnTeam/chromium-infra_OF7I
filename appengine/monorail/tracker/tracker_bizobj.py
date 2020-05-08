@@ -847,6 +847,18 @@ def UsersInvolvedInComponents(component_defs):
   return result
 
 
+def UsersInvolvedInApprovalDefs(approval_defs, matching_fds):
+  # type: (Sequence[proto.tracker_pb2.ApprovalDef],
+  #     Sequence[proto.tracker_pb2.FieldDef]) -> Collection[int]
+  """Return a set of user IDs referenced in the approval_defs and field defs"""
+  result = set()
+  for ad in approval_defs:
+    result.update(ad.approver_ids)
+  for fd in matching_fds:
+    result.update(fd.admin_ids)
+  return result
+
+
 def UsersInvolvedInConfig(config):
   """Return a set of all user IDs referenced in the config."""
   result = set()
