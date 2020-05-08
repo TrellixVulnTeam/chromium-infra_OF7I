@@ -34,3 +34,10 @@ export const USER_2 = Object.freeze({
 
 /** @type {Object<string, User>} */
 export const BY_NAME = Object.freeze({[NAME]: USER, [NAME_2]: USER_2});
+
+/** @type {ProjectMember} */
+export const PROJECT_MEMBER = Object.freeze({
+  name: 'projects/proj/members/1234',
+  role: 'CONTRIBUTOR',
+});
+

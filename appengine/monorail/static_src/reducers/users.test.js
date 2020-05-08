@@ -17,8 +17,10 @@ describe('user reducers', () => {
     const actual = users.reducer(undefined, {type: null});
     const expected = {
       byName: {},
+      projectMemberships: {},
       requests: {
         batchGet: {},
+        gatherProjectMemberships: {},
       },
     };
     assert.deepEqual(actual, expected);
@@ -29,12 +31,34 @@ describe('user reducers', () => {
     const actual = users.byNameReducer({}, action);
     assert.deepEqual(actual, {[example.NAME]: example.USER});
   });
+
+  describe('projectMembershipsReducer', () => {
+    it('updates on GATHER_PROJECT_MEMBERSHIPS_SUCCESS', () => {
+      const action = {type: users.GATHER_PROJECT_MEMBERSHIPS_SUCCESS,
+        userName: example.NAME, projectMemberships: [example.PROJECT_MEMBER]};
+      const actual = users.projectMembershipsReducer({}, action);
+      assert.deepEqual(actual, {[example.NAME]: [example.PROJECT_MEMBER]});
+    });
+
+    it('sets empty on GATHER_PROJECT_MEMBERSHIPS_SUCCESS', () => {
+      const action = {type: users.GATHER_PROJECT_MEMBERSHIPS_SUCCESS,
+        userName: example.NAME, projectMemberships: undefined};
+      const actual = users.projectMembershipsReducer({}, action);
+      assert.deepEqual(actual, {[example.NAME]: []});
+    });
+  });
 });
 
 describe('user selectors', () => {
   it('byName', () => {
     const state = {users: {byName: example.BY_NAME}};
     assert.deepEqual(users.byName(state), example.BY_NAME);
+  });
+
+  it('projectMemberships', () => {
+    const membershipsByName = {[example.NAME]: [example.PROJECT_MEMBER]};
+    const state = {users: {projectMemberships: membershipsByName}};
+    assert.deepEqual(users.projectMemberships(state), membershipsByName);
   });
 });
 
@@ -70,6 +94,42 @@ describe('user action creators', () => {
       await users.batchGet([example.NAME])(dispatch);
 
       const action = {type: users.BATCH_GET_FAILURE, error: sinon.match.any};
+      sinon.assert.calledWith(dispatch, action);
+    });
+  });
+
+  describe('gatherProjectMemberships', () => {
+    it('success', async () => {
+      prpcClient.call.returns(Promise.resolve({projectMemberships: [
+        example.PROJECT_MEMBER,
+      ]}));
+
+      await users.gatherProjectMemberships(
+          example.NAME)(dispatch);
+
+      sinon.assert.calledWith(dispatch,
+          {type: users.GATHER_PROJECT_MEMBERSHIPS_START});
+
+      const args = {user: example.NAME};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Frontend',
+          'GatherProjectMembershipsForUser', args);
+
+      const action = {
+        type: users.GATHER_PROJECT_MEMBERSHIPS_SUCCESS,
+        projectMemberships: [example.PROJECT_MEMBER],
+        userName: example.NAME,
+      };
+      sinon.assert.calledWith(dispatch, action);
+    });
+
+    it('failure', async () => {
+      prpcClient.call.throws(new Error());
+
+      await users.batchGet([example.NAME])(dispatch);
+
+      const action = {type: users.BATCH_GET_FAILURE,
+        error: sinon.match.instanceOf(Error)};
       sinon.assert.calledWith(dispatch, action);
     });
   });

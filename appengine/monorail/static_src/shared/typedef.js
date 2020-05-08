@@ -68,11 +68,32 @@
 /**
  * Resource name of a Project.
  *
- * Examples of valid project resource names:
+ * Examples of valid Project resource names:
  * - projects/monorail
  * - projects/test-project-1
  *
  * @typedef {string} ProjectName
+ */
+
+
+/**
+ * Resource name of a User.
+ *
+ * Examples of valid User resource names:
+ * - users/test@example.com
+ * - users/1234
+ *
+ * @typedef {string} UserName
+ */
+
+/**
+ * Resource name of a ProjectMember.
+ *
+ * Examples of valid ProjectMember resource names:
+ * - projects/monorail/members/1234
+ * - projects/test-xyz/members/5678
+ *
+ * @typedef {string} ProjectMemberName
  */
 
 
@@ -341,9 +362,42 @@
  */
 
 /**
+ * An Enum representing the role a ProjectMember has.
+ *
+ * @typedef {string} ProjectRole
+ */
+
+/**
+ * An Enum representing how a ProjectMember shows up in autocomplete.
+ *
+ * @typedef {string} AutocompleteVisibility
+ */
+
+/**
+ * A ProjectMember Object returned by the pRPC API project_objects.proto.
+ *
+ * @typedef {Object} ProjectMember
+ * @property {ProjectMemberName} name
+ * @property {ProjectRole} role
+ * @property {Array<Permission>=} standardPerms
+ * @property {Array<string>=} customPerms
+ * @property {string=} notes
+ * @property {AutocompleteVisibility=} includeInAutocomplete
+ */
+
+/**
  * A Project Object returned by the pRPC API project_objects.proto.
  *
  * @typedef {Object} Project
+ * @property {string} name
+ * @property {string} summary
+ * @property {string=} description
+ */
+
+/**
+ * A Project Object returned by the v0 pRPC API project_objects.proto.
+ *
+ * @typedef {Object} ProjectV0
  * @property {string} name
  * @property {string} summary
  * @property {string=} description
