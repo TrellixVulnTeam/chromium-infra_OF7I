@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -169,6 +170,139 @@ func TestUpdateChromePlatform(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestGetChromePlatform(t *testing.T) {
+	t.Parallel()
+	Convey("GetChromePlatform", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		chromePlatform1 := mockChromePlatform("chromePlatform-1", "Camera")
+		req := &api.CreateChromePlatformRequest{
+			ChromePlatform:   chromePlatform1,
+			ChromePlatformId: "chromePlatform-1",
+		}
+		resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, chromePlatform1)
+		Convey("Get chromePlatform by existing ID", func() {
+			req := &api.GetChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-1"),
+			}
+			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform1)
+		})
+		Convey("Get chromePlatform by non-existing ID", func() {
+			req := &api.GetChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-2"),
+			}
+			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+		Convey("Get chromePlatform - Invalid input empty name", func() {
+			req := &api.GetChromePlatformRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get chromePlatform - Invalid input invalid characters", func() {
+			req := &api.GetChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListChromePlatforms(t *testing.T) {
+	t.Parallel()
+	Convey("ListChromePlatforms", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		chromePlatforms := make([]*proto.ChromePlatform, 0, 4)
+		for i := 0; i < 4; i++ {
+			chromePlatform1 := mockChromePlatform("", "Camera")
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform:   chromePlatform1,
+				ChromePlatformId: fmt.Sprintf("chromePlatform-%d", i),
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform1)
+			chromePlatforms = append(chromePlatforms, resp)
+		}
+
+		Convey("ListChromePlatforms - page_size negative", func() {
+			req := &api.ListChromePlatformsRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListChromePlatforms - page_token invalid", func() {
+			req := &api.ListChromePlatformsRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.InvalidPageToken)
+		})
+
+		Convey("ListChromePlatforms - Full listing Max PageSize", func() {
+			req := &api.ListChromePlatformsRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms)
+		})
+
+		Convey("ListChromePlatforms - Full listing with no pagination", func() {
+			req := &api.ListChromePlatformsRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms)
+		})
+
+		Convey("ListChromePlatforms - listing with pagination", func() {
+			req := &api.ListChromePlatformsRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms[:3])
+
+			req = &api.ListChromePlatformsRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListChromePlatforms(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms[3:])
 		})
 	})
 }

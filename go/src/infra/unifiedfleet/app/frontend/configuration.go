@@ -94,7 +94,14 @@ func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *api.GetCh
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	chromePlatform, err := configuration.GetChromePlatform(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	chromePlatform.Name = util.AddPrefix(chromePlatformCollection, chromePlatform.Name)
+	return chromePlatform, err
 }
 
 // ListChromePlatforms list the chromeplatforms information from database.
@@ -105,7 +112,19 @@ func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *api.Lis
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := configuration.ListChromePlatforms(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, chromePlatform := range result {
+		chromePlatform.Name = util.AddPrefix(chromePlatformCollection, chromePlatform.Name)
+	}
+	return &api.ListChromePlatformsResponse{
+		ChromePlatforms: result,
+		NextPageToken:   nextPageToken,
+	}, nil
 }
 
 // DeleteChromePlatform deletes the chromeplatform from database.

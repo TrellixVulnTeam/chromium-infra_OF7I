@@ -5,6 +5,7 @@
 package configuration
 
 import (
+	"fmt"
 	fleet "infra/unifiedfleet/api/v1/proto"
 	"testing"
 
@@ -77,6 +78,78 @@ func TestUpdateChromePlatform(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestGetChromePlatform(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	chromePlatform1 := mockChromePlatform("ChromePlatform-1", "Camera")
+	Convey("GetChromePlatform", t, func() {
+		Convey("Get chromePlatform by existing ID", func() {
+			resp, err := CreateChromePlatform(ctx, chromePlatform1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform1)
+			resp, err = GetChromePlatform(ctx, "ChromePlatform-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform1)
+		})
+		Convey("Get chromePlatform by non-existing ID", func() {
+			resp, err := GetChromePlatform(ctx, "chromePlatform-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get chromePlatform - invalid ID", func() {
+			resp, err := GetChromePlatform(ctx, "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestListChromePlatforms(t *testing.T) {
+	t.Parallel()
+	Convey("ListChromePlatforms", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		chromePlatforms := make([]*fleet.ChromePlatform, 0, 4)
+		for i := 0; i < 4; i++ {
+			chromePlatform1 := mockChromePlatform(fmt.Sprintf("chromePlatform-%d", i), "Camera")
+			resp, err := CreateChromePlatform(ctx, chromePlatform1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform1)
+			chromePlatforms = append(chromePlatforms, resp)
+		}
+		Convey("List chromePlatforms - page_token invalid", func() {
+			resp, nextPageToken, err := ListChromePlatforms(ctx, 5, "abc")
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List chromePlatforms - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListChromePlatforms(ctx, 4, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatforms)
+		})
+
+		Convey("List chromePlatforms - listing with pagination", func() {
+			resp, nextPageToken, err := ListChromePlatforms(ctx, 3, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatforms[:3])
+
+			resp, _, err = ListChromePlatforms(ctx, 2, nextPageToken)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatforms[3:])
 		})
 	})
 }

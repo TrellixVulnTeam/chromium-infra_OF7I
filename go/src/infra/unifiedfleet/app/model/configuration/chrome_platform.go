@@ -11,6 +11,9 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
@@ -72,6 +75,49 @@ func CreateChromePlatform(ctx context.Context, chromePlatform *fleet.ChromePlatf
 // UpdateChromePlatform updates chromePlatform in datastore.
 func UpdateChromePlatform(ctx context.Context, chromePlatform *fleet.ChromePlatform) (*fleet.ChromePlatform, error) {
 	return putChromePlatform(ctx, chromePlatform, true)
+}
+
+// GetChromePlatform returns chromePlatform for the given id from datastore.
+func GetChromePlatform(ctx context.Context, id string) (*fleet.ChromePlatform, error) {
+	pm, err := fleetds.Get(ctx, &fleet.ChromePlatform{Name: id}, newChromePlatformEntity)
+	if err == nil {
+		return pm.(*fleet.ChromePlatform), err
+	}
+	return nil, err
+}
+
+// ListChromePlatforms lists the chromePlatforms
+// Does a query over ChromePlatform entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.ChromePlatform, nextPageToken string, err error) {
+	q, err := fleetds.ListQuery(ctx, ChromePlatformKind, pageSize, pageToken)
+	if err != nil {
+		return nil, "", err
+	}
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *ChromePlatformEntity, cb datastore.CursorCB) error {
+		pm, err := ent.GetProto()
+		if err != nil {
+			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+			return nil
+		}
+		res = append(res, pm.(*fleet.ChromePlatform))
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to List ChromePlatforms %s", err)
+		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
 }
 
 // InsertChromePlatforms inserts chrome platforms to datastore.
