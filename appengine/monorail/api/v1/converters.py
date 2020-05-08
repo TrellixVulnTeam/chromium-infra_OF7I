@@ -531,8 +531,6 @@ class Converter(object):
       # Skip over approval fields, they have their separate ApprovalDef
       if fd.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
         continue
-      # If the FieldDef with field_id was not found in ConvertFieldDefNames()
-      # we skip.
       if fd.field_id not in resource_names_dict:
         continue
 
@@ -666,11 +664,7 @@ class Converter(object):
 
     api_fvs = []
     for fv in field_values:
-      # If the FieldDef with field_id was not found in ConvertFieldDefNames()
-      # we skip
       if fv.field_id not in resource_names_dict:
-        logging.info(
-            'Ignoring field value referencing a non-existent field: %r', fv)
         continue
 
       name = resource_names_dict.get(fv.field_id)
@@ -741,11 +735,7 @@ class Converter(object):
 
     api_avs = []
     for av in approval_values:
-      # If the FieldDef with approval_id was not found in
-      # ConvertApprovalDefNames(), we skip
       if av.approval_id not in resource_names_dict:
-        logging.info(
-            'Ignoring approval value referencing a non-existent field: %r', av)
         continue
       name = resource_names_dict.get(av.approval_id)
       approvers = rnc.ConvertUserNames(av.approver_ids).values()
@@ -817,9 +807,6 @@ class Converter(object):
 
     for template in templates:
       if template.template_id not in resource_names_dict:
-        logging.info(
-            'Ignoring template referencing a non-existent template id: %s',
-            template.template_id)
         continue
       name = resource_names_dict.get(template.template_id)
       summary_must_be_edited = template.summary_must_be_edited
