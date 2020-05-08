@@ -638,7 +638,7 @@ class ProcessCodeCoverageData(BaseHandler):
                 'summaries': group_data['summaries'],
             })
 
-          if actual_data_type == 'files' and 'revision' in group_data:
+          if actual_data_type == 'files' and group_data.get('revision', ''):
             self._FetchAndSaveFileIfNecessary(report, group_data['path'],
                                               group_data['revision'])
 
@@ -1480,7 +1480,7 @@ class ServeCodeCoverageData(BaseHandler):
     if data_type == 'files':
       line_to_data = collections.defaultdict(dict)
 
-      if 'revision' in metadata:
+      if metadata.get('revision', ''):
         gs_path = _ComposeSourceFileGsPath(report, path, metadata['revision'])
         file_content = _GetFileContentFromGs(gs_path)
         if not file_content:
