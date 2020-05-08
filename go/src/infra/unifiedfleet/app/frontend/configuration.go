@@ -7,6 +7,7 @@ package frontend
 import (
 	"net/http"
 
+	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"go.chromium.org/luci/server/auth"
@@ -31,9 +32,9 @@ var (
 	parsePlatformsFunc = configuration.ParsePlatformsFromFile
 )
 
-func (cs *FleetServerImpl) newCfgInterface(ctx context.Context) luciconfig.Interface {
-	if cs.cfgInterfaceFactory != nil {
-		return cs.cfgInterfaceFactory(ctx)
+func (fs *FleetServerImpl) newCfgInterface(ctx context.Context) luciconfig.Interface {
+	if fs.cfgInterfaceFactory != nil {
+		return fs.cfgInterfaceFactory(ctx)
 	}
 	cfgService := config.Get(ctx).LuciConfigService
 	if cfgService == "" {
@@ -48,8 +49,63 @@ func (cs *FleetServerImpl) newCfgInterface(ctx context.Context) luciconfig.Inter
 	})
 }
 
+// CreateChromePlatform creates chromeplatform entry in database.
+func (fs *FleetServerImpl) CreateChromePlatform(ctx context.Context, req *api.CreateChromePlatformRequest) (rsp *proto.ChromePlatform, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// UpdateChromePlatform updates the chromeplatform information in database.
+func (fs *FleetServerImpl) UpdateChromePlatform(ctx context.Context, req *api.UpdateChromePlatformRequest) (rsp *proto.ChromePlatform, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// GetChromePlatform gets the chromeplatform information from database.
+func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *api.GetChromePlatformRequest) (rsp *proto.ChromePlatform, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// ListChromePlatforms list the chromeplatforms information from database.
+func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *api.ListChromePlatformsRequest) (rsp *api.ListChromePlatformsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// DeleteChromePlatform deletes the chromeplatform from database.
+func (fs *FleetServerImpl) DeleteChromePlatform(ctx context.Context, req *api.DeleteChromePlatformRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
 // ImportChromePlatforms imports the Chrome Platform in batch.
-func (cs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *status.Status, err error) {
+func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *status.Status, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -70,7 +126,7 @@ func (cs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 		}
 	default:
 		logging.Debugf(ctx, "Importing chrome platforms from luci-config")
-		cfgInterface := cs.newCfgInterface(ctx)
+		cfgInterface := fs.newCfgInterface(ctx)
 		fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
 		if err != nil {
 			return nil, configServiceFailureStatus.Err()

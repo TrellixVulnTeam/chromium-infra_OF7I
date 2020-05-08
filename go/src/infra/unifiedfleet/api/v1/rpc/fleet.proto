@@ -18,6 +18,21 @@ import "infra/unifiedfleet/api/v1/proto/rack.proto";
 import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
 
 service Fleet {
+    // CreateChromePlatform creates a new chromePlatform.
+  rpc CreateChromePlatform(CreateChromePlatformRequest) returns (proto.ChromePlatform);
+
+  // Update updates the chromePlatform
+  rpc UpdateChromePlatform(UpdateChromePlatformRequest) returns (proto.ChromePlatform);
+
+  // Get retrieves the details of the chromePlatform
+  rpc GetChromePlatform(GetChromePlatformRequest) returns (proto.ChromePlatform);
+
+  // List gets all the chromePlatforms
+  rpc ListChromePlatforms(ListChromePlatformsRequest) returns (ListChromePlatformsResponse);
+
+  // Delete delete the chromePlatform
+  rpc DeleteChromePlatform(DeleteChromePlatformRequest) returns (google.protobuf.Empty);
+
   // ImportChromePlatforms imports chrome platforms.
   rpc ImportChromePlatforms(ImportChromePlatformsRequest) returns (google.rpc.Status);
 
@@ -56,6 +71,68 @@ service Fleet {
 
   // Delete delete the rack
   rpc DeleteRack(DeleteRackRequest) returns (google.protobuf.Empty);
+}
+
+// Contains the required information for creating a ChromePlatform represented in
+// the database.
+message CreateChromePlatformRequest {
+  // The chromePlatform to create.
+  proto.ChromePlatform chromePlatform = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the ChromePlatform, which will become the final component of
+  // the ChromePlatform's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string chromePlatform_id = 2;
+}
+
+message UpdateChromePlatformRequest {
+  // The chromePlatform to update.
+  proto.ChromePlatform chromePlatform = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetChromePlatformRequest {
+  // The name of the chromePlatform to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/ChromePlatform" }
+  ];
+}
+
+message ListChromePlatformsRequest {
+  // The maximum number of chromePlatforms to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 chromePlatforms will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListChromePlatforms` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListChromePlatforms` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListChromePlatformsResponse {
+  // The chromePlatforms from datastore.
+  repeated proto.ChromePlatform chromePlatforms = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteChromePlatformRequest {
+  // The name of the ChromePlatform to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/ChromePlatform" }
+  ];
 }
 
 message ImportChromePlatformsRequest {

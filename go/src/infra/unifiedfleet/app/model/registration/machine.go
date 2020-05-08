@@ -26,13 +26,14 @@ const MachineKind string = "Machine"
 
 // MachineEntity is a datastore entity that tracks Machine.
 type MachineEntity struct {
-	_kind    string `gae:"$kind,Machine"`
-	ID       string `gae:"$id"`
-	SwitchID string `gae:"switch_id"`
-	KVMID    string `gae:"kvm_id"`
-	RPMID    string `gae:"rpm_id"`
-	NicID    string `gae:"nic_id"`
-	DracID   string `gae:"drac_id"`
+	_kind            string `gae:"$kind,Machine"`
+	ID               string `gae:"$id"`
+	SwitchID         string `gae:"switch_id"`
+	KVMID            string `gae:"kvm_id"`
+	RPMID            string `gae:"rpm_id"`
+	NicID            string `gae:"nic_id"`
+	DracID           string `gae:"drac_id"`
+	ChromePlatformID string `gae:"chrome_platform_id"`
 	// fleet.Machine cannot be directly used as it contains pointer.
 	Machine []byte `gae:",noindex"`
 }
@@ -56,13 +57,14 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntit
 		return nil, errors.Annotate(err, "fail to marshal Machine %s", p).Err()
 	}
 	return &MachineEntity{
-		ID:       p.GetName(),
-		SwitchID: p.GetChromeBrowserMachine().GetNetworkDeviceInterface().GetSwitch(),
-		KVMID:    p.GetChromeBrowserMachine().GetKvmInterface().GetKvm(),
-		RPMID:    p.GetChromeBrowserMachine().GetRpmInterface().GetRpm(),
-		NicID:    p.GetChromeBrowserMachine().GetNic(),
-		DracID:   p.GetChromeBrowserMachine().GetDrac(),
-		Machine:  machine,
+		ID:               p.GetName(),
+		SwitchID:         p.GetChromeBrowserMachine().GetNetworkDeviceInterface().GetSwitch(),
+		KVMID:            p.GetChromeBrowserMachine().GetKvmInterface().GetKvm(),
+		RPMID:            p.GetChromeBrowserMachine().GetRpmInterface().GetRpm(),
+		NicID:            p.GetChromeBrowserMachine().GetNic(),
+		DracID:           p.GetChromeBrowserMachine().GetDrac(),
+		ChromePlatformID: p.GetChromeBrowserMachine().GetChromePlatform(),
+		Machine:          machine,
 	}, nil
 }
 

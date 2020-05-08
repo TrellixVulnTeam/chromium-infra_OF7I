@@ -31,6 +31,296 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+// Contains the required information for creating a ChromePlatform represented in
+// the database.
+type CreateChromePlatformRequest struct {
+	// The chromePlatform to create.
+	ChromePlatform *proto1.ChromePlatform `protobuf:"bytes,1,opt,name=chromePlatform,proto3" json:"chromePlatform,omitempty"`
+	// The ID to use for the ChromePlatform, which will become the final component of
+	// the ChromePlatform's resource name.
+	//
+	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// contains only ASCII letters, numbers, dash and underscore.
+	ChromePlatformId     string   `protobuf:"bytes,2,opt,name=chromePlatform_id,json=chromePlatformId,proto3" json:"chromePlatform_id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CreateChromePlatformRequest) Reset()         { *m = CreateChromePlatformRequest{} }
+func (m *CreateChromePlatformRequest) String() string { return proto.CompactTextString(m) }
+func (*CreateChromePlatformRequest) ProtoMessage()    {}
+func (*CreateChromePlatformRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{0}
+}
+
+func (m *CreateChromePlatformRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreateChromePlatformRequest.Unmarshal(m, b)
+}
+func (m *CreateChromePlatformRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreateChromePlatformRequest.Marshal(b, m, deterministic)
+}
+func (m *CreateChromePlatformRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateChromePlatformRequest.Merge(m, src)
+}
+func (m *CreateChromePlatformRequest) XXX_Size() int {
+	return xxx_messageInfo_CreateChromePlatformRequest.Size(m)
+}
+func (m *CreateChromePlatformRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreateChromePlatformRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CreateChromePlatformRequest proto.InternalMessageInfo
+
+func (m *CreateChromePlatformRequest) GetChromePlatform() *proto1.ChromePlatform {
+	if m != nil {
+		return m.ChromePlatform
+	}
+	return nil
+}
+
+func (m *CreateChromePlatformRequest) GetChromePlatformId() string {
+	if m != nil {
+		return m.ChromePlatformId
+	}
+	return ""
+}
+
+type UpdateChromePlatformRequest struct {
+	// The chromePlatform to update.
+	ChromePlatform *proto1.ChromePlatform `protobuf:"bytes,1,opt,name=chromePlatform,proto3" json:"chromePlatform,omitempty"`
+	// The list of fields to be updated.
+	UpdateMask           *field_mask.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
+}
+
+func (m *UpdateChromePlatformRequest) Reset()         { *m = UpdateChromePlatformRequest{} }
+func (m *UpdateChromePlatformRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdateChromePlatformRequest) ProtoMessage()    {}
+func (*UpdateChromePlatformRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{1}
+}
+
+func (m *UpdateChromePlatformRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateChromePlatformRequest.Unmarshal(m, b)
+}
+func (m *UpdateChromePlatformRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateChromePlatformRequest.Marshal(b, m, deterministic)
+}
+func (m *UpdateChromePlatformRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateChromePlatformRequest.Merge(m, src)
+}
+func (m *UpdateChromePlatformRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdateChromePlatformRequest.Size(m)
+}
+func (m *UpdateChromePlatformRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateChromePlatformRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdateChromePlatformRequest proto.InternalMessageInfo
+
+func (m *UpdateChromePlatformRequest) GetChromePlatform() *proto1.ChromePlatform {
+	if m != nil {
+		return m.ChromePlatform
+	}
+	return nil
+}
+
+func (m *UpdateChromePlatformRequest) GetUpdateMask() *field_mask.FieldMask {
+	if m != nil {
+		return m.UpdateMask
+	}
+	return nil
+}
+
+type GetChromePlatformRequest struct {
+	// The name of the chromePlatform to retrieve.
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetChromePlatformRequest) Reset()         { *m = GetChromePlatformRequest{} }
+func (m *GetChromePlatformRequest) String() string { return proto.CompactTextString(m) }
+func (*GetChromePlatformRequest) ProtoMessage()    {}
+func (*GetChromePlatformRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{2}
+}
+
+func (m *GetChromePlatformRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetChromePlatformRequest.Unmarshal(m, b)
+}
+func (m *GetChromePlatformRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetChromePlatformRequest.Marshal(b, m, deterministic)
+}
+func (m *GetChromePlatformRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetChromePlatformRequest.Merge(m, src)
+}
+func (m *GetChromePlatformRequest) XXX_Size() int {
+	return xxx_messageInfo_GetChromePlatformRequest.Size(m)
+}
+func (m *GetChromePlatformRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetChromePlatformRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetChromePlatformRequest proto.InternalMessageInfo
+
+func (m *GetChromePlatformRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type ListChromePlatformsRequest struct {
+	// The maximum number of chromePlatforms to return. The service may return fewer than
+	// this value.
+	// If unspecified, at most 100 chromePlatforms will be returned.
+	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `ListChromePlatforms` call.
+	// Provide this to retrieve the subsequent page.
+	//
+	// When paginating, all other parameters provided to `ListChromePlatforms` must match
+	// the call that provided the page token.
+	PageToken            string   `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListChromePlatformsRequest) Reset()         { *m = ListChromePlatformsRequest{} }
+func (m *ListChromePlatformsRequest) String() string { return proto.CompactTextString(m) }
+func (*ListChromePlatformsRequest) ProtoMessage()    {}
+func (*ListChromePlatformsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{3}
+}
+
+func (m *ListChromePlatformsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListChromePlatformsRequest.Unmarshal(m, b)
+}
+func (m *ListChromePlatformsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListChromePlatformsRequest.Marshal(b, m, deterministic)
+}
+func (m *ListChromePlatformsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListChromePlatformsRequest.Merge(m, src)
+}
+func (m *ListChromePlatformsRequest) XXX_Size() int {
+	return xxx_messageInfo_ListChromePlatformsRequest.Size(m)
+}
+func (m *ListChromePlatformsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListChromePlatformsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListChromePlatformsRequest proto.InternalMessageInfo
+
+func (m *ListChromePlatformsRequest) GetPageSize() int32 {
+	if m != nil {
+		return m.PageSize
+	}
+	return 0
+}
+
+func (m *ListChromePlatformsRequest) GetPageToken() string {
+	if m != nil {
+		return m.PageToken
+	}
+	return ""
+}
+
+type ListChromePlatformsResponse struct {
+	// The chromePlatforms from datastore.
+	ChromePlatforms []*proto1.ChromePlatform `protobuf:"bytes,1,rep,name=chromePlatforms,proto3" json:"chromePlatforms,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken        string   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListChromePlatformsResponse) Reset()         { *m = ListChromePlatformsResponse{} }
+func (m *ListChromePlatformsResponse) String() string { return proto.CompactTextString(m) }
+func (*ListChromePlatformsResponse) ProtoMessage()    {}
+func (*ListChromePlatformsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{4}
+}
+
+func (m *ListChromePlatformsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListChromePlatformsResponse.Unmarshal(m, b)
+}
+func (m *ListChromePlatformsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListChromePlatformsResponse.Marshal(b, m, deterministic)
+}
+func (m *ListChromePlatformsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListChromePlatformsResponse.Merge(m, src)
+}
+func (m *ListChromePlatformsResponse) XXX_Size() int {
+	return xxx_messageInfo_ListChromePlatformsResponse.Size(m)
+}
+func (m *ListChromePlatformsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListChromePlatformsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListChromePlatformsResponse proto.InternalMessageInfo
+
+func (m *ListChromePlatformsResponse) GetChromePlatforms() []*proto1.ChromePlatform {
+	if m != nil {
+		return m.ChromePlatforms
+	}
+	return nil
+}
+
+func (m *ListChromePlatformsResponse) GetNextPageToken() string {
+	if m != nil {
+		return m.NextPageToken
+	}
+	return ""
+}
+
+type DeleteChromePlatformRequest struct {
+	// The name of the ChromePlatform to delete
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeleteChromePlatformRequest) Reset()         { *m = DeleteChromePlatformRequest{} }
+func (m *DeleteChromePlatformRequest) String() string { return proto.CompactTextString(m) }
+func (*DeleteChromePlatformRequest) ProtoMessage()    {}
+func (*DeleteChromePlatformRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{5}
+}
+
+func (m *DeleteChromePlatformRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteChromePlatformRequest.Unmarshal(m, b)
+}
+func (m *DeleteChromePlatformRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteChromePlatformRequest.Marshal(b, m, deterministic)
+}
+func (m *DeleteChromePlatformRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteChromePlatformRequest.Merge(m, src)
+}
+func (m *DeleteChromePlatformRequest) XXX_Size() int {
+	return xxx_messageInfo_DeleteChromePlatformRequest.Size(m)
+}
+func (m *DeleteChromePlatformRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteChromePlatformRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteChromePlatformRequest proto.InternalMessageInfo
+
+func (m *DeleteChromePlatformRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 type ImportChromePlatformsRequest struct {
 	// Types that are valid to be assigned to Source:
 	//	*ImportChromePlatformsRequest_MachineDbSource
@@ -45,7 +335,7 @@ func (m *ImportChromePlatformsRequest) Reset()         { *m = ImportChromePlatfo
 func (m *ImportChromePlatformsRequest) String() string { return proto.CompactTextString(m) }
 func (*ImportChromePlatformsRequest) ProtoMessage()    {}
 func (*ImportChromePlatformsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{0}
+	return fileDescriptor_bfc37a625f56a717, []int{6}
 }
 
 func (m *ImportChromePlatformsRequest) XXX_Unmarshal(b []byte) error {
@@ -123,7 +413,7 @@ func (m *ImportChromePlatformsResponse) Reset()         { *m = ImportChromePlatf
 func (m *ImportChromePlatformsResponse) String() string { return proto.CompactTextString(m) }
 func (*ImportChromePlatformsResponse) ProtoMessage()    {}
 func (*ImportChromePlatformsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{1}
+	return fileDescriptor_bfc37a625f56a717, []int{7}
 }
 
 func (m *ImportChromePlatformsResponse) XXX_Unmarshal(b []byte) error {
@@ -170,7 +460,7 @@ func (m *ChromePlatformResult) Reset()         { *m = ChromePlatformResult{} }
 func (m *ChromePlatformResult) String() string { return proto.CompactTextString(m) }
 func (*ChromePlatformResult) ProtoMessage()    {}
 func (*ChromePlatformResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{2}
+	return fileDescriptor_bfc37a625f56a717, []int{8}
 }
 
 func (m *ChromePlatformResult) XXX_Unmarshal(b []byte) error {
@@ -225,7 +515,7 @@ func (m *CreateMachineRequest) Reset()         { *m = CreateMachineRequest{} }
 func (m *CreateMachineRequest) String() string { return proto.CompactTextString(m) }
 func (*CreateMachineRequest) ProtoMessage()    {}
 func (*CreateMachineRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{3}
+	return fileDescriptor_bfc37a625f56a717, []int{9}
 }
 
 func (m *CreateMachineRequest) XXX_Unmarshal(b []byte) error {
@@ -274,7 +564,7 @@ func (m *UpdateMachineRequest) Reset()         { *m = UpdateMachineRequest{} }
 func (m *UpdateMachineRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateMachineRequest) ProtoMessage()    {}
 func (*UpdateMachineRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{4}
+	return fileDescriptor_bfc37a625f56a717, []int{10}
 }
 
 func (m *UpdateMachineRequest) XXX_Unmarshal(b []byte) error {
@@ -321,7 +611,7 @@ func (m *GetMachineRequest) Reset()         { *m = GetMachineRequest{} }
 func (m *GetMachineRequest) String() string { return proto.CompactTextString(m) }
 func (*GetMachineRequest) ProtoMessage()    {}
 func (*GetMachineRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{5}
+	return fileDescriptor_bfc37a625f56a717, []int{11}
 }
 
 func (m *GetMachineRequest) XXX_Unmarshal(b []byte) error {
@@ -370,7 +660,7 @@ func (m *ListMachinesRequest) Reset()         { *m = ListMachinesRequest{} }
 func (m *ListMachinesRequest) String() string { return proto.CompactTextString(m) }
 func (*ListMachinesRequest) ProtoMessage()    {}
 func (*ListMachinesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{6}
+	return fileDescriptor_bfc37a625f56a717, []int{12}
 }
 
 func (m *ListMachinesRequest) XXX_Unmarshal(b []byte) error {
@@ -420,7 +710,7 @@ func (m *ListMachinesResponse) Reset()         { *m = ListMachinesResponse{} }
 func (m *ListMachinesResponse) String() string { return proto.CompactTextString(m) }
 func (*ListMachinesResponse) ProtoMessage()    {}
 func (*ListMachinesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{7}
+	return fileDescriptor_bfc37a625f56a717, []int{13}
 }
 
 func (m *ListMachinesResponse) XXX_Unmarshal(b []byte) error {
@@ -467,7 +757,7 @@ func (m *DeleteMachineRequest) Reset()         { *m = DeleteMachineRequest{} }
 func (m *DeleteMachineRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteMachineRequest) ProtoMessage()    {}
 func (*DeleteMachineRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{8}
+	return fileDescriptor_bfc37a625f56a717, []int{14}
 }
 
 func (m *DeleteMachineRequest) XXX_Unmarshal(b []byte) error {
@@ -509,7 +799,7 @@ func (m *ImportMachinesRequest) Reset()         { *m = ImportMachinesRequest{} }
 func (m *ImportMachinesRequest) String() string { return proto.CompactTextString(m) }
 func (*ImportMachinesRequest) ProtoMessage()    {}
 func (*ImportMachinesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{9}
+	return fileDescriptor_bfc37a625f56a717, []int{15}
 }
 
 func (m *ImportMachinesRequest) XXX_Unmarshal(b []byte) error {
@@ -586,7 +876,7 @@ func (m *MachineDBSource) Reset()         { *m = MachineDBSource{} }
 func (m *MachineDBSource) String() string { return proto.CompactTextString(m) }
 func (*MachineDBSource) ProtoMessage()    {}
 func (*MachineDBSource) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{10}
+	return fileDescriptor_bfc37a625f56a717, []int{16}
 }
 
 func (m *MachineDBSource) XXX_Unmarshal(b []byte) error {
@@ -627,7 +917,7 @@ func (m *ConfigSource) Reset()         { *m = ConfigSource{} }
 func (m *ConfigSource) String() string { return proto.CompactTextString(m) }
 func (*ConfigSource) ProtoMessage()    {}
 func (*ConfigSource) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{11}
+	return fileDescriptor_bfc37a625f56a717, []int{17}
 }
 
 func (m *ConfigSource) XXX_Unmarshal(b []byte) error {
@@ -682,7 +972,7 @@ func (m *CreateRackRequest) Reset()         { *m = CreateRackRequest{} }
 func (m *CreateRackRequest) String() string { return proto.CompactTextString(m) }
 func (*CreateRackRequest) ProtoMessage()    {}
 func (*CreateRackRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{12}
+	return fileDescriptor_bfc37a625f56a717, []int{18}
 }
 
 func (m *CreateRackRequest) XXX_Unmarshal(b []byte) error {
@@ -731,7 +1021,7 @@ func (m *UpdateRackRequest) Reset()         { *m = UpdateRackRequest{} }
 func (m *UpdateRackRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateRackRequest) ProtoMessage()    {}
 func (*UpdateRackRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{13}
+	return fileDescriptor_bfc37a625f56a717, []int{19}
 }
 
 func (m *UpdateRackRequest) XXX_Unmarshal(b []byte) error {
@@ -778,7 +1068,7 @@ func (m *GetRackRequest) Reset()         { *m = GetRackRequest{} }
 func (m *GetRackRequest) String() string { return proto.CompactTextString(m) }
 func (*GetRackRequest) ProtoMessage()    {}
 func (*GetRackRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{14}
+	return fileDescriptor_bfc37a625f56a717, []int{20}
 }
 
 func (m *GetRackRequest) XXX_Unmarshal(b []byte) error {
@@ -827,7 +1117,7 @@ func (m *ListRacksRequest) Reset()         { *m = ListRacksRequest{} }
 func (m *ListRacksRequest) String() string { return proto.CompactTextString(m) }
 func (*ListRacksRequest) ProtoMessage()    {}
 func (*ListRacksRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{15}
+	return fileDescriptor_bfc37a625f56a717, []int{21}
 }
 
 func (m *ListRacksRequest) XXX_Unmarshal(b []byte) error {
@@ -877,7 +1167,7 @@ func (m *ListRacksResponse) Reset()         { *m = ListRacksResponse{} }
 func (m *ListRacksResponse) String() string { return proto.CompactTextString(m) }
 func (*ListRacksResponse) ProtoMessage()    {}
 func (*ListRacksResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{16}
+	return fileDescriptor_bfc37a625f56a717, []int{22}
 }
 
 func (m *ListRacksResponse) XXX_Unmarshal(b []byte) error {
@@ -924,7 +1214,7 @@ func (m *DeleteRackRequest) Reset()         { *m = DeleteRackRequest{} }
 func (m *DeleteRackRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteRackRequest) ProtoMessage()    {}
 func (*DeleteRackRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{17}
+	return fileDescriptor_bfc37a625f56a717, []int{23}
 }
 
 func (m *DeleteRackRequest) XXX_Unmarshal(b []byte) error {
@@ -953,6 +1243,12 @@ func (m *DeleteRackRequest) GetName() string {
 }
 
 func init() {
+	proto.RegisterType((*CreateChromePlatformRequest)(nil), "unifiedfleet.api.v1.rpc.CreateChromePlatformRequest")
+	proto.RegisterType((*UpdateChromePlatformRequest)(nil), "unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest")
+	proto.RegisterType((*GetChromePlatformRequest)(nil), "unifiedfleet.api.v1.rpc.GetChromePlatformRequest")
+	proto.RegisterType((*ListChromePlatformsRequest)(nil), "unifiedfleet.api.v1.rpc.ListChromePlatformsRequest")
+	proto.RegisterType((*ListChromePlatformsResponse)(nil), "unifiedfleet.api.v1.rpc.ListChromePlatformsResponse")
+	proto.RegisterType((*DeleteChromePlatformRequest)(nil), "unifiedfleet.api.v1.rpc.DeleteChromePlatformRequest")
 	proto.RegisterType((*ImportChromePlatformsRequest)(nil), "unifiedfleet.api.v1.rpc.ImportChromePlatformsRequest")
 	proto.RegisterType((*ImportChromePlatformsResponse)(nil), "unifiedfleet.api.v1.rpc.ImportChromePlatformsResponse")
 	proto.RegisterType((*ChromePlatformResult)(nil), "unifiedfleet.api.v1.rpc.ChromePlatformResult")
@@ -978,72 +1274,84 @@ func init() {
 }
 
 var fileDescriptor_bfc37a625f56a717 = []byte{
-	// 1039 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x57, 0xdd, 0x6e, 0x1b, 0x45,
-	0x14, 0xc6, 0x69, 0x7e, 0xec, 0x93, 0xa4, 0xc1, 0x53, 0x43, 0x23, 0x87, 0x8a, 0x68, 0x51, 0x68,
-	0x12, 0xe1, 0x5d, 0x1a, 0x14, 0x01, 0xaa, 0x04, 0xb2, 0x93, 0xb4, 0x44, 0x6a, 0xaa, 0xb0, 0x2e,
-	0x91, 0x0a, 0x95, 0xac, 0xf1, 0x7a, 0xd6, 0x19, 0xd9, 0xeb, 0x59, 0x66, 0x76, 0xa3, 0x36, 0x17,
-	0x3c, 0x00, 0x0f, 0xc0, 0x5b, 0xf0, 0x1c, 0xdc, 0xf1, 0x0c, 0x7d, 0x01, 0x5e, 0x80, 0x2b, 0x34,
-	0x3f, 0xeb, 0xff, 0x5d, 0x3b, 0x10, 0x2e, 0x7a, 0x95, 0xf8, 0xcc, 0x39, 0xdf, 0x39, 0xfb, 0xcd,
-	0xf9, 0xce, 0xd9, 0x85, 0x3d, 0xda, 0xf3, 0x39, 0x76, 0xe2, 0x1e, 0xf5, 0x29, 0x69, 0xf9, 0x5d,
-	0x42, 0x22, 0x07, 0x87, 0xd4, 0xb9, 0x7a, 0xe4, 0xf0, 0xd0, 0x73, 0x94, 0xc1, 0x0e, 0x39, 0x8b,
-	0x18, 0xba, 0x3f, 0xec, 0x64, 0xe3, 0x90, 0xda, 0x57, 0x8f, 0x6c, 0x1e, 0x7a, 0xe5, 0xad, 0x36,
-	0x63, 0xed, 0x2e, 0x71, 0x94, 0x5b, 0x33, 0xf6, 0x1d, 0x12, 0x84, 0xd1, 0x1b, 0x1d, 0x55, 0xde,
-	0x1e, 0x3f, 0xf4, 0x29, 0xe9, 0xb6, 0x1a, 0x01, 0x16, 0x1d, 0xe3, 0xf1, 0x6d, 0x9b, 0xd9, 0xde,
-	0x25, 0x67, 0x01, 0x8d, 0x03, 0x9b, 0xf1, 0xb6, 0xd3, 0x8d, 0x3d, 0xea, 0xb4, 0x65, 0x7a, 0xe5,
-	0xe0, 0x18, 0x04, 0x59, 0x96, 0x0e, 0x6e, 0x92, 0x4b, 0x7c, 0x45, 0x19, 0x37, 0x00, 0x5f, 0xdf,
-	0x00, 0x80, 0x13, 0xc1, 0x62, 0xee, 0x11, 0x13, 0xfa, 0xe5, 0x9c, 0xa1, 0xd2, 0x20, 0x22, 0x1c,
-	0xc5, 0xc2, 0x04, 0x56, 0xd2, 0x79, 0xd3, 0x81, 0x01, 0xf6, 0x2e, 0x69, 0x2f, 0xc9, 0xb3, 0x3f,
-	0xcb, 0x9d, 0x63, 0x2f, 0xe1, 0xe3, 0x70, 0x96, 0xaf, 0x2a, 0x98, 0x34, 0xc2, 0x2e, 0x8e, 0x7c,
-	0xc6, 0x03, 0x1d, 0x66, 0xfd, 0x99, 0x83, 0x8f, 0x4e, 0x83, 0x90, 0xf1, 0xe8, 0x48, 0x9d, 0x9f,
-	0x9b, 0x63, 0xe1, 0x92, 0x9f, 0x63, 0x22, 0x22, 0x74, 0x01, 0x45, 0x53, 0x54, 0xa3, 0xd5, 0x6c,
-	0x68, 0x1a, 0x36, 0x73, 0xdb, 0xb9, 0xdd, 0xd5, 0x83, 0x5d, 0x3b, 0xe5, 0x6e, 0xed, 0x33, 0x1d,
-	0x71, 0x5c, 0xab, 0x2b, 0xff, 0xef, 0xde, 0x73, 0x37, 0x0c, 0xc8, 0x71, 0x53, 0x9b, 0xd0, 0x33,
-	0x58, 0xf7, 0x58, 0xcf, 0xa7, 0xed, 0x04, 0x73, 0x41, 0x61, 0xee, 0xa4, 0x62, 0x1e, 0x29, 0xef,
-	0x3e, 0xe0, 0x9a, 0x37, 0xf4, 0xbb, 0x96, 0x87, 0x65, 0x0d, 0x63, 0xfd, 0x9e, 0x83, 0x07, 0x29,
-	0x0f, 0x24, 0x42, 0xd6, 0x13, 0x04, 0x9d, 0xc0, 0x72, 0x88, 0x85, 0x20, 0xad, 0xcd, 0xdc, 0xf6,
-	0x9d, 0xdd, 0xd5, 0x83, 0x4a, 0x7a, 0xca, 0x11, 0x04, 0x97, 0x88, 0xb8, 0x1b, 0xb9, 0x26, 0x58,
-	0xc2, 0xf8, 0x98, 0x76, 0x49, 0x6b, 0x73, 0xe1, 0x5f, 0xc1, 0xe8, 0x60, 0xeb, 0x1a, 0x4a, 0xd3,
-	0xce, 0xd1, 0x09, 0xe4, 0x93, 0xab, 0x32, 0x74, 0xef, 0x4d, 0x4d, 0xa0, 0xae, 0x71, 0x3c, 0x45,
-	0x3f, 0x14, 0x6d, 0x41, 0x81, 0x70, 0xce, 0x78, 0x23, 0x10, 0x6d, 0x45, 0x71, 0xc1, 0xcd, 0x2b,
-	0xc3, 0x99, 0x68, 0x5b, 0xaf, 0xa1, 0x74, 0xc4, 0x09, 0x8e, 0x88, 0xb9, 0xaf, 0xe4, 0xce, 0xab,
-	0xb0, 0x62, 0xae, 0xcb, 0xa4, 0xb6, 0x32, 0x52, 0x9b, 0xd8, 0xda, 0x9d, 0xb7, 0xd5, 0x05, 0x37,
-	0x89, 0x43, 0x0f, 0x00, 0x92, 0xb6, 0xa1, 0x2d, 0x93, 0xb8, 0x60, 0x2c, 0xa7, 0x2d, 0xeb, 0xb7,
-	0x1c, 0x94, 0x7e, 0x08, 0x5b, 0xff, 0x4b, 0xea, 0xc7, 0xb0, 0x1a, 0x2b, 0x68, 0x35, 0x2e, 0x4c,
-	0x5f, 0x95, 0x6d, 0xad, 0x49, 0x3b, 0x99, 0x28, 0xf6, 0x13, 0x39, 0x14, 0xce, 0xb0, 0xe8, 0xb8,
-	0x10, 0x9b, 0x4a, 0x44, 0xc7, 0x7a, 0x09, 0xc5, 0xa7, 0x24, 0x1a, 0x2b, 0xea, 0x18, 0x16, 0x7b,
-	0x38, 0xd0, 0x15, 0x15, 0x6a, 0x9f, 0xbf, 0xad, 0x2e, 0xfc, 0x5d, 0xdd, 0x87, 0x5d, 0x53, 0x58,
-	0x45, 0x55, 0x56, 0x11, 0x6f, 0x44, 0x44, 0x02, 0x1b, 0x87, 0xa1, 0x08, 0x59, 0x64, 0x7b, 0x2c,
-	0x70, 0x12, 0x18, 0x15, 0x6d, 0x7d, 0x0f, 0xf7, 0x9e, 0x51, 0x91, 0x60, 0xf7, 0x05, 0xb6, 0x05,
-	0x85, 0x10, 0xb7, 0x49, 0x43, 0xd0, 0x6b, 0x9d, 0x61, 0xc9, 0xcd, 0x4b, 0x43, 0x9d, 0x5e, 0x2b,
-	0x1a, 0xd5, 0x61, 0xc4, 0x3a, 0xa4, 0x97, 0xd0, 0x28, 0x2d, 0x2f, 0xa4, 0xc1, 0xfa, 0x05, 0x4a,
-	0xa3, 0x90, 0xa6, 0xc5, 0xbf, 0x81, 0xbc, 0x61, 0x43, 0x98, 0x26, 0x9f, 0x83, 0x46, 0xb7, 0x1f,
-	0x83, 0x3e, 0x85, 0x8d, 0x1e, 0x79, 0x1d, 0x35, 0x26, 0x72, 0xaf, 0x4b, 0xf3, 0x79, 0x3f, 0xff,
-	0x2b, 0x28, 0x1d, 0x93, 0x2e, 0x99, 0xb8, 0xc5, 0xdb, 0x21, 0xec, 0x8f, 0x1c, 0x7c, 0xa0, 0xa5,
-	0x3c, 0xce, 0xd9, 0xbb, 0x36, 0x94, 0x76, 0x60, 0x63, 0x2c, 0x3b, 0x42, 0xb0, 0x78, 0xc9, 0x44,
-	0xa4, 0x29, 0x72, 0xd5, 0xff, 0xd6, 0x4f, 0xb0, 0x36, 0x0c, 0x88, 0x6c, 0xb8, 0x97, 0x94, 0x43,
-	0xf8, 0x15, 0xf5, 0x48, 0x63, 0xc0, 0xaa, 0x5b, 0x34, 0xb9, 0xf4, 0xc9, 0x73, 0x1c, 0x10, 0xd9,
-	0x4a, 0x3e, 0xed, 0x1a, 0x2f, 0x23, 0x76, 0x69, 0x90, 0x87, 0x96, 0x0f, 0x45, 0x2d, 0x76, 0x17,
-	0x7b, 0x9d, 0x84, 0xc8, 0xaf, 0x60, 0x51, 0xee, 0x10, 0xc3, 0xdd, 0xc7, 0x19, 0x4d, 0x22, 0xa3,
-	0xb4, 0xd0, 0x54, 0x04, 0xba, 0x0f, 0x2b, 0xf2, 0xef, 0x40, 0xdd, 0xcb, 0xf2, 0xe7, 0x69, 0xcb,
-	0xfa, 0x35, 0x07, 0x45, 0x2d, 0xed, 0xdb, 0x49, 0xf4, 0x9f, 0xe4, 0x5c, 0x87, 0xbb, 0x4f, 0x49,
-	0x34, 0x5c, 0x48, 0x75, 0xa4, 0x35, 0x2b, 0xaa, 0x35, 0x1f, 0xc2, 0xce, 0xcc, 0xd6, 0x54, 0x18,
-	0xba, 0x2f, 0x9f, 0xc3, 0xfb, 0x52, 0x75, 0xd2, 0x72, 0x2b, 0x2a, 0xe6, 0x50, 0x1c, 0xc2, 0x33,
-	0x12, 0x3e, 0x84, 0x25, 0xf9, 0xf8, 0x89, 0x7e, 0x67, 0x31, 0xe6, 0x6a, 0xef, 0xb9, 0x95, 0x7b,
-	0x01, 0x45, 0xad, 0xdc, 0xdb, 0xe5, 0xe6, 0xe0, 0xaf, 0x3c, 0x2c, 0x3d, 0x91, 0x7e, 0xa8, 0x99,
-	0x88, 0x77, 0x6c, 0x0f, 0xa3, 0xc3, 0x54, 0x35, 0x65, 0xbd, 0x88, 0x94, 0x51, 0x72, 0xe5, 0xd2,
-	0xb3, 0xae, 0xde, 0xaa, 0x50, 0x13, 0xd6, 0x47, 0x16, 0x18, 0xca, 0x58, 0xc2, 0x53, 0x16, 0x5d,
-	0x79, 0x8e, 0xa9, 0x28, 0x73, 0x8c, 0x6c, 0xaa, 0x8c, 0x1c, 0xd3, 0x36, 0xda, 0x5c, 0x39, 0x5e,
-	0x01, 0x0c, 0xb6, 0x0e, 0xda, 0x4f, 0x4d, 0x30, 0xb1, 0x9a, 0xe6, 0x42, 0xef, 0xc0, 0xda, 0xf0,
-	0x96, 0x40, 0x9f, 0xa5, 0xe2, 0x4f, 0xd9, 0x4f, 0xe5, 0xca, 0x9c, 0xde, 0xa6, 0x6f, 0x2f, 0x60,
-	0x7d, 0x64, 0x25, 0x64, 0xd0, 0x35, 0x6d, 0x75, 0x94, 0x3f, 0x9c, 0x50, 0xf6, 0x89, 0xfc, 0x2e,
-	0x40, 0x2f, 0xe0, 0xee, 0xe8, 0x2e, 0x40, 0xf6, 0x8c, 0x3e, 0x1a, 0x7f, 0x90, 0x69, 0x0d, 0xf4,
-	0x12, 0x60, 0x30, 0x14, 0x33, 0x88, 0x9f, 0x98, 0x9c, 0xe5, 0x59, 0x82, 0x94, 0xd0, 0x83, 0x31,
-	0x98, 0x01, 0x3d, 0x31, 0x2b, 0x67, 0x43, 0xd7, 0x61, 0xc5, 0x4c, 0x35, 0xf4, 0x30, 0xab, 0x57,
-	0x6e, 0x04, 0xda, 0x84, 0x42, 0x7f, 0x0a, 0xa1, 0xbd, 0xcc, 0x4b, 0x1f, 0x9e, 0x7c, 0xe5, 0xfd,
-	0x79, 0x5c, 0x4d, 0x73, 0x9c, 0x03, 0x0c, 0xa6, 0x4e, 0x06, 0x27, 0x13, 0xa3, 0x29, 0xad, 0x2d,
-	0x6a, 0x3b, 0x3f, 0x7e, 0x92, 0xf9, 0x2d, 0xfa, 0x38, 0xf6, 0x45, 0xd8, 0x6c, 0x2e, 0xab, 0xb0,
-	0x2f, 0xfe, 0x09, 0x00, 0x00, 0xff, 0xff, 0x5c, 0x1a, 0xef, 0x88, 0xb9, 0x0e, 0x00, 0x00,
+	// 1226 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x58, 0xcd, 0x6e, 0xdc, 0x54,
+	0x14, 0xc6, 0x6d, 0x7e, 0x4f, 0xfe, 0x3a, 0xb7, 0x81, 0x46, 0x1e, 0x2a, 0x22, 0xa3, 0xd0, 0x24,
+	0x30, 0x36, 0x49, 0x1b, 0x15, 0x54, 0x09, 0x94, 0xbf, 0x86, 0x88, 0xa6, 0x0a, 0x9e, 0x36, 0xa2,
+	0x50, 0x69, 0xe4, 0xb1, 0xaf, 0x1d, 0x93, 0xf1, 0xd8, 0xf5, 0xb5, 0x43, 0x9b, 0x05, 0x62, 0xcd,
+	0x03, 0xb0, 0x60, 0xc9, 0x9e, 0x0d, 0x5b, 0x1e, 0x80, 0x1d, 0xcf, 0xd0, 0xe7, 0x60, 0x85, 0xee,
+	0x8f, 0x67, 0xc6, 0xce, 0xd8, 0xe3, 0x49, 0x07, 0x24, 0x56, 0x4d, 0xce, 0x3d, 0xe7, 0x3b, 0xd7,
+	0xe7, 0x7e, 0xdf, 0x39, 0x27, 0x85, 0x35, 0xb7, 0x6d, 0x87, 0x86, 0x16, 0xb7, 0x5d, 0xdb, 0xc5,
+	0x96, 0xdd, 0xc2, 0x38, 0xd2, 0x8c, 0xc0, 0xd5, 0xce, 0x37, 0xb4, 0x30, 0x30, 0x35, 0x66, 0x50,
+	0x83, 0xd0, 0x8f, 0x7c, 0x74, 0xab, 0xd7, 0x49, 0x35, 0x02, 0x57, 0x3d, 0xdf, 0x50, 0xc3, 0xc0,
+	0x94, 0xab, 0x8e, 0xef, 0x3b, 0x2d, 0xac, 0x31, 0xb7, 0x66, 0x6c, 0x6b, 0xd8, 0x0b, 0xa2, 0x57,
+	0x3c, 0x4a, 0x5e, 0xce, 0x1e, 0xda, 0x2e, 0x6e, 0x59, 0x0d, 0xcf, 0x20, 0x67, 0xc2, 0xe3, 0x73,
+	0xc7, 0x57, 0xcd, 0xd3, 0xd0, 0xf7, 0xdc, 0xd8, 0x53, 0xfd, 0xd0, 0xd1, 0x5a, 0xb1, 0xe9, 0x6a,
+	0x0e, 0x4d, 0xcf, 0x1c, 0x34, 0x81, 0x40, 0xaf, 0xc5, 0x83, 0x9b, 0xf8, 0xd4, 0x38, 0x77, 0xfd,
+	0x50, 0x00, 0x7c, 0x3a, 0x04, 0x40, 0x88, 0x89, 0x1f, 0x87, 0x26, 0x16, 0xa1, 0xf7, 0x4b, 0x86,
+	0x52, 0x03, 0x89, 0x8c, 0x28, 0x26, 0x22, 0xb0, 0x96, 0x5f, 0x37, 0x1e, 0xe8, 0x19, 0xe6, 0xa9,
+	0xdb, 0x4e, 0xf2, 0xac, 0x0f, 0x72, 0x0f, 0x0d, 0x33, 0xa9, 0xc7, 0xd6, 0x20, 0x5f, 0x76, 0x61,
+	0xdc, 0x08, 0x5a, 0x46, 0x64, 0xfb, 0xa1, 0xc7, 0xc3, 0x94, 0x5f, 0x25, 0xa8, 0xee, 0x86, 0xd8,
+	0x88, 0xf0, 0x2e, 0x3b, 0x3f, 0x16, 0xc7, 0x3a, 0x7e, 0x11, 0x63, 0x12, 0xa1, 0x13, 0x98, 0x37,
+	0x53, 0x07, 0x4b, 0xd2, 0xb2, 0xb4, 0x3a, 0xb3, 0xb9, 0xa6, 0xf6, 0x7b, 0x57, 0x86, 0xa9, 0xa6,
+	0x91, 0x76, 0xae, 0xbf, 0xde, 0xbe, 0xa6, 0x67, 0x50, 0xd0, 0x87, 0x50, 0x49, 0x5b, 0x1a, 0xae,
+	0xb5, 0x74, 0x6d, 0x59, 0x5a, 0x9d, 0xd6, 0x6f, 0xa4, 0x0f, 0x0e, 0x2d, 0xe5, 0x77, 0x09, 0xaa,
+	0x4f, 0x03, 0xeb, 0x3f, 0xbf, 0xe4, 0x03, 0x98, 0x89, 0x59, 0x5a, 0x46, 0x3c, 0x76, 0xbd, 0x99,
+	0x4d, 0x59, 0xe5, 0xaf, 0xab, 0x26, 0xdc, 0x54, 0x1f, 0x52, 0x7a, 0x1d, 0x19, 0xe4, 0x4c, 0x07,
+	0xee, 0x4e, 0x7f, 0x56, 0x1c, 0x58, 0x3a, 0xc0, 0x51, 0xff, 0x0b, 0x7f, 0x09, 0x63, 0x6d, 0xc3,
+	0xc3, 0xec, 0x9a, 0xd3, 0x3b, 0xf7, 0x5f, 0x6f, 0x5f, 0xfb, 0x7b, 0x7b, 0x03, 0x92, 0xc7, 0xab,
+	0xb1, 0xeb, 0xd6, 0xc8, 0x2b, 0x12, 0x61, 0x4f, 0x35, 0x82, 0x80, 0x04, 0x7e, 0xa4, 0x9a, 0xbe,
+	0xa7, 0x65, 0xd0, 0x18, 0x88, 0xf2, 0x35, 0xc8, 0x8f, 0x5c, 0x92, 0xc9, 0x44, 0x92, 0x54, 0x55,
+	0x98, 0x0e, 0x0c, 0x07, 0x37, 0x88, 0x7b, 0xc1, 0xf3, 0x8d, 0xeb, 0x53, 0xd4, 0x50, 0x77, 0x2f,
+	0x30, 0xba, 0x0d, 0xc0, 0x0e, 0x23, 0xff, 0x0c, 0xb7, 0x45, 0xf9, 0x99, 0xfb, 0x13, 0x6a, 0x50,
+	0x7e, 0x91, 0xa0, 0xda, 0x17, 0x9a, 0x04, 0x7e, 0x9b, 0x60, 0x54, 0x87, 0x85, 0x74, 0xc5, 0xc8,
+	0x92, 0xb4, 0x7c, 0x7d, 0xa8, 0xc2, 0xeb, 0x59, 0x04, 0xf4, 0x01, 0x2c, 0xb4, 0xf1, 0xcb, 0xa8,
+	0x71, 0xe9, 0x62, 0x73, 0xd4, 0x7c, 0xdc, 0xb9, 0xdc, 0x77, 0x50, 0xdd, 0xc3, 0x2d, 0x9c, 0xc7,
+	0x89, 0x91, 0x96, 0xf8, 0x2f, 0x09, 0xde, 0x3d, 0xf4, 0x02, 0x3f, 0xcc, 0xab, 0xf2, 0x09, 0x54,
+	0x84, 0x74, 0x1b, 0x56, 0xb3, 0xc1, 0x9b, 0x85, 0x20, 0xe1, 0xaa, 0x9a, 0xd3, 0x01, 0xd5, 0x23,
+	0x1e, 0xb1, 0xb7, 0x53, 0x67, 0xfe, 0x5f, 0xbc, 0xa5, 0x2f, 0x08, 0x90, 0xbd, 0x26, 0x37, 0xa1,
+	0x47, 0x30, 0x67, 0xfa, 0x6d, 0xdb, 0x75, 0x12, 0x4c, 0xce, 0xc1, 0x95, 0x5c, 0xcc, 0x5d, 0xe6,
+	0xdd, 0x01, 0x9c, 0x35, 0x7b, 0x7e, 0xdf, 0x99, 0x82, 0x09, 0x0e, 0xa3, 0xfc, 0x26, 0xc1, 0xed,
+	0x9c, 0x0f, 0x12, 0x6f, 0xbb, 0x0f, 0x13, 0x81, 0x41, 0x08, 0xb6, 0xc4, 0x93, 0xd6, 0xf2, 0x53,
+	0x66, 0xea, 0x4f, 0xe2, 0x56, 0xa4, 0x8b, 0x60, 0x0a, 0x63, 0x1b, 0x6e, 0x0b, 0x53, 0x71, 0x5f,
+	0x05, 0x86, 0x07, 0x2b, 0x17, 0xb0, 0xd8, 0xef, 0x1c, 0xed, 0xc3, 0x54, 0x70, 0x55, 0xcd, 0xeb,
+	0x9d, 0x50, 0x2a, 0x12, 0x1c, 0x86, 0x7e, 0xd8, 0xf0, 0x88, 0x23, 0xd8, 0x36, 0xc5, 0x0c, 0x47,
+	0xc4, 0x51, 0x5e, 0xc2, 0x22, 0xef, 0x90, 0xe2, 0xbd, 0x92, 0x37, 0xdf, 0x86, 0x49, 0xf1, 0x5c,
+	0x22, 0xb5, 0x52, 0x90, 0x5a, 0xc4, 0xf2, 0x3e, 0x93, 0xc4, 0x51, 0xfd, 0x25, 0xb4, 0xe9, 0xb4,
+	0xbf, 0x69, 0x61, 0x39, 0xb4, 0x94, 0x9f, 0x25, 0x58, 0x7c, 0x2a, 0x3a, 0xca, 0xa8, 0x53, 0xbf,
+	0x51, 0x6f, 0x7b, 0x06, 0x95, 0x03, 0x1c, 0x65, 0x2e, 0xb5, 0x97, 0x52, 0xdc, 0xc7, 0x4c, 0x71,
+	0xeb, 0xb0, 0x3a, 0x50, 0x71, 0x09, 0x0c, 0x97, 0xda, 0x57, 0x70, 0x93, 0xb6, 0x1c, 0x61, 0x1c,
+	0x49, 0x1b, 0xfb, 0x01, 0x16, 0xd3, 0x90, 0x82, 0xe2, 0x9f, 0xc1, 0x94, 0xa8, 0x46, 0xd2, 0xb7,
+	0x4a, 0x94, 0x51, 0xef, 0xc4, 0x94, 0xee, 0x54, 0xcf, 0x61, 0x91, 0x77, 0xaa, 0x7f, 0xa5, 0x60,
+	0x7f, 0x4a, 0xf0, 0x36, 0x97, 0x72, 0xb6, 0x66, 0xff, 0xb7, 0xa6, 0xb4, 0x02, 0x0b, 0x99, 0xec,
+	0x08, 0xc1, 0xd8, 0xa9, 0x4f, 0x22, 0x5e, 0x22, 0x9d, 0xfd, 0xac, 0x7c, 0x0b, 0xb3, 0xbd, 0x80,
+	0x48, 0x85, 0x9b, 0xc9, 0x75, 0x70, 0x78, 0xee, 0x9a, 0xb8, 0xd1, 0xad, 0xaa, 0x5e, 0x11, 0xb9,
+	0xf8, 0xc9, 0x63, 0xc3, 0xc3, 0x94, 0x4a, 0xb6, 0xdb, 0x12, 0x5e, 0x42, 0xec, 0xd4, 0x40, 0x0f,
+	0x15, 0x1b, 0x2a, 0x5c, 0xec, 0xba, 0x61, 0x9e, 0x25, 0x85, 0xfc, 0x04, 0xc6, 0xe8, 0xa6, 0x25,
+	0x6a, 0xf7, 0x5e, 0x01, 0x49, 0x68, 0x14, 0x17, 0x1a, 0x8b, 0x40, 0xb7, 0x60, 0x92, 0xfe, 0xdb,
+	0x55, 0xf7, 0x04, 0xfd, 0xf5, 0xd0, 0x52, 0x7e, 0x92, 0xa0, 0xc2, 0xa5, 0x3d, 0x9a, 0x44, 0x6f,
+	0x24, 0xe7, 0x3a, 0xcc, 0x1f, 0xe0, 0xa8, 0xf7, 0x22, 0xdb, 0x29, 0x6a, 0xd6, 0x18, 0x35, 0xef,
+	0xc0, 0xca, 0x40, 0x6a, 0x32, 0x0c, 0xce, 0xcb, 0xc7, 0x70, 0x83, 0xaa, 0x8e, 0x5a, 0x46, 0xa2,
+	0xe2, 0x10, 0x2a, 0x3d, 0x78, 0x42, 0xc2, 0x5b, 0x30, 0x4e, 0x3f, 0x3f, 0xd1, 0xef, 0xa0, 0x8a,
+	0xe9, 0xdc, 0xbb, 0xb4, 0x72, 0x4f, 0xa0, 0xc2, 0x95, 0x3b, 0xda, 0xda, 0x6c, 0xfe, 0x31, 0x07,
+	0xe3, 0x0f, 0xa9, 0x1f, 0xfa, 0x3e, 0x19, 0x2e, 0xe9, 0xd9, 0x84, 0xee, 0xe5, 0x8b, 0x29, 0x7f,
+	0x5b, 0x97, 0xcb, 0x0f, 0x3f, 0x9a, 0xb8, 0xdf, 0x4a, 0x5d, 0x90, 0xb8, 0x60, 0x03, 0x1f, 0x26,
+	0xf1, 0x0b, 0x36, 0x3b, 0x32, 0xc6, 0x8d, 0xdc, 0xac, 0x79, 0x3b, 0xf4, 0x30, 0x29, 0x7f, 0x94,
+	0xf8, 0x50, 0xc9, 0xec, 0x3a, 0xe8, 0x6e, 0x6e, 0xd6, 0xfc, 0x85, 0x5a, 0xbe, 0x37, 0x5c, 0x90,
+	0x20, 0xaa, 0x95, 0xcc, 0x80, 0xd2, 0xe5, 0x2e, 0x58, 0x6e, 0xe5, 0x77, 0x2e, 0x09, 0x7b, 0x9f,
+	0xfe, 0xf1, 0x8c, 0x9a, 0xc9, 0x28, 0xc8, 0x7e, 0xe9, 0x56, 0x6e, 0x9a, 0xa2, 0xb5, 0x56, 0x46,
+	0x49, 0x1e, 0xea, 0x59, 0x67, 0x7f, 0xc9, 0xa2, 0x26, 0xcc, 0xa5, 0xd6, 0x21, 0x54, 0x1b, 0x40,
+	0xd5, 0xf4, 0xd4, 0x93, 0x4b, 0xcc, 0x58, 0x9a, 0x23, 0xb5, 0xf7, 0x14, 0xe4, 0xe8, 0xb7, 0x1f,
+	0x95, 0xca, 0xf1, 0x1c, 0xa0, 0xbb, 0xc3, 0xa0, 0xf5, 0x22, 0x02, 0x5e, 0x01, 0xfd, 0x0c, 0x66,
+	0x7b, 0x77, 0x0e, 0xf4, 0x51, 0x21, 0x6b, 0x32, 0x93, 0x5b, 0xae, 0x95, 0xf4, 0x16, 0xe4, 0x3a,
+	0x81, 0xb9, 0xd4, 0x82, 0x51, 0x50, 0xae, 0x7e, 0x8b, 0x48, 0x2e, 0x9d, 0x9e, 0xc0, 0x7c, 0x7a,
+	0xb3, 0x40, 0xea, 0x00, 0x1e, 0x65, 0x3f, 0xa4, 0x1f, 0x81, 0x9e, 0x01, 0x74, 0x47, 0x6c, 0x41,
+	0xe1, 0x2f, 0xcd, 0x61, 0x79, 0x50, 0x7b, 0xa7, 0xd0, 0xdd, 0xa1, 0x5a, 0x00, 0x7d, 0x69, 0xf2,
+	0x0e, 0x86, 0xae, 0xc3, 0xa4, 0x98, 0x91, 0xe8, 0x4e, 0x11, 0x57, 0x86, 0x02, 0x6d, 0xc2, 0x74,
+	0x67, 0xa6, 0xa1, 0xb5, 0xc2, 0x47, 0xef, 0x9d, 0xa3, 0xf2, 0x7a, 0x19, 0x57, 0x41, 0x8e, 0x63,
+	0x80, 0xee, 0x0c, 0x2b, 0xa8, 0xc9, 0xa5, 0x41, 0x97, 0x47, 0x8b, 0x9d, 0x95, 0x6f, 0xde, 0x2f,
+	0xfc, 0xff, 0xbf, 0x07, 0xb1, 0x4d, 0x82, 0x66, 0x73, 0x82, 0x85, 0xdd, 0xfd, 0x27, 0x00, 0x00,
+	0xff, 0xff, 0x8c, 0x88, 0x2e, 0x05, 0x2d, 0x14, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1058,6 +1366,16 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type FleetClient interface {
+	// CreateChromePlatform creates a new chromePlatform.
+	CreateChromePlatform(ctx context.Context, in *CreateChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error)
+	// Update updates the chromePlatform
+	UpdateChromePlatform(ctx context.Context, in *UpdateChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error)
+	// Get retrieves the details of the chromePlatform
+	GetChromePlatform(ctx context.Context, in *GetChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error)
+	// List gets all the chromePlatforms
+	ListChromePlatforms(ctx context.Context, in *ListChromePlatformsRequest, opts ...grpc.CallOption) (*ListChromePlatformsResponse, error)
+	// Delete delete the chromePlatform
+	DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	// ImportChromePlatforms imports chrome platforms.
 	ImportChromePlatforms(ctx context.Context, in *ImportChromePlatformsRequest, opts ...grpc.CallOption) (*status.Status, error)
 	// CreateMachine creates a new machine.
@@ -1092,6 +1410,51 @@ type fleetPRPCClient struct {
 
 func NewFleetPRPCClient(client *prpc.Client) FleetClient {
 	return &fleetPRPCClient{client}
+}
+
+func (c *fleetPRPCClient) CreateChromePlatform(ctx context.Context, in *CreateChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error) {
+	out := new(proto1.ChromePlatform)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "CreateChromePlatform", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) UpdateChromePlatform(ctx context.Context, in *UpdateChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error) {
+	out := new(proto1.ChromePlatform)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "UpdateChromePlatform", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) GetChromePlatform(ctx context.Context, in *GetChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error) {
+	out := new(proto1.ChromePlatform)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "GetChromePlatform", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) ListChromePlatforms(ctx context.Context, in *ListChromePlatformsRequest, opts ...grpc.CallOption) (*ListChromePlatformsResponse, error) {
+	out := new(ListChromePlatformsResponse)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "ListChromePlatforms", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteChromePlatform", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *fleetPRPCClient) ImportChromePlatforms(ctx context.Context, in *ImportChromePlatformsRequest, opts ...grpc.CallOption) (*status.Status, error) {
@@ -1210,6 +1573,51 @@ func NewFleetClient(cc grpc.ClientConnInterface) FleetClient {
 	return &fleetClient{cc}
 }
 
+func (c *fleetClient) CreateChromePlatform(ctx context.Context, in *CreateChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error) {
+	out := new(proto1.ChromePlatform)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/CreateChromePlatform", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) UpdateChromePlatform(ctx context.Context, in *UpdateChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error) {
+	out := new(proto1.ChromePlatform)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/UpdateChromePlatform", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) GetChromePlatform(ctx context.Context, in *GetChromePlatformRequest, opts ...grpc.CallOption) (*proto1.ChromePlatform, error) {
+	out := new(proto1.ChromePlatform)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/GetChromePlatform", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) ListChromePlatforms(ctx context.Context, in *ListChromePlatformsRequest, opts ...grpc.CallOption) (*ListChromePlatformsResponse, error) {
+	out := new(ListChromePlatformsResponse)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/ListChromePlatforms", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) DeleteChromePlatform(ctx context.Context, in *DeleteChromePlatformRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteChromePlatform", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *fleetClient) ImportChromePlatforms(ctx context.Context, in *ImportChromePlatformsRequest, opts ...grpc.CallOption) (*status.Status, error) {
 	out := new(status.Status)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/ImportChromePlatforms", in, out, opts...)
@@ -1320,6 +1728,16 @@ func (c *fleetClient) DeleteRack(ctx context.Context, in *DeleteRackRequest, opt
 
 // FleetServer is the server API for Fleet service.
 type FleetServer interface {
+	// CreateChromePlatform creates a new chromePlatform.
+	CreateChromePlatform(context.Context, *CreateChromePlatformRequest) (*proto1.ChromePlatform, error)
+	// Update updates the chromePlatform
+	UpdateChromePlatform(context.Context, *UpdateChromePlatformRequest) (*proto1.ChromePlatform, error)
+	// Get retrieves the details of the chromePlatform
+	GetChromePlatform(context.Context, *GetChromePlatformRequest) (*proto1.ChromePlatform, error)
+	// List gets all the chromePlatforms
+	ListChromePlatforms(context.Context, *ListChromePlatformsRequest) (*ListChromePlatformsResponse, error)
+	// Delete delete the chromePlatform
+	DeleteChromePlatform(context.Context, *DeleteChromePlatformRequest) (*empty.Empty, error)
 	// ImportChromePlatforms imports chrome platforms.
 	ImportChromePlatforms(context.Context, *ImportChromePlatformsRequest) (*status.Status, error)
 	// CreateMachine creates a new machine.
@@ -1353,6 +1771,21 @@ type FleetServer interface {
 type UnimplementedFleetServer struct {
 }
 
+func (*UnimplementedFleetServer) CreateChromePlatform(ctx context.Context, req *CreateChromePlatformRequest) (*proto1.ChromePlatform, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method CreateChromePlatform not implemented")
+}
+func (*UnimplementedFleetServer) UpdateChromePlatform(ctx context.Context, req *UpdateChromePlatformRequest) (*proto1.ChromePlatform, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method UpdateChromePlatform not implemented")
+}
+func (*UnimplementedFleetServer) GetChromePlatform(ctx context.Context, req *GetChromePlatformRequest) (*proto1.ChromePlatform, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method GetChromePlatform not implemented")
+}
+func (*UnimplementedFleetServer) ListChromePlatforms(ctx context.Context, req *ListChromePlatformsRequest) (*ListChromePlatformsResponse, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method ListChromePlatforms not implemented")
+}
+func (*UnimplementedFleetServer) DeleteChromePlatform(ctx context.Context, req *DeleteChromePlatformRequest) (*empty.Empty, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method DeleteChromePlatform not implemented")
+}
 func (*UnimplementedFleetServer) ImportChromePlatforms(ctx context.Context, req *ImportChromePlatformsRequest) (*status.Status, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method ImportChromePlatforms not implemented")
 }
@@ -1392,6 +1825,96 @@ func (*UnimplementedFleetServer) DeleteRack(ctx context.Context, req *DeleteRack
 
 func RegisterFleetServer(s prpc.Registrar, srv FleetServer) {
 	s.RegisterService(&_Fleet_serviceDesc, srv)
+}
+
+func _Fleet_CreateChromePlatform_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateChromePlatformRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).CreateChromePlatform(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/CreateChromePlatform",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).CreateChromePlatform(ctx, req.(*CreateChromePlatformRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_UpdateChromePlatform_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateChromePlatformRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).UpdateChromePlatform(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/UpdateChromePlatform",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).UpdateChromePlatform(ctx, req.(*UpdateChromePlatformRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_GetChromePlatform_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChromePlatformRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).GetChromePlatform(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/GetChromePlatform",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).GetChromePlatform(ctx, req.(*GetChromePlatformRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_ListChromePlatforms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListChromePlatformsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).ListChromePlatforms(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/ListChromePlatforms",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).ListChromePlatforms(ctx, req.(*ListChromePlatformsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_DeleteChromePlatform_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteChromePlatformRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).DeleteChromePlatform(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/DeleteChromePlatform",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).DeleteChromePlatform(ctx, req.(*DeleteChromePlatformRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Fleet_ImportChromePlatforms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1614,6 +2137,26 @@ var _Fleet_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "unifiedfleet.api.v1.rpc.Fleet",
 	HandlerType: (*FleetServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateChromePlatform",
+			Handler:    _Fleet_CreateChromePlatform_Handler,
+		},
+		{
+			MethodName: "UpdateChromePlatform",
+			Handler:    _Fleet_UpdateChromePlatform_Handler,
+		},
+		{
+			MethodName: "GetChromePlatform",
+			Handler:    _Fleet_GetChromePlatform_Handler,
+		},
+		{
+			MethodName: "ListChromePlatforms",
+			Handler:    _Fleet_ListChromePlatforms_Handler,
+		},
+		{
+			MethodName: "DeleteChromePlatform",
+			Handler:    _Fleet_DeleteChromePlatform_Handler,
+		},
 		{
 			MethodName: "ImportChromePlatforms",
 			Handler:    _Fleet_ImportChromePlatforms_Handler,

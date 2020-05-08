@@ -27,6 +27,91 @@ type DecoratedFleet struct {
 	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
+func (s *DecoratedFleet) CreateChromePlatform(ctx context.Context, req *CreateChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateChromePlatform", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateChromePlatform(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateChromePlatform", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateChromePlatform(ctx context.Context, req *UpdateChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateChromePlatform", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateChromePlatform(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateChromePlatform", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetChromePlatform(ctx context.Context, req *GetChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetChromePlatform", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetChromePlatform(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetChromePlatform", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListChromePlatforms(ctx context.Context, req *ListChromePlatformsRequest) (rsp *ListChromePlatformsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListChromePlatforms", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListChromePlatforms(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListChromePlatforms", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteChromePlatform(ctx context.Context, req *DeleteChromePlatformRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteChromePlatform", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteChromePlatform(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteChromePlatform", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) ImportChromePlatforms(ctx context.Context, req *ImportChromePlatformsRequest) (rsp *status.Status, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
