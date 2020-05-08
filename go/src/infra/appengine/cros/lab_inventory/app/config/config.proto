@@ -48,6 +48,7 @@ message Config {
 
   // HaRT PubSub Configs
   HaRT hart = 14;
+  LuciAuthGroup pubsub_pushers = 15;
 }
 
 message AdminService {
