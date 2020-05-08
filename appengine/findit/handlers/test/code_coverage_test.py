@@ -127,10 +127,8 @@ def _CreateSampleComponentCoverageData(builder_name='linux-code-coverage'):
               'name': 'dir/',
               'summaries': _CreateSampleCoverageSummaryMetric()
           }],
-          'path':
-              'Component>Test',
-          'summaries':
-              _CreateSampleCoverageSummaryMetric()
+          'path': 'Component>Test',
+          'summaries': _CreateSampleCoverageSummaryMetric()
       })
 
 
@@ -154,8 +152,7 @@ def _CreateSampleRootComponentCoverageData(builder_name='linux-code-coverage'):
               'name': 'Component>Test',
               'summaries': _CreateSampleCoverageSummaryMetric()
           }],
-          'path':
-              '>>'
+          'path': '>>'
       })
 
 
@@ -309,8 +306,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
     # Mock get validated data from cloud storage.
     coverage_data = {
-        'dirs':
-            None,
+        'dirs': None,
         'files': [{
             'path':
                 '//dir/test.cc',
@@ -324,10 +320,8 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
                 'last': 2,
             }],
         }],
-        'summaries':
-            None,
-        'components':
-            None,
+        'summaries': None,
+        'components': None,
     }
     mocked_get_validated_data.return_value = coverage_data
 
@@ -369,9 +363,10 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(code_coverage, '_GetValidatedData')
   @mock.patch.object(code_coverage, 'GetV2Build')
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  def testProcessCLPatchDataMergingData(
-      self, _, mocked_get_build, mocked_get_validated_data,
-      mocked_abs_percentages, mocked_inc_percentages):
+  def testProcessCLPatchDataMergingData(self, _, mocked_get_build,
+                                        mocked_get_validated_data,
+                                        mocked_abs_percentages,
+                                        mocked_inc_percentages):
     # Mock buildbucket v2 API.
     build = mock.Mock()
     build.builder.project = 'chromium'
@@ -396,8 +391,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
     # Mock get validated data from cloud storage.
     coverage_data = {
-        'dirs':
-            None,
+        'dirs': None,
         'files': [{
             'path': '//dir/test.cc',
             'lines': [{
@@ -406,10 +400,8 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
                 'last': 1,
             }],
         }],
-        'summaries':
-            None,
-        'components':
-            None,
+        'summaries': None,
+        'components': None,
     }
     mocked_get_validated_data.return_value = coverage_data
 
@@ -465,7 +457,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value=True)
   @mock.patch.object(code_coverage.ProcessCodeCoverageData,
                      '_FetchAndSaveFileIfNecessary')
-  @mock.patch.object(code_coverage, '_RetrieveManifest')
+  @mock.patch.object(code_coverage, '_RetrieveChromeManifest')
   @mock.patch.object(code_coverage.CachedGitilesRepository, 'GetChangeLog')
   @mock.patch.object(code_coverage, '_GetValidatedData')
   @mock.patch.object(code_coverage, 'GetV2Build')
@@ -511,30 +503,26 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     # shard json.
     all_coverage_data = {
         'dirs': [{
-            'path':
-                '//dir/',
+            'path': '//dir/',
             'dirs': [],
             'files': [{
                 'path': '//dir/test.cc',
                 'name': 'test.cc',
                 'summaries': _CreateSampleCoverageSummaryMetric()
             }],
-            'summaries':
-                _CreateSampleCoverageSummaryMetric()
+            'summaries': _CreateSampleCoverageSummaryMetric()
         }],
         'file_shards': ['file_coverage/files1.json.gz'],
         'summaries':
             _CreateSampleCoverageSummaryMetric(),
         'components': [{
-            'path':
-                'Component>Test',
+            'path': 'Component>Test',
             'dirs': [{
                 'path': '//dir/',
                 'name': 'dir/',
                 'summaries': _CreateSampleCoverageSummaryMetric()
             }],
-            'summaries':
-                _CreateSampleCoverageSummaryMetric()
+            'summaries': _CreateSampleCoverageSummaryMetric()
         }],
     }
 
@@ -762,7 +750,6 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     mock_rebase_data.side_effect = RuntimeError('Some unknown http code')
     response = self.test_app.get(request_url, expect_errors=True)
     self.assertEqual(500, response.status_int)
-
 
   @mock.patch.object(code_coverage.code_coverage_util,
                      'RebasePresubmitCoverageDataBetweenPatchsets')

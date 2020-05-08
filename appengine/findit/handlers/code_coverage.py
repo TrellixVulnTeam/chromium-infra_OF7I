@@ -258,7 +258,36 @@ def _GetValidatedData(gs_path):  # pragma: no cover.
   return data
 
 
-def _RetrieveManifest(repo_url, revision, os_platform):  # pragma: no cover.
+def _AddDependencyToManifest(path, url, revision,
+                             manifest):  # pragma: no cover.
+  """Adds a dependency to the given manifest.
+
+  Args:
+    path (str): Path to the dependency repo.
+    url (str): The url to the Gitiles project of the root repository.
+    revision (str): The revision of the root repository.
+    manifest: A list of DependencyRepository.
+  """
+  assert path.startswith('//')
+  if not path.endswith('/'):
+    path = path + '/'
+
+  # Parse the url to extract the hostname and project name.
+  # For "https://chromium.google.com/chromium/src.git", we get
+  # ParseResult(netloc='chromium.google.com', path='/chromium/src.git', ...)
+  result = urlparse.urlparse(url)
+  assert result.path, 'No project extracted from %s' % url
+
+  manifest.append(
+      DependencyRepository(
+          path=path,
+          server_host=result.netloc,
+          project=result.path[1:],  # Strip the leading '/'.
+          revision=revision))
+
+
+def _RetrieveChromeManifest(repo_url, revision,
+                            os_platform):  # pragma: no cover.
   """Returns the manifest of all the dependencies for the given revision.
 
   Args:
@@ -276,31 +305,8 @@ def _RetrieveManifest(repo_url, revision, os_platform):  # pragma: no cover.
   """
   manifest = []
 
-  root_dir = 'src/'
-
-  def AddDependencyToManifest(path, url, revision):  # pragma: no cover.
-    if path.startswith(root_dir):
-      path = path[len(root_dir):]
-    assert not path.startswith('//')
-    path = '//' + path
-    if not path.endswith('/'):
-      path = path + '/'
-
-    # Parse the url to extract the hostname and project name.
-    # For "https://chromium.google.com/chromium/src.git", we get
-    # ParseResult(netloc='chromium.google.com', path='/chromium/src.git', ...)
-    result = urlparse.urlparse(url)
-    assert result.path, 'No project extracted from %s' % url
-
-    manifest.append(
-        DependencyRepository(
-            path=path,
-            server_host=result.netloc,
-            project=result.path[1:],  # Strip the leading '/'.
-            revision=revision))
-
   # Add the root repository.
-  AddDependencyToManifest('src/', repo_url, revision)
+  _AddDependencyToManifest('//', repo_url, revision, manifest)
 
   # Add all the dependent repositories.
   # DEPS fetcher now assumes chromium/src and master branch.
@@ -311,7 +317,11 @@ def _RetrieveManifest(repo_url, revision, os_platform):  # pragma: no cover.
     # Remove clause when crbug.com/929315 gets fixed.
     if path in _GetBlacklistedDeps().get(repo_url, []):
       continue
-    AddDependencyToManifest(path, dep.repo_url, dep.revision)
+
+    # Public DEPS paths have the src/ prefix, and they need to be striped to be
+    # converted to source absolute path format.
+    path = '//' + path[len('src/'):]
+    _AddDependencyToManifest(path, dep.repo_url, dep.revision, manifest)
 
   manifest.sort(key=lambda x: len(x.path), reverse=True)
   return manifest
@@ -354,8 +364,8 @@ def _ComposeSourceFileGsPath(report, file_path, revision):
   assert revision, 'A valid revision is required'
 
   dependency = _GetMatchedDependencyRepository(report, file_path)
-  assert dependency, (
-      '%s file does not belong to any dependency repository' % file_path)
+  assert dependency, ('%s file does not belong to any dependency repository' %
+                      file_path)
 
   # Calculate the relative path to the root of the dependency repository itself.
   relative_file_path = file_path[len(dependency.path):]
@@ -426,8 +436,8 @@ def _GetFileContentFromGitiles(report, file_path,
   assert revision, 'A valid revision is required'
 
   dependency = _GetMatchedDependencyRepository(report, file_path)
-  assert dependency, (
-      '%s file does not belong to any dependency repository' % file_path)
+  assert dependency, ('%s file does not belong to any dependency repository' %
+                      file_path)
 
   # Calculate the relative path to the root of the dependency repository itself.
   relative_file_path = file_path[len(dependency.path):]
@@ -529,13 +539,13 @@ class FetchSourceFile(BaseHandler):
     assert revision, 'revision is required'
 
     report = entity_util.GetEntityFromUrlsafeKey(report_key)
-    assert report, (
-        'Postsubmit report does not exist for urlsafe key' % report_key)
+    assert report, ('Postsubmit report does not exist for urlsafe key' %
+                    report_key)
 
     file_content = _GetFileContentFromGitiles(report, path, revision)
     if not file_content:
-      logging.error(
-          'Failed to get file from gitiles for %s@%s' % (path, revision))
+      logging.error('Failed to get file from gitiles for %s@%s' %
+                    (path, revision))
       return
 
     gs_path = _ComposeSourceFileGsPath(report, path, revision)
@@ -547,16 +557,22 @@ class ProcessCodeCoverageData(BaseHandler):
 
   def _ProcessFullRepositoryData(self, commit, data, full_gs_metadata_dir,
                                  builder, build_id, mimic_builder_name):
-
     # Load the commit log first so that we could fail fast before redo all.
     repo_url = 'https://%s/%s.git' % (commit.host, commit.project)
     change_log = CachedGitilesRepository(FinditHttpClient(),
                                          repo_url).GetChangeLog(commit.id)
     assert change_log is not None, 'Failed to retrieve the commit log'
 
-    # Load the manifest based on the DEPS file.
-    # TODO(crbug.com/921714): output the manifest as a build output property.
-    manifest = _RetrieveManifest(repo_url, commit.id, 'unix')
+    # TODO(crbug.com/921714): output the manifest as a build output property,
+    # and make it project agnostic.
+    if (commit.host == 'chromium.googlesource.com' and
+        commit.project == 'chromium/src'):
+      manifest = _RetrieveChromeManifest(repo_url, commit.id, 'unix')
+    else:
+      # For projects other than chromium/src, dependency repos are ignored for
+      # simplicity.
+      manifest = []
+      _AddDependencyToManifest('//', repo_url, commit.id, manifest)
 
     report = PostsubmitReport.Create(
         server_host=commit.host,
@@ -648,9 +664,10 @@ class ProcessCodeCoverageData(BaseHandler):
                 builder=mimic_builder_name,
                 data=group_data)
 
-            bq_row = _CreateBigqueryRow(
-                commit, change_log.committer.time, builder, group_data['path'],
-                group_data['summaries'], mimic_builder_name)
+            bq_row = _CreateBigqueryRow(commit, change_log.committer.time,
+                                        builder, group_data['path'],
+                                        group_data['summaries'],
+                                        mimic_builder_name)
             if actual_data_type == 'dirs':
               directory_bq_rows.append(bq_row)
             else:
@@ -698,8 +715,8 @@ class ProcessCodeCoverageData(BaseHandler):
           'ref':
               commit.ref or 'refs/heads/master',
           'builder':
-              '%s/%s/%s' % (builder.project, builder.bucket,
-                            mimic_builder_name),
+              '%s/%s/%s' %
+              (builder.project, builder.bucket, mimic_builder_name),
       })
 
     monitoring.code_coverage_report_timestamp.set(
@@ -712,8 +729,8 @@ class ProcessCodeCoverageData(BaseHandler):
             'ref':
                 commit.ref or 'refs/heads/master',
             'builder':
-                '%s/%s/%s' % (builder.project, builder.bucket,
-                              mimic_builder_name),
+                '%s/%s/%s' %
+                (builder.project, builder.bucket, mimic_builder_name),
             'is_success':
                 report.visible,
         })
@@ -1368,8 +1385,9 @@ class ServeCodeCoverageData(BaseHandler):
     warning = platform_info_map[platform].get('warning')
 
     if list_reports:
-      return self._ServeProjectViewCoverageData(
-          luci_project, host, project, ref, revision, platform, bucket, builder)
+      return self._ServeProjectViewCoverageData(luci_project, host, project,
+                                                ref, revision, platform, bucket,
+                                                builder)
 
     template = None
     if not data_type:
@@ -1420,8 +1438,9 @@ class ServeCodeCoverageData(BaseHandler):
           bucket=bucket,
           builder=builder)
       if not entity:
-        warning = ('File "%s" does not exist in this report, defaulting to root'
-                   % path)
+        warning = (
+            'File "%s" does not exist in this report, defaulting to root' %
+            path)
         logging.warning(warning)
         path = '//'
         data_type = 'dirs'
@@ -1437,8 +1456,9 @@ class ServeCodeCoverageData(BaseHandler):
           bucket=bucket,
           builder=builder)
       if not entity:
-        warning = ('Path "%s" does not exist in this report, defaulting to root'
-                   % path)
+        warning = (
+            'Path "%s" does not exist in this report, defaulting to root' %
+            path)
         logging.warning(warning)
         path = default_path
         entity = SummaryCoverageData.Get(
