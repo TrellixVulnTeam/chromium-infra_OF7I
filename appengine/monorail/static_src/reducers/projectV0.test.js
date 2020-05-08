@@ -6,6 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import {prpcClient} from 'prpc-client-instance.js';
 import * as projectV0 from './projectV0.js';
+import {store} from './base.js';
 import * as example from 'shared/test/constants-projectV0.js';
 import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
 
@@ -852,6 +853,40 @@ describe('project action creators', () => {
       type: projectV0.FETCH_VISIBLE_MEMBERS_SUCCESS,
       projectName: 'chromium',
       visibleMembers: {userRefs: [{userId: '123'}]},
+    });
+  });
+});
+
+describe('helpers', () => {
+  beforeEach(() => {
+    sinon.stub(prpcClient, 'call');
+  });
+
+  afterEach(() => {
+    prpcClient.call.restore();
+  });
+
+  describe('fetchFieldPerms', () => {
+    it('fetch field permissions', async () => {
+      const projectName = 'proj';
+      const fieldDefs = [
+        {
+          fieldRef: {
+            fieldName: 'testField',
+            fieldId: 1,
+            type: 'ENUM_TYPE',
+          },
+        },
+      ];
+      const response = {};
+      prpcClient.call.returns(Promise.resolve(response));
+
+      await store.dispatch(projectV0.fetchFieldPerms(projectName, fieldDefs));
+
+      const args = {names: ['projects/proj/fieldDefs/testField']};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v1.Permissions',
+          'BatchGetPermissionSets', args);
     });
   });
 });

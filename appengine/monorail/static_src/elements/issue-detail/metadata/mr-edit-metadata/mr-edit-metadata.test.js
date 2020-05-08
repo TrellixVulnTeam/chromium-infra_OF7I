@@ -9,6 +9,7 @@ import {ISSUE_EDIT_PERMISSION, ISSUE_EDIT_SUMMARY_PERMISSION,
   ISSUE_EDIT_STATUS_PERMISSION, ISSUE_EDIT_OWNER_PERMISSION,
   ISSUE_EDIT_CC_PERMISSION,
 } from 'shared/permissions.js';
+import {FIELD_DEF_VALUE_EDIT} from 'reducers/permissions.js';
 import {store, resetState} from 'reducers/base.js';
 
 let element;
@@ -495,6 +496,35 @@ describe('mr-edit-metadata', () => {
     assert.deepEqual(element.delta, {
       summary: 'newfangled fancy summary',
     });
+  });
+
+  it('custom fields the user cannot edit should be hidden', async () => {
+    element.projectName = 'proj';
+    const fieldName = 'projects/proj/fieldDefs/normalFd';
+    const restrictedFieldName = 'projects/proj/fieldDefs/cantEditFd';
+    element._permissions = {
+      [fieldName]: {permissions: [FIELD_DEF_VALUE_EDIT]},
+      [restrictedFieldName]: {permissions: []}};
+    element.fieldDefs = [
+      {
+        fieldRef: {
+          fieldName: 'normalFd',
+          fieldId: 1,
+          type: 'ENUM_TYPE',
+        },
+      },
+      {
+        fieldRef: {
+          fieldName: 'cantEditFd',
+          fieldId: 2,
+          type: 'ENUM_TYPE',
+        },
+      },
+    ];
+
+    await element.updateComplete;
+    assert.isFalse(element.shadowRoot.querySelector('#normalFdInput').hidden);
+    assert.isTrue(element.shadowRoot.querySelector('#cantEditFdInput').hidden);
   });
 
   it('changing custom fields produces delta', async () => {

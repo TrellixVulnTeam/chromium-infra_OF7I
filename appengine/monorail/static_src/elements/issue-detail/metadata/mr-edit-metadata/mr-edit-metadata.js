@@ -21,12 +21,13 @@ import {fieldTypes} from 'shared/issue-fields.js';
 import {displayNameToUserRef, labelStringToRef, componentStringToRef,
   componentRefsToStrings, issueStringToRef, issueStringToBlockingRef,
   issueRefToString, issueRefsToStrings, filteredUserDisplayNames,
-  valueToFieldValue,
+  valueToFieldValue, fieldDefToName,
 } from 'shared/convertersV0.js';
 import {isEmptyObject, equalsIgnoreCase} from 'shared/helpers.js';
 import {NON_EDITING_KEY_EVENTS} from 'shared/dom-helpers.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import * as issueV0 from 'reducers/issueV0.js';
+import * as permissions from 'reducers/permissions.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as ui from 'reducers/ui.js';
 import '../mr-edit-field/mr-edit-field.js';
@@ -584,8 +585,9 @@ export class MrEditMetadata extends connectStore(LitElement) {
    */
   _renderCustomField(field) {
     if (!field || !field.fieldRef) return '';
+    const userCanEdit = this._userCanEdit(field);
     const {fieldRef, isNiche, docstring, isMultivalued} = field;
-    const isHidden = !this.showNicheFields && isNiche;
+    const isHidden = (!this.showNicheFields && isNiche) || !userCanEdit;
 
     let acType;
     if (fieldRef.type === fieldTypes.USER_TYPE) {
@@ -650,6 +652,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
       ownerName: {type: String},
       labelNames: {type: Array},
       derivedLabels: {type: Array},
+      _permissions: {type: Array},
       phaseName: {type: String},
       projectConfig: {type: Object},
       projectName: {type: String},
@@ -684,6 +687,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.issueRef = {};
     this.fieldGroups = HARDCODED_FIELD_GROUPS;
 
+    this._permissions = {};
     this.presubmitDebounceTimeOut = DEBOUNCED_PRESUBMIT_TIME_OUT;
     this.saving = false;
     this.isDirty = false;
@@ -775,6 +779,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this.fieldValueMap = issueV0.fieldValueMap(state);
     this.issueType = issueV0.type(state);
     this.issueRef = issueV0.viewedIssueRef(state);
+    this._permissions = permissions.byName(state);
     this.presubmitResponse = issueV0.presubmitResponse(state);
     this.predictedComponent = issueV0.predictedComponent(state);
     this.projectConfig = projectV0.viewedConfig(state);
@@ -900,6 +905,19 @@ export class MrEditMetadata extends connectStore(LitElement) {
     } catch (e) {
       this.error = `Error while loading file for attachment: ${e.message}`;
     }
+  }
+
+  /**
+   * @param {FieldDef} field
+   * @return {boolean}
+   * @private
+   */
+  _userCanEdit(field) {
+    const fieldName = fieldDefToName(this.projectName, field);
+    if (!this._permissions[fieldName] ||
+        !this._permissions[fieldName].permissions) return false;
+    const userPerms = this._permissions[fieldName].permissions;
+    return userPerms.includes(permissions.FIELD_DEF_VALUE_EDIT);
   }
 
   /**

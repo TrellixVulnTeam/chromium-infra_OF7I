@@ -2984,9 +2984,10 @@ class WorkEnv(object):
   def ListFieldDefPermissions(self, field_id, project_id):
     # type:(int, int) -> List[str]
     """Return the list of permissions the current user has for the fieldDef."""
-    # TODO(crbug/monorail/4993): Make sure anon users can at most view the
-    # field.
     project = self.GetProject(project_id)
+    # TODO(crbug/monorail/7614): The line below was added temporarily while this
+    # bug is fixed.
+    self.mc.LookupLoggedInUserPerms(project)
     field = self.GetFieldDef(field_id, project)
     if permissions.CanEditFieldDef(self.mc.auth.effective_ids, self.mc.perms,
                                    project, field):

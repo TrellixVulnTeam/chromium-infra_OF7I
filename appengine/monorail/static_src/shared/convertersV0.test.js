@@ -9,7 +9,7 @@ import {displayNameToUserRef, userIdOrDisplayNameToUserRef,
   userNameToId, userV3ToRef, labelStringToRef,
   labelRefToString, labelRefsToStrings, labelRefsToOneWordLabels,
   isOneWordLabel, _makeRestrictionLabel, restrictionLabelsForPermissions,
-  statusRefToString, statusRefsToStrings,
+  fieldDefToName, statusRefToString, statusRefsToStrings,
   componentStringToRef, componentRefToString, componentRefsToStrings,
   issueStringToRef, issueStringToBlockingRef, issueRefToString,
   issueRefToUrl, fieldNameToLabelPrefix, labelNameToLabelPrefixes,
@@ -195,6 +195,14 @@ describe('labelNameToLabelValue', () => {
     assert.deepEqual(labelNameToLabelValue('test-hello', 'TEST'), 'hello');
     assert.deepEqual(labelNameToLabelValue('test-hello', 'tEsT'), 'hello');
     assert.deepEqual(labelNameToLabelValue('TEST-hello', 'test'), 'hello');
+  });
+});
+
+describe('fieldDefToName', () => {
+  it('converts fieldDef', () => {
+    const fieldDef = {fieldRef: {fieldName: 'field-name'}};
+    const actual = fieldDefToName('project-name', fieldDef);
+    assert.equal(actual, 'projects/project-name/fieldDefs/field-name');
   });
 });
 

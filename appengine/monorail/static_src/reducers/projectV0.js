@@ -5,11 +5,12 @@
 import {combineReducers} from 'redux';
 import {createSelector} from 'reselect';
 import {createReducer, createRequestReducer} from './redux-helpers.js';
+import * as permissions from 'reducers/permissions.js';
 import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS, defaultIssueFieldMap,
   parseColSpec, stringValuesForIssueField} from 'shared/issue-fields.js';
 import {hasPrefix, removePrefix} from 'shared/helpers.js';
 import {fieldNameToLabelPrefix,
-  labelNameToLabelPrefixes, labelNameToLabelValue,
+  labelNameToLabelPrefixes, labelNameToLabelValue, fieldDefToName,
   restrictionLabelsForPermissions} from 'shared/convertersV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import 'shared/typedef.js';
@@ -451,6 +452,7 @@ export const fetch = (projectName) => async (dispatch) => {
     customPermissionsPromise]);
   config.labelDefs = [...config.labelDefs,
     ...restrictionLabelsForPermissions(customPermissions)];
+  dispatch(fetchFieldPerms(config.projectName, config.fieldDefs));
   // eslint-disable-next-line new-cap
   window.TKR_populateAutocomplete(config, visibleMembers, customPermissions);
 };
@@ -555,4 +557,21 @@ const fetchTemplates = (projectName) => async (dispatch) => {
   } catch (error) {
     dispatch({type: FETCH_TEMPLATES_FAILURE, error});
   }
+};
+
+// Helpers
+
+/**
+ * Helper to fetch field permissions.
+ * @param {string} projectName The name of the project where the fields are.
+ * @param {Array<FieldDef>} fieldDefs
+ * @return {function(function): Promise<void>}
+ */
+export const fetchFieldPerms = (projectName, fieldDefs) => async (dispatch) => {
+  const fieldDefsNames = [];
+  fieldDefs.forEach((fd) => {
+    const fieldDefName = fieldDefToName(projectName, fd);
+    fieldDefsNames.push(fieldDefName);
+  });
+  await dispatch(permissions.batchGet(fieldDefsNames));
 };

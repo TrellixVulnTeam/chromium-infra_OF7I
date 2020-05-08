@@ -22,6 +22,12 @@ import 'shared/typedef.js';
 
 /** @typedef {import('redux').AnyAction} AnyAction */
 
+// Permissions
+
+// Field Permissions
+export const FIELD_DEF_EDIT = 'FIELD_DEF_EDIT';
+export const FIELD_DEF_VALUE_EDIT = 'FIELD_DEF_VALUE_EDIT';
+
 // Actions
 export const BATCH_GET_START = 'permissions/BATCH_GET_START';
 export const BATCH_GET_SUCCESS = 'permissions/BATCH_GET_SUCCESS';
