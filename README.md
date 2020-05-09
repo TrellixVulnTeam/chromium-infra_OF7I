@@ -40,7 +40,7 @@ The rest of this page is specific to this repo.
 
 ## Integrating tests with test.py
 
-If you've added a new module, integrate your tests with test.py:
+If you've added a new module, run your tests with test.py:
 
 1. Create a .coveragerc file in the root directory of the module you want to
    test. Take a look at another .coveragerc to see what to include in that.
