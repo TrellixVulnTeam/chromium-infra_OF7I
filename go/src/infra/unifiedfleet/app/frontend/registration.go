@@ -245,5 +245,15 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 	if err := api.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
+	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	if err != nil {
+		return nil, machineDBConnectionFailureStatus.Err()
+	}
+	logging.Debugf(ctx, "Querying machine-db to get the list of nics")
+	resp, err := mdbClient.ListNICs(ctx, &crimson.ListNICsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListMachines").Err()
+	}
+	logging.Debugf(ctx, "Importing %d nics", len(resp.Nics))
 	return successStatus.Proto(), nil
 }

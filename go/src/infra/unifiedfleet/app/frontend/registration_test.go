@@ -755,6 +755,29 @@ func TestDeleteRack(t *testing.T) {
 	})
 }
 
+func TestImportNics(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import nics", t, func() {
+		Convey("happy path", func() {
+			req := &api.ImportNicsRequest{
+				Source: &api.ImportNicsRequest_MachineDbSource{
+					MachineDbSource: &api.MachineDBSource{
+						Host: "fake_host",
+					},
+				},
+			}
+			res, err := tf.Fleet.ImportNics(ctx, req)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
+		})
+		// Invalid & Empty machine DB hosts are tested in TestImportMachines
+		// Skip testing here
+	})
+}
+
 func getMachineNames(res OpResults) []string {
 	names := make([]string, 0)
 	for _, r := range res {
