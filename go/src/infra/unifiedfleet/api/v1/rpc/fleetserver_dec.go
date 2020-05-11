@@ -332,3 +332,88 @@ func (s *DecoratedFleet) ImportNics(ctx context.Context, req *ImportNicsRequest)
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateMachineLSE(ctx context.Context, req *CreateMachineLSERequest) (rsp *proto1.MachineLSE, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateMachineLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateMachineLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateMachineLSE", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateMachineLSE(ctx context.Context, req *UpdateMachineLSERequest) (rsp *proto1.MachineLSE, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateMachineLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateMachineLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateMachineLSE", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetMachineLSE(ctx context.Context, req *GetMachineLSERequest) (rsp *proto1.MachineLSE, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetMachineLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetMachineLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetMachineLSE", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListMachineLSEs(ctx context.Context, req *ListMachineLSEsRequest) (rsp *ListMachineLSEsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListMachineLSEs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListMachineLSEs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListMachineLSEs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteMachineLSE(ctx context.Context, req *DeleteMachineLSERequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteMachineLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteMachineLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteMachineLSE", rsp, err)
+	}
+	return
+}

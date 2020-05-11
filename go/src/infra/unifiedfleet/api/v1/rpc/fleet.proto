@@ -16,6 +16,7 @@ import "go.chromium.org/luci/grpc/proto/google/rpc/status.proto";
 import "infra/unifiedfleet/api/v1/proto/machine.proto";
 import "infra/unifiedfleet/api/v1/proto/rack.proto";
 import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
+import "infra/unifiedfleet/api/v1/proto/machine_lse.proto";
 
 service Fleet {
     // CreateChromePlatform creates a new chromePlatform.
@@ -74,6 +75,21 @@ service Fleet {
 
   // ImportNics imports nics info.
   rpc ImportNics(ImportNicsRequest) returns (google.rpc.Status);
+  
+    // CreateMachineLSE creates a new machineLSE
+  rpc CreateMachineLSE(CreateMachineLSERequest) returns (proto.MachineLSE);
+
+  // Update updates the machineLSE
+  rpc UpdateMachineLSE(UpdateMachineLSERequest) returns (proto.MachineLSE);
+
+  // Get retrieves the details of the machineLSE
+  rpc GetMachineLSE(GetMachineLSERequest) returns (proto.MachineLSE);
+
+  // List gets all the machineLSEs
+  rpc ListMachineLSEs(ListMachineLSEsRequest) returns (ListMachineLSEsResponse);
+
+  // Delete delete the machineLSE
+  rpc DeleteMachineLSE(DeleteMachineLSERequest) returns (google.protobuf.Empty);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -300,5 +316,67 @@ message DeleteRackRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Rack" }
+  ];
+}
+
+// Contains the required information for creating a MachineLSE represented in
+// the database.
+message CreateMachineLSERequest {
+  // The machineLSE to create.
+  proto.MachineLSE machineLSE = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the MachineLSE, which will become the final component of
+  // the MachineLSE's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string machineLSE_id = 2;
+}
+
+message UpdateMachineLSERequest {
+  // The machineLSE to update.
+  proto.MachineLSE machineLSE = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetMachineLSERequest {
+  // The name of the machineLSE to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSE" }
+  ];
+}
+
+message ListMachineLSEsRequest {
+  // The maximum number of machineLSEs to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 machineLSEs will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListMachineLSEs` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListMachineLSEs` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListMachineLSEsResponse {
+  // The machineLSEs from datastore.
+  repeated proto.MachineLSE machineLSEs = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteMachineLSERequest {
+  // The name of the MachineLSE to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSE" }
   ];
 }

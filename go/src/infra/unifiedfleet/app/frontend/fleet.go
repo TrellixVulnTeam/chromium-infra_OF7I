@@ -26,7 +26,8 @@ const (
 	rackCollection           string = "racks"
 	chromePlatformCollection string = "chromeplatforms"
 	// https://cloud.google.com/datastore/docs/concepts/limits
-	importPageSize int = 500
+	importPageSize       int    = 500
+	machineLSECollection string = "machineLSEs"
 )
 
 // CfgInterfaceFactory is a contsructor for a luciconfig.Interface

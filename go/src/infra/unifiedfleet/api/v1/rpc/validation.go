@@ -24,6 +24,7 @@ const (
 	MachineNameFormat        string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat           string = "Invalid input - Entity Name pattern should be racks/{rack}."
 	ChromePlatformNameFormat string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
+	MachineLSENameFormat     string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
 )
 
 var (
@@ -35,6 +36,7 @@ var idRegex = regexp.MustCompile(`^[a-zA-Z0-9-_]{4,63}$`)
 var chromePlatformRegex = regexp.MustCompile(`chromeplatforms\.*`)
 var machineRegex = regexp.MustCompile(`machines\.*`)
 var rackRegex = regexp.MustCompile(`racks\.*`)
+var machineLSERegex = regexp.MustCompile(`machineLSEs\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -148,6 +150,44 @@ func (r *ListRacksRequest) Validate() error {
 // Validate validates input requests of DeleteRack.
 func (r *DeleteRackRequest) Validate() error {
 	return validateResourceName(rackRegex, RackNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateMachineLSE.
+func (r *CreateMachineLSERequest) Validate() error {
+	if r.MachineLSE == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.MachineLSEId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateMachineLSE.
+func (r *UpdateMachineLSERequest) Validate() error {
+	if r.MachineLSE == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.MachineLSE.GetName())
+}
+
+// Validate validates input requests of GetMachineLSE.
+func (r *GetMachineLSERequest) Validate() error {
+	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.Name)
+}
+
+// Validate validates input requests of ListMachineLSEs.
+func (r *ListMachineLSEsRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteMachineLSE.
+func (r *DeleteMachineLSERequest) Validate() error {
+	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {
