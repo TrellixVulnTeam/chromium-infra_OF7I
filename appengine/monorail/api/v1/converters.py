@@ -1067,7 +1067,7 @@ class Converter(object):
     return api_fvs
 
   def ConvertProject(self, project):
-    # type: (proto.project_object.Project) ->
+    # type: (proto.project_pb2.Project) ->
     #     api_proto.project_objects_pb2.Project
     """Convert a protorpc Project to its protoc Project."""
 
@@ -1079,7 +1079,7 @@ class Converter(object):
         thumbnail_url=project_helpers.GetThumbnailUrl(project.logo_gcs_id))
 
   def ConvertProjects(self, projects):
-    # type: (Sequence[proto.project_object.Project]) ->
+    # type: (Sequence[proto.project_pb2.Project]) ->
     #     Sequence[api_proto.project_objects_pb2.Project]
     """Convert a Sequence of protorpc Projects to protoc Projects."""
     return [self.ConvertProject(proj) for proj in projects]
