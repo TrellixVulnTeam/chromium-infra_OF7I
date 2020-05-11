@@ -315,3 +315,20 @@ func (s *DecoratedFleet) DeleteRack(ctx context.Context, req *DeleteRackRequest)
 	}
 	return
 }
+
+func (s *DecoratedFleet) ImportNics(ctx context.Context, req *ImportNicsRequest) (rsp *status.Status, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ImportNics", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ImportNics(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ImportNics", rsp, err)
+	}
+	return
+}

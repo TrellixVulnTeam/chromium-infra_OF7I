@@ -71,6 +71,9 @@ service Fleet {
 
   // Delete delete the rack
   rpc DeleteRack(DeleteRackRequest) returns (google.protobuf.Empty);
+
+  // ImportNics imports nics info.
+  rpc ImportNics(ImportNicsRequest) returns (google.rpc.Status);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -133,6 +136,13 @@ message DeleteChromePlatformRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/ChromePlatform" }
   ];
+}
+
+message ImportNicsRequest {
+  oneof source {
+    MachineDBSource machine_db_source = 1;
+    ConfigSource config_source = 2;
+  }
 }
 
 message ImportChromePlatformsRequest {

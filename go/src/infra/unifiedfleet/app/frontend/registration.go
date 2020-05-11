@@ -115,11 +115,8 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 	source := req.GetMachineDbSource()
-	if source == nil {
-		return nil, emptyMachineDBSourceStatus.Err()
-	}
-	if source.GetHost() == "" {
-		return nil, invalidHostInMachineDBSourceStatus.Err()
+	if err := api.ValidateMachineDBSource(source); err != nil {
+		return nil, err
 	}
 	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
@@ -237,4 +234,16 @@ func (fs *FleetServerImpl) DeleteRack(ctx context.Context, req *api.DeleteRackRe
 	name := util.RemovePrefix(req.Name)
 	err = registration.DeleteRack(ctx, name)
 	return &empty.Empty{}, err
+}
+
+// ImportNics imports the nics info in batch.
+func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRequest) (response *status.Status, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	source := req.GetMachineDbSource()
+	if err := api.ValidateMachineDBSource(source); err != nil {
+		return nil, err
+	}
+	return successStatus.Proto(), nil
 }

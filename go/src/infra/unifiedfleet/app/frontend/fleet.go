@@ -70,14 +70,12 @@ func (cs *FleetServerImpl) getImportPageSize() int {
 var (
 	machineDBServiceFailure = "Fail to call machine DB service: %s"
 
-	successStatus                      = status.New(codes.OK, "")
-	emptyConfigSourceStatus            = status.New(codes.InvalidArgument, "Invalid argument - Config source is empty")
-	emptyMachineDBSourceStatus         = status.New(codes.InvalidArgument, "Invalid argument - MachineDB source is empty")
-	invalidHostInMachineDBSourceStatus = status.New(codes.InvalidArgument, "Invalid argument - Host in MachineDB source is empty/invalid")
-	invalidConfigFileContentStatus     = status.New(codes.FailedPrecondition, "The config file format is invalid")
-	configServiceFailureStatus         = status.New(codes.Internal, "Fail to get configs from luci config service")
-	machineDBConnectionFailureStatus   = status.New(codes.Internal, "Fail to initialize connection to machine DB")
-	machineDBServiceFailureStatus      = func(service string) *status.Status {
+	successStatus                    = status.New(codes.OK, "")
+	emptyConfigSourceStatus          = status.New(codes.InvalidArgument, "Invalid argument - Config source is empty")
+	invalidConfigFileContentStatus   = status.New(codes.FailedPrecondition, "The config file format is invalid")
+	configServiceFailureStatus       = status.New(codes.Internal, "Fail to get configs from luci config service")
+	machineDBConnectionFailureStatus = status.New(codes.Internal, "Fail to initialize connection to machine DB")
+	machineDBServiceFailureStatus    = func(service string) *status.Status {
 		return status.New(codes.Internal, fmt.Sprintf(machineDBServiceFailure, service))
 	}
 	insertDatastoreFailureStatus = status.New(codes.Internal, "Fail to insert chrome platforms into datastore in importing")

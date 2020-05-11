@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
 	"infra/unifiedfleet/app/util"
 )
 
@@ -23,6 +24,11 @@ const (
 	MachineNameFormat        string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat           string = "Invalid input - Entity Name pattern should be racks/{rack}."
 	ChromePlatformNameFormat string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
+)
+
+var (
+	emptyMachineDBSourceStatus         = status.New(codes.InvalidArgument, "Invalid argument - MachineDB source is empty")
+	invalidHostInMachineDBSourceStatus = status.New(codes.InvalidArgument, "Invalid argument - Host in MachineDB source is empty/invalid")
 )
 
 var idRegex = regexp.MustCompile(`^[a-zA-Z0-9-_]{4,63}$`)
@@ -161,6 +167,17 @@ func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name
 func validatePageSize(pageSize int32) error {
 	if pageSize < 0 {
 		return status.Errorf(codes.InvalidArgument, InvalidPageSize)
+	}
+	return nil
+}
+
+// ValidateMachineDBSource validates the MachineDBSource
+func ValidateMachineDBSource(machinedb *MachineDBSource) error {
+	if machinedb == nil {
+		return emptyMachineDBSourceStatus.Err()
+	}
+	if machinedb.GetHost() == "" {
+		return invalidHostInMachineDBSourceStatus.Err()
 	}
 	return nil
 }
