@@ -67,7 +67,6 @@ const (
 )
 
 func discoverTestCases(t *testing.T) []testCase {
-	t.Helper()
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("load test data: %s", err.Error())
@@ -106,7 +105,6 @@ func discoverTestCases(t *testing.T) []testCase {
 }
 
 func loadSpecification(t *testing.T, path string, m proto.Message) {
-	t.Helper()
 	r, err := os.Open(path)
 	if err != nil {
 		t.Fatalf("load proto from %s: %s", path, err.Error())
@@ -121,7 +119,7 @@ func loadSpecification(t *testing.T, path string, m proto.Message) {
 // Failures to load golden file contents are not considered fatal so that the
 // golden file can be updated later.
 func loadGoldenFile(t *testing.T, tc testCase) []string {
-	t.Helper()
+
 	data := []string{}
 	var s []byte
 	if tc.goldenFileFound {
@@ -139,7 +137,6 @@ func loadGoldenFile(t *testing.T, tc testCase) []string {
 }
 
 func writeGoldenFile(t *testing.T, f string, data []string) {
-	t.Helper()
 	s, err := json.MarshalIndent(data, "", "")
 	if err != nil {
 		t.Fatalf("write golden file %s: %s", f, err.Error())
