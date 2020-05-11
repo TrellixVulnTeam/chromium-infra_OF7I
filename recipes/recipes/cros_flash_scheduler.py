@@ -180,13 +180,14 @@ def get_closest_available_version(api, board, image_type, lkgm_base):
   return None, None
 
 
-def trigger_flash(api, bot, xbuddy_path, flashing_builder,
+def trigger_flash(api, bot, device_type, xbuddy_path, flashing_builder,
                   flashing_builder_bucket):
   build_req = {
       'bucket': flashing_builder_bucket,
       'parameters': {
           'builder_name': flashing_builder,
           'properties': {
+              'board': device_type,
               'xbuddy_path': xbuddy_path
           },
           'swarming': {
@@ -288,8 +289,8 @@ def RunSteps(api, swarming_server, swarming_pool, device_type, bb_host,
   with api.step.nest('flash bots'):
     for bot in bots_to_flash:
       flashing_requests.add(
-          trigger_flash(api, bot, latest_version_xbuddy, flashing_builder,
-                        flashing_builder_bucket))
+          trigger_flash(api, bot, device_type, latest_version_xbuddy,
+                        flashing_builder, flashing_builder_bucket))
 
   # Wait for all the flashing jobs. Nest it under a single step since there
   # will be several buildbucket.get_build() step calls.

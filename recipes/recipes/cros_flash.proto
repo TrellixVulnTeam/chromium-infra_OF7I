@@ -10,4 +10,6 @@ package recipes.infra.cros_flash;
 message Inputs {
   // Xbuddy path of the image to flash the device with.
   string xbuddy_path = 1;
+  // Board of the device to flash.
+  string board = 2;
 }

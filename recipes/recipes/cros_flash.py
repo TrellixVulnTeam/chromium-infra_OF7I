@@ -98,6 +98,7 @@ def RunSteps(api, properties):
           'flash',
           CROS_DUT_HOSTNAME,
           properties.xbuddy_path,
+          '--board', properties.board,
           '--disable-rootfs-verification',  # Needed to add ssh ID below.
           '--clobber-stateful',  # Fully wipe the device.
           '--force',  # Force yes to all Y/N prompts.
