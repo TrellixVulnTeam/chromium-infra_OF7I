@@ -179,6 +179,9 @@ class FieldDetail(servlet.Servlet):
 
     field_helpers.ParsedFieldDefAssertions(mr, parsed)
 
+    if not parsed.is_restricted_field:
+      assert not editor_ids, 'Editors are only for restricted fields.'
+
     if field_def.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
       assert not (
           parsed.is_restricted_field), 'Approval fields cannot be restricted.'
@@ -228,10 +231,8 @@ class FieldDetail(servlet.Servlet):
         date_action=parsed.date_action_str,
         docstring=parsed.field_docstring,
         admin_ids=admin_ids,
-        # TODO(juanescobar): Set to editor_ids when feature is launched.
-        # Also include tests.
-        editor_ids=[],
-        is_restricted_field=False)
+        editor_ids=editor_ids,
+        is_restricted_field=parsed.is_restricted_field)
 
     if field_def.field_type == tracker_pb2.FieldTypes.APPROVAL_TYPE:
       approval_defs = field_helpers.ReviseApprovals(

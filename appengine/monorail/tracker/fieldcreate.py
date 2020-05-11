@@ -182,12 +182,10 @@ class FieldCreate(servlet.Servlet):
         parsed.date_action_str,
         parsed.field_docstring,
         admin_ids,
-        # TODO(juanescobar): Set to editor_ids when feature is launched.
-        # Also include tests.
-        [],
+        editor_ids,
         approval_id,
         parsed.is_phase_field,
-        is_restricted_field=False)
+        is_restricted_field=parsed.is_restricted_field)
     if parsed.field_type_str == 'approval_type':
       revised_approvals = field_helpers.ReviseApprovals(
           field_id, approver_ids, parsed.survey, config)

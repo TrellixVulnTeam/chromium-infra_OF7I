@@ -301,6 +301,44 @@
     </td>
   </tr>
 
+  [is field_def.type_name "APPROVAL_TYPE"][else]
+
+  <tr id="editors_restriction">
+    <th>Restriction
+      <i id="editors_tooltip" class="material-icons inline-icon" style="font-size:14px; vertical-align: text-bottom"
+        title="Project owners and field admins can always edit the values of a custom field.">
+      info_outline</i> :
+    </th>
+    <td style="display:flex; align-items:center">
+      [if-any allow_edit]
+        <input id="editors_checkbox" type="checkbox" name="is_restricted_field" class="acob"
+               [if-any field_def.is_restricted_field]checked="checked"[end]>
+        Restrict users that can edit values of this custom field.
+      [else]
+        [if-any field_def.is_restricted_field]Yes[else]No[end]
+      [end]
+    </td>
+  </tr>
+  <tr id="editors_input"
+      [if-any field_def.is_restricted_field][else]style="display:none"[end]>
+    <th>Editors:</th>
+    <td>
+      [if-any allow_edit]
+        <input id="member_editors" name="editor_names" size="75" value="[initial_editors]"
+               autocomplete="off" class="acob"
+               [if-any field_def.is_restricted_field][else]disabled[end]>
+        <span class="fielderror" style="margin-left:1em">
+            [if-any errors.field_editors][errors.field_editors][end]
+        </span>
+      [else]
+        [for field_def.editors]
+          <div>[include "../framework/user-link.ezt" field_def.editors]</div>
+        [end]
+      [end]
+    </td>
+  </tr>
+
+  [end]
 
   <tr>
     <td></td>
@@ -343,6 +381,20 @@ runOnLoad(function() {
      });
   }
 
+  [is field_def.type_name "APPROVAL_TYPE"][else]
+  //Enable editors input only when restricting the field.
+  document.getElementById('editors_checkbox').onchange = function() {
+    var member_editors = document.getElementById('member_editors');
+    var editors_input = document.getElementById('editors_input');
+    if (this.checked) {
+      editors_input.style.display = '';
+    } else {
+      editors_input.style.display = 'none';
+    }
+    member_editors.disabled = !this.checked;
+  };
+  [end]
+
   var acobElements = document.getElementsByClassName("acob");
   for (var i = 0; i < acobElements.length; ++i) {
      var el = acobElements[[]i];
@@ -352,9 +404,11 @@ runOnLoad(function() {
      });
   }
 
+  [is field_def.type_name "APPROVAL_TYPE"]
   $('member_approvers').addEventListener("focus", function(event) {
     _acof(event);
   });
+  [end]
 
   if ($("needs_member")) {
     $("needs_member").addEventListener("change", function(event) {

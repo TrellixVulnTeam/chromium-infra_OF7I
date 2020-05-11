@@ -227,14 +227,15 @@ class FieldDetailTest(unittest.TestCase):
         field_type=['INT_TYPE'],
         min_value=['2'],
         admin_names=['gatsby@example.com'],
-        editor_names=[''])
+        editor_names=['sport@example.com'],
+        is_restricted_field=['Yes'])
     self.servlet._ProcessEditField(
         self.mr, post_data, self.config, self.fd)
     fd = tracker_bizobj.FindFieldDef('CPU', self.config)
     self.assertEqual('CPU', fd.field_name)
     self.assertEqual(2, fd.min_value)
     self.assertEqual([111], fd.admin_ids)
-    self.assertEqual([], fd.editor_ids)
+    self.assertEqual([222], fd.editor_ids)
 
   def testProcessEditField_Reject(self):
     post_data = fake.PostData(
@@ -267,14 +268,28 @@ class FieldDetailTest(unittest.TestCase):
     self.assertIsNone(fd.min_value)
     self.assertIsNone(fd.max_value)
 
+  def testProcessEditField_Reject_EditorsForNonRestrictedField(self):
+    # This method tests that an exception is raised
+    # when trying to add editors to a non restricted field.
+    post_data = fake.PostData(
+        name=['CPU'],
+        field_type=['INT_TYPE'],
+        min_value=['2'],
+        admin_names=[''],
+        editor_names=['gatsby@example.com'])
+
+    self.assertRaises(
+        AssertionError, self.servlet._ProcessEditField, self.mr, post_data,
+        self.config, self.fd)
+
   def testProcessEditField_RejectAssertions_1(self):
-    #This method tests that an exception is raised
-    #when trying to add editors to a non restricted field.
+    # This method tests that an exception is raised
+    # when trying to add editors to an approval field.
     post_data = fake.PostData(
         name=['CPU'],
         approver_names=['gatsby@example.com'],
         admin_names=[''],
-        editor_names=['gatsby@example.com'])
+        editor_names=['sports@example.com'])
 
     self.assertRaises(
         AssertionError, self.servlet._ProcessEditField, self.mr, post_data,

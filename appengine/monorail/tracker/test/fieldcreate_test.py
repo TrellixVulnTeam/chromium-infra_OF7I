@@ -101,7 +101,9 @@ class FieldCreateTest(unittest.TestCase):
         docstring=['It is just some field'],
         applicable_type=['Defect'],
         date_action=['no_action'],
-        admin_names=['gatsby@example.com'])
+        admin_names=['gatsby@example.com'],
+        editor_names=['sport@example.com'],
+        is_restricted_field=['Yes'])
     url = self.servlet.ProcessFormData(self.mr, post_data)
     self.assertTrue('/adminLabels?saved=1&' in url)
     config = self.services.config.GetProjectConfig(
@@ -120,8 +122,7 @@ class FieldCreateTest(unittest.TestCase):
     self.assertEqual('Defect', fd.applicable_type)
     self.assertEqual('', fd.applicable_predicate)
     self.assertEqual([111], fd.admin_ids)
-    self.assertEqual([], fd.editor_ids)
-
+    self.assertEqual([222], fd.editor_ids)
 
   def testProcessFormData_Reject_EditorsForNonRestrictedField(self):
     # This method tests that an exception is raised
@@ -164,7 +165,7 @@ class FieldCreateTest(unittest.TestCase):
         AssertionError, self.servlet.ProcessFormData, self.mr, post_data)
 
   @mock.patch('framework.servlet.Servlet.PleaseCorrect')
-  def testProcessFormData_RejectAssertions_3(self, fake_servlet_pc):
+  def testProcessFormData_RejectAssertions(self, fake_servlet_pc):
     #This method tests when errors are found using when the
     #field_helpers.ParsedFieldDefAssertions is triggered.
     post_data = fake.PostData(

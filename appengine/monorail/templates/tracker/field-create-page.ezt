@@ -206,6 +206,29 @@
     </td>
   </tr>
 
+  <tr id="field_restriction">
+    <th>Restriction
+      <i id="editors_tooltip" class="material-icons inline-icon" style="font-size:14px; vertical-align: text-bottom"
+        title="Project owners and field admins can always edit the values of a custom field.">
+      info_outline</i> :
+    </th>
+    <td style="display:flex; align-items:center">
+      <input id="editors_checkbox" type="checkbox" name="is_restricted_field" class="acob"
+             [if-any initial_is_restricted_field]checked="checked"[end]>
+      Restrict users that can edit values of this custom field.
+    </td>
+  </tr>
+  <tr id="editors_input" style="display:none">
+    <th>Editors:</th>
+    <td>
+      <input id="member_editors" name="editor_names" size="75" value="[initial_editors]"
+             autocomplete="off" class="acob" disabled>
+      <span class="fielderror" style="margin-left:1em">
+          [if-any errors.field_editors][errors.field_editors][end]
+      </span>
+    </td>
+  </tr>
+
   <tr>
     <td></td>
     <td>
@@ -300,12 +323,28 @@ runOnLoad(function() {
 
     let approval_row_display = (new_type == 'approval_type') ? '' : 'none';
     let approval_row_hide = (new_type == 'approval_type') ? 'none' : '';
+    let new_type_is_approval = (new_type == 'approval_type');
     document.getElementById(
         'multi_row').style.display = approval_row_hide;
     document.getElementById(
         'importance_row').style.display = approval_row_hide;
     document.getElementById(
         'applicable_row').style.display = approval_row_hide;
+    document.getElementById(
+        'field_restriction').style.display = approval_row_hide;
+    if (new_type_is_approval) {
+      document.getElementById('editors_input').style.display = 'none';
+    } else {
+      if (document.getElementById('editors_checkbox').checked) {
+        document.getElementById('editors_input').style.display = '';
+      } else {
+        document.getElementById('editors_input').style.display = 'none';
+      }
+    }
+    document.getElementById(
+        'editors_checkbox').disabled = new_type_is_approval;
+    document.getElementById(
+        'member_editors').disabled = new_type_is_approval || !document.getElementById('editors_checkbox').checked;
     document.getElementById('approval_row').style.display = approval_row_display;
     document.getElementById('approval_row2').style.display = approval_row_display;
   }
@@ -324,6 +363,18 @@ runOnLoad(function() {
     if (!enable) needs_perm.value = '';
   }
   enableNeedsPerm(false);
+
+  //Enable editors input only when restricting the field.
+  document.getElementById('editors_checkbox').onchange = function() {
+    let member_editors = document.getElementById('member_editors');
+    let editors_input = document.getElementById('editors_input');
+    if (this.checked) {
+      editors_input.style.display = '';
+    } else {
+      editors_input.style.display = 'none';
+    }
+    member_editors.disabled = !this.checked;
+  };
 
   let needs_member = document.getElementById("needs_member");
   if (needs_member)
