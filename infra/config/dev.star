@@ -222,7 +222,7 @@ luci.notifier_template(
     name = 'test',
     body = """{{.Build.Builder | formatBuilderID}} notification
 
-<a href="{{.Build.ViewUrl}}">Build {{.Build.Number}}</a>
+<a href="{{buildUrl .}}">Build {{.Build.Number}}</a>
 has completed.
 
 {{template "steps" .}}
