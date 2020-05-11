@@ -35,13 +35,6 @@ type NewFunc func(context.Context, proto.Message) (FleetEntity, error)
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
 
-// FakeAncestorKey returns a fake datastore key
-// A query in transaction requires to have Ancestor filter, see
-// https://cloud.google.com/appengine/docs/standard/python/datastore/query-restrictions#queries_inside_transactions_must_include_ancestor_filters
-func FakeAncestorKey(ctx context.Context, entityName string) *datastore.Key {
-	return datastore.MakeKey(ctx, entityName, "key")
-}
-
 // exists checks if a list of fleet entities exist in datastore.
 func exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
 	res, err := datastore.Exists(ctx, entities)
