@@ -135,7 +135,9 @@ func (fs *FleetServerImpl) DeleteChromePlatform(ctx context.Context, req *api.De
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	err = configuration.DeleteChromePlatform(ctx, name)
+	return &empty.Empty{}, err
 }
 
 // ImportChromePlatforms imports the Chrome Platform in batch.

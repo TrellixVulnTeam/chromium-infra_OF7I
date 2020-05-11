@@ -307,6 +307,124 @@ func TestListChromePlatforms(t *testing.T) {
 	})
 }
 
+func TestDeleteChromePlatform(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteChromePlatform", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Delete chromePlatform by existing ID with references", func() {
+			chromePlatform1 := mockChromePlatform("", "Camera")
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform:   chromePlatform1,
+				ChromePlatformId: "chromePlatform-1",
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform1)
+
+			chromeBrowserMachine1 := &proto.Machine{
+				Name: util.AddPrefix(machineCollection, "machine-1"),
+				Device: &proto.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+						ChromePlatform: "chromePlatform-1",
+					},
+				},
+			}
+			mreq := &api.CreateMachineRequest{
+				Machine:   chromeBrowserMachine1,
+				MachineId: "machine-1",
+			}
+			mresp, merr := tf.Fleet.CreateMachine(tf.C, mreq)
+			So(merr, ShouldBeNil)
+			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
+
+			/* TODO(eshwarn) : Remove comment when kvm create/get is added
+			kvm1 := &proto.KVM{
+				Name: util.AddPrefix(kvmCollection, "kvm-1"),
+				ChromePlatform: "chromePlatform-1",
+			}
+			kreq := &api.CreateKVMMachineRequest{
+				Kvm:   kvm1,
+				KvmId: "kvm-1",
+			}
+			kresp, kerr := tf.Fleet.CreateKVM(tf.C, kreq)
+			So(kerr, ShouldBeNil)
+			So(kresp, ShouldResembleProto, kvm1)
+			*/
+
+			dreq := &api.DeleteChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-1"),
+			}
+			_, err = tf.Fleet.DeleteChromePlatform(tf.C, dreq)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
+
+			greq := &api.GetChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-1"),
+			}
+			res, err := tf.Fleet.GetChromePlatform(tf.C, greq)
+			So(res, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(res, ShouldResembleProto, chromePlatform1)
+		})
+
+		Convey("Delete chromePlatform by existing ID without references", func() {
+			chromePlatform2 := mockChromePlatform("", "Camera")
+			req := &api.CreateChromePlatformRequest{
+				ChromePlatform:   chromePlatform2,
+				ChromePlatformId: "chromePlatform-2",
+			}
+			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromePlatform2)
+
+			dreq := &api.DeleteChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-2"),
+			}
+			_, err = tf.Fleet.DeleteChromePlatform(tf.C, dreq)
+			So(err, ShouldBeNil)
+
+			greq := &api.GetChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-2"),
+			}
+			res, err := tf.Fleet.GetChromePlatform(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Delete chromePlatform by non-existing ID", func() {
+			req := &api.DeleteChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-2"),
+			}
+			_, err := tf.Fleet.DeleteChromePlatform(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Delete chromePlatform - Invalid input empty name", func() {
+			req := &api.DeleteChromePlatformRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Delete chromePlatform - Invalid input invalid characters", func() {
+			req := &api.DeleteChromePlatformRequest{
+				Name: util.AddPrefix(chromePlatformCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteChromePlatform(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
 func TestImportChromePlatforms(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
