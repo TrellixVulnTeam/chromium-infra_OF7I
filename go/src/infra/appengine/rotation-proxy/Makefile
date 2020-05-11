@@ -19,4 +19,4 @@ deploy-prod:
 	$(GAE_PY) upload -A chrome-ops-rotation-proxy
 
 gen:
-	cproto proto
+	cd proto && go generate

@@ -16,3 +16,4 @@ package rotationproxy
 
 //go:generate cproto
 //go:generate proto-gae -type Rotation -type Shift -type OncallPerson
+//go:generate svcdec -type RotationProxyServiceServer
