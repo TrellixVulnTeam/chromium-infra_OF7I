@@ -1133,3 +1133,23 @@ class Converter(object):
     return project_objects_pb2.ProjectMember(
         name=name,
         role=project_objects_pb2.ProjectMember.ProjectRole.Value(role))
+
+  def ConvertLabelDefs(self, label_defs, project_id):
+    # type: (Sequence[proto.tracker_pb2.LabelDef], int) ->
+    #     Sequence[api_proto.project_objects_pb2.LabelDef]
+    """Convert protorpc LabelDefs to protoc LabelDefs"""
+    resource_names_dict = rnc.ConvertLabelDefNames(
+        self.cnxn, [ld.label for ld in label_defs], project_id, self.services)
+
+    api_lds = []
+    for ld in label_defs:
+      state = project_objects_pb2.LabelDef.LabelDefState.Value('ACTIVE')
+      if ld.deprecated:
+        state = project_objects_pb2.LabelDef.LabelDefState.Value('DEPRECATED')
+      api_lds.append(
+          project_objects_pb2.LabelDef(
+              name=resource_names_dict.get(ld.label),
+              value=ld.label,
+              docstring=ld.label_docstring,
+              state=state))
+    return api_lds

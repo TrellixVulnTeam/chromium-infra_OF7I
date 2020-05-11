@@ -209,7 +209,14 @@ class ConverterFunctionsTest(unittest.TestCase):
         label='yellow-tasket',
         label_docstring='Deprecated tasket choice for yellow enum field',
         deprecated=True)
-    predefined_labels = [self.labeldef_1, self.labeldef_2, self.labeldef_3]
+    self.labeldef_5 = tracker_pb2.LabelDef(
+        label='mont-blanc',
+        label_docstring='test label doc string for mont-blanc',
+        deprecated=True)
+    predefined_labels = [
+        self.labeldef_1, self.labeldef_2, self.labeldef_3, self.labeldef_4,
+        self.labeldef_5
+    ]
     self.services.config.UpdateConfig(
         self.cnxn,
         self.project_1,
@@ -1614,3 +1621,30 @@ class ConverterFunctionsTest(unittest.TestCase):
     actual = self.converter.ConvertApprovalDefs(
         [input_ad], self.project_1.project_id)
     self.assertEqual(actual, [])
+
+  def testConvertLabelDefs(self):
+    """We can convert LabelDefs"""
+    actual = self.converter.ConvertLabelDefs(
+        [self.labeldef_1, self.labeldef_5], self.project_1.project_id)
+    resource_names_dict = rnc.ConvertLabelDefNames(
+        self.cnxn, [self.labeldef_1.label, self.labeldef_5.label],
+        self.project_1.project_id, self.services)
+    expected_0_name = resource_names_dict.get(self.labeldef_1.label)
+    expected_0 = project_objects_pb2.LabelDef(
+        name=expected_0_name,
+        value=self.labeldef_1.label,
+        docstring=self.labeldef_1.label_docstring,
+        state=project_objects_pb2.LabelDef.LabelDefState.Value('ACTIVE'))
+    self.assertEqual(expected_0, actual[0])
+    expected_1_name = resource_names_dict.get(self.labeldef_5.label)
+    expected_1 = project_objects_pb2.LabelDef(
+        name=expected_1_name,
+        value=self.labeldef_5.label,
+        docstring=self.labeldef_5.label_docstring,
+        state=project_objects_pb2.LabelDef.LabelDefState.Value('DEPRECATED'))
+    self.assertEqual(expected_1, actual[1])
+
+  def testConvertLabelDefs_Empty(self):
+    """We can handle empty input case"""
+    actual = self.converter.ConvertLabelDefs([], self.project_1.project_id)
+    self.assertEqual([], actual)
