@@ -302,6 +302,7 @@ func getLabMetaFromLabel(dutID string, l *inventory.SchedulableLabels) (labconfi
 	p := l.GetPeripherals()
 	if p != nil {
 		labMeta.ServoType = p.GetServoType()
+		labMeta.SmartUsbhub = p.GetSmartUsbhub()
 	}
 
 	return &labMeta
