@@ -153,3 +153,32 @@ func TestListMachineLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteMachineLSE(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	machineLSE1 := mockMachineLSE("machineLSE-1")
+	Convey("DeleteMachineLSE", t, func() {
+		Convey("Delete machineLSE by existing ID", func() {
+			resp, cerr := CreateMachineLSE(ctx, machineLSE1)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE1)
+			err := DeleteMachineLSE(ctx, "machineLSE-1")
+			So(err, ShouldBeNil)
+			res, err := GetMachineLSE(ctx, "machineLSE-1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete machineLSE by non-existing ID", func() {
+			err := DeleteMachineLSE(ctx, "machineLSE-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete machineLSE - invalid ID", func() {
+			err := DeleteMachineLSE(ctx, "")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}

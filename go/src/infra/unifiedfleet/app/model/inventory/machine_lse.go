@@ -119,6 +119,11 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string) (res
 	return
 }
 
+// DeleteMachineLSE deletes the machineLSE in datastore
+func DeleteMachineLSE(ctx context.Context, id string) error {
+	return fleetds.Delete(ctx, &fleet.MachineLSE{Name: id}, newMachineLSEEntity)
+}
+
 func putMachineLSE(ctx context.Context, machineLSE *fleet.MachineLSE, update bool) (*fleet.MachineLSE, error) {
 	machineLSE.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, machineLSE, newMachineLSEEntity, update)

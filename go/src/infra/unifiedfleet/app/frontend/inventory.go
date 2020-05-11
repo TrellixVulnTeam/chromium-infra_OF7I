@@ -100,5 +100,7 @@ func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *api.Delete
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	err = inventory.DeleteMachineLSE(ctx, name)
+	return &empty.Empty{}, err
 }

@@ -289,3 +289,60 @@ func TestListMachineLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteMachineLSE(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteMachineLSE", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		machineLSE1 := mockMachineLSE("")
+		req := &api.CreateMachineLSERequest{
+			MachineLSE:   machineLSE1,
+			MachineLSEId: "machineLSE-1",
+		}
+		resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, machineLSE1)
+		Convey("Delete machineLSE by existing ID", func() {
+			req := &api.DeleteMachineLSERequest{
+				Name: util.AddPrefix(machineLSECollection, "machineLSE-1"),
+			}
+			_, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			greq := &api.GetMachineLSERequest{
+				Name: util.AddPrefix(machineLSECollection, "machineLSE-1"),
+			}
+			res, err := tf.Fleet.GetMachineLSE(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete machineLSE by non-existing ID", func() {
+			req := &api.DeleteMachineLSERequest{
+				Name: util.AddPrefix(machineLSECollection, "machineLSE-2"),
+			}
+			_, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete machineLSE - Invalid input empty name", func() {
+			req := &api.DeleteMachineLSERequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Delete machineLSE - Invalid input invalid characters", func() {
+			req := &api.DeleteMachineLSERequest{
+				Name: util.AddPrefix(machineLSECollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
