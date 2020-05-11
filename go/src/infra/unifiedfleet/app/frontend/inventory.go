@@ -59,7 +59,14 @@ func (fs *FleetServerImpl) GetMachineLSE(ctx context.Context, req *api.GetMachin
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	machineLSE, err := inventory.GetMachineLSE(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machineLSE.Name = util.AddPrefix(machineLSECollection, machineLSE.Name)
+	return machineLSE, err
 }
 
 // ListMachineLSEs list the machineLSEs information from database.
@@ -70,7 +77,19 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *api.ListMac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := inventory.ListMachineLSEs(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, machineLSE := range result {
+		machineLSE.Name = util.AddPrefix(machineLSECollection, machineLSE.Name)
+	}
+	return &api.ListMachineLSEsResponse{
+		MachineLSEs:   result,
+		NextPageToken: nextPageToken,
+	}, nil
 }
 
 // DeleteMachineLSE deletes the machineLSE from database.

@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"fmt"
 	"testing"
 
 	proto "infra/unifiedfleet/api/v1/proto"
@@ -152,6 +153,139 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestGetMachineLSE(t *testing.T) {
+	t.Parallel()
+	Convey("GetMachineLSE", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		machineLSE1 := mockMachineLSE("machineLSE-1")
+		req := &api.CreateMachineLSERequest{
+			MachineLSE:   machineLSE1,
+			MachineLSEId: "machineLSE-1",
+		}
+		resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, machineLSE1)
+		Convey("Get machineLSE by existing ID", func() {
+			req := &api.GetMachineLSERequest{
+				Name: util.AddPrefix(machineLSECollection, "machineLSE-1"),
+			}
+			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE1)
+		})
+		Convey("Get machineLSE by non-existing ID", func() {
+			req := &api.GetMachineLSERequest{
+				Name: util.AddPrefix(machineLSECollection, "machineLSE-2"),
+			}
+			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get machineLSE - Invalid input empty name", func() {
+			req := &api.GetMachineLSERequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get machineLSE - Invalid input invalid characters", func() {
+			req := &api.GetMachineLSERequest{
+				Name: util.AddPrefix(machineLSECollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListMachineLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("ListMachineLSEs", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		machineLSEs := make([]*proto.MachineLSE, 0, 4)
+		for i := 0; i < 4; i++ {
+			machineLSE1 := mockMachineLSE("machineLSE-1")
+			req := &api.CreateMachineLSERequest{
+				MachineLSE:   machineLSE1,
+				MachineLSEId: fmt.Sprintf("machineLSE-%d", i),
+			}
+			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE1)
+			machineLSEs = append(machineLSEs, resp)
+		}
+
+		Convey("ListMachineLSEs - page_size negative", func() {
+			req := &api.ListMachineLSEsRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListMachineLSEs - page_token invalid", func() {
+			req := &api.ListMachineLSEsRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("ListMachineLSEs - Full listing Max PageSize", func() {
+			req := &api.ListMachineLSEsRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs)
+		})
+
+		Convey("ListMachineLSEs - Full listing with no pagination", func() {
+			req := &api.ListMachineLSEsRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs)
+		})
+
+		Convey("ListMachineLSEs - listing with pagination", func() {
+			req := &api.ListMachineLSEsRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs[:3])
+
+			req = &api.ListMachineLSEsRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListMachineLSEs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs[3:])
 		})
 	})
 }

@@ -5,6 +5,7 @@
 package inventory
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -77,6 +78,78 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestGetMachineLSE(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	machineLSE1 := mockMachineLSE("machineLSE-1")
+	Convey("GetMachineLSE", t, func() {
+		Convey("Get machineLSE by existing ID", func() {
+			resp, err := CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE1)
+			resp, err = GetMachineLSE(ctx, "machineLSE-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE1)
+		})
+		Convey("Get machineLSE by non-existing ID", func() {
+			resp, err := GetMachineLSE(ctx, "machineLSE-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get machineLSE - invalid ID", func() {
+			resp, err := GetMachineLSE(ctx, "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestListMachineLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("ListMachineLSEs", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		machineLSEs := make([]*proto.MachineLSE, 0, 4)
+		for i := 0; i < 4; i++ {
+			machineLSE1 := mockMachineLSE(fmt.Sprintf("machineLSE-%d", i))
+			resp, err := CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE1)
+			machineLSEs = append(machineLSEs, resp)
+		}
+		Convey("List machineLSEs - page_token invalid", func() {
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 5, "abc")
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List machineLSEs - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEs)
+		})
+
+		Convey("List machineLSEs - listing with pagination", func() {
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 3, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEs[:3])
+
+			resp, _, err = ListMachineLSEs(ctx, 2, nextPageToken)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEs[3:])
 		})
 	})
 }
