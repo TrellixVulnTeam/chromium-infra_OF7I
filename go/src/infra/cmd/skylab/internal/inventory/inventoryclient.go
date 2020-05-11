@@ -33,6 +33,7 @@ type Client interface {
 	GetDutInfo(context.Context, string, bool) (*inventory.DeviceUnderTest, error)
 	DeleteDUTs(context.Context, []string, *authcli.Flags, skycmdlib.RemovalReason, io.Writer) (bool, error)
 	BatchUpdateDUTs(context.Context, *invV1Api.BatchUpdateDutsRequest, io.Writer) error
+	FilterDUTHostnames(context.Context, []string) ([]string, error)
 }
 
 type inventoryClientV2 struct {
@@ -163,4 +164,23 @@ func (client *inventoryClientV2) updateAssets(ctx context.Context, deletedDevice
 			fmt.Fprintf(b, "AssetId: %s , New Location: %s\n", assetResult.GetAsset().GetId(), assetResult.GetAsset().GetLocation().String())
 		}
 	}
+}
+
+// FilterDUTHostnames produces a list of only the DUT hostnames that exist.
+func (client *inventoryClientV2) FilterDUTHostnames(ctx context.Context, hostnames []string) ([]string, error) {
+	var out []string
+	req := &invV2Api.GetCrosDevicesRequest{}
+	for _, hostname := range hostnames {
+		req.Ids = append(req.Ids, &invV2Api.DeviceID{Id: &invV2Api.DeviceID_Hostname{Hostname: hostname}})
+	}
+	rsp, err := client.ic.GetCrosDevices(ctx, req)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to get DUT information").Err()
+	}
+	for _, item := range rsp.Data {
+		hostname := item.GetLabConfig().GetDut().GetHostname()
+		out = append(out, hostname)
+
+	}
+	return out, nil
 }

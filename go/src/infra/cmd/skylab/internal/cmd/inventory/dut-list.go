@@ -16,6 +16,7 @@ import (
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	flagx "infra/cmd/skylab/internal/flagx"
+	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/swarming"
@@ -104,8 +105,20 @@ func (c *dutListRun) innerRun(a subcommands.Application, args []string, env subc
 			return err
 		}
 	}
+
+	ic := inv.NewInventoryClient(hc, c.envFlags.Env())
+
+	var rawSwarmingHosts []string
 	for _, l := range listed {
-		fmt.Printf("%s\n", l.String())
+		rawSwarmingHosts = append(rawSwarmingHosts, l.String())
+	}
+	hosts, err := ic.FilterDUTHostnames(ctx, rawSwarmingHosts)
+	if err != nil {
+		return err
+	}
+
+	for _, l := range hosts {
+		fmt.Printf("%s\n", l)
 	}
 
 	return nil
