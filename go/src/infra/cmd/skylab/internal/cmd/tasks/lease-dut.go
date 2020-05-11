@@ -58,6 +58,7 @@ Do not build automation around this subcommand.`,
 		// We allow arbitrary dimensions to be passed in via the -dims flag.
 		// e.g. -dims a=4,b=7
 		c.Flags.Var(flagx.Dims(&c.dims), "dims", "List of additional dimensions in format key1=value1,key2=value2,... .")
+		c.Flags.BoolVar(&c.evilLease, "evil-lease", false, "Evil lease allows the user to bypass the lease per model limit if there's an emergency.")
 		return c
 	},
 }
@@ -71,6 +72,7 @@ type leaseDutRun struct {
 	model        string
 	board        string
 	dims         map[string]string
+	evilLease    bool
 }
 
 func (c *leaseDutRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -172,7 +174,7 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 	if maxTasksPerModel <= 0 {
 		return errors.Reason("Leases by model are disabled").Err()
 	}
-	if len(tasks) > maxTasksPerModel {
+	if !c.evilLease && len(tasks) > maxTasksPerModel {
 		return fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), c.model, maxTasksPerModel)
 	}
 
