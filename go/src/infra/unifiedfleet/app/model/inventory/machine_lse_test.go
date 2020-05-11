@@ -182,3 +182,77 @@ func TestDeleteMachineLSE(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchUpdateMachineLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("BatchUpdateMachineLSEs", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		machineLSEs := make([]*proto.MachineLSE, 0, 4)
+		for i := 0; i < 4; i++ {
+			machineLSE1 := mockMachineLSE(fmt.Sprintf("machineLSE-%d", i))
+			resp, err := CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE1)
+			machineLSEs = append(machineLSEs, resp)
+		}
+		Convey("BatchUpdate all machineLSEs", func() {
+			resp, err := BatchUpdateMachineLSEs(ctx, machineLSEs)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEs)
+		})
+		Convey("BatchUpdate existing and invalid machineLSEs", func() {
+			machineLSE5 := mockMachineLSE("")
+			machineLSEs = append(machineLSEs, machineLSE5)
+			resp, err := BatchUpdateMachineLSEs(ctx, machineLSEs)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestQueryMachineLSEByPropertyName(t *testing.T) {
+	t.Parallel()
+	Convey("QueryMachineLSEByPropertyName", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		dummymachineLSE := &proto.MachineLSE{
+			Name: "machineLSE-1",
+		}
+		machineLSE1 := &proto.MachineLSE{
+			Name:                "machineLSE-1",
+			Machines:            []string{"machine-1", "machine-2"},
+			MachineLsePrototype: "machineLsePrototype-1",
+		}
+		resp, cerr := CreateMachineLSE(ctx, machineLSE1)
+		So(cerr, ShouldBeNil)
+		So(resp, ShouldResembleProto, machineLSE1)
+
+		machineLSEs := make([]*proto.MachineLSE, 0, 1)
+		machineLSEs = append(machineLSEs, machineLSE1)
+
+		dummymachineLSEs := make([]*proto.MachineLSE, 0, 1)
+		dummymachineLSEs = append(dummymachineLSEs, dummymachineLSE)
+		Convey("Query By existing Machine", func() {
+			resp, err := QueryMachineLSEByPropertyName(ctx, "machine_ids", "machine-1", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEs)
+		})
+		Convey("Query By non-existing Machine", func() {
+			resp, err := QueryMachineLSEByPropertyName(ctx, "machine_ids", "machine-5", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing MachineLsePrototype keysonly", func() {
+			resp, err := QueryMachineLSEByPropertyName(ctx, "machinelse_prototype_id", "machineLsePrototype-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, dummymachineLSEs)
+		})
+		Convey("Query By non-existing MachineLsePrototype", func() {
+			resp, err := QueryMachineLSEByPropertyName(ctx, "machinelse_prototype_id", "machineLsePrototype-2", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+	})
+}
