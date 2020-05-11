@@ -150,8 +150,15 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def GetVisibleMembers(self, mc, request):
-    """Return the members of the project that the user can see."""
+    """Return the members of the project that the user can see.
+
+    Raises:
+      PermissionException the user is not allowed to view the project members.
+    """
     project = self._GetProject(mc, request)
+    if not permissions.CanViewContributorList(mc, project):
+      raise permissions.PermissionException(
+          'User is not allowed to view the project members')
 
     users_by_id = tracker_helpers.GetVisibleMembers(mc, project, self.services)
 

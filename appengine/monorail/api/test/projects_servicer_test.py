@@ -408,10 +408,11 @@ class ProjectsServicerTest(unittest.TestCase):
   def testGetVisibleMembers_OnlyOwnersSeeContributors(self):
     self.project.only_owners_see_contributors = True
     # Not logged in
-    self.assertVisibleMembers([111, 222], [])
-    # Logged in
-    self.assertVisibleMembers([111, 222], [],
-                              requester='foo@example.com')
+    with self.assertRaises(permissions.PermissionException):
+      self.assertVisibleMembers([111, 222], [])
+    # Logged in with a non-member
+    with self.assertRaises(permissions.PermissionException):
+      self.assertVisibleMembers([111, 222], [], requester='foo@example.com')
     # Logged in as owner
     self.assertVisibleMembers([111, 222, 333], [],
                               requester='owner@example.com')
@@ -419,8 +420,9 @@ class ProjectsServicerTest(unittest.TestCase):
     self.assertVisibleMembers([111, 222, 333], [],
                               requester='user_222@example.com')
     # Logged in as contributor
-    self.assertVisibleMembers([111, 222], [],
-                              requester='user_333@example.com')
+    with self.assertRaises(permissions.PermissionException):
+      self.assertVisibleMembers(
+          [111, 222], [], requester='user_333@example.com')
 
   def testGetVisibleMembers_MemberIsGroup(self):
     self.project.contributor_ids.extend([999])
