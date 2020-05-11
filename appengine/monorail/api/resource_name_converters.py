@@ -22,6 +22,7 @@ from features import features_constants
 from framework import exceptions
 from framework import validate
 from project import project_constants
+from proto import tracker_pb2
 
 # Constants that hold regex patterns for resource names.
 PROJECT_NAME_PATTERN = (
@@ -55,6 +56,8 @@ HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
 
 ISSUE_NAME_TMPL = 'projects/{project}/issues/{local_id}'
 COMMENT_NAME_TMPL = '%s/comments/{comment_id}' % ISSUE_NAME_TMPL
+APPROVAL_VALUE_NAME_TMPL = '%s/approvalValues/{approval_name}' % ISSUE_NAME_TMPL
+
 USER_NAME_TMPL = 'users/{user_id}'
 PROJECT_STAR_NAME_TMPL = 'users/{user_id}/projectStars/{project_name}'
 
@@ -341,6 +344,42 @@ def ConvertIssueNames(cnxn, issue_ids, services):
           project=project, local_id=local_id)
   return issue_ids_to_names
 
+
+def ConvertApprovalValueNames(cnxn, issue_id, services):
+  # type: (MonorailConnection, int, Services)
+  #   -> Mapping[int, str]
+  """Takes an Issue ID and returns the resource names of its ApprovalValues.
+
+  Args:
+    cnxn: MonorailConnection object.
+    issue_id: ID of the Issue the approval_values belong to.
+    services: Services object for connections to backend services.
+
+  Returns:
+    Dict of ApprovalDef IDs to ApprovalValue resource names for
+      ApprovalDefs that are found.
+
+  Raises:
+    NoSuchIssueException if the Issue is not found.
+  """
+  issue = services.issue.GetIssue(cnxn, issue_id)
+  project = services.project.GetProject(cnxn, issue.project_id)
+  config = services.config.GetProjectConfig(cnxn, issue.project_id)
+
+  ads_by_id = {fd.field_id: fd for fd in config.field_defs
+               if fd.field_type is tracker_pb2.FieldTypes.APPROVAL_TYPE}
+
+  approval_def_ids = [av.approval_id for av in issue.approval_values]
+  approval_ids_to_names = {}
+  for ad_id in approval_def_ids:
+    fd = ads_by_id.get(ad_id)
+    if not fd:
+      logging.info('Approval type field with id %d not found.', ad_id)
+      continue
+    approval_ids_to_names[ad_id] = APPROVAL_VALUE_NAME_TMPL.format(
+        project=project.project_name, local_id=issue.local_id,
+        approval_name=fd.field_name)
+  return approval_ids_to_names
 
 # Users
 

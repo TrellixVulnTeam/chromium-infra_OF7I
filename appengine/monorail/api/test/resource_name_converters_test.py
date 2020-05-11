@@ -16,6 +16,7 @@ from api import resource_name_converters as rnc
 from framework import exceptions
 from testing import fake
 from services import service_manager
+from proto import tracker_pb2
 
 class ResourceNameConverterTest(unittest.TestCase):
 
@@ -235,6 +236,16 @@ class ResourceNameConverterTest(unittest.TestCase):
         rnc.ConvertIssueNames(
             self.cnxn, [self.issue_1.issue_id, 3279], self.services),
         {self.issue_1.issue_id: 'projects/proj/issues/1'})
+
+  def testConvertApprovalValueNames(self):
+    """We can create ApprovalValue resource names."""
+    self.issue_1.approval_values = [tracker_pb2.ApprovalValue(
+        approval_id=self.approval_def_1_id)]
+    self.assertEqual(
+        {self.approval_def_1_id:
+         'projects/proj/issues/1/approvalValues/approval_field_1'},
+        rnc.ConvertApprovalValueNames(
+            self.cnxn, self.issue_1.issue_id, self.services))
 
   def testIngestUserName(self):
     """We can get a User ID from User resource name."""
