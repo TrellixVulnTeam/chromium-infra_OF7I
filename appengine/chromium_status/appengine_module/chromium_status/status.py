@@ -469,7 +469,7 @@ class MainPage(BasePage):
     template_values = self.InitializeTemplate(self.APP_NAME + ' Tree Status')
     template_values['status'] = status
     template_values['message'] = last_message
-    template_values['last_status_key'] = current_status.key()
+    template_values['last_status_key'] = current_status.key().id()
     template_values['error_message'] = error_message
     template_values['limit'] = limit
     template_values['preamble'] = self.PREAMBLE
@@ -496,7 +496,7 @@ class MainPage(BasePage):
       return
 
     current_status = get_status()
-    if current_status and (last_status_key != str(current_status.key())):
+    if current_status and (last_status_key != str(current_status.key().id())):
       error_message = ('Message not saved, mid-air collision detected, '
                        'please resolve any conflicts and try again!')
       last_message = new_message
