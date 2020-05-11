@@ -16,7 +16,6 @@ import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
-import "infra/unifiedfleet/api/v1/proto/network.proto";
 import "infra/unifiedfleet/api/v1/proto/chromeos/lab/device.proto";
 
 // MachineLSE is the Machine Lab Setup Environment.
@@ -100,7 +99,7 @@ message ChromeOSDeviceLSE {
 // maintain the swarming bots that maps to the real chromeos devices.
 message ChromeOSServerLSE {
    // The vlan that this server is going to serve
-   Vlan supported_restricted_vlan = 1 [(google.api.resource_reference) = {
+   string supported_restricted_vlan = 1 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/Vlan"
     }];
 }

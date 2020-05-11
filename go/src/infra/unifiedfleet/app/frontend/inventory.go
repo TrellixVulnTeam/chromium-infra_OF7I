@@ -11,6 +11,8 @@ import (
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/util"
 )
 
 // CreateMachineLSE creates machineLSE entry in database.
@@ -21,7 +23,14 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *api.Create
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.MachineLSE.Name = req.MachineLSEId
+	machineLSE, err := inventory.CreateMachineLSE(ctx, req.MachineLSE)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machineLSE.Name = util.AddPrefix(machineLSECollection, machineLSE.Name)
+	return machineLSE, err
 }
 
 // UpdateMachineLSE updates the machineLSE information in database.
@@ -32,7 +41,14 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *api.Update
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.MachineLSE.Name = util.RemovePrefix(req.MachineLSE.Name)
+	machineLSE, err := inventory.UpdateMachineLSE(ctx, req.MachineLSE)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machineLSE.Name = util.AddPrefix(machineLSECollection, machineLSE.Name)
+	return machineLSE, err
 }
 
 // GetMachineLSE gets the machineLSE information from database.
