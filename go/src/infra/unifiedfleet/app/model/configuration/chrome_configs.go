@@ -12,7 +12,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	gitlib "infra/libs/cros/git"
-	fleet "infra/unifiedfleet/api/v1/proto"
 
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )
@@ -43,18 +42,4 @@ func GetPlatformsFromGit(ctx context.Context, gitC *gitlib.Client, fp string) (*
 		return nil, errors.Annotate(err, "fail to unmarshal %s", fp).Err()
 	}
 	return &platforms, nil
-}
-
-// ToChromePlatforms converts platforms in static file to UFS format.
-func ToChromePlatforms(oldP *crimsonconfig.Platforms) []*fleet.ChromePlatform {
-	ps := oldP.GetPlatform()
-	newP := make([]*fleet.ChromePlatform, len(ps))
-	for i, p := range ps {
-		newP[i] = &fleet.ChromePlatform{
-			Name:         p.GetName(),
-			Manufacturer: p.GetManufacturer(),
-			Description:  p.GetDescription(),
-		}
-	}
-	return newP
 }

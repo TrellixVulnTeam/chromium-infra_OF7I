@@ -171,7 +171,7 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 		resolver := textproto.Message(oldP)
 		resolver.Resolve(fetchedConfigs)
 	}
-	platforms = configuration.ToChromePlatforms(oldP)
+	platforms = util.ToChromePlatforms(oldP)
 
 	logging.Debugf(ctx, "Importing %d platforms", len(platforms))
 	res, err := configuration.InsertChromePlatforms(ctx, platforms)
