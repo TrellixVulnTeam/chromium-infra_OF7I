@@ -214,6 +214,134 @@ func TestDeleteMachine(t *testing.T) {
 	})
 }
 
+func TestBatchUpdateMachines(t *testing.T) {
+	t.Parallel()
+	Convey("BatchUpdateMachines", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		machines := make([]*proto.Machine, 0, 4)
+		for i := 0; i < 4; i++ {
+			chromeOSMachine1 := mockChromeOSMachine(fmt.Sprintf("chromeos-%d", i), "chromeoslab", "samus")
+			resp, err := CreateMachine(ctx, chromeOSMachine1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, chromeOSMachine1)
+			machines = append(machines, resp)
+		}
+		Convey("BatchUpdate all machines", func() {
+			resp, err := BatchUpdateMachines(ctx, machines)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines)
+		})
+		Convey("BatchUpdate existing and non-existing machines", func() {
+			chromeOSMachine5 := mockChromeOSMachine("", "chromeoslab", "samus")
+			machines = append(machines, chromeOSMachine5)
+			resp, err := BatchUpdateMachines(ctx, machines)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestQueryMachineByPropertyName(t *testing.T) {
+	t.Parallel()
+	Convey("QueryMachineByPropertyName", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		dummyMachine := &proto.Machine{
+			Name: "machine-1",
+		}
+		machine1 := &proto.Machine{
+			Name: "machine-1",
+			Device: &proto.Machine_ChromeBrowserMachine{
+				ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+					ChromePlatform: "chromePlatform-1",
+					Nic:            "nic-1",
+					Drac:           "drac-1",
+					NetworkDeviceInterface: &proto.SwitchInterface{
+						Switch: "switch-1",
+					},
+					KvmInterface: &proto.KVMInterface{
+						Kvm: "kvm-1",
+					},
+					RpmInterface: &proto.RPMInterface{
+						Rpm: "rpm-1",
+					},
+				},
+			},
+		}
+		resp, cerr := CreateMachine(ctx, machine1)
+		So(cerr, ShouldBeNil)
+		So(resp, ShouldResembleProto, machine1)
+
+		machines := make([]*proto.Machine, 0, 1)
+		machines = append(machines, dummyMachine)
+
+		machines1 := make([]*proto.Machine, 0, 1)
+		machines1 = append(machines1, machine1)
+		Convey("Query By existing ChromePlatform", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "chrome_platform_id", "chromePlatform-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines)
+		})
+		Convey("Query By non-existing ChromePlatform", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "chrome_platform_id", "chromePlatform-2", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing rpm", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "rpm_id", "rpm-1", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines1)
+		})
+		Convey("Query By non-existing rpm", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "rpm_id", "rpm-2", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing Nic", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "nic_id", "nic-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines)
+		})
+		Convey("Query By non-existing Nic", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "nic_id", "nic-2", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing Drac", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "drac_id", "drac-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines)
+		})
+		Convey("Query By non-existing Drac", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "drac_id", "drac-2", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing switch", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "switch_id", "switch-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines)
+		})
+		Convey("Query By non-existing switch", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "switch_id", "switch-2", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing kvm", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "kvm_id", "kvm-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machines)
+		})
+		Convey("Query By non-existing kvm", func() {
+			resp, err := QueryMachineByPropertyName(ctx, "kvm_id", "kvm-2", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+	})
+}
+
 /*
 func TestGetAllMachines(t *testing.T) {
 	t.Parallel()

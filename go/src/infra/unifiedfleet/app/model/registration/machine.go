@@ -81,6 +81,38 @@ func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 	return fe, nil
 }
 
+// QueryMachineByPropertyName queries Machine Entity in the datastore
+// If keysOnly is true, then only key field is populated in returned machines
+func QueryMachineByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Machine, error) {
+	q := datastore.NewQuery(MachineKind).KeysOnly(keysOnly)
+	var entities []*MachineEntity
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No machines found for the query: %s", id)
+		return nil, nil
+	}
+	machines := make([]*fleet.Machine, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			machine := &fleet.Machine{
+				Name: entity.ID,
+			}
+			machines = append(machines, machine)
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			machines = append(machines, pm.(*fleet.Machine))
+		}
+	}
+	return machines, nil
+}
+
 // CreateMachine creates a new machine in datastore.
 func CreateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine, error) {
 	return putMachine(ctx, machine, false)
@@ -155,11 +187,33 @@ func ImportMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.Op
 	return fleetds.Insert(ctx, protos, newMachineEntity, true, true)
 }
 
+// BatchUpdateMachines updates machines in datastore.
+// This is a non-atomic operation and doesnt check if the object already exists before
+// update. Must be used within a Transaction where objects are checked before update.
+// Will lead to partial updates if not used in a transaction.
+func BatchUpdateMachines(ctx context.Context, machines []*fleet.Machine) ([]*fleet.Machine, error) {
+	return putAllMachine(ctx, machines, true)
+}
+
 func putMachine(ctx context.Context, machine *fleet.Machine, update bool) (*fleet.Machine, error) {
 	machine.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, machine, newMachineEntity, update)
 	if err == nil {
 		return pm.(*fleet.Machine), err
+	}
+	return nil, err
+}
+
+func putAllMachine(ctx context.Context, machines []*fleet.Machine, update bool) ([]*fleet.Machine, error) {
+	protos := make([]proto.Message, len(machines))
+	updateTime := ptypes.TimestampNow()
+	for i, machine := range machines {
+		machine.UpdateTime = updateTime
+		protos[i] = machine
+	}
+	_, err := fleetds.PutAll(ctx, protos, newMachineEntity, update)
+	if err == nil {
+		return machines, err
 	}
 	return nil, err
 }

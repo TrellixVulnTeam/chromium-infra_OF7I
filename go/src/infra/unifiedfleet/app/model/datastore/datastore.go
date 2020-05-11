@@ -34,6 +34,13 @@ type NewFunc func(context.Context, proto.Message) (FleetEntity, error)
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
 
+// FakeAncestorKey returns a fake datastore key
+// A query in transaction requires to have Ancestor filter, see
+// https://cloud.google.com/appengine/docs/standard/python/datastore/query-restrictions#queries_inside_transactions_must_include_ancestor_filters
+func FakeAncestorKey(ctx context.Context, entityName string) *datastore.Key {
+	return datastore.MakeKey(ctx, entityName, "key")
+}
+
 // exists checks if a list of fleet entities exist in datastore.
 func exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
 	res, err := datastore.Exists(ctx, entities)
@@ -73,6 +80,28 @@ func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.
 		return nil, err
 	}
 	return pm, nil
+}
+
+// PutAll Upserts entities in the datastore.
+// This is a non-atomic operation and doesnt check if the object already exists before insert/update.
+// Returns error even if partial insert/updates succeeds.
+// Must be used within a Transaction where objects are checked for existence before update/insert.
+// Using it in a Transaction will rollback the partial insert/updates and propagate correct error message.
+func PutAll(ctx context.Context, pms []proto.Message, nf NewFunc, update bool) ([]proto.Message, error) {
+	entities := make([]FleetEntity, 0, len(pms))
+	for _, pm := range pms {
+		entity, err := nf(ctx, pm)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
+			return nil, status.Errorf(codes.Internal, InternalError)
+		}
+		entities = append(entities, entity)
+	}
+	if err := datastore.Put(ctx, entities); err != nil {
+		logging.Errorf(ctx, "Failed to put in datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, InternalError)
+	}
+	return pms, nil
 }
 
 // Get retrieves entity from the datastore.
