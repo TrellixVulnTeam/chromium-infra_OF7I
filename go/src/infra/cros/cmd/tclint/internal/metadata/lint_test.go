@@ -35,7 +35,7 @@ var update = flag.Bool("update-lint-golden-files", false, "Update the golden fil
 // changes in logic unrelated to the message creation, each test case should
 // minimize the number of errors detected.
 func TestErrorMessages(t *testing.T) {
-	for _, tc := range discoverTestCases(t) {
+	for _, tc := range discoverTestCases(t, testDataDir) {
 		t.Run(tc.name, func(t *testing.T) {
 			var spec metadataPB.Specification
 			loadSpecification(t, tc.inputFile, &spec)
@@ -66,32 +66,20 @@ const (
 	goldenFileExt = ".golden"
 )
 
-func discoverTestCases(t *testing.T) []testCase {
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("load test data: %s", err.Error())
-	}
-	dataDir := filepath.Join(wd, testDataDir)
-	fs, err := ioutil.ReadDir(dataDir)
-	if err != nil {
-		t.Fatalf("load test data from %s: %s", dataDir, err.Error())
-	}
-
+func discoverTestCases(t *testing.T, root string) []testCase {
 	tcs := []testCase{}
-	for _, f := range fs {
-		if filepath.Ext(f.Name()) != inputFileExt {
-			continue
-		}
-		name := strings.TrimSuffix(f.Name(), filepath.Ext(f.Name()))
+	for _, p := range discoverInputFiles(t, root) {
+		dir, base := filepath.Split(p)
+		name := strings.TrimSuffix(base, filepath.Ext(base))
 		tc := testCase{
-			name:       name,
-			inputFile:  filepath.Join(testDataDir, f.Name()),
-			goldenFile: filepath.Join(testDataDir, fmt.Sprintf("%s%s", name, goldenFileExt)),
+			name:       filepath.Join(dir, name),
+			inputFile:  p,
+			goldenFile: filepath.Join(dir, fmt.Sprintf("%s%s", name, goldenFileExt)),
 		}
 		if _, err := os.Stat(tc.goldenFile); err == nil {
 			tc.goldenFileFound = true
 		} else {
-			// Failures to find golden file is not considered fatal so that the
+			// Failure to find golden file is not considered fatal so that the
 			// golden file can be added later.
 			t.Errorf("no golden file for input file %s", tc.inputFile)
 		}
@@ -99,9 +87,26 @@ func discoverTestCases(t *testing.T) []testCase {
 	}
 
 	if len(tcs) == 0 {
-		t.Fatalf("no input files found in %s", dataDir)
+		t.Fatalf("no input files found in %s", testDataDir)
 	}
 	return tcs
+}
+
+func discoverInputFiles(t *testing.T, root string) []string {
+	inputFiles := []string{}
+	filepath.Walk(
+		root,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				t.Fatalf("listInputFiles(%s) %s: %s", root, path, err)
+			}
+			if filepath.Ext(path) == inputFileExt {
+				inputFiles = append(inputFiles, path)
+			}
+			return nil
+		},
+	)
+	return inputFiles
 }
 
 func loadSpecification(t *testing.T, path string, m proto.Message) {
