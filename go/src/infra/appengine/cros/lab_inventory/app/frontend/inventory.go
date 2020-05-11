@@ -389,7 +389,8 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 	labMeta := make(map[string]datastore.LabMeta, len(req.GetLabMetas()))
 	for _, d := range req.GetLabMetas() {
 		labMeta[d.GetChromeosDeviceId()] = datastore.LabMeta{
-			ServoType: d.GetServoType(),
+			ServoType:   d.GetServoType(),
+			SmartUsbhub: d.GetSmartUsbhub(),
 		}
 	}
 	metaUpdateResults, err = datastore.UpdateLabMeta(ctx, labMeta)

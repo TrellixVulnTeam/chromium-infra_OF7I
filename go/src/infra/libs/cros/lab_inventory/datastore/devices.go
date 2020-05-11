@@ -510,10 +510,11 @@ func UpdateDutMeta(ctx context.Context, meta map[string]DutMeta) (DeviceOpResult
 
 // LabMeta refers to the metadata to be stored for a DUT.
 type LabMeta struct {
-	ServoType string
+	ServoType   string
+	SmartUsbhub bool
 }
 
-// UpdateLabMeta updates servo_type for a given host.
+// UpdateLabMeta updates servo_type and smart_usbhub flag for a given host.
 func UpdateLabMeta(ctx context.Context, meta map[string]LabMeta) (DeviceOpResults, error) {
 	ids := make([]string, 0, len(meta))
 	for i := range meta {
@@ -538,9 +539,11 @@ func UpdateLabMeta(ctx context.Context, meta map[string]LabMeta) (DeviceOpResult
 
 		hid := string(r.Entity.ID)
 		if dut := labData.GetDut(); dut != nil {
-			if servo := dut.GetPeripherals().GetServo(); servo != nil {
+			p := dut.GetPeripherals()
+			if servo := p.GetServo(); servo != nil {
 				servo.ServoType = meta[hid].ServoType
 			}
+			p.SmartUsbhub = meta[hid].SmartUsbhub
 		}
 
 		r := DeviceOpResult{

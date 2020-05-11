@@ -32,7 +32,8 @@ func mockDut(hostname, id, servoHost string) *lab.ChromeOSDevice {
 			Dut: &lab.DeviceUnderTest{
 				Hostname: hostname,
 				Peripherals: &lab.Peripherals{
-					Servo: mockServo(servoHost),
+					Servo:       mockServo(servoHost),
+					SmartUsbhub: false,
 				},
 			},
 		},
@@ -474,14 +475,16 @@ func TestUpdateLabMeta(t *testing.T) {
 		}
 		originalServo := devsToAdd[0].GetDut().GetPeripherals().GetServo()
 		So(devsToAdd[0].GetDut().GetPeripherals().GetServo().ServoType, ShouldEqual, "v3")
+		So(devsToAdd[0].GetDut().GetPeripherals().SmartUsbhub, ShouldEqual, false)
 		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)
 
 		datastore.GetTestable(ctx).Consistent(true)
-		Convey("Update only ServoType in meta", func() {
+		Convey("Update ServoType and SmartUsbhub in meta", func() {
 			meta := map[string]LabMeta{
 				"UUID:01": {
-					ServoType: "servo_v4_with_ccd_cr50",
+					ServoType:   "servo_v4_with_ccd_cr50",
+					SmartUsbhub: true,
 				},
 				"UUID:ghost": {},
 			}
@@ -495,6 +498,7 @@ func TestUpdateLabMeta(t *testing.T) {
 			var p lab.ChromeOSDevice
 			passed[0].Entity.GetCrosDeviceProto(&p)
 			So(p.GetDut().GetPeripherals().GetServo().ServoType, ShouldEqual, "servo_v4_with_ccd_cr50")
+			So(p.GetDut().GetPeripherals().SmartUsbhub, ShouldEqual, true)
 
 			//validates only the single field was change from original
 			newServoPr := proto.MarshalTextString(p.GetDut().GetPeripherals().GetServo())

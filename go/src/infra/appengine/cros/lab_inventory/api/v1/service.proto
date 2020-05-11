@@ -134,6 +134,7 @@ message DutMeta {
 message LabMeta {
   string chromeos_device_id = 1;
   string servo_type = 2;
+  bool smart_usbhub = 3;
 }
 
 message UpdateDutsStatusResponse {

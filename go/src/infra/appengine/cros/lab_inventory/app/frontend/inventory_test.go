@@ -511,6 +511,7 @@ func TestUpdateDutsStatus(t *testing.T) {
 					Servo: &lab.Servo{
 						ServoType: "v3",
 					},
+					SmartUsbhub: false,
 				},
 			},
 		},
@@ -545,6 +546,7 @@ func TestUpdateDutsStatus(t *testing.T) {
 		labMetaGood := &api.LabMeta{
 			ChromeosDeviceId: "UUID:01",
 			ServoType:        "servo_v4_with_ccd_cr50",
+			SmartUsbhub:      true,
 		}
 		getUpdatedDevice := func(ctx context.Context) lab.ChromeOSDevice {
 			r := datastore.GetDevicesByIds(ctx, []string{"UUID:01"})
@@ -568,6 +570,7 @@ func TestUpdateDutsStatus(t *testing.T) {
 			So(p.GetSerialNumber(), ShouldEqual, "")
 			So(p.GetManufacturingId().GetValue(), ShouldEqual, "")
 			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "v3")
+			So(p.GetDut().GetPeripherals().GetSmartUsbhub(), ShouldEqual, false)
 		})
 
 		Convey("Happy path with dut meta", func() {
@@ -585,6 +588,7 @@ func TestUpdateDutsStatus(t *testing.T) {
 			So(p.GetSerialNumber(), ShouldEqual, "serial2")
 			So(p.GetManufacturingId().GetValue(), ShouldEqual, "hwid2")
 			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "v3")
+			So(p.GetDut().GetPeripherals().GetSmartUsbhub(), ShouldEqual, false)
 		})
 
 		Convey("Happy path with lab meta", func() {
@@ -602,6 +606,7 @@ func TestUpdateDutsStatus(t *testing.T) {
 			So(p.GetSerialNumber(), ShouldEqual, "")
 			So(p.GetManufacturingId().GetValue(), ShouldEqual, "")
 			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "servo_v4_with_ccd_cr50")
+			So(p.GetDut().GetPeripherals().GetSmartUsbhub(), ShouldEqual, true)
 		})
 
 		Convey("Happy path with dut and lab meta", func() {
@@ -620,6 +625,7 @@ func TestUpdateDutsStatus(t *testing.T) {
 			So(p.GetSerialNumber(), ShouldEqual, "serial2")
 			So(p.GetManufacturingId().GetValue(), ShouldEqual, "hwid2")
 			So(p.GetDut().GetPeripherals().GetServo().GetServoType(), ShouldEqual, "servo_v4_with_ccd_cr50")
+			So(p.GetDut().GetPeripherals().GetSmartUsbhub(), ShouldEqual, true)
 		})
 
 		Convey("Cannot update a labstation", func() {
