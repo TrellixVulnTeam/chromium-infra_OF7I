@@ -290,8 +290,62 @@ END
 			So(err, ShouldBeNil)
 			So(actual, ShouldResembleProto, expected)
 		})
-	})
 
+		Convey(`test addtional tags`, func(c C) {
+			ann := &milo.Step{}
+			err := luciproto.UnmarshalTextML(`
+					substep: <
+						step: <
+							name: "buildbucket.add_tags_to_current_build"
+							status: SUCCESS
+							started: < seconds: 1400000000 >
+							ended: < seconds: 1400001000 >
+							property: <
+								name: "$recipe_engine/buildbucket/runtime-tags"
+								value:<<END
+								{
+									"k1": ["v1"],
+									"k2": ["v2", "v2_1"]
+								}
+	END
+							>
+						>
+					>
+				`, ann)
+			So(err, ShouldBeNil)
+			So(ann.Substep, ShouldHaveLength, 1)
+
+			expected := &buildbucketpb.UpdateBuildRequest{}
+			err = jsonpb.UnmarshalString(`{
+					"build": {
+						"id": 42,
+						"steps": [
+							{
+								"name": "buildbucket.add_tags_to_current_build",
+								"status": "SUCCESS",
+								"startTime": "2014-05-13T16:53:20.0Z",
+								"endTime": "2014-05-13T17:10:00.0Z"
+
+							}
+						],
+						"output": {
+							"properties": {}
+						}
+					},
+					"updateMask": {
+						"paths": [
+							"build.steps",
+							"build.output.properties"
+						]
+					}
+				}`, expected)
+			So(err, ShouldBeNil)
+
+			actual, err := bu.ParseAnnotations(ctx, ann)
+			So(err, ShouldBeNil)
+			So(actual, ShouldResembleProto, expected)
+		})
+	})
 }
 
 func TestReadBuildSecrets(t *testing.T) {

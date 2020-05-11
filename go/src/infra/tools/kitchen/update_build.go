@@ -213,11 +213,17 @@ func (b *buildUpdater) ParseAnnotations(ctx context.Context, ann *milo.Step) (*b
 	}
 	if outputCommit == nil {
 		if outputCommit, err = outputCommitFromLegacyProperties(props); err != nil {
-			logging.Errorf(ctx, "failed to parse output commit from legacy properties: %s", err)
+			logging.Warningf(ctx, "failed to parse output commit from legacy properties: %s", err)
 		}
 	}
 	if outputCommit != nil {
 		updatePaths = append(updatePaths, "build.output.gitiles_commit")
+	}
+
+	tags := parseAdditionalTags(props)
+	if len(tags) > 0 {
+		// TODO(crbug/1040685): Update the tags once cr-buildbucket is ready.
+		logging.Errorf(ctx, "would have sent tags to cr-buildbucket: %v", tags)
 	}
 
 	return &buildbucketpb.UpdateBuildRequest{
@@ -340,4 +346,27 @@ func readBuildSecrets(ctx context.Context) (*buildbucketpb.BuildSecrets, error) 
 	}
 
 	return secrets, nil
+}
+
+// parseAdditionalTags parses tags from output properties.
+// The other side: https://cs.chromium.org/chromium/infra/recipes-py/recipe_modules/buildbucket/api.py?q=add_tags_to_current_build
+func parseAdditionalTags(props *structpb.Struct) []*buildbucketpb.StringPair {
+	tags := []*buildbucketpb.StringPair{}
+	tagsProp := "$recipe_engine/buildbucket/runtime-tags"
+	v, ok := props.Fields[tagsProp]
+	if !ok {
+		return tags
+	}
+
+	dict := v.GetStructValue().GetFields()
+	for key, values := range dict {
+		for _, value := range values.GetListValue().GetValues() {
+			tags = append(tags, &buildbucketpb.StringPair{
+				Key:   key,
+				Value: value.GetStringValue(),
+			})
+		}
+	}
+	delete(props.Fields, tagsProp)
+	return tags
 }
