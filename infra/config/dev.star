@@ -234,7 +234,7 @@ luci.notifier_template(
     body = """Renders steps.
 
 <ol>
-{{range $s := .Steps}}
+{{range $s := .Build.Steps}}
   <li>{{$s.Name}}</li>
 {{end}}
 </ol>
