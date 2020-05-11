@@ -1,4 +1,4 @@
-{{.Build.Builder.IDString}} notification
+{{.Build.Builder | formatBuilderID}} notification
 
 <a href="{{.Build.ViewUrl}}">Build {{.Build.Number}}</a>
 has completed.
