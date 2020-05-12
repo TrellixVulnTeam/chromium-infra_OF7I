@@ -75,6 +75,7 @@ var (
 
 	successStatus                    = status.New(codes.OK, "")
 	emptyConfigSourceStatus          = status.New(codes.InvalidArgument, "Invalid argument - Config source is empty")
+	invalidConfigServiceName         = status.New(codes.FailedPrecondition, "The config service name is invalid")
 	invalidConfigFileContentStatus   = status.New(codes.FailedPrecondition, "The config file format is invalid")
 	configServiceFailureStatus       = status.New(codes.Internal, "Fail to get configs from luci config service")
 	machineDBConnectionFailureStatus = status.New(codes.Internal, "Fail to initialize connection to machine DB")

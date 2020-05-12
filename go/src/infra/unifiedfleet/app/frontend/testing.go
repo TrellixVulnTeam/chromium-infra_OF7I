@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
+	luciconfig "go.chromium.org/luci/config"
 
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/frontend/fake"
@@ -32,6 +33,7 @@ func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, 
 	mc := gomock.NewController(t)
 
 	tf.Fleet = &FleetServerImpl{
+		cfgInterfaceFactory:       fakeCfgInterfaceFactory,
 		machineDBInterfaceFactory: fakeMachineDBInterface,
 		importPageSize:            testImportPageSize,
 	}
@@ -58,4 +60,8 @@ func fakeMachineDBInterface(ctx context.Context, host string) (crimson.CrimsonCl
 	return &fake.CrimsonClient{
 		MachineNames: testMachines,
 	}, nil
+}
+
+func fakeCfgInterfaceFactory(ctx context.Context) luciconfig.Interface {
+	return &fake.LuciConfigClient{}
 }

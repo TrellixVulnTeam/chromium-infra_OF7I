@@ -90,7 +90,7 @@ service Fleet {
   // Delete delete the machineLSE
   rpc DeleteMachineLSE(DeleteMachineLSERequest) returns (google.protobuf.Empty);
 
-    // CreateRackLSE creates a new rackLSE
+  // CreateRackLSE creates a new rackLSE
   rpc CreateRackLSE(CreateRackLSERequest) returns (proto.RackLSE);
 
   // Update updates the rackLSE
@@ -122,6 +122,9 @@ service Fleet {
 
   // ImportNics imports nics info.
   rpc ImportNics(ImportNicsRequest) returns (google.rpc.Status);
+
+  // ImportDatacenters imports datacenter & its related info, including kvm & switch.
+  rpc ImportDatacenters(ImportDatacentersRequest) returns (google.rpc.Status);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -531,6 +534,13 @@ message DeleteNicRequest {
 }
 
 message ImportNicsRequest {
+  oneof source {
+    MachineDBSource machine_db_source = 1;
+    ConfigSource config_source = 2;
+  }
+}
+
+message ImportDatacentersRequest {
   oneof source {
     MachineDBSource machine_db_source = 1;
     ConfigSource config_source = 2;

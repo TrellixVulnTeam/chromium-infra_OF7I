@@ -7,6 +7,8 @@ package frontend
 import (
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
+	luciconfig "go.chromium.org/luci/config"
+	"go.chromium.org/luci/config/server/cfgclient/textproto"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
@@ -16,6 +18,7 @@ import (
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 
+	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 )
 
@@ -345,5 +348,34 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 		return nil, machineDBServiceFailureStatus("ListMachines").Err()
 	}
 	logging.Debugf(ctx, "Importing %d nics", len(resp.Nics))
+	return successStatus.Proto(), nil
+}
+
+// ImportDatacenters imports the datacenter and its related info in batch.
+func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.ImportDatacentersRequest) (response *status.Status, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	configSource := req.GetConfigSource()
+	if configSource == nil {
+		return nil, emptyConfigSourceStatus.Err()
+	}
+	if configSource.ConfigServiceName == "" {
+		return nil, invalidConfigServiceName.Err()
+	}
+
+	logging.Debugf(ctx, "Importing datacenters from luci-config: %s", configSource.FileName)
+	cfgInterface := fs.newCfgInterface(ctx)
+	fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
+	if err != nil {
+		return nil, configServiceFailureStatus.Err()
+	}
+	dc := &crimsonconfig.Datacenter{}
+	logging.Debugf(ctx, "%#v", fetchedConfigs)
+	resolver := textproto.Message(dc)
+	resolver.Resolve(fetchedConfigs)
+	logging.Debugf(ctx, "processing datacenter: %s", dc.GetName())
+	racks, kvms, switches, dhcps := util.ProcessDatacenters(dc)
+	logging.Debugf(ctx, "Got %d racks, %d kvms, %d switches, %d dhcp configs", len(racks), len(kvms), len(switches), len(dhcps))
 	return successStatus.Proto(), nil
 }

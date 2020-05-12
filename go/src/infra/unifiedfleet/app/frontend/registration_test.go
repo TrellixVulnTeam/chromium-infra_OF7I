@@ -1154,6 +1154,28 @@ func TestImportNics(t *testing.T) {
 	})
 }
 
+func TestImportDatacenters(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import datacenters", t, func() {
+		Convey("happy path", func() {
+			req := &api.ImportDatacentersRequest{
+				Source: &api.ImportDatacentersRequest_ConfigSource{
+					ConfigSource: &api.ConfigSource{
+						ConfigServiceName: "fake-service",
+						FileName:          "fakeDatacenter.cfg",
+					},
+				},
+			}
+			res, err := tf.Fleet.ImportDatacenters(ctx, req)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
+		})
+	})
+}
+
 func getMachineNames(res OpResults) []string {
 	names := make([]string, 0)
 	for _, r := range res {

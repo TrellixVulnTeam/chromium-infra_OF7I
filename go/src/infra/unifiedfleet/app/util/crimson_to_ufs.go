@@ -68,3 +68,53 @@ func ToChromePlatforms(oldP *crimsonconfig.Platforms) []*fleet.ChromePlatform {
 	}
 	return newP
 }
+
+// ProcessDatacenters converts datacenters to several UFS objects
+func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.KVM, []*fleet.Switch, []*fleet.DHCPConfig) {
+	dcName := dc.GetName()
+	switches := make([]*fleet.Switch, 0)
+	racks := make([]*fleet.Rack, 0)
+	rackToKvms := make(map[string][]string, 0)
+	kvms := make([]*fleet.KVM, 0)
+	dhcps := make([]*fleet.DHCPConfig, 0)
+	for _, oldKVM := range dc.GetKvm() {
+		name := oldKVM.GetName()
+		k := &fleet.KVM{
+			Name:           name,
+			MacAddress:     oldKVM.GetMacAddress(),
+			ChromePlatform: oldKVM.GetPlatform(),
+		}
+		kvms = append(kvms, k)
+		rackName := oldKVM.GetRack()
+		rackToKvms[rackName] = append(rackToKvms[rackName], name)
+		dhcps = append(dhcps, &fleet.DHCPConfig{
+			MacAddress: oldKVM.GetMacAddress(),
+			Hostname:   name,
+			Ip:         oldKVM.GetIpv4(),
+		})
+	}
+	for _, old := range dc.GetRack() {
+		rackName := old.GetName()
+		switchNames := make([]string, 0)
+		for _, crimsonSwitch := range old.GetSwitch() {
+			s := &fleet.Switch{
+				Name:         crimsonSwitch.GetName(),
+				CapacityPort: crimsonSwitch.GetPorts(),
+			}
+			switches = append(switches, s)
+			switchNames = append(switchNames, s.GetName())
+		}
+		r := &fleet.Rack{
+			Name:     rackName,
+			Location: toLocation(rackName, dcName),
+			Rack: &fleet.Rack_ChromeBrowserRack{
+				ChromeBrowserRack: &fleet.ChromeBrowserRack{
+					Switches: switchNames,
+					Kvms:     rackToKvms[rackName],
+				},
+			},
+		}
+		racks = append(racks, r)
+	}
+	return racks, kvms, switches, dhcps
+}
