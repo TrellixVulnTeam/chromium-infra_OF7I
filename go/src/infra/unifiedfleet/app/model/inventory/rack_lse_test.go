@@ -181,3 +181,77 @@ func TestDeleteRackLSE(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchUpdateRackLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("BatchUpdateRackLSEs", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		rackLSEs := make([]*proto.RackLSE, 0, 4)
+		for i := 0; i < 4; i++ {
+			rackLSE1 := mockRackLSE(fmt.Sprintf("rackLSE-%d", i))
+			resp, err := CreateRackLSE(ctx, rackLSE1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+			rackLSEs = append(rackLSEs, resp)
+		}
+		Convey("BatchUpdate all rackLSEs", func() {
+			resp, err := BatchUpdateRackLSEs(ctx, rackLSEs)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEs)
+		})
+		Convey("BatchUpdate existing and invalid rackLSEs", func() {
+			rackLSE5 := mockRackLSE("")
+			rackLSEs = append(rackLSEs, rackLSE5)
+			resp, err := BatchUpdateRackLSEs(ctx, rackLSEs)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestQueryRackLSEByPropertyName(t *testing.T) {
+	t.Parallel()
+	Convey("QueryRackLSEByPropertyName", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		dummyrackLSE := &proto.RackLSE{
+			Name: "rackLSE-1",
+		}
+		rackLSE1 := &proto.RackLSE{
+			Name:             "rackLSE-1",
+			Racks:            []string{"rack-1", "rack-2"},
+			RackLsePrototype: "rackLsePrototype-1",
+		}
+		resp, cerr := CreateRackLSE(ctx, rackLSE1)
+		So(cerr, ShouldBeNil)
+		So(resp, ShouldResembleProto, rackLSE1)
+
+		rackLSEs := make([]*proto.RackLSE, 0, 1)
+		rackLSEs = append(rackLSEs, rackLSE1)
+
+		dummyrackLSEs := make([]*proto.RackLSE, 0, 1)
+		dummyrackLSEs = append(dummyrackLSEs, dummyrackLSE)
+		Convey("Query By existing Rack", func() {
+			resp, err := QueryRackLSEByPropertyName(ctx, "rack_ids", "rack-1", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEs)
+		})
+		Convey("Query By non-existing Rack", func() {
+			resp, err := QueryRackLSEByPropertyName(ctx, "rack_ids", "rack-5", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing RackLsePrototype keysonly", func() {
+			resp, err := QueryRackLSEByPropertyName(ctx, "racklse_prototype_id", "rackLsePrototype-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, dummyrackLSEs)
+		})
+		Convey("Query By non-existing RackLsePrototype", func() {
+			resp, err := QueryRackLSEByPropertyName(ctx, "racklse_prototype_id", "rackLsePrototype-2", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+	})
+}

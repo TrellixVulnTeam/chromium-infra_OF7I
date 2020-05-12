@@ -62,6 +62,39 @@ func newRackLSEEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntit
 	}, nil
 }
 
+// QueryRackLSEByPropertyName queries RackLSE Entity in the datastore
+//
+// If keysOnly is true, then only key field is populated in returned racklses
+func QueryRackLSEByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.RackLSE, error) {
+	q := datastore.NewQuery(RackLSEKind).KeysOnly(keysOnly)
+	var entities []*RackLSEEntity
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No rackLSEs found for the query: %s", id)
+		return nil, nil
+	}
+	rackLSEs := make([]*fleet.RackLSE, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			rackLSE := &fleet.RackLSE{
+				Name: entity.ID,
+			}
+			rackLSEs = append(rackLSEs, rackLSE)
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			rackLSEs = append(rackLSEs, pm.(*fleet.RackLSE))
+		}
+	}
+	return rackLSEs, nil
+}
+
 // CreateRackLSE creates a new rackLSE in datastore.
 func CreateRackLSE(ctx context.Context, rackLSE *fleet.RackLSE) (*fleet.RackLSE, error) {
 	return putRackLSE(ctx, rackLSE, false)
@@ -121,11 +154,34 @@ func DeleteRackLSE(ctx context.Context, id string) error {
 	return fleetds.Delete(ctx, &fleet.RackLSE{Name: id}, newRackLSEEntity)
 }
 
+// BatchUpdateRackLSEs updates rackLSEs in datastore.
+//
+// This is a non-atomic operation and doesnt check if the object already exists before
+// update. Must be used within a Transaction where objects are checked before update.
+// Will lead to partial updates if not used in a transaction.
+func BatchUpdateRackLSEs(ctx context.Context, rackLSEs []*fleet.RackLSE) ([]*fleet.RackLSE, error) {
+	return putAllRackLSE(ctx, rackLSEs, true)
+}
+
 func putRackLSE(ctx context.Context, rackLSE *fleet.RackLSE, update bool) (*fleet.RackLSE, error) {
 	rackLSE.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, rackLSE, newRackLSEEntity, update)
 	if err == nil {
 		return pm.(*fleet.RackLSE), err
+	}
+	return nil, err
+}
+
+func putAllRackLSE(ctx context.Context, rackLSEs []*fleet.RackLSE, update bool) ([]*fleet.RackLSE, error) {
+	protos := make([]proto.Message, len(rackLSEs))
+	updateTime := ptypes.TimestampNow()
+	for i, rackLSE := range rackLSEs {
+		rackLSE.UpdateTime = updateTime
+		protos[i] = rackLSE
+	}
+	_, err := fleetds.PutAll(ctx, protos, newRackLSEEntity, update)
+	if err == nil {
+		return rackLSEs, err
 	}
 	return nil, err
 }
