@@ -26,6 +26,7 @@ const (
 	ChromePlatformNameFormat string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
 	MachineLSENameFormat     string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
 	RackLSENameFormat        string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
+	NicNameFormat            string = "Invalid input - Entity Name pattern should be nics/{nic}."
 )
 
 var (
@@ -39,6 +40,7 @@ var machineRegex = regexp.MustCompile(`machines\.*`)
 var rackRegex = regexp.MustCompile(`racks\.*`)
 var machineLSERegex = regexp.MustCompile(`machineLSEs\.*`)
 var rackLSERegex = regexp.MustCompile(`rackLSEs\.*`)
+var nicRegex = regexp.MustCompile(`nics\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -228,6 +230,44 @@ func (r *ListRackLSEsRequest) Validate() error {
 // Validate validates input requests of DeleteRackLSE.
 func (r *DeleteRackLSERequest) Validate() error {
 	return validateResourceName(rackLSERegex, RackLSENameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateNic.
+func (r *CreateNicRequest) Validate() error {
+	if r.Nic == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.NicId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateNic.
+func (r *UpdateNicRequest) Validate() error {
+	if r.Nic == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(nicRegex, NicNameFormat, r.Nic.GetName())
+}
+
+// Validate validates input requests of GetNic.
+func (r *GetNicRequest) Validate() error {
+	return validateResourceName(nicRegex, NicNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListNics.
+func (r *ListNicsRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteNic.
+func (r *DeleteNicRequest) Validate() error {
+	return validateResourceName(nicRegex, NicNameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

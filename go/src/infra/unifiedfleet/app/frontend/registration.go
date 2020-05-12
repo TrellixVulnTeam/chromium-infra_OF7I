@@ -236,6 +236,61 @@ func (fs *FleetServerImpl) DeleteRack(ctx context.Context, req *api.DeleteRackRe
 	return &empty.Empty{}, err
 }
 
+// CreateNic creates nic entry in database.
+func (fs *FleetServerImpl) CreateNic(ctx context.Context, req *api.CreateNicRequest) (rsp *proto.Nic, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// UpdateNic updates the nic information in database.
+func (fs *FleetServerImpl) UpdateNic(ctx context.Context, req *api.UpdateNicRequest) (rsp *proto.Nic, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// GetNic gets the nic information from database.
+func (fs *FleetServerImpl) GetNic(ctx context.Context, req *api.GetNicRequest) (rsp *proto.Nic, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// ListNics list the nics information from database.
+func (fs *FleetServerImpl) ListNics(ctx context.Context, req *api.ListNicsRequest) (rsp *api.ListNicsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// DeleteNic deletes the nic from database.
+func (fs *FleetServerImpl) DeleteNic(ctx context.Context, req *api.DeleteNicRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
 // ImportNics imports the nics info in batch.
 func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRequest) (response *status.Status, err error) {
 	defer func() {

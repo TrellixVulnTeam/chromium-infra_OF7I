@@ -18,9 +18,10 @@ import "infra/unifiedfleet/api/v1/proto/rack.proto";
 import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
 import "infra/unifiedfleet/api/v1/proto/machine_lse.proto";
 import "infra/unifiedfleet/api/v1/proto/rack_lse.proto";
+import "infra/unifiedfleet/api/v1/proto/network.proto";
 
 service Fleet {
-    // CreateChromePlatform creates a new chromePlatform.
+  // CreateChromePlatform creates a new chromePlatform.
   rpc CreateChromePlatform(CreateChromePlatformRequest) returns (proto.ChromePlatform);
 
   // Update updates the chromePlatform
@@ -74,10 +75,7 @@ service Fleet {
   // Delete delete the rack
   rpc DeleteRack(DeleteRackRequest) returns (google.protobuf.Empty);
 
-  // ImportNics imports nics info.
-  rpc ImportNics(ImportNicsRequest) returns (google.rpc.Status);
-  
-    // CreateMachineLSE creates a new machineLSE
+  // CreateMachineLSE creates a new machineLSE
   rpc CreateMachineLSE(CreateMachineLSERequest) returns (proto.MachineLSE);
 
   // Update updates the machineLSE
@@ -106,6 +104,24 @@ service Fleet {
 
   // Delete delete the rackLSE
   rpc DeleteRackLSE(DeleteRackLSERequest) returns (google.protobuf.Empty);
+
+  // CreateNic creates a new nic
+  rpc CreateNic(CreateNicRequest) returns (proto.Nic);
+
+  // Update updates the nic
+  rpc UpdateNic(UpdateNicRequest) returns (proto.Nic);
+
+  // Get retrieves the details of the nic
+  rpc GetNic(GetNicRequest) returns (proto.Nic);
+
+  // List gets all the nics
+  rpc ListNics(ListNicsRequest) returns (ListNicsResponse);
+
+  // Delete delete the nic
+  rpc DeleteNic(DeleteNicRequest) returns (google.protobuf.Empty);
+
+  // ImportNics imports nics info.
+  rpc ImportNics(ImportNicsRequest) returns (google.rpc.Status);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -168,13 +184,6 @@ message DeleteChromePlatformRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/ChromePlatform" }
   ];
-}
-
-message ImportNicsRequest {
-  oneof source {
-    MachineDBSource machine_db_source = 1;
-    ConfigSource config_source = 2;
-  }
 }
 
 message ImportChromePlatformsRequest {
@@ -457,4 +466,73 @@ message DeleteRackLSERequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/RackLSE" }
   ];
+}
+
+// Contains the required information for creating a Nic represented in
+// the database.
+message CreateNicRequest {
+  // The nic to create.
+  proto.Nic nic = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the Nic, which will become the final component of
+  // the Nic's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string nic_id = 2;
+}
+
+message UpdateNicRequest {
+  // The nic to update.
+  proto.Nic nic = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetNicRequest {
+  // The name of the nic to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Nic" }
+  ];
+}
+
+message ListNicsRequest {
+  // The maximum number of nics to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 nics will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListNics` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListNics` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListNicsResponse {
+  // The nics from datastore.
+  repeated proto.Nic nics = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteNicRequest {
+  // The name of the Nic to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Nic" }
+  ];
+}
+
+message ImportNicsRequest {
+  oneof source {
+    MachineDBSource machine_db_source = 1;
+    ConfigSource config_source = 2;
+  }
 }

@@ -321,86 +321,6 @@ func (m *DeleteChromePlatformRequest) GetName() string {
 	return ""
 }
 
-type ImportNicsRequest struct {
-	// Types that are valid to be assigned to Source:
-	//	*ImportNicsRequest_MachineDbSource
-	//	*ImportNicsRequest_ConfigSource
-	Source               isImportNicsRequest_Source `protobuf_oneof:"source"`
-	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
-	XXX_unrecognized     []byte                     `json:"-"`
-	XXX_sizecache        int32                      `json:"-"`
-}
-
-func (m *ImportNicsRequest) Reset()         { *m = ImportNicsRequest{} }
-func (m *ImportNicsRequest) String() string { return proto.CompactTextString(m) }
-func (*ImportNicsRequest) ProtoMessage()    {}
-func (*ImportNicsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{6}
-}
-
-func (m *ImportNicsRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ImportNicsRequest.Unmarshal(m, b)
-}
-func (m *ImportNicsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ImportNicsRequest.Marshal(b, m, deterministic)
-}
-func (m *ImportNicsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ImportNicsRequest.Merge(m, src)
-}
-func (m *ImportNicsRequest) XXX_Size() int {
-	return xxx_messageInfo_ImportNicsRequest.Size(m)
-}
-func (m *ImportNicsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ImportNicsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ImportNicsRequest proto.InternalMessageInfo
-
-type isImportNicsRequest_Source interface {
-	isImportNicsRequest_Source()
-}
-
-type ImportNicsRequest_MachineDbSource struct {
-	MachineDbSource *MachineDBSource `protobuf:"bytes,1,opt,name=machine_db_source,json=machineDbSource,proto3,oneof"`
-}
-
-type ImportNicsRequest_ConfigSource struct {
-	ConfigSource *ConfigSource `protobuf:"bytes,2,opt,name=config_source,json=configSource,proto3,oneof"`
-}
-
-func (*ImportNicsRequest_MachineDbSource) isImportNicsRequest_Source() {}
-
-func (*ImportNicsRequest_ConfigSource) isImportNicsRequest_Source() {}
-
-func (m *ImportNicsRequest) GetSource() isImportNicsRequest_Source {
-	if m != nil {
-		return m.Source
-	}
-	return nil
-}
-
-func (m *ImportNicsRequest) GetMachineDbSource() *MachineDBSource {
-	if x, ok := m.GetSource().(*ImportNicsRequest_MachineDbSource); ok {
-		return x.MachineDbSource
-	}
-	return nil
-}
-
-func (m *ImportNicsRequest) GetConfigSource() *ConfigSource {
-	if x, ok := m.GetSource().(*ImportNicsRequest_ConfigSource); ok {
-		return x.ConfigSource
-	}
-	return nil
-}
-
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*ImportNicsRequest) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
-		(*ImportNicsRequest_MachineDbSource)(nil),
-		(*ImportNicsRequest_ConfigSource)(nil),
-	}
-}
-
 type ImportChromePlatformsRequest struct {
 	// Types that are valid to be assigned to Source:
 	//	*ImportChromePlatformsRequest_MachineDbSource
@@ -415,7 +335,7 @@ func (m *ImportChromePlatformsRequest) Reset()         { *m = ImportChromePlatfo
 func (m *ImportChromePlatformsRequest) String() string { return proto.CompactTextString(m) }
 func (*ImportChromePlatformsRequest) ProtoMessage()    {}
 func (*ImportChromePlatformsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{7}
+	return fileDescriptor_bfc37a625f56a717, []int{6}
 }
 
 func (m *ImportChromePlatformsRequest) XXX_Unmarshal(b []byte) error {
@@ -493,7 +413,7 @@ func (m *ImportChromePlatformsResponse) Reset()         { *m = ImportChromePlatf
 func (m *ImportChromePlatformsResponse) String() string { return proto.CompactTextString(m) }
 func (*ImportChromePlatformsResponse) ProtoMessage()    {}
 func (*ImportChromePlatformsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{8}
+	return fileDescriptor_bfc37a625f56a717, []int{7}
 }
 
 func (m *ImportChromePlatformsResponse) XXX_Unmarshal(b []byte) error {
@@ -540,7 +460,7 @@ func (m *ChromePlatformResult) Reset()         { *m = ChromePlatformResult{} }
 func (m *ChromePlatformResult) String() string { return proto.CompactTextString(m) }
 func (*ChromePlatformResult) ProtoMessage()    {}
 func (*ChromePlatformResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{9}
+	return fileDescriptor_bfc37a625f56a717, []int{8}
 }
 
 func (m *ChromePlatformResult) XXX_Unmarshal(b []byte) error {
@@ -595,7 +515,7 @@ func (m *CreateMachineRequest) Reset()         { *m = CreateMachineRequest{} }
 func (m *CreateMachineRequest) String() string { return proto.CompactTextString(m) }
 func (*CreateMachineRequest) ProtoMessage()    {}
 func (*CreateMachineRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{10}
+	return fileDescriptor_bfc37a625f56a717, []int{9}
 }
 
 func (m *CreateMachineRequest) XXX_Unmarshal(b []byte) error {
@@ -644,7 +564,7 @@ func (m *UpdateMachineRequest) Reset()         { *m = UpdateMachineRequest{} }
 func (m *UpdateMachineRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateMachineRequest) ProtoMessage()    {}
 func (*UpdateMachineRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{11}
+	return fileDescriptor_bfc37a625f56a717, []int{10}
 }
 
 func (m *UpdateMachineRequest) XXX_Unmarshal(b []byte) error {
@@ -691,7 +611,7 @@ func (m *GetMachineRequest) Reset()         { *m = GetMachineRequest{} }
 func (m *GetMachineRequest) String() string { return proto.CompactTextString(m) }
 func (*GetMachineRequest) ProtoMessage()    {}
 func (*GetMachineRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{12}
+	return fileDescriptor_bfc37a625f56a717, []int{11}
 }
 
 func (m *GetMachineRequest) XXX_Unmarshal(b []byte) error {
@@ -740,7 +660,7 @@ func (m *ListMachinesRequest) Reset()         { *m = ListMachinesRequest{} }
 func (m *ListMachinesRequest) String() string { return proto.CompactTextString(m) }
 func (*ListMachinesRequest) ProtoMessage()    {}
 func (*ListMachinesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{13}
+	return fileDescriptor_bfc37a625f56a717, []int{12}
 }
 
 func (m *ListMachinesRequest) XXX_Unmarshal(b []byte) error {
@@ -790,7 +710,7 @@ func (m *ListMachinesResponse) Reset()         { *m = ListMachinesResponse{} }
 func (m *ListMachinesResponse) String() string { return proto.CompactTextString(m) }
 func (*ListMachinesResponse) ProtoMessage()    {}
 func (*ListMachinesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{14}
+	return fileDescriptor_bfc37a625f56a717, []int{13}
 }
 
 func (m *ListMachinesResponse) XXX_Unmarshal(b []byte) error {
@@ -837,7 +757,7 @@ func (m *DeleteMachineRequest) Reset()         { *m = DeleteMachineRequest{} }
 func (m *DeleteMachineRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteMachineRequest) ProtoMessage()    {}
 func (*DeleteMachineRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{15}
+	return fileDescriptor_bfc37a625f56a717, []int{14}
 }
 
 func (m *DeleteMachineRequest) XXX_Unmarshal(b []byte) error {
@@ -879,7 +799,7 @@ func (m *ImportMachinesRequest) Reset()         { *m = ImportMachinesRequest{} }
 func (m *ImportMachinesRequest) String() string { return proto.CompactTextString(m) }
 func (*ImportMachinesRequest) ProtoMessage()    {}
 func (*ImportMachinesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{16}
+	return fileDescriptor_bfc37a625f56a717, []int{15}
 }
 
 func (m *ImportMachinesRequest) XXX_Unmarshal(b []byte) error {
@@ -956,7 +876,7 @@ func (m *MachineDBSource) Reset()         { *m = MachineDBSource{} }
 func (m *MachineDBSource) String() string { return proto.CompactTextString(m) }
 func (*MachineDBSource) ProtoMessage()    {}
 func (*MachineDBSource) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{17}
+	return fileDescriptor_bfc37a625f56a717, []int{16}
 }
 
 func (m *MachineDBSource) XXX_Unmarshal(b []byte) error {
@@ -997,7 +917,7 @@ func (m *ConfigSource) Reset()         { *m = ConfigSource{} }
 func (m *ConfigSource) String() string { return proto.CompactTextString(m) }
 func (*ConfigSource) ProtoMessage()    {}
 func (*ConfigSource) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{18}
+	return fileDescriptor_bfc37a625f56a717, []int{17}
 }
 
 func (m *ConfigSource) XXX_Unmarshal(b []byte) error {
@@ -1052,7 +972,7 @@ func (m *CreateRackRequest) Reset()         { *m = CreateRackRequest{} }
 func (m *CreateRackRequest) String() string { return proto.CompactTextString(m) }
 func (*CreateRackRequest) ProtoMessage()    {}
 func (*CreateRackRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{19}
+	return fileDescriptor_bfc37a625f56a717, []int{18}
 }
 
 func (m *CreateRackRequest) XXX_Unmarshal(b []byte) error {
@@ -1101,7 +1021,7 @@ func (m *UpdateRackRequest) Reset()         { *m = UpdateRackRequest{} }
 func (m *UpdateRackRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateRackRequest) ProtoMessage()    {}
 func (*UpdateRackRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{20}
+	return fileDescriptor_bfc37a625f56a717, []int{19}
 }
 
 func (m *UpdateRackRequest) XXX_Unmarshal(b []byte) error {
@@ -1148,7 +1068,7 @@ func (m *GetRackRequest) Reset()         { *m = GetRackRequest{} }
 func (m *GetRackRequest) String() string { return proto.CompactTextString(m) }
 func (*GetRackRequest) ProtoMessage()    {}
 func (*GetRackRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{21}
+	return fileDescriptor_bfc37a625f56a717, []int{20}
 }
 
 func (m *GetRackRequest) XXX_Unmarshal(b []byte) error {
@@ -1197,7 +1117,7 @@ func (m *ListRacksRequest) Reset()         { *m = ListRacksRequest{} }
 func (m *ListRacksRequest) String() string { return proto.CompactTextString(m) }
 func (*ListRacksRequest) ProtoMessage()    {}
 func (*ListRacksRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{22}
+	return fileDescriptor_bfc37a625f56a717, []int{21}
 }
 
 func (m *ListRacksRequest) XXX_Unmarshal(b []byte) error {
@@ -1247,7 +1167,7 @@ func (m *ListRacksResponse) Reset()         { *m = ListRacksResponse{} }
 func (m *ListRacksResponse) String() string { return proto.CompactTextString(m) }
 func (*ListRacksResponse) ProtoMessage()    {}
 func (*ListRacksResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{23}
+	return fileDescriptor_bfc37a625f56a717, []int{22}
 }
 
 func (m *ListRacksResponse) XXX_Unmarshal(b []byte) error {
@@ -1294,7 +1214,7 @@ func (m *DeleteRackRequest) Reset()         { *m = DeleteRackRequest{} }
 func (m *DeleteRackRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteRackRequest) ProtoMessage()    {}
 func (*DeleteRackRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{24}
+	return fileDescriptor_bfc37a625f56a717, []int{23}
 }
 
 func (m *DeleteRackRequest) XXX_Unmarshal(b []byte) error {
@@ -1342,7 +1262,7 @@ func (m *CreateMachineLSERequest) Reset()         { *m = CreateMachineLSERequest
 func (m *CreateMachineLSERequest) String() string { return proto.CompactTextString(m) }
 func (*CreateMachineLSERequest) ProtoMessage()    {}
 func (*CreateMachineLSERequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{25}
+	return fileDescriptor_bfc37a625f56a717, []int{24}
 }
 
 func (m *CreateMachineLSERequest) XXX_Unmarshal(b []byte) error {
@@ -1391,7 +1311,7 @@ func (m *UpdateMachineLSERequest) Reset()         { *m = UpdateMachineLSERequest
 func (m *UpdateMachineLSERequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateMachineLSERequest) ProtoMessage()    {}
 func (*UpdateMachineLSERequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{26}
+	return fileDescriptor_bfc37a625f56a717, []int{25}
 }
 
 func (m *UpdateMachineLSERequest) XXX_Unmarshal(b []byte) error {
@@ -1438,7 +1358,7 @@ func (m *GetMachineLSERequest) Reset()         { *m = GetMachineLSERequest{} }
 func (m *GetMachineLSERequest) String() string { return proto.CompactTextString(m) }
 func (*GetMachineLSERequest) ProtoMessage()    {}
 func (*GetMachineLSERequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{27}
+	return fileDescriptor_bfc37a625f56a717, []int{26}
 }
 
 func (m *GetMachineLSERequest) XXX_Unmarshal(b []byte) error {
@@ -1487,7 +1407,7 @@ func (m *ListMachineLSEsRequest) Reset()         { *m = ListMachineLSEsRequest{}
 func (m *ListMachineLSEsRequest) String() string { return proto.CompactTextString(m) }
 func (*ListMachineLSEsRequest) ProtoMessage()    {}
 func (*ListMachineLSEsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{28}
+	return fileDescriptor_bfc37a625f56a717, []int{27}
 }
 
 func (m *ListMachineLSEsRequest) XXX_Unmarshal(b []byte) error {
@@ -1537,7 +1457,7 @@ func (m *ListMachineLSEsResponse) Reset()         { *m = ListMachineLSEsResponse
 func (m *ListMachineLSEsResponse) String() string { return proto.CompactTextString(m) }
 func (*ListMachineLSEsResponse) ProtoMessage()    {}
 func (*ListMachineLSEsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{29}
+	return fileDescriptor_bfc37a625f56a717, []int{28}
 }
 
 func (m *ListMachineLSEsResponse) XXX_Unmarshal(b []byte) error {
@@ -1584,7 +1504,7 @@ func (m *DeleteMachineLSERequest) Reset()         { *m = DeleteMachineLSERequest
 func (m *DeleteMachineLSERequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteMachineLSERequest) ProtoMessage()    {}
 func (*DeleteMachineLSERequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{30}
+	return fileDescriptor_bfc37a625f56a717, []int{29}
 }
 
 func (m *DeleteMachineLSERequest) XXX_Unmarshal(b []byte) error {
@@ -1632,7 +1552,7 @@ func (m *CreateRackLSERequest) Reset()         { *m = CreateRackLSERequest{} }
 func (m *CreateRackLSERequest) String() string { return proto.CompactTextString(m) }
 func (*CreateRackLSERequest) ProtoMessage()    {}
 func (*CreateRackLSERequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{31}
+	return fileDescriptor_bfc37a625f56a717, []int{30}
 }
 
 func (m *CreateRackLSERequest) XXX_Unmarshal(b []byte) error {
@@ -1681,7 +1601,7 @@ func (m *UpdateRackLSERequest) Reset()         { *m = UpdateRackLSERequest{} }
 func (m *UpdateRackLSERequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateRackLSERequest) ProtoMessage()    {}
 func (*UpdateRackLSERequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{32}
+	return fileDescriptor_bfc37a625f56a717, []int{31}
 }
 
 func (m *UpdateRackLSERequest) XXX_Unmarshal(b []byte) error {
@@ -1728,7 +1648,7 @@ func (m *GetRackLSERequest) Reset()         { *m = GetRackLSERequest{} }
 func (m *GetRackLSERequest) String() string { return proto.CompactTextString(m) }
 func (*GetRackLSERequest) ProtoMessage()    {}
 func (*GetRackLSERequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{33}
+	return fileDescriptor_bfc37a625f56a717, []int{32}
 }
 
 func (m *GetRackLSERequest) XXX_Unmarshal(b []byte) error {
@@ -1777,7 +1697,7 @@ func (m *ListRackLSEsRequest) Reset()         { *m = ListRackLSEsRequest{} }
 func (m *ListRackLSEsRequest) String() string { return proto.CompactTextString(m) }
 func (*ListRackLSEsRequest) ProtoMessage()    {}
 func (*ListRackLSEsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{34}
+	return fileDescriptor_bfc37a625f56a717, []int{33}
 }
 
 func (m *ListRackLSEsRequest) XXX_Unmarshal(b []byte) error {
@@ -1827,7 +1747,7 @@ func (m *ListRackLSEsResponse) Reset()         { *m = ListRackLSEsResponse{} }
 func (m *ListRackLSEsResponse) String() string { return proto.CompactTextString(m) }
 func (*ListRackLSEsResponse) ProtoMessage()    {}
 func (*ListRackLSEsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{35}
+	return fileDescriptor_bfc37a625f56a717, []int{34}
 }
 
 func (m *ListRackLSEsResponse) XXX_Unmarshal(b []byte) error {
@@ -1874,7 +1794,7 @@ func (m *DeleteRackLSERequest) Reset()         { *m = DeleteRackLSERequest{} }
 func (m *DeleteRackLSERequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteRackLSERequest) ProtoMessage()    {}
 func (*DeleteRackLSERequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bfc37a625f56a717, []int{36}
+	return fileDescriptor_bfc37a625f56a717, []int{35}
 }
 
 func (m *DeleteRackLSERequest) XXX_Unmarshal(b []byte) error {
@@ -1902,6 +1822,376 @@ func (m *DeleteRackLSERequest) GetName() string {
 	return ""
 }
 
+// Contains the required information for creating a Nic represented in
+// the database.
+type CreateNicRequest struct {
+	// The nic to create.
+	Nic *proto1.Nic `protobuf:"bytes,1,opt,name=nic,proto3" json:"nic,omitempty"`
+	// The ID to use for the Nic, which will become the final component of
+	// the Nic's resource name.
+	//
+	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// contains only ASCII letters, numbers, dash and underscore.
+	NicId                string   `protobuf:"bytes,2,opt,name=nic_id,json=nicId,proto3" json:"nic_id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CreateNicRequest) Reset()         { *m = CreateNicRequest{} }
+func (m *CreateNicRequest) String() string { return proto.CompactTextString(m) }
+func (*CreateNicRequest) ProtoMessage()    {}
+func (*CreateNicRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{36}
+}
+
+func (m *CreateNicRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreateNicRequest.Unmarshal(m, b)
+}
+func (m *CreateNicRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreateNicRequest.Marshal(b, m, deterministic)
+}
+func (m *CreateNicRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateNicRequest.Merge(m, src)
+}
+func (m *CreateNicRequest) XXX_Size() int {
+	return xxx_messageInfo_CreateNicRequest.Size(m)
+}
+func (m *CreateNicRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreateNicRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CreateNicRequest proto.InternalMessageInfo
+
+func (m *CreateNicRequest) GetNic() *proto1.Nic {
+	if m != nil {
+		return m.Nic
+	}
+	return nil
+}
+
+func (m *CreateNicRequest) GetNicId() string {
+	if m != nil {
+		return m.NicId
+	}
+	return ""
+}
+
+type UpdateNicRequest struct {
+	// The nic to update.
+	Nic *proto1.Nic `protobuf:"bytes,1,opt,name=nic,proto3" json:"nic,omitempty"`
+	// The list of fields to be updated.
+	UpdateMask           *field_mask.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
+}
+
+func (m *UpdateNicRequest) Reset()         { *m = UpdateNicRequest{} }
+func (m *UpdateNicRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdateNicRequest) ProtoMessage()    {}
+func (*UpdateNicRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{37}
+}
+
+func (m *UpdateNicRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateNicRequest.Unmarshal(m, b)
+}
+func (m *UpdateNicRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateNicRequest.Marshal(b, m, deterministic)
+}
+func (m *UpdateNicRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateNicRequest.Merge(m, src)
+}
+func (m *UpdateNicRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdateNicRequest.Size(m)
+}
+func (m *UpdateNicRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateNicRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UpdateNicRequest proto.InternalMessageInfo
+
+func (m *UpdateNicRequest) GetNic() *proto1.Nic {
+	if m != nil {
+		return m.Nic
+	}
+	return nil
+}
+
+func (m *UpdateNicRequest) GetUpdateMask() *field_mask.FieldMask {
+	if m != nil {
+		return m.UpdateMask
+	}
+	return nil
+}
+
+type GetNicRequest struct {
+	// The name of the nic to retrieve.
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetNicRequest) Reset()         { *m = GetNicRequest{} }
+func (m *GetNicRequest) String() string { return proto.CompactTextString(m) }
+func (*GetNicRequest) ProtoMessage()    {}
+func (*GetNicRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{38}
+}
+
+func (m *GetNicRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetNicRequest.Unmarshal(m, b)
+}
+func (m *GetNicRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetNicRequest.Marshal(b, m, deterministic)
+}
+func (m *GetNicRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetNicRequest.Merge(m, src)
+}
+func (m *GetNicRequest) XXX_Size() int {
+	return xxx_messageInfo_GetNicRequest.Size(m)
+}
+func (m *GetNicRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetNicRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetNicRequest proto.InternalMessageInfo
+
+func (m *GetNicRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type ListNicsRequest struct {
+	// The maximum number of nics to return. The service may return fewer than
+	// this value.
+	// If unspecified, at most 100 nics will be returned.
+	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `ListNics` call.
+	// Provide this to retrieve the subsequent page.
+	//
+	// When paginating, all other parameters provided to `ListNics` must match
+	// the call that provided the page token.
+	PageToken            string   `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListNicsRequest) Reset()         { *m = ListNicsRequest{} }
+func (m *ListNicsRequest) String() string { return proto.CompactTextString(m) }
+func (*ListNicsRequest) ProtoMessage()    {}
+func (*ListNicsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{39}
+}
+
+func (m *ListNicsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListNicsRequest.Unmarshal(m, b)
+}
+func (m *ListNicsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListNicsRequest.Marshal(b, m, deterministic)
+}
+func (m *ListNicsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListNicsRequest.Merge(m, src)
+}
+func (m *ListNicsRequest) XXX_Size() int {
+	return xxx_messageInfo_ListNicsRequest.Size(m)
+}
+func (m *ListNicsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListNicsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListNicsRequest proto.InternalMessageInfo
+
+func (m *ListNicsRequest) GetPageSize() int32 {
+	if m != nil {
+		return m.PageSize
+	}
+	return 0
+}
+
+func (m *ListNicsRequest) GetPageToken() string {
+	if m != nil {
+		return m.PageToken
+	}
+	return ""
+}
+
+type ListNicsResponse struct {
+	// The nics from datastore.
+	Nics []*proto1.Nic `protobuf:"bytes,1,rep,name=nics,proto3" json:"nics,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken        string   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListNicsResponse) Reset()         { *m = ListNicsResponse{} }
+func (m *ListNicsResponse) String() string { return proto.CompactTextString(m) }
+func (*ListNicsResponse) ProtoMessage()    {}
+func (*ListNicsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{40}
+}
+
+func (m *ListNicsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListNicsResponse.Unmarshal(m, b)
+}
+func (m *ListNicsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListNicsResponse.Marshal(b, m, deterministic)
+}
+func (m *ListNicsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListNicsResponse.Merge(m, src)
+}
+func (m *ListNicsResponse) XXX_Size() int {
+	return xxx_messageInfo_ListNicsResponse.Size(m)
+}
+func (m *ListNicsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListNicsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListNicsResponse proto.InternalMessageInfo
+
+func (m *ListNicsResponse) GetNics() []*proto1.Nic {
+	if m != nil {
+		return m.Nics
+	}
+	return nil
+}
+
+func (m *ListNicsResponse) GetNextPageToken() string {
+	if m != nil {
+		return m.NextPageToken
+	}
+	return ""
+}
+
+type DeleteNicRequest struct {
+	// The name of the Nic to delete
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeleteNicRequest) Reset()         { *m = DeleteNicRequest{} }
+func (m *DeleteNicRequest) String() string { return proto.CompactTextString(m) }
+func (*DeleteNicRequest) ProtoMessage()    {}
+func (*DeleteNicRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{41}
+}
+
+func (m *DeleteNicRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteNicRequest.Unmarshal(m, b)
+}
+func (m *DeleteNicRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteNicRequest.Marshal(b, m, deterministic)
+}
+func (m *DeleteNicRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteNicRequest.Merge(m, src)
+}
+func (m *DeleteNicRequest) XXX_Size() int {
+	return xxx_messageInfo_DeleteNicRequest.Size(m)
+}
+func (m *DeleteNicRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteNicRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteNicRequest proto.InternalMessageInfo
+
+func (m *DeleteNicRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type ImportNicsRequest struct {
+	// Types that are valid to be assigned to Source:
+	//	*ImportNicsRequest_MachineDbSource
+	//	*ImportNicsRequest_ConfigSource
+	Source               isImportNicsRequest_Source `protobuf_oneof:"source"`
+	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+	XXX_unrecognized     []byte                     `json:"-"`
+	XXX_sizecache        int32                      `json:"-"`
+}
+
+func (m *ImportNicsRequest) Reset()         { *m = ImportNicsRequest{} }
+func (m *ImportNicsRequest) String() string { return proto.CompactTextString(m) }
+func (*ImportNicsRequest) ProtoMessage()    {}
+func (*ImportNicsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_bfc37a625f56a717, []int{42}
+}
+
+func (m *ImportNicsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ImportNicsRequest.Unmarshal(m, b)
+}
+func (m *ImportNicsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ImportNicsRequest.Marshal(b, m, deterministic)
+}
+func (m *ImportNicsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ImportNicsRequest.Merge(m, src)
+}
+func (m *ImportNicsRequest) XXX_Size() int {
+	return xxx_messageInfo_ImportNicsRequest.Size(m)
+}
+func (m *ImportNicsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ImportNicsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ImportNicsRequest proto.InternalMessageInfo
+
+type isImportNicsRequest_Source interface {
+	isImportNicsRequest_Source()
+}
+
+type ImportNicsRequest_MachineDbSource struct {
+	MachineDbSource *MachineDBSource `protobuf:"bytes,1,opt,name=machine_db_source,json=machineDbSource,proto3,oneof"`
+}
+
+type ImportNicsRequest_ConfigSource struct {
+	ConfigSource *ConfigSource `protobuf:"bytes,2,opt,name=config_source,json=configSource,proto3,oneof"`
+}
+
+func (*ImportNicsRequest_MachineDbSource) isImportNicsRequest_Source() {}
+
+func (*ImportNicsRequest_ConfigSource) isImportNicsRequest_Source() {}
+
+func (m *ImportNicsRequest) GetSource() isImportNicsRequest_Source {
+	if m != nil {
+		return m.Source
+	}
+	return nil
+}
+
+func (m *ImportNicsRequest) GetMachineDbSource() *MachineDBSource {
+	if x, ok := m.GetSource().(*ImportNicsRequest_MachineDbSource); ok {
+		return x.MachineDbSource
+	}
+	return nil
+}
+
+func (m *ImportNicsRequest) GetConfigSource() *ConfigSource {
+	if x, ok := m.GetSource().(*ImportNicsRequest_ConfigSource); ok {
+		return x.ConfigSource
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*ImportNicsRequest) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*ImportNicsRequest_MachineDbSource)(nil),
+		(*ImportNicsRequest_ConfigSource)(nil),
+	}
+}
+
 func init() {
 	proto.RegisterType((*CreateChromePlatformRequest)(nil), "unifiedfleet.api.v1.rpc.CreateChromePlatformRequest")
 	proto.RegisterType((*UpdateChromePlatformRequest)(nil), "unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest")
@@ -1909,7 +2199,6 @@ func init() {
 	proto.RegisterType((*ListChromePlatformsRequest)(nil), "unifiedfleet.api.v1.rpc.ListChromePlatformsRequest")
 	proto.RegisterType((*ListChromePlatformsResponse)(nil), "unifiedfleet.api.v1.rpc.ListChromePlatformsResponse")
 	proto.RegisterType((*DeleteChromePlatformRequest)(nil), "unifiedfleet.api.v1.rpc.DeleteChromePlatformRequest")
-	proto.RegisterType((*ImportNicsRequest)(nil), "unifiedfleet.api.v1.rpc.ImportNicsRequest")
 	proto.RegisterType((*ImportChromePlatformsRequest)(nil), "unifiedfleet.api.v1.rpc.ImportChromePlatformsRequest")
 	proto.RegisterType((*ImportChromePlatformsResponse)(nil), "unifiedfleet.api.v1.rpc.ImportChromePlatformsResponse")
 	proto.RegisterType((*ChromePlatformResult)(nil), "unifiedfleet.api.v1.rpc.ChromePlatformResult")
@@ -1940,6 +2229,13 @@ func init() {
 	proto.RegisterType((*ListRackLSEsRequest)(nil), "unifiedfleet.api.v1.rpc.ListRackLSEsRequest")
 	proto.RegisterType((*ListRackLSEsResponse)(nil), "unifiedfleet.api.v1.rpc.ListRackLSEsResponse")
 	proto.RegisterType((*DeleteRackLSERequest)(nil), "unifiedfleet.api.v1.rpc.DeleteRackLSERequest")
+	proto.RegisterType((*CreateNicRequest)(nil), "unifiedfleet.api.v1.rpc.CreateNicRequest")
+	proto.RegisterType((*UpdateNicRequest)(nil), "unifiedfleet.api.v1.rpc.UpdateNicRequest")
+	proto.RegisterType((*GetNicRequest)(nil), "unifiedfleet.api.v1.rpc.GetNicRequest")
+	proto.RegisterType((*ListNicsRequest)(nil), "unifiedfleet.api.v1.rpc.ListNicsRequest")
+	proto.RegisterType((*ListNicsResponse)(nil), "unifiedfleet.api.v1.rpc.ListNicsResponse")
+	proto.RegisterType((*DeleteNicRequest)(nil), "unifiedfleet.api.v1.rpc.DeleteNicRequest")
+	proto.RegisterType((*ImportNicsRequest)(nil), "unifiedfleet.api.v1.rpc.ImportNicsRequest")
 }
 
 func init() {
@@ -1947,107 +2243,119 @@ func init() {
 }
 
 var fileDescriptor_bfc37a625f56a717 = []byte{
-	// 1587 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x59, 0xcb, 0x6e, 0xdb, 0x46,
-	0x17, 0xfe, 0x99, 0x8b, 0x63, 0x1f, 0x5b, 0xb1, 0x35, 0xf1, 0x1f, 0x1b, 0x74, 0x83, 0x1a, 0x0c,
-	0xdc, 0x38, 0x4e, 0x45, 0xc5, 0xb9, 0x20, 0x2d, 0x02, 0xb4, 0xb0, 0x63, 0xc5, 0x75, 0xab, 0x04,
-	0x29, 0x95, 0x04, 0x4d, 0x1b, 0x40, 0xa0, 0xa8, 0x91, 0xcc, 0x4a, 0x14, 0x19, 0x92, 0x72, 0x93,
-	0x2c, 0x8a, 0x6e, 0x9b, 0x07, 0xe8, 0xa2, 0xcb, 0xee, 0xbb, 0xe9, 0x2b, 0x74, 0xd1, 0x5d, 0x9f,
-	0x21, 0xcf, 0xd1, 0x55, 0x31, 0x37, 0xf1, 0x22, 0xde, 0xe4, 0xc8, 0x05, 0xb2, 0x13, 0x87, 0x73,
-	0xbe, 0x73, 0x78, 0xe6, 0x3b, 0xb7, 0x11, 0x5c, 0x35, 0x07, 0x1d, 0x57, 0xaf, 0x0e, 0x07, 0x66,
-	0xc7, 0xc4, 0xed, 0x4e, 0x1f, 0x63, 0xbf, 0xaa, 0x3b, 0x66, 0xf5, 0x68, 0xbb, 0xea, 0x3a, 0x46,
-	0x95, 0x2e, 0xa8, 0x8e, 0x6b, 0xfb, 0x36, 0x5a, 0x09, 0x6f, 0x52, 0x75, 0xc7, 0x54, 0x8f, 0xb6,
-	0x55, 0xd7, 0x31, 0xe4, 0xb5, 0xae, 0x6d, 0x77, 0xfb, 0xb8, 0x4a, 0xb7, 0xb5, 0x86, 0x9d, 0x2a,
-	0xb6, 0x1c, 0xff, 0x15, 0x93, 0x92, 0xd7, 0xe3, 0x2f, 0x3b, 0x26, 0xee, 0xb7, 0x9b, 0x96, 0xee,
-	0xf5, 0xf8, 0x8e, 0xcf, 0xbb, 0xb6, 0x6a, 0x1c, 0xba, 0xb6, 0x65, 0x0e, 0x2d, 0xd5, 0x76, 0xbb,
-	0xd5, 0xfe, 0xd0, 0x30, 0xab, 0x5d, 0xa2, 0x9e, 0x6e, 0xa8, 0x72, 0x04, 0x62, 0x16, 0x13, 0x6e,
-	0xe1, 0x43, 0xfd, 0xc8, 0xb4, 0x5d, 0x0e, 0xf0, 0xe9, 0x04, 0x00, 0x2e, 0xf6, 0xec, 0xa1, 0x6b,
-	0x60, 0x2e, 0x7a, 0xa7, 0xa0, 0x28, 0x59, 0xf0, 0x7c, 0xdd, 0x1f, 0x7a, 0x5c, 0xb0, 0x92, 0xee,
-	0x37, 0x26, 0x68, 0xe9, 0xc6, 0xa1, 0x39, 0x10, 0x7a, 0xb6, 0xf2, 0xb6, 0xbb, 0xba, 0x21, 0xfc,
-	0x71, 0x3b, 0x6f, 0x2f, 0x35, 0x18, 0x37, 0x9d, 0xbe, 0xee, 0x77, 0x6c, 0xd7, 0xe2, 0x62, 0xdb,
-	0x05, 0x2d, 0x6a, 0xf6, 0x3d, 0x61, 0x95, 0x5a, 0xc4, 0xaa, 0x60, 0xbf, 0xf2, 0x9b, 0x04, 0x6b,
-	0xf7, 0x5c, 0xac, 0xfb, 0xf8, 0x1e, 0x35, 0xe1, 0x11, 0xb7, 0x40, 0xc3, 0x2f, 0x86, 0xd8, 0xf3,
-	0xd1, 0x53, 0x38, 0x6f, 0x44, 0x5e, 0xac, 0x4a, 0xeb, 0xd2, 0xe6, 0xfc, 0x8d, 0xab, 0x6a, 0x12,
-	0x75, 0x28, 0xa6, 0x1a, 0x45, 0xda, 0x3d, 0xfd, 0x76, 0xe7, 0x94, 0x16, 0x43, 0x41, 0xd7, 0xa0,
-	0x1c, 0x5d, 0x69, 0x9a, 0xed, 0xd5, 0x53, 0xeb, 0xd2, 0xe6, 0x9c, 0xb6, 0x14, 0x7d, 0x71, 0xd0,
-	0x56, 0xfe, 0x90, 0x60, 0xed, 0x89, 0xd3, 0xfe, 0xcf, 0x8d, 0xbc, 0x0b, 0xf3, 0x43, 0xaa, 0x96,
-	0x72, 0x9b, 0x9a, 0x37, 0x7f, 0x43, 0x56, 0x19, 0x81, 0x54, 0x41, 0x7f, 0xf5, 0x3e, 0x61, 0xf0,
-	0x03, 0xdd, 0xeb, 0x69, 0xc0, 0xb6, 0x93, 0xdf, 0x4a, 0x17, 0x56, 0xf7, 0xb1, 0x9f, 0x6c, 0xf0,
-	0x57, 0x70, 0x66, 0xa0, 0x5b, 0x98, 0x9a, 0x39, 0xb7, 0x7b, 0xe7, 0xed, 0xce, 0xa9, 0x7f, 0x76,
-	0xb6, 0x41, 0x9c, 0x5a, 0x85, 0x9a, 0x5b, 0xf1, 0x5e, 0x79, 0x3e, 0xb6, 0x54, 0xdd, 0x71, 0x3c,
-	0xc7, 0xf6, 0x55, 0xc3, 0xb6, 0xaa, 0x31, 0x34, 0x0a, 0xa2, 0x7c, 0x03, 0x72, 0xdd, 0xf4, 0x62,
-	0x9a, 0x3c, 0xa1, 0x6a, 0x0d, 0xe6, 0x1c, 0xbd, 0x8b, 0x9b, 0x9e, 0xf9, 0x9a, 0xe9, 0x3b, 0xab,
-	0xcd, 0x92, 0x85, 0x86, 0xf9, 0x1a, 0xa3, 0x4b, 0x00, 0xf4, 0xa5, 0x6f, 0xf7, 0xf0, 0x80, 0xbb,
-	0x9f, 0x6e, 0x7f, 0x4c, 0x16, 0x94, 0x5f, 0x25, 0x58, 0x4b, 0x84, 0xf6, 0x1c, 0x7b, 0xe0, 0x61,
-	0xd4, 0x80, 0xc5, 0xa8, 0xc7, 0xbc, 0x55, 0x69, 0xfd, 0xf4, 0x44, 0x8e, 0xd7, 0xe2, 0x08, 0xe8,
-	0x23, 0x58, 0x1c, 0xe0, 0x97, 0x7e, 0x73, 0xcc, 0xb0, 0x12, 0x59, 0x7e, 0x34, 0x32, 0xee, 0x7b,
-	0x58, 0xdb, 0xc3, 0x7d, 0x9c, 0xc6, 0x89, 0xa9, 0xba, 0xf8, 0x4f, 0x09, 0xca, 0x07, 0x96, 0x63,
-	0xbb, 0xfe, 0x43, 0xd3, 0xf0, 0x02, 0xda, 0x95, 0x45, 0x00, 0xb6, 0x5b, 0x4d, 0x96, 0x84, 0x38,
-	0xf3, 0x36, 0xd5, 0x94, 0xcc, 0xaa, 0x3e, 0x60, 0x12, 0x7b, 0xbb, 0x0d, 0xba, 0xff, 0x8b, 0xff,
-	0x69, 0x8b, 0x1c, 0x64, 0xaf, 0xc5, 0x96, 0x50, 0x1d, 0x4a, 0x86, 0x3d, 0xe8, 0x98, 0x5d, 0x81,
-	0xc9, 0x88, 0xb7, 0x91, 0x8a, 0x79, 0x8f, 0xee, 0x1e, 0x01, 0x2e, 0x18, 0xa1, 0xe7, 0xdd, 0x59,
-	0x98, 0x61, 0x30, 0xca, 0xdf, 0x12, 0x7c, 0xc0, 0xbe, 0x22, 0x85, 0x2b, 0xef, 0xdb, 0x07, 0xfd,
-	0x2e, 0xc1, 0xa5, 0x94, 0x0f, 0xe2, 0x0c, 0xad, 0xc1, 0x8c, 0xa3, 0x7b, 0x1e, 0x6e, 0x73, 0x62,
-	0x56, 0xd2, 0x55, 0xc6, 0x58, 0xe4, 0x0d, 0xfb, 0xbe, 0xc6, 0x85, 0x09, 0x4c, 0x47, 0x37, 0xfb,
-	0x98, 0xa4, 0xa8, 0xe3, 0xc0, 0x30, 0x61, 0xe5, 0x35, 0x2c, 0x27, 0xbd, 0x47, 0x35, 0x98, 0x75,
-	0x8e, 0x9b, 0xb9, 0xb4, 0x91, 0x28, 0x09, 0x75, 0xec, 0xba, 0xb6, 0xdb, 0xb4, 0xbc, 0x2e, 0x8f,
-	0x99, 0x59, 0xba, 0xf0, 0xc0, 0xeb, 0x2a, 0x2f, 0x61, 0x99, 0xe5, 0x79, 0x7e, 0x5e, 0xe2, 0xcc,
-	0x77, 0xe0, 0x1c, 0x3f, 0x2e, 0xae, 0x5a, 0xc9, 0x50, 0xcd, 0x65, 0x59, 0xb6, 0x14, 0x72, 0x24,
-	0x8b, 0x08, 0xda, 0x8c, 0x92, 0xf8, 0x1c, 0x5f, 0x39, 0x68, 0x2b, 0xbf, 0x48, 0xb0, 0xfc, 0x84,
-	0xe7, 0xc5, 0x69, 0xab, 0x7e, 0xa7, 0x0c, 0xfd, 0x0c, 0xca, 0xfb, 0xd8, 0x8f, 0x19, 0xb5, 0x17,
-	0xc9, 0x1b, 0xd7, 0x69, 0xde, 0xd8, 0x82, 0xcd, 0xdc, 0xbc, 0x21, 0x60, 0x58, 0xc2, 0xf8, 0x1a,
-	0x2e, 0x90, 0xc4, 0xc9, 0x17, 0xa7, 0x92, 0x8c, 0x7f, 0x84, 0xe5, 0x28, 0x24, 0xa7, 0xf8, 0x67,
-	0x30, 0xcb, 0xbd, 0x21, 0xb2, 0x6f, 0x01, 0x37, 0x6a, 0x23, 0x99, 0xc2, 0xf9, 0xf6, 0x39, 0x2c,
-	0xb3, 0x7c, 0x7b, 0x22, 0x0e, 0xfb, 0x4b, 0x82, 0xff, 0xb3, 0x50, 0x8e, 0xfb, 0xec, 0x7d, 0x4b,
-	0x4a, 0x1b, 0xb0, 0x18, 0xd3, 0x8e, 0x10, 0x9c, 0x39, 0xb4, 0x3d, 0x9f, 0xb9, 0x48, 0xa3, 0xbf,
-	0x95, 0xef, 0x60, 0x21, 0x0c, 0x88, 0x54, 0xb8, 0x20, 0xcc, 0xc1, 0xee, 0x91, 0x69, 0xe0, 0x66,
-	0xe0, 0x55, 0xad, 0xcc, 0x75, 0xb1, 0x37, 0x0f, 0x75, 0x0b, 0x13, 0x2a, 0x75, 0xcc, 0x3e, 0xdf,
-	0xc5, 0x83, 0x9d, 0x2c, 0x90, 0x97, 0x4a, 0x07, 0xca, 0x2c, 0xd8, 0x35, 0xdd, 0xe8, 0x09, 0x47,
-	0x7e, 0x02, 0x67, 0x48, 0xf3, 0xc7, 0x7d, 0xf7, 0x61, 0x06, 0x49, 0x88, 0x14, 0x0b, 0x34, 0x2a,
-	0x81, 0x56, 0xe0, 0x1c, 0x6d, 0x1b, 0x47, 0xd1, 0x3d, 0x43, 0x1e, 0x0f, 0xda, 0xca, 0x1b, 0x09,
-	0xca, 0x2c, 0xb4, 0xa7, 0xa3, 0xe8, 0x9d, 0xc2, 0xb9, 0x01, 0xe7, 0xf7, 0xb1, 0x1f, 0x36, 0x64,
-	0x27, 0x42, 0xcd, 0x0a, 0xa5, 0xe6, 0x15, 0xd8, 0xc8, 0xa5, 0x26, 0xc5, 0x60, 0xbc, 0x7c, 0x08,
-	0x4b, 0x24, 0xea, 0xc8, 0xca, 0x54, 0xa2, 0xd8, 0x85, 0x72, 0x08, 0x8f, 0x87, 0xf0, 0x6d, 0x38,
-	0x4b, 0x3e, 0x5f, 0xc4, 0x6f, 0x9e, 0xc7, 0x34, 0xb6, 0xbb, 0x70, 0xe4, 0x3e, 0x85, 0x32, 0x8b,
-	0xdc, 0x29, 0xfb, 0xe6, 0x8d, 0x04, 0x2b, 0x91, 0x9a, 0x52, 0x6f, 0xd4, 0x04, 0xfc, 0x97, 0xa3,
-	0x9a, 0x50, 0x6f, 0xd4, 0x38, 0x13, 0x36, 0xf2, 0xf3, 0x52, 0xbd, 0x51, 0x63, 0x7c, 0x08, 0x49,
-	0xa3, 0xcb, 0x50, 0x0a, 0x9e, 0x02, 0x12, 0x2e, 0x04, 0x8b, 0x07, 0x6d, 0x32, 0xc8, 0xac, 0x44,
-	0xaa, 0xcc, 0x09, 0x19, 0xf3, 0x4e, 0x14, 0x6d, 0xc2, 0x72, 0x50, 0x71, 0x42, 0x06, 0xee, 0x47,
-	0x0e, 0xe3, 0x26, 0x3d, 0x8c, 0x0a, 0x5c, 0x2b, 0x9a, 0x43, 0x09, 0x12, 0x3b, 0x92, 0xc7, 0x70,
-	0x31, 0x54, 0x24, 0xea, 0x8d, 0xda, 0x54, 0x48, 0x4b, 0x0e, 0x7a, 0x0c, 0x96, 0x73, 0x77, 0x1f,
-	0xe6, 0x03, 0xef, 0x08, 0x06, 0x17, 0x73, 0xae, 0x16, 0x96, 0x2c, 0xcc, 0xe6, 0x16, 0xac, 0x44,
-	0xea, 0xd0, 0x49, 0xb8, 0x71, 0xd4, 0x2c, 0x11, 0xb6, 0x87, 0x14, 0xec, 0xb0, 0x44, 0x18, 0xb0,
-	0x48, 0xc9, 0x09, 0xd5, 0x11, 0x85, 0x84, 0x1c, 0x71, 0x35, 0xff, 0x19, 0x6a, 0x96, 0xf8, 0x4a,
-	0xa4, 0x59, 0x9a, 0xbe, 0xea, 0x29, 0x34, 0x4b, 0x31, 0xa3, 0x8e, 0x5b, 0xfb, 0x05, 0x4c, 0xa4,
-	0x59, 0xe2, 0x8b, 0xd3, 0x6c, 0x96, 0x02, 0xc8, 0xa0, 0x59, 0xe2, 0xde, 0x28, 0xd2, 0x2c, 0x09,
-	0x33, 0x47, 0x32, 0x93, 0x37, 0x4b, 0x27, 0xe1, 0xb0, 0x1b, 0x3f, 0x5f, 0x84, 0xb3, 0xf7, 0xc9,
-	0x56, 0xf4, 0x83, 0x20, 0x6a, 0x74, 0x28, 0x40, 0xb7, 0xd2, 0xbb, 0x98, 0xf4, 0xcb, 0x1e, 0xb9,
-	0xf8, 0xd4, 0x41, 0x14, 0x27, 0xdd, 0xc8, 0x64, 0x28, 0xce, 0xb8, 0xc0, 0x99, 0x44, 0xf1, 0x0b,
-	0xca, 0xc3, 0xd8, 0xe2, 0x76, 0xaa, 0xd6, 0xb4, 0x2b, 0x98, 0x49, 0x54, 0xfe, 0x24, 0x31, 0x82,
-	0xc6, 0x86, 0x4c, 0x74, 0x33, 0x55, 0x6b, 0xfa, 0x7d, 0x8c, 0x7c, 0x6b, 0x32, 0x21, 0xce, 0xdb,
-	0xb6, 0xe0, 0x53, 0x61, 0x77, 0x67, 0xdc, 0x8d, 0xc8, 0x17, 0xc7, 0x62, 0xbe, 0x66, 0x39, 0xfe,
-	0x2b, 0xd4, 0x12, 0x3d, 0x78, 0xfc, 0x4b, 0x6f, 0xa7, 0xaa, 0xc9, 0xba, 0x4f, 0x90, 0x91, 0xd0,
-	0x43, 0x76, 0x36, 0xe8, 0x5d, 0x2b, 0x6a, 0x41, 0x29, 0xd2, 0x33, 0xa0, 0x4a, 0x0e, 0x55, 0xa3,
-	0xe3, 0x86, 0x5c, 0x60, 0xb8, 0x21, 0x3a, 0x22, 0xad, 0x40, 0x86, 0x8e, 0xa4, 0xc1, 0xb4, 0x90,
-	0x8e, 0xe7, 0x00, 0x41, 0x29, 0x47, 0x5b, 0x59, 0x04, 0x3c, 0x06, 0x7a, 0x0f, 0x16, 0xc2, 0xc3,
-	0x1e, 0xfa, 0x38, 0x93, 0x35, 0xb1, 0x91, 0x49, 0xae, 0x14, 0xdc, 0xcd, 0xc9, 0xf5, 0x14, 0x4a,
-	0x91, 0x8a, 0x9a, 0xe1, 0xae, 0xa4, 0x09, 0x30, 0x95, 0x4e, 0x8f, 0xe1, 0x7c, 0x74, 0xa4, 0x43,
-	0x6a, 0x0e, 0x8f, 0xe2, 0x1f, 0x92, 0x44, 0xa0, 0x67, 0x00, 0x41, 0x6d, 0xce, 0x70, 0xfc, 0xd8,
-	0x00, 0x24, 0xe7, 0xf5, 0xd5, 0x04, 0x3a, 0xa8, 0xbd, 0x19, 0xd0, 0x63, 0x23, 0x4f, 0x3e, 0x74,
-	0x03, 0xce, 0xf1, 0xf2, 0x89, 0xae, 0x64, 0x71, 0x65, 0x22, 0xd0, 0x16, 0xcc, 0x8d, 0x86, 0x09,
-	0x74, 0x35, 0xf3, 0xd0, 0xc3, 0x03, 0x8c, 0xbc, 0x55, 0x64, 0x2b, 0x27, 0xc7, 0x23, 0x80, 0xa0,
-	0x92, 0x65, 0xf8, 0x64, 0x6c, 0xc2, 0x48, 0xa5, 0x45, 0x1d, 0x20, 0xb8, 0x4b, 0xcd, 0x40, 0x1c,
-	0xbb, 0x70, 0x4d, 0xa4, 0x43, 0x0f, 0x96, 0xe2, 0x33, 0x08, 0xba, 0x5e, 0x2c, 0xa5, 0x04, 0x75,
-	0x59, 0x2e, 0xd6, 0xb0, 0x12, 0x65, 0xf1, 0x19, 0x23, 0x43, 0x59, 0xca, 0x38, 0x52, 0x54, 0x19,
-	0x86, 0x52, 0x64, 0x58, 0xc8, 0x08, 0xcb, 0xa4, 0xa1, 0xa2, 0xa8, 0x1a, 0x1f, 0x16, 0x63, 0xbd,
-	0x3d, 0xaa, 0x16, 0xc9, 0x1f, 0xa1, 0x56, 0x4d, 0xbe, 0x5e, 0x5c, 0x80, 0xd3, 0xea, 0x39, 0x2c,
-	0xc5, 0xbb, 0xf8, 0x0c, 0x4f, 0xa6, 0x34, 0xfc, 0x19, 0x85, 0xac, 0x14, 0xe9, 0xdf, 0x73, 0x8b,
-	0x4c, 0xb4, 0x4d, 0x93, 0x0b, 0x34, 0x85, 0x41, 0x91, 0xc9, 0xd7, 0x91, 0xd4, 0xd0, 0x17, 0xd2,
-	0xc1, 0x8a, 0x8c, 0x78, 0xda, 0xca, 0x4b, 0x1c, 0x13, 0xa2, 0xf3, 0x22, 0x23, 0x9a, 0xe4, 0x9c,
-	0x22, 0x13, 0x6b, 0xcf, 0x73, 0x8a, 0xcc, 0x58, 0xe7, 0x3d, 0x2a, 0x32, 0xf9, 0xee, 0x4a, 0xea,
-	0x9c, 0xd3, 0x8e, 0x7a, 0x77, 0xe3, 0xdb, 0xcb, 0x99, 0xff, 0x77, 0xdf, 0x1d, 0x76, 0x3c, 0xa7,
-	0xd5, 0x9a, 0xa1, 0x62, 0x37, 0xff, 0x0d, 0x00, 0x00, 0xff, 0xff, 0xf5, 0x15, 0x16, 0xb1, 0x1d,
-	0x1f, 0x00, 0x00,
+	// 1779 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x5a, 0x4b, 0x53, 0x1b, 0xd7,
+	0x12, 0xbe, 0x63, 0x03, 0x86, 0x06, 0x0c, 0x3a, 0xc6, 0x86, 0x3b, 0x5c, 0xdf, 0x50, 0x72, 0xb0,
+	0x01, 0x5b, 0x23, 0x83, 0x4d, 0x39, 0x29, 0x57, 0x25, 0x01, 0x83, 0x09, 0x09, 0x50, 0x78, 0x84,
+	0xa9, 0x38, 0x71, 0x95, 0x32, 0x1a, 0x1d, 0x89, 0x09, 0x92, 0x66, 0x3c, 0x33, 0xc2, 0x8f, 0x45,
+	0x2a, 0xab, 0x2c, 0xfc, 0x03, 0xb2, 0xc8, 0x32, 0xfb, 0x6c, 0xb2, 0xce, 0x2e, 0x8b, 0xec, 0xf2,
+	0x1b, 0xfc, 0x3b, 0xb2, 0x4a, 0x9d, 0xd7, 0xbc, 0xa4, 0x79, 0x08, 0x44, 0xaa, 0xbc, 0xd3, 0x9c,
+	0xe9, 0xfe, 0xba, 0xa7, 0xcf, 0xd7, 0x7d, 0xba, 0x4f, 0x09, 0x16, 0x8d, 0x56, 0xcd, 0xd6, 0x8a,
+	0xed, 0x96, 0x51, 0x33, 0x70, 0xb5, 0xd6, 0xc0, 0xd8, 0x2d, 0x6a, 0x96, 0x51, 0x3c, 0x59, 0x2e,
+	0xda, 0x96, 0x5e, 0xa4, 0x0b, 0x8a, 0x65, 0x9b, 0xae, 0x89, 0xa6, 0x83, 0x42, 0x8a, 0x66, 0x19,
+	0xca, 0xc9, 0xb2, 0x62, 0x5b, 0xba, 0x3c, 0x5b, 0x37, 0xcd, 0x7a, 0x03, 0x17, 0xa9, 0x58, 0xa5,
+	0x5d, 0x2b, 0xe2, 0xa6, 0xe5, 0xbe, 0x66, 0x5a, 0xf2, 0x5c, 0xf4, 0x65, 0xcd, 0xc0, 0x8d, 0x6a,
+	0xb9, 0xa9, 0x39, 0xc7, 0x5c, 0xe2, 0xd3, 0xba, 0xa9, 0xe8, 0x47, 0xb6, 0xd9, 0x34, 0xda, 0x4d,
+	0xc5, 0xb4, 0xeb, 0xc5, 0x46, 0x5b, 0x37, 0x8a, 0x75, 0x62, 0x9e, 0x0a, 0x14, 0x39, 0x02, 0x71,
+	0x8b, 0x29, 0x57, 0xf0, 0x91, 0x76, 0x62, 0x98, 0x36, 0x07, 0xf8, 0xb8, 0x07, 0x00, 0x1b, 0x3b,
+	0x66, 0xdb, 0xd6, 0x31, 0x57, 0x7d, 0x90, 0x51, 0x95, 0x2c, 0x38, 0xae, 0xe6, 0xb6, 0x1d, 0xae,
+	0x58, 0x88, 0x8f, 0x1b, 0x53, 0x6c, 0x6a, 0xfa, 0x91, 0xd1, 0x12, 0x76, 0x96, 0xd2, 0xc4, 0x6d,
+	0x4d, 0x17, 0xf1, 0x58, 0x4d, 0x93, 0xa5, 0x0e, 0xe3, 0xb2, 0xd5, 0xd0, 0xdc, 0x9a, 0x69, 0x37,
+	0xb9, 0xda, 0x72, 0x46, 0x8f, 0xca, 0x0d, 0x47, 0x78, 0xa5, 0x64, 0xf1, 0x2a, 0x20, 0x9f, 0xfa,
+	0xd1, 0x2d, 0xec, 0xbe, 0x34, 0x6d, 0xfe, 0x21, 0xf9, 0x5f, 0x24, 0x98, 0x7d, 0x64, 0x63, 0xcd,
+	0xc5, 0x8f, 0xa8, 0xc7, 0xfb, 0xdc, 0x61, 0x15, 0xbf, 0x68, 0x63, 0xc7, 0x45, 0x87, 0x70, 0x59,
+	0x0f, 0xbd, 0x98, 0x91, 0xe6, 0xa4, 0x85, 0xd1, 0x95, 0x45, 0xa5, 0x1b, 0xd3, 0x28, 0xa6, 0x12,
+	0x46, 0x5a, 0xbf, 0xf8, 0x6e, 0xed, 0x82, 0x1a, 0x41, 0x41, 0xb7, 0x21, 0x17, 0x5e, 0x29, 0x1b,
+	0xd5, 0x99, 0x0b, 0x73, 0xd2, 0xc2, 0x88, 0x3a, 0x19, 0x7e, 0xb1, 0x5d, 0xcd, 0xff, 0x26, 0xc1,
+	0xec, 0x53, 0xab, 0xfa, 0xaf, 0x3b, 0xf9, 0x10, 0x46, 0xdb, 0xd4, 0x2c, 0x4d, 0x05, 0xea, 0xde,
+	0xe8, 0x8a, 0xac, 0x30, 0xbe, 0x29, 0x22, 0x5b, 0x94, 0xc7, 0x84, 0xf0, 0xbb, 0x9a, 0x73, 0xac,
+	0x02, 0x13, 0x27, 0xbf, 0xf3, 0x75, 0x98, 0xd9, 0xc2, 0x6e, 0x77, 0x87, 0xbf, 0x84, 0x81, 0x96,
+	0xd6, 0xc4, 0xd4, 0xcd, 0x91, 0xf5, 0x07, 0xef, 0xd6, 0x2e, 0xfc, 0xbd, 0xb6, 0x0c, 0x62, 0xd3,
+	0x0a, 0xd4, 0xdd, 0x82, 0xf3, 0xda, 0x71, 0x71, 0x53, 0xd1, 0x2c, 0xcb, 0xb1, 0x4c, 0x57, 0xd1,
+	0xcd, 0x66, 0x31, 0x82, 0x46, 0x41, 0xf2, 0x5f, 0x81, 0xbc, 0x63, 0x38, 0x11, 0x4b, 0x8e, 0x30,
+	0x35, 0x0b, 0x23, 0x96, 0x56, 0xc7, 0x65, 0xc7, 0x78, 0xc3, 0xec, 0x0d, 0xaa, 0xc3, 0x64, 0xa1,
+	0x64, 0xbc, 0xc1, 0xe8, 0x3a, 0x00, 0x7d, 0xe9, 0x9a, 0xc7, 0xb8, 0xc5, 0xc3, 0x4f, 0xc5, 0x0f,
+	0xc8, 0x42, 0xfe, 0x67, 0x09, 0x66, 0xbb, 0x42, 0x3b, 0x96, 0xd9, 0x72, 0x30, 0x2a, 0xc1, 0x44,
+	0x38, 0x62, 0xce, 0x8c, 0x34, 0x77, 0xb1, 0xa7, 0xc0, 0xab, 0x51, 0x04, 0x74, 0x13, 0x26, 0x5a,
+	0xf8, 0x95, 0x5b, 0xee, 0x70, 0x6c, 0x9c, 0x2c, 0xef, 0x7b, 0xce, 0x7d, 0x07, 0xb3, 0x1b, 0xb8,
+	0x81, 0xe3, 0x38, 0xd1, 0xd7, 0x10, 0xff, 0x25, 0xc1, 0xff, 0xb6, 0x9b, 0x96, 0x69, 0xc7, 0x45,
+	0xf9, 0x10, 0x72, 0x22, 0x75, 0xab, 0x95, 0x32, 0x2b, 0x5f, 0x9c, 0x84, 0x0b, 0x4a, 0x4c, 0x4d,
+	0x56, 0x76, 0x99, 0xc6, 0xc6, 0x7a, 0x89, 0xca, 0x7f, 0xfe, 0x1f, 0x75, 0x82, 0x83, 0x6c, 0x54,
+	0xd8, 0x12, 0xda, 0x81, 0x71, 0xdd, 0x6c, 0xd5, 0x8c, 0xba, 0xc0, 0x64, 0x1c, 0x9c, 0x8f, 0xc5,
+	0x7c, 0x44, 0xa5, 0x3d, 0xc0, 0x31, 0x3d, 0xf0, 0xbc, 0x3e, 0x0c, 0x43, 0x0c, 0x26, 0xff, 0xab,
+	0x04, 0xd7, 0x63, 0x3e, 0x88, 0xef, 0xed, 0x26, 0x0c, 0x59, 0x9a, 0xe3, 0xe0, 0x2a, 0xdf, 0xd2,
+	0x42, 0xbc, 0xc9, 0x48, 0xfc, 0x9d, 0x76, 0xc3, 0x55, 0xb9, 0x32, 0x81, 0xa9, 0x69, 0x46, 0x03,
+	0x93, 0xe4, 0x3e, 0x0d, 0x0c, 0x53, 0xce, 0xbf, 0x81, 0xa9, 0x6e, 0xef, 0xd1, 0x26, 0x0c, 0x5b,
+	0xa7, 0xcd, 0x79, 0xd5, 0x53, 0x25, 0x49, 0x82, 0x6d, 0xdb, 0xb4, 0xcb, 0x4d, 0xa7, 0xce, 0xd9,
+	0x36, 0x4c, 0x17, 0x76, 0x9d, 0x7a, 0xfe, 0x15, 0x4c, 0xb1, 0x0a, 0xc9, 0xf7, 0x4b, 0xec, 0xf9,
+	0x1a, 0x5c, 0xe2, 0xdb, 0xc5, 0x4d, 0xe7, 0x13, 0x4c, 0x73, 0x5d, 0x56, 0x67, 0x84, 0x1e, 0xc9,
+	0x3f, 0x41, 0x1b, 0xaf, 0xfc, 0x8d, 0xf0, 0x95, 0xed, 0x6a, 0xfe, 0x27, 0x09, 0xa6, 0x9e, 0xf2,
+	0x8a, 0xd2, 0x6f, 0xd3, 0x67, 0xaa, 0x6d, 0xcf, 0x20, 0xb7, 0x85, 0xdd, 0x88, 0x53, 0x1b, 0xa1,
+	0x8c, 0xbb, 0x4b, 0x33, 0x6e, 0x09, 0x16, 0x52, 0x33, 0x4e, 0xc0, 0xb0, 0x54, 0x7b, 0x02, 0x57,
+	0x48, 0xc9, 0xe1, 0x8b, 0x7d, 0x29, 0x63, 0xdf, 0xc3, 0x54, 0x18, 0x92, 0x53, 0xfc, 0x13, 0x18,
+	0xe6, 0xd1, 0x10, 0x75, 0x2b, 0x43, 0x18, 0x55, 0x4f, 0x27, 0x73, 0xa5, 0x7a, 0x0e, 0x53, 0xac,
+	0x52, 0x9d, 0x4b, 0xc0, 0xfe, 0x94, 0xe0, 0x2a, 0x4b, 0xe5, 0x68, 0xcc, 0xde, 0xb7, 0xa2, 0x34,
+	0x0f, 0x13, 0x11, 0xeb, 0x08, 0xc1, 0xc0, 0x91, 0xe9, 0xb8, 0x2c, 0x44, 0x2a, 0xfd, 0x9d, 0xff,
+	0x06, 0xc6, 0x82, 0x80, 0x48, 0x81, 0x2b, 0xc2, 0x1d, 0x6c, 0x9f, 0x18, 0x3a, 0x2e, 0xfb, 0x51,
+	0x55, 0x73, 0xdc, 0x16, 0x7b, 0xb3, 0xa7, 0x35, 0x31, 0xa1, 0x52, 0xcd, 0x68, 0x70, 0x29, 0x9e,
+	0xec, 0x64, 0x81, 0xbc, 0xcc, 0xd7, 0x20, 0xc7, 0x92, 0x5d, 0xd5, 0xf4, 0x63, 0x11, 0xc8, 0x8f,
+	0x60, 0x80, 0x74, 0x59, 0x3c, 0x76, 0x1f, 0x24, 0x90, 0x84, 0x68, 0xb1, 0x44, 0xa3, 0x1a, 0x68,
+	0x1a, 0x2e, 0xd1, 0xfe, 0xcc, 0xcb, 0xee, 0x21, 0xf2, 0xb8, 0x5d, 0xcd, 0xbf, 0x95, 0x20, 0xc7,
+	0x52, 0xbb, 0x3f, 0x86, 0xce, 0x94, 0xce, 0x25, 0xb8, 0xbc, 0x85, 0xdd, 0xa0, 0x23, 0x6b, 0x21,
+	0x6a, 0x16, 0x28, 0x35, 0x6f, 0xc1, 0x7c, 0x2a, 0x35, 0x29, 0x06, 0xe3, 0xe5, 0x1e, 0x4c, 0x92,
+	0xac, 0x23, 0x2b, 0x7d, 0xc9, 0x62, 0x1b, 0x72, 0x01, 0x3c, 0x9e, 0xc2, 0xab, 0x30, 0x48, 0x3e,
+	0x5f, 0xe4, 0x6f, 0x5a, 0xc4, 0x54, 0x26, 0x9d, 0x39, 0x73, 0x0f, 0x21, 0xc7, 0x32, 0xb7, 0xcf,
+	0xb1, 0x79, 0x2b, 0xc1, 0x74, 0xe8, 0x4c, 0xd9, 0x29, 0x6d, 0x0a, 0xf8, 0x2f, 0xbc, 0x33, 0x61,
+	0xa7, 0xb4, 0xc9, 0x99, 0x30, 0x9f, 0x5e, 0x97, 0x76, 0x4a, 0x9b, 0x8c, 0x0f, 0x01, 0x6d, 0x74,
+	0x03, 0xc6, 0xfd, 0x27, 0x9f, 0x84, 0x63, 0xfe, 0xe2, 0x76, 0x95, 0x8c, 0x00, 0xd3, 0xa1, 0x53,
+	0xe6, 0x9c, 0x9c, 0x39, 0x13, 0x45, 0xcb, 0x30, 0xe5, 0x9f, 0x38, 0x01, 0x07, 0xb7, 0x42, 0x9b,
+	0x71, 0x8f, 0x6e, 0x46, 0x01, 0x6e, 0x67, 0xad, 0xa1, 0x04, 0x89, 0x6d, 0xc9, 0x01, 0x5c, 0x0b,
+	0x1c, 0x12, 0x3b, 0xa5, 0xcd, 0xbe, 0x90, 0x96, 0x6c, 0x74, 0x07, 0x2c, 0xe7, 0xee, 0x16, 0x8c,
+	0xfa, 0xd1, 0x11, 0x0c, 0xce, 0x16, 0x5c, 0x35, 0xa8, 0x99, 0x99, 0xcd, 0x15, 0x98, 0x0e, 0x9d,
+	0x43, 0xe7, 0x11, 0x46, 0xaf, 0x59, 0x22, 0x6c, 0x0f, 0x18, 0x58, 0x63, 0x85, 0xd0, 0x67, 0x51,
+	0x3e, 0x25, 0x55, 0x3d, 0x0a, 0x09, 0x3d, 0x12, 0x6a, 0xfe, 0x33, 0xd0, 0x2c, 0xf1, 0x95, 0x50,
+	0xb3, 0xd4, 0x7f, 0xd3, 0x7d, 0x68, 0x96, 0x22, 0x4e, 0x9d, 0xf6, 0xec, 0x17, 0x30, 0xa1, 0x66,
+	0x89, 0x2f, 0xf6, 0xb3, 0x59, 0xf2, 0x21, 0xfd, 0x66, 0x89, 0x47, 0x23, 0x4b, 0xb3, 0x24, 0xdc,
+	0xf4, 0x74, 0x7a, 0x6f, 0x96, 0xce, 0x25, 0x60, 0xdf, 0xc2, 0x24, 0xa3, 0xe7, 0x9e, 0xa1, 0x0b,
+	0xe4, 0x55, 0xb8, 0xd8, 0x32, 0x74, 0xce, 0x8d, 0xff, 0x27, 0x7c, 0xd4, 0x9e, 0xa1, 0x33, 0x5e,
+	0x10, 0x79, 0x74, 0x15, 0x86, 0x5a, 0x86, 0xee, 0x53, 0x71, 0xb0, 0x65, 0xe8, 0xdb, 0xd5, 0xfc,
+	0x8f, 0x12, 0x4c, 0x32, 0x1a, 0x9e, 0xdd, 0xc4, 0x99, 0x68, 0xf7, 0x04, 0xc6, 0xb7, 0xb0, 0x1b,
+	0x70, 0xe2, 0xb3, 0x50, 0x04, 0xef, 0xd0, 0x08, 0xde, 0x84, 0x0f, 0x53, 0x23, 0x48, 0x20, 0x58,
+	0xf4, 0x76, 0x61, 0x82, 0x70, 0x63, 0xcf, 0xd0, 0xfb, 0x42, 0xb5, 0x16, 0xeb, 0x10, 0x18, 0x1c,
+	0xa7, 0xd9, 0x0a, 0x0c, 0xb4, 0x0c, 0x5d, 0x50, 0x2c, 0x25, 0x54, 0x2a, 0x95, 0xcd, 0x4c, 0xad,
+	0x03, 0x98, 0x64, 0xd4, 0xea, 0x6b, 0x50, 0xfe, 0x90, 0x20, 0xc7, 0xfa, 0xef, 0x60, 0x5c, 0xde,
+	0xb3, 0xde, 0x7b, 0xe5, 0xf7, 0xff, 0xc2, 0xe0, 0x63, 0xa2, 0x8b, 0x5e, 0x8a, 0x0a, 0x1e, 0x9e,
+	0x96, 0xd1, 0xfd, 0x78, 0x13, 0xf1, 0xf7, 0x87, 0x72, 0xf6, 0x71, 0x9c, 0x18, 0xee, 0x76, 0xc9,
+	0x97, 0x60, 0x38, 0xe1, 0x4e, 0xb0, 0x17, 0xc3, 0x2f, 0x68, 0x81, 0x8e, 0x2c, 0x2e, 0xc7, 0x5a,
+	0x8d, 0xbb, 0xd5, 0xeb, 0xc5, 0xe4, 0x0f, 0x12, 0xab, 0xdc, 0x91, 0xdb, 0x17, 0x74, 0x2f, 0xd6,
+	0x6a, 0xfc, 0x15, 0x9f, 0x7c, 0xbf, 0x37, 0x25, 0x9e, 0x69, 0x55, 0x51, 0x68, 0x33, 0x87, 0x3b,
+	0xe1, 0xba, 0x4d, 0xbe, 0xd6, 0x51, 0x95, 0x36, 0x9b, 0x96, 0xfb, 0x1a, 0x55, 0xc4, 0x70, 0x1a,
+	0xfd, 0xd2, 0xd5, 0x58, 0x33, 0x49, 0x17, 0x6d, 0x32, 0x12, 0x76, 0x88, 0x64, 0x89, 0xde, 0xf6,
+	0xa3, 0x0a, 0x8c, 0x87, 0x9a, 0x69, 0x54, 0x48, 0xa1, 0x6a, 0x78, 0x0e, 0x97, 0x33, 0x4c, 0xfd,
+	0xc4, 0x46, 0xa8, 0x47, 0x4e, 0xb0, 0xd1, 0xed, 0xc6, 0x26, 0x93, 0x8d, 0xe7, 0x00, 0x7e, 0x8f,
+	0x8b, 0x96, 0x92, 0x08, 0x78, 0x0a, 0xf4, 0x63, 0x18, 0x0b, 0xde, 0x82, 0xa0, 0x3b, 0x89, 0xac,
+	0x89, 0xdc, 0x25, 0xc8, 0x85, 0x8c, 0xd2, 0x9c, 0x5c, 0x87, 0x30, 0x1e, 0x6a, 0x35, 0x13, 0xc2,
+	0xd5, 0xed, 0x6a, 0x24, 0x96, 0x4e, 0x07, 0x70, 0x39, 0x7c, 0xd7, 0x81, 0x94, 0x14, 0x1e, 0x45,
+	0x3f, 0xa4, 0x1b, 0x81, 0x9e, 0x01, 0xf8, 0x4d, 0x6b, 0x42, 0xe0, 0x3b, 0x6e, 0x06, 0xe4, 0xb4,
+	0x81, 0x93, 0x40, 0xfb, 0x4d, 0x69, 0x02, 0x74, 0xc7, 0x5d, 0x40, 0x3a, 0x74, 0x09, 0x2e, 0xf1,
+	0xbe, 0x12, 0xdd, 0x4a, 0xe2, 0x4a, 0x4f, 0xa0, 0x15, 0x18, 0xf1, 0xa6, 0x6c, 0xb4, 0x98, 0xb8,
+	0xe9, 0xc1, 0xc9, 0x5e, 0x5e, 0xca, 0x22, 0xca, 0xc9, 0xb1, 0x0f, 0xe0, 0xb7, 0x78, 0x09, 0x31,
+	0xe9, 0x18, 0xbd, 0x63, 0x69, 0x71, 0x2c, 0xda, 0x3a, 0x7f, 0x1e, 0x41, 0x77, 0xb3, 0x15, 0x01,
+	0xbf, 0xc5, 0x94, 0xb3, 0xcd, 0x5e, 0xc4, 0x58, 0x74, 0x5c, 0x4e, 0x30, 0x16, 0x33, 0x59, 0x67,
+	0x35, 0x86, 0x69, 0x17, 0x17, 0x58, 0x28, 0x64, 0x28, 0x0b, 0xbd, 0x9b, 0x71, 0x59, 0x67, 0x17,
+	0x18, 0x53, 0x51, 0x31, 0x4b, 0xc6, 0x07, 0xa6, 0x0e, 0xf9, 0x6e, 0x76, 0x05, 0x4e, 0x84, 0xe7,
+	0xa2, 0x21, 0xcb, 0x14, 0xc9, 0x98, 0xd9, 0x35, 0xe1, 0xe8, 0x19, 0x0f, 0x8d, 0xa2, 0xa9, 0xc7,
+	0x42, 0x78, 0xe2, 0x90, 0x33, 0xcc, 0x37, 0xfe, 0xb1, 0x90, 0x6e, 0xa3, 0xdb, 0x6c, 0x9a, 0xc9,
+	0x06, 0x3b, 0x16, 0xc4, 0xd3, 0x52, 0x5a, 0xaa, 0xf7, 0x88, 0xce, 0x8f, 0x05, 0x31, 0xef, 0xa5,
+	0x1c, 0x0b, 0x91, 0x49, 0x33, 0xe5, 0x58, 0xe8, 0x18, 0x22, 0xbd, 0x63, 0x21, 0x3d, 0x5c, 0xdd,
+	0x86, 0xc0, 0xd8, 0xad, 0x3e, 0x84, 0x11, 0x6f, 0xac, 0x4b, 0xa8, 0x5a, 0xd1, 0xd1, 0x4f, 0x4e,
+	0x99, 0x2f, 0x08, 0xae, 0x37, 0xcb, 0x25, 0xe0, 0x46, 0xe7, 0xbd, 0x54, 0xdc, 0x7d, 0x18, 0x62,
+	0xb3, 0x19, 0xba, 0x99, 0xb4, 0x9d, 0x3d, 0x20, 0x96, 0x61, 0x58, 0xcc, 0x52, 0x68, 0x21, 0x71,
+	0x53, 0x02, 0x53, 0x8a, 0xbc, 0x98, 0x41, 0x92, 0x6f, 0xdd, 0x1e, 0x8c, 0x78, 0xc3, 0x53, 0x42,
+	0x28, 0xa2, 0x03, 0x56, 0xec, 0x96, 0xed, 0x00, 0xf8, 0x53, 0x53, 0x02, 0xab, 0x3b, 0x46, 0xab,
+	0x6e, 0x27, 0xf8, 0xfa, 0xfc, 0xd7, 0x37, 0x12, 0xff, 0x24, 0xf3, 0xb0, 0x5d, 0x73, 0xac, 0x4a,
+	0x65, 0x88, 0x3a, 0x71, 0xef, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xf8, 0xd4, 0xc5, 0xfc, 0x52,
+	0x23, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -2099,8 +2407,6 @@ type FleetClient interface {
 	ListRacks(ctx context.Context, in *ListRacksRequest, opts ...grpc.CallOption) (*ListRacksResponse, error)
 	// Delete delete the rack
 	DeleteRack(ctx context.Context, in *DeleteRackRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	// ImportNics imports nics info.
-	ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error)
 	// CreateMachineLSE creates a new machineLSE
 	CreateMachineLSE(ctx context.Context, in *CreateMachineLSERequest, opts ...grpc.CallOption) (*proto1.MachineLSE, error)
 	// Update updates the machineLSE
@@ -2121,6 +2427,18 @@ type FleetClient interface {
 	ListRackLSEs(ctx context.Context, in *ListRackLSEsRequest, opts ...grpc.CallOption) (*ListRackLSEsResponse, error)
 	// Delete delete the rackLSE
 	DeleteRackLSE(ctx context.Context, in *DeleteRackLSERequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// CreateNic creates a new nic
+	CreateNic(ctx context.Context, in *CreateNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error)
+	// Update updates the nic
+	UpdateNic(ctx context.Context, in *UpdateNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error)
+	// Get retrieves the details of the nic
+	GetNic(ctx context.Context, in *GetNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error)
+	// List gets all the nics
+	ListNics(ctx context.Context, in *ListNicsRequest, opts ...grpc.CallOption) (*ListNicsResponse, error)
+	// Delete delete the nic
+	DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// ImportNics imports nics info.
+	ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error)
 }
 type fleetPRPCClient struct {
 	client *prpc.Client
@@ -2283,15 +2601,6 @@ func (c *fleetPRPCClient) DeleteRack(ctx context.Context, in *DeleteRackRequest,
 	return out, nil
 }
 
-func (c *fleetPRPCClient) ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error) {
-	out := new(status.Status)
-	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "ImportNics", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *fleetPRPCClient) CreateMachineLSE(ctx context.Context, in *CreateMachineLSERequest, opts ...grpc.CallOption) (*proto1.MachineLSE, error) {
 	out := new(proto1.MachineLSE)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "CreateMachineLSE", in, out, opts...)
@@ -2376,6 +2685,60 @@ func (c *fleetPRPCClient) ListRackLSEs(ctx context.Context, in *ListRackLSEsRequ
 func (c *fleetPRPCClient) DeleteRackLSE(ctx context.Context, in *DeleteRackLSERequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
 	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteRackLSE", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) CreateNic(ctx context.Context, in *CreateNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error) {
+	out := new(proto1.Nic)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "CreateNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) UpdateNic(ctx context.Context, in *UpdateNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error) {
+	out := new(proto1.Nic)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "UpdateNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) GetNic(ctx context.Context, in *GetNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error) {
+	out := new(proto1.Nic)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "GetNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) ListNics(ctx context.Context, in *ListNicsRequest, opts ...grpc.CallOption) (*ListNicsResponse, error) {
+	out := new(ListNicsResponse)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "ListNics", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "DeleteNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetPRPCClient) ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error) {
+	out := new(status.Status)
+	err := c.client.Call(ctx, "unifiedfleet.api.v1.rpc.Fleet", "ImportNics", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2543,15 +2906,6 @@ func (c *fleetClient) DeleteRack(ctx context.Context, in *DeleteRackRequest, opt
 	return out, nil
 }
 
-func (c *fleetClient) ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error) {
-	out := new(status.Status)
-	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/ImportNics", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *fleetClient) CreateMachineLSE(ctx context.Context, in *CreateMachineLSERequest, opts ...grpc.CallOption) (*proto1.MachineLSE, error) {
 	out := new(proto1.MachineLSE)
 	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/CreateMachineLSE", in, out, opts...)
@@ -2642,6 +2996,60 @@ func (c *fleetClient) DeleteRackLSE(ctx context.Context, in *DeleteRackLSEReques
 	return out, nil
 }
 
+func (c *fleetClient) CreateNic(ctx context.Context, in *CreateNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error) {
+	out := new(proto1.Nic)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/CreateNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) UpdateNic(ctx context.Context, in *UpdateNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error) {
+	out := new(proto1.Nic)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/UpdateNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) GetNic(ctx context.Context, in *GetNicRequest, opts ...grpc.CallOption) (*proto1.Nic, error) {
+	out := new(proto1.Nic)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/GetNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) ListNics(ctx context.Context, in *ListNicsRequest, opts ...grpc.CallOption) (*ListNicsResponse, error) {
+	out := new(ListNicsResponse)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/ListNics", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) DeleteNic(ctx context.Context, in *DeleteNicRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/DeleteNic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fleetClient) ImportNics(ctx context.Context, in *ImportNicsRequest, opts ...grpc.CallOption) (*status.Status, error) {
+	out := new(status.Status)
+	err := c.cc.Invoke(ctx, "/unifiedfleet.api.v1.rpc.Fleet/ImportNics", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FleetServer is the server API for Fleet service.
 type FleetServer interface {
 	// CreateChromePlatform creates a new chromePlatform.
@@ -2681,8 +3089,6 @@ type FleetServer interface {
 	ListRacks(context.Context, *ListRacksRequest) (*ListRacksResponse, error)
 	// Delete delete the rack
 	DeleteRack(context.Context, *DeleteRackRequest) (*empty.Empty, error)
-	// ImportNics imports nics info.
-	ImportNics(context.Context, *ImportNicsRequest) (*status.Status, error)
 	// CreateMachineLSE creates a new machineLSE
 	CreateMachineLSE(context.Context, *CreateMachineLSERequest) (*proto1.MachineLSE, error)
 	// Update updates the machineLSE
@@ -2703,6 +3109,18 @@ type FleetServer interface {
 	ListRackLSEs(context.Context, *ListRackLSEsRequest) (*ListRackLSEsResponse, error)
 	// Delete delete the rackLSE
 	DeleteRackLSE(context.Context, *DeleteRackLSERequest) (*empty.Empty, error)
+	// CreateNic creates a new nic
+	CreateNic(context.Context, *CreateNicRequest) (*proto1.Nic, error)
+	// Update updates the nic
+	UpdateNic(context.Context, *UpdateNicRequest) (*proto1.Nic, error)
+	// Get retrieves the details of the nic
+	GetNic(context.Context, *GetNicRequest) (*proto1.Nic, error)
+	// List gets all the nics
+	ListNics(context.Context, *ListNicsRequest) (*ListNicsResponse, error)
+	// Delete delete the nic
+	DeleteNic(context.Context, *DeleteNicRequest) (*empty.Empty, error)
+	// ImportNics imports nics info.
+	ImportNics(context.Context, *ImportNicsRequest) (*status.Status, error)
 }
 
 // UnimplementedFleetServer can be embedded to have forward compatible implementations.
@@ -2760,9 +3178,6 @@ func (*UnimplementedFleetServer) ListRacks(ctx context.Context, req *ListRacksRe
 func (*UnimplementedFleetServer) DeleteRack(ctx context.Context, req *DeleteRackRequest) (*empty.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteRack not implemented")
 }
-func (*UnimplementedFleetServer) ImportNics(ctx context.Context, req *ImportNicsRequest) (*status.Status, error) {
-	return nil, status1.Errorf(codes.Unimplemented, "method ImportNics not implemented")
-}
 func (*UnimplementedFleetServer) CreateMachineLSE(ctx context.Context, req *CreateMachineLSERequest) (*proto1.MachineLSE, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method CreateMachineLSE not implemented")
 }
@@ -2792,6 +3207,24 @@ func (*UnimplementedFleetServer) ListRackLSEs(ctx context.Context, req *ListRack
 }
 func (*UnimplementedFleetServer) DeleteRackLSE(ctx context.Context, req *DeleteRackLSERequest) (*empty.Empty, error) {
 	return nil, status1.Errorf(codes.Unimplemented, "method DeleteRackLSE not implemented")
+}
+func (*UnimplementedFleetServer) CreateNic(ctx context.Context, req *CreateNicRequest) (*proto1.Nic, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method CreateNic not implemented")
+}
+func (*UnimplementedFleetServer) UpdateNic(ctx context.Context, req *UpdateNicRequest) (*proto1.Nic, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method UpdateNic not implemented")
+}
+func (*UnimplementedFleetServer) GetNic(ctx context.Context, req *GetNicRequest) (*proto1.Nic, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method GetNic not implemented")
+}
+func (*UnimplementedFleetServer) ListNics(ctx context.Context, req *ListNicsRequest) (*ListNicsResponse, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method ListNics not implemented")
+}
+func (*UnimplementedFleetServer) DeleteNic(ctx context.Context, req *DeleteNicRequest) (*empty.Empty, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method DeleteNic not implemented")
+}
+func (*UnimplementedFleetServer) ImportNics(ctx context.Context, req *ImportNicsRequest) (*status.Status, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method ImportNics not implemented")
 }
 
 func RegisterFleetServer(s prpc.Registrar, srv FleetServer) {
@@ -3104,24 +3537,6 @@ func _Fleet_DeleteRack_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Fleet_ImportNics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ImportNicsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FleetServer).ImportNics(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/ImportNics",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FleetServer).ImportNics(ctx, req.(*ImportNicsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Fleet_CreateMachineLSE_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateMachineLSERequest)
 	if err := dec(in); err != nil {
@@ -3302,6 +3717,114 @@ func _Fleet_DeleteRackLSE_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Fleet_CreateNic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateNicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).CreateNic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/CreateNic",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).CreateNic(ctx, req.(*CreateNicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_UpdateNic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateNicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).UpdateNic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/UpdateNic",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).UpdateNic(ctx, req.(*UpdateNicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_GetNic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).GetNic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/GetNic",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).GetNic(ctx, req.(*GetNicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_ListNics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListNicsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).ListNics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/ListNics",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).ListNics(ctx, req.(*ListNicsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_DeleteNic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteNicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).DeleteNic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/DeleteNic",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).DeleteNic(ctx, req.(*DeleteNicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fleet_ImportNics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImportNicsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FleetServer).ImportNics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/unifiedfleet.api.v1.rpc.Fleet/ImportNics",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FleetServer).ImportNics(ctx, req.(*ImportNicsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Fleet_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "unifiedfleet.api.v1.rpc.Fleet",
 	HandlerType: (*FleetServer)(nil),
@@ -3375,10 +3898,6 @@ var _Fleet_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Fleet_DeleteRack_Handler,
 		},
 		{
-			MethodName: "ImportNics",
-			Handler:    _Fleet_ImportNics_Handler,
-		},
-		{
 			MethodName: "CreateMachineLSE",
 			Handler:    _Fleet_CreateMachineLSE_Handler,
 		},
@@ -3417,6 +3936,30 @@ var _Fleet_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteRackLSE",
 			Handler:    _Fleet_DeleteRackLSE_Handler,
+		},
+		{
+			MethodName: "CreateNic",
+			Handler:    _Fleet_CreateNic_Handler,
+		},
+		{
+			MethodName: "UpdateNic",
+			Handler:    _Fleet_UpdateNic_Handler,
+		},
+		{
+			MethodName: "GetNic",
+			Handler:    _Fleet_GetNic_Handler,
+		},
+		{
+			MethodName: "ListNics",
+			Handler:    _Fleet_ListNics_Handler,
+		},
+		{
+			MethodName: "DeleteNic",
+			Handler:    _Fleet_DeleteNic_Handler,
+		},
+		{
+			MethodName: "ImportNics",
+			Handler:    _Fleet_ImportNics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

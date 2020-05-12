@@ -316,23 +316,6 @@ func (s *DecoratedFleet) DeleteRack(ctx context.Context, req *DeleteRackRequest)
 	return
 }
 
-func (s *DecoratedFleet) ImportNics(ctx context.Context, req *ImportNicsRequest) (rsp *status.Status, err error) {
-	if s.Prelude != nil {
-		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "ImportNics", req)
-		if err == nil {
-			ctx = newCtx
-		}
-	}
-	if err == nil {
-		rsp, err = s.Service.ImportNics(ctx, req)
-	}
-	if s.Postlude != nil {
-		err = s.Postlude(ctx, "ImportNics", rsp, err)
-	}
-	return
-}
-
 func (s *DecoratedFleet) CreateMachineLSE(ctx context.Context, req *CreateMachineLSERequest) (rsp *proto1.MachineLSE, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
@@ -499,6 +482,108 @@ func (s *DecoratedFleet) DeleteRackLSE(ctx context.Context, req *DeleteRackLSERe
 	}
 	if s.Postlude != nil {
 		err = s.Postlude(ctx, "DeleteRackLSE", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) CreateNic(ctx context.Context, req *CreateNicRequest) (rsp *proto1.Nic, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateNic", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateNic(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateNic", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateNic(ctx context.Context, req *UpdateNicRequest) (rsp *proto1.Nic, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateNic", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateNic(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateNic", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetNic(ctx context.Context, req *GetNicRequest) (rsp *proto1.Nic, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetNic", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetNic(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetNic", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListNics(ctx context.Context, req *ListNicsRequest) (rsp *ListNicsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListNics", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListNics(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListNics", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteNic(ctx context.Context, req *DeleteNicRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteNic", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteNic(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteNic", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ImportNics(ctx context.Context, req *ImportNicsRequest) (rsp *status.Status, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ImportNics", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ImportNics(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ImportNics", rsp, err)
 	}
 	return
 }
