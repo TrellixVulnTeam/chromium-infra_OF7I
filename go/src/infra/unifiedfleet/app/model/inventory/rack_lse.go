@@ -116,6 +116,11 @@ func ListRackLSEs(ctx context.Context, pageSize int32, pageToken string) (res []
 	return
 }
 
+// DeleteRackLSE deletes the rackLSE in datastore
+func DeleteRackLSE(ctx context.Context, id string) error {
+	return fleetds.Delete(ctx, &fleet.RackLSE{Name: id}, newRackLSEEntity)
+}
+
 func putRackLSE(ctx context.Context, rackLSE *fleet.RackLSE, update bool) (*fleet.RackLSE, error) {
 	rackLSE.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, rackLSE, newRackLSEEntity, update)

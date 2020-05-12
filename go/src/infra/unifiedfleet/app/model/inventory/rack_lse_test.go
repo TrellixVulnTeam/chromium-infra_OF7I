@@ -152,3 +152,32 @@ func TestListRackLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteRackLSE(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	rackLSE1 := mockRackLSE("rackLSE-1")
+	Convey("DeleteRackLSE", t, func() {
+		Convey("Delete rackLSE by existing ID", func() {
+			resp, cerr := CreateRackLSE(ctx, rackLSE1)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+			err := DeleteRackLSE(ctx, "rackLSE-1")
+			So(err, ShouldBeNil)
+			res, err := GetRackLSE(ctx, "rackLSE-1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete rackLSE by non-existing ID", func() {
+			err := DeleteRackLSE(ctx, "rackLSE-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete rackLSE - invalid ID", func() {
+			err := DeleteRackLSE(ctx, "")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}

@@ -190,5 +190,7 @@ func (fs *FleetServerImpl) DeleteRackLSE(ctx context.Context, req *api.DeleteRac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	err = inventory.DeleteRackLSE(ctx, name)
+	return &empty.Empty{}, err
 }

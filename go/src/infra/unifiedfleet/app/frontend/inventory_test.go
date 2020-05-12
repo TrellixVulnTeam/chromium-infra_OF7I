@@ -618,3 +618,60 @@ func TestListRackLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteRackLSE(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteRackLSE", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		rackLSE1 := mockRackLSE("")
+		req := &api.CreateRackLSERequest{
+			RackLSE:   rackLSE1,
+			RackLSEId: "rackLSE-1",
+		}
+		resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, rackLSE1)
+		Convey("Delete rackLSE by existing ID", func() {
+			req := &api.DeleteRackLSERequest{
+				Name: util.AddPrefix(rackLSECollection, "rackLSE-1"),
+			}
+			_, err := tf.Fleet.DeleteRackLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			greq := &api.GetRackLSERequest{
+				Name: util.AddPrefix(rackLSECollection, "rackLSE-1"),
+			}
+			res, err := tf.Fleet.GetRackLSE(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete rackLSE by non-existing ID", func() {
+			req := &api.DeleteRackLSERequest{
+				Name: util.AddPrefix(rackLSECollection, "rackLSE-2"),
+			}
+			_, err := tf.Fleet.DeleteRackLSE(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete rackLSE - Invalid input empty name", func() {
+			req := &api.DeleteRackLSERequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Delete rackLSE - Invalid input invalid characters", func() {
+			req := &api.DeleteRackLSERequest{
+				Name: util.AddPrefix(rackLSECollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
