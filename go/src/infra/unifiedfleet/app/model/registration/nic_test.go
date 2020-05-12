@@ -5,6 +5,7 @@
 package registration
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -76,6 +77,78 @@ func TestUpdateNic(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestGetNic(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	nic1 := mockNic("Nic-1")
+	Convey("GetNic", t, func() {
+		Convey("Get nic by existing ID", func() {
+			resp, err := CreateNic(ctx, nic1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+			resp, err = GetNic(ctx, "Nic-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+		})
+		Convey("Get nic by non-existing ID", func() {
+			resp, err := GetNic(ctx, "nic-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get nic - invalid ID", func() {
+			resp, err := GetNic(ctx, "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestListNics(t *testing.T) {
+	t.Parallel()
+	Convey("ListNics", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		nics := make([]*proto.Nic, 0, 4)
+		for i := 0; i < 4; i++ {
+			nic1 := mockNic(fmt.Sprintf("nic-%d", i))
+			resp, err := CreateNic(ctx, nic1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+			nics = append(nics, resp)
+		}
+		Convey("List nics - page_token invalid", func() {
+			resp, nextPageToken, err := ListNics(ctx, 5, "abc")
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List nics - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListNics(ctx, 4, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nics)
+		})
+
+		Convey("List nics - listing with pagination", func() {
+			resp, nextPageToken, err := ListNics(ctx, 3, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nics[:3])
+
+			resp, _, err = ListNics(ctx, 2, nextPageToken)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nics[3:])
 		})
 	})
 }

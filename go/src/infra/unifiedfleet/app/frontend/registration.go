@@ -280,7 +280,14 @@ func (fs *FleetServerImpl) GetNic(ctx context.Context, req *api.GetNicRequest) (
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	nic, err := registration.GetNic(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	nic.Name = util.AddPrefix(nicCollection, nic.Name)
+	return nic, err
 }
 
 // ListNics list the nics information from database.
@@ -291,7 +298,19 @@ func (fs *FleetServerImpl) ListNics(ctx context.Context, req *api.ListNicsReques
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := registration.ListNics(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, nic := range result {
+		nic.Name = util.AddPrefix(nicCollection, nic.Name)
+	}
+	return &api.ListNicsResponse{
+		Nics:          result,
+		NextPageToken: nextPageToken,
+	}, nil
 }
 
 // DeleteNic deletes the nic from database.

@@ -894,6 +894,139 @@ func TestUpdateNic(t *testing.T) {
 	})
 }
 
+func TestGetNic(t *testing.T) {
+	t.Parallel()
+	Convey("GetNic", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		nic1 := mockNic("nic-1")
+		req := &api.CreateNicRequest{
+			Nic:   nic1,
+			NicId: "nic-1",
+		}
+		resp, err := tf.Fleet.CreateNic(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, nic1)
+		Convey("Get nic by existing ID", func() {
+			req := &api.GetNicRequest{
+				Name: util.AddPrefix(nicCollection, "nic-1"),
+			}
+			resp, err := tf.Fleet.GetNic(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+		})
+		Convey("Get nic by non-existing ID", func() {
+			req := &api.GetNicRequest{
+				Name: util.AddPrefix(nicCollection, "nic-2"),
+			}
+			resp, err := tf.Fleet.GetNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get nic - Invalid input empty name", func() {
+			req := &api.GetNicRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get nic - Invalid input invalid characters", func() {
+			req := &api.GetNicRequest{
+				Name: util.AddPrefix(nicCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListNics(t *testing.T) {
+	t.Parallel()
+	Convey("ListNics", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		nics := make([]*proto.Nic, 0, 4)
+		for i := 0; i < 4; i++ {
+			nic1 := mockNic("")
+			req := &api.CreateNicRequest{
+				Nic:   nic1,
+				NicId: fmt.Sprintf("nic-%d", i),
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+			nics = append(nics, resp)
+		}
+
+		Convey("ListNics - page_size negative", func() {
+			req := &api.ListNicsRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListNics(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListNics - page_token invalid", func() {
+			req := &api.ListNicsRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListNics(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("ListNics - Full listing Max PageSize", func() {
+			req := &api.ListNicsRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListNics(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Nics, ShouldResembleProto, nics)
+		})
+
+		Convey("ListNics - Full listing with no pagination", func() {
+			req := &api.ListNicsRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListNics(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Nics, ShouldResembleProto, nics)
+		})
+
+		Convey("ListNics - listing with pagination", func() {
+			req := &api.ListNicsRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListNics(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Nics, ShouldResembleProto, nics[:3])
+
+			req = &api.ListNicsRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListNics(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Nics, ShouldResembleProto, nics[3:])
+		})
+	})
+}
+
 func TestImportNics(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
