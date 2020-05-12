@@ -477,8 +477,8 @@ func UpdateDutMeta(ctx context.Context, meta map[string]DutMeta) (DeviceOpResult
 			continue
 		}
 		hid := string(r.Entity.ID)
-		if labData.SerialNumber != "" && labData.ManufacturingId != nil {
-			r.logError(errors.New("meta is already set"))
+		if labData.SerialNumber == meta[hid].SerialNumber && labData.ManufacturingId != nil && labData.GetManufacturingId().GetValue() == meta[hid].HwID {
+			r.logError(errors.New(fmt.Sprintf("meta is not changed. Old serial number %s, old hwid %s", meta[hid].SerialNumber, meta[hid].HwID)))
 			failedResults = append(failedResults, r)
 			continue
 		}

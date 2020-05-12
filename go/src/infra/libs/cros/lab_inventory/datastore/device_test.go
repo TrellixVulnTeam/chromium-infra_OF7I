@@ -460,6 +460,26 @@ func TestUpdateDutMeta(t *testing.T) {
 			So(failed, ShouldHaveLength, 1)
 			So(failed[0].Entity.ID, ShouldEqual, "UUID:ghost")
 		})
+		Convey("Update the same meta", func() {
+			meta := map[string]DutMeta{
+				"UUID:01": {
+					SerialNumber: "serial2",
+					HwID:         "hwid2",
+				},
+			}
+			result, err := UpdateDutMeta(ctx, meta)
+			if err != nil {
+				t.Fatal(err)
+			}
+			passed := result.Passed()
+			So(passed, ShouldHaveLength, 1)
+
+			result, err = UpdateDutMeta(ctx, meta)
+			failed := result.Failed()
+			So(failed, ShouldHaveLength, 1)
+			So(failed[0].Entity.ID, ShouldEqual, "UUID:01")
+			So(failed[0].Err.Error(), ShouldContainSubstring, "meta is not changed")
+		})
 	})
 }
 
