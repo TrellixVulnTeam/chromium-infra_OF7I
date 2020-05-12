@@ -19,7 +19,7 @@ infra.console_view(
 )
 
 luci.cq_group(
-    name = 'recipes-py cq',
+    name = 'recipes-py',
     watch = cq.refset(repo = REPO_URL, refs = [r'refs/heads/master']),
     retry_config = cq.RETRY_TRANSIENT_FAILURES,
 )
@@ -28,13 +28,13 @@ luci.cq_group(
 # Presubmit trybots.
 build.presubmit(
     name = 'recipes-py-try-presubmit',
-    cq_group = 'recipes-py cq',
+    cq_group = 'recipes-py',
     repo_name = 'recipes_py',
     os = 'Ubuntu-16.04',
 )
 build.presubmit(
     name = 'recipes-py-try-presubmit-win',
-    cq_group = 'recipes-py cq',
+    cq_group = 'recipes-py',
     repo_name = 'recipes_py',
     os = 'Windows-10',
     experiment_percentage = 100,
@@ -67,7 +67,7 @@ recipes.roll_trybots(
         'skia',
         'skiabuildbot',
     ],
-    cq_group = 'recipes-py cq',
+    cq_group = 'recipes-py',
     # TODO(tandrii): make this default for rollers and remove from here.
     os = 'Ubuntu-16.04',
 )
@@ -76,9 +76,9 @@ recipes.roll_trybots(
 # External testers (defined in another projects) for recipe rolls.
 luci.cq_tryjob_verifier(
     builder = 'infra-internal:try/build_limited Roll Tester (recipe_engine)',
-    cq_group = 'recipes-py cq',
+    cq_group = 'recipes-py',
 )
 luci.cq_tryjob_verifier(
     builder = 'infra-internal:try/release_scripts Roll Tester (recipe_engine)',
-    cq_group = 'recipes-py cq',
+    cq_group = 'recipes-py',
 )

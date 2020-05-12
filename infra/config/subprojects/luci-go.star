@@ -15,7 +15,7 @@ infra.console_view(
     title = 'luci-go repository console',
     repo = REPO_URL,
 )
-infra.cq_group(name = 'luci-go cq', repo = REPO_URL)
+infra.cq_group(name = 'luci-go', repo = REPO_URL)
 
 
 def ci_builder(name, os, tree_closing=False):
@@ -57,7 +57,7 @@ def try_builder(
   )
   luci.cq_tryjob_verifier(
       builder = name,
-      cq_group = 'luci-go cq',
+      cq_group = 'luci-go',
       experiment_percentage = experiment_percentage,
       disable_reuse = (properties or {}).get('presubmit'),
   )

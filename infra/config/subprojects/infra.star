@@ -10,7 +10,7 @@ load('//lib/recipes.star', 'recipes')
 
 
 infra.console_view(name = 'infra', title = 'infra/infra repository console')
-infra.cq_group(name = 'infra cq', tree_status_host = 'infra-status.appspot.com')
+infra.cq_group(name = 'infra', tree_status_host = 'infra-status.appspot.com')
 
 
 def ci_builder(
@@ -67,7 +67,7 @@ def try_builder(
   )
   luci.cq_tryjob_verifier(
       builder = name,
-      cq_group = 'infra cq',
+      cq_group = 'infra',
       experiment_percentage=experiment_percentage,
   )
 
@@ -146,7 +146,7 @@ try_builder(
 )
 
 # Presubmit trybot.
-build.presubmit(name = 'infra-try-presubmit', cq_group = 'infra cq', repo_name = 'infra')
+build.presubmit(name = 'infra-try-presubmit', cq_group = 'infra', repo_name = 'infra')
 
 # Recipes ecosystem.
 recipes.simulation_tester(

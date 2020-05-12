@@ -15,7 +15,7 @@ infra.console_view(
     title = 'luci-gae repository console',
     repo = REPO_URL,
 )
-infra.cq_group(name = 'luci-gae cq', repo = REPO_URL)
+infra.cq_group(name = 'luci-gae', repo = REPO_URL)
 
 
 def ci_builder(name, os):
@@ -50,7 +50,7 @@ def try_builder(name, os, presubmit=False):
   )
   luci.cq_tryjob_verifier(
       builder = name,
-      cq_group = 'luci-gae cq',
+      cq_group = 'luci-gae',
       disable_reuse = presubmit,
   )
 

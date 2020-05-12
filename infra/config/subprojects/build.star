@@ -19,7 +19,7 @@ infra.console_view(
 )
 
 luci.cq_group(
-    name = 'build cq',
+    name = 'build',
     watch = cq.refset(repo = REPO_URL, refs = [r'refs/heads/master']),
     retry_config = cq.RETRY_TRANSIENT_FAILURES,
 )
@@ -28,13 +28,13 @@ luci.cq_group(
 # Presubmit trybots.
 build.presubmit(
     name = 'Build Presubmit',
-    cq_group = 'build cq',
+    cq_group = 'build',
     repo_name = 'build',
 )
 # Trybot that launches a task via 'led' to verify updated recipes work.
 recipes.led_recipes_tester(
     name = 'Build Recipes Tester',
-    cq_group = 'build cq',
+    cq_group = 'build',
     repo_name = 'build',
 )
 
@@ -55,16 +55,16 @@ recipes.roll_trybots(
     downstream = [
         'infra',
     ],
-    cq_group = 'build cq',
+    cq_group = 'build',
 )
 
 
 # External testers (defined in another projects) for recipe rolls.
 luci.cq_tryjob_verifier(
     builder = 'infra-internal:try/build_limited Roll Tester (build)',
-    cq_group = 'build cq',
+    cq_group = 'build',
 )
 luci.cq_tryjob_verifier(
     builder = 'infra-internal:try/release_scripts Roll Tester (build)',
-    cq_group = 'build cq',
+    cq_group = 'build',
 )

@@ -7,7 +7,7 @@
 load('//lib/build.star', 'build')
 load('//lib/infra.star', 'infra')
 
-cq_group = 'luci-py cq'
+cq_group = 'luci-py'
 
 infra.cq_group(
     name = cq_group,

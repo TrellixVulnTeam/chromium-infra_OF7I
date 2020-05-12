@@ -25,7 +25,7 @@ infra.console_view(
 )
 
 luci.cq_group(
-    name = 'depot_tools cq',
+    name = 'depot_tools',
     watch = cq.refset(repo = REPO_URL, refs = ['refs/heads/master']),
     retry_config = cq.RETRY_TRANSIENT_FAILURES,
 )
@@ -34,14 +34,14 @@ luci.cq_group(
 # Presubmit trybots.
 build.presubmit(
     name = 'Depot Tools Presubmit',
-    cq_group = 'depot_tools cq',
+    cq_group = 'depot_tools',
     repo_name = 'depot_tools',
     run_hooks = False,
 )
 
 build.presubmit(
     name = 'Depot Tools Presubmit (win)',
-    cq_group = 'depot_tools cq',
+    cq_group = 'depot_tools',
     repo_name = 'depot_tools',
     run_hooks = False,
     os = 'Windows-10',
@@ -68,18 +68,18 @@ recipes.roll_trybots(
         'skia',
         'skiabuildbot',
     ],
-    cq_group = 'depot_tools cq',
+    cq_group = 'depot_tools',
 )
 
 
 # External testers (defined in another project) for recipe rolls.
 luci.cq_tryjob_verifier(
     builder = 'infra-internal:try/build_limited Roll Tester (depot_tools)',
-    cq_group = 'depot_tools cq',
+    cq_group = 'depot_tools',
 )
 luci.cq_tryjob_verifier(
     builder = 'infra-internal:try/release_scripts Roll Tester (depot_tools)',
-    cq_group = 'depot_tools cq',
+    cq_group = 'depot_tools',
 )
 
 

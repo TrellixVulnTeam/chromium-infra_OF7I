@@ -10,7 +10,7 @@ load('//lib/build.star', 'build')
 REPO_URL = 'https://chromium.googlesource.com/infra/testing/expect_tests'
 
 luci.cq_group(
-    name = 'expect_tests cq',
+    name = 'expect_tests',
     watch = cq.refset(repo = REPO_URL, refs = [r'refs/heads/master']),
     retry_config = cq.RETRY_NONE,
 )
@@ -18,7 +18,7 @@ luci.cq_group(
 
 build.presubmit(
     name = 'Expect-Tests Presubmit',
-    cq_group = 'expect_tests cq',
+    cq_group = 'expect_tests',
     repo_name = 'expect_tests',
     run_hooks = False,
 )
