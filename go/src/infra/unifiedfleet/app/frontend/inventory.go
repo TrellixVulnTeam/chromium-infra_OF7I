@@ -104,3 +104,58 @@ func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *api.Delete
 	err = inventory.DeleteMachineLSE(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// CreateRackLSE creates rackLSE entry in database.
+func (fs *FleetServerImpl) CreateRackLSE(ctx context.Context, req *api.CreateRackLSERequest) (rsp *proto.RackLSE, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// UpdateRackLSE updates the rackLSE information in database.
+func (fs *FleetServerImpl) UpdateRackLSE(ctx context.Context, req *api.UpdateRackLSERequest) (rsp *proto.RackLSE, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// GetRackLSE gets the rackLSE information from database.
+func (fs *FleetServerImpl) GetRackLSE(ctx context.Context, req *api.GetRackLSERequest) (rsp *proto.RackLSE, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// ListRackLSEs list the rackLSEs information from database.
+func (fs *FleetServerImpl) ListRackLSEs(ctx context.Context, req *api.ListRackLSEsRequest) (rsp *api.ListRackLSEsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// DeleteRackLSE deletes the rackLSE from database.
+func (fs *FleetServerImpl) DeleteRackLSE(ctx context.Context, req *api.DeleteRackLSERequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}

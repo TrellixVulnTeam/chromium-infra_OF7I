@@ -17,6 +17,7 @@ import "infra/unifiedfleet/api/v1/proto/machine.proto";
 import "infra/unifiedfleet/api/v1/proto/rack.proto";
 import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
 import "infra/unifiedfleet/api/v1/proto/machine_lse.proto";
+import "infra/unifiedfleet/api/v1/proto/rack_lse.proto";
 
 service Fleet {
     // CreateChromePlatform creates a new chromePlatform.
@@ -90,6 +91,21 @@ service Fleet {
 
   // Delete delete the machineLSE
   rpc DeleteMachineLSE(DeleteMachineLSERequest) returns (google.protobuf.Empty);
+
+    // CreateRackLSE creates a new rackLSE
+  rpc CreateRackLSE(CreateRackLSERequest) returns (proto.RackLSE);
+
+  // Update updates the rackLSE
+  rpc UpdateRackLSE(UpdateRackLSERequest) returns (proto.RackLSE);
+
+  // Get retrieves the details of the rackLSE
+  rpc GetRackLSE(GetRackLSERequest) returns (proto.RackLSE);
+
+  // List gets all the rackLSEs
+  rpc ListRackLSEs(ListRackLSEsRequest) returns (ListRackLSEsResponse);
+
+  // Delete delete the rackLSE
+  rpc DeleteRackLSE(DeleteRackLSERequest) returns (google.protobuf.Empty);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -378,5 +394,67 @@ message DeleteMachineLSERequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSE" }
+  ];
+}
+
+// Contains the required information for creating a RackLSE represented in
+// the database.
+message CreateRackLSERequest {
+  // The rackLSE to create.
+  proto.RackLSE rackLSE = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the RackLSE, which will become the final component of
+  // the RackLSE's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string rackLSE_id = 2;
+}
+
+message UpdateRackLSERequest {
+  // The rackLSE to update.
+  proto.RackLSE rackLSE = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetRackLSERequest {
+  // The name of the rackLSE to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/RackLSE" }
+  ];
+}
+
+message ListRackLSEsRequest {
+  // The maximum number of rackLSEs to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 rackLSEs will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListRackLSEs` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListRackLSEs` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListRackLSEsResponse {
+  // The rackLSEs from datastore.
+  repeated proto.RackLSE rackLSEs = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteRackLSERequest {
+  // The name of the RackLSE to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/RackLSE" }
   ];
 }

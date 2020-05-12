@@ -417,3 +417,88 @@ func (s *DecoratedFleet) DeleteMachineLSE(ctx context.Context, req *DeleteMachin
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateRackLSE(ctx context.Context, req *CreateRackLSERequest) (rsp *proto1.RackLSE, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateRackLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateRackLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateRackLSE", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateRackLSE(ctx context.Context, req *UpdateRackLSERequest) (rsp *proto1.RackLSE, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateRackLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateRackLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateRackLSE", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetRackLSE(ctx context.Context, req *GetRackLSERequest) (rsp *proto1.RackLSE, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetRackLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetRackLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetRackLSE", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListRackLSEs(ctx context.Context, req *ListRackLSEsRequest) (rsp *ListRackLSEsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListRackLSEs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListRackLSEs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListRackLSEs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteRackLSE(ctx context.Context, req *DeleteRackLSERequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteRackLSE", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteRackLSE(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteRackLSE", rsp, err)
+	}
+	return
+}

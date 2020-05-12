@@ -25,6 +25,7 @@ const (
 	RackNameFormat           string = "Invalid input - Entity Name pattern should be racks/{rack}."
 	ChromePlatformNameFormat string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
 	MachineLSENameFormat     string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
+	RackLSENameFormat        string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
 )
 
 var (
@@ -37,6 +38,7 @@ var chromePlatformRegex = regexp.MustCompile(`chromeplatforms\.*`)
 var machineRegex = regexp.MustCompile(`machines\.*`)
 var rackRegex = regexp.MustCompile(`racks\.*`)
 var machineLSERegex = regexp.MustCompile(`machineLSEs\.*`)
+var rackLSERegex = regexp.MustCompile(`rackLSEs\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -188,6 +190,44 @@ func (r *ListMachineLSEsRequest) Validate() error {
 // Validate validates input requests of DeleteMachineLSE.
 func (r *DeleteMachineLSERequest) Validate() error {
 	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateRackLSE.
+func (r *CreateRackLSERequest) Validate() error {
+	if r.RackLSE == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.RackLSEId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateRackLSE.
+func (r *UpdateRackLSERequest) Validate() error {
+	if r.RackLSE == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(rackLSERegex, RackLSENameFormat, r.RackLSE.GetName())
+}
+
+// Validate validates input requests of GetRackLSE.
+func (r *GetRackLSERequest) Validate() error {
+	return validateResourceName(rackLSERegex, RackLSENameFormat, r.Name)
+}
+
+// Validate validates input requests of ListRackLSEs.
+func (r *ListRackLSEsRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteRackLSE.
+func (r *DeleteRackLSERequest) Validate() error {
+	return validateResourceName(rackLSERegex, RackLSENameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {
