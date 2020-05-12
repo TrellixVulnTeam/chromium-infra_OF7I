@@ -9,8 +9,12 @@ dispatch:
   - url: "*/prpc/buildbucket.v2.Builds/UpdateBuild"
     service: backend
 
-  # Serve rpcexplorer from go service. Actual prpc calls are still served from
-  # python. default-go service lives here:
+  # Serve rpcexplorer from go service. Most prpc calls are still served from
+  # python (exceptions below). default-go service lives here:
   # https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/appengine/frontend
   - url: "*/rpcexplorer/*"
+    service: default-go
+
+  # GetBuild is implemented in go, so serve it from there.
+  - url: "*/prpc/buildbucket.v2.Builds/GetBuild"
     service: default-go
