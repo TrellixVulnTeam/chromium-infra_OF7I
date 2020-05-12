@@ -23,6 +23,12 @@ func mockMachineLSE(id string) *proto.MachineLSE {
 	}
 }
 
+func mockRackLSE(id string) *proto.RackLSE {
+	return &proto.RackLSE{
+		Name: util.AddPrefix(rackLSECollection, id),
+	}
+}
+
 func TestCreateMachineLSE(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -340,6 +346,139 @@ func TestDeleteMachineLSE(t *testing.T) {
 				Name: util.AddPrefix(machineLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestCreateRackLSE(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	rackLSE1 := mockRackLSE("rackLSE-1")
+	rackLSE2 := mockRackLSE("rackLSE-2")
+	Convey("CreateRackLSEs", t, func() {
+		Convey("Create new rackLSE with rackLSE_id", func() {
+			req := &api.CreateRackLSERequest{
+				RackLSE:   rackLSE1,
+				RackLSEId: "rackLSE-1",
+			}
+			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+		})
+
+		Convey("Create existing rackLSEs", func() {
+			req := &api.CreateRackLSERequest{
+				RackLSE:   rackLSE1,
+				RackLSEId: "rackLSE-1",
+			}
+			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
+		})
+
+		Convey("Create new rackLSE - Invalid input nil", func() {
+			req := &api.CreateRackLSERequest{
+				RackLSE: nil,
+			}
+			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new rackLSE - Invalid input empty ID", func() {
+			req := &api.CreateRackLSERequest{
+				RackLSE:   rackLSE2,
+				RackLSEId: "",
+			}
+			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new rackLSE - Invalid input invalid characters", func() {
+			req := &api.CreateRackLSERequest{
+				RackLSE:   rackLSE2,
+				RackLSEId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateRackLSE(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	rackLSE1 := mockRackLSE("rackLSE-1")
+	rackLSE2 := mockRackLSE("rackLSE-1")
+	rackLSE3 := mockRackLSE("rackLSE-3")
+	rackLSE4 := mockRackLSE("")
+	rackLSE5 := mockRackLSE("a.b)7&")
+	Convey("UpdateRackLSEs", t, func() {
+		Convey("Update existing rackLSEs", func() {
+			req := &api.CreateRackLSERequest{
+				RackLSE:   rackLSE1,
+				RackLSEId: "rackLSE-1",
+			}
+			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+			ureq := &api.UpdateRackLSERequest{
+				RackLSE: rackLSE2,
+			}
+			resp, err = tf.Fleet.UpdateRackLSE(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE2)
+		})
+
+		Convey("Update non-existing rackLSEs", func() {
+			ureq := &api.UpdateRackLSERequest{
+				RackLSE: rackLSE3,
+			}
+			resp, err := tf.Fleet.UpdateRackLSE(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Update rackLSE - Invalid input nil", func() {
+			req := &api.UpdateRackLSERequest{
+				RackLSE: nil,
+			}
+			resp, err := tf.Fleet.UpdateRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update rackLSE - Invalid input empty name", func() {
+			rackLSE4.Name = ""
+			req := &api.UpdateRackLSERequest{
+				RackLSE: rackLSE4,
+			}
+			resp, err := tf.Fleet.UpdateRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update rackLSE - Invalid input invalid characters", func() {
+			req := &api.UpdateRackLSERequest{
+				RackLSE: rackLSE5,
+			}
+			resp, err := tf.Fleet.UpdateRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)

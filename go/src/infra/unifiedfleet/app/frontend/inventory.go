@@ -113,7 +113,14 @@ func (fs *FleetServerImpl) CreateRackLSE(ctx context.Context, req *api.CreateRac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.RackLSE.Name = req.RackLSEId
+	rackLSE, err := inventory.CreateRackLSE(ctx, req.RackLSE)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rackLSE.Name = util.AddPrefix(rackLSECollection, rackLSE.Name)
+	return rackLSE, err
 }
 
 // UpdateRackLSE updates the rackLSE information in database.
@@ -124,7 +131,14 @@ func (fs *FleetServerImpl) UpdateRackLSE(ctx context.Context, req *api.UpdateRac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.RackLSE.Name = util.RemovePrefix(req.RackLSE.Name)
+	rackLSE, err := inventory.UpdateRackLSE(ctx, req.RackLSE)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rackLSE.Name = util.AddPrefix(rackLSECollection, rackLSE.Name)
+	return rackLSE, err
 }
 
 // GetRackLSE gets the rackLSE information from database.
