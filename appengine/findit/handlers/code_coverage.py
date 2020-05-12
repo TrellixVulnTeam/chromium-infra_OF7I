@@ -248,6 +248,16 @@ def _GetValidatedData(gs_path):  # pragma: no cover.
   del decompressed_data  # Explicitly release memory.
   logging.info('Finished decompressing and loading coverage data.')
 
+  # According to https://developers.google.com/discovery/v1/type-format, certain
+  # serialization APIs will automatically convert int64 to string when
+  # serializing to JSON, and to facilitate later computations, the following for
+  # loops convert them back to int64 (int in Python).
+  # The following workaround should be removed when the service migrates away
+  # from JSON.
+  for file_data in data.get('files', []):
+    for line_data in file_data.get('lines', []):
+      line_data['count'] = int(line_data['count'])
+
   # Validate that the data is in good format.
   logging.info('Validating coverage data...')
   report = CoverageReport()
