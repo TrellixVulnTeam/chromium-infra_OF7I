@@ -57,6 +57,12 @@ func mockRack(id string, rackCapactiy int32) *proto.Rack {
 	}
 }
 
+func mockNic(id string) *proto.Nic {
+	return &proto.Nic{
+		Name: util.AddPrefix(nicCollection, id),
+	}
+}
+
 func TestCreateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -748,6 +754,139 @@ func TestDeleteRack(t *testing.T) {
 				Name: util.AddPrefix(rackCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteRack(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestCreateNic(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	nic1 := mockNic("")
+	nic2 := mockNic("")
+	nic3 := mockNic("")
+	Convey("CreateNic", t, func() {
+		Convey("Create new nic with nic_id", func() {
+			req := &api.CreateNicRequest{
+				Nic:   nic1,
+				NicId: "Nic-1",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+		})
+
+		Convey("Create existing nic", func() {
+			req := &api.CreateNicRequest{
+				Nic:   nic3,
+				NicId: "Nic-1",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
+		})
+
+		Convey("Create new nic - Invalid input nil", func() {
+			req := &api.CreateNicRequest{
+				Nic: nil,
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new nic - Invalid input empty ID", func() {
+			req := &api.CreateNicRequest{
+				Nic:   nic2,
+				NicId: "",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new nic - Invalid input invalid characters", func() {
+			req := &api.CreateNicRequest{
+				Nic:   nic2,
+				NicId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateNic(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	nic1 := mockNic("")
+	nic2 := mockNic("nic-1")
+	nic3 := mockNic("nic-3")
+	nic4 := mockNic("a.b)7&")
+	Convey("UpdateNic", t, func() {
+		Convey("Update existing nic", func() {
+			req := &api.CreateNicRequest{
+				Nic:   nic1,
+				NicId: "nic-1",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+			ureq := &api.UpdateNicRequest{
+				Nic: nic2,
+			}
+			resp, err = tf.Fleet.UpdateNic(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic2)
+		})
+
+		Convey("Update non-existing nic", func() {
+			ureq := &api.UpdateNicRequest{
+				Nic: nic3,
+			}
+			resp, err := tf.Fleet.UpdateNic(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Update nic - Invalid input nil", func() {
+			req := &api.UpdateNicRequest{
+				Nic: nil,
+			}
+			resp, err := tf.Fleet.UpdateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update nic - Invalid input empty name", func() {
+			nic3.Name = ""
+			req := &api.UpdateNicRequest{
+				Nic: nic3,
+			}
+			resp, err := tf.Fleet.UpdateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update nic - Invalid input invalid characters", func() {
+			req := &api.UpdateNicRequest{
+				Nic: nic4,
+			}
+			resp, err := tf.Fleet.UpdateNic(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)

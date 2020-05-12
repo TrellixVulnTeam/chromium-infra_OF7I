@@ -244,7 +244,14 @@ func (fs *FleetServerImpl) CreateNic(ctx context.Context, req *api.CreateNicRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.Nic.Name = req.NicId
+	nic, err := registration.CreateNic(ctx, req.Nic)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	nic.Name = util.AddPrefix(nicCollection, nic.Name)
+	return nic, err
 }
 
 // UpdateNic updates the nic information in database.
@@ -255,7 +262,14 @@ func (fs *FleetServerImpl) UpdateNic(ctx context.Context, req *api.UpdateNicRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.Nic.Name = util.RemovePrefix(req.Nic.Name)
+	nic, err := registration.UpdateNic(ctx, req.Nic)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	nic.Name = util.AddPrefix(nicCollection, nic.Name)
+	return nic, err
 }
 
 // GetNic gets the nic information from database.
