@@ -321,7 +321,9 @@ func (fs *FleetServerImpl) DeleteNic(ctx context.Context, req *api.DeleteNicRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	err = registration.DeleteNic(ctx, name)
+	return &empty.Empty{}, err
 }
 
 // ImportNics imports the nics info in batch.

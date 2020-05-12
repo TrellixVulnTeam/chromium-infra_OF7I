@@ -152,3 +152,62 @@ func TestListNics(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteNic(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	nic1 := mockNic("nic-1")
+	nic2 := mockNic("nic-2")
+	Convey("DeleteNic", t, func() {
+		Convey("Delete nic by existing ID with machine reference", func() {
+			resp, cerr := CreateNic(ctx, nic1)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+
+			chromeBrowserMachine1 := &proto.Machine{
+				Name: "machine-1",
+				Device: &proto.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+						Nic: "nic-1",
+					},
+				},
+			}
+			mresp, merr := CreateMachine(ctx, chromeBrowserMachine1)
+			So(merr, ShouldBeNil)
+			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
+
+			err := DeleteNic(ctx, "nic-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, CannotDelete)
+
+			resp, cerr = GetNic(ctx, "nic-1")
+			So(resp, ShouldNotBeNil)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+		})
+		Convey("Delete nic successfully by existing ID without references", func() {
+			resp, cerr := CreateNic(ctx, nic2)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic2)
+
+			err := DeleteNic(ctx, "nic-2")
+			So(err, ShouldBeNil)
+
+			resp, cerr = GetNic(ctx, "nic-2")
+			So(resp, ShouldBeNil)
+			So(cerr, ShouldNotBeNil)
+			So(cerr.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete nic by non-existing ID", func() {
+			err := DeleteNic(ctx, "nic-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete nic - invalid ID", func() {
+			err := DeleteNic(ctx, "")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}

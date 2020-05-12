@@ -6,6 +6,8 @@ package registration
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -106,6 +108,29 @@ func ListNics(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 		nextPageToken = nextCur.String()
 	}
 	return
+}
+
+// DeleteNic deletes the nic in datastore
+//
+// For referential data intergrity,
+// Delete if there are no references to the Nic by Machine in the datastore.
+// If there are any references, delete will be rejected and an error message will be thrown.
+func DeleteNic(ctx context.Context, id string) error {
+	machines, err := QueryMachineByPropertyName(ctx, "nic_id", id, true)
+	if err != nil {
+		return err
+	}
+	if len(machines) > 0 {
+		var errorMsg strings.Builder
+		errorMsg.WriteString(fmt.Sprintf("Nic %s cannot be deleted because there are other resources which are referring this Nic.", id))
+		errorMsg.WriteString(fmt.Sprintf("\nMachines referring the Nic:\n"))
+		for _, machine := range machines {
+			errorMsg.WriteString(machine.Name + ", ")
+		}
+		logging.Infof(ctx, errorMsg.String())
+		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+	}
+	return fleetds.Delete(ctx, &fleet.Nic{Name: id}, newNicEntity)
 }
 
 func putNic(ctx context.Context, nic *fleet.Nic, update bool) (*fleet.Nic, error) {

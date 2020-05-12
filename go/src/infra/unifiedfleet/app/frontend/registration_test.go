@@ -1027,6 +1027,110 @@ func TestListNics(t *testing.T) {
 	})
 }
 
+func TestDeleteNic(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteNic", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Delete nic by existing ID with machine reference", func() {
+			nic1 := mockNic("")
+			req := &api.CreateNicRequest{
+				Nic:   nic1,
+				NicId: "nic-1",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+
+			chromeBrowserMachine1 := &proto.Machine{
+				Name: util.AddPrefix(machineCollection, "machine-1"),
+				Device: &proto.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+						Nic: "nic-1",
+					},
+				},
+			}
+			mreq := &api.CreateMachineRequest{
+				Machine:   chromeBrowserMachine1,
+				MachineId: "machine-1",
+			}
+			mresp, merr := tf.Fleet.CreateMachine(tf.C, mreq)
+			So(merr, ShouldBeNil)
+			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
+
+			dreq := &api.DeleteNicRequest{
+				Name: util.AddPrefix(nicCollection, "nic-1"),
+			}
+			_, err = tf.Fleet.DeleteNic(tf.C, dreq)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, CannotDelete)
+
+			greq := &api.GetNicRequest{
+				Name: util.AddPrefix(nicCollection, "nic-1"),
+			}
+			res, err := tf.Fleet.GetNic(tf.C, greq)
+			So(res, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(res, ShouldResembleProto, nic1)
+		})
+
+		Convey("Delete nic by existing ID without references", func() {
+			nic2 := mockNic("")
+			req := &api.CreateNicRequest{
+				Nic:   nic2,
+				NicId: "nic-2",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic2)
+
+			dreq := &api.DeleteNicRequest{
+				Name: util.AddPrefix(nicCollection, "nic-2"),
+			}
+			_, err = tf.Fleet.DeleteNic(tf.C, dreq)
+			So(err, ShouldBeNil)
+
+			greq := &api.GetNicRequest{
+				Name: util.AddPrefix(nicCollection, "nic-2"),
+			}
+			res, err := tf.Fleet.GetNic(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete nic by non-existing ID", func() {
+			req := &api.DeleteNicRequest{
+				Name: util.AddPrefix(nicCollection, "nic-2"),
+			}
+			_, err := tf.Fleet.DeleteNic(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete nic - Invalid input empty name", func() {
+			req := &api.DeleteNicRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Delete nic - Invalid input invalid characters", func() {
+			req := &api.DeleteNicRequest{
+				Name: util.AddPrefix(nicCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
 func TestImportNics(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
