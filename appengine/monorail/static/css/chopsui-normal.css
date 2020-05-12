@@ -31,6 +31,9 @@
   --chops-gray-700: #616161;
   --chops-gray-800: #424242;
   --chops-gray-900: #212121;
+  /* Making these variables makes it easier to add user-side scripts in a reasonable way. */
+  --chops-white: #ffffff;
+  --chops-black: #000000;
 
   /* To make grays used for font styles and icons maintain consistent
    * contrast ratios across colored backgrounds, we repesent them as pure black
@@ -42,10 +45,10 @@
   --chops-blue-gray-25: #f1f3f4;
   --chops-blue-gray-50: #eceff1;  /* Similar to grimoire. */
 
-  --chops-primary-header-bg: white;
+  --chops-primary-header-bg: var(--chops-white);
   --chops-secondary-header-bg: var(--chops-blue-gray-25);
   --chops-sidebar-bg: var(--chops-blue-gray-25);
-  --chops-page-bg: white;
+  --chops-page-bg: var(--chops-white);
   --chops-footer-bg: transparent;
   --chops-primary-icon-color: var(--chops-gray-700-alpha);
 
@@ -63,9 +66,9 @@
   --chops-primary-accent-color: var(--chops-blue-700);
   --chops-primary-accent-bg: var(--chops-blue-50);
   --chops-primary-button-bg: var(--chops-primary-accent-color);
-  --chops-primary-button-color: white;
+  --chops-primary-button-color: var(--chops-white);
   --chops-button-bg: var(--chops-gray-200);
-  --chops-button-color: #000000;
+  --chops-button-color: var(--chops-black);
   --chops-button-disabled-bg: var(--chops-gray-300);
   --chops-button-disabled-color: var(--chops-gray-600);
   --chops-button-border: none;
@@ -86,10 +89,10 @@
   --chops-card-heading-bg: var(--chops-secondary-header-bg);
   --chops-card-details-bg: var(--chops-gray-50);
   --chops-card-border: var(--chops-normal-border);
-  --chops-card-content-bg: white;
+  --chops-card-content-bg: var(--chops-white);
 
   --chops-table-header-bg: var(--chops-secondary-header-bg);
-  --chops-table-row-bg: white;
+  --chops-table-row-bg: var(--chops-white);
   --chops-table-divider: var(--chops-normal-border);
 
   --chops-main-font-size: 13px;
